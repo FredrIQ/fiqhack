@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# Last modified by Alex Smith, 2013-10-16
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
@@ -85,36 +86,41 @@ get at each verbosity level are:
 
 =over 4
 
-=item -2
+=item -v-2
 
 No messages at all.  Even important ones.
 
-=item -1
+=item -v-1
 
 Messages about warnings, errors, and failures to compile.  No messages will be
 printed if everything works correctly.
 
-=item 0
+=item -v0
 
 Level -1 messages, plus messages about operations that aimake is performing
 that actually contribute to compiling the code (e.g. running compilers,
 linkers, and so on).  At level 0 and above, aimake also displays the details
 of what it is thinking temporarily, using one line that repeatedly changes.
 
-=item 1
+=item -v1
 
 Level 0 messages, plus messages about other operations that aimake performs
 (such as determining dependencies).
 
-=item 2
+=item -v2
 
 Level 1 messages, plus a record of all the actual commands that are run.
 Additionally, the temporary messages about what aimake is doing are left on
 the screen, rather than removed.
 
-=item 4
+=item -v4
 
 Level 2 messages, plus information useful mostly for debugging aimake itself.
+
+=item -v5
+
+Level 4 messages, plus particularly verbose information useful mostly for
+debugging aimake itself.
 
 =back
 
@@ -205,13 +211,13 @@ it was installed to, even if it instructs aimake to tell it the install path.
 =item B<--destdir=>F<directory>
 
 When installing, treat the given directory as the root directory, rather than
-using the actual root directory.  (For instance, giving B<-i> F</usr> B<-p>
-F</home/user> would install into F</home/user/usr>, but the installed program
-would look for paths as if it had been installed into F</usr>.)  This is
-intended for use in packaging programs, and when installing into a chroot from
-outside the chroot.  This option may only be given if the install directory is
-outside the source directory and outside the build directory (otherwise, it's
-not quite clear what it would mean).
+using the actual root directory.  (For instance, giving B<-i> F</usr>
+B<--destdir> F</home/user> would install into F</home/user/usr>, but the
+installed program would look for paths as if it had been installed into
+F</usr>.)  This is intended for use in packaging programs, and when installing
+into a chroot from outside the chroot.  This option may only be given if the
+install directory is outside the source directory and outside the build
+directory (otherwise, it's not quite clear what it would mean).
 
 =item B<--documentation>
 
@@ -228,16 +234,26 @@ only useful if stdout is not a terminal).
 
 =item B<--dump-status>
 
+=item B<--dump-status=subset>
+
 Instead of compiling, dump the internal statefile to stdout in a
 human-readable format.  This is mostly only useful for debugging aimake.
+
+It is possible to specify a subset of the statefile to dump as a
+comma-separated sequence of keys (e.g. 'xuse_by_object,config_option:libdir').
+On large projects, this is considerably faster than dumping the entire
+statefile if you are only interested in a small portion of it.
 
 =item B<--ignore-builtin-config>
 
 Ignore all the built-in rules and options, reading configuration only from the
-project-specific configuration file.  This is mostly only useful for testing
+project-specific configuration file.  aimake only has minimal functionality
+with no rules (for instance, it will not even check for changes to files in
+the source directory), and as such, this is mostly only useful for testing
 aimake, or if you want to use aimake's engine for something radically
-different from compiling C.  (The built-in directory layouts are not ignored,
-but they will not be used for anything if directory_layout is set to something
+different from compiling C and have a complex configuration file handy for
+that alternative use.  (The built-in directory layouts are not ignored, but
+they will not be used for anything if directory_layout is set to something
 other than a built-in directory layout.)
 
 =item B<--version>
@@ -294,7 +310,7 @@ aimake works around this via mandating a standard filename format in its
 configuration files (that it translates to an appropriate format for the
 operating system), and emulating many commands itself (although it necessarily
 has to use the C toolchain from the system; an entire C compiler and linker
-would be outside the scope of a single Perl script a few hundred kilobyes
+would be outside the scope of a single Perl script a few hundred kilobytes
 long).
 
 =item *
@@ -325,8 +341,9 @@ and the clocks on the computers are not perfectly in sync.)  Likewise, it
 rebuilds a file if any of its dependencies changed modification time, even if
 the file itself did not change.  aimake works around these problems via using
 the hash of a file in addition to its modification timestamp; if the timestamp
-changes at all (forwards or backwards), the file's hash is recomputed to see
-if its contents also changed.
+changes at all (forwards or backwards), or in cases where the file might
+plausibly have changed multiple times within the resolution of its timestamp,
+the file's hash is recomputed to see if its contents also changed.
 
 =item *
 
@@ -339,7 +356,7 @@ B<make>'s behaviour on warnings is even worse: it will display them once, but
 on subsequent compiles, the warnings will no longer be visible because the
 compiler will not be re-run, and the warnings were not saved anywhere.  aimake
 remembers warning and error messages, meaning that warnings will not be lost
-upon recompiling, and programs won't run unless their inputs have changed,
+upon recompilation, and programs won't run unless their inputs have changed,
 even if they errored out or produced no output.
 
 =item *
@@ -378,6 +395,164 @@ generate.)
 Many other build tools are available that try to fix one or more of these
 problems, but as far as I know, aimake is the only program which tries to fix
 them all at once.
+
+=head1 ADAPTING A SOURCE TREE FOR USE WITH AIMAKE
+
+aimake is designed to be as easy as possible to use with new projects, and as
+such it often works with unmodified source and no project-specific
+configuration file.  However, there are some steps you can take to get the
+best possible result.
+
+First, make sure that the directory layout of your source tree reflects the
+dependencies between files; this is to help it resolve ambiguities.  It mostly
+doesn't matter if all your symbols have different name, but if you declare the
+same function or variable in multiple files, aimake will need to know which to
+link against.  It will favour linking against files that it has to link to
+anyway, but when all else fails, it will fall back to linking to files in the
+same directory (and with as many matching characters as possible at the start
+of the filename, as a second tiebreak).  Also make sure that files have
+appropriate extensions (F<.c> for C files, F<.cxx> for C++ files, F<.h> for
+headers, etc.).
+
+Next, you can use some aimake-specific macros in your C and C++ source and
+header files.  One reason to do this would be if you have code specific to one
+operating system; you can use C<AIMAKE_BUILDOS_> macros to conditionalize your
+code to one operating system, for instance C<AIMAKE_BUILDOS_linux>,
+C<AIMAKE_BUILDOS_MSWin32>, or C<AIMAKE_BUILDOS_darwin> (typically indicating
+Mac OS X).  (The possibilities for the build OS are taken from Perl's C<$^O>
+operating system identification variable.)  Another is to make your code
+depend on aimake configuration options; you can write
+C<AIMAKE_OPTION_packagename> to discover the package name, for instance.  (You
+can use any configuration option or install directory this way; aimake will
+recompile the file in question whenever the the relevant option or directory
+is changed.)  Note that the option value will be used as-is; if you want it as
+a C string, stringify it as follows:
+
+    #define STRINGIFY_EXPAND(x) STRINGIFY(x)
+    #define STRINGIFY(x) #x
+    #define PACKAGENAME_AS_STRING STRINGIFY_EXPAND(AIMAKE_OPTION_packagename)
+
+Although aimake will identify which executables it should produce as output
+(via looking for functions called C<main>), it will not produce shared
+libraries without an indication of which symbols form the API of the shared
+library.  In order to create shared libraries correctly on all operating
+systems, aimake will need to know which symbols are imported from shared
+libraries (that you create; the system header files will contain this
+information for system libraries), and which symbols are exported from shared
+libraries, via wrapping their names in macros, e.g.:
+
+    int AIMAKE_EXPORT(library_function)(void); /* exported function */
+    int AIMAKE_IMPORT(library_function)(void); /* imported function */
+
+The names only need to be wrapped this way in the declaration, not the
+definition (which can be left unchanged).  C<AIMAKE_IMPORT> and
+C<AIMAKE_EXPORT> only work correctly when the type of a variable, or return
+type of a function, is a single identifier (not some complex chain of arrays
+and pointers, etc.), so for complicated return types you will need to use a
+typedef:
+
+    char *function_returning_a_string(void) /* not imported or exported */
+
+    typedef char *char_p;
+    char_p AIMAKE_EXPORT(function_returning_a_string)(void) /* exported */
+
+In addition to C<AIMAKE_IMPORT> and C<AIMAKE_EXPORT>, there are also
+C<AIMAKE_REVERSE_IMPORT> and C<AIMAKE_REVERSE_EXPORT>, which mark symbols that
+exist in the file using the library, and are used by the library (rather than
+the other way round, a much more common scenario).  Note that some platforms
+may have restrictions on the dependency graphs of libraries; the currently
+known restrictions are as follows:
+
+=over 4
+
+=item *
+
+Linux is happy to allow arbitrary libraries to import symbols from arbitrary
+other source files and libraries (although aimake still requires reverse
+imports to be correctly marked so that it can ensure that each files have the
+correct dependencies).
+
+=item *
+
+Windows will allow a reverse import from a library to another library.
+However, the library doing the reverse importing (i.e. the library being used)
+needs to know the name of the library doing the exporting (the library using
+it), which means in practice that a library doing reverse importing can only
+be used by one, specific other library.  (This restriction is not as crippling
+as it sounds; one of the main reasons to do reverse imports is to construct
+plugins designed to be dynamically loaded, and you can create a stub library
+to load the plugins with.)
+
+=back
+
+If aimake sees any symbols tagged as C<AIMAKE_EXPORT>, it will place them in a
+shared library (and, if appropriate, link executables it creates against that
+shared library).  The name of the library will be based on the common prefix
+of the source files that export symbols in the library (so, e.g., if they have
+wildly varying filenames but are all in the same directory, it will be named
+after the directory).  As an exception, directories called F<src> are ignored
+for naming purposes, because that name is very commonly used to hold source
+files.
+
+Shared libraries often have an OS-specific versioning system.  When exporting
+symbols, you can specify a version number for the shared library they create,
+as follows:
+
+    AIMAKE_ABI_VERSION(1.2.3)
+
+The first component of the version number should be increased whenever a
+change is made to the library's ABI or API that would invalidate existing
+programs that used that library.  The other components of the version number
+are arbitrary (and need not exist).
+
+Finally, you can request that a file not be compiled in certain configurations
+via making it conditionally error out:
+
+    #ifdef AIMAKE_BUILDOS_MSWin32
+    # error !AIMAKE_FAIL_SILENTLY! This file should not be built on Windows.
+    #endif
+
+The C<#error !AIMAKE_FAIL_SILENTLY!> will cause the compilation to error out
+silently, without the user being informed of an error in the file.  (Note that
+this can happen while aimake is locating header files necessary to be able to
+use the file; as such, you should ensure that the error happens based only on
+the individual file being compiled, and does not depend on anything that might
+be included from a header file.)
+
+In addition to changing the source and headers that make up your project, it
+is also possible to add a project-specific configuration file, that contains
+configuration options or rules overrides.  This should be a file named
+F<aimake.rules> in the source directory.  Here's a sample configuration:
+
+    {
+        options => {
+            packagename => 'example',
+        },
+        rules => {
+            _libraries => {
+                output => ['searchlib:some_unusual_library:symbol:foo'],
+            },
+            _cflags => {
+                object => 'optionset:CFLAGS',
+                depends => ['optstring:-Wall', 'optstring:-Wextra'],
+            },
+        },
+    }
+
+The format of the configuration file is explained in much more detail later in
+this document, but this example should serve as an overview of some of the
+most common tasks: setting an option (in this case, C<packagename>, which is
+probably the most important option to set); telling aimake to search for a
+particular library so that it can be linked into the project (specifying the
+name of the library, and a symbol in that library); and changing the flags
+that will be passed to the C compiler.  (All the libraries used by a project
+can be listed as C<searchlib:> objects in a rule output, even if some are only
+used in some configurations or on some operating systems; aimake will not
+complain if it fails to find a library, or if it finds it but does not find a
+reason to use it.)  There are some libraries searched for by default (rule
+C<default_libraries> in the default configuration; additionally, any libraries
+used by default on the build system (such as F<libc.so> on Linux) will be
+automatically incuded.
 
 =head1 INTERNALS
 
@@ -549,13 +724,16 @@ previous versions had trouble with this case.  There's another minor exception
 to do with C<searchfile:> objects, in case a generated source file wants to
 search for the same header file that the source of the generator wanted to
 search for; the situation is obviously benign, as it'll find it in the same
-place, but would potentially cause a dependency loop without special casing.)
-When the pair is run, it becomes unchanged, and the hashes of anything it
-previously output, and anything it now outputs, are updated.  Such objects
-also become sure (with a slight exception in the dubious case where the same
-object is output by multiple pairs).  An object no longer being produced by a
-pair counts as a hash change (the hash of a nonexistent object is treated as
-different from the hash of an object that exists).
+place, but would potentially cause a dependency loop without special casing.
+The same special case applies in some other situations too; the general rule
+is that if an object is provided by multiple rules with the same outdepends,
+only one of them has to be sure.)  When the pair is run, it becomes unchanged,
+and the hashes of anything it previously output, and anything it now outputs,
+are updated.  Such objects also become sure (with a slight exception in the
+dubious case where the same object is output by multiple pairs).  An object no
+longer being produced by a pair counts as a hash change (the hash of a
+nonexistent object is treated as different from the hash of an object that
+exists).
 
 Any warnings produced running the pair are recorded with the pair.  If the
 pair produced an I<error>, then any objects it previously produced are marked
@@ -638,8 +816,12 @@ search for files with a particular name to be interchangeable.
 =item C<searchlib:>
 
 A library that is being searched for (not including naming conventions of the
-platform, e.g. 'libfoo.a' on Linux would become 'searchlib:foo'). aimake
-assumes that these are interchangeable the same way C<searchfile:>s are.
+platform, e.g. 'libfoo.a' on Linux would become 'searchlib:foo:' and a
+symbol), followed by a C<symbol:> object that exists within that library.
+(The symbol has two purposes: ensuring that the correct library is found, and
+persuading linkers to actually try to link the library while it's being
+searched for.)  aimake assumes that these are interchangeable the same way
+C<searchfile:>s are.
 
 =item C<extend:>
 
@@ -648,10 +830,12 @@ extension and a file-like object, and is just an alias for something in the
 C<bpath:>, not an object in its own right.  For instance,
 C<extend:.s:path:src/foo.c> might be an alias for C<bpath:src/foo.s>.  (This
 is mostly used to tell compilers and similar tools where to place their
-output.)   As a special case, an extension of ".." causes the filename to be
+output.)  As a special case, an extension of ".." causes the filename to be
 deleted too, producing the directory of the object:
 C<extend:..:path:src/foo.c> is C<path:src>.  This construction might produce
-an C<spath:>, C<path:> or C<bpath:>.
+an C<spath:>, C<path:> or C<bpath:>.  As another special case, an extension of
+"..." produces the filename by itself, removing the directories, and producing
+an output in the root of the C<bpath:>.
 
 =item C<file:>
 
@@ -667,10 +851,38 @@ I<depend on> a C<file:> object to let aimake know to use it once it's found.
 A reference to a symbol (as would be used by a linker); this is used the same
 way as C<file:>, but for linking rather than compiling.
 
+=item C<shared_symbol:>
+
+A symbol that is exported by the file that provides it, and is intended to be
+compiled as part of the API of a library.  aimake's standard rules will
+attempt to create a C<symbolset:> containing each shared_symbol that is
+defined.
+
+C<shared_symbol:> objects have their dependencies built cumulatively; if
+multiple pairs try to generate one, their C<outdepends> will be combined.
+
 =item C<symbol_in_object:>
 
 A reference to a symbol produced by a specific object.  This is used
 internally to determine which C files contain a C<main> function.
+
+=item C<symbolset:>
+
+A set of exported symbols, ready to be made into a library.  Symbol sets are
+defined with reference to a filename and version suffix, as in
+C<symbolset:.1.2.3:bpath:libfoo>.  When aimake creates a symbol set, the
+filename is based on the common prefix of the source files that define those
+symbols, and the version number on C<AIMAKE_ABI_VERSION> macros in the source
+files that define those symbols.  Symbol sets are provided objects; they don't
+represent a file on disk (thus, the filename is a I<suggested> filename that
+will most likely be used to represent the resulting library, most likely with
+the extension changed to something platform-specific like F<.so> or F<.dll>.).
+If a C<symbolset:> object is used in an C<optpath:> or C<extend:> object, it
+will be treated as if it were just its filename portion; this does not happen
+for other uses of C<symbolset:> objects.
+
+The dependencies of a C<symbolset:> object are built cumulatively, the same
+way that the dependencies of a C<shared_symbol:> object are.
 
 =item C<config_option:>
 
@@ -792,25 +1004,62 @@ the operating system.)
 =item C<intcmd:echo>
 
 An internal command that outputs its arguments, separated by spaces.  Any
-paths in the arguments will be output in aimake format.
+C<optpath::>s in the arguments will be output in aimake format.
+
+C<intcmd:echo> can also extract parts of object names, even if they aren't
+paths:
+
+=over 4
+
+=item C<optpath:-w:>
+
+The whole object name (for file-like objects, equivalent to not specifying the
+C<-w>, but it works on other types of object too);
+
+=item C<optpath:-t:>
+
+The object type, without the colon (e.g. C<optpath>, C<intcmd>);
+
+=item C<optpath:-a:>
+
+The object argument (as would be generated by an C<outputarg> specifier in a
+rule); this is the bit between the colons for a nested object, or the entire
+object name apart from the type for a simple object name.
+
+=item C<optpath:-i:>
+
+The "inside" object (the part after the second colon for a nested object); do
+not use this for non-nested objects.
+
+=back
 
 =item C<intcmd:writefile>
 
-An internal command that takes a filename (as an C<optpath:> and a set of
-contents for that file (as an C<optstring:>.)  Any underscores in the contents
-will be replaced with spaces, and any spaces with newlines, and then the
-resulting string will be written to that file (which should be in the
-C<bpath:>).  This is used to generate things like input files for compiler
+An internal command that takes a filename (as an C<optpath::>, i.e. no prefix)
+and a set of contents for that file (as any number of C<optstring:>s, or
+C<optpath:>s with a prefix, which are interpreted as for C<intcmd:echo>.)  Any
+underscores in the contents will be replaced with spaces, and any spaces with
+newlines, and then the resulting string will be written to that file (which
+should be in the C<bpath:>); underscores and backslashes can be escaped with
+backslashes.  This is used to generate things like input files for compiler
 tests.
 
 =item C<intcmd:symlink>
 
-An internal command that causes its second argument to become an alias for its
-first argument.  This will be done via a symbolic link if possible, but on
+An internal command that causes each of its output arguments
+(C<optpath:-o:...>) to become an alias for its input argument
+(C<optpath::...>).  This will be done via a symbolic link if possible, but on
 some platforms it may need to copy the file; thus, there is no guarantee that
 the two arguments will have the same meaning forever.  This will overwrite its
 second argument if necessary.  (On POSIXy systems, this is similar to B<ln
 -sf>, except that it handles relative paths more intuitively.)
+
+=item C<intcmd:assert_equal>
+
+An internal command that compares two arguments (optstrings or optpaths).  It
+succeeds if they are equal, and fails otherwise, producing no output.  The
+intended use of this command is in combination with fail_silently, to create
+rules that work only in certain circumstances (e.g. on specific OSes).
 
 =item C<intcmd:testcase>
 
@@ -906,6 +1155,47 @@ itself, 1 will also list its subdirectories, and so on.
 If given an optpath that's a C<searchfile:> rather than a directory, the
 output will be limited to files with that filename.
 
+=item C<intcmd:xuse_statistics>
+
+An internal command that outputs some information about the rule that caused
+it to run (specifically, the expanded set of use dependencies of the rule's
+commands, i.e. the build dependencies of its output).  Any number of
+C<optstring:> arguments can be given; if any are given, then objects are only
+considered for calculating the C<hash> if they have at least one of the given
+C<optstring:>s as a suffix.  The output is a number of lines in key=value
+form, and may be expanded with extra information in future. At present, the
+currently output keys are:
+
+=over 4
+
+=item hash
+
+The MD5 hash (in hexadecimal) of the string constructed by sorting then
+concatenating the names of all the C<path:> and C<bpath:> objects (that have
+appropriate suffixes) in the expanded use dependencies, separated by colons.
+The main purpose of this is to be able to easily compare sets of dependencies.
+
+=item stem
+
+The longest common prefix of the C<namehint:>s in the expanded use
+dependencies of the rule; any final slash will be removed, and the resulting
+object name will be on the C<bpath:>.  The intended purpose of this is to find
+a sensible filename and location for objects that would not otherwise have an
+obvious filename.
+
+=item version
+
+The numerically largest observed version number among the C<namehint:>s in the
+expaned use dependencies of the rule, with a leading dot (this makes regexes
+that manipulate version numbers easier to write).
+
+=item dependency
+
+A use dependency of the rule's commands, including non-file-like objects,
+objects on the C<spath:>, or objects that do not match the suffixes given.
+
+=back
+
 =back
 
 =item C<optstring:>
@@ -933,19 +1223,56 @@ mostly used for libraries, e.g. C<optstring: -lm>.
 A combination of an C<optstring:> and a file-like object.  The format is,
 e.g., C<optpath:-o:bpath:file.h> if they should be combined into one
 command-line option, and C<optpath:-o :bpath:file.h> (that's a space and a
-colon) if they should be left as two consecutive command-line options.
+colon) if they should be left as two consecutive command-line options; to just
+mention a file with no prefix, use C<optpath::bpath:file.h>.  (Many fields of
+configuration rules will fill in a missing object name with the rule's
+C<object>; thus, C<optpath::> is a common sight in a command, to substitute a
+rule's object into its command line.)
+
+Like an C<optstring:>, an C<optpath:> with a leading space
+(e.g. C<optpath: -o :bpath:file.h>, or even C<optpath: :libm.so>) is moved to
+the end of the command line, but otherwise works like the C<optpath:> without
+the leading space.  (Specifically, the order of arguments is C<optstring:>s
+with no leading space, C<optpath:>s with something between the colons and no
+leading space, C<optpath:>s with nothing between the colons, C<optpath:>s with
+a leading space, and C<optstring:>s with a leading space.  Apart from this
+sorting, aimake will try, as far as is meaningful, to leave options in the
+order in which they were specified.
 
 =item C<optionset:>
 
 A set of options commonly used together, such as the C<CFLAGS> commonly used
 by B<make> programs (which would be C<optionset:CFLAGS>).
 
+The dependencies of an C<optionset:> object are built cumulatively, the same
+way that the dependencies of a C<shared_symbol:> object are.  This is useful
+if you want to combine all files output via a certain rule into an archive.
+
+=item C<namehint:>
+
+A clue as to what would make a sensible name and version number for an object.
+Objects that particularly strongly hint at a name depend on their own names;
+e.g. a file C<bpath:main_c.o> that contained the main routines for a file
+might well depend on C<namehint::bpath:main_c.o>.  For objects that hint at
+creating libraries, a version number is needed too:
+C<namehint:1.2.3:bpath:library.c>.  C<namehint:> objects always exist (thus
+depending on them doesn't cause problems, unless someone adds dependencies to
+them using dependency rules; don't do that), and are added by the default
+configuration according to some heuristics.  Therefore, you should never need
+to deal with them yourself.
+
 =item C<dependencies:>
 
 The set of dependencies generated by a particular dependency rule,
 e.g. C<dependencies:ch_file_dependencies:path:header.h> would represent the
 dependencies of C<header.h> that were found via the rule
-C<ch_file_dependencies>.
+C<ch_file_dependencies>.  Dependency objects generated by dependency rules are
+automatically added as dependencies of the objects they are dependencies for.
+These can be generated manually too, in which case they behave like
+C<optionset:> objects; you might want to do this if, for instance, you only
+want the object to respect certain set of dependencies for the purpose of
+specific other rules, or if you want something that works like an
+C<optionset:> but which is parameterized on an object name.
 
 =back
 
@@ -959,7 +1286,7 @@ used as part of the build process).
 Much of the workings of aimake are driven by a configuration file that's
 embedded into the B<aimake> script itself, in order that only a single file
 need be shipped.  Any part of this script can be overriden by a configuration
-file C<aimake2.config> in the root of the package source directory, via
+file C<aimake.rules> in the root of the package source directory, via
 specifying an option or a rule with the same name.
 
 The format of the configuration file itself is Perl object notation; this
@@ -967,19 +1294,26 @@ allows for comments, dictionaries, lists, numbers, strings, and regular
 expressions:
 
     # this is a comment, from the # to the end of line
-    4                          # a number
-    'abcde'                    # a literal string
-    "x\n\t$var"                # a string containing escapes, variables
-    qr/foo.*bar/i              # a regular expression
-    [1, 2, 3, 4,]              # a list, trailing comma optional
-    {foo => 1, bar => 2,}      # a dictionary, trailing comma optional
+    4                       # a number
+    'abcde'                 # a literal string
+    "x\n\t$var"             # a string containing escapes, variables
+    qr/foo.*bar/i           # a regular expression (qr//; the i is a modifier)
+    [1, 2, 3, 4,]           # a list, trailing comma optional
+    {foo => 1, bar => 2,}   # a dictionary, trailing comma optional
 
 The configuration file allows defining one or more variables (either to
 abbreviate what would otherwise be repeated code, or to avoid "magic numbers"
 in tthe code).  There are also some predefined variables, which hold
 platform-specific extensions: $exeext (executables), $objext (object files),
-$libext (static libraries).  These are followed by a single dictionary with
-two keys, C<options> and C<rules>.  Here's a simple example C<aimake2.config>:
+$libext (static libraries), $dllext (dynamic libraries), $impext (import
+libraries; on many systems, this is the same as $dllext because the dynamic
+libraries are their own import libraries, but on some systems it differs).
+(In order to catch mistakes due to omitting $exeext, it will never be set to
+the null string, but rather to an arbitrary string on platforms that do not
+normally use a special extension for executables.  This extension will be
+removed when installing the executable.)  These are followed by a single
+dictionary with two keys, C<options> and C<rules>.  Here's a simple example
+C<aimake.rules>:
 
     $version = "1.2.3";        # variable definition
 
@@ -997,7 +1331,10 @@ two keys, C<options> and C<rules>.  Here's a simple example C<aimake2.config>:
     }
 
 The options dictionary is very simple: keys of the dictionary are options, and
-the corresponding values their values.  The following options are recognised:
+the corresponding values their values.  The following options are recognised
+(unrecognised options are also legal, but will be ignored except for
+C<config_option:> dependencies, which e.g. are used to define the
+C<AIMAKE_OPTION_> macros):
 
 =over 4
 
@@ -1029,20 +1366,20 @@ rules with an underscore.
 
 There are two sorts of rules, from the point of view of an install: rules
 which specify dependencies of objects or install them, and rules which provice
-objects.  Rules that produce an object have a C<command> and C<output>, and
-perhaps also a C<object> if they need to be able to generate filenames or the
-like, a C<verb> and/or a C<outputarg>, and may specify C<information_only>
-and/or C<propagate_usedeps>.  Rules that provide an object work like
-production rules, but also need an C<outdepends>.  Rules that specify
-dependencies have an C<object> and a C<depends> (or an C<install_dir> if they
-are actually install rules), and perhaps also a C<command> if commands need to
-be run to determine the dependencies, and/or a C<dependsarg>.  Either can have
-a C<inner>, C<prereq>, C<linesep>, C<lineskip>, C<linemax>, C<unescape>,
-C<filter>, C<filter_absolute>, C<filter_text_files>,
-C<filter_nonexistent_files>, C<output_as_searchfile>, C<filter_spath>,
-C<require_match> and/or C<low_message_priority>, and can specify
-C<force_locale>, C<fail_silently>, C<also_match_stderr>, C<ignore_warnings>,
-and/or C<ignore_spath> if they have a C<command>.
+objects.  Rules that produce an object have a C<command> and C<output> (or
+C<output_from_optpath>), and perhaps also a C<object> if they need to apply to
+multiple files or the like, a C<verb> and/or an C<outputarg>, and may specify
+C<information_only> and/or C<propagate_usedeps>.  Rules that provide an object
+work like production rules, but also need an C<outdepends>.  Rules that
+specify dependencies have an C<object> and a C<depends> (or an C<install_dir>
+if they are actually install rules), and perhaps also a C<command> if commands
+need to be run to determine the dependencies, and/or a C<dependsarg>.  Either
+can have a C<inner>, C<linesep>, C<lineskip>, C<linemax>, C<unescape>,
+C<avoid_rules>, C<avoid_built_from>, C<filter>, C<filter_absolute>,
+C<filter_text_files>, C<filter_nonexistent_files>, C<output_as_searchfile>,
+C<filter_spath>, C<require_match> and/or C<low_message_priority>, and can
+specify C<force_locale>, C<fail_silently>, C<also_match_stderr>, and/or
+C<ignore_warnings> if they have a C<command>.
 
 A rule itself is a dictionary with a number of keys:
 
@@ -1057,21 +1394,23 @@ provicion rule).  Once this has been done, all executable-like and option-like
 objects will be used to form a command (either an internal command or one that
 exists on the system, depending on which executable-like objects are
 involved), and executed.  (Alternatively, you get an error if you try to use
-multiple different executables, or provide none.)  The list of objects is also
-considered a list of dependencies, to know when to rebuild.
+multiple different executables, or provide none; C<bpath:> objects are only
+treated as executable-like if there are no other executable-like objects
+provided.)  The list of objects is also considered a list of dependencies, to
+know when to rebuild.
 
-If the command produces output on stdout, it is discarded unless C<output> is
-a regexp.  If it produces output on stderr, the user will be informed of it
-(and there will be an indication of warnings in the progress report), but the
-output will otherwise be ignored.  If the command returns a failure status or
-crashes with a signal, it will be reported as an error unless the
-C<fail_silently> key is set; when failing silently, it will be considered to
-produce an empty C<output> or C<depends> (depending on the type of rule),
-whereas when an error is reported, it will leave all its descendants in limbo
-until the error is resolved.
+If the command produces output on stdout, it is discarded unless one of the
+other options (most commonly C<output>) is a regexp.  If it produces output on
+stderr, the user will be informed of it (and there will be an indication of
+warnings in the progress report), but the output will otherwise be ignored.
+If the command returns a failure status or crashes with a signal, it will be
+reported as an error unless the C<fail_silently> key is set; when failing
+silently, it will be considered to produce an empty C<output> or C<depends>
+(depending on the type of rule), whereas when an error is reported, it will
+leave all its descendants in limbo until the error is resolved.
 
-For dependency rules, rather than provicion rules, C<command> is provided to
-determine which command to use to determine the dependencies.  It can be
+For dependency rules, rather than provicion rules, a C<command> can be given
+if a command needs to be used to determine the dependencies.  It can be
 omitted if it would just be C<intcmd:nop>.  (It can also be omitted in
 provicion rules if no command need be run for the rule; this happens in
 provision rules quite a bit, and could also happen in rules that "generate"
@@ -1089,8 +1428,8 @@ because the C<object> is automatically included in the dependency lists, this
 doesn't necessarily mean it will be mentioned on the command line; use
 C<optpath::> for that.  (The command line arguments to the executable being
 run are produced entirely out of C<optstring:> and C<optpath:> objects; no
-other objects have an influence on it, although the executable itself is part
-of the command line.)
+other objects have an influence on it, unless you consider the name of the
+executable itself to be part of the command line.)
 
 =item output
 
@@ -1098,23 +1437,39 @@ Just like the C<command>, a list of objects or a single object.  You can use a
 regular expression instead of an object name; that will cause the output of
 the command to be parsed for lines matching the regular expression, and the
 first parenthesized group matched by the regular expression will be treated as
-a filename (for non-internal commands and C<intcmd:cat>), or an object name
-(for C<intcmd:listtree>).  (It's OK for the regular expression to match
-multiple times on the same line, which will produce multiple output objects.)
-The output will be interpreted as if it were encoded in the current locale for
-your platform (because this is the encoding most likely to be output by
-programs), if it comes from an external program.  The list of output objects
-is considered to be the objects that the rule is responsible for providing or
-producing, and (mostly for the purpose of catching errors in the configuration
-files; aimake itself could handle this case just fine) they must exist after
-the rule is executed.  (It's OK if they existed beforehand; in fact, there are
-standard rules that "generate" C<spath:> objects, with the purpose of the rule
-being to inform aimake of the object's existence, and get it to monitor for
-changes in it, rather than to create it.)  If an object is listed as providing
-or producing itself, that will be silently ignored (because it's meaningless,
-and the config file is easier to write without having to handle that case).
-Null strings, as usual, refer to the C<object>, including nested inside other
+a filename (for non-internal commands and internal commands that operate on
+text, such as C<intcmd:cat>), or an object name (for internal commands that
+operate on objects, such as C<intcmd:listtree>).  (It's OK for the regular
+expression to match multiple times on the same line, which will produce
+multiple output objects.)  The output will be interpreted assuming that it is
+encoded in the current locale for your platform (because this is the encoding
+most likely to be output by programs), if it comes from an external program.
+The list of output objects is considered to be the objects that the rule is
+responsible for providing or producing, and (mostly for the purpose of
+catching errors in the configuration files; aimake itself could handle this
+case just fine) if they are files, they must exist after the rule is executed.
+(It's OK if they existed beforehand; in fact, there are standard rules that
+"generate" C<spath:> objects, with the purpose of the rule being to inform
+aimake of the object's existence, and get it to monitor for changes in it,
+rather than to create it.)  If an object is listed as providing or producing
+itself, that will be silently ignored (because it's meaningless, and the
+config file is easier to write without having to handle that case).  Null
+strings, as usual, refer to the C<object>, including nested inside other
 objects (if there's no C<inner>).
+
+=item output_from_optpath
+
+On occasion, the location where a command outputs is produced via a complex
+calculation, rather than hardcoded in the command (for which you would use a
+literal C<output>) or dependent on the messages produced by the command (for
+which you would use a regexp for C<output>).  In such cases, there is
+typically an option (e.g. C<optpath:-o :file.out>) telling the command where
+to place its output.  Using C<optpath_from_output> lets aimake know that the
+command is told to place its output via an option (in this case, C<<
+optpath_from_output => '-o ' >>); aimake will set the C<output> according to
+that option.  (You can give an array here too, e.g. C<< optpath_from_output =>
+['-o ', '--header='] >>, for if the command has more than one option that
+controls output locations.)
 
 =item outdepends
 
@@ -1129,21 +1484,22 @@ production rules, and for dependency rules.
 
 Normally, outputting something in the C<path:> or C<spath:> is a mistake.  If
 you do it intentionally (e.g. to make aimake aware of files in the C<spath:>),
-set information_only so that aimake will know that you're merely talking about
-the files, not changing them, and so not error out.
+set C<information_only> so that aimake will know that you're merely talking
+about the files, not changing them, and so not error out.
 
 =item propagate_usedeps
 
-Sometimes, a provision rule will not need the normal use dependencies of an
-object to be in place.  (For instance, when looking at a file to see which
-symbols it provides, you don't need access to the symbols that that file
-uses.)  Setting propagate_usedeps to 1 will cause the object itself to become
-a use dependency of the objects it produces/provides, but not require those
-dependencies to be satisfied to run the rule.  (This is always the case for
-dependency rules, so there's no point in specifying it.)  The first of these
-effects is equivalent to adding C<''> to the C<outdepends>, but the second
-effect cannot be achieved otherwise (which is why C<propagate_usedeps>
-exists).
+Sometimes, a provision (or in extreme circumstances where a file does not need
+to exist in order to produce objects from it, a production rule) rule will not
+need the normal use dependencies of an object to be in place.  (For instance,
+when looking at a file to see which symbols it provides, you don't need access
+to the symbols that that file uses.)  Setting propagate_usedeps to 1 will
+cause the object itself to become a use dependency of the objects it
+produces/provides, but not require those dependencies to be satisfied to run
+the rule.  (This is always the case for dependency rules, so there's no point
+in specifying it.)  The first of these effects is equivalent to adding C<''>
+to the C<outdepends>, but the second effect cannot be achieved otherwise
+(which is why C<propagate_usedeps> exists).
 
 You can set propagate_usedeps to 2 to get the second effect on its own,
 causing the objects provided by the C<object> to completely ignore the
@@ -1286,7 +1642,7 @@ A directory used for log files that are written by the program.
 =item lockdir
 
 A directory used for files, shared between all users, that are transient in
-nature.  (The directory is likely, but not guarantee, to be one where files
+nature.  (The directory is likely, but not guaranteed, to be one where files
 are deleted on reboot.)  It is probably a bad idea to install anything into
 this directory, but aimake tracks it so that compiled programs can refer to
 it.
@@ -1348,15 +1704,43 @@ they're less prone to being misinterpreted).
 
 =item require_match
 
-Consider the command to have errored out if any regexes in it fail to match
-any lines of output.  (This helps detect typos in regexes in the case where
-you know they should match at least once.)
+Consider the command to have errored out if any regexes in the rule fail to
+match any lines of output.  (This helps detect typos in regexes in the case
+where you know they should match at least once.)  This option overrides
+C<fail_silently> in the situation where both are given (otherwise, the
+combination of C<require_match> and C<fail_silently> would be completely
+pointless.)
 
 =item low_message_priority
 
-Causes aimake not to print messages about the rule being run unless the
+Causes aimake not to print messages about this rule being run unless the
 verbosity level is increased to at least 1.  (This is used for production
-rules that make aimake aware of objects on the C<spath:>, mostly.)
+rules that make aimake aware of objects on the C<spath:>, mostly.)  There is
+no point in specifying this for dependency rules, because those messages
+require a verbosity level of 1 or more to be printed anyway.
+
+=item avoid_rules
+
+Can be set to a regular expression that matches the names of rules.  Provided
+objects created by rules whose names match the regular expression will not be
+considered to satisfy dependencies of this rule; produced objects created by
+rules whose name match the regular expression will not be considered as an
+C<object> of the rule.  (You would use this, for instance, to avoid an
+infinite regress when creating a dynamic library; you would want the symbols
+to come from object files, not from the dynamic library that the rule itself
+had created.)
+
+=item avoid_built_from
+
+This works like C<avoid_rules>, except that it excludes provided objects only,
+and based on the C<object> they were built from, rather than the rule they
+were built from.  This is a single object name, which will have missing
+portions filled in with the C<object> the same way as for most other fields of
+a rule.  (For instance, this is used in the scenario where a source file
+produces an implementation and an interface in separate files, and compiling
+the implementation needs access to the interface of other files; it should not
+be compiled in terms of its own interface, or it will attempt to import from
+itself, which typically leads to problems.)
 
 =item filter
 
@@ -1464,13 +1848,6 @@ This is similar to C<fail_silently>, but for successes; if the command
 succeeds, the user will not be informed of any warnings produced running it.
 It should be set to 1 or omitted.
 
-=item ignore_spath
-
-When a rule has a C<command>, C<ignore_spath> will cause any dependencies that
-were only included due to C<spath:> objects to be ignored when working out the
-command's arguments.  The main purpose of this is to avoid statically linking
-system libraries into libraries being built by B<aimake>.
-
 =item filter_absolute
 
 Causes any objects other than C<file:> objects (i.e. any objecs that
@@ -1481,7 +1858,7 @@ dependency rules).  It should be set to 1 or omitted.
 =item output_as_searchfile
 
 Causes any C<file:> objects that would be output to be output as
-C<searchfile:> objects instead.  This is mostly useful in dependency rules.
+C<searchfile:> objects instead.
 
 =item filter_spath
 
@@ -1494,7 +1871,8 @@ rules).  It should be set to 1 or omitted.
 If set to 1, causes any objects that would be generated via a regular
 expression match to be ignored if they don't appear to be the filename of an
 existing file (that's either a regular file or a symbolic link).  It should be
-set to 1 or omitted.
+set to 1 or omitted, and is mostly useful for avoiding false positives when
+parsing output that mixes filenames with other information.
 
 =item filter_text_files
 
@@ -2334,7 +2712,7 @@ sub run_command;
         $ldiff < 0 and $str .= ' ' x -$ldiff;
         if ($level <= $opt_verbose + 0.5 && $level > $opt_verbose
             && $level < 3 && !$opt_nocr) {
-            $str = substr $str, 0, screenwidth - 1;
+            $str = substr $str, 0, screenwidth() - 1;
             print_stderr_tl "$str\r";
             $str =~ s/ +$//;
             $last_report_msg = $str;
@@ -2342,6 +2720,7 @@ sub run_command;
             print_stderr_tl "$str\n";
             $last_report_msg = '';
         }
+        return 1;
     }
 }
 
@@ -2406,19 +2785,35 @@ sub sv_hash {
 # and some are provided (and some are just virtual).
 my %objtype_nested = (
     path => 0, bpath => 0, spath => 0, extend => 1, file => 0, symbol => 0,
-    symbol_in_object => 1, config_option => 0, config_rule => 0, cmd => 0,
-    tool => 0, intcmd => 0, optstring => 0, optpath => 1, optionset => 0, sys
-    => 0, searchpath => 0, searchfile => 0, searchlib => 0, dependencies => 1);
+    shared_symbol => 0, symbolset => 1, symbol_in_object => 1, namehint => 1,
+    config_option => 0, config_rule => 0, cmd => 0, tool => 0, intcmd => 0,
+    optstring => 0, optpath => 1, optionset => 0, sys => 0, searchpath => 0,
+    searchfile => 0, searchlib => 1, dependencies => 1);
 my %objtype_provided = (
     path => 0, bpath => 0, spath => 0, extend => 0, file => 1, symbol => 1,
-    symbol_in_object => 1, config_option => 0, config_rule => 0, cmd => 0,
-    tool => 1, intcmd => 0, optstring => 0, optpath => 0, optionset => 1, sys
-    => 0, searchpath => 1, searchfile => 1, searchlib => 1, dependencies => 1);
+    shared_symbol => 1, symbolset => 1, symbol_in_object => 1, namehint => 0,
+    config_option => 0, config_rule => 0, cmd => 0, tool => 1, intcmd => 0,
+    optstring => 0, optpath => 0, optionset => 1, sys => 0, searchpath => 1,
+    searchfile => 1, searchlib => 1, dependencies => 1);
 my %objtype_is_special = ( # TODO: existence check for (int)?cmd:?
     path => 0, bpath => 0, spath => 0, extend => 1, file => 0, symbol => 0,
-    symbol_in_object => 0, config_option => 0, config_rule => 0, cmd => 1,
-    tool => 0, intcmd => 1, optstring => 1, optpath => 1, optionset => 0, sys
-    => 1, searchpath => 0, searchfile => 0, searchlib => 0, dependencies => 0);
+    shared_symbol => 0, symbolset => 0, symbol_in_object => 0, namehint => 1,
+    config_option => 0, config_rule => 0, cmd => 1, tool => 0, intcmd => 1,
+    optstring => 1, optpath => 1, optionset => 0, sys => 1, searchpath => 0,
+    searchfile => 0, searchlib => 0, dependencies => 0);
+
+# Some object types allow multiple interchangeable providers, in which
+# case we merge the outdepends of each provider. This is done via a
+# regex, rather than via parsing + a hash, because it's part of the
+# inner loop.
+use constant multiple_providers_ok_regex =>
+    qr/^(?> s(?:earch(?:file|lib) |
+             ymbolset |
+             hared_symbol |
+             path) |
+            path |
+            optionset |
+            dependencies) : /x;
 
 # Splits an object name into its components. If the second argument is true,
 # don't worry about missing components.
@@ -2438,6 +2833,7 @@ sub parse_objname {
     }
     return ($objtype, $objvalue);
 }
+# don't memoize; it's very slightly slower (40 microseconds, not 32)
 
 # Splits a pair name into components. A pair name is "$rule $object".
 sub parse_pairname {
@@ -2453,13 +2849,27 @@ sub parse_pairname {
 sub aipath_parent;
 sub parse_aipath;
 sub deparse_aipath;
+sub resolve_extend;
 sub resolve_extend {
     my $objname = shift;
     my ($objtype, $objvalue, $objinner) = parse_objname $objname;
 
-    $objtype eq 'extend' or return $objname;
+    if ($objinner) {
+        $objinner = resolve_extend $objinner;
+        $objtype eq 'extend' or return "$objtype:$objvalue:$objinner";
+    } else {
+        $objtype eq 'extend' or return $objname;
+    }
 
     $objvalue eq '..' and return aipath_parent $objinner;
+
+    (undef, undef, $objinner) = parse_objname $objinner
+        while $objinner =~ /^symbolset:/;
+
+    if ($objvalue eq '...') {
+        my @components = parse_aipath $objinner;
+        return deparse_aipath 'bpath', $components[-1];
+    }
 
     my @aipath = parse_aipath $objinner;
     # Remove any existing extension. It's OK if this doesn't match.
@@ -2517,8 +2927,6 @@ sub friendly_objname {
 
     $objtype eq 'symbol'           and return $objvalue;
     $objtype eq 'symbol_in_object' and return $objvalue;
-
-    $objtype eq 'dependencies'     and return friendly_objname $objinner;
 
     defined $objinner and return "$objtype:$objvalue:$objinner";
     return "$objtype:$objvalue";
@@ -2608,10 +3016,10 @@ sub ospath2aipath {
 
     # If we're trying to convert a nonexistent path, we won't be able to
     # realpath it successfully. So we need an eval to trap errors.
-    eval {
+    $ospath = eval {
         !defined $required_by || File::Spec->file_name_is_absolute($ospath)
-            and $ospath = realpath($ospath);
-    };
+            and realpath($ospath);
+    } || $ospath;
 
     if (File::Spec->case_tolerant) {
         $ospath = defined_or(
@@ -2888,23 +3296,25 @@ memoize('locate_command');
 my %listtree_cache = ();
 sub run_command {
     # Find options and executables.
-    my @execs = grep /^(?:cmd|intcmd):/, @_;
-    my @opts = grep /^opt(?:string|path):/, @_;
+    my @xuse = grep !ref $_, @_;
+    my @execs = grep /^(?:cmd|intcmd):/, @xuse;
+    my @opts = grep /^opt(?:string|path):/, @xuse;
     my %intopts = map {$$_ =~ /^(cwd|locale):(.*)$/s ? ($1 => $2) : ($$_ => 1)}
         grep ref $_, @_;
     if (scalar @execs == 0) {
-        @execs = grep /^bpath:/, @_;
+        @execs = grep /^bpath:/, @xuse;
         @execs = grep {-x aipath2ospath($_)} @execs;
     }
     scalar @execs == 0 and die "Cannot find command in {" .
-        (join ', ', map +(friendly_objname $_), grep !ref $_, @_) . "}";
+        (join ', ', map +(friendly_objname $_), @xuse) . "}";
     scalar @execs > 1 and die "Found too many commands: {" .
         (join ', ', map +(friendly_objname $_), @execs) . "}";
 
     # Move options into order.
     @opts = ((grep /^optstring:[^ ]/, @opts),
-             (grep !/^optstring:./s && !/^optpath::/, @opts),
+             (grep !/^optstring:./s && !/^optpath:[ :]/, @opts),
              (grep /^optpath::/, @opts),
+             (grep /^optpath: /, @opts),
              (grep /^optstring: /, @opts));
 
     my $cmd = $execs[0];
@@ -2912,7 +3322,7 @@ sub run_command {
         if ($cmd eq 'intcmd:nop') {
             return (undef, '', '');
         } elsif ($cmd eq 'intcmd:cat') {
-            scalar @opts == 1 and $opts[0] =~ /^optpath::(.*)$/s
+            scalar @opts == 1 and $opts[0] =~ /^optpath: ?:(.*)$/s
                 or return ("Invalid arguments", '', '');
             my $fn = aipath2ospath($1);
             # TODO: User-customizable encoding?
@@ -2925,7 +3335,7 @@ sub run_command {
         } elsif ($cmd eq 'intcmd:filetest') {
             @opts = sort @opts;
             scalar @opts == 2 and $opts[1] =~ /^optstring:-[fdlxzsTB]/
-                and $opts[0] =~ /^optpath::(.*)$/s
+                and $opts[0] =~ /^optpath: ?:(.*)$/s
                 or return ("Invalid arguments", '', '');
             my $fn = aipath2ospath($1);
             my ($ts, $expl);
@@ -2941,25 +3351,46 @@ sub run_command {
             !$ts and return ("$fn is not $expl", '', '');
             return (undef, '', '');
         } elsif ($cmd eq 'intcmd:echo') {
-            map +(s/^optstring: ?// || s/^optpath:([^:]*):/$1/), @opts;
+            map +(s/^optstring: ?// ||
+                  s/^optpath: ?-w://e ||
+                  s/^optpath: ?-t([^:]*):(.*)$/$1.((parse_objname $2)[0])/es ||
+                  s/^optpath: ?-a([^:]*):(.*)$/$1.((parse_objname $2)[1])/es ||
+                  s/^optpath: ?-i([^:]*):(.*)$/$1.((parse_objname $2)[2])/es ||
+                  s/^optpath: ?([^:]*):/$1/), @opts;
             return (undef, (join ' ', @opts), '');
         } elsif ($cmd eq 'intcmd:writefile' ||
                  $cmd eq 'intcmd:testruncount') {
-            scalar @opts and (pop @opts) =~ /^optpath::(.*)$/s
-                or return ("Invalid arguments (no filename)", '', '');
-            grep !/^optstring:/, @opts
-                and return ("Invalid arguments (too many filenames)", '', '');
-            my $fn = aipath2ospath($1);
+            my @paths = grep /^optpath: ?:/s, @opts;
+            my @strings = grep /^(?:optstring:|optpath: ?-[wtai])/s, @opts;
+            my %okopts;
+            $okopts{$_} = 1 for (@paths, @strings);
+            my @bad = grep !$okopts{$_}, @opts;
+            scalar @paths + scalar @strings == scalar @opts
+                or return ("Invalid arguments (bad options)", '',
+                           "Bad options are: [@bad]");
+            scalar @paths == 1
+                or return ("Invalid arguments (wrong number of filenames)",
+                           '', '');
+            $paths[0] =~ /^optpath: ?:(.*)$/s;
+            my $fn = $1;
+            $fn = resolve_extend($fn);
+            $fn = aipath2ospath($fn);
             open my $fh, ">$text_layers", $fn or
-                return ("Could not open 'fn' for writing: $!", '', '');
-            s/^optstring:// for @opts;
-            y/ _/\n / for @opts;
+                return ("Could not open '$fn' for writing: $!", '', '');
+            s/^optstring: ?// for @strings;
+            s/^optpath: ?-w:// for @strings;
+            s/^optpath: ?-t([^:]*):(.*)$/$1.(parse_objname $2)[0]/es for @strings;
+            s/^optpath: ?-a([^:]*):(.*)$/$1.(parse_objname $2)[1]/es for @strings;
+            s/^optpath: ?-i([^:]*):(.*)$/$1.(parse_objname $2)[2]/es for @strings;
+            s{(\\.|_| )}{$1 eq '_' ? ' ' :
+                         $1 eq ' ' ? "\n" :
+                         substr $1, 1, 1}ge for @strings;
             if ($cmd eq 'intcmd:testruncount') {
-                @opts = ($config_hashes{'sys:always_rebuild'});
+                @strings = ($config_hashes{'sys:always_rebuild'});
             }
             print $fh "$_\n" or do {
                 close $fh; return ("Could not write '$fn': $!", '', '');
-            } for @opts;
+            } for @strings;
             close $fh or return ("Could not flush '$fn': $!", '', '');
             return (undef, '', '');
         } elsif ($cmd eq 'intcmd:testcase') {
@@ -2967,13 +3398,19 @@ sub run_command {
             $opts[0] and $opts[0] =~ /failed/ and
                 return ('Testcase failure', '', (join ' ', @opts));
             return (undef, '', (join ' ', @opts));
+        } elsif ($cmd eq 'intcmd:assert_equal') {
+            # If we have two identical arguments, they collapse to one
+            # argument.
+            scalar @opts == 1 and return(undef, '', '');
+            scalar @opts == 2 or return ("Wrong number of arguments", '', '');
+            return ("'opts[0]' does not equal '$opts[1]'", '', '');
         } elsif ($cmd eq 'intcmd:optionvalues') {
             my $stderr = '';
             my @stdout = ();
             my $failreason = undef;
             for my $o (@opts) {
                 if ($o !~ /^optstring:(.*)$/s &&
-                    $o !~ /^optpath::config_option:(.*)$/) {
+                    $o !~ /^optpath: ?:config_option:(.*)$/) {
                     $failreason = "Invalid arguments";
                     $stderr .= "'$o' is the wrong sort of object";
                 } elsif (defined $config->{options}->{$1}) {
@@ -2987,7 +3424,55 @@ sub run_command {
                     $stderr .= "'$1' is not a config option";
                 }
             }
-            return ($failreason, \@stdout, $stderr);
+            # TODO: Because we're outputting OS paths, we need to use in-band
+            # newlines to signal that fact. Of course, this fails for dirnames
+            # with newlines in.
+            return ($failreason, (join "\n", @stdout), $stderr);
+        } elsif ($cmd eq 'intcmd:xuse_statistics') {
+            my @stdout = ();
+            my @flxuse = grep /^b?path:/, @xuse;
+            if (scalar @opts) {
+                my %filtered_flxuse = ();
+                for my $filter (@opts) {
+                    if ($filter =~ /^optstring:(.*)$/) {
+                        my $match = $1;
+                        /\Q$match\E$/ and $filtered_flxuse{$_} = 1
+                            for @flxuse;
+                    }
+                }
+                @flxuse = sort keys %filtered_flxuse;
+            } else {
+                @flxuse = sort @flxuse;
+            }
+            push @stdout, 'hash=' . md5_hex(join ':', @flxuse);
+            my @namehints = grep /^namehint:/, @xuse;
+            @namehints and @flxuse = sort @namehints;
+            my $stem = 'anonymous';
+            my @version_max = ();
+            if (@flxuse) {
+                $stem = $flxuse[0];
+                $stem =~ s/^namehint:[^:]*:[^:]+://;
+                for my $flxuse (@flxuse) {
+                    "${stem}::$flxuse" =~ /^(.*).*?::namehint:([^:]*):[^:]+:\1/;
+                    $stem = $1;
+                    my $version = $2;
+                    $version =~ s/\s//g;
+                    my @version = split /\./, $version;
+                    for my $i (0..$#version) {
+                        $#version_max < $i || $version[$i] > $version_max[$i]
+                            and (@version_max = @version), last;
+                        $version[$i] < $version_max[$i] and last;
+                    }
+                }
+            }
+            $stem =~ s/\/$//;
+            # It's common to use "src" as an intermediate folder name, but we
+            # don't want to go around creating libraries src.so.
+            $stem =~ s/\/src$//;
+            push @stdout, "stem=bpath:$stem";
+            push @stdout, "version=" . (join '.', '', @version_max);
+            push @stdout, "dependency=$_" for @xuse;
+            return (undef, \@stdout, '');
         } elsif ($cmd eq 'intcmd:listtree') {
             my %results = ();
             my $starttime = time;
@@ -2995,8 +3480,8 @@ sub run_command {
             my $depth = undef;
             my %dirs = ();
             my $fnfilter = undef;
-            /^optpath::([bs]?path:.*)$/s and $dirs{$1} = 1 for @opts;
-            /^optpath::searchfile:(.*)$/s and $fnfilter = $1 for @opts;
+            /^optpath: ?:([bs]?path:.*)$/s and $dirs{$1} = 1 for @opts;
+            /^optpath: ?:searchfile:(.*)$/s and $fnfilter = $1 for @opts;
             /^optstring:(\d+)/s and $depth = $1 for @opts;
             keys %dirs or return ("No directory specified", '', '');
             for my $dir (keys %dirs) {
@@ -3056,7 +3541,27 @@ sub run_command {
             }
             return (undef, [sort keys %results], '');
         } elsif ($cmd eq 'intcmd:symlink') {
-            return ('TODO: intcmd:symlink unimplemented', '', '');
+            my @targets;
+            my @sources;
+            /^optpath: ?:(.*)$/s and push @targets, $1 for @opts;
+            /^optpath: ?-o:(.*)$/s and push @sources, $1 for @opts;
+            @targets == 1 or return ("Wrong number of targets", '', '');
+            for my $source (@sources) {
+                my $ostarget = aipath2ospath($targets[0]);
+                my $ossource = aipath2ospath($source);
+                my ($ossourcevol, $ossourcedir, undef) =
+                    File::Spec->splitpath($ossource);
+                $ossourcedir = File::Spec->catpath(
+                    $ossourcevol, $ossourcedir, '');
+                $ostarget = File::Spec->abs2rel($ostarget, $ossourcedir);
+                # -e returns false on broken symlinks
+                -e $ossource || -l $ossource and unlink $ossource;
+                $! = 0;
+                symlink $ostarget, $ossource or return
+                    ("Could not create link", '',
+                     "Linking '$ossource' to '$ostarget': $!");
+            }
+            return (undef, '', '');
         }
         return ("No such internal command $cmd", '', '');
     } elsif ($cmd =~ /^bpath:/) {
@@ -3073,21 +3578,25 @@ sub run_command {
         $cmd = aipath2ospath($cmd);
     }
 
-    # Convert options into a string representation.
+    # Convert options into a string representation (unless we were running an
+    # internal command).
     my $oldcwd_aipath = $cwd;
     $intopts{'cwd'} and $cwd = $intopts{'cwd'};
     my $rel = $intopts{'relpaths'} ? $cwd : undef;
-    @opts = map {
-        /^optstring: ?(.*)$/s ? split / /, $1 :
-        do {
-            my (undef, $objvalue, $objinner) = parse_objname $_;
-            $objinner = resolve_extend $objinner;
-            my $ospath = $objinner =~ /^searchlib:(.*)$/s ? $1 :
-                aipath2ospath($objinner, $rel);
-            $objvalue =~ /^(.*) $/s ? ($1, $ospath) : "$objvalue$ospath";
-        }
-    } @opts;
-
+    if ($cmd !~ /^intcmd:/) {
+        @opts = map {
+            /^optstring: ?(.*)$/s ? split / /, $1 : do {
+                my (undef, $objvalue, $objinner) = parse_objname $_;
+                $objinner = resolve_extend $objinner;
+                my $ospath = $objinner =~ /^searchlib:([^:]*):/s ? $1 :
+                    $objinner =~ /^config_option:/ ? $objinner :
+                    $objinner =~ /^symbolset:[^:]+:(.*)$/s ?
+                    aipath2ospath($1, $rel) : aipath2ospath($objinner, $rel);
+                $objvalue =~ s/^ //;
+                $objvalue =~ /^(.*) $/s ? ($1, $ospath) : "$objvalue$ospath";
+            }
+        } @opts;
+    }
     # If we're asked for the command line, just return it now. This doesn't
     # actually follow any quoting rules in existence, but it's pretty close to
     # what Windows uses and will be familiar on Unix too. (Less ambiguous
@@ -3175,6 +3684,8 @@ sub run_command {
         $failreason = "Command reported failure status " .
             ($sysreturn >> 8);
     } elsif ($sysreturn != 0) {
+        signal_name($sysreturn & 127) eq 'SIGINT' and
+            die "Interrupted."; # make control-C work as expected
         $failreason = "Command crashed with signal " .
             signal_name($sysreturn & 127);
     }
@@ -3354,7 +3865,12 @@ sub objects_for_rule {
 # is changed or blocked, then xuse_by_pair can be undef; in such a case,
 # xuse_by_object doesn't contain that pair. The innermost keys of
 # xuse_by_object list the objects originally responsible for including that
-# xuse; this gives better error messages.
+# xuse; this gives better error messages. There is also a hash
+# ->{xuse_prevpair} that, for each pair and each object in its expanded use
+# dependencies, specifies the object that created that object (if any); this
+# is only meaningful when xuse_by_pair is not undef, and is used by unsureness
+# checks to determine whether an unsure object would have an effect on a pair
+# or not.
 #
 # There is a list of changed pairs, ->{changed_pairs}. The values of that hash
 # list the reason the pair has not been marked as unchanged yet.
@@ -3433,7 +3949,6 @@ sub mark_object_sure {
 
     %unsure_pair_cache = ();
 }
-sub ensure_pair_has_xuse;
 sub mark_pair_xuse_unknown;
 sub mark_pair_changed {
     my $pair = shift;
@@ -3503,6 +4018,7 @@ sub mark_pair_unchanged {
         delete $state->{blocked_by_pair}->{$pair};
     }
 }
+sub inappropriate_prevpair;
 sub set_proviced_hash {
     my $pair = shift;
     my $obj = shift;
@@ -3564,8 +4080,10 @@ sub set_proviced_hash {
     # respect to other objects). This must be done after hash_by_object is
     # set, so that mark_pair_changed won't defer the changed setting until
     # this object comes into existence (falsely believing it not to exist).
+    # However, we can (and should, for efficiency reasons) skip any pairs that
+    # cannot possibly look at the object via $pair.
     #
-    # Iterating over xuse-by_object may miss out some pairs, but only changed
+    # Iterating over xuse_by_object may miss out some pairs, but only changed
     # pairs with unknown xuses (on which operating would be pointless anyway).
     for my $cpair (keys %{$state->{xuse_by_object}->{$obj}}) {
         # We need to mark the xuse unknown before marking the pair as changed,
@@ -3594,14 +4112,24 @@ sub set_proviced_hash {
     # may have changed, meaning that the xuses are different). Marking the
     # rules as changed will be a no-op in most cases, but it will matter if
     # the pair is brand new.
+    #
+    # Additionally, if a dependency rule changes, we need to recalculate
+    # xuses of anything that depended on its object.
     if ($objtype eq 'config_rule') {
         progress_report 4, "Adding pairs from rule $objvalue";
         my @objects = objects_for_rule $objvalue;
+        my $r = $config->{rules}->{$objvalue};
         for my $o (@objects) {
             my $cpair = "$objvalue $o";
             mark_pair_xuse_unknown $cpair;
             mark_pair_unchanged $cpair; # unblock it
             mark_pair_changed $cpair;
+            if (defined $r && exists $r->{depends}) {
+                for my $dpair (keys %{$state->{xuse_by_object}->{$o}}) {
+                    mark_pair_xuse_unknown $dpair;
+                    mark_pair_changed $dpair; # needed to allow an undef xuse
+                }
+            }
         }
     }
 
@@ -3623,6 +4151,14 @@ sub record_pair_outputs {
     for my $oldobj (keys %{$state->{hash_by_pair}->{$pair}}) {
         # Force the keys to exist for any object that was there before.
         $obj_to_hash{$oldobj} = defined_or($obj_to_hash{$oldobj}, undef);
+    }
+    if (defined $state->{unsure_by_pair}->{$pair}) {
+        for my $oldobj (keys %{$state->{unsure_by_pair}->{$pair}}) {
+            # Force the keys to exist for any object's unsure via the pair, even
+            # if it isn't being output (this can happen when there was previously
+            # a dependency loop).
+            $obj_to_hash{$oldobj} = defined_or($obj_to_hash{$oldobj}, undef);
+        }
     }
     set_proviced_hash $pair, $_, $obj_to_hash{$_}
         for keys %obj_to_hash;
@@ -3657,74 +4193,149 @@ sub record_pair_error {
 }
 
 ### Resolving object contents
-#
+
+# Helper routine
+sub not_empty_array {
+    my $a = shift;
+    return 1 unless ref $a eq 'ARRAY';
+    return scalar @$a;
+}
+
 # Sometimes we'll have multiple possible versions of a provided object (this
 # happens most often with symbol:main, but can happen for other provided
 # objects, too). For produced objects, this is an error (they'd overwrite each
 # other on the filesystem), but for provided objects, we work out which to use
 # based on filename similarity. This takes two object names as arguments (the
-# provided object, and the object that wants to use it), and returns the
-# appropriate pair to use.
-sub appropriate_pair_for_object {
+# provided object, and the object that wants to use it), a flag indicating
+# whether it's OK to have a tie in score, and the list of possible pairs, and
+# returns a list of top-scoring pairs to use. (This will be empty if there are
+# no usable pairs, a single element unless there is a tie, and all tied
+# elements otherwise.)
+#
+# This routine is only called from recalculate_pair_xuse, but is placed in a
+# separate subroutine for clarity.
+sub appropriate_pairs_for_object {
     my $provided = shift;
     my $user = shift;
+    my $ties_ok = shift;
+    my @providers = @_;
 
-    return unless $state->{hash_by_object}->{$provided};
-    my @providers = keys %{$state->{hash_by_object}->{$provided}};
+    scalar @providers == 0 and return ();
+    scalar @providers == 1 and return ($providers[0]);
 
-    scalar @providers == 1 and return $providers[0];
+    $provided =~ multiple_providers_ok_regex and return ('sys:fuse');
 
     my ($prvtype, undef) = parse_objname $provided;
-    # It's OK for multiple rules to find objects on the path or spath.
-    $prvtype eq 'spath' and return $providers[0];
-    $prvtype eq 'path' and return $providers[0];
-
     $objtype_provided{$prvtype} or
         croak "Object $provided is produced by multiple rules: @providers";
 
+    progress_report 4, "Finding appropriate pair for $provided (user $user)...";
+
     my $best = undef;
     my $bestscore = -1;
-    # The 'sort' here is for determinism when we have two equally good
-    # providers. (TODO: As an alternative, we could perhaps error out if two
-    # providers are equally good, because that probably means something is
-    # wrong.)
-    for my $provider (sort @providers) {
-        my (undef, $obj) = parse_pairname $provider;
+    my @tie = ();
+    # We error out if we have two equally good providers.
+    for my $provider (@providers) {
+        my ($prule, $obj) = parse_pairname $provider;
         my ($objtype, $objvalue, $objinner) = parse_objname $obj;
         my $score = 0;
         if ($objtype eq 'spath') {
             # Avoid if possible. It's better than an entirely virtual
             # provider, though.
             $score = 1;
+            my @aipath = parse_aipath $obj;
+            # We add some bonuses based on the name. In particular, we prefer
+            # to use libraries following the lib... naming convention, to
+            # avoid linking against the dynamic loader explicitly for free()
+            # or something silly like that, and libc is the best option when
+            # available.
+            $aipath[-1] =~ /^lib/ and $score += 0.1;
+            $aipath[-1] =~ /^libc\b/ and $score += 0.4;
+            $aipath[-1] =~ /^libmingw\b/ and $score += 0.4;
+            $aipath[-1] =~ /^libmsvcrt\b/ and $score += 0.4;
         } elsif ($objtype =~ /^b?path/s) {
             # The score depends on how many characters match at the
             # start of the objvalue.
             my ($utype, $uvalue, $uinner) = parse_objname $user;
+            ($utype, $uvalue, $uinner) = parse_objname $uinner
+                while $utype eq 'symbolset';
             $score = 2;
             while ($uvalue ne '' && $objvalue ne '' &&
                    substr($uvalue, 0, 1, '') eq substr($objvalue, 0, 1, '')) {
                 $score++;
             }
         }
-        $score > $bestscore and ($best, $bestscore) = ($provider, $score);
-    }
+        # Add a small bonus based on the rule that produced the object.
+        if (defined $config->{rules}->{$prule}) {
+            $score += defined_or($config->{rules}->{$prule}->{preference}, 0)
+                / 100000;
+        }
 
-    return $best;
+        # A tie is benign if we have two rules with the same object, and it
+        # isn't sys:no_object; it's also benign if both rules have an empty
+        # outdepends (this is to make the placeholder symbols for reverse
+        # imports work correctly). Otherwise, it's a problem.
+        if ($score == $bestscore && (parse_pairname $best)[1] ne $obj &&
+            (not_empty_array($state->{hash_by_object}->{$provided}->{$provider}) ||
+             not_empty_array($state->{hash_by_object}->{$provided}->{$best}))) {
+            push @tie, $provider;
+        } elsif ($score > $bestscore) {
+            @tie = ();
+            ($best, $bestscore) = ($provider, $score);
+        }
+        progress_report 4, "Score for $provider is $score";
+    }
+    if (@tie) {
+        unshift @tie, $best;
+        $ties_ok and return @tie;
+        croak "Multiple equally good pairs are available to build ".
+            "$provided (user $user): [@tie]";
+    }
+    return $best if defined $best;
+    return ();
 }
 
-# Determines which hash of an object we're supposed to be building from.
-# This is used for produced bpath:,path:,spath: objects to determine whether
-# the file has changed on disk; and for produced objects to get at their
-# outdepends.
+# Determines which hash of an object we're supposed to be building from. This
+# is used for produced bpath:,path:,spath: objects to determine whether the
+# file has changed on disk.
 sub xuse_hash {
     my $pair = shift;
     my $obj = shift;
-    return $state->{hash_by_object}->{$obj}->{
-        appropriate_pair_for_object $obj, $pair};
+    return unless $state->{hash_by_object}->{$obj};
+    die "Produced object $obj produced by more than one rule"
+        unless 1 == keys $state->{hash_by_object}->{$obj} ||
+        $obj =~ multiple_providers_ok_regex;
+    return (values $state->{hash_by_object}->{$obj})[0];
 }
 
 ### Dependency calculations
-#
+
+# We want to avoid allowing an object to be created in terms of itself. Rules
+# cannot use their own output as a dependency, nor any output from rules or
+# objects that are marked as avoided for it.
+sub inappropriate_prevpair {
+    my $pair = shift;
+    my $pair2 = shift;
+    my ($rule, $obj) = parse_pairname $pair;
+    my ($rule2, $obj2) = parse_pairname $pair2;
+    my $avoid_rules = $config->{rules}->{$rule}->{avoid_rules};
+    defined $avoid_rules and $rule2 =~ $avoid_rules and
+        progress_report 5, "($pair,$pair2) inappropriate: avoid_rules"
+        and return 1;
+    my $avoid_objects = $config->{rules}->{$rule}->{avoid_built_from};
+    if (defined $avoid_objects) {
+        complete_objname \$avoid_objects, $obj;
+        $avoid_objects = resolve_extend $avoid_objects;
+        progress_report 5, "($pair,$pair2) inappropriate: avoid_built_from",
+            return 1 if $avoid_objects eq $obj2;
+    }
+    return unless $state->{hash_by_object}->{$obj2};
+    $state->{hash_by_object}->{$obj2}->{$pair} and
+        progress_report 5, "($pair,$pair2) inappropriate: output"
+        and return 1;
+    return;
+}
+
 # We calculate the xuse for a pair via looping over its command, adding in the
 # following dependencies recursively:
 #
@@ -3744,14 +4355,23 @@ sub xuse_hash {
 #   be checked for changes on disk, and their nonexistence hashwise will be
 #   noticed then, something that doesn't happen with provided objects.)
 #
+# In the case where there are multiple reasonable possible ancestors, we hold
+# off on choosing an ancestor immediately, and then try again once the set of
+# xuses is complete, preferring to choose one that's already in the set. We
+# report a tie if there's still multiple ancestors with the same degree of
+# reasonability. We also never choose any of the rule's outputs as an ancestor
+# for the rule itself.
+#
 # We also preserve order in xuse_by_pair, because the order is sometimes
 # sigificant. (xuse_by_object is unordered.)
 sub recalculate_pair_xuse {
-    # TODO: Recalculate xuses when new dependencies: objects are added.
     my $pair = shift;
+    my $ties_ok = shift;
     my ($rule, $obj) = parse_pairname($pair);
     progress_report 4, "Calculating xuse of $pair";
     reset_pair_xuse($pair);
+    %sure_pair_cache = ();
+    %unsure_pair_cache = ();
     my $r = $config->{rules}->{$rule};
     # Add the pair's rule to the list.
     my %xuse = ("config_rule:$rule" => $obj);
@@ -3767,32 +4387,94 @@ sub recalculate_pair_xuse {
         scalar @command == 1 && ref $command[0] eq 'ARRAY'
             and @command = (@{$command[0]});
         # Add the pair's object to the list.
-        $r->{output} and !$r->{propagate_usedeps} and
+        if (($r->{output}||$r->{output_from_optpath}) &&
+            !$r->{propagate_usedeps}) {
             push @command, '';
+        }
+        # We can't run the rule if the object was produced by a rule it
+        # avoids.
+        my ($objtype, undef, undef) = parse_objname $obj;
+        if ($r->{avoid_rules} && !$objtype_provided{$obj} &&
+            $state->{hash_by_object}->{$obj}) {
+            my ($producer, undef) = keys %{
+                $state->{hash_by_object}->{$obj}};
+            my ($prodrule, undef) = parse_pairname $producer;
+            if ($prodrule =~ $r->{avoid_rules}) {
+                $xuse{'sys:clean'} or push @xuse, 'sys:clean';
+                $xuse{'sys:clean'} = "config_rule:$rule";
+            }
+        }
+
         # For install rules, add sys:installing to the list.
         $r->{install_dir} and push @command, 'sys:installing';
         my %xuse_reason = ();
-        while (@command) {
+        my $pass = 1;
+        my @postponed = ();
+        my %pass1_xuse_pairs = ();
+        while (@command || ($pass == 1 && @postponed)) {
+            if (!@command) {
+                @command = @postponed;
+                $pass = 2;
+            }
             # Convert the object name from a partially specified name into a
             # complete name.
             my $o = shift @command;
             complete_objname \$o, $obj;
             $o = resolve_extend $o;
             next if $xuse{$o};
-            $xuse{$o} = defined_or($xuse_reason{$o}, $obj);
-            push @xuse, $o;
-
-            # Push all the use dependencies of this object onto @command.
             my ($otype, undef) = parse_objname $o;
-            # Add provided outdepends to the list.
+
+            # Add provided outdepends to the list. (Or postpone it for later
+            # if we have multiple reasonable possibilities and we're still on
+            # the first pass.)
             if ($objtype_provided{$otype}) {
-                my $provider = appropriate_pair_for_object $o, $obj;
-                if ($provider) {
-                    my @udeps = @{$state->{hash_by_pair}->{$provider}->{$o}};
-                    push @command, sort @udeps;
+                my @ancestors = sort keys %{$state->{hash_by_object}->{$o}};
+                delete $state->{hash_by_object}->{$o} unless
+                    keys %{$state->{hash_by_object}->{$o}};
+                @ancestors = grep !inappropriate_prevpair($pair, $_),
+                    @ancestors;
+                if ($pass == 2 && $o !~ multiple_providers_ok_regex) {
+                    # It would be slightly more accurate to check the use
+                    # dependencies of the pairs we add to see if they're
+                    # already there. But this method is faster and easier to
+                    # read, and will produce the same results in pretty much
+                    # all cases.
+                    my @filtered_ancestors =
+                        grep $pass1_xuse_pairs{$_}, @ancestors;
+                    @filtered_ancestors and @ancestors = @filtered_ancestors;
+                    @ancestors = appropriate_pairs_for_object $o, $obj,
+                        $ties_ok, @ancestors;
+                }
+                if (@ancestors > 1 && $o =~ multiple_providers_ok_regex) {
+                    # Fuse the output from the various providers.
+                    $state->{xuse_prevpair}->{$pair}->{$o} =
+                        'nonexistent sys:fuse';
+                    my %udeps = ();
+                    for my $ancestor (@ancestors) {
+                        for my $udep (@{$state->{hash_by_pair}->
+                                        {$ancestor}->{$o}}) {
+                            push @command, $udep unless $udeps{$udep};
+                            $udeps{$udep} = 1;
+                        }
+                    }
+                    $xuse_reason{$_} = $o for keys %udeps;
+                } elsif (@ancestors > 1 && $pass == 1) {
+                    push @postponed, $o;
+                    next;
+                } elsif (@ancestors > 1 && $pass == 2) {
+                    mark_pair_xuse_unknown $pair;
+                    return 0 unless wantarray;
+                    return (0, $o, $obj, \@ancestors);
+                } elsif (@ancestors == 1) {
+                    $pass == 1 and $pass1_xuse_pairs{$ancestors[0]} = 1;
+                    $state->{xuse_prevpair}->{$pair}->{$o} = $ancestors[0];
+                    my @udeps = @{$state->{hash_by_pair}->{$ancestors[0]}->{$o}};
+                    push @command, @udeps;
                     $xuse_reason{$_} = $o for @udeps;
                 } else {
                     # Nothing provides the object; add sys:clean to the list.
+                    $state->{xuse_prevpair}->{$pair}->{$o} =
+                        'nonexistent sys:clean';
                     $xuse{'sys:clean'} or push @xuse, 'sys:clean';
                     $xuse{'sys:clean'} = $o; # nothing provides it
                 }
@@ -3803,6 +4485,9 @@ sub recalculate_pair_xuse {
             @drules = grep $config->{rules}->{$_}->{depends}, sort @drules;
             push @command, map "dependencies:$_:$o", @drules;
             $xuse_reason{"dependencies:$_:$o"} = "config_rule:$_" for @drules;
+
+            $xuse{$o} = defined_or($xuse_reason{$o}, $obj);
+            push @xuse, $o;
         }
     }
     unless ($xuse{$obj}) {
@@ -3813,9 +4498,7 @@ sub recalculate_pair_xuse {
     for my $xuse (keys %xuse) {
         $state->{xuse_by_object}->{$xuse}->{$pair} = $xuse{$xuse};
     }
-
-    %sure_pair_cache = ();
-    %unsure_pair_cache = ();
+    return 1;
 }
 
 # Resets the xuse of a pair. This is called for two reasons: either because
@@ -3834,17 +4517,20 @@ sub recalculate_pair_xuse {
 sub reset_pair_xuse {
     my $pair = shift;
 
+    mark_pair_xuse_unknown $pair;
     progress_report 4, "Resetting xuse of $pair.";
 
-    mark_pair_xuse_unknown $pair;
     delete $state->{xuse_by_pair}->{$pair};
-
+    delete $state->{xuse_prevpair}->{$pair};
     %sure_pair_cache = ();
     %unsure_pair_cache = ();
 }
 
 sub mark_pair_xuse_unknown {
     my $pair = shift;
+
+    progress_report 4, "Marking xuse of $pair as unknown.";
+
     if (defined $state->{xuse_by_pair}->{$pair}) {
         for my $obj (@{$state->{xuse_by_pair}->{$pair}}) {
             delete $state->{xuse_by_object}->{$obj}->{$pair};
@@ -3853,59 +4539,106 @@ sub mark_pair_xuse_unknown {
         }
     }
     $state->{xuse_by_pair}->{$pair} = undef;
-
+    delete $state->{xuse_prevpair}->{$pair};
     %sure_pair_cache = ();
     %unsure_pair_cache = ();
 }
 
 sub ensure_pair_has_xuse {
     my $pair = shift;
+    my $ties_ok = shift;
     if (!defined $state->{xuse_by_pair}->{$pair}) {
-        recalculate_pair_xuse $pair;
+        return recalculate_pair_xuse $pair, $ties_ok;
     }
+    return 1;
 }
 
 ### Sureness calculations
-#
+
+sub pair_is_definitely_deletable {
+    my ($prule, $pobj) = parse_pairname shift;
+    rule_applies_to_object $prule, $pobj or return 1;
+    object_exists "config_rule:$prule" or return 1;
+    return;
+}
+memoize('pair_is_definitely_deletable');
+
 # A pair is sure if all its xuses, recursing back forever, are sure. This goes
-# via appropriate_pair_for_object in most cases. As an exception, for
-# searchfile and searchlib objects (which have no useful outdepends), the pair
-# is sure if any of its ancestors are sure.
+# via xuse_prevpair in most cases. As an exception, for searchfile, searchlib
+# and symbolset objects (which have an outdepends depending only on their
+# name), the pair is sure if any of its ancestors are sure.
 my %pair_is_sure_seen = ();
 sub pair_is_sure;
 sub pair_is_sure {
     my $pair = shift;
-    my $recursion_ok = shift;
-    # Caches.
+
+    # Caches. Check these even before completing argument passing, because
+    # this function is called a /lot/ and bailing out early is helpful.
+    # (Thanks, profiler!)
     $sure_pair_cache{$pair} and return 1;
     $unsure_pair_cache{$pair} and return 0 unless wantarray;
     $unsure_pair_cache{$pair} and return (0, [@{$unsure_pair_cache{$pair}}]);
+
+    my $recursion_ok = shift;
     if ($pair_is_sure_seen{$pair}) {
         $recursion_ok and return 0 unless wantarray;
         $recursion_ok and return (0, []);
         croak "Pair $pair seems to have been built in terms of itself";
     }
+
+    # The pair is definitely deletable (i.e. we're sure what to do with it) if
+    # the rule doesn't exist, or the rule doesn't apply to the object; both of
+    # those cases cannot be resolved during the run.
+    pair_is_definitely_deletable $pair and return 1;
+
     # Base case.
     $pair eq 'parse_configuration sys:no_object' and return 1;
     # Recursive case.
-    my (undef, $pobj) = parse_pairname $pair;
-    ensure_pair_has_xuse $pair;
+    unless (ensure_pair_has_xuse $pair, 1) {
+        # If we have a tie, we're not sure how to resolve it.
+        my $unsure_list = ['tie'];
+        $unsure_pair_cache{$pair} = [@$unsure_list];
+        delete $pair_is_sure_seen{$pair};
+        progress_report 4, "pair_is_sure: $pair is unsure due to tie";
+        return 0 unless wantarray;
+        return (0, $unsure_list);
+    }
     $pair_is_sure_seen{$pair} = 1; # avoid an infinite regress
     my @xuses = @{$state->{xuse_by_pair}->{$pair}};
     for my $xuse (@xuses) {
-        my ($xobjtype, undef) = parse_objname $xuse;
-        if ($xobjtype !~ /^search(?:file|lib)/) {
-            if ($state->{unsure_count_by_object}->{$xuse}) {
+        # Parsing $xuse is actually pretty timeconsuming. We regex it instead
+        # for efficiency, because we only care about the object type. (This
+        # line is actually the inner loop of the program; it runs more often
+        # than any other line anywhere in aimake. Thus, the need for extreme
+        # efficiency.)
+        if ($xuse !~ multiple_providers_ok_regex) {
+            # Make sure that the object's prevpair is sure, and that the
+            # object is sure via its prevpair.
+            my $prevpair = $state->{xuse_prevpair}->{$pair}->{$xuse};
+            if (!defined $prevpair) { # nonexistent or produced object
+                next unless $state->{hash_by_object}->{$xuse};
+                croak "No xuse_prevpair from $pair for an object $xuse " .
+                    "with multiple prevpairs " . (join ', ',
+                    keys %{$state->{hash_by_object}->{$xuse}})
+                    unless keys %{$state->{hash_by_object}->{$xuse}} == 1;
+                $prevpair = (keys %{$state->{hash_by_object}->{$xuse}})[0];
+            }
+            next if $prevpair eq 'nonexistent sys:clean';
+            if ($state->{unsure_by_pair}->{$prevpair} &&
+                $state->{unsure_by_pair}->{$prevpair}->{$xuse}) {
                 exists $state->{changed_pairs}->{$pair} and
                     $state->{changed_pairs}->{$pair} = "xuse $xuse is unsure";
                 my $unsure_list = [$xuse];
                 $unsure_pair_cache{$pair} = [@$unsure_list];
                 delete $pair_is_sure_seen{$pair};
+                progress_report 4,
+                    "pair_is_sure: $pair is unsure due to " .
+                        "unsure $xuse via $prevpair";
                 return 0 unless wantarray;
                 return (0, $unsure_list);
             }
-            my $prevpair = appropriate_pair_for_object $xuse, $pobj;
-            if (defined $prevpair) {
+            # If the chosen prevpair is unsure, we're unsure.
+            if ($state->{hash_by_object}->{$xuse}) {
                 my ($sure, $unsure_list) =
                     pair_is_sure $prevpair, $recursion_ok;
                 if (!$sure) {
@@ -3915,33 +4648,55 @@ sub pair_is_sure {
                     unshift @$unsure_list, $xuse, $prevpair;
                     $unsure_pair_cache{$pair} = [@$unsure_list];
                     delete $pair_is_sure_seen{$pair};
+                    progress_report 4,
+                        "pair_is_sure: $pair is unsure due to ".
+                            "unsure $prevpair needed for $xuse";
                     return 0 unless wantarray;
                     return (0, $unsure_list);
                 }
             }
         } elsif ($state->{hash_by_object}->{$xuse}) {
             my @providers = sort keys %{$state->{hash_by_object}->{$xuse}};
-            my $some_sure = 0;
-            # We check unsureness one provider at a time.
+            # For each provider, we require that either:
+            # - that provider is sure; or
+            # - that provider's outdepends are identical to another provider's
+            #   outdepends.
+            my %outdepends_seen = ();
+            my %outdepends_because = ();
+            my %outdepends_unsurelist = ();
             for my $provider (@providers) {
-                if ((pair_is_sure $provider, 1) &&
-                    (!$state->{unsure_by_pair}->{$provider} ||
-                     !$state->{unsure_by_pair}->{$provider}->{$xuse})) {
-                    $some_sure = 1;
-                    last;
-                }
+                my ($sure, $unsure_list) = (pair_is_sure $provider, 1);
+                $sure = ($sure &&
+                         (!$state->{unsure_by_pair}->{$provider} ||
+                          !$state->{unsure_by_pair}->{$provider}->{$xuse}));
+                my $outdepends = $state->{hash_by_object}->{$xuse}->{$provider};
+                $outdepends = serialize_sv($outdepends);
+                next if $outdepends_seen{$outdepends};
+                $outdepends_seen{$outdepends} = $sure;
+                $outdepends_because{$outdepends} = $provider;
+                $outdepends_unsurelist{$outdepends} = $unsure_list;
             }
-            if (!$some_sure) {
-                # TODO: Pick an arbitrary choice to demonstrate the loop.
+            $outdepends_seen{$_} and delete $outdepends_seen{$_} for
+                keys %outdepends_seen;
+            if (keys %outdepends_seen) {
+                my ($outdepends, undef) = keys %outdepends_seen;
+                my $problem = $outdepends_because{$outdepends};
+                my $unsure_list = $outdepends_unsurelist{$outdepends};
+                unshift @$unsure_list, $xuse, $problem;
                 exists $state->{changed_pairs}->{$pair} and
-                    $state->{changed_pairs}->{$pair} = "no sure ancestors";
-                $unsure_pair_cache{$pair} = ['?'];
+                    $state->{changed_pairs}->{$pair} =
+                    "outdepends of unsure pair $problem is not provided by a sure pair";
+                $unsure_pair_cache{$pair} = [@$unsure_list];
                 delete $pair_is_sure_seen{$pair};
+                progress_report 4, "pair_is_sure: $pair is unsure " .
+                    "because unsure pair ${problem}'s outdepends are not " .
+                    "generated surely for $xuse";
                 return 0 unless wantarray;
-                return (0, ['?']);
+                return (0, $unsure_list);
             }
         }
     }
+    progress_report 5, "pair_is_sure: $pair is sure";
     $sure_pair_cache{$pair} = 1;
     delete $pair_is_sure_seen{$pair};
     return 1;
@@ -3985,7 +4740,7 @@ eval {
 } or do {
     my $locale = $ENV{LC_ALL};
     defined $locale or $locale = $ENV{LANG};
-    $locale =~ /\.([^.]+)$/ and $codeset = $1;
+    defined $locale and $locale =~ /\.([^.]+)$/ and $codeset = $1;
 };
 
 # We support two types of file: text and binary.
@@ -4030,7 +4785,7 @@ Getopt::Long::Configure('bundling', 'permute', 'auto_help');
 $opt_verbose = 0;
 $opt_install = undef;
 $opt_prefix = undef;
-$opt_dump = 0;
+$opt_dump = undef;
 $opt_ignore_builtin_config = 0;
 @opt_warnings = (); # TODO: unimplemented
 $opt_nocr = 0;
@@ -4042,7 +4797,7 @@ $opt_version = 0;
 GetOptions('verbose|v:+' => \$opt_verbose,
            'install|i:s' => \$opt_install,
            'destdir=s' => \$opt_prefix,
-           'dump-status' => \$opt_dump,
+           'dump-status:s' => \$opt_dump,
            'show-warnings|W' => \@opt_warnings,
            'no-carriage-return' => \$opt_nocr,
            'documentation' => \$opt_documentation,
@@ -4069,13 +4824,28 @@ EOF
     exit 0;
 }
 $opt_verbose = defined_or($opt_verbose, 0);
-if ($opt_dump) {
+if (defined $opt_dump) {
     atomic_read {
         $Data::Dumper::Indent = 1;   # to help keep it on the screen
         $Data::Dumper::Sortkeys = 1; # make it easier to find things in it
         $Data::Dumper::Useqq = 1;    # make it more readable
         $Data::Dumper::Deepcopy = 1; # don't use cross-references
-        print Dumper($state);
+        $Data::Dumper::Terse = 1;    # don't prefix '$VAR1 = '
+        my @path = split /,/, $opt_dump;
+        my $subset = $state;
+        for my $key (@path) {
+            if (defined_or(ref $subset, 'undef') eq 'HASH') {
+                if (exists $subset->{$key}) {
+                    $subset = $subset->{$key};
+                } else {
+                    $subset = '!exists';
+                }
+            } else {
+                defined_or($subset, 'undef') ne '!exists' and
+                    $subset = 'not a HASH ref';
+            }
+        }
+        print ref $subset || !defined $subset ? Dumper($subset) : "$subset\n";
     };
     exit 0;
 }
@@ -4144,7 +4914,17 @@ $configsafe->permit_only(qw/null stub scalar pushmark const undef list qr
 our $libext = $Config{_a};
 our $objext = $Config{_o};
 our $exeext = $Config{_exe};
-$configsafe->share('$libext', '$objext', '$exeext');
+$exeext eq '' and $exeext = '.exe';
+# a UUID generated for the purpose of avoiding clashes with other things
+our $longrandomstring = 'AIMAKE_e15d5ce8_c8f0_40c9_9a3f_3b568bcd59d5_';
+our $dllext = {MSWin32 => '.dll',
+               linux   => '.so',
+               darwin  => '.dylib'}->{$^O};
+our $impext = {MSWin32 => '.dll.a', # MinGW uses this
+               linux   => '.so',
+               darwin  => '.dylib'}->{$^O};
+$configsafe->share('$libext', '$objext', '$exeext', '$dllext', '$impext',
+                   '$longrandomstring');
 
 # Parse the global config file, from our <DATA>
 $! = 0;
@@ -4280,12 +5060,14 @@ progress_report 4, "Starting main program.";
 # "output").
 for my $rulename (keys %{$config->{rules}}) {
     my $rule = $config->{rules}->{$rulename};
+    defined $rule or delete $config->{rules}->{$rulename}, next;
     # Check the rule for sanity.
     croak "Rule $rulename has no output, depends, or install directory"
-        unless exists $rule->{output} || exists $rule->{depends} ||
-        exists $rule->{install_dir};
+        unless exists $rule->{output} || exists $rule->{output_from_optpath}
+        || exists $rule->{depends} || exists $rule->{install_dir};
     croak "Rule $rulename has both output and depends"
-        if exists $rule->{output} && exists $rule->{depends};
+        if (exists $rule->{output} || exists $rule->{output_from_optpath})
+        && exists $rule->{depends};
 }
 $config_hashes{"config_rule:$_"} = sv_hash $config->{rules}->{$_}
     for keys %{$config->{rules}};
@@ -4328,6 +5110,7 @@ MAINLOOP: while (1) {
     my $find_another;
     my $no_changes_since = undef;
     my $no_rules_since_timestamp = time;
+    my $lastbuild;
     my @xuse;
     atomically {
       FIND_ANOTHER_RULE:
@@ -4374,7 +5157,9 @@ MAINLOOP: while (1) {
                               $opt_verbose + 0.5 : 4),
                 "Looking for a rule to run (checking '$rulename'" .
                 (defined $objname ? " on object '" .
-                 friendly_objname $objname . "')" : ')');
+                 (friendly_objname $objname) . "')" : ')');
+            time > $no_rules_since_timestamp + 2 and
+                $no_rules_since_timestamp ++;
             defined $no_changes_since or $no_changes_since = $curpair;
             # Check for unsureness.
             progress_report 4, "Checking pair $curpair";
@@ -4413,9 +5198,10 @@ MAINLOOP: while (1) {
             } else {
                 # Check the rule's xuse for objects that don't exist, or that
                 # have the wrong hash on disk.
+                my ($currule, $curobject) = parse_pairname $curpair;
                 ensure_pair_has_xuse $curpair;
                 for my $obj (@{$state->{xuse_by_pair}->{$curpair}}) {
-                    progress_report 4, "Checking xuse $obj";
+                    progress_report 5, "Checking xuse $obj";
                     if (!object_exists $obj) {
                         # We're definitely sure that this rule cannot be built
                         # from right now (and cannot be built from at all this
@@ -4530,12 +5316,24 @@ MAINLOOP: while (1) {
     # Work out where we're outputting to.
     my $output_target = defined_or($rule->{output},
                                    "dependencies:$rulename:$objname");
+
+    if (defined $rule->{output_from_optpath}) {
+        $output_target = [];
+        my $ofo = $rule->{output_from_optpath};
+        ref $ofo eq 'ARRAY' or $ofo = [$ofo];
+        for my $match (@$ofo) {
+            /^optpath:\Q$match\E:(.*)$/s and push @$output_target, $1 for @xuse;
+        }
+    }
+
     my $installed_into = undef;
     if ($rule->{install_dir}) {
         my ($objtype, undef) = parse_objname $objname;
         my @components = $objtype eq 'sys' ? $objname : parse_aipath $objname;
+        my $install_name = defined_or($rule->{install_name}, $components[-1]);
+        $install_name =~ s/\Q$exeext\E$/$Config{_exe}/es;
         $output_target = $config->{options}->{$rule->{install_dir}} . "/" .
-            defined_or($rule->{install_name}, $components[-1]);
+            $install_name;
         if ($opt_prefix) {
             my $aiprefix = ospath2aipath $opt_prefix;
             my @components1 = parse_aipath $aiprefix;
@@ -4582,15 +5380,25 @@ MAINLOOP: while (1) {
         if ($objtype ne 'sys') {
             my $ospathfrom = aipath2ospath $objname;
             my $ospathto = aipath2ospath $output_target->[0];
-            open my $fhfrom, "<$binary_layers", $ospathfrom
-                or die "Could not open '$ospathfrom' for read";
-            open my $fhto, ">$binary_layers", $ospathto
-                or die "Could not open '$ospathto' for write";
-            print $fhto $_ for <$fhfrom>;
-            close $fhfrom; close $fhto;
-            # If we're installing an executable, the target should also be
-            # executable.
-            -x $ospathfrom and chmod 0755, $ospathto;
+            if (-l $ospathfrom) {
+                # To install a symlink, we need to create a new symlink with
+                # the same target.
+                my $ltarget = readlink $ospathfrom or die
+                    "Could not read symlink '$ospathfrom': $!";
+                -e $ospathto || -l $ospathto and unlink $ospathto;
+                symlink $ltarget, $ospathto or die
+                    "Could not symlink '$ospathto' to '$ltarget': $!";
+            } else {
+                open my $fhfrom, "<$binary_layers", $ospathfrom
+                    or die "Could not open '$ospathfrom' for read: $!";
+                open my $fhto, ">$binary_layers", $ospathto
+                    or die "Could not open '$ospathto' for write: $!";
+                print $fhto $_ for <$fhfrom>;
+                close $fhfrom; close $fhto;
+                # If we're installing an executable, the target should also be
+                # executable.
+                -x $ospathfrom and chmod 0755, $ospathto;
+            }
         } elsif ($objname eq 'sys:touch_only') {
             # nothing to do; we already created the directory
         } elsif ($objname eq 'sys:create_subdir') {
@@ -4598,13 +5406,13 @@ MAINLOOP: while (1) {
         } elsif ($objname eq 'sys:empty_file') {
             my $ospathto = aipath2ospath $output_target->[0];
             open my $fhto, ">$binary_layers", $ospathto
-                or die "Could not open '$ospathto' for write";
+                or die "Could not open '$ospathto' for write: $!";
             close $fhto;
         } elsif ($objname eq 'sys:ensure_exists') {
             my $ospathto = aipath2ospath $output_target->[0];
             if (!-e $ospathto) {
                 open my $fhto, ">$binary_layers", $ospathto
-                    or die "Could not open '$ospathto' for write";
+                    or die "Could not open '$ospathto' for write: $!";
                 close $fhto;
             }
         } else {
@@ -4615,12 +5423,14 @@ MAINLOOP: while (1) {
         $output_target = [];
     }
 
-    # Run the command.
+    # Calculate the command line.
     my @rcargs = @xuse;
     defined $rule->{in_subdir} and push @rcargs,
         \ ("cwd:" . $rule->{in_subdir}), \ "relpaths";
     defined $rule->{force_locale} and push @rcargs,
         \ ("locale:" . $rule->{force_locale});
+
+    # Run the command.
     my ($failreason, $stdout, $stderr) = run_command(@rcargs);
 
     $rule->{also_match_stderr} and ($stdout, $stderr) = ($stdout.$stderr, '');
@@ -4671,44 +5481,43 @@ MAINLOOP: while (1) {
         # paths.
         my @regexable = (\$output_target, \$inner, \$depends,
                          undef, \$otarg, \$deparg);
-        my $rx = undef;
         my $aify = 1;
         for my $r (@regexable) {
             if (!defined $r) {
                 $aify = 0;
-            } else {
-                (ref $$r) =~ /\bRegexp$/ and $rx = $r, last;
+                next;
             }
-        }
-        if ($rx) {
+            (ref $$r) =~ /\bRegexp$/ or next;
+
             my $rxreplace = [];
-            if (!ref $stdout) {
-                # Remove the very last newline from $stdout.
-                chomp $stdout;
-                # $stdout needs a split and perhaps an unescape.
+            my $out = (ref $stdout ? dclone $stdout : $stdout);
+            if (!ref $out) {
+                # Remove the very last newline from $out.
+                chomp $out;
+                # $out needs a split and perhaps an unescape.
                 my $linesep = defined_or($rule->{linesep}, "\n");
                 (ref $linesep) !~ /\bRegexp$/
                     and $linesep = qr/\Q$linesep\E/;
                 if (defined $rule->{unescape}) {
-                    my @stdout = ();
-                    push @stdout, $1 while
-                        $stdout =~ m/((?:[^\\]|\\.)*?)(?:$linesep | $ )/gsx;
-                    $stdout = \@stdout;
+                    my @out = ();
+                    push @out, $1 while
+                        $out =~ m/((?:[^\\]|\\.)*?)(?:$linesep | $ )/gsx;
+                    $out = \@out;
                 } else {
-                    $stdout = [split /$linesep/, $stdout];
+                    $out = [split /$linesep/, $out];
                 }
                 if (defined $rule->{unescape} &&
                     $rule->{unescape} eq 'backslash') {
-                    s/\\\n//g for @$stdout;
+                    s/\\\n//g for @$out;
                     s{\\(.)}{do{my $x = $1;
                                 $x =~ y/abfnrt/\a\b\f\n\r\t/; $x}}ge
-                        for @$stdout;
-                    @$stdout = grep $_ ne '', @$stdout;
+                        for @$out;
+                    @$out = grep $_ ne '', @$out;
                 } elsif (defined $rule->{unescape} &&
                          $rule->{unescape} eq 'backslash_whitespace') {
-                    s/\\\n//g for @$stdout;
-                    s/\\([\s\\])/$1/ge for @$stdout;
-                    @$stdout = grep $_ ne '', @$stdout;
+                    s/\\\n//g for @$out;
+                    s/\\([\s\\])/$1/ge for @$out;
+                    @$out = grep $_ ne '', @$out;
                 }
             } else {
                 # If an intcmd is giving us out-of-band end-of-lines, it's
@@ -4717,16 +5526,28 @@ MAINLOOP: while (1) {
             }
 
             my $filter = $rule->{filter};
-            my @outlines = $filter ? grep /$filter/, @$stdout : @$stdout;
+            my @outlines = $filter ? grep /$filter/, @$out : @$out;
             my $lineskip = $rule->{lineskip};
             my $linemax = $rule->{linemax};
+            # move the deref outside the loop, that match is one of the most
+            # run lines in the program (according to the profiler) so any
+            # small gain is helpful; don't bother precompiling the regex
+            # because it's already in a qr// and putting it in another qr//
+            # won't help
+            my $regex_licm = $$r;
             for my $line (@outlines) {
                 $lineskip--, next if $lineskip;
                 next if defined $linemax && $linemax == 0;
                 $linemax-- if defined $linemax;
-                while ($line =~ m/$$rx/g) {
+                while ($line =~ m/$regex_licm/g) {
                     my $n = $1;
-                    $aify and $n = ospath2aipath($n, $inner);
+                    if ($aify) {
+                        my $old_n = $n;
+                        $n = ospath2aipath($n, $inner);
+                        $n eq 'file:' and
+                            die "ospath2aipath could not parse '$old_n' ".
+                            "(pair $curpair)";
+                    }
                     $n =~ /^file:/ and $rule->{output_as_searchfile}
                         and $n = "search$n";
                     push @$rxreplace, $n unless
@@ -4734,20 +5555,19 @@ MAINLOOP: while (1) {
                         ($n !~ /^(search)?file:/ &&
                          $rule->{filter_absolute}) ||
                         ($rule->{filter_nonexistent_files} &&
-                         ($n !~ /^[bs]?path:/ ||
-                          !-e aipath2ospath($n) ||
-                          (!-f _ && !-l _))) ||
+                         $n =~ /^[bs]?path:/ &&
+                         (!-e aipath2ospath($n) || (!-f _ && !-l _))) ||
                         ($rule->{filter_text_files} &&
                          $n =~ /^[bs]?path:/ && -T aipath2ospath($n));
                 }
             }
             if ($rule->{require_match} and !@$rxreplace) {
                 $shortfailreason = $failreason =
-                    "Regular expression $$rx failed to match [@outlines]";
+                    "Regular expression $$r failed to match [@outlines]";
                 $failreason .= "\nThe command line was:\n";
                 $failreason .= run_command(@rcargs, \ "cmdline");
             }
-            $$rx = $rxreplace;
+            $$r = $rxreplace;
         }
         # Our list of everything that could possibly be a regex doubles
         # as a list of everything that could be a scalar or could be an
@@ -4786,25 +5606,41 @@ MAINLOOP: while (1) {
         my ($otype, undef) = parse_objname $o;
         if ($otype eq 'dependencies') {
             croak "Rule $rulename output $o but is not a dependency rule"
-                unless exists $rule->{depends};
+                unless exists $rule->{depends} || $rule->{outdepends};
         } elsif ($objtype_provided{$otype}) {
             croak "Rule $rulename output provided object $o but " .
                 "has no outdepends" unless exists $rule->{outdepends};
         } elsif ($otype eq 'bpath') {
             croak "Provision rule $rulename output produced object $o"
                 if exists $rule->{outdepends};
-            croak "Provision rule $rulename output produced object $o"
-                if exists $rule->{propagate_usedeps};
         } elsif (!exists $rule->{information_only}) {
             croak "Rule $rulename output unprovicable object $o";
+        }
+    }
+    for my $o (@depends) {
+        parse_objname $o; # check it's a well-formed object name
+    }
+
+    # Some rules may produce lots of duplicate output dependencies.
+    # This has the same meaning as non-duplicate dependencies, so we can
+    # just remove the copies. Make sure to keep them in the same order.
+    my @depends_duplicates = @depends;
+    @depends = ();
+    my %depends_seen = ();
+    for my $dependency (@depends_duplicates) {
+        if (!$depends_seen{$dependency}) {
+            $depends_seen{$dependency} = 1;
+            push @depends, $dependency;
         }
     }
 
     my @shortened = map {friendly_objname($_)} @output;
     my $msg;
-    if (@shortened && $shortened[0] =~ /^dependencies:/) {
+    if ($rule->{depends}) {
         @shortened = map {friendly_objname($_)} @depends;
         $verb = "found";
+    } elsif (@depends) {
+        progress_report 4, "Outdepends are [".(join ", ", @depends)."]";
     }
     if (!$failreason) {
         if (scalar @shortened == 0) {
@@ -4929,33 +5765,46 @@ atomically {
             $state->{blocked_by_pair}->{$pair} . "', existence '" .
             ((object_exists $state->{blocked_by_pair}->{$pair}) ?
              'yes' : 'no') . "', command [@$command]";
-        ensure_pair_has_xuse $pair;
-        my @missing_deps = sort grep +((!object_exists $_) && $_ ne 'sys:clean'),
-            @{$state->{xuse_by_pair}->{$pair}};
+        my ($has_xuse, $wanted, $user, $tied) = ensure_pair_has_xuse $pair, 1;
+        my @missing_deps;
+        my $verb = 'missing';
+        if ($has_xuse) {
+            @missing_deps = sort grep +((!object_exists $_) && $_ ne 'sys:clean'),
+                @{$state->{xuse_by_pair}->{$pair}};
+
+            $_ = (friendly_objname($objname) ne
+                  friendly_objname($state->{xuse_by_object}->{$_}->{$pair}) ?
+                  friendly_objname($_) . '(' .
+                  friendly_objname($state->{xuse_by_object}->{$_}->{$pair}) . ')' :
+                  friendly_objname($_))
+                for @missing_deps;
+        } else {
+            @missing_deps = @$tied;
+            $verb = "multiple possibilities for " .
+                friendly_objname($wanted) . ':';
+            (undef, $_) = parse_pairname $_ for @missing_deps;
+            $_ = friendly_objname($_) for @missing_deps;
+        }
         (scalar @missing_deps) or next;
 
         $anyproblems++; # this sort of missing dependency is a problem
 
         if (!$ewprinted) {
             progress_report -1,
-                "\nThe following rules did not run due to missing dependencies:\n";
+                "\nThe following rules did not run due to dependency issues:\n";
         }
-
-        $_ = friendly_objname $_ . '(' .
-            friendly_objname($state->{xuse_by_object}->{$_}->{$pair}) . ')'
-            for @missing_deps;
 
         if ((scalar @missing_deps) > 4) {
             $missing_deps[3] = 'and ' . ((scalar @missing_deps) - 3) .
-                ' more objects';
+                " more objects";
             $#missing_deps = 3;
         }
         my $missing_deps = join ', ', @missing_deps;
 
         if ($objname eq 'sys:no_object') {
-            $bad_rule_deps{"$rulename: $missing_deps"} = {};
+            $bad_rule_deps{"$rulename: $verb $missing_deps"} = {};
         } else {
-            $bad_rule_deps{"$rulename on #OBJECT#: $missing_deps"}->
+            $bad_rule_deps{"$rulename on #OBJECT#: $verb $missing_deps"}->
                           {$objname} = 1;
         }
         $ewprinted++;
@@ -4965,7 +5814,7 @@ atomically {
         if (0 == scalar @objs) {
             progress_report -1, $msg;
         } elsif (1 == scalar @objs) {
-            $msg =~ s/#OBJECT#/'object '.$objs[0]/e;
+            $msg =~ s/#OBJECT#/'object '.friendly_objname($objs[0])/e;
             progress_report -1, $msg;
         } else {
             $msg =~ s/#OBJECT#/(scalar @objs).' objects'/e;
@@ -5007,12 +5856,14 @@ atomically {
         $state->{changed_pairs}->{$pair} or next;
         for my $obj (keys %{$state->{unsure_by_pair}->{$pair}}) {
             my $fobj1 = friendly_objname $obj;
-            my ($sure, $unsure_list) = pair_is_sure $pair;
+            my ($sure, $unsure_list) = pair_is_sure $pair, 0;
             $sure and croak "Pair $pair is changed yet sure at program end";
 
-            # It's theoretically possible that we get a false positive due
-            # to two erroring rules that depend on each other in exactly the
-            # right way. Make sure that's not happening.
+            $unsure_list->[0] eq 'tie' and next;
+
+            # If a rule errored out, we can get a changed, unsure rule that
+            # isn't involve in a dependency loop. Discover if it's in a loop
+            # via actually looking for the object that's in the loop.
             my $last_obj = $unsure_list->[$#$unsure_list];
             $loop_objects{$last_obj} or next;
 
@@ -5021,6 +5872,7 @@ atomically {
             if (!$ewprinted) {
                 progress_report -1,
                     "\nThe following dependency loops were detected:\n";
+                $ewprinted++;
             }
 
             # The list alternates between xuses and pairs, with an xuse at
@@ -5242,15 +6094,16 @@ __DATA__
         # Installing for just one user. Unlike the FHS installs, this one
         # works on Windows too, so there's an autodetect for the most common
         # instance of that (Windows Vista+ with a noncustomized English
-        # document path). As such, care must be taken to avoid any
-        # FHS-specific paths. We still use a vaguely FHS-like layout to keep
-        # things neat, but with more generic names, and all the directories
-        # are arbitrary. (One big difference is the use of $installdir, not
-        # $installdir/bin, for binaries; this makes them easier to find.)
+        # document path). (The /Users/ autodetect is for Mac OS X.) As such,
+        # care must be taken to avoid any FHS-specific paths. We still use a
+        # vaguely FHS-like layout to keep things neat, but with more generic
+        # names, and all the directories are arbitrary. (One big difference is
+        # the use of $installdir, not $installdir/bin, for binaries; this
+        # makes them easier to find.)
         single_user => {
             # The [^/]+ is not a typo: / is not legal in filenames on Windows,
             # so we don't have to worry about an escaped /.
-            autodetect => qr=^spath:(?:/home|(?i:c/users/[^/]+/documents))/=,
+            autodetect => qr=^spath:(?:/home/|/Users/|(?i:c/users/[^/]+/documents))/=,
             preferred_installdir => 'bpath:aimake_install',
 
             # Everything is relative to -i on the command line.
@@ -5326,13 +6179,24 @@ __DATA__
         # TODO: Take these from options? Or from the environment?
         default_cflags => {
             output => 'optionset:CFLAGS',
-            outdepends => 'optstring:-g -O2 -Wall',
+            outdepends => ['optstring:-g',
+                           'optstring:-O2',
+                           'optstring:-Wall'],
+            verb => 'determined',
+            low_message_priority => 1,
+        },
+        default_cxxflags => {
+            output => 'optionset:CXXFLAGS',
+            outdepends => ['optstring:-g',
+                           'optstring:-O2',
+                           'optstring:-Wall'],
             verb => 'determined',
             low_message_priority => 1,
         },
         default_iflags => {
             output => 'optionset:IFLAGS',
-            outdepends => [],
+            outdepends => ['optpath:-include :bpath:aimake/aimake_1.h',
+                           'bpath:aimake/aimake_1.h'],
             verb => 'determined',
             low_message_priority => 1,
         },
@@ -5347,17 +6211,16 @@ __DATA__
             depends => 'optionset:IFLAGS',
             verb => 'determined',
         },
+        cxxflags_includes_iflags => {
+            object => 'optionset:CXXFLAGS',
+            depends => 'optionset:IFLAGS',
+            verb => 'determined',
+        },
 
         default_libraries => {
             # some likely guesses, not including the system libc
-            output => ['searchlib:crypt',
-                       'searchlib:dl',
-                       'searchlib:m',
-                       'searchlib:ncurses',
-                       'searchlib:ncursesw',
-                       'searchlib:pthread',
-                       'searchlib:rt',
-                       'searchlib:z'],
+            output => ['searchlib:m:symbol:sin',
+                       'searchlib:dl:symbol:dlopen'],
             outdepends => [],
             verb => 'determined',
             low_message_priority => 1,
@@ -5372,6 +6235,7 @@ __DATA__
             verb => 'found',
             information_only => 1,
         },
+
         fhs_library_directory => {
             # Are we on a UNIX/Linux-like system? If so, there's a bunch of
             # extra library directories we should add, because some linkers
@@ -5420,16 +6284,16 @@ __DATA__
         #   multiarch version of sys/types.h, as well as a default version.)
         #
         # <setjmp.h>
-        #   We need to find the default system libraries themselves. This
+        #   We need to find the default system headers themselves. This
         #   involves picking one that won't be involved in multiarch, will be
         #   provided by the libc not the compiler, and won't be fixed by the
         #   compiler's installation. The only standard C header that fulfils
-        #   these conditions is <setjmp.h>, probably because it's too weird
-        #   to be caught up in any of the other mechanisms.
+        #   these conditions is <setjmp.h>, probably because it's too weird to
+        #   be caught up in any of the other mechanisms.
         #
         # <zlib.h>
-        #   Finally, some C installations use a separate path for libraries
-        #   that are not part of C or POSIX. zlib is chosen because it has an
+        #   Finally, some C installations use a separate path for headers that
+        #   are not part of C or POSIX. zlib is chosen because it has an
         #   excellent chance of being installed by such installations (it's
         #   not only commonly used by itself, it's also a dependency of lots
         #   of other things).
@@ -5526,9 +6390,17 @@ __DATA__
         # libgcc.a in particular, as far as I can tell.) However, unlike with
         # the headers, we have lists of relevant libraries in the options
         # already. So to locate them, we run ld, via the compiler, specifying
-        # -Wl,--verbose. This gets the linker to tell us where it found each
+        # -Wl,-t (--verbose would produce easier-to-parse output, but isn't
+        # portable). This gets the linker to tell us where it found each
         # library. It'll also tell us about the system's libcs, so we don't
         # need to specify those.
+        #
+        # With GNU ld's and gold's --verbose we can test any number of files
+        # at once; if it errors, it keeps going. However, this doesn't work
+        # using Darwin ld (which requires -t); it produces no useful output
+        # on error. Thus, we run on each library independently. (This is why
+        # the searchlib: object type is needed; it can't be done with an
+        # optionset because that would not allow looping over the libraries.)
         generate_library_test_object_file => {
             object => 'bpath:aimake/aimake_1.c',
             command => ['tool:c_compiler', 'optpath::', '',
@@ -5537,22 +6409,37 @@ __DATA__
             verb => 'built',
             low_message_priority => 1,
         },
-        find_libraries => {
+        find_library_symbol_check => {
+            # Tell the linker to link in the specified symbol.  (This won't
+            # work on a library that has reverse imports, but that's a dubious
+            # situation in the first place.)
             object => qr/^searchlib:/,
+            command => ['intcmd:echo', 'optpath::'],
+            depends => 'optstring:-Wl,-u,',
+            dependsarg => qr/^searchlib:[^:]+:symbol:(.*)$/s,
+            require_match => 1,
+        },
+        find_default_static_libraries => {
+            # On systems with a static libc, the linker may report only on
+            # archive components that are actually linked in.  As such, we
+            # have to force the whole thing to be linked, which is kind-of
+            # slow, but there's no other real option.  fail_silently is at 2
+            # for this because a) it assumes the GNU linker (and other linkers
+            # will error out on these options; fail_silently makes this
+            # harmless except if those systems also have a static libc), b)
+            # some libcs don't actually link correctly under --whole-archive.
+            # Incidentally, this actually crashes mingw ld, but the crash
+            # comes after the information we need is already available; it
+            # happens during the link proper, rather than during the trace.
             command => ['tool:c_linker', "bpath:aimake/aimake_1$objext",
                         "optpath::bpath:aimake/aimake_1$objext",
                         "optpath:-o :bpath:aimake/aimake_1$exeext",
-                        'optpath:-l:',
-                        'optstring:-Wl,-t'],
-            # We're looking at the linker's trace output to locate
-            # libraries. -t prints each found object file on its own
-            # line on stderr. We recognise the object files via the
-            # extension, and the fact that they're existing, binary
-            # files.
-            #
-            # Some versions of ld will write this as -llib (pathname);
-            # recognise that pattern too.
-            output => qr/^(?:-l[^ ]+ \()?(.*(?<!aimake_1)(?:\Q$libext\E|\Q$objext\E|\.so|\.dll|\.dylib)(?:\.[0-9]+)?)\)?$/s,
+                        'optstring:-Wl,-t,--whole-archive,--allow-multiple-definition'],
+            # We're looking at the linker's trace output to locate libraries.
+            # -t prints each found object file on its own line on stderr. We
+            # recognise the object files via the extension, and the fact that
+            # they're existing, binary files.
+            output => qr/^(?:(?:-l|lib)[^ ]+ )?\(?(.*?\/.*?(?<!aimake_1)(?:\Q$libext\E|\Q$objext\E|\Q$dllext\E)(?:\.[0-9]+)?)(?:\)|\([^\/]*\)|\z)/s,
             filter_text_files => 1,
             filter_nonexistent_files => 1,
             force_locale => 'C',
@@ -5565,21 +6452,67 @@ __DATA__
             information_only => 1,
             low_message_priority => 1,
         },
+        find_libraries => {
+            object => qr/^searchlib:/,
+            command => ['tool:c_linker', "bpath:aimake/aimake_1$objext",
+                        "optpath::bpath:aimake/aimake_1$objext",
+                        "optpath:-o :bpath:aimake/aimake_1$exeext",
+                        'optpath:-l:',
+                        'optstring:-Wl,-t'],
+            output => qr/^(?:(?:-l|lib)[^ ]+ )?\(?(.*?\/.*?(?<!aimake_1)(?:\Q$libext\E|\Q$objext\E|\Q$dllext\E)(?:\.[0-9]+)?)(?:\)|\([^\/]*\)|\z)/s,
+            filter_text_files => 1,
+            filter_nonexistent_files => 1,
+            force_locale => 'C',
+            verb => 'found',
+            fail_silently => 1,
+            also_match_stderr => 1,
+            information_only => 1,
+            low_message_priority => 1,
+        },
 
-        # Compiling c.
+        # An aimake-specific header file that's forced onto every C file.
+        generate_aimake_header => {
+            command => [
+                'intcmd:writefile', 'optpath::bpath:aimake/aimake_1.h',
+                'optstring:' .
+                '#ifndef_AIMAKE\\_HEADER\\_INCLUDED ' .
+                '#_define_AIMAKE\\_HEADER\\_INCLUDED ' .
+                "#_define_AIMAKE\\_BUILDOS\\_$^O_1",
+                'optionset:aimake_header_lines',
+                'optstring: #endif'],
+            output => 'bpath:aimake/aimake_1.h',
+            verb => 'generated',
+            low_message_priority => 1,
+        },
+        default_aimake_header_lines => {
+            output => 'optionset:aimake_header_lines',
+            outdepends => [],
+        },
+
+        # Compiling C and C++.
         c_compiler_tool => {
             output => 'tool:c_compiler',
             outdepends => ['cmd:gcc', 'optionset:CFLAGS', 'optstring:-c'],
             verb => 'found',
         },
-        c_dependencies_tool => {
+        cxx_compiler_tool => {
+            output => 'tool:cxx_compiler',
+            outdepends => ['cmd:gcc', 'optionset:CXXFLAGS', 'optstring:-c'],
+            verb => 'found',
+        },
+        c_cxx_dependencies_tool => {
             output => 'tool:c_dependencies',
             outdepends => ['cmd:gcc', 'optstring:-M -MG',
                            'optionset:IFLAGS'],
             verb => 'found',
         },
+        c_cxx_preprocess_tool => {
+            output => 'tool:c_preprocessor',
+            outdepends => ['cmd:gcc', 'optstring:-E', 'optionset:IFLAGS'],
+            verb => 'found',
+        },
         ch_file_dependencies => {
-            object => qr/^b?path:(?!aimake\/).*\.[ch]$/s,
+            object => qr/^b?path:(?!aimake\/).*\.[ch](?:xx)?$/s,
             command => ['tool:c_dependencies', 'optpath::'],
             # A little aimake magic here: this outputs relative paths for
             # non-found files, and those become file: objects, whereas
@@ -5592,7 +6525,7 @@ __DATA__
             filter_spath => 1,
         },
         ch_file_searchfiles => {
-            object => qr/^b?path:(?!aimake\/).*\.[ch]$/s,
+            object => qr/^b?path:(?!aimake\/).*\.[ch](?:xx)?$/s,
             command => ['tool:c_dependencies', 'optpath::'],
             linesep => ' ', lineskip => 2, unescape => 'backslash_whitespace',
             output => qr/^(.+)$/s,
@@ -5601,28 +6534,24 @@ __DATA__
             filter_absolute => 1,
             output_as_searchfile => 1,
         },
+        # We can't just put config options in aimake_1.h, like we do for the
+        # other aimake defines, because we need dependencies on them from the
+        # config options.
         ch_embedded_aimake_option => {
-            object => qr/^b?path:(?!aimake\/).*\.[ch]$/s,
+            object => qr/^b?path:(?!aimake\/).*\.[ch](?:xx)?$/s,
             command => ['intcmd:cat', 'optpath::'],
-            depends => 'config_option:',
+            depends => 'dependencies:embedded_aimake_option:config_option:',
             dependsarg => qr'AIMAKE_OPTION_([a-zA-Z0-9_]+)',
         },
         embedded_aimake_option_define => {
             object => qr/^config_option:/,
             command => ['intcmd:optionvalues', 'optpath::'],
-            depends => 'optstring:-DAIMAKE_OPTION_',
+            output => 'dependencies:embedded_aimake_option:',
+            outdepends => 'optstring:-DAIMAKE_OPTION_',
             dependsarg => qr/^(.*)$/,
         },
-        ch_embedded_aimake_buildos => {
-            # Define AIMAKE_BUILDOS_$^O if it's mentioned by a file.
-            # (That is, AIMAKE_BUILDOS_MSWin32 is defined on Windows, etc.)
-            object => qr/^b?path:(?!aimake\/).*\.[ch]$/s,
-            command => ['intcmd:cat', 'optpath::'],
-            depends => "optstring:-DAIMAKE_BUILDOS_",
-            dependsarg => qr"AIMAKE_BUILDOS_($^O)",
-        },
         header_files_are_files => {
-            object => qr/^[bs]?path:.*\.h/,
+            object => qr/^[bs]?path:.*\.h(?:xx)?/,
             command => ['intcmd:echo', 'optpath::'],
             output => 'file:',
             outputarg => qr/^[bs]?path:
@@ -5632,12 +6561,278 @@ __DATA__
         },
         compile_c => {
             object => qr/^b?path:(?!aimake\/).*\.c$/s,
+            # Double-extend the filename, in case we have a C and C++ source
+            # file with the same basename.
             command => ['tool:c_compiler', 'optpath::',
-                        "optpath:-o :extend:$objext:"],
-            output => "extend:$objext:",
+                        "optpath:-o :extend:_c$objext:"],
+            output => "extend:_c$objext:",
             verb => 'compiled',
             in_subdir => 'bpath:', # shorter error/warning messages
         },
+        compile_cxx => {
+            object => qr/^b?path:(?!aimake\/).*\.cxx$/s,
+            # Double-extend the filename, in case we have a C and C++ source
+            # file with the same basename.
+            command => ['tool:cxx_compiler', 'optpath::',
+                        "optpath:-o :extend:_cxx$objext:"],
+            output => "extend:_cxx$objext:",
+            verb => 'compiled',
+            in_subdir => 'bpath:', # shorter error/warning messages
+        },
+
+        # OS detection
+        #
+        # Necessary to link shared libraries correctly.
+
+        os_detect_linux => {
+            command => ['intcmd:assert_equal',
+                        'optstring:linux', "optstring:$^O"],
+            fail_silently => 1,
+            output => ['optionset:os_linux', 'optionset:os_osx_linux'],
+            outdepends => [],
+        },
+        os_detect_windows => {
+            command => ['intcmd:assert_equal',
+                        'optstring:MSWin32', "optstring:$^O"],
+            fail_silently => 1,
+            output => 'optionset:os_windows',
+            outdepends => [],
+        },
+        os_detect_osx => {
+            command => ['intcmd:assert_equal',
+                        'optstring:darwin', "optstring:$^O"],
+            fail_silently => 1,
+            output => ['optionset:os_osx', 'optionset:os_osx_linux'],
+            outdepends => [],
+        },
+
+        # Shared objects.
+        #
+        # We detect that a library is wanted using flags in the source code:
+        #
+        # AIMAKE_EXPORT  This symbol is in a library and should be exported.
+        # AIMAKE_IMPORT  This symbol should be imported from a library.
+        # AIMAKE_REVERSE_EXPORT  This symbol should be made available to
+        #                        libraries that use this code.
+        # AIMAKE_REVERSE_IMPORT  This symbol should be imported from users of
+        #                        this library into the library itself.
+        #
+        # Both _EXPORTs become __attribute__((visibility("default"))) on
+        # Linux, and __declspec(dllexport) on Windows. The _IMPORTs are no-ops
+        # on Linux, and become __declspec(dllimport) on Windows. Mac OS X
+        # apparently works the same way as Linux in this respect (it supports
+        # "hidden" and "default" visibility the same way Linux does).
+        #
+        # The syntax in the source file is AIMAKE_EXPORT(symbol), etc.. The
+        # reason for this is so that we can identify symbol names that need
+        # exporting using the preprocessor (using token pasting and
+        # $longrandomstring). Once we find these, we create a symbolset for
+        # each based on the stem of the namehints of the symbol. (That way, we
+        # don't end up creating duplicate libraries.)
+
+        ch_embedded_aimake_export => {
+            object => qr/^b?path:(?!aimake\/).*\.[ch](?:xx)?$/s,
+            command => ['tool:c_preprocessor', 'optpath::', 'optstring:-P',
+                        "optstring:-DAIMAKE_OVERRIDE_DEFINES",
+                        "optstring:-DAIMAKE_EXPORT(x)=${longrandomstring}##x[]",
+                        "optstring:-DAIMAKE_ABI_VERSION(x)=${longrandomstring}[x]",],
+            output => 'shared_symbol:',
+            outputarg => qr/${longrandomstring}(\w+)/,
+            # We want the name of the library to be based on the name of the
+            # source files and headers that exported the symbol. (A previous
+            # version of this code based it on the object files that were
+            # dependencies of the symbol, but that caused problems with
+            # transitive dependencies.) An AIMAKE_ABI_VERSION argument gives
+            # us hints about what version number to use, if present. If not,
+            # we produce unversioned namehints, because this regexp matches
+            # AIMAKE_EXPORTs as well.
+            outdepends => 'namehint:',
+            dependsarg => qr/${longrandomstring}\w*\s*\[([^][]*)\]/,
+            verb => 'found',
+        },
+        ch_embedded_aimake_reverse_import => {
+            # Reverse imports shouldn't count as dependencies for the purpose
+            # of creating an import library, or for linking shared libraries
+            # on Linux. They should count for the purpose of linking DLLs on
+            # Windows, and for creating executables on any platform. Thus, we
+            # null-provide them here, and avoid this rule in any rule that
+            # should link them "properly".
+            object => qr/^b?path:(?!aimake\/).*\.[ch](?:xx)?$/s,
+            command => ['tool:c_preprocessor', 'optpath::', 'optstring:-P',
+                        "optstring:-DAIMAKE_OVERRIDE_DEFINES",
+                        "optstring:-DAIMAKE_REVERSE_IMPORT(x)=${longrandomstring}##x"],
+            output => ['symbol:', 'symbol:__imp_'],
+            outputarg => qr/${longrandomstring}(\w+)/,
+            outdepends => [],
+            preference => 100,
+        },
+        create_symbolset => {
+            object => qr/^shared_symbol:/,
+            command => ['intcmd:xuse_statistics', "optstring:$objext"],
+            output => 'symbolset:',
+            outputarg => qr/^version=(.*)$/,
+            inner => qr/^stem=(.+)$/,
+            outdepends => qr/^dependency=shared_(symbol:.*)$/,
+            avoid_rules => qr/^(?:bpath_shared_object_provisions |,
+                                  linux_library_finding_link)/x,
+            verb => 'named',
+        },
+
+        link_shared_library_linux => {
+            object => qr/^symbolset:/,
+            command => ['tool:c_linker', 'optstring:-shared',
+                        'dependencies:symbolset_soname_linux:',
+                        'dependencies:symbolset_output_linux:'],
+            output_from_optpath => '-o ',
+            in_subdir => 'bpath:',
+            verb => 'linked',
+            avoid_rules => qr/^(?:linux_library_finding_link |
+                                  library_option_for_import_libs)$/x,
+        },
+        link_shared_library_windows => {
+            object => qr/^symbolset:/,
+            command => ['tool:c_linker', 'optstring:-shared',
+                        "optpath:-o :extend:$dllext:",
+                        'optionset:os_windows'],
+            output_from_optpath => '-o ',
+            in_subdir => 'bpath:',
+            verb => 'linked',
+            avoid_rules => qr/^(?:library_option_for_import_libs |
+                                  ch_embedded_aimake_reverse_import)$/x,
+            avoid_built_from => "extend:$impext:",
+        },
+
+        osx_linux_cflags => {
+            command => ['intcmd:nop', 'optionset:os_osx_linux'],
+            output => ['optionset:CFLAGS', 'optionset:CXXFLAGS'],
+            outdepends => 'optstring:-fvisibility=hidden',
+        },
+        osx_linux_lflags => {
+            command => ['intcmd:nop', 'optionset:os_osx_linux'],
+            output => 'optionset:LFLAGS',
+            outdepends => 'optstring:-rdynamic',
+        },
+        osx_linux_headerlines => {
+            command => ['intcmd:nop', 'optionset:os_osx_linux'],
+            output => 'optionset:aimake_header_lines',
+            outdepends => 'optstring:' .
+                '#_ifndef_AIMAKE\\_OVERRIDE\\_DEFINES ' .
+                '#__define_AIMAKE\\_ABI\\_VERSION(x) ' .
+                '#__define_AIMAKE\\_IMPORT(x)_x ' .
+                '#__define_AIMAKE\\_REVERSE\\_IMPORT(x)_x ' .
+                '#__define_AIMAKE\\_EXPORT(x)_\\_\\_attribute\\_\\_(('.
+                'visibility("default")))_x '.
+                '#__define_AIMAKE\\_REVERSE\\_EXPORT(x)_\\_\\_attribute\\_\\_(('.
+                'visibility("default")))_x ' .
+                '#_endif'
+        },
+        symbolset_soname_linux => {
+            object => qr/^symbolset:/,
+            command => ['intcmd:echo', 'optionset:os_linux', 'optpath::'],
+            propagate_usedeps => 2,
+            output => 'dependencies:symbolset_soname_linux:',
+            outdepends => "optpath:-Wl,-soname,:extend:...:extend:$dllext",
+            dependsarg => qr/^symbolset:(\.?[^.:]*)/s,
+        },
+        symbolset_output_linux => {
+            object => qr/^symbolset:/,
+            command => ['intcmd:echo', 'optionset:os_linux', 'optpath::'],
+            propagate_usedeps => 2,
+            output =>  'dependencies:symbolset_output_linux:',
+            outdepends => "optpath:-o :extend:$dllext",
+            dependsarg => qr/^symbolset:([^:]*)/s,
+        },
+
+        windows_headerlines => {
+            command => ['intcmd:nop', 'optionset:os_windows'],
+            output => 'optionset:aimake_header_lines',
+            outdepends => 'optstring:' .
+                '#_ifndef_AIMAKE\\_OVERRIDE\\_DEFINES ' .
+                '#__define_AIMAKE\\_ABI\\_VERSION(x) ' .
+                '#__define_AIMAKE\\_IMPORT(x)_\\_\\_declspec(dllimport)_x ' .
+                '#__define_AIMAKE\\_REVERSE\\_IMPORT(x)_' .
+                '\\_\\_declspec(dllimport)_x ' .
+                '#__define_AIMAKE\\_EXPORT(x)_\\_\\_declspec(dllexport)_x ' .
+                '#__define_AIMAKE\\_REVERSE\\_EXPORT(x)_' .
+                '\\_\\_declspec(dllexport)_x ' .
+                '#_endif'
+        },
+        windows_generate_import_library => {
+            # Windows won't create a shared library if it has missing
+            # dependencies, which causes problems in the case of reverse
+            # imports. However, this is fixable via creating an import library
+            # manually, rather than telling the linker to do it, and from the
+            # object files rather than the resulting DLL; the missing
+            # reverse-exported symbols won't matter when creating the import
+            # library, and there are no longer any circular dependencies.
+            object => qr/^symbolset:/,
+            command => ['cmd:dlltool', 'optionset:os_windows',
+                        "optpath:-l :extend:$impext:",
+                        "optpath:-D :extend:...:extend:$dllext:"],
+            output_from_optpath => ['-l '],
+            in_subdir => 'bpath:',
+            verb => 'generated',
+            avoid_rules => qr/^library_option_for_linking$/,
+        },
+
+        # The setup for versioned shared libraries on Debian/Ubuntu, also used
+        # by aimake for Linux, places the library at libXXX.so.1.2.3, then
+        # places a symlink from its soname (libXXX.so.1) so that ld.so can
+        # find it, and a symlink from its unadorned name (libXXX.so) so that
+        # ld can find it.
+        linux_ld_so_finding_link => {
+            object => qr/^bpath:.*\Q$dllext\E\.[\d]*\.[\d.]*\z/s,
+            command => ['intcmd:echo', 'optionset:os_linux', 'optpath::'],
+            output => 'dependencies:linux_library_finding_link:',
+            outdepends => "optpath:-o:",
+            propagate_usedeps => 2,
+            dependsarg => qr/^(.*\Q$dllext\E\.?[^.]*)[\d.]*$/s,
+            avoid_rules => qr/^linux_library_finding_link$/,
+        },
+        linux_ld_finding_link => {
+            object => qr/^bpath:.*\Q$dllext\E\.[\d.]*\z/s,
+            command => ['intcmd:echo', 'optionset:os_linux', 'optpath::'],
+            output => 'dependencies:linux_library_finding_link:',
+            outdepends => "optpath:-o:",
+            propagate_usedeps => 2,
+            dependsarg => qr/^(.*\Q$dllext\E)[\d.]*$/s,
+            avoid_rules => qr/^linux_library_finding_link$/,
+        },
+        linux_library_finding_link => {
+            object => qr/^bpath:.*\Q$dllext\E\.[\d.]*\z/s,
+            command => ['dependencies:linux_library_finding_link:',
+                        'optpath::', 'intcmd:symlink'],
+            output_from_optpath => '-o',
+            propagate_usedeps => 2,
+            verb => 'symlinked',
+            avoid_rules => qr/^linux_library_finding_link$/,
+        },
+
+        # Selecting sensible names.
+        #
+        # This is used for executables (the names of shared objects are based
+        # on the names of the filenames which declare the objects they
+        # export). When selecting a sensible name for an executable, we base
+        # it on the bpath objects that contain initialized read/write data, as
+        # a crude heuristic to distinguish programs from library functions.
+        # (Library functions rarely work on a single, centralized copy of data
+        # because that causes a lack of re-entrancy. Read-only data doesn't
+        # count for this purpose; and uninitialized data is possibly a static
+        # buffer, which is a much more common way to lack re-entrancy than
+        # initialized data.) Additionally, a symbol "main" or "_main"
+        # automatically gets your name hinted, and exported symbols get their
+        # names hinted when creating shared libraries.
+        # choose_namehint => {
+        #     object => qr/^bpath:.*\Q$objext\E$/,
+        #     depends => 'namehint:',
+        #     command => ['cmd:nm', 'optpath::'],
+        #     # In order to conditionally include the namehint, we use a regex
+        #     # match that captures nothing. If it doesn't match, there'll be no
+        #     # capture and thus no hint. (The hint itself is provided by the
+        #     # implicit inner => ''.)
+        #     dependsarg => qr'^()[[:xdigit:]]*\s+(?:[tT] _?main|[dDgG])',
+        #     verb => 'chose',
+        # },
 
         # Linking.
         c_link_tool => {
@@ -5645,78 +6840,166 @@ __DATA__
             outdepends => ['cmd:gcc', 'optionset:LFLAGS'],
             verb => 'found',
         },
-        oa_file_dependencies => {
+        object_dependencies => {
             # Note that this only matches the bpath, not the spath.
-            object => qr/^bpath:.*(?:\Q$objext\E|\Q$libext\E)$/,
+            object => qr/^bpath:.*(?:\Q$objext\E|\Q$libext\E|\Q$dllext\E)$/,
             command => ['cmd:nm', 'optpath::'],
             depends => 'symbol:',
             # To make things work on Windows, omit symbols that start with a
-            # double underscore, and translate DLL import hooks (__imp_.*) to
-            # the function being imported.
-            dependsarg => qr'^[[:xdigit:]]*\s+U (?:__imp_)?((?>_?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*))',
+            # double underscore, apart from DLL import hooks (__imp_.*).
+            dependsarg => qr'^[[:xdigit:]]*\s+U ((?>_?(?:_imp_+)?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*))',
         },
         o_file_provisions => {
             object => qr/^b?path:(?!aimake\/).*\Q$objext\E\z/,
             command => ['cmd:nm', 'optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
-            # [ABCDGRSTVWiI] are all the externally visible symbols. (Capital
-            # I is used on Windows for DLL exports; normally there's a __imp_
-            # with an I and a non-prefixed version of a function with a T, but
-            # for variables, only the I exists, so we need to remove the
-            # __imp_ ourself.)
-            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] (?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+))',
+            # [ABCDGRSTVWiI] are all the externally visible symbols.
+            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] ((?>_?(?:_imp_+)?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*))',
             # inner => '' is implied, as with the next few rules
-            outdepends => ['', 'optpath::'],
+            # outdepends => '' is implied by propagate_usedeps
+            outdepends => 'optpath::',
             verb => 'found',
             propagate_usedeps => 1,
+            preference => 80,
         },
         a_file_provisions => {
             object => qr/^spath:.*\Q$libext\E\z/s,
             command => ['cmd:nm', 'optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
-            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] (?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+))',
+            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] ((?>_?(?:_imp_+)?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*))',
             ignore_warnings => 1,
-            outdepends => '',
+            outdepends => [],
             verb => 'found',
             propagate_usedeps => 1,
             low_message_priority => 1,
+            preference => 30,
         },
         shared_object_provisions_nondynamic => {
-            # TODO: condition by platform
-            object => qr/^spath:.*\.(?:so|dll|dylib)(?:\z|\.)/s,
+            object => qr/^s?path:.*\Q$dllext\E(?:\z|\.)[\d.]*\z/s,
             command => ['cmd:nm', 'optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
-            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] (?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+))',
+            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] ((?>_?(?:_imp_+)?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*))',
             ignore_warnings => 1,
             propagate_usedeps => 1,
-            outdepends => '',
+            outdepends => [],
             verb => 'found',
             low_message_priority => 1,
+            preference => 50,
         },
         shared_object_provisions_dynamic => {
-            # TODO: condition by platform
-            object => qr/^spath:.*\.(?:so|dll|dylib)(?:\z|\.)/s,
+            object => qr/^s?path:.*\Q$dllext\E(?:\z|\.)[\d.]*\z/s,
             command => ['cmd:nm','optstring:-D','optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
-            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] (?>(?:__imp_)?)((?>[a-zA-Z0-9_$]+))',
+            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] ((?>_?(?:_imp_+)?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*))',
             fail_silently => 1, # not everything is dynamic
             ignore_warnings => 1,
             propagate_usedeps => 1,
-            outdepends => '',
+            outdepends => [],
             verb => 'found',
             low_message_priority => 1,
+            preference => 50,
         },
+        bpath_shared_object_provisions_nondynamic => {
+            # For Windows, we need to find the provisions of the import library
+            # (.dll.a).  On other platforms, $impext is $dllext, so this matches
+            # the shared object as required.
+            object => qr/^bpath:.*\Q$impext\E(?:\z|\.)[\d.]*\z/s,
+            command => ['cmd:nm', 'optpath::'],
+            output => ['symbol:', 'symbol_in_object:'],
+            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] ((?>_?(?:_imp_+)?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*))',
+            ignore_warnings => 1,
+            propagate_usedeps => 1,
+            outdepends => [],
+            verb => 'found',
+            low_message_priority => 1,
+            preference => 90,
+            avoid_rules => qr/^linux_library_finding_link$/,
+        },
+        bpath_shared_object_provisions_dynamic => {
+            object => qr/^bpath:.*\Q$impext\E(?:\z|\.)[\d.]*\z/s,
+            command => ['cmd:nm','optstring:-D','optpath::'],
+            output => ['symbol:', 'symbol_in_object:'],
+            outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] ((?>_?(?:_imp_+)?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*))',
+            fail_silently => 1, # not everything is dynamic
+            ignore_warnings => 1,
+            propagate_usedeps => 1,
+            outdepends => [],
+            verb => 'found',
+            low_message_priority => 1,
+            preference => 90,
+            avoid_rules => qr/^linux_library_finding_link$/,
+        },
+
         spath_library_option => {
-            object => qr/^spath:.*(?:\.so|\.dll|\.dylib|\Q$libext\E)(?:\z|\.)/,
-            command => ['intcmd:echo', 'optpath::'],
-            depends => 'optstring: -l',
-            # Libraries on the spath which are not lib* get no option; they
-            # probably don't get generated in the first place (apart from
-            # the dynamic loader, which shouldn't be mentioned anyway)
-            dependsarg => qr/^[bs]?path:
-                (?:(?:[^\\]|\\.)+\/)?lib((?:[^\\\/]|\\.)+?)
-                (?:\.so|\.dll|\.dylib|\Q$libext\E)(\z|\.)/x,
+            object => qr/^spath:.*(?:\Q$dllext\E|\Q$libext\E)(?:\z|\.)[\d.]*\z/s,
+            depends => 'dependencies:library_option:',
         },
+        bpath_library_option => {
+            # If we generated the library ourself, we need to link against the
+            # import library, not the library proper (unless the library is its
+            # own import library, as on Linux).  Also set an appropriate runtime
+            # path for the platform.
+            object => qr/^bpath:.*\Q$impext\E(?:\z|\.)[\d.]*\z/s,
+            depends => ['dependencies:library_option:',
+                        'optionset:rpath'],
+        },
+        library_option_for_linking => {
+            object => qr/^(?:spath:.*(?:\Q$dllext\E|\Q$libext\E)(?:\z|\.)[\d.]*\z |
+                             bpath:.*\Q$impext\E(?:\z|\.)[\d.]*\z)/sx,
+            propagate_usedeps => 2,
+            output => 'dependencies:library_option:',
+            # The obvious thing to do here is to try to construct an -l option
+            # from the name on the spath, but this can fail on Linux because a
+            # library's soname doesn't necessarily have to correlate with the
+            # unadorned version of the filename that's used for linking
+            # it. What we'd ideally have to do would be to realpath the
+            # spath library, then look for symlinks to it and pick the most
+            # unadorned one. Rather than that complexity, we just specify the
+            # path directly, the same way as is done for bpath libraries; it
+            # comes to the same thing anyway, except that it doesn't give the
+            # linker the chance to override the .a/.so choice that aimake made
+            # (and thus confuse it by linking to a library with different
+            # symbols, in the case where the two aren't identical).
+            outdepends => 'optpath: :',
+        },
+        library_option_for_import_libs => {
+            object => qr/^(?:spath:.*(?:\Q$dllext\E|\Q$libext\E)(?:\z|\.)[\d.]*\z |
+                             bpath:.*\Q$impext\E(?:\z|\.)[\d.]*\z)/sx,
+            propagate_usedeps => 2,
+            output => 'dependencies:library_option:',
+            outdepends => [],
+        },
+
+        linux_rpath => {
+            # We set the rpath to the installed location for the shared
+            # objects. We can't know if it'll be libdir or specificlibdir,
+            # so we do both.
+            output => 'optionset:linux_rpath',
+            command => ['intcmd:optionvalues',
+                        'config_option:libdir',
+                        'config_option:specificlibdir',
+                        'optpath::config_option:libdir',
+                        'optpath::config_option:specificlibdir'],
+            outdepends => 'optpath:-Wl,-rpath=:',
+            inner => qr/^(?:specific)?libdir=(.*)$/,
+        },
+        linux_bpath_library_option => {
+            command => ['intcmd:assert_equal',
+                        'optstring:linux', "optstring:$^O"],
+            fail_silently => 1,
+            output => 'optionset:rpath',
+            outdepends => 'optionset:linux_rpath',
+        },
+
+        windows_rpath => {
+            # TODO: Figure out how runtime paths work on Windows.
+            command => ['intcmd:assert_equal',
+                        'optstring:MSWin32', "optstring:$^O"],
+            fail_silently => 1,
+            output => 'optionset:rpath',
+            outdepends => [],
+        },
+
         link_c => {
             object => qr/^b?path:.*\Q$objext\E/,
             command => ['symbol_in_object:main:', 'tool:c_linker',
@@ -5724,11 +7007,13 @@ __DATA__
             output => "extend:$exeext:",
             verb => 'linked',
             in_subdir => 'bpath:',
+            avoid_rules => qr/^(?:library_option_for_import_libs |
+                                  ch_embedded_aimake_reverse_import)$/x,
         },
-        # Some compilers add an extra underscore to everything. No
-        # problem, we'll just link files with a _main too. (This
-        # causes issues if a file has both a _main and a main, but
-        # in such a case, we're in trouble anyway.)
+        # Some compilers add an extra underscore to everything. No problem,
+        # we'll just link files with a _main too. (This causes issues if a
+        # file has both a _main and a main, but in such a case, we're in
+        # trouble anyway.)
         link_mangled_c => {
             object => qr/^b?path:.*\Q$objext\E/,
             command => ['symbol_in_object:_main:', 'tool:c_linker',
@@ -5736,6 +7021,8 @@ __DATA__
             output => "extend:$exeext:",
             verb => 'linked',
             in_subdir => 'bpath:',
+            avoid_rules => qr/^(?:library_option_for_import_libs |
+                                  ch_embedded_aimake_reverse_import)$/x,
         },
 
         # lex, yacc
@@ -5773,31 +7060,14 @@ __DATA__
             verb => 'generated',
         },
 
-        # Creating static libraries. We do this by looking at .api files that
-        # specify what symbols should be in them. (It'd be nice to somehow
-        # mark all the other symbols as nonpublic, but there's no obvious way
-        # to do that.)
-        ar_tool => {
-            output => 'tool:ar',
-            outdepends => ['cmd:ar', 'optstring:rcs'],
-            verb => 'found',
+        # Installing. Some projects may wish to modify or undef out these rules.
+        install_libraries => {
+            object => qr/^bpath:.*\Q$dllext\E(?:\z|\.)[\d.]*\z$/s,
+            install_dir => "libdir",
         },
-        api_dependencies => {
-            # bpath is allowed here in case people want to generate .api files
-            # at runtime and have them work correctly
-            object => qr/^b?path:.*\.api$/,
-            command => ['intcmd:cat'],
-            filter => qr/^symbol:/,
-            depends => 'symbol:',
-            dependsarg => qr/^symbol:([^#]+?)\s*(?:#|$)/,
-        },
-        create_library => {
-            object => qr/^b?path:.*\.api$/,
-            command => ['tool:ar', "optpath::extend:$libext:"],
-            output => "extend:$libext",
-            ignore_spath => 1,
-            verb => 'created',
-            in_subdir => 'bpath:',
+        install_executables => {
+            object => qr/^bpath:.*\Q$exeext\E$/s,
+            install_dir => "bindir",
         },
     },
 }

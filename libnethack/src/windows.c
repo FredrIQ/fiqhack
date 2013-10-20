@@ -4,7 +4,7 @@
 
 #include "hack.h"
 
-struct nh_window_procs windowprocs;
+extern struct nh_window_procs windowprocs;
 
 int
 getpos(coord * cc, boolean force, const char *goal)
