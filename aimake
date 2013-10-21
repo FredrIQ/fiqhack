@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2013-10-16
+# Last modified by Alex Smith, 2013-10-19
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
@@ -522,7 +522,10 @@ be included from a header file.)
 In addition to changing the source and headers that make up your project, it
 is also possible to add a project-specific configuration file, that contains
 configuration options or rules overrides.  This should be a file named
-F<aimake.rules> in the source directory.  Here's a sample configuration:
+F<aimake.rules> in the source directory.  (A second file, named aimake.local,
+can also be used; the idea is that aimake.rules can be kept under version
+control and provided by the project authors, with aimake.local used for local
+changes.)  Here's a sample configuration:
 
     {
         options => {
@@ -2649,6 +2652,7 @@ use Storable qw/store_fd fd_retrieve dclone/; # why the naming inconsistency?
 ####### Global variables and constants
 
 use constant configfilename => 'path:aimake.rules';
+use constant localconfigfilename => 'path:aimake.local';
 use constant statefilename => 'bpath:aimake.objects';
 
 select STDERR;
@@ -4952,30 +4956,32 @@ if ($opt_ignore_builtin_config) {
 }
 
 # Parse the local config file, from path:aimake.rules
-my $localconfigfile = aipath2ospath(configfilename);
-if (-f $localconfigfile) {
-    local $/;
-    open my $fh, '<', $localconfigfile
-        or die "Could not open config file $localconfigfile: $!";
-    $configdata = <$fh>;
-} else { $configdata = '{}'; }
-my $localconfig;
-if ($] >= 5.009) {
-    $localconfig = $configsafe->reval($configdata, 0);
-} else {
-    $localconfig = eval $configdata;
-}
-$@ or ($! and $@ = $!);
-$@ or $@ = "bad configuration file format";
-defined $localconfig or
-    die "Could not load project-specific config file: $@";
-undef $@;
-ref $localconfig eq 'HASH'
-    or die "Invalid type in project-specific config file";
-for my $t (qw/rules options directories/) {
-    if (exists $localconfig->{$t}) {
-        $config->{$t}->{$_} = $localconfig->{$t}->{$_}
+for my $localconfigfile (aipath2ospath(configfilename),
+                         aipath2ospath(localconfigfilename)) {
+    if (-f $localconfigfile) {
+        local $/;
+        open my $fh, '<', $localconfigfile
+            or die "Could not open config file $localconfigfile: $!";
+        $configdata = <$fh>;
+    } else { $configdata = '{}'; }
+    my $localconfig;
+    if ($] >= 5.009) {
+        $localconfig = $configsafe->reval($configdata, 0);
+    } else {
+        $localconfig = eval $configdata;
+    }
+    $@ or ($! and $@ = $!);
+    $@ or $@ = "bad configuration file format";
+    defined $localconfig or
+        die "Could not load project-specific config file: $@";
+    undef $@;
+    ref $localconfig eq 'HASH'
+        or die "Invalid type in project-specific config file";
+    for my $t (qw/rules options directories/) {
+        if (exists $localconfig->{$t}) {
+            $config->{$t}->{$_} = $localconfig->{$t}->{$_}
             for keys %{$localconfig->{$t}};
+        }
     }
 }
 
