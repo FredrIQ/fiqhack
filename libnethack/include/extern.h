@@ -1,15 +1,50 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-10-22 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef EXTERN_H
 # define EXTERN_H
 
-# include "winprocs.h"
+/* hacklib.h now contains extern definitions for hacklib */
 # include "hacklib.h"
 
-# include "prop.h"
+/* forward definitions of structures and enums */
+enum memfile_tagtype;
+enum nh_direction;
+enum nh_log_status;
+enum nh_menuitem_role;
+enum objslot;
+struct attack;
+struct damage;
+struct def_skill;
+struct d_level;
+struct engr;
+struct flag;
+struct level;
+struct memfile;
+struct menulist;
+struct mkroom;
+struct monst;
+struct musable;
+struct nh_autopickup_rules;
+struct nh_cmd_arg;
+struct nh_menuitem;
+struct nh_objitem;
+struct nh_objresult;
+struct nh_option_desc;
+struct nhrect;
+struct nh_topten_entry;
+struct nh_window_procs;
+struct obj;
+struct object_pick;
+struct permonst;
+struct region;
+struct rm;
+struct tmp_sym;
+struct trap;
+struct version_info;
+struct you;
 
 /* ### allmain.c ### */
 
