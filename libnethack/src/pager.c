@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -316,7 +316,7 @@ describe_mon(int x, int y, int monnum, char *buf)
            you could also see yourself via other means). Sensing self while
            blind or swallowed is treated as if it were by normal vision (cf
            canseeself()). */
-        if ((Invisible || u.uundetected) && !Blind && !u.uswallow) {
+        if ((Invisible || u.uundetected) && !Blind && !Engulfed) {
             unsigned how = 0;
 
             if (Infravision)
@@ -426,7 +426,7 @@ nh_describe_pos(int x, int y, struct nh_desc_buf *bufs, int *is_in)
     if (level->locations[x][y].mem_invis)
         strcpy(bufs->invisdesc, invisexplain);
 
-    if (u.uswallow && (x != u.ux || y != u.uy)) {
+    if (Engulfed && (x != u.ux || y != u.uy)) {
         /* all locations when swallowed other than the hero are the monster */
         sprintf(bufs->effectdesc, "interior of %s",
                 Blind ? "a monster" : a_monnam(u.ustuck));

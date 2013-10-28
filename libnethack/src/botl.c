@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -294,7 +294,7 @@ make_player_info(struct nh_player_info *pi)
         strncpy(pi->statusitems[pi->nr_items++], "Slime", ITEMLEN);
     if (Stoned) /* 11 */
         strncpy(pi->statusitems[pi->nr_items++], "Petrify", ITEMLEN);
-    if (u.ustuck && !u.uswallow && !sticks(youmonst.data))      /* 12 */
+    if (u.ustuck && !Engulfed && !sticks(youmonst.data))      /* 12 */
         strncpy(pi->statusitems[pi->nr_items++], "Held", ITEMLEN);
     if (enc_stat[cap])  /* 13 */
         strncpy(pi->statusitems[pi->nr_items++], enc_stat[cap], ITEMLEN);

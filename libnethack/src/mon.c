@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -418,7 +418,7 @@ minliquid(struct monst *mtmp)
             if (cansee(mtmp->mx, mtmp->my)) {
                 pline("%s drowns.", Monnam(mtmp));
             }
-            if (u.ustuck && u.uswallow && u.ustuck == mtmp) {
+            if (u.ustuck && Engulfed && u.ustuck == mtmp) {
                 /* This can happen after a purple worm plucks you off a flying
                    steed while you are over water. */
                 pline("%s sinks as water rushes in and flushes you out.",
@@ -1665,7 +1665,7 @@ monstone(struct monst *mdef)
         newsym(x, y);
     /* We don't currently trap the hero in the statue in this case but we could 
      */
-    if (u.uswallow && u.ustuck == mdef)
+    if (Engulfed && u.ustuck == mdef)
         wasinside = TRUE;
     mondead(mdef);
     if (wasinside) {
@@ -1703,10 +1703,10 @@ void
 unstuck(struct monst *mtmp)
 {
     if (u.ustuck == mtmp) {
-        if (u.uswallow) {
+        if (Engulfed) {
             u.ux = mtmp->mx;
             u.uy = mtmp->my;
-            u.uswallow = 0;
+            Engulfed = 0;
             u.uswldtim = 0;
             if (Punished)
                 placebc();
@@ -1737,7 +1737,7 @@ xkilled(struct monst *mtmp, int dest)
     struct obj *otmp;
     struct trap *t;
     boolean redisp = FALSE;
-    boolean wasinside = u.uswallow && (u.ustuck == mtmp);
+    boolean wasinside = Engulfed && (u.ustuck == mtmp);
 
 
     /* KMH, conduct */
@@ -2483,7 +2483,7 @@ newcham(struct monst *mtmp, const struct permonst *mdat,
         !(mdat->mlet == S_EEL && is_pool(level, mtmp->mx, mtmp->my)))
         mtmp->mundetected = 0;
     if (u.ustuck == mtmp) {
-        if (u.uswallow) {
+        if (Engulfed) {
             if (!attacktype(mdat, AT_ENGL)) {
                 /* Does mdat care? */
                 if (!noncorporeal(mdat) && !amorphous(mdat) && !is_whirly(mdat)

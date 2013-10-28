@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -233,7 +233,7 @@ find_defensive(struct monst *mtmp, struct musable *m)
         return FALSE;
     if (dist2(x, y, mtmp->mux, mtmp->muy) > 25)
         return FALSE;
-    if (u.uswallow && stuck)
+    if (Engulfed && stuck)
         return FALSE;
 
     m->defensive = NULL;
@@ -971,7 +971,7 @@ find_offensive(struct monst * mtmp, struct musable * m)
     if (is_animal(mtmp->data) || mindless(mtmp->data) || nohands(mtmp->data))
         return FALSE;
     if (target == &youmonst) {
-        if (u.uswallow)
+        if (Engulfed)
             return FALSE;
         if (in_your_sanctuary(mtmp, 0, 0))
             return FALSE;
@@ -1530,7 +1530,7 @@ find_misc(struct monst * mtmp, struct musable * m)
     m->has_misc = 0;
     if (is_animal(mdat) || mindless(mdat))
         return 0;
-    if (u.uswallow && stuck)
+    if (Engulfed && stuck)
         return FALSE;
 
     /* We arbitrarily limit to times when a player is nearby for the same

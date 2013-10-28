@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -636,7 +636,7 @@ cast_protection(void)
             else
                 pline("The %s around you begins to shimmer with %s haze.",
                       (Underwater || Is_waterlevel(&u.uz)) ? "water" :
-                      u.uswallow ? mbodypart(u.ustuck, STOMACH) :
+                      Engulfed ? mbodypart(u.ustuck, STOMACH) :
                       IS_STWALL(level->locations[u.ux][u.uy].typ) ? "stone" :
                       "air",
                       an(hgolden));
@@ -830,7 +830,7 @@ spelleffects(int spell, boolean atme)
                     dx = cc.x + rnd(3) - 2;
                     dy = cc.y + rnd(3) - 2;
                     if (!isok(dx, dy) || !cansee(dx, dy) ||
-                        IS_STWALL(level->locations[dx][dy].typ) || u.uswallow) {
+                        IS_STWALL(level->locations[dx][dy].typ) || Engulfed) {
                         /* Spell is reflected back to center */
                         dx = cc.x;
                         dy = cc.y;
@@ -979,7 +979,7 @@ throwspell(schar * dx, schar * dy)
     if (distmin(u.ux, u.uy, cc.x, cc.y) > 10) {
         pline("The spell dissipates over the distance!");
         return 0;
-    } else if (u.uswallow) {
+    } else if (Engulfed) {
         pline("The spell is cut short!");
         exercise(A_WIS, FALSE); /* What were you THINKING! */
         *dx = 0;

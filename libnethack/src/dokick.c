@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -739,7 +739,7 @@ dokick(void)
     else
         avrg_attrib = (ACURRSTR + ACURR(A_DEX) + ACURR(A_CON)) / 3;
 
-    if (u.uswallow) {
+    if (Engulfed) {
         switch (rn2(3)) {
         case 0:
             pline("You can't move your %s!", body_part(LEG));
@@ -798,7 +798,7 @@ dokick(void)
             /* check x and y; a monster that evades your kick by jumping to an
                unseen square doesn't leave an I behind */
             mtmp->mx == x && mtmp->my == y && !level->locations[x][y].mem_invis
-            && !(u.uswallow && mtmp == u.ustuck))
+            && !(Engulfed && mtmp == u.ustuck))
             map_invisible(x, y);
         if ((Is_airlevel(&u.uz) || Levitation) && flags.move) {
             int range;

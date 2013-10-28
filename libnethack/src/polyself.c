@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -36,7 +36,7 @@ static void
 polyman(const char *fmt, const char *arg)
 {
     boolean sticky = sticks(youmonst.data) && u.ustuck &&
-        !u.uswallow, was_mimicking = (youmonst.m_ap_type == M_AP_OBJECT);
+        !Engulfed, was_mimicking = (youmonst.m_ap_type == M_AP_OBJECT);
     boolean could_pass_walls = Passes_walls;
     boolean was_blind = ! !Blind;
 
@@ -354,7 +354,7 @@ int
 polymon(int mntmp)
 {
     boolean sticky = sticks(youmonst.data) && u.ustuck &&
-        !u.uswallow, was_blind = ! !Blind, dochange = FALSE;
+        !Engulfed, was_blind = ! !Blind, dochange = FALSE;
     boolean could_pass_walls = Passes_walls;
     int mlvl;
 
@@ -506,7 +506,7 @@ polymon(int mntmp)
     }
     newsym(u.ux, u.uy); /* Change symbol */
 
-    if (!sticky && !u.uswallow && u.ustuck && sticks(youmonst.data))
+    if (!sticky && !Engulfed && u.ustuck && sticks(youmonst.data))
         u.ustuck = 0;
     else if (sticky && !sticks(youmonst.data))
         uunstick();
@@ -844,7 +844,7 @@ dospinweb(void)
         pline("You must be on the ground to spin a web.");
         return 0;
     }
-    if (u.uswallow) {
+    if (Engulfed) {
         pline("You release web fluid inside %s.", mon_nam(u.ustuck));
         if (is_animal(u.ustuck->data)) {
             expels(u.ustuck, u.ustuck->data, TRUE);

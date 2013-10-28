@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1712,7 +1712,7 @@ update_location(boolean all_objects)
     }
 
     items = malloc(size * sizeof (struct nh_objitem));
-    if (u.uswallow && u.ustuck) {
+    if (Engulfed && u.ustuck) {
         otmp = u.ustuck->minvent;
         minv = TRUE;
     } else {
@@ -1776,7 +1776,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
        0) */
     boolean skip_win = update_location(!skip_objects) && obj_cnt;
 
-    if (u.uswallow && u.ustuck) {
+    if (Engulfed && u.ustuck) {
         struct monst *mtmp = u.ustuck;
 
         sprintf(fbuf, "Contents of %s %s", s_suffix(mon_nam(mtmp)),

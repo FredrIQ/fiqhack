@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -161,7 +161,7 @@ can_blnd(struct monst * magr,   /* NULL == no specific aggressor */
             return TRUE;        /* no defense */
         } else
             return FALSE;       /* other objects cannot cause blindness yet */
-        if ((magr == &youmonst) && u.uswallow)
+        if ((magr == &youmonst) && Engulfed)
             return FALSE;       /* can't affect eyes while inside monster */
         break;
 
@@ -176,7 +176,7 @@ can_blnd(struct monst * magr,   /* NULL == no specific aggressor */
         /* e.g. raven: all ublindf, including LENSES, protect */
         if (is_you && ublindf)
             return FALSE;
-        if ((magr == &youmonst) && u.uswallow)
+        if ((magr == &youmonst) && Engulfed)
             return FALSE;       /* can't affect eyes while inside monster */
         check_visor = TRUE;
         break;

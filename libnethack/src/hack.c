@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1138,7 +1138,7 @@ domove(schar dx, schar dy, schar dz)
         nomul(0, NULL);
         return 1;
     }
-    if (u.uswallow) {
+    if (Engulfed) {
         dx = dy = 0;
         u.ux = x = u.ustuck->mx;
         u.uy = y = u.ustuck->my;
@@ -1804,7 +1804,7 @@ stillinwater:
         if (trap && !pit)
             dotrap(trap, 0);    /* fall into arrow trap, etc. */
     }
-    if ((mtmp = m_at(level, u.ux, u.uy)) && !u.uswallow) {
+    if ((mtmp = m_at(level, u.ux, u.uy)) && !Engulfed) {
         mtmp->mundetected = mtmp->msleeping = 0;
         switch (mtmp->data->mlet) {
         case S_PIERCER:
@@ -2111,8 +2111,8 @@ dopickup(void)
     /* awful kludge to work around parse()'s pre-decrement */
     count = multi;
     multi = 0;  /* always reset */
-    /* uswallow case added by GAN 01/29/87 */
-    if (u.uswallow) {
+    /* Engulfed case added by GAN 01/29/87 */
+    if (Engulfed) {
         if (!u.ustuck->minvent) {
             if (is_animal(u.ustuck->data)) {
                 pline("You pick up %s tongue.", s_suffix(mon_nam(u.ustuck)));

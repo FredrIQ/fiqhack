@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Dean Luick, with acknowledgements to Dave Cohrs, 1990. */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -514,7 +514,7 @@ vision_recalc(int control)
     get_unused_cs(&next_array, &next_rmin, &next_rmax);
 
     /* You see nothing, nothing can see you --- if swallowed or refreshing. */
-    if (u.uswallow || control == 2) {
+    if (Engulfed || control == 2) {
         /* do nothing -- get_unused_cs() nulls out the new work area */
 
     } else if (Blind) {

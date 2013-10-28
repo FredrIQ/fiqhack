@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -135,10 +135,10 @@
  *
  * This returns true if the hero can see her/himself.
  *
- * The u.uswallow check assumes that you can see yourself even if you are
+ * The Engulfed check assumes that you can see yourself even if you are
  * invisible.  If not, then we don't need the check.
  */
-# define canseeself()   (Blind || u.uswallow || (!Invisible && !u.uundetected))
+# define canseeself()   (Blind || Engulfed || (!Invisible && !u.uundetected))
 # define senseself()    (canseeself() || Unblind_telepat || Detect_monsters)
 
 /*

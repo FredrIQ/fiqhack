@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -270,7 +270,7 @@ make_hallucinated(long xtime,   /* nonzero if this is an attempt to turn on
     }
 
     if (changed && !program_state.restoring) {
-        if (u.uswallow) {
+        if (Engulfed) {
             swallowed(0);       /* redraw swallow display */
         } else {
             /* The see_* routines should be called *before* the pline. */
@@ -336,17 +336,17 @@ dodrink(struct obj *potion)
         return 0;
     }
     /* Is there a fountain to drink from here? */
-    if (IS_FOUNTAIN(level->locations[u.ux][u.uy].typ) && !u.uswallow &&
+    if (IS_FOUNTAIN(level->locations[u.ux][u.uy].typ) && !Engulfed &&
         !Levitation) {
         terrain = drinkfountain;
     }
     /* Or a kitchen sink? */
-    if (IS_SINK(level->locations[u.ux][u.uy].typ) && !u.uswallow) {
+    if (IS_SINK(level->locations[u.ux][u.uy].typ) && !Engulfed) {
         terrain = drinksink;
     }
 
     /* Or are you surrounded by water? */
-    if (Underwater && !u.uswallow) {
+    if (Underwater && !Engulfed) {
         if (yn("Drink the water around you?") == 'y') {
             pline("Do you know what lives in this water?!");
             return 1;

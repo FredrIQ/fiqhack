@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -940,7 +940,7 @@ seffects(struct obj *sobj, boolean * known)
         break;
     case SCR_TAMING:
     case SPE_CHARM_MONSTER:
-        if (u.uswallow) {
+        if (Engulfed) {
             maybe_tame(u.ustuck, sobj);
         } else {
             int i, j, bd = confused ? 5 : 1;
@@ -1321,7 +1321,7 @@ litroom(boolean on, struct obj *obj)
         struct obj *otmp;
 
         if (!Blind) {
-            if (u.uswallow) {
+            if (Engulfed) {
                 pline("It seems even darker in here than before.");
                 return;
             }
@@ -1341,7 +1341,7 @@ litroom(boolean on, struct obj *obj)
     } else {
         if (Blind)
             goto do_it;
-        if (u.uswallow) {
+        if (Engulfed) {
             if (is_animal(u.ustuck->data))
                 pline("%s %s is lit.", s_suffix(Monnam(u.ustuck)),
                       mbodypart(u.ustuck, STOMACH));
@@ -1748,7 +1748,7 @@ punish(struct obj *sobj)
      *  Place ball & chain if not swallowed.  If swallowed, the ball &
      *  chain variables will be set at the next call to placebc().
      */
-    if (!u.uswallow) {
+    if (!Engulfed) {
         placebc();
         if (Blind)
             set_bc(1);  /* set up ball and chain variables */

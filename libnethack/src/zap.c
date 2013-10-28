@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -103,7 +103,7 @@ bhitm(struct monst *mtmp, struct obj *otmp)
     boolean disguised_mimic = (mtmp->data->mlet == S_MIMIC &&
                                mtmp->m_ap_type != M_AP_NOTHING);
 
-    if (u.uswallow && mtmp == u.ustuck)
+    if (Engulfed && mtmp == u.ustuck)
         reveal_invis = FALSE;
 
     switch (otyp) {
@@ -115,7 +115,7 @@ bhitm(struct monst *mtmp, struct obj *otmp)
         if (resists_magm(mtmp)) {       /* match effect on player */
             shieldeff(mtmp->mx, mtmp->my);
             break;      /* skip makeknown */
-        } else if (u.uswallow || rnd(20) < 10 + find_mac(mtmp)) {
+        } else if (Engulfed || rnd(20) < 10 + find_mac(mtmp)) {
             dmg = dice(2, 12);
             if (dbldam)
                 dmg *= 2;
@@ -132,7 +132,7 @@ bhitm(struct monst *mtmp, struct obj *otmp)
         if (!resist(mtmp, otmp->oclass, 0, NOTELL)) {
             mon_adjust_speed(mtmp, -1, otmp);
             m_dowear(mtmp, FALSE);      /* might want speed boots */
-            if (u.uswallow && (mtmp == u.ustuck) && is_whirly(mtmp->data)) {
+            if (Engulfed && (mtmp == u.ustuck) && is_whirly(mtmp->data)) {
                 pline("You disrupt %s!", mon_nam(mtmp));
                 pline("A huge hole opens up...");
                 expels(mtmp, mtmp->data, TRUE);
@@ -229,7 +229,7 @@ bhitm(struct monst *mtmp, struct obj *otmp)
     case WAN_OPENING:
     case SPE_KNOCK:
         wake = FALSE;   /* don't want immediate counterattack */
-        if (u.uswallow && mtmp == u.ustuck) {
+        if (Engulfed && mtmp == u.ustuck) {
             if (is_animal(mtmp->data)) {
                 if (Blind)
                     pline("You feel a sudden rush of air!");
@@ -2539,7 +2539,7 @@ weffects(struct obj *obj, schar dx, schar dy, schar dz)
     } else if (objects[otyp].oc_dir == IMMEDIATE) {
         obj_zapped = FALSE;
 
-        if (u.uswallow) {
+        if (Engulfed) {
             bhitm(u.ustuck, obj);
             /* [how about `bhitpile(u.ustuck->minvent)' effect?] */
         } else if (dz) {
@@ -2655,7 +2655,7 @@ void
 hit(const char *str, struct monst *mtmp, const char *force)
 {       /* usually either "." or "!" */
     if ((!cansee(bhitpos.x, bhitpos.y) && !canspotmon(mtmp) &&
-         !(u.uswallow && mtmp == u.ustuck))
+         !(Engulfed && mtmp == u.ustuck))
         || !flags.verbose)
         pline("%s %s it.", The(str), vtense(str, "hit"));
     else
@@ -2684,7 +2684,7 @@ miss(const char *str, struct monst *mtmp)
  *  function) several objects and monsters on its path.  The return value
  *  is the monster hit (weapon != ZAPPED_WAND), or a null monster pointer.
  *
- *  Check !u.uswallow before calling beam_hit().
+ *  Check !Engulfed before calling beam_hit().
  *  This function reveals the absence of a remembered invisible monster in
  *  necessary cases (throwing or kicking weapons).  The presence of a real
  *  one is revealed for a weapon, but if not a weapon is left up to fhitm().
@@ -3095,7 +3095,7 @@ zap_hit_mon(struct monst *mon, int type, int nd, struct obj **ootmp)
         if (spellcaster)
             tmp += spell_damage_bonus();
 
-        if (!resists_blnd(mon) && !(type > 0 && u.uswallow && mon == u.ustuck)) {
+        if (!resists_blnd(mon) && !(type > 0 && Engulfed && mon == u.ustuck)) {
             unsigned rnd_tmp = rnd(50);
 
             mon->mcansee = 0;
@@ -3375,14 +3375,14 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy)
     spell_type = is_hero_spell(type) ? SPE_MAGIC_MISSILE + abstype : 0;
 
     fltxt = flash_types[(type <= -30) ? abstype : abs(type)];
-    if (u.uswallow) {
+    if (Engulfed) {
         int tmp;
 
         if (type < 0)
             return;
         tmp = zap_hit_mon(u.ustuck, type, nd, &otmp);
         if (!u.ustuck)
-            u.uswallow = 0;
+            Engulfed = 0;
         else
             pline("%s rips into %s%s", The(fltxt), mon_nam(u.ustuck),
                   exclam(tmp));
@@ -4270,7 +4270,7 @@ retry:
         examine_object(otmp);
         /* The(aobjnam()) is safe since otmp is unidentified -dlc */
         hold_another_object(otmp,
-                            u.uswallow ? "Oops!  %s out of your reach!"
+                            Engulfed ? "Oops!  %s out of your reach!"
                             : (Is_airlevel(&u.uz) || Is_waterlevel(&u.uz) ||
                                level->locations[u.ux][u.uy].typ < IRONBARS ||
                                level->locations[u.ux][u.uy].typ >=

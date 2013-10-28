@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -158,7 +158,7 @@ wipeout_text(char *engr, int cnt, unsigned seed)
 boolean
 can_reach_floor(void)
 {
-    return (boolean) (!u.uswallow &&
+    return (boolean) (!Engulfed &&
                       /* Restricted/unskilled riders can't reach the floor */
                       !(u.usteed && P_SKILL(P_RIDING) < P_BASIC) &&
                       (!Levitation || Is_airlevel(&u.uz) ||
@@ -171,7 +171,7 @@ surface(int x, int y)
 {
     struct rm *loc = &level->locations[x][y];
 
-    if ((x == u.ux) && (y == u.uy) && u.uswallow && is_animal(u.ustuck->data))
+    if ((x == u.ux) && (y == u.uy) && Engulfed && is_animal(u.ustuck->data))
         return "maw";
     else if (IS_AIR(loc->typ) && Is_airlevel(&u.uz))
         return "air";
@@ -483,7 +483,7 @@ doengrave_core(struct obj *otmp, int auto_elbereth)
 
     /* Can the adventurer engrave at all? */
 
-    if (u.uswallow) {
+    if (Engulfed) {
         if (is_animal(u.ustuck->data)) {
             pline("What would you write?  \"Jonah was here\"?");
             return 0;

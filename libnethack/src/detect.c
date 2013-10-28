@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1115,7 +1115,7 @@ findit(void)
 {       /* returns number of things found */
     int num = 0;
 
-    if (u.uswallow)
+    if (Engulfed)
         return 0;
     do_clear_area(u.ux, u.uy, BOLT_LIM, findone, &num);
     return num;
@@ -1126,7 +1126,7 @@ openit(void)
 {       /* returns number of things found and opened */
     int num = 0;
 
-    if (u.uswallow) {
+    if (Engulfed) {
         if (is_animal(u.ustuck->data)) {
             if (Blind)
                 pline("Its mouth opens!");
@@ -1180,7 +1180,7 @@ dosearch0(int aflag)
     struct trap *trap;
     struct monst *mtmp;
 
-    if (u.uswallow) {
+    if (Engulfed) {
         if (!aflag)
             pline("What are you looking for?  The exit?");
     } else {

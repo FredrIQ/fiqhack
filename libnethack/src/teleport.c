@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -272,8 +272,8 @@ teleds(int nux, int nuy, boolean allow_drag)
             youmonst.m_ap_type = M_AP_NOTHING;
     }
 
-    if (u.uswallow) {
-        u.uswldtim = u.uswallow = 0;
+    if (Engulfed) {
+        u.uswldtim = Engulfed = 0;
         if (Punished && !ball_active) {
             /* ensure ball placement, like unstuck */
             ball_active = TRUE;
@@ -912,7 +912,7 @@ rloc_to(struct monst *mtmp, int x, int y)
         place_worm_tail_randomly(mtmp, x, y);
 
     if (u.ustuck == mtmp) {
-        if (u.uswallow) {
+        if (Engulfed) {
             u.ux = x;
             u.uy = y;
             doredraw();
@@ -1234,7 +1234,7 @@ u_teleport_mon(struct monst * mtmp, boolean give_feedback)
         if (give_feedback)
             pline("%s resists your magic!", Monnam(mtmp));
         return FALSE;
-    } else if (level->flags.noteleport && u.uswallow && mtmp == u.ustuck) {
+    } else if (level->flags.noteleport && Engulfed && mtmp == u.ustuck) {
         if (give_feedback)
             pline("You are no longer inside %s!", mon_nam(mtmp));
         unstuck(mtmp);

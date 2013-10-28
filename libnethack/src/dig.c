@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -239,7 +239,7 @@ dig(void)
     loc = &level->locations[dpx][dpy];
     /* perhaps a nymph stole your pick-axe while you were busy digging */
     /* or perhaps you teleported away */
-    if (u.uswallow || !uwep || (!ispick && !is_axe(uwep)) ||
+    if (Engulfed || !uwep || (!ispick && !is_axe(uwep)) ||
         !on_level(&digging.level, &u.uz) ||
         ((digging.down ? (dpx != u.ux || dpy != u.uy)
           : (distu(dpx, dpy) > 2))))
@@ -870,7 +870,7 @@ use_pick_axe2(struct obj *obj, schar dx, schar dy, schar dz)
     boolean ispick = is_pick(obj);
     const char *verbing = ispick ? "digging" : "chopping";
 
-    if (u.uswallow && attack(u.ustuck, dx, dy)) {
+    if (Engulfed && attack(u.ustuck, dx, dy)) {
         ;       /* return 1 */
     } else if (Underwater) {
         pline("Turbulence torpedoes your %s attempts.", verbing);
@@ -1157,7 +1157,7 @@ zap_dig(schar dx, schar dy, schar dz)
     int zx, zy, digdepth;
     boolean shopdoor, shopwall, maze_dig;
 
-    if (u.uswallow) {
+    if (Engulfed) {
         mtmp = u.ustuck;
 
         if (!is_whirly(mtmp->data)) {

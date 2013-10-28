@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -183,7 +183,7 @@ pickup(int what)
     else        /* pick anything */
         count = 0;
 
-    if (!u.uswallow) {
+    if (!Engulfed) {
         struct trap *ttmp = t_at(level, u.ux, u.uy);
 
         /* no auto-pick if no-pick move, nothing there, or in a pool */
@@ -237,7 +237,7 @@ pickup(int what)
     }
 
     add_valid_menu_class(0);    /* reset */
-    if (!u.uswallow) {
+    if (!Engulfed) {
         objchain = level->objects[u.ux][u.uy];
         traverse_how = BY_NEXTHERE;
     } else {
@@ -283,7 +283,7 @@ menu_pickup:
     if (pick_list)
         free(pick_list);
 
-    if (!u.uswallow) {
+    if (!Engulfed) {
         if (!OBJ_AT(u.ux, u.uy))
             u.uundetected = 0;
 
@@ -1106,7 +1106,7 @@ struct obj *
 pick_obj(struct obj *otmp)
 {
     obj_extract_self(otmp);
-    if (!u.uswallow && otmp != uball && costly_spot(otmp->ox, otmp->oy)) {
+    if (!Engulfed && otmp != uball && costly_spot(otmp->ox, otmp->oy)) {
         char saveushops[5], fakeshop[2];
 
         /* addtobill cares about your location rather than the object's;
@@ -1476,7 +1476,7 @@ loot_mon(struct monst *mtmp, int *passed_info, boolean * prev_loot)
     }
     /* 3.4.0 introduced the ability to pick things up from within swallower's
        stomach */
-    if (u.uswallow) {
+    if (Engulfed) {
         int count = passed_info ? *passed_info : 0;
 
         timepassed = pickup(count);

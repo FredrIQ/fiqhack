@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -292,7 +292,7 @@ mstatusline(struct monst *mtmp)
         strcat(info, ", invisible");
     if (mtmp == u.ustuck)
         strcat(info,
-               (sticks(youmonst.data)) ? ", held by you" : u.uswallow
+               (sticks(youmonst.data)) ? ", held by you" : Engulfed
                ? (is_animal(u.ustuck->data) ? ", swallowed you" :
                   ", engulfed you") : ", holding you");
     if (mtmp == u.usteed)

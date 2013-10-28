@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -955,7 +955,7 @@ enlightenment(int final)
         sprintf(buf, "riding %s", y_monnam(u.usteed));
         you_are(&menu, buf);
     }
-    if (u.uswallow) {
+    if (Engulfed) {
         sprintf(buf, "swallowed by %s", a_monnam(u.ustuck));
         if (wizard)
             sprintf(eos(buf), " (%u)", u.uswldtim);
@@ -1805,7 +1805,7 @@ nh_get_object_commands(int *count, char invlet)
         SET_OBJ_CMD('z', "zap", "Zap %s to release its magic", 0);
 
     /* sacrifice object */
-    if (IS_ALTAR(level->locations[u.ux][u.uy].typ) && !u.uswallow) {
+    if (IS_ALTAR(level->locations[u.ux][u.uy].typ) && !Engulfed) {
         if (In_endgame(&u.uz) &&
             (obj->otyp == AMULET_OF_YENDOR ||
              obj->otyp == FAKE_AMULET_OF_YENDOR))

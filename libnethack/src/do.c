@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -458,7 +458,7 @@ drop(struct obj *obj)
         setuswapwep(NULL);
     }
 
-    if (u.uswallow) {
+    if (Engulfed) {
         /* barrier between you and the floor */
         if (flags.verbose) {
             char buf[BUFSZ];
@@ -501,7 +501,7 @@ dropx(struct obj *obj)
     if (obj->oclass == COIN_CLASS)
         iflags.botl = 1;
     freeinv(obj);
-    if (!u.uswallow) {
+    if (!Engulfed) {
         if (ship_object(obj, u.ux, u.uy, FALSE))
             return;
         if (IS_ALTAR(level->locations[u.ux][u.uy].typ))
@@ -515,10 +515,10 @@ dropy(struct obj *obj)
 {
     unwield_silently(obj);
 
-    if (!u.uswallow && flooreffects(obj, u.ux, u.uy, "drop"))
+    if (!Engulfed && flooreffects(obj, u.ux, u.uy, "drop"))
         return;
-    /* uswallow check done by GAN 01/29/87 */
-    if (u.uswallow) {
+    /* Engulfed check done by GAN 01/29/87 */
+    if (Engulfed) {
         boolean could_petrify = FALSE;
         boolean could_poly = FALSE;
         boolean could_slime = FALSE;
@@ -542,7 +542,7 @@ dropy(struct obj *obj)
                 } else if (could_petrify) {
                     minstapetrify(u.ustuck, TRUE);
                     /* Don't leave a cockatrice corpse in a statue */
-                    if (!u.uswallow)
+                    if (!Engulfed)
                         delobj(obj);
                 } else if (could_grow) {
                     grow_up(u.ustuck, NULL);
@@ -741,7 +741,7 @@ dodown(void)
     }
     if (u.ustuck) {
         pline("You are %s, and cannot go down.",
-              !u.uswallow ? "being held" :
+              !Engulfed ? "being held" :
               is_animal(u.ustuck->data) ? "swallowed" : "engulfed");
         return 1;
     }
@@ -813,7 +813,7 @@ doup(void)
         return 0;
     } else if (u.ustuck) {
         pline("You are %s, and cannot go up.",
-              !u.uswallow ? "being held" :
+              !Engulfed ? "being held" :
               is_animal(u.ustuck->data) ? "swallowed" : "engulfed");
         return 1;
     }
@@ -946,12 +946,11 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
     u.uinwater = 0;
     u.uundetected = 0;  /* not hidden, even if means are available */
     keepdogs(FALSE);
-    if (u.uswallow)     /* idem */
-        u.uswldtim = u.uswallow = 0;
+    if (Engulfed)     /* idem */
+        u.uswldtim = Engulfed = 0;
     /* 
      *  We no longer see anything on the level->  Make sure that this
-     *  follows u.uswallow set to null since uswallow overrides all
-     *  normal vision.
+     *  follows Engulfed set to null since it overrides all normal vision.
      */
     vision_recalc(2);
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -533,7 +533,7 @@ x_monnam(const struct monst *mtmp,
     do_invis = mtmp->minvis && !(suppress & SUPPRESS_INVISIBLE);
     do_it = !canspotmon(mtmp) && article != ARTICLE_YOUR &&
         !program_state.gameover && mtmp != u.usteed &&
-        !(u.uswallow && mtmp == u.ustuck) &&
+        !(Engulfed && mtmp == u.ustuck) &&
         !(suppress & SUPPRESS_IT);
     do_saddle = !(suppress & SUPPRESS_SADDLE);
 

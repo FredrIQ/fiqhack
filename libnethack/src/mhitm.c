@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -119,7 +119,7 @@ fightm(struct monst *mtmp)
         if (itsstuck(mtmp))
             return 0;
     }
-    has_u_swallowed = (u.uswallow && (mtmp == u.ustuck));
+    has_u_swallowed = (Engulfed && (mtmp == u.ustuck));
 
     for (mon = level->monlist; mon; mon = nmon) {
         nmon = mon->nmon;
@@ -130,7 +130,7 @@ fightm(struct monst *mtmp)
            the monster attacked a cockatrice bare-handedly, for instance. */
         if (mon != mtmp && !DEADMONSTER(mon)) {
             if (monnear(mtmp, mon->mx, mon->my)) {
-                if (!u.uswallow && (mtmp == u.ustuck)) {
+                if (!Engulfed && (mtmp == u.ustuck)) {
                     if (!rn2(4)) {
                         pline("%s releases you!", Monnam(mtmp));
                         u.ustuck = 0;
@@ -400,7 +400,7 @@ mattackm(struct monst *magr, struct monst *mdef)
                 break;
             }
             /* Engulfing attacks are directed at the hero if possible. -dlc */
-            if (u.uswallow && magr == u.ustuck)
+            if (Engulfed && magr == u.ustuck)
                 strike = 0;
             else {
                 if ((strike = (tmp > rnd(20 + i))))
@@ -1350,7 +1350,7 @@ void
 slept_monst(struct monst *mon)
 {
     if ((mon->msleeping || !mon->mcanmove) && mon == u.ustuck &&
-        !sticks(youmonst.data) && !u.uswallow) {
+        !sticks(youmonst.data) && !Engulfed) {
         pline("%s grip relaxes.", s_suffix(Monnam(mon)));
         unstuck(mon);
     }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -125,7 +125,7 @@ placebc(void)
 void
 unplacebc(void)
 {
-    if (u.uswallow)
+    if (Engulfed)
         return; /* ball&chain not placed while swallowed */
 
     if (!carried(uball)) {
@@ -154,7 +154,7 @@ bc_order(void)
     struct obj *obj;
 
     if (uchain->ox != uball->ox || uchain->oy != uball->oy || carried(uball)
-        || u.uswallow)
+        || Engulfed)
         return BCPOS_DIFFER;
 
     for (obj = level->objects[uball->ox][uball->oy]; obj; obj = obj->nexthere) {
@@ -181,7 +181,7 @@ set_bc(int already_blind)
     u.bc_order = bc_order();    /* get the order */
     u.bc_felt = ball_on_floor ? BC_BALL | BC_CHAIN : BC_CHAIN;  /* felt */
 
-    if (already_blind || u.uswallow) {
+    if (already_blind || Engulfed) {
         u.cglyph = u.bglyph = level->locations[u.ux][u.uy].mem_obj;
         return;
     }

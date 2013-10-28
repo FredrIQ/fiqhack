@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -379,7 +379,7 @@ mpickobj(struct monst *mtmp, struct obj *otmp)
     if (otmp->lamplit &&        /* hack to avoid function calls for most objs */
         obj_sheds_light(otmp) && attacktype(mtmp->data, AT_ENGL)) {
         /* this is probably a burning object that you dropped or threw */
-        if (u.uswallow && mtmp == u.ustuck && !Blind)
+        if (Engulfed && mtmp == u.ustuck && !Blind)
             pline("%s out.", Tobjnam(otmp, "go"));
         snuff_otmp = TRUE;
     }

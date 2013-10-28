@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2301,7 +2301,7 @@ float_up(void)
         pline("It feels as though you've lost some weight.");
     else if (u.uinwater)
         spoteffects(TRUE);
-    else if (u.uswallow)
+    else if (Engulfed)
         pline(is_animal(u.ustuck->data) ? "You float away from the %s." :
               "You spiral up into %s.",
               is_animal(u.ustuck->data) ? surface(u.ux, u.uy) :
@@ -2347,7 +2347,7 @@ float_down(long hmask)
 
     if (Levitation)
         return 0;       /* maybe another ring/potion/boots */
-    if (u.uswallow) {
+    if (Engulfed) {
         pline((Flying) ? "You feel less buoyant, but you are still %s." :
               "You float down, but you are still %s.",
               is_animal(u.ustuck->data) ? "swallowed" : "engulfed");
@@ -2373,7 +2373,7 @@ float_down(long hmask)
     }
     /* check for falling into pool - added by GAN 10/20/86 */
     if (!Flying) {
-        if (!u.uswallow && u.ustuck) {
+        if (!Engulfed && u.ustuck) {
             if (sticks(youmonst.data))
                 pline("You aren't able to maintain your hold on %s.",
                       mon_nam(u.ustuck));
@@ -2458,7 +2458,7 @@ float_down(long hmask)
                 dotrap(trap, 0);
         }
 
-    if (!Is_airlevel(&u.uz) && !Is_waterlevel(&u.uz) && !u.uswallow &&
+    if (!Is_airlevel(&u.uz) && !Is_waterlevel(&u.uz) && !Engulfed &&
         /* falling through trap door calls goto_level, and goto_level does its
            own pickup() call */
         on_level(&u.uz, &current_dungeon_level))

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -357,7 +357,7 @@ hitfloor(struct obj *obj)
     if (ship_object(obj, u.ux, u.uy, FALSE))
         return;
     dropy(obj);
-    if (!u.uswallow)
+    if (!Engulfed)
         container_impact_dmg(obj);
 }
 
@@ -916,7 +916,7 @@ throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang
 
     thrownobj = obj;
 
-    if (u.uswallow) {
+    if (Engulfed) {
         mon = u.ustuck;
         bhitpos.x = mon->mx;
         bhitpos.y = mon->my;
@@ -1036,7 +1036,7 @@ throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang
             return;
     }
 
-    if (u.uswallow) {
+    if (Engulfed) {
         /* ball is not picked up by monster */
         if (obj != uball)
             mpickobj(u.ustuck, obj);
@@ -1208,7 +1208,7 @@ thitmonst(struct monst *mon, struct obj *obj)
     int tmp;    /* Base chance to hit */
     int disttmp;        /* distance modifier */
     int otyp = obj->otyp;
-    boolean guaranteed_hit = (u.uswallow && mon == u.ustuck);
+    boolean guaranteed_hit = (Engulfed && mon == u.ustuck);
 
     /* Differences from melee weapons: Dex still gives a bonus, but strength
        does not. Polymorphed players lacking attacks may still throw. There's a 
@@ -1383,7 +1383,7 @@ thitmonst(struct monst *mon, struct obj *obj)
 
             exercise(A_DEX, TRUE);
             if (!hmon(mon, obj, 1)) {   /* mon killed */
-                if (was_swallowed && !u.uswallow && obj == uball)
+                if (was_swallowed && !Engulfed && obj == uball)
                     return 1;   /* already did placebc() */
             }
         } else {
@@ -1434,7 +1434,7 @@ thitmonst(struct monst *mon, struct obj *obj)
             if (is_animal(u.ustuck->data)) {
                 minstapetrify(u.ustuck, TRUE);
                 /* Don't leave a cockatrice corpse available in a statue */
-                if (!u.uswallow) {
+                if (!Engulfed) {
                     delobj(obj);
                     return 1;
                 }
@@ -1742,7 +1742,7 @@ throw_gold(struct obj *obj, schar dx, schar dy, schar dz)
     }
     freeinv(obj);
 
-    if (u.uswallow) {
+    if (Engulfed) {
         pline(is_animal(u.ustuck->data) ? "%s in the %s's entrails." :
               "%s into %s.", "The money disappears", mon_nam(u.ustuck));
         add_to_minv(u.ustuck, obj);

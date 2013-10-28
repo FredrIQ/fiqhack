@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -67,7 +67,7 @@ use_camera(struct obj *obj)
 
     if (obj->cursed && !rn2(2)) {
         zapyourself(obj, TRUE);
-    } else if (u.uswallow) {
+    } else if (Engulfed) {
         pline("You take a picture of %s %s.", s_suffix(mon_nam(u.ustuck)),
               mbodypart(u.ustuck, STOMACH));
     } else if (dz) {
@@ -207,7 +207,7 @@ use_stethoscope(struct obj *obj)
     struct rm *loc;
     int rx, ry, res;
     schar dx, dy, dz;
-    boolean interference = (u.uswallow && is_whirly(u.ustuck->data) &&
+    boolean interference = (Engulfed && is_whirly(u.ustuck->data) &&
                             !rn2(Role_if(PM_HEALER) ? 10 : 3));
 
     if (nohands(youmonst.data)) {       /* should also check for no ears and/or 
@@ -233,10 +233,10 @@ use_stethoscope(struct obj *obj)
         } else
             mstatusline(u.usteed);
         return res;
-    } else if (u.uswallow && (dx || dy || dz)) {
+    } else if (Engulfed && (dx || dy || dz)) {
         mstatusline(u.ustuck);
         return res;
-    } else if (u.uswallow && interference) {
+    } else if (Engulfed && interference) {
         pline("%s interferes.", Monnam(u.ustuck));
         mstatusline(u.ustuck);
         return res;
@@ -666,7 +666,7 @@ use_mirror(struct obj *obj)
         }
         return 1;
     }
-    if (u.uswallow) {
+    if (Engulfed) {
         if (!Blind)
             pline("You reflect %s %s.", s_suffix(mon_nam(u.ustuck)),
                   mbodypart(u.ustuck, STOMACH));
@@ -769,7 +769,7 @@ use_bell(struct obj **optr)
 
     pline("You ring %s.", the(xname(obj)));
 
-    if (Underwater || (u.uswallow && ordinary)) {
+    if (Underwater || (Engulfed && ordinary)) {
         pline("But the sound is muffled.");
 
     } else if (invoking && ordinary) {
@@ -810,7 +810,7 @@ use_bell(struct obj **optr)
         /* charged Bell of Opening */
         consume_obj_charge(obj, TRUE);
 
-        if (u.uswallow) {
+        if (Engulfed) {
             if (!obj->cursed)
                 openit();
             else
@@ -887,7 +887,7 @@ use_candelabrum(struct obj *obj)
         pline("This %s has no %s.", xname(obj), s);
         return 1;
     }
-    if (u.uswallow || obj->cursed) {
+    if (Engulfed || obj->cursed) {
         if (!Blind)
             pline("The %s %s seem to have lit.",
                   obj->spe > 1L ? "don't" : "doesn't");
@@ -931,7 +931,7 @@ use_candle(struct obj **optr)
     const char *s;
     char qbuf[QBUFSZ];
 
-    if (u.uswallow) {
+    if (Engulfed) {
         pline(no_elbow_room);
         return 0;
     }
@@ -1159,7 +1159,7 @@ light_cocktail(struct obj *obj)
 {       /* obj is a potion of oil */
     char buf[BUFSZ];
 
-    if (u.uswallow) {
+    if (Engulfed) {
         pline(no_elbow_room);
         return 0;
     }
@@ -1279,7 +1279,7 @@ jump(int magic  /* 0=Physical, otherwise skill level */
     } else if (!magic && !Jumping) {
         pline("You can't jump very far.");
         return 0;
-    } else if (u.uswallow) {
+    } else if (Engulfed) {
         if (magic) {
             pline("You bounce around a little.");
             return 1;
@@ -1747,7 +1747,7 @@ figurine_location_checks(struct obj *obj, coord * cc, boolean quietly)
 {
     xchar x, y;
 
-    if (carried(obj) && u.uswallow) {
+    if (carried(obj) && Engulfed) {
         if (!quietly)
             pline("You don't have enough room in here.");
         return FALSE;
@@ -1789,7 +1789,7 @@ use_figurine(struct obj **objp)
     schar dx, dy, dz;
     struct obj *obj = *objp;
 
-    if (u.uswallow) {
+    if (Engulfed) {
         /* can't activate a figurine while swallowed */
         if (!figurine_location_checks(obj, NULL, FALSE))
             return 0;
@@ -2043,7 +2043,7 @@ use_trap(struct obj *otmp)
         what = "without hands";
     else if (Stunned)
         what = "while stunned";
-    else if (u.uswallow)
+    else if (Engulfed)
         what = is_animal(u.ustuck->data) ? "while swallowed" : "while engulfed";
     else if (Underwater)
         what = "underwater";
@@ -2206,7 +2206,7 @@ use_whip(struct obj *obj)
     if (proficient < 0)
         proficient = 0;
 
-    if (u.uswallow && attack(u.ustuck, dx, dy)) {
+    if (Engulfed && attack(u.ustuck, dx, dy)) {
         pline("There is not enough room to flick your bullwhip.");
 
     } else if (Underwater) {
@@ -2434,7 +2434,7 @@ use_pole(struct obj *obj)
 
 
     /* Are you allowed to use the pole? */
-    if (u.uswallow) {
+    if (Engulfed) {
         pline(not_enough_room);
         return 0;
     }
@@ -2550,7 +2550,7 @@ use_grapple(struct obj *obj)
     struct obj *otmp;
 
     /* Are you allowed to use the hook? */
-    if (u.uswallow) {
+    if (Engulfed) {
         pline(not_enough_room);
         return 0;
     }
@@ -3065,7 +3065,7 @@ doapply(struct obj *obj)
             otmp->cursed = obj->cursed;
             otmp->owt = weight(otmp);
             hold_another_object(otmp,
-                                u.uswallow ? "Oops!  %s out of your reach!"
+                                Engulfed ? "Oops!  %s out of your reach!"
                                 : (Is_airlevel(&u.uz) || Is_waterlevel(&u.uz) ||
                                    level->locations[u.ux][u.uy].typ < IRONBARS
                                    || level->locations[u.ux][u.uy].typ >=

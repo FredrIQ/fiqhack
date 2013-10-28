@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -711,7 +711,7 @@ newsym(int x, int y)
         return;
 
     /* only permit updating the hero when swallowed */
-    if (u.uswallow) {
+    if (Engulfed) {
         if (x == u.ux && y == u.uy)
             display_self();
         return;
@@ -1131,7 +1131,7 @@ under_water(int mode)
     int x, y;
 
     /* swallowing has a higher precedence than under water */
-    if (Is_waterlevel(&u.uz) || u.uswallow)
+    if (Is_waterlevel(&u.uz) || Engulfed)
         return;
 
     /* full update */
@@ -1174,7 +1174,7 @@ under_ground(int mode)
     static boolean dela;
 
     /* swallowing has a higher precedence than under ground */
-    if (u.uswallow)
+    if (Engulfed)
         return;
 
     /* full update */
@@ -1332,7 +1332,7 @@ doredraw(void)
     if (!u.ux)
         return 0;       /* display isn't ready yet */
 
-    if (u.uswallow) {
+    if (Engulfed) {
         swallowed(1);
         return 0;
     }

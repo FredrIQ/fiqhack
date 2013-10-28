@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -112,7 +112,7 @@ but that's really hard.
  */
 
 #define ugod_is_angry() (u.ualign.record < 0)
-#define on_altar()      (IS_ALTAR(level->locations[u.ux][u.uy].typ) && !u.uswallow)
+#define on_altar()      (IS_ALTAR(level->locations[u.ux][u.uy].typ) && !Engulfed)
 #define on_shrine()     ((level->locations[u.ux][u.uy].altarmask & AM_SHRINE) != 0)
 #define a_align(x,y)    ((aligntyp)Amask2align(level->locations[x][y].altarmask & AM_MASK))
 
@@ -468,7 +468,7 @@ fix_worst_trouble(int trouble)
 static void
 god_zaps_you(aligntyp resp_god)
 {
-    if (u.uswallow) {
+    if (Engulfed) {
         pline
             ("Suddenly a bolt of lightning comes down at you from the heavens!");
         pline("It strikes %s!", mon_nam(u.ustuck));
@@ -495,7 +495,7 @@ god_zaps_you(aligntyp resp_god)
     }
 
     pline("%s is not deterred...", align_gname(resp_god));
-    if (u.uswallow) {
+    if (Engulfed) {
         pline("A wide-angle disintegration beam aimed at you hits %s!",
               mon_nam(u.ustuck));
         if (!resists_disint(u.ustuck)) {
@@ -625,7 +625,7 @@ at_your_feet(const char *str)
 {
     if (Blind)
         str = "Something";
-    if (u.uswallow) {
+    if (Engulfed) {
         /* barrier between you and the floor */
         pline("%s %s into %s %s.", str, vtense(str, "drop"),
               s_suffix(mon_nam(u.ustuck)), mbodypart(u.ustuck, STOMACH));
@@ -1167,7 +1167,7 @@ dosacrifice(struct obj *otmp)
     int pm;
     aligntyp altaralign = a_align(u.ux, u.uy);
 
-    if (!on_altar() || u.uswallow) {
+    if (!on_altar() || Engulfed) {
         pline("You are not standing on an altar.");
         return 0;
     }

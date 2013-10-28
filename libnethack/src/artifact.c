@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -887,7 +887,7 @@ artifact_hit_behead(struct monst *magr, struct monst *mdef, struct obj *otmp,
     boolean youdefend = (mdef == &youmonst);
     boolean vis = (!youattack && magr && cansee(magr->mx, magr->my))
         || (!youdefend && cansee(mdef->mx, mdef->my))
-        || (youattack && u.uswallow && mdef == u.ustuck && !Blind);
+        || (youattack && Engulfed && mdef == u.ustuck && !Blind);
     const char *wepdesc;
     char hittee[BUFSZ];
 
@@ -898,7 +898,7 @@ artifact_hit_behead(struct monst *magr, struct monst *mdef, struct obj *otmp,
     if (otmp->oartifact == ART_TSURUGI_OF_MURAMASA && dieroll == 1) {
         wepdesc = "The razor-sharp blade";
         /* not really beheading, but so close, why add another SPFX */
-        if (youattack && u.uswallow && mdef == u.ustuck) {
+        if (youattack && Engulfed && mdef == u.ustuck) {
             pline("You slice %s wide open!", mon_nam(mdef));
             *dmgptr = 2 * mdef->mhp + FATAL_DAMAGE_MODIFIER;
             return TRUE;
@@ -944,11 +944,11 @@ artifact_hit_behead(struct monst *magr, struct monst *mdef, struct obj *otmp,
             "%s decapitates %s!"
         };
 
-        if (youattack && u.uswallow && mdef == u.ustuck)
+        if (youattack && Engulfed && mdef == u.ustuck)
             return FALSE;
         wepdesc = artilist[ART_VORPAL_BLADE].name;
         if (!youdefend) {
-            if (!has_head(mdef->data) || notonhead || u.uswallow) {
+            if (!has_head(mdef->data) || notonhead || Engulfed) {
                 if (youattack)
                     pline("Somehow, you miss %s wildly.", mon_nam(mdef));
                 else if (vis)
@@ -996,7 +996,7 @@ artifact_hit_drainlife(struct monst *magr, struct monst *mdef, struct obj *otmp,
     boolean youdefend = (mdef == &youmonst);
     boolean vis = (!youattack && magr && cansee(magr->mx, magr->my))
         || (!youdefend && cansee(mdef->mx, mdef->my))
-        || (youattack && u.uswallow && mdef == u.ustuck && !Blind);
+        || (youattack && Engulfed && mdef == u.ustuck && !Blind);
 
     if (!youdefend) {
         if (vis) {
@@ -1060,7 +1060,7 @@ artifact_hit(struct monst * magr, struct monst * mdef, struct obj * otmp,
     boolean youdefend = (mdef == &youmonst);
     boolean vis = (!youattack && magr && cansee(magr->mx, magr->my))
         || (!youdefend && cansee(mdef->mx, mdef->my))
-        || (youattack && u.uswallow && mdef == u.ustuck && !Blind);
+        || (youattack && Engulfed && mdef == u.ustuck && !Blind);
     boolean realizes_damage;
     char hittee[BUFSZ];
 

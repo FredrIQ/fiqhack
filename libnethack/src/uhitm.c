@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -102,7 +102,7 @@ attack_checks(struct monst *mtmp,
     /* if you're close enough to attack, alert any waiting monster */
     mtmp->mstrategy &= ~STRAT_WAITMASK;
 
-    if (u.uswallow && mtmp == u.ustuck)
+    if (Engulfed && mtmp == u.ustuck)
         return FALSE;
 
     if (flags.forcefight) {
@@ -398,7 +398,7 @@ atk_done:
        returned 0 (it's okay to attack), and the monster didn't evade. */
     if (flags.forcefight && mtmp->mhp > 0 && !canspotmon(mtmp) &&
         !level->locations[u.ux + dx][u.uy + dy].mem_invis &&
-        !(u.uswallow && mtmp == u.ustuck))
+        !(Engulfed && mtmp == u.ustuck))
         map_invisible(u.ux + dx, u.uy + dy);
 
     return TRUE;
@@ -445,14 +445,14 @@ known_hitum(struct monst *mon, int *mhit, const struct attack *uattk, schar dx,
         if (malive) {
             /* monster still alive */
             if (!rn2(25) && mon->mhp < mon->mhpmax / 2 &&
-                !(u.uswallow && mon == u.ustuck)) {
+                !(Engulfed && mon == u.ustuck)) {
                 /* maybe should regurgitate if swallowed? */
                 if (!rn2(3)) {
                     monflee(mon, rnd(100), FALSE, TRUE);
                 } else
                     monflee(mon, 0, FALSE, TRUE);
 
-                if (u.ustuck == mon && !u.uswallow && !sticks(youmonst.data))
+                if (u.ustuck == mon && !Engulfed && !sticks(youmonst.data))
                     u.ustuck = 0;
             }
             /* Vorpal Blade hit converted to miss */
@@ -476,7 +476,7 @@ hitum(struct monst *mon, int tmp, const struct attack *uattk, schar dx,
       schar dy)
 {
     boolean malive;
-    int mhit = (tmp > (dieroll = rnd(20)) || u.uswallow);
+    int mhit = (tmp > (dieroll = rnd(20)) || Engulfed);
 
     if (tmp > dieroll)
         exercise(A_DEX, TRUE);
@@ -1457,12 +1457,12 @@ damageum(struct monst *mdef, const struct attack *mattk)
         if (!negated && tmp < mdef->mhp) {
             char nambuf[BUFSZ];
             boolean u_saw_mon = canseemon(mdef) ||
-                (u.uswallow && u.ustuck == mdef);
+                (Engulfed && u.ustuck == mdef);
             /* record the name before losing sight of monster */
             strcpy(nambuf, Monnam(mdef));
             if (u_teleport_mon(mdef, FALSE) && u_saw_mon) {
                 boolean can_see_mon = canseemon(mdef) ||
-                    (u.uswallow && u.ustuck == mdef);
+                    (Engulfed && u.ustuck == mdef);
                 if (!can_see_mon)
                     pline("%s suddenly disappears!", nambuf);
             }
@@ -1789,7 +1789,7 @@ gulpum(struct monst *mdef, const struct attack *mattk)
     if (mdef->data->msize >= MZ_HUGE)
         return 0;
 
-    if (u.uhunger < 1500 && !u.uswallow) {
+    if (u.uhunger < 1500 && !Engulfed) {
         for (otmp = mdef->minvent; otmp; otmp = otmp->nobj)
             snuff_lit(otmp);
 
@@ -1998,7 +1998,7 @@ hmonas(struct monst *mon, int tmp, schar dx, schar dy)
                 hittmp += weapon_hit_bonus(uwep);
                 tmp += hittmp;
             }
-            dhit = (tmp > (dieroll = rnd(20)) || u.uswallow);
+            dhit = (tmp > (dieroll = rnd(20)) || Engulfed);
             /* KMH -- Don't accumulate to-hit bonuses */
             if (uwep)
                 tmp -= hittmp;
@@ -2032,10 +2032,10 @@ hmonas(struct monst *mon, int tmp, schar dx, schar dy)
         case AT_TENT:
             if (i == 0 && uwep && (youmonst.data->mlet == S_LICH))
                 goto use_weapon;
-            if ((dhit = (tmp > rnd(20) || u.uswallow)) != 0) {
+            if ((dhit = (tmp > rnd(20) || Engulfed)) != 0) {
                 int compat;
 
-                if (!u.uswallow &&
+                if (!Engulfed &&
                     (compat = could_seduce(&youmonst, mon, mattk))) {
                     pline("You %s %s %s.", mon->mcansee && haseyes(mon->data)
                           ? "smile at" : "talk to", mon_nam(mon),
@@ -2078,7 +2078,7 @@ hmonas(struct monst *mon, int tmp, schar dx, schar dy)
             wakeup(mon);
             if (mon->data == &mons[PM_SHADE])
                 pline("Your hug passes harmlessly through %s.", mon_nam(mon));
-            else if (!sticks(mon->data) && !u.uswallow) {
+            else if (!sticks(mon->data) && !Engulfed) {
                 if (mon == u.ustuck) {
                     pline("%s is being %s.", Monnam(mon),
                           u.umonnum == PM_ROPE_GOLEM ? "choked" : "crushed");

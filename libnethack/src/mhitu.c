@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -305,7 +305,7 @@ mattacku(struct monst *mtmp)
         return 0;
 
     /* If swallowed, can only be affected by u.ustuck */
-    if (u.uswallow) {
+    if (Engulfed) {
         if (mtmp != u.ustuck)
             return 0;
         u.ustuck->mux = u.ux;
@@ -333,7 +333,7 @@ mattacku(struct monst *mtmp)
         }
     }
 
-    if (u.uundetected && !range2 && foundyou && !u.uswallow) {
+    if (u.uundetected && !range2 && foundyou && !Engulfed) {
         u.uundetected = 0;
         if (is_hider(youmonst.data)) {
             coord cc;   /* maybe we need a unexto() function? */
@@ -424,7 +424,7 @@ mattacku(struct monst *mtmp)
         return 0;
     }
     if (youmonst.data->mlet == S_MIMIC && youmonst.m_ap_type && !range2 &&
-        foundyou && !u.uswallow) {
+        foundyou && !Engulfed) {
         if (!youseeit)
             pline("It gets stuck on you.");
         else
@@ -438,7 +438,7 @@ mattacku(struct monst *mtmp)
     }
 
     /* player might be mimicking an object */
-    if (youmonst.m_ap_type == M_AP_OBJECT && !range2 && foundyou && !u.uswallow) {
+    if (youmonst.m_ap_type == M_AP_OBJECT && !range2 && foundyou && !Engulfed) {
         if (!youseeit)
             pline("Something %s!",
                   (likes_gold(mtmp->data) &&
@@ -567,7 +567,7 @@ mattacku(struct monst *mtmp)
 
         sum[i] = 0;
         mattk = getmattk(mdat, i, sum, &alt_attk);
-        if (u.uswallow && (mattk->aatyp != AT_ENGL))
+        if (Engulfed && (mattk->aatyp != AT_ENGL))
             continue;
         switch (mattk->aatyp) {
         case AT_CLAW:  /* "hand to hand" attacks */
@@ -614,7 +614,7 @@ mattacku(struct monst *mtmp)
         case AT_ENGL:
             if (!range2) {
                 if (foundyou) {
-                    if (u.uswallow || tmp > (j = rnd(20 + i))) {
+                    if (Engulfed || tmp > (j = rnd(20 + i))) {
                         /* Force swallowing monster to be displayed even when
                            player is moving away */
                         flush_screen();
@@ -1656,7 +1656,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
 }
 
 
-/* monster swallows you, or damage if u.uswallow */
+/* monster swallows you, or damage if Engulfed */
 static int
 gulpmu(struct monst *mtmp, const struct attack *mattk)
 {
@@ -1666,7 +1666,7 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
     struct obj *otmp2;
     int i;
 
-    if (!u.uswallow) {  /* swallows you */
+    if (!Engulfed) {  /* swallows you */
         if (youmonst.data->msize >= MZ_HUGE)
             return 0;
         if ((t && ((t->ttyp == PIT) || (t->ttyp == SPIKED_PIT))) &&
@@ -1724,7 +1724,7 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
 
         win_pause_output(P_MESSAGE);
         vision_recalc(2);       /* hero can't see anything */
-        u.uswallow = 1;
+        Engulfed = 1;
         /* u.uswldtim always set > 1 */
         tim_tmp = 25 - (int)mtmp->m_lev;
         if (tim_tmp > 0)

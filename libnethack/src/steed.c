@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -54,7 +54,7 @@ use_saddle(struct obj *otmp)
     }
 
     /* Select an animal */
-    if (u.uswallow || Underwater || !getdir(NULL, &dx, &dy, &dz)) {
+    if (Engulfed || Underwater || !getdir(NULL, &dx, &dy, &dz)) {
         pline("Never mind.");
         return 0;
     }
@@ -238,10 +238,10 @@ mount_steed(struct monst * mtmp,        /* The animal */
         pline("I see nobody there.");
         return FALSE;
     }
-    if (u.uswallow || u.ustuck || u.utrap || Punished ||
+    if (Engulfed || u.ustuck || u.utrap || Punished ||
         !test_move(u.ux, u.uy, mtmp->mx - u.ux, mtmp->my - u.uy, 0,
                    TEST_MOVE)) {
-        if (Punished || !(u.uswallow || u.ustuck || u.utrap))
+        if (Punished || !(Engulfed || u.ustuck || u.utrap))
             pline("You are unable to swing your %s over.", body_part(LEG));
         else
             pline("You are stuck here for now.");
@@ -540,7 +540,7 @@ dismount_steed(int reason)
     }
     if (!DEADMONSTER(mtmp)) {
         place_monster(mtmp, u.ux, u.uy);
-        if (!u.uswallow && !u.ustuck && have_spot) {
+        if (!Engulfed && !u.ustuck && have_spot) {
             const struct permonst *mdat = mtmp->data;
 
             /* The steed may drop into water/lava */

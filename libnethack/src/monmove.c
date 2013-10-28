@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -173,7 +173,7 @@ monflee(struct monst *mtmp, int fleetime, boolean first, boolean fleemsg)
         return;
 
     if (u.ustuck == mtmp) {
-        if (u.uswallow)
+        if (Engulfed)
             expels(mtmp, mtmp->data, TRUE);
         else if (!sticks(youmonst.data)) {
             unstuck(mtmp);      /* monster lets go when fleeing */
@@ -349,7 +349,7 @@ dochug(struct monst *mtmp)
 
     /* Demonic Blackmail! */
     if (nearby && mdat->msound == MS_BRIBE && mtmp->mpeaceful && !mtmp->mtame &&
-        !u.uswallow) {
+        !Engulfed) {
         if (multi < 0)
             return (0); /* wait for you to be able to respond */
         if (mtmp->mux != u.ux || mtmp->muy != u.uy) {
@@ -518,7 +518,7 @@ toofar:
             if (!nearby &&
                 (ranged_attk(mdat) || find_offensive(mtmp, &musable)))
                 break;
-            else if (u.uswallow && mtmp == u.ustuck) {
+            else if (Engulfed && mtmp == u.ustuck) {
                 /* a monster that's digesting you can move at the same time
                    -dlc */
                 return mattacku(mtmp);
@@ -566,7 +566,7 @@ static const char gem_class[] = { GEM_CLASS, 0 };
 boolean
 itsstuck(struct monst *mtmp)
 {
-    if (sticks(youmonst.data) && mtmp == u.ustuck && !u.uswallow) {
+    if (sticks(youmonst.data) && mtmp == u.ustuck && !Engulfed) {
         pline("%s cannot escape from you!", Monnam(mtmp));
         return TRUE;
     }
@@ -699,14 +699,14 @@ m_move(struct monst *mtmp, int after)
         goto postmov;
     }
 not_special:
-    if (u.uswallow && !mtmp->mflee && u.ustuck != mtmp)
+    if (Engulfed && !mtmp->mflee && u.ustuck != mtmp)
         return 1;
     omx = mtmp->mx;
     omy = mtmp->my;
     gx = mtmp->mux;
     gy = mtmp->muy;
     appr = mtmp->mflee ? -1 : 1;
-    if (mtmp->mconf || (u.uswallow && mtmp == u.ustuck))
+    if (mtmp->mconf || (Engulfed && mtmp == u.ustuck))
         appr = 0;
     else {
         struct obj *lepgold, *ygold;
@@ -1146,7 +1146,7 @@ postmov:
                 return 2;       /* mon died (position already updated) */
 
             /* set also in domove(), hack.c */
-            if (u.uswallow && mtmp == u.ustuck &&
+            if (Engulfed && mtmp == u.ustuck &&
                 (mtmp->mx != omx || mtmp->my != omy)) {
                 /* If the monster moved, then update */
                 u.ux0 = u.ux;

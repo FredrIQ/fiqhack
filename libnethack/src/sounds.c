@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-10-28 */
 /*      Copyright (c) 1989 Janet Walz, Mike Threepoint */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -26,7 +26,7 @@ dosounds(void)
     int hallu, vx, vy;
     struct monst *mtmp;
 
-    if (!flags.soundok || u.uswallow || Underwater)
+    if (!flags.soundok || Engulfed || Underwater)
         return;
 
     hallu = Hallucination ? 1 : 0;
@@ -842,7 +842,7 @@ dochat(int idx, int idy, int idz)
         pline("You can't speak.  You're choking!");
         return 0;
     }
-    if (u.uswallow) {
+    if (Engulfed) {
         pline("They won't hear you out there.");
         return 0;
     }
