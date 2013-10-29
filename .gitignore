@@ -1,10 +1,11 @@
-# Last modified by Alex Smith, 2013-09-21
+# Last modified by Alex Smith, 2013-10-29
 build/*
 *.swp
 *.kate-swp
 *~
 .emacs.desktop
 .emacs.desktop.lock
+aimake.local
 CMakeFiles/
 CMakeCache.txt
 Makefile
