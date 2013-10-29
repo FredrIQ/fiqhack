@@ -1,16 +1,24 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
-#ifdef MAKEDEFS_C
-/* in makedefs.c, all we care about is the list of names */
+#ifdef ARTINAMES_H
+/* in artinames.h, all we care about is the list of names */
 
 # define A(nam,typ,s1,s2,mt,atk,dfn,cry,inv,al,cl,rac,cost) nam
 
 static const char *artifact_names[] = {
 #else
-/* in artifact.c, set up the actual artifact list structure */
+/* in artilist.h, set up the actual artifact list structure */
+
+# include "artifact.h"
+# include "align.h"
+# include "permonst.h"
+# include "monsym.h"
+# include "onames.h"
+# include "prop.h"
+# include "pm.h"
 
 # define A(nam,typ,s1,s2,mt,atk,dfn,cry,inv,al,cl,rac,cost) \
  { nam, cost, s1, s2, mt, atk, dfn, cry, al, inv, cl, rac, typ }
@@ -28,7 +36,7 @@ static const char *artifact_names[] = {
 # define     STUN(a,b)  {0,AD_STUN,a,b} /* magical attack */
 
 static const struct artifact const_artilist[] = {
-#endif /* MAKEDEFS_C */
+#endif /* ARTINAMES_C */
 
 /* Artifact cost rationale:
  * 1.  The more useful the artifact, the better its cost.
@@ -234,7 +242,7 @@ static const struct artifact const_artilist[] = {
 
 #undef  A
 
-#ifndef MAKEDEFS_C
+#ifndef ARTINAMES_H
 # undef NO_ATTK
 # undef NO_DFNS
 # undef DFNS

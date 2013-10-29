@@ -1,9 +1,13 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-10-29 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef RND_H
 # define RND_H
+
+# include "extern.h"
+# include "you.h"
+# include "decl.h"
 
 # define RND(x) (int)(mt_random() % (long)(x))
 

@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2013-10-16
+# Last modified by Alex Smith, 2013-10-29
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -52,8 +52,9 @@
             outdepends => [],
             verb => 'determined',
         },
+
         _warn_about_global_variables => {
-            object => "bpath:libnethack$dllext",
+            object => "bpath:libnethack/libnethack$dllext",
             command => ['optionset:os_osx_linux',
                         'cmd:sh',
                         'path:libnethack/util/checkglobals.sh',
@@ -62,34 +63,57 @@
             propagate_usedeps => 1,
             output => [],
         },
+
+        _generate_artinames_h => {
+            # artilist.h is compiled twice, once as itself, once as
+            # artinames.h. We generate the two versions using the preprocessor
+            # directly.
+            object => 'bpath:libnethack/include/artilist.h/artilist.h',
+            command => ['tool:c_preprocessor', 'optpath::',
+                        'optstring:-DARTINAMES_H',
+                        'optpath:-o :' .
+                        'bpath:libnethack/include/artinames.h/artinames.h'],
+            output_from_optpath => '-o ',
+            verb => 'generated',
+            propagate_usedeps => 2, # ignore the usual dependencies
+        },
+
         _statically_link_uncursed_plugins => {
             # Most uncursed plugins are loaded as libraries. However, there's
             # no reason to do that in the case of terminal-based plugins that
             # require no external library support of their own (tty and
             # wincon), so we just link those in directly.
-            object => "bpath:libuncursed/src/libuncursed_c$objext",
+            object => "bpath:libuncursed/src/libuncursed.c/libuncursed$objext",
             depends => "optionset:_uncursed_static_plugins",
         },
+        _uncursed_plugins_have_wrappers => {
+            object => qr=^bpath:libuncursed/src/plugins/
+                         [^/]+\.c/.+\Q$objext\E$=xs,
+            command => ['intcmd:echo', 'optpath::'],
+            depends => ["extend:$objext:extend:/:extend:.cxx:extend:..:",
+                        "optpath::extend:$objext:extend:/:extend:.cxx:extend:..:"],
+            require_match => 1,
+        },
         _uncursed_plugins_to_link_statically => {
-            object => qr=^bpath:libuncursed/src/plugins/(?:wincon|tty)_c\Q$objext\E$=,
+            object => qr=^bpath:libuncursed/src/plugins/
+                      (?:wincon|tty)\.c/.+\Q$objext\E$=xs,
             output => 'optionset:_uncursed_static_plugins',
             propagate_usedeps => 1,
-            # If the _c.o file exists, we want to link the _cxx.o file. We'd
-            # normally do this via echo and regex trickery, but in this case,
-            # there's an easier way.
-            outdepends => ["extend:xx$objext:", "optpath::extend:xx$objext:"]
+            outdepends => ['', 'optpath::']
         },
         _uncursed_plugins_to_link_dynamically => {
-            object => qr=^path:libuncursed/src/plugins/(?!wincon|tty).*\.c$=,
+            object => qr=^bpath:libuncursed/src/plugins/
+                         (?!wincon\b|tty\b).+\.c/.+\Q$objext\E$=xs,
             command => ['intcmd:echo', 'optpath::'],
             output => "symbolset::bpath:libuncursed/src/plugins/libuncursed_",
-            outputarg => qr=^path:libuncursed/src/plugins/(.*)\.c$=,
+            outputarg => qr=^bpath:libuncursed/src/plugins/(.*)\.c=,
             propagate_usedeps => 2,
-            outdepends => ["extend:_cxx$objext:", "optpath::extend:_cxx$objext:"]
+            outdepends => ['', 'optpath::'],
         },
+
         _build_desfile => {
             object => qr/^path:.*\.des$/s,
-            command => ["bpath:libnethack/util/lev_main_c$exeext",
+            command => ["bpath:libnethack/util/lev_main.c/lev_main$exeext",
                         # We can't portably produce a "filename with a
                         # trailing slash". So we give a single space
                         # as the file part of the name, and get
@@ -115,56 +139,56 @@
             dependsarg => qr/^([0-9a-f]{8})/,
         },
         _makedefs_date => {
-            command => ["bpath:libnethack/util/makedefs_c$exeext",
+            command => ["bpath:libnethack/util/makedefs.c/makedefs$exeext",
                         "optpath:-v :bpath:libnethack/include/date.h",
                         "sys:always_rebuild",
                         "optionset:specific_version"],
             output => 'bpath:libnethack/include/date.h',
         },
         _makedefs_verinfo => {
-            command => ["bpath:libnethack/util/makedefs_c$exeext",
+            command => ["bpath:libnethack/util/makedefs.c/makedefs$exeext",
                         "optpath:-w :bpath:libnethack/include/verinfo.h"],
             output => 'bpath:libnethack/include/verinfo.h',
         },
         _makedefs_onames => {
-            command => ["bpath:libnethack/util/makedefs_c$exeext",
+            command => ["bpath:libnethack/util/makedefs.c/makedefs$exeext",
                         "optpath:-o :bpath:libnethack/include/onames.h"],
             output => 'bpath:libnethack/include/onames.h',
         },
         _makedefs_pm => {
-            command => ["bpath:libnethack/util/makedefs_c$exeext",
+            command => ["bpath:libnethack/util/makedefs.c/makedefs$exeext",
                         "optpath:-p :bpath:libnethack/include/pm.h"],
             output => 'bpath:libnethack/include/pm.h',
         },
         _makedefs_readonly => {
-            command => ["bpath:libnethack/util/makedefs_c$exeext",
+            command => ["bpath:libnethack/util/makedefs.c/makedefs$exeext",
                         "optpath:-m :bpath:libnethack/src/readonly.c"],
             output => 'bpath:libnethack/src/readonly.c',
         },
         _makedefs_data => {
             object => "path:libnethack/dat/data.base",
-            command => ["bpath:libnethack/util/makedefs_c$exeext",
+            command => ["bpath:libnethack/util/makedefs.c/makedefs$exeext",
                         "optpath:-d :",
                         "optpath::bpath:libnethack/dat/data"],
             output => 'bpath:libnethack/dat/data',
         },
         _makedefs_dungeon => {
             object => "path:libnethack/dat/dungeon.def",
-            command => ["bpath:libnethack/util/makedefs_c$exeext",
+            command => ["bpath:libnethack/util/makedefs.c/makedefs$exeext",
                         "optpath:-e :",
                         "optpath::bpath:libnethack/dat/dungeon.pdf"],
             output => 'bpath:libnethack/dat/dungeon.pdf',
         },
         _makedefs_quest => {
             object => "path:libnethack/dat/quest.txt",
-            command => ["bpath:libnethack/util/makedefs_c$exeext",
+            command => ["bpath:libnethack/util/makedefs.c/makedefs$exeext",
                         "optpath:-q :",
                         "optpath::bpath:libnethack/dat/quest.dat"],
             output => 'bpath:libnethack/dat/quest.dat',
         },
         _makedefs_oracles => {
             object => "path:libnethack/dat/oracles.txt",
-            command => ["bpath:libnethack/util/makedefs_c$exeext",
+            command => ["bpath:libnethack/util/makedefs.c/makedefs$exeext",
                         "optpath:-d :",
                         "optpath::bpath:libnethack/dat/oracles"],
             output => 'bpath:libnethack/dat/oracles',
@@ -172,7 +196,7 @@
         _makedefs_rumors => {
             # We rely on the fact that optpath: options given
             # explicitly always stay in the same order.
-            command => ["bpath:libnethack/util/makedefs_c$exeext",
+            command => ["bpath:libnethack/util/makedefs.c/makedefs$exeext",
                         "optstring:-r",
                         "path:libnethack/dat/rumors.tru",
                         "optpath::path:libnethack/dat/rumors.tru",
@@ -183,18 +207,18 @@
         },
         _compile_dungeon => {
             object => "bpath:libnethack/dat/dungeon.pdf",
-            command => ["bpath:libnethack/util/dgn_main_c$exeext",
+            command => ["bpath:libnethack/util/dgn_main.c/dgn_main$exeext",
                         "optpath::"],
             output => 'bpath:libnethack/dat/dungeon',
         },
         _nhdata_levfiles => {
-            object => "bpath:libnethack/util/dlb_main_c$exeext",
+            object => "bpath:libnethack/util/dlb_main.c/dlb_main$exeext",
             command => ["intcmd:listtree", "sys:rebuild_late",
                         "optpath::bpath:libnethack/dat"],
             depends => qr/^(.+\.lev)$/s,
         },
         _nhdata => {
-            command => ["bpath:libnethack/util/dlb_main_c$exeext",
+            command => ["bpath:libnethack/util/dlb_main.c/dlb_main$exeext",
                         "optpath:cf :bpath:libnethack/dat/nhdat",
                         "bpath:libnethack/dat/data",
                         "bpath:libnethack/dat/dungeon",
@@ -210,7 +234,7 @@
             output => "bpath:libnethack/dat/nhdat",
         },
         _tileset_tilemap => {
-            command => ["bpath:tilesets/util/tilemap_c$exeext",
+            command => ["bpath:tilesets/util/tilemap.c/tilemap$exeext",
                         "path:tilesets/include/tile_h.in",
                         "optpath::path:tilesets/include/tile_h.in",
                         "optpath::bpath:tilesets/include/tile.h",
@@ -243,7 +267,7 @@
         },
         _merge_tilesets => {
             object => qr=^path:tilesets/dat/catalogues/tile-16\.txt$=s,
-            command => ["bpath:tilesets/util/convert_tileset_c$exeext",
+            command => ["bpath:tilesets/util/convert_tileset.c/convert_tileset$exeext",
                         "optpath:-p :path:tilesets/dat/palette.txt",
                         "optpath:-m :bpath:tilesets/dat/maps/nethack4.map"],
             output_from_optpath => '-o ',
@@ -251,7 +275,7 @@
         },
         _build_tileset_images => {
             object => qr=^bpath:tilesets/dat/merged/.*\.txt$=s,
-            command => ["bpath:tilesets/util/export_tileset_c$exeext",
+            command => ["bpath:tilesets/util/export_tileset.c/export_tileset$exeext",
                         "optpath:-o :extend:.png:",
                         "optstring:-t",
                         "optpath::"],
@@ -259,7 +283,7 @@
         },
         _build_fonts => {
             object => qr=^path:tilesets/dat/fonts/font14\.txt=s,
-            command => ["bpath:tilesets/util/export_tileset_c$exeext",
+            command => ["bpath:tilesets/util/export_tileset.c/export_tileset$exeext",
                         "optpath:-o :extend:.png:",
                         "optstring:-f",
                         "optpath::"],
@@ -284,12 +308,12 @@
         install_executables => undef, # we don't want to install most of them
         # but we don't override install_libraries
         _install_main => {
-            object => "bpath:nethack/src/main_c$exeext",
+            object => "bpath:nethack/src/main.c/main$exeext",
             install_dir => "gamesbindir",
             install_name => "nethack4$exeext",
         },
         _install_server => {
-            object => "bpath:nethack_server/src/srvmain_c$exeext",
+            object => "bpath:nethack_server/src/srvmain.c/srvmain$exeext",
             install_dir => "gamesbindir",
             install_name => "nethack4-server$exeext",
         },
@@ -318,34 +342,34 @@
         _install_server_config => {
             object => "sys:ensure_exists",
             command => ["intcmd:nop",
-                        "bpath:nethack_server/src/srvmain_c$exeext"],
+                        "bpath:nethack_server/src/srvmain.c/srvmain$exeext"],
             install_dir => "configdir",
             install_name => "nethack4.conf",
         },
         _install_server_logfile => {
             object => "sys:ensure_exists",
             command => ["intcmd:nop",
-                        "bpath:nethack_server/src/srvmain_c$exeext"],
+                        "bpath:nethack_server/src/srvmain.c/srvmain$exeext"],
             install_dir => "logdir",
             install_name => "nethack4.log",
         },
         _install_server_lockfile => {
             object => "sys:touch_only",
             command => ["intcmd:nop",
-                        "bpath:nethack_server/src/srvmain_c$exeext"],
+                        "bpath:nethack_server/src/srvmain.c/srvmain$exeext"],
             install_dir => "lockdir",
         },
         _install_server_dumps => {
             object => "sys:create_subdir",
             command => ["intcmd:nop",
-                        "bpath:nethack_server/src/srvmain_c$exeext"],
+                        "bpath:nethack_server/src/srvmain.c/srvmain$exeext"],
             install_dir => "gamesstatedir",
             install_name => "dumps",
         },
         _install_dumps_note => {
             object => "bpath:readme-dumps",
             command => ["intcmd:nop",
-                        "bpath:nethack_server/src/srvmain_c$exeext"],
+                        "bpath:nethack_server/src/srvmain.c/srvmain$exeext"],
             install_dir => "gamesstatedir",
             install_name => "dumps/README",            
         },

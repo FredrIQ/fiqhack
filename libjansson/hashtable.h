@@ -1,4 +1,4 @@
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-10-29 */
 /*
  * Copyright (c) 2009-2011 Petri Lehtinen <petri@digip.org>
  *
@@ -8,6 +8,8 @@
 
 #ifndef HASHTABLE_H
 #define HASHTABLE_H
+
+#include <stddef.h>
 
 typedef size_t (*key_hash_fn)(const void *key);
 typedef int (*key_cmp_fn)(const void *key1, const void *key2);

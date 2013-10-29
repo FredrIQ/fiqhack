@@ -1,4 +1,4 @@
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-10-29 */
 /*
  * Copyright (c) 2009-2011 Petri Lehtinen <petri@digip.org>
  *
@@ -8,6 +8,8 @@
 
 #ifndef STRBUFFER_H
 #define STRBUFFER_H
+
+#include <stddef.h>
 
 typedef struct {
     char *value;

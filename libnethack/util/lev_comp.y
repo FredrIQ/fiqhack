@@ -1,4 +1,8 @@
-%{
+%code requires {
+#include "hack.h"
+#include "sp_lev.h"
+}
+%code {
 /* Last modified by Alex Smith, 2013-09-21 */
 /*	Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -7,9 +11,6 @@
  * This file contains the Level Compiler code
  * It may handle special mazes & special room-levels
  */
-
-#include "hack.h"
-#include "sp_lev.h"
 
 #define MAX_REGISTERS	10
 #define ERR		(-1)
@@ -114,7 +115,7 @@ extern int fatal_error;
 extern int want_warnings;
 extern const char *fname;
 
-%}
+}
 
 %union
 {

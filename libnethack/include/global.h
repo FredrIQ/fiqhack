@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-10-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -71,12 +71,14 @@ typedef schar xchar;
  * Please don't change the order.  It does matter.
  */
 
-# ifdef UNIX
-#  include "unixconf.h"
-# endif
-
-# ifdef WIN32
+# ifdef AIMAKE_BUILDOS_MSWin32
 #  include "ntconf.h"
+# else
+#  if defined(AIMAKE_BUILDOS_darwin) || defined(AIMAKE_BUILDOS_linux)
+#   include "unixconf.h"
+#  else
+#   error Could not detect your OS. Update the logic in global.h.
+#  endif 
 # endif
 
 /* Displayable name of this port; don't redefine if defined in *conf.h */
