@@ -2250,18 +2250,13 @@ doseduce(struct monst *mon)
                 pline("%s decides she'd like your %s, and takes it.",
                       Blind ? "She" : Monnam(mon), xname(ring));
             makeknown(RIN_ADORNMENT);
-            if (ring == uleft || ring == uright)
-                Ring_gone(ring);
-            if (ring == uwep)
-                setuwep(NULL);
-            if (ring == uswapwep)
-                setuswapwep(NULL);
-            if (ring == uquiver)
-                setuqwep(NULL);
+            unwield_silently(ring);
+            setunequip(ring);
             freeinv(ring);
             mpickobj(mon, ring);
         } else {
             char buf[BUFSZ];
+            enum objslot slot;
 
             if (uleft && uright && uleft->otyp == RIN_ADORNMENT &&
                 uright->otyp == RIN_ADORNMENT)
@@ -2289,27 +2284,27 @@ doseduce(struct monst *mon)
                 pline("%s puts %s on your right %s.",
                       Blind ? "He" : Monnam(mon), the(xname(ring)),
                       body_part(HAND));
-                setworn(ring, W_MASK(os_ringr));
+                slot = os_ringr;
             } else if (!uleft) {
                 pline("%s puts %s on your left %s.", Blind ? "He" : Monnam(mon),
                       the(xname(ring)), body_part(HAND));
-                setworn(ring, W_MASK(os_ringl));
+                slot = os_ringl;
             } else if (uright && uright->otyp != RIN_ADORNMENT) {
                 strcpy(buf, xname(uright));
                 pline("%s replaces your %s with your %s.",
                       Blind ? "He" : Monnam(mon), buf, xname(ring));
-                Ring_gone(uright);
-                setworn(ring, W_MASK(os_ringr));
+                setunequip(uright);
+                slot = os_ringr;
             } else if (uleft && uleft->otyp != RIN_ADORNMENT) {
                 strcpy(buf, xname(uleft));
                 pline("%s replaces your %s with your %s.",
                       Blind ? "He" : Monnam(mon), buf, xname(ring));
-                Ring_gone(uleft);
-                setworn(ring, W_MASK(os_ringl));
+                setunequip(uleft);
+                slot = os_ringl;
             } else
                 impossible("ring replacement");
             unwield_silently(ring);
-            Ring_on(ring);
+            setequip(slot, ring, em_silent);
             prinv(NULL, ring, 0L);
         }
     }

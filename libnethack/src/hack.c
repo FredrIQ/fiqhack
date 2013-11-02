@@ -446,21 +446,12 @@ dosinkfall(void)
 
     /* Turn off levitation before printing messages */
     HLevitation &= ~(I_SPECIAL | TIMEOUT);
-    if (uleft && uleft->otyp == RIN_LEVITATION) {
-        obj = uleft;
-        Slot_gone(os_ringl);
-        pline("%s falls off your finger.", Yname2(obj));
-    }
-    if (uright && uright->otyp == RIN_LEVITATION) {
-        obj = uright;
-        Slot_gone(os_ringr);
-        pline("%s falls off your finger.", Yname2(obj));
-    }
-    if (uarmf && uarmf->otyp == LEVITATION_BOOTS) {
-        obj = uarmf;
-        Slot_gone(os_armf);
-        off_msg(obj);
-    }
+    if (uleft && uleft->otyp == RIN_LEVITATION)
+        setequip(os_ringl, NULL, em_magical);
+    if (uright && uright->otyp == RIN_LEVITATION)
+        setequip(os_ringr, NULL, em_magical);
+    if (uarmf && uarmf->otyp == LEVITATION_BOOTS)
+        setequip(os_armf, NULL, em_magical);
     for (obj = invent; obj; obj = obj->nobj) {
         if (obj->oartifact && artifact_has_invprop(obj, LEVITATION))
             uninvoke_artifact(obj);

@@ -291,23 +291,21 @@ recharge(struct obj *obj, int curse_bless)
             pline("Your %s %s momentarily, then %s!", xname(obj),
                   otense(obj, "pulsate"), otense(obj, "explode"));
             if (is_on)
-                Ring_gone(obj);
+                setunequip(obj);
             s = rnd(3 * abs(obj->spe)); /* amount of damage */
             useup(obj);
             losehp(s, "exploding ring", KILLED_BY_AN);
         } else {
-            long mask = is_on ? W_MASK(obj == uleft ? os_ringl : os_ringr) : 0L;
+            enum objslot slot = obj == uleft ? os_ringl : os_ringr;
 
             pline("Your %s spins %sclockwise for a moment.", xname(obj),
                   s < 0 ? "counter" : "");
             /* cause attributes and/or properties to be updated */
             if (is_on)
-                Ring_off(obj);
+                setunequip(obj);
             obj->spe += s;      /* update the ring while it's off */
-            if (is_on) {
-                setworn(obj, mask);
-                Ring_on(obj);
-            }
+            if (is_on)
+                setequip(slot, obj, em_silent);
             /* oartifact: if a touch-sensitive artifact ring is ever created
                the above will need to be revised */
         }
@@ -651,18 +649,7 @@ seffects(struct obj *sobj, boolean * known)
                       (Blind || same_color) ? nul :
                       hcolor(sobj->cursed ? "black" : "silver"),
                       otense(otmp, "evaporate"));
-                if (is_cloak(otmp))
-                    Cloak_off();
-                if (is_boots(otmp))
-                    Boots_off();
-                if (is_helmet(otmp))
-                    Helmet_off();
-                if (is_gloves(otmp))
-                    Gloves_off();
-                if (is_shield(otmp))
-                    Shield_off();
-                if (otmp == uarm)
-                    Armor_gone();
+                setunequip(otmp);
                 useup(otmp);
                 break;
             }

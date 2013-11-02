@@ -1400,15 +1400,17 @@ poly_obj(struct obj *obj, int id)
 
 
     /* swap otmp for obj */
+    long old_mask = obj->owornmask;
+    if (obj_location == OBJ_INVENT)
+        remove_worn_item(obj, TRUE);
     replace_object(obj, otmp);
     if (obj_location == OBJ_INVENT) {
         /* We may need to do extra adjustments for the hero if we're messing
            with the hero's inventory.  The following calls are equivalent to
            calling freeinv on obj and addinv on otmp, while doing an in-place
            swap of the actual objects. */
-        long old_mask = obj->owornmask, new_mask;
+        long new_mask;
         /* boolean save_twoweap = u.twoweap; */
-        remove_worn_item(obj, TRUE);
         swapinv(obj, otmp);
 
         /* This code counts the number of bits set in the mask.  We want to be
@@ -1429,8 +1431,8 @@ poly_obj(struct obj *obj, int id)
                 (old_mask & body_slots && new_mask & body_slots) ||
                 (old_mask & W_RING && new_mask & W_RING)) {
                 if (new_mask == W_RING) new_mask = old_mask;
-                setworn(otmp, new_mask);
-                if (Slot_on(objslot_from_mask(new_mask))) {
+                if (setequip(objslot_from_mask(new_mask), otmp, em_silent)) {
+                    /* otmp was destroyed */
                     if (obj->unpaid)
                         costly_damage_obj(obj);
                     delobj(obj);
@@ -1445,9 +1447,9 @@ poly_obj(struct obj *obj, int id)
             setuswapwep(otmp);
             /* FIXME: two-weaponing */
         }
-    } else if (otmp->owornmask) {
+    } else if (old_mask) {
         impossible("owornmask not in inventory in poly_obj?");
-        otmp->owornmask = obj->owornmask;
+        otmp->owornmask = old_mask;
     }
 
     if ((!carried(otmp) || obj->unpaid) &&
@@ -4033,12 +4035,8 @@ destroy_item(int osym, int dmgtyp)
                 if (!breathless(youmonst.data) || haseyes(youmonst.data))
                     potionbreathe(obj);
             }
-            if (obj->owornmask) {
-                if (obj->owornmask & W_RING)    /* ring being worn */
-                    Ring_gone(obj);
-                else
-                    setnotworn(obj);
-            }
+            setunequip(obj);
+
             /* If destroying the item that (perhaps indirectly) caused the
                destruction, we need to notify the caller, but obfree() does that
                (via modifying turnstate), and obfree() is a better place (it

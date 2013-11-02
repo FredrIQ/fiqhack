@@ -610,17 +610,17 @@ break_armor(void)
         if ((otmp = uarm) != 0 && otmp != uskin()) {
             pline("You break out of your armor!");
             exercise(A_STR, FALSE);
-            Armor_gone();
+            setequip(os_arm, NULL, em_silent);
             useup(otmp);
         }
         if ((otmp = uarmc) != 0) {
             if (otmp->oartifact) {
                 pline("Your %s falls off!", cloak_simple_name(otmp));
-                Cloak_off();
+                setequip(os_armc, NULL, em_silent);
                 dropx(otmp);
             } else {
                 pline("Your %s tears apart!", cloak_simple_name(otmp));
-                Cloak_off();
+                setequip(os_armc, NULL, em_silent);
                 useup(otmp);
             }
         }
@@ -633,7 +633,7 @@ break_armor(void)
         if (((otmp = uarm) != 0) && (otmp != uskin()) &&
             (racial_exception(&youmonst, otmp) < 1)) {
             pline("Your armor falls around you!");
-            Armor_gone();
+            setequip(os_arm, NULL, em_silent);
             dropx(otmp);
         }
         if ((otmp = uarmc) != 0) {
@@ -641,7 +641,7 @@ break_armor(void)
                 pline("Your %s falls, unsupported!", cloak_simple_name(otmp));
             else
                 pline("You shrink out of your %s!", cloak_simple_name(otmp));
-            Cloak_off();
+            setequip(os_armc, NULL, em_silent);
             dropx(otmp);
         }
         if ((otmp = uarmu) != 0) {
@@ -649,7 +649,7 @@ break_armor(void)
                 pline("You seep right through your shirt!");
             else
                 pline("You become much too small for your shirt!");
-            setworn(NULL, otmp->owornmask & W_MASK(os_armu));
+            setequip(os_armu, NULL, em_silent);
             dropx(otmp);
         }
     }
@@ -666,7 +666,7 @@ break_armor(void)
             } else {
                 pline("Your %s falls to the %s!", helmet_name(otmp),
                       surface(u.ux, u.uy));
-                Helmet_off();
+                setequip(os_armh, NULL, em_silent);
                 dropx(otmp);
             }
         }
@@ -676,18 +676,18 @@ break_armor(void)
             /* Drop weapon along with gloves */
             pline("You drop your gloves%s!", uwep ? " and weapon" : "");
             drop_weapon(0);
-            Gloves_off();
+            setequip(os_armg, NULL, em_silent);
             dropx(otmp);
         }
         if ((otmp = uarms) != 0) {
             pline("You can no longer hold your shield!");
-            Shield_off();
+            setequip(os_arms, NULL, em_silent);
             dropx(otmp);
         }
         if ((otmp = uarmh) != 0) {
             pline("Your %s falls to the %s!", helmet_name(otmp),
                   surface(u.ux, u.uy));
-            Helmet_off();
+            setequip(os_armh, NULL, em_silent);
             dropx(otmp);
         }
     }
@@ -699,7 +699,7 @@ break_armor(void)
             else
                 pline("Your boots %s off your feet!",
                       verysmall(youmonst.data) ? "slide" : "are pushed");
-            Boots_off();
+            setequip(os_armf, NULL, em_silent);
             dropx(otmp);
         }
     }

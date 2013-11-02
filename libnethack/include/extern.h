@@ -15,6 +15,7 @@
 # include "hacklib.h"
 
 /* forward definitions of structures and enums */
+enum equipmsg;
 enum memfile_tagtype;
 enum nh_direction;
 enum nh_log_status;
@@ -344,33 +345,9 @@ extern char *coyotename(const struct monst *, char *);
 
 /* ### do_wear.c ### */
 
-extern void off_msg(struct obj *);
 extern void set_wear(void);
-extern int Armor_on(void);
-extern int Armor_off(void);
-extern int Armor_gone(void);
-extern int Helmet_on(void);
-extern int Helmet_off(void);
-extern int Gloves_on(void);
-extern int Gloves_off(void);
-extern int Boots_on(void);
-extern int Boots_off(void);
-extern int Cloak_on(void);
-extern int Cloak_off(void);
-extern int Shield_on(void);
-extern int Shield_off(void);
-extern int Shirt_on(void);
-extern int Shirt_off(void);
-extern boolean Amulet_on(void);
-extern void Amulet_off(void);
-extern void Ring_on(struct obj *);
-extern void Ring_off(struct obj *);
-extern void Ring_gone(struct obj *);
-extern void Blindf_on(struct obj *);
-extern void Blindf_off(struct obj *);
-extern boolean Slot_on(enum objslot);
-extern void Slot_off(enum objslot);
-extern void Slot_gone(enum objslot);
+extern boolean setequip(enum objslot, struct obj *, enum equipmsg);
+extern void setunequip(struct obj *);
 extern enum objslot objslot_from_mask(int);
 extern int equip_heartbeat(void);
 extern int dounequip(struct obj *otmp);

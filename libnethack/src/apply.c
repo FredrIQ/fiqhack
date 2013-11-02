@@ -121,7 +121,7 @@ use_towel(struct obj *obj)
                     struct obj *saved_ublindf = ublindf;
 
                     pline("You push your %s off.", what);
-                    Blindf_off(ublindf);
+                    setequip(os_tool, NULL, em_silent);
                     dropx(saved_ublindf);
                 }
             }

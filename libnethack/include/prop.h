@@ -126,6 +126,12 @@ enum objslot {
     os_invalid = -1,
 };
 
+enum equipmsg {
+    em_silent,    /* no messages; used for theft, etc. */
+    em_voluntary, /* as if the player was doing the action intentionally */
+    em_magical,   /* for magical forcible removal: "<the ring> falls off!" */
+};
+
 /* This enum holds non-equipment object pointers that are tracked indirectly in
    struct you (mostly state for handling occupations that might be interrupted,
    which is why it can't go in struct turnstate). These are saved and restored,

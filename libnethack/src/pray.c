@@ -1332,7 +1332,7 @@ dosacrifice(struct obj *otmp)
         } else {
             /* The final Test. Did you win? */
             if (uamul == otmp)
-                Amulet_off();
+                setequip(os_amul, NULL, em_voluntary);
             u.uevent.ascended = 1;
             if (carried(otmp))
                 useup(otmp);    /* well, it's gone now */

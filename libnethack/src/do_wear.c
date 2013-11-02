@@ -1118,6 +1118,37 @@ Slot_gone(enum objslot slot)
     };
 }
 
+/* Changes which item is placed in a slot. This is a reasonably low-level
+   function; it doesn't check whether the change is possible, it just does it.
+   Likewise, it takes zero time. (The assumption is that the caller has either
+   checked things like time and possibility, or else the item's being unequipped
+   magically, being destroyed, or something similar.)
+
+   Returns TRUE if attempting to equip the item destroyed it (e.g. amulet of
+   change). */
+boolean
+setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
+{
+    /* TODO: This is just a wrapper for now. It should eventually do the
+       work itself. */
+    if (!otmp || otmp == &zeroobj) {
+        (msgtype == em_silent ? Slot_gone : Slot_off)(slot);
+    } else {
+        setworn(otmp, W_MASK(slot));
+        return Slot_on(slot);
+    }
+    return FALSE;
+}
+
+/* Convenience wrapper around setequip. */
+void
+setunequip(struct obj *otmp)
+{
+    if (otmp->owornmask & W_EQUIP)
+        setequip(objslot_from_mask(otmp->owornmask & W_EQUIP),
+                 NULL, em_silent);
+}
+
 enum objslot
 objslot_from_mask(int wearmask)
 {
@@ -1128,7 +1159,9 @@ objslot_from_mask(int wearmask)
     panic("Could not find equipment slot for wear mask %d", wearmask);
 }
 
-/* called in main to set extrinsics of worn start-up items */
+/* Called in main to set extrinsics of worn start-up items. TODO: The call
+   pattern of this function looks /very/ suspect. I suspect that it's always a
+   no-op in practice. If it isn't, the way it's being called is wrong. */
 void
 set_wear(void)
 {
@@ -1137,8 +1170,10 @@ set_wear(void)
     for (i = (sizeof equip_order) / (sizeof *equip_order) - 1; i; i--)
         if (equip_order[i].slot <= os_last_armor &&
             equip_order[i].direction == ed_equip &&
-            EQUIP(equip_order[i].slot))
-            Slot_on(equip_order[i].slot);
+            EQUIP(equip_order[i].slot)) {
+            setequip(equip_order[i].slot, EQUIP(equip_order[i].slot),
+                     em_silent);
+        }
 }
 
 /* The commands wxQWTRPA (and the use of a to equip eye-slot items) are all now
@@ -1535,7 +1570,7 @@ equip_heartbeat(void)
                underneath, but in that case, we don't have to worry about an
                immediate re-equip because the equip and unequip have separate
                lines on the table.) */
-            Slot_off(islot);
+            setequip(islot, NULL, em_voluntary);
             /* Unequipping artifact armour will succeed despite a blast, but
                you still get blasted. */
             if (current->oartifact)
@@ -1553,8 +1588,7 @@ equip_heartbeat(void)
                on to it. */
             if (!desired->oartifact || touch_artifact(desired, &youmonst)) {
                 unwield_silently(desired);
-                setworn(desired, W_MASK(islot));
-                Slot_on(islot);
+                setequip(islot, desired, em_voluntary);
             }
         }
         /* Remove the desire to change a slot that has had the correct item
@@ -2278,12 +2312,12 @@ glibr(void)
         xfl++;
         if (leftfall) {
             otmp = uleft;
-            Ring_off(uleft);
+            setunequip(otmp);
             dropx(otmp);
         }
         if (rightfall) {
             otmp = uright;
-            Ring_off(uright);
+            setunequip(otmp);
             dropx(otmp);
         }
     }
@@ -2412,38 +2446,40 @@ destroy_arm(struct obj *atmp)
                         (!atmp || atmp == otmp) &&                 \
                         (!obj_resists(otmp, 0, 90)))
 
+    /* For anyone confused by the following code: DESTROY_ARM sets otmp as a
+       side effect. Yes, it's confusing. */
     if (DESTROY_ARM(uarmc)) {
         pline("Your %s crumbles and turns to dust!", cloak_simple_name(uarmc));
-        Slot_gone(os_armc);
+        setunequip(otmp);
         useup(otmp);
     } else if (DESTROY_ARM(uarm)) {
         pline("Your armor turns to dust and falls to the %s!",
               surface(u.ux, u.uy));
-        Slot_gone(os_arm);
+        setunequip(otmp);
         useup(otmp);
     } else if (DESTROY_ARM(uarmu)) {
         pline("Your shirt crumbles into tiny threads and falls apart!");
-        Slot_gone(os_armu);
+        setunequip(otmp);
         useup(otmp);
     } else if (DESTROY_ARM(uarmh)) {
         pline("Your helmet turns to dust and is blown away!");
-        Slot_gone(os_armh);
+        setunequip(otmp);
         useup(otmp);
     } else if (DESTROY_ARM(uarmg)) {
         char kbuf[BUFSZ];
 
         sprintf(kbuf, "losing %s gloves while wielding", uhis());
         pline("Your gloves vanish!");
-        Slot_gone(os_armg);
+        setunequip(otmp);
         useup(otmp);
         selftouch("You", kbuf);
     } else if (DESTROY_ARM(uarmf)) {
         pline("Your boots disintegrate!");
-        Slot_gone(os_armf);
+        setunequip(otmp);
         useup(otmp);
     } else if (DESTROY_ARM(uarms)) {
         pline("Your shield crumbles away!");
-        Slot_gone(os_arms);
+        setunequip(otmp);
         useup(otmp);
     } else {
         return 0;       /* could not destroy anything */

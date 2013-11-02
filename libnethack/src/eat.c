@@ -1337,7 +1337,7 @@ eataccessory(struct obj *otmp)
     /* (How often do you even _find_ 3 rings of polymorph in a game?) */
     oldprop = u.uintrinsic[objects[typ].oc_oprop];
     if (otmp == uleft || otmp == uright) {
-        Ring_gone(otmp);
+        setunequip(otmp);
         if (u.uhp <= 0)
             return;     /* died from sink fall */
     }

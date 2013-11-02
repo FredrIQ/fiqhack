@@ -137,20 +137,20 @@ remove_worn_item(struct obj *obj, boolean unchain_ball)
     if (!obj->owornmask)
         return;
 
+    unwield_silently(obj);
     if (obj->owornmask & W_WORN) {
         if (obj == uskin()) {
             impossible("Removing embedded scales?");
         }
-        
-        Slot_off(objslot_from_mask(obj->owornmask));
+        setunequip(obj);
     }
-    unwield_silently(obj);
 
     if (obj->owornmask & (W_MASK(os_ball) | W_MASK(os_chain))) {
         if (unchain_ball)
             unpunish();
     } else if (obj->owornmask) {
-        /* catchall */
+        /* This is a catchall for cases not considered above. It's used for
+           uninvoking artifacts, but possibly not for anything else. */
         setnotworn(obj);
     }
 }

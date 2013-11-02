@@ -4037,7 +4037,7 @@ lava_effects(void)
                 /* always display this, as it explains why you're falling into
                    the lava */
                 pline("Your %s into flame!", aobjnam(obj, "burst"));
-                (void)Boots_off();
+                setequip(os_armf, NULL, em_silent);
                 useupall(obj);
             }
             pline("You fall into the lava!");
@@ -4063,29 +4063,8 @@ lava_effects(void)
                     if (usurvive)
                         pline("Your %s into flame!", aobjnam(obj, "burst"));
 
-                    if (obj == uarm)
-                        Armor_gone();
-                    else if (obj == uarmc)
-                        Cloak_off();
-                    else if (obj == uarmh)
-                        Helmet_off();
-                    else if (obj == uarms)
-                        Shield_off();
-                    else if (obj == uarmg)
-                        Gloves_off();
-                    else if (obj == uarmf)
-                        Boots_off();
-                    else if (obj == uarmu)
-                        setnotworn(obj);
-                    else if (obj == uleft)
-                        Ring_gone(obj);
-                    else if (obj == uright)
-                        Ring_gone(obj);
-                    else if (obj == ublindf)
-                        Blindf_off(obj);
-                    else if (obj == uamul)
-                        Amulet_off();
                     unwield_silently(obj);
+                    setunequip(obj);
                 }
                 useupall(obj);
             }
@@ -4116,10 +4095,10 @@ lava_effects(void)
        armor anyway */
 burn_stuff:
     if (uarmf && !uarmf->oerodeproof && is_organic(uarmf)) {
-        /* save uarmf value because Boots_off() sets uarmf to null */
+        /* save uarmf value because setequip sets uarmf to null */
         obj = uarmf;
-        pline("Your %s bursts into flame!", xname(obj));
-        Boots_off();
+        pline("Your %s burst into flame!", xname(obj));
+        setequip(os_armf, NULL, em_silent);
         useup(obj);
     }
     destroy_item(SCROLL_CLASS, AD_FIRE);
