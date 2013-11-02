@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-29 */
+/* Last modified by Alex Smith, 2013-11-02 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -346,8 +346,6 @@ extern char *coyotename(const struct monst *, char *);
 
 extern void off_msg(struct obj *);
 extern void set_wear(void);
-extern boolean donning(struct obj *);
-extern void cancel_don(void);
 extern int Armor_on(void);
 extern int Armor_off(void);
 extern int Armor_gone(void);
@@ -372,21 +370,21 @@ extern void Blindf_on(struct obj *);
 extern void Blindf_off(struct obj *);
 extern boolean Slot_on(enum objslot);
 extern void Slot_off(enum objslot);
+extern void Slot_gone(enum objslot);
 extern enum objslot objslot_from_mask(int);
-extern int dotakeoff(struct obj *otmp);
-extern int doremring(struct obj *otmp);
-extern int cursed(struct obj *);
-extern boolean canwearobj(struct obj *, long *, boolean);
+extern int equip_heartbeat(void);
+extern int dounequip(struct obj *otmp);
 extern int dowear(struct obj *otmp);
-extern int doputon(struct obj *otmp);
+extern int doequip(void);
+extern int equip_in_slot(struct obj *otmp, enum objslot);
+extern boolean canwearobj(struct obj *, long *, boolean, boolean, boolean);
+extern boolean canunwearobj(struct obj *, boolean, boolean, boolean);
 extern void find_ac(void);
 extern void glibr(void);
 extern struct obj *some_armor(struct monst *);
 extern void erode_armor(struct monst *, boolean);
 extern struct obj *stuck_ring(struct obj *, int);
 extern struct obj *unchanger(void);
-extern void reset_remarm(void);
-extern int doddoremarm(void);
 extern int destroy_arm(struct obj *);
 extern void adj_abon(struct obj *, schar);
 
@@ -503,7 +501,7 @@ extern int dooverview(void);
 
 /* ### eat.c ### */
 
-extern boolean is_edible(const struct obj *);
+extern boolean is_edible(const struct obj *, boolean);
 extern void init_uhunger(void);
 extern int Hear_again(void);
 extern void reset_eat(void);
@@ -514,6 +512,7 @@ extern boolean is_fainted(void);
 extern void reset_faint(void);
 extern void violated_vegetarian(void);
 extern void newuhs(boolean);
+extern boolean can_sacrifice(const struct obj *);
 extern struct obj *floorfood(const char *);
 extern void vomit(void);
 extern int eaten_stat(int, struct obj *);
@@ -1808,6 +1807,8 @@ extern void you_unwere(boolean);
 
 /* ### wield.c ### */
 
+extern int canwieldobj(struct obj *, boolean, boolean, boolean);
+extern int canreadyobj(struct obj *, boolean, boolean, boolean);
 extern int ready_weapon(struct obj *);
 extern void setuwep(struct obj *);
 extern void setuqwep(struct obj *);

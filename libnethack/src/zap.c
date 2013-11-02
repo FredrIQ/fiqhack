@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-11-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1413,11 +1413,15 @@ poly_obj(struct obj *obj, int id)
 
         /* This code counts the number of bits set in the mask.  We want to be
            sure that only one bit is set, because otherwise we're very
-           confused.  v&(v-1) is nonzero whenever multiple bits are set. */
+           confused.  v&(v-1) is nonzero whenever multiple bits are set.
+
+           TODO: The way canwearobj currently works, this code will cause
+           polymorphed items to fall off if they're worn beneath cursed
+           items. This is probably not what we want. */
         long v = old_mask & W_EQUIP;
         if (v & (v-1)) {
             impossible("More than one worn mask set in poly_obj?!?");
-        } else if (canwearobj(otmp, &new_mask, FALSE)) {
+        } else if (canwearobj(otmp, &new_mask, FALSE, TRUE, TRUE)) {
             /* canwearobj only checks for wearable armor */
             const int body_slots = 
                 (W_MASK(os_arm) | W_MASK(os_armc) | W_MASK(os_armu));

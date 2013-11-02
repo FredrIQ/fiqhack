@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-11-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1035,7 +1035,14 @@ ini_inv(const struct trobj *trop, short nocreate[4])
             if (is_shield(obj) && uswapwep)
                 setuswapwep(NULL);
 
-            if (canwearobj(obj, &mask, FALSE) && mask & W_ARMOR)
+            /* The TRUE for cblock allows armour to be equipped out of order.
+               Just in case we generate it like that. This relies on the fact
+               that we don't give the player cursed items in starting
+               inventory.
+            
+               TODO: Does this provide numerical extrinsics, like brilliance?
+               The situation nonetheless probably can't currently come up. */
+            if (canwearobj(obj, &mask, FALSE, TRUE, TRUE) && mask & W_ARMOR)
                 setworn(obj, mask);
         }
 
@@ -1235,7 +1242,11 @@ restore_utracked(struct memfile *mf, struct you *y)
         int oid;
         y->utracked[i] = NULL;
         oid = mread32(mf);
-        if (oid) y->utracked[i] = find_oid(oid);
+        if (oid == -1)
+            y->utracked[i] = &zeroobj;
+        else if (oid)
+            y->utracked[i] = find_oid(oid);
+        y->uoccupation_progress[i] = mread32(mf);
     }
 }
 
@@ -1399,7 +1410,9 @@ save_utracked(struct memfile *mf, struct you *y)
 {
     int i;
     for (i = 0; i <= tos_last_slot; i++) {
-        mwrite32(mf, y->utracked[i] ? y->utracked[i]->o_id : 0);
+        mwrite32(mf, y->utracked[i] ? y->utracked[i]->o_id :
+                 y->utracked[i] == &zeroobj ? -1 : 0);
+        mwrite32(mf, y->uoccupation_progress[i]);
     }
 }
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-11-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -13,8 +13,6 @@ static void invdisp_nothing(const char *, const char *);
 static boolean worn_wield_only(const struct obj *);
 static boolean only_here(const struct obj *);
 static void compactify(char *);
-static boolean taking_off(const char *);
-static boolean putting_on(const char *);
 static char display_pickinv(const char *, boolean, long *);
 static boolean this_type_only(const struct obj *);
 static void dounpaid(void);
@@ -29,11 +27,12 @@ static void addinv_stats(struct obj *);
 static void freeinv_stats(struct obj *);
 
 
+/* Keep this in order; larger value are more impossible to use. */
 enum obj_use_status {
-    OBJECT_USABLE,
-    ALREADY_IN_USE,
-    UNSUITABLE_USE,
-    CURRENTLY_NOT_USABLE
+    OBJECT_USABLE,             /* using this object is reasonable */
+    NONSENSIBLE_USE,           /* using this object is not reasonable */
+    CURRENTLY_NOT_USABLE,      /* using this object is impossible for now */
+    IMPOSSIBLE_USE,            /* using this object is impossible forever */
 };
 
 
@@ -708,113 +707,134 @@ compactify(char *buf)
     }
 }
 
-/* match the prompt for either 'T' or 'R' command */
-static boolean
-taking_off(const char *action)
-{
-    return !strcmp(action, "take off") || !strcmp(action, "remove");
-}
-
-/* match the prompt for either 'W' or 'P' command */
-static boolean
-putting_on(const char *action)
-{
-    return !strcmp(action, "wear") || !strcmp(action, "put on");
-}
-
-
 /* ugly checks that were pulled out of getobj. The intent is to determine
- * whether object otmp should be displayed for the query descibed by word.
- * This function assumes that otmp->oclass is known to be allowed. */
+   whether object otmp should be displayed for the query descibed by word. This
+   function assumes that otmp->oclass is known to be allowed.
+
+   TODO: Eventually we want to remove oclass-based validation altogether and
+   just have this function do everything itself. */
 static enum obj_use_status
 object_selection_checks(struct obj *otmp, const char *word)
 {
-    long dummymask;
+    long dummy;
     int otyp = otmp->otyp;
 
-    /* ugly check: remove inappropriate things */
-    if ((taking_off(word) &&
-         (!(otmp->owornmask & W_WORN) || (otmp == uskin())
-          || (otmp == uarm && uarmc) || (otmp == uarmu && (uarm || uarmc))))
-        || (putting_on(word) && (otmp->owornmask & W_WORN))
-        || (!strcmp(word, "ready") &&
-            (otmp == uwep || (otmp == uswapwep && u.twoweap))))
-        return ALREADY_IN_USE;
+    /* cblock controls whether we allow equip commands that require removing
+       other items temporarily. TODO: make this a game option. */
+    boolean cblock = TRUE;
 
-    /* Second ugly check; unlike the first it won't trigger an "else" in "you
-       don't have anything else to ___". */
-    else if ((putting_on(word) &&
-              ((otmp->oclass == FOOD_CLASS && otmp->otyp != MEAT_RING) ||
-               (otmp->oclass == TOOL_CLASS && otyp != BLINDFOLD && otyp != TOWEL
-                && otyp != LENSES)))
-             || (!strcmp(word, "wield") &&
-                 (otmp->oclass == TOOL_CLASS && !is_weptool(otmp)))
-             || (!strcmp(word, "eat") && !is_edible(otmp))
-             || (!strcmp(word, "sacrifice") &&
-                 (otyp != CORPSE && otyp != AMULET_OF_YENDOR &&
-                  otyp != FAKE_AMULET_OF_YENDOR))
-             || (!strcmp(word, "write with") &&
-                 (otmp->oclass == TOOL_CLASS && otyp != MAGIC_MARKER &&
-                  otyp != TOWEL))
-             || (!strcmp(word, "tin") && (otyp != CORPSE || !tinnable(otmp)))
-             || (!strcmp(word, "rub") &&
-                 ((otmp->oclass == TOOL_CLASS && otyp != OIL_LAMP &&
-                   otyp != MAGIC_LAMP && otyp != BRASS_LANTERN) ||
-                  (otmp->oclass == GEM_CLASS && !is_graystone(otmp))))
-             || (!strncmp(word, "rub on the stone", 16) &&
-                 otmp->oclass == GEM_CLASS && /* using known touchstone */
-                 otmp->dknown && objects[otyp].oc_name_known)
-             || ((!strcmp(word, "use or apply") || !strcmp(word, "untrap with"))
-                 &&
-                 /* Picks, axes, pole-weapons, bullwhips */
-                 ((otmp->oclass == WEAPON_CLASS && !is_pick(otmp) &&
-                   !is_axe(otmp) && !is_pole(otmp) && otyp != BULLWHIP) ||
-                  (otmp->oclass == POTION_CLASS &&
-                   /* only applicable potion is oil, and it will only be
-                      offered as a choice when already discovered */
-                   (otyp != POT_OIL || !otmp->dknown ||
-                    !objects[POT_OIL].oc_name_known)) ||
-                  (otmp->oclass == FOOD_CLASS && otyp != CREAM_PIE &&
-                   otyp != EUCALYPTUS_LEAF) || (otmp->oclass == GEM_CLASS &&
-                                                !is_graystone(otmp))))
-             || (!strncmp(word, "invoke", 6) &&
-                 (!otmp->oartifact && !objects[otyp].oc_unique &&
-                  (otyp != FAKE_AMULET_OF_YENDOR || otmp->known) &&
-                  otmp->oclass != WAND_CLASS &&   /* V for breaking wands */
-                  ((otmp->oclass == TOOL_CLASS && /* V for rubbing */
-                    otyp != OIL_LAMP && otyp != MAGIC_LAMP &&
-                    otyp != BRASS_LANTERN) ||
-                   (otmp->oclass == GEM_CLASS && !is_graystone(otmp)) ||
-                   (otmp->oclass != TOOL_CLASS && otmp->oclass != GEM_CLASS)) &&
-                  otyp != CRYSTAL_BALL &&         /* V for applying */
-                  /* note: presenting the possibility of invoking non-artifact
-                     mirrors and/or lamps is a simply a cruel deception... */
-                  otyp != MIRROR && otyp != MAGIC_LAMP &&
-                  (otyp != OIL_LAMP || /* don't list known oil lamp */
-                   (otmp->dknown && objects[OIL_LAMP].oc_name_known))))
-             || (!strcmp(word, "untrap with") &&
-                 (otmp->oclass == TOOL_CLASS && otyp != CAN_OF_GREASE))
-             || (!strcmp(word, "charge") && !is_chargeable(otmp))
-             || (otmp->oclass == COIN_CLASS && !strcmp(word, "eat") &&
-                 (!metallivorous(youmonst.data) ||
-                  youmonst.data == &mons[PM_RUST_MONSTER])))
-        return UNSUITABLE_USE;
+    /* Check to see if equipping/unequipping is known to be unreasonable, either
+       because the object is inappropriate or the slot is blocked by a cursed
+       item (cblock == TRUE) or any item (cblock == FALSE).
 
-    /* ugly check for unworn armor that can't be worn */
-    else if (putting_on(word) && otmp->oclass == ARMOR_CLASS &&
-             !canwearobj(otmp, &dummymask, FALSE))
+       There are three sets of checks. We return IMPOSSIBLE_USE if the object is
+       one that inherently can't be worn (this never happens for wield checks);
+       CURRENTLY_NOT_USABLE if the request is impossible right now;
+       NONSENSIBLE_USE if the request is possible right now but not sensible
+       (e.g. wielding food rations).
+    
+       ALREADY_IN_USE no longer exists; we don't want to ruin muscle memory via
+       printing "You don't have anything else to wear" under any circumstances,
+       and we allow the caller to print a more sensible message as to why
+       something can't be equipped. We consider already worn items to be
+       non-sensible choices instead, and currently wielded items to be just fine
+       as choices. In the case where a player tries to wield an object over
+       itself, we get equip_heartbeat to print the message. */
+    if ((!strcmp(word, "wear") || !strcmp(word, "take off")) &&
+        otmp->oclass != ARMOR_CLASS && otmp->oclass != AMULET_CLASS &&
+        otmp->oclass != RING_CLASS && otmp->otyp != MEAT_RING &&
+        otmp->otyp != BLINDFOLD && otmp->otyp != LENSES && otmp->otyp != TOWEL)
+        return IMPOSSIBLE_USE;
+    if (((!strcmp(word, "take off") || !strcmp(word, "unequip")) &&
+         !canunwearobj(otmp, FALSE, FALSE, cblock)) ||
+        (!strcmp(word, "wear") &&
+         !canwearobj(otmp, &dummy, FALSE, FALSE, cblock)) ||
+        (!strcmp(word, "wield") && !canwieldobj(otmp, FALSE, FALSE, cblock)) ||
+        (!strcmp(word, "ready") && !canreadyobj(otmp, FALSE, FALSE, cblock)) ||
+        (!strcmp(word, "quiver") && !canreadyobj(otmp, FALSE, FALSE, cblock)))
         return CURRENTLY_NOT_USABLE;
+    if ((!strcmp(word, "wield") &&
+         canwieldobj(otmp, FALSE, FALSE, cblock) != 2) ||
+        (!strcmp(word, "ready") &&
+         !(canreadyobj(otmp, FALSE, FALSE, cblock) & 4)) ||
+        (!strcmp(word, "quiver") &&
+         !(canreadyobj(otmp, FALSE, FALSE, cblock) & 2)) ||
+        (!strcmp(word, "wear") && (otmp->owornmask & W_WORN)))
+        return NONSENSIBLE_USE;
+
+    /* Other verbs: impossible uses (i.e. these actions cannot meaningfully
+       even be attempted). */
+    if ((!strcmp(word, "eat") && !is_edible(otmp, FALSE)) ||
+        (!strcmp(word, "rub") && /* TODO: Downgrade to nonsensible */
+         ((otmp->oclass == TOOL_CLASS && otyp != OIL_LAMP &&
+           otyp != MAGIC_LAMP && otyp != BRASS_LANTERN) ||
+          (otmp->oclass == GEM_CLASS && !is_graystone(otmp)))) ||
+        (!strcmp(word, "sacrifice") && !can_sacrifice(otmp)) ||
+        (!strcmp(word, "tin") && (otyp != CORPSE || !tinnable(otmp))) ||
+        ((!strcmp(word, "use or apply") || !strcmp(word, "untrap with")) &&
+         /* Picks, axes, pole-weapons, bullwhips */
+         ((otmp->oclass == WEAPON_CLASS && !is_pick(otmp) &&
+           !is_axe(otmp) && !is_pole(otmp) && otyp != BULLWHIP) ||
+          (otmp->oclass == FOOD_CLASS && otyp != CREAM_PIE &&
+           otyp != EUCALYPTUS_LEAF) ||
+          (otmp->oclass == GEM_CLASS && !is_graystone(otmp)))) ||
+        (!strcmp(word, "read") &&
+         (otmp->oclass != SCROLL_CLASS && otmp->oclass != SPBOOK_CLASS &&
+          otyp != FORTUNE_COOKIE && otyp != T_SHIRT)) ||
+        (!strcmp(word, "untrap with") &&
+         (otmp->oclass == TOOL_CLASS && otyp != CAN_OF_GREASE)) ||
+        (!strcmp(word, "charge") && !is_chargeable(otmp)))
+        return IMPOSSIBLE_USE;
+
+    /* Other verbs: currently impossible uses. */
+    if ((!strcmp(word, "eat") && !is_edible(otmp, TRUE)))
+        return CURRENTLY_NOT_USABLE;
+    
+    /* Other verbs: non-recommended uses. */
+    if ((!strcmp(word, "write with") &&
+         (otmp->oclass == TOOL_CLASS && otyp != MAGIC_MARKER &&
+          otyp != TOWEL)) ||
+        (!strcmp(word, "read") &&
+         (otmp->oclass != SCROLL_CLASS && otmp->oclass != SPBOOK_CLASS)) ||
+        (!strncmp(word, "rub on the stone", 16) &&
+         otmp->oclass == GEM_CLASS && /* using known touchstone */
+         otmp->dknown && objects[otyp].oc_name_known) ||
+        (!strncmp(word, "invoke", 6) &&
+         (!otmp->oartifact && !objects[otyp].oc_unique &&
+          (otyp != FAKE_AMULET_OF_YENDOR || otmp->known) &&
+          otmp->oclass != WAND_CLASS &&   /* V for breaking wands */
+          ((otmp->oclass == TOOL_CLASS && /* V for rubbing */
+            otyp != OIL_LAMP && otyp != MAGIC_LAMP && otyp != BRASS_LANTERN) ||
+           (otmp->oclass == GEM_CLASS && !is_graystone(otmp)) ||
+           (otmp->oclass != TOOL_CLASS && otmp->oclass != GEM_CLASS)) &&
+          otyp != CRYSTAL_BALL &&         /* V for applying */
+          /* note: presenting the possibility of invoking non-artifact
+             mirrors and/or lamps is a simply a cruel deception... */
+          otyp != MIRROR && otyp != MAGIC_LAMP &&
+          (otyp != OIL_LAMP || /* don't list known oil lamp */
+           (otmp->dknown && objects[OIL_LAMP].oc_name_known)))) ||
+        (!strcmp(word, "throw") &&
+         !(ammo_and_launcher(otmp, uwep) || is_missile(otmp)) &&
+         !(throws_rocks(youmonst.data) && otyp == BOULDER)))
+        return NONSENSIBLE_USE;
 
     return OBJECT_USABLE;
 }
 
 
 /*
+ * Requests an object from the player's inventory.
+ *
  * getobj returns:
  *      struct obj *xxx:  object to do something with.
  *      NULL              error return: no object.
  *      &zeroobj          explicitly no object (as in w-).
-!!!! test if gold can be used in unusual ways (eaten etc.)
+ * TODO: test if gold can be used in unusual ways (eaten etc.)
+ *
+ * The user will be given a list of the "OBJECT_USABLE" uses by default;
+ * pressing ? also shows this list. Pressing * shows that list, and also all
+ * "NONSENSIBLE_USE" objects. With allowall, all objects are treated as at
+ * least "NONSENSIBLE_USE". (TODO: Remove allowall altogether.)
  */
 struct obj *
 getobj(const char *let, const char *word)
@@ -829,8 +849,6 @@ getobj(const char *let, const char *word)
     boolean allowall = FALSE;
     boolean allownone = FALSE;
     char nonechar = '-';
-    boolean useboulder = FALSE;
-    xchar foox = 0;
     int cnt;
     boolean prezero = FALSE;
 
@@ -842,62 +860,33 @@ getobj(const char *let, const char *word)
         let++, allownone = TRUE;
     if (*let == NONE_ON_COMMA)
         let++, nonechar = ',';
-    /* "ugly check" for reading fortune cookies, part 1 */
-    /* The normal 'ugly check' keeps the object on the inventory list. We don't 
-       want to do that for shirts/cookies, so the check for them is handled a
-       bit differently (and also requires that we set allowall in the caller) */
-    if (allowall && !strcmp(word, "read"))
-        allowall = FALSE;
 
-    /* another ugly check: show boulders (not statues) */
-    if (*let == WEAPON_CLASS && !strcmp(word, "throw") &&
-        throws_rocks(youmonst.data))
-        useboulder = TRUE;
-
-    if (allownone)
+    if (allownone) {
         *bp++ = nonechar;
-    if (bp > buf && bp[-1] == nonechar)
         *bp++ = ' ';
+    }
     ap = altlets;
 
-    ilet = 'a';
     for (otmp = invent; otmp; otmp = otmp->nobj) {
-        if (!*let || strchr(let, otmp->oclass)
-            || (useboulder && otmp->otyp == BOULDER)) {
+        if (!*let || strchr(let, otmp->oclass)) {
             bp[foo++] = otmp->invlet;
 
             switch (object_selection_checks(otmp, word)) {
-            case ALREADY_IN_USE:       /* eg: wield the weapon in your hands */
-                foo--;
-                foox++;
-                break;
-
-            case UNSUITABLE_USE:       /* eg: putting on a tool */
-                foo--;
-                break;
-
             case CURRENTLY_NOT_USABLE:
+            case IMPOSSIBLE_USE:
                 foo--;
-                allowall = TRUE;
+                break;
+
+            case NONSENSIBLE_USE:
+                foo--;
                 *ap++ = otmp->invlet;
                 break;
 
-            default:
+            case OBJECT_USABLE:
+                *ap++ = otmp->invlet;
                 break;
             }
-
-        } else {
-
-            /* "ugly check" for reading fortune cookies, part 2 */
-            if ((!strcmp(word, "read") &&
-                 (otmp->otyp == FORTUNE_COOKIE || otmp->otyp == T_SHIRT)))
-                allowall = TRUE;
         }
-
-        if (ilet == 'z')
-            ilet = 'A';
-        else
-            ilet++;
     }
     bp[foo] = 0;
     if (foo == 0 && bp > buf && bp[-1] == ' ')
@@ -907,11 +896,9 @@ getobj(const char *let, const char *word)
         compactify(bp);
     *ap = '\0';
 
-    /* if (!strncmp(word, "rub on the stone", 16)) { allowall = TRUE; usegold = 
-       TRUE; } */
-
-    if (!foo && !allowall && !allownone) {
-        pline("You don't have anything %sto %s.", foox ? "else " : "", word);
+    /* TODO: Get rid of this! */
+    if (!*altlets && !allowall && !allownone) {
+        pline("You don't have anything to %s.", word);
         return NULL;
     }
     for (;;) {
@@ -947,18 +934,16 @@ getobj(const char *let, const char *word)
                for Larn, where trying to drop 2^32-n gold pieces was allowed,
                and did interesting things to your money supply.  The LRS is the 
                tax bureau from Larn. */
-            if (cnt < 0) {
+            if (cnt <= 0) {
                 pline
                     ("The LRS would be very interested to know you have that much.");
                 return NULL;
             }
         }
         if (ilet == '?' || ilet == '*') {
-            char *allowed_choices = (ilet == '?') ? lets : NULL;
+            char *allowed_choices = (ilet == '?') ? lets : altlets;
             long ctmp = 0;
 
-            if (ilet == '?' && !*lets && *altlets)
-                allowed_choices = altlets;
             ilet =
                 display_pickinv(allowed_choices, TRUE, allowcnt ? &ctmp : NULL);
             if (!ilet)
@@ -984,6 +969,7 @@ getobj(const char *let, const char *word)
                 allowcnt = 1;
             if (cnt == 0 && prezero)
                 return NULL;
+            /* TODO: This is simply factually incorrect. Daggerstorm, anyone? */
             if (cnt > 1) {
                 pline("You can only throw one item at a time.");
                 continue;
@@ -1026,7 +1012,7 @@ getobj(const char *let, const char *word)
 boolean
 validate_object(struct obj * obj, const char *lets, const char *word)
 {
-    boolean allowall = !lets || ! !strchr(lets, ALL_CLASSES);
+    boolean allowall = !lets || !!strchr(lets, ALL_CLASSES);
 
     if (!allowall && lets && !strchr(lets, obj->oclass)) {
         silly_thing(word, obj);
@@ -1035,15 +1021,16 @@ validate_object(struct obj * obj, const char *lets, const char *word)
 
     switch (object_selection_checks(obj, word)) {
     default:
-    case ALREADY_IN_USE:
-        pline("That item is already equipped.");
-        return FALSE;
-    case UNSUITABLE_USE:
+    case CURRENTLY_NOT_USABLE:
+        if (allowall)
+            return TRUE;
+        /*FALLTHRU*/
+    case IMPOSSIBLE_USE:
         silly_thing(word, obj);
         return FALSE;
 
     case OBJECT_USABLE:
-    case CURRENTLY_NOT_USABLE:
+    case NONSENSIBLE_USE:
         return TRUE;
     }
 }

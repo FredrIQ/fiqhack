@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-11-02 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -608,8 +608,6 @@ break_armor(void)
 
     if (breakarm(youmonst.data)) {
         if ((otmp = uarm) != 0 && otmp != uskin()) {
-            if (donning(otmp))
-                cancel_don();
             pline("You break out of your armor!");
             exercise(A_STR, FALSE);
             Armor_gone();
@@ -634,8 +632,6 @@ break_armor(void)
         /* uskin check is paranoia */
         if (((otmp = uarm) != 0) && (otmp != uskin()) &&
             (racial_exception(&youmonst, otmp) < 1)) {
-            if (donning(otmp))
-                cancel_don();
             pline("Your armor falls around you!");
             Armor_gone();
             dropx(otmp);
@@ -659,7 +655,7 @@ break_armor(void)
     }
     if (has_horns(youmonst.data)) {
         if ((otmp = uarmh) != 0) {
-            if (is_flimsy(otmp) && !donning(otmp)) {
+            if (is_flimsy(otmp)) {
                 char hornbuf[BUFSZ], yourbuf[BUFSZ];
 
                 /* Future possiblities: This could damage/destroy helmet */
@@ -668,8 +664,6 @@ break_armor(void)
                       vtense(hornbuf, "pierce"), shk_your(yourbuf, otmp),
                       xname(otmp));
             } else {
-                if (donning(otmp))
-                    cancel_don();
                 pline("Your %s falls to the %s!", helmet_name(otmp),
                       surface(u.ux, u.uy));
                 Helmet_off();
@@ -679,8 +673,6 @@ break_armor(void)
     }
     if (nohands(youmonst.data) || verysmall(youmonst.data)) {
         if ((otmp = uarmg) != 0) {
-            if (donning(otmp))
-                cancel_don();
             /* Drop weapon along with gloves */
             pline("You drop your gloves%s!", uwep ? " and weapon" : "");
             drop_weapon(0);
@@ -693,8 +685,6 @@ break_armor(void)
             dropx(otmp);
         }
         if ((otmp = uarmh) != 0) {
-            if (donning(otmp))
-                cancel_don();
             pline("Your %s falls to the %s!", helmet_name(otmp),
                   surface(u.ux, u.uy));
             Helmet_off();
@@ -704,8 +694,6 @@ break_armor(void)
     if (nohands(youmonst.data) || verysmall(youmonst.data) ||
         slithy(youmonst.data) || youmonst.data->mlet == S_CENTAUR) {
         if ((otmp = uarmf) != 0) {
-            if (donning(otmp))
-                cancel_don();
             if (is_whirly(youmonst.data))
                 pline("Your boots fall away!");
             else

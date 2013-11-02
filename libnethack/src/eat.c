@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-11-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -56,12 +56,11 @@ static unsigned newuhs_save_hs;
 static boolean newuhs_saved_hs = FALSE;
 
 
-/*
- * Decide whether a particular object can be eaten by the possibly
- * polymorphed character.  Not used for monster checks.
- */
+/* Decide whether a particular object can be eaten by the possibly polymorphed
+   character; if now is set, return whether eating is possible now, otherwise
+   return whether it will ever be possible. Not used for monster checks. */
 boolean
-is_edible(const struct obj *obj)
+is_edible(const struct obj *obj, boolean now)
 {
     /* protect invocation tools but not Rider corpses (handled elsewhere) */
     /* if (obj->oclass != FOOD_CLASS && obj_resists(obj, 0, 0)) */
@@ -70,7 +69,8 @@ is_edible(const struct obj *obj)
     /* above also prevents the Amulet from being eaten, so we must never allow
        fake amulets to be eaten either [which is already the case] */
 
-    if (metallivorous(youmonst.data) && is_metallic(obj) &&
+    if (metallivorous(youmonst.data) &&
+        (is_metallic(obj) || obj->oclass == COIN_CLASS) &&
         (youmonst.data != &mons[PM_RUST_MONSTER] || is_rustprone(obj)))
         return TRUE;
     if (u.umonnum == PM_GELATINOUS_CUBE && is_organic(obj) &&
@@ -79,10 +79,18 @@ is_edible(const struct obj *obj)
         !Has_contents(obj))
         return TRUE;
 
-    /* return (boolean)(!!strchr(comestibles, obj->oclass)); */
+    /* Items that could be eaten if polymorphed */
+    if ((is_metallic(obj) || is_rustprone(obj) ||
+         is_organic(obj) || obj->oclass == COIN_CLASS) && !now)
+        return TRUE;
+
     return (boolean) (obj->oclass == FOOD_CLASS);
 }
-
+static boolean
+is_edible_now(const struct obj *obj)
+{
+    return is_edible(obj, TRUE);
+}
 
 void
 init_uhunger(void)
@@ -124,7 +132,8 @@ static const struct {
 
 static struct tin {
     /* The tin itself is stored in u.utracked[tos_tin]. */
-    int usedtime, reqtime;
+    /* Progress eating it is stored in u.uoccupation_progress[tos_tin]. */
+    int reqtime;
 } tin;
 
 /* Information about the current eating process. The item being eaten is now
@@ -132,8 +141,8 @@ static struct tin {
    code can find it. */
 static struct victual {
     /* doeat() initializes these when piece is valid */
-    int usedtime,       /* turns spent eating */
-        reqtime;        /* turns required to eat */
+    int reqtime;        /* turns required to eat */
+    /* amount of time used is in u.uoccupation_progress[tos_food] */
     int nmod;   /* coded nutrition per turn */
     unsigned canchoke:1;        /* was satiated at beginning */
 
@@ -327,7 +336,7 @@ eatfood(void)
     if (!victual.eating)
         return 0;
 
-    if (++victual.usedtime <= victual.reqtime) {
+    if (++u.uoccupation_progress[tos_food] <= victual.reqtime) {
         if (bite())
             return 0;
         return 1;       /* still busy */
@@ -858,11 +867,11 @@ opentin(void)
         !obj_here(u.utracked[tos_tin], u.ux, u.uy))
         /* perhaps it was stolen? */
         return 0;       /* %% probably we should use tinoid */
-    if (tin.usedtime++ >= 50) {
+    if (u.uoccupation_progress[tos_tin]++ >= 50) {
         pline("You give up your attempt to open the tin.");
         return 0;
     }
-    if (tin.usedtime < tin.reqtime)
+    if (u.uoccupation_progress[tos_tin] < tin.reqtime)
         return 1;       /* still busy */
     if (u.utracked[tos_tin]->otrapped ||
         (u.utracked[tos_tin]->cursed &&
@@ -1035,7 +1044,7 @@ start_tin(struct obj *otmp)
         tmp = rn1(1 + 500 / ((int)(ACURR(A_DEX) + ACURRSTR)), 10);
     }
     tin.reqtime = tmp;
-    tin.usedtime = 0;
+    u.uoccupation_progress[tos_tin] = 0;
     u.utracked[tos_tin] = otmp;
     set_occupation(opentin, "opening the tin");
     return;
@@ -1220,7 +1229,7 @@ start_eating(struct obj *otmp)
     if (bite())
         return;
 
-    if (++victual.usedtime >= victual.reqtime) {
+    if (++u.uoccupation_progress[tos_food] >= victual.reqtime) {
         /* print "finish eating" message if they just resumed -dlc */
         done_eating(victual.reqtime > 1 ? TRUE : FALSE);
         return;
@@ -1800,7 +1809,7 @@ doeat(struct obj *otmp)
        ridiculous amounts of coding to deal with partly eaten plate mails,
        players who polymorph back to human in the middle of their metallic
        meal, etc.... */
-    if (!is_edible(otmp)) {
+    if (!is_edible(otmp, TRUE)) {
         pline("You cannot eat that!");
         return 0;
     } else if ((otmp->owornmask & (W_ARMOR | W_MASK(os_tool) |
@@ -1844,7 +1853,7 @@ doeat(struct obj *otmp)
 
         if (!touch_artifact(otmp, &youmonst))
             return 1;
-        if (!is_edible(otmp)) {
+        if (!is_edible(otmp, TRUE)) {
             pline("You can no longer eat %s.", doname(otmp));
             return 1;
         }
@@ -1852,7 +1861,7 @@ doeat(struct obj *otmp)
         victual.reqtime = 1;
         u.utracked[tos_food] = otmp;
         /* Don't split it, we don't need to if it's 1 move */
-        victual.usedtime = 0;
+        u.uoccupation_progress[tos_food] = 0;
         victual.canchoke = (u.uhs == SATIATED);
         /* Note: gold weighs 1 pt. for each 1000 pieces (see */
         /* pickup.c) so gold and non-gold is consistent. */
@@ -1919,7 +1928,7 @@ doeat(struct obj *otmp)
     u.uconduct.food++;
 
     u.utracked[tos_food] = otmp = touchfood(otmp);
-    victual.usedtime = 0;
+    u.uoccupation_progress[tos_food] = 0;
 
     /* Now we need to calculate delay and nutritional info. The base nutrition
        calculated here and in eatcorpse() accounts for normal vs. rotten food.
@@ -1998,9 +2007,8 @@ doeat(struct obj *otmp)
     return 1;
 }
 
-/* Take a single bite from a piece of food, checking for choking and
- * modifying usedtime.  Returns 1 if they choked and survived, 0 otherwise.
- */
+/* Take a single bite from a piece of food, checking for choking and modifying
+   occupation progress. Returns 1 if they choked and survived, 0 otherwise. */
 static int
 bite(void)
 {
@@ -2016,7 +2024,8 @@ bite(void)
     if (victual.nmod < 0) {
         lesshungry(-victual.nmod);
         consume_oeaten(u.utracked[tos_food], victual.nmod);    /* -= -nmod */
-    } else if (victual.nmod > 0 && (victual.usedtime % victual.nmod)) {
+    } else if (victual.nmod > 0 && (u.uoccupation_progress[tos_food] %
+                                    victual.nmod)) {
         lesshungry(1);
         consume_oeaten(u.utracked[tos_food], -1);      /* -= 1 */
     }
@@ -2277,7 +2286,7 @@ newuhs(boolean incr)
     }
 }
 
-static boolean
+boolean
 can_sacrifice(const struct obj *otmp)
 {
     return (otmp->otyp == CORPSE || otmp->otyp == AMULET_OF_YENDOR ||
@@ -2311,7 +2320,7 @@ floorfood(const char *verb)
     
     floorfood_check = (sacrificing ? can_sacrifice :
                        tinning ? tinnable :
-                       feeding ? is_edible : other_floorfood);
+                       feeding ? is_edible_now : other_floorfood);
     
     /* if we can't touch floor objects then use invent food only */
     if (!can_reach_floor() || (feeding && u.usteed) ||  /* can't eat off floor
@@ -2469,7 +2478,7 @@ consume_oeaten(struct obj *obj, int amt)
 
     if (obj->oeaten == 0) {
         if (obj == u.utracked[tos_food])       /* always true unless wishing... */
-            victual.reqtime = victual.usedtime; /* no bites left */
+            victual.reqtime = u.uoccupation_progress[tos_food]; /* no bites left */
         obj->oeaten = 1;        /* smallest possible positive value */
     }
 }
@@ -2481,9 +2490,11 @@ boolean
 maybe_finished_meal(boolean stopping)
 {
     /* in case consume_oeaten() has decided that the food is all gone */
-    if (occupation == eatfood && victual.usedtime >= victual.reqtime) {
-        if (stopping)
+    if (occupation == eatfood &&
+        u.uoccupation_progress[tos_food] >= victual.reqtime) {
+        if (stopping) {
             occupation = 0;     /* for do_reset_eat */
+        }
         eatfood();      /* calls done_eating() to use up u.utracked[tos_food] */
         return TRUE;
     }
@@ -2498,7 +2509,6 @@ save_food(struct memfile *mf)
 
     /* no mtag useful; fixed distance after track */
 
-    mwrite32(mf, victual.usedtime);
     mwrite32(mf, victual.reqtime);
     mwrite32(mf, victual.nmod);
 
@@ -2507,7 +2517,6 @@ save_food(struct memfile *mf)
         (victual.eating << 29) | (victual.doreset << 28);
     mwrite32(mf, vflags);
 
-    mwrite32(mf, tin.usedtime);
     mwrite32(mf, tin.reqtime);
 }
 
@@ -2517,7 +2526,6 @@ restore_food(struct memfile *mf)
 {
     unsigned int vflags;
 
-    victual.usedtime = mread32(mf);
     victual.reqtime = mread32(mf);
     victual.nmod = mread32(mf);
 
@@ -2527,7 +2535,6 @@ restore_food(struct memfile *mf)
     victual.eating = (vflags >> 29) & 1;
     victual.doreset = (vflags >> 28) & 1;
 
-    tin.usedtime = mread32(mf);
     tin.reqtime = mread32(mf);
 }
 

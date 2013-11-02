@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-11-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -100,6 +100,7 @@ const struct cmd_desc cmdlist[] = {
      enhance_weapon_skill, CMD_ARG_NONE | CMD_EXT},
     {"engrave", "write on the floor", 'E', 0, FALSE, doengrave,
      CMD_ARG_NONE | CMD_ARG_OBJ},
+    {"equip", "change your equipment", 'A', 0, FALSE, doequip, CMD_ARG_NONE},
     {"farlook", "say what is on a distant square", ';', 0, TRUE, doquickwhatis,
      CMD_ARG_NONE | CMD_NOTIME},
     {"fight", "attack even if no hostile monster is visible", 'F', 0, FALSE,
@@ -149,8 +150,6 @@ const struct cmd_desc cmdlist[] = {
      CMD_ARG_NONE},
     {"pray", "pray to the gods for help", M('p'), 0, TRUE, dopray,
      CMD_ARG_NONE | CMD_EXT},
-    {"put on", "put on jewellery or accessories", 'P', 0, FALSE, doputon,
-     CMD_ARG_NONE | CMD_ARG_OBJ},
     {"quit", "exit without saving current game", M('q'), 0, TRUE, done2,
      CMD_ARG_NONE | CMD_EXT},
     {"quiver", "ready an item for firing", 'Q', 0, FALSE, dowieldquiver,
@@ -159,10 +158,6 @@ const struct cmd_desc cmdlist[] = {
      CMD_ARG_NONE | CMD_ARG_OBJ},
     {"redraw", "redraw the screen", C('r'), 0, TRUE, doredraw,
      CMD_ARG_NONE | CMD_NOTIME},
-    {"remove", "remove jewellery or accessories", 'R', 0, FALSE, doremring,
-     CMD_ARG_NONE | CMD_ARG_OBJ},
-    {"removearm", "remove multiple pieces of equipment", 'A', 0, FALSE,
-     doddoremarm, CMD_ARG_NONE},
     {"ride", "ride (or stop riding) a monster", M('r'), 0, FALSE, doride,
      CMD_ARG_NONE | CMD_EXT},
     {"rub", "rub a lamp or a stone", 0, 0, FALSE, dorub,
@@ -189,7 +184,7 @@ const struct cmd_desc cmdlist[] = {
      dovspell, CMD_ARG_NONE},
     {"swapweapon", "exchange wielded and alternate weapon", 'x', 0, FALSE,
      doswapweapon, CMD_ARG_NONE},
-    {"takeoff", "take off an item you are wearing", 'T', 0, FALSE, dotakeoff,
+    {"takeoff", "take off an item you are wearing", 'T', 'R', FALSE, dounequip,
      CMD_ARG_NONE | CMD_ARG_OBJ},
     {"teleport", "use intrinsic or magical teleportation ability", C('t'), 0,
      TRUE, dotele, CMD_ARG_NONE},
@@ -210,7 +205,7 @@ const struct cmd_desc cmdlist[] = {
      CMD_HELP | CMD_ARG_NONE | CMD_NOTIME | CMD_EXT},
     {"wait", "do nothing for one turn", '.', 0, TRUE, donull, CMD_ARG_NONE,
      "waiting"},
-    {"wear", "wear clothing or armor", 'W', 0, FALSE, dowear,
+    {"wear", "wear clothing, armor, or accessories", 'W', 'P', FALSE, dowear,
      CMD_ARG_NONE | CMD_ARG_OBJ},
     {"wield", "hold an item in your hands", 'w', 0, FALSE, dowield,
      CMD_ARG_NONE | CMD_ARG_OBJ},
@@ -295,17 +290,13 @@ command_repeat_occupation(void)
  * since it is with you.  If you are acting on something at a distance,
  * your orientation to it must have changed when you moved.
  *
- * The exception to this is taking off items, since they can be taken
- * off in a number of ways in the intervening time, screwing up ordering.
  *
- *      Currently:  Take off all armor.
- *                  Picking Locks / Forcing Chests.
+ *      Currently:  Picking Locks / Forcing Chests.
  *                  Setting traps.
  */
 void
 reset_occupations(void)
 {
-    reset_remarm();
     reset_pick();
     reset_trapset();
 }
@@ -1704,7 +1695,7 @@ nh_get_object_commands(int *count, char invlet)
         SET_OBJ_CMD('e', "eat", "Open and eat %s with your tin opener", 1);
     else if (obj->otyp == TIN)
         SET_OBJ_CMD('e', "eat", "Open and eat %s", 1);
-    else if (is_edible(obj))
+    else if (is_edible(obj, TRUE))
         SET_OBJ_CMD('e', "eat", "Eat %s", 1);
 
     /* engrave with item */

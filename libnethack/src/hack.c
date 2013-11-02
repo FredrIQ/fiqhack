@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-11-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -448,17 +448,17 @@ dosinkfall(void)
     HLevitation &= ~(I_SPECIAL | TIMEOUT);
     if (uleft && uleft->otyp == RIN_LEVITATION) {
         obj = uleft;
-        Ring_off(obj);
-        off_msg(obj);
+        Slot_gone(os_ringl);
+        pline("%s falls off your finger.", Yname2(obj));
     }
     if (uright && uright->otyp == RIN_LEVITATION) {
         obj = uright;
-        Ring_off(obj);
-        off_msg(obj);
+        Slot_gone(os_ringr);
+        pline("%s falls off your finger.", Yname2(obj));
     }
     if (uarmf && uarmf->otyp == LEVITATION_BOOTS) {
         obj = uarmf;
-        Boots_off();
+        Slot_gone(os_armf);
         off_msg(obj);
     }
     for (obj = invent; obj; obj = obj->nobj) {

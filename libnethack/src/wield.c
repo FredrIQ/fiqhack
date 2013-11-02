@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-19 */
+/* Last modified by Alex Smith, 2013-11-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -11,57 +11,51 @@
  * 1.  Is filled by the (w)ield command.
  * 2.  Can be filled with any type of item.
  * 3.  May be carried in one or both hands.
- * 4.  Is used as the melee weapon and as the launcher for
- *     ammunition.
- * 5.  Only conveys intrinsics when it is a weapon, weapon-tool,
- *     or artifact.
- * 6.  Certain cursed items will weld to the hand and cannot be
- *     unwielded or dropped.  See erodeable_wep() and will_weld()
- *     below for the list of which items apply.
+ * 4.  Is used as the melee weapon and as the launcher for ammunition.
+ * 5.  Only conveys extrinsics when it is a weapon, weapon-tool, or artifact.
+ * 6.  Certain cursed items will weld to the hand and cannot be unwielded or
+ *     dropped.  See sensible_wep() and will_weld() below for the list of which
+ *     items apply.
  *
  * The secondary weapon (uswapwep):
- * 1.  Is filled by the e(x)change command, which swaps this slot
- *     with the main weapon.  If the "pushweapon" option is set,
- *     the (w)ield command will also store the old weapon in the
- *     secondary slot.
- * 2.  Can be field with anything that will fit in the main weapon
- *     slot; that is, any type of item.
- * 3.  Is usually NOT considered to be carried in the hands.
- *     That would force too many checks among the main weapon,
- *     second weapon, shield, gloves, and rings; and it would
- *     further be complicated by bimanual weapons.  A special
- *     exception is made for two-weapon combat.
- * 4.  Is used as the second weapon for two-weapon combat, and as
- *     a convenience to swap with the main weapon.
- * 5.  Never conveys intrinsics.
- * 6.  Cursed items never weld (see #3 for reasons), but they also
- *     prevent two-weapon combat.
+ * 1.  Is filled by the e(x)change command, which swaps this slot with the main
+ *     weapon.  If the "pushweapon" option is set, the (w)ield command will also
+ *     store the old weapon in the secondary slot.
+ * 2.  Can be filled with anything that will fit in the main weapon slot; that
+ *     is, any type of item.
+ * 3.  Is usually NOT considered to be carried in the hands.  That would force
+ *     too many checks among the main weapon, second weapon, shield, gloves, and
+ *     rings; and it would further be complicated by bimanual weapons.  A
+ *     special exception is made for two-weapon combat.
+ * 4.  Is used as the second weapon for two-weapon combat, and as a convenience
+ *     to swap with the main weapon.
+ * 5.  Never conveys extrinsics.
+ * 6.  Cursed items never weld (see #3 for reasons), but they also prevent
+ *     two-weapon combat.
  *
  * The quiver (uquiver):
  * 1.  Is filled by the (Q)uiver command.
  * 2.  Can be filled with any type of item.
  * 3.  Is considered to be carried in a special part of the pack.
- * 4.  Is used as the item to throw with the (f)ire command.
- *     This is a convenience over the normal (t)hrow command.
- * 5.  Never conveys intrinsics.
+ * 4.  Is used as the item to throw with the (f)ire command.  This is a
+ *     convenience over the normal (t)hrow command.
+ * 5.  Never conveys extrinsics.
  * 6.  Cursed items never weld; their effect is handled by the normal
  *     throwing code.
  *
  * No item may be in more than one of these slots.
  */
 
+/* An item that it makes sense for the player to use as a main or readied
+   weapon: weapons (including launchers but not including ammo), weapon-tools,
+   and iron balls. */
+#define sensible_wep(optr) (((optr)->oclass == WEAPON_CLASS && !is_ammo(optr)) \
+                            || is_weptool(optr)                         \
+                            || (optr)->otyp == HEAVY_IRON_BALL)
 
-/* used by will_weld() */
-/* probably should be renamed */
-#define erodeable_wep(optr) ((optr)->oclass == WEAPON_CLASS \
-                                || is_weptool(optr) \
-                                || (optr)->otyp == HEAVY_IRON_BALL \
-                                || (optr)->otyp == IRON_CHAIN)
-
-/* used by welded(), and also while wielding */
-#define will_weld(optr)     ((optr)->cursed \
-                                && (erodeable_wep(optr) \
-                                   || (optr)->otyp == TIN_OPENER))
+/* An item that will weld to the hands if wielded. */
+#define will_weld(optr)    ((optr)->cursed  &&                          \
+                            (sensible_wep(optr) || (optr)->otyp == TIN_OPENER))
 
 
 /*** Functions that place a given item in a slot ***/
@@ -107,22 +101,129 @@ setuwep(struct obj *obj)
     update_inventory();
 }
 
+/*
+ * Returns a value depending on whether the player can attempt to wield the
+ * given object. (Giving NULL or &zeroobj checks to see if unwielding the
+ * current weapon is possible, via simply calling canunwearobj(uwep, ...).)
+ *
+ * The return values are:
+ *
+ * 0    Wielding the given object is currently impossible.
+ * 1    Wielding the given object is possible, but not sensible; that is, it
+ *      will not show if you give ? at the wield prompt (but will succeed if you
+ *      wield "manually" or via using *).
+ * 2    Wielding the given object is both possible and sensible.
+ *
+ * As always for the canwearobj family of functions, this is based on character
+ * knowledge if spoil is FALSE, and on full knowledge of the gamestate if spoil
+ * is TRUE.
+ *
+ * Note that this function returns nonzero in cases where the character may try
+ * and fail to wield an item (e.g. barehanded c corpse, or blasting artifact).
+ *
+ * As with canwearobj, if this function returns zero even with spoil == FALSE,
+ * then the wield attempt should not cost a turn. If it does not return zero
+ * until spoil == TRUE, then the wield attempt should cost a turn.
+ *
+ * Also as with canwearobj, the cblock argument should not be set to TRUE at the
+ * same time as spoil; cblock == TRUE means that existing equipment should not
+ * be considered to block the wielding of a weapon unless it's known to be
+ * cursed, whereas cblock == FALSE means that existing equipment slots should be
+ * considered to prevent wielding. (For instance, cblock == FALSE will cause the
+ * function to return 0 if the item in question is worn, or if it's bimanual and
+ * a shield is worn; cblock == TRUE will return nonzero in these cases, unless
+ * the offending object is known cursed.)
+ *
+ * Note that a weapon being in the offhand or quiver slot does not prevent it
+ * being wielded. (It'll just be evicted from its previous slot.)
+ */
+int
+canwieldobj(struct obj *wep, boolean noisy, boolean spoil, boolean cblock)
+{
+    if (uwep && wep != uwep && !canunwearobj(uwep, noisy, spoil, cblock))
+        return 0;
+    if (!wep || wep == &zeroobj)
+        return 2; /* - is a reasonable wield choice */
+    if (cantwield(youmonst.data)) {
+        pline("You are physically incapable of holding %s.", yname(wep));
+        return 0;
+    }
+    if (uarms && (cblock || (uarms->cursed && uarms->bknown)) &&
+        bimanual(wep)) {
+        pline("You cannot wield a two-handed %s while wearing a shield.",
+              is_sword(wep) ? "sword" : wep->otyp ==
+              BATTLE_AXE ? "axe" : "weapon");
+        return 0;
+    }
+    /* If we can't ready something, we can't wield it either, unless it's our
+       currently wielded weapon. */
+    if (wep != uwep && !canreadyobj(wep, noisy, spoil, cblock))
+        return 0;
+    if (sensible_wep(wep))
+        return 2;
+
+    return 1;
+}
+
+/*
+ * As above, but for the swapwep or quiver slots.
+ *
+ * Return values:
+ * 0    Readying and quivering the given object are currently impossible.
+ * 1    Readying and quivering the given object are possible but not sensible.
+ * 3    Readying the object is possible; quivering is possible and sensible.
+ * 5    Quivering the object is possible; readying is possible and sensible.
+ * 7    Readying and quivering the given object are both possible and sensible.
+ */
+int
+canreadyobj(struct obj *wep, boolean noisy, boolean spoil, boolean cblock)
+{
+    if (!wep || wep == &zeroobj)
+        return 7;
+
+    if (wep->owornmask & (W_WORN | W_MASK(os_saddle) | W_MASK(os_wep))
+        && (!cblock || (wep->cursed && wep->bknown))) {
+        if (noisy)
+            pline("You are currently %s %s!",
+                  wep == uwep ? "wielding" : "wearing", yname(wep));
+        return 0;
+    }
+
+    return 1 | (sensible_wep(wep) ? 4 : 0) |
+        (is_ammo(wep) || throwing_weapon(wep) ? 2 : 0);
+}
+
+/* Places wep in the wielded weapon slot, if possible. wep can be NULL in order
+   to unwield the wielded weapon. Returns 0 if the character knew that the wield
+   was impossible before starting, and thus didn't even try; 1 if the character
+   spent time, regardless of whether the wield succeeded or not. (To determine
+   whether the wield suceeded, check uwep, or else wep->owornmask.) */
 int
 ready_weapon(struct obj *wep)
 {
-    /* Separated function so swapping works easily */
-    int res = 0;
+    /* Does the character know it's impossible? */
+    if (uwep && !canunwearobj(uwep, TRUE, FALSE, FALSE))
+        return 0;
+    if (wep && !canwieldobj(wep, TRUE, FALSE, FALSE))
+        return 0;
+    if (!wep && !uwep) {
+        pline("You are already empty %s.", body_part(HANDED));
+        return 0;
+    }
+
+    /* At this point, the character attempts to do the wield/unwield. */
+    unwield_silently(wep); /* remove from quiver/swapwep */
+    if (uwep && !canunwearobj(uwep, TRUE, TRUE, FALSE))
+        return 1;
+    if (wep && !canwieldobj(wep, TRUE, TRUE, FALSE))
+        return 1;
 
     if (!wep) {
-        /* No weapon */
-        if (uwep) {
-            pline("You are empty %s.", body_part(HANDED));
-            setuwep(NULL);
-            res++;
-        } else
-            pline("You are already empty %s.", body_part(HANDED));
+        pline("You are empty %s.", body_part(HANDED));
+        setuwep(NULL);
     } else if (!uarmg && !Stone_resistance && wep->otyp == CORPSE &&
-               touch_petrifies(&mons[wep->corpsenm])) {
+               touch_petrifies(&mons[wep->corpsenm]) &&
+               !(poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))) {
         /* Prevent wielding cockatrice when not wearing gloves --KAA */
         char kbuf[BUFSZ];
 
@@ -131,15 +232,11 @@ ready_weapon(struct obj *wep)
         sprintf(kbuf, "wielding %s corpse without gloves",
                 an(mons[wep->corpsenm].mname));
         instapetrify(kbuf);
-    } else if (uarms && bimanual(wep))
-        pline("You cannot wield a two-handed %s while wearing a shield.",
-              is_sword(wep) ? "sword" : wep->otyp ==
-              BATTLE_AXE ? "axe" : "weapon");
-    else if (wep->oartifact && !touch_artifact(wep, &youmonst)) {
-        res++;  /* takes a turn even though it doesn't get wielded */
+        /* if the player lifesaves from that, don't wield */
+    } else if (wep->oartifact && !touch_artifact(wep, &youmonst)) {
+        ; /* you got blasted, don't attempt to wield */
     } else {
         /* Weapon WILL be wielded after this point */
-        res++;
         if (will_weld(wep)) {
             const char *tmp = xname(wep), *thestr = "The ";
 
@@ -154,15 +251,7 @@ ready_weapon(struct obj *wep)
                   : body_part(HAND));
             wep->bknown = TRUE;
         } else {
-            /* The message must be printed before setuwep (since you might die
-               and be revived from changing weapons), and the message must be
-               before the death message and Lifesaved rewielding.  Yet we want
-               the message to say "weapon in hand", thus this kludge. */
-            long dummy = wep->owornmask;
-
-            wep->owornmask |= W_MASK(os_wep);
-            prinv(NULL, wep, 0L);
-            wep->owornmask = dummy;
+            pline("You are now wielding %s.", yname(wep));
         }
         setuwep(wep);
 
@@ -185,8 +274,8 @@ ready_weapon(struct obj *wep)
             }
         }
     }
-    return res;
-}
+    return 1;
+    }
 
 void
 setuqwep(struct obj *obj)
@@ -205,174 +294,56 @@ setuswapwep(struct obj *obj)
 
 /*** Commands to change particular slot(s) ***/
 
-static const char wield_objs[] =
-    { ALL_CLASSES, ALLOW_NONE, WEAPON_CLASS, TOOL_CLASS, 0 };
-static const char ready_objs[] = { ALL_CLASSES, ALLOW_NONE, WEAPON_CLASS, 0 };
-
-static const char bullets[] =   /* (note: different from dothrow.c) */
-{ ALL_CLASSES, ALLOW_NONE, GEM_CLASS, WEAPON_CLASS, 0 };
+static const char wield_objs[] = { ALL_CLASSES, ALLOW_NONE, 0 }; 
 
 int
 dowield(struct obj *wep)
 {
-    struct obj *oldwep;
-    int result;
-
-    /* May we attempt this? */
-    multi = 0;
-    if (cantwield(youmonst.data)) {
-        pline("Don't be ridiculous!");
-        return 0;
-    }
-
-    /* Prompt for a new weapon */
     if (wep && !validate_object(wep, wield_objs, "wield"))
         return 0;
     else if (!wep)
         wep = getobj(wield_objs, "wield");
     if (!wep)
-        /* Cancelled */
         return 0;
-    else if (wep == uwep) {
-        pline("You are already wielding that!");
-        if (is_weptool(wep))
-            unweapon = FALSE;   /* [see setuwep()] */
-        return 0;
-    } else if (welded(uwep)) {
-        weldmsg(uwep);
-        /* previously interrupted armor removal mustn't be resumed */
-        reset_remarm();
-        return 0;
-    }
 
-    /* Handle no object, or object in other slot */
-    if (wep == &zeroobj)
-        wep = NULL;
-    else if (wep == uswapwep)
-        return doswapweapon();
-    else if (wep == uquiver)
-        setuqwep(NULL);
-    else if (wep->owornmask & (W_WORN | W_MASK(os_saddle))) {
-        pline("You cannot wield that!");
-        return 0;
-    }
-
-    /* Set your new primary weapon */
-    oldwep = uwep;
-    result = ready_weapon(wep);
-    if (flags.pushweapon && oldwep && uwep != oldwep)
-        setuswapwep(oldwep);
-    untwoweapon();
-
-    return result;
+    /* TODO: pushweapon */
+    return equip_in_slot(wep, os_wep);
 }
 
 int
 doswapweapon(void)
 {
-    struct obj *oldwep, *oldswap;
-
-    /* May we attempt this? */
-    multi = 0;
-    if (cantwield(youmonst.data)) {
-        pline("Don't be ridiculous!");
-        return 0;
-    }
-    if (welded(uwep)) {
-        weldmsg(uwep);
-        return 0;
-    }
-
-    /* Unwield your current secondary weapon */
-    oldwep = uwep;
-    oldswap = uswapwep;
-    setuswapwep(NULL);
-
-    /* Set your new primary weapon */
-    ready_weapon(oldswap);
-
-    /* Set your new secondary weapon */
-    if (uwep == oldwep)
-        /* Wield failed for some reason */
-        setuswapwep(oldswap);
-    else {
-        setuswapwep(oldwep);
-        if (uswapwep)
-            prinv(NULL, uswapwep, 0L);
+    enum objslot j;
+    for (j = 0; j <= os_last_equip; j++) {
+        if (j == os_wep)
+            u.utracked[tos_first_equip + j] = uswapwep ? uswapwep : &zeroobj;
+        else if (j == os_swapwep)
+            u.utracked[tos_first_equip + j] = uwep ? uwep : &zeroobj;
         else
-            pline("You have no secondary weapon readied.");
+            u.utracked[tos_first_equip + j] = NULL;
+        /* We can just set uoccupation_progress to 0 unconditionally because
+           wielding does not take multiple turns. */
+        u.uoccupation_progress[tos_first_equip + j] = 0;
     }
 
-    if (u.twoweap && !can_twoweapon())
-        untwoweapon();
-
+    if (equip_heartbeat() != 0)
+        impossible("Swapping weapons took time?");
     return 0;
 }
 
 int
 dowieldquiver(struct obj *newquiver)
 {
-    const char *quivee_types = (uslinging() ||
-                                (uswapwep &&
-                                 objects[uswapwep->otyp].oc_skill ==
-                                 P_SLING)) ? bullets : ready_objs;
-
-    /* Since the quiver isn't in your hands, don't check cantwield(), */
-    /* will_weld(), touch_petrifies(), etc. */
-    multi = 0;
-
-    if (newquiver && !validate_object(newquiver, quivee_types, "ready"))
+    if (newquiver && !validate_object(newquiver, wield_objs, "quiver"))
         return 0;
     else if (!newquiver)
         /* Prompt for a new quiver */
-        newquiver = getobj(quivee_types, "ready");
+        newquiver = getobj(wield_objs, "quiver");
     if (!newquiver)
         /* Cancelled */
         return 0;
 
-    /* Handle no object, or object in other slot */
-    /* Any type is okay, since we give no intrinsics anyways */
-    if (newquiver == &zeroobj) {
-        /* Explicitly nothing */
-        if (uquiver) {
-            pline("You now have no ammunition readied.");
-            setuqwep(newquiver = NULL);
-        } else {
-            pline("You already have no ammunition readied!");
-            return 0;
-        }
-    } else if (newquiver == uquiver) {
-        pline("That ammunition is already readied!");
-        return 0;
-    } else if (newquiver == uwep) {
-        /* Prevent accidentally readying the main weapon */
-        pline("%s already being used as a weapon!",
-              !is_plural(uwep) ? "That is" : "They are");
-        return 0;
-    } else if (newquiver->owornmask & (W_WORN | W_MASK(os_saddle))) {
-        pline("You cannot ready that!");
-        return 0;
-    } else {
-        long dummy;
-
-
-        /* Check if it's the secondary weapon */
-        if (newquiver == uswapwep) {
-            setuswapwep(NULL);
-            untwoweapon();
-        }
-
-        /* Okay to put in quiver; print it */
-        dummy = newquiver->owornmask;
-        newquiver->owornmask |= W_MASK(os_quiver);
-        prinv(NULL, newquiver, 0L);
-        newquiver->owornmask = dummy;
-    }
-
-    /* Finally, place it in the quiver */
-    setuqwep(newquiver);
-    /* Take no time since this is a convenience slot */
-    return 0;
+    return equip_in_slot(newquiver, os_quiver);
 }
 
 /* used for #rub and for applying pick-axe, whip, grappling hook, or polearm */
@@ -440,7 +411,7 @@ wield_tool(struct obj * obj, const char *verb)
     if (uwep != obj)
         return FALSE;   /* rewielded old object after dying */
     /* applying weapon or tool that gets wielded ends two-weapon combat */
-    if (u.twoweap)
+    if (u.twoweap && !can_twoweapon())
         untwoweapon();
     if (obj->oclass != WEAPON_CLASS)
         unweapon = TRUE;
@@ -779,13 +750,9 @@ welded(struct obj *obj)
 void
 weldmsg(struct obj *obj)
 {
-    long savewornmask;
-
-    savewornmask = obj->owornmask;
     pline("Your %s %s welded to your %s!", xname(obj), otense(obj, "are"),
           bimanual(obj) ? (const char *)makeplural(body_part(HAND))
           : body_part(HAND));
-    obj->owornmask = savewornmask;
 }
 
 /* Unwields all weapons silently. */

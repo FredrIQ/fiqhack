@@ -1,59 +1,150 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-11-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 
-static long takeoff_mask = 0L;
-static enum objslot taking_off = os_invalid;
-
-static int todelay;
-static boolean cancelled_don = FALSE;
-
 static const char see_yourself[] = "see yourself";
 static const char unknown_type[] = "Unknown type of %s (%d)";
 
+/* Slot name for messages like "You are already wearing a shirt". */
 static const char * const c_slotnames[] = {
-    [os_arm]   = "suit",
-    [os_armc]  = "cloak",
-    [os_armh]  = "helmet",
-    [os_arms]  = "shield",
-    [os_armg]  = "gloves",
-    [os_armf]  = "boots",
-    [os_armu]  = "shirt",
-    [os_amul]  = "amulet",
-    [os_ringl] = "ring",
-    [os_ringr] = "ring",
-    [os_tool]  = "eyewear",
-    [os_wep]   = "weapon",
+    [os_arm]     = "suit",
+    [os_armc]    = "cloak",
+    [os_armh]    = "helmet",
+    [os_arms]    = "shield",
+    [os_armg]    = "gloves",
+    [os_armf]    = "boots",
+    [os_armu]    = "shirt",
+    [os_amul]    = "amulet",
+    [os_ringl]   = "ring",
+    [os_ringr]   = "ring",
+    [os_tool]    = "eyewear",
+    [os_wep]     = "weapon",
+    [os_swapwep] = "readied weapon",
+    [os_quiver]  = "quivered ammunition",
+};
+
+/* Slot name as it appears in the doequip() menu */
+static const char * const c_slotnames_menu[] = {
+    [os_arm]     = "Armour",
+    [os_armc]    = "Cloak",
+    [os_armh]    = "Helmet",
+    [os_arms]    = "Shield",
+    [os_armg]    = "Gloves",
+    [os_armf]    = "Boots",
+    [os_armu]    = "Shirt",
+    [os_amul]    = "Amulet",
+    [os_ringl]   = "Left ring",
+    [os_ringr]   = "Right ring",
+    [os_tool]    = "Eyewear",
+    [os_wep]     = "Weapon",
+    [os_swapwep] = "Secondary weapon",
+    [os_quiver]  = "Quiver",
 };
 
 static const char c_that_[] = "that";
 
-static enum objslot takeoff_order[] = {
-    os_tool, os_wep, os_arms, os_armg, os_ringl, os_ringr, os_armc,
-    os_armh, os_amul, os_arm, os_armu, os_armf, os_swapwep, os_quiver,
-    os_invalid
+/* The order in which items should be equipped or unequipped, when the user
+   requests multiple simultaneous equips.
+
+   The basic rules here are that all slots should be unequipped before they are
+   equipped, and that a slot can only be equipped or unequipped before every
+   slot covering it is equipped or unequipped. We also group together actions
+   that take less time when combined (e.g. unequipping then equipping a weapon
+   takes 1 action when given as one command, 2 actions when given as two
+   commands). */
+enum equip_direction { ed_equip, ed_unequip };
+const struct equip_order {
+    enum objslot slot;
+    enum equip_direction direction;
+} equip_order [] = {
+    /* Tool comes first and last, because you'd typically want to be able to
+       see what you're doing when switching out armour. */
+    {os_tool,    ed_unequip},
+
+    /* Hand slots. The weapon doesn't cover the glove slot (i.e. wielding a
+       weapon doesn't make gloves any slower to equip), but it does block the
+       glove and ring slot if cursed. Thus, we want to do this before swapping
+       out the weapon, so that we do the right thing if the player specifies a
+       ring and a cursed weapon as the items they want to equip. We also must
+       unequip both rings before equipping either, in case the player wants to
+       swap rings.
+
+       TODO: We should really come to a decision on whether rings are worn above
+       or below gloves. The code's currently inconsistent. Note that if rings
+       can be covered by gloves, the logic in dounequip() will need changing. */
+    {os_armg,    ed_unequip},
+    {os_ringl,   ed_unequip},
+    {os_ringr,   ed_unequip},
+    {os_ringr,   ed_equip  },
+    {os_ringl,   ed_equip  },
+    {os_armg,    ed_equip  },
+
+    /* Swap the weapon slots around next. swapwep/wep can be swapped in 0
+       actions; swapwep and wep can each be changed in 1, without necessarily
+       unequipping in between. The quiver takes 0 no matter what it's combined
+       with. */
+    {os_swapwep, ed_unequip}, /* must come immediately before uwep */
+    {os_swapwep, ed_equip  },
+    {os_wep,     ed_unequip},
+    {os_wep,     ed_equip  },
+    {os_quiver,  ed_unequip},
+    {os_quiver,  ed_equip  },
+
+    /* The shield follows the same reasoning as the weapon. */
+    {os_arms,    ed_unequip},
+    {os_arms,    ed_equip  },
+
+    /* Body slots. */
+    {os_armc,    ed_unequip},
+    {os_arm,     ed_unequip},
+    {os_armu,    ed_unequip},
+    {os_armu,    ed_equip  },
+    {os_arm,     ed_equip  },
+    {os_armc,    ed_equip  },
+
+    /* Slots that don't block anything. */
+    {os_amul,    ed_unequip},
+    {os_amul,    ed_equip},
+    {os_armh,    ed_unequip},
+    {os_armh,    ed_equip},
+    {os_armf,    ed_unequip},
+    {os_armf,    ed_equip},
+
+    /* And finally, put the blindfold back on. */
+    {os_tool,    ed_equip  },
 };
 
+static boolean canwearobjon(struct obj *, enum objslot,
+                            boolean, boolean, boolean);
 static void on_msg(struct obj *);
 static void Ring_off_or_gone(struct obj *, boolean);
-static int select_off(struct obj *);
-static struct obj *do_takeoff(void);
-static int take_off(void);
-static int menu_remarm(int);
 static void already_wearing(const char *);
-static int armoroff(struct obj *);
+
+static boolean
+slot_covers(enum objslot above, enum objslot beneath)
+{
+    /* Weapons do not currently cover rings or gloves. A cursed weapon prevents
+       a ring or glove being removed; but a noncursed weapon does not slow the
+       removal of a ring or glove. */
+    /* TODO: Currently, neither ring nor glove covers the other. We should
+       change that. */
+    if (above == os_armc)
+        return beneath == os_arm || beneath == os_armu;
+    if (above == os_arm)
+        return beneath == os_armu;
+    return FALSE;
+}
 
 void
 off_msg(struct obj *otmp)
 {
     if (flags.verbose)
-        pline("You were wearing %s.", doname(otmp));
+        pline("You take off %s.", yname(otmp));
 }
 
-/* for items that involve no delay */
 static void
 on_msg(struct obj *otmp)
 {
@@ -137,31 +228,31 @@ int
 Boots_off(void)
 {
     if (!uarmf) return 0;
+    off_msg(uarmf);
 
     int otyp = uarmf->otyp;
     long oldprop = worn_extrinsic(objects[otyp].oc_oprop) & ~W_MASK(os_armf);
 
-    takeoff_mask &= ~W_MASK(os_armf);
     /* For levitation, float_down() returns if Levitation, so we must do a
        setworn() _before_ the levitation case. */
     setworn(NULL, W_MASK(os_armf));
     switch (otyp) {
     case SPEED_BOOTS:
-        if (!Very_fast && !cancelled_don) {
+        if (!Very_fast) {
             makeknown(otyp);
             pline("You feel yourself slow down%s.", Fast ? " a bit" : "");
         }
         break;
     case WATER_WALKING_BOOTS:
         if (is_pool(level, u.ux, u.uy) && !Levitation && !Flying &&
-            !is_clinger(youmonst.data) && !cancelled_don) {
+            !is_clinger(youmonst.data)) {
             makeknown(otyp);
             /* make boots known in case you survive the drowning */
             spoteffects(TRUE);
         }
         break;
     case ELVEN_BOOTS:
-        if (!oldprop && !HStealth && !BStealth && !cancelled_don) {
+        if (!oldprop && !HStealth && !BStealth) {
             makeknown(otyp);
             pline("You sure are noisy.");
         }
@@ -171,7 +262,7 @@ Boots_off(void)
             HFumbling = 0;
         break;
     case LEVITATION_BOOTS:
-        if (!oldprop && !HLevitation && !cancelled_don) {
+        if (!oldprop && !HLevitation) {
             float_down(0L);
             makeknown(otyp);
         }
@@ -189,7 +280,7 @@ Boots_off(void)
     default:
         impossible(unknown_type, c_slotnames[os_armf], otyp);
     }
-    cancelled_don = FALSE;
+    
     return 0;
 }
 
@@ -248,11 +339,11 @@ int
 Cloak_off(void)
 {
     if (!uarmc) return 0;
+    off_msg(uarmc);
 
     int otyp = uarmc->otyp;
     long oldprop = worn_extrinsic(objects[otyp].oc_oprop) & ~W_MASK(os_armc);
 
-    takeoff_mask &= ~W_MASK(os_armc);
     /* For mummy wrapping, taking it off first resets `Invisible'. */
     setworn(NULL, W_MASK(os_armc));
     switch (otyp) {
@@ -358,8 +449,7 @@ int
 Helmet_off(void)
 {
     if (!uarmh) return 0;
-
-    takeoff_mask &= ~W_MASK(os_armh);
+    off_msg(uarmh);
 
     switch (uarmh->otyp) {
     case FEDORA:
@@ -373,10 +463,8 @@ Helmet_off(void)
         iflags.botl = 1;
         break;
     case CORNUTHAUM:
-        if (!cancelled_don) {
-            ABON(A_CHA) += (Role_if(PM_WIZARD) ? -1 : 1);
-            iflags.botl = 1;
-        }
+        ABON(A_CHA) += (Role_if(PM_WIZARD) ? -1 : 1);
+        iflags.botl = 1;
         break;
     case HELM_OF_TELEPATHY:
         /* need to update ability before calling see_monsters() */
@@ -384,8 +472,7 @@ Helmet_off(void)
         see_monsters();
         return 0;
     case HELM_OF_BRILLIANCE:
-        if (!cancelled_don)
-            adj_abon(uarmh, -uarmh->spe);
+        adj_abon(uarmh, -uarmh->spe);
         break;
     case HELM_OF_OPPOSITE_ALIGNMENT:
         u.ualign.type = u.ualignbase[A_CURRENT];
@@ -397,7 +484,6 @@ Helmet_off(void)
         impossible(unknown_type, c_slotnames[os_armh], uarmh->otyp);
     }
     setworn(NULL, W_MASK(os_armh));
-    cancelled_don = FALSE;
     return 0;
 }
 
@@ -435,11 +521,10 @@ int
 Gloves_off(void)
 {
     if (!uarmg) return 0;
+    off_msg(uarmg);
 
     long oldprop =
         worn_extrinsic(objects[uarmg->otyp].oc_oprop) & ~W_MASK(os_armg);
-
-    takeoff_mask &= ~W_MASK(os_armg);
 
     switch (uarmg->otyp) {
     case LEATHER_GLOVES:
@@ -453,14 +538,11 @@ Gloves_off(void)
         iflags.botl = 1;        /* taken care of in attrib.c */
         break;
     case GAUNTLETS_OF_DEXTERITY:
-        if (!cancelled_don)
-            adj_abon(uarmg, -uarmg->spe);
-        break;
+        adj_abon(uarmg, -uarmg->spe);
     default:
         impossible(unknown_type, c_slotnames[os_armg], uarmg->otyp);
     }
     setworn(NULL, W_MASK(os_armg));
-    cancelled_don = FALSE;
     encumber_msg();     /* immediate feedback for GoP */
 
     /* Prevent wielding cockatrice when not wearing gloves */
@@ -505,8 +587,7 @@ int
 Shield_off(void)
 {
     if (!uarms) return 0;
-
-    takeoff_mask &= ~W_MASK(os_arms);
+    off_msg(uarms);
 
     setworn(NULL, W_MASK(os_arms));
     return 0;
@@ -526,8 +607,7 @@ int
 Shirt_off(void)
 {
     if (!uarmu) return 0;
-
-    takeoff_mask &= ~W_MASK(os_armu);
+    off_msg(uarmu);
 
     setworn(NULL, W_MASK(os_armu));
     return 0;
@@ -551,24 +631,22 @@ int
 Armor_off(void)
 {
     if (!uarm) return 0;
+    off_msg(uarm);
 
-    takeoff_mask &= ~W_MASK(os_arm);
     setworn(NULL, W_MASK(os_arm));
-    cancelled_don = FALSE;
+
     return 0;
 }
 
-/* The gone functions differ from the off functions in that if you die from
- * taking it off and have life saving, you still die.
- */
+/* The gone functions differ from the off functions in that they don't print
+   messages. Eventually, they'll be removed. */
 int
 Armor_gone(void)
 {
     if (!uarm) return 0;
 
-    takeoff_mask &= ~W_MASK(os_arm);
     setnotworn(uarm);
-    cancelled_don = FALSE;
+
     return 0;
 }
 
@@ -628,6 +706,7 @@ Amulet_on(void)
     case AMULET_OF_YENDOR:
         break;
     }
+    on_msg(uamul);
     return FALSE;
 }
 
@@ -635,8 +714,7 @@ void
 Amulet_off(void)
 {
     if (!uamul) return;
-
-    takeoff_mask &= ~W_MASK(os_amul);
+    off_msg(uamul);
 
     switch (uamul->otyp) {
     case AMULET_OF_ESP:
@@ -784,17 +862,18 @@ Ring_on(struct obj *obj)
         }
         break;
     }
+    on_msg(obj);
 }
 
 static void
 Ring_off_or_gone(struct obj *obj, boolean gone)
 {
     if (!obj) return;
+    if (!gone) off_msg(obj);
 
     long mask = (obj->owornmask & W_RING);
     int old_attrib, which;
 
-    takeoff_mask &= ~mask;
     if (objects[obj->otyp].oc_oprop &&
         !(worn_extrinsic(objects[obj->otyp].oc_oprop) & mask))
         impossible("Strange... I didn't know you had that ring.");
@@ -939,7 +1018,6 @@ Blindf_off(struct obj *otmp)
 {
     boolean was_blind = Blind, changed = FALSE;
 
-    takeoff_mask &= ~W_MASK(os_tool);
     setworn(NULL, otmp->owornmask);
     off_msg(otmp);
 
@@ -970,7 +1048,7 @@ Blindf_off(struct obj *otmp)
     }
 }
 
-/* Calls appropriate *_on / *_off functions for a given slot, respectively
+/* Calls appropriate *_on / *_off functions for a given slot, respectively.
    Wearing an item can destroy it; this function returns true if the item is
    destroyed. */
 boolean
@@ -1016,6 +1094,29 @@ Slot_off(enum objslot slot)
         impossible("Unequipping strange item slot %d");
     };
 }
+void
+Slot_gone(enum objslot slot)
+{
+    /* TODO: Merge with Slot_off. This currently doesn't always print the right
+       messages because many options don't have a _gone. */
+    switch(slot) {
+    case os_arm: Armor_gone(); break;
+    case os_armh: Helmet_off(); break;
+    case os_armg: Gloves_off(); break;
+    case os_armf: Boots_off(); break;
+    case os_armc: Cloak_off(); break;
+    case os_arms: Shield_off(); break;
+    case os_armu: Shirt_off(); break;
+    case os_amul: Amulet_off(); break;
+    case os_ringl:
+    case os_ringr:
+        Ring_gone(EQUIP(slot)); break;
+    case os_tool:
+        Blindf_off(EQUIP(slot)); break;
+    default:
+        impossible("Unequipping strange item slot %d");
+    };
+}
 
 enum objslot
 objslot_from_mask(int wearmask)
@@ -1027,213 +1128,648 @@ objslot_from_mask(int wearmask)
     panic("Could not find equipment slot for wear mask %d", wearmask);
 }
 
-/* called in main to set intrinsics of worn start-up items */
+/* called in main to set extrinsics of worn start-up items */
 void
 set_wear(void)
 {
     int i;
     /* We wear the items in the reverse of their takeoff order. */
-    for (i = (sizeof takeoff_order) / (sizeof *takeoff_order) - 1; i; i--)
-        if (takeoff_order[i] <= os_last_armor &&
-            takeoff_order[i] != os_invalid && EQUIP(takeoff_order[i]))
-            Slot_on(takeoff_order[i]);
+    for (i = (sizeof equip_order) / (sizeof *equip_order) - 1; i; i--)
+        if (equip_order[i].slot <= os_last_armor &&
+            equip_order[i].direction == ed_equip &&
+            EQUIP(equip_order[i].slot))
+            Slot_on(equip_order[i].slot);
 }
 
-/* check whether the target object is currently being put on (or taken off) */
-boolean
-donning(struct obj *otmp)
-{       /* also checks for doffing */
-    enum objslot what = taking_off;     /* if valid, occupation is implied */
-    boolean result = FALSE;
+/* The commands wxQWTRPA (and the use of a to equip eye-slot items) are all now
+   merged into one standard API for equipping and unequipping. (There are still
+   some codepaths for equipping that don't use this API; for instance, the use
+   of V to wield a lamp, or a to wield a pick-axe. That happens when a command
+   needs to equip an item and do something else in the same action; in the case
+   of the lamp, it would be rubbing it.)
 
-    /* Sadly, this doesn't simplify, beause we have to compare all the
-       function pointers. */
-    if (otmp == uarm)
-        result = (afternmv == Armor_on || afternmv == Armor_off ||
-                  what == os_arm);
-    else if (otmp == uarmu)
-        result = (afternmv == Shirt_on || afternmv == Shirt_off ||
-                  what == os_armu);
-    else if (otmp == uarmc)
-        result = (afternmv == Cloak_on || afternmv == Cloak_off ||
-                  what == os_armc);
-    else if (otmp == uarmf)
-        result = (afternmv == Boots_on || afternmv == Boots_off ||
-                  what == os_armf);
-    else if (otmp == uarmh)
-        result = (afternmv == Helmet_on || afternmv == Helmet_off ||
-                  what == os_armh);
-    else if (otmp == uarmg)
-        result = (afternmv == Gloves_on || afternmv == Gloves_off ||
-                  what == os_armg);
-    else if (otmp == uarms)
-        result = (afternmv == Shield_on || afternmv == Shield_off ||
-                  what == os_arms);
+   u.utracked[tos_first_equip ... tos_last_equip] hold the item that the player
+   wants to place in each swap; this is a persistent value, saved in the save
+   file. They can be legally set to any valid object pointer, regardless of
+   whether it's appropriate for the slot, or even whether it's in the player's
+   inventory. Use &zeroobj to request that nothing is stored in the slot; NULL
+   represents that no change is desired. We use this convention for two reasons:
+   a) because if an object is destroyed while in utracked, the corresponding
+   slot of utracked becomes NULL; b) because that way, if an item is stolen
+   independently of the equip code, the player won't automatically re-equip it
+   if they subsequently pick it up.
 
-    return result;
-}
+   This function handles the actual equipping. The rules are as follows:
 
-void
-cancel_don(void)
+   - If an action can't even be attempted because the item isn't in inventory,
+     it's skipped entirely. This means that the player can start to wear an
+     item, be interrupted, and choose to continue wearing once they reclaim it,
+     with the benefits of their accumulated progress.
+
+   - If the action can be attempted but doesn't work (e.g. is blocked by a
+     cursed item), we print out a message and NULL the slot. This takes 1
+     action, or 0 if the action could normally be done for free, rather than the
+     normal time it takes to equip the item.
+
+   - If all the actions that the player wants to perform are free (such as
+     quivering, or swapping the main and offhand), then this function performs
+     all of them (printing appropriate messages), and returns 0.
+
+   - Otherwise, it increases the action reservoir (uoccupation_progress for the
+     appropriate slot) by 1, and compares it to the length of time taken by the
+     next action to perform:
+
+       - If the action takes more time than is in the reservoir, the function
+         returns 2 with no further action.
+
+       - If the action takes no more time than is in the reservoir, then the
+         time is taken from the reservoir and the action is performed. (The slot
+         is NULLed out in response, except when unequipping an item temporarily
+         to put on another, when it's set to the old item.) Then any number of
+         zero-time actions that might be scheduled to happen after that occur,
+         and then the function returns 2 if there are actions remaining, 1
+         otherwise.
+
+   The correct use for this function in a command, then, is to set utracked,
+   reset the reservoir if any objects were removed from utracked, then call
+   equip_heartbeat yourself once. If it returns 0 or 1, return the same
+   value. If it returns 2, set equip_occupation_callback as an occupation, then
+   return 1. */
+static inline boolean
+want_to_change_slot(enum objslot os)
 {
-    /* the piece of armor we were donning/doffing has vanished, so stop wasting 
-       time on it (and don't dereference it when donning would otherwise
-       finish) */
-    cancelled_don = (afternmv == Boots_on || afternmv == Helmet_on ||
-                     afternmv == Gloves_on || afternmv == Armor_on);
-    afternmv = 0;
-    nomovemsg = NULL;
-    multi = 0;
-    todelay = 0;
-    taking_off = os_invalid;
+    struct obj *current = EQUIP(os);
+    struct obj *desired = u.utracked[tos_first_equip + os];
+    if (desired == NULL) return FALSE;
+    if (desired == &zeroobj && current == NULL) return FALSE;
+    if (desired == current) return FALSE;
+    if (desired != &zeroobj && desired->where != OBJ_INVENT)
+        return FALSE; /* no change yet */
+    return TRUE;
 }
-
-static const char clothes_and_accessories[] =
-    { ARMOR_CLASS, RING_CLASS, AMULET_CLASS, TOOL_CLASS, FOOD_CLASS, 0 };
-
-/* the 'T' command */
 int
-dotakeoff(struct obj *otmp)
+equip_heartbeat(void)
 {
+    int i;
+    enum objslot j;
+    boolean reservoir_increased = FALSE;
+
+    /* Loop over the equip order, performing equip actions in equip order. */
+    for (i = 0; i < (sizeof equip_order) / (sizeof *equip_order); i++) {
+        enum objslot islot = equip_order[i].slot;
+        struct obj *desired = u.utracked[tos_first_equip + islot];
+        struct obj *current = EQUIP(islot);
+        boolean temp_unequip = FALSE;
+        boolean fast_weapon_swap = FALSE;
+        boolean cant_equip = FALSE;
+        int action_cost = 0;
+
+        /* Do we want to temporarily unequip an item to equip it later? */
+        if (equip_order[i].direction == ed_unequip)
+            for (j = 0; j <= os_last_equip; j++) {
+                if (islot == j) continue;
+                if (slot_covers(islot, j) && want_to_change_slot(j))
+                    temp_unequip = TRUE;
+            }
+
+        /* In the special case of a player trying to equip an object over
+           itself, we want to print a message and then remove the desire to
+           change the slot. (We might nonetheless remove the object, if it's
+           blocking an equip that the player wants to do.) */
+        if (current && desired == current) {
+            pline("You are already %s %s.",
+                  islot == os_wep ? "wielding" :
+                  islot == os_swapwep ? "readying" :
+                  islot == os_quiver ? "quivering" : "wearing", yname(current));
+            u.utracked[tos_first_equip + islot] = desired = NULL;
+        }
+
+        /*
+         * Swapping weapons is implemented as a special case of the first action
+         * that could represent it (either "unequip swapwep", or "equip swapwep"
+         * if we're swapping a main weapon into an empty offhand slot); that's
+         * the point at which we must decide whether it's a swap or a standard
+         * wield/unwield. A partial swap (main weapon into readied slot, empty
+         * main weapon slot) is also zero actions if the main weapon slot is
+         * filled, so as to prevent the pushweapon option allowing you to do
+         * things faster than you otherwise would be able to. This further
+         * implies that it's possible to empty the weapon or offhand slot in
+         * zero time via repeated swapping, so we add that as a separate case
+         * (that isn't a fast weapon swap internally, though; just an unequip
+         * that happens to take zero time).
+         *
+         * All the swap-like cases which take zero time have uwep == desired,
+         * and it turns out that there are no other restrictions. If this
+         * condition is met, we set fast_weapon_swap, which overrides the time
+         * taken to 0, and informs the later code that the main weapon will need
+         * to be swapped into the offhand slot (and possibly vice versa). This
+         * also has the side-effect of cancelling the unequip in the offhand
+         * slot if the mainhand weapon turns out to be cursed; this is
+         * reasonable behaviour, though, so it's just allowed to happen. (The
+         * opposite does not happen; there's no reason to not go through with
+         * the swap, and get welded hands, if it's the offhand weapon that's
+         * cursed.)
+         *
+         * If the player desires to move the offhand slot to the mainhand slot,
+         * but not vice versa, there's no way to do that in zero time, unless
+         * the offhand slot is to end up empty. It can, however, be done in one
+         * action (fast swap, followed by re-equipping the offhand slot), and
+         * this is perfectly safe (moving a cursed item to offhand is not a
+         * problem, moving a cursed item to mainhand is what the user requested
+         * so it's OK to do even if the item is cursed). Therefore, we also
+         * enable the fast swap in this case. We don't use it if the offhand is
+         * empty and the mainhand is desired empty, though; just unequipping the
+         * mainhand directly works just as fast in that case, and is clearer.
+         */
+        if (islot == os_swapwep &&
+            (desired == uwep || (desired == &zeroobj && uwep == NULL) ||
+             current == u.utracked[tos_first_equip + os_wep]))
+            fast_weapon_swap = TRUE;
+
+        /* Likewise, we have a special case for trying to unequip an object
+           over an empty slot. */
+        if (!current && desired == &zeroobj) {
+            pline("You have no %s equipped.", c_slotnames[islot]);
+            u.utracked[tos_first_equip + islot] = desired = NULL;
+        }
+
+        if (!want_to_change_slot(islot) && !temp_unequip) continue;
+
+        /* If the slot is empty and this is an unequip entry, do nothing,
+           unless this is also a fast weapon swap.*/
+        if (equip_order[i].direction == ed_unequip && !current &&
+            !fast_weapon_swap)
+            continue;
+        /* If we want to empty the slot and this is an equip entry, do
+           nothing. This case is probably unreachable, because the unequip
+           should have been checked first. The !desired check is definitely
+           unreachable - it's checked in want_to_change_slot - but that means
+           that the compiler will just optimize it out, and it's there to
+           avoid null-pointer-related crashes if the code ever changes. */
+        if (equip_order[i].direction == ed_equip && !fast_weapon_swap &&
+            (!desired || desired == &zeroobj))
+            continue;
+
+        /* Before spending any time, check to see if the character knows
+           the action to be impossible. */
+        if (fast_weapon_swap)
+            /* Note: we don't check to see if we can ready the currently wielded
+               weapon; we can't, because it's currently wielded. If the unwield
+               works, the ready will also work, though. We need three checks;
+               two to see if the swap is possible, one that allows for a
+               potential slow equip afterwards. */
+            cant_equip = 
+                (uwep && !canunwearobj(uwep, TRUE, FALSE, FALSE)) ||
+                !canwieldobj(uswapwep, TRUE, FALSE, FALSE) ||
+                (desired != uwep &&
+                 !canreadyobj(desired, TRUE, FALSE, FALSE));
+        else if (islot == os_wep)
+            cant_equip = !canwieldobj(desired, TRUE, FALSE, FALSE);
+        else if (islot == os_swapwep || islot == os_quiver)
+            cant_equip = !canreadyobj(desired, TRUE, FALSE, FALSE);
+        else if (equip_order[i].direction == ed_unequip)
+            cant_equip = !canunwearobj(current, TRUE, FALSE, FALSE);
+        else
+            cant_equip = !canwearobjon(desired, islot, TRUE, FALSE, FALSE);
+            
+        if (cant_equip) {
+            /* Abort the attempt to equip. */
+            u.utracked[tos_first_equip + islot] = NULL;
+            /* On an impossible swap, also cancel the wield, to avoid duplicate
+               messages. */
+            if (fast_weapon_swap)
+                u.utracked[tos_first_equip + os_wep] = NULL;
+            /* Move on without costing time. */
+            continue;
+        }
+
+        /*
+         * At this point, the character is going to attempt to equip/unequip the
+         * item. Does he/she/it have time to do so?
+         *
+         * The timings used for equipping in NetHack up to 4.2 depended on the
+         * command used, and were inconsistent in some cases:
+         *
+         * Q   0 actions
+         * x   0 actions (in AceHack, at least; 1 in 3.4.3 and earlier)
+         * w   1 action
+         * a   1 action
+         * P   1 action
+         * R   1 action
+         * W   1 action  + oc_delay turns
+         * T   1 action  + oc_delay turns
+         * A   0 actions + min(oc_delay, 1) actions; except 2 for os_tool
+         *
+         * (This has been verified experimentally as well as via reading the
+         * code.) This means that A is normally faster (except for removing
+         * blindfolds and lenses), but T is faster for armor with a long delay,
+         * if you're polymorphed into something slower than normal speed. (This
+         * might come up if, say, you're polymorphed into a dwarf lord.)
+         *
+         * The timings in NetHack 4.3 depend on the slot, not the command, and
+         * are always measured entirely in actions (technically, because that's
+         * how occupation callbacks work; but it also makes sense in that speed
+         * should allow you to put on armour faster):
+         *
+         * os_quiver               0 for equip, unequip, change
+         * os_wep/swapwep          0 if swapping os_wep and os_swapwep
+         *                         0 to move os_wep to os_swapwep, emptying it
+         *                         1 for equip, unequip, change
+         * os_ring[lr]/amul/blindf 1 for equip, unequip
+         *                         2 to change
+         * os_arm*                 1 + oc_delay for equip, unequip
+         *                         change takes as much time as equip + unequip
+         *
+         * The time spent in 4.3 is thus usually a little slower than A, and a
+         * little faster than W/T. (It's equal in the case of the non-armor
+         * slots, which had consistent timing anyway.)
+         */
+        switch (islot) {
+        case os_quiver:
+            action_cost = 0;
+            break;
+        case os_wep:
+        case os_swapwep:
+            action_cost = fast_weapon_swap ||
+                equip_order[i].direction == ed_unequip ? 0 : 1;
+            break;
+        case os_ringl:
+        case os_ringr:
+        case os_amul:
+        case os_tool:
+            action_cost = 1;
+            break;
+        default:
+            /* This is the code to change if it's ever desired to make the
+               delays for equipping and unequipping asymmetrical. */
+            if (equip_order[i].direction == ed_unequip)
+                action_cost = 1 + objects[current->otyp].oc_delay;
+            else
+                action_cost = 1 + objects[desired->otyp].oc_delay;
+            break;
+        }
+
+        /* If the action is free, or if we have at least 1 action in the
+           reservoir, or if we have leeway to increase the reservoir, check to
+           see if it's possible, and stop trying to perform it if it isn't. */
+        if (action_cost == 0 || !reservoir_increased ||
+            u.uoccupation_progress[tos_first_equip + islot]) {
+
+            /* Objects can always be wielded/readied/quivered unless they're
+               already worn in some other slot. However, there may be a
+               replacement item. This code calls the appropriate check functions
+               to ensure that the equip is possible.
+              
+               There's no need for twoweapon checks, because we can fix such
+               problems simply by ending twoweapon.
+              
+               These are similar to the earlier checks, except now we have spoil
+               == TRUE, because the character's actually spending time
+               attempting to equip the item. */
+            if (fast_weapon_swap)
+                cant_equip =
+                    (uwep && !canunwearobj(uwep, TRUE, TRUE, FALSE)) ||
+                    !canwieldobj(uswapwep, TRUE, TRUE, FALSE) ||
+                    (desired != uwep &&
+                     !canreadyobj(desired, TRUE, TRUE, FALSE));
+            else if (islot == os_wep)
+                cant_equip = !canwieldobj(desired, TRUE, TRUE, FALSE);
+            else if (islot == os_swapwep || islot == os_quiver)
+                cant_equip = !canreadyobj(desired, TRUE, TRUE, FALSE);
+            else if (equip_order[i].direction == ed_unequip)
+                cant_equip = !canunwearobj(current, TRUE, TRUE, FALSE);
+            else
+                cant_equip = !canwearobjon(desired, islot, TRUE, TRUE, FALSE);
+
+            if (cant_equip && action_cost)
+                action_cost = 1;
+        }
+
+        /* Compare the cost to the time we've already spent trying to equip the
+           item. If it's too high, spend an action (unless it was spent earlier
+           in this function; we can only spend one per call because we need to
+           give the monsters a chance to move), then check again. */
+        if (action_cost > u.uoccupation_progress[tos_first_equip + islot] &&
+            !reservoir_increased) {
+            u.uoccupation_progress[tos_first_equip + islot]++;
+            reservoir_increased = TRUE;
+        }
+        /* If we still don't have enough time, let the caller know, and
+           continue with the equip later. */
+        if (action_cost > u.uoccupation_progress[tos_first_equip + islot])
+            return 2;
+
+        u.uoccupation_progress[tos_first_equip + islot] -= action_cost;
+
+        /* If the equip action is impossible, then now we've paid the 1 action
+           cost for discovering that, cancel the action and move on. */
+        if (cant_equip) {
+            u.utracked[tos_first_equip + islot] = NULL;
+            /* Cancel the wield, too, on an impossible swap. The result could
+               otherwise include duplicate messages. */
+            if (fast_weapon_swap)
+                u.utracked[tos_first_equip + os_wep] = NULL;
+            continue;
+        }
+
+        /* At this point, the equip/unequip will happen. */
+        if (fast_weapon_swap) {
+            /* The fast weapon swap is the only thing we do this time round the
+               loop. If there's a slow offhand equip after that, we do it on the
+               next iteration. */
+            if (u.utracked[tos_first_equip + os_wep] == current ||
+                (!current &&
+                 u.utracked[tos_first_equip + os_wep] == &zeroobj)) {
+                /* code above enforces: desired is uwep, current is uswapwep */
+                setuswapwep(NULL);
+                ready_weapon(current);
+                if (uwep == current) { /* it worked */
+                    setuswapwep(desired == &zeroobj ? NULL : desired);
+                    if (desired == &zeroobj)
+                        pline("You have no secondary weapon readied.");
+                    else
+                        prinv(NULL, desired, 0L);
+                } else { /* something went wrong equipping */
+                    setuswapwep(current);
+                }
+            } else { /* half-swap: uwep is readied, uswapwep is unequipped */
+                ready_weapon(NULL);
+                if (desired != &zeroobj && !(desired->owornmask & W_EQUIP))
+                    setuswapwep(desired == &zeroobj ? NULL : desired);
+                    if (desired == &zeroobj)
+                        pline("You have no secondary weapon readied.");
+                    else
+                        prinv(NULL, desired, 0L);
+            }
+            /* If we swapped the object we wanted into a slot, remember that
+               the slot no longer has a desire to change. */
+            if (!want_to_change_slot(os_swapwep))
+                u.utracked[tos_first_equip + os_swapwep] = NULL;
+            if (!want_to_change_slot(os_wep))
+                u.utracked[tos_first_equip + os_wep] = NULL;
+            if (u.utracked[tos_first_equip + os_swapwep] &&
+                u.utracked[tos_first_equip + os_wep])
+                panic("Swapping items did not help with desire");
+        } else if (islot == os_wep) {
+            ready_weapon(desired == &zeroobj ? NULL : desired);
+        } else if (islot == os_swapwep) {
+            if (desired != &zeroobj) unwield_silently(desired);
+            setuswapwep(desired == &zeroobj ? NULL : desired);
+            /* The can_twoweapon check is done early, so that we don't get
+               "wielded in other hand" if it actually isn't. */
+            if (u.twoweap && !can_twoweapon())
+                untwoweapon();
+            if (desired == &zeroobj)
+                pline("You have no secondary weapon readied.");
+            else
+                prinv(NULL, desired, 0L);
+        } else if (islot == os_quiver) {
+            if (desired != &zeroobj) unwield_silently(desired);
+            setuqwep(desired == &zeroobj ? NULL : desired);
+            if (desired == &zeroobj)
+                pline("You now have no ammunition readied.");
+            else
+                prinv(NULL, desired, 0L);
+        } else if (equip_order[i].direction == ed_unequip) {
+            /* Unequip the item. (This might be only temporary to change a slot
+               underneath, but in that case, we don't have to worry about an
+               immediate re-equip because the equip and unequip have separate
+               lines on the table.) */
+            Slot_off(islot);
+            /* Unequipping artifact armour will succeed despite a blast, but
+               you still get blasted. */
+            if (current->oartifact)
+                touch_artifact(current, &youmonst);
+            /* If it's temporary, set a desire to re-equip. */
+            if (u.utracked[tos_first_equip + islot] == NULL && temp_unequip)
+                u.utracked[tos_first_equip + islot] = current;
+        } else {
+            /* Equip the item. (We know desired != &zeroobj if we get here.)
+               setworn() doesn't have an artifact touch check, so we do that
+               here. canwearobj() doesn't have a check for already wielded,
+               so we unwield here too. The two checks are in the same order
+               as in 3.4.3: if you try to wear a wielded artifact, and it
+               blasts you, the attempt to wear fails but you can still hang
+               on to it. */
+            if (!desired->oartifact || touch_artifact(desired, &youmonst)) {
+                unwield_silently(desired);
+                setworn(desired, W_MASK(islot));
+                Slot_on(islot);
+            }
+        }
+        /* Remove the desire to change a slot that has had the correct item
+           placed in it. (Temporary unequips mean that the wrong item might
+           have been placed in it even if there was a change.) */
+        if (!want_to_change_slot(islot))
+            u.utracked[tos_first_equip + islot] = NULL;
+        /* Remove the desire to change a slot where we tried and failed to equip
+           something in it, to avoid an infinite loop. (This case can come up if
+           for example the player lifesaves from wielding a c corpse.) */
+        if (current == EQUIP(islot))
+            u.utracked[tos_first_equip + islot] = NULL;
+
+        /* Cancel two-weaponing if it's no longer possible. */
+        if (u.twoweap && !can_twoweapon())
+            untwoweapon();
+
+        update_inventory();
+    }
+    return reservoir_increased ? 1 : 0;
+}
+static int
+equip_occupation_callback(void)
+{
+    return equip_heartbeat() == 2 ? 1 : 0;
+}
+
+/* Called when the player requests to equip otmp in slot. (You can empty the
+   slot using either NULL or &zeroobj.) This function may be called with any
+   object and any slot; it will do nothing (except maybe reset the equip
+   occupation state) and return 0 if the equip is impossible and the character
+   knows it's impossible, do nothing and return 1 if it's impossible and the
+   character has to experiment to find that out, and otherwise will perform the
+   equip, taking 0, 1, or more actions, and return whether or not it took
+   time. (In the case where it takes more than 1 action, it will set an
+   occupation callback that will do the actual equipping at the appropriate time
+   in the future; this can be interrupted, and will be resumed by equip_in_slot
+   if it's called with the same arguments with no equipping done in between, and
+   in a few other cases, such as wearing an item that was temporarily taken
+   off.) */
+int
+equip_in_slot(struct obj *otmp, enum objslot slot)
+{
+    int t;
+    enum objslot j;
+    if (!otmp)
+        otmp = &zeroobj;
+
+    /* We're resuming if we request an equip that's already the case (the
+       "putting items back on" stage, or an equip that's already desired (the
+       "taking items off to free the slot" stage, or the "equipping the item
+       itself" stage). We aren't resuming if there are no desires marked
+       anywhere, though. */
+    boolean resuming = FALSE;
+    for (j = 0; j <= os_last_equip; j++)
+        if (u.utracked[tos_first_equip + j])
+            resuming = TRUE;
+    resuming = resuming &&
+        (u.utracked[tos_first_equip + slot] == otmp ||
+         EQUIP(slot) == otmp || (!EQUIP(slot) && otmp == &zeroobj));
+
+    /* Make sure that each of our slots has the correct desired item and the
+       correct occupation progress. */
+    for (j = 0; j <= os_last_equip; j++) {
+        struct obj **desired = u.utracked + tos_first_equip + j;
+        struct obj *target = j == slot ? otmp : NULL;
+        /* If we're continuing a compound equip, don't cancel desires for slots
+           that cover the slot we want to change. (They may be temporarily
+           unequipped items.) We do cancel desires for other slots, though, so
+           that it's possible to abort a compound equip via equipping a higher
+           slot. */
+        if (resuming && (slot_covers(j, slot) || j == slot))
+            continue;
+        /* If we're placing a different object in a slot from what was there
+           before, cancel our progress in equipping that slot. */
+        if (*desired != target)
+            u.uoccupation_progress[tos_first_equip + j] = 0;
+        *desired = target;
+    }
+
+    /* Equips in time-consuming slots should print messages to let the player
+       know what's happening. Potentially time-consuming slots are any armor
+       slot, and any slot that covers another slot (but all covering slots
+       are armor slots at the moment. */
+    if (flags.verbose && slot <= os_last_armor) {
+        if (otmp != &zeroobj && otmp != EQUIP(slot))
+            pline("You %s equipping %s.", 
+                  resuming ? "continue" : "start", yname(otmp));
+        else if (otmp == &zeroobj && EQUIP(slot))
+            pline("You %s removing %s.", 
+                  resuming ? "continue" : "start", yname(EQUIP(slot)));
+        else {
+            /* Either we're putting items back on, or else we're not making any
+               changes at all and this is very trivial. */
+            for (j = 0; j <= os_last_equip; j++) {
+                if (u.utracked[tos_first_equip + j] != NULL && j != slot) {
+                    pline("You start putting your other items back on.");
+                    break;
+                }
+            }
+        }
+    }
+
+    /* Do the equip. */
+    t = equip_heartbeat();
+    if (t == 2) {
+        set_occupation(equip_occupation_callback, "changing your equipment");
+    }
+    return t > 0;
+}
+
+/* The logic for this is now moved to object_selection_checks, meaning that
+   this can be as simple as possible. */
+static const char clothes_and_accessories[] = { ALL_CLASSES, 0 };
+
+/* the 'T'/'R' command */
+int
+dounequip(struct obj *otmp)
+{
+    enum objslot j;
+    long mask;
+
     if (otmp && !validate_object(otmp, clothes_and_accessories, "take off"))
         return 0;
     else if (!otmp)
         otmp = getobj(clothes_and_accessories, "take off");
     if (!otmp)
         return 0;
-    if (otmp->oclass != ARMOR_CLASS)
-        return doremring(otmp);
-    if (!(otmp->owornmask & W_ARMOR)) {
-        pline("You are not wearing that.");
-        return 0;
-    }
-    if (otmp == uskin()) {
-        pline("The %s merged with your skin!",
-              uskin()->otyp >=
-              GRAY_DRAGON_SCALES ? "dragon scales are" :
-              "dragon scale mail is");
-        return 0;
-    }
-    if (((otmp == uarm) && uarmc) || ((otmp == uarmu) && (uarmc || uarm))) {
-        /* TODO: replace this with a multistep remove */
-        pline("The rest of your armor is in the way.");
-        return 0;
-    }
 
-    reset_remarm();     /* clear takeoff_mask and taking_off */
-    select_off(otmp);
-    if (!takeoff_mask)
-        return 0;
-    reset_remarm();     /* armoroff() doesn't use takeoff_mask */
+    /* We could make 'T'/'R' capable of unwielding the worn weapon, quiver, etc.
+       simply by changing os_last_worn to os_last_equip. Should we? */
+    for (j = 0; j <= os_last_worn; j++)
+        if (otmp->owornmask & W_MASK(j))
+            return equip_in_slot(NULL, j);
 
-    armoroff(otmp);
-    return 1;
-}
-
-/* the 'R' command */
-int
-doremring(struct obj *otmp)
-{
-    if (otmp && !validate_object(otmp, clothes_and_accessories, "remove"))
-        return 0;
-    else if (!otmp)
-        otmp = getobj(clothes_and_accessories, "remove");
-    if (!otmp)
-        return 0;
-    /* TODO: Merge this with the 'T' command. */
-    if (otmp->oclass == ARMOR_CLASS)
-        return dotakeoff(otmp);
-    if (!(otmp->owornmask & W_WORN & ~W_ARMOR)) {
+    /* We get here if an equip was interrupted while we were putting items back
+       on; we also get here if someone tries to unequip an item that isn't
+       equipped. To distinguish between the cases, we rely on the fact that
+       rings can't be covered, and so we can look at which slots the object can
+       naturally be equipped in to determine which slot to use. */
+    if (!canwearobj(otmp, &mask, FALSE, FALSE, TRUE) || mask & W_RING) {
+        /* Either it isn't equipment at all, or else the slot's covered by a
+           cursed item, or else it's a ring. In all these cases, we can't
+           sensibly continue, especially not without manual confirmation. */
         pline("You are not wearing that.");
         return 0;
     }
 
-    reset_remarm();     /* clear takeoff_mask and taking_off */
-    select_off(otmp);
-    if (!takeoff_mask)
-        return 0;
-    reset_remarm();     /* not used by Ring_/Amulet_/Blindf_off() */
+    /* Now de-equip the slot the (unequipped) item should be in. This will
+       continue with a compound unequip if necessary, or else print a message
+       explaining that the action doesn't make sense. Exception: don't do this
+       if the slot is already filled by some other item, because then we'd
+       unequip that item, which is not what the user wants. */
+    for (j = 0; j <= os_last_worn; j++)
+        if (mask & W_MASK(j) && !EQUIP(j))
+            return equip_in_slot(NULL, j);
 
-    if (otmp == uright || otmp == uleft) {
-        /* Sometimes we want to give the off_msg before removing and sometimes
-           after; for instance, "you were wearing a moonstone ring (on right
-           hand)" is desired but "you were wearing a square amulet (being
-           worn)" is not because of the redundant "being worn". */
-        off_msg(otmp);
-        Ring_off(otmp);
-    } else if (otmp == uamul) {
-        Amulet_off();
-        off_msg(otmp);
-    } else if (otmp == ublindf) {
-        Blindf_off(otmp);       /* does its own off_msg */
-    } else {
-        impossible("removing strange accessory?");
-    }
-    return 1;
-}
-
-/* Check if something worn is cursed _and_ unremovable. */
-int
-cursed(struct obj *otmp)
-{
-    /* Curses, like chickens, come home to roost. */
-    if ((otmp == uwep) ? welded(otmp) : (int)otmp->cursed) {
-        pline("You can't.  %s cursed.",
-              (is_boots(otmp) || is_gloves(otmp) || otmp->otyp == LENSES ||
-               otmp->quan > 1L)
-              ? "They are" : "It is");
-        otmp->bknown = TRUE;
-        return 1;
-    }
+    pline("You are not wearing that.");
     return 0;
 }
 
+/* the 'W'/'P' command */
 int
-armoroff(struct obj *otmp)
+dowear(struct obj *otmp)
 {
-    int delay = -objects[otmp->otyp].oc_delay;
+    long mask;
+    enum objslot j;
 
-    if (cursed(otmp))
+    if (otmp && !validate_object(otmp, clothes_and_accessories, "wear"))
         return 0;
-    if (delay) {
-        nomul(delay, "disrobing");
-        if (is_helmet(otmp)) {
-            nomovemsg = "You finish taking off your helmet.";
-            afternmv = Helmet_off;
-        } else if (is_gloves(otmp)) {
-            nomovemsg = "You finish taking off your gloves.";
-            afternmv = Gloves_off;
-        } else if (is_boots(otmp)) {
-            nomovemsg = "You finish taking off your boots.";
-            afternmv = Boots_off;
+    else if (!otmp)
+        otmp = getobj(clothes_and_accessories, "wear");
+    if (!otmp)
+        return 0;
+
+    /* Work out which slot it should go in. If it doesn't go into any slot, then
+       we can't reasonably use equip_in_slot, so we allow canwearobj to print
+       the message, then return 0. */
+    if (!canwearobj(otmp, &mask, TRUE, FALSE, TRUE))
+        return 0;
+
+    /* If we can place a ring on either hand, try without cblock in order to see
+       if one ring hand is faster to equip (because there's already a ring on the
+       other hand). */
+    if (mask == W_RING && !canwearobj(otmp, &mask, FALSE, FALSE, FALSE)) {
+        /* We could reach this point if there's a ring on both hands, or if the
+           selected ring is already worn. We don't want to auto-de-equip an
+           arbitrary ring. */
+        if (otmp->owornmask & W_RING) {
+            /* There is actually a sensible response to this situation: we could
+               move the ring to the other hand. For the time being, though, we
+               don't do that unless explicitly requested with A, to avoid
+               ridiculous accidents. */
+            pline("That ring is already on your finger!");
+            return 0;
         } else {
-            nomovemsg = "You finish taking off your suit.";
-            afternmv = Armor_off;
+            pline("Both your ring fingers are already full.");
+            return 0;
         }
-    } else {
-        /* Be warned! We want off_msg after removing the item to avoid "You
-           were wearing ____ (being worn)." However, an item which grants fire
-           resistance might cause some trouble if removed in Hell and
-           lifesaving puts it back on; in this case the message will be printed 
-           at the wrong time (after the messages saying you died and were
-           lifesaved).  Luckily, no cloak, shield, or fast-removable armor
-           grants fire resistance, so we can safely do the off_msg afterwards.
-           Rings do grant fire resistance, but for rings we want the off_msg
-           before removal anyway so there's no problem.  Take care in adding
-           armors granting fire resistance; this code might need modification.
-           3.2 (actually 3.1 even): this comment is obsolete since fire
-           resistance is not needed for Gehennom. */
-        if (is_cloak(otmp))
-            Cloak_off();
-        else if (is_shield(otmp))
-            Shield_off();
-        else
-            setworn(NULL, otmp->owornmask & W_ARMOR);
-        off_msg(otmp);
     }
-    takeoff_mask = 0L;
-    taking_off = os_invalid;
-    return 1;
+
+    /* The way this (mask & W_MASK(j)) check is written, we pick an arbitrary
+       ring slot for rings that could still reasonably go on either hand, rather
+       than prompting.  The player can place a ring on a specific hand using the
+       'A' command.
+
+       This also continues a compound equip, if necessary; we don't have an
+       already-worn check, because equip_in_slot does that for us (via
+       equip_heartbeat). */
+    for (j = 0; j <= os_last_worn; j++)
+        if (mask & W_MASK(j))
+            return equip_in_slot(otmp, j);
+
+    impossible("Bad mask from canwearobj?");
+    return 0;
 }
 
 static void
@@ -1242,16 +1778,37 @@ already_wearing(const char *cc)
     pline("You are already wearing %s%c", cc, (cc == c_that_) ? '!' : '.');
 }
 
+/* welded() sets bknown; so only call it if the wielded weapon is bknown or
+   we're actually experimenting to see if we can unwield. Otherwise, act
+   like the weapon is uncursed. (It's very hard (impossible?) to have the
+   weapon cursed without knowing it, so this is mostly (entirely?)
+   paranoia, but best to make sure we don't cause side effects in zero
+   time.) */
+static inline boolean
+known_welded(boolean noisy)
+{
+    return (noisy || (uwep && uwep->bknown)) && welded(uwep);
+}
+
 /*
  * canwearobj checks to see whether the player can wear a piece of armor or
- * jewellery (i.e. anything that can meaningfully have bits in W_WORN set).
+ * jewellery (i.e. anything that can meaningfully have bits in W_WORN set). It
+ * does not return useful information for the wield slot, because that would
+ * cause a TRUE return in almost any situation (basically anything is
+ * wieldable), and thus rather complicate the code for W, which doesn't wield.
+ * (You can determine if an item is potentially wieldable via seeing whether
+ * it's currently worn; all items that are neither worn (including as a saddle)
+ * nor welded are wieldable, although c corpses may well cause instant death
+ * upon trying, and they aren't the only try-then-fail case; ready_weapon is the
+ * appropriate function to use to attempt the actual wielding.)
  *
- * This is used in two basic contexts:
+ * This is used in three basic contexts:
  *
- * a) As a check in response to the user attempting to wear a piece of armor.
- *    In this case, the code will pline() out explanations about why the
- *    armor can't be worn, if it can't be worn. With this case (noisy != FALSE),
- *    it will use actual knowledge about BCUs, and set bknown accordingly.
+ * a) As a check in response to the user giving the command to wear a piece of
+ *    armor (noisy != FALSE, spoil == FALSE). In this case, the code will
+ *    pline() out explanations about why the armor can't be worn, if it can't be
+ *    worn. This is based on character knowledge; if it returns FALSE, the
+ *    character will know it won't work and won't waste a turn trying.
  *
  * b) To check to see if and where an item can be equipped, in preparation for
  *    presenting a menu of sensible options to the user, or to determine
@@ -1261,16 +1818,34 @@ already_wearing(const char *cc)
  *    cannot be equipped (if the character does not know why it cannot be
  *    equipped).
  *
- * This function now also checks for the amulet, ring, and blindfold slots.
- * In the case of rings, *mask will be W_RING if both ring slots are free,
+ * c) While the character is trying to equip the item (neither noisy nor spoil
+ *    is false). This will use actual knowledge about BCUs, and set bknown
+ *    accordingly.
+ *
+ * This function now also checks for the amulet, ring, and blindfold slots. In
+ * the case of rings, *mask will be W_RING if both ring slots are free,
  * W_MASK(os_ringl) or W_MASK(os_ringr) if only one ring slot is free.
  *
+ * You can get different outcomes from this function using the cblock value.
+ * With cblock == TRUE, the return values are based on what could be
+ * accomplished via removing items in other slots. With cblock == FALSE, the
+ * return values are based on what could be accomplished right now (e.g. armour
+ * will be blocked by a perfectly removable suit of armour or a cloak). cblock
+ * is mutually exclusive with spoil; if you're trying to move the item right
+ * now, it's important that the slot is unblocked even if you theoretically
+ * could unblock it.
+ *
  * inputs: otmp (the piece of armor)
- *         noisy (TRUE to complain if wearing is not possible)
+ *         noisy (TRUE to print messages; FALSE to stay silent)
+ *         spoil (TRUE to use game knowledge; FALSE to use character knowledge)
+ *         cblock (when TRUE, consider items in blocking slots to block the
+ *                 equip only if known to be cursed)
  * output: mask (otmp's armor type)
  */
+#define CBLOCK(x) ((x) && (!cblock || ((x)->bknown && (x)->cursed)))
 boolean
-canwearobj(struct obj *otmp, long *mask, boolean noisy)
+canwearobj(struct obj *otmp, long *mask,
+           boolean noisy, boolean spoil, boolean cblock)
 {
     enum objslot slot = os_invalid;
     int temp_mask;
@@ -1298,9 +1873,13 @@ canwearobj(struct obj *otmp, long *mask, boolean noisy)
         slot = os_tool;
 
     /* Generic checks: wearing armour is possible; the armour is not already
-       equipped; the item is equippable; the equip is not blocked by a cursed
-       two-handed weapon */
-    if ((slot == os_arm || slot == os_armc || slot == os_armu) &&
+       equipped (if !cblock); the item is equippable; the equip is not blocked
+       by a cursed two-handed weapon */
+    if (verysmall(youmonst.data) || nohands(youmonst.data)) {
+        if (noisy)
+            pline("You are in no state to equip items!");
+        return FALSE;
+    } else if ((slot == os_arm || slot == os_armc || slot == os_armu) &&
         cantweararm(youmonst.data) &&
         /* same exception for cloaks as used in m_dowear() */
         (slot != os_armc || youmonst.data->msize != MZ_SMALL) &&
@@ -1308,7 +1887,7 @@ canwearobj(struct obj *otmp, long *mask, boolean noisy)
         if (noisy)
             pline("The %s will not fit on your body.", c_slotnames[slot]);
         return FALSE;
-    } else if (otmp->owornmask & W_EQUIP) {
+    } else if (otmp->owornmask & W_WORN && !cblock) {
         if (noisy)
             already_wearing(c_that_);
         return FALSE;
@@ -1317,9 +1896,7 @@ canwearobj(struct obj *otmp, long *mask, boolean noisy)
             silly_thing("equip", otmp);
         return FALSE;
     } else if (slot == os_arm || slot == os_armu || slot == os_ringl) {
-        if (noisy && uwep)
-            uwep->bknown = TRUE;
-        if (uwep && welded(uwep) && bimanual(uwep)) {
+        if (uwep && bimanual(uwep) && known_welded(spoil)) {
             if (noisy)
                 pline("You cannot do that while your hands "
                       "are welded to your %s.",
@@ -1335,15 +1912,15 @@ canwearobj(struct obj *otmp, long *mask, boolean noisy)
         /* Rings are a special case because we have two slots to equip them
            into, and thus we complain only if both are blocked. */
         temp_mask = W_RING;
-        if (EQUIP(os_ringl)) temp_mask &= ~W_MASK(os_ringl);
-        if (EQUIP(os_ringr)) temp_mask &= ~W_MASK(os_ringr);
+        if (CBLOCK(EQUIP(os_ringl))) temp_mask &= ~W_MASK(os_ringl);
+        if (CBLOCK(EQUIP(os_ringr))) temp_mask &= ~W_MASK(os_ringr);
         if (!temp_mask) {
             if (noisy)
                 already_wearing("two rings");
             return FALSE;
         }
     } else {
-        if (EQUIP(slot)) {
+        if (CBLOCK(EQUIP(slot))) {
             if (noisy)
                 already_wearing(an(c_slotnames[slot]));
             return FALSE;
@@ -1360,10 +1937,22 @@ canwearobj(struct obj *otmp, long *mask, boolean noisy)
                       plur(num_horns(youmonst.data)));
             return FALSE;
         }
+        if (otmp->otyp == HELM_OF_OPPOSITE_ALIGNMENT &&
+            qstart_level.dnum == u.uz.dnum && spoil) {   /* in quest */
+            if (u.ualignbase[A_CURRENT] == u.ualignbase[A_ORIGINAL])
+                pline("You narrowly avoid losing all chance at your goal.");
+            else    /* converted */
+                pline("You are suddenly overcome with shame "
+                      "and change your mind.");
+            u.ublessed = 0; /* lose your god's protection */
+            makeknown(otmp->otyp);
+            iflags.botl = 1;
+            return FALSE;
+        }        
         break;
 
     case os_arms:
-        if (uwep && bimanual(uwep)) {
+        if (CBLOCK(uwep) && uwep && bimanual(uwep)) {
             if (noisy)
                 pline
                     ("You cannot wear a shield while wielding a two-handed %s.",
@@ -1400,17 +1989,19 @@ canwearobj(struct obj *otmp, long *mask, boolean noisy)
         }
         break;
 
+        /* We don't use slot_covers for these because we want custom messages */
+
     case os_armg:
-        if (welded(uwep)) {
+        if (known_welded(spoil)) {
             if (noisy)
                 pline("You cannot wear gloves over your %s.",
-                      is_sword(uwep) ? "sword" : "weapon");
+                      (uwep && is_sword(uwep)) ? "sword" : "weapon");
             return FALSE;
         }
         break;
 
     case os_armu:
-        if (uarm || uarmc) {
+        if (CBLOCK(uarm) || CBLOCK(uarmc)) {
             if (noisy)
                 pline("You can't wear that over your %s.",
                       (uarm && !uarmc) ? "armor" : cloak_simple_name(uarmc));
@@ -1419,7 +2010,7 @@ canwearobj(struct obj *otmp, long *mask, boolean noisy)
         break;
 
     case os_arm:
-        if (uarmc) {
+        if (CBLOCK(uarmc)) {
             if (noisy)
                 pline("You cannot wear armor over a %s.",
                       cloak_simple_name(uarmc));
@@ -1437,18 +2028,21 @@ canwearobj(struct obj *otmp, long *mask, boolean noisy)
         /* It's possible to have cursed gloves and not know it. In such a case,
            we shouldn't spoil this fact until the user actually tries to equip
            a ring. */
-        if (uarmg && noisy)
+        if (uarmg && uarmg->cursed && spoil)
             uarmg->bknown = TRUE;
         if (uarmg && uarmg->cursed && uarmg->bknown) {
             if (noisy)
                 pline("You cannot remove your gloves to put on the ring.");
             return FALSE;
         }
-        if (uwep && uwep->bknown && welded(uwep)) {
+        if (known_welded(spoil)) {
             /* We've already checked for a weld to both hands, but we also need
                to check for a weld to just the right hand; this forces the ring
                onto the left hand, or prevents wearing it if the left hand is
-               full. */
+               full.
+
+               TODO: Currently the left hand isn't blocked by a welded shield
+               (neither for glove nor ring).  Should it be? */
             temp_mask &= ~W_MASK(os_ringr);
             if (!temp_mask) {
                 if (noisy)
@@ -1467,144 +2061,165 @@ canwearobj(struct obj *otmp, long *mask, boolean noisy)
     return TRUE;
 }
 
-/* the 'W' command */
-int
-dowear(struct obj *otmp)
+/* Like the above, but for a specific slot. */
+static boolean
+canwearobjon(struct obj *otmp, enum objslot slot,
+             boolean noisy, boolean spoil, boolean cblock)
 {
-    int delay;
-    long mask = 0L;
+    long mask;
+    if (!canwearobj(otmp, &mask, noisy, spoil, cblock))
+        return FALSE;
+    if (mask & W_MASK(slot))
+        return TRUE;
 
-    if (otmp && !validate_object(otmp, clothes_and_accessories, "wear"))
-        return 0;
-    else if (!otmp)
-        otmp = getobj(clothes_and_accessories, "wear");
-    if (!otmp)
-        return 0;
+    /* We're trying to wear in the wrong slot. */
+    if (!noisy)
+        return FALSE;
 
-    /* TODO: merge doputon into dowear */
-    if (otmp->oclass != ARMOR_CLASS)
-        return doputon(otmp);
+    /* Is this an attempt to wear a ring on a blocked hand, when the other
+       hand is available? */
+    if (mask & W_RING && (slot == os_ringl || slot == os_ringr))
+        pline("%s will only fit on your other hand.", Yname2(otmp));
+    else
+        pline("%s won't fit on that part of your body.", Yname2(otmp));
 
-    /* cantweararm checks for suits of armor */
-    /* verysmall or nohands checks for shields, gloves, etc... */
-    if ((verysmall(youmonst.data) || nohands(youmonst.data))) {
-        pline("Don't even bother.");
-        return 0;
-    }
-
-    if (!canwearobj(otmp, &mask, TRUE) || !(mask & W_ARMOR))
-        return 0;
-
-    if (otmp->oartifact && !touch_artifact(otmp, &youmonst))
-        return 1;       /* costs a turn even though it didn't get worn */
-
-    if (otmp->otyp == HELM_OF_OPPOSITE_ALIGNMENT &&
-        qstart_level.dnum == u.uz.dnum) {   /* in quest */
-        if (u.ualignbase[A_CURRENT] == u.ualignbase[A_ORIGINAL])
-            pline("You narrowly avoid losing all chance at your goal.");
-        else    /* converted */
-            pline("You are suddenly overcome with shame and change your mind.");
-        u.ublessed = 0; /* lose your god's protection */
-        makeknown(otmp->otyp);
-        iflags.botl = 1;
-        return 1;
-    }
-
-    unwield_silently(otmp);
-    setworn(otmp, mask);
-    delay = -objects[otmp->otyp].oc_delay;
-
-    int (*after) (void) = NULL;
-
-    if (is_boots(otmp))
-        after = Boots_on;
-    if (is_helmet(otmp))
-        after = Helmet_on;
-    if (is_gloves(otmp))
-        after = Gloves_on;
-    if (otmp == uarm)
-        after = Armor_on;
-    if (is_cloak(otmp))
-        after = Cloak_on;
-    if (is_shirt(otmp))
-        after = Shirt_on;
-    if (is_shield(otmp))
-        after = Shield_on;
-
-    if (!after) {
-        impossible("No after function for equipping?");
-    } else if (delay) {
-        nomul(delay, "dressing up");
-        afternmv = after;
-        nomovemsg = "You finish your dressing maneuver.";
-    } else {
-        after();
-    }
-    takeoff_mask = 0L;
-    taking_off = os_invalid;
-    return 1;
+    return FALSE;
 }
 
-int
-doputon(struct obj *otmp)
+/* Like the above, but for unwearing. We don't return a mask this time, because
+   it makes no sense to request which slots the item won't be worn in. Although
+   it probably doesn't matter, this should complain even about uncursed items
+   that are in the way; that way, the player isn't forced into a potentially
+   slow temporary unequip cycle unless they override the list of letters in a
+   prompt, and this function is the only check necessary to ensure that a
+   particular unequip command is legal.
+
+   Unlike canwearobj, this works even for the weapon slots. (There is a check in
+   the code for R/T to ensure that it does not suggest the wielded weapon as
+   something that can be unequipped.) The asymmetry is because it's possible to
+   determine whether it's the weapon slots or worn slots that we need to talk
+   about via seeing which the item is actually in. */
+boolean
+canunwearobj(struct obj *otmp, boolean noisy, boolean spoil, boolean cblock)
 {
-    long mask = 0L;
+    struct obj *why;
+    char buf[BUFSZ];
 
-    if (otmp && !validate_object(otmp, clothes_and_accessories, "put on"))
-        return 0;
-    else if (!otmp)
-        otmp = getobj(clothes_and_accessories, "put on");
-    if (!otmp)
-        return 0;
-    if (otmp->oclass == ARMOR_CLASS)
-        return dowear(otmp);
-
-    if (welded(otmp)) {
-        weldmsg(otmp);
-        return 0;
+    if (!otmp || otmp == &zeroobj)
+        return FALSE;
+    if (!(otmp->owornmask & W_EQUIP)) {   /* to unequip, it must be equipped */
+        if (noisy)
+            pline("You are not wearing %s", yname(otmp));
+        return FALSE;
     }
 
-    if (!canwearobj(otmp, &mask, TRUE))
-        return 0;
+    *buf = '\0';        /* lint suppresion */
 
-    unwield_silently(otmp);
-
-    /* If a ring could go on either finger, inquire as to which to use. */
-    while (mask == W_RING) {
-        char qbuf[QBUFSZ];
-        char answer;
-        
-        sprintf(qbuf, "Which %s%s, Right or Left?",
-                humanoid(youmonst.data) ? "ring-" : "",
-                body_part(FINGER));
-        if (!(answer = yn_function(qbuf, "rl", '\0')))
+    /* special ring checks */
+    if (otmp->owornmask & W_RING) {
+        if (nolimbs(youmonst.data)) {
+            if (noisy)
+                pline("The ring is stuck.");
             return 0;
-        switch (answer) {
-        case 'l':
-        case 'L':
-            mask = W_MASK(os_ringl);
-            break;
-        case 'r':
-        case 'R':
-            mask = W_MASK(os_ringr);
-            break;
         }
-    };
+        why = 0;        /* the item which prevents ring removal */
+        if ((otmp == uright || (uwep && bimanual(uwep))) &&
+            known_welded(spoil)) {
+            sprintf(buf, "free a weapon %s", body_part(HAND));
+            why = uwep;
+        } else if (uarmg && uarmg->cursed && (spoil || uarmg->bknown)) {
+            sprintf(buf, "take off your gloves");
+            why = uarmg;
+        }
+        if (why) {
+            if (noisy)
+                pline("You cannot %s to remove the ring.", buf);
+            if (spoil)
+                why->bknown = TRUE;
+            return FALSE;
+        }
+    }
+    /* special glove checks */
+    if (otmp->owornmask & W_MASK(os_armg)) {
+        if (uwep && known_welded(spoil)) {
+            if (noisy) {
+                pline("You are unable to take off your gloves "
+                      "while wielding that %s.",
+                      "gloves", is_sword(uwep) ? "sword" : "weapon");
+                uwep->bknown = TRUE;
+            }
+            return FALSE;
+        } else if (Glib) {
+            if (noisy)
+                pline("You can't take off the slippery gloves ",
+                      "with your slippery %s.", makeplural(body_part(FINGER)));
+            return FALSE;
+        }
+    }
+    /* special boot checks */
+    if (otmp->owornmask & W_MASK(os_armf)) {
+        if (u.utrap && u.utraptype == TT_BEARTRAP) {
+            if (noisy)
+                pline("The bear trap prevents you from pulling your %s out.",
+                      body_part(FOOT));
+            return FALSE;
+        } else if (u.utrap && u.utraptype == TT_INFLOOR) {
+            if (noisy)
+                pline("You are stuck in the %s, and cannot pull your %s out.",
+                      surface(u.ux, u.uy), makeplural(body_part(FOOT)));
+            return FALSE;
+        }
+    }
+    /* special suit and shirt checks */
+    if (otmp->owornmask & (W_MASK(os_arm) | W_MASK(os_armu))) {
+        why = 0;        /* the item which prevents disrobing */
+        if (CBLOCK(uarmc)) {
+            sprintf(buf, "remove your %s", cloak_simple_name(uarmc));
+            why = uarmc;
+        } else if ((otmp->owornmask & W_MASK(os_armu)) && CBLOCK(uarm)) {
+            /* We could add a different message for removing a shirt underneath
+               skin, but that scenario is kind-of absurd and currently can't
+               happen, because draconic forms break shirts. */
+            sprintf(buf, "remove your armor");
+            why = uarm;
+        } else if (uwep && bimanual(uwep) && known_welded(spoil)) {
+            sprintf(buf, "release your %s",
+                    is_sword(uwep) ? "sword" :
+                    (uwep->otyp == BATTLE_AXE) ? "axe" : "weapon");
+            why = uwep;
+        }
+        if (why) {
+            if (noisy)
+                pline("You cannot %s to take off %s.", buf, the(xname(otmp)));
+            return FALSE;
+        }
+        if (otmp == uskin()) {
+            if (noisy)
+                pline("The %s is merged with your skin!",
+                      otmp->otyp >= GRAY_DRAGON_SCALES ?
+                      "dragon scales are" : "dragon scale mail is");
+        }
+    }
+    /* basic curse checks: anything welds in equip slots, only specific items
+       weld in the hands, nothing welds in weapon or quiver */
+    if (otmp->owornmask & W_EQUIP) {
+        if (spoil && otmp->cursed)
+            otmp->bknown = TRUE;
+        if (otmp->cursed && otmp->bknown) {
+            if (noisy)
+                pline("You can't remove %s.  It is cursed.", the(xname(otmp)));
+            return FALSE;
+        }
+    }
+    if (otmp->owornmask & W_MASK(os_wep) && known_welded(spoil)) {
+        if (noisy)
+            weldmsg(otmp);
+        return FALSE;
+    }
 
-    if (otmp->oartifact && !touch_artifact(otmp, &youmonst))
-        return 1;   /* costs a turn even though it didn't get worn */
-
-    setworn(otmp, mask);
-    /* Don't do a prinv if an amulet is consumed. */
-    if (Slot_on(objslot_from_mask(mask)))
-        return 1;
-
-    if (is_worn(otmp))
-        prinv(NULL, otmp, 0L);
-
-    return 1;
+    return TRUE;
 }
-
+#undef CBLOCK
 
 void
 find_ac(void)
@@ -1612,7 +2227,7 @@ find_ac(void)
     int uac = mons[u.umonnum].ac;
 
     /* Armor transformed into dragon skin gives no AC bonus. TODO: Should it at
-       least give a bonus/penaltyt from its enchantment? */
+       least give a bonus/penalty from its enchantment? */
     if (uarm && !uskin())
         uac -= ARM_BONUS(uarm);
     if (uarmc)
@@ -1746,8 +2361,8 @@ erode_armor(struct monst *victim, boolean acid_dmg)
 struct obj *
 stuck_ring(struct obj *ring, int otyp)
 {
-    if (ring != uleft && ring != uright) {
-        impossible("stuck_ring: neither left nor right?");
+    if (ring && !(ring->owornmask & W_RING)) {
+        impossible("stuck_ring: not worn as a ring?");
         return NULL;
     }
 
@@ -1757,7 +2372,7 @@ stuck_ring(struct obj *ring, int otyp)
         if (nolimbs(youmonst.data) && uamul &&
             uamul->otyp == AMULET_OF_UNCHANGING && uamul->cursed)
             return uamul;
-        if (welded(uwep) && (ring == uright || bimanual(uwep)))
+        if ((ring == uright || (uwep && bimanual(uwep))) && welded(uwep))
             return uwep;
         if (uarmg && uarmg->cursed)
             return uarmg;
@@ -1777,284 +2392,13 @@ unchanger(void)
     return 0;
 }
 
-/* occupation callback for 'A' */
-static int
-select_off(struct obj *otmp)
-{
-    struct obj *why;
-    char buf[BUFSZ];
-    enum objslot i;
-
-    if (!otmp)
-        return 0;
-    *buf = '\0';        /* lint suppresion */
-
-    /* special ring checks */
-    if (otmp == uright || otmp == uleft) {
-        if (nolimbs(youmonst.data)) {
-            pline("The ring is stuck.");
-            return 0;
-        }
-        why = 0;        /* the item which prevents ring removal */
-        if (welded(uwep) && (otmp == uright || bimanual(uwep))) {
-            sprintf(buf, "free a weapon %s", body_part(HAND));
-            why = uwep;
-        } else if (uarmg && uarmg->cursed) {
-            sprintf(buf, "take off your gloves");
-            why = uarmg;
-        }
-        if (why) {
-            pline("You cannot %s to remove the ring.", buf);
-            why->bknown = TRUE;
-            return 0;
-        }
-    }
-    /* special glove checks */
-    if (otmp == uarmg) {
-        if (welded(uwep)) {
-            pline(
-                "You are unable to take off your gloves while wielding that %s.",
-                "gloves", is_sword(uwep) ? "sword" : "weapon");
-            uwep->bknown = TRUE;
-            return 0;
-        } else if (Glib) {
-            pline(
-                "You can't take off the slippery gloves with your slippery %s.",
-                makeplural(body_part(FINGER)));
-            return 0;
-        }
-    }
-    /* special boot checks */
-    if (otmp == uarmf) {
-        if (u.utrap && u.utraptype == TT_BEARTRAP) {
-            pline("The bear trap prevents you from pulling your %s out.",
-                  body_part(FOOT));
-            return 0;
-        } else if (u.utrap && u.utraptype == TT_INFLOOR) {
-            pline("You are stuck in the %s, and cannot pull your %s out.",
-                  surface(u.ux, u.uy), makeplural(body_part(FOOT)));
-            return 0;
-        }
-    }
-    /* special suit and shirt checks */
-    if (otmp == uarm || otmp == uarmu) {
-        why = 0;        /* the item which prevents disrobing */
-        if (uarmc && uarmc->cursed) {
-            sprintf(buf, "remove your %s", cloak_simple_name(uarmc));
-            why = uarmc;
-        } else if (otmp == uarmu && uarm && uarm->cursed) {
-            /* We could add a check for removing a shirt underneath skin, but
-               that scenario is kind-of absurd and currently can't happen. */
-            sprintf(buf, "remove your armor");
-            why = uarm;
-        } else if (welded(uwep) && bimanual(uwep)) {
-            sprintf(buf, "release your %s",
-                    is_sword(uwep) ? "sword" :
-                    (uwep->otyp == BATTLE_AXE) ? "axe" : "weapon");
-            why = uwep;
-        }
-        if (why) {
-            pline("You cannot %s to take off %s.", buf, the(xname(otmp)));
-            why->bknown = TRUE;
-            return 0;
-        }
-    }
-    /* basic curse check */
-    if (otmp == uquiver || (otmp == uswapwep && !u.twoweap)) {
-        ;       /* some items can be removed even when cursed */
-    } else {
-        /* otherwise, this is fundamental */
-        if (cursed(otmp))
-            return 0;
-    }
-
-    for (i = 0; i <= os_last_equip; i++) {
-        if (otmp == EQUIP(i)) {
-            takeoff_mask |= W_MASK(i);
-            break;
-        }
-        if (i == os_last_equip)
-            impossible("select_off: %s???", doname(otmp));
-    }
-
-    return 0;
-}
-
-static struct obj *
-do_takeoff(void)
-{
-    struct obj *otmp = NULL;
-
-    if (taking_off == os_wep) {
-        if (!cursed(uwep)) {
-            setuwep(NULL);
-            pline("You are empty %s.", body_part(HANDED));
-            u.twoweap = FALSE;
-        }
-    } else if (taking_off == os_swapwep) {
-        setuswapwep(NULL);
-        pline("You no longer have a second weapon readied.");
-        u.twoweap = FALSE;
-    } else if (taking_off == os_quiver) {
-        setuqwep(NULL);
-        pline("You no longer have ammunition readied.");
-    } else if (taking_off <= os_last_worn) {
-        otmp = EQUIP(taking_off);
-        if (!cursed(otmp))
-            Slot_off(taking_off);
-    } else
-        impossible("do_takeoff: taking off %d", (int)taking_off);
-
-    return otmp;
-}
-
-static const char *disrobing;
-
-static int
-take_off(void)
-{
-    int i;
-    struct obj *otmp;
-
-    if (taking_off != os_invalid) {
-        if (todelay > 0) {
-            todelay--;
-            return 1;   /* still busy */
-        } else {
-            if ((otmp = do_takeoff()))
-                off_msg(otmp);
-        }
-        takeoff_mask &= ~W_MASK(taking_off);
-        taking_off = os_invalid;
-    }
-
-    for (i = 0; takeoff_order[i] != os_invalid; i++)
-        if (takeoff_mask & W_MASK(takeoff_order[i])) {
-            taking_off = takeoff_order[i];
-            break;
-        }
-
-    otmp = NULL;
-    todelay = 0;
-
-    if (taking_off == os_invalid) {
-        pline("You finish %s.", disrobing);
-        return 0;
-    } else if (taking_off <= os_last_armor) {
-        otmp = EQUIP(taking_off);
-        /* If a cloak is being worn, add the time to take it off and put it
-           back on again.  Kludge alert! since that time is 0 for all known
-           cloaks, add 1 so that it actually matters... */
-        if (taking_off == os_arm && uarmc)
-            todelay += 2 * objects[uarmc->otyp].oc_delay + 1;
-        if (taking_off == os_armu) {
-            if (uarm)
-                todelay += 2 * objects[uarm->otyp].oc_delay;
-            if (uarmc)
-                todelay += 2 * objects[uarmc->otyp].oc_delay + 1;
-        }
-    } else if (taking_off == os_tool) {
-        todelay = 2;
-    } else if (taking_off <= os_last_equip) {
-        /* TODO: 3.4.3 has a delay of 1 for secondary weapon and quiver.
-           This seems wrong, especially for the quiver, but is currently
-           preserved; this whole code needs a rewrite anyway. */
-        todelay = 1;
-    } else {
-        impossible("take_off: taking off %d", (int)taking_off);
-        return 0;       /* force done */
-    }
-
-    if (otmp)
-        todelay += objects[otmp->otyp].oc_delay;
-
-    /* Since setting the occupation now starts the counter next move, that
-       would always produce a delay 1 too big per item unless we subtract 1
-       here to account for it. */
-    if (todelay > 0)
-        todelay--;
-
-    set_occupation(take_off, disrobing);
-    return 1;   /* get busy */
-}
-
-/* clear saved context to avoid inappropriate resumption of interrupted 'A' */
-void
-reset_remarm(void)
-{
-    takeoff_mask = 0L;
-    taking_off = os_invalid;
-    disrobing = NULL;
-}
-
-/* the 'A' command -- remove multiple worn items */
+/* The 'A' command: make arbitrary equipment changes. This used to have the
+   awesome name "doddoremarm", but I felt like I had to change it to something
+   more sensible :( */
 int
-doddoremarm(void)
+doequip(void)
 {
-    if (taking_off != os_invalid || takeoff_mask) {
-        pline("You continue %s.", disrobing);
-        set_occupation(take_off, disrobing);
-        return 0;
-    } else if (!uwep && !uswapwep && !uquiver && !uamul && !ublindf && !uleft &&
-               !uright && !wearing_armor()) {
-        pline("You are not wearing anything.");
-        return 0;
-    }
-
-    add_valid_menu_class(0);    /* reset */
-    menu_remarm(0);
-
-    if (takeoff_mask) {
-        /* default activity for armor and/or accessories, possibly combined
-           with weapons */
-        disrobing = "disrobing";
-        /* if removing only weapons (i.e. unworn equipment), use a different
-           verb */
-        if (!(takeoff_mask & ~(W_EQUIP & ~W_WORN)))
-            disrobing = "disarming";
-        take_off();
-    }
-    /* The time to perform the command is already completely accounted for in
-       take_off(); if we return 1, that would add an extra turn to each
-       disrobe. */
-    return 0;
-}
-
-static int
-menu_remarm(int retry)
-{
-    int n, i = 0;
-    int pick_list[30];
-    struct object_pick *obj_pick_list;
-    boolean all_worn_categories = TRUE;
-
-    if (retry) {
-        all_worn_categories = (retry == -2);
-    } else if (flags.menu_style == MENU_FULL) {
-        all_worn_categories = FALSE;
-        n = query_category("What type of things do you want to take off?",
-                           invent, WORN_TYPES | ALL_TYPES, pick_list, PICK_ANY);
-        if (!n)
-            return 0;
-        for (i = 0; i < n; i++) {
-            if (pick_list[i] == ALL_TYPES_SELECTED)
-                all_worn_categories = TRUE;
-            else
-                add_valid_menu_class(pick_list[i]);
-        }
-    }
-
-    n = query_objlist("What do you want to take off?", invent,
-                      SIGNAL_NOMENU | USE_INVLET | INVORDER_SORT,
-                      &obj_pick_list, PICK_ANY,
-                      all_worn_categories ? is_worn : is_worn_by_type);
-    if (n > 0) {
-        for (i = 0; i < n; i++)
-            select_off(obj_pick_list[i].obj);
-        free(obj_pick_list);
-    } else if (n < 0) {
-        pline("There is nothing else you can remove or unwield.");
-    }
+    pline("This function is currently unimplemented.");
     return 0;
 }
 
@@ -2069,51 +2413,37 @@ destroy_arm(struct obj *atmp)
                         (!obj_resists(otmp, 0, 90)))
 
     if (DESTROY_ARM(uarmc)) {
-        if (donning(otmp))
-            cancel_don();
         pline("Your %s crumbles and turns to dust!", cloak_simple_name(uarmc));
-        Cloak_off();
+        Slot_gone(os_armc);
         useup(otmp);
     } else if (DESTROY_ARM(uarm)) {
-        if (donning(otmp))
-            cancel_don();
         pline("Your armor turns to dust and falls to the %s!",
               surface(u.ux, u.uy));
-        Armor_gone();
+        Slot_gone(os_arm);
         useup(otmp);
     } else if (DESTROY_ARM(uarmu)) {
-        if (donning(otmp))
-            cancel_don();
         pline("Your shirt crumbles into tiny threads and falls apart!");
-        Shirt_off();
+        Slot_gone(os_armu);
         useup(otmp);
     } else if (DESTROY_ARM(uarmh)) {
-        if (donning(otmp))
-            cancel_don();
         pline("Your helmet turns to dust and is blown away!");
-        Helmet_off();
+        Slot_gone(os_armh);
         useup(otmp);
     } else if (DESTROY_ARM(uarmg)) {
         char kbuf[BUFSZ];
 
         sprintf(kbuf, "losing %s gloves while wielding", uhis());
-        if (donning(otmp))
-            cancel_don();
         pline("Your gloves vanish!");
-        Gloves_off();
+        Slot_gone(os_armg);
         useup(otmp);
         selftouch("You", kbuf);
     } else if (DESTROY_ARM(uarmf)) {
-        if (donning(otmp))
-            cancel_don();
         pline("Your boots disintegrate!");
-        Boots_off();
+        Slot_gone(os_armf);
         useup(otmp);
     } else if (DESTROY_ARM(uarms)) {
-        if (donning(otmp))
-            cancel_don();
         pline("Your shield crumbles away!");
-        Shield_off();
+        Slot_gone(os_arms);
         useup(otmp);
     } else {
         return 0;       /* could not destroy anything */

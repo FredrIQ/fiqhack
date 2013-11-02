@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-11-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2889,20 +2889,7 @@ doapply(struct obj *obj)
     switch (obj->otyp) {
     case BLINDFOLD:
     case LENSES:
-        if (obj == ublindf) {
-            if (!cursed(obj))
-                Blindf_off(obj);
-        } else if (!ublindf) {
-            unwield_silently(obj);
-            setworn(obj, W_MASK(os_tool));
-            Blindf_on(obj);
-        } else {
-            pline("You are already %s.",
-                  ublindf->otyp ==
-                  TOWEL ? "covered by a towel" : ublindf->otyp ==
-                  BLINDFOLD ? "wearing a blindfold" : "wearing lenses");
-            res = 0;
-        }
+        res = equip_in_slot(obj, os_tool);
         break;
     case CREAM_PIE:
         res = use_cream_pie(&obj);

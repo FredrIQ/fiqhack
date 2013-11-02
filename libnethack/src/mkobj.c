@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-16 */
+/* Last modified by Alex Smith, 2013-11-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -738,9 +738,6 @@ curse(struct obj *otmp)
         return;
     otmp->blessed = 0;
     otmp->cursed = 1;
-    /* welded two-handed weapon interferes with some armor removal */
-    if (otmp == uwep && bimanual(uwep))
-        reset_remarm();
     /* rules at top of wield.c state that twoweapon cannot be done with cursed
        alternate weapon */
     if (otmp == uswapwep && u.twoweap)
