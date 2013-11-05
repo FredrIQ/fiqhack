@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-02 */
+/* Last modified by Alex Smith, 2013-11-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -120,7 +120,6 @@ const struct equip_order {
 static boolean canwearobjon(struct obj *, enum objslot,
                             boolean, boolean, boolean);
 static void on_msg(struct obj *);
-static void Ring_off_or_gone(struct obj *, boolean);
 static void already_wearing(const char *);
 
 static boolean
@@ -138,13 +137,6 @@ slot_covers(enum objslot above, enum objslot beneath)
     return FALSE;
 }
 
-void
-off_msg(struct obj *otmp)
-{
-    if (flags.verbose)
-        pline("You take off %s.", yname(otmp));
-}
-
 static void
 on_msg(struct obj *otmp)
 {
@@ -160,21 +152,88 @@ on_msg(struct obj *otmp)
     }
 }
 
-/*
- * The Type_on() functions should be called *after* setworn().
- * The Type_off() functions call setworn() themselves.
- */
+/* Changes which item is placed in a slot. This is a reasonably low-level
+   function; it doesn't check whether the change is possible, it just does it.
+   Likewise, it takes zero time. (The assumption is that the caller has either
+   checked things like time and possibility, or else the item's being unequipped
+   magically, being destroyed, or something similar.) The main reason for the
+   existence of this function is to print messages (if msgtype != em_silent),
+   and to trigger side effects of equipping (such as identifying the enchantment
+   of equipped armour, or changing the gender of a player who equips an amulet
+   of change).
 
-int
-Boots_on(void)
+   This function currently only works for A_WORN slots (not weapon, secondary
+   weapon, or quiver). TODO: Merge this with the wield code so that it works
+   with A_EQUIP slots in general.
+
+   Returns TRUE if attempting to equip the item destroyed it (e.g. amulet of
+   change). */
+boolean
+setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
 {
-    if (!uarmf) return 0;
+    /* o holds the item that is being equipped or removed. */
+    struct obj *o = otmp;
+    /* Work out whether we're equipping, unequipping, both, or neither. */
+    if (o == &zeroobj)
+        o = NULL;
+    if (!o)
+        o = EQUIP(slot); /* we're unequipping */
+    else if (EQUIP(slot))
+        setequip(slot, NULL, msgtype); /* empty the slot to equip into it */
+    if (!o)
+        return FALSE; /* nothing to do */
+    boolean equipping = otmp && otmp != &zeroobj;
+    int equipsgn = equipping ? 1 : -1;
+    int otyp = o->otyp;
+    int prop = objects[otyp].oc_oprop;
+    boolean redundant_extrinsic = !!(worn_extrinsic(prop) & ~W_MASK(slot));
+    /* TODO: Effects that are redundant to racial properties. I'm not sure if
+       this can actually come up, but we should handle it anyway. */
+    boolean redundant = redundant_extrinsic || u.uintrinsic[prop];
+    redundant = redundant && !worn_blocked(prop);
+    boolean destroyed = FALSE;
+    boolean already_blind = Blind; /* for blindfold tracking */
+    int which, old_attrib;
 
-    long oldprop =
-        worn_extrinsic(objects[uarmf->otyp].oc_oprop) & ~W_MASK(os_armf);
+    /* Change the item in the slot. */
+    if (equipping) {
+        setworn(o, W_MASK(slot));
+        if (msgtype != em_silent)
+            on_msg(o);
+    } else {
+        setworn(NULL, W_MASK(slot));
+        /* It's not obvious whether we should uninvoke or not here. We need to
+           uninvoke if the item is being destroyed or dropped, but not
+           otherwise. However, of the items with togglable invokes, the Sceptre
+           of Might is a weapon (thus doesn't go into armour slots); the Heart
+           of Ahriman is a luckstone and thus can't be worn; and the Orb of
+           Detection is a crystal ball and thus also can't be worn.
 
-    uarmf->known = TRUE;
-    switch (uarmf->otyp) {
+           Thus, uninvoking unconditionally works just fine; there are no
+           items that trigger the case where it wouldn't work. */
+        if (o->oartifact)
+            uninvoke_artifact(o);
+        if (msgtype == em_voluntary && flags.verbose)
+            pline("You take off %s.", yname(o));
+        else if (msgtype == em_magical)
+            pline("%s falls off your %s!", Yname2(o),
+                  (slot == os_ringl || slot == os_ringr) ?
+                  body_part(FINGER) :
+                  slot == os_amul ? body_part(NECK) :
+                  slot == os_tool ? body_part(FACE) : "body");
+    }
+
+    /* Equipping armour makes its enchantment obvious. */
+    if (slot <= os_last_worn)
+        o->known = TRUE;
+
+    /* Side effects for all armour in the game.
+
+       WARNING: Some of these can destroy objects. That includes the object
+       we're trying to equip! Thus, o and otmp should not be used after this
+       switch returns. (Checking EQUIP(slot) is fine, though.) */
+    switch (otyp) {
+        /* Boots */
     case LOW_BOOTS:
     case IRON_SHOES:
     case HIGH_BOOTS:
@@ -182,122 +241,52 @@ Boots_on(void)
         break;
     case JUMPING_BOOTS:
         /* jumping is obvious no matter what the situation */
-        makeknown(uarmf->otyp);
-        pline("Your %s feel longer.", makeplural(body_part(LEG)));
-        break;
-    case WATER_WALKING_BOOTS:
-        if (u.uinwater)
-            spoteffects(TRUE);
-        break;
-    case SPEED_BOOTS:
-        /* Speed boots are still better than intrinsic speed, */
-        /* though not better than potion speed */
-        if (!oldprop && !(HFast & TIMEOUT)) {
-            makeknown(uarmf->otyp);
-            pline("You feel yourself speed up%s.",
-                  (oldprop || HFast) ? " a bit more" : "");
-        }
-        break;
-    case ELVEN_BOOTS:
-        if (!oldprop && !HStealth && !BStealth) {
-            makeknown(uarmf->otyp);
-            pline("You walk very quietly.");
-        }
-        break;
-    case FUMBLE_BOOTS:
-        if (!oldprop && !(HFumbling & ~TIMEOUT))
-            incr_itimeout(&HFumbling, rnd(20));
-        break;
-    case LEVITATION_BOOTS:
-        if (!oldprop && !HLevitation) {
-            makeknown(uarmf->otyp);
-            float_up();
-            spoteffects(FALSE); /* can deallocate uarmf */
-            if (!uarmf) return 0;
-        }
-        break;
-    default:
-        impossible(unknown_type, c_slotnames[os_armf], uarmf->otyp);
-    }
-
-    on_msg(uarmf);
-    return 0;
-}
-
-int
-Boots_off(void)
-{
-    if (!uarmf) return 0;
-    off_msg(uarmf);
-
-    int otyp = uarmf->otyp;
-    long oldprop = worn_extrinsic(objects[otyp].oc_oprop) & ~W_MASK(os_armf);
-
-    /* For levitation, float_down() returns if Levitation, so we must do a
-       setworn() _before_ the levitation case. */
-    setworn(NULL, W_MASK(os_armf));
-    switch (otyp) {
-    case SPEED_BOOTS:
-        if (!Very_fast) {
-            makeknown(otyp);
-            pline("You feel yourself slow down%s.", Fast ? " a bit" : "");
-        }
+        makeknown(otyp);
+        pline("Your %s feel %s.", makeplural(body_part(LEG)),
+              equipping ? "longer" : "shorter");
         break;
     case WATER_WALKING_BOOTS:
         if (is_pool(level, u.ux, u.uy) && !Levitation && !Flying &&
             !is_clinger(youmonst.data)) {
             makeknown(otyp);
-            /* make boots known in case you survive the drowning */
             spoteffects(TRUE);
+        } else if (u.uinwater)
+            spoteffects(TRUE);
+        break;
+    case SPEED_BOOTS:
+        /* Speed boots are still better than intrinsic speed, though not better
+           than potion speed */
+        if (!redundant_extrinsic && !(HFast & ~INTRINSIC)) {
+            makeknown(otyp);
+            pline("You feel yourself %s%s.",
+                  equipping ? "speed up" : "slow down",
+                  (redundant) ? " slightly" : "");
         }
         break;
     case ELVEN_BOOTS:
-        if (!oldprop && !HStealth && !BStealth) {
+        if (!redundant) {
             makeknown(otyp);
-            pline("You sure are noisy.");
+            if (equipping)
+                pline("You walk very quietly.");
+            else
+                pline("You sure are noisy.");
         }
         break;
     case FUMBLE_BOOTS:
-        if (!oldprop && !(HFumbling & ~TIMEOUT))
-            HFumbling = 0;
-        break;
-    case LEVITATION_BOOTS:
-        if (!oldprop && !HLevitation) {
-            float_down(0L);
-            makeknown(otyp);
+        if (!redundant_extrinsic && !(HFumbling & ~TIMEOUT)) {
+            if (equipping)
+                incr_itimeout(&HFumbling, rnd(20));
+            else
+                HFumbling = 0;
         }
         break;
-    case JUMPING_BOOTS:
-        /* jumping is obvious no matter what the situation */
-        makeknown(otyp);
-        pline("Your %s feel shorter.", makeplural(body_part(LEG)));
-        break;
-    case LOW_BOOTS:
-    case IRON_SHOES:
-    case HIGH_BOOTS:
-    case KICKING_BOOTS:
-        break;
-    default:
-        impossible(unknown_type, c_slotnames[os_armf], otyp);
-    }
-    
-    return 0;
-}
+        /* levitation boots handled the same way as levitation rings */
 
-int
-Cloak_on(void)
-{
-    if (!uarmc) return 0;
-
-    long oldprop =
-        worn_extrinsic(objects[uarmc->otyp].oc_oprop) & ~W_MASK(os_armc);
-
-    uarmc->known = TRUE;
-    switch (uarmc->otyp) {
+        /* Cloaks */
     case ELVEN_CLOAK:
     case CLOAK_OF_PROTECTION:
     case CLOAK_OF_DISPLACEMENT:
-        makeknown(uarmc->otyp);
+        makeknown(otyp);
         break;
     case ORCISH_CLOAK:
     case DWARVISH_CLOAK:
@@ -307,87 +296,36 @@ Cloak_on(void)
     case ALCHEMY_SMOCK:
         break;
     case MUMMY_WRAPPING:
-        /* Note: it's already being worn, so we have to cheat here. */
+        /* Note: while equipping, the mummy wrapping is already worn, so we
+           can't just use Invis directly. */
         if ((HInvis || EInvis || pm_invisible(youmonst.data)) && !Blind) {
             newsym(u.ux, u.uy);
             pline("You can %s!",
-                  See_invisible ? "no longer see through yourself" :
-                  see_yourself);
+                  equipping ?
+                  (See_invisible ? "no longer see through yourself" :
+                   see_yourself) :
+                  (See_invisible ? "see through yourself" :
+                   "no longer see yourself"));
         }
         break;
     case CLOAK_OF_INVISIBILITY:
-        /* since cloak of invisibility was worn, we know mummy wrapping wasn't, 
-           so no need to check `oldprop' against blocked */
-        if (!oldprop && !HInvis && !Blind) {
-            makeknown(uarmc->otyp);
+        if (!redundant && !Blind) {
+            makeknown(otyp);
             newsym(u.ux, u.uy);
             pline("Suddenly you can%s yourself.",
-                  See_invisible ? " see through" : "not see");
+                  equipping ?
+                  (See_invisible ? " see through" : "not see") :
+                  (See_invisible ? " no longer see through" : " see"));
         }
         break;
     case OILSKIN_CLOAK:
-        pline("%s very tightly.", Tobjnam(uarmc, "fit"));
-        break;
-    default:
-        impossible(unknown_type, c_slotnames[os_armc], uarmc->otyp);
-    }
-    on_msg(uarmc);
-    return 0;
-}
-
-int
-Cloak_off(void)
-{
-    if (!uarmc) return 0;
-    off_msg(uarmc);
-
-    int otyp = uarmc->otyp;
-    long oldprop = worn_extrinsic(objects[otyp].oc_oprop) & ~W_MASK(os_armc);
-
-    /* For mummy wrapping, taking it off first resets `Invisible'. */
-    setworn(NULL, W_MASK(os_armc));
-    switch (otyp) {
-    case ELVEN_CLOAK:
-    case ORCISH_CLOAK:
-    case DWARVISH_CLOAK:
-    case CLOAK_OF_PROTECTION:
-    case CLOAK_OF_MAGIC_RESISTANCE:
-    case CLOAK_OF_DISPLACEMENT:
-    case OILSKIN_CLOAK:
-    case ROBE:
-    case LEATHER_CLOAK:
-    case ALCHEMY_SMOCK:
-        break;
-    case MUMMY_WRAPPING:
-        if (Invis && !Blind) {
-            newsym(u.ux, u.uy);
-            pline("You can %s.",
-                  See_invisible ? "see through yourself" :
-                  "no longer see yourself");
+        if (equipping) {
+            pline("%s very tightly.", Tobjnam(o, "fit"));
+            makeknown(otyp);
         }
         break;
-    case CLOAK_OF_INVISIBILITY:
-        if (!oldprop && !HInvis && !Blind) {
-            makeknown(CLOAK_OF_INVISIBILITY);
-            newsym(u.ux, u.uy);
-            pline("Suddenly you can %s.",
-                  See_invisible ? "no longer see through yourself" :
-                  see_yourself);
-        }
-        break;
-    default:
-        impossible(unknown_type, c_slotnames[os_armc], otyp);
-    }
-    return 0;
-}
 
-int
-Helmet_on(void)
-{
-    if (!uarmh) return 0;
-
-    uarmh->known = TRUE;
-    switch (uarmh->otyp) {
+        /* Helmets */
     case FEDORA:
     case HELMET:
     case DENTED_POT:
@@ -397,153 +335,261 @@ Helmet_on(void)
     case HELM_OF_TELEPATHY:
         break;
     case HELM_OF_BRILLIANCE:
-        adj_abon(uarmh, uarmh->spe);
+        adj_abon(o, equipsgn * o->spe);
         break;
     case CORNUTHAUM:
         /* people think marked wizards know what they're talking about, but it
            takes trained arrogance to pull it off, and the actual enchantment
            of the hat is irrelevant. */
-        ABON(A_CHA) += (Role_if(PM_WIZARD) ? 1 : -1);
+        ABON(A_CHA) += equipsgn * (Role_if(PM_WIZARD) ? 1 : -1);
         iflags.botl = 1;
-        makeknown(uarmh->otyp);
+        makeknown(otyp);
         break;
     case HELM_OF_OPPOSITE_ALIGNMENT:
-        if (u.ualign.type == A_NEUTRAL)
+        if (!equipping)
+            u.ualign.type = u.ualignbase[A_CURRENT];
+        else if (u.ualign.type == A_NEUTRAL)
             u.ualign.type = rn2(2) ? A_CHAOTIC : A_LAWFUL;
         else
             u.ualign.type = -(u.ualign.type);
         u.ualign.record = -1;   /* consistent with altar conversion */
-        u.ublessed = 0; /* lose your god's protection */
-        /* makeknown(uarmh->otyp); -- moved below, after xname() */
-     /*FALLTHRU*/ case DUNCE_CAP:
-        if (!uarmh->cursed) {
+        u.ublessed = 0; /* lose the appropriate god's protection */
+        /* Run makeknown() only after printing messages */
+        /*FALLTHRU*/
+    case DUNCE_CAP:
+        if (equipping && !o->cursed) {
             if (Blind)
-                pline("%s for a moment.", Tobjnam(uarmh, "vibrate"));
+                pline("%s for a moment.", Tobjnam(o, "vibrate"));
             else
-                pline("%s %s for a moment.", Tobjnam(uarmh, "glow"),
+                pline("%s %s for a moment.", Tobjnam(o, "glow"),
                       hcolor("black"));
-            curse(uarmh);
-            uarmh->bknown = TRUE;
+            curse(o);
+            o->bknown = TRUE;
         }
         iflags.botl = 1;        /* reveal new alignment or INT & WIS */
         if (Hallucination) {
             pline("My brain hurts!");   /* Monty Python's Flying Circus */
-        } else if (uarmh->otyp == DUNCE_CAP) {
+        } else if (equipping && otyp == DUNCE_CAP) {
             pline("You feel %s.",       /* track INT change; ignore WIS */
                   ACURR(A_INT) <=
                   (ABASE(A_INT) + ABON(A_INT) +
                    ATEMP(A_INT)) ? "like sitting in a corner" : "giddy");
-        } else {
+        } else if (otyp == HELM_OF_OPPOSITE_ALIGNMENT) {
             pline("Your mind oscillates briefly.");
-            makeknown(HELM_OF_OPPOSITE_ALIGNMENT);
         }
+        makeknown(otyp);
         break;
-    default:
-        impossible(unknown_type, c_slotnames[os_armh], uarmh->otyp);
-    }
-    on_msg(uarmh);
-    return 0;
-}
 
-int
-Helmet_off(void)
-{
-    if (!uarmh) return 0;
-    off_msg(uarmh);
-
-    switch (uarmh->otyp) {
-    case FEDORA:
-    case HELMET:
-    case DENTED_POT:
-    case ELVEN_LEATHER_HELM:
-    case DWARVISH_IRON_HELM:
-    case ORCISH_HELM:
-        break;
-    case DUNCE_CAP:
-        iflags.botl = 1;
-        break;
-    case CORNUTHAUM:
-        ABON(A_CHA) += (Role_if(PM_WIZARD) ? -1 : 1);
-        iflags.botl = 1;
-        break;
-    case HELM_OF_TELEPATHY:
-        /* need to update ability before calling see_monsters() */
-        setworn(NULL, W_MASK(os_armh));
-        see_monsters();
-        return 0;
-    case HELM_OF_BRILLIANCE:
-        adj_abon(uarmh, -uarmh->spe);
-        break;
-    case HELM_OF_OPPOSITE_ALIGNMENT:
-        u.ualign.type = u.ualignbase[A_CURRENT];
-        u.ualign.record = -1;   /* consistent with altar conversion */
-        u.ublessed = 0; /* lose the other god's protection */
-        iflags.botl = 1;
-        break;
-    default:
-        impossible(unknown_type, c_slotnames[os_armh], uarmh->otyp);
-    }
-    setworn(NULL, W_MASK(os_armh));
-    return 0;
-}
-
-int
-Gloves_on(void)
-{
-    if (!uarmg) return 0;
-
-    long oldprop =
-        worn_extrinsic(objects[uarmg->otyp].oc_oprop) & ~W_MASK(os_armg);
-
-    uarmg->known = TRUE;
-    switch (uarmg->otyp) {
+        /* Gloves */
     case LEATHER_GLOVES:
         break;
     case GAUNTLETS_OF_FUMBLING:
-        if (!oldprop && !(HFumbling & ~TIMEOUT))
+        if (!redundant_extrinsic && !(HFumbling & ~TIMEOUT))
             incr_itimeout(&HFumbling, rnd(20));
         break;
     case GAUNTLETS_OF_POWER:
-        makeknown(uarmg->otyp);
+        makeknown(otyp);
+        encumber_msg();
         iflags.botl = 1;        /* taken care of in attrib.c */
         break;
     case GAUNTLETS_OF_DEXTERITY:
-        adj_abon(uarmg, uarmg->spe);
+        if (o->spe)
+            makeknown(otyp);
+        adj_abon(o, equipsgn * o->spe);
         break;
+
+        /* Amulets */
+    case AMULET_OF_ESP:
+        see_monsters();
+        break;
+    case AMULET_OF_LIFE_SAVING:
+    case AMULET_VERSUS_POISON:
+    case AMULET_OF_REFLECTION:
+    case AMULET_OF_MAGICAL_BREATHING:
+    case FAKE_AMULET_OF_YENDOR:
+        break;
+    case AMULET_OF_UNCHANGING:
+        if (Slimed && equipping) {
+            Slimed = 0;
+            iflags.botl = 1;
+        }
+        break;
+    case AMULET_OF_CHANGE:
+        if (equipping) {
+            int orig_sex = poly_gender();
+
+            if (Unchanging)
+                break;
+            change_sex();
+            /* Don't use same message as polymorph */
+            if (orig_sex != poly_gender())
+                pline("You are suddenly very %s!",
+                      flags.female ? "feminine" : "masculine");
+            else
+                /* already polymorphed into single-gender monster; only changed 
+                   the character's base sex */
+                pline("You don't feel like yourself.");
+            pline("The amulet disintegrates!");
+            destroyed = 1;
+            makeknown(otyp);
+            useup(o);
+            iflags.botl = 1;
+        }
+        break;
+    case AMULET_OF_STRANGULATION:
+        makeknown(otyp);
+        if (equipping && !Strangled) {
+            pline("It constricts your throat!");
+            Strangled = 6;
+        } else if (Strangled) {
+            pline("You can breathe more easily!");
+            Strangled = 0;
+        }
+        break;
+    case AMULET_OF_RESTFUL_SLEEP:
+        if (!ESleeping && !(HSleeping & INTRINSIC))
+            HSleeping = equipping ? rnd(100) : 0;
+        break;
+    case AMULET_OF_YENDOR:
+        break;
+
+        /* Rings */
+    case RIN_TELEPORTATION:
+    case RIN_REGENERATION:
+    case RIN_SEARCHING:
+    case RIN_STEALTH:
+    case RIN_HUNGER:
+    case RIN_AGGRAVATE_MONSTER:
+    case RIN_POISON_RESISTANCE:
+    case RIN_FIRE_RESISTANCE:
+    case RIN_COLD_RESISTANCE:
+    case RIN_SHOCK_RESISTANCE:
+    case RIN_CONFLICT:
+    case RIN_TELEPORT_CONTROL:
+    case RIN_POLYMORPH:
+    case RIN_POLYMORPH_CONTROL:
+    case RIN_FREE_ACTION:
+    case RIN_SLOW_DIGESTION:
+    case RIN_SUSTAIN_ABILITY:
+    case MEAT_RING:
+        break;
+    case RIN_WARNING:
+        see_monsters();
+        break;
+    case RIN_SEE_INVISIBLE:
+        /* can now see invisible monsters */
+        if (!redundant) {
+            set_mimic_blocking();   /* do special mimic handling */
+            see_monsters();
+#ifdef INVISIBLE_OBJECTS
+            see_objects();
+#endif
+        }
+
+        if (Invis && !redundant && !perceives(youmonst.data) && !Blind) {
+            newsym(u.ux, u.uy);
+            pline(equipping ? "Suddenly you are transparent, but there!" :
+                  "Suddenly you cannot see yourself.");
+            makeknown(otyp);
+        }
+        break;
+    case RIN_INVISIBILITY:
+        if (!redundant && !BInvis && !Blind) {
+            makeknown(otyp);
+            newsym(u.ux, u.uy);
+            if (equipping)
+                self_invis_message();
+            else
+                pline("Your body seems to unfade%s.",
+                      See_invisible ? " completely" : "..");
+        }
+        break;
+    case LEVITATION_BOOTS: /* moved from the boots section */
+    case RIN_LEVITATION:
+        if (!redundant) {
+            if (equipping) {
+                float_up();
+                spoteffects(FALSE); /* for sinks */
+            } else {
+                float_down(0L);
+            }
+            makeknown(otyp);
+        }
+        break;
+    case RIN_GAIN_STRENGTH:
+        which = A_STR;
+        goto adjust_attrib;
+    case RIN_GAIN_CONSTITUTION:
+        which = A_CON;
+        goto adjust_attrib;
+    case RIN_ADORNMENT:
+        which = A_CHA;
+    adjust_attrib:
+        old_attrib = ACURR(which);
+        ABON(which) += equipsgn * o->spe;
+        if (ACURR(which) != old_attrib) {
+            iflags.botl = 1;
+            makeknown(otyp);
+            if (ACURR(which) != 3 && ACURR(which) != 25)
+                o->known = 1;
+            update_inventory();
+        } else if (objects[otyp].oc_name_known &&
+                   old_attrib != 3 && old_attrib != 25) {
+            /* The player knows it's +0 */
+            o->known = 1;
+            update_inventory();
+        }
+        break;
+    case RIN_INCREASE_ACCURACY:        /* KMH */
+        u.uhitinc += equipsgn * o->spe;
+        break;
+    case RIN_INCREASE_DAMAGE:
+        u.udaminc += equipsgn * o->spe;
+        break;
+    case RIN_PROTECTION_FROM_SHAPE_CHANGERS:
+        if (equipping)
+            resistcham();
+        else
+            restartcham();
+        break;
+    case RIN_PROTECTION:
+        if (o->spe || objects[otyp].oc_name_known) {
+            iflags.botl = 1;
+            makeknown(RIN_PROTECTION);
+            o->known = 1;
+            update_inventory();
+        }
+        break;
+
+        /* tools */
+    case BLINDFOLD:
+    case TOWEL:
+    case LENSES:
+        if (Blind && !already_blind) {
+            if (flags.verbose)
+                pline("You can't see any more.");
+            /* set ball&chain variables before the hero goes blind */
+            if (Punished)
+                set_bc(0);
+        } else if (already_blind && !Blind) {
+            /* "You are now wearing the Eyes of the Overworld." */
+            pline("You can see!");
+        }
+        if (Blind_telepat || Infravision)
+            see_monsters();
+        vision_full_recalc = 1; /* recalc vision limits */
+        iflags.botl = 1;
+        break;
+
+        /* Shields, shirts, body armour: no special cases! */
     default:
-        impossible(unknown_type, c_slotnames[os_armg], uarmg->otyp);
+        if (slot != os_arms && slot != os_armu && slot != os_arm) {
+            impossible("otyp %d is missing equip code in setequip()",
+                       otyp);
+        }
+        break;
     }
-    on_msg(uarmg);
-    return 0;
-}
-
-int
-Gloves_off(void)
-{
-    if (!uarmg) return 0;
-    off_msg(uarmg);
-
-    long oldprop =
-        worn_extrinsic(objects[uarmg->otyp].oc_oprop) & ~W_MASK(os_armg);
-
-    switch (uarmg->otyp) {
-    case LEATHER_GLOVES:
-        break;
-    case GAUNTLETS_OF_FUMBLING:
-        if (!oldprop && !(HFumbling & ~TIMEOUT))
-            HFumbling = 0;
-        break;
-    case GAUNTLETS_OF_POWER:
-        makeknown(uarmg->otyp);
-        iflags.botl = 1;        /* taken care of in attrib.c */
-        break;
-    case GAUNTLETS_OF_DEXTERITY:
-        adj_abon(uarmg, -uarmg->spe);
-    default:
-        impossible(unknown_type, c_slotnames[os_armg], uarmg->otyp);
-    }
-    setworn(NULL, W_MASK(os_armg));
-    encumber_msg();     /* immediate feedback for GoP */
+    /* at this point o, otmp are invalid */
 
     /* Prevent wielding cockatrice when not wearing gloves */
     if (uwep && uwep->otyp == CORPSE && touch_petrifies(&mons[uwep->corpsenm])) {
@@ -570,574 +616,7 @@ Gloves_off(void)
         uswapwepgone(); /* lifesaved still doesn't allow touching cockatrice */
     }
 
-    return 0;
-}
-
-int
-Shield_on(void)
-{
-    if (!uarms) return 0;
-
-    uarms->known = TRUE;
-    on_msg(uarms);
-    return 0;
-}
-
-int
-Shield_off(void)
-{
-    if (!uarms) return 0;
-    off_msg(uarms);
-
-    setworn(NULL, W_MASK(os_arms));
-    return 0;
-}
-
-int
-Shirt_on(void)
-{
-    if (!uarmu) return 0;
-
-    uarmu->known = TRUE;
-    on_msg(uarmu);
-    return 0;
-}
-
-int
-Shirt_off(void)
-{
-    if (!uarmu) return 0;
-    off_msg(uarmu);
-
-    setworn(NULL, W_MASK(os_armu));
-    return 0;
-}
-
-/* This must be done in worn.c, because one of the possible intrinsics conferred
- * is fire resistance, and we have to immediately set HFire_resistance in worn.c
- * since worn.c will check it before returning.
- */
-int
-Armor_on(void)
-{
-    if (!uarm) return 0;
-
-    uarm->known = TRUE;
-    on_msg(uarm);
-    return 0;
-}
-
-int
-Armor_off(void)
-{
-    if (!uarm) return 0;
-    off_msg(uarm);
-
-    setworn(NULL, W_MASK(os_arm));
-
-    return 0;
-}
-
-/* The gone functions differ from the off functions in that they don't print
-   messages. Eventually, they'll be removed. */
-int
-Armor_gone(void)
-{
-    if (!uarm) return 0;
-
-    setnotworn(uarm);
-
-    return 0;
-}
-
-/* Return TRUE if the amulet is consumed in the process */
-boolean
-Amulet_on(void)
-{
-    if (!uamul) return TRUE;
-
-    switch (uamul->otyp) {
-    case AMULET_OF_ESP:
-    case AMULET_OF_LIFE_SAVING:
-    case AMULET_VERSUS_POISON:
-    case AMULET_OF_REFLECTION:
-    case AMULET_OF_MAGICAL_BREATHING:
-    case FAKE_AMULET_OF_YENDOR:
-        break;
-    case AMULET_OF_UNCHANGING:
-        if (Slimed) {
-            Slimed = 0;
-            iflags.botl = 1;
-        }
-        break;
-    case AMULET_OF_CHANGE:
-        {
-            int orig_sex = poly_gender();
-
-            if (Unchanging)
-                break;
-            change_sex();
-            /* Don't use same message as polymorph */
-            if (orig_sex != poly_gender()) {
-                makeknown(AMULET_OF_CHANGE);
-                pline("You are suddenly very %s!",
-                      flags.female ? "feminine" : "masculine");
-                iflags.botl = 1;
-            } else
-                /* already polymorphed into single-gender monster; only changed 
-                   the character's base sex */
-                pline("You don't feel like yourself.");
-            pline("The amulet disintegrates!");
-            if (orig_sex == poly_gender() && uamul->dknown &&
-                !objects[AMULET_OF_CHANGE].oc_name_known &&
-                !objects[AMULET_OF_CHANGE].oc_uname)
-                docall(uamul);
-            useup(uamul);
-            return TRUE;
-        }
-    case AMULET_OF_STRANGULATION:
-        makeknown(AMULET_OF_STRANGULATION);
-        pline("It constricts your throat!");
-        Strangled = 6;
-        break;
-    case AMULET_OF_RESTFUL_SLEEP:
-        HSleeping = rnd(100);
-        break;
-    case AMULET_OF_YENDOR:
-        break;
-    }
-    on_msg(uamul);
-    return FALSE;
-}
-
-void
-Amulet_off(void)
-{
-    if (!uamul) return;
-    off_msg(uamul);
-
-    switch (uamul->otyp) {
-    case AMULET_OF_ESP:
-        /* need to update ability before calling see_monsters() */
-        setworn(NULL, W_MASK(os_amul));
-        see_monsters();
-        return;
-    case AMULET_OF_LIFE_SAVING:
-    case AMULET_VERSUS_POISON:
-    case AMULET_OF_REFLECTION:
-    case AMULET_OF_CHANGE:
-    case AMULET_OF_UNCHANGING:
-    case FAKE_AMULET_OF_YENDOR:
-        break;
-    case AMULET_OF_MAGICAL_BREATHING:
-        if (Underwater) {
-            /* HMagical_breathing must be set off before calling drown() */
-            setworn(NULL, W_MASK(os_amul));
-            if (!breathless(youmonst.data) && !amphibious(youmonst.data)
-                && !Swimming) {
-                pline("You suddenly inhale an unhealthy amount of water!");
-                drown();
-            }
-            return;
-        }
-        break;
-    case AMULET_OF_STRANGULATION:
-        if (Strangled) {
-            pline("You can breathe more easily!");
-            Strangled = 0;
-        }
-        break;
-    case AMULET_OF_RESTFUL_SLEEP:
-        setworn(NULL, W_MASK(os_amul));
-        if (!ESleeping && !(HSleeping & INTRINSIC))
-            HSleeping = 0;
-        return;
-    case AMULET_OF_YENDOR:
-        break;
-    }
-    setworn(NULL, W_MASK(os_amul));
-    return;
-}
-
-void
-Ring_on(struct obj *obj)
-{
-    if (!obj) return;
-
-    long oldprop = worn_extrinsic(objects[obj->otyp].oc_oprop);
-    int old_attrib, which;
-
-    /* only mask out W_RING when we don't have both left and right rings of the 
-       same type */
-    if ((oldprop & W_RING) != W_RING)
-        oldprop &= ~W_RING;
-
-    switch (obj->otyp) {
-    case RIN_TELEPORTATION:
-    case RIN_REGENERATION:
-    case RIN_SEARCHING:
-    case RIN_STEALTH:
-    case RIN_HUNGER:
-    case RIN_AGGRAVATE_MONSTER:
-    case RIN_POISON_RESISTANCE:
-    case RIN_FIRE_RESISTANCE:
-    case RIN_COLD_RESISTANCE:
-    case RIN_SHOCK_RESISTANCE:
-    case RIN_CONFLICT:
-    case RIN_TELEPORT_CONTROL:
-    case RIN_POLYMORPH:
-    case RIN_POLYMORPH_CONTROL:
-    case RIN_FREE_ACTION:
-    case RIN_SLOW_DIGESTION:
-    case RIN_SUSTAIN_ABILITY:
-    case MEAT_RING:
-        break;
-    case RIN_WARNING:
-        see_monsters();
-        break;
-    case RIN_SEE_INVISIBLE:
-        /* can now see invisible monsters */
-        set_mimic_blocking();   /* do special mimic handling */
-        see_monsters();
-#ifdef INVISIBLE_OBJECTS
-        see_objects();
-#endif
-
-        if (Invis && !oldprop && !HSee_invisible && !perceives(youmonst.data) &&
-            !Blind) {
-            newsym(u.ux, u.uy);
-            pline("Suddenly you are transparent, but there!");
-            makeknown(RIN_SEE_INVISIBLE);
-        }
-        break;
-    case RIN_INVISIBILITY:
-        if (!oldprop && !HInvis && !BInvis && !Blind) {
-            makeknown(RIN_INVISIBILITY);
-            newsym(u.ux, u.uy);
-            self_invis_message();
-        }
-        break;
-    case RIN_LEVITATION:
-        if (!oldprop && !HLevitation) {
-            float_up();
-            makeknown(RIN_LEVITATION);
-            spoteffects(FALSE); /* for sinks */
-        }
-        break;
-    case RIN_GAIN_STRENGTH:
-        which = A_STR;
-        goto adjust_attrib;
-    case RIN_GAIN_CONSTITUTION:
-        which = A_CON;
-        goto adjust_attrib;
-    case RIN_ADORNMENT:
-        which = A_CHA;
-    adjust_attrib:
-        old_attrib = ACURR(which);
-        ABON(which) += obj->spe;
-        if (ACURR(which) != old_attrib ||
-            (objects[obj->otyp].oc_name_known && old_attrib != 25 &&
-             old_attrib != 3)) {
-            iflags.botl = 1;
-            makeknown(obj->otyp);
-            obj->known = 1;
-            update_inventory();
-        }
-        break;
-    case RIN_INCREASE_ACCURACY:        /* KMH */
-        u.uhitinc += obj->spe;
-        break;
-    case RIN_INCREASE_DAMAGE:
-        u.udaminc += obj->spe;
-        break;
-    case RIN_PROTECTION_FROM_SHAPE_CHANGERS:
-        resistcham();
-        break;
-    case RIN_PROTECTION:
-        if (obj->spe || objects[RIN_PROTECTION].oc_name_known) {
-            iflags.botl = 1;
-            makeknown(RIN_PROTECTION);
-            obj->known = 1;
-            update_inventory();
-        }
-        break;
-    }
-    on_msg(obj);
-}
-
-static void
-Ring_off_or_gone(struct obj *obj, boolean gone)
-{
-    if (!obj) return;
-    if (!gone) off_msg(obj);
-
-    long mask = (obj->owornmask & W_RING);
-    int old_attrib, which;
-
-    if (objects[obj->otyp].oc_oprop &&
-        !(worn_extrinsic(objects[obj->otyp].oc_oprop) & mask))
-        impossible("Strange... I didn't know you had that ring.");
-    if (gone)
-        setnotworn(obj);
-    else
-        setworn(NULL, obj->owornmask);
-
-    switch (obj->otyp) {
-    case RIN_TELEPORTATION:
-    case RIN_REGENERATION:
-    case RIN_SEARCHING:
-    case RIN_STEALTH:
-    case RIN_HUNGER:
-    case RIN_AGGRAVATE_MONSTER:
-    case RIN_POISON_RESISTANCE:
-    case RIN_FIRE_RESISTANCE:
-    case RIN_COLD_RESISTANCE:
-    case RIN_SHOCK_RESISTANCE:
-    case RIN_CONFLICT:
-    case RIN_TELEPORT_CONTROL:
-    case RIN_POLYMORPH:
-    case RIN_POLYMORPH_CONTROL:
-    case RIN_FREE_ACTION:
-    case RIN_SLOW_DIGESTION:
-    case RIN_SUSTAIN_ABILITY:
-    case MEAT_RING:
-        break;
-    case RIN_WARNING:
-        see_monsters();
-        break;
-    case RIN_SEE_INVISIBLE:
-        /* Make invisible monsters go away */
-        if (!See_invisible) {
-            set_mimic_blocking();       /* do special mimic handling */
-            see_monsters();
-#ifdef INVISIBLE_OBJECTS
-            see_objects();
-#endif
-        }
-
-        if (Invisible && !Blind) {
-            newsym(u.ux, u.uy);
-            pline("Suddenly you cannot see yourself.");
-            makeknown(RIN_SEE_INVISIBLE);
-        }
-        break;
-    case RIN_INVISIBILITY:
-        if (!Invis && !BInvis && !Blind) {
-            newsym(u.ux, u.uy);
-            pline("Your body seems to unfade%s.",
-                  See_invisible ? " completely" : "..");
-            makeknown(RIN_INVISIBILITY);
-        }
-        break;
-    case RIN_LEVITATION:
-        float_down(0L);
-        if (!Levitation)
-            makeknown(RIN_LEVITATION);
-        break;
-    case RIN_GAIN_STRENGTH:
-        which = A_STR;
-        goto adjust_attrib;
-    case RIN_GAIN_CONSTITUTION:
-        which = A_CON;
-        goto adjust_attrib;
-    case RIN_ADORNMENT:
-        which = A_CHA;
-    adjust_attrib:
-        old_attrib = ACURR(which);
-        ABON(which) -= obj->spe;
-        if (ACURR(which) != old_attrib) {
-            iflags.botl = 1;
-            makeknown(obj->otyp);
-            obj->known = 1;
-            update_inventory();
-        }
-        break;
-    case RIN_INCREASE_ACCURACY:        /* KMH */
-        u.uhitinc -= obj->spe;
-        break;
-    case RIN_INCREASE_DAMAGE:
-        u.udaminc -= obj->spe;
-        break;
-    case RIN_PROTECTION:
-        /* might have forgotten it due to amnesia */
-        if (obj->spe) {
-            iflags.botl = 1;
-            makeknown(RIN_PROTECTION);
-            obj->known = 1;
-            update_inventory();
-        }
-    case RIN_PROTECTION_FROM_SHAPE_CHANGERS:
-        /* If you're no longer protected, let the chameleons change shape again 
-           -dgk */
-        restartcham();
-        break;
-    }
-}
-
-void
-Ring_off(struct obj *obj)
-{
-    Ring_off_or_gone(obj, FALSE);
-}
-
-void
-Ring_gone(struct obj *obj)
-{
-    Ring_off_or_gone(obj, TRUE);
-}
-
-void
-Blindf_on(struct obj *otmp)
-{
-    boolean already_blind = Blind, changed = FALSE;
-
-    if (Blind && !already_blind) {
-        changed = TRUE;
-        if (flags.verbose)
-            pline("You can't see any more.");
-        /* set ball&chain variables before the hero goes blind */
-        if (Punished)
-            set_bc(0);
-    } else if (already_blind && !Blind) {
-        changed = TRUE;
-        /* "You are now wearing the Eyes of the Overworld." */
-        pline("You can see!");
-    }
-    if (changed) {
-        /* blindness has just been toggled */
-        if (Blind_telepat || Infravision)
-            see_monsters();
-        vision_full_recalc = 1; /* recalc vision limits */
-        iflags.botl = 1;
-    }
-    on_msg(otmp);
-}
-
-void
-Blindf_off(struct obj *otmp)
-{
-    boolean was_blind = Blind, changed = FALSE;
-
-    setworn(NULL, otmp->owornmask);
-    off_msg(otmp);
-
-    if (Blind) {
-        if (was_blind) {
-            /* "still cannot see" makes no sense when removing lenses since
-               they can't have been the cause of your blindness */
-            if (otmp->otyp != LENSES)
-                pline("You still cannot see.");
-        } else {
-            changed = TRUE;     /* !was_blind */
-            /* "You were wearing the Eyes of the Overworld." */
-            pline("You can't see anything now!");
-            /* set ball&chain variables before the hero goes blind */
-            if (Punished)
-                set_bc(0);
-        }
-    } else if (was_blind) {
-        changed = TRUE; /* !Blind */
-        pline("You can see again.");
-    }
-    if (changed) {
-        /* blindness has just been toggled */
-        if (Blind_telepat || Infravision)
-            see_monsters();
-        vision_full_recalc = 1; /* recalc vision limits */
-        iflags.botl = 1;
-    }
-}
-
-/* Calls appropriate *_on / *_off functions for a given slot, respectively.
-   Wearing an item can destroy it; this function returns true if the item is
-   destroyed. */
-boolean
-Slot_on(enum objslot slot)
-{
-    switch(slot) {
-    case os_arm: Armor_on(); break;
-    case os_armh: Helmet_on(); break;
-    case os_armg: Gloves_on(); break;
-    case os_armf: Boots_on(); break;
-    case os_armc: Cloak_on(); break;
-    case os_arms: Shield_on(); break;
-    case os_armu: Shirt_on(); break;
-    case os_amul: return Amulet_on(); /* equipping an amulet can destroy it */
-    case os_ringl:
-    case os_ringr:
-        Ring_on(EQUIP(slot)); break;
-    case os_tool:
-        Blindf_on(EQUIP(slot)); break;
-    default:
-        impossible("Equipping strange item slot %d");
-    };
-    return FALSE;
-}
-void
-Slot_off(enum objslot slot)
-{
-    switch(slot) {
-    case os_arm: Armor_off(); break;
-    case os_armh: Helmet_off(); break;
-    case os_armg: Gloves_off(); break;
-    case os_armf: Boots_off(); break;
-    case os_armc: Cloak_off(); break;
-    case os_arms: Shield_off(); break;
-    case os_armu: Shirt_off(); break;
-    case os_amul: Amulet_off(); break;
-    case os_ringl:
-    case os_ringr:
-        Ring_off(EQUIP(slot)); break;
-    case os_tool:
-        Blindf_off(EQUIP(slot)); break;
-    default:
-        impossible("Unequipping strange item slot %d");
-    };
-}
-void
-Slot_gone(enum objslot slot)
-{
-    /* TODO: Merge with Slot_off. This currently doesn't always print the right
-       messages because many options don't have a _gone. */
-    switch(slot) {
-    case os_arm: Armor_gone(); break;
-    case os_armh: Helmet_off(); break;
-    case os_armg: Gloves_off(); break;
-    case os_armf: Boots_off(); break;
-    case os_armc: Cloak_off(); break;
-    case os_arms: Shield_off(); break;
-    case os_armu: Shirt_off(); break;
-    case os_amul: Amulet_off(); break;
-    case os_ringl:
-    case os_ringr:
-        Ring_gone(EQUIP(slot)); break;
-    case os_tool:
-        Blindf_off(EQUIP(slot)); break;
-    default:
-        impossible("Unequipping strange item slot %d");
-    };
-}
-
-/* Changes which item is placed in a slot. This is a reasonably low-level
-   function; it doesn't check whether the change is possible, it just does it.
-   Likewise, it takes zero time. (The assumption is that the caller has either
-   checked things like time and possibility, or else the item's being unequipped
-   magically, being destroyed, or something similar.)
-
-   Returns TRUE if attempting to equip the item destroyed it (e.g. amulet of
-   change). */
-boolean
-setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
-{
-    /* TODO: This is just a wrapper for now. It should eventually do the
-       work itself. */
-    if (!otmp || otmp == &zeroobj) {
-        (msgtype == em_silent ? Slot_gone : Slot_off)(slot);
-    } else {
-        setworn(otmp, W_MASK(slot));
-        return Slot_on(slot);
-    }
-    return FALSE;
+    return destroyed;
 }
 
 /* Convenience wrapper around setequip. */
