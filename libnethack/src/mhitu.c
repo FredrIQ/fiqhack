@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-11-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2301,8 +2301,10 @@ doseduce(struct monst *mon)
                       Blind ? "He" : Monnam(mon), buf, xname(ring));
                 setunequip(uleft);
                 slot = os_ringl;
-            } else
+            } else {
                 impossible("ring replacement");
+                slot = os_ringl;
+            }
             unwield_silently(ring);
             setequip(slot, ring, em_silent);
             prinv(NULL, ring, 0L);
