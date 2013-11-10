@@ -1,0 +1,98 @@
+About this document:
+Last modified by Sean Hunt, 2013-11-10
+
+Copyright (C) 2013 Sean Hunt
+
+Just to annoy Alex Smith, this document is not licensed under the NetHack
+General Public License.
+
+
+Dungeon Layout in NetHack 4
+===========================
+
+Background
+----------
+
+<+ais523_> I guess whenever you look at any part of NetHack code in details,
+you just find a mound of special cases taped together by global variables
+<+ais523_> apart from the drawbridge code
+< coppro> ais523_: which is a mound of special cases taped together by special
+cases?
+<+ais523_> which works by assuming that the rest of NetHack follows a sane
+storage model and then tries to warp reality around it to fit
+
+Currently, the level and dungeon layout in NetHack is a mess. A large amount
+of the engine seems to have been designed assuming a single linear dungeon
+layout, and things like interbranch connections are largely glued on.
+
+It's important to remember that what we think of as a "branch" is often
+referred to in existing code as a "dungeon".
+
+If we look in dungeon.h, we will see the following structures:
+
+ - d_flags: Level flags which apply to entire dungeons or to special levels.
+ - d_level: An identifier for a level, including the dungeon number and depth.
+ - s_level: Extra information required for a special level.
+ - stairway: Destination data for stairs.
+ - dest_area: actually just a rectangle in a rectangle, it's used for some
+   forms of level change.
+ - dungeon: This contains an entire dungeon, including its flags and
+   information about its levels.
+ - branch: This contains the information about the link between a pair of
+   dungeons.
+ - overview_info: Information for use with the dungeon overview feature.
+
+The level struct in rm.h is also important, since it contains the entire level
+and all data, including monsters, objects, a levelflags structure (of course,
+different from the d_flags structure), room information, door information, and
+more.
+
+The special level loading process is also its own set of Wonderful Wonderful
+fun, becase for no particularly-well-understood reason, the dev originally
+designing it thought it would be a good idea to make the compiled levels
+pluggable so that you could change the levels around on the fly. In practice,
+some special cases (for instance, handling moving up into the Castle level
+from the Valley) are poorly done and this makes pluggability not particularly
+good.
+
+The level compiler also doesn't handle everything as well as it might; the
+special vault in Knox, for instance, is a morgue in the description file and
+the loader does some hacking to populate it correctly. This just adds to the
+raft of special cases.
+
+
+The Plan
+--------
+
+For NetHack 4, the plan is to significantly revamp and simplify the level
+handling system. Firstly, the level compiler will be mostly scrapped and the special
+level descriptions will be transferred into the main library with a pluggable
+interface. Macros will be used to help generate such levels. This will allow
+special levels to do weird things which they couldn't otherwise while reducing
+the number of special cases in the main part of the code. Ideally, we can
+outsource everything or almost everything to the level interface and that will
+lead to a much happier developer. For instance, a level could provide a
+migration override so that the Castle migration can be handled correctly. This
+also allows levels to do all sorts of things that require full Turing
+completeness without needing to make another Turing complete sublanguage.
+
+Also important is the simplification of dungeon and branch layout. Very little
+needs to be stored on the dungeon/branch itself; instead, dungeon properties
+will simply be stored on each level within the dungeon. On the particularly
+rare occasions that information about the larger structure is
+required---branchports and overviews---it can be generated on the fly. Levels
+will generally be referred to by pointers, and each level will store the
+connection information directly in the level. When you migrate via a
+connection, the default migration code will simply try to find the matching
+connection and, if it fails, will just complain a lot. The code will not rely
+on having at most one of each type of connection (ladder up/down, stair
+up/down, long stair, portal) per level.
+
+This will allow some other nice properties: it will be impossible to move
+"down" by simply adding one to the level z, but instead you'll need to use a
+helper function. This will permit things to fall out of the bottom of Sokoban.
+Finally.
+
+Also, the level property "shortsighted" will be first against the wall when
+the revolution comes, since it's unused. It can be reimplemented later if it
+ever matters.
