@@ -3,8 +3,8 @@ Last modified by Sean Hunt, 2013-11-10
 
 Copyright (C) 2013 Sean Hunt
 
-Just to annoy Alex Smith, this document is not licensed under the NetHack
-General Public License.
+This document is licensed under the NetHack General Public License.  See
+libnethack/dat/license for details.
 
 
 Dungeon Layout in NetHack 4
@@ -65,16 +65,17 @@ The Plan
 --------
 
 For NetHack 4, the plan is to significantly revamp and simplify the level
-handling system. Firstly, the level compiler will be mostly scrapped and the special
-level descriptions will be transferred into the main library with a pluggable
-interface. Macros will be used to help generate such levels. This will allow
-special levels to do weird things which they couldn't otherwise while reducing
-the number of special cases in the main part of the code. Ideally, we can
-outsource everything or almost everything to the level interface and that will
-lead to a much happier developer. For instance, a level could provide a
-migration override so that the Castle migration can be handled correctly. This
-also allows levels to do all sorts of things that require full Turing
-completeness without needing to make another Turing complete sublanguage.
+handling system. Firstly, the level compiler will be mostly scrapped and the
+special level descriptions will be transferred into the main library with a
+pluggable interface. Macros will be used to help generate such levels. This
+will allow special levels to do weird things which they couldn't otherwise
+while reducing the number of special cases in the main part of the code.
+Ideally, we can outsource everything or almost everything to the level
+interface and that will lead to a much happier developer. For instance, a
+level could provide a migration override so that the Castle migration can be
+handled correctly. This also allows levels to do all sorts of things that
+require full Turing completeness without needing to make another Turing
+complete sublanguage.
 
 Also important is the simplification of dungeon and branch layout. Very little
 needs to be stored on the dungeon/branch itself; instead, dungeon properties
@@ -91,8 +92,134 @@ up/down, long stair, portal) per level.
 This will allow some other nice properties: it will be impossible to move
 "down" by simply adding one to the level z, but instead you'll need to use a
 helper function. This will permit things to fall out of the bottom of Sokoban.
-Finally.
+Finally. In order to implement this bit, there will need to be a concept of
+"directly above" and "directly below" in the connection information. There
+will only be one level directly above or below a given level, but the relation
+is not necessarily symmetric, as D:2 might be directly above both D:3 and
+Mines:1. 
 
 Also, the level property "shortsighted" will be first against the wall when
 the revolution comes, since it's unused. It can be reimplemented later if it
 ever matters.
+
+Gory Details
+------------
+
+The level manager is the structure containing all the functions needed to
+handle special cases in the level system. This includes, for instance,
+everything that makes special levels special.
+
+All levels are given managers, even regular levels. The dungeon layout is
+responsible for assigning the level managers to each level.
+
+The following is a list of known special level special cases that are not
+easily handled through some aspect of this method:
+ - The Castle drawbridge
+ - Special pickaxe digging on earth
+ - Earth elementals and xorns from digging on Earth
+ - The maze level digging rules, including the way they don't apply on Earth
+ - The farlooking protection of high priests and priestesses on Astral
+ - Pets refuse to dig on the Rogue level [why?]
+ - Various special cased messages
+ - Bracing yourself while kicking on astral [this is broken anyway]
+ - The inability to use cursed gain level to ascend from the top of the
+   Wizard's tower
+ - Escaping in celestial disgrace being a factor of the astral plane
+ - Level names on gravestones and historic events
+ - Some surface names and other descriptions
+ - Some bits of spoteffects
+ - Portals on planes not letting through coelementals and the Amulet
+ - the valley's and the invocation level's level teleport blocking effects
+ - the wizard's different interventions on Astral
+ - wizard tower migration
+ - Vlad not using wands of digging in his own tower
+ - Clairvoyance/branchport/levelport not working in the endgame
+ - The behaviour of the D:1 upstair
+ - Different naming/inventory/talking of monster players in the endgame
+ - Extra monster HP in the endgame
+ - Samurai lacquered armor in their Quest
+ - The mysterious force
+
+Things that need to be in/accessible via struct level:
+ - Bones id
+ - Pointer to branch
+ - Depth in branch [for level descriptions and the like]
+ - Difficulty level
+ - Connections to other levels
+
+Things that need to be in the branch information:
+ - Branch name
+
+Things that need to be in the level flags:
+ - Whether the level is weightless (currently Air, Water?)
+ - Whether the level is moist (currently Water) (affects eels)
+ - Level display mode
+ - Whether something is the rogue level [there are tons of special cases and
+   since there is a unifying theme here, it is acceptable to have a rogue
+   level flag]
+ - Whether this is a sokoban level [too many special cases and again no easy
+   unifying themes]
+ - Whether the floor is diggable
+ - Whether altars are high (also affects wrath; make the Amulet sacrificable
+   to Moloch in the Sanctum)
+ - Whether scrolls of earth work [can this be merged with something else? Fire
+   is the big weird one here, especially as it has a ceiling]
+ - Whether the level is open air (currently qhome, Fire?)
+ - Existing dungeon flags (incl. alignment and hellishness)
+
+Things that need to be in the level manager:
+ - Generation (at least mklev() through mineralize())
+ - Hook to do each turn
+ - Hook for loading
+ - Hook for unloading
+ - Hook for migrations
+ - Hook for entering the level
+ - The description for the overview
+ - The description for wizmode printdungeon and extra info like
+   portal/vibrating square location
+ - Some monster generation controls (rogue monster inventories/letters,
+   elemental plane restrictions, alignment restrictions, pickaxes for
+   elvenkings on Earth)
+ - Some item generation controls (rogue/hellprobs)
+ - Some trap generation controls (a set of flags at the very least)
+ - Saving/loading
+
+Other things that need more thought:
+ - Handling of water, generally. See is_moat, is_pool, waterbody_name, and
+   Plane of Water special cases in draw code especially. Thoughts: make water
+   on Water into "freestanding" water, a different terrain type that could
+   exist on a regular level as well. Deal with juiblex differently (why is it
+   different from Medusa anway, other than surface name?)
+ - How exactly does the Plane of Water work? Is the player actually walking on
+   the surface of the bubble, or floating in the air? The code seems to be
+   contradictory on this point. We should make a decision and rework all the
+   special cases accordingly. [possibly related: should you be able to dive in
+   while walking on water?]
+ - What is the exact algorithm for branchporting and levelporting?
+
+Special cases that need looking for:
+ - Is_water/air/earth/fire/astrallevel
+ - Is_rogue_level
+ - Is_stronghold
+ - Is_special
+ - Is_oracle_level
+ - Is_qstart
+ - Is_qlocate
+ - Is_bigroom
+ - Is_nemesis
+ - Is_asmo_level
+ - Is_juiblex_level
+ - Is_baal_level
+ - Is_valley
+ - Is_medusa_level
+ - Is_wiz1/2/3_level
+ - Is_sanctum
+ - Is_portal_level
+ - In_sokoban
+ - In_W_tower
+ - Invocation_lev
+ - In_V_tower
+ - On_W_tower_level
+ - In_endgame
+ - Inhell
+ - In_quest
