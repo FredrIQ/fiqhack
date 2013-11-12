@@ -2256,7 +2256,7 @@ doseduce(struct monst *mon)
             mpickobj(mon, ring);
         } else {
             char buf[BUFSZ];
-            enum objslot slot;
+            enum objslot slot = os_invalid;
 
             if (uleft && uright && uleft->otyp == RIN_ADORNMENT &&
                 uright->otyp == RIN_ADORNMENT)
@@ -2303,9 +2303,12 @@ doseduce(struct monst *mon)
                 slot = os_ringl;
             } else
                 impossible("ring replacement");
-            unwield_silently(ring);
-            setequip(slot, ring, em_silent);
-            prinv(NULL, ring, 0L);
+
+            if (slot != os_invalid) {
+                unwield_silently(ring);
+                setequip(slot, ring, em_silent);
+                prinv(NULL, ring, 0L);
+            }
         }
     }
 
