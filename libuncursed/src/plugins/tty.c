@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-04 */
+/* Last modified by Alex Smith, 2013-11-12 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -79,6 +79,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <stdarg.h>
 
 /* tty.c is always linked statically. */
 #define UNCURSED_MAIN_PROGRAM
@@ -122,6 +123,28 @@ static long parse_utf8(char *s) {
     }
     if (r >= 0x110000) return -2;
     return r;
+}
+
+static int chars_since_flush = 0;
+static void ofile_output(char *format, ...) {
+    va_list v;
+    va_start(v, format);
+
+    chars_since_flush += vfprintf(ofile, format, v);
+
+    va_end(v);
+
+    if (chars_since_flush > 200) {
+        /* Older versions of Konsole dislike it when stdio flushes in the middle
+           of a UTF-8 character. We solve the issue by flushing ourself, before
+           stdio gets the chance. (Pretty much every stdio has a buffer that's
+           at least 256 bytes; 4096 is more common. We subtract some amount
+           because we don't know how long the next vfprintf will be.) */
+        tty_hook_flush();
+    }
+}
+static void ofile_outputs(char * s) {
+    ofile_output("%s", s);
 }
 
 /* Linux-specific functions */
@@ -386,16 +409,16 @@ static void record_and_measure_terminal_size(int *h, int *w) {
    in an unknown location */
 static void set_charset(int y, int x) {
     if (x > -1) fprintf(ofile, CSI "%d;%dH", y+1, x+1);
-    fputs("\x0f", ofile); /* select character set G0 */
+    ofile_outputs("\x0f"); /* select character set G0 */
     if (x > -1) fprintf(ofile, CSI "%d;%dH", y+1, x+1);
     if (supports_utf8) {
-        fputs("\x1b(B", ofile); /* select default character set for G0 */
+        ofile_outputs("\x1b(B"); /* select default character set for G0 */
         if (x > -1) fprintf(ofile, CSI "%d;%dH", y+1, x+1);
-        fputs("\x1b%G", ofile); /* set character set as UTF-8 */
+        ofile_outputs("\x1b%G"); /* set character set as UTF-8 */
     } else {
-        fputs("\x1b%@", ofile); /* disable Unicode, set default character set */
+        ofile_outputs("\x1b%@"); /* disable Unicode, set default character set */
         if (x > -1) fprintf(ofile, CSI "%d;%dH", y+1, x+1);
-        fputs("\x1b(U", ofile); /* select null mapping, = cp437 on a PC */
+        ofile_outputs("\x1b(U"); /* select null mapping, = cp437 on a PC */
     }
     last_y = last_x = -1;
 }
@@ -426,14 +449,14 @@ static void reset_palette(void) {
 }
 
 void tty_hook_beep(void) {
-    fputs("\x07", ofile);
+    ofile_outputs("\x07");
     fflush(ofile);
 }
 
 void tty_hook_setcursorsize(int size) {
     /* TODO: Shield fom DOS */
-    if (size == 0) fputs(CSI "?25l", ofile);
-    else fputs(CSI "?25h", ofile);
+    if (size == 0) ofile_outputs(CSI "?25l");
+    else ofile_outputs(CSI "?25h");
     /* Don't change the cursor size; we'd have no way to undo the change, and
        it leads to garbage on many terminals. */
     fflush(ofile);
@@ -448,18 +471,18 @@ void tty_hook_init(int *h, int *w, char *title) {
     (void)title;
     platform_specific_init();
     /* Save the character sets. */
-    fputs("\x1b""7", ofile);
+    ofile_outputs("\x1b""7");
     /* Switch to the alternate screen, if possible, so that we don't overwrite
        the user's scrollback. */
-    fputs(CSI "?1049h", ofile);
+    ofile_outputs(CSI "?1049h");
     /* Hide any scrollbar, because it's useless. */
-    fputs(CSI "?30l", ofile);
+    ofile_outputs(CSI "?30l");
     /* Work out the terminal size; also set it to itself (so that people
        watching, and recordings, have the terminal size known). */
     record_and_measure_terminal_size(h, w);
     /* Take control over the numeric keypad, if possible. Even when it isn't
        (e.g. xterm), this lets us distinguish Enter from Return. */
-    fputs("\x1b=", ofile);
+    ofile_outputs("\x1b=");
     /* TODO: turn on mouse tracking? */
     /* Work out the Unicodiness of the terminal. We do this by sending 4 bytes
        = 2 Unicode codepoints, and seeing how far the cursor moves.*/
@@ -499,7 +522,7 @@ void tty_hook_init(int *h, int *w, char *title) {
     setup_palette();
 
     /* Clear the terminal. */
-    fputs(CSI "2J", ofile);
+    ofile_outputs(CSI "2J");
     terminal_contents_unknown = 1;
     last_color = -1;
     last_y = last_x = -1;
@@ -510,14 +533,14 @@ void tty_hook_exit(void) {
     /* It'd be great to reset the terminal right now, but that wipes out
        scrollback. We can try to undo as many of our settings as we can, but
        that's not very many, due to problems with the protocol. */
-    fputs("\x1b>", ofile); /* turn off keypad special-casing */
-    fputs(CSI "?25h", ofile); /* turn the cursor back on */
+    ofile_outputs("\x1b>"); /* turn off keypad special-casing */
+    ofile_outputs(CSI "?25h"); /* turn the cursor back on */
     reset_palette();
-    fputs(CSI "2J", ofile); /* and we can at least wipe the screen */
+    ofile_outputs(CSI "2J"); /* and we can at least wipe the screen */
     /* Switch back to the main screen. */
-    fputs(CSI "?1049l", ofile);
+    ofile_outputs(CSI "?1049l");
     /* Restore G0/G1. */
-    fputs("\x1b""8", ofile);
+    ofile_outputs("\x1b""8");
     platform_specific_exit();
     is_inited = 0;
 }
@@ -609,11 +632,11 @@ void tty_hook_update(int y, int x) {
         set_charset(y, x);
     } else if (!uncursed_rhook_needsupdate(y, x)) return;
     if (last_y != y || last_x == -1) {
-        fprintf(ofile, CSI "%d;%dH", y+1, x+1);
+        ofile_output(CSI "%d;%dH", y+1, x+1);
     } else if (last_x > x) {
-        fprintf(ofile, CSI "%dD", last_x - x);
+        ofile_output(CSI "%dD", last_x - x);
     } else if (last_x < x) {
-        fprintf(ofile, CSI "%dC", x - last_x);
+        ofile_output(CSI "%dC", x - last_x);
     }
     int color = uncursed_rhook_color_at(y, x);
     if (color != last_color) {
@@ -624,25 +647,25 @@ void tty_hook_update(int y, int x) {
            background). We set the colors using the 8-color code first, then
            the 16-color code, to get support for 16 colors without losing
            support for 8 colors. */
-        fputs(CSI "0;", ofile);
+        ofile_outputs(CSI "0;");
         if ((color & 31) == 16) /* default fg */
-            fputs("39;", ofile);
+            ofile_outputs("39;");
         else if ((color & 31) >= 8) /* bright fg */
-            fprintf(ofile, "1;%d;%d;", (color & 31) + 22, (color & 31) + 82);
+            ofile_output("1;%d;%d;", (color & 31) + 22, (color & 31) + 82);
         else /* dark fg */
-            fprintf(ofile, "%d;", (color & 31) + 30);
+            ofile_output("%d;", (color & 31) + 30);
         color >>= 5;
-        if (color & 32) fputs("4;", ofile);
+        if (color & 32) ofile_outputs("4;");
         color &= 31;
         if (color == 16) /* default bg */
-            fputs("49m", ofile);
+            ofile_outputs("49m");
         else if (color >= 8) /* bright bg */
-            fprintf(ofile, "48;5;5;%d;%dm", color + 32, color + 92);
+            ofile_output("48;5;5;%d;%dm", color + 32, color + 92);
         else
-            fprintf(ofile, "%dm", color + 40);
+            ofile_output("%dm", color + 40);
     }
     if (supports_utf8) 
-        fputs(uncursed_rhook_utf8_at(y, x), ofile);
+        ofile_outputs(uncursed_rhook_utf8_at(y, x));
     else
         fputc(uncursed_rhook_cp437_at(y, x), ofile);
     uncursed_rhook_updated(y, x);
@@ -654,10 +677,11 @@ void tty_hook_update(int y, int x) {
 void tty_hook_fullredraw(void) {
     terminal_contents_unknown = 1;
     setup_palette();
-    fputs(CSI "2J", ofile);
+    ofile_outputs(CSI "2J");
     tty_hook_update(0,0);
 }
 
 void tty_hook_flush(void) {
-    fflush(stdout);
+    fflush(ofile);
+    chars_since_flush = 0;
 }
