@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2013-10-03
+Last modified by Alex Smith, 2013-11-12
 
 This documentation for the uncursed rendering library is provided under the
 same terms as libuncursed itself: it may be distributed under either of the
@@ -106,6 +106,7 @@ This interface is tested and known to work on the following terminals:
         Gnome-based environments such as Gnome, MATE, and Ubuntu Unity);
       * `konsole` (typically used as the terminal emulator under KDE and
         KDE-based environments);
+      * `lxterminal` (typically used as the terminal under LXDE);
       * `PuTTY` (the most commonly used terminal emulator for ssh and telnet
         connections under Windows);
       * `urxvt` (the Unicode-aware version of `rxvt`, which was once the main

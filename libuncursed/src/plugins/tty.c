@@ -27,6 +27,7 @@
  * konsole
  * PuTTY
  * urxvt
+ * lxterminal
  *
  * Terminal multiplexers:
  * screen
