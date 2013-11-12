@@ -56,42 +56,45 @@ void initialize_uncursed(int *p_argc, char **argv) {
     if (uncursed_hooks_inited) return;
 
     /* We need to change the uncursed_hook_list to contain exactly one input set
-       of hooks, and any number of broadcast and recording hooks. (A set of
-       hooks is provided by an uncursed plugin.)
-
-       When initialize_uncursed is called, we may have a number of hooks in the
-       list already: specifically, any hooks that were statically linked into
-       the program, and any hooks in dynamically linked libraries that are
-       specified as dependencies of the program. We can also add additional
-       hooks via loading dynamically linked libraries in a platform-specific way
-       (e.g. dlopen on POSIXy OSes). Merely loading the libraries will add
-       entries to uncursed_hook_list (which is a reverse export). This mechanism
-       allows the set of available plugins to be changed without changing the
-       executable; thus, an executable and a set of plugins can be in separate
-       packages in a package manager. (The platform-specific plugin loading code
-       is in plugins.c.)
-
-       We first check the argument list for requested hooks:
-
-       - If there is an explicit --interface option, we load any plugins
-         specified there (if they aren't alreay loaded), and error out if we
-         can't, or if more than one input plugin is specified.
-       - If there is no explicit --interface option, or if it didn't specify an
-         input plugin, we check the executable's basename; if it ends -foo for
-         any foo, we attempt to load a plugin named foo, and error out if we
-         can't. (This leads to weirdness if a non-input plugin is specified as
-         part of the filename, but we can't do much sensible with that anyway.)
-       - If there still isn't an input plugin, we check the list of hooks for an
-         input plugin that came prelinked; if we find any, we include the plugin
-         with the highest priority.
-       - If even that fails to find an input plugin (most likely because there
-         are no plugins linked into the executable and the user didn't specify
-         one), we attempt to load the "tty" or "wincon" plugin, depending on
-         platform, and error out if we can't find it.
-
-       When we decide to use a set of hooks, we record the fact using the "used"
-       field of the hookset, which always initializes at 0.
-    */
+     * of hooks, and any number of broadcast and recording hooks. (A set of
+     * hooks is provided by an uncursed plugin.)
+     *
+     * When initialize_uncursed is called, we may have a number of hooks in the
+     * list already: specifically, any hooks that were statically linked into
+     * the program, and any hooks in dynamically linked libraries that are
+     * specified as dependencies of the program. We can also add additional
+     * hooks via loading dynamically linked libraries in a platform-specific way
+     * (e.g. dlopen on POSIXy OSes). Merely loading the libraries will add
+     * entries to uncursed_hook_list (which is a reverse export). This mechanism
+     * allows the set of available plugins to be changed without changing the
+     * executable; thus, an executable and a set of plugins can be in separate
+     * packages in a package manager. (The platform-specific plugin loading code
+     * is in plugins.c.)
+     *
+     * We first check the argument list for requested hooks:
+     *
+     * - If there is an explicit --interface option, we load any plugins
+     *   specified there (if they aren't alreay loaded), and error out if we
+     *   can't, or if more than one input plugin is specified.
+     *
+     * - If there is no explicit --interface option, or if it didn't specify an
+     *   input plugin, we check the executable's basename; if it ends -foo for
+     *   any foo, we attempt to load a plugin named foo, and error out if we
+     *   can't. (This leads to weirdness if a non-input plugin is specified as
+     *   part of the filename, but we can't do much sensible with that anyway.)
+     *
+     * - If there still isn't an input plugin, we check the list of hooks for an
+     *   input plugin that came prelinked; if we find any, we include the plugin
+     *   with the highest priority.
+     *
+     * - If even that fails to find an input plugin (most likely because there
+     *   are no plugins linked into the executable and the user didn't specify
+     *   one), we attempt to load the "tty" or "wincon" plugin, depending on
+     *   platform, and error out if we can't find it.
+     *
+     * When we decide to use a set of hooks, we record the fact using the "used"
+     * field of the hookset, which always initializes at 0.
+     */
     char **p = argv;
     if (*p) p++; /* don't read the filename */
     int input_plugins;
@@ -1060,39 +1063,41 @@ wchar_t *wunctrl(wchar_t c) {
 char *keyname(int c) {
     if (c < 256) return unctrl(c);
     /* We have three types of special keys:
-       - Cursor motion / numeric keypad: ESC [ letter or ESC O letter
-         (Modified: ESC [ 1 ; modifier letter or ESC O 1 ; modifier letter)
-       - General function keys: ESC [ number ~
-         (Modified: ESC [ number ; modifier ~)
-       - F1-F5 can send other codes, such as ESC [ [ letter
-       The letters can be both uppercase and lowercase. (Lowercase letters
-       are used for the numeric keypad by some terminals.)
-
-       We use the integer as a bitfield:
-       256     always true (to make the code >= 256)
-       512     true for cursor motion/numpad
-       1024    true for Linux console F1-F5
-       2048 up the modifier seen minus 1 (0 for no modifier)
-       1       the number or letter seen
-
-       Based on the codes normally sent, a modifier of shift sets the 2048s bit,
-       of alt sets the 4096s bit, of control sets the 8192s it. Some codes won't
-       be sent by certain terminals, and some will overlap. One problem we have
-       is that there are some keys that are the same but have different codes on
-       different terminals (e.g. home/end), and some keys that are conflated by
-       some terminals but not others (e.g. numpad home versus main keyboard
-       home). In order to give stable KEY_x definitions, we translate ^[OH and
-       ^[OF (home/end on xterm) to ^[[1~ and ^[[4~ (home/end on Linux console),
-       ^[[15~ (F5 on xterm) to ^[[[E (F5 on Linux console), and ^[[E (num5 on
-       xterm) and ^[[G (num6 on Linux console outside application mode) to ^[Ou
-       (num5 on Linux console inside application mode). There's also one clash
-       between ESC [ P (Pause/Break), and ESC O P (PF1); we resolve this by
-       translating ESC [ P as ESC [ [ P.
-
-       keyname's job is to undo all this, and return a sensible name for the
-       key that's pressed. Unlike curses keyname, it will construct a name for
-       any keypress.
-    */
+     *
+     * - Cursor motion / numeric keypad: ESC [ letter or ESC O letter
+     *   (Modified: ESC [ 1 ; modifier letter or ESC O 1 ; modifier letter)
+     * - General function keys: ESC [ number ~
+     *   (Modified: ESC [ number ; modifier ~)
+     * - F1-F5 can send other codes, such as ESC [ [ letter
+     *
+     * The letters can be both uppercase and lowercase. (Lowercase letters
+     * are used for the numeric keypad by some terminals.)
+     *
+     * We use the integer as a bitfield:
+     * 256     always true (to make the code >= 256)
+     * 512     true for cursor motion/numpad
+     * 1024    true for Linux console F1-F5
+     * 2048 up the modifier seen minus 1 (0 for no modifier)
+     * 1       the number or letter seen
+     *
+     * Based on the codes normally sent, a modifier of shift sets the 2048s bit,
+     * of alt sets the 4096s bit, of control sets the 8192s it. Some codes won't
+     * be sent by certain terminals, and some will overlap. One problem we have
+     * is that there are some keys that are the same but have different codes on
+     * different terminals (e.g. home/end), and some keys that are conflated by
+     * some terminals but not others (e.g. numpad home versus main keyboard
+     * home). In order to give stable KEY_x definitions, we translate ^[OH and
+     * ^[OF (home/end on xterm) to ^[[1~ and ^[[4~ (home/end on Linux console),
+     * ^[[15~ (F5 on xterm) to ^[[[E (F5 on Linux console), and ^[[E (num5 on
+     * xterm) and ^[[G (num6 on Linux console outside application mode) to ^[Ou
+     * (num5 on Linux console inside application mode). There's also one clash
+     * between ESC [ P (Pause/Break), and ESC O P (PF1); we resolve this by
+     * translating ESC [ P as ESC [ [ P.
+     *
+     * keyname's job is to undo all this, and return a sensible name for the
+     * key that's pressed. Unlike curses keyname, it will construct a name for
+     * any keypress.
+     */
     static char keybuf[80];
     strcpy(keybuf, "KEY_");
     if (c & KEY_CTRL)  strcat(keybuf, "CTRL_");
@@ -1547,8 +1552,8 @@ char *uncursed_rhook_utf8_at(int y, int x) {
             *r++ = 0x80 | ((*c >> 12) & 0x3f);
             *r++ = 0x80 | ((*c >> 6) & 0x3f);
             *r++ = 0x80 | ((*c >> 0) & 0x3f);
-        } else { // out of Unicode range
-            /* This is the encoding for REPLACEMENT CHARACTER. */
+        } else {
+            /* out of Unicode range; send a REPLACEMENT CHARACTER. */
             *r++ = 0xef; *r++ = 0xbf; *r++ = 0xbd;
         }
         itercount++;

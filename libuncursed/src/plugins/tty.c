@@ -9,51 +9,51 @@
  * the files libnethack/dat/license and libnethack/dat/gpl respectively.
  */
 /* This gives a terminal backend for the uncursed rendering library, designed to
-   work well on virtual terminals, but sacrificing support for physical
-   terminals (at least, those that require padding). The minimum feature set
-   required by the terminal is 8 colors + bold for another 8, basic cursor
-   movement commands, and understanding either code page 437 or Unicode
-   (preferably both). This file is tested against the following terminal
-   emulators, and intended to work correctly on all of them:
-
-   Terminals built into operating systems:
-   Linux console (fbcon)
-   DOSBOx emulation of the DOS console
-
-   Terminal emulation software:
-   xterm
-   gnome-terminal
-   konsole
-   PuTTY
-   urxvt
-
-   Terminal multiplexers:
-   screen
-   tmux
-
-   Terminal recording renderers:
-   termplay
-   jettyplay
-   (Note that some ttyrec players, such as ttyplay, use the terminal for
-   rendering rather than doing their own rendering; those aren't included on
-   this list. ipbt is not included because it does not support character sets
-   beyond ASCII; it also has a major issue where it understands the codes for
-   colors above 8, but is subsequently unable to render them.)
-
-   Probably the most commonly used terminal emulator not on this list is
-   original rxvt, which has very poor support for all sorts of features we would
-   want to use (although the main reason it isn't supported is that it relies on
-   the font used for encoding support rather than trying to do any encoding
-   handling itself, meaning that text that's meant to be CP437 tends to get
-   printed as Latin-1 in practice). It's entirely possible that you could manage
-   to configure rxvt to work with uncursed, but save yourself some trouble and
-   use urxvt instead :)
-
-   This file is written to be platform-agnostic, but contains platform-specific
-   code on occasion (e.g. signals, delays). Where there's a choice of platform-
-   specific function, the most portable is used (e.g. select() rather than
-   usleep() for delays, because it's in older versions of POSIX).
-*/
+ * work well on virtual terminals, but sacrificing support for physical
+ * terminals (at least, those that require padding). The minimum feature set
+ * required by the terminal is 8 colors + bold for another 8, basic cursor
+ * movement commands, and understanding either code page 437 or Unicode
+ * (preferably both). This file is tested against the following terminal
+ * emulators, and intended to work correctly on all of them:
+ *
+ * Terminals built into operating systems:
+ * Linux console (fbcon)
+ * DOSBOx emulation of the DOS console
+ *
+ * Terminal emulation software:
+ * xterm
+ * gnome-terminal
+ * konsole
+ * PuTTY
+ * urxvt
+ *
+ * Terminal multiplexers:
+ * screen
+ * tmux
+ *
+ * Terminal recording renderers:
+ * termplay
+ * jettyplay
+ * (Note that some ttyrec players, such as ttyplay, use the terminal for
+ * rendering rather than doing their own rendering; those aren't included on
+ * this list. ipbt is not included because it does not support character sets
+ * beyond ASCII; it also has a major issue where it understands the codes for
+ * colors above 8, but is subsequently unable to render them.)
+ *
+ * Probably the most commonly used terminal emulator not on this list is
+ * original rxvt, which has very poor support for all sorts of features we would
+ * want to use (although the main reason it isn't supported is that it relies on
+ * the font used for encoding support rather than trying to do any encoding
+ * handling itself, meaning that text that's meant to be CP437 tends to get
+ * printed as Latin-1 in practice). It's entirely possible that you could manage
+ * to configure rxvt to work with uncursed, but save yourself some trouble and
+ * use urxvt instead :)
+ *
+ * This file is written to be platform-agnostic, but contains platform-specific
+ * code on occasion (e.g. signals, delays). Where there's a choice of platform-
+ * specific function, the most portable is used (e.g. select() rather than
+ * usleep() for delays, because it's in older versions of POSIX).
+ */
 
 /* Detect OS. */
 #ifdef AIMAKE_BUILDOS_MSWin32
@@ -88,8 +88,9 @@
 #include "uncursed.h"
 #include "uncursed_tty.h"
 
-/* Note: ifile only uses platform-specific read functions like read();
-   ofile only uses stdio for output (e.g. fputs). Try not to muddle these! */
+/* Note: ifile only uses platform-specific read functions like read(); ofile
+   only uses stdio for output (e.g. fputs), but all output to ofile is
+   abstracted via ofile_output anyway. Try not to muddle these! */
 #define ofile stdout
 #define ifile stdin
 
@@ -204,29 +205,29 @@ static void platform_specific_init(void) {
     tcgetattr(fileno(ifile), &ti_orig);
     tcgetattr(fileno(ofile), &to_orig);
     /* Terminal control flags to turn off for the input file:
-       ISTRIP    bit 8 stripping (incompatible with Unicode)
-       INPCK     parity checking (ditto)
-       PARENB    more parity checking (ditto)
-       IGNCR     ignore CR (means there's a key we can't read)
-       INLCR     translate NL to CR (ditto)
-       ICRNL     translate CR to NL (ditto)
-       IXON      insert XON/XOFF into the stream (confuses the client)
-       IXOFF     respect XON/XOFF (causes the process to lock up on ^S)
-       ICANON    read a line at a time (means we can't read keys)
-       ECHO      echo typed characters (confuses our view of the screen)
-       We also set ISIG based on raw_isig, and VMIN to 1, VTIME to 0,
-       which gives select() the correct semantics; and we turn on CS8,
-       to be able to read Unicode (although on Unicode systems it seems
-       to be impossible to turn it off anyway).
-    */
-    /* Terminal control flags to turn off for the output file:
-       OPOST     general output postprocessing (portability nightmare)
-       OCRNL     map CR to NL (we need to stay on the same line with CR)
-       ONLRET    delete CR (we want to be able to use CR)
-       OFILL     delay using padding (only works on physical terminals)
-       We modify the flags for to only after modifying the flags for ti,
-       so that one set of changes doesn't overwrite the other.
-    */
+     * ISTRIP    bit 8 stripping (incompatible with Unicode)
+     * INPCK     parity checking (ditto)
+     * PARENB    more parity checking (ditto)
+     * IGNCR     ignore CR (means there's a key we can't read)
+     * INLCR     translate NL to CR (ditto)
+     * ICRNL     translate CR to NL (ditto)
+     * IXON      insert XON/XOFF into the stream (confuses the client)
+     * IXOFF     respect XON/XOFF (causes the process to lock up on ^S)
+     * ICANON    read a line at a time (means we can't read keys)
+     * ECHO      echo typed characters (confuses our view of the screen)
+     * We also set ISIG based on raw_isig, and VMIN to 1, VTIME to 0,
+     * which gives select() the correct semantics; and we turn on CS8,
+     * to be able to read Unicode (although on Unicode systems it seems
+     * to be impossible to turn it off anyway).
+     *
+     * Terminal control flags to turn off for the output file:
+     * OPOST     general output postprocessing (portability nightmare)
+     * OCRNL     map CR to NL (we need to stay on the same line with CR)
+     * ONLRET    delete CR (we want to be able to use CR)
+     * OFILL     delay using padding (only works on physical terminals)
+     * We modify the flags for to only after modifying the flags for ti,
+     * so that one set of changes doesn't overwrite the other.
+     */
     tcgetattr(fileno(ifile), &ti);
     ti.c_iflag &= ~(ISTRIP|INPCK|IGNCR|INLCR|ICRNL|IXON|IXOFF);
     ti.c_cflag &= ~PARENB;
@@ -345,14 +346,15 @@ static char* platform_specific_getkeystring(int timeout_ms) {
             }
         } else {
             /* The user pressed a key. We need to return immediately if:
-               - It wasn't ESC, and was the last character of a UTF-8
-                 encoding (including ASCII), or
-               - It's the second character, the first was ESC, and it
-                 isn't [ or O;
-               - It's the third or subsequent character, the first was
-                 ESC, and it isn't [, ;, or a digit;
-               - We're running out of room in the buffer (malicious
-                 input). */
+             * - It wasn't ESC, and was the last character of a UTF-8
+             *   encoding (including ASCII), or
+             * - It's the second character, the first was ESC, and it
+             *   isn't [ or O;
+             * - It's the third or subsequent character, the first was
+             *   ESC, and it isn't [, ;, or a digit;
+             * - We're running out of room in the buffer (malicious
+             *   input).
+             */
             if (read(fileno(ifile), r++, 1) == 0) {
                 /* EOF on the input is unrecoverable, so the best we can do is
                    to treat it as a hangup. */
@@ -437,8 +439,8 @@ static void setup_palette(void) {
         /* Setup for xterm, gnome-terminal */
         fprintf(ofile, "\r" OSC "4;%d;rgb:%02x/%02x/%02x" ST,
                 i, palette[i][0], palette[i][1], palette[i][2]);
-        /* Setup for Linux console; I think PuTTY parses this too
-           Linux console doesn't need the ST on the end, but without it, other
+        /* Setup for Linux console; I think PuTTY parses this too. The Linux
+           console doesn't need the ST on the end, but without it, other
            terminals may end up waiting forever for the ST */
         fprintf(ofile, "\r" OSC "P%01x%02x%02x%02x" ST,
                 i, palette[i][0], palette[i][1], palette[i][2]);
