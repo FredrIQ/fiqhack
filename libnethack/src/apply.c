@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-11-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -321,6 +321,7 @@ use_whistle(struct obj *obj)
         return 0;
     }
     pline(whistle_str, obj->cursed ? "shrill" : "high");
+    makeknown(obj->otyp);
     wake_nearby();
     return 1;
 }
@@ -359,9 +360,8 @@ use_magic_whistle(struct obj *obj)
                     change_luck(-1);
             }
         }
-        if (pet_cnt > 0)
-            makeknown(obj->otyp);
     }
+    makeknown(obj->otyp);
     return 1;
 }
 
