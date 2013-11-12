@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-11-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -860,7 +860,11 @@ mkportal(struct level *lev, xchar x, xchar y, xchar todnum, xchar todlevel)
 static struct bubble *bbubbles, *ebubbles;
 
 static struct trap *wportal;
-static int xmin, ymin, xmax, ymax;      /* level boundaries */
+
+static const int xmin = 3;
+static const int ymin = 1;
+static const int xmax = 78;
+static const int ymax = 20;
 
 /* bubble movement boundaries */
 #define bxmin (xmin + 1)
@@ -1072,10 +1076,6 @@ save_waterlevel(struct memfile *mf)
        that's longer than it needs to be. */
     mtag(mf, 0, MTAG_WATERLEVEL);
     mwrite32(mf, n);
-    mwrite32(mf, xmin);
-    mwrite32(mf, ymin);
-    mwrite32(mf, xmax);
-    mwrite32(mf, ymax);
     mwrite8(mf, bubble_up);
     for (b = bbubbles; b; b = b->next) {
         mwrite8(mf, b->x);
@@ -1102,10 +1102,6 @@ restore_waterlevel(struct memfile *mf, struct level *lev)
 
     set_wportal(lev);
     n = mread32(mf);
-    xmin = mread32(mf);
-    ymin = mread32(mf);
-    xmax = mread32(mf);
-    ymax = mread32(mf);
     bubble_up = mread8(mf);
 
     for (i = 0; i < n; i++) {
@@ -1179,13 +1175,6 @@ setup_waterlevel(struct level *lev)
 {
     int x, y;
     int xskip, yskip;
-
-    /* ouch, hardcoded... */
-
-    xmin = 3;
-    ymin = 1;
-    xmax = 78;
-    ymax = 20;
 
     /* set hero's memory to water */
 
