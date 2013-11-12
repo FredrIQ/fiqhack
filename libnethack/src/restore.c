@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-11-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -454,8 +454,6 @@ restgamestate(struct memfile *mf)
     restore_food(mf);
     restore_steal(mf);
     restore_dig_status(mf);
-    stetho_last_used_move = mread32(mf);
-    stetho_last_used_movement = mread32(mf);
     multi = mread32(mf);
     restore_rndmonst_state(mf);
     restore_history(mf);

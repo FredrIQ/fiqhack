@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-02 */
+/* Last modified by Alex Smith, 2013-11-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -196,10 +196,13 @@ its_dead(int rx, int ry, int *resp)
 
 static const char hollow_str[] = "a hollow sound.  This must be a secret %s!";
 
-/* Strictly speaking it makes no sense for usage of a stethoscope to
-   not take any time; however, unless it did, the stethoscope would be
-   almost useless.  As a compromise, one use per turn is free, another
-   uses up the turn; this makes curse status have a tangible effect. */
+/* Strictly speaking it makes no sense for usage of a stethoscope to not take
+   any time; however, unless it did, the stethoscope would be almost useless.
+   As a compromise, one use per action per stethoscope is free, another uses up
+   the turn; this makes curse status have a tangible effect.
+
+   The last stethoscope use turn is stored in obj->lastused; the last
+   stethoscope use movement energy is stored in obj->spe. */
 static int
 use_stethoscope(struct obj *obj)
 {
@@ -221,10 +224,9 @@ use_stethoscope(struct obj *obj)
     if (!getdir(NULL, &dx, &dy, &dz))
         return 0;
 
-    res = (moves == stetho_last_used_move) &&
-        (youmonst.movement == stetho_last_used_movement);
-    stetho_last_used_move = moves;
-    stetho_last_used_movement = youmonst.movement;
+    res = (moves == obj->lastused) && (youmonst.movement == obj->spe);
+    obj->lastused = moves;
+    obj->spe = youmonst.movement;
 
     if (u.usteed && dz > 0) {
         if (interference) {
