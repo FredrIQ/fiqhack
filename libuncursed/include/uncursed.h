@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-03 */
+/* Last modified by Alex Smith, 2013-11-12 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -36,23 +36,26 @@
     extern t EI(mv##f)(int, int);                            \
     extern t EI(mvw##f)(WINDOW *, int, int)
 
-#define UNCURSED_ANDWINDOWDEF(t, f, ty, ...)                    \
-    t f(__VA_ARGS__) ty; {return w##f(stdscr, __VA_ARGS__);}    \
-    t w##f(win, __VA_ARGS__) WINDOW *win; ty;
+#define UNCURSED_DEPAREN(...) __VA_ARGS__
+
+#define UNCURSED_ANDWINDOWDEF(t, f, proto, args)                \
+    t f proto {return w##f(stdscr, UNCURSED_DEPAREN args);}     \
+    t w##f (WINDOW *win, UNCURSED_DEPAREN proto)
 #define UNCURSED_ANDWINDOWVDEF(t, f)                            \
     t f(void) {return w##f(stdscr);}                            \
     t w##f(WINDOW *win)
-#define UNCURSED_ANDMVWINDOWDEF(t, f, ty, ...)                  \
-    t f(__VA_ARGS__) ty; {return w##f(stdscr, __VA_ARGS__);}    \
-    t mv##f(y, x, __VA_ARGS__) int y, x; ty; {                  \
-        return mvw##f(stdscr, y, x, __VA_ARGS__);               \
+
+#define UNCURSED_ANDMVWINDOWDEF(t, f, proto, args)              \
+    t f proto {return w##f(stdscr, UNCURSED_DEPAREN args);}     \
+    t mv##f(int y, int x, UNCURSED_DEPAREN proto) {             \
+        return mvw##f(stdscr, y, x, UNCURSED_DEPAREN args);     \
     }                                                           \
-    t mvw##f(win, y, x, __VA_ARGS__)                            \
-    WINDOW *win; int y, x; ty; {                                \
+    t mvw##f(WINDOW *win, int y, int x, UNCURSED_DEPAREN proto) \
+    {                                                           \
         if (wmove(win, y, x) == ERR) return ERR;                \
-        return w##f(win, __VA_ARGS__);                          \
+        return w##f(win, UNCURSED_DEPAREN args);                \
     }                                                           \
-    t w##f(win, __VA_ARGS__) WINDOW *win; ty;
+    t w##f(WINDOW *win, UNCURSED_DEPAREN proto)
 #define UNCURSED_ANDMVWINDOWVDEF(t, f)                          \
     t f(void) {return w##f(stdscr);}                            \
     t mv##f(int y, int x) {                                     \
