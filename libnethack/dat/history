@@ -1,4 +1,5 @@
-NetHack History file for release 4.2.1
+NetHack History file for release 4.3.0
+This file was last updated by Alex Smith, 2013-11-12
 
 Behold, mortal, the origins of NetHack...
 
@@ -239,4 +240,4 @@ NetHack 4 also contains code written by:
     Derek Ray                 Marco Bonetti             Stanislav Traykov
     Edoardo Spadolini         Mathew Hodson             Stephen Demos
     GreyKnight                Michael Deutschmann       Trevor Cook
-    Grunt                     Pasi Kallinnen            
+    Grunt                     Pasi Kallinnen            Zsbán Ambrus
