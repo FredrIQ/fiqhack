@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-12 */
+/* Last modified by Alex Smith, 2013-11-13 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -83,6 +83,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <string.h>
 
 /* tty.c is always linked statically. */
 #define UNCURSED_MAIN_PROGRAM
@@ -238,6 +239,33 @@ handle_sigcont(int unused)
     write(selfpipe[1], "c", 1);
 }
 
+/* These standard hooks need to be implemented in a platform-specific manner */
+void
+tty_hook_signal_getch(void)
+{
+    write(selfpipe[1], "g", 1);
+}
+
+static fd_set watchfds;
+static int watchfds_inited = 0;
+static int watchfd_max = 0;
+
+void
+tty_hook_watch_fd(int fd, int watch)
+{
+    if (fd >= FD_SETSIZE)
+        abort(); /* avoid UB using defined, noticeable behaviour */
+
+    if (watch) {
+        FD_SET(fd, &watchfds);
+        if (fd >= watchfd_max) watchfd_max = fd+1;
+    } else {
+        FD_CLR(fd, &watchfds);
+        while (watchfd_max && !FD_ISSET(watchfd_max - 1, &watchfds))
+            watchfd_max--;
+    }   
+}
+
 static void
 platform_specific_init(void)
 {
@@ -248,6 +276,11 @@ platform_specific_init(void)
             exit(1);
         }
     }
+
+    /* We initially aren't watching any FDs. */
+    if (!watchfds_inited)
+        FD_ZERO(&watchfds);
+    watchfds_inited = 1;
 
     /* Set up the terminal control flags. */
     tcgetattr(fileno(ifile), &ti_orig);
@@ -322,10 +355,12 @@ platform_specific_exit(void)
     tcsetattr(fileno(ofile), TCSADRAIN, &to_orig);
 }
 
-static char keystrings[3];      /* used to create unique pointers as sentinels */
+static char keystrings[5];      /* used to create unique pointers as sentinels */
 static char *KEYSTRING_HANGUP = keystrings + 0;
 static char *KEYSTRING_RESIZE = keystrings + 1;
 static char *KEYSTRING_INVALID = keystrings + 2;
+static char *KEYSTRING_SIGNAL = keystrings + 3;
+static char *KEYSTRING_OTHERFD = keystrings + 4;
 
 static int inited_when_stopped = 0;
 
@@ -359,7 +394,7 @@ platform_specific_getkeystring(int timeout_ms)
             return KEYSTRING_HANGUP;
 
         fd_set readfds;
-        FD_ZERO(&readfds);
+        memcpy(&readfds, &watchfds, sizeof (fd_set));
         FD_SET(fileno(ifile), &readfds);
 
         int max = fileno(ifile);
@@ -398,6 +433,9 @@ platform_specific_getkeystring(int timeout_ms)
             read(selfpipe[0], signalcode, 1);
 
             switch (*signalcode) {
+            case 'g':  /* uncursed_signal_getch */
+                return KEYSTRING_SIGNAL;
+
             case 'r':  /* SIGWINCH */
                 return KEYSTRING_RESIZE;
 
@@ -429,6 +467,11 @@ platform_specific_getkeystring(int timeout_ms)
                 }
                 break;
             }
+
+        } else if (!FD_ISSET(fileno(ifile), &readfds)) {
+
+            /* Activity on one of the watch fds. */
+            return KEYSTRING_OTHERFD;
 
         } else {
             /*
@@ -748,6 +791,12 @@ tty_hook_getkeyorcodepoint(int timeout_ms)
     last_color = -1;    /* send a new SGR on the next redraw */
 
     char *ks = platform_specific_getkeystring(timeout_ms);
+
+    if (ks == KEYSTRING_SIGNAL)
+        return KEY_SIGNAL + KEY_BIAS;
+
+    if (ks == KEYSTRING_OTHERFD)
+        return KEY_OTHERFD + KEY_BIAS;
 
     if (ks == KEYSTRING_HANGUP)
         return KEY_HANGUP + KEY_BIAS;

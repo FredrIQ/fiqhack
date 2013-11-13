@@ -26,6 +26,13 @@
 #include "uncursed_hooks.h"
 #include "uncursed_sdl.h"
 
+#ifdef AIMAKE_BUILDOS_MSWin32
+# include <Winsock2.h>
+# include <Ws2def.h>
+#else
+# include <sys/select.h>
+#endif
+
 #define debugprintf(x, ...) do {} while(0)
 
 static int fontwidth = 8;
@@ -624,6 +631,11 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
         }
 
         switch (e.type) {
+        case SDL_USEREVENT:
+
+            /* We got a key from a different thread. */
+            return e.user.code + KEY_BIAS;
+
         case SDL_WINDOWEVENT:
 
             /* The events we're interested in here are closing the window, and
@@ -814,6 +826,73 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
     } while (timeout_ms == -1 || SDL_GetTicks() < tick_target);
 
     return KEY_SILENCE + KEY_BIAS;
+}
+
+static void
+signal_event_loop(int key)
+{
+    /* Send a user message that will be picked up by the SDL event loop. */
+    SDL_UserEvent ue;
+    ue.type = SDL_USEREVENT;
+    ue.timestamp = SDL_GetTicks();
+    ue.windowID = 0;
+    ue.code = key;
+    SDL_PushEvent(&(union SDL_Event){.user = ue});
+}
+
+void
+sdl_hook_signal_getch(void)
+{
+    signal_event_loop(KEY_SIGNAL);
+}
+
+static SDL_Thread *watching_threads[FD_SETSIZE] = {0};
+
+static int
+fd_watcher(void *data)
+{
+    int fd_to_watch = (int)data;
+    while (watching_threads[fd_to_watch]) {
+        fd_set readfds;
+        struct timeval t;
+
+        t.tv_sec = 0;
+        t.tv_usec = 500000; /* poll for thread shutdown every 500ms */
+
+        FD_ZERO(&readfds);
+        FD_SET(fd_to_watch, &readfds);
+
+        int s = select(fd_to_watch + 1, &readfds, 0, 0, &t);
+        if (s > 0)
+            signal_event_loop(KEY_OTHERFD);
+    }
+    return 0;
+}
+
+void
+sdl_hook_watch_fd(int fd, int watch)
+{
+    if (fd >= FD_SETSIZE)
+        abort();
+
+    if (watch) {
+        /* To reduce polling, we spin off a thread whose purpose is to watch the
+           file descriptor in question. select() is defined as thread-safe by
+           POSIX, and is hopefully thread-safe on Windows too (and if it isn't,
+           we don't have another option anyway).
+
+           We still have to poll to see when the thread is exited, because we
+           can't portably signal a specific thread. */
+        watching_threads[fd] = SDL_CreateThread(fd_watcher, "FD Watcher",
+                                                (void *)fd);
+        /* If it fails, it leaves NULL in watching_threads, like we'd want. */
+
+    } else if (watching_threads[fd]) {
+        SDL_Thread *t = watching_threads[fd];
+        watching_threads[fd] = 0; /* tell the thread to exit */
+        if (t)
+            SDL_WaitThread(t, 0);
+    }
 }
 
 /* copied from tty.c; perhaps this should go in a header somewhere */
@@ -1078,9 +1157,20 @@ sdl_hook_fullredraw(void)
 {
     int i, j;
 
+    SDL_SetRenderDrawColor(render, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(render,
+                       &(SDL_Rect) {
+                           .x = 0,
+                           .y = 0,
+                           .w = fontwidth * winwidth,
+                           .h = fontheight * winheight
+                       });
+    sdl_hook_flush();
+
     for (j = 0; j < winheight; j++)
         for (i = 0; i < winwidth; i++)
             sdl_hook_update(j, i);
+    sdl_hook_flush();
 }
 
 void

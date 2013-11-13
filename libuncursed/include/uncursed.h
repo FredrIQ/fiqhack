@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-12 */
+/* Last modified by Alex Smith, 2013-11-13 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -455,6 +455,10 @@ extern uncursed_char_p EI(friendly_keyname) (int);
 /* We're being asked to exit in a hurry (SIGHUP, SIGTERM). */
 #define KEY_HANGUP    (KEY_NONDEC | 6)
 
+/* Input that isn't handled by uncursed, but needs to break it out of get_wch */
+#define KEY_SIGNAL    (KEY_NONDEC | 7)
+#define KEY_OTHERFD   (KEY_NONDEC | 8)
+
 #define KEY_MAX       (KEY_NONDEC | KEY_CTRL | KEY_ALT | KEY_SHIFT | 255)
 
 /* manual page 3ncurses delch */
@@ -496,7 +500,11 @@ extern int EI(wredrawln) (WINDOW *win, int, int);
 /* manual page 3ncurses get_wch */
 UNCURSED_ANDMVWINDOW(int, get_wch, wint_t *);
 extern int EI(unget_wch) (wchar_t);
+/* and some uncursed-specific functions: */
 extern int EI(timeout_get_wch) (int, wint_t *);
+extern void EI(uncursed_signal_getch) (void);
+extern void EI(uncursed_watch_fd) (int);
+extern void EI(uncursed_unwatch_fd) (int);
 
 /* manual page 3ncurses getyx, legacy; these are all macros */
 #define getyx(win, yy, xx) \
