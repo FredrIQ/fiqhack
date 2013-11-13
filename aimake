@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2013-10-29
+# Last modified by Alex Smith, 2013-11-13
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
@@ -1023,8 +1023,8 @@ the operating system.)
 An internal command that outputs its arguments, separated by spaces.  Any
 C<optpath::>s in the arguments will be output in aimake format.
 
-C<intcmd:echo> can also extract parts of object names, even if they aren't
-paths:
+C<intcmd:echo> can also output the content of files, or extract parts of
+object names, even if they aren't paths:
 
 =over 4
 
@@ -1032,6 +1032,12 @@ paths:
 
 The whole object name (for file-like objects, equivalent to not specifying the
 C<-w>, but it works on other types of object too);
+
+=item C<optpath:-q:>
+
+The file that a file-like object represents, in whatever path format is
+standard for the operating system you are using, formatted as a C string
+(i.e. surrounded with double quotes and with special characters escaped).
 
 =item C<optpath:-t:>
 
@@ -1047,6 +1053,11 @@ object name apart from the type for a simple object name.
 
 The "inside" object (the part after the second colon for a nested object); do
 not use this for non-nested objects.
+
+=item C<optpath:-c:>
+
+The contents of the file that an object represents.  (Remember to add a
+dependency on the file!)
 
 =back
 
@@ -2697,7 +2708,8 @@ my ($codeset, $text_layers, $binary_layers,
     $utf8_layers, $ascii_layers); # encodings
 my ($path, $bpath, $ipath, $singledir, $cwd); # important paths
 my $installing;                   # mode of operation
-my %config_hashes = ();           # configuration
+my %config_hashes = ();           # configuration parser state
+my %conditions = ();              # which bits of the build system are enabled
 my ($state, $state_fh, $config);  # state and configuration handling
 
 ####### Subroutines
@@ -3146,6 +3158,16 @@ sub aipath2ospath {
     }
 }
 
+# Like aipath2ospath, but quoted as a C string.
+sub quoted_ospath {
+    my $aipath = shift;
+    my $ospath = aipath2ospath $aipath;
+    $ospath =~ s{([^ -~]|\\)}{ord $1 < 128 ?
+        sprintf "\\x%2x", ord $1 :
+        sprintf "\\u%4x", ord $1}eg;
+    return "\"$ospath\"";
+}
+
 # Given an aimake path, returns the containing directory.
 # This cannot meaningfully be done for "path:" (the source directory),
 # "bpath:" (the build directory), or any spath: object without slashes
@@ -3379,7 +3401,7 @@ sub run_command {
             my $fn = aipath2ospath($1);
             # TODO: User-customizable encoding?
             open my $fh, "<$utf8_layers", $fn or
-                return ("Could not open 'fn' for reading: $!", '', '');
+                return ("Could not open '$fn' for reading: $!", '', '');
             local $/ = undef;
             my $stdout = <$fh>;
             close $fh;
@@ -3408,12 +3430,23 @@ sub run_command {
                   s/^optpath: ?-t([^:]*):(.*)$/$1.((parse_objname $2)[0])/es ||
                   s/^optpath: ?-a([^:]*):(.*)$/$1.((parse_objname $2)[1])/es ||
                   s/^optpath: ?-i([^:]*):(.*)$/$1.((parse_objname $2)[2])/es ||
+                  s/^optpath: ?-q([^:]*):(.*)$/$1.(quoted_ospath $2)/es ||
+                  s{^optpath: ?-c([^:]*):(.*)$}{$1.do{
+                      my $fn = $2;
+                      $fn = resolve_extend $fn;
+                      open my $fh, "<$utf8_layers", aipath2ospath $fn or
+                          return ("Could not open '$fn' for reading: $!", '', '');
+                      local $/ = undef;
+                      my $file_contents = <$fh>;
+                      close $fh;
+                      $file_contents;
+                  }}es ||
                   s/^optpath: ?([^:]*):/$1/), @opts;
             return (undef, (join ' ', @opts), '');
         } elsif ($cmd eq 'intcmd:writefile' ||
                  $cmd eq 'intcmd:testruncount') {
             my @paths = grep /^optpath: ?:/s, @opts;
-            my @strings = grep /^(?:optstring:|optpath: ?-[wtai])/s, @opts;
+            my @strings = grep /^(?:optstring:|optpath: ?-[wtaiqc])/s, @opts;
             my %okopts;
             $okopts{$_} = 1 for (@paths, @strings);
             my @bad = grep !$okopts{$_}, @opts;
@@ -3430,13 +3463,30 @@ sub run_command {
             open my $fh, ">$text_layers", $fn or
                 return ("Could not open '$fn' for writing: $!", '', '');
             s/^optstring: ?// for @strings;
-            s/^optpath: ?-w:// for @strings;
-            s/^optpath: ?-t([^:]*):(.*)$/$1.(parse_objname $2)[0]/es for @strings;
-            s/^optpath: ?-a([^:]*):(.*)$/$1.(parse_objname $2)[1]/es for @strings;
-            s/^optpath: ?-i([^:]*):(.*)$/$1.(parse_objname $2)[2]/es for @strings;
-            s{(\\.|_| )}{$1 eq '_' ? ' ' :
-                         $1 eq ' ' ? "\n" :
-                         substr $1, 1, 1}ge for @strings;
+            for my $i (0 .. $#strings) {
+                $strings[$i] =~ s/^optpath: ?-w:// or
+                    $strings[$i] =~ s{^optpath: ?-t([^:]*):(.*)$}{
+                        $1.((parse_objname $2)[0])}es or
+                    $strings[$i] =~ s{^optpath: ?-a([^:]*):(.*)$}{
+                        $1.((parse_objname $2)[1])}es or
+                    $strings[$i] =~ s{^optpath: ?-i([^:]*):(.*)$}{
+                        $1.((parse_objname $2)[2])}es or
+                    $strings[$i] =~ s{^optpath: ?-q([^:]*):(.*)$}{
+                        $1.(quoted_ospath $2)}es or
+                    $strings[$i] =~ s{^optpath: ?-c([^:]*):(.*)$}{$1.do{
+                        my $fn2 = $2;
+                        $fn2 = resolve_extend $fn2;
+                        open my $fh2, "<$utf8_layers", aipath2ospath $fn2 or
+                            return ("Could not open '$2' for reading: $!", '', '');
+                        local $/ = undef;
+                        my $file_contents = <$fh2>;
+                        close $fh2;
+                        $file_contents; }}es or
+                    $strings[$i] =~ s{(\\.|_| )}{
+                        $1 eq '_' ? ' ' :
+                            $1 eq ' ' ? "\n" :
+                            substr $1, 1, 1}ge;
+            }
             if ($cmd eq 'intcmd:testruncount') {
                 @strings = ($config_hashes{'sys:always_rebuild'});
             }
@@ -5189,6 +5239,15 @@ for my $rulename (keys %{$config->{rules}}) {
         if (exists $rule->{output} || exists $rule->{output_from_optpath})
         && exists $rule->{depends};
 }
+
+# Delete any rules outright if they violate conditions. This is how we
+# configure the build system.
+for my $rulename (keys %{$config->{rules}}) {
+    my $rule = $config->{rules}->{$rulename};
+    $rule->{condition} and !$conditions{$rule->{condition}} and
+        delete $config->{rules}->{$rulename};
+}
+
 $config_hashes{"config_rule:$_"} = sv_hash $config->{rules}->{$_}
     for keys %{$config->{rules}};
 $config_hashes{"config_option:$_"} = sv_hash $config->{options}->{$_}
@@ -6684,9 +6743,11 @@ __DATA__
         #   sitting around in the source directory.
         isolate_file => {
             object => qr/^path:.*\.(?:c|h|cxx|l|y)$/s,
-            command => ['intcmd:symlink', 'optpath::',
-                        'optpath:-o:extend:/:'],
-            output_from_optpath => '-o',
+            command => ['intcmd:writefile',
+                        'optpath::extend:/:',
+                        'optpath:-q#line 1 :',
+                        'optpath:-c:'],
+            output_from_optpath => '',
             low_message_priority => 1,
             propagate_usedeps => 2,
         },
@@ -6774,6 +6835,7 @@ __DATA__
             output => 'tool:c_precompile',
             outdepends => ['tool:c_toolchain', 'optionset:CFLAGS'],
             verb => 'found',
+            condition => 'compile_headers',
         },
         precompile_headers => {
             object => qr/^bpath:(?!aimake).*\.h$/s,
@@ -6784,6 +6846,7 @@ __DATA__
             # so this is safe (also necessary to avoid dependency loops).
             avoid_rules => qr/^headers_depend_on_precompiled_headers$/,
             output_from_optpath => '-o ',
+            condition => 'compile_headers',
         },
         # We use one of the following two dependencies for each header,
         # depending on which rule cares about them.
@@ -6792,16 +6855,19 @@ __DATA__
             output => 'dependencies:precompiled_header:',
             outdepends => [],
             propagate_usedeps => 2,
+            condition => 'compile_headers',
         },
         headers_depend_on_precompiled_headers => {
             object => qr/^bpath:(?!aimake).*\.h$/s,
             output => 'dependencies:precompiled_header:',
             outdepends => 'extend:.h.gch:',
             propagate_usedeps => 2,
+            condition => 'compile_headers',
         },
         add_precompiled_header_dependencies => {
             object => qr/^bpath:(?!aimake).*\.h$/s,
             depends => 'dependencies:precompiled_header:',
+            condition => 'compile_headers',
         },
 
         # OS detection
@@ -6873,8 +6939,9 @@ __DATA__
             outdepends => 'namehint:',
             dependsarg => qr/${longrandomstring}\w*\s*\[([^][]*)\]/,
             verb => 'found',
-            # Precompiled headers for this because we're defining extra
-            # macros; therefore, depending on them is pointless.
+            # Precompiled headers for this won't be used because we're
+            # defining extra macros; therefore, depending on them is
+            # pointless.
             avoid_rules => qr/^headers_depend_on_precompiled_headers$/,
         },
         c_embedded_aimake_reverse_import => {
