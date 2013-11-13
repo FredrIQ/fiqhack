@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-05 */
+/* Last modified by Alex Smith, 2013-11-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -54,6 +54,29 @@ static const struct artifact const_artilist[] = {
 /*  dummy element #0, so that all interesting indices are non-zero */
     A("", STRANGE_OBJECT,
       0, 0, 0, NO_ATTK, NO_DFNS, NO_CARY, 0, A_NONE, NON_PM, NON_PM, 0L),
+
+/*
+  The bonuses of artifacts are defined partly by the list in this file. This is
+  an array of struct artifact structures. This structure has a struct attack
+  attk field whose members are used in a way completely unlike how struct attack
+  is used for monster descriptions. In this struct attack, the adtyp field tells
+  both what type of elemental damage the bonus damage deals, and how a monster
+  can resist the bonus damage; the damn field gives the to-hit bonus, and the
+  damd field gives the damage bonus.
+
+  The to-hit bonus applies against any monsters, and is 1dX where X is the
+  previously mentioned damn field.
+
+  The damage bonus applies only to particular monsters, and either adds 1dY
+  extra damage where Y is the damd field, or doubles the normal damage that
+  would be dealt by the weapon (if the damd field is zero). This is handled in
+  artifact.c:artifact_hit. There's special handling for artifacts that drain
+  life or behead or bisect.
+
+  Magicbane gets extra special bonuses in addition to the normal damage bonus
+  code path. This handles both the effects and the extra damage for the scare,
+  confuse, stun, cancel, probe bonuses.
+ */
 
     A("Excalibur", LONG_SWORD,
       (SPFX_NOGEN | SPFX_RESTR | SPFX_SEEK | SPFX_DEFN | SPFX_INTEL |

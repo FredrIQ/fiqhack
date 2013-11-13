@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-29 */
+/* Last modified by Alex Smith, 2013-11-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -19,19 +19,13 @@ enum obj_where {
     NOBJ_STATES
 };
 
-
-union vptrs {
-    struct obj *v_nexthere;     /* floor location lists */
-    struct obj *v_ocontainer;   /* point back to container */
-    struct monst *v_ocarry;     /* point back to carrying monst */
-};
-
 struct obj {
     struct obj *nobj;
-    union vptrs v;
-# define nexthere       v.v_nexthere
-# define ocontainer     v.v_ocontainer
-# define ocarry         v.v_ocarry
+    union {
+        struct obj *nexthere;     /* floor location lists */
+        struct obj *ocontainer;   /* point back to container */
+        struct monst *ocarry;     /* point back to carrying monst */
+    };
 
     struct obj *cobj;   /* contents list for containers */
     unsigned int o_id;
@@ -41,74 +35,81 @@ struct obj {
     unsigned owt;
     int quan;   /* number of items */
 
-    schar spe;  /* quality of weapon, armor or ring (+ or -) number of charges
-                   for wand ( >= -1 ) marks your eggs, spinach tins royal
-                   coffers for a court ( == 2) tells which fruit a fruit is
-                   special for uball and amulet historic and gender for statues 
+    schar spe;  /*
+                 * quality of weapon, armor or ring (+ or -)
+                 * number of charges for wand ( >= -1 )
+                 * marks your eggs, spinach tins
+                 * royal coffers for a court ( == 2)
+                 * tells which fruit a fruit is
+                 * special for uball and amulet
+                 * historic and gender for statues
+                 * last used movement for a stethoscope
                  */
 # define STATUE_HISTORIC 0x01
 # define STATUE_MALE     0x02
 # define STATUE_FEMALE   0x04
-    char oclass;        /* object class */
-    char invlet;        /* designation in inventory */
-    char oartifact;     /* artifact array index */
+    char oclass;                /* object class */
+    char invlet;                /* designation in inventory */
+    char oartifact;             /* artifact array index */
 
-    xchar where;        /* where the object thinks it is */
-    xchar timed;        /* # of fuses (timers) attached to this obj */
+    xchar where;                /* where the object thinks it is */
+    xchar timed;                /* # of fuses (timers) attached to this obj */
 
     unsigned cursed:1;
     unsigned blessed:1;
-    unsigned unpaid:1;  /* on some bill */
+    unsigned unpaid:1;          /* on some bill */
     unsigned no_charge:1;       /* if shk shouldn't charge for this */
-    unsigned known:1;   /* exact nature known */
-    unsigned dknown:1;  /* color or text known */
-    unsigned bknown:1;  /* blessing or curse known */
-    unsigned rknown:1;  /* rustproof or not known */
+    unsigned known:1;           /* exact nature known */
+    unsigned dknown:1;          /* color or text known */
+    unsigned bknown:1;          /* blessing or curse known */
+    unsigned rknown:1;          /* rustproof or not known */
 
-    unsigned oeroded:2; /* rusted/burnt weapon/armor */
+    unsigned oeroded:2;         /* rusted/burnt weapon/armor */
     unsigned oeroded2:2;        /* corroded/rotted weapon/armor */
 # define greatest_erosion(otmp) (int)((otmp)->oeroded > (otmp)->oeroded2 ? (otmp)->oeroded : (otmp)->oeroded2)
 # define MAX_ERODE 3
-# define orotten oeroded/* rotten food */
+# define orotten oeroded        /* rotten food */
 # define odiluted oeroded       /* diluted potions */
 # define norevive oeroded2
     unsigned oerodeproof:1;     /* erodeproof weapon/armor */
-    unsigned olocked:1; /* object is locked */
-    unsigned obroken:1; /* lock has been broken */
+    unsigned olocked:1;         /* object is locked */
+    unsigned obroken:1;         /* lock has been broken */
     unsigned otrapped:1;        /* container is trapped */
     /* or accidental tripped rolling boulder trap */
 # define opoisoned otrapped     /* object (weapon) is coated with poison */
 
     unsigned recharged:3;       /* number of times it's been recharged */
-    unsigned lamplit:1; /* a light-source -- can be lit */
+    unsigned lamplit:1;         /* a light-source -- can be lit */
 # ifdef INVISIBLE_OBJECTS
-    unsigned oinvis:1;  /* invisible */
+    unsigned oinvis:1;          /* invisible */
 # endif
-    unsigned greased:1; /* covered with grease */
+    unsigned greased:1;         /* covered with grease */
     unsigned oattached:2;       /* obj struct has special attachment */
 # define OATTACHED_NOTHING 0
 # define OATTACHED_MONST   1    /* monst struct in oextra */
 # define OATTACHED_M_ID    2    /* monst id in oextra */
 # define OATTACHED_UNUSED3 3
 
-    unsigned in_use:1;  /* for magic items before useup items */
+    unsigned in_use:1;          /* for magic items before useup items */
     unsigned was_thrown:1;      /* thrown by the hero since last picked up */
     unsigned bypass:1;  /* mark this as an object to be skipped by bhito() */
     /* 5 free bits */
 
-    int corpsenm;       /* type of corpse is mons[corpsenm] */
-# define leashmon   corpsenm    /* gets m_id of attached pet */
-# define spestudied corpsenm    /* # of times a spellbook has been studied */
-# define fromsink   corpsenm    /* a potion from a sink */
-# define lastused   corpsenm    /* last time an unlocking tool was used */
-    unsigned oeaten;    /* nutrition left in food, if partly eaten */
+    union {
+        int corpsenm;           /* type of corpse is mons[corpsenm] */
+        int leashmon;           /* gets m_id of attached pet */
+        int spestudied;         /* # of times a spellbook has been studied */
+        int fromsink;           /* a potion from a sink */
+        int lastused;           /* last time a tool was used */
+    };
+    unsigned oeaten;            /* nutrition left in food, if partly eaten */
 
-    uchar onamelth;     /* length of name (following oxlth) */
-    short oxlth;        /* length of following data */
-    int age;    /* creation date */
+    uchar onamelth;             /* length of name (following oxlth) */
+    short oxlth;                /* length of following data */
+    int age;                    /* creation date */
     int owornmask;
-    void *oextra[];     /* used for name of ordinary objects - length is
-                           flexible; amount for tmp gold objects */
+    void *oextra[];             /* used for name of ordinary objects - length is
+                                   flexible; amount for tmp gold objects */
 };
 
 # define newobj(xl)     malloc((unsigned)(xl) + sizeof(struct obj))
