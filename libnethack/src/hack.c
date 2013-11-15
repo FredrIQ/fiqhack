@@ -2056,32 +2056,6 @@ check_special_room(boolean newlev)
 
         if (rt != 0) {
             level->rooms[roomno].rtype = OROOM;
-            if (!search_special(level, rt)) {
-                /* No more room of that type */
-                switch (rt) {
-                case COURT:
-                    level->flags.has_court = 0;
-                    break;
-                case SWAMP:
-                    level->flags.has_swamp = 0;
-                    break;
-                case MORGUE:
-                    level->flags.has_morgue = 0;
-                    break;
-                case ZOO:
-                    level->flags.has_zoo = 0;
-                    break;
-                case BARRACKS:
-                    level->flags.has_barracks = 0;
-                    break;
-                case TEMPLE:
-                    level->flags.has_temple = 0;
-                    break;
-                case BEEHIVE:
-                    level->flags.has_beehive = 0;
-                    break;
-                }
-            }
             if (rt == COURT || rt == SWAMP || rt == MORGUE || rt == ZOO)
                 for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
                     if (!DEADMONSTER(mtmp) && !Stealth && !rn2(3))

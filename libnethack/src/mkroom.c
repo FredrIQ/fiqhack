@@ -373,36 +373,17 @@ fill_zoo(struct level *lev, struct mkroom *sroom)
                 break;
             }
         }
-    switch (type) {
-    case COURT:
-        {
-            struct obj *chest;
 
-            lev->locations[tx][ty].typ = THRONE;
-            somexy(lev, sroom, &mm);
-            mkgold((long)rn1(50 * level_difficulty(&lev->z), 10), lev, mm.x,
-                   mm.y);
-            /* the royal coffers */
-            chest = mksobj_at(CHEST, lev, mm.x, mm.y, TRUE, FALSE);
-            chest->spe = 2;     /* so it can be found later */
-            lev->flags.has_court = 1;
-            break;
-        }
-    case BARRACKS:
-        lev->flags.has_barracks = 1;
-        break;
-    case ZOO:
-        lev->flags.has_zoo = 1;
-        break;
-    case MORGUE:
-        lev->flags.has_morgue = 1;
-        break;
-    case SWAMP:
-        lev->flags.has_swamp = 1;
-        break;
-    case BEEHIVE:
-        lev->flags.has_beehive = 1;
-        break;
+    if (type == COURT) {
+        struct obj *chest;
+
+        lev->locations[tx][ty].typ = THRONE;
+        somexy(lev, sroom, &mm);
+        mkgold((long)rn1(50 * level_difficulty(&lev->z), 10), lev, mm.x,
+               mm.y);
+        /* the royal coffers */
+        chest = mksobj_at(CHEST, lev, mm.x, mm.y, TRUE, FALSE);
+        chest->spe = 2;     /* so it can be found later */
     }
 }
 
@@ -493,7 +474,6 @@ mkswamp(struct level *lev)
                         makemon(mkclass(&lev->z, S_FUNGUS, 0), lev, sx, sy,
                                 NO_MM_FLAGS);
                 }
-        lev->flags.has_swamp = 1;
     }
 }
 
@@ -530,7 +510,6 @@ mktemple(struct level *lev)
     loc->altarmask = induced_align(&lev->z, 80);
     priestini(lev, sroom, shrine_spot->x, shrine_spot->y, FALSE);
     loc->altarmask |= AM_SHRINE;
-    lev->flags.has_temple = 1;
 }
 
 boolean

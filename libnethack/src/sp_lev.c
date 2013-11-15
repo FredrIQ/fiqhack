@@ -1132,18 +1132,12 @@ create_altar(struct level *lev, altar * a, struct mkroom *croom)
     if (a->shrine < 0)
         a->shrine = rn2(2);     /* handle random case */
 
-    if (oldtyp == FOUNTAIN)
-        lev->flags.nfountains--;
-    else if (oldtyp == SINK)
-        lev->flags.nsinks--;
-
     if (!croom_is_temple || !a->shrine)
         return;
 
     if (a->shrine) {    /* Is it a shrine or sanctum? */
         priestini(lev, croom, x, y, (a->shrine > 1));
         lev->locations[x][y].altarmask |= AM_SHRINE;
-        lev->flags.has_temple = TRUE;
     }
 }
 
@@ -1200,10 +1194,6 @@ create_feature(struct level *lev, int fx, int fy, struct mkroom *croom, int typ)
         return;
 
     lev->locations[x][y].typ = typ;
-    if (typ == FOUNTAIN)
-        lev->flags.nfountains++;
-    else if (typ == SINK)
-        lev->flags.nsinks++;
 }
 
 /*
@@ -1484,7 +1474,6 @@ fill_room(struct level *lev, struct mkroom *croom, boolean prefilled)
         /* Shop ? */
         if (croom->rtype >= SHOPBASE) {
             stock_room(croom->rtype - SHOPBASE, lev, croom);
-            lev->flags.has_shop = TRUE;
             return;
         }
 
@@ -1502,32 +1491,6 @@ fill_room(struct level *lev, struct mkroom *croom, boolean prefilled)
             fill_zoo(lev, croom);
             break;
         }
-    }
-    switch (croom->rtype) {
-    case VAULT:
-        lev->flags.has_vault = TRUE;
-        break;
-    case ZOO:
-        lev->flags.has_zoo = TRUE;
-        break;
-    case COURT:
-        lev->flags.has_court = TRUE;
-        break;
-    case MORGUE:
-        lev->flags.has_morgue = TRUE;
-        break;
-    case BEEHIVE:
-        lev->flags.has_beehive = TRUE;
-        break;
-    case BARRACKS:
-        lev->flags.has_barracks = TRUE;
-        break;
-    case TEMPLE:
-        lev->flags.has_temple = TRUE;
-        break;
-    case SWAMP:
-        lev->flags.has_swamp = TRUE;
-        break;
     }
 }
 

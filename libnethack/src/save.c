@@ -366,15 +366,8 @@ savelev(struct memfile *mf, xchar levnum)
     mwrite(mf, &lev->sstairs, sizeof (stairway));
     mwrite(mf, &lev->updest, sizeof (dest_area));
     mwrite(mf, &lev->dndest, sizeof (dest_area));
-    mwrite8(mf, lev->flags.nfountains);
-    mwrite8(mf, lev->flags.nsinks);
 
-    lflags =
-        (lev->flags.has_shop << 31) | (lev->flags.has_vault << 30) |
-        (lev->flags.has_zoo << 29) | (lev->flags.has_court << 28) |
-        (lev->flags.has_morgue << 27) | (lev->flags.has_beehive << 26) |
-        (lev->flags.has_barracks << 25) | (lev->flags.has_temple << 24) |
-        (lev->flags.has_swamp << 23) | (lev->flags.noteleport << 22) |
+    lflags = (lev->flags.noteleport << 22) |
         (lev->flags.hardfloor << 21) | (lev->flags.nommap << 20) |
         (lev->flags.hero_memory << 19) | (lev->flags.shortsighted << 18) |
         (lev->flags.graveyard << 17) | (lev->flags.is_maze_lev << 16) |
