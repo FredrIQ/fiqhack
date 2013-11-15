@@ -2432,7 +2432,6 @@ srch:
         p = eos(bp);
         if (!BSTRCMP(bp, p - 8, "fountain")) {
             level->locations[u.ux][u.uy].typ = FOUNTAIN;
-            level->flags.nfountains++;
             if (!strncmpi(bp, "magic ", 6))
                 level->locations[u.ux][u.uy].blessedftn = 1;
             pline("A %sfountain.",
@@ -2448,7 +2447,6 @@ srch:
         }
         if (!BSTRCMP(bp, p - 4, "sink")) {
             level->locations[u.ux][u.uy].typ = SINK;
-            level->flags.nsinks++;
             pline("A sink.");
             newsym(u.ux, u.uy);
             return &zeroobj;

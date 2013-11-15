@@ -438,8 +438,6 @@ stock_room(int shp_indx, struct level *lev, struct mkroom *sroom)
      * Special monster placements (if any) should go here: that way,
      * monsters will sit on top of objects and not the other way around.
      */
-
-    lev->flags.has_shop = TRUE;
 }
 
 

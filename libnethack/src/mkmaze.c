@@ -461,7 +461,7 @@ fixup_special(struct level *lev)
         /* using an unfilled morgue for rm id */
         croom = search_special(lev, MORGUE);
         /* avoid inappropriate morgue-related messages */
-        lev->flags.graveyard = lev->flags.has_morgue = 0;
+        lev->flags.graveyard = 0;
         croom->rtype = OROOM;   /* perhaps it should be set to VAULT? */
         /* stock the main vault */
         for (x = croom->lx; x <= croom->hx; x++)

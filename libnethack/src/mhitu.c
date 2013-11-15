@@ -2256,7 +2256,7 @@ doseduce(struct monst *mon)
             mpickobj(mon, ring);
         } else {
             char buf[BUFSZ];
-            enum objslot slot;
+            enum objslot slot = os_invalid;
 
             if (uleft && uright && uleft->otyp == RIN_ADORNMENT &&
                 uright->otyp == RIN_ADORNMENT)

@@ -442,21 +442,8 @@ struct damage {
 };
 
 struct levelflags {
-    uchar nfountains;   /* number of fountains on level */
-    uchar nsinks;       /* number of sinks on the level */
     int purge_monsters; /* number of dead monsters still on level->monlist */
 
-    /* Several flags that give hints about what's on the level */
-    unsigned has_shop:1;
-    unsigned has_vault:1;
-    unsigned has_zoo:1;
-    unsigned has_court:1;
-    unsigned has_morgue:1;
-    unsigned has_beehive:1;
-    unsigned has_barracks:1;
-    unsigned has_temple:1;
-
-    unsigned has_swamp:1;
     unsigned noteleport:1;
     unsigned hardfloor:1;
     unsigned nommap:1;
@@ -464,10 +451,9 @@ struct levelflags {
     unsigned shortsighted:1;    /* monsters are shortsighted */
     unsigned graveyard:1;       /* has_morgue, but remains set */
     unsigned is_maze_lev:1;
-
     unsigned is_cavernous_lev:1;
-    unsigned arboreal:1;        /* Trees replace rock */
 
+    unsigned arboreal:1;        /* Trees replace rock */
     unsigned forgotten:1;       /* previously visited but forgotten (amnesia) */
 };
 

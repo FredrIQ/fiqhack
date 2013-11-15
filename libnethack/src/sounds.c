@@ -31,7 +31,7 @@ dosounds(void)
 
     hallu = Hallucination ? 1 : 0;
 
-    if (level->flags.nfountains && !rn2(400)) {
+    if (has_terrain(level, FOUNTAIN) && !rn2(400)) {
         static const char *const fountain_msg[4] = {
             "bubbling water.",
             "water falling on coins.",
@@ -41,7 +41,7 @@ dosounds(void)
         You_hear(fountain_msg[rn2(3) + hallu]);
     }
 
-    if (level->flags.nsinks && !rn2(300)) {
+    if (has_terrain(level, SINK) && !rn2(300)) {
         static const char *const sink_msg[3] = {
             "a slow drip.",
             "a gurgling noise.",
@@ -50,7 +50,7 @@ dosounds(void)
         You_hear(sink_msg[rn2(2) + hallu]);
     }
 
-    if (level->flags.has_court && !rn2(200)) {
+    if (search_special(level, COURT) && !rn2(200)) {
         static const char *const throne_msg[4] = {
             "the tones of courtly conversation.",
             "a sceptre pounded in judgment.",
@@ -74,7 +74,7 @@ dosounds(void)
             }
         }
     }
-    if (level->flags.has_swamp && !rn2(200)) {
+    if (search_special(level, SWAMP) && !rn2(200)) {
         static const char *const swamp_msg[3] = {
             "You hear mosquitoes!",
             "You smell marsh gas!",     /* so it's a smell... */
@@ -83,12 +83,7 @@ dosounds(void)
         pline(swamp_msg[rn2(2) + hallu]);
         return;
     }
-    if (level->flags.has_vault && !rn2(200)) {
-        if (!(sroom = search_special(level, VAULT))) {
-            /* strange ... */
-            level->flags.has_vault = 0;
-            return;
-        }
+    if ((sroom = search_special(level, VAULT)) && !rn2(200)) {
         if (gd_sound())
             switch (rn2(2) + hallu) {
             case 1:{
@@ -118,7 +113,7 @@ dosounds(void)
             }
         return;
     }
-    if (level->flags.has_beehive && !rn2(200)) {
+    if (search_special(level, BEEHIVE) && !rn2(200)) {
         for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
             if (DEADMONSTER(mtmp))
                 continue;
@@ -140,7 +135,7 @@ dosounds(void)
             }
         }
     }
-    if (level->flags.has_morgue && !rn2(200)) {
+    if (search_special(level, MORGUE) && !rn2(200)) {
         for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
             if (DEADMONSTER(mtmp))
                 continue;
@@ -168,7 +163,7 @@ dosounds(void)
             }
         }
     }
-    if (level->flags.has_barracks && !rn2(200)) {
+    if (search_special(level, BARRACKS) && !rn2(200)) {
         static const char *const barracks_msg[4] = {
             "blades being honed.",
             "loud snoring.",
@@ -188,7 +183,7 @@ dosounds(void)
             }
         }
     }
-    if (level->flags.has_zoo && !rn2(200)) {
+    if (search_special(level, ZOO) && !rn2(200)) {
         static const char *const zoo_msg[3] = {
             "a sound reminiscent of an elephant stepping on a peanut.",
             "a sound reminiscent of a seal barking.",
@@ -204,12 +199,7 @@ dosounds(void)
             }
         }
     }
-    if (level->flags.has_shop && !rn2(200)) {
-        if (!(sroom = search_special(level, ANY_SHOP))) {
-            /* strange... */
-            level->flags.has_shop = 0;
-            return;
-        }
+    if ((sroom = search_special(level, ANY_SHOP)) && !rn2(200)) {
         if (tended_shop(sroom) &&
             !strchr(u.ushops, ROOM_INDEX(sroom) + ROOMOFFSET)) {
             static const char *const shop_msg[3] = {
@@ -221,7 +211,7 @@ dosounds(void)
         }
         return;
     }
-    if (Is_oracle_level(&u.uz) && !rn2(400)) {
+    if (search_special(level, DELPHI) && !rn2(400)) {
         /* make sure the Oracle is still here */
         for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
             if (!DEADMONSTER(mtmp) && mtmp->data == &mons[PM_ORACLE])

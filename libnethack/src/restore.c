@@ -831,19 +831,7 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
     mread(mf, &lev->updest, sizeof (dest_area));
     mread(mf, &lev->dndest, sizeof (dest_area));
 
-    lev->flags.nfountains = mread8(mf);
-    lev->flags.nsinks = mread8(mf);
-
     lflags = mread32(mf);
-    lev->flags.has_shop = (lflags >> 31) & 1;
-    lev->flags.has_vault = (lflags >> 30) & 1;
-    lev->flags.has_zoo = (lflags >> 29) & 1;
-    lev->flags.has_court = (lflags >> 28) & 1;
-    lev->flags.has_morgue = (lflags >> 27) & 1;
-    lev->flags.has_beehive = (lflags >> 26) & 1;
-    lev->flags.has_barracks = (lflags >> 25) & 1;
-    lev->flags.has_temple = (lflags >> 24) & 1;
-    lev->flags.has_swamp = (lflags >> 23) & 1;
     lev->flags.noteleport = (lflags >> 22) & 1;
     lev->flags.hardfloor = (lflags >> 21) & 1;
     lev->flags.nommap = (lflags >> 20) & 1;

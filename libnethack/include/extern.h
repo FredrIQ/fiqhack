@@ -694,6 +694,10 @@ extern void carry_obj_effects(struct obj *);
 extern const char *currency(long);
 extern void silly_thing(const char *, struct obj *);
 
+/* ### level.c ### */
+
+extern boolean has_terrain(struct level *lev, schar typ);
+
 /* ### light.c ### */
 
 extern void new_light_source(struct level *lev, xchar x, xchar y, int range,

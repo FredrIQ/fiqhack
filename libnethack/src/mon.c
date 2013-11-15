@@ -1088,8 +1088,7 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                     }
                     /* Note: ALLOW_SANCT only prevents movement, not */
                     /* attack, into a temple. */
-                    if (level->flags.has_temple &&
-                        *in_rooms(level, nx, ny, TEMPLE) &&
+                    if (*in_rooms(level, nx, ny, TEMPLE) &&
                         !*in_rooms(level, x, y, TEMPLE) &&
                         in_your_sanctuary(NULL, nx, ny)) {
                         if (!(flag & ALLOW_SANCT))

@@ -636,7 +636,6 @@ makelevel(struct level *lev)
         fill_vault:
             add_room(lev, vault_x, vault_y, vault_x + w, vault_y + h, TRUE,
                      VAULT, FALSE);
-            lev->flags.has_vault = 1;
             ++room_threshold;
             fill_room(lev, &lev->rooms[lev->nroom - 1], FALSE);
             mk_knox_portal(lev, vault_x + w, vault_y + h);
@@ -903,7 +902,7 @@ mklev(d_level * levnum)
     /* has_morgue gets cleared once morgue is entered; graveyard stays set
        (graveyard might already be set even when has_morgue is clear [see
        fixup_special()], so don't update it unconditionally) */
-    if (lev->flags.has_morgue)
+    if (search_special(lev, MORGUE))
         lev->flags.graveyard = 1;
     if (!lev->flags.is_maze_lev) {
         for (croom = &lev->rooms[0]; croom != &lev->rooms[lev->nroom]; croom++)
@@ -1295,8 +1294,6 @@ mkfount(struct level *lev, int mazeflag, struct mkroom *croom)
     /* Is it a "blessed" fountain? (affects drinking from fountain) */
     if (!rn2(7))
         lev->locations[m.x][m.y].blessedftn = 1;
-
-    lev->flags.nfountains++;
 }
 
 
@@ -1315,8 +1312,6 @@ mksink(struct level *lev, struct mkroom *croom)
 
     /* Put a sink at m.x, m.y */
     lev->locations[m.x][m.y].typ = SINK;
-
-    lev->flags.nsinks++;
 }
 
 

@@ -189,7 +189,6 @@ dryup(xchar x, xchar y, boolean isyou)
         /* The location is seen if the hero/monster is invisible */
         /* or felt if the hero is blind.  */
         newsym(x, y);
-        level->flags.nfountains--;
         if (isyou && in_town(x, y))
             angry_guards(FALSE);
     }
@@ -393,7 +392,6 @@ dipfountain(struct obj *obj)
         level->locations[u.ux][u.uy].typ = ROOM;
         level->locations[u.ux][u.uy].looted = 0;
         newsym(u.ux, u.uy);
-        level->flags.nfountains--;
         if (in_town(u.ux, u.uy))
             angry_guards(FALSE);
         return;
@@ -499,10 +497,8 @@ breaksink(int x, int y)
 {
     if (cansee(x, y) || (x == u.ux && y == u.uy))
         pline("The pipes break!  Water spurts out!");
-    level->flags.nsinks--;
     level->locations[x][y].doormask = 0;
     level->locations[x][y].typ = FOUNTAIN;
-    level->flags.nfountains++;
     newsym(x, y);
 }
 
