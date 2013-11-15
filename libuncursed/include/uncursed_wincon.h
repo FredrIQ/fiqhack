@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-12 */
+/* Last modified by Alex Smith, 2013-11-13 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -24,6 +24,8 @@ extern "C" {
     extern void wincon_hook_delay(int);
     extern void wincon_hook_rawsignals(int);
     extern int wincon_hook_getkeyorcodepoint(int);
+    extern void wincon_hook_signal_getch(void);
+    extern void wincon_hook_watch_fd(int, int);
 
 #ifdef __cplusplus
 }

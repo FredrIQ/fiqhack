@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-12 */
+/* Last modified by Alex Smith, 2013-11-13 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -382,6 +382,26 @@ uncursed_hook_getkeyorcodepoint(int ms)
         if (h->used && h->hook_type != uncursed_hook_type_input)
             h->recordkeyorcodepoint(kc);
     return kc;
+}
+
+static void
+uncursed_hook_signal_getch(void)
+{
+    struct uncursed_hooks *h;
+
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used && h->hook_type == uncursed_hook_type_input)
+            h->signal_getch();
+}
+
+static void
+uncursed_hook_watch_fd(int fd, int watch)
+{
+    struct uncursed_hooks *h;
+
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used && h->hook_type == uncursed_hook_type_input)
+            h->watch_fd(fd, watch);
 }
 
 #ifdef __GNUC__
@@ -1700,6 +1720,7 @@ keyname(int c)
         KEYCHECK(BACKSPACE); KEYCHECK(ESCAPE); KEYCHECK(ENTER);
         KEYCHECK(MOUSE); KEYCHECK(RESIZE); KEYCHECK(PRINT);
         KEYCHECK(INVALID); KEYCHECK(HANGUP);
+        KEYCHECK(OTHERFD); KEYCHECK(SIGNAL);
 #undef KEYCHECK
 
     default:
@@ -1800,6 +1821,7 @@ friendly_keyname(int c)
         KEYNAME(MOUSE, Mouse); KEYNAME(RESIZE, Resize);
         KEYNAME(PRINT, PrtSc); KEYNAME(INVALID, Invalid);
         KEYNAME(HANGUP, Hangup);
+        KEYNAME(OTHERFD, OtherFD); KEYNAME(SIGNAL, Signal);
 #undef KEYAME
 
     case ' ':
@@ -1810,9 +1832,11 @@ friendly_keyname(int c)
         /* Synthesize a key name out of the codes we were actually sent. */
 
         if ((c & KEY_KEYPAD) == KEY_KEYPAD) {
-            sprintf(keybuf + strlen(keybuf), "Unknown%c", (c & 255) + 256);
+            sprintf(keybuf + strlen(keybuf), "Unknown%d1",
+                    (int)(unsigned char)c);
         } else {
-            sprintf(keybuf + strlen(keybuf), "Unknown%d", c & 255);
+            sprintf(keybuf + strlen(keybuf), "Unknown%d2",
+                    (int)(unsigned char)c);
         }
     }
 
@@ -2478,6 +2502,24 @@ UNCURSED_ANDMVWINDOWDEF(int,
 get_wch, (wint_t * rv), (rv))
 {
     return timeout_get_wch(win->timeout, rv);
+}
+
+void
+uncursed_signal_getch(void)
+{
+    uncursed_hook_signal_getch();
+}
+
+void
+uncursed_watch_fd(int fd)
+{
+    uncursed_hook_watch_fd(fd, 1);
+}
+
+void
+uncursed_unwatch_fd(int fd)
+{
+    uncursed_hook_watch_fd(fd, 0);
 }
 
 /* manual page 3ncurses getcchar */

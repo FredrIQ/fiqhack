@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2013-10-03
+Last modified by Alex Smith, 2013-11-13
 
 This documentation for the uncursed rendering library is provided under the
 same terms as libuncursed itself: it may be distributed under either of the
@@ -86,7 +86,7 @@ UNIX-like platforms (such as Linux), and produces output suitable for use in a
 modern terminal that uses VT100-inspired control codes.  (The terminal does
 not necessarily have to be running on the same operating system as libuncursed
 itself; roguelikes are commonly played over ssh or telnet, and the `tty`
-interface is specifically supported in this sort of configuration.
+interface is specifically supported in this sort of configuration.)
 
 This interface is tested and known to work on the following terminals:
 
@@ -148,8 +148,8 @@ ignore the bits intended for other terminals).  This means that the terminal
 will render the data correctly even if `TERM` is set incorrectly (a common
 problem over ssh; although ssh sends the value of `TERM` correctly, it can
 often has a different meaning on the source and target machines if the
-operating systems differently), and even if the terminal capabilities database
-is wrong or insufficient (which is a common cause of dark gray rendering
+operating systems differ), and even if the terminal capabilities database is
+wrong or insufficient (which is a common cause of dark gray rendering
 incorrectly on terminals; some terminals will render dark gray incorrectly on
 ncurses but correctly via libuncursed).
 
@@ -297,8 +297,9 @@ screen location (as well as several settings that can be toggled, and a
 current attribute and cursor location); however, there is no particular reason
 why a window should necessarily fit within the screen, or indeed ever be drawn
 to the screen, so they can be used to store information independently of their
-screen coordinates.  Windows mostly have their own memory buffers, although it
-is possible to create two windows that share a buffer.
+screen coordinates.  It is also possible to create multiple windows that are
+views into the same memory buffer; a "parent" window that is the buffer
+itself, and "child" windows that look at rectangular regions of it.
 
 An `attr_t` is a numeric type that represents a text attribute: everything
 about one character on screen (color, underlining, etc.) apart from the
@@ -326,17 +327,17 @@ it.
 `WINDOW *stdscr` is the default window created when uncursed is initialised.
 It is always the same size as the screen of the terminal that uncursed renders
 onto (which is likely to be a window in a GUI in practice, but "screen" will
-be used to describe it in this document because "window" is used for another
-meaning), and always has that entire screen as its suggested screen location.
-It should not be moved, resized, etc. by the program using libuncursed
-(although libuncursed may have to resize it itself in response to user
-interaction).
+be used to describe it in this document because "window" is used to mean
+something else), and always has that entire screen as its suggested screen
+location.  It should not be moved, resized, etc. by the program using
+libuncursed (although it can be resized by the user of the program, via
+resizing the terminal that uncursed is rendering onto).
 
 `int COLORS`, `int COLOR_PAIRS` are integers that should be treated as
 read-only `uncursed_color` values.  They specify the maximum number of colors
 in existence, and maximum number of color pairs (palette entries) that can be
 used at any one time.  In curses, these would have been dynamically decided
-depending on the terminal; at current, libuncursed always gives these the
+depending on the terminal; at present, libuncursed always gives these the
 values 16 and 32767 respectively, although it is probably best to read their
 values rather than hardcode the numbers in case they ever change.
 
@@ -347,7 +348,9 @@ by the application that uses uncursed.
 
 `int LINES`, `int COLS` give the screen dimensions.  (You could also access
 these via querying the size of `stdscr`, but the existence of these variables
-is traditional and makes for shorter code.)
+is traditional and makes for shorter code.)  These will be written to by
+libuncursed upon initialization and if the terminal is resized; programs that
+use libuncursed should only read from them, not assign to them.
 
 Constants
 ---------
@@ -367,8 +370,10 @@ practice, terminals tend to be quite limited in their support for combining
 characters (even more so than in their support for Unicode in general); it's
 reasonable to use combining characters if you have no other option, but in
 general, it's going to be more portable if you just assume that this is 1.
-(Terminals each have their own effective `CCHARW_MAX` limits, which might be
-lower or higher than libuncursed's.
+Terminals each have their own effective `CCHARW_MAX` limits, which might be
+lower or higher than libuncursed's; if you try to draw more combining
+charaters onto a part of the screen than the terminal can handle, expect
+rendering issues.
 
 The 8 colors used by libuncursed are `COLOR_BLACK`, `COLOR_RED`,
 `COLOR_GREEN`, `COLOR_YELLOW`, `COLOR_BLUE`, `COLOR_MAGENTA`, `COLOR_CYAN`,
@@ -390,8 +395,8 @@ supported by libuncursed are `A_NORMAL`, `A_BOLD`, and (on many but not all
 terminals) `A_UNDERLINE`.  It also recognises some other names for
 compatibility with ncurses: `A_INVIS` and `A_REVERSE` are rendered via setting
 the foreground to the background, and swapping the foreground and background,
-respectively (and thus do not do anything that could not be accomplished simly
-using color), `A_STANDOUT` is a combination of various attributes that
+respectively (and thus do not do anything that could not be accomplished
+simply using color), `A_STANDOUT` is a combination of various attributes that
 increase visibility (and should be avoided in favour of something more
 specific), and `A_BLINK`, `A_DIM`, `A_PROTECT`, `A_ALTCHARSET` are recognised
 but do not do anything at all.
@@ -447,7 +452,7 @@ Key codes
 ---------
 
 The other major group of constants is key codes.  curses implementations are
-historically limited by a relatively small number of recognised keypresses,
+historically limited to a relatively small number of recognised keypresses,
 meaning that frequently if an unusual combination of keys were pressed, your
 application would not be able to respond to it at all.  uncursed uses a much
 larger number of keypresses than in curses; `KEY_MAX`, the highest possible
@@ -460,14 +465,15 @@ even if there is no constant for them.  This most frequently happens if the
 user presses a key on their keyboard that sends a code that is correctly
 formatted for the key-sending protocol in use (i.e. uncursed can parse it),
 but it doesn't correspond to any key that uncursed is aware of.  In such
-cases, the key will be given an otherwise unallocated code based on what it
-parsed from the representation of the key it was sent; `keyname` will return a
-representation of a C expression that would produce this code, and
-`friendly_keyname` will return a string along the lines of `Unknown100` that
-is consistent for the numerical code.  (Thus, although uncursed does not know
-what the key is, and your application doesn't either, your application will
-nonetheless be able to bind commands to the key via treating the key number as
-an opaque and meaningless identifier.)
+cases, the key will be given an otherwise unallocated code based on what
+uncursed parsed from the representation of the key that it was sent; `keyname`
+will return a representation of a C expression that would produce this code,
+and `friendly_keyname` will return a string along the lines of `Unknown101`
+that is (as far as possible) the same for the same keypress, and different for
+different keypresses.  (Thus, although uncursed does not know what the key is,
+and thus your application doesn't either, your application will nonetheless be
+able to bind commands to the key via treating the key number as an opaque and
+meaningless identifier.)
 
 One other thing to mention is an unfortunate historical accident.  The DEC
 VT100, on which the protocol used to communicate with modern terminals was
@@ -479,13 +485,14 @@ majority of modern systems, terminal emulator designers had to make a choice
 as to how to map their function keys so that they worked with the existing
 programs that were designed to work with a VT100.  There were two major
 designs: some terminal emulators mapped F1-F4 on the PC keyboard (which aren't
-usable on a DEC) to PF1-PF4 in the protocol; and others mapped the keys in the
-same positions on the keyboard, thus PF1-PF4 would be produced via NumLock,
-numpad plus, numpad times, numpad divide.  Therefore, if libuncursed sees a
-code of "PF1" arriving from the terminal, it can't know whether the user
-actually pressed F1, or NumLock.  (Or is using a terminal that actually has a
-physical PF1 key.)  In such a situation, it will return `KEY_PF1` to the
-application, and leave the application to figure out what to do with it.
+usable on a DEC) to PF1-PF4 in the protocol; and others associated the key
+codes with physical locations on the keyboard, thus PF1-PF4 would be produced
+via NumLock, numpad plus, numpad times, numpad divide.  Therefore, if
+libuncursed sees a code of "PF1" arriving from the terminal, it can't know
+whether the user actually pressed F1, or NumLock.  (Or is using a terminal
+that actually has a physical PF1 key.)  In such a situation, it will return
+`KEY_PF1` to the application, and leave the application to figure out what to
+do with it.
 
 There are two sets of key codes that can be generated: keys that represent
 printable characters, and keys that represent other things.  When using the
@@ -504,8 +511,8 @@ way to produce a code from 128 up in a non-Unicode terminal is to use the Meta
 key (or sometimes the Alt key), which literally means "add 128 to the
 character code", and thus a code of, say, 193 should typically be interpreted
 as a capital 'A' (code 65) with 128 added to it, and rendered by applications
-as (`Meta-A`).  (It could also mean an 'Á', Unicode and Latin-1 codepoint
-193, but this is less likely; perhaps the most reasonable behaviour for an
+as `Meta-A`.  (It could also mean an 'Á', Unicode and Latin-1 codepoint 193,
+but this is less likely; perhaps the most reasonable behaviour for an
 application is to use the Unicode/Latin-1 behaviour if they were expecting
 text to be input, and to treat it as a Meta-modified haracter otherwise.)
 uncursed will attempt to, as far as possible, distinguish between Meta and
@@ -602,6 +609,8 @@ happen in response to a request for a key, and thus have to be returned by
 `get_wch` and `getch`:
 
     KEY_MOUSE    A mouse click (reserved for future use, currently not sent)
+    KEY_SIGNAL   A message from a signal handler or another thread
+    KEY_OTHERFD  Input is available on a socket or pipe
     KEY_RESIZE   The terminal was resized
     KEY_INVALID  The terminal sent a malformed key code
     KEY_HANGUP   The terminal no longer exists
@@ -609,6 +618,14 @@ happen in response to a request for a key, and thus have to be returned by
 `KEY_MAX` is the highest possible key code (and, as a result of key modifier
 combinations and a large number of codes reserved for unknown keys, is quite
 large).
+
+`KEY_SIGNAL` and `KEY_OTHERFD` are only ever sent by your own application.
+Their purpose is to allow a program to accept input from multiple sources at
+once; you can call `get_wch` or similar in your main loop, and it will return
+`KEY_OTHERFD` if the data arrived on a file descriptor it was told to monitor,
+or `KEY_SIGNAL` if you called `uncursed_signal_getch` (most likely via use of
+a signal handler or a different thread).  See the documentation for
+`uncursed_signal_getch` and `uncursed_watch_fd` for more information.
 
 Note that `KEY_RESIZE` requires special handling by the application, and
 behaves differently from its behaviour in ncurses.  In ncurses, when the
@@ -674,13 +691,13 @@ something like a failure to allocate memory).  Otherwise, it will return
 `stdscr` (allowing you to avoid the use of global variables, if you wish).
 
 After calling `initscr`, uncursed may gain control of stdin, stdout and
-stderr; your application should not try to uses these standard file handles
+stderr; your application should not try to use these standard file handles
 without first calling `endwin`, or it is likely to produce garbled output
 and/or receive garbled input.
 
 `initscr` should only be called once per program; if you try to call it a
 second time, it will do nothing and return `NULL`. To tell libuncursed to take
-control of the terminal a second time, after it has reliquished it, use
+control of the terminal a second time, after it has relinquished it, use
 `refresh`.
 
 When using interface plugins that create their own windows, rather than using
@@ -694,7 +711,7 @@ terminal's settings to normal, and can also be called at other times if your
 program needs to write to stdout or stderr for some reason.  If uncursed is
 using an interface plugin that creates its own window, rather than using an
 existing terminal, this will have no visible effect on the screen (although
-stdout/stderr will be connected to wherever they were connected before
+stdout/stderr will be reconnected to wherever they were connected before
 uncursed was run, most likely the terminal from which the uncursed-using
 program was run).  If uncursed is using an existing terminal, this will
 attempt to restore as much of its state as possible to the state when
@@ -809,6 +826,66 @@ for control- or meta-modified keys); `key_name` gives a name (of the form
 will operate either on (ASCII) codepoints, or on (ASCII or Unicode) key names
 (i.e., it can handle the values that `getch` outputs); and `friendly_keyname`
 is similar, but gives a more human-readable name (like `Left` or `PrtSc`).
+
+### Input from sources other than the terminal
+
+uncursed does not input from sources other than its terminal, but it has
+functions to simplify its use by programs that take input from multiple
+sources, such as network sockets or signal handlers.  (Trying to get a curses
+program to read from either the terminal or a network socket is very complex;
+the simplest method I know of involves multithreading, which is not very
+simple.)
+
+    void uncursed_signal_getch(void)
+
+Causes the current or next call to `get_wch`, `getch`, or `timeout_get_wch` to
+return as if `KEY_SIGNAL` were pressed.  Unlike every other uncursed function
+(which must be called on the same thread as `initialize_uncursed` and
+`initscr`, this function can safely be called from a signal handler, or a
+thread other than the thread that the other uncursed functions are running on
+(and in fact, this is the only way to call it during a call to `get_wch`).  If
+this function is called multiple times between calls to `get_wch`, its effects
+will be queued, causing the same number of calls to `get_wch` to return
+`KEY_SIGNAL` (although those calls will not necessarily be consecutive,
+because they can be overriden by other unusual return values, such as
+`KEY_RESIZE` and `KEY_HANGUP`).  There may be OS-dependent limits on how many
+signals can be queued up (likely in the low hundreds); when the limit is
+reached, the function may block, or else signals may be lost.
+
+The intended use for this is to call `get_wch` in the main loop of your
+program, while a signal handler or separate thread waits in the background.
+When an event arrives that your main loop would need to know about, the signal
+handler or separate thread pushes information about it into an appropriately
+synchronized queue, then calls `uncursed_signal_getch`; the main loop will
+then read the `KEY_SIGNAL` and pop the information it needs from the queue.
+
+    void uncursed_watch_fd(int fd)
+    void uncursed_unwatch_fd(int fd)
+
+`uncursed_watch_fd` causes future calls to `get_wch`, `getch`, or
+`timeout_get_wch` to return `KEY_OTHERFD` when input is available on the given
+file descriptor; `uncursed_unwatch_fd` undoes this effect.  What constitutes a
+"file descriptor" depends on your operating system; all major operating
+systems use file descriptors for network sockets, and some use them for other
+things as well (such as pipes, or even regular files).  "Input is available"
+means that it is possible to read from the given file descriptor without
+blocking. (Note that a file at EOF can usually be read without blocking; the
+read is not particularly interesting, but it doesn't block.)
+
+The `KEY_OTHERFD` return does not specify *which* file descriptor can be read
+from without blocking, so if you are watching more than one file descriptor,
+you will need to determine which one is readable via use of nonblocking reads,
+or perhaps the POSIX API function `select()`.
+
+The given file descriptor, `fd`, may be limited in range, due to the system
+calls used to monitor a descriptor for input. (For instance, it may need to be
+less than `FD_SETSIZE` on a POSIX system.) It must also be open (and should
+not be closed until after it is unwatched).
+
+The intended use for this is to be able to receive data from either the user
+or from a network connection; you call `uncursed_watch_fd` when you open the
+network connection, then read from it whenever the `get_wch` in your main loop
+returns `KEY_OTHERFD`.
 
 ### Drawing windows to the screen
 

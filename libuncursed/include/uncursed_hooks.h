@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-12 */
+/* Last modified by Alex Smith, 2013-11-13 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -61,6 +61,8 @@ struct uncursed_hooks {
     void (*rawsignals) (int);       /* 0 or 1 */
 #define KEY_BIAS (0x10ff00) /* add this to a key to show it isn't a codepoint */
     int (*getkeyorcodepoint) (int); /* timeout in ms */
+    void (*signal_getch) (void);
+    void (*watch_fd) (int, int);    /* fd, then 1 to watch or 0 to unwatch */
 
 /*** Input notification: called on broadcast and recording hooks (should
      be ignored by recording hooks when not recording) ***/
