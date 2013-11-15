@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-12 */
+/* Last modified by Alex Smith, 2013-11-15 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -849,10 +849,10 @@ sdl_hook_signal_getch(void)
 static SDL_Thread *watching_threads[FD_SETSIZE] = {0};
 
 static int
-fd_watcher(void *data)
+fd_watcher(void *thread_watch_pointer)
 {
-    int fd_to_watch = (int)data;
-    while (watching_threads[fd_to_watch]) {
+    int fd_to_watch = (SDL_Thread **)thread_watch_pointer - watching_threads;
+    while (*(SDL_Thread **)thread_watch_pointer) {
         fd_set readfds;
         struct timeval t;
 
@@ -883,8 +883,8 @@ sdl_hook_watch_fd(int fd, int watch)
 
            We still have to poll to see when the thread is exited, because we
            can't portably signal a specific thread. */
-        watching_threads[fd] = SDL_CreateThread(fd_watcher, "FD Watcher",
-                                                (void *)fd);
+        watching_threads[fd] = SDL_CreateThread(
+            fd_watcher, "FD Watcher", watching_threads + fd);
         /* If it fails, it leaves NULL in watching_threads, like we'd want. */
 
     } else if (watching_threads[fd]) {
