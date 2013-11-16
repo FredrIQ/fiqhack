@@ -323,6 +323,7 @@ use_whistle(struct obj *obj)
         return 0;
     }
     pline(whistle_str, obj->cursed ? "shrill" : "high");
+    makeknown(obj->otyp);
     wake_nearby();
     return 1;
 }
@@ -361,9 +362,8 @@ use_magic_whistle(struct obj *obj)
                     change_luck(-1);
             }
         }
-        if (pet_cnt > 0)
-            makeknown(obj->otyp);
     }
+    makeknown(obj->otyp);
     return 1;
 }
 

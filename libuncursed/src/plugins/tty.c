@@ -27,6 +27,7 @@
  * konsole
  * PuTTY
  * urxvt
+ * lxterminal
  *
  * Terminal multiplexers:
  * screen
@@ -325,7 +326,7 @@ platform_specific_init(void)
     tcsetattr(fileno(ifile), TCSANOW, &ti);
 
     tcgetattr(fileno(ofile), &to);
-    ti.c_oflag &= ~(OPOST | OCRNL | ONLRET | OFILL);
+    to.c_oflag &= ~(OPOST | OCRNL | ONLRET | OFILL);
     tcsetattr(fileno(ofile), TCSADRAIN, &to);
 
     /* Set up signal handlers. (Luckily, sigaction is just as portable as
