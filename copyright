@@ -206,6 +206,10 @@ Files: libnethack/src/history.c
 License: NHGPL
 Copyright: Copyright (c) Daniel Thaler, 2011
 
+Files: libnethack/src/level.c
+License: NHGPL
+Copyright: Copyright (c) Sean Hunt, 2013
+
 Files: libnethack/src/light.c
 License: NHGPL
 Copyright: Copyright (c) Dean Luick, 1994
