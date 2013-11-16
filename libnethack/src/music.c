@@ -238,7 +238,7 @@ do_earthquake(int force)
                         pline("The kitchen sink falls into a chasm.");
                     goto do_pit;
                 case ALTAR:
-                    if (Is_astralevel(&u.uz) || Is_sanctum(&u.uz))
+                    if (level->locations[x][y].altarmask & AM_SANCTUM)
                         break;
 
                     if (cansee(x, y))

@@ -1138,6 +1138,9 @@ create_altar(struct level *lev, altar * a, struct mkroom *croom)
     if (a->shrine) {    /* Is it a shrine or sanctum? */
         priestini(lev, croom, x, y, (a->shrine > 1));
         lev->locations[x][y].altarmask |= AM_SHRINE;
+        if (a->shrine > 1) { /* It is a sanctum? */
+            lev->locations[x][y].altarmask |= AM_SANCTUM;
+        }
     }
 }
 

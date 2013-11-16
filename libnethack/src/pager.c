@@ -192,7 +192,7 @@ describe_bg(int x, int y, int bg, char *buf)
         if (!In_endgame(&u.uz))
             sprintf(buf, "%s altar",
                     align_str(Amask2align
-                              (level->locations[x][y].altarmask & ~AM_SHRINE)));
+                              (level->locations[x][y].altarmask & AM_MASK)));
         else
             sprintf(buf, "aligned altar");
         break;

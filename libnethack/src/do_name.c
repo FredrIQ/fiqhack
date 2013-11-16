@@ -4,6 +4,7 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "epri.h"
 
 struct monst *
 christen_monst(struct monst *mtmp, const char *name)
@@ -787,7 +788,8 @@ distant_monnam(const struct monst *mon, int article, char *outbuf)
        you're adjacent (overridden for hallucination which does its own
        obfuscation) */
     if (mon->data == &mons[PM_HIGH_PRIEST] && !Hallucination &&
-        Is_astralevel(&u.uz) && distu(mon->mx, mon->my) > 2) {
+        has_sanctum(level, Align2amask(EPRI(mon)->shralign)) &&
+        EPRI(mon)->shralign != A_NONE && distu(mon->mx, mon->my) > 2) {
         strcpy(outbuf, article == ARTICLE_THE ? "the " : "");
         strcat(outbuf, mon->female ? "high priestess" : "high priest");
     } else {

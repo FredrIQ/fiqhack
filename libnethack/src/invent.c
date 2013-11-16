@@ -1616,7 +1616,7 @@ dfeature_at(int x, int y, char *buf)
         cmap = S_sink;  /* "sink" */
     else if (IS_ALTAR(ltyp)) {
         sprintf(altbuf, "altar to %s (%s)", a_gname(),
-                align_str(Amask2align(loc->altarmask & ~AM_SHRINE)));
+                align_str(Amask2align(loc->altarmask & AM_MASK)));
         dfeature = altbuf;
     } else if (x == level->sstairs.sx && y == level->sstairs.sy &&
                level->sstairs.up)
