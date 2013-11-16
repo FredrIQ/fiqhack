@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-13 */
+/* Last modified by Alex Smith, 2013-11-16 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -1542,18 +1542,6 @@ clrtoeol)
     return OK;
 }
 
-static void
-wunclear(WINDOW *win)
-{
-    int j, i;
-
-    for (j = 0; j <= win->maxy; j++) {
-        for (i = 0; i <= win->maxx; i++) {
-            win->chararray[i + j * win->stride].attr = -1;
-        }
-    }
-}
-
 /* manual page 3ncurses outopts */
 int
 clearok(WINDOW *win, uncursed_bool clear_on_refresh)
@@ -1974,7 +1962,7 @@ uncursed_rhook_setsize(int h, int w)
     wresize(stdscr, h, w);
     wresize(nout_win, h, w);
     wresize(disp_win, h, w);
-    wunclear(disp_win); /* we need to touch every character */
+    redrawwin(stdscr); /* we need to touch every character */
 
     struct uncursed_hooks *hook;
 
@@ -2175,7 +2163,7 @@ wcursyncup(WINDOW *win)
 
 /* manual page 3ncurses refresh */
 UNCURSED_ANDWINDOWVDEF(int,
- refresh)
+refresh)
 {
     wnoutrefresh(win);
     return doupdate();
@@ -2184,15 +2172,23 @@ UNCURSED_ANDWINDOWVDEF(int,
 int
 redrawwin(WINDOW *win)
 {
-    touchwin(win);
-    return wrefresh(win);
+    return wredrawln(win, 0, win->maxy+1);
 }
 
 int
 wredrawln(WINDOW *win, int first, int num)
 {
-    touchline(win, first, num);
-    return wrefresh(win);
+    int j, i;
+    for (j = win->scry + first;
+         j < win->scry + first + num && j <= disp_win->maxy; j++) {
+        if (j >= 0)
+            for (i = win->scrx;
+                 i <= win->scrx + win->maxx && i <= disp_win->maxx; i++) {
+                if (i >= 0)
+                    disp_win->chararray[i + j * win->stride].attr = -1;
+            }
+    }
+    return touchline(win, first, num);
 }
 
 int
@@ -2205,7 +2201,7 @@ wnoutrefresh(WINDOW *win)
 
         win = stdscr = save_stdscr;
         save_stdscr = 0;
-        wunclear(disp_win);
+        redrawwin(stdscr);
         win->clear_on_refresh = 1;
         uncursed_hook_init(&LINES, &COLS, title);
         uncursed_rhook_setsize(LINES, COLS);
@@ -2227,7 +2223,7 @@ doupdate(void)
     int i, j;
 
     if (nout_win->clear_on_refresh) {
-        wunclear(disp_win);
+        redrawwin(stdscr);
         uncursed_hook_fullredraw();
     }
     nout_win->clear_on_refresh = 0;

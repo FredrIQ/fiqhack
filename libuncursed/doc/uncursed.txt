@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2013-11-13
+Last modified by Alex Smith, 2013-11-16
 
 This documentation for the uncursed rendering library is provided under the
 same terms as libuncursed itself: it may be distributed under either of the
@@ -895,16 +895,10 @@ memory and produces no output on the screen), and then to copy the windows to
 the screen, which is the only point at which the screen actually updates.
 
     int [w]refresh([WINDOW *win])
-    int redrawwin(WINDOW *win)
-    int wredrawln(WINDOW *win, int first, int last)
 
-These functions all do the same thing, with the `first` and `last` arguments
-to `wredrawln` ignored. (In ncurses, they differ as to how much of the screen
-is assumed to be corrupted, or drawn on via other windows: none, all, or some,
-respectively; for uncursed, we recommend always just using `refresh` or
-`wrefresh`.)  They copy the contents of the specified window (or `stdscr`) to
-the screen, at its suggested screen location; and move the screen's cursor to
-the same location as the window's cursor.  (These routines must not be called,
+This function copies the contents of the specified window (or `stdscr`) to the
+screen, at its suggested screen location; and moves the screen's cursor to the
+same location as the window's cursor.  (These routines must not be called,
 directly or indirectly, for a window that does not fit on the screen; doing so
 will likely corrupt memory or cause a segfault.  This is a good reason to move
 windows so that they fit on the screen immediately after receiving a
@@ -912,6 +906,15 @@ windows so that they fit on the screen immediately after receiving a
 
 `refresh` additionally can be used to undo the effects of `endwin`, once again
 giving uncursed control of the terminal.
+
+    int redrawwin(WINDOW *win)
+    int wredrawln(WINDOW *win, int first, int count)
+
+These functions cause uncursed to forget any assumptions that it might have
+about the contents of the screen behind the suggested screen location of the
+specified window (or the suggested screen location of a particular range of
+lines of that window). This will cause the area behind the window to be
+repainted from scratch at the next refresh.
 
     int wnoutrefresh(WINDOW *win)
     int doupdate(void)
