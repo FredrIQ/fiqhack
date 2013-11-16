@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-13 */
+/* Last modified by Alex Smith, 2013-11-16 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -102,6 +102,8 @@
 #define OSC "\x1b]"
 #define ST  "\x1b\\"
 
+#define OFILE_BUFFER_SIZE (1 << 18)
+
 static int is_inited = 0;
 
 /* Portable helper functions */
@@ -159,12 +161,12 @@ ofile_output(char *format, ...)
     chars_since_flush += vfprintf(ofile, format, v);
     va_end(v);
 
-    if (chars_since_flush > 200) {
+    if (chars_since_flush > OFILE_BUFFER_SIZE - 200) {
         /* Older versions of Konsole dislike it when stdio flushes in the
            middle of a UTF-8 character. We solve the issue by flushing ourself,
-           before stdio gets the chance. (Pretty much every stdio has a buffer
-           that's at least 256 bytes; 4096 is more common. We subtract some
-           amount because we don't know how long the next vfprintf will be.) */
+           before stdio gets the chance. We told it to flush once every
+           OFILE_BUFFER_SIZE bytes; allow some headroom on that because we often
+           send more than one byte at a time. */
         tty_hook_flush();
     }
 }
@@ -541,6 +543,7 @@ platform_specific_delay(int ms)
 /* (mostly) portable functions */
 static int terminal_contents_unknown = 1;
 static int last_color = -1;
+static int last_cursor = -1;
 static int supports_utf8 = 0;
 
 static int last_y = -1, last_x = -1;
@@ -558,12 +561,42 @@ record_and_measure_terminal_size(int *h, int *w)
     last_w = *w;
 }
 
+static void
+setcursorsize(int size)
+{
+    /* Change whether the cursor is drawn at all. TODO: Shield fom DOS. */
+    if (size == 0) {
+        if (last_cursor != 0)
+            ofile_outputs(CSI "?25l");                   /* hide cursor */
+        last_cursor = 0;
+    } else {
+        if (last_cursor != 1)
+            ofile_outputs(CSI "?25h");                   /* show cursor */
+        last_cursor = 1;
+    }
+
+    /* Don't change the cursor size; we'd have no way to undo the change, and
+       it leads to garbage on many terminals. */
+}
+
 /* (y, x) are the coordinates of a character that can safely be clobbered,
    or (-1, -1) if it doesn't matter if we print garbage; the cursor is left
    in an unknown location */
 static void
 set_charset(int y, int x)
 {
+    if (x > -1)
+        fprintf(ofile, CSI "%d;%dH", y + 1, x + 1);     /* move cursor */
+
+    /* Tell the terminal the cursor status we remembered, if there is one;
+       this means that anyone watching will have their cursor sync up with the
+       actual game. */
+    if (last_cursor != -1) {
+        int lc = last_cursor;
+        last_cursor = -1;
+        setcursorsize(lc);
+    }
+
     if (x > -1)
         fprintf(ofile, CSI "%d;%dH", y + 1, x + 1);     /* move cursor */
 
@@ -635,29 +668,24 @@ void
 tty_hook_beep(void)
 {
     ofile_outputs("\x07");
-    fflush(ofile);
+    tty_hook_flush();
 }
 
 void
 tty_hook_setcursorsize(int size)
 {
-    /* Change whether the cursor is drawn at all. TODO: Shield fom DOS. */
-    if (size == 0)
-        ofile_outputs(CSI "?25l");                       /* hide cursor */
-    else
-        ofile_outputs(CSI "?25h");                       /* show cursor */
-
-    fflush(ofile);
-
-    /* Don't change the cursor size; we'd have no way to undo the change, and
-       it leads to garbage on many terminals. */
+    setcursorsize(size);
+    tty_hook_flush();
 }
 
 void
 tty_hook_positioncursor(int y, int x)
 {
+    if (last_y == y && last_x == x)
+        return;
+
     fprintf(ofile, CSI "%d;%dH", y + 1, x + 1);          /* move cursor */
-    fflush(ofile);
+    tty_hook_flush();
 
     last_y = y;
     last_x = x;
@@ -667,6 +695,17 @@ void
 tty_hook_init(int *h, int *w, char *title)
 {
     (void)title;
+
+    /* Switch to block buffering, to avoid an early flush that confuses some
+       broken terminals (e.g. old versions of Konsole), and to try to cut down
+       on frames in a ttyrec.
+
+       C11 requires setvbuf to be the first operation performed on a stream. I
+       don't think (although am not 100% sure) that that applies to POSIX,
+       though. We flush before the setvbuf in order to reduce issues that might
+       be caused by that restriction on unusual platforms. */
+    tty_hook_flush();
+    setvbuf(ofile, NULL, _IOFBF, OFILE_BUFFER_SIZE);
 
     platform_specific_init();
 
@@ -697,8 +736,9 @@ tty_hook_init(int *h, int *w, char *title)
      * \xc2\xa0 = non-breaking space in UTF-8
      * \x1b[6n  = report cursor position
      */
-    fputs("\r\n\xc2\xa0\xc2\xa0\x1b[6n\nConfiguring terminal, please wait.\n",
-          ofile);
+    ofile_outputs("\r\nConfiguring terminal, please wait.\r\n"
+                  "\xc2\xa0\xc2\xa0\x1b[6n");
+    tty_hook_flush();
 
     /* Very primitive terminals might not send any reply. So we wait 2 seconds
        for a reply before moving on. The reply is written as a PF3 with
@@ -747,6 +787,7 @@ tty_hook_init(int *h, int *w, char *title)
     terminal_contents_unknown = 1;
 
     last_color = -1;
+    last_cursor = -1;
     last_y = last_x = -1;
     is_inited = 1;
 }
@@ -769,6 +810,14 @@ tty_hook_exit(void)
     ofile_outputs("\x1b" "8");                           /* restore state */
 
     platform_specific_exit();
+
+    /* We can't know what the old buffering discipline was, but given that
+       uncursed is designed to be attached to a terminal, we can have a very
+       good guess. Line-buffering also won't hurt if it does happen to be
+       something unusual; flushing a FILE* too often causes no issues but a
+       slight performanc degradation. */
+    setvbuf(ofile, NULL, _IOLBF, BUFSIZ);
+
     is_inited = 0;
 }
 
@@ -904,11 +953,14 @@ tty_hook_getkeyorcodepoint(int timeout_ms)
 void
 tty_hook_update(int y, int x)
 {
+    int j, i;
+
     /* If we need to do a full redraw, do so. */
     if (terminal_contents_unknown) {
         terminal_contents_unknown = 0;
         last_color = -1;
-        int j, i;
+        last_cursor = -1;
+        last_x = -1;
 
         for (j = 0; j < last_h; j++)
             for (i = 0; i < last_w; i++)
@@ -926,9 +978,15 @@ tty_hook_update(int y, int x)
     if (last_y != y || last_x == -1) {
         ofile_output(CSI "%d;%dH", y + 1, x + 1);        /* move cursor */
     } else if (last_x > x) {
-        ofile_output(CSI "%dD", last_x - x);             /* move left */
+        if (last_x == x + 1)
+            ofile_outputs(CSI "D");                      /* move left */
+        else
+            ofile_output(CSI "%dD", last_x - x);         /* move left */
     } else if (last_x < x) {
-        ofile_output(CSI "%dC", x - last_x);             /* move right */
+        if (last_x == x-1)
+            ofile_outputs(CSI "C");                      /* move right */
+        else
+            ofile_output(CSI "%dC", x - last_x);         /* move right */
     }
 
     int color = uncursed_rhook_color_at(y, x);
@@ -972,9 +1030,40 @@ tty_hook_update(int y, int x)
     uncursed_rhook_updated(y, x);
 
     last_x = x + 1;
-    if (last_x > COLS)
-        last_x = -1;
     last_y = y;
+
+    /* To save on output, redraw up to three characters that don't need
+       redrawing rather than skipping them. We first check to see if the second,
+       third or fourth character needs an update; if none do, then we're
+       skipping at least four characters (first character doesn't need an
+       update) or zero characters (first character needs an update), and
+       shouldn't do any redundant drawing in either case. If one of those does
+       need an update, we draw up to the first character that needs a
+       non-redundant update using redundant updates. */
+
+    int any_nearby_updates = 0;
+    for (i = last_x + 1; i < last_x + 4 && i < last_w; i++)
+        any_nearby_updates |= uncursed_rhook_needsupdate(y, i);
+
+    while (any_nearby_updates && last_x < last_w) {
+        if (uncursed_rhook_needsupdate(y, last_x))
+            break;
+        if (uncursed_rhook_color_at(y, last_x) != last_color)
+            break;
+        if (supports_utf8)
+            ofile_outputs(uncursed_rhook_utf8_at(y, last_x));
+        else
+            ofile_output("%c", uncursed_rhook_cp437_at(y, last_x));
+
+        /* futureproofing; we checked that the update isn't needed, so this
+           should technically always be a no-op */
+        uncursed_rhook_updated(y, last_x);
+
+        last_x++;
+    }
+
+    if (last_x == last_w)
+        last_x = -1;
 }
 
 void

@@ -2280,12 +2280,12 @@ uncursed_rhook_needsupdate(int y, int x)
     if (p->attr != q->attr)
         return 1;
 
-    if (disp_win->regionarray + x + y * (disp_win->maxx + 1) ==
-        (void *)&invalid_region)
+    if (disp_win->regionarray[x + y * (disp_win->maxx + 1)] ==
+        &invalid_region)
         return 1;
 
-    if (nout_win->regionarray + x + y * (nout_win->maxx + 1) !=
-        disp_win->regionarray + x + y * (disp_win->maxx + 1))
+    if (nout_win->regionarray[x + y * (nout_win->maxx + 1)] !=
+        disp_win->regionarray[x + y * (disp_win->maxx + 1)])
         return 1;
 
     int k;
