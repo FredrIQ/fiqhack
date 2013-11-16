@@ -33,7 +33,10 @@
 # include <sys/select.h>
 #endif
 
-#define debugprintf(x, ...) do {} while(0)
+#define debugprintf(...) do {                   \
+        if(debug)                               \
+            printf(__VA_ARGS__);                \
+    } while(0)
 
 static int fontwidth = 8;
 static int fontheight = 14;
@@ -58,6 +61,8 @@ static int tileset_rows;
 static int tileset_cols;
 
 static int hangup_mode = 0;
+
+static int debug = 0;
 
 /* force the minimum size as 80x24; many programs don't function properly with
    less than that */
@@ -88,7 +93,8 @@ static void update_cell(int y, int x, struct sdl_tile_region *current_region);
 static SDL_Window *win = NULL;
 static SDL_Renderer *render = NULL;
 static SDL_Texture *font = NULL;
-static SDL_Texture *rendertarget = NULL;
+static SDL_Texture *screen = NULL;
+static SDL_Texture *rendertarget = NULL; /* most recently used render target */
 
 static SDL_Texture *
 load_png_file_to_texture(char *filename, int *w, int *h)
@@ -291,8 +297,14 @@ update_window_sizes(int font_size_changed)
         SDL_SetWindowMinimumSize(win, MINCHARWIDTH * fontwidth,
                                  MINCHARHEIGHT * fontheight);
 
-    SDL_SetRenderTarget(render, NULL);
-    rendertarget = NULL;
+    if (screen)
+        SDL_DestroyTexture(screen);
+    screen = SDL_CreateTexture(render, SDL_PIXELFORMAT_RGBA8888,
+                               SDL_TEXTUREACCESS_TARGET,
+                               w * fontwidth, h * fontheight);
+
+    SDL_SetRenderTarget(render, screen);
+    rendertarget = screen;
 
     if (w != winwidth || h != winheight || font_size_changed) {
         SDL_RenderSetLogicalSize(render, w * fontwidth, h * fontheight);
@@ -302,8 +314,10 @@ update_window_sizes(int font_size_changed)
            KEY_RESIZE sent the program using this plugin won't do it itself. */
         if (w != winwidth || h != winheight)
             resize_queued = 1;
-        else
+        else {
             sdl_hook_fullredraw();
+            sdl_hook_flush();
+        }
     }
 
     winwidth = w;
@@ -313,6 +327,18 @@ update_window_sizes(int font_size_changed)
 static void
 exit_handler(void)
 {
+    if (font) {
+        SDL_DestroyTexture(font);
+        font = NULL;
+    }
+    if (screen) {
+        SDL_DestroyTexture(screen);
+        screen = NULL;
+    }
+    if (render) {
+        SDL_DestroyRenderer(render);
+        render = NULL;
+    }
     if (win) {
         SDL_DestroyWindow(win);
         SDL_Quit();
@@ -324,6 +350,8 @@ void
 sdl_hook_init(int *h, int *w, char *title)
 {
     if (!win) {
+        debug = !!getenv("UNCURSED_SDL_DEBUG");
+
         if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) {
             fprintf(stderr, "Error initializing SDL: %s\n", SDL_GetError());
             exit(EXIT_FAILURE);
@@ -350,7 +378,7 @@ sdl_hook_init(int *h, int *w, char *title)
         *w = winwidth;
         *h = winheight;
 
-        int i, bestrender = -1, bestrenderscore = 5;
+        int i, bestrender = -1, bestrenderscore = 8;
 
         /* Look for desirable renderer properties. We /must/ have the ability
            to target textures. It's nice to have hardware acceleration and
@@ -361,7 +389,7 @@ sdl_hook_init(int *h, int *w, char *title)
             int score = 1;
 
             SDL_GetRenderDriverInfo(i, &ri);
-            debugprintf("Renderer '%s': supports ", ri.name);
+            debugprintf("Renderer %d ('%s'): supports ", i, ri.name);
 
             if (ri.flags & SDL_RENDERER_TARGETTEXTURE) {
                 debugprintf("target texture");
@@ -383,6 +411,8 @@ sdl_hook_init(int *h, int *w, char *title)
                 if (score > 1)
                     debugprintf(", ");
                 debugprintf("pure software implementation");
+                if (getenv("UNCURSED_SDL_PREFER_SOFTWARE"))
+                    score += 5;
             }
             debugprintf("\n");
 
@@ -393,6 +423,7 @@ sdl_hook_init(int *h, int *w, char *title)
         }
 
         if (bestrender != -1) {
+            debugprintf("Chose renderer %d\n", bestrender);
             render =
                 SDL_CreateRenderer(win, bestrender,
                                    SDL_RENDERER_ACCELERATED |
@@ -498,8 +529,8 @@ sdl_hook_allocate_tiles_region(int height, int width, int loc_h, int loc_w,
     region->texsize_w = region->tilesize_w * width;
     region->texsize_h = region->tilesize_h * height;
 
-    SDL_SetRenderTarget(render, NULL);
-    rendertarget = NULL;
+    SDL_SetRenderTarget(render, screen);
+    rendertarget = screen;
 
     region->texture =
         SDL_CreateTexture(render, SDL_PIXELFORMAT_RGBA8888,
@@ -986,8 +1017,8 @@ update_region(struct sdl_tile_region *r)
     if (r->dirty) {
         /* Draw the entire screen at once, to save on drawing lots of
            individual tiles. */
-        SDL_SetRenderTarget(render, NULL);
-        rendertarget = NULL;
+        SDL_SetRenderTarget(render, screen);
+        rendertarget = screen;
         int lf = r->pixelshift_x;
         int tf = r->pixelshift_y;
         int lt = r->loc_l * fontwidth;
@@ -1054,9 +1085,9 @@ update_cell(int y, int x, struct sdl_tile_region *current_region)
         bgcolor = palette[0];
     /* TODO: Underlining (1024s bit) */
 
-    if (rendertarget != NULL)
-        SDL_SetRenderTarget(render, NULL);
-    rendertarget = NULL;
+    if (rendertarget != screen)
+        SDL_SetRenderTarget(render, screen);
+    rendertarget = screen;
 
     /* Draw the background. */
     if (!region) {
@@ -1157,6 +1188,10 @@ sdl_hook_fullredraw(void)
 {
     int i, j;
 
+    if (rendertarget != screen)
+        SDL_SetRenderTarget(render, screen);
+    rendertarget = screen;
+
     SDL_SetRenderDrawColor(render, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(render,
                        &(SDL_Rect) {
@@ -1176,8 +1211,19 @@ sdl_hook_fullredraw(void)
 void
 sdl_hook_flush(void)
 {
-    if (rendertarget)
+    if (rendertarget != NULL)
         SDL_SetRenderTarget(render, NULL);
     rendertarget = NULL;
+    SDL_RenderCopy(render, screen,
+                   &(SDL_Rect) {      /* source */
+                       .x = 0,
+                       .y = 0,
+                       .w = fontwidth * winwidth,
+                       .h = fontheight * winheight},
+                   &(SDL_Rect) {      /* destination */
+                       .x = 0,
+                       .y = 0,
+                       .w = fontwidth * winwidth,
+                       .h = fontheight * winheight});
     SDL_RenderPresent(render);
 }
