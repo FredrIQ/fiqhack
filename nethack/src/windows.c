@@ -361,12 +361,9 @@ redraw_game_windows(void)
 {
     struct gamewin *gw;
 
-    redrawwin(basewin);
     wnoutrefresh(basewin);
 
     if (ui_flags.ingame) {
-        redrawwin(mapwin);
-        redrawwin(msgwin);
 
         wnoutrefresh(mapwin);
         wnoutrefresh(msgwin);
@@ -374,12 +371,10 @@ redraw_game_windows(void)
         /* statuswin can become NULL if the terminal is resized to microscopic
            dimensions */
         if (statuswin) {
-            redrawwin(statuswin);
             wnoutrefresh(statuswin);
         }
 
         if (sidebar) {
-            redrawwin(sidebar);
             wnoutrefresh(sidebar);
         }
 
@@ -388,7 +383,6 @@ redraw_game_windows(void)
 
     for (gw = firstgw; gw; gw = gw->next) {
         gw->draw(gw);
-        redrawwin(gw->win);
         wnoutrefresh(gw->win);
     }
 }
@@ -409,7 +403,6 @@ rebuild_ui(void)
 
         redraw_game_windows();
     } else if (basewin) {
-        redrawwin(basewin);
         wrefresh(basewin);
     }
 }
@@ -425,7 +418,6 @@ handle_resize(void)
             continue;
 
         gw->resize(gw);
-        redrawwin(gw->win);
         wnoutrefresh(gw->win);
     }
 
