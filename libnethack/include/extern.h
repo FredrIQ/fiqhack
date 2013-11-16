@@ -696,6 +696,7 @@ extern void silly_thing(const char *, struct obj *);
 
 /* ### level.c ### */
 
+extern boolean has_sanctum(struct level *lev, xchar alignmask);
 extern boolean has_terrain(struct level *lev, schar typ);
 
 /* ### light.c ### */

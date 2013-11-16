@@ -13,7 +13,7 @@
 #define ALGN_SINNED     (-4)    /* worse than strayed */
 
 static boolean histemple_at(struct monst *, xchar, xchar);
-static boolean has_shrine(const struct monst *);
+static xchar has_shrine(const struct monst *);
 
 /*
  * Move for priests and shopkeepers.  Called from shk_move() and pri_move().
@@ -302,7 +302,7 @@ p_coaligned(const struct monst * priest)
     return (boolean) (u.ualign.type == ((int)EPRI(priest)->shralign));
 }
 
-static boolean
+static xchar
 has_shrine(const struct monst *pri)
 {
     struct rm *loc;
@@ -310,10 +310,10 @@ has_shrine(const struct monst *pri)
     if (!pri)
         return FALSE;
     loc = &level->locations[EPRI(pri)->shrpos.x][EPRI(pri)->shrpos.y];
-    if (!IS_ALTAR(loc->typ) || !(loc->altarmask & AM_SHRINE))
+    if (!IS_ALTAR(loc->typ))
         return FALSE;
-    return (boolean) (EPRI(pri)->shralign ==
-                      Amask2align(loc->altarmask & ~AM_SHRINE));
+    return (EPRI(pri)->shralign == Amask2align(loc->altarmask & AM_MASK))
+        ? loc->altarmask & (AM_SHRINE | AM_SANCTUM) : 0;
 }
 
 struct monst *
@@ -337,7 +337,8 @@ intemple(int roomno)
 {
     struct monst *priest = findpriest((char)roomno);
     boolean tended = (priest != NULL);
-    boolean shrined, sanctum, can_speak;
+    boolean sanctum, can_speak;
+    xchar shrined;
     const char *msg1, *msg2;
     char buf[BUFSZ];
 
@@ -345,7 +346,7 @@ intemple(int roomno)
         if (tended) {
             shrined = has_shrine(priest);
             sanctum = (priest->data == &mons[PM_HIGH_PRIEST] &&
-                       (Is_sanctum(&u.uz) || In_endgame(&u.uz)));
+                       (shrined & AM_SANCTUM));
             can_speak = (priest->mcanmove && !priest->msleeping &&
                          flags.soundok);
             if (can_speak) {
@@ -361,7 +362,7 @@ intemple(int roomno)
                 priest->ispriest = save_priest;
             }
             msg2 = 0;
-            if (sanctum && Is_sanctum(&u.uz)) {
+            if (sanctum && EPRI(priest)->shralign == A_NONE) {
                 if (priest->mpeaceful) {
                     msg1 = "Infidel, you have entered Moloch's Sanctum!";
                     msg2 = "Be gone!";

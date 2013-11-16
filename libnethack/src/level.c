@@ -5,10 +5,24 @@
 
 #include "hack.h"
 
+boolean has_sanctum(struct level *lev, xchar alignmask) {
+    for (int sx = 0; sx < COLNO; ++sx)
+        for (int sy = 0; sy < ROWNO; ++sy) {
+            xchar locmask = lev->locations[sx][sy].altarmask;
+            if (IS_ALTAR(lev->locations[sx][sy].typ) &&
+                (locmask & AM_SANCTUM) &&
+                (locmask & alignmask))
+                return TRUE;
+        }
+
+    return FALSE;
+}
+
 boolean has_terrain(struct level *lev, schar typ) {
     for (int sx = 0; sx < COLNO; ++sx)
         for (int sy = 0; sy < ROWNO; ++sy)
             if (lev->locations[sx][sy].typ == typ)
                 return TRUE;
+
     return FALSE;
 }

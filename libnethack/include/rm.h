@@ -235,6 +235,7 @@ enum dungeon_symbols {
  * Some altars are considered as shrines, so we need a flag.
  */
 # define AM_SHRINE      8
+# define AM_SANCTUM     16
 
 /*
  * Thrones should only be looted once.

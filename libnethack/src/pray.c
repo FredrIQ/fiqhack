@@ -525,7 +525,7 @@ god_zaps_you(aligntyp resp_god)
             pline("You bask in its black glow for a minute...");
             godvoice(resp_god, "I believe it not!");
         }
-        if (Is_astralevel(&u.uz) || Is_sanctum(&u.uz)) {
+        if (has_sanctum(level, Align2amask(resp_god))) {
             /* one more try for high altars */
             verbalize("Thou cannot escape my wrath, mortal!");
             summon_minion(resp_god, FALSE);
@@ -1166,13 +1166,14 @@ dosacrifice(struct obj *otmp)
     int value = 0;
     int pm;
     aligntyp altaralign = a_align(u.ux, u.uy);
+    boolean sanctum = level->locations[u.ux][u.uy].altarmask & AM_SANCTUM;
 
     if (!on_altar() || Engulfed) {
         pline("You are not standing on an altar.");
         return 0;
     }
 
-    if (In_endgame(&u.uz)) {
+    if (sanctum && altaralign != A_NONE) {
         if (otmp && !validate_object(otmp, sacrifice_types, "sacrifice"))
             return 0;
         else if (!otmp)
@@ -1229,8 +1230,12 @@ dosacrifice(struct obj *otmp)
             if (altaralign != A_CHAOTIC && altaralign != A_NONE) {
                 /* curse the lawful/neutral altar */
                 pline("The altar is stained with %s blood.", urace.adj);
-                if (!Is_astralevel(&u.uz))
-                    level->locations[u.ux][u.uy].altarmask = AM_CHAOTIC;
+                if (!sanctum) {
+                    /* This is supposed to be &= */
+                    level->locations[u.ux][u.uy].altarmask &=
+                        AM_SHRINE & AM_SANCTUM;
+                    level->locations[u.ux][u.uy].altarmask |= AM_CHAOTIC;
+                }
                 angry_priest();
             } else {
                 struct monst *dmon;
@@ -1238,7 +1243,8 @@ dosacrifice(struct obj *otmp)
 
                 /* Human sacrifice on a chaotic or unaligned altar */
                 /* is equivalent to demon summoning */
-                if (altaralign == A_CHAOTIC && u.ualign.type != A_CHAOTIC) {
+                if (altaralign == A_CHAOTIC && u.ualign.type != A_CHAOTIC &&
+                    !sanctum) {
                     pline
                         ("The blood floods the altar, which vanishes in %s cloud!",
                          an(hcolor("black")));
@@ -1250,7 +1256,7 @@ dosacrifice(struct obj *otmp)
                 } else {
                     /* either you're chaotic or altar is Moloch's or both */
                     pline("The blood covers the altar!");
-                    change_luck(altaralign == A_NONE ? -2 : 2);
+                    change_luck(altaralign == u.ualign.type ? 2 : -2);
                     demonless_msg = "blood coagulates";
                 }
                 if ((pm = dlord(altaralign)) != NON_PM &&
@@ -1323,7 +1329,7 @@ dosacrifice(struct obj *otmp)
     }
     /* corpse */
     if (otmp->otyp == AMULET_OF_YENDOR) {
-        if (!Is_astralevel(&u.uz)) {
+        if (!sanctum || altaralign == AM_NONE) {
             if (Hallucination)
                 pline("You feel homesick.");
             else
@@ -1391,8 +1397,7 @@ dosacrifice(struct obj *otmp)
         return 1;
     }
 
-    if (altaralign != u.ualign.type &&
-        (Is_astralevel(&u.uz) || Is_sanctum(&u.uz))) {
+    if (altaralign != u.ualign.type && sanctum) {
         /* 
          * REAL BAD NEWS!!! High altars cannot be converted.  Even an attempt
          * gets the god who owns it truely pissed off.
@@ -1457,11 +1462,10 @@ dosacrifice(struct obj *otmp)
                     exercise(A_WIS, TRUE);
                     change_luck(1);
                     /* Yes, this is supposed to be &=, not |= */
-                    level->locations[u.ux][u.uy].altarmask &= AM_SHRINE;
-                    /* the following accommodates stupid compilers */
-                    level->locations[u.ux][u.uy].altarmask =
-                        level->locations[u.ux][u.uy].
-                        altarmask | (Align2amask(u.ualign.type));
+                    level->locations[u.ux][u.uy].altarmask &=
+                        AM_SHRINE & AM_SANCTUM;
+                    level->locations[u.ux][u.uy].altarmask |=
+                        Align2amask(u.ualign.type);
                     if (!Blind)
                         pline("The altar glows %s.",
                               hcolor(u.ualign.type ==
