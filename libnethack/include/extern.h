@@ -419,9 +419,9 @@ extern boolean hurtle_step(void *, int, int);
 
 /* ### dump.c ### */
 
-extern void begin_dump(int how);
-extern void end_dump(int how, char *kilbuf, char *pbuf, long umoney);
-extern void dump_catch_menus(boolean intercept);
+extern void begin_dump(int);
+extern void end_dump(int, char *, char *, long, unsigned long);
+extern void dump_catch_menus(boolean);
 
 /* ### dungeon.c ### */
 
@@ -512,7 +512,7 @@ extern int num_genocides(void);
 extern int num_extinctions(void);
 extern void list_vanquished(char, boolean);
 extern void list_genocided(char, boolean);
-extern void display_rip(int how, char *kilbuf, char *pbuf, long umoney);
+extern void display_rip(int, char *, char *, long, unsigned long);
 extern long calc_score(int, boolean, long);
 
 /* ### engrave.c ### */
@@ -649,6 +649,7 @@ extern void delallobj(int, int);
 extern void delobj(struct obj *);
 extern struct obj *sobj_at(int otyp, struct level *lev, int x, int y);
 extern struct obj *carrying(int);
+extern struct obj *carrying_questart(void);
 extern boolean have_lizard(void);
 extern struct obj *o_on(unsigned int, struct obj *);
 extern boolean obj_here(struct obj *, int, int);
@@ -1646,8 +1647,9 @@ extern int wiz_timeout_queue(void);
 
 /* ### topten.c ### */
 
-extern void update_topten(int how);
+extern void update_topten(int how, unsigned long carried);
 extern struct obj *tt_oname(struct obj *);
+extern unsigned long encode_carried(void);
 extern void topten_level_name(int dnum, int dlev, char *outbuf);
 extern void write_log_toptenentry(int fd, int how);
 extern void read_log_toptenentry(int fd, struct nh_topten_entry *entry);

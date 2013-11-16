@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-11-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -881,7 +881,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
     if (dunlev(newlevel) > dunlevs_in_dungeon(newlevel))
         newlevel->dlevel = dunlevs_in_dungeon(newlevel);
     if (newdungeon && In_endgame(newlevel)) {   /* 1st Endgame Level !!! */
-        if (u.uhave.amulet)
+        if (Uhave_amulet)
             assign_level(newlevel, &earth_level);
         else
             return;
@@ -897,7 +897,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
        +1 75.0 75.0 75.0 0 0.0 12.5 25.0 0 6.25 8.33 12.5 -1 8.33 4.17 0.0 -1
        6.25 8.33 12.5 -2 8.33 4.17 0.0 -2 6.25 8.33 0.0 -3 8.33 4.17 0.0 -3
        6.25 0.0 0.0 */
-    if (Inhell && up && u.uhave.amulet && !newdungeon && !portal &&
+    if (Inhell && up && Uhave_amulet && !newdungeon && !portal &&
         (dunlev(&u.uz) < dunlevs_in_dungeon(&u.uz) - 3)) {
         if (!rn2(4)) {
             int odds = 3 + (int)u.ualign.type,  /* 2..4 */
@@ -1222,7 +1222,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
     if (new && Is_rogue_level(&u.uz))
         pline("You enter what seems to be an older, more primitive world.");
     /* Final confrontation */
-    if (In_endgame(&u.uz) && newdungeon && u.uhave.amulet)
+    if (In_endgame(&u.uz) && newdungeon && Uhave_amulet)
         resurrect();
     if (newdungeon && In_V_tower(&u.uz) && In_hell(&u.uz0))
         pline("The heat and smoke are gone.");

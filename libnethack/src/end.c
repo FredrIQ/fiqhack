@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-16 */
+/* Last modified by Alex Smith, 2013-11-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -696,7 +696,8 @@ check_survival(int how, char *kilbuf)
 }
 
 void
-display_rip(int how, char *kilbuf, char *pbuf, long umoney)
+display_rip(int how, char *kilbuf, char *pbuf, long umoney,
+            unsigned long carried)
 {
     char outrip_buf[BUFSZ];
     boolean show_endwin = FALSE;
@@ -735,9 +736,11 @@ display_rip(int how, char *kilbuf, char *pbuf, long umoney)
 /* changing kilbuf really changes killer. we do it this way because
    killer is declared a (const char *)
 */
-    if (u.uhave.amulet)
+    if (carried & 0x0001UL) /* real Amulet of Yendor */
         strcat(kilbuf, " (with the Amulet)");
     else if (how == ESCAPED) {
+        /* Note: the fake Amulet check relies on bones not having been
+           created; this is safe for escapes, but not safe in general */
         if (Is_astralevel(&u.uz))       /* offered Amulet to wrong deity */
             strcat(kilbuf, " (in celestial disgrace)");
         else if (carrying(FAKE_AMULET_OF_YENDOR))
@@ -978,6 +981,12 @@ done_noreturn(int how)
     if (bones_ok && taken)
         finish_paybill();
 
+    /* The "carried at death" field of the xlog needs to have remembered
+       values from before leaving bones; if the Candelabrum, etc., is dropped
+       on the ground and transformed into a candle, Uhave_menorah will be 0,
+       whereas we want 1 in the disclose */
+    unsigned long carried = encode_carried();
+
     if (bones_ok && !discover) {
         if (!wizard || yn("Save bones?") == 'y')
             savebones(corpse);
@@ -990,12 +999,12 @@ done_noreturn(int how)
        (containers will be gone by then if bones just got saved...) */
     done_money = umoney;
 
-    end_dump(how, killbuf, pbuf, umoney);
-    display_rip(how, killbuf, pbuf, umoney);
+    end_dump(how, killbuf, pbuf, umoney, carried);
+    display_rip(how, killbuf, pbuf, umoney, carried);
 
     /* generate a topten entry for this game. update_topten does not display
        anything. */
-    update_topten(how);
+    update_topten(how, carried);
 
     terminate();
 }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-02 */
+/* Last modified by Alex Smith, 2013-11-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -247,27 +247,9 @@ addinv_stats(struct obj *obj)
     if (obj->oclass == COIN_CLASS) {
         iflags.botl = 1;
     } else if (obj->otyp == AMULET_OF_YENDOR) {
-        if (u.uhave.amulet)
-            impossible("already have amulet?");
-        u.uhave.amulet = 1;
         historic_event(!obj->known, "gained the Amulet of Yendor!");
-    } else if (obj->otyp == CANDELABRUM_OF_INVOCATION) {
-        if (u.uhave.menorah)
-            impossible("already have candelabrum?");
-        u.uhave.menorah = 1;
-    } else if (obj->otyp == BELL_OF_OPENING) {
-        if (u.uhave.bell)
-            impossible("already have silver bell?");
-        u.uhave.bell = 1;
-    } else if (obj->otyp == SPE_BOOK_OF_THE_DEAD) {
-        if (u.uhave.book)
-            impossible("already have the book?");
-        u.uhave.book = 1;
     } else if (obj->oartifact) {
         if (is_quest_artifact(obj)) {
-            if (u.uhave.questart)
-                impossible("already have quest artifact?");
-            u.uhave.questart = 1;
             artitouch();
         }
     }
@@ -487,31 +469,11 @@ freeinv_stats(struct obj *obj)
         iflags.botl = 1;
         return;
     } else if (obj->otyp == AMULET_OF_YENDOR) {
-        if (!u.uhave.amulet)
-            impossible("don't have amulet?");
-        u.uhave.amulet = 0;
         /* Minor information leak about the Amulet of Yendor (vs fakes). You
            don't get any more info than you do by turning on show_uncursed
            though. */
         historic_event(!obj->known, "lost the Amulet of Yendor.");
-    } else if (obj->otyp == CANDELABRUM_OF_INVOCATION) {
-        if (!u.uhave.menorah)
-            impossible("don't have candelabrum?");
-        u.uhave.menorah = 0;
-    } else if (obj->otyp == BELL_OF_OPENING) {
-        if (!u.uhave.bell)
-            impossible("don't have silver bell?");
-        u.uhave.bell = 0;
-    } else if (obj->otyp == SPE_BOOK_OF_THE_DEAD) {
-        if (!u.uhave.book)
-            impossible("don't have the book?");
-        u.uhave.book = 0;
     } else if (obj->oartifact) {
-        if (is_quest_artifact(obj)) {
-            if (!u.uhave.questart)
-                impossible("don't have quest artifact?");
-            u.uhave.questart = 0;
-        }
         uninvoke_artifact(obj);
     }
 
@@ -615,6 +577,18 @@ carrying(int type)
             return otmp;
     return NULL;
 }
+
+struct obj *
+carrying_questart(void)
+{
+    struct obj *otmp;
+
+    for (otmp = invent; otmp; otmp = otmp->nobj)
+        if (otmp->oartifact && is_quest_artifact(otmp))
+            return otmp;
+    return NULL;
+}
+
 
 const char *
 currency(long amount)

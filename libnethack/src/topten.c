@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-11-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -134,29 +134,29 @@ encode_uevent(void)
     return c;
 }
 
-static unsigned long
+unsigned long
 encode_carried(void)
 {
     unsigned long c = 0UL;
 
     /* this encodes important items potentially owned by the player at the time 
        of death */
-    if (u.uhave.amulet)
+    if (Uhave_amulet)
         c |= 0x0001UL;  /* real Amulet of Yendor */
-    if (u.uhave.bell)
+    if (Uhave_bell)
         c |= 0x0002UL;  /* Bell of Opening */
-    if (u.uhave.book)
+    if (Uhave_book)
         c |= 0x0004UL;  /* Book of the Dead */
-    if (u.uhave.menorah)
+    if (Uhave_menorah)
         c |= 0x0008UL;  /* Candelabrum of Invocation */
-    if (u.uhave.questart)
+    if (Uhave_questart)
         c |= 0x0010UL;  /* own quest artifact */
 
     return c;
 }
 
 static void
-write_xlentry(FILE * rfile, const struct toptenentry *tt)
+write_xlentry(FILE * rfile, const struct toptenentry *tt, unsigned long carried)
 {
     char buf[DTHSZ + 1];
     char *uname;
@@ -195,7 +195,7 @@ write_xlentry(FILE * rfile, const struct toptenentry *tt)
     /* AceHack's equivalent of achieve has rather different semantics from
        vanilla's. So give it a different name. */
     fprintf(rfile, SEP "event=%ld", encode_uevent());
-    fprintf(rfile, SEP "carried=%ld", encode_carried());
+    fprintf(rfile, SEP "carried=%ld", carried);
 
     fprintf(rfile, SEP "starttime=%ld" SEP "endtime=%ld", (long)u.ubirthday,
             (long)deathtime_internal);
@@ -265,7 +265,7 @@ update_log(const struct toptenentry *newtt)
 }
 
 static void
-update_xlog(const struct toptenentry *newtt)
+update_xlog(const struct toptenentry *newtt, unsigned long carried)
 {
     /* used for statistical purposes and tournament scoring */
     int fd =
@@ -273,7 +273,7 @@ update_xlog(const struct toptenentry *newtt)
     if (lock_fd(fd, 10)) {
         FILE *xlfile = fdopen(fd, "a");
 
-        write_xlentry(xlfile, newtt);
+        write_xlentry(xlfile, newtt, carried);
         unlock_fd(fd);
         fclose(xlfile); /* also closes fd */
     }
@@ -433,7 +433,7 @@ toptenlist_insert(struct toptenentry *ttlist, struct toptenentry *newtt)
  * Add the result of the current game to the score list
  */
 void
-update_topten(int how)
+update_topten(int how, unsigned long carried)
 {
     struct toptenentry *toptenlist, newtt;
     boolean need_rewrite;
@@ -446,7 +446,7 @@ update_topten(int how)
 
     fill_topten_entry(&newtt, how);
     update_log(&newtt);
-    update_xlog(&newtt);
+    update_xlog(&newtt, carried);
 
     /* nothing more to do for non-scoring games */
     if (wizard || discover)

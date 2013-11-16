@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-11-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -507,7 +507,7 @@ keepdogs(boolean pets_only)
              (mtmp == u.usteed) ||
              /* the wiz will level t-port from anywhere to chase the amulet; if 
                 you don't have it, will chase you only if in range. -3. */
-             (u.uhave.amulet && mtmp->iswiz))
+             (Uhave_amulet && mtmp->iswiz))
             && ((!mtmp->msleeping && mtmp->mcanmove)
                 /* eg if level teleport or new trap, steed has no control to
                    avoid following */

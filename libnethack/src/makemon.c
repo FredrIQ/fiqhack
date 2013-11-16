@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-11-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1052,7 +1052,7 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
         break;
     case S_JABBERWOCK:
     case S_NYMPH:
-        if (rn2(5) && !u.uhave.amulet)
+        if (rn2(5) && !Uhave_amulet)
             mtmp->msleeping = 1;
         break;
     case S_ORC:
@@ -1106,7 +1106,7 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
 
     if (in_mklev) {
         if (((is_ndemon(ptr)) || (mndx == PM_WUMPUS) || (mndx == PM_LONG_WORM)
-             || (mndx == PM_GIANT_EEL)) && !u.uhave.amulet && rn2(5))
+             || (mndx == PM_GIANT_EEL)) && !Uhave_amulet && rn2(5))
             mtmp->msleeping = TRUE;
     } else {
         if (byyou) {
@@ -1663,7 +1663,7 @@ peace_minded(const struct permonst * ptr)
         return FALSE;
 
     /* Negative monster hostile to player with Amulet. */
-    if (mal < A_NEUTRAL && u.uhave.amulet)
+    if (mal < A_NEUTRAL && Uhave_amulet)
         return FALSE;
 
     /* minions are hostile to players that have strayed at all */

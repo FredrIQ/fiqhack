@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-11-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -46,7 +46,7 @@ static const unsigned wizapp[] = {
 
 /* If you've found the Amulet, make the Wizard appear after some time */
 /* Also, give hints about portal locations, if amulet is worn/wielded -dlc */
-/* pre condition: u.uhave.amulet == 1 */
+/* pre condition: Uhave_amulet == 1 */
 void
 amulet(void)
 {
@@ -195,15 +195,15 @@ you_have(int mask)
 {
     switch (mask) {
     case M3_WANTSAMUL:
-        return (boolean) (u.uhave.amulet);
+        return !!Uhave_amulet;
     case M3_WANTSBELL:
-        return (boolean) (u.uhave.bell);
+        return !!Uhave_bell;
     case M3_WANTSCAND:
-        return (boolean) (u.uhave.menorah);
+        return !!Uhave_menorah;
     case M3_WANTSBOOK:
-        return (boolean) (u.uhave.book);
+        return !!Uhave_book;
     case M3_WANTSARTI:
-        return (boolean) (u.uhave.questart);
+        return !!Uhave_questart;
     default:
         break;
     }
@@ -396,7 +396,7 @@ clonewiz(void)
          makemon(&mons[PM_WIZARD_OF_YENDOR], level, u.ux, u.uy,
                  NO_MM_FLAGS)) != 0) {
         mtmp2->msleeping = mtmp2->mtame = mtmp2->mpeaceful = 0;
-        if (!u.uhave.amulet && rn2(2)) {        /* give clone a fake */
+        if (!Uhave_amulet && rn2(2)) {        /* give clone a fake */
             add_to_minv(mtmp2,
                         mksobj(level, FAKE_AMULET_OF_YENDOR, TRUE, FALSE));
         }
@@ -609,7 +609,7 @@ cuss(struct monst *mtmp)
     if (mtmp->iswiz) {
         if (!rn2(5))    /* typical bad guy action */
             pline("%s laughs fiendishly.", Monnam(mtmp));
-        else if (u.uhave.amulet && !rn2(SIZE(random_insult)))
+        else if (Uhave_amulet && !rn2(SIZE(random_insult)))
             verbalize("Relinquish the amulet, %s!",
                       random_insult[rn2(SIZE(random_insult))]);
         else if (u.uhp < 5 && !rn2(2))  /* Panic */

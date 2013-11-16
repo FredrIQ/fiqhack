@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-02 */
+/* Last modified by Alex Smith, 2013-11-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1072,7 +1072,7 @@ void
 restore_you(struct memfile *mf, struct you *y)
 {
     int i;
-    unsigned int yflags, eflags, hflags;
+    unsigned int yflags, eflags;
     unsigned long long temp_ubirthday;
 
     temp_ubirthday = u.ubirthday;
@@ -1081,7 +1081,6 @@ restore_you(struct memfile *mf, struct you *y)
 
     yflags = mread32(mf);
     eflags = mread32(mf);
-    hflags = mread32(mf);
 
     y->uswallow = (yflags >> 31) & 1;
     y->uinwater = (yflags >> 30) & 1;
@@ -1104,12 +1103,6 @@ restore_you(struct memfile *mf, struct you *y)
     y->uevent.uhand_of_elbereth = (eflags >> 20) & 3;
     y->uevent.udemigod = (eflags >> 19) & 1;
     y->uevent.ascended = (eflags >> 18) & 1;
-
-    y->uhave.amulet = (hflags >> 31) & 1;
-    y->uhave.bell = (hflags >> 30) & 1;
-    y->uhave.book = (hflags >> 29) & 1;
-    y->uhave.menorah = (hflags >> 28) & 1;
-    y->uhave.questart = (hflags >> 27) & 1;
 
     y->uhp = mread32(mf);
     y->uhpmax = mread32(mf);
@@ -1254,7 +1247,7 @@ void
 save_you(struct memfile *mf, struct you *y)
 {
     int i;
-    unsigned int yflags, eflags, hflags;
+    unsigned int yflags, eflags;
 
     yflags =
         (y->uswallow << 31) | (y->uinwater << 30) |
@@ -1274,15 +1267,10 @@ save_you(struct memfile *mf, struct you *y)
         (y->uevent.uhand_of_elbereth << 20) |
         (y->uevent.udemigod << 19) |
         (y->uevent.ascended << 18);
-    hflags =
-        (y->uhave.amulet << 31) | (y->uhave.bell << 30) |
-        (y->uhave.book << 29) | (y-> uhave.  menorah << 28) |
-        (y->uhave.questart << 27);
 
     mtag(mf, 0, MTAG_YOU);
     mwrite32(mf, yflags);
     mwrite32(mf, eflags);
-    mwrite32(mf, hflags);
     mwrite32(mf, y->uhp);
     mwrite32(mf, y->uhpmax);
     mwrite32(mf, y->uen);

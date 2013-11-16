@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-11-16 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1546,7 +1546,7 @@ nh_get_savegame_status(int fd, struct nh_game_info *gi)
         gi->depth = depth(&sg_you.uz);
         gi->moves = sg_moves;
         gi->level_desc[0] = '\0';
-        gi->has_amulet = sg_you.uhave.amulet;
+        gi->has_amulet = 0; /* TODO */
         topten_level_name(sg_you.uz.dnum, depth(&sg_you.uz), gi->level_desc);
 
         if (!game_inited) {

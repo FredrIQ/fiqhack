@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-02 */
+/* Last modified by Alex Smith, 2013-11-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -96,7 +96,7 @@ bhitm(struct monst *mtmp, struct obj *otmp)
 {
     boolean wake = TRUE;        /* Most 'zaps' should wake monster */
     boolean reveal_invis = FALSE;
-    boolean dbldam = Role_if(PM_KNIGHT) && u.uhave.questart;
+    boolean dbldam = Role_if(PM_KNIGHT) && Uhave_questart;
     int dmg, otyp = otmp->otyp;
     const char *zap_type_text = "spell";
     struct obj *obj;
@@ -3137,7 +3137,7 @@ zap_hit_mon(struct monst *mon, int type, int nd, struct obj **ootmp)
     }
     if (sho_shieldeff)
         shieldeff(mon->mx, mon->my);
-    if (is_hero_spell(type) && (Role_if(PM_KNIGHT) && u.uhave.questart))
+    if (is_hero_spell(type) && (Role_if(PM_KNIGHT) && Uhave_questart))
         tmp *= 2;
     if (tmp > 0 && type >= 0 &&
         resist(mon, type < ZT_SPELL(0) ? WAND_CLASS : '\0', 0, NOTELL))

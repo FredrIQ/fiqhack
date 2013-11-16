@@ -698,7 +698,7 @@ skip0:
            stairs. Conclusion: we have to check for monsters on the stairs
            anyway. */
 
-        if (u.uhave.amulet || !rn2(3)) {
+        if (Uhave_amulet || !rn2(3)) {
             x = somex(croom);
             y = somey(croom);
             tmonst = makemon(NULL, lev, x, y, NO_MM_FLAGS);

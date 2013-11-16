@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-11-16 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -215,15 +215,15 @@ deadbook(struct obj *book2, boolean invoked)
             return;
         }
 
-        if (!u.uhave.bell || !u.uhave.menorah) {
+        if (!Uhave_bell || !Uhave_menorah) {
             pline("A chill runs down your %s.", body_part(SPINE));
-            if (!u.uhave.bell) {
+            if (!Uhave_bell) {
                 if (Hallucination)
                     pline("You feel like a tuning fork!");
                 else
                     You_hear("a faint chime...");
             }
-            if (!u.uhave.menorah) {
+            if (!Uhave_menorah) {
                 if (Hallucination)
                     pline("Nosferatu giggles.");
                 else
@@ -726,7 +726,7 @@ spelleffects(int spell, boolean atme)
         return 0;
     }
 
-    if (u.uhave.amulet) {
+    if (Uhave_amulet) {
         pline("You feel the amulet draining your energy away.");
         energy += rnd(2 * energy);
     }

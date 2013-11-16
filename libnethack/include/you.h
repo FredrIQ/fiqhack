@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-02 */
+/* Last modified by Alex Smith, 2013-11-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -17,15 +17,6 @@
 
 
 /*** Substructures ***/
-
-struct u_have {
-    unsigned amulet:1;  /* carrying Amulet */
-    unsigned bell:1;    /* carrying Bell */
-    unsigned book:1;    /* carrying Book */
-    unsigned menorah:1; /* carrying Candelabrum */
-    unsigned questart:1;        /* carrying the Quest Artifact */
-    unsigned unused:3;
-};
 
 struct u_event {
     unsigned minor_oracle:1;    /* received at least 1 cheap oracle */
@@ -145,7 +136,6 @@ struct you {
 
     unsigned udg_cnt;   /* how long you have been demigod */
     struct u_event uevent;      /* certain events have happened */
-    struct u_have uhave;        /* you're carrying special objects */
     struct u_conduct uconduct;  /* KMH, conduct */
     struct attribs acurr,       /* your current attributes (eg. str) */
             aexe,       /* for gain/loss via "exercise" */

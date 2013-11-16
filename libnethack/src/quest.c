@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-11-16 */
 /* Copyright 1991, M. Stephenson */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -193,7 +193,7 @@ finish_quest(struct obj *obj)
 {
     struct obj *otmp;
 
-    if (u.uhave.amulet) {       /* unlikely but not impossible */
+    if (Uhave_amulet) {       /* unlikely but not impossible */
         qt_pager(QT_HASAMULET);
         /* leader IDs the real amulet but ignores any fakes */
         if ((otmp = carrying(AMULET_OF_YENDOR)) != 0)
@@ -221,7 +221,7 @@ static void
 chat_with_leader(void)
 {
 /* Rule 0: Cheater checks.                                 */
-    if (u.uhave.questart && !Qstat(met_nemesis))
+    if (Uhave_questart && !Qstat(met_nemesis))
         Qstat(cheater) = TRUE;
 
 /* It is possible for you to get the amulet without completing
@@ -229,7 +229,7 @@ chat_with_leader(void)
  */
     if (Qstat(got_thanks)) {
 /* Rule 1: You've gone back with/without the amulet.       */
-        if (u.uhave.amulet)
+        if (Uhave_amulet)
             finish_quest(NULL);
 
 /* Rule 2: You've gone back before going for the amulet.   */
@@ -238,7 +238,7 @@ chat_with_leader(void)
     }
 
 /* Rule 3: You've got the artifact and are back to return it. */
-    else if (u.uhave.questart) {
+    else if (Uhave_questart) {
         struct obj *otmp;
 
         for (otmp = invent; otmp; otmp = otmp->nobj)
@@ -323,7 +323,7 @@ void
 nemesis_speaks(void)
 {
     if (!Qstat(in_battle)) {
-        if (u.uhave.questart)
+        if (Uhave_questart)
             qt_pager(QT_NEMWANTSIT);
         else if (Qstat(made_goal) == 1 || !Qstat(met_nemesis))
             qt_pager(QT_FIRSTNEMESIS);
@@ -344,7 +344,7 @@ static void
 chat_with_guardian(void)
 {
 /* These guys/gals really don't have much to say... */
-    if (u.uhave.questart && Qstat(killed_nemesis))
+    if (Uhave_questart && Qstat(killed_nemesis))
         qt_pager(rn1(5, QT_GUARDTALK2));
     else
         qt_pager(rn1(5, QT_GUARDTALK));

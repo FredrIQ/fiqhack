@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-02 */
+/* Last modified by Alex Smith, 2013-11-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -397,21 +397,21 @@ stealamulet(struct monst *mtmp)
     int real = 0, fake = 0;
 
     /* select the artifact to steal */
-    if (u.uhave.amulet) {
+    if (Uhave_amulet) {
         real = AMULET_OF_YENDOR;
         fake = FAKE_AMULET_OF_YENDOR;
-    } else if (u.uhave.questart) {
+    } else if (Uhave_questart) {
         for (otmp = invent; otmp; otmp = otmp->nobj)
             if (is_quest_artifact(otmp))
                 break;
         if (!otmp)
             return;     /* should we panic instead? */
-    } else if (u.uhave.bell) {
+    } else if (Uhave_bell) {
         real = BELL_OF_OPENING;
         fake = BELL;
-    } else if (u.uhave.book) {
+    } else if (Uhave_book) {
         real = SPE_BOOK_OF_THE_DEAD;
-    } else if (u.uhave.menorah) {
+    } else if (Uhave_menorah) {
         real = CANDELABRUM_OF_INVOCATION;
     } else
         return; /* you have nothing of special interest */

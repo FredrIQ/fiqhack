@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-11-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -405,7 +405,7 @@ tele_impl(boolean wizard_tele)
     if (!Blinded)
         make_blinded(0L, FALSE);
 
-    if ((u.uhave.amulet || On_W_tower_level(&u.uz)) && !rn2(3)) {
+    if ((Uhave_amulet || On_W_tower_level(&u.uz)) && !rn2(3)) {
         pline("You feel disoriented for a moment.");
         return;
     }
@@ -540,7 +540,7 @@ level_tele_impl(boolean wizard_tele)
     char buf[BUFSZ];
     boolean force_dest = FALSE;
 
-    if ((u.uhave.amulet || In_endgame(&u.uz) || In_sokoban(&u.uz))
+    if ((Uhave_amulet || In_endgame(&u.uz) || In_sokoban(&u.uz))
         && !wizard_tele) {
         pline("You feel very disoriented for a moment.");
         return;
@@ -582,7 +582,7 @@ level_tele_impl(boolean wizard_tele)
                     newlevel.dlevel = destlev;
                     if (In_endgame(&newlevel) && !In_endgame(&u.uz)) {
                         sprintf(buf, "Destination is earth level");
-                        if (!u.uhave.amulet) {
+                        if (!Uhave_amulet) {
                             struct obj *obj;
 
                             obj = mksobj(level, AMULET_OF_YENDOR, TRUE, FALSE);
@@ -779,7 +779,7 @@ domagicportal(struct trap *ttmp)
     /* prevent the poor shnook, whose amulet was stolen while in the endgame,
        from accidently triggering the portal to the next level, and thus losing 
        the game */
-    if (In_endgame(&u.uz) && !u.uhave.amulet) {
+    if (In_endgame(&u.uz) && !Uhave_amulet) {
         pline("You feel dizzy for a moment, but nothing happens...");
         return;
     }
