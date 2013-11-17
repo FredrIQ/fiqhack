@@ -770,8 +770,8 @@ pre_move_tasks(boolean didmove)
     if (iflags.botl)
         bot();
 
-    if (didmove && (Uhave_amulet || Clairvoyant) && !In_endgame(&u.uz) &&
-        !BClairvoyant && !(moves % 15) && !rn2(2))
+    if (didmove && Clairvoyant && !In_endgame(&u.uz) && !(moves % 15) &&
+        !rn2(2))
         do_vicinity_map();
 
     u.umoved = FALSE;
