@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Sean Hunt, 2013-11-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2440,8 +2440,6 @@ float_down(long hmask)
             nomul(0, NULL);
     }
 
-    /* can't rely on u.uz0 for detecting trap door-induced level change; it
-       gets changed to reflect the new level before we can check it */
     assign_level(&current_dungeon_level, &u.uz);
 
     if (trap)

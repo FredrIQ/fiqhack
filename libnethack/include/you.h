@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Sean Hunt, 2013-11-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -62,7 +62,7 @@ struct you {
     schar dx, dy;       /* direction of the ongoing multi-turn move */
     xchar tx, ty;       /* destination of travel */
     xchar ux0, uy0;     /* initial position of a move */
-    d_level uz, uz0;    /* your level on this and the previous turn */
+    d_level uz;    /* your level on this and the previous turn */
     d_level utolev;     /* level monster teleported you to, or uz */
     uchar utotype;      /* bitmask of goto_level() flags for utolev */
     boolean umoved;     /* changed map location (post-move) */
