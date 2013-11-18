@@ -1,5 +1,5 @@
 About this document:
-Last modified by Sean Hunt, 2013-11-10
+Last modified by Sean Hunt, 2013-11-18
 
 Copyright (C) 2013 Sean Hunt
 
@@ -98,19 +98,54 @@ will only be one level directly above or below a given level, but the relation
 is not necessarily symmetric, as D:2 might be directly above both D:3 and
 Mines:1. 
 
-Also, the level property "shortsighted" will be first against the wall when
-the revolution comes, since it's unused. It can be reimplemented later if it
-ever matters.
-
-Gory Details
-------------
+The Details
+-----------
 
 The level manager is the structure containing all the functions needed to
-handle special cases in the level system. This includes, for instance,
-everything that makes special levels special.
+handle special cases in the level system. This includes almost everything that
+makes special levels special, but also some other branch-related controls. A
+level manager is responsible for generating the level in the first place, and
+thereafter for handling a number of things related to the level via a series
+of hooks.
 
 All levels are given managers, even regular levels. The dungeon layout is
-responsible for assigning the level managers to each level.
+responsible for assigning the level managers to each level. For ease of
+coding, a dungeon manager may leave a given hook as nulled, in which case it
+will be filled in with the game's default function for that hook.
+
+Level flags and other parameters of levels will be effectively split into four
+categories:
+ 1. Properties which may be changed as a result of specific occurrences in the
+    game (examples: whether the level was forgotten, whether it's a graveyard)
+ 2. Properties which are constant and part of the level description (examples:
+    whether the level is notele or undiggable)
+ 3. Properties which may be dynamically recalculated but are not otherwise
+    subject to change (no examples come to mind at the moment but it's worth
+    leaving as a category)
+ 4. Properties which would otherwise be in class 2 but are more easily
+    expressible as functions
+
+Properties in classes 1 and 2 will be stored directly on the level structure,
+in different substructures to make clear which is which. Properties in classes
+3 and 4 will be handled as level manager hooks.
+
+Certain levels will require additional special cases beyond what can be
+provided by the level manager; at the very least the Rogue level, the Sokoban
+branch, and the planes of Air and Water. These levels will have a single flag
+(of class 2) indicating that they require extra special cases. The rest of the
+endgame will be special-cased initially, although it may turn out to be
+possible to eliminate the special cases.
+
+The d_level struct will be excised from the general game usage, and u.uz (the
+global variable for the current level) will instead be replaced with level (the
+existing other global variable for the current level). Pointers to level
+structures will be preferred wherever possible. An alternate structure will
+be provided for situations such as migrations where the level's existence
+cannot be assured; the API will be designed in such a way as to minimize the
+need for other code to know if its existence.
+
+Working Notes
+-------------
 
 The following is a list of known special level special cases that are not
 easily handled through some aspect of this method:
@@ -166,6 +201,9 @@ Things that need to be in the level flags:
    is the big weird one here, especially as it has a ceiling]
  - Whether the level is open air (currently qhome, Fire?)
  - Existing dungeon flags (incl. alignment and hellishness)
+ - A pointer to either the bones name of the level, or NULL for no bones.
+   [note that this could be changed in the future if the level manager is
+    given more control over bones, say to allow bones on branch levels]
 
 Things that need to be in the level manager:
  - Generation (at least mklev() through mineralize())
@@ -223,3 +261,4 @@ Special cases that need looking for:
  - In_endgame
  - Inhell
  - In_quest
+ - In_hell
