@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Sean Hunt, 2013-11-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -245,8 +245,6 @@ static void
 post_init_tasks(void)
 {
     encumber_msg();     /* in case they auto-picked up something */
-
-    u.uz0.dlevel = u.uz.dlevel;
 
     /* prepare for the first move */
     pre_move_tasks(0);
@@ -772,8 +770,8 @@ pre_move_tasks(boolean didmove)
     if (iflags.botl)
         bot();
 
-    if (didmove && (Uhave_amulet || Clairvoyant) && !In_endgame(&u.uz) &&
-        !BClairvoyant && !(moves % 15) && !rn2(2))
+    if (didmove && Clairvoyant && !In_endgame(&u.uz) && !(moves % 15) &&
+        !rn2(2))
         do_vicinity_map();
 
     u.umoved = FALSE;

@@ -1,6 +1,10 @@
 #!/bin/sh
-# Last modified by Alex Smith, 2013-11-18
-for x in `git ls-tree -r HEAD | cut -f 2`
+# Last modified by Alex Smith, 2013-11-19
+STASH=$(git diff | ifne -n echo false | ifne echo true)
+$STASH && git stash save --keep-index -q
+for x in $(git diff --name-only --diff-filter=M --cached)
 do
-    sed -i -e "1,2s/Last modified by.*, ....-..-../$(git log -n 1 --pretty=format:'Last modified by %an, %at' $x | perl -pe 's/(\d+)$/`date --date=\@$1 +%F`/e')/" $x
+    sed -i -e "1,2s/Last modified by.*, ....-..-../Last modified by $(git config user.name), $(date -Idate)/" $x
+    git add $x
 done
+$STASH && git stash pop -q

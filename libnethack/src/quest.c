@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Sean Hunt, 2013-11-16 */
 /* Copyright 1991, M. Stephenson */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -10,11 +10,10 @@
 #include "quest.h"
 #include "qtext.h"
 
-#define Not_firsttime   (on_level(&u.uz0, &u.uz))
 #define Qstat(x)        (quest_status.x)
 
-static void on_start(void);
-static void on_locate(void);
+static void on_start(const d_level * orig_lev);
+static void on_locate(const d_level * orig_lev);
 static void on_goal(void);
 static boolean not_capable(void);
 static int is_pure(boolean);
@@ -28,12 +27,13 @@ static void nemesis_speaks(void);
 
 
 static void
-on_start(void)
+on_start(const d_level * orig_lev)
 {
     if (!Qstat(first_start)) {
         qt_pager(QT_FIRSTTIME);
         Qstat(first_start) = TRUE;
-    } else if ((u.uz0.dnum != u.uz.dnum) || (u.uz0.dlevel < u.uz.dlevel)) {
+    } else if ((orig_lev->dnum != u.uz.dnum) ||
+               (orig_lev->dlevel < u.uz.dlevel)) {
         if (Qstat(not_ready) <= 2)
             qt_pager(QT_NEXTTIME);
         else
@@ -42,12 +42,12 @@ on_start(void)
 }
 
 static void
-on_locate(void)
+on_locate(const d_level * orig_lev)
 {
     if (!Qstat(first_locate)) {
         qt_pager(QT_FIRSTLOCATE);
         Qstat(first_locate) = TRUE;
-    } else if (u.uz0.dlevel < u.uz.dlevel && !Qstat(killed_nemesis))
+    } else if (orig_lev->dlevel < u.uz.dlevel && !Qstat(killed_nemesis))
         qt_pager(QT_NEXTLOCATE);
 }
 
@@ -67,17 +67,17 @@ on_goal(void)
 }
 
 void
-onquest(void)
+onquest(const d_level * orig_lev)
 {
-    if (u.uevent.qcompleted || Not_firsttime)
+    if (u.uevent.qcompleted || on_level(orig_lev, &u.uz))
         return;
     if (!Is_special(&u.uz))
         return;
 
     if (Is_qstart(&u.uz))
-        on_start();
-    else if (Is_qlocate(&u.uz) && u.uz.dlevel > u.uz0.dlevel)
-        on_locate();
+        on_start(orig_lev);
+    else if (Is_qlocate(&u.uz) && u.uz.dlevel > orig_lev->dlevel)
+        on_locate(orig_lev);
     else if (Is_nemesis(&u.uz))
         on_goal();
     return;
@@ -193,7 +193,7 @@ finish_quest(struct obj *obj)
 {
     struct obj *otmp;
 
-    if (Uhave_amulet) {       /* unlikely but not impossible */
+    if (Uhave_amulet) { /* unlikely but not impossible */
         qt_pager(QT_HASAMULET);
         /* leader IDs the real amulet but ignores any fakes */
         if ((otmp = carrying(AMULET_OF_YENDOR)) != 0)

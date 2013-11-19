@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Sean Hunt, 2013-11-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -877,6 +877,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
     struct level *origlev;
     boolean at_trapdoor = ((t_at(level, u.ux, u.uy)) &&
                            (t_at(level, u.ux, u.uy))->ttyp == TRAPDOOR);
+    d_level orig_d;
 
     if (dunlev(newlevel) > dunlevs_in_dungeon(newlevel))
         newlevel->dlevel = dunlevs_in_dungeon(newlevel);
@@ -961,7 +962,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
     update_mlstmv();    /* current monsters are becoming inactive */
 
 
-    assign_level(&u.uz0, &u.uz);
+    assign_level(&orig_d, &u.uz);
     assign_level(&u.uz, newlevel);
     assign_level(&u.utolev, newlevel);
     u.utotype = 0;
@@ -1181,7 +1182,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
     check_special_room(FALSE);
 
     /* Check whether we just entered Gehennom. */
-    if (!In_hell(&u.uz0) && Inhell) {
+    if (!In_hell(&orig_d) && Inhell) {
         if (Is_valley(&u.uz)) {
             pline("You arrive at the Valley of the Dead...");
             pline("The odor of burnt flesh and decay pervades the air.");
@@ -1224,11 +1225,11 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
     /* Final confrontation */
     if (In_endgame(&u.uz) && newdungeon && Uhave_amulet)
         resurrect();
-    if (newdungeon && In_V_tower(&u.uz) && In_hell(&u.uz0))
+    if (newdungeon && In_V_tower(&u.uz) && In_hell(&orig_d))
         pline("The heat and smoke are gone.");
 
     /* the message from your quest leader */
-    if (!In_quest(&u.uz0) && at_dgn_entrance(&u.uz, "The Quest") &&
+    if (!In_quest(&orig_d) && at_dgn_entrance(&u.uz, "The Quest") &&
         !(u.uevent.qexpelled || u.uevent.qcompleted ||
           quest_status.leader_is_dead)) {
 
@@ -1252,8 +1253,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
     if (on_level(&u.uz, &astral_level))
         final_level();
     else
-        onquest();
-    assign_level(&u.uz0, &u.uz);        /* reset u.uz0 */
+        onquest(&orig_d);
 
     if (*level->levname)
         pline("You named this level: %s.", level->levname);

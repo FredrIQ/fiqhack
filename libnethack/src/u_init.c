@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Sean Hunt, 2013-11-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -539,7 +539,6 @@ u_init(void)
     u.ustuck = NULL;
 
     u.uz.dlevel = 1;
-    u.uz0.dlevel = 0;
     u.utolev = u.uz;
 
     u.umoved = FALSE;
@@ -1180,8 +1179,6 @@ restore_you(struct memfile *mf, struct you *y)
     y->uy0 = mread8(mf);
     y->uz.dnum = mread8(mf);
     y->uz.dlevel = mread8(mf);
-    y->uz0.dnum = mread8(mf);
-    y->uz0.dlevel = mread8(mf);
     y->utolev.dnum = mread8(mf);
     y->utolev.dlevel = mread8(mf);
     y->utotype = mread8(mf);
@@ -1346,8 +1343,6 @@ save_you(struct memfile *mf, struct you *y)
     mwrite8(mf, y->uy0);
     mwrite8(mf, y->uz.dnum);
     mwrite8(mf, y->uz.dlevel);
-    mwrite8(mf, y->uz0.dnum);
-    mwrite8(mf, y->uz0.dlevel);
     mwrite8(mf, y->utolev.dnum);
     mwrite8(mf, y->utolev.dlevel);
     mwrite8(mf, y->utotype);
