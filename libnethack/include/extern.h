@@ -502,6 +502,7 @@ extern void reset_food(void);
 
 /* ### end.c ### */
 
+extern void nonfatal_dump_core(void);
 extern void NORETURN terminate(void);
 extern void NORETURN panic(const char *, ...);
 extern int done2(void);

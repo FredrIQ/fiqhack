@@ -196,6 +196,8 @@ vraw_printf(const char *line, va_list the_args)
 void
 impossible(const char *s, ...)
 {
+    nonfatal_dump_core();
+
     va_list the_args;
 
     va_start(the_args, s);
