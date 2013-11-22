@@ -61,9 +61,6 @@ struct multishot m_shot = { 0, 0, STRANGE_OBJECT, FALSE };
 
 struct dig_info digging;
 
-unsigned int stetho_last_used_move;
-int stetho_last_used_movement;
-
 int branch_id;
 dungeon dungeons[MAXDUNGEON];   /* ini'ed by init_dungeon() */
 s_level *sp_levchn;
