@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -548,6 +548,9 @@ u_init(void)
     u.umonnum = u.umonster = (flags.female &&
                               urole.femalenum !=
                               NON_PM) ? urole.femalenum : urole.malenum;
+
+    u.lastinvnr = 51;
+
     set_uasmon();
 
     u.ulevel = 0;       /* set up some of the initial attributes */
