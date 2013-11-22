@@ -857,7 +857,7 @@ doname_base(const struct obj *obj, boolean with_price)
         break;
     }
 
-    if ((obj->owornmask & W_MASK(os_wep)) && !mrg_to_wielded) {
+    if (obj->owornmask & W_MASK(os_wep)) {
         if (obj->quan != 1L) {
             strcat(bp, " (wielded)");
         } else {

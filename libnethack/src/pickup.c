@@ -1088,11 +1088,8 @@ pickup_object(struct obj *obj, long count, boolean telekinesis)
 
     obj = pick_obj(obj);
 
-    if (uwep && uwep == obj)
-        mrg_to_wielded = TRUE;
     nearload = near_capacity();
     prinv(nearload == SLT_ENCUMBER ? moderateloadmsg : NULL, obj, count);
-    mrg_to_wielded = FALSE;
     return 1;
 }
 

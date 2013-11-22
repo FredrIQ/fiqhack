@@ -72,7 +72,6 @@ coord inv_pos;  /* vibrating square position */
 boolean in_mklev;
 boolean stoned; /* done to monsters hit by 'c' */
 boolean unweapon;
-boolean mrg_to_wielded; /* weapon picked is merged with wielded one */
 
 boolean in_steed_dismounting;
 
@@ -247,7 +246,7 @@ init_data(void)
     ffruit = NULL;
     current_fruit = 0;
     sp_levchn = NULL;
-    in_mklev = stoned = unweapon = mrg_to_wielded = FALSE;
+    in_mklev = stoned = unweapon = FALSE;
     invent = NULL;
     in_steed_dismounting = FALSE;
     wailmsg = 0;
