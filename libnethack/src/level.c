@@ -1,13 +1,14 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-11-22 */
 /* Copyright (c) Sean Hunt, 2013. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 
 boolean has_sanctum(struct level *lev, xchar alignmask) {
-    for (int sx = 0; sx < COLNO; ++sx)
-        for (int sy = 0; sy < ROWNO; ++sy) {
+    int sx, sy;
+    for (sx = 0; sx < COLNO; ++sx)
+        for (sy = 0; sy < ROWNO; ++sy) {
             xchar locmask = lev->locations[sx][sy].altarmask;
             if (IS_ALTAR(lev->locations[sx][sy].typ) &&
                 (locmask & AM_SANCTUM) &&
