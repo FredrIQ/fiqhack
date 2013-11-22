@@ -908,7 +908,7 @@ getobj(const char *let, const char *word)
                for Larn, where trying to drop 2^32-n gold pieces was allowed,
                and did interesting things to your money supply.  The LRS is the 
                tax bureau from Larn. */
-            if (cnt <= 0) {
+            if (cnt < 0) {
                 pline
                     ("The LRS would be very interested to know you have that much.");
                 return NULL;
