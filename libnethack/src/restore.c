@@ -7,6 +7,7 @@
 #include "lev.h"
 #include <stdint.h>
 
+static void restore_utracked(struct memfile *mf, struct you *you);
 static void find_lev_obj(struct level *lev);
 static void restlevchn(struct memfile *mf);
 static void restdamage(struct memfile *mf, struct level *lev, boolean ghostly);
@@ -367,30 +368,30 @@ restore_mvitals(struct memfile *mf)
 
 
 static void
-restore_quest_status(struct memfile *mf)
+restore_quest_status(struct memfile *mf, struct q_score *q)
 {
     unsigned int qflags;
 
     qflags = mread32(mf);
-    quest_status.first_start = (qflags >> 31) & 1;
-    quest_status.met_leader = (qflags >> 30) & 1;
-    quest_status.not_ready = (qflags >> 27) & 7;
-    quest_status.pissed_off = (qflags >> 26) & 1;
-    quest_status.got_quest = (qflags >> 25) & 1;
-    quest_status.first_locate = (qflags >> 24) & 1;
-    quest_status.met_intermed = (qflags >> 23) & 1;
-    quest_status.got_final = (qflags >> 22) & 1;
-    quest_status.made_goal = (qflags >> 19) & 7;
-    quest_status.met_nemesis = (qflags >> 18) & 1;
-    quest_status.killed_nemesis = (qflags >> 17) & 1;
-    quest_status.in_battle = (qflags >> 16) & 1;
-    quest_status.cheater = (qflags >> 15) & 1;
-    quest_status.touched_artifact = (qflags >> 14) & 1;
-    quest_status.offered_artifact = (qflags >> 13) & 1;
-    quest_status.got_thanks = (qflags >> 12) & 1;
-    quest_status.leader_is_dead = (qflags >> 11) & 1;
+    q->first_start = (qflags >> 31) & 1;
+    q->met_leader = (qflags >> 30) & 1;
+    q->not_ready = (qflags >> 27) & 7;
+    q->pissed_off = (qflags >> 26) & 1;
+    q->got_quest = (qflags >> 25) & 1;
+    q->first_locate = (qflags >> 24) & 1;
+    q->met_intermed = (qflags >> 23) & 1;
+    q->got_final = (qflags >> 22) & 1;
+    q->made_goal = (qflags >> 19) & 7;
+    q->met_nemesis = (qflags >> 18) & 1;
+    q->killed_nemesis = (qflags >> 17) & 1;
+    q->in_battle = (qflags >> 16) & 1;
+    q->cheater = (qflags >> 15) & 1;
+    q->touched_artifact = (qflags >> 14) & 1;
+    q->offered_artifact = (qflags >> 13) & 1;
+    q->got_thanks = (qflags >> 12) & 1;
+    q->leader_is_dead = (qflags >> 11) & 1;
 
-    quest_status.leader_m_id = mread32(mf);
+    q->leader_m_id = mread32(mf);
 }
 
 
@@ -432,7 +433,6 @@ restgamestate(struct memfile *mf)
 
     /* TODO: save/restore unweapon */
 
-    restore_quest_status(mf);
     restore_spellbook(mf);
     restore_artifacts(mf);
     restore_oracles(mf);
@@ -478,6 +478,181 @@ restgamestate(struct memfile *mf)
             panic("Cannot find the monster usteed.");
         u.usteed = mtmp;
         remove_monster(lev, mtmp->mx, mtmp->my);
+    }
+}
+
+void
+restore_you(struct memfile *mf, struct you *y)
+{
+    int i;
+    unsigned int yflags, eflags;
+    unsigned long long temp_ubirthday;
+
+    temp_ubirthday = u.ubirthday;
+    memset(y, 0, sizeof (struct you));
+    u.ubirthday = temp_ubirthday;
+
+    yflags = mread32(mf);
+    eflags = mread32(mf);
+
+    y->uswallow = (yflags >> 31) & 1;
+    y->uinwater = (yflags >> 30) & 1;
+    y->uundetected = (yflags >> 29) & 1;
+    y->mfemale = (yflags >> 28) & 1;
+    y->uinvulnerable = (yflags >> 27) & 1;
+    y->uburied = (yflags >> 26) & 1;
+    y->uedibility = (yflags >> 25) & 1;
+    y->usick_type = (yflags >> 23) & 3;
+
+    y->uevent.minor_oracle = (eflags >> 31) & 1;
+    y->uevent.major_oracle = (eflags >> 30) & 1;
+    y->uevent.qcalled = (eflags >> 29) & 1;
+    y->uevent.qexpelled = (eflags >> 28) & 1;
+    y->uevent.qcompleted = (eflags >> 27) & 1;
+    y->uevent.uheard_tune = (eflags >> 25) & 3;
+    y->uevent.uopened_dbridge = (eflags >> 24) & 1;
+    y->uevent.invoked = (eflags >> 23) & 1;
+    y->uevent.gehennom_entered = (eflags >> 22) & 1;
+    y->uevent.uhand_of_elbereth = (eflags >> 20) & 3;
+    y->uevent.udemigod = (eflags >> 19) & 1;
+    y->uevent.ascended = (eflags >> 18) & 1;
+
+    y->uhp = mread32(mf);
+    y->uhpmax = mread32(mf);
+    y->uen = mread32(mf);
+    y->uenmax = mread32(mf);
+    y->ulevel = mread32(mf);
+    y->umoney0 = mread32(mf);
+    y->uexp = mread32(mf);
+    y->urexp = mread32(mf);
+    y->ulevelmax = mread32(mf);
+    y->umonster = mread32(mf);
+    y->umonnum = mread32(mf);
+    y->mh = mread32(mf);
+    y->mhmax = mread32(mf);
+    y->mtimedone = mread32(mf);
+    y->ulycn = mread32(mf);
+    y->last_str_turn = mread32(mf);
+    y->utrap = mread32(mf);
+    y->utraptype = mread32(mf);
+    y->uhunger = mread32(mf);
+    y->uhs = mread32(mf);
+    y->umconf = mread32(mf);
+    y->nv_range = mread32(mf);
+    y->bglyph = mread32(mf);
+    y->cglyph = mread32(mf);
+    y->bc_order = mread32(mf);
+    y->bc_felt = mread32(mf);
+    y->ucreamed = mread32(mf);
+    y->uswldtim = mread32(mf);
+    y->udg_cnt = mread32(mf);
+    y->next_attr_check = mread32(mf);
+    y->ualign.record = mread32(mf);
+    y->ugangr = mread32(mf);
+    y->ugifts = mread32(mf);
+    y->ublessed = mread32(mf);
+    y->ublesscnt = mread32(mf);
+    y->ucleansed = mread32(mf);
+    y->usleep = mread32(mf);
+    y->uinvault = mread32(mf);
+    y->ugallop = mread32(mf);
+    y->urideturns = mread32(mf);
+    y->umortality = mread32(mf);
+    y->ugrave_arise = mread32(mf);
+    y->weapon_slots = mread32(mf);
+    y->skills_advanced = mread32(mf);
+    y->initrole = mread32(mf);
+    y->initrace = mread32(mf);
+    y->initgend = mread32(mf);
+    y->initalign = mread32(mf);
+    y->uconduct.unvegetarian = mread32(mf);
+    y->uconduct.unvegan = mread32(mf);
+    y->uconduct.food = mread32(mf);
+    y->uconduct.gnostic = mread32(mf);
+    y->uconduct.weaphit = mread32(mf);
+    y->uconduct.killer = mread32(mf);
+    y->uconduct.literate = mread32(mf);
+    y->uconduct.polypiles = mread32(mf);
+    y->uconduct.polyselfs = mread32(mf);
+    y->uconduct.wishes = mread32(mf);
+    y->uconduct.wisharti = mread32(mf);
+    y->uconduct.elbereths = mread32(mf);
+    y->uconduct.puddings = mread32(mf);
+
+    /* at this point, ustuck and usteed are mon ids rather than pointers */
+    y->ustuck = (void *)(intptr_t) mread32(mf);
+    y->usteed = (void *)(intptr_t) mread32(mf);
+
+    y->ux = mread8(mf);
+    y->uy = mread8(mf);
+    y->dx = mread8(mf);
+    y->dy = mread8(mf);
+    y->tx = mread8(mf);
+    y->ty = mread8(mf);
+    y->ux0 = mread8(mf);
+    y->uy0 = mread8(mf);
+    y->uz.dnum = mread8(mf);
+    y->uz.dlevel = mread8(mf);
+    y->utolev.dnum = mread8(mf);
+    y->utolev.dlevel = mread8(mf);
+    y->utotype = mread8(mf);
+    y->umoved = mread8(mf);
+    y->ualign.type = mread8(mf);
+    y->ualignbase[0] = mread8(mf);
+    y->ualignbase[1] = mread8(mf);
+    y->uluck = mread8(mf);
+    y->moreluck = mread8(mf);
+    y->uhitinc = mread8(mf);
+    y->udaminc = mread8(mf);
+    y->uac = mread8(mf);
+    y->uspellprot = mread8(mf);
+    y->usptime = mread8(mf);
+    y->uspmtime = mread8(mf);
+    y->twoweap = mread8(mf);
+
+    mread(mf, y->usick_cause, sizeof (y->usick_cause));
+    mread(mf, y->urooms, sizeof (y->urooms));
+    mread(mf, y->urooms0, sizeof (y->urooms0));
+    mread(mf, y->uentered, sizeof (y->uentered));
+    mread(mf, y->ushops, sizeof (y->ushops));
+    mread(mf, y->ushops0, sizeof (y->ushops0));
+    mread(mf, y->ushops_entered, sizeof (y->ushops_entered));
+    mread(mf, y->ushops_left, sizeof (y->ushops_left));
+    mread(mf, y->macurr.a, sizeof (y->macurr.a));
+    mread(mf, y->mamax.a, sizeof (y->mamax.a));
+    mread(mf, y->acurr.a, sizeof (y->acurr.a));
+    mread(mf, y->aexe.a, sizeof (y->aexe.a));
+    mread(mf, y->abon.a, sizeof (y->abon.a));
+    mread(mf, y->amax.a, sizeof (y->amax.a));
+    mread(mf, y->atemp.a, sizeof (y->atemp.a));
+    mread(mf, y->atime.a, sizeof (y->atime.a));
+    mread(mf, y->skill_record, sizeof (y->skill_record));
+
+    for (i = 0; i <= LAST_PROP; i++) {
+        y->uintrinsic[i] = mread32(mf);
+    }
+    for (i = 0; i < P_NUM_SKILLS; i++) {
+        y->weapon_skills[i].skill = mread8(mf);
+        y->weapon_skills[i].max_skill = mread8(mf);
+        y->weapon_skills[i].advance = mread16(mf);
+    }
+
+    restore_quest_status(mf, &y->quest_status);
+}
+
+static void
+restore_utracked(struct memfile *mf, struct you *y)
+{
+    int i;
+    for (i = 0; i <= tos_last_slot; i++) {
+        int oid;
+        y->utracked[i] = NULL;
+        oid = mread32(mf);
+        if (oid == -1)
+            y->utracked[i] = &zeroobj;
+        else if (oid)
+            y->utracked[i] = find_oid(oid);
+        y->uoccupation_progress[i] = mread32(mf);
     }
 }
 
@@ -563,6 +738,8 @@ dorecover(struct memfile *mf)
         return 0;
     }
 
+    moves = mread32(mf);
+
     level = NULL;       /* level restore must not use this pointer */
 
     restore_flags(mf, &flags);
@@ -570,8 +747,6 @@ dorecover(struct memfile *mf)
 
     restore_you(mf, &u);
     role_init();        /* Reset the initial role, race, gender, and alignment */
-
-    moves = mread32(mf);
 
     mtmp = restore_mon(mf);
     youmonst = *mtmp;

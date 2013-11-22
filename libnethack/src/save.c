@@ -7,6 +7,8 @@
 #include "lev.h"
 #include "quest.h"
 
+static void save_you(struct memfile *mf, struct you *you);
+static void save_utracked(struct memfile *mf, struct you *you);
 static void savelevchn(struct memfile *mf);
 static void savedamage(struct memfile *mf, struct level *lev);
 static void freedamage(struct level *lev);
@@ -99,9 +101,9 @@ savegame(struct memfile *mf)
     /* Place flags, player info & moves at the beginning of the save. This
        makes it possible to read them in nh_get_savegame_status without parsing 
        all the dungeon and level data */
+    mwrite32(mf, moves);        /* no tag useful here; you is fixed-length */
     save_flags(mf);
     save_you(mf, &u);
-    mwrite32(mf, moves);        /* no tag useful here; you is fixed-length */
     save_mon(mf, &youmonst);
 
     /* store dungeon layout */
@@ -206,22 +208,22 @@ save_mvitals(struct memfile *mf)
 
 
 static void
-save_quest_status(struct memfile *mf)
+save_quest_status(struct memfile *mf, struct q_score *q)
 {
     unsigned int qflags;
 
     qflags =
-        (quest_status.first_start << 31) | (quest_status.met_leader << 30) |
-        (quest_status.not_ready << 27) | (quest_status.pissed_off << 26) |
-        (quest_status.got_quest << 25) | (quest_status.first_locate << 24) |
-        (quest_status.met_intermed << 23) | (quest_status.got_final << 22) |
-        (quest_status.made_goal << 19) | (quest_status.met_nemesis << 18) |
-        (quest_status.killed_nemesis << 17) | (quest_status.in_battle << 16) |
-        (quest_status.cheater << 15) | (quest_status.touched_artifact << 14) |
-        (quest_status.offered_artifact << 13) |
-        (quest_status.got_thanks << 12) | (quest_status.leader_is_dead << 11);
+        (q->first_start << 31) | (q->met_leader << 30) |
+        (q->not_ready << 27) | (q->pissed_off << 26) |
+        (q->got_quest << 25) | (q->first_locate << 24) |
+        (q->met_intermed << 23) | (q->got_final << 22) |
+        (q->made_goal << 19) | (q->met_nemesis << 18) |
+        (q->killed_nemesis << 17) | (q->in_battle << 16) |
+        (q->cheater << 15) | (q->touched_artifact << 14) |
+        (q->offered_artifact << 13) |
+        (q->got_thanks << 12) | (q->leader_is_dead << 11);
     mwrite32(mf, qflags);
-    mwrite32(mf, quest_status.leader_m_id);
+    mwrite32(mf, q->leader_m_id);
 }
 
 
@@ -252,7 +254,6 @@ savegamestate(struct memfile *mf)
     savemonchn(mf, migrating_mons);
     save_mvitals(mf);
 
-    save_quest_status(mf);
     save_spellbook(mf);
     save_artifacts(mf);
     save_oracles(mf);
@@ -328,6 +329,167 @@ save_location(struct memfile *mf, struct rm *loc)
     mwrite8(mf, loc->typ);
     mwrite8(mf, loc->seenv);
     mwrite16(mf, rflags);
+}
+
+static void
+save_you(struct memfile *mf, struct you *y)
+{
+    int i;
+    unsigned int yflags, eflags;
+
+    yflags =
+        (y->uswallow << 31) | (y->uinwater << 30) |
+        (y->uundetected << 29) | (y->mfemale << 28) |
+        (y->uinvulnerable << 27) | (y->uburied << 26) |
+        (y->uedibility << 25) | (y->usick_type << 23);
+    eflags =
+        (y->uevent.minor_oracle << 31) |
+        (y->uevent.major_oracle << 30) |
+        (y->uevent.qcalled << 29) |
+        (y->uevent.qexpelled << 28) |
+        (y->uevent.qcompleted << 27) |
+        (y->uevent.uheard_tune << 25) |
+        (y->uevent.uopened_dbridge << 24) |
+        (y->uevent.invoked << 23) |
+        (y->uevent.gehennom_entered << 22) |
+        (y->uevent.uhand_of_elbereth << 20) |
+        (y->uevent.udemigod << 19) |
+        (y->uevent.ascended << 18);
+
+    mtag(mf, 0, MTAG_YOU);
+    mwrite32(mf, yflags);
+    mwrite32(mf, eflags);
+    mwrite32(mf, y->uhp);
+    mwrite32(mf, y->uhpmax);
+    mwrite32(mf, y->uen);
+    mwrite32(mf, y->uenmax);
+    mwrite32(mf, y->ulevel);
+    mwrite32(mf, y->umoney0);
+    mwrite32(mf, y->uexp);
+    mwrite32(mf, y->urexp);
+    mwrite32(mf, y->ulevelmax);
+    mwrite32(mf, y->umonster);
+    mwrite32(mf, y->umonnum);
+    mwrite32(mf, y->mh);
+    mwrite32(mf, y->mhmax);
+    mwrite32(mf, y->mtimedone);
+    mwrite32(mf, y->ulycn);
+    mwrite32(mf, y->last_str_turn);
+    mwrite32(mf, y->utrap);
+    mwrite32(mf, y->utraptype);
+    mwrite32(mf, y->uhunger);
+    mwrite32(mf, y->uhs);
+    mwrite32(mf, y->umconf);
+    mwrite32(mf, y->nv_range);
+    mwrite32(mf, y->bglyph);
+    mwrite32(mf, y->cglyph);
+    mwrite32(mf, y->bc_order);
+    mwrite32(mf, y->bc_felt);
+    mwrite32(mf, y->ucreamed);
+    mwrite32(mf, y->uswldtim);
+    mwrite32(mf, y->udg_cnt);
+    mwrite32(mf, y->next_attr_check);
+    mwrite32(mf, y->ualign.record);
+    mwrite32(mf, y->ugangr);
+    mwrite32(mf, y->ugifts);
+    mwrite32(mf, y->ublessed);
+    mwrite32(mf, y->ublesscnt);
+    mwrite32(mf, y->ucleansed);
+    mwrite32(mf, y->usleep);
+    mwrite32(mf, y->uinvault);
+    mwrite32(mf, y->ugallop);
+    mwrite32(mf, y->urideturns);
+    mwrite32(mf, y->umortality);
+    mwrite32(mf, y->ugrave_arise);
+    mwrite32(mf, y->weapon_slots);
+    mwrite32(mf, y->skills_advanced);
+    mwrite32(mf, y->initrole);
+    mwrite32(mf, y->initrace);
+    mwrite32(mf, y->initgend);
+    mwrite32(mf, y->initalign);
+    mwrite32(mf, y->uconduct.unvegetarian);
+    mwrite32(mf, y->uconduct.unvegan);
+    mwrite32(mf, y->uconduct.food);
+    mwrite32(mf, y->uconduct.gnostic);
+    mwrite32(mf, y->uconduct.weaphit);
+    mwrite32(mf, y->uconduct.killer);
+    mwrite32(mf, y->uconduct.literate);
+    mwrite32(mf, y->uconduct.polypiles);
+    mwrite32(mf, y->uconduct.polyselfs);
+    mwrite32(mf, y->uconduct.wishes);
+    mwrite32(mf, y->uconduct.wisharti);
+    mwrite32(mf, y->uconduct.elbereths);
+    mwrite32(mf, y->uconduct.puddings);
+
+    mwrite32(mf, y->ustuck ? y->ustuck->m_id : 0);
+    mwrite32(mf, y->usteed ? y->usteed->m_id : 0);
+
+    mwrite8(mf, y->ux);
+    mwrite8(mf, y->uy);
+    mwrite8(mf, y->dx);
+    mwrite8(mf, y->dy);
+    mwrite8(mf, y->tx);
+    mwrite8(mf, y->ty);
+    mwrite8(mf, y->ux0);
+    mwrite8(mf, y->uy0);
+    mwrite8(mf, y->uz.dnum);
+    mwrite8(mf, y->uz.dlevel);
+    mwrite8(mf, y->utolev.dnum);
+    mwrite8(mf, y->utolev.dlevel);
+    mwrite8(mf, y->utotype);
+    mwrite8(mf, y->umoved);
+    mwrite8(mf, y->ualign.type);
+    mwrite8(mf, y->ualignbase[0]);
+    mwrite8(mf, y->ualignbase[1]);
+    mwrite8(mf, y->uluck);
+    mwrite8(mf, y->moreluck);
+    mwrite8(mf, y->uhitinc);
+    mwrite8(mf, y->udaminc);
+    mwrite8(mf, y->uac);
+    mwrite8(mf, y->uspellprot);
+    mwrite8(mf, y->usptime);
+    mwrite8(mf, y->uspmtime);
+    mwrite8(mf, y->twoweap);
+
+    mwrite(mf, y->usick_cause, sizeof (y->usick_cause));
+    mwrite(mf, y->urooms, sizeof (y->urooms));
+    mwrite(mf, y->urooms0, sizeof (y->urooms0));
+    mwrite(mf, y->uentered, sizeof (y->uentered));
+    mwrite(mf, y->ushops, sizeof (y->ushops));
+    mwrite(mf, y->ushops0, sizeof (y->ushops0));
+    mwrite(mf, y->ushops_entered, sizeof (y->ushops_entered));
+    mwrite(mf, y->ushops_left, sizeof (y->ushops_left));
+    mwrite(mf, y->macurr.a, sizeof (y->macurr.a));
+    mwrite(mf, y->mamax.a, sizeof (y->mamax.a));
+    mwrite(mf, y->acurr.a, sizeof (y->acurr.a));
+    mwrite(mf, y->aexe.a, sizeof (y->aexe.a));
+    mwrite(mf, y->abon.a, sizeof (y->abon.a));
+    mwrite(mf, y->amax.a, sizeof (y->amax.a));
+    mwrite(mf, y->atemp.a, sizeof (y->atemp.a));
+    mwrite(mf, y->atime.a, sizeof (y->atime.a));
+    mwrite(mf, y->skill_record, sizeof (y->skill_record));
+
+    for (i = 0; i <= LAST_PROP; i++) {
+        mwrite32(mf, y->uintrinsic[i]);
+    }
+    for (i = 0; i < P_NUM_SKILLS; i++) {
+        mwrite8(mf, y->weapon_skills[i].skill);
+        mwrite8(mf, y->weapon_skills[i].max_skill);
+        mwrite16(mf, y->weapon_skills[i].advance);
+    }
+
+    save_quest_status(mf, &y->quest_status);
+}
+
+static void
+save_utracked(struct memfile *mf, struct you *y)
+{
+    int i;
+    for (i = 0; i <= tos_last_slot; i++) {
+        mwrite32(mf, y->utracked[i] ? y->utracked[i]->o_id :
+                 y->utracked[i] == &zeroobj ? -1 : 0);
+        mwrite32(mf, y->uoccupation_progress[i]);
+    }
 }
 
 

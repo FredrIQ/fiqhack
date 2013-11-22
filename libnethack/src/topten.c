@@ -98,7 +98,7 @@ encode_uevent(void)
         c |= 0x0001UL;  /* any Oracle consultation */
     if (u.uevent.qcalled)
         c |= 0x0002UL;  /* reached quest portal level */
-    if (quest_status.got_quest || quest_status.got_thanks)
+    if (u.quest_status.got_quest || u.quest_status.got_thanks)
         c |= 0x0004UL;  /* was accepted for quest */
     if (u.uevent.qcompleted)
         c |= 0x0008UL;  /* showed quest arti to leader */
@@ -118,7 +118,7 @@ encode_uevent(void)
         c |= 0x0200UL;  /* was crowned */
 
     /* boss kills */
-    if (quest_status.killed_nemesis)
+    if (u.quest_status.killed_nemesis)
         c |= 0x0400UL;  /* defeated quest nemesis */
     if (mvitals[PM_CROESUS].died)
         c |= 0x0800UL;  /* defeated Croesus */

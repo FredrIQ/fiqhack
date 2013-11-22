@@ -174,7 +174,7 @@ static const short cham_to_pm[] = {
                          is_reviver((mon)->data) ||                     \
                          /* normally leader the will be unique, */      \
                          /* but he might have been polymorphed  */      \
-                         (mon)->m_id == quest_status.leader_m_id ||     \
+                         (mon)->m_id == u.quest_status.leader_m_id ||     \
                          /* special cancellation handling for these */  \
                          (dmgtype((mon)->data, AD_SEDU) ||              \
                           dmgtype((mon)->data, AD_SSEX)))
@@ -1462,8 +1462,8 @@ mondead(struct monst *mtmp)
         mvitals[tmp].died++;
 
     /* if it's a (possibly polymorphed) quest leader, mark him as dead */
-    if (mtmp->m_id == quest_status.leader_m_id)
-        quest_status.leader_is_dead = TRUE;
+    if (mtmp->m_id == u.quest_status.leader_m_id)
+        u.quest_status.leader_is_dead = TRUE;
 
     if (mtmp->data->mlet == S_KOP) {
         /* Dead Kops may come back. */
@@ -1858,7 +1858,7 @@ cleanup:
     newexplevel();      /* will decide if you go up */
 
     /* adjust alignment points */
-    if (mtmp->m_id == quest_status.leader_m_id) {       /* REAL BAD! */
+    if (mtmp->m_id == u.quest_status.leader_m_id) {       /* REAL BAD! */
         adjalign(-(u.ualign.record + (int)ALIGNLIM / 2));
         pline("That was %sa bad idea...",
               u.uevent.qcompleted ? "probably " : "");

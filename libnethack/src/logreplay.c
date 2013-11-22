@@ -906,16 +906,12 @@ static long
 true_moves(void)
 {
     long pos = diff_base.pos;
-    struct you sg_you;
-    struct flag sg_flags;
     long rv;
 
     if (!loginfo.out_of_sync)
         return moves;
     diff_base.pos = 0;
     uptodate(&diff_base, NULL);
-    restore_flags(&diff_base, &sg_flags);
-    restore_you(&diff_base, &sg_you);
     rv = mread32(&diff_base);
     diff_base.pos = pos;
     return rv;
@@ -1532,9 +1528,9 @@ nh_get_savegame_status(int fd, struct nh_game_info *gi)
             return LS_CRASHED;  /* probably still a valid game */
         }
 
+        sg_moves = mread32(&mf);
         restore_flags(&mf, &sg_flags);
         restore_you(&mf, &sg_you);
-        sg_moves = mread32(&mf);
         free(mf.buf);
 
         /* make sure topten_level_name can work correctly */

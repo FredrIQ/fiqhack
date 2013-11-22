@@ -1407,6 +1407,7 @@ extern int dorecover(struct memfile *mf);
 extern int dorecover_fd(int fd);
 extern void trickery(char *);
 extern void restore_flags(struct memfile *mf, struct flag *f);
+extern void restore_you(struct memfile *mf, struct you *y);
 extern struct level *getlev(struct memfile *mf, xchar levnum, boolean ghostly);
 extern boolean lookup_id_mapping(unsigned, unsigned *);
 
@@ -1706,10 +1707,6 @@ extern void cnv_trap_obj(struct level *lev, int otyp, int cnt,
 
 extern void u_init(void);
 extern void u_init_inv_skills(void);
-extern void restore_you(struct memfile *mf, struct you *y);
-extern void save_you(struct memfile *mf, struct you *y);
-extern void restore_utracked(struct memfile *mf, struct you *y);
-extern void save_utracked(struct memfile *mf, struct you *y);
 
 /* ### uhitm.c ### */
 

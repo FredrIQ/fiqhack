@@ -96,9 +96,6 @@ extern s_level *sp_levchn;
 
 # define dunlev_reached(x)      (dungeons[(x)->dnum].dunlev_ureached)
 
-# include "quest.h"
-extern struct q_score quest_status;
-
 extern char pl_character[PL_CSIZ];
 extern char pl_race;    /* character's race */
 

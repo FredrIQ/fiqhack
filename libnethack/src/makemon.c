@@ -978,7 +978,7 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
     set_mon_data(mtmp, ptr, 0);
 
     if (mtmp->data->msound == MS_LEADER)
-        quest_status.leader_m_id = mtmp->m_id;
+        u.quest_status.leader_m_id = mtmp->m_id;
     mtmp->mnum = mndx;
 
     mtmp->m_lev = adj_lev(&lev->z, ptr);

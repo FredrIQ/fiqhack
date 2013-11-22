@@ -12,9 +12,6 @@
  */
 struct dgn_topology dungeon_topology;
 
-#include "quest.h"
-struct q_score quest_status;
-
 int smeq[MAXNROFROOMS + 1];
 
 int killer_format;
@@ -221,7 +218,7 @@ init_data(void)
     memset(&program_state, 0, sizeof (program_state));
     memset(&flags, 0, sizeof (flags));
     memset(&iflags, 0, sizeof (iflags));
-    memset(&quest_status, 0, sizeof (quest_status));
+    memset(&u.quest_status, 0, sizeof (u.quest_status));
     memset(&levels, 0, sizeof (levels));
     memset(&u, 0, sizeof (u));
     memset(dogname, 0, sizeof (dogname));

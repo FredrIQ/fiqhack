@@ -10,7 +10,7 @@
 #include "quest.h"
 #include "qtext.h"
 
-#define Qstat(x)        (quest_status.x)
+#define Qstat(x)        (u.quest_status.x)
 
 static void on_start(const d_level * orig_lev);
 static void on_locate(const d_level * orig_lev);

@@ -811,7 +811,7 @@ tamedog(struct monst *mtmp, struct obj *obj)
         (obj && dogfood(mtmp, obj) >= MANFOOD))
         return NULL;
 
-    if (mtmp->m_id == quest_status.leader_m_id)
+    if (mtmp->m_id == u.quest_status.leader_m_id)
         return NULL;
 
     /* make a new monster which has the pet extension */

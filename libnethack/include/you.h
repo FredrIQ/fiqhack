@@ -12,6 +12,7 @@
 # include "prop.h"     /* for makedefs, enum objslot */
 # include "skills.h"
 # include "dungeon.h"
+# include "quest.h"
 
 # include <time.h>
 
@@ -191,6 +192,7 @@ struct you {
     int initgend;       /* starting gender (index into genders[]) */
     int initalign;      /* starting alignment (index into aligns[]) */
 
+    struct q_score quest_status;
 };      /* end of `struct you' */
 
 # define Upolyd (u.umonnum != u.umonster)

@@ -680,9 +680,9 @@ revive(struct obj *obj)
                     mtmp = christen_monst(mtmp, ONAME(obj));
                 /* flag the quest leader as alive. */
                 if (mtmp->data->msound == MS_LEADER ||
-                    mtmp->m_id == quest_status.leader_m_id) {
-                    quest_status.leader_m_id = mtmp->m_id;
-                    quest_status.leader_is_dead = FALSE;
+                    mtmp->m_id == u.quest_status.leader_m_id) {
+                    u.quest_status.leader_m_id = mtmp->m_id;
+                    u.quest_status.leader_is_dead = FALSE;
                 }
             }
         }
