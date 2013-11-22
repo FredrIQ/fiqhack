@@ -264,7 +264,6 @@ savegamestate(struct memfile *mf)
     savefruitchn(mf);
     savenames(mf);
     save_waterlevel(mf);
-    mwrite32(mf, lastinvnr);
     save_mt_state(mf);
     save_track(mf);
     save_food(mf);
@@ -479,6 +478,8 @@ save_you(struct memfile *mf, struct you *y)
     }
 
     save_quest_status(mf, &y->quest_status);
+
+    mwrite32(mf, y->lastinvnr);
 }
 
 static void

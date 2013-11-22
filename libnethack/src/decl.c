@@ -80,7 +80,6 @@ struct instance_flags iflags;
 struct you u;
 
 struct obj *invent;
-int lastinvnr;  /* 0 ... 51 */
 
 const int shield_static[SHIELD_COUNT] = {
     E_ss1, E_ss2, E_ss3, E_ss2, E_ss1, E_ss2, E_ss4,    /* 7 per row */

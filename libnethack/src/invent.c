@@ -73,7 +73,7 @@ assigninvlet(struct obj *otmp)
     if ((i = otmp->invlet) &&
         (('a' <= i && i <= 'z') || ('A' <= i && i <= 'Z')))
         return;
-    for (i = lastinvnr + 1; i != lastinvnr; i++) {
+    for (i = u.lastinvnr + 1; i != u.lastinvnr; i++) {
         if (i == 52) {
             i = -1;
             continue;
@@ -83,7 +83,7 @@ assigninvlet(struct obj *otmp)
     }
     otmp->invlet =
         (inuse[i] ? NOINVSYM : (i < 26) ? ('a' + i) : ('A' + i - 26));
-    lastinvnr = i;
+    u.lastinvnr = i;
 }
 
 

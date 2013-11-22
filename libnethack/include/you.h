@@ -193,6 +193,8 @@ struct you {
     int initalign;      /* starting alignment (index into aligns[]) */
 
     struct q_score quest_status;
+
+    int lastinvnr;
 };      /* end of `struct you' */
 
 # define Upolyd (u.umonnum != u.umonster)

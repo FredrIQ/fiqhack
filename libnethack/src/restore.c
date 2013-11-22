@@ -448,7 +448,6 @@ restgamestate(struct memfile *mf)
 
     restnames(mf);
     restore_waterlevel(mf, lev);
-    lastinvnr = mread32(mf);
     restore_mt_state(mf);
     restore_track(mf);
     restore_food(mf);
@@ -638,6 +637,8 @@ restore_you(struct memfile *mf, struct you *y)
     }
 
     restore_quest_status(mf, &y->quest_status);
+
+    y->lastinvnr = mread32(mf);
 }
 
 static void
