@@ -436,7 +436,7 @@ select_enum_value(union nh_optvalue *value, struct nh_option_desc *option)
 
 /* get a new value of the appropriate type for the given option */
 static nh_bool
-get_option_value(struct win_menu *mdat, int idx)
+query_new_value(struct win_menu *mdat, int idx)
 {
     char buf[BUFSZ], query[BUFSZ];
     union nh_optvalue value;
@@ -557,7 +557,7 @@ display_options(nh_bool change_birth_opt)
 
         n = curses_display_menu_core(items, icount, "Set what options?",
                                      PICK_ONE, NULL, 0, 0, -1, -1,
-                                     get_option_value);
+                                     query_new_value);
     } while (n > 0);
     free(items);
 
