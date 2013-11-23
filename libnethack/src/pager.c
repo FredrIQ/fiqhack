@@ -384,9 +384,6 @@ describe_mon(int x, int y, int monnum, char *buf)
 void
 nh_describe_pos(int x, int y, struct nh_desc_buf *bufs, int *is_in)
 {
-    int monid = dbuf_get_mon(x, y);
-    int mem_bg = level->locations[x][y].mem_bg;
-
     bufs->bgdesc[0] = '\0';
     bufs->trapdesc[0] = '\0';
     bufs->objdesc[0] = '\0';
@@ -395,6 +392,12 @@ nh_describe_pos(int x, int y, struct nh_desc_buf *bufs, int *is_in)
     bufs->effectdesc[0] = '\0';
     bufs->objcount = -1;
 
+    if (is_in)
+        *is_in = 0;
+
+    if (!program_state.game_running || !api_entry_checkpoint())
+        return;
+
     if (is_in) {
         if (IS_ROCK(level->locations[x][y].typ) || closed_door(level, x, y))
             *is_in = 1;
@@ -402,8 +405,8 @@ nh_describe_pos(int x, int y, struct nh_desc_buf *bufs, int *is_in)
             *is_in = 0;
     }
 
-    if (!program_state.game_running || !api_entry_checkpoint())
-        return;
+    int monid = dbuf_get_mon(x, y);
+    int mem_bg = level->locations[x][y].mem_bg;
 
     describe_bg(x, y, mem_bg, bufs->bgdesc);
 
