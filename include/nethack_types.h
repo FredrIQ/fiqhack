@@ -221,7 +221,7 @@ enum nh_command_status {
     COMMAND_OK
 };
 
-/* return values for nh_do_move */
+/* return values for nh_command */
 enum nh_input_status {
     READY_FOR_INPUT,
     MULTI_IN_PROGRESS,
