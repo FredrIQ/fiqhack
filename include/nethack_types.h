@@ -134,6 +134,7 @@
 # define OCLASS_ANY 'a' /* for autopickup */
 
 enum nh_direction {
+    DIR_SERVERCANCEL = -2,
     DIR_NONE = -1,
     DIR_W = 0,
     DIR_NW,
