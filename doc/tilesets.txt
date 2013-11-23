@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2013-09-24
+Last modified by Alex Smith, 2013-11-23
 
 The tiles code in this directory was originally taken from Slash'EM, and has
 been modified by Alex Smith for use in NetHack 4.  (This documentation file
@@ -8,6 +8,9 @@ themselves are distributed in a text format with routines to help in
 converting them to a system's preferred format and using them there.  For
 information on the authorship of the tiles, see the "copyright" file in the
 root of the NetHack 4 distribution.
+
+This document is licensed under the NetHack General Public License.  See
+libnethack/dat/license for details.
 
 
 The Tiles System in NetHack 4
