@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-23 */
+/* Last modified by Alex Smith, 2013-11-23 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -300,6 +300,15 @@ enum placement_hint {
     PLHINT_ONELINER,
     PLHINT_CONTAINER,
     PLHINT_INVENTORY
+};
+
+enum nh_client_response {
+    NHCR_ACCEPTED,
+    NHCR_CLIENT_CANCEL,
+    NHCR_SERVER_CANCEL,
+    NHCR_CONTINUE, 
+    NHCR_MOREINFO,
+    NHCR_MOREINFO_CONTINUE,
 };
 
 /* the name "boolean" is too common to use here */

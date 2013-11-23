@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-11-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -601,12 +601,6 @@ checkfile(const char *inp, struct permonst *pm, boolean user_typed_name,
 }
 
 
-/* getpos() return values */
-#define LOOK_TRADITIONAL        0       /* '.' -- ask about "more info?" */
-#define LOOK_QUICK              1       /* ',' -- skip "more info?" */
-#define LOOK_ONCE               2       /* ';' -- skip and stop looping */
-#define LOOK_VERBOSE            3       /* ':' -- show more info w/o asking */
-
 /* also used by getpos hack in do_name.c */
 const char what_is_an_unknown_object[] = "an unknown object";
 
@@ -667,7 +661,7 @@ do_look(boolean quick)
             pline("Pick an object.");
 
         ans = getpos(&cc, FALSE, what_is_an_unknown_object);
-        if (ans < 0 || cc.x < 0) {
+        if (ans == NHCR_CLIENT_CANCEL || cc.x < 0) {
             flags.verbose = save_verbose;
             if (flags.verbose)
                 pline(quick ? "Never mind." : "Done.");
@@ -715,14 +709,17 @@ do_look(boolean quick)
             out_str[0] = highc(out_str[0]);
             pline("%s.", out_str);
             /* check the data file for information about this thing */
-            if (found == 1 && ans != LOOK_QUICK && ans != LOOK_ONCE &&
-                (ans == LOOK_VERBOSE || !quick)) {
-                checkfile(firstmatch, NULL, FALSE, ans == LOOK_VERBOSE);
+            if (found == 1 && ans != NHCR_CONTINUE &&
+                (ans == NHCR_MOREINFO ||
+                 ans == NHCR_MOREINFO_CONTINUE || !quick)) {
+                checkfile(firstmatch, NULL, FALSE,
+                          ans == NHCR_MOREINFO ||
+                          ans == NHCR_MOREINFO_CONTINUE);
             }
         } else {
             pline("I've never heard of such things.");
         }
-    } while (!quick && ans != LOOK_ONCE);
+    } while (ans == NHCR_CONTINUE || ans == NHCR_MOREINFO_CONTINUE);
 
     flags.verbose = save_verbose;
     if (!quick && flags.verbose)

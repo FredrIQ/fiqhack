@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-11-23 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -973,7 +973,7 @@ throwspell(schar * dx, schar * dy)
     pline("Where do you want to cast the spell?");
     cc.x = u.ux;
     cc.y = u.uy;
-    if (getpos(&cc, TRUE, "the desired position") < 0)
+    if (getpos(&cc, TRUE, "the desired position") == NHCR_CLIENT_CANCEL)
         return 0;       /* user pressed ESC */
     /* The number of moves from hero to where the spell drops. */
     if (distmin(u.ux, u.uy, cc.x, cc.y) > 10) {
