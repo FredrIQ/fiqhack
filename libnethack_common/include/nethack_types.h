@@ -311,12 +311,6 @@ struct nh_listitem {
     char *caption;
 };
 
-
-struct nh_boolopt_map {
-    const char *optname;
-    nh_bool *addr;
-};
-
 struct nh_int_option {
     int max;
     int min;

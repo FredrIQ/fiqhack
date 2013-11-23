@@ -60,9 +60,6 @@ extern nh_drawing_info_p EXPORT(nh_get_drawing_info) (void);
 extern nh_bool EXPORT(nh_set_option) (
     const char *name, union nh_optvalue value, nh_bool isstr);
 extern nh_option_desc_p EXPORT(nh_get_options) (enum nh_option_list list);
-extern void EXPORT(nh_setup_ui_options) (
-    struct nh_option_desc *options, struct nh_boolopt_map *boolmap,
-    nh_bool(*callback) (struct nh_option_desc *));
 extern const_char_p EXPORT(nh_get_option_string) (
     const struct nh_option_desc *opt);
 

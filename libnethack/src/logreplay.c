@@ -6,6 +6,7 @@
 #include "hack.h"
 #include "dlb.h"
 #include "patchlevel.h"
+#include "common_options.h"
 #include <ctype.h>
 #include <zlib.h>
 /* stdint.h, inttypes.h let us scanf long longs portably */
@@ -741,7 +742,7 @@ replay_read_option(char *token)
     case 'a':
         arbuf = calloc(base64_strlen(valstr) + 1, 1);
         base64_decode(valstr, arbuf);
-        value.ar = parse_autopickup_rules(arbuf);
+        value.ar = nhlib_parse_autopickup_rules(arbuf);
         free(arbuf);
         break;
 

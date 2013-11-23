@@ -493,9 +493,9 @@ connect_server(struct server_info *server)
                                    "options to the server?", "yn",
                                    'y') == 'y') {
                 for (i = 0; game_opts[i].name; i++)
-                    nh_set_option(game_opts[i].name, game_opts[i].value, 0);
+                    curses_set_option(game_opts[i].name, game_opts[i].value, 0);
                 for (i = 0; birth_opts[i].name; i++)
-                    nh_set_option(birth_opts[i].name, birth_opts[i].value, 0);
+                    curses_set_option(birth_opts[i].name, birth_opts[i].value, 0);
             }
 
             return TRUE;

@@ -4,6 +4,7 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "nhcurses.h"
+#include "common_options.h"
 #include <fcntl.h>
 #include <ctype.h>
 #include <errno.h>
@@ -122,7 +123,7 @@ struct nh_option_desc curses_options[] = {
     {NULL, NULL, OPTTYPE_BOOL, {NULL}}
 };
 
-struct nh_boolopt_map boolopt_map[] = {
+struct nhlib_boolopt_map boolopt_map[] = {
     {"bgbranding", &settings.bgbranding},
     {"blink", &settings.blink},
     {"darkgray", &settings.darkgray},
@@ -143,9 +144,40 @@ struct nh_boolopt_map boolopt_map[] = {
 };
 
 
-static nh_bool
-option_change_callback(struct nh_option_desc *option)
+nh_bool
+curses_set_option(const char *name, union nh_optvalue value, nh_bool isstring)
 {
+    struct nh_option_desc *option = nhlib_find_option(curses_options, name);
+    if (!option)
+        return nh_set_option(name, value, isstring);
+
+    if ((int)option->type == OPTTYPE_KEYMAP)
+        /* FIXME: impossible() */
+        return FALSE;
+
+    if (isstring)
+        value = nhlib_string_to_optvalue(option, value.s);
+
+    if (!nhlib_option_value_ok(option, value))
+        return FALSE;
+
+    nhlib_copy_option_value(option, value);
+
+    /* We may have allocated a new copy of the autopickup rules. */
+    if (isstring && option->type == OPTTYPE_AUTOPICKUP_RULES) {
+        free(value.ar->rules);
+        free(value.ar);
+    }
+
+    if (option->type == OPTTYPE_BOOL) {
+        nh_bool *var = nhlib_find_boolopt(boolopt_map, option->name);
+        if (!var)
+            /* FIXME: impossible() */
+            return FALSE;
+
+        *var = value.b;
+    }
+
     if (!strcmp(option->name, "frame") || !strcmp(option->name, "status3") ||
         !strcmp(option->name, "sidebar")) {
         rebuild_ui();
@@ -241,12 +273,10 @@ init_options(void)
     find_option("win_height")->i.max = 70;      /* ROWNO + max msgheight +
                                                    extra for status and frame */
 #endif
-    nh_setup_ui_options(curses_options, boolopt_map, option_change_callback);
-
     /* set up option defaults; this is necessary for options that are not
        specified in the config file */
     for (i = 0; curses_options[i].name; i++)
-        nh_set_option(curses_options[i].name, curses_options[i].value, FALSE);
+        curses_set_option(curses_options[i].name, curses_options[i].value, FALSE);
 
     read_ui_config();
 }
@@ -468,7 +498,7 @@ get_option_value(struct win_menu *mdat, int idx)
         return FALSE;
     }
 
-    if (!nh_set_option(option->name, value, FALSE)) {
+    if (!curses_set_option(option->name, value, FALSE)) {
         sprintf(strbuf, "new value for %s rejected", option->name);
         curses_msgwin(strbuf);
     } else
@@ -886,7 +916,7 @@ show_autopickup_menu(struct nh_option_desc *opt)
         edit_ap_rule(&opt->a, value.ar, id);
     } while (n > 0);
 
-    nh_set_option(opt->name, value, FALSE);
+    curses_set_option(opt->name, value, FALSE);
 
     free(value.ar->rules);
     free(value.ar);
@@ -937,7 +967,7 @@ read_config_line(char *line)
     }
 
     optval.s = value;
-    nh_set_option(name, optval, TRUE);
+    curses_set_option(name, optval, TRUE);
 }
 
 

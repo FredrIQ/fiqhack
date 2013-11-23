@@ -4,19 +4,14 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "common_options.h"
 #include <ctype.h>
 
 #define WINTYPELEN 16
 
 static int change_inv_order(char *op);
-static struct nh_autopickup_rules *copy_autopickup_rules(
-    const struct nh_autopickup_rules *in);
 
 /* -------------------------------------------------------------------------- */
-
-/* output array for parse_autopickup_rules. */
-static struct nh_autopickup_rule ap_rules_array[AUTOPICKUP_MAX_RULES];
-static struct nh_autopickup_rules ap_rules_static;
 
 #define listlen(list) (sizeof(list)/sizeof(list[0]))
 
@@ -198,7 +193,7 @@ static const struct nh_option_desc const_birth_options[] = {
 
 
 /* associate boolean options with variables directly */
-static const struct nh_boolopt_map boolopt_map[] = {
+static const struct nhlib_boolopt_map boolopt_map[] = {
     {"autodig", &flags.autodig},
     {"autodigdown", &iflags.autodigdown},
     {"autopickup", &flags.pickup},
@@ -237,11 +232,6 @@ static const char def_inv_order[MAXOCLASSES] = {
 };
 
 
-struct nh_option_desc *ui_options;
-struct nh_boolopt_map *ui_boolopt_map;
-
-boolean(*ui_option_callback) (struct nh_option_desc *);
-
 /* most environment variables will eventually be printed in an error
  * message if they don't work, and most error message paths go through
  * BUFSZ buffers, which could be overflowed by a maliciously long
@@ -258,19 +248,6 @@ nh_getenv(const char *ev)
         return getev;
     else
         return NULL;
-}
-
-
-static struct nh_option_desc *
-find_option(struct nh_option_desc *optlist, const char *name)
-{
-    int i;
-
-    for (i = 0; optlist[i].name; i++)
-        if (!strcmp(name, optlist[i].name))
-            return &optlist[i];
-
-    return NULL;
 }
 
 
@@ -332,23 +309,23 @@ init_opt_struct(void)
     build_race_spec();
 
     /* initialize option definitions */
-    find_option(options, "comment")->s.maxlen = BUFSZ;
-    find_option(options, "disclose")->e = disclose_spec;
-    find_option(options, "fruit")->s.maxlen = PL_FSIZ;
-    find_option(options, "menustyle")->e = menustyle_spec;
-    find_option(options, "pickup_burden")->e = pickup_burden_spec;
-    find_option(options, "packorder")->s.maxlen = MAXOCLASSES;
-    find_option(options, "runmode")->e = runmode_spec;
-    find_option(options, "autopickup_rules")->a = autopickup_spec;
+    nhlib_find_option(options, "comment")->s.maxlen = BUFSZ;
+    nhlib_find_option(options, "disclose")->e = disclose_spec;
+    nhlib_find_option(options, "fruit")->s.maxlen = PL_FSIZ;
+    nhlib_find_option(options, "menustyle")->e = menustyle_spec;
+    nhlib_find_option(options, "pickup_burden")->e = pickup_burden_spec;
+    nhlib_find_option(options, "packorder")->s.maxlen = MAXOCLASSES;
+    nhlib_find_option(options, "runmode")->e = runmode_spec;
+    nhlib_find_option(options, "autopickup_rules")->a = autopickup_spec;
 
-    find_option(birth_options, "align")->e = align_spec;
-    find_option(birth_options, "gender")->e = gender_spec;
-    find_option(birth_options, "role")->e = role_spec;
-    find_option(birth_options, "race")->e = race_spec;
-    find_option(birth_options, "pettype")->e = pettype_spec;
-    find_option(birth_options, "catname")->s.maxlen = PL_PSIZ;
-    find_option(birth_options, "dogname")->s.maxlen = PL_PSIZ;
-    find_option(birth_options, "horsename")->s.maxlen = PL_PSIZ;
+    nhlib_find_option(birth_options, "align")->e = align_spec;
+    nhlib_find_option(birth_options, "gender")->e = gender_spec;
+    nhlib_find_option(birth_options, "role")->e = role_spec;
+    nhlib_find_option(birth_options, "race")->e = race_spec;
+    nhlib_find_option(birth_options, "pettype")->e = pettype_spec;
+    nhlib_find_option(birth_options, "catname")->s.maxlen = PL_PSIZ;
+    nhlib_find_option(birth_options, "dogname")->s.maxlen = PL_PSIZ;
+    nhlib_find_option(birth_options, "horsename")->s.maxlen = PL_PSIZ;
 
     /* If no config file exists, these values will not get set until they have
        already been used during game startup.  (-1) is a much better default,
@@ -411,187 +388,15 @@ initoptions(void)
 
 
 static boolean
-option_value_ok(struct nh_option_desc *option, union nh_optvalue value)
-{
-    int i;
-
-    switch (option->type) {
-    case OPTTYPE_BOOL:
-        if (value.b == ! !value.b)
-            return TRUE;
-        break;
-
-    case OPTTYPE_INT:
-        if (value.i >= option->i.min && value.i <= option->i.max)
-            return TRUE;
-        break;
-
-    case OPTTYPE_ENUM:
-        for (i = 0; i < option->e.numchoices; i++)
-            if (value.e == option->e.choices[i].id)
-                return TRUE;
-        break;
-
-    case OPTTYPE_STRING:
-        if (!value.s)
-            break;
-
-        if (strlen(value.s) > option->s.maxlen)
-            break;
-
-        if (!*value.s)
-            value.s = NULL;
-
-        return TRUE;
-
-    case OPTTYPE_AUTOPICKUP_RULES:
-        if (value.ar && value.ar->num_rules > AUTOPICKUP_MAX_RULES)
-            break;
-        return TRUE;
-    }
-
-    return FALSE;
-}
-
-
-static union nh_optvalue
-string_to_optvalue(struct nh_option_desc *option, char *str)
-{
-    union nh_optvalue value;
-    int i;
-
-    value.i = -99999;
-
-    switch (option->type) {
-    case OPTTYPE_BOOL:
-        if (!strcmp(str, "TRUE") || !strcmp(str, "true") || !strcmp(str, "1"))
-            value.b = TRUE;
-        else if (!strcmp(str, "FALSE") || !strcmp(str, "false") ||
-                 !strcmp(str, "0"))
-            value.b = FALSE;
-        else
-            value.i = 2;        /* intentionally invalid */
-
-        break;
-
-    case OPTTYPE_INT:
-        sscanf(str, "%d", &value.i);
-        break;
-
-    case OPTTYPE_ENUM:
-        for (i = 0; i < option->e.numchoices; i++)
-            if (!strcmp(str, option->e.choices[i].caption))
-                value.e = option->e.choices[i].id;
-        break;
-
-    case OPTTYPE_STRING:
-        if (*str)
-            value.s = str;
-        else
-            value.s = NULL;
-        break;
-
-    case OPTTYPE_AUTOPICKUP_RULES:
-        value.ar = parse_autopickup_rules(str);
-        break;
-    }
-
-    return value;
-}
-
-
-/* copy values carefully: copying pointers to strings on the stack is not good
- * return TRUE if the new value differs from the current value */
-static boolean
-copy_option_value(struct nh_option_desc *option, union nh_optvalue value)
-{
-    struct nh_autopickup_rules *aold, *anew;
-    int i;
-
-    switch (option->type) {
-    case OPTTYPE_STRING:
-        if (option->value.s == value.s ||
-            (option->value.s && value.s && !strcmp(option->value.s, value.s)))
-            return FALSE;       /* setting the option to it's current value;
-                                   nothing to copy */
-
-        if (option->value.s)
-            free(option->value.s);
-        option->value.s = NULL;
-        if (value.s) {
-            option->value.s = malloc(strlen(value.s) + 1);
-            strcpy(option->value.s, value.s);
-        }
-        break;
-
-    case OPTTYPE_AUTOPICKUP_RULES:
-        aold = option->value.ar;
-        anew = value.ar;
-
-        if (!aold && !anew)
-            return FALSE;
-
-        /* check rule set equality */
-        if (aold && anew && aold->num_rules == anew->num_rules) {
-            /* compare each individual rule */
-            for (i = 0; i < aold->num_rules; i++)
-                if (strcmp(aold->rules[i].pattern, anew->rules[i].pattern) ||
-                    aold->rules[i].oclass != anew->rules[i].oclass ||
-                    aold->rules[i].buc != anew->rules[i].buc ||
-                    aold->rules[i].action != anew->rules[i].action)
-                    break;      /* rule difference found */
-            if (i == aold->num_rules)
-                return FALSE;
-        }
-
-        if (aold) {
-            free(aold->rules);
-            free(aold);
-        }
-
-        option->value.ar = copy_autopickup_rules(value.ar);
-        break;
-
-    case OPTTYPE_BOOL:
-        if (option->value.b == value.b)
-            return FALSE;
-        option->value.b = value.b;
-        break;
-
-    case OPTTYPE_ENUM:
-        if (option->value.e == value.e)
-            return FALSE;
-        option->value.e = value.e;
-        break;
-
-    case OPTTYPE_INT:
-        if (option->value.i == value.i)
-            return FALSE;
-        option->value.i = value.i;
-        break;
-    }
-
-    return TRUE;
-
-}
-
-
-static boolean
 set_option(const char *name, union nh_optvalue value, boolean isstring)
 {
-    boolean is_ui = FALSE;
     struct nh_option_desc *option = NULL;
 
     if (options)
-        option = find_option(options, name);
+        option = nhlib_find_option(options, name);
 
     if (!option && !program_state.game_running && birth_options)
-        option = find_option(birth_options, name);
-
-    if (!option && ui_options) {
-        option = find_option(ui_options, name);
-        is_ui = TRUE;
-    }
+        option = nhlib_find_option(birth_options, name);
 
     if (!option)
         return FALSE;
@@ -599,44 +404,33 @@ set_option(const char *name, union nh_optvalue value, boolean isstring)
     /* if this option change affects game options (!is_ui) and happens during a 
        replay (program_state.viewing) and the change isn't triggered by the
        replay (!program_state.restoring) */
-    if (!is_ui && program_state.viewing && !program_state.restoring)
+    if (program_state.viewing && !program_state.restoring)
         return FALSE;   /* Nope, sorry. That would mess up the replay */
 
     if (isstring)
-        value = string_to_optvalue(option, value.s);
+        value = nhlib_string_to_optvalue(option, value.s);
 
-    if (!option_value_ok(option, value))
+    if (!nhlib_option_value_ok(option, value))
         return FALSE;
 
-    if (copy_option_value(option, value) && !is_ui)
+    if (nhlib_copy_option_value(option, value))
         log_option(option);     /* prev value != new value */
 
+    /* We may have allocated a new copy of the autopickup rules. */
+    if (isstring && option->type == OPTTYPE_AUTOPICKUP_RULES) {
+        free(value.ar->rules);
+        free(value.ar);
+    }
+
     if (option->type == OPTTYPE_BOOL) {
-        int i;
-        boolean *bvar = NULL;
-        const struct nh_boolopt_map *boolmap = boolopt_map;
-
-        if (is_ui)
-            boolmap = ui_boolopt_map;
-
-        for (i = 0; boolmap[i].optname && !bvar; i++)
-            if (!strcmp(option->name, boolmap[i].optname))
-                bvar = boolmap[i].addr;
-
-        if (!bvar)
-            /* shouldn't happen */
+        boolean *bvar = nhlib_find_boolopt(boolopt_map, option->name);
+        if (!bvar) {
+            impossible("no boolean for option '%s'", option->name);
             return FALSE;
-
+        }
         *bvar = option->value.b;
-        if (is_ui && ui_option_callback)
-            /* allow the ui to "see" changes to booleans, but the return value
-               doesn't mattter as the option was set here. */
-            ui_option_callback(option);
         return TRUE;
-    } else if (is_ui)
-        return ui_option_callback(option);
-    /* regular non-boolean options */
-    else if (!strcmp("comment", option->name)) {
+    } else if (!strcmp("comment", option->name)) {
         /* do nothing */
     } else if (!strcmp("disclose", option->name)) {
         flags.end_disclose = option->value.e;
@@ -659,7 +453,7 @@ set_option(const char *name, union nh_optvalue value, boolean isstring)
             free(iflags.ap_rules);
             iflags.ap_rules = NULL;
         }
-        iflags.ap_rules = copy_autopickup_rules(option->value.ar);
+        iflags.ap_rules = nhlib_copy_autopickup_rules(option->value.ar);
     }
     /* birth options */
     else if (!strcmp("align", option->name)) {
@@ -788,7 +582,7 @@ clone_optlist(const struct nh_option_desc *in)
         if (in[i].type == OPTTYPE_STRING && in[i].value.s)
             out[i].value.s = strdup(in[i].value.s);
         else if (in[i].type == OPTTYPE_AUTOPICKUP_RULES && in[i].value.ar)
-            out[i].value.ar = copy_autopickup_rules(in[i].value.ar);
+            out[i].value.ar = nhlib_copy_autopickup_rules(in[i].value.ar);
     }
 
     return out;
@@ -938,37 +732,6 @@ change_inv_order(char *op)
 }
 
 
-/* convenience function: allows the ui to share option handling code */
-void
-nh_setup_ui_options(struct nh_option_desc *uioptions,
-                    struct nh_boolopt_map *boolmap,
-                    boolean(*callback) (struct nh_option_desc *))
-{
-    ui_options = uioptions;
-    ui_boolopt_map = boolmap;
-    ui_option_callback = callback;
-}
-
-
-static struct nh_autopickup_rules *
-copy_autopickup_rules(const struct nh_autopickup_rules *in)
-{
-    struct nh_autopickup_rules *out;
-    int size;
-
-    if (!in || !in->num_rules)
-        return NULL;
-
-    out = malloc(sizeof (struct nh_autopickup_rules));
-    out->num_rules = in->num_rules;
-    size = out->num_rules * sizeof (struct nh_autopickup_rule);
-    out->rules = malloc(size);
-    memcpy(out->rules, in->rules, size);
-
-    return out;
-}
-
-
 char *
 autopickup_to_string(const struct nh_autopickup_rules *ar)
 {
@@ -1004,51 +767,5 @@ autopickup_to_string(const struct nh_autopickup_rules *ar)
 
     return buf;
 }
-
-
-struct nh_autopickup_rules *
-parse_autopickup_rules(const char *str)
-{
-    struct nh_autopickup_rules *out;
-    char *copy, *semi;
-    const char *start;
-    int i, rcount = 0;
-    unsigned int action, buc;
-
-    if (!str || !*str)
-        return NULL;
-
-    start = str;
-    while ((semi = strchr(start, ';'))) {
-        start = ++semi;
-        rcount++;
-    }
-
-    if (!rcount)
-        return NULL;
-
-    out = &ap_rules_static;
-    out->rules = ap_rules_array;
-    out->num_rules = rcount;
-
-    i = 0;
-    start = copy = strdup(str);
-    while ((semi = strchr(start, ';')) && i < rcount) {
-        *semi++ = '\0';
-        sscanf(start, "(\"%39[^,],%d,%u,%u);", out->rules[i].pattern,
-               &out->rules[i].oclass, &buc, &action);
-        /* since %[ in sscanf requires a nonempty match, we allowed it to match
-           the closing '"' of the rule. Remove that now. */
-        out->rules[i].pattern[strlen(out->rules[i].pattern) - 1] = '\0';
-        out->rules[i].buc = (enum nh_bucstatus)buc;
-        out->rules[i].action = (enum autopickup_action)action;
-        i++;
-        start = semi;
-    }
-
-    free(copy);
-    return out;
-}
-
 
 /*options.c*/
