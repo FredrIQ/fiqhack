@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-11-22 */
+/* Last modified by Sean Hunt, 2013-11-23 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -33,12 +33,6 @@ enum extra_opttypes {
 
 static void show_autopickup_menu(struct nh_option_desc *opt);
 
-
-#if defined(NETCLIENT)
-# define should_write_config() (!nhnet_active())
-#else
-# define should_write_config() (1)
-#endif
 
 
 /*----------------------------------------------------------------------------*/
@@ -1147,7 +1141,7 @@ write_config(void)
 
     if (!ui_flags.connection_only) {
         fp = open_config_file(filename);
-        if (fp && should_write_config()) {
+        if (fp) {
             write_config_options(fp, nh_get_options(GAME_OPTIONS));
             write_config_options(fp, nh_get_options(CURRENT_BIRTH_OPTIONS));
             fclose(fp);
