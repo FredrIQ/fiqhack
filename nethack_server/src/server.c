@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-11-23 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -8,22 +8,17 @@
 
 /*
  * NetHack server core.
- * 
+ *
  * The code is designed to meet the following goals/constraints:
- *  - Each NetHack game MUST run in it's own process. The game is the
- *    anti-thesis of thread-safe. Writing a threaded server would require major
- *    work on the game code.
- * 
- *  - Clients should be able to disconnect from the server between commands.
- *    This is required to more easily support web clients. In that scenario
- *    Some javascript in a browser issues an XMLHttpRequest to a web-server,
- *    where a script performs the trivial transformation from request parameters
- *    to a JSON string which it sends on (via localhost) to the NetHack server.
- *    The NH server responds with some more JSON which represents game state.
- *    Since the request is now complete from their point of view, neither the
- *    web server nor the web client should be required to maintain a connection
- *    to the NH server.
- * 
+ *
+ *  - Each NetHack game MUST run in its own process. The game is the anti-thesis
+ *    of thread-safe. Writing a threaded server would require major work on the
+ *    game code.
+ *
+ *  - Clients should be able to disconnect from the server at any point they
+ *    like. This is useful both to support web clients, and to prevent
+ *    corruption when a network connection breaks.
+ *
  * In order to allow a client to reconnect to its running game, there are 2
  * alternatives:
  *   (1) performing each client connection over a new server socket on a
@@ -32,7 +27,7 @@
  *       the listening socket to a client process which handles the game state.
  * Option (1) has been tried in FTP; this design is widely considered to be a
  * bad idea.
- * 
+ *
  * The design of the NH server was based on alternative (2):
  * The server listens for incoming connections.
  * When a connection is made, the client is allowed to send enough data to
@@ -83,21 +78,22 @@ enum comm_status {
 };
 
 /* Client communication data.
- * This structure tracks connected clients, ie remote users with open sockets
- * and also "disconnected clients", which refer to local games that continue to
- * run while waiting for the owner to reconnect and issue more commands.
- * 
- * Theoretically the auth info for new sockets could be split out, but it would
- * cause all sorts of headaches and saving a few bytes just isn't worth it. */
+
+   This structure tracks connected clients, ie remote users with open sockets
+   and also "disconnected clients", which refer to local games that continue to
+   run while waiting for the owner to reconnect and issue more commands.
+
+   Theoretically the auth info for new sockets could be split out, but it would
+   cause all sorts of headaches and saving a few bytes just isn't worth it. */
 struct client_data {
     enum comm_status state;
     int pid;
-    int userid; /* owner of this game */
+    int userid;         /* owner of this game */
     int connid;
     struct client_data *prev, *next;
     int pipe_out;       /* master -> game pipe */
     int pipe_in;        /* game -> master pipe */
-    int sock;   /* master <-> client socket */
+    int sock;           /* master <-> client socket */
     int unsent_data_size;
     char *unsent_data;
 };
@@ -105,16 +101,17 @@ struct client_data {
 
 /*---------------------------------------------------------------------------*/
 
-static struct client_data new_connection_dummy = { NEW_CONNECTION, 0 
+static struct client_data new_connection_dummy = { NEW_CONNECTION, 0
                                                    /* , 0 etc */  };
 
 /* disconnected_list_head: list of games which are fully established, but the
- * client has disconnected. The client can reconnect to the running game later.
- * in these client_data structures, sockfd will be -1, but everything else is valid.*/
+   client has disconnected. The client can reconnect to the running game later.
+   in these client_data structures, sockfd will be -1, but everything else is
+   valid.*/
 static struct client_data disconnected_list_head;
 
 /* connected_list_head: list of games which are fully established and have a
- * connected client. */
+   connected client. */
 static struct client_data connected_list_head;
 
 static struct client_data **fd_to_client;
@@ -203,7 +200,7 @@ init_server_socket(struct sockaddr *sa)
         break;
     case AF_INET6:
         len = sizeof (struct sockaddr_in6);
-        /* Setting the IPV6_V6ONLY socket option allows the ipv6 socket to bind 
+        /* Setting the IPV6_V6ONLY socket option allows the ipv6 socket to bind
            to the same port as the ipv4 socket. Using one socket for each
            protocol is better than using one ipv4-compatible ipv6 socket, as
            that limits the possible ipv6 addresses to ipv4 compatible ones. */
@@ -450,7 +447,7 @@ handle_new_connection(int newfd, int epfd)
         return;
     }
 
-    /* 
+    /*
      * ready to authenticate the user here
      */
     userid = auth_user(authbuf, addr2str(&addr), &is_reg, &reconnect_id);
@@ -591,7 +588,7 @@ close_client_pipe(struct client_data *client, int epfd)
         /* allow a send to complete (incl retransmits). close() is too brutal. */
         shutdown(client->sock, SHUT_RDWR);
     else {
-        /* don't try to send a signal in cleanup_game_process - the process may 
+        /* don't try to send a signal in cleanup_game_process - the process may
            be gone already */
         client->pid = 0;
         cleanup_game_process(client, epfd);
@@ -644,7 +641,7 @@ send_to_client(struct client_data *client, char *buffer, int sendlen)
 /*
  * handle an epoll event for a fully esablished communication channel, where
  * client->sock, client->pipe_in an client->pipe->out all exist.
- * 
+ *
  * The function determines what happened to which file descriptor and passes
  * data around accordingly.
  */
@@ -738,7 +735,7 @@ handle_communication(int fd, int epfd, unsigned int event_mask)
             if (client->unsent_data)
                 return; /* socket isn't ready for sending */
 
-            /* oddity alert: this code originally used splice for sending. That 
+            /* oddity alert: this code originally used splice for sending. That
                would match the receive case above and no buffer would be
                required. Unfortunately sending that way is significantly
                slower. splice: 200ms - read+write: 0.2ms! Ouch! */
@@ -888,7 +885,7 @@ runserver(void)
     if (!setup_server_sockets(&ipv4fd, &ipv6fd, &unixfd, epfd))
         return FALSE;
 
-    /* 
+    /*
      * server event loop
      */
     while (1) { /* loop exit via "goto finally" */
