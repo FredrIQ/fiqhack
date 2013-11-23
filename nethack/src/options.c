@@ -15,8 +15,7 @@
 
 enum option_lists {
     NO_LIST,
-    ACT_BIRTH_OPTS,
-    CUR_BIRTH_OPTS,
+    BIRTH_OPTS,
     GAME_OPTS,
     UI_OPTS
 };
@@ -71,50 +70,60 @@ static const char *const bucnames[] =
     { "unknown", "blessed", "uncursed", "cursed", "all" };
 
 struct nh_option_desc curses_options[] = {
-    {"name", "name for new characters (blank = ask)", OPTTYPE_STRING, {.s = NULL}},
+    {"name", "name for new characters (blank = ask)", FALSE, OPTTYPE_STRING,
+     {.s = NULL}},
     {"bgbranding", "use background colors to show hidden stairs and traps",
+     FALSE,
      OPTTYPE_BOOL, {.b = TRUE}},
     {"blink",
-     "show multiple symbols for each location by switching between them",
+     "show multiple symbols for each location by switching between them", FALSE,
      OPTTYPE_BOOL, {.b = FALSE}},
-    {"darkgray", "try to show 'black' as dark gray instead of dark blue",
+    {"darkgray", "try to show 'black' as dark gray instead of dark blue", FALSE,
      OPTTYPE_BOOL, {.b = FALSE}},
-    {"extmenu", "use a menu for selecting extended commands (#)", OPTTYPE_BOOL,
+    {"extmenu", "use a menu for selecting extended commands (#)", FALSE,
+     OPTTYPE_BOOL,
      {.b = FALSE}},
     {"floorcolor", "change the color of the floor to show where you walked",
+     FALSE,
      OPTTYPE_BOOL, {.b = TRUE}},
-    {"frame", "draw a frame around the window sections", OPTTYPE_BOOL, {.b = TRUE}},
-    {"graphics", "characters or tiles to use for the map", OPTTYPE_ENUM,
+    {"frame", "draw a frame around the window sections", FALSE, OPTTYPE_BOOL,
+     {.b = TRUE}},
+    {"graphics", "characters or tiles to use for the map", FALSE, OPTTYPE_ENUM,
      {.e = UNICODE_GRAPHICS}},
-    {"hilite_pet", "use background colors to show monster attitude",
+    {"hilite_pet", "use background colors to show monster attitude", FALSE,
      OPTTYPE_BOOL, {.b = TRUE}},
-    {"invweight", "show item weights in the inventory", OPTTYPE_BOOL, {.b = TRUE}},
-    {"keymap", "alter the key to command mapping",
+    {"invweight", "show item weights in the inventory", FALSE, OPTTYPE_BOOL,
+     {.b = TRUE}},
+    {"keymap", "alter the key to command mapping", FALSE,
      (enum nh_opttype)OPTTYPE_KEYMAP, {0}},
-    {"menu_headings", "display style for menu headings", OPTTYPE_ENUM,
+    {"menu_headings", "display style for menu headings", FALSE, OPTTYPE_ENUM,
      {.e = A_REVERSE}},
-    {"msgheight", "message window height", OPTTYPE_INT, {.i = 8}},
-    {"msghistory", "number of messages saved for prevmsg", OPTTYPE_INT,
+    {"msgheight", "message window height", FALSE, OPTTYPE_INT, {.i = 8}},
+    {"msghistory", "number of messages saved for prevmsg", FALSE, OPTTYPE_INT,
      {.i = 256}},
-    {"optstyle", "option menu display style", OPTTYPE_ENUM,
+    {"optstyle", "option menu display style", FALSE, OPTTYPE_ENUM,
      {.e = OPTSTYLE_FULL}},
-    {"scores_own", "show all your own scores in the list", OPTTYPE_BOOL,
+    {"scores_own", "show all your own scores in the list", FALSE, OPTTYPE_BOOL,
      {.b = FALSE}},
-    {"scores_top", "how many top scores to show", OPTTYPE_INT, {.i = 3}},
-    {"scores_around", "the number of scores shown around your score",
+    {"scores_top", "how many top scores to show", FALSE, OPTTYPE_INT, {.i = 3}},
+    {"scores_around", "the number of scores shown around your score", FALSE,
      OPTTYPE_INT, {.i = 2}},
-    {"showexp", "show experience points", OPTTYPE_BOOL, {.b = TRUE}},
-    {"showscore", "show your score in the status line", OPTTYPE_BOOL, {.b = TRUE}},
-    {"sidebar", "draw the inventory sidebar", OPTTYPE_BOOL, {.b = TRUE}},
-    {"standout", "use standout for --More--", OPTTYPE_BOOL, {.b = FALSE}},
-    {"status3", "3 line status display", OPTTYPE_BOOL, {.b = TRUE}},
-    {"time", "display elapsed game time, in moves", OPTTYPE_BOOL, {.b = TRUE}},
-    {"use_inverse", "use inverse video for some things", OPTTYPE_BOOL, {.b = TRUE}},
+    {"showexp", "show experience points", FALSE, OPTTYPE_BOOL, {.b = TRUE}},
+    {"showscore", "show your score in the status line", FALSE, OPTTYPE_BOOL,
+     {.b = TRUE}},
+    {"sidebar", "draw the inventory sidebar", FALSE, OPTTYPE_BOOL, {.b = TRUE}},
+    {"standout", "use standout for --More--", FALSE, OPTTYPE_BOOL,
+     {.b = FALSE}},
+    {"status3", "3 line status display", FALSE, OPTTYPE_BOOL, {.b = TRUE}},
+    {"time", "display elapsed game time, in moves", FALSE, OPTTYPE_BOOL,
+     {.b = TRUE}},
+    {"use_inverse", "use inverse video for some things", FALSE, OPTTYPE_BOOL,
+     {.b = TRUE}},
 #if defined(PDCURSES) && defined(WIN32)
-    {"win_width", "window width", OPTTYPE_INT, {.i = 130}},
-    {"win_height", "window height", OPTTYPE_INT, {.i = 40}},
+    {"win_width", "window width", FALSE, OPTTYPE_INT, {.i = 130}},
+    {"win_height", "window height", FALSE, OPTTYPE_INT, {.i = 40}},
 #endif
-    {NULL, NULL, OPTTYPE_BOOL, {NULL}}
+    {NULL, NULL, FALSE, OPTTYPE_BOOL, {NULL}}
 };
 
 struct nhlib_boolopt_map boolopt_map[] = {
@@ -328,13 +337,17 @@ print_option_string(struct nh_option_desc *option, char *buf)
 /* add a list of options to the given selection menu */
 static int
 menu_add_options(struct nh_menuitem **items, int *size, int *icount, int listid,
-                 struct nh_option_desc *options, nh_bool read_only)
+                 struct nh_option_desc *options, nh_bool birth_only,
+                 nh_bool read_only)
 {
     int i, id;
     char optbuf[256];
 
     for (i = 0; options[i].name; i++) {
         id = (listid << 10) | i;
+        if (options[i].birth_option != birth_only)
+            continue;
+
         print_option_string(&options[i], optbuf);
         if (read_only)
             add_menu_txt(*items, *size, *icount, optbuf, MI_TEXT);
@@ -434,14 +447,9 @@ get_option_value(struct win_menu *mdat, int idx)
     int prev_optstyle = settings.optstyle;
 
     switch (listid) {
-    case ACT_BIRTH_OPTS:
-        optlist = nh_get_options(ACTIVE_BIRTH_OPTIONS);
-        break;
-    case CUR_BIRTH_OPTS:
-        optlist = nh_get_options(CURRENT_BIRTH_OPTIONS);
-        break;
+    case BIRTH_OPTS:
     case GAME_OPTS:
-        optlist = nh_get_options(GAME_OPTIONS);
+        optlist = nh_get_options();
         break;
     case UI_OPTS:
         optlist = curses_options;
@@ -512,8 +520,7 @@ display_options(nh_bool change_birth_opt)
 {
     struct nh_menuitem *items;
     int icount, size;
-    struct nh_option_desc *nhoptions = nh_get_options(GAME_OPTIONS);
-    struct nh_option_desc *birthoptions = NULL;
+    struct nh_option_desc *options = nh_get_options();
     int n;
 
     size = 10;
@@ -522,33 +529,31 @@ display_options(nh_bool change_birth_opt)
     do {
         icount = 0;
         if (!change_birth_opt) {
-            birthoptions = nh_get_options(ACTIVE_BIRTH_OPTIONS);
             /* add general game options */
             add_menu_txt(items, size, icount, "Game options:", MI_HEADING);
-            menu_add_options(&items, &size, &icount, GAME_OPTS, nhoptions,
-                             FALSE);
+            menu_add_options(&items, &size, &icount, GAME_OPTS, options,
+                             FALSE, FALSE);
 
             /* add or display birth options */
             add_menu_txt(items, size, icount, "Birth options for this game:",
                          MI_HEADING);
-            menu_add_options(&items, &size, &icount, ACT_BIRTH_OPTS,
-                             birthoptions, TRUE);
+            menu_add_options(&items, &size, &icount, BIRTH_OPTS, options,
+                             TRUE, TRUE);
         } else {
-            birthoptions = nh_get_options(CURRENT_BIRTH_OPTIONS);
             /* add or display birth options */
             add_menu_txt(items, size, icount, "Birth options:", MI_HEADING);
-            menu_add_options(&items, &size, &icount, CUR_BIRTH_OPTS,
-                             birthoptions, FALSE);
+            menu_add_options(&items, &size, &icount, BIRTH_OPTS, options,
+                             TRUE, FALSE);
 
             add_menu_txt(items, size, icount, "Game options:", MI_HEADING);
-            menu_add_options(&items, &size, &icount, GAME_OPTS, nhoptions,
-                             FALSE);
+            menu_add_options(&items, &size, &icount, GAME_OPTS, options,
+                             FALSE, FALSE);
         }
 
         /* add UI specific options */
         add_menu_txt(items, size, icount, "Interface options:", MI_HEADING);
         menu_add_options(&items, &size, &icount, UI_OPTS, curses_options,
-                         FALSE);
+                         FALSE, FALSE);
 
         n = curses_display_menu_core(items, icount, "Set what options?",
                                      PICK_ONE, NULL, 0, 0, -1, -1,
@@ -566,23 +571,25 @@ print_options(void)
     struct nh_menuitem *items;
     int i, icount, size;
     char buf[BUFSZ];
-    struct nh_option_desc *options;
+    struct nh_option_desc *options = nh_get_options();
 
     icount = 0;
     size = 10;
     items = malloc(sizeof (struct nh_menuitem) * size);
 
     add_menu_txt(items, size, icount, "Birth options:", MI_HEADING);
-    options = nh_get_options(CURRENT_BIRTH_OPTIONS);
     for (i = 0; options[i].name; i++) {
+        if (!options[i].birth_option)
+            continue;
         snprintf(buf, BUFSZ, "%s\t%s", options[i].name, options[i].helptxt);
         add_menu_txt(items, size, icount, buf, MI_TEXT);
     }
     add_menu_txt(items, size, icount, "", MI_TEXT);
 
     add_menu_txt(items, size, icount, "Game options:", MI_HEADING);
-    options = nh_get_options(GAME_OPTIONS);
     for (i = 0; options[i].name; i++) {
+        if (options[i].birth_option)
+            continue;
         snprintf(buf, BUFSZ, "%s\t%s", options[i].name, options[i].helptxt);
         add_menu_txt(items, size, icount, buf, MI_TEXT);
     }
@@ -1139,11 +1146,10 @@ write_config(void)
     if (!get_config_name(uiconfname, TRUE))
         return;
 
-    if (!ui_flags.connection_only) {
+    if (!ui_flags.connection_only && !game_is_running) {
         fp = open_config_file(filename);
         if (fp) {
-            write_config_options(fp, nh_get_options(GAME_OPTIONS));
-            write_config_options(fp, nh_get_options(CURRENT_BIRTH_OPTIONS));
+            write_config_options(fp, nh_get_options());
             fclose(fp);
         }
     }

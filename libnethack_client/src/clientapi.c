@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Sean Hunt, 2013-11-23 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -10,7 +10,7 @@
 
 struct nh_window_procs windowprocs, alt_windowprocs;
 int current_game;
-struct nh_option_desc *option_lists[OPTION_LIST_COUNT];
+struct nh_option_desc *option_list;
 
 #ifdef UNIX
 # include <signal.h>
@@ -631,7 +631,7 @@ nhnet_set_option(const char *name, union nh_optvalue value, nh_bool isstr)
 {
     int ret, i;
     json_t *jmsg, *joval, *jobj;
-    struct nh_option_desc *gameopts, *birthopts, *opt;
+    struct nh_option_desc *opts, *opt;
     struct nh_autopickup_rule *r;
 
     ret = nh_set_option(name, value, isstr);
@@ -641,15 +641,11 @@ nhnet_set_option(const char *name, union nh_optvalue value, nh_bool isstr)
     if (!api_entry())
         return FALSE;
 
-    gameopts = nhnet_get_options(GAME_OPTIONS);
-    birthopts = nhnet_get_options(CURRENT_BIRTH_OPTIONS);
+    opts = nhnet_get_options();
     opt = NULL;
-    for (i = 0; gameopts[i].name && !opt; i++)
-        if (!strcmp(name, gameopts[i].name))
-            opt = &gameopts[i];
-    for (i = 0; birthopts[i].name && !opt; i++)
-        if (!strcmp(name, birthopts[i].name))
-            opt = &birthopts[i];
+    for (i = 0; opts[i].name && !opt; i++)
+        if (!strcmp(name, opts[i].name))
+            opt = &opts[i];
 
     if (opt) {
         if (isstr || opt->type == OPTTYPE_STRING)
@@ -691,17 +687,17 @@ nhnet_set_option(const char *name, union nh_optvalue value, nh_bool isstr)
 
 
 struct nh_option_desc *
-nhnet_get_options(enum nh_option_list list)
+nhnet_get_options(void)
 {
     struct nh_option_desc *olist;
     json_t *jmsg, *jarr, *jobj;
     int count, i;
 
     if (!nhnet_active())
-        return nh_get_options(list);
+        return nh_get_options();
 
-    if (list < OPTION_LIST_COUNT && option_lists[list])
-        return option_lists[list];
+    if (option_list)
+        return option_list;
 
     if (!api_entry()) {
         olist = xmalloc(sizeof (struct nh_option_desc));
@@ -709,7 +705,7 @@ nhnet_get_options(enum nh_option_list list)
         return olist;
     }
 
-    jmsg = send_receive_msg("get_options", json_pack("{si}", "list", list));
+    jmsg = send_receive_msg("get_options", json_object());
     if (json_unpack(jmsg, "{so!}", "options", &jarr) == -1 ||
         !json_is_array(jarr)) {
         print_error("Incorrect return object in nhnet_get_options");
@@ -717,7 +713,7 @@ nhnet_get_options(enum nh_option_list list)
         memset(olist, 0, sizeof (struct nh_option_desc));
     } else {
         count = json_array_size(jarr);
-        option_lists[list] = olist =
+        option_list = olist =
             malloc(sizeof (struct nh_option_desc) * (count + 1));
         memset(olist, 0, sizeof (struct nh_option_desc) * (count + 1));
         for (i = 0; i < count; i++) {
@@ -735,15 +731,14 @@ nhnet_get_options(enum nh_option_list list)
 void
 free_option_lists(void)
 {
-    int i, j;
+    int i;
 
-    for (i = 0; i < OPTION_LIST_COUNT; i++)
-        if (option_lists[i]) {
-            for (j = 0; option_lists[i][j].name; j++)
-                free_option_data(&option_lists[i][j]);
-            free(option_lists[i]);
-            option_lists[i] = NULL;
-        }
+    if (option_list) {
+        for (i = 0; option_list[i].name; i++)
+            free_option_data(&option_list[i]);
+        free(option_list);
+        option_list = NULL;
+    }
 }
 
 

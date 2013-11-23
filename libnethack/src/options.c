@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-11-22 */
+/* Last modified by Sean Hunt, 2013-11-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -117,78 +117,84 @@ static const struct nh_autopickup_rules def_autopickup =
     { def_ap_ruleset, SIZE(def_ap_ruleset) };
 
 static const struct nh_option_desc const_options[] = {
-    {"autodig", "dig if moving and wielding digging tool", OPTTYPE_BOOL,
+    {"autodig", "dig if moving and wielding digging tool", FALSE, OPTTYPE_BOOL,
      {.b = FALSE}},
-    {"autodigdown", "autodig downwards tries to create a pit or hole",
+    {"autodigdown", "autodig downwards tries to create a pit or hole", FALSE,
      OPTTYPE_BOOL, {.b = FALSE}},
-    {"autopickup", "automatically pick up objects you move over", OPTTYPE_BOOL,
-     {.b = TRUE}},
+    {"autopickup", "automatically pick up objects you move over", FALSE,
+     OPTTYPE_BOOL, {.b = TRUE}},
     {"autopickup_rules",
-     "rules to decide what to autopickup if autopickup is on",
+     "rules to decide what to autopickup if autopickup is on", FALSE,
      OPTTYPE_AUTOPICKUP_RULES, {.ar = &def_autopickup}},
     {"autoquiver",
-     "when firing with an empty quiver, select something suitable",
+     "when firing with an empty quiver, select something suitable", FALSE,
      OPTTYPE_BOOL, {.b = FALSE}},
-    {"comment", "has no effect", OPTTYPE_STRING, {.s = ""}},
-    {"confirm", "ask before hitting tame or peaceful monsters", OPTTYPE_BOOL,
-     {.b = TRUE}},
-    {"disclose", "whether to disclose information at end of game", OPTTYPE_ENUM,
-     {.e = DISCLOSE_PROMPT_DEFAULT_YES}},
-    {"fruit", "the name of a fruit you enjoy eating", OPTTYPE_STRING,
+    {"comment", "has no effect", FALSE, OPTTYPE_STRING, {.s = ""}},
+    {"confirm", "ask before hitting tame or peaceful monsters", FALSE,
+     OPTTYPE_BOOL, {.b = TRUE}},
+    {"disclose", "whether to disclose information at end of game", FALSE,
+     OPTTYPE_ENUM, {.e = DISCLOSE_PROMPT_DEFAULT_YES}},
+    {"fruit", "the name of a fruit you enjoy eating", FALSE, OPTTYPE_STRING,
      {"slime mold"}},
-    {"lit_corridor", "show a dark corridor as lit if in sight", OPTTYPE_BOOL,
-     {.b = FALSE}},
-    {"menustyle", "user interface for object selection", OPTTYPE_ENUM,
-     {.e = MENU_FULL}},
-    {"packorder", "the inventory order of the items in your pack",
-     OPTTYPE_STRING, {.s = "$\")[%?+!=/(*`0_"}},
-    {"pickup_burden", "maximum burden picked up before prompt", OPTTYPE_ENUM,
-     {.e = MOD_ENCUMBER}},
-    {"pickup_thrown", "autopickup items you threw or fired", OPTTYPE_BOOL,
-     {.b = TRUE}},
-    {"prayconfirm", "use confirmation prompt when #pray command issued",
-     OPTTYPE_BOOL, {.b = TRUE}},
-    {"pushweapon", "offhand the old weapon when wielding a new one",
+    {"lit_corridor", "show a dark corridor as lit if in sight", FALSE,
      OPTTYPE_BOOL, {.b = FALSE}},
-    {"runmode", "display frequency when `running' or `travelling'",
-     OPTTYPE_ENUM, {.e =RUN_LEAP}},
-    {"safe_pet", "prevent you from (knowingly) attacking your pet(s)",
+    {"menustyle", "user interface for object selection", FALSE, OPTTYPE_ENUM,
+     {.e = MENU_FULL}},
+    {"packorder", "the inventory order of the items in your pack", FALSE,
+     OPTTYPE_STRING, {.s = "$\")[%?+!=/(*`0_"}},
+    {"pickup_burden", "maximum burden picked up before prompt", FALSE,
+     OPTTYPE_ENUM, {.e = MOD_ENCUMBER}},
+    {"pickup_thrown", "autopickup items you threw or fired", FALSE,
      OPTTYPE_BOOL, {.b = TRUE}},
-    {"show_uncursed", "always show uncursed status", OPTTYPE_BOOL, {.b = FALSE}},
-    {"showrace", "show yourself by your race rather than by role", OPTTYPE_BOOL,
+    {"prayconfirm", "use confirmation prompt when #pray command issued", FALSE,
+     OPTTYPE_BOOL, {.b = TRUE}},
+    {"pushweapon", "offhand the old weapon when wielding a new one", FALSE,
+     OPTTYPE_BOOL, {.b = FALSE}},
+    {"runmode", "display frequency when `running' or `travelling'", FALSE,
+     OPTTYPE_ENUM, {.e = RUN_LEAP}},
+    {"safe_pet", "prevent you from (knowingly) attacking your pet(s)", FALSE,
+     OPTTYPE_BOOL, {.b = TRUE}},
+    {"show_uncursed", "always show uncursed status", FALSE, OPTTYPE_BOOL,
      {.b = FALSE}},
-    {"sortpack", "group similar kinds of objects in inventory", OPTTYPE_BOOL,
-     {.b = TRUE}},
+    {"showrace", "show yourself by your race rather than by role", FALSE,
+     OPTTYPE_BOOL, {.b = FALSE}},
+    {"sortpack", "group similar kinds of objects in inventory", FALSE,
+     OPTTYPE_BOOL, {.b = TRUE}},
     {"sparkle", "display sparkly effect for resisted magical attacks",
-     OPTTYPE_BOOL, {.b = TRUE}},
-    {"tombstone", "print tombstone when you die", OPTTYPE_BOOL, {.b = TRUE}},
-    {"travel_interrupt", "interrupt travel (_) when a hostile is in sight",
-     OPTTYPE_BOOL, {.b = TRUE}},
-    {"verbose", "print more commentary during the game", OPTTYPE_BOOL, {.b = TRUE}},
-
-    {NULL, NULL, OPTTYPE_BOOL, {.s = NULL}}
-};
-
-
-static const struct nh_option_desc const_birth_options[] = {
-    {"elbereth", "difficulty: the E-word repels monsters", OPTTYPE_BOOL,
+     OPTTYPE_BOOL, FALSE, {.b = TRUE}},
+    {"tombstone", "print tombstone when you die", FALSE, OPTTYPE_BOOL,
      {.b = TRUE}},
-    {"reincarnation", "Special Rogue-like levels", OPTTYPE_BOOL, {.b = TRUE}},
-    {"seduction", "certain monsters may seduce you", OPTTYPE_BOOL, {.b = TRUE}},
-    {"bones", "allow bones levels", OPTTYPE_BOOL, {.b = TRUE}},
-    {"permablind", "spend the whole game blind", OPTTYPE_BOOL, {FALSE}},
-    {"permahallu", "spend the whole game hallucinating", OPTTYPE_BOOL, {FALSE}},
-    {"legacy", "print introductory message", OPTTYPE_BOOL, {.b = TRUE}},
-    {"align", "your starting alignment", OPTTYPE_ENUM, {.e = ROLE_NONE}},
-    {"gender", "your starting gender", OPTTYPE_ENUM, {.e = ROLE_NONE}},
-    {"race", "your starting race", OPTTYPE_ENUM, {.e = ROLE_NONE}},
-    {"role", "your starting role", OPTTYPE_ENUM, {.e = ROLE_NONE}},
-    {"catname", "the name of your (first) cat", OPTTYPE_STRING, {.s = NULL}},
-    {"dogname", "the name of your (first) dog", OPTTYPE_STRING, {.s = NULL}},
-    {"horsename", "the name of your (first) horse", OPTTYPE_STRING, {.s = NULL}},
-    {"pettype", "your preferred initial pet type", OPTTYPE_ENUM, {.e = 0}},
+    {"travel_interrupt", "interrupt travel (_) when a hostile is in sight",
+     FALSE, OPTTYPE_BOOL, {.b = TRUE}},
+    {"verbose", "print more commentary during the game", FALSE, OPTTYPE_BOOL,
+     {.b = TRUE}},
 
-    {NULL, NULL, OPTTYPE_BOOL, {.s = NULL}}
+    {"elbereth", "difficulty: the E-word repels monsters", TRUE, OPTTYPE_BOOL,
+     {.b = TRUE}},
+    {"reincarnation", "Special Rogue-like levels", TRUE, OPTTYPE_BOOL,
+     {.b = TRUE}},
+    {"seduction", "certain monsters may seduce you", TRUE, OPTTYPE_BOOL,
+     {.b = TRUE}},
+    {"bones", "allow bones levels", TRUE, OPTTYPE_BOOL, {.b = TRUE}},
+    {"permablind", "spend the whole game blind", TRUE, OPTTYPE_BOOL,
+     {.b = FALSE}},
+    {"permahallu", "spend the whole game hallucinating", TRUE, OPTTYPE_BOOL,
+     {.b = FALSE}},
+    {"legacy", "print introductory message", TRUE, OPTTYPE_BOOL, {.b = TRUE}},
+    {"align", "your starting alignment", TRUE, OPTTYPE_ENUM, {.e = ROLE_NONE}},
+    {"gender", "your starting gender", TRUE, OPTTYPE_ENUM, {.e = ROLE_NONE}},
+    {"race", "your starting race", TRUE, OPTTYPE_ENUM, {.e = ROLE_NONE}},
+    {"role", "your starting role", TRUE, OPTTYPE_ENUM, {.e = ROLE_NONE}},
+    {"catname", "the name of your (first) cat", TRUE, OPTTYPE_STRING,
+     {.s = NULL}},
+    {"dogname", "the name of your (first) dog", TRUE, OPTTYPE_STRING,
+     {.s = NULL}},
+    {"horsename", "the name of your (first) horse", TRUE, OPTTYPE_STRING,
+     {.s = NULL}},
+    {"pettype", "your preferred initial pet type", TRUE, OPTTYPE_ENUM,
+     {.e = 0}},
+
+    {NULL, NULL, FALSE, OPTTYPE_BOOL, {.s = NULL}}
 };
 
 
@@ -303,7 +309,6 @@ void
 init_opt_struct(void)
 {
     options = clone_optlist(const_options);
-    birth_options = clone_optlist(const_birth_options);
 
     build_role_spec();
     build_race_spec();
@@ -318,14 +323,14 @@ init_opt_struct(void)
     nhlib_find_option(options, "runmode")->e = runmode_spec;
     nhlib_find_option(options, "autopickup_rules")->a = autopickup_spec;
 
-    nhlib_find_option(birth_options, "align")->e = align_spec;
-    nhlib_find_option(birth_options, "gender")->e = gender_spec;
-    nhlib_find_option(birth_options, "role")->e = role_spec;
-    nhlib_find_option(birth_options, "race")->e = race_spec;
-    nhlib_find_option(birth_options, "pettype")->e = pettype_spec;
-    nhlib_find_option(birth_options, "catname")->s.maxlen = PL_PSIZ;
-    nhlib_find_option(birth_options, "dogname")->s.maxlen = PL_PSIZ;
-    nhlib_find_option(birth_options, "horsename")->s.maxlen = PL_PSIZ;
+    nhlib_find_option(options, "align")->e = align_spec;
+    nhlib_find_option(options, "gender")->e = gender_spec;
+    nhlib_find_option(options, "role")->e = role_spec;
+    nhlib_find_option(options, "race")->e = race_spec;
+    nhlib_find_option(options, "pettype")->e = pettype_spec;
+    nhlib_find_option(options, "catname")->s.maxlen = PL_PSIZ;
+    nhlib_find_option(options, "dogname")->s.maxlen = PL_PSIZ;
+    nhlib_find_option(options, "horsename")->s.maxlen = PL_PSIZ;
 
     /* If no config file exists, these values will not get set until they have
        already been used during game startup.  (-1) is a much better default,
@@ -343,8 +348,6 @@ cleanup_opt_struct(void)
     race_spec.choices = NULL;
     free_optlist(options);
     options = NULL;
-    free_optlist(birth_options);
-    birth_options = NULL;
 }
 
 
@@ -365,25 +368,8 @@ initoptions(void)
     fruitadd(obj_descr[SLIME_MOLD].oc_name);
     strncpy(pl_fruit, obj_descr[SLIME_MOLD].oc_name, PL_FSIZ);
 
-    /* init from option definitions */
-    for (i = 0; birth_options[i].name; i++)
-        nh_set_option(birth_options[i].name, birth_options[i].value, FALSE);
-
     for (i = 0; options[i].name; i++)
         nh_set_option(options[i].name, options[i].value, FALSE);
-
-    if (!active_birth_options)
-        /* at this point the user may no longer change their birth options.
-           active_birth_options will recieve birth option changes made during
-           log replay, so that we can show the user what birth options the
-           loaded game was started with */
-        active_birth_options = clone_optlist(birth_options);
-    else
-        /* the switch to alternate birth options has already happened, so make
-           sure those settings are active instead. */
-        for (i = 0; active_birth_options[i].name; i++)
-            nh_set_option(active_birth_options[i].name,
-                          active_birth_options[i].value, FALSE);
 }
 
 
@@ -392,20 +378,17 @@ set_option(const char *name, union nh_optvalue value, boolean isstring)
 {
     struct nh_option_desc *option = NULL;
 
-    if (options)
-        option = nhlib_find_option(options, name);
-
-    if (!option && !program_state.game_running && birth_options)
-        option = nhlib_find_option(birth_options, name);
-
-    if (!option)
-        return FALSE;
-
-    /* if this option change affects game options (!is_ui) and happens during a 
+    /* if this option change affects game options and happens during a 
        replay (program_state.viewing) and the change isn't triggered by the
        replay (!program_state.restoring) */
     if (program_state.viewing && !program_state.restoring)
         return FALSE;   /* Nope, sorry. That would mess up the replay */
+
+    if (options)
+        option = nhlib_find_option(options, name);
+
+    if (!option || (option->birth_option && program_state.game_running))
+        return FALSE;
 
     if (isstring)
         value = nhlib_string_to_optvalue(option, value.s);
@@ -424,6 +407,7 @@ set_option(const char *name, union nh_optvalue value, boolean isstring)
 
     if (option->type == OPTTYPE_BOOL) {
         boolean *bvar = nhlib_find_boolopt(boolopt_map, option->name);
+
         if (!bvar) {
             impossible("no boolean for option '%s'", option->name);
             return FALSE;
@@ -501,18 +485,9 @@ nh_set_option(const char *name, union nh_optvalue value, boolean isstring)
 
 
 struct nh_option_desc *
-nh_get_options(enum nh_option_list list)
+nh_get_options(void)
 {
-    switch (list) {
-    case CURRENT_BIRTH_OPTIONS:
-        return birth_options;
-    case ACTIVE_BIRTH_OPTIONS:
-        return active_birth_options;
-    case GAME_OPTIONS:
-        return options;
-    default:
-        return NULL;
-    }
+    return options;
 }
 
 

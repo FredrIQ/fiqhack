@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-16 */
+/* Last modified by Sean Hunt, 2013-11-23 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 /* this header defines the interface between libnethack and window ports
@@ -59,7 +59,7 @@ extern nh_drawing_info_p EXPORT(nh_get_drawing_info) (void);
 /* options.c */
 extern nh_bool EXPORT(nh_set_option) (
     const char *name, union nh_optvalue value, nh_bool isstr);
-extern nh_option_desc_p EXPORT(nh_get_options) (enum nh_option_list list);
+extern nh_option_desc_p EXPORT(nh_get_options) (void);
 extern const_char_p EXPORT(nh_get_option_string) (
     const struct nh_option_desc *opt);
 

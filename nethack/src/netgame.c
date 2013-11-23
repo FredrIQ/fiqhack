@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Sean Hunt, 2013-11-23 */
 /* Copyright (c) Daniel Thaler, 2012 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -438,7 +438,7 @@ connect_server(struct server_info *server)
 {
     int ret, i;
     char buf[BUFSZ];
-    struct nh_option_desc *game_opts, *birth_opts;
+    struct nh_option_desc *game_opts;
 
     while (1) {
         ret =
@@ -469,8 +469,7 @@ connect_server(struct server_info *server)
             continue;
         } else {        /* AUTH_FAILED_UNKNOWN_USER */
             nhnet_lib_exit();   /* need to acces the local options */
-            game_opts = nh_get_options(GAME_OPTIONS);
-            birth_opts = nh_get_options(CURRENT_BIRTH_OPTIONS);
+            game_opts = nh_get_options();
             nhnet_lib_init(&curses_windowprocs);
 
             sprintf(buf, "The account \"%s\" will be created for you.",
@@ -494,8 +493,6 @@ connect_server(struct server_info *server)
                                    'y') == 'y') {
                 for (i = 0; game_opts[i].name; i++)
                     curses_set_option(game_opts[i].name, game_opts[i].value, 0);
-                for (i = 0; birth_opts[i].name; i++)
-                    curses_set_option(birth_opts[i].name, birth_opts[i].value, 0);
             }
 
             return TRUE;

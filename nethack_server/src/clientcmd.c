@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Sean Hunt, 2013-11-23 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -7,6 +7,7 @@
  */
 
 #include "nhserver.h"
+#include "common_options.h"
 #include <time.h>
 
 static void ccmd_shutdown(json_t * ignored);
@@ -685,23 +686,6 @@ ccmd_describe_pos(json_t * params)
 }
 
 
-static const struct nh_option_desc *
-find_option(const char *optname, const struct nh_option_desc *list1,
-            const struct nh_option_desc *list2)
-{
-    int i;
-    const struct nh_option_desc *option = NULL;
-
-    for (i = 0; list1[i].name && !option; i++)
-        if (!strcmp(optname, list1[i].name))
-            option = &list1[i];
-    for (i = 0; list2[i].name && !option; i++)
-        if (!strcmp(optname, list2[i].name))
-            option = &list2[i];
-    return option;
-}
-
-
 static json_t *
 json_list(const struct nh_listitem *list, int len)
 {
@@ -777,7 +761,7 @@ ccmd_set_option(json_t * params)
     const char *optname, *optstr, *pattern;
     json_t *jmsg, *joval, *jopt;
     int isstr, i, ret;
-    const struct nh_option_desc *gameopt, *birthopt, *option;
+    const struct nh_option_desc *opts, *option;
     union nh_optvalue value;
     struct nh_autopickup_rules ar = { NULL, 0 };
     struct nh_autopickup_rule *r;
@@ -789,10 +773,8 @@ ccmd_set_option(json_t * params)
 
     /* find the option_desc for the options that should be set; the option type
        is required in order to decode the option value. */
-    gameopt = nh_get_options(GAME_OPTIONS);
-    birthopt =
-        nh_get_options(gameid ? ACTIVE_BIRTH_OPTIONS : CURRENT_BIRTH_OPTIONS);
-    option = find_option(optname, gameopt, birthopt);
+    opts = nh_get_options();
+    option = nhlib_find_option(opts, optname);
     if (!option) {
         jmsg = json_pack("{si,so}", "return", FALSE, "option", json_object());
         client_msg("set_option", jmsg);
@@ -837,10 +819,8 @@ ccmd_set_option(json_t * params)
     if (option->type == OPTTYPE_AUTOPICKUP_RULES)
         free(ar.rules);
 
-    gameopt = nh_get_options(GAME_OPTIONS);
-    birthopt =
-        nh_get_options(gameid ? ACTIVE_BIRTH_OPTIONS : CURRENT_BIRTH_OPTIONS);
-    option = find_option(optname, gameopt, birthopt);
+    opts = nh_get_options();
+    option = nhlib_find_option(opts, optname);
 
     jopt = json_option(option);
     optstr = nh_get_option_string(option);
@@ -858,15 +838,16 @@ ccmd_set_option(json_t * params)
 static void
 ccmd_get_options(json_t * params)
 {
-    int list, i;
+    int i;
     const struct nh_option_desc *options;
     json_t *jmsg, *jarr;
 
-    if (json_unpack(params, "{si*}", "list", &list) == -1)
-        exit_client("Bad parameters for get_options");
+    void *iter = json_object_iter(params);
+    if (iter)
+        exit_client("non-empty parameter list for get_options");
 
     jarr = json_array();
-    options = nh_get_options(list);
+    options = nh_get_options();
     for (i = 0; options[i].name; i++)
         json_array_append_new(jarr, json_option(&options[i]));
     jmsg = json_pack("{so}", "options", jarr);

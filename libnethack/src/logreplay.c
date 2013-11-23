@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Sean Hunt, 2013-11-23 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1099,14 +1099,7 @@ replay_run_cmdloop(boolean optonly, boolean singlestep, boolean fast)
     char *cmd, *token;
     int count, cmdidx;
     struct nh_cmd_arg cmdarg;
-    struct nh_option_desc *tmp;
     boolean did_action = FALSE;
-
-    /* the log contains the birth options that are required for this game, so
-       nh_set_option calls during the replay must change active_birth_options */
-    tmp = birth_options;
-    birth_options = active_birth_options;
-    active_birth_options = tmp;
 
     token = strdupnull(next_log_token());
 
@@ -1158,11 +1151,6 @@ replay_run_cmdloop(boolean optonly, boolean singlestep, boolean fast)
     }
 
 out:
-    /* return the birth options to normal */
-    tmp = birth_options;
-    birth_options = active_birth_options;
-    active_birth_options = tmp;
-
     return did_action;
 }
 

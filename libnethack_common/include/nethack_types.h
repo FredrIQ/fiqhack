@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-11-22 */
+/* Last modified by Sean Hunt, 2013-11-23 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -191,14 +191,6 @@ enum nh_opttype {
                                    came to the conclusion that YAGNI applies */
 };
 
-enum nh_option_list {
-    CURRENT_BIRTH_OPTIONS,
-    ACTIVE_BIRTH_OPTIONS,
-    GAME_OPTIONS,
-
-    OPTION_LIST_COUNT
-};
-
 enum nh_bucstatus {
     B_UNKNOWN,
     B_BLESSED,
@@ -353,6 +345,7 @@ union nh_optvalue {
 struct nh_option_desc {
     const char *name;
     const char *helptxt;
+    nh_bool birth_option;
     enum nh_opttype type;
     union nh_optvalue value;
     union {
