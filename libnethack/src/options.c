@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Sean Hunt, 2013-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -121,83 +121,79 @@ static struct nh_autopickup_rule def_ap_ruleset[] = {
 static const struct nh_autopickup_rules def_autopickup =
     { def_ap_ruleset, SIZE(def_ap_ruleset) };
 
-
-#define VTRUE (void*)TRUE
-#define VFALSE (void*)FALSE
-
 static const struct nh_option_desc const_options[] = {
     {"autodig", "dig if moving and wielding digging tool", OPTTYPE_BOOL,
-     {VFALSE}},
+     {.b = FALSE}},
     {"autodigdown", "autodig downwards tries to create a pit or hole",
-     OPTTYPE_BOOL, {VFALSE}},
+     OPTTYPE_BOOL, {.b = FALSE}},
     {"autopickup", "automatically pick up objects you move over", OPTTYPE_BOOL,
-     {VTRUE}},
+     {.b = TRUE}},
     {"autopickup_rules",
      "rules to decide what to autopickup if autopickup is on",
-     OPTTYPE_AUTOPICKUP_RULES, {(void *)&def_autopickup}},
+     OPTTYPE_AUTOPICKUP_RULES, {.ar = &def_autopickup}},
     {"autoquiver",
      "when firing with an empty quiver, select something suitable",
-     OPTTYPE_BOOL, {VFALSE}},
-    {"comment", "has no effect", OPTTYPE_STRING, {""}},
+     OPTTYPE_BOOL, {.b = FALSE}},
+    {"comment", "has no effect", OPTTYPE_STRING, {.s = ""}},
     {"confirm", "ask before hitting tame or peaceful monsters", OPTTYPE_BOOL,
-     {VTRUE}},
+     {.b = TRUE}},
     {"disclose", "whether to disclose information at end of game", OPTTYPE_ENUM,
-     {(void *)DISCLOSE_PROMPT_DEFAULT_YES}},
+     {.e = DISCLOSE_PROMPT_DEFAULT_YES}},
     {"fruit", "the name of a fruit you enjoy eating", OPTTYPE_STRING,
      {"slime mold"}},
     {"lit_corridor", "show a dark corridor as lit if in sight", OPTTYPE_BOOL,
-     {VFALSE}},
+     {.b = FALSE}},
     {"menustyle", "user interface for object selection", OPTTYPE_ENUM,
-     {(void *)MENU_FULL}},
+     {.e = MENU_FULL}},
     {"packorder", "the inventory order of the items in your pack",
-     OPTTYPE_STRING, {"$\")[%?+!=/(*`0_"}},
+     OPTTYPE_STRING, {.s = "$\")[%?+!=/(*`0_"}},
     {"pickup_burden", "maximum burden picked up before prompt", OPTTYPE_ENUM,
-     {(void *)MOD_ENCUMBER}},
+     {.e = MOD_ENCUMBER}},
     {"pickup_thrown", "autopickup items you threw or fired", OPTTYPE_BOOL,
-     {VTRUE}},
+     {.b = TRUE}},
     {"prayconfirm", "use confirmation prompt when #pray command issued",
-     OPTTYPE_BOOL, {VTRUE}},
+     OPTTYPE_BOOL, {.b = TRUE}},
     {"pushweapon", "offhand the old weapon when wielding a new one",
-     OPTTYPE_BOOL, {VFALSE}},
+     OPTTYPE_BOOL, {.b = FALSE}},
     {"runmode", "display frequency when `running' or `travelling'",
-     OPTTYPE_ENUM, {(void *)RUN_LEAP}},
+     OPTTYPE_ENUM, {.e =RUN_LEAP}},
     {"safe_pet", "prevent you from (knowingly) attacking your pet(s)",
-     OPTTYPE_BOOL, {VTRUE}},
-    {"show_uncursed", "always show uncursed status", OPTTYPE_BOOL, {VFALSE}},
+     OPTTYPE_BOOL, {.b = TRUE}},
+    {"show_uncursed", "always show uncursed status", OPTTYPE_BOOL, {.b = FALSE}},
     {"showrace", "show yourself by your race rather than by role", OPTTYPE_BOOL,
-     {VFALSE}},
+     {.b = FALSE}},
     {"sortpack", "group similar kinds of objects in inventory", OPTTYPE_BOOL,
-     {VTRUE}},
+     {.b = TRUE}},
     {"sparkle", "display sparkly effect for resisted magical attacks",
-     OPTTYPE_BOOL, {VTRUE}},
-    {"tombstone", "print tombstone when you die", OPTTYPE_BOOL, {VTRUE}},
+     OPTTYPE_BOOL, {.b = TRUE}},
+    {"tombstone", "print tombstone when you die", OPTTYPE_BOOL, {.b = TRUE}},
     {"travel_interrupt", "interrupt travel (_) when a hostile is in sight",
-     OPTTYPE_BOOL, {VTRUE}},
-    {"verbose", "print more commentary during the game", OPTTYPE_BOOL, {VTRUE}},
+     OPTTYPE_BOOL, {.b = TRUE}},
+    {"verbose", "print more commentary during the game", OPTTYPE_BOOL, {.b = TRUE}},
 
-    {NULL, NULL, OPTTYPE_BOOL, {NULL}}
+    {NULL, NULL, OPTTYPE_BOOL, {.s = NULL}}
 };
 
 
 static const struct nh_option_desc const_birth_options[] = {
     {"elbereth", "difficulty: the E-word repels monsters", OPTTYPE_BOOL,
-     {VTRUE}},
-    {"reincarnation", "Special Rogue-like levels", OPTTYPE_BOOL, {VTRUE}},
-    {"seduction", "certain monsters may seduce you", OPTTYPE_BOOL, {VTRUE}},
-    {"bones", "allow bones levels", OPTTYPE_BOOL, {VTRUE}},
+     {.b = TRUE}},
+    {"reincarnation", "Special Rogue-like levels", OPTTYPE_BOOL, {.b = TRUE}},
+    {"seduction", "certain monsters may seduce you", OPTTYPE_BOOL, {.b = TRUE}},
+    {"bones", "allow bones levels", OPTTYPE_BOOL, {.b = TRUE}},
     {"permablind", "spend the whole game blind", OPTTYPE_BOOL, {FALSE}},
     {"permahallu", "spend the whole game hallucinating", OPTTYPE_BOOL, {FALSE}},
-    {"legacy", "print introductory message", OPTTYPE_BOOL, {VTRUE}},
-    {"align", "your starting alignment", OPTTYPE_ENUM, {(void *)ROLE_NONE}},
-    {"gender", "your starting gender", OPTTYPE_ENUM, {(void *)ROLE_NONE}},
-    {"race", "your starting race", OPTTYPE_ENUM, {(void *)ROLE_NONE}},
-    {"role", "your starting role", OPTTYPE_ENUM, {(void *)ROLE_NONE}},
-    {"catname", "the name of your (first) cat", OPTTYPE_STRING, {NULL}},
-    {"dogname", "the name of your (first) dog", OPTTYPE_STRING, {NULL}},
-    {"horsename", "the name of your (first) horse", OPTTYPE_STRING, {NULL}},
-    {"pettype", "your preferred initial pet type", OPTTYPE_ENUM, {0}},
+    {"legacy", "print introductory message", OPTTYPE_BOOL, {.b = TRUE}},
+    {"align", "your starting alignment", OPTTYPE_ENUM, {.e = ROLE_NONE}},
+    {"gender", "your starting gender", OPTTYPE_ENUM, {.e = ROLE_NONE}},
+    {"race", "your starting race", OPTTYPE_ENUM, {.e = ROLE_NONE}},
+    {"role", "your starting role", OPTTYPE_ENUM, {.e = ROLE_NONE}},
+    {"catname", "the name of your (first) cat", OPTTYPE_STRING, {.s = NULL}},
+    {"dogname", "the name of your (first) dog", OPTTYPE_STRING, {.s = NULL}},
+    {"horsename", "the name of your (first) horse", OPTTYPE_STRING, {.s = NULL}},
+    {"pettype", "your preferred initial pet type", OPTTYPE_ENUM, {.e = 0}},
 
-    {NULL, NULL, OPTTYPE_BOOL, {NULL}}
+    {NULL, NULL, OPTTYPE_BOOL, {.s = NULL}}
 };
 
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-23 */
+/* Last modified by Sean Hunt, 2013-11-22 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -362,9 +362,6 @@ struct nh_option_desc {
     enum nh_opttype type;
     union nh_optvalue value;
     union {
-        /* only the first element of a union can be initialized at compile time 
-           (without C99), so boolean args go first, there are more of those ... 
-         */
         struct nh_int_option i;
         struct nh_enum_option e;
         struct nh_string_option s;

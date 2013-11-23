@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Sean Hunt, 2013-11-22 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -75,52 +75,49 @@ static struct nh_enum_option optstyle_spec =
 static const char *const bucnames[] =
     { "unknown", "blessed", "uncursed", "cursed", "all" };
 
-
-#define VTRUE (void*)TRUE
-
 struct nh_option_desc curses_options[] = {
-    {"name", "name for new characters (blank = ask)", OPTTYPE_STRING, {NULL}},
+    {"name", "name for new characters (blank = ask)", OPTTYPE_STRING, {.s = NULL}},
     {"bgbranding", "use background colors to show hidden stairs and traps",
-     OPTTYPE_BOOL, {VTRUE}},
+     OPTTYPE_BOOL, {.b = TRUE}},
     {"blink",
      "show multiple symbols for each location by switching between them",
-     OPTTYPE_BOOL, {FALSE}},
+     OPTTYPE_BOOL, {.b = FALSE}},
     {"darkgray", "try to show 'black' as dark gray instead of dark blue",
-     OPTTYPE_BOOL, {FALSE}},
+     OPTTYPE_BOOL, {.b = FALSE}},
     {"extmenu", "use a menu for selecting extended commands (#)", OPTTYPE_BOOL,
-     {FALSE}},
+     {.b = FALSE}},
     {"floorcolor", "change the color of the floor to show where you walked",
-     OPTTYPE_BOOL, {VTRUE}},
-    {"frame", "draw a frame around the window sections", OPTTYPE_BOOL, {VTRUE}},
+     OPTTYPE_BOOL, {.b = TRUE}},
+    {"frame", "draw a frame around the window sections", OPTTYPE_BOOL, {.b = TRUE}},
     {"graphics", "characters or tiles to use for the map", OPTTYPE_ENUM,
-     {(void *)UNICODE_GRAPHICS}},
+     {.e = UNICODE_GRAPHICS}},
     {"hilite_pet", "use background colors to show monster attitude",
-     OPTTYPE_BOOL, {VTRUE}},
-    {"invweight", "show item weights in the inventory", OPTTYPE_BOOL, {VTRUE}},
+     OPTTYPE_BOOL, {.b = TRUE}},
+    {"invweight", "show item weights in the inventory", OPTTYPE_BOOL, {.b = TRUE}},
     {"keymap", "alter the key to command mapping",
      (enum nh_opttype)OPTTYPE_KEYMAP, {0}},
     {"menu_headings", "display style for menu headings", OPTTYPE_ENUM,
-     {(void *)A_REVERSE}},
-    {"msgheight", "message window height", OPTTYPE_INT, {(void *)8}},
+     {.e = A_REVERSE}},
+    {"msgheight", "message window height", OPTTYPE_INT, {.i = 8}},
     {"msghistory", "number of messages saved for prevmsg", OPTTYPE_INT,
-     {(void *)256}},
+     {.i = 256}},
     {"optstyle", "option menu display style", OPTTYPE_ENUM,
-     {(void *)OPTSTYLE_FULL}},
+     {.e = OPTSTYLE_FULL}},
     {"scores_own", "show all your own scores in the list", OPTTYPE_BOOL,
-     {FALSE}},
-    {"scores_top", "how many top scores to show", OPTTYPE_INT, {(void *)3}},
+     {.b = FALSE}},
+    {"scores_top", "how many top scores to show", OPTTYPE_INT, {.i = 3}},
     {"scores_around", "the number of scores shown around your score",
-     OPTTYPE_INT, {(void *)2}},
-    {"showexp", "show experience points", OPTTYPE_BOOL, {VTRUE}},
-    {"showscore", "show your score in the status line", OPTTYPE_BOOL, {VTRUE}},
-    {"sidebar", "draw the inventory sidebar", OPTTYPE_BOOL, {VTRUE}},
-    {"standout", "use standout for --More--", OPTTYPE_BOOL, {FALSE}},
-    {"status3", "3 line status display", OPTTYPE_BOOL, {VTRUE}},
-    {"time", "display elapsed game time, in moves", OPTTYPE_BOOL, {VTRUE}},
-    {"use_inverse", "use inverse video for some things", OPTTYPE_BOOL, {VTRUE}},
+     OPTTYPE_INT, {.i = 2}},
+    {"showexp", "show experience points", OPTTYPE_BOOL, {.b = TRUE}},
+    {"showscore", "show your score in the status line", OPTTYPE_BOOL, {.b = TRUE}},
+    {"sidebar", "draw the inventory sidebar", OPTTYPE_BOOL, {.b = TRUE}},
+    {"standout", "use standout for --More--", OPTTYPE_BOOL, {.b = FALSE}},
+    {"status3", "3 line status display", OPTTYPE_BOOL, {.b = TRUE}},
+    {"time", "display elapsed game time, in moves", OPTTYPE_BOOL, {.b = TRUE}},
+    {"use_inverse", "use inverse video for some things", OPTTYPE_BOOL, {.b = TRUE}},
 #if defined(PDCURSES) && defined(WIN32)
-    {"win_width", "window width", OPTTYPE_INT, {(void *)130}},
-    {"win_height", "window height", OPTTYPE_INT, {(void *)40}},
+    {"win_width", "window width", OPTTYPE_INT, {.i = 130}},
+    {"win_height", "window height", OPTTYPE_INT, {.i = 40}},
 #endif
     {NULL, NULL, OPTTYPE_BOOL, {NULL}}
 };
