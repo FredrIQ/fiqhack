@@ -1,5 +1,5 @@
 #!/bin/bash
-# Last modified by Alex Smith, 2013-11-18
+# Last modified by Alex Smith, 2013-11-25
 
 # If there are any changes in the working copy, stash them.
 stashed_changes=`git stash create`
@@ -14,7 +14,7 @@ for x in $(git diff-tree --cc HEAD | pcregrep -o '^\+\+\+ b/\K.*')
 do
     # Update the timestamps on the files that were changed in the
     # commit that was just committed.
-    sed -i -e "1,2s/Last modified by.*, ....-..-../Last modified by $(git log -n1 --pretty='%an'), $(date +%F)/" $x
+    sed -i -e "1,2s/Last modified by.*, ....-..-../Last modified by $(git log -n1 --pretty='%cn'), $(date +%F)/" $x
     git add $x
 done
 
