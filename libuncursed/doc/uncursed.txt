@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2013-11-16
+Last modified by Alex Smith, 2013-11-27
 
 This documentation for the uncursed rendering library is provided under the
 same terms as libuncursed itself: it may be distributed under either of the
@@ -866,12 +866,21 @@ then read the `KEY_SIGNAL` and pop the information it needs from the queue.
 `uncursed_watch_fd` causes future calls to `get_wch`, `getch`, or
 `timeout_get_wch` to return `KEY_OTHERFD` when input is available on the given
 file descriptor; `uncursed_unwatch_fd` undoes this effect.  What constitutes a
-"file descriptor" depends on your operating system; all major operating
-systems use file descriptors for network sockets, and some use them for other
-things as well (such as pipes, or even regular files).  "Input is available"
-means that it is possible to read from the given file descriptor without
-blocking. (Note that a file at EOF can usually be read without blocking; the
+"file descriptor" depends on your operating system; on Windows, the only
+supported file descriptors are network sockets, and on POSIXy systems like
+Linux, Mac OS X, and BSD, descriptors for open pipes/fifos are also supported,
+as well as files representing character devices.  "Input is available" means
+that it is possible to read from the given file descriptor without
+blocking.  (Note that a file at EOF can usually be read without blocking; the
 read is not particularly interesting, but it doesn't block.)
+
+When using the `wincon` interface plugin, watching a network socket will, as a
+side effect, cause it to go into nonblocking mode: this is a deficiency of the
+Windows API.  (It may be simplest to manually set the socket to nonblocking
+mode on every operating system, to avoid having to deal with this special
+case.  Note, however, that it is irrelevant whether the socket is blocking or
+not if you only read from it upon receiving a `KEY_OTHERFD` response, because
+it will already have been established that the reads cannot block.)
 
 The `KEY_OTHERFD` return does not specify *which* file descriptor can be read
 from without blocking, so if you are watching more than one file descriptor,
@@ -879,9 +888,11 @@ you will need to determine which one is readable via use of nonblocking reads,
 or perhaps the POSIX API function `select()`.
 
 The given file descriptor, `fd`, may be limited in range, due to the system
-calls used to monitor a descriptor for input. (For instance, it may need to be
-less than `FD_SETSIZE` on a POSIX system.) It must also be open (and should
-not be closed until after it is unwatched).
+calls used to monitor a descriptor for input.  (For instance, it may need to
+be less than `FD_SETSIZE` on a POSIXy system.)  It must also be in a state in
+which it would be reasonably possible to accept input from it (i.e. open and
+connected, for a network socket), and should not be closed until after it is
+unwatched.
 
 The intended use for this is to be able to receive data from either the user
 or from a network connection; you call `uncursed_watch_fd` when you open the
