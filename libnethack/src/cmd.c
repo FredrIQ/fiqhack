@@ -1565,7 +1565,7 @@ nh_get_commands(int *count)
     struct nh_cmd_desc *ui_cmd;
 
     for (i = 0; cmdlist[i].name; i++)
-        if (wizard || !(cmdlist[i].flags & CMD_DEBUG))
+        if (!(cmdlist[i].flags & CMD_INTERNAL))
             cmdcount++;
 
     ui_cmd = xmalloc(sizeof (struct nh_cmd_desc) * cmdcount);
@@ -1575,8 +1575,7 @@ nh_get_commands(int *count)
 
     j = 0;
     for (i = 0; cmdlist[i].name; i++)
-        if ((wizard || !(cmdlist[i].flags & CMD_DEBUG)) &&
-            !(cmdlist[i].flags & CMD_INTERNAL)) {
+        if (!(cmdlist[i].flags & CMD_INTERNAL)) {
             strncpy(ui_cmd[j].name, cmdlist[i].name, sizeof (ui_cmd[j].name));
             strncpy(ui_cmd[j].desc, cmdlist[i].desc, sizeof (ui_cmd[j].desc));
             ui_cmd[j].defkey = cmdlist[i].defkey;

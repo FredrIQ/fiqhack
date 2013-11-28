@@ -285,21 +285,22 @@ get_commands
 ------------
 
 This command lists which commands exist and can be used in a `game_command`
-call, and corresponds to the `nh_get_commands` API call in libnethack.  (TODO:
-It currently doesn't have a check for whether the game is running, which it
-needs because it looks at whether the game is in debug mode or not.  It should
-probably always list debug mode commands, with the client deleting the ones
-that won't do anything useful.)
+call, and corresponds to the `nh_get_commands` API call in libnethack.
 
 In addition to information about the commands, it also returns default
 keybindings for them; clients can choose to respect or ignore these.  This
 means that minor changes to the game's commands can be made without needing to
 alter clients.
 
+This command can be used even when the game is not running; whether there is a
+running game or not, it will return all commands that can be used by the user,
+including debug mode commands. The client may want to hide debug mode commands
+from non-debug-mode games.
+
 Command arguments: none
 
 Response arguments:
-  * `struct nh_cmd_desc cmdlist`: a list of the commands that exist:
+  * `struct nh_cmd_desc[] cmdlist`: a list of the commands that exist:
       * `string name`: the name of the command (`command` in `game_command`);
       * `string desc`: a human-readable description of the command;
       * `unsigned flags`: information about the command, a bitmask of:
