@@ -2040,8 +2040,7 @@ get_command_idx(const char *command)
         return -1;
 
     for (i = 0; cmdlist[i].name; i++)
-        if (!strcmp(command, cmdlist[i].name) &&
-            (wizard || !(cmdlist[i].flags & CMD_DEBUG)))
+        if (!strcmp(command, cmdlist[i].name))
             return i;
 
     return -1;
@@ -2081,14 +2080,14 @@ do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *arg)
     if (!arg)
         arg = &noarg;
 
+    prev_command = command;
+    prev_arg = *arg;
+    prev_repcount = repcount;
+
     /* Debug commands are now restricted to wizard mode here, rather than with
        a special case in each command */
     if (cmdlist[command].flags & CMD_DEBUG)
         return COMMAND_UNKNOWN;
-
-    prev_command = command;
-    prev_arg = *arg;
-    prev_repcount = repcount;
 
     flags.move = FALSE;
     multi = 0;

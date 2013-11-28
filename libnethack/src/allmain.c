@@ -805,7 +805,11 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
         handle_occupation();
     else if (multi == 0 || (multi > 0 && cmdidx != -1)) {
         turnstate.saved_cmd = cmdidx;
-        do_command(cmdidx, rep, TRUE, arg);
+        if (do_command(cmdidx, rep, TRUE, arg) != COMMAND_OK) {
+            pline("Unrecognised command.");
+            nomul(0, NULL);
+            return READY_FOR_INPUT;
+        }
     } else if (multi > 0) {
         /* allow interruption of multi-turn commands */
         if (rep == -1) {
@@ -822,7 +826,12 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
                 nomul(0, NULL);
             }
         } else
-            do_command(turnstate.saved_cmd, multi, FALSE, arg);
+            if (do_command(turnstate.saved_cmd, multi, FALSE, arg) !=
+                COMMAND_OK) {
+                pline("Unrecognised command."); 
+                nomul(0, NULL);
+                return READY_FOR_INPUT;
+            }
     }
     /* no need to do anything here for multi < 0 */
 
@@ -880,7 +889,7 @@ nh_command(const char *cmd, int rep, struct nh_cmd_arg *arg)
     cmdidx = get_command_idx(cmd);
     if (program_state.viewing &&
         (cmdidx < 0 || !(cmdlist[cmdidx].flags & CMD_NOTIME)))
-        return ERR_COMMAND_FORBIDDEN;   /* */
+        return ERR_COMMAND_FORBIDDEN;
 
     if (!api_entry_checkpoint()) {
         /* terminate() in end.c will arrive here */
