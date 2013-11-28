@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2013-11-23
+Last modified by Alex Smith, 2013-11-28
 
 This document documents the version of the network protocol used in
 NetHack 4.3, and was written by Daniel Thaler, GreyKnight, Alex Smith.
@@ -86,10 +86,10 @@ This command is specific to client/server communication, and is not used for
 local play.  It specifies which user is making the connection, and whether to
 start a new connection or attempt to re-establish an existing connection.
 
-Upon creating a new connection, there will be no game loaded: `start_game` or
-`restore_game` will need to be used before commands that require a game to be
-loaded will work.  Re-establishing an existing connection will leave it in
-whatever state it was in before the connection went down.
+Upon creating a new connection, there will be no game loaded: `restore_game`
+will need to be used before commands that require a game to be loaded will
+work.  Re-establishing an existing connection will leave it in whatever state
+it was in before the connection went down.
 
 Command arguments:
   * `string username`: the username of the user who is making the connection
@@ -260,8 +260,8 @@ Response arguments:
       * `ERR_FORCED_EXIT` = 9: The game was saved or exited via the
         `exit_game` client command;
       * `ERR_GAME_NOT_RUNNING` = 10: There was no game running, either because
-        `start_game` / `restore_game` weren't called, or because the game has
-        been saved/exited/panicked, or possibly due to a panic outside the
+        `restore_game` wasn't called, or because the game has been
+        saved/exited/panicked, or possibly due to a panic outside the
         `game_command` call;
       * `ERR_NETWORK_ERROR` = 20000: Something went wrong trying to send the
         command to the server.
@@ -688,8 +688,13 @@ Response arguments:
   * `int return`: Always 1.
 
 
-start_game
-----------
+create_game
+-----------
+
+Creates a new save file, that can subsequently be opened with `restore_game`
+in order to start a new game.  This mostly corresponds to the `nh_create_game`
+API call in libnethack (although it has a slightly different calling
+convention).
 
 TODO: The API of this function is under revision.
 
@@ -699,9 +704,6 @@ Command arguments:
 Response arguments:
   * `int gameid`: The game ID, for use with future `restore_game` calls; if
     this is -1, the game creation failed
-  * `boolean return`: if this is false, the game creation failed
-
-The game creation succeeded if `gameid` is -1 and `return` has a true value.
 
 
 Server requests

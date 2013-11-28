@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-11-28 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -10,7 +10,7 @@
 #include <time.h>
 
 static void ccmd_shutdown(json_t * ignored);
-static void ccmd_start_game(json_t * params);
+static void ccmd_create_game(json_t * params);
 static void ccmd_restore_game(json_t * params);
 static void ccmd_exit_game(json_t * params);
 static void ccmd_game_command(json_t * params);
@@ -34,7 +34,7 @@ static void ccmd_set_password(json_t * params);
 const struct client_command clientcmd[] = {
     {"shutdown", ccmd_shutdown, 0},
 
-    {"start_game", ccmd_start_game, 0},
+    {"create_game", ccmd_create_game, 0},
     {"restore_game", ccmd_restore_game, 0},
     {"exit_game", ccmd_exit_game, 0},
     {"game_command", ccmd_game_command, 0},
@@ -75,11 +75,12 @@ ccmd_shutdown(json_t * ignored)
     client_msg("shutdown", jmsg);
 }
 
-/* start_game: Start a new game
+/*
+ * create_game: Start a new game
  * parameters: name, role, race, gend, align, playmode
  */
 static void
-ccmd_start_game(json_t * params)
+ccmd_create_game(json_t * params)
 {
     char filename[1024], basename[1024], path[1024];
     json_t *j_msg;
@@ -90,7 +91,7 @@ ccmd_start_game(json_t * params)
     if (json_unpack
         (params, "{ss,si,si,si,si,si*}", "name", &name, "role", &role, "race",
          &race, "gender", &gend, "alignment", &align, "mode", &mode) == -1)
-        exit_client("Bad set of parameters for start_game");
+        exit_client("Bad set of parameters for create_game");
 
     /* reset cached display data from a previous game */
     reset_cached_diplaydata();
@@ -109,28 +110,27 @@ ccmd_start_game(json_t * params)
     if (fd == -1)
         exit_client("Could not create the logfile");
 
-    ret = nh_start_game(fd, name, role, race, gend, align, mode);
+    ret = nh_create_game(fd, name, role, race, gend, align, mode);
+    close(fd);
     if (ret) {
         struct nh_roles_info *ri = nh_get_roles();
         const char *rolename = (gend &&
                                 ri->rolenames_f[role]) ?
             ri->rolenames_f[role] : ri->rolenames_m[role];
-        gamefd = fd;
         gameid =
             db_add_new_game(user_info.uid, basename, rolename,
                             ri->racenames[race], ri->gendnames[gend],
                             ri->alignnames[align], mode, name,
                             player_info.level_desc);
-        log_msg("%s has started a new game (%d) as %s", user_info.username,
+        log_msg("%s has created a new game (%d) as %s", user_info.username,
                 gameid, name);
-        j_msg = json_pack("{si,si}", "return", ret, "gameid", gameid);
+        j_msg = json_pack("{si}", "return", gameid);
     } else {
-        close(fd);
         unlink(filename);
-        j_msg = json_pack("{si,si}", "return", ret, "gameid", -1);
+        j_msg = json_pack("{si}", "return", -1);
     }
 
-    client_msg("start_game", j_msg);
+    client_msg("create_game", j_msg);
 }
 
 

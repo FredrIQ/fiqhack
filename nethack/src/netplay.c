@@ -1,23 +1,22 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-11-28 */
 /* Copyright (c) Daniel Thaler, 2012 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "nhcurses.h"
-
 
 void
 net_rungame(void)
 {
     char plname[BUFSZ];
     int role = initrole, race = initrace, gend = initgend, align = initalign;
-    int ret;
+    int ret, gameno;
 
     if (!player_selection(&role, &race, &gend, &align, random_player))
         return;
 
     strncpy(plname, settings.plname, PL_NSIZ);
-    /* The player name is set to "wizard" (again) in nh_start_game, so setting
+    /* The player name is set to "wizard" (again) in nh_create_game, so setting
        it here just prevents wizmode player from being asked for a name. */
     if (ui_flags.playmode == MODE_WIZARD)
         strcpy(plname, "wizard");
@@ -28,7 +27,11 @@ net_rungame(void)
         return;
 
     create_game_windows();
-    if (!nhnet_start_game(plname, role, race, gend, align, ui_flags.playmode)) {
+    /* Create a game, then restore it. */
+    gameno = nhnet_create_game(plname, role, race, gend, align,
+                               ui_flags.playmode);
+
+    if (gameno < 0 || nhnet_restore_game(gameno, NULL) != GAME_RESTORED) {
         destroy_game_windows();
         return;
     }

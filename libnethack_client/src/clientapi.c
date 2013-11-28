@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-11-28 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -175,12 +175,12 @@ nhnet_restore_game(int gid, struct nh_window_procs *rwinprocs)
 }
 
 
-nh_bool
-nhnet_start_game(const char *name, int role, int race, int gend, int align,
-                 enum nh_game_modes playmode)
+int
+nhnet_create_game(const char *name, int role, int race, int gend, int align,
+                  enum nh_game_modes playmode)
 {
-    int ret;
     json_t *jmsg;
+    int ret;
 
     if (!api_entry())
         return 0;
@@ -188,10 +188,9 @@ nhnet_start_game(const char *name, int role, int race, int gend, int align,
     jmsg =
         json_pack("{ss,si,si,si,si,si}", "name", name, "role", role, "race",
                   race, "gender", gend, "alignment", align, "mode", playmode);
-    jmsg = send_receive_msg("start_game", jmsg);
-    if (json_unpack(jmsg, "{si,si!}", "return", &ret, "gameid", &current_game)
-        == -1) {
-        print_error("Incorrect return object in nhnet_start_game");
+    jmsg = send_receive_msg("create_game", jmsg);
+    if (json_unpack(jmsg, "{si}", "return", &ret) == -1) {
+        print_error("Incorrect return object in nhnet_create_game");
         ret = 0;
     }
 

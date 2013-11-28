@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-27 */
+/* Last modified by Alex Smith, 2013-11-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -251,9 +251,9 @@ post_init_tasks(void)
 }
 
 
-boolean
-nh_start_game(int fd, const char *name, int irole, int irace, int igend,
-              int ialign, enum nh_game_modes playmode)
+int
+nh_create_game(int fd, const char *name, int irole, int irace, int igend,
+               int ialign, enum nh_game_modes playmode)
 {
     unsigned int seed = 0;
 
@@ -286,20 +286,18 @@ nh_start_game(int fd, const char *name, int irole, int irace, int igend,
     log_newgame(fd, turntime, seed, playmode);
 
     newgame();
-    wd_message();
 
     flags.move = 0;
-    flags.verbose = FALSE;
-    set_wear();
-    flags.verbose = TRUE;
-    pickup(1);
 
     log_command_result();
 
     program_state.game_running = TRUE;
-    youmonst.movement = NORMAL_SPEED;   /* give the hero some movement points */
-    realtime_tasks();
-    post_init_tasks();
+
+    /* Now save and exit the newly created game. */
+    dosave0(FALSE);
+    program_state.something_worth_saving = 0;
+    program_state.game_running = FALSE;
+    u.uhp = -1;  /* universal game over indicator; TODO: get rid of this */
 
     api_exit();
     return TRUE;
@@ -400,12 +398,8 @@ nh_restore_game(int fd, struct nh_window_procs *rwinprocs,
     log_truncate();
     log_init(); /* must be called before we start writing to the log */
 
-    /* info might not have reached the ui while alternate window procs were set 
-     */
+    /* while loading a save file, we don't do rendering */
     doredraw();
-
-    /* nh_start_game() does this via newgame(), but since this function doesn't
-       call newgame(), we have to do it here instead. */
     notify_levelchange(NULL);
 
     bot();
@@ -1006,11 +1000,6 @@ newgame(void)
     /* help the window port get it's display charset/tiles sorted out */
     notify_levelchange(NULL);
 
-    if (flags.legacy) {
-        flush_screen();
-        com_pager(1);
-    }
-
     /* Stop autoexplore revisiting the entrance stairs (or position). */
     level->locations[u.ux][u.uy].mem_stepped = 1;
 
@@ -1018,9 +1007,6 @@ newgame(void)
 
     historic_event(FALSE,
                    "entered the Dungeons of Doom to retrieve the Amulet of Yendor!");
-
-    /* Success! */
-    welcome(TRUE);
 
     /* prepare for the first move */
     flags.move = 0;
@@ -1037,12 +1023,17 @@ newgame(void)
 }
 
 
-/* show "welcome [back] to NetHack" message at program startup */
+/* show legacy, "welcome [back] to NetHack" message at program startup */
 static void
 welcome(boolean new_game)
 {       /* false => restoring an old game */
     char buf[BUFSZ];
     boolean currentgend = Upolyd ? u.mfemale : flags.female;
+
+    if (new_game && flags.legacy) {
+        flush_screen();
+        com_pager(1);
+    }
 
     /* 
      * The "welcome back" message always describes your innate form

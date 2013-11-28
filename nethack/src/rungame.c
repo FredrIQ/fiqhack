@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-11-28 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -254,7 +254,7 @@ rungame(void)
                                     info->rolenames_m)[role]);
 
     strncpy(plname, settings.plname, PL_NSIZ);
-    /* The player name is set to "wizard" (again) in nh_start_game, so setting
+    /* The player name is set to "wizard" (again) in nh_create_game, so setting
        it here just prevents wizmode player from being asked for a name. */
     if (ui_flags.playmode == MODE_WIZARD)
         strcpy(plname, "wizard");
@@ -277,7 +277,9 @@ rungame(void)
     }
 
     create_game_windows();
-    if (!nh_start_game(fd, plname, role, race, gend, align, ui_flags.playmode)) {
+    /* Create the game, then immediately load it. */
+    if (!nh_create_game(fd, plname, role, race, gend, align, ui_flags.playmode)
+        || nh_restore_game(fd, NULL, FALSE) != GAME_RESTORED) {
         destroy_game_windows();
         close(fd);
         return;
