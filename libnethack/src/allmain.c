@@ -995,10 +995,6 @@ newgame(void)
     if (MON_AT(level, u.ux, u.uy))
         mnexto(m_at(level, u.ux, u.uy));
     makedog();
-    doredraw();
-
-    /* help the window port get it's display charset/tiles sorted out */
-    notify_levelchange(NULL);
 
     /* Stop autoexplore revisiting the entrance stairs (or position). */
     level->locations[u.ux][u.uy].mem_stepped = 1;
@@ -1011,7 +1007,6 @@ newgame(void)
     /* prepare for the first move */
     flags.move = 0;
     set_wear();
-    pickup(1);
 
     log_command_result();
 
