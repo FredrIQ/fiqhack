@@ -140,8 +140,6 @@ commandloop(void)
     reset_prev_cmd();
     reset_last_dir();
 
-    load_keymap();      /* need to load the keymap after the game has been
-                           started */
     cmdarg.argtype = CMD_ARG_NONE;
     nh_command("welcome", 0, &cmdarg);
 
@@ -158,8 +156,6 @@ commandloop(void)
                                            was in progress */
         gamestate = nh_command(cmd, count, &cmdarg);
     }
-
-    free_keymap();
 
     game_is_running = FALSE;
     return gamestate;
