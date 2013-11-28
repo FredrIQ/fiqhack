@@ -232,10 +232,10 @@ const struct cmd_desc cmdlist[] = {
     {"welcome", "(internal) display the 'welcome back!' message", 0, 0, TRUE,
      dowelcome, CMD_ARG_NONE | CMD_INTERNAL},
 
-    {"create monster", "(DEBUG) create a monster", C('g'), 0, TRUE, wiz_genesis,
-     CMD_ARG_NONE | CMD_DEBUG},
     {"detect", "(DEBUG) detect monsters", 0, 0, TRUE, wiz_detect,
      CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
+    {"genesis", "(DEBUG) create a monster", C('g'), 0, TRUE, wiz_genesis,
+     CMD_ARG_NONE | CMD_DEBUG},
     {"identify", "(DEBUG) identify all items in the inventory", C('i'), 0, TRUE,
      wiz_identify, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
     {"levelchange", "(DEBUG) change experience level", 0, 0, TRUE,
@@ -268,7 +268,7 @@ const struct cmd_desc cmdlist[] = {
      CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
     {"wish", "(DEBUG) wish for an item", C('w'), 0, TRUE, wiz_wish,
      CMD_ARG_NONE | CMD_DEBUG},
-    {"wizard teleport", "(DEBUG) teleport without fail", C('f'), 0, TRUE,
+    {"wizport", "(DEBUG) teleport without fail", C('f'), 0, TRUE,
      wiz_teleport, CMD_ARG_NONE | CMD_DEBUG},
     {"wmode", "(DEBUG) show wall modes", 0, 0, TRUE, wiz_show_wmodes,
      CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
@@ -365,15 +365,13 @@ domonability(void)
 static int
 wiz_wish(void)
 {       /* Unlimited wishes for debug mode by Paul Polderman */
-    if (wizard) {
-        boolean save_verbose = flags.verbose;
+    boolean save_verbose = flags.verbose;
 
-        flags.verbose = FALSE;
-        makewish();
-        flags.verbose = save_verbose;
-        encumber_msg();
-    } else
-        pline("Unavailable command '^W'.");
+    flags.verbose = FALSE;
+    makewish();
+    flags.verbose = save_verbose;
+    encumber_msg();
+
     return 0;
 }
 
@@ -381,10 +379,8 @@ wiz_wish(void)
 static int
 wiz_identify(void)
 {
-    if (wizard)
-        identify_pack(0);
-    else
-        pline("Unavailable command '^I'.");
+    identify_pack(0);
+
     return 0;
 }
 
@@ -392,20 +388,18 @@ wiz_identify(void)
 static int
 wiz_map(void)
 {
-    if (wizard) {
-        struct trap *t;
-        long save_Hconf = HConfusion, save_Hhallu = HHallucination;
+    struct trap *t;
+    long save_Hconf = HConfusion, save_Hhallu = HHallucination;
 
-        HConfusion = HHallucination = 0L;
-        for (t = level->lev_traps; t != 0; t = t->ntrap) {
-            t->tseen = 1;
-            map_trap(t, TRUE);
-        }
-        do_mapping();
-        HConfusion = save_Hconf;
-        HHallucination = save_Hhallu;
-    } else
-        pline("Unavailable command '^F'.");
+    HConfusion = HHallucination = 0L;
+    for (t = level->lev_traps; t != 0; t = t->ntrap) {
+        t->tseen = 1;
+        map_trap(t, TRUE);
+    }
+    do_mapping();
+    HConfusion = save_Hconf;
+    HHallucination = save_Hhallu;
+
     return 0;
 }
 
@@ -413,10 +407,8 @@ wiz_map(void)
 static int
 wiz_genesis(void)
 {
-    if (wizard)
-        create_particular();
-    else
-        pline("Unavailable command '^G'.");
+    create_particular();
+
     return 0;
 }
 
@@ -424,10 +416,8 @@ wiz_genesis(void)
 static int
 wiz_levelcide(void)
 {
-    if (wizard)
-        do_level_genocide();
-    else
-        pline("Unavailable command 'levelcide'.");
+    do_level_genocide();
+
     return 0;
 }
 
@@ -435,10 +425,8 @@ wiz_levelcide(void)
 static int
 wiz_where(void)
 {
-    if (wizard)
-        print_dungeon(FALSE, NULL, NULL);
-    else
-        pline("Unavailable command '^O'.");
+    print_dungeon(FALSE, NULL, NULL);
+
     return 0;
 }
 
@@ -446,10 +434,8 @@ wiz_where(void)
 static int
 wiz_detect(void)
 {
-    if (wizard)
-        findit();
-    else
-        pline("Unavailable command '^E'.");
+    findit();
+
     return 0;
 }
 
@@ -457,10 +443,8 @@ wiz_detect(void)
 static int
 wiz_teleport(void)
 {
-    if (wizard)
-        tele_impl(TRUE);
-    else
-        pline("Unavailable command '^Y'.");
+    tele_impl(TRUE);
+
     return 0;
 }
 
@@ -468,10 +452,8 @@ wiz_teleport(void)
 static int
 wiz_level_tele(void)
 {
-    if (wizard)
-        level_tele_impl(TRUE);
-    else
-        pline("Unavailable command '^V'.");
+    level_tele_impl(TRUE);
+
     return 0;
 }
 
@@ -482,6 +464,7 @@ wiz_mon_polycontrol(void)
     iflags.mon_polycontrol = !iflags.mon_polycontrol;
     pline("Monster polymorph control is %s.",
           iflags.mon_polycontrol ? "on" : "off");
+
     return 0;
 }
 
@@ -490,7 +473,9 @@ static int
 wiz_togglegen(void)
 {
     iflags.mon_generation = !iflags.mon_generation;
-    pline("Monster generation is %s.", iflags.mon_generation ? "on" : "off");
+    pline("Monster generation is %s.",
+          iflags.mon_generation ? "on" : "off");
+
     return 0;
 }
 
@@ -564,7 +549,7 @@ wiz_show_seenv(void)
     char row[COLNO + 1];
 
     init_menulist(&menu);
-    /* 
+    /*
      * Each seenv description takes up 2 characters, so center
      * the seenv display around the hero.
      */
@@ -1053,7 +1038,7 @@ enlightenment(int final)
             sprintf(eos(buf), " (%d)", u.ugangr);
         enl_msg(&menu, u_gname(), " is", " was", buf);
     } else
-        /* 
+        /*
          * We need to suppress this when the game is over, because death
          * can change the value calculated by can_pray(), potentially
          * resulting in a false claim that you could have prayed safely.
@@ -1142,7 +1127,7 @@ encode_conduct(void)
         c |= 0x0400UL;
     if (!num_genocides())
         c |= 0x0800UL;
-    /* Slash'EM xlogfile does not record celibacy, presumably either by mistake 
+    /* Slash'EM xlogfile does not record celibacy, presumably either by mistake
        or for compatibility with vanilla. So it's safe to just take the next
        available number for elbereths. */
     if (!u.uconduct.elbereths)
@@ -1415,7 +1400,7 @@ dowelcome(void)
         com_pager(1);
     }
 
-    /* 
+    /*
      * The "welcome back" message always describes your innate form
      * even when polymorphed or wearing a helm of opposite alignment.
      * Alignment is shown unconditionally for new games; for restores
@@ -1944,7 +1929,7 @@ contained(struct menulist *menu, const char *src, long *total_count,
     count_obj(invent, &count, &size, FALSE, TRUE);
     count_obj(level->objlist, &count, &size, FALSE, TRUE);
     count_obj(level->buriedobjlist, &count, &size, FALSE, TRUE);
-    /* DEADMONSTER check not required in this loop since they have no inventory 
+    /* DEADMONSTER check not required in this loop since they have no inventory
      */
     for (mon = level->monlist; mon; mon = mon->nmon)
         count_obj(mon->minvent, &count, &size, FALSE, TRUE);
@@ -2097,6 +2082,11 @@ do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *arg)
     if (!arg)
         arg = &noarg;
 
+    /* Debug commands are now restricted to wizard mode here, rather than with
+       a special case in each command */
+    if (cmdlist[command].flags & CMD_DEBUG)
+        return COMMAND_UNKNOWN;
+
     prev_command = command;
     prev_arg = *arg;
     prev_repcount = repcount;
@@ -2110,7 +2100,7 @@ do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *arg)
     }
 
     /* in some cases, a command function will accept either it's proper
-       argument type or no argument; we're looking for the possible type of the 
+       argument type or no argument; we're looking for the possible type of the
        argument here */
     functype = (cmdlist[command].flags & CMD_ARG_FLAGS);
     if (!functype)

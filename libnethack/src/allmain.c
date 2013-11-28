@@ -866,8 +866,8 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
 
 
 /* command wrapper function: make sure the game is able to run commands, perform
- * logging and generate reasonable return values for api clients with no access
- * to internal state */
+   logging and generate reasonable return values for api clients with no access
+   to internal state */
 int
 nh_command(const char *cmd, int rep, struct nh_cmd_arg *arg)
 {
