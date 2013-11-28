@@ -36,10 +36,7 @@ net_rungame(void)
         return;
     }
 
-    load_keymap();      /* need to load the keymap after the game has been
-                           started */
     ret = commandloop();
-    free_keymap();
 
     destroy_game_windows();
     cleanup_messages();
@@ -89,10 +86,7 @@ net_loadgame(void)
         return;
     }
 
-    load_keymap();      /* need to load the keymap after the game has been
-                           started */
     ret = commandloop();
-    free_keymap();
 
     destroy_game_windows();
     cleanup_messages();

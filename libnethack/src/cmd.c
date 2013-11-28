@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-23 */
+/* Last modified by Alex Smith, 2013-11-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -22,6 +22,7 @@ static int command_repeat_occupation(void);
 static int domonability(void);
 static int dotravel(int x, int y);
 static int doautoexplore(void);
+static int dowelcome(void);
 static int wiz_wish(void);
 static int wiz_identify(void);
 static int wiz_map(void);
@@ -227,6 +228,9 @@ const struct cmd_desc cmdlist[] = {
      CMD_ARG_DIR | CMD_MOVE},
     {"go2", "like go, but branching corridors are boring", 'G', 0, FALSE, dogo2,
      CMD_ARG_DIR | CMD_MOVE},
+
+    {"welcome", "(internal) display the 'welcome back!' message", 0, 0, TRUE,
+     dowelcome, CMD_ARG_NONE | CMD_INTERNAL},
 
     {"create monster", "(DEBUG) create a monster", C('g'), 0, TRUE, wiz_genesis,
      CMD_ARG_NONE | CMD_DEBUG},
@@ -1386,6 +1390,58 @@ minimal_enlightenment(void)
     return n;
 }
 
+/* Shows legacy, "welcome [back] to NetHack" messages when a save file is
+   restored; the client sends this command to record the times that the game was
+   restored via voluntary action rather than via reconnecting a timed-out
+   connection.
+
+   It is important that this command does not affect anything other than
+   messages (it may affect parts of the gamestate that affect only messages,
+   such as u.uwelcomed). Otherwise, it would be possible to use a hacked client
+   to send this command at inappropriate times in order to modify the gamestate
+   in ways that would not be available to a normal player. Hacking in order to
+   get welcome messages at inappropriate times is pointless :-) */
+static int
+dowelcome(void)
+{       /* false => restoring an old game */
+    char buf[BUFSZ];
+    boolean currentgend = Upolyd ? u.mfemale : flags.female;
+    boolean new_game = !u.uwelcomed;
+
+    u.uwelcomed = 1;
+
+    if (new_game && flags.legacy) {
+        flush_screen();
+        com_pager(1);
+    }
+
+    /* 
+     * The "welcome back" message always describes your innate form
+     * even when polymorphed or wearing a helm of opposite alignment.
+     * Alignment is shown unconditionally for new games; for restores
+     * it's only shown if it has changed from its original value.
+     * Sex is shown for new games except when it is redundant; for
+     * restores it's only shown if different from its original value.
+     */
+    *buf = '\0';
+    if (new_game || u.ualignbase[A_ORIGINAL] != u.ualignbase[A_CURRENT])
+        sprintf(eos(buf), " %s", align_str(u.ualignbase[A_ORIGINAL]));
+    if (!urole.name.f &&
+        (new_game ? (urole.allow & ROLE_GENDMASK) ==
+         (ROLE_MALE | ROLE_FEMALE) : currentgend != u.initgend))
+        sprintf(eos(buf), " %s", genders[currentgend].adj);
+
+    pline(new_game ? "%s %s, welcome to NetHack!  You are a%s %s %s." :
+          "%s %s, the%s %s %s, welcome back to NetHack!", Hello(NULL), plname,
+          buf, urace.adj, (currentgend &&
+                           urole.name.f) ? urole.name.f : urole.name.m);
+
+    if (*level->levname)
+        pline("You named this level: %s.", level->levname);
+
+    return 0;
+}
+
 
 static int
 doattributes(void)
@@ -1534,7 +1590,8 @@ nh_get_commands(int *count)
 
     j = 0;
     for (i = 0; cmdlist[i].name; i++)
-        if (wizard || !(cmdlist[i].flags & CMD_DEBUG)) {
+        if ((wizard || !(cmdlist[i].flags & CMD_DEBUG)) &&
+            !(cmdlist[i].flags & CMD_INTERNAL)) {
             strncpy(ui_cmd[j].name, cmdlist[i].name, sizeof (ui_cmd[j].name));
             strncpy(ui_cmd[j].desc, cmdlist[i].desc, sizeof (ui_cmd[j].desc));
             ui_cmd[j].defkey = cmdlist[i].defkey;

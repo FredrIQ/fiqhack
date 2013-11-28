@@ -140,6 +140,11 @@ commandloop(void)
     reset_prev_cmd();
     reset_last_dir();
 
+    load_keymap();      /* need to load the keymap after the game has been
+                           started */
+    cmdarg.argtype = CMD_ARG_NONE;
+    nh_command("welcome", 0, &cmdarg);
+
     while (gamestate < GAME_OVER) {
         count = 0;
         cmd = NULL;
@@ -153,6 +158,8 @@ commandloop(void)
                                            was in progress */
         gamestate = nh_command(cmd, count, &cmdarg);
     }
+
+    free_keymap();
 
     game_is_running = FALSE;
     return gamestate;
@@ -233,7 +240,7 @@ rungame(void)
         return;
 
     /* 
-     * Describe the player character for naming; see welcome() in allmain.c in
+     * Describe the player character for naming; see dowelcome() in cmd.c in
      * libnethack.
      */
     info = nh_get_roles();
@@ -285,10 +292,8 @@ rungame(void)
         return;
     }
 
-    load_keymap();      /* need to load the keymap after the game has been
-                           started */
     ret = commandloop();
-    free_keymap();
+
     close(fd);
 
     destroy_game_windows();
@@ -527,10 +532,8 @@ loadgame(void)
         return FALSE;
     }
 
-    load_keymap();      /* need to load the keymap after the game has been
-                           started */
     ret = commandloop();
-    free_keymap();
+
     close(fd);
 
     destroy_game_windows();

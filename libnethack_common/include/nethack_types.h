@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-23 */
+/* Last modified by Alex Smith, 2013-11-28 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -120,6 +120,10 @@
                                            alter the game state in any way.
                                            Marked commands will not be logged */
 # define CMD_DEBUG      (1 << 14)       /* a wizmode command */
+# define CMD_INTERNAL   (1 << 15)       /* sent automatically by the client;
+                                           not meaningful if sent manually */
+/* note that CMD_INTERNAL commands should be ones that cannot be used to cheat
+   if they're nonetheless sent manually anyway */
 
 /* reserved flag for use by ui code that uses struct nh_cmd_desc internally */
 # define CMD_UI         (1U << 31)

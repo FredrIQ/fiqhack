@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-11-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -501,7 +501,8 @@ restore_you(struct memfile *mf, struct you *y)
     y->uinvulnerable = (yflags >> 27) & 1;
     y->uburied = (yflags >> 26) & 1;
     y->uedibility = (yflags >> 25) & 1;
-    y->usick_type = (yflags >> 23) & 3;
+    y->uwelcomed = (yflags >> 24) & 1;
+    y->usick_type = (yflags >> 22) & 3;
 
     y->uevent.minor_oracle = (eflags >> 31) & 1;
     y->uevent.major_oracle = (eflags >> 30) & 1;

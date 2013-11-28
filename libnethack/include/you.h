@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-11-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -129,11 +129,12 @@ struct you {
     unsigned uinwater:1;        /* if you're currently in water (only
                                    underwater possible currently) */
     unsigned uundetected:1;     /* if you're a hiding monster/piercer */
-    unsigned mfemale:1; /* saved human value of flags.female */
+    unsigned mfemale:1;         /* saved human value of flags.female */
     unsigned uinvulnerable:1;   /* you're invulnerable (praying) */
-    unsigned uburied:1; /* you're buried */
+    unsigned uburied:1;         /* you're buried */
     unsigned uedibility:1;      /* blessed food detection; sense unsafe food */
-    /* 1 free bit! */
+    unsigned uwelcomed:1;       /* you've seen the "Welcome to NetHack!"
+                                   message (and legacy if appropriate) */
 
     unsigned udg_cnt;   /* how long you have been demigod */
     struct u_event uevent;      /* certain events have happened */

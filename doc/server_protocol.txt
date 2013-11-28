@@ -319,7 +319,9 @@ Response arguments:
           * `CMD_NOTIME` = 8192: this command makes no changes to the
             gamestate, and thus can be used while watching or replaying a
             game;
-          * `CMD_DEBUG` = 16384: this command is only available in debug mode.
+          * `CMD_DEBUG` = 16384: this command is only available in debug mode;
+          * `CMD_INTERNAL` = 32768: although commands with this flag set exist,
+            they are never returned from `nh_get_commands`.
       * `charcode def`: a default keybinding for this command (ASCII,
         control-ASCII, meta-ASCII);
       * `charcode alt`: another, lower-priority, default keybinding for this
