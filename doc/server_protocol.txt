@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2013-11-28
+Last modified by Alex Smith, 2013-11-30
 
 This document documents the version of the network protocol used in
 NetHack 4.3, and was written by Daniel Thaler, GreyKnight, Alex Smith.
@@ -21,7 +21,7 @@ The server protocol is an enhancement of the protocol used by a window port to
 connect to a local game; the two are very similar, and so this documentation
 may also be consulted to gain some amount of understanding of the behaviour of
 a windowport.  There are a few commands that are specific to server use,
-though, suh as `auth`, and the API for map updates is different.
+though, such as `auth`, and the API for map updates is different.
 
 The following types are all special cases of integers:
 * All enumerated types
@@ -86,10 +86,11 @@ This command is specific to client/server communication, and is not used for
 local play.  It specifies which user is making the connection, and whether to
 start a new connection or attempt to re-establish an existing connection.
 
-Upon creating a new connection, there will be no game loaded: `restore_game`
-will need to be used before commands that require a game to be loaded will
-work.  Re-establishing an existing connection will leave it in whatever state
-it was in before the connection went down.
+Upon creating a new connection, there will be no game loaded: `play_game` will
+need to be used before commands that require a game to be loaded will work
+(and those commands can only be given to follow up server requests that follow
+up the `play_game` call).  Re-establishing an existing connection will leave
+it in whatever state it was in before the connection went down.
 
 Command arguments:
   * `string username`: the username of the user who is making the connection
@@ -189,103 +190,11 @@ Response arguments:
     exit
 
 
-game_command
-------------
-
-This command is used to send player input to the server; the client is
-responsible for translating the input into a game command.  Use `get_commands`
-in a client in order to determine which commands exist.
-
-This command corresponds to the `nh_command` API call in libnethack.
-
-Command arguments:
-  * `string command`: what the player wants to tell their character to do
-  * `struct nh_cmd_arg arg`: an argument to the command
-      * `unsigned argtype`: what sort of argument is provided:
-          * `CMD_ARG_NONE` = 2: no argument
-          * `CMD_ARG_DIR` = 4: a direction
-          * `CMD_ARG_POS` = 8: a position
-          * `CMD_ARG_OBJ` = 16: an inventory letter
-      * `enum nh_direction d`: a direction argument (provided iff `argtype` is
-        4)
-          * `DIR_W` = 0: west (`h`, `4`)
-          * `DIR_NW` = 1: northwest (`y`, `7`)
-          * `DIR_N` = 2: north (`k`, `8`)
-          * `DIR_NE` = 3: northeast (`u`, `9`)
-          * `DIR_E` = 4: east (`l`, `6`)
-          * `DIR_SE` = 5: southeast (`n`, `3`)
-          * `DIR_S` = 6: south (`j`, `2`)
-          * `DIR_SW` = 7: southwest (`b`, `1`)
-          * `DIR_UP` = 8: up (`<`)
-          * `DIR_DOWN` = 9: down (`>`)
-          * `DIR_SELF` = 10: at self (`.` or `s`)
-      * `charcode invlet`: an inventory letter (provided iff `argtype` is 16)
-      * `coordinate x`: an x coordinate (provided iff `argtype` is 8)
-      * `coordinate y`: a y coordinate (provided iff `argtype` is 8)
-  * `int count`: a numeric prefix to the command (which often but not always
-    represents a repeat count; the meaning depends on the command); should be
-    0 to continue a multi-turn command, or -1 to interrupt a multi-turn command
-
-Response arguments:
-  * `enum nh_input_status return`: What state the game was left in as a result
-    of running the command:
-      * `READY_FOR_INPUT` = 0: The game is ready to accept another command;
-      * `MULTI_IN_PROGRESS` = 1: An action is currently being repeated due to
-        a nonzero count; the `nh_command` call should be repeated with a count
-        of 0 or -1;
-      * `OCCUPATION_IN_PROGRESS` = 2: An interruptible multi-turn action is in
-        progress; the `nh_command` call should be repeated with a count of 0
-        (TODO: should we allow interrupting these? The main game library
-        currently disallows that, as does the client, but it seems weird to
-        allow monsters to interrupt something that the player can't interrupt
-        from the keyboard);
-      * `POST_ACTION_DELAY` = 3: The player was left helpless as a result of
-        their action; the client should repeat the call with a count of 0 in
-        order to get an update for the next turn;
-      * `ERR_NO_INPUT_ALLOWED` = 4: Currently unused (TODO: It would make
-        sense to use this if the player attempts to run a command while at a
-        prompt, something which the code doesn't seem to disallow at the
-        moment, but which it definitely should);
-      * `ERR_COMMAND_FORBIDDEN` = 5: You cannot provide input to this game,
-        either because it's not your game (and you're watching/replaying it
-        rather than playing it), or because you're looking at a past rather
-        than current state of the game (because you're replaying it);
-      * `GAME_OVER` = 6: The game ended as a result of the command (if it
-        wasn't a quit, then the player died), and is no longer running;
-      * `GAME_SAVED` = 7: The game saved as a result of the command (probably
-        because it was the save command), and is no longer running;
-      * `GAME_PANICKED` = 8: Something went wrong trying to handle the
-        command; the game is no longer running, and its save file may need
-        recovery;
-      * `ERR_FORCED_EXIT` = 9: The game was saved or exited via the
-        `exit_game` client command;
-      * `ERR_GAME_NOT_RUNNING` = 10: There was no game running, either because
-        `restore_game` wasn't called, or because the game has been
-        saved/exited/panicked, or possibly due to a panic outside the
-        `game_command` call;
-      * `ERR_NETWORK_ERROR` = 20000: Something went wrong trying to send the
-        command to the server.
-
-The order of these enum returns groups them according to the response the
-client should take:
-
-  * 0: Prompt the user for another command;
-  * 1-3: Repeat the command with the count set to 0 or -1;
-  * 5: Complain that the command is invalid, and ask for another command;
-  * 6+: Exit the main "in-game" loop and go back to the main menu.
-
-(`ERR_NO_INPUT_ALLOWED` will only be sent by the server in response to a bug
-in the client; a client's correct response to this is probably to panic.)
-
-TODO: We should probably have a separate continue_command call for continuing
-commands, rather than the current magic interpretation of `count`.
-
-
 get_commands
 ------------
 
-This command lists which commands exist and can be used in a `game_command`
-call, and corresponds to the `nh_get_commands` API call in libnethack.
+This command lists which commands exist and can be used in a `request_command`
+response, and corresponds to the `nh_get_commands` API call in libnethack.
 
 In addition to information about the commands, it also returns default
 keybindings for them; clients can choose to respect or ignore these.  This
@@ -301,7 +210,8 @@ Command arguments: none
 
 Response arguments:
   * `struct nh_cmd_desc[] cmdlist`: a list of the commands that exist:
-      * `string name`: the name of the command (`command` in `game_command`);
+      * `string name`: the name of the command (`command` in
+        `request_command`);
       * `string desc`: a human-readable description of the command;
       * `unsigned flags`: information about the command, a bitmask of:
           * `CMD_ARG_NONE` = 2: the command's argument can be omitted (and if
@@ -453,7 +363,7 @@ set_option
 
 Changes a (non-interface) option on the server.  This corresponds to the
 `nh_set_option` API call in libnethack.  TODO: This command should only be
-runnable in situations where `game_command` is legal, except possibly for
+runnable as a followup to `request_command` is legal, except possibly for
 setting birth options; this needs more thought.
 
 Command arguments:
@@ -581,13 +491,13 @@ Command arguments:
 Response arguments:
   * `struct nhnet_game[] games`: the information about the games selected by
     the arguments:
-      * `int gameid`: a value that can be given to `restore_game` to connect to
+      * `int gameid`: a value that can be given to `play_game` to connect to
         this game
       * `enum nh_game_modes playmode`: any special rules that might apply to
         this game:
           * `MODE_NORMAL` = 0: there is nothing special about this game;
           * `MODE_EXPLORE` = 1: this game is in non-scoring discovery mode;
-          * `MODE_WIZARD` = 2: this game is in debug mode
+          * `MODE_WIZARD` = 2: this game is in debug mode.
       * `string plname`: the name of this game's player
       * `string death`: (optional) the reason a completed game ended
       * `int depth`: (optional) the current dungeon level on which the player
@@ -613,41 +523,82 @@ Arguments marked as (optional) with no elaboration will normally be available,
 but might not be if the save file is invalid or requires recovery.
 
 
-restore_game
-------------
+create_game
+-----------
 
-Attaches to a game, causing that game to be loaded.  If the game has read
-access with the user the connection is authenticated as, and the game is not
-completed, the user will be able to play, watch, and/or replay the
-game.  Otherwise, the user will only be able to watch and replay the game.
+Creates a new save file, that can subsequently be opened with `play_game` in
+order to start a new game.  This mostly corresponds to the `nh_create_game`
+API call in libnethack (although it has a slightly different calling
+convention).
 
-This corresponds to the `nh_restore_game` API call in libnethack.
-
-TODO: This doesn't seem to have checks against a game being in progress.  If
-this is called inappropriately, what happens? Everything working fine? Memory
-leaK? Or something worse?
+TODO: The API of this function is under revision.
 
 Command arguments:
-  * `int gameid`: A value returned from `list_games` representing a game to
-    attach to
+  * Under revision
 
 Response arguments:
-  * `enum nh_restore_status return`: what happen in the attempt to restore the game:
-      * `GAME_RESTORED` = 0: the game was restored successfully, there is now
-        a game loaded
-      * `ERR_BAD_ARGS` = 1: the given game ID does not exist
-      * `ERR_BAD_FILE` = 2: the given game ID corresponds to a file on disk
-        that cannot be read
-      * `ERR_GAME_OVER` = 3: (previously used on an attempt to resume a
-        completed game, no longer generates because this is now a meaningful
-        operation, with the game resuming in replay mode)
-      * `ERR_IN_PROGRESS` = 4: it is impossible to attach to the game due to
+  * `int gameid`: The game ID, for use with future `play_game` calls; if this
+    is -1, the game creation failed
+
+
+play_game
+---------
+
+Attaches to a game, causing that game to be loaded if it isn't already.  If
+the game allows read access for the user the connection is authenticated as,
+and the game is not completed, the user will be able to play, watch, and/or
+replay the game.  Otherwise, the user will only be able to watch and replay
+the game.  The `play_game` call does not respond until the gameplay is over
+(or immediately, if an error happens); rather, the server will respond with a
+number of followup commands to handle the user interaction side of the
+gameplay itself.
+
+This corresponds to the `nh_play_game` API call in libnethack.
+
+Note that a `play_game` response may happen at any time after a unresponded
+`play_game` command, even if there are unresolved requests or responses in the
+meantime.  (This corresponds to a `longjmp` back to `nh_play_game` in the
+libnethack API.)  This can happen in a few different situations:
+  * If the client requests a save or quit (via `exit_game`) while a prompt is
+    open;
+  * If the server needs to close a prompt that it put up without user input
+    dismissing it, e.g. when watching a game;
+  * If something goes wrong and the server needs to rewind the save file
+    mid-turn;
+  * During network play, if the network connection breaks or times out on the
+    server, the client API code simulates this to transparently reconnect the
+    connection, even though it isn't actually sent over the network.
+
+Command arguments:
+  * `int gameid`: A value returned from `list_games` or `create_game`
+    representing a game to attach to
+
+Response arguments:
+  * `enum nh_play_status return`: what happen in the attempt to restore the game:
+      * `GAME_DETACHED` = 0: the game was restored successfully; eventually,
+        the client requested to stop playing, and the game still exists
+      * `GAME_OVER` = 1: the game was restored successfully; eventually, the
+        game ended through the death of the character or some similarly
+        permanent means; this return value is only sent to one process (the
+        one that sent the input causing the game to end)
+      * `GAME_ALREADY_OVER` = 2: the game was restored successfully, but
+        either it had already ended (and thus was loaded in replay mode), or
+        else it ended while attached but some other process sent the input
+        that caused the game to end
+      * `RESTART_PLAY` = 3: something happened that forced the server to jump
+        back to `play_game`; the client should in most cases immediately call
+        `play_game` with the same argument
+      * `ERR_BAD_ARGS` = 4: the game did not start because the given game ID
+        does not exist
+      * `ERR_BAD_FILE` = 5: the game did not start because the given game ID
+        corresponds to a file on disk that cannot be read
+      * `ERR_IN_PROGRESS` = 6: it is impossible to attach to the game due to
         locking issues; on POSIXy OSes, this should only happen if the file is
         being recovered manually, but on some OSes this may happen if anyone
         else is currently playing the game
-      * `ERR_RESTORE_FAILED` = 5: the game is completely corrupted and needs
+      * `ERR_RESTORE_FAILED` = 7: the game is completely corrupted and needs
         manual recovery
-      * `ERR_REPLAY_FAILED` = 6: the game is partially corrupted, and the user
+      * `ERR_REPLAY_FAILED` = 8: the game is partially corrupted, and the user
         chose not to rewind it when prompted about whether to rewind it
 
 
@@ -691,33 +642,73 @@ Response arguments:
   * `int return`: Always 1.
 
 
-create_game
------------
-
-Creates a new save file, that can subsequently be opened with `restore_game`
-in order to start a new game.  This mostly corresponds to the `nh_create_game`
-API call in libnethack (although it has a slightly different calling
-convention).
-
-TODO: The API of this function is under revision.
-
-Command arguments:
-  * Under revision
-
-Response arguments:
-  * `int gameid`: The game ID, for use with future `restore_game` calls; if
-    this is -1, the game creation failed
-
-
 Server requests
 ===============
 
 These requests are sent by the server, expecting a response from the client.
 Normally they will only be sent as followups to a response from the client;
-the only exceptions are `cancel_server_request` and `server_error`, which can
-be sent at any time (except to interrupt the request half of a server request
-or response half of a server response, in which case they will be delayed
-until the server is done sending its current request/response).
+the only exception is `server_error`, which can be sent at any time (except to
+interrupt the request half of a server request or response half of a server
+response, in which case they will be delayed until the server is done sending
+its current request/response).
+
+
+request_command
+---------------
+
+This request is sent by the server when the player's character is able to send
+a new command.  The client should respond with a game command, possibly
+following up with network API command in order to help decide which command to
+respond with.
+
+Request arguments:
+  * `boolean debug`: whether debug-mode commands are a reasonable response to
+    the prompt
+  * `boolean completed`: false if the client is in the middle of a multi-turn
+    command (whether it was interrupted by a monster or the like, or whether
+    the server's just giving the client the chance to interrupt); true if the
+    previous command completed or there was no previous command
+  * `boolean interrupted`: meaningful only if `completed` is false: false
+    means that the server recommends just sending `"repeat"` in the absence of
+    user input, true means that the server recommends that `"repeat"` should
+    only be sent in response to user input
+
+Response arguments:
+  * `string command`: what the player wants to tell their character to do;
+    this should be a string returned by `get_commands`, or else one of the
+    following internal-use commands:
+      * `"welcome"`: Display the "Welcome [back] to NetHack!" message; this
+        should be sent spontaneously by the client as the first command if the
+        game was restored due to player action (rather than due to a network
+        timeout or the like), rather than in response to user input
+      * `"repeat"`: Repeat the previous command (if it completed); resume the
+        previous command (if it was interrupted); continue the previous
+        command (if it was not yet completed)
+  * `struct nh_cmd_arg arg`: an argument to the command
+      * `unsigned argtype`: what sort of argument is provided:
+          * `CMD_ARG_NONE` = 2: no argument
+          * `CMD_ARG_DIR` = 4: a direction
+          * `CMD_ARG_POS` = 8: a position
+          * `CMD_ARG_OBJ` = 16: an inventory letter
+      * `enum nh_direction d`: a direction argument (provided iff `argtype` is
+        4)
+          * `DIR_W` = 0: west (`h`, `4`)
+          * `DIR_NW` = 1: northwest (`y`, `7`)
+          * `DIR_N` = 2: north (`k`, `8`)
+          * `DIR_NE` = 3: northeast (`u`, `9`)
+          * `DIR_E` = 4: east (`l`, `6`)
+          * `DIR_SE` = 5: southeast (`n`, `3`)
+          * `DIR_S` = 6: south (`j`, `2`)
+          * `DIR_SW` = 7: southwest (`b`, `1`)
+          * `DIR_UP` = 8: up (`<`)
+          * `DIR_DOWN` = 9: down (`>`)
+          * `DIR_SELF` = 10: at self (`.` or `s`)
+      * `charcode invlet`: an inventory letter (provided iff `argtype` is 16)
+      * `coordinate x`: an x coordinate (provided iff `argtype` is 8)
+      * `coordinate y`: a y coordinate (provided iff `argtype` is 8)
+  * `int limit`: for `CMD_LIMITABLE` commands, an integer that specifies what
+    amount to limt the command to (e.g. a number of projectiles to throw);
+    should be 0 to not limit a command, or for non-limitable commands
 
 
 display_menu
@@ -725,7 +716,7 @@ display_menu
 
 Requests the client to display a menu to the user (either simply for display,
 or to allow them to make a selection), until the user makes a selection or the
-server cancels the request.
+server cancels the request using a `play_game` response.
 
 TODO: The API is inherently prone to buffer length mismatches.
 
@@ -777,8 +768,6 @@ Response arguments:
       * `NHCR_ACCEPTED` = 0: pressing Return (or similar), scrolling off the
         end, or (for `PICK_ONE`) selecting an item;
       * `NHCR_CLIENT_CANCEL` = 1: pressing Escape (or similar)
-      * `NHCR_SERVER_CANCEL` = 2: as a result of a `cancel_server_request`
-        message
 
 
 display_objects
@@ -821,8 +810,8 @@ Response arguments:
 getdir
 ------
 
-Requests a direction from the user (can be cancelled by the user or the
-server).
+Requests a direction from the user (can be cancelled by the user, or the
+server via a `play_game` response).
 
 Request arguments:
   * `string query`: a message to print along with the direction request (the
@@ -847,14 +836,13 @@ Response arguments:
       * `DIR_DOWN` = 9: down (`>`)
       * `DIR_SELF` = 10: at self (`.` or `s`)
       * `DIR_NONE` = -1: the user cancelled the prompt
-      * `DIR_SERVERCANCEL` = -2: the server cancelled the prompt
 
 
 getline
 -------
 
-Requests a line of input from the user (can be cancelled by the user or the
-server).
+Requests a line of input from the user (can be cancelled by the user, or the
+server via a `play_game` response).
 
 Request arguments:
   * `string query`: The prompt to display along with the request for a line.
@@ -862,15 +850,13 @@ Request arguments:
 Response arguments:
   * `string line`: The line of input from the user. Is the null string if the
     null string was entered, a single ESC character (hex 1B) if the user
-    cancelled the prompt, and two ESC characters if the server cancelled the
-    prompt.
-
+    cancelled the prompt, or otherwise the user's input.
 
 getpos
 ------
 
-Requests a map location from the user (can be cancelled by the user or the
-server).
+Requests a map location from the user (can be cancelled by the user, or the
+server via a `play_game` response).
 
 Request arguments:
   * `boolean force`: if true, the client should make it difficult for the user
@@ -885,12 +871,11 @@ Response arguments:
         ordinary input (usually `.`);
       * `NHCR_CLIENT_CANCEL` = 1: the user cancelled the location prompt
         (e.g. via ESC);
-      * `NHCR_SERVER_CANCEL` = 2: the server cancelled the prompt;
-      * `NHCR_CONTINUE` = 3: the user accepted the location, requesting to
+      * `NHCR_CONTINUE` = 2: the user accepted the location, requesting to
         continue choosing locations (normally accomplished via `,`);
-      * `NHCR_MOREINFO` = 4: the user accepted the location, requesting more
+      * `NHCR_MOREINFO` = 3: the user accepted the location, requesting more
         information about it (normally accomplished via `:`);
-      * `NHCR_MOREINFO_CONTINUE` = 5: a combination of the two previous cases
+      * `NHCR_MOREINFO_CONTINUE` = 4: a combination of the two previous cases
         (normally accomplished via `;`).
   * `coordinate x`: the x coordinate chosen by the user
   * `coordinate y`: the y coordinate chosen by the user
@@ -913,14 +898,14 @@ Response arguments:
     even if `allow_count` is false, but is always -1 in that case and should
     be ignored
   * `charcode return`: the key the user pressed; this is ESC if cancelled by
-    the user, NUL if cancelled by the server
+    the user
 
 
 yn
 ---
 
 Requests the user to choose from a short list of choices represented by ASCII
-characters.
+characters.  As always, can be cancelled by the user or the server.
 
 Request arguments:
   * `string query`: the prompt to print to the user
@@ -932,7 +917,7 @@ Request arguments:
 
 Response arguments:
   * `charcode return`: the choice the user chose; this is `def` if cancelled
-    by the user, NUL if cancelled by the server
+    by the user
 
 
 server_error
@@ -950,29 +935,6 @@ Request arguments:
     to the user
 
 No response.
-
-
-cancel_server_request
----------------------
-
-Called by the server to countermand a previous request to the client.  This
-message is not responded to in the normal way.  Rather, if the client is
-currently waiting on user input, it instead responds immediately to the
-current request using a special response that means "cancelled by server".
-These responses are matched to the API of the individual client responses, and
-specified above.  If the client is not currently waiting on user input, it
-waits to respond to the `cancel_server_request` request until it would next
-accept user input, and sends the appropriate special response to its current
-request.
-
-It is possible that the client receives a `cancel_server_request` when it does
-not have a current request to handle.  In this case, and only this case, it
-sends a `cancel_server_request` response as normal.
-
-
-Request arguments: none
-
-Response arguments: none
 
 
 Display elements

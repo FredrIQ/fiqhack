@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-11-30 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -21,6 +21,9 @@ static void srv_level_changed(int displaymode);
 static void srv_outrip(struct nh_menuitem *items, int icount, nh_bool tombstone,
                        const char *name, int gold, const char *killbuf,
                        int end_how, int year);
+static void srv_request_command(nh_bool debug, nh_bool completed,
+                                nh_bool interrupted, char *command,
+                                struct nh_cmd_arg *arg, int *limit);
 static int srv_display_menu(struct nh_menuitem *items, int icount,
                             const char *title, int how, int placement_hint,
                             int *results);
@@ -67,6 +70,7 @@ struct nh_window_procs server_windowprocs = {
     srv_display_buffer,
     srv_update_status,
     srv_print_message,
+    srv_request_command,
     srv_display_menu,
     srv_display_objects,
     srv_list_items,
@@ -90,6 +94,7 @@ struct nh_window_procs server_alt_windowprocs = {
     srv_alt_display_buffer,
     srv_alt_update_status,
     srv_alt_print_message,
+    NULL,
     NULL,
     NULL,
     srv_alt_list_items,
@@ -120,6 +125,8 @@ client_request(const char *funcname, json_t * request_msg)
 
     /* client response */
     jret = read_input();
+    if (!jret)
+        exit_client("Incorrect or damaged response");
 
     jobj = json_object_get(jret, funcname);
     while (!jobj || !json_is_object(jobj)) {
@@ -457,6 +464,57 @@ srv_outrip(struct nh_menuitem *items, int icount, nh_bool tombstone,
 /*
  * Callbacks that require user input
  */
+
+static void
+srv_request_command(nh_bool debug, nh_bool completed, nh_bool interrupted,
+                    char *command, struct nh_cmd_arg *arg, int *limit)
+{
+    json_t *jarg, *jobj;
+    const char *cmd;
+
+    jobj = json_pack("{sb,sb,sb}", "debug", debug, "completed", completed,
+                     "interrupted", interrupted);
+    jobj = client_request("request_command", jobj);
+
+    if (json_unpack
+        (jobj, "{ss,so,si!}", "command", &cmd, "arg", &jarg,
+         "limit", limit) == -1)
+        exit_client("Bad set of parameters for request_command");
+
+    if (json_unpack(jarg, "{si*}", "argtype", &(arg->argtype)) == -1)
+        exit_client("Bad parameter arg in request_command");
+
+    switch (arg->argtype) {
+    case CMD_ARG_DIR:
+        if (json_unpack(jarg, "{si*}", "d", &(arg->d)) == -1)
+            exit_client("Bad direction arg in request_command");
+        break;
+
+    case CMD_ARG_POS:
+        if (json_unpack(jarg, "{si,si*}", "x", &(arg->pos.x),
+                        "y", &(arg->pos.y)) == -1)
+            exit_client("Bad position arg in request_command");
+        break;
+
+    case CMD_ARG_OBJ:
+        if (json_unpack(jarg, "{si*}", "invlet", &(arg->invlet)) == -1)
+            exit_client("Bad invlet arg in request_command");
+        break;
+
+    case CMD_ARG_NONE:
+    default:
+        break;
+    }
+
+    if (cmd != NULL && strlen(cmd) < 60) {
+        /* avoid remote buffer overflow attacks, and remote commands with
+           bad characters in */
+        strcpy(command, cmd);
+        command[strspn(command, "abcdefghijklmnopqrstuvwxyz0123456789")] = 0;
+    } else
+        *command = '\0';
+}
+
 
 static int
 srv_display_menu(struct nh_menuitem *items, int icount, const char *title,

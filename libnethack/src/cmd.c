@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-28 */
+/* Last modified by Alex Smith, 2013-11-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2097,9 +2097,9 @@ do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *arg)
         flags.nopick = 0;
     }
 
-    /* in some cases, a command function will accept either it's proper
-       argument type or no argument; we're looking for the possible type of the
-       argument here */
+    /* in some cases, a command function will accept either its proper argument
+       type or no argument; we're looking for the possible type of the argument
+       here */
     functype = (cmdlist[command].flags & CMD_ARG_FLAGS);
     if (!functype)
         functype = CMD_ARG_NONE;

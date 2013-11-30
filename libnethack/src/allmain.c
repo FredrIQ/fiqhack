@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-28 */
+/* Last modified by Alex Smith, 2013-11-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -24,6 +24,7 @@ static void pre_move_tasks(boolean);
 static void newgame(void);
 static void handle_lava_trap(boolean didmove);
 
+static void command_input(int cmdidx, int rep, struct nh_cmd_arg *arg);
 
 static void
 wd_message(void)
@@ -133,9 +134,11 @@ nh_exit_game(int exit_type)
     }
 
     iflags.disable_log = log_disabled;
+
     /* calling terminate() will get us out of nested contexts safely, eg:
-       UI_cmdloop -> nh_command -> UI_update_screen (problem happens here) ->
-       nh_exit_game will jump all the way back to UI_cmdloop */
+       nh_play_game -> request_command -> do_command -> UI_update_screen
+       (problem happens here) -> nh_exit_game will jump all the way back to
+       UI_cmdloop; TODO: a more specific terminate */
     terminate();
 
     api_exit(); /* not reached */
@@ -306,44 +309,35 @@ err_out:
     return FALSE;
 }
 
-enum nh_restore_status
-nh_restore_game(int fd, struct nh_window_procs *rwinprocs,
-                volatile boolean force_replay)
+enum nh_play_status
+nh_play_game(int fd)
 {
-    /* technically force_replay doesn't need to be volatile because it's never
-       changed after the setjmp call, but some compilers don't realise that */
-
     int playmode, irole, irace, igend, ialign;
     unsigned long long temp_turntime;
     char namebuf[PL_NSIZ];
 
-    /* some compilers can't cope with the fact that all subsequent stores to
-       error are not dead, but become important if the error handler longjumps
-       back. volatile is required to prevent invalid optimization based on that
-       wrong assumption. */
-    volatile enum nh_restore_status error = GAME_RESTORED;
-
-    if (fd == -1)
+    if (fd < 0)
         return ERR_BAD_ARGS;
 
     switch (nh_get_savegame_status(fd, NULL)) {
     case LS_INVALID:
         return ERR_BAD_FILE;
     case LS_DONE:
-        return ERR_GAME_OVER;
+        /* TODO: Load in replay mode. */
+        return GAME_ALREADY_OVER;
     case LS_CRASHED:
-        force_replay = TRUE;
-        break;
+        return ERR_RESTORE_FAILED;
     case LS_IN_PROGRESS:
-        return ERR_IN_PROGRESS;
     case LS_SAVED:
         break;  /* default, everything is A-OK */
     }
 
+    /* TODO: Fix the longjmp/setjmp discipline here; there are lots of reasons
+       why this checkpoint might be hit and we need to differentiate using the
+       setjmp return code */
     if (!api_entry_checkpoint())
         goto error_out;
 
-    error = ERR_BAD_FILE;
     replay_set_logfile(fd);     /* store the fd and try to get a lock or exit */
     replay_begin();
 
@@ -358,7 +352,7 @@ nh_restore_game(int fd, struct nh_window_procs *rwinprocs,
 
     /* set special windowprocs which will autofill requests for user input with 
        data from the log file */
-    replay_setup_windowprocs(rwinprocs);
+    replay_setup_windowprocs(NULL);
 
     startup_common(namebuf, playmode);
     u.initrole = irole;
@@ -366,26 +360,17 @@ nh_restore_game(int fd, struct nh_window_procs *rwinprocs,
     u.initgend = igend;
     u.initalign = ialign;
     u.ubirthday = turntime = temp_turntime;
-    if (!force_replay) {
-        error = ERR_RESTORE_FAILED;
-        replay_run_cmdloop(TRUE, FALSE, TRUE);
-        replay_jump_to_endpos();
-        if (!dorecover_fd(fd)) {
-            replay_undo_jump_to_endpos();
-            goto error_out2;
-        }
+
+    replay_run_cmdloop(TRUE, FALSE, TRUE);
+    replay_jump_to_endpos();
+    if (!dorecover_fd(fd)) {
         replay_undo_jump_to_endpos();
-        wd_message();
-        program_state.game_running = 1;
-        post_init_tasks();
-    } else {
-        replay_run_cmdloop(TRUE, TRUE, FALSE);  /* option setup only */
-        newgame();
-        /* try replaying instead */
-        error = ERR_REPLAY_FAILED;
-        replay_run_cmdloop(FALSE, FALSE, TRUE);
-        replay_sync_save();
+        goto error_out2;
     }
+    replay_undo_jump_to_endpos();
+    wd_message();
+    program_state.game_running = 1;
+    post_init_tasks();
 
     /* restore standard window procs */
     replay_restore_windowprocs();
@@ -407,8 +392,73 @@ nh_restore_game(int fd, struct nh_window_procs *rwinprocs,
     realtime_messages(TRUE, TRUE);
     update_inventory();
 
-    api_exit();
-    return GAME_RESTORED;
+    /* The main loop. */
+    boolean completed = TRUE;
+    boolean interrupted = FALSE;
+    while (1) {
+        char cmd[BUFSZ];
+        struct nh_cmd_arg arg;
+        int limit;
+
+        int cmdidx;
+
+        (*windowprocs.win_request_command)
+            (wizard, completed, interrupted, cmd, &arg, &limit);
+        cmdidx = get_command_idx(cmd);
+        if (!strcmp(cmd, "repeat")) {
+            cmdidx = -1;
+            
+        } else if (cmdidx < 0) {
+            pline("Unrecognised command '%s'", cmd);
+            completed = TRUE;
+            interrupted = FALSE;
+            continue;
+        } else if (multi > 0) {
+            /* allow interruption of multi-turn commands */
+            nomul(0, NULL);
+        }
+
+        if (program_state.viewing &&
+            (cmdidx < 0 || !(cmdlist[cmdidx].flags & CMD_NOTIME))) {
+            pline("Command '%s' unavailable while watching/replaying a game.",
+                  cmd);
+            completed = TRUE;
+            interrupted = FALSE;
+            continue;
+        }
+
+        /* TODO: Better resolution for turntime */
+        turntime = time(NULL);
+        log_command(cmdidx, limit, &arg);
+
+        unsigned int pre_rngstate = mt_nextstate();
+        int pre_moves = moves;
+
+        command_input(cmdidx, limit, &arg);
+
+        /* make sure we actually want this command to be logged */
+        if (cmdidx >= 0 && (cmdlist[cmdidx].flags & CMD_NOTIME) &&
+            pre_rngstate == mt_nextstate() && pre_moves == moves)
+            log_revert_command();   /* nope, cut it out of the log */
+        else
+            log_command_result();   /* log the result */
+
+        /* 
+         * performing a command can put the game into several different states:
+         *  - the command completes immediately: a simple move or an attack etc.
+         *    multi == 0, occupation == NULL
+         *  - if a count is given, the command will (usually) take count turns
+         *    multi == count (> 0), occupation == NULL
+         *  - the command may cause a delay: for ex. putting on or removing
+         *    armor multi == -delay (< 0), occupation == NULL
+         *    multi is incremented in you_moved
+         *  - the command may take multiple moves, and require a callback to be
+         *    run for each move. example: forcing a lock
+         *    multi >= 0, occupation == callback
+         */
+        completed = multi == 0 && !occupation;
+        interrupted = FALSE; /* TODO */
+    }
 
 error_out2:
     api_exit();
@@ -420,12 +470,7 @@ error_out:
     replay_end();
     unlock_fd(fd);
 
-    if (error == ERR_RESTORE_FAILED) {
-        raw_printf("Restore failed. Attempting to replay instead.\n");
-        error = nh_restore_game(fd, rwinprocs, TRUE);
-    }
-
-    return error;
+    return ERR_RESTORE_FAILED;
 }
 
 
@@ -794,9 +839,8 @@ pre_move_tasks(boolean didmove)
 }
 
 
-/* perform the command given by cmdidx (in index into cmdlist in cmd.c)
- * returns -1 if the command completes */
-int
+/* perform the command given by cmdidx (an index into cmdlist in cmd.c) */
+static void
 command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
 {
     boolean didmove = FALSE;
@@ -805,18 +849,13 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
         handle_occupation();
     else if (multi == 0 || (multi > 0 && cmdidx != -1)) {
         turnstate.saved_cmd = cmdidx;
+        turnstate.saved_arg = *arg;
         if (do_command(cmdidx, rep, TRUE, arg) != COMMAND_OK) {
             pline("Unrecognised command.");
             nomul(0, NULL);
-            return READY_FOR_INPUT;
+            return;
         }
     } else if (multi > 0) {
-        /* allow interruption of multi-turn commands */
-        if (rep == -1) {
-            nomul(0, NULL);
-            return READY_FOR_INPUT;
-        }
-
         if (flags.mv) {
             if (multi < COLNO && !--multi)
                 flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
@@ -826,11 +865,12 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
                 nomul(0, NULL);
             }
         } else
-            if (do_command(turnstate.saved_cmd, multi, FALSE, arg) !=
+            if (do_command(turnstate.saved_cmd, multi, FALSE,
+                           &turnstate.saved_arg) !=
                 COMMAND_OK) {
                 pline("Unrecognised command."); 
                 nomul(0, NULL);
-                return READY_FOR_INPUT;
+                return;
             }
     }
     /* no need to do anything here for multi < 0 */
@@ -869,82 +909,6 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
 
     if (multi == 0 && !occupation)
         flush_screen(); /* Flush screen buffer */
-
-    return -1;
-}
-
-
-/* command wrapper function: make sure the game is able to run commands, perform
-   logging and generate reasonable return values for api clients with no access
-   to internal state */
-int
-nh_command(const char *cmd, int rep, struct nh_cmd_arg *arg)
-{
-    int cmdidx, cmdresult;
-    unsigned int pre_rngstate, pre_moves;
-
-    if (!program_state.game_running)
-        return ERR_GAME_NOT_RUNNING;
-
-    cmdidx = get_command_idx(cmd);
-    if (program_state.viewing &&
-        (cmdidx < 0 || !(cmdlist[cmdidx].flags & CMD_NOTIME)))
-        return ERR_COMMAND_FORBIDDEN;
-
-    if (!api_entry_checkpoint()) {
-        /* terminate() in end.c will arrive here */
-        if (program_state.panicking)
-            return GAME_PANICKED;
-        if (!program_state.gameover)
-            return GAME_SAVED;
-        if (program_state.forced_exit)
-            return ERR_FORCED_EXIT;
-        return GAME_OVER;
-    }
-
-    /* if the game is being restored, turntime is set in restore_read_command */
-    turntime = time(NULL);
-    log_command(cmdidx, rep, arg);
-
-    pre_rngstate = mt_nextstate();
-    pre_moves = moves;
-
-    /* do the deed. command_input returns -1 if the command completed normally */
-    cmdresult = command_input(cmdidx, rep, arg);
-
-    /* make sure we actually want this command to be logged */
-    if (cmdidx >= 0 && (cmdlist[cmdidx].flags & CMD_NOTIME) &&
-        pre_rngstate == mt_nextstate() && pre_moves == moves)
-        log_revert_command();   /* nope, cut it out of the log */
-    else
-        log_command_result();   /* log the result */
-
-    api_exit(); /* no unsafe operations after this point */
-
-    if (cmdresult != -1)
-        return cmdresult;
-
-    /* 
-     * performing a command can put the game into several different states:
-     *  - the command completes immediately: a simple move or an attack etc
-     *    multi == 0, occupation == NULL
-     *  - if a count is given, the command will (usually) take count turns
-     *    multi == count (> 0), occupation == NULL
-     *  - the command may cause a delay: for ex. putting on or removing armor
-     *    multi == -delay (< 0), occupation == NULL
-     *    multi is incremented in you_moved
-     *  - the command may take multiple moves, and require a callback to be
-     *    run for each move. example: forcing a lock
-     *    multi >= 0, occupation == callback
-     */
-    if (multi >= 0 && occupation)
-        return OCCUPATION_IN_PROGRESS;
-    else if (multi > 0)
-        return MULTI_IN_PROGRESS;
-    else if (multi < 0)
-        return POST_ACTION_DELAY;
-
-    return READY_FOR_INPUT;
 }
 
 

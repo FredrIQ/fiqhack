@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-28 */
+/* Last modified by Alex Smith, 2013-11-30 */
 /* Copyright (c) Daniel Thaler, 2012 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -31,12 +31,9 @@ net_rungame(void)
     gameno = nhnet_create_game(plname, role, race, gend, align,
                                ui_flags.playmode);
 
-    if (gameno < 0 || nhnet_restore_game(gameno, NULL) != GAME_RESTORED) {
-        destroy_game_windows();
-        return;
-    }
-
-    ret = commandloop();
+    ret = ERR_BAD_FILE;
+    if (gameno >= 0)
+        ret = playgame(gameno);
 
     destroy_game_windows();
     cleanup_messages();
@@ -80,13 +77,8 @@ net_loadgame(void)
     id = pick[0];
 
     create_game_windows();
-    if (nhnet_restore_game(id, NULL) != GAME_RESTORED) {
-        curses_msgwin("Failed to restore saved game.");
-        destroy_game_windows();
-        return;
-    }
 
-    ret = commandloop();
+    ret = playgame(id);
 
     destroy_game_windows();
     cleanup_messages();

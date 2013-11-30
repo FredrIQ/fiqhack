@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2013-10-16
+Last modified by Alex Smith, 2013-11-30
 
 Copyright (C) 2013 Alex Smith.
 
@@ -582,16 +582,14 @@ into the following categories:
     target location, etc.).  This is stored in `logstate`, is never saved in
     the binary save, and is meaningful only while the game is being played,
     watched or replayed (not once it's exited).  It is initialized from
-    scratch in `nh_restore_game` and `nh_start_game`, and becomes meaningless
-    upon `nh_exit_game` (unless there was a confirmation dialog and the user
-    cancelled it).  Whenever the game engine runs, all this data (apart from
-    target location) must have a value that depends only on the gamestate
-    location, thus allowing all this information to be reconstructed from the
-    log file.  (If a process crashes, its target location is lost, but this is
-    no great loss; the only effect is that if a replaying process crashes, the
-    user has to navigate back to the same point in the replay by hand.  While
-    watching or playing, the target location is always at the end of the
-    file.)
+    scratch in `nh_play_game`, and becomes meaningless when `nh_play_game`
+    returns.  Whenever the game engine runs, all this data (apart from target
+    location) must have a value that depends only on the gamestate location,
+    thus allowing all this information to be reconstructed from the log file.
+    (If a process crashes, its target location is lost, but this is no great
+    loss; the only effect is that if a replaying process crashes, the user has
+    to navigate back to the same point in the replay by hand.  While watching
+    or playing, the target location is always at the end of the file.)
 
   * State involved with communicating with the interface (for instance, the
     list of extra option values to reply with to the UI option parsing code).

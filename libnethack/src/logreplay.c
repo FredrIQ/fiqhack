@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-28 */
+/* Last modified by Alex Smith, 2013-11-30 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -121,6 +121,7 @@ static const struct nh_window_procs def_replay_windowprocs = {
     replay_display_buffer,
     replay_update_status,
     replay_print_message,
+    NULL,       /* TODO */
     replay_display_menu,
     replay_display_objects,
     NULL,       /* no function required for list_items */
@@ -1120,6 +1121,7 @@ replay_run_cmdloop(boolean optonly, boolean singlestep, boolean fast)
             break;
 
         case '>':      /* command */
+#ifdef TODO
             if (!optonly && !loginfo.cmds_are_invalid) {
                 replay_read_command(token, &cmd, &count, &cmdarg);
                 cmdidx = get_command_idx(cmd);
@@ -1127,6 +1129,7 @@ replay_run_cmdloop(boolean optonly, boolean singlestep, boolean fast)
             }
             if (!optonly)
                 did_action = TRUE;
+#endif
             break;
 
         case '<':      /* a command result */

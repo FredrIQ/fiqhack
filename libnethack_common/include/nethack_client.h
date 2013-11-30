@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-28 */
+/* Last modified by Alex Smith, 2013-11-30 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef NETHACK_CLIENT_H
@@ -13,7 +13,8 @@
 #  define EXPORT(x) AIMAKE_IMPORT(x)
 # endif
 
-/* extra return status for nhnet_command and nhnet_restore_game */
+/* extra return status for nhnet_play_game */
+/* TODO: Check if this is still needed. */
 # define ERR_NETWORK_ERROR (20000)
 
 enum authresult {
@@ -51,8 +52,7 @@ extern nhnet_game_p EXPORT(nhnet_list_games) (
 extern void EXPORT(nhnet_lib_init) (const struct nh_window_procs *);
 extern void EXPORT(nhnet_lib_exit) (void);
 extern nh_bool EXPORT(nhnet_exit_game) (int exit_type);
-extern int EXPORT(nhnet_restore_game) (int gid,
-                                       struct nh_window_procs *rwinprocs);
+extern int EXPORT(nhnet_play_game) (int gid);
 extern int EXPORT(nhnet_create_game) (const char *name, int role, int race,
                                       int gend, int align,
                                       enum nh_game_modes playmode);
@@ -90,7 +90,7 @@ extern int EXPORT(nhnet_change_password) (const char *password);
 
 # if defined(NHNET_TRANSPARENT) && \
     !defined(NETHACK_CLIENT_H_IN_LIBNETHACK_CLIENT)
-#  define nh_command                  nhnet_command
+#  define nh_play_game                nhnet_play_game
 #  define nh_exit_game                nhnet_exit_game
 #  define nh_view_replay_start        nhnet_view_replay_start
 #  define nh_view_replay_step         nhnet_view_replay_step

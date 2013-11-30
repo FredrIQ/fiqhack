@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-16 */
+/* Last modified by Alex Smith, 2013-11-30 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -381,10 +381,13 @@ extern void replay_commandloop(int fd);
 
 /* rungame.c */
 extern nh_bool get_gamedir(enum game_dirs dirtype, fnchar * buf);
-extern int commandloop(void);
+extern void curses_request_command(nh_bool debug, nh_bool completed,
+                                   nh_bool interrupted, char *cmd,
+                                   struct nh_cmd_arg *cmdarg, int *limit);
 extern void rungame(void);
 extern nh_bool loadgame(void);
 extern fnchar **list_gamefiles(fnchar * dir, int *count);
+extern enum nh_play_status playgame(int fd_or_gameno);
 
 /* sidebar.c */
 extern void draw_sidebar(void);

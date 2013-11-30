@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-11-30 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -23,6 +23,7 @@ static json_t *cmd_update_screen(json_t * params, int display_only);
 static json_t *cmd_delay_output(json_t * params, int display_only);
 static json_t *cmd_level_changed(json_t * params, int display_only);
 static json_t *cmd_outrip(json_t * params, int display_only);
+static json_t *cmd_request_command(json_t * params, int display_only);
 static json_t *cmd_display_menu(json_t * params, int display_only);
 static json_t *cmd_display_objects(json_t * params, int display_only);
 static json_t *cmd_list_items(json_t * params, int display_only);
@@ -47,6 +48,8 @@ struct netcmd netcmd_list[] = {
     {"delay_output", cmd_delay_output},
     {"level_changed", cmd_level_changed},
     {"outrip", cmd_outrip},
+
+    {"request_command", cmd_request_command},
     {"display_menu", cmd_display_menu},
     {"display_objects", cmd_display_objects},
     {"list_items", cmd_list_items},
@@ -445,6 +448,54 @@ cmd_outrip(json_t * params, int display_only)
                             end_how, year);
     free(items);
     return NULL;
+}
+
+
+static json_t *
+cmd_request_command(json_t * params, int display_only)
+{
+    int debug;
+    int completed;
+    int interrupted;
+    char command[256];
+    struct nh_cmd_arg arg;
+    int limit;
+    json_t *jarg;
+
+    if (json_unpack(params, "{sb,sb,sb}", "debug", &debug, "completed",
+                    &completed, "interrupted", &interrupted) == -1) {
+        print_error("Incorrect parameter type in cmd_request_command");
+        return NULL;
+    }
+
+    cur_wndprocs.win_request_command(debug, completed, interrupted,
+                                     command, &arg, &limit);
+
+    switch (arg.argtype) {
+    case CMD_ARG_DIR:
+        jarg = json_pack("{si,si}", "argtype", arg.argtype, "d", arg.d);
+        break;
+
+    case CMD_ARG_POS:
+        jarg =
+            json_pack("{si,si,si}", "argtype", arg.argtype, "x", arg.pos.x,
+                      "y", arg.pos.y);
+        break;
+
+    case CMD_ARG_OBJ:
+        jarg =
+            json_pack("{si,si}", "argtype", arg.argtype, "invlet",
+                      arg.invlet);
+        break;
+
+    case CMD_ARG_NONE:
+    default:
+        jarg = json_pack("{si}", "argtype", arg.argtype);
+        break;
+    }
+
+    return json_pack("{ss,so,si}", "command", command, "arg", jarg,
+                     "limit", limit);
 }
 
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-11-30 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -29,6 +29,7 @@ static struct nh_window_procs curses_replay_windowprocs = {
     curses_display_buffer,
     curses_update_status_silent,
     curses_print_message_nonblocking,
+    NULL,
     NULL,
     NULL,
     curses_list_items_nonblocking,
@@ -215,6 +216,7 @@ show_replay_help(void)
 void
 replay_commandloop(int fd)
 {
+#ifdef TODO
     int key, move, count;
     char buf[BUFSZ], qbuf[BUFSZ];
     nh_bool ret, firsttime = TRUE;
@@ -296,6 +298,7 @@ out:
     free_keymap();
     destroy_game_windows();
     cleanup_messages();
+#endif
 }
 
 

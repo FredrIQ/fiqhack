@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-28 */
+/* Last modified by Alex Smith, 2013-11-30 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -150,26 +150,27 @@ nhnet_list_games(int done, int show_all, int *count)
 
 
 int
-nhnet_restore_game(int gid, struct nh_window_procs *rwinprocs)
+nhnet_play_game(int gid)
 {
     int ret;
     json_t *jmsg;
+
+    if (!nhnet_active())
+        return nh_play_game(gid);
 
     if (!api_entry())
         return ERR_NETWORK_ERROR;
 
     jmsg = json_pack("{si}", "gameid", gid);
-    jmsg = send_receive_msg("restore_game", jmsg);
+    current_game = gid;
+    jmsg = send_receive_msg("play_game", jmsg);
+    current_game = 0;
     if (json_unpack(jmsg, "{si!}", "return", &ret) == -1) {
-        print_error("Incorrect return object in nhnet_restore_game");
+        print_error("Incorrect return object in nhnet_play_game");
         ret = ERR_NETWORK_ERROR;        /* we don't know the error actually
                                            was, any error code will do */
     }
     json_decref(jmsg);
-
-    if (ret == GAME_RESTORED)
-        current_game = gid;
-
     api_exit();
     return ret;
 }
@@ -191,58 +192,6 @@ nhnet_create_game(const char *name, int role, int race, int gend, int align,
     jmsg = send_receive_msg("create_game", jmsg);
     if (json_unpack(jmsg, "{si}", "return", &ret) == -1) {
         print_error("Incorrect return object in nhnet_create_game");
-        ret = 0;
-    }
-
-    json_decref(jmsg);
-    api_exit();
-    return ret;
-}
-
-
-int
-nhnet_command(const char *volatile cmd, int rep, struct nh_cmd_arg *arg)
-{
-    int ret;
-    json_t *jmsg, *jarg;
-
-    if (!nhnet_active())
-        return nh_command(cmd, rep, arg);
-
-    if (!api_entry())
-        return ERR_NETWORK_ERROR;
-
-    xmalloc_cleanup();
-
-    switch (arg->argtype) {
-    case CMD_ARG_DIR:
-        jarg = json_pack("{si,si}", "argtype", arg->argtype, "d", arg->d);
-        break;
-
-    case CMD_ARG_POS:
-        jarg =
-            json_pack("{si,si,si}", "argtype", arg->argtype, "x", arg->pos.x,
-                      "y", arg->pos.y);
-        break;
-
-    case CMD_ARG_OBJ:
-        jarg =
-            json_pack("{si,si}", "argtype", arg->argtype, "invlet",
-                      arg->invlet);
-        break;
-
-    case CMD_ARG_NONE:
-    default:
-        jarg = json_pack("{si}", "argtype", arg->argtype);
-        break;
-    }
-
-    jmsg =
-        json_pack("{ss,so,si}", "command", cmd ? cmd : "", "arg", jarg, "count",
-                  rep);
-    jmsg = send_receive_msg("game_command", jmsg);
-    if (json_unpack(jmsg, "{si!}", "return", &ret) == -1) {
-        print_error("Incorrect return object in nhnet_command");
         ret = 0;
     }
 
@@ -354,7 +303,7 @@ nhnet_get_commands(int *count)
     jmsg = send_receive_msg("get_commands", jmsg);
     if (json_unpack(jmsg, "{so!}", "cmdlist", &jarr) == -1 ||
         !json_is_array(jarr)) {
-        print_error("Incorrect return object in nhnet_restore_game");
+        print_error("Incorrect return object in nhnet_get_commands");
     } else {
         *count = json_array_size(jarr);
         cmdlist = xmalloc(*count * sizeof (struct nh_cmd_desc));
