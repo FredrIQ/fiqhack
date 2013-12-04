@@ -1447,9 +1447,10 @@ canwearobj(struct obj *otmp, long *mask,
        by a cursed two-handed weapon */
     if (slot_count(&youmonst, slot, noisy) == 0) {
         return FALSE;
-    } if (verysmall(youmonst.data) || nohands(youmonst.data)) {
+    } if ((verysmall(youmonst.data) || nohands(youmonst.data)) &&
+          slot != os_amul && slot != os_ringl && slot != os_ringr) {
         if (noisy)
-            pline("You are in no state to equip items!");
+            pline("You are in no state to equip armor!");
         return FALSE;
     } else if (otmp->owornmask & W_WORN && !cblock) {
         if (noisy)
