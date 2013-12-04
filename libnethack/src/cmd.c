@@ -2086,8 +2086,8 @@ do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *arg)
 
     /* Debug commands are now restricted to wizard mode here, rather than with
        a special case in each command */
-    if (cmdlist[command].flags & CMD_DEBUG)
-        return COMMAND_UNKNOWN;
+    if (cmdlist[command].flags & CMD_DEBUG && !wizard)
+        return COMMAND_DEBUG_ONLY;
 
     flags.move = FALSE;
     multi = 0;

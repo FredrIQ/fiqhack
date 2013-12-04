@@ -893,8 +893,17 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
     else if (multi == 0 || (multi > 0 && cmdidx != -1)) {
         turnstate.saved_cmd = cmdidx;
         turnstate.saved_arg = *arg;
-        if (do_command(cmdidx, rep, TRUE, arg) != COMMAND_OK) {
+        switch (do_command(cmdidx, rep, TRUE, arg)) {
+        case COMMAND_UNKNOWN:
             pline("Unrecognised command.");
+            nomul(0, NULL);
+            return;
+        case COMMAND_DEBUG_ONLY:
+            pline("That command is only available in debug mode.");
+            nomul(0, NULL);
+            return;
+        case COMMAND_BAD_ARG:
+            pline("I don't understand what you want that command to apply to.");
             nomul(0, NULL);
             return;
         }
