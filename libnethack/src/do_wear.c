@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-05 */
+/* Last modified by Alex Smith, 2013-12-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1303,6 +1303,63 @@ known_welded(boolean noisy)
     return (noisy || (uwep && uwep->bknown)) && welded(uwep);
 }
 
+/* Checks how many slots of a given type a given monster has (works correctly
+   with "youmonst"). At present, this should only return 0 or 1 because not all
+   the code works with more. Some day, 2 and higher will be valid return values,
+   and we can have ettins with multiple helmets, etc..
+
+   If noisy is set, the function will print out a complaint upon returning 0, as
+   if the item were being equipped by the player (but will still be silent if
+   returning a positive number).
+
+   Note that this checks whether the slot exist at all; if slot_count is 0 for a
+   slot, items always fall off during polymorph, but depending on the situation
+   they might fall off even without this. There is no guarantee that items can
+   be equipped to the slot, or unequipped from it. Additionally, it's possible
+   that only specific items will fit into the slot, in some cases.
+
+   This function currently only works correctly for W_WORN slots.
+*/
+static int
+slot_count(struct monst *mon, enum objslot slot, boolean noisy)
+{
+    if ((slot == os_arm || slot == os_armc || slot == os_armu) &&
+        (breakarm(mon->data) || sliparm(mon->data)) &&
+        /* TODO: get m_dowear() to look at this function rather than
+           repeating the check */
+        (slot != os_armc || mon->data->msize != MZ_SMALL) &&
+        /* Hobbits have an os_arm slot that can be used for elven armor only */
+        (raceptr(mon) != &mons[PM_HOBBIT] || slot != os_arm)) {
+        if (noisy)
+            pline("The %s will not fit on your body.", c_slotnames[slot]);
+        return 0;
+    }
+    /* Horned monsters /do/ have a head slot; they can wear elven leather helms
+       and similar. So we don't check for os_armh against horns.
+
+       TODO: 3.4.3 behaviour is that having no hands also means you can't wear a
+       helmet or boots. This has been preserved, but I'm not sure it's what we
+       want; at least, the function is misleadingly named in that case. */
+    if ((slot == os_armg || slot == os_arms || slot == os_armh) &&
+        (nohands(mon->data) || verysmall(mon->data))) {
+        if (noisy)
+            pline("You can't balance the %s on your body.", c_slotnames[slot]);
+        return 0;
+    }
+    if (slot == os_armf &&
+        ((nohands(mon->data) || verysmall(mon->data) ||
+          slithy(mon->data) || mon->data->mlet == S_CENTAUR))) {
+        if (noisy)
+            pline("You can't fit boots on your %s.",
+                  makeplural(mbodypart(mon, FOOT)));
+        return 0;
+    }
+
+    /* Everything has ring and amulet slots. */
+    return 1;
+}
+
+
 /*
  * canwearobj checks to see whether the player can wear a piece of armor or
  * jewellery (i.e. anything that can meaningfully have bits in W_WORN set). It
@@ -1388,17 +1445,11 @@ canwearobj(struct obj *otmp, long *mask,
     /* Generic checks: wearing armour is possible; the armour is not already
        equipped (if !cblock); the item is equippable; the equip is not blocked
        by a cursed two-handed weapon */
-    if (verysmall(youmonst.data) || nohands(youmonst.data)) {
+    if (slot_count(&youmonst, slot, noisy) == 0) {
+        return FALSE;
+    } if (verysmall(youmonst.data) || nohands(youmonst.data)) {
         if (noisy)
             pline("You are in no state to equip items!");
-        return FALSE;
-    } else if ((slot == os_arm || slot == os_armc || slot == os_armu) &&
-        cantweararm(youmonst.data) &&
-        /* same exception for cloaks as used in m_dowear() */
-        (slot != os_armc || youmonst.data->msize != MZ_SMALL) &&
-        (racial_exception(&youmonst, otmp) < 1)) {
-        if (noisy)
-            pline("The %s will not fit on your body.", c_slotnames[slot]);
         return FALSE;
     } else if (otmp->owornmask & W_WORN && !cblock) {
         if (noisy)
@@ -1476,19 +1527,7 @@ canwearobj(struct obj *otmp, long *mask,
         break;
 
     case os_armf:
-        if (Upolyd && slithy(youmonst.data)) {
-            if (noisy)
-                pline("You have no feet...");   /* not body_part(FOOT) */
-            return FALSE;
-        } else if (Upolyd && youmonst.data->mlet == S_CENTAUR) {
-            /* break_armor() pushes boots off for centaurs, so don't let
-               dowear() put them back on... */
-            if (noisy)
-                pline("You have too many hooves to wear boots.");
-            /* makeplural(body_part(FOOT)) yields "rear hooves" which sounds
-               odd */
-            return FALSE;
-        } else if (u.utrap &&
+        if (u.utrap &&
                    (u.utraptype == TT_BEARTRAP || u.utraptype == TT_INFLOOR)) {
             if (u.utraptype == TT_BEARTRAP) {
                 if (noisy)
@@ -1527,6 +1566,14 @@ canwearobj(struct obj *otmp, long *mask,
             if (noisy)
                 pline("You cannot wear armor over a %s.",
                       cloak_simple_name(uarmc));
+            return FALSE;
+        }
+        if (youmonst.data->msize == MZ_SMALL &&
+            racial_exception(&youmonst, otmp) < 1) {
+            /* The different message is to imply that some small monsters may
+               be able to wear some sorts of armor. */
+            if (noisy)
+                pline("The armor almost fits, but is slightly too large.");
             return FALSE;
         }
         break;
@@ -1907,7 +1954,7 @@ unchanger(void)
 
 /* The 'A' command: make arbitrary equipment changes. This used to have the
    awesome name "doddoremarm", but I felt like I had to change it to something
-   more sensible :( */
+   more sensible :-( */
 int
 doequip(void)
 {
