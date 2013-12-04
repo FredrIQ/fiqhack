@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-12-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -243,9 +243,8 @@ extern coord bhitpos;   /* place where throw or zap hits or stops */
 # define AC_VALUE(AC)     ((AC) >= 0 ? (AC) : -rnd(-(AC)))
 
 /* Byte swapping macros for the savefile code to make endian-independent saves.
- * Many systems have such macros, but using different names every time.
- * Defining out own is easier than figuring that out.
- */
+   Many systems have such macros, but using different names every time.
+   Defining our own is easier than figuring that out. */
 # define _byteswap16(x)   ((((x) & 0x00ffU) << 8) | \
                           (((x) & 0xff00U) >> 8))
 
@@ -255,20 +254,52 @@ extern coord bhitpos;   /* place where throw or zap hits or stops */
                           (((x) & 0xff000000U) >> 24))
 
 /* If endian.h exists (on Linux for example and perhaps on other UNIX) and is
- * indirectly included via the system headers, we may be able to find out what
- * the endianness is.  Otherwise define IS_BIG_ENDIAN in config.h */
+   indirectly included via the system headers, we may be able to find out what
+   the endianness is.  Otherwise define IS_BIG_ENDIAN in config.h */
 # if defined(__BYTE_ORDER) && defined(__BIG_ENDIAN) && __BYTE_ORDER == __BIG_ENDIAN
 #  define IS_BIG_ENDIAN
 # endif
 
-/* 
- * every api function that might ultimately call panic() must use
- * api_entry_checkpoint / api_exit
- * this MUST be a macro: stack values get clobbered; this includes the return address
- */
-# define api_entry_checkpoint() \
-    (exit_jmp_buf_valid++ ? 1 : nh_setjmp(exit_jmp_buf) ? 0 : 1)
+/* An API checkpoint lets us simulate an exception in the case that we need to
+   cause an exceptional control flow pattern. The basic rule is that
+   API_ENTRY_CHECKPOINT() is called at every entry point to the API (including
+   the ones that shouldn't be called out of sequence; being able to use
+   exceptions to handle out-of-sequence calls is good!), with the main
+   interesting call being that in nh_play_game. API_EXIT() is the opposite, and
+   should match API_ENTRY_CHECKPOINT: it specifies the end of scopes that
+   API_ENTRY_CHECKPOINT creates.
 
-# define api_exit() do {--exit_jmp_buf_valid; } while(0)
+   API_ENTRY_CHECKPOINT, being setjmp-based, needs an awkward calling convention
+   (setjmp can't be moved into a stack frame of its own); additionally, it needs
+   an awkward API because it can't be used in the middle of an expression. As
+   such, this introdues a block (using "switch", the only legal way to unpack
+   the return value of setjmp), using IF_API_EXCEPTION to generate the case
+   labels. (The parameter to IF_API_EXCEPTION is an enum nh_play_status.)
+ */
+# define API_ENTRY_CHECKPOINT()                 \
+    if (!(exit_jmp_buf_valid++))                \
+        switch(nh_setjmp(exit_jmp_buf))                                 
+
+# define API_ENTRY_OFFSET 5
+# define IF_API_EXCEPTION(x) case ((x)+API_ENTRY_OFFSET)
+# define IF_ANY_API_EXCEPTION() case 0: break; default
+
+# define API_ENTRY_CHECKPOINT_RETURN_ON_ERROR(ret)      \
+    do {                                                \
+        API_ENTRY_CHECKPOINT() {                        \
+        IF_ANY_API_EXCEPTION():                         \
+            return (ret);                               \
+        }                                               \
+    } while (0)
+# define API_ENTRY_CHECKPOINT_RETURN_VOID_ON_ERROR()    \
+    do {                                                \
+        API_ENTRY_CHECKPOINT() {                        \
+        IF_ANY_API_EXCEPTION():                         \
+            return;                                     \
+        }                                               \
+    } while (0)
+
+
+# define API_EXIT() do {--exit_jmp_buf_valid; } while(0)
 
 #endif /* HACK_H */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-30 */
+/* Last modified by Alex Smith, 2013-12-04 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -502,7 +502,7 @@ extern void reset_food(void);
 /* ### end.c ### */
 
 extern void nonfatal_dump_core(void);
-extern void NORETURN terminate(void);
+extern void NORETURN terminate(enum nh_play_status);
 extern void NORETURN panic(const char *, ...);
 extern int done2(void);
 extern void done_in_by(struct monst *);

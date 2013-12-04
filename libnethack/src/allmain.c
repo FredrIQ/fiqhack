@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-30 */
+/* Last modified by Alex Smith, 2013-12-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -45,10 +45,7 @@ nh_lib_init(const struct nh_window_procs *procs, char **paths)
 {
     int i;
 
-    if (!api_entry_checkpoint())        /* not sure anything in here can
-                                           actually call panic */
-        return;
-
+    API_ENTRY_CHECKPOINT_RETURN_VOID_ON_ERROR();
     windowprocs = *procs;
 
     for (i = 0; i < PREFIX_COUNT; i++)
@@ -60,7 +57,7 @@ nh_lib_init(const struct nh_window_procs *procs, char **paths)
 
     current_timezone = get_tz_offset();
 
-    api_exit();
+    API_EXIT();
 }
 
 
@@ -83,15 +80,13 @@ nh_lib_exit(void)
 boolean
 nh_exit_game(int exit_type)
 {
-    boolean log_disabled = iflags.disable_log;
-
-    if (!api_entry_checkpoint()) {      /* not sure anything in here can
-                                           actually call panic */
-        iflags.disable_log = log_disabled;
-        return TRUE;    /* terminate was called, so exit is successful */
-    }
-
-    program_state.forced_exit = TRUE;
+    /* This routine always throws an exception, and normally doesn't return (it
+       lets nh_play_game do the returning). It will, however, have to return
+       itself if the game isn't running. In such a case, all options give a
+       success return; saving/exiting the game is easy (but a no-op) if it isn't
+       running.
+    */
+    API_ENTRY_CHECKPOINT_RETURN_ON_ERROR(TRUE);
 
     /* clean up after viewing a game replay */
     if (program_state.viewing)
@@ -99,7 +94,11 @@ nh_exit_game(int exit_type)
 
     xmalloc_cleanup();
     iflags.disable_log = TRUE;
+
     if (program_state.game_running) {
+
+        program_state.forced_exit = TRUE;
+
         switch (exit_type) {
         case EXIT_REQUEST_SAVE:
             dosave();   /* will ask "really save?" and, if 'y', eventually call 
@@ -107,8 +106,7 @@ nh_exit_game(int exit_type)
             break;
 
         case EXIT_FORCE_SAVE:
-            dosave0(TRUE);
-            terminate();
+            terminate(GAME_DETACHED);
             break;
 
         case EXIT_REQUEST_QUIT:
@@ -117,32 +115,29 @@ nh_exit_game(int exit_type)
 
         case EXIT_FORCE_QUIT:
             done(QUIT);
-            break;      /* not reached */
+            break;      /* not reached; quitting can't be lifesaved */
 
         case EXIT_PANIC:
-            /* freeing things should be safe */
-            freedynamicdata();
-            dlb_cleanup();
-            panic("UI problem.");
+            /* We can't/shouldn't abort the turn just because the client claimed
+               to malfunction; that's exploitable. We can safely log the
+               failure, though. Perhaps we should add some method of specifying
+               a panic message. */
+            paniclog("ui_problem", "Unspecified UI problem.");
             break;
         }
 
-        iflags.disable_log = log_disabled;
-        api_exit();
+        API_EXIT();
+
         program_state.forced_exit = FALSE;
         return FALSE;
+
+    } else {
+        /* Calling terminate() will get us out of nested contexts safely. I'm
+           not sure if this can happen with no game running, but it doesn't hurt
+           to code for the possibility it might (via jumping back to the
+           checkpoint with terminate(). */
+        terminate(GAME_ALREADY_OVER); /* doesn't return */
     }
-
-    iflags.disable_log = log_disabled;
-
-    /* calling terminate() will get us out of nested contexts safely, eg:
-       nh_play_game -> request_command -> do_command -> UI_update_screen
-       (problem happens here) -> nh_exit_game will jump all the way back to
-       UI_cmdloop; TODO: a more specific terminate */
-    terminate();
-
-    api_exit(); /* not reached */
-    return TRUE;
 }
 
 
@@ -259,8 +254,7 @@ nh_create_game(int fd, const char *name, int irole, int irace, int igend,
 {
     unsigned int seed = 0;
 
-    if (!api_entry_checkpoint())
-        return FALSE;   /* init failed; programmer error! */
+    API_ENTRY_CHECKPOINT_RETURN_ON_ERROR(FALSE);
 
     if (fd == -1 || !name || !*name)
         goto err_out;
@@ -301,11 +295,11 @@ nh_create_game(int fd, const char *name, int irole, int irace, int igend,
     program_state.game_running = FALSE;
     u.uhp = -1;  /* universal game over indicator; TODO: get rid of this */
 
-    api_exit();
+    API_EXIT();
     return TRUE;
 
 err_out:
-    api_exit();
+    API_EXIT();
     return FALSE;
 }
 
@@ -313,6 +307,7 @@ enum nh_play_status
 nh_play_game(int fd)
 {
     int playmode, irole, irace, igend, ialign;
+    volatile int ret;
     unsigned long long temp_turntime;
     char namebuf[PL_NSIZ];
 
@@ -332,12 +327,59 @@ nh_play_game(int fd)
         break;  /* default, everything is A-OK */
     }
 
-    /* TODO: Fix the longjmp/setjmp discipline here; there are lots of reasons
-       why this checkpoint might be hit and we need to differentiate using the
-       setjmp return code */
-    if (!api_entry_checkpoint())
-        goto error_out;
+    /* setjmp cannot portably do anything with its return value but a series of
+       comparisons; even assigning it to a variable directly doesn't
+       work. Instead, we enumerate all the possible values, which works even on
+       C implementations that can't generate a temporary to do an assignment
+       inside a setjmp, and will probably be optimized by compilers that can. */
+    API_ENTRY_CHECKPOINT() {
+        /* Normal termination statuses. */
+    IF_API_EXCEPTION(GAME_DETACHED):
+        ret = GAME_DETACHED;
+        goto normal_exit;
+    IF_API_EXCEPTION(GAME_OVER):
+        ret = GAME_OVER;
+        goto normal_exit;
+    IF_API_EXCEPTION(GAME_ALREADY_OVER):
+        ret = GAME_ALREADY_OVER;
+        goto normal_exit;
 
+        /* This happens if the game needs to escape from a deeply nested
+           context. The longjmp() is not enough by itself in case the network
+           API is involved (returning from nh_play_game out of sequence causes
+           the longjmp() to propagate across the newtork). */
+    IF_API_EXCEPTION(RESTART_PLAY):
+        ret = RESTART_PLAY;
+        goto normal_exit;
+
+        /* Errors while loading. These still use the normal_exit codepath. */
+    IF_API_EXCEPTION(ERR_BAD_ARGS):
+        ret = ERR_BAD_ARGS;
+        goto normal_exit;
+    IF_API_EXCEPTION(ERR_BAD_FILE):
+        ret = ERR_BAD_FILE;
+        goto normal_exit;
+    IF_API_EXCEPTION(ERR_IN_PROGRESS):
+        ret = ERR_IN_PROGRESS;
+        goto normal_exit;
+    IF_API_EXCEPTION(ERR_RESTORE_FAILED):
+        ret = ERR_RESTORE_FAILED;
+        goto normal_exit;
+    IF_API_EXCEPTION(ERR_REPLAY_FAILED):
+        ret = ERR_REPLAY_FAILED;
+        goto normal_exit;
+
+        /* Catchall. This should never happen. We can't call panic() because the
+           exit_jmp_buf is no longer valid, also if the state is this badly
+           screwed up we probably can't rely on it working. So we just log a
+           failure and exit the program. */
+    IF_ANY_API_EXCEPTION():
+        paniclog("panic", "impossible program termination");
+        pline("Internal error: program terminated in an impossible way.");
+        ret = GAME_DETACHED;
+        goto normal_exit;
+    }
+    
     replay_set_logfile(fd);     /* store the fd and try to get a lock or exit */
     replay_begin();
 
@@ -365,7 +407,7 @@ nh_play_game(int fd)
     replay_jump_to_endpos();
     if (!dorecover_fd(fd)) {
         replay_undo_jump_to_endpos();
-        goto error_out2;
+        goto error_out;
     }
     replay_undo_jump_to_endpos();
     wd_message();
@@ -460,17 +502,18 @@ nh_play_game(int fd)
         interrupted = FALSE; /* TODO */
     }
 
-error_out2:
-    api_exit();
-
 error_out:
+    API_EXIT();
+    ret = ERR_RESTORE_FAILED;
+
+normal_exit:
     replay_restore_windowprocs();
     program_state.restoring = FALSE;
     iflags.disable_log = FALSE;
     replay_end();
     unlock_fd(fd);
 
-    return ERR_RESTORE_FAILED;
+    return ret;
 }
 
 

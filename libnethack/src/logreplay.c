@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-30 */
+/* Last modified by Alex Smith, 2013-12-04 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -190,7 +190,7 @@ base64_decode(const char *in, char *out)
                        errcode == Z_MEM_ERROR ? "Out of memory" : errcode ==
                        Z_BUF_ERROR ? "Invalid size" : errcode ==
                        Z_DATA_ERROR ? "Corrupted file" : "(unknown error)");
-            terminate();
+            terminate(ERR_RESTORE_FAILED);
         }
     }
 }
@@ -205,7 +205,7 @@ replay_set_logfile(int logfd)
     if (!lock_fd(logfd, 1)) {
         raw_printf
             ("The game log is locked by another NetHack process. Aborting.");
-        terminate();
+        terminate(ERR_RESTORE_FAILED);
     }
     logfile = logfd;
 }
@@ -242,7 +242,7 @@ replay_begin(void)
                 &loginfo.actioncount) || loginfo.endpos > filesize) {
         fclose(loginfo.flog);
         loginfo.flog = NULL;
-        terminate();
+        terminate(ERR_RESTORE_FAILED);
     }
 
     action_count = loginfo.actioncount;
@@ -353,7 +353,7 @@ parse_error(const char *str)
                "The game will be replayed from diffs instead.");
 #endif
     loginfo.cmds_are_invalid = TRUE;
-    terminate();
+    terminate(ERR_RESTORE_FAILED);
 }
 
 /* note: returns a buffer that is overwritten on every call */
@@ -381,7 +381,7 @@ next_log_token(void)
         }
         if (fread(&c, 1, 1, loginfo.flog) != 1) {
             raw_printf("Unexpected EOF or error in save file");
-            terminate();
+            terminate(ERR_RESTORE_FAILED);
         }
         rbuf[rbpos] = c;
         if (rbuf[rbpos] == '\r' || rbuf[rbpos] == '\n' || rbuf[rbpos] == ' ') {
@@ -688,7 +688,7 @@ replay_read_newgame(unsigned long long *init, int *playmode, char *namebuf,
 
     if (*initrole == ROLE_NONE || *initrace == ROLE_NONE ||
         *initgend == ROLE_NONE || *initalign == ROLE_NONE)
-        terminate();
+        terminate(ERR_RESTORE_FAILED);
 
     mt_srand(seed);
 
@@ -716,11 +716,11 @@ replay_read_option(char *token)
     name = token + 1;
     otype = strchr(name, ':');
     if (!otype)
-        terminate();
+        terminate(ERR_RESTORE_FAILED);
     *otype++ = '\0';
     valstr = strchr(otype, ':');
     if (!valstr)
-        terminate();
+        terminate(ERR_RESTORE_FAILED);
     *valstr++ = '\0';
 
     base64_decode(name, optname);
@@ -864,7 +864,7 @@ replay_sync_save(void)
 {
     if (!loginfo.out_of_sync)
         return;
-
+#ifdef TODO
     volatile struct sinfo ps;
     jmp_buf old_exit_jmp_buf;
 
@@ -901,6 +901,7 @@ replay_sync_save(void)
 
     memcpy(&exit_jmp_buf, &old_exit_jmp_buf, sizeof (jmp_buf));
     exit_jmp_buf_valid = 1;
+#endif
 }
 
 static long
@@ -1346,6 +1347,7 @@ nh_view_replay_step(struct nh_replay_info * info, enum replay_control action,
     int i, prev_actions, target;
     volatile int moves_this_step = true_moves();
 
+#ifdef TODO
     if (!program_state.viewing) {
         info->actions++;
         did_action = TRUE;
@@ -1441,6 +1443,7 @@ out2:
        know it should erase messages in the future */
     print_message(true_moves(), "");
 
+#endif
     return did_action;
 }
 
@@ -1518,10 +1521,9 @@ nh_get_savegame_status(int fd, struct nh_game_info *gi)
     if (ret == LS_CRASHED || ret == LS_IN_PROGRESS)
         return ret;
 
-    if (!api_entry_checkpoint())
-        /* something went wrong, hopefully it isn't so bad that replay won't
-           work */
-        return LS_CRASHED;
+    /* if something goes wrong, just record that fact and let the game loading
+       code worry about it */
+    API_ENTRY_CHECKPOINT_RETURN_ON_ERROR(LS_CRASHED);
 
     lseek(fd, savepos, SEEK_SET);
     if (ret == LS_SAVED) {
@@ -1532,7 +1534,7 @@ nh_get_savegame_status(int fd, struct nh_game_info *gi)
 
         if (!uptodate(&mf, NULL)) {
             free(mf.buf);
-            api_exit();
+            API_EXIT();
             return LS_CRASHED;  /* probably still a valid game */
         }
 
@@ -1566,7 +1568,7 @@ nh_get_savegame_status(int fd, struct nh_game_info *gi)
         strncpy(gi->death, tt.death, BUFSZ);
     }
 
-    api_exit();
+    API_EXIT();
 
     return ret;
 }

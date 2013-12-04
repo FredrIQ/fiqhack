@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-30 */
+/* Last modified by Alex Smith, 2013-12-04 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -251,10 +251,9 @@ enum nh_play_status {
     /* The game didn't load */
     ERR_BAD_ARGS,       /* game ID does not exist, or fd is out of range */
     ERR_BAD_FILE,       /* file isn't a saved game */
-    ERR_IN_PROGRESS,    /* this game is active in a different process */
-    ERR_RESTORE_FAILED, /* restoring the saved game state did not succeed (try
-                           replaying the log instead) */
-    ERR_REPLAY_FAILED   /* replaying the action log did not succeed */
+    ERR_IN_PROGRESS,    /* locking issues attaching to the game */
+    ERR_RESTORE_FAILED, /* game needs manual recovery */
+    ERR_REPLAY_FAILED,  /* automatic recovery was declined */
 };
 
 enum nh_log_status {
