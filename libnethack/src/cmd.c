@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-30 */
+/* Last modified by Alex Smith, 2013-12-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -134,10 +134,10 @@ const struct cmd_desc cmdlist[] = {
     {"multidrop", "drop multiple items", 'D', 0, FALSE, doddrop, CMD_ARG_NONE},
     {"name", "name a monster, item or type of object", M('n'), 'C', TRUE,
      do_naming, CMD_ARG_NONE | CMD_EXT},
-    {"name mon", "christen a monster", 0, 0, TRUE, do_mname, CMD_ARG_NONE},
-    {"name item", "name an item", 0, 0, TRUE, do_oname,
+    {"namemon", "christen a monster", 0, 0, TRUE, do_mname, CMD_ARG_NONE},
+    {"nameitem", "name an item", 0, 0, TRUE, do_oname,
      CMD_ARG_NONE | CMD_ARG_OBJ},
-    {"name type", "name a type of objects", 0, 0, TRUE, do_tname,
+    {"nametype", "name a type of objects", 0, 0, TRUE, do_tname,
      CMD_ARG_NONE | CMD_ARG_OBJ},
     {"offer", "offer a sacrifice to the gods", 0, 0, FALSE,
      dosacrifice, CMD_ARG_NONE | CMD_EXT | CMD_ARG_OBJ},
@@ -218,11 +218,11 @@ const struct cmd_desc cmdlist[] = {
      CMD_ARG_NONE | CMD_ARG_OBJ},
 
     {"move", "move one step", 0, 0, FALSE, domovecmd, CMD_ARG_DIR | CMD_MOVE},
-    {"move nopickup", "move, but don't fight or pick anything up", 'm', 0,
+    {"moveonly", "move, but don't fight or pick anything up", 'm', 0,
      FALSE, domovecmd_nopickup, CMD_ARG_DIR | CMD_MOVE},
     {"run", "run until something interesting is seen", 0, 0, FALSE, dorun,
      CMD_ARG_DIR | CMD_MOVE},
-    {"run nopickup", "run without picking anything up", 0, 'M', FALSE,
+    {"runonly", "run without picking anything up", 0, 'M', FALSE,
      dorun_nopickup, CMD_ARG_DIR | CMD_MOVE},
     {"go", "move, stopping for anything interesting", 'g', 0, FALSE, dogo,
      CMD_ARG_DIR | CMD_MOVE},
