@@ -43,6 +43,8 @@ static const char * const c_slotnames_menu[] = {
     [os_swapwep] = "Secondary weapon",
     [os_quiver]  = "Quiver",
 };
+/* Hopefully, the compiler will optimize out the strlen of a literal string. */
+#define LONGEST_SLOTNAME strlen("Secondary weapon")
 
 static const char c_that_[] = "that";
 
@@ -426,7 +428,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
                 pline("You are suddenly very %s!",
                       flags.female ? "feminine" : "masculine");
             else
-                /* already polymorphed into single-gender monster; only changed 
+                /* already polymorphed into single-gender monster; only changed
                    the character's base sex */
                 pline("You don't feel like yourself.");
             pline("The amulet disintegrates!");
@@ -678,7 +680,8 @@ set_wear(void)
    - If an action can't even be attempted because the item isn't in inventory,
      it's skipped entirely. This means that the player can start to wear an
      item, be interrupted, and choose to continue wearing once they reclaim it,
-     with the benefits of their accumulated progress.
+     with the benefits of their accumulated progress. (TODO: This makes no
+     sense at all.)
 
    - If the action can be attempted but doesn't work (e.g. is blocked by a
      cursed item), we print out a message and NULL the slot. This takes 1
@@ -832,20 +835,16 @@ equip_heartbeat(void)
                works, the ready will also work, though. We need three checks;
                two to see if the swap is possible, one that allows for a
                potential slow equip afterwards. */
-            cant_equip = 
+            cant_equip =
                 (uwep && !canunwearobj(uwep, TRUE, FALSE, FALSE)) ||
                 !canwieldobj(uswapwep, TRUE, FALSE, FALSE) ||
                 (desired != uwep &&
                  !canreadyobj(desired, TRUE, FALSE, FALSE));
-        else if (islot == os_wep)
-            cant_equip = !canwieldobj(desired, TRUE, FALSE, FALSE);
-        else if (islot == os_swapwep || islot == os_quiver)
-            cant_equip = !canreadyobj(desired, TRUE, FALSE, FALSE);
         else if (equip_order[i].direction == ed_unequip)
             cant_equip = !canunwearobj(current, TRUE, FALSE, FALSE);
         else
             cant_equip = !canwearobjon(desired, islot, TRUE, FALSE, FALSE);
-            
+
         if (cant_equip) {
             /* Abort the attempt to equip. */
             u.utracked[tos_first_equip + islot] = NULL;
@@ -933,10 +932,10 @@ equip_heartbeat(void)
                already worn in some other slot. However, there may be a
                replacement item. This code calls the appropriate check functions
                to ensure that the equip is possible.
-              
+
                There's no need for twoweapon checks, because we can fix such
                problems simply by ending twoweapon.
-              
+
                These are similar to the earlier checks, except now we have spoil
                == TRUE, because the character's actually spending time
                attempting to equip the item. */
@@ -946,10 +945,6 @@ equip_heartbeat(void)
                     !canwieldobj(uswapwep, TRUE, TRUE, FALSE) ||
                     (desired != uwep &&
                      !canreadyobj(desired, TRUE, TRUE, FALSE));
-            else if (islot == os_wep)
-                cant_equip = !canwieldobj(desired, TRUE, TRUE, FALSE);
-            else if (islot == os_swapwep || islot == os_quiver)
-                cant_equip = !canreadyobj(desired, TRUE, TRUE, FALSE);
             else if (equip_order[i].direction == ed_unequip)
                 cant_equip = !canunwearobj(current, TRUE, TRUE, FALSE);
             else
@@ -1151,13 +1146,13 @@ equip_in_slot(struct obj *otmp, enum objslot slot)
     /* Equips in time-consuming slots should print messages to let the player
        know what's happening. Potentially time-consuming slots are any armor
        slot, and any slot that covers another slot (but all covering slots
-       are armor slots at the moment. */
+       are armor slots at the moment). */
     if (flags.verbose && slot <= os_last_armor) {
         if (otmp != &zeroobj && otmp != EQUIP(slot))
-            pline("You %s equipping %s.", 
+            pline("You %s equipping %s.",
                   resuming ? "continue" : "start", yname(otmp));
         else if (otmp == &zeroobj && EQUIP(slot))
-            pline("You %s removing %s.", 
+            pline("You %s removing %s.",
                   resuming ? "continue" : "start", yname(EQUIP(slot)));
         else {
             /* Either we're putting items back on, or else we're not making any
@@ -1173,15 +1168,16 @@ equip_in_slot(struct obj *otmp, enum objslot slot)
 
     /* Do the equip. */
     t = equip_heartbeat();
-    if (t == 2) {
+    if (t == 2)
         set_occupation(equip_occupation_callback, "changing your equipment");
-    }
+
     return t > 0;
 }
 
 /* The logic for this is now moved to object_selection_checks, meaning that
    this can be as simple as possible. */
 static const char clothes_and_accessories[] = { ALL_CLASSES, 0 };
+static const char equippables_and_nothing[] = { ALL_CLASSES, ALLOW_NONE, 0 };
 
 /* the 'T'/'R' command */
 int
@@ -1317,8 +1313,6 @@ known_welded(boolean noisy)
    they might fall off even without this. There is no guarantee that items can
    be equipped to the slot, or unequipped from it. Additionally, it's possible
    that only specific items will fit into the slot, in some cases.
-
-   This function currently only works correctly for W_WORN slots.
 */
 static int
 slot_count(struct monst *mon, enum objslot slot, boolean noisy)
@@ -1355,7 +1349,14 @@ slot_count(struct monst *mon, enum objslot slot, boolean noisy)
         return 0;
     }
 
-    /* Everything has ring and amulet slots. */
+    /* for doequip() */
+    if (slot == os_wep && cantwield(mon->data)) {
+        if (noisy)
+            pline("You are physically incapable of holding items.");
+        return 0;
+    }
+
+    /* Everything has ring, amulet, quiver, and secondary weapon slots. */
     return 1;
 }
 
@@ -1513,7 +1514,7 @@ canwearobj(struct obj *otmp, long *mask,
             makeknown(otmp->otyp);
             iflags.botl = 1;
             return FALSE;
-        }        
+        }
         break;
 
     case os_arms:
@@ -1622,12 +1623,19 @@ canwearobj(struct obj *otmp, long *mask,
     return TRUE;
 }
 
-/* Like the above, but for a specific slot. */
+/* Like the above, but for a specific slot, and it works even for weaponn
+   slots. */
 static boolean
 canwearobjon(struct obj *otmp, enum objslot slot,
              boolean noisy, boolean spoil, boolean cblock)
 {
     long mask;
+
+    if (slot == os_wep)
+        return !!canwieldobj(otmp, noisy, spoil, cblock);
+    else if (slot == os_swapwep || slot == os_quiver)
+        return !!canreadyobj(otmp, noisy, spoil, cblock);
+
     if (!canwearobj(otmp, &mask, noisy, spoil, cblock))
         return FALSE;
     if (mask & W_MASK(slot))
@@ -1955,12 +1963,125 @@ unchanger(void)
 
 /* The 'A' command: make arbitrary equipment changes. This used to have the
    awesome name "doddoremarm", but I felt like I had to change it to something
-   more sensible :-( */
+   more sensible :-(
+
+   This function allows equipping any item in any slot, or continuing an aborted
+   equip action (even if there were other intervening actions). */
 int
 doequip(void)
 {
-    pline("This function is currently unimplemented.");
-    return 0;
+    enum objslot j;
+    int n;
+    int selected[1];
+    struct menulist menu;
+    int changes, time_consuming_changes;
+    boolean resuming;
+
+    do {
+        changes = time_consuming_changes = 0;
+        resuming = FALSE;
+
+        init_menulist(&menu);
+
+        for (j = 0; j <= os_last_equip; j++) {
+            char buf[BUFSZ];
+            struct obj *otmp = EQUIP(j);
+            sprintf(buf, "%*s: %.*s", LONGEST_SLOTNAME,
+                    c_slotnames_menu[j],
+                    BUFSZ - LONGEST_SLOTNAME - 4,
+                    otmp ? doname(otmp) : "(empty)");
+            add_menuitem(&menu, j+1, buf, 0, FALSE);
+            if (u.utracked[tos_first_equip + j]) {
+                boolean progress = !!u.uoccupation_progress[
+                    tos_first_equip + j];
+                sprintf(buf, "%*s %.*s%s", LONGEST_SLOTNAME + 5,
+                        "->", BUFSZ - LONGEST_SLOTNAME - 7 -
+                        strlen(" (in progress)"),
+                        u.utracked[tos_first_equip + j] != &zeroobj ?
+                        doname(u.utracked[tos_first_equip + j]) :
+                        "(empty)",
+                        progress ? " (in progress)" : "" );
+                add_menuitem(&menu, 0, buf, 0, FALSE);
+                changes++;
+                if (j <= os_last_armor)
+                    time_consuming_changes += 2;
+                else if (j != os_quiver)
+                    time_consuming_changes++;
+                if (progress)
+                    resuming = TRUE;
+            }
+        }
+        add_menutext(&menu, "");
+        if (changes) {
+            add_menuitem(
+                &menu, os_last_slot+1 + 1, resuming ?
+                "Continue changing your equipment as shown above" :
+                "Change your equipment as shown above", 'C', FALSE);
+            add_menuitem(
+                &menu, os_last_slot+1 + 2,
+                "Cancel changing your equipment", 'X', FALSE);
+        }
+        add_menuitem(
+            &menu, os_last_slot+1 + 3,
+            "Remove all equipment", 'T', FALSE);
+
+        n = display_menu(menu.items, menu.icount, "Your Equipment",
+                         PICK_ONE, PLHINT_INVENTORY, selected);
+        free(menu.items);
+        if (!n) /* no selection made */
+            return 0;
+
+        if (*selected == os_last_slot+1 + 2) {
+            for (j = 0; j <= os_last_equip; j++) {
+                u.utracked[tos_first_equip + j] = NULL;
+                u.uoccupation_progress[tos_first_equip + j] = 0;
+            }
+        } else if (*selected == os_last_slot+1 + 3) {
+            for (j = 0; j <= os_last_equip; j++) {
+                if (u.utracked[tos_first_equip + j] != &zeroobj)
+                    u.uoccupation_progress[tos_first_equip + j] = 0;
+                u.utracked[tos_first_equip + j] = EQUIP(j) ? &zeroobj : 0;
+            }
+        } else if (*selected <= os_last_equip + 1) {
+            struct obj *otmp;
+            j = *selected - 1;
+
+            /* check that unequipping is not known to be impossible */
+            otmp = EQUIP(j);
+            if (otmp && !canunwearobj(otmp, TRUE, FALSE, TRUE))
+                continue;
+
+            /* prompt the user */
+            otmp = getobj(equippables_and_nothing,
+                          j == os_wep ? "wield" :
+                          j == os_swapwep ? "ready" :
+                          j == os_quiver ? "quiver" : "wear");
+
+            /* check that equipping is not known to be impossible */
+            if (otmp && (otmp == &zeroobj ||
+                         canwearobjon(otmp, j, TRUE, FALSE, TRUE))) {
+                /* schedule the equip */
+                u.utracked[tos_first_equip + j] = otmp;
+                if (otmp == &zeroobj)
+                    otmp = NULL;
+                if (otmp == EQUIP(j))
+                    u.utracked[tos_first_equip + j] = NULL;
+                u.uoccupation_progress[tos_first_equip + j] = 0;
+            }
+        }
+
+    } while (*selected != os_last_slot+1 + 1);
+
+    /* If changing any slow item or two or more fast items, print a message,
+       because this will probably take multiple turns. */
+    if (time_consuming_changes >= 2 && flags.verbose)
+        pline("You %s equipping yourself.", resuming ? "continue" : "start");
+
+    /* Do the equip. */
+    n = equip_heartbeat();
+    if (n == 2)
+        set_occupation(equip_occupation_callback, "changing your equipment");
+    return n > 0;
 }
 
 /* hit by destroy armor scroll/black dragon breath/monster spell */
