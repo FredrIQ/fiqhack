@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-04 */
+/* Last modified by Alex Smith, 2013-12-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -87,10 +87,6 @@ nh_exit_game(int exit_type)
        running.
     */
     API_ENTRY_CHECKPOINT_RETURN_ON_ERROR(TRUE);
-
-    /* clean up after viewing a game replay */
-    if (program_state.viewing)
-        nh_view_replay_finish();
 
     xmalloc_cleanup();
     iflags.disable_log = TRUE;

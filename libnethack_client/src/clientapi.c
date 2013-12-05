@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-30 */
+/* Last modified by Alex Smith, 2013-12-05 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -8,7 +8,7 @@
 
 #include "nhclient.h"
 
-struct nh_window_procs windowprocs, alt_windowprocs;
+struct nh_window_procs windowprocs;
 int current_game;
 struct nh_option_desc *option_lists[OPTION_LIST_COUNT];
 
@@ -35,7 +35,6 @@ nhnet_lib_init(const struct nh_window_procs *winprocs)
 #endif
 
     windowprocs = *winprocs;
-    alt_windowprocs = *winprocs;
 }
 
 
@@ -198,90 +197,6 @@ nhnet_create_game(const char *name, int role, int race, int gend, int align,
     json_decref(jmsg);
     api_exit();
     return ret;
-}
-
-
-nh_bool
-nhnet_view_replay_start(int fd, struct nh_window_procs * rwinprocs,
-                        struct nh_replay_info * info)
-{
-    int ret;
-    json_t *jmsg;
-    const char *nextcmd;
-
-    if (!nhnet_active())
-        return nh_view_replay_start(fd, rwinprocs, info);
-
-    if (!api_entry())
-        return FALSE;
-
-    alt_windowprocs = *rwinprocs;
-
-    jmsg = send_receive_msg("view_start", json_pack("{si}", "gameid", fd));
-    if (json_unpack
-        (jmsg, "{si,s:{ss,si,si,si,si}}", "return", &ret, "info", "nextcmd",
-         &nextcmd, "actions", &info->actions, "max_actions", &info->max_actions,
-         "moves", &info->moves, "max_moves", &info->max_moves) == -1) {
-        print_error("Incorrect return object in nhnet_view_replay_step");
-        ret = 0;
-    } else
-        strncpy(info->nextcmd, nextcmd, sizeof (info->nextcmd) - 1);
-
-    api_exit();
-    return ret;
-}
-
-
-nh_bool
-nhnet_view_replay_step(struct nh_replay_info * info, enum replay_control action,
-                       int count)
-{
-    int ret;
-    json_t *jmsg;
-    const char *nextcmd;
-
-    if (!nhnet_active())
-        return nh_view_replay_step(info, action, count);
-
-    if (!api_entry())
-        return FALSE;
-
-    jmsg =
-        send_receive_msg("view_step",
-                         json_pack("{si,si,s:{si,si,si,si}}", "action", action,
-                                   "count", count, "info", "actions",
-                                   info->actions, "max_actions",
-                                   info->max_actions, "moves", info->moves,
-                                   "max_moves", info->max_moves));
-    if (json_unpack
-        (jmsg, "{si,s:{ss,si,si,si,si}}", "return", &ret, "info", "nextcmd",
-         &nextcmd, "actions", &info->actions, "max_actions", &info->max_actions,
-         "moves", &info->moves, "max_moves", &info->max_moves) == -1) {
-        print_error("Incorrect return object in nhnet_view_replay_step");
-    } else
-        strncpy(info->nextcmd, nextcmd, sizeof (info->nextcmd) - 1);
-
-    api_exit();
-    return ret;
-}
-
-
-void
-nhnet_view_replay_finish(void)
-{
-    if (!nhnet_active())
-        return nh_view_replay_finish();
-
-    xmalloc_cleanup();
-
-    alt_windowprocs = windowprocs;
-
-    if (!api_entry())
-        return;
-
-    send_receive_msg("view_finish", json_object());
-
-    api_exit();
 }
 
 

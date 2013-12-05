@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-30 */
+/* Last modified by Alex Smith, 2013-12-05 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef NETHACK_CLIENT_H
@@ -59,11 +59,6 @@ extern int EXPORT(nhnet_create_game) (const char *name, int role, int race,
 extern int EXPORT(nhnet_command) (const char *cmd, int rep,
                                   struct nh_cmd_arg *arg);
 /* no nhnet_get_copyright_banner; the client should display its own copyright */
-extern nh_bool EXPORT(nhnet_view_replay_start) (
-    int fd, struct nh_window_procs *rwinprocs, struct nh_replay_info *info);
-extern nh_bool EXPORT(nhnet_view_replay_step) (
-    struct nh_replay_info *info, enum replay_control action, int count);
-extern void EXPORT(nhnet_view_replay_finish) (void);
 extern nh_cmd_desc_p EXPORT(nhnet_get_commands) (int *count);
 extern nh_cmd_desc_p EXPORT(nhnet_get_object_commands) (
     int *count, char invlet);
@@ -92,9 +87,6 @@ extern int EXPORT(nhnet_change_password) (const char *password);
     !defined(NETHACK_CLIENT_H_IN_LIBNETHACK_CLIENT)
 #  define nh_play_game                nhnet_play_game
 #  define nh_exit_game                nhnet_exit_game
-#  define nh_view_replay_start        nhnet_view_replay_start
-#  define nh_view_replay_step         nhnet_view_replay_step
-#  define nh_view_replay_finish       nhnet_view_replay_finish
 #  define nh_get_commands             nhnet_get_commands
 #  define nh_get_object_commands      nhnet_get_object_commands
 #  define nh_get_drawing_info         nhnet_get_drawing_info

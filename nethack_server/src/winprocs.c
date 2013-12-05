@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-30 */
+/* Last modified by Alex Smith, 2013-12-05 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -37,24 +37,6 @@ static int srv_getpos(int *x, int *y, nh_bool force, const char *goal);
 static enum nh_direction srv_getdir(const char *query, nh_bool restricted);
 static void srv_getline(const char *query, char *buf);
 
-static void srv_alt_raw_print(const char *str);
-static void srv_alt_pause(enum nh_pause_reason r);
-static void srv_alt_display_buffer(const char *buf, nh_bool trymove);
-static void srv_alt_update_status(struct nh_player_info *pi);
-static void srv_alt_print_message(int turn, const char *msg);
-static void
-srv_alt_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy)
-{
-}
-
-static void srv_alt_delay_output(void);
-static void srv_alt_level_changed(int displaymode);
-static void srv_alt_outrip(struct nh_menuitem *items, int icount,
-                           nh_bool tombstone, const char *name, int gold,
-                           const char *killbuf, int end_how, int year);
-static nh_bool srv_alt_list_items(struct nh_objitem *items, int icount,
-                                  nh_bool invent);
-
 /*---------------------------------------------------------------------------*/
 
 struct nh_player_info player_info;
@@ -63,7 +45,6 @@ static int prev_invent_icount, prev_floor_icount;
 static struct nh_objitem *prev_invent;
 static const struct nh_dbuf_entry zero_dbuf;    /* an entry of all zeroes */
 static json_t *display_data, *jinvent_items, *jfloor_items;
-static int altproc;
 
 struct nh_window_procs server_windowprocs = {
     srv_pause,
@@ -85,30 +66,6 @@ struct nh_window_procs server_windowprocs = {
     srv_level_changed,
     srv_outrip,
     srv_print_message_nonblocking,
-};
-
-
-/* alternative window procs for replay*/
-struct nh_window_procs server_alt_windowprocs = {
-    srv_alt_pause,
-    srv_alt_display_buffer,
-    srv_alt_update_status,
-    srv_alt_print_message,
-    NULL,
-    NULL,
-    NULL,
-    srv_alt_list_items,
-    srv_alt_update_screen,
-    srv_alt_raw_print,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    srv_alt_delay_output,
-    srv_alt_level_changed,
-    srv_alt_outrip,
-    srv_alt_print_message,
 };
 
 /*---------------------------------------------------------------------------*/
@@ -169,13 +126,6 @@ static void
 add_display_data(const char *key, json_t * data)
 {
     json_t *tmpobj;
-    char keystr[BUFSZ];
-
-    if (altproc) {
-        snprintf(keystr, BUFSZ - 1, "alt_%s", key);
-        keystr[BUFSZ - 1] = '\0';
-        key = keystr;
-    }
 
     if (!display_data)
         display_data = json_array();
@@ -738,93 +688,6 @@ srv_getline(const char *query, char *buf)
 }
 
 /*---------------------------------------------------------------------------*/
-
-static void
-srv_alt_raw_print(const char *str)
-{
-    altproc = TRUE;
-    srv_raw_print(str);
-    altproc = FALSE;
-}
-
-
-static void
-srv_alt_pause(enum nh_pause_reason r)
-{
-    altproc = TRUE;
-    srv_pause(r);
-    altproc = FALSE;
-}
-
-
-static void
-srv_alt_display_buffer(const char *buf, nh_bool trymove)
-{
-    altproc = TRUE;
-    srv_display_buffer(buf, trymove);
-    altproc = FALSE;
-}
-
-
-static void
-srv_alt_update_status(struct nh_player_info *pi)
-{
-    altproc = TRUE;
-    srv_update_status(pi);
-    altproc = FALSE;
-}
-
-
-static void
-srv_alt_print_message(int turn, const char *msg)
-{
-    altproc = TRUE;
-    srv_print_message(turn, msg);
-    altproc = FALSE;
-}
-
-
-static void
-srv_alt_delay_output(void)
-{
-    altproc = TRUE;
-    srv_delay_output();
-    altproc = FALSE;
-}
-
-
-static void
-srv_alt_level_changed(int displaymode)
-{
-    altproc = TRUE;
-    srv_level_changed(displaymode);
-    altproc = FALSE;
-}
-
-
-static void
-srv_alt_outrip(struct nh_menuitem *items, int icount, nh_bool tombstone,
-               const char *name, int gold, const char *killbuf, int end_how,
-               int year)
-{
-    altproc = TRUE;
-    srv_alt_outrip(items, icount, tombstone, name, gold, killbuf, end_how,
-                   year);
-    altproc = FALSE;
-}
-
-
-static nh_bool
-srv_alt_list_items(struct nh_objitem *items, int icount, nh_bool invent)
-{
-    int ret;
-
-    altproc = TRUE;
-    ret = srv_list_items(items, icount, invent);
-    altproc = FALSE;
-    return ret;
-}
-
 
 void
 reset_cached_diplaydata(void)

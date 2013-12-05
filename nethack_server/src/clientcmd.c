@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-30 */
+/* Last modified by Alex Smith, 2013-12-05 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -13,9 +13,6 @@ static void ccmd_shutdown(json_t * ignored);
 static void ccmd_create_game(json_t * params);
 static void ccmd_play_game(json_t * params);
 static void ccmd_exit_game(json_t * params);
-static void ccmd_view_start(json_t * params);
-static void ccmd_view_step(json_t * params);
-static void ccmd_view_finish(json_t * params);
 static void ccmd_list_games(json_t * params);
 static void ccmd_get_drawing_info(json_t * params);
 static void ccmd_get_roles(json_t * params);
@@ -36,9 +33,6 @@ const struct client_command clientcmd[] = {
     {"create_game", ccmd_create_game, 0},
     {"play_game", ccmd_play_game, 0},
     {"exit_game", ccmd_exit_game, 0},
-    {"view_start", ccmd_view_start, 0},
-    {"view_step", ccmd_view_step, 0},
-    {"view_finish", ccmd_view_finish, 0},
     {"list_games", ccmd_list_games, 0},
 
     {"get_drawing_info", ccmd_get_drawing_info, 1},
@@ -236,91 +230,6 @@ ccmd_exit_game(json_t * params)
     }
 
     client_msg("exit_game", json_pack("{si}", "return", status));
-}
-
-
-static void
-ccmd_view_start(json_t * params)
-{
-    int ret, gid, fd;
-    struct nh_replay_info info;
-    char basename[1024], filename[1024];
-    json_t *jmsg;
-
-    if (json_unpack(params, "{si*}", "gameid", &gid) == -1)
-        exit_client("Bad set of parameters for view_start");
-
-    if (!db_get_game_filename(0, gid, basename, 1024)) {
-        log_msg("Client requested nonexistent game %d for viewing", gid);
-        jmsg = json_pack("{si}", "return", FALSE);
-        client_msg("view_start", jmsg);
-        return;
-    }
-
-    snprintf(filename, 1024, "%s/save/%s/%s", settings.workdir,
-             user_info.username, basename);
-    fd = open(filename, O_RDWR);
-    if (fd == -1) {
-        snprintf(filename, 1024, "%s/completed/%s", settings.workdir, basename);
-        fd = open(filename, O_RDWR);
-    }
-    if (fd == -1) {
-        log_msg("failed to open game %d (file %s) for viewing", gid, basename);
-        jmsg = json_pack("{si}", "return", FALSE);
-        client_msg("view_start", jmsg);
-        return;
-    }
-
-    ret = nh_view_replay_start(fd, &server_alt_windowprocs, &info);
-
-    jmsg =
-        json_pack("{si,s:{ss,si,si,si,si}}", "return", ret, "info", "nextcmd",
-                  info.nextcmd, "actions", info.actions, "max_actions",
-                  info.max_actions, "moves", info.moves, "max_moves",
-                  info.max_moves);
-    client_msg("view_start", jmsg);
-}
-
-
-static void
-ccmd_view_step(json_t * params)
-{
-    enum replay_control action;
-    int count, ret;
-    struct nh_replay_info info;
-    json_t *jmsg;
-
-    if (json_unpack
-        (params, "{si,si,s:{si,si,si,si*}*}", "action", &action, "count",
-         &count, "info", "actions", &info.actions, "max_actions",
-         &info.max_actions, "moves", &info.moves, "max_moves",
-         &info.max_moves) == -1)
-        exit_client("Bad set of parameters for view_step");
-
-    info.nextcmd[0] = '\0';
-    ret = nh_view_replay_step(&info, action, count);
-
-    jmsg =
-        json_pack("{si,s:{ss,si,si,si,si}}", "return", ret, "info", "nextcmd",
-                  info.nextcmd, "actions", info.actions, "max_actions",
-                  info.max_actions, "moves", info.moves, "max_moves",
-                  info.max_moves);
-    client_msg("view_step", jmsg);
-}
-
-
-static void
-ccmd_view_finish(json_t * params)
-{
-    void *iter;
-
-    iter = json_object_iter(params);
-    if (iter)
-        exit_client("non-empty parameter list for view_finish");
-
-    nh_view_replay_finish();
-
-    client_msg("view_finish", json_object());
 }
 
 
