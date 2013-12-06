@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-04 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -182,7 +182,7 @@ write_xlentry(FILE * rfile, const struct toptenentry *tt, unsigned long carried)
     munge_xlstring(buf, uname, DTHSZ + 1);
     fprintf(rfile, SEP "name=%s", buf);
 
-    munge_xlstring(buf, plname, DTHSZ + 1);
+    munge_xlstring(buf, u.uplname, DTHSZ + 1);
     fprintf(rfile, SEP "charname=%s", buf);
 
     munge_xlstring(buf, tt->death, DTHSZ + 1);
@@ -363,7 +363,7 @@ fill_topten_entry(struct toptenentry *newtt, int how)
     newtt->plgend[ROLESZ] = '\0';
     strncpy(newtt->plalign, aligns[1 - u.ualign.type].filecode, ROLESZ);
     newtt->plalign[ROLESZ] = '\0';
-    strncpy(newtt->name, plname, NAMSZ);
+    strncpy(newtt->name, u.uplname, NAMSZ);
     newtt->name[NAMSZ] = '\0';
     newtt->death[0] = '\0';
     switch (killer_format) {
@@ -699,7 +699,7 @@ nh_get_topten(int *out_len, char *statusbuf, const char *volatile player,
 
     if (!player) {
         if (game_complete)
-            player = plname;
+            player = u.uplname;
         else
             player = "";
     }
@@ -715,7 +715,7 @@ nh_get_topten(int *out_len, char *statusbuf, const char *volatile player,
     }
 
     /* find the rank of a completed game in the score list */
-    if (game_complete && !strcmp(player, plname)) {
+    if (game_complete && !strcmp(player, u.uplname)) {
         fill_topten_entry(&newtt, end_how);
 
         /* find this entry in the list */

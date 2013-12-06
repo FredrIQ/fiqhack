@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-04 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -754,7 +754,7 @@ display_rip(int how, char *kilbuf, char *pbuf, long umoney,
     }
 
     if (!done_stopprint) {
-        sprintf(pbuf, "%s %s the %s...", Goodbye(), plname,
+        sprintf(pbuf, "%s %s the %s...", Goodbye(), u.uplname,
                 how !=
                 ASCENDED ? (const char *)((flags.female && urole.name.f) ?
                                           urole.name.f : urole.name.m) :
@@ -862,7 +862,7 @@ display_rip(int how, char *kilbuf, char *pbuf, long umoney,
         add_menutext(&menu, "");
     }
     if (!done_stopprint)
-        outrip(menu.items, menu.icount, how <= GENOCIDED, plname, umoney,
+        outrip(menu.items, menu.icount, how <= GENOCIDED, u.uplname, umoney,
                outrip_buf, how, getyear());
 
     free(menu.items);
@@ -940,8 +940,8 @@ done_noreturn(int how)
                         urace.femalenum !=
                         NON_PM) ? urace.femalenum : urace.malenum;
             }
-            corpse = mk_named_object(CORPSE, &mons[mnum], u.ux, u.uy, plname);
-            sprintf(pbuf, "%s, %s%s", plname,
+            corpse = mk_named_object(CORPSE, &mons[mnum], u.ux, u.uy, u.uplname);
+            sprintf(pbuf, "%s, %s%s", u.uplname,
                     killer_format ==
                     NO_KILLER_PREFIX ? "" : killed_by_prefix[how],
                     killer_format == KILLED_BY_AN ? an(killer) : killer);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -408,11 +408,11 @@ mattacku(struct monst *mtmp)
                     }
                     if (youmonst.data->mlet == S_EEL)
                         pline("Wait, %s!  There's a hidden %s named %s there!",
-                              m_monnam(mtmp), youmonst.data->mname, plname);
+                              m_monnam(mtmp), youmonst.data->mname, u.uplname);
                     else
                         pline
                             ("Wait, %s!  There's a %s named %s hiding under %s!",
-                             m_monnam(mtmp), youmonst.data->mname, plname,
+                             m_monnam(mtmp), youmonst.data->mname, u.uplname,
                              doname(level->objects[u.ux][u.uy]));
                     if (obj)
                         obj->spe = save_spe;
@@ -429,7 +429,7 @@ mattacku(struct monst *mtmp)
             pline("It gets stuck on you.");
         else
             pline("Wait, %s!  That's a %s named %s!", m_monnam(mtmp),
-                  youmonst.data->mname, plname);
+                  youmonst.data->mname, u.uplname);
         u.ustuck = mtmp;
         youmonst.m_ap_type = M_AP_NOTHING;
         youmonst.mappearance = 0;
@@ -446,7 +446,8 @@ mattacku(struct monst *mtmp)
                    GOLD_PIECE) ? "tries to pick you up" : "disturbs you");
         else
             pline("Wait, %s!  That %s is really %s named %s!", m_monnam(mtmp),
-                  mimic_obj_name(&youmonst), an(mons[u.umonnum].mname), plname);
+                  mimic_obj_name(&youmonst), an(mons[u.umonnum].mname),
+                  u.uplname);
         if (multi < 0) {        /* this should always be the case */
             char buf[BUFSZ];
 
@@ -2679,7 +2680,7 @@ cloneu(void)
 
     mon = makemon(youmonst.data, level, u.ux, u.uy, NO_MINVENT | MM_EDOG);
     if (mon) {
-        mon = christen_monst(mon, plname);
+        mon = christen_monst(mon, u.uplname);
         initedog(mon);
         mon->m_lev = youmonst.data->mlevel;
         mon->mhpmax = u.mhmax;

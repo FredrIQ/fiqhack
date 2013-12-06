@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-28 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -627,6 +627,7 @@ restore_you(struct memfile *mf, struct you *y)
     mread(mf, y->atemp.a, sizeof (y->atemp.a));
     mread(mf, y->atime.a, sizeof (y->atime.a));
     mread(mf, y->skill_record, sizeof (y->skill_record));
+    mread(mf, y->uplname, sizeof (y->uplname));
 
     for (i = 0; i <= LAST_PROP; i++) {
         y->uintrinsic[i] = mread32(mf);

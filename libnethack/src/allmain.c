@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-06 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -162,19 +162,6 @@ startup_common(const char *name, int playmode)
      */
     vision_init();
 
-    if (playmode == MODE_EXPLORE)
-        discover = TRUE;
-    else if (playmode == MODE_WIZARD)
-        wizard = TRUE;
-
-    if (name && name[0]) {
-        strncpy(plname, name, PL_NSIZ);
-        plname[PL_NSIZ - 1] = '\0';
-    }
-
-    if (wizard)
-        strcpy(plname, "wizard");
-
     cls();
 
     initrack();
@@ -258,9 +245,19 @@ nh_create_game(int fd, const char *name, int irole, int irace, int igend,
         seed = turntime ^ get_seedval();
         /* initialize the random number generator */
         mt_srand(seed);
+
+    if (playmode == MODE_EXPLORE)
+        discover = TRUE;
+    else if (playmode == MODE_WIZARD)
+        wizard = TRUE;
+
+    if (name && name[0]) {
+        strncpy(u.uplname, name, PL_NSIZ);
+        u.uplname[PL_NSIZ - 1] = '\0';
     }
-    /* else: turntime and rng seeding are done in logreplay.c */
-    startup_common(name, playmode);
+
+    if (wizard)
+        strcpy(u.uplname, "wizard");
 
     if (!validrole(irole) || !validrace(irole, irace) ||
         !validgend(irole, irace, igend) || !validalign(irole, irace, ialign))

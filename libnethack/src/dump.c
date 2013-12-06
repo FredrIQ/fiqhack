@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -14,7 +14,7 @@ static int dump_display_menu(struct nh_menuitem *, int, const char *, int, int,
 static int dump_display_objects(struct nh_objitem *, int, const char *, int,
                                 int, struct nh_objresult *);
 static void dump_outrip(struct nh_menuitem *items, int icount, boolean ts,
-                        const char *plname, int gold, const char *killbuf,
+                        const char *name, int gold, const char *killbuf,
                         int end_how, int year);
 
 #if !defined(WIN32)
@@ -56,7 +56,7 @@ begin_dump(int how)
         break;
     }
 
-    sprintf(dumpname, "%s, %s-%s-%s-%s-%s, %s.txt", timestamp, plname,
+    sprintf(dumpname, "%s, %s-%s-%s-%s-%s, %s.txt", timestamp, u.uplname,
             urole.filecode, urace.filecode, genders[flags.female].filecode,
             aligns[1 - u.ualign.type].filecode, status);
     dumpfp = fopen_datafile(dumpname, "w+", DUMPPREFIX);
@@ -64,7 +64,7 @@ begin_dump(int how)
         return;
 
     rolename = (flags.female && urole.name.f) ? urole.name.f : urole.name.m;
-    fprintf(dumpfp, "%s, %s %s %s %s\n", plname, aligns[1 - u.ualign.type].adj,
+    fprintf(dumpfp, "%s, %s %s %s %s\n", u.uplname, aligns[1 - u.ualign.type].adj,
             genders[flags.female].adj, urace.adj, rolename);
 
     dump_screen(dumpfp);
@@ -77,7 +77,7 @@ dump_status(void)
 {
     int hp;
 
-    fprintf(dumpfp, "%s the %s\n", plname,
+    fprintf(dumpfp, "%s the %s\n", u.uplname,
             rank_of(u.ulevel, Role_switch, flags.female));
     fprintf(dumpfp, "  Experience level: %d\n", u.ulevel);
 

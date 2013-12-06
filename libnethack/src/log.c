@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-06 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -206,7 +206,7 @@ log_newgame(int logfd, unsigned long long start_time, unsigned int seed,
     lprintf("NHGAME inpr %08x 00000000 %d.%d.%d\n", 0, VERSION_MAJOR,
             VERSION_MINOR, PATCHLEVEL);
 
-    base64_encode(plname, encbuf);
+    base64_encode(u.uplname, encbuf);
     lprintf("%" PRIxLEAST64 " %x %d %s %s %s %s %s\n", start_time_l64, seed,
             playmode, encbuf, role, races[u.initrace].noun,
             genders[u.initgend].adj, aligns[u.initalign].adj);

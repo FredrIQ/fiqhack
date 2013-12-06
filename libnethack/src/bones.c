@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -260,7 +260,8 @@ make_bones:
     /* dispose of your possessions, usually cursed */
     if (u.ugrave_arise == (NON_PM - 1)) {
         /* embed your possessions in your statue */
-        statue = mk_named_object(STATUE, &mons[u.umonnum], u.ux, u.uy, plname);
+        statue = mk_named_object(STATUE, &mons[u.umonnum], u.ux, u.uy,
+                                 u.uplname);
 
         drop_upon_death(NULL, statue);
         if (!statue)
@@ -275,7 +276,7 @@ make_bones:
         in_mklev = FALSE;
         if (!mtmp)
             return;
-        mtmp = christen_monst(mtmp, plname);
+        mtmp = christen_monst(mtmp, u.uplname);
         if (corpse)
             corpse = obj_attach_mid(corpse, mtmp->m_id);
     } else {
@@ -287,7 +288,7 @@ make_bones:
             drop_upon_death(NULL, NULL);
             return;
         }
-        mtmp = christen_monst(mtmp, plname);
+        mtmp = christen_monst(mtmp, u.uplname);
         newsym(u.ux, u.uy);
         pline("Your body rises from the dead as %s...",
               an(mons[u.ugrave_arise].mname));
@@ -384,11 +385,8 @@ getbones(d_level * levnum)
         return 0;
 
     make_bones_id(bonesid, levnum);
-    if (program_state.restoring) {
-        mf.buf = replay_bones(&mf.len);
-        if (!mf.buf || !mf.len)
-            return 0;
-    } else {
+
+    {
         int fd = open_bonesfile(bonesid);
 
         if (fd == -1)

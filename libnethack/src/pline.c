@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -373,7 +373,7 @@ ustatusline(void)
         strcat(info, mon_nam(u.ustuck));
     }
 
-    pline("Status of %s (%s%s):  Level %d  HP %d(%d)  Def %d%s.", plname,
+    pline("Status of %s (%s%s):  Level %d  HP %d(%d)  Def %d%s.", u.uplname,
           (u.ualign.record >= 20) ? "piously " :
           (u.ualign.record > 13) ? "devoutly " :
           (u.ualign.record > 8) ? "fervently " :

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -166,7 +166,7 @@ create_bonesfile(char *bonesid, char errbuf[])
     if (errbuf)
         *errbuf = '\0';
     sprintf(bones, "bon%s", bonesid);
-    sprintf(tempname, "%d%s.bn", (int)getuid(), plname);
+    sprintf(tempname, "%d%s.bn", (int)getuid(), u.uplname);
     file = fqname(tempname, BONESPREFIX, 0);
 
 #if defined(WIN32)
@@ -194,7 +194,7 @@ commit_bonesfile(char *bonesid)
 
     sprintf(bones, "bon%s", bonesid);
     fq_bones = fqname(bones, BONESPREFIX, 0);
-    sprintf(tempbuf, "%d%s.bn", (int)getuid(), plname);
+    sprintf(tempbuf, "%d%s.bn", (int)getuid(), u.uplname);
     tempname = fqname(tempbuf, BONESPREFIX, 1);
 
     ret = rename(tempname, fq_bones);

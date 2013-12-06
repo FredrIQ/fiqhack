@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-04 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1237,7 +1237,7 @@ minimal_enlightenment(void)
     add_menuheading(&menu, "Stats");
 
     /* Starting and current name, race, role, gender, alignment, abilities */
-    sprintf(buf, fmtstr_noorig, "name", plname);
+    sprintf(buf, fmtstr_noorig, "name", u.uplname);
     add_menutext(&menu, buf);
     sprintf(buf, fmtstr, "race", Upolyd ? youmonst.data->mname : urace.noun,
             urace.noun);
@@ -1417,9 +1417,9 @@ dowelcome(void)
         sprintf(eos(buf), " %s", genders[currentgend].adj);
 
     pline(new_game ? "%s %s, welcome to NetHack!  You are a%s %s %s." :
-          "%s %s, the%s %s %s, welcome back to NetHack!", Hello(NULL), plname,
-          buf, urace.adj, (currentgend &&
-                           urole.name.f) ? urole.name.f : urole.name.m);
+          "%s %s, the%s %s %s, welcome back to NetHack!", Hello(NULL),
+          u.uplname, buf, urace.adj,
+          (currentgend && urole.name.f) ? urole.name.f : urole.name.m);
 
     if (*level->levname)
         pline("You named this level: %s.", level->levname);

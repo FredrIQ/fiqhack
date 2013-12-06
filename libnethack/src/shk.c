@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-23 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -231,7 +231,7 @@ restshk(struct monst *shkp, boolean ghostly)
     /* savebones guarantees that non-homed shk's will be gone */
     if (ghostly) {
         assign_level(&eshkp->shoplevel, &u.uz);
-        if (ANGRY(shkp) && strncmpi(eshkp->customer, plname, PL_NSIZ))
+        if (ANGRY(shkp) && strncmpi(eshkp->customer, u.uplname, PL_NSIZ))
             pacify_shk(shkp);
     }
 }
@@ -391,7 +391,7 @@ u_left_shop(char *leavestring, boolean newlev)
          * Try to intimidate him into paying his bill
          */
         verbalize(NOTANGRY(shkp) ? "%s!  Please pay before leaving." :
-                  "%s!  Don't you leave without paying!", plname);
+                  "%s!  Don't you leave without paying!", u.uplname);
         return;
     }
 
@@ -492,11 +492,11 @@ u_entered_shop(char *enterstring)
     eshkp->bill_p = &(eshkp->bill[0]);
 
     if ((!eshkp->visitct || *eshkp->customer) &&
-        strncmpi(eshkp->customer, plname, PL_NSIZ)) {
+        strncmpi(eshkp->customer, u.uplname, PL_NSIZ)) {
         /* You seem to be new here */
         eshkp->visitct = 0;
         eshkp->following = 0;
-        strncpy(eshkp->customer, plname, PL_NSIZ);
+        strncpy(eshkp->customer, u.uplname, PL_NSIZ);
         pacify_shk(shkp);
     }
 
@@ -512,12 +512,12 @@ u_entered_shop(char *enterstring)
     rt = level->rooms[*enterstring - ROOMOFFSET].rtype;
 
     if (ANGRY(shkp)) {
-        verbalize("So, %s, you dare return to %s %s?!", plname,
+        verbalize("So, %s, you dare return to %s %s?!", u.uplname,
                   s_suffix(shkname(shkp)), shtypes[rt - SHOPBASE].name);
     } else if (eshkp->robbed) {
         pline("%s mutters imprecations against shoplifters.", shkname(shkp));
     } else {
-        verbalize("%s, %s!  Welcome%s to %s %s!", Hello(shkp), plname,
+        verbalize("%s, %s!  Welcome%s to %s %s!", Hello(shkp), u.uplname,
                   eshkp->visitct++ ? " again" : "", s_suffix(shkname(shkp)),
                   shtypes[rt - SHOPBASE].name);
     }
@@ -975,7 +975,7 @@ hot_pursuit(struct monst *shkp)
         return;
 
     rile_shk(shkp);
-    strncpy(ESHK(shkp)->customer, plname, PL_NSIZ);
+    strncpy(ESHK(shkp)->customer, u.uplname, PL_NSIZ);
     ESHK(shkp)->following = 1;
 }
 
@@ -1214,7 +1214,7 @@ proceed:
             pline("You try to appease %s by giving %s 1000 gold pieces.",
                   x_monnam(shkp, ARTICLE_THE, "angry", 0, FALSE), mhim(shkp));
             pay(1000L, shkp);
-            if (strncmp(eshkp->customer, plname, PL_NSIZ) || rn2(3))
+            if (strncmp(eshkp->customer, u.uplname, PL_NSIZ) || rn2(3))
                 make_happy_shk(shkp, FALSE);
             else
                 pline("But %s is as angry as ever.", mon_nam(shkp));
@@ -1584,7 +1584,7 @@ inherits(struct monst *shkp, int numsk, int croaked)
             money2mon(shkp, loss);
             iflags.botl = 1;
             pline("%s %s the %ld %s %sowed %s.", Monnam(shkp), takes, loss,
-                  currency(loss), strncmp(eshkp->customer, plname,
+                  currency(loss), strncmp(eshkp->customer, u.uplname,
                                           PL_NSIZ) ? "" : "you ",
                   shkp->female ? "her" : "him");
             /* shopkeeper has now been paid in full */
@@ -2401,7 +2401,7 @@ stolen_value(struct obj *obj, xchar x, xchar y, boolean peaceful,
         if (!silent) {
             if (cansee(shkp->mx, shkp->my)) {
                 Norep("%s booms: \"%s, you are a thief!\"", Monnam(shkp),
-                      plname);
+                      u.uplname);
             } else
                 Norep("You hear a scream, \"Thief!\"");
         }
@@ -3113,15 +3113,15 @@ shk_move(struct monst *shkp)
             return 0;
         }
         if (eshkp->following) {
-            if (strncmp(eshkp->customer, plname, PL_NSIZ)) {
-                verbalize("%s, %s!  I was looking for %s.", Hello(shkp), plname,
-                          eshkp->customer);
+            if (strncmp(eshkp->customer, u.uplname, PL_NSIZ)) {
+                verbalize("%s, %s!  I was looking for %s.", Hello(shkp),
+                          u.uplname, eshkp->customer);
                 eshkp->following = 0;
                 return 0;
             }
             if (moves > followmsg + 4) {
                 verbalize("%s, %s!  Didn't you forget to pay?", Hello(shkp),
-                          plname);
+                          u.uplname);
                 followmsg = moves;
                 if (!rn2(9)) {
                     pline("%s doesn't like customers who don't pay.",
@@ -3389,7 +3389,7 @@ pay_for_damage(const char *dmgstr, boolean cant_mollify)
     y = appear_here->place.y;
 
     /* not the best introduction to the shk... */
-    strncpy(ESHK(shkp)->customer, plname, PL_NSIZ);
+    strncpy(ESHK(shkp)->customer, u.uplname, PL_NSIZ);
 
     /* if the shk is already on the war path, be sure it's all out */
     if (ANGRY(shkp) || ESHK(shkp)->following) {
@@ -3625,12 +3625,13 @@ shk_chat(struct monst *shkp)
         pline("%s mentions how much %s dislikes %s customers.", shkname(shkp),
               mhe(shkp), eshk->robbed ? "non-paying" : "rude");
     else if (eshk->following) {
-        if (strncmp(eshk->customer, plname, PL_NSIZ)) {
-            verbalize("%s %s!  I was looking for %s.", Hello(shkp), plname,
+        if (strncmp(eshk->customer, u.uplname, PL_NSIZ)) {
+            verbalize("%s %s!  I was looking for %s.", Hello(shkp), u.uplname,
                       eshk->customer);
             eshk->following = 0;
         } else {
-            verbalize("%s %s!  Didn't you forget to pay?", Hello(shkp), plname);
+            verbalize("%s %s!  Didn't you forget to pay?", Hello(shkp),
+                      u.uplname);
         }
     } else if (eshk->billct) {
         long total = addupbill(shkp) + eshk->debit;

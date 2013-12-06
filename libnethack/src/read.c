@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-23 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1073,7 +1073,7 @@ seffects(struct obj *sobj, boolean * known)
                (!confused || sobj->cursed ? ALL_MAP : 0));
         if (Hallucination)      /* Ommmmmm! */
             pline("Your mind releases itself from mundane concerns.");
-        else if (!strncmpi(plname, "Maud", 4))
+        else if (!strncmpi(u.uplname, "Maud", 4))
             pline
                 ("As your mind turns inward on itself, you forget everything else.");
         else if (rn2(2))

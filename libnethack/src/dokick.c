@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1314,11 +1314,11 @@ impact_drop(struct obj *missile, xchar x, xchar y, xchar dlev)
             pline("You removed %ld %s worth of goods!", price, currency(price));
             if (cansee(shkp->mx, shkp->my)) {
                 if (ESHK(shkp)->customer[0] == 0)
-                    strncpy(ESHK(shkp)->customer, plname, PL_NSIZ);
+                    strncpy(ESHK(shkp)->customer, u.uplname, PL_NSIZ);
                 if (angry)
                     pline("%s is infuriated!", Monnam(shkp));
                 else
-                    pline("\"%s, you are a thief!\"", plname);
+                    pline("\"%s, you are a thief!\"", u.uplname);
             } else
                 You_hear("a scream, \"Thief!\"");
             hot_pursuit(shkp);

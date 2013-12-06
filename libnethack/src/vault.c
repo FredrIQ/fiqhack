@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -330,7 +330,7 @@ invault(void)
 
         if (u.ualign.type == A_LAWFUL &&
             /* ignore trailing text, in case player includes character's rank */
-            strncmpi(buf, plname, (int)strlen(plname)) != 0) {
+            strncmpi(buf, u.uplname, (int)strlen(u.uplname)) != 0) {
             adjalign(-1);       /* Liar! */
         }
 
@@ -820,7 +820,7 @@ paygd(void)
         gx = level->rooms[EGD(grd)->vroom].lx + rn2(2);
         gy = level->rooms[EGD(grd)->vroom].ly + rn2(2);
         sprintf(buf, "To Croesus: here's the gold recovered from %s the %s.",
-                plname, mons[u.umonster].mname);
+                u.uplname, mons[u.umonster].mname);
         make_grave(level, gx, gy, buf);
     }
 
