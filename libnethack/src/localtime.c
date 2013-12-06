@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-12-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) Robert Patrick Rankin, 1991                      */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -20,20 +20,24 @@
 
 static struct tm *getlt(void);
 
+long
+get_tz_offset(void)
+{
+#if !defined(__FreeBSD__)
+    tzset();    /* sets the extern "timezone" which has the offset from UTC in
+                   seconds */
+    return timezone;
+#else
+    time_t t = time(NULL);
+
+    return -localtime(&t)->tm_gmtoff;
+#endif
+}
+
 static struct tm *
 getlt(void)
 {
-    if (program_state.restoring) {
-        /* the game might have been started in a different timezone. Our
-           timestamps are utc time. localtime() will subtract the current
-           timezone offset from the timestamp to form a local timestamp. The
-           following calculation causes localtime to return data that is local
-           to the original timezone, not the current one. */
-        unsigned long long adjusted =
-            turntime + current_timezone - replay_timezone;
-        return localtime((time_t *) & adjusted);
-    }
-    return localtime((time_t *) & turntime);
+    return gmtime((time_t *) & turntime);
 }
 
 int
@@ -51,9 +55,9 @@ yyyymmdd(time_t date)
     if (date == 0)
         lt = getlt();
     else
-        lt = localtime(&date);
+        lt = gmtime(&date);
 
-    /* just in case somebody's localtime supplies (year % 100) rather than the
+    /* just in case somebody's gmtime supplies (year % 100) rather than the
        expected (year - 1900) */
     if (lt->tm_year < 70)
         datenum = (long)lt->tm_year + 2000L;

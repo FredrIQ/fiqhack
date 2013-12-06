@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-12-06 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -181,21 +181,6 @@ log_command_list(void)
 }
 
 
-long
-get_tz_offset(void)
-{
-#if !defined(__FreeBSD__)
-    tzset();    /* sets the extern "timezone" which has the offset from UTC in
-                   seconds */
-    return timezone;
-#else
-    time_t t = time(NULL);
-
-    return -localtime(&t)->tm_gmtoff;
-#endif
-}
-
-
 void
 log_newgame(int logfd, unsigned long long start_time, unsigned int seed,
             int playmode)
@@ -227,20 +212,6 @@ log_newgame(int logfd, unsigned long long start_time, unsigned int seed,
             genders[u.initgend].adj, aligns[u.initalign].adj);
     log_command_list();
     log_game_opts();
-    /* all the timestamps are UTC, so timezone info is required to interpret
-       them */
-    log_timezone(get_tz_offset());
-}
-
-
-
-void
-log_timezone(int tz_offset)
-{
-    if (iflags.disable_log || logfile == -1)
-        return;
-
-    lprintf("\nTZ%d", tz_offset);
 }
 
 

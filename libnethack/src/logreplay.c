@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-05 */
+/* Last modified by Alex Smith, 2013-12-06 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -313,17 +313,12 @@ void
 replay_end(void)
 {
     int i;
-    long tz_off;
 
     if (!loginfo.flog)
         return;
 
     fclose(loginfo.flog);
     loginfo.flog = 0;
-
-    tz_off = get_tz_offset();
-    if (tz_off != replay_timezone)
-        log_timezone(tz_off);
 
     /* restore saved options */
     for (i = 0; saved_options[i].name; i++)
@@ -693,17 +688,6 @@ replay_read_newgame(unsigned long long *init, int *playmode, char *namebuf,
     mt_srand(seed);
 
     replay_read_commandlist();
-}
-
-
-static void
-replay_read_timezone(char *token)
-{
-    int n;
-
-    n = sscanf(token, "TZ%d", &replay_timezone);
-    if (n != 1)
-        parse_error("Bad timezone offset data.");
 }
 
 
@@ -1115,10 +1099,6 @@ replay_run_cmdloop(boolean optonly, boolean singlestep, boolean fast)
         switch (token[0]) {
         case '!':      /* Option */
             replay_read_option(token);
-            break;
-
-        case 'T':      /* timezone offset */
-            replay_read_timezone(token);
             break;
 
         case '>':      /* command */

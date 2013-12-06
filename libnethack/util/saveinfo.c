@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-12-06 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* The code in this file is yours to do whatever you want with.   */
 
@@ -237,16 +237,6 @@ parse_dir(char *token)
 
 
 static void
-parse_timezone(char *token, long tcount)
-{
-    int tz;
-
-    sscanf(token, "TZ%d", &tz);
-    printf("%05ld: Timezone offset: %d seconds\n", tcount, tz);
-}
-
-
-static void
 parse_result(char *token)
 {
     unsigned int state;
@@ -362,9 +352,6 @@ main(int argc, char *argv[])
             break;
         case 'y':
             parse_yesno(tokens[tnum]);
-            break;
-        case 'T':
-            parse_timezone(tokens[tnum], tnum);
             break;
         case 'm':
             printf("menu ");

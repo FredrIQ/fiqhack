@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-04 */
+/* Last modified by Alex Smith, 2013-12-06 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -726,6 +726,7 @@ extern int wiz_light_sources(void);
 
 /* ### localtime.c ### */
 
+extern long get_tz_offset(void);
 extern int getyear(void);
 extern long yyyymmdd(time_t);
 extern int phase_of_the_moon(void);
@@ -750,7 +751,6 @@ extern int doclose(int dx, int dy, int dz);
 extern void log_newgame(int logfd, unsigned long long start_time,
                         unsigned int seed, int playmode);
 extern void log_command(int cmd, int count, struct nh_cmd_arg *arg);
-extern void log_timezone(int tz_offset);
 extern void log_command_result(void);
 extern void log_revert_command(void);
 extern void log_option(struct nh_option_desc *opt);
@@ -765,7 +765,6 @@ extern void log_bones(const char *bonesbuf, int buflen);
 extern void log_init(void);
 extern void log_finish(enum nh_log_status status);
 extern void log_truncate(void);
-extern long get_tz_offset(void);
 
 /* ### logreplay.c ### */
 
