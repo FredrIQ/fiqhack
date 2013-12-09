@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-12-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -22,9 +22,9 @@ static void wd_message(void);
 static void pre_move_tasks(boolean);
 
 static void newgame(void);
-static void welcome(boolean);
 static void handle_lava_trap(boolean didmove);
 
+static void command_input(int cmdidx, int rep, struct nh_cmd_arg *arg);
 
 static void
 wd_message(void)
@@ -45,10 +45,7 @@ nh_lib_init(const struct nh_window_procs *procs, char **paths)
 {
     int i;
 
-    if (!api_entry_checkpoint())        /* not sure anything in here can
-                                           actually call panic */
-        return;
-
+    API_ENTRY_CHECKPOINT_RETURN_VOID_ON_ERROR();
     windowprocs = *procs;
 
     for (i = 0; i < PREFIX_COUNT; i++)
@@ -60,7 +57,7 @@ nh_lib_init(const struct nh_window_procs *procs, char **paths)
 
     current_timezone = get_tz_offset();
 
-    api_exit();
+    API_EXIT();
 }
 
 
@@ -83,23 +80,21 @@ nh_lib_exit(void)
 boolean
 nh_exit_game(int exit_type)
 {
-    boolean log_disabled = iflags.disable_log;
-
-    if (!api_entry_checkpoint()) {      /* not sure anything in here can
-                                           actually call panic */
-        iflags.disable_log = log_disabled;
-        return TRUE;    /* terminate was called, so exit is successful */
-    }
-
-    program_state.forced_exit = TRUE;
-
-    /* clean up after viewing a game replay */
-    if (program_state.viewing)
-        nh_view_replay_finish();
+    /* This routine always throws an exception, and normally doesn't return (it
+       lets nh_play_game do the returning). It will, however, have to return
+       itself if the game isn't running. In such a case, all options give a
+       success return; saving/exiting the game is easy (but a no-op) if it isn't
+       running.
+    */
+    API_ENTRY_CHECKPOINT_RETURN_ON_ERROR(TRUE);
 
     xmalloc_cleanup();
     iflags.disable_log = TRUE;
+
     if (program_state.game_running) {
+
+        program_state.forced_exit = TRUE;
+
         switch (exit_type) {
         case EXIT_REQUEST_SAVE:
             dosave();   /* will ask "really save?" and, if 'y', eventually call 
@@ -107,8 +102,7 @@ nh_exit_game(int exit_type)
             break;
 
         case EXIT_FORCE_SAVE:
-            dosave0(TRUE);
-            terminate();
+            terminate(GAME_DETACHED);
             break;
 
         case EXIT_REQUEST_QUIT:
@@ -117,30 +111,29 @@ nh_exit_game(int exit_type)
 
         case EXIT_FORCE_QUIT:
             done(QUIT);
-            break;      /* not reached */
+            break;      /* not reached; quitting can't be lifesaved */
 
         case EXIT_PANIC:
-            /* freeing things should be safe */
-            freedynamicdata();
-            dlb_cleanup();
-            panic("UI problem.");
+            /* We can't/shouldn't abort the turn just because the client claimed
+               to malfunction; that's exploitable. We can safely log the
+               failure, though. Perhaps we should add some method of specifying
+               a panic message. */
+            paniclog("ui_problem", "Unspecified UI problem.");
             break;
         }
 
-        iflags.disable_log = log_disabled;
-        api_exit();
+        API_EXIT();
+
         program_state.forced_exit = FALSE;
         return FALSE;
+
+    } else {
+        /* Calling terminate() will get us out of nested contexts safely. I'm
+           not sure if this can happen with no game running, but it doesn't hurt
+           to code for the possibility it might (via jumping back to the
+           checkpoint with terminate(). */
+        terminate(GAME_ALREADY_OVER); /* doesn't return */
     }
-
-    iflags.disable_log = log_disabled;
-    /* calling terminate() will get us out of nested contexts safely, eg:
-       UI_cmdloop -> nh_command -> UI_update_screen (problem happens here) ->
-       nh_exit_game will jump all the way back to UI_cmdloop */
-    terminate();
-
-    api_exit(); /* not reached */
-    return TRUE;
 }
 
 
@@ -251,14 +244,13 @@ post_init_tasks(void)
 }
 
 
-boolean
-nh_start_game(int fd, const char *name, int irole, int irace, int igend,
-              int ialign, enum nh_game_modes playmode)
+int
+nh_create_game(int fd, const char *name, int irole, int irace, int igend,
+               int ialign, enum nh_game_modes playmode)
 {
     unsigned int seed = 0;
 
-    if (!api_entry_checkpoint())
-        return FALSE;   /* init failed; programmer error! */
+    API_ENTRY_CHECKPOINT_RETURN_ON_ERROR(FALSE);
 
     if (fd == -1 || !name || !*name)
         goto err_out;
@@ -286,67 +278,104 @@ nh_start_game(int fd, const char *name, int irole, int irace, int igend,
     log_newgame(fd, turntime, seed, playmode);
 
     newgame();
-    wd_message();
 
     flags.move = 0;
-    flags.verbose = FALSE;
-    set_wear();
-    flags.verbose = TRUE;
-    pickup(1);
 
     log_command_result();
 
     program_state.game_running = TRUE;
-    youmonst.movement = NORMAL_SPEED;   /* give the hero some movement points */
-    realtime_tasks();
-    post_init_tasks();
 
-    api_exit();
+    /* Now save and exit the newly created game. */
+    dosave0(FALSE);
+    program_state.something_worth_saving = 0;
+    program_state.game_running = FALSE;
+    u.uhp = -1;  /* universal game over indicator; TODO: get rid of this */
+
+    API_EXIT();
     return TRUE;
 
 err_out:
-    api_exit();
+    API_EXIT();
     return FALSE;
 }
 
-enum nh_restore_status
-nh_restore_game(int fd, struct nh_window_procs *rwinprocs,
-                volatile boolean force_replay)
+enum nh_play_status
+nh_play_game(int fd)
 {
-    /* technically force_replay doesn't need to be volatile because it's never
-       changed after the setjmp call, but some compilers don't realise that */
-
     int playmode, irole, irace, igend, ialign;
+    volatile int ret;
     unsigned long long temp_turntime;
     char namebuf[PL_NSIZ];
 
-    /* some compilers can't cope with the fact that all subsequent stores to
-       error are not dead, but become important if the error handler longjumps
-       back. volatile is required to prevent invalid optimization based on that
-       wrong assumption. */
-    volatile enum nh_restore_status error = GAME_RESTORED;
-
-    if (fd == -1)
+    if (fd < 0)
         return ERR_BAD_ARGS;
 
     switch (nh_get_savegame_status(fd, NULL)) {
     case LS_INVALID:
         return ERR_BAD_FILE;
     case LS_DONE:
-        return ERR_GAME_OVER;
+        /* TODO: Load in replay mode. */
+        return GAME_ALREADY_OVER;
     case LS_CRASHED:
-        force_replay = TRUE;
-        break;
+        return ERR_RESTORE_FAILED;
     case LS_IN_PROGRESS:
-        return ERR_IN_PROGRESS;
     case LS_SAVED:
         break;  /* default, everything is A-OK */
     }
 
-    if (!api_entry_checkpoint())
-        goto error_out;
+    /* setjmp cannot portably do anything with its return value but a series of
+       comparisons; even assigning it to a variable directly doesn't
+       work. Instead, we enumerate all the possible values, which works even on
+       C implementations that can't generate a temporary to do an assignment
+       inside a setjmp, and will probably be optimized by compilers that can. */
+    API_ENTRY_CHECKPOINT() {
+        /* Normal termination statuses. */
+    IF_API_EXCEPTION(GAME_DETACHED):
+        ret = GAME_DETACHED;
+        goto normal_exit;
+    IF_API_EXCEPTION(GAME_OVER):
+        ret = GAME_OVER;
+        goto normal_exit;
+    IF_API_EXCEPTION(GAME_ALREADY_OVER):
+        ret = GAME_ALREADY_OVER;
+        goto normal_exit;
 
-    error = ERR_BAD_FILE;
+        /* This happens if the game needs to escape from a deeply nested
+           context. The longjmp() is not enough by itself in case the network
+           API is involved (returning from nh_play_game out of sequence causes
+           the longjmp() to propagate across the newtork). */
+    IF_API_EXCEPTION(RESTART_PLAY):
+        ret = RESTART_PLAY;
+        goto normal_exit;
+
+        /* Errors while loading. These still use the normal_exit codepath. */
+    IF_API_EXCEPTION(ERR_BAD_ARGS):
+        ret = ERR_BAD_ARGS;
+        goto normal_exit;
+    IF_API_EXCEPTION(ERR_BAD_FILE):
+        ret = ERR_BAD_FILE;
+        goto normal_exit;
+    IF_API_EXCEPTION(ERR_IN_PROGRESS):
+        ret = ERR_IN_PROGRESS;
+        goto normal_exit;
+    IF_API_EXCEPTION(ERR_RESTORE_FAILED):
+        ret = ERR_RESTORE_FAILED;
+        goto normal_exit;
+    IF_API_EXCEPTION(ERR_REPLAY_FAILED):
+        ret = ERR_REPLAY_FAILED;
+        goto normal_exit;
+
+        /* Catchall. This should never happen. We can't call panic() because the
+           exit_jmp_buf is no longer valid, also if the state is this badly
+           screwed up we probably can't rely on it working. So we just log a
+           failure and exit the program. */
+    IF_ANY_API_EXCEPTION():
+        paniclog("panic", "impossible program termination");
+        pline("Internal error: program terminated in an impossible way.");
+        ret = GAME_DETACHED;
+        goto normal_exit;
+    }
+    
     replay_set_logfile(fd);     /* store the fd and try to get a lock or exit */
     replay_begin();
 
@@ -361,7 +390,7 @@ nh_restore_game(int fd, struct nh_window_procs *rwinprocs,
 
     /* set special windowprocs which will autofill requests for user input with 
        data from the log file */
-    replay_setup_windowprocs(rwinprocs);
+    replay_setup_windowprocs(NULL);
 
     startup_common(namebuf, playmode);
     u.initrole = irole;
@@ -369,26 +398,17 @@ nh_restore_game(int fd, struct nh_window_procs *rwinprocs,
     u.initgend = igend;
     u.initalign = ialign;
     u.ubirthday = turntime = temp_turntime;
-    if (!force_replay) {
-        error = ERR_RESTORE_FAILED;
-        replay_run_cmdloop(TRUE, FALSE, TRUE);
-        replay_jump_to_endpos();
-        if (!dorecover_fd(fd)) {
-            replay_undo_jump_to_endpos();
-            goto error_out2;
-        }
+
+    replay_run_cmdloop(TRUE, FALSE, TRUE);
+    replay_jump_to_endpos();
+    if (!dorecover_fd(fd)) {
         replay_undo_jump_to_endpos();
-        wd_message();
-        program_state.game_running = 1;
-        post_init_tasks();
-    } else {
-        replay_run_cmdloop(TRUE, TRUE, FALSE);  /* option setup only */
-        newgame();
-        /* try replaying instead */
-        error = ERR_REPLAY_FAILED;
-        replay_run_cmdloop(FALSE, FALSE, TRUE);
-        replay_sync_save();
+        goto error_out;
     }
+    replay_undo_jump_to_endpos();
+    wd_message();
+    program_state.game_running = 1;
+    post_init_tasks();
 
     /* restore standard window procs */
     replay_restore_windowprocs();
@@ -400,40 +420,96 @@ nh_restore_game(int fd, struct nh_window_procs *rwinprocs,
     log_truncate();
     log_init(); /* must be called before we start writing to the log */
 
-    /* info might not have reached the ui while alternate window procs were set 
-     */
+    /* while loading a save file, we don't do rendering */
     doredraw();
-
-    /* nh_start_game() does this via newgame(), but since this function doesn't
-       call newgame(), we have to do it here instead. */
     notify_levelchange(NULL);
 
     bot();
     flush_screen();
 
-    welcome(FALSE);
     realtime_messages(TRUE, TRUE);
     update_inventory();
 
-    api_exit();
-    return GAME_RESTORED;
+    /* The main loop. */
+    boolean completed = TRUE;
+    boolean interrupted = FALSE;
+    while (1) {
+        char cmd[BUFSZ];
+        struct nh_cmd_arg arg;
+        int limit;
 
-error_out2:
-    api_exit();
+        int cmdidx;
+
+        (*windowprocs.win_request_command)
+            (wizard, completed, interrupted, cmd, &arg, &limit);
+        cmdidx = get_command_idx(cmd);
+        if (!strcmp(cmd, "repeat")) {
+            cmdidx = -1;
+            
+        } else if (cmdidx < 0) {
+            pline("Unrecognised command '%s'", cmd);
+            completed = TRUE;
+            interrupted = FALSE;
+            continue;
+        } else if (multi > 0) {
+            /* allow interruption of multi-turn commands */
+            nomul(0, NULL);
+        }
+
+        if (program_state.viewing &&
+            (cmdidx < 0 || !(cmdlist[cmdidx].flags & CMD_NOTIME))) {
+            pline("Command '%s' unavailable while watching/replaying a game.",
+                  cmd);
+            completed = TRUE;
+            interrupted = FALSE;
+            continue;
+        }
+
+        /* TODO: Better resolution for turntime */
+        turntime = time(NULL);
+        log_command(cmdidx, limit, &arg);
+
+        unsigned int pre_rngstate = mt_nextstate();
+        int pre_moves = moves;
+
+        command_input(cmdidx, limit, &arg);
+
+        /* make sure we actually want this command to be logged */
+        if (cmdidx >= 0 && (cmdlist[cmdidx].flags & CMD_NOTIME) &&
+            pre_rngstate == mt_nextstate() && pre_moves == moves)
+            log_revert_command();   /* nope, cut it out of the log */
+        else
+            log_command_result();   /* log the result */
+
+        /* 
+         * performing a command can put the game into several different states:
+         *  - the command completes immediately: a simple move or an attack etc.
+         *    multi == 0, occupation == NULL
+         *  - if a count is given, the command will (usually) take count turns
+         *    multi == count (> 0), occupation == NULL
+         *  - the command may cause a delay: for ex. putting on or removing
+         *    armor multi == -delay (< 0), occupation == NULL
+         *    multi is incremented in you_moved
+         *  - the command may take multiple moves, and require a callback to be
+         *    run for each move. example: forcing a lock
+         *    multi >= 0, occupation == callback
+         */
+        completed = multi == 0 && !occupation;
+        interrupted = FALSE; /* TODO */
+    }
 
 error_out:
+    API_EXIT();
+    ret = ERR_RESTORE_FAILED;
+
+normal_exit:
     replay_restore_windowprocs();
     program_state.restoring = FALSE;
     iflags.disable_log = FALSE;
     replay_end();
     unlock_fd(fd);
 
-    if (error == ERR_RESTORE_FAILED) {
-        raw_printf("Restore failed. Attempting to replay instead.\n");
-        error = nh_restore_game(fd, rwinprocs, TRUE);
-    }
-
-    return error;
+    return ret;
 }
 
 
@@ -535,12 +611,12 @@ you_moved(void)
                 u.ublesscnt--;
             iflags.botl = 1;
 
-            /* One possible result of prayer is healing.  Whether or * not you
-               get healed depends on your current hit points. * If you are
-               allowed to regenerate during the prayer, the * end-of-prayer
-               calculation messes up on this. * Another possible result is
-               rehumanization, which requires * that encumbrance and movement
-               rate be recalculated. */
+            /* One possible result of prayer is healing. Whether or not you get
+               healed depends on your current hit points. If you are allowed to
+               regenerate during the prayer, the end-of-prayer calculation
+               messes up on this. Another possible result is rehumanization,
+               which requires that encumbrance and movement rate be
+               recalculated. */
             if (u.uinvulnerable) {
                 /* for the moment at least, you're in tiptop shape */
                 wtcap = UNENCUMBERED;
@@ -802,9 +878,8 @@ pre_move_tasks(boolean didmove)
 }
 
 
-/* perform the command given by cmdidx (in index into cmdlist in cmd.c)
- * returns -1 if the command completes */
-int
+/* perform the command given by cmdidx (an index into cmdlist in cmd.c) */
+static void
 command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
 {
     boolean didmove = FALSE;
@@ -813,14 +888,22 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
         handle_occupation();
     else if (multi == 0 || (multi > 0 && cmdidx != -1)) {
         turnstate.saved_cmd = cmdidx;
-        do_command(cmdidx, rep, TRUE, arg);
-    } else if (multi > 0) {
-        /* allow interruption of multi-turn commands */
-        if (rep == -1) {
+        turnstate.saved_arg = *arg;
+        switch (do_command(cmdidx, rep, TRUE, arg)) {
+        case COMMAND_UNKNOWN:
+            pline("Unrecognised command.");
             nomul(0, NULL);
-            return READY_FOR_INPUT;
+            return;
+        case COMMAND_DEBUG_ONLY:
+            pline("That command is only available in debug mode.");
+            nomul(0, NULL);
+            return;
+        case COMMAND_BAD_ARG:
+            pline("I don't understand what you want that command to apply to.");
+            nomul(0, NULL);
+            return;
         }
-
+    } else if (multi > 0) {
         if (flags.mv) {
             if (multi < COLNO && !--multi)
                 flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
@@ -830,7 +913,13 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
                 nomul(0, NULL);
             }
         } else
-            do_command(turnstate.saved_cmd, multi, FALSE, arg);
+            if (do_command(turnstate.saved_cmd, multi, FALSE,
+                           &turnstate.saved_arg) !=
+                COMMAND_OK) {
+                pline("Unrecognised command."); 
+                nomul(0, NULL);
+                return;
+            }
     }
     /* no need to do anything here for multi < 0 */
 
@@ -868,82 +957,6 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
 
     if (multi == 0 && !occupation)
         flush_screen(); /* Flush screen buffer */
-
-    return -1;
-}
-
-
-/* command wrapper function: make sure the game is able to run commands, perform
- * logging and generate reasonable return values for api clients with no access
- * to internal state */
-int
-nh_command(const char *cmd, int rep, struct nh_cmd_arg *arg)
-{
-    int cmdidx, cmdresult;
-    unsigned int pre_rngstate, pre_moves;
-
-    if (!program_state.game_running)
-        return ERR_GAME_NOT_RUNNING;
-
-    cmdidx = get_command_idx(cmd);
-    if (program_state.viewing &&
-        (cmdidx < 0 || !(cmdlist[cmdidx].flags & CMD_NOTIME)))
-        return ERR_COMMAND_FORBIDDEN;   /* */
-
-    if (!api_entry_checkpoint()) {
-        /* terminate() in end.c will arrive here */
-        if (program_state.panicking)
-            return GAME_PANICKED;
-        if (!program_state.gameover)
-            return GAME_SAVED;
-        if (program_state.forced_exit)
-            return ERR_FORCED_EXIT;
-        return GAME_OVER;
-    }
-
-    /* if the game is being restored, turntime is set in restore_read_command */
-    turntime = time(NULL);
-    log_command(cmdidx, rep, arg);
-
-    pre_rngstate = mt_nextstate();
-    pre_moves = moves;
-
-    /* do the deed. command_input returns -1 if the command completed normally */
-    cmdresult = command_input(cmdidx, rep, arg);
-
-    /* make sure we actually want this command to be logged */
-    if (cmdidx >= 0 && (cmdlist[cmdidx].flags & CMD_NOTIME) &&
-        pre_rngstate == mt_nextstate() && pre_moves == moves)
-        log_revert_command();   /* nope, cut it out of the log */
-    else
-        log_command_result();   /* log the result */
-
-    api_exit(); /* no unsafe operations after this point */
-
-    if (cmdresult != -1)
-        return cmdresult;
-
-    /* 
-     * performing a command can put the game into several different states:
-     *  - the command completes immediately: a simple move or an attack etc
-     *    multi == 0, occupation == NULL
-     *  - if a count is given, the command will (usually) take count turns
-     *    multi == count (> 0), occupation == NULL
-     *  - the command may cause a delay: for ex. putting on or removing armor
-     *    multi == -delay (< 0), occupation == NULL
-     *    multi is incremented in you_moved
-     *  - the command may take multiple moves, and require a callback to be
-     *    run for each move. example: forcing a lock
-     *    multi >= 0, occupation == callback
-     */
-    if (multi >= 0 && occupation)
-        return OCCUPATION_IN_PROGRESS;
-    else if (multi > 0)
-        return MULTI_IN_PROGRESS;
-    else if (multi < 0)
-        return POST_ACTION_DELAY;
-
-    return READY_FOR_INPUT;
 }
 
 
@@ -1001,15 +1014,6 @@ newgame(void)
     if (MON_AT(level, u.ux, u.uy))
         mnexto(m_at(level, u.ux, u.uy));
     makedog();
-    doredraw();
-
-    /* help the window port get it's display charset/tiles sorted out */
-    notify_levelchange(NULL);
-
-    if (flags.legacy) {
-        flush_screen();
-        com_pager(1);
-    }
 
     /* Stop autoexplore revisiting the entrance stairs (or position). */
     level->locations[u.ux][u.uy].mem_stepped = 1;
@@ -1019,13 +1023,9 @@ newgame(void)
     historic_event(FALSE,
                    "entered the Dungeons of Doom to retrieve the Amulet of Yendor!");
 
-    /* Success! */
-    welcome(TRUE);
-
     /* prepare for the first move */
     flags.move = 0;
     set_wear();
-    pickup(1);
 
     log_command_result();
 
@@ -1034,39 +1034,6 @@ newgame(void)
     post_init_tasks();
 
     return;
-}
-
-
-/* show "welcome [back] to NetHack" message at program startup */
-static void
-welcome(boolean new_game)
-{       /* false => restoring an old game */
-    char buf[BUFSZ];
-    boolean currentgend = Upolyd ? u.mfemale : flags.female;
-
-    /* 
-     * The "welcome back" message always describes your innate form
-     * even when polymorphed or wearing a helm of opposite alignment.
-     * Alignment is shown unconditionally for new games; for restores
-     * it's only shown if it has changed from its original value.
-     * Sex is shown for new games except when it is redundant; for
-     * restores it's only shown if different from its original value.
-     */
-    *buf = '\0';
-    if (new_game || u.ualignbase[A_ORIGINAL] != u.ualignbase[A_CURRENT])
-        sprintf(eos(buf), " %s", align_str(u.ualignbase[A_ORIGINAL]));
-    if (!urole.name.f &&
-        (new_game ? (urole.allow & ROLE_GENDMASK) ==
-         (ROLE_MALE | ROLE_FEMALE) : currentgend != u.initgend))
-        sprintf(eos(buf), " %s", genders[currentgend].adj);
-
-    pline(new_game ? "%s %s, welcome to NetHack!  You are a%s %s %s." :
-          "%s %s, the%s %s %s, welcome back to NetHack!", Hello(NULL), plname,
-          buf, urace.adj, (currentgend &&
-                           urole.name.f) ? urole.name.f : urole.name.m);
-
-    if (*level->levname)
-        pline("You named this level: %s.", level->levname);
 }
 
 /*allmain.c*/

@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2013-10-29
+# Last modified by Alex Smith, 2013-11-27
 build/*
 *.swp
 *.kate-swp
@@ -13,3 +13,5 @@ cscope.*
 cmake_install.cmake
 install_manifest.txt
 tags
+TAGS
+

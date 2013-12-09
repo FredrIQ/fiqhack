@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-12-05 */
 #ifndef NHCLIENT_H
 # define NHCLIENT_H
 
@@ -41,7 +41,6 @@ extern int _snprintf_s(char *, size_t, size_t, const char *, ...);
 # define DEFAULT_PORT 53421     /* matches the definition in nhserver.h */
 
 extern struct nh_window_procs AIMAKE_REVERSE_EXPORT(windowprocs);
-extern struct nh_window_procs alt_windowprocs;
 extern int current_game;
 extern jmp_buf ex_jmp_buf;
 extern int ex_jmp_buf_valid;

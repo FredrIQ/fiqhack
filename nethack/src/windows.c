@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-11-30 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -29,6 +29,7 @@ struct nh_window_procs curses_windowprocs = {
     curses_display_buffer,
     curses_update_status,
     curses_print_message,
+    curses_request_command,
     curses_display_menu,
     curses_display_objects,
     curses_list_items,

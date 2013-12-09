@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-11-23 */
+/* Last modified by Sean Hunt, 2013-12-10 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -8,7 +8,7 @@
 
 #include "nhclient.h"
 
-struct nh_window_procs windowprocs, alt_windowprocs;
+struct nh_window_procs windowprocs;
 int current_game;
 struct nh_option_desc *option_list;
 
@@ -35,7 +35,6 @@ nhnet_lib_init(const struct nh_window_procs *winprocs)
 #endif
 
     windowprocs = *winprocs;
-    alt_windowprocs = *winprocs;
 }
 
 
@@ -150,51 +149,26 @@ nhnet_list_games(int done, int show_all, int *count)
 
 
 int
-nhnet_restore_game(int gid, struct nh_window_procs *rwinprocs)
+nhnet_play_game(int gid)
 {
     int ret;
     json_t *jmsg;
+
+    if (!nhnet_active())
+        return nh_play_game(gid);
 
     if (!api_entry())
         return ERR_NETWORK_ERROR;
 
     jmsg = json_pack("{si}", "gameid", gid);
-    jmsg = send_receive_msg("restore_game", jmsg);
+    current_game = gid;
+    jmsg = send_receive_msg("play_game", jmsg);
+    current_game = 0;
     if (json_unpack(jmsg, "{si!}", "return", &ret) == -1) {
-        print_error("Incorrect return object in nhnet_restore_game");
+        print_error("Incorrect return object in nhnet_play_game");
         ret = ERR_NETWORK_ERROR;        /* we don't know the error actually
                                            was, any error code will do */
     }
-    json_decref(jmsg);
-
-    if (ret == GAME_RESTORED)
-        current_game = gid;
-
-    api_exit();
-    return ret;
-}
-
-
-nh_bool
-nhnet_start_game(const char *name, int role, int race, int gend, int align,
-                 enum nh_game_modes playmode)
-{
-    int ret;
-    json_t *jmsg;
-
-    if (!api_entry())
-        return 0;
-
-    jmsg =
-        json_pack("{ss,si,si,si,si,si}", "name", name, "role", role, "race",
-                  race, "gender", gend, "alignment", align, "mode", playmode);
-    jmsg = send_receive_msg("start_game", jmsg);
-    if (json_unpack(jmsg, "{si,si!}", "return", &ret, "gameid", &current_game)
-        == -1) {
-        print_error("Incorrect return object in nhnet_start_game");
-        ret = 0;
-    }
-
     json_decref(jmsg);
     api_exit();
     return ret;
@@ -202,138 +176,27 @@ nhnet_start_game(const char *name, int role, int race, int gend, int align,
 
 
 int
-nhnet_command(const char *volatile cmd, int rep, struct nh_cmd_arg *arg)
+nhnet_create_game(const char *name, int role, int race, int gend, int align,
+                  enum nh_game_modes playmode)
 {
+    json_t *jmsg;
     int ret;
-    json_t *jmsg, *jarg;
-
-    if (!nhnet_active())
-        return nh_command(cmd, rep, arg);
 
     if (!api_entry())
-        return ERR_NETWORK_ERROR;
-
-    xmalloc_cleanup();
-
-    switch (arg->argtype) {
-    case CMD_ARG_DIR:
-        jarg = json_pack("{si,si}", "argtype", arg->argtype, "d", arg->d);
-        break;
-
-    case CMD_ARG_POS:
-        jarg =
-            json_pack("{si,si,si}", "argtype", arg->argtype, "x", arg->pos.x,
-                      "y", arg->pos.y);
-        break;
-
-    case CMD_ARG_OBJ:
-        jarg =
-            json_pack("{si,si}", "argtype", arg->argtype, "invlet",
-                      arg->invlet);
-        break;
-
-    case CMD_ARG_NONE:
-    default:
-        jarg = json_pack("{si}", "argtype", arg->argtype);
-        break;
-    }
+        return 0;
 
     jmsg =
-        json_pack("{ss,so,si}", "command", cmd ? cmd : "", "arg", jarg, "count",
-                  rep);
-    jmsg = send_receive_msg("game_command", jmsg);
-    if (json_unpack(jmsg, "{si!}", "return", &ret) == -1) {
-        print_error("Incorrect return object in nhnet_command");
+        json_pack("{ss,si,si,si,si,si}", "name", name, "role", role, "race",
+                  race, "gender", gend, "alignment", align, "mode", playmode);
+    jmsg = send_receive_msg("create_game", jmsg);
+    if (json_unpack(jmsg, "{si}", "return", &ret) == -1) {
+        print_error("Incorrect return object in nhnet_create_game");
         ret = 0;
     }
 
     json_decref(jmsg);
     api_exit();
     return ret;
-}
-
-
-nh_bool
-nhnet_view_replay_start(int fd, struct nh_window_procs * rwinprocs,
-                        struct nh_replay_info * info)
-{
-    int ret;
-    json_t *jmsg;
-    const char *nextcmd;
-
-    if (!nhnet_active())
-        return nh_view_replay_start(fd, rwinprocs, info);
-
-    if (!api_entry())
-        return FALSE;
-
-    alt_windowprocs = *rwinprocs;
-
-    jmsg = send_receive_msg("view_start", json_pack("{si}", "gameid", fd));
-    if (json_unpack
-        (jmsg, "{si,s:{ss,si,si,si,si}}", "return", &ret, "info", "nextcmd",
-         &nextcmd, "actions", &info->actions, "max_actions", &info->max_actions,
-         "moves", &info->moves, "max_moves", &info->max_moves) == -1) {
-        print_error("Incorrect return object in nhnet_view_replay_step");
-        ret = 0;
-    } else
-        strncpy(info->nextcmd, nextcmd, sizeof (info->nextcmd) - 1);
-
-    api_exit();
-    return ret;
-}
-
-
-nh_bool
-nhnet_view_replay_step(struct nh_replay_info * info, enum replay_control action,
-                       int count)
-{
-    int ret;
-    json_t *jmsg;
-    const char *nextcmd;
-
-    if (!nhnet_active())
-        return nh_view_replay_step(info, action, count);
-
-    if (!api_entry())
-        return FALSE;
-
-    jmsg =
-        send_receive_msg("view_step",
-                         json_pack("{si,si,s:{si,si,si,si}}", "action", action,
-                                   "count", count, "info", "actions",
-                                   info->actions, "max_actions",
-                                   info->max_actions, "moves", info->moves,
-                                   "max_moves", info->max_moves));
-    if (json_unpack
-        (jmsg, "{si,s:{ss,si,si,si,si}}", "return", &ret, "info", "nextcmd",
-         &nextcmd, "actions", &info->actions, "max_actions", &info->max_actions,
-         "moves", &info->moves, "max_moves", &info->max_moves) == -1) {
-        print_error("Incorrect return object in nhnet_view_replay_step");
-    } else
-        strncpy(info->nextcmd, nextcmd, sizeof (info->nextcmd) - 1);
-
-    api_exit();
-    return ret;
-}
-
-
-void
-nhnet_view_replay_finish(void)
-{
-    if (!nhnet_active())
-        return nh_view_replay_finish();
-
-    xmalloc_cleanup();
-
-    alt_windowprocs = windowprocs;
-
-    if (!api_entry())
-        return;
-
-    send_receive_msg("view_finish", json_object());
-
-    api_exit();
 }
 
 
@@ -355,7 +218,7 @@ nhnet_get_commands(int *count)
     jmsg = send_receive_msg("get_commands", jmsg);
     if (json_unpack(jmsg, "{so!}", "cmdlist", &jarr) == -1 ||
         !json_is_array(jarr)) {
-        print_error("Incorrect return object in nhnet_restore_game");
+        print_error("Incorrect return object in nhnet_get_commands");
     } else {
         *count = json_array_size(jarr);
         cmdlist = xmalloc(*count * sizeof (struct nh_cmd_desc));

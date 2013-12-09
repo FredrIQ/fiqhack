@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-11-30 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -128,34 +128,27 @@ get_gamedir(enum game_dirs dirtype, char *buf)
 #endif
 
 
-int
-commandloop(void)
+static int welcomed;
+void
+curses_request_command(nh_bool debug, nh_bool completed, nh_bool interrupted,
+                       char *cmd, struct nh_cmd_arg *cmdarg, int *limit)
 {
-    const char *cmd;
-    int gamestate, count;
-    struct nh_cmd_arg cmdarg;
+    *limit = 0;
+    cmdarg->argtype = CMD_ARG_NONE;
 
-    gamestate = READY_FOR_INPUT;
-    game_is_running = TRUE;
-    reset_prev_cmd();
-    reset_last_dir();
-
-    while (gamestate < GAME_OVER) {
-        count = 0;
-        cmd = NULL;
-
-        if (gamestate == READY_FOR_INPUT)
-            cmd = get_command(&count, &cmdarg);
-        else if (gamestate == MULTI_IN_PROGRESS && interrupt_multi)
-            count = -1;
-
-        interrupt_multi = FALSE;        /* could have been set while no multi
-                                           was in progress */
-        gamestate = nh_command(cmd, count, &cmdarg);
+    if (!welcomed) {
+        strcpy(cmd, "welcome");
+        welcomed = 1;
+        return;
     }
 
-    game_is_running = FALSE;
-    return gamestate;
+    /* TODO: Allow user interruption of long commands? */
+    if (!completed && !interrupted) {
+        strcpy(cmd, "repeat");
+        return;
+    }
+
+    strcpy(cmd, get_command(limit, cmdarg));
 }
 
 
@@ -233,7 +226,7 @@ rungame(void)
         return;
 
     /* 
-     * Describe the player character for naming; see welcome() in allmain.c in
+     * Describe the player character for naming; see dowelcome() in cmd.c in
      * libnethack.
      */
     info = nh_get_roles();
@@ -254,7 +247,7 @@ rungame(void)
                                     info->rolenames_m)[role]);
 
     strncpy(plname, settings.plname, PL_NSIZ);
-    /* The player name is set to "wizard" (again) in nh_start_game, so setting
+    /* The player name is set to "wizard" (again) in nh_create_game, so setting
        it here just prevents wizmode player from being asked for a name. */
     if (ui_flags.playmode == MODE_WIZARD)
         strcpy(plname, "wizard");
@@ -277,16 +270,12 @@ rungame(void)
     }
 
     create_game_windows();
-    if (!nh_start_game(fd, plname, role, race, gend, align, ui_flags.playmode)) {
-        destroy_game_windows();
-        close(fd);
-        return;
-    }
 
-    load_keymap();      /* need to load the keymap after the game has been
-                           started */
-    ret = commandloop();
-    free_keymap();
+    /* Create the game, then immediately load it. */
+    ret = ERR_BAD_FILE;
+    if (nh_create_game(fd, plname, role, race, gend, align, ui_flags.playmode))
+        ret = playgame(fd);
+
     close(fd);
 
     destroy_game_windows();
@@ -515,20 +504,9 @@ loadgame(void)
 
     fd = sys_open(filename, O_RDWR, FILE_OPEN_MASK);
     create_game_windows();
-    if (nh_restore_game(fd, NULL, FALSE) != GAME_RESTORED) {
-        destroy_game_windows();
-        close(fd);
-        if (curses_yn_function
-            ("Failed to load the save. Do you wish to delete the file?", "yn",
-             'n') == 'y')
-            unlink(filename);
-        return FALSE;
-    }
 
-    load_keymap();      /* need to load the keymap after the game has been
-                           started */
-    ret = commandloop();
-    free_keymap();
+    ret = playgame(fd);
+
     close(fd);
 
     destroy_game_windows();
@@ -536,4 +514,22 @@ loadgame(void)
     game_ended(ret, filename);
 
     return TRUE;
+}
+
+
+enum nh_play_status
+playgame(int fd_or_gameno)
+{
+    enum nh_play_status ret;
+
+    game_is_running = TRUE;
+    reset_prev_cmd();
+    reset_last_dir();
+    welcomed = 0;
+    do {
+        ret = nh_play_game(fd_or_gameno);
+    } while (ret == RESTART_PLAY);
+    game_is_running = FALSE;
+
+    return ret;
 }

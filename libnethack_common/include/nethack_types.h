@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-11-23 */
+/* Last modified by Alex Smith, 2013-12-04 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -120,6 +120,10 @@
                                            alter the game state in any way.
                                            Marked commands will not be logged */
 # define CMD_DEBUG      (1 << 14)       /* a wizmode command */
+# define CMD_INTERNAL   (1 << 15)       /* sent automatically by the client;
+                                           not meaningful if sent manually */
+/* note that CMD_INTERNAL commands should be ones that cannot be used to cheat
+   if they're nonetheless sent manually anyway */
 
 /* reserved flag for use by ui code that uses struct nh_cmd_desc internally */
 # define CMD_UI         (1U << 31)
@@ -134,6 +138,7 @@
 # define OCLASS_ANY 'a' /* for autopickup */
 
 enum nh_direction {
+    DIR_SERVERCANCEL = -2,
     DIR_NONE = -1,
     DIR_W = 0,
     DIR_NW,
@@ -206,35 +211,10 @@ enum nh_menuitem_role {
 };
 
 enum nh_command_status {
-    COMMAND_NOT_GIVEN,
+    COMMAND_DEBUG_ONLY,
     COMMAND_UNKNOWN,
     COMMAND_BAD_ARG,
     COMMAND_OK
-};
-
-/* return values for nh_do_move */
-enum nh_input_status {
-    READY_FOR_INPUT,
-    MULTI_IN_PROGRESS,
-    OCCUPATION_IN_PROGRESS,
-    POST_ACTION_DELAY,
-    ERR_NO_INPUT_ALLOWED,
-    ERR_COMMAND_FORBIDDEN,      /* tried to alter the game state while viewing
-                                   a replay */
-
-    /* for a status >= GAME_OVER exit the command loop */
-    GAME_OVER,  /* i.e. player died */
-    GAME_SAVED,
-    GAME_PANICKED,      /* something went wrong in libnethack and panic() was
-                           called */
-    ERR_FORCED_EXIT,    /* exit from the command loop was forced by a call to
-                           nh_exit_game */
-    ERR_GAME_NOT_RUNNING        /* possibilities: the init sequence was
-                                   incorrect and the game is not running YET or 
-                                   some api call other than nh_do_move caused a 
-                                   panic, which killed the game or an attempt
-                                   was made to call nh_do_move after some other 
-                                   final status (>= GAME_OVER) was returned */
 };
 
 enum nh_effect_types {
@@ -252,16 +232,20 @@ enum nh_exit_types {
     EXIT_PANIC
 };
 
-enum nh_restore_status {
-    GAME_RESTORED,
-    ERR_BAD_ARGS,
+enum nh_play_status {
+    /* The game loaded */
+    GAME_DETACHED,      /* the game loaded, then unloaded, it still exists */
+    GAME_OVER,          /* the game loaded, but now it's over */
+    GAME_ALREADY_OVER,  /* the game loaded, some other process ended it */
+    RESTART_PLAY,       /* the server needed to longjmp out of nh_play_game; try
+                           giving the same call again */
+
+    /* The game didn't load */
+    ERR_BAD_ARGS,       /* game ID does not exist, or fd is out of range */
     ERR_BAD_FILE,       /* file isn't a saved game */
-    ERR_GAME_OVER,      /* this is the log of a completed game, play cannot be
-                           resumed */
-    ERR_IN_PROGRESS,    /* this game is active in a different process */
-    ERR_RESTORE_FAILED, /* restoring the saved game state did not succeed (try
-                           replaying the log instead) */
-    ERR_REPLAY_FAILED   /* replaying the action log did not succeed */
+    ERR_IN_PROGRESS,    /* locking issues attaching to the game */
+    ERR_RESTORE_FAILED, /* game needs manual recovery */
+    ERR_REPLAY_FAILED,  /* automatic recovery was declined */
 };
 
 enum nh_log_status {
@@ -292,6 +276,14 @@ enum placement_hint {
     PLHINT_ONELINER,
     PLHINT_CONTAINER,
     PLHINT_INVENTORY
+};
+
+enum nh_client_response {
+    NHCR_ACCEPTED,
+    NHCR_CLIENT_CANCEL,
+    NHCR_CONTINUE, 
+    NHCR_MOREINFO,
+    NHCR_MOREINFO_CONTINUE,
 };
 
 /* the name "boolean" is too common to use here */
@@ -411,11 +403,9 @@ struct nh_game_info {
     char plrace[PLRBUFSZ];
     char plgend[PLRBUFSZ];
     char plalign[PLRBUFSZ];
-    /* the following fields are only valid if the status is LS_SAVED retrieving 
+    /* the following fields are only valid if the status is LS_SAVED; retrieving
        the values for LS_IN_PROGRESS would require reconstructing the full
-       game. You can force that by doing: if (nh_restore_game(fd, NULL, TRUE)
-       != GAME_RESTORED) handle_error(...) nh_exit(EXIT_FORCE_SAVE); Now a call 
-       to nh_get_savegame_status will return LS_SAVED. */
+       game. */
     char level_desc[COLNO];
     int moves, depth;
     nh_bool has_amulet;
@@ -598,12 +588,15 @@ struct nh_window_procs {
     void (*win_display_buffer) (const char *buf, nh_bool trymove);
     void (*win_update_status) (struct nh_player_info * pi);
     void (*win_print_message) (int turn, const char *msg);
+    void (*win_request_command) (nh_bool debug, nh_bool completed,
+                                 nh_bool interrupted, char *command,
+                                 struct nh_cmd_arg *arg, int *limit);
     int (*win_display_menu) (struct nh_menuitem *, int, const char *, int, int,
                              int *);
     int (*win_display_objects) (struct nh_objitem *, int, const char *, int,
                                 int, struct nh_objresult *);
-        nh_bool(*win_list_items) (struct nh_objitem * items, int icount,
-                                  nh_bool invent);
+    nh_bool(*win_list_items) (struct nh_objitem * items, int icount,
+                              nh_bool invent);
     void (*win_update_screen) (struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux,
                                int uy);
     void (*win_raw_print) (const char *str);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-12-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -688,8 +688,7 @@ nh_get_topten(int *out_len, char *statusbuf, const char *volatile player,
     statusbuf[0] = '\0';
     *out_len = 0;
 
-    if (!api_entry_checkpoint())
-        return NULL;
+    API_ENTRY_CHECKPOINT_RETURN_ON_ERROR(NULL);
 
     if (!game_inited) {
         /* If nh_get_topten() isn't called after a game, we never went through
@@ -710,7 +709,8 @@ nh_get_topten(int *out_len, char *statusbuf, const char *volatile player,
     close(fd);
     if (!ttlist) {
         strcpy(statusbuf, "Cannot open record file!");
-        api_exit();
+
+        API_EXIT();
         return NULL;
     }
 
@@ -783,7 +783,7 @@ nh_get_topten(int *out_len, char *statusbuf, const char *volatile player,
     free(selected);
     free(ttlist);
 
-    api_exit();
+    API_EXIT();
     return score_list;
 }
 

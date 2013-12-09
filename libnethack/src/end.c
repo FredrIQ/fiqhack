@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-12-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -179,7 +179,7 @@ panic(const char *str, ...)
     va_start(the_args, str);
 
     if (program_state.panicking++)
-        terminate();    /* avoid loops - this should never happen */
+        terminate(GAME_DETACHED); /* avoid loops - this should never happen */
 
     raw_print(program_state.gameover ? "Postgame wrapup disrupted.\n" :
               !program_state.something_worth_saving ?
@@ -189,15 +189,13 @@ panic(const char *str, ...)
         raw_printf("Report error to \"%s\"%s.\n", WIZARD,
                    !program_state.something_worth_saving ? "" :
                    " and it may be possible to rebuild.");
-    if (program_state.something_worth_saving)
-        dosave0(TRUE);
 
     vsprintf(buf, str, the_args);
     raw_print(buf);
     paniclog("panic", buf);
 
-    va_end(the_args);
-    done_noreturn(PANICKED);
+    /* TODO: attempt to rewind the turn */
+    terminate(GAME_DETACHED);             /* equivalent to saving the game */
 }
 
 static boolean
@@ -892,18 +890,21 @@ done_noreturn(int how)
     struct obj *corpse = NULL;
     long umoney;
 
-    /* replays are done here: no dumping or high-score calculation required */
+    /* If watching or replaying, we're going to get a GAME_OVER on the main
+       process, = we should produce GAME_ALREADY_OVER on watching processes. */
     if (program_state.viewing)
-        terminate();
+        terminate(GAME_ALREADY_OVER);
 
     /* 
      *      The game is now over...
      */
     program_state.gameover = 1;
 
-    /* don't do the whole post-game dance if the game exploded */
+    /* done(PANICKED) should no longer be called on any codepath. We pass back
+       to panic() (which is no longer coded in terms of done()) if it somehow is
+       anyway. */
     if (how == PANICKED)
-        terminate();
+        panic("done(PANICKED) called");
 
     log_command_result();
     /* render vision subsystem inoperative */
@@ -1013,7 +1014,7 @@ done_noreturn(int how)
        anything. */
     update_topten(how, carried);
 
-    terminate();
+    terminate(GAME_OVER);
 }
 
 
@@ -1075,31 +1076,33 @@ container_contents(struct obj *list, boolean identified, boolean all_containers)
 }
 
 
+/* Exits or aborts a running game, or an API call that happens outside a game.
+   This is used for both normal and abnormal termination. The semantics are
+   roughly "unwind the stack until you find nh_play_game, or if it isn't there,
+   some other API call; then return playstatus from it if it's nh_play_game, or
+   a suitable error code if it isn't there". */
 void
-terminate(void)
+terminate(enum nh_play_status playstatus)
 {
     /* don't bother to try to release memory if we're in panic mode, to avoid
        trouble in case that happens to be due to memory problems */
-    if (!program_state.panicking && !program_state.viewing) {
+    if (!program_state.panicking) {
         freedynamicdata();
         dlb_cleanup();
     }
 
     program_state.game_running = 0;
-    if (!program_state.panicking)       /* logging could be in disorder, ex: RO 
-                                           logfile */
-        log_finish(LS_IN_PROGRESS);     /* didn't necessarily get here via
-                                           done() */
 
     /* try to leave gracefully - this should return control to the ui code */
     if (exit_jmp_buf_valid) {
         exit_jmp_buf_valid = 0;
-        nh_longjmp(exit_jmp_buf, 1);
+        nh_longjmp(exit_jmp_buf, API_ENTRY_OFFSET + playstatus);
     }
 
-    /* no jmp_buf. This can only happen when an unguarded api function calls
-       panic() This should not happen. */
-    exit(1);
+    /* We should always have a jmp_buf. If not, something's gone badly wrong.
+       We can't rely on any particular internal function working (in particular,
+       panic() is no good because it tries to call terminate()), so... */
+    abort();
 }
 
 void nonfatal_dump_core(void)

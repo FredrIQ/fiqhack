@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-11-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1341,7 +1341,7 @@ jump(int magic  /* 0=Physical, otherwise skill level */
     pline("Where do you want to jump?");
     cc.x = u.ux;
     cc.y = u.uy;
-    if (getpos(&cc, TRUE, "the desired position") < 0)
+    if (getpos(&cc, TRUE, "the desired position") == NHCR_CLIENT_CANCEL)
         return 0;       /* user pressed ESC */
     if (!magic && !(HJumping & ~INTRINSIC) && !EJumping &&
         distu(cc.x, cc.y) != 5) {
@@ -2452,7 +2452,7 @@ use_pole(struct obj *obj)
     pline(where_to_hit);
     cc.x = u.ux;
     cc.y = u.uy;
-    if (getpos(&cc, TRUE, "the spot to hit") < 0)
+    if (getpos(&cc, TRUE, "the spot to hit") == NHCR_CLIENT_CANCEL)
         return res;     /* user pressed ESC */
 
     /* Calculate range */
@@ -2568,7 +2568,7 @@ use_grapple(struct obj *obj)
     pline(where_to_hit);
     cc.x = u.ux;
     cc.y = u.uy;
-    if (getpos(&cc, TRUE, "the spot to hit") < 0)
+    if (getpos(&cc, TRUE, "the spot to hit") == NHCR_CLIENT_CANCEL)
         return res;     /* user pressed ESC */
 
     /* Calculate range */

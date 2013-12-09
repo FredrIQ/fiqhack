@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-11-23 */
+/* Last modified by Sean Hunt, 2013-12-10 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef NETHACK_CLIENT_H
@@ -13,7 +13,8 @@
 #  define EXPORT(x) AIMAKE_IMPORT(x)
 # endif
 
-/* extra return status for nhnet_command and nhnet_restore_game */
+/* extra return status for nhnet_play_game */
+/* TODO: Check if this is still needed. */
 # define ERR_NETWORK_ERROR (20000)
 
 enum authresult {
@@ -51,27 +52,19 @@ extern nhnet_game_p EXPORT(nhnet_list_games) (
 extern void EXPORT(nhnet_lib_init) (const struct nh_window_procs *);
 extern void EXPORT(nhnet_lib_exit) (void);
 extern nh_bool EXPORT(nhnet_exit_game) (int exit_type);
-extern int EXPORT(nhnet_restore_game) (int gid,
-                                     struct nh_window_procs *rwinprocs);
-extern nh_bool EXPORT(nhnet_start_game) (const char *name, int role, int race,
-                                       int gend, int align,
-                                       enum nh_game_modes playmode);
+extern int EXPORT(nhnet_play_game) (int gid);
+extern int EXPORT(nhnet_create_game) (const char *name, int role, int race,
+                                      int gend, int align,
+                                      enum nh_game_modes playmode);
 extern int EXPORT(nhnet_command) (const char *cmd, int rep,
-                                struct nh_cmd_arg *arg);
+                                  struct nh_cmd_arg *arg);
 /* no nhnet_get_copyright_banner; the client should display its own copyright */
-extern nh_bool EXPORT(nhnet_view_replay_start) (int fd,
-                                              struct nh_window_procs *rwinprocs,
-                                              struct nh_replay_info *info);
-extern nh_bool EXPORT(nhnet_view_replay_step) (struct nh_replay_info *info,
-                                             enum replay_control action,
-                                             int count);
-extern void EXPORT(nhnet_view_replay_finish) (void);
 extern nh_cmd_desc_p EXPORT(nhnet_get_commands) (int *count);
 extern nh_cmd_desc_p EXPORT(nhnet_get_object_commands) (
     int *count, char invlet);
 extern nh_drawing_info_p EXPORT(nhnet_get_drawing_info) (void);
-extern nh_bool EXPORT(nhnet_set_option) (const char *name,
-                                       union nh_optvalue value, nh_bool isstr);
+extern nh_bool EXPORT(nhnet_set_option) (
+    const char *name, union nh_optvalue value, nh_bool isstr);
 extern nh_option_desc_p EXPORT(nhnet_get_options) (void);
 /* no nhnet_get_option_string; the client translates the values locally */
 extern void EXPORT(nhnet_describe_pos) (
@@ -91,11 +84,8 @@ extern int EXPORT(nhnet_change_password) (const char *password);
 
 # if defined(NHNET_TRANSPARENT) && \
     !defined(NETHACK_CLIENT_H_IN_LIBNETHACK_CLIENT)
-#  define nh_command                  nhnet_command
+#  define nh_play_game                nhnet_play_game
 #  define nh_exit_game                nhnet_exit_game
-#  define nh_view_replay_start        nhnet_view_replay_start
-#  define nh_view_replay_step         nhnet_view_replay_step
-#  define nh_view_replay_finish       nhnet_view_replay_finish
 #  define nh_get_commands             nhnet_get_commands
 #  define nh_get_object_commands      nhnet_get_object_commands
 #  define nh_get_drawing_info         nhnet_get_drawing_info

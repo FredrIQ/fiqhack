@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-11-23 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -241,12 +241,19 @@ place_desc_message(WINDOW * win, int *x, int *y, char *b)
 int
 curses_getpos(int *x, int *y, nh_bool force, const char *goal)
 {
-    int result = 0;
+    int result = NHCR_ACCEPTED;
     int cx, cy;
     int key, dx, dy;
     int sidx;
     static const char pick_chars[] = " \r\n.,;:";
-    static const int pick_vals[] = { 1, 1, 1, 1, 2, 3, 4 };
+    static const int pick_vals[] = {
+        NHCR_ACCEPTED,
+        NHCR_ACCEPTED,
+        NHCR_ACCEPTED,
+        NHCR_ACCEPTED,
+        NHCR_CONTINUE,
+        NHCR_MOREINFO_CONTINUE,
+        NHCR_MOREINFO};
     const char *cp;
     char printbuf[BUFSZ];
     char *matching = NULL;
@@ -296,7 +303,7 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
         key = get_map_key(FALSE);
         if (key == KEY_ESCAPE) {
             cx = cy = -10;
-            result = -1;
+            result = NHCR_CLIENT_CANCEL;
             break;
         }
 

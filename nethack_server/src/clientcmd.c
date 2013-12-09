@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-11-23 */
+/* Last modified by Alex Smith, 2013-12-05 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -11,13 +11,9 @@
 #include <time.h>
 
 static void ccmd_shutdown(json_t * ignored);
-static void ccmd_start_game(json_t * params);
-static void ccmd_restore_game(json_t * params);
+static void ccmd_create_game(json_t * params);
+static void ccmd_play_game(json_t * params);
 static void ccmd_exit_game(json_t * params);
-static void ccmd_game_command(json_t * params);
-static void ccmd_view_start(json_t * params);
-static void ccmd_view_step(json_t * params);
-static void ccmd_view_finish(json_t * params);
 static void ccmd_list_games(json_t * params);
 static void ccmd_get_drawing_info(json_t * params);
 static void ccmd_get_roles(json_t * params);
@@ -35,13 +31,9 @@ static void ccmd_set_password(json_t * params);
 const struct client_command clientcmd[] = {
     {"shutdown", ccmd_shutdown, 0},
 
-    {"start_game", ccmd_start_game, 0},
-    {"restore_game", ccmd_restore_game, 0},
+    {"create_game", ccmd_create_game, 0},
+    {"play_game", ccmd_play_game, 0},
     {"exit_game", ccmd_exit_game, 0},
-    {"game_command", ccmd_game_command, 0},
-    {"view_start", ccmd_view_start, 0},
-    {"view_step", ccmd_view_step, 0},
-    {"view_finish", ccmd_view_finish, 0},
     {"list_games", ccmd_list_games, 0},
 
     {"get_drawing_info", ccmd_get_drawing_info, 1},
@@ -76,11 +68,12 @@ ccmd_shutdown(json_t * ignored)
     client_msg("shutdown", jmsg);
 }
 
-/* start_game: Start a new game
+/*
+ * create_game: Start a new game
  * parameters: name, role, race, gend, align, playmode
  */
 static void
-ccmd_start_game(json_t * params)
+ccmd_create_game(json_t * params)
 {
     char filename[1024], basename[1024], path[1024];
     json_t *j_msg;
@@ -91,7 +84,7 @@ ccmd_start_game(json_t * params)
     if (json_unpack
         (params, "{ss,si,si,si,si,si*}", "name", &name, "role", &role, "race",
          &race, "gender", &gend, "alignment", &align, "mode", &mode) == -1)
-        exit_client("Bad set of parameters for start_game");
+        exit_client("Bad set of parameters for create_game");
 
     /* reset cached display data from a previous game */
     reset_cached_diplaydata();
@@ -110,42 +103,52 @@ ccmd_start_game(json_t * params)
     if (fd == -1)
         exit_client("Could not create the logfile");
 
-    ret = nh_start_game(fd, name, role, race, gend, align, mode);
+    ret = nh_create_game(fd, name, role, race, gend, align, mode);
+    close(fd);
     if (ret) {
         struct nh_roles_info *ri = nh_get_roles();
         const char *rolename = (gend &&
                                 ri->rolenames_f[role]) ?
             ri->rolenames_f[role] : ri->rolenames_m[role];
-        gamefd = fd;
         gameid =
             db_add_new_game(user_info.uid, basename, rolename,
                             ri->racenames[race], ri->gendnames[gend],
                             ri->alignnames[align], mode, name,
                             player_info.level_desc);
-        log_msg("%s has started a new game (%d) as %s", user_info.username,
+        log_msg("%s has created a new game (%d) as %s", user_info.username,
                 gameid, name);
-        j_msg = json_pack("{si,si}", "return", ret, "gameid", gameid);
+        j_msg = json_pack("{si}", "return", gameid);
     } else {
-        close(fd);
         unlink(filename);
-        j_msg = json_pack("{si,si}", "return", ret, "gameid", -1);
+        j_msg = json_pack("{si}", "return", -1);
     }
 
-    client_msg("start_game", j_msg);
+    client_msg("create_game", j_msg);
 }
 
 
+static const char *const play_status_names[] = {
+    [GAME_DETACHED] = "game detached",
+    [GAME_OVER] = "game ended",
+    [GAME_ALREADY_OVER] = "watched/replayed game ended",
+    [RESTART_PLAY] = "connection was disrupted and needs reconnecting",
+    [ERR_BAD_ARGS] = "game ID did not exist",
+    [ERR_BAD_FILE] = "file on disk was unreadable",
+    [ERR_IN_PROGRESS] = "locking issues",
+    [ERR_RESTORE_FAILED] = "manual recovery failed",
+    [ERR_REPLAY_FAILED] = "automatic recovery refused",
+};
 static void
-ccmd_restore_game(json_t * params)
+ccmd_play_game(json_t * params)
 {
     int gid, fd, status;
     char filename[1024], basename[1024];
 
     if (json_unpack(params, "{si*}", "gameid", &gid) == -1)
-        exit_client("Bad set of parameters for restore_game");
+        exit_client("Bad set of parameters for play_game");
 
     if (!db_get_game_filename(user_info.uid, gid, basename, 1024)) {
-        client_msg("restore_game", json_pack("{si}", "return", ERR_BAD_FILE));
+        client_msg("play_game", json_pack("{si}", "return", ERR_BAD_FILE));
         return;
     }
 
@@ -153,15 +156,24 @@ ccmd_restore_game(json_t * params)
              user_info.username, basename);
     fd = open(filename, O_RDWR);
     if (fd == -1) {
-        client_msg("restore_game", json_pack("{si}", "return", ERR_BAD_FILE));
+        client_msg("play_game", json_pack("{si}", "return", ERR_BAD_FILE));
         return;
     }
 
     /* reset cached display data from a previous game */
     reset_cached_diplaydata();
 
-    status = nh_restore_game(fd, NULL, FALSE);
-    if (status == ERR_REPLAY_FAILED) {
+    log_msg("User '%s' started to play game %d, file %s",
+            user_info.username, gid, filename);
+    gameid = gid;
+    gamefd = fd;
+    status = nh_play_game(fd);
+    gameid = -1;
+    gamefd = -1;
+    log_msg("User '%s' stopped playing game %d, file %s: %s",
+            user_info.username, gid, filename, play_status_names[status]);
+
+    if (status == ERR_RESTORE_FAILED) {
         log_msg("Failed to restore saved game %d, file %s", gid, filename);
         if (srv_yn_function
             ("Restoring the game failed. Would you like to remove it from the list?",
@@ -172,98 +184,13 @@ ccmd_restore_game(json_t * params)
         }
     }
 
-    client_msg("restore_game", json_pack("{si}", "return", status));
+    client_msg("play_game", json_pack("{si}", "return", status));
 
-    if (status == GAME_RESTORED) {
-        gameid = gid;
-        gamefd = fd;
-        db_update_game(gameid, player_info.moves, player_info.z,
-                       player_info.level_desc);
-        log_msg("%s has restored game %d", user_info.username, gameid);
-    }
-}
-
-
-static void
-ccmd_exit_game(json_t * params)
-{
-    int etype, status;
-
-    if (json_unpack(params, "{si*}", "exit_type", &etype) == -1)
-        exit_client("Bad set of parameters for exit_game");
-
-    status = nh_exit_game(etype);
-    if (status) {
-        db_update_game(gameid, player_info.moves, player_info.z,
-                       player_info.level_desc);
-        log_msg("%s has closed game %d", user_info.username, gameid);
-        gameid = 0;
-        close(gamefd);
-        gamefd = -1;
-    }
-
-    client_msg("exit_game", json_pack("{si}", "return", status));
-}
-
-
-static void
-ccmd_game_command(json_t * params)
-{
-    json_t *jarg;
-    int count, result, gid;
-    const char *cmd;
-    struct nh_cmd_arg arg;
-
-    if (json_unpack
-        (params, "{ss,so,si*}", "command", &cmd, "arg", &jarg, "count",
-         &count) == -1)
-        exit_client("Bad set of parameters for game_command");
-
-    if (json_unpack(jarg, "{si*}", "argtype", &arg.argtype) == -1)
-        exit_client("Bad parameter arg in game_command");
-
-    switch (arg.argtype) {
-    case CMD_ARG_DIR:
-        if (json_unpack(jarg, "{si*}", "d", &arg.d) == -1)
-            exit_client("Bad direction arg in game_command");
-        break;
-
-    case CMD_ARG_POS:
-        if (json_unpack(jarg, "{si,si*}", "x", &arg.pos.x, "y", &arg.pos.y) ==
-            -1)
-            exit_client("Bad position arg in game_command");
-        break;
-
-    case CMD_ARG_OBJ:
-        if (json_unpack(jarg, "{si*}", "invlet", &arg.invlet) == -1)
-            exit_client("Bad invlet arg in game_command");
-        break;
-
-    case CMD_ARG_NONE:
-    default:
-        break;
-    }
-
-    if (cmd[0] == '\0')
-        cmd = NULL;
-
-    result = nh_command(cmd, count, &arg);
-
-    gid = gameid;
-    if (result >= GAME_OVER) {
-        close(gamefd);
-        log_msg("Game %d (by %s) closed: game %s.", gameid, user_info.username,
-                result == GAME_SAVED ? "saved" : "ended");
-        gamefd = -1;
-        gameid = 0;
-    }
-
-    client_msg("game_command", json_pack("{si}", "return", result));
-    db_update_game(gameid, player_info.moves, player_info.z,
+    db_update_game(gid, player_info.moves, player_info.z,
                    player_info.level_desc);
 
     /* move the finished game to its final resting place */
-    if (result == GAME_OVER) {
+    if (status == GAME_OVER) {
         char basename[1024], filename[1024], final_name[1024];
         int len;
         char buf[BUFSZ];
@@ -286,87 +213,24 @@ ccmd_game_command(json_t * params)
 
 
 static void
-ccmd_view_start(json_t * params)
+ccmd_exit_game(json_t * params)
 {
-    int ret, gid, fd;
-    struct nh_replay_info info;
-    char basename[1024], filename[1024];
-    json_t *jmsg;
+    int etype, status;
 
-    if (json_unpack(params, "{si*}", "gameid", &gid) == -1)
-        exit_client("Bad set of parameters for view_start");
+    if (json_unpack(params, "{si*}", "exit_type", &etype) == -1)
+        exit_client("Bad set of parameters for exit_game");
 
-    if (!db_get_game_filename(0, gid, basename, 1024)) {
-        log_msg("Client requested nonexistent game %d for viewing", gid);
-        jmsg = json_pack("{si}", "return", FALSE);
-        client_msg("view_start", jmsg);
-        return;
+    status = nh_exit_game(etype);
+    if (status) {
+        db_update_game(gameid, player_info.moves, player_info.z,
+                       player_info.level_desc);
+        log_msg("%s has closed game %d", user_info.username, gameid);
+        gameid = -1;
+        close(gamefd);
+        gamefd = -1;
     }
 
-    snprintf(filename, 1024, "%s/save/%s/%s", settings.workdir,
-             user_info.username, basename);
-    fd = open(filename, O_RDWR);
-    if (fd == -1) {
-        snprintf(filename, 1024, "%s/completed/%s", settings.workdir, basename);
-        fd = open(filename, O_RDWR);
-    }
-    if (fd == -1) {
-        log_msg("failed to open game %d (file %s) for viewing", gid, basename);
-        jmsg = json_pack("{si}", "return", FALSE);
-        client_msg("view_start", jmsg);
-        return;
-    }
-
-    ret = nh_view_replay_start(fd, &server_alt_windowprocs, &info);
-
-    jmsg =
-        json_pack("{si,s:{ss,si,si,si,si}}", "return", ret, "info", "nextcmd",
-                  info.nextcmd, "actions", info.actions, "max_actions",
-                  info.max_actions, "moves", info.moves, "max_moves",
-                  info.max_moves);
-    client_msg("view_start", jmsg);
-}
-
-
-static void
-ccmd_view_step(json_t * params)
-{
-    enum replay_control action;
-    int count, ret;
-    struct nh_replay_info info;
-    json_t *jmsg;
-
-    if (json_unpack
-        (params, "{si,si,s:{si,si,si,si*}*}", "action", &action, "count",
-         &count, "info", "actions", &info.actions, "max_actions",
-         &info.max_actions, "moves", &info.moves, "max_moves",
-         &info.max_moves) == -1)
-        exit_client("Bad set of parameters for view_step");
-
-    info.nextcmd[0] = '\0';
-    ret = nh_view_replay_step(&info, action, count);
-
-    jmsg =
-        json_pack("{si,s:{ss,si,si,si,si}}", "return", ret, "info", "nextcmd",
-                  info.nextcmd, "actions", info.actions, "max_actions",
-                  info.max_actions, "moves", info.moves, "max_moves",
-                  info.max_moves);
-    client_msg("view_step", jmsg);
-}
-
-
-static void
-ccmd_view_finish(json_t * params)
-{
-    void *iter;
-
-    iter = json_object_iter(params);
-    if (iter)
-        exit_client("non-empty parameter list for view_finish");
-
-    nh_view_replay_finish();
-
-    client_msg("view_finish", json_object());
+    client_msg("exit_game", json_pack("{si}", "return", status));
 }
 
 

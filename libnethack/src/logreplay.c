@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-11-23 */
+/* Last modified by Alex Smith, 2013-12-05 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -122,6 +122,7 @@ static const struct nh_window_procs def_replay_windowprocs = {
     replay_display_buffer,
     replay_update_status,
     replay_print_message,
+    NULL,       /* TODO */
     replay_display_menu,
     replay_display_objects,
     NULL,       /* no function required for list_items */
@@ -190,7 +191,7 @@ base64_decode(const char *in, char *out)
                        errcode == Z_MEM_ERROR ? "Out of memory" : errcode ==
                        Z_BUF_ERROR ? "Invalid size" : errcode ==
                        Z_DATA_ERROR ? "Corrupted file" : "(unknown error)");
-            terminate();
+            terminate(ERR_RESTORE_FAILED);
         }
     }
 }
@@ -205,7 +206,7 @@ replay_set_logfile(int logfd)
     if (!lock_fd(logfd, 1)) {
         raw_printf
             ("The game log is locked by another NetHack process. Aborting.");
-        terminate();
+        terminate(ERR_RESTORE_FAILED);
     }
     logfile = logfd;
 }
@@ -242,7 +243,7 @@ replay_begin(void)
                 &loginfo.actioncount) || loginfo.endpos > filesize) {
         fclose(loginfo.flog);
         loginfo.flog = NULL;
-        terminate();
+        terminate(ERR_RESTORE_FAILED);
     }
 
     action_count = loginfo.actioncount;
@@ -353,7 +354,7 @@ parse_error(const char *str)
                "The game will be replayed from diffs instead.");
 #endif
     loginfo.cmds_are_invalid = TRUE;
-    terminate();
+    terminate(ERR_RESTORE_FAILED);
 }
 
 /* note: returns a buffer that is overwritten on every call */
@@ -381,7 +382,7 @@ next_log_token(void)
         }
         if (fread(&c, 1, 1, loginfo.flog) != 1) {
             raw_printf("Unexpected EOF or error in save file");
-            terminate();
+            terminate(ERR_RESTORE_FAILED);
         }
         rbuf[rbpos] = c;
         if (rbuf[rbpos] == '\r' || rbuf[rbpos] == '\n' || rbuf[rbpos] == ' ') {
@@ -688,7 +689,7 @@ replay_read_newgame(unsigned long long *init, int *playmode, char *namebuf,
 
     if (*initrole == ROLE_NONE || *initrace == ROLE_NONE ||
         *initgend == ROLE_NONE || *initalign == ROLE_NONE)
-        terminate();
+        terminate(ERR_RESTORE_FAILED);
 
     mt_srand(seed);
 
@@ -716,11 +717,11 @@ replay_read_option(char *token)
     name = token + 1;
     otype = strchr(name, ':');
     if (!otype)
-        terminate();
+        terminate(ERR_RESTORE_FAILED);
     *otype++ = '\0';
     valstr = strchr(otype, ':');
     if (!valstr)
-        terminate();
+        terminate(ERR_RESTORE_FAILED);
     *valstr++ = '\0';
 
     base64_decode(name, optname);
@@ -864,7 +865,7 @@ replay_sync_save(void)
 {
     if (!loginfo.out_of_sync)
         return;
-
+#ifdef TODO
     volatile struct sinfo ps;
     jmp_buf old_exit_jmp_buf;
 
@@ -901,6 +902,7 @@ replay_sync_save(void)
 
     memcpy(&exit_jmp_buf, &old_exit_jmp_buf, sizeof (jmp_buf));
     exit_jmp_buf_valid = 1;
+#endif
 }
 
 static long
@@ -1114,6 +1116,7 @@ replay_run_cmdloop(boolean optonly, boolean singlestep, boolean fast)
             break;
 
         case '>':      /* command */
+#ifdef TODO
             if (!optonly && !loginfo.cmds_are_invalid) {
                 replay_read_command(token, &cmd, &count, &cmdarg);
                 cmdidx = get_command_idx(cmd);
@@ -1121,6 +1124,7 @@ replay_run_cmdloop(boolean optonly, boolean singlestep, boolean fast)
             }
             if (!optonly)
                 did_action = TRUE;
+#endif
             break;
 
         case '<':      /* a command result */
@@ -1271,175 +1275,6 @@ find_next_command(char *buf, int buflen)
 }
 
 
-boolean
-nh_view_replay_start(int fd, struct nh_window_procs * rwinprocs,
-                     struct nh_replay_info * info)
-{
-    int playmode;
-    char namebuf[PL_NSIZ];
-    struct nh_game_info gi;
-
-    if (!api_entry_checkpoint())
-        return FALSE;
-
-    memset(info, 0, sizeof (struct nh_replay_info));
-    if (logfile != -1 || nh_get_savegame_status(fd, &gi) == LS_INVALID) {
-        api_exit();
-        return FALSE;
-    }
-
-    program_state.restoring = TRUE;
-    iflags.disable_log = TRUE;
-    logfile = fd;
-    replay_begin();
-    replay_read_newgame(&turntime, &playmode, namebuf, &u.initrole, &u.initrace,
-                        &u.initgend, &u.initalign);
-    replay_setup_windowprocs(rwinprocs);
-
-    replay_run_cmdloop(TRUE, TRUE, FALSE);      /* (re)set options */
-    nh_start_game(fd, namebuf, u.initrole, u.initrace, u.initgend, u.initalign,
-                  playmode);
-    program_state.restoring = FALSE;
-    program_state.viewing = TRUE;
-    replay_restore_windowprocs();
-
-    /* the win_update_screen proc in the replay_windowprocs does nothing, so
-       flush (again) after switching back to regular window procs */
-    flush_screen();
-
-    info->max_moves = gi.moves;
-    info->max_actions = loginfo.actioncount - 1; /* - 1 for the new-game ~ */
-    find_next_command(info->nextcmd, sizeof (info->nextcmd));
-    update_inventory();
-    make_checkpoint(0);
-
-    api_exit();
-
-    return TRUE;
-}
-
-
-boolean
-nh_view_replay_step(struct nh_replay_info * info, enum replay_control action,
-                    volatile int count)
-{
-    boolean did_action = FALSE;
-    int i, prev_actions, target;
-    volatile int moves_this_step = true_moves();
-
-    if (!program_state.viewing) {
-        info->actions++;
-        did_action = TRUE;
-        goto out2;
-    }
-
-    if (!api_entry_checkpoint()) {
-        /* Something went wrong replaying the turn; however, we have two
-           different method of replaying, so the other one might work. Replay
-           back up to the current turn. */
-        if (moves_this_step == -1) {
-            raw_printf("Could not restore state after replay failed!");
-            did_action = TRUE;
-            goto out2;
-        }
-        count = moves_this_step;
-        action = REPLAY_GOTO;
-        moves = 0;
-        moves_this_step = -1;   /* avoid recursion */
-        replay_restore_windowprocs();
-    }
-
-    program_state.restoring = TRUE;
-    replay_setup_windowprocs(&replay_windowprocs);
-    info->moves = true_moves();
-    switch (action) {
-    case REPLAY_BACKWARD:
-        prev_actions = info->actions;
-        target = prev_actions - count;
-        for (i = 0; i < cpcount - 1; i++)
-            if (checkpoints[i + 1].actions >= target)
-                break;
-
-        /* rewind the entire game state to the checkpoint */
-        info->actions = load_checkpoint(i);
-        count = target - info->actions;
-        if (count == 0) {
-            did_action = TRUE;
-            goto out;
-        }
-        /* else fall through */
-
-    case REPLAY_FORWARD:
-        did_action = TRUE;
-        i = 0;
-        while (i < count && did_action) {
-            i++;
-            did_action = replay_run_cmdloop(FALSE, TRUE, i != count);
-            if (did_action) {
-                info->actions++;
-                make_checkpoint(info->actions);
-            }
-        }
-        break;
-
-    case REPLAY_GOTO:
-        target = count;
-        if (target < true_moves()) {
-            for (i = 0; i < cpcount - 1; i++)
-                if (checkpoints[i + 1].moves >= target)
-                    break;
-            /* rewind the entire game state to the checkpoint */
-            info->actions = load_checkpoint(i);
-        }
-
-        did_action = info->actions < info->max_actions;
-        while (true_moves() < count && did_action) {
-            did_action = replay_run_cmdloop(FALSE, TRUE, TRUE);
-            if (did_action) {
-                info->actions++;
-                make_checkpoint(info->actions);
-            }
-        }
-        replay_sync_save();
-        did_action = (moves_this_step == -1 ? TRUE : true_moves() == count);
-        break;
-    }
-
-out:
-    api_exit();
-out2:
-    program_state.restoring = FALSE;
-    info->moves = true_moves();
-    find_next_command(info->nextcmd, sizeof (info->nextcmd));
-    replay_restore_windowprocs();
-    if (loginfo.cmds_are_invalid)
-        doredraw();
-    flush_screen();     /* must happen after replay_restore_windowprocs to
-                           ensure output */
-    update_inventory();
-
-    /* if we're going backwards, the timestamp on this message will let the ui
-       know it should erase messages in the future */
-    print_message(true_moves(), "");
-
-    return did_action;
-}
-
-
-void
-nh_view_replay_finish(void)
-{
-    replay_restore_windowprocs();
-    program_state.viewing = FALSE;
-    program_state.game_running = FALSE;
-    replay_end();
-    freedynamicdata();
-    free_checkpoints();
-    logfile = -1;
-    iflags.disable_log = FALSE;
-}
-
-
 enum nh_log_status
 nh_get_savegame_status(int fd, struct nh_game_info *gi)
 {
@@ -1499,10 +1334,9 @@ nh_get_savegame_status(int fd, struct nh_game_info *gi)
     if (ret == LS_CRASHED || ret == LS_IN_PROGRESS)
         return ret;
 
-    if (!api_entry_checkpoint())
-        /* something went wrong, hopefully it isn't so bad that replay won't
-           work */
-        return LS_CRASHED;
+    /* if something goes wrong, just record that fact and let the game loading
+       code worry about it */
+    API_ENTRY_CHECKPOINT_RETURN_ON_ERROR(LS_CRASHED);
 
     lseek(fd, savepos, SEEK_SET);
     if (ret == LS_SAVED) {
@@ -1513,7 +1347,7 @@ nh_get_savegame_status(int fd, struct nh_game_info *gi)
 
         if (!uptodate(&mf, NULL)) {
             free(mf.buf);
-            api_exit();
+            API_EXIT();
             return LS_CRASHED;  /* probably still a valid game */
         }
 
@@ -1547,7 +1381,7 @@ nh_get_savegame_status(int fd, struct nh_game_info *gi)
         strncpy(gi->death, tt.death, BUFSZ);
     }
 
-    api_exit();
+    API_EXIT();
 
     return ret;
 }

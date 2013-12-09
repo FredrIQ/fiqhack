@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-11-23 */
+/* Last modified by Alex Smith, 2013-12-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -50,7 +50,7 @@ dosave(void)
         if (dosave0(FALSE)) {
             program_state.something_worth_saving = 0;
             u.uhp = -1; /* universal game's over indicator */
-            terminate();
+            terminate(GAME_DETACHED);
         } else
             doredraw();
     } else if (n == 2) {
@@ -340,7 +340,8 @@ save_you(struct memfile *mf, struct you *y)
         (y->uswallow << 31) | (y->uinwater << 30) |
         (y->uundetected << 29) | (y->mfemale << 28) |
         (y->uinvulnerable << 27) | (y->uburied << 26) |
-        (y->uedibility << 25) | (y->usick_type << 23);
+        (y->uedibility << 25) | (y->uwelcomed << 24) |
+        (y->usick_type << 22);
     eflags =
         (y->uevent.minor_oracle << 31) |
         (y->uevent.major_oracle << 30) |

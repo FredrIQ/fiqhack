@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-11-28 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -961,11 +961,7 @@ void
 show_keymap_menu(nh_bool readonly)
 {
     int i, n, icount;
-    nh_bool need_init = !cmdcount;
     struct nh_menuitem *items;
-
-    if (need_init)
-        load_keymap();
 
     items =
         malloc(sizeof (struct nh_menuitem) *
@@ -1002,7 +998,4 @@ show_keymap_menu(nh_bool readonly)
     free(items);
 
     write_keymap();
-
-    if (need_init)
-        free_keymap();
 }

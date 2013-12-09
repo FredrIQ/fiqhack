@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-12-05 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -23,6 +23,7 @@ static json_t *cmd_update_screen(json_t * params, int display_only);
 static json_t *cmd_delay_output(json_t * params, int display_only);
 static json_t *cmd_level_changed(json_t * params, int display_only);
 static json_t *cmd_outrip(json_t * params, int display_only);
+static json_t *cmd_request_command(json_t * params, int display_only);
 static json_t *cmd_display_menu(json_t * params, int display_only);
 static json_t *cmd_display_objects(json_t * params, int display_only);
 static json_t *cmd_list_items(json_t * params, int display_only);
@@ -47,6 +48,8 @@ struct netcmd netcmd_list[] = {
     {"delay_output", cmd_delay_output},
     {"level_changed", cmd_level_changed},
     {"outrip", cmd_outrip},
+
+    {"request_command", cmd_request_command},
     {"display_menu", cmd_display_menu},
     {"display_objects", cmd_display_objects},
     {"list_items", cmd_list_items},
@@ -61,30 +64,13 @@ struct netcmd netcmd_list[] = {
     {NULL, NULL}
 };
 
-static struct nh_window_procs cur_wndprocs;
-
 /*---------------------------------------------------------------------------*/
-
-static const char *
-switch_windowprocs(const char *key)
-{
-    if (!strncmp(key, "alt_", 4)) {
-        cur_wndprocs = alt_windowprocs;
-        return key + 4;
-    } else {
-        cur_wndprocs = windowprocs;
-        return key;
-    }
-}
-
 
 json_t *
 handle_netcmd(const char *key, json_t * jmsg)
 {
     int i;
     json_t *ret_msg = NULL;
-
-    switch_windowprocs(key);
 
     for (i = 0; netcmd_list[i].name; i++) {
         if (!strcmp(key, netcmd_list[i].name)) {
@@ -126,8 +112,6 @@ handle_display_list(json_t * display_list)
         key = json_object_iter_key(iter);
         jobj = json_object_iter_value(iter);
 
-        key = switch_windowprocs(key);
-
         for (j = 0; netcmd_list[j].name; j++) {
             if (!strcmp(key, netcmd_list[j].name)) {
                 netcmd_list[j].func(jobj, TRUE);
@@ -153,7 +137,7 @@ cmd_raw_print(json_t * params, int display_only)
         return NULL;
     }
 
-    cur_wndprocs.win_raw_print(json_string_value(params));
+    windowprocs.win_raw_print(json_string_value(params));
     return NULL;
 }
 
@@ -166,7 +150,7 @@ cmd_pause(json_t * params, int display_only)
         return NULL;
     }
 
-    cur_wndprocs.win_pause(json_integer_value(params));
+    windowprocs.win_pause(json_integer_value(params));
     return NULL;
 }
 
@@ -182,7 +166,7 @@ cmd_display_buffer(json_t * params, int display_only)
         return NULL;
     }
 
-    cur_wndprocs.win_display_buffer(buf, trymove);
+    windowprocs.win_display_buffer(buf, trymove);
     return NULL;
 }
 
@@ -261,7 +245,7 @@ cmd_update_status(json_t * params, int display_only)
                     json_string_value(json_array_get(p, i)), ITEMLEN - 1);
     }
 
-    cur_wndprocs.win_update_status(&player);
+    windowprocs.win_update_status(&player);
     return NULL;
 }
 
@@ -277,7 +261,7 @@ cmd_print_message(json_t * params, int display_only)
         return NULL;
     }
 
-    cur_wndprocs.win_print_message(turn, msg);
+    windowprocs.win_print_message(turn, msg);
     return NULL;
 }
 
@@ -292,7 +276,7 @@ cmd_print_message_nonblocking(json_t * params, int display_only)
         return NULL;
     }
 
-    cur_wndprocs.win_print_message_nonblocking(turn, msg);
+    windowprocs.win_print_message_nonblocking(turn, msg);
     return NULL;
 }
 
@@ -314,7 +298,7 @@ cmd_update_screen(json_t * params, int display_only)
     if (json_is_integer(jdbuf)) {
         if (json_integer_value(jdbuf) == 0) {
             memset(dbuf, 0, sizeof (struct nh_dbuf_entry) * ROWNO * COLNO);
-            cur_wndprocs.win_update_screen(dbuf, ux, uy);
+            windowprocs.win_update_screen(dbuf, ux, uy);
         } else
             print_error("Incorrect parameter in cmd_update_screen");
         return NULL;
@@ -371,7 +355,7 @@ cmd_update_screen(json_t * params, int display_only)
         }
     }
 
-    cur_wndprocs.win_update_screen(dbuf, ux, uy);
+    windowprocs.win_update_screen(dbuf, ux, uy);
     return NULL;
 }
 
@@ -379,7 +363,7 @@ cmd_update_screen(json_t * params, int display_only)
 static json_t *
 cmd_delay_output(json_t * params, int display_only)
 {
-    cur_wndprocs.win_delay();
+    windowprocs.win_delay();
     return NULL;
 }
 
@@ -392,7 +376,7 @@ cmd_level_changed(json_t * params, int display_only)
         return NULL;
     }
 
-    cur_wndprocs.win_level_changed(json_integer_value(params));
+    windowprocs.win_level_changed(json_integer_value(params));
     return NULL;
 }
 
@@ -441,10 +425,58 @@ cmd_outrip(json_t * params, int display_only)
     for (i = 0; i < icount; i++)
         json_read_menuitem(json_array_get(jarr, i), &items[i]);
 
-    cur_wndprocs.win_outrip(items, icount, tombstone, name, gold, killbuf,
+    windowprocs.win_outrip(items, icount, tombstone, name, gold, killbuf,
                             end_how, year);
     free(items);
     return NULL;
+}
+
+
+static json_t *
+cmd_request_command(json_t * params, int display_only)
+{
+    int debug;
+    int completed;
+    int interrupted;
+    char command[256];
+    struct nh_cmd_arg arg;
+    int limit;
+    json_t *jarg;
+
+    if (json_unpack(params, "{sb,sb,sb}", "debug", &debug, "completed",
+                    &completed, "interrupted", &interrupted) == -1) {
+        print_error("Incorrect parameter type in cmd_request_command");
+        return NULL;
+    }
+
+    windowprocs.win_request_command(debug, completed, interrupted,
+                                     command, &arg, &limit);
+
+    switch (arg.argtype) {
+    case CMD_ARG_DIR:
+        jarg = json_pack("{si,si}", "argtype", arg.argtype, "d", arg.d);
+        break;
+
+    case CMD_ARG_POS:
+        jarg =
+            json_pack("{si,si,si}", "argtype", arg.argtype, "x", arg.pos.x,
+                      "y", arg.pos.y);
+        break;
+
+    case CMD_ARG_OBJ:
+        jarg =
+            json_pack("{si,si}", "argtype", arg.argtype, "invlet",
+                      arg.invlet);
+        break;
+
+    case CMD_ARG_NONE:
+    default:
+        jarg = json_pack("{si}", "argtype", arg.argtype);
+        break;
+    }
+
+    return json_pack("{ss,so,si}", "command", command, "arg", jarg,
+                     "limit", limit);
 }
 
 
@@ -477,7 +509,7 @@ cmd_display_menu(json_t * params, int display_only)
 
     selected = malloc(icount * sizeof (int));
     ret =
-        cur_wndprocs.win_display_menu(items, icount, title, how, placement_hint,
+        windowprocs.win_display_menu(items, icount, title, how, placement_hint,
                                       selected);
     free(items);
     if (display_only) {
@@ -542,7 +574,7 @@ cmd_display_objects(json_t * params, int display_only)
 
     pick_list = malloc(icount * sizeof (struct nh_objresult));
     ret =
-        cur_wndprocs.win_display_objects(items, icount, title, how,
+        windowprocs.win_display_objects(items, icount, title, how,
                                          placement_hint, pick_list);
     free(items);
     if (display_only) {
@@ -584,7 +616,7 @@ cmd_list_items(json_t * params, int display_only)
     items = malloc(icount * sizeof (struct nh_objitem));
     for (i = 0; i < icount; i++)
         json_read_objitem(json_array_get(jarr, i), &items[i]);
-    cur_wndprocs.win_list_items(items, icount, invent);
+    windowprocs.win_list_items(items, icount, invent);
     free(items);
 
     return NULL;
@@ -611,7 +643,7 @@ cmd_query_key(json_t * params, int display_only)
     }
 
     count = 0;
-    ret = cur_wndprocs.win_query_key(query, allow_count ? &count : NULL);
+    ret = windowprocs.win_query_key(query, allow_count ? &count : NULL);
 
     return json_pack("{si,si}", "return", ret, "count", count);
 }
@@ -635,7 +667,7 @@ cmd_getpos(json_t * params, int display_only)
         return NULL;
     }
 
-    ret = cur_wndprocs.win_getpos(&x, &y, force, goal);
+    ret = windowprocs.win_getpos(&x, &y, force, goal);
     return json_pack("{si,si,si}", "return", ret, "x", x, "y", y);
 }
 
@@ -657,7 +689,7 @@ cmd_getdir(json_t * params, int display_only)
         return NULL;
     }
 
-    ret = cur_wndprocs.win_getdir(query, restr);
+    ret = windowprocs.win_getdir(query, restr);
     return json_pack("{si}", "return", ret);
 }
 
@@ -681,7 +713,7 @@ cmd_yn_function(json_t * params, int display_only)
         return NULL;
     }
 
-    ret = cur_wndprocs.win_yn_function(query, set, def);
+    ret = windowprocs.win_yn_function(query, set, def);
     return json_pack("{si}", "return", ret);
 }
 
@@ -703,7 +735,7 @@ cmd_getline(json_t * params, int display_only)
     }
 
     linebuf[0] = '\0';
-    cur_wndprocs.win_getlin(query, linebuf);
+    windowprocs.win_getlin(query, linebuf);
     return json_pack("{ss}", "line", linebuf);
 }
 

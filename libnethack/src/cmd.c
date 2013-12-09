@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-02 */
+/* Last modified by Alex Smith, 2013-12-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -22,6 +22,7 @@ static int command_repeat_occupation(void);
 static int domonability(void);
 static int dotravel(int x, int y);
 static int doautoexplore(void);
+static int dowelcome(void);
 static int wiz_wish(void);
 static int wiz_identify(void);
 static int wiz_map(void);
@@ -100,7 +101,7 @@ const struct cmd_desc cmdlist[] = {
      enhance_weapon_skill, CMD_ARG_NONE | CMD_EXT},
     {"engrave", "write on the floor", 'E', 0, FALSE, doengrave,
      CMD_ARG_NONE | CMD_ARG_OBJ},
-    {"equip", "change your equipment", 'A', 0, FALSE, doequip, CMD_ARG_NONE},
+    {"equip", "change your equipment", 'A', '*', FALSE, doequip, CMD_ARG_NONE},
     {"farlook", "say what is on a distant square", ';', 0, TRUE, doquickwhatis,
      CMD_ARG_NONE | CMD_NOTIME},
     {"fight", "attack even if no hostile monster is visible", 'F', 0, FALSE,
@@ -133,10 +134,10 @@ const struct cmd_desc cmdlist[] = {
     {"multidrop", "drop multiple items", 'D', 0, FALSE, doddrop, CMD_ARG_NONE},
     {"name", "name a monster, item or type of object", M('n'), 'C', TRUE,
      do_naming, CMD_ARG_NONE | CMD_EXT},
-    {"name mon", "christen a monster", 0, 0, TRUE, do_mname, CMD_ARG_NONE},
-    {"name item", "name an item", 0, 0, TRUE, do_oname,
+    {"namemon", "christen a monster", 0, 0, TRUE, do_mname, CMD_ARG_NONE},
+    {"nameitem", "name an item", 0, 0, TRUE, do_oname,
      CMD_ARG_NONE | CMD_ARG_OBJ},
-    {"name type", "name a type of objects", 0, 0, TRUE, do_tname,
+    {"nametype", "name a type of objects", 0, 0, TRUE, do_tname,
      CMD_ARG_NONE | CMD_ARG_OBJ},
     {"offer", "offer a sacrifice to the gods", 0, 0, FALSE,
      dosacrifice, CMD_ARG_NONE | CMD_EXT | CMD_ARG_OBJ},
@@ -167,17 +168,17 @@ const struct cmd_desc cmdlist[] = {
     {"save", "save the game and exit", 'S', 0, TRUE, dosave, CMD_ARG_NONE},
     {"search", "search for hidden doors and traps", 's', 0, TRUE, dosearch,
      CMD_ARG_NONE, "searching"},
-    {"showamulets", "list the amulets in your inventory", '"', 0, TRUE,
+    {"showamulets", "list your worn amulet", '"', 0, TRUE,
      dopramulet, CMD_ARG_NONE | CMD_NOTIME},
-    {"showarmor", "list the armor in your inventory", '[', 0, TRUE, doprarm,
+    {"showarmor", "list your worn armor", '[', 0, TRUE, doprarm,
      CMD_ARG_NONE | CMD_NOTIME},
-    {"showrings", "list the rings in your inventory", '=', 0, TRUE, doprring,
+    {"showrings", "list your worn rings", '=', 0, TRUE, doprring,
      CMD_ARG_NONE | CMD_NOTIME},
-    {"showtools", "list the tools in your inventory", '(', 0, TRUE, doprtool,
+    {"showtools", "list your worn eyewear", '(', 0, TRUE, doprtool,
      CMD_ARG_NONE | CMD_NOTIME},
-    {"showweapon", "list the weapons in your inventory", ')', 0, TRUE, doprwep,
+    {"showweapon", "list your wielded weapons", ')', 0, TRUE, doprwep,
      CMD_ARG_NONE | CMD_NOTIME},
-    {"showworn", "show the items you are wearing", '*', 0, TRUE, doprinuse,
+    {"showworn", "list your equipment", 0, 0, TRUE, doprinuse,
      CMD_ARG_NONE | CMD_NOTIME},
     {"sit", "sit down", M('s'), 0, FALSE, dosit, CMD_ARG_NONE | CMD_EXT},
     {"spellbook", "display and change letters of spells", '+', 0, TRUE,
@@ -217,21 +218,24 @@ const struct cmd_desc cmdlist[] = {
      CMD_ARG_NONE | CMD_ARG_OBJ},
 
     {"move", "move one step", 0, 0, FALSE, domovecmd, CMD_ARG_DIR | CMD_MOVE},
-    {"move nopickup", "move, but don't fight or pick anything up", 'm', 0,
+    {"moveonly", "move, but don't fight or pick anything up", 'm', 0,
      FALSE, domovecmd_nopickup, CMD_ARG_DIR | CMD_MOVE},
     {"run", "run until something interesting is seen", 0, 0, FALSE, dorun,
      CMD_ARG_DIR | CMD_MOVE},
-    {"run nopickup", "run without picking anything up", 0, 'M', FALSE,
+    {"runonly", "run without picking anything up", 0, 'M', FALSE,
      dorun_nopickup, CMD_ARG_DIR | CMD_MOVE},
     {"go", "move, stopping for anything interesting", 'g', 0, FALSE, dogo,
      CMD_ARG_DIR | CMD_MOVE},
     {"go2", "like go, but branching corridors are boring", 'G', 0, FALSE, dogo2,
      CMD_ARG_DIR | CMD_MOVE},
 
-    {"create monster", "(DEBUG) create a monster", C('g'), 0, TRUE, wiz_genesis,
-     CMD_ARG_NONE | CMD_DEBUG},
+    {"welcome", "(internal) display the 'welcome back!' message", 0, 0, TRUE,
+     dowelcome, CMD_ARG_NONE | CMD_INTERNAL},
+
     {"detect", "(DEBUG) detect monsters", 0, 0, TRUE, wiz_detect,
      CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
+    {"genesis", "(DEBUG) create a monster", C('g'), 0, TRUE, wiz_genesis,
+     CMD_ARG_NONE | CMD_DEBUG},
     {"identify", "(DEBUG) identify all items in the inventory", C('i'), 0, TRUE,
      wiz_identify, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
     {"levelchange", "(DEBUG) change experience level", 0, 0, TRUE,
@@ -264,7 +268,7 @@ const struct cmd_desc cmdlist[] = {
      CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
     {"wish", "(DEBUG) wish for an item", C('w'), 0, TRUE, wiz_wish,
      CMD_ARG_NONE | CMD_DEBUG},
-    {"wizard teleport", "(DEBUG) teleport without fail", C('f'), 0, TRUE,
+    {"wizport", "(DEBUG) teleport without fail", C('f'), 0, TRUE,
      wiz_teleport, CMD_ARG_NONE | CMD_DEBUG},
     {"wmode", "(DEBUG) show wall modes", 0, 0, TRUE, wiz_show_wmodes,
      CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
@@ -361,15 +365,13 @@ domonability(void)
 static int
 wiz_wish(void)
 {       /* Unlimited wishes for debug mode by Paul Polderman */
-    if (wizard) {
-        boolean save_verbose = flags.verbose;
+    boolean save_verbose = flags.verbose;
 
-        flags.verbose = FALSE;
-        makewish();
-        flags.verbose = save_verbose;
-        encumber_msg();
-    } else
-        pline("Unavailable command '^W'.");
+    flags.verbose = FALSE;
+    makewish();
+    flags.verbose = save_verbose;
+    encumber_msg();
+
     return 0;
 }
 
@@ -377,10 +379,8 @@ wiz_wish(void)
 static int
 wiz_identify(void)
 {
-    if (wizard)
-        identify_pack(0);
-    else
-        pline("Unavailable command '^I'.");
+    identify_pack(0);
+
     return 0;
 }
 
@@ -388,20 +388,18 @@ wiz_identify(void)
 static int
 wiz_map(void)
 {
-    if (wizard) {
-        struct trap *t;
-        long save_Hconf = HConfusion, save_Hhallu = HHallucination;
+    struct trap *t;
+    long save_Hconf = HConfusion, save_Hhallu = HHallucination;
 
-        HConfusion = HHallucination = 0L;
-        for (t = level->lev_traps; t != 0; t = t->ntrap) {
-            t->tseen = 1;
-            map_trap(t, TRUE);
-        }
-        do_mapping();
-        HConfusion = save_Hconf;
-        HHallucination = save_Hhallu;
-    } else
-        pline("Unavailable command '^F'.");
+    HConfusion = HHallucination = 0L;
+    for (t = level->lev_traps; t != 0; t = t->ntrap) {
+        t->tseen = 1;
+        map_trap(t, TRUE);
+    }
+    do_mapping();
+    HConfusion = save_Hconf;
+    HHallucination = save_Hhallu;
+
     return 0;
 }
 
@@ -409,10 +407,8 @@ wiz_map(void)
 static int
 wiz_genesis(void)
 {
-    if (wizard)
-        create_particular();
-    else
-        pline("Unavailable command '^G'.");
+    create_particular();
+
     return 0;
 }
 
@@ -420,10 +416,8 @@ wiz_genesis(void)
 static int
 wiz_levelcide(void)
 {
-    if (wizard)
-        do_level_genocide();
-    else
-        pline("Unavailable command 'levelcide'.");
+    do_level_genocide();
+
     return 0;
 }
 
@@ -431,10 +425,8 @@ wiz_levelcide(void)
 static int
 wiz_where(void)
 {
-    if (wizard)
-        print_dungeon(FALSE, NULL, NULL);
-    else
-        pline("Unavailable command '^O'.");
+    print_dungeon(FALSE, NULL, NULL);
+
     return 0;
 }
 
@@ -442,10 +434,8 @@ wiz_where(void)
 static int
 wiz_detect(void)
 {
-    if (wizard)
-        findit();
-    else
-        pline("Unavailable command '^E'.");
+    findit();
+
     return 0;
 }
 
@@ -453,10 +443,8 @@ wiz_detect(void)
 static int
 wiz_teleport(void)
 {
-    if (wizard)
-        tele_impl(TRUE);
-    else
-        pline("Unavailable command '^Y'.");
+    tele_impl(TRUE);
+
     return 0;
 }
 
@@ -464,10 +452,8 @@ wiz_teleport(void)
 static int
 wiz_level_tele(void)
 {
-    if (wizard)
-        level_tele_impl(TRUE);
-    else
-        pline("Unavailable command '^V'.");
+    level_tele_impl(TRUE);
+
     return 0;
 }
 
@@ -478,6 +464,7 @@ wiz_mon_polycontrol(void)
     iflags.mon_polycontrol = !iflags.mon_polycontrol;
     pline("Monster polymorph control is %s.",
           iflags.mon_polycontrol ? "on" : "off");
+
     return 0;
 }
 
@@ -486,7 +473,9 @@ static int
 wiz_togglegen(void)
 {
     iflags.mon_generation = !iflags.mon_generation;
-    pline("Monster generation is %s.", iflags.mon_generation ? "on" : "off");
+    pline("Monster generation is %s.",
+          iflags.mon_generation ? "on" : "off");
+
     return 0;
 }
 
@@ -560,7 +549,7 @@ wiz_show_seenv(void)
     char row[COLNO + 1];
 
     init_menulist(&menu);
-    /* 
+    /*
      * Each seenv description takes up 2 characters, so center
      * the seenv display around the hero.
      */
@@ -1049,7 +1038,7 @@ enlightenment(int final)
             sprintf(eos(buf), " (%d)", u.ugangr);
         enl_msg(&menu, u_gname(), " is", " was", buf);
     } else
-        /* 
+        /*
          * We need to suppress this when the game is over, because death
          * can change the value calculated by can_pray(), potentially
          * resulting in a false claim that you could have prayed safely.
@@ -1138,7 +1127,7 @@ encode_conduct(void)
         c |= 0x0400UL;
     if (!num_genocides())
         c |= 0x0800UL;
-    /* Slash'EM xlogfile does not record celibacy, presumably either by mistake 
+    /* Slash'EM xlogfile does not record celibacy, presumably either by mistake
        or for compatibility with vanilla. So it's safe to just take the next
        available number for elbereths. */
     if (!u.uconduct.elbereths)
@@ -1386,6 +1375,58 @@ minimal_enlightenment(void)
     return n;
 }
 
+/* Shows legacy, "welcome [back] to NetHack" messages when a save file is
+   restored; the client sends this command to record the times that the game was
+   restored via voluntary action rather than via reconnecting a timed-out
+   connection.
+
+   It is important that this command does not affect anything other than
+   messages (it may affect parts of the gamestate that affect only messages,
+   such as u.uwelcomed). Otherwise, it would be possible to use a hacked client
+   to send this command at inappropriate times in order to modify the gamestate
+   in ways that would not be available to a normal player. Hacking in order to
+   get welcome messages at inappropriate times is pointless :-) */
+static int
+dowelcome(void)
+{       /* false => restoring an old game */
+    char buf[BUFSZ];
+    boolean currentgend = Upolyd ? u.mfemale : flags.female;
+    boolean new_game = !u.uwelcomed;
+
+    u.uwelcomed = 1;
+
+    if (new_game && flags.legacy) {
+        flush_screen();
+        com_pager(1);
+    }
+
+    /*
+     * The "welcome back" message always describes your innate form
+     * even when polymorphed or wearing a helm of opposite alignment.
+     * Alignment is shown unconditionally for new games; for restores
+     * it's only shown if it has changed from its original value.
+     * Sex is shown for new games except when it is redundant; for
+     * restores it's only shown if different from its original value.
+     */
+    *buf = '\0';
+    if (new_game || u.ualignbase[A_ORIGINAL] != u.ualignbase[A_CURRENT])
+        sprintf(eos(buf), " %s", align_str(u.ualignbase[A_ORIGINAL]));
+    if (!urole.name.f &&
+        (new_game ? (urole.allow & ROLE_GENDMASK) ==
+         (ROLE_MALE | ROLE_FEMALE) : currentgend != u.initgend))
+        sprintf(eos(buf), " %s", genders[currentgend].adj);
+
+    pline(new_game ? "%s %s, welcome to NetHack!  You are a%s %s %s." :
+          "%s %s, the%s %s %s, welcome back to NetHack!", Hello(NULL), plname,
+          buf, urace.adj, (currentgend &&
+                           urole.name.f) ? urole.name.f : urole.name.m);
+
+    if (*level->levname)
+        pline("You named this level: %s.", level->levname);
+
+    return 0;
+}
+
 
 static int
 doattributes(void)
@@ -1524,7 +1565,7 @@ nh_get_commands(int *count)
     struct nh_cmd_desc *ui_cmd;
 
     for (i = 0; cmdlist[i].name; i++)
-        if (wizard || !(cmdlist[i].flags & CMD_DEBUG))
+        if (!(cmdlist[i].flags & CMD_INTERNAL))
             cmdcount++;
 
     ui_cmd = xmalloc(sizeof (struct nh_cmd_desc) * cmdcount);
@@ -1534,7 +1575,7 @@ nh_get_commands(int *count)
 
     j = 0;
     for (i = 0; cmdlist[i].name; i++)
-        if (wizard || !(cmdlist[i].flags & CMD_DEBUG)) {
+        if (!(cmdlist[i].flags & CMD_INTERNAL)) {
             strncpy(ui_cmd[j].name, cmdlist[i].name, sizeof (ui_cmd[j].name));
             strncpy(ui_cmd[j].desc, cmdlist[i].desc, sizeof (ui_cmd[j].desc));
             ui_cmd[j].defkey = cmdlist[i].defkey;
@@ -1887,7 +1928,7 @@ contained(struct menulist *menu, const char *src, long *total_count,
     count_obj(invent, &count, &size, FALSE, TRUE);
     count_obj(level->objlist, &count, &size, FALSE, TRUE);
     count_obj(level->buriedobjlist, &count, &size, FALSE, TRUE);
-    /* DEADMONSTER check not required in this loop since they have no inventory 
+    /* DEADMONSTER check not required in this loop since they have no inventory
      */
     for (mon = level->monlist; mon; mon = mon->nmon)
         count_obj(mon->minvent, &count, &size, FALSE, TRUE);
@@ -1999,8 +2040,7 @@ get_command_idx(const char *command)
         return -1;
 
     for (i = 0; cmdlist[i].name; i++)
-        if (!strcmp(command, cmdlist[i].name) &&
-            (wizard || !(cmdlist[i].flags & CMD_DEBUG)))
+        if (!strcmp(command, cmdlist[i].name))
             return i;
 
     return -1;
@@ -2044,6 +2084,11 @@ do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *arg)
     prev_arg = *arg;
     prev_repcount = repcount;
 
+    /* Debug commands are now restricted to wizard mode here, rather than with
+       a special case in each command */
+    if (cmdlist[command].flags & CMD_DEBUG && !wizard)
+        return COMMAND_DEBUG_ONLY;
+
     flags.move = FALSE;
     multi = 0;
 
@@ -2052,9 +2097,9 @@ do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *arg)
         flags.nopick = 0;
     }
 
-    /* in some cases, a command function will accept either it's proper
-       argument type or no argument; we're looking for the possible type of the 
-       argument here */
+    /* in some cases, a command function will accept either its proper argument
+       type or no argument; we're looking for the possible type of the argument
+       here */
     functype = (cmdlist[command].flags & CMD_ARG_FLAGS);
     if (!functype)
         functype = CMD_ARG_NONE;
@@ -2254,7 +2299,8 @@ dotravel(int x, int y)
             cc.y = u.uy;
         }
         pline("Where do you want to travel to?");
-        if (getpos(&cc, FALSE, "the desired destination") < 0) {
+        if (getpos(&cc, FALSE, "the desired destination") ==
+            NHCR_CLIENT_CANCEL) {
             if (flags.verbose)
                 pline("Never mind.");
             return 0;

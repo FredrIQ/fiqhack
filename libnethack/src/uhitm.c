@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-11-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -280,9 +280,9 @@ find_roll_to_hit(struct monst *mtmp)
  * attacks.  It is therefore wrong to add hitval to tmp; we must add
  * it only for the specific attack (in hmonas()).
  */
-    if (uwep && !Upolyd) {
+    if (!Upolyd) {
         tmp += hitval(uwep, mtmp);
-        tmp += weapon_hit_bonus(uwep);
+        tmp += weapon_hit_bonus(uwep); /* picks up bare-handed bonus */
     }
     return tmp;
 }
@@ -1993,11 +1993,9 @@ hmonas(struct monst *mon, int tmp, schar dx, schar dy)
             /* Potential problem: if the monster gets multiple weapon attacks,
                we currently allow the player to get each of these as a weapon
                attack.  Is this really desirable? */
-            if (uwep) {
-                hittmp = hitval(uwep, mon);
-                hittmp += weapon_hit_bonus(uwep);
-                tmp += hittmp;
-            }
+            hittmp = hitval(uwep, mon);
+            hittmp += weapon_hit_bonus(uwep);
+            tmp += hittmp;
             dhit = (tmp > (dieroll = rnd(20)) || Engulfed);
             /* KMH -- Don't accumulate to-hit bonuses */
             if (uwep)
