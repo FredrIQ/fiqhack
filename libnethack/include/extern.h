@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-04 */
+/* Last modified by Sean Hunt, 2013-12-10 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -779,8 +779,7 @@ extern char *replay_bones(int *buflen);
 extern void replay_setup_windowprocs(const struct nh_window_procs *procs);
 extern void replay_restore_windowprocs(void);
 extern void replay_read_newgame(unsigned long long *init, int *playmode,
-                                char *namebuf, int *initrole, int *initrace,
-                                int *initgend, int *initalign);
+                                char *namebuf);
 extern boolean replay_run_cmdloop(boolean optonly, boolean singlestep,
                                   boolean fast);
 
@@ -1207,8 +1206,6 @@ extern char *nh_getenv(const char *);
 extern void init_opt_struct(void);
 extern void cleanup_opt_struct(void);
 extern void initoptions(void);
-extern struct nh_option_desc *clone_optlist(const struct nh_option_desc *in);
-extern void free_optlist(struct nh_option_desc *opt);
 extern int dotogglepickup(void);
 extern int fruitadd(const char *str);
 extern char *autopickup_to_string(const struct nh_autopickup_rules *rules);

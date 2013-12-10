@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-04 */
+/* Last modified by Sean Hunt, 2013-12-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -20,6 +20,8 @@ static void savetrapchn(struct memfile *mf, struct trap *, struct level *lev);
 static void freetrapchn(struct trap *trap);
 static void savegamestate(struct memfile *mf);
 static void save_flags(struct memfile *mf);
+static void save_options(struct memfile *mf);
+static void save_option(struct memfile *mf, struct nh_option_desc *opt);
 static void freefruitchn(void);
 
 
@@ -104,6 +106,7 @@ savegame(struct memfile *mf)
     mwrite32(mf, moves);        /* no tag useful here; you is fixed-length */
     save_flags(mf);
     save_you(mf, &u);
+    save_options(mf);
     save_mon(mf, &youmonst);
 
     /* store dungeon layout */
@@ -137,10 +140,6 @@ save_flags(struct memfile *mf)
     mwrite32(mf, flags.ident);
     mwrite32(mf, flags.moonphase);
     mwrite32(mf, flags.no_of_wizards);
-    mwrite32(mf, flags.init_role);
-    mwrite32(mf, flags.init_race);
-    mwrite32(mf, flags.init_gend);
-    mwrite32(mf, flags.init_align);
     mwrite32(mf, flags.randomall);
     mwrite32(mf, flags.pantheon);
     mwrite32(mf, flags.run);
@@ -189,6 +188,55 @@ save_flags(struct memfile *mf)
     mwrite8(mf, flags.permahallu);
 
     mwrite(mf, flags.inv_order, sizeof (flags.inv_order));
+}
+
+
+static void
+save_options(struct memfile *mf)
+{
+    mtag(mf, 0, MTAG_OPTIONS);
+
+    int i;
+    for (i = 0; options[i].name; ++i) {}
+    mwrite32(mf, i);
+    
+    /* When saving options, we sanity-check the spacing, but we assume that
+     * the order of options in memory is preserved, since we can't well handle
+     * changes to the option list anyway. */
+    for (i = 0; options[i].name; ++i) {
+        mtag(mf, i, MTAG_OPTIONS);
+        save_option(mf, &options[i]);
+    }
+}
+
+
+static void
+save_option(struct memfile *mf, struct nh_option_desc *opt)
+{
+    int len, i;
+
+    switch (opt->type) {
+    case OPTTYPE_BOOL:
+        mwrite8(mf, opt->value.b);
+        break;
+    case OPTTYPE_INT:
+    case OPTTYPE_ENUM:
+        mwrite32(mf, opt->value.i); /* equivalent opt->value.e */
+        break;
+    case OPTTYPE_STRING:
+        len = opt->value.s ? strlen(opt->value.s) : 0 ;
+        mwrite32(mf, len);
+        if (len)
+            mwrite(mf, opt->value.s, len);
+        break;
+    case OPTTYPE_AUTOPICKUP_RULES:
+        len = opt->value.ar->num_rules;
+        mwrite32(mf, len);
+        for (i = 0; i < len; ++i)
+            mwrite(mf, &opt->value.ar->rules[i],
+                   sizeof (struct nh_autopickup_rule));
+        break;
+    }
 }
 
 

@@ -347,6 +347,7 @@ extern void wrap_text(int width, const char *input, int *output_count,
 extern void free_wrap(char **wrap_output);
 
 /* options.c */
+extern struct nh_option_desc *curses_get_nh_opts(void);
 extern nh_bool curses_set_option(const char *name, union nh_optvalue value,
                                  nh_bool isstring);
 extern void display_options(nh_bool change_birth_opt);
@@ -356,6 +357,7 @@ extern void read_nh_config(void);
 extern void read_ui_config(void);
 extern void write_nh_config(void);
 extern void write_ui_config(void);
+
 
 /* outchars.c */
 extern void init_displaychars(void);

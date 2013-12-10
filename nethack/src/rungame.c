@@ -1,9 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-30 */
+/* Last modified by Sean Hunt, 2013-12-10 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "nhcurses.h"
+#include "common_options.h"
 #include <fcntl.h>
 #include <time.h>
 #include <sys/stat.h>
@@ -271,11 +272,29 @@ rungame(void)
 
     create_game_windows();
 
+    struct nh_option_desc *new_opts = nhlib_clone_optlist(curses_get_nh_opts()),
+                          *roleopt = nhlib_find_option(new_opts, "role"),
+                          *raceopt = nhlib_find_option(new_opts, "race"),
+                          *alignopt = nhlib_find_option(new_opts, "align"),
+                          *gendopt = nhlib_find_option(new_opts, "gender");
+    if (!roleopt || !raceopt || !alignopt || !gendopt) {
+        curses_raw_print("Creation options not available?");
+        nhlib_free_optlist(new_opts);
+        return;
+    }
+
+    roleopt->value.i = role;
+    raceopt->value.i = race;
+    alignopt->value.i = align;
+    gendopt->value.i = gend;
+     
     /* Create the game, then immediately load it. */
     ret = ERR_BAD_FILE;
-    if (nh_create_game(fd, plname, role, race, gend, align, ui_flags.playmode))
+    if (nh_create_game(fd, plname, new_opts, ui_flags.playmode) ==
+        NHCREATE_OK)
         ret = playgame(fd);
 
+    nhlib_free_optlist(new_opts);
     close(fd);
 
     destroy_game_windows();

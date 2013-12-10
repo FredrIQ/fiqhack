@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-05 */
+/* Last modified by Sean Hunt, 2013-12-10 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -92,14 +92,12 @@ static struct memfile diff_base;
 
 struct replay_checkpoint {
     int actions, moves, nexttoken;
-    struct nh_option_desc *opt; /* option state at the time of the checkpoint */
     struct memfile cpdata;      /* binary save data */
 };
 
 static struct replay_checkpoint *checkpoints;
 static char **commands;
 static int cmdcount, cpcount;
-static struct nh_option_desc *saved_options;
 static struct nh_window_procs replay_windowprocs, orig_windowprocs;
 
 /* base 64 decoding table */
@@ -290,11 +288,6 @@ replay_begin(void)
 
     mfree(&diff_base);
     mnew(&diff_base, NULL);
-
-    /* the log contains options that need to be set while the log is being
-       replayed. However, the current option state is the most recent state set 
-       by the user and should be preserved */
-    saved_options = clone_optlist(options);
 }
 
 void
@@ -325,12 +318,6 @@ replay_end(void)
     tz_off = get_tz_offset();
     if (tz_off != replay_timezone)
         log_timezone(tz_off);
-
-    /* restore saved options */
-    for (i = 0; saved_options[i].name; i++)
-        nh_set_option(saved_options[i].name, saved_options[i].value, FALSE);
-    free_optlist(saved_options);
-    saved_options = NULL;
 
     mfree(&diff_base);
 
@@ -647,67 +634,6 @@ replay_read_commandlist(void)
 }
 
 
-void
-replay_read_newgame(unsigned long long *init, int *playmode, char *namebuf,
-                    int *initrole, int *initrace, int *initgend, int *initalign)
-{
-    char *header, *verstr;
-    int ver1, ver2, ver3, n;
-    unsigned int seed;
-    uint_least64_t init_l64;
-
-    header = next_log_token();
-    if (!header || strcmp(header, "NHGAME"))
-        parse_error("This file does not look like a NetHack logfile.");
-    /* now header is not read any more */
-
-    next_log_token();   /* marker */
-    next_log_token();   /* end pos, see replay_begin() */
-    next_log_token();   /* action count, see replay_begin(); */
-    verstr = next_log_token();
-
-    n = sscanf(verstr, "%d.%d.%d", &ver1, &ver2, &ver3);
-    if (n != 3)
-        parse_error("No version found where it was expected");
-    /* now verstr is not read any more */
-
-    if (ver1 != VERSION_MAJOR && ver2 != VERSION_MINOR)
-        raw_printf("Warning: Version mismatch; expected %d.%d, got %d.%d\n",
-                   VERSION_MAJOR, VERSION_MINOR, ver1, ver2);
-
-    /* Windows doesn't support the %ll syntax. So we use this C99 trick. */
-
-    sscanf(next_log_token(), "%" SCNxLEAST64, &init_l64);
-    *init = (unsigned long long)init_l64;
-    sscanf(next_log_token(), "%x", &seed);
-    *playmode = atoi(next_log_token());
-    base64_decode(next_log_token(), namebuf);
-    *initrole = str2role(next_log_token());
-    *initrace = str2race(next_log_token());
-    *initgend = str2gend(next_log_token());
-    *initalign = str2align(next_log_token());
-
-    if (*initrole == ROLE_NONE || *initrace == ROLE_NONE ||
-        *initgend == ROLE_NONE || *initalign == ROLE_NONE)
-        terminate(ERR_RESTORE_FAILED);
-
-    mt_srand(seed);
-
-    replay_read_commandlist();
-}
-
-
-static void
-replay_read_timezone(char *token)
-{
-    int n;
-
-    n = sscanf(token, "TZ%d", &replay_timezone);
-    if (n != 1)
-        parse_error("Bad timezone offset data.");
-}
-
-
 static void
 replay_read_option(char *token)
 {
@@ -752,6 +678,81 @@ replay_read_option(char *token)
     }
 
     nh_set_option(optname, value, FALSE);
+}
+
+
+static void
+replay_read_game_opts(void) {
+    char *header;
+    int i;
+
+    header = next_log_token();
+    if (!sscanf(header, "opts:%x", &i))
+        parse_error("Option count not found where expected");
+
+    while (--i)
+        replay_read_option(next_log_token());
+}
+
+
+
+void
+replay_read_newgame(unsigned long long *init, int *playmode, char *namebuf)
+{
+    char *header, *verstr;
+    int ver1, ver2, ver3, n;
+    unsigned int seed;
+    uint_least64_t init_l64;
+
+    header = next_log_token();
+    if (!header || strcmp(header, "NHGAME"))
+        parse_error("This file does not look like a NetHack logfile.");
+    /* now header is not read any more */
+
+    next_log_token();   /* marker */
+    next_log_token();   /* end pos, see replay_begin() */
+    next_log_token();   /* action count, see replay_begin(); */
+    verstr = next_log_token();
+
+    n = sscanf(verstr, "%d.%d.%d", &ver1, &ver2, &ver3);
+    if (n != 3)
+        parse_error("No version found where it was expected");
+    /* now verstr is not read any more */
+
+    if (ver1 != VERSION_MAJOR && ver2 != VERSION_MINOR)
+        raw_printf("Warning: Version mismatch; expected %d.%d, got %d.%d\n",
+                   VERSION_MAJOR, VERSION_MINOR, ver1, ver2);
+
+    /* Windows doesn't support the %ll syntax. So we use this C99 trick. */
+
+    sscanf(next_log_token(), "%" SCNxLEAST64, &init_l64);
+    *init = (unsigned long long)init_l64;
+    sscanf(next_log_token(), "%x", &seed);
+    *playmode = atoi(next_log_token());
+    base64_decode(next_log_token(), namebuf);
+    /* Skip the character information in the header used for easy
+     * identification. The actual character options are stored in the birth
+     * options, read below. */
+    next_log_token();
+    next_log_token();
+    next_log_token();
+    next_log_token();
+
+    mt_srand(seed);
+
+    replay_read_commandlist();
+    replay_read_game_opts();
+}
+
+
+static void
+replay_read_timezone(char *token)
+{
+    int n;
+
+    n = sscanf(token, "TZ%d", &replay_timezone);
+    if (n != 1)
+        parse_error("Bad timezone offset data.");
 }
 
 
@@ -1180,7 +1181,6 @@ make_checkpoint(int actions)
     checkpoints[cpcount - 1].nexttoken = ftell(loginfo.flog);
     /* the active option list must be saved: it is not part of the normal
        binary save */
-    checkpoints[cpcount - 1].opt = clone_optlist(options);
     mnew(&checkpoints[cpcount - 1].cpdata, NULL);
     savegame(&checkpoints[cpcount - 1].cpdata);
     checkpoints[cpcount - 1].cpdata.len = checkpoints[cpcount - 1].cpdata.pos;
@@ -1206,8 +1206,7 @@ load_checkpoint(int idx)
     freedynamicdata();
 
     replay_begin();
-    replay_read_newgame(&turntime, &playmode, namebuf, &irole, &irace, &igend,
-                        &ialign);
+    replay_read_newgame(&turntime, &playmode, namebuf);
     fseek(loginfo.flog, checkpoints[idx].nexttoken, SEEK_SET);
 
     loginfo.cmds_are_invalid = cmd_invalid;
@@ -1225,11 +1224,6 @@ load_checkpoint(int idx)
     program_state.viewing = TRUE;
     program_state.game_running = TRUE;
 
-    /* restore the full option state of the time of the checkpoint */
-    for (i = 0; checkpoints[idx].opt[i].name; i++)
-        nh_set_option(checkpoints[idx].opt[i].name,
-                      checkpoints[idx].opt[i].value, FALSE);
-
     savegame(&diff_base);
 
     return checkpoints[idx].actions;
@@ -1242,7 +1236,6 @@ free_checkpoints(void)
     int i;
 
     for (i = 0; i < cpcount; i++) {
-        free_optlist(checkpoints[i].opt);
         mfree(&(checkpoints[i].cpdata));
     }
     free(checkpoints);

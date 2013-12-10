@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-28 */
+/* Last modified by Sean Hunt, 2013-12-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,6 +7,8 @@
 #include "lev.h"
 #include <stdint.h>
 
+static void restore_options(struct memfile *mf);
+static void restore_option(struct memfile *mf, struct nh_option_desc *opt);
 static void restore_utracked(struct memfile *mf, struct you *you);
 static void find_lev_obj(struct level *lev);
 static void restlevchn(struct memfile *mf);
@@ -659,6 +661,60 @@ restore_utracked(struct memfile *mf, struct you *y)
 }
 
 
+static void
+restore_options(struct memfile *mf)
+{
+    int i, num;
+    num = mread32(mf);
+
+    for (i = 0; i < num; ++i) {
+        if (!options[i].name)
+            impossible("restore_options: too few saved options");
+
+        restore_option(mf, &options[i]);
+    }
+
+    if (options[i].name)
+            impossible("restore_options: too many saved options");
+}
+
+
+static void
+restore_option(struct memfile *mf, struct nh_option_desc *opt)
+{
+    int len, i;
+
+    switch (opt->type) {
+    case OPTTYPE_BOOL:
+        /* Insure against boolean sizing shenanigans. */
+        opt->value.b = mread8(mf);
+        break;
+    case OPTTYPE_INT:
+    case OPTTYPE_ENUM:
+        opt->value.i = mread32(mf); /* equivalent to opt->value.e */
+        break;
+    case OPTTYPE_STRING:
+        free(opt->value.s);
+        len = mread32(mf);
+        if (len) {
+            opt->value.s = malloc(len + 1);
+            mread(mf, opt->value.s, len);
+            opt->value.s[len] = '\0';
+        } else
+            opt->value.s = NULL;
+        break;
+    case OPTTYPE_AUTOPICKUP_RULES:
+        free(opt->value.ar->rules);
+        len = mread32(mf);
+        opt->value.ar->num_rules = len;
+        opt->value.ar->rules = malloc(len * sizeof(struct nh_autopickup_rule));
+        for (i = 0; i < len; ++i)
+            mread(mf, &opt->value.ar->rules[i],
+                  sizeof (struct nh_autopickup_rule));
+        break;
+    }
+}
+
 void
 restore_flags(struct memfile *mf, struct flag *f)
 {
@@ -667,10 +723,6 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->ident = mread32(mf);
     f->moonphase = mread32(mf);
     f->no_of_wizards = mread32(mf);
-    f->init_role = mread32(mf);
-    f->init_race = mread32(mf);
-    f->init_gend = mread32(mf);
-    f->init_align = mread32(mf);
     f->randomall = mread32(mf);
     f->pantheon = mread32(mf);
     f->run = mread32(mf);
@@ -749,6 +801,8 @@ dorecover(struct memfile *mf)
 
     restore_you(mf, &u);
     role_init();        /* Reset the initial role, race, gender, and alignment */
+
+    restore_options(mf);
 
     mtmp = restore_mon(mf);
     youmonst = *mtmp;

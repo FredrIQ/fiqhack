@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Sean Hunt, 2013-12-10 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #define IN_LIBNETHACK_COMMON
@@ -256,4 +256,47 @@ nhlib_copy_option_value(struct nh_option_desc *option, union nh_optvalue value)
     }
 
     return TRUE;
+}
+
+
+void
+nhlib_free_optlist(struct nh_option_desc *opt)
+{
+    int i;
+
+    if (!opt)
+        return;
+
+    for (i = 0; opt[i].name; i++) {
+        if (opt[i].type == OPTTYPE_STRING && opt[i].value.s)
+            free(opt[i].value.s);
+        else if (opt[i].type == OPTTYPE_AUTOPICKUP_RULES && opt[i].value.ar) {
+            free(opt[i].value.ar->rules);
+            free(opt[i].value.ar);
+        }
+    }
+
+    free(opt);
+}
+
+
+struct nh_option_desc *
+nhlib_clone_optlist(const struct nh_option_desc *in)
+{
+    int i;
+    struct nh_option_desc *out;
+
+    for (i = 0; in[i].name; i++) ;
+    i++;
+    out = malloc(sizeof (struct nh_option_desc) * i);
+    memcpy(out, in, sizeof (struct nh_option_desc) * i);
+
+    for (i = 0; in[i].name; i++) {
+        if (in[i].type == OPTTYPE_STRING && in[i].value.s)
+            out[i].value.s = strdup(in[i].value.s);
+        else if (in[i].type == OPTTYPE_AUTOPICKUP_RULES && in[i].value.ar)
+            out[i].value.ar = nhlib_copy_autopickup_rules(in[i].value.ar);
+    }
+
+    return out;
 }

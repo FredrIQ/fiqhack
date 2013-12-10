@@ -53,9 +53,8 @@ extern void EXPORT(nhnet_lib_init) (const struct nh_window_procs *);
 extern void EXPORT(nhnet_lib_exit) (void);
 extern nh_bool EXPORT(nhnet_exit_game) (int exit_type);
 extern int EXPORT(nhnet_play_game) (int gid);
-extern int EXPORT(nhnet_create_game) (const char *name, int role, int race,
-                                      int gend, int align,
-                                      enum nh_game_modes playmode);
+extern enum nh_create_response EXPORT(nhnet_create_game) (
+    const char *name, struct nh_option_desc *opts, enum nh_game_modes playmode);
 extern int EXPORT(nhnet_command) (const char *cmd, int rep,
                                   struct nh_cmd_arg *arg);
 /* no nhnet_get_copyright_banner; the client should display its own copyright */

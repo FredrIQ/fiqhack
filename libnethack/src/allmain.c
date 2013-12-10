@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-05 */
+/* Last modified by Sean Hunt, 2013-12-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -244,16 +244,25 @@ post_init_tasks(void)
 }
 
 
-int
-nh_create_game(int fd, const char *name, int irole, int irace, int igend,
-               int ialign, enum nh_game_modes playmode)
+enum nh_create_response
+nh_create_game(int fd, const char *name, struct nh_option_desc *opts,
+               enum nh_game_modes playmode)
 {
     unsigned int seed = 0;
+    int i, irole, irace, igend, ialign;
 
-    API_ENTRY_CHECKPOINT_RETURN_ON_ERROR(FALSE);
+    API_ENTRY_CHECKPOINT() {
+        IF_API_EXCEPTION(GAME_DETACHED):
+            return NHCREATE_OK;
 
-    if (fd == -1 || !name || !*name)
-        goto err_out;
+        IF_ANY_API_EXCEPTION():
+            return NHCREATE_FAIL;
+    }
+
+    if (fd == -1 || !name || !*name) {
+        API_EXIT();
+        return NHCREATE_INVALID;
+    }
 
     if (!program_state.restoring) {
         turntime = (unsigned long long)time(NULL);
@@ -264,13 +273,18 @@ nh_create_game(int fd, const char *name, int irole, int irace, int igend,
     /* else: turntime and rng seeding are done in logreplay.c */
     startup_common(name, playmode);
 
-    if (!validrole(irole) || !validrace(irole, irace) ||
-        !validgend(irole, irace, igend) || !validalign(irole, irace, ialign))
-        goto err_out;
-    u.initrole = irole;
-    u.initrace = irace;
-    u.initgend = igend;
-    u.initalign = ialign;
+    for (i = 0; opts[i].name; i++) {
+        nh_set_option(opts[i].name, opts[i].value, FALSE);
+    }
+
+    if (!validrole(u.initrole) || !validrace(u.initrole, u.initrace) ||
+        !validgend(u.initrole, u.initrace, u.initgend) ||
+        !validalign(u.initrole, u.initrace, u.initalign)) {
+        /* Reset options that we just clobbered. */
+        init_opt_struct();
+        API_EXIT();
+        return NHCREATE_INVALID;
+    }
 
     /* write out a new logfile header "NHGAME ..." with all the initial details 
      */
@@ -283,26 +297,17 @@ nh_create_game(int fd, const char *name, int irole, int irace, int igend,
 
     log_command_result();
 
-    program_state.game_running = TRUE;
-
     /* Now save and exit the newly created game. */
     dosave0(FALSE);
     program_state.something_worth_saving = 0;
-    program_state.game_running = FALSE;
     u.uhp = -1;  /* universal game over indicator; TODO: get rid of this */
-
-    API_EXIT();
-    return TRUE;
-
-err_out:
-    API_EXIT();
-    return FALSE;
+    terminate(GAME_DETACHED);
 }
 
 enum nh_play_status
 nh_play_game(int fd)
 {
-    int playmode, irole, irace, igend, ialign;
+    int playmode;
     volatile int ret;
     unsigned long long temp_turntime;
     char namebuf[PL_NSIZ];
@@ -384,8 +389,7 @@ nh_play_game(int fd)
                                    already in the log */
 
     /* Read the log header for this game. */
-    replay_read_newgame(&turntime, &playmode, namebuf, &irole, &irace, &igend,
-                        &ialign);
+    replay_read_newgame(&turntime, &playmode, namebuf);
     temp_turntime = turntime;
 
     /* set special windowprocs which will autofill requests for user input with 
@@ -393,10 +397,6 @@ nh_play_game(int fd)
     replay_setup_windowprocs(NULL);
 
     startup_common(namebuf, playmode);
-    u.initrole = irole;
-    u.initrace = irace;
-    u.initgend = igend;
-    u.initalign = ialign;
     u.ubirthday = turntime = temp_turntime;
 
     replay_run_cmdloop(TRUE, FALSE, TRUE);

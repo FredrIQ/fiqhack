@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-05 */
+/* Last modified by Sean Hunt, 2013-12-10 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -103,7 +103,7 @@ ccmd_create_game(json_t * params)
     if (fd == -1)
         exit_client("Could not create the logfile");
 
-    ret = nh_create_game(fd, name, role, race, gend, align, mode);
+    ret = 0; /* FIXME nh_create_game(fd, name, opts, mode); */
     close(fd);
     if (ret) {
         struct nh_roles_info *ri = nh_get_roles();
@@ -622,6 +622,7 @@ json_option(const struct nh_option_desc *option)
 static void
 ccmd_set_option(json_t * params)
 {
+#if 0
     const char *optname, *optstr, *pattern;
     json_t *jmsg, *joval, *jopt;
     int isstr, i, ret;
@@ -696,6 +697,8 @@ ccmd_set_option(json_t * params)
        separate get_option_string message unneccessary */
     jmsg = json_pack("{si,so}", "return", ret, "option", jopt);
     client_msg("set_option", jmsg);
+    FIXME
+#endif
 }
 
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-30 */
+/* Last modified by Sean Hunt, 2013-12-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -116,13 +116,6 @@ struct flag {
        both new and restored games. These variables should not be referred to
        after the character is initialized or restored (specifically, after
        role_init() is called). */
-
-    /* Default starting role, race, gender and alignment, as per the options.
-       The actual values in use for an ongoing game are in struct you. */
-    int init_role;      /* (index into roles[]) */
-    int init_race;      /* (index into races[]) */
-    int init_gend;      /* (index into genders[]) */
-    int init_align;     /* (index into aligns[]) */
 
     int randomall;      /* randomly assign everything not specified */
     int pantheon;       /* deity selection for priest character */

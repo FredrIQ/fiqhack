@@ -308,7 +308,10 @@ build_race_spec(void)
 void
 init_opt_struct(void)
 {
-    options = clone_optlist(const_options);
+    if (options)
+        nhlib_free_optlist(options);
+
+    options = nhlib_clone_optlist(const_options);
 
     build_role_spec();
     build_race_spec();
@@ -335,7 +338,7 @@ init_opt_struct(void)
     /* If no config file exists, these values will not get set until they have
        already been used during game startup.  (-1) is a much better default,
        as 0 will always cause a lawful male Archologist to be created */
-    flags.init_align = flags.init_gend = flags.init_race = flags.init_role = -1;
+    u.initalign = u.initgend = u.initrace = u.initrole = -1;
 }
 
 
@@ -346,7 +349,7 @@ cleanup_opt_struct(void)
     role_spec.choices = NULL;
     free((void *)race_spec.choices);
     race_spec.choices = NULL;
-    free_optlist(options);
+    nhlib_free_optlist(options);
     options = NULL;
 }
 
@@ -397,7 +400,7 @@ set_option(const char *name, union nh_optvalue value, boolean isstring)
         return FALSE;
 
     if (nhlib_copy_option_value(option, value))
-        log_option(option);     /* prev value != new value */
+        log_option(option);
 
     /* We may have allocated a new copy of the autopickup rules. */
     if (isstring && option->type == OPTTYPE_AUTOPICKUP_RULES) {
@@ -441,13 +444,13 @@ set_option(const char *name, union nh_optvalue value, boolean isstring)
     }
     /* birth options */
     else if (!strcmp("align", option->name)) {
-        flags.init_align = option->value.e;
+        u.initalign = option->value.e;
     } else if (!strcmp("gender", option->name)) {
-        flags.init_gend = option->value.e;
+        u.initgend = option->value.e;
     } else if (!strcmp("race", option->name)) {
-        flags.init_race = option->value.e;
+        u.initrace = option->value.e;
     } else if (!strcmp("role", option->name)) {
-        flags.init_role = option->value.e;
+        u.initrole = option->value.e;
     }
 
     else if (!strcmp("catname", option->name)) {
@@ -538,49 +541,6 @@ nh_get_option_string(const struct nh_option_desc *option)
     if (freestr)
         free(valstr);
     return outstr;
-}
-
-
-struct nh_option_desc *
-clone_optlist(const struct nh_option_desc *in)
-{
-    int i;
-    struct nh_option_desc *out;
-
-    for (i = 0; in[i].name; i++) ;
-    i++;
-    out = malloc(sizeof (struct nh_option_desc) * i);
-    memcpy(out, in, sizeof (struct nh_option_desc) * i);
-
-    for (i = 0; in[i].name; i++) {
-        if (in[i].type == OPTTYPE_STRING && in[i].value.s)
-            out[i].value.s = strdup(in[i].value.s);
-        else if (in[i].type == OPTTYPE_AUTOPICKUP_RULES && in[i].value.ar)
-            out[i].value.ar = nhlib_copy_autopickup_rules(in[i].value.ar);
-    }
-
-    return out;
-}
-
-
-void
-free_optlist(struct nh_option_desc *opt)
-{
-    int i;
-
-    if (!opt)
-        return;
-
-    for (i = 0; opt[i].name; i++) {
-        if (opt[i].type == OPTTYPE_STRING && opt[i].value.s)
-            free(opt[i].value.s);
-        else if (opt[i].type == OPTTYPE_AUTOPICKUP_RULES && opt[i].value.ar) {
-            free(opt[i].value.ar->rules);
-            free(opt[i].value.ar);
-        }
-    }
-
-    free(opt);
 }
 
 

@@ -146,13 +146,35 @@ struct nhlib_boolopt_map boolopt_map[] = {
     {NULL, NULL}
 };
 
+static struct nh_option_desc *nh_options = NULL;
+
+
+struct nh_option_desc *
+curses_get_nh_opts(void)
+{
+    if (game_is_running)
+        return nh_get_options();
+    else
+        return nh_options;
+}
+
 
 nh_bool
 curses_set_option(const char *name, union nh_optvalue value, nh_bool isstring)
 {
+    nh_bool game_option = FALSE;
     struct nh_option_desc *option = nhlib_find_option(curses_options, name);
-    if (!option)
-        return nh_set_option(name, value, isstring);
+
+    if (!option) {
+        if (game_is_running)
+            return nh_set_option(name, value, isstring);
+
+        /* If the game is not running, update our local copy of options. */
+        if (!nh_options || !(option = nhlib_find_option(nh_options, name))) {
+            return FALSE;
+        }
+        game_option = TRUE;
+    }
 
     if ((int)option->type == OPTTYPE_KEYMAP)
         /* FIXME: impossible() */
@@ -171,6 +193,9 @@ curses_set_option(const char *name, union nh_optvalue value, nh_bool isstring)
         free(value.ar->rules);
         free(value.ar);
     }
+
+    if (game_option)
+        return TRUE;
 
     if (option->type == OPTTYPE_BOOL) {
         nh_bool *var = nhlib_find_boolopt(boolopt_map, option->name);
@@ -449,7 +474,7 @@ query_new_value(struct win_menu *mdat, int idx)
     switch (listid) {
     case BIRTH_OPTS:
     case GAME_OPTS:
-        optlist = nh_get_options();
+        optlist = curses_get_nh_opts();
         break;
     case UI_OPTS:
         optlist = curses_options;
@@ -520,7 +545,7 @@ display_options(nh_bool change_birth_opt)
 {
     struct nh_menuitem *items;
     int icount, size;
-    struct nh_option_desc *options = nh_get_options();
+    struct nh_option_desc *options = curses_get_nh_opts();
     int n;
 
     size = 10;
@@ -561,7 +586,9 @@ display_options(nh_bool change_birth_opt)
     } while (n > 0);
     free(items);
 
-    write_config();
+    write_ui_config();
+    if (!game_is_running)
+        write_nh_config();
 }
 
 
@@ -571,7 +598,7 @@ print_options(void)
     struct nh_menuitem *items;
     int i, icount, size;
     char buf[BUFSZ];
-    struct nh_option_desc *options = nh_get_options();
+    struct nh_option_desc *options = curses_get_nh_opts();
 
     icount = 0;
     size = 10;
@@ -1075,6 +1102,17 @@ read_nh_config(void)
 {
     fnchar filename[BUFSZ];
 
+    /* First, we need to make a local copy of the game's options to change when
+     * no game is in progress, as the game will reject any changes while it is
+     * in operation. */
+    struct nh_option_desc *opts = nh_get_options();
+    if (!opts)
+        /* TODO: panic? */
+        return;
+
+    nhlib_free_optlist(nh_options);
+    nh_options = nhlib_clone_optlist(opts);
+
     if (!ui_flags.connection_only) {
         get_config_name(filename, FALSE);
         read_config_file(filename);
@@ -1085,6 +1123,7 @@ void
 read_ui_config(void)
 {
     fnchar uiconfname[BUFSZ];
+    unsigned i;
 
     /* If running in connection-only mode, we won't know the file to look at
        the first time we call get_config_name. So instead, we put this off
@@ -1135,13 +1174,6 @@ write_config_options(FILE * fp, struct nh_option_desc *options)
 }
 
 
-static struct nh_option_desc*
-get_game_options(void)
-{
-    return nh_get_options();
-}
-
-
 void
 write_nh_config(void)
 {
@@ -1151,7 +1183,7 @@ write_nh_config(void)
     if (!ui_flags.connection_only &&
         get_config_name(filename, FALSE) &&
         (fp = open_config_file(filename))) {
-        write_config_options(fp, get_game_options());
+        write_config_options(fp, nh_options);
         fclose(fp);
     }
 }

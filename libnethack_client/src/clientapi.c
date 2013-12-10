@@ -175,8 +175,8 @@ nhnet_play_game(int gid)
 }
 
 
-int
-nhnet_create_game(const char *name, int role, int race, int gend, int align,
+enum nh_create_response
+nhnet_create_game(const char *name, struct nh_option_desc *opts,
                   enum nh_game_modes playmode)
 {
     json_t *jmsg;
@@ -184,7 +184,7 @@ nhnet_create_game(const char *name, int role, int race, int gend, int align,
 
     if (!api_entry())
         return 0;
-
+/* FIXME
     jmsg =
         json_pack("{ss,si,si,si,si,si}", "name", name, "role", role, "race",
                   race, "gender", gend, "alignment", align, "mode", playmode);
@@ -196,6 +196,7 @@ nhnet_create_game(const char *name, int role, int race, int gend, int align,
 
     json_decref(jmsg);
     api_exit();
+    */
     return ret;
 }
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-04 */
+/* Last modified by Sean Hunt, 2013-12-10 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -278,6 +278,12 @@ enum placement_hint {
     PLHINT_INVENTORY
 };
 
+enum nh_create_response {
+    NHCREATE_OK,
+    NHCREATE_INVALID,
+    NHCREATE_FAIL
+};
+
 enum nh_client_response {
     NHCR_ACCEPTED,
     NHCR_CLIENT_CANCEL,
@@ -327,7 +333,7 @@ struct nh_autopickup_rules {
 };
 
 union nh_optvalue {
-    char *s;    /* largest element first for static initialisation */
+    char *s;
     nh_bool b;
     int i;
     int e;
