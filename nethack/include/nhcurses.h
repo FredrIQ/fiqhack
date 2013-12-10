@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-05 */
+/* Last modified by Sean Hunt, 2013-12-10 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -354,7 +354,8 @@ extern void print_options(void);
 extern void init_options(void);
 extern void read_nh_config(void);
 extern void read_ui_config(void);
-extern void write_config(void);
+extern void write_nh_config(void);
+extern void write_ui_config(void);
 
 /* outchars.c */
 extern void init_displaychars(void);

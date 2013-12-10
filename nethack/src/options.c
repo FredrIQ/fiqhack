@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-11-23 */
+/* Last modified by Sean Hunt, 2013-12-10 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1111,7 +1111,8 @@ open_config_file(fnchar * filename)
     }
 
     fprintf(fp,
-            "# note: this file is rewritten whenever options are changed ingame\n");
+            "# note: this file is rewritten whenever options are\n"
+            "# changed and a game is not running\n");
 
     return fp;
 }
@@ -1134,28 +1135,38 @@ write_config_options(FILE * fp, struct nh_option_desc *options)
 }
 
 
+static struct nh_option_desc*
+get_game_options(void)
+{
+    return nh_get_options();
+}
+
+
 void
-write_config(void)
+write_nh_config(void)
 {
     FILE *fp;
     fnchar filename[BUFSZ];
-    fnchar uiconfname[BUFSZ];
 
-    if (!ui_flags.connection_only)
-        get_config_name(filename, FALSE);
-    if (!get_config_name(uiconfname, TRUE))
-        return;
-
-    if (!ui_flags.connection_only && !game_is_running) {
-        fp = open_config_file(filename);
-        if (fp) {
-            write_config_options(fp, nh_get_options());
-            fclose(fp);
-        }
+    if (!ui_flags.connection_only &&
+        get_config_name(filename, FALSE) &&
+        (fp = open_config_file(filename))) {
+        write_config_options(fp, get_game_options());
+        fclose(fp);
     }
+}
 
-    fp = open_config_file(uiconfname);
-    if (fp) {
+
+void
+write_ui_config(void)
+{
+    FILE *fp;
+    fnchar filename[BUFSZ];
+
+    get_config_name(filename, TRUE);
+
+    if (get_config_name(filename, FALSE) &&
+        (fp = open_config_file(filename))) {
         write_config_options(fp, curses_options);
         fclose(fp);
     }
