@@ -175,28 +175,99 @@ nhnet_play_game(int gid)
 }
 
 
+static json_t *
+json_list(const struct nh_listitem *list, int len)
+{
+    int i;
+    json_t *jarr = json_array();
+
+    for (i = 0; i < len; i++)
+        json_array_append_new(jarr,
+                              json_pack("{si,ss}", "id", list[i].id, "txt",
+                                        list[i].caption));
+    return jarr;
+}
+
+
+static json_t *
+json_option(const struct nh_option_desc *option)
+{
+    int i;
+    json_t *jopt, *joptval, *joptdesc, *jobj;
+    struct nh_autopickup_rule *r;
+
+    switch (option->type) {
+    case OPTTYPE_BOOL:
+        joptval = json_integer(option->value.b);
+        joptdesc = json_object();
+        break;
+
+    case OPTTYPE_INT:
+        joptval = json_integer(option->value.i);
+        joptdesc =
+            json_pack("{si,si}", "max", option->i.max, "min", option->i.min);
+        break;
+
+    case OPTTYPE_ENUM:
+        joptval = json_integer(option->value.e);
+        joptdesc = json_list(option->e.choices, option->e.numchoices);
+        break;
+
+    case OPTTYPE_STRING:
+        joptval = json_string(option->value.s);
+        joptdesc = json_integer(option->s.maxlen);
+        break;
+
+    case OPTTYPE_AUTOPICKUP_RULES:
+        joptdesc = json_list(option->a.classes, option->a.numclasses);
+        joptval = json_array();
+        for (i = 0; option->value.ar && i < option->value.ar->num_rules; i++) {
+            r = &option->value.ar->rules[i];
+            jobj =
+                json_pack("{ss,si,si,si}", "pattern", r->pattern, "oclass",
+                          r->oclass, "buc", r->buc, "action", r->action);
+            json_array_append_new(joptval, jobj);
+        }
+        break;
+
+    default:
+        joptdesc = json_string("<error: no description for option>");
+        joptval = json_string("<error>");
+        break;
+    }
+
+    jopt =
+        json_pack("{ss,ss,si,so,so}", "name", option->name, "helptxt",
+                  option->helptxt, "type", option->type, "value", joptval,
+                  "desc", joptdesc);
+    return jopt;
+}
+
+
 enum nh_create_response
 nhnet_create_game(const char *name, struct nh_option_desc *opts,
                   enum nh_game_modes playmode)
 {
-    json_t *jmsg;
-    int ret;
+    json_t *jmsg, *jarr;
+    int ret, i;
 
     if (!api_entry())
         return 0;
-/* FIXME
+
+    jarr = json_array();
+    for (i = 0; opts[i].name; i++)
+        json_array_append_new(jarr, json_option(&opts[i]));
+
     jmsg =
-        json_pack("{ss,si,si,si,si,si}", "name", name, "role", role, "race",
-                  race, "gender", gend, "alignment", align, "mode", playmode);
+        json_pack("{ss,so,si}", "name", name, "opts", jarr, "mode", playmode);
     jmsg = send_receive_msg("create_game", jmsg);
     if (json_unpack(jmsg, "{si}", "return", &ret) == -1) {
         print_error("Incorrect return object in nhnet_create_game");
-        ret = 0;
+        ret = NHCREATE_FAIL;
     }
 
     json_decref(jmsg);
     api_exit();
-    */
     return ret;
 }
 
