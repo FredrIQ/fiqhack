@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-10 */
+/* Last modified by Sean Hunt, 2013-12-12 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -217,14 +217,33 @@ rungame(void)
     long t;
     struct nh_roles_info *info;
 
+    struct nh_option_desc *new_opts = nhlib_clone_optlist(curses_get_nh_opts()),
+                          *roleopt = nhlib_find_option(new_opts, "role"),
+                          *raceopt = nhlib_find_option(new_opts, "race"),
+                          *alignopt = nhlib_find_option(new_opts, "align"),
+                          *gendopt = nhlib_find_option(new_opts, "gender");
+    if (!roleopt || !raceopt || !alignopt || !gendopt) {
+        curses_raw_print("Creation options not available?");
+        goto cleanup;
+    }
+
+    if (role == ROLE_NONE)
+        role = roleopt->value.i;
+    if (race == ROLE_NONE)
+        race = raceopt->value.i;
+    if (align == ROLE_NONE)
+        align = alignopt->value.i;
+    if (gend == ROLE_NONE)
+        gend = gendopt->value.i;
+
     if (!get_gamedir(SAVE_DIR, savedir)) {
         curses_raw_print
             ("Could not find where to put the logfile for a new game.");
-        return;
+        goto cleanup;
     }
 
     if (!player_selection(&role, &race, &gend, &align, random_player))
-        return;
+        goto cleanup;
 
     /* 
      * Describe the player character for naming; see dowelcome() in cmd.c in
@@ -256,7 +275,7 @@ rungame(void)
     while (!plname[0])
         curses_getline(prompt, plname);
     if (plname[0] == '\033')    /* canceled */
-        return;
+        goto cleanup;
 
     t = (long)time(NULL);
 #if defined(WIN32)
@@ -267,21 +286,10 @@ rungame(void)
     fd = sys_open(filename, O_TRUNC | O_CREAT | O_RDWR, FILE_OPEN_MASK);
     if (fd == -1) {
         curses_raw_print("Could not create the logfile.");
-        return;
+        goto cleanup;
     }
 
     create_game_windows();
-
-    struct nh_option_desc *new_opts = nhlib_clone_optlist(curses_get_nh_opts()),
-                          *roleopt = nhlib_find_option(new_opts, "role"),
-                          *raceopt = nhlib_find_option(new_opts, "race"),
-                          *alignopt = nhlib_find_option(new_opts, "align"),
-                          *gendopt = nhlib_find_option(new_opts, "gender");
-    if (!roleopt || !raceopt || !alignopt || !gendopt) {
-        curses_raw_print("Creation options not available?");
-        nhlib_free_optlist(new_opts);
-        return;
-    }
 
     roleopt->value.i = role;
     raceopt->value.i = race;
@@ -294,12 +302,14 @@ rungame(void)
         NHCREATE_OK)
         ret = playgame(fd);
 
-    nhlib_free_optlist(new_opts);
     close(fd);
 
     destroy_game_windows();
     cleanup_messages();
     game_ended(ret, filename);
+
+cleanup:
+    nhlib_free_optlist(new_opts);
 }
 
 
