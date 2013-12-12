@@ -545,7 +545,7 @@ you_moved(void)
             for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
                 mtmp->movement += mcalcmove(mtmp);
 
-            if (iflags.mon_generation &&
+            if (flags.mon_generation &&
                 !rn2(u.uevent.udemigod ? 25 :
                      (depth(&u.uz) > depth(&stronghold_level)) ? 50 : 70))
                 makemon(NULL, level, 0, 0, NO_MM_FLAGS);

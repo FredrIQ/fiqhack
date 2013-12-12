@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Sean Hunt, 2013-12-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -315,7 +315,7 @@ autopickup_match(struct obj *obj)
     char *objdesc;
     enum nh_bucstatus objbuc;
 
-    if (!iflags.ap_rules)
+    if (!flags.ap_rules)
         return FALSE;
 
     objdesc = makesingular(doname_price(obj));
@@ -331,8 +331,8 @@ autopickup_match(struct obj *obj)
 
     /* test the aotupickup rules in order. If any of the rules matches this
        object, return the result */
-    r = &iflags.ap_rules->rules[0];
-    for (i = 0; i < iflags.ap_rules->num_rules; i++, r++) {
+    r = &flags.ap_rules->rules[0];
+    for (i = 0; i < flags.ap_rules->num_rules; i++, r++) {
         if ((!strlen(r->pattern) || pmatch(r->pattern, objdesc)) &&
             (r->oclass == OCLASS_ANY ||
              r->oclass == def_oc_syms[(int)obj->oclass]) &&

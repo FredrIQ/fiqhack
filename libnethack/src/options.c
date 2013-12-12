@@ -201,7 +201,7 @@ static const struct nh_option_desc const_options[] = {
 /* associate boolean options with variables directly */
 static const struct nhlib_boolopt_map boolopt_map[] = {
     {"autodig", &flags.autodig},
-    {"autodigdown", &iflags.autodigdown},
+    {"autodigdown", &flags.autodigdown},
     {"autopickup", &flags.pickup},
     {"autoquiver", &flags.autoquiver},
     {"confirm", &flags.confirm},
@@ -215,7 +215,7 @@ static const struct nhlib_boolopt_map boolopt_map[] = {
     {"showrace", &iflags.showrace},
     {"sortpack", &flags.sortpack},
     {"sparkle", &flags.sparkle},
-    {"travel_interrupt", &iflags.travel_interrupt},
+    {"travel_interrupt", &flags.travel_interrupt},
     {"tombstone", &flags.tombstone},
     {"verbose", &flags.verbose},
 
@@ -358,7 +358,7 @@ initoptions(void)
 {
     int i;
 
-    iflags.mon_generation = TRUE;
+    flags.mon_generation = 1;
 
     iflags.travelcc.x = iflags.travelcc.y = -1;
     flags.warnlevel = 1;
@@ -434,12 +434,12 @@ set_option(const char *name, union nh_optvalue value, boolean isstring)
     } else if (!strcmp("runmode", option->name)) {
         iflags.runmode = option->value.e;
     } else if (!strcmp("autopickup_rules", option->name)) {
-        if (iflags.ap_rules) {
-            free(iflags.ap_rules->rules);
-            free(iflags.ap_rules);
-            iflags.ap_rules = NULL;
+        if (flags.ap_rules) {
+            free(flags.ap_rules->rules);
+            free(flags.ap_rules);
+            flags.ap_rules = NULL;
         }
-        iflags.ap_rules = nhlib_copy_autopickup_rules(option->value.ar);
+        flags.ap_rules = nhlib_copy_autopickup_rules(option->value.ar);
     }
     /* birth options */
     else if (!strcmp("align", option->name)) {

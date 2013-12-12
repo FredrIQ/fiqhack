@@ -46,7 +46,9 @@ extern struct turnstate turnstate;
  */
 
 struct flag {
+    struct nh_autopickup_rules *ap_rules;
     boolean autodig;    /* MRKR: Automatically dig */
+    boolean autodigdown;        /* autodigging works downwadrds */
     boolean autoquiver; /* Automatically fill quiver */
     boolean beginner;
     boolean confirm;    /* confirm before hitting tame monsters */
@@ -59,7 +61,9 @@ struct flag {
     boolean legacy;     /* print game entry "story" */
     boolean lit_corridor;       /* show a dark corr as lit if it is in sight */
     boolean made_amulet;
+    boolean mon_generation;     /* debug: control monster generaion */
     boolean mon_moving; /* monsters' turn to move */
+    boolean mon_polycontrol;    /* debug: control monster polymorphs */
     boolean move;       /* normally 1, unless an action during your turn did
                            NOT use up the move */
     boolean mv;
@@ -76,6 +80,8 @@ struct flag {
     boolean soundok;    /* ok to tell about sounds heard */
     boolean sparkle;    /* show "resisting" special FX (Scott Bigham) */
     boolean tombstone;  /* print tombstone */
+    boolean travel_interrupt;   /* Interrupt travel if there is a hostile *
+                                   monster in sight. */
     boolean verbose;    /* max battle info */
     boolean prayconfirm;        /* confirm before praying */
     unsigned ident;     /* social security number for each monster */
@@ -136,11 +142,8 @@ struct instance_flags {
     boolean pickup_thrown;      /* auto-pickup items you threw */
     boolean travel1;    /* first travel step */
     coord travelcc;     /* coordinates for travel_cache */
-    boolean mon_polycontrol;    /* debug: control monster polymorphs */
-    boolean mon_generation;     /* debug: control monster generaion */
     boolean next_msg_nonblocking;       /* suppress a --More-- after this
                                            message */
-    boolean autodigdown;        /* autodigging works downwadrds */
 
     /* Items which belong in flags, but are here to allow save compatibility */
     boolean show_uncursed;      /* always show uncursed items as such */
@@ -149,9 +152,6 @@ struct instance_flags {
     boolean disable_log;        /* don't append anything to the logfile */
     boolean botl;       /* redo status line */
     boolean autoexplore;        /* currently autoexploring */
-    boolean travel_interrupt;   /* Interrupt travel if there is a hostile *
-                                   monster in sight. */
-    struct nh_autopickup_rules *ap_rules;
 };
 
 extern struct flag flags;

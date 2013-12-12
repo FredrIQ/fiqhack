@@ -9,6 +9,8 @@
 
 static void restore_options(struct memfile *mf);
 static void restore_option(struct memfile *mf, struct nh_option_desc *opt);
+static void restore_autopickup_rules(struct memfile *mf,
+                                     struct nh_autopickup_rules *r);
 static void restore_utracked(struct memfile *mf, struct you *you);
 static void find_lev_obj(struct level *lev);
 static void restlevchn(struct memfile *mf);
@@ -682,6 +684,17 @@ restore_options(struct memfile *mf)
 
 
 static void
+restore_autopickup_rules(struct memfile *mf, struct nh_autopickup_rules *ar)
+{
+    int len = mread32(mf), i;
+    ar->num_rules = len;
+    ar->rules = malloc(len * sizeof(struct nh_autopickup_rule));
+    for (i = 0; i < len; ++i)
+        mread(mf, &ar->rules[i], sizeof (struct nh_autopickup_rule));
+}
+
+
+static void
 restore_option(struct memfile *mf, struct nh_option_desc *opt)
 {
     int len, i;
@@ -707,19 +720,18 @@ restore_option(struct memfile *mf, struct nh_option_desc *opt)
         break;
     case OPTTYPE_AUTOPICKUP_RULES:
         free(opt->value.ar->rules);
-        len = mread32(mf);
-        opt->value.ar->num_rules = len;
-        opt->value.ar->rules = malloc(len * sizeof(struct nh_autopickup_rule));
-        for (i = 0; i < len; ++i)
-            mread(mf, &opt->value.ar->rules[i],
-                  sizeof (struct nh_autopickup_rule));
+        restore_autopickup_rules(mf, opt->value.ar);
         break;
     }
 }
 
+
 void
 restore_flags(struct memfile *mf, struct flag *f)
 {
+    struct nh_autopickup_rules *ar = f->ap_rules;
+    if (ar)
+        free(ar->rules);
     memset(f, 0, sizeof (struct flag));
 
     f->ident = mread32(mf);
@@ -733,6 +745,7 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->recently_broken_otyp = mread32(mf);
 
     f->autodig = mread8(mf);
+    f->autodigdown = mread8(mf);
     f->autoquiver = mread8(mf);
     f->beginner = mread8(mf);
     f->confirm = mread8(mf);
@@ -743,7 +756,9 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->legacy = mread8(mf);
     f->lit_corridor = mread8(mf);
     f->made_amulet = mread8(mf);
+    f->mon_generation = mread8(mf);
     f->mon_moving = mread8(mf);
+    f->mon_polycontrol = mread8(mf);
     f->move = mread8(mf);
     f->mv = mread8(mf);
     f->nopick = mread8(mf);
@@ -757,6 +772,7 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->soundok = mread8(mf);
     f->sparkle = mread8(mf);
     f->tombstone = mread8(mf);
+    f->travel_interrupt = mread8(mf);
     f->verbose = mread8(mf);
     f->prayconfirm = mread8(mf);
     f->travel = mread8(mf);
@@ -770,6 +786,11 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->permahallu = mread8(mf);
 
     mread(mf, f->inv_order, sizeof (f->inv_order));
+
+    if (!ar)
+        ar = malloc(sizeof(struct nh_autopickup_rules));
+    restore_autopickup_rules(mf, ar);
+    f->ap_rules = ar;
 }
 
 

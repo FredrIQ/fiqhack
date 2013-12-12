@@ -461,9 +461,9 @@ wiz_level_tele(void)
 static int
 wiz_mon_polycontrol(void)
 {
-    iflags.mon_polycontrol = !iflags.mon_polycontrol;
+    flags.mon_polycontrol = !flags.mon_polycontrol;
     pline("Monster polymorph control is %s.",
-          iflags.mon_polycontrol ? "on" : "off");
+          flags.mon_polycontrol ? "on" : "off");
 
     return 0;
 }
@@ -472,9 +472,9 @@ wiz_mon_polycontrol(void)
 static int
 wiz_togglegen(void)
 {
-    iflags.mon_generation = !iflags.mon_generation;
+    flags.mon_generation = !flags.mon_generation;
     pline("Monster generation is %s.",
-          iflags.mon_generation ? "on" : "off");
+          flags.mon_generation ? "on" : "off");
 
     return 0;
 }

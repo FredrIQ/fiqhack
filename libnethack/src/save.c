@@ -22,6 +22,8 @@ static void savegamestate(struct memfile *mf);
 static void save_flags(struct memfile *mf);
 static void save_options(struct memfile *mf);
 static void save_option(struct memfile *mf, struct nh_option_desc *opt);
+static void save_autopickup_rules(struct memfile *mf,
+                                  struct nh_autopickup_rules *ar);
 static void freefruitchn(void);
 
 
@@ -148,6 +150,7 @@ save_flags(struct memfile *mf)
     mwrite32(mf, flags.recently_broken_otyp);
 
     mwrite8(mf, flags.autodig);
+    mwrite8(mf, flags.autodigdown);
     mwrite8(mf, flags.autoquiver);
     mwrite8(mf, flags.beginner);
     mwrite8(mf, flags.confirm);
@@ -158,7 +161,9 @@ save_flags(struct memfile *mf)
     mwrite8(mf, flags.legacy);
     mwrite8(mf, flags.lit_corridor);
     mwrite8(mf, flags.made_amulet);
+    mwrite8(mf, flags.mon_generation);
     mwrite8(mf, flags.mon_moving);
+    mwrite8(mf, flags.mon_polycontrol);
     mwrite8(mf, flags.move);
     mwrite8(mf, flags.mv);
     mwrite8(mf, flags.nopick);
@@ -172,6 +177,7 @@ save_flags(struct memfile *mf)
     mwrite8(mf, flags.soundok);
     mwrite8(mf, flags.sparkle);
     mwrite8(mf, flags.tombstone);
+    mwrite8(mf, flags.travel_interrupt);
     mwrite8(mf, flags.verbose);
     mwrite8(mf, flags.prayconfirm);
     mwrite8(mf, flags.travel);
@@ -185,6 +191,8 @@ save_flags(struct memfile *mf)
     mwrite8(mf, flags.permahallu);
 
     mwrite(mf, flags.inv_order, sizeof (flags.inv_order));
+
+    save_autopickup_rules(mf, flags.ap_rules);
 }
 
 
@@ -227,13 +235,19 @@ save_option(struct memfile *mf, struct nh_option_desc *opt)
             mwrite(mf, opt->value.s, len);
         break;
     case OPTTYPE_AUTOPICKUP_RULES:
-        len = opt->value.ar->num_rules;
-        mwrite32(mf, len);
-        for (i = 0; i < len; ++i)
-            mwrite(mf, &opt->value.ar->rules[i],
-                   sizeof (struct nh_autopickup_rule));
+        save_autopickup_rules(mf, opt->value.ar);
         break;
     }
+}
+
+
+static void
+save_autopickup_rules(struct memfile *mf, struct nh_autopickup_rules *ar)
+{
+    int len = ar->num_rules, i;
+    mwrite32(mf, len);
+    for (i = 0; i < len; ++i)
+        mwrite(mf, &ar->rules[i], sizeof (struct nh_autopickup_rule));
 }
 
 
@@ -903,12 +917,12 @@ freedynamicdata(void)
     free_dungeon();
     free_history();
 
-    if (iflags.ap_rules) {
-        free(iflags.ap_rules->rules);
-        iflags.ap_rules->rules = NULL;
-        free(iflags.ap_rules);
+    if (flags.ap_rules) {
+        free(flags.ap_rules->rules);
+        flags.ap_rules->rules = NULL;
+        free(flags.ap_rules);
     }
-    iflags.ap_rules = NULL;
+    flags.ap_rules = NULL;
     free(artilist);
     free(objects);
     objects = NULL;

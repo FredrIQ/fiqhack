@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-10 */
+/* Last modified by Sean Hunt, 2013-12-12 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1345,7 +1345,11 @@ nh_get_savegame_status(int fd, struct nh_game_info *gi)
         }
 
         sg_moves = mread32(&mf);
+        /* to avoid invalid free */
+        sg_flags.ap_rules = NULL;
         restore_flags(&mf, &sg_flags);
+        free(sg_flags.ap_rules->rules);
+        free(sg_flags.ap_rules);
         restore_you(&mf, &sg_you);
         free(mf.buf);
 

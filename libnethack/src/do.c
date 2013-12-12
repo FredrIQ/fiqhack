@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-11-16 */
+/* Last modified by Sean Hunt, 2013-12-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -730,7 +730,7 @@ dodown(void)
              && trap->ttyp != SPIKED_PIT)
             || (!can_fall_thru(level) && can_fall) || !trap->tseen) {
 
-            if (flags.autodig && !flags.nopick && iflags.autodigdown && uwep &&
+            if (flags.autodig && !flags.nopick && flags.autodigdown && uwep &&
                 is_pick(uwep)) {
                 return use_pick_axe2(uwep, 0, 0, 1);
             } else {
@@ -763,7 +763,7 @@ dodown(void)
     if (trap) {
         if (trap->ttyp == PIT || trap->ttyp == SPIKED_PIT) {
             if (u.utrap && (u.utraptype == TT_PIT)) {
-                if (flags.autodig && !flags.nopick && iflags.autodigdown && uwep
+                if (flags.autodig && !flags.nopick && flags.autodigdown && uwep
                     && is_pick(uwep)) {
                     return use_pick_axe2(uwep, 0, 0, 1);
                 } else {
