@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-10 */
+/* Last modified by Sean Hunt, 2013-12-12 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1419,6 +1419,7 @@ extern boolean validrace(int rolenum, int racenum);
 extern boolean validgend(int rolenum, int racenum, int gendnum);
 extern boolean validalign(int rolenum, int racenum, int alignnum);
 extern void role_init(void);
+extern void pantheon_init(void);
 extern const char *Hello(struct monst *);
 extern const char *Goodbye(void);
 

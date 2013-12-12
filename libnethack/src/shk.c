@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-23 */
+/* Last modified by Sean Hunt, 2013-12-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2184,7 +2184,7 @@ speak:
             if (!is_human(youmonst.data))
                 strcat(buf, " creature");
             else
-                strcat(buf, (flags.female) ? " lady" : " sir");
+                strcat(buf, (u.ufemale) ? " lady" : " sir");
         }
         if (ininv) {
             long quan = obj->quan;
@@ -3247,10 +3247,10 @@ shopdig(int fall)
             if (u.utraptype == TT_PIT)
                 verbalize
                     ("Be careful, %s, or you might fall through the floor.",
-                     flags.female ? "madam" : "sir");
+                     u.ufemale ? "madam" : "sir");
             else
                 verbalize("%s, do not damage the floor here!",
-                          flags.female ? "Madam" : "Sir");
+                          u.ufemale ? "Madam" : "Sir");
         }
         if (Role_if(PM_KNIGHT)) {
             pline("You feel like a common thief.");

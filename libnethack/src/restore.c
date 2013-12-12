@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-10 */
+/* Last modified by Sean Hunt, 2013-12-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -505,6 +505,7 @@ restore_you(struct memfile *mf, struct you *y)
     y->uedibility = (yflags >> 25) & 1;
     y->uwelcomed = (yflags >> 24) & 1;
     y->usick_type = (yflags >> 22) & 3;
+    y->ufemale = (yflags >> 21) & 1;
 
     y->uevent.minor_oracle = (eflags >> 31) & 1;
     y->uevent.major_oracle = (eflags >> 30) & 1;
@@ -567,6 +568,7 @@ restore_you(struct memfile *mf, struct you *y)
     y->initrace = mread32(mf);
     y->initgend = mread32(mf);
     y->initalign = mread32(mf);
+    y->upantheon = mread32(mf);
     y->uconduct.unvegetarian = mread32(mf);
     y->uconduct.unvegan = mread32(mf);
     y->uconduct.food = mread32(mf);
@@ -723,8 +725,6 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->ident = mread32(mf);
     f->moonphase = mread32(mf);
     f->no_of_wizards = mread32(mf);
-    f->randomall = mread32(mf);
-    f->pantheon = mread32(mf);
     f->run = mread32(mf);
     f->warnlevel = mread32(mf);
     f->djinni_count = mread32(mf);
@@ -738,7 +738,6 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->confirm = mread8(mf);
     f->debug = mread8(mf);
     f->explore = mread8(mf);
-    f->female = mread8(mf);
     f->forcefight = mread8(mf);
     f->friday13 = mread8(mf);
     f->legacy = mread8(mf);
@@ -801,6 +800,7 @@ dorecover(struct memfile *mf)
 
     restore_you(mf, &u);
     role_init();        /* Reset the initial role, race, gender, and alignment */
+    pantheon_init();
 
     restore_options(mf);
 

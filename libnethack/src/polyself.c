@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-02 */
+/* Last modified by Sean Hunt, 2013-12-12 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -27,7 +27,7 @@ set_uasmon(void)
     const struct permonst *pm = &mons[u.umonnum];
 
     if (!Upolyd)
-        pm = flags.female ? &pm_you_female : &pm_you_male;
+        pm = u.ufemale ? &pm_you_female : &pm_you_male;
     set_mon_data(&youmonst, pm, 0);
 }
 
@@ -44,7 +44,7 @@ polyman(const char *fmt, const char *arg)
         u.acurr = u.macurr;     /* restore old attribs */
         u.amax = u.mamax;
         u.umonnum = u.umonster;
-        flags.female = u.mfemale;
+        u.ufemale = u.mfemale;
     }
     set_uasmon();
 
@@ -121,20 +121,20 @@ change_sex(void)
     if (!already_polyd ||
         (!is_male(youmonst.data) && !is_female(youmonst.data) &&
          !is_neuter(youmonst.data)))
-        flags.female = !flags.female;
+        u.ufemale = !u.ufemale;
     if (already_polyd)  /* poly'd: also change saved sex */
         u.mfemale = !u.mfemale;
     max_rank_sz();      /* [this appears to be superfluous] */
-    if ((already_polyd ? u.mfemale : flags.female) && urole.name.f)
+    if ((already_polyd ? u.mfemale : u.ufemale) && urole.name.f)
         strcpy(pl_character, urole.name.f);
     else
         strcpy(pl_character, urole.name.m);
-    u.umonster = ((already_polyd ? u.mfemale : flags.female) &&
+    u.umonster = ((already_polyd ? u.mfemale : u.ufemale) &&
                   urole.femalenum != NON_PM) ? urole.femalenum : urole.malenum;
     if (!already_polyd) {
         u.umonnum = u.umonster;
     } else if (u.umonnum == PM_SUCCUBUS || u.umonnum == PM_INCUBUS) {
-        flags.female = !flags.female;
+        u.ufemale = !u.ufemale;
         /* change monster type to match new sex */
         u.umonnum = (u.umonnum == PM_SUCCUBUS) ? PM_INCUBUS : PM_SUCCUBUS;
         set_uasmon();
@@ -214,7 +214,7 @@ newman(void)
     }
     newuhs(FALSE);
     polyman("You feel like a new %s!",
-            (flags.female &&
+            (u.ufemale &&
              urace.individual.f) ? urace.individual.f :
             (urace.individual.m) ? urace.individual.m : urace.noun);
     if (Slimed) {
@@ -371,13 +371,13 @@ polymon(int mntmp)
         /* Human to monster; save human stats */
         u.macurr = u.acurr;
         u.mamax = u.amax;
-        u.mfemale = flags.female;
+        u.mfemale = u.ufemale;
     } else {
         /* Monster to monster; restore human stats, to be immediately changed
            to provide stats for the new monster */
         u.acurr = u.macurr;
         u.amax = u.mamax;
-        flags.female = u.mfemale;
+        u.ufemale = u.mfemale;
     }
 
     if (youmonst.m_ap_type) {
@@ -390,21 +390,21 @@ polymon(int mntmp)
         youmonst.m_ap_type = M_AP_NOTHING;
     }
     if (is_male(&mons[mntmp])) {
-        if (flags.female)
+        if (u.ufemale)
             dochange = TRUE;
     } else if (is_female(&mons[mntmp])) {
-        if (!flags.female)
+        if (!u.ufemale)
             dochange = TRUE;
     } else if (!is_neuter(&mons[mntmp]) && mntmp != u.ulycn) {
         if (!rn2(10))
             dochange = TRUE;
     }
     if (dochange) {
-        flags.female = !flags.female;
+        u.ufemale = !u.ufemale;
         pline("You %s %s%s!",
               (u.umonnum != mntmp) ? "turn into a" : "feel like a new",
               (is_male(&mons[mntmp]) ||
-               is_female(&mons[mntmp])) ? "" : flags.female ? "female " :
+               is_female(&mons[mntmp])) ? "" : u.ufemale ? "female " :
               "male ", mons[mntmp].mname);
     } else {
         if (u.umonnum != mntmp)
@@ -551,7 +551,7 @@ polymon(int mntmp)
             pline(use_thec, monsterc, "emit a mental blast");
         if (youmonst.data->msound == MS_SHRIEK) /* worthless, actually */
             pline(use_thec, monsterc, "shriek");
-        if (lays_eggs(youmonst.data) && flags.female)
+        if (lays_eggs(youmonst.data) && u.ufemale)
             pline(use_thec, "sit", "lay an egg");
     }
     /* you now know what an egg of your type looks like */
@@ -1292,12 +1292,12 @@ body_part(int part)
 int
 poly_gender(void)
 {
-/* Returns gender of polymorphed player; 0/1=same meaning as flags.female,
+/* Returns gender of polymorphed player; 0/1=same meaning as u.ufemale,
  * 2=none.
  */
     if (is_neuter(youmonst.data) || !humanoid(youmonst.data))
         return 2;
-    return flags.female;
+    return u.ufemale;
 }
 
 

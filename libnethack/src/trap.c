@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-11-16 */
+/* Last modified by Sean Hunt, 2013-12-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2598,7 +2598,7 @@ domagictrap(void)
         case 15:
             if (on_level(&u.uz, &qstart_level))
                 pline("You feel %slike the prodigal son.",
-                      (flags.female ||
+                      (u.ufemale ||
                        (Upolyd && is_neuter(youmonst.data))) ? "oddly " : "");
             else
                 pline("You suddenly yearn for %s.",

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-10 */
+/* Last modified by Sean Hunt, 2013-12-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -756,9 +756,9 @@ display_rip(int how, char *kilbuf, char *pbuf, long umoney,
     if (!done_stopprint) {
         sprintf(pbuf, "%s %s the %s...", Goodbye(), plname,
                 how !=
-                ASCENDED ? (const char *)((flags.female && urole.name.f) ?
+                ASCENDED ? (const char *)((u.ufemale && urole.name.f) ?
                                           urole.name.f : urole.name.m) :
-                (const char *)(flags.female ?
+                (const char *)(u.ufemale ?
                                "Demigoddess" : "Demigod"));
         add_menutext(&menu, pbuf);
         add_menutext(&menu, "");
@@ -936,7 +936,7 @@ done_noreturn(int how)
             if (!Upolyd) {
                 /* Base corpse on race when not poly'd since original u.umonnum 
                    is based on role, and all role monsters are human. */
-                mnum = (flags.female &&
+                mnum = (u.ufemale &&
                         urace.femalenum !=
                         NON_PM) ? urace.femalenum : urace.malenum;
             }

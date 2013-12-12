@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Sean Hunt, 2013-12-12 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -57,15 +57,15 @@ begin_dump(int how)
     }
 
     sprintf(dumpname, "%s, %s-%s-%s-%s-%s, %s.txt", timestamp, plname,
-            urole.filecode, urace.filecode, genders[flags.female].filecode,
+            urole.filecode, urace.filecode, genders[u.ufemale].filecode,
             aligns[1 - u.ualign.type].filecode, status);
     dumpfp = fopen_datafile(dumpname, "w+", DUMPPREFIX);
     if (!dumpfp)
         return;
 
-    rolename = (flags.female && urole.name.f) ? urole.name.f : urole.name.m;
+    rolename = (u.ufemale && urole.name.f) ? urole.name.f : urole.name.m;
     fprintf(dumpfp, "%s, %s %s %s %s\n", plname, aligns[1 - u.ualign.type].adj,
-            genders[flags.female].adj, urace.adj, rolename);
+            genders[u.ufemale].adj, urace.adj, rolename);
 
     dump_screen(dumpfp);
     dump_status();
@@ -78,7 +78,7 @@ dump_status(void)
     int hp;
 
     fprintf(dumpfp, "%s the %s\n", plname,
-            rank_of(u.ulevel, Role_switch, flags.female));
+            rank_of(u.ulevel, Role_switch, u.ufemale));
     fprintf(dumpfp, "  Experience level: %d\n", u.ulevel);
 
     if (ACURR(A_STR) > 18) {

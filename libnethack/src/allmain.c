@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-10 */
+/* Last modified by Sean Hunt, 2013-12-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -987,7 +987,6 @@ newgame(void)
 
     init_objects();     /* must be before u_init() */
 
-    flags.pantheon = -1;        /* role_init() will reset this */
     role_init();        /* must be before init_dungeons(), u_init(), and
                            init_artifacts() */
 
@@ -997,6 +996,7 @@ newgame(void)
     init_artifacts();
     u_init();   /* struct you must have some basic data for mklev to work right 
                  */
+    pantheon_init();
 
     load_qtlist();      /* load up the quest text info */
 

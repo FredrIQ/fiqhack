@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Sean Hunt, 2013-12-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1301,8 +1301,8 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             if (!Blind) {
                 pline("%s tries to %s you, but you seem %s.",
                       Adjmonnam(mtmp, "plain"),
-                      flags.female ? "charm" : "seduce",
-                      flags.female ? "unaffected" : "uninterested");
+                      u.ufemale ? "charm" : "seduce",
+                      u.ufemale ? "unaffected" : "uninterested");
             }
             if (rn2(3)) {
                 if (!tele_restrict(mtmp))
@@ -2330,7 +2330,7 @@ doseduce(struct monst *mon)
 
     if ((uarm && !uskin()) || uarmc) {
         verbalize("You're such a %s; I wish...",
-                  flags.female ? "sweet lady" : "nice guy");
+                  u.ufemale ? "sweet lady" : "nice guy");
         if (!tele_restrict(mon))
             rloc(mon, FALSE);
         return 1;

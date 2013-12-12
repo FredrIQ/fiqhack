@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-10 */
+/* Last modified by Sean Hunt, 2013-12-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1125,37 +1125,11 @@ role_init(void)
 {
     int alignmnt;
 
-    /* Check for a valid role.  Try u.initrole first. */
-    if (!validrole(u.initrole)) {
-        /* Try the player letter second */
-        if ((u.initrole = str2role(pl_character)) < 0)
-            /* None specified; pick a random role */
-            u.initrole = randrole();
-    }
-
     /* We now have a valid role index.  Copy the role name back. */
     /* This should become OBSOLETE */
     strcpy(pl_character, roles[u.initrole].name.m);
     pl_character[PL_CSIZ - 1] = '\0';
 
-    /* Check for a valid race */
-    if (!validrace(u.initrole, u.initrace))
-        u.initrace = randrace(u.initrole);
-
-    /* Check for a valid gender.  If new game, check both initgend and female.
-       On restore, assume flags.female is correct. */
-    if (flags.pantheon == -1) { /* new game */
-        if (!validgend(u.initrole, u.initrace, flags.female))
-            flags.female = !flags.female;
-    }
-    if (!validgend(u.initrole, u.initrace, u.initgend))
-        /* Note that there is no way to check for an unspecified gender. */
-        u.initgend = flags.female;
-
-    /* Check for a valid alignment */
-    if (!validalign(u.initrole, u.initrace, u.initalign))
-        /* Pick a random alignment */
-        u.initalign = randalign(u.initrole, u.initrace);
     alignmnt = aligns[u.initalign].value;
 
     /* Initialize urole and urace */
@@ -1187,18 +1161,6 @@ role_init(void)
         pm_nemesis.mflags3 |= M3_WANTSARTI | M3_WAITFORU;
     }
 
-    /* Fix up the god names */
-    if (flags.pantheon == -1) { /* new game */
-        flags.pantheon = u.initrole;    /* use own gods */
-        while (!roles[flags.pantheon].lgod)     /* unless they're missing */
-            flags.pantheon = randrole();
-    }
-    if (!urole.lgod) {
-        urole.lgod = roles[flags.pantheon].lgod;
-        urole.ngod = roles[flags.pantheon].ngod;
-        urole.cgod = roles[flags.pantheon].cgod;
-    }
-
     /* Fix up infravision */
     pm_you_male = pm_you_female = mons[urole.malenum];
     if (urole.femalenum != NON_PM)
@@ -1219,6 +1181,24 @@ role_init(void)
 
     /* Success! */
     return;
+}
+
+/* Initialize the player's pantheon.
+ *
+ * This must come after both u and urole are initialized by role_init 
+ * and by either u_init or restore_you
+ */
+void
+pantheon_init(void)
+{
+    u.upantheon = u.initrole;            /* use own gods */
+    while (!roles[u.upantheon].lgod)     /* unless they're missing */
+        u.upantheon = randrole();
+    if (!urole.lgod) {
+        urole.lgod = roles[u.upantheon].lgod;
+        urole.ngod = roles[u.upantheon].ngod;
+        urole.cgod = roles[u.upantheon].cgod;
+    }
 }
 
 const char *

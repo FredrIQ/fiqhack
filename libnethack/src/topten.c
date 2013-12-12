@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-04 */
+/* Last modified by Sean Hunt, 2013-12-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -359,7 +359,7 @@ fill_topten_entry(struct toptenentry *newtt, int how)
     newtt->plrole[ROLESZ] = '\0';
     strncpy(newtt->plrace, urace.filecode, ROLESZ);
     newtt->plrace[ROLESZ] = '\0';
-    strncpy(newtt->plgend, genders[flags.female].filecode, ROLESZ);
+    strncpy(newtt->plgend, genders[u.ufemale].filecode, ROLESZ);
     newtt->plgend[ROLESZ] = '\0';
     strncpy(newtt->plalign, aligns[1 - u.ualign.type].filecode, ROLESZ);
     newtt->plalign[ROLESZ] = '\0';

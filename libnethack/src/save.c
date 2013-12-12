@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-10 */
+/* Last modified by Sean Hunt, 2013-12-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -140,8 +140,6 @@ save_flags(struct memfile *mf)
     mwrite32(mf, flags.ident);
     mwrite32(mf, flags.moonphase);
     mwrite32(mf, flags.no_of_wizards);
-    mwrite32(mf, flags.randomall);
-    mwrite32(mf, flags.pantheon);
     mwrite32(mf, flags.run);
     mwrite32(mf, flags.warnlevel);
     mwrite32(mf, flags.djinni_count);
@@ -155,7 +153,6 @@ save_flags(struct memfile *mf)
     mwrite8(mf, flags.confirm);
     mwrite8(mf, flags.debug);
     mwrite8(mf, flags.explore);
-    mwrite8(mf, flags.female);
     mwrite8(mf, flags.forcefight);
     mwrite8(mf, flags.friday13);
     mwrite8(mf, flags.legacy);
@@ -389,7 +386,7 @@ save_you(struct memfile *mf, struct you *y)
         (y->uundetected << 29) | (y->mfemale << 28) |
         (y->uinvulnerable << 27) | (y->uburied << 26) |
         (y->uedibility << 25) | (y->uwelcomed << 24) |
-        (y->usick_type << 22);
+        (y->usick_type << 22) | (y->ufemale << 21);
     eflags =
         (y->uevent.minor_oracle << 31) |
         (y->uevent.major_oracle << 30) |
@@ -455,6 +452,7 @@ save_you(struct memfile *mf, struct you *y)
     mwrite32(mf, y->initrace);
     mwrite32(mf, y->initgend);
     mwrite32(mf, y->initalign);
+    mwrite32(mf, y->upantheon);
     mwrite32(mf, y->uconduct.unvegetarian);
     mwrite32(mf, y->uconduct.unvegan);
     mwrite32(mf, y->uconduct.food);

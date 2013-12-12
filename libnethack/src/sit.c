@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Sean Hunt, 2013-12-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -209,7 +209,7 @@ dosit(void)
 
                     pline("A voice echoes:");
                     verbalize("Thy audience hath been summoned, %s!",
-                              flags.female ? "Dame" : "Sire");
+                              u.ufemale ? "Dame" : "Sire");
                     while (cnt--)
                         makemon(courtmon(&u.uz), level, u.ux, u.uy,
                                 NO_MM_FLAGS);
@@ -218,7 +218,7 @@ dosit(void)
             case 8:
                 pline("A voice echoes:");
                 verbalize("By thy Imperious order, %s...",
-                          flags.female ? "Dame" : "Sire");
+                          u.ufemale ? "Dame" : "Sire");
                 do_genocide(5); /* REALLY|ONTHRONE, see do_genocide() */
                 break;
             case 9:
@@ -287,7 +287,7 @@ dosit(void)
     } else if (lays_eggs(youmonst.data)) {
         struct obj *uegg;
 
-        if (!flags.female) {
+        if (!u.ufemale) {
             pline("Males can't lay eggs!");
             return 0;
         }

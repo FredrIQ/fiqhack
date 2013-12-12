@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-04 */
+/* Last modified by Sean Hunt, 2013-12-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1243,10 +1243,10 @@ minimal_enlightenment(void)
             urace.noun);
     add_menutext(&menu, buf);
     sprintf(buf, fmtstr_noorig, "role",
-            ((Upolyd ? u.mfemale : flags.female) &&
+            ((Upolyd ? u.mfemale : u.ufemale) &&
              urole.name.f) ? urole.name.f : urole.name.m);
     add_menutext(&menu, buf);
-    genidx = is_neuter(youmonst.data) ? 2 : flags.female;
+    genidx = is_neuter(youmonst.data) ? 2 : u.ufemale;
     sprintf(buf, fmtstr, "gender", genders[genidx].adj,
             genders[u.initgend].adj);
     add_menutext(&menu, buf);
@@ -1390,7 +1390,7 @@ static int
 dowelcome(void)
 {       /* false => restoring an old game */
     char buf[BUFSZ];
-    boolean currentgend = Upolyd ? u.mfemale : flags.female;
+    boolean currentgend = Upolyd ? u.mfemale : u.ufemale;
     boolean new_game = !u.uwelcomed;
 
     u.uwelcomed = 1;
