@@ -54,7 +54,7 @@ extern void EXPORT(nhnet_lib_exit) (void);
 extern nh_bool EXPORT(nhnet_exit_game) (int exit_type);
 extern int EXPORT(nhnet_play_game) (int gid);
 extern enum nh_create_response EXPORT(nhnet_create_game) (
-    const char *name, struct nh_option_desc *opts, enum nh_game_modes playmode);
+    struct nh_option_desc *opts, enum nh_game_modes playmode);
 extern int EXPORT(nhnet_command) (const char *cmd, int rep,
                                   struct nh_cmd_arg *arg);
 /* no nhnet_get_copyright_banner; the client should display its own copyright */

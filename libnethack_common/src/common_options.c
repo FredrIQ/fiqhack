@@ -27,8 +27,8 @@ nhlib_find_boolopt(const struct nhlib_boolopt_map *map, const char *name)
     int i;
 
     for (i = 0; map[i].optname; i++)
-        if (!strcmp(name, map[i]->optname))
-            return map[i]->addr;
+        if (!strcmp(name, map[i].optname))
+            return map[i].addr;
 
     return NULL;
 }

@@ -245,8 +245,7 @@ json_option(const struct nh_option_desc *option)
 
 
 enum nh_create_response
-nhnet_create_game(const char *name, struct nh_option_desc *opts,
-                  enum nh_game_modes playmode)
+nhnet_create_game(struct nh_option_desc *opts, enum nh_game_modes playmode)
 {
     json_t *jmsg, *jarr;
     int ret, i;
@@ -258,8 +257,7 @@ nhnet_create_game(const char *name, struct nh_option_desc *opts,
     for (i = 0; opts[i].name; i++)
         json_array_append_new(jarr, json_option(&opts[i]));
 
-    jmsg =
-        json_pack("{ss,so,si}", "name", name, "opts", jarr, "mode", playmode);
+    jmsg = json_pack("{so,si}", "opts", jarr, "mode", playmode);
     jmsg = send_receive_msg("create_game", jmsg);
     if (json_unpack(jmsg, "{si}", "return", &ret) == -1) {
         print_error("Incorrect return object in nhnet_create_game");

@@ -278,10 +278,14 @@ enum placement_hint {
     PLHINT_INVENTORY
 };
 
+/* When doing a create over the network, instead of an OK, we will get back the
+ * game number. Thus negative values are used for errors, so they are errors in
+ * both the local and network versions of the call.
+ */
 enum nh_create_response {
     NHCREATE_OK,
-    NHCREATE_INVALID,
-    NHCREATE_FAIL
+    NHCREATE_INVALID = -1,
+    NHCREATE_FAIL = -2
 };
 
 enum nh_client_response {

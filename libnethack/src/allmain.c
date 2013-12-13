@@ -138,7 +138,7 @@ nh_exit_game(int exit_type)
 
 
 void
-startup_common(const char *name, int playmode)
+startup_common(int playmode)
 {
     /* (re)init all global data */
     init_data();
@@ -168,11 +168,6 @@ startup_common(const char *name, int playmode)
         discover = TRUE;
     else if (playmode == MODE_WIZARD)
         wizard = TRUE;
-
-    if (name && name[0]) {
-        strncpy(plname, name, PL_NSIZ);
-        plname[PL_NSIZ - 1] = '\0';
-    }
 
     if (wizard)
         strcpy(plname, "wizard");
@@ -245,11 +240,10 @@ post_init_tasks(void)
 
 
 enum nh_create_response
-nh_create_game(int fd, const char *name, struct nh_option_desc *opts,
-               enum nh_game_modes playmode)
+nh_create_game(int fd, struct nh_option_desc *opts, enum nh_game_modes playmode)
 {
     unsigned int seed = 0;
-    int i, irole, irace, igend, ialign;
+    int i;
 
     API_ENTRY_CHECKPOINT() {
         IF_API_EXCEPTION(GAME_DETACHED):
@@ -259,9 +253,14 @@ nh_create_game(int fd, const char *name, struct nh_option_desc *opts,
             return NHCREATE_FAIL;
     }
 
-    if (fd == -1 || !name || !*name) {
+    if (fd == -1) {
         API_EXIT();
         return NHCREATE_INVALID;
+    }
+
+    /* options must be initialized before startup_common for plname */
+    for (i = 0; opts[i].name; i++) {
+        nh_set_option(opts[i].name, opts[i].value, FALSE);
     }
 
     if (!program_state.restoring) {
@@ -271,15 +270,12 @@ nh_create_game(int fd, const char *name, struct nh_option_desc *opts,
         mt_srand(seed);
     }
     /* else: turntime and rng seeding are done in logreplay.c */
-    startup_common(name, playmode);
-
-    for (i = 0; opts[i].name; i++) {
-        nh_set_option(opts[i].name, opts[i].value, FALSE);
-    }
+    startup_common(playmode);
 
     if (!validrole(u.initrole) || !validrace(u.initrole, u.initrace) ||
         !validgend(u.initrole, u.initrace, u.initgend) ||
-        !validalign(u.initrole, u.initrace, u.initalign)) {
+        !validalign(u.initrole, u.initrace, u.initalign) ||
+        (!plname && playmode != MODE_WIZARD)) {
         /* Reset options that we just clobbered. */
         init_opt_struct();
         API_EXIT();
@@ -310,7 +306,6 @@ nh_play_game(int fd)
     int playmode;
     volatile int ret;
     unsigned long long temp_turntime;
-    char namebuf[PL_NSIZ];
 
     if (fd < 0)
         return ERR_BAD_ARGS;
@@ -389,14 +384,14 @@ nh_play_game(int fd)
                                    already in the log */
 
     /* Read the log header for this game. */
-    replay_read_newgame(&turntime, &playmode, namebuf);
+    replay_read_newgame(&turntime, &playmode);
     temp_turntime = turntime;
 
     /* set special windowprocs which will autofill requests for user input with 
        data from the log file */
     replay_setup_windowprocs(NULL);
 
-    startup_common(namebuf, playmode);
+    startup_common(playmode);
     u.ubirthday = turntime = temp_turntime;
 
     replay_run_cmdloop(TRUE, FALSE, TRUE);

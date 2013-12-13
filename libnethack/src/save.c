@@ -218,7 +218,7 @@ save_options(struct memfile *mf)
 static void
 save_option(struct memfile *mf, struct nh_option_desc *opt)
 {
-    int len, i;
+    int len;
 
     switch (opt->type) {
     case OPTTYPE_BOOL:

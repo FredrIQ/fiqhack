@@ -8,8 +8,6 @@
 static boolean ok_race(int, int, int, int);
 static boolean ok_gend(int, int, int, int);
 static boolean ok_align(int, int, int, int);
-static int randrace(int);
-static int randalign(int, int);
 
 
 /*** Table of all roles ***/
@@ -519,33 +517,6 @@ validrace(int rolenum, int racenum)
 
 
 int
-randrace(int rolenum)
-{
-    int i, n = 0;
-
-    /* Count the number of valid races */
-    for (i = 0; races[i].noun; i++)
-        if (roles[rolenum].allow & races[i].allow & ROLE_RACEMASK)
-            n++;
-
-    /* Pick a random race */
-    /* Use a factor of 100 in case of bad random number generators */
-    if (n)
-        n = rn2(n * 100) / 100;
-    for (i = 0; races[i].noun; i++)
-        if (roles[rolenum].allow & races[i].allow & ROLE_RACEMASK) {
-            if (n)
-                n--;
-            else
-                return i;
-        }
-
-    /* This role has no permitted races? */
-    return rn2(SIZE(races) - 1);
-}
-
-
-int
 str2race(char *str)
 {
     int i, len;
@@ -619,34 +590,6 @@ validalign(int rolenum, int racenum, int alignnum)
     return (alignnum >= 0 && alignnum < ROLE_ALIGNS &&
             (roles[rolenum].allow & races[racenum].allow &
              aligns[alignnum].allow & ROLE_ALIGNMASK));
-}
-
-
-int
-randalign(int rolenum, int racenum)
-{
-    int i, n = 0;
-
-    /* Count the number of valid alignments */
-    for (i = 0; i < ROLE_ALIGNS; i++)
-        if (roles[rolenum].allow & races[racenum].allow &
-            aligns[i].allow & ROLE_ALIGNMASK)
-            n++;
-
-    /* Pick a random alignment */
-    if (n)
-        n = rn2(n);
-    for (i = 0; i < ROLE_ALIGNS; i++)
-        if (roles[rolenum].allow & races[racenum].allow &
-            aligns[i].allow & ROLE_ALIGNMASK) {
-            if (n)
-                n--;
-            else
-                return i;
-        }
-
-    /* This role/race has no permitted alignments? */
-    return rn2(ROLE_ALIGNS);
 }
 
 

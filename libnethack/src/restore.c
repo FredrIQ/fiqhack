@@ -697,7 +697,7 @@ restore_autopickup_rules(struct memfile *mf, struct nh_autopickup_rules *ar)
 static void
 restore_option(struct memfile *mf, struct nh_option_desc *opt)
 {
-    int len, i;
+    int len;
 
     switch (opt->type) {
     case OPTTYPE_BOOL:

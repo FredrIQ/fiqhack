@@ -55,7 +55,7 @@ struct you;
 /* ### allmain.c ### */
 
 extern void stop_occupation(void);
-extern void startup_common(const char *name, int playmode);
+extern void startup_common(int playmode);
 
 /* ### apply.c ### */
 
@@ -778,8 +778,7 @@ extern void replay_sync_save(void);
 extern char *replay_bones(int *buflen);
 extern void replay_setup_windowprocs(const struct nh_window_procs *procs);
 extern void replay_restore_windowprocs(void);
-extern void replay_read_newgame(unsigned long long *init, int *playmode,
-                                char *namebuf);
+extern void replay_read_newgame(unsigned long long *init, int *playmode);
 extern boolean replay_run_cmdloop(boolean optonly, boolean singlestep,
                                   boolean fast);
 

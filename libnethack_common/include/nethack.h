@@ -34,8 +34,7 @@ extern nh_bool EXPORT(nh_exit_game) (int exit_type);
 extern enum nh_play_status EXPORT (nh_play_game) (int fd);
 
 extern enum nh_create_response EXPORT(nh_create_game) (
-    int fd, const char *name, struct nh_option_desc *opts,
-    enum nh_game_modes playmode);
+    int fd, struct nh_option_desc *opts, enum nh_game_modes playmode);
 extern const_char_p_const_p EXPORT(nh_get_copyright_banner) (void);
 
 /* logreplay.c */

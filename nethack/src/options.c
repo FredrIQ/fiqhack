@@ -70,8 +70,6 @@ static const char *const bucnames[] =
     { "unknown", "blessed", "uncursed", "cursed", "all" };
 
 struct nh_option_desc curses_options[] = {
-    {"name", "name for new characters (blank = ask)", FALSE, OPTTYPE_STRING,
-     {.s = NULL}},
     {"bgbranding", "use background colors to show hidden stairs and traps",
      FALSE,
      OPTTYPE_BOOL, {.b = TRUE}},
@@ -251,12 +249,7 @@ curses_set_option(const char *name, union nh_optvalue value, nh_bool isstring)
         handle_resize();
     }
 #endif
-    else if (!strcmp(option->name, "name")) {
-        if (option->value.s)
-            strcpy(settings.plname, option->value.s);
-        else
-            settings.plname[0] = '\0';
-    } else
+    else
         return FALSE;
 
     return TRUE;
@@ -281,7 +274,6 @@ init_options(void)
 {
     int i;
 
-    find_option("name")->s.maxlen = PL_NSIZ;
     find_option("menu_headings")->e = menu_headings_spec;
     find_option("msgheight")->i.min = 1;
     find_option("msgheight")->i.max = 40;
@@ -1123,7 +1115,6 @@ void
 read_ui_config(void)
 {
     fnchar uiconfname[BUFSZ];
-    unsigned i;
 
     /* If running in connection-only mode, we won't know the file to look at
        the first time we call get_config_name. So instead, we put this off

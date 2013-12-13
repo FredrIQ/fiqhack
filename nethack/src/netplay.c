@@ -6,44 +6,6 @@
 #include "nhcurses.h"
 
 void
-net_rungame(void)
-{
-    char plname[BUFSZ];
-    int role = initrole, race = initrace, gend = initgend, align = initalign;
-    int ret, gameno;
-
-    if (!player_selection(&role, &race, &gend, &align, random_player))
-        return;
-
-    strncpy(plname, settings.plname, PL_NSIZ);
-    /* The player name is set to "wizard" (again) in nh_create_game, so setting
-       it here just prevents wizmode player from being asked for a name. */
-    if (ui_flags.playmode == MODE_WIZARD)
-        strcpy(plname, "wizard");
-
-    while (!plname[0])
-        curses_getline("what is your name?", plname);
-    if (plname[0] == '\033')    /* canceled */
-        return;
-
-    create_game_windows();
-    /* Create a game, then restore it. */
-    gameno = nhnet_create_game(plname, curses_get_nh_opts(), ui_flags.playmode);
-
-    ret = ERR_BAD_FILE;
-    if (gameno >= 0)
-        ret = playgame(gameno);
-
-    destroy_game_windows();
-    cleanup_messages();
-
-    if (ret == GAME_OVER)
-        show_topten(player.plname, settings.end_top, settings.end_around,
-                    settings.end_own);
-}
-
-
-void
 net_loadgame(void)
 {
     char buf[BUFSZ];

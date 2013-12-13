@@ -123,9 +123,6 @@ struct interface_flags {
 };
 
 struct settings {
-    char plname[BUFSZ]; /* standard player name; size is BUFSZ rather than
-                           PL_NSIZ, because the buffer may be written to
-                           directly via curses_getline */
     nh_bool end_own;    /* list all own scores */
     int end_top, end_around;    /* describe desired score list */
     int graphics;
@@ -260,7 +257,8 @@ extern struct nh_window_procs curses_windowprocs;
 extern WINDOW *basewin, *mapwin, *msgwin, *statuswin, *sidebar;
 extern struct curses_drawing_info *default_drawing, *cur_drawing;
 extern struct nh_player_info player;
-extern int initrole, initrace, initgend, initalign;
+extern int cmdline_role, cmdline_race, cmdline_gend, cmdline_align;
+extern char cmdline_name[];
 extern nh_bool random_player;
 extern struct nh_cmd_desc *keymap[KEY_MAX];
 extern const char *nhlogo_small[11], *nhlogo_large[14];
@@ -388,7 +386,7 @@ extern void curses_request_command(nh_bool debug, nh_bool completed,
                                    struct nh_cmd_arg *cmdarg, int *limit);
 extern void describe_game(char *buf, enum nh_log_status status,
                           struct nh_game_info *gi);
-extern void rungame(void);
+extern void rungame(nh_bool net);
 extern nh_bool loadgame(void);
 extern fnchar **list_gamefiles(fnchar * dir, int *count);
 extern enum nh_play_status playgame(int fd_or_gameno);
@@ -431,7 +429,6 @@ extern void curses_delay_output(void);
 extern void netgame(void);
 
 /* netplay.c */
-extern void net_rungame(void);
 extern void net_loadgame(void);
 extern void net_replay(void);
 # endif

@@ -697,7 +697,7 @@ replay_read_game_opts(void) {
 
 
 void
-replay_read_newgame(unsigned long long *init, int *playmode, char *namebuf)
+replay_read_newgame(unsigned long long *init, int *playmode)
 {
     char *header, *verstr;
     int ver1, ver2, ver3, n;
@@ -729,10 +729,10 @@ replay_read_newgame(unsigned long long *init, int *playmode, char *namebuf)
     *init = (unsigned long long)init_l64;
     sscanf(next_log_token(), "%x", &seed);
     *playmode = atoi(next_log_token());
-    base64_decode(next_log_token(), namebuf);
     /* Skip the character information in the header used for easy
      * identification. The actual character options are stored in the birth
      * options, read below. */
+    next_log_token();
     next_log_token();
     next_log_token();
     next_log_token();
@@ -1191,9 +1191,8 @@ make_checkpoint(int actions)
 static int
 load_checkpoint(int idx)
 {
-    int playmode, i, irole, irace, igend, ialign;
+    int playmode;
     boolean cmd_invalid, diff_invalid;
-    char namebuf[BUFSZ];
 
     if (idx < 0 || idx >= cpcount)
         return -1;
@@ -1206,14 +1205,14 @@ load_checkpoint(int idx)
     freedynamicdata();
 
     replay_begin();
-    replay_read_newgame(&turntime, &playmode, namebuf);
+    replay_read_newgame(&turntime, &playmode);
     fseek(loginfo.flog, checkpoints[idx].nexttoken, SEEK_SET);
 
     loginfo.cmds_are_invalid = cmd_invalid;
     loginfo.diffs_are_invalid = diff_invalid;
 
     program_state.restoring = TRUE;
-    startup_common(namebuf, playmode);
+    startup_common(playmode);
     dorecover(&checkpoints[idx].cpdata);
     checkpoints[idx].cpdata.pos = 0;
 

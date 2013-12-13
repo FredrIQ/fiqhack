@@ -436,7 +436,7 @@ connect_server_menu(struct server_info **servlist)
 static int
 connect_server(struct server_info *server)
 {
-    int ret, i;
+    int ret;
     char buf[BUFSZ];
 
     while (1) {
@@ -551,7 +551,7 @@ netgame_mainmenu(struct server_info *server)
 
         switch (menuresult[0]) {
         case NEWGAME:
-            net_rungame();
+            rungame(TRUE);
             break;
 
         case LOAD:

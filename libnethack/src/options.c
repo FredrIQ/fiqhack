@@ -169,6 +169,7 @@ static const struct nh_option_desc const_options[] = {
     {"verbose", "print more commentary during the game", FALSE, OPTTYPE_BOOL,
      {.b = TRUE}},
 
+    {"name", "character name", TRUE, OPTTYPE_STRING, {.s = NULL}},
     {"elbereth", "difficulty: the E-word repels monsters", TRUE, OPTTYPE_BOOL,
      {.b = TRUE}},
     {"reincarnation", "Special Rogue-like levels", TRUE, OPTTYPE_BOOL,
@@ -325,6 +326,7 @@ init_opt_struct(void)
     nhlib_find_option(options, "runmode")->e = runmode_spec;
     nhlib_find_option(options, "autopickup_rules")->a = autopickup_spec;
 
+    nhlib_find_option(options, "name")->s.maxlen = PL_PSIZ;
     nhlib_find_option(options, "align")->e = align_spec;
     nhlib_find_option(options, "gender")->e = gender_spec;
     nhlib_find_option(options, "role")->e = role_spec;
@@ -452,7 +454,9 @@ set_option(const char *name, union nh_optvalue value, boolean isstring)
         u.initrole = option->value.e;
     }
 
-    else if (!strcmp("catname", option->name)) {
+    else if (!strcmp("name", option->name)) {
+        strncpy(plname, option->value.s, PL_PSIZ);
+    } else if (!strcmp("catname", option->name)) {
         strncpy(catname, option->value.s, PL_PSIZ);
     } else if (!strcmp("dogname", option->name)) {
         strncpy(dogname, option->value.s, PL_PSIZ);

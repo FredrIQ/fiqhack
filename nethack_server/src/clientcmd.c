@@ -169,12 +169,11 @@ ccmd_create_game(json_t * params)
 {
     char filename[1024], basename[1024], path[1024];
     json_t *j_msg, *jarr, *jobj;
-    const char *name;
     int mode, fd, ret, count, i;
     long t;
 
-    if (json_unpack (params, "{ss,so,si*}", "name", &name, "options", &jarr,
-                     "mode", &mode) == -1 ||
+    if (json_unpack (params, "{ss,so,si*}", "options", &jarr, "mode",
+                     &mode) == -1 ||
         !json_is_array(jarr))
         exit_client("Bad set of parameters for create_game");
 
@@ -192,6 +191,11 @@ ccmd_create_game(json_t * params)
         read_json_option(jobj, &opts[i]);
     }
 
+    struct nh_option_desc *nameopt = nhlib_find_option(opts, "name");
+    if (!nameopt)
+        exit_client("No character name provided");
+    char *name = nameopt->value.s;
+
     t = (long)time(NULL);
     snprintf(path, 1024, "%s/save/%s/", settings.workdir, user_info.username);
     snprintf(basename, 1024, "%ld_%s.nhgame", t, name);
@@ -203,11 +207,11 @@ ccmd_create_game(json_t * params)
     if (fd == -1)
         exit_client("Could not create the logfile");
 
-    ret = nh_create_game(fd, name, opts, mode);
+    ret = nh_create_game(fd, opts, mode);
     close(fd);
     nhlib_free_optlist(opts);
 
-    if (ret) {
+    if (ret == NHCREATE_OK) {
         opts = nh_get_options();
 
         struct nh_option_desc
@@ -235,9 +239,8 @@ ccmd_create_game(json_t * params)
         j_msg = json_pack("{si}", "return", gameid);
     } else {
         unlink(filename);
-        j_msg = json_pack("{si}", "return", -1);
+        j_msg = json_pack("{si}", "return", ret);
     }
-
 
     client_msg("create_game", j_msg);
 }
