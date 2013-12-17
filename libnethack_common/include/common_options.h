@@ -6,9 +6,9 @@
 # define COMMON_OPTIONS_H
 
 # ifdef IN_LIBNETHACK_COMMON
-#  define EXPORT(x) AIMAKE_EXPORT(x)
+#  define EXPORT(x) x
 # else
-#  define EXPORT(x) AIMAKE_IMPORT(x)
+#  define EXPORT(x) x
 # endif
 
 # include "nethack_types.h"
