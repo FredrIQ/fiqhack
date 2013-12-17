@@ -529,6 +529,8 @@ log_neutral_turnstate(void)
 
         program_state.binary_save_location = get_log_offset();
 
+        mdiffflush(&program_state.binary_save);
+
         lprintf("~");
         log_binary(program_state.binary_save.diffbuf,
                    program_state.binary_save.diffpos);
@@ -1228,21 +1230,26 @@ log_sync(void)
         if (relative_to_target(loglineloc) > 0) {
 
             /* We overshot. */
-            sloc = program_state.binary_save_location;
+            program_state.binary_save_location = sloc;
 
             if (!program_state.binary_save_allocated) /* should never happen */
                 panic("overshoot in log_sync but no binary save present");
 
+            free(logline);
             mfree(&program_state.binary_save);
             program_state.binary_save = bsave;
+
+            load_gamestate_from_binary_save(TRUE);
+            return;
 
         } else {
 
             /* We didn't overshoot: set the locations to match this new save. */
-            program_state.binary_save_location = sloc;
+            sloc = program_state.binary_save_location = loglineloc;
             if (*logline == '*')
-                program_state.save_backup_location = sloc;
+                program_state.save_backup_location = loglineloc;
 
+            mfree(&bsave);
         }
 
         free(logline);
