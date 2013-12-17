@@ -322,6 +322,7 @@ save_you(struct memfile *mf, struct you *y)
         (y->uevent.ascended << 18);
 
     mtag(mf, 0, MTAG_YOU);
+    mwrite64(mf, y->ubirthday);
     mwrite32(mf, yflags);
     mwrite32(mf, eflags);
     mwrite32(mf, y->uhp);
