@@ -179,6 +179,7 @@ char toplines[MSGCOUNT][BUFSZ];
 int toplines_count[MSGCOUNT];
 int curline;
 
+/* When changing this, also change neutral_turnstate_tasks. */
 static const struct turnstate default_turnstate = {
     .occupation = NULL,
     .multi = 0,
@@ -199,9 +200,38 @@ init_turnstate(void)
 }
 
 void
+neutral_turnstate_tasks(void)
+{
+    /* We want to compare turnstate to the default for effective equality:
+       integers are equal, strings are equal up to the first NUL, tagged
+       unions are equal up to the tag and the bits containing its associated
+       value, padding doesn't matter. */
+#define CHECKEQ(x, y) do {                                              \
+        if (turnstate.x != y)                                           \
+            impossible("turnstate."#x" persisted between turns");       \
+    } while(0)
+
+    CHECKEQ(occupation, 0);
+    CHECKEQ(multi, 0);
+    CHECKEQ(afternmv, 0);
+    CHECKEQ(multi_txt[0], 0);
+    CHECKEQ(occupation_txt[0], 0);
+    CHECKEQ(saved_cmd, -1);
+    CHECKEQ(saved_arg.argtype, CMD_ARG_NONE);
+
+#undef CHECKEQ
+
+    if (memcmp(turnstate.tracked, default_turnstate.tracked,
+               sizeof (turnstate.tracked)))
+        impossible("turnstate.tracked persisted between turns");
+
+    /* TODO: clean up memory */
+
+    log_command_result();
+
+void
 init_data(void)
 {
-
     /* iflags may already contain valid, important data, because init_data()
        runs as part of the game init sequence after options have been set, etc. 
      */

@@ -459,8 +459,8 @@ nh_play_game(int fd)
         if (cmdidx >= 0 && (cmdlist[cmdidx].flags & CMD_NOTIME) &&
             pre_rngstate == mt_nextstate() && pre_moves == moves)
             log_revert_command();   /* nope, cut it out of the log */
-        else
-            log_command_result();   /* log the result */
+        else if (!multi && !occupation)
+            neutral_turnstate_tasks();
 
         /* 
          * performing a command can put the game into several different states:
@@ -868,8 +868,10 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
     if (multi >= 0 && occupation)
         handle_occupation();
     else if (multi == 0 || (multi > 0 && cmdidx != -1)) {
-        turnstate.saved_cmd = cmdidx;
-        turnstate.saved_arg = *arg;
+        if (multi) {
+            turnstate.saved_cmd = cmdidx;
+            turnstate.saved_arg = *arg;
+        }
         switch (do_command(cmdidx, rep, TRUE, arg)) {
         case COMMAND_UNKNOWN:
             pline("Unrecognised command.");
@@ -888,6 +890,8 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
         if (flags.mv) {
             if (multi < COLNO && !--multi)
                 flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
+            if (!multi)
+                nomul(0, NULL); /* reset multi state */
             if (!domove(u.dx, u.dy, 0)) {
                 /* Don't use a move when travelling into an obstacle. */
                 flags.move = FALSE;
@@ -948,6 +952,7 @@ stop_occupation(void)
         if (!maybe_finished_meal(TRUE))
             pline("You stop %s.", turnstate.occupation_txt);
         occupation = 0;
+        *(turnstate.occupation_txt) = 0;
         iflags.botl = 1;        /* in case u.uhs changed */
         /* fainting stops your occupation, there's no reason to sync.
            sync_hunger(); */
@@ -1006,7 +1011,7 @@ newgame(void)
     flags.move = 0;
     set_wear();
 
-    log_command_result();
+    log_neutral_turnstate();
 
     program_state.game_running = TRUE;
     youmonst.movement = NORMAL_SPEED;   /* give the hero some movement points */

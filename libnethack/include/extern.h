@@ -195,8 +195,9 @@ extern void destroy_drawbridge(int, int);
 
 /* ### decl.c ### */
 
-void init_turnstate(void);
-void init_data(void);
+extern void init_turnstate(void);
+extern void neutral_turnstate_tasks(void);
+extern void init_data(void);
 
 /* ### detect.c ### */
 

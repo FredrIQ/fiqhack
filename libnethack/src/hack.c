@@ -2335,11 +2335,17 @@ nomul(int nval, const char *txt)
     u.uinvulnerable = FALSE;    /* Kludge to avoid ctrl-C bug -dlc */
     u.usleep = 0;
     multi = nval;
+    if (!multi)
+        txt = NULL;
     if (txt && txt[0])
         strncpy(turnstate.multi_txt, txt, BUFSZ);
     else
         memset(turnstate.multi_txt, 0, BUFSZ);
     flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
+    if (multi <= 0) {
+        turnstate.saved_cmd = -1;
+        turnstate.saved_arg.argtype = CMD_ARG_NONE;
+    }
 }
 
 /* called when a non-movement, multi-turn action has completed */

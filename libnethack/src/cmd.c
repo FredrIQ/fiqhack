@@ -284,6 +284,8 @@ command_repeat_occupation(void)
     (*timed_occ_fn) ();
     if (multi > 0)
         multi--;
+    if (!multi)
+        nomul(0, NULL);     /* reset multi_txt, etc. */
     return multi > 0;
 }
 
@@ -2190,6 +2192,8 @@ do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *arg)
 
         if (multi > 0)
             --multi;
+        if (multi == 0)
+            nomul(0, NULL); /* clear multi state */
     }
 
     if (!res) {
