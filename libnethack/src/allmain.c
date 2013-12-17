@@ -731,6 +731,7 @@ handle_occupation(void)
 {
     if ((*occupation) () == 0) {
         occupation = NULL;
+        *turnstate.occupation_txt = 0;
         return;
     }
     if (monster_nearby()) {
