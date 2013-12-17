@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-23 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -19,7 +19,7 @@ getpos(coord * cc, boolean force, const char *goal)
         rv = (*windowprocs.win_getpos) (&x, &y, force, goal);
     } while (force && (rv == NHCR_CLIENT_CANCEL ||
                        x < 1 || y < 1 || x > COLNO || y > ROWNO));
-    log_getpos(rv, x, y);
+
     if (rv == -1)
         pline("<position: (cancelled)>");
     else
@@ -44,7 +44,6 @@ getdir(const char *s, schar * dx, schar * dy, schar * dz)
     boolean restricted = u.umonnum == PM_GRID_BUG;
     enum nh_direction dir = (*windowprocs.win_getdir) (query, restricted);
 
-    log_getdir(dir);
     suppress_more();
     pline("<%s: %s>", query, dirnames[dir + 1]);
 
@@ -70,7 +69,7 @@ query_key(const char *query, int *count)
     char key;
 
     key = (*windowprocs.win_query_key) (query, count);
-    log_query_key(key, count);
+
     suppress_more();
     if (count && *count != -1)
         pline("<%s: %d %c>", query, *count, key);
@@ -84,7 +83,7 @@ void
 getlin(const char *query, char *bufp)
 {
     (*windowprocs.win_getlin) (query, bufp);
-    log_getlin(bufp);
+
     suppress_more();
     pline("<%s: %s>", query, bufp[0] == '\033' ? "(escaped)" : bufp);
 }
@@ -115,7 +114,7 @@ yn_function(const char *query, const char *resp, char def)
         strcpy(qbuf, query);
 
     key = (*windowprocs.win_yn_function) (qbuf, resp, def);
-    log_yn_function(key);
+
     suppress_more();
     pline("<%s [%s]: %c>", qbuf, resp, key);
     return key;
@@ -133,7 +132,6 @@ display_menu(struct nh_menuitem *items, int icount, const char *title, int how,
     if (how != PICK_NONE) {
         char buf[BUFSZ] = "(none selected)";
 
-        log_menu(n, results);
         if (n == 1) {
             for (j = 0; j < icount && items[j].id != results[0]; j++) {
             }
@@ -158,7 +156,6 @@ display_objects(struct nh_objitem *items, int icount, const char *title,
     if (how != PICK_NONE) {
         char buf[BUFSZ] = "(none selected)";
 
-        log_objmenu(n, pick_list);
         if (n == 1) {
             for (j = 0; j < icount && items[j].id != pick_list[0].id; j++) {
             }

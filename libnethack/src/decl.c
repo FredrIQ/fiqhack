@@ -227,7 +227,8 @@ neutral_turnstate_tasks(void)
 
     /* TODO: clean up memory */
 
-    log_command_result();
+    log_neutral_turnstate();
+}
 
 void
 init_data(void)

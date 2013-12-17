@@ -257,24 +257,17 @@ nh_create_game(int fd, const char *name, int irole, int irace, int igend,
     u.initgend = igend;
     u.initalign = ialign;
 
-    /* write out a new logfile header "NHGAME ..." with all the initial details 
-     */
-    log_init();
-    log_newgame(fd, turntime, seed, playmode);
+    /* We create a new save file that saves the state immediately after
+       newgame() is called. */
+    log_init(fd);
+    log_newgame(turntime, seed, playmode);
 
     newgame();
 
-    flags.move = 0;
-
-    log_command_result();
-
-    program_state.game_running = TRUE;
-
-    /* Now save and exit the newly created game. */
-    dosave0(FALSE);
-    program_state.something_worth_saving = 0;
-    program_state.game_running = FALSE;
-    u.uhp = -1;  /* universal game over indicator; TODO: get rid of this */
+    /* We need a full backup save after creating the new game, because we
+       don't have anything to diff against. */
+    log_backup_save();
+    log_uninit();
 
     program_state.suppress_screen_updates = FALSE;
     API_EXIT();
@@ -289,10 +282,7 @@ err_out:
 enum nh_play_status
 nh_play_game(int fd)
 {
-    int playmode, irole, irace, igend, ialign;
     volatile int ret;
-    unsigned long long temp_turntime;
-    char namebuf[PL_NSIZ];
 
     if (fd < 0)
         return ERR_BAD_ARGS;
@@ -364,43 +354,18 @@ nh_play_game(int fd)
         goto normal_exit;
     }
     
-    replay_set_logfile(fd);     /* store the fd and try to get a lock or exit */
-    replay_begin();
+    startup_common();
 
-    /* Read the log header for this game. */
-    replay_read_newgame(&turntime, &playmode, namebuf, &irole, &irace, &igend,
-                        &ialign);
-    temp_turntime = turntime;
+    /* Load the save file. log_sync() needs to be called at least once because
+       we no longer try to rerun the new game sequence, and thus must start by
+       loading a binary save. (In addition, using log_sync() is /much/ faster
+       than attempting to replay the entire game.) */
+    log_init(fd);
+    program_state.target_location_units = TLU_EOF;
+    log_sync();
 
-    /* set special windowprocs which will autofill requests for user input with 
-       data from the log file */
-    replay_setup_windowprocs(NULL);
-
-    startup_common(namebuf, playmode);
-    u.initrole = irole;
-    u.initrace = irace;
-    u.initgend = igend;
-    u.initalign = ialign;
-    u.ubirthday = turntime = temp_turntime;
-
-    replay_run_cmdloop(TRUE, FALSE, TRUE);
-    replay_jump_to_endpos();
-    if (!dorecover_fd(fd)) {
-        replay_undo_jump_to_endpos();
-        goto error_out;
-    }
-    replay_undo_jump_to_endpos();
-    wd_message();
     program_state.game_running = TRUE;
     post_init_tasks();
-
-    /* restore standard window procs */
-    replay_restore_windowprocs();
-
-    /* clean up data used for replay */
-    replay_end();
-    log_truncate();
-    log_init(); /* must be called before we start writing to the log */
 
     /* While loading a save file, we don't do rendering. */
     doredraw();
@@ -448,7 +413,6 @@ nh_play_game(int fd)
 
         /* TODO: Better resolution for turntime */
         turntime = time(NULL);
-        log_command(cmdidx, limit, &arg);
 
         unsigned int pre_rngstate = mt_nextstate();
         int pre_moves = moves;
@@ -479,16 +443,9 @@ nh_play_game(int fd)
         interrupted = FALSE; /* TODO */
     }
 
-error_out:
-    API_EXIT();
-    ret = ERR_RESTORE_FAILED;
-
 normal_exit:
-    replay_restore_windowprocs();
     program_state.game_running = FALSE;
-    iflags.disable_log = FALSE;
-    replay_end();
-    unlock_fd(fd);
+    log_uninit();
 
     return ret;
 }

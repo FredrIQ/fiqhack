@@ -612,9 +612,6 @@ set_option(const char *name, union nh_optvalue value, boolean isstring)
     if (!option_value_ok(option, value))
         return FALSE;
 
-    if (copy_option_value(option, value) && !is_ui)
-        log_option(option);     /* prev value != new value */
-
     if (option->type == OPTTYPE_BOOL) {
         int i;
         boolean *bvar = NULL;

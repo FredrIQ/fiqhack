@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-05 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -88,12 +88,11 @@ nhnet_exit_game(int exit_type)
 struct nhnet_game *
 nhnet_list_games(int done, int show_all, int *count)
 {
-    int i, has_amulet;
+    int i;
     json_t *jmsg, *jarr, *jobj;
     struct nhnet_game *gb;
     struct nhnet_game *gamebuf = NULL;
-    const char *plname, *plrole, *plrace, *plgend, *plalign, *level_desc,
-        *death;
+    const char *plname, *plrole, *plrace, *plgend, *plalign, *game_state;
 
     if (!api_entry())
         return NULL;
@@ -114,10 +113,11 @@ nhnet_list_games(int done, int show_all, int *count)
             memset(gb, 0, sizeof (struct nhnet_game));
             jobj = json_array_get(jarr, i);
             if (json_unpack
-                (jobj, "{si,si,si,ss,ss,ss,ss,ss*}", "gameid", &gb->gameid,
+                (jobj, "{si,si,si,ss,ss,ss,ss,ss,ss*}", "gameid", &gb->gameid,
                  "status", &gb->status, "playmode", &gb->i.playmode, "plname",
                  &plname, "plrole", &plrole, "plrace", &plrace, "plgend",
-                 &plgend, "plalign", &plalign) == -1) {
+                 &plgend, "plalign", &plalign, "game_state", &game_state) ==
+                -1) {
                 print_error("Invalid game info object.");
                 continue;
             }
@@ -126,19 +126,7 @@ nhnet_list_games(int done, int show_all, int *count)
             strncpy(gb->i.plrace, plrace, PLRBUFSZ - 1);
             strncpy(gb->i.plgend, plgend, PLRBUFSZ - 1);
             strncpy(gb->i.plalign, plalign, PLRBUFSZ - 1);
-
-            if (gb->status == LS_SAVED) {
-                json_unpack(jobj, "{ss,si,si,si*}", "level_desc", &level_desc,
-                            "moves", &gb->i.moves, "depth", &gb->i.depth,
-                            "has_amulet", &has_amulet);
-                gb->i.has_amulet = has_amulet;
-                strncpy(gb->i.level_desc, level_desc,
-                        sizeof (gb->i.level_desc) - 1);
-            } else if (gb->status == LS_DONE) {
-                json_unpack(jobj, "{ss,si,si*}", "death", &death, "moves",
-                            &gb->i.moves, "depth", &gb->i.depth);
-                strncpy(gb->i.death, death, sizeof (gb->i.death) - 1);
-            }
+            strncpy(gb->i.game_state, plalign, COLNO - 1);
         }
     }
     json_decref(jmsg);

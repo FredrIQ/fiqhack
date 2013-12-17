@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-30 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -521,6 +521,7 @@ enum nh_play_status
 playgame(int fd_or_gameno)
 {
     enum nh_play_status ret;
+    int reconnect_tries_upon_network_error = 10;
 
     game_is_running = TRUE;
     reset_prev_cmd();
@@ -528,6 +529,15 @@ playgame(int fd_or_gameno)
     welcomed = 0;
     do {
         ret = nh_play_game(fd_or_gameno);
+
+        /* We reconnect if the server asked us to restart the connection; and we
+           make a limited number of reconnection attempts if the network went
+           down. TODO: Perhaps this behaviour should be in the client library
+           rather than here. */
+        if (ret != ERR_NETWORK_ERROR)
+            reconnect_tries_upon_network_error = 10;
+        else if (--reconnect_tries_upon_network_error > 0)
+            ret = RESTART_PLAY;
     } while (ret == RESTART_PLAY);
     game_is_running = FALSE;
 

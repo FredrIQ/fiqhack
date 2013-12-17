@@ -371,6 +371,9 @@ getbones(d_level * levnum)
     char c, bonesid[10], oldbonesid[10];
     struct memfile mf;
 
+    /* TODO: Make bones reading work like the rest of the input routines*/
+    return 0;
+
     mnew(&mf, NULL);
 
     if (discover || !flags.bones_enabled)       /* save bones files for real

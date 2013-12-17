@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2013-11-30
+Last modified by Alex Smith, 2013-12-17
 
 This document documents the version of the network protocol used in
 NetHack 4.3, and was written by Daniel Thaler, GreyKnight, Alex Smith.
@@ -173,6 +173,13 @@ in terms of its user-visible effect, but is kinder on server resources than
 dropping the connection would be.  This command can be sent if there is no
 running game, but does nothing but return true in that situation.  It
 corresponds to the `nh_exit_game` API call in libnethack.
+
+If the game is running, this API call will typically return via `play_game`
+response (see the documentation for `play_game`) rather than directly
+(especially if it needs to get out of multiple nested contexts; it can be sent
+at any time while the game is running and there is some server request pending
+that the client could respond to).  Obviously, it must return directly if
+there is no game running.
 
 Command arguments:
   * `enum nh_exit_types exit_type`: what sort of exit to perform
@@ -556,11 +563,12 @@ gameplay itself.
 This corresponds to the `nh_play_game` API call in libnethack.
 
 Note that a `play_game` response may happen at any time after a unresponded
-`play_game` command, even if there are unresolved requests or responses in the
-meantime.  (This corresponds to a `longjmp` back to `nh_play_game` in the
-libnethack API.)  This can happen in a few different situations:
-  * If the client requests a save or quit (via `exit_game`) while a prompt is
-    open;
+`play_game` command, even if there are unresponded requests in the meantime.
+(This corresponds to a `longjmp` back to `nh_play_game` in the libnethack
+API.)  The unresponded requests simply vanish, and the client should act as
+though they never happened.  This can happen in a few different situations:
+  * If the client requests a save or quit (via `exit_game`), perhaps while a
+    prompt is open;
   * If the server needs to close a prompt that it put up without user input
     dismissing it, e.g. when watching a game;
   * If something goes wrong and the server needs to rewind the save file

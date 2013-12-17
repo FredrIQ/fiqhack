@@ -748,41 +748,17 @@ extern int doclose(int dx, int dy, int dz);
 
 /* ### log.c ### */
 
-extern void log_newgame(int logfd, unsigned long long start_time,
+extern void log_newgame(unsigned long long start_time,
                         unsigned int seed, int playmode);
 extern void log_command(int cmd, int count, struct nh_cmd_arg *arg);
-extern void log_command_result(void);
+extern void log_neutral_turnstate(void);
+extern void log_backup_save(void);
+extern void log_sync(void);
 extern void log_revert_command(void);
-extern void log_option(struct nh_option_desc *opt);
-extern void log_getpos(int ret, int x, int y);
-extern void log_getdir(enum nh_direction dir);
-extern void log_query_key(char key, int *count);
-extern void log_getlin(char *buf);
-extern void log_yn_function(char key);
-extern void log_menu(int n, int *results);
-extern void log_objmenu(int n, struct nh_objresult *pick_list);
 extern void log_bones(const char *bonesbuf, int buflen);
-extern void log_init(void);
-extern void log_finish(enum nh_log_status status);
-extern void log_truncate(void);
-
-/* ### logreplay.c ### */
-
-extern void replay_set_logfile(int logfd);
-extern void replay_begin(void);
-extern void replay_end(void);
-extern void replay_jump_to_endpos(void);
-extern void replay_undo_jump_to_endpos(void);
-extern void replay_sync_save(void);
-extern char *replay_bones(int *buflen);
-extern void replay_setup_windowprocs(const struct nh_window_procs *procs);
-extern void replay_restore_windowprocs(void);
-extern void replay_read_newgame(unsigned long long *init, int *playmode,
-                                char *namebuf, int *initrole, int *initrace,
-                                int *initgend, int *initalign);
-extern boolean replay_run_cmdloop(boolean optonly, boolean singlestep,
-                                  boolean fast);
-
+extern void log_init(int fd);
+extern void log_uninit(void);
+extern void log_game_over(char *death);
 
 /* ### makemon.c ### */
 
