@@ -16,6 +16,7 @@
 
 /* forward definitions of structures and enums */
 enum equipmsg;
+enum locktype;
 enum memfile_tagtype;
 enum nh_direction;
 enum nh_log_status;
@@ -571,8 +572,7 @@ extern void commit_bonesfile(char *bonesid);
 extern int open_bonesfile(char *bonesid);
 extern int delete_bonesfile(char *bonesid);
 extern void paniclog(const char *, const char *);
-extern boolean lock_fd(int fd, int retry);
-extern void unlock_fd(int fd);
+extern boolean change_fd_lock(int fd, enum locktype type, int timeout);
 
 /* ### fountain.c ### */
 

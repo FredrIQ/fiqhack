@@ -228,49 +228,66 @@ delete_bonesfile(char *bonesid)
 
 /* ----------  BEGIN FILE LOCKING HANDLING ----------- */
 
+/* change_fd_lock is the general locking/unlocking/upgrading/downgrading
+   routine. The idea is that a write lock is used to protect writes to a file,
+   and a read lock is used both to protect reads to the file, and (on
+   Linux/UNIX) to express interest in being notified about its contents,
+   something that's important for server play and for watching games. */
+
 #if defined(UNIX)
 /* lock any open file using fcntl */
+
+static void
+handle_sigalrm(int signum)
+{
+    /* We use alarm() to implement the timeout on locking. The handler does
+       nothing, but because it exists and isn't SIG_DFL, it'll interrupt our
+       lock attempt with EINTR. */
+    (void) signum;
+}
+
 boolean
-lock_fd(int fd, int retry)
+change_fd_lock(int fd, enum locktype type, int timeout)
 {
     struct flock sflock;
+    struct sigaction saction, oldsaction;
     int ret;
 
     if (fd == -1)
         return FALSE;
 
-    sflock.l_type = F_WRLCK;
+    saction.sa_handler = handle_sigalrm;
+    saction.sa_flags = SA_RESETHAND;
+    sigaction(SIGALRM, &saction, &oldsaction);
+    if (timeout)
+        alarm(timeout);
+
+    sflock.l_type =
+        type == LT_WRITE ? F_WRLCK :
+        type == LT_READ ? F_RDLCK :
+        type == LT_NONE ? F_UNLCK :
+        (impossible("invalid lock type in change_fd_lock"), F_UNLCK);
     sflock.l_whence = SEEK_SET;
     sflock.l_start = 0;
     sflock.l_len = 0;
 
-    while ((ret = fcntl(fd, F_SETLK, &sflock)) == -1 && retry--)
-        sleep(1);
+    /* TODO: Check to see if any processes have read locks, tell them to unlock
+       the file, tell them to relock the file once the lock's been
+       established. */
 
-    return ret != -1;
+    ret = fcntl(fd, F_SETLKW, &sflock) >= 0;
+
+    alarm(0);
+    sigaction(SIGALRM, &oldsaction, NULL);
+    
+    return ret;
 }
 
-
-void
-unlock_fd(int fd)
-{
-    struct flock sflock;
-
-    if (fd == -1)
-        return;
-
-    sflock.l_type = F_UNLCK;
-    sflock.l_whence = SEEK_SET;
-    sflock.l_start = 0;
-    sflock.l_len = 0;
-
-    fcntl(fd, F_SETLK, &sflock);
-}
 #elif defined (WIN32)   /* windows versionf of lock_fd(), unlock_fd() */
 
 /* lock any open file using LockFile */
 boolean
-lock_fd(int fd, int retry)
+change_fd_lock(int fd, enum locktype type, int timeout)
 {
     HANDLE hFile;
     BOOL ret;
@@ -280,25 +297,20 @@ lock_fd(int fd, int retry)
 
     hFile = (HANDLE) _get_osfhandle(fd);
 
+    if (type == LT_NONE) {
+        UnlockFile(hFile, 0, 0, 64, 0);
+        return TRUE;
+    }
+
+    /* TODO: Check that the return value of this has the right semantics
+       (it didn't in the UNIX code; check to see if separate read locks
+       and write locks exist */
+
     /* lock only the first 64 bytes of the file to avoid problems with
        mismatching lock/unlock ranges */
-    while (!(ret = LockFile(hFile, 0, 0, 64, 0)) && retry--)
+    while (!(ret = LockFile(hFile, 0, 0, 64, 0)) && timeout--)
         Sleep(1);
     return ret;
-}
-
-
-void
-unlock_fd(int fd)
-{
-    HANDLE hFile;
-
-    if (fd == -1)
-        return;
-
-    hFile = (HANDLE) _get_osfhandle(fd);
-
-    UnlockFile(hFile, 0, 0, 64, 0);
 }
 #endif
 

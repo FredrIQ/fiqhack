@@ -257,9 +257,9 @@ update_log(const struct toptenentry *newtt)
     /* used for debugging (who dies of what, where) */
     int fd = open_datafile(LOGFILE, O_CREAT | O_APPEND | O_WRONLY, SCOREPREFIX);
 
-    if (lock_fd(fd, 10)) {
+    if (change_fd_lock(fd, LT_WRITE, 10)) {
         writeentry(fd, newtt);
-        unlock_fd(fd);
+        change_fd_lock(fd, LT_NONE, 0);
         close(fd);
     }
 }
@@ -270,11 +270,11 @@ update_xlog(const struct toptenentry *newtt, unsigned long carried)
     /* used for statistical purposes and tournament scoring */
     int fd =
         open_datafile(XLOGFILE, O_CREAT | O_APPEND | O_WRONLY, SCOREPREFIX);
-    if (lock_fd(fd, 10)) {
+    if (change_fd_lock(fd, LT_WRITE, 10)) {
         FILE *xlfile = fdopen(fd, "a");
 
         write_xlentry(xlfile, newtt, carried);
-        unlock_fd(fd);
+        change_fd_lock(fd, LT_NONE, 0);
         fclose(xlfile); /* also closes fd */
     }
 }
@@ -453,7 +453,7 @@ update_topten(int how, unsigned long carried)
         return;
 
     fd = open_datafile(RECORD, O_RDWR | O_CREAT, SCOREPREFIX);
-    if (!lock_fd(fd, 30)) {
+    if (!change_fd_lock(fd, LT_WRITE, 30)) {
         close(fd);
         return;
     }
@@ -465,7 +465,7 @@ update_topten(int how, unsigned long carried)
     if (need_rewrite)
         write_topten(fd, toptenlist);
 
-    unlock_fd(fd);
+    change_fd_lock(fd, LT_NONE, 0);
     close(fd);
     free(toptenlist);
 }
