@@ -961,7 +961,6 @@ done_noreturn(int how)
     /* write_log_toptenentry needs killer_format */
     write_log_toptenentry(fd, how);
     /* in case of a subsequent panic(), there's no point trying to save */
-    program_state.something_worth_saving = 0;
 
     /* these affect score and/or bones, but avoid them during panic */
     taken = paybill((how == ESCAPED) ? -1 : (how != QUIT));

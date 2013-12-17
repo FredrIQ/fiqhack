@@ -103,25 +103,6 @@ extern char pl_fruit[PL_FSIZ];
 extern int current_fruit;
 extern struct fruit *ffruit;
 
-extern struct sinfo {
-    int game_running;   /* ok to call nh_do_move */
-    int restoring;      /* game is currently non-interactive (user input via
-                           log restore) */
-    int viewing;        /* non-interactive: viewing a game replay */
-    int gameover;       /* self explanatory? */
-    int forced_exit;    /* exit was triggered by nh_exit_game */
-    int stopprint;      /* inhibit further end of game disclosure */
-    int something_worth_saving; /* in case of panic */
-    int panicking;      /* `panic' is in progress */
-# if defined(WIN32)
-    int exiting;        /* an exit handler is executing */
-# endif
-    int in_impossible;
-# ifdef PANICLOG
-    int in_paniclog;
-# endif
-} program_state;
-
 extern char tune[6];
 
 # define MAXLINFO (MAXDUNGEON * MAXLEVEL)
@@ -384,5 +365,57 @@ struct memfile {
 };
 
 extern int logfile;
+
+enum target_location_units {
+    TLU_BYTES,
+    TLU_TURNS,
+    TLU_EOF
+};
+
+extern struct sinfo {
+    int game_running;   /* ok to call nh_do_move */
+    int viewing;        /* replaying or watching a game */
+    int gameover;       /* self explanatory? */
+    int stopprint;      /* inhibit further end of game disclosure */
+    int panicking;      /* `panic' is in progress */
+# if defined(WIN32)
+    int exiting;        /* an exit handler is executing */
+# endif
+    int in_impossible;
+# ifdef PANICLOG
+    int in_paniclog;
+# endif
+    boolean suppress_screen_updates;
+    boolean restoring_binary_save;
+
+    /*
+     * Invariants:
+     * * binary_save is uninitialized (and doesn't point to memory that needs
+     *   freeing) if binary_save_allocated is false, and the binary save
+     *   matching binary_save_location if binary_save_allocated is true;
+     * * save_backup_location <= binary_save_location <= gamestate_location;
+     * * save_backup_location refers to a save backup (or, if log_sync() has
+     *   never been called for this save file, may be 0, but log_sync() is
+     *   meant to be called immediately upon loading it);
+     * * last_save_backup_location_location is one byte past the first save
+     *   backup in the file;
+     * * gamestate_location points to the location in the save file that
+     *   reflects the current gamestate (in u, level, etc.), except possibly
+     *   while log_sync() is running.
+     * Note that there are no invariants on target_location. You can call
+     * log_sync() to set the binary_save_location as close as possible to
+     * target_location, but nothing forces you to do this.
+     */
+    int logfile;                                      /* file descriptor */
+    struct memfile binary_save;
+    boolean binary_save_allocated;
+    long last_save_backup_location_location; /* bytes from start of file */
+    long save_backup_location;               /* bytes from start of file */
+    long binary_save_location;               /* bytes from start of file */
+    long gamestate_location;                 /* bytes from start of file */
+    long target_location;           /* in units of target_location_units */
+    enum target_location_units target_location_units;
+    boolean ok_to_diff;
+} program_state;
 
 #endif /* DECL_H */

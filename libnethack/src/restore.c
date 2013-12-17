@@ -741,6 +741,8 @@ dorecover(struct memfile *mf)
         return 0;
     }
 
+    program_state.restoring_binary_save = TRUE;
+
     moves = mread32(mf);
 
     level = NULL;       /* level restore must not use this pointer */
@@ -796,6 +798,8 @@ dorecover(struct memfile *mf)
 
     /* help the window port get it's display charset/tiles sorted out */
     notify_levelchange(NULL);
+
+    program_state.restoring_binary_save = FALSE;
 
     run_timers();       /* expire all timers that have gone off while away */
     doredraw();

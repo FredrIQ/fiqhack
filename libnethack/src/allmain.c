@@ -224,6 +224,8 @@ nh_create_game(int fd, const char *name, int irole, int irace, int igend,
 
     API_ENTRY_CHECKPOINT_RETURN_ON_ERROR(FALSE);
 
+    program_state.suppress_screen_updates = TRUE;
+
     if (fd == -1 || !name || !*name)
         goto err_out;
 
@@ -274,10 +276,12 @@ nh_create_game(int fd, const char *name, int irole, int irace, int igend,
     program_state.game_running = FALSE;
     u.uhp = -1;  /* universal game over indicator; TODO: get rid of this */
 
+    program_state.suppress_screen_updates = FALSE;
     API_EXIT();
     return TRUE;
 
 err_out:
+    program_state.suppress_screen_updates = FALSE;
     API_EXIT();
     return FALSE;
 }
@@ -363,10 +367,6 @@ nh_play_game(int fd)
     replay_set_logfile(fd);     /* store the fd and try to get a lock or exit */
     replay_begin();
 
-    program_state.restoring = TRUE;
-    iflags.disable_log = TRUE;  /* don't log any of the commands, they're
-                                   already in the log */
-
     /* Read the log header for this game. */
     replay_read_newgame(&turntime, &playmode, namebuf, &irole, &irace, &igend,
                         &ialign);
@@ -391,23 +391,20 @@ nh_play_game(int fd)
     }
     replay_undo_jump_to_endpos();
     wd_message();
-    program_state.game_running = 1;
+    program_state.game_running = TRUE;
     post_init_tasks();
 
     /* restore standard window procs */
     replay_restore_windowprocs();
-    program_state.restoring = FALSE;
-    iflags.disable_log = FALSE;
 
     /* clean up data used for replay */
     replay_end();
     log_truncate();
     log_init(); /* must be called before we start writing to the log */
 
-    /* while loading a save file, we don't do rendering */
+    /* While loading a save file, we don't do rendering. */
     doredraw();
     notify_levelchange(NULL);
-
     bot();
     flush_screen();
 
@@ -488,7 +485,7 @@ error_out:
 
 normal_exit:
     replay_restore_windowprocs();
-    program_state.restoring = FALSE;
+    program_state.game_running = FALSE;
     iflags.disable_log = FALSE;
     replay_end();
     unlock_fd(fd);

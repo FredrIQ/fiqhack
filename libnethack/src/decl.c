@@ -201,12 +201,10 @@ init_turnstate(void)
 void
 init_data(void)
 {
-    boolean in_restore = program_state.restoring;
 
     /* iflags may already contain valid, important data, because init_data()
        runs as part of the game init sequence after options have been set, etc. 
      */
-    boolean nolog = iflags.disable_log;
     struct nh_autopickup_rules *rules = iflags.ap_rules;
 
     init_turnstate();
@@ -254,8 +252,6 @@ init_data(void)
     timer_id = 1;
     curline = 0;
 
-    program_state.restoring = in_restore;
-    iflags.disable_log = nolog;
     iflags.ap_rules = rules;
     flags.moonphase = 10;       /* invalid value, so that the first call to
                                    realtime_tasks will dtrt */

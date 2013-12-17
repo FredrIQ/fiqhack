@@ -451,7 +451,7 @@ getbones(d_level * levnum)
             return ok;
         }
     }
-    if (!program_state.restoring && !delete_bonesfile(bonesid)) {
+    if (!delete_bonesfile(bonesid)) {
         /* When N games try to simultaneously restore the same bones file, N-1
            of them will fail to delete it (the first N-1 under AmigaDOS, the
            last N-1 under UNIX). So no point in a mysterious message for a
