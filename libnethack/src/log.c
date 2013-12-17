@@ -404,9 +404,10 @@ log_newgame(unsigned long long start_time, unsigned int seed, int playmode)
     start_of_third_line = get_log_offset();
 
     base64_encode(u.uplname, encbuf);
-    lprintf("%0" PRIxLEAST64 " %x %d %s %s %s %s %s\n", start_time_l64, seed,
-            playmode, encbuf, role, races[u.initrace].noun,
-            genders[u.initgend].adj, aligns[u.initalign].adj);
+    lprintf("%0" PRIxLEAST64 " %x %d %s %.3s %.3s %.3s %.3s\n",
+            start_time_l64, seed, playmode, encbuf, role,
+            races[u.initrace].noun, genders[u.initgend].adj,
+            aligns[u.initalign].adj);
 
     /* The gamestate location is meant to be set to the start of the last line
        of the log, when the log's in a state ready to be updated. Ensure that
