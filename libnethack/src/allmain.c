@@ -21,7 +21,6 @@ static const char *const copyright_banner[] =
 static void pre_move_tasks(boolean);
 
 static void newgame(void);
-static void startup_common(void);
 
 static void handle_lava_trap(boolean didmove);
 
@@ -124,11 +123,11 @@ nh_exit_game(int exit_type)
 }
 
 
-static void
-startup_common(void)
+void
+startup_common(boolean including_program_state)
 {
     /* (re)init all global data */
-    init_data();
+    init_data(including_program_state);
     reset_food();       /* zero out victual and tin */
     reset_steal();
     reset_dig_status();
@@ -234,7 +233,7 @@ nh_create_game(int fd, const char *name, int irole, int irace, int igend,
     /* initialize the random number generator */
     mt_srand(seed);
 
-    startup_common();
+    startup_common(TRUE);
 
     if (playmode == MODE_EXPLORE)
         discover = TRUE;
@@ -354,7 +353,7 @@ nh_play_game(int fd)
         goto normal_exit;
     }
     
-    startup_common();
+    startup_common(TRUE);
 
     /* Load the save file. log_sync() needs to be called at least once because
        we no longer try to rerun the new game sequence, and thus must start by

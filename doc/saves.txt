@@ -131,8 +131,24 @@ lines, separated by newlines:
     itself.
 
     Save backup lines are generated upon new game (as the first line in the
-    file apart from the headers), and just after each new level is entered for
-    the first time.
+    file apart from the headers), and periodically thereafter: if a save diff
+    line would be generated, it's converted to a save backup line if the
+    uncompressed length of the previous turn's binary save (in bytes) would be
+    less than half the number of (after compression) bytes since the start of
+    the previous save backup line.  As such, not counting the first save
+    backup line in a file, at most 1/2 of the file can possibly be made out of
+    save backup lines, and something more like 1/4 is most likely.  This
+    algorithm prevents the size of the save file blowing up as a result of
+    pudding farming or similar actions; the details are chosen to produce
+    approximately the correct ratio while being fast to calculate.
+    
+    A save backup line is also used in place of a save diff line if a
+    backwards-compatible change was made to the save format while the game was
+    running.  (This is for technical reasons: the game needs to know how to be
+    able to produce a save file in order to be able to diff against it, and
+    even a backwards-compatible change to the save format prevents that; the
+    backwards compatibility allows new versions to read old-format save files,
+    but not to write them.)
     
     For the very first save backup line in the file, the number given is a
     hint as to the location of the last save backup line in the file.  It need

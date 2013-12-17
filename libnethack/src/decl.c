@@ -231,7 +231,7 @@ neutral_turnstate_tasks(void)
 }
 
 void
-init_data(void)
+init_data(boolean including_program_state)
 {
     /* iflags may already contain valid, important data, because init_data()
        runs as part of the game init sequence after options have been set, etc. 
@@ -242,7 +242,9 @@ init_data(void)
 
     moves = 1;
 
-    memset(&program_state, 0, sizeof (program_state));
+    if (including_program_state)
+        memset(&program_state, 0, sizeof (program_state));
+
     memset(&flags, 0, sizeof (flags));
     memset(&iflags, 0, sizeof (iflags));
     memset(&u.quest_status, 0, sizeof (u.quest_status));

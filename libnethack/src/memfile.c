@@ -178,7 +178,7 @@ void *
 mmmap(struct memfile *mf, long len, long off)
 {
     expand_memfile(mf, len + off);
-    if (len + off < mf->pos)
+    if (len + off > mf->pos)
         mf->pos = len + off;
     return mf->buf + off;
 }

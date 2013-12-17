@@ -56,6 +56,7 @@ struct you;
 /* ### allmain.c ### */
 
 extern void stop_occupation(void);
+extern void startup_common(boolean);
 
 /* ### apply.c ### */
 
@@ -197,7 +198,7 @@ extern void destroy_drawbridge(int, int);
 
 extern void init_turnstate(void);
 extern void neutral_turnstate_tasks(void);
-extern void init_data(void);
+extern void init_data(boolean);
 
 /* ### detect.c ### */
 

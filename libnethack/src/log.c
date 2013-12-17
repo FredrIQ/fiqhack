@@ -19,6 +19,7 @@
 static void log_reset(void);
 static void log_binary(const char *buf, int buflen);
 static long get_log_offset(void);
+static void load_gamestate_from_binary_save(boolean maybe_old_version);
 
 /***** Error handling *****/
 
@@ -27,7 +28,7 @@ error_reading_save(char *reason)
 {
     if (strchr(reason, '%'))
         raw_printf(reason, get_log_offset());
-    else
+    else if (*reason)
         raw_printf("%s", reason);
 
     log_reset();
@@ -300,7 +301,7 @@ lgetline_malloc(int fd)
         if (inbuflen == fpos)
             break;
 
-        fpos = inbuflen;        
+        fpos = inbuflen;
     } while (!nlloc);
 
     if (!nlloc) {
@@ -487,6 +488,10 @@ log_backup_save(void)
     lseek(program_state.logfile, 0, SEEK_END);
 
     stop_updating_logfile();
+
+    /* Verify that the save file loads correctly; it's better to fail fast
+       than end up with a corrupted save. */
+    load_gamestate_from_binary_save(FALSE);
 }
 
 void
@@ -498,31 +503,49 @@ log_neutral_turnstate(void)
     if (multi || occupation)
         panic("log_neutral_turnstate called but turnstate isn't neutral");
 
-#ifdef TODO
-    lprintf("\n<%x", mt_nextstate() & 0xffff);
+    /* A heuristic to work out whether to use a save diff or save backup
+       line. */
+    if (program_state.binary_save.pos <
+        (program_state.gamestate_location -
+         program_state.save_backup_location) / 2 || !program_state.ok_to_diff)
 
-    if (!multi && !occupation) {
-        struct memfile *this_cmd_state =
-            (last_cmd_state ==
-             recent_cmd_states ? recent_cmd_states + 1 : recent_cmd_states);
+        log_backup_save();
 
-        mnew(this_cmd_state, last_cmd_state);
-        savegame(this_cmd_state);       /* both records the state, and calcs a
-                                           diff */
-        lprintf("\n~");
-        mdiffflush(this_cmd_state);
-        log_binary(this_cmd_state->diffbuf, this_cmd_state->diffpos);
-        mfree(last_cmd_state);
-        last_cmd_state = this_cmd_state;
-        action_count++;
+    else {
+
+        /* We're generating a save diff line. */
+        struct memfile mf = program_state.binary_save;
+
+        /* start_updating_logfile can cause a turn restart, so place it
+           outside the allocation of the new binary save */
+        start_updating_logfile();
+
+        mnew(&program_state.binary_save, &mf);
+        program_state.binary_save_location = 0;
+
+        /* Save the game, and calculate a diff against the old location in
+           the process. */
+        savegame(&program_state.binary_save);
+
+        program_state.binary_save_location = get_log_offset();
+
+        lprintf("~");
+        log_binary(program_state.binary_save.diffbuf,
+                   program_state.binary_save.diffpos);
+        lprintf("\n");
+
+        /* Make the new binary save absolute rather than relative, so that
+           we can free the old one. */
+        program_state.binary_save.relativeto = NULL;
+        mfree(&mf);
+
+        stop_updating_logfile();
+
+        /* Check the gamestate, for the same reason as in log_backup_save(). */
+        load_gamestate_from_binary_save(FALSE);
     }
 
-    last_cmd_pos = lseek(program_state.logfile, 0, SEEK_CUR);
-    lseek(program_state.logfile, 0, SEEK_SET);
-    lprintf("NHGAME %4s %08x %08x", statuscodes[LS_IN_PROGRESS], last_cmd_pos,
-            action_count);
-    lseek(program_state.logfile, last_cmd_pos, SEEK_SET);
-#endif
+    /* TODO: Periodically update the second line of the logfile. */
 }
 
 
@@ -744,6 +767,8 @@ load_gamestate_from_binary_save(boolean maybe_old_version)
 
     /* Load the saved game. */
     program_state.gamestate_location = program_state.binary_save_location;
+    freedynamicdata();
+    startup_common(FALSE);
     dorecover(&program_state.binary_save);
 
     /* Save the loaded game. */
@@ -857,7 +882,7 @@ apply_save_diff(char *s, struct memfile *diff_base)
             break;
 
         case MDIFF_EDIT:
-            
+
             mfp = mmmap(&program_state.binary_save, n,
                         program_state.binary_save.pos);
 
@@ -986,7 +1011,7 @@ relative_to_target(long bsl)
     case TLU_EOF:
         targetpos = lseek(program_state.logfile, 0, SEEK_END);
         /* fall through */
-    case TLU_BYTES: 
+    case TLU_BYTES:
 
         return bsl - targetpos;
 
