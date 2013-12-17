@@ -86,9 +86,12 @@ setworn(struct obj *obj, long mask)
                 obj->owornmask |= W_MASK(i);
             }
         }
-    vision_full_recalc = 1; /* this might have changed the XRAY property */
-    see_monsters();         /* or the WARN_OF_MON property */
-    update_inventory();     /* and it definitely changed equip slots */
+
+    if (!program_state.restoring_binary_save) {
+        vision_full_recalc = 1; /* this might have changed the XRAY property */
+        see_monsters();         /* or the WARN_OF_MON property */
+        update_inventory();     /* and it definitely changed equip slots */
+    }
 }
 
 /* called e.g. when obj is destroyed */
