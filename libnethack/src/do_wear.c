@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-04 */
+/* Last modified by Sean Hunt, 2013-12-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -426,7 +426,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
             /* Don't use same message as polymorph */
             if (orig_sex != poly_gender())
                 pline("You are suddenly very %s!",
-                      flags.female ? "feminine" : "masculine");
+                      u.ufemale ? "feminine" : "masculine");
             else
                 /* already polymorphed into single-gender monster; only changed
                    the character's base sex */

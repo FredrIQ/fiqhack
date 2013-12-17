@@ -1640,7 +1640,7 @@ do_genocide(int how)
             strcpy(buf, youmonst.data->mname);
         else {
             strcpy(buf,
-                   (flags.female &&
+                   (u.ufemale &&
                     urole.name.f) ? urole.name.f : urole.name.m);
             buf[0] = lowc(buf[0]);
         }

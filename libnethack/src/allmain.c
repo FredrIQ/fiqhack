@@ -148,6 +148,7 @@ startup_common(boolean including_program_state)
      *  Initialize the vision system.  This must be before mklev() on a
      *  new game or before a level restore on a saved game.
      */
+
     if (including_program_state) {
         vision_init();
         cls();
@@ -222,18 +223,31 @@ post_init_tasks(void)
 }
 
 
-int
-nh_create_game(int fd, const char *name, int irole, int irace, int igend,
-               int ialign, enum nh_game_modes playmode)
+enum nh_create_response
+nh_create_game(int fd, struct nh_option_desc *opts, enum nh_game_modes playmode)
 {
     unsigned int seed = 0;
+    int i;
 
-    API_ENTRY_CHECKPOINT_RETURN_ON_ERROR(FALSE);
+    API_ENTRY_CHECKPOINT() {
+        IF_API_EXCEPTION(GAME_DETACHED):
+            return NHCREATE_OK;
+
+        IF_ANY_API_EXCEPTION():
+            return NHCREATE_FAIL;
+    }
+
+    if (fd == -1) {
+        API_EXIT();
+        return NHCREATE_INVALID;
+    }
 
     program_state.suppress_screen_updates = TRUE;
 
-    if (fd == -1 || !name || !*name)
-        goto err_out;
+    /* options must be initialized before startup_common for plname */
+    for (i = 0; opts[i].name; i++) {
+        nh_set_option(opts[i].name, opts[i].value, FALSE);
+    }
 
     turntime = (unsigned long long)time(NULL);
     seed = turntime ^ get_seedval();
@@ -255,13 +269,15 @@ nh_create_game(int fd, const char *name, int irole, int irace, int igend,
     if (wizard)
         strcpy(u.uplname, "wizard");
 
-    if (!validrole(irole) || !validrace(irole, irace) ||
-        !validgend(irole, irace, igend) || !validalign(irole, irace, ialign))
-        goto err_out;
-    u.initrole = irole;
-    u.initrace = irace;
-    u.initgend = igend;
-    u.initalign = ialign;
+    if (!validrole(u.initrole) || !validrace(u.initrole, u.initrace) ||
+        !validgend(u.initrole, u.initrace, u.initgend) ||
+        !validalign(u.initrole, u.initrace, u.initalign) ||
+        (!plname && playmode != MODE_WIZARD)) {
+        /* Reset options that we just clobbered. */
+        init_opt_struct();
+        API_EXIT();
+        return NHCREATE_INVALID;
+    }
 
     /* We create a new save file that saves the state immediately after
        newgame() is called. */
@@ -276,13 +292,8 @@ nh_create_game(int fd, const char *name, int irole, int irace, int igend,
     log_uninit();
 
     program_state.suppress_screen_updates = FALSE;
-    API_EXIT();
-    return TRUE;
 
-err_out:
-    program_state.suppress_screen_updates = FALSE;
-    API_EXIT();
-    return FALSE;
+    terminate(GAME_DETACHED);
 }
 
 enum nh_play_status
@@ -491,7 +502,7 @@ you_moved(void)
             for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
                 mtmp->movement += mcalcmove(mtmp);
 
-            if (iflags.mon_generation &&
+            if (flags.mon_generation &&
                 !rn2(u.uevent.udemigod ? 25 :
                      (depth(&u.uz) > depth(&stronghold_level)) ? 50 : 70))
                 makemon(NULL, level, 0, 0, NO_MM_FLAGS);
@@ -939,7 +950,6 @@ newgame(void)
 
     init_objects();     /* must be before u_init() */
 
-    flags.pantheon = -1;        /* role_init() will reset this */
     role_init();        /* must be before init_dungeons(), u_init(), and
                            init_artifacts() */
 
@@ -949,6 +959,7 @@ newgame(void)
     init_artifacts();
     u_init();   /* struct you must have some basic data for mklev to work right 
                  */
+    pantheon_init();
 
     load_qtlist();      /* load up the quest text info */
 

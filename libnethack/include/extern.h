@@ -1187,8 +1187,6 @@ extern char *nh_getenv(const char *);
 extern void init_opt_struct(void);
 extern void cleanup_opt_struct(void);
 extern void initoptions(void);
-extern struct nh_option_desc *clone_optlist(const struct nh_option_desc *in);
-extern void free_optlist(struct nh_option_desc *opt);
 extern int dotogglepickup(void);
 extern int fruitadd(const char *str);
 extern char *autopickup_to_string(const struct nh_autopickup_rules *rules);
@@ -1401,6 +1399,7 @@ extern boolean validrace(int rolenum, int racenum);
 extern boolean validgend(int rolenum, int racenum, int gendnum);
 extern boolean validalign(int rolenum, int racenum, int alignnum);
 extern void role_init(void);
+extern void pantheon_init(void);
 extern const char *Hello(struct monst *);
 extern const char *Goodbye(void);
 

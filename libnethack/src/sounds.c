@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Sean Hunt, 2013-12-12 */
 /*      Copyright (c) 1989 Janet Walz, Mike Threepoint */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -445,7 +445,7 @@ domonnoise(struct monst *mtmp)
                                   (u.umonnum == PM_WOLF ||
                                    u.umonnum == PM_WINTER_WOLF ||
                                    u.umonnum == PM_WINTER_WOLF_CUB));
-            const char *racenoun = (flags.female &&
+            const char *racenoun = (u.ufemale &&
                                     urace.individual.f) ? urace.
                 individual.f : (urace.individual.m) ? urace.individual.
                 m : urace.noun;
@@ -468,7 +468,7 @@ domonnoise(struct monst *mtmp)
             } else if (mtmp->mpeaceful) {
                 if (kindred && isnight) {
                     sprintf(verbuf, "Good feeding %s!",
-                            flags.female ? "sister" : "brother");
+                            u.ufemale ? "sister" : "brother");
                     verbl_msg = verbuf;
                 } else if (nightchild && isnight) {
                     sprintf(verbuf,
@@ -727,7 +727,7 @@ domonnoise(struct monst *mtmp)
         break;
     case MS_ARREST:
         if (mtmp->mpeaceful)
-            verbalize("Just the facts, %s.", flags.female ? "Ma'am" : "Sir");
+            verbalize("Just the facts, %s.", u.ufemale ? "Ma'am" : "Sir");
         else {
             static const char *const arrest_msg[3] = {
                 "Anything you say can be used against you.",

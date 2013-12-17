@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Sean Hunt, 2013-12-12 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1364,11 +1364,11 @@ dosacrifice(struct obj *otmp)
                 verbalize
                     ("In return for thy service, I grant thee the gift of Immortality!");
                 pline("You ascend to the status of Demigod%s...",
-                      flags.female ? "dess" : "");
+                      u.ufemale ? "dess" : "");
                 historic_event(FALSE,
                                "offered the Amulet of Yendor to %s and ascended"
                                " to the status of Demigod%s!", u_gname(),
-                               flags.female ? "dess" : "");
+                               u.ufemale ? "dess" : "");
                 done(ASCENDED);
             }
         }

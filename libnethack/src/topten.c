@@ -382,7 +382,7 @@ fill_topten_entry(struct toptenentry *newtt, int how)
     newtt->plrole[ROLESZ] = '\0';
     strncpy(newtt->plrace, urace.filecode, ROLESZ);
     newtt->plrace[ROLESZ] = '\0';
-    strncpy(newtt->plgend, genders[flags.female].filecode, ROLESZ);
+    strncpy(newtt->plgend, genders[u.ufemale].filecode, ROLESZ);
     newtt->plgend[ROLESZ] = '\0';
     strncpy(newtt->plalign, aligns[1 - u.ualign.type].filecode, ROLESZ);
     newtt->plalign[ROLESZ] = '\0';

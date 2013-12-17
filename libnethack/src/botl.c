@@ -82,7 +82,7 @@ rank_of(int lev, short monnum, boolean female)
 static const char *
 rank(void)
 {
-    return rank_of(u.ulevel, Role_switch, flags.female);
+    return rank_of(u.ulevel, Role_switch, u.ufemale);
 }
 
 int

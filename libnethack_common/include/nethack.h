@@ -33,9 +33,8 @@ extern void EXPORT(nh_lib_exit) (void);
 extern nh_bool EXPORT(nh_exit_game) (int exit_type);
 extern enum nh_play_status EXPORT (nh_play_game) (int fd);
 
-extern int EXPORT(nh_create_game) (
-    int fd, const char *name, int role, int race, int gend, int align,
-    enum nh_game_modes playmode);
+extern enum nh_create_response EXPORT(nh_create_game) (
+    int fd, struct nh_option_desc *opts, enum nh_game_modes playmode);
 extern const_char_p_const_p EXPORT(nh_get_copyright_banner) (void);
 
 /* log.c */
@@ -52,10 +51,7 @@ extern nh_drawing_info_p EXPORT(nh_get_drawing_info) (void);
 /* options.c */
 extern nh_bool EXPORT(nh_set_option) (
     const char *name, union nh_optvalue value, nh_bool isstr);
-extern nh_option_desc_p EXPORT(nh_get_options) (enum nh_option_list list);
-extern void EXPORT(nh_setup_ui_options) (
-    struct nh_option_desc *options, struct nh_boolopt_map *boolmap,
-    nh_bool(*callback) (struct nh_option_desc *));
+extern nh_option_desc_p EXPORT(nh_get_options) (void);
 extern const_char_p EXPORT(nh_get_option_string) (
     const struct nh_option_desc *opt);
 

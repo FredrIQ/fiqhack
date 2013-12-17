@@ -463,9 +463,9 @@ wiz_level_tele(void)
 static int
 wiz_mon_polycontrol(void)
 {
-    iflags.mon_polycontrol = !iflags.mon_polycontrol;
+    flags.mon_polycontrol = !flags.mon_polycontrol;
     pline("Monster polymorph control is %s.",
-          iflags.mon_polycontrol ? "on" : "off");
+          flags.mon_polycontrol ? "on" : "off");
 
     return 0;
 }
@@ -474,9 +474,9 @@ wiz_mon_polycontrol(void)
 static int
 wiz_togglegen(void)
 {
-    iflags.mon_generation = !iflags.mon_generation;
+    flags.mon_generation = !flags.mon_generation;
     pline("Monster generation is %s.",
-          iflags.mon_generation ? "on" : "off");
+          flags.mon_generation ? "on" : "off");
 
     return 0;
 }
@@ -1245,10 +1245,10 @@ minimal_enlightenment(void)
             urace.noun);
     add_menutext(&menu, buf);
     sprintf(buf, fmtstr_noorig, "role",
-            ((Upolyd ? u.mfemale : flags.female) &&
+            ((Upolyd ? u.mfemale : u.ufemale) &&
              urole.name.f) ? urole.name.f : urole.name.m);
     add_menutext(&menu, buf);
-    genidx = is_neuter(youmonst.data) ? 2 : flags.female;
+    genidx = is_neuter(youmonst.data) ? 2 : u.ufemale;
     sprintf(buf, fmtstr, "gender", genders[genidx].adj,
             genders[u.initgend].adj);
     add_menutext(&menu, buf);
@@ -1392,7 +1392,7 @@ static int
 dowelcome(void)
 {       /* false => restoring an old game */
     char buf[BUFSZ];
-    boolean currentgend = Upolyd ? u.mfemale : flags.female;
+    boolean currentgend = Upolyd ? u.mfemale : u.ufemale;
     boolean new_game = !u.uwelcomed;
 
     u.uwelcomed = 1;

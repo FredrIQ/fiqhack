@@ -276,8 +276,6 @@ extern struct histevent *histevents;
 extern unsigned long long turntime;
 extern unsigned int timer_id;
 
-extern struct nh_option_desc *active_birth_options;
-extern struct nh_option_desc *birth_options;
 extern struct nh_option_desc *options;
 
 # define MSGCOUNT 30
@@ -301,43 +299,47 @@ extern int curline;
 # define MDIFF_INVALID 255
 
 enum memfile_tagtype {
-    MTAG_START, /* 0 */
+    MTAG_START,             /* 0 */
     MTAG_WATERLEVEL,
     MTAG_DUNGEONSTRUCT,
     MTAG_BRANCH,
     MTAG_DUNGEON,
-    MTAG_REGION,        /* 5 */
+    MTAG_REGION,            /* 5 */
     MTAG_YOU,
     MTAG_VERSION,
     MTAG_WORMS,
     MTAG_ROOMS,
-    MTAG_HISTORY,       /* 10 */
+    MTAG_HISTORY,           /* 10 */
     MTAG_ORACLES,
     MTAG_TIMER,
     MTAG_TIMERS,
     MTAG_LIGHT,
-    MTAG_LIGHTS,        /* 15 */
+    MTAG_LIGHTS,            /* 15 */
     MTAG_OBJ,
     MTAG_TRACK,
     MTAG_OCLASSES,
     MTAG_RNDMONST,
-    MTAG_MON,           /* 20 */
+    MTAG_MON,               /* 20 */
     MTAG_STEAL,
     MTAG_ARTIFACT,
     MTAG_RNGSTATE,
     MTAG_LEVEL,
-    MTAG_LEVELS,        /* 25 */
+    MTAG_LEVELS,            /* 25 */
     MTAG_MVITALS,
     MTAG_GAMESTATE,
     MTAG_DAMAGE,
     MTAG_DAMAGEVALUE,
-    MTAG_TRAP,          /* 30 */
+    MTAG_TRAP,              /* 30 */
     MTAG_FRUIT,
     MTAG_ENGRAVING,
     MTAG_FLAGS,
     MTAG_STAIRWAYS,
-    MTAG_LFLAGS,        /* 35 */
+    MTAG_LFLAGS,            /* 35 */
     MTAG_LOCATIONS,
+    MTAG_OPTION,
+    MTAG_OPTIONS,
+    MTAG_AUTOPICKUP_RULE,
+    MTAG_AUTOPICKUP_RULES,  /* 40 */
 };
 struct memfile_tag {
     struct memfile_tag *next;

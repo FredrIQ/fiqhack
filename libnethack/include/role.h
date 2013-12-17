@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-29 */
+/* Last modified by Sean Hunt, 2013-12-12 */
 #ifndef ROLE_H
 # define ROLE_H
 
@@ -157,9 +157,9 @@ struct Gender {
 
 extern const struct Gender genders[];   /* table of available genders */
 
-# define uhe()          (genders[flags.female ? 1 : 0].he)
-# define uhim()         (genders[flags.female ? 1 : 0].him)
-# define uhis()         (genders[flags.female ? 1 : 0].his)
+# define uhe()          (genders[u.ufemale ? 1 : 0].he)
+# define uhim()         (genders[u.ufemale ? 1 : 0].him)
+# define uhis()         (genders[u.ufemale ? 1 : 0].his)
 # define mhe(mtmp)      (genders[pronoun_gender(mtmp)].he)
 # define mhim(mtmp)     (genders[pronoun_gender(mtmp)].him)
 # define mhis(mtmp)     (genders[pronoun_gender(mtmp)].his)

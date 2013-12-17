@@ -57,15 +57,16 @@ begin_dump(int how)
     }
 
     sprintf(dumpname, "%s, %s-%s-%s-%s-%s, %s.txt", timestamp, u.uplname,
-            urole.filecode, urace.filecode, genders[flags.female].filecode,
+            urole.filecode, urace.filecode, genders[u.ufemale].filecode,
             aligns[1 - u.ualign.type].filecode, status);
     dumpfp = fopen_datafile(dumpname, "w+", DUMPPREFIX);
     if (!dumpfp)
         return;
 
-    rolename = (flags.female && urole.name.f) ? urole.name.f : urole.name.m;
-    fprintf(dumpfp, "%s, %s %s %s %s\n", u.uplname, aligns[1 - u.ualign.type].adj,
-            genders[flags.female].adj, urace.adj, rolename);
+    rolename = (u.ufemale && urole.name.f) ? urole.name.f : urole.name.m;
+    fprintf(dumpfp, "%s, %s %s %s %s\n", u.uplname,
+            aligns[1 - u.ualign.type].adj, genders[u.ufemale].adj,
+            urace.adj, rolename);
 
     dump_screen(dumpfp);
     dump_status();
@@ -78,7 +79,7 @@ dump_status(void)
     int hp;
 
     fprintf(dumpfp, "%s the %s\n", u.uplname,
-            rank_of(u.ulevel, Role_switch, flags.female));
+            rank_of(u.ulevel, Role_switch, u.ufemale));
     fprintf(dumpfp, "  Experience level: %d\n", u.ulevel);
 
     if (ACURR(A_STR) > 18) {

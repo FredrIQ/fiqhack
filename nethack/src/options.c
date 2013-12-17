@@ -1,9 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Sean Hunt, 2013-12-10 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "nhcurses.h"
+#include "common_options.h"
 #include <fcntl.h>
 #include <ctype.h>
 #include <errno.h>
@@ -14,8 +15,7 @@
 
 enum option_lists {
     NO_LIST,
-    ACT_BIRTH_OPTS,
-    CUR_BIRTH_OPTS,
+    BIRTH_OPTS,
     GAME_OPTS,
     UI_OPTS
 };
@@ -32,12 +32,6 @@ enum extra_opttypes {
 
 static void show_autopickup_menu(struct nh_option_desc *opt);
 
-
-#if defined(NETCLIENT)
-# define should_write_config() (!nhnet_active())
-#else
-# define should_write_config() (1)
-#endif
 
 
 /*----------------------------------------------------------------------------*/
@@ -75,57 +69,62 @@ static struct nh_enum_option optstyle_spec =
 static const char *const bucnames[] =
     { "unknown", "blessed", "uncursed", "cursed", "all" };
 
-
-#define VTRUE (void*)TRUE
-
 struct nh_option_desc curses_options[] = {
-    {"name", "name for new characters (blank = ask)", OPTTYPE_STRING, {NULL}},
     {"bgbranding", "use background colors to show hidden stairs and traps",
-     OPTTYPE_BOOL, {VTRUE}},
+     FALSE,
+     OPTTYPE_BOOL, {.b = TRUE}},
     {"blink",
-     "show multiple symbols for each location by switching between them",
-     OPTTYPE_BOOL, {FALSE}},
-    {"darkgray", "try to show 'black' as dark gray instead of dark blue",
-     OPTTYPE_BOOL, {FALSE}},
-    {"extmenu", "use a menu for selecting extended commands (#)", OPTTYPE_BOOL,
-     {FALSE}},
+     "show multiple symbols for each location by switching between them", FALSE,
+     OPTTYPE_BOOL, {.b = FALSE}},
+    {"darkgray", "try to show 'black' as dark gray instead of dark blue", FALSE,
+     OPTTYPE_BOOL, {.b = FALSE}},
+    {"extmenu", "use a menu for selecting extended commands (#)", FALSE,
+     OPTTYPE_BOOL,
+     {.b = FALSE}},
     {"floorcolor", "change the color of the floor to show where you walked",
-     OPTTYPE_BOOL, {VTRUE}},
-    {"frame", "draw a frame around the window sections", OPTTYPE_BOOL, {VTRUE}},
-    {"graphics", "characters or tiles to use for the map", OPTTYPE_ENUM,
-     {(void *)UNICODE_GRAPHICS}},
-    {"hilite_pet", "use background colors to show monster attitude",
-     OPTTYPE_BOOL, {VTRUE}},
-    {"invweight", "show item weights in the inventory", OPTTYPE_BOOL, {VTRUE}},
-    {"keymap", "alter the key to command mapping",
+     FALSE,
+     OPTTYPE_BOOL, {.b = TRUE}},
+    {"frame", "draw a frame around the window sections", FALSE, OPTTYPE_BOOL,
+     {.b = TRUE}},
+    {"graphics", "characters or tiles to use for the map", FALSE, OPTTYPE_ENUM,
+     {.e = UNICODE_GRAPHICS}},
+    {"hilite_pet", "use background colors to show monster attitude", FALSE,
+     OPTTYPE_BOOL, {.b = TRUE}},
+    {"invweight", "show item weights in the inventory", FALSE, OPTTYPE_BOOL,
+     {.b = TRUE}},
+    {"keymap", "alter the key to command mapping", FALSE,
      (enum nh_opttype)OPTTYPE_KEYMAP, {0}},
-    {"menu_headings", "display style for menu headings", OPTTYPE_ENUM,
-     {(void *)A_REVERSE}},
-    {"msgheight", "message window height", OPTTYPE_INT, {(void *)8}},
-    {"msghistory", "number of messages saved for prevmsg", OPTTYPE_INT,
-     {(void *)256}},
-    {"optstyle", "option menu display style", OPTTYPE_ENUM,
-     {(void *)OPTSTYLE_FULL}},
-    {"scores_own", "show all your own scores in the list", OPTTYPE_BOOL,
-     {FALSE}},
-    {"scores_top", "how many top scores to show", OPTTYPE_INT, {(void *)3}},
-    {"scores_around", "the number of scores shown around your score",
-     OPTTYPE_INT, {(void *)2}},
-    {"showexp", "show experience points", OPTTYPE_BOOL, {VTRUE}},
-    {"showscore", "show your score in the status line", OPTTYPE_BOOL, {VTRUE}},
-    {"sidebar", "draw the inventory sidebar", OPTTYPE_BOOL, {VTRUE}},
-    {"standout", "use standout for --More--", OPTTYPE_BOOL, {FALSE}},
-    {"status3", "3 line status display", OPTTYPE_BOOL, {VTRUE}},
-    {"time", "display elapsed game time, in moves", OPTTYPE_BOOL, {VTRUE}},
-    {"use_inverse", "use inverse video for some things", OPTTYPE_BOOL, {VTRUE}},
+    {"menu_headings", "display style for menu headings", FALSE, OPTTYPE_ENUM,
+     {.e = A_REVERSE}},
+    {"msgheight", "message window height", FALSE, OPTTYPE_INT, {.i = 8}},
+    {"msghistory", "number of messages saved for prevmsg", FALSE, OPTTYPE_INT,
+     {.i = 256}},
+    {"optstyle", "option menu display style", FALSE, OPTTYPE_ENUM,
+     {.e = OPTSTYLE_FULL}},
+    {"scores_own", "show all your own scores in the list", FALSE, OPTTYPE_BOOL,
+     {.b = FALSE}},
+    {"scores_top", "how many top scores to show", FALSE, OPTTYPE_INT, {.i = 3}},
+    {"scores_around", "the number of scores shown around your score", FALSE,
+     OPTTYPE_INT, {.i = 2}},
+    {"showexp", "show experience points", FALSE, OPTTYPE_BOOL, {.b = TRUE}},
+    {"showscore", "show your score in the status line", FALSE, OPTTYPE_BOOL,
+     {.b = TRUE}},
+    {"sidebar", "draw the inventory sidebar", FALSE, OPTTYPE_BOOL, {.b = TRUE}},
+    {"standout", "use standout for --More--", FALSE, OPTTYPE_BOOL,
+     {.b = FALSE}},
+    {"status3", "3 line status display", FALSE, OPTTYPE_BOOL, {.b = TRUE}},
+    {"time", "display elapsed game time, in moves", FALSE, OPTTYPE_BOOL,
+     {.b = TRUE}},
+    {"use_inverse", "use inverse video for some things", FALSE, OPTTYPE_BOOL,
+     {.b = TRUE}},
 #if defined(PDCURSES) && defined(WIN32)
-    {"win_width", "window width", OPTTYPE_INT, {(void *)130}},
-    {"win_height", "window height", OPTTYPE_INT, {(void *)40}},
+    {"win_width", "window width", FALSE, OPTTYPE_INT, {.i = 130}},
+    {"win_height", "window height", FALSE, OPTTYPE_INT, {.i = 40}},
 #endif
-    {NULL, NULL, OPTTYPE_BOOL, {NULL}}
+    {NULL, NULL, FALSE, OPTTYPE_BOOL, {NULL}}
 };
 
-struct nh_boolopt_map boolopt_map[] = {
+struct nhlib_boolopt_map boolopt_map[] = {
     {"bgbranding", &settings.bgbranding},
     {"blink", &settings.blink},
     {"darkgray", &settings.darkgray},
@@ -145,10 +144,66 @@ struct nh_boolopt_map boolopt_map[] = {
     {NULL, NULL}
 };
 
+static struct nh_option_desc *nh_options = NULL;
 
-static nh_bool
-option_change_callback(struct nh_option_desc *option)
+
+struct nh_option_desc *
+curses_get_nh_opts(void)
 {
+    if (game_is_running)
+        return nh_get_options();
+    else
+        return nh_options;
+}
+
+
+nh_bool
+curses_set_option(const char *name, union nh_optvalue value, nh_bool isstring)
+{
+    nh_bool game_option = FALSE;
+    struct nh_option_desc *option = nhlib_find_option(curses_options, name);
+
+    if (!option) {
+        if (game_is_running)
+            return nh_set_option(name, value, isstring);
+
+        /* If the game is not running, update our local copy of options. */
+        if (!nh_options || !(option = nhlib_find_option(nh_options, name))) {
+            return FALSE;
+        }
+        game_option = TRUE;
+    }
+
+    if ((int)option->type == OPTTYPE_KEYMAP)
+        /* FIXME: impossible() */
+        return FALSE;
+
+    if (isstring)
+        value = nhlib_string_to_optvalue(option, value.s);
+
+    if (!nhlib_option_value_ok(option, value))
+        return FALSE;
+
+    nhlib_copy_option_value(option, value);
+
+    /* We may have allocated a new copy of the autopickup rules. */
+    if (isstring && option->type == OPTTYPE_AUTOPICKUP_RULES) {
+        free(value.ar->rules);
+        free(value.ar);
+    }
+
+    if (game_option)
+        return TRUE;
+
+    if (option->type == OPTTYPE_BOOL) {
+        nh_bool *var = nhlib_find_boolopt(boolopt_map, option->name);
+        if (!var)
+            /* FIXME: impossible() */
+            return FALSE;
+
+        *var = value.b;
+    }
+
     if (!strcmp(option->name, "frame") || !strcmp(option->name, "status3") ||
         !strcmp(option->name, "sidebar")) {
         rebuild_ui();
@@ -194,12 +249,7 @@ option_change_callback(struct nh_option_desc *option)
         handle_resize();
     }
 #endif
-    else if (!strcmp(option->name, "name")) {
-        if (option->value.s)
-            strcpy(settings.plname, option->value.s);
-        else
-            settings.plname[0] = '\0';
-    } else
+    else
         return FALSE;
 
     return TRUE;
@@ -224,7 +274,6 @@ init_options(void)
 {
     int i;
 
-    find_option("name")->s.maxlen = PL_NSIZ;
     find_option("menu_headings")->e = menu_headings_spec;
     find_option("msgheight")->i.min = 1;
     find_option("msgheight")->i.max = 40;
@@ -244,12 +293,10 @@ init_options(void)
     find_option("win_height")->i.max = 70;      /* ROWNO + max msgheight +
                                                    extra for status and frame */
 #endif
-    nh_setup_ui_options(curses_options, boolopt_map, option_change_callback);
-
     /* set up option defaults; this is necessary for options that are not
        specified in the config file */
     for (i = 0; curses_options[i].name; i++)
-        nh_set_option(curses_options[i].name, curses_options[i].value, FALSE);
+        curses_set_option(curses_options[i].name, curses_options[i].value, FALSE);
 
     read_ui_config();
 }
@@ -307,13 +354,17 @@ print_option_string(struct nh_option_desc *option, char *buf)
 /* add a list of options to the given selection menu */
 static int
 menu_add_options(struct nh_menuitem **items, int *size, int *icount, int listid,
-                 struct nh_option_desc *options, nh_bool read_only)
+                 struct nh_option_desc *options, nh_bool birth_only,
+                 nh_bool read_only)
 {
     int i, id;
     char optbuf[256];
 
     for (i = 0; options[i].name; i++) {
         id = (listid << 10) | i;
+        if (options[i].birth_option != birth_only)
+            continue;
+
         print_option_string(&options[i], optbuf);
         if (read_only)
             add_menu_txt(*items, *size, *icount, optbuf, MI_TEXT);
@@ -402,7 +453,7 @@ select_enum_value(union nh_optvalue *value, struct nh_option_desc *option)
 
 /* get a new value of the appropriate type for the given option */
 static nh_bool
-get_option_value(struct win_menu *mdat, int idx)
+query_new_value(struct win_menu *mdat, int idx)
 {
     char buf[BUFSZ], query[BUFSZ];
     union nh_optvalue value;
@@ -413,14 +464,9 @@ get_option_value(struct win_menu *mdat, int idx)
     int prev_optstyle = settings.optstyle;
 
     switch (listid) {
-    case ACT_BIRTH_OPTS:
-        optlist = nh_get_options(ACTIVE_BIRTH_OPTIONS);
-        break;
-    case CUR_BIRTH_OPTS:
-        optlist = nh_get_options(CURRENT_BIRTH_OPTIONS);
-        break;
+    case BIRTH_OPTS:
     case GAME_OPTS:
-        optlist = nh_get_options(GAME_OPTIONS);
+        optlist = curses_get_nh_opts();
         break;
     case UI_OPTS:
         optlist = curses_options;
@@ -471,7 +517,7 @@ get_option_value(struct win_menu *mdat, int idx)
         return FALSE;
     }
 
-    if (!nh_set_option(option->name, value, FALSE)) {
+    if (!curses_set_option(option->name, value, FALSE)) {
         sprintf(strbuf, "new value for %s rejected", option->name);
         curses_msgwin(strbuf);
     } else
@@ -491,8 +537,7 @@ display_options(nh_bool change_birth_opt)
 {
     struct nh_menuitem *items;
     int icount, size;
-    struct nh_option_desc *nhoptions = nh_get_options(GAME_OPTIONS);
-    struct nh_option_desc *birthoptions = NULL;
+    struct nh_option_desc *options = curses_get_nh_opts();
     int n;
 
     size = 10;
@@ -501,41 +546,41 @@ display_options(nh_bool change_birth_opt)
     do {
         icount = 0;
         if (!change_birth_opt) {
-            birthoptions = nh_get_options(ACTIVE_BIRTH_OPTIONS);
             /* add general game options */
             add_menu_txt(items, size, icount, "Game options:", MI_HEADING);
-            menu_add_options(&items, &size, &icount, GAME_OPTS, nhoptions,
-                             FALSE);
+            menu_add_options(&items, &size, &icount, GAME_OPTS, options,
+                             FALSE, FALSE);
 
             /* add or display birth options */
             add_menu_txt(items, size, icount, "Birth options for this game:",
                          MI_HEADING);
-            menu_add_options(&items, &size, &icount, ACT_BIRTH_OPTS,
-                             birthoptions, TRUE);
+            menu_add_options(&items, &size, &icount, BIRTH_OPTS, options,
+                             TRUE, TRUE);
         } else {
-            birthoptions = nh_get_options(CURRENT_BIRTH_OPTIONS);
             /* add or display birth options */
             add_menu_txt(items, size, icount, "Birth options:", MI_HEADING);
-            menu_add_options(&items, &size, &icount, CUR_BIRTH_OPTS,
-                             birthoptions, FALSE);
+            menu_add_options(&items, &size, &icount, BIRTH_OPTS, options,
+                             TRUE, FALSE);
 
             add_menu_txt(items, size, icount, "Game options:", MI_HEADING);
-            menu_add_options(&items, &size, &icount, GAME_OPTS, nhoptions,
-                             FALSE);
+            menu_add_options(&items, &size, &icount, GAME_OPTS, options,
+                             FALSE, FALSE);
         }
 
         /* add UI specific options */
         add_menu_txt(items, size, icount, "Interface options:", MI_HEADING);
         menu_add_options(&items, &size, &icount, UI_OPTS, curses_options,
-                         FALSE);
+                         FALSE, FALSE);
 
         n = curses_display_menu_core(items, icount, "Set what options?",
                                      PICK_ONE, NULL, 0, 0, -1, -1,
-                                     get_option_value);
+                                     query_new_value);
     } while (n > 0);
     free(items);
 
-    write_config();
+    write_ui_config();
+    if (!game_is_running)
+        write_nh_config();
 }
 
 
@@ -545,23 +590,25 @@ print_options(void)
     struct nh_menuitem *items;
     int i, icount, size;
     char buf[BUFSZ];
-    struct nh_option_desc *options;
+    struct nh_option_desc *options = curses_get_nh_opts();
 
     icount = 0;
     size = 10;
     items = malloc(sizeof (struct nh_menuitem) * size);
 
     add_menu_txt(items, size, icount, "Birth options:", MI_HEADING);
-    options = nh_get_options(CURRENT_BIRTH_OPTIONS);
     for (i = 0; options[i].name; i++) {
+        if (!options[i].birth_option)
+            continue;
         snprintf(buf, BUFSZ, "%s\t%s", options[i].name, options[i].helptxt);
         add_menu_txt(items, size, icount, buf, MI_TEXT);
     }
     add_menu_txt(items, size, icount, "", MI_TEXT);
 
     add_menu_txt(items, size, icount, "Game options:", MI_HEADING);
-    options = nh_get_options(GAME_OPTIONS);
     for (i = 0; options[i].name; i++) {
+        if (options[i].birth_option)
+            continue;
         snprintf(buf, BUFSZ, "%s\t%s", options[i].name, options[i].helptxt);
         add_menu_txt(items, size, icount, buf, MI_TEXT);
     }
@@ -889,7 +936,7 @@ show_autopickup_menu(struct nh_option_desc *opt)
         edit_ap_rule(&opt->a, value.ar, id);
     } while (n > 0);
 
-    nh_set_option(opt->name, value, FALSE);
+    curses_set_option(opt->name, value, FALSE);
 
     free(value.ar->rules);
     free(value.ar);
@@ -940,7 +987,7 @@ read_config_line(char *line)
     }
 
     optval.s = value;
-    nh_set_option(name, optval, TRUE);
+    curses_set_option(name, optval, TRUE);
 }
 
 
@@ -1047,6 +1094,17 @@ read_nh_config(void)
 {
     fnchar filename[BUFSZ];
 
+    /* First, we need to make a local copy of the game's options to change when
+     * no game is in progress, as the game will reject any changes while it is
+     * in operation. */
+    struct nh_option_desc *opts = nh_get_options();
+    if (!opts)
+        /* TODO: panic? */
+        return;
+
+    nhlib_free_optlist(nh_options);
+    nh_options = nhlib_clone_optlist(opts);
+
     if (!ui_flags.connection_only) {
         get_config_name(filename, FALSE);
         read_config_file(filename);
@@ -1083,7 +1141,8 @@ open_config_file(fnchar * filename)
     }
 
     fprintf(fp,
-            "# note: this file is rewritten whenever options are changed ingame\n");
+            "# note: this file is rewritten whenever options are\n"
+            "# changed and a game is not running\n");
 
     return fp;
 }
@@ -1107,28 +1166,30 @@ write_config_options(FILE * fp, struct nh_option_desc *options)
 
 
 void
-write_config(void)
+write_nh_config(void)
 {
     FILE *fp;
     fnchar filename[BUFSZ];
-    fnchar uiconfname[BUFSZ];
 
-    if (!ui_flags.connection_only)
-        get_config_name(filename, FALSE);
-    if (!get_config_name(uiconfname, TRUE))
-        return;
-
-    if (!ui_flags.connection_only) {
-        fp = open_config_file(filename);
-        if (fp && should_write_config()) {
-            write_config_options(fp, nh_get_options(GAME_OPTIONS));
-            write_config_options(fp, nh_get_options(CURRENT_BIRTH_OPTIONS));
-            fclose(fp);
-        }
+    if (!ui_flags.connection_only &&
+        get_config_name(filename, FALSE) &&
+        (fp = open_config_file(filename))) {
+        write_config_options(fp, nh_options);
+        fclose(fp);
     }
+}
 
-    fp = open_config_file(uiconfname);
-    if (fp) {
+
+void
+write_ui_config(void)
+{
+    FILE *fp;
+    fnchar filename[BUFSZ];
+
+    get_config_name(filename, TRUE);
+
+    if (get_config_name(filename, FALSE) &&
+        (fp = open_config_file(filename))) {
         write_config_options(fp, curses_options);
         fclose(fp);
     }

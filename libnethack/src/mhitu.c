@@ -1302,8 +1302,8 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             if (!Blind) {
                 pline("%s tries to %s you, but you seem %s.",
                       Adjmonnam(mtmp, "plain"),
-                      flags.female ? "charm" : "seduce",
-                      flags.female ? "unaffected" : "uninterested");
+                      u.ufemale ? "charm" : "seduce",
+                      u.ufemale ? "unaffected" : "uninterested");
             }
             if (rn2(3)) {
                 if (!tele_restrict(mtmp))
@@ -2331,7 +2331,7 @@ doseduce(struct monst *mon)
 
     if ((uarm && !uskin()) || uarmc) {
         verbalize("You're such a %s; I wish...",
-                  flags.female ? "sweet lady" : "nice guy");
+                  u.ufemale ? "sweet lady" : "nice guy");
         if (!tele_restrict(mon))
             rloc(mon, FALSE);
         return 1;

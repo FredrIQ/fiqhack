@@ -167,13 +167,11 @@ struct histevent *histevents;
 unsigned long long turntime;
 unsigned int timer_id = 1;
 
-/* If one game (A) is started and then saved, followed by game B with different
- * birth_options, after which game A is restored, then A must run with its
- * original birth_options, rather than the most recent birth_options which were
- * set for game B. */
-struct nh_option_desc *active_birth_options;
-struct nh_option_desc *birth_options;
-struct nh_option_desc *options;
+/* This global has a funny set of rules. Because it can be given to the client
+ * for use in configuration when a game is not in progress, it must be valid at
+ * all times when a game is not in play. Accordingly, it is reset in program
+ * initialization and in terminate() */
+struct nh_option_desc *options = 0;
 
 char toplines[MSGCOUNT][BUFSZ];
 int toplines_count[MSGCOUNT];
@@ -233,11 +231,6 @@ neutral_turnstate_tasks(void)
 void
 init_data(boolean including_program_state)
 {
-    /* iflags may already contain valid, important data, because init_data()
-       runs as part of the game init sequence after options have been set, etc. 
-     */
-    struct nh_autopickup_rules *rules = iflags.ap_rules;
-
     init_turnstate();
 
     moves = 1;
@@ -289,7 +282,6 @@ init_data(boolean including_program_state)
     timer_id = 1;
     curline = 0;
 
-    iflags.ap_rules = rules;
     flags.moonphase = 10;       /* invalid value, so that the first call to
                                    realtime_tasks will dtrt */
     flags.soundok = 1;

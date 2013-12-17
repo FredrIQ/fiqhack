@@ -96,7 +96,6 @@ struct you {
 
     unsigned umconf;
     char usick_cause[PL_PSIZ + 20];     /* sizeof "unicorn horn named "+1 */
-    unsigned usick_type:2;
 # define SICK_VOMITABLE 0x01
 # define SICK_NONVOMITABLE 0x02
 # define SICK_ALL 0x03
@@ -129,12 +128,15 @@ struct you {
     unsigned uinwater:1;        /* if you're currently in water (only
                                    underwater possible currently) */
     unsigned uundetected:1;     /* if you're a hiding monster/piercer */
-    unsigned mfemale:1;         /* saved human value of flags.female */
+    unsigned ufemale:1;         /* no neutral gender for players normally */
+    unsigned mfemale:1;         /* saved value of ufemale */
     unsigned uinvulnerable:1;   /* you're invulnerable (praying) */
     unsigned uburied:1;         /* you're buried */
     unsigned uedibility:1;      /* blessed food detection; sense unsafe food */
+
     unsigned uwelcomed:1;       /* you've seen the "Welcome to NetHack!"
                                    message (and legacy if appropriate) */
+    unsigned usick_type:2;
 
     unsigned udg_cnt;   /* how long you have been demigod */
     struct u_event uevent;      /* certain events have happened */
@@ -151,6 +153,7 @@ struct you {
 # define A_ORIGINAL     1
 # define A_CURRENT      0
     aligntyp ualignbase[CONVERT];       /* for ualign conversion record */
+    int upantheon;
     schar uluck, moreluck;      /* luck and luck bonus */
 # define Luck   (u.uluck + u.moreluck)
 # define LUCKADD        3

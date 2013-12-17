@@ -10,7 +10,7 @@
 
 struct nh_window_procs windowprocs;
 int current_game;
-struct nh_option_desc *option_lists[OPTION_LIST_COUNT];
+struct nh_option_desc *option_list;
 
 #ifdef UNIX
 # include <signal.h>
@@ -163,23 +163,93 @@ nhnet_play_game(int gid)
 }
 
 
-int
-nhnet_create_game(const char *name, int role, int race, int gend, int align,
-                  enum nh_game_modes playmode)
+static json_t *
+json_list(const struct nh_listitem *list, int len)
 {
-    json_t *jmsg;
-    int ret;
+    int i;
+    json_t *jarr = json_array();
+
+    for (i = 0; i < len; i++)
+        json_array_append_new(jarr,
+                              json_pack("{si,ss}", "id", list[i].id, "txt",
+                                        list[i].caption));
+    return jarr;
+}
+
+
+static json_t *
+json_option(const struct nh_option_desc *option)
+{
+    int i;
+    json_t *jopt, *joptval, *joptdesc, *jobj;
+    struct nh_autopickup_rule *r;
+
+    switch (option->type) {
+    case OPTTYPE_BOOL:
+        joptval = json_integer(option->value.b);
+        joptdesc = json_object();
+        break;
+
+    case OPTTYPE_INT:
+        joptval = json_integer(option->value.i);
+        joptdesc =
+            json_pack("{si,si}", "max", option->i.max, "min", option->i.min);
+        break;
+
+    case OPTTYPE_ENUM:
+        joptval = json_integer(option->value.e);
+        joptdesc = json_list(option->e.choices, option->e.numchoices);
+        break;
+
+    case OPTTYPE_STRING:
+        joptval = json_string(option->value.s);
+        joptdesc = json_integer(option->s.maxlen);
+        break;
+
+    case OPTTYPE_AUTOPICKUP_RULES:
+        joptdesc = json_list(option->a.classes, option->a.numclasses);
+        joptval = json_array();
+        for (i = 0; option->value.ar && i < option->value.ar->num_rules; i++) {
+            r = &option->value.ar->rules[i];
+            jobj =
+                json_pack("{ss,si,si,si}", "pattern", r->pattern, "oclass",
+                          r->oclass, "buc", r->buc, "action", r->action);
+            json_array_append_new(joptval, jobj);
+        }
+        break;
+
+    default:
+        joptdesc = json_string("<error: no description for option>");
+        joptval = json_string("<error>");
+        break;
+    }
+
+    jopt =
+        json_pack("{ss,ss,si,so,so}", "name", option->name, "helptxt",
+                  option->helptxt, "type", option->type, "value", joptval,
+                  "desc", joptdesc);
+    return jopt;
+}
+
+
+enum nh_create_response
+nhnet_create_game(struct nh_option_desc *opts, enum nh_game_modes playmode)
+{
+    json_t *jmsg, *jarr;
+    int ret, i;
 
     if (!api_entry())
         return 0;
 
-    jmsg =
-        json_pack("{ss,si,si,si,si,si}", "name", name, "role", role, "race",
-                  race, "gender", gend, "alignment", align, "mode", playmode);
+    jarr = json_array();
+    for (i = 0; opts[i].name; i++)
+        json_array_append_new(jarr, json_option(&opts[i]));
+
+    jmsg = json_pack("{so,si}", "opts", jarr, "mode", playmode);
     jmsg = send_receive_msg("create_game", jmsg);
     if (json_unpack(jmsg, "{si}", "return", &ret) == -1) {
         print_error("Incorrect return object in nhnet_create_game");
-        ret = 0;
+        ret = NHCREATE_FAIL;
     }
 
     json_decref(jmsg);
@@ -482,7 +552,7 @@ nhnet_set_option(const char *name, union nh_optvalue value, nh_bool isstr)
 {
     int ret, i;
     json_t *jmsg, *joval, *jobj;
-    struct nh_option_desc *gameopts, *birthopts, *opt;
+    struct nh_option_desc *opts, *opt;
     struct nh_autopickup_rule *r;
 
     ret = nh_set_option(name, value, isstr);
@@ -492,15 +562,11 @@ nhnet_set_option(const char *name, union nh_optvalue value, nh_bool isstr)
     if (!api_entry())
         return FALSE;
 
-    gameopts = nhnet_get_options(GAME_OPTIONS);
-    birthopts = nhnet_get_options(CURRENT_BIRTH_OPTIONS);
+    opts = nhnet_get_options();
     opt = NULL;
-    for (i = 0; gameopts[i].name && !opt; i++)
-        if (!strcmp(name, gameopts[i].name))
-            opt = &gameopts[i];
-    for (i = 0; birthopts[i].name && !opt; i++)
-        if (!strcmp(name, birthopts[i].name))
-            opt = &birthopts[i];
+    for (i = 0; opts[i].name && !opt; i++)
+        if (!strcmp(name, opts[i].name))
+            opt = &opts[i];
 
     if (opt) {
         if (isstr || opt->type == OPTTYPE_STRING)
@@ -542,17 +608,17 @@ nhnet_set_option(const char *name, union nh_optvalue value, nh_bool isstr)
 
 
 struct nh_option_desc *
-nhnet_get_options(enum nh_option_list list)
+nhnet_get_options(void)
 {
     struct nh_option_desc *olist;
     json_t *jmsg, *jarr, *jobj;
     int count, i;
 
     if (!nhnet_active())
-        return nh_get_options(list);
+        return nh_get_options();
 
-    if (list < OPTION_LIST_COUNT && option_lists[list])
-        return option_lists[list];
+    if (option_list)
+        return option_list;
 
     if (!api_entry()) {
         olist = xmalloc(sizeof (struct nh_option_desc));
@@ -560,7 +626,7 @@ nhnet_get_options(enum nh_option_list list)
         return olist;
     }
 
-    jmsg = send_receive_msg("get_options", json_pack("{si}", "list", list));
+    jmsg = send_receive_msg("get_options", json_object());
     if (json_unpack(jmsg, "{so!}", "options", &jarr) == -1 ||
         !json_is_array(jarr)) {
         print_error("Incorrect return object in nhnet_get_options");
@@ -568,7 +634,7 @@ nhnet_get_options(enum nh_option_list list)
         memset(olist, 0, sizeof (struct nh_option_desc));
     } else {
         count = json_array_size(jarr);
-        option_lists[list] = olist =
+        option_list = olist =
             malloc(sizeof (struct nh_option_desc) * (count + 1));
         memset(olist, 0, sizeof (struct nh_option_desc) * (count + 1));
         for (i = 0; i < count; i++) {
@@ -586,15 +652,14 @@ nhnet_get_options(enum nh_option_list list)
 void
 free_option_lists(void)
 {
-    int i, j;
+    int i;
 
-    for (i = 0; i < OPTION_LIST_COUNT; i++)
-        if (option_lists[i]) {
-            for (j = 0; option_lists[i][j].name; j++)
-                free_option_data(&option_lists[i][j]);
-            free(option_lists[i]);
-            option_lists[i] = NULL;
-        }
+    if (option_list) {
+        for (i = 0; option_list[i].name; i++)
+            free_option_data(&option_list[i]);
+        free(option_list);
+        option_list = NULL;
+    }
 }
 
 

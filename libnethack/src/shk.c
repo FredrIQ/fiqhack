@@ -2184,7 +2184,7 @@ speak:
             if (!is_human(youmonst.data))
                 strcat(buf, " creature");
             else
-                strcat(buf, (flags.female) ? " lady" : " sir");
+                strcat(buf, (u.ufemale) ? " lady" : " sir");
         }
         if (ininv) {
             long quan = obj->quan;
@@ -3247,10 +3247,10 @@ shopdig(int fall)
             if (u.utraptype == TT_PIT)
                 verbalize
                     ("Be careful, %s, or you might fall through the floor.",
-                     flags.female ? "madam" : "sir");
+                     u.ufemale ? "madam" : "sir");
             else
                 verbalize("%s, do not damage the floor here!",
-                          flags.female ? "Madam" : "Sir");
+                          u.ufemale ? "Madam" : "Sir");
         }
         if (Role_if(PM_KNIGHT)) {
             pline("You feel like a common thief.");

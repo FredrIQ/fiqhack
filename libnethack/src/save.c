@@ -20,6 +20,10 @@ static void savetrapchn(struct memfile *mf, struct trap *, struct level *lev);
 static void freetrapchn(struct trap *trap);
 static void savegamestate(struct memfile *mf);
 static void save_flags(struct memfile *mf);
+static void save_options(struct memfile *mf);
+static void save_option(struct memfile *mf, struct nh_option_desc *opt);
+static void save_autopickup_rules(struct memfile *mf,
+                                  struct nh_autopickup_rules *ar);
 static void freefruitchn(void);
 
 
@@ -69,6 +73,7 @@ savegame(struct memfile *mf)
     mwrite32(mf, moves);
     save_flags(mf);
     save_you(mf, &u);
+    save_options(mf);
     save_mon(mf, &youmonst);
 
     /* store dungeon layout */
@@ -104,58 +109,113 @@ save_flags(struct memfile *mf)
     mwrite32(mf, flags.ident);                /*  0 */
     mwrite32(mf, flags.moonphase);            /*  4 */
     mwrite32(mf, flags.no_of_wizards);        /*  8 */
-    mwrite32(mf, flags.init_role);            /* 12 */
-    mwrite32(mf, flags.init_race);            /* 16 */
-    mwrite32(mf, flags.init_gend);            /* 20 */
-    mwrite32(mf, flags.init_align);           /* 24 */
-    mwrite32(mf, flags.randomall);            /* 28 */
-    mwrite32(mf, flags.pantheon);             /* 32 */
-    mwrite32(mf, flags.run);                  /* 36 */
-    mwrite32(mf, flags.warnlevel);            /* 40 */
-    mwrite32(mf, flags.djinni_count);         /* 44 */
-    mwrite32(mf, flags.ghost_count);          /* 48 */
-    mwrite32(mf, flags.pickup_burden);        /* 52 */
-    mwrite32(mf, flags.recently_broken_otyp); /* 56 */
+    mwrite32(mf, flags.run);                  /* 12 */
+    mwrite32(mf, flags.warnlevel);            /* 16 */
+    mwrite32(mf, flags.djinni_count);         /* 20 */
+    mwrite32(mf, flags.ghost_count);          /* 24 */
+    mwrite32(mf, flags.pickup_burden);        /* 28 */
+    mwrite32(mf, flags.recently_broken_otyp); /* 32 */
 
-    mwrite8(mf, flags.autodig);               /* 57 */
-    mwrite8(mf, flags.autoquiver);            /* 58 */
-    mwrite8(mf, flags.beginner);              /* 59 */
-    mwrite8(mf, flags.confirm);               /* 60 */
-    mwrite8(mf, flags.debug);                 /* 61 */
-    mwrite8(mf, flags.explore);               /* 62 */
-    mwrite8(mf, flags.female);                /* 63 */
-    mwrite8(mf, flags.forcefight);            /* 64 */
-    mwrite8(mf, flags.friday13);              /* 65 */
-    mwrite8(mf, flags.legacy);                /* 66 */
-    mwrite8(mf, flags.lit_corridor);          /* 67 */
-    mwrite8(mf, flags.made_amulet);           /* 68 */
-    mwrite8(mf, flags.mon_moving);            /* 69 */
-    mwrite8(mf, flags.move);                  /* 70 */
-    mwrite8(mf, flags.mv);                    /* 71 */
-    mwrite8(mf, flags.nopick);                /* 72 */
-    mwrite8(mf, flags.null);                  /* 73 */
-    mwrite8(mf, flags.pickup);                /* 74 */
-    mwrite8(mf, flags.pushweapon);            /* 75 */
-    mwrite8(mf, flags.rest_on_space);         /* 76 */
-    mwrite8(mf, flags.safe_dog);              /* 77 */
-    mwrite8(mf, flags.silent);                /* 78 */
-    mwrite8(mf, flags.sortpack);              /* 79 */
-    mwrite8(mf, flags.soundok);               /* 80 */
-    mwrite8(mf, flags.sparkle);               /* 81 */
-    mwrite8(mf, flags.tombstone);             /* 82 */
-    mwrite8(mf, flags.verbose);               /* 83 */
-    mwrite8(mf, flags.prayconfirm);           /* 84 */
-    mwrite8(mf, flags.travel);                /* 85 */
-    mwrite8(mf, flags.end_disclose);          /* 86 */
-    mwrite8(mf, flags.menu_style);            /* 87 */
-    mwrite8(mf, flags.elbereth_enabled);      /* 88 */
-    mwrite8(mf, flags.rogue_enabled);         /* 89 */
-    mwrite8(mf, flags.seduce_enabled);        /* 90 */
-    mwrite8(mf, flags.bones_enabled);         /* 91 */
-    mwrite8(mf, flags.permablind);            /* 92 */
-    mwrite8(mf, flags.permahallu);            /* 93 */
+    mwrite8(mf, flags.autodig);               /* 33 */
+    mwrite8(mf, flags.autodigdown);           /* 34 */
+    mwrite8(mf, flags.autoquiver);            /* 35 */
+    mwrite8(mf, flags.beginner);              /* 36 */
+    mwrite8(mf, flags.confirm);               /* 37 */
+    mwrite8(mf, flags.debug);                 /* 38 */
+    mwrite8(mf, flags.explore);               /* 39 */
+    mwrite8(mf, flags.forcefight);            /* 40 */
+    mwrite8(mf, flags.friday13);              /* 41 */
+    mwrite8(mf, flags.legacy);                /* 42 */
+    mwrite8(mf, flags.lit_corridor);          /* 43 */
+    mwrite8(mf, flags.made_amulet);           /* 44 */
+    mwrite8(mf, flags.mon_generation);        /* 45 */
+    mwrite8(mf, flags.mon_moving);            /* 46 */
+    mwrite8(mf, flags.mon_polycontrol);       /* 47 */
+    mwrite8(mf, flags.move);                  /* 48 */
+    mwrite8(mf, flags.mv);                    /* 49 */
+    mwrite8(mf, flags.nopick);                /* 50 */
+    mwrite8(mf, flags.null);                  /* 51 */
+    mwrite8(mf, flags.pickup);                /* 52 */
+    mwrite8(mf, flags.pushweapon);            /* 53 */
+    mwrite8(mf, flags.rest_on_space);         /* 54 */
+    mwrite8(mf, flags.safe_dog);              /* 55 */
+    mwrite8(mf, flags.silent);                /* 56 */
+    mwrite8(mf, flags.sortpack);              /* 57 */
+    mwrite8(mf, flags.soundok);               /* 58 */
+    mwrite8(mf, flags.sparkle);               /* 59 */
+    mwrite8(mf, flags.tombstone);             /* 60 */
+    mwrite8(mf, flags.travel_interrupt);      /* 61 */
+    mwrite8(mf, flags.verbose);               /* 62 */
+    mwrite8(mf, flags.prayconfirm);           /* 63 */
+    mwrite8(mf, flags.travel);                /* 64 */
+    mwrite8(mf, flags.end_disclose);          /* 65 */
+    mwrite8(mf, flags.menu_style);            /* 66 */
+    mwrite8(mf, flags.elbereth_enabled);      /* 67 */
+    mwrite8(mf, flags.rogue_enabled);         /* 68 */
+    mwrite8(mf, flags.seduce_enabled);        /* 69 */
+    mwrite8(mf, flags.bones_enabled);         /* 70 */
+    mwrite8(mf, flags.permablind);            /* 71 */
+    mwrite8(mf, flags.permahallu);            /* 72 */
 
-    mwrite(mf, flags.inv_order, sizeof (flags.inv_order)); /* 94+ */
+    mwrite(mf, flags.inv_order, sizeof (flags.inv_order));
+
+    save_autopickup_rules(mf, flags.ap_rules);
+}
+
+
+static void
+save_options(struct memfile *mf)
+{
+    mtag(mf, 0, MTAG_OPTIONS);
+
+    int i;
+    for (i = 0; options[i].name; ++i) {}
+    mwrite32(mf, i);
+    
+    /* When saving options, we sanity-check the spacing, but we assume that
+     * the order of options in memory is preserved, since we can't well handle
+     * changes to the option list anyway. */
+    for (i = 0; options[i].name; ++i) {
+        mtag(mf, i, MTAG_OPTIONS);
+        save_option(mf, &options[i]);
+    }
+}
+
+
+static void
+save_option(struct memfile *mf, struct nh_option_desc *opt)
+{
+    int len;
+
+    switch (opt->type) {
+    case OPTTYPE_BOOL:
+        mwrite8(mf, opt->value.b);
+        break;
+    case OPTTYPE_INT:
+    case OPTTYPE_ENUM:
+        mwrite32(mf, opt->value.i); /* equivalent opt->value.e */
+        break;
+    case OPTTYPE_STRING:
+        len = opt->value.s ? strlen(opt->value.s) : 0 ;
+        mwrite32(mf, len);
+        if (len)
+            mwrite(mf, opt->value.s, len);
+        break;
+    case OPTTYPE_AUTOPICKUP_RULES:
+        save_autopickup_rules(mf, opt->value.ar);
+        break;
+    }
+}
+
+
+static void
+save_autopickup_rules(struct memfile *mf, struct nh_autopickup_rules *ar)
+{
+    int len = ar->num_rules, i;
+    mwrite32(mf, len);
+    for (i = 0; i < len; ++i)
+        mwrite(mf, &ar->rules[i], sizeof (struct nh_autopickup_rule));
+>>>>>>> coppro/options
 }
 
 
@@ -312,7 +372,7 @@ save_you(struct memfile *mf, struct you *y)
         (y->uundetected << 29) | (y->mfemale << 28) |
         (y->uinvulnerable << 27) | (y->uburied << 26) |
         (y->uedibility << 25) | (y->uwelcomed << 24) |
-        (y->usick_type << 22);
+        (y->usick_type << 22) | (y->ufemale << 21);
     eflags =
         (y->uevent.minor_oracle << 31) |
         (y->uevent.major_oracle << 30) |
@@ -379,6 +439,7 @@ save_you(struct memfile *mf, struct you *y)
     mwrite32(mf, y->initrace);
     mwrite32(mf, y->initgend);
     mwrite32(mf, y->initalign);
+    mwrite32(mf, y->upantheon);
     mwrite32(mf, y->uconduct.unvegetarian);
     mwrite32(mf, y->uconduct.unvegan);
     mwrite32(mf, y->uconduct.food);
@@ -835,20 +896,16 @@ freedynamicdata(void)
     free_dungeon();
     free_history();
 
-    if (iflags.ap_rules) {
-        free(iflags.ap_rules->rules);
-        iflags.ap_rules->rules = NULL;
-        free(iflags.ap_rules);
+    if (flags.ap_rules) {
+        free(flags.ap_rules->rules);
+        flags.ap_rules->rules = NULL;
+        free(flags.ap_rules);
     }
-    iflags.ap_rules = NULL;
+    flags.ap_rules = NULL;
     free(artilist);
     free(objects);
     objects = NULL;
     artilist = NULL;
-
-    if (active_birth_options)
-        free_optlist(active_birth_options);
-    active_birth_options = NULL;
 
     return;
 }

@@ -7,6 +7,7 @@
  */
 
 #include "nhserver.h"
+#include "common_options.h"
 #include <time.h>
 
 static void ccmd_shutdown(json_t * ignored);
@@ -67,6 +68,98 @@ ccmd_shutdown(json_t * ignored)
     client_msg("shutdown", jmsg);
 }
 
+
+/* duplicated in clientapi.c */
+static struct nh_listitem *
+read_json_list(json_t * jarr)
+{
+    struct nh_listitem *list;
+    json_t *jobj;
+    int size, i;
+    const char *txt;
+
+    size = json_array_size(jarr);
+    list = malloc(size * sizeof (struct nh_listitem));
+
+    for (i = 0; i < size; i++) {
+        jobj = json_array_get(jarr, i);
+        if (json_unpack(jobj, "{si,ss!}", "id", &list[i].id, "txt", &txt) == -1)
+            continue;
+        list[i].caption = strdup(txt);
+    }
+
+    return list;
+}
+
+
+/* duplicated in clientapi.c */
+static void
+read_json_option(json_t * jobj, struct nh_option_desc *opt)
+{
+    json_t *joptval, *joptdesc, *jelem;
+    const char *name, *helptxt, *strval;
+    int size, i;
+    struct nh_autopickup_rule *r;
+
+    memset(opt, 0, sizeof (struct nh_option_desc));
+    if (!json_unpack
+        (jobj, "{ss,ss,si,so,so!}", "name", &name, "helptxt", &helptxt, "type",
+         &opt->type, "value", &joptval, "desc", &joptdesc) == -1) {
+        memset(opt, 0, sizeof (struct nh_option_desc));
+        return;
+    }
+    opt->name = strdup(name);
+    opt->helptxt = strdup(helptxt);
+
+    switch (opt->type) {
+    case OPTTYPE_BOOL:
+        opt->value.b = json_integer_value(joptval);
+        break;
+
+    case OPTTYPE_INT:
+        opt->value.i = json_integer_value(joptval);
+        json_unpack(joptdesc, "{si,si!}", "max", &opt->i.max, "min",
+                    &opt->i.min);
+        break;
+
+    case OPTTYPE_ENUM:
+        opt->value.e = json_integer_value(joptval);
+
+        size = json_array_size(joptdesc);
+        opt->e.numchoices = size;
+        opt->e.choices = read_json_list(joptdesc);
+        break;
+
+    case OPTTYPE_STRING:
+        opt->value.s = strdup(json_string_value(joptval));
+        opt->s.maxlen = json_integer_value(joptdesc);
+        break;
+
+    case OPTTYPE_AUTOPICKUP_RULES:
+        size = json_array_size(joptdesc);
+        opt->a.numclasses = size;
+        opt->a.classes = read_json_list(joptdesc);
+
+        size = json_array_size(joptval);
+        if (!size)
+            break;
+        opt->value.ar = malloc(sizeof (struct nh_autopickup_rules));
+        opt->value.ar->num_rules = size;
+        opt->value.ar->rules =
+            malloc(size * sizeof (struct nh_autopickup_rule));
+        for (i = 0; i < size; i++) {
+            r = &opt->value.ar->rules[i];
+            jelem = json_array_get(joptval, i);
+            json_unpack(jelem, "{ss,si,si,si!}", "pattern", &strval, "oclass",
+                        &r->oclass, "buc", &r->buc, "action", &r->action);
+            strncpy(r->pattern, strval, sizeof (r->pattern) - 1);
+        }
+
+        break;
+    }
+}
+
+
 /*
  * create_game: Start a new game
  * parameters: name, role, race, gend, align, playmode
@@ -75,14 +168,13 @@ static void
 ccmd_create_game(json_t * params)
 {
     char filename[1024], basename[1024], path[1024];
-    json_t *j_msg;
-    const char *name;
-    int role, race, gend, align, mode, fd, ret;
+    json_t *j_msg, *jarr, *jobj;
+    int mode, fd, ret, count, i;
     long t;
 
-    if (json_unpack
-        (params, "{ss,si,si,si,si,si*}", "name", &name, "role", &role, "race",
-         &race, "gender", &gend, "alignment", &align, "mode", &mode) == -1)
+    if (json_unpack (params, "{ss,so,si*}", "options", &jarr, "mode",
+                     &mode) == -1 ||
+        !json_is_array(jarr))
         exit_client("Bad set of parameters for create_game");
 
     /* reset cached display data from a previous game */
@@ -90,6 +182,19 @@ ccmd_create_game(json_t * params)
 
     if (mode == MODE_WIZARD && !user_info.can_debug)
         mode = MODE_EXPLORE;
+
+    struct nh_option_desc *opts;
+    count = json_array_size(jarr);
+    opts = calloc(sizeof (struct nh_option_desc), (count + 1));
+    for (i = 0; i < count; i++) {
+        jobj = json_array_get(jarr, i);
+        read_json_option(jobj, &opts[i]);
+    }
+
+    struct nh_option_desc *nameopt = nhlib_find_option(opts, "name");
+    if (!nameopt)
+        exit_client("No character name provided");
+    char *name = nameopt->value.s;
 
     t = (long)time(NULL);
     snprintf(path, 1024, "%s/save/%s/", settings.workdir, user_info.username);
@@ -102,10 +207,25 @@ ccmd_create_game(json_t * params)
     if (fd == -1)
         exit_client("Could not create the logfile");
 
-    ret = nh_create_game(fd, name, role, race, gend, align, mode);
+    ret = nh_create_game(fd, opts, mode);
     close(fd);
-    if (ret) {
+    nhlib_free_optlist(opts);
+
+    if (ret == NHCREATE_OK) {
+        opts = nh_get_options();
+
+        struct nh_option_desc
+            *roleopt = nhlib_find_option(opts, "role"),
+            *raceopt = nhlib_find_option(opts, "race"),
+            *alignopt = nhlib_find_option(opts, "align"),
+            *gendopt = nhlib_find_option(opts, "gend");
         struct nh_roles_info *ri = nh_get_roles();
+
+        int role = roleopt->value.i;
+        int race = raceopt->value.i;
+        int gend = gendopt->value.i;
+        int align = alignopt->value.i;
+
         const char *rolename = (gend &&
                                 ri->rolenames_f[role]) ?
             ri->rolenames_f[role] : ri->rolenames_m[role];
@@ -119,7 +239,7 @@ ccmd_create_game(json_t * params)
         j_msg = json_pack("{si}", "return", gameid);
     } else {
         unlink(filename);
-        j_msg = json_pack("{si}", "return", -1);
+        j_msg = json_pack("{si}", "return", ret);
     }
 
     client_msg("create_game", j_msg);
@@ -539,23 +659,7 @@ ccmd_describe_pos(json_t * params)
 }
 
 
-static const struct nh_option_desc *
-find_option(const char *optname, const struct nh_option_desc *list1,
-            const struct nh_option_desc *list2)
-{
-    int i;
-    const struct nh_option_desc *option = NULL;
-
-    for (i = 0; list1[i].name && !option; i++)
-        if (!strcmp(optname, list1[i].name))
-            option = &list1[i];
-    for (i = 0; list2[i].name && !option; i++)
-        if (!strcmp(optname, list2[i].name))
-            option = &list2[i];
-    return option;
-}
-
-
+/* duplicated in clientapi.c */
 static json_t *
 json_list(const struct nh_listitem *list, int len)
 {
@@ -570,6 +674,7 @@ json_list(const struct nh_listitem *list, int len)
 }
 
 
+/* duplicated in clientapi.c */
 static json_t *
 json_option(const struct nh_option_desc *option)
 {
@@ -631,7 +736,7 @@ ccmd_set_option(json_t * params)
     const char *optname, *optstr, *pattern;
     json_t *jmsg, *joval, *jopt;
     int isstr, i, ret;
-    const struct nh_option_desc *gameopt, *birthopt, *option;
+    const struct nh_option_desc *opts, *option;
     union nh_optvalue value;
     struct nh_autopickup_rules ar = { NULL, 0 };
     struct nh_autopickup_rule *r;
@@ -643,10 +748,8 @@ ccmd_set_option(json_t * params)
 
     /* find the option_desc for the options that should be set; the option type
        is required in order to decode the option value. */
-    gameopt = nh_get_options(GAME_OPTIONS);
-    birthopt =
-        nh_get_options(gameid ? ACTIVE_BIRTH_OPTIONS : CURRENT_BIRTH_OPTIONS);
-    option = find_option(optname, gameopt, birthopt);
+    opts = nh_get_options();
+    option = nhlib_find_option(opts, optname);
     if (!option) {
         jmsg = json_pack("{si,so}", "return", FALSE, "option", json_object());
         client_msg("set_option", jmsg);
@@ -691,10 +794,8 @@ ccmd_set_option(json_t * params)
     if (option->type == OPTTYPE_AUTOPICKUP_RULES)
         free(ar.rules);
 
-    gameopt = nh_get_options(GAME_OPTIONS);
-    birthopt =
-        nh_get_options(gameid ? ACTIVE_BIRTH_OPTIONS : CURRENT_BIRTH_OPTIONS);
-    option = find_option(optname, gameopt, birthopt);
+    opts = nh_get_options();
+    option = nhlib_find_option(opts, optname);
 
     jopt = json_option(option);
     optstr = nh_get_option_string(option);
@@ -712,15 +813,16 @@ ccmd_set_option(json_t * params)
 static void
 ccmd_get_options(json_t * params)
 {
-    int list, i;
+    int i;
     const struct nh_option_desc *options;
     json_t *jmsg, *jarr;
 
-    if (json_unpack(params, "{si*}", "list", &list) == -1)
-        exit_client("Bad parameters for get_options");
+    void *iter = json_object_iter(params);
+    if (iter)
+        exit_client("non-empty parameter list for get_options");
 
     jarr = json_array();
-    options = nh_get_options(list);
+    options = nh_get_options();
     for (i = 0; options[i].name; i++)
         json_array_append_new(jarr, json_option(&options[i]));
     jmsg = json_pack("{so}", "options", jarr);

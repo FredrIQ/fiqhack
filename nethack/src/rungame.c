@@ -4,6 +4,7 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "nhcurses.h"
+#include "common_options.h"
 #include <fcntl.h>
 #include <time.h>
 #include <sys/stat.h>
@@ -205,25 +206,52 @@ game_ended(int status, fnchar * filename)
 
 
 void
-rungame(void)
+rungame(nh_bool net)
 {
-    int ret, role = initrole, race = initrace, gend = initgend, align =
-        initalign;
+    int ret, role = cmdline_role, race = cmdline_race, gend = cmdline_gend,
+        align = cmdline_align;
     int fd = -1;
-    char plname[BUFSZ], prompt[BUFSZ] = "You are a ";
+    char plname[BUFSZ] = {0}, prompt[BUFSZ] = "You are a ";
     fnchar filename[1024];
     fnchar savedir[BUFSZ];
     long t;
     struct nh_roles_info *info;
 
-    if (!get_gamedir(SAVE_DIR, savedir)) {
+    struct nh_option_desc *new_opts = nhlib_clone_optlist(curses_get_nh_opts()),
+                          *roleopt = nhlib_find_option(new_opts, "role"),
+                          *raceopt = nhlib_find_option(new_opts, "race"),
+                          *alignopt = nhlib_find_option(new_opts, "align"),
+                          *gendopt = nhlib_find_option(new_opts, "gender"),
+                          *nameopt = nhlib_find_option(new_opts, "name");
+    if (!roleopt || !raceopt || !alignopt || !gendopt || !nameopt) {
+        curses_raw_print("Creation options not available?");
+        goto cleanup;
+    }
+
+    if (role == ROLE_NONE)
+        role = roleopt->value.i;
+    if (race == ROLE_NONE)
+        race = raceopt->value.i;
+    if (align == ROLE_NONE)
+        align = alignopt->value.i;
+    if (gend == ROLE_NONE)
+        gend = gendopt->value.i;
+    if (cmdline_name[0]) {
+        strncpy(plname, cmdline_name, BUFSZ);
+        plname[BUFSZ - 1] = '\0';
+    } else if (nameopt->value.s) {
+        strncpy(plname, nameopt->value.s, BUFSZ);
+        plname[BUFSZ - 1] = '\0';
+    }
+
+    if (!net && !get_gamedir(SAVE_DIR, savedir)) {
         curses_raw_print
             ("Could not find where to put the logfile for a new game.");
-        return;
+        goto cleanup;
     }
 
     if (!player_selection(&role, &race, &gend, &align, random_player))
-        return;
+        goto cleanup;
 
     /* 
      * Describe the player character for naming; see dowelcome() in cmd.c in
@@ -246,41 +274,62 @@ rungame(void)
                                     rolenames_f[role] ? info->rolenames_f :
                                     info->rolenames_m)[role]);
 
-    strncpy(plname, settings.plname, PL_NSIZ);
-    /* The player name is set to "wizard" (again) in nh_create_game, so setting
-       it here just prevents wizmode player from being asked for a name. */
-    if (ui_flags.playmode == MODE_WIZARD)
-        strcpy(plname, "wizard");
-
-    while (!plname[0])
+    /* In wizard mode, the name is provided automatically by the engine. */
+    while (!plname[0] && ui_flags.playmode != MODE_WIZARD)
         curses_getline(prompt, plname);
     if (plname[0] == '\033')    /* canceled */
-        return;
+        goto cleanup;
 
-    t = (long)time(NULL);
+    if (!net) {
+        t = (long)time(NULL);
 #if defined(WIN32)
-    snwprintf(filename, 1024, L"%ls%ld_%hs.nhgame", savedir, t, plname);
+        snwprintf(filename, 1024, L"%ls%ld_%hs.nhgame", savedir, t, plname);
 #else
-    snprintf(filename, 1024, "%s%ld_%s.nhgame", savedir, t, plname);
+        snprintf(filename, 1024, "%s%ld_%s.nhgame", savedir, t, plname);
 #endif
-    fd = sys_open(filename, O_TRUNC | O_CREAT | O_RDWR, FILE_OPEN_MASK);
-    if (fd == -1) {
-        curses_raw_print("Could not create the logfile.");
-        return;
+        fd = sys_open(filename, O_TRUNC | O_CREAT | O_RDWR, FILE_OPEN_MASK);
+        if (fd == -1) {
+            curses_raw_print("Could not create the logfile.");
+            goto cleanup;
+        }
     }
 
     create_game_windows();
 
+    roleopt->value.i = role;
+    raceopt->value.i = race;
+    alignopt->value.i = align;
+    gendopt->value.i = gend;
+    if (nameopt->value.s)
+        free(nameopt->value.s);
+    nameopt->value.s = plname;
+     
     /* Create the game, then immediately load it. */
     ret = ERR_BAD_FILE;
-    if (nh_create_game(fd, plname, role, race, gend, align, ui_flags.playmode))
-        ret = playgame(fd);
+    if (net) {
+        fd = nhnet_create_game(new_opts, ui_flags.playmode);
+        if (fd >= 0)
+            ret = playgame(fd);
+    } else {
+        if (nh_create_game(fd, new_opts, ui_flags.playmode) == NHCREATE_OK)
+            ret = playgame(fd);
+    }
 
     close(fd);
 
     destroy_game_windows();
     cleanup_messages();
-    game_ended(ret, filename);
+    if (net) {
+        show_topten(player.plname, settings.end_top, settings.end_around,
+                    settings.end_own);
+    } else {
+        game_ended(ret, filename);
+    }
+
+cleanup:
+    /* avoid freeing stack memory */
+    nameopt->value.s = NULL;
+    nhlib_free_optlist(new_opts);
 }
 
 

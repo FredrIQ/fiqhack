@@ -436,9 +436,8 @@ connect_server_menu(struct server_info **servlist)
 static int
 connect_server(struct server_info *server)
 {
-    int ret, i;
+    int ret;
     char buf[BUFSZ];
-    struct nh_option_desc *game_opts, *birth_opts;
 
     while (1) {
         ret =
@@ -448,7 +447,6 @@ connect_server(struct server_info *server)
             /* only copy into ui_flags.username once the connection has been
                accepted */
             strcpy(ui_flags.username, server->username);
-            return TRUE;
         } else if (ret == AUTH_SUCCESS_RECONNECT) {
             /* TODO: This case should never happen, and probably /does/ never
                happen, in which case this is dead code. */
@@ -470,11 +468,6 @@ connect_server(struct server_info *server)
             server->password = strdup(buf);
             continue;
         } else {        /* AUTH_FAILED_UNKNOWN_USER */
-            nhnet_lib_exit();   /* need to acces the local options */
-            game_opts = nh_get_options(GAME_OPTIONS);
-            birth_opts = nh_get_options(CURRENT_BIRTH_OPTIONS);
-            nhnet_lib_init(&curses_windowprocs);
-
             sprintf(buf, "The account \"%s\" will be created for you.",
                     server->username);
             curses_msgwin(buf);
@@ -488,21 +481,12 @@ connect_server(struct server_info *server)
                 curses_msgwin("Sorry, the registration failed.");
                 return FALSE;
             }
-
-            /* upload current options */
-            if (!ui_flags.connection_only &&
-                curses_yn_function("Do you want to copy your current game "
-                                   "options to the server?", "yn",
-                                   'y') == 'y') {
-                for (i = 0; game_opts[i].name; i++)
-                    nh_set_option(game_opts[i].name, game_opts[i].value, 0);
-                for (i = 0; birth_opts[i].name; i++)
-                    nh_set_option(birth_opts[i].name, birth_opts[i].value, 0);
-            }
-
-            return TRUE;
         }
     }
+
+    /* Successful connection; reload options in case server has different
+     * perception of valid options than client does. */
+    read_nh_config();
 }
 
 
@@ -569,7 +553,7 @@ netgame_mainmenu(struct server_info *server)
 
         switch (menuresult[0]) {
         case NEWGAME:
-            net_rungame();
+            rungame(TRUE);
             break;
 
         case LOAD:

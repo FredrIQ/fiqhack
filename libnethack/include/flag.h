@@ -46,7 +46,9 @@ extern struct turnstate turnstate;
  */
 
 struct flag {
+    struct nh_autopickup_rules *ap_rules;
     boolean autodig;    /* MRKR: Automatically dig */
+    boolean autodigdown;        /* autodigging works downwadrds */
     boolean autoquiver; /* Automatically fill quiver */
     boolean beginner;
     boolean confirm;    /* confirm before hitting tame monsters */
@@ -54,13 +56,14 @@ struct flag {
 # define wizard  flags.debug
     boolean explore;    /* in exploration mode */
 # define discover flags.explore
-    boolean female;
     boolean forcefight;
     boolean friday13;   /* it's Friday the 13th */
     boolean legacy;     /* print game entry "story" */
     boolean lit_corridor;       /* show a dark corr as lit if it is in sight */
     boolean made_amulet;
+    boolean mon_generation;     /* debug: control monster generaion */
     boolean mon_moving; /* monsters' turn to move */
+    boolean mon_polycontrol;    /* debug: control monster polymorphs */
     boolean move;       /* normally 1, unless an action during your turn did
                            NOT use up the move */
     boolean mv;
@@ -77,6 +80,8 @@ struct flag {
     boolean soundok;    /* ok to tell about sounds heard */
     boolean sparkle;    /* show "resisting" special FX (Scott Bigham) */
     boolean tombstone;  /* print tombstone */
+    boolean travel_interrupt;   /* Interrupt travel if there is a hostile *
+                                   monster in sight. */
     boolean verbose;    /* max battle info */
     boolean prayconfirm;        /* confirm before praying */
     unsigned ident;     /* social security number for each monster */
@@ -117,16 +122,6 @@ struct flag {
        after the character is initialized or restored (specifically, after
        role_init() is called). */
 
-    /* Default starting role, race, gender and alignment, as per the options.
-       The actual values in use for an ongoing game are in struct you. */
-    int init_role;      /* (index into roles[]) */
-    int init_race;      /* (index into races[]) */
-    int init_gend;      /* (index into genders[]) */
-    int init_align;     /* (index into aligns[]) */
-
-    int randomall;      /* randomly assign everything not specified */
-    int pantheon;       /* deity selection for priest character */
-
     /* birth option flags */
     boolean elbereth_enabled;   /* should the E-word repel monsters? */
     boolean rogue_enabled;      /* create a rogue level */
@@ -147,11 +142,8 @@ struct instance_flags {
     boolean pickup_thrown;      /* auto-pickup items you threw */
     boolean travel1;    /* first travel step */
     coord travelcc;     /* coordinates for travel_cache */
-    boolean mon_polycontrol;    /* debug: control monster polymorphs */
-    boolean mon_generation;     /* debug: control monster generaion */
     boolean next_msg_nonblocking;       /* suppress a --More-- after this
                                            message */
-    boolean autodigdown;        /* autodigging works downwadrds */
 
     /* Items which belong in flags, but are here to allow save compatibility */
     boolean show_uncursed;      /* always show uncursed items as such */
@@ -159,9 +151,6 @@ struct instance_flags {
     int runmode;        /* update screen display during run moves */
     boolean botl;       /* redo status line */
     boolean autoexplore;        /* currently autoexploring */
-    boolean travel_interrupt;   /* Interrupt travel if there is a hostile *
-                                   monster in sight. */
-    struct nh_autopickup_rules *ap_rules;
 };
 
 extern struct flag flags;

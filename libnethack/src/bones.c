@@ -299,7 +299,7 @@ make_bones:
     if (mtmp) {
         mtmp->m_lev = (u.ulevel ? u.ulevel : 1);
         mtmp->mhp = mtmp->mhpmax = u.uhpmax;
-        mtmp->female = flags.female;
+        mtmp->female = u.ufemale;
         mtmp->msleeping = 1;
     }
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {

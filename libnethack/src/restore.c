@@ -7,6 +7,10 @@
 #include "lev.h"
 #include <stdint.h>
 
+static void restore_options(struct memfile *mf);
+static void restore_option(struct memfile *mf, struct nh_option_desc *opt);
+static void restore_autopickup_rules(struct memfile *mf,
+                                     struct nh_autopickup_rules *r);
 static void restore_utracked(struct memfile *mf, struct you *you);
 static void find_lev_obj(struct level *lev);
 static void restlevchn(struct memfile *mf);
@@ -503,6 +507,7 @@ restore_you(struct memfile *mf, struct you *y)
     y->uedibility = (yflags >> 25) & 1;
     y->uwelcomed = (yflags >> 24) & 1;
     y->usick_type = (yflags >> 22) & 3;
+    y->ufemale = (yflags >> 21) & 1;
 
     y->uevent.minor_oracle = (eflags >> 31) & 1;
     y->uevent.major_oracle = (eflags >> 30) & 1;
@@ -565,6 +570,7 @@ restore_you(struct memfile *mf, struct you *y)
     y->initrace = mread32(mf);
     y->initgend = mread32(mf);
     y->initalign = mread32(mf);
+    y->upantheon = mread32(mf);
     y->uconduct.unvegetarian = mread32(mf);
     y->uconduct.unvegan = mread32(mf);
     y->uconduct.food = mread32(mf);
@@ -660,20 +666,78 @@ restore_utracked(struct memfile *mf, struct you *y)
 }
 
 
+static void
+restore_options(struct memfile *mf)
+{
+    int i, num;
+    num = mread32(mf);
+
+    for (i = 0; i < num; ++i) {
+        if (!options[i].name)
+            impossible("restore_options: too few saved options");
+
+        restore_option(mf, &options[i]);
+    }
+
+    if (options[i].name)
+            impossible("restore_options: too many saved options");
+}
+
+
+static void
+restore_autopickup_rules(struct memfile *mf, struct nh_autopickup_rules *ar)
+{
+    int len = mread32(mf), i;
+    ar->num_rules = len;
+    ar->rules = malloc(len * sizeof(struct nh_autopickup_rule));
+    for (i = 0; i < len; ++i)
+        mread(mf, &ar->rules[i], sizeof (struct nh_autopickup_rule));
+}
+
+
+static void
+restore_option(struct memfile *mf, struct nh_option_desc *opt)
+{
+    int len;
+
+    switch (opt->type) {
+    case OPTTYPE_BOOL:
+        /* Insure against boolean sizing shenanigans. */
+        opt->value.b = mread8(mf);
+        break;
+    case OPTTYPE_INT:
+    case OPTTYPE_ENUM:
+        opt->value.i = mread32(mf); /* equivalent to opt->value.e */
+        break;
+    case OPTTYPE_STRING:
+        free(opt->value.s);
+        len = mread32(mf);
+        if (len) {
+            opt->value.s = malloc(len + 1);
+            mread(mf, opt->value.s, len);
+            opt->value.s[len] = '\0';
+        } else
+            opt->value.s = NULL;
+        break;
+    case OPTTYPE_AUTOPICKUP_RULES:
+        free(opt->value.ar->rules);
+        restore_autopickup_rules(mf, opt->value.ar);
+        break;
+    }
+}
+
+
 void
 restore_flags(struct memfile *mf, struct flag *f)
 {
+    struct nh_autopickup_rules *ar = f->ap_rules;
+    if (ar)
+        free(ar->rules);
     memset(f, 0, sizeof (struct flag));
 
     f->ident = mread32(mf);
     f->moonphase = mread32(mf);
     f->no_of_wizards = mread32(mf);
-    f->init_role = mread32(mf);
-    f->init_race = mread32(mf);
-    f->init_gend = mread32(mf);
-    f->init_align = mread32(mf);
-    f->randomall = mread32(mf);
-    f->pantheon = mread32(mf);
     f->run = mread32(mf);
     f->warnlevel = mread32(mf);
     f->djinni_count = mread32(mf);
@@ -682,18 +746,20 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->recently_broken_otyp = mread32(mf);
 
     f->autodig = mread8(mf);
+    f->autodigdown = mread8(mf);
     f->autoquiver = mread8(mf);
     f->beginner = mread8(mf);
     f->confirm = mread8(mf);
     f->debug = mread8(mf);
     f->explore = mread8(mf);
-    f->female = mread8(mf);
     f->forcefight = mread8(mf);
     f->friday13 = mread8(mf);
     f->legacy = mread8(mf);
     f->lit_corridor = mread8(mf);
     f->made_amulet = mread8(mf);
+    f->mon_generation = mread8(mf);
     f->mon_moving = mread8(mf);
+    f->mon_polycontrol = mread8(mf);
     f->move = mread8(mf);
     f->mv = mread8(mf);
     f->nopick = mread8(mf);
@@ -707,6 +773,7 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->soundok = mread8(mf);
     f->sparkle = mread8(mf);
     f->tombstone = mread8(mf);
+    f->travel_interrupt = mread8(mf);
     f->verbose = mread8(mf);
     f->prayconfirm = mread8(mf);
     f->travel = mread8(mf);
@@ -720,6 +787,11 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->permahallu = mread8(mf);
 
     mread(mf, f->inv_order, sizeof (f->inv_order));
+
+    if (!ar)
+        ar = malloc(sizeof(struct nh_autopickup_rules));
+    restore_autopickup_rules(mf, ar);
+    f->ap_rules = ar;
 }
 
 
@@ -752,6 +824,9 @@ dorecover(struct memfile *mf)
 
     restore_you(mf, &u);
     role_init();        /* Reset the initial role, race, gender, and alignment */
+    pantheon_init();
+
+    restore_options(mf);
 
     mtmp = restore_mon(mf);
     youmonst = *mtmp;

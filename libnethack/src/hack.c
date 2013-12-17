@@ -2160,7 +2160,7 @@ lookaround(void)
     }
 
     /* If travel_interrupt is set, then stop if there is a hostile nearby. */
-    if (flags.run != 1 && iflags.travel_interrupt) {
+    if (flags.run != 1 && flags.travel_interrupt) {
         for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
             if (distmin(u.ux, u.uy, mtmp->mx, mtmp->my) <= (BOLT_LIM + 1) &&
                 couldsee(mtmp->mx, mtmp->my) && check_interrupt(mtmp)) {

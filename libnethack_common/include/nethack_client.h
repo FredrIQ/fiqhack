@@ -52,9 +52,8 @@ extern void EXPORT(nhnet_lib_init) (const struct nh_window_procs *);
 extern void EXPORT(nhnet_lib_exit) (void);
 extern nh_bool EXPORT(nhnet_exit_game) (int exit_type);
 extern int EXPORT(nhnet_play_game) (int gid);
-extern int EXPORT(nhnet_create_game) (const char *name, int role, int race,
-                                      int gend, int align,
-                                      enum nh_game_modes playmode);
+extern enum nh_create_response EXPORT(nhnet_create_game) (
+    struct nh_option_desc *opts, enum nh_game_modes playmode);
 extern int EXPORT(nhnet_command) (const char *cmd, int rep,
                                   struct nh_cmd_arg *arg);
 /* no nhnet_get_copyright_banner; the client should display its own copyright */
@@ -64,8 +63,7 @@ extern nh_cmd_desc_p EXPORT(nhnet_get_object_commands) (
 extern nh_drawing_info_p EXPORT(nhnet_get_drawing_info) (void);
 extern nh_bool EXPORT(nhnet_set_option) (
     const char *name, union nh_optvalue value, nh_bool isstr);
-extern nh_option_desc_p EXPORT(nhnet_get_options) (
-    enum nh_option_list list);
+extern nh_option_desc_p EXPORT(nhnet_get_options) (void);
 /* no nhnet_get_option_string; the client translates the values locally */
 extern void EXPORT(nhnet_describe_pos) (
     int x, int y, struct nh_desc_buf *bufs, int *is_in);

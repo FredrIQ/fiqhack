@@ -32,8 +32,9 @@ struct settings settings;
 struct interface_flags ui_flags;
 nh_bool interrupt_multi = FALSE;
 nh_bool game_is_running = FALSE;
-int initrole = ROLE_NONE, initrace = ROLE_NONE;
-int initgend = ROLE_NONE, initalign = ROLE_NONE;
+int cmdline_role = ROLE_NONE, cmdline_race = ROLE_NONE;
+int cmdline_gend = ROLE_NONE, cmdline_align = ROLE_NONE;
+char cmdline_name[BUFSZ] = {0};
 nh_bool random_player = FALSE;
 
 char *override_hackdir, *override_userdir;
@@ -304,7 +305,7 @@ mainmenu(void)
 
         switch (menuresult[0]) {
         case NEWGAME:
-            rungame();
+            rungame(FALSE);
             break;
 
         case LOAD:
@@ -438,12 +439,12 @@ process_args(int argc, char *argv[])
 
         case 'u':
             if (argv[0][2])
-                strncpy(settings.plname, argv[0] + 2,
-                        sizeof (settings.plname) - 1);
+                strncpy(cmdline_name, argv[0] + 2,
+                        sizeof (cmdline_name) - 1);
             else if (argc > 1) {
                 argc--;
                 argv++;
-                strncpy(settings.plname, argv[0], sizeof (settings.plname) - 1);
+                strncpy(cmdline_name, argv[0], sizeof (cmdline_name) - 1);
             } else
                 printf("Player name expected after -u");
             break;
@@ -452,13 +453,13 @@ process_args(int argc, char *argv[])
             if (argv[0][2]) {
                 i = str2role(ri, &argv[0][2]);
                 if (i >= 0)
-                    initrole = i;
+                    cmdline_role = i;
             } else if (argc > 1) {
                 argc--;
                 argv++;
                 i = str2role(ri, argv[0]);
                 if (i >= 0)
-                    initrole = i;
+                    cmdline_role = i;
             }
             break;
 
@@ -466,13 +467,13 @@ process_args(int argc, char *argv[])
             if (argv[0][2]) {
                 i = str2race(ri, &argv[0][2]);
                 if (i >= 0)
-                    initrace = i;
+                    cmdline_race = i;
             } else if (argc > 1) {
                 argc--;
                 argv++;
                 i = str2race(ri, argv[0]);
                 if (i >= 0)
-                    initrace = i;
+                    cmdline_race = i;
             }
             break;
 
@@ -507,7 +508,7 @@ process_args(int argc, char *argv[])
         default:
             i = str2role(ri, argv[0]);
             if (i >= 0)
-                initrole = i;
+                cmdline_role = i;
         }
     }
 }

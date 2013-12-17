@@ -751,9 +751,9 @@ display_rip(int how, char *kilbuf, char *pbuf, long umoney,
     if (!done_stopprint) {
         sprintf(pbuf, "%s %s the %s...", Goodbye(), u.uplname,
                 how !=
-                ASCENDED ? (const char *)((flags.female && urole.name.f) ?
+                ASCENDED ? (const char *)((u.ufemale && urole.name.f) ?
                                           urole.name.f : urole.name.m) :
-                (const char *)(flags.female ?
+                (const char *)(u.ufemale ?
                                "Demigoddess" : "Demigod"));
         add_menutext(&menu, pbuf);
         add_menutext(&menu, "");
@@ -930,7 +930,7 @@ done_noreturn(int how)
             if (!Upolyd) {
                 /* Base corpse on race when not poly'd since original u.umonnum 
                    is based on role, and all role monsters are human. */
-                mnum = (flags.female &&
+                mnum = (u.ufemale &&
                         urace.femalenum !=
                         NON_PM) ? urace.femalenum : urace.malenum;
             }
@@ -1079,6 +1079,9 @@ terminate(enum nh_play_status playstatus)
     if (!program_state.panicking) {
         freedynamicdata();
         dlb_cleanup();
+
+        /* Reset options to their default state. */
+        init_opt_struct();
     }
 
     program_state.game_running = 0;

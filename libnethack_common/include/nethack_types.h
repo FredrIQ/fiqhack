@@ -196,14 +196,6 @@ enum nh_opttype {
                                    came to the conclusion that YAGNI applies */
 };
 
-enum nh_option_list {
-    CURRENT_BIRTH_OPTIONS,
-    ACTIVE_BIRTH_OPTIONS,
-    GAME_OPTIONS,
-
-    OPTION_LIST_COUNT
-};
-
 enum nh_bucstatus {
     B_UNKNOWN,
     B_BLESSED,
@@ -286,6 +278,16 @@ enum placement_hint {
     PLHINT_INVENTORY
 };
 
+/* When doing a create over the network, instead of an OK, we will get back the
+ * game number. Thus negative values are used for errors, so they are errors in
+ * both the local and network versions of the call.
+ */
+enum nh_create_response {
+    NHCREATE_OK,
+    NHCREATE_INVALID = -1,
+    NHCREATE_FAIL = -2
+};
+
 enum nh_client_response {
     NHCR_ACCEPTED,
     NHCR_CLIENT_CANCEL,
@@ -301,12 +303,6 @@ typedef signed char nh_bool;    /* 0 or 1 */
 struct nh_listitem {
     int id;
     char *caption;
-};
-
-
-struct nh_boolopt_map {
-    const char *optname;
-    nh_bool *addr;
 };
 
 struct nh_int_option {
@@ -341,7 +337,7 @@ struct nh_autopickup_rules {
 };
 
 union nh_optvalue {
-    char *s;    /* largest element first for static initialisation */
+    char *s;
     nh_bool b;
     int i;
     int e;
@@ -351,12 +347,10 @@ union nh_optvalue {
 struct nh_option_desc {
     const char *name;
     const char *helptxt;
+    nh_bool birth_option;
     enum nh_opttype type;
     union nh_optvalue value;
     union {
-        /* only the first element of a union can be initialized at compile time 
-           (without C99), so boolean args go first, there are more of those ... 
-         */
         struct nh_int_option i;
         struct nh_enum_option e;
         struct nh_string_option s;
