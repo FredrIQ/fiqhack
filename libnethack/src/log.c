@@ -884,7 +884,7 @@ apply_save_diff(char *s, struct memfile *diff_base)
 
         bufp += 2;
 
-        switch ((unsigned char)(bufp[1]) >> 6) {
+        switch ((unsigned char)(bufp[-1]) >> 6) {
         case MDIFF_SEEK:
 
             if (n >= 0x2000)
