@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-04 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -18,6 +18,12 @@ host_to_le32(unsigned int x)
     return _byteswap32(x);
 }
 
+static unsigned long long
+host_to_le64(unsigned long long x)
+{
+    return _byteswap64(x);
+}
+
 static unsigned short
 le16_to_host(unsigned short x)
 {
@@ -29,6 +35,13 @@ le32_to_host(unsigned int x)
 {
     return _byteswap32(x);
 }
+
+static unsigned long long
+le64_to_host(unsigned long long x)
+{
+    return _byteswap64(x);
+}
+
 #else
 static unsigned short
 host_to_le16(unsigned short x)
@@ -42,6 +55,12 @@ host_to_le32(unsigned int x)
     return x;
 }
 
+static unsigned int
+host_to_le64(unsigned long long x)
+{
+    return x;
+}
+
 static unsigned short
 le16_to_host(unsigned short x)
 {
@@ -50,6 +69,12 @@ le16_to_host(unsigned short x)
 
 static unsigned int
 le32_to_host(unsigned int x)
+{
+    return x;
+}
+
+static unsigned int
+le64_to_host(unsigned long long x)
 {
     return x;
 }
@@ -67,6 +92,40 @@ mnew(struct memfile *mf, struct memfile *relativeto)
     mf->curcmd = MDIFF_INVALID; /* no command yet */
     for (i = 0; i < MEMFILE_HASHTABLE_SIZE; i++)
         mf->tags[i] = 0;
+}
+
+/* Allocates to as a deep copy of from. */
+void
+mclone(struct memfile *to, const struct memfile *from)
+{
+    int i;
+
+    *to = *from;
+
+    if (from->buf) {
+        to->buf = malloc(from->len);
+        memcpy(to->buf, from->buf, from->len);
+    }
+    if (from->diffbuf) {
+        to->diffbuf = malloc(to->difflen);
+        memcpy(to->diffbuf, from->diffbuf, from->difflen);
+    }
+
+    for (i = 0; i < MEMFILE_HASHTABLE_SIZE; i++) {
+        struct memfile_tag *fromtag, **totag;
+
+        fromtag = from->tags[i];
+        totag = &(to->tags[i]);
+
+        while (fromtag) {
+            *totag = malloc(sizeof (struct memfile_tag));
+            **totag = *fromtag;
+            fromtag = fromtag->next;
+            totag = &((*totag)->next);
+        }
+
+        *totag = 0;
+    }
 }
 
 void
@@ -98,18 +157,36 @@ mfree(struct memfile *mf)
    aren't saved to disk as they can always be reconstructed and anyway
    they improve efficiency rather than being required for correctness. */
 
+static void
+expand_memfile(struct memfile *mf, long newlen)
+{
+    if (mf->len < newlen) {
+        mf->len = (newlen & ~4095L) + 4096L;
+        mf->buf = realloc(mf->buf, mf->len);
+    }
+}
+
+/* Returns a pointer to the internals of a memory file (analogous to how mmap()
+   works on regular files). There is no mmunmap; rather, the pointer is only
+   guaranteed to be valid up to the next call to a memory file manipulation
+   function. If you plan to write to the resulting pointer, mf->relativeto must
+   be NULL (i.e. not a diff-based file); if all you're doing is reading, any
+   sort of memory file will work. The memory file pointer, mf->pos, will move
+   to the end of the mapped area if it's within or before the mapped area
+   (because it's used to measure the length of the file). */
+void *
+mmmap(struct memfile *mf, long len, long off)
+{
+    expand_memfile(mf, len + off);
+    if (len + off < mf->pos)
+        mf->pos = len + off;
+    return mf->buf + off;
+}
+
 void
 mwrite(struct memfile *mf, const void *buf, unsigned int num)
 {
-    boolean do_realloc = FALSE;
-
-    while (mf->len < mf->pos + num) {
-        mf->len += 4096;
-        do_realloc = TRUE;
-    }
-
-    if (do_realloc)
-        mf->buf = realloc(mf->buf, mf->len);
+    expand_memfile(mf, mf->pos + num);
     memcpy(&mf->buf[mf->pos], buf, num);
 
     if (!mf->relativeto) {
@@ -164,6 +241,13 @@ mwrite32(struct memfile *mf, int32_t value)
     mwrite(mf, &le_value, 4);
 }
 
+void
+mwrite64(struct memfile *mf, int64_t value)
+{
+    int64_t le_value = host_to_le64(value);
+
+    mwrite(mf, &le_value, 8);
+}
 
 void
 store_mf(int fd, struct memfile *mf)
@@ -311,6 +395,16 @@ mread32(struct memfile * mf)
 
     mread(mf, &value, 4);
     return le32_to_host(value);
+}
+
+
+int64_t
+mread64(struct memfile * mf)
+{
+    int64_t value;
+
+    mread(mf, &value, 8);
+    return le64_to_host(value);
 }
 
 

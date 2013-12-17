@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-04 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -246,12 +246,22 @@ extern coord bhitpos;   /* place where throw or zap hits or stops */
    Many systems have such macros, but using different names every time.
    Defining our own is easier than figuring that out. */
 # define _byteswap16(x)   ((((x) & 0x00ffU) << 8) | \
-                          (((x) & 0xff00U) >> 8))
+                           (((x) & 0xff00U) >> 8))
 
-# define _byteswap32(x)   ((((x) & 0x000000ffU) << 24) | \
-                          (((x) & 0x0000ff00U) <<  8) | \
-                          (((x) & 0x00ff0000U) >>  8) | \
-                          (((x) & 0xff000000U) >> 24))
+# define _byteswap32(x)   ((((x) & 0x000000ffLU) << 24) | \
+                           (((x) & 0x0000ff00LU) <<  8) | \
+                           (((x) & 0x00ff0000LU) >>  8) | \
+                           (((x) & 0xff000000LU) >> 24))
+
+# define _byteswap64(x)   ((((x) & 0x00000000000000ffLLU) << 56) | \
+                           (((x) & 0x000000000000ff00LLU) << 40) | \
+                           (((x) & 0x0000000000ff0000LLU) << 24) | \
+                           (((x) & 0x00000000ff000000LLU) <<  8) | \
+                           (((x) & 0x000000ff00000000LLU) <<  8) | \
+                           (((x) & 0x0000ff0000000000LLU) << 24) | \
+                           (((x) & 0x00ff000000000000LLU) << 40) | \
+                           (((x) & 0xff00000000000000LLU) << 56))
+
 
 /* If endian.h exists (on Linux for example and perhaps on other UNIX) and is
    indirectly included via the system headers, we may be able to find out what
