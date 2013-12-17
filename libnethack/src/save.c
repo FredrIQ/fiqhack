@@ -98,62 +98,64 @@ savegame(struct memfile *mf)
 static void
 save_flags(struct memfile *mf)
 {
-    /* no mtag useful; fixed distance after version */
-    mwrite32(mf, flags.ident);
-    mwrite32(mf, flags.moonphase);
-    mwrite32(mf, flags.no_of_wizards);
-    mwrite32(mf, flags.init_role);
-    mwrite32(mf, flags.init_race);
-    mwrite32(mf, flags.init_gend);
-    mwrite32(mf, flags.init_align);
-    mwrite32(mf, flags.randomall);
-    mwrite32(mf, flags.pantheon);
-    mwrite32(mf, flags.run);
-    mwrite32(mf, flags.warnlevel);
-    mwrite32(mf, flags.djinni_count);
-    mwrite32(mf, flags.ghost_count);
-    mwrite32(mf, flags.pickup_burden);
-    mwrite32(mf, flags.recently_broken_otyp);
+    /* this is a fixed difference after version, but we tag it anyway to
+       make debugging easier */
+    mtag(mf, 0, MTAG_FLAGS);
+    mwrite32(mf, flags.ident);                /*  0 */
+    mwrite32(mf, flags.moonphase);            /*  4 */
+    mwrite32(mf, flags.no_of_wizards);        /*  8 */
+    mwrite32(mf, flags.init_role);            /* 12 */
+    mwrite32(mf, flags.init_race);            /* 16 */
+    mwrite32(mf, flags.init_gend);            /* 20 */
+    mwrite32(mf, flags.init_align);           /* 24 */
+    mwrite32(mf, flags.randomall);            /* 28 */
+    mwrite32(mf, flags.pantheon);             /* 32 */
+    mwrite32(mf, flags.run);                  /* 36 */
+    mwrite32(mf, flags.warnlevel);            /* 40 */
+    mwrite32(mf, flags.djinni_count);         /* 44 */
+    mwrite32(mf, flags.ghost_count);          /* 48 */
+    mwrite32(mf, flags.pickup_burden);        /* 52 */
+    mwrite32(mf, flags.recently_broken_otyp); /* 56 */
 
-    mwrite8(mf, flags.autodig);
-    mwrite8(mf, flags.autoquiver);
-    mwrite8(mf, flags.beginner);
-    mwrite8(mf, flags.confirm);
-    mwrite8(mf, flags.debug);
-    mwrite8(mf, flags.explore);
-    mwrite8(mf, flags.female);
-    mwrite8(mf, flags.forcefight);
-    mwrite8(mf, flags.friday13);
-    mwrite8(mf, flags.legacy);
-    mwrite8(mf, flags.lit_corridor);
-    mwrite8(mf, flags.made_amulet);
-    mwrite8(mf, flags.mon_moving);
-    mwrite8(mf, flags.move);
-    mwrite8(mf, flags.mv);
-    mwrite8(mf, flags.nopick);
-    mwrite8(mf, flags.null);
-    mwrite8(mf, flags.pickup);
-    mwrite8(mf, flags.pushweapon);
-    mwrite8(mf, flags.rest_on_space);
-    mwrite8(mf, flags.safe_dog);
-    mwrite8(mf, flags.silent);
-    mwrite8(mf, flags.sortpack);
-    mwrite8(mf, flags.soundok);
-    mwrite8(mf, flags.sparkle);
-    mwrite8(mf, flags.tombstone);
-    mwrite8(mf, flags.verbose);
-    mwrite8(mf, flags.prayconfirm);
-    mwrite8(mf, flags.travel);
-    mwrite8(mf, flags.end_disclose);
-    mwrite8(mf, flags.menu_style);
-    mwrite8(mf, flags.elbereth_enabled);
-    mwrite8(mf, flags.rogue_enabled);
-    mwrite8(mf, flags.seduce_enabled);
-    mwrite8(mf, flags.bones_enabled);
-    mwrite8(mf, flags.permablind);
-    mwrite8(mf, flags.permahallu);
+    mwrite8(mf, flags.autodig);               /* 57 */
+    mwrite8(mf, flags.autoquiver);            /* 58 */
+    mwrite8(mf, flags.beginner);              /* 59 */
+    mwrite8(mf, flags.confirm);               /* 60 */
+    mwrite8(mf, flags.debug);                 /* 61 */
+    mwrite8(mf, flags.explore);               /* 62 */
+    mwrite8(mf, flags.female);                /* 63 */
+    mwrite8(mf, flags.forcefight);            /* 64 */
+    mwrite8(mf, flags.friday13);              /* 65 */
+    mwrite8(mf, flags.legacy);                /* 66 */
+    mwrite8(mf, flags.lit_corridor);          /* 67 */
+    mwrite8(mf, flags.made_amulet);           /* 68 */
+    mwrite8(mf, flags.mon_moving);            /* 69 */
+    mwrite8(mf, flags.move);                  /* 70 */
+    mwrite8(mf, flags.mv);                    /* 71 */
+    mwrite8(mf, flags.nopick);                /* 72 */
+    mwrite8(mf, flags.null);                  /* 73 */
+    mwrite8(mf, flags.pickup);                /* 74 */
+    mwrite8(mf, flags.pushweapon);            /* 75 */
+    mwrite8(mf, flags.rest_on_space);         /* 76 */
+    mwrite8(mf, flags.safe_dog);              /* 77 */
+    mwrite8(mf, flags.silent);                /* 78 */
+    mwrite8(mf, flags.sortpack);              /* 79 */
+    mwrite8(mf, flags.soundok);               /* 80 */
+    mwrite8(mf, flags.sparkle);               /* 81 */
+    mwrite8(mf, flags.tombstone);             /* 82 */
+    mwrite8(mf, flags.verbose);               /* 83 */
+    mwrite8(mf, flags.prayconfirm);           /* 84 */
+    mwrite8(mf, flags.travel);                /* 85 */
+    mwrite8(mf, flags.end_disclose);          /* 86 */
+    mwrite8(mf, flags.menu_style);            /* 87 */
+    mwrite8(mf, flags.elbereth_enabled);      /* 88 */
+    mwrite8(mf, flags.rogue_enabled);         /* 89 */
+    mwrite8(mf, flags.seduce_enabled);        /* 90 */
+    mwrite8(mf, flags.bones_enabled);         /* 91 */
+    mwrite8(mf, flags.permablind);            /* 92 */
+    mwrite8(mf, flags.permahallu);            /* 93 */
 
-    mwrite(mf, flags.inv_order, sizeof (flags.inv_order));
+    mwrite(mf, flags.inv_order, sizeof (flags.inv_order)); /* 94+ */
 }
 
 
@@ -240,6 +242,10 @@ savegamestate(struct memfile *mf)
 }
 
 
+/* Note: when changing this function, you should also change the error handler
+   in load_gamestate_from_binary_save, so that it can correctly calculate
+   which location had the problem. It needs to know how many bytes there are
+   per location (currently 64 bits = 8 bytes). */
 static void
 save_location(struct memfile *mf, struct rm *loc)
 {
@@ -478,18 +484,21 @@ savelev(struct memfile *mf, xchar levnum)
         dmonsfree(lev);
     }
 
-    /* mtagging for this already done in save_game */
+    mtag(mf, levnum, MTAG_LEVEL);
     mfmagic_set(mf, LEVEL_MAGIC);
 
     mwrite8(mf, lev->z.dnum);
     mwrite8(mf, lev->z.dlevel);
     mwrite(mf, lev->levname, sizeof (lev->levname));
 
+    mtag(mf, levnum, MTAG_LOCATIONS);
     for (x = 0; x < COLNO; x++)
         for (y = 0; y < ROWNO; y++)
             save_location(mf, &lev->locations[x][y]);
 
     mwrite32(mf, lev->lastmoves);
+
+    mtag(mf, levnum, MTAG_STAIRWAYS);
     mwrite(mf, &lev->upstair, sizeof (stairway));
     mwrite(mf, &lev->dnstair, sizeof (stairway));
     mwrite(mf, &lev->upladder, sizeof (stairway));
@@ -498,6 +507,7 @@ savelev(struct memfile *mf, xchar levnum)
     mwrite(mf, &lev->updest, sizeof (dest_area));
     mwrite(mf, &lev->dndest, sizeof (dest_area));
 
+    mtag(mf, levnum, MTAG_LFLAGS);
     lflags = (lev->flags.noteleport << 22) |
         (lev->flags.hardfloor << 21) | (lev->flags.nommap << 20) |
         (lev->flags.hero_memory << 19) | (lev->flags.shortsighted << 18) |
@@ -506,6 +516,7 @@ savelev(struct memfile *mf, xchar levnum)
         (lev->flags.forgotten << 13);
     mwrite32(mf, lflags);
     mwrite(mf, lev->doors, sizeof (lev->doors));
+
     save_rooms(mf, lev);        /* no dynamic memory to reclaim */
 
     /* must be saved before mons, objs, and buried objs */

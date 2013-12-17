@@ -762,8 +762,15 @@ static void
 load_gamestate_from_binary_save(boolean maybe_old_version)
 {
     struct memfile mf;
-    void *oldp, *newp;
-    long len;
+    char *oldp, *newp;
+    long len, off;
+    struct memfile_tag *tag, *titer;
+    int bin;
+
+    /* For the time being, there are no compatible old versions, thus we can
+       safely force maybe_old_version to FALSE for even more aggressive error
+       detection. */
+    maybe_old_version = FALSE;
 
     /* Load the saved game. */
     program_state.gamestate_location = program_state.binary_save_location;
@@ -775,31 +782,57 @@ load_gamestate_from_binary_save(boolean maybe_old_version)
     mnew(&mf, NULL);
     savegame(&mf);
 
-    /* Compare the old and new save files.
+    /* Compare the old and new save files. If they're different lengths, we
+       compare only the portion that fits into both files. */
 
-       TODO: This is a fatal error for the time being. Perhaps we should make it
-       a warning instead, so that backwards-compatible changes to the save
-       format */
-    len = mf.pos;
-    if (len != program_state.binary_save.pos) {
-        if (maybe_old_version) {
-            mfree(&mf);
-            program_state.ok_to_diff = FALSE;
-            return;
-        }
-        error_reading_save(
-            "loading then immediately saving changes save file length\n");
-    }
+    len = program_state.binary_save.pos;
+    if (len > mf.pos)
+        len = mf.pos;
+
     oldp = mmmap(&program_state.binary_save, len, 0);
     newp = mmmap(&mf, len, 0);
-    if (memcmp(oldp, newp, len) != 0) {
+
+    if (mf.pos != program_state.binary_save.pos ||
+        memcmp(oldp, newp, len) != 0) {
+
         if (maybe_old_version) {
             mfree(&mf);
             program_state.ok_to_diff = FALSE;
             return;
         }
-        error_reading_save(
-            "loading then immediately saving changes save file contents\n");
+        raw_printf(
+            "loading then immediately saving changes save file contents:\n");
+
+        /* Determine where the desyncs are. */
+        tag = NULL;
+        for (off = 0; off < len; off++) {
+            for (bin = 0; bin < MEMFILE_HASHTABLE_SIZE; bin++)
+                for (titer = mf.tags[bin]; titer; titer = titer->next)
+                    if (titer->pos == off)
+                        tag = titer;
+            if (tag && oldp[off] != newp[off]) {
+
+                raw_printf("desync at %ld (tag %d:%08lx + %ld byte%s)\n",
+                           off, (int)tag->tagtype, tag->tagdata,
+                           off - tag->pos, (off - tag->pos == 1) ? "" : "s");
+
+                if (tag->tagtype == MTAG_LOCATIONS) {
+
+                    const int bpl = 8; /* bytes per location */
+                    int which_location = (off - tag->pos) / bpl;
+
+                    raw_printf("this corresponds to (%d, %d) + %ld byte%s\n",
+                               which_location / ROWNO,
+                               which_location % ROWNO,
+                               (off - tag->pos) % bpl,
+                               ((off - tag->pos) % bpl) == 1 ? "" : "s");
+                }
+
+                tag = NULL; /* don't report further issues with this tag */
+            }
+        }
+
+        error_reading_save("");
     }
 
     /* Replace the old save file with the new save file. */
