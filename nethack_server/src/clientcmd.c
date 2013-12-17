@@ -749,7 +749,7 @@ ccmd_set_option(json_t * params)
     /* find the option_desc for the options that should be set; the option type
        is required in order to decode the option value. */
     opts = nh_get_options();
-    option = nhlib_find_option(opts, optname);
+    option = nhlib_const_find_option(opts, optname);
     if (!option) {
         jmsg = json_pack("{si,so}", "return", FALSE, "option", json_object());
         client_msg("set_option", jmsg);
@@ -795,7 +795,7 @@ ccmd_set_option(json_t * params)
         free(ar.rules);
 
     opts = nh_get_options();
-    option = nhlib_find_option(opts, optname);
+    option = nhlib_const_find_option(opts, optname);
 
     jopt = json_option(option);
     optstr = nh_get_option_string(option);

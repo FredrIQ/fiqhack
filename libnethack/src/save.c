@@ -215,7 +215,6 @@ save_autopickup_rules(struct memfile *mf, struct nh_autopickup_rules *ar)
     mwrite32(mf, len);
     for (i = 0; i < len; ++i)
         mwrite(mf, &ar->rules[i], sizeof (struct nh_autopickup_rule));
->>>>>>> coppro/options
 }
 
 

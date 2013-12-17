@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-10 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #define IN_LIBNETHACK_COMMON
@@ -11,6 +11,18 @@
 
 struct nh_option_desc *
 nhlib_find_option(struct nh_option_desc *optlist, const char *name)
+{
+    int i;
+
+    for (i = 0; optlist[i].name; i++)
+        if (!strcmp(name, optlist[i].name))
+            return &optlist[i];
+
+    return NULL;
+}
+
+const struct nh_option_desc *
+nhlib_const_find_option(const struct nh_option_desc *optlist, const char *name)
 {
     int i;
 

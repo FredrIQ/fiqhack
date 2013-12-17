@@ -400,8 +400,7 @@ set_option(const char *name, union nh_optvalue value, boolean isstring)
     if (!nhlib_option_value_ok(option, value))
         return FALSE;
 
-    if (nhlib_copy_option_value(option, value))
-        log_option(option);
+    nhlib_copy_option_value(option, value);
 
     /* We may have allocated a new copy of the autopickup rules. */
     if (isstring && option->type == OPTTYPE_AUTOPICKUP_RULES) {
@@ -455,13 +454,17 @@ set_option(const char *name, union nh_optvalue value, boolean isstring)
     }
 
     else if (!strcmp("name", option->name)) {
-        strncpy(plname, option->value.s, PL_PSIZ);
+        strncpy(u.uplname, option->value.s, PL_NSIZ-1);
+        u.uplname[PL_NSIZ-1] = '\0';
     } else if (!strcmp("catname", option->name)) {
-        strncpy(catname, option->value.s, PL_PSIZ);
+        strncpy(catname, option->value.s, PL_PSIZ-1);
+        catname[PL_PSIZ-1] = '\0';
     } else if (!strcmp("dogname", option->name)) {
-        strncpy(dogname, option->value.s, PL_PSIZ);
+        strncpy(dogname, option->value.s, PL_PSIZ-1);
+        dogname[PL_PSIZ-1] = '\0';
     } else if (!strcmp("horsename", option->name)) {
-        strncpy(horsename, option->value.s, PL_PSIZ);
+        strncpy(horsename, option->value.s, PL_PSIZ-1);
+        horsename[PL_PSIZ-1] = '\0';
     } else if (!strcmp("pettype", option->name)) {
         preferred_pet = (char)option->value.e;
     }

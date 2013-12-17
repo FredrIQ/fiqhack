@@ -261,18 +261,13 @@ nh_create_game(int fd, struct nh_option_desc *opts, enum nh_game_modes playmode)
     else if (playmode == MODE_WIZARD)
         wizard = TRUE;
 
-    if (name && name[0]) {
-        strncpy(u.uplname, name, PL_NSIZ);
-        u.uplname[PL_NSIZ - 1] = '\0';
-    }
-
     if (wizard)
         strcpy(u.uplname, "wizard");
 
     if (!validrole(u.initrole) || !validrace(u.initrole, u.initrace) ||
         !validgend(u.initrole, u.initrace, u.initgend) ||
         !validalign(u.initrole, u.initrace, u.initalign) ||
-        (!plname && playmode != MODE_WIZARD)) {
+        !*u.uplname) {
         /* Reset options that we just clobbered. */
         init_opt_struct();
         API_EXIT();
