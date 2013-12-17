@@ -258,6 +258,7 @@ change_fd_lock(int fd, enum locktype type, int timeout)
 
     saction.sa_handler = handle_sigalrm;
     saction.sa_flags = SA_RESETHAND;
+    sigemptyset(&saction.sa_mask);
     sigaction(SIGALRM, &saction, &oldsaction);
     if (timeout)
         alarm(timeout);
