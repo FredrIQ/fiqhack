@@ -80,8 +80,10 @@ find_lev_obj(struct level *lev)
 }
 
 /* Things that were marked "in_use" when the game was saved (ex. via the
- * infamous "HUP" cheat) get used up here.
- */
+   infamous "HUP" cheat) get used up here.
+
+   TODO: If this isn't a no-op, it's going to cause a desync and an unloadable
+   save file. */
 void
 inven_inuse(boolean quietly)
 {
@@ -789,20 +791,14 @@ dorecover(struct memfile *mf)
     inven_inuse(FALSE);
 
     load_qtlist();      /* re-load the quest text info */
-    /* Set up the vision internals, after level->locations[] data is loaded */
-    /* but before doredraw().  */
-    vision_reset();
-    vision_full_recalc = 1;     /* recompute vision (not saved) */
-
-    /* help the window port get it's display charset/tiles sorted out */
-    notify_levelchange(NULL);
 
     program_state.restoring_binary_save = FALSE;
 
-    run_timers();       /* expire all timers that have gone off while away */
-    doredraw();
-
-    flags.move = 0;
+    /* Note: dorecover() no longer calls run_timers() or doredraw(), because
+       those can have side effects that are saved in the save file (e.g. running
+       the vision code), which would cause loading and immediately saving to
+       change the save file, something that the save code detects as a
+       desync. Therefore, this is now the caller's job. */
 
     /* Success! */
     mf->pos = temp_pos;

@@ -242,11 +242,19 @@ init_data(boolean including_program_state)
 
     moves = 1;
 
-    if (including_program_state)
+    /* If including_program_state is not set, we don't init anything that
+       isn't saved in the save file. */
+    if (including_program_state) {
         memset(&program_state, 0, sizeof (program_state));
+        memset(&iflags, 0, sizeof (iflags));
+        memset(toplines, 0, sizeof (toplines));
+        memset(toplines_count, 0, sizeof (toplines_count));
+
+        vision_full_recalc = FALSE;
+        viz_array = NULL;
+    }
 
     memset(&flags, 0, sizeof (flags));
-    memset(&iflags, 0, sizeof (iflags));
     memset(&u.quest_status, 0, sizeof (u.quest_status));
     memset(&levels, 0, sizeof (levels));
     memset(&u, 0, sizeof (u));
@@ -260,8 +268,6 @@ init_data(boolean including_program_state)
     memset(disco, 0, sizeof (disco));
     memset(&digging, 0, sizeof (digging));
     memset(&inv_pos, 0, sizeof (inv_pos));
-    memset(toplines, 0, sizeof (toplines));
-    memset(toplines_count, 0, sizeof (toplines_count));
 
     level = NULL;
     killer_format = 0;
@@ -276,8 +282,6 @@ init_data(boolean including_program_state)
     bhitpos.x = bhitpos.y = 0;
     preferred_pet = 0;
     migrating_mons = mydogs = NULL;
-    vision_full_recalc = FALSE;
-    viz_array = NULL;
     artilist = NULL;
     branch_id = 0;
     histevents = NULL;

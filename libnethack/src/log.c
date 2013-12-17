@@ -462,7 +462,7 @@ log_backup_save(void)
         panic("log_backup_save called with no logfile");
 
     if (multi || occupation)
-        panic("log_neutral_turnstate called but turnstate isn't neutral");
+        panic("log_backup_save called but turnstate isn't neutral");
 
     start_updating_logfile();
 

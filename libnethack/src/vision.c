@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) Dean Luick, with acknowledgements to Dave Cohrs, 1990. */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -459,7 +459,7 @@ new_angle(struct rm *loc, unsigned char *sv, int row, int col)
  *     + At end of moveloop. [moveloop() ??? not sure why this is here]
  *     + Right before something is printed. [pline()]
  *     + Right before we do a vision based operation. [do_clear_area()]
- *     + screen redraw, so we can renew all positions in sight. [doredraw()]
+ *     + Screen redraw, so we can renew all positions in sight. [doredraw()]
  *
  * Control flag = 1.  An adjacent vision recalculation.  The hero has moved
  * one square.  Knowing this, it might be possible to optimize the vision

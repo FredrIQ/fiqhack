@@ -148,9 +148,10 @@ startup_common(boolean including_program_state)
      *  Initialize the vision system.  This must be before mklev() on a
      *  new game or before a level restore on a saved game.
      */
-    vision_init();
-
-    cls();
+    if (including_program_state) {
+        vision_init();
+        cls();
+    }
 
     initrack();
 }
@@ -210,7 +211,13 @@ realtime_tasks(void)
 static void
 post_init_tasks(void)
 {
-    /* prepare for the first move */
+    /* dorecover() used to run timers. The side effects from dorecover() have
+       been moved here (so that dorecover() can be used to test save file
+       integrity); but the timer run has been removed altogether (the /correct/
+       place for it is goto_level(), and there was already a call there). */
+
+    /* Prepare for the first move. */
+    flags.move = 0;                  /* TODO: Does this help? Does this hurt? */
     pre_move_tasks(0);
 }
 
@@ -366,7 +373,9 @@ nh_play_game(int fd)
     program_state.game_running = TRUE;
     post_init_tasks();
 
-    /* While loading a save file, we don't do rendering. */
+    /* While loading a save file, we don't do rendering, and we don't run
+       the vision system. Do all that stuff now. */
+    vision_reset();
     doredraw();
     notify_levelchange(NULL);
     bot();
@@ -966,8 +975,6 @@ newgame(void)
     /* prepare for the first move */
     flags.move = 0;
     set_wear();
-
-    log_neutral_turnstate();
 
     program_state.game_running = TRUE;
     youmonst.movement = NORMAL_SPEED;   /* give the hero some movement points */
