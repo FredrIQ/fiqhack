@@ -329,6 +329,29 @@ read_topten(int fd, int limit)
 }
 
 
+void
+describe_death(char *death, int how, int maxlen)
+{
+    death[0] = '\0';
+    switch (killer_format) {
+    default:
+        impossible("bad killer format?");
+    case KILLED_BY_AN:
+        strcat(death, killed_by_prefix[how]);
+        strncat(death, an(killer), maxlen - strlen(death) - 1);
+        break;
+    case KILLED_BY:
+        strcat(death, killed_by_prefix[how]);
+        strncat(death, killer, maxlen - strlen(death) - 1);
+        break;
+    case NO_KILLER_PREFIX:
+        strncat(death, killer, maxlen - 1);
+        break;
+    }
+    death[maxlen-1] = '\0';
+}
+
+
 static void
 fill_topten_entry(struct toptenentry *newtt, int how)
 {
@@ -365,22 +388,7 @@ fill_topten_entry(struct toptenentry *newtt, int how)
     newtt->plalign[ROLESZ] = '\0';
     strncpy(newtt->name, u.uplname, NAMSZ);
     newtt->name[NAMSZ] = '\0';
-    newtt->death[0] = '\0';
-    switch (killer_format) {
-    default:
-        impossible("bad killer format?");
-    case KILLED_BY_AN:
-        strcat(newtt->death, killed_by_prefix[how]);
-        strncat(newtt->death, an(killer), DTHSZ - strlen(newtt->death));
-        break;
-    case KILLED_BY:
-        strcat(newtt->death, killed_by_prefix[how]);
-        strncat(newtt->death, killer, DTHSZ - strlen(newtt->death));
-        break;
-    case NO_KILLER_PREFIX:
-        strncat(newtt->death, killer, DTHSZ);
-        break;
-    }
+    describe_death(newtt->death, how, DTHSZ);
     newtt->birthdate = yyyymmdd(u.ubirthday);
     newtt->deathdate = yyyymmdd((time_t) 0L);
     time(&deathtime_internal);
@@ -787,35 +795,5 @@ nh_get_topten(int *out_len, char *statusbuf, const char *volatile player,
     return score_list;
 }
 
-
-/* append the topten entry for the completed game to that game's logfile */
-void
-write_log_toptenentry(int fd, int how)
-{
-    struct toptenentry tt;
-
-    if (fd == -1)
-        return;
-
-    fill_topten_entry(&tt, how);
-    writeentry(fd, &tt);
-}
-
-
-/* read the toptenentry appended to the end of a game log */
-void
-read_log_toptenentry(int fd, struct nh_topten_entry *entry)
-{
-    struct toptenentry tt;
-    int size;
-    char *line = loadfile(fd, &size);
-
-    if (!line)
-        return;
-
-    readentry(line, &tt);
-    fill_nh_score_entry(&tt, entry, -1, FALSE);
-    free(line);
-}
 
 /* topten.c */

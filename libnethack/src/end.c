@@ -878,9 +878,9 @@ done(int how)
 static void NORETURN
 done_noreturn(int how)
 {
-    int fd;
     boolean taken;
     char pbuf[BUFSZ];
+    char kbuf[BUFSZ];
     boolean bones_ok;
     struct obj *corpse = NULL;
     long umoney;
@@ -955,11 +955,8 @@ done_noreturn(int how)
     if (how == ESCAPED)
         killer_format = NO_KILLER_PREFIX;
 
-    fd = logfile;
-    log_finish(LS_DONE);
-    /* write_log_toptenentry needs killer_format */
-    write_log_toptenentry(fd, how);
-    /* in case of a subsequent panic(), there's no point trying to save */
+    describe_death(kbuf, how, COLNO-1);
+    log_game_over(kbuf);
 
     /* these affect score and/or bones, but avoid them during panic */
     taken = paybill((how == ESCAPED) ? -1 : (how != QUIT));

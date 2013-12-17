@@ -1655,8 +1655,7 @@ extern void update_topten(int how, unsigned long carried);
 extern struct obj *tt_oname(struct obj *);
 extern unsigned long encode_carried(void);
 extern void topten_level_name(int dnum, int dlev, char *outbuf);
-extern void write_log_toptenentry(int fd, int how);
-extern void read_log_toptenentry(int fd, struct nh_topten_entry *entry);
+extern void describe_death(char *death, int how, int maxlen);
 
 /* ### track.c ### */
 
