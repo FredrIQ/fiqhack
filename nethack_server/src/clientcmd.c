@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-05 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -274,18 +274,8 @@ ccmd_list_games(json_t * params)
             json_pack("{si,si,si,ss,ss,ss,ss,ss}", "gameid", files[i].gid,
                       "status", status, "playmode", gi.playmode, "plname",
                       gi.name, "plrole", gi.plrole, "plrace", gi.plrace,
-                      "plgend", gi.plgend, "plalign", gi.plalign);
-        if (status == LS_SAVED) {
-            json_object_set_new(jobj, "level_desc", json_string(gi.level_desc));
-            json_object_set_new(jobj, "moves", json_integer(gi.moves));
-            json_object_set_new(jobj, "depth", json_integer(gi.depth));
-            json_object_set_new(jobj, "has_amulet",
-                                json_integer(gi.has_amulet));
-        } else if (status == LS_DONE) {
-            json_object_set_new(jobj, "death", json_string(gi.death));
-            json_object_set_new(jobj, "moves", json_integer(gi.moves));
-            json_object_set_new(jobj, "depth", json_integer(gi.depth));
-        }
+                      "plgend", gi.plgend, "plalign", gi.plalign,
+                      "game_state", gi.game_state);
         json_array_append_new(jarr, jobj);
 
         free((void *)files[i].username);

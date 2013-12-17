@@ -287,42 +287,23 @@ rungame(void)
 void
 describe_game(char *buf, enum nh_log_status status, struct nh_game_info *gi)
 {
-    const char *mode_desc[] = { "", "\t[explore]", "\t[wizard]" };
-    switch (status) {
-    case LS_CRASHED:
-        snprintf(buf, BUFSZ, "%s\t%3.3s-%3.3s-%3.3s-%3.3s  (crashed)\t%s",
-                 gi->name, gi->plrole, gi->plrace, gi->plgend, gi->plalign,
-                 mode_desc[gi->playmode]);
-        break;
+    const char *mode_desc[] = { "", "\t[explore]", "\t[wizard]",
+                                "\t[unknown game mode]" };
+    int pm = gi->playmode;
+    const char *game_state = gi->game_state;
 
-    case LS_IN_PROGRESS:
-        snprintf(buf, BUFSZ,
-                 "    %s\t%3.3s-%3.3s-%3.3s-%3.3s  (in progress)\t%s", gi->name,
-                 gi->plrole, gi->plrace, gi->plgend, gi->plalign,
-                 mode_desc[gi->playmode]);
-        break;
+    if (pm < 0 || pm > (sizeof mode_desc / sizeof *mode_desc))
+        pm = (sizeof mode_desc / sizeof *mode_desc) - 1;
+    if (status == LS_CRASHED)
+        game_state = "(crashed)";
+    if (status == LS_IN_PROGRESS)
+        game_state = "(status unavailable)";
 
-    case LS_SAVED:
-        snprintf(buf, BUFSZ,
-                 "%s\t%3.3s-%3.3s-%3.3s-%3.3s %s%s\tafter %d moves%s", gi->name,
-                 gi->plrole, gi->plrace, gi->plgend, gi->plalign,
-                 gi->level_desc, gi->has_amulet ? " with the amulet" : "",
-                 gi->moves, mode_desc[gi->playmode]);
-        break;
-
-    case LS_DONE:
-        snprintf(buf, BUFSZ, "%s\t%3.3s-%3.3s-%3.3s-%3.3s %s\tafter %d moves%s",
-                 gi->name, gi->plrole, gi->plrace, gi->plgend, gi->plalign,
-                 gi->death, gi->moves, mode_desc[gi->playmode]);
-        break;
-
-
-    default:
-        buf[0] = '\0';
-        break;
-    }
+    snprintf(buf, BUFSZ,
+             "%s\t%3.3s-%3.3s-%3.3s-%3.3s\t%s%s", gi->name,
+             gi->plrole, gi->plrace, gi->plgend, gi->plalign,
+             game_state, mode_desc[pm]);
 }
-
 
 #if defined(WIN32)
 

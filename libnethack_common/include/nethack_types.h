@@ -419,16 +419,9 @@ struct nh_game_info {
     char plrace[PLRBUFSZ];
     char plgend[PLRBUFSZ];
     char plalign[PLRBUFSZ];
-    /* the following fields are only valid if the status is LS_SAVED; retrieving
-       the values for LS_IN_PROGRESS would require reconstructing the full
-       game. */
-    char level_desc[COLNO];
-    int moves, depth;
-    nh_bool has_amulet;
-    /* most of nh_player_info is possible, but what makes sense? */
 
-    /* if the status is LS_DONE */
-    char death[BUFSZ];
+    /* A freeform text description of the status of the game */
+    char game_state[COLNO];
 };
 
 

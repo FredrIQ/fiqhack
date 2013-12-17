@@ -506,14 +506,9 @@ Response arguments:
           * `MODE_EXPLORE` = 1: this game is in non-scoring discovery mode;
           * `MODE_WIZARD` = 2: this game is in debug mode.
       * `string plname`: the name of this game's player
-      * `string death`: (optional) the reason a completed game ended
-      * `int depth`: (optional) the current dungeon level on which the player
-        resides
-      * `string level_desc`: (optional) a textual description of the current
-        dungeon level on which the player resides
-      * `boolean has_amulet`: (optional) whether the player of this game has the
-        Amulet of Yendor
-      * `int moves`: (optional) the number of turns this game has lasted
+      * `string game_status`: a textual description of the current state of
+        the game (death reason for a completed game, location of the character
+        in the dungeon for an incomplete game)
       * `string plalign`: the alignment of this game's character
       * `string plgend`: the gender of this game's character
       * `string plrace`: the race of this game's character
