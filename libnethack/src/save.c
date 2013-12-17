@@ -461,8 +461,8 @@ save_utracked(struct memfile *mf, struct you *y)
 {
     int i;
     for (i = 0; i <= tos_last_slot; i++) {
-        mwrite32(mf, y->utracked[i] ? y->utracked[i]->o_id :
-                 y->utracked[i] == &zeroobj ? -1 : 0);
+        mwrite32(mf, y->utracked[i] == &zeroobj ? -1 :
+                 y->utracked[i] ? y->utracked[i]->o_id : 0);
         mwrite32(mf, y->uoccupation_progress[i]);
     }
 }
