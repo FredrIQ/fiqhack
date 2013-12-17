@@ -18,21 +18,14 @@ extern const struct cmd_desc cmdlist[];
 static const char *const copyright_banner[] =
     { COPYRIGHT_BANNER_A, COPYRIGHT_BANNER_B, COPYRIGHT_BANNER_C, NULL };
 
-static void wd_message(void);
 static void pre_move_tasks(boolean);
 
 static void newgame(void);
+static void startup_common(void);
+
 static void handle_lava_trap(boolean didmove);
 
 static void command_input(int cmdidx, int rep, struct nh_cmd_arg *arg);
-
-static void
-wd_message(void)
-{
-    if (discover)
-        pline("You are in non-scoring discovery mode.");
-}
-
 
 const char *const *
 nh_get_copyright_banner(void)
@@ -87,11 +80,8 @@ nh_exit_game(int exit_type)
     API_ENTRY_CHECKPOINT_RETURN_ON_ERROR(TRUE);
 
     xmalloc_cleanup();
-    iflags.disable_log = TRUE;
 
     if (program_state.game_running) {
-
-        program_state.forced_exit = TRUE;
 
         switch (exit_type) {
         case EXIT_REQUEST_SAVE:
@@ -122,7 +112,6 @@ nh_exit_game(int exit_type)
 
         API_EXIT();
 
-        program_state.forced_exit = FALSE;
         return FALSE;
 
     } else {
@@ -135,8 +124,8 @@ nh_exit_game(int exit_type)
 }
 
 
-void
-startup_common(const char *name, int playmode)
+static void
+startup_common(void)
 {
     /* (re)init all global data */
     init_data();
@@ -222,8 +211,6 @@ realtime_tasks(void)
 static void
 post_init_tasks(void)
 {
-    encumber_msg();     /* in case they auto-picked up something */
-
     /* prepare for the first move */
     pre_move_tasks(0);
 }
@@ -240,11 +227,12 @@ nh_create_game(int fd, const char *name, int irole, int irace, int igend,
     if (fd == -1 || !name || !*name)
         goto err_out;
 
-    if (!program_state.restoring) {
-        turntime = (unsigned long long)time(NULL);
-        seed = turntime ^ get_seedval();
-        /* initialize the random number generator */
-        mt_srand(seed);
+    turntime = (unsigned long long)time(NULL);
+    seed = turntime ^ get_seedval();
+    /* initialize the random number generator */
+    mt_srand(seed);
+
+    startup_common();
 
     if (playmode == MODE_EXPLORE)
         discover = TRUE;
@@ -314,6 +302,7 @@ nh_play_game(int fd)
     case LS_CRASHED:
         return ERR_RESTORE_FAILED;
     case LS_IN_PROGRESS:
+        return ERR_IN_PROGRESS;
     case LS_SAVED:
         break;  /* default, everything is A-OK */
     }
@@ -1012,8 +1001,6 @@ newgame(void)
 
     /* Stop autoexplore revisiting the entrance stairs (or position). */
     level->locations[u.ux][u.uy].mem_stepped = 1;
-
-    program_state.something_worth_saving++;     /* useful data now exists */
 
     historic_event(FALSE,
                    "entered the Dungeons of Doom to retrieve the Amulet of Yendor!");

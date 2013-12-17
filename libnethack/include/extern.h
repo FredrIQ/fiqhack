@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-06 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -55,7 +55,6 @@ struct you;
 /* ### allmain.c ### */
 
 extern void stop_occupation(void);
-extern void startup_common(const char *name, int playmode);
 
 /* ### apply.c ### */
 
@@ -1436,7 +1435,6 @@ extern int doconsult(struct monst *);
 /* ### save.c ### */
 
 extern int dosave(void);
-extern int dosave0(boolean emergency);
 extern void savegame(struct memfile *mf);
 extern void savelev(struct memfile *mf, xchar levnum);
 extern void freelev(xchar levnum);

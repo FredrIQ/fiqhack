@@ -46,46 +46,11 @@ dosave(void)
         if (multi > 0)
             nomul(0, NULL);
     } else if (n == 1) {
-        pline("Saving...");
-        if (dosave0(FALSE)) {
-            program_state.something_worth_saving = 0;
-            u.uhp = -1; /* universal game's over indicator */
-            terminate(GAME_DETACHED);
-        } else
-            doredraw();
+        terminate(GAME_DETACHED);
     } else if (n == 2) {
         return done2();
     }
     return 0;
-}
-
-
-/* returns 1 if save successful */
-int
-dosave0(boolean emergency)
-{
-    int fd;
-    struct memfile mf;
-    boolean log_disabled = iflags.disable_log;
-
-    mnew(&mf, NULL);
-
-    fd = logfile;
-
-    /* when we leave via nh_exit, logging is disabled. It needs to be enabled
-       briefly so that log_finish will update the log header. */
-    iflags.disable_log = FALSE;
-    log_finish(LS_SAVED);
-    iflags.disable_log = log_disabled;
-    vision_recalc(2);   /* shut down vision to prevent problems in the event of 
-                           an impossible() call */
-
-    savegame(&mf);
-    store_mf(fd, &mf);  /* also frees mf */
-
-    freedynamicdata();
-
-    return TRUE;
 }
 
 
@@ -101,7 +66,7 @@ savegame(struct memfile *mf)
     /* Place flags, player info & moves at the beginning of the save. This
        makes it possible to read them in nh_get_savegame_status without parsing 
        all the dungeon and level data */
-    mwrite32(mf, moves);        /* no tag useful here; you is fixed-length */
+    mwrite32(mf, moves);
     save_flags(mf);
     save_you(mf, &u);
     save_mon(mf, &youmonst);

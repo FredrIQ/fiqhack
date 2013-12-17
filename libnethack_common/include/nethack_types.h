@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-04 */
+/* Last modified by Alex Smith, 2013-12-17 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -259,9 +259,9 @@ enum nh_play_status {
 enum nh_log_status {
     LS_CRASHED = -2,    /* the game crashed (or was "kill -9"ed) */
     LS_INVALID = -1,    /* not a nethack log/savegame */
-    LS_SAVED,   /* an ordinary save */
-    LS_DONE,    /* quit, died, ascended, etc */
-    LS_IN_PROGRESS      /* this game is active in a different process */
+    LS_SAVED,           /* an ordinary save */
+    LS_DONE,            /* quit, died, ascended, etc */
+    LS_IN_PROGRESS      /* locking issues trying to obtain save information */
 };
 
 enum autopickup_action {

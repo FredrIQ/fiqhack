@@ -181,14 +181,9 @@ panic(const char *str, ...)
     if (program_state.panicking++)
         terminate(GAME_DETACHED); /* avoid loops - this should never happen */
 
-    raw_print(program_state.gameover ? "Postgame wrapup disrupted.\n" :
-              !program_state.something_worth_saving ?
-              "Program initialization has failed.\n" :
-              "Suddenly, the dungeon collapses.\n");
+    raw_print("Suddenly, the dungeon collapses.\n");
     if (!wizard)
-        raw_printf("Report error to \"%s\"%s.\n", WIZARD,
-                   !program_state.something_worth_saving ? "" :
-                   " and it may be possible to rebuild.");
+        raw_printf("You can report this error at <http://trac.nethack4.org>.");
 
     vsprintf(buf, str, the_args);
     raw_print(buf);

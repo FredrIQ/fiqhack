@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-04 */
+/* Last modified by Alex Smith, 2013-12-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -603,7 +603,7 @@ set_option(const char *name, union nh_optvalue value, boolean isstring)
     /* if this option change affects game options (!is_ui) and happens during a 
        replay (program_state.viewing) and the change isn't triggered by the
        replay (!program_state.restoring) */
-    if (!is_ui && program_state.viewing && !program_state.restoring)
+    if (!is_ui && program_state.viewing)
         return FALSE;   /* Nope, sorry. That would mess up the replay */
 
     if (isstring)

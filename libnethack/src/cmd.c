@@ -1421,6 +1421,9 @@ dowelcome(void)
           u.uplname, buf, urace.adj,
           (currentgend && urole.name.f) ? urole.name.f : urole.name.m);
 
+    if (discover)
+        pline("You are in non-scoring discovery mode.");
+
     if (*level->levname)
         pline("You named this level: %s.", level->levname);
 

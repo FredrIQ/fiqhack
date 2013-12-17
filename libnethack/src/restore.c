@@ -799,7 +799,6 @@ dorecover(struct memfile *mf)
 
     run_timers();       /* expire all timers that have gone off while away */
     doredraw();
-    program_state.something_worth_saving++;     /* useful data now exists */
 
     flags.move = 0;
 
