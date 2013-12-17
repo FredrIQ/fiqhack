@@ -479,6 +479,10 @@ in the binary save code):
     is recorded in the log file.
 
 
+For more information, see the documentation in `doc/mainloop.txt`, which
+focuses on the same issues from the point of view of the API rather than the
+save system.
+
 Recovery
 --------
 

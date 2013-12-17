@@ -21,7 +21,8 @@ The server protocol is an enhancement of the protocol used by a window port to
 connect to a local game; the two are very similar, and so this documentation
 may also be consulted to gain some amount of understanding of the behaviour of
 a windowport.  There are a few commands that are specific to server use,
-though, such as `auth`, and the API for map updates is different.
+though, such as `auth`, and the API for map updates is different.  For a full
+explanation of the various protocols in use, see `doc/mainloop.txt`.
 
 The following types are all special cases of integers:
 * All enumerated types
