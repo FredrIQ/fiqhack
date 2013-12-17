@@ -809,36 +809,6 @@ dorecover(struct memfile *mf)
     return 1;
 }
 
-
-/* wrapper for dorecover so that data can come from a file */
-int
-dorecover_fd(int infd)
-{
-    int ret;
-    struct memfile mf;
-    long initial_pos;
-
-    mnew(&mf, NULL);
-
-    initial_pos = lseek(infd, 0, SEEK_CUR);
-    mf.buf = loadfile(infd, &mf.len);
-    if (!mf.buf)
-        return 0;
-
-    ret = dorecover(&mf);
-
-    mfree(&mf);
-
-    if (ret) {
-        /* erase the binary portion of the logfile */
-        lseek(infd, initial_pos, SEEK_SET);
-        ftruncate(infd, initial_pos);
-    }
-
-    return ret;
-}
-
-
 void
 trickery(char *reason)
 {

@@ -1383,7 +1383,6 @@ extern struct region *create_gas_cloud(struct level *lev, xchar, xchar, int,
 
 extern void inven_inuse(boolean);
 extern int dorecover(struct memfile *mf);
-extern int dorecover_fd(int fd);
 extern void trickery(char *);
 extern void restore_flags(struct memfile *mf, struct flag *f);
 extern void restore_you(struct memfile *mf, struct you *y);
