@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-04 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1181,15 +1181,13 @@ static const char equippables_and_nothing[] = { ALL_CLASSES, ALLOW_NONE, 0 };
 
 /* the 'T'/'R' command */
 int
-dounequip(struct obj *otmp)
+dounequip(const struct nh_cmd_arg *arg)
 {
     enum objslot j;
     long mask;
+    struct obj *otmp;
 
-    if (otmp && !validate_object(otmp, clothes_and_accessories, "take off"))
-        return 0;
-    else if (!otmp)
-        otmp = getobj(clothes_and_accessories, "take off");
+    otmp = getobj(clothes_and_accessories, "take off");
     if (!otmp)
         return 0;
 
@@ -1227,15 +1225,13 @@ dounequip(struct obj *otmp)
 
 /* the 'W'/'P' command */
 int
-dowear(struct obj *otmp)
+dowear(const struct nh_cmd_arg *arg)
 {
     long mask;
     enum objslot j;
+    struct obj *otmp;
 
-    if (otmp && !validate_object(otmp, clothes_and_accessories, "wear"))
-        return 0;
-    else if (!otmp)
-        otmp = getobj(clothes_and_accessories, "wear");
+    otmp = getargobj(arg, clothes_and_accessories, "wear");
     if (!otmp)
         return 0;
 
@@ -1968,20 +1964,22 @@ unchanger(void)
    This function allows equipping any item in any slot, or continuing an aborted
    equip action (even if there were other intervening actions). */
 int
-doequip(void)
+doequip(const struct nh_cmd_arg *arg)
 {
     enum objslot j;
     int n;
     int selected[1];
     struct menulist menu;
-    int changes, time_consuming_changes;
-    boolean resuming;
+    int changes, time_consuming_changes = 0;
+    boolean resuming = TRUE;
+    boolean silently = arg->argtype & CMD_ARG_CONT;
 
     do {
         changes = time_consuming_changes = 0;
         resuming = FALSE;
 
-        init_menulist(&menu);
+        if (!silently)
+            init_menulist(&menu);
 
         for (j = 0; j <= os_last_equip; j++) {
             char buf[BUFSZ];
@@ -1990,7 +1988,8 @@ doequip(void)
                     c_slotnames_menu[j],
                     BUFSZ - LONGEST_SLOTNAME - 4,
                     otmp ? doname(otmp) : "(empty)");
-            add_menuitem(&menu, j+1, buf, 0, FALSE);
+            if (!silently)
+                add_menuitem(&menu, j+1, buf, 0, FALSE);
             if (u.utracked[tos_first_equip + j]) {
                 boolean progress = !!u.uoccupation_progress[
                     tos_first_equip + j];
@@ -2001,7 +2000,8 @@ doequip(void)
                         doname(u.utracked[tos_first_equip + j]) :
                         "(empty)",
                         progress ? " (in progress)" : "" );
-                add_menuitem(&menu, 0, buf, 0, FALSE);
+                if (!silently)
+                    add_menuitem(&menu, 0, buf, 0, FALSE);
                 changes++;
                 if (j <= os_last_armor)
                     time_consuming_changes += 2;
@@ -2011,25 +2011,29 @@ doequip(void)
                     resuming = TRUE;
             }
         }
-        add_menutext(&menu, "");
-        if (changes) {
-            add_menuitem(
-                &menu, os_last_slot+1 + 1, resuming ?
-                "Continue changing your equipment as shown above" :
-                "Change your equipment as shown above", 'C', FALSE);
-            add_menuitem(
-                &menu, os_last_slot+1 + 2,
-                "Cancel changing your equipment", 'X', FALSE);
-        }
-        add_menuitem(
-            &menu, os_last_slot+1 + 3,
-            "Remove all equipment", 'T', FALSE);
 
-        n = display_menu(menu.items, menu.icount, "Your Equipment",
-                         PICK_ONE, PLHINT_INVENTORY, selected);
-        free(menu.items);
-        if (!n) /* no selection made */
-            return 0;
+        if (!silently) {
+            add_menutext(&menu, "");
+            if (changes) {
+                add_menuitem(
+                    &menu, os_last_slot+1 + 1, resuming ?
+                    "Continue changing your equipment as shown above" :
+                    "Change your equipment as shown above", 'C', FALSE);
+                add_menuitem(
+                    &menu, os_last_slot+1 + 2,
+                    "Cancel changing your equipment", 'X', FALSE);
+            }
+            add_menuitem(
+                &menu, os_last_slot+1 + 3,
+                "Remove all equipment", 'T', FALSE);
+            
+            n = display_menu(menu.items, menu.icount, "Your Equipment",
+                             PICK_ONE, PLHINT_INVENTORY, selected);
+            free(menu.items);
+            if (!n) /* no selection made */
+                return 0;
+        } else
+            *selected = os_last_slot+1 + 1;
 
         if (*selected == os_last_slot+1 + 2) {
             for (j = 0; j <= os_last_equip; j++) {
@@ -2071,6 +2075,12 @@ doequip(void)
         }
 
     } while (*selected != os_last_slot+1 + 1);
+
+    /* we can get here upon control-A after equipping is finished */
+    if (!changes) {
+        pline("You have already finished changing your equipment.");
+        return 0;
+    }
 
     /* If changing any slow item or two or more fast items, print a message,
        because this will probably take multiple turns. */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1031,10 +1031,8 @@ couldsee_func(int x, int y)
     return couldsee(x, y);
 }
 
-
-
 int
-domove(schar dx, schar dy, schar dz)
+domove(const struct nh_cmd_arg *arg)
 {
     struct monst *mtmp;
     struct rm *tmpr;
@@ -1046,6 +1044,10 @@ domove(schar dx, schar dy, schar dz)
     int bc_control;     /* control for ball&chain */
     boolean cause_delay = FALSE;        /* dragging ball will skip a move */
     const char *predicament;
+    schar dx, dy, dz;
+
+    if (!getargdir(arg, NULL, &dx, &dy, &dz))
+        return 0;
 
     if (dz) {
         nomul(0, NULL);
@@ -1463,7 +1465,9 @@ domove(schar dx, schar dy, schar dz)
     /* If moving into a door, open it. */
     if (IS_DOOR(tmpr->typ) && tmpr->doormask != D_BROKEN &&
         tmpr->doormask != D_NODOOR && tmpr->doormask != D_ISOPEN) {
-        if (!doopen(dx, dy, 0)) {
+        struct nh_cmd_arg arg;
+        arg_from_delta(dx, dy, dz, &arg);
+        if (!doopen(&arg)) {
             nomul(0, NULL);
             return 0;
         }
@@ -2068,14 +2072,16 @@ check_special_room(boolean newlev)
 
 
 int
-dopickup(void)
+dopickup(const struct nh_cmd_arg *arg)
 {
-    int count;
+    int count = 0;
     struct trap *traphere = t_at(level, u.ux, u.uy);
 
-    /* awful kludge to work around parse()'s pre-decrement */
-    count = multi;
-    multi = 0;  /* always reset */
+    if (arg->argtype & CMD_ARG_LIMIT)
+        count = arg->limit;
+    if (count < 0)
+        count = 0;
+
     /* Engulfed case added by GAN 01/29/87 */
     if (Engulfed) {
         if (!u.ustuck->minvent) {
@@ -2344,7 +2350,7 @@ nomul(int nval, const char *txt)
     flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
     if (multi <= 0) {
         turnstate.saved_cmd = -1;
-        turnstate.saved_arg.argtype = CMD_ARG_NONE;
+        turnstate.saved_arg.argtype = 0;
     }
 }
 
@@ -2576,7 +2582,7 @@ money_cnt(struct obj *otmp)
 
 
 int
-dofight(int dx, int dy, int dz)
+dofight(const struct nh_cmd_arg *arg)
 {
     int ret;
 
@@ -2587,7 +2593,7 @@ dofight(int dx, int dy, int dz)
     if (multi)
         flags.mv = TRUE;
 
-    ret = domove(dx, dy, dz);
+    ret = domove(arg);
     flags.forcefight = 0;
 
     return ret;
@@ -2595,7 +2601,7 @@ dofight(int dx, int dy, int dz)
 
 
 int
-domovecmd(int dx, int dy, int dz)
+domovecmd(const struct nh_cmd_arg *arg)
 {
     flags.travel = iflags.travel1 = 0;
     flags.run = 0;      /* only matters here if it was 8 */
@@ -2603,17 +2609,17 @@ domovecmd(int dx, int dy, int dz)
     if (multi)
         flags.mv = TRUE;
 
-    return domove(dx, dy, dz);
+    return domove(arg);
 }
 
 
 int
-domovecmd_nopickup(int dx, int dy, int dz)
+domovecmd_nopickup(const struct nh_cmd_arg *arg)
 {
     int ret;
 
     flags.nopick = 1;
-    ret = domovecmd(dx, dy, dz);
+    ret = domovecmd(arg);
     flags.nopick = 0;
 
     return ret;
@@ -2621,7 +2627,7 @@ domovecmd_nopickup(int dx, int dy, int dz)
 
 
 static int
-do_rush(int dx, int dy, int dz, int runmode, boolean move_only)
+do_rush(const struct nh_cmd_arg *arg, int runmode, boolean move_only)
 {
     int ret;
 
@@ -2634,7 +2640,7 @@ do_rush(int dx, int dy, int dz, int runmode, boolean move_only)
     if (!multi)
         multi = max(COLNO, ROWNO);
 
-    ret = domove(dx, dy, dz);
+    ret = domove(arg);
 
     flags.nopick = 0;
     return ret;
@@ -2642,30 +2648,30 @@ do_rush(int dx, int dy, int dz, int runmode, boolean move_only)
 
 
 int
-dorun(int dx, int dy, int dz)
+dorun(const struct nh_cmd_arg *arg)
 {
-    return do_rush(dx, dy, dz, 1, FALSE);
+    return do_rush(arg, 1, FALSE);
 }
 
 
 int
-dorun_nopickup(int dx, int dy, int dz)
+dorun_nopickup(const struct nh_cmd_arg *arg)
 {
-    return do_rush(dx, dy, dz, 1, TRUE);
+    return do_rush(arg, 1, TRUE);
 }
 
 
 int
-dogo(int dx, int dy, int dz)
+dogo(const struct nh_cmd_arg *arg)
 {
-    return do_rush(dx, dy, dz, 2, FALSE);
+    return do_rush(arg, 2, FALSE);
 }
 
 
 int
-dogo2(int dx, int dy, int dz)
+dogo2(const struct nh_cmd_arg *arg)
 {
-    return do_rush(dx, dy, dz, 3, FALSE);
+    return do_rush(arg, 3, FALSE);
 }
 
 /*hack.c*/

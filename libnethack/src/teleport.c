@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-23 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -436,10 +436,15 @@ tele_impl(boolean wizard_tele)
     safe_teleds(FALSE);
 }
 
+/* TODO: Perhaps work out some way to let controlled teleport in on a
+   CMD_ARG_POS, but there are too many codeflow possibilities involved to make
+   that easy. */
 int
-dotele(void)
+dotele(const struct nh_cmd_arg *arg)
 {
     struct trap *trap;
+
+    (void) arg;
 
     trap = t_at(level, u.ux, u.uy);
     if (trap && (!trap->tseen || trap->ttyp != TELEP_TRAP))

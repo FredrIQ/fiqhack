@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1035,7 +1035,7 @@ cheapest_item(struct monst *shkp)
 
 
 int
-dopay(struct obj *oneitem)
+dopay(const struct nh_cmd_arg *arg)
 {
     struct eshk *eshkp;
     struct monst *shkp;
@@ -1044,6 +1044,11 @@ dopay(struct obj *oneitem)
     int pass, tmp, sk = 0, seensk = 0;
     char iprompt;
     boolean paid = FALSE, stashed_gold = (hidden_gold() > 0L);
+    struct obj *oneitem = NULL;
+
+    char allowall[] = {ALL_CLASSES, 0};
+    if (arg->argtype & CMD_ARG_OBJ)
+        oneitem = getargobj(arg, allowall, "pay for");
 
     multi = 0;
 

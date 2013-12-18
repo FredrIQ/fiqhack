@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -735,25 +735,28 @@ do_look(boolean quick)
 
 
 int
-dowhatis(void)
+dowhatis(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
     return do_look(FALSE);
 }
 
+/* TODO: CMD_ARG_POS is meaningful here, we should implement it. */
 int
-doquickwhatis(void)
+doquickwhatis(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
     return do_look(TRUE);
 }
 
 int
-doidtrap(void)
+doidtrap(const struct nh_cmd_arg *arg)
 {
     struct trap *trap;
     int x, y, tt;
     schar dx, dy, dz;
 
-    if (!getdir(NULL, &dx, &dy, &dz))
+    if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
 
     x = u.ux + dx;
@@ -784,16 +787,18 @@ doidtrap(void)
 
 
 int
-dolicense(void)
+dolicense(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
     display_file(LICENSE, TRUE);
     return 0;
 }
 
 
 int
-doverhistory(void)
+doverhistory(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
     display_file(HISTORY, TRUE);
     return 0;
 }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -38,7 +38,7 @@ christen_monst(struct monst *mtmp, const char *name)
 
 
 int
-do_mname(void)
+do_mname(const struct nh_cmd_arg *arg)
 {
     char buf[BUFSZ];
     coord cc;
@@ -52,7 +52,7 @@ do_mname(void)
     }
     cc.x = u.ux;
     cc.y = u.uy;
-    if (getpos(&cc, FALSE, "the monster you want to name") ==
+    if (getargpos(arg, &cc, FALSE, "the monster you want to name") ==
         NHCR_CLIENT_CANCEL || (cx = cc.x) < 0)
         return 0;
     cy = cc.y;
@@ -79,7 +79,7 @@ do_mname(void)
     /* special case similar to the one in lookat() */
     distant_monnam(mtmp, ARTICLE_THE, buf);
     sprintf(qbuf, "What do you want to call %s?", buf);
-    getlin(qbuf, buf);
+    getarglin(arg, qbuf, buf);
     if (!*buf || *buf == '\033')
         return 0;
     /* strip leading and trailing spaces; unnames monster if all spaces */
@@ -107,14 +107,14 @@ static const char nameable[] = {
  * when obj is in the inventory.
  */
 int
-do_oname(struct obj *obj)
+do_oname(const struct nh_cmd_arg *arg)
 {
     char buf[BUFSZ], qbuf[QBUFSZ];
     const char *aname;
     short objtyp;
+    struct obj *obj;
 
-    if (!obj)
-        obj = getobj(nameable, "name");
+    obj = getargobj(arg, nameable, "name");
     if (!obj)
         return 0;
 
@@ -123,7 +123,7 @@ do_oname(struct obj *obj)
 		safe_qbuf("", sizeof("What do you want to name these ?"),
 			  xname(obj), simple_typename(obj->otyp),
 			  is_plural(obj) ? "things" : "thing"));
-    getlin(qbuf, buf);
+    getarglin(arg, qbuf, buf);
     if (!*buf || *buf == '\033')
         return 0;
     /* strip leading and trailing spaces; unnames item if all spaces */
@@ -273,7 +273,7 @@ oname(struct obj *obj, const char *name)
 }
 
 static void
-docall_inner(int otyp)
+docall_inner(const struct nh_cmd_arg *arg, int otyp)
 {
     char buf[BUFSZ], qbuf[QBUFSZ];
     char **str1;
@@ -286,7 +286,7 @@ docall_inner(int otyp)
         strncpy(qbuf + 5, an(ot), QBUFSZ - 7);
     qbuf[QBUFSZ - 2] = '\0';
     strcpy(eos(qbuf), ":");
-    getlin(qbuf, buf);
+    getarglin(arg, qbuf, buf);
     if (!*buf || *buf == '\033')
         return;
 
@@ -316,10 +316,9 @@ static const char callable[] = {
 };
 
 int
-do_tname(struct obj *obj)
+do_tname(const struct nh_cmd_arg *arg)
 {
-    if (!obj)
-        obj = getobj(callable, "call");
+    struct obj *obj = getargobj(arg, callable, "call");
     if (obj) {
         /* behave as if examining it in inventory; this might set dknown if it 
            was picked up while blind and the hero can now see */
@@ -329,17 +328,19 @@ do_tname(struct obj *obj)
             pline("You would never recognize another one.");
             return 0;
         }
-        docall_inner(obj->otyp);
+        docall_inner(arg, obj->otyp);
     }
     return 0;
 }
 
 int
-do_naming(void)
+do_naming(const struct nh_cmd_arg *arg)
 {
     int n, selected[1];
     char classes[20], *s;
     struct menulist menu;
+
+    (void) arg;
 
     init_menulist(&menu);
 
@@ -368,19 +369,19 @@ do_naming(void)
     default:
         break;
     case 0:
-        do_mname();
+        do_mname(&(struct nh_cmd_arg){.argtype = 0});
         break;
 
     case 1:
-        donamelevel();
+        donamelevel(&(struct nh_cmd_arg){.argtype = 0});
         break;
 
     case 2:
-        do_oname(NULL);
+        do_oname(&(struct nh_cmd_arg){.argtype = 0});
         break;
 
     case 3:
-        do_tname(NULL);
+        do_tname(&(struct nh_cmd_arg){.argtype = 0});
         break;
 
     case 4:
@@ -431,11 +432,13 @@ do_naming(void)
                          PLHINT_INVENTORY, selected);
         free(menu.items);
         if (n == 1)
-            docall_inner(selected[0]);
+            docall_inner(&(struct nh_cmd_arg){.argtype = 0},
+                         selected[0]);
         break;
 
     case 5:
-        docall_inner(flags.recently_broken_otyp);
+        docall_inner(&(struct nh_cmd_arg){.argtype = 0},
+                     flags.recently_broken_otyp);
         break;
     }
     return 0;

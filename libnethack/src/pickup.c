@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1250,7 +1250,7 @@ Is_container_func(const struct obj *otmp)
 
 /* loot a container on the floor or loot saddle from mon. */
 int
-doloot(void)
+doloot(const struct nh_cmd_arg *arg)
 {
     struct obj *cobj;
     int c = -1;
@@ -1262,6 +1262,10 @@ doloot(void)
     int prev_inquiry = 0;
     boolean prev_loot = FALSE;
     int container_count = 0;
+
+    /* We don't allow directions, for now. TODO: In general, this function
+       needs an entirely different UI anyway (e.g. menu-driven). */
+    (void) arg;
 
     if (check_capacity(NULL)) {
         /* "Can't do that while carrying so much stuff." */

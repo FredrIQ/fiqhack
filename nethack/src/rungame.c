@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -131,10 +131,9 @@ get_gamedir(enum game_dirs dirtype, char *buf)
 static int welcomed;
 void
 curses_request_command(nh_bool debug, nh_bool completed, nh_bool interrupted,
-                       char *cmd, struct nh_cmd_arg *cmdarg, int *limit)
+                       char *cmd, struct nh_cmd_arg *cmdarg)
 {
-    *limit = 0;
-    cmdarg->argtype = CMD_ARG_NONE;
+    cmdarg->argtype = 0;
 
     if (!welcomed) {
         strcpy(cmd, "welcome");
@@ -148,7 +147,7 @@ curses_request_command(nh_bool debug, nh_bool completed, nh_bool interrupted,
         return;
     }
 
-    strcpy(cmd, get_command(limit, cmdarg));
+    strcpy(cmd, get_command(cmdarg));
 }
 
 

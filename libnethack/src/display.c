@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -1323,6 +1323,12 @@ display_self(void)
                  0, 0, dbuf_branding(&level->locations[x][y]));
 }
 
+int
+doredrawcmd(const struct nh_cmd_arg *arg)
+{
+    (void) arg;
+    return doredraw();
+}
 
 int
 doredraw(void)

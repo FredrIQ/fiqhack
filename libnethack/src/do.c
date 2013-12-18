@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -21,14 +21,14 @@ static const char drop_types[] = { ALLOW_COUNT, ALL_CLASSES, 0 };
 
 /* 'd' command: drop one inventory item */
 int
-dodrop(struct obj *obj)
+dodrop(const struct nh_cmd_arg *arg)
 {
     int result, i = (invent) ? 0 : (SIZE(drop_types) - 1);
+    struct obj *obj;
 
     if (*u.ushops)
         sellobj_state(SELL_DELIBERATE);
-    if (!obj)
-        obj = getobj(&drop_types[i], "drop");
+    obj = getargobj(arg, &drop_types[i], "drop");
     result = drop(obj);
     if (*u.ushops)
         sellobj_state(SELL_NORMAL);
@@ -593,9 +593,11 @@ obj_no_longer_held(struct obj *obj)
 
 /* 'D' command: drop several things */
 int
-doddrop(void)
+doddrop(const struct nh_cmd_arg *arg)
 {
     int result = 0;
+
+    (void) arg;
 
     add_valid_menu_class(0);    /* clear any classes already there */
     if (*u.ushops)
@@ -1508,8 +1510,9 @@ revive_mon(void *arg, long timeout)
 }
 
 int
-donull(void)
+donull(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
     return 1;   /* Do nothing, but let other things happen */
 }
 
@@ -1539,8 +1542,9 @@ wipeoff(void)
 }
 
 int
-dowipe(void)
+dowipe(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
     if (u.ucreamed) {
         static char buf[39];
 

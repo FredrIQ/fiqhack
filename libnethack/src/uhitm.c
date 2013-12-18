@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-25 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -193,8 +193,11 @@ attack_checks(struct monst *mtmp,
         if (always_peaceful(mtmp->data) && mtmp->mpeaceful) {
             if (mtmp->data->msound == MS_PRIEST)
                 pline("The priest mutters a prayer.");
-            else
-                dotalk(dx, dy, 0);
+            else {
+                struct nh_cmd_arg arg;
+                arg_from_delta(dx, dy, 0, &arg);
+                dotalk(&arg);
+            }
             return TRUE;
         }
         if (flags.confirm && mtmp->mpeaceful) {

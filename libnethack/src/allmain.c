@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -24,7 +24,7 @@ static void newgame(void);
 
 static void handle_lava_trap(boolean didmove);
 
-static void command_input(int cmdidx, int rep, struct nh_cmd_arg *arg);
+static void command_input(int cmdidx, const struct nh_cmd_arg *arg);
 
 const char *const *
 nh_get_copyright_banner(void)
@@ -84,8 +84,7 @@ nh_exit_game(int exit_type)
 
         switch (exit_type) {
         case EXIT_REQUEST_SAVE:
-            dosave();   /* will ask "really save?" and, if 'y', eventually call 
-                           terminate. */
+            dosave(&(struct nh_cmd_arg){.argtype = 0});
             break;
 
         case EXIT_FORCE_SAVE:
@@ -390,12 +389,11 @@ nh_play_game(int fd)
     while (1) {
         char cmd[BUFSZ];
         struct nh_cmd_arg arg;
-        int limit;
 
         int cmdidx;
 
         (*windowprocs.win_request_command)
-            (wizard, completed, interrupted, cmd, &arg, &limit);
+            (wizard, completed, interrupted, cmd, &arg);
         cmdidx = get_command_idx(cmd);
         if (!strcmp(cmd, "repeat")) {
             cmdidx = -1;
@@ -425,7 +423,7 @@ nh_play_game(int fd)
         unsigned int pre_rngstate = mt_nextstate();
         int pre_moves = moves;
 
-        command_input(cmdidx, limit, &arg);
+        command_input(cmdidx, &arg);
 
         /* make sure we actually want this command to be logged */
         if (cmdidx >= 0 && (cmdlist[cmdidx].flags & CMD_NOTIME) &&
@@ -827,7 +825,7 @@ pre_move_tasks(boolean didmove)
 
 /* perform the command given by cmdidx (an index into cmdlist in cmd.c) */
 static void
-command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
+command_input(int cmdidx, const struct nh_cmd_arg *arg)
 {
     boolean didmove = FALSE;
 
@@ -838,7 +836,8 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
             turnstate.saved_cmd = cmdidx;
             turnstate.saved_arg = *arg;
         }
-        switch (do_command(cmdidx, rep, TRUE, arg)) {
+        flags.nopick = 0;
+        switch (do_command(cmdidx, arg)) {
         case COMMAND_UNKNOWN:
             pline("Unrecognised command.");
             nomul(0, NULL);
@@ -858,14 +857,16 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
                 flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
             if (!multi)
                 nomul(0, NULL); /* reset multi state */
-            if (!domove(u.dx, u.dy, 0)) {
+
+            struct nh_cmd_arg arg;
+            arg_from_delta(u.dx, u.dy, 0, &arg);
+            if (!domove(&arg)) {
                 /* Don't use a move when travelling into an obstacle. */
                 flags.move = FALSE;
                 nomul(0, NULL);
             }
         } else
-            if (do_command(turnstate.saved_cmd, multi, FALSE,
-                           &turnstate.saved_arg) !=
+            if (do_command(turnstate.saved_cmd, &turnstate.saved_arg) !=
                 COMMAND_OK) {
                 pline("Unrecognised command."); 
                 nomul(0, NULL);

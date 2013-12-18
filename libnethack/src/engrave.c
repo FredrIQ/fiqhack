@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -444,7 +444,7 @@ static const char styluses[] =
 
 /* return 1 if action took 1 (or more) moves, 0 if error or aborted */
 static int
-doengrave_core(struct obj *otmp, int auto_elbereth)
+doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
 {
     boolean dengr = FALSE;      /* TRUE if we wipe out the current engraving */
     boolean doblind = FALSE;    /* TRUE if engraving blinds the player */
@@ -467,6 +467,7 @@ doengrave_core(struct obj *otmp, int auto_elbereth)
     int len;    /* # of nonspace chars of new engraving text */
     int maxelen;        /* Max allowable length of engraving text */
     struct engr *oep = engr_at(level, u.ux, u.uy);
+    struct obj *otmp;
 
     /* The current engraving */
     char *writer;
@@ -517,14 +518,9 @@ doengrave_core(struct obj *otmp, int auto_elbereth)
     /* One may write with finger, or weapon, or wand, or..., or... Edited by
        GAN 10/20/86 so as not to change weapon wielded. */
 
-    if (otmp && !validate_object(otmp, styluses, "write with"))
-        return 0;
-    else if (!otmp && !auto_elbereth)
-        otmp = getobj(styluses, "write with");
-    else if (!otmp)
-        otmp = &zeroobj;        /* TODO: search for athames */
+    otmp = getargobj(arg, styluses, "write with");
     if (!otmp)
-        return 0;       /* otmp == zeroobj if fingers */
+        return 0;       /* otmp == &zeroobj if fingers */
 
     if (otmp == &zeroobj)
         writer = makeplural(body_part(FINGER));
@@ -991,7 +987,7 @@ doengrave_core(struct obj *otmp, int auto_elbereth)
     if (auto_elbereth)
         strcpy(ebuf, "Elbereth");
     else
-        getlin(qbuf, ebuf);
+        getarglin(arg, qbuf, ebuf);
 
     /* Count the actual # of chars engraved not including spaces */
     len = strlen(ebuf);
@@ -1156,16 +1152,18 @@ doengrave_core(struct obj *otmp, int auto_elbereth)
 }
 
 int
-doengrave(struct obj *o)
+doengrave(const struct nh_cmd_arg *arg)
 {
-    return doengrave_core(o, 0);
+    return doengrave_core(arg, 0);
 }
 
 int
-doelbereth(void)
+doelbereth(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
     /* TODO: Athame? */
-    return doengrave_core(&zeroobj, 1);
+    return doengrave_core(&(struct nh_cmd_arg){
+            .argtype = CMD_ARG_OBJ, .invlet = '-'}, 1);
 }
 
 void

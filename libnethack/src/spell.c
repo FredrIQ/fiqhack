@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-23 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -562,13 +562,21 @@ getspell(int *spell_no)
     return dospellmenu("Choose which spell to cast", SPELLMENU_CAST, spell_no);
 }
 
+static boolean
+getargspell(const struct nh_cmd_arg *arg, int *spell_no)
+{
+    /* TODO: look at arg */
+    (void) arg;
+    return getspell(spell_no);
+}
+
 /* the 'Z' command -- cast a spell */
 int
-docast(void)
+docast(const struct nh_cmd_arg *arg)
 {
     int spell_no;
 
-    if (getspell(&spell_no))
+    if (getargspell(arg, &spell_no))
         return spelleffects(spell_no, FALSE);
     return 0;
 }
@@ -940,7 +948,7 @@ spelleffects(int spell, boolean atme)
         cast_protection();
         break;
     case SPE_JUMPING:
-        if (!jump(max(role_skill, 1)))
+        if (!jump(&(struct nh_cmd_arg){.argtype = 0}, max(role_skill, 1)))
             pline("Nothing happens.");
         break;
     default:
@@ -1021,11 +1029,13 @@ losespells(void)
 
 /* the '+' command -- view known spells */
 int
-dovspell(void)
+dovspell(const struct nh_cmd_arg *arg)
 {
     char qbuf[QBUFSZ];
     int splnum, othnum;
     struct spell spl_tmp;
+
+    (void) arg;
 
     if (spellid(0) == NO_SPELL)
         pline("You don't know any spells right now.");

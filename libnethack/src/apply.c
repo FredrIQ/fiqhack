@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-23 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1209,13 +1209,11 @@ light_cocktail(struct obj *obj)
 static const char cuddly[] = { TOOL_CLASS, GEM_CLASS, 0 };
 
 int
-dorub(struct obj *obj)
+dorub(const struct nh_cmd_arg *arg)
 {
-    if (obj && !validate_object(obj, cuddly, "rub"))
-        return 0;
-    else if (!obj)
-        obj = getobj(cuddly, "rub");
+    struct obj *obj;
 
+    obj = getargobj(arg, cuddly, "rub");
     if (!obj)
         return 0;
 
@@ -1261,15 +1259,15 @@ dorub(struct obj *obj)
 }
 
 int
-dojump(void)
+dojump(const struct nh_cmd_arg *arg)
 {
     /* Physical jump */
-    return jump(0);
+    return jump(arg, 0);
 }
 
+/* Meaning of "magic" argument: 0 means physical; otherwise skill level */
 int
-jump(int magic  /* 0=Physical, otherwise skill level */
-    )
+jump(const struct nh_cmd_arg *arg, int magic)
 {
     coord cc;
 
@@ -1341,7 +1339,7 @@ jump(int magic  /* 0=Physical, otherwise skill level */
     pline("Where do you want to jump?");
     cc.x = u.ux;
     cc.y = u.uy;
-    if (getpos(&cc, TRUE, "the desired position") == NHCR_CLIENT_CANCEL)
+    if (getargpos(arg, &cc, TRUE, "the desired position") == NHCR_CLIENT_CANCEL)
         return 0;       /* user pressed ESC */
     if (!magic && !(HJumping & ~INTRINSIC) && !EJumping &&
         distu(cc.x, cc.y) != 5) {
@@ -2852,10 +2850,11 @@ add_class(char *cl, char class)
 }
 
 int
-doapply(struct obj *obj)
+doapply(const struct nh_cmd_arg *arg)
 {
     int res = 1;
     char class_list[MAXOCLASSES + 2];
+    struct obj *obj;
 
     if (check_capacity(NULL))
         return 0;
@@ -2867,16 +2866,13 @@ doapply(struct obj *obj)
     if (carrying(CREAM_PIE) || carrying(EUCALYPTUS_LEAF))
         add_class(class_list, FOOD_CLASS);
 
-    if (obj && !validate_object(obj, class_list, "use or apply"))
-        return 0;
-    else if (!obj)
-        obj = getobj(class_list, "use or apply");
+    obj = getargobj(arg, class_list, "use or apply");
     if (!obj)
         return 0;
 
     if (obj == &zeroobj) {
         /* "a," for doing looting */
-        return doloot();
+        return doloot(arg);
     }
 
     if (obj->oartifact && !touch_artifact(obj, &youmonst))

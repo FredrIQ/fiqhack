@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -187,7 +187,7 @@ static const struct turnstate default_turnstate = {
     .multi_txt = "",
     .occupation_txt = "",
     .saved_cmd = -1,
-    .saved_arg = { CMD_ARG_NONE },
+    .saved_arg = {.argtype = 0},
     .tracked = {0},
 };
 
@@ -217,7 +217,7 @@ neutral_turnstate_tasks(void)
     CHECKEQ(multi_txt[0], 0);
     CHECKEQ(occupation_txt[0], 0);
     CHECKEQ(saved_cmd, -1);
-    CHECKEQ(saved_arg.argtype, CMD_ARG_NONE);
+    CHECKEQ(saved_arg.argtype, 0);
 
 #undef CHECKEQ
 

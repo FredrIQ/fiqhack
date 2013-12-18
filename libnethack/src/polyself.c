@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-02 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -767,7 +767,7 @@ rehumanize(void)
 }
 
 int
-dobreathe(void)
+dobreathe(const struct nh_cmd_arg *arg)
 {
     const struct attack *mattk;
     schar dx, dy, dz;
@@ -783,7 +783,7 @@ dobreathe(void)
     u.uen -= 15;
     iflags.botl = 1;
 
-    if (!getdir(NULL, &dx, &dy, &dz))
+    if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
 
     mattk = attacktype_fordmg(youmonst.data, AT_BREA, AD_ANY);
@@ -796,12 +796,12 @@ dobreathe(void)
 }
 
 int
-dospit(void)
+dospit(const struct nh_cmd_arg *arg)
 {
     struct obj *otmp;
     schar dx, dy, dz;
 
-    if (!getdir(NULL, &dx, &dy, &dz))
+    if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
     otmp =
         mksobj(level, u.umonnum == PM_COBRA ? BLINDING_VENOM : ACID_VENOM, TRUE,

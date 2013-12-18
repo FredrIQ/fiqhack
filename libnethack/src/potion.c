@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -326,8 +326,9 @@ ghost_from_bottle(void)
 /* "Quaffing is like drinking, except you spill more."  -- Terry Pratchett
  */
 int
-dodrink(struct obj *potion)
+dodrink(const struct nh_cmd_arg *arg)
 {
+    struct obj *potion;
     const char *potion_descr;
     void (*terrain) (void) = 0;
 
@@ -353,14 +354,8 @@ dodrink(struct obj *potion)
         }
     }
 
-    if (potion &&
-        !validate_object(potion, terrain ? beverages_and_fountains : beverages,
-                         "drink"))
-        return 0;
-    else if (!potion)
-        potion = getobj(terrain ? beverages_and_fountains : beverages, "drink");
-    if (!potion)
-        return 0;
+    potion = getargobj(arg, terrain ? beverages_and_fountains : beverages,
+                       "drink");
 
     if (potion == &zeroobj) {
         if (!terrain)
@@ -1581,9 +1576,9 @@ get_wet(struct obj * obj)
 
 
 int
-dodip(struct obj *potion)
+dodip(const struct nh_cmd_arg *arg)
 {
-    struct obj *obj;
+    struct obj *obj, *potion;
     struct obj *singlepotion;
     const char *tmp;
     uchar here;
@@ -1591,14 +1586,11 @@ dodip(struct obj *potion)
     short mixture;
     char qbuf[QBUFSZ], Your_buf[BUFSZ];
 
-    if (potion && !validate_object(potion, beverages, "dip into"))
-        return 0;
-
     obj = getobj(allowall, "dip");
     if (!obj)
         return 0;
 
-    if (!potion) {
+    if (!(arg->argtype & CMD_ARG_OBJ)) {
         here = level->locations[u.ux][u.uy].typ;
         /* Is there a fountain to dip into here? */
         if (IS_FOUNTAIN(here)) {
@@ -1630,11 +1622,11 @@ dodip(struct obj *potion)
                 return 1;
             }
         }
-        sprintf(qbuf, "dip %s into",
-                safe_qbuf("", sizeof ("dip  into"), the(xname(obj)),
-                          the(simple_typename(obj->otyp)), "this item"));
-        potion = getobj(beverages, qbuf);
     }
+    sprintf(qbuf, "dip %s into",
+            safe_qbuf("", sizeof ("dip  into"), the(xname(obj)),
+                      the(simple_typename(obj->otyp)), "this item"));
+    potion = getargobj(arg, beverages, qbuf);
 
     if (!potion)
         return 0;

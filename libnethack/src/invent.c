@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1190,8 +1190,9 @@ char *xprname(struct obj *obj, const char *txt, /* text to print instead of obj
 
 /* the 'i' command */
 int
-ddoinv(void)
+ddoinv(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
     display_inventory(NULL, FALSE);
     return 0;
 }
@@ -1528,7 +1529,7 @@ this_type_only(const struct obj *obj)
 
 /* the 'I' command */
 int
-dotypeinv(void)
+dotypeinv(const struct nh_cmd_arg *arg)
 {
     char c = '\0';
     int n, i = 0;
@@ -1537,6 +1538,8 @@ dotypeinv(void)
     int pick_list[30];
     struct object_pick *dummy;
     const char *prompt = "What type of object do you want an inventory of?";
+
+    (void) arg;
 
     if (!invent && !billx) {
         pline("You aren't carrying anything.");
@@ -1857,8 +1860,9 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
 
 /* explicilty look at what is here, including all objects */
 int
-dolook(void)
+dolook(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
     return look_here(0, FALSE);
 }
 
@@ -1977,8 +1981,10 @@ mergable(struct obj *otmp, struct obj *obj)
 }
 
 int
-doprgold(void)
+doprgold(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
+
     /* the messages used to refer to "carrying gold", but that didn't take
        containers into account */
     long umoney = money_cnt(invent);
@@ -1994,8 +2000,10 @@ doprgold(void)
 
 
 int
-doprwep(void)
+doprwep(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
+
     if (!uwep) {
         pline("You are empty %s.", body_part(HANDED));
     } else {
@@ -2007,8 +2015,9 @@ doprwep(void)
 }
 
 int
-doprarm(void)
+doprarm(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
     if (!wearing_armor())
         pline("You are not wearing any armor.");
     else {
@@ -2036,8 +2045,9 @@ doprarm(void)
 }
 
 int
-doprring(void)
+doprring(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
     if (!uleft && !uright)
         pline("You are not wearing any rings.");
     else {
@@ -2055,8 +2065,9 @@ doprring(void)
 }
 
 int
-dopramulet(void)
+dopramulet(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
     if (!uamul)
         pline("You are not wearing an amulet.");
     else
@@ -2076,11 +2087,13 @@ tool_in_use(struct obj *obj)
 }
 
 int
-doprtool(void)
+doprtool(const struct nh_cmd_arg *arg)
 {
     struct obj *otmp;
     int ct = 0;
     char lets[52 + 1];
+
+    (void) arg;
 
     for (otmp = invent; otmp; otmp = otmp->nobj)
         if (tool_in_use(otmp))
@@ -2096,11 +2109,13 @@ doprtool(void)
 /* '*' command; combines the ')' + '[' + '=' + '"' + '(' commands;
    show inventory of all currently wielded, worn, or used objects */
 int
-doprinuse(void)
+doprinuse(const struct nh_cmd_arg *arg)
 {
     struct obj *otmp;
     int ct = 0;
     char lets[52 + 1];
+
+    (void) arg;
 
     for (otmp = invent; otmp; otmp = otmp->nobj)
         if (is_worn(otmp) || tool_in_use(otmp))
@@ -2210,8 +2225,9 @@ static const char organizable[] = {
     FOOD_CLASS, 0
 };
 
+/* TODO: Allow a CMD_ARG_LIMIT on this to split stacks? */
 int
-doorganize(void)
+doorganize(const struct nh_cmd_arg *arg)
 {       /* inventory organizer by Del Lamb */
     struct obj *obj, *otmp;
     int ix, cur;
@@ -2221,7 +2237,7 @@ doorganize(void)
     const char *adj_type;
 
     /* get a pointer to the object the user wants to organize */
-    if (!(obj = getobj(organizable, "adjust")))
+    if (!(obj = getargobj(arg, organizable, "adjust")))
         return 0;
 
     /* initialize the list with all upper and lower case letters */

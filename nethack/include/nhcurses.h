@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -300,8 +300,8 @@ extern nh_bool check_prev_cmd_same(void);
 extern int get_current_cmd_key(void);
 extern const char *curses_keyname(int key);
 extern void handle_internal_cmd(struct nh_cmd_desc **cmd,
-                                struct nh_cmd_arg *arg, int *count);
-extern const char *get_command(int *count, struct nh_cmd_arg *arg);
+                                struct nh_cmd_arg *arg);
+extern const char *get_command(struct nh_cmd_arg *arg);
 extern void set_next_command(const char *cmd, struct nh_cmd_arg *arg);
 extern void load_keymap(void);
 extern void free_keymap(void);
@@ -380,7 +380,7 @@ extern void replay(void);
 extern nh_bool get_gamedir(enum game_dirs dirtype, fnchar * buf);
 extern void curses_request_command(nh_bool debug, nh_bool completed,
                                    nh_bool interrupted, char *cmd,
-                                   struct nh_cmd_arg *cmdarg, int *limit);
+                                   struct nh_cmd_arg *cmdarg);
 extern void describe_game(char *buf, enum nh_log_status status,
                           struct nh_game_info *gi);
 extern void rungame(void);

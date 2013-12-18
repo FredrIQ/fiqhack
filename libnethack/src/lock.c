@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-20 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -474,11 +474,13 @@ pick_lock(struct obj *pick, schar dx, schar dy, schar dz)
 
 /* try to force a chest with your weapon */
 int
-doforce(void)
+doforce(const struct nh_cmd_arg *arg)
 {
     struct obj *otmp;
     int c, picktyp;
     char qbuf[QBUFSZ];
+
+    (void) arg;
 
     if (!uwep ||        /* proper type test */
         (uwep->oclass != WEAPON_CLASS && !is_weptool(uwep) &&
@@ -538,13 +540,13 @@ doforce(void)
 
 /* try to open a door */
 int
-doopen(int dx, int dy, int dz)
+doopen(const struct nh_cmd_arg *arg)
 {
     coord cc;
     struct rm *door;
     struct monst *mtmp;
     boolean got_dir = FALSE;
-    schar unused;
+    schar dx, dy, dz;
 
     if (nohands(youmonst.data)) {
         pline
@@ -557,21 +559,13 @@ doopen(int dx, int dy, int dz)
         return 0;
     }
 
-    if (dx != -2 && dy != -2 && dz != -2) {  /* -2 signals no direction given */
-        cc.x = u.ux + dx;
-        cc.y = u.uy + dy;
-        if (isok(cc.x, cc.y))
-            got_dir = TRUE;
-    }
-
-    if (!got_dir && !get_adjacent_loc(NULL, NULL, u.ux, u.uy, &cc, &unused))
+    if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
 
-    if (!got_dir) {
-        dx = cc.x - u.ux;
-        dy = cc.y - u.uy;
-        dz = 0;
-    }
+    cc.x = u.ux + dx;
+    cc.y = u.uy + dy;
+    if (!isok(cc.x, cc.y))
+        return 0;
 
     if ((cc.x == u.ux) && (cc.y == u.uy))
         return 0;
@@ -595,8 +589,11 @@ doopen(int dx, int dy, int dz)
         return 0;
     }
 
-    if (door->doormask == D_ISOPEN)
-        return doclose(dx, dy, dz);
+    if (door->doormask == D_ISOPEN) {
+        struct nh_cmd_arg arg;
+        arg_from_delta(dx, dy, dz, &arg);
+        return doclose(&arg);
+    }
 
     if (!(door->doormask & D_CLOSED)) {
         const char *mesg;
@@ -697,13 +694,12 @@ obstructed(int x, int y)
 
 /* try to close a door */
 int
-doclose(int dx, int dy, int dz)
+doclose(const struct nh_cmd_arg *arg)
 {
-    boolean got_dir = FALSE;
     struct rm *door;
     struct monst *mtmp;
     coord cc;
-    schar unused;
+    schar dx, dy, dz;
 
     if (nohands(youmonst.data)) {
         pline("You can't close anything -- you have no hands!");
@@ -715,21 +711,13 @@ doclose(int dx, int dy, int dz)
         return 0;
     }
 
-    if (dx != -2 && dy != -2 && dz != -2) {  /* -2 signals no direction given */
-        cc.x = u.ux + dx;
-        cc.y = u.uy + dy;
-        if (isok(cc.x, cc.y))
-            got_dir = TRUE;
-    }
-
-    if (!got_dir && !get_adjacent_loc(NULL, NULL, u.ux, u.uy, &cc, &unused))
+    if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
 
-    if (!got_dir) {
-        dx = cc.x - u.ux;
-        dy = cc.y - u.uy;
-        dz = 0;
-    }
+    cc.x = u.ux + dx;
+    cc.y = u.uy + dy;
+    if (!isok(cc.x, cc.y))
+        return 0;
 
     if ((cc.x == u.ux) && (cc.y == u.uy)) {
         pline("You are in the way!");

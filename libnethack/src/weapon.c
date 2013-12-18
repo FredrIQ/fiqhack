@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-25 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -956,7 +956,7 @@ static const struct skill_range {
  * others unselectable.
  */
 int
-enhance_weapon_skill(void)
+enhance_weapon_skill(const struct nh_cmd_arg *arg)
 {
     int pass, i, n, len, longest, id, to_advance, eventually_advance,
         maxxed_cnt, selected[1];
@@ -964,6 +964,8 @@ enhance_weapon_skill(void)
     const char *prefix;
     struct menulist menu;
     boolean speedy = FALSE;
+
+    (void) arg;
 
     if (wizard && yn("Advance skills without practice?") == 'y')
         speedy = TRUE;

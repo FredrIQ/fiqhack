@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1774,18 +1774,29 @@ edibility_prompts(struct obj *otmp)
 }
 
 int
-doeat(struct obj *otmp)
+doeat(const struct nh_cmd_arg *arg)
 {       /* generic "eat" command funtion (see cmd.c) */
     int basenutrit;     /* nutrition of full item */
     boolean dont_start = FALSE;
+    struct obj *otmp;
 
     if (Strangled) {
         pline("If you can't breathe air, how can you consume solids?");
         return 0;
     }
-    if (otmp && !validate_object(otmp, allobj + 2, "eat"))
-        return 0;
-    else if (!otmp)
+    /* If the caller specifies an inventory letter, use that. In the case of
+       a continued action, continue eating the existing object if we can; it
+       must either be in inventory, or on the floor at our location. */
+    if (arg->argtype & CMD_ARG_OBJ)
+        otmp = getargobj(arg, allobj + 2, "eat");
+    else if (arg->argtype & CMD_ARG_CONT && u.utracked[tos_food] &&
+             (u.utracked[tos_food]->where == OBJ_INVENT ||
+              (u.utracked[tos_food]->where == OBJ_FLOOR &&
+               u.utracked[tos_food]->ox == u.ux &&
+               u.utracked[tos_food]->oy == u.uy &&
+               u.utracked[tos_food]->olev == level)))
+        otmp = u.utracked[tos_food];
+    else
         otmp = floorfood("eat");
     if (!otmp)
         return 0;

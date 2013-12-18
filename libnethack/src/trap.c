@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2944,7 +2944,7 @@ drown(void)
         (Teleport_control || rn2(3) < Luck + 2)) {
         pline("You attempt a teleport spell."); /* utcsri!carroll */
         if (!level->flags.noteleport) {
-            dotele();
+            dotele(&(struct nh_cmd_arg){.argtype = 0});
             if (!is_pool(level, u.ux, u.uy))
                 return TRUE;
         } else
@@ -3042,7 +3042,7 @@ drain_en(int n)
 
 /* disarm a trap */
 int
-dountrap(void)
+dountrap(const struct nh_cmd_arg *arg)
 {
     if (near_capacity() >= HVY_ENCUMBER) {
         pline("You're too strained to do that.");
@@ -3061,7 +3061,7 @@ dountrap(void)
               makeplural(body_part(HAND)));
         return 0;
     }
-    return untrap(FALSE);
+    return untrap(arg, FALSE);
 }
 
 
@@ -3463,7 +3463,7 @@ help_monster_out(struct monst *mtmp, struct trap *ttmp)
 }
 
 int
-untrap(boolean force)
+untrap(const struct nh_cmd_arg *arg, boolean force)
 {
     struct obj *otmp;
     boolean confused = (Confusion > 0 || Hallucination > 0);
@@ -3478,7 +3478,7 @@ untrap(boolean force)
     int containercnt = 0;
     schar dx, dy, dz;
 
-    if (!getdir(NULL, &dx, &dy, &dz))
+    if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
     x = u.ux + dx;
     y = u.uy + dy;

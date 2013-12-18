@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,13 +7,15 @@
 
 
 int
-dohistory(void)
+dohistory(const struct nh_cmd_arg *arg)
 {
     struct menulist menu;
     boolean over = program_state.gameover;
     boolean showall = over || wizard;
     char buf[BUFSZ];
     int i;
+
+    (void) arg;
 
     if (histcount < 2) {
         /* you get an automatic entry on turn 1 for being born. If it's the

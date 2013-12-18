@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-28 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -106,14 +106,13 @@ struct nh_cmd_desc *keymap[KEY_MAX], *unknown_keymap[KEY_MAX];
 static struct nh_cmd_desc *commandlist, *unknown_commands;
 static int cmdcount, unknown_count, unknown_size;
 static struct nh_cmd_desc *prev_cmd;
-static struct nh_cmd_arg prev_arg = { CMD_ARG_NONE }, next_command_arg;
+static struct nh_cmd_arg prev_arg = { 0 }, next_command_arg;
 
 static nh_bool prev_cmd_same = FALSE;
 static int current_cmd_key;
 
 static nh_bool have_next_command = FALSE;
 static char next_command_name[32];
-static int prev_count;
 
 static void show_whatdoes(void);
 static struct nh_cmd_desc *show_help(void);
@@ -185,8 +184,7 @@ find_command(const char *cmdname)
 
 
 void
-handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg,
-                    int *count)
+handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg)
 {
     int id = (*cmd)->flags & ~(CMD_UI | DIRCMD | DIRCMD_SHIFT | DIRCMD_CTRL);
 
@@ -201,8 +199,8 @@ handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg,
     case DIR_SE:
     case DIR_UP:
     case DIR_DOWN:
-        arg->argtype = CMD_ARG_DIR;
-        arg->d = id;
+        arg->argtype |= CMD_ARG_DIR;
+        arg->dir = id;
         if ((*cmd)->flags & DIRCMD)
             *cmd = find_command("move");
         else if ((*cmd)->flags & DIRCMD_SHIFT)
@@ -222,14 +220,13 @@ handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg,
         break;
 
     case UICMD_HELP:
-        arg->argtype = CMD_ARG_NONE;
+        arg->argtype = 0;
         *cmd = show_help();
         break;
 
     case UICMD_REDO:
         *cmd = prev_cmd;
         *arg = prev_arg;
-        *count = prev_count;
         break;
 
     case UICMD_STOP:
@@ -255,7 +252,7 @@ handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg,
 
 
 const char *
-get_command(int *count, struct nh_cmd_arg *arg)
+get_command( struct nh_cmd_arg *arg)
 {
     int key, key2, multi;
     char line[BUFSZ];
@@ -264,7 +261,6 @@ get_command(int *count, struct nh_cmd_arg *arg)
     /* inventory item actions may set the next command */
     if (have_next_command) {
         have_next_command = FALSE;
-        *count = 0;
         *arg = next_command_arg;
         return next_command_name;
     }
@@ -272,7 +268,7 @@ get_command(int *count, struct nh_cmd_arg *arg)
     do {
         multi = 0;
         cmd = NULL;
-        arg->argtype = CMD_ARG_NONE;
+        arg->argtype = 0;
 
         key = get_map_key(TRUE);
         while ((key >= '0' && key <= '9') ||
@@ -292,7 +288,6 @@ get_command(int *count, struct nh_cmd_arg *arg)
             continue;
 
         new_action();   /* use a new message line for this action */
-        *count = multi;
         cmd = keymap[key];
         current_cmd_key = key;
 
@@ -300,9 +295,14 @@ get_command(int *count, struct nh_cmd_arg *arg)
             /* handle internal commands. The command handler may alter * cmd,
                arg and count (redo does this) */
             if (cmd->flags & CMD_UI) {
-                handle_internal_cmd(&cmd, arg, count);
+                handle_internal_cmd(&cmd, arg);
                 if (!cmd)       /* command was fully handled internally */
                     continue;
+            }
+
+            if (multi && cmd->flags & CMD_ARG_LIMIT) {
+                arg->argtype |= CMD_ARG_LIMIT;
+                arg->limit = multi;
             }
 
             if (cmd == find_command("redraw")) {
@@ -315,7 +315,7 @@ get_command(int *count, struct nh_cmd_arg *arg)
 
             /* if the command requres an arg AND the arg isn't set yet (by
                handle_internal_cmd) */
-            if (!(cmd->flags & CMD_ARG_NONE) && cmd->flags & CMD_ARG_DIR &&
+            if (cmd->flags & CMD_ARG_DIR && cmd->flags & CMD_MOVE &&
                 arg->argtype != CMD_ARG_DIR) {
                 key2 = get_map_key(TRUE);
                 if (key2 == '\033')     /* cancel silently */
@@ -323,8 +323,8 @@ get_command(int *count, struct nh_cmd_arg *arg)
 
                 cmd2 = keymap[key2];
                 if (cmd2 && (cmd2->flags & CMD_UI) && (cmd2->flags & DIRCMD)) {
-                    arg->argtype = CMD_ARG_DIR;
-                    arg->d =
+                    arg->argtype |= CMD_ARG_DIR;
+                    arg->dir =
                         (enum nh_direction)(cmd2->flags & ~(CMD_UI | DIRCMD));
                 } else
                     cmd = NULL;
@@ -342,7 +342,6 @@ get_command(int *count, struct nh_cmd_arg *arg)
     prev_cmd_same = (cmd == prev_cmd);
     prev_cmd = cmd;
     prev_arg = *arg;
-    prev_count = *count;
 
     return cmd->name;
 }

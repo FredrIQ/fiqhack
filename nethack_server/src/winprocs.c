@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-05 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -23,7 +23,7 @@ static void srv_outrip(struct nh_menuitem *items, int icount, nh_bool tombstone,
                        int end_how, int year);
 static void srv_request_command(nh_bool debug, nh_bool completed,
                                 nh_bool interrupted, char *command,
-                                struct nh_cmd_arg *arg, int *limit);
+                                struct nh_cmd_arg *arg);
 static int srv_display_menu(struct nh_menuitem *items, int icount,
                             const char *title, int how, int placement_hint,
                             int *results);
@@ -417,44 +417,37 @@ srv_outrip(struct nh_menuitem *items, int icount, nh_bool tombstone,
 
 static void
 srv_request_command(nh_bool debug, nh_bool completed, nh_bool interrupted,
-                    char *command, struct nh_cmd_arg *arg, int *limit)
+                    char *command, struct nh_cmd_arg *arg)
 {
     json_t *jarg, *jobj;
-    const char *cmd;
+    const char *cmd, *str;
 
     jobj = json_pack("{sb,sb,sb}", "debug", debug, "completed", completed,
                      "interrupted", interrupted);
     jobj = client_request("request_command", jobj);
 
-    if (json_unpack
-        (jobj, "{ss,so,si!}", "command", &cmd, "arg", &jarg,
-         "limit", limit) == -1)
+    if (json_unpack(jobj, "{ss,so,si!}", "command", &cmd, "arg", &jarg))
         exit_client("Bad set of parameters for request_command");
 
-    if (json_unpack(jarg, "{si*}", "argtype", &(arg->argtype)) == -1)
-        exit_client("Bad parameter arg in request_command");
+    arg->argtype = 0;
 
-    switch (arg->argtype) {
-    case CMD_ARG_DIR:
-        if (json_unpack(jarg, "{si*}", "d", &(arg->d)) == -1)
-            exit_client("Bad direction arg in request_command");
-        break;
-
-    case CMD_ARG_POS:
-        if (json_unpack(jarg, "{si,si*}", "x", &(arg->pos.x),
-                        "y", &(arg->pos.y)) == -1)
-            exit_client("Bad position arg in request_command");
-        break;
-
-    case CMD_ARG_OBJ:
-        if (json_unpack(jarg, "{si*}", "invlet", &(arg->invlet)) == -1)
-            exit_client("Bad invlet arg in request_command");
-        break;
-
-    case CMD_ARG_NONE:
-    default:
-        break;
+    if (json_unpack(jarg, "{si*}", "d", &(arg->dir)) != -1)
+        arg->argtype |= CMD_ARG_DIR;
+    if (json_unpack(jarg, "{si,si*}",
+                    "x", &(arg->pos.x), "y", &(arg->pos.y)) != -1)
+        arg->argtype |= CMD_ARG_POS;
+    if (json_unpack(jarg, "{si*}", "invlet", &(arg->invlet)) != -1)
+        arg->argtype |= CMD_ARG_OBJ;
+    if (json_unpack(jarg, "{ss*}", "str", &str) != -1 && strlen(str) < BUFSZ) {
+        strcpy(arg->str, str);
+        arg->argtype |= CMD_ARG_STR;
     }
+    if (json_unpack(jarg, "{si*}", "spellet", &(arg->spelllet)) != -1)
+        arg->argtype |= CMD_ARG_SPELL;
+    if (json_unpack(jarg, "{si*}", "limit", &(arg->limit)) != -1)
+        arg->argtype |= CMD_ARG_LIMIT;
+    if (json_object_get(jarg, "continuing"))
+        arg->argtype |= CMD_ARG_CONT;
 
     if (cmd != NULL && strlen(cmd) < 60) {
         /* avoid remote buffer overflow attacks, and remote commands with

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1161,26 +1161,31 @@ consume_offering(struct obj *otmp)
 
 
 int
-dosacrifice(struct obj *otmp)
+dosacrifice(const struct nh_cmd_arg *arg)
 {
     int value = 0;
     int pm;
     aligntyp altaralign = a_align(u.ux, u.uy);
     boolean sanctum = level->locations[u.ux][u.uy].altarmask & AM_SANCTUM;
+    struct obj *otmp;
 
     if (!on_altar() || Engulfed) {
         pline("You are not standing on an altar.");
         return 0;
     }
 
+    /* TODO: Proper handling for amulet sacrifices outside the Sanctum, and food
+       sacrifices inside. (Note: Rider corpses are meant to be non-sacrificable,
+       but making the interface refuse to accept the keystrokes is probably the
+       wrong implementation.) */
     if (sanctum && altaralign != A_NONE) {
-        if (otmp && !validate_object(otmp, sacrifice_types, "sacrifice"))
-            return 0;
-        else if (!otmp)
-            otmp = getobj(sacrifice_types, "sacrifice");
+        otmp = getargobj(arg, sacrifice_types, "sacrifice");
         if (!otmp)
             return 0;
     } else {
+        otmp = NULL;
+        if (arg->argtype & CMD_ARG_OBJ)
+            otmp = getargobj(arg, sacrifice_types, "sacrifice");
         if (otmp && otmp->otyp != CORPSE) {
             pline("You can't sacrifice that!");
             return 0;
@@ -1650,8 +1655,10 @@ can_pray(boolean praying)
 }
 
 int
-dopray(void)
+dopray(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
+
     /* Confirm accidental slips of Alt-P */
     if (flags.prayconfirm)
         if (yn("Are you sure you want to pray?") == 'n')
@@ -1750,11 +1757,13 @@ prayer_done(void)
 }
 
 int
-doturn(void)
+doturn(const struct nh_cmd_arg *arg)
 {       /* Knights & Priest(esse)s only please */
 
     struct monst *mtmp, *mtmp2;
     int once, range, xlev;
+
+    (void) arg;
 
     if (!Role_if(PM_PRIEST) && !Role_if(PM_KNIGHT)) {
         /* Try to use turn undead spell. */
