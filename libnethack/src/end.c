@@ -91,6 +91,11 @@ done2(void)
         return 0;
     }
 
+    /* check_survival does this as a side effect. TODO: Make the information
+       flow more sensible. For bonus points, "killbuf" and "kilbuf" both exist,
+       and don't mean quite the same thing. */
+    killer = killbuf;
+    strcpy(killbuf, deaths[QUIT]);
     done_noreturn(QUIT);
 }
 
