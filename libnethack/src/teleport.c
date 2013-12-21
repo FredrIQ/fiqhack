@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-18 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -421,7 +421,8 @@ tele_impl(boolean wizard_tele)
                   u.usteed ? buf : "");
             cc.x = u.ux;
             cc.y = u.uy;
-            if (getpos(&cc, TRUE, "the desired position") == NHCR_CLIENT_CANCEL)
+            if (getpos(&cc, TRUE, "the desired position", FALSE)
+                == NHCR_CLIENT_CANCEL)
                 return; /* abort */
             /* possible extensions: introduce a small error if magic power is
                low; allow transfer to solid rock */
@@ -438,13 +439,13 @@ tele_impl(boolean wizard_tele)
 
 /* TODO: Perhaps work out some way to let controlled teleport in on a
    CMD_ARG_POS, but there are too many codeflow possibilities involved to make
-   that easy. */
+   that easy. For now, if dotele turns into the spell, we copy the argument on
+   to the spell-handling function (which currently ignores it), but the other
+   possible codepaths just lose it. */
 int
 dotele(const struct nh_cmd_arg *arg)
 {
     struct trap *trap;
-
-    (void) arg;
 
     trap = t_at(level, u.ux, u.uy);
     if (trap && (!trap->tseen || trap->ttyp != TELEP_TRAP))
@@ -504,7 +505,7 @@ dotele(const struct nh_cmd_arg *arg)
 
         if (castit) {
             exercise(A_WIS, TRUE);
-            if (spelleffects(sp_no, TRUE))
+            if (spelleffects(sp_no, TRUE, arg))
                 return 1;
             else
                 return 0;
@@ -564,7 +565,7 @@ level_tele_impl(boolean wizard_tele)
 
                     strcat(qbuf, " [type a number]");
             }
-            getlin(qbuf, buf);
+            getlin(qbuf, buf, FALSE);
             if (!strcmp(buf, "\033")) { /* cancelled */
                 if (Confusion && rnl(5)) {
                     pline("Oops...");

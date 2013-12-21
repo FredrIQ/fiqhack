@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-18 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -811,7 +811,7 @@ object_selection_checks(struct obj *otmp, const char *word)
  * least "NONSENSIBLE_USE". (TODO: Remove allowall altogether.)
  */
 struct obj *
-getobj(const char *let, const char *word)
+getobj(const char *let, const char *word, boolean isarg)
 {
     struct obj *otmp;
     char ilet;
@@ -825,6 +825,9 @@ getobj(const char *let, const char *word)
     char nonechar = '-';
     int cnt;
     boolean prezero = FALSE;
+
+    if (isarg)
+        flags.last_arg.argtype &= ~CMD_ARG_OBJ;
 
     if (*let == ALLOW_COUNT)
         let++, allowcnt = 1;
@@ -899,6 +902,10 @@ getobj(const char *let, const char *word)
             return NULL;
         }
         if (ilet == nonechar) {
+            if (allownone && isarg) {
+                flags.last_arg.argtype |= CMD_ARG_OBJ;
+                flags.last_arg.invlet = nonechar;
+            }
             return allownone ? &zeroobj : NULL;
         }
         if (ilet == def_oc_syms[COIN_CLASS]) {
@@ -979,6 +986,12 @@ getobj(const char *let, const char *word)
                 otmp = splitobj(otmp, cnt);
         }
     }
+
+    if (isarg) {
+        flags.last_arg.argtype |= CMD_ARG_OBJ;
+        flags.last_arg.invlet = otmp->invlet;
+    }
+
     return otmp;
 }
 

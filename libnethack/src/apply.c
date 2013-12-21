@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-18 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -16,29 +16,29 @@ static const char tools_too[] = { ALL_CLASSES, ALLOW_NONE, NONE_ON_COMMA,
     WEAPON_CLASS, WAND_CLASS, GEM_CLASS, 0
 };
 
-static int use_camera(struct obj *);
+static int use_camera(struct obj *, const struct nh_cmd_arg *);
 static int use_towel(struct obj *);
 static boolean its_dead(int, int, int *);
-static int use_stethoscope(struct obj *);
+static int use_stethoscope(struct obj *, const struct nh_cmd_arg *);
 static int use_whistle(struct obj *);
 static int use_magic_whistle(struct obj *);
-static int use_leash(struct obj *);
-static int use_mirror(struct obj *);
+static int use_leash(struct obj *, const struct nh_cmd_arg *);
+static int use_mirror(struct obj *, const struct nh_cmd_arg *);
 static void use_bell(struct obj **);
 static int use_candelabrum(struct obj *);
 static int use_candle(struct obj **);
 static int use_lamp(struct obj *);
 static int light_cocktail(struct obj *);
 static int use_tinning_kit(struct obj *);
-static int use_figurine(struct obj **obj);
+static int use_figurine(struct obj **obj, const struct nh_cmd_arg *);
 static int use_grease(struct obj *);
 static int use_trap(struct obj *);
 static int use_stone(struct obj *);
 static int set_trap(void);      /* occupation callback */
-static int use_whip(struct obj *);
-static int use_pole(struct obj *);
+static int use_whip(struct obj *, const struct nh_cmd_arg *);
+static int use_pole(struct obj *, const struct nh_cmd_arg *);
 static int use_cream_pie(struct obj **);
-static int use_grapple(struct obj *);
+static int use_grapple(struct obj *, const struct nh_cmd_arg *);
 static boolean figurine_location_checks(struct obj *, coord *, boolean);
 static boolean uhave_graystone(void);
 static void add_class(char *, char);
@@ -47,7 +47,7 @@ static const char no_elbow_room[] =
     "You don't have enough elbow-room to maneuver.";
 
 static int
-use_camera(struct obj *obj)
+use_camera(struct obj *obj, const struct nh_cmd_arg *arg)
 {
     struct monst *mtmp;
     schar dx, dy, dz;
@@ -56,7 +56,7 @@ use_camera(struct obj *obj)
         pline("Using your camera underwater would void the warranty.");
         return 0;
     }
-    if (!getdir(NULL, &dx, &dy, &dz))
+    if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
 
     if (obj->spe <= 0) {
@@ -204,7 +204,7 @@ static const char hollow_str[] = "a hollow sound.  This must be a secret %s!";
    The last stethoscope use turn is stored in obj->lastused; the last
    stethoscope use movement energy is stored in obj->spe. */
 static int
-use_stethoscope(struct obj *obj)
+use_stethoscope(struct obj *obj, const struct nh_cmd_arg *arg)
 {
     struct monst *mtmp;
     struct rm *loc;
@@ -221,7 +221,7 @@ use_stethoscope(struct obj *obj)
         pline("You have no free %s.", body_part(HAND));
         return 0;
     }
-    if (!getdir(NULL, &dx, &dy, &dz))
+    if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
 
     res = (moves == obj->lastused) && (youmonst.movement == obj->spe);
@@ -430,22 +430,27 @@ unleash_all(void)
 
 /* ARGSUSED */
 static int
-use_leash(struct obj *obj)
+use_leash(struct obj *obj, const struct nh_cmd_arg *arg)
 {
     coord cc;
     struct monst *mtmp;
     int spotmon;
-    schar dz;
+    schar dx, dy, dz;
 
     if (!obj->leashmon && number_leashed() >= MAXLEASHED) {
         pline("You cannot leash any more pets.");
         return 0;
     }
 
-    if (!get_adjacent_loc(NULL, NULL, u.ux, u.uy, &cc, &dz))
+    if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
 
-    if ((cc.x == u.ux) && (cc.y == u.uy)) {
+    cc.x = u.ux + dx;
+    cc.y = u.uy + dy;
+    if (!isok(cc.x, cc.y))
+        return 0;
+
+    if (!dx && !dy) {
         if (u.usteed && dz > 0) {
             mtmp = u.usteed;
             spotmon = 1;
@@ -620,14 +625,14 @@ check_leash(xchar x, xchar y)
 static const char look_str[] = "You look %s.";
 
 static int
-use_mirror(struct obj *obj)
+use_mirror(struct obj *obj, const struct nh_cmd_arg *arg)
 {
     struct monst *mtmp;
     char mlet;
     boolean vis;
     schar dx, dy, dz;
 
-    if (!getdir(NULL, &dx, &dy, &dz))
+    if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
 
     if (obj->cursed && !rn2(2)) {
@@ -1442,7 +1447,10 @@ use_tinning_kit(struct obj *obj)
         return 1;
     }
 
-    if (!(corpse = floorfood("tin")))
+    /* We can't reuse an argument here, because the argument is the tinning
+       kit, not the item being tinned. We signal this to floorfood using a NULL
+       argument pointer. */
+    if (!(corpse = floorfood("tin", NULL)))
         return 0;
     if (corpse->oeaten) {
         pline("You cannot tin something which is partly eaten.");
@@ -1782,7 +1790,7 @@ figurine_location_checks(struct obj *obj, coord * cc, boolean quietly)
 
 
 static int
-use_figurine(struct obj **objp)
+use_figurine(struct obj **objp, const struct nh_cmd_arg *arg)
 {
     xchar x, y;
     coord cc;
@@ -1794,7 +1802,7 @@ use_figurine(struct obj **objp)
         if (!figurine_location_checks(obj, NULL, FALSE))
             return 0;
     }
-    if (!getdir(NULL, &dx, &dy, &dz)) {
+    if (!getargdir(arg, NULL, &dx, &dy, &dz)) {
         flags.move = multi = 0;
         return 0;
     }
@@ -1849,7 +1857,7 @@ use_grease(struct obj *obj)
             dropx(obj);
             return 1;
         }
-        otmp = getobj(lubricables, "grease");
+        otmp = getobj(lubricables, "grease", FALSE);
         if (!otmp)
             return 0;
         if ((otmp->owornmask & W_MASK(os_arm)) && uarmc) {
@@ -1925,7 +1933,7 @@ use_stone(struct obj *tstone)
     choices = (tstone->otyp == TOUCHSTONE && tstone->dknown &&
                objects[TOUCHSTONE].oc_name_known) ? justgems : allowall;
     sprintf(stonebuf, "rub on the stone%s", plur(tstone->quan));
-    if ((obj = getobj(choices, stonebuf)) == 0)
+    if ((obj = getobj(choices, stonebuf, FALSE)) == 0)
         return 0;
 
     if (obj == tstone && obj->quan == 1) {
@@ -2165,7 +2173,7 @@ set_trap(void)
 
 
 static int
-use_whip(struct obj *obj)
+use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
 {
     char buf[BUFSZ];
     struct monst *mtmp;
@@ -2182,7 +2190,7 @@ use_whip(struct obj *obj)
             res = 1;
     }
 
-    if (!getdir(NULL, &dx, &dy, &dz))
+    if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return res;
 
     if (Stunned || (Confusion && !rn2(5)))
@@ -2426,7 +2434,7 @@ static const char
 
 /* Distance attacks by pole-weapons */
 static int
-use_pole(struct obj *obj)
+use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
 {
     int res = 0, typ, max_range = 4, min_range = 4;
     coord cc;
@@ -2450,7 +2458,7 @@ use_pole(struct obj *obj)
     pline(where_to_hit);
     cc.x = u.ux;
     cc.y = u.uy;
-    if (getpos(&cc, TRUE, "the spot to hit") == NHCR_CLIENT_CANCEL)
+    if (getargpos(arg, &cc, TRUE, "the spot to hit") == NHCR_CLIENT_CANCEL)
         return res;     /* user pressed ESC */
 
     /* Calculate range */
@@ -2542,7 +2550,7 @@ use_cream_pie(struct obj **objp)
 
 
 static int
-use_grapple(struct obj *obj)
+use_grapple(struct obj *obj, const struct nh_cmd_arg *arg)
 {
     int res = 0, typ, max_range = 4, tohit;
     coord cc;
@@ -2566,7 +2574,7 @@ use_grapple(struct obj *obj)
     pline(where_to_hit);
     cc.x = u.ux;
     cc.y = u.uy;
-    if (getpos(&cc, TRUE, "the spot to hit") == NHCR_CLIENT_CANCEL)
+    if (getargpos(arg, &cc, TRUE, "the spot to hit") == NHCR_CLIENT_CANCEL)
         return res;     /* user pressed ESC */
 
     /* Calculate range */
@@ -2893,10 +2901,10 @@ doapply(const struct nh_cmd_arg *arg)
         res = use_cream_pie(&obj);
         break;
     case BULLWHIP:
-        res = use_whip(obj);
+        res = use_whip(obj, arg);
         break;
     case GRAPPLING_HOOK:
-        res = use_grapple(obj);
+        res = use_grapple(obj, arg);
         break;
     case LARGE_BOX:
     case CHEST:
@@ -2919,16 +2927,16 @@ doapply(const struct nh_cmd_arg *arg)
         break;
     case PICK_AXE:
     case DWARVISH_MATTOCK:
-        res = use_pick_axe(obj);
+        res = use_pick_axe(obj, arg);
         break;
     case TINNING_KIT:
         res = use_tinning_kit(obj);
         break;
     case LEASH:
-        res = use_leash(obj);
+        res = use_leash(obj, arg);
         break;
     case SADDLE:
-        res = use_saddle(obj);
+        res = use_saddle(obj, arg);
         break;
     case MAGIC_WHISTLE:
         res = use_magic_whistle(obj);
@@ -2958,10 +2966,10 @@ doapply(const struct nh_cmd_arg *arg)
         }
         break;
     case STETHOSCOPE:
-        res = use_stethoscope(obj);
+        res = use_stethoscope(obj, arg);
         break;
     case MIRROR:
-        res = use_mirror(obj);
+        res = use_mirror(obj, arg);
         break;
     case BELL:
     case BELL_OF_OPENING:
@@ -2983,7 +2991,7 @@ doapply(const struct nh_cmd_arg *arg)
         res = light_cocktail(obj);
         break;
     case EXPENSIVE_CAMERA:
-        res = use_camera(obj);
+        res = use_camera(obj, arg);
         break;
     case TOWEL:
         res = use_towel(obj);
@@ -2992,7 +3000,7 @@ doapply(const struct nh_cmd_arg *arg)
         use_crystal_ball(obj);
         break;
     case MAGIC_MARKER:
-        res = dowrite(obj);
+        res = dowrite(obj, arg);
         break;
     case TIN_OPENER:
         if (!carrying(TIN)) {
@@ -3009,7 +3017,7 @@ doapply(const struct nh_cmd_arg *arg)
         goto xit;
 
     case FIGURINE:
-        res = use_figurine(&obj);
+        res = use_figurine(&obj, arg);
         break;
     case UNICORN_HORN:
         use_unicorn_horn(obj);
@@ -3024,7 +3032,7 @@ doapply(const struct nh_cmd_arg *arg)
     case BUGLE:
     case LEATHER_DRUM:
     case DRUM_OF_EARTHQUAKE:
-        res = do_play_instrument(obj);
+        res = do_play_instrument(obj, arg);
         break;
     case HORN_OF_PLENTY:       /* not a musical instrument */
         if (obj->spe > 0) {
@@ -3074,10 +3082,10 @@ doapply(const struct nh_cmd_arg *arg)
     default:
         /* Pole-weapons can strike at a distance */
         if (is_pole(obj)) {
-            res = use_pole(obj);
+            res = use_pole(obj, arg);
             break;
         } else if (is_pick(obj) || is_axe(obj)) {
-            res = use_pick_axe(obj);
+            res = use_pick_axe(obj, arg);
             break;
         }
         pline("Sorry, I don't know how to use that.");

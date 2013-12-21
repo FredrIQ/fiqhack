@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-18 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -73,13 +73,13 @@ const struct cmd_desc cmdlist[] = {
     {"annotate", "name the current level", 0, 0, TRUE, donamelevel,
      CMD_ARG_STR | CMD_EXT},
     {"apply", "use a tool or container or dip into a potion", 'a', 0, FALSE,
-     doapply, CMD_ARG_OBJ},
+     doapply, CMD_ARG_OBJ | CMD_ARG_POS | CMD_ARG_DIR | CMD_ARG_STR},
     {"attributes", "show your attributes", C('x'), 0, TRUE, doattributes,
      0},
     {"autoexplore", "automatically explore until something happens", 'v', 0,
      FALSE, doautoexplore, 0},
     {"cast", "cast a spell from memory", 'Z', 0, TRUE, docast,
-     CMD_ARG_SPELL},
+     CMD_ARG_SPELL | CMD_ARG_DIR | CMD_ARG_POS},
     {"chat", "talk to someone", 'c', M('c'), TRUE, dotalk,
      CMD_ARG_DIR | CMD_EXT},     /* converse? */
     {"close", "close a door", 0, 0, FALSE, doclose, CMD_ARG_DIR},
@@ -102,11 +102,11 @@ const struct cmd_desc cmdlist[] = {
     {"enhance", "advance or check weapon and spell skills", M('e'), 0, TRUE,
      enhance_weapon_skill, CMD_EXT},
     {"engrave", "write on the floor", 'E', 0, FALSE, doengrave,
-     CMD_ARG_OBJ},
+     CMD_ARG_OBJ | CMD_ARG_STR},
     {"equip", "change your equipment", 'A', '*', FALSE, doequip,
      CMD_ARG_CONT},
     {"farlook", "say what is on a distant square", ';', 0, TRUE, doquickwhatis,
-     CMD_NOTIME},
+     CMD_NOTIME | CMD_ARG_POS},
     {"fight", "attack even if no hostile monster is visible", 'F', 0, FALSE,
      dofight, CMD_ARG_DIR},
     {"fire", "throw your quivered item", 'f', 0, FALSE, dofire,
@@ -218,7 +218,7 @@ const struct cmd_desc cmdlist[] = {
     {"wipe", "wipe off your face", M('w'), 0, FALSE, dowipe,
      CMD_EXT},
     {"whatis", "describe what a symbol means", '/', 0, TRUE, dowhatis,
-     CMD_HELP | CMD_NOTIME},
+     CMD_HELP | CMD_NOTIME | CMD_ARG_POS | CMD_ARG_STR},
     {"zap", "zap a wand to use its magic", 'z', 0, FALSE, dozap,
      CMD_ARG_OBJ | CMD_ARG_DIR},
 
@@ -240,7 +240,7 @@ const struct cmd_desc cmdlist[] = {
     {"detect", "(DEBUG) detect monsters", 0, 0, TRUE, wiz_detect,
      CMD_DEBUG | CMD_EXT},
     {"genesis", "(DEBUG) create a monster", C('g'), 0, TRUE, wiz_genesis,
-     CMD_DEBUG},
+     CMD_DEBUG | CMD_ARG_LIMIT | CMD_ARG_STR},
     {"identify", "(DEBUG) identify all items in the inventory", C('i'), 0, TRUE,
      wiz_identify, CMD_DEBUG | CMD_EXT},
     {"levelchange", "(DEBUG) change experience level", 0, 0, TRUE,
@@ -422,12 +422,7 @@ wiz_map(const struct nh_cmd_arg *arg)
 static int
 wiz_genesis(const struct nh_cmd_arg *arg)
 {
-    int quan = 1;
-
-    if ((arg->argtype & CMD_ARG_LIMIT) && arg->limit > 1)
-        quan = arg->limit;
-
-    create_particular(quan);
+    create_particular(arg);
 
     return 0;
 }
@@ -521,9 +516,7 @@ wiz_level_change(const struct nh_cmd_arg *arg)
     int newlevel;
     int ret;
 
-    (void) arg;
-
-    getlin("To what experience level do you want to be set?", buf);
+    getarglin(arg, "To what experience level do you want to be set?", buf);
     mungspaces(buf);
     if (buf[0] == '\033' || buf[0] == '\0')
         ret = 0;
@@ -2106,11 +2099,21 @@ getargdir(const struct nh_cmd_arg *arg, const char *query,
     /* Is there a reasonable direction specified already? */
     if ((arg->argtype & CMD_ARG_DIR) &&
         dir_to_delta(arg->dir, dx, dy, dz) &&
-        (!dx || !dy || u.umonnum != PM_GRID_BUG))
+        (!dx || !dy || u.umonnum != PM_GRID_BUG)) {
+
+        /* getdir() has a stun/confusion check; replicate that here.
+
+           (Doing things this way prevents a bug whereby command repeat would
+           remember the direction chosen from stun/confusion rather than
+           re-randomizing it each turn.) */
+        if (!*dz && (Stunned || (Confusion && !rn2(5))))
+            confdir(dx, dy);
+
         return 1;
+    }
 
     /* Otherwise, ask. */
-    return getdir(query, dx, dy, dz);
+    return getdir(query, dx, dy, dz, TRUE);
 }
 
 int
@@ -2124,7 +2127,7 @@ getargpos(const struct nh_cmd_arg *arg, coord *cc, boolean force, const char *go
     }
 
     /* Otherwise, ask. */
-    return getpos(cc, force, goal);
+    return getpos(cc, force, goal, TRUE);
 }
 
 struct obj *
@@ -2133,19 +2136,23 @@ getargobj(const struct nh_cmd_arg *arg, const char *let, const char *word)
     struct obj *obj = NULL, *otmp;
   
     /* Did the client specify an inventory letter? */
-    if (arg->argtype & CMD_ARG_POS)
+    if (arg->argtype & CMD_ARG_OBJ)
         for (otmp = invent; otmp && !obj; otmp = otmp->nobj)
             if (otmp->invlet == arg->invlet)
                 obj = otmp;
 
-    /* If so, is that a valid object? */
+    /* If so, is that a valid object? (If not, ask for another.) */
     if (obj && validate_object(obj, let, word))
         return obj;
 
-    /* TODO: Special-case '-', ',' to &zeroobj if allowed */
+    /* What about '-' or ','? */
+    if (arg->argtype & CMD_ARG_OBJ &&
+        (arg->invlet == '-' || arg->invlet == ',') &&
+        strchr(let, ALLOW_NONE))
+        return &zeroobj;
 
     /* Otherwise, prompt the user. */
-    return getobj(let, word);
+    return getobj(let, word, TRUE);
 }
 
 void
@@ -2161,7 +2168,7 @@ getarglin(const struct nh_cmd_arg *arg, const char *query, char *bufp)
     }
 
     /* Otherwise, prompt for one. */
-    getlin(query, bufp);
+    getlin(query, bufp, TRUE);
 }
 
 int
@@ -2287,7 +2294,7 @@ get_adjacent_loc(const char *prompt, const char *emsg, xchar x, xchar y,
     xchar new_x, new_y;
     schar dx, dy;
 
-    if (!getdir(prompt, &dx, &dy, dz)) {
+    if (!getdir(prompt, &dx, &dy, dz, FALSE)) {
         pline("Never mind.");
         return 0;
     }

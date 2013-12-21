@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-18 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -233,7 +233,7 @@ extern boolean is_digging(void);
 extern int holetime(void);
 extern boolean dig_check(struct monst *, boolean, int, int);
 extern void digactualhole(int, int, struct monst *, int);
-extern int use_pick_axe(struct obj *);
+extern int use_pick_axe(struct obj *, const struct nh_cmd_arg *);
 extern int use_pick_axe2(struct obj *, schar, schar, schar);
 extern boolean mdig_tunnel(struct monst *);
 extern void watch_dig(struct monst *, xchar, xchar, boolean);
@@ -501,7 +501,7 @@ extern void reset_faint(void);
 extern void violated_vegetarian(void);
 extern void newuhs(boolean);
 extern boolean can_sacrifice(const struct obj *);
-extern struct obj *floorfood(const char *);
+extern struct obj *floorfood(const char *, const struct nh_cmd_arg *);
 extern void vomit(void);
 extern int eaten_stat(int, struct obj *);
 extern void fix_petrification(void);
@@ -669,7 +669,7 @@ extern boolean wearing_armor(void);
 extern boolean is_worn(const struct obj *);
 extern struct obj *gold_at(struct level *lev, int x, int y);
 extern struct obj *mkgoldobj(long);
-extern struct obj *getobj(const char *let, const char *word);
+extern struct obj *getobj(const char *let, const char *word, boolean isarg);
 extern boolean validate_object(struct obj *obj, const char *lets,
                                const char *word);
 extern void fully_identify_obj(struct obj *);
@@ -1115,7 +1115,6 @@ extern void save_mt_state(struct memfile *mf);
 extern void restore_mt_state(struct memfile *mf);
 extern int display_rng(int);
 
-
 /* ### muse.c ### */
 
 extern boolean find_defensive(struct monst *mon, struct musable *m);
@@ -1136,7 +1135,7 @@ extern void you_aggravate(struct monst *);
 /* ### music.c ### */
 
 extern void awaken_soldiers(void);
-extern int do_play_instrument(struct obj *);
+extern int do_play_instrument(struct obj *, const struct nh_cmd_arg *);
 
 /* ### o_init.c ### */
 
@@ -1367,7 +1366,7 @@ extern void do_genocide(int);
 extern void punish(struct obj *);
 extern void unpunish(void);
 extern boolean cant_create(int *, boolean);
-extern boolean create_particular(int);
+extern boolean create_particular(const struct nh_cmd_arg *);
 
 /* ### rect.c ### */
 
@@ -1541,7 +1540,7 @@ extern int study_book(struct obj *);
 extern void age_spells(void);
 extern int docast(const struct nh_cmd_arg *);
 extern int spell_skilltype(int);
-extern int spelleffects(int, boolean);
+extern int spelleffects(int, boolean, const struct nh_cmd_arg *);
 extern void losespells(void);
 extern int dovspell(const struct nh_cmd_arg *arg);
 extern void dump_spells(void);
@@ -1566,7 +1565,7 @@ extern void reset_steal(void);
 
 extern void rider_cant_reach(void);
 extern boolean can_saddle(struct monst *);
-extern int use_saddle(struct obj *);
+extern int use_saddle(struct obj *, const struct nh_cmd_arg *);
 extern boolean can_ride(struct monst *);
 extern int doride(const struct nh_cmd_arg *);
 extern void exercise_steed(void);
@@ -1803,11 +1802,11 @@ extern void unwield_silently(struct obj *obj);
 
 /* ### windows.c ### */
 
-extern int getpos(coord * cc, boolean, const char *);
+extern int getpos(coord *cc, boolean, const char *, boolean isarg);
 extern char yn_function(const char *query, const char *resp, char def);
-extern int getdir(const char *, schar * dx, schar * dy, schar * dz);
+extern int getdir(const char *, schar *dx, schar *dy, schar *dz, boolean isarg);
 extern char query_key(const char *query, int *count);
-extern void getlin(const char *query, char *bufp);
+extern void getlin(const char *query, char *bufp, boolean isarg);
 extern int display_menu(struct nh_menuitem *, int, const char *, int, int,
                         int *);
 extern int display_objects(struct nh_objitem *, int, const char *, int, int,
@@ -1875,7 +1874,7 @@ extern int extra_pref(struct monst *, struct obj *);
 
 /* ### write.c ### */
 
-extern int dowrite(struct obj *);
+extern int dowrite(struct obj *, const struct nh_cmd_arg *);
 
 /* ### xmalloc.c ### */
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -24,8 +24,6 @@ struct turnstate {
     int multi;                   /* negative = helpless, positive = repeating */
     int (*afternmv) (void);      /* what to do after helplessness ends */
     char multi_txt[BUFSZ];       /* the reason the player is helpless */
-    int saved_cmd;               /* command being repeated by positive multi */
-    struct nh_cmd_arg saved_arg; /* argument for saved_cmd */
 
     /* Objects that might potentially be destroyed or otherwise changed during
        a turn. */
@@ -98,6 +96,17 @@ struct flag {
 # define DISCLOSE_NO_WITHOUT_PROMPT     '-'
     char end_disclose;  /* disclose various info upon exit */
     char menu_style;    /* User interface style setting */
+
+    /* Multi-turn command state.
+
+       last_cmd is always the last command that the user entered (and is set to
+       the command currently being processed, while a command is being
+       processed). last_arg is initially the argument that the user entered for
+       that command, but it is modified in response to user input (i.e. if the
+       server prompts for an argument, it's handled the same way as if the
+       client had volunteered it.) */
+    int last_cmd;                             /* this or previous command */
+    struct nh_cmd_arg last_arg;              /* this or previous argument */
 
     /* KMH, role patch -- Variables used during startup. If the user wishes to
        select a role, race, gender, and/or alignment during startup, the

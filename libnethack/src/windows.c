@@ -1,12 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 
 int
-getpos(coord * cc, boolean force, const char *goal)
+getpos(coord * cc, boolean force, const char *goal, boolean isarg)
 {
     int rv = -1, x, y;
 
@@ -29,12 +29,22 @@ getpos(coord * cc, boolean force, const char *goal)
     cc->x = x;
     cc->y = y;
 
+    if (isarg) {
+        if (rv == -1)
+            flags.last_arg.argtype &= ~CMD_ARG_POS;
+        else {
+            flags.last_arg.argtype |= CMD_ARG_POS;
+            flags.last_arg.pos.x = cc->x;
+            flags.last_arg.pos.y = cc->y;
+        }
+    }
+
     return rv;
 }
 
 
 int
-getdir(const char *s, schar * dx, schar * dy, schar * dz)
+getdir(const char *s, schar * dx, schar * dy, schar * dz, boolean isarg)
 {
     static const char *const dirnames[] = {
         "no direction", "west", "northwest", "north", "northeast",
@@ -47,6 +57,8 @@ getdir(const char *s, schar * dx, schar * dy, schar * dz)
     suppress_more();
     pline("<%s: %s>", query, dirnames[dir + 1]);
 
+    flags.last_arg.argtype &= ~CMD_ARG_DIR;
+
     *dz = 0;
     if (!dir_to_delta(dir, dx, dy, dz))
         return 0;
@@ -55,6 +67,9 @@ getdir(const char *s, schar * dx, schar * dy, schar * dz)
         *dx = *dy = 0;
         return 0;
     }
+
+    flags.last_arg.argtype |= CMD_ARG_DIR;
+    flags.last_arg.dir = dir;
 
     if (!*dz && (Stunned || (Confusion && !rn2(5))))
         confdir(dx, dy);
@@ -80,12 +95,19 @@ query_key(const char *query, int *count)
 
 
 void
-getlin(const char *query, char *bufp)
+getlin(const char *query, char *bufp, boolean isarg)
 {
     (*windowprocs.win_getlin) (query, bufp);
 
     suppress_more();
     pline("<%s: %s>", query, bufp[0] == '\033' ? "(escaped)" : bufp);
+
+    if (*bufp == '\033')
+        flags.last_arg.argtype &= ~CMD_ARG_STR;
+    else {
+        flags.last_arg.argtype |= CMD_ARG_STR;
+        strcpy(flags.last_arg.str, bufp);
+    }
 }
 
 

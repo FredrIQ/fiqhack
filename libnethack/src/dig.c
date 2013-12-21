@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -826,7 +826,7 @@ dig_up_grave(void)
 }
 
 int
-use_pick_axe(struct obj *obj)
+use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
 {
     boolean ispick;
     char qbuf[QBUFSZ];
@@ -853,7 +853,7 @@ use_pick_axe(struct obj *obj)
     }
 
     sprintf(qbuf, "In what direction do you want to %s?", verb);
-    if (!getdir(qbuf, &dx, &dy, &dz))
+    if (!getargdir(arg, qbuf, &dx, &dy, &dz))
         return res;
 
     return use_pick_axe2(obj, dx, dy, dz);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-18 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1784,12 +1784,13 @@ doeat(const struct nh_cmd_arg *arg)
         pline("If you can't breathe air, how can you consume solids?");
         return 0;
     }
-    /* If the caller specifies an inventory letter, use that. In the case of
-       a continued action, continue eating the existing object if we can; it
-       must either be in inventory, or on the floor at our location. */
-    if (arg->argtype & CMD_ARG_OBJ)
-        otmp = getargobj(arg, allobj + 2, "eat");
-    else if (arg->argtype & CMD_ARG_CONT && u.utracked[tos_food] &&
+    /* In the case of a continued action, continue eating the existing object if
+       we can; it must either be in inventory, or on the floor at our
+       location. Otherwise, fall through to floorfood(), which will read an
+       object from the argument if specified, and otherwise prompt. (We need to
+       special-case CMD_ARG_CONT because otherwise it would propmt every turn
+       for floor items.) */
+    if (arg->argtype & CMD_ARG_CONT && u.utracked[tos_food] &&
              (u.utracked[tos_food]->where == OBJ_INVENT ||
               (u.utracked[tos_food]->where == OBJ_FLOOR &&
                u.utracked[tos_food]->ox == u.ux &&
@@ -1797,7 +1798,7 @@ doeat(const struct nh_cmd_arg *arg)
                u.utracked[tos_food]->olev == level)))
         otmp = u.utracked[tos_food];
     else
-        otmp = floorfood("eat");
+        otmp = floorfood("eat", arg);
     if (!otmp)
         return 0;
     if (check_capacity(NULL))
@@ -2313,7 +2314,7 @@ other_floorfood(const struct obj *otmp)
 /* Returns an object representing food.  Object may be either on floor or in
    inventory. */
 struct obj *
-floorfood(const char *verb)
+floorfood(const char *verb, const struct nh_cmd_arg *arg)
 {
     struct obj *otmp;
     char qbuf[QBUFSZ];
@@ -2401,10 +2402,20 @@ eat_floorfood:
 
 skipfloor:
     /* We cannot use ALL_CLASSES since that causes getobj() to skip its "ugly
-       checks" and we need to check for inedible items. */
-    otmp = getobj(feeding ? (const char *)(allobj + (can_floorfood ? 0 : 2))
-                  : (const char *)(comestibles + (can_floorfood ? 0 : 2)),
-                  verb);
+       checks" and we need to check for inedible items.
+
+       An arg of NULL means that we should use a nonrepeatable prompt, rather
+       than a command argument. */
+    if (arg)
+        otmp = getargobj(arg, feeding ?
+                         (const char *)(allobj + (can_floorfood ? 0 : 2)) :
+                         (const char *)(comestibles + (can_floorfood ? 0 : 2)),
+                         verb);
+    else
+        otmp = getobj(feeding ?
+                      (const char *)(allobj + (can_floorfood ? 0 : 2)) :
+                      (const char *)(comestibles + (can_floorfood ? 0 : 2)),
+                      verb, FALSE);
     if (otmp == &zeroobj) {
         checking_can_floorfood = FALSE;
         goto eat_floorfood;

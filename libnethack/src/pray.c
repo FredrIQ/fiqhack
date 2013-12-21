@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-18 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1183,14 +1183,10 @@ dosacrifice(const struct nh_cmd_arg *arg)
         if (!otmp)
             return 0;
     } else {
-        otmp = NULL;
-        if (arg->argtype & CMD_ARG_OBJ)
-            otmp = getargobj(arg, sacrifice_types, "sacrifice");
-        if (otmp && otmp->otyp != CORPSE) {
-            pline("You can't sacrifice that!");
-            return 0;
-        } else if (!otmp)
-            otmp = floorfood("sacrifice");
+        /* This implementation will, if the user command-repeats a sacrifice
+           from the ground, ask for another item from the ground. This is
+           reasonable behaviour. */
+        otmp = floorfood("sacrifice", arg);
         if (!otmp)
             return 0;
     }
@@ -1775,7 +1771,7 @@ doturn(const struct nh_cmd_arg *arg)
                  spl_book[sp_no].sp_id != SPE_TURN_UNDEAD; sp_no++) ;
 
             if (sp_no < MAXSPELL && spl_book[sp_no].sp_id == SPE_TURN_UNDEAD)
-                return spelleffects(sp_no, TRUE);
+                return spelleffects(sp_no, TRUE, arg);
         }
 
         pline("You don't know how to turn undead!");

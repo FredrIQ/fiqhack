@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-18 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1187,7 +1187,7 @@ dounequip(const struct nh_cmd_arg *arg)
     long mask;
     struct obj *otmp;
 
-    otmp = getobj(clothes_and_accessories, "take off");
+    otmp = getargobj(arg, clothes_and_accessories, "take off");
     if (!otmp)
         return 0;
 
@@ -2059,7 +2059,7 @@ doequip(const struct nh_cmd_arg *arg)
             otmp = getobj(equippables_and_nothing,
                           j == os_wep ? "wield" :
                           j == os_swapwep ? "ready" :
-                          j == os_quiver ? "quiver" : "wear");
+                          j == os_quiver ? "quiver" : "wear", FALSE);
 
             /* check that equipping is not known to be impossible */
             if (otmp && (otmp == &zeroobj ||

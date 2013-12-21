@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-18 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -396,8 +396,7 @@ nh_play_game(int fd)
             (wizard, completed, interrupted, cmd, &arg);
         cmdidx = get_command_idx(cmd);
         if (!strcmp(cmd, "repeat")) {
-            cmdidx = -1;
-            
+            cmdidx = -1;            
         } else if (cmdidx < 0) {
             pline("Unrecognised command '%s'", cmd);
             completed = TRUE;
@@ -832,9 +831,12 @@ command_input(int cmdidx, const struct nh_cmd_arg *arg)
     if (multi >= 0 && occupation)
         handle_occupation();
     else if (multi == 0 || (multi > 0 && cmdidx != -1)) {
-        if (multi) {
-            turnstate.saved_cmd = cmdidx;
-            turnstate.saved_arg = *arg;
+        if (cmdidx == -1) {
+            cmdidx = flags.last_cmd;
+            arg = &flags.last_arg;
+        } else {
+            flags.last_cmd = cmdidx;
+            flags.last_arg = *arg;
         }
         flags.nopick = 0;
         switch (do_command(cmdidx, arg)) {
@@ -866,7 +868,7 @@ command_input(int cmdidx, const struct nh_cmd_arg *arg)
                 nomul(0, NULL);
             }
         } else
-            if (do_command(turnstate.saved_cmd, &turnstate.saved_arg) !=
+            if (do_command(flags.last_cmd, &flags.last_arg) !=
                 COMMAND_OK) {
                 pline("Unrecognised command."); 
                 nomul(0, NULL);

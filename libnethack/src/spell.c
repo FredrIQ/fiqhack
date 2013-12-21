@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-18 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -26,7 +26,7 @@ static int learn(void);
 static boolean getspell(int *);
 static boolean dospellmenu(const char *, int, int *);
 static int percent_success(int);
-static int throwspell(schar * dx, schar * dy);
+static int throwspell(schar *dx, schar *dy, const struct nh_cmd_arg *arg);
 static void cast_protection(void);
 static void spell_backfire(int);
 static const char *spelltypemnemonic(int);
@@ -577,7 +577,7 @@ docast(const struct nh_cmd_arg *arg)
     int spell_no;
 
     if (getargspell(arg, &spell_no))
-        return spelleffects(spell_no, FALSE);
+        return spelleffects(spell_no, FALSE, arg);
     return 0;
 }
 
@@ -693,7 +693,7 @@ spell_backfire(int spell)
 }
 
 int
-spelleffects(int spell, boolean atme)
+spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
 {
     int energy, damage, chance, n, intell;
     int skill, role_skill;
@@ -816,7 +816,7 @@ spelleffects(int spell, boolean atme)
     case SPE_CONE_OF_COLD:
     case SPE_FIREBALL:
         if (role_skill >= P_SKILLED) {
-            if (throwspell(&dx, &dy)) {
+            if (throwspell(&dx, &dy, arg)) {
                 dz = 0;
                 cc.x = dx;
                 cc.y = dy;
@@ -871,7 +871,7 @@ spelleffects(int spell, boolean atme)
         if (objects[pseudo->otyp].oc_dir != NODIR) {
             if (atme)
                 dx = dy = dz = 0;
-            else if (!getdir(NULL, &dx, &dy, &dz)) {
+            else if (!getargdir(arg, NULL, &dx, &dy, &dz)) {
                 /* getdir cancelled, generate a random direction */
                 dz = 0;
                 confdir(&dx, &dy);
@@ -966,7 +966,7 @@ spelleffects(int spell, boolean atme)
 
 /* Choose location where spell takes effect. */
 static int
-throwspell(schar * dx, schar * dy)
+throwspell(schar *dx, schar *dy, const struct nh_cmd_arg *arg)
 {
     coord cc;
 
@@ -981,7 +981,7 @@ throwspell(schar * dx, schar * dy)
     pline("Where do you want to cast the spell?");
     cc.x = u.ux;
     cc.y = u.uy;
-    if (getpos(&cc, TRUE, "the desired position") == NHCR_CLIENT_CANCEL)
+    if (getargpos(arg, &cc, TRUE, "the desired position") == NHCR_CLIENT_CANCEL)
         return 0;       /* user pressed ESC */
     /* The number of moves from hero to where the spell drops. */
     if (distmin(u.ux, u.uy, cc.x, cc.y) > 10) {

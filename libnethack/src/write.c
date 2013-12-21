@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
@@ -62,7 +62,7 @@ cost(struct obj *otmp)
 static const char write_on[] = { SCROLL_CLASS, SPBOOK_CLASS, 0 };
 
 int
-dowrite(struct obj *pen)
+dowrite(struct obj *pen, const struct nh_cmd_arg *arg)
 {
     struct obj *paper;
     char namebuf[BUFSZ], *nm, *bp;
@@ -85,7 +85,7 @@ dowrite(struct obj *pen)
     }
 
     /* get paper to write on */
-    paper = getobj(write_on, "write on");
+    paper = getargobj(arg, write_on, "write on");
     if (!paper)
         return 0;
     typeword = (paper->oclass == SPBOOK_CLASS) ? "spellbook" : "scroll";
@@ -102,7 +102,7 @@ dowrite(struct obj *pen)
 
     /* what to write */
     sprintf(qbuf, "What type of %s do you want to write?", typeword);
-    getlin(qbuf, namebuf);
+    getarglin(arg, qbuf, namebuf);
     mungspaces(namebuf);        /* remove any excess whitespace */
     if (namebuf[0] == '\033' || !namebuf[0])
         return 1;
