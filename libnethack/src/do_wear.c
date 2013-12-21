@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-21 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -709,9 +709,8 @@ set_wear(void)
 
    The correct use for this function in a command, then, is to set utracked,
    reset the reservoir if any objects were removed from utracked, then call
-   equip_heartbeat yourself once. If it returns 0 or 1, return the same
-   value. If it returns 2, set equip_occupation_callback as an occupation, then
-   return 1. */
+   equip_heartbeat. If it returns 0 or 1, return the same value. If it returns
+   2, call action_incomplete(), then return 1. */
 static inline boolean
 want_to_change_slot(enum objslot os)
 {
@@ -1084,11 +1083,6 @@ equip_heartbeat(void)
     }
     return reservoir_increased ? 1 : 0;
 }
-static int
-equip_occupation_callback(void)
-{
-    return equip_heartbeat() == 2 ? 1 : 0;
-}
 
 /* Called when the player requests to equip otmp in slot. (You can empty the
    slot using either NULL or &zeroobj.) This function may be called with any
@@ -1097,12 +1091,8 @@ equip_occupation_callback(void)
    knows it's impossible, do nothing and return 1 if it's impossible and the
    character has to experiment to find that out, and otherwise will perform the
    equip, taking 0, 1, or more actions, and return whether or not it took
-   time. (In the case where it takes more than 1 action, it will set an
-   occupation callback that will do the actual equipping at the appropriate time
-   in the future; this can be interrupted, and will be resumed by equip_in_slot
-   if it's called with the same arguments with no equipping done in between, and
-   in a few other cases, such as wearing an item that was temporarily taken
-   off.) */
+   time. (In the case where it takes more than 1 action, it will mark the action
+   as incomplete.) */
 int
 equip_in_slot(struct obj *otmp, enum objslot slot)
 {
@@ -1169,7 +1159,7 @@ equip_in_slot(struct obj *otmp, enum objslot slot)
     /* Do the equip. */
     t = equip_heartbeat();
     if (t == 2)
-        set_occupation(equip_occupation_callback, "changing your equipment");
+        action_incomplete("changing your equipment", occ_equip);
 
     return t > 0;
 }
@@ -1972,13 +1962,12 @@ doequip(const struct nh_cmd_arg *arg)
     struct menulist menu;
     int changes, time_consuming_changes = 0;
     boolean resuming = TRUE;
-    boolean silently = arg->argtype & CMD_ARG_CONT;
 
     do {
         changes = time_consuming_changes = 0;
         resuming = FALSE;
 
-        if (!silently)
+        if (turnstate.continue_message)
             init_menulist(&menu);
 
         for (j = 0; j <= os_last_equip; j++) {
@@ -1988,7 +1977,7 @@ doequip(const struct nh_cmd_arg *arg)
                     c_slotnames_menu[j],
                     BUFSZ - LONGEST_SLOTNAME - 4,
                     otmp ? doname(otmp) : "(empty)");
-            if (!silently)
+            if (turnstate.continue_message)
                 add_menuitem(&menu, j+1, buf, 0, FALSE);
             if (u.utracked[tos_first_equip + j]) {
                 boolean progress = !!u.uoccupation_progress[
@@ -2000,7 +1989,7 @@ doequip(const struct nh_cmd_arg *arg)
                         doname(u.utracked[tos_first_equip + j]) :
                         "(empty)",
                         progress ? " (in progress)" : "" );
-                if (!silently)
+                if (turnstate.continue_message)
                     add_menuitem(&menu, 0, buf, 0, FALSE);
                 changes++;
                 if (j <= os_last_armor)
@@ -2012,7 +2001,7 @@ doequip(const struct nh_cmd_arg *arg)
             }
         }
 
-        if (!silently) {
+        if (turnstate.continue_message) {
             add_menutext(&menu, "");
             if (changes) {
                 add_menuitem(
@@ -2090,7 +2079,7 @@ doequip(const struct nh_cmd_arg *arg)
     /* Do the equip. */
     n = equip_heartbeat();
     if (n == 2)
-        set_occupation(equip_occupation_callback, "changing your equipment");
+        action_incomplete("changing your equipment", occ_equip);
     return n > 0;
 }
 
@@ -2144,7 +2133,7 @@ destroy_arm(struct obj *atmp)
     }
 
 #undef DESTROY_ARM
-    stop_occupation();
+    action_interrupted();
     return 1;
 }
 

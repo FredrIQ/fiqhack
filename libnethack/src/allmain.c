@@ -1,16 +1,16 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-21 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 /* various code that was replicated in *main.c */
 
 #include "hack.h"
+#include "hungerstatus.h"
 
 #include <sys/stat.h>
 
 #include "dlb.h"
-#include "hack.h"
 #include "patchlevel.h"
 
 extern const struct cmd_desc cmdlist[];
@@ -127,9 +127,6 @@ startup_common(boolean including_program_state)
 {
     /* (re)init all global data */
     init_data(including_program_state);
-    reset_food();       /* zero out victual and tin */
-    reset_steal();
-    reset_dig_status();
     reset_encumber_msg();
 
     /* create mutable copies of object and artifact liss */
@@ -384,8 +381,6 @@ nh_play_game(int fd)
     update_inventory();
 
     /* The main loop. */
-    boolean completed = TRUE;
-    boolean interrupted = FALSE;
     while (1) {
         char cmd[BUFSZ];
         struct nh_cmd_arg arg;
@@ -393,24 +388,18 @@ nh_play_game(int fd)
         int cmdidx;
 
         (*windowprocs.win_request_command)
-            (wizard, completed, interrupted, cmd, &arg);
+            (wizard, !flags.incomplete, flags.interrupted, cmd, &arg);
         cmdidx = get_command_idx(cmd);
+
         if (cmdidx < 0) {
             pline("Unrecognised command '%s'", cmd);
-            completed = TRUE;
-            interrupted = FALSE;
             continue;
-        } else if (multi > 0) {
-            /* allow interruption of multi-turn commands */
-            nomul(0, NULL);
         }
 
         if (program_state.viewing &&
             (cmdidx < 0 || !(cmdlist[cmdidx].flags & CMD_NOTIME))) {
             pline("Command '%s' unavailable while watching/replaying a game.",
                   cmd);
-            completed = TRUE;
-            interrupted = FALSE;
             continue;
         }
 
@@ -420,30 +409,16 @@ nh_play_game(int fd)
         unsigned int pre_rngstate = mt_nextstate();
         int pre_moves = moves;
 
+        flags.incomplete = FALSE;
+        flags.interrupted = FALSE;
         command_input(cmdidx, &arg);
 
         /* make sure we actually want this command to be logged */
         if (cmdidx >= 0 && (cmdlist[cmdidx].flags & CMD_NOTIME) &&
             pre_rngstate == mt_nextstate() && pre_moves == moves)
             log_revert_command();   /* nope, cut it out of the log */
-        else if (!multi && !occupation)
+        else
             neutral_turnstate_tasks();
-
-        /* 
-         * performing a command can put the game into several different states:
-         *  - the command completes immediately: a simple move or an attack etc.
-         *    multi == 0, occupation == NULL
-         *  - if a count is given, the command will (usually) take count turns
-         *    multi == count (> 0), occupation == NULL
-         *  - the command may cause a delay: for ex. putting on or removing
-         *    armor multi == -delay (< 0), occupation == NULL
-         *    multi is incremented in you_moved
-         *  - the command may take multiple moves, and require a callback to be
-         *    run for each move. example: forcing a lock
-         *    multi >= 0, occupation == callback
-         */
-        completed = multi == 0 && !occupation;
-        interrupted = FALSE; /* TODO */
     }
 
 normal_exit:
@@ -649,11 +624,8 @@ you_moved(void)
                          !rn2(80 - (20 * night())))
                     change = 2;
                 if (change && !Unchanging) {
-                    if (multi >= 0) {
-                        if (occupation)
-                            stop_occupation();
-                        else
-                            nomul(0, NULL);
+                    if (!Helpless) {
+                        action_interrupted();
                         if (change == 1)
                             polyself(FALSE);
                         else
@@ -663,7 +635,7 @@ you_moved(void)
                 }
             }
 
-            if (Searching && multi >= 0)
+            if (Searching && !Helpless)
                 dosearch0(1);
             dosounds();
             do_storms();
@@ -701,10 +673,11 @@ you_moved(void)
             }
 
             /* when immobile, count is in turns */
-            if (multi < 0) {
-                if (++multi == 0) {     /* finished yet? */
-                    unmul(NULL);
-                    /* if unmul caused a level change, take it now */
+            if (Helpless) {
+                Helpless--;
+                if (!Helpless) {     /* finished yet? */
+                    cancel_helplessness(u.umoveagain);
+                    /* if doing that caused a level change, take it now */
                     if (u.utotype)
                         deferred_goto();
                 }
@@ -718,21 +691,6 @@ you_moved(void)
 
     if (u.utrap && u.utraptype == TT_LAVA)
         handle_lava_trap(TRUE);
-}
-
-
-static void
-handle_occupation(void)
-{
-    if ((*occupation) () == 0) {
-        occupation = NULL;
-        *turnstate.occupation_txt = 0;
-        return;
-    }
-    if (monster_nearby()) {
-        stop_occupation();
-        reset_eat();
-    }
 }
 
 
@@ -794,14 +752,14 @@ pre_move_tasks(boolean didmove)
 
     u.umoved = FALSE;
 
-    if (multi > 0) {
-        lookaround();
-        if (!multi) {
-            /* lookaround may clear multi */
-            flags.move = 0;
-            iflags.botl = 1;
-        }
-    }
+    /* Cancel occupations if they no longer apply. */
+    reset_occupations(FALSE);
+
+    /* TODO: Switch between lookaround and monster_nearby depending on
+       what command we're doing. */
+    lookaround();
+    flags.move = 0;
+    iflags.botl = 1;
 
     if (didmove && moves % 100 == 0)
         realtime_tasks();
@@ -820,53 +778,141 @@ pre_move_tasks(boolean didmove)
 }
 
 
+void
+helpless(int turns, const char *reason, const char *done)
+{
+    if (turns < Helpless)
+        return;
+
+    action_interrupted();
+
+    u.uinvulnerable = FALSE;
+    u.usleep = 0;
+    Helpless = turns;
+
+    strcpy(u.uwhybusy, reason);
+    if (done)
+        strcpy(u.umoveagain, reason);
+    else
+        strcpy(u.umoveagain, "You can move again.");
+
+    flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
+}
+
+
+void
+cancel_helplessness(const char *msg)
+{
+    boolean previously_unconscious = unconscious();
+
+    action_interrupted();
+
+    if (*msg)
+        pline(msg);
+
+    Helpless = 0;
+    u.usleep = 0;
+    flags.soundok = 1;
+
+    if (previously_unconscious) {
+        see_monsters();
+        see_objects();
+        vision_full_recalc = 1;
+    }
+
+    /* Were we mimicking something? */
+    if (youmonst.m_ap_type) {
+        youmonst.m_ap_type = M_AP_NOTHING;
+        newsym(u.ux, u.uy);
+    }
+
+    if (u.uhs == FAINTED)
+        u.uhs = FAINTING;
+}
+
+
+/* Called from command implementations to indicate that they're multi-turn
+   commands; all but the last turn should call this */
+void
+action_incomplete(const char *reason, enum occupation ocode)
+{
+    strcpy(u.uwhybusy, reason);
+    flags.incomplete = TRUE;
+    flags.occupation = ocode;
+}
+
+/* Called when an action is logically complete: it completes it and interrupts
+   it with no message. For single-action commands, this effectively means "I
+   know the action only takes one turn, but even if you gave a repeat count it
+   shouldn't be repeated." For multi-action commands, this means "I thought this
+   action might take more than one turn, but it didn't." */
+void
+action_completed(void)
+{
+    flags.incomplete = FALSE;
+    flags.interrupted = TRUE;
+    flags.occupation = occ_none;
+}
+
+/* Called from just about anywhere to abort an interruptible multi-turn
+ * command. This happens even if the server doesn't consider a multi-turn
+ * command to be in progress; the current API allows the client to substitute
+ * its own definition if it wants to.
+ *
+ * The general rule about which action_ function to use is:
+ * - action_interrupted: if something surprises the character that is unrelated
+ *   to the command they input
+ * - action_completed: if the interruption is due to the action that the
+ *   character was attempting, either because of invalid input, or something
+ *   that interrupts that command in particular (such as walking onto an item
+ *   while exploring).
+ *
+ * The user interface is aware of the difference between these functions.
+ * However, no present interface treats them differently (apart from the message
+ * that action_interrupted prints).
+ */
+void
+action_interrupted(void)
+{
+    if (flags.incomplete && !flags.interrupted)
+        pline("You stop %s.", u.uwhybusy);
+    flags.interrupted = TRUE;
+}
+
+/* Helper function for occupations. */
+void
+one_occupation_turn(int (*callback)(void), const char *gerund,
+                    enum occupation ocode)
+{
+    action_incomplete(gerund, ocode);
+    if (!callback())
+        action_completed();
+}
+
 /* perform the command given by cmdidx (an index into cmdlist in cmd.c) */
 static void
 command_input(int cmdidx, struct nh_cmd_arg *arg)
 {
     boolean didmove = FALSE;
 
-    if (multi >= 0 && occupation)
-        handle_occupation();
-    else if (multi == 0 || (multi > 0 && cmdidx != -1)) {
-        flags.nopick = 0;
+    flags.nopick = 0;
+    flags.occupation = occ_none;
+    if (!Helpless) {
         switch (do_command(cmdidx, arg)) {
         case COMMAND_UNKNOWN:
             pline("Unrecognised command.");
-            nomul(0, NULL);
+            action_interrupted();
             return;
         case COMMAND_DEBUG_ONLY:
             pline("That command is only available in debug mode.");
-            nomul(0, NULL);
+            action_interrupted();
             return;
         case COMMAND_BAD_ARG:
             pline("I don't understand what you want that command to apply to.");
-            nomul(0, NULL);
+            action_interrupted();
             return;
         }
-    } else if (multi > 0) {
-        if (flags.mv) {
-            if (multi < COLNO && !--multi)
-                flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
-            if (!multi)
-                nomul(0, NULL); /* reset multi state */
-
-            struct nh_cmd_arg arg;
-            arg_from_delta(u.dx, u.dy, 0, &arg);
-            if (!domove(&arg)) {
-                /* Don't use a move when travelling into an obstacle. */
-                flags.move = FALSE;
-                nomul(0, NULL);
-            }
-        } else
-            if (do_command(flags.last_cmd, &flags.last_arg) !=
-                COMMAND_OK) {
-                pline("Unrecognised command."); 
-                nomul(0, NULL);
-                return;
-            }
     }
-    /* no need to do anything here for multi < 0 */
 
     if (u.utotype)      /* change dungeon level */
         deferred_goto();        /* after rhack() */
@@ -876,13 +922,6 @@ command_input(int cmdidx, struct nh_cmd_arg *arg)
 
     if (vision_full_recalc)
         vision_recalc(0);       /* vision! */
-    /* when running in non-tport mode, this gets done through domove() */
-    if ((!flags.run || iflags.runmode == RUN_TPORT) &&
-        (multi && (!flags.travel ? !(multi % 7) : !(moves % 7L)))) {
-        if (flags.run)
-            iflags.botl = 1;
-        flush_screen();
-    }
 
     didmove = flags.move;
     if (didmove) {
@@ -892,7 +931,7 @@ command_input(int cmdidx, struct nh_cmd_arg *arg)
     /* actual time passed */
     /****************************************/
     /* once-per-player-input things go here */
-     /****************************************/
+    /****************************************/
     xmalloc_cleanup();
     iflags.next_msg_nonblocking = 0;
 
@@ -900,24 +939,7 @@ command_input(int cmdidx, struct nh_cmd_arg *arg)
     flags.move = 1;
     pre_move_tasks(didmove);
 
-    if (multi == 0 && !occupation)
-        flush_screen(); /* Flush screen buffer */
-}
-
-
-void
-stop_occupation(void)
-{
-    if (occupation) {
-        if (!maybe_finished_meal(TRUE))
-            pline("You stop %s.", turnstate.occupation_txt);
-        occupation = 0;
-        *(turnstate.occupation_txt) = 0;
-        iflags.botl = 1;        /* in case u.uhs changed */
-        /* fainting stops your occupation, there's no reason to sync.
-           sync_hunger(); */
-    }
-    nomul(0, NULL); /* running, travel and autotravel don't count as occupations */
+    flush_screen(); 
 }
 
 

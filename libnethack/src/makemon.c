@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1362,13 +1362,10 @@ restore_rndmonst_state(struct memfile *mf)
 }
 
 
-/* The routine below is used to make one of the multiple types
- * of a given monster class.  The second parameter specifies a
- * special casing bit mask to allow the normal genesis
- * masks to be deactivated.  Returns 0 if no monsters
- * in that class can be made.
- */
-
+/* The routine below is used to make one of the multiple types of a given
+   monster class. The second parameter specifies a special casing bit mask to
+   allow the normal genesis masks to be deactivated. Returns 0 if no monsters
+   in that class can be made. */
 const struct permonst *
 mkclass(const d_level * dlev, char class, int spc)
 {
@@ -2084,11 +2081,13 @@ restore_mon(struct memfile *mf)
     mon->mpeaceful = (mflags >> 9) & 1;
     mon->mtrapped = (mflags >> 8) & 1;
     mon->mleashed = (mflags >> 7) & 1;
-    mon->isshk = (mflags >> 6) & 1;
-    mon->isminion = (mflags >> 5) & 1;
-    mon->isgd = (mflags >> 4) & 1;
-    mon->ispriest = (mflags >> 3) & 1;
-    mon->iswiz = (mflags >> 2) & 1;
+    mon->msuspicious = (mflags >> 6) & 1;
+    /* 1 free bit */
+    mon->isshk = (mflags >> 4) & 1;
+    mon->isminion = (mflags >> 3) & 1;
+    mon->isgd = (mflags >> 2) & 1;
+    mon->ispriest = (mflags >> 1) & 1;
+    mon->iswiz = (mflags >> 0) & 1;
 
     return mon;
 }
@@ -2184,9 +2183,12 @@ save_mon(struct memfile *mf, const struct monst *mon)
         (mon->mflee << 15) | (mon->mcansee << 14) |
         (mon->mcanmove << 13) | (mon->msleeping << 12) |
         (mon->mstun << 11) | (mon->mconf << 10) | (mon->mpeaceful << 9) |
-        (mon->mtrapped << 8) | (mon->mleashed << 7) | (mon->isshk << 6) |
-        (mon->isminion << 5) | (mon->isgd << 4) |
-        (mon->ispriest << 3) | (mon->iswiz << 2);
+        (mon->mtrapped << 8) | (mon->mleashed << 7) |
+        (mon->msuspicious << 6) |
+        /* 1 free bit */
+        (mon->isshk << 4) |
+        (mon->isminion << 3) | (mon->isgd << 2) |
+        (mon->ispriest << 1) | (mon->iswiz << 0);
     mwrite32(mf, mflags);
 
     mwrite8(mf, mon->mfleetim);

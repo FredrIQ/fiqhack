@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-21 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -45,8 +45,7 @@ dosave(const struct nh_cmd_arg *arg)
         n = 3;
 
     if (n == 3) {
-        if (multi > 0)
-            nomul(0, NULL);
+        action_interrupted();
     } else if (n == 1) {
         terminate(GAME_DETACHED);
     } else if (n == 2) {
@@ -157,8 +156,11 @@ save_flags(struct memfile *mf)
     mwrite8(mf, flags.bones_enabled);         /*  98 */
     mwrite8(mf, flags.permablind);            /*  99 */
     mwrite8(mf, flags.permahallu);            /* 100 */
+    mwrite8(mf, flags.incomplete);            /* 101 */
+    mwrite8(mf, flags.interrupted);           /* 102 */
+    mwrite8(mf, flags.occupation);            /* 103 */
 
-    mwrite(mf, flags.inv_order, sizeof (flags.inv_order)); /* 101+ */
+    mwrite(mf, flags.inv_order, sizeof (flags.inv_order)); /* 104+ */
     mwrite(mf, &(flags.last_arg), sizeof (flags.last_arg));
 }
 
@@ -237,10 +239,6 @@ savegamestate(struct memfile *mf)
     save_waterlevel(mf);
     save_mt_state(mf);
     save_track(mf);
-    save_food(mf);
-    save_steal(mf);
-    save_dig_status(mf);
-    mwrite32(mf, multi);
     save_rndmonst_state(mf);
     save_history(mf);
 }
@@ -363,6 +361,7 @@ save_you(struct memfile *mf, struct you *y)
     mwrite32(mf, y->bc_felt);
     mwrite32(mf, y->ucreamed);
     mwrite32(mf, y->uswldtim);
+    mwrite32(mf, y->uhelpless);
     mwrite32(mf, y->udg_cnt);
     mwrite32(mf, y->next_attr_check);
     mwrite32(mf, y->ualign.record);
@@ -427,6 +426,8 @@ save_you(struct memfile *mf, struct you *y)
     mwrite8(mf, y->uspmtime);
     mwrite8(mf, y->twoweap);
 
+    mwrite(mf, y->uwhybusy, (sizeof y->uwhybusy));
+    mwrite(mf, y->umoveagain, (sizeof y->umoveagain));
     mwrite(mf, y->usick_cause, sizeof (y->usick_cause));
     mwrite(mf, y->urooms, sizeof (y->urooms));
     mwrite(mf, y->urooms0, sizeof (y->urooms0));
@@ -468,6 +469,10 @@ save_utracked(struct memfile *mf, struct you *y)
         mwrite32(mf, y->utracked[i] == &zeroobj ? -1 :
                  y->utracked[i] ? y->utracked[i]->o_id : 0);
         mwrite32(mf, y->uoccupation_progress[i]);
+    }
+    for (i = 0; i <= tl_last_slot; i++) {
+        mwrite8(mf, y->utracked_location[i].x);
+        mwrite8(mf, y->utracked_location[i].y);
     }
 }
 

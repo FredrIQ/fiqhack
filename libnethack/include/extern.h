@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-21 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -22,6 +22,7 @@ enum nh_direction;
 enum nh_log_status;
 enum nh_menuitem_role;
 enum objslot;
+enum occupation;
 struct attack;
 struct damage;
 struct def_skill;
@@ -55,8 +56,13 @@ struct you;
 
 /* ### allmain.c ### */
 
-extern void stop_occupation(void);
 extern void startup_common(boolean);
+extern void action_incomplete(const char *gerund, enum occupation occupation);
+extern void action_interrupted(void);
+extern void action_completed(void);
+extern void one_occupation_turn(int (*)(void), const char *, enum occupation);
+extern void helpless(int turns, const char *reason, const char *done);
+extern void cancel_helplessness(const char *done);
 
 /* ### apply.c ### */
 
@@ -77,7 +83,6 @@ extern boolean snuff_lit(struct obj *);
 extern boolean catch_lit(struct obj *);
 extern void use_unicorn_horn(struct obj *);
 extern boolean tinnable(const struct obj *);
-extern void reset_trapset(void);
 extern void fig_transform(void *, long);
 extern int unfixable_trouble_count(boolean);
 extern int do_break_wand(struct obj *);
@@ -164,9 +169,9 @@ extern const char *rank_of(int, short, boolean);
 
 /* ### cmd.c ### */
 
-extern void reset_occupations(void);
-extern void set_occupation(int (*)(void), const char *);
+extern void reset_occupations(boolean);
 extern int get_command_idx(const char *cmd);
+extern boolean last_command_was(const char *cmd);
 extern int do_command(int, struct nh_cmd_arg *);
 extern void enlightenment(int);
 extern void show_conduct(int);
@@ -234,17 +239,13 @@ extern int holetime(void);
 extern boolean dig_check(struct monst *, boolean, int, int);
 extern void digactualhole(int, int, struct monst *, int);
 extern int use_pick_axe(struct obj *, const struct nh_cmd_arg *);
-extern int use_pick_axe2(struct obj *, schar, schar, schar);
 extern boolean mdig_tunnel(struct monst *);
-extern void watch_dig(struct monst *, xchar, xchar, boolean);
+extern void watch_warn(struct monst *, xchar, xchar, boolean);
 extern void zap_dig(schar, schar, schar);
 extern void bury_objs(struct level *, int, int);
 extern void unearth_objs(struct level *lev, int x, int y);
 extern void rot_organic(void *, long);
 extern void rot_corpse(void *, long);
-extern void save_dig_status(struct memfile *mf);
-extern void restore_dig_status(struct memfile *mf);
-extern void reset_dig_status(void);
 
 /* ### display.c ### */
 
@@ -491,13 +492,9 @@ extern int dooverview(const struct nh_cmd_arg *);
 
 extern boolean is_edible(const struct obj *, boolean);
 extern void init_uhunger(void);
-extern int Hear_again(void);
-extern void reset_eat(void);
 extern int doeat(const struct nh_cmd_arg *);
 extern void gethungry(void);
 extern void morehungry(int);
-extern boolean is_fainted(void);
-extern void reset_faint(void);
 extern void violated_vegetarian(void);
 extern void newuhs(boolean);
 extern boolean can_sacrifice(const struct obj *);
@@ -505,11 +502,6 @@ extern struct obj *floorfood(const char *, const struct nh_cmd_arg *);
 extern void vomit(void);
 extern int eaten_stat(int, struct obj *);
 extern void fix_petrification(void);
-extern void consume_oeaten(struct obj *, int);
-extern boolean maybe_finished_meal(boolean);
-extern void save_food(struct memfile *mf);
-extern void restore_food(struct memfile *mf);
-extern void reset_food(void);
 
 /* ### end.c ### */
 
@@ -615,8 +607,6 @@ extern void check_special_room(boolean);
 extern int dopickup(const struct nh_cmd_arg *);
 extern void lookaround(void);
 extern int monster_nearby(void);
-extern void nomul(int nval, const char *msg);
-extern void unmul(const char *);
 extern void losehp(int, const char *, boolean);
 extern int weight_cap(void);
 extern int inv_weight(void);
@@ -662,6 +652,7 @@ extern void delobj(struct obj *);
 extern struct obj *sobj_at(int otyp, struct level *lev, int x, int y);
 extern struct obj *carrying(int);
 extern struct obj *carrying_questart(void);
+extern boolean obj_with_u(struct obj *);
 extern boolean have_lizard(void);
 extern struct obj *o_on(unsigned int, struct obj *);
 extern boolean obj_here(struct obj *, int, int);
@@ -748,10 +739,7 @@ extern int midnight(void);
 
 /* ### lock.c ### */
 
-extern boolean picking_lock(int *, int *);
-extern boolean picking_at(int, int);
-extern void reset_pick(void);
-extern int pick_lock(struct obj *, schar dx, schar dy, schar sz);
+extern int pick_lock(struct obj *, const struct nh_cmd_arg *);
 extern int doforce(const struct nh_cmd_arg *);
 extern boolean boxlock(struct obj *, struct obj *);
 extern boolean doorlock(struct obj *, int, int);
@@ -1536,7 +1524,7 @@ extern boolean load_special(struct level *lev, const char *);
 /* ### spell.c ### */
 
 extern void deadbook(struct obj *book2, boolean invoked);
-extern int study_book(struct obj *);
+extern int study_book(struct obj *, const struct nh_cmd_arg *);
 extern void age_spells(void);
 extern int docast(const struct nh_cmd_arg *);
 extern int spell_skilltype(int);
@@ -1557,9 +1545,6 @@ extern void stealamulet(struct monst *);
 extern void mdrop_special_objs(struct monst *);
 extern void relobj(struct monst *, int, boolean);
 extern struct obj *findgold(struct obj *);
-extern void save_steal(struct memfile *mf);
-extern void restore_steal(struct memfile *mf);
-extern void reset_steal(void);
 
 /* ### steed.c ### */
 

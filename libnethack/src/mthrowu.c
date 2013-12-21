@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -349,14 +349,12 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
             if (ohitmon(mtmp, singleobj, range, verbose))
                 break;
         } else if (bhitpos.x == u.ux && bhitpos.y == u.uy) {
-            if (multi)
-                nomul(0, NULL);
+            action_interrupted();
 
             if (singleobj->oclass == GEM_CLASS &&
                 singleobj->otyp <= LAST_GEM + 9
                 /* 9 glass colors */
-                && is_unicorn(youmonst.data)
-                && multi >= 0) {
+                && is_unicorn(youmonst.data) && !Helpless) {
                 if (singleobj->otyp > LAST_GEM) {
                     pline("You catch the %s.", xname(singleobj));
                     pline("You are not interested in %s junk.",
@@ -453,7 +451,7 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
                     killer = NULL;
                 }
             }
-            stop_occupation();
+            action_interrupted();
             if (hitu || !range) {
                 drop_throw(singleobj, hitu, u.ux, u.uy);
                 break;
@@ -560,7 +558,7 @@ thrwmu(struct monst *mtmp)
             dam = 1;
 
         thitu(hitv, dam, otmp, NULL);
-        stop_occupation();
+        action_interrupted();
         return;
     }
 
@@ -646,7 +644,7 @@ thrwmu(struct monst *mtmp)
     m_shot.o = STRANGE_OBJECT;
     m_shot.s = FALSE;
 
-    nomul(0, NULL);
+    action_interrupted();
 }
 
 /* Find a target for a ranged attack. */
@@ -852,7 +850,7 @@ thrwmm(struct monst *mtmp, struct monst *mdef)
     m_shot.o = STRANGE_OBJECT;
     m_shot.s = FALSE;
 
-    nomul(0, NULL);
+    action_interrupted();
 }
 
 /* monster spits substance at you */
@@ -888,7 +886,7 @@ spitmu(struct monst *mtmp, const struct attack *mattk)
             m_throw(mtmp, mtmp->mx, mtmp->my, sgn(tbx), sgn(tby),
                     distmin(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy), otmp,
                     TRUE);
-            nomul(0, NULL);
+            action_interrupted();
             return 0;
         }
     }
@@ -923,7 +921,7 @@ spitmm(struct monst *mtmp, struct monst *mdef, const struct attack *mattk)
             (BOLT_LIM - distmin(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy))) {
             if (canseemon(mtmp)) {
                 pline("%s spits venom!", Monnam(mtmp));
-                nomul(0, NULL);
+                action_interrupted();
             }
             m_throw(mtmp, mtmp->mx, mtmp->my, sgn(tbx), sgn(tby),
                     distmin(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy), otmp,
@@ -960,7 +958,7 @@ breamu(struct monst *mtmp, const struct attack *mattk)
                     pline("%s breathes %s!", Monnam(mtmp), breathwep[typ - 1]);
                 buzz((int)(-20 - (typ - 1)), (int)mattk->damn, mtmp->mx,
                      mtmp->my, sgn(tbx), sgn(tby));
-                nomul(0, NULL);
+                action_interrupted();
                 /* breath runs out sometimes. Also, give monster some cunning;
                    don't breath if the player fell asleep. */
                 if (!rn2(3))
@@ -997,7 +995,7 @@ breamm(struct monst *mtmp, struct monst *mdef, const struct attack *mattk)
             if ((typ >= AD_MAGM) && (typ <= AD_ACID)) {
                 if (canseemon(mtmp)) {
                     pline("%s breathes %s!", Monnam(mtmp), breathwep[typ - 1]);
-                    nomul(0, NULL);
+                    action_interrupted();
                 }
                 buzz((int)(-20 - (typ - 1)), (int)mattk->damn, mtmp->mx,
                      mtmp->my, sgn(tbx), sgn(tby));

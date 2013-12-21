@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-18 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /*      Copyright (c) 1989 Janet Walz, Mike Threepoint */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -294,8 +294,7 @@ growl(struct monst *mtmp)
         growl_verb = growl_sound(mtmp);
     if (growl_verb) {
         pline("%s %s!", Monnam(mtmp), vtense(NULL, growl_verb));
-        if (flags.run)
-            nomul(0, NULL);
+        action_interrupted();
         wake_nearto(mtmp->mx, mtmp->my, mtmp->data->mlevel * 18);
     }
 }
@@ -336,8 +335,7 @@ yelp(struct monst *mtmp)
         }
     if (yelp_verb) {
         pline("%s %s!", Monnam(mtmp), vtense(NULL, yelp_verb));
-        if (flags.run)
-            nomul(0, NULL);
+        action_interrupted();
         wake_nearto(mtmp->mx, mtmp->my, mtmp->data->mlevel * 12);
     }
 }
@@ -369,8 +367,7 @@ whimper(struct monst *mtmp)
         }
     if (whimper_verb) {
         pline("%s %s.", Monnam(mtmp), vtense(NULL, whimper_verb));
-        if (flags.run)
-            nomul(0, NULL);
+        action_interrupted();
         wake_nearto(mtmp->mx, mtmp->my, mtmp->data->mlevel * 6);
     }
 }
@@ -607,8 +604,7 @@ domonnoise(struct monst *mtmp)
     case MS_BONES:
         pline("%s rattles noisily.", Monnam(mtmp));
         pline("You freeze for a moment.");
-        nomul(-2, "scared by rattling");
-        nomovemsg = 0;  /* default: "You can move again." */
+        helpless(2, "scared by rattling", NULL);
         break;
     case MS_LAUGH:
         {

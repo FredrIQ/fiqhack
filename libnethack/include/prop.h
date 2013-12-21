@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-06 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -132,15 +132,20 @@ enum equipmsg {
     em_magical,   /* for magical forcible removal: "<the ring> falls off!" */
 };
 
-/* This enum holds non-equipment object pointers that are tracked indirectly in
-   struct you (mostly state for handling occupations that might be interrupted,
-   which is why it can't go in struct turnstate). These are saved and restored,
-   and also updated when the object is reallocated and nulled out when the
-   object is freed. */
+/* This enum holds object pointers (other than equipped equipment) that are
+   tracked indirectly in struct you (mostly state for handling occupations that
+   might be interrupted, which is why it can't go in struct turnstate). These
+   are saved and restored, and also updated when the object is reallocated and
+   nulled out when the object is freed. There is also an associated integer with
+   each that is designed to track progress on the occupation in question; not
+   all of these are used, although many of them are. */
 enum tracked_object_slots {
     tos_book,    /* book we were interrupted reading */
     tos_food,    /* food we were interrupted eating */
     tos_tin,     /* tin we were interrupted eating */
+    tos_trap,    /* trap we were interrupted setting */
+    tos_dig,     /* no associated item, used for progress only */
+    tos_lock,    /* chest we were interrupted lockpicking or forcing */
 
     tos_first_equip,   /* equipment we were interrupted equipping */
     tos_last_equip = tos_first_equip + os_last_maskable,
@@ -154,6 +159,38 @@ enum turntracked_object_slots {
     ttos_wand,    /* item that is currently being zapped */
 
     ttos_last_slot = ttos_wand,
+};
+
+/* Multi-turn commands. Many things that are on this list are also on the
+   tracked_object_slots list, but there isn't a 1-to-1 correspondence.
+
+   The main purpose of this is to know whether to interrupt an action when it no
+   longer becomes applicable. For instance, without this, a door getting
+   magically opened while you were lockpicking it with the "open" command would
+   cause you to close the door on the next turn. The occupation being set allows
+   the code to know whether to interrupt or not. */
+enum occupation {
+    occ_none = 0,
+    occ_book,        /* reading a spellbook */
+    occ_food,        /* eating */
+    occ_tin,         /* opening a tin */
+    occ_trap,        /* setting a trap */
+    occ_dig,         /* digging */
+    occ_lock,        /* picking or forcing a lock */
+    occ_equip,       /* changing equipment */
+    occ_move,        /* moving */
+    occ_travel,      /* travelling */
+    occ_autoexplore, /* autoexploring */
+    occ_wipe,        /* wiping your face */
+};
+
+/* Occupations generally track objects, but some track locations, or both. */
+enum tracked_location {
+    tl_trap,         /* location where a trap is set */
+    tl_dig,          /* location which is being dug out */
+    tl_lock,         /* location of a door that is having its lock picked */
+
+    tl_last_slot = tl_lock,
 };
 
 # define EQUIP(oslot) which_armor(&youmonst, oslot)

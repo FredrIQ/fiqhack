@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-21 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -82,12 +82,7 @@ done2(void)
 {
     if (yn("Really abandon this game and delete its save file?") == 'n') {
         flush_screen();
-        if (multi > 0)
-            nomul(0, NULL);
-        if (multi == 0) {
-            u.uinvulnerable = FALSE;    /* avoid ctrl-C bug -dlc */
-            u.usleep = 0;
-        }
+        action_interrupted();
         return 0;
     }
 
@@ -152,12 +147,9 @@ done_in_by(struct monst *mtmp)
             sprintf(eos(buf), " called %s", NAME(mtmp));
     }
 
-    if (multi) {
-        if (*(turnstate.multi_txt))
-            sprintf(eos(buf), ", while %s", turnstate.multi_txt);
-        else
-            strcat(buf, ", while helpless");
-    }
+    if (Helpless)
+        sprintf(eos(buf), ", while %s", u.uwhybusy);
+
     killer = buf;
     if (mtmp->data->mlet == S_WRAITH)
         u.ugrave_arise = PM_WRAITH;
@@ -343,12 +335,11 @@ savelife(int how)
     }
     if (how == CHOKING)
         init_uhunger();
-    nomovemsg = "You survived that attempt on your life.";
-    flags.move = 0;
-    if (multi > 0)
-        multi = 0;
-    else
-        multi = -1;
+
+    /* Note: this is different timing properties from 3.4.3. Mostly because the
+       timing properties in 3.4.3 don't make sense at all. */
+    cancel_helplessness("You survived that attempt on your life.");
+
     if (u.utrap && u.utraptype == TT_LAVA)
         u.utrap = 0;
     iflags.botl = 1;

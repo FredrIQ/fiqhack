@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-21 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -452,10 +452,6 @@ restgamestate(struct memfile *mf)
     restore_waterlevel(mf, lev);
     restore_mt_state(mf);
     restore_track(mf);
-    restore_food(mf);
-    restore_steal(mf);
-    restore_dig_status(mf);
-    multi = mread32(mf);
     restore_rndmonst_state(mf);
     restore_history(mf);
 
@@ -545,6 +541,7 @@ restore_you(struct memfile *mf, struct you *y)
     y->bc_felt = mread32(mf);
     y->ucreamed = mread32(mf);
     y->uswldtim = mread32(mf);
+    y->uhelpless = mread32(mf);
     y->udg_cnt = mread32(mf);
     y->next_attr_check = mread32(mf);
     y->ualign.record = mread32(mf);
@@ -610,6 +607,8 @@ restore_you(struct memfile *mf, struct you *y)
     y->uspmtime = mread8(mf);
     y->twoweap = mread8(mf);
 
+    mread(mf, y->uwhybusy, sizeof (y->uwhybusy));
+    mread(mf, y->umoveagain, sizeof (y->umoveagain));
     mread(mf, y->usick_cause, sizeof (y->usick_cause));
     mread(mf, y->urooms, sizeof (y->urooms));
     mread(mf, y->urooms0, sizeof (y->urooms0));
@@ -656,6 +655,10 @@ restore_utracked(struct memfile *mf, struct you *y)
         else if (oid)
             y->utracked[i] = find_oid(oid);
         y->uoccupation_progress[i] = mread32(mf);
+    }
+    for (i = 0; i <= tl_last_slot; i++) {
+        y->utracked_location[i].x = mread8(mf);
+        y->utracked_location[i].y = mread8(mf);
     }
 }
 
@@ -719,6 +722,9 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->bones_enabled = mread8(mf);
     f->permablind = mread8(mf);
     f->permahallu = mread8(mf);
+    f->incomplete = mread8(mf);
+    f->interrupted = mread8(mf);
+    f->occupation = mread8(mf);
 
     mread(mf, f->inv_order, sizeof (f->inv_order));
     mread(mf, &(f->last_arg), sizeof (f->last_arg));

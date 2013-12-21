@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -221,7 +221,8 @@ castmu(struct monst *mtmp, const struct attack *mattk,
         return 0;
     }
 
-    nomul(0, NULL);
+    action_interrupted();
+
     if (rn2(ml * 10) < (mtmp->mconf ? 100 : 20)) {      /* fumbled attack */
         if (canseemon(mtmp) && flags.soundok)
             pline("The air crackles around %s.", mon_nam(mtmp));
@@ -597,18 +598,16 @@ cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
     case CLC_PARALYZE:
         if (Antimagic || Free_action) {
             shieldeff(u.ux, u.uy);
-            if (multi >= 0)
+            if (!Helpless)
                 pline("You stiffen briefly.");
-            nomul(-1, "paralyzed by a monster");
-            nomovemsg = NULL;
+            helpless(1, "paralyzed by a monster", NULL);
         } else {
-            if (multi >= 0)
+            if (!Helpless)
                 pline("You are frozen in place!");
             dmg = 4 + (int)mtmp->m_lev;
             if (Half_spell_damage)
                 dmg = (dmg + 1) / 2;
-            nomul(-dmg, "paralyzed by a monster");
-            nomovemsg = NULL;
+            helpless(dmg, "paralyzed by a monster", NULL);
         }
         dmg = 0;
         break;
@@ -839,7 +838,7 @@ buzzmu(struct monst *mtmp, const struct attack *mattk)
         return 0;
     }
     if (lined_up(mtmp) && rn2(3)) {
-        nomul(0, NULL);
+        action_interrupted();
         if (mattk->adtyp && (mattk->adtyp < 11)) {      /* no cf unsigned >0 */
             if (canseemon(mtmp))
                 pline("%s zaps you with a %s!", Monnam(mtmp),

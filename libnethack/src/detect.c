@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-21 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -879,8 +879,8 @@ use_crystal_ball(struct obj *obj)
         return;
     }
     pline("You peer into %s...", the(xname(obj)));
-    nomul(-rnd(10), "gazing into a crystal ball");
-    nomovemsg = "You finish your crystal-gazing.";
+    helpless(rnd(10), "gazing into a crystal ball",
+             "You finish your crystal-gazing.");
     if (obj->spe <= 0)
         pline("The vision is unclear.");
     else {
@@ -1203,7 +1203,7 @@ dosearch0(int aflag)
                         /* changes .type to DOOR */
                         cvt_sdoor_to_door(&level->locations[x][y], &u.uz);
                         exercise(A_WIS, TRUE);
-                        nomul(0, NULL);
+                        action_completed();
                         if (Blind && !aflag)
                             feel_location(x, y);   /* make sure it shows up */
                         else
@@ -1214,7 +1214,7 @@ dosearch0(int aflag)
                         level->locations[x][y].typ = CORR;
                         unblock_point(x, y);    /* vision */
                         exercise(A_WIS, TRUE);
-                        nomul(0, NULL);
+                        action_completed();
                         newsym(x, y);
                     } else {
                         /* Be careful not to find anything in an SCORR or SDOOR 
@@ -1262,7 +1262,7 @@ dosearch0(int aflag)
 
                         if ((trap = t_at(level, x, y)) && !trap->tseen &&
                             !rnl(8)) {
-                            nomul(0, NULL);
+                            action_interrupted();
 
                             if (trap->ttyp == STATUE_TRAP) {
                                 if (activate_statue_trap(trap, x, y, FALSE))

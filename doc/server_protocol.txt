@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2013-12-21
+Last modified by Alex Smith, 2013-12-22
 
 This document documents the version of the network protocol used in
 NetHack 4.3, and was written by Daniel Thaler, GreyKnight, Alex Smith.
@@ -675,10 +675,9 @@ Request arguments:
     command (whether it was interrupted by a monster or the like, or whether
     the server's just giving the client the chance to interrupt); true if the
     previous command completed or there was no previous command
-  * `boolean interrupted`: meaningful only if `completed` is false: false
-    means that the server recommends just sending `"repeat"` in the absence of
-    user input, true means that the server recommends that `"repeat"` should
-    only be sent in response to user input
+  * `boolean interrupted`: true if the character is aware of danger that might
+    cause a player to want to abort their current action (or not repeat a
+    repeated action); this is independent of `completed`
 
 Response arguments:
   * `string command`: what the player wants to tell their character to do;
@@ -688,9 +687,6 @@ Response arguments:
         should be sent spontaneously by the client as the first command if the
         game was restored due to player action (rather than due to a network
         timeout or the like), rather than in response to user input
-      * `"repeat"`: Repeat the previous command (if it completed); resume the
-        previous command (if it was interrupted); continue the previous
-        command (if it was not yet completed)
   * `struct nh_cmd_arg arg`: a set of arguments to the command (any subset of
     the arguments that `nh_get_command` specified were acceptable)
       * `enum nh_direction d`: [optional] a direction argument

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-18 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -461,9 +461,6 @@ log_backup_save(void)
     if (program_state.logfile == -1)
         panic("log_backup_save called with no logfile");
 
-    if (multi || occupation)
-        panic("log_backup_save called but turnstate isn't neutral");
-
     start_updating_logfile();
 
     program_state.binary_save_location = 0;
@@ -499,9 +496,6 @@ log_neutral_turnstate(void)
 {
     if (program_state.logfile == -1)
         panic("log_neutral_turnstate called with no logfile");
-
-    if (multi || occupation)
-        panic("log_neutral_turnstate called but turnstate isn't neutral");
 
     /* A heuristic to work out whether to use a save diff or save backup
        line. */

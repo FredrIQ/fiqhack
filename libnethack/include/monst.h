@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-29 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -126,6 +126,7 @@ struct monst {
     unsigned mpeaceful:1;       /* does not attack unprovoked */
     unsigned mtrapped:1;        /* trapped in a pit, web or bear trap */
     unsigned mleashed:1;        /* monster is on a leash */
+    unsigned msuspicious:1;     /* monster is suspicious of the player */
 
     unsigned isshk:1;   /* is shopkeeper */
     unsigned isminion:1;        /* is a minion */

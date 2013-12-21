@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-18 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -342,8 +342,12 @@ read_engr_at(int x, int y)
             } else
                 et = ep->engr_txt;
             pline("You %s: \"%s\".", (Blind) ? "feel the words" : "read", et);
-            if (flags.run > 1)
-                nomul(0, NULL);
+            /* TODO: For now, engravings stop farmove, autoexplore, and
+               travel. This can get quite spammy, though. */
+            if (flags.occupation == occ_move ||
+                flags.occupation == occ_travel ||
+                flags.occupation == occ_autoexplore)
+                action_interrupted();
         }
     }
 }
@@ -442,6 +446,8 @@ static const char styluses[] =
  * moonstone  -  6      (orthoclase)    * amber      -  2-2.5
  */
 
+/* TODO: This should be rewritten as an occupation, rather than in terms of
+   helplessness. */
 /* return 1 if action took 1 (or more) moves, 0 if error or aborted */
 static int
 doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
@@ -466,14 +472,12 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
     char *sp;   /* Place holder for space count of engr text */
     int len;    /* # of nonspace chars of new engraving text */
     int maxelen;        /* Max allowable length of engraving text */
+    int helpless_time;  /* Temporary for calculating helplessness */
     struct engr *oep = engr_at(level, u.ux, u.uy);
     struct obj *otmp;
 
     /* The current engraving */
     char *writer;
-
-    multi = 0;  /* moves consumed */
-    nomovemsg = NULL;   /* occupation end message */
 
     buf[0] = (char)0;
     ebuf[0] = (char)0;
@@ -1036,21 +1040,19 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
        much. */
     switch (type) {
     default:
-        multi = -(len / 10);
-        if (multi)
-            nomovemsg = "You finish your weird engraving.";
+        if (len / 10)
+            helpless(len / 10, "engraving", "You finish your weird engraving.");
         break;
     case DUST:
-        multi = -(len / 10);
-        if (multi)
-            nomovemsg = "You finish writing in the dust.";
+        if (len / 10)
+            helpless(len / 10, "engraving", "You finish writing in the dust.");
         break;
     case HEADSTONE:
     case ENGRAVE:
-        multi = -(len / 10);
+        helpless_time = len / 10;
         if ((otmp->oclass == WEAPON_CLASS) &&
             ((otmp->otyp != ATHAME) || otmp->cursed)) {
-            multi = -len;
+            helpless_time = len;
             maxelen = ((otmp->spe + 3) * 2) + 1;
             /* -2 = 3, -1 = 5, 0 = 7, +1 = 9, +2 = 11 Note: this does not allow 
                a +0 anything (except an athame) to engrave "Elbereth" all at
@@ -1066,45 +1068,44 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                 }
             }
             if (len > maxelen) {
-                multi = -maxelen;
+                helpless_time = maxelen;
                 otmp->spe = -3;
             } else if (len > 1)
                 otmp->spe -= len >> 1;
             else
                 otmp->spe -= 1; /* Prevent infinite engraving */
         } else if ((otmp->oclass == RING_CLASS) || (otmp->oclass == GEM_CLASS))
-            multi = -len;
-        if (multi)
-            nomovemsg = "You finish engraving.";
+            helpless_time = len;
+        if (helpless_time)
+            helpless(helpless_time, "engraving", "You finish engraving.");
         break;
     case BURN:
-        multi = -(len / 10);
-        if (multi)
-            nomovemsg =
-                is_ice(level, u.ux,
-                       u.uy) ? "You finish melting your message into the ice." :
-                "You finish burning your message into the floor.";
+        if (len / 10)
+            helpless(len / 10, "engraving",
+                     is_ice(level, u.ux, u.uy) ?
+                     "You finish melting your message into the ice." :
+                     "You finish burning your message into the floor.");
         break;
     case MARK:
-        multi = -(len / 10);
+        helpless_time = len / 10;
         if ((otmp->oclass == TOOL_CLASS) && (otmp->otyp == MAGIC_MARKER)) {
             maxelen = (otmp->spe) * 2;  /* one charge / 2 letters */
             if (len > maxelen) {
                 pline("Your marker dries out.");
                 otmp->spe = 0;
-                multi = -(maxelen / 10);
+                helpless_time = maxelen / 10;
             } else if (len > 1)
                 otmp->spe -= len >> 1;
             else
                 otmp->spe -= 1; /* Prevent infinite grafitti */
         }
-        if (multi)
-            nomovemsg = "You finish defacing the dungeon.";
+        if (helpless_time)
+            helpless(helpless_time, "engraving",
+                     "You finish defacing the dungeon.");
         break;
     case ENGR_BLOOD:
-        multi = -(len / 10);
-        if (multi)
-            nomovemsg = "You finish scrawling.";
+        if (len / 10)
+            helpless(len / 10, "engraving", "You finish scrawling.");
         break;
     }
 
@@ -1115,8 +1116,8 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                 maxelen--;
         if (!maxelen && *sp) {
             *sp = (char)0;
-            if (multi)
-                nomovemsg = "You cannot write any more.";
+            if (Helpless)
+                strcpy(u.umoveagain, "You cannot write any more.");
             pline("You only are able to write \"%s\"", ebuf);
         }
     }
@@ -1127,7 +1128,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
 
     strncat(buf, ebuf, (BUFSZ - (int)strlen(buf) - 1));
 
-    make_engr_at(level, u.ux, u.uy, buf, (moves - multi), type);
+    make_engr_at(level, u.ux, u.uy, buf, (moves + Helpless), type);
 
     if (strstri(buf, "Elbereth")) {
         u.uconduct.elbereths++;

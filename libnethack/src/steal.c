@@ -1,11 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-
-static int stealarm(void);
+#include "hungerstatus.h"
 
 static const char *equipname(struct obj *);
 static void mdrop_obj(struct monst *, struct obj *, boolean);
@@ -90,45 +89,6 @@ stealgold(struct monst *mtmp)
     }
 }
 
-
-/* steal armor after you finish taking it off */
-unsigned int stealoid;  /* object to be stolen */
-unsigned int stealmid;  /* monster doing the stealing */
-
-static int
-stealarm(void)
-{
-    struct monst *mtmp;
-    struct obj *otmp;
-
-    for (otmp = invent; otmp; otmp = otmp->nobj) {
-        if (otmp->o_id == stealoid) {
-            for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
-                if (mtmp->m_id == stealmid) {
-                    if (DEADMONSTER(mtmp))
-                        impossible("stealarm(): dead monster stealing");
-                    if (!dmgtype(mtmp->data, AD_SITM))  /* polymorphed */
-                        goto botm;
-                    if (otmp->unpaid)
-                        subfrombill(otmp, shop_keeper(level, *u.ushops));
-                    freeinv(otmp);
-                    pline("%s steals %s!", Monnam(mtmp), doname(otmp));
-                    mpickobj(mtmp, otmp);       /* may free otmp */
-                    /* Implies seduction, "you gladly hand over ..." so we
-                       don't set mavenge bit here. */
-                    monflee(mtmp, 0, FALSE, FALSE);
-                    if (!tele_restrict(mtmp))
-                        rloc(mtmp, FALSE);
-                    break;
-                }
-            }
-            break;
-        }
-    }
-botm:stealoid = 0;
-    return 0;
-}
-
 /* An object you're wearing has been taken off by a monster (theft or
    seduction).  Also used if a worn item gets transformed (stone to flesh). */
 void
@@ -163,7 +123,7 @@ int
 steal(struct monst *mtmp, char *objnambuf)
 {
     struct obj *otmp;
-    int tmp, could_petrify, named = 0, armordelay;
+    int tmp, could_petrify, named = 0, armordelay, slowly = 0;
     boolean monkey_business;    /* true iff an animal is doing the thievery */
 
     if (objnambuf)
@@ -171,12 +131,6 @@ steal(struct monst *mtmp, char *objnambuf)
     /* the following is true if successful on first of two attacks. */
     if (!monnear(mtmp, u.ux, u.uy))
         return 0;
-
-    /* food being eaten might already be used up but will not have been removed 
-       from inventory yet; we don't want to steal that, so this will cause it
-       to be removed now */
-    if (occupation)
-        maybe_finished_meal(FALSE);
 
     if (!invent || (inv_cnt(FALSE) == 1 && uskin())) {
     nothing_to_steal:
@@ -234,8 +188,6 @@ steal(struct monst *mtmp, char *objnambuf)
     else if (otmp == uarmu && uarm && !uskin())
         otmp = uarm;
 gotobj:
-    if (otmp->o_id == stealoid)
-        return 0;
 
     /* animals can't overcome curse stickiness nor unlock chains */
     if (monkey_business) {
@@ -270,7 +222,7 @@ gotobj:
     }
 
     /* you're going to notice the theft... */
-    stop_occupation();
+    action_interrupted();
 
     if (otmp->owornmask & W_WORN) {
         switch (otmp->oclass) {
@@ -291,15 +243,14 @@ gotobj:
                 break;
             } else {
                 int curssv = otmp->cursed;
-                int slowly;
                 boolean seen = canspotmon(mtmp);
 
                 otmp->cursed = 0;
                 /* can't charm you without first waking you */
-                if (multi < 0 && is_fainted())
-                    unmul(NULL);
-                slowly = (armordelay >= 1 || multi < 0);
-                if (multi < 0) {
+                if (u.uhs == FAINTED)
+                    cancel_helplessness("Someone revives you.");
+                slowly = (armordelay >= 1 || Helpless);
+                if (Helpless) {
                     pline
                         ("%s tries to %s you, but is dismayed by your lack of response.",
                          !seen ? "She" : Monnam(mtmp),
@@ -317,19 +268,20 @@ gotobj:
                           curssv ? "helps you to take" : slowly ?
                           "you start taking" : "you take", equipname(otmp));
                 named++;
-                /* the following is to set multi for later on */
-                nomul(-armordelay, "taking off clothes");
-                nomovemsg = "You finish disrobing.";
+                if (armordelay)
+                    helpless(armordelay, "taking off clothes",
+                             "You finish disrobing.");
                 remove_worn_item(otmp, TRUE);
                 otmp->cursed = curssv;
-                if (multi < 0) {
-                    /* 
-                       multi = 0; nomovemsg = 0; afternmv = 0; */
-                    stealoid = otmp->o_id;
-                    stealmid = mtmp->m_id;
-                    afternmv = stealarm;
-                    return 0;
-                }
+                /* Note: it used to be that the nymph would wait for you to
+                   disrobe, then take the item, but that lead to huge
+                   complications in the code (and a rather unfun situation where
+                   the nymph could chain armor theft), and some resulting
+                   bugs. Instead, we just go down the normal codepath; you lose
+                   the item, and you're left helpless for the length of time it
+                   should have taken to remove. The nymph will stay around (due
+                   to the slowly || Helpless check at the end of the
+                   function). */
             }
             break;
         default:
@@ -355,7 +307,7 @@ gotobj:
         minstapetrify(mtmp, TRUE);
         return -1;
     }
-    return (multi < 0) ? 0 : 1;
+    return (slowly || Helpless) ? 0 : 1;
 }
 
 
@@ -547,29 +499,6 @@ relobj(struct monst *mtmp, int show, boolean is_pet)
 
     if (show & cansee(omx, omy))
         newsym(omx, omy);
-}
-
-
-void
-reset_steal(void)
-{
-    stealoid = stealmid = 0;
-}
-
-void
-save_steal(struct memfile *mf)
-{
-    mtag(mf, 0, MTAG_STEAL);
-    mwrite32(mf, stealoid);
-    mwrite32(mf, stealmid);
-}
-
-
-void
-restore_steal(struct memfile *mf)
-{
-    stealoid = mread32(mf);
-    stealmid = mread32(mf);
 }
 
 /*steal.c*/
