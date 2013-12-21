@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2013-12-18
+Last modified by Alex Smith, 2013-12-21
 
 This document documents the version of the network protocol used in
 NetHack 4.3, and was written by Daniel Thaler, GreyKnight, Alex Smith.
@@ -231,9 +231,6 @@ Response arguments:
           * `CMD_ARG_LIMIT` = 32: the command can accept a numeric argument
             that specifies a reduced maximum for things like multishot or item
             stack size;
-          * `CMD_ARG_CONT` = 64: the command acts differently between being
-            explicitly repeated (e.g. the same command again) and implicitly
-            repeated (e.g. via control-A);
           * `CMD_EXT` = 1024: it is recommended that by default, this command
             should be available as an extended command (via `#`);
           * `CMD_MOVE` = 2048: this is a movement command (and thus it is not
@@ -714,9 +711,6 @@ Response arguments:
       * `string str`: [optional] a string
       * `charcode spelllet`: [optional] a spell letter
       * `int limit`: [optional] the amount to limit the command to
-      * `void continuing`: [optional] present if `nh_get_command` requested
-        that continued commands are explicitly marked and the command is
-        implicitly continued rather than being restarted, absent otherwise
 
 display_menu
 ------------

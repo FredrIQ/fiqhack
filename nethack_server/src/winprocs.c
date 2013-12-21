@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-18 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -446,8 +446,6 @@ srv_request_command(nh_bool debug, nh_bool completed, nh_bool interrupted,
         arg->argtype |= CMD_ARG_SPELL;
     if (json_unpack(jarg, "{si*}", "limit", &(arg->limit)) != -1)
         arg->argtype |= CMD_ARG_LIMIT;
-    if (json_object_get(jarg, "continuing"))
-        arg->argtype |= CMD_ARG_CONT;
 
     if (cmd != NULL && strlen(cmd) < 60) {
         /* avoid remote buffer overflow attacks, and remote commands with

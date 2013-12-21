@@ -121,16 +121,10 @@
  *   (A limit is an integer that specifies some number which should not be
  *   exceeded when running the command, e.g. the maximum number of 
  *
- * * CMD_ARG_CONT is present on commands that behave differently when continued
- *   or repeated implicitly (e.g. control-A), than they do when explicitly
- *   repeated via entering the command's name again. (For instance, if you're
- *   interrupted while equipping at the A menu, giving the A command again gives
- *   you a chance to cancel or change the equip, repeating with control-A just
- *   resumes the equip automatically). This is purely for the purpose of
- *   providing a more usable interface; commands should be careful to avoid
- *   exploits that might exist as a result of a maliciously incorrectly set
- *   CMD_ARG_CONT. (It doesn't correspond to an actual argument; it's just an
- *   argument type that can be given or absent.)
+ * * CMD_ARG_CONT is used only by the server, to distinguish a second or
+ *   subsequent iteration of the action from the first. The client can
+ *   effectively control this via choosing whether to send a command using
+ *   "repeat" or just via entering the same command again.
  *
  * * CMD_ARG_OBJ should normally be omitted, but in clients that use a
  *   menu-based interface in combination with get_obj_commands(), they have
@@ -158,9 +152,6 @@
 # define CMD_ARG_SPELL (1 << 4)         /* param can be a spell letter */
 # define CMD_ARG_LIMIT (1 << 5)         /* param can be a limit */
 # define CMD_ARG_CONT  (1 << 6)         /* avoid prompting where possible */
-# define CMD_ARG_FLAGS (CMD_ARG_DIR | CMD_ARG_POS | CMD_ARG_OBJ | \
-                        CMD_ARG_STR | CMD_ARG_SPELL | CMD_ARG_LIMIT | \
-                        CMD_ARG_CONT)
 
 /* command usage hints */
 # define CMD_EXT        (1 << 10)       /* an 'extended' command */

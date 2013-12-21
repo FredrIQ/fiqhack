@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-18 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -467,8 +467,6 @@ cmd_request_command(json_t * params, int display_only)
         json_object_set_new(jarg, "spell", json_integer(arg.spelllet));
     if (arg.argtype & CMD_ARG_LIMIT)
         json_object_set_new(jarg, "limit", json_integer(arg.limit));
-    if (arg.argtype & CMD_ARG_CONT)
-        json_object_set_new(jarg, "continuing", json_true());
 
     return json_pack("{ss,so,si}", "command", command, "arg", jarg);
 }
