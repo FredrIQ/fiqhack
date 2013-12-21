@@ -356,6 +356,8 @@ dodrink(const struct nh_cmd_arg *arg)
 
     potion = getargobj(arg, terrain ? beverages_and_fountains : beverages,
                        "drink");
+    if (!potion)
+        return 0;
 
     if (potion == &zeroobj) {
         if (!terrain)
@@ -1631,9 +1633,9 @@ dodip(const struct nh_cmd_arg *arg)
             safe_qbuf("", sizeof ("dip  into"), the(xname(obj)),
                       the(simple_typename(obj->otyp)), "this item"));
     potion = getargobj(arg, beverages, qbuf);
-
     if (!potion)
         return 0;
+
     if (potion == obj && potion->quan == 1L) {
         pline("That is a potion bottle, not a Klein bottle!");
         return 0;

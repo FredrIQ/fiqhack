@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -680,6 +680,7 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->ghost_count = mread32(mf);
     f->pickup_burden = mread32(mf);
     f->recently_broken_otyp = mread32(mf);
+    f->last_cmd = mread32(mf);
 
     f->autodig = mread8(mf);
     f->autoquiver = mread8(mf);
@@ -720,6 +721,7 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->permahallu = mread8(mf);
 
     mread(mf, f->inv_order, sizeof (f->inv_order));
+    mread(mf, &(f->last_arg), sizeof (f->last_arg));
 }
 
 

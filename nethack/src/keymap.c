@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-18 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -14,7 +14,6 @@ enum internal_commands {
     UICMD_OPTIONS = DIR_SELF + 1,
     UICMD_EXTCMD,
     UICMD_HELP,
-    UICMD_REDO,
     UICMD_STOP,
     UICMD_PREVMSG,
     UICMD_WHATDOES,
@@ -94,7 +93,6 @@ struct nh_cmd_desc builtin_commands[] = {
      CMD_UI | UICMD_OPTIONS},
     {"prevmsg", "list previously displayed messages", Ctrl('p'), 0,
      CMD_UI | UICMD_PREVMSG},
-    {"redo", "redo the previous command", '\001', 0, CMD_UI | UICMD_REDO},
     {"stop", "suspend to shell", Ctrl('z'), 0, CMD_UI | UICMD_STOP},
     {"whatdoes", "describe what a key does", '&', 0, CMD_UI | UICMD_WHATDOES},
     {"(nothing)", "bind keys to this command to suppress \"Bad command\".", 0,
@@ -105,10 +103,8 @@ struct nh_cmd_desc builtin_commands[] = {
 struct nh_cmd_desc *keymap[KEY_MAX], *unknown_keymap[KEY_MAX];
 static struct nh_cmd_desc *commandlist, *unknown_commands;
 static int cmdcount, unknown_count, unknown_size;
-static struct nh_cmd_desc *prev_cmd;
-static struct nh_cmd_arg prev_arg = { 0 }, next_command_arg;
+static struct nh_cmd_arg next_command_arg;
 
-static nh_bool prev_cmd_same = FALSE;
 static int current_cmd_key;
 
 static nh_bool have_next_command = FALSE;
@@ -120,28 +116,6 @@ static void init_keymap(void);
 static void write_keymap(void);
 static struct nh_cmd_desc *doextcmd(void);
 static void dostop(void);
-
-
-void
-reset_prev_cmd(void)
-{
-    prev_cmd = NULL;
-    prev_cmd_same = FALSE;
-}
-
-
-nh_bool
-check_prev_cmd_same(void)
-{
-    return prev_cmd_same;
-}
-
-
-int
-get_current_cmd_key(void)
-{
-    return current_cmd_key;
-}
 
 
 const char *
@@ -224,11 +198,6 @@ handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg)
         *cmd = show_help();
         break;
 
-    case UICMD_REDO:
-        *cmd = prev_cmd;
-        *arg = prev_arg;
-        break;
-
     case UICMD_STOP:
         dostop();
         *cmd = NULL;
@@ -292,8 +261,8 @@ get_command( struct nh_cmd_arg *arg)
         current_cmd_key = key;
 
         if (cmd != NULL) {
-            /* handle internal commands. The command handler may alter * cmd,
-               arg and count (redo does this) */
+            /* handle internal commands. The command handler may alter *cmd, and
+               arg (although not all this functionality is currently used) */
             if (cmd->flags & CMD_UI) {
                 handle_internal_cmd(&cmd, arg);
                 if (!cmd)       /* command was fully handled internally */
@@ -338,10 +307,6 @@ get_command( struct nh_cmd_arg *arg)
     } while (!cmd);
 
     wmove(mapwin, player.y, player.x - 1);
-
-    prev_cmd_same = (cmd == prev_cmd);
-    prev_cmd = cmd;
-    prev_arg = *arg;
 
     return cmd->name;
 }

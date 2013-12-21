@@ -167,7 +167,7 @@ extern const char *rank_of(int, short, boolean);
 extern void reset_occupations(void);
 extern void set_occupation(int (*)(void), const char *);
 extern int get_command_idx(const char *cmd);
-extern int do_command(int, const struct nh_cmd_arg *);
+extern int do_command(int, struct nh_cmd_arg *);
 extern void enlightenment(int);
 extern void show_conduct(int);
 extern unsigned long encode_conduct(void);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-18 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -275,7 +275,6 @@ extern void set_darkgray(void);
 
 /* dialog.c */
 extern WINDOW *newdialog(int height, int width);
-extern void reset_last_dir(void);
 extern enum nh_direction curses_getdir(const char *query, nh_bool restricted);
 extern char curses_yn_function(const char *query, const char *resp, char def);
 extern char curses_query_key(const char *query, int *count);
@@ -295,9 +294,6 @@ extern void curses_getline(const char *query, char *buffer);
 extern void curses_getline_pw(const char *query, char *buffer);
 
 /* keymap.c */
-extern void reset_prev_cmd(void);
-extern nh_bool check_prev_cmd_same(void);
-extern int get_current_cmd_key(void);
 extern const char *curses_keyname(int key);
 extern void handle_internal_cmd(struct nh_cmd_desc **cmd,
                                 struct nh_cmd_arg *arg);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -332,20 +332,23 @@ read_topten(int fd, int limit)
 void
 describe_death(char *death, int how, int maxlen)
 {
+    const char *k = killer;
     death[0] = '\0';
+    if (!k)
+        k = "";
     switch (killer_format) {
     default:
         impossible("bad killer format?");
     case KILLED_BY_AN:
         strcat(death, killed_by_prefix[how]);
-        strncat(death, an(killer), maxlen - strlen(death) - 1);
+        strncat(death, an(k), maxlen - strlen(death) - 1);
         break;
     case KILLED_BY:
         strcat(death, killed_by_prefix[how]);
-        strncat(death, killer, maxlen - strlen(death) - 1);
+        strncat(death, k, maxlen - strlen(death) - 1);
         break;
     case NO_KILLER_PREFIX:
-        strncat(death, killer, maxlen - 1);
+        strncat(death, k, maxlen - 1);
         break;
     }
     death[maxlen-1] = '\0';

@@ -24,7 +24,7 @@ static void newgame(void);
 
 static void handle_lava_trap(boolean didmove);
 
-static void command_input(int cmdidx, const struct nh_cmd_arg *arg);
+static void command_input(int cmdidx, struct nh_cmd_arg *arg);
 
 const char *const *
 nh_get_copyright_banner(void)
@@ -395,9 +395,7 @@ nh_play_game(int fd)
         (*windowprocs.win_request_command)
             (wizard, completed, interrupted, cmd, &arg);
         cmdidx = get_command_idx(cmd);
-        if (!strcmp(cmd, "repeat")) {
-            cmdidx = -1;            
-        } else if (cmdidx < 0) {
+        if (cmdidx < 0) {
             pline("Unrecognised command '%s'", cmd);
             completed = TRUE;
             interrupted = FALSE;
@@ -824,20 +822,13 @@ pre_move_tasks(boolean didmove)
 
 /* perform the command given by cmdidx (an index into cmdlist in cmd.c) */
 static void
-command_input(int cmdidx, const struct nh_cmd_arg *arg)
+command_input(int cmdidx, struct nh_cmd_arg *arg)
 {
     boolean didmove = FALSE;
 
     if (multi >= 0 && occupation)
         handle_occupation();
     else if (multi == 0 || (multi > 0 && cmdidx != -1)) {
-        if (cmdidx == -1) {
-            cmdidx = flags.last_cmd;
-            arg = &flags.last_arg;
-        } else {
-            flags.last_cmd = cmdidx;
-            flags.last_arg = *arg;
-        }
         flags.nopick = 0;
         switch (do_command(cmdidx, arg)) {
         case COMMAND_UNKNOWN:

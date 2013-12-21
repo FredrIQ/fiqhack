@@ -88,6 +88,7 @@ dowrite(struct obj *pen, const struct nh_cmd_arg *arg)
     paper = getargobj(arg, write_on, "write on");
     if (!paper)
         return 0;
+
     typeword = (paper->oclass == SPBOOK_CLASS) ? "spellbook" : "scroll";
     if (Blind && !paper->dknown) {
         pline("You don't know if that %s is blank or not!", typeword);

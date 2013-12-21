@@ -164,6 +164,8 @@ const struct cmd_desc cmdlist[] = {
      CMD_ARG_OBJ},
     {"redraw", "redraw the screen", C('r'), 0, TRUE, doredrawcmd,
      CMD_NOTIME},
+    {"repeat", "repeat the last command or continue an interrupted command",
+     C('a'), 0, TRUE, NULL},
     {"ride", "ride (or stop riding) a monster", M('r'), 0, FALSE, doride,
      CMD_ARG_DIR | CMD_EXT},
     {"rub", "rub a lamp or a stone", 0, 0, FALSE, dorub,
@@ -2186,20 +2188,10 @@ get_command_idx(const char *command)
     return -1;
 }
 
-static int prev_command;
-static struct nh_cmd_arg prev_arg = { 0 };
-
 int
-do_command(int command, const struct nh_cmd_arg *arg)
+do_command(int command, struct nh_cmd_arg *arg)
 {
     int res;
-
-    /* for multi-turn movement, we use re-invocation of do_command rather than
-       set_occupation, so the relevant command must be saved and restored */
-    if (command == -1) {
-        command = prev_command;
-        arg = &prev_arg;
-    }
 
     /* protection from out-of-range values from the client */
     if (command < 0)
@@ -2211,8 +2203,21 @@ do_command(int command, const struct nh_cmd_arg *arg)
     if (!arg)
         arg = &(struct nh_cmd_arg){.argtype = 0};
 
-    prev_command = command;
-    prev_arg = *arg;
+    /* Although accessible to the user (because they may want to repeat/continue
+       actions even if interrupted), "repeat" is special in that it's also sent
+       spontaneously by the windowport to repeat actions or continue multi-turn
+       actions. Note that a client is never forced to repeat; if do_command()
+       runs at all, the user (if using an appropriate client) has full control
+       over whether an action continues or not. */
+    if (!cmdlist[command].func) {
+        command = flags.last_cmd;
+        arg = &flags.last_arg;
+        arg->argtype |= CMD_ARG_CONT;
+    } else {
+        flags.last_cmd = command;
+        flags.last_arg = *arg;
+        arg->argtype &= ~CMD_ARG_CONT;
+    }
 
     /* Debug commands are now restricted to wizard mode here, rather than with
        a special case in each command */
@@ -2222,9 +2227,9 @@ do_command(int command, const struct nh_cmd_arg *arg)
     flags.move = FALSE;
 
     /* Make sure the client hasn't given extra arguments on top of the ones that
-       we'd normally accept. */
-    if (arg->argtype & ~cmdlist[command].flags)
-        return COMMAND_BAD_ARG;
+       we'd normally accept. To simplify things, we just silently drop any
+       additional arguments. */
+    arg->argtype &= cmdlist[command].flags;
 
     if (u.uburied && !cmdlist[command].can_if_buried) {
         pline("You can't do that while you are buried!");

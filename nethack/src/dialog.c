@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,8 +7,6 @@
 #include <ctype.h>
 #include <limits.h>
 
-
-static enum nh_direction last_dir;
 
 WINDOW *
 newdialog(int height, int width)
@@ -47,29 +45,16 @@ newdialog(int height, int width)
 }
 
 
-void
-reset_last_dir(void)
-{
-    last_dir = DIR_NONE;
-}
-
-
 enum nh_direction
 curses_getdir(const char *query, nh_bool restricted)
 {
     int key;
     enum nh_direction dir;
     char qbuf[QBUFSZ];
-    nh_bool repeat_hint = check_prev_cmd_same();
-    int curr_key = get_current_cmd_key();
 
-    snprintf(qbuf, QBUFSZ, "%s%s%s%s", query ? query : "In what direction?",
-             repeat_hint ? " (" : "",
-             repeat_hint ? curses_keyname(curr_key) : "",
-             repeat_hint ? " to repeat)" : "");
+    snprintf(qbuf, QBUFSZ, "%s", query ? query : "In what direction?");
     key = curses_msgwin(qbuf);
     if (key == '.' || key == 's') {
-        last_dir = DIR_SELF;
         return DIR_SELF;
     } else if (key == KEY_ESCAPE) {
         return DIR_NONE;
@@ -77,14 +62,7 @@ curses_getdir(const char *query, nh_bool restricted)
 
     dir = key_to_dir(key);
     if (dir == DIR_NONE) {
-        /* Repeat last direction if the command key for this action is used in
-           this direction prompt. */
-        if (curr_key == key && last_dir != DIR_NONE)
-            dir = last_dir;
-        else
-            curses_msgwin("What a strange direction!");
-    } else {
-        last_dir = dir;
+        curses_msgwin("What a strange direction!");
     }
 
     return dir;
