@@ -2213,7 +2213,7 @@ do_command(int command, struct nh_cmd_arg *arg)
         command = flags.last_cmd;
         arg = &flags.last_arg;
         arg->argtype |= CMD_ARG_CONT;
-    } else {
+    } else if (!(cmdlist[command].flags & CMD_INTERNAL)) {
         flags.last_cmd = command;
         flags.last_arg = *arg;
         arg->argtype &= ~CMD_ARG_CONT;

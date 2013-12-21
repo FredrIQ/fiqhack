@@ -133,6 +133,7 @@ void
 curses_request_command(nh_bool debug, nh_bool completed, nh_bool interrupted,
                        char *cmd, struct nh_cmd_arg *cmdarg)
 {
+    int save_repeats;
     cmdarg->argtype = 0;
 
     if (!welcomed) {
@@ -141,13 +142,33 @@ curses_request_command(nh_bool debug, nh_bool completed, nh_bool interrupted,
         return;
     }
 
-    /* TODO: Allow user interruption of long commands? */
-    if (!completed && !interrupted) {
+    /*
+     * The behaviour of multiple-turn commands in the client is as follows:
+     * - If no count is given, we continue until the command is completed or
+     *   interrupted.
+     * - If a count is given, we continue for the given number of turns or
+     *   until interrupted, ignoring the completed status.
+     * - When interrupted, we set the count back to 0 /unless/ the next command
+     *   entered by the user is "repeat", in which case we act as though we
+     *   weren't interrupted.
+     */
+    if (!interrupted && !completed && !repeats_remaining) {
+        strcpy(cmd, "repeat");
+        return;
+    }
+    if (!interrupted && repeats_remaining && --repeats_remaining) {
         strcpy(cmd, "repeat");
         return;
     }
 
+    save_repeats = repeats_remaining;
+    repeats_remaining = 0;
+
+    /* This also sets repeats_remaining. */
     strcpy(cmd, get_command(cmdarg));
+
+    if (!strcmp(cmd, "repeat"))
+        repeats_remaining = save_repeats;
 }
 
 

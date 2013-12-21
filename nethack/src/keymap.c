@@ -107,6 +107,8 @@ static struct nh_cmd_arg next_command_arg;
 
 static int current_cmd_key;
 
+int repeats_remaining;
+
 static nh_bool have_next_command = FALSE;
 static char next_command_name[32];
 
@@ -221,7 +223,7 @@ handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg)
 
 
 const char *
-get_command( struct nh_cmd_arg *arg)
+get_command(struct nh_cmd_arg *arg)
 {
     int key, key2, multi;
     char line[BUFSZ];
@@ -272,6 +274,8 @@ get_command( struct nh_cmd_arg *arg)
             if (multi && cmd->flags & CMD_ARG_LIMIT) {
                 arg->argtype |= CMD_ARG_LIMIT;
                 arg->limit = multi;
+            } else {
+                repeats_remaining = multi;
             }
 
             if (cmd == find_command("redraw")) {
