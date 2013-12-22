@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-10 */
+/* Last modified by Sean Hunt, 2013-12-22 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -197,8 +197,7 @@ get_tz_offset(void)
 
 
 void
-log_newgame(int logfd, unsigned long long start_time, unsigned int seed,
-            int playmode)
+log_newgame(int logfd, unsigned long long start_time, unsigned int seed)
 {
     char encbuf[ENCBUFSZ];
     const char *role;
@@ -223,8 +222,9 @@ log_newgame(int logfd, unsigned long long start_time, unsigned int seed,
 
     base64_encode(plname, encbuf);
     lprintf("%" PRIxLEAST64 " %x %d %s %s %s %s %s\n", start_time_l64, seed,
-            playmode, encbuf, role, races[u.initrace].noun,
-            genders[u.initgend].adj, aligns[u.initalign].adj);
+            wizard ? MODE_WIZARD : discover ? MODE_EXPLORE : MODE_NORMAL,
+            encbuf, role, races[u.initrace].noun, genders[u.initgend].adj,
+            aligns[u.initalign].adj);
     log_command_list();
     log_game_opts();
     /* all the timestamps are UTC, so timezone info is required to interpret

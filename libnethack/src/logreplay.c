@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-12 */
+/* Last modified by Sean Hunt, 2013-12-22 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -697,10 +697,10 @@ replay_read_game_opts(void) {
 
 
 void
-replay_read_newgame(unsigned long long *init, int *playmode)
+replay_read_newgame(unsigned long long *init)
 {
     char *header, *verstr;
-    int ver1, ver2, ver3, n;
+    int ver1, ver2, ver3, n, i;
     unsigned int seed;
     uint_least64_t init_l64;
 
@@ -728,15 +728,13 @@ replay_read_newgame(unsigned long long *init, int *playmode)
     sscanf(next_log_token(), "%" SCNxLEAST64, &init_l64);
     *init = (unsigned long long)init_l64;
     sscanf(next_log_token(), "%x", &seed);
-    *playmode = atoi(next_log_token());
-    /* Skip the character information in the header used for easy
+    /* Skip the character and mode information in the header used for easy
      * identification. The actual character options are stored in the birth
      * options, read below. */
-    next_log_token();
-    next_log_token();
-    next_log_token();
-    next_log_token();
-    next_log_token();
+    /* Yes this is a magic number, because it corresponds to the number of %s in
+     * the logging code. */
+    for (i = 0; i < 6; ++i)
+        next_log_token();
 
     mt_srand(seed);
 
@@ -1191,7 +1189,6 @@ make_checkpoint(int actions)
 static int
 load_checkpoint(int idx)
 {
-    int playmode;
     boolean cmd_invalid, diff_invalid;
 
     if (idx < 0 || idx >= cpcount)
@@ -1205,14 +1202,14 @@ load_checkpoint(int idx)
     freedynamicdata();
 
     replay_begin();
-    replay_read_newgame(&turntime, &playmode);
+    replay_read_newgame(&turntime);
     fseek(loginfo.flog, checkpoints[idx].nexttoken, SEEK_SET);
 
     loginfo.cmds_are_invalid = cmd_invalid;
     loginfo.diffs_are_invalid = diff_invalid;
 
     program_state.restoring = TRUE;
-    startup_common(playmode);
+    startup_common();
     dorecover(&checkpoints[idx].cpdata);
     checkpoints[idx].cpdata.pos = 0;
 

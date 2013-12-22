@@ -138,7 +138,7 @@ nh_exit_game(int exit_type)
 
 
 void
-startup_common(int playmode)
+startup_common(void)
 {
     /* (re)init all global data */
     init_data();
@@ -163,11 +163,6 @@ startup_common(int playmode)
      *  new game or before a level restore on a saved game.
      */
     vision_init();
-
-    if (playmode == MODE_EXPLORE)
-        discover = TRUE;
-    else if (playmode == MODE_WIZARD)
-        wizard = TRUE;
 
     if (wizard)
         strcpy(plname, "wizard");
@@ -240,7 +235,7 @@ post_init_tasks(void)
 
 
 enum nh_create_response
-nh_create_game(int fd, struct nh_option_desc *opts, enum nh_game_modes playmode)
+nh_create_game(int fd, struct nh_option_desc *opts)
 {
     unsigned int seed = 0;
     int i;
@@ -270,12 +265,12 @@ nh_create_game(int fd, struct nh_option_desc *opts, enum nh_game_modes playmode)
         mt_srand(seed);
     }
     /* else: turntime and rng seeding are done in logreplay.c */
-    startup_common(playmode);
+    startup_common();
 
     if (!validrole(u.initrole) || !validrace(u.initrole, u.initrace) ||
         !validgend(u.initrole, u.initrace, u.initgend) ||
         !validalign(u.initrole, u.initrace, u.initalign) ||
-        (!plname && playmode != MODE_WIZARD)) {
+        (!plname && !wizard)) {
         /* Reset options that we just clobbered. */
         init_opt_struct();
         API_EXIT();
@@ -285,7 +280,7 @@ nh_create_game(int fd, struct nh_option_desc *opts, enum nh_game_modes playmode)
     /* write out a new logfile header "NHGAME ..." with all the initial details 
      */
     log_init();
-    log_newgame(fd, turntime, seed, playmode);
+    log_newgame(fd, turntime, seed);
 
     newgame();
 
@@ -303,7 +298,6 @@ nh_create_game(int fd, struct nh_option_desc *opts, enum nh_game_modes playmode)
 enum nh_play_status
 nh_play_game(int fd)
 {
-    int playmode;
     volatile int ret;
     unsigned long long temp_turntime;
 
@@ -384,14 +378,14 @@ nh_play_game(int fd)
                                    already in the log */
 
     /* Read the log header for this game. */
-    replay_read_newgame(&turntime, &playmode);
+    replay_read_newgame(&turntime);
     temp_turntime = turntime;
 
     /* set special windowprocs which will autofill requests for user input with 
        data from the log file */
     replay_setup_windowprocs(NULL);
 
-    startup_common(playmode);
+    startup_common();
     u.ubirthday = turntime = temp_turntime;
 
     replay_run_cmdloop(TRUE, FALSE, TRUE);

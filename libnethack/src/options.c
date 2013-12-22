@@ -51,6 +51,14 @@ static const struct nh_listitem runmode_list[] = {
 static const struct nh_enum_option runmode_spec =
     { runmode_list, listlen(runmode_list) };
 
+static const struct nh_listitem mode_list[] = {
+    {MODE_NORMAL, "normal"},
+    {MODE_EXPLORE, "explore"},
+    {MODE_WIZARD, "debug"}
+};
+static const struct nh_enum_option mode_spec =
+    { mode_list, listlen(mode_list) };
+
 static const struct nh_listitem align_list[] = {
     {0, "lawful"},
     {1, "neutral"},
@@ -170,6 +178,7 @@ static const struct nh_option_desc const_options[] = {
      {.b = TRUE}},
 
     {"name", "character name", TRUE, OPTTYPE_STRING, {.s = NULL}},
+    {"mode", "game mode", TRUE, OPTTYPE_ENUM, {.e = MODE_NORMAL}},
     {"elbereth", "difficulty: the E-word repels monsters", TRUE, OPTTYPE_BOOL,
      {.b = TRUE}},
     {"reincarnation", "Special Rogue-like levels", TRUE, OPTTYPE_BOOL,
@@ -327,6 +336,7 @@ init_opt_struct(void)
     nhlib_find_option(options, "autopickup_rules")->a = autopickup_spec;
 
     nhlib_find_option(options, "name")->s.maxlen = PL_PSIZ;
+    nhlib_find_option(options, "mode")->e = mode_spec;
     nhlib_find_option(options, "align")->e = align_spec;
     nhlib_find_option(options, "gender")->e = gender_spec;
     nhlib_find_option(options, "role")->e = role_spec;
@@ -444,7 +454,10 @@ set_option(const char *name, union nh_optvalue value, boolean isstring)
         flags.ap_rules = nhlib_copy_autopickup_rules(option->value.ar);
     }
     /* birth options */
-    else if (!strcmp("align", option->name)) {
+    else if (!strcmp("mode", option->name)) {
+        flags.debug = (option->value.e == MODE_WIZARD);
+        flags.explore = (option->value.e == MODE_EXPLORE);
+    } else if (!strcmp("align", option->name)) {
         u.initalign = option->value.e;
     } else if (!strcmp("gender", option->name)) {
         u.initgend = option->value.e;

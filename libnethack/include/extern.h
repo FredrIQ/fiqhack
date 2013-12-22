@@ -55,7 +55,7 @@ struct you;
 /* ### allmain.c ### */
 
 extern void stop_occupation(void);
-extern void startup_common(int playmode);
+extern void startup_common(void);
 
 /* ### apply.c ### */
 
@@ -748,7 +748,7 @@ extern int doclose(int dx, int dy, int dz);
 /* ### log.c ### */
 
 extern void log_newgame(int logfd, unsigned long long start_time,
-                        unsigned int seed, int playmode);
+                        unsigned int seed);
 extern void log_command(int cmd, int count, struct nh_cmd_arg *arg);
 extern void log_timezone(int tz_offset);
 extern void log_command_result(void);
@@ -778,7 +778,7 @@ extern void replay_sync_save(void);
 extern char *replay_bones(int *buflen);
 extern void replay_setup_windowprocs(const struct nh_window_procs *procs);
 extern void replay_restore_windowprocs(void);
-extern void replay_read_newgame(unsigned long long *init, int *playmode);
+extern void replay_read_newgame(unsigned long long *init);
 extern boolean replay_run_cmdloop(boolean optonly, boolean singlestep,
                                   boolean fast);
 

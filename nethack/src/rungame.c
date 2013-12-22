@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-12 */
+/* Last modified by Sean Hunt, 2013-12-22 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -209,7 +209,7 @@ void
 rungame(nh_bool net)
 {
     int ret, role = cmdline_role, race = cmdline_race, gend = cmdline_gend,
-        align = cmdline_align;
+        align = cmdline_align, playmode = ui_flags.playmode;
     int fd = -1;
     char plname[BUFSZ] = {0}, prompt[BUFSZ] = "You are a ";
     fnchar filename[1024];
@@ -222,8 +222,9 @@ rungame(nh_bool net)
                           *raceopt = nhlib_find_option(new_opts, "race"),
                           *alignopt = nhlib_find_option(new_opts, "align"),
                           *gendopt = nhlib_find_option(new_opts, "gender"),
-                          *nameopt = nhlib_find_option(new_opts, "name");
-    if (!roleopt || !raceopt || !alignopt || !gendopt || !nameopt) {
+                          *nameopt = nhlib_find_option(new_opts, "name"),
+                          *modeopt = nhlib_find_option(new_opts, "mode");
+    if (!roleopt || !raceopt || !alignopt || !gendopt || !nameopt || !modeopt) {
         curses_raw_print("Creation options not available?");
         goto cleanup;
     }
@@ -243,6 +244,8 @@ rungame(nh_bool net)
         strncpy(plname, nameopt->value.s, BUFSZ);
         plname[BUFSZ - 1] = '\0';
     }
+    if (playmode == MODE_NORMAL)
+        playmode = modeopt->value.e;
 
     if (!net && !get_gamedir(SAVE_DIR, savedir)) {
         curses_raw_print
@@ -275,7 +278,7 @@ rungame(nh_bool net)
                                     info->rolenames_m)[role]);
 
     /* In wizard mode, the name is provided automatically by the engine. */
-    while (!plname[0] && ui_flags.playmode != MODE_WIZARD)
+    while (!plname[0] && playmode != MODE_WIZARD)
         curses_getline(prompt, plname);
     if (plname[0] == '\033')    /* canceled */
         goto cleanup;
@@ -303,15 +306,16 @@ rungame(nh_bool net)
     if (nameopt->value.s)
         free(nameopt->value.s);
     nameopt->value.s = plname;
+    modeopt->value.e = playmode;
      
     /* Create the game, then immediately load it. */
     ret = ERR_BAD_FILE;
     if (net) {
-        fd = nhnet_create_game(new_opts, ui_flags.playmode);
+        fd = nhnet_create_game(new_opts);
         if (fd >= 0)
             ret = playgame(fd);
     } else {
-        if (nh_create_game(fd, new_opts, ui_flags.playmode) == NHCREATE_OK)
+        if (nh_create_game(fd, new_opts) == NHCREATE_OK)
             ret = playgame(fd);
     }
 
