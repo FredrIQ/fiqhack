@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-21 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -17,31 +17,16 @@
    to be reconstructed, the reconstruction is done via replaying user actions
    from the last command (when it had a known value.) */
 struct turnstate {
-
-    /* Multi-turn commands */
-    int (*occupation) (void);    /* what the player is currently doing */
-    char occupation_txt[BUFSZ];  /* the reason the player is occupied */
-    int multi;                   /* negative = helpless, positive = repeating */
-    int (*afternmv) (void);      /* what to do after helplessness ends */
-    char multi_txt[BUFSZ];       /* the reason the player is helpless */
-
     /* Objects that might potentially be destroyed or otherwise changed during
        a turn. */
     struct obj *tracked[ttos_last_slot + 1];
+    /* TRUE if continuing a multi-turn action should print a message. */
+    boolean continue_message;
 };
 
 extern struct turnstate turnstate;
 
-# ifndef IN_DECL_C
-#  define occupation turnstate.occupation
-#  define multi      turnstate.multi
-#  define afternmv   turnstate.afternmv
-# endif
-
-/*
- * Persistent flags that are saved and restored with the game.
- *
- */
+/* Persistent flags that are saved and restored with the game. */
 
 struct flag {
     boolean autodig;    /* MRKR: Automatically dig */
@@ -61,6 +46,8 @@ struct flag {
     boolean mon_moving; /* monsters' turn to move */
     boolean move;       /* normally 1, unless an action during your turn did
                            NOT use up the move */
+    boolean incomplete; /* the requested action continues into future turns */
+    boolean interrupted;/* something happened to make long actions stop */
     boolean mv;
     boolean bypasses;   /* bypass flag is set on at least one fobj */
     boolean nopick;     /* do not pickup objects (as when running) */
@@ -107,6 +94,7 @@ struct flag {
        client had volunteered it.) */
     int last_cmd;                             /* this or previous command */
     struct nh_cmd_arg last_arg;              /* this or previous argument */
+    enum occupation occupation; /* internal code for a multi-turn command */
 
     /* KMH, role patch -- Variables used during startup. If the user wishes to
        select a role, race, gender, and/or alignment during startup, the

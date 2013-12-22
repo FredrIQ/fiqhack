@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-18 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -582,14 +582,14 @@ hurtle(int dx, int dy, int range, boolean verbose)
        give the player a message and return. */
     if (Punished && !carried(uball)) {
         pline("You feel a tug from the iron ball.");
-        nomul(0, NULL);
+        action_completed();
         return;
     } else if (u.utrap) {
         pline("You are anchored by the %s.",
               u.utraptype == TT_WEB ? "web" :
               u.utraptype == TT_LAVA ? "lava" :
               u.utraptype == TT_INFLOOR ? surface(u.ux, u.uy) : "trap");
-        nomul(0, NULL);
+        action_completed();
         return;
     }
 
@@ -600,8 +600,7 @@ hurtle(int dx, int dy, int range, boolean verbose)
     if (!range || (!dx && !dy) || u.ustuck)
         return; /* paranoia */
 
-    nomovemsg = "";
-    nomul(-range, "moving through the air");
+    helpless(range, "moving through the air", "");
     if (verbose)
         pline("You %s in the opposite direction.",
               range > 1 ? "hurtle" : "float");

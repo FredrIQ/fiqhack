@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-21 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -56,8 +56,8 @@ polyman(const char *fmt, const char *arg)
         uunstick();
     find_ac();
     if (was_mimicking) {
-        if (multi < 0)
-            unmul("");
+        if (Helpless)
+            cancel_helplessness("");
         youmonst.m_ap_type = M_AP_NOTHING;
     }
 
@@ -382,8 +382,8 @@ polymon(int mntmp)
 
     if (youmonst.m_ap_type) {
         /* stop mimicking immediately */
-        if (multi < 0)
-            unmul("");
+        if (Helpless)
+            cancel_helplessness("");
         youmonst.m_ap_type = M_AP_NOTHING;
     } else if (mons[mntmp].mlet != S_MIMIC) {
         /* as in polyman() */
@@ -759,7 +759,7 @@ rehumanize(void)
         killer = kbuf;
         done(DIED);
     }
-    nomul(0, NULL);
+    action_interrupted();
 
     iflags.botl = 1;
     vision_full_recalc = 1;
@@ -1059,10 +1059,10 @@ dogaze(void)
                     if (!Free_action) {
                         pline("You are frozen by %s gaze!",
                               s_suffix(mon_nam(mtmp)));
-                        nomul((u.ulevel > 6 ||
-                               rn2(4)) ? -dice((int)mtmp->m_lev + 1,
-                                               (int)mtmp->data->mattk[0].damd)
-                              : -200, "frozen by a monster's gaze");
+                        helpless((u.ulevel > 6 ||
+                                  rn2(4)) ? dice((int)mtmp->m_lev + 1,
+                                                 (int)mtmp->data->mattk[0].damd)
+                                 : 200, "frozen by a monster's gaze", NULL);
                         return 1;
                     } else
                         pline("You stiffen momentarily under %s gaze.",

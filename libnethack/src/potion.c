@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-21 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -318,8 +318,8 @@ ghost_from_bottle(void)
     }
     if (flags.verbose)
         pline("You are frightened to death, and unable to move.");
-    nomul(-3, "being frightened to death");
-    nomovemsg = "You regain your composure.";
+
+    helpless(3, "being frightened to death", "You regain your composure.");
 }
 
 
@@ -527,8 +527,7 @@ peffects(struct obj *otmp)
         exercise(A_WIS, FALSE);
         if (otmp->cursed) {
             pline("You pass out.");
-            nomul(-rnd(15), "drunk");
-            nomovemsg = "You awake with a headache.";
+            helpless(rnd(15), "drunk", "You awake with a headache.");
             see_monsters();
             see_objects();
             vision_full_recalc = 1;
@@ -623,8 +622,8 @@ peffects(struct obj *otmp)
             else
                 pline("Your %s are frozen to the %s!",
                       makeplural(body_part(FOOT)), surface(u.ux, u.uy));
-            nomul(-(rn1(10, 25 - 12 * bcsign(otmp))), "frozen by a potion");
-            nomovemsg = "You can move again.";
+            helpless(rn1(10, 25 - 12 * bcsign(otmp)),
+                     "frozen by a potion", NULL);
             exercise(A_DEX, FALSE);
         }
         break;
@@ -1310,8 +1309,7 @@ potionbreathe(struct obj *obj)
         kn++;
         if (!Free_action) {
             pline("Something seems to be holding you.");
-            nomul(-rnd(5), "frozen by a potion");
-            nomovemsg = "You can move again.";
+            helpless(5, "frozen by potion vapours", NULL);
             exercise(A_DEX, FALSE);
         } else
             pline("You stiffen momentarily.");
@@ -1320,8 +1318,7 @@ potionbreathe(struct obj *obj)
         kn++;
         if (!Free_action && !Sleep_resistance) {
             pline("You feel rather tired.");
-            nomul(-rnd(5), "sleeping off a magical draught");
-            nomovemsg = "You can move again.";
+            helpless(5, "sleeping off potion vapours", NULL);
             exercise(A_DEX, FALSE);
         } else
             pline("You yawn.");

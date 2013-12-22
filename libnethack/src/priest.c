@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Izchak Miller, Steve Linhart, 1989.              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -416,8 +416,8 @@ intemple(int roomno)
                 set_malign(mtmp);
                 if (flags.verbose)
                     pline("You are frightened to death, and unable to move.");
-                nomul(-3, "frightened to death");
-                nomovemsg = "You regain your composure.";
+                helpless(3, "frightened to death",
+                         "You regain your composure.");
             }
         }
     }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -110,6 +110,8 @@
 # define Vomiting               u.uintrinsic[VOMITING]
 # define Glib                   u.uintrinsic[GLIB]
 # define Slimed                 u.uintrinsic[SLIMED]      /* [Tom] */
+
+# define Helpless               u.uhelpless
 
 /* Hallucination is solely a timeout; its resistance is extrinsic */
 # define HHallucination         u.uintrinsic[HALLUC]

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-21 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -32,7 +32,7 @@ static int light_cocktail(struct obj *);
 static int use_tinning_kit(struct obj *);
 static int use_figurine(struct obj **obj, const struct nh_cmd_arg *);
 static int use_grease(struct obj *);
-static int use_trap(struct obj *);
+static int use_trap(struct obj *, const struct nh_cmd_arg *);
 static int use_stone(struct obj *);
 static int set_trap(void);      /* occupation callback */
 static int use_whip(struct obj *, const struct nh_cmd_arg *);
@@ -650,9 +650,8 @@ use_mirror(struct obj *obj, const struct nh_cmd_arg *arg)
                               simple_typename(obj->otyp));
                     else
                         pline("Yikes!  You've frozen yourself!");
-                    nomul(-rnd((MAXULEV + 6) - u.ulevel),
-                          "gazing into a mirror");
-                    nomovemsg = 0;      /* default: "You can move again." */
+                    helpless(rnd((MAXULEV + 6) - u.ulevel),
+                             "gazing into a mirror", NULL);
                 } else
                     pline("You stiffen momentarily under your gaze.");
             } else if (youmonst.data->mlet == S_VAMPIRE)
@@ -805,9 +804,9 @@ use_bell(struct obj **optr)
                 case 1:
                     mon_adjust_speed(mtmp, 2, NULL);
                     break;
-                case 2:        /* no explanation; it just happens... */
-                    nomovemsg = "";
-                    nomul(-rnd(2), NULL);
+                case 2:
+                    pline("You freeze for a moment in surprise.");
+                    helpless(rnd(2), "summoning a nymph", NULL);
                     break;
                 }
         }
@@ -1418,8 +1417,7 @@ jump(const struct nh_cmd_arg *arg, int magic)
             change_luck(-1);
 
         teleds(cc.x, cc.y, TRUE);
-        nomul(-1, "jumping around");
-        nomovemsg = "";
+        helpless(1, "jumping around", "");
         morehungry(rnd(25));
         return 1;
     }
@@ -1803,7 +1801,8 @@ use_figurine(struct obj **objp, const struct nh_cmd_arg *arg)
             return 0;
     }
     if (!getargdir(arg, NULL, &dx, &dy, &dz)) {
-        flags.move = multi = 0;
+        flags.move = 0;
+        action_completed();
         return 0;
     }
 
@@ -1897,20 +1896,6 @@ use_grease(struct obj *obj)
     }
     update_inventory();
     return res;
-}
-
-static struct trapinfo {
-    struct obj *tobj;
-    xchar tx, ty;
-    int time_needed;
-    boolean force_bungle;
-} trapinfo;
-
-void
-reset_trapset(void)
-{
-    trapinfo.tobj = 0;
-    trapinfo.force_bungle = 0;
 }
 
 /* touchstones - by Ken Arnold */
@@ -2040,7 +2025,7 @@ use_stone(struct obj *tstone)
 
 /* Place a landmine/bear trap.  Helge Hafting */
 static int
-use_trap(struct obj *otmp)
+use_trap(struct obj *otmp, const struct nh_cmd_arg *arg)
 {
     int ttyp, tmp;
     const char *what = NULL;
@@ -2070,26 +2055,31 @@ use_trap(struct obj *otmp)
         what = "here";
     if (what) {
         pline("You can't set a trap %s!", what);
-        reset_trapset();
+        u.utracked[tos_trap] = 0;
         return 0;
     }
     ttyp = (otmp->otyp == LAND_MINE) ? LANDMINE : BEAR_TRAP;
     makeknown(otmp->otyp);
-    if (otmp == trapinfo.tobj && u.ux == trapinfo.tx && u.uy == trapinfo.ty) {
-        pline("You resume setting %s %s.", shk_your(buf, otmp),
-              trapexplain[what_trap(ttyp) - 1]);
-        set_occupation(set_trap, occutext);
+    if (otmp == u.utracked[tos_trap] &&
+        u.ux == u.utracked_location[tl_trap].x &&
+        u.uy == u.utracked_location[tl_trap].y) {
+        if (turnstate.continue_message)
+            pline("You resume setting %s %s.", shk_your(buf, otmp),
+                  trapexplain[what_trap(ttyp) - 1]);
+        one_occupation_turn(set_trap, occutext, occ_trap);
         return 1;
     }
-    trapinfo.tobj = otmp;
-    trapinfo.tx = u.ux, trapinfo.ty = u.uy;
+    u.utracked[tos_trap] = otmp;
+    u.utracked_location[tl_trap].x = u.ux;
+    u.utracked_location[tl_trap].y = u.uy;
     tmp = ACURR(A_DEX);
-    trapinfo.time_needed = (tmp > 17) ? 2 : (tmp > 12) ? 3 : (tmp > 7) ? 4 : 5;
+    u.uoccupation_progress[tos_trap] =
+        (tmp > 17) ? 2 : (tmp > 12) ? 3 : (tmp > 7) ? 4 : 5;
     if (Blind)
-        trapinfo.time_needed *= 2;
+        u.uoccupation_progress[tos_trap] *= 2;
     tmp = ACURR(A_STR);
     if (ttyp == BEAR_TRAP && tmp < 18)
-        trapinfo.time_needed += (tmp > 12) ? 1 : (tmp > 7) ? 2 : 4;
+        u.uoccupation_progress[tos_trap] += (tmp > 12) ? 1 : (tmp > 7) ? 2 : 4;
     /* [fumbling and/or confusion and/or cursed object check(s) should be
        incorporated here instead of in set_trap] */
     if (u.usteed && P_SKILL(P_RIDING) < P_BASIC) {
@@ -2106,12 +2096,11 @@ use_trap(struct obj *otmp)
         if (yn(buf) == 'y') {
             if (chance) {
                 switch (ttyp) {
-                case LANDMINE: /* set it off */
-                    trapinfo.time_needed = 0;
-                    trapinfo.force_bungle = TRUE;
-                    break;
-                case BEAR_TRAP:        /* drop it without arming it */
-                    reset_trapset();
+                case LANDMINE:
+                    /* TODO: Perhaps we should have an explosion here?
+                       3.4.3 did, but the code is really ugly. */
+                case BEAR_TRAP: /* drop it without arming it */
+                    u.utracked[tos_trap] = 0;
                     pline("You drop %s!",
                           the(trapexplain[what_trap(ttyp) - 1]));
                     dropx(otmp);
@@ -2119,14 +2108,14 @@ use_trap(struct obj *otmp)
                 }
             }
         } else {
-            reset_trapset();
+            u.utracked[tos_trap] = 0;
             return 0;
         }
     }
 
     pline("You begin setting %s %s.", shk_your(buf, otmp),
           trapexplain[what_trap(ttyp) - 1]);
-    set_occupation(set_trap, occutext);
+    one_occupation_turn(set_trap, occutext, occ_trap);
     return 1;
 }
 
@@ -2134,17 +2123,18 @@ use_trap(struct obj *otmp)
 static int
 set_trap(void)
 {
-    struct obj *otmp = trapinfo.tobj;
+    struct obj *otmp = u.utracked[tos_trap];
     struct trap *ttmp;
     int ttyp;
 
-    if (!otmp || !carried(otmp) || u.ux != trapinfo.tx || u.uy != trapinfo.ty) {
-        /* ?? */
-        reset_trapset();
+    if (!otmp || !carried(otmp) ||
+        u.ux != u.utracked_location[tl_trap].x ||
+        u.uy != u.utracked_location[tl_trap].y) {
+        u.utracked[tos_trap] = 0;
         return 0;
     }
 
-    if (--trapinfo.time_needed > 0)
+    if (--u.uoccupation_progress[tos_trap] > 0)
         return 1;       /* still busy */
 
     ttyp = (otmp->otyp == LAND_MINE) ? LANDMINE : BEAR_TRAP;
@@ -2156,18 +2146,16 @@ set_trap(void)
         if (*in_rooms(level, u.ux, u.uy, SHOPBASE)) {
             add_damage(u.ux, u.uy, 0L); /* schedule removal */
         }
-        if (!trapinfo.force_bungle)
-            pline("You finish arming %s.",
-                  the(trapexplain[what_trap(ttyp) - 1]));
-        if (((otmp->cursed || Fumbling) && (rnl(10) > 5)) ||
-            trapinfo.force_bungle)
-            dotrap(ttmp, (unsigned)(trapinfo.force_bungle ? FORCEBUNGLE : 0));
+        pline("You finish arming %s.",
+              the(trapexplain[what_trap(ttyp) - 1]));
+        if ((otmp->cursed || Fumbling) && rnl(10) > 5)
+            dotrap(ttmp, 0);
     } else {
         /* this shouldn't happen */
         pline("Your trap setting attempt fails.");
     }
     useup(otmp);
-    reset_trapset();
+    u.utracked[tos_trap] = 0;
     return 0;
 }
 
@@ -2776,7 +2764,7 @@ do_break_wand(struct obj *obj)
                     IS_DOOR(level->locations[x][y].typ)) {
                     /* normally, pits and holes don't anger guards, but they do 
                        if it's a wall or door that's being dug */
-                    watch_dig(NULL, x, y, TRUE);
+                    watch_warn(NULL, x, y, TRUE);
                     if (*in_rooms(level, x, y, SHOPBASE))
                         shop_damage = TRUE;
                 }
@@ -2832,7 +2820,7 @@ discard_broken_wand:
     turnstate.tracked[ttos_wand] = 0;
     if (obj)
         delobj(obj);
-    nomul(0, NULL);
+    action_completed();
     return 1;
 }
 
@@ -2923,7 +2911,7 @@ doapply(const struct nh_cmd_arg *arg)
     case LOCK_PICK:
     case CREDIT_CARD:
     case SKELETON_KEY:
-        res = pick_lock(obj, -2, -2, -2);
+        res = pick_lock(obj, arg);
         break;
     case PICK_AXE:
     case DWARVISH_MATTOCK:
@@ -3071,7 +3059,7 @@ doapply(const struct nh_cmd_arg *arg)
         break;
     case LAND_MINE:
     case BEARTRAP:
-        res = use_trap(obj);
+        res = use_trap(obj, arg);
         break;
     case FLINT:
     case LUCKSTONE:
@@ -3090,12 +3078,11 @@ doapply(const struct nh_cmd_arg *arg)
         }
         pline("Sorry, I don't know how to use that.");
     xit:
-        nomul(0, NULL);
+        action_completed();
         return 0;
     }
     if (res && obj && obj->oartifact)
         arti_speak(obj);
-    nomul(0, NULL);
     return res;
 }
 

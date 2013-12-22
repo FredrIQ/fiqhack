@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-21 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -589,6 +589,21 @@ carrying_questart(void)
     return NULL;
 }
 
+/* Used by functions that need to track time-consuming actions by the player on
+   an object, to see if the object is still around and in reach. Returns TRUE
+   for a non-NULL object in inventory or on the ground on the player's square.
+   Returns FALSE for a NULL argument or for zeroobj. */
+boolean
+obj_with_u(struct obj *obj)
+{
+    if (!obj || obj == &zeroobj)
+        return FALSE;
+    if (obj->where == OBJ_INVENT)
+        return TRUE;
+    if (obj->where != OBJ_FLOOR)
+        return FALSE;
+    return obj_here(obj, u.ux, u.uy);
+}
 
 const char *
 currency(long amount)
@@ -626,7 +641,7 @@ o_on(unsigned int id, struct obj *objchn)
 }
 
 boolean
-obj_here(struct obj * obj, int x, int y)
+obj_here(struct obj *obj, int x, int y)
 {
     struct obj *otmp;
 

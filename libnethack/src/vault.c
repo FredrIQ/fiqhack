@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-21 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -281,7 +281,8 @@ invault(void)
         EGD(guard)->vroom = vaultroom;
         EGD(guard)->warncnt = 0;
 
-        reset_faint();  /* if fainted - wake up */
+        /* We used to reset fainted status here, but that doesn't really make
+           sense; instead, that's treated like normal helplessness */
         if (canspotmon(guard))
             pline("Suddenly one of the Vault's guards enters!");
         else if (flags.soundok)
@@ -308,7 +309,7 @@ invault(void)
             mongone(guard);
             return;
         }
-        if (Strangled || is_silent(youmonst.data) || multi < 0) {
+        if (Strangled || is_silent(youmonst.data) || Helpless) {
             /* [we ought to record whether this this message has already been
                given in order to vary it upon repeat visits, but discarding the 
                monster and its egd data renders that hard] */
@@ -317,11 +318,8 @@ invault(void)
             return;
         }
 
-        stop_occupation();      /* if occupied, stop it *now* */
-        if (multi > 0) {
-            nomul(0, NULL);
-            unmul(NULL);
-        }
+        action_interrupted();
+
         trycount = 5;
         do {
             getlin("\"Hello stranger, who are you?\" -", buf, FALSE);
@@ -540,7 +538,7 @@ gd_move(struct monst *grd)
                 return -1;
             }
             /* not fair to get mad when (s)he's fainted or paralyzed */
-            if (!is_fainted() && multi >= 0)
+            if (!Helpless)
                 egrd->warncnt++;
             return 0;
         }

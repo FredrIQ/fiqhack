@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -41,6 +41,9 @@ mb_trapped(struct monst *mtmp)
 }
 
 
+/* Called every turn by the Watch to see if they notice any misbehaviour.
+   Currently this only handles occupations. (There are other behaviours
+   forbidden by the Watch via other codepaths.) */
 static void
 watch_on_duty(struct monst *mtmp)
 {
@@ -49,27 +52,23 @@ watch_on_duty(struct monst *mtmp)
     if (mtmp->mpeaceful && in_town(u.ux, u.uy) && mtmp->mcansee &&
         m_canseeu(mtmp) && !rn2(3)) {
 
-        if (picking_lock(&x, &y) && IS_DOOR(level->locations[x][y].typ) &&
-            (level->locations[x][y].doormask & D_LOCKED)) {
+        /* If you're digging, or if you're picking a lock (chests are OK), the
+           Watch may potentially be annoyed. We calculate the location via
+           working out which location command repeat would affect. (These cases
+           are merged because they both affect map locations on an ongoing
+           basis, so the code for both is much the same.) */
+        if ((flags.occupation == occ_dig ||
+             (flags.occupation == occ_lock &&
+              u.utracked[tos_lock] == &zeroobj)) &&
+            (flags.last_arg.argtype & CMD_ARG_DIR)) {
+            schar dx, dy, dz;
 
-            if (couldsee(mtmp->mx, mtmp->my)) {
+            dir_to_delta(flags.last_arg.dir, &dx, &dy, &dz);
+            x = u.ux + dx;
+            y = u.uy + dy;
 
-                pline("%s yells:", Amonnam(mtmp));
-                if (level->locations[x][y].looted & D_WARNED) {
-                    verbalize("Halt, thief!  You're under arrest!");
-                    angry_guards(!(flags.soundok));
-                } else {
-                    verbalize("Hey, stop picking that lock!");
-                    level->locations[x][y].looted |= D_WARNED;
-                    /* know locked status, know trapped status, know there's a
-                       door there -> safe to magic map */
-                    magic_map_background(x, y, 1);
-                }
-                stop_occupation();
-            }
-        } else if (is_digging()) {
-            /* chewing, wand/spell of digging are checked elsewhere */
-            watch_dig(mtmp, digging.pos.x, digging.pos.y, FALSE);
+            if (isok(x, y))
+                watch_warn(mtmp, x, y, FALSE);
         }
     }
 }
@@ -79,13 +78,12 @@ int
 dochugw(struct monst *mtmp)
 {
     int x = mtmp->mx, y = mtmp->my;
-    boolean already_saw_mon = !occupation ? 0 : canspotmon(mtmp);
+    boolean already_saw_mon = canspotmon(mtmp);
     int rd = dochug(mtmp);
 
     /* a similar check is in monster_nearby() in hack.c */
     /* check whether hero notices monster and stops current activity */
-    if (occupation && !rd && !Confusion && (!mtmp->mpeaceful || Hallucination)
-        &&
+    if (!rd && !Confusion && (!mtmp->mpeaceful || Hallucination) &&
         /* it's close enough to be a threat */
         distu(mtmp->mx, mtmp->my) <= (BOLT_LIM + 1) * (BOLT_LIM + 1) &&
         /* and either couldn't see it before, or it was too far away */
@@ -94,7 +92,7 @@ dochugw(struct monst *mtmp)
         /* can see it now, or sense it and would normally see it */
         (canseemon(mtmp) || (sensemon(mtmp) && couldsee(mtmp->mx, mtmp->my))) &&
         mtmp->mcanmove && !noattacks(mtmp->data) && !onscary(u.ux, u.uy, mtmp))
-        stop_occupation();
+        action_interrupted();
 
     return rd;
 }
@@ -350,8 +348,8 @@ dochug(struct monst *mtmp)
     /* Demonic Blackmail! */
     if (nearby && mdat->msound == MS_BRIBE && mtmp->mpeaceful && !mtmp->mtame &&
         !Engulfed) {
-        if (multi < 0)
-            return (0); /* wait for you to be able to respond */
+        if (Helpless)
+            return 0; /* wait for you to be able to respond */
         if (mtmp->mux != u.ux || mtmp->muy != u.uy) {
             pline("%s whispers at thin air.",
                   cansee(mtmp->mux, mtmp->muy) ? Monnam(mtmp) : "It");

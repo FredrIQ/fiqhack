@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-21 */
+/* Last modified by Alex Smith, 2013-12-22 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -121,11 +121,6 @@
  *   (A limit is an integer that specifies some number which should not be
  *   exceeded when running the command, e.g. the maximum number of 
  *
- * * CMD_ARG_CONT is used only by the server, to distinguish a second or
- *   subsequent iteration of the action from the first. The client can
- *   effectively control this via choosing whether to send a command using
- *   "repeat" or just via entering the same command again.
- *
  * * CMD_ARG_OBJ should normally be omitted, but in clients that use a
  *   menu-based interface in combination with get_obj_commands(), they have
  *   enough information to tell the user what the argument means.
@@ -151,7 +146,6 @@
 # define CMD_ARG_STR   (1 << 3)         /* param can be a string */
 # define CMD_ARG_SPELL (1 << 4)         /* param can be a spell letter */
 # define CMD_ARG_LIMIT (1 << 5)         /* param can be a limit */
-# define CMD_ARG_CONT  (1 << 6)         /* avoid prompting where possible */
 
 /* command usage hints */
 # define CMD_EXT        (1 << 10)       /* an 'extended' command */

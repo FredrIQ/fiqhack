@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2013-12-17
+Last modified by Alex Smith, 2013-12-22
 
 Copyright (C) 2013 Alex Smith.
 
@@ -440,14 +440,14 @@ divided into two categories:
         controls).  This was traditionally implemented by setting the variable
         `multi` to a positive value, which decremented every action.
         
-        The `multi` variable also had many other uses.  The uses for things
-        like limiting the number of items picked up from a pile with `,` or
-        the maximum number of arrows to shoot with `f` are now implemented via
-        the `limit` output parameter of `request_command`.  TODO: The aim is
-        that eventually, repeat counts that refer to repeating should simply
-        be implemented on the client.  For the time being, `limit` is
-        interpreted as a repeat count for backwards compatibility, for
-        commands which don't have a sensible interpretation of it as a limit.
+        The `multi` variable also had many other uses.  The uses of `multi`
+        for things like limiting the number of items picked up from a pile
+        with `,` or the maximum number of arrows to shoot with `f` are now
+        implemented via the `limit` element of `struct nh_cmd_arg`.  For
+        repetition-related uses, the repetition now happens on the client,
+        with `CMD_ARG_CONT` used to make the server aware of the repetition
+        (so that it can adapt the interface appropriately, e.g. not prompting
+        about whether to resume an interrupted action).
 
       * Farmove commands (e.g. `54` with numpad controls or `gh` with vikeys
         controls).  These were traditionally implemented as command repeat
@@ -459,9 +459,15 @@ divided into two categories:
 
       * Occupations.  This was traditionally implemented via setting the
         variable `occupation` to a non-NULL value, a callback that ran every
-        action.  TODO: It still works like this, except that the client can
-        interrupt the occupation via sending a command other than `repeat`.
-        Ideally, the `occupation` variable shouldn't be needed at all.
+        action.  The new implementation works via setting the `completed`
+        argument of `nh_request_command` to false, recommending that the
+        client repeat the action; the server tracks the *name* of the action
+        being repeated, in order to construct messages, but whether to
+        continue or stop is entirely up to the client (the server just sends
+        it hints: `completed` when the action is conceptually finished and any
+        further repetitions would logically be a new action, `interrupted` if
+        the character is in danger and the player should be asked to confirm
+        continuing/repeating the action manually with control-A).
 
   * Uninterruptible actions.  These are currently implemented in the
     traditional way: `multi` is set to a negative number, increasing by one

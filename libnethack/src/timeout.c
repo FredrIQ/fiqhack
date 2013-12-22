@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-18 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -35,12 +35,13 @@ stoned_dialogue(void)
 
     if (i > 0L && i <= SIZE(stoned_texts)) {
         pline(stoned_texts[SIZE(stoned_texts) - i]);
-        nomul(0, NULL); /* ensure the player is able to act on this message */
+        /* ensure the player is able to act on this message */
+        action_interrupted();
     }
     if (i == 5L)
         HFast = 0L;
     if (i == 3L)
-        nomul(-3, "getting stoned");
+        helpless(3, "unable to move due to turning to stone", NULL);
     exercise(A_DEX, FALSE);
 }
 
@@ -151,9 +152,7 @@ slime_dialogue(void)
     }
     if (i == 3L) {      /* limbs becoming oozy */
         HFast = 0L;     /* lose intrinsic speed */
-        stop_occupation();
-        if (multi > 0)
-            nomul(0, NULL);
+        action_interrupted();
     }
     exercise(A_DEX, FALSE);
 }
@@ -286,44 +285,44 @@ nh_timeout(void)
             case CONFUSION:
                 HConfusion = 1; /* So make_confused works properly */
                 make_confused(0L, TRUE);
-                stop_occupation();
+                action_interrupted();
                 break;
             case STUNNED:
                 HStun = 1;
                 make_stunned(0L, TRUE);
-                stop_occupation();
+                action_interrupted();
                 break;
             case BLINDED:
                 Blinded = 1;
                 make_blinded(0L, TRUE);
-                stop_occupation();
+                action_interrupted();
                 break;
             case INVIS:
                 newsym(u.ux, u.uy);
                 if (!Invis && !BInvis && !Blind) {
                     pline(!See_invisible ? "You are no longer invisible." :
                           "You can no longer see through yourself.");
-                    stop_occupation();
+                    action_interrupted();
                 }
                 break;
             case SEE_INVIS:
                 set_mimic_blocking();   /* do special mimic handling */
                 see_monsters(); /* make invis mons appear */
                 newsym(u.ux, u.uy);     /* make self appear */
-                stop_occupation();
+                action_interrupted();
                 break;
             case LWOUNDED_LEGS:
                 heal_one_leg(LEFT_SIDE);
-                stop_occupation();
+                action_interrupted();
                 break;
             case RWOUNDED_LEGS:
                 heal_one_leg(RIGHT_SIDE);
-                stop_occupation();
+                action_interrupted();
                 break;
             case HALLUC:
                 HHallucination = 1;
                 make_hallucinated(0L, TRUE);
-                stop_occupation();
+                action_interrupted();
                 break;
             case SLEEPING:
                 if (unconscious() || Sleep_resistance)
@@ -348,8 +347,7 @@ nh_timeout(void)
                 /* otherwise handle fumbling msgs locally. */
                 if (u.umoved && !Levitation) {
                     slip_or_trip();
-                    nomul(-2, "fumbling");
-                    nomovemsg = "";
+                    helpless(2, "fumbling", "");
                     /* The more you are carrying the more likely you are to
                        make noise when you fumble.  Adjustments to this number
                        must be thoroughly play tested. */
@@ -377,18 +375,11 @@ nh_timeout(void)
 void
 fall_asleep(int how_long, boolean wakeup_msg)
 {
-    stop_occupation();
-    nomul(how_long, "sleeping");
-    /* generally don't notice sounds while sleeping */
-    if (wakeup_msg && multi == how_long) {
-        /* caller can follow with a direct call to Hear_again() if there's a
-           need to override this when wakeup_msg is true */
-        flags.soundok = 0;
-        afternmv = Hear_again;  /* this won't give any messages */
-    }
     /* early wakeup from combat won't be possible until next monster turn */
     u.usleep = moves;
-    nomovemsg = wakeup_msg ? "You wake up." : "You can move again.";
+    flags.soundok = 0;
+    helpless(how_long, "sleeping",
+             wakeup_msg ? "You wake up." : NULL);
     see_monsters();
     see_objects();
     vision_full_recalc = 1;
@@ -1178,11 +1169,8 @@ do_storms(void)
     if (level->locations[u.ux][u.uy].typ == CLOUD) {
         /* inside a cloud during a thunder storm is deafening */
         pline("Kaboom!!!  Boom!!  Boom!!");
-        if (!u.uinvulnerable) {
-            stop_occupation();
-            nomovemsg = 0;      /* default: "You can move again." */
-            nomul(-3, "hiding from a thunderstorm");
-        }
+        if (!u.uinvulnerable)
+            helpless(3, "hiding from a thunderstorm", NULL);
     } else
         You_hear("a rumbling noise.");
 }

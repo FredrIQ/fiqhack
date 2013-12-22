@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-21 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -17,9 +17,6 @@
 
 #define CMD_TRAVEL (char)0x90
 
-static int (*timed_occ_fn) (const struct nh_cmd_arg *arg);
-
-static int command_repeat_occupation(void);
 static int domonability(const struct nh_cmd_arg *);
 static int dotravel(const struct nh_cmd_arg *);
 static int doautoexplore(const struct nh_cmd_arg *);
@@ -73,7 +70,7 @@ const struct cmd_desc cmdlist[] = {
     {"annotate", "name the current level", 0, 0, TRUE, donamelevel,
      CMD_ARG_STR | CMD_EXT},
     {"apply", "use a tool or container or dip into a potion", 'a', 0, FALSE,
-     doapply, CMD_ARG_OBJ | CMD_ARG_POS | CMD_ARG_DIR | CMD_ARG_STR},
+     doapply, CMD_ARG_OBJ | CMD_ARG_POS | CMD_ARG_DIR | CMD_ARG_STR },
     {"attributes", "show your attributes", C('x'), 0, TRUE, doattributes,
      0},
     {"autoexplore", "automatically explore until something happens", 'v', 0,
@@ -103,8 +100,7 @@ const struct cmd_desc cmdlist[] = {
      enhance_weapon_skill, CMD_EXT},
     {"engrave", "write on the floor", 'E', 0, FALSE, doengrave,
      CMD_ARG_OBJ | CMD_ARG_STR},
-    {"equip", "change your equipment", 'A', '*', FALSE, doequip,
-     CMD_ARG_CONT},
+    {"equip", "change your equipment", 'A', '*', FALSE, doequip, 0},
     {"farlook", "say what is on a distant square", ';', 0, TRUE, doquickwhatis,
      CMD_NOTIME | CMD_ARG_POS},
     {"fight", "attack even if no hostile monster is visible", 'F', 0, FALSE,
@@ -154,14 +150,12 @@ const struct cmd_desc cmdlist[] = {
      CMD_ARG_OBJ},
     {"pickup", "take items from the floor", ',', 0, FALSE, dopickup,
      CMD_ARG_LIMIT},
-    {"pray", "pray to the gods for help", M('p'), 0, TRUE, dopray,
-     CMD_EXT},
+    {"pray", "pray to the gods for help", M('p'), 0, TRUE, dopray, CMD_EXT},
     {"quit", "exit without saving current game", M('q'), 0, TRUE, doquit,
      CMD_EXT},
     {"quiver", "ready an item for firing", 'Q', 0, FALSE, dowieldquiver,
      CMD_ARG_OBJ},
-    {"read", "read a scroll or spellbook", 'r', 0, FALSE, doread,
-     CMD_ARG_OBJ},
+    {"read", "read a scroll or spellbook", 'r', 0, FALSE, doread, CMD_ARG_OBJ},
     {"redraw", "redraw the screen", C('r'), 0, TRUE, doredrawcmd,
      CMD_NOTIME},
     {"repeat", "repeat the last command or continue an interrupted command",
@@ -283,46 +277,50 @@ const struct cmd_desc cmdlist[] = {
     {NULL, NULL, 0, 0, 0, 0, 0, NULL}
 };
 
-
-/* Count down by decrementing multi */
-static int
-command_repeat_occupation(void)
-{
-    (*timed_occ_fn) (&(struct nh_cmd_arg){.argtype = 0});
-    if (multi > 0)
-        multi--;
-    if (!multi)
-        nomul(0, NULL);     /* reset multi_txt, etc. */
-    return multi > 0;
-}
-
-/* If you have moved since initially setting some occupations, they
- * now shouldn't be able to restart.
- *
- * The basic rule is that if you are carrying it, you can continue
- * since it is with you.  If you are acting on something at a distance,
- * your orientation to it must have changed when you moved.
- *
- *
- *      Currently:  Picking Locks / Forcing Chests.
- *                  Setting traps.
- */
+/* Several occupations cannot be meaningfully continued if you move (anything
+   acting on a map square, for instance, because your orientation to it
+   changes). Others can't be continued if the item is no longer in inventory
+   (equipping), or if the item is no longer on the ground at your location
+   (unlocking, forcing). */
 void
-reset_occupations(void)
+reset_occupations(boolean u_changed_location)
 {
-    reset_pick();
-    reset_trapset();
-}
+    int i;
 
-void
-set_occupation(int (*fn) (void), const char *txt)
-{
-    occupation = fn;
-    strncpy(turnstate.occupation_txt, txt,
-            (sizeof turnstate.occupation_txt)-2);
-    return;
-}
+    /* Occupations that always reset if you move. */
+    if (u_changed_location) {
+        /* Setting traps. */
+        u.uoccupation_progress[tos_trap] = 0;
+        u.utracked[tos_trap] = 0;
+        /* Digging. */
+        u.uoccupation_progress[tos_dig] = 0; /* u.utracked[tos_dig] unused */
+        /* Picking locks. */
+        u.uoccupation_progress[tos_lock] = 0;
+        u.utracked[tos_lock] = 0;
+    }
 
+    /* Occupations that reset if you don't have the item in inventory. */
+    for (i = tos_first_equip; i <= tos_last_equip; i++) {
+        /* Equipping. */
+        if (u.utracked[i] && u.utracked[i] != &zeroobj &&
+            u.utracked[i]->where != OBJ_INVENT) {
+            u.utracked[i] = 0;
+            u.uoccupation_progress[i] = 0;
+        }
+    }
+
+    /* Occupations that require the item to be on the ground. */
+    if (u.utracked[tos_lock] != &zeroobj) {
+        if (!obj_with_u(u.utracked[tos_lock]) ||
+            u.utracked[tos_lock]->where == OBJ_INVENT) {
+            u.utracked[tos_lock] = 0;
+            u.uoccupation_progress[tos_lock] = 0;
+        }
+    }
+
+    /* Eating, reading, and opening tins can be resumed even if you lose the
+       item in the meantime. */
+}
 
 /* #monster command - use special monster ability while polymorphed */
 static int
@@ -2066,7 +2064,6 @@ wiz_show_stats(const struct nh_cmd_arg *arg)
     return 0;
 }
 
-
 boolean
 dir_to_delta(enum nh_direction dir, schar * dx, schar * dy, schar * dz)
 {
@@ -2188,6 +2185,19 @@ get_command_idx(const char *command)
     return -1;
 }
 
+/* Returns TRUE if the command that the user entered during the current turn (if
+   it's their turn) or their previous turn (if it isn't) was the named command
+   exactly, no synonyms. The main purpose of this is for commands that require a
+   specific method of invoking before they will do something dangerous (e.g.
+   opening a door needs the "open" in order to unlock it, which is
+   timeconsuming). Except for this purpose, commands shouldn't care about how
+   they were invoked. */
+boolean
+last_command_was(const char *command)
+{
+    return flags.last_cmd == get_command_idx(command);
+}
+
 int
 do_command(int command, struct nh_cmd_arg *arg)
 {
@@ -2212,11 +2222,10 @@ do_command(int command, struct nh_cmd_arg *arg)
     if (!cmdlist[command].func) {
         command = flags.last_cmd;
         arg = &flags.last_arg;
-        arg->argtype |= CMD_ARG_CONT;
+        turnstate.continue_message = FALSE;
     } else if (!(cmdlist[command].flags & CMD_INTERNAL)) {
         flags.last_cmd = command;
         flags.last_arg = *arg;
-        arg->argtype &= ~CMD_ARG_CONT;
     }
 
     /* Debug commands are now restricted to wizard mode here, rather than with
@@ -2234,31 +2243,21 @@ do_command(int command, struct nh_cmd_arg *arg)
     if (u.uburied && !cmdlist[command].can_if_buried) {
         pline("You can't do that while you are buried!");
         res = 0;
-        multi = 0;
+        action_completed();
     } else {
-        if (cmdlist[command].text && !occupation && multi > 1) {
-            timed_occ_fn = cmdlist[command].func;
-            set_occupation(command_repeat_occupation,
-                           cmdlist[command].text);
-        }
-
         flags.move = TRUE;
         res = (*cmdlist[command].func) (arg);
-
-        if (multi > 0)
-            --multi;
-        if (multi == 0)
-            nomul(0, NULL); /* clear multi state */
     }
 
     if (!res) {
         flags.move = FALSE;
-        multi = 0;
+        action_completed(); /* most likely the command was cancelled */
     }
+
+    turnstate.continue_message = TRUE;
 
     return COMMAND_OK;
 }
-
 
 
 int
@@ -2336,11 +2335,10 @@ doautoexplore(const struct nh_cmd_arg *arg)
     iflags.travel1 = 1;
     flags.run = 8;
     flags.nopick = FALSE;
-    if (!multi)
-        multi = max(COLNO, ROWNO);
     u.last_str_turn = 0;
     flags.mv = TRUE;
 
+    action_incomplete("exploring", occ_autoexplore);
     domove(&(struct nh_cmd_arg){.argtype = CMD_ARG_DIR, .dir = DIR_SELF});
 
     return 1;
@@ -2376,11 +2374,10 @@ dotravel(const struct nh_cmd_arg *arg)
     iflags.travel1 = 1;
     flags.run = 8;
     flags.nopick = TRUE;
-    if (!multi)
-        multi = max(COLNO, ROWNO);
     u.last_str_turn = 0;
     flags.mv = TRUE;
 
+    action_incomplete("travelling", occ_travel);
     return domove(&(struct nh_cmd_arg){.argtype = CMD_ARG_DIR,
                                        .dir = DIR_SELF});
 }

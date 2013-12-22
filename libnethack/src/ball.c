@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -550,7 +550,7 @@ drag:
     if (near_capacity() > SLT_ENCUMBER && dist2(x, y, u.ux, u.uy) <= 2) {
         pline("You cannot %sdrag the heavy iron ball.",
               invent ? "carry all that and also " : "");
-        nomul(0, NULL);
+        action_completed();
         return FALSE;
     }
 
@@ -587,7 +587,7 @@ drag:
                 u.uy = uchain->oy;
                 newsym(u.ux0, u.uy0);
             }
-            nomul(0, NULL);
+            action_interrupted();
 
             *bc_control = BC_BALL;
             move_bc(1, *bc_control, *ballx, *bally, *chainx, *chainy);

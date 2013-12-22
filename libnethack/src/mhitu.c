@@ -1,10 +1,11 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "artifact.h"
+#include "hungerstatus.h"
 
 static struct obj *otmp;
 
@@ -87,7 +88,7 @@ missmu(struct monst *mtmp, boolean nearmiss, const struct attack *mattk)
         else
             pline("%s just misses!", Monnam(mtmp));
     }
-    stop_occupation();
+    action_interrupted();
 }
 
 /* monster swings obj */
@@ -298,9 +299,8 @@ mattacku(struct monst *mtmp)
 
     /* Might be attacking your image around the corner, or invisible, or you
        might be blind.... */
-
     if (!ranged)
-        nomul(0, NULL);
+        action_interrupted();
     if (mtmp->mhp <= 0 || (Underwater && !is_swimmer(mtmp->data)))
         return 0;
 
@@ -448,14 +448,14 @@ mattacku(struct monst *mtmp)
             pline("Wait, %s!  That %s is really %s named %s!", m_monnam(mtmp),
                   mimic_obj_name(&youmonst), an(mons[u.umonnum].mname),
                   u.uplname);
-        if (multi < 0) {        /* this should always be the case */
+        if (Helpless) {        /* this should always be the case */
             char buf[BUFSZ];
 
             sprintf(buf, "You appear to be %s again.",
                     Upolyd ? (const char *)an(youmonst.
                                               data->mname) : (const char *)
                     "yourself");
-            unmul(buf); /* immediately stop mimicking */
+            cancel_helplessness(buf); /* immediately stop mimicking */
         }
         return 0;
     }
@@ -463,7 +463,7 @@ mattacku(struct monst *mtmp)
 /* Work out the armor class differential   */
     tmp = AC_VALUE(u.uac) + 10; /* tmp ~= 0 - 20 */
     tmp += mtmp->m_lev;
-    if (multi < 0)
+    if (Helpless)
         tmp += 4;
     if ((Invis && !perceives(mdat)) || !mtmp->mcansee)
         tmp -= 2;
@@ -696,10 +696,8 @@ mattacku(struct monst *mtmp)
             bot();
         /* give player a chance of waking up before dying -kaa */
         if (sum[i] == 1) {      /* successful attack */
-            if (u.usleep && u.usleep < moves && !rn2(10)) {
-                multi = -1;
-                nomovemsg = "The combat suddenly awakens you.";
-            }
+            if (u.usleep && u.usleep < moves && !rn2(10))
+                cancel_helplessness("The combat suddenly awakens you.");
         }
         if (sum[i] == 2)
             return 1;   /* attacker dead */
@@ -1035,7 +1033,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_SLEE:
         hitmsg(mtmp, mattk);
-        if (uncancelled && multi >= 0 && !rn2(5)) {
+        if (uncancelled && !Helpless && !rn2(5)) {
             if (Sleep_resistance)
                 break;
             fall_asleep(-rnd(10), TRUE);
@@ -1132,7 +1130,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_PLYS:
         hitmsg(mtmp, mattk);
-        if (uncancelled && multi >= 0 && !rn2(3)) {
+        if (uncancelled && !Helpless && !rn2(3)) {
             if (Free_action) {
                 pline("You momentarily stiffen.");
             } else {
@@ -1140,8 +1138,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                     pline("You are frozen!");
                 else
                     pline("You are frozen by %s!", mon_nam(mtmp));
-                nomovemsg = 0;  /* default: "you can move again" */
-                nomul(-rnd(10), "paralyzed by a monster");
+                helpless(10, "paralyzed by a monster's touch", NULL);
                 exercise(A_DEX, FALSE);
             }
         }
@@ -1549,7 +1546,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     case AD_FAMN:
         pline("%s reaches out, and your body shrivels.", Monnam(mtmp));
         exercise(A_CON, FALSE);
-        if (!is_fainted())
+        if (u.uhs != FAINTED)
             morehungry(rn1(40, 40));
         /* plus the normal damage */
         break;
@@ -1652,7 +1649,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         res = passiveum(olduasmon, mtmp, mattk);
     else
         res = 1;
-    stop_occupation();
+    action_interrupted();
     return res;
 }
 
@@ -1693,8 +1690,8 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
             dismount_steed(DISMOUNT_ENGULFED);
         } else
             pline("%s engulfs you!", Monnam(mtmp));
-        stop_occupation();
-        reset_occupations();    /* behave as if you had moved */
+        action_interrupted();
+        reset_occupations(TRUE);    /* behave as if you had moved */
 
         if (u.utrap) {
             pline("You are released from the %s!",
@@ -1854,7 +1851,7 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
 
     mdamageu(mtmp, tmp);
     if (tmp)
-        stop_occupation();
+        action_interrupted();
 
     if (touch_petrifies(youmonst.data) && !resists_ston(mtmp)) {
         pline("%s very hurriedly %s you!", Monnam(mtmp),
@@ -2009,7 +2006,7 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
         if (canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my) &&
             !Stone_resistance) {
             pline("You meet %s gaze.", s_suffix(mon_nam(mtmp)));
-            stop_occupation();
+            action_interrupted();
             if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
                 break;
             pline("You turn to stone...");
@@ -2029,7 +2026,7 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
             else
                 pline("You are getting more and more confused.");
             make_confused(HConfusion + conf, FALSE);
-            stop_occupation();
+            action_interrupted();
         }
         break;
     case AD_STUN:
@@ -2040,7 +2037,7 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
             mtmp->mspec_used = mtmp->mspec_used + (stun + rn2(6));
             pline("%s stares piercingly at you!", Monnam(mtmp));
             make_stunned(HStun + stun, TRUE);
-            stop_occupation();
+            action_interrupted();
         }
         break;
     case AD_BLND:
@@ -2050,7 +2047,7 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
 
             pline("You are blinded by %s radiance!", s_suffix(mon_nam(mtmp)));
             make_blinded((long)blnd, FALSE);
-            stop_occupation();
+            action_interrupted();
             /* not blind at this point implies you're wearing the Eyes of the
                Overworld; make them block this particular stun attack too */
             if (!Blind)
@@ -2065,7 +2062,7 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
             int dmg = dice(2, 6);
 
             pline("%s attacks you with a fiery gaze!", Monnam(mtmp));
-            stop_occupation();
+            action_interrupted();
             if (Fire_resistance) {
                 pline("The fire doesn't feel hot!");
                 dmg = 0;
@@ -2084,7 +2081,7 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
 #ifdef PM_BEHOLDER      /* work in progress */
     case AD_SLEE:
         if (!mtmp->mcan && canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my) &&
-            mtmp->mcansee && multi >= 0 && !rn2(5) && !Sleep_resistance) {
+            mtmp->mcansee && !Helpless && !rn2(5) && !Sleep_resistance) {
 
             fall_asleep(-rnd(10), TRUE);
             pline("%s gaze makes you very sleepy...", s_suffix(Monnam(mtmp)));
@@ -2096,7 +2093,7 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
             !rn2(4))
 
             u_slow_down();
-        stop_occupation();
+        action_interrupted();
         break;
 #endif
     default:
@@ -2222,7 +2219,7 @@ doseduce(struct monst *mon)
         return 0;
     }
 
-    if (multi < 0) {
+    if (Helpless) {
         pline("%s seems dismayed at your lack of response.", Monnam(mon));
         return 0;
     }
