@@ -819,6 +819,7 @@ extern int32_t mread32(struct memfile *mf);
 extern int64_t mread64(struct memfile *mf);
 extern void mfmagic_check(struct memfile *mf, int32_t magic);
 extern void mfmagic_set(struct memfile *mf, int32_t magic);
+extern boolean mequal(struct memfile *mf1, struct memfile *mf2, boolean noisy);
 
 /* ### mhitm.c ### */
 
@@ -1673,7 +1674,6 @@ extern boolean lava_effects(void);
 extern void blow_up_landmine(struct trap *);
 extern void cnv_trap_obj(struct level *lev, int otyp, int cnt,
                          struct trap *ttmp);
-
 
 /* ### u_init.c ### */
 

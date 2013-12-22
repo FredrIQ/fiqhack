@@ -545,18 +545,24 @@ log_neutral_turnstate(void)
 }
 
 
-/* remove the ongoing command fom the logfile. This is used to suppress the
-   logging of commands marked as CMD_NOTIME */
+/* Ensure that a command that was meant to have no effect actually did have no
+   effect. If it did have an effect, complain and revert the command (via use of
+   impossible()). */
 void
 log_revert_command(void)
 {
-#ifdef TODO
-    if (program_state.logfile == -1)
-        return;
+    struct memfile mf;
 
-    lseek(program_state.logfile, last_cmd_pos, SEEK_SET);
-    ftruncate(program_state.logfile, last_cmd_pos);
-#endif
+    mnew(&mf, NULL);
+    savegame(&mf);
+
+    if (!mequal(&program_state.binary_save, &mf, TRUE)) {
+        mfree(&mf);
+        impossible("Informational command changed the gamestate");
+        terminate(RESTART_PLAY); /* for now */
+    }
+
+    mfree(&mf);
 }
 
 #ifdef TODO
@@ -758,10 +764,6 @@ static void
 load_gamestate_from_binary_save(boolean maybe_old_version)
 {
     struct memfile mf;
-    char *oldp, *newp;
-    long len, off;
-    struct memfile_tag *tag, *titer;
-    int bin;
 
     /* For the time being, there are no compatible old versions, thus we can
        safely force maybe_old_version to FALSE for even more aggressive error
@@ -778,56 +780,13 @@ load_gamestate_from_binary_save(boolean maybe_old_version)
     mnew(&mf, NULL);
     savegame(&mf);
 
-    /* Compare the old and new save files. If they're different lengths, we
-       compare only the portion that fits into both files. */
+    if (!mequal(&program_state.binary_save, &mf, !maybe_old_version)) {
 
-    len = program_state.binary_save.pos;
-    if (len > mf.pos)
-        len = mf.pos;
-
-    oldp = mmmap(&program_state.binary_save, len, 0);
-    newp = mmmap(&mf, len, 0);
-
-    if (mf.pos != program_state.binary_save.pos ||
-        memcmp(oldp, newp, len) != 0) {
-
+        mfree(&mf);
         if (maybe_old_version) {
-            mfree(&mf);
             program_state.ok_to_diff = FALSE;
             return;
         }
-        raw_printf(
-            "loading then immediately saving changes save file contents:\n");
-
-        /* Determine where the desyncs are. */
-        tag = NULL;
-        for (off = 0; off < len; off++) {
-            for (bin = 0; bin < MEMFILE_HASHTABLE_SIZE; bin++)
-                for (titer = mf.tags[bin]; titer; titer = titer->next)
-                    if (titer->pos == off)
-                        tag = titer;
-            if (tag && oldp[off] != newp[off]) {
-
-                raw_printf("desync at %ld (tag %d:%08lx + %ld byte%s)\n",
-                           off, (int)tag->tagtype, tag->tagdata,
-                           off - tag->pos, (off - tag->pos == 1) ? "" : "s");
-
-                if (tag->tagtype == MTAG_LOCATIONS) {
-
-                    const int bpl = 8; /* bytes per location */
-                    int which_location = (off - tag->pos) / bpl;
-
-                    raw_printf("this corresponds to (%d, %d) + %ld byte%s\n",
-                               which_location / ROWNO,
-                               which_location % ROWNO,
-                               (off - tag->pos) % bpl,
-                               ((off - tag->pos) % bpl) == 1 ? "" : "s");
-                }
-
-                tag = NULL; /* don't report further issues with this tag */
-            }
-        }
-
         error_reading_save("");
     }
 
