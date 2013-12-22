@@ -255,7 +255,8 @@ enum nh_command_status {
     COMMAND_DEBUG_ONLY,
     COMMAND_UNKNOWN,
     COMMAND_BAD_ARG,
-    COMMAND_OK
+    COMMAND_OK,
+    COMMAND_ZERO_TIME
 };
 
 enum nh_effect_types {

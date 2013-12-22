@@ -1302,6 +1302,8 @@ domove(const struct nh_cmd_arg *arg)
         if (flags.forcefight || !mtmp->mundetected || sensemon(mtmp) ||
             ((hides_under(mtmp->data) || mtmp->data->mlet == S_EEL) &&
              !is_safepet(mtmp))) {
+            enum attack_check_status attack_status;
+
             gethungry();
             if (wtcap >= HVY_ENCUMBER && moves % 3) {
                 if (Upolyd && u.mh > 1) {
@@ -1319,8 +1321,9 @@ domove(const struct nh_cmd_arg *arg)
 
             /* try to attack; note that it might evade */
             /* also, we don't attack tame when _safepet_ */
-            if (attack(mtmp, dx, dy))
-                return 1;
+            attack_status = attack(mtmp, dx, dy);
+            if (attack_status != ac_continue)
+                return attack_status != ac_cancel;
         }
     }
 
@@ -1485,7 +1488,6 @@ domove(const struct nh_cmd_arg *arg)
             pline(is_pool(level, x, y) ? "You never learned to swim!" :
                   "That lava looks rather dangerous...");
             pline("(Use the 'moveonly' command to move there anyway.)");
-            flags.move = 0;
             action_completed();
             return 0;
         }

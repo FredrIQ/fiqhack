@@ -1801,7 +1801,6 @@ use_figurine(struct obj **objp, const struct nh_cmd_arg *arg)
             return 0;
     }
     if (!getargdir(arg, NULL, &dx, &dy, &dz)) {
-        flags.move = 0;
         action_completed();
         return 0;
     }
@@ -2202,8 +2201,9 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
     if (proficient < 0)
         proficient = 0;
 
-    if (Engulfed && attack(u.ustuck, dx, dy)) {
-        pline("There is not enough room to flick your bullwhip.");
+    if (Engulfed) {
+        enum attack_check_status attack_status = attack(u.ustuck, dx, dy);
+        return attack_status != ac_cancel;
 
     } else if (Underwater) {
         pline("There is too much resistance to flick your bullwhip.");
@@ -2280,10 +2280,11 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
             if (bigmonst(mtmp->data)) {
                 wrapped_what = strcpy(buf, mon_nam(mtmp));
             } else if (proficient) {
-                if (attack(mtmp, dx, dy))
-                    return 1;
-                else
+                enum attack_check_status attack_status = attack(mtmp, dx, dy);
+                if (attack_status == ac_continue)
                     pline(msg_snap);
+                else
+                    return attack_status != ac_cancel;
             }
         }
         if (!wrapped_what) {
@@ -2394,10 +2395,11 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
             else
                 pline("You flick your bullwhip towards %s.", mon_nam(mtmp));
             if (proficient) {
-                if (attack(mtmp, dx, dy))
-                    return 1;
-                else
+                enum attack_check_status attack_status = attack(mtmp, dx, dy);
+                if (attack_status == ac_continue)
                     pline(msg_snap);
+                else
+                    return attack_status != ac_cancel;
             }
         }
 
@@ -2475,9 +2477,12 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
     /* Attack the monster there */
     if ((mtmp = m_at(level, cc.x, cc.y)) != NULL) {
         int oldhp = mtmp->mhp;
+        enum attack_check_status attack_status;
 
-        if (attack_checks(mtmp, obj, cc.x, cc.y))
-            return res;
+        attack_status = attack_checks(mtmp, obj, cc.x, cc.y);
+
+        if (attack_status != ac_continue)
+            return res || attack_status != ac_cancel;
 
         bhitpos = cc;
         check_caitiff(mtmp);

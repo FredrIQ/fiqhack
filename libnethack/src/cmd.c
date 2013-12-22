@@ -2198,7 +2198,7 @@ last_command_was(const char *command)
     return flags.last_cmd == get_command_idx(command);
 }
 
-int
+enum nh_command_status
 do_command(int command, struct nh_cmd_arg *arg)
 {
     int res;
@@ -2233,8 +2233,6 @@ do_command(int command, struct nh_cmd_arg *arg)
     if (cmdlist[command].flags & CMD_DEBUG && !wizard)
         return COMMAND_DEBUG_ONLY;
 
-    flags.move = FALSE;
-
     /* Make sure the client hasn't given extra arguments on top of the ones that
        we'd normally accept. To simplify things, we just silently drop any
        additional arguments. */
@@ -2245,18 +2243,17 @@ do_command(int command, struct nh_cmd_arg *arg)
         res = 0;
         action_completed();
     } else {
-        flags.move = TRUE;
         res = (*cmdlist[command].func) (arg);
     }
 
-    if (!res) {
-        flags.move = FALSE;
-        action_completed(); /* most likely the command was cancelled */
-    }
+    /* If the command takes no time, most likely it was cancelled, and there's
+       probably not much sense in repeat-counting it anyway. */
+    if (!res)
+        action_completed();
 
     turnstate.continue_message = TRUE;
 
-    return COMMAND_OK;
+    return res ? COMMAND_OK : COMMAND_ZERO_TIME;
 }
 
 

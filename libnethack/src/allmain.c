@@ -210,10 +210,13 @@ post_init_tasks(void)
     /* dorecover() used to run timers. The side effects from dorecover() have
        been moved here (so that dorecover() can be used to test save file
        integrity); but the timer run has been removed altogether (the /correct/
-       place for it is goto_level(), and there was already a call there). */
+       place for it is goto_level(), and there was already a call there).
+
+       After some effort eliminating them, there are no dorecover() side effects
+       here at all right now, and that's the way it should be; saving then
+       reloading should have no effect. */
 
     /* Prepare for the first move. */
-    flags.move = 0;                  /* TODO: Does this help? Does this hurt? */
     pre_move_tasks(0);
 }
 
@@ -758,7 +761,6 @@ pre_move_tasks(boolean didmove)
     /* TODO: Switch between lookaround and monster_nearby depending on
        what command we're doing. */
     lookaround();
-    flags.move = 0;
     iflags.botl = 1;
 
     if (didmove && moves % 100 == 0)
@@ -893,7 +895,7 @@ one_occupation_turn(int (*callback)(void), const char *gerund,
 static void
 command_input(int cmdidx, struct nh_cmd_arg *arg)
 {
-    boolean didmove = FALSE;
+    boolean didmove = TRUE;
 
     flags.nopick = 0;
     flags.occupation = occ_none;
@@ -911,22 +913,23 @@ command_input(int cmdidx, struct nh_cmd_arg *arg)
             pline("I don't understand what you want that command to apply to.");
             action_interrupted();
             return;
+        case COMMAND_ZERO_TIME:
+            didmove = FALSE;
+            break;
+        case COMMAND_OK:
+            /* nothing to do */
+            break;
         }
     }
 
     if (u.utotype)      /* change dungeon level */
         deferred_goto();        /* after rhack() */
-    /* !flags.move here: multiple movement command stopped */
-    else if (!flags.move || !flags.mv)
-        iflags.botl = 1;
 
     if (vision_full_recalc)
         vision_recalc(0);       /* vision! */
 
-    didmove = flags.move;
-    if (didmove) {
+    if (didmove)
         you_moved();
-    }
 
     /* actual time passed */
     /****************************************/
@@ -936,7 +939,6 @@ command_input(int cmdidx, struct nh_cmd_arg *arg)
     iflags.next_msg_nonblocking = 0;
 
     /* prepare for the next move */
-    flags.move = 1;
     pre_move_tasks(didmove);
 
     flush_screen(); 
@@ -990,7 +992,6 @@ newgame(void)
                    "entered the Dungeons of Doom to retrieve the Amulet of Yendor!");
 
     /* prepare for the first move */
-    flags.move = 0;
     set_wear();
 
     program_state.game_running = TRUE;

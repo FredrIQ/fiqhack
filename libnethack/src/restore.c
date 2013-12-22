@@ -709,7 +709,6 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->lit_corridor = mread8(mf);
     f->made_amulet = mread8(mf);
     f->mon_moving = mread8(mf);
-    f->move = mread8(mf);
     f->mv = mread8(mf);
     f->nopick = mread8(mf);
     f->null = mread8(mf);

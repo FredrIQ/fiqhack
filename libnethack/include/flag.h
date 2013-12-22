@@ -44,8 +44,6 @@ struct flag {
     boolean lit_corridor;       /* show a dark corr as lit if it is in sight */
     boolean made_amulet;
     boolean mon_moving; /* monsters' turn to move */
-    boolean move;       /* normally 1, unless an action during your turn did
-                           NOT use up the move */
     boolean incomplete; /* the requested action continues into future turns */
     boolean interrupted;/* something happened to make long actions stop */
     boolean mv;

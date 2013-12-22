@@ -852,9 +852,13 @@ use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
     if (!getargdir(arg, qbuf, &dx, &dy, &dz))
         return res;
 
-    if (Engulfed && attack(u.ustuck, dx, dy)) {
-        ;       /* return 1 */
-    } else if (Underwater) {
+    if (Engulfed) {
+        enum attack_check_status attack_status = attack(u.ustuck, dx, dy);
+        if (attack_status != ac_continue)
+            return attack_status != ac_cancel;
+    }
+
+    if (Underwater) {
         pline("Turbulence torpedoes your %s attempts.", verbing);
     } else if (dz < 0) {
         if (Levitation)

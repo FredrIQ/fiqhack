@@ -15,6 +15,7 @@
 # include "hacklib.h"
 
 /* forward definitions of structures and enums */
+enum attack_check_status;
 enum equipmsg;
 enum locktype;
 enum memfile_tagtype;
@@ -172,7 +173,7 @@ extern const char *rank_of(int, short, boolean);
 extern void reset_occupations(boolean);
 extern int get_command_idx(const char *cmd);
 extern boolean last_command_was(const char *cmd);
-extern int do_command(int, struct nh_cmd_arg *);
+extern enum nh_command_status do_command(int, struct nh_cmd_arg *);
 extern void enlightenment(int);
 extern void show_conduct(int);
 extern unsigned long encode_conduct(void);
@@ -1682,10 +1683,11 @@ extern void u_init_inv_skills(void);
 /* ### uhitm.c ### */
 
 extern void hurtmarmor(struct monst *, int);
-extern boolean attack_checks(struct monst *, struct obj *, schar, schar);
+extern enum attack_check_status attack_checks(struct monst *, struct obj *,
+                                              schar, schar);
 extern void check_caitiff(struct monst *);
 extern schar find_roll_to_hit(struct monst *);
-extern boolean attack(struct monst *, schar, schar);
+extern enum attack_check_status attack(struct monst *, schar, schar);
 extern boolean hmon(struct monst *, struct obj *, int);
 extern int damageum(struct monst *, const struct attack *);
 extern void missum(struct monst *, const struct attack *);
