@@ -1138,21 +1138,24 @@ equip_in_slot(struct obj *otmp, enum objslot slot)
        slot, and any slot that covers another slot (but all covering slots
        are armor slots at the moment). */
     if (flags.verbose && slot <= os_last_armor) {
-        if (otmp != &zeroobj && otmp != EQUIP(slot))
-            pline("You %s equipping %s.",
-                  resuming ? "continue" : "start", yname(otmp));
-        else if (otmp == &zeroobj && EQUIP(slot))
-            pline("You %s removing %s.",
-                  resuming ? "continue" : "start", yname(EQUIP(slot)));
-        else {
+        if (otmp != &zeroobj && otmp != EQUIP(slot)) {
+            if (!resuming || turnstate.continue_message)
+                pline("You %s equipping %s.",
+                      resuming ? "continue" : "start", yname(otmp));
+        } else if (otmp == &zeroobj && EQUIP(slot)) {
+            if (!resuming || turnstate.continue_message)
+                pline("You %s removing %s.",
+                      resuming ? "continue" : "start", yname(EQUIP(slot)));
+        } else {
             /* Either we're putting items back on, or else we're not making any
                changes at all and this is very trivial. */
-            for (j = 0; j <= os_last_equip; j++) {
-                if (u.utracked[tos_first_equip + j] != NULL && j != slot) {
-                    pline("You start putting your other items back on.");
-                    break;
+            if (turnstate.continue_message)
+                for (j = 0; j <= os_last_equip; j++) {
+                    if (u.utracked[tos_first_equip + j] != NULL && j != slot) {
+                        pline("You start putting your other items back on.");
+                        break;
+                    }
                 }
-            }
         }
     }
 
@@ -2073,7 +2076,8 @@ doequip(const struct nh_cmd_arg *arg)
 
     /* If changing any slow item or two or more fast items, print a message,
        because this will probably take multiple turns. */
-    if (time_consuming_changes >= 2 && flags.verbose)
+    if (time_consuming_changes >= 2 && flags.verbose &&
+        (!resuming || turnstate.continue_message))
         pline("You %s equipping yourself.", resuming ? "continue" : "start");
 
     /* Do the equip. */
