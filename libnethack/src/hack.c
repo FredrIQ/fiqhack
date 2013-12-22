@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-12 */
+/* Last modified by Sean Hunt, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1684,13 +1684,13 @@ domove(schar dx, schar dy, schar dz)
         nomovemsg = "";
     }
 
-    if (flags.run && iflags.runmode != RUN_TPORT) {
+    if (flags.run && flags.runmode != RUN_TPORT) {
         /* display every step or every 7th step depending upon mode */
-        if (iflags.runmode != RUN_LEAP || !(moves % 7L)) {
+        if (flags.runmode != RUN_LEAP || !(moves % 7L)) {
             iflags.botl = 1;
             flush_screen();
             win_delay_output();
-            if (iflags.runmode == RUN_CRAWL) {
+            if (flags.runmode == RUN_CRAWL) {
                 win_delay_output();
                 win_delay_output();
                 win_delay_output();

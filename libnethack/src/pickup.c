@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-12 */
+/* Last modified by Sean Hunt, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -362,7 +362,7 @@ autopick(struct obj *olist,     /* the object list */
     /* first count the number of eligible items */
     for (n = 0, curr = olist; curr; curr = FOLLOW(curr, follow)) {
         examine_object(curr);
-        if ((iflags.pickup_thrown && curr->was_thrown) ||
+        if ((flags.pickup_thrown && curr->was_thrown) ||
             autopickup_match(curr))
             n++;
     }
@@ -370,7 +370,7 @@ autopick(struct obj *olist,     /* the object list */
     if (n) {
         *pick_list = pi = malloc(sizeof (struct object_pick) * n);
         for (n = 0, curr = olist; curr; curr = FOLLOW(curr, follow))
-            if ((iflags.pickup_thrown && curr->was_thrown) ||
+            if ((flags.pickup_thrown && curr->was_thrown) ||
                 autopickup_match(curr)) {
                 pi[n].obj = curr;
                 pi[n].count = curr->quan;

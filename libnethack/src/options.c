@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-12 */
+/* Last modified by Sean Hunt, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -208,12 +208,12 @@ static const struct nhlib_boolopt_map boolopt_map[] = {
     {"confirm", &flags.confirm},
     {"legacy", &flags.legacy},
     {"lit_corridor", &flags.lit_corridor},
-    {"pickup_thrown", &iflags.pickup_thrown},
+    {"pickup_thrown", &flags.pickup_thrown},
     {"prayconfirm", &flags.prayconfirm},
     {"pushweapon", &flags.pushweapon},
     {"safe_pet", &flags.safe_dog},
-    {"show_uncursed", &iflags.show_uncursed},
-    {"showrace", &iflags.showrace},
+    {"show_uncursed", &flags.show_uncursed},
+    {"showrace", &flags.showrace},
     {"sortpack", &flags.sortpack},
     {"sparkle", &flags.sparkle},
     {"travel_interrupt", &flags.travel_interrupt},
@@ -434,7 +434,7 @@ set_option(const char *name, union nh_optvalue value, boolean isstring)
     } else if (!strcmp("pickup_burden", option->name)) {
         flags.pickup_burden = option->value.e;
     } else if (!strcmp("runmode", option->name)) {
-        iflags.runmode = option->value.e;
+        flags.runmode = option->value.e;
     } else if (!strcmp("autopickup_rules", option->name)) {
         if (flags.ap_rules) {
             free(flags.ap_rules->rules);

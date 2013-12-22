@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-12 */
+/* Last modified by Sean Hunt, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -927,7 +927,7 @@ command_input(int cmdidx, int rep, struct nh_cmd_arg *arg)
     if (vision_full_recalc)
         vision_recalc(0);       /* vision! */
     /* when running in non-tport mode, this gets done through domove() */
-    if ((!flags.run || iflags.runmode == RUN_TPORT) &&
+    if ((!flags.run || flags.runmode == RUN_TPORT) &&
         (multi && (!flags.travel ? !(multi % 7) : !(moves % 7L)))) {
         if (flags.run)
             iflags.botl = 1;

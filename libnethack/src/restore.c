@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-12 */
+/* Last modified by Sean Hunt, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -734,28 +734,33 @@ restore_flags(struct memfile *mf, struct flag *f)
         free(ar->rules);
     memset(f, 0, sizeof (struct flag));
 
+    f->djinni_count = mread32(mf);
+    f->ghost_count = mread32(mf);
     f->ident = mread32(mf);
     f->moonphase = mread32(mf);
     f->no_of_wizards = mread32(mf);
-    f->run = mread32(mf);
-    f->warnlevel = mread32(mf);
-    f->djinni_count = mread32(mf);
-    f->ghost_count = mread32(mf);
-    f->pickup_burden = mread32(mf);
     f->recently_broken_otyp = mread32(mf);
+    f->pickup_burden = mread32(mf);
+    f->run = mread32(mf);
+    f->runmode = mread32(mf);
+    f->warnlevel = mread32(mf);
 
     f->autodig = mread8(mf);
     f->autodigdown = mread8(mf);
     f->autoquiver = mread8(mf);
     f->beginner = mread8(mf);
+    f->bones_enabled = mread8(mf);
     f->confirm = mread8(mf);
     f->debug = mread8(mf);
     f->explore = mread8(mf);
+    f->elbereth_enabled = mread8(mf);
+    f->end_disclose = mread8(mf);
     f->forcefight = mread8(mf);
     f->friday13 = mread8(mf);
     f->legacy = mread8(mf);
     f->lit_corridor = mread8(mf);
     f->made_amulet = mread8(mf);
+    f->menu_style = mread8(mf);
     f->mon_generation = mread8(mf);
     f->mon_moving = mread8(mf);
     f->mon_polycontrol = mread8(mf);
@@ -763,27 +768,26 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->mv = mread8(mf);
     f->nopick = mread8(mf);
     f->null = mread8(mf);
+    f->permablind = mread8(mf);
+    f->permahallu = mread8(mf);
     f->pickup = mread8(mf);
+    f->pickup_thrown = mread8(mf);
+    f->prayconfirm = mread8(mf);
     f->pushweapon = mread8(mf);
     f->rest_on_space = mread8(mf);
+    f->rogue_enabled = mread8(mf);
     f->safe_dog = mread8(mf);
+    f->seduce_enabled = mread8(mf);
+    f->showrace = mread8(mf);
+    f->show_uncursed = mread8(mf);
     f->silent = mread8(mf);
     f->sortpack = mread8(mf);
     f->soundok = mread8(mf);
     f->sparkle = mread8(mf);
     f->tombstone = mread8(mf);
+    f->travel = mread8(mf);
     f->travel_interrupt = mread8(mf);
     f->verbose = mread8(mf);
-    f->prayconfirm = mread8(mf);
-    f->travel = mread8(mf);
-    f->end_disclose = mread8(mf);
-    f->menu_style = mread8(mf);
-    f->elbereth_enabled = mread8(mf);
-    f->rogue_enabled = mread8(mf);
-    f->seduce_enabled = mread8(mf);
-    f->bones_enabled = mread8(mf);
-    f->permablind = mread8(mf);
-    f->permahallu = mread8(mf);
 
     mread(mf, f->inv_order, sizeof (f->inv_order));
 
