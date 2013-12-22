@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -8,7 +8,7 @@
 #include "hack.h"
 #include "edog.h"
 
-static int throw_obj(struct obj *, int, boolean);
+static int throw_obj(struct obj *, const struct nh_cmd_arg *, boolean);
 static void autoquiver(void);
 static int gem_accept(struct monst *, struct obj *);
 static void tmiss(struct obj *, struct monst *);
@@ -32,9 +32,10 @@ struct obj *thrownobj = 0;      /* tracks an object until it lands */
 extern boolean notonhead;       /* for long worms */
 
 
-/* Throw the selected object, asking for direction */
+/* Throw the selected object, taking direction and maximum multishot from
+   the provided argument */
 static int
-throw_obj(struct obj *obj, int shotlimit, boolean cancel_unquivers)
+throw_obj(struct obj *obj, const struct nh_cmd_arg *arg, boolean cancel_unquivers)
 {
     struct obj *otmp;
     int multishot = 1;
@@ -43,8 +44,8 @@ throw_obj(struct obj *obj, int shotlimit, boolean cancel_unquivers)
     boolean twoweap;
     schar dx, dy, dz;
 
-    /* ask "in what direction?" */
-    if (!getdir(NULL, &dx, &dy, &dz)) {
+    /* ask "in what direction?" if necessary */
+    if (!getargdir(arg, NULL, &dx, &dy, &dz)) {
         /* obj might need to be merged back into the singular gold object */
         freeinv(obj);
         addinv(obj);
@@ -143,13 +144,15 @@ throw_obj(struct obj *obj, int shotlimit, boolean cancel_unquivers)
     if ((long)multishot > obj->quan)
         multishot = (int)obj->quan;
     multishot = rnd(multishot);
-    if (shotlimit > 0 && multishot > shotlimit)
-        multishot = shotlimit;
+    if (arg->argtype & CMD_ARG_LIMIT && multishot > arg->limit)
+        multishot = arg->limit;
+    if (multishot < 1)
+        multishot = 1;
 
     m_shot.s = ammo_and_launcher(obj, uwep) ? TRUE : FALSE;
     /* give a message if shooting more than one, or if player attempted to
        specify a count */
-    if (multishot > 1 || shotlimit > 0) {
+    if (multishot > 1 || (arg->argtype & CMD_ARG_LIMIT)) {
         /* "You shoot N arrows." or "You throw N daggers." */
         pline("You %s %d %s.", m_shot.s ? "shoot" : "throw",
               multishot, /* (might be 1 if player gave shotlimit) */
@@ -181,21 +184,9 @@ throw_obj(struct obj *obj, int shotlimit, boolean cancel_unquivers)
 
 
 int
-dothrow(struct obj *obj)
+dothrow(const struct nh_cmd_arg *arg)
 {
-    int shotlimit;
-
-    /* 
-     * Since some characters shoot multiple missiles at one time,
-     * allow user to specify a count prefix for 'f' or 't' to limit
-     * number of items thrown (to avoid possibly hitting something
-     * behind target after killing it, or perhaps to conserve ammo).
-     *
-     * Prior to 3.3.0, command ``3t'' meant ``t(shoot) t(shoot) t(shoot)''
-     * and took 3 turns.  Now it means ``t(shoot at most 3 missiles)''.
-     */
-    shotlimit = multi;
-    multi = 0;  /* reset; it's been used up */
+    struct obj *obj;
 
     if (notake(youmonst.data) || nohands(youmonst.data)) {
         pline("You are physically incapable of throwing anything.");
@@ -205,16 +196,13 @@ dothrow(struct obj *obj)
     if (check_capacity(NULL))
         return 0;
 
-    if (obj && !validate_object(obj, uslinging()? bullets : toss_objs, "throw"))
-        return 0;
-    else if (!obj)
-        obj = getobj(uslinging()? bullets : toss_objs, "throw");
+    obj = getargobj(arg, uslinging() ? bullets : toss_objs, "throw");
     /* it is also possible to throw food */
     /* (or jewels, or iron balls... ) */
-
     if (!obj)
         return 0;
-    return throw_obj(obj, shotlimit, FALSE);
+
+    return throw_obj(obj, arg, FALSE);
 }
 
 
@@ -285,9 +273,8 @@ autoquiver(void)
 
 /* Throw from the quiver */
 int
-dofire(void)
+dofire(const struct nh_cmd_arg *arg)
 {
-    int shotlimit;
     boolean cancel_unquivers = FALSE;
 
     if (notake(youmonst.data)) {
@@ -301,38 +288,25 @@ dofire(void)
         if (!flags.autoquiver) {
             /* Don't automatically fill the quiver */
             pline("You have no ammunition readied!");
-            dowieldquiver(NULL);
+            dowieldquiver(&(struct nh_cmd_arg){.argtype = 0});
             /* Allow this quiver to be unset if the throw is cancelled, so
                vi-keys players don't have to do it manually after typo-ing an
                object when entering a firing direction. */
             cancel_unquivers = TRUE;
             if (!uquiver)
-                return dothrow(NULL);
+                return dothrow(arg);
         }
         autoquiver();
         if (!uquiver) {
             pline("You have nothing appropriate for your quiver!");
-            return dothrow(NULL);
+            return dothrow(arg);
         } else {
             pline("You fill your quiver:");
             prinv(NULL, uquiver, 0L);
         }
     }
 
-    /* 
-     * Since some characters shoot multiple missiles at one time,
-     * allow user to specify a count prefix for 'f' or 't' to limit
-     * number of items thrown (to avoid possibly hitting something
-     * behind target after killing it, or perhaps to conserve ammo).
-     *
-     * The number specified can never increase the number of missiles.
-     * Using ``5f'' when the shooting skill (plus RNG) dictates launch
-     * of 3 projectiles will result in 3 being shot, not 5.
-     */
-    shotlimit = multi;
-    multi = 0;  /* reset; it's been used up */
-
-    return throw_obj(uquiver, shotlimit, cancel_unquivers);
+    return throw_obj(uquiver, arg, cancel_unquivers);
 }
 
 
@@ -608,14 +582,14 @@ hurtle(int dx, int dy, int range, boolean verbose)
        give the player a message and return. */
     if (Punished && !carried(uball)) {
         pline("You feel a tug from the iron ball.");
-        nomul(0, NULL);
+        action_completed();
         return;
     } else if (u.utrap) {
         pline("You are anchored by the %s.",
               u.utraptype == TT_WEB ? "web" :
               u.utraptype == TT_LAVA ? "lava" :
               u.utraptype == TT_INFLOOR ? surface(u.ux, u.uy) : "trap");
-        nomul(0, NULL);
+        action_completed();
         return;
     }
 
@@ -626,8 +600,7 @@ hurtle(int dx, int dy, int range, boolean verbose)
     if (!range || (!dx && !dy) || u.ustuck)
         return; /* paranoia */
 
-    nomovemsg = "";
-    nomul(-range, "moving through the air");
+    helpless(range, "moving through the air", "");
     if (verbose)
         pline("You %s in the opposite direction.",
               range > 1 ? "hurtle" : "float");

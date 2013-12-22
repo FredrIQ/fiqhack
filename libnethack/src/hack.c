@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -82,7 +82,7 @@ moverock(schar dx, schar dy)
 
         rx = u.ux + 2 * dx;     /* boulder destination position */
         ry = u.uy + 2 * dy;
-        nomul(0, NULL);
+        action_completed();
         if (Levitation || Is_airlevel(&u.uz)) {
             if (Blind)
                 feel_location(sx, sy);
@@ -311,40 +311,32 @@ still_chewing(xchar x, xchar y)
     struct obj *boulder = sobj_at(BOULDER, level, x, y);
     const char *digtxt = NULL, *dmgtxt = NULL;
 
-    if (digging.down)   /* not continuing previous dig (w/ pick-axe) */
-        memset(&digging, 0, sizeof digging);
-
     if (!boulder && IS_ROCK(loc->typ) && !may_dig(level, x, y)) {
         pline("You hurt your teeth on the %s.",
               IS_TREE(loc->typ) ? "tree" : "hard stone");
-        nomul(0, NULL);
+        action_completed();
         return 1;
-    } else if (digging.pos.x != x || digging.pos.y != y ||
-               !on_level(&digging.level, &u.uz)) {
-        digging.down = FALSE;
-        digging.chew = TRUE;
-        digging.warned = FALSE;
-        digging.pos.x = x;
-        digging.pos.y = y;
-        assign_level(&digging.level, &u.uz);
+    } else if (u.utracked_location[tl_dig].x != x ||
+               u.utracked_location[tl_dig].y != y ||
+               !u.uoccupation_progress[tos_dig]) {
+        u.utracked_location[tl_dig].x = x;
+        u.utracked_location[tl_dig].y = y;
         /* solid rock takes more work & time to dig through */
-        digging.effort = (IS_ROCK(loc->typ) &&
-                          !IS_TREE(loc->typ) ? 30 : 60) + u.udaminc;
+        u.uoccupation_progress[tos_dig] =
+            (IS_ROCK(loc->typ) && !IS_TREE(loc->typ) ? 30 : 60) + u.udaminc;
         pline("You start chewing %s %s.",
               (boulder ||
                IS_TREE(loc->typ)) ? "on a" : "a hole in the",
               boulder ? "boulder" : IS_TREE(loc->typ) ?
               "tree" : IS_ROCK(loc->typ) ? "rock" : "door");
-        watch_dig(NULL, x, y, FALSE);
+        watch_warn(NULL, x, y, FALSE);
         return 1;
-    } else if ((digging.effort += (30 + u.udaminc)) <= 100) {
+    } else if ((u.uoccupation_progress[tos_dig] += (30 + u.udaminc)) <= 100) {
         if (flags.verbose)
-            pline("You %s chewing on the %s.",
-                  digging.chew ? "continue" : "begin",
+            pline("You continue chewing on the %s.",
                   boulder ? "boulder" : IS_TREE(loc->typ) ?
                   "tree" : IS_ROCK(loc->typ) ? "rock" : "door");
-        digging.chew = TRUE;
-        watch_dig(NULL, x, y, FALSE);
+        watch_warn(NULL, x, y, FALSE);
         return 1;
     }
 
@@ -367,7 +359,7 @@ still_chewing(xchar x, xchar y)
             sobj_at(BOULDER, level, x, y)) {
             block_point(x, y);  /* delobj will unblock the point */
             /* reset dig state */
-            memset(&digging, 0, sizeof digging);
+            u.uoccupation_progress[tos_dig] = 0;
             return 1;
         }
 
@@ -422,7 +414,7 @@ still_chewing(xchar x, xchar y)
         pline(digtxt);  /* after newsym */
     if (dmgtxt)
         pay_for_damage(dmgtxt, FALSE);
-    memset(&digging, 0, sizeof digging);
+    u.uoccupation_progress[tos_dig] = 0;
     return 0;
 }
 
@@ -510,7 +502,7 @@ invocation_pos(const d_level * dlev, xchar x, xchar y)
 static void
 autoexplore_msg(const char *text, int mode)
 {
-    if (iflags.autoexplore) {
+    if (flags.occupation == occ_autoexplore) {
         char tmp[BUFSZ];
 
         strcpy(tmp, text);
@@ -547,8 +539,11 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode)
         } else if (flags.autodig && !flags.run && !flags.nopick && uwep &&
                    is_pick(uwep)) {
             /* MRKR: Automatic digging when wielding the appropriate tool */
-            if (mode == DO_MOVE)
-                use_pick_axe2(uwep, dx, dy, dz);
+            if (mode == DO_MOVE) {
+                struct nh_cmd_arg arg;
+                arg_from_delta(dx, dy, dz, &arg);
+                return use_pick_axe(uwep, &arg);
+            }
             return FALSE;
         } else {
             if (mode == DO_MOVE) {
@@ -815,7 +810,7 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy)
         if (test_move(u.ux, u.uy, u.tx - u.ux, u.ty - u.uy, 0, TEST_MOVE)) {
             *dx = u.tx - u.ux;
             *dy = u.ty - u.uy;
-            nomul(0, NULL);
+            action_completed();
             iflags.travelcc.x = iflags.travelcc.y = -1;
             return TRUE;
         }
@@ -932,7 +927,7 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy)
                                     *dx = x - ux;
                                     *dy = y - uy;
                                     if (x == u.tx && y == u.ty) {
-                                        nomul(0, NULL);
+                                        action_completed();
                                         /* reset run so domove run checks work */
                                         flags.run = 8;
                                         iflags.travelcc.x = iflags.travelcc.y =
@@ -998,7 +993,7 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy)
                 *dx = sgn(u.tx - u.ux);
                 *dy = sgn(u.ty - u.uy);
                 if (*dx == 0 && *dy == 0) {
-                    nomul(0, "");
+                    action_completed();
                     return FALSE;
                 }
                 if (test_move(u.ux, u.uy, *dx, *dy, 0, TEST_MOVE))
@@ -1020,7 +1015,7 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy)
 found:
     *dx = 0;
     *dy = 0;
-    nomul(0, NULL);
+    action_completed();
     return FALSE;
 }
 
@@ -1031,10 +1026,8 @@ couldsee_func(int x, int y)
     return couldsee(x, y);
 }
 
-
-
 int
-domove(schar dx, schar dy, schar dz)
+domove(const struct nh_cmd_arg *arg)
 {
     struct monst *mtmp;
     struct rm *tmpr;
@@ -1046,9 +1039,13 @@ domove(schar dx, schar dy, schar dz)
     int bc_control;     /* control for ball&chain */
     boolean cause_delay = FALSE;        /* dragging ball will skip a move */
     const char *predicament;
+    schar dx, dy, dz;
+
+    if (!getargdir(arg, NULL, &dx, &dy, &dz))
+        return 0;
 
     if (dz) {
-        nomul(0, NULL);
+        action_completed();
         if (dz < 0)
             return doup();
         else
@@ -1062,7 +1059,7 @@ domove(schar dx, schar dy, schar dz)
         const char *stop_which = NULL;
 
         if (flags.travel) {
-            if (iflags.autoexplore)
+            if (flags.occupation == occ_autoexplore)
                 stop_which = "explore";
             else
                 stop_which = "travel";
@@ -1071,33 +1068,32 @@ domove(schar dx, schar dy, schar dz)
         }
         if (stop_which) {
             pline("Your head is spinning too badly to %s.", stop_which);
-            nomul(0, NULL);
+            action_completed();
             return 0;
         }
     }
 
     if (flags.travel) {
-        if (iflags.autoexplore) {
+        if (flags.occupation == occ_autoexplore) {
             if (Blind) {
                 pline("You can't see where you're going!");
-                nomul(0, NULL);
+                action_completed();
                 return 0;
             }
             if (In_sokoban(&u.uz)) {
                 pline
                     ("You somehow know the layout of this place without exploring.");
-                nomul(0, NULL);
+                action_completed();
                 return 0;
             }
             if (u.uhs >= WEAK) {
                 pline("You feel too weak from hunger to explore.");
-                nomul(0, NULL);
+                action_completed();
                 return 0;
             }
             u.tx = u.ux;
             u.ty = u.uy;
             if (!findtravelpath(unexplored, &dx, &dy)) {
-                iflags.autoexplore = FALSE;
                 pline
                     ("Nowhere else around here can be automatically explored.");
             }
@@ -1105,7 +1101,7 @@ domove(schar dx, schar dy, schar dz)
             findtravelpath(couldsee_func, &dx, &dy);
         iflags.travel1 = 0;
         if (dx == 0 && dy == 0) {
-            nomul(0, NULL);
+            action_completed();
             return 0;
         }
     }
@@ -1113,7 +1109,7 @@ domove(schar dx, schar dy, schar dz)
     /* Travel hit an obstacle, or domove() was called with dx, dy and dz all
        zero, which they shouldn't do. */
     if (dx == 0 && dy == 0) {   /* dz is always zero here from above */
-        nomul(0, NULL);
+        action_completed();
         return 0;
     }
 
@@ -1126,7 +1122,7 @@ domove(schar dx, schar dy, schar dz)
             exercise(A_CON, FALSE);
         } else
             pline("You collapse under your load.");
-        nomul(0, NULL);
+        action_completed();
         return 1;
     }
     if (Engulfed) {
@@ -1180,7 +1176,7 @@ domove(schar dx, schar dy, schar dz)
 
             do {
                 if (tries++ > 50) {
-                    nomul(0, NULL);
+                    action_completed();
                     return 1;
                 }
                 confdir(&dx, &dy);
@@ -1192,14 +1188,14 @@ domove(schar dx, schar dy, schar dz)
         if (u.uinwater) {
             water_friction(&dx, &dy);
             if (!dx && !dy) {
-                nomul(0, NULL);
+                action_completed();
                 return 1;
             }
             x = u.ux + dx;
             y = u.uy + dy;
         }
         if (!isok(x, y)) {
-            nomul(0, NULL);
+            action_completed();
             return 0;
         }
         if (((trap = t_at(level, x, y)) && trap->tseen) ||
@@ -1207,12 +1203,13 @@ domove(schar dx, schar dy, schar dz)
              (is_pool(level, x, y) || is_lava(level, x, y)) &&
              level->locations[x][y].seenv)) {
             if (flags.run >= 2) {
-                if (trap && trap->tseen && flags.run == 8 && iflags.autoexplore)
+                if (trap && trap->tseen && flags.run == 8 &&
+                    flags.occupation == occ_autoexplore)
                     autoexplore_msg("a trap", DO_MOVE);
-                nomul(0, NULL);
+                action_completed();
                 return 0;
             } else
-                nomul(0, NULL);
+                action_completed();
         }
 
         if (u.ustuck && (x != u.ustuck->mx || y != u.ustuck->my)) {
@@ -1247,7 +1244,7 @@ domove(schar dx, schar dy, schar dz)
                     if (u.ustuck->mtame && !Conflict && !u.ustuck->mconf)
                         goto pull_free;
                     pline("You cannot escape from %s!", mon_nam(u.ustuck));
-                    nomul(0, NULL);
+                    action_completed();
                     return 1;
                 }
             }
@@ -1262,7 +1259,7 @@ domove(schar dx, schar dy, schar dz)
                   ((mtmp->m_ap_type != M_AP_FURNITURE &&
                     mtmp->m_ap_type != M_AP_OBJECT) ||
                    Protection_from_shape_changers)) || sensemon(mtmp))) {
-                nomul(0, NULL);
+                action_completed();
                 autoexplore_msg(Monnam(mtmp), DO_MOVE);
                 return 0;
             }
@@ -1278,7 +1275,7 @@ domove(schar dx, schar dy, schar dz)
     /* attack monster */
     if (mtmp) {
         if (!is_safepet(mtmp) || flags.forcefight)
-            nomul(0, NULL);
+            action_completed();
         /* only attack if we know it's there */
         /* or if we used the 'F' command to fight blindly */
         /* or if it hides_under, in which case we call attack() to print the
@@ -1305,6 +1302,8 @@ domove(schar dx, schar dy, schar dz)
         if (flags.forcefight || !mtmp->mundetected || sensemon(mtmp) ||
             ((hides_under(mtmp->data) || mtmp->data->mlet == S_EEL) &&
              !is_safepet(mtmp))) {
+            enum attack_check_status attack_status;
+
             gethungry();
             if (wtcap >= HVY_ENCUMBER && moves % 3) {
                 if (Upolyd && u.mh > 1) {
@@ -1317,13 +1316,14 @@ domove(schar dx, schar dy, schar dz)
                     fall_asleep(-10, FALSE);
                 }
             }
-            if (multi < 0)
+            if (Helpless)
                 return 1;       /* we just fainted */
 
             /* try to attack; note that it might evade */
             /* also, we don't attack tame when _safepet_ */
-            if (attack(mtmp, dx, dy))
-                return 1;
+            attack_status = attack(mtmp, dx, dy);
+            if (attack_status != ac_continue)
+                return attack_status != ac_cancel;
         }
     }
 
@@ -1340,7 +1340,7 @@ domove(schar dx, schar dy, schar dz)
                                                  y) ? "empty water" : buf);
         unmap_object(x, y);     /* known empty -- remove 'I' if present */
         newsym(x, y);
-        nomul(0, NULL);
+        action_completed();
         if (expl) {
             u.mh = -1;  /* dead in the current form */
             rehumanize();
@@ -1354,12 +1354,12 @@ domove(schar dx, schar dy, schar dz)
     /* not attacking an animal, so we try to move */
     if (u.usteed && !u.usteed->mcanmove && (dx || dy)) {
         pline("%s won't move!", upstart(y_monnam(u.usteed)));
-        nomul(0, NULL);
+        action_completed();
         return 1;
     } else if (!youmonst.data->mmove) {
         pline("You are rooted %s.", Levitation || Is_airlevel(&u.uz) ||
               Is_waterlevel(&u.uz) ? "in place" : "to the ground");
-        nomul(0, NULL);
+        action_completed();
         return 1;
     }
     if (u.utrap) {
@@ -1463,31 +1463,33 @@ domove(schar dx, schar dy, schar dz)
     /* If moving into a door, open it. */
     if (IS_DOOR(tmpr->typ) && tmpr->doormask != D_BROKEN &&
         tmpr->doormask != D_NODOOR && tmpr->doormask != D_ISOPEN) {
-        if (!doopen(dx, dy, 0)) {
-            nomul(0, NULL);
+        struct nh_cmd_arg arg;
+        arg_from_delta(dx, dy, dz, &arg);
+        if (!doopen(&arg)) {
+            action_completed();
             return 0;
         }
         return 1;
     }
 
     if (!test_move(u.ux, u.uy, dx, dy, dz, DO_MOVE)) {
-        nomul(0, NULL);
+        action_completed();
         return 0;
     }
 
     /* If no 'm' prefix, veto dangerous moves */
     if (!flags.nopick || flags.run) {
         if (!Levitation && !Flying && !is_clinger(youmonst.data) && !Stunned &&
-            !Confusion && (!flags.travel || !iflags.autoexplore) &&
+            !Confusion &&
+            (!flags.travel || flags.occupation != occ_autoexplore) &&
             (is_lava(level, x, y) || !HSwimming) &&
             (is_pool(level, x, y) || is_lava(level, x, y)) &&
             level->locations[x][y].seenv && !is_pool(level, u.ux, u.uy) &&
             !is_lava(level, u.ux, u.uy)) {
             pline(is_pool(level, x, y) ? "You never learned to swim!" :
                   "That lava looks rather dangerous...");
-            pline("(Use m-direction to move there anyway.)");
-            flags.move = 0;
-            nomul(0, "");
+            pline("(Use the 'moveonly' command to move there anyway.)");
+            action_completed();
             return 0;
         }
     }
@@ -1596,13 +1598,13 @@ domove(schar dx, schar dy, schar dz)
         }
     }
 
-    reset_occupations();
+    reset_occupations(TRUE);
     if (flags.run) {
         if (flags.run < 8) {
             if (IS_DOOR(tmpr->typ) || IS_ROCK(tmpr->typ) ||
                 IS_FURNITURE(tmpr->typ))
-                nomul(0, NULL);
-        } else if (flags.travel && iflags.autoexplore) {
+                action_completed();
+        } else if (flags.travel && flags.occupation == occ_autoexplore) {
             int wallcount, mem_bg;
 
             /* autoexplore stoppers: being orthogonally adjacent to a boulder,
@@ -1628,7 +1630,7 @@ domove(schar dx, schar dy, schar dz)
                     IS_ROCK(level->locations[u.ux][u.uy + 1].typ) +
                     ! !sobj_at(BOULDER, level, u.ux, u.uy + 1) * 3;
             if (wallcount >= 3)
-                nomul(0, NULL);
+                action_completed();
             /* 
              * More autoexplore stoppers: interesting dungeon features
              * that haven't been stepped on yet.
@@ -1640,7 +1642,7 @@ domove(schar dx, schar dy, schar dz)
                  mem_bg == S_upstair || mem_bg == S_dnsstair ||
                  mem_bg == S_upsstair || mem_bg == S_dnladder ||
                  mem_bg == S_upladder))
-                nomul(0, NULL);
+                action_completed();
         }
     }
 
@@ -1679,10 +1681,8 @@ domove(schar dx, schar dy, schar dz)
 
     /* delay next move because of ball dragging */
     /* must come after we finished picking up, in spoteffects() */
-    if (cause_delay) {
-        nomul(-2, "dragging an iron ball");
-        nomovemsg = "";
-    }
+    if (cause_delay)
+        helpless(2, "dragging an iron ball", "");
 
     if (flags.run && iflags.runmode != RUN_TPORT) {
         /* display every step or every 7th step depending upon mode */
@@ -1709,7 +1709,11 @@ invocation_message(void)
         char buf[BUFSZ];
         struct obj *otmp = carrying(CANDELABRUM_OF_INVOCATION);
 
-        nomul(0, NULL); /* stop running or travelling */
+        if (flags.occupation == occ_move ||
+            flags.occupation == occ_travel ||
+            flags.occupation == occ_autoexplore)
+            action_completed();
+
         if (u.usteed)
             sprintf(buf, "beneath %s", y_monnam(u.usteed));
         else if (Levitation || Flying)
@@ -2068,14 +2072,16 @@ check_special_room(boolean newlev)
 
 
 int
-dopickup(void)
+dopickup(const struct nh_cmd_arg *arg)
 {
-    int count;
+    int count = 0;
     struct trap *traphere = t_at(level, u.ux, u.uy);
 
-    /* awful kludge to work around parse()'s pre-decrement */
-    count = multi;
-    multi = 0;  /* always reset */
+    if (arg->argtype & CMD_ARG_LIMIT)
+        count = arg->limit;
+    if (count < 0)
+        count = 0;
+
     /* Engulfed case added by GAN 01/29/87 */
     if (Engulfed) {
         if (!u.ustuck->minvent) {
@@ -2155,7 +2161,7 @@ lookaround(void)
     /* Grid bugs stop if trying to move diagonal, even if blind.  Maybe */
     /* they polymorphed while in the middle of a long move. */
     if (u.umonnum == PM_GRID_BUG && u.dx && u.dy) {
-        nomul(0, NULL);
+        action_completed();
         return;
     }
 
@@ -2164,7 +2170,7 @@ lookaround(void)
         for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
             if (distmin(u.ux, u.uy, mtmp->mx, mtmp->my) <= (BOLT_LIM + 1) &&
                 couldsee(mtmp->mx, mtmp->my) && check_interrupt(mtmp)) {
-                nomul(0, NULL);
+                action_interrupted();
                 return;
             }
         }
@@ -2256,7 +2262,7 @@ lookaround(void)
                     continue;
             }
         stop:
-            nomul(0, NULL);
+            action_interrupted();
             return;
         }       /* end for loops */
 
@@ -2306,7 +2312,6 @@ check_interrupt(struct monst *mtmp)
 }
 
 
-
 /* something like lookaround, but we are not running */
 /* react only to monsters that might hit us */
 int
@@ -2325,52 +2330,6 @@ monster_nearby(void)
                 return 1;
         }
     return 0;
-}
-
-void
-nomul(int nval, const char *txt)
-{
-    if (multi < nval)
-        return; /* This is a bug fix by ab@unido */
-    u.uinvulnerable = FALSE;    /* Kludge to avoid ctrl-C bug -dlc */
-    u.usleep = 0;
-    multi = nval;
-    if (!multi)
-        txt = NULL;
-    if (txt && txt[0])
-        strncpy(turnstate.multi_txt, txt, BUFSZ);
-    else
-        memset(turnstate.multi_txt, 0, BUFSZ);
-    flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
-    if (multi <= 0) {
-        turnstate.saved_cmd = -1;
-        turnstate.saved_arg.argtype = CMD_ARG_NONE;
-    }
-}
-
-/* called when a non-movement, multi-turn action has completed */
-void
-unmul(const char *msg_override)
-{
-    boolean previously_unconscious = unconscious();
-
-    nomul(0, NULL);
-    if (msg_override)
-        nomovemsg = msg_override;
-    else if (!nomovemsg)
-        nomovemsg = "You can move again.";
-    if (*nomovemsg)
-        pline(nomovemsg);
-    nomovemsg = 0;
-    if (afternmv)
-        (*afternmv) ();
-    afternmv = 0;
-
-    if (previously_unconscious ^ unconscious()) {
-        see_monsters();
-        see_objects();
-        vision_full_recalc = 1;
-    }
 }
 
 
@@ -2429,7 +2388,7 @@ losehp(int n, const char *knam, boolean k_format)
     if (u.uhp > u.uhpmax)
         u.uhpmax = u.uhp;       /* perhaps n was negative */
     else
-        nomul(0, NULL); /* taking damage stops command repeat */
+        action_interrupted(); /* taking damage stops command repeat */
     iflags.botl = 1;
     if (u.uhp < 1) {
         killer_format = k_format;
@@ -2576,7 +2535,7 @@ money_cnt(struct obj *otmp)
 
 
 int
-dofight(int dx, int dy, int dz)
+dofight(const struct nh_cmd_arg *arg)
 {
     int ret;
 
@@ -2584,10 +2543,7 @@ dofight(int dx, int dy, int dz)
     flags.run = 0;
     flags.forcefight = 1;
 
-    if (multi)
-        flags.mv = TRUE;
-
-    ret = domove(dx, dy, dz);
+    ret = domove(arg);
     flags.forcefight = 0;
 
     return ret;
@@ -2595,25 +2551,22 @@ dofight(int dx, int dy, int dz)
 
 
 int
-domovecmd(int dx, int dy, int dz)
+domovecmd(const struct nh_cmd_arg *arg)
 {
     flags.travel = iflags.travel1 = 0;
     flags.run = 0;      /* only matters here if it was 8 */
 
-    if (multi)
-        flags.mv = TRUE;
-
-    return domove(dx, dy, dz);
+    return domove(arg);
 }
 
 
 int
-domovecmd_nopickup(int dx, int dy, int dz)
+domovecmd_nopickup(const struct nh_cmd_arg *arg)
 {
     int ret;
 
     flags.nopick = 1;
-    ret = domovecmd(dx, dy, dz);
+    ret = domovecmd(arg);
     flags.nopick = 0;
 
     return ret;
@@ -2621,20 +2574,17 @@ domovecmd_nopickup(int dx, int dy, int dz)
 
 
 static int
-do_rush(int dx, int dy, int dz, int runmode, boolean move_only)
+do_rush(const struct nh_cmd_arg *arg, int runmode, boolean move_only)
 {
     int ret;
 
-    iflags.autoexplore = FALSE;
     flags.travel = iflags.travel1 = 0;
     flags.run = runmode;
 
     flags.nopick = move_only;
 
-    if (!multi)
-        multi = max(COLNO, ROWNO);
-
-    ret = domove(dx, dy, dz);
+    action_incomplete("running", occ_move);
+    ret = domove(arg);
 
     flags.nopick = 0;
     return ret;
@@ -2642,30 +2592,30 @@ do_rush(int dx, int dy, int dz, int runmode, boolean move_only)
 
 
 int
-dorun(int dx, int dy, int dz)
+dorun(const struct nh_cmd_arg *arg)
 {
-    return do_rush(dx, dy, dz, 1, FALSE);
+    return do_rush(arg, 1, FALSE);
 }
 
 
 int
-dorun_nopickup(int dx, int dy, int dz)
+dorun_nopickup(const struct nh_cmd_arg *arg)
 {
-    return do_rush(dx, dy, dz, 1, TRUE);
+    return do_rush(arg, 1, TRUE);
 }
 
 
 int
-dogo(int dx, int dy, int dz)
+dogo(const struct nh_cmd_arg *arg)
 {
-    return do_rush(dx, dy, dz, 2, FALSE);
+    return do_rush(arg, 2, FALSE);
 }
 
 
 int
-dogo2(int dx, int dy, int dz)
+dogo2(const struct nh_cmd_arg *arg)
 {
-    return do_rush(dx, dy, dz, 3, FALSE);
+    return do_rush(arg, 3, FALSE);
 }
 
 /*hack.c*/

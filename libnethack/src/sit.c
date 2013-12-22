@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-12 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -28,12 +28,14 @@ take_gold(void)
 }
 
 int
-dosit(void)
+dosit(const struct nh_cmd_arg *arg)
 {
     static const char sit_message[] = "You sit on the %s.";
     struct trap *trap;
     int typ = level->locations[u.ux][u.uy].typ;
     int attrib;
+
+    (void) arg;
 
     if (u.usteed) {
         pline("You are already sitting on %s.", mon_nam(u.usteed));

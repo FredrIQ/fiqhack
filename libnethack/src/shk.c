@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -68,19 +68,13 @@ static struct obj *find_oid_lev(struct level *lev, unsigned id);
  */
 
 
-/*
-    Transfer money from inventory to monster when paying
-    shopkeepers, priests, oracle, succubus, & other demons.
-    Simple with only gold coins.
-    This routine will handle money changing when multiple
-    coin types is implemented, only appropriate
-    monsters will pay change.  (Peaceful shopkeepers, priests
-    & the oracle try to maintain goodwill while selling
-    their wares or services.  Angry monsters and all demons
-    will keep anything they get their hands on.
-    Returns the amount actually paid, so we can know
-    if the monster kept the change.
- */
+/* Transfer money from inventory to monster when paying shopkeepers, priests,
+   oracle, succubus, & other demons. Simple with only gold coins. This routine
+   will handle money changing when multiple coin types is implemented, only
+   appropriate monsters will pay change. (Peaceful shopkeepers, priests & the
+   oracle try to maintain goodwill while selling their wares or services. Angry
+   monsters and all demons will keep anything they get their hands on. Returns
+   the amount actually paid, so we can know if the monster kept the change. */
 long
 money2mon(struct monst *mon, long amount)
 {
@@ -1035,7 +1029,7 @@ cheapest_item(struct monst *shkp)
 
 
 int
-dopay(struct obj *oneitem)
+dopay(const struct nh_cmd_arg *arg)
 {
     struct eshk *eshkp;
     struct monst *shkp;
@@ -1044,8 +1038,16 @@ dopay(struct obj *oneitem)
     int pass, tmp, sk = 0, seensk = 0;
     char iprompt;
     boolean paid = FALSE, stashed_gold = (hidden_gold() > 0L);
+    struct obj *oneitem = NULL;
 
-    multi = 0;
+    char allowall[] = {ALL_CLASSES, 0};
+    if (arg->argtype & CMD_ARG_OBJ)
+        oneitem = getargobj(arg, allowall, "pay for");
+
+    /* TODO: This seems to be there only because the command is not reasonable
+       to repeat. I'm not sure if overriding the user's intentions is
+       worthwhile, though; if someone types n2p, they probably mean it. */
+    action_completed();
 
     /* find how many shk's there are, how many are in */
     /* sight, and are you in a shop room with one.  */
@@ -1102,7 +1104,7 @@ dopay(struct obj *oneitem)
         pline("Pay whom?");
         cc.x = u.ux;
         cc.y = u.uy;
-        if (getpos(&cc, TRUE, "the creature you want to pay") ==
+        if (getpos(&cc, TRUE, "the creature you want to pay", FALSE) ==
             NHCR_CLIENT_CANCEL)
             return 0;   /* player pressed ESC */
         cx = cc.x;
@@ -2864,7 +2866,7 @@ remove_damage(struct monst *shkp, boolean croaked)
 {
     struct damage *tmp_dam, *tmp2_dam;
     boolean did_repair = FALSE, saw_door = FALSE;
-    boolean saw_floor = FALSE, stop_picking = FALSE;
+    boolean saw_floor = FALSE;
     boolean saw_untrap = FALSE;
     uchar saw_walls = 0;
     struct level *lev = levels[ledger_no(&ESHK(shkp)->shoplevel)];
@@ -2881,16 +2883,8 @@ remove_damage(struct monst *shkp, boolean croaked)
         if (strchr(shops, ESHK(shkp)->shoproom)) {
             if (croaked)
                 disposition = (shops[1]) ? 0 : 1;
-            else if (stop_picking)
+            else
                 disposition = repair_damage(lev, shkp, tmp_dam, FALSE);
-            else {
-                /* Defer the stop_occupation() until after repair msgs */
-                if (closed_door(lev, x, y))
-                    stop_picking = picking_at(x, y);
-                disposition = repair_damage(lev, shkp, tmp_dam, FALSE);
-                if (!disposition)
-                    stop_picking = FALSE;
-            }
         }
 
         if (!disposition) {
@@ -2944,8 +2938,6 @@ remove_damage(struct monst *shkp, boolean croaked)
         else if (flags.soundok && !rn2(10))
             Norep("The dungeon acoustics noticeably change.");
     }
-    if (stop_picking)
-        stop_occupation();
 }
 
 /*

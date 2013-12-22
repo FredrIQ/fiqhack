@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-05 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -440,7 +440,6 @@ cmd_request_command(json_t * params, int display_only)
     int interrupted;
     char command[256];
     struct nh_cmd_arg arg;
-    int limit;
     json_t *jarg;
 
     if (json_unpack(params, "{sb,sb,sb}", "debug", &debug, "completed",
@@ -450,33 +449,26 @@ cmd_request_command(json_t * params, int display_only)
     }
 
     windowprocs.win_request_command(debug, completed, interrupted,
-                                     command, &arg, &limit);
+                                     command, &arg);
 
-    switch (arg.argtype) {
-    case CMD_ARG_DIR:
-        jarg = json_pack("{si,si}", "argtype", arg.argtype, "d", arg.d);
-        break;
+    jarg = json_object();
 
-    case CMD_ARG_POS:
-        jarg =
-            json_pack("{si,si,si}", "argtype", arg.argtype, "x", arg.pos.x,
-                      "y", arg.pos.y);
-        break;
-
-    case CMD_ARG_OBJ:
-        jarg =
-            json_pack("{si,si}", "argtype", arg.argtype, "invlet",
-                      arg.invlet);
-        break;
-
-    case CMD_ARG_NONE:
-    default:
-        jarg = json_pack("{si}", "argtype", arg.argtype);
-        break;
+    if (arg.argtype & CMD_ARG_DIR)
+        json_object_set_new(jarg, "d", json_integer(arg.dir));
+    if (arg.argtype & CMD_ARG_POS) {
+        json_object_set_new(jarg, "x", json_integer(arg.pos.x));
+        json_object_set_new(jarg, "y", json_integer(arg.pos.y));
     }
+    if (arg.argtype & CMD_ARG_OBJ)
+        json_object_set_new(jarg, "invlet", json_integer(arg.invlet));
+    if (arg.argtype & CMD_ARG_STR)
+        json_object_set_new(jarg, "str", json_string(arg.str));
+    if (arg.argtype & CMD_ARG_SPELL)
+        json_object_set_new(jarg, "spell", json_integer(arg.spelllet));
+    if (arg.argtype & CMD_ARG_LIMIT)
+        json_object_set_new(jarg, "limit", json_integer(arg.limit));
 
-    return json_pack("{ss,so,si}", "command", command, "arg", jarg,
-                     "limit", limit);
+    return json_pack("{ss,so,si}", "command", command, "arg", jarg);
 }
 
 

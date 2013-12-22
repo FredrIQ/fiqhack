@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,6 +7,7 @@
 /* #define DEBUG *//* uncomment for debugging */
 
 #include <stdbool.h>
+#include <string.h>
 
 /*
  * Some systems may have getchar() return EOF for various reasons, and
@@ -16,30 +17,30 @@
 
 #define CMD_TRAVEL (char)0x90
 
-static int (*timed_occ_fn) (void);
-
-static int command_repeat_occupation(void);
-static int domonability(void);
-static int dotravel(int x, int y);
-static int doautoexplore(void);
-static int dowelcome(void);
-static int wiz_wish(void);
-static int wiz_identify(void);
-static int wiz_map(void);
-static int wiz_genesis(void);
-static int wiz_levelcide(void);
-static int wiz_where(void);
-static int wiz_detect(void);
-static int wiz_panic(void);
-static int wiz_polyself(void);
-static int wiz_teleport(void);
-static int wiz_level_tele(void);
-static int wiz_level_change(void);
-static int wiz_show_seenv(void);
-static int wiz_show_vision(void);
-static int wiz_mon_polycontrol(void);
-static int wiz_togglegen(void);
-static int wiz_show_wmodes(void);
+static int domonability(const struct nh_cmd_arg *);
+static int dotravel(const struct nh_cmd_arg *);
+static int doautoexplore(const struct nh_cmd_arg *);
+static int dowelcome(const struct nh_cmd_arg *);
+static int doattributes(const struct nh_cmd_arg *);
+static int doconduct(const struct nh_cmd_arg *);
+static int wiz_wish(const struct nh_cmd_arg *);
+static int wiz_identify(const struct nh_cmd_arg *);
+static int wiz_map(const struct nh_cmd_arg *);
+static int wiz_genesis(const struct nh_cmd_arg *);
+static int wiz_levelcide(const struct nh_cmd_arg *);
+static int wiz_where(const struct nh_cmd_arg *);
+static int wiz_detect(const struct nh_cmd_arg *);
+static int wiz_panic(const struct nh_cmd_arg *);
+static int wiz_polyself(const struct nh_cmd_arg *);
+static int wiz_teleport(const struct nh_cmd_arg *);
+static int wiz_level_tele(const struct nh_cmd_arg *);
+static int wiz_level_change(const struct nh_cmd_arg *);
+static int wiz_show_seenv(const struct nh_cmd_arg *);
+static int wiz_show_vision(const struct nh_cmd_arg *);
+static int wiz_mon_polycontrol(const struct nh_cmd_arg *);
+static int wiz_togglegen(const struct nh_cmd_arg *);
+static int wiz_show_wmodes(const struct nh_cmd_arg *);
+static int wiz_show_stats(const struct nh_cmd_arg *);
 static void count_obj(struct obj *, long *, long *, boolean, boolean);
 static void obj_chain(struct menulist *, const char *, struct obj *, long *,
                       long *);
@@ -48,10 +49,7 @@ static void mon_invent_chain(struct menulist *, const char *, struct monst *,
 static void mon_chain(struct menulist *, const char *, struct monst *, long *,
                       long *);
 static void contained(struct menulist *, const char *, long *, long *);
-static int wiz_show_stats(void);
-static int doattributes(void);
-static int doconduct(void);
- /**/ static boolean minimal_enlightenment(void);
+static boolean minimal_enlightenment(void);
 
 static void enlght_line(struct menulist *, const char *, const char *,
                         const char *);
@@ -68,154 +66,157 @@ static char *enlght_combatinc(const char *, int, int, char *);
 const struct cmd_desc cmdlist[] = {
     /* "str", "", defkey, altkey, wiz, buried, func, arg */
     {"adjust", "adjust inventory letters", M('a'), 0, TRUE, doorganize,
-     CMD_ARG_NONE | CMD_EXT},
+     CMD_ARG_OBJ | CMD_EXT},
     {"annotate", "name the current level", 0, 0, TRUE, donamelevel,
-     CMD_ARG_NONE | CMD_EXT},
+     CMD_ARG_STR | CMD_EXT},
     {"apply", "use a tool or container or dip into a potion", 'a', 0, FALSE,
-     doapply, CMD_ARG_NONE | CMD_ARG_OBJ},
+     doapply, CMD_ARG_OBJ | CMD_ARG_POS | CMD_ARG_DIR | CMD_ARG_STR },
     {"attributes", "show your attributes", C('x'), 0, TRUE, doattributes,
-     CMD_ARG_NONE},
+     0},
     {"autoexplore", "automatically explore until something happens", 'v', 0,
-     FALSE, doautoexplore, CMD_ARG_NONE},
-    {"cast", "cast a spell from memory", 'Z', 0, TRUE, docast, CMD_ARG_NONE},
+     FALSE, doautoexplore, 0},
+    {"cast", "cast a spell from memory", 'Z', 0, TRUE, docast,
+     CMD_ARG_SPELL | CMD_ARG_DIR | CMD_ARG_POS},
     {"chat", "talk to someone", 'c', M('c'), TRUE, dotalk,
-     CMD_ARG_NONE | CMD_ARG_DIR | CMD_EXT},     /* converse? */
-    {"close", "close a door", 0, 0, FALSE, doclose, CMD_ARG_NONE | CMD_ARG_DIR},
+     CMD_ARG_DIR | CMD_EXT},     /* converse? */
+    {"close", "close a door", 0, 0, FALSE, doclose, CMD_ARG_DIR},
     {"conduct", "list status of voluntary challenges", 0, 0, TRUE, doconduct,
-     CMD_ARG_NONE | CMD_EXT | CMD_NOTIME},
+     CMD_EXT | CMD_NOTIME},
     {"countgold", "show gold, debt, credit, and unpaid items", '$', 0, TRUE,
-     doprgold, CMD_ARG_NONE | CMD_NOTIME},
+     doprgold, CMD_NOTIME},
     {"dip", "dip an object into something", M('d'), 0, FALSE, dodip,
-     CMD_ARG_NONE | CMD_EXT | CMD_ARG_OBJ},
+     CMD_EXT | CMD_ARG_OBJ},
     {"discoveries", "show your knowledge about items", '\\', 0, TRUE,
-     dodiscovered, CMD_ARG_NONE | CMD_NOTIME},
+     dodiscovered, CMD_NOTIME},
     {"drink", "quaff a potion", 'q', 0, FALSE, dodrink,
-     CMD_ARG_NONE | CMD_ARG_OBJ},
+     CMD_ARG_OBJ},
     {"drop", "drop one item", 'd', 0, FALSE, dodrop,
-     CMD_ARG_NONE | CMD_ARG_OBJ},
+     CMD_ARG_OBJ},
     {"eat", "eat an item from inventory or the floor", 'e', 0, FALSE, doeat,
-     CMD_ARG_NONE | CMD_ARG_OBJ},
+     CMD_ARG_OBJ},
     {"elbereth", "write an Elbereth in the dust", C('e'), 0, FALSE, doelbereth,
-     CMD_ARG_NONE},
+     0},
     {"enhance", "advance or check weapon and spell skills", M('e'), 0, TRUE,
-     enhance_weapon_skill, CMD_ARG_NONE | CMD_EXT},
+     enhance_weapon_skill, CMD_EXT},
     {"engrave", "write on the floor", 'E', 0, FALSE, doengrave,
-     CMD_ARG_NONE | CMD_ARG_OBJ},
-    {"equip", "change your equipment", 'A', '*', FALSE, doequip, CMD_ARG_NONE},
+     CMD_ARG_OBJ | CMD_ARG_STR},
+    {"equip", "change your equipment", 'A', '*', FALSE, doequip, 0},
     {"farlook", "say what is on a distant square", ';', 0, TRUE, doquickwhatis,
-     CMD_ARG_NONE | CMD_NOTIME},
+     CMD_NOTIME | CMD_ARG_POS},
     {"fight", "attack even if no hostile monster is visible", 'F', 0, FALSE,
      dofight, CMD_ARG_DIR},
-    {"fire", "throw your quivered item", 'f', 0, FALSE, dofire, CMD_ARG_NONE},
+    {"fire", "throw your quivered item", 'f', 0, FALSE, dofire,
+     CMD_ARG_DIR | CMD_ARG_LIMIT},
     {"force", "force a lock", M('f'), 0, FALSE, doforce,
-     CMD_ARG_NONE | CMD_EXT},
+     CMD_EXT},
     {"history", "show a list of your historic deeds", 0, 0, TRUE, dohistory,
-     CMD_ARG_NONE | CMD_EXT | CMD_NOTIME},
+     CMD_EXT | CMD_NOTIME},
     {"idtrap", "identify a trap", '^', 0, TRUE, doidtrap,
-     CMD_ARG_NONE | CMD_NOTIME},
+     CMD_ARG_DIR | CMD_NOTIME},
     {"inventory", "show your inventory", 'i', 0, TRUE, ddoinv,
-     CMD_ARG_NONE | CMD_NOTIME},
+     CMD_NOTIME},
     {"invoke", "invoke an object's powers", 'V', M('i'), TRUE, doinvoke,
-     CMD_ARG_NONE | CMD_EXT | CMD_ARG_OBJ},
+     CMD_EXT | CMD_ARG_OBJ},
     {"jump", "jump to a location", M('j'), 'j', FALSE, dojump,
-     CMD_ARG_NONE | CMD_EXT},
+     CMD_ARG_POS | CMD_EXT},
     {"kick", "kick an adjacent object or monster", C('d'), 'k', FALSE, dokick,
-     CMD_ARG_NONE},
+     CMD_ARG_DIR},
     {"license", "show the NetHack license", 0, 0, TRUE, dolicense,
-     CMD_ARG_NONE | CMD_HELP | CMD_NOTIME},
+     CMD_HELP | CMD_NOTIME},
     {"lookhere", "describe the current square", ':', 0, TRUE, dolook,
-     CMD_ARG_NONE | CMD_NOTIME},
+     CMD_NOTIME},
     {"loot", "loot a bag or box on the floor", M('l'), 'l', FALSE, doloot,
-     CMD_ARG_NONE | CMD_EXT},
+     CMD_EXT},
     {"menuinv", "show a partial inventory", 'I', 0, TRUE, dotypeinv,
-     CMD_ARG_NONE | CMD_NOTIME},
+     CMD_NOTIME},
     {"monster", "use a monster's special ability", 'M', M('m'), TRUE,
-     domonability, CMD_ARG_NONE | CMD_EXT},
-    {"multidrop", "drop multiple items", 'D', 0, FALSE, doddrop, CMD_ARG_NONE},
+     domonability, CMD_ARG_DIR | CMD_EXT},
+    {"multidrop", "drop multiple items", 'D', 0, FALSE, doddrop, 0},
     {"name", "name a monster, item or type of object", M('n'), 'C', TRUE,
-     do_naming, CMD_ARG_NONE | CMD_EXT},
-    {"namemon", "christen a monster", 0, 0, TRUE, do_mname, CMD_ARG_NONE},
+     do_naming, CMD_EXT},
+    {"namemon", "christen a monster", 0, 0, TRUE, do_mname,
+     CMD_ARG_POS | CMD_ARG_STR},
     {"nameitem", "name an item", 0, 0, TRUE, do_oname,
-     CMD_ARG_NONE | CMD_ARG_OBJ},
+     CMD_ARG_OBJ | CMD_ARG_STR},
     {"nametype", "name a type of objects", 0, 0, TRUE, do_tname,
-     CMD_ARG_NONE | CMD_ARG_OBJ},
+     CMD_ARG_OBJ | CMD_ARG_STR},
     {"offer", "offer a sacrifice to the gods", 0, 0, FALSE,
-     dosacrifice, CMD_ARG_NONE | CMD_EXT | CMD_ARG_OBJ},
+     dosacrifice, CMD_EXT | CMD_ARG_OBJ},
     {"open", "open, close or unlock a door", 'o', 0, FALSE, doopen,
-     CMD_ARG_NONE | CMD_ARG_DIR},
+     CMD_ARG_DIR},
     {"overview", "show an overview of the dungeon", C('o'), 0, TRUE, dooverview,
-     CMD_ARG_NONE | CMD_EXT | CMD_NOTIME},
+     CMD_EXT | CMD_NOTIME},
     {"pay", "pay a shopkeeper", 'p', 0, FALSE, dopay,
-     CMD_ARG_NONE | CMD_ARG_OBJ},
+     CMD_ARG_OBJ},
     {"pickup", "take items from the floor", ',', 0, FALSE, dopickup,
-     CMD_ARG_NONE},
-    {"pray", "pray to the gods for help", M('p'), 0, TRUE, dopray,
-     CMD_ARG_NONE | CMD_EXT},
-    {"quit", "exit without saving current game", M('q'), 0, TRUE, done2,
-     CMD_ARG_NONE | CMD_EXT},
+     CMD_ARG_LIMIT},
+    {"pray", "pray to the gods for help", M('p'), 0, TRUE, dopray, CMD_EXT},
+    {"quit", "exit without saving current game", M('q'), 0, TRUE, doquit,
+     CMD_EXT},
     {"quiver", "ready an item for firing", 'Q', 0, FALSE, dowieldquiver,
-     CMD_ARG_NONE | CMD_ARG_OBJ},
-    {"read", "read a scroll or spellbook", 'r', 0, FALSE, doread,
-     CMD_ARG_NONE | CMD_ARG_OBJ},
-    {"redraw", "redraw the screen", C('r'), 0, TRUE, doredraw,
-     CMD_ARG_NONE | CMD_NOTIME},
+     CMD_ARG_OBJ},
+    {"read", "read a scroll or spellbook", 'r', 0, FALSE, doread, CMD_ARG_OBJ},
+    {"redraw", "redraw the screen", C('r'), 0, TRUE, doredrawcmd,
+     CMD_NOTIME},
+    {"repeat", "repeat the last command or continue an interrupted command",
+     C('a'), 0, TRUE, NULL},
     {"ride", "ride (or stop riding) a monster", M('r'), 0, FALSE, doride,
-     CMD_ARG_NONE | CMD_EXT},
+     CMD_ARG_DIR | CMD_EXT},
     {"rub", "rub a lamp or a stone", 0, 0, FALSE, dorub,
-     CMD_ARG_NONE | CMD_EXT | CMD_ARG_OBJ},
+     CMD_EXT | CMD_ARG_OBJ},
     {"sacrifice", "offer a sacrifice to the gods", M('o'), 0, FALSE,
-     dosacrifice, CMD_ARG_NONE | CMD_EXT | CMD_ARG_OBJ},
-    {"save", "save the game and exit", 'S', 0, TRUE, dosave, CMD_ARG_NONE},
+     dosacrifice, CMD_EXT | CMD_ARG_OBJ},
+    {"save", "save the game and exit", 'S', 0, TRUE, dosave, 0},
     {"search", "search for hidden doors and traps", 's', 0, TRUE, dosearch,
-     CMD_ARG_NONE, "searching"},
+     0, "searching"},
     {"showamulets", "list your worn amulet", '"', 0, TRUE,
-     dopramulet, CMD_ARG_NONE | CMD_NOTIME},
+     dopramulet, CMD_NOTIME},
     {"showarmor", "list your worn armor", '[', 0, TRUE, doprarm,
-     CMD_ARG_NONE | CMD_NOTIME},
+     CMD_NOTIME},
     {"showrings", "list your worn rings", '=', 0, TRUE, doprring,
-     CMD_ARG_NONE | CMD_NOTIME},
+     CMD_NOTIME},
     {"showtools", "list your worn eyewear", '(', 0, TRUE, doprtool,
-     CMD_ARG_NONE | CMD_NOTIME},
+     CMD_NOTIME},
     {"showweapon", "list your wielded weapons", ')', 0, TRUE, doprwep,
-     CMD_ARG_NONE | CMD_NOTIME},
+     CMD_NOTIME},
     {"showworn", "list your equipment", 0, 0, TRUE, doprinuse,
-     CMD_ARG_NONE | CMD_NOTIME},
-    {"sit", "sit down", M('s'), 0, FALSE, dosit, CMD_ARG_NONE | CMD_EXT},
+     CMD_NOTIME},
+    {"sit", "sit down", M('s'), 0, FALSE, dosit, CMD_EXT},
     {"spellbook", "display and change letters of spells", '+', 0, TRUE,
-     dovspell, CMD_ARG_NONE},
+     dovspell, 0},
     {"swapweapon", "exchange wielded and alternate weapon", 'x', 0, FALSE,
-     doswapweapon, CMD_ARG_NONE},
+     doswapweapon, 0},
     {"takeoff", "take off an item you are wearing", 'T', 'R', FALSE, dounequip,
-     CMD_ARG_NONE | CMD_ARG_OBJ},
+     CMD_ARG_OBJ},
     {"teleport", "use intrinsic or magical teleportation ability", C('t'), 0,
-     TRUE, dotele, CMD_ARG_NONE},
+     TRUE, dotele, 0},
     {"throw", "throw an item", 't', 0, FALSE, dothrow,
-     CMD_ARG_NONE | CMD_ARG_OBJ},
+     CMD_ARG_OBJ | CMD_ARG_DIR | CMD_ARG_LIMIT},
     {"togglepickup", "toggle the autopickup option", '@', 0, TRUE,
-     dotogglepickup, CMD_ARG_NONE},
+     dotogglepickup, 0},
     {"travel", "walk until a given square is reached", '_', 0, TRUE, dotravel,
-     CMD_ARG_NONE | CMD_ARG_POS},
-    {"turn", "turn undead", M('t'), 0, TRUE, doturn, CMD_ARG_NONE | CMD_EXT},
+     CMD_ARG_POS},
+    {"turn", "turn undead", M('t'), 0, TRUE, doturn, CMD_EXT},
     {"twoweapon", "toggle two-weapon combat", M('2'), 'X', FALSE, dotwoweapon,
-     CMD_ARG_NONE | CMD_EXT},
+     CMD_EXT},
     {"untrap", "untrap something", M('u'), 'u', FALSE, dountrap,
-     CMD_ARG_NONE | CMD_EXT},
+     CMD_EXT},
     {"version", "displays the version number", 0, 0, TRUE, doversion,
-     CMD_HELP | CMD_ARG_NONE | CMD_NOTIME | CMD_EXT},
+     CMD_HELP | CMD_NOTIME | CMD_EXT},
     {"verhistory", "display the version history", 0, 0, TRUE, doverhistory,
-     CMD_HELP | CMD_ARG_NONE | CMD_NOTIME | CMD_EXT},
-    {"wait", "do nothing for one turn", '.', 0, TRUE, donull, CMD_ARG_NONE,
+     CMD_HELP | CMD_NOTIME | CMD_EXT},
+    {"wait", "do nothing for one turn", '.', 0, TRUE, donull, 0,
      "waiting"},
     {"wear", "wear clothing, armor, or accessories", 'W', 'P', FALSE, dowear,
-     CMD_ARG_NONE | CMD_ARG_OBJ},
+     CMD_ARG_OBJ},
     {"wield", "hold an item in your hands", 'w', 0, FALSE, dowield,
-     CMD_ARG_NONE | CMD_ARG_OBJ},
+     CMD_ARG_OBJ},
     {"wipe", "wipe off your face", M('w'), 0, FALSE, dowipe,
-     CMD_ARG_NONE | CMD_EXT},
+     CMD_EXT},
     {"whatis", "describe what a symbol means", '/', 0, TRUE, dowhatis,
-     CMD_HELP | CMD_ARG_NONE | CMD_NOTIME},
+     CMD_HELP | CMD_NOTIME | CMD_ARG_POS | CMD_ARG_STR},
     {"zap", "zap a wand to use its magic", 'z', 0, FALSE, dozap,
-     CMD_ARG_NONE | CMD_ARG_OBJ},
+     CMD_ARG_OBJ | CMD_ARG_DIR},
 
     {"move", "move one step", 0, 0, FALSE, domovecmd, CMD_ARG_DIR | CMD_MOVE},
     {"moveonly", "move, but don't fight or pick anything up", 'm', 0,
@@ -230,101 +231,105 @@ const struct cmd_desc cmdlist[] = {
      CMD_ARG_DIR | CMD_MOVE},
 
     {"welcome", "(internal) display the 'welcome back!' message", 0, 0, TRUE,
-     dowelcome, CMD_ARG_NONE | CMD_INTERNAL},
+     dowelcome, CMD_INTERNAL},
 
     {"detect", "(DEBUG) detect monsters", 0, 0, TRUE, wiz_detect,
-     CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
+     CMD_DEBUG | CMD_EXT},
     {"genesis", "(DEBUG) create a monster", C('g'), 0, TRUE, wiz_genesis,
-     CMD_ARG_NONE | CMD_DEBUG},
+     CMD_DEBUG | CMD_ARG_LIMIT | CMD_ARG_STR},
     {"identify", "(DEBUG) identify all items in the inventory", C('i'), 0, TRUE,
-     wiz_identify, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
+     wiz_identify, CMD_DEBUG | CMD_EXT},
     {"levelchange", "(DEBUG) change experience level", 0, 0, TRUE,
-     wiz_level_change, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
+     wiz_level_change, CMD_DEBUG | CMD_EXT},
     {"levelcide", "(DEBUG) kill all other monsters on the level", 0, 0, TRUE,
-     wiz_levelcide, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
+     wiz_levelcide, CMD_DEBUG | CMD_EXT},
     {"lightsources", "(DEBUG) show mobile light sources", 0, 0, TRUE,
-     wiz_light_sources, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
+     wiz_light_sources, CMD_DEBUG | CMD_EXT | CMD_NOTIME},
     {"levelteleport", "(DEBUG) telport to a different level", C('v'), 0, TRUE,
-     wiz_level_tele, CMD_ARG_NONE | CMD_DEBUG},
+     wiz_level_tele, CMD_DEBUG},
     {"monpolycontrol", "(DEBUG) control monster polymorphs", 0, 0, TRUE,
-     wiz_mon_polycontrol, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
-    {"panic", "(DEBUG) test panic routine (fatal to game)", 0, 0, TRUE,
-     wiz_panic, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
+     wiz_mon_polycontrol, CMD_DEBUG | CMD_EXT},
+    {"panic", "(DEBUG) test panic routine", 0, 0, TRUE,
+     wiz_panic, CMD_DEBUG | CMD_EXT},
     {"polyself", "(DEBUG) polymorph self", 0, 0, TRUE, wiz_polyself,
-     CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
+     CMD_DEBUG | CMD_EXT},
     {"printdungeon", "(DEBUG) print dungeon structure", 0, 0, TRUE, wiz_where,
-     CMD_ARG_NONE | CMD_DEBUG | CMD_NOTIME | CMD_EXT},
+     CMD_DEBUG | CMD_NOTIME | CMD_EXT},
     {"seenv", "(DEBUG) show seen vectors", 0, 0, TRUE, wiz_show_seenv,
-     CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
+     CMD_DEBUG | CMD_EXT | CMD_NOTIME},
     {"showmap", "(DEBUG) reveal the entire map", 0, 0, TRUE, wiz_map,
-     CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
+     CMD_DEBUG | CMD_EXT},
     {"stats", "(DEBUG) show memory statistics", 0, 0, TRUE, wiz_show_stats,
-     CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
+     CMD_DEBUG | CMD_EXT | CMD_NOTIME},
     {"timeout", "(DEBUG) look at timeout queue", 0, 0, TRUE, wiz_timeout_queue,
-     CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
+     CMD_DEBUG | CMD_EXT | CMD_NOTIME},
     {"togglegen", "(DEBUG) toggle monster generation", 0, 0, TRUE,
-     wiz_togglegen, CMD_ARG_NONE | CMD_DEBUG | CMD_EXT},
+     wiz_togglegen, CMD_DEBUG | CMD_EXT},
     {"vision", "(DEBUG) show vision array", 0, 0, TRUE, wiz_show_vision,
-     CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
+     CMD_DEBUG | CMD_EXT | CMD_NOTIME},
     {"wish", "(DEBUG) wish for an item", C('w'), 0, TRUE, wiz_wish,
-     CMD_ARG_NONE | CMD_DEBUG},
+     CMD_DEBUG},
     {"wizport", "(DEBUG) teleport without fail", C('f'), 0, TRUE,
-     wiz_teleport, CMD_ARG_NONE | CMD_DEBUG},
+     wiz_teleport, CMD_DEBUG},
     {"wmode", "(DEBUG) show wall modes", 0, 0, TRUE, wiz_show_wmodes,
-     CMD_ARG_NONE | CMD_DEBUG | CMD_EXT | CMD_NOTIME},
+     CMD_DEBUG | CMD_EXT | CMD_NOTIME},
 
     {NULL, NULL, 0, 0, 0, 0, 0, NULL}
 };
 
-
-/* Count down by decrementing multi */
-static int
-command_repeat_occupation(void)
-{
-    (*timed_occ_fn) ();
-    if (multi > 0)
-        multi--;
-    if (!multi)
-        nomul(0, NULL);     /* reset multi_txt, etc. */
-    return multi > 0;
-}
-
-/* If you have moved since initially setting some occupations, they
- * now shouldn't be able to restart.
- *
- * The basic rule is that if you are carrying it, you can continue
- * since it is with you.  If you are acting on something at a distance,
- * your orientation to it must have changed when you moved.
- *
- *
- *      Currently:  Picking Locks / Forcing Chests.
- *                  Setting traps.
- */
+/* Several occupations cannot be meaningfully continued if you move (anything
+   acting on a map square, for instance, because your orientation to it
+   changes). Others can't be continued if the item is no longer in inventory
+   (equipping), or if the item is no longer on the ground at your location
+   (unlocking, forcing). */
 void
-reset_occupations(void)
+reset_occupations(boolean u_changed_location)
 {
-    reset_pick();
-    reset_trapset();
-}
+    int i;
 
-void
-set_occupation(int (*fn) (void), const char *txt)
-{
-    occupation = fn;
-    strncpy(turnstate.occupation_txt, txt,
-            (sizeof turnstate.occupation_txt)-2);
-    return;
-}
+    /* Occupations that always reset if you move. */
+    if (u_changed_location) {
+        /* Setting traps. */
+        u.uoccupation_progress[tos_trap] = 0;
+        u.utracked[tos_trap] = 0;
+        /* Digging. */
+        u.uoccupation_progress[tos_dig] = 0; /* u.utracked[tos_dig] unused */
+        /* Picking locks. */
+        u.uoccupation_progress[tos_lock] = 0;
+        u.utracked[tos_lock] = 0;
+    }
 
+    /* Occupations that reset if you don't have the item in inventory. */
+    for (i = tos_first_equip; i <= tos_last_equip; i++) {
+        /* Equipping. */
+        if (u.utracked[i] && u.utracked[i] != &zeroobj &&
+            u.utracked[i]->where != OBJ_INVENT) {
+            u.utracked[i] = 0;
+            u.uoccupation_progress[i] = 0;
+        }
+    }
+
+    /* Occupations that require the item to be on the ground. */
+    if (u.utracked[tos_lock] != &zeroobj) {
+        if (!obj_with_u(u.utracked[tos_lock]) ||
+            u.utracked[tos_lock]->where == OBJ_INVENT) {
+            u.utracked[tos_lock] = 0;
+            u.uoccupation_progress[tos_lock] = 0;
+        }
+    }
+
+    /* Eating, reading, and opening tins can be resumed even if you lose the
+       item in the meantime. */
+}
 
 /* #monster command - use special monster ability while polymorphed */
 static int
-domonability(void)
+domonability(const struct nh_cmd_arg *arg)
 {
     if (can_breathe(youmonst.data))
-        return dobreathe();
+        return dobreathe(arg);
     else if (attacktype(youmonst.data, AT_SPIT))
-        return dospit();
+        return dospit(arg);
     else if (attacktype(youmonst.data, AT_MAGC))
         return castum((struct monst *)0,
                       &youmonst.data->
@@ -365,9 +370,13 @@ domonability(void)
 
 /* ^W command - wish for something */
 static int
-wiz_wish(void)
+wiz_wish(const struct nh_cmd_arg *arg)
 {       /* Unlimited wishes for debug mode by Paul Polderman */
     boolean save_verbose = flags.verbose;
+
+    (void) arg;
+    /* TODO: We could implement CMD_ARG_STR for this to allow repeatedly
+       wishing for the same item. */
 
     flags.verbose = FALSE;
     makewish();
@@ -379,8 +388,10 @@ wiz_wish(void)
 
 /* ^I command - identify hero's inventory */
 static int
-wiz_identify(void)
+wiz_identify(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
+
     identify_pack(0);
 
     return 0;
@@ -388,10 +399,12 @@ wiz_identify(void)
 
 /* ^F command - reveal the level map and any traps on it */
 static int
-wiz_map(void)
+wiz_map(const struct nh_cmd_arg *arg)
 {
     struct trap *t;
     long save_Hconf = HConfusion, save_Hhallu = HHallucination;
+
+    (void) arg;
 
     HConfusion = HHallucination = 0L;
     for (t = level->lev_traps; t != 0; t = t->ntrap) {
@@ -407,17 +420,19 @@ wiz_map(void)
 
 /* ^G command - generate monster(s); a count prefix will be honored */
 static int
-wiz_genesis(void)
+wiz_genesis(const struct nh_cmd_arg *arg)
 {
-    create_particular();
+    create_particular(arg);
 
     return 0;
 }
 
 /* #levelcide - kill all other monsters on the level */
 static int
-wiz_levelcide(void)
+wiz_levelcide(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
+
     do_level_genocide();
 
     return 0;
@@ -425,8 +440,10 @@ wiz_levelcide(void)
 
 /* ^O command - display dungeon layout */
 static int
-wiz_where(void)
+wiz_where(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
+
     print_dungeon(FALSE, NULL, NULL);
 
     return 0;
@@ -434,8 +451,10 @@ wiz_where(void)
 
 /* ^E command - detect unseen (secret doors, traps, hidden monsters) */
 static int
-wiz_detect(void)
+wiz_detect(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
+
     findit();
 
     return 0;
@@ -443,8 +462,10 @@ wiz_detect(void)
 
 /* ^Y command - teleport without fail */
 static int
-wiz_teleport(void)
+wiz_teleport(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
+
     tele_impl(TRUE);
 
     return 0;
@@ -452,8 +473,10 @@ wiz_teleport(void)
 
 /* ^V command - level teleport */
 static int
-wiz_level_tele(void)
+wiz_level_tele(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
+
     level_tele_impl(TRUE);
 
     return 0;
@@ -461,9 +484,12 @@ wiz_level_tele(void)
 
 /* #monpolycontrol command - choose new form for shapechangers, polymorphees */
 static int
-wiz_mon_polycontrol(void)
+wiz_mon_polycontrol(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
+
     flags.mon_polycontrol = !flags.mon_polycontrol;
+
     pline("Monster polymorph control is %s.",
           flags.mon_polycontrol ? "on" : "off");
 
@@ -472,9 +498,11 @@ wiz_mon_polycontrol(void)
 
 /* #togglegen command - toggle monster generation on/off */
 static int
-wiz_togglegen(void)
+wiz_togglegen(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
     flags.mon_generation = !flags.mon_generation;
+
     pline("Monster generation is %s.",
           flags.mon_generation ? "on" : "off");
 
@@ -483,13 +511,13 @@ wiz_togglegen(void)
 
 /* #levelchange command - adjust hero's experience level */
 static int
-wiz_level_change(void)
+wiz_level_change(const struct nh_cmd_arg *arg)
 {
     char buf[BUFSZ];
     int newlevel;
     int ret;
 
-    getlin("To what experience level do you want to be set?", buf);
+    getarglin(arg, "To what experience level do you want to be set?", buf);
     mungspaces(buf);
     if (buf[0] == '\033' || buf[0] == '\0')
         ret = 0;
@@ -527,28 +555,34 @@ wiz_level_change(void)
 
 /* #panic command - test program's panic handling */
 static int
-wiz_panic(void)
+wiz_panic(const struct nh_cmd_arg *arg)
 {
-    if (yn("Do you want to call panic() and end your game?") == 'y')
+    (void) arg;
+
+    if (yn("Do you want to call panic()?") == 'y')
         panic("crash test.");
     return 0;
 }
 
 /* #polyself command - change hero's form */
 static int
-wiz_polyself(void)
+wiz_polyself(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
+
     polyself(TRUE);
     return 0;
 }
 
 /* #seenv command */
 static int
-wiz_show_seenv(void)
+wiz_show_seenv(const struct nh_cmd_arg *arg)
 {
     struct menulist menu;
     int x, y, v, startx, stopx, curx;
     char row[COLNO + 1];
+
+    (void) arg;
 
     init_menulist(&menu);
     /*
@@ -589,11 +623,13 @@ wiz_show_seenv(void)
 
 /* #vision command */
 static int
-wiz_show_vision(void)
+wiz_show_vision(const struct nh_cmd_arg *arg)
 {
     struct menulist menu;
     int x, y, v;
     char row[COLNO + 1];
+
+    (void) arg;
 
     init_menulist(&menu);
     sprintf(row, "Flags: 0x%x could see, 0x%x in sight, 0x%x temp lit",
@@ -628,12 +664,14 @@ wiz_show_vision(void)
 
 /* #wmode command */
 static int
-wiz_show_wmodes(void)
+wiz_show_wmodes(const struct nh_cmd_arg *arg)
 {
     struct menulist menu;
     int x, y;
     char row[COLNO + 1];
     struct rm *loc;
+
+    (void) arg;
 
     init_menulist(&menu);
     for (y = 0; y < ROWNO; y++) {
@@ -1349,7 +1387,7 @@ minimal_enlightenment(void)
         n = 0;
         switch (*selected) {
         case 'i':
-            n = ddoinv();
+            n = ddoinv(&(struct nh_cmd_arg){.argtype = 0});
             break;
         case 'a':
             unspoilered_intrinsics();
@@ -1361,7 +1399,7 @@ minimal_enlightenment(void)
             list_genocided('y', FALSE);
             break;
         case 'c':
-            n = doconduct();
+            n = doconduct(&(struct nh_cmd_arg){.argtype = 0});
             break;
         case 's':
             calc_score(-1, TRUE, money_cnt(invent) + hidden_gold());
@@ -1389,11 +1427,13 @@ minimal_enlightenment(void)
    in ways that would not be available to a normal player. Hacking in order to
    get welcome messages at inappropriate times is pointless :-) */
 static int
-dowelcome(void)
-{       /* false => restoring an old game */
+dowelcome(const struct nh_cmd_arg *arg)
+{
     char buf[BUFSZ];
     boolean currentgend = Upolyd ? u.mfemale : u.ufemale;
     boolean new_game = !u.uwelcomed;
+
+    (void) arg;
 
     u.uwelcomed = 1;
 
@@ -1434,8 +1474,9 @@ dowelcome(void)
 
 
 static int
-doattributes(void)
+doattributes(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
     if (!minimal_enlightenment())
         return 0;
     if (wizard || discover)
@@ -1447,8 +1488,9 @@ doattributes(void)
  * (shares enlightenment's tense handling)
  */
 static int
-doconduct(void)
+doconduct(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
     show_conduct(0);
     return 0;
 }
@@ -1969,12 +2011,14 @@ mon_chain(struct menulist *menu, const char *src, struct monst *chain,
  * Display memory usage of all monsters and objects on the level.
  */
 static int
-wiz_show_stats(void)
+wiz_show_stats(const struct nh_cmd_arg *arg)
 {
     char buf[BUFSZ];
     struct menulist menu;
     long total_obj_size = 0, total_obj_count = 0;
     long total_mon_size = 0, total_mon_count = 0;
+
+    (void) arg;
 
     init_menulist(&menu);
     add_menutext(&menu, "Current memory statistics:");
@@ -2021,7 +2065,6 @@ wiz_show_stats(void)
     return 0;
 }
 
-
 boolean
 dir_to_delta(enum nh_direction dir, schar * dx, schar * dy, schar * dz)
 {
@@ -2035,6 +2078,98 @@ dir_to_delta(enum nh_direction dir, schar * dx, schar * dy, schar * dz)
     return TRUE;
 }
 
+/* The caller must verify that the delta is valid. */
+void
+arg_from_delta(schar dx, schar dy, schar dz, struct nh_cmd_arg *arg)
+{
+    int i;
+    arg->argtype = CMD_ARG_DIR;
+
+    /* TODO: Bleh at the hardcoded 11. */
+    for (i = 0; i < 11; i++) {
+        if (dx == xdir[i] && dy == ydir[i] && dz == zdir[i])
+            arg->dir = i;
+    }
+}
+
+int
+getargdir(const struct nh_cmd_arg *arg, const char *query,
+          schar *dx, schar *dy, schar *dz)
+{
+    /* Is there a reasonable direction specified already? */
+    if ((arg->argtype & CMD_ARG_DIR) &&
+        dir_to_delta(arg->dir, dx, dy, dz) &&
+        (!dx || !dy || u.umonnum != PM_GRID_BUG)) {
+
+        /* getdir() has a stun/confusion check; replicate that here.
+
+           (Doing things this way prevents a bug whereby command repeat would
+           remember the direction chosen from stun/confusion rather than
+           re-randomizing it each turn.) */
+        if (!*dz && (Stunned || (Confusion && !rn2(5))))
+            confdir(dx, dy);
+
+        return 1;
+    }
+
+    /* Otherwise, ask. */
+    return getdir(query, dx, dy, dz, TRUE);
+}
+
+int
+getargpos(const struct nh_cmd_arg *arg, coord *cc, boolean force, const char *goal)
+{
+    /* Did the client specify an (in bounds) position? */
+    if ((arg->argtype & CMD_ARG_POS) && isok(cc->x, cc->y)) {
+        cc->x = arg->pos.x;
+        cc->y = arg->pos.y;
+        return NHCR_ACCEPTED;
+    }
+
+    /* Otherwise, ask. */
+    return getpos(cc, force, goal, TRUE);
+}
+
+struct obj *
+getargobj(const struct nh_cmd_arg *arg, const char *let, const char *word)
+{
+    struct obj *obj = NULL, *otmp;
+  
+    /* Did the client specify an inventory letter? */
+    if (arg->argtype & CMD_ARG_OBJ)
+        for (otmp = invent; otmp && !obj; otmp = otmp->nobj)
+            if (otmp->invlet == arg->invlet)
+                obj = otmp;
+
+    /* If so, is that a valid object? (If not, ask for another.) */
+    if (obj && validate_object(obj, let, word))
+        return obj;
+
+    /* What about '-' or ','? */
+    if (arg->argtype & CMD_ARG_OBJ &&
+        (arg->invlet == '-' || arg->invlet == ',') &&
+        strchr(let, ALLOW_NONE))
+        return &zeroobj;
+
+    /* Otherwise, prompt the user. */
+    return getobj(let, word, TRUE);
+}
+
+void
+getarglin(const struct nh_cmd_arg *arg, const char *query, char *bufp)
+{
+    /* Did the user specify a string? Ensure that it isn't empty, nor a cancel
+       string, and that it fits inside the buffer (i.e. contains a NUL
+       somewhere). */
+    if ((arg->argtype && CMD_ARG_STR) && *(arg->str) != '\033' &&
+        *(arg->str) && memchr(arg->str, '\0', BUFSZ)) {
+        strcpy(bufp, arg->str);
+        return;
+    }
+
+    /* Otherwise, prompt for one. */
+    getlin(query, bufp, TRUE);
+}
 
 int
 get_command_idx(const char *command)
@@ -2051,29 +2186,23 @@ get_command_idx(const char *command)
     return -1;
 }
 
-static int prev_command;
-static struct nh_cmd_arg prev_arg = { CMD_ARG_NONE };
-
-static int prev_repcount = 0;
-
-int
-do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *arg)
+/* Returns TRUE if the command that the user entered during the current turn (if
+   it's their turn) or their previous turn (if it isn't) was the named command
+   exactly, no synonyms. The main purpose of this is for commands that require a
+   specific method of invoking before they will do something dangerous (e.g.
+   opening a door needs the "open" in order to unlock it, which is
+   timeconsuming). Except for this purpose, commands shouldn't care about how
+   they were invoked. */
+boolean
+last_command_was(const char *command)
 {
-    schar dx, dy, dz;
-    int x, y;
-    int res, (*func) (void), (*func_dir) (int, int, int);
-    int (*func_pos) (int, int), (*func_obj) (struct obj *);
-    struct obj *obj, *otmp;
-    struct nh_cmd_arg noarg = { CMD_ARG_NONE };
-    int argtype, functype;
+    return flags.last_cmd == get_command_idx(command);
+}
 
-    /* for multi-turn movement, we use re-invocation of do_command rather than
-       set_occupation, so the relevant command must be saved and restored */
-    if (command == -1) {
-        command = prev_command;
-        arg = &prev_arg;
-        repcount = prev_repcount;
-    }
+enum nh_command_status
+do_command(int command, struct nh_cmd_arg *arg)
+{
+    int res;
 
     /* protection from out-of-range values from the client */
     if (command < 0)
@@ -2081,129 +2210,52 @@ do_command(int command, int repcount, boolean firsttime, struct nh_cmd_arg *arg)
     if (command >= (sizeof cmdlist / sizeof *cmdlist))
         return COMMAND_UNKNOWN;
 
-    /* NULL arg is synonymous to CMD_ARG_NONE */
+    /* NULL arg is synonymous to an argtype of 0 */
     if (!arg)
-        arg = &noarg;
+        arg = &(struct nh_cmd_arg){.argtype = 0};
 
-    prev_command = command;
-    prev_arg = *arg;
-    prev_repcount = repcount;
+    /* Although accessible to the user (because they may want to repeat/continue
+       actions even if interrupted), "repeat" is special in that it's also sent
+       spontaneously by the windowport to repeat actions or continue multi-turn
+       actions. Note that a client is never forced to repeat; if do_command()
+       runs at all, the user (if using an appropriate client) has full control
+       over whether an action continues or not. */
+    if (!cmdlist[command].func) {
+        command = flags.last_cmd;
+        arg = &flags.last_arg;
+        turnstate.continue_message = FALSE;
+    } else if (!(cmdlist[command].flags & CMD_INTERNAL)) {
+        flags.last_cmd = command;
+        flags.last_arg = *arg;
+    }
 
     /* Debug commands are now restricted to wizard mode here, rather than with
        a special case in each command */
     if (cmdlist[command].flags & CMD_DEBUG && !wizard)
         return COMMAND_DEBUG_ONLY;
 
-    flags.move = FALSE;
-    multi = 0;
-
-    if (firsttime) {
-        u.last_str_turn = 0;    /* for flags.run > 1 movement */
-        flags.nopick = 0;
-    }
-
-    /* in some cases, a command function will accept either its proper argument
-       type or no argument; we're looking for the possible type of the argument
-       here */
-    functype = (cmdlist[command].flags & CMD_ARG_FLAGS);
-    if (!functype)
-        functype = CMD_ARG_NONE;
-
-    argtype = (arg->argtype & cmdlist[command].flags);
-    if (!argtype)
-        return COMMAND_BAD_ARG;
+    /* Make sure the client hasn't given extra arguments on top of the ones that
+       we'd normally accept. To simplify things, we just silently drop any
+       additional arguments. */
+    arg->argtype &= cmdlist[command].flags;
 
     if (u.uburied && !cmdlist[command].can_if_buried) {
         pline("You can't do that while you are buried!");
         res = 0;
+        action_completed();
     } else {
-        multi = repcount;
-
-        switch (functype) {
-        case CMD_ARG_NONE:
-            func = cmdlist[command].func;
-            if (cmdlist[command].text && !occupation && multi > 1) {
-                timed_occ_fn = func;
-                set_occupation(command_repeat_occupation,
-                               cmdlist[command].text);
-            }
-            flags.move = TRUE;
-            res = (*func) ();   /* perform the command */
-            break;
-
-        case CMD_ARG_DIR:
-            func_dir = cmdlist[command].func;
-            if (!firsttime) {
-                /* for multi-move commands such as dogo ('g') and dogo2 ('G'),
-                   the last-used direction is kept in u.dx and u.dy.
-                   lookaround() may change these values! */
-                dx = u.dx;
-                dy = u.dy;
-                dz = 0;
-            } else if (argtype == CMD_ARG_DIR) {
-                if (!dir_to_delta(arg->d, &dx, &dy, &dz))
-                    return COMMAND_BAD_ARG;
-                if (dx && dy && u.umonnum == PM_GRID_BUG)
-                    return COMMAND_BAD_ARG;
-
-            } else {
-                /* invalid direction deltas indicate that no arg was given */
-                dx = -2;
-                dy = -2;
-                dz = -2;
-            }
-            flags.move = TRUE;
-            if (firsttime) {
-                u.dx = dx;
-                u.dy = dy;
-            }
-            res = func_dir(dx, dy, dz);
-            break;
-
-        case CMD_ARG_POS:
-            func_pos = cmdlist[command].func;
-            if (argtype == CMD_ARG_POS) {
-                x = arg->pos.x;
-                y = arg->pos.y;
-            } else {
-                x = -1;
-                y = -1;
-            }
-            flags.move = TRUE;
-            res = func_pos(x, y);
-            break;
-
-        case CMD_ARG_OBJ:
-            func_obj = cmdlist[command].func;
-            obj = NULL;
-            if (argtype == CMD_ARG_OBJ) {
-                for (otmp = invent; otmp && !obj; otmp = otmp->nobj)
-                    if (otmp->invlet == arg->invlet)
-                        obj = otmp;
-            }
-            flags.move = TRUE;
-            res = func_obj(obj);
-            break;
-
-        default:
-            multi = 0;
-            return COMMAND_BAD_ARG;
-        }
-
-        if (multi > 0)
-            --multi;
-        if (multi == 0)
-            nomul(0, NULL); /* clear multi state */
+        res = (*cmdlist[command].func) (arg);
     }
 
-    if (!res) {
-        flags.move = FALSE;
-        multi = 0;
-    }
+    /* If the command takes no time, most likely it was cancelled, and there's
+       probably not much sense in repeat-counting it anyway. */
+    if (!res)
+        action_completed();
 
-    return COMMAND_OK;
+    turnstate.continue_message = TRUE;
+
+    return res ? COMMAND_OK : COMMAND_ZERO_TIME;
 }
-
 
 
 int
@@ -2244,7 +2296,7 @@ get_adjacent_loc(const char *prompt, const char *emsg, xchar x, xchar y,
     xchar new_x, new_y;
     schar dx, dy;
 
-    if (!getdir(prompt, &dx, &dy, dz)) {
+    if (!getdir(prompt, &dx, &dy, dz, FALSE)) {
         pline("Never mind.");
         return 0;
     }
@@ -2273,63 +2325,58 @@ confdir(schar * dx, schar * dy)
 }
 
 static int
-doautoexplore(void)
+doautoexplore(const struct nh_cmd_arg *arg)
 {
-    iflags.autoexplore = TRUE;
+    (void) arg;
+
     flags.travel = 1;
     iflags.travel1 = 1;
     flags.run = 8;
     flags.nopick = FALSE;
-    if (!multi)
-        multi = max(COLNO, ROWNO);
     u.last_str_turn = 0;
     flags.mv = TRUE;
 
-    domove(0, 0, 0);
+    action_incomplete("exploring", occ_autoexplore);
+    domove(&(struct nh_cmd_arg){.argtype = CMD_ARG_DIR, .dir = DIR_SELF});
 
     return 1;
 }
 
 
 static int
-dotravel(int x, int y)
+dotravel(const struct nh_cmd_arg *arg)
 {
     /* Keyboard travel command */
     coord cc;
 
-    if (x == -1 && y == -1) {
-        cc.x = iflags.travelcc.x;
-        cc.y = iflags.travelcc.y;
-        if (cc.x == -1 && cc.y == -1) {
-            /* No cached destination, start attempt from current position */
-            cc.x = u.ux;
-            cc.y = u.uy;
-        }
+    cc.x = iflags.travelcc.x;
+    cc.y = iflags.travelcc.y;
+    if (cc.x == -1 && cc.y == -1) {
+        /* No cached destination, start attempt from current position */
+        cc.x = u.ux;
+        cc.y = u.uy;
+    }
+    if (!(arg->argtype & CMD_ARG_POS))
         pline("Where do you want to travel to?");
-        if (getpos(&cc, FALSE, "the desired destination") ==
-            NHCR_CLIENT_CANCEL) {
-            if (flags.verbose)
-                pline("Never mind.");
-            return 0;
-        }
-    } else {
-        cc.x = x;
-        cc.y = y;
+    if (getargpos(arg, &cc, FALSE, "the desired destination") ==
+        NHCR_CLIENT_CANCEL) {
+        if (flags.verbose)
+            pline("Never mind.");
+        return 0;
     }
     iflags.travelcc.x = u.tx = cc.x;
     iflags.travelcc.y = u.ty = cc.y;
-    iflags.autoexplore = FALSE;
 
     flags.travel = 1;
     iflags.travel1 = 1;
     flags.run = 8;
     flags.nopick = TRUE;
-    if (!multi)
-        multi = max(COLNO, ROWNO);
     u.last_str_turn = 0;
     flags.mv = TRUE;
 
-    return domove(0, 0, 0);
+    action_incomplete("travelling", occ_travel);
+    return domove(&(struct nh_cmd_arg){.argtype = CMD_ARG_DIR,
+                                       .dir = DIR_SELF});
 }
 
 /*cmd.c*/

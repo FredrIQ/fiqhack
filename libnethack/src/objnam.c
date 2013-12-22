@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2776,11 +2776,10 @@ typfnd:
 
     if (halfeaten && otmp->oclass == FOOD_CLASS) {
         if (otmp->otyp == CORPSE)
-            otmp->oeaten = mons[otmp->corpsenm].cnutrit;
+            otmp->oeaten = mons[otmp->corpsenm].cnutrit / 2;
         else
-            otmp->oeaten = objects[otmp->otyp].oc_nutrition;
+            otmp->oeaten = objects[otmp->otyp].oc_nutrition / 2;
         /* (do this adjustment before setting up object's weight) */
-        consume_oeaten(otmp, 1);
     }
     otmp->owt = weight(otmp);
     if (very && otmp->otyp == HEAVY_IRON_BALL)

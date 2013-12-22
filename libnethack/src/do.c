@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-12 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -10,7 +10,6 @@
 
 static void dosinkring(struct obj *);
 static int drop(struct obj *);
-static int wipeoff(void);
 
 static int menu_drop(int);
 static void final_level(void);
@@ -21,18 +20,19 @@ static const char drop_types[] = { ALLOW_COUNT, ALL_CLASSES, 0 };
 
 /* 'd' command: drop one inventory item */
 int
-dodrop(struct obj *obj)
+dodrop(const struct nh_cmd_arg *arg)
 {
     int result, i = (invent) ? 0 : (SIZE(drop_types) - 1);
+    struct obj *obj;
 
     if (*u.ushops)
         sellobj_state(SELL_DELIBERATE);
+    obj = getargobj(arg, &drop_types[i], "drop");
     if (!obj)
-        obj = getobj(&drop_types[i], "drop");
+        return 0;
     result = drop(obj);
     if (*u.ushops)
         sellobj_state(SELL_NORMAL);
-    reset_occupations();
 
     return result;
 }
@@ -593,9 +593,11 @@ obj_no_longer_held(struct obj *obj)
 
 /* 'D' command: drop several things */
 int
-doddrop(void)
+doddrop(const struct nh_cmd_arg *arg)
 {
     int result = 0;
+
+    (void) arg;
 
     add_valid_menu_class(0);    /* clear any classes already there */
     if (*u.ushops)
@@ -603,7 +605,6 @@ doddrop(void)
     result = menu_drop(result);
     if (*u.ushops)
         sellobj_state(SELL_NORMAL);
-    reset_occupations();
 
     return result;
 }
@@ -732,7 +733,9 @@ dodown(void)
 
             if (flags.autodig && !flags.nopick && flags.autodigdown && uwep &&
                 is_pick(uwep)) {
-                return use_pick_axe2(uwep, 0, 0, 1);
+                struct nh_cmd_arg arg;
+                arg_from_delta(0, 0, 1, &arg);
+                return use_pick_axe(uwep, &arg);
             } else {
                 pline("You can't go down here.");
                 return 0;
@@ -765,7 +768,9 @@ dodown(void)
             if (u.utrap && (u.utraptype == TT_PIT)) {
                 if (flags.autodig && !flags.nopick && flags.autodigdown && uwep
                     && is_pick(uwep)) {
-                    return use_pick_axe2(uwep, 0, 0, 1);
+                    struct nh_cmd_arg arg;
+                    arg_from_delta(0, 0, 1, &arg);
+                    return use_pick_axe(uwep, &arg);
                 } else {
                     pline("You are already in the pit.");       /* YAFM needed */
                 }
@@ -1259,6 +1264,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
         pline("You named this level: %s.", level->levname);
 
     /* assume this will always return TRUE when changing level */
+    reset_occupations(TRUE);    /* you moved */
     in_out_region(level, u.ux, u.uy);
     pickup(1);
 }
@@ -1493,10 +1499,12 @@ revive_corpse(struct obj *corpse)
 }
 
 /* Revive the corpse via a timeout. */
- /*ARGSUSED*/ void
+void
 revive_mon(void *arg, long timeout)
 {
     struct obj *body = (struct obj *)arg;
+
+    (void) timeout;
 
     /* if we succeed, the corpse is gone, otherwise, rot it away */
     if (!revive_corpse(body)) {
@@ -1508,15 +1516,23 @@ revive_mon(void *arg, long timeout)
 }
 
 int
-donull(void)
+donull(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
     return 1;   /* Do nothing, but let other things happen */
 }
 
-
-static int
-wipeoff(void)
+int
+dowipe(const struct nh_cmd_arg *arg)
 {
+    char buf[BUFSZ];
+    (void) arg;
+
+    if (!u.ucreamed) {
+        pline("Your %s is already clean.", body_part(FACE));
+        return 0;
+    }
+
     if (u.ucreamed < 4)
         u.ucreamed = 0;
     else
@@ -1525,33 +1541,26 @@ wipeoff(void)
         Blinded = 0;
     else
         Blinded -= 4;
+
     if (!Blinded) {
+
         pline("You've got the glop off.");
         u.ucreamed = 0;
         Blinded = 1;
         make_blinded(0L, TRUE);
-        return 0;
-    } else if (!u.ucreamed) {
-        pline("Your %s feels clean now.", body_part(FACE));
-        return 0;
-    }
-    return 1;   /* still busy */
-}
+        return 1;
 
-int
-dowipe(void)
-{
-    if (u.ucreamed) {
-        static char buf[39];
+    } else if (!u.ucreamed) {
+
+        pline("Your %s feels clean now.", body_part(FACE));
+        return 1;
+
+    } else {
 
         sprintf(buf, "wiping off your %s", body_part(FACE));
-        set_occupation(wipeoff, buf);
-        /* Not totally correct; what if they change back after now but before
-           they're finished wiping? */
+        action_incomplete(buf, occ_wipe);
         return 1;
     }
-    pline("Your %s is already clean.", body_part(FACE));
-    return 1;
 }
 
 void

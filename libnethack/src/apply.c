@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-23 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -16,29 +16,29 @@ static const char tools_too[] = { ALL_CLASSES, ALLOW_NONE, NONE_ON_COMMA,
     WEAPON_CLASS, WAND_CLASS, GEM_CLASS, 0
 };
 
-static int use_camera(struct obj *);
+static int use_camera(struct obj *, const struct nh_cmd_arg *);
 static int use_towel(struct obj *);
 static boolean its_dead(int, int, int *);
-static int use_stethoscope(struct obj *);
+static int use_stethoscope(struct obj *, const struct nh_cmd_arg *);
 static int use_whistle(struct obj *);
 static int use_magic_whistle(struct obj *);
-static int use_leash(struct obj *);
-static int use_mirror(struct obj *);
+static int use_leash(struct obj *, const struct nh_cmd_arg *);
+static int use_mirror(struct obj *, const struct nh_cmd_arg *);
 static void use_bell(struct obj **);
 static int use_candelabrum(struct obj *);
 static int use_candle(struct obj **);
 static int use_lamp(struct obj *);
 static int light_cocktail(struct obj *);
 static int use_tinning_kit(struct obj *);
-static int use_figurine(struct obj **obj);
+static int use_figurine(struct obj **obj, const struct nh_cmd_arg *);
 static int use_grease(struct obj *);
-static int use_trap(struct obj *);
+static int use_trap(struct obj *, const struct nh_cmd_arg *);
 static int use_stone(struct obj *);
 static int set_trap(void);      /* occupation callback */
-static int use_whip(struct obj *);
-static int use_pole(struct obj *);
+static int use_whip(struct obj *, const struct nh_cmd_arg *);
+static int use_pole(struct obj *, const struct nh_cmd_arg *);
 static int use_cream_pie(struct obj **);
-static int use_grapple(struct obj *);
+static int use_grapple(struct obj *, const struct nh_cmd_arg *);
 static boolean figurine_location_checks(struct obj *, coord *, boolean);
 static boolean uhave_graystone(void);
 static void add_class(char *, char);
@@ -47,7 +47,7 @@ static const char no_elbow_room[] =
     "You don't have enough elbow-room to maneuver.";
 
 static int
-use_camera(struct obj *obj)
+use_camera(struct obj *obj, const struct nh_cmd_arg *arg)
 {
     struct monst *mtmp;
     schar dx, dy, dz;
@@ -56,7 +56,7 @@ use_camera(struct obj *obj)
         pline("Using your camera underwater would void the warranty.");
         return 0;
     }
-    if (!getdir(NULL, &dx, &dy, &dz))
+    if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
 
     if (obj->spe <= 0) {
@@ -204,7 +204,7 @@ static const char hollow_str[] = "a hollow sound.  This must be a secret %s!";
    The last stethoscope use turn is stored in obj->lastused; the last
    stethoscope use movement energy is stored in obj->spe. */
 static int
-use_stethoscope(struct obj *obj)
+use_stethoscope(struct obj *obj, const struct nh_cmd_arg *arg)
 {
     struct monst *mtmp;
     struct rm *loc;
@@ -221,7 +221,7 @@ use_stethoscope(struct obj *obj)
         pline("You have no free %s.", body_part(HAND));
         return 0;
     }
-    if (!getdir(NULL, &dx, &dy, &dz))
+    if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
 
     res = (moves == obj->lastused) && (youmonst.movement == obj->spe);
@@ -430,22 +430,27 @@ unleash_all(void)
 
 /* ARGSUSED */
 static int
-use_leash(struct obj *obj)
+use_leash(struct obj *obj, const struct nh_cmd_arg *arg)
 {
     coord cc;
     struct monst *mtmp;
     int spotmon;
-    schar dz;
+    schar dx, dy, dz;
 
     if (!obj->leashmon && number_leashed() >= MAXLEASHED) {
         pline("You cannot leash any more pets.");
         return 0;
     }
 
-    if (!get_adjacent_loc(NULL, NULL, u.ux, u.uy, &cc, &dz))
+    if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
 
-    if ((cc.x == u.ux) && (cc.y == u.uy)) {
+    cc.x = u.ux + dx;
+    cc.y = u.uy + dy;
+    if (!isok(cc.x, cc.y))
+        return 0;
+
+    if (!dx && !dy) {
         if (u.usteed && dz > 0) {
             mtmp = u.usteed;
             spotmon = 1;
@@ -620,14 +625,14 @@ check_leash(xchar x, xchar y)
 static const char look_str[] = "You look %s.";
 
 static int
-use_mirror(struct obj *obj)
+use_mirror(struct obj *obj, const struct nh_cmd_arg *arg)
 {
     struct monst *mtmp;
     char mlet;
     boolean vis;
     schar dx, dy, dz;
 
-    if (!getdir(NULL, &dx, &dy, &dz))
+    if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
 
     if (obj->cursed && !rn2(2)) {
@@ -645,9 +650,8 @@ use_mirror(struct obj *obj)
                               simple_typename(obj->otyp));
                     else
                         pline("Yikes!  You've frozen yourself!");
-                    nomul(-rnd((MAXULEV + 6) - u.ulevel),
-                          "gazing into a mirror");
-                    nomovemsg = 0;      /* default: "You can move again." */
+                    helpless(rnd((MAXULEV + 6) - u.ulevel),
+                             "gazing into a mirror", NULL);
                 } else
                     pline("You stiffen momentarily under your gaze.");
             } else if (youmonst.data->mlet == S_VAMPIRE)
@@ -800,9 +804,9 @@ use_bell(struct obj **optr)
                 case 1:
                     mon_adjust_speed(mtmp, 2, NULL);
                     break;
-                case 2:        /* no explanation; it just happens... */
-                    nomovemsg = "";
-                    nomul(-rnd(2), NULL);
+                case 2:
+                    pline("You freeze for a moment in surprise.");
+                    helpless(rnd(2), "summoning a nymph", NULL);
                     break;
                 }
         }
@@ -1209,13 +1213,11 @@ light_cocktail(struct obj *obj)
 static const char cuddly[] = { TOOL_CLASS, GEM_CLASS, 0 };
 
 int
-dorub(struct obj *obj)
+dorub(const struct nh_cmd_arg *arg)
 {
-    if (obj && !validate_object(obj, cuddly, "rub"))
-        return 0;
-    else if (!obj)
-        obj = getobj(cuddly, "rub");
+    struct obj *obj;
 
+    obj = getargobj(arg, cuddly, "rub");
     if (!obj)
         return 0;
 
@@ -1261,15 +1263,15 @@ dorub(struct obj *obj)
 }
 
 int
-dojump(void)
+dojump(const struct nh_cmd_arg *arg)
 {
     /* Physical jump */
-    return jump(0);
+    return jump(arg, 0);
 }
 
+/* Meaning of "magic" argument: 0 means physical; otherwise skill level */
 int
-jump(int magic  /* 0=Physical, otherwise skill level */
-    )
+jump(const struct nh_cmd_arg *arg, int magic)
 {
     coord cc;
 
@@ -1341,7 +1343,7 @@ jump(int magic  /* 0=Physical, otherwise skill level */
     pline("Where do you want to jump?");
     cc.x = u.ux;
     cc.y = u.uy;
-    if (getpos(&cc, TRUE, "the desired position") == NHCR_CLIENT_CANCEL)
+    if (getargpos(arg, &cc, TRUE, "the desired position") == NHCR_CLIENT_CANCEL)
         return 0;       /* user pressed ESC */
     if (!magic && !(HJumping & ~INTRINSIC) && !EJumping &&
         distu(cc.x, cc.y) != 5) {
@@ -1415,8 +1417,7 @@ jump(int magic  /* 0=Physical, otherwise skill level */
             change_luck(-1);
 
         teleds(cc.x, cc.y, TRUE);
-        nomul(-1, "jumping around");
-        nomovemsg = "";
+        helpless(1, "jumping around", "");
         morehungry(rnd(25));
         return 1;
     }
@@ -1444,7 +1445,10 @@ use_tinning_kit(struct obj *obj)
         return 1;
     }
 
-    if (!(corpse = floorfood("tin")))
+    /* We can't reuse an argument here, because the argument is the tinning
+       kit, not the item being tinned. We signal this to floorfood using a NULL
+       argument pointer. */
+    if (!(corpse = floorfood("tin", NULL)))
         return 0;
     if (corpse->oeaten) {
         pline("You cannot tin something which is partly eaten.");
@@ -1784,7 +1788,7 @@ figurine_location_checks(struct obj *obj, coord * cc, boolean quietly)
 
 
 static int
-use_figurine(struct obj **objp)
+use_figurine(struct obj **objp, const struct nh_cmd_arg *arg)
 {
     xchar x, y;
     coord cc;
@@ -1796,8 +1800,8 @@ use_figurine(struct obj **objp)
         if (!figurine_location_checks(obj, NULL, FALSE))
             return 0;
     }
-    if (!getdir(NULL, &dx, &dy, &dz)) {
-        flags.move = multi = 0;
+    if (!getargdir(arg, NULL, &dx, &dy, &dz)) {
+        action_completed();
         return 0;
     }
 
@@ -1851,7 +1855,7 @@ use_grease(struct obj *obj)
             dropx(obj);
             return 1;
         }
-        otmp = getobj(lubricables, "grease");
+        otmp = getobj(lubricables, "grease", FALSE);
         if (!otmp)
             return 0;
         if ((otmp->owornmask & W_MASK(os_arm)) && uarmc) {
@@ -1893,20 +1897,6 @@ use_grease(struct obj *obj)
     return res;
 }
 
-static struct trapinfo {
-    struct obj *tobj;
-    xchar tx, ty;
-    int time_needed;
-    boolean force_bungle;
-} trapinfo;
-
-void
-reset_trapset(void)
-{
-    trapinfo.tobj = 0;
-    trapinfo.force_bungle = 0;
-}
-
 /* touchstones - by Ken Arnold */
 static int
 use_stone(struct obj *tstone)
@@ -1927,7 +1917,7 @@ use_stone(struct obj *tstone)
     choices = (tstone->otyp == TOUCHSTONE && tstone->dknown &&
                objects[TOUCHSTONE].oc_name_known) ? justgems : allowall;
     sprintf(stonebuf, "rub on the stone%s", plur(tstone->quan));
-    if ((obj = getobj(choices, stonebuf)) == 0)
+    if ((obj = getobj(choices, stonebuf, FALSE)) == 0)
         return 0;
 
     if (obj == tstone && obj->quan == 1) {
@@ -2034,7 +2024,7 @@ use_stone(struct obj *tstone)
 
 /* Place a landmine/bear trap.  Helge Hafting */
 static int
-use_trap(struct obj *otmp)
+use_trap(struct obj *otmp, const struct nh_cmd_arg *arg)
 {
     int ttyp, tmp;
     const char *what = NULL;
@@ -2064,26 +2054,31 @@ use_trap(struct obj *otmp)
         what = "here";
     if (what) {
         pline("You can't set a trap %s!", what);
-        reset_trapset();
+        u.utracked[tos_trap] = 0;
         return 0;
     }
     ttyp = (otmp->otyp == LAND_MINE) ? LANDMINE : BEAR_TRAP;
     makeknown(otmp->otyp);
-    if (otmp == trapinfo.tobj && u.ux == trapinfo.tx && u.uy == trapinfo.ty) {
-        pline("You resume setting %s %s.", shk_your(buf, otmp),
-              trapexplain[what_trap(ttyp) - 1]);
-        set_occupation(set_trap, occutext);
+    if (otmp == u.utracked[tos_trap] &&
+        u.ux == u.utracked_location[tl_trap].x &&
+        u.uy == u.utracked_location[tl_trap].y) {
+        if (turnstate.continue_message)
+            pline("You resume setting %s %s.", shk_your(buf, otmp),
+                  trapexplain[what_trap(ttyp) - 1]);
+        one_occupation_turn(set_trap, occutext, occ_trap);
         return 1;
     }
-    trapinfo.tobj = otmp;
-    trapinfo.tx = u.ux, trapinfo.ty = u.uy;
+    u.utracked[tos_trap] = otmp;
+    u.utracked_location[tl_trap].x = u.ux;
+    u.utracked_location[tl_trap].y = u.uy;
     tmp = ACURR(A_DEX);
-    trapinfo.time_needed = (tmp > 17) ? 2 : (tmp > 12) ? 3 : (tmp > 7) ? 4 : 5;
+    u.uoccupation_progress[tos_trap] =
+        (tmp > 17) ? 2 : (tmp > 12) ? 3 : (tmp > 7) ? 4 : 5;
     if (Blind)
-        trapinfo.time_needed *= 2;
+        u.uoccupation_progress[tos_trap] *= 2;
     tmp = ACURR(A_STR);
     if (ttyp == BEAR_TRAP && tmp < 18)
-        trapinfo.time_needed += (tmp > 12) ? 1 : (tmp > 7) ? 2 : 4;
+        u.uoccupation_progress[tos_trap] += (tmp > 12) ? 1 : (tmp > 7) ? 2 : 4;
     /* [fumbling and/or confusion and/or cursed object check(s) should be
        incorporated here instead of in set_trap] */
     if (u.usteed && P_SKILL(P_RIDING) < P_BASIC) {
@@ -2100,12 +2095,11 @@ use_trap(struct obj *otmp)
         if (yn(buf) == 'y') {
             if (chance) {
                 switch (ttyp) {
-                case LANDMINE: /* set it off */
-                    trapinfo.time_needed = 0;
-                    trapinfo.force_bungle = TRUE;
-                    break;
-                case BEAR_TRAP:        /* drop it without arming it */
-                    reset_trapset();
+                case LANDMINE:
+                    /* TODO: Perhaps we should have an explosion here?
+                       3.4.3 did, but the code is really ugly. */
+                case BEAR_TRAP: /* drop it without arming it */
+                    u.utracked[tos_trap] = 0;
                     pline("You drop %s!",
                           the(trapexplain[what_trap(ttyp) - 1]));
                     dropx(otmp);
@@ -2113,14 +2107,14 @@ use_trap(struct obj *otmp)
                 }
             }
         } else {
-            reset_trapset();
+            u.utracked[tos_trap] = 0;
             return 0;
         }
     }
 
     pline("You begin setting %s %s.", shk_your(buf, otmp),
           trapexplain[what_trap(ttyp) - 1]);
-    set_occupation(set_trap, occutext);
+    one_occupation_turn(set_trap, occutext, occ_trap);
     return 1;
 }
 
@@ -2128,17 +2122,18 @@ use_trap(struct obj *otmp)
 static int
 set_trap(void)
 {
-    struct obj *otmp = trapinfo.tobj;
+    struct obj *otmp = u.utracked[tos_trap];
     struct trap *ttmp;
     int ttyp;
 
-    if (!otmp || !carried(otmp) || u.ux != trapinfo.tx || u.uy != trapinfo.ty) {
-        /* ?? */
-        reset_trapset();
+    if (!otmp || !carried(otmp) ||
+        u.ux != u.utracked_location[tl_trap].x ||
+        u.uy != u.utracked_location[tl_trap].y) {
+        u.utracked[tos_trap] = 0;
         return 0;
     }
 
-    if (--trapinfo.time_needed > 0)
+    if (--u.uoccupation_progress[tos_trap] > 0)
         return 1;       /* still busy */
 
     ttyp = (otmp->otyp == LAND_MINE) ? LANDMINE : BEAR_TRAP;
@@ -2150,24 +2145,22 @@ set_trap(void)
         if (*in_rooms(level, u.ux, u.uy, SHOPBASE)) {
             add_damage(u.ux, u.uy, 0L); /* schedule removal */
         }
-        if (!trapinfo.force_bungle)
-            pline("You finish arming %s.",
-                  the(trapexplain[what_trap(ttyp) - 1]));
-        if (((otmp->cursed || Fumbling) && (rnl(10) > 5)) ||
-            trapinfo.force_bungle)
-            dotrap(ttmp, (unsigned)(trapinfo.force_bungle ? FORCEBUNGLE : 0));
+        pline("You finish arming %s.",
+              the(trapexplain[what_trap(ttyp) - 1]));
+        if ((otmp->cursed || Fumbling) && rnl(10) > 5)
+            dotrap(ttmp, 0);
     } else {
         /* this shouldn't happen */
         pline("Your trap setting attempt fails.");
     }
     useup(otmp);
-    reset_trapset();
+    u.utracked[tos_trap] = 0;
     return 0;
 }
 
 
 static int
-use_whip(struct obj *obj)
+use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
 {
     char buf[BUFSZ];
     struct monst *mtmp;
@@ -2184,7 +2177,7 @@ use_whip(struct obj *obj)
             res = 1;
     }
 
-    if (!getdir(NULL, &dx, &dy, &dz))
+    if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return res;
 
     if (Stunned || (Confusion && !rn2(5)))
@@ -2208,8 +2201,9 @@ use_whip(struct obj *obj)
     if (proficient < 0)
         proficient = 0;
 
-    if (Engulfed && attack(u.ustuck, dx, dy)) {
-        pline("There is not enough room to flick your bullwhip.");
+    if (Engulfed) {
+        enum attack_check_status attack_status = attack(u.ustuck, dx, dy);
+        return attack_status != ac_cancel;
 
     } else if (Underwater) {
         pline("There is too much resistance to flick your bullwhip.");
@@ -2286,10 +2280,11 @@ use_whip(struct obj *obj)
             if (bigmonst(mtmp->data)) {
                 wrapped_what = strcpy(buf, mon_nam(mtmp));
             } else if (proficient) {
-                if (attack(mtmp, dx, dy))
-                    return 1;
-                else
+                enum attack_check_status attack_status = attack(mtmp, dx, dy);
+                if (attack_status == ac_continue)
                     pline(msg_snap);
+                else
+                    return attack_status != ac_cancel;
             }
         }
         if (!wrapped_what) {
@@ -2400,10 +2395,11 @@ use_whip(struct obj *obj)
             else
                 pline("You flick your bullwhip towards %s.", mon_nam(mtmp));
             if (proficient) {
-                if (attack(mtmp, dx, dy))
-                    return 1;
-                else
+                enum attack_check_status attack_status = attack(mtmp, dx, dy);
+                if (attack_status == ac_continue)
                     pline(msg_snap);
+                else
+                    return attack_status != ac_cancel;
             }
         }
 
@@ -2428,7 +2424,7 @@ static const char
 
 /* Distance attacks by pole-weapons */
 static int
-use_pole(struct obj *obj)
+use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
 {
     int res = 0, typ, max_range = 4, min_range = 4;
     coord cc;
@@ -2452,7 +2448,7 @@ use_pole(struct obj *obj)
     pline(where_to_hit);
     cc.x = u.ux;
     cc.y = u.uy;
-    if (getpos(&cc, TRUE, "the spot to hit") == NHCR_CLIENT_CANCEL)
+    if (getargpos(arg, &cc, TRUE, "the spot to hit") == NHCR_CLIENT_CANCEL)
         return res;     /* user pressed ESC */
 
     /* Calculate range */
@@ -2481,9 +2477,12 @@ use_pole(struct obj *obj)
     /* Attack the monster there */
     if ((mtmp = m_at(level, cc.x, cc.y)) != NULL) {
         int oldhp = mtmp->mhp;
+        enum attack_check_status attack_status;
 
-        if (attack_checks(mtmp, obj, cc.x, cc.y))
-            return res;
+        attack_status = attack_checks(mtmp, obj, cc.x, cc.y);
+
+        if (attack_status != ac_continue)
+            return res || attack_status != ac_cancel;
 
         bhitpos = cc;
         check_caitiff(mtmp);
@@ -2544,7 +2543,7 @@ use_cream_pie(struct obj **objp)
 
 
 static int
-use_grapple(struct obj *obj)
+use_grapple(struct obj *obj, const struct nh_cmd_arg *arg)
 {
     int res = 0, typ, max_range = 4, tohit;
     coord cc;
@@ -2568,7 +2567,7 @@ use_grapple(struct obj *obj)
     pline(where_to_hit);
     cc.x = u.ux;
     cc.y = u.uy;
-    if (getpos(&cc, TRUE, "the spot to hit") == NHCR_CLIENT_CANCEL)
+    if (getargpos(arg, &cc, TRUE, "the spot to hit") == NHCR_CLIENT_CANCEL)
         return res;     /* user pressed ESC */
 
     /* Calculate range */
@@ -2770,7 +2769,7 @@ do_break_wand(struct obj *obj)
                     IS_DOOR(level->locations[x][y].typ)) {
                     /* normally, pits and holes don't anger guards, but they do 
                        if it's a wall or door that's being dug */
-                    watch_dig(NULL, x, y, TRUE);
+                    watch_warn(NULL, x, y, TRUE);
                     if (*in_rooms(level, x, y, SHOPBASE))
                         shop_damage = TRUE;
                 }
@@ -2826,7 +2825,7 @@ discard_broken_wand:
     turnstate.tracked[ttos_wand] = 0;
     if (obj)
         delobj(obj);
-    nomul(0, NULL);
+    action_completed();
     return 1;
 }
 
@@ -2852,10 +2851,11 @@ add_class(char *cl, char class)
 }
 
 int
-doapply(struct obj *obj)
+doapply(const struct nh_cmd_arg *arg)
 {
     int res = 1;
     char class_list[MAXOCLASSES + 2];
+    struct obj *obj;
 
     if (check_capacity(NULL))
         return 0;
@@ -2867,16 +2867,13 @@ doapply(struct obj *obj)
     if (carrying(CREAM_PIE) || carrying(EUCALYPTUS_LEAF))
         add_class(class_list, FOOD_CLASS);
 
-    if (obj && !validate_object(obj, class_list, "use or apply"))
-        return 0;
-    else if (!obj)
-        obj = getobj(class_list, "use or apply");
+    obj = getargobj(arg, class_list, "use or apply");
     if (!obj)
         return 0;
 
     if (obj == &zeroobj) {
         /* "a," for doing looting */
-        return doloot();
+        return doloot(arg);
     }
 
     if (obj->oartifact && !touch_artifact(obj, &youmonst))
@@ -2897,10 +2894,10 @@ doapply(struct obj *obj)
         res = use_cream_pie(&obj);
         break;
     case BULLWHIP:
-        res = use_whip(obj);
+        res = use_whip(obj, arg);
         break;
     case GRAPPLING_HOOK:
-        res = use_grapple(obj);
+        res = use_grapple(obj, arg);
         break;
     case LARGE_BOX:
     case CHEST:
@@ -2919,20 +2916,20 @@ doapply(struct obj *obj)
     case LOCK_PICK:
     case CREDIT_CARD:
     case SKELETON_KEY:
-        res = pick_lock(obj, -2, -2, -2);
+        res = pick_lock(obj, arg);
         break;
     case PICK_AXE:
     case DWARVISH_MATTOCK:
-        res = use_pick_axe(obj);
+        res = use_pick_axe(obj, arg);
         break;
     case TINNING_KIT:
         res = use_tinning_kit(obj);
         break;
     case LEASH:
-        res = use_leash(obj);
+        res = use_leash(obj, arg);
         break;
     case SADDLE:
-        res = use_saddle(obj);
+        res = use_saddle(obj, arg);
         break;
     case MAGIC_WHISTLE:
         res = use_magic_whistle(obj);
@@ -2962,10 +2959,10 @@ doapply(struct obj *obj)
         }
         break;
     case STETHOSCOPE:
-        res = use_stethoscope(obj);
+        res = use_stethoscope(obj, arg);
         break;
     case MIRROR:
-        res = use_mirror(obj);
+        res = use_mirror(obj, arg);
         break;
     case BELL:
     case BELL_OF_OPENING:
@@ -2987,7 +2984,7 @@ doapply(struct obj *obj)
         res = light_cocktail(obj);
         break;
     case EXPENSIVE_CAMERA:
-        res = use_camera(obj);
+        res = use_camera(obj, arg);
         break;
     case TOWEL:
         res = use_towel(obj);
@@ -2996,7 +2993,7 @@ doapply(struct obj *obj)
         use_crystal_ball(obj);
         break;
     case MAGIC_MARKER:
-        res = dowrite(obj);
+        res = dowrite(obj, arg);
         break;
     case TIN_OPENER:
         if (!carrying(TIN)) {
@@ -3013,7 +3010,7 @@ doapply(struct obj *obj)
         goto xit;
 
     case FIGURINE:
-        res = use_figurine(&obj);
+        res = use_figurine(&obj, arg);
         break;
     case UNICORN_HORN:
         use_unicorn_horn(obj);
@@ -3028,7 +3025,7 @@ doapply(struct obj *obj)
     case BUGLE:
     case LEATHER_DRUM:
     case DRUM_OF_EARTHQUAKE:
-        res = do_play_instrument(obj);
+        res = do_play_instrument(obj, arg);
         break;
     case HORN_OF_PLENTY:       /* not a musical instrument */
         if (obj->spe > 0) {
@@ -3067,7 +3064,7 @@ doapply(struct obj *obj)
         break;
     case LAND_MINE:
     case BEARTRAP:
-        res = use_trap(obj);
+        res = use_trap(obj, arg);
         break;
     case FLINT:
     case LUCKSTONE:
@@ -3078,20 +3075,19 @@ doapply(struct obj *obj)
     default:
         /* Pole-weapons can strike at a distance */
         if (is_pole(obj)) {
-            res = use_pole(obj);
+            res = use_pole(obj, arg);
             break;
         } else if (is_pick(obj) || is_axe(obj)) {
-            res = use_pick_axe(obj);
+            res = use_pick_axe(obj, arg);
             break;
         }
         pline("Sorry, I don't know how to use that.");
     xit:
-        nomul(0, NULL);
+        action_completed();
         return 0;
     }
     if (res && obj && obj->oartifact)
         arti_speak(obj);
-    nomul(0, NULL);
     return res;
 }
 

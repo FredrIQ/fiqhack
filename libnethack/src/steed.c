@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -36,7 +36,7 @@ can_saddle(struct monst *mtmp)
 
 
 int
-use_saddle(struct obj *otmp)
+use_saddle(struct obj *otmp, const struct nh_cmd_arg *arg)
 {
     struct monst *mtmp;
     const struct permonst *ptr;
@@ -54,7 +54,7 @@ use_saddle(struct obj *otmp)
     }
 
     /* Select an animal */
-    if (Engulfed || Underwater || !getdir(NULL, &dx, &dy, &dz)) {
+    if (Engulfed || Underwater || !getargdir(arg, NULL, &dx, &dy, &dz)) {
         pline("Never mind.");
         return 0;
     }
@@ -166,14 +166,15 @@ can_ride(struct monst * mtmp)
 
 
 int
-doride(void)
+doride(const struct nh_cmd_arg *arg)
 {
     boolean forcemount = FALSE;
     schar dx, dy, dz;
 
     if (u.usteed)
         dismount_steed(DISMOUNT_BYCHOICE);
-    else if (getdir(NULL, &dx, &dy, &dz) && isok(u.ux + dx, u.uy + dy)) {
+    else if (getargdir(arg, NULL, &dx, &dy, &dz) &&
+             isok(u.ux + dx, u.uy + dy)) {
         if (wizard && yn("Force the mount to succeed?") == 'y')
             forcemount = TRUE;
         return mount_steed(m_at(level, u.ux + dx, u.uy + dy), forcemount);

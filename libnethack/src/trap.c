@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-12 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -509,7 +509,7 @@ animate_statue(struct obj *statue, xchar x, xchar y, int cause,
     else {      /* cause == ANIMATE_NORMAL */
         pline("You find %s posing as a statue.",
               canspotmon(mon) ? a_monnam(mon) : "something");
-        stop_occupation();
+        action_interrupted();
     }
     /* avoid hiding under nothing */
     if (x == u.ux && y == u.uy && Upolyd && hides_under(youmonst.data) &&
@@ -601,7 +601,7 @@ dotrap(struct trap *trap, unsigned trflags)
     boolean webmsgok = (!(trflags & NOWEBMSG));
     boolean forcebungle = (trflags & FORCEBUNGLE);
 
-    nomul(0, NULL);
+    action_interrupted();
 
     /* KMH -- You can't escape the Sokoban level traps */
     if (In_sokoban(&u.uz) &&
@@ -1351,12 +1351,6 @@ launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
         obj_extract_self(singleobj);
     }
     newsym(x1, y1);
-    /* in case you're using a pick-axe to chop the boulder that's being
-       launched (perhaps a monster triggered it), destroy context so that next
-       dig attempt never thinks you're resuming previous effort */
-    if ((otyp == BOULDER || otyp == STATUE) && singleobj->ox == digging.pos.x &&
-        singleobj->oy == digging.pos.y)
-        memset(&digging, 0, sizeof digging);
 
     dist = distmin(x1, y1, x2, y2);
     bhitpos.x = x1;
@@ -1420,12 +1414,10 @@ launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
                 break;
             }
         } else if (bhitpos.x == u.ux && bhitpos.y == u.uy) {
-            if (multi)
-                nomul(0, NULL);
-            if (thitu(9 + singleobj->spe, 0, singleobj, NULL)) {
+            action_interrupted();
+
+            if (thitu(9 + singleobj->spe, 0, singleobj, NULL))
                 damage = dmgval(singleobj, &youmonst);
-                stop_occupation();
-            }
         }
         if (style == ROLL) {
             if (down_gate(bhitpos.x, bhitpos.y) != -1) {
@@ -2156,10 +2148,8 @@ mintrap(struct monst *mtmp)
                     minliquid(mtmp);
                 if (mtmp->mhp <= 0)
                     trapkilled = TRUE;
-                if (unconscious()) {
-                    multi = -1;
-                    nomovemsg = "The explosion awakens you!";
-                }
+                if (unconscious())
+                    cancel_helplessness("The explosion awakens you!");
                 break;
             }
         case POLY_TRAP:
@@ -2435,9 +2425,7 @@ float_down(long hmask)
                 }
             }
         }
-        stop_occupation();
-        if (multi > 0)
-            nomul(0, NULL);
+        action_interrupted();
     }
 
     assign_level(&current_dungeon_level, &u.uz);
@@ -2944,7 +2932,7 @@ drown(void)
         (Teleport_control || rn2(3) < Luck + 2)) {
         pline("You attempt a teleport spell."); /* utcsri!carroll */
         if (!level->flags.noteleport) {
-            dotele();
+            dotele(&(struct nh_cmd_arg){.argtype = 0});
             if (!is_pool(level, u.ux, u.uy))
                 return TRUE;
         } else
@@ -2959,11 +2947,11 @@ drown(void)
     x = y = 0;  /* lint suppression */
     /* if sleeping, wake up now so that we don't crawl out of water while still 
        asleep; we can't do that the same way that waking due to combat is
-       handled; note unmul() clears u.usleep */
+       handled; note cancel_helplessness clears u.usleep */
     if (u.usleep)
-        unmul("Suddenly you wake up!");
+        cancel_helplessness("Suddenly you wake up!");
     /* can't crawl if unable to move (crawl_ok flag stays false) */
-    if (multi < 0 || (Upolyd && !youmonst.data->mmove))
+    if (Helpless || (Upolyd && !youmonst.data->mmove))
         goto crawl;
     /* look around for a place to crawl to */
     for (i = 0; i < 100; i++) {
@@ -3042,7 +3030,7 @@ drain_en(int n)
 
 /* disarm a trap */
 int
-dountrap(void)
+dountrap(const struct nh_cmd_arg *arg)
 {
     if (near_capacity() >= HVY_ENCUMBER) {
         pline("You're too strained to do that.");
@@ -3061,7 +3049,7 @@ dountrap(void)
               makeplural(body_part(HAND)));
         return 0;
     }
-    return untrap(FALSE);
+    return untrap(arg, FALSE);
 }
 
 
@@ -3302,7 +3290,7 @@ disarm_squeaky_board(struct trap *ttmp, schar dx, schar dy)
     boolean bad_tool;
     int fails;
 
-    obj = getobj(oil, "untrap with");
+    obj = getobj(oil, "untrap with", FALSE);
     if (!obj)
         return 0;
 
@@ -3463,7 +3451,7 @@ help_monster_out(struct monst *mtmp, struct trap *ttmp)
 }
 
 int
-untrap(boolean force)
+untrap(const struct nh_cmd_arg *arg, boolean force)
 {
     struct obj *otmp;
     boolean confused = (Confusion > 0 || Hallucination > 0);
@@ -3478,7 +3466,7 @@ untrap(boolean force)
     int containercnt = 0;
     schar dx, dy, dz;
 
-    if (!getdir(NULL, &dx, &dy, &dz))
+    if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
     x = u.ux + dx;
     y = u.uy + dy;
@@ -3836,10 +3824,8 @@ chest_trap(struct obj * obj, int bodypart, boolean disarm)
         case 3:
             if (!Free_action) {
                 pline("Suddenly you are frozen in place!");
-                nomovemsg = 0;  /* default: "You can move again." */
-                nomul(-dice(5, 6), "frozen by a trap");
+                helpless(dice(5, 6), "frozen by a trap", NULL);
                 exercise(A_DEX, FALSE);
-                nomovemsg = "You can move again.";
             } else
                 pline("You momentarily stiffen.");
             break;
@@ -4000,11 +3986,11 @@ thitm(int tlev, struct monst *mon, struct obj *obj, int d_override,
 boolean
 unconscious(void)
 {
-    if (multi >= 0 || !nomovemsg)
+    if (!Helpless)
         return FALSE;
-    return (boolean) (u.usleep || !strncmp(nomovemsg, "You regain con", 14) ||
-                      !strncmp(nomovemsg, "You awake with a headache", 25) ||
-                      !strncmp(nomovemsg, "You are consci", 14));
+    return u.usleep || !strncmp(u.umoveagain, "You regain con", 14) ||
+        !strncmp(u.umoveagain, "You awake with a headache", 25) ||
+        !strncmp(u.umoveagain, "You are consci", 14);
 }
 
 static const char lava_killer[] = "molten lava";

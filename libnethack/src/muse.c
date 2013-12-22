@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -162,7 +162,7 @@ mzapmsg(struct monst *mtmp, struct obj *otmp, boolean self)
               doname(otmp));
     else {
         pline("%s zaps %s!", Monnam(mtmp), an(xname(otmp)));
-        stop_occupation();
+        action_interrupted();
     }
 }
 
@@ -991,7 +991,7 @@ find_offensive(struct monst * mtmp, struct musable * m)
                 m->has_offense = MUSE_WAN_DEATH;
             }
             nomore(MUSE_WAN_SLEEP);
-            if (obj->otyp == WAN_SLEEP && obj->spe > 0 && multi >= 0) {
+            if (obj->otyp == WAN_SLEEP && obj->spe > 0 && !Helpless) {
                 m->offensive = obj;
                 m->has_offense = MUSE_WAN_SLEEP;
             }
@@ -1034,7 +1034,7 @@ find_offensive(struct monst * mtmp, struct musable * m)
             m->has_offense = MUSE_WAN_STRIKING;
         }
         nomore(MUSE_POT_PARALYSIS);
-        if (obj->otyp == POT_PARALYSIS && multi >= 0) {
+        if (obj->otyp == POT_PARALYSIS && !Helpless) {
             m->offensive = obj;
             m->has_offense = MUSE_POT_PARALYSIS;
         }
@@ -1107,8 +1107,7 @@ mbhitm(struct monst *mtmp, struct obj *otmp)
                 losehp(tmp, "wand", KILLED_BY_AN);
             } else
                 pline("The wand misses you.");
-            stop_occupation();
-            nomul(0, NULL);
+            action_interrupted();
         } else if (resists_magm(mtmp)) {
             shieldeff(mtmp->mx, mtmp->my);
             pline("Boing!");
@@ -1892,10 +1891,10 @@ you_aggravate(struct monst *mtmp)
     pline("You feel aggravated at %s.", noit_mon_nam(mtmp));
     win_pause_output(P_MAP);
     doredraw();
-    if (unconscious()) {
-        multi = -1;
-        nomovemsg = "Aggravated, you are jolted into full consciousness.";
-    }
+    if (unconscious())
+        cancel_helplessness(
+            "Aggravated, you are jolted into full consciousness.");
+
     newsym(mtmp->mx, mtmp->my);
     if (!canspotmon(mtmp))
         map_invisible(mtmp->mx, mtmp->my);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-12 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -48,17 +48,13 @@ static const char moderateloadmsg[] = "You have a little trouble lifting";
 static const char nearloadmsg[] = "You have much trouble lifting";
 static const char overloadmsg[] = "You have extreme difficulty lifting";
 
-static int oldcap;
-
-
 /* look at the objects at our location, unless there are too many of them */
 static void
 check_here(boolean picked_some)
 {
     struct obj *obj;
     int ct = 0;
-    boolean autoexploring = (flags.run == 8 && flags.travel &&
-                             iflags.autoexplore);
+    boolean autoexploring = flags.occupation == occ_autoexplore;
 
     /* count the objects here */
     for (obj = level->objects[u.ux][u.uy]; obj; obj = obj->nexthere) {
@@ -70,7 +66,7 @@ check_here(boolean picked_some)
        explored space. */
     if (ct && !(autoexploring && level->locations[u.ux][u.uy].mem_stepped)) {
         if (flags.run)
-            nomul(0, NULL);
+            action_completed();
         flush_screen();
         look_here(ct, picked_some);
     } else {
@@ -197,8 +193,7 @@ pickup(int what)
 
         /* no pickup if levitating & not on air or water level */
         if (!can_reach_floor()) {
-            if ((multi && !flags.run) || (autopickup && !flags.pickup))
-                read_engr_at(u.ux, u.uy);
+            read_engr_at(u.ux, u.uy);
             return 0;
         }
         if (ttmp && ttmp->tseen) {
@@ -213,10 +208,8 @@ pickup(int what)
                 return 0;
             }
         }
-        /* multi && !flags.run means they are in the middle of some other
-           action, or possibly paralyzed, sleeping, etc.... and they just
-           teleported onto the object.  They shouldn't pick it up. */
-        if ((multi && !flags.run) || (autopickup && !flags.pickup)) {
+        /* Don't autopick up while teleporting while helpless */
+        if (Helpless) {
             check_here(FALSE);
             return 0;
         }
@@ -231,9 +224,10 @@ pickup(int what)
         /* If there's anything here, stop running and travel, but not
            autoexplore unless it picks something up, which is handled later. */
         if (OBJ_AT(u.ux, u.uy) && flags.run &&
-            (flags.run != 8 || (flags.travel && !iflags.autoexplore)) &&
+            (flags.run != 8 || (flags.travel &&
+                                flags.occupation != occ_autoexplore)) &&
             !flags.nopick)
-            nomul(0, NULL);
+            action_completed();
     }
 
     add_valid_menu_class(0);    /* reset */
@@ -298,10 +292,10 @@ menu_pickup:
 
     /* Stop autoexplore if this pile hasn't been explored or auto-pickup (tried 
        to) pick up anything. */
-    if (flags.run == 8 && flags.travel && iflags.autoexplore &&
+    if (flags.run == 8 && flags.travel && flags.occupation == occ_autoexplore &&
         (!level->locations[u.ux][u.uy].mem_stepped ||
          (autopickup && n_tried > 0)))
-        nomul(0, NULL);
+        action_completed();
 
     return n_tried > 0;
 }
@@ -1132,7 +1126,7 @@ pick_obj(struct obj *otmp)
 void
 reset_encumber_msg(void)
 {
-    oldcap = UNENCUMBERED;
+    u.oldcap = UNENCUMBERED;
 }
 
 /*
@@ -1144,7 +1138,7 @@ encumber_msg(void)
 {
     int newcap = near_capacity();
 
-    if (oldcap < newcap) {
+    if (u.oldcap < newcap) {
         switch (newcap) {
         case 1:
             pline("Your movements are slowed slightly because of your load.");
@@ -1162,7 +1156,7 @@ encumber_msg(void)
             break;
         }
         iflags.botl = 1;
-    } else if (oldcap > newcap) {
+    } else if (u.oldcap > newcap) {
         switch (newcap) {
         case 0:
             pline("Your movements are now unencumbered.");
@@ -1181,7 +1175,7 @@ encumber_msg(void)
         iflags.botl = 1;
     }
 
-    oldcap = newcap;
+    u.oldcap = newcap;
     return newcap;
 }
 
@@ -1250,7 +1244,7 @@ Is_container_func(const struct obj *otmp)
 
 /* loot a container on the floor or loot saddle from mon. */
 int
-doloot(void)
+doloot(const struct nh_cmd_arg *arg)
 {
     struct obj *cobj;
     int c = -1;
@@ -1262,6 +1256,10 @@ doloot(void)
     int prev_inquiry = 0;
     boolean prev_loot = FALSE;
     int container_count = 0;
+
+    /* We don't allow directions, for now. TODO: In general, this function
+       needs an entirely different UI anyway (e.g. menu-driven). */
+    (void) arg;
 
     if (check_capacity(NULL)) {
         /* "Can't do that while carrying so much stuff." */
@@ -1315,7 +1313,7 @@ lootcont:
 
                 pline("You carefully open %s...", the(xname(cobj)));
                 timepassed |= use_container(cobj, 0);
-                if (multi < 0) {        /* e.g. a chest trap */
+                if (Helpless) {        /* e.g. a chest trap */
                     free(lootlist);
                     return 1;
                 }
@@ -1681,10 +1679,7 @@ in_container(struct obj *obj)
         current_container = NULL;       /* baggone = TRUE; */
 
         /* stop multi-looting; other containers might be destroyed */
-        if (multi >= 0) {
-            nomul(-1, "blowing up a magical bag");
-            nomovemsg = "";
-        }
+        helpless(1, "blowing up a magical bag", "");
     }
 
     if (current_container) {
@@ -1883,10 +1878,7 @@ use_container(struct obj *obj, int held)
             pline("You open %s...", the(xname(obj)));
         chest_trap(obj, HAND, FALSE);
         /* even if the trap fails, you've used up this turn */
-        if (multi >= 0) {       /* in case we didn't become paralyzed */
-            nomul(-1, "opening a trapped container");
-            nomovemsg = "";
-        }
+        helpless(1, "opening a trapped container", "");
         return 1;
     }
     current_container = obj;    /* for use by in/out_container */

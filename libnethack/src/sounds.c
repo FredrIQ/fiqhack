@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-12 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /*      Copyright (c) 1989 Janet Walz, Mike Threepoint */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,7 +7,7 @@
 #include "edog.h"
 
 static int domonnoise(struct monst *);
-static int dochat(int, int, int);
+static int dochat(const struct nh_cmd_arg *);
 static int mon_in_room(struct monst *, int);
 
 /* this easily could be a macro, but it might overtax dumb compilers */
@@ -294,8 +294,7 @@ growl(struct monst *mtmp)
         growl_verb = growl_sound(mtmp);
     if (growl_verb) {
         pline("%s %s!", Monnam(mtmp), vtense(NULL, growl_verb));
-        if (flags.run)
-            nomul(0, NULL);
+        action_interrupted();
         wake_nearto(mtmp->mx, mtmp->my, mtmp->data->mlevel * 18);
     }
 }
@@ -336,8 +335,7 @@ yelp(struct monst *mtmp)
         }
     if (yelp_verb) {
         pline("%s %s!", Monnam(mtmp), vtense(NULL, yelp_verb));
-        if (flags.run)
-            nomul(0, NULL);
+        action_interrupted();
         wake_nearto(mtmp->mx, mtmp->my, mtmp->data->mlevel * 12);
     }
 }
@@ -369,8 +367,7 @@ whimper(struct monst *mtmp)
         }
     if (whimper_verb) {
         pline("%s %s.", Monnam(mtmp), vtense(NULL, whimper_verb));
-        if (flags.run)
-            nomul(0, NULL);
+        action_interrupted();
         wake_nearto(mtmp->mx, mtmp->my, mtmp->data->mlevel * 6);
     }
 }
@@ -607,8 +604,7 @@ domonnoise(struct monst *mtmp)
     case MS_BONES:
         pline("%s rattles noisily.", Monnam(mtmp));
         pline("You freeze for a moment.");
-        nomul(-2, "scared by rattling");
-        nomovemsg = 0;  /* default: "You can move again." */
+        helpless(2, "scared by rattling", NULL);
         break;
     case MS_LAUGH:
         {
@@ -803,26 +799,26 @@ domonnoise(struct monst *mtmp)
 
 
 int
-dotalk(int dx, int dy, int dz)
+dotalk(const struct nh_cmd_arg *arg)
 {
     int result;
     boolean save_soundok = flags.soundok;
 
     flags.soundok = 1;  /* always allow sounds while chatting */
-    result = dochat(dx, dy, dz);
+    result = dochat(arg);
     flags.soundok = save_soundok;
     return result;
 }
 
 static int
-dochat(int idx, int idy, int idz)
+dochat(const struct nh_cmd_arg *arg)
 {
     struct monst *mtmp;
     int tx, ty;
     struct obj *otmp;
-    schar dx = idx;
-    schar dy = idy;
-    schar dz = idz;
+    schar dx;
+    schar dy;
+    schar dz;
 
     if (is_silent(youmonst.data)) {
         pline("As %s, you cannot speak.", an(youmonst.data->mname));
@@ -852,11 +848,9 @@ dochat(int idx, int idy, int idz)
         return 1;
     }
 
-    if (dx == -2 || dy == -2 || dz == -2) {
-        if (!getdir(NULL, &dx, &dy, &dz)) {
-            /* decided not to chat */
-            return 0;
-        }
+    if (!getargdir(arg, NULL, &dx, &dy, &dz)) {
+        /* decided not to chat */
+        return 0;
     }
 
     if (u.usteed && dz > 0) {
@@ -891,7 +885,9 @@ dochat(int idx, int idy, int idz)
 
     if (!mtmp || mtmp->mundetected || mtmp->m_ap_type == M_AP_FURNITURE ||
         mtmp->m_ap_type == M_AP_OBJECT) {
-        return doclose(dx, dy, 0);
+        struct nh_cmd_arg arg;
+        arg_from_delta(dx, dy, dz, &arg);
+        return doclose(&arg);
     }
 
     /* sleeping monsters won't talk, except priests (who wake up) */

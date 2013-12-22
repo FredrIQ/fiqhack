@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2013-12-17
+Last modified by Alex Smith, 2013-12-22
 
 This document documents the version of the network protocol used in
 NetHack 4.3, and was written by Daniel Thaler, GreyKnight, Alex Smith.
@@ -222,12 +222,15 @@ Response arguments:
         `request_command`);
       * `string desc`: a human-readable description of the command;
       * `unsigned flags`: information about the command, a bitmask of:
-          * `CMD_ARG_NONE` = 2: the command's argument can be omitted (and if
-            no other `CMD_ARG_*` flags are set, must be omitted);
-          * `CMD_ARG_DIR` = 4: the command can accept a direction argument;
-          * `CMD_ARG_POS` = 8: the command can accept a position argument;
-          * `CMD_ARG_POS` = 16: the command can accept an inventory object
+          * `CMD_ARG_DIR` = 1: the command can accept a direction argument;
+          * `CMD_ARG_POS` = 2: the command can accept a position argument;
+          * `CMD_ARG_OBJ` = 4: the command can accept an inventory object
             argument;
+          * `CMD_ARG_STR` = 8: the command can accept a string argument;
+          * `CMD_ARG_SPELL` = 16: the command can accept a spell argument;
+          * `CMD_ARG_LIMIT` = 32: the command can accept a numeric argument
+            that specifies a reduced maximum for things like multishot or item
+            stack size;
           * `CMD_EXT` = 1024: it is recommended that by default, this command
             should be available as an extended command (via `#`);
           * `CMD_MOVE` = 2048: this is a movement command (and thus it is not
@@ -672,10 +675,9 @@ Request arguments:
     command (whether it was interrupted by a monster or the like, or whether
     the server's just giving the client the chance to interrupt); true if the
     previous command completed or there was no previous command
-  * `boolean interrupted`: meaningful only if `completed` is false: false
-    means that the server recommends just sending `"repeat"` in the absence of
-    user input, true means that the server recommends that `"repeat"` should
-    only be sent in response to user input
+  * `boolean interrupted`: true if the character is aware of danger that might
+    cause a player to want to abort their current action (or not repeat a
+    repeated action); this is independent of `completed`
 
 Response arguments:
   * `string command`: what the player wants to tell their character to do;
@@ -685,17 +687,9 @@ Response arguments:
         should be sent spontaneously by the client as the first command if the
         game was restored due to player action (rather than due to a network
         timeout or the like), rather than in response to user input
-      * `"repeat"`: Repeat the previous command (if it completed); resume the
-        previous command (if it was interrupted); continue the previous
-        command (if it was not yet completed)
-  * `struct nh_cmd_arg arg`: an argument to the command
-      * `unsigned argtype`: what sort of argument is provided:
-          * `CMD_ARG_NONE` = 2: no argument
-          * `CMD_ARG_DIR` = 4: a direction
-          * `CMD_ARG_POS` = 8: a position
-          * `CMD_ARG_OBJ` = 16: an inventory letter
-      * `enum nh_direction d`: a direction argument (provided iff `argtype` is
-        4)
+  * `struct nh_cmd_arg arg`: a set of arguments to the command (any subset of
+    the arguments that `nh_get_command` specified were acceptable)
+      * `enum nh_direction d`: [optional] a direction argument
           * `DIR_W` = 0: west (`h`, `4`)
           * `DIR_NW` = 1: northwest (`y`, `7`)
           * `DIR_N` = 2: north (`k`, `8`)
@@ -707,13 +701,12 @@ Response arguments:
           * `DIR_UP` = 8: up (`<`)
           * `DIR_DOWN` = 9: down (`>`)
           * `DIR_SELF` = 10: at self (`.` or `s`)
-      * `charcode invlet`: an inventory letter (provided iff `argtype` is 16)
-      * `coordinate x`: an x coordinate (provided iff `argtype` is 8)
-      * `coordinate y`: a y coordinate (provided iff `argtype` is 8)
-  * `int limit`: for `CMD_LIMITABLE` commands, an integer that specifies what
-    amount to limt the command to (e.g. a number of projectiles to throw);
-    should be 0 to not limit a command, or for non-limitable commands
-
+      * `charcode invlet`: [optional] an inventory letter
+      * `coordinate x`: [optional] an x coordinate
+      * `coordinate y`: [optional] a y coordinate
+      * `string str`: [optional] a string
+      * `charcode spelllet`: [optional] a spell letter
+      * `int limit`: [optional] the amount to limit the command to
 
 display_menu
 ------------

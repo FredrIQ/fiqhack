@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -135,11 +135,15 @@ restdamage(struct memfile *mf, struct level *lev, boolean ghostly)
 {
     int counter;
     struct damage *tmp_dam;
+    struct damage **pnext;
 
     counter = mread32(mf);
     if (!counter)
         return;
+
     tmp_dam = malloc(sizeof (struct damage));
+    pnext = &(lev->damagelist);
+
     while (--counter >= 0) {
         char damaged_shops[5], *shp = NULL;
 
@@ -154,6 +158,11 @@ restdamage(struct memfile *mf, struct level *lev, boolean ghostly)
         strcpy(damaged_shops,
                in_rooms(lev, tmp_dam->place.x, tmp_dam->place.y, SHOPBASE));
 
+/* TODO: Maybe we should consider doing this on level change. It definitely
+   mustn't happen on save game restore, though, otherwise saving and restoring a
+   game allows you to repair damage while the shopkeeper is asleep or
+   paralyzed, something that wouldn't happen without this code running. */
+#if 0
         for (shp = damaged_shops; *shp; shp++) {
             struct monst *shkp = shop_keeper(lev, *shp);
 
@@ -161,10 +170,12 @@ restdamage(struct memfile *mf, struct level *lev, boolean ghostly)
                 repair_damage(lev, shkp, tmp_dam, TRUE))
                 break;
         }
+#endif
 
         if (!shp || !*shp) {
-            tmp_dam->next = lev->damagelist;
-            lev->damagelist = tmp_dam;
+            tmp_dam->next = 0;
+            *pnext = tmp_dam;
+            pnext = &(tmp_dam->next);
             tmp_dam = malloc(sizeof (*tmp_dam));
         }
     }
@@ -456,10 +467,6 @@ restgamestate(struct memfile *mf)
     restore_waterlevel(mf, lev);
     restore_mt_state(mf);
     restore_track(mf);
-    restore_food(mf);
-    restore_steal(mf);
-    restore_dig_status(mf);
-    multi = mread32(mf);
     restore_rndmonst_state(mf);
     restore_history(mf);
 
@@ -542,6 +549,7 @@ restore_you(struct memfile *mf, struct you *y)
     y->utraptype = mread32(mf);
     y->uhunger = mread32(mf);
     y->uhs = mread32(mf);
+    y->oldcap = mread32(mf);
     y->umconf = mread32(mf);
     y->nv_range = mread32(mf);
     y->bglyph = mread32(mf);
@@ -550,6 +558,7 @@ restore_you(struct memfile *mf, struct you *y)
     y->bc_felt = mread32(mf);
     y->ucreamed = mread32(mf);
     y->uswldtim = mread32(mf);
+    y->uhelpless = mread32(mf);
     y->udg_cnt = mread32(mf);
     y->next_attr_check = mread32(mf);
     y->ualign.record = mread32(mf);
@@ -616,6 +625,8 @@ restore_you(struct memfile *mf, struct you *y)
     y->uspmtime = mread8(mf);
     y->twoweap = mread8(mf);
 
+    mread(mf, y->uwhybusy, sizeof (y->uwhybusy));
+    mread(mf, y->umoveagain, sizeof (y->umoveagain));
     mread(mf, y->usick_cause, sizeof (y->usick_cause));
     mread(mf, y->urooms, sizeof (y->urooms));
     mread(mf, y->urooms0, sizeof (y->urooms0));
@@ -662,6 +673,10 @@ restore_utracked(struct memfile *mf, struct you *y)
         else if (oid)
             y->utracked[i] = find_oid(oid);
         y->uoccupation_progress[i] = mread32(mf);
+    }
+    for (i = 0; i <= tl_last_slot; i++) {
+        y->utracked_location[i].x = mread8(mf);
+        y->utracked_location[i].y = mread8(mf);
     }
 }
 
@@ -744,6 +759,7 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->ghost_count = mread32(mf);
     f->pickup_burden = mread32(mf);
     f->recently_broken_otyp = mread32(mf);
+    f->last_cmd = mread32(mf);
 
     f->autodig = mread8(mf);
     f->autodigdown = mread8(mf);
@@ -760,7 +776,6 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->mon_generation = mread8(mf);
     f->mon_moving = mread8(mf);
     f->mon_polycontrol = mread8(mf);
-    f->move = mread8(mf);
     f->mv = mread8(mf);
     f->nopick = mread8(mf);
     f->null = mread8(mf);
@@ -785,8 +800,12 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->bones_enabled = mread8(mf);
     f->permablind = mread8(mf);
     f->permahallu = mread8(mf);
+    f->incomplete = mread8(mf);
+    f->interrupted = mread8(mf);
+    f->occupation = mread8(mf);
 
     mread(mf, f->inv_order, sizeof (f->inv_order));
+    mread(mf, &(f->last_arg), sizeof (f->last_arg));
 
     if (!ar)
         ar = malloc(sizeof(struct nh_autopickup_rules));

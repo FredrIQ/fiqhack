@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -19,7 +19,6 @@ const char *killer;
 const char *delayed_killer;
 int done_money;
 char killer_buf[BUFSZ];
-const char *nomovemsg;
 const char nul[40] = {0};     /* contains zeros */
 char pl_character[PL_CSIZ];
 char pl_race;
@@ -54,8 +53,6 @@ schar tbx, tby; /* mthrowu: target */
 /* for xname handling of multiple shot missile volleys:
    number of shots, index of current one, validity check, shoot vs throw */
 struct multishot m_shot = { 0, 0, STRANGE_OBJECT, FALSE };
-
-struct dig_info digging;
 
 int branch_id;
 dungeon dungeons[MAXDUNGEON];   /* ini'ed by init_dungeon() */
@@ -179,14 +176,8 @@ int curline;
 
 /* When changing this, also change neutral_turnstate_tasks. */
 static const struct turnstate default_turnstate = {
-    .occupation = NULL,
-    .multi = 0,
-    .afternmv = NULL,
-    .multi_txt = "",
-    .occupation_txt = "",
-    .saved_cmd = -1,
-    .saved_arg = { CMD_ARG_NONE },
     .tracked = {0},
+    .continue_message = TRUE,
 };
 
 struct turnstate turnstate;
@@ -204,24 +195,11 @@ neutral_turnstate_tasks(void)
        integers are equal, strings are equal up to the first NUL, tagged
        unions are equal up to the tag and the bits containing its associated
        value, padding doesn't matter. */
-#define CHECKEQ(x, y) do {                                              \
-        if (turnstate.x != y)                                           \
-            impossible("turnstate."#x" persisted between turns");       \
-    } while(0)
-
-    CHECKEQ(occupation, 0);
-    CHECKEQ(multi, 0);
-    CHECKEQ(afternmv, 0);
-    CHECKEQ(multi_txt[0], 0);
-    CHECKEQ(occupation_txt[0], 0);
-    CHECKEQ(saved_cmd, -1);
-    CHECKEQ(saved_arg.argtype, CMD_ARG_NONE);
-
-#undef CHECKEQ
-
     if (memcmp(turnstate.tracked, default_turnstate.tracked,
                sizeof (turnstate.tracked)))
         impossible("turnstate.tracked persisted between turns");
+    if (!turnstate.continue_message)
+        impossible("turnstate.continue_message persisted between turns");
 
     /* TODO: clean up memory */
 
@@ -259,7 +237,6 @@ init_data(boolean including_program_state)
     memset(mvitals, 0, sizeof (mvitals));
     memset(spl_book, 0, sizeof (spl_book));
     memset(disco, 0, sizeof (disco));
-    memset(&digging, 0, sizeof (digging));
     memset(&inv_pos, 0, sizeof (inv_pos));
 
     level = NULL;

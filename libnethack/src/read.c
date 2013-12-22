@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -32,18 +32,16 @@ static void maybe_tame(struct monst *, struct obj *);
 static void set_lit(int, int, void *);
 
 int
-doread(struct obj *scroll)
+doread(const struct nh_cmd_arg *arg)
 {
     boolean confused, known;
+    struct obj *scroll;
 
     known = FALSE;
     if (check_capacity(NULL))
         return 0;
 
-    if (scroll && !validate_object(scroll, readable, "read"))
-        return 0;
-    else if (!scroll)
-        scroll = getobj(readable, "read");
+    scroll = getargobj(arg, readable, "read");
     if (!scroll)
         return 0;
 
@@ -119,9 +117,9 @@ doread(struct obj *scroll)
         u.uconduct.literate++;
 
     confused = (Confusion != 0);
-    if (scroll->oclass == SPBOOK_CLASS) {
-        return study_book(scroll);
-    }
+    if (scroll->oclass == SPBOOK_CLASS)
+        return study_book(scroll, arg);
+
     scroll->in_use = TRUE;      /* scroll, not spellbook, now being read */
     if (scroll->otyp != SCR_BLANK_PAPER) {
         if (Blind)
@@ -1024,7 +1022,7 @@ seffects(struct obj *sobj, boolean * known)
         useup(sobj);
         makeknown(SCR_CHARGING);
 
-        otmp = getobj(all_count, "charge");
+        otmp = getobj(all_count, "charge", FALSE);
         if (!otmp)
             return 1;
         recharge(otmp, cval);
@@ -1255,7 +1253,7 @@ seffects(struct obj *sobj, boolean * known)
             pline("Where do you want to center the cloud?");
             cc.x = u.ux;
             cc.y = u.uy;
-            if (getpos(&cc, TRUE, "the desired position") ==
+            if (getpos(&cc, TRUE, "the desired position", FALSE) ==
                 NHCR_CLIENT_CANCEL) {
                 pline("Never mind.");
                 return 0;
@@ -1405,7 +1403,8 @@ do_class_genocide(void)
             return;
         }
         do {
-            getlin("What class of monsters do you wish to genocide?", buf);
+            getlin("What class of monsters do you wish to genocide?",
+                   buf, FALSE); /* not meaningfully repeatable... */
             mungspaces(buf);
         } while (buf[0] == '\033' || !buf[0]);
         /* choosing "none" preserves genocideless conduct */
@@ -1584,7 +1583,7 @@ do_genocide(int how)
                 return;
             }
             getlin("What monster do you want to genocide? [type the name]",
-                   buf);
+                   buf, FALSE); /* not meaningfully repeatable... */
             mungspaces(buf);
             /* choosing "none" preserves genocideless conduct */
             if (!strcmpi(buf, "none") || !strcmpi(buf, "nothing")) {
@@ -1786,24 +1785,25 @@ cant_create(int *mtype, boolean revival)
  * than a mimic; this behavior quirk is useful so don't "fix" it...
  */
 boolean
-create_particular(void)
+create_particular(const struct nh_cmd_arg *arg)
 {
     char buf[BUFSZ], *bufp, monclass = MAXMCLASSES;
-    int which, tries, i, quan;
+    int which, tries, i;
     const struct permonst *whichpm;
     struct monst *mtmp;
     boolean madeany = FALSE;
     boolean maketame, makepeaceful, makehostile;
+    int quan = 1;
+
+    if ((arg->argtype & CMD_ARG_LIMIT) && arg->limit > 1)
+        quan = arg->limit;
 
     tries = 0;
     do {
-        if (multi > 0)
-            quan = multi;
-        else
-            quan = 1;
         which = urole.malenum;  /* an arbitrary index into mons[] */
         maketame = makepeaceful = makehostile = FALSE;
-        getlin("Create what kind of monster? [type the name or symbol]", buf);
+        getarglin(arg, "Create what kind of monster? [type the name or symbol]",
+                  buf);
         bufp = mungspaces(buf);
         if (*bufp == '\033')
             return FALSE;

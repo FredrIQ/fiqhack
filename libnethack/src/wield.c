@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-12 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -297,12 +297,9 @@ setuswapwep(struct obj *obj)
 static const char wield_objs[] = { ALL_CLASSES, ALLOW_NONE, 0 }; 
 
 int
-dowield(struct obj *wep)
+dowield(const struct nh_cmd_arg *arg)
 {
-    if (wep && !validate_object(wep, wield_objs, "wield"))
-        return 0;
-    else if (!wep)
-        wep = getobj(wield_objs, "wield");
+    struct obj *wep = getargobj(arg, wield_objs, "wield");
     if (!wep)
         return 0;
 
@@ -311,8 +308,10 @@ dowield(struct obj *wep)
 }
 
 int
-doswapweapon(void)
+doswapweapon(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
+
     enum objslot j;
     for (j = 0; j <= os_last_equip; j++) {
         if (j == os_wep)
@@ -332,15 +331,10 @@ doswapweapon(void)
 }
 
 int
-dowieldquiver(struct obj *newquiver)
+dowieldquiver(const struct nh_cmd_arg *arg)
 {
-    if (newquiver && !validate_object(newquiver, wield_objs, "quiver"))
-        return 0;
-    else if (!newquiver)
-        /* Prompt for a new quiver */
-        newquiver = getobj(wield_objs, "quiver");
+    struct obj *newquiver = getargobj(arg, wield_objs, "quiver");
     if (!newquiver)
-        /* Cancelled */
         return 0;
 
     return equip_in_slot(newquiver, os_quiver);
@@ -400,7 +394,7 @@ wield_tool(struct obj * obj, const char *verb)
     if (uquiver == obj)
         setuqwep(NULL);
     if (uswapwep == obj) {
-        doswapweapon();
+        doswapweapon(&(struct nh_cmd_arg){.argtype = 0});
         /* doswapweapon might fail */
         if (uswapwep == obj)
             return FALSE;
@@ -483,8 +477,10 @@ drop_uswapwep(void)
 }
 
 int
-dotwoweapon(void)
+dotwoweapon(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
+
     /* You can always toggle it off */
     if (u.twoweap) {
         pline("You switch to your primary weapon.");

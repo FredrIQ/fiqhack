@@ -1,11 +1,9 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-23 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-
-static schar delay;     /* moves left for this spell */
 
 /* spellmenu arguments; 0 thru n-1 used as spl_book[] index when swapping */
 #define SPELLMENU_CAST (-2)
@@ -26,7 +24,7 @@ static int learn(void);
 static boolean getspell(int *);
 static boolean dospellmenu(const char *, int, int *);
 static int percent_success(int);
-static int throwspell(schar * dx, schar * dy);
+static int throwspell(schar *dx, schar *dy, const struct nh_cmd_arg *arg);
 static void cast_protection(void);
 static void spell_backfire(int);
 static const char *spelltypemnemonic(int);
@@ -338,6 +336,7 @@ deadbook(struct obj *book2, boolean invoked)
     return;
 }
 
+/* Handles one turn of book reading. Returns 1 if unfinished, 0 if finshed. */
 static int
 learn(void)
 {
@@ -347,26 +346,30 @@ learn(void)
     boolean costly = TRUE;
 
     /* JDS: lenses give 50% faster reading; 33% smaller read time */
-    if (delay && ublindf && ublindf->otyp == LENSES && rn2(2))
-        delay++;
+    if (u.uoccupation_progress[tos_book] &&
+        ublindf && ublindf->otyp == LENSES && rn2(2))
+        u.uoccupation_progress[tos_book]++;
     if (Confusion) {    /* became confused while learning */
         confused_book(u.utracked[tos_book]);
         u.utracked[tos_book] = 0;       /* no longer studying */
-        nomul(delay, "reading a book"); /* remaining delay is uninterrupted */
-        nomovemsg = "You're finally able to put the book down.";
-        delay = 0;
+        helpless(-u.uoccupation_progress[tos_book], "absorbed in a spellbook",
+                 "You're finally able to put the book down.");
+        u.uoccupation_progress[tos_book] = 0;
         return 0;
     }
-    if (delay) {        /* not if (delay++), so at end delay == 0 */
-        delay++;
-        return 1;       /* still busy */
-    }
-    exercise(A_WIS, TRUE);      /* you're studying. */
+
     booktype = u.utracked[tos_book]->otyp;
     if (booktype == SPE_BOOK_OF_THE_DEAD) {
         deadbook(u.utracked[tos_book], FALSE);
+        u.utracked[tos_book] = 0;
+        u.uoccupation_progress[tos_book] = 0;
         return 0;
     }
+
+    if (++u.uoccupation_progress[tos_book] < 0)
+        return 1;       /* still busy */
+
+    exercise(A_WIS, TRUE);      /* you're studying. */
 
     sprintf(splname,
             objects[booktype].oc_name_known ? "\"%s\"" : "the \"%s\" spell",
@@ -422,18 +425,22 @@ learn(void)
 }
 
 int
-study_book(struct obj *spellbook)
+study_book(struct obj *spellbook, const struct nh_cmd_arg *arg)
 {
     int booktype = spellbook->otyp;
     boolean confused = (Confusion != 0);
     boolean too_hard = FALSE;
 
-    if (delay && !confused && spellbook == u.utracked[tos_book] &&
+    if (u.uoccupation_progress[tos_book] && !confused &&
+        spellbook == u.utracked[tos_book] &&
         /* handle the sequence: start reading, get interrupted, have book
            become erased somehow, resume reading it */
         booktype != SPE_BLANK_PAPER) {
-        pline("You continue your efforts to memorize the spell.");
+        if (turnstate.continue_message)
+            pline("You continue your efforts to memorize the spell.");
     } else {
+        /* Restarting reading the book */
+
         /* KMH -- Simplified this code */
         if (booktype == SPE_BLANK_PAPER) {
             pline("This spellbook is all blank.");
@@ -443,19 +450,20 @@ study_book(struct obj *spellbook)
         switch (objects[booktype].oc_level) {
         case 1:
         case 2:
-            delay = -objects[booktype].oc_delay;
+            u.uoccupation_progress[tos_book] = -objects[booktype].oc_delay;
             break;
         case 3:
         case 4:
-            delay =
+            u.uoccupation_progress[tos_book] =
                 -(objects[booktype].oc_level - 1) * objects[booktype].oc_delay;
             break;
         case 5:
         case 6:
-            delay = -objects[booktype].oc_level * objects[booktype].oc_delay;
+            u.uoccupation_progress[tos_book] =
+                -objects[booktype].oc_level * objects[booktype].oc_delay;
             break;
         case 7:
-            delay = -8 * objects[booktype].oc_delay;
+            u.uoccupation_progress[tos_book] = -8 * objects[booktype].oc_delay;
             break;
         default:
             impossible("Unknown spellbook level %d, book %d;",
@@ -496,9 +504,9 @@ study_book(struct obj *spellbook)
         if (too_hard) {
             boolean gone = cursed_book(spellbook);
 
-            nomul(delay, "reading a book");     /* study time */
-            nomovemsg = 0;      /* default: "You can move again." */
-            delay = 0;
+            helpless(-u.uoccupation_progress[tos_book],
+                     "frozen by a spellbook", 0);
+            u.uoccupation_progress[tos_book] = 0;
             if (gone || !rn2(3)) {
                 if (!gone)
                     pline("The spellbook crumbles to dust!");
@@ -513,9 +521,11 @@ study_book(struct obj *spellbook)
             if (!confused_book(spellbook)) {
                 spellbook->in_use = FALSE;
             }
-            nomul(delay, "reading a book");
-            nomovemsg = "You're finally able to put the book down.";
-            delay = 0;
+            helpless(-u.uoccupation_progress[tos_book],
+                     "absorbed in a spellbook",
+                     "You're finally able to put the book down.");
+            u.uoccupation_progress[tos_book] = 0;
+            u.utracked[tos_book] = 0;
             return 1;
         }
         spellbook->in_use = FALSE;
@@ -525,7 +535,9 @@ study_book(struct obj *spellbook)
     }
 
     u.utracked[tos_book] = spellbook;
-    set_occupation(learn, "studying");
+
+    one_occupation_turn(learn, "studying", occ_book);
+
     return 1;
 }
 
@@ -562,14 +574,22 @@ getspell(int *spell_no)
     return dospellmenu("Choose which spell to cast", SPELLMENU_CAST, spell_no);
 }
 
+static boolean
+getargspell(const struct nh_cmd_arg *arg, int *spell_no)
+{
+    /* TODO: look at arg */
+    (void) arg;
+    return getspell(spell_no);
+}
+
 /* the 'Z' command -- cast a spell */
 int
-docast(void)
+docast(const struct nh_cmd_arg *arg)
 {
     int spell_no;
 
-    if (getspell(&spell_no))
-        return spelleffects(spell_no, FALSE);
+    if (getargspell(arg, &spell_no))
+        return spelleffects(spell_no, FALSE, arg);
     return 0;
 }
 
@@ -685,7 +705,7 @@ spell_backfire(int spell)
 }
 
 int
-spelleffects(int spell, boolean atme)
+spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
 {
     int energy, damage, chance, n, intell;
     int skill, role_skill;
@@ -808,7 +828,7 @@ spelleffects(int spell, boolean atme)
     case SPE_CONE_OF_COLD:
     case SPE_FIREBALL:
         if (role_skill >= P_SKILLED) {
-            if (throwspell(&dx, &dy)) {
+            if (throwspell(&dx, &dy, arg)) {
                 dz = 0;
                 cc.x = dx;
                 cc.y = dy;
@@ -863,7 +883,7 @@ spelleffects(int spell, boolean atme)
         if (objects[pseudo->otyp].oc_dir != NODIR) {
             if (atme)
                 dx = dy = dz = 0;
-            else if (!getdir(NULL, &dx, &dy, &dz)) {
+            else if (!getargdir(arg, NULL, &dx, &dy, &dz)) {
                 /* getdir cancelled, generate a random direction */
                 dz = 0;
                 confdir(&dx, &dy);
@@ -940,7 +960,7 @@ spelleffects(int spell, boolean atme)
         cast_protection();
         break;
     case SPE_JUMPING:
-        if (!jump(max(role_skill, 1)))
+        if (!jump(&(struct nh_cmd_arg){.argtype = 0}, max(role_skill, 1)))
             pline("Nothing happens.");
         break;
     default:
@@ -958,7 +978,7 @@ spelleffects(int spell, boolean atme)
 
 /* Choose location where spell takes effect. */
 static int
-throwspell(schar * dx, schar * dy)
+throwspell(schar *dx, schar *dy, const struct nh_cmd_arg *arg)
 {
     coord cc;
 
@@ -973,7 +993,7 @@ throwspell(schar * dx, schar * dy)
     pline("Where do you want to cast the spell?");
     cc.x = u.ux;
     cc.y = u.uy;
-    if (getpos(&cc, TRUE, "the desired position") == NHCR_CLIENT_CANCEL)
+    if (getargpos(arg, &cc, TRUE, "the desired position") == NHCR_CLIENT_CANCEL)
         return 0;       /* user pressed ESC */
     /* The number of moves from hero to where the spell drops. */
     if (distmin(u.ux, u.uy, cc.x, cc.y) > 10) {
@@ -1021,11 +1041,13 @@ losespells(void)
 
 /* the '+' command -- view known spells */
 int
-dovspell(void)
+dovspell(const struct nh_cmd_arg *arg)
 {
     char qbuf[QBUFSZ];
     int splnum, othnum;
     struct spell spl_tmp;
+
+    (void) arg;
 
     if (spellid(0) == NO_SPELL)
         pline("You don't know any spells right now.");

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -810,8 +810,7 @@ magicbane_hit(struct monst *magr,       /* attacker */
             if (Antimagic) {
                 resisted = TRUE;
             } else {
-                nomul(-3, "being scared stiff");
-                nomovemsg = "You regain your composure";
+                helpless(3, "being scared stiff", "You regain your composure.");
                 if (magr && magr == u.ustuck && sticks(youmonst.data)) {
                     u.ustuck = NULL;
                     pline("You release %s!", mon_nam(magr));
@@ -1160,17 +1159,35 @@ static const char invoke_types[] = { ALL_CLASSES, 0 };
                 /* #invoke: an "ugly check" filters out most objects */
 
 int
-doinvoke(struct obj *obj)
+doinvoke(const struct nh_cmd_arg *arg)
 {
-    if (obj && !validate_object(obj, invoke_types, "invoke, break, or rub"))
-        return 0;
-    else if (!obj)
-        obj = getobj(invoke_types, "invoke, break, or rub");
+    struct obj *obj;
+
+    obj = getargobj(arg, invoke_types, "invoke, break, or rub");
     if (!obj)
         return 0;
 
     if (obj->oartifact && !touch_artifact(obj, &youmonst))
         return 1;
+
+    const struct artifact *oart = get_artifact(obj);
+
+    if (!oart || !oart->inv_prop) {
+        if (obj->oclass == WAND_CLASS)
+            return do_break_wand(obj);
+        else if (obj->otyp == OIL_LAMP || obj->otyp == MAGIC_LAMP ||
+                 obj->otyp == BRASS_LANTERN)
+            return dorub(&(struct nh_cmd_arg){.argtype = CMD_ARG_OBJ,
+                                              .invlet = obj->invlet});
+        else if (obj->otyp == CRYSTAL_BALL)
+            use_crystal_ball(obj);
+        else if (obj->otyp == SPE_BOOK_OF_THE_DEAD)
+            deadbook(obj, TRUE); /* deadbook() handles nothing happening */
+        else
+            pline("Nothing happens.");
+        return 1;
+    }
+
     return arti_invoke(obj);
 }
 
@@ -1194,21 +1211,6 @@ arti_invoke(struct obj *obj)
     }
 
     const struct artifact *oart = get_artifact(obj);
-
-    if (!oart || !oart->inv_prop) {
-        if (obj->oclass == WAND_CLASS)
-            return do_break_wand(obj);
-        else if (obj->otyp == OIL_LAMP || obj->otyp == MAGIC_LAMP ||
-                 obj->otyp == BRASS_LANTERN)
-            return dorub(obj);
-        else if (obj->otyp == CRYSTAL_BALL)
-            use_crystal_ball(obj);
-        else if (obj->otyp == SPE_BOOK_OF_THE_DEAD)
-            deadbook(obj, TRUE); /* deadbook() handles nothing happening */
-        else
-            pline("Nothing happens.");
-        return 1;
-    }
 
     if (oart->inv_prop > LAST_PROP) {
         /* It's a special power, not "just" a property */
@@ -1273,7 +1275,7 @@ arti_invoke(struct obj *obj)
                 break;
             }
         case UNTRAP:{
-                if (!untrap(TRUE)) {
+                if (!untrap(&(struct nh_cmd_arg){.argtype = 0}, TRUE)) {
                     obj->age = 0;       /* don't charge for changing their mind 
                                          */
                     return 0;
@@ -1281,7 +1283,7 @@ arti_invoke(struct obj *obj)
                 break;
             }
         case CHARGE_OBJ:{
-                struct obj *otmp = getobj(recharge_type, "charge");
+                struct obj *otmp = getobj(recharge_type, "charge", FALSE);
                 boolean b_effect;
 
                 if (!otmp) {

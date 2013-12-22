@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-04 */
+/* Last modified by Alex Smith, 2013-12-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1738,7 +1738,7 @@ print_dungeon(boolean bymenu, schar * rlev, xchar * rdgn)
 
 /* add a custom name to the current level */
 int
-donamelevel(void)
+donamelevel(const struct nh_cmd_arg *arg)
 {
     char query[QBUFSZ], buf[BUFSZ];
 
@@ -1746,7 +1746,7 @@ donamelevel(void)
         sprintf(query, "Replace previous name \"%s\" with?", level->levname);
     else
         sprintf(query, "What do you want to call this dungeon level?");
-    getlin(query, buf);
+    getarglin(arg, query, buf);
 
     if (buf[0] == '\033')
         return 0;
@@ -2027,13 +2027,15 @@ overview_print_branch(char *buf, const struct overview_info *oi)
 
 /* print a dungeon overview */
 int
-dooverview(void)
+dooverview(const struct nh_cmd_arg *arg)
 {
     struct overview_info oinfo;
     struct menulist menu;
     int i, n, x, y, dnum, selected[1];
     char buf[BUFSZ];
     struct level *lev;
+
+    (void) arg;
 
     init_menulist(&menu);
 

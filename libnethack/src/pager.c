@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -15,7 +15,7 @@ static void describe_bg(int x, int y, int bg, char *buf);
 static int describe_object(int x, int y, int votyp, char *buf, int known_embed);
 static void describe_mon(int x, int y, int monnum, char *buf);
 static void checkfile(const char *inp, struct permonst *, boolean, boolean);
-static int do_look(boolean);
+static int do_look(boolean, const struct nh_cmd_arg *);
 
 /* The explanations below are also used when the user gives a string
  * for blessed genocide, so no text should wholly contain any later
@@ -611,7 +611,7 @@ const char what_is_an_unknown_object[] = "an unknown object";
 
 /* quick: use cursor && don't search for "more info" */
 static int
-do_look(boolean quick)
+do_look(boolean quick, const struct nh_cmd_arg *arg)
 {
     char out_str[BUFSZ];
     char firstmatch[BUFSZ];
@@ -623,7 +623,7 @@ do_look(boolean quick)
     struct nh_desc_buf descbuf;
     struct obj *otmp;
 
-    if (quick) {
+    if (quick || (arg->argtype & CMD_ARG_POS)) {
         from_screen = TRUE;     /* yes, we want to use the cursor */
     } else {
         i = ynq("Specify unknown object by cursor?");
@@ -636,7 +636,7 @@ do_look(boolean quick)
         cc.x = u.ux;
         cc.y = u.uy;
     } else {
-        getlin("Specify what? (type the word)", out_str);
+        getarglin(arg, "Specify what? (type the word)", out_str);
         if (out_str[0] == '\0' || out_str[0] == '\033')
             return 0;
 
@@ -665,7 +665,7 @@ do_look(boolean quick)
         else
             pline("Pick an object.");
 
-        ans = getpos(&cc, FALSE, what_is_an_unknown_object);
+        ans = getargpos(arg, &cc, FALSE, what_is_an_unknown_object);
         if (ans == NHCR_CLIENT_CANCEL || cc.x < 0) {
             flags.verbose = save_verbose;
             if (flags.verbose)
@@ -735,25 +735,26 @@ do_look(boolean quick)
 
 
 int
-dowhatis(void)
+dowhatis(const struct nh_cmd_arg *arg)
 {
-    return do_look(FALSE);
+    return do_look(FALSE, arg);
+}
+
+/* TODO: CMD_ARG_POS is meaningful here, we should implement it. */
+int
+doquickwhatis(const struct nh_cmd_arg *arg)
+{
+    return do_look(TRUE, arg);
 }
 
 int
-doquickwhatis(void)
-{
-    return do_look(TRUE);
-}
-
-int
-doidtrap(void)
+doidtrap(const struct nh_cmd_arg *arg)
 {
     struct trap *trap;
     int x, y, tt;
     schar dx, dy, dz;
 
-    if (!getdir(NULL, &dx, &dy, &dz))
+    if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
 
     x = u.ux + dx;
@@ -784,16 +785,18 @@ doidtrap(void)
 
 
 int
-dolicense(void)
+dolicense(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
     display_file(LICENSE, TRUE);
     return 0;
 }
 
 
 int
-doverhistory(void)
+doverhistory(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
     display_file(HISTORY, TRUE);
     return 0;
 }

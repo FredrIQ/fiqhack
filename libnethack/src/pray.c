@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-12 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1161,31 +1161,32 @@ consume_offering(struct obj *otmp)
 
 
 int
-dosacrifice(struct obj *otmp)
+dosacrifice(const struct nh_cmd_arg *arg)
 {
     int value = 0;
     int pm;
     aligntyp altaralign = a_align(u.ux, u.uy);
     boolean sanctum = level->locations[u.ux][u.uy].altarmask & AM_SANCTUM;
+    struct obj *otmp;
 
     if (!on_altar() || Engulfed) {
         pline("You are not standing on an altar.");
         return 0;
     }
 
+    /* TODO: Proper handling for amulet sacrifices outside the Sanctum, and food
+       sacrifices inside. (Note: Rider corpses are meant to be non-sacrificable,
+       but making the interface refuse to accept the keystrokes is probably the
+       wrong implementation.) */
     if (sanctum && altaralign != A_NONE) {
-        if (otmp && !validate_object(otmp, sacrifice_types, "sacrifice"))
-            return 0;
-        else if (!otmp)
-            otmp = getobj(sacrifice_types, "sacrifice");
+        otmp = getargobj(arg, sacrifice_types, "sacrifice");
         if (!otmp)
             return 0;
     } else {
-        if (otmp && otmp->otyp != CORPSE) {
-            pline("You can't sacrifice that!");
-            return 0;
-        } else if (!otmp)
-            otmp = floorfood("sacrifice");
+        /* This implementation will, if the user command-repeats a sacrifice
+           from the ground, ask for another item from the ground. This is
+           reasonable behaviour. */
+        otmp = floorfood("sacrifice", arg);
         if (!otmp)
             return 0;
     }
@@ -1266,7 +1267,7 @@ dosacrifice(struct obj *otmp)
                     if (sgn(u.ualign.type) == sgn(dmon->data->maligntyp))
                         dmon->mpeaceful = TRUE;
                     pline("You are terrified, and unable to move.");
-                    nomul(-3, "being terrified of a demon");
+                    helpless(3, "being terrified of a demon", NULL);
                 } else
                     pline("The %s.", demonless_msg);
             }
@@ -1650,8 +1651,10 @@ can_pray(boolean praying)
 }
 
 int
-dopray(void)
+dopray(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
+
     /* Confirm accidental slips of Alt-P */
     if (flags.prayconfirm)
         if (yn("Are you sure you want to pray?") == 'n')
@@ -1681,9 +1684,8 @@ dopray(void)
         }
     }
 
-    nomul(-3, "praying");
-    nomovemsg = "You finish your prayer.";
-    afternmv = prayer_done;
+    pline("TODO: Prayer is currently unimplemented.");
+    return 0;
 
     if (p_type == 3 && !Inhell) {
         /* if you've been true to your god you can't die while you pray */
@@ -1750,11 +1752,13 @@ prayer_done(void)
 }
 
 int
-doturn(void)
+doturn(const struct nh_cmd_arg *arg)
 {       /* Knights & Priest(esse)s only please */
 
     struct monst *mtmp, *mtmp2;
     int once, range, xlev;
+
+    (void) arg;
 
     if (!Role_if(PM_PRIEST) && !Role_if(PM_KNIGHT)) {
         /* Try to use turn undead spell. */
@@ -1766,7 +1770,7 @@ doturn(void)
                  spl_book[sp_no].sp_id != SPE_TURN_UNDEAD; sp_no++) ;
 
             if (sp_no < MAXSPELL && spl_book[sp_no].sp_id == SPE_TURN_UNDEAD)
-                return spelleffects(sp_no, TRUE);
+                return spelleffects(sp_no, TRUE, arg);
         }
 
         pline("You don't know how to turn undead!");
@@ -1846,7 +1850,7 @@ doturn(void)
             }
         }
     }
-    nomul(-5, "trying to turn the monsters");
+    helpless(5, "trying to turn the monsters", NULL);
     return 1;
 }
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (C) 1990 by Ken Arromdee                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -566,18 +566,16 @@ scatter(int sx, int sy, /* location of objects to scatter */
                     if (scflags & MAY_HITYOU) {
                         int hitvalu, hitu;
 
-                        if (multi)
-                            nomul(0, NULL);
+                        action_interrupted();
+
                         hitvalu = 8 + stmp->obj->spe;
                         if (bigmonst(youmonst.data))
                             hitvalu++;
                         hitu =
                             thitu(hitvalu, dmgval(stmp->obj, &youmonst),
                                   stmp->obj, NULL);
-                        if (hitu) {
+                        if (hitu)
                             stmp->range -= 3;
-                            stop_occupation();
-                        }
                     }
                 } else {
                     if (scflags & VIS_EFFECTS) {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -35,7 +35,7 @@ static void charm_snakes(int);
 static void calm_nymphs(int);
 static void charm_monsters(int);
 static void do_earthquake(int);
-static int do_improvisation(struct obj *);
+static int do_improvisation(struct obj *, const struct nh_cmd_arg *);
 
 /*
  * Wake every monster in range...
@@ -356,7 +356,7 @@ do_earthquake(int force)
  * The player is trying to extract something from his/her instrument.
  */
 static int
-do_improvisation(struct obj *instr)
+do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
 {
     int damage, do_spec = !Confusion;
 
@@ -389,7 +389,7 @@ do_improvisation(struct obj *instr)
 
             consume_obj_charge(instr, TRUE);
 
-            if (!getdir(NULL, &dx, &dy, &dz)) {
+            if (!getargdir(arg, NULL, &dx, &dy, &dz)) {
                 pline("%s.", Tobjnam(instr, "vibrate"));
                 break;
             } else if (!dx && !dy && !dz) {
@@ -461,7 +461,7 @@ do_improvisation(struct obj *instr)
  * So you want music...
  */
 int
-do_play_instrument(struct obj *instr)
+do_play_instrument(struct obj *instr, const struct nh_cmd_arg *arg)
 {
     char buf[BUFSZ], c = 'y';
     char *s;
@@ -487,7 +487,9 @@ do_play_instrument(struct obj *instr)
         if (u.uevent.uheard_tune == 2 && yn("Play the passtune?") == 'y') {
             strcpy(buf, tune);
         } else {
-            getlin("What tune are you playing? [5 notes, A-G]", buf);
+            /* Note: This is explicitly not getarglin(); we don't want
+               command repeat to repeat the tune. */
+            getlin("What tune are you playing? [5 notes, A-G]", buf, FALSE);
             mungspaces(buf);
             /* convert to uppercase and change any "H" to the expected "B" */
             for (s = buf; *s; s++) {
@@ -572,7 +574,7 @@ do_play_instrument(struct obj *instr)
         }
         return 1;
     } else
-        return do_improvisation(instr);
+        return do_improvisation(instr, arg);
 }
 
 /*music.c*/

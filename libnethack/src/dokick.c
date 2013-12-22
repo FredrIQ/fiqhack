@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -16,7 +16,7 @@ static const char *gate_str;
 extern boolean notonhead;       /* for long worms */
 
 static void kickdmg(struct monst *, boolean, schar, schar);
-static boolean kick_monster(xchar, xchar, schar, schar);
+static enum attack_check_status kick_monster(xchar, xchar, schar, schar);
 static int kick_object(xchar, xchar, schar, schar);
 static char *kickstr(char *);
 static void otransit_msg(struct obj *, boolean, long);
@@ -131,19 +131,24 @@ kickdmg(struct monst *mon, boolean clumsy, schar dx, schar dy)
         use_skill(kick_skill, 1);
 }
 
-static boolean
+static enum attack_check_status
 kick_monster(xchar x, xchar y, schar dx, schar dy)
 {
     boolean clumsy = FALSE;
     struct monst *mon = m_at(level, x, y);
-    int i, j;
+    int i, j, attack_status;
     coord bypos;
     boolean canmove = TRUE;
 
     bhitpos.x = x;
     bhitpos.y = y;
-    if (attack_checks(mon, NULL, dx, dy))
-        return FALSE;
+
+    attack_status = attack_checks(mon, NULL, dx, dy);
+    if (attack_status)
+        return attack_status;
+
+    attack_status = ac_continue;
+
     setmangry(mon);
 
     /* Kick attacks by kicking monsters are normal attacks, not special. This
@@ -159,7 +164,7 @@ kick_monster(xchar x, xchar y, schar dx, schar dy)
         for (i = 0; i < NATTK; i++) {
             /* first of two kicks might have provoked counterattack that has
                incapacitated the hero (ie, floating eye) */
-            if (multi < 0)
+            if (Helpless)
                 break;
 
             uattk = &youmonst.data->mattk[i];
@@ -174,6 +179,7 @@ kick_monster(xchar x, xchar y, schar dx, schar dy)
                 break;  /* skip any additional kicks */
             } else if (tmp > rnd(20)) {
                 pline("You kick %s.", mon_nam(mon));
+                attack_status = ac_monsterhit;
                 sum = damageum(mon, uattk);
                 passive(mon, (boolean) (sum > 0), (sum != 2), AT_KICK);
                 if (sum == 2)
@@ -183,14 +189,14 @@ kick_monster(xchar x, xchar y, schar dx, schar dy)
                 passive(mon, 0, 1, AT_KICK);
             }
         }
-        return TRUE;
+        return attack_status;
     }
 
     if (Levitation && !rn2(3) && verysmall(mon->data) && !is_flyer(mon->data)) {
         pline("Floating in the air, you miss wildly!");
         exercise(A_DEX, FALSE);
         passive(mon, FALSE, 1, AT_KICK);
-        return TRUE;
+        return attack_status;
     }
 
     i = -inv_weight();
@@ -202,7 +208,7 @@ kick_monster(xchar x, xchar y, schar dx, schar dy)
                 goto doit;
             pline("Your clumsy kick does no damage.");
             passive(mon, FALSE, 1, AT_KICK);
-            return TRUE;
+            return attack_status;
         }
         if (i < j / 10)
             clumsy = TRUE;
@@ -231,7 +237,7 @@ doit:
             pline("%s blocks your %skick.", Monnam(mon),
                   clumsy ? "clumsy " : "");
             passive(mon, FALSE, 1, AT_KICK);
-            return TRUE;
+            return ac_somethingelse;
         } else {
             rloc_to(mon, bypos.x, bypos.y);
             if (mon->mx != x || mon->my != y) {
@@ -248,13 +254,13 @@ doit:
                        "jumps"), clumsy ? "easily" : "nimbly",
                       clumsy ? "clumsy " : "");
                 passive(mon, FALSE, 1, AT_KICK);
-                return TRUE;
+                return ac_continue;
             }
         }
     }
     kickdmg(mon, clumsy, dx, dy);
 
-    return TRUE;
+    return ac_monsterhit;
 }
 
 /*
@@ -661,7 +667,7 @@ kickstr(char *buf)
 }
 
 int
-dokick(void)
+dokick(const struct nh_cmd_arg *arg)
 {
     int x, y;
     int avrg_attrib;
@@ -725,7 +731,7 @@ dokick(void)
         return 0;
     }
 
-    if (!getdir(NULL, &dx, &dy, &dz))
+    if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
     if (!dx && !dy)
         return 0;
@@ -787,8 +793,8 @@ dokick(void)
             flags.forcefight = TRUE;    /* attack even if invisible */
         ret = kick_monster(x, y, dx, dy);
         flags.forcefight = FALSE;
-        if (!ret)
-            return 0;
+        if (ret != ac_continue)
+            return ret != ac_cancel;
 
         wake_nearby();
         u_wipe_engr(2);
@@ -800,7 +806,7 @@ dokick(void)
             mtmp->mx == x && mtmp->my == y && !level->locations[x][y].mem_invis
             && !(Engulfed && mtmp == u.ustuck))
             map_invisible(x, y);
-        if ((Is_airlevel(&u.uz) || Levitation) && flags.move) {
+        if (Is_airlevel(&u.uz) || Levitation) {
             int range;
 
             range = ((int)youmonst.data->cwt + (weight_cap() + inv_weight()));

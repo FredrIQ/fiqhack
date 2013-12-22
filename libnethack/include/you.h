@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -89,12 +89,26 @@ struct you {
     int uhunger;        /* refd only in eat.c and shk.c */
     unsigned uhs;       /* hunger state - see eat.c */
 
+    int oldcap;         /* carry cap on previous turn */
+
     unsigned uintrinsic[LAST_PROP + 1];     /* uses defines from prop.h */
 
     struct obj *utracked[tos_last_slot + 1];      /* occupation objects */
     int uoccupation_progress[tos_last_slot + 1];  /* time spent on occupation */
+    coord utracked_location[tl_last_slot + 1];    /* occupation locations */
 
     unsigned umconf;
+
+    /* uwhybusy is reason for helplessness, "killed by ..., while uwhybusy", or
+       reason for occupation, "You stop uwhybusy."; which is determined by
+       Helpless and flags.occupation. (You can't be helpless and occupied at the
+       same time; the definition of helplessness precludes the character from
+       doing anything.) If neither Helpless nor flags.occupation is nonzero,
+       this is meaningless (which is OK, because it's initialized in both
+       action_incomplete() and helpless()). */
+    char uwhybusy[BUFSZ];
+    char umoveagain[BUFSZ];
+
     char usick_cause[PL_PSIZ + 20];     /* sizeof "unicorn horn named "+1 */
 # define SICK_VOMITABLE 0x01
 # define SICK_NONVOMITABLE 0x02
@@ -123,6 +137,7 @@ struct you {
 
     unsigned ucreamed;
     unsigned uswldtim;  /* time you have been swallowed */
+    unsigned uhelpless;
 
     unsigned uswallow:1;        /* true if swallowed */
     unsigned uinwater:1;        /* if you're currently in water (only

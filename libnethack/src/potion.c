@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -318,16 +318,17 @@ ghost_from_bottle(void)
     }
     if (flags.verbose)
         pline("You are frightened to death, and unable to move.");
-    nomul(-3, "being frightened to death");
-    nomovemsg = "You regain your composure.";
+
+    helpless(3, "being frightened to death", "You regain your composure.");
 }
 
 
 /* "Quaffing is like drinking, except you spill more."  -- Terry Pratchett
  */
 int
-dodrink(struct obj *potion)
+dodrink(const struct nh_cmd_arg *arg)
 {
+    struct obj *potion;
     const char *potion_descr;
     void (*terrain) (void) = 0;
 
@@ -353,12 +354,8 @@ dodrink(struct obj *potion)
         }
     }
 
-    if (potion &&
-        !validate_object(potion, terrain ? beverages_and_fountains : beverages,
-                         "drink"))
-        return 0;
-    else if (!potion)
-        potion = getobj(terrain ? beverages_and_fountains : beverages, "drink");
+    potion = getargobj(arg, terrain ? beverages_and_fountains : beverages,
+                       "drink");
     if (!potion)
         return 0;
 
@@ -530,8 +527,7 @@ peffects(struct obj *otmp)
         exercise(A_WIS, FALSE);
         if (otmp->cursed) {
             pline("You pass out.");
-            nomul(-rnd(15), "drunk");
-            nomovemsg = "You awake with a headache.";
+            helpless(rnd(15), "drunk", "You awake with a headache.");
             see_monsters();
             see_objects();
             vision_full_recalc = 1;
@@ -626,8 +622,8 @@ peffects(struct obj *otmp)
             else
                 pline("Your %s are frozen to the %s!",
                       makeplural(body_part(FOOT)), surface(u.ux, u.uy));
-            nomul(-(rn1(10, 25 - 12 * bcsign(otmp))), "frozen by a potion");
-            nomovemsg = "You can move again.";
+            helpless(rn1(10, 25 - 12 * bcsign(otmp)),
+                     "frozen by a potion", NULL);
             exercise(A_DEX, FALSE);
         }
         break;
@@ -1313,8 +1309,7 @@ potionbreathe(struct obj *obj)
         kn++;
         if (!Free_action) {
             pline("Something seems to be holding you.");
-            nomul(-rnd(5), "frozen by a potion");
-            nomovemsg = "You can move again.";
+            helpless(5, "frozen by potion vapours", NULL);
             exercise(A_DEX, FALSE);
         } else
             pline("You stiffen momentarily.");
@@ -1323,8 +1318,7 @@ potionbreathe(struct obj *obj)
         kn++;
         if (!Free_action && !Sleep_resistance) {
             pline("You feel rather tired.");
-            nomul(-rnd(5), "sleeping off a magical draught");
-            nomovemsg = "You can move again.";
+            helpless(5, "sleeping off potion vapours", NULL);
             exercise(A_DEX, FALSE);
         } else
             pline("You yawn.");
@@ -1581,9 +1575,9 @@ get_wet(struct obj * obj)
 
 
 int
-dodip(struct obj *potion)
+dodip(const struct nh_cmd_arg *arg)
 {
-    struct obj *obj;
+    struct obj *obj, *potion;
     struct obj *singlepotion;
     const char *tmp;
     uchar here;
@@ -1591,14 +1585,15 @@ dodip(struct obj *potion)
     short mixture;
     char qbuf[QBUFSZ], Your_buf[BUFSZ];
 
-    if (potion && !validate_object(potion, beverages, "dip into"))
-        return 0;
+    /* The dip /into/ is taken from arg; the object to dip must therefore
+       be propmted for each time.
 
-    obj = getobj(allowall, "dip");
+       TODO: "What do you want to dip into your potions of sickness?" */
+    obj = getobj(allowall, "dip", FALSE);
     if (!obj)
         return 0;
 
-    if (!potion) {
+    if (!(arg->argtype & CMD_ARG_OBJ)) {
         here = level->locations[u.ux][u.uy].typ;
         /* Is there a fountain to dip into here? */
         if (IS_FOUNTAIN(here)) {
@@ -1630,14 +1625,14 @@ dodip(struct obj *potion)
                 return 1;
             }
         }
-        sprintf(qbuf, "dip %s into",
-                safe_qbuf("", sizeof ("dip  into"), the(xname(obj)),
-                          the(simple_typename(obj->otyp)), "this item"));
-        potion = getobj(beverages, qbuf);
     }
-
+    sprintf(qbuf, "dip %s into",
+            safe_qbuf("", sizeof ("dip  into"), the(xname(obj)),
+                      the(simple_typename(obj->otyp)), "this item"));
+    potion = getargobj(arg, beverages, qbuf);
     if (!potion)
         return 0;
+
     if (potion == obj && potion->quan == 1L) {
         pline("That is a potion bottle, not a Klein bottle!");
         return 0;

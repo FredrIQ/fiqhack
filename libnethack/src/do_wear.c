@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-12 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -709,9 +709,8 @@ set_wear(void)
 
    The correct use for this function in a command, then, is to set utracked,
    reset the reservoir if any objects were removed from utracked, then call
-   equip_heartbeat yourself once. If it returns 0 or 1, return the same
-   value. If it returns 2, set equip_occupation_callback as an occupation, then
-   return 1. */
+   equip_heartbeat. If it returns 0 or 1, return the same value. If it returns
+   2, call action_incomplete(), then return 1. */
 static inline boolean
 want_to_change_slot(enum objslot os)
 {
@@ -1084,11 +1083,6 @@ equip_heartbeat(void)
     }
     return reservoir_increased ? 1 : 0;
 }
-static int
-equip_occupation_callback(void)
-{
-    return equip_heartbeat() == 2 ? 1 : 0;
-}
 
 /* Called when the player requests to equip otmp in slot. (You can empty the
    slot using either NULL or &zeroobj.) This function may be called with any
@@ -1097,12 +1091,8 @@ equip_occupation_callback(void)
    knows it's impossible, do nothing and return 1 if it's impossible and the
    character has to experiment to find that out, and otherwise will perform the
    equip, taking 0, 1, or more actions, and return whether or not it took
-   time. (In the case where it takes more than 1 action, it will set an
-   occupation callback that will do the actual equipping at the appropriate time
-   in the future; this can be interrupted, and will be resumed by equip_in_slot
-   if it's called with the same arguments with no equipping done in between, and
-   in a few other cases, such as wearing an item that was temporarily taken
-   off.) */
+   time. (In the case where it takes more than 1 action, it will mark the action
+   as incomplete.) */
 int
 equip_in_slot(struct obj *otmp, enum objslot slot)
 {
@@ -1148,28 +1138,31 @@ equip_in_slot(struct obj *otmp, enum objslot slot)
        slot, and any slot that covers another slot (but all covering slots
        are armor slots at the moment). */
     if (flags.verbose && slot <= os_last_armor) {
-        if (otmp != &zeroobj && otmp != EQUIP(slot))
-            pline("You %s equipping %s.",
-                  resuming ? "continue" : "start", yname(otmp));
-        else if (otmp == &zeroobj && EQUIP(slot))
-            pline("You %s removing %s.",
-                  resuming ? "continue" : "start", yname(EQUIP(slot)));
-        else {
+        if (otmp != &zeroobj && otmp != EQUIP(slot)) {
+            if (!resuming || turnstate.continue_message)
+                pline("You %s equipping %s.",
+                      resuming ? "continue" : "start", yname(otmp));
+        } else if (otmp == &zeroobj && EQUIP(slot)) {
+            if (!resuming || turnstate.continue_message)
+                pline("You %s removing %s.",
+                      resuming ? "continue" : "start", yname(EQUIP(slot)));
+        } else {
             /* Either we're putting items back on, or else we're not making any
                changes at all and this is very trivial. */
-            for (j = 0; j <= os_last_equip; j++) {
-                if (u.utracked[tos_first_equip + j] != NULL && j != slot) {
-                    pline("You start putting your other items back on.");
-                    break;
+            if (turnstate.continue_message)
+                for (j = 0; j <= os_last_equip; j++) {
+                    if (u.utracked[tos_first_equip + j] != NULL && j != slot) {
+                        pline("You start putting your other items back on.");
+                        break;
+                    }
                 }
-            }
         }
     }
 
     /* Do the equip. */
     t = equip_heartbeat();
     if (t == 2)
-        set_occupation(equip_occupation_callback, "changing your equipment");
+        action_incomplete("changing your equipment", occ_equip);
 
     return t > 0;
 }
@@ -1181,15 +1174,13 @@ static const char equippables_and_nothing[] = { ALL_CLASSES, ALLOW_NONE, 0 };
 
 /* the 'T'/'R' command */
 int
-dounequip(struct obj *otmp)
+dounequip(const struct nh_cmd_arg *arg)
 {
     enum objslot j;
     long mask;
+    struct obj *otmp;
 
-    if (otmp && !validate_object(otmp, clothes_and_accessories, "take off"))
-        return 0;
-    else if (!otmp)
-        otmp = getobj(clothes_and_accessories, "take off");
+    otmp = getargobj(arg, clothes_and_accessories, "take off");
     if (!otmp)
         return 0;
 
@@ -1227,15 +1218,13 @@ dounequip(struct obj *otmp)
 
 /* the 'W'/'P' command */
 int
-dowear(struct obj *otmp)
+dowear(const struct nh_cmd_arg *arg)
 {
     long mask;
     enum objslot j;
+    struct obj *otmp;
 
-    if (otmp && !validate_object(otmp, clothes_and_accessories, "wear"))
-        return 0;
-    else if (!otmp)
-        otmp = getobj(clothes_and_accessories, "wear");
+    otmp = getargobj(arg, clothes_and_accessories, "wear");
     if (!otmp)
         return 0;
 
@@ -1968,20 +1957,21 @@ unchanger(void)
    This function allows equipping any item in any slot, or continuing an aborted
    equip action (even if there were other intervening actions). */
 int
-doequip(void)
+doequip(const struct nh_cmd_arg *arg)
 {
     enum objslot j;
     int n;
     int selected[1];
     struct menulist menu;
-    int changes, time_consuming_changes;
-    boolean resuming;
+    int changes, time_consuming_changes = 0;
+    boolean resuming = TRUE;
 
     do {
         changes = time_consuming_changes = 0;
         resuming = FALSE;
 
-        init_menulist(&menu);
+        if (turnstate.continue_message)
+            init_menulist(&menu);
 
         for (j = 0; j <= os_last_equip; j++) {
             char buf[BUFSZ];
@@ -1990,7 +1980,8 @@ doequip(void)
                     c_slotnames_menu[j],
                     BUFSZ - LONGEST_SLOTNAME - 4,
                     otmp ? doname(otmp) : "(empty)");
-            add_menuitem(&menu, j+1, buf, 0, FALSE);
+            if (turnstate.continue_message)
+                add_menuitem(&menu, j+1, buf, 0, FALSE);
             if (u.utracked[tos_first_equip + j]) {
                 boolean progress = !!u.uoccupation_progress[
                     tos_first_equip + j];
@@ -2001,7 +1992,8 @@ doequip(void)
                         doname(u.utracked[tos_first_equip + j]) :
                         "(empty)",
                         progress ? " (in progress)" : "" );
-                add_menuitem(&menu, 0, buf, 0, FALSE);
+                if (turnstate.continue_message)
+                    add_menuitem(&menu, 0, buf, 0, FALSE);
                 changes++;
                 if (j <= os_last_armor)
                     time_consuming_changes += 2;
@@ -2011,25 +2003,29 @@ doequip(void)
                     resuming = TRUE;
             }
         }
-        add_menutext(&menu, "");
-        if (changes) {
-            add_menuitem(
-                &menu, os_last_slot+1 + 1, resuming ?
-                "Continue changing your equipment as shown above" :
-                "Change your equipment as shown above", 'C', FALSE);
-            add_menuitem(
-                &menu, os_last_slot+1 + 2,
-                "Cancel changing your equipment", 'X', FALSE);
-        }
-        add_menuitem(
-            &menu, os_last_slot+1 + 3,
-            "Remove all equipment", 'T', FALSE);
 
-        n = display_menu(menu.items, menu.icount, "Your Equipment",
-                         PICK_ONE, PLHINT_INVENTORY, selected);
-        free(menu.items);
-        if (!n) /* no selection made */
-            return 0;
+        if (turnstate.continue_message) {
+            add_menutext(&menu, "");
+            if (changes) {
+                add_menuitem(
+                    &menu, os_last_slot+1 + 1, resuming ?
+                    "Continue changing your equipment as shown above" :
+                    "Change your equipment as shown above", 'C', FALSE);
+                add_menuitem(
+                    &menu, os_last_slot+1 + 2,
+                    "Cancel changing your equipment", 'X', FALSE);
+            }
+            add_menuitem(
+                &menu, os_last_slot+1 + 3,
+                "Remove all equipment", 'T', FALSE);
+            
+            n = display_menu(menu.items, menu.icount, "Your Equipment",
+                             PICK_ONE, PLHINT_INVENTORY, selected);
+            free(menu.items);
+            if (!n) /* no selection made */
+                return 0;
+        } else
+            *selected = os_last_slot+1 + 1;
 
         if (*selected == os_last_slot+1 + 2) {
             for (j = 0; j <= os_last_equip; j++) {
@@ -2055,7 +2051,7 @@ doequip(void)
             otmp = getobj(equippables_and_nothing,
                           j == os_wep ? "wield" :
                           j == os_swapwep ? "ready" :
-                          j == os_quiver ? "quiver" : "wear");
+                          j == os_quiver ? "quiver" : "wear", FALSE);
 
             /* check that equipping is not known to be impossible */
             if (otmp && (otmp == &zeroobj ||
@@ -2072,15 +2068,22 @@ doequip(void)
 
     } while (*selected != os_last_slot+1 + 1);
 
+    /* we can get here upon control-A after equipping is finished */
+    if (!changes) {
+        pline("You have already finished changing your equipment.");
+        return 0;
+    }
+
     /* If changing any slow item or two or more fast items, print a message,
        because this will probably take multiple turns. */
-    if (time_consuming_changes >= 2 && flags.verbose)
+    if (time_consuming_changes >= 2 && flags.verbose &&
+        (!resuming || turnstate.continue_message))
         pline("You %s equipping yourself.", resuming ? "continue" : "start");
 
     /* Do the equip. */
     n = equip_heartbeat();
     if (n == 2)
-        set_occupation(equip_occupation_callback, "changing your equipment");
+        action_incomplete("changing your equipment", occ_equip);
     return n > 0;
 }
 
@@ -2134,7 +2137,7 @@ destroy_arm(struct obj *atmp)
     }
 
 #undef DESTROY_ARM
-    stop_occupation();
+    action_interrupted();
     return 1;
 }
 

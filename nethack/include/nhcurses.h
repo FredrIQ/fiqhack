@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -263,6 +263,7 @@ extern nh_bool random_player;
 extern struct nh_cmd_desc *keymap[KEY_MAX];
 extern const char *nhlogo_small[11], *nhlogo_large[14];
 extern char *override_hackdir, *override_userdir;
+extern int repeats_remaining;
 
 /*----------------------------------------------------------------------------*/
 
@@ -273,7 +274,6 @@ extern void set_darkgray(void);
 
 /* dialog.c */
 extern WINDOW *newdialog(int height, int width);
-extern void reset_last_dir(void);
 extern enum nh_direction curses_getdir(const char *query, nh_bool restricted);
 extern char curses_yn_function(const char *query, const char *resp, char def);
 extern char curses_query_key(const char *query, int *count);
@@ -293,13 +293,10 @@ extern void curses_getline(const char *query, char *buffer);
 extern void curses_getline_pw(const char *query, char *buffer);
 
 /* keymap.c */
-extern void reset_prev_cmd(void);
-extern nh_bool check_prev_cmd_same(void);
-extern int get_current_cmd_key(void);
 extern const char *curses_keyname(int key);
 extern void handle_internal_cmd(struct nh_cmd_desc **cmd,
-                                struct nh_cmd_arg *arg, int *count);
-extern const char *get_command(int *count, struct nh_cmd_arg *arg);
+                                struct nh_cmd_arg *arg);
+extern const char *get_command(struct nh_cmd_arg *arg);
 extern void set_next_command(const char *cmd, struct nh_cmd_arg *arg);
 extern void load_keymap(void);
 extern void free_keymap(void);
@@ -383,7 +380,7 @@ extern void replay(void);
 extern nh_bool get_gamedir(enum game_dirs dirtype, fnchar * buf);
 extern void curses_request_command(nh_bool debug, nh_bool completed,
                                    nh_bool interrupted, char *cmd,
-                                   struct nh_cmd_arg *cmdarg, int *limit);
+                                   struct nh_cmd_arg *cmdarg);
 extern void describe_game(char *buf, enum nh_log_status status,
                           struct nh_game_info *gi);
 extern void rungame(nh_bool net);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -443,6 +443,68 @@ mfmagic_set(struct memfile *mf, int32_t magic)
     mfalign(mf, 4);
     mwrite32(mf, magic);
 }
+
+/* Returns TRUE if two memory files are equal. If noisy is set, the code will
+   complain if they aren't, using raw prints. */
+boolean
+mequal(struct memfile *mf1, struct memfile *mf2, boolean noisy)
+{
+    char *p1, *p2;
+    long len, off;
+    struct memfile_tag *tag, *titer;
+    int bin;
+
+    /* Compare the save files. If they're different lengths, we compare only the
+       portion that fits into both files. */
+    len = mf1->pos;
+    if (len > mf2->pos)
+        len = mf2->pos;
+
+    p1 = mmmap(mf1, len, 0);
+    p2 = mmmap(mf2, len, 0);
+
+    if (mf1->pos != mf2->pos || memcmp(p1, p2, len) != 0) {
+
+        if (!noisy)
+            return FALSE;
+
+        raw_printf("Unexpected change to save file contents:\n");
+
+        /* Determine where the desyncs are. */
+        tag = NULL;
+        for (off = 0; off < len; off++) {
+            for (bin = 0; bin < MEMFILE_HASHTABLE_SIZE; bin++)
+                for (titer = mf2->tags[bin]; titer; titer = titer->next)
+                    if (titer->pos == off)
+                        tag = titer;
+
+            if (tag && p1[off] != p2[off]) {
+                raw_printf("desync at %ld (tag %d:%08lx + %ld byte%s)\n",
+                           off, (int)tag->tagtype, tag->tagdata,
+                           off - tag->pos, (off - tag->pos == 1) ? "" : "s");
+
+                if (tag->tagtype == MTAG_LOCATIONS) {
+
+                    const int bpl = 8; /* bytes per location */
+                    int which_location = (off - tag->pos) / bpl;
+
+                    raw_printf("this corresponds to (%d, %d) + %ld byte%s\n",
+                               which_location / ROWNO,
+                               which_location % ROWNO,
+                               (off - tag->pos) % bpl,
+                               ((off - tag->pos) % bpl) == 1 ? "" : "s");
+                }
+
+                tag = NULL; /* don't report further issues with this tag */
+            }
+
+        }
+
+        return FALSE;
+    }
+    return TRUE;
+}
+
 
 
 /* memfile.c */

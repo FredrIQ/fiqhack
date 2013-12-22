@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-21 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -132,10 +132,10 @@ get_gamedir(enum game_dirs dirtype, char *buf)
 static int welcomed;
 void
 curses_request_command(nh_bool debug, nh_bool completed, nh_bool interrupted,
-                       char *cmd, struct nh_cmd_arg *cmdarg, int *limit)
+                       char *cmd, struct nh_cmd_arg *cmdarg)
 {
-    *limit = 0;
-    cmdarg->argtype = CMD_ARG_NONE;
+    int save_repeats;
+    cmdarg->argtype = 0;
 
     if (!welcomed) {
         strcpy(cmd, "welcome");
@@ -143,13 +143,33 @@ curses_request_command(nh_bool debug, nh_bool completed, nh_bool interrupted,
         return;
     }
 
-    /* TODO: Allow user interruption of long commands? */
-    if (!completed && !interrupted) {
+    /*
+     * The behaviour of multiple-turn commands in the client is as follows:
+     * - If no count is given, we continue until the command is completed or
+     *   interrupted.
+     * - If a count is given, we continue for the given number of turns or
+     *   until interrupted, ignoring the completed status.
+     * - When interrupted, we set the count back to 0 /unless/ the next command
+     *   entered by the user is "repeat", in which case we act as though we
+     *   weren't interrupted.
+     */
+    if (!interrupted && !completed && !repeats_remaining) {
+        strcpy(cmd, "repeat");
+        return;
+    }
+    if (!interrupted && repeats_remaining && --repeats_remaining) {
         strcpy(cmd, "repeat");
         return;
     }
 
-    strcpy(cmd, get_command(limit, cmdarg));
+    save_repeats = repeats_remaining;
+    repeats_remaining = 0;
+
+    /* This also sets repeats_remaining. */
+    strcpy(cmd, get_command(cmdarg));
+
+    if (!strcmp(cmd, "repeat"))
+        repeats_remaining = save_repeats;
 }
 
 
@@ -554,8 +574,6 @@ playgame(int fd_or_gameno)
     int reconnect_tries_upon_network_error = 10;
 
     game_is_running = TRUE;
-    reset_prev_cmd();
-    reset_last_dir();
     welcomed = 0;
     do {
         ret = nh_play_game(fd_or_gameno);

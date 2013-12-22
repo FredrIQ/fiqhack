@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-22 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -104,12 +104,48 @@
 
 # define LDM_COUNT      7       /* number of level display modes */
 
-/* command param type specification */
-# define CMD_ARG_NONE (1 << 1)  /* param can be empty */
-# define CMD_ARG_DIR  (1 << 2)  /* param can be a direction */
-# define CMD_ARG_POS  (1 << 3)  /* param can be a position */
-# define CMD_ARG_OBJ  (1 << 4)  /* param can be an object (==inventory letter) */
-# define CMD_ARG_FLAGS (CMD_ARG_DIR | CMD_ARG_POS | CMD_ARG_OBJ)
+/* Command parameters.
+ *
+ * A command description specifies a set of parameters that it understands. All
+ * the parameters are optional. Because the client does not usually have enough
+ * information to explain to the user what an argument means, it should normally
+ * omit arguments, in which case the engine will prompt for them if necessary.
+ *
+ * There are some exceptions to this:
+ *
+ * * CMD_ARG_LIMIT is never prompted for by the engine (omitting it means "no
+ *   limit"); a client should send it if the user specified a limit on the
+ *   command (say, using main keyboard numbers in a vikeys-based interface), and
+ *   not otherwise. If a command does not have a CMD_ARG_LIMIT tag, a client
+ *   should typically interpret what would be a limit as command repeat instead.
+ *   (A limit is an integer that specifies some number which should not be
+ *   exceeded when running the command, e.g. the maximum number of 
+ *
+ * * CMD_ARG_OBJ should normally be omitted, but in clients that use a
+ *   menu-based interface in combination with get_obj_commands(), they have
+ *   enough information to tell the user what the argument means.
+ *
+ * * CMD_MOVE, movement commands, should always be given a direction.
+ *
+ * * Some interfaces for other roguelikes work via having an ability to specify
+ *   a default direction, which is used for all commands. At the time of writing
+ *   there are no NetHack interfaces which work on this principle, but if any
+ *   are written, they should feel free to specify CMD_ARG_DIR in every response
+ *   where it makes sense. A client should /never/ prompt the user for a
+ *   direction except in response to a getpos() call or if CMD_MOVE is set;
+ *   CMD_ARG_DIR is sometimes specified on commands (like zap) where a direction
+ *   is sometimes relevant but sometimes irrelevant. Thus, it should only be
+ *   sent if the server has asked for it, repeating a command when the server
+ *   asked for it on a previous repeat, or as a result of an interface like the
+ *   one described above.
+ */
+
+# define CMD_ARG_DIR   (1 << 0)         /* param can be a direction */
+# define CMD_ARG_POS   (1 << 1)         /* param can be a position */
+# define CMD_ARG_OBJ   (1 << 2)         /* param can be an inventory letter */
+# define CMD_ARG_STR   (1 << 3)         /* param can be a string */
+# define CMD_ARG_SPELL (1 << 4)         /* param can be a spell letter */
+# define CMD_ARG_LIMIT (1 << 5)         /* param can be a limit */
 
 /* command usage hints */
 # define CMD_EXT        (1 << 10)       /* an 'extended' command */
@@ -127,9 +163,6 @@
 
 /* reserved flag for use by ui code that uses struct nh_cmd_desc internally */
 # define CMD_UI         (1U << 31)
-
-# define NH_ARG_NONE    (1<<0)
-# define NH_ARG_DIR     (1<<1)
 
 # define AUTOPICKUP_MAX_RULES 1000      /* this is intended as a rough sanity
                                            check to detect pointers to
@@ -214,7 +247,8 @@ enum nh_command_status {
     COMMAND_DEBUG_ONLY,
     COMMAND_UNKNOWN,
     COMMAND_BAD_ARG,
-    COMMAND_OK
+    COMMAND_OK,
+    COMMAND_ZERO_TIME
 };
 
 enum nh_effect_types {
@@ -458,12 +492,14 @@ struct nh_cmdarg_pos {
 };
 
 struct nh_cmd_arg {
-    unsigned argtype;
-    union {
-        enum nh_direction d;
-        struct nh_cmdarg_pos pos;
-        char invlet;
-    };
+    unsigned argtype; /* which of the other fields are present */
+
+    enum nh_direction dir;     /* CMD_ARG_DIR */
+    struct nh_cmdarg_pos pos;  /* CMD_ARG_POS */
+    char invlet;               /* CMD_ARG_OBJ */
+    char str[BUFSZ];           /* CMD_ARG_STR */
+    char spelllet;             /* CMD_ARG_SPELL */
+    int limit;                 /* CMD_ARG_LIMIT */
 };
 
 /* various extra information that the character knows, and the 
@@ -593,7 +629,7 @@ struct nh_window_procs {
     void (*win_print_message) (int turn, const char *msg);
     void (*win_request_command) (nh_bool debug, nh_bool completed,
                                  nh_bool interrupted, char *command,
-                                 struct nh_cmd_arg *arg, int *limit);
+                                 struct nh_cmd_arg *arg);
     int (*win_display_menu) (struct nh_menuitem *, int, const char *, int, int,
                              int *);
     int (*win_display_objects) (struct nh_objitem *, int, const char *, int,

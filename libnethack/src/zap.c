@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-25 */
+/* Last modified by Alex Smith, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1907,18 +1907,16 @@ backfire(struct obj *otmp)
 static const char zap_syms[] = { WAND_CLASS, 0 };
 
 int
-dozap(struct obj *obj)
+dozap(const struct nh_cmd_arg *arg)
 {
     int damage;
     schar dx = 0, dy = 0, dz = 0;
+    struct obj *obj;
 
     if (check_capacity(NULL))
         return 0;
 
-    if (obj && !validate_object(obj, zap_syms, "zap"))
-        return 0;
-    else if (!obj)
-        obj = getobj(zap_syms, "zap");
+    obj = getargobj(arg, zap_syms, "zap");
     if (!obj)
         return 0;
 
@@ -1934,7 +1932,7 @@ dozap(struct obj *obj)
         exercise(A_STR, FALSE);
         return 1;
     } else if (!(objects[obj->otyp].oc_dir == NODIR) &&
-               !getdir(NULL, &dx, &dy, &dz)) {
+               !getargdir(arg, NULL, &dx, &dy, &dz)) {
         if (!Blind)
             pline("%s glows and fades.", The(xname(obj)));
         /* make him pay for knowing !NODIR */
@@ -3539,7 +3537,7 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy)
                 miss(fltxt, mon);
             }
         } else if (sx == u.ux && sy == u.uy && range >= 0) {
-            nomul(0, NULL);
+            action_interrupted();
             if (u.usteed && !rn2(3) && !mon_reflects(u.usteed, NULL)) {
                 mon = u.usteed;
                 goto buzzmonst;
@@ -3566,8 +3564,7 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy)
                 if (!Blind)
                     pline("Your vision quickly clears.");
             }
-            stop_occupation();
-            nomul(0, NULL);
+            action_interrupted();
         }
 
         if (!ZAP_POS(loc->typ) || (closed_door(level, sx, sy) && (range >= 0))) {
@@ -3836,10 +3833,6 @@ zap_over_floor(xchar x, xchar y, int type, boolean * shopdamage)
             } else if (hear_txt) {
                 if (flags.soundok)
                     You_hear(hear_txt);
-            }
-            if (picking_at(x, y)) {
-                stop_occupation();
-                reset_pick();
             }
         }
     }
@@ -4237,7 +4230,8 @@ makewish(void)
     if (flags.verbose)
         pline("You may wish for an object.");
 retry:
-    getlin("For what do you wish?", buf);
+    /* never repeat the part where you specify what to wish for */
+    getlin("For what do you wish?", buf, FALSE);
 
     if (buf[0] == '\033')
         buf[0] = 0;
