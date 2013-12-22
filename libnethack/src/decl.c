@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-12 */
+/* Last modified by Sean Hunt, 2013-12-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -168,12 +168,6 @@ struct histevent *histevents;
 unsigned long long turntime;
 int current_timezone, replay_timezone;
 unsigned int timer_id = 1;
-
-/* This global has a funny set of rules. Because it can be given to the client
- * for use in configuration when a game is not in progress, it must be valid at
- * all times when a game is not in play. Accordingly, it is reset in program
- * initialization and in terminate() */
-struct nh_option_desc *options = 0;
 
 char toplines[MSGCOUNT][BUFSZ];
 int toplines_count[MSGCOUNT];
