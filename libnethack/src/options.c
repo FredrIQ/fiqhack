@@ -624,19 +624,6 @@ nonew:
 }
 
 
-int
-dotogglepickup(void)
-{
-    union nh_optvalue val;
-
-    val.b = !flags.pickup;
-    set_option("autopickup", val, FALSE);
-
-    pline("Autopickup: %s.", flags.pickup ? "ON" : "OFF");
-    return 0;
-}
-
-
 static int
 change_inv_order(char *op)
 {
