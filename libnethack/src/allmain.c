@@ -390,9 +390,14 @@ nh_play_game(int fd)
 
         int cmdidx;
 
-        (*windowprocs.win_request_command)
-            (wizard, !flags.incomplete, flags.interrupted, cmd, &arg);
-        cmdidx = get_command_idx(cmd);
+        if (Helpless && !program_state.viewing) {
+            cmdidx = get_command_idx("wait");
+            arg.argtype = 0;
+        } else {
+            (*windowprocs.win_request_command)
+                (wizard, !flags.incomplete, flags.interrupted, cmd, &arg);
+            cmdidx = get_command_idx(cmd);
+        }
 
         if (cmdidx < 0) {
             pline("Unrecognised command '%s'", cmd);
