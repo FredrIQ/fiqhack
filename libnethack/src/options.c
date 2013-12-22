@@ -137,7 +137,6 @@ static const struct nh_option_desc const_options[] = {
     {"autoquiver",
      "when firing with an empty quiver, select something suitable", FALSE,
      OPTTYPE_BOOL, {.b = FALSE}},
-    {"comment", "has no effect", FALSE, OPTTYPE_STRING, {.s = ""}},
     {"confirm", "ask before hitting tame or peaceful monsters", FALSE,
      OPTTYPE_BOOL, {.b = TRUE}},
     {"disclose", "whether to disclose information at end of game", FALSE,
@@ -246,6 +245,17 @@ static const char def_inv_order[MAXOCLASSES] = {
     TOOL_CLASS, GEM_CLASS, ROCK_CLASS, BALL_CLASS, CHAIN_CLASS, 0,
 };
 
+/* This global has a funny set of rules. Because it can be given to the client
+ * for use in configuration when a game is not in progress, it must be valid at
+ * all times when a game is not in play. Accordingly, it is reset in program
+ * initialization and in terminate().
+ *
+ * Additionally, the set of values contained within is not necessarily up to
+ * date. Actual option values are stored elsewhere (such as on flags or u).
+ * Calling nh_get_options() is required to update the values to match reality.
+ */
+struct nh_option_desc *options = 0;
+
 
 /* most environment variables will eventually be printed in an error
  * message if they don't work, and most error message paths go through
@@ -326,7 +336,6 @@ init_opt_struct(void)
     build_race_spec();
 
     /* initialize option definitions */
-    nhlib_find_option(options, "comment")->s.maxlen = BUFSZ;
     nhlib_find_option(options, "disclose")->e = disclose_spec;
     nhlib_find_option(options, "fruit")->s.maxlen = PL_FSIZ;
     nhlib_find_option(options, "menustyle")->e = menustyle_spec;
@@ -335,7 +344,7 @@ init_opt_struct(void)
     nhlib_find_option(options, "runmode")->e = runmode_spec;
     nhlib_find_option(options, "autopickup_rules")->a = autopickup_spec;
 
-    nhlib_find_option(options, "name")->s.maxlen = PL_PSIZ;
+    nhlib_find_option(options, "name")->s.maxlen = PL_NSIZ;
     nhlib_find_option(options, "mode")->e = mode_spec;
     nhlib_find_option(options, "align")->e = align_spec;
     nhlib_find_option(options, "gender")->e = gender_spec;
@@ -428,12 +437,11 @@ set_option(const char *name, union nh_optvalue value, boolean isstring)
         }
         *bvar = option->value.b;
         return TRUE;
-    } else if (!strcmp("comment", option->name)) {
-        /* do nothing */
     } else if (!strcmp("disclose", option->name)) {
         flags.end_disclose = option->value.e;
     } else if (!strcmp("fruit", option->name)) {
-        strncpy(pl_fruit, option->value.s, PL_FSIZ);
+        strncpy(pl_fruit, option->value.s, PL_FSIZ-1);
+        pl_fruit[PL_FSIZ - 1] = '\0';
         if (objects)    /* don't do fruitadd before the game is running */
             fruitadd(pl_fruit);
     } else if (!strcmp("menustyle", option->name)) {
@@ -468,13 +476,17 @@ set_option(const char *name, union nh_optvalue value, boolean isstring)
     }
 
     else if (!strcmp("name", option->name)) {
-        strncpy(plname, option->value.s, PL_PSIZ);
+        strncpy(plname, option->value.s, PL_NSIZ-1);
+        plname[PL_NSIZ - 1] = '\0';
     } else if (!strcmp("catname", option->name)) {
-        strncpy(catname, option->value.s, PL_PSIZ);
+        strncpy(catname, option->value.s, PL_PSIZ-1);
+        catname[PL_PSIZ - 1] = '\0';
     } else if (!strcmp("dogname", option->name)) {
-        strncpy(dogname, option->value.s, PL_PSIZ);
+        strncpy(dogname, option->value.s, PL_PSIZ-1);
+        dogname[PL_PSIZ - 1] = '\0';
     } else if (!strcmp("horsename", option->name)) {
-        strncpy(horsename, option->value.s, PL_PSIZ);
+        strncpy(horsename, option->value.s, PL_PSIZ-1);
+        horsename[PL_PSIZ - 1] = '\0';
     } else if (!strcmp("pettype", option->name)) {
         preferred_pet = (char)option->value.e;
     }
@@ -505,6 +517,88 @@ nh_set_option(const char *name, union nh_optvalue value, boolean isstring)
 struct nh_option_desc *
 nh_get_options(void)
 {
+    /* Outside of a game, don't attempt to recover options from state; all
+     * options should have default values. */
+    if (!program_state.game_running)
+        return options;
+
+    struct nh_option_desc *option;
+    for (option = options; *option->name; ++option) {
+        if (option->type != OPTTYPE_BOOL) {
+            boolean *bvar = nhlib_find_boolopt(boolopt_map, option->name);
+
+            if (!bvar) {
+                impossible("no boolean for option '%s'", option->name);
+                return FALSE;
+            }
+
+            option->value.b = *bvar;
+        }
+
+        else if (!strcmp("disclose", option->name)) {
+            option->value.e = flags.end_disclose;
+        } else if (!strcmp("fruit", option->name)) {
+            if (option->value.s)
+                free(option->value.s);
+            option->value.s = malloc(PL_FSIZ);
+            strncpy(option->value.s, pl_fruit, PL_FSIZ-1);
+            option->value.s[PL_FSIZ - 1] = '\0';
+        } else if (!strcmp("menustyle", option->name)) {
+            option->value.e = flags.menu_style;
+        } else if (!strcmp("packorder", option->name)) {
+            if (option->value.s)
+                free(option->value.s);
+            option->value.s = malloc(MAXOCLASSES);
+            memcpy(option->value.s, flags.inv_order, MAXOCLASSES);
+        } else if (!strcmp("pickup_burden", option->name)) {
+            option->value.e = flags.runmode;
+        } else if (!strcmp("autopickup_rules", option->name)) {
+            if (option->value.ar) {
+                free(option->value.ar->rules);
+                free(option->value.ar);
+            }
+            option->value.ar = nhlib_copy_autopickup_rules(flags.ap_rules);
+        } else if (!strcmp("mode", option->name)) {
+            option->value.e =
+                flags.debug ? MODE_WIZARD :
+                flags.explore ? MODE_EXPLORE : MODE_NORMAL;
+        } else if (!strcmp("align", option->name)) {
+            option->value.e = u.initalign;
+        } else if (!strcmp("gender", option->name)) {
+            option->value.e = u.initgend;
+        } else if (!strcmp("race", option->name)) {
+            option->value.e = u.initrace;
+        } else if (!strcmp("role", option->name)) {
+            option->value.e = u.initrole;
+        } else if (!strcmp("name", option->name)) {
+            if (option->value.s)
+                free(option->value.s);
+            option->value.s = malloc(PL_NSIZ);
+            strncpy(option->value.s, plname, PL_NSIZ-1);
+            option->value.s[PL_NSIZ - 1] = '\0';
+        } else if (!strcmp("catname", option->name)) {
+            if (option->value.s)
+                free(option->value.s);
+            option->value.s = malloc(PL_PSIZ);
+            strncpy(option->value.s, catname, PL_PSIZ-1);
+            option->value.s[PL_PSIZ - 1] = '\0';
+        } else if (!strcmp("dogname", option->name)) {
+            if (option->value.s)
+                free(option->value.s);
+            option->value.s = malloc(PL_PSIZ);
+            strncpy(option->value.s, dogname, PL_PSIZ-1);
+            option->value.s[PL_PSIZ - 1] = '\0';
+        } else if (!strcmp("horsename", option->name)) {
+            if (option->value.s)
+                free(option->value.s);
+            option->value.s = malloc(PL_PSIZ);
+            strncpy(option->value.s, horsename, PL_PSIZ-1);
+            option->value.s[PL_PSIZ - 1] = '\0';
+        } else if (!strcmp("pettype", option->name)) {
+            option->value.e = preferred_pet;
+        }
+    }
+
     return options;
 }
 
