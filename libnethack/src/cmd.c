@@ -2327,7 +2327,7 @@ static int
 doautoexplore(const struct nh_cmd_arg *arg)
 {
     (void) arg;
-    iflags.autoexplore = TRUE;
+
     flags.travel = 1;
     iflags.travel1 = 1;
     flags.run = 8;
@@ -2365,7 +2365,6 @@ dotravel(const struct nh_cmd_arg *arg)
     }
     iflags.travelcc.x = u.tx = cc.x;
     iflags.travelcc.y = u.ty = cc.y;
-    iflags.autoexplore = FALSE;
 
     flags.travel = 1;
     iflags.travel1 = 1;

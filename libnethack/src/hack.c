@@ -502,7 +502,7 @@ invocation_pos(const d_level * dlev, xchar x, xchar y)
 static void
 autoexplore_msg(const char *text, int mode)
 {
-    if (iflags.autoexplore) {
+    if (flags.occupation == occ_autoexplore) {
         char tmp[BUFSZ];
 
         strcpy(tmp, text);
@@ -1059,7 +1059,7 @@ domove(const struct nh_cmd_arg *arg)
         const char *stop_which = NULL;
 
         if (flags.travel) {
-            if (iflags.autoexplore)
+            if (flags.occupation == occ_autoexplore)
                 stop_which = "explore";
             else
                 stop_which = "travel";
@@ -1074,7 +1074,7 @@ domove(const struct nh_cmd_arg *arg)
     }
 
     if (flags.travel) {
-        if (iflags.autoexplore) {
+        if (flags.occupation == occ_autoexplore) {
             if (Blind) {
                 pline("You can't see where you're going!");
                 action_completed();
@@ -1094,7 +1094,6 @@ domove(const struct nh_cmd_arg *arg)
             u.tx = u.ux;
             u.ty = u.uy;
             if (!findtravelpath(unexplored, &dx, &dy)) {
-                iflags.autoexplore = FALSE;
                 pline
                     ("Nowhere else around here can be automatically explored.");
             }
@@ -1204,7 +1203,8 @@ domove(const struct nh_cmd_arg *arg)
              (is_pool(level, x, y) || is_lava(level, x, y)) &&
              level->locations[x][y].seenv)) {
             if (flags.run >= 2) {
-                if (trap && trap->tseen && flags.run == 8 && iflags.autoexplore)
+                if (trap && trap->tseen && flags.run == 8 &&
+                    flags.occupation == occ_autoexplore)
                     autoexplore_msg("a trap", DO_MOVE);
                 action_completed();
                 return 0;
@@ -1480,7 +1480,8 @@ domove(const struct nh_cmd_arg *arg)
     /* If no 'm' prefix, veto dangerous moves */
     if (!flags.nopick || flags.run) {
         if (!Levitation && !Flying && !is_clinger(youmonst.data) && !Stunned &&
-            !Confusion && (!flags.travel || !iflags.autoexplore) &&
+            !Confusion &&
+            (!flags.travel || flags.occupation != occ_autoexplore) &&
             (is_lava(level, x, y) || !HSwimming) &&
             (is_pool(level, x, y) || is_lava(level, x, y)) &&
             level->locations[x][y].seenv && !is_pool(level, u.ux, u.uy) &&
@@ -1603,7 +1604,7 @@ domove(const struct nh_cmd_arg *arg)
             if (IS_DOOR(tmpr->typ) || IS_ROCK(tmpr->typ) ||
                 IS_FURNITURE(tmpr->typ))
                 action_completed();
-        } else if (flags.travel && iflags.autoexplore) {
+        } else if (flags.travel && flags.occupation == occ_autoexplore) {
             int wallcount, mem_bg;
 
             /* autoexplore stoppers: being orthogonally adjacent to a boulder,
@@ -2577,7 +2578,6 @@ do_rush(const struct nh_cmd_arg *arg, int runmode, boolean move_only)
 {
     int ret;
 
-    iflags.autoexplore = FALSE;
     flags.travel = iflags.travel1 = 0;
     flags.run = runmode;
 

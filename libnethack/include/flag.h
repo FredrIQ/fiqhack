@@ -153,7 +153,6 @@ struct instance_flags {
     boolean showrace;   /* show hero glyph by race rather than by role */
     int runmode;        /* update screen display during run moves */
     boolean botl;       /* redo status line */
-    boolean autoexplore;        /* currently autoexploring */
     boolean travel_interrupt;   /* Interrupt travel if there is a hostile *
                                    monster in sight. */
     struct nh_autopickup_rules *ap_rules;

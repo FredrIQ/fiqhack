@@ -224,7 +224,8 @@ pickup(int what)
         /* If there's anything here, stop running and travel, but not
            autoexplore unless it picks something up, which is handled later. */
         if (OBJ_AT(u.ux, u.uy) && flags.run &&
-            (flags.run != 8 || (flags.travel && !iflags.autoexplore)) &&
+            (flags.run != 8 || (flags.travel &&
+                                flags.occupation != occ_autoexplore)) &&
             !flags.nopick)
             action_completed();
     }
@@ -291,7 +292,7 @@ menu_pickup:
 
     /* Stop autoexplore if this pile hasn't been explored or auto-pickup (tried 
        to) pick up anything. */
-    if (flags.run == 8 && flags.travel && iflags.autoexplore &&
+    if (flags.run == 8 && flags.travel && flags.occupation == occ_autoexplore &&
         (!level->locations[u.ux][u.uy].mem_stepped ||
          (autopickup && n_tried > 0)))
         action_completed();
