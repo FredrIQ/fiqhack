@@ -352,6 +352,7 @@ save_you(struct memfile *mf, struct you *y)
     mwrite32(mf, y->utraptype);
     mwrite32(mf, y->uhunger);
     mwrite32(mf, y->uhs);
+    mwrite32(mf, y->oldcap);
     mwrite32(mf, y->umconf);
     mwrite32(mf, y->nv_range);
     mwrite32(mf, y->bglyph);

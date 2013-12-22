@@ -89,6 +89,8 @@ struct you {
     int uhunger;        /* refd only in eat.c and shk.c */
     unsigned uhs;       /* hunger state - see eat.c */
 
+    int oldcap;         /* carry cap on previous turn */
+
     unsigned uintrinsic[LAST_PROP + 1];     /* uses defines from prop.h */
 
     struct obj *utracked[tos_last_slot + 1];      /* occupation objects */

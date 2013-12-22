@@ -48,9 +48,6 @@ static const char moderateloadmsg[] = "You have a little trouble lifting";
 static const char nearloadmsg[] = "You have much trouble lifting";
 static const char overloadmsg[] = "You have extreme difficulty lifting";
 
-static int oldcap;
-
-
 /* look at the objects at our location, unless there are too many of them */
 static void
 check_here(boolean picked_some)
@@ -1128,7 +1125,7 @@ pick_obj(struct obj *otmp)
 void
 reset_encumber_msg(void)
 {
-    oldcap = UNENCUMBERED;
+    u.oldcap = UNENCUMBERED;
 }
 
 /*
@@ -1140,7 +1137,7 @@ encumber_msg(void)
 {
     int newcap = near_capacity();
 
-    if (oldcap < newcap) {
+    if (u.oldcap < newcap) {
         switch (newcap) {
         case 1:
             pline("Your movements are slowed slightly because of your load.");
@@ -1158,7 +1155,7 @@ encumber_msg(void)
             break;
         }
         iflags.botl = 1;
-    } else if (oldcap > newcap) {
+    } else if (u.oldcap > newcap) {
         switch (newcap) {
         case 0:
             pline("Your movements are now unencumbered.");
@@ -1177,7 +1174,7 @@ encumber_msg(void)
         iflags.botl = 1;
     }
 
-    oldcap = newcap;
+    u.oldcap = newcap;
     return newcap;
 }
 

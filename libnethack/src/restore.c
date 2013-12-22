@@ -544,6 +544,7 @@ restore_you(struct memfile *mf, struct you *y)
     y->utraptype = mread32(mf);
     y->uhunger = mread32(mf);
     y->uhs = mread32(mf);
+    y->oldcap = mread32(mf);
     y->umconf = mread32(mf);
     y->nv_range = mread32(mf);
     y->bglyph = mread32(mf);
