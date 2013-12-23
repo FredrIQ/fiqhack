@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -35,11 +35,6 @@ static const char SQL_init_games_table[] =
     "done boolean NOT NULL DEFAULT FALSE, "
     "owner integer NOT NULL REFERENCES users (uid), " "ts timestamp NOT NULL, "
     "start_ts timestamp NOT NULL" ");";
-
-static const char SQL_init_options_table[] =
-    "CREATE TABLE options(" "uid integer NOT NULL REFERENCES users (uid), "
-    "optname text NOT NULL, " "opttype integer NOT NULL, "
-    "optvalue text NOT NULL, " "PRIMARY KEY(uid, optname)" ");";
 
 static const char SQL_init_topten_table[] =
     "CREATE TABLE topten(" "gid integer PRIMARY KEY REFERENCES games (gid), "
@@ -107,17 +102,6 @@ static const char SQL_list_games[] =
     "FROM games AS g JOIN users AS u ON g.owner = u.uid "
     "WHERE (u.uid = $1::integer OR $1::integer = 0) AND g.done = $2::boolean "
     "ORDER BY g.ts DESC " "LIMIT $3::integer;";
-
-static const char SQL_update_option[] =
-    "UPDATE options " "SET optvalue = $1::text "
-    "WHERE uid = $2::integer AND optname = $3::text;";
-
-static const char SQL_insert_option[] =
-    "INSERT INTO options (optvalue, uid, optname, opttype) "
-    "VALUES ($1::text, $2::integer, $3::text, $4::integer);";
-
-static const char SQL_get_options[] =
-    "SELECT optname, optvalue " "FROM options " "WHERE uid = $1::integer;";
 
 static const char SQL_add_topten_entry[] =
     "INSERT INTO topten (gid, points, hp, maxhp, deaths, end_how, death, entrytxt) "
@@ -211,8 +195,7 @@ check_database(void)
      */
     if (!check_create_table("users", SQL_init_user_table) ||
         !check_create_table("games", SQL_init_games_table) ||
-        !check_create_table("topten", SQL_init_topten_table) ||
-        !check_create_table("options", SQL_init_options_table))
+        !check_create_table("topten", SQL_init_topten_table))
         goto err;
 
     /* 
@@ -559,81 +542,6 @@ db_list_games(int completed, int uid, int limit, int *count)
     PQclear(res);
     return files;
 }
-
-
-void
-db_set_option(int uid, const char *optname, int type, const char *optval)
-{
-    PGresult *res;
-    char uidstr[16], typestr[16];
-    const char *const params[] = { optval, uidstr, optname, typestr };
-    const int paramFormats[] = { 0, 0, 0, 0 };
-    const char *numrows;
-
-    sprintf(uidstr, "%d", uid);
-    sprintf(typestr, "%d", type);
-
-    /* try to update first */
-    res =
-        PQexecParams(conn, SQL_update_option, 3, NULL, params, NULL,
-                     paramFormats, 0);
-    numrows = PQcmdTuples(res);
-    if (PQresultStatus(res) == PGRES_COMMAND_OK && atoi(numrows) == 1) {
-        PQclear(res);
-        return;
-    }
-    PQclear(res);
-
-    /* update failed, try to insert */
-    res =
-        PQexecParams(conn, SQL_insert_option, 4, NULL, params, NULL,
-                     paramFormats, 0);
-    numrows = PQcmdTuples(res);
-    if (PQresultStatus(res) == PGRES_COMMAND_OK && atoi(numrows) == 1) {
-        PQclear(res);
-        return;
-    }
-    PQclear(res);
-
-    /* insert failed too */
-    log_msg("Failed to store an option. '%s = %s': %s", optname, optval,
-            PQerrorMessage(conn));
-}
-
-
-void
-db_restore_options(int uid)
-{
-    PGresult *res;
-    char uidstr[16];
-    const char *const params[] = { uidstr };
-    const char *optname;
-    const int paramFormats[] = { 0 };
-    int i, count, ncol, vcol;
-    union nh_optvalue value;
-
-    sprintf(uidstr, "%d", uid);
-
-    res =
-        PQexecParams(conn, SQL_get_options, 1, NULL, params, NULL, paramFormats,
-                     0);
-    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-        log_msg("get_options error: %s", PQerrorMessage(conn));
-        PQclear(res);
-        return;
-    }
-
-    count = PQntuples(res);
-    ncol = PQfnumber(res, "optname");
-    vcol = PQfnumber(res, "optvalue");
-    for (i = 0; i < count; i++) {
-        optname = PQgetvalue(res, i, ncol);
-        value.s = PQgetvalue(res, i, vcol);
-        nh_set_option(optname, value, 1);
-    }
-    PQclear(res);
-}
-
 
 void
 db_add_topten_entry(int gid, int points, int hp, int maxhp, int deaths,

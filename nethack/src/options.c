@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-22 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -159,14 +159,14 @@ curses_get_nh_opts(void)
 
 
 nh_bool
-curses_set_option(const char *name, union nh_optvalue value, nh_bool isstring)
+curses_set_option(const char *name, union nh_optvalue value)
 {
     nh_bool game_option = FALSE;
     struct nh_option_desc *option = nhlib_find_option(curses_options, name);
 
     if (!option) {
         if (game_is_running)
-            return nh_set_option(name, value, isstring);
+            return nh_set_option(name, value);
 
         /* If the game is not running, update our local copy of options. */
         if (!nh_options || !(option = nhlib_find_option(nh_options, name))) {
@@ -179,19 +179,10 @@ curses_set_option(const char *name, union nh_optvalue value, nh_bool isstring)
         /* FIXME: impossible() */
         return FALSE;
 
-    if (isstring)
-        value = nhlib_string_to_optvalue(option, value.s);
-
     if (!nhlib_option_value_ok(option, value))
         return FALSE;
 
     nhlib_copy_option_value(option, value);
-
-    /* We may have allocated a new copy of the autopickup rules. */
-    if (isstring && option->type == OPTTYPE_AUTOPICKUP_RULES) {
-        free(value.ar->rules);
-        free(value.ar);
-    }
 
     if (game_option)
         return TRUE;
@@ -300,7 +291,7 @@ init_options(void)
     /* set up option defaults; this is necessary for options that are not
        specified in the config file */
     for (i = 0; curses_options[i].name; i++)
-        curses_set_option(curses_options[i].name, curses_options[i].value, FALSE);
+        curses_set_option(curses_options[i].name, curses_options[i].value);
 
     read_ui_config();
 }
@@ -521,7 +512,7 @@ query_new_value(struct win_menu *mdat, int idx)
         return FALSE;
     }
 
-    if (!curses_set_option(option->name, value, FALSE)) {
+    if (!curses_set_option(option->name, value)) {
         sprintf(strbuf, "new value for %s rejected", option->name);
         curses_msgwin(strbuf);
     } else
@@ -940,7 +931,7 @@ show_autopickup_menu(struct nh_option_desc *opt)
         edit_ap_rule(&opt->a, value.ar, id);
     } while (n > 0);
 
-    curses_set_option(opt->name, value, FALSE);
+    curses_set_option(opt->name, value);
 
     free(value.ar->rules);
     free(value.ar);
@@ -954,6 +945,8 @@ static void
 read_config_line(char *line)
 {
     char *comment, *delim, *name, *value;
+    struct nh_option_desc *option;
+    struct nh_option_desc *optlist;
     union nh_optvalue optval;
 
     comment = strchr(line, '#');
@@ -990,8 +983,24 @@ read_config_line(char *line)
         *delim = '\0';
     }
 
-    optval.s = value;
-    curses_set_option(name, optval, TRUE);
+    /* Find an options list with which to parse this option name. */
+    option = nhlib_find_option(curses_options, name);
+    if (!option) {
+        optlist = curses_get_nh_opts();
+        if (optlist)
+            option = nhlib_find_option(optlist, name);
+    }
+
+    if (!option)
+        /* FIXME: impossible() */
+        return;
+
+    optval = nhlib_string_to_optvalue(option, value);
+    curses_set_option(name, optval);
+    if (option->type == OPTTYPE_AUTOPICKUP_RULES) {
+        free(optval.ar->rules);
+        free(optval.ar);
+    }
 }
 
 
@@ -1099,8 +1108,8 @@ read_nh_config(void)
     fnchar filename[BUFSZ];
 
     /* First, we need to make a local copy of the game's options to change when
-     * no game is in progress, as the game will reject any changes while it is
-     * in operation. */
+       no game is in progress, as the game will reject any changes while it is
+       in operation. */
     struct nh_option_desc *opts = nh_get_options();
     if (!opts)
         /* TODO: panic? */

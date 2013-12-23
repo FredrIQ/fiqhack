@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-22 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -548,14 +548,14 @@ free_option_data(struct nh_option_desc *opt)
 
 
 nh_bool
-nhnet_set_option(const char *name, union nh_optvalue value, nh_bool isstr)
+nhnet_set_option(const char *name, union nh_optvalue value)
 {
     int ret, i;
     json_t *jmsg, *joval, *jobj;
     struct nh_option_desc *opts, *opt;
     struct nh_autopickup_rule *r;
 
-    ret = nh_set_option(name, value, isstr);
+    ret = nh_set_option(name, value);
     if (!nhnet_active())
         return ret;
 
@@ -569,7 +569,7 @@ nhnet_set_option(const char *name, union nh_optvalue value, nh_bool isstr)
             opt = &opts[i];
 
     if (opt) {
-        if (isstr || opt->type == OPTTYPE_STRING)
+        if (opt->type == OPTTYPE_STRING)
             joval = json_string(value.s);
         else if (opt->type == OPTTYPE_INT || opt->type == OPTTYPE_ENUM ||
                  opt->type == OPTTYPE_BOOL) {
@@ -590,8 +590,7 @@ nhnet_set_option(const char *name, union nh_optvalue value, nh_bool isstr)
         }
 
         jmsg =
-            json_pack("{ss,so,si}", "name", name, "value", joval, "isstr",
-                      isstr);
+            json_pack("{ss,so}", "name", name, "value", joval);
         jmsg = send_receive_msg("set_option", jmsg);
         if (json_unpack(jmsg, "{si,so!}", "return", &ret, "option", &jobj) ==
             -1) {

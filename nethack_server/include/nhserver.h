@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-05 */
+/* Last modified by Alex Smith, 2013-12-23 */
 #ifndef NHSERVER_H
 # define NHSERVER_H
 
@@ -173,9 +173,6 @@ extern int db_get_game_filename(int uid, int gid, char *namebuf, int buflen);
 extern void db_delete_game(int uid, int gid);
 extern struct gamefile_info *db_list_games(int completed, int uid, int limit,
                                            int *count);
-extern void db_set_option(int uid, const char *optname, int type,
-                          const char *optval);
-extern void db_restore_options(int uid);
 extern void db_add_topten_entry(int gid, int points, int hp, int maxhp,
                                 int deaths, int end_how, const char *death,
                                 const char *entrytxt);

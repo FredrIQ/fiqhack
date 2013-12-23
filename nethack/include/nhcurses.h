@@ -343,8 +343,7 @@ extern void free_wrap(char **wrap_output);
 
 /* options.c */
 extern struct nh_option_desc *curses_get_nh_opts(void);
-extern nh_bool curses_set_option(const char *name, union nh_optvalue value,
-                                 nh_bool isstring);
+extern nh_bool curses_set_option(const char *name, union nh_optvalue value);
 extern void display_options(nh_bool change_birth_opt);
 extern void print_options(void);
 extern void init_options(void);

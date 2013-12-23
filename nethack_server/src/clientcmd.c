@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-22 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -739,17 +739,16 @@ json_option(const struct nh_option_desc *option)
 static void
 ccmd_set_option(json_t * params)
 {
-    const char *optname, *optstr, *pattern;
+    const char *optname, *pattern;
     json_t *jmsg, *joval, *jopt;
-    int isstr, i, ret;
+    int  i, ret;
     const struct nh_option_desc *opts, *option;
     union nh_optvalue value;
     struct nh_autopickup_rules ar = { NULL, 0 };
     struct nh_autopickup_rule *r;
 
     if (json_unpack
-        (params, "{ss,so,si*}", "name", &optname, "value", &joval, "isstr",
-         &isstr) == -1)
+        (params, "{ss,so*}", "name", &optname, "value", &joval) == -1)
         exit_client("Bad parameters for set_option");
 
     /* find the option_desc for the options that should be set; the option type
@@ -763,7 +762,7 @@ ccmd_set_option(json_t * params)
     }
 
     /* decode the option value depending on the option type */
-    if (isstr || option->type == OPTTYPE_STRING) {
+    if (option->type == OPTTYPE_STRING) {
         if (!json_is_string(joval))
             exit_client("could not decode option string");
         value.s = (char *)json_string_value(joval);
@@ -795,7 +794,7 @@ ccmd_set_option(json_t * params)
             value.ar = NULL;
     }
 
-    ret = nh_set_option(optname, value, isstr);
+    ret = nh_set_option(optname, value);
 
     if (option->type == OPTTYPE_AUTOPICKUP_RULES)
         free(ar.rules);
@@ -804,10 +803,7 @@ ccmd_set_option(json_t * params)
     option = nhlib_const_find_option(opts, optname);
 
     jopt = json_option(option);
-    optstr = nh_get_option_string(option);
 
-    if (ret == TRUE)
-        db_set_option(user_info.uid, optname, option->type, optstr);
     /* return the altered option struct and the string representation to the
        client. The intent is to save some network round trips and make a
        separate get_option_string message unneccessary */

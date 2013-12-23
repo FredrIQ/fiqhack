@@ -531,7 +531,7 @@ dotogglepickup(void)
     }
 
     val.b = !option->value.b;
-    curses_set_option("autopickup", val, FALSE);
+    curses_set_option("autopickup", val);
 
     curses_msgwin(val.b ? "Autopickup now ON" : "Autopickup now OFF");
 }

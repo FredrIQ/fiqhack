@@ -50,7 +50,7 @@ extern nh_drawing_info_p EXPORT(nh_get_drawing_info) (void);
 
 /* options.c */
 extern nh_bool EXPORT(nh_set_option) (
-    const char *name, union nh_optvalue value, nh_bool isstr);
+    const char *name, union nh_optvalue value);
 extern nh_option_desc_p EXPORT(nh_get_options) (void);
 extern const_char_p EXPORT(nh_get_option_string) (
     const struct nh_option_desc *opt);

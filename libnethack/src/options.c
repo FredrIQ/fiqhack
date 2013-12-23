@@ -392,12 +392,12 @@ initoptions(void)
     strncpy(pl_fruit, obj_descr[SLIME_MOLD].oc_name, PL_FSIZ);
 
     for (i = 0; options[i].name; i++)
-        nh_set_option(options[i].name, options[i].value, FALSE);
+        nh_set_option(options[i].name, options[i].value);
 }
 
 
 static boolean
-set_option(const char *name, union nh_optvalue value, boolean isstring)
+set_option(const char *name, union nh_optvalue value)
 {
     struct nh_option_desc *option = NULL;
 
@@ -413,19 +413,10 @@ set_option(const char *name, union nh_optvalue value, boolean isstring)
     if (!option || (option->birth_option && program_state.game_running))
         return FALSE;
 
-    if (isstring)
-        value = nhlib_string_to_optvalue(option, value.s);
-
     if (!nhlib_option_value_ok(option, value))
         return FALSE;
 
     nhlib_copy_option_value(option, value);
-
-    /* We may have allocated a new copy of the autopickup rules. */
-    if (isstring && option->type == OPTTYPE_AUTOPICKUP_RULES) {
-        free(value.ar->rules);
-        free(value.ar);
-    }
 
     if (option->type == OPTTYPE_BOOL) {
         boolean *bvar = nhlib_find_boolopt(boolopt_map, option->name);
@@ -500,13 +491,13 @@ set_option(const char *name, union nh_optvalue value, boolean isstring)
 
 
 boolean
-nh_set_option(const char *name, union nh_optvalue value, boolean isstring)
+nh_set_option(const char *name, union nh_optvalue value)
 {
     boolean rv;
 
     API_ENTRY_CHECKPOINT_RETURN_ON_ERROR(FALSE);
 
-    rv = set_option(name, value, isstring);
+    rv = set_option(name, value);
 
     API_EXIT();
     return rv;

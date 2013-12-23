@@ -245,7 +245,7 @@ nh_create_game(int fd, struct nh_option_desc *opts)
 
     /* options must be initialized before startup_common for plname */
     for (i = 0; opts[i].name; i++) {
-        nh_set_option(opts[i].name, opts[i].value, FALSE);
+        nh_set_option(opts[i].name, opts[i].value);
     }
 
     turntime = (unsigned long long)time(NULL);
