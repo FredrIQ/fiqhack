@@ -2648,7 +2648,8 @@ dofight(const struct nh_cmd_arg *arg)
 int
 domovecmd(const struct nh_cmd_arg *arg)
 {
-    return domove(arg, flags.interaction_mode);
+    return domove(arg, turnstate.continue_message ?
+                  flags.interaction_mode : exploration_interaction_status());
 }
 
 int
