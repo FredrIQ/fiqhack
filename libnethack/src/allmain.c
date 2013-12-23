@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Sean Hunt, 2013-12-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -243,17 +243,17 @@ nh_create_game(int fd, struct nh_option_desc *opts)
 
     program_state.suppress_screen_updates = TRUE;
 
-    /* options must be initialized before startup_common for plname */
-    for (i = 0; opts[i].name; i++) {
-        nh_set_option(opts[i].name, opts[i].value);
-    }
-
     turntime = (unsigned long long)time(NULL);
     seed = turntime ^ get_seedval();
     /* initialize the random number generator */
     mt_srand(seed);
 
     startup_common(TRUE);
+    /* Set defaults in case list of options from client was incomplete. */
+    for (i = 0; options[i].name; i++)
+        nh_set_option(options[i].name, opts[i].value);
+    for (i = 0; opts[i].name; i++)
+        nh_set_option(opts[i].name, opts[i].value);
 
     if (wizard)
         strcpy(u.uplname, "wizard");
