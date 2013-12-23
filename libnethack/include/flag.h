@@ -52,16 +52,13 @@ struct flag {
     boolean interrupted;/* something happened to make long actions stop */
     boolean mv;
     boolean nopick;     /* do not pickup objects (as when running) */
-    boolean null;       /* OK to send nulls to the terminal */
     boolean pickup;     /* whether you pickup or move and look */
     boolean pickup_thrown;      /* auto-pickup items you threw */
     boolean prayconfirm;        /* confirm before praying */
     boolean pushweapon; /* When wielding, push old weapon into second slot */
-    boolean rest_on_space;      /* space means rest */
     boolean safe_dog;   /* give complete protection to the dog */
     boolean showrace;   /* show hero glyph by race rather than by role */
     boolean show_uncursed;      /* always show uncursed items as such */
-    boolean silent;     /* whether the bell rings or not */
     boolean sortpack;   /* sorted inventory */
     boolean soundok;    /* ok to tell about sounds heard */
     boolean sparkle;    /* show "resisting" special FX (Scott Bigham) */
@@ -79,7 +76,6 @@ struct flag {
     unsigned run;       /* 0: h (etc), 1: H (etc), 2: fh (etc) 3: FH, 4: ff+,
                            5: ff-, 6: FF+, 7: FF- 8: travel */
     int runmode;        /* update screen display during run moves */
-    int warnlevel;
     int djinni_count, ghost_count;      /* potion effect tuning */
     int pickup_burden;  /* maximum burden before prompt */
     int recently_broken_otyp;   /* object that broke recently */

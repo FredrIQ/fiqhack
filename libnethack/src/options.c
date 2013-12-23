@@ -382,7 +382,6 @@ initoptions(void)
     flags.mon_generation = 1;
 
     iflags.travelcc.x = iflags.travelcc.y = -1;
-    flags.warnlevel = 1;
 
     /* init flags.inv_order this way, as setting it via the option requires a
        preexisting order */

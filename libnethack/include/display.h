@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -33,9 +33,9 @@
       ((Blind && Blind_telepat) || /* 3a. hero is blind and telepathic OR   */\
                                 /* 3b. hero is using a telepathy inducing   */\
                                 /*       object and in range                */\
-      (Unblind_telepat &&                                             \
-        (distu(mon->mx, mon->my) <= (BOLT_LIM * BOLT_LIM))))                  \
-)
+       (Unblind_telepat &&                                              \
+        (distu(mon->mx, mon->my) <= (BOLT_LIM * BOLT_LIM))))            \
+        )
 
 # define sensemon(mon) (mon->dlevel == level && \
                        (tp_sensemon(mon) || Detect_monsters || \
@@ -46,9 +46,9 @@
  * vicinity, and a glyph representing the warning level is displayed.
  */
 
-# define mon_warning(mon) (Warning && !(mon)->mpeaceful &&                              \
-             (distu((mon)->mx, (mon)->my) < 100) &&                         \
-             (((int) ((mon)->m_lev / 4)) >= flags.warnlevel))
+# define mon_warning(mon) (Warning && !(mon)->mpeaceful &&              \
+                           (distu((mon)->mx, (mon)->my) < 100) &&       \
+                           (((int) ((mon)->m_lev / 4)) >= 1))
 
 /*
  * mon_visible()
