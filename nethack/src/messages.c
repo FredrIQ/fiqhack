@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Sean Hunt, 2013-12-23 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -101,8 +101,10 @@ prune_messages(int maxturn)
     if (!msghistory)
         return;
 
-    /* remove future messages from the history */
-    while (msghistory[histpos].turn >= maxturn) {
+    /* remove future messages from the history
+     * maxturn = 0 will clear all messages */
+    i = histsize;
+    while (msghistory[histpos].turn >= maxturn && i--) {
         msghistory[histpos].turn = 0;
         if (msghistory[histpos].msg) {
             free(msghistory[histpos].msg);
