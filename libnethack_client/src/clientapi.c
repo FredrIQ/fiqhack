@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Sean Hunt, 2013-12-22 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -233,7 +233,7 @@ json_option(const struct nh_option_desc *option)
 
 
 enum nh_create_response
-nhnet_create_game(struct nh_option_desc *opts, enum nh_game_modes playmode)
+nhnet_create_game(struct nh_option_desc *opts)
 {
     json_t *jmsg, *jarr;
     int ret, i;
@@ -245,7 +245,7 @@ nhnet_create_game(struct nh_option_desc *opts, enum nh_game_modes playmode)
     for (i = 0; opts[i].name; i++)
         json_array_append_new(jarr, json_option(&opts[i]));
 
-    jmsg = json_pack("{so,si}", "opts", jarr, "mode", playmode);
+    jmsg = json_pack("{so}", "opts", jarr);
     jmsg = send_receive_msg("create_game", jmsg);
     if (json_unpack(jmsg, "{si}", "return", &ret) == -1) {
         print_error("Incorrect return object in nhnet_create_game");

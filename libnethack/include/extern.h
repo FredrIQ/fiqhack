@@ -750,7 +750,7 @@ extern int doclose(const struct nh_cmd_arg *);
 /* ### log.c ### */
 
 extern void log_newgame(unsigned long long start_time,
-                        unsigned int seed, int playmode);
+                        unsigned int seed);
 extern void log_command(int cmd, int count, const struct nh_cmd_arg *arg);
 extern void log_neutral_turnstate(void);
 extern void log_backup_save(void);
@@ -1187,7 +1187,6 @@ extern char *nh_getenv(const char *);
 extern void init_opt_struct(void);
 extern void cleanup_opt_struct(void);
 extern void initoptions(void);
-extern int dotogglepickup(const struct nh_cmd_arg *);
 extern int fruitadd(const char *str);
 extern char *autopickup_to_string(const struct nh_autopickup_rules *rules);
 extern struct nh_autopickup_rules *parse_autopickup_rules(const char *str);

@@ -108,62 +108,66 @@ save_flags(struct memfile *mf)
        make debugging easier */
     mtag(mf, 0, MTAG_FLAGS);
 
-    mwrite32(mf, flags.ident);                /*  0 */
-    mwrite32(mf, flags.moonphase);            /*  4 */
-    mwrite32(mf, flags.no_of_wizards);        /*  8 */
-    mwrite32(mf, flags.run);                  /* 12 */
-    mwrite32(mf, flags.warnlevel);            /* 16 */
-    mwrite32(mf, flags.djinni_count);         /* 20 */
-    mwrite32(mf, flags.ghost_count);          /* 24 */
-    mwrite32(mf, flags.pickup_burden);        /* 28 */
-    mwrite32(mf, flags.recently_broken_otyp); /* 32 */
-    mwrite32(mf, flags.last_cmd);             /* 36 */
+    mwrite32(mf, flags.djinni_count);         /*  0 */
+    mwrite32(mf, flags.ghost_count);          /*  4 */
+    mwrite32(mf, flags.ident);                /*  8 */
+    mwrite32(mf, flags.last_cmd);             /* 12 */
+    mwrite32(mf, flags.moonphase);            /* 16 */
+    mwrite32(mf, flags.no_of_wizards);        /* 20 */
+    mwrite32(mf, flags.pickup_burden);        /* 24 */
+    mwrite32(mf, flags.recently_broken_otyp); /* 28 */
+    mwrite32(mf, flags.run);                  /* 32 */
+    mwrite32(mf, flags.runmode);              /* 36 */
+    mwrite32(mf, flags.warnlevel);            /* 40 */
 
-    mwrite8(mf, flags.autodig);               /* 40 */
-    mwrite8(mf, flags.autodigdown);           /* 41 */
-    mwrite8(mf, flags.autoquiver);            /* 42 */
-    mwrite8(mf, flags.beginner);              /* 43 */
-    mwrite8(mf, flags.confirm);               /* 44 */
-    mwrite8(mf, flags.debug);                 /* 45 */
-    mwrite8(mf, flags.explore);               /* 46 */
-    mwrite8(mf, flags.forcefight);            /* 47 */
-    mwrite8(mf, flags.friday13);              /* 49 */
-    mwrite8(mf, flags.legacy);                /* 50 */
-    mwrite8(mf, flags.lit_corridor);          /* 51 */
-    mwrite8(mf, flags.made_amulet);           /* 52 */
-    mwrite8(mf, flags.mon_generation);        /* 53 */
-    mwrite8(mf, flags.mon_moving);            /* 54 */
-    mwrite8(mf, flags.mon_polycontrol);       /* 55 */
-    mwrite8(mf, flags.mv);                    /* 56 */
-    mwrite8(mf, flags.nopick);                /* 57 */
-    mwrite8(mf, flags.null);                  /* 58 */
-    mwrite8(mf, flags.pickup);                /* 59 */
-    mwrite8(mf, flags.pushweapon);            /* 60 */
-    mwrite8(mf, flags.rest_on_space);         /* 61 */
-    mwrite8(mf, flags.safe_dog);              /* 62 */
-    mwrite8(mf, flags.silent);                /* 63 */
-    mwrite8(mf, flags.sortpack);              /* 64 */
-    mwrite8(mf, flags.soundok);               /* 65 */
-    mwrite8(mf, flags.sparkle);               /* 66 */
-    mwrite8(mf, flags.tombstone);             /* 67 */
-    mwrite8(mf, flags.travel_interrupt);      /* 68 */
-    mwrite8(mf, flags.verbose);               /* 69 */
-    mwrite8(mf, flags.prayconfirm);           /* 70 */
-    mwrite8(mf, flags.travel);                /* 71 */
-    mwrite8(mf, flags.end_disclose);          /* 72 */
-    mwrite8(mf, flags.menu_style);            /* 73 */
-    mwrite8(mf, flags.elbereth_enabled);      /* 74 */
-    mwrite8(mf, flags.rogue_enabled);         /* 75 */
-    mwrite8(mf, flags.seduce_enabled);        /* 76 */
-    mwrite8(mf, flags.bones_enabled);         /* 77 */
-    mwrite8(mf, flags.permablind);            /* 78 */
-    mwrite8(mf, flags.permahallu);            /* 79 */
-    mwrite8(mf, flags.incomplete);            /* 80 */
-    mwrite8(mf, flags.interrupted);           /* 81 */
-    mwrite8(mf, flags.occupation);            /* 82 */
+    mwrite8(mf, flags.autodig);               /* 44 */
+    mwrite8(mf, flags.autodigdown);           /* 45 */
+    mwrite8(mf, flags.autoquiver);            /* 46 */
+    mwrite8(mf, flags.beginner);              /* 47 */
+    mwrite8(mf, flags.bones_enabled);         /* 48 */
+    mwrite8(mf, flags.confirm);               /* 49 */
+    mwrite8(mf, flags.debug);                 /* 50 */
+    mwrite8(mf, flags.explore);               /* 51 */
+    mwrite8(mf, flags.elbereth_enabled);      /* 52 */
+    mwrite8(mf, flags.end_disclose);          /* 53 */
+    mwrite8(mf, flags.forcefight);            /* 54 */
+    mwrite8(mf, flags.friday13);              /* 55 */
+    mwrite8(mf, flags.incomplete);            /* 56 */
+    mwrite8(mf, flags.interrupted);           /* 57 */
+    mwrite8(mf, flags.legacy);                /* 58 */
+    mwrite8(mf, flags.lit_corridor);          /* 59 */
+    mwrite8(mf, flags.made_amulet);           /* 60 */
+    mwrite8(mf, flags.menu_style);            /* 61 */
+    mwrite8(mf, flags.mon_generation);        /* 62 */
+    mwrite8(mf, flags.mon_moving);            /* 63 */
+    mwrite8(mf, flags.mon_polycontrol);       /* 64 */
+    mwrite8(mf, flags.mv);                    /* 65 */
+    mwrite8(mf, flags.nopick);                /* 66 */
+    mwrite8(mf, flags.null);                  /* 67 */
+    mwrite8(mf, flags.occupation);            /* 68 */
+    mwrite8(mf, flags.permablind);            /* 69 */
+    mwrite8(mf, flags.permahallu);            /* 70 */
+    mwrite8(mf, flags.pickup);                /* 71 */
+    mwrite8(mf, flags.pickup_thrown);         /* 72 */
+    mwrite8(mf, flags.prayconfirm);           /* 73 */
+    mwrite8(mf, flags.pushweapon);            /* 74 */
+    mwrite8(mf, flags.rest_on_space);         /* 75 */
+    mwrite8(mf, flags.rogue_enabled);         /* 76 */
+    mwrite8(mf, flags.safe_dog);              /* 77 */
+    mwrite8(mf, flags.seduce_enabled);        /* 78 */
+    mwrite8(mf, flags.showrace);              /* 79 */
+    mwrite8(mf, flags.show_uncursed);         /* 80 */
+    mwrite8(mf, flags.silent);                /* 81 */
+    mwrite8(mf, flags.sortpack);              /* 82 */
+    mwrite8(mf, flags.soundok);               /* 83 */
+    mwrite8(mf, flags.sparkle);               /* 84 */
+    mwrite8(mf, flags.tombstone);             /* 85 */
+    mwrite8(mf, flags.travel);                /* 86 */
+    mwrite8(mf, flags.travel_interrupt);      /* 87 */
+    mwrite8(mf, flags.verbose);               /* 88 */
 
     mwrite(mf, flags.inv_order, sizeof (flags.inv_order));
-    mwrite(mf, &(flags.inv_order), sizeof (flags.last_arg));
+    mwrite(mf, &(flags.last_arg), sizeof (flags.last_arg));
 
     save_autopickup_rules(mf, flags.ap_rules);
 }

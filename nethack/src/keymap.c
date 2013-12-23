@@ -1,9 +1,11 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-21 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "nhcurses.h"
+#include "common_options.h"
+
 #include <sys/types.h>
 #include <fcntl.h>
 #include <ctype.h>
@@ -17,6 +19,7 @@ enum internal_commands {
     UICMD_STOP,
     UICMD_PREVMSG,
     UICMD_WHATDOES,
+    UICMD_TOGGLEPICKUP,
     UICMD_NOTHING
 };
 
@@ -94,6 +97,8 @@ struct nh_cmd_desc builtin_commands[] = {
     {"prevmsg", "list previously displayed messages", Ctrl('p'), 0,
      CMD_UI | UICMD_PREVMSG},
     {"stop", "suspend to shell", Ctrl('z'), 0, CMD_UI | UICMD_STOP},
+    {"togglepickup", "toggle the autopickup option", '@', 0,
+     CMD_UI | UICMD_TOGGLEPICKUP},
     {"whatdoes", "describe what a key does", '&', 0, CMD_UI | UICMD_WHATDOES},
     {"(nothing)", "bind keys to this command to suppress \"Bad command\".", 0,
      0, CMD_UI | UICMD_NOTHING},
@@ -118,6 +123,7 @@ static void init_keymap(void);
 static void write_keymap(void);
 static struct nh_cmd_desc *doextcmd(void);
 static void dostop(void);
+static void dotogglepickup(void);
 
 
 const char *
@@ -212,6 +218,11 @@ handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg)
 
     case UICMD_WHATDOES:
         show_whatdoes();
+        *cmd = NULL;
+        break;
+
+    case UICMD_TOGGLEPICKUP:
+        dotogglepickup();
         *cmd = NULL;
         break;
 
@@ -505,6 +516,26 @@ dostop(void)
     doupdate();
 #endif
 }
+
+
+void
+dotogglepickup(void)
+{
+    union nh_optvalue val;
+    struct nh_option_desc *option =
+        nhlib_find_option(nh_get_options(), "autopickup");
+
+    if (!option) {
+        curses_msgwin("Error: No autopickup option found.");
+        return;
+    }
+
+    val.b = !option->value.b;
+    curses_set_option("autopickup", val, FALSE);
+
+    curses_msgwin(val.b ? "Autopickup now ON" : "Autopickup now OFF");
+}
+
 
 /*----------------------------------------------------------------------------*/
 

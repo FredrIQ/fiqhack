@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-10 */
+/* Last modified by Sean Hunt, 2013-12-22 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -76,6 +76,7 @@ struct nh_option_desc curses_options[] = {
     {"blink",
      "show multiple symbols for each location by switching between them", FALSE,
      OPTTYPE_BOOL, {.b = FALSE}},
+    {"comment", "has no effect", FALSE, OPTTYPE_STRING, {.s = ""}},
     {"darkgray", "try to show 'black' as dark gray instead of dark blue", FALSE,
      OPTTYPE_BOOL, {.b = FALSE}},
     {"extmenu", "use a menu for selecting extended commands (#)", FALSE,
@@ -212,6 +213,8 @@ curses_set_option(const char *name, union nh_optvalue value, nh_bool isstring)
                !strcmp(option->name, "showscore") ||
                !strcmp(option->name, "time")) {
         curses_update_status(NULL);
+    } else if (!strcmp(option->name, "comment")) {
+        /* do nothing */
     } else if (!strcmp(option->name, "darkgray")) {
         set_darkgray();
         draw_map(player.x, player.y);
@@ -274,6 +277,7 @@ init_options(void)
 {
     int i;
 
+    find_option("comment")->s.maxlen = BUFSZ;
     find_option("menu_headings")->e = menu_headings_spec;
     find_option("msgheight")->i.min = 1;
     find_option("msgheight")->i.max = 40;

@@ -34,6 +34,7 @@ struct flag {
     boolean autodigdown;        /* autodigging works downwadrds */
     boolean autoquiver; /* Automatically fill quiver */
     boolean beginner;
+    boolean bypasses;   /* bypass flag is set on at least one fobj */
     boolean confirm;    /* confirm before hitting tame monsters */
     boolean debug;      /* in debugging mode */
 # define wizard  flags.debug
@@ -50,14 +51,16 @@ struct flag {
     boolean incomplete; /* the requested action continues into future turns */
     boolean interrupted;/* something happened to make long actions stop */
     boolean mv;
-    boolean bypasses;   /* bypass flag is set on at least one fobj */
     boolean nopick;     /* do not pickup objects (as when running) */
     boolean null;       /* OK to send nulls to the terminal */
     boolean pickup;     /* whether you pickup or move and look */
-
+    boolean pickup_thrown;      /* auto-pickup items you threw */
+    boolean prayconfirm;        /* confirm before praying */
     boolean pushweapon; /* When wielding, push old weapon into second slot */
     boolean rest_on_space;      /* space means rest */
     boolean safe_dog;   /* give complete protection to the dog */
+    boolean showrace;   /* show hero glyph by race rather than by role */
+    boolean show_uncursed;      /* always show uncursed items as such */
     boolean silent;     /* whether the bell rings or not */
     boolean sortpack;   /* sorted inventory */
     boolean soundok;    /* ok to tell about sounds heard */
@@ -66,7 +69,7 @@ struct flag {
     boolean travel_interrupt;   /* Interrupt travel if there is a hostile *
                                    monster in sight. */
     boolean verbose;    /* max battle info */
-    boolean prayconfirm;        /* confirm before praying */
+
     unsigned ident;     /* social security number for each monster */
     unsigned moonphase;
 # define NEW_MOON       0
@@ -75,6 +78,7 @@ struct flag {
     boolean travel;     /* find way automatically to u.tx,u.ty */
     unsigned run;       /* 0: h (etc), 1: H (etc), 2: fh (etc) 3: FH, 4: ff+,
                            5: ff-, 6: FF+, 7: FF- 8: travel */
+    int runmode;        /* update screen display during run moves */
     int warnlevel;
     int djinni_count, ghost_count;      /* potion effect tuning */
     int pickup_burden;  /* maximum burden before prompt */
@@ -99,24 +103,6 @@ struct flag {
     struct nh_cmd_arg last_arg;              /* this or previous argument */
     enum occupation occupation; /* internal code for a multi-turn command */
 
-    /* KMH, role patch -- Variables used during startup. If the user wishes to
-       select a role, race, gender, and/or alignment during startup, the
-       choices should be recorded here.  This might be specified through
-       command-line options, environmental variables, a popup dialog box,
-       menus, etc. These values are each an index into an array.  They are not
-       characters or letters, because that limits us to 26 roles. They are not
-       booleans, because someday someone may need a neuter gender.  Negative
-       values are used to indicate that the user hasn't yet specified that
-       particular value. If you determine that the user wants a random choice,
-       then you should set an appropriate random value; if you just left the
-       negative value, the user would be asked again! These variables are
-       stored here because the u structure is cleared during character
-       initialization, and because the flags structure is restored for saved
-       games.  Thus, we can use the same parameters to build the role entry for 
-       both new and restored games. These variables should not be referred to
-       after the character is initialized or restored (specifically, after
-       role_init() is called). */
-
     /* birth option flags */
     boolean elbereth_enabled;   /* should the E-word repel monsters? */
     boolean rogue_enabled;      /* create a rogue level */
@@ -134,16 +120,11 @@ struct flag {
  */
 struct instance_flags {
     boolean vision_inited;      /* true if vision is ready */
-    boolean pickup_thrown;      /* auto-pickup items you threw */
     boolean travel1;    /* first travel step */
     coord travelcc;     /* coordinates for travel_cache */
     boolean next_msg_nonblocking;       /* suppress a --More-- after this
                                            message */
 
-    /* Items which belong in flags, but are here to allow save compatibility */
-    boolean show_uncursed;      /* always show uncursed items as such */
-    boolean showrace;   /* show hero glyph by race rather than by role */
-    int runmode;        /* update screen display during run moves */
     boolean botl;       /* redo status line */
 };
 

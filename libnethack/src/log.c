@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -383,7 +383,7 @@ stop_updating_logfile(void)
 static_assert(SECOND_LOGLINE_LEN < COLNO, "SECOND_LOGLINE_LEN too long");
 
 void
-log_newgame(unsigned long long start_time, unsigned int seed, int playmode)
+log_newgame(unsigned long long start_time, unsigned int seed)
 {
     char encbuf[ENCBUFSZ];
     const char *role;
@@ -405,9 +405,9 @@ log_newgame(unsigned long long start_time, unsigned int seed, int playmode)
     start_of_third_line = get_log_offset();
 
     base64_encode(u.uplname, encbuf);
-    lprintf("%0" PRIxLEAST64 " %x %d %s %.3s %.3s %.3s %.3s\n",
-            start_time_l64, seed, playmode, encbuf, role,
-            races[u.initrace].noun, genders[u.initgend].adj,
+    lprintf("%0" PRIxLEAST64 " %x %d %s %.3s %.3s %.3s %.3s\n", start_time_l64,
+            seed, wizard ? MODE_WIZARD : discover ? MODE_EXPLORE : MODE_NORMAL,
+            encbuf, role, races[u.initrace].noun, genders[u.initgend].adj,
             aligns[u.initalign].adj);
 
     /* The gamestate location is meant to be set to the start of the last line

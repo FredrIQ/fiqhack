@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Sean Hunt, 2013-12-22 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -169,19 +169,15 @@ ccmd_create_game(json_t * params)
 {
     char filename[1024], basename[1024], path[1024];
     json_t *j_msg, *jarr, *jobj;
-    int mode, fd, ret, count, i;
+    int fd, ret, count, i, debug = 0;
     long t;
 
-    if (json_unpack (params, "{ss,so,si*}", "options", &jarr, "mode",
-                     &mode) == -1 ||
+    if (json_unpack (params, "{ss,so}", "options", &jarr) == -1 ||
         !json_is_array(jarr))
         exit_client("Bad set of parameters for create_game");
 
     /* reset cached display data from a previous game */
     reset_cached_diplaydata();
-
-    if (mode == MODE_WIZARD && !user_info.can_debug)
-        mode = MODE_EXPLORE;
 
     struct nh_option_desc *opts;
     count = json_array_size(jarr);
@@ -191,8 +187,16 @@ ccmd_create_game(json_t * params)
         read_json_option(jobj, &opts[i]);
     }
 
+    struct nh_option_desc *modeopt = nhlib_find_option(opts, "mode");
+    if (modeopt && modeopt->value.e == MODE_WIZARD) {
+        if (user_info.can_debug)
+            debug = 1;
+        else
+            modeopt->value.e = MODE_EXPLORE;
+    }
+
     struct nh_option_desc *nameopt = nhlib_find_option(opts, "name");
-    if (!nameopt)
+    if (!nameopt && !debug)
         exit_client("No character name provided");
     char *name = nameopt->value.s;
 
@@ -207,7 +211,7 @@ ccmd_create_game(json_t * params)
     if (fd == -1)
         exit_client("Could not create the logfile");
 
-    ret = nh_create_game(fd, opts, mode);
+    ret = nh_create_game(fd, opts);
     close(fd);
     nhlib_free_optlist(opts);
 
@@ -218,13 +222,15 @@ ccmd_create_game(json_t * params)
             *roleopt = nhlib_find_option(opts, "role"),
             *raceopt = nhlib_find_option(opts, "race"),
             *alignopt = nhlib_find_option(opts, "align"),
-            *gendopt = nhlib_find_option(opts, "gend");
+            *gendopt = nhlib_find_option(opts, "gend"),
+            *modeopt = nhlib_find_option(opts, "mode");
         struct nh_roles_info *ri = nh_get_roles();
 
         int role = roleopt->value.i;
         int race = raceopt->value.i;
         int gend = gendopt->value.i;
         int align = alignopt->value.i;
+        int mode = modeopt->value.e;
 
         const char *rolename = (gend &&
                                 ri->rolenames_f[role]) ?

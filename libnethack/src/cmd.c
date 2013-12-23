@@ -192,8 +192,6 @@ const struct cmd_desc cmdlist[] = {
      TRUE, dotele, 0},
     {"throw", "throw an item", 't', 0, FALSE, dothrow,
      CMD_ARG_OBJ | CMD_ARG_DIR | CMD_ARG_LIMIT},
-    {"togglepickup", "toggle the autopickup option", '@', 0, TRUE,
-     dotogglepickup, 0},
     {"travel", "walk until a given square is reached", '_', 0, TRUE, dotravel,
      CMD_ARG_POS},
     {"turn", "turn undead", M('t'), 0, TRUE, doturn, CMD_EXT},

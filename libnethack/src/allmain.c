@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -223,7 +223,7 @@ post_init_tasks(void)
 
 
 enum nh_create_response
-nh_create_game(int fd, struct nh_option_desc *opts, enum nh_game_modes playmode)
+nh_create_game(int fd, struct nh_option_desc *opts)
 {
     unsigned int seed = 0;
     int i;
@@ -255,18 +255,13 @@ nh_create_game(int fd, struct nh_option_desc *opts, enum nh_game_modes playmode)
 
     startup_common(TRUE);
 
-    if (playmode == MODE_EXPLORE)
-        discover = TRUE;
-    else if (playmode == MODE_WIZARD)
-        wizard = TRUE;
-
     if (wizard)
         strcpy(u.uplname, "wizard");
 
     if (!validrole(u.initrole) || !validrace(u.initrole, u.initrace) ||
         !validgend(u.initrole, u.initrace, u.initgend) ||
         !validalign(u.initrole, u.initrace, u.initalign) ||
-        !*u.uplname) {
+        (!*u.uplname && !wizard)) {
         /* Reset options that we just clobbered. */
         init_opt_struct();
         API_EXIT();
@@ -276,7 +271,7 @@ nh_create_game(int fd, struct nh_option_desc *opts, enum nh_game_modes playmode)
     /* We create a new save file that saves the state immediately after
        newgame() is called. */
     log_init(fd);
-    log_newgame(turntime, seed, playmode);
+    log_newgame(turntime, seed);
 
     newgame();
 
