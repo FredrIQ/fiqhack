@@ -172,7 +172,7 @@ ccmd_create_game(json_t * params)
     int fd, ret, count, i, debug = 0;
     long t;
 
-    if (json_unpack (params, "{ss,so}", "options", &jarr) == -1 ||
+    if (json_unpack (params, "{so!}", "options", &jarr) == -1 ||
         !json_is_array(jarr))
         exit_client("Bad set of parameters for create_game");
 

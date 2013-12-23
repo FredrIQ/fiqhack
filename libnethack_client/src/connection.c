@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-30 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -460,6 +460,9 @@ do_connect(const char *host, int port, const char *user, const char *pass,
             snprintf(errmsg, 256, "IPv4: %s", ipv4_error);
             print_error(errmsg);
         }
+
+        sockfd = -1;
+        net_active = FALSE;
         return NO_CONNECTION;
     }
 
@@ -483,6 +486,8 @@ do_connect(const char *host, int port, const char *user, const char *pass,
         if (jmsg)
             json_decref(jmsg);
         close(fd);
+        net_active = FALSE;
+        sockfd = -1;
         return NO_CONNECTION;
     }
     /* the "version" field in the response is optional */
@@ -502,8 +507,15 @@ do_connect(const char *host, int port, const char *user, const char *pass,
     if (pass != saved_password)
         strncpy(saved_password, pass, sizeof (saved_password));
     saved_port = port;
-    conn_err = FALSE;
-    net_active = TRUE;
+
+    if (authresult == AUTH_SUCCESS_NEW ||
+        authresult == AUTH_SUCCESS_RECONNECT) {
+        conn_err = FALSE;
+        net_active = TRUE;
+    } else {
+        net_active = FALSE;
+        sockfd = -1;
+    }
 
     return authresult;
 }

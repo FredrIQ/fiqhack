@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Daniel Thaler, 2012 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -447,6 +447,7 @@ connect_server(struct server_info *server)
             /* only copy into ui_flags.username once the connection has been
                accepted */
             strcpy(ui_flags.username, server->username);
+            return TRUE;
         } else if (ret == AUTH_SUCCESS_RECONNECT) {
             /* TODO: This case should never happen, and probably /does/ never
                happen, in which case this is dead code. */
@@ -480,12 +481,13 @@ connect_server(struct server_info *server)
             if (ret != AUTH_SUCCESS_NEW) {
                 curses_msgwin("Sorry, the registration failed.");
                 return FALSE;
-            }
+            } else
+                return TRUE;
         }
     }
 
     /* Successful connection; reload options in case server has different
-     * perception of valid options than client does. */
+       perception of valid options than client does. */
     read_nh_config();
 }
 

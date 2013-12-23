@@ -245,7 +245,7 @@ nhnet_create_game(struct nh_option_desc *opts)
     for (i = 0; opts[i].name; i++)
         json_array_append_new(jarr, json_option(&opts[i]));
 
-    jmsg = json_pack("{so}", "opts", jarr);
+    jmsg = json_pack("{so}", "options", jarr);
     jmsg = send_receive_msg("create_game", jmsg);
     if (json_unpack(jmsg, "{si}", "return", &ret) == -1) {
         print_error("Incorrect return object in nhnet_create_game");
