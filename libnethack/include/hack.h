@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -122,7 +122,12 @@ extern coord bhitpos;   /* place where throw or zap hits or stops */
 # define MM_ADJACENTOK    0x100 /* it is acceptable to use adjacent
                                    coordinates */
 
-/* Flags for attack_checks, attack */
+/* Return value from functions that handle attack-like actions (anything that
+   can hit and damage an adjacent monster). Note that "ac_continue" varies a
+   little in meaning; for a function that's checking if an attack is possible it
+   means "sure, go ahead with the attack"; for a function that conditionally
+   performs an attack it means "you swung your weapon past this square, and
+   there weren't any monsters that got in the way". */
 enum attack_check_status {
     ac_continue,        /* nothing prevents this action from happening */
     ac_cancel,          /* the attack-like action was cancelled */
@@ -130,7 +135,8 @@ enum attack_check_status {
     ac_monsterhit,      /* the attack-like action hit a monster */
 };
 
-/* special mhpmax value when loading bones monster to flag as extinct or genocided */
+/* special mhpmax value when loading bones monster to flag as extinct or
+   genocided */
 # define DEFUNCT_MONSTER  (-100)
 
 /* flags for special ggetobj status returns */

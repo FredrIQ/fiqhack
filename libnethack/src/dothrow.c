@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -488,7 +488,7 @@ hurtle_step(void *arg, int x, int y)
 
     if ((mon = m_at(level, x, y)) != 0) {
         pline("You bump into %s.", a_monnam(mon));
-        wakeup(mon);
+        wakeup(mon, TRUE);
         return FALSE;
     }
     if ((u.ux - x) && (u.uy - y) && bad_rock(youmonst.data, u.ux, y) &&
@@ -1163,7 +1163,7 @@ tmiss(struct obj *obj, struct monst *mon)
     else
         miss(missile, mon);
     if (!rn2(3))
-        wakeup(mon);
+        wakeup(mon, TRUE);
     return;
 }
 
@@ -1207,7 +1207,7 @@ thitmonst(struct monst *mon, struct obj *obj)
     if (disttmp < -4)
         disttmp = -4;
     tmp += disttmp;
-
+    
     /* gloves are a hinderance to proper use of bows */
     if (uarmg && uwep && objects[uwep->otyp].oc_skill == P_BOW) {
         switch (uarmg->otyp) {
@@ -1372,9 +1372,8 @@ thitmonst(struct monst *mon, struct obj *obj)
             tmiss(obj, mon);
         }
 
-    } else
-        if ((otyp == EGG || otyp == CREAM_PIE || otyp == BLINDING_VENOM ||
-             otyp == ACID_VENOM)) {
+    } else if ((otyp == EGG || otyp == CREAM_PIE || otyp == BLINDING_VENOM ||
+                otyp == ACID_VENOM)) {
         if ((guaranteed_hit || ACURR(A_DEX) > rnd(25))) {
             hmon(mon, obj, 1);
             return 1;   /* hmon used it up */
@@ -1402,7 +1401,7 @@ thitmonst(struct monst *mon, struct obj *obj)
         }
     } else if (guaranteed_hit) {
         /* this assumes that guaranteed_hit is due to swallowing */
-        wakeup(mon);
+        wakeup(mon, TRUE);
         if (obj->otyp == CORPSE && touch_petrifies(&mons[obj->corpsenm])) {
             if (is_animal(u.ustuck->data)) {
                 minstapetrify(u.ustuck, TRUE);

@@ -12,7 +12,8 @@ static void maybe_wail(void);
 static int moverock(schar dx, schar dy);
 static int still_chewing(xchar, xchar);
 static void dosinkfall(void);
-static boolean findtravelpath(boolean(*)(int, int), schar *, schar *);
+static boolean findtravelpath(boolean(*)(int, int), schar *, schar *,
+                              enum u_interaction_mode);
 static struct monst *monstinroom(const struct permonst *, int);
 static boolean check_interrupt(struct monst *mtmp);
 static boolean couldsee_func(int, int);
@@ -510,11 +511,19 @@ autoexplore_msg(const char *text, int mode)
     }
 }
 
+boolean
+travelling(void)
+{
+    return flags.occupation == occ_travel ||
+        flags.occupation == occ_autoexplore;
+}
+
 /* return TRUE if (dx,dy) is an OK place to move
  * mode is one of DO_MOVE, TEST_MOVE, TEST_TRAV or TEST_TRAP
  */
 boolean
-test_move(int ux, int uy, int dx, int dy, int dz, int mode)
+test_move(int ux, int uy, int dx, int dy, int dz, int mode,
+          enum u_interaction_mode uim)
 {
     int x = ux + dx;
     int y = uy + dy;
@@ -536,8 +545,8 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode)
             /* Eat the rock. */
             if (mode == DO_MOVE && still_chewing(x, y))
                 return FALSE;
-        } else if (flags.autodig && !flags.run && !flags.nopick && uwep &&
-                   is_pick(uwep)) {
+        } else if (flags.autodig && ITEM_INTERACTIVE(uim) &&
+                   flags.occupation != occ_move && uwep && is_pick(uwep)) {
             /* MRKR: Automatic digging when wielding the appropriate tool */
             if (mode == DO_MOVE) {
                 struct nh_cmd_arg arg;
@@ -623,7 +632,7 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode)
     /* Pick travel path that does not require crossing a trap. Avoid water and
        lava using the usual running rules. (but not u.ux/u.uy because
        findtravelpath walks toward u.ux/u.uy) */
-    if (flags.run == 8 && (x != u.ux || y != u.uy)) {
+    if (travelling() && (x != u.ux || y != u.uy)) {
         struct trap *t = t_at(level, x, y);
 
         if ((t && t->tseen) ||
@@ -635,7 +644,7 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode)
                     autoexplore_msg("a body of water", mode);
                 else if (is_lava(level, x, y))
                     autoexplore_msg("a pool of lava", mode);
-                if (flags.travel)
+                if (travelling())
                     return FALSE;
             }
             return mode == TEST_TRAP || mode == DO_MOVE;
@@ -660,7 +669,8 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode)
     }
 
     if (sobj_at(BOULDER, level, x, y) && (In_sokoban(&u.uz) || !Passes_walls)) {
-        if (!(Blind || Hallucination) && (flags.run >= 2) && mode != TEST_TRAV) {
+        if (!(Blind || Hallucination) && !ITEM_INTERACTIVE(uim) &&
+            mode != TEST_TRAV) {
             if (sobj_at(BOULDER, level, x, y) && mode == DO_MOVE)
                 autoexplore_msg("a boulder", mode);
             return FALSE;
@@ -802,19 +812,24 @@ autotravel_weighting(int x, int y, unsigned distance)
  * Returns TRUE if a path was found.
  */
 static boolean
-findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy)
+findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy,
+               enum u_interaction_mode uim)
 {
-    /* if travel to adjacent, reachable location, use normal movement rules */
-    if (!guess && iflags.travel1 && distmin(u.ux, u.uy, u.tx, u.ty) == 1) {
-        flags.run = 0;
-        if (test_move(u.ux, u.uy, u.tx - u.ux, u.ty - u.uy, 0, TEST_MOVE)) {
+    /* If a travel command is sent to an adjacent, reachable location
+       (i.e. continue_message is TRUE, meaning that this isn't an implicitly
+       continued action), use normal movement rules (and reset the interaction
+       mode). This is for mouse-driven ports, to allow clicking on an adjacent
+       square to move there. */
+    if (!guess && turnstate.continue_message &&
+        distmin(u.ux, u.uy, u.tx, u.ty) == 1) {
+        if (test_move(u.ux, u.uy, u.tx - u.ux, u.ty - u.uy,
+                      0, TEST_MOVE, flags.interaction_mode)) {
             *dx = u.tx - u.ux;
             *dy = u.ty - u.uy;
             action_completed();
             iflags.travelcc.x = iflags.travelcc.y = -1;
             return TRUE;
         }
-        flags.run = 8;
     }
     if (u.tx != u.ux || u.ty != u.uy || guess == unexplored) {
         unsigned travel[COLNO][ROWNO];
@@ -904,7 +919,7 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy)
                     if ((!Passes_walls && !can_ooze(&youmonst) &&
                          closed_door(level, nx, ny)) ||
                         sobj_at(BOULDER, level, nx, ny) ||
-                        test_move(x, y, nx - x, ny - y, 0, TEST_TRAP)) {
+                        test_move(x, y, nx - x, ny - y, 0, TEST_TRAP, uim)) {
                         /* closed doors and boulders usually cause a delay, so
                            prefer another path */
                         if ((int)travel[x][y] > radius - 5) {
@@ -918,8 +933,8 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy)
                             continue;
                         }
                     }
-                    if (test_move(x, y, nx - x, ny - y, 0, TEST_TRAP) ||
-                        test_move(x, y, nx - x, ny - y, 0, TEST_TRAV)) {
+                    if (test_move(x, y, nx - x, ny - y, 0, TEST_TRAP, uim) ||
+                        test_move(x, y, nx - x, ny - y, 0, TEST_TRAV, uim)) {
                         if ((level->locations[nx][ny].seenv ||
                              (!Blind && couldsee(nx, ny)))) {
                             if (nx == ux && ny == uy) {
@@ -928,10 +943,8 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy)
                                     *dy = y - uy;
                                     if (x == u.tx && y == u.ty) {
                                         action_completed();
-                                        /* reset run so domove run checks work */
-                                        flags.run = 8;
-                                        iflags.travelcc.x = iflags.travelcc.y =
-                                            -1;
+                                        iflags.travelcc.x =
+                                            iflags.travelcc.y = -1;
                                     }
                                     return TRUE;
                                 }
@@ -996,7 +1009,7 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy)
                     action_completed();
                     return FALSE;
                 }
-                if (test_move(u.ux, u.uy, *dx, *dy, 0, TEST_MOVE))
+                if (test_move(u.ux, u.uy, *dx, *dy, 0, TEST_MOVE, uim))
                     return TRUE;
                 goto found;
             }
@@ -1027,7 +1040,7 @@ couldsee_func(int x, int y)
 }
 
 int
-domove(const struct nh_cmd_arg *arg)
+domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
 {
     struct monst *mtmp;
     struct rm *tmpr;
@@ -1047,9 +1060,9 @@ domove(const struct nh_cmd_arg *arg)
     if (dz) {
         action_completed();
         if (dz < 0)
-            return doup();
+            return doup(uim);
         else
-            return dodown();
+            return dodown(uim);
     }
 
     u_wipe_engr(rnd(5));
@@ -1058,14 +1071,13 @@ domove(const struct nh_cmd_arg *arg)
     if (Stunned || Confusion) {
         const char *stop_which = NULL;
 
-        if (flags.travel) {
-            if (flags.occupation == occ_autoexplore)
-                stop_which = "explore";
-            else
-                stop_which = "travel";
-        } else if (flags.run) {
+        if (flags.occupation == occ_autoexplore)
+            stop_which = "explore";
+        else if (flags.occupation == occ_travel)
+            stop_which = "travel";
+        else if (flags.occupation == occ_move)
             stop_which = "run";
-        }
+
         if (stop_which) {
             pline("Your head is spinning too badly to %s.", stop_which);
             action_completed();
@@ -1073,7 +1085,7 @@ domove(const struct nh_cmd_arg *arg)
         }
     }
 
-    if (flags.travel) {
+    if (travelling()) {
         if (flags.occupation == occ_autoexplore) {
             if (Blind) {
                 pline("You can't see where you're going!");
@@ -1093,13 +1105,13 @@ domove(const struct nh_cmd_arg *arg)
             }
             u.tx = u.ux;
             u.ty = u.uy;
-            if (!findtravelpath(unexplored, &dx, &dy)) {
+            if (!findtravelpath(unexplored, &dx, &dy, uim)) {
                 pline
                     ("Nowhere else around here can be automatically explored.");
             }
-        } else if (!findtravelpath(NULL, &dx, &dy))
-            findtravelpath(couldsee_func, &dx, &dy);
-        iflags.travel1 = 0;
+        } else if (!findtravelpath(NULL, &dx, &dy, uim))
+            findtravelpath(couldsee_func, &dx, &dy, uim);
+
         if (dx == 0 && dy == 0) {
             action_completed();
             return 0;
@@ -1202,9 +1214,8 @@ domove(const struct nh_cmd_arg *arg)
             (Blind && !Levitation && !Flying && !is_clinger(youmonst.data) &&
              (is_pool(level, x, y) || is_lava(level, x, y)) &&
              level->locations[x][y].seenv)) {
-            if (flags.run >= 2) {
-                if (trap && trap->tseen && flags.run == 8 &&
-                    flags.occupation == occ_autoexplore)
+            if (ITEM_INTERACTIVE(uim)) {
+                if (trap && trap->tseen && flags.occupation == occ_autoexplore)
                     autoexplore_msg("a trap", DO_MOVE);
                 action_completed();
                 return 0;
@@ -1251,19 +1262,7 @@ domove(const struct nh_cmd_arg *arg)
         }
 
         mtmp = m_at(level, x, y);
-        if (mtmp && !is_safepet(mtmp)) {
-            /* Don't attack if you're running, and can see it */
-            /* We should never get here if forcefight */
-            if (flags.run &&
-                ((!Blind && mon_visible(mtmp) &&
-                  ((mtmp->m_ap_type != M_AP_FURNITURE &&
-                    mtmp->m_ap_type != M_AP_OBJECT) ||
-                   Protection_from_shape_changers)) || sensemon(mtmp))) {
-                action_completed();
-                autoexplore_msg(Monnam(mtmp), DO_MOVE);
-                return 0;
-            }
-        }
+        /* Checks for confirm, autoexplore have moved to attack_checks(). */
     }
 
     u.ux0 = u.ux;
@@ -1272,65 +1271,122 @@ domove(const struct nh_cmd_arg *arg)
     bhitpos.y = y;
     tmpr = &level->locations[x][y];
 
-    /* attack monster */
+    /* There's a monster here. Do we try to attack it?
+
+       The logic here has been simplified from previous via not duplicating half
+       of attack_checks(). For anyone wondering where the forcefight checks
+       went, they're in is_safepet and attack_checks now. */
     if (mtmp) {
-        if (!is_safepet(mtmp) || flags.forcefight)
+        enum attack_check_status attack_status = ac_continue;
+
+        if (!is_safepet(mtmp, uim)) {
+            attack_status = attack_checks(mtmp, uwep, dx, dy, uim);
             action_completed();
-        /* only attack if we know it's there */
-        /* or if we used the 'F' command to fight blindly */
-        /* or if it hides_under, in which case we call attack() to print the
-           Wait! message. This is different from ceiling hiders, who aren't
-           handled in attack(). */
-
-        /* If they used a 'm' command, trying to move onto a monster prints the 
-           below message and wastes a turn.  The exception is if the monster is 
-           unseen and the player doesn't remember an invisible monster--then,
-           we fall through to attack() and attack_check(), which still wastes a 
-           turn, but prints a different message and makes the player remember
-           the monster.  */
-        if (flags.nopick && !flags.travel &&
-            (canspotmon(mtmp) || level->locations[x][y].mem_invis)) {
-            if (mtmp->m_ap_type && !Protection_from_shape_changers &&
-                !sensemon(mtmp))
-                stumble_onto_mimic(mtmp, dx, dy);
-            else if (mtmp->mpeaceful && !Hallucination)
-                pline("Pardon me, %s.", m_monnam(mtmp));
-            else
-                pline("You move right into %s.", mon_nam(mtmp));
-            return 1;
         }
-        if (flags.forcefight || !mtmp->mundetected || sensemon(mtmp) ||
-            ((hides_under(mtmp->data) || mtmp->data->mlet == S_EEL) &&
-             !is_safepet(mtmp))) {
-            enum attack_check_status attack_status;
 
-            gethungry();
-            if (wtcap >= HVY_ENCUMBER && moves % 3) {
-                if (Upolyd && u.mh > 1) {
-                    u.mh--;
-                } else if (!Upolyd && u.uhp > 1) {
-                    u.uhp--;
-                } else {
-                    pline("You pass out from exertion!");
-                    exercise(A_CON, FALSE);
-                    fall_asleep(-10, FALSE);
-                }
+        if (attack_status != ac_continue)
+            return attack_status != ac_cancel;
+
+        /* attack_checks said "Sure, go ahead with the attack attempt", so at
+           this point, we know that the character has a pretty good idea that
+           there's a monster there (enough that the attack will be definitely
+           attempted at this point). Exception: for safepet, we use the same
+           process, even moving into the attack, but attack() rejects the
+           attack. This causes displacement to have the same nutrition/exertion
+           penalties as attacking, which is 3.4.3 behaviour; it may well have
+           been an accident, but players have grown to expect it. */
+        
+        gethungry();
+        if (wtcap >= HVY_ENCUMBER && moves % 3) {
+            if (Upolyd && u.mh > 1) {
+                u.mh--;
+            } else if (!Upolyd && u.uhp > 1) {
+                u.uhp--;
+            } else {
+                pline("You pass out from exertion!");
+                exercise(A_CON, FALSE);
+                fall_asleep(-10, FALSE);
             }
-            if (Helpless)
-                return 1;       /* we just fainted */
+        }
+        if (Helpless)
+            return 1;       /* we just fainted */
 
-            /* try to attack; note that it might evade */
-            /* also, we don't attack tame when _safepet_ */
-            attack_status = attack(mtmp, dx, dy);
+        if (!is_safepet(mtmp, uim)) {
+
+            /* Try to perform the attack itself. We've already established that
+               the player's willing to perform the attack, so we crank the
+               interaction mode all the way up to "indiscriminate". This is
+               necessary to avoid double peaceful prompts (and also in the
+               dubious situation where there's an invisible-monster I over a
+               peaceful mimic). */
+            attack_status = attack(mtmp, dx, dy, uim_indiscriminate);
             if (attack_status != ac_continue)
                 return attack_status != ac_cancel;
+            
+            /* This point is only reached if the monster dodged, or is a
+               safepet. It used to be that you could cheese stumbling when
+               dodged via always using an explicit F when attacking leprechauns,
+               but that makes no sense, so force forcefight off in such cases,
+               and give a message. */
+            pline("You miss wildly and stumble forwards.");
+            if (uim == uim_forcefight)
+                uim = uim_indiscriminate;
+
+        } else {
+            /* This section of code provides protection against accidentally
+               hitting peaceful (like '@') and tame (like 'd') monsters.
+               Protection is provided as long as player is not: blind, confused,
+               hallucinating or stunned.
+
+               Changes by wwp 5/16/85.
+
+               More changes 12/90, -dkh-. If it's tame and safepet, (and
+               protected 07/92) then we assume that you're not trying to
+               attack. Instead, you'll usually just swap places if this is a
+               movement command.
+
+               There are some additional considerations: this won't work if in a
+               shop or Punished or you miss a random roll or if you can walk
+               through walls and your pet cannot (KAA) or if your pet is a long
+               worm (unless someone does better). There's also a chance of
+               displacing a "frozen" monster. Sleeping monsters might magically
+               walk in their sleep. */
+            boolean foo = (Punished || !rn2(7) ||
+                           is_longworm(mtmp->data)), inshop = FALSE;
+            char *p;
+
+            for (p = in_rooms(level, mtmp->mx, mtmp->my, SHOPBASE); *p; p++)
+                if (tended_shop(&level->rooms[*p - ROOMOFFSET])) {
+                    inshop = TRUE;
+                    break;
+                }
+
+            if (inshop || foo ||
+                (IS_ROCK(level->locations[u.ux][u.uy].typ) &&
+                 !passes_walls(mtmp->data))) {
+                char buf[BUFSZ];
+
+                monflee(mtmp, rnd(6), FALSE, FALSE);
+                strcpy(buf, y_monnam(mtmp));
+                buf[0] = highc(buf[0]);
+                pline("You stop.  %s is in the way!", buf);
+                action_completed();
+                return 0;
+            } else if ((mtmp->mfrozen || (!mtmp->mcanmove)
+                        || (mtmp->data->mmove == 0)) && rn2(6)) {
+                pline("%s doesn't seem to move!", Monnam(mtmp));
+                action_completed();
+                return 1;
+            }
         }
     }
 
-    /* specifying 'F' with no monster wastes a turn */
-    if (flags.forcefight ||
-        /* remembered an 'I' && didn't use a move command */
-        (level->locations[x][y].mem_invis && !flags.nopick)) {
+    /* Either there isn't (any more) a monster there, or there is a safepet
+       there. Does the character try to attack the square? They will if there's
+       a remembered-monster 'I' and they aren't using a pacifist style of
+       movement, or if they were force-fighting. */
+    if (uim == uim_forcefight ||
+        (level->locations[x][y].mem_invis && UIM_AGGRESSIVE(uim))) {
         boolean expl = (Upolyd && attacktype(youmonst.data, AT_EXPL));
         char buf[BUFSZ];
 
@@ -1347,11 +1403,15 @@ domove(const struct nh_cmd_arg *arg)
         }
         return 1;
     }
+
+    /* We saw an invisible 'I' but decided not to attack it. This is when we
+       discover there isn't a monster there after all. */
     if (level->locations[x][y].mem_invis) {
         unmap_object(x, y);
         newsym(x, y);
     }
-    /* not attacking an animal, so we try to move */
+
+    /* Not attacking a monster, for whatever reason; we try to move. */
     if (u.usteed && !u.usteed->mcanmove && (dx || dy)) {
         pline("%s won't move!", upstart(y_monnam(u.usteed)));
         action_completed();
@@ -1462,7 +1522,8 @@ domove(const struct nh_cmd_arg *arg)
 
     /* If moving into a door, open it. */
     if (IS_DOOR(tmpr->typ) && tmpr->doormask != D_BROKEN &&
-        tmpr->doormask != D_NODOOR && tmpr->doormask != D_ISOPEN) {
+        tmpr->doormask != D_NODOOR && tmpr->doormask != D_ISOPEN &&
+        ITEM_INTERACTIVE(uim)) {
         struct nh_cmd_arg arg;
         arg_from_delta(dx, dy, dz, &arg);
         if (!doopen(&arg)) {
@@ -1472,16 +1533,17 @@ domove(const struct nh_cmd_arg *arg)
         return 1;
     }
 
-    if (!test_move(u.ux, u.uy, dx, dy, dz, DO_MOVE)) {
+    if (!test_move(u.ux, u.uy, dx, dy, dz, DO_MOVE, uim)) {
         action_completed();
         return 0;
     }
 
-    /* If no 'm' prefix, veto dangerous moves */
-    if (!flags.nopick || flags.run) {
+    /* If not using 'moveonly', veto dangerous moves. (This uses
+       last_command_was, not uim, because the relevant factor is not the
+       semantics of the command, but the interface used to enter it.) */
+    if (!last_command_was("moveonly")) {
         if (!Levitation && !Flying && !is_clinger(youmonst.data) && !Stunned &&
             !Confusion &&
-            (!flags.travel || flags.occupation != occ_autoexplore) &&
             (is_lava(level, x, y) || !HSwimming) &&
             (is_pool(level, x, y) || is_lava(level, x, y)) &&
             level->locations[x][y].seenv && !is_pool(level, u.ux, u.uy) &&
@@ -1529,7 +1591,7 @@ domove(const struct nh_cmd_arg *arg)
      * Ceiling-hiding pets are skipped by this section of code, to
      * be caught by the normal falling-monster code.
      */
-    if (is_safepet(mtmp) && !(is_hider(mtmp->data) && mtmp->mundetected)) {
+    if (is_safepet(mtmp, uim) && !(is_hider(mtmp->data) && mtmp->mundetected)) {
         /* if trapped, there's a chance the pet goes wild */
         if (mtmp->mtrapped) {
             if (!rn2(mtmp->mtame)) {
@@ -1599,51 +1661,49 @@ domove(const struct nh_cmd_arg *arg)
     }
 
     reset_occupations(TRUE);
-    if (flags.run) {
-        if (flags.run < 8) {
-            if (IS_DOOR(tmpr->typ) || IS_ROCK(tmpr->typ) ||
-                IS_FURNITURE(tmpr->typ))
-                action_completed();
-        } else if (flags.travel && flags.occupation == occ_autoexplore) {
-            int wallcount, mem_bg;
+    if (flags.occupation == occ_move || flags.occupation == occ_travel) {
+        if (IS_DOOR(tmpr->typ) || IS_ROCK(tmpr->typ) ||
+            IS_FURNITURE(tmpr->typ))
+            action_completed();
+    } else if (flags.occupation == occ_autoexplore) {
+        int wallcount, mem_bg;
 
-            /* autoexplore stoppers: being orthogonally adjacent to a boulder,
-               being orthogonally adjacent to 3 or more walls; this logic could
-               be incorrect when blind, but we check for that earlier; while not
-               blind, we'll assume the hero knows about adjacent walls and
-               boulders due to being able to see them */
-            wallcount = 0;
-            if (isok(u.ux - 1, u.uy))
-                wallcount +=
-                    IS_ROCK(level->locations[u.ux - 1][u.uy].typ) +
-                    ! !sobj_at(BOULDER, level, u.ux - 1, u.uy) * 3;
-            if (isok(u.ux + 1, u.uy))
-                wallcount +=
-                    IS_ROCK(level->locations[u.ux + 1][u.uy].typ) +
-                    ! !sobj_at(BOULDER, level, u.ux + 1, u.uy) * 3;
-            if (isok(u.ux, u.uy - 1))
-                wallcount +=
-                    IS_ROCK(level->locations[u.ux][u.uy - 1].typ) +
-                    ! !sobj_at(BOULDER, level, u.ux, u.uy - 1) * 3;
-            if (isok(u.ux, u.uy + 1))
-                wallcount +=
-                    IS_ROCK(level->locations[u.ux][u.uy + 1].typ) +
-                    ! !sobj_at(BOULDER, level, u.ux, u.uy + 1) * 3;
-            if (wallcount >= 3)
-                action_completed();
-            /* 
-             * More autoexplore stoppers: interesting dungeon features
-             * that haven't been stepped on yet.
-             */
-            mem_bg = tmpr->mem_bg;
-            if (tmpr->mem_stepped == 0 &&
-                (mem_bg == S_altar || mem_bg == S_throne || mem_bg == S_sink ||
-                 mem_bg == S_fountain || mem_bg == S_dnstair ||
-                 mem_bg == S_upstair || mem_bg == S_dnsstair ||
-                 mem_bg == S_upsstair || mem_bg == S_dnladder ||
-                 mem_bg == S_upladder))
-                action_completed();
-        }
+        /* autoexplore stoppers: being orthogonally adjacent to a boulder,
+           being orthogonally adjacent to 3 or more walls; this logic could
+           be incorrect when blind, but we check for that earlier; while not
+           blind, we'll assume the hero knows about adjacent walls and
+           boulders due to being able to see them */
+        wallcount = 0;
+        if (isok(u.ux - 1, u.uy))
+            wallcount +=
+                IS_ROCK(level->locations[u.ux - 1][u.uy].typ) +
+                ! !sobj_at(BOULDER, level, u.ux - 1, u.uy) * 3;
+        if (isok(u.ux + 1, u.uy))
+            wallcount +=
+                IS_ROCK(level->locations[u.ux + 1][u.uy].typ) +
+                ! !sobj_at(BOULDER, level, u.ux + 1, u.uy) * 3;
+        if (isok(u.ux, u.uy - 1))
+            wallcount +=
+                IS_ROCK(level->locations[u.ux][u.uy - 1].typ) +
+                ! !sobj_at(BOULDER, level, u.ux, u.uy - 1) * 3;
+        if (isok(u.ux, u.uy + 1))
+            wallcount +=
+                IS_ROCK(level->locations[u.ux][u.uy + 1].typ) +
+                ! !sobj_at(BOULDER, level, u.ux, u.uy + 1) * 3;
+        if (wallcount >= 3)
+            action_completed();
+        /* 
+         * More autoexplore stoppers: interesting dungeon features
+         * that haven't been stepped on yet.
+         */
+        mem_bg = tmpr->mem_bg;
+        if (tmpr->mem_stepped == 0 &&
+            (mem_bg == S_altar || mem_bg == S_throne || mem_bg == S_sink ||
+             mem_bg == S_fountain || mem_bg == S_dnstair ||
+             mem_bg == S_upstair || mem_bg == S_dnsstair ||
+             mem_bg == S_upsstair || mem_bg == S_dnladder ||
+             mem_bg == S_upladder))
+            action_completed();
     }
 
     if (hides_under(youmonst.data))
@@ -1684,20 +1744,6 @@ domove(const struct nh_cmd_arg *arg)
     if (cause_delay)
         helpless(2, "dragging an iron ball", "");
 
-    if (flags.run && flags.runmode != RUN_TPORT) {
-        /* display every step or every 7th step depending upon mode */
-        if (flags.runmode != RUN_LEAP || !(moves % 7L)) {
-            iflags.botl = 1;
-            flush_screen();
-            win_delay_output();
-            if (flags.runmode == RUN_CRAWL) {
-                win_delay_output();
-                win_delay_output();
-                win_delay_output();
-                win_delay_output();
-            }
-        }
-    }
     return 1;
 }
 
@@ -1794,8 +1840,9 @@ stillinwater:
         pit = (trap && (trap->ttyp == PIT || trap->ttyp == SPIKED_PIT));
         if (trap && pit)
             dotrap(trap, 0);    /* fall into pit */
+        /* TODO: This might not be correct if you m-direction into a pit. */
         if (pick)
-            pickup(1);
+            pickup(1, flags.interaction_mode);
         if (trap && !pit)
             dotrap(trap, 0);    /* fall into arrow trap, etc. */
     }
@@ -2143,20 +2190,51 @@ dopickup(const struct nh_cmd_arg *arg)
         }
     }
 
-    return pickup(-count);
+    /* We're picking up items explicitly, so override the interaction mode to
+       specify that items are picked up. */
+    return pickup(-count, uim_standard);
 }
 
+/* Calls action_completed()/action_interrupted() as appropriate for
+   movement-related commands. Also responsible for turning corners.
 
-/* stop running if we see something interesting */
-/* turn around a corner if that is the only way we can proceed */
-/* do not turn left or right twice */
+   This code previously worked on a "flags.run" value that was explained only
+   with the following obscure comment:
+
+   0: h (etc), 1: H (etc), 2: fh (etc), 3: FH, 4: ff+, 5: ff-, 6: FF+, 7: FF-,
+   8: travel
+
+   8 is obvious, and 0 and 1 appear to correspond to simple move and shift-move,
+   but if anyone knows what the other entries mean, please let me know, mostly
+   out of curiosity.
+
+   Reverse-engineering the code has produced the following findings:
+
+   Aggressive farmove is 1 (and in previous versions, comes in pickup and
+   non-pickup varieties, a feature that has been removed because based on
+   talking to players, nobody even noticed the difference). "go" and "go2" -
+   non-aggressive farmove - are 2 and 3 respectively (3 is documented to ignore
+   branching corridors). 8 is travel (obviously), and the rest appear to be
+   unused. (0, 4, 5, 6, and 7 all work the same way, but in a way different from
+   each of 1, 2, 3, and 8.)
+
+   The new calculation treats aggressive farmove like the former "1", travel
+   like the former "8", and otherwise acts like 2 if the last command wasn't
+   "go2" or 3 otherwise. This preserves the previous behaviour almost perfectly,
+   although is still quite unintuitive. We may want to consider removing one of
+   "go" and "go2"; the commands are noticeably different from aggressive farmove
+   (and widely used), but players tend to use them interchangeably.
+*/
 void
-lookaround(void)
+lookaround(enum u_interaction_mode uim)
 {
     int x, y, i, x0 = 0, y0 = 0, m0 = 1, i0 = 9;
     int corrct = 0, noturn = 0;
     struct monst *mtmp;
     struct trap *trap;
+    boolean farmoving = travelling() || flags.occupation == occ_move;
+    boolean aggressive_farmoving = ITEM_INTERACTIVE(uim) && !travelling();
+    boolean go2 = !flags.corridorbranch;
 
     /* Grid bugs stop if trying to move diagonal, even if blind.  Maybe */
     /* they polymorphed while in the middle of a long move. */
@@ -2165,8 +2243,10 @@ lookaround(void)
         return;
     }
 
-    /* If travel_interrupt is set, then stop if there is a hostile nearby. */
-    if (flags.run != 1 && flags.travel_interrupt) {
+    /* If travel_interrupt is set, then stop if there is a hostile nearby.
+       Exception: item-interactive (i.e. aggressive) farmoves, such as
+       shift-direction. */
+    if (farmoving && !aggressive_farmoving && flags.travel_interrupt) {
         for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
             if (distmin(u.ux, u.uy, mtmp->mx, mtmp->my) <= (BOLT_LIM + 1) &&
                 couldsee(mtmp->mx, mtmp->my) && check_interrupt(mtmp)) {
@@ -2176,8 +2256,9 @@ lookaround(void)
         }
     }
 
-    if (Blind || flags.run == 0)
+    if (Blind || !farmoving)
         return;
+
     for (x = u.ux - 1; x <= u.ux + 1; x++)
         for (y = u.uy - 1; y <= u.uy + 1; y++) {
             if (!isok(x, y))
@@ -2192,8 +2273,8 @@ lookaround(void)
             if ((mtmp = m_at(level, x, y)) && mtmp->m_ap_type != M_AP_FURNITURE
                 && mtmp->m_ap_type != M_AP_OBJECT &&
                 (!mtmp->minvis || See_invisible) && !mtmp->mundetected) {
-                if ((flags.run != 1 && check_interrupt(mtmp)) ||
-                    (x == u.ux + u.dx && y == u.uy + u.dy && !flags.travel))
+                if ((!aggressive_farmoving && check_interrupt(mtmp)) ||
+                    (x == u.ux + u.dx && y == u.uy + u.dy && !travelling()))
                     goto stop;
             }
 
@@ -2210,15 +2291,15 @@ lookaround(void)
                      (mtmp && mtmp->m_ap_type == M_AP_FURNITURE &&
                       (mtmp->mappearance == S_hcdoor ||
                        mtmp->mappearance == S_vcdoor))) {
-                if (flags.run == 8 || (x != u.ux && y != u.uy))
+                if (travelling() || (x != u.ux && y != u.uy))
                     continue;
-                if (flags.run != 1)
+                if (!aggressive_farmoving)
                     goto stop;
                 goto bcorr;
             } else if (level->locations[x][y].typ == CORR) {
             bcorr:
                 if (level->locations[u.ux][u.uy].typ != ROOM) {
-                    if (flags.run == 1 || flags.run == 3 || flags.run == 8) {
+                    if (!go2) {
                         i = dist2(x, y, u.ux + u.dx, u.uy + u.dy);
                         if (i > 2)
                             continue;
@@ -2235,7 +2316,7 @@ lookaround(void)
                 }
                 continue;
             } else if ((trap = t_at(level, x, y)) && trap->tseen) {
-                if (flags.run == 1)
+                if (aggressive_farmoving)
                     goto bcorr; /* if you must */
                 if (x == u.ux + u.dx && y == u.uy + u.dy)
                     goto stop;
@@ -2251,9 +2332,9 @@ lookaround(void)
                     goto stop;
                 continue;
             } else {    /* e.g. objects or trap or stairs */
-                if (flags.run == 1)
+                if (aggressive_farmoving)
                     goto bcorr;
-                if (flags.run == 8)
+                if (travelling())
                     continue;
                 if (mtmp)
                     continue;   /* d */
@@ -2262,14 +2343,14 @@ lookaround(void)
                     continue;
             }
         stop:
-            action_interrupted();
+            action_completed();
             return;
         }       /* end for loops */
 
-    if (corrct > 1 && flags.run == 2)
+    if (corrct > 1 && go2)
         goto stop;
-    if ((flags.run == 1 || flags.run == 3 || flags.run == 8) && !noturn && !m0
-        && i0 && (corrct == 1 || (corrct == 2 && i0 == 1))) {
+    if (!go2 && !noturn && !m0 && i0 &&
+        (corrct == 1 || (corrct == 2 && i0 == 1))) {
         /* make sure that we do not turn too far */
         if (i0 == 2) {
             if (u.dx == y0 - u.uy && u.dy == u.ux - x0)
@@ -2533,89 +2614,67 @@ money_cnt(struct obj *otmp)
     return 0;
 }
 
+/* Picks a suitable interaction status for farmove and autoexplore. It will
+   displace monsters if the player's default status displaces monsters, and
+   interact with items if the player's default status interacts with items. It
+   never attacks. */
+enum u_interaction_mode
+exploration_interaction_status(void)
+{
+    enum u_interaction_mode uim = flags.interaction_mode;
+
+    if (uim <= uim_displace)
+        return flags.interaction_mode;
+
+    if (uim == uim_pacifist || uim == uim_standard)
+        return uim_displace;
+
+    if (ITEM_INTERACTIVE(uim))
+        return uim_onlyitems;
+
+    return uim_nointeraction;
+}
 
 int
 dofight(const struct nh_cmd_arg *arg)
 {
-    int ret;
-
-    flags.travel = iflags.travel1 = 0;
-    flags.run = 0;
-    flags.forcefight = 1;
-
-    ret = domove(arg);
-    flags.forcefight = 0;
-
-    return ret;
+    return domove(arg, uim_forcefight);
 }
 
+/* TODO: pre_move_tasks() currently uses a hardcoded list of movement commands.
+   For the time being, keep it in sync with this list. Hopefully there will
+   eventually be a better solution. */
 
 int
 domovecmd(const struct nh_cmd_arg *arg)
 {
-    flags.travel = iflags.travel1 = 0;
-    flags.run = 0;      /* only matters here if it was 8 */
-
-    return domove(arg);
+    return domove(arg, flags.interaction_mode);
 }
-
 
 int
 domovecmd_nopickup(const struct nh_cmd_arg *arg)
 {
-    int ret;
-
-    flags.nopick = 1;
-    ret = domovecmd(arg);
-    flags.nopick = 0;
-
-    return ret;
+    return domove(arg, uim_nointeraction);
 }
 
 
 static int
-do_rush(const struct nh_cmd_arg *arg, int runmode, boolean move_only)
+do_rush(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
 {
-    int ret;
-
-    flags.travel = iflags.travel1 = 0;
-    flags.run = runmode;
-
-    flags.nopick = move_only;
-
     action_incomplete("running", occ_move);
-    ret = domove(arg);
-
-    flags.nopick = 0;
-    return ret;
+    return domove(arg, uim);
 }
-
 
 int
 dorun(const struct nh_cmd_arg *arg)
 {
-    return do_rush(arg, 1, FALSE);
+    return do_rush(arg, exploration_interaction_status());
 }
-
-
-int
-dorun_nopickup(const struct nh_cmd_arg *arg)
-{
-    return do_rush(arg, 1, TRUE);
-}
-
 
 int
 dogo(const struct nh_cmd_arg *arg)
 {
-    return do_rush(arg, 2, FALSE);
-}
-
-
-int
-dogo2(const struct nh_cmd_arg *arg)
-{
-    return do_rush(arg, 3, FALSE);
+    return do_rush(arg, uim_nointeraction);
 }
 
 /*hack.c*/

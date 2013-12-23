@@ -759,8 +759,9 @@ pre_move_tasks(boolean didmove)
     /* recalc attribute bonuses from items */
     calc_attr_bonus();
     find_ac();
-    if (!flags.mv || Blind)
-        special_vision_handling();
+    
+    /* hallucination, etc. */
+    special_vision_handling();
 
     if (iflags.botl)
         bot();
@@ -774,10 +775,21 @@ pre_move_tasks(boolean didmove)
     /* Cancel occupations if they no longer apply. */
     reset_occupations(FALSE);
 
-    /* TODO: Switch between lookaround and monster_nearby depending on
-       what command we're doing. */
-    if (didmove)
-        lookaround();
+    if (didmove) {
+        if (last_command_was("move"))
+            lookaround(flags.interaction_mode);
+        else if (last_command_was("moveonly") || last_command_was("go"))
+            lookaround(uim_nointeraction);
+        else if (last_command_was("run"))
+            lookaround(uim_displace);
+        else if (flags.occupation == occ_autoexplore)
+            lookaround(uim_displace);
+        else if (flags.occupation == occ_travel)
+            lookaround(uim_nointeraction);
+        else if (monster_nearby())
+            action_interrupted();
+    }
+
     iflags.botl = 1;
 
     if (didmove && moves % 100 == 0)
@@ -814,8 +826,6 @@ helpless(int turns, const char *reason, const char *done)
         strcpy(u.umoveagain, reason);
     else
         strcpy(u.umoveagain, "You can move again.");
-
-    flags.travel = iflags.travel1 = flags.mv = flags.run = 0;
 }
 
 
@@ -914,7 +924,6 @@ command_input(int cmdidx, struct nh_cmd_arg *arg)
 {
     boolean didmove = TRUE;
 
-    flags.nopick = 0;
     flags.occupation = occ_none;
     if (!Helpless) {
         switch (do_command(cmdidx, arg)) {

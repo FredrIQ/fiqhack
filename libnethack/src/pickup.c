@@ -65,7 +65,7 @@ check_here(boolean picked_some)
     /* If there are objects here, take a look unless autoexploring a previously
        explored space. */
     if (ct && !(autoexploring && level->locations[u.ux][u.uy].mem_stepped)) {
-        if (flags.run)
+        if (flags.occupation == occ_move || travelling())
             action_completed();
         flush_screen();
         look_here(ct, picked_some);
@@ -166,7 +166,7 @@ is_worn_by_type(const struct obj * otmp)
  * or not it succeeded.
  */
 int
-pickup(int what)
+pickup(int what, enum u_interaction_mode uim)
 {
     int i, n, res, count, n_tried = 0, n_picked = 0;
     struct object_pick *pick_list = NULL;
@@ -184,7 +184,7 @@ pickup(int what)
 
         /* no auto-pick if no-pick move, nothing there, or in a pool */
         if (autopickup &&
-            (flags.nopick || !OBJ_AT(u.ux, u.uy) ||
+            (!ITEM_INTERACTIVE(uim) || !OBJ_AT(u.ux, u.uy) ||
              (is_pool(level, u.ux, u.uy) && !Underwater) ||
              is_lava(level, u.ux, u.uy))) {
             read_engr_at(u.ux, u.uy);
@@ -223,10 +223,8 @@ pickup(int what)
 
         /* If there's anything here, stop running and travel, but not
            autoexplore unless it picks something up, which is handled later. */
-        if (OBJ_AT(u.ux, u.uy) && flags.run &&
-            (flags.run != 8 || (flags.travel &&
-                                flags.occupation != occ_autoexplore)) &&
-            !flags.nopick)
+        if (OBJ_AT(u.ux, u.uy) && (flags.occupation == occ_move ||
+                                   flags.occupation == occ_travel))
             action_completed();
     }
 
@@ -292,7 +290,7 @@ menu_pickup:
 
     /* Stop autoexplore if this pile hasn't been explored or auto-pickup (tried 
        to) pick up anything. */
-    if (flags.run == 8 && flags.travel && flags.occupation == occ_autoexplore &&
+    if (flags.occupation == occ_autoexplore &&
         (!level->locations[u.ux][u.uy].mem_stepped ||
          (autopickup && n_tried > 0)))
         action_completed();
@@ -1471,7 +1469,9 @@ loot_mon(struct monst *mtmp, int *passed_info, boolean * prev_loot)
     if (Engulfed) {
         int count = passed_info ? *passed_info : 0;
 
-        timepassed = pickup(count);
+        /* override user interaction mode, the user explicitly asked us to
+           pick items up */
+        timepassed = pickup(count, uim_standard);
     }
     return timepassed;
 }

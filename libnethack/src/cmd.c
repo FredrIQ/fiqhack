@@ -220,13 +220,9 @@ const struct cmd_desc cmdlist[] = {
     {"move", "move one step", 0, 0, FALSE, domovecmd, CMD_ARG_DIR | CMD_MOVE},
     {"moveonly", "move, but don't fight or pick anything up", 'm', 0,
      FALSE, domovecmd_nopickup, CMD_ARG_DIR | CMD_MOVE},
-    {"run", "run until something interesting is seen", 0, 0, FALSE, dorun,
+    {"run", "run, interacting with things found on the way", 0, 0, FALSE, dorun,
      CMD_ARG_DIR | CMD_MOVE},
-    {"runonly", "run without picking anything up", 0, 'M', FALSE,
-     dorun_nopickup, CMD_ARG_DIR | CMD_MOVE},
-    {"go", "move, stopping for anything interesting", 'g', 0, FALSE, dogo,
-     CMD_ARG_DIR | CMD_MOVE},
-    {"go2", "like go, but branching corridors are boring", 'G', 0, FALSE, dogo2,
+    {"go", "run until something happens, cautiously", 'g', 'G', FALSE, dogo,
      CMD_ARG_DIR | CMD_MOVE},
 
     {"welcome", "(internal) display the 'welcome back!' message", 0, 0, TRUE,
@@ -338,7 +334,7 @@ domonability(const struct nh_cmd_arg *arg)
     else if (youmonst.data->mlet == S_NYMPH)
         return doremove();
     else if (attacktype(youmonst.data, AT_GAZE))
-        return dogaze();
+        return dogaze(apply_interaction_mode());
     else if (is_were(youmonst.data))
         return dosummon();
     else if (webmaker(youmonst.data))
@@ -2347,15 +2343,11 @@ doautoexplore(const struct nh_cmd_arg *arg)
 {
     (void) arg;
 
-    flags.travel = 1;
-    iflags.travel1 = 1;
-    flags.run = 8;
-    flags.nopick = FALSE;
     u.last_str_turn = 0;
-    flags.mv = TRUE;
 
     action_incomplete("exploring", occ_autoexplore);
-    domove(&(struct nh_cmd_arg){.argtype = CMD_ARG_DIR, .dir = DIR_SELF});
+    domove(&(struct nh_cmd_arg){.argtype = CMD_ARG_DIR, .dir = DIR_SELF},
+           exploration_interaction_status());
 
     return 1;
 }
@@ -2385,16 +2377,11 @@ dotravel(const struct nh_cmd_arg *arg)
     iflags.travelcc.x = u.tx = cc.x;
     iflags.travelcc.y = u.ty = cc.y;
 
-    flags.travel = 1;
-    iflags.travel1 = 1;
-    flags.run = 8;
-    flags.nopick = TRUE;
     u.last_str_turn = 0;
-    flags.mv = TRUE;
 
     action_incomplete("travelling", occ_travel);
-    return domove(&(struct nh_cmd_arg){.argtype = CMD_ARG_DIR,
-                                       .dir = DIR_SELF});
+    return domove(&(struct nh_cmd_arg){.argtype = CMD_ARG_DIR, .dir = DIR_SELF},
+                  uim_nointeraction);
 }
 
 /*cmd.c*/

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -16,7 +16,8 @@ static const char *gate_str;
 extern boolean notonhead;       /* for long worms */
 
 static void kickdmg(struct monst *, boolean, schar, schar);
-static enum attack_check_status kick_monster(xchar, xchar, schar, schar);
+static enum attack_check_status kick_monster(
+    xchar, xchar, schar, schar, enum u_interaction_mode);
 static int kick_object(xchar, xchar, schar, schar);
 static char *kickstr(char *);
 static void otransit_msg(struct obj *, boolean, long);
@@ -132,7 +133,7 @@ kickdmg(struct monst *mon, boolean clumsy, schar dx, schar dy)
 }
 
 static enum attack_check_status
-kick_monster(xchar x, xchar y, schar dx, schar dy)
+kick_monster(xchar x, xchar y, schar dx, schar dy, enum u_interaction_mode uim)
 {
     boolean clumsy = FALSE;
     struct monst *mon = m_at(level, x, y);
@@ -143,7 +144,7 @@ kick_monster(xchar x, xchar y, schar dx, schar dy)
     bhitpos.x = x;
     bhitpos.y = y;
 
-    attack_status = attack_checks(mon, NULL, dx, dy);
+    attack_status = attack_checks(mon, NULL, dx, dy, uim);
     if (attack_status)
         return attack_status;
 
@@ -274,7 +275,7 @@ ghitm(struct monst * mtmp, struct obj * gold)
 
     if (!likes_gold(mtmp->data) && !mtmp->isshk && !mtmp->ispriest &&
         !is_mercenary(mtmp->data)) {
-        wakeup(mtmp);
+        wakeup(mtmp, FALSE);
     } else if (!mtmp->mcanmove) {
         /* too light to do real damage */
         if (canseemon(mtmp)) {
@@ -789,10 +790,7 @@ dokick(const struct nh_cmd_arg *arg)
 
         mtmp = m_at(level, x, y);
         mdat = mtmp->data;
-        if (!mtmp->mpeaceful || !canspotmon(mtmp))
-            flags.forcefight = TRUE;    /* attack even if invisible */
-        ret = kick_monster(x, y, dx, dy);
-        flags.forcefight = FALSE;
+        ret = kick_monster(x, y, dx, dy, apply_interaction_mode());
         if (ret != ac_continue)
             return ret != ac_cancel;
 

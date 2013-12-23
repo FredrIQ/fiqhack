@@ -679,7 +679,7 @@ drop_done:
 static boolean at_ladder = FALSE;
 
 int
-dodown(void)
+dodown(enum u_interaction_mode uim)
 {
     struct trap *trap = 0;
     boolean stairs_down =
@@ -731,8 +731,8 @@ dodown(void)
              && trap->ttyp != SPIKED_PIT)
             || (!can_fall_thru(level) && can_fall) || !trap->tseen) {
 
-            if (flags.autodig && !flags.nopick && flags.autodigdown && uwep &&
-                is_pick(uwep)) {
+            if (flags.autodig && ITEM_INTERACTIVE(uim) && flags.autodigdown &&
+                flags.occupation == occ_none && uwep && is_pick(uwep)) {
                 struct nh_cmd_arg arg;
                 arg_from_delta(0, 0, 1, &arg);
                 return use_pick_axe(uwep, &arg);
@@ -766,8 +766,8 @@ dodown(void)
     if (trap) {
         if (trap->ttyp == PIT || trap->ttyp == SPIKED_PIT) {
             if (u.utrap && (u.utraptype == TT_PIT)) {
-                if (flags.autodig && !flags.nopick && flags.autodigdown && uwep
-                    && is_pick(uwep)) {
+                if (flags.autodig && ITEM_INTERACTIVE(uim) && flags.autodigdown
+                    && flags.occupation == occ_none && uwep && is_pick(uwep)) {
                     struct nh_cmd_arg arg;
                     arg_from_delta(0, 0, 1, &arg);
                     return use_pick_axe(uwep, &arg);
@@ -799,7 +799,7 @@ dodown(void)
 }
 
 int
-doup(void)
+doup(enum u_interaction_mode uim)
 {
     if ((u.ux != level->upstair.sx || u.uy != level->upstair.sy)
         && (!level->upladder.sx || u.ux != level->upladder.sx ||
@@ -1266,7 +1266,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
     /* assume this will always return TRUE when changing level */
     reset_occupations(TRUE);    /* you moved */
     in_out_region(level, u.ux, u.uy);
-    pickup(1);
+    pickup(1, flags.interaction_mode);
 }
 
 

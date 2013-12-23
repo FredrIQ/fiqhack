@@ -124,9 +124,11 @@
  * A special case check used in attack() and domove().  Placing the
  * definition here is convenient.
  */
-# define is_safepet(mon) \
-        (mon && mon->mtame && canspotmon(mon) && flags.safe_dog \
-                && !Confusion && !Hallucination && !Stunned)
+# define is_safepet(mon, uim)                           \
+    ((mon) && (mon)->mtame && canspotmon(mon) &&        \
+     ((uim) == uim_pacifist || (uim) == uim_standard || \
+      (uim) == uim_displace) &&                         \
+     !Confusion && !Hallucination && !Stunned)
 
 
 /*

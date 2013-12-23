@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2448,7 +2448,7 @@ float_down(long hmask)
         /* falling through trap door calls goto_level, and goto_level does its
            own pickup() call */
         on_level(&u.uz, &current_dungeon_level))
-        pickup(1);
+        pickup(1, flags.interaction_mode);
     return 1;
 }
 

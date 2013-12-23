@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -91,35 +91,56 @@ hurtmarmor(struct monst *mdef, int attk)
     }
 }
 
-/* Return values: 0 = OK to attack, 1 = not OK to attack and no time spent,
-   2 = not OK to attack but time was spent.
-
-   TODO: This function should just be about revealing mimics and the like. In
-   particular, the priest side effect is in entirely the wrong place, and it
-   doesn't make much sense that you can wake a monster in zero time. */
-enum attack_check_status
-attack_checks(struct monst *mtmp,
-              struct obj *wep, /* uwep for attack(), null for kick_monster() */
-              schar dx, schar dy)
+boolean
+confirm_attack(struct monst *mtmp, enum u_interaction_mode uim)
 {
     char qbuf[QBUFSZ];
 
-    /* if you're close enough to attack, alert any waiting monster */
+    if (!UIM_AGGRESSIVE(uim)) {
+        pline("You take care not to attack %s.", mon_nam(mtmp));
+        return FALSE; /* pacifists never confirm attacks */
+    }
+    if (mtmp->mpeaceful && !Hallucination && uim <= uim_standard) {
+        sprintf(qbuf, "Really attack %s?", mon_nam(mtmp));
+        if (yn(qbuf) != 'y')
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+/* Return values: ac_continue = OK to attack, ac_cancel = not OK to attack and
+   no time spent, ac_somethingelse = not OK to attack but time was spent.
+
+   This function ignores the item interaction mode of uim, and cares only about
+   the monster interaction mode. It also assumes that the caller is vetoing
+   displace attempts (they don't make sense to most callers of this function);
+   if callers want to be able to do those, they should check is_safepet()
+   manually. */
+enum attack_check_status
+attack_checks(struct monst *mtmp,
+              struct obj *wep, /* uwep for attack(), null for kick_monster() */
+              schar dx, schar dy, enum u_interaction_mode uim)
+{
+    /* If you're close enough to attack, alert any waiting monster. */
     mtmp->mstrategy &= ~STRAT_WAITMASK;
 
-    if (Engulfed && mtmp == u.ustuck)
+    /* You're always aware of an engulfing monster. */
+    if (Engulfed && mtmp == u.ustuck) {
+        if (!UIM_AGGRESSIVE(uim)) {
+            pline("You can't do that without attacking.");
+            return ac_cancel;
+        }
         return ac_continue;
+    }
 
-    if (flags.forcefight) {
-        /* Do this in the caller, after we checked that the monster didn't die
-           from the blow.  Reason: putting the 'I' there causes the hero to
-           forget the square's contents since both 'I' and remembered contents
-           are stored in .glyph. If the monster dies immediately from the blow, 
-           the 'I' will not stay there, so the player will have suddenly
-           forgotten the square's contents for no apparent reason. if
-           (!canspotmon(mtmp) &&
-           !level->locations[u.ux+u.dx][u.uy+u.dy].mem_invis)
-           map_invisible(u.ux+u.dx, u.uy+u.dy); */
+    /* If the user's very insistent about attacking, always try to attack. */
+    if (uim == uim_forcefight) {
+        /* With the new memory engine, we can do this without clobbering the
+           information on what's beneath. */
+        if (!canspotmon(mtmp) &&
+            !level->locations[u.ux + dx][u.uy + dy].mem_invis)
+            map_invisible(u.ux + dx, u.uy + dy);
         return ac_continue;
     }
 
@@ -128,7 +149,11 @@ attack_checks(struct monst *mtmp,
        prints a warning message and prevents you from hitting the monster just
        via the hidden monster code below; if we also did that here, similar
        behavior would be happening two turns in a row.  The latter shows a
-       glyph on the screen, so you know something is there. */
+       glyph on the screen, so you know something is there.
+
+       This happens regardless of the interaction mode (assuming it's not
+       forcefight); the character tries to move onto the square (in every mode),
+       and gets surprised. */
     if (!canspotmon(mtmp) && !warning_at(u.ux + dx, u.uy + dy) &&
         !level->locations[u.ux + dx][u.uy + dy].mem_invis &&
         !(!Blind && mtmp->mundetected && hides_under (mtmp->data))) {
@@ -140,9 +165,18 @@ attack_checks(struct monst *mtmp,
             if (!u.ustuck && !mtmp->mflee && dmgtype(mtmp->data, AD_STCK))
                 u.ustuck = mtmp;
         }
-        wakeup(mtmp);   /* always necessary; also un-mimics mimics */
+        wakeup(mtmp, FALSE);   /* always necessary; also un-mimics mimics */
         return ac_somethingelse;
     }
+
+    /* If the character remembers an invisible monster on the square, then
+       if they're a pacifist they're not going to risk attacking it. */
+    if (level->locations[mtmp->mx][mtmp->my].mem_invis &&
+        !UIM_AGGRESSIVE(uim)) {
+        pline("You don't want to risk attacking something.");
+        return ac_cancel;
+    }
+    /* from now on we can attack invisible monsters safely */
 
     if (mtmp->m_ap_type && !Protection_from_shape_changers && !sensemon(mtmp) &&
         !warning_at(u.ux + dx, u.uy + dy)) {
@@ -182,34 +216,43 @@ attack_checks(struct monst *mtmp,
        that the monster is there. */
     if ((mtmp->mundetected || mtmp->m_ap_type) && sensemon(mtmp)) {
         mtmp->mundetected = 0;
-        wakeup(mtmp);
+        wakeup(mtmp, TRUE);
     }
 
     /* The remaining cases only happen if the player knows what the monster is
-       and walked into it deliberately. TODO: attack_checks is also called in
-       other situations, such as applying a bullwhip; we should probably make
-       forcefight a parameter to it. */
+       and walked into it deliberately. */
     if (canspotmon(mtmp) && !Confusion && !Hallucination && !Stunned) {
-        if (mtmp->isshk && mtmp->mpeaceful &&
-            (ESHK(mtmp)->billct || ESHK(mtmp)->debit)) {
-            return dopay(NULL) ? ac_somethingelse : ac_cancel;
+
+        if (uim <= uim_displace) {
+            pline("There's a monster there.");
+            return ac_cancel; /* no interaction with monsters at all */
         }
-        if (always_peaceful(mtmp->data) && mtmp->mpeaceful) {
-            if (mtmp->data->msound == MS_PRIEST)
-                pline("The priest mutters a prayer.");
-            else {
-                struct nh_cmd_arg arg;
-                arg_from_delta(dx, dy, 0, &arg);
-                return dotalk(&arg) ? ac_somethingelse : ac_cancel;
+
+        /* These cases only happen from movement, because they're never returned
+           by apply_interaction_mode(). */
+        if (uim == uim_pacifist || uim == uim_standard) {
+            if (mtmp->isshk && mtmp->mpeaceful &&
+                (ESHK(mtmp)->billct || ESHK(mtmp)->debit)) {
+                return dopay(NULL) ? ac_somethingelse : ac_cancel;
             }
-            return ac_cancel;
-        }
-        if (flags.confirm && mtmp->mpeaceful) {
-            sprintf(qbuf, "Really attack %s?", mon_nam(mtmp));
-            if (yn(qbuf) != 'y') {
+            if (always_peaceful(mtmp->data) && mtmp->mpeaceful) {
+                if (mtmp->data->msound == MS_PRIEST)
+                    pline("The priest mutters a prayer.");
+                else {
+                    struct nh_cmd_arg arg;
+                    arg_from_delta(dx, dy, 0, &arg);
+                    return dotalk(&arg) ? ac_somethingelse : ac_cancel;
+                }
                 return ac_cancel;
             }
         }
+
+        /* Prompt about whether to attack peaceful but not always-peaceful
+           monsters; also tame monsters in modes that don't support safepet;
+           also always-peacefuls in modes that don't support chatting to
+           always-peacefuls. */
+        if (!confirm_attack(mtmp, uim))
+            return ac_cancel;
     }
 
     return ac_continue;
@@ -295,68 +338,29 @@ find_roll_to_hit(struct monst *mtmp)
 /* Called when the user does something that might attack a monster with uwep.
  *
  * Return values:
- * 0 = The monster dodged the attack; uwep should continue moving past the
- *     monster to do whatever it would do anyway.
- * 1 = The user cancelled the attack; the entire action should be cancelled, if
- *     that makes sense in context.
- * 2 = Something else happened entirely; the turn should end here.
- * 3 = uwep hit the monster, that's it for the turn.
+ * ac_continue = The monster dodged the attack; uwep should continue moving past
+ *     the monster to do whatever it would do anyway.
+ * ac_cancel = The user cancelled the attack; the entire action should be
+ *     cancelled, if that makes sense in context (or if it would be plausible
+ *     for the character to attack only a subset of monsters in an area attack,
+ *     simply avoid that specific monster).
+ * ac_somethingelse = Something else happened entirely; the turn should end
+ *     here.
+ * ac_monsterhit = uwep hit the monster, that's it for the turn.
  */
 enum attack_check_status
-attack(struct monst * mtmp, schar dx, schar dy)
+attack(struct monst * mtmp, schar dx, schar dy, enum u_interaction_mode uim)
 {
     schar tmp;
     const struct permonst *mdat = mtmp->data;
     enum attack_check_status ret;
 
-    /* This section of code provides protection against accidentally hitting
-       peaceful (like '@') and tame (like 'd') monsters. Protection is provided 
-       as long as player is not: blind, confused, hallucinating or stunned.
-       changes by wwp 5/16/85 More changes 12/90, -dkh-. if its tame and
-       safepet, (and protected 07/92) then we assume that you're not trying to
-       attack. Instead, you'll usually just swap places if this is a movement
-       command */
-    if (is_safepet(mtmp) && !flags.forcefight) {
-        /* there are some additional considerations: this won't work if in
-           a shop or Punished or you miss a random roll or if you can walk
-           thru walls and your pet cannot (KAA) or if your pet is a long
-           worm (unless someone does better). there's also a chance of
-           displacing a "frozen" monster. sleeping monsters might magically 
-           walk in their sleep. */
-        boolean foo = (Punished || !rn2(7) ||
-                       is_longworm(mtmp->data)), inshop = FALSE;
-        char *p;
-
-        for (p = in_rooms(level, mtmp->mx, mtmp->my, SHOPBASE); *p; p++)
-            if (tended_shop(&level->rooms[*p - ROOMOFFSET])) {
-                inshop = TRUE;
-                break;
-            }
-
-        if (inshop || foo ||
-            (IS_ROCK(level->locations[u.ux][u.uy].typ) &&
-             !passes_walls(mtmp->data))) {
-            char buf[BUFSZ];
-
-            monflee(mtmp, rnd(6), FALSE, FALSE);
-            strcpy(buf, y_monnam(mtmp));
-            buf[0] = highc(buf[0]);
-            pline("You stop.  %s is in the way!", buf);
-            action_interrupted();
-            return ac_cancel;
-        } else if ((mtmp->mfrozen || (!mtmp->mcanmove)
-                    || (mtmp->data->mmove == 0)) && rn2(6)) {
-            pline("%s doesn't seem to move!", Monnam(mtmp));
-            action_interrupted();
-            return ac_somethingelse;
-        } else
-            return ac_continue;
-    }
-
-
-    /* possibly set in attack_checks; examined in known_hitum, called via hitum
-       or hmonas below  */
-    ret = attack_checks(mtmp, uwep, dx, dy);
+    /* This always needs doing, but it needs doing exactly once. We normally do
+       it ourselves in order that the caller doesn't have to. If the caller has
+       done a check already, they should set the interaction mode to
+       "indiscriminate" in order to avoid the second check causing problems
+       (it's always going to return ac_continue if the first check did). */
+    ret = attack_checks(mtmp, uwep, dx, dy, uim);
     if (ret != ac_continue)
         return ret;
 
@@ -365,12 +369,12 @@ attack(struct monst * mtmp, schar dx, schar dy)
         if (noattacks(youmonst.data)) {
             pline("You have no way to attack monsters physically.");
             mtmp->mstrategy &= ~STRAT_WAITMASK;
-            goto atk_done;
+            return ac_cancel;
         }
     }
 
     if (check_capacity("You cannot fight while so heavily loaded."))
-        goto atk_done;
+        return ac_cancel;
 
     if (u.twoweap && !can_twoweapon())
         untwoweapon();
@@ -406,15 +410,6 @@ attack(struct monst * mtmp, schar dx, schar dy)
     else
         hitum(mtmp, tmp, youmonst.data->mattk, dx, dy);
     mtmp->mstrategy &= ~STRAT_WAITMASK;
-
-atk_done:
-    /* see comment in attack_checks() */
-    /* we only need to check for this if we did an attack_checks() and it
-       returned 0 (it's okay to attack), and the monster didn't evade. */
-    if (flags.forcefight && mtmp->mhp > 0 && !canspotmon(mtmp) &&
-        !level->locations[u.ux + dx][u.uy + dy].mem_invis &&
-        !(Engulfed && mtmp == u.ustuck))
-        map_invisible(u.ux + dx, u.uy + dy);
 
     return ac_monsterhit;
 }
@@ -547,7 +542,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
     unconventional[0] = '\0';
     saved_oname[0] = '\0';
 
-    wakeup(mon);
+    wakeup(mon, TRUE);
     if (!obj) { /* attack with bare hands */
         if (mdat == &mons[PM_SHADE])
             tmp = 0;
@@ -1976,7 +1971,7 @@ missum(struct monst *mdef, const struct attack *mattk)
     else
         pline("You miss it.");
     if (!mdef->msleeping && mdef->mcanmove)
-        wakeup(mdef);
+        wakeup(mdef, FALSE);
 }
 
 /* attack monster as a monster. */
@@ -2052,7 +2047,7 @@ hmonas(struct monst *mon, int tmp, schar dx, schar dy)
                     sum[i] = damageum(mon, mattk);
                     break;
                 }
-                wakeup(mon);
+                wakeup(mon, FALSE);
                 /* maybe this check should be in damageum()? */
                 if (mon->data == &mons[PM_SHADE] &&
                     !(mattk->aatyp == AT_KICK && uarmf && uarmf->blessed)) {
@@ -2083,7 +2078,7 @@ hmonas(struct monst *mon, int tmp, schar dx, schar dy)
             /* automatic if prev two attacks succeed, or if already grabbed in
                a previous attack */
             dhit = 1;
-            wakeup(mon);
+            wakeup(mon, FALSE);
             if (mon->data == &mons[PM_SHADE])
                 pline("Your hug passes harmlessly through %s.", mon_nam(mon));
             else if (!sticks(mon->data) && !Engulfed) {
@@ -2101,13 +2096,13 @@ hmonas(struct monst *mon, int tmp, schar dx, schar dy)
 
         case AT_EXPL:  /* automatic hit if next to */
             dhit = -1;
-            wakeup(mon);
+            wakeup(mon, FALSE);
             sum[i] = explum(mon, mattk);
             break;
 
         case AT_ENGL:
             if ((dhit = (tmp > rnd(20 + i)))) {
-                wakeup(mon);
+                wakeup(mon, FALSE);
                 if (mon->data == &mons[PM_SHADE])
                     pline("Your attempt to surround %s is harmless.",
                           mon_nam(mon));
@@ -2475,7 +2470,7 @@ stumble_onto_mimic(struct monst *mtmp, schar dx, schar dy)
     if (what)
         pline(fmt, what);
 
-    wakeup(mtmp);       /* clears mimicking */
+    wakeup(mtmp, TRUE);       /* clears mimicking */
 }
 
 static void

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -458,7 +458,12 @@ mcalcmove(struct monst *mon)
         mmove = (4 * mmove + 2) / 3;
 
     if (mon == u.usteed) {
-        if (u.ugallop && flags.mv) {
+        /* This used to have a flags.mv check, but that has been conclusively
+           been shown to be a) abusable, and b) really confusing in practice.
+           (flags.mv no longer exists, but the same effect could be achieved
+           using flags.occupation. It's just that this is no longer an effect
+           that's worth acheiving.) */
+        if (u.ugallop) {
             /* average movement is 1.50 times normal */
             mmove = ((rn2(2) ? 4 : 5) * mmove) / 3;
         }
@@ -2124,14 +2129,14 @@ setmangry(struct monst *mtmp)
 
 
 void
-wakeup(struct monst *mtmp)
+wakeup(struct monst *mtmp, boolean force_detected)
 {
     mtmp->msleeping = 0;
     mtmp->meating = 0;  /* assume there's no salvagable food left */
     setmangry(mtmp);
     if (mtmp->m_ap_type)
         seemimic(mtmp);
-    else if (flags.forcefight && !flags.mon_moving && mtmp->mundetected) {
+    else if (force_detected && !flags.mon_moving && mtmp->mundetected) {
         mtmp->mundetected = 0;
         newsym(mtmp->mx, mtmp->my);
     }

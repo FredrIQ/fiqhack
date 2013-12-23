@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -962,11 +962,10 @@ dosummon(void)
 }
 
 int
-dogaze(void)
+dogaze(enum u_interaction_mode uim)
 {
     struct monst *mtmp;
     int looked = 0;
-    char qbuf[QBUFSZ];
     int i;
     uchar adtyp = 0;
 
@@ -980,7 +979,6 @@ dogaze(void)
         impossible("gaze attack %d?", adtyp);
         return 0;
     }
-
 
     if (Blind) {
         pline("You can't see anything to gaze at.");
@@ -1006,24 +1004,19 @@ dogaze(void)
                      mtmp->m_ap_type == M_AP_OBJECT) {
                 looked--;
                 continue;
-            } else if (flags.safe_dog && !Confusion && !Hallucination &&
-                       mtmp->mtame) {
+            } else if (is_safepet(mtmp, uim)) {
                 pline("You avoid gazing at %s.", y_monnam(mtmp));
             } else {
-                if (flags.confirm && mtmp->mpeaceful && !Confusion &&
-                    !Hallucination) {
-                    sprintf(qbuf, "Really %s %s?",
-                            (adtyp == AD_CONF) ? "confuse" : "attack",
-                            mon_nam(mtmp));
-                    if (yn(qbuf) != 'y')
-                        continue;
-                    setmangry(mtmp);
-                }
+                if (!Confusion && !confirm_attack(mtmp, uim))
+                    continue;
+                setmangry(mtmp);
+
                 if (!mtmp->mcanmove || mtmp->mstun || mtmp->msleeping ||
                     !mtmp->mcansee || !haseyes(mtmp->data)) {
                     looked--;
                     continue;
                 }
+
                 /* No reflection check for consistency with when a monster
                    gazes at *you*--only medusa gaze gets reflected then. */
                 if (adtyp == AD_CONF) {

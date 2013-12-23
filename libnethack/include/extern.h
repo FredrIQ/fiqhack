@@ -24,6 +24,7 @@ enum nh_log_status;
 enum nh_menuitem_role;
 enum objslot;
 enum occupation;
+enum u_interaction_mode;
 struct attack;
 struct damage;
 struct def_skill;
@@ -67,6 +68,7 @@ extern void cancel_helplessness(const char *done);
 
 /* ### apply.c ### */
 
+extern enum u_interaction_mode apply_interaction_mode(void);
 extern int doapply(const struct nh_cmd_arg *);
 extern int dorub(const struct nh_cmd_arg *);
 extern int dojump(const struct nh_cmd_arg *);
@@ -310,8 +312,8 @@ extern void dropx(struct obj *);
 extern void dropy(struct obj *);
 extern void obj_no_longer_held(struct obj *);
 extern int doddrop(const struct nh_cmd_arg *);
-extern int dodown(void);
-extern int doup(void);
+extern int dodown(enum u_interaction_mode);
+extern int doup(enum u_interaction_mode);
 extern void notify_levelchange(const d_level *);
 extern void goto_level(d_level *, boolean, boolean, boolean);
 extern void schedule_goto(d_level *, boolean, boolean, int, const char *,
@@ -598,15 +600,17 @@ extern boolean may_dig(struct level *lev, xchar x, xchar y);
 extern boolean may_passwall(struct level *lev, xchar x, xchar y);
 extern boolean bad_rock(const struct permonst *, xchar, xchar);
 extern boolean invocation_pos(const d_level * dlev, xchar x, xchar y);
-extern boolean test_move(int, int, int, int, int, int);
-extern int domove(const struct nh_cmd_arg *);
+extern boolean travelling(void);
+extern boolean test_move(
+    int, int, int, int, int, int, enum u_interaction_mode);
+extern int domove(const struct nh_cmd_arg *, enum u_interaction_mode);
 extern void invocation_message(void);
 extern void spoteffects(boolean);
 extern char *in_rooms(struct level *lev, xchar, xchar, int);
 extern boolean in_town(int, int);
 extern void check_special_room(boolean);
 extern int dopickup(const struct nh_cmd_arg *);
-extern void lookaround(void);
+extern void lookaround(enum u_interaction_mode);
 extern int monster_nearby(void);
 extern void losehp(int, const char *, boolean);
 extern int weight_cap(void);
@@ -617,12 +621,11 @@ extern int max_capacity(void);
 extern boolean check_capacity(const char *);
 extern int inv_cnt(boolean);
 extern long money_cnt(struct obj *);
+extern enum u_interaction_mode exploration_interaction_status(void);
 extern int domovecmd(const struct nh_cmd_arg *);
 extern int domovecmd_nopickup(const struct nh_cmd_arg *);
 extern int dorun(const struct nh_cmd_arg *);
-extern int dorun_nopickup(const struct nh_cmd_arg *);
 extern int dogo(const struct nh_cmd_arg *);
-extern int dogo2(const struct nh_cmd_arg *);
 extern int dofight(const struct nh_cmd_arg *);
 
 /* ### history.c ### */
@@ -1003,7 +1006,7 @@ extern void poisontell(int);
 extern void poisoned(const char *, int, const char *, int);
 extern void m_respond(struct monst *);
 extern void setmangry(struct monst *);
-extern void wakeup(struct monst *);
+extern void wakeup(struct monst *, boolean);
 extern void wake_nearby(void);
 extern void wake_nearto(int, int, int);
 extern void seemimic(struct monst *);
@@ -1205,7 +1208,7 @@ extern void add_valid_menu_class(int);
 extern boolean allow_all(const struct obj *);
 extern boolean allow_category(const struct obj *);
 extern boolean is_worn_by_type(const struct obj *);
-extern int pickup(int);
+extern int pickup(int, enum u_interaction_mode);
 extern int pickup_object(struct obj *, long, boolean);
 extern int query_category(const char *, struct obj *, int, int *, int);
 extern int obj_compare(const void *, const void *);
@@ -1250,7 +1253,7 @@ extern int dospit(const struct nh_cmd_arg *);
 extern int doremove(void);
 extern int dospinweb(void);
 extern int dosummon(void);
-extern int dogaze(void);
+extern int dogaze(enum u_interaction_mode uim);
 extern int dohide(void);
 extern int domindblast(void);
 extern struct obj *uskin(void);
@@ -1681,11 +1684,13 @@ extern void u_init_inv_skills(void);
 /* ### uhitm.c ### */
 
 extern void hurtmarmor(struct monst *, int);
-extern enum attack_check_status attack_checks(struct monst *, struct obj *,
-                                              schar, schar);
+extern boolean confirm_attack(struct monst *, enum u_interaction_mode);
+extern enum attack_check_status attack_checks(
+    struct monst *, struct obj *, schar, schar, enum u_interaction_mode);
 extern void check_caitiff(struct monst *);
 extern schar find_roll_to_hit(struct monst *);
-extern enum attack_check_status attack(struct monst *, schar, schar);
+extern enum attack_check_status attack(
+    struct monst *, schar, schar, enum u_interaction_mode);
 extern boolean hmon(struct monst *, struct obj *, int);
 extern int damageum(struct monst *, const struct attack *);
 extern void missum(struct monst *, const struct attack *);

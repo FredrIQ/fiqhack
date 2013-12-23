@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -560,7 +560,7 @@ digactualhole(int x, int y, struct monst *madeby, int ttyp)
             } else
                 u.utrap = 0;
             if (oldobjs != newobjs)     /* something unearthed */
-                pickup(1);      /* detects pit */
+                pickup(1, flags.interaction_mode);      /* detects pit */
         } else if (mtmp) {
             if (is_flyer(mtmp->data) || is_floater(mtmp->data)) {
                 if (canseemon(mtmp))
@@ -592,7 +592,7 @@ digactualhole(int x, int y, struct monst *madeby, int ttyp)
                 if (newobjs)
                     impact_drop(NULL, x, y, 0);
                 if (oldobjs != newobjs)
-                    pickup(1);
+                    pickup(1, flags.interaction_mode);
                 if (shopdoor && madeby_u)
                     pay_for_damage("ruin", FALSE);
 
@@ -853,9 +853,10 @@ use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
         return res;
 
     if (Engulfed) {
-        enum attack_check_status attack_status = attack(u.ustuck, dx, dy);
+        enum attack_check_status attack_status =
+            attack(u.ustuck, dx, dy, apply_interaction_mode());
         if (attack_status != ac_continue)
-            return attack_status != ac_cancel;
+            return res || attack_status != ac_cancel;
     }
 
     if (Underwater) {
@@ -887,8 +888,12 @@ use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
             return 1;
         }
         loc = &level->locations[rx][ry];
-        if (MON_AT(level, rx, ry) && attack(m_at(level, rx, ry), dx, dy))
-            return 1;
+        if (MON_AT(level, rx, ry)) {
+            enum attack_check_status attack_status =
+                attack(m_at(level, rx, ry), dx, dy, apply_interaction_mode());
+            if (attack_status != ac_continue)
+                return res || attack_status != ac_cancel;
+        }
         dig_target = dig_typ(obj, rx, ry);
         if (dig_target == DIGTYP_UNDIGGABLE) {
             /* ACCESSIBLE or POOL */

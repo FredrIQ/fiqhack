@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Izchak Miller, Steve Linhart, 1989.              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -677,7 +677,7 @@ angry_priest(void)
     struct rm *loc;
 
     if ((priest = findpriest(temple_occupied(u.urooms))) != 0) {
-        wakeup(priest);
+        wakeup(priest, FALSE);
         /* 
          * If the altar has been destroyed or converted, let the
          * priest run loose.

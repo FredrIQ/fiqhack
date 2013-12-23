@@ -42,6 +42,20 @@ static const struct nh_listitem pickup_burden_list[] = {
 static const struct nh_enum_option pickup_burden_spec =
     { pickup_burden_list, listlen(pickup_burden_list) };
 
+static const struct nh_listitem movecommand_list[] = {
+    {uim_nointeraction, "nointeraction"},
+    {uim_onlyitems, "onlyitems"},
+    {uim_displace, "displace"},
+    {uim_pacifist, "pacifist"},
+    {uim_attackonly, "attackonly"},
+    {uim_traditional, "traditional"},
+    {uim_standard, "standard"},
+    {uim_indiscriminate, "indiscriminate"},
+    {uim_forcefight, "forcefight"}
+};
+static const struct nh_enum_option movecommand_spec =
+    { movecommand_list, listlen(movecommand_list) };
+
 static const struct nh_listitem runmode_list[] = {
     {RUN_CRAWL, "crawl"},
     {RUN_STEP, "step"},
@@ -137,7 +151,7 @@ static const struct nh_option_desc const_options[] = {
     {"autoquiver",
      "when firing with an empty quiver, select something suitable", FALSE,
      OPTTYPE_BOOL, {.b = FALSE}},
-    {"confirm", "ask before hitting tame or peaceful monsters", FALSE,
+    {"corridorbranch", "branching corridors stop farmove", FALSE,
      OPTTYPE_BOOL, {.b = TRUE}},
     {"disclose", "whether to disclose information at end of game", FALSE,
      OPTTYPE_ENUM, {.e = DISCLOSE_PROMPT_DEFAULT_YES}},
@@ -147,6 +161,8 @@ static const struct nh_option_desc const_options[] = {
      OPTTYPE_BOOL, {.b = FALSE}},
     {"menustyle", "user interface for object selection", FALSE, OPTTYPE_ENUM,
      {.e = MENU_FULL}},
+    {"movecommand", "what the movement keys do", FALSE, OPTTYPE_ENUM,
+     {.e = uim_standard}},
     {"packorder", "the inventory order of the items in your pack", FALSE,
      OPTTYPE_STRING, {.s = "$\")[%?+!=/(*`0_"}},
     {"pickup_burden", "maximum burden picked up before prompt", FALSE,
@@ -159,8 +175,6 @@ static const struct nh_option_desc const_options[] = {
      OPTTYPE_BOOL, {.b = FALSE}},
     {"runmode", "display frequency when `running' or `travelling'", FALSE,
      OPTTYPE_ENUM, {.e = RUN_LEAP}},
-    {"safe_pet", "prevent you from (knowingly) attacking your pet(s)", FALSE,
-     OPTTYPE_BOOL, {.b = TRUE}},
     {"show_uncursed", "always show uncursed status", FALSE, OPTTYPE_BOOL,
      {.b = FALSE}},
     {"showrace", "show yourself by your race rather than by role", FALSE,
@@ -213,13 +227,12 @@ static const struct nhlib_boolopt_map boolopt_map[] = {
     {"autodigdown", &flags.autodigdown},
     {"autopickup", &flags.pickup},
     {"autoquiver", &flags.autoquiver},
-    {"confirm", &flags.confirm},
+    {"corridorbranch", &flags.corridorbranch},
     {"legacy", &flags.legacy},
     {"lit_corridor", &flags.lit_corridor},
     {"pickup_thrown", &flags.pickup_thrown},
     {"prayconfirm", &flags.prayconfirm},
     {"pushweapon", &flags.pushweapon},
-    {"safe_pet", &flags.safe_dog},
     {"show_uncursed", &flags.show_uncursed},
     {"showrace", &flags.showrace},
     {"sortpack", &flags.sortpack},
@@ -339,6 +352,7 @@ init_opt_struct(void)
     nhlib_find_option(options, "disclose")->e = disclose_spec;
     nhlib_find_option(options, "fruit")->s.maxlen = PL_FSIZ;
     nhlib_find_option(options, "menustyle")->e = menustyle_spec;
+    nhlib_find_option(options, "movecommand")->e = movecommand_spec;
     nhlib_find_option(options, "pickup_burden")->e = pickup_burden_spec;
     nhlib_find_option(options, "packorder")->s.maxlen = MAXOCLASSES;
     nhlib_find_option(options, "runmode")->e = runmode_spec;
@@ -435,13 +449,13 @@ set_option(const char *name, union nh_optvalue value)
             fruitadd(pl_fruit);
     } else if (!strcmp("menustyle", option->name)) {
         flags.menu_style = option->value.e;
+    } else if (!strcmp("movecommand", option->name)) {
+        flags.interaction_mode = option->value.e;
     } else if (!strcmp("packorder", option->name)) {
         if (!change_inv_order(option->value.s))
             return FALSE;
     } else if (!strcmp("pickup_burden", option->name)) {
         flags.pickup_burden = option->value.e;
-    } else if (!strcmp("runmode", option->name)) {
-        flags.runmode = option->value.e;
     } else if (!strcmp("autopickup_rules", option->name)) {
         if (flags.ap_rules) {
             free(flags.ap_rules->rules);
@@ -534,13 +548,15 @@ nh_get_options(void)
             option->value.s[PL_FSIZ - 1] = '\0';
         } else if (!strcmp("menustyle", option->name)) {
             option->value.e = flags.menu_style;
+        } else if (!strcmp("pickup_burden", option->name)) {
+            option->value.e = flags.interaction_mode;
         } else if (!strcmp("packorder", option->name)) {
             if (option->value.s)
                 free(option->value.s);
             option->value.s = malloc(MAXOCLASSES);
             memcpy(option->value.s, flags.inv_order, MAXOCLASSES);
         } else if (!strcmp("pickup_burden", option->name)) {
-            option->value.e = flags.runmode;
+            option->value.e = flags.pickup_burden;
         } else if (!strcmp("autopickup_rules", option->name)) {
             if (option->value.ar) {
                 free(option->value.ar->rules);

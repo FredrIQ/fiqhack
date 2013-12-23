@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -45,6 +45,21 @@ static void add_class(char *, char);
 
 static const char no_elbow_room[] =
     "You don't have enough elbow-room to maneuver.";
+
+/* The appropriate interaction mode for an "attack" made via applying an
+   object. Also handles kicks.
+
+   The main rule here is that this must never select a mode that would allow
+   the user to chat to a monster, etc.; it's attack, or nothing. */
+enum u_interaction_mode
+apply_interaction_mode(void)
+{
+    if (flags.interaction_mode >= uim_indiscriminate)
+        return flags.interaction_mode;
+    if (!UIM_AGGRESSIVE(flags.interaction_mode))
+        return uim_nointeraction;
+    return uim_attackonly;
+}
 
 static int
 use_camera(struct obj *obj, const struct nh_cmd_arg *arg)
@@ -2202,7 +2217,8 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
         proficient = 0;
 
     if (Engulfed) {
-        enum attack_check_status attack_status = attack(u.ustuck, dx, dy);
+        enum attack_check_status attack_status =
+            attack(u.ustuck, dx, dy, apply_interaction_mode());
         return attack_status != ac_cancel;
 
     } else if (Underwater) {
@@ -2280,7 +2296,8 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
             if (bigmonst(mtmp->data)) {
                 wrapped_what = strcpy(buf, mon_nam(mtmp));
             } else if (proficient) {
-                enum attack_check_status attack_status = attack(mtmp, dx, dy);
+                enum attack_check_status attack_status =
+                    attack(mtmp, dx, dy, apply_interaction_mode());
                 if (attack_status == ac_continue)
                     pline(msg_snap);
                 else
@@ -2310,7 +2327,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
                 pline(msg_slipsfree);
             }
             if (mtmp)
-                wakeup(mtmp);
+                wakeup(mtmp, FALSE);
         } else
             pline(msg_snap);
 
@@ -2387,7 +2404,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
             } else {
                 pline(msg_slipsfree);
             }
-            wakeup(mtmp);
+            wakeup(mtmp, TRUE);
         } else {
             if (mtmp->m_ap_type && !Protection_from_shape_changers &&
                 !sensemon(mtmp))
@@ -2395,7 +2412,8 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
             else
                 pline("You flick your bullwhip towards %s.", mon_nam(mtmp));
             if (proficient) {
-                enum attack_check_status attack_status = attack(mtmp, dx, dy);
+                enum attack_check_status attack_status =
+                    attack(mtmp, dx, dy, apply_interaction_mode());
                 if (attack_status == ac_continue)
                     pline(msg_snap);
                 else
@@ -2479,7 +2497,8 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
         int oldhp = mtmp->mhp;
         enum attack_check_status attack_status;
 
-        attack_status = attack_checks(mtmp, obj, cc.x, cc.y);
+        attack_status =
+            attack_checks(mtmp, obj, cc.x, cc.y, apply_interaction_mode());
 
         if (attack_status != ac_continue)
             return res || attack_status != ac_cancel;
