@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-12 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1132,11 +1132,14 @@ role_init(void)
  * and by either u_init or restore_you
  */
 void
-pantheon_init(void)
+pantheon_init(boolean newgame)
 {
-    u.upantheon = u.initrole;            /* use own gods */
-    while (!roles[u.upantheon].lgod)     /* unless they're missing */
-        u.upantheon = randrole();
+    if (newgame) {
+        u.upantheon = u.initrole;            /* use own gods */
+        while (!roles[u.upantheon].lgod)     /* unless they're missing */
+            u.upantheon = randrole();
+    }
+
     if (!urole.lgod) {
         urole.lgod = roles[u.upantheon].lgod;
         urole.ngod = roles[u.upantheon].ngod;

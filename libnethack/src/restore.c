@@ -847,7 +847,7 @@ dorecover(struct memfile *mf)
 
     restore_you(mf, &u);
     role_init();        /* Reset the initial role, race, gender, and alignment */
-    pantheon_init();
+    pantheon_init(FALSE);
 
     restore_options(mf);
 

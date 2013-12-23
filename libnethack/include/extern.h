@@ -1398,7 +1398,7 @@ extern boolean validrace(int rolenum, int racenum);
 extern boolean validgend(int rolenum, int racenum, int gendnum);
 extern boolean validalign(int rolenum, int racenum, int alignnum);
 extern void role_init(void);
-extern void pantheon_init(void);
+extern void pantheon_init(boolean);
 extern const char *Hello(struct monst *);
 extern const char *Goodbye(void);
 

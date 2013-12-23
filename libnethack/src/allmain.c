@@ -972,7 +972,7 @@ newgame(void)
     init_artifacts();
     u_init();   /* struct you must have some basic data for mklev to work right 
                  */
-    pantheon_init();
+    pantheon_init(TRUE);
 
     load_qtlist();      /* load up the quest text info */
 
