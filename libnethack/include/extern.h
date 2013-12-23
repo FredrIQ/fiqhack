@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1187,7 +1187,7 @@ extern char *nh_getenv(const char *);
 extern void init_opt_struct(void);
 extern void cleanup_opt_struct(void);
 extern void initoptions(void);
-extern int dotogglepickup(void);
+extern int dotogglepickup(const struct nh_cmd_arg *);
 extern int fruitadd(const char *str);
 extern char *autopickup_to_string(const struct nh_autopickup_rules *rules);
 extern struct nh_autopickup_rules *parse_autopickup_rules(const char *str);
