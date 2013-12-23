@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-21 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -29,7 +29,7 @@ getpos(coord * cc, boolean force, const char *goal, boolean isarg)
     cc->x = x;
     cc->y = y;
 
-    if (isarg) {
+    if (isarg && !program_state.in_zero_time_command) {
         if (rv == -1)
             flags.last_arg.argtype &= ~CMD_ARG_POS;
         else {
@@ -68,8 +68,10 @@ getdir(const char *s, schar * dx, schar * dy, schar * dz, boolean isarg)
         return 0;
     }
 
-    flags.last_arg.argtype |= CMD_ARG_DIR;
-    flags.last_arg.dir = dir;
+    if (isarg && !program_state.in_zero_time_command) {
+        flags.last_arg.argtype |= CMD_ARG_DIR;
+        flags.last_arg.dir = dir;
+    }
 
     if (!*dz && (Stunned || (Confusion && !rn2(5))))
         confdir(dx, dy);
@@ -102,11 +104,13 @@ getlin(const char *query, char *bufp, boolean isarg)
     suppress_more();
     pline("<%s: %s>", query, bufp[0] == '\033' ? "(escaped)" : bufp);
 
-    if (*bufp == '\033')
-        flags.last_arg.argtype &= ~CMD_ARG_STR;
-    else {
-        flags.last_arg.argtype |= CMD_ARG_STR;
-        strcpy(flags.last_arg.str, bufp);
+    if (isarg && !program_state.in_zero_time_command) {
+        if (*bufp == '\033')
+            flags.last_arg.argtype &= ~CMD_ARG_STR;
+        else {
+            flags.last_arg.argtype |= CMD_ARG_STR;
+            strcpy(flags.last_arg.str, bufp);
+        }
     }
 }
 

@@ -415,16 +415,26 @@ nh_play_game(int fd)
         /* TODO: Better resolution for turntime */
         turntime = time(NULL);
 
-        unsigned int pre_rngstate = mt_nextstate();
-        int pre_moves = moves;
-
         flags.incomplete = FALSE;
         flags.interrupted = FALSE;
+
+        if (cmdlist[cmdidx].flags & CMD_NOTIME &&
+            (flags.incomplete || !flags.interrupted || flags.occupation)) {
+            /* CMD_NOTIME actions don't set last_cmd/last_arg, so we need to
+               ensure we interrupt them in order to avoid screwing up command
+               repeat. We accomplish this via logging an "interrupt" command. */
+            command_input(get_command_idx("interrupt"),
+                          &(struct nh_cmd_arg){.argtype = 0});
+            neutral_turnstate_tasks();
+        }
+
+        program_state.in_zero_time_command =
+            !!(cmdlist[cmdidx].flags & CMD_NOTIME);
         command_input(cmdidx, &arg);
+        program_state.in_zero_time_command = FALSE;
 
         /* make sure we actually want this command to be logged */
-        if (cmdidx >= 0 && (cmdlist[cmdidx].flags & CMD_NOTIME) &&
-            pre_rngstate == mt_nextstate() && pre_moves == moves)
+        if (cmdlist[cmdidx].flags & CMD_NOTIME)
             log_revert_command();   /* nope, cut it out of the log */
         else
             neutral_turnstate_tasks();
@@ -766,7 +776,8 @@ pre_move_tasks(boolean didmove)
 
     /* TODO: Switch between lookaround and monster_nearby depending on
        what command we're doing. */
-    lookaround();
+    if (didmove)
+        lookaround();
     iflags.botl = 1;
 
     if (didmove && moves % 100 == 0)

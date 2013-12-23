@@ -21,6 +21,7 @@ static int domonability(const struct nh_cmd_arg *);
 static int dotravel(const struct nh_cmd_arg *);
 static int doautoexplore(const struct nh_cmd_arg *);
 static int dowelcome(const struct nh_cmd_arg *);
+static int dointerrupt(const struct nh_cmd_arg *);
 static int doattributes(const struct nh_cmd_arg *);
 static int doconduct(const struct nh_cmd_arg *);
 static int wiz_wish(const struct nh_cmd_arg *);
@@ -230,6 +231,8 @@ const struct cmd_desc cmdlist[] = {
 
     {"welcome", "(internal) display the 'welcome back!' message", 0, 0, TRUE,
      dowelcome, CMD_INTERNAL},
+    {"interrupt", "(internal) cancels a multi-turn command", 0, 0, TRUE,
+     dointerrupt, CMD_INTERNAL},
 
     {"detect", "(DEBUG) detect monsters", 0, 0, TRUE, wiz_detect,
      CMD_DEBUG | CMD_EXT},
@@ -1470,6 +1473,23 @@ dowelcome(const struct nh_cmd_arg *arg)
     return 0;
 }
 
+/* Normally, we don't want commands like "inventory" to change the save data.
+   However, there's one respect in which they must: if you use them to break up
+   a multi-turn action, you don't want the action immediately restarting after
+   viewing your inventory, yet the action would continue if you didn't (and the
+   client ddidn't intervene). Thus, we need to insert a command whose purpose is
+   to capture this side effect of a notime action. It can also be sent
+   explicitly by the client in order to print a "You stop running." message, or
+   the like. */
+static int
+dointerrupt(const struct nh_cmd_arg *arg)
+{
+    (void) arg;
+
+    action_interrupted();
+    return 0;
+}
+
 
 static int
 doattributes(const struct nh_cmd_arg *arg)
@@ -2222,7 +2242,7 @@ do_command(int command, struct nh_cmd_arg *arg)
         command = flags.last_cmd;
         arg = &flags.last_arg;
         turnstate.continue_message = FALSE;
-    } else if (!(cmdlist[command].flags & CMD_INTERNAL)) {
+    } else if (!(cmdlist[command].flags & (CMD_INTERNAL | CMD_NOTIME))) {
         flags.last_cmd = command;
         flags.last_arg = *arg;
     }

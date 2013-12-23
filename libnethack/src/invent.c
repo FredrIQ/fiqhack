@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Alex Smith, 2013-12-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -841,7 +841,7 @@ getobj(const char *let, const char *word, boolean isarg)
     int cnt;
     boolean prezero = FALSE;
 
-    if (isarg)
+    if (isarg && !program_state.in_zero_time_command)
         flags.last_arg.argtype &= ~CMD_ARG_OBJ;
 
     if (*let == ALLOW_COUNT)
@@ -917,7 +917,7 @@ getobj(const char *let, const char *word, boolean isarg)
             return NULL;
         }
         if (ilet == nonechar) {
-            if (allownone && isarg) {
+            if (allownone && isarg && !program_state.in_zero_time_command) {
                 flags.last_arg.argtype |= CMD_ARG_OBJ;
                 flags.last_arg.invlet = nonechar;
             }
@@ -1002,7 +1002,7 @@ getobj(const char *let, const char *word, boolean isarg)
         }
     }
 
-    if (isarg) {
+    if (isarg && !program_state.in_zero_time_command) {
         flags.last_arg.argtype |= CMD_ARG_OBJ;
         flags.last_arg.invlet = otmp->invlet;
     }
