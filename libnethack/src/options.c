@@ -526,13 +526,13 @@ nh_get_options(void)
         return options;
 
     struct nh_option_desc *option;
-    for (option = options; *option->name; ++option) {
-        if (option->type != OPTTYPE_BOOL) {
+    for (option = options; option->name; ++option) {
+        if (option->type == OPTTYPE_BOOL) {
             boolean *bvar = nhlib_find_boolopt(boolopt_map, option->name);
 
             if (!bvar) {
                 impossible("no boolean for option '%s'", option->name);
-                return FALSE;
+                continue;
             }
 
             option->value.b = *bvar;
@@ -551,10 +551,15 @@ nh_get_options(void)
         } else if (!strcmp("pickup_burden", option->name)) {
             option->value.e = flags.interaction_mode;
         } else if (!strcmp("packorder", option->name)) {
+            int i;
+
             if (option->value.s)
                 free(option->value.s);
-            option->value.s = malloc(MAXOCLASSES);
-            memcpy(option->value.s, flags.inv_order, MAXOCLASSES);
+
+            for (i = 0; i < MAXOCLASSES; ++i)
+                option->value.s[i] = def_oc_syms[(int)flags.inv_order[i]];
+
+            option->value.s[MAXOCLASSES - 1] = '\0';
         } else if (!strcmp("pickup_burden", option->name)) {
             option->value.e = flags.pickup_burden;
         } else if (!strcmp("autopickup_rules", option->name)) {
@@ -601,7 +606,8 @@ nh_get_options(void)
             option->value.s[PL_PSIZ - 1] = '\0';
         } else if (!strcmp("pettype", option->name)) {
             option->value.e = preferred_pet;
-        }
+        } else
+            impossible("unknown option '%s'", option->name);
     }
 
     return options;
