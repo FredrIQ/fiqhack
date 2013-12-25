@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-12-25 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -801,6 +801,7 @@ tty_hook_exit(void)
        that's not very many, due to problems with the protocol. */
     ofile_outputs("\x1b>");                              /* no keypad mode */
     ofile_outputs(CSI "?25h");                           /* show cursor */
+    ofile_outputs(CSI "0m");                             /* SGR reset */
     reset_palette();
     ofile_outputs(CSI "2J");                             /* clear terminal */
 
@@ -809,6 +810,9 @@ tty_hook_exit(void)
 
     /* Restore G0/G1. */
     ofile_outputs("\x1b" "8");                           /* restore state */
+
+    /* Force a flush, so that our frame of reset commands is actually sent. */
+    tty_hook_flush();
 
     platform_specific_exit();
 
@@ -1001,26 +1005,26 @@ tty_hook_update(int y, int x)
            background). We set the colors using the 8-color code first, then
            the 16-color code, to get support for 16 colors without losing
            support for 8 colors. */
-        ofile_outputs(CSI "0;");                         /* CSI reset */
+        ofile_outputs(CSI "0;");                         /* SGR reset */
         if ((color & 31) == 16)         /* default fg */
-            ofile_outputs("39;");                        /* CSI default fg */
+            ofile_outputs("39;");                        /* SGR default fg */
         else if ((color & 31) >= 8)     /* bright fg */
-            /* CSI bold; CSI 8 color (fg & 8); CSI 16 color (fg) */
+            /* SGR bold; SGR 8 color (fg & 8); SGR 16 color (fg) */
             ofile_output("1;%d;%d;", (color & 31) + 22, (color & 31) + 82);
         else    /* dark fg */
-            ofile_output("%d;", (color & 31) + 30);      /* CSI 8 color (fg) */
+            ofile_output("%d;", (color & 31) + 30);      /* SGR 8 color (fg) */
         color >>= 5;
         if (color & 32)
-            ofile_outputs("4;");                         /* CSI underline */
+            ofile_outputs("4;");                         /* SGR underline */
         color &= 31;
         if (color == 16)        /* default bg */
-            ofile_outputs("49m");                        /* CSI default bg */
+            ofile_outputs("49m");                        /* SGR default bg */
         else if (color >= 8)    /* bright bg */
-            /* CSI 256 color 5 /or/ CSI blink (depending on color depth);
-               CSI 8 color (bg & 8); CSI 16 color (bg) */
+            /* SGR 256 color 5 /or/ SGR blink (depending on color depth);
+               SGR 8 color (bg & 8); SGR 16 color (bg) */
             ofile_output("48;5;5;%d;%dm", color + 32, color + 92);
         else
-            ofile_output("%dm", color + 40);             /* CSI 8 color (bg) */
+            ofile_output("%dm", color + 40);             /* SGR 8 color (bg) */
     }
 
     if (supports_utf8)
