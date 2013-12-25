@@ -321,7 +321,7 @@ platform_specific_init(void)
     ti.c_lflag &= ~(ISIG | ICANON | ECHO);
     ti.c_cc[VMIN] = 1;
     ti.c_cc[VTIME] = 0;
-    if (raw_isig)
+    if (!raw_isig)
         ti.c_lflag |= ISIG;
     tcsetattr(fileno(ifile), TCSANOW, &ti);
 
