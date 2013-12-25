@@ -513,7 +513,7 @@ dostop(void)
 
     endwin();
     kill(getpid(), SIGSTOP);
-    doupdate();
+    refresh();
 #endif
 }
 
