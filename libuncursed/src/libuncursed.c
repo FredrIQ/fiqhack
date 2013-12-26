@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Alex Smith, 2013-12-26 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -2564,7 +2564,8 @@ setcchar(cchar_t *c, const wchar_t * s, attr_t attr, short pairnum,
 }
 
 /* manual page 3ncurses getch */
-UNCURSED_ANDMVWINDOWVDEF(int, getch)
+UNCURSED_ANDMVWINDOWVDEF(int,
+getch)
 {
     wint_t w;
 
@@ -2596,7 +2597,8 @@ ungetch(int k)
 
 
 /* manual page 3ncurses move */
-UNCURSED_ANDWINDOWDEF(int, move, (int y, int x), (y, x))
+UNCURSED_ANDWINDOWDEF(int,
+move, (int y, int x), (y, x))
 {
     if (y > win->maxy || x > win->maxx || y < 0 || x < 0)
         return ERR;
