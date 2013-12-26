@@ -289,22 +289,23 @@ layout_msgwin(nh_bool dodraw, int offset, nh_bool more, nh_bool mark_seen)
 static void
 keypress_at_more(void)
 {
+    int continue_looping = 1;
     if (stopmore)
         return;
 
-    do {
-        switch (get_map_key(TRUE)) {
+    while (continue_looping) {
+        switch (get_map_key(FALSE)) {
         case KEY_ESCAPE:
             stopmore = 1;
+            continue_looping = 0;
             break;
         case ' ':
         case 10:
         case 13:
+            continue_looping = 0;
             break;
-        default:
-            continue;
         }
-    } while(0);
+    }
 }
 
 /* Ensure that the user has seen all the messages that they're required to see
@@ -320,7 +321,7 @@ force_seen(nh_bool more, nh_bool mark_last_screenful_seen) {
             offset++;
         while (offset > 0) {
             layout_msgwin(1, offset, 1, 1); /* sets unseen to 0 */
-            get_map_key(TRUE);
+            keypress_at_more();
             offset -= getmaxy(msgwin);
         }
     }
