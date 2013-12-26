@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-29 */
+/* Last modified by Alex Smith, 2013-12-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -17,6 +17,11 @@
 # include <assert.h>
 
 # include "nethack_types.h"
+
+# ifndef static_assert
+#  define static_assert(cond, msg) \
+    extern const int static_assertion_##__LINE__[cond ? 1 : -1]
+# endif
 
 /*
  * Files expected to exist in the playground directory.
