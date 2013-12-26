@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Sean Hunt, 2013-12-26 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -110,9 +110,6 @@ enum objslot {
     os_last_equip = os_swapwep,
 
 /* Other object slot codes that appear in a wear mask */
-    os_ball,      /* punishment ball */
-    os_chain,     /* punishment chain */
-
     os_saddle,    /* for riding */
 
     os_last_maskable = os_saddle,
@@ -146,6 +143,8 @@ enum tracked_object_slots {
     tos_trap,    /* trap we were interrupted setting */
     tos_dig,     /* no associated item, used for progress only */
     tos_lock,    /* chest we were interrupted lockpicking or forcing */
+    tos_ball,    /* iron ball we're punished with */
+    tos_chain,   /* chain the ball is attached with */
 
     tos_first_equip,   /* equipment we were interrupted equipping */
     tos_last_equip = tos_first_equip + os_last_maskable,
@@ -224,8 +223,8 @@ enum tracked_location {
 # define uwep     EQUIP(os_wep)
 # define uswapwep EQUIP(os_swapwep)
 # define uquiver  EQUIP(os_quiver)
-# define uball    EQUIP(os_ball)
-# define uchain   EQUIP(os_chain)
+# define uball    (u.utracked[tos_ball])
+# define uchain   (u.utracked[tos_chain])
 
 /* Flags for intrinsics */
 

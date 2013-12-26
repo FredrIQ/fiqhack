@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Sean Hunt, 2013-12-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1233,8 +1233,8 @@ poly_obj(struct obj *obj, int id)
     boolean can_merge = (id == STRANGE_OBJECT);
     int obj_location = obj->where;
 
-    if (obj->owornmask &
-        (W_MASK(os_ball) | W_MASK(os_chain) | W_MASK(os_saddle))) {
+    if (obj->owornmask & W_MASK(os_saddle) ||
+        obj == uball || obj == uchain) {
         impossible("Polymorphing a chain, ball, or saddle!");
         return obj;
     }

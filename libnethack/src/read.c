@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Sean Hunt, 2013-12-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -845,9 +845,7 @@ seffects(struct obj *sobj, boolean * known)
                     if (obj->oclass == COIN_CLASS)
                         continue;
 
-                    /* Don't allow equipped-only curse removal to work on the
-                       ball (although it does work on the chain) */
-                    wornmask = obj->owornmask & ~W_MASK(os_ball) & W_MASKABLE;
+                    wornmask = obj->owornmask & W_MASKABLE;
                     if (wornmask && !sobj->blessed) {
                         /* handle a couple of special cases; we don't allow
                            auxiliary weapon slots to be used to artificially
@@ -1727,8 +1725,8 @@ punish(struct obj *sobj)
         dropy(mkobj(level, BALL_CLASS, TRUE));
         return;
     }
-    setworn(mkobj(level, CHAIN_CLASS, TRUE), W_MASK(os_chain));
-    setworn(mkobj(level, BALL_CLASS, TRUE), W_MASK(os_ball));
+    uchain = mkobj(level, CHAIN_CLASS, TRUE);
+    uball = mkobj(level, BALL_CLASS, TRUE);
     uball->spe = 1;     /* special ball (see save) */
 
     /* 
@@ -1750,10 +1748,9 @@ unpunish(void)
 
     obj_extract_self(uchain);
     newsym(uchain->ox, uchain->oy);
-    setworn(NULL, W_MASK(os_chain));
     dealloc_obj(savechain);
     uball->spe = 0;
-    setworn(NULL, W_MASK(os_ball));
+    uball = uchain = NULL;
 }
 
 /* some creatures have special data structures that only make sense in their
