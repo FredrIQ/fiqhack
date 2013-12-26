@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-23 */
+/* Last modified by Alex Smith, 2013-12-26 */
 /* Copyright (c) NetHack Development Team 1992.                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -196,7 +196,7 @@ const struct nh_symdef defsyms[] = {
     {'<', "upsstair", CLR_YELLOW},
     {'>', "dnsstair", CLR_YELLOW},
     {'_', "altar", CLR_GRAY},
-    {'|', "grave", CLR_GRAY},
+    {'|', "grave", CLR_BLACK},
     {'\\', "throne", HI_GOLD},
     {'#', "sink", CLR_GRAY},
 /*40*/ {'{', "fountain", CLR_BLUE},
