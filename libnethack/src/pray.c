@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-27 */
+/* Last modified by Alex Smith, 2013-12-26 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1824,16 +1824,16 @@ doturn(const struct nh_cmd_arg *arg)
                 switch (mtmp->data->mlet) {
                     /* this is intentional, lichs are tougher than zombies. */
                 case S_LICH:
-                    xlev += 2;
-                 /*FALLTHRU*/ case S_GHOST:
-                    xlev += 2;
-                 /*FALLTHRU*/ case S_VAMPIRE:
-                    xlev += 2;
-                 /*FALLTHRU*/ case S_WRAITH:
-                    xlev += 2;
-                 /*FALLTHRU*/ case S_MUMMY:
-                    xlev += 2;
-                 /*FALLTHRU*/ case S_ZOMBIE:
+                    xlev += 4; /*FALLTHRU*/
+                case S_VAMPIRE:
+                    xlev += 2; /*FALLTHRU*/
+                case S_WRAITH:
+                    if (noncorporeal(mtmp->data)) /* actually a ghost */
+                        xlev += 4;
+                    xlev += 2; /*FALLTHRU*/
+                case S_MUMMY:
+                    xlev += 2; /*FALLTHRU*/
+                case S_ZOMBIE:
                     if (u.ulevel >= xlev && !resist(mtmp, '\0', 0, NOTELL)) {
                         if (u.ualign.type == A_CHAOTIC) {
                             mtmp->mpeaceful = 1;

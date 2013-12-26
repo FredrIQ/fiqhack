@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Alex Smith, 2013-12-26 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -909,7 +909,7 @@ rnd_defensive_item(struct monst *mtmp)
     int trycnt = 0;
 
     if (is_animal(pm) || attacktype(pm, AT_EXPL) || mindless(mtmp->data)
-        || pm->mlet == S_GHOST || pm->mlet == S_KOP)
+        || noncorporeal(pm) || pm->mlet == S_KOP)
         return 0;
 try_again:
     switch (rn2(8 + (difficulty > 3) + (difficulty > 6) + (difficulty > 8))) {
@@ -1475,7 +1475,7 @@ rnd_offensive_item(struct monst *mtmp)
     int difficulty = monstr[monsndx(pm)];
 
     if (is_animal(pm) || attacktype(pm, AT_EXPL) || mindless(mtmp->data)
-        || pm->mlet == S_GHOST || pm->mlet == S_KOP)
+        || noncorporeal(pm) || pm->mlet == S_KOP)
         return 0;
     if (difficulty > 7 && !rn2(35))
         return WAN_DEATH;
@@ -1907,7 +1907,7 @@ rnd_misc_item(struct monst *mtmp)
     int difficulty = monstr[monsndx(pm)];
 
     if (is_animal(pm) || attacktype(pm, AT_EXPL) || mindless(mtmp->data)
-        || pm->mlet == S_GHOST || pm->mlet == S_KOP)
+        || noncorporeal(pm) || pm->mlet == S_KOP)
         return 0;
     /* Unlike other rnd_item functions, we only allow _weak_ monsters to have
        this item; after all, the item will be used to strengthen the monster

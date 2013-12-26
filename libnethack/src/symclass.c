@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-12-26 */
 /* Copyright (c) NetHack Development Team 1992.                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -84,7 +84,6 @@ const char def_monsyms[MAXMCLASSES] = {
     DEF_YETI,
     DEF_ZOMBIE,
     DEF_HUMAN,
-    DEF_GHOST,
     DEF_GOLEM,
     DEF_DEMON,
     DEF_EEL,

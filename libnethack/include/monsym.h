@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-12-26 */
 /*      Monster symbols and creation information rev 1.0          */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -64,16 +64,15 @@
 # define S_YETI         51
 # define S_ZOMBIE       52
 # define S_HUMAN        53
-# define S_GHOST        54
-# define S_GOLEM        55
-# define S_DEMON        56
-# define S_EEL          57
-# define S_LIZARD       58
+# define S_GOLEM        54
+# define S_DEMON        55
+# define S_EEL          56
+# define S_LIZARD       57
 
-# define S_WORM_TAIL    59
-# define S_MIMIC_DEF    60
+# define S_WORM_TAIL    58
+# define S_MIMIC_DEF    59
 
-# define MAXMCLASSES 61 /* number of monster classes */
+# define MAXMCLASSES 60 /* number of monster classes */
 
 /*
  * Default characters for monsters.  These correspond to the monster classes
@@ -131,7 +130,6 @@
 # define DEF_YETI       'Y'
 # define DEF_ZOMBIE     'Z'
 # define DEF_HUMAN      '@'
-# define DEF_GHOST      ' '
 # define DEF_GOLEM      '\''
 # define DEF_DEMON      '&'
 # define DEF_EEL        ';'

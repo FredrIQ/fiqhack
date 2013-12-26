@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-12-26 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -37,7 +37,8 @@
 # define amphibious(ptr)        (((ptr)->mflags1 & (M1_AMPHIBIOUS | M1_BREATHLESS)) != 0L)
 # define passes_walls(ptr)      (((ptr)->mflags1 & M1_WALLWALK) != 0L)
 # define amorphous(ptr)         (((ptr)->mflags1 & M1_AMORPHOUS) != 0L)
-# define noncorporeal(ptr)      ((ptr)->mlet == S_GHOST)
+# define noncorporeal(ptr)      ((ptr) == &mons[PM_GHOST] || \
+                                 (ptr) == &mons[PM_SHADE])
 # define tunnels(ptr)           (((ptr)->mflags1 & M1_TUNNEL) != 0L)
 # define needspick(ptr)         (((ptr)->mflags1 & M1_NEEDPICK) != 0L)
 # define hides_under(ptr)       (((ptr)->mflags1 & M1_CONCEAL) != 0L)
