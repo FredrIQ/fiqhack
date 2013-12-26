@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Sean Hunt, 2013-12-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1507,7 +1507,10 @@ insert_timer(struct level *lev, timer_element * gnu)
     timer_element *curr, *prev;
 
     for (prev = 0, curr = lev->lev_timers; curr; prev = curr, curr = curr->next)
-        if (curr->timeout >= gnu->timeout)
+        /* For most purposes, > vs. >= has little effect. Using >, however,
+         * ensures that we load timers in the same order as when they were saved
+         * to a file, which avoids desyncing the save. */
+        if (curr->timeout > gnu->timeout)
             break;
 
     gnu->next = curr;
