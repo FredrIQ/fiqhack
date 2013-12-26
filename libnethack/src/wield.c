@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-18 */
+/* Last modified by Sean Hunt, 2013-12-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -303,7 +303,24 @@ dowield(const struct nh_cmd_arg *arg)
     if (!wep)
         return 0;
 
-    /* TODO: pushweapon */
+    int j;
+    for (j = 0; j <= os_last_equip; j++) {
+        if (j == os_wep)
+            u.utracked[tos_first_equip + j] = wep;
+        if (j == os_swapwep && flags.pushweapon && uwep)
+            u.utracked[tos_first_equip + j] = uwep;
+        else
+            u.utracked[tos_first_equip + j] = NULL;
+        /* We can just set uoccupation_progress to 0 unconditionally because
+           wielding does not take multiple turns. */
+        u.uoccupation_progress[tos_first_equip + j] = 0;
+    }
+
+    /* Do the wield. */
+    int t = equip_heartbeat();
+    if (t == 2)
+        action_incomplete("wielding a weapon", occ_equip);
+
     return equip_in_slot(wep, os_wep);
 }
 
