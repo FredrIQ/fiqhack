@@ -418,6 +418,9 @@ curses_print_message_core(int turn, const char *msg, nh_bool canblock)
     histlines_pointer++;
     histlines_pointer %= histlines_alloclen;
 
+    free(histlines[histlines_pointer].message);
+    histlines[histlines_pointer].message = 0;
+
     if (!layout_msgwin(0, 0, 0, 0))
         force_seen(0, 0); /* print a --More-- at the appropriate point */
     else
