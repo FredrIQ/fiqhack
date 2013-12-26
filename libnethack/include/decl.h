@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Alex Smith, 2013-12-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -284,9 +284,13 @@ extern int curline;
 
 # define MEMFILE_HASHTABLE_SIZE 1009
 
+/* Seeks tend to have small integer arguments, whereas copies very often have
+   all-bits-1 as an argument. Thus, using the value of 3 for MDIFF_COPY means
+   that a "no-change" diff will be all-bits-1 up until the end, making it a
+   little more compressible. */
 # define MDIFF_SEEK 0
-# define MDIFF_COPY 1
 # define MDIFF_EDIT 2
+# define MDIFF_COPY 3
 # define MDIFF_INVALID 255
 
 enum memfile_tagtype {
