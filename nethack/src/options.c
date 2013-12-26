@@ -78,7 +78,7 @@ struct nh_option_desc curses_options[] = {
      OPTTYPE_BOOL, {.b = FALSE}},
     {"comment", "has no effect", FALSE, OPTTYPE_STRING, {.s = NULL}},
     {"darkgray", "try to show 'black' as dark gray instead of dark blue", FALSE,
-     OPTTYPE_BOOL, {.b = FALSE}},
+     OPTTYPE_BOOL, {.b = TRUE}},
     {"extmenu", "use a menu for selecting extended commands (#)", FALSE,
      OPTTYPE_BOOL,
      {.b = FALSE}},
