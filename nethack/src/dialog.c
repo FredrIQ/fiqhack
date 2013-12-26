@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-21 */
+/* Last modified by Alex Smith, 2013-12-26 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -171,6 +171,15 @@ curses_msgwin(const char *msg)
 {
     int key, len;
     int width = strlen(msg) + 4;
+
+    /* We don't know whether the window system is inited right now. So ask.
+       isendwin() is one of the few uncursed functions that works no matter
+       what. */
+    if (isendwin()) {
+        fprintf(stderr, "%s\n", msg);
+        return '\x1b';
+    }
+
     int prevcurs = curs_set(0);
     WINDOW *win = newdialog(3, width);
 
