@@ -143,12 +143,13 @@ draw_menu(struct gamewin *gw)
             wprintw(mdat->content, "%c %c ", item->accel,
                     mdat->selected[mdat->offset + i] ? '+' : '-');
 
-        if (col)
+        if (col) {
             for (j = 0; j <= col; j++) {
-                wprintw(mdat->content, "%-*s",
-                        mdat->colpos[j + 1] - mdat->colpos[j] - 1, colstrs[j]);
+                waddnstr(mdat->content, colstrs[j],
+                         mdat->colpos[j + 1] - mdat->colpos[j] - 1);
                 if (j < col)
                     wmove(mdat->content, i, mdat->colpos[j + 1]);
+            }
         } else
             waddstr(mdat->content, caption);
 
