@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Sean Hunt, 2013-12-26 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -76,7 +76,7 @@ struct nh_option_desc curses_options[] = {
     {"blink",
      "show multiple symbols for each location by switching between them", FALSE,
      OPTTYPE_BOOL, {.b = FALSE}},
-    {"comment", "has no effect", FALSE, OPTTYPE_STRING, {.s = ""}},
+    {"comment", "has no effect", FALSE, OPTTYPE_STRING, {.s = NULL}},
     {"darkgray", "try to show 'black' as dark gray instead of dark blue", FALSE,
      OPTTYPE_BOOL, {.b = FALSE}},
     {"extmenu", "use a menu for selecting extended commands (#)", FALSE,
@@ -1199,9 +1199,7 @@ write_ui_config(void)
     FILE *fp;
     fnchar filename[BUFSZ];
 
-    get_config_name(filename, TRUE);
-
-    if (get_config_name(filename, FALSE) &&
+    if (get_config_name(filename, TRUE) &&
         (fp = open_config_file(filename))) {
         write_config_options(fp, curses_options);
         fclose(fp);
