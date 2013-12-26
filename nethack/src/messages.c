@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-23 */
+/* Last modified by Alex Smith, 2013-12-26 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,474 +7,450 @@
 
 #include "nhcurses.h"
 
-/* save more of long messages than could be displayed in COLNO chars */
-#define MSGLEN 119
-
-struct message {
-    char *msg;
-    int turn;
+struct msghist_entry {
+    int turn;               /* for displaying in the UI */
+    char *message;          /* the message; can be NULL if this slot is empty */
+    nh_bool old;            /* true if the user has acted since seeing it */
+    nh_bool unseen;         /* true if the user must see it but has not, yet */
+    nh_bool nomerge;        /* don't merge this message with the next one */
 };
 
-#define MAX_MSGLINES 40
+static struct msghist_entry *histlines; /* circular buffer */
+static int histlines_alloclen;          /* allocated length of histlines */
+static int histlines_pointer;           /* next unused histline entry */
+static nh_bool last_line_reserved;      /* keep the last line of msgwin blank */
+static int first_unseen = -1;           /* first unseen histline entry */
+static int first_new = -1;              /* first non-"old" histline entry */
+static nh_bool stopmore = 0;            /* stop doing input at --More-- */
 
-static struct message *msghistory;
-static int histsize, histpos;
-static char msglines[MAX_MSGLINES][COLNO + 1];
-static int curline;
-static int start_of_turn_curline = -1;
-static int last_redraw_curline;
-static nh_bool stopprint, blockafter = TRUE;
-static int prevturn, action, prevaction;
-
-static void newline(void);
-
-static void
-store_message(int turn, const char *msg)
-{
-    if (!*msg)
-        return;
-
-    histpos++;
-    if (histpos >= histsize)
-        histpos = 0;
-
-    msghistory[histpos].turn = turn;
-    if (msghistory[histpos].msg)
-        free(msghistory[histpos].msg);
-    msghistory[histpos].msg = strdup(msg);
-}
-
-
+/* Allocates space for settings.msghistory lines of message history, or adjusts
+   the message history to the given amount of space if it's already been
+   allocated. We actually allocate an extra line, so that histlines_pointer can
+   always point to a blank line; this simplifies the code. */
 void
 alloc_hist_array(void)
 {
-    struct message *oldhistory = msghistory;
-    int i, oldsize = histsize, oldpos = histpos;
+    static struct msghist_entry *newhistlines;
+    int i, j;
 
-    msghistory = calloc(settings.msghistory, sizeof (struct message));
-    histsize = settings.msghistory;
-    histpos = -1;       /* histpos is incremented before any message is stored */
+    newhistlines = malloc((settings.msghistory + 1) * sizeof *newhistlines);
 
-    for (i = 0; i < histsize; i++) {
-        msghistory[i].msg = NULL;
-        msghistory[i].turn = 0;
-    }
+    if (!newhistlines)
+        return;                            /* just keep using the old array */
 
-    if (!oldhistory)
-        return;
+    i = histlines_pointer + 1;
+    j = 0;
 
-    for (i = 0; i < oldsize; i++) {
-        int pos = oldpos + i + 1;
+    first_unseen = -1;
+    first_new = -1;
 
-        if (pos >= oldsize)     /* wrap around eventually */
-            pos -= oldsize;
+    if (histlines) {
+        while (i != histlines_pointer) {
+            if (histlines[i].message) {
+                newhistlines[j] = histlines[i];
 
-        if (oldhistory[pos].turn)
-            store_message(oldhistory[pos].turn, oldhistory[pos].msg);
-        if (oldhistory[pos].msg)
-            free(oldhistory[pos].msg);
-    }
+                if (histlines[j].unseen && first_unseen == -1)
+                    first_unseen = j;
+                if (!histlines[j].old && first_new == -1)
+                    first_new = j;
 
-    free(oldhistory);
-}
-
-
-static void
-newline(void)
-{
-    if (msglines[curline][0]) { /* do nothing if the line is empty */
-        curline++;
-        if (curline >= MAX_MSGLINES)
-            curline = 0;
-
-        msglines[curline][0] = '\0';
-    }
-}
-
-
-static void
-prune_messages(int maxturn)
-{
-    int i, pos;
-    const char *msg;
-
-    if (!msghistory)
-        return;
-
-    /* remove future messages from the history
-     * maxturn = 0 will clear all messages */
-    i = histsize;
-    while (msghistory[histpos].turn >= maxturn && i--) {
-        msghistory[histpos].turn = 0;
-        if (msghistory[histpos].msg) {
-            free(msghistory[histpos].msg);
-            msghistory[histpos].msg = NULL;
+                j++;
+                j %= settings.msghistory + 1;
+            }
+            i++;
+            i %= histlines_alloclen;
         }
-        histpos--;
-        if (histpos < 0)
-            histpos += histsize;
+        free(histlines);
+    }
+    histlines = newhistlines;
+    histlines_pointer = j;
+    histlines_alloclen = settings.msghistory + 1;
+}
+
+/* Deallocate and reset state used by the messages code. */
+void
+cleanup_messages(void)
+{
+    int i;
+    for (i = 0; i < histlines_alloclen; i++)
+        free(histlines[i].message);                 /* free(NULL) is legal */
+    free(histlines);
+    histlines = 0;
+    histlines_alloclen = 0;
+    histlines_pointer = 0;
+    first_unseen = -1;
+    first_new = -1;
+}
+
+/* Appends second to the end of first, which will be reallocated larger to fit
+   if necessary. The allocated length of first is stored in first_alloclen.
+   *first can be NULL, in which case *first_alloclen must be 0; first itself
+   must point to a valid char pointer. If second is NULL, the function returns
+   without doing anything. */
+static void
+realloc_strcat(char **first, int *first_alloclen, char *second)
+{
+    int strlen_first = *first ? strlen(*first) : 0;
+    int strlen_second = second ? strlen(second) : 0;
+
+    if (!second)
+        return;
+
+    if (strlen_first + strlen_second >= *first_alloclen) {
+        int first_was_null = !*first;
+
+        *first_alloclen = ((strlen_first + strlen_second + 1) & 256) + 256;
+        *first = realloc(*first, *first_alloclen);
+
+        if (first_was_null)
+            **first = 0;
     }
 
-    /* rebuild msglines */
-    curline = 0;
-    for (i = 0; i < MAX_MSGLINES; i++)
-        msglines[i][0] = '\0';
-    for (i = 0; i < histsize; i++) {
-        pos = histpos + i + 1;
-        if (pos >= histsize)
-            pos -= histsize;
+    strcat(*first, second);
+}
 
-        msg = msghistory[pos].msg;
-        if (!msg)
+/* Calculates how many messages fit into the message area, and optionally draws
+   them (controlled by "dodraw"). The last "offset" lines on screen will not be
+   shown (allowing you to scroll back the message buffer in order to print
+   earlier parts of a long message, or to add a --More-- when previously none
+   was needed). The return value is TRUE if the first character of the first
+   unseen message line fits onto the screen under the given settings (or if it
+   doesn't exist), FALSE otherwise. This respects last_line_reserved with
+   space_for_more FALSE, and draws a --More-- otherwise. */
+static nh_bool
+layout_msgwin(nh_bool dodraw, int offset, nh_bool more, nh_bool mark_seen)
+{
+    int ypos = getmaxy(msgwin) - 1;
+    int hp = histlines_pointer;
+    int last_on_this_line = hp;
+    int chars_on_this_line = more ? 9 : 0;
+    int rv = first_unseen == -1;
+
+    if (dodraw)
+        werase(msgwin);
+
+    /* Sometimes we don't want to write to the last line. */
+    if (last_line_reserved && !more)
+        ypos--;
+
+    /* If we're reserving the /only/ line on a 1-line message buffer, we
+       obviously don't print anything. */
+    if (ypos < 0) {
+        wnoutrefresh(msgwin);
+        return rv;
+    }
+
+    ypos += offset;
+
+    /* Run backwards through the messages, printing as many as will fit. */
+    do {
+        int hp_len = 0;
+
+        /* Find the previous message line. */
+        if (hp == 0)
+            hp = histlines_alloclen - 1;
+        else
+            hp--;
+
+        if (histlines[hp].message)
+            hp_len = strlen(histlines[hp].message);
+
+        /* Does this message need to end a new line? (Note: "end" rather than
+           "start" because we're looping backwards.) */
+        if (!histlines[hp].message || histlines[hp].nomerge ||
+            hp_len + chars_on_this_line + 2 > getmaxx(msgwin)) {
+
+            /* Yep; lay out the subsequent messages. */
+            char *nextline = NULL;
+            int nextlinelen = 0;
+            int hp2 = hp;
+            int anyold = 0;
+            int first_unseen_seen = 0;
+
+            do {
+                hp2++;
+                hp2 %= histlines_alloclen;
+
+                if (histlines[hp2].message && nextlinelen) {
+                    realloc_strcat(&nextline, &nextlinelen, "  ");
+                }
+                realloc_strcat(&nextline, &nextlinelen, histlines[hp2].message);
+
+                if (histlines[hp2].message && histlines[hp2].old)
+                    anyold = 1;
+
+                if (hp2 == first_unseen)
+                    first_unseen_seen = 1;
+
+            } while (hp2 != last_on_this_line);
+
+            /* It could be that we have nothing to print. */
+            if (nextline) {
+
+                /* If there's a single subsequent message and it's very long, we
+                   need to wrap it. It's simplest to always call the wrapping
+                   code. */
+                char **wrapped_nextline;
+                int wrap_linecount;
+                attr_t colorattr = anyold ?
+                    curses_color_attr(COLOR_BLACK, 0) :
+                    curses_color_attr(COLOR_WHITE, 0);
+
+                wrap_text(getmaxx(msgwin) - (more ? 9 : 0), nextline,
+                          &wrap_linecount, &wrapped_nextline);
+                free(nextline);
+
+                while (wrap_linecount--) {
+                    if (dodraw && ypos >= 0 && ypos < getmaxy(msgwin)) {
+                        char *p = wrapped_nextline[wrap_linecount];
+
+                        wmove(msgwin, ypos, 0);
+
+                        while (*p)
+                            waddch(msgwin, *p++ | colorattr);
+
+                        if (more) {
+                            colorattr = curses_color_attr(COLOR_WHITE + 8, 0);
+                            p = " --More--";
+                            while (*p)
+                            waddch(msgwin, *p++ | colorattr);
+                        }
+
+                    }
+                    ypos--;
+                    if (ypos == getmaxy(msgwin))
+                        more = 0;
+                }
+
+                if (ypos >= -1 && ypos < getmaxy(msgwin) - 1 && mark_seen) {
+                    /* The first characters of each of these lines were written
+                       onto the screen. Mark them as seen. (If we have ypos <
+                       -1, then we only drew part of the line, so it's not
+                       properly "seen". If we have ypos >= getmaxy(msgwin), they
+                       were excluded by the offset, and still aren't seen.)
+
+                       Code using offsets to suppress later parts of a long
+                       message line will need to ensure by itself that the later
+                       parts of the long message are printed. */
+                    hp2 = hp;
+
+                    do {
+                        hp2++;
+                        hp2 %= histlines_alloclen;
+
+                        histlines[hp2].unseen = 0;
+                    } while (hp2 != last_on_this_line);
+                }
+
+                if (ypos >= -1 && first_unseen_seen) {
+                    /* We went to or past the first unseen line. (Going past can
+                       happen in some obscure cases involving --More--.) Return
+                       TRUE, and find the new first unseen line (which may be
+                       the same as the old one. */
+                    rv = 1;
+                    if (mark_seen && ypos < getmaxy(msgwin - 1)) {
+
+                        /* Find the new first unseen line, if any. */
+                        hp2 = histlines_pointer;
+                        first_unseen = -1;
+
+                        while (hp2 != hp) {
+                            if (hp2 == 0)
+                                hp2 = histlines_alloclen - 1;
+                            else
+                                hp2--;
+
+                            if (histlines[hp2].message &&
+                                histlines[hp2].unseen)
+                                first_unseen = hp2;
+                        }
+                    }
+                }
+
+                free_wrap(wrapped_nextline);
+            }
+
+            last_on_this_line = hp;
+            chars_on_this_line = more ? 10 : 0;
+        }
+
+        chars_on_this_line += hp_len;
+
+        /* If we just printed the last message line in the buffer, or that
+           fits onto the screen, exit. */
+    } while (ypos >= 0 && histlines[hp].message);
+
+    if (dodraw)
+        wnoutrefresh(msgwin);
+
+    return rv;
+}
+
+static void
+keypress_at_more(void)
+{
+    if (stopmore)
+        return;
+
+    do {
+        switch (get_map_key(TRUE)) {
+        case KEY_ESCAPE:
+            stopmore = 1;
+            break;
+        case ' ':
+        case 10:
+        case 13:
+            break;
+        default:
             continue;
-        if (msghistory[pos].turn > prevturn)
-            start_of_turn_curline = last_redraw_curline = curline;
-        prevturn = msghistory[pos].turn;
-
-        if (strlen(msglines[curline]) + strlen(msg) + 2 < COLNO) {
-            if (msglines[curline][0])
-                strcat(msglines[curline], "  ");
-            strcat(msglines[curline], msg);
-        } else {
-            if (strlen(msglines[curline]) > 0)
-                newline();
-            strcpy(msglines[curline], msg);
         }
-    }
+    } while(0);
 }
 
+/* Ensure that the user has seen all the messages that they're required to see
+   (via displaying them, with --More-- if necessary), finally leaving the last
+   onscreen. If more is set, draw a --More-- after the last set, too. */
+static void
+force_seen(nh_bool more, nh_bool mark_last_screenful_seen) {
+    if (!layout_msgwin(0, 0, more, 0)) {
+        /* The text so far doesn't fit onto the screen. Draw it, followed by a
+           --More--. */
+        int offset = 1;
+        while (!layout_msgwin(0, offset, 1, 0))
+            offset++;
+        while (offset > 0) {
+            layout_msgwin(1, offset, 1, 1); /* sets unseen to 0 */
+            get_map_key(TRUE);
+            offset -= getmaxy(msgwin);
+        }
+    }
+    layout_msgwin(1, 0, more, mark_last_screenful_seen);
+}
 
+/* Draws messages on the screen. Any messages drawn since the last call to
+   new_action() are in white; others are in blue. This routine adapts to the
+   size of the message buffer.
+
+   This never asks for user input; it's more low-level than that. When adding a
+   new message line, the caller will need to arrange for --More-- to be shown
+   appropriately by itself. Typically, it's used to redraw the message window
+   if it hasn't changed since the last time it was drawn. */
 void
 draw_msgwin(void)
 {
-    int i, pos;
-    nh_bool drew_older = FALSE;
-
-    werase(msgwin);
-
-    for (i = getmaxy(msgwin) - 1; i >= 0; i--) {
-        pos = curline - getmaxy(msgwin) + 1 + i;
-        if (pos < 0)
-            pos += MAX_MSGLINES;
-        if (pos == start_of_turn_curline) {
-            wattron(msgwin, curses_color_attr(COLOR_BLACK, 0));
-            drew_older = TRUE;
-        }
-        wmove(msgwin, i, 0);
-        waddstr(msgwin, msglines[pos]);
-        /* Only clear the remainder of the line if the cursor did not wrap. */
-        if (getcurx(msgwin))
-            wclrtoeol(msgwin);
-    }
-
-    if (drew_older) {
-        wattroff(msgwin, curses_color_attr(COLOR_BLACK, 0));
-    } else {
-        /* Don't dim out messages if the message buffer wraps. */
-        start_of_turn_curline = -1;
-    }
-
-    wnoutrefresh(msgwin);
+    layout_msgwin(1, 0, 0, 0);
 }
 
-
-static void
-more(void)
-{
-    int key, attr = A_NORMAL;
-    int cursx, cursy;
-
-    draw_msgwin();
-
-    if (settings.standout)
-        attr = A_STANDOUT;
-
-    if (getmaxy(msgwin) == 1) {
-        wmove(msgwin, getmaxy(msgwin) - 1, COLNO - 8);
-        wattron(msgwin, attr);
-        waddstr(msgwin, "--More--");
-        wattroff(msgwin, attr);
-        wrefresh(msgwin);
-    } else {
-        newline();
-        draw_msgwin();
-        wmove(msgwin, getmaxy(msgwin) - 1, 0);
-        wclrtoeol(msgwin);
-        wmove(msgwin, getmaxy(msgwin) - 1, COLNO / 2 - 4);
-        wattron(msgwin, attr);
-        waddstr(msgwin, "--More--");
-        wattroff(msgwin, attr);
-        wrefresh(msgwin);
-    }
-
-    getyx(msgwin, cursy, cursx);
-    wtimeout(msgwin, 666);      /* enable blinking */
-    do {
-        key = nh_wgetch(msgwin);
-        draw_map(player.x, player.y);
-        wmove(msgwin, cursy, cursx);
-        doupdate();
-    } while (key != '\n' && key != '\r' && key != ' ' && key != KEY_ESCAPE);
-    wtimeout(msgwin, -1);
-
-    /* Clean up after the --More--. */
-    if (getmaxy(msgwin) == 1) {
-        newline();
-    } else {
-        wmove(msgwin, getmaxy(msgwin) - 1, 0);
-        wclrtoeol(msgwin);
-    }
-    draw_msgwin();
-
-    if (key == KEY_ESCAPE)
-        stopprint = TRUE;
-
-    /* we want to --more-- by screenfuls, not lines */
-    last_redraw_curline = curline;
-}
-
-
-/* called from get_command */
+/* When called, previous messages should be blued out. Assumes that there has
+   been user input with the message window visible since the last message was
+   written. */
 void
 new_action(void)
 {
-    action++;
-    start_of_turn_curline = last_redraw_curline = curline;
-    draw_msgwin();
+    int hp = first_new;
+    int last_hp = hp;
+    if (hp == -1)
+        return;
+
+    while (hp != histlines_pointer) {
+        histlines[hp].old = 1;
+        last_hp = hp;
+        hp++;
+        hp %= histlines_alloclen;
+    }
+
+    /* Don't merge histlines from different actions. */
+    histlines[last_hp].nomerge = 1;
+
+    first_new = -1;
+    stopmore = 0;
+
+    layout_msgwin(1, 0, 0, 1);
 }
 
-/* Make sure the bottom message line is empty; if this would scroll something
-   off the screen, do a --More-- first if necessary */
+/* Make sure the bottom message line is empty. If this would scroll something
+   off the screen, do a --More-- first if necessary. */
 void
 fresh_message_line(nh_bool canblock)
 {
-    /* If we would scroll a message off the screen that the user hasn't had a
-       chance to look at this redraw, then run more(), else newline(). Because
-       the --more-- takes up a line by itself, we need to offset that by one
-       line. Thus, a message window of height 2 requires us to always show a
-       --more-- even if we're on the first message of the redraw; with height
-       3, we can safely newline after the first line of messages but must
-       --more-- after the second, etc. getmaxy gives the height of the window
-       minus 1, which is why we only subtract 2 not 3. */
-    if (!blockafter || action > prevaction)
-        newline();
-    else if ((curline + MAX_MSGLINES - last_redraw_curline) % MAX_MSGLINES >
-             getmaxy(msgwin) - 2)
-        more();
-    else
-        newline();
-    blockafter = canblock;
+    force_seen(0, 0);
+    last_line_reserved = 1;
+    if (!layout_msgwin(0, 0, 0, 0)) {
+        layout_msgwin(1, 0, 1, 1);
+        keypress_at_more();
+    }
+    layout_msgwin(1, 0, 0, 1);
 }
 
 static void
 curses_print_message_core(int turn, const char *msg, nh_bool canblock)
 {
-    int hsize, vsize, maxlen;
-    nh_bool died;
+    struct msghist_entry *h = histlines + histlines_pointer;
+    last_line_reserved = 0;
 
-    if (!msghistory)
-        alloc_hist_array();
+    free(h->message); /* in case there was something there */
+    h->turn = turn;
+    h->message = malloc(strlen(msg)+1);
+    strcpy(h->message, msg);
+    h->old = 0;
+    h->unseen = canblock;
+    h->nomerge = 0;
 
-    if (turn < prevturn)        /* going back in time can happen during replay */
-        prune_messages(turn);
+    if (first_new == -1)
+        first_new = histlines_pointer;
+    if (first_unseen == -1 && canblock)
+        first_unseen = histlines_pointer;
 
-    if (!*msg)
-        return; /* empty message. done. */
+    histlines_pointer++;
+    histlines_pointer %= histlines_alloclen;
 
-    if (action > prevaction) {
-        /* re-enable output if it was stopped and start a new line */
-        stopprint = FALSE;
-        newline();
-    }
-    prevturn = turn;
-    prevaction = action;
-
-    store_message(turn, msg);
-
-    if (stopprint)
-        return;
-
-    /* 
-     * generally we want to put as many messages on one line as possible to
-     * maximize space usage. A new line is begun after each player turn or if
-     * more() is called via pause_messages(). "You die" also deserves its own line.
-     * 
-     * If the message area is only one line high, space for "--More--" must be
-     * reserved at the end of the line, otherwise  --More-- is shown on a new line.
-     */
-
-    getmaxyx(msgwin, vsize, hsize);
-
-    maxlen = hsize;
-    if (maxlen >= COLNO)
-        maxlen = COLNO - 1;
-    if (vsize == 1)
-        maxlen -= 8;    /* for "--More--" */
-
-    died = !strncmp(msg, "You die", 7);
-    if (strlen(msglines[curline]) + strlen(msg) + 1 < maxlen && !died) {
-        if (msglines[curline][0])
-            strcat(msglines[curline], "  ");
-        strcat(msglines[curline], msg);
-    } else {
-        int idx, output_count;
-        char **output;
-
-        wrap_text(maxlen, msg, &output_count, &output);
-
-        for (idx = 0; idx < output_count; idx++) {
-            if (strlen(msglines[curline]) > 0)
-                fresh_message_line(canblock);
-            if (stopprint)
-                break;  /* may get set in more() */
-            strcpy(msglines[curline], output[idx]);
-        }
-
-        free_wrap(output);
-    }
-
-    draw_msgwin();
+    if (!layout_msgwin(0, 0, 0, 0))
+        force_seen(0, 0); /* print a --More-- at the appropriate point */
+    else
+        layout_msgwin(1, 0, 0, 0);
 }
 
-
-/* The meaning of nonblocking has changed from AceHack. A nonblocking message
-   is now one we don't block /after/. */
+/* Prints a message onto the screen, and into message history. The code will
+   ensure that the user sees the message (e.g. with --More--). */
 void
 curses_print_message(int turn, const char *inmsg)
 {
     curses_print_message_core(turn, inmsg, TRUE);
 }
 
+/* Prints a message into message history, and shows it onscreen unless there are
+   more important messages to show. */
 void
 curses_print_message_nonblocking(int turn, const char *inmsg)
 {
     curses_print_message_core(turn, inmsg, FALSE);
 }
 
-
+/* Ensure that the user has seen all messages printed so far, before
+   continuing to run the rest of the program. */
 void
 pause_messages(void)
 {
+    if (first_unseen != -1) {
+        force_seen(1, 1);
+        stopmore = 0;
+        keypress_at_more();
+    }
     draw_msgwin();
-    if (msglines[curline][0])   /* new text printed this turn */
-        more();
 }
 
-
+/* Displays the message history. */
 void
 doprev_message(void)
 {
-    /* 80 chars - 2 (borders) - 2 (gutters) - "T:" - 1 (divider) */
-    const int hist_msg_width = 73;
-
-    int prevturn;
-    int pos;
-    int maxturn, maxturn_width;
-
-    struct nh_menuitem *items;
-    char buf[MSGLEN + 1];
-    int icount, size, i;
-
-    /* keep the previous messages window within 80 characters */
-    maxturn = 0;
-    for (i = 0; i < histsize; i++) {
-        pos = (histpos + i + 1) % histsize;
-        if (msghistory[pos].turn > maxturn)
-            maxturn = msghistory[pos].turn;
-    }
-    maxturn_width = 0;
-    while (maxturn) {
-        maxturn_width++;
-        maxturn /= 10;
-    }
-    if (maxturn_width < 1)
-        maxturn_width = 1;
-
-    /* Prevent duplicate turn stamps. */
-    prevturn = 0;
-
-    icount = 0;
-    size = 10;
-    items = malloc(size * sizeof (struct nh_menuitem));
-
-    for (i = 0; i < histsize; i++) {
-        int turn;
-        const char *msg;
-
-        pos = (histpos + i + 1) % histsize;
-
-        if (!msghistory[pos].turn)
-            continue;
-
-        turn = msghistory[pos].turn;
-        msg = msghistory[pos].msg;
-
-        if (strlen(msg) <= hist_msg_width - maxturn_width) {
-            if (turn != prevturn)
-                snprintf(buf, MSGLEN + 1, "T:%*d\t%s", maxturn_width, turn,
-                         msg);
-            else
-                snprintf(buf, MSGLEN + 1, "\t%s", msg);
-            add_menu_txt(items, size, icount, buf, MI_TEXT);
-        } else {
-            int output_count, j;
-            char **output;
-
-            wrap_text(hist_msg_width - maxturn_width, msg, &output_count,
-                      &output);
-
-            if (turn != prevturn)
-                snprintf(buf, MSGLEN + 1, "T:%*d\t%s", maxturn_width, turn,
-                         output[0]);
-            else
-                snprintf(buf, MSGLEN + 1, "\t%s", output[0]);
-            add_menu_txt(items, size, icount, buf, MI_TEXT);
-
-            for (j = 1; j < output_count; j++) {
-                snprintf(buf, MSGLEN + 1, "\t%s", output[j]);
-                add_menu_txt(items, size, icount, buf, MI_TEXT);
-            }
-
-            free_wrap(output);
-        }
-
-        prevturn = turn;
-    }
-
-    curses_display_menu(items, icount, "Message history:", PICK_NONE,
-                        PLHINT_ANYWHERE, NULL);
-    free(items);
+    /* TODO */
 }
 
-
-void
-cleanup_messages(void)
-{
-    int i;
-
-    for (i = 0; i < histsize; i++) {
-        if (msghistory[i].msg)
-            free(msghistory[i].msg);
-    }
-
-    free(msghistory);
-    prevturn = 0;
-
-    /* extra cleanup to prevent old messages from appearing in a new game */
-    msghistory = NULL;
-    curline = last_redraw_curline = 0;
-    start_of_turn_curline = -1;
-    histsize = histpos = 0;
-    for (i = 0; i < MAX_MSGLINES; i++)
-        msglines[i][0] = '\0';
-}
-
-/* Given the string "input", generate a series of strings of the given
- * maximum width, wrapping lines at spaces in the text.  The number of
- * lines will be stored into *output_count, and an array of the output
- * lines will be stored in *output.  The memory for both the output strings
- * and the output array is obtained via malloc and should be freed when
- * no longer needed. */
+/* Given the string "input", generate a series of strings of the given maximum
+   width, wrapping lines at spaces in the text. The number of lines will be
+   stored into *output_count, and an array of the output lines will be stored in
+   *output. The memory for both the output strings and the output array is
+   obtained via malloc and should be freed when no longer needed. */
 void
 wrap_text(int width, const char *input, int *output_count, char ***output)
 {
@@ -498,8 +474,8 @@ wrap_text(int width, const char *input, int *output_count, char ***output)
 
         for (input_lidx = input_idx + width;
              !isspace(input[input_lidx]) && input_lidx - input_idx > min_width;
-             input_lidx--) {
-        }
+             input_lidx--) {}
+
         if (!isspace(input[input_lidx]))
             input_lidx = input_idx + width;
 
@@ -508,8 +484,7 @@ wrap_text(int width, const char *input, int *output_count, char ***output)
         (*output)[outcount][input_lidx - input_idx] = '\0';
         outcount++;
 
-        for (input_idx = input_lidx; isspace(input[input_idx]); input_idx++) {
-        }
+        for (input_idx = input_lidx; isspace(input[input_idx]); input_idx++) {}
     } while (input[input_idx] && outcount < max_wrap);
 
     *output_count = outcount;
