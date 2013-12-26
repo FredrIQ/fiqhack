@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Alex Smith, 2013-12-26 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -57,7 +57,8 @@ getdir(const char *s, schar * dx, schar * dy, schar * dz, boolean isarg)
     suppress_more();
     pline("<%s: %s>", query, dirnames[dir + 1]);
 
-    flags.last_arg.argtype &= ~CMD_ARG_DIR;
+    if (!program_state.in_zero_time_command)
+        flags.last_arg.argtype &= ~CMD_ARG_DIR;
 
     *dz = 0;
     if (!dir_to_delta(dir, dx, dy, dz))
