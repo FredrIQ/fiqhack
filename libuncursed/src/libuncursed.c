@@ -155,7 +155,9 @@ initialize_uncursed(int *p_argc, char **argv)
 
         if (argv_hyphen && !strchr(argv_hyphen, '/') &&
             !strchr(argv_hyphen, '\\')) {
-            char *argv_plugin = strdup(argv_hyphen + 1);
+
+            char *argv_plugin = malloc(strlen(argv_hyphen));
+            strcpy(argv_plugin, argv_hyphen + 1);
 
             if (strchr(argv_plugin, '.'))
                 *(strchr(argv_plugin, '.')) = '\0';
