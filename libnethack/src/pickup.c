@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Alex Smith, 2013-12-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -196,6 +196,7 @@ pickup(int what, enum u_interaction_mode uim)
             read_engr_at(u.ux, u.uy);
             return 0;
         }
+
         if (ttmp && ttmp->tseen) {
             /* Allow pickup from holes and trap doors that you escaped from
                because that stuff is teetering on the edge just like you, but
@@ -208,11 +209,14 @@ pickup(int what, enum u_interaction_mode uim)
                 return 0;
             }
         }
-        /* Don't autopick up while teleporting while helpless */
-        if (Helpless) {
+
+        /* Don't autopick up while teleporting while helpless, or if the player
+           explicitly turned autopickup off. */
+        if (Helpless || (autopickup && !flags.pickup)) {
             check_here(FALSE);
             return 0;
         }
+
         if (notake(youmonst.data)) {
             if (!autopickup)
                 pline("You are physically incapable of picking anything up.");
