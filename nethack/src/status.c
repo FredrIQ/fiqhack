@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-12-26 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -34,17 +34,19 @@ draw_bar(int barlen, int val_cur, int val_max, nh_bool ishp)
 
     sprintf(str, "%*d / %-*d", (bl - 3) / 2, val_cur, (bl - 2) / 2, val_max);
 
-    wattron(statuswin, colorattr);
-    wprintw(statuswin, ishp ? "HP:" : "Pw:");
-    wattroff(statuswin, colorattr);
-    waddch(statuswin, '[');
-    wattron(statuswin, colorattr);
-    wattron(statuswin, A_REVERSE);
-    wprintw(statuswin, "%.*s", fill_len, str);
-    wattroff(statuswin, A_REVERSE);
-    wprintw(statuswin, "%s", &str[fill_len]);
-    wattroff(statuswin, colorattr);
-    waddch(statuswin, ']');
+    if (statuswin) {
+        wattron(statuswin, colorattr);
+        wprintw(statuswin, ishp ? "HP:" : "Pw:");
+        wattroff(statuswin, colorattr);
+        waddch(statuswin, '[');
+        wattron(statuswin, colorattr);
+        wattron(statuswin, A_REVERSE);
+        wprintw(statuswin, "%.*s", fill_len, str);
+        wattroff(statuswin, A_REVERSE);
+        wprintw(statuswin, "%s", &str[fill_len]);
+        wattroff(statuswin, colorattr);
+        waddch(statuswin, ']');
+    }
 }
 
 /*
@@ -115,6 +117,9 @@ draw_status(struct nh_player_info *pi, nh_bool threeline)
 {
     char buf[COLNO];
     int i, j, k;
+
+    if (!statuswin)
+        return;
 
     /* penultimate line */
     wmove(statuswin, (threeline ? 1 : 0), 0);
@@ -201,7 +206,8 @@ curses_update_status(struct nh_player_info *pi)
     /* prevent the cursor from flickering in the status line */
     wmove(mapwin, player.y, player.x - 1);
 
-    wnoutrefresh(statuswin);
+    if (statuswin)
+        wnoutrefresh(statuswin);
 }
 
 void

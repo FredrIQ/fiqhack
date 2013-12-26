@@ -33,7 +33,7 @@ alloc_hist_array(void)
     static struct msghist_entry *newhistlines;
     int i, j;
 
-    newhistlines = malloc((settings.msghistory + 1) * sizeof *newhistlines);
+    newhistlines = calloc((settings.msghistory + 1), sizeof *newhistlines);
 
     if (!newhistlines)
         return;                            /* just keep using the old array */
@@ -248,7 +248,7 @@ layout_msgwin(nh_bool dodraw, int offset, nh_bool more, nh_bool mark_seen)
                        TRUE, and find the new first unseen line (which may be
                        the same as the old one. */
                     rv = 1;
-                    if (mark_seen && ypos < getmaxy(msgwin - 1)) {
+                    if (mark_seen && ypos < getmaxy(msgwin) - 1) {
 
                         /* Find the new first unseen line, if any. */
                         hp2 = histlines_pointer;

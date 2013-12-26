@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-23 */
+/* Last modified by Alex Smith, 2013-12-26 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -228,7 +228,7 @@ place_desc_message(WINDOW * win, int *x, int *y, char *b)
             (*y)++;
             *x = 0;
         }
-        if (*y <= 1)
+        if (*y <= 1 && statuswin)
             mvwaddstr(statuswin, *y, *x, b);
         (*x) += (strlen(b) >= 38 ? 80 : 40);
         if (*x > 40) {
@@ -266,14 +266,16 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
     int moncount = 0, monidx = 0;
     int firstmove = 1;
 
-    werase(statuswin);
-    mvwaddstr(statuswin, 0, 0,
-              "Move the cursor with the direction keys. Press "
-              "the letter of a dungeon symbol");
-    mvwaddstr(statuswin, 1, 0,
-              "to select it or use m/M to move to a nearby "
-              "monster. Finish with one of .,;:");
-    wrefresh(statuswin);
+    if (statuswin) {
+        werase(statuswin);
+        mvwaddstr(statuswin, 0, 0,
+                  "Move the cursor with the direction keys. Press "
+                  "the letter of a dungeon symbol");
+        mvwaddstr(statuswin, 1, 0,
+                  "to select it or use m/M to move to a nearby "
+                  "monster. Finish with one of .,;:");
+        wrefresh(statuswin);
+    }
 
     cx = *x >= 1 ? *x : player.x;
     cy = *y >= 0 ? *y : player.y;
@@ -286,14 +288,16 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
 
             nh_describe_pos(cx, cy, &descbuf, NULL);
 
-            werase(statuswin);
-            place_desc_message(statuswin, &mx, &my, descbuf.effectdesc);
-            place_desc_message(statuswin, &mx, &my, descbuf.invisdesc);
-            place_desc_message(statuswin, &mx, &my, descbuf.mondesc);
-            place_desc_message(statuswin, &mx, &my, descbuf.objdesc);
-            place_desc_message(statuswin, &mx, &my, descbuf.trapdesc);
-            place_desc_message(statuswin, &mx, &my, descbuf.bgdesc);
-            wrefresh(statuswin);
+            if (statuswin) {
+                werase(statuswin);
+                place_desc_message(statuswin, &mx, &my, descbuf.effectdesc);
+                place_desc_message(statuswin, &mx, &my, descbuf.invisdesc);
+                place_desc_message(statuswin, &mx, &my, descbuf.mondesc);
+                place_desc_message(statuswin, &mx, &my, descbuf.objdesc);
+                place_desc_message(statuswin, &mx, &my, descbuf.trapdesc);
+                place_desc_message(statuswin, &mx, &my, descbuf.bgdesc);
+                wrefresh(statuswin);
+            }
 
             wmove(mapwin, cy, cx - 1);
         }
