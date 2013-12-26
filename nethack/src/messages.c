@@ -72,8 +72,9 @@ void
 cleanup_messages(void)
 {
     int i;
-    for (i = 0; i < histlines_alloclen; i++)
-        free(histlines[i].message);                 /* free(NULL) is legal */
+    if (histlines)
+        for (i = 0; i < histlines_alloclen; i++)
+            free(histlines[i].message);            /* free(NULL) is legal */
     free(histlines);
     histlines = 0;
     histlines_alloclen = 0;
@@ -125,6 +126,9 @@ layout_msgwin(nh_bool dodraw, int offset, nh_bool more, nh_bool mark_seen)
     int last_on_this_line = hp;
     int chars_on_this_line = more ? 9 : 0;
     int rv = first_unseen == -1;
+
+    if (!histlines)
+        alloc_hist_array();
 
     if (dodraw)
         werase(msgwin);
@@ -353,6 +357,9 @@ new_action(void)
     if (hp == -1)
         return;
 
+    if (!histlines)
+        alloc_hist_array();
+
     while (hp != histlines_pointer) {
         histlines[hp].old = 1;
         last_hp = hp;
@@ -386,7 +393,13 @@ fresh_message_line(nh_bool canblock)
 static void
 curses_print_message_core(int turn, const char *msg, nh_bool canblock)
 {
-    struct msghist_entry *h = histlines + histlines_pointer;
+    struct msghist_entry *h;
+
+    if (!histlines)
+        alloc_hist_array();
+
+    h = histlines + histlines_pointer;
+
     last_line_reserved = 0;
 
     free(h->message); /* in case there was something there */
