@@ -214,16 +214,16 @@ layout_msgwin(nh_bool dodraw, int offset, nh_bool more, nh_bool mark_seen)
                             waddch(msgwin, *p++ | colorattr);
 
                         if (more) {
-                            colorattr = curses_color_attr(COLOR_WHITE + 8, 0);
                             p = " --More--";
                             while (*p)
-                            waddch(msgwin, *p++ | colorattr);
+                            waddch(msgwin, *p++ |
+                                   curses_color_attr(COLOR_WHITE + 8, 0));
                         }
 
                     }
-                    ypos--;
-                    if (ypos == getmaxy(msgwin))
+                    if (ypos == getmaxy(msgwin) - 1)
                         more = 0;
+                    ypos--;
                 }
 
                 if (ypos >= -1 && ypos < getmaxy(msgwin) - 1 && mark_seen) {
