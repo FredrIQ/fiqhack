@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-30 */
+/* Last modified by Alex Smith, 2013-12-26 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -244,6 +244,7 @@ create_game_windows(void)
     if (ui_flags.draw_frame) {
         msgwin = newwin(ui_flags.msgheight, COLNO, 1, 1);
         mapwin = newwin(ROWNO, COLNO, ui_flags.msgheight + 2, 1);
+
         statuswin =
             derwin(basewin, statusheight, COLNO, ui_flags.msgheight + ROWNO + 3,
                    1);
@@ -257,8 +258,16 @@ create_game_windows(void)
     } else {
         msgwin = newwin(ui_flags.msgheight, COLNO, 0, 0);
         mapwin = newwin(ROWNO, COLNO, ui_flags.msgheight, 0);
-        statuswin =
-            derwin(basewin, statusheight, COLNO, ui_flags.msgheight + ROWNO, 0);
+
+        /* In a particularly small window, we can get crashes due to statuswin
+           not fitting inside basewin. */
+        if (getmaxy(basewin) < ui_flags.msgheight + ROWNO + statusheight ||
+            getmaxx(basewin) < COLNO)
+            statuswin = NULL;
+        else
+            statuswin =
+                derwin(basewin, statusheight, COLNO,
+                       ui_flags.msgheight + ROWNO, 0);
 
         if (ui_flags.draw_sidebar)
             sidebar =
@@ -271,7 +280,9 @@ create_game_windows(void)
     keypad(msgwin, TRUE);
     leaveok(mapwin, FALSE);
     leaveok(msgwin, FALSE);
-    leaveok(statuswin, TRUE);
+
+    if (statuswin)
+        leaveok(statuswin, TRUE);
     if (sidebar)
         leaveok(sidebar, TRUE);
 
@@ -292,7 +303,10 @@ resize_game_windows(void)
 
     /* statuswin and sidebar never accept input, so simply recreating those is
        easiest. */
-    delwin(statuswin);
+    if (statuswin) {
+        delwin(statuswin);
+        statuswin = NULL;
+    }
     if (sidebar) {
         delwin(sidebar);
         sidebar = NULL;
@@ -320,8 +334,16 @@ resize_game_windows(void)
         wresize(msgwin, ui_flags.msgheight, COLNO);
         mvwin(mapwin, ui_flags.msgheight, 0);
         wresize(mapwin, ROWNO, COLNO);
-        statuswin =
-            derwin(basewin, statusheight, COLNO, ui_flags.msgheight + ROWNO, 0);
+
+        /* In a particularly small window, we can get crashes due to statuswin
+           not fitting inside basewin. */
+        if (getmaxy(basewin) < ui_flags.msgheight + ROWNO + statusheight ||
+            getmaxx(basewin) < COLNO)
+            statuswin = NULL;
+        else
+            statuswin =
+                derwin(basewin, statusheight, COLNO,
+                       ui_flags.msgheight + ROWNO, 0);
 
         if (ui_flags.draw_sidebar)
             sidebar =
@@ -330,7 +352,8 @@ resize_game_windows(void)
 
     if (mapwin) setup_tiles();
 
-    leaveok(statuswin, TRUE);
+    if (statuswin)
+        leaveok(statuswin, TRUE);
     if (sidebar)
         leaveok(sidebar, TRUE);
 
@@ -345,10 +368,12 @@ destroy_game_windows(void)
     if (ui_flags.ingame) {
         delwin(msgwin);
         delwin(mapwin);
-        delwin(statuswin);
+        if (statuswin)
+            delwin(statuswin);
         if (sidebar || ui_flags.draw_sidebar) {
             cleanup_sidebar(FALSE);
-            delwin(sidebar);
+            if (sidebar)
+                delwin(sidebar);
         }
         msgwin = mapwin = statuswin = sidebar = NULL;
     }
@@ -371,13 +396,11 @@ redraw_game_windows(void)
 
         /* statuswin can become NULL if the terminal is resized to microscopic
            dimensions */
-        if (statuswin) {
+        if (statuswin)
             wnoutrefresh(statuswin);
-        }
 
-        if (sidebar) {
+        if (sidebar)
             wnoutrefresh(sidebar);
-        }
 
         draw_frame();
     }

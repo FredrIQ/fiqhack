@@ -33,7 +33,7 @@ alloc_hist_array(void)
     static struct msghist_entry *newhistlines;
     int i, j;
 
-    newhistlines = malloc((settings.msghistory + 1) * sizeof *newhistlines);
+    newhistlines = calloc((settings.msghistory + 1), sizeof *newhistlines);
 
     if (!newhistlines)
         return;                            /* just keep using the old array */
@@ -72,8 +72,9 @@ void
 cleanup_messages(void)
 {
     int i;
-    for (i = 0; i < histlines_alloclen; i++)
-        free(histlines[i].message);                 /* free(NULL) is legal */
+    if (histlines)
+        for (i = 0; i < histlines_alloclen; i++)
+            free(histlines[i].message);            /* free(NULL) is legal */
     free(histlines);
     histlines = 0;
     histlines_alloclen = 0;
@@ -125,6 +126,9 @@ layout_msgwin(nh_bool dodraw, int offset, nh_bool more, nh_bool mark_seen)
     int last_on_this_line = hp;
     int chars_on_this_line = more ? 9 : 0;
     int rv = first_unseen == -1;
+
+    if (!histlines)
+        alloc_hist_array();
 
     if (dodraw)
         werase(msgwin);
@@ -210,16 +214,16 @@ layout_msgwin(nh_bool dodraw, int offset, nh_bool more, nh_bool mark_seen)
                             waddch(msgwin, *p++ | colorattr);
 
                         if (more) {
-                            colorattr = curses_color_attr(COLOR_WHITE + 8, 0);
                             p = " --More--";
                             while (*p)
-                            waddch(msgwin, *p++ | colorattr);
+                            waddch(msgwin, *p++ |
+                                   curses_color_attr(COLOR_WHITE + 8, 0));
                         }
 
                     }
-                    ypos--;
-                    if (ypos == getmaxy(msgwin))
+                    if (ypos == getmaxy(msgwin) - 1)
                         more = 0;
+                    ypos--;
                 }
 
                 if (ypos >= -1 && ypos < getmaxy(msgwin) - 1 && mark_seen) {
@@ -248,7 +252,7 @@ layout_msgwin(nh_bool dodraw, int offset, nh_bool more, nh_bool mark_seen)
                        TRUE, and find the new first unseen line (which may be
                        the same as the old one. */
                     rv = 1;
-                    if (mark_seen && ypos < getmaxy(msgwin - 1)) {
+                    if (mark_seen && ypos < getmaxy(msgwin) - 1) {
 
                         /* Find the new first unseen line, if any. */
                         hp2 = histlines_pointer;
@@ -353,6 +357,9 @@ new_action(void)
     if (hp == -1)
         return;
 
+    if (!histlines)
+        alloc_hist_array();
+
     while (hp != histlines_pointer) {
         histlines[hp].old = 1;
         last_hp = hp;
@@ -386,7 +393,13 @@ fresh_message_line(nh_bool canblock)
 static void
 curses_print_message_core(int turn, const char *msg, nh_bool canblock)
 {
-    struct msghist_entry *h = histlines + histlines_pointer;
+    struct msghist_entry *h;
+
+    if (!histlines)
+        alloc_hist_array();
+
+    h = histlines + histlines_pointer;
+
     last_line_reserved = 0;
 
     free(h->message); /* in case there was something there */
