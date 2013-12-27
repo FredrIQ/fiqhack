@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Sean Hunt, 2013-12-27 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1023,7 +1023,7 @@ void
 losespells(void)
 {
     boolean confused = (Confusion != 0);
-    int n, nzap, i;
+    int n, nzap, i, j;
 
     u.utracked[tos_book] = 0;
     for (n = 0; n < MAXSPELL && spellid(n) != NO_SPELL; n++)
@@ -1032,9 +1032,21 @@ losespells(void)
         nzap = rnd(n) + confused ? 1 : 0;
         if (nzap > n)
             nzap = n;
-        for (i = n - nzap; i < n; i++) {
-            spellid(i) = NO_SPELL;
-            exercise(A_WIS, FALSE);     /* ouch! */
+        for (i = 0; i < n; i++) {
+            if (rnd(n) <= nzap) {
+                spellid(i) = NO_SPELL;
+                exercise(A_WIS, FALSE);     /* ouch! */
+            }
+        }
+
+        for (i = j = 0; j < n; i++, j++) {
+           if (spellid(i) == NO_SPELL) {
+               while (spellid(j) == NO_SPELL && j < n)
+                   j++;
+               spellid(i) = spellid(j);
+               spellknow(i) = spellknow(j);
+               spellid(j) = NO_SPELL;
+           }
         }
     }
 }
