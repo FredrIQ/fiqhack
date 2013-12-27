@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-26 */
+/* Last modified by Sean Hunt, 2013-12-27 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -175,9 +175,9 @@ curses_set_option(const char *name, union nh_optvalue value)
         game_option = TRUE;
     }
 
-    if ((int)option->type == OPTTYPE_KEYMAP)
-        /* FIXME: impossible() */
+    if ((int)option->type == OPTTYPE_KEYMAP) {
         return FALSE;
+    }
 
     if (!nhlib_option_value_ok(option, value))
         return FALSE;
@@ -189,9 +189,10 @@ curses_set_option(const char *name, union nh_optvalue value)
 
     if (option->type == OPTTYPE_BOOL) {
         nh_bool *var = nhlib_find_boolopt(boolopt_map, option->name);
-        if (!var)
-            /* FIXME: impossible() */
+        if (!var) {
+            curses_impossible("missing boolean option");
             return FALSE;
+        }
 
         *var = value.b;
 
@@ -990,9 +991,11 @@ read_config_line(char *line)
             option = nhlib_find_option(optlist, name);
     }
 
-    if (!option)
-        /* FIXME: impossible() */
+    if (!option) {
+        curses_msgwin("Unknown option in config file:");
+        curses_msgwin(name);
         return;
+    }
 
     optval = nhlib_string_to_optvalue(option, value);
     curses_set_option(name, optval);
