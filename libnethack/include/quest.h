@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Sean Hunt, 2013-12-27 */
 /* Copyright (c) Mike Stephenson 1991.                            */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -36,7 +36,7 @@ struct q_score {        /* Quest "scorecard" */
 # define MAX_QUEST_TRIES  7     /* exceed this and you "fail" */
 
 /* at least this align.record to start */
-# define MIN_QUEST_ALIGN ((ALIGNLIM) > 20 ? 20 : (ALIGNLIM))
+# define MIN_QUEST_ALIGN 20
   /* note: align 20 matches "pious" as reported by enlightenment (cmd.c) */
 # define MIN_QUEST_LEVEL 14     /* at least this u.ulevel to start */
   /* note: exp.lev. 14 is threshold level for 5th rank (class title, role.c) */
