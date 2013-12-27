@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-11-16 */
+/* Last modified by Sean Hunt, 2013-12-27 */
 /* Copyright 1991, M. Stephenson */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -271,7 +271,7 @@ chat_with_leader(void)
         } else if (is_pure(TRUE) < 0) {
             com_pager(QT_BANISHED);
             expulsion(TRUE);
-        } else if (is_pure(TRUE) == 0) {
+        } else if (is_pure(FALSE) == 0) {
             qt_pager(QT_BADALIGN);
             if (Qstat(not_ready) == MAX_QUEST_TRIES) {
                 qt_pager(QT_LASTLEADER);
