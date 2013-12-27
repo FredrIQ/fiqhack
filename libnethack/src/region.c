@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Sean Hunt, 2013-12-27 */
 /* Copyright (c) 1996 by Jean-Christophe Collet  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -490,6 +490,17 @@ visible_region_at(struct level *lev, xchar x, xchar y)
     return NULL;
 }
 
+
+static void
+save_rect(struct memfile *mf, struct nhrect r)
+{
+    mwrite8(mf, r.lx);
+    mwrite8(mf, r.ly);
+    mwrite8(mf, r.hx);
+    mwrite8(mf, r.hy);
+}
+
+
 /**
  * save_regions :
  */
@@ -512,13 +523,13 @@ save_regions(struct memfile *mf, struct level *lev)
     for (i = 0; i < lev->n_regions; i++) {
         r = lev->regions[i];
 
-        mwrite(mf, &r->bounding_box, sizeof (struct nhrect));
+        save_rect(mf, r->bounding_box);
         mwrite32(mf, r->attach_2_m);
         mwrite32(mf, r->effect_id);
         mwrite32(mf, r->arg);
         mwrite16(mf, r->nrects);
         for (j = 0; j < r->nrects; j++)
-            mwrite(mf, &r->rects[j], sizeof (struct nhrect));
+            save_rect(mf, r->rects[j]);
         mwrite16(mf, r->ttl);
         mwrite16(mf, r->expire_f);
         mwrite16(mf, r->can_enter_f);
@@ -546,6 +557,17 @@ save_regions(struct memfile *mf, struct level *lev)
             mwrite(mf, r->leave_msg, len2);
     }
 }
+
+
+static void
+restore_rect(struct memfile *mf, struct nhrect *r)
+{
+    r->lx = mread8(mf);
+    r->ly = mread8(mf);
+    r->hx = mread8(mf);
+    r->hy = mread8(mf);
+}
+
 
 void
 rest_regions(struct memfile *mf, struct level *lev, boolean ghostly)
@@ -576,7 +598,7 @@ rest_regions(struct memfile *mf, struct level *lev, boolean ghostly)
 
         r->lev = lev;
 
-        mread(mf, &r->bounding_box, sizeof (struct nhrect));
+        restore_rect(mf, &r->bounding_box);
         r->attach_2_m = mread32(mf);
         r->effect_id = mread32(mf);
         r->arg = mread32(mf);
@@ -584,7 +606,7 @@ rest_regions(struct memfile *mf, struct level *lev, boolean ghostly)
         if (r->nrects > 0)
             r->rects = malloc(sizeof (struct nhrect) * r->nrects);
         for (j = 0; j < r->nrects; j++)
-            mread(mf, &r->rects[j], sizeof (struct nhrect));
+            restore_rect(mf, &r->rects[j]);
         r->ttl = mread16(mf);
         r->expire_f = mread16(mf);
         r->can_enter_f = mread16(mf);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-26 */
+/* Last modified by Sean Hunt, 2013-12-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -335,6 +335,7 @@ enum memfile_tagtype {
     MTAG_OPTIONS,
     MTAG_AUTOPICKUP_RULE,
     MTAG_AUTOPICKUP_RULES,  /* 40 */
+    MTAG_DUNGEON_TOPOLOGY,
 };
 struct memfile_tag {
     struct memfile_tag *next;

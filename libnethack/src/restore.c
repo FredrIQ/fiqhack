@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Sean Hunt, 2013-12-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -114,7 +114,7 @@ restlevchn(struct memfile *mf)
     for (; cnt > 0; cnt--) {
         tmplev = malloc(sizeof (s_level));
         tmplev->flags = restore_d_flags(mf);
-        mread(mf, &tmplev->dlevel, sizeof (tmplev->dlevel));
+        restore_dlevel(mf, &tmplev->dlevel);
         mread(mf, tmplev->proto, sizeof (tmplev->proto));
         tmplev->boneid = mread8(mf);
         tmplev->rndlevs = mread8(mf);
@@ -799,7 +799,16 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->verbose = mread8(mf);
 
     mread(mf, f->inv_order, sizeof (f->inv_order));
-    mread(mf, &(f->last_arg), sizeof (f->last_arg));
+
+    f->last_arg.argtype = mread32(mf);
+    f->last_arg.dir = mread32(mf);
+    f->last_arg.pos.x = mread16(mf);
+    f->last_arg.pos.y = mread16(mf);
+    f->last_arg.invlet = mread8(mf);
+    f->last_arg.spelllet = mread8(mf);
+    f->last_arg.limit = mread32(mf);
+    
+    mread(mf, f->last_arg.str, sizeof f->last_arg.str);
 
     if (!ar)
         ar = malloc(sizeof(struct nh_autopickup_rules));
@@ -1023,6 +1032,41 @@ restore_traps(struct memfile *mf)
 }
 
 
+static void
+restore_stairway(struct memfile *mf, stairway *s)
+{
+    s->sx = mread8(mf);
+    s->sy = mread8(mf);
+    restore_dlevel(mf, &s->tolev);
+    s->up = mread8(mf);
+}
+
+
+static void
+restore_dest_area(struct memfile *mf, dest_area *a)
+{
+    a->lx = mread8(mf);
+    a->ly = mread8(mf);
+    a->hx = mread8(mf);
+    a->hy = mread8(mf);
+    a->nlx = mread8(mf);
+    a->nly = mread8(mf);
+    a->nhx = mread8(mf);
+    a->nhy = mread8(mf);
+}
+
+
+void
+restore_coords(struct memfile *mf, coord *c, int n)
+{
+    coord *p;
+    for (p = c; p < c + n; ++p) {
+        p->x = mread8(mf);
+        p->y = mread8(mf);
+    }
+}
+
+
 struct level *
 getlev(struct memfile *mf, xchar levnum, boolean ghostly)
 {
@@ -1056,13 +1100,13 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
             restore_location(mf, &lev->locations[x][y]);
 
     lev->lastmoves = mread32(mf);
-    mread(mf, &lev->upstair, sizeof (stairway));
-    mread(mf, &lev->dnstair, sizeof (stairway));
-    mread(mf, &lev->upladder, sizeof (stairway));
-    mread(mf, &lev->dnladder, sizeof (stairway));
-    mread(mf, &lev->sstairs, sizeof (stairway));
-    mread(mf, &lev->updest, sizeof (dest_area));
-    mread(mf, &lev->dndest, sizeof (dest_area));
+    restore_stairway(mf, &lev->upstair);
+    restore_stairway(mf, &lev->dnstair);
+    restore_stairway(mf, &lev->upladder);
+    restore_stairway(mf, &lev->dnladder);
+    restore_stairway(mf, &lev->sstairs);
+    restore_dest_area(mf, &lev->updest);
+    restore_dest_area(mf, &lev->dndest);
 
     lflags = mread32(mf);
     lev->flags.noteleport = (lflags >> 22) & 1;
@@ -1076,7 +1120,7 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
     lev->flags.arboreal = (lflags >> 14) & 1;
     lev->flags.forgotten = (lflags >> 13) & 1;
 
-    mread(mf, lev->doors, sizeof (lev->doors));
+    restore_coords(mf, lev->doors, DOORMAX);
     rest_rooms(mf, lev);        /* No joke :-) */
     if (lev->nroom)
         lev->doorindex =

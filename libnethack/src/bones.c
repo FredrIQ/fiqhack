@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Sean Hunt, 2013-12-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -351,7 +351,7 @@ make_bones:
     store_version(&mf);
     /* no tagging is useful here, as the tags in bones memfiles aren't used for 
        anything anyway */
-    mwrite(&mf, &c, sizeof c);
+    mwrite8(&mf, c);
     mwrite(&mf, bonesid, (unsigned)c);  /* DD.nnn */
     savefruitchn(&mf);
     update_mlstmv();    /* update monsters for eventual restoration */
@@ -413,7 +413,7 @@ getbones(d_level * levnum)
             }
         }
 
-        mread(&mf, &c, sizeof c);       /* length incl. '\0' */
+        c = mread8(&mf);       /* length incl. '\0' */
         mread(&mf, oldbonesid, (unsigned)c);    /* DD.nnn */
         if (strcmp(bonesid, oldbonesid) != 0) {
             char errbuf[BUFSZ];

@@ -442,8 +442,10 @@ extern void dump_catch_menus(boolean);
 
 extern void free_dungeon(void);
 extern void save_d_flags(struct memfile *mf, d_flags f);
+extern void save_dlevel(struct memfile *mf, d_level d);
 extern void save_dungeon(struct memfile *mf);
 extern d_flags restore_d_flags(struct memfile *mf);
+extern void restore_dlevel(struct memfile *mf, d_level *d);
 extern void restore_dungeon(struct memfile *mf);
 extern void insert_branch(branch *, boolean);
 extern void init_dungeons(void);
@@ -1386,6 +1388,7 @@ extern int dorecover(struct memfile *mf);
 extern void trickery(char *);
 extern void restore_flags(struct memfile *mf, struct flag *f);
 extern void restore_you(struct memfile *mf, struct you *y);
+extern void restore_coords(struct memfile *mf, coord *c, int n);
 extern struct level *getlev(struct memfile *mf, xchar levnum, boolean ghostly);
 extern boolean lookup_id_mapping(unsigned, unsigned *);
 
@@ -1418,6 +1421,7 @@ extern int doconsult(struct monst *);
 
 extern int dosave(const struct nh_cmd_arg *);
 extern void savegame(struct memfile *mf);
+extern void save_coords(struct memfile *mf, const coord *c, int n);
 extern void savelev(struct memfile *mf, xchar levnum);
 extern void freelev(xchar levnum);
 extern void savefruitchn(struct memfile *mf);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-26 */
+/* Last modified by Sean Hunt, 2013-12-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -113,15 +113,58 @@ save_dungeon_struct(struct memfile *mf, const dungeon * dgn)
 }
 
 
+void
+save_dlevel(struct memfile *mf, d_level d)
+{
+    mwrite8(mf, d.dnum);
+    mwrite8(mf, d.dlevel);
+}
+
+
 static void
 save_branch(struct memfile *mf, const branch * b)
 {
     mtag(mf, b->id, MTAG_BRANCH);
     mwrite32(mf, b->id);
     mwrite32(mf, b->type);
-    mwrite(mf, &b->end1, sizeof (d_level));
-    mwrite(mf, &b->end2, sizeof (d_level));
+    save_dlevel(mf, b->end1);
+    save_dlevel(mf, b->end2);
     mwrite8(mf, b->end1_up);
+}
+
+
+static void
+save_dungeon_topology(struct memfile *mf)
+{
+    mtag(mf, 0, MTAG_DUNGEON_TOPOLOGY);
+    save_dlevel(mf, dungeon_topology.d_oracle_level);
+    save_dlevel(mf, dungeon_topology.d_bigroom_level);
+    save_dlevel(mf, dungeon_topology.d_rogue_level);
+    save_dlevel(mf, dungeon_topology.d_medusa_level);
+    save_dlevel(mf, dungeon_topology.d_stronghold_level);
+    save_dlevel(mf, dungeon_topology.d_valley_level);
+    save_dlevel(mf, dungeon_topology.d_wiz1_level);
+    save_dlevel(mf, dungeon_topology.d_wiz2_level);
+    save_dlevel(mf, dungeon_topology.d_wiz3_level);
+    save_dlevel(mf, dungeon_topology.d_juiblex_level);
+    save_dlevel(mf, dungeon_topology.d_orcus_level);
+    save_dlevel(mf, dungeon_topology.d_baalzebub_level);
+    save_dlevel(mf, dungeon_topology.d_asmodeus_level);
+    save_dlevel(mf, dungeon_topology.d_portal_level);
+    save_dlevel(mf, dungeon_topology.d_sanctum_level);
+    save_dlevel(mf, dungeon_topology.d_earth_level);
+    save_dlevel(mf, dungeon_topology.d_water_level);
+    save_dlevel(mf, dungeon_topology.d_fire_level);
+    save_dlevel(mf, dungeon_topology.d_air_level);
+    save_dlevel(mf, dungeon_topology.d_astral_level);
+    mwrite8(mf, dungeon_topology.d_tower_dnum);
+    mwrite8(mf, dungeon_topology.d_sokoban_dnum);
+    mwrite8(mf, dungeon_topology.d_mines_dnum);
+    mwrite8(mf, dungeon_topology.d_quest_dnum);
+    save_dlevel(mf, dungeon_topology.d_qstart_level);
+    save_dlevel(mf, dungeon_topology.d_qlocate_level);
+    save_dlevel(mf, dungeon_topology.d_nemesis_level);
+    save_dlevel(mf, dungeon_topology.d_knox_level);
 }
 
 
@@ -135,13 +178,13 @@ save_dungeon(struct memfile *mf)
     mtag(mf, 0, MTAG_DUNGEON);
     mfmagic_set(mf, DGN_MAGIC);
 
-    mwrite(mf, &n_dgns, sizeof n_dgns);
+    mwrite32(mf, n_dgns);
     for (i = 0; i < n_dgns; i++)
         save_dungeon_struct(mf, &dungeons[i]);
 
     /* writing dungeon_topology directly should be ok, it's just a * fancy
        collection of single byte values */
-    mwrite(mf, &dungeon_topology, sizeof dungeon_topology);
+    save_dungeon_topology(mf);
     mwrite(mf, tune, sizeof tune);
 
     for (count = 0, curr = branches; curr; curr = curr->next)
@@ -151,7 +194,8 @@ save_dungeon(struct memfile *mf)
     for (curr = branches; curr; curr = curr->next)
         save_branch(mf, curr);
 
-    mwrite(mf, &inv_pos, sizeof (coord));
+    mwrite8(mf, inv_pos.x);
+    mwrite8(mf, inv_pos.y);
 }
 
 
@@ -187,15 +231,57 @@ restore_dungeon_struct(struct memfile *mf, dungeon * dgn)
 }
 
 
+void
+restore_dlevel(struct memfile *mf, d_level *d)
+{
+    d->dnum = mread8(mf);
+    d->dlevel = mread8(mf);
+}
+
+
 static void
 restore_branch(struct memfile *mf, branch * b)
 {
     b->next = NULL;
     b->id = mread32(mf);
     b->type = mread32(mf);
-    mread(mf, &b->end1, sizeof (d_level));
-    mread(mf, &b->end2, sizeof (d_level));
+    restore_dlevel(mf, &b->end1);
+    restore_dlevel(mf, &b->end2);
     b->end1_up = mread8(mf);
+}
+
+
+static void
+restore_dungeon_topology(struct memfile *mf)
+{
+    restore_dlevel(mf, &dungeon_topology.d_oracle_level);
+    restore_dlevel(mf, &dungeon_topology.d_bigroom_level);
+    restore_dlevel(mf, &dungeon_topology.d_rogue_level);
+    restore_dlevel(mf, &dungeon_topology.d_medusa_level);
+    restore_dlevel(mf, &dungeon_topology.d_stronghold_level);
+    restore_dlevel(mf, &dungeon_topology.d_valley_level);
+    restore_dlevel(mf, &dungeon_topology.d_wiz1_level);
+    restore_dlevel(mf, &dungeon_topology.d_wiz2_level);
+    restore_dlevel(mf, &dungeon_topology.d_wiz3_level);
+    restore_dlevel(mf, &dungeon_topology.d_juiblex_level);
+    restore_dlevel(mf, &dungeon_topology.d_orcus_level);
+    restore_dlevel(mf, &dungeon_topology.d_baalzebub_level);
+    restore_dlevel(mf, &dungeon_topology.d_asmodeus_level);
+    restore_dlevel(mf, &dungeon_topology.d_portal_level);
+    restore_dlevel(mf, &dungeon_topology.d_sanctum_level);
+    restore_dlevel(mf, &dungeon_topology.d_earth_level);
+    restore_dlevel(mf, &dungeon_topology.d_water_level);
+    restore_dlevel(mf, &dungeon_topology.d_fire_level);
+    restore_dlevel(mf, &dungeon_topology.d_air_level);
+    restore_dlevel(mf, &dungeon_topology.d_astral_level);
+    dungeon_topology.d_tower_dnum = mread8(mf);
+    dungeon_topology.d_sokoban_dnum = mread8(mf);
+    dungeon_topology.d_mines_dnum = mread8(mf);
+    dungeon_topology.d_quest_dnum = mread8(mf);
+    restore_dlevel(mf, &dungeon_topology.d_qstart_level);
+    restore_dlevel(mf, &dungeon_topology.d_qlocate_level);
+    restore_dlevel(mf, &dungeon_topology.d_nemesis_level);
+    restore_dlevel(mf, &dungeon_topology.d_knox_level);
 }
 
 
@@ -207,10 +293,10 @@ restore_dungeon(struct memfile *mf)
     int count, i;
 
     mfmagic_check(mf, DGN_MAGIC);
-    mread(mf, &n_dgns, sizeof (n_dgns));
+    n_dgns = mread32(mf);
     for (i = 0; i < n_dgns; i++)
         restore_dungeon_struct(mf, &dungeons[i]);
-    mread(mf, &dungeon_topology, sizeof dungeon_topology);
+    restore_dungeon_topology(mf);
     mread(mf, tune, sizeof tune);
 
     last = branches = NULL;
@@ -226,7 +312,8 @@ restore_dungeon(struct memfile *mf)
         last = curr;
     }
 
-    mread(mf, &inv_pos, sizeof (coord));
+    inv_pos.x = mread8(mf);
+    inv_pos.y = mread8(mf);
 }
 
 static void

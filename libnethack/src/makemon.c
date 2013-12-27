@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-26 */
+/* Last modified by Sean Hunt, 2013-12-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1960,7 +1960,7 @@ restore_mon(struct memfile *mf)
     mon->mlstmv = mread32(mf);  /* 36 */
     mon->mstrategy = mread32(mf);       /* 40 */
     mon->meating = mread32(mf); /* 44 */
-    mread(mf, mon->mtrack, sizeof (mon->mtrack));       /* 52 */
+    restore_coords(mf, mon->mtrack, MTSZ); /* 52 */
     mon->mnum = mread16(mf);    /* 54 */
     mon->mx = mread8(mf);       /* 55 */
     mon->my = mread8(mf);       /* 56 */
@@ -2159,7 +2159,7 @@ save_mon(struct memfile *mf, const struct monst *mon)
     mwrite32(mf, mon->mlstmv);
     mwrite32(mf, mon->mstrategy);
     mwrite32(mf, mon->meating);
-    mwrite(mf, mon->mtrack, sizeof (mon->mtrack));
+    save_coords(mf, mon->mtrack, MTSZ);
     mwrite16(mf, mon->mnum);
     mwrite8(mf, mon->mx);
     mwrite8(mf, mon->my);

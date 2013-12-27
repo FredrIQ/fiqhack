@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-26 */
+/* Last modified by Sean Hunt, 2013-12-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -155,8 +155,17 @@ save_flags(struct memfile *mf)
     mwrite8(mf, flags.tombstone);             /* 67 */
     mwrite8(mf, flags.travel_interrupt);      /* 68 */
     mwrite8(mf, flags.verbose);               /* 69 */
-    mwrite(mf, flags.inv_order, sizeof (flags.inv_order));
-    mwrite(mf, &(flags.last_arg), sizeof (flags.last_arg));
+    mwrite(mf, flags.inv_order, sizeof (flags.inv_order)); /* 87 */
+
+    mwrite32(mf, flags.last_arg.argtype);     /* 91 */
+    mwrite32(mf, flags.last_arg.dir);         /* 95 */
+    mwrite16(mf, flags.last_arg.pos.x);       /* 97 */
+    mwrite16(mf, flags.last_arg.pos.y);       /* 99 */
+    mwrite8(mf, flags.last_arg.invlet);       /* 100 */
+    mwrite8(mf, flags.last_arg.spelllet);     /* 101 */
+    mwrite32(mf, flags.last_arg.limit);       /* 105 */
+
+    mwrite(mf, flags.last_arg.str, sizeof flags.last_arg.str);
 
     save_autopickup_rules(mf, flags.ap_rules);
 }
@@ -532,6 +541,41 @@ save_utracked(struct memfile *mf, struct you *y)
 }
 
 
+static void
+save_stairway(struct memfile *mf, stairway s)
+{
+    mwrite8(mf, s.sx);
+    mwrite8(mf, s.sy);
+    save_dlevel(mf, s.tolev);
+    mwrite8(mf, s.up);
+}
+
+
+static void
+save_dest_area(struct memfile *mf, dest_area a)
+{
+    mwrite8(mf, a.lx);
+    mwrite8(mf, a.ly);
+    mwrite8(mf, a.hx);
+    mwrite8(mf, a.hy);
+    mwrite8(mf, a.nlx);
+    mwrite8(mf, a.nly);
+    mwrite8(mf, a.nhx);
+    mwrite8(mf, a.nhy);
+}
+
+
+void
+save_coords(struct memfile *mf, const coord *c, int n)
+{
+    const coord *p;
+    for (p = c; p < c + n; ++p) {
+        mwrite8(mf, p->x);
+        mwrite8(mf, p->y);
+    }
+}
+
+
 void
 savelev(struct memfile *mf, xchar levnum)
 {
@@ -563,13 +607,13 @@ savelev(struct memfile *mf, xchar levnum)
     mwrite32(mf, lev->lastmoves);
 
     mtag(mf, levnum, MTAG_STAIRWAYS);
-    mwrite(mf, &lev->upstair, sizeof (stairway));
-    mwrite(mf, &lev->dnstair, sizeof (stairway));
-    mwrite(mf, &lev->upladder, sizeof (stairway));
-    mwrite(mf, &lev->dnladder, sizeof (stairway));
-    mwrite(mf, &lev->sstairs, sizeof (stairway));
-    mwrite(mf, &lev->updest, sizeof (dest_area));
-    mwrite(mf, &lev->dndest, sizeof (dest_area));
+    save_stairway(mf, lev->upstair);
+    save_stairway(mf, lev->dnstair);
+    save_stairway(mf, lev->upladder);
+    save_stairway(mf, lev->dnladder);
+    save_stairway(mf, lev->sstairs);
+    save_dest_area(mf, lev->updest);
+    save_dest_area(mf, lev->dndest);
 
     mtag(mf, levnum, MTAG_LFLAGS);
     lflags = (lev->flags.noteleport << 22) |
@@ -579,7 +623,7 @@ savelev(struct memfile *mf, xchar levnum)
         (lev->flags.is_cavernous_lev << 15) | (lev->flags.arboreal << 14) |
         (lev->flags.forgotten << 13);
     mwrite32(mf, lflags);
-    mwrite(mf, lev->doors, sizeof (lev->doors));
+    save_coords(mf, lev->doors, DOORMAX);
 
     save_rooms(mf, lev);        /* no dynamic memory to reclaim */
 
@@ -642,7 +686,7 @@ savelevchn(struct memfile *mf)
 
     for (tmplev = sp_levchn; tmplev; tmplev = tmplev->next) {
         save_d_flags(mf, tmplev->flags);
-        mwrite(mf, &tmplev->dlevel, sizeof (tmplev->dlevel));
+        save_dlevel(mf, tmplev->dlevel);
         mwrite(mf, tmplev->proto, sizeof (tmplev->proto));
         mwrite8(mf, tmplev->boneid);
         mwrite8(mf, tmplev->rndlevs);
