@@ -1,5 +1,5 @@
 About this document:
-Last modified by Sean Hunt, 2013-11-18
+Last modified by Sean Hunt, 2013-12-27
 
 Copyright (C) 2013 Sean Hunt
 
@@ -204,6 +204,9 @@ Things that need to be in the level flags:
  - A pointer to either the bones name of the level, or NULL for no bones.
    [note that this could be changed in the future if the level manager is
     given more control over bones, say to allow bones on branch levels]
+ - Whether the level blocks level teleporting downward. This includes the
+   quest home until it's unlocked, the invocation level until the invocation
+   is performed, and the valley if you're not on it.
 
 Things that need to be in the level manager:
  - Generation (at least mklev() through mineralize())
