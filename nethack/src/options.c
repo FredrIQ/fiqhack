@@ -194,21 +194,20 @@ curses_set_option(const char *name, union nh_optvalue value)
             return FALSE;
 
         *var = value.b;
-    }
 
-    if (!strcmp(option->name, "frame") || !strcmp(option->name, "status3") ||
-        !strcmp(option->name, "sidebar")) {
-        rebuild_ui();
-        return TRUE;
+        if (!strcmp(option->name, "frame") || !strcmp(option->name, "status3") ||
+            !strcmp(option->name, "sidebar")) {
+            rebuild_ui();
+        } else if (!strcmp(option->name, "darkgray")) {
+            set_darkgray();
+            draw_map(player.x, player.y);
+        }
     } else if (!strcmp(option->name, "showexp") ||
                !strcmp(option->name, "showscore") ||
                !strcmp(option->name, "time")) {
         curses_update_status(NULL);
     } else if (!strcmp(option->name, "comment")) {
         /* do nothing */
-    } else if (!strcmp(option->name, "darkgray")) {
-        set_darkgray();
-        draw_map(player.x, player.y);
     } else if (!strcmp(option->name, "menu_headings")) {
         settings.menu_headings = option->value.e;
     } else if (!strcmp(option->name, "graphics")) {
