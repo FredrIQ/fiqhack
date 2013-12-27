@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-26 */
+/* Last modified by Sean Hunt, 2013-12-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2412,7 +2412,7 @@ zap_updown(struct obj *obj, schar dz)
                    &&
                    /* can't use the stairs down to quest level 2 until leader
                       "unlocks" them; give feedback if you try */
-                   on_level(&u.uz, &qstart_level) && !ok_to_quest()) {
+                   on_level(&u.uz, &qstart_level) && !ok_to_quest(FALSE)) {
             pline("The stairs seem to ripple momentarily.");
             disclose = TRUE;
         }

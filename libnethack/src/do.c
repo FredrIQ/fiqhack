@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Sean Hunt, 2013-12-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -932,10 +932,8 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
 
     /* Prevent the player from going past the first quest level unless (s)he
        has been given the go-ahead by the leader. */
-    if (on_level(&u.uz, &qstart_level) && !newdungeon && !ok_to_quest()) {
-        pline("A mysterious force prevents you from descending.");
+    if (on_level(&u.uz, &qstart_level) && !newdungeon && !ok_to_quest(TRUE))
         return;
-    }
 
     if (on_level(newlevel, &u.uz))
         return; /* this can happen */

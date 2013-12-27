@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Sean Hunt, 2013-12-27 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1541,7 +1541,7 @@ down_gate(xchar x, xchar y)
 
     gate_str = 0;
     /* this matches the player restriction in goto_level() */
-    if (on_level(&u.uz, &qstart_level) && !ok_to_quest())
+    if (on_level(&u.uz, &qstart_level) && !ok_to_quest(FALSE))
         return MIGR_NOWHERE;
 
     if ((level->dnstair.sx == x && level->dnstair.sy == y) ||

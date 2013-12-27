@@ -104,10 +104,36 @@ artitouch(void)
 
 /* external hook for do.c (level change check) */
 boolean
-ok_to_quest(void)
+ok_to_quest(boolean verbose)
 {
-    return (boolean) ((Qstat(got_quest) || Qstat(got_thanks)))
-        && (is_pure(FALSE) > 0);
+    if (!(Qstat(got_quest)) && !(Qstat(got_thanks))) {
+        if (verbose) {
+            if (Hallucination)
+                You_hear("the man telling you what you can and can't do.");
+            else
+                You_hear("a mysterious voice say "
+                         "\"You must have permission to descend.\"");
+        }
+    } else if (is_pure(TRUE) <= 0) {
+        if (verbose) {
+            if (Hallucination)
+                You_hear("someone whining about how you should treat %s "
+                         "better.", halu_gname(u.ualignbase[A_ORIGINAL]));
+            else
+                You_hear("a mysterious voice say "
+                         "\"Only the faithful of %s may descend.\"",
+                         align_gname(u.ualignbase[A_ORIGINAL]));
+        }
+    } else
+        return TRUE;
+
+    if (verbose) {
+        if (Hallucination)
+            pline("This staircase is a lie, man!");
+        else
+            pline("A mysterious force prevents you from descending.");
+    }
+    return FALSE;
 }
 
 static boolean
