@@ -1023,7 +1023,7 @@ void
 losespells(void)
 {
     boolean confused = (Confusion != 0);
-    int n, nzap, i, j;
+    int n, nzap, i;
 
     u.utracked[tos_book] = 0;
     for (n = 0; n < MAXSPELL && spellid(n) != NO_SPELL; n++)
@@ -1034,19 +1034,9 @@ losespells(void)
             nzap = n;
         for (i = 0; i < n; i++) {
             if (rnd(n) <= nzap) {
-                spellid(i) = NO_SPELL;
+                spellknow(i) = 0;
                 exercise(A_WIS, FALSE);     /* ouch! */
             }
-        }
-
-        for (i = j = 0; j < n; i++, j++) {
-           if (spellid(i) == NO_SPELL) {
-               while (spellid(j) == NO_SPELL && j < n)
-                   j++;
-               spellid(i) = spellid(j);
-               spellknow(i) = spellknow(j);
-               spellid(j) = NO_SPELL;
-           }
         }
     }
 }
