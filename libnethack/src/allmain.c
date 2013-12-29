@@ -420,9 +420,6 @@ nh_play_game(int fd)
         /* TODO: Better resolution for turntime */
         turntime = time(NULL);
 
-        flags.incomplete = FALSE;
-        flags.interrupted = FALSE;
-
         /* Make sure the client hasn't given extra arguments on top of the ones
            that we'd normally accept. To simplify things, we just silently drop
            any additional arguments. We do this before logging so that the
@@ -431,27 +428,45 @@ nh_play_game(int fd)
 
         if (cmdlist[cmdidx].flags & CMD_NOTIME &&
             (flags.incomplete || !flags.interrupted || flags.occupation)) {
+
             /* CMD_NOTIME actions don't set last_cmd/last_arg, so we need to
                ensure we interrupt them in order to avoid screwing up command
                repeat. We accomplish this via logging an "interrupt" command. */
+
+            flags.incomplete = FALSE;
+            flags.interrupted = FALSE; /* set to true by "interrupt" */
+
             log_record_command("interrupt",
                                &(struct nh_cmd_arg){.argtype = 0});
             command_input(get_command_idx("interrupt"),
                           &(struct nh_cmd_arg){.argtype = 0});
             neutral_turnstate_tasks();
+
+        } else {
+
+            flags.incomplete = FALSE;
+            flags.interrupted = FALSE;
+
         }
 
         program_state.in_zero_time_command =
             !!(cmdlist[cmdidx].flags & CMD_NOTIME);
 
-        log_record_command(cmd, &arg);
+        /* We can't record a command if we didn't prompt for one; it creates
+           desyncs when replaying. (If we /did/ prompt or one, it's OK to record
+           a different one, which is why the record of "interrupt" above is OK;
+           it's not OK to record two, but log_record_command won't record
+           zero-time commands.) */
+        if (!Helpless)
+            log_record_command(cmd, &arg);
+
         command_input(cmdidx, &arg);
 
         program_state.in_zero_time_command = FALSE;
 
         if (cmdlist[cmdidx].flags & CMD_NOTIME)
             log_revert_command(); /* make sure it didn't change the gamestate */
-        else
+        else if ((!flags.incomplete || flags.interrupted) && !Helpless)
             neutral_turnstate_tasks();
     }
 

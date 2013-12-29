@@ -819,7 +819,7 @@ log_replay_input(int count, const char *fmt, ...)
     /* Does the format line parse all the characters in logline? */
     actual_count = -1;
     sscanf(logline, fmtbuf, &actual_count);
-    if (p2 - fmt != actual_count) {
+    if (strlen(logline) != actual_count) {
         free(logline);
         return FALSE;
     }

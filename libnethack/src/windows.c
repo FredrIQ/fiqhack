@@ -240,6 +240,8 @@ display_menu(struct nh_menuitem *items, int icount, const char *title, int how,
 
     if (how == PICK_NONE && log_replay_input(0, "M"))
         n = 0;
+    else if (log_replay_input(0, "M!"))
+        n = -1;
     else if (!log_replay_menu(FALSE, &n, results)) {
         log_replay_no_more_options();
         n = (*windowprocs.win_display_menu) (items, icount, title, how,
@@ -248,7 +250,11 @@ display_menu(struct nh_menuitem *items, int icount, const char *title, int how,
 
     if (how == PICK_NONE)
         log_record_input("M");
-    else {
+    else if (n == -1) {
+        log_record_input("M!");
+        suppress_more();
+        pline("<%s: cancelled>", title ? title : "List of objects");
+    } else {
         char buf[BUFSZ] = "(none selected)";
 
         log_record_menu(FALSE, n, results);
@@ -275,6 +281,8 @@ display_objects(struct nh_objitem *items, int icount, const char *title,
 
     if (how == PICK_NONE && log_replay_input(0, "O"))
         n = 0;
+    else if (log_replay_input(0, "O!"))
+        n = -1;
     else if (!log_replay_menu(TRUE, &n, pick_list)) {
         log_replay_no_more_options();
         n = (*windowprocs.win_display_objects) (items, icount, title, how,
@@ -283,7 +291,11 @@ display_objects(struct nh_objitem *items, int icount, const char *title,
 
     if (how == PICK_NONE)
         log_record_input("O");
-    else {
+    else if (n == -1) {
+        log_record_input("O!");
+        suppress_more();
+        pline("<%s: cancelled>", title ? title : "List of objects");
+    } else {
         char buf[BUFSZ] = "(none selected)";
 
         log_record_menu(TRUE, n, pick_list);
