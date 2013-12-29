@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-18 */
+/* Last modified by Sean Hunt, 2013-12-27 */
 /* Copyright (c) Dean Luick, 1994                                       */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -299,7 +299,7 @@ restore_light_sources(struct memfile *mf, struct level *lev)
 {
     int count;
     intptr_t id;
-    light_source *ls;
+    light_source *ls, *prev = NULL;
 
     /* restore elements */
     count = mread32(mf);
@@ -314,8 +314,12 @@ restore_light_sources(struct memfile *mf, struct level *lev)
         ls->x = mread8(mf);
         ls->y = mread8(mf);
 
-        ls->next = lev->lev_lights;
-        lev->lev_lights = ls;
+        ls->next = NULL;
+        if (prev)
+            prev->next = ls;
+        else
+            lev->lev_lights = ls;
+        prev = ls;
     }
 }
 
