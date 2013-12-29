@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Sean Hunt, 2013-12-29 */
 /*      Copyright 1991, M. Stephenson             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -11,27 +11,17 @@
 #include "qtext.h"
 
 #define QTEXT_FILE      "quest.dat"
-/* #define DEBUG *//* uncomment for debugging */
 
 static void Fread(void *, int, int, dlb *);
 static struct qtmsg *construct_qtlist(long);
-static const char *intermed(void);
-static const char *neminame(void);
-static const char *guardname(void);
-static const char *homebase(void);
 static struct qtmsg *msg_in(struct qtmsg *, int);
-static void convert_arg(char);
-static void convert_line(void);
+static void convert_arg(char c, char *buf);
+static char *convert_line(const char *in_line);
 static void deliver_by_pline(struct qtmsg *);
 static void deliver_by_window(struct qtmsg *);
-static const char *ldrname(void);
 
-static char in_line[80], cvt_buf[64], out_line[128];
 static struct qtlists qt_list;
 static dlb *msg_file;
-
-/* used by ldrname() and neminame(), then copied into cvt_buf */
-static char nambuf[sizeof cvt_buf];
 
 
 static void
@@ -134,55 +124,10 @@ quest_info(int typ)
     return 0;
 }
 
-/* return your role leader's name */
-const char *
-ldrname(void)
-{
-    int i = urole.ldrnum;
-
-    sprintf(nambuf, "%s%s", type_is_pname(&mons[i]) ? "" : "the ",
-            mons[i].mname);
-    return nambuf;
-}
-
-/* return your intermediate target string */
-static const char *
-intermed(void)
-{
-    return urole.intermed;
-}
-
 boolean
 is_quest_artifact(struct obj * otmp)
 {
     return (boolean) (otmp->oartifact == urole.questarti);
-}
-
-/* return your role nemesis' name */
-static const char *
-neminame(void)
-{
-    int i = urole.neminum;
-
-    sprintf(nambuf, "%s%s", type_is_pname(&mons[i]) ? "" : "the ",
-            mons[i].mname);
-    return nambuf;
-}
-
-/* return your role leader's guard monster name */
-static const char *
-guardname(void)
-{
-    int i = urole.guardnum;
-
-    return mons[i].mname;
-}
-
-/* return your role leader's location */
-static const char *
-homebase(void)
-{
-    return urole.homebase;
 }
 
 static struct qtmsg *
@@ -198,93 +143,92 @@ msg_in(struct qtmsg *qtm_list, int msgnum)
 }
 
 static void
-convert_arg(char c)
+convert_arg(char c, char *buf)
 {
-    const char *str;
-
     switch (c) {
-
     case 'p':
-        str = u.uplname;
+        strcpy(buf, u.uplname);
         break;
     case 'c':
-        str = (u.ufemale && urole.name.f) ? urole.name.f : urole.name.m;
+        strcpy(buf, (u.ufemale && urole.name.f) ? urole.name.f : urole.name.m);
         break;
     case 'r':
-        str = rank_of(u.ulevel, Role_switch, u.ufemale);
+        strcpy(buf, rank_of(u.ulevel, Role_switch, u.ufemale));
         break;
     case 'R':
-        str = rank_of(MIN_QUEST_LEVEL, Role_switch, u.ufemale);
+        strcpy(buf, rank_of(MIN_QUEST_LEVEL, Role_switch, u.ufemale));
         break;
     case 's':
-        str = (u.ufemale) ? "sister" : "brother";
+        strcpy(buf, (u.ufemale) ? "sister" : "brother");
         break;
     case 'S':
-        str = (u.ufemale) ? "daughter" : "son";
+        strcpy(buf, (u.ufemale) ? "daughter" : "son");
         break;
     case 'l':
-        str = ldrname();
-        break;
-    case 'i':
-        str = intermed();
-        break;
-    case 'o':
-        str = the(artiname(urole.questarti));
-        break;
-    case 'n':
-        str = neminame();
-        break;
-    case 'g':
-        str = guardname();
-        break;
-    case 'G':
-        str = align_gtitle(u.ualignbase[A_ORIGINAL]);
-        break;
-    case 'H':
-        str = homebase();
-        break;
-    case 'a':
-        str = align_str(u.ualignbase[A_ORIGINAL]);
-        break;
-    case 'A':
-        str = align_str(u.ualign.type);
-        break;
-    case 'd':
-        str = align_gname(u.ualignbase[A_ORIGINAL]);
-        break;
-    case 'D':
-        str = align_gname(A_LAWFUL);
-        break;
-    case 'C':
-        str = "chaotic";
-        break;
-    case 'N':
-        str = "neutral";
-        break;
-    case 'L':
-        str = "lawful";
-        break;
-    case 'x':
-        str = Blind ? "sense" : "see";
-        break;
-    case 'Z':
-        str = dungeons[0].dname;
-        break;
-    case '%':
-        str = "%";
-        break;
-    default:
-        str = "";
+    case 'n': {
+        int i = c == 'l' ? urole.ldrnum : urole.neminum;;
+        if (snprintf(buf, BUFSZ, "%s%s", type_is_pname(&mons[i]) ? "" : "the ",
+                     mons[i].mname) >= BUFSZ)
+            impossible("Quest monster name exceeds BUFSZ");
         break;
     }
-    strcpy(cvt_buf, str);
+    case 'i':
+        strcpy(buf, urole.intermed);
+        break;
+    case 'o':
+        strcpy(buf, the(artiname(urole.questarti)));
+        break;
+        break;
+    case 'g':
+        strcpy(buf, mons[urole.guardnum].mname);
+        break;
+    case 'G':
+        strcpy(buf, align_gtitle(u.ualignbase[A_ORIGINAL]));
+        break;
+    case 'H':
+        strcpy(buf, urole.homebase);
+        break;
+    case 'a':
+        strcpy(buf, align_str(u.ualignbase[A_ORIGINAL]));
+        break;
+    case 'A':
+        strcpy(buf, align_str(u.ualign.type));
+        break;
+    case 'd':
+        strcpy(buf, align_gname(u.ualignbase[A_ORIGINAL]));
+        break;
+    case 'D':
+        strcpy(buf, align_gname(A_LAWFUL));
+        break;
+    case 'C':
+        strcpy(buf, "chaotic");
+        break;
+    case 'N':
+        strcpy(buf, "neutral");
+        break;
+    case 'L':
+        strcpy(buf, "lawful");
+        break;
+    case 'x':
+        strcpy(buf, Blind ? "sense" : "see");
+        break;
+    case 'Z':
+        strcpy(buf, dungeons[0].dname);
+        break;
+    case '%':
+        strcpy(buf, "%");
+        break;
+    default:
+        strcpy(buf, "");
+        break;
+    }
 }
 
-static void
-convert_line(void)
+static char *
+convert_line(const char *in_line)
 {
-    char *c, *cc;
-    char xbuf[BUFSZ];
+    char *c, *cc, *out_line = malloc(BUFSZ * 2);
+    char xbuf[BUFSZ], buf[BUFSZ];
 
     cc = out_line;
     for (c = xcrypt(in_line, xbuf); *c; c++) {
@@ -295,46 +239,46 @@ convert_line(void)
         case '\r':
         case '\n':
             *(++cc) = 0;
-            return;
+            return out_line;
 
         case '%':
             if (*(c + 1)) {
-                convert_arg(*(++c));
+                convert_arg(*(++c), buf);
                 switch (*(++c)) {
 
                     /* insert "a"/"an" prefix */
                 case 'A':
-                    strcat(cc, An(cvt_buf));
+                    strcat(cc, An(buf));
                     cc += strlen(cc);
                     continue;   /* for */
                 case 'a':
-                    strcat(cc, an(cvt_buf));
+                    strcat(cc, an(buf));
                     cc += strlen(cc);
                     continue;   /* for */
 
                     /* capitalize */
                 case 'C':
-                    cvt_buf[0] = highc(cvt_buf[0]);
+                    buf[0] = highc(buf[0]);
                     break;
 
                     /* pluralize */
                 case 'P':
-                    cvt_buf[0] = highc(cvt_buf[0]);
+                    buf[0] = highc(buf[0]);
                 case 'p':
-                    strcpy(cvt_buf, makeplural(cvt_buf));
+                    strcpy(buf, makeplural(buf));
                     break;
 
                     /* append possessive suffix */
                 case 'S':
-                    cvt_buf[0] = highc(cvt_buf[0]);
+                    buf[0] = highc(buf[0]);
                 case 's':
-                    strcpy(cvt_buf, s_suffix(cvt_buf));
+                    strcpy(buf, s_suffix(buf));
                     break;
 
                     /* strip any "the" prefix */
                 case 't':
-                    if (!strncmpi(cvt_buf, "the ", 4)) {
-                        strcat(cc, &cvt_buf[4]);
+                    if (!strncmpi(buf, "the ", 4)) {
+                        strcat(cc, &buf[4]);
                         cc += strlen(cc);
                         continue;       /* for */
                     }
@@ -344,8 +288,8 @@ convert_line(void)
                     --c;        /* undo switch increment */
                     break;
                 }
-                strcat(cc, cvt_buf);
-                cc += strlen(cvt_buf);
+                strcat(cc, buf);
+                cc += strlen(buf);
                 break;
             }
             /* else fall through */
@@ -357,18 +301,20 @@ convert_line(void)
     if (cc >= out_line + sizeof out_line)
         panic("convert_line: overflow");
     *cc = 0;
-    return;
+    return out_line;
 }
 
 static void
 deliver_by_pline(struct qtmsg *qt_msg)
 {
     long size;
+    char in_line[BUFSZ];
 
     for (size = 0; size < qt_msg->size; size += (long)strlen(in_line)) {
         dlb_fgets(in_line, 80, msg_file);
-        convert_line();
+        char *out_line = convert_line(in_line);
         pline(out_line);
+        free(out_line);
     }
 
 }
@@ -377,14 +323,16 @@ static void
 deliver_by_window(struct qtmsg *qt_msg)
 {
     long size;
+    char in_line[BUFSZ];
     struct menulist menu;
 
     init_menulist(&menu);
 
     for (size = 0; size < qt_msg->size; size += (long)strlen(in_line)) {
         dlb_fgets(in_line, 80, msg_file);
-        convert_line();
+        char *out_line = convert_line(in_line);
         add_menutext(&menu, out_line);
+        free(out_line);
     }
     display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_ANYWHERE,
                  NULL);
