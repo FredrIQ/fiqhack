@@ -853,7 +853,7 @@ helpless(int turns, const char *reason, const char *done)
 
     strcpy(u.uwhybusy, reason);
     if (done)
-        strcpy(u.umoveagain, reason);
+        strcpy(u.umoveagain, done);
     else
         strcpy(u.umoveagain, "You can move again.");
 }
