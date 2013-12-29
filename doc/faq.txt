@@ -1,3 +1,14 @@
+About this document:
+Last modified by Alex Smith, 2013-12-29
+
+Copyright (C) 2013 Alex Smith.
+
+This FAQ is licensed under the NetHack General Public License.  See
+libnethack/dat/license for details.
+
+
+
+
 "FAQ" stands for "Frequently Asked Questions".  However, giving a list
 of the questions I've been asked a lot seems mostly useless by itself.
 So here are some questions I've been asked a lot, and some questions
@@ -11,171 +22,160 @@ About the NetHack 4 project
 What is NetHack?
 ----------------
 
-A long time ago, back before the use of graphics for computer games
-played on actual computers (rather than games consoles) caught on,
-there was a game called Rogue.  Previous games were mostly text
-adventures (think Zork or Colossal Cave Adventure); the game would
-describe a situation using text, and the player would respond to that.
-Instead of describing the game world, Rogue visualised it, placing
-letters on the screen in order to show where the player was relative
-to enemies.  It was also notable for having a randomly generated map,
-and deleting the save file upon the character's death; there was no
-way to go back and try again.
+A long time ago, back before the use of graphics for computer games played on
+actual computers (rather than games consoles) caught on, there was a game
+called Rogue.  Previous games were mostly text adventures (think Zork or
+Colossal Cave Adventure); the game would describe a situation using text, and
+the player would respond to that.  Instead of describing the game world, Rogue
+visualised it, placing letters on specific screen locations in order to show
+where the player was relative to enemies.  It was also notable for having a
+randomly generated map, and deleting the save file upon the character's death;
+there was no way to go back and try again.
 
-NetHack is a "roguelike" game following in the same tradition; the
-player controls an adventurer delving into a randomly generated
-dungeon to retrieve the Amulet of Yendor from its depths.  The
-earliest versions were based quite heavily on Dungeons & Dragons,
-although it has diverged somewhat since (although there are still many
-obvious ties between them, such as the presence of surprisingly many
-types of polearm).  As such, it allows unusual levels of flexibility
-in its gameplay; if it seems like you should be able to do something,
-you probably can, and unlike many roguelikes, the emphasis is on
-allowing you to build the character you want to play, rather than on
-trying to make do with a limited number of tools.
+NetHack is a "roguelike" game following in the same tradition; the player
+controls an adventurer delving into a randomly generated dungeon to retrieve
+the Amulet of Yendor from its depths.  The earliest versions were based quite
+heavily on Dungeons & Dragons, although it has diverged somewhat since
+(although there are still many obvious ties between them, such as the presence
+of surprisingly many types of polearm).  As such, it allows unusual levels of
+flexibility in its gameplay; if it seems like you should be able to do
+something, you probably can, and unlike many roguelikes, the emphasis is on
+allowing you to build the character you want to play, rather than on trying to
+make do with a limited number of tools.
 
 
 What is NetHack 4?
 ------------------
 
-NetHack (and its predecessor Hack) were kept in development for many
-many years; NetHack dates from 1987 (and as such, is older than many
-people who play it).  The development team who worked on versions 1 to
-3 of NetHack ([the DevTeam][1]) claim to still be
-working on it, but there's hardly any visible progress; just the
-occasional update to the (woefully inadequate) bug tracker, or the fix
-of one of the ports to work on the latest version of an operating
-system.  This means that NetHack is still stuck in 2003, with the
-world moving on in the meantime.  It's a testament to the game's
-quality that it can still be enjoyed after staying stagnant for this
-long, but the situation is far from what it could be.
+NetHack (and its predecessor Hack) were kept in development for many many
+years; NetHack dates from 1987 (and as such, is older than many people who
+play it).  The development team who worked on versions 1 to 3 of NetHack
+([the DevTeam][1]) claim to still be working on it, but there's hardly any
+visible progress; just the occasional update to the (woefully inadequate) bug
+tracker, or the fix of one of the ports to work on the latest version of an
+operating system.  This means that NetHack is still stuck in 2003, with the
+world moving on in the meantime.  It's a testament to the game's quality that
+it can still be enjoyed after staying stagnant for this long, but the
+situation is far from what it could be.
 
-As expected for a game popular among programmers, there were many
-people willing to take the game forwards who *weren't* members of the
-DevTeam; an ecosystem of first patches, and later on full "variants",
-sprang up.  After a long time with no useful activity from the
-DevTeam, though, it became clear that a replacement would be needed;
-this was exacerbated somewhat by the tendency of variants to be
-created and guided by players who were significantly above average at
-the game (and as such, noticeably harder), leading to variants being
-dismissed by many players.  [NetHack 4][2] was originally created by
-merging two resonably conservative variants (NitroHack by Daniel
-Thaler, which focused on modernizing the codebase, and AceHack by Alex
-Smith, which focused on interface improvements), although many other
-people have worked on it since, or contributed patches to the variants
-it is based on.  The result is, hopefully, a more modern NetHack that
-still has gameplay familiar to fans of previous versions.
+As expected for a game popular among programmers, there were many people
+willing to take the game forwards who *weren't* members of the DevTeam; an
+ecosystem of first patches, and later on full "variants", sprang up.  After a
+long time with no useful activity from the DevTeam, though, it became clear
+that a replacement would be needed; this was exacerbated somewhat by the
+tendency of variants to be created and guided by players who were
+significantly above average at the game (and as such, noticeably harder),
+leading to variants being dismissed by many players.  [NetHack 4][2] was
+originally created by merging two resonably conservative variants (NitroHack
+by Daniel Thaler, which focused on modernizing the codebase, and AceHack by
+Alex Smith, which focused on interface improvements), although many other
+people have worked on it since, or contributed patches to the variants it is
+based on.  The result is, hopefully, a more modern NetHack that still has
+gameplay familiar to fans of previous versions.
 
 
 Why is the game called NetHack 4, if it isn't made by the DevTeam?
 ------------------------------------------------------------------
 
-NetHack seems liable to die if nobody tries to take it forwards.  If
-the DevTeam can't or won't take it forwards, someone else will have
-to.  NetHack 4 aims to be a direct successor to NetHack 3.4.3, rather
-than a "challenge patch", and it felt like the most appropriate name
-for a project that aims at continuing the legacy of NetHack.
+NetHack seems liable to die if nobody tries to take it forwards.  If the
+DevTeam can't or won't take it forwards, someone else will have to.  NetHack 4
+aims to be a direct successor to NetHack 3.4.3, rather than a "challenge
+patch", and it felt like the most appropriate name for a project that aims at
+continuing the legacy of NetHack.
 
-Basically, we like NetHack too much to want to let it die.  Using only
-a minor modification to the name (adding the "4") lets us signify that
-we're trying to keep it alive, rather than abandoning it in favour of
-an alternative.
+Basically, we like NetHack too much to want to let it die.  Using only a minor
+modification to the name (adding the "4") lets us signify that we're trying to
+keep it alive, rather than abandoning it in favour of an alternative.
 
-As an additional historical note, the name "NetHack" was chosen
-because it was a version of Hack which was coordinated over the
-Internet (especially Usenet).  Nowdays, the DevTeam have mostly
-abandoned online communication with the users, merely answering the
-occasional bug report email, so the name "NetHack" more accurately
-describes NetHack 4 than it describes NetHack 3.4.3.
+As an additional historical note, the name "NetHack" was chosen because it was
+a version of Hack which was coordinated over the Internet (especially Usenet).
+Nowdays, the DevTeam have mostly abandoned online communication with the
+users, merely answering the occasional bug report email, so the name "NetHack"
+more accurately describes NetHack 4 than it describes NetHack 3.4.3.
 
 
 What will you do if the DevTeam releases a new version of NetHack?
 ------------------------------------------------------------------
 
-If this baits a new version out, we'll be happy enough with that
-result that any version number clashes or other disputes become
-secondary.  Most likely, we'd attempt to merge their version with ours
-(or vice versa).
+If this baits a new version out, we'll be happy enough with that result that
+any version number clashes or other disputes become secondary.  Most likely,
+we'd attempt to merge their version with ours (or vice versa).
 
 By the way, if the DevTeam needs help and are willing to give us the
-information we need to help them, we'd be willing to help them out
-with their own development version; we're having to proceed without
-them because they're too secretive to let us proceed with them, but
-working together would be better.
+information we need to help them, we'd be willing to help them out with their
+own development version; we're having to proceed without them because they're
+too secretive to let us proceed with them, but working together would be
+better.
 
 
 Why has the DevTeam not produced a new version of NetHack?
 ----------------------------------------------------------
 
-We don't know conclusively, but there are a few plausible guesses.
-It's strongly suspected that whatever they have in their own source
-repository is not particularly close to a releasable state, and that
-either none or few of the DevTeam are willing to work on the parts
-that have problems, meaning that it doesn't get noticeably closer to
-release over time (and may even be drifting further away).  Because
-the DevTeam keeps the development process secretive (there's no public
-source for any interim version since 3.4.3, for instance), it's
-impossible for the NetHack patching community to help them out, and we
-don't even know what they're having trouble with.
+We don't know conclusively, but there are a few plausible guesses.  It's
+strongly suspected that whatever they have in their own source repository is
+not particularly close to a releasable state, and that either none or few of
+the DevTeam are willing to work on the parts that have problems, meaning that
+it doesn't get noticeably closer to release over time (and may even be
+drifting further away).  Because the DevTeam keeps the development process
+secretive (there's no public source for any interim version since 3.4.3, for
+instance), it's impossible for the NetHack patching community to help them
+out, and we don't even know what they're having trouble with.
 
-This is very annoying, because it forces us to duplicate their work
-rather than being able to build on it, and they've had several years'
-head start.  It seems possible that we've even overtaken them by now,
-though.
+This is very annoying, because it forces us to duplicate their work rather
+than being able to build on it, and they've had several years' head start.  It
+seems possible that we've even overtaken them by now, though.
 
 
 How can I follow/contribute to NetHack 4 development?
 -----------------------------------------------------
 
-NetHack 4 was branched from NitroHack, so its source (including
-interim development versions) is available from [Alex Smith's clone of
-the NitroHack repository][3], branch "nicehack".  There is also now a
-[bug tracker][4], where you can read or report bugs, or submit patches.
+NetHack 4 was branched from NitroHack, so its source (including interim
+development versions) is available from
+[Alex Smith's clone of the NitroHack repository][3], branch "nicehack".  There
+is also now a [bug tracker][4], where you can read or report bugs, or submit
+patches.
 
-You can also send emails to ais523.  The email address is not written
-here directly in the hope of confusing spammers, but it's the most
-obvious one that can be formed from the username "ais523" and the
-domain name "nethack4.org".
+You can also send emails to ais523.  The email address is not written here
+directly in the hope of confusing spambots, but it's the most obvious one that
+can be formed from the username "ais523" and the domain name "nethack4.org".
 
-If you want to discuss the game or its development, we also have an
-IRC channel, #acehack on irc.freenode.net; many of the developers idle
-there, and many discussions are made there too.
+If you want to discuss the game or its development, we also have an IRC
+channel, #acehack on irc.freenode.net; many of the developers idle there, and
+many discussions are made there too.
 
-Finally, you can comment on Usenet, at rec.games.roguelikes.nethack.
-Make sure your subject line clearly refers to NetHack 4 if you don't
-want to cause confusion as to which version you're talking about.
+Finally, you can comment on Usenet, at rec.games.roguelikes.nethack.  Make
+sure your subject line clearly refers to NetHack 4 if you don't want to cause
+confusion as to which version you're talking about.
 
 
 What about playing in tournaments?
 ----------------------------------
 
 NetHack 4 is one of the games featured in the annual
-[Junethack tournament][5], which looks at the future of NetHack by
-allowing competition on the various forks and variants (as well as
-3.4.3).  As the name might suggest, it runs in June every year.  See
-the tournament site for more details.
+[Junethack tournament][5], which looks at the future of NetHack by allowing
+competition on the various forks and variants (as well as 3.4.3).  As the name
+might suggest, it runs in June every year.  See the tournament site for more
+details.
 
 
 What license is the code under?
 -------------------------------
 
-Just like previous versions of NetHack, NetHack 4 is licensed under
-the NetHack General Public License (which is similar to old versions
-of the GNU General Public License).  Some of the newer files are
-dual-licensed and also allow other licensing options in addition to
-the NHGPL.  (The build system, aimake version 3, is licensed under
-version 3 of the GNU GPL, rather than under the NHGPL; however, its
-license does not extend onto the license of the code it compiles,
-leaving the resulting executables as purely NHGPL.)
+Just like previous versions of NetHack, NetHack 4 is licensed under the
+NetHack General Public License (which is similar to old versions of the GNU
+General Public License).  Some of the newer files are dual-licensed and also
+allow other licensing options in addition to the NHGPL.  (The build system,
+aimake version 3, is licensed under version 3 of the GNU GPL, rather than
+under the NHGPL; however, its license does not extend onto the license of the
+code it compiles, leaving the resulting executables as purely NHGPL.)
 
-Several of the libraries on which NetHack 4 depends have other
-licenses; for instance, libjansson (which ships with the NetHack 4
-source, nowadays) is licensed under the Expat license, and SDL2 (which
-does not ship with the source, but which does ship with the binaries)
-is licensed under the zlib license.  The file `copyright` in the root
-of a source or binary distribution gives a machine-readable
-explanation of the copyright status of the source files in the
-distribution.
+Several of the libraries on which NetHack 4 depends have other licenses; for
+instance, libjansson (which ships with the NetHack 4 source, nowadays) is
+licensed under the Expat license, and SDL2 (which does not ship with the
+source, but which does ship with the binaries) is licensed under the zlib
+license.  The file `copyright` in the root of a source or binary distribution
+gives a machine-readable explanation of the copyright status of the source
+files in the distribution.
 
 Please note that there is no warranty for NetHack 4.
 
@@ -186,24 +186,24 @@ Getting the game running
 How can I play NetHack 4?
 -------------------------
 
-There are two ways to play NetHack 4: you can either run it locally on
-your own computer, or use telnet or ssh to connect to a public server
-and play on the server.  Server play has the advantage that your save
-file is available no matter which computer you play on, and that you
-can (on Linux or Mac OS X) use standard software that comes with the
-operating system rather than having to install a separate binary; it's
-also much easier to prove that you aren't cheating.  Local play works
-even without an Internet connection, and allows you to experiment with
-patches to the code and otherwise modify the game as you like.
+There are two ways to play NetHack 4: you can either run it locally on your
+own computer, or use telnet or ssh to connect to a public server and play on
+the server.  Server play has the advantage that your save file is available no
+matter which computer you play on, and that you can (on Linux or Mac OS X) use
+standard software that comes with the operating system rather than having to
+install a separate binary; it's also much easier to prove that you aren't
+cheating.  Local play works even without an Internet connection, and allows
+you to experiment with patches to the code and otherwise modify the game as
+you like.
 
 
 How can I play on a public server?
 ----------------------------------
 
-The official (and to our knowledge, only) public server is
-nethack4.org.  Open a terminal in your favourite terminal emulator,
-and use telnet (default settings) or ssh (username "nethack", password
-"nethack") to connect. At the command prompt:
+The official (and to our knowledge, only) public server is nethack4.org.  Open
+a terminal in your favourite terminal emulator, and use telnet (default
+settings) or ssh (username "nethack", password "nethack") to connect. At the
+command prompt:
 
     telnet nethack4.org
 
@@ -211,74 +211,67 @@ or
 
     ssh nethack@nethack4.org
 
-You'll be asked to give a username and password upon connecting; if
-you use a currently unknown username, you'll be prompted to create an
-account.
+You'll be asked to give a username and password upon connecting; if you use a
+currently unknown username, you'll be prompted to create an account.
 
-If you're using Windows, this is rather harder to do than on Linux or
-Mac OS X, because Windows doesn't come with ssh, its telnet client
-(when it even exists at all) is buried in an obscure corner of the
-menus and is disabled by default, and its default terminal emulator is
-woefully inadequate for pretty much anything (and probably doesn't run
-NetHack 4 over telnet correctly; I'm not sure if anyone has tried).
-As such, it is probably best to install a separate terminal emulator /
-telnet / ssh package.  The most commonly used is [PuTTY][6].  Note
-that PuTTY's defaults are somewhat dubious (e.g. the cursor looks a
-little out of place), so it may need some amount of configuration in
-order to provide the best play experience.  Note that it has something
-called "NetHack mode"; this is a workaround for keybinding issues in
-considerably older versions of NetHack, and may well be more harmful
-than useful, so try to get things working with it turned off first,
-and use it only as a last resort.
+If you're using Windows, this is rather harder to do than on Linux or Mac OS
+X, because Windows doesn't come with ssh, its telnet client (when it even
+exists at all) is buried in an obscure corner of the menus and is disabled by
+default, and its default terminal emulator is woefully inadequate for pretty
+much anything (and probably doesn't run NetHack 4 over telnet correctly; I'm
+not sure if anyone has tried).  As such, it is probably best to install a
+separate terminal emulator / telnet / ssh package.  The most commonly used is
+[PuTTY][6].  Note that PuTTY's defaults are somewhat dubious (e.g. the cursor
+looks a little out of place), so it may need some amount of configuration in
+order to provide the best play experience.  Note that it has something called
+"NetHack mode"; this is a workaround for keybinding issues in considerably
+older versions of NetHack, and may well be more harmful than useful, so try to
+get things working with it turned off first, and use it only as a last resort.
 
 
 How can I compile the game for local play?
 ------------------------------------------
 
-NetHack 4 can be compiled on most commonly used systems; we've tested
-Linux, OS X, and Windows.  Linux and Mac OS X work out of the box.
-Windows is a little harder but still relatively easy to compile on, if
-you don't mind downloading several extra tools to do the compilation
-with.
+NetHack 4 can be compiled on most commonly used systems; we've tested Linux,
+OS X, and Windows.  Linux and Mac OS X work out of the box.  Windows is a
+little harder but still relatively easy to compile on, if you don't mind
+downloading several extra tools to do the compilation with.
 
-In order to compile NetHack 4 locally, you can get a copy of the
-source from the repository, and follow the instructions in the README
-file (if you're on Mac OS X, follow the instructions for UNIX/Linux,
-because OS X is a UNIX derivative).  You'll need some dependencies in
-addition to NetHack 4 itself: a working C toolchain and zlib.  (You'll
-also need postgresql if you're planning to run your own server, but
-you probably aren't; for local play, the game works just fine without
-a server to connect to.)  Previous versions of NetHack 4 depended on
-the [libjansson library][7], but the source to this library is now
-shipped with NetHack 4 in order to avoid library dependency problems;
-previous versions also depended on libncursesw, but that dependency no
-longer exists (NetHack 4 now uses its own rendering library, named
-libuncursed).
+In order to compile NetHack 4 locally, you can get a copy of the source from
+the repository, and follow the instructions in the README file (if you're on
+Mac OS X, follow the instructions for UNIX/Linux, because OS X is a UNIX
+derivative).  You'll need some dependencies in addition to NetHack 4 itself: a
+working C toolchain and zlib.  (You'll also need postgresql if you're planning
+to run your own server, but you probably aren't; for local play, the game
+works just fine without a server to connect to.)  Previous versions of NetHack
+4 depended on the [libjansson library][7], but the source to this library is
+now shipped with NetHack 4 in order to avoid library dependency problems;
+previous versions also depended on libncursesw, but that dependency no longer
+exists (NetHack 4 now uses its own rendering library, named libuncursed).
 
-To build a binary capable of tiles play, you will also need version 2
-of the [Simple DirectMedia Layer][8] library (and its development
-headers and (on Windows) import libraries).  On Linux, you may have to
-compile it yourself; most distributions only offer version 1, which is
-not sufficient to compile a tiles port.
+To build a binary capable of tiles play, you will also need version 2 of the
+[Simple DirectMedia Layer][8] library (and its development headers and (on
+Windows) import libraries).  On Linux, you might have to compile it yourself;
+some older distributions only offer version 1, which is not sufficient to
+compile a tiles port.
 
-You'll additionally need a copy of Perl in order to run the build
-system: this will likely come with your system on Linux and Mac OS X.
-If you're on Windows, get [Strawberry Perl][9]; it comes with a
-working C toolchain and all the libraries required (except for SDL),
-meaning that you can avoid the usual problems of trying to set up a C
-toolchain on Windows.  On Mac OS X, the usual C toolchain is Xcode,
-which is available from Apple; most Linux systems come with a C
-toolchain, but if you're on Debian or a derivative (such as Ubuntu or
-Linux Mint), you'll need to install the `build-essential` package (and
-also `bison` and `flex`).
+You'll additionally need a copy of Perl in order to run the build system: this
+will likely come with your system on Linux and Mac OS X.  If you're on
+Windows, get [Strawberry Perl][9]; it comes with a working C toolchain and all
+the libraries required (except for SDL), meaning that you can avoid the usual
+problems of trying to set up a C toolchain on Windows.  On Mac OS X, the usual
+C toolchain is Xcode, which is available from Apple; most Linux systems come
+with a C toolchain, but if you're on Debian or a derivative (such as Ubuntu or
+Linux Mint), you'll need to install the `build-essential` package (and also
+`bison` and `flex`).
 
 
 Are precompiled binaries available?
 -----------------------------------
 
-Currently, precompiled binaries are available from the NetHack 4
-website, but only for Windows, and they are not regularly updated.  If
-you can, we recommend you compile your own binaries from source.
+Currently, precompiled binaries are available from the NetHack 4 website, but
+only for Windows, and they are not regularly updated.  If you can, we
+recommend you compile your own binaries from source.
 
 
 Does NetHack 4 depend on curses/ncurses?
@@ -290,53 +283,50 @@ Not any more; it used to, but that dependency has since been removed.
 How do I select which interface NetHack 4 uses?
 -----------------------------------------------
 
-NetHack 4 does its rendering via the libuncursed rendering library.
-By default, it will use a terminal for rendering, using its `tty` or
-`wincon` interface (depending on your platform).  In order to use
-other interfaces, you will need a plugin for libuncursed; for
-instance, `libuncursed_sdl.dll` ships with the Windows executables
-(and the sources for that plugin ship with the NetHack 4 source,
-meaning that it will be built when you compile the source on other
-operating systems, too).
+NetHack 4 does its rendering via the libuncursed rendering library.  By
+default, it will use a terminal for rendering, using its `tty` or `wincon`
+interface (depending on your platform).  In order to use other interfaces, you
+will need a plugin for libuncursed; for instance, `libuncursed_sdl.dll` ships
+with the Windows executables (and the sources for that plugin ship with the
+NetHack 4 source, meaning that it will be built when you compile the source on
+other operating systems, too).
 
-In order to load the `sdl` rather than `tty` or `wincon` interface,
-you will need to make this request known to libuncursed via any of the
-following methods:
+In order to load the `sdl` rather than `tty` or `wincon` interface, you will
+need to make this request known to libuncursed via any of the following
+methods:
 
-  * Use the `--interface sdl` command line option when starting
-    NetHack 4; or
-  * Rename the executable to end `-sdl` (i.e. `nethack4-sdl.exe`);
-    this is probably the easiest method on Windows; or
+  * Use the `--interface sdl` command line option when starting NetHack 4; or
+  * Rename the executable to end `-sdl` (i.e. `nethack4-sdl.exe`); this is
+    probably the easiest method on Windows; or
   * Create a symbolic link `nethack4-sdl` that links to the NetHack 4
-    executable, and use it to launch the game rather than running the
-    game directly.
+    executable, and use it to launch the game rather than running the game
+    directly.
 
-The `sdl` interface is a "fake terminal" port that simulates a
-terminal itself, rather than using an actual terminal; this allows you
-to avoid any problems that the terminals provided with your platform
-might have.  (For instance, the Windows console is rather slow.)
-Unlike the other interfaces, it is also capable of displaying tiles.
+The `sdl` interface is a "fake terminal" port that simulates a terminal
+itself, rather than using an actual terminal; this allows you to avoid any
+problems that the terminals provided with your platform might have.  (For
+instance, the Windows console is rather slow.)  Unlike the other interfaces,
+it is also capable of displaying tiles.
 
 
 Is there a graphical/tiles version?
 -----------------------------------
 
-Yes.  For tiles play, you will need to be playing on a graphical
-interface (not a terminal interface; thus tiles play on a server won't
-work); and you will also need to change the "graphics" option in-game
-to specify tiles play.  (The option exists even for terminal players,
-but will have no effect for those players unless they subsequently
-load a tiles interface; all interfaces share the same option files.)
-The `libuncursed_sdl` interface plugin is currently recommended for
-tiles play (being the only current graphical interface plugin for
-libuncursed).
+Yes.  For tiles play, you will need to be playing on a graphical interface
+(not a terminal interface; thus tiles play on a server won't work); and you
+will also need to change the "graphics" option in-game to specify tiles play.
+(The option exists even for terminal players, but will have no effect for
+those players unless they subsequently load a tiles interface; all interfaces
+share the same option files.)  The `libuncursed_sdl` interface plugin is
+currently recommended for tiles play (being the only current graphical
+interface plugin for libuncursed).
 
-The tiles port is currently very new and experimental; probably the
-major drawbacks with it at the moment are that only one tileset is
-available (two others exist in the source distribution but neither
-works correctly), and that it's currently impossible to resize the
-area of the screen that is used to draw tiles.  Both these problems
-are likely to be fixed in time, but perhaps not immediately.
+The tiles port is currently very new and experimental; probably the major
+drawbacks with it at the moment are that only one tileset is available (two
+others exist in the source distribution but neither works correctly), and that
+it's currently impossible to resize the area of the screen that is used to
+draw tiles.  Both these problems are likely to be fixed in time, but perhaps
+not immediately.
 
 
 Gameplay
@@ -345,146 +335,142 @@ Gameplay
 Should I look up "spoilers"/gameplay FAQs/information about the game?
 ---------------------------------------------------------------------
 
-We hope that the game is pretty fun both ways, both with spoilers and
-without.  A large number of people enjoy playing NetHack even after
-reading all the spoilers about it that they can; it's quite hard to
-get information on the number of people who enjoy it without, because
-they tend to not mingle with the NetHack-playing community at large,
-but many people have reported enjoying it before they became spoiled.
+We hope that the game is pretty fun both ways, both with spoilers and without.
+A large number of people enjoy playing NetHack even after reading all the
+spoilers about it that they can; it's quite hard to get information on the
+number of people who enjoy it without, because they tend to not mingle with
+the NetHack-playing community at large, but many people have reported enjoying
+it before they became spoiled.
 
-Note that without spoilers, it is likely to take a very long time
-before you win (most likely years); there's a lot to learn, and even
-more to figure out.  Of course, another way to look at that is that
-you can have years of exciting gameplay discovery ahead of you!  One
-interesting middle ground might be to find other players unspoiled on
-external sources, and share your findings among yourselves; this is
-the way that NetHack was played for many years, in UNIX computer labs
-all over the world, and it still works today.
+Note that without spoilers, it is likely to take a very long time before you
+win (most likely years); there's a lot to learn, and even more to figure out.
+Of course, another way to look at that is that you can have years of exciting
+gameplay discovery ahead of you!  One interesting middle ground might be to
+find other players unspoiled on external sources, and share your findings
+among yourselves; this is the way that NetHack was played for many years, in
+UNIX computer labs all over the world, and it still works today.
 
-If you're interested in reading spoilers, good resources include IRC
-(#acehack and #nethack on irc.freenode.net), and the
-[NetHack wiki][10].  NetHack 4 has some deviations from 3.4.3, but the
-changes are relatively conservative, so spoilers for 3.4.3 will still
-be mostly applicable.
+If you're interested in reading spoilers, good resources include IRC (#acehack
+and #nethack on irc.freenode.net), and the [NetHack wiki][10].  NetHack 4 has
+some deviations from 3.4.3, but the changes are relatively conservative, so
+spoilers for 3.4.3 will still be mostly applicable.
 
 
 Which character should I select?
 ---------------------------------
 
-Whatever you enjoy playing with.  Try a few playstyles out, and note
-that trying the more difficult characters is often good practice for
-eventually winning with the easier ones.
+Whatever you enjoy playing with.  Try a few playstyles out, and note that
+trying the more difficult characters is often good practice for eventually
+winning with the easier ones.
 
-There's widespread disagreement about role difficulty (some people
-think Wizards are the easiest role, others one of the hardest; they do
-seem to be good for unusual challenge runs, though), but if you're
-just looking for a win, dwarven Valkyries seem to have the easiest
-time overall.  (Not that any role is particularly easy; NetHack is
-much harder than typical modern games are, and only the most
-experienced players can get anything like a consistent win rate at
-it.)
+There's widespread disagreement about role difficulty (some people think
+Wizards are the easiest role, others one of the hardest; they do seem to be
+good for unusual challenge runs, though), but if you're just looking for a
+win, dwarven Valkyries seem to have the easiest time overall.  (Not that any
+role is particularly easy; NetHack is much harder than typical modern games
+are, and only the most experienced players can get anything like a consistent
+win rate at it.)
 
 
 What are the main gameplay changes from NetHack 3.4.3?
 ------------------------------------------------------
 
-The interface has many improvements; we don't consider things like
-warning the character that a corpse is dangerously old to be
-gameplay-related, as it's information that should be theoretically
-available anyway, but maybe you do.  Apart from that, some of the
-largest changes were added as compensation to balance gameplay
-elements that were balanced via means of perverse interface in 3.4.3;
-for instance, amnesia now drains skill points, and floating eyes can
+The interface has many improvements; we don't consider things like warning the
+character that a corpse is dangerously old to be gameplay-related, as it's
+information that should be theoretically available anyway, but maybe you do.
+Apart from that, some of the largest changes were added as compensation to
+balance gameplay elements that were balanced via means of perverse interface
+in 3.4.3; for instance, amnesia now drains skill points, and floating eyes can
 protect themselves from melee attacks.
 
 
 Doesn't making the interface less hostile take away the challenge?
 ------------------------------------------------------------------
 
-NetHack is a game where you play as an adventurer trying to survive in
-a dungeon as they retrieve an amulet.  As such, it doesn't make a lot
-of sense to give the player less information than the character would
-have.  In real life, nobody (well, hardly anybody over the age of 3)
-eats something by mistake when they were merely trying to hold it in
-their hands; dungeoneers shouldn't become more likely to just because
-`e` and `w` are next to each other on their keyboard.  Likewise, it
-can be assumed that an adventurer who wasn't blind or otherwise
-impaired would notice a sea of lava right next to them, and not
-accidentally walk into it because they'd pressed a key on a keyboard
-too many times.
+NetHack is a game where you play as an adventurer trying to survive in a
+dungeon as they retrieve an amulet.  As such, it doesn't make a lot of sense
+to give the player less information than the character would have.  In real
+life, nobody (well, hardly anybody over the age of 3) eats something by
+mistake when they were merely trying to hold it in their hands; dungeoneers
+shouldn't become more likely to just because `e` and `w` are next to each
+other on their keyboard.  Likewise, it can be assumed that an adventurer who
+wasn't blind or otherwise impaired would notice a sea of lava right next to
+them, and not accidentally walk into it because they'd pressed a key on a
+keyboard too many times.
 
-It's certainly possible to imagine an interesting game whose main
-challenge comes from a hostile interface.  It shouldn't, however, be a
-tactical game about dungeon exploration.  (Probably a minigame
-collection would work better.)
+It's certainly possible to imagine an interesting game whose main challenge
+comes from a hostile interface.  It shouldn't, however, be a tactical game
+about dungeon exploration.  (Probably a minigame collection would work
+better.)
 
 
 What do all the commands do / How do I do *action*?
 ---------------------------------------------------
 
-Press `?` while playing for a list of commands.  As is common with
-roguelike interfaces, there are a lot of commands for specific
-purposes, because there are a lot of possible actions.  Note that if
-you want to do something with an item, you can press `i` to view your
-inventory, then the item's inventory letter, in order to see a list of
-possible actions with that item.
+Press `?` while playing for a list of commands.  As is common with roguelike
+interfaces, there are a lot of commands for specific purposes, because there
+are a lot of possible actions.  Note that if you want to do something with an
+item, you can press `i` to view your inventory, then the item's inventory
+letter, in order to see a list of possible actions with that item.
 
 
 How do I eat an item from the ground?
 -------------------------------------
 
-Use `e` then `,`.  (In general, 3.4.3 keybindings work unchanged in
-Nethack 4; this is one of the major differences.  The 3.4.3
-keybindings were unsatisfactory because `en` and `ey` meant different
-things depending on whether you were standing on an edible item or
-not; this was a common cause of nasty interface deaths.  Changing
-commands to be less context-sensitive was thus a priority.)
+Use `e` then `,`.  (In general, 3.4.3 keybindings work unchanged in Nethack 4;
+this is one of the major differences.  The 3.4.3 keybindings were
+unsatisfactory because `en` and `ey` meant different things depending on
+whether you were standing on an edible item or not; this was a common cause of
+nasty interface deaths.  Changing commands to be less context-sensitive was
+thus a priority.)
 
 
 How do I change between number_pad and vi-keys settings?
 --------------------------------------------------------
 
-In theory, the number keys on the numeric keypad should work for
-movement, and the number keys on the main keyboard for command repeat;
-on a few terminal emulators, you may have to turn NumLock off for this
-to work.  Hopefully, the longstanding roguelike flamewar between using
-`hjklyubn` and `42867913` for movement should no longer be something
-the game has to be aware of.  On a very few terminal emulators, this
-may not work correctly, in which case you might have to rebind the
-keys in-game.  (Rebinding the keys is also useful if you have a German
-keyboard and want to move using `hjklzubn`.)
+In theory, the number keys on the numeric keypad should work for movement, and
+the number keys on the main keyboard for command repeat; on a few terminal
+emulators, you may have to turn NumLock off for this to work.  Hopefully, the
+longstanding roguelike flamewar between using `hjklyubn` and `42867913` for
+movement should no longer be something the game has to be aware of.  On a very
+few terminal emulators, this may not work correctly, in which case you might
+have to rebind the keys in-game.  (Rebinding the keys is also useful if you
+have a German keyboard and want to move using `hjklzubn`.)
+
+If you're feeling particularly heretical, you can move orthogonally with the
+cursor keys (Up/Left/Down/Right) and diagonally using Home/End/PgDn/PgUp.
+This adds a new dimension to the movement command Holy War whose implications
+have not yet been discovered in practice.
 
 
 How do I configure the game options?
 ------------------------------------
 
-NitroHack changed the options file to not be human-editable (we're not
-100% sure why); rather, if you change the option settings in-game with
-the `O` command, those changes will persist into future games.
+NitroHack changed the options file to not be human-editable (we're not 100%
+sure why); rather, if you change the option settings using the `o` entry of
+the main menu, changes will persist into future games.
 
-There's also a new sort of option called a "birth option", which
-changes settings for newly started games; for instance, you can play
-with Elbereth not existing without needing to recompile the code.
-(So now if, like many people, you think it's a cheap tactic, nothing's
-forcing you to allow yourself access to it.  It was always intended to
-be optional in NetHack 3.4.3 as a difficulty setting, but the method
-of changing it was too obscure for most people.)
+There's also a new sort of option called a "birth option", which changes
+settings for newly started games; for instance, you can play with Elbereth not
+existing without needing to recompile the code.  (So now if, like many people,
+you think it's a cheap tactic, nothing's forcing you to allow yourself access
+to it.  It was always intended to be optional in NetHack 3.4.3 as a difficulty
+setting, but the method of changing it was too obscure for most people.)
 
 
 Why does Gehennom suck so much?
 -------------------------------
 
-Because it comes at a point in the game at which you've already
-achieved most of your main goals, and have been given the means to
-achieve the rest of them easily.  So it's basically a bunch of filler
-levels, with no challenge (mostly because the damage formula doesn't
-scale into the late game), with repetitive and tedious maps, with
-nothing much to aim for.
+Because it comes at a point in the game at which you've already achieved most
+of your main goals, and have been given the means to achieve the rest of them
+easily.  So it's basically a bunch of filler levels, with no challenge (mostly
+because the damage formula doesn't scale into the late game), with repetitive
+and tedious maps, with nothing much to aim for.
 
-We're aware of this problem, and are currently looking for fixes.  A
-new map generator would solve one of the problems, at least, but
-larger changes are needed to solve the others, and there's no easy fix
-to solve its problems as a whole.
+We're aware of this problem, and are currently looking for fixes.  A new map
+generator would solve one of the problems, at least, but larger changes are
+needed to solve the others, and there's no easy fix to solve its problems as a
+whole.
 
 
 Internals
@@ -493,78 +479,73 @@ Internals
 How does the save system work?
 ------------------------------
 
-NitroHack's save system kept a log of user-entered commands, and
-replayed these upon reloading a game.  However, this turned out to be
-too unreliable for practical use, and many people lost their save
-games as a result.
+NitroHack's save system kept a log of user-entered commands, and replayed
+these upon reloading a game.  However, this turned out to be too unreliable
+for practical use, and many people lost their save games as a result.
 
-NetHack 4's save system is a hybrid of the NitroHack and AceHack
-systems; the command log still exists, but in addition to the log of
-commands, there is a (delta-compressed) log of gamestates.  As such,
-the state of the game at any point during the game can be recreated,
-even if the game binary is modified in ways that change the meaning of
-commands; and this can allow saves to be reconstructed even in the
-case of a power failure or similar situation.
+NetHack 4.3's save system is loosely inspired by NetHack 4.2's save system,
+which was a hybrid of the NitroHack and AceHack systems; the command log still
+exists, but in addition to the log of commands, there is a (delta-compressed)
+log of gamestates.  As such, the state of the game at any point during the
+game can be recreated, even if the game binary is modified in ways that change
+the meaning of commands; and this can allow saves to be reconstructed even in
+the case of a power failure or similar situation.
 
-The save system is still somewhat buggy despite these fixes; however,
-it's quite rare for a game save to fail in a way that cannot be
-reconstructed.  Fixing the remaining bugs with saving is one of our
-top priorities.  In the meantime, if a save fails, the most common
-reason seems to be stray newlines at the end of the file; removing
-these, and changing the information about the length of the file to
-match (it's in the header in the first line), usually fixes the
-problem and allows the save file to be loaded.
+NetHack 4.3 improves on this model by removing all the famously buggy
+NitroHack save code, using the gamestate log in order to recover the state of
+the game between turns, and a log of user input in order to recover the state
+of the game within a turn.  Thus, changes to the engine that alter the effect
+of a command will only cause you to lose a turn of progress, and only if you
+were in the middle of an affected command at the time.  This save system also
+enables some other fun tricks, such as reconnecting to a game and continuing
+to play it before your original connection to the game times out.
 
 
 How does the server code work?
 ------------------------------
 
-The interface is completely decoupled from the gameplay (actually, it
-is in 3.4.3 as well; the main innovation in NitroHack was exposing
-this over a network and adding a separate server daemon).  As such,
-there is no reason why the server and client should be on the same
-system.  It's possible to get some of the benefits of online play by
-using a local executable that connects to a remote server (which is
-necessary to play tiles on a server); the code for making connections
-is in the client by default, and at the moment, the only obstacle to
-doing this is that there are no servers that accept connections from
-remote clients (nethack4.org firewalls them out, because the server
-has not been security audited yet).  The server/client code is used
-internally on nethack4.org; connecting to it via telnet or ssh spawns
-a client, which connects to the separate server daemon internally.
+The interface is completely decoupled from the gameplay (actually, it is in
+3.4.3 as well; the main innovation in NitroHack was exposing this over a
+network and adding a separate server daemon).  As such, there is no reason why
+the server and client should be on the same system.  It's possible to get some
+of the benefits of online play by using a local executable that connects to a
+remote server (which is necessary to play tiles on a server); the code for
+making connections is in the client by default, and at the moment, the only
+obstacle to doing this is that there are no servers that accept connections
+from remote clients (nethack4.org firewalls them out, because the server has
+not been security audited yet).  The server/client code is used internally on
+nethack4.org; connecting to it via telnet or ssh spawns a client, which
+connects to the separate server daemon internally.
 
-There are seven separate directories in the distribution, which handle
-the separate codebases: `libnethack` for the game logic,
-`libnethack_client` to allow clients to connect to the server,
-`nethack` for the interface code (that calculates what to draw on
-screen), `libuncursed` for the rendering code (that actually draws
-it), `tilesets` for the tiles-handling utilities, `libjansson` for the
-JSON encoding between the client and the server, and `nethack_server`
-for the server-specific logic (creating accounts, keeping separate
-save games for separate user accounts, that sort of thing).  Various
-executables are built out of code from various directories (but not
-with a 1:1 correspondence; most of them use code from multiple
-directories).
+There are eight separate directories in the distribution, which handle the
+separate codebases: `libnethack_common` for information common to both the
+server and client, `libnethack` for the game logic, `libnethack_client` to
+allow clients to connect to the server, `nethack` for the interface code (that
+calculates what to draw on screen), `libuncursed` for the rendering code (that
+actually draws it), `tilesets` for the tiles-handling utilities, `libjansson`
+for the JSON encoding between the client and the server, and `nethack_server`
+for the server-specific logic (creating accounts, keeping separate save games
+for separate user accounts, that sort of thing).  Various executables are
+built out of code from various directories (but not with a 1:1 correspondence;
+most of them use code from multiple directories).
 
 
 What is grammartree?
 --------------------
 
-An experimental project, that's nowhere near finished, to give NetHack
-4 an understanding of the grammatical structure of the messages it
-outputs.  This should hopefully allow us to eventually output combined
-messages to heavily reduce message spam, such as "Ten fire elementals
-step on fire traps!  They don't seem harmed.".  As a nice side effect,
-this should make the game much easier to internationalize.  The
-project is mostly stalled, because it ended up with
-design-by-committee problems, and then was put on hold so that we
-could actually get other changes done rather than spending all our
-time trying to get the design behind grammartree perfect; we do plan
-to start it up again someday, though.
+An experimental project, that's nowhere near finished, to give NetHack 4 an
+understanding of the grammatical structure of the messages it outputs.  This
+should hopefully allow us to eventually output combined messages to heavily
+reduce message spam, such as "Ten fire elementals step on fire traps!  They
+don't seem harmed.".  As a nice side effect, this should make the game much
+easier to internationalize.  The project is mostly stalled, because it ended
+up with design-by-committee problems, and then was put on hold so that we
+could actually get other changes done rather than spending all our time trying
+to get the design behind grammartree perfect; we do plan to start it up again
+someday, though.
 
-If you're interested in our progress on grammartree, or want to help
-out, look at the `grammartree` branch in the repository to see how far
-we've got.
+If you're interested in our progress on grammartree, or want to help out, look
+at the `grammartree` branch in the repository to see how far we've got.
 
 
 [1]: http://nethack.org
