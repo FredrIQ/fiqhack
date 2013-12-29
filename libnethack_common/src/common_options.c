@@ -1,5 +1,6 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-29 */
+/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #define IN_LIBNETHACK_COMMON
@@ -90,6 +91,92 @@ nhlib_string_to_optvalue(const struct nh_option_desc *option, char *str)
     return value;
 }
 
+static char *
+autopickup_to_string(const struct nh_autopickup_rules *ar)
+{
+    int size, i;
+    char *buf, *bp, pattern[40];
+
+    if (!ar || !ar->num_rules) {
+        buf = malloc(1);
+        *buf = 0;
+        return buf;
+    }
+
+    /* at this point, size is an upper bound on the stringified length of ar 3
+       stringified small numbers + a pattern with up to 40 chars < 64 chars */
+    size = 64 * ar->num_rules;
+    buf = malloc(size);
+    buf[0] = '\0';
+
+    for (i = 0; i < ar->num_rules; i++) {
+        strncpy(pattern, ar->rules[i].pattern, sizeof (pattern));
+
+        /* remove '"' and ';' from the pattern by replacing them by '?' (single 
+           character wildcard), to simplify parsing */
+        bp = pattern;
+        while (*bp) {
+            if (*bp == '"' || *bp == ';')
+                *bp = '?';
+            bp++;
+        }
+
+        snprintf(buf + strlen(buf), 64, "(\"%s\",%d,%u,%u);", pattern,
+                 ar->rules[i].oclass, ar->rules[i].buc, ar->rules[i].action);
+    }
+
+    return buf;
+}
+
+char *
+nhlib_optvalue_to_string(const struct nh_option_desc *option)
+{
+    char valbuf[10], *outstr;
+    char *valstr = NULL;
+    int i;
+    nh_bool freestr = FALSE;
+
+    switch (option->type) {
+    case OPTTYPE_BOOL:
+        valstr = option->value.b ? "true" : "false";
+        break;
+
+    case OPTTYPE_ENUM:
+        valstr = "(invalid)";
+        for (i = 0; i < option->e.numchoices; i++)
+            if (option->value.e == option->e.choices[i].id)
+                valstr = option->e.choices[i].caption;
+        break;
+
+    case OPTTYPE_INT:
+        sprintf(valbuf, "%d", option->value.i);
+        valstr = valbuf;
+        break;
+
+    case OPTTYPE_STRING:
+        if (!option->value.s)
+            valstr = "";
+        else
+            valstr = option->value.s;
+        break;
+
+    case OPTTYPE_AUTOPICKUP_RULES:
+        freestr = TRUE;
+        valstr = autopickup_to_string(option->value.ar);
+        break;
+
+    default:   /* custom option type defined by the client? */
+        return NULL;
+    }
+
+    outstr = malloc(strlen(valstr) + 1);
+    strcpy(outstr, valstr);
+    if (freestr)
+        free(valstr);
+    return outstr;
+}
+
+
 struct nh_autopickup_rules *
 nhlib_parse_autopickup_rules(const char *str)
 {
@@ -116,7 +203,9 @@ nhlib_parse_autopickup_rules(const char *str)
     out->num_rules = rcount;
 
     i = 0;
-    start = copy = strdup(str);
+    start = copy = malloc(strlen(str) + 1);
+    strcpy(copy, str);
+
     while ((semi = strchr(start, ';')) && i < rcount) {
         *semi++ = '\0';
         sscanf(start, "(\"%39[^,],%d,%u,%u);", out->rules[i].pattern,

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-05 */
+/* Last modified by Alex Smith, 2013-12-29 */
 #ifndef NHCLIENT_H
 # define NHCLIENT_H
 
@@ -59,10 +59,6 @@ extern int restart_connection(void);
 /* netcmd.c */
 extern json_t *handle_netcmd(const char *key, json_t * jmsg);
 extern void handle_display_list(json_t * display_list);
-
-/* xmalloc.c */
-extern void *xmalloc(int size);
-extern void xmalloc_cleanup(void);
 
 # define api_entry() \
     (!conn_err && (ex_jmp_buf_valid++ ? 1 : setjmp(ex_jmp_buf) ? 0 : 1))

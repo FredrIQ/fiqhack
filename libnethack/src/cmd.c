@@ -1627,11 +1627,13 @@ nh_get_commands(int *count)
     int i, j, cmdcount = 0;
     struct nh_cmd_desc *ui_cmd;
 
+    xmalloc_cleanup(&api_blocklist);
+
     for (i = 0; cmdlist[i].name; i++)
         if (!(cmdlist[i].flags & CMD_INTERNAL))
             cmdcount++;
 
-    ui_cmd = xmalloc(sizeof (struct nh_cmd_desc) * cmdcount);
+    ui_cmd = xmalloc(&api_blocklist, sizeof (struct nh_cmd_desc) * cmdcount);
     if (!ui_cmd)
         return NULL;
     memset(ui_cmd, 0, sizeof (struct nh_cmd_desc) * cmdcount);
@@ -1692,6 +1694,8 @@ nh_get_object_commands(int *count, char invlet)
     struct obj *obj;
     struct monst *shkp;
 
+    xmalloc_cleanup(&api_blocklist);
+
     /* returning a list of commands when .viewing is true doesn't hurt
        anything, but since they won't work there is no point. */
     if (program_state.viewing)
@@ -1710,7 +1714,7 @@ nh_get_object_commands(int *count, char invlet)
 
     /* alloc space for all potential commands, even if fewer will apply to the
        given object. This greatly simplifies the counting above. */
-    obj_cmd = xmalloc(sizeof (struct nh_cmd_desc) * cmdcount);
+    obj_cmd = xmalloc(&api_blocklist, sizeof (struct nh_cmd_desc) * cmdcount);
     if (!obj_cmd)
         return NULL;
     memset(obj_cmd, 0, sizeof (struct nh_cmd_desc) * cmdcount);

@@ -9,6 +9,7 @@
 # include "flag.h"
 # include "dungeon.h"
 # include "monsym.h"
+# include "xmalloc.h"
 
 # define WARNCOUNT 6    /* number of different warning levels */
 
@@ -124,6 +125,7 @@ extern char catname[];
 extern char horsename[];
 extern char preferred_pet;
 
+extern struct xmalloc_block *api_blocklist;
 
 extern schar tbx, tby;  /* set in mthrowu.c */
 

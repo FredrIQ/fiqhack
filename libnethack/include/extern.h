@@ -1203,8 +1203,6 @@ extern void init_opt_struct(void);
 extern void cleanup_opt_struct(void);
 extern void initoptions(void);
 extern int fruitadd(const char *str);
-extern char *autopickup_to_string(const struct nh_autopickup_rules *rules);
-extern struct nh_autopickup_rules *parse_autopickup_rules(const char *str);
 
 /* ### pager.c ### */
 
@@ -1880,11 +1878,6 @@ extern int extra_pref(struct monst *, struct obj *);
 /* ### write.c ### */
 
 extern int dowrite(struct obj *, const struct nh_cmd_arg *);
-
-/* ### xmalloc.c ### */
-
-extern void *xmalloc(int size);
-extern void xmalloc_cleanup(void);
 
 /* ### zap.c ### */
 

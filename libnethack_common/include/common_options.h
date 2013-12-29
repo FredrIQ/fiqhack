@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef COMMON_OPTIONS_H
@@ -29,6 +29,9 @@ extern nh_bool *EXPORT(nhlib_find_boolopt)(
 
 extern union nh_optvalue EXPORT(nhlib_string_to_optvalue)(
     const struct nh_option_desc *option, char *str);
+
+extern char *EXPORT(nhlib_optvalue_to_string)(
+    const struct nh_option_desc *opt);
 
 /* Parse new autopickup rules, allocated on the heap */
 extern struct nh_autopickup_rules *EXPORT(nhlib_parse_autopickup_rules)(

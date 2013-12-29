@@ -1,9 +1,13 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-26 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) NetHack Development Team 1992.                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "xmalloc.h"
+
+#include <stdio.h>
+
 
 /* Be very, very careful about what functions you call from this file. It's
    linked into the tiles ports, and other things that aren't part of libnethack;
@@ -24,10 +28,11 @@
    Apart from xmalloc.c, which is basically just memory allocation functions,
    these are basically just files like this one that declare arrays of strings
    and accessor functions. Please keep it that way; there should be no game
-   logic reachable via this file at all. (In particular, avoid anything that
-   has any sort of state; xmalloc.c is just about acceptable because its state
-   is only used to remember memory allocations.)
+   logic reachable via this file at all. In particular, avoid any kind of state
+   in the referenced files.
  */
+
+static struct xmalloc_block *xm_drawing = 0;
 
 /* Relevant header information in rm.h and objclass.h. */
 
@@ -389,7 +394,8 @@ make_mon_name(int mnum)
     char *name;
 
     if (mons[mnum].mlet == S_HUMAN && !strncmp(mons[mnum].mname, "were", 4)) {
-        name = xmalloc(strlen(mons[mnum].mname) + strlen("human ") + 1);
+        name = xmalloc(&xm_drawing,
+                       strlen(mons[mnum].mname) + strlen("human ") + 1);
         sprintf(name, "human %s", mons[mnum].mname);
         return name;
     }
@@ -397,13 +403,16 @@ make_mon_name(int mnum)
 }
 
 
-#include <stdio.h>
 struct nh_drawing_info *
 nh_get_drawing_info(void)
 {
     int i;
     struct nh_symdef *tmp;
-    struct nh_drawing_info *di = xmalloc(sizeof (struct nh_drawing_info));
+    struct nh_drawing_info *di;
+
+    xmalloc_cleanup(&xm_drawing);
+
+    di = xmalloc(&xm_drawing, sizeof (struct nh_drawing_info));
 
     di->num_bgelements = SIZE(defsyms);
     di->bgelements = (struct nh_symdef *)defsyms;
@@ -412,7 +421,7 @@ nh_get_drawing_info(void)
     di->traps = (struct nh_symdef *)trapsyms;
 
     di->num_objects = NUM_OBJECTS;
-    tmp = xmalloc(sizeof (struct nh_symdef) * di->num_objects);
+    tmp = xmalloc(&xm_drawing, sizeof (struct nh_symdef) * di->num_objects);
     for (i = 0; i < di->num_objects; i++) {
         tmp[i].ch = def_oc_syms[(int)const_objects[i].oc_class];
         tmp[i].symname = make_object_name(i);
@@ -420,14 +429,14 @@ nh_get_drawing_info(void)
     }
     di->objects = tmp;
 
-    tmp = xmalloc(sizeof (struct nh_symdef));
+    tmp = xmalloc(&xm_drawing, sizeof (struct nh_symdef));
     tmp->ch = DEF_INVISIBLE;
     tmp->color = CLR_BRIGHT_BLUE;
     tmp->symname = invismonexplain;
     di->invis = tmp;
 
     di->num_monsters = NUMMONS;
-    tmp = xmalloc(sizeof (struct nh_symdef) * di->num_monsters);
+    tmp = xmalloc(&xm_drawing, sizeof (struct nh_symdef) * di->num_monsters);
     for (i = 0; i < di->num_monsters; i++) {
         tmp[i].ch = def_monsyms[(int)mons[i].mlet];
         tmp[i].symname = make_mon_name(i);

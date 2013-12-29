@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -549,7 +549,6 @@ nhnet_disconnect(void)
     connection_id = 0;
     conn_err = FALSE;
     net_active = FALSE;
-    xmalloc_cleanup();
     free_option_lists();
     memset(&nhnet_server_ver, 0, sizeof (nhnet_server_ver));
 }

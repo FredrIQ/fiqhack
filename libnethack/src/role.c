@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -729,9 +729,13 @@ struct nh_roles_info *
 nh_get_roles(void)
 {
     int i, rolenum, racenum, gendnum, alignnum, arrsize;
-    struct nh_roles_info *info = xmalloc(sizeof (struct nh_roles_info));
+    struct nh_roles_info *info;
     const char **names, **names2;
     nh_bool *tmpmatrix;
+
+    xmalloc_cleanup(&api_blocklist);
+
+    info = xmalloc(&api_blocklist, sizeof (struct nh_roles_info));
 
     /* number of choices */
     for (i = 0; roles[i].name.m; i++) ;
@@ -744,8 +748,8 @@ nh_get_roles(void)
     info->num_aligns = ROLE_ALIGNS;
 
     /* names of choices */
-    names = xmalloc(info->num_roles * sizeof (char *));
-    names2 = xmalloc(info->num_roles * sizeof (char *));
+    names = xmalloc(&api_blocklist, info->num_roles * sizeof (char *));
+    names2 = xmalloc(&api_blocklist, info->num_roles * sizeof (char *));
     for (i = 0; i < info->num_roles; i++) {
         names[i] = roles[i].name.m;
         names2[i] = roles[i].name.f;
@@ -753,17 +757,17 @@ nh_get_roles(void)
     info->rolenames_m = names;
     info->rolenames_f = names2;
 
-    names = xmalloc(info->num_races * sizeof (char *));
+    names = xmalloc(&api_blocklist, info->num_races * sizeof (char *));
     for (i = 0; i < info->num_races; i++)
         names[i] = races[i].noun;
     info->racenames = names;
 
-    names = xmalloc(info->num_genders * sizeof (char *));
+    names = xmalloc(&api_blocklist, info->num_genders * sizeof (char *));
     for (i = 0; i < info->num_genders; i++)
         names[i] = genders[i].adj;
     info->gendnames = names;
 
-    names = xmalloc(info->num_aligns * sizeof (char *));
+    names = xmalloc(&api_blocklist, info->num_aligns * sizeof (char *));
     for (i = 0; i < info->num_aligns; i++)
         names[i] = aligns[i].adj;
     info->alignnames = names;
@@ -778,7 +782,7 @@ nh_get_roles(void)
     arrsize =
         info->num_roles * info->num_races * info->num_genders *
         info->num_aligns;
-    tmpmatrix = xmalloc(arrsize * sizeof (nh_bool));
+    tmpmatrix = xmalloc(&api_blocklist, arrsize * sizeof (nh_bool));
     memset(tmpmatrix, FALSE, arrsize * sizeof (nh_bool));
     for (rolenum = 0; rolenum < info->num_roles; rolenum++) {
         for (racenum = 0; racenum < info->num_races; racenum++) {

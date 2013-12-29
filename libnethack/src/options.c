@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-25 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -609,55 +609,6 @@ nh_get_options(void)
 }
 
 
-const char *
-nh_get_option_string(const struct nh_option_desc *option)
-{
-    char valbuf[10], *outstr;
-    char *valstr = NULL;
-    int i;
-    boolean freestr = FALSE;
-
-    switch (option->type) {
-    case OPTTYPE_BOOL:
-        valstr = option->value.b ? "true" : "false";
-        break;
-
-    case OPTTYPE_ENUM:
-        valstr = "(invalid)";
-        for (i = 0; i < option->e.numchoices; i++)
-            if (option->value.e == option->e.choices[i].id)
-                valstr = option->e.choices[i].caption;
-        break;
-
-    case OPTTYPE_INT:
-        sprintf(valbuf, "%d", option->value.i);
-        valstr = valbuf;
-        break;
-
-    case OPTTYPE_STRING:
-        if (!option->value.s)
-            valstr = "";
-        else
-            valstr = option->value.s;
-        break;
-
-    case OPTTYPE_AUTOPICKUP_RULES:
-        freestr = TRUE;
-        valstr = autopickup_to_string(option->value.ar);
-        break;
-
-    default:   /* custom option type defined by the client? */
-        return NULL;
-    }
-
-    /* copy the string to xmalloced memory so that we can forget about the
-       pointer here */
-    outstr = xmalloc(strlen(valstr) + 1);
-    strcpy(outstr, valstr);
-    if (freestr)
-        free(valstr);
-    return outstr;
-}
 
 
 /* Returns the fid of the fruit type; if that type already exists, it
@@ -766,43 +717,6 @@ change_inv_order(char *op)
 
     strcpy(flags.inv_order, buf);
     return 1;
-}
-
-
-char *
-autopickup_to_string(const struct nh_autopickup_rules *ar)
-{
-    int size, i;
-    char *buf, *bp, pattern[40];
-
-    if (!ar || !ar->num_rules) {
-        buf = strdup("");
-        return buf;
-    }
-
-    /* at this point, size is an upper bound on the stringified length of ar 3
-       stringified small numbers + a pattern with up to 40 chars < 64 chars */
-    size = 64 * ar->num_rules;
-    buf = malloc(size);
-    buf[0] = '\0';
-
-    for (i = 0; i < ar->num_rules; i++) {
-        strncpy(pattern, ar->rules[i].pattern, sizeof (pattern));
-
-        /* remove '"' and ';' from the pattern by replacing them by '?' (single 
-           character wildcard), to simplify parsing */
-        bp = pattern;
-        while (*bp) {
-            if (*bp == '"' || *bp == ';')
-                *bp = '?';
-            bp++;
-        }
-
-        snprintf(eos(buf), 64, "(\"%s\",%d,%u,%u);", pattern,
-                 ar->rules[i].oclass, ar->rules[i].buc, ar->rules[i].action);
-    }
-
-    return buf;
 }
 
 /*options.c*/

@@ -1,12 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include <stdlib.h>
-
-void *xmalloc(int size);
-void xmalloc_cleanup(void);
+#include "xmalloc.h"
 
 /* malloc wrapper functions for "external" memory allocations
  * 
@@ -19,15 +17,8 @@ void xmalloc_cleanup(void);
  * the next move. After that memory is automatically freed.
  */
 
-struct xmalloc_block {
-    void *mem;
-    struct xmalloc_block *next;
-};
-
-struct xmalloc_block *xm_blocklist = NULL;
-
 void *
-xmalloc(int size)
+xmalloc(struct xmalloc_block **blocklist, int size)
 {
     void *mem;
     struct xmalloc_block *b;
@@ -43,21 +34,21 @@ xmalloc(int size)
     }
 
     b->mem = mem;
-    b->next = xm_blocklist;
-    xm_blocklist = b;
+    b->next = *blocklist;
+    *blocklist = b;
 
     return mem;
 }
 
 
 void
-xmalloc_cleanup(void)
+xmalloc_cleanup(struct xmalloc_block **blocklist)
 {
     struct xmalloc_block *b;
 
-    while (xm_blocklist) {
-        b = xm_blocklist;
-        xm_blocklist = xm_blocklist->next;
+    while (*blocklist) {
+        b = *blocklist;
+        *blocklist = b->next;
 
         free(b->mem);
         free(b);

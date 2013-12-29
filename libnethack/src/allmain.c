@@ -56,7 +56,7 @@ nh_lib_exit(void)
 {
     int i;
 
-    xmalloc_cleanup();
+    xmalloc_cleanup(&api_blocklist);
 
     for (i = 0; i < PREFIX_COUNT; i++) {
         free(fqn_prefix[i]);
@@ -78,7 +78,7 @@ nh_exit_game(int exit_type)
     */
     API_ENTRY_CHECKPOINT_RETURN_ON_ERROR(TRUE);
 
-    xmalloc_cleanup();
+    xmalloc_cleanup(&api_blocklist);
 
     if (program_state.game_running) {
 
@@ -991,7 +991,6 @@ command_input(int cmdidx, struct nh_cmd_arg *arg)
     /****************************************/
     /* once-per-player-input things go here */
     /****************************************/
-    xmalloc_cleanup();
     iflags.next_msg_nonblocking = 0;
 
     /* prepare for the next move */

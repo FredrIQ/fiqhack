@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-27 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -297,20 +297,24 @@ init_options(void)
 }
 
 
-static const char *
+static char *
 get_display_string(struct nh_option_desc *option)
 {
+    char *str;
+
     switch ((int)option->type) {
     default:
     case OPTTYPE_BOOL:
     case OPTTYPE_ENUM:
     case OPTTYPE_INT:
     case OPTTYPE_STRING:
-        return nh_get_option_string(option);
+        return nhlib_optvalue_to_string(option);
 
     case OPTTYPE_AUTOPICKUP_RULES:
     case OPTTYPE_KEYMAP:
-        return "submenu";
+        str = malloc(1 + sizeof "submenu");
+        strcpy(str, "submenu");
+        return str;
     }
 }
 
@@ -320,7 +324,7 @@ print_option_string(struct nh_option_desc *option, char *buf)
 {
     char fmt[16];
     const char *opttxt;
-    const char *valstr = get_display_string(option);
+    char *valstr = get_display_string(option);
 
     switch (settings.optstyle) {
     case OPTSTYLE_DESC:
@@ -343,6 +347,8 @@ print_option_string(struct nh_option_desc *option, char *buf)
         snprintf(buf, BUFSZ, fmt, option->name, valstr, option->helptxt);
         break;
     }
+
+    free(valstr);
 }
 
 
@@ -1167,15 +1173,16 @@ static void
 write_config_options(FILE * fp, struct nh_option_desc *options)
 {
     int i;
-    const char *optval;
+    char *optval;
 
     for (i = 0; options[i].name; i++) {
-        optval = nh_get_option_string(&options[i]);
+        optval = nhlib_optvalue_to_string(&options[i]);
         if (options[i].type == OPTTYPE_STRING ||
             options[i].type == OPTTYPE_ENUM)
             fprintf(fp, "%s=\"%s\"\n", options[i].name, optval);
         else
             fprintf(fp, "%s=%s\n", options[i].name, optval);
+        free(optval);
     }
 }
 
