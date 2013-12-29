@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-25 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -121,7 +121,7 @@ static void show_whatdoes(void);
 static struct nh_cmd_desc *show_help(void);
 static void init_keymap(void);
 static void write_keymap(void);
-static struct nh_cmd_desc *doextcmd(void);
+static struct nh_cmd_desc *doextcmd(nh_bool);
 static void dostop(void);
 static void dotogglepickup(void);
 
@@ -166,7 +166,9 @@ find_command(const char *cmdname)
 
 
 void
-handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg)
+handle_internal_cmd(struct nh_cmd_desc **cmd,
+                    struct nh_cmd_arg *arg,
+                    nh_bool include_debug)
 {
     int id = (*cmd)->flags & ~(CMD_UI | DIRCMD | DIRCMD_SHIFT | DIRCMD_CTRL);
 
@@ -198,7 +200,7 @@ handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg)
         break;
 
     case UICMD_EXTCMD:
-        *cmd = doextcmd();
+        *cmd = doextcmd(include_debug);
         break;
 
     case UICMD_HELP:
@@ -234,7 +236,7 @@ handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg)
 
 
 const char *
-get_command(struct nh_cmd_arg *arg)
+get_command(struct nh_cmd_arg *arg, nh_bool include_debug)
 {
     int key, key2, multi;
     char line[BUFSZ];
@@ -277,7 +279,7 @@ get_command(struct nh_cmd_arg *arg)
             /* handle internal commands. The command handler may alter *cmd, and
                arg (although not all this functionality is currently used) */
             if (cmd->flags & CMD_UI) {
-                handle_internal_cmd(&cmd, arg);
+                handle_internal_cmd(&cmd, arg, include_debug);
                 if (!cmd)       /* command was fully handled internally */
                     continue;
             }
@@ -374,7 +376,7 @@ doextlist(const char **namelist, const char **desclist, int listlen)
 
 /* here after # - now read a full-word command */
 static struct nh_cmd_desc *
-doextcmd(void)
+doextcmd(nh_bool include_debug)
 {
     int i, idx, size;
     struct nh_cmd_desc *retval = NULL;
@@ -385,7 +387,8 @@ doextcmd(void)
 
     size = 0;
     for (i = 0; i < cmdcount; i++)
-        if (commandlist[i].flags & CMD_EXT)
+        if ((commandlist[i].flags & CMD_EXT) &&
+            (include_debug || !(commandlist[i].flags & CMD_DEBUG)))
             size++;
     namelist = malloc((size + 1) * sizeof (char *));
     desclist = malloc((size + 1) * sizeof (char *));
@@ -398,7 +401,8 @@ doextcmd(void)
 
     idx = 0;
     for (i = 0; i < cmdcount; i++) {
-        if (commandlist[i].flags & CMD_EXT) {
+        if ((commandlist[i].flags & CMD_EXT) &&
+            (include_debug || !(commandlist[i].flags & CMD_DEBUG))) {
             namelist[idx] = commandlist[i].name;
             desclist[idx] = commandlist[i].desc;
             idx++;
