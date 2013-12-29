@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -16,13 +16,20 @@
 
 /* #define DEBUG */
 
+#define MENU_ID_OFFSET 4
+
 static void log_reset(void);
 static void log_binary(const char *buf, int buflen);
 static long get_log_offset(void);
 static void load_gamestate_from_binary_save(boolean maybe_old_version);
 
+/* We assume ASCII. (The whole log thing is done in binary.) */
+static_assert('A' == 65 && 'a' == 97,
+              "The execution character set must be ASCII or extended ASCII");
+
 /***** Error handling *****/
 
+/* The save file format was incorrect. */
 static void NORETURN
 error_reading_save(char *reason)
 {
@@ -33,6 +40,14 @@ error_reading_save(char *reason)
 
     log_reset();
     terminate(ERR_RESTORE_FAILED);
+}
+
+/* The save file was in a correct format, but referred to something that
+   couldn't possibly happen in the gamestate. */
+static void NORETURN
+log_desync(void)
+{
+    panic("log_desync unimplemented");
 }
 
 /***** Base 64 handling *****/
@@ -230,20 +245,30 @@ full_write(int fd, const void *buffer, int len)
 }
 
 static int
-lprintf(const char *fmt, ...)
+lvprintf(const char *fmt, va_list vargs)
 {
-    va_list vargs;
     char outbuf[4096];
     int size;
 
-    va_start(vargs, fmt);
     size = vsnprintf(outbuf, sizeof (outbuf), fmt, vargs);
-    va_end(vargs);
 
     if (!full_write(program_state.logfile, outbuf, size))
         panic("Could not write text content to the log.");
 
     return size;
+}
+
+static int
+lprintf(const char *fmt, ...)
+{
+    va_list vargs;
+    int ret;
+
+    va_start(vargs, fmt);
+    ret = lvprintf(fmt, vargs);
+    va_end(vargs);
+
+    return ret;
 }
 
 static void
@@ -297,7 +322,7 @@ lgetline_malloc(int fd)
 
         /* We want to break out of the loop if we're at EOF (inbuflen ==
            fpos) or if a newline was found. */
-        nlloc = memchr(inbuf, '\n', fpos);
+        nlloc = memchr(inbuf, '\x0a', fpos);
         if (inbuflen == fpos)
             break;
 
@@ -343,7 +368,6 @@ lgetline_malloc(int fd)
 static void
 start_updating_logfile(void)
 {
-    char *s;
     long o;
 
     if (program_state.viewing)
@@ -354,11 +378,9 @@ start_updating_logfile(void)
 
     /* TODO: check recovery count */
 
-    lseek(program_state.logfile, program_state.gamestate_location, SEEK_SET);
-    s = lgetline_malloc(program_state.logfile);
-    if (!s)
-        panic("Log file has shrunk without increasing recovery count");
-    free(s);
+    lseek(program_state.logfile,
+          program_state.end_of_gamestate_location, SEEK_SET);
+
     /* now the file pointer should be at EOF */
     o = get_log_offset();
 
@@ -370,8 +392,20 @@ start_updating_logfile(void)
 }
 
 static void
-stop_updating_logfile(void)
+stop_updating_logfile(int lines_added)
 {
+    if (lines_added == 1) {
+
+        program_state.gamestate_location =
+            program_state.end_of_gamestate_location;
+
+        program_state.end_of_gamestate_location =
+            lseek(program_state.logfile, 0, SEEK_END);
+
+    } else if (lines_added > 1) {
+        panic("logfile updates may add at most 1 line");
+    }
+
     if (!change_fd_lock(program_state.logfile, LT_READ, 1))
         panic("Could not downgrade to read lock on logfile");
 }
@@ -399,21 +433,22 @@ log_newgame(unsigned long long start_time, unsigned int seed)
     else
         role = roles[u.initrole].name.m;
 
-    lprintf("NHGAME 00000001 %d.%03d.%03d\n",
+    lprintf("NHGAME 00000001 %d.%03d.%03d\x0a",
             VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
-    lprintf("%" SECOND_LOGLINE_LEN_STR "s\n", "(new game)");
+    lprintf("%" SECOND_LOGLINE_LEN_STR "s\x0a", "(new game)");
     start_of_third_line = get_log_offset();
 
     base64_encode(u.uplname, encbuf);
-    lprintf("%0" PRIxLEAST64 " %x %d %s %.3s %.3s %.3s %.3s\n", start_time_l64,
-            seed, wizard ? MODE_WIZARD : discover ? MODE_EXPLORE : MODE_NORMAL,
-            encbuf, role, races[u.initrace].noun, genders[u.initgend].adj,
-            aligns[u.initalign].adj);
+    lprintf("%0" PRIxLEAST64 " %x %d %s %.3s %.3s %.3s %.3s\x0a",
+            start_time_l64, seed, wizard ? MODE_WIZARD : discover ? MODE_EXPLORE
+            : MODE_NORMAL, encbuf, role, races[u.initrace].noun,
+            genders[u.initgend].adj, aligns[u.initalign].adj);
 
     /* The gamestate location is meant to be set to the start of the last line
        of the log, when the log's in a state ready to be updated. Ensure that
        invariant now. */
     program_state.gamestate_location = start_of_third_line;
+    program_state.end_of_gamestate_location = get_log_offset();
 }
 
 void
@@ -421,38 +456,9 @@ log_game_over(char *death)
 {
     start_updating_logfile();
     lseek(program_state.logfile,
-          strlen("NHGAME 00000001 4.000.000\n"), SEEK_SET);
+          strlen("NHGAME 00000001 4.000.000\x0a"), SEEK_SET);
     lprintf("%" SECOND_LOGLINE_LEN_STR "." SECOND_LOGLINE_LEN_STR "s", death);
-    stop_updating_logfile();
-}
-
-void
-log_command(int cmd, int rep, const struct nh_cmd_arg *arg)
-{
-#ifdef TODO
-    uint_least64_t turntime_l64 = (uint_least64_t) turntime;
-
-    if (program_state.logfile == -1)
-        return;
-
-    /* command numbers are shifted by 1, so that they can be array indices
-       during replay */
-    lprintf("\n>%" PRIxLEAST64 ":%x:%d ", turntime_l64, cmd + 1, rep);
-    switch (arg->argtype) {
-    case CMD_ARG_NONE:
-        lprintf("n");
-        break;
-    case CMD_ARG_DIR:
-        lprintf("d:%d", arg->d);
-        break;
-    case CMD_ARG_POS:
-        lprintf("p:%x:%x", arg->pos.x, arg->pos.y);
-        break;
-    case CMD_ARG_OBJ:
-        lprintf("o:%c", arg->invlet);
-        break;
-    }
-#endif
+    stop_updating_logfile(0);
 }
 
 void
@@ -472,19 +478,19 @@ log_backup_save(void)
 
     long o = get_log_offset();
     boolean is_newgame = program_state.save_backup_location == 0;
-    lprintf("*%08x ", program_state.save_backup_location);
+    lprintf("*%08lx ", program_state.save_backup_location);
     program_state.save_backup_location = o;
     program_state.binary_save_location = o;
     log_binary(program_state.binary_save.buf, program_state.binary_save.pos);
-    lprintf("\n");
+    lprintf("\x0a");
 
     /* Record the location of this save backup in the appropriate place. */
     lseek(program_state.logfile, is_newgame ? o + 1 :
           program_state.last_save_backup_location_location, SEEK_SET);
-    lprintf("%08x", o);
+    lprintf("%08lx", o);
     lseek(program_state.logfile, 0, SEEK_END);
 
-    stop_updating_logfile();
+    stop_updating_logfile(1);
 
     /* Verify that the save file loads correctly; it's better to fail fast
        than end up with a corrupted save. */
@@ -528,14 +534,14 @@ log_neutral_turnstate(void)
         lprintf("~");
         log_binary(program_state.binary_save.diffbuf,
                    program_state.binary_save.diffpos);
-        lprintf("\n");
+        lprintf("\x0a");
 
         /* Make the new binary save absolute rather than relative, so that
            we can free the old one. */
         program_state.binary_save.relativeto = NULL;
         mfree(&mf);
 
-        stop_updating_logfile();
+        stop_updating_logfile(1);
 
         /* Check the gamestate, for the same reason as in log_backup_save(). */
         load_gamestate_from_binary_save(FALSE);
@@ -565,105 +571,7 @@ log_revert_command(void)
     mfree(&mf);
 }
 
-#ifdef TODO
-void
-log_getpos(int ret, int x, int y)
-{
-    if (program_state.logfile == -1)
-        return;
-    lprintf(" p:%d:%x:%x", ret, x, y);
-}
-
-
-void
-log_getdir(enum nh_direction dir)
-{
-    if (program_state.logfile == -1)
-        return;
-    lprintf(" d:%d", dir);
-}
-
-
-void
-log_query_key(char key, int *count)
-{
-    if (program_state.logfile == -1)
-        return;
-
-    lprintf(" k:%hhx", key);
-    if (count && *count != -1)
-        lprintf(":%x", *count);
-}
-
-
-void
-log_getlin(char *buf)
-{
-    char encodebuf[ENCBUFSZ];
-
-    if (program_state.logfile == -1)
-        return;
-    base64_encode(buf, encodebuf);
-    lprintf(" l:%s", encodebuf);
-}
-
-
-void
-log_yn_function(char key)
-{
-    if (program_state.logfile == -1)
-        return;
-    lprintf(" y:%hhx", key);
-}
-
-
-void
-log_menu(int n, int *results)
-{
-    int i;
-
-    if (program_state.logfile == -1)
-        return;
-
-    if (n == -1) {
-        lprintf(" m:x");
-        return;
-    }
-
-    lprintf(" m:[");
-    for (i = 0; i < n; i++)
-        lprintf("%x:", results[i]);
-
-    lprintf("]");
-}
-
-
-void
-log_objmenu(int n, struct nh_objresult *pick_list)
-{
-    int i;
-
-    if (program_state.logfile == -1)
-        return;
-
-    if (n == -1) {
-        lprintf(" o:x");
-        return;
-    }
-
-    lprintf(" o:[");
-    for (i = 0; i < n; i++) {
-        if (pick_list[i].count > -1)
-            lprintf("%x,%x:", pick_list[i].id, pick_list[i].count);
-        else
-            lprintf("%x:", pick_list[i].id);
-    }
-
-    lprintf("]");
-}
-#endif
-
-/* bones files must also be logged, since they are an input into the game state */
+/* Bones files must also be logged, since they are an input into the game state */
 void
 log_bones(const char *bonesbuf, int buflen)
 {
@@ -672,7 +580,417 @@ log_bones(const char *bonesbuf, int buflen)
 #endif
 }
 
+void
+log_record_input(const char *fmt, ...)
+{
+    va_list vargs;
+
+    if (program_state.in_zero_time_command)
+        return;
+
+    if (program_state.input_was_just_replayed) {
+        program_state.input_was_just_replayed = FALSE;
+        return;
+    }
+
+    start_updating_logfile();
+
+    va_start(vargs, fmt);
+    lvprintf(fmt, vargs);
+    lprintf("\x0a");
+    va_end(vargs);
+
+    stop_updating_logfile(1);
+}
+
+void
+log_record_line(const char *l)
+{
+    if (program_state.in_zero_time_command || program_state.viewing)
+        return;
+
+    if (program_state.input_was_just_replayed) {
+        program_state.input_was_just_replayed = FALSE;
+        return;
+    }
+
+    start_updating_logfile();
+
+    lprintf("L");
+    log_binary(l, strlen(l) + 1);
+    lprintf("\x0a");
+
+    stop_updating_logfile(1);
+}
+
+void
+log_record_menu(boolean isobjmenu, int itemcount, const void *el)
+{
+    if (program_state.in_zero_time_command)
+        return;
+
+    if (program_state.input_was_just_replayed) {
+        program_state.input_was_just_replayed = FALSE;
+        return;
+    }
+
+    start_updating_logfile();
+
+    lprintf(isobjmenu ? "O" : "M");
+
+    while (itemcount) {
+        if (isobjmenu) {
+            const struct nh_objresult *elcast = el;
+            if (elcast->count == -1)
+                lprintf("%" PRIx32,
+                        (int32_t)(elcast->id + MENU_ID_OFFSET));
+            else if (elcast->count >= 0)
+                lprintf("%" PRIx32 ",%d",
+                        (int32_t)(elcast->id + MENU_ID_OFFSET), elcast->count);
+            else
+                panic("negative count in log_record_menu");
+            el = elcast + 1;
+        } else {
+            const int *elcast = el;
+            lprintf("%" PRIx32, (*elcast + MENU_ID_OFFSET));
+            el = elcast + 1;
+        }
+        if (--itemcount)
+            lprintf(":");
+    }
+
+    lprintf("\x0a");
+
+    stop_updating_logfile(1);    
+}
+
+void
+log_record_command(const char *cmd, const struct nh_cmd_arg *arg)
+{
+    if (program_state.in_zero_time_command)
+        return;
+
+    if (program_state.input_was_just_replayed) {
+        program_state.input_was_just_replayed = FALSE;
+        return;
+    }
+
+    start_updating_logfile();
+
+    if (*cmd < 'a' || *cmd > 'z')
+        panic("command '%s' does not start with lowercase letter", cmd);
+
+    if (strchr(cmd, ' '))
+        panic("command '%s' contains a space", cmd);
+
+    lprintf("%s", cmd);
+
+    if (arg->argtype & CMD_ARG_DIR)
+        lprintf(" D%d", arg->dir);
+    if (arg->argtype & CMD_ARG_POS)
+        lprintf(" P%d,%d", arg->pos.x, arg->pos.y);
+    if (arg->argtype & CMD_ARG_OBJ)
+        lprintf(" I%c", arg->invlet);
+    if (arg->argtype & CMD_ARG_STR) {
+        lprintf(" T");
+        log_binary(arg->str, strlen(arg->str) + 1);
+    }
+    if (arg->argtype & CMD_ARG_SPELL)
+        lprintf(" S%c", arg->spelllet);
+    if (arg->argtype & CMD_ARG_LIMIT)
+        lprintf(" L%d", arg->limit);
+
+    lprintf("\x0a");
+
+    stop_updating_logfile(1);
+}
+
 /***** Reading the log *****/
+
+/* Called when reading non-command input from the log. This is idempotent. */
+static char *
+start_replaying_logfile(char firstchar)
+{
+    char *logline;
+
+    if (program_state.in_zero_time_command)
+        return NULL;
+
+    if (program_state.input_was_just_replayed)
+        panic("log_replay_* was not followed by a call to log_record_*");
+
+    lseek(program_state.logfile,
+          program_state.end_of_gamestate_location, SEEK_SET);
+
+    logline = lgetline_malloc(program_state.logfile);
+
+    if (logline && firstchar && firstchar != *logline) {
+        /* Desync: the log contains one sort of input, but the engine is
+           requesting another. */
+        log_desync();
+    }
+
+    return logline;
+}
+
+/* Called when non-command input was /successfully/ read from the log.
+   (This is omitted if start_replaying_logfile was called but then the log
+   entry turned out to be wrong; start_replaying_logfile is idempotent.) */
+static void
+stop_replaying_logfile(void)
+{
+    program_state.gamestate_location = program_state.end_of_gamestate_location;
+    program_state.end_of_gamestate_location = get_log_offset();
+    program_state.input_was_just_replayed = TRUE;
+}
+
+static int
+parse_decimal_number(char **ptr)
+{
+    int rv = 0;
+    while (**ptr >= '0' && **ptr <= '9') {
+        rv *= 10;
+        rv += **ptr - '0';
+        (*ptr)++;
+    }
+    return rv;
+}
+
+/* This needs a defined bitwidth because otherwise we can't handle negative
+   numbers correctly. */
+static int32_t
+parse_hex_number(char **ptr)
+{
+    uint32_t rv = 0;
+    while ((**ptr >= '0' && **ptr <= '9') ||
+           (**ptr >= 'a' && **ptr <= 'f')) {
+        rv *= 16;
+        if (**ptr >= '0' && **ptr <= '9')
+            rv += **ptr - '0';
+        else
+            rv += **ptr - 'a' + 10;
+    }
+    return (int32_t)rv;
+}
+
+boolean
+log_replay_input(int count, const char *fmt, ...)
+{
+    char *logline;
+    va_list vargs;
+    char fmtbuf[BUFSZ];
+    int actual_count;
+    char *p1;
+    const char *p2;
+
+    logline = start_replaying_logfile(*fmt);
+    if (!logline)
+        return FALSE;
+
+    /* We need to check that the entire line matches the format string (it's
+       not uncommon for one format to be a prefix of another). We do this by
+       making sure it matches up to %n with assignment suppressions, and then
+       making sure all the arguments parse. */
+    p1 = fmtbuf;
+    p2 = fmt;
+    while (*p2) {
+        *p1 = *p2;
+        if (*p2 == '%') {
+            if (p2[1] == '%' || p2[1] == '*') {
+                /* a %% or %* specifier; just copy the next character and skip
+                   special handling on both this and the next character */
+                *++p1 = *++p2;
+            } else {
+                *++p1 = '*'; /* suppress assignment */
+            }
+        }
+        p1++;
+        p2++;
+    }
+
+    *p1 = '%';
+    *++p1 = 'n';
+    *++p1 = '\0';
+
+    /* Does the format line parse all the characters in logline? */
+    actual_count = -1;
+    sscanf(logline, fmtbuf, &actual_count);
+    if (p2 - fmt != actual_count) {
+        free(logline);
+        return FALSE;
+    }
+
+    /* OK, now make sure there's enough input in logline to assign to all
+       the arguments. */
+    va_start(vargs, fmt);
+    actual_count = vsscanf(logline, fmt, vargs);
+    va_end(vargs);
+
+    free(logline);
+
+    if (count != actual_count)
+        return FALSE;
+
+    stop_replaying_logfile();
+
+    return TRUE;
+}
+
+boolean
+log_replay_line(char *buf)
+{
+    char *logline = start_replaying_logfile('L');
+    if (!logline)
+        return FALSE;
+
+    base64_decode(logline+1, buf, BUFSZ);
+
+    stop_replaying_logfile();
+
+    free(logline);
+
+    return TRUE;
+}
+
+boolean
+log_replay_menu(boolean isobjmenu, int *itemcount, void *el)
+{
+    char *logline = start_replaying_logfile(isobjmenu ? 'O' : 'M');
+    char *lp;
+
+    if (!logline)
+        return FALSE;
+    
+    *itemcount = 0;
+
+    lp = logline + 1;
+
+    while (*lp) {
+        uint32_t id = 0;
+        int count = -1;
+
+        id = parse_decimal_number(&lp);
+
+        if (*lp == ',') {
+
+            if (!isobjmenu)
+                error_reading_save("non-obj menu has counts\n");
+
+            lp++;
+            count = parse_hex_number(&lp);
+        }
+
+        if (*lp != ':' && *lp)
+            error_reading_save("bad number format in menu\n");
+
+        if (isobjmenu) {
+            struct nh_objresult *elcast = el;
+            elcast->id = ((int32_t)id) - MENU_ID_OFFSET;
+            elcast->count = count;
+            el = elcast + 1;
+        } else {
+            int *elcast = el;
+            *elcast = ((int32_t)id) - MENU_ID_OFFSET;
+            el = elcast + 1;
+        }
+
+        (*itemcount)++;
+
+        if (*lp)
+            lp++;
+    }
+
+    stop_replaying_logfile();
+
+    free(logline);
+    return TRUE;
+}
+
+boolean
+log_replay_command(char *cmd, struct nh_cmd_arg *arg)
+{
+    char *logline = start_replaying_logfile(0);
+    char *lp, *lp2, c;
+
+    if (!logline)
+        return FALSE;
+
+    if (*logline < 'a' || *logline > 'z')
+        log_desync();
+
+    lp = logline;
+    lp2 = cmd;
+
+    while (*lp && *lp != ' ') {
+        *(lp2++) = *(lp++);
+        if (lp2 - cmd > 60) /* sanity check */
+            error_reading_save("Command name was too long\n");
+    }
+    *lp2 = '\0';
+
+    /* Zero the argtype, and make sure the rest of the structure is
+       initialized. */
+    memset(arg, 0, sizeof (struct nh_cmd_arg));
+
+    while (*lp == ' ') {
+        lp += 2;
+        switch (lp[-1]) {
+        case 'D':
+            arg->dir = parse_decimal_number(&lp);
+            break;
+
+        case 'P':
+            arg->pos.x = parse_decimal_number(&lp);
+            if (*(lp++) != ',')
+                error_reading_save("No comma in position argument\n");
+            arg->pos.y = parse_decimal_number(&lp);
+            break;
+
+        case 'I':
+            arg->invlet = *(lp++);
+            break;
+
+        case 'T':
+            lp2 = lp;
+            while (*lp2 != ' ' && *lp2)
+                lp2++;
+            c = *lp2;
+            *lp2 = '\0';
+            base64_decode(lp, arg->str, sizeof arg->str);
+            *lp2 = c;
+            lp = lp2;
+            break;
+
+        case 'S':
+            arg->spelllet = *(lp++);
+            break;
+
+        case 'L':
+            arg->limit = parse_decimal_number(&lp);
+            break;
+
+        default:
+            error_reading_save("Unrecognised command argument\n");
+        }
+    }
+
+    stop_replaying_logfile();
+
+    free(logline);
+
+    return TRUE;
+}
+
+/* After trying a bunch of log_replay_* functions, this one is called to
+   record that there were no options left; it desyncs if we're in a situation
+   where we were expecting to be able to play something. */
+void
+log_replay_no_more_options(void)
+{
+    if (start_replaying_logfile(0))
+        log_desync();
+}
+
 
 /* Code common to nh_get_savegame_status and log loading */
 static enum nh_log_status
@@ -772,6 +1090,11 @@ load_gamestate_from_binary_save(boolean maybe_old_version)
 
     /* Load the saved game. */
     program_state.gamestate_location = program_state.binary_save_location;
+    lseek(program_state.logfile, program_state.binary_save_location,
+          SEEK_SET);
+    free(lgetline_malloc(program_state.logfile));
+    program_state.end_of_gamestate_location = get_log_offset();
+
     freedynamicdata();
     startup_common(FALSE);
     dorecover(&program_state.binary_save);
@@ -846,7 +1169,7 @@ apply_save_diff(char *s, struct memfile *diff_base)
             if (dbpos < n) {
                 free(buf);
                 mfree(&program_state.binary_save);
-                error_reading_save("binary diff seeks past start of file");
+                error_reading_save("binary diff seeks past start of file\n");
             }
 
             dbpos -= n;
@@ -861,7 +1184,7 @@ apply_save_diff(char *s, struct memfile *diff_base)
             if (dbpos + n > diff_base->pos) {
                 free(buf);
                 mfree(&program_state.binary_save);
-                error_reading_save("binary diff reads past EOF");
+                error_reading_save("binary diff reads past EOF\n");
             }
 
             memcpy(mfp, diff_base->buf + dbpos, n);
@@ -877,7 +1200,7 @@ apply_save_diff(char *s, struct memfile *diff_base)
             if (bufp - buf + n > buflen) {
                 free(buf);
                 mfree(&program_state.binary_save);
-                error_reading_save("binary diff ends unexpectedly");
+                error_reading_save("binary diff ends unexpectedly\n");
             }
 
             memcpy(mfp, bufp, n);
@@ -889,7 +1212,7 @@ apply_save_diff(char *s, struct memfile *diff_base)
         default:
             free(buf);
             mfree(&program_state.binary_save);
-            error_reading_save("unknown command in binary diff");
+            error_reading_save("unknown command in binary diff\n");
         }
     }
 
@@ -1220,6 +1543,7 @@ log_reset(void)
         mfree(&program_state.binary_save);
     program_state.binary_save_allocated = FALSE;
     program_state.ok_to_diff = FALSE;
+    program_state.input_was_just_replayed = FALSE;
 
     program_state.save_backup_location = 0;
     program_state.binary_save_location = 0;

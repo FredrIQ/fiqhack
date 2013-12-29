@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -153,7 +153,7 @@ const struct cmd_desc cmdlist[] = {
      CMD_ARG_LIMIT},
     {"pray", "pray to the gods for help", M('p'), 0, TRUE, dopray, CMD_EXT},
     {"quit", "exit without saving current game", M('q'), 0, TRUE, doquit,
-     CMD_EXT},
+     CMD_EXT | CMD_NOTIME},
     {"quiver", "ready an item for firing", 'Q', 0, FALSE, dowieldquiver,
      CMD_ARG_OBJ},
     {"read", "read a scroll or spellbook", 'r', 0, FALSE, doread, CMD_ARG_OBJ},
@@ -167,7 +167,9 @@ const struct cmd_desc cmdlist[] = {
      CMD_EXT | CMD_ARG_OBJ},
     {"sacrifice", "offer a sacrifice to the gods", M('o'), 0, FALSE,
      dosacrifice, CMD_EXT | CMD_ARG_OBJ},
-    {"save", "save the game and exit", 'S', 0, TRUE, dosave, 0},
+    /* save must be marked as CMD_NOTIME, because the process of saving a game
+       must not alter the save file itself */
+    {"save", "save the game and exit", 'S', 0, TRUE, dosave, CMD_NOTIME},
     {"search", "search for hidden doors and traps", 's', 0, TRUE, dosearch,
      0, "searching"},
     {"showamulets", "list your worn amulet", '"', 0, TRUE,
@@ -2224,10 +2226,6 @@ do_command(int command, struct nh_cmd_arg *arg)
     if (command >= (sizeof cmdlist / sizeof *cmdlist))
         return COMMAND_UNKNOWN;
 
-    /* NULL arg is synonymous to an argtype of 0 */
-    if (!arg)
-        arg = &(struct nh_cmd_arg){.argtype = 0};
-
     /* Although accessible to the user (because they may want to repeat/continue
        actions even if interrupted), "repeat" is special in that it's also sent
        spontaneously by the windowport to repeat actions or continue multi-turn
@@ -2247,11 +2245,6 @@ do_command(int command, struct nh_cmd_arg *arg)
        a special case in each command */
     if (cmdlist[command].flags & CMD_DEBUG && !wizard)
         return COMMAND_DEBUG_ONLY;
-
-    /* Make sure the client hasn't given extra arguments on top of the ones that
-       we'd normally accept. To simplify things, we just silently drop any
-       additional arguments. */
-    arg->argtype &= cmdlist[command].flags;
 
     if (u.uburied && !cmdlist[command].can_if_buried) {
         pline("You can't do that while you are buried!");

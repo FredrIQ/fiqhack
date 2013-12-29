@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-27 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -404,8 +404,10 @@ extern struct sinfo {
      * * last_save_backup_location_location is one byte past the first save
      *   backup in the file;
      * * gamestate_location points to the location in the save file that
-     *   reflects the current gamestate (in u, level, etc.), except possibly
-     *   while log_sync() is running.
+     *   reflects the start of the line referring to the current gamestate (in
+     *   u, level, etc.), except possibly while log_sync() is running.
+     * * end_of_gamestate_location is the start of the line immediately after
+     *   the one that gamestate_location point to.
      * Note that there are no invariants on target_location. You can call
      * log_sync() to set the binary_save_location as close as possible to
      * target_location, but nothing forces you to do this.
@@ -417,8 +419,10 @@ extern struct sinfo {
     long save_backup_location;               /* bytes from start of file */
     long binary_save_location;               /* bytes from start of file */
     long gamestate_location;                 /* bytes from start of file */
+    long end_of_gamestate_location;          /* bytes from start of file */
     long target_location;           /* in units of target_location_units */
     enum target_location_units target_location_units;
+    boolean input_was_just_replayed;
     boolean ok_to_diff;
 } program_state;
 

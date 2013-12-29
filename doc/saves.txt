@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2013-12-17
+Last modified by Alex Smith, 2013-12-29
 
 Copyright (C) 2013 Alex Smith.
 
@@ -172,13 +172,18 @@ lines, separated by newlines:
 
   * A 'command' line starts with the name of a game command (and is recognised
     via the fact that it starts with a lowercase letter).  If the command
-    takes no argument, the line ends there.  Commands with an argument have
-    the argument specified after a space: a direction is a single decimal
-    integer (an `enum nh_direction` value), a position is two decimal integers
-    with a comma in between (and no space), and an object is an inventory
-    letter (a lowercase or uppercase letter, `$` for gold, or `#` for the
-    inventory overflow slot).
-
+    takes no argument, the line ends there.  Commands that take arguments have
+    the arguments specified after a space, and separated by spaces:
+        
+      * A direction is `D` followed by a decimal integer;
+      * A position is `P` followed by two decimal integers (with a comma but
+        no space separating them);
+      * An inventory letter is `I` followed by that letter (which could be a
+        letter, or `$`, `-`, or `,`);
+      * A string is `T` followed by that string encoded in base 64;
+      * A spell letter is `S` followed by that letter;
+      * A limit is `L` followed by the limit (in decimal).
+      
   * A 'time' line starts with `+`, and contains a number of milliseconds in
     hexadecimal; this is a relative offset from the previous save backup, save
     diff, or time line in the file (whichever is most recent), and lists the
@@ -199,22 +204,21 @@ lines, separated by newlines:
     in decimal unless otherwise stated):
 
       * `P!`    getpos request was cancelled
-      * `P1,2`  position provided at getpos (x, y coordinates)
-      * `D!`    getdir request was cancelled
+      * `P1,2;` position provided at getpos (x, y coords; key that accepted)
+      * `D-1`   getdir request was cancelled
       * `D0`    direction provided at getdir (an `enum nh_direction` value)
-      * `K!`    query_key request was cancelled
       * `K65`   ASCII character provided at query_key (ASCII code)
       * `K65,2` as above, with explicit count
       * `Yy`    ASCII character provided at yn_function (as a literal)
       * `M!`    menu was cancelled
       * `M`     menu was closed normally, with no selections
-      * `M2a`   menu had 1 selected item (in hexadecimal)
+      * `M2a`   menu had 1 selected item (ID + 4, in hexadecimal)
       * `M1:c`  menu, most general form (`:`-separated list, in hexadecimal)
       * `O!`    object menu was cancelled
       * `O`     object menu was closed normally, with no selections
       * general form of object menus is `O` followed by a `:`-separated list;
-        list items are ID or ID,count, ID is in hexadecimal, count is in
-        decimal
+        list items are ID or ID,count, ID is in hexadecimal and 4 is added to
+        it (so that small negative numbers are shorter), count is in decimal
 
     There is one other sort of user input line: `L` followed by base 64 data,
     representing the value given by the user as a response to a getlin

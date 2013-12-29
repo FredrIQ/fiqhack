@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-27 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -756,12 +756,21 @@ extern int doclose(const struct nh_cmd_arg *);
 
 extern void log_newgame(unsigned long long start_time,
                         unsigned int seed);
-extern void log_command(int cmd, int count, const struct nh_cmd_arg *arg);
 extern void log_neutral_turnstate(void);
 extern void log_backup_save(void);
 extern void log_sync(void);
 extern void log_revert_command(void);
 extern void log_bones(const char *bonesbuf, int buflen);
+extern void log_record_input(const char *, ...);
+extern boolean log_replay_input(int, const char *, ...);
+extern void log_record_line(const char *);
+extern boolean log_replay_line(char *);
+extern void log_record_menu(boolean, int, const void *);
+extern boolean log_replay_menu(boolean, int *, void *);
+extern void log_record_command(const char *cmd, const struct nh_cmd_arg *arg);
+extern boolean log_replay_command(char *cmd, struct nh_cmd_arg *arg);
+extern void log_replay_no_more_options(void);
+
 extern void log_init(int fd);
 extern void log_uninit(void);
 extern void log_game_over(char *death);
@@ -1796,7 +1805,8 @@ extern void unwield_silently(struct obj *obj);
 
 /* ### windows.c ### */
 
-extern int getpos(coord *cc, boolean, const char *, boolean isarg);
+extern enum nh_client_response getpos(coord *cc, boolean, const char *,
+                                      boolean isarg);
 extern char yn_function(const char *query, const char *resp, char def);
 extern int getdir(const char *, schar *dx, schar *dy, schar *dz, boolean isarg);
 extern char query_key(const char *query, int *count);

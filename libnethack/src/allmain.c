@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-26 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -397,8 +397,11 @@ nh_play_game(int fd)
             cmdidx = get_command_idx("wait");
             arg.argtype = 0;
         } else {
-            (*windowprocs.win_request_command)
-                (wizard, !flags.incomplete, flags.interrupted, cmd, &arg);
+
+            if (!log_replay_command(cmd, &arg))
+                (*windowprocs.win_request_command)
+                    (wizard, !flags.incomplete, flags.interrupted, cmd, &arg);
+
             cmdidx = get_command_idx(cmd);
         }
 
@@ -420,11 +423,19 @@ nh_play_game(int fd)
         flags.incomplete = FALSE;
         flags.interrupted = FALSE;
 
+        /* Make sure the client hasn't given extra arguments on top of the ones
+           that we'd normally accept. To simplify things, we just silently drop
+           any additional arguments. We do this before logging so that the
+           extra arguments aren't recorded in the save file. */
+        arg.argtype &= cmdlist[cmdidx].flags;
+
         if (cmdlist[cmdidx].flags & CMD_NOTIME &&
             (flags.incomplete || !flags.interrupted || flags.occupation)) {
             /* CMD_NOTIME actions don't set last_cmd/last_arg, so we need to
                ensure we interrupt them in order to avoid screwing up command
                repeat. We accomplish this via logging an "interrupt" command. */
+            log_record_command("interrupt",
+                               &(struct nh_cmd_arg){.argtype = 0});
             command_input(get_command_idx("interrupt"),
                           &(struct nh_cmd_arg){.argtype = 0});
             neutral_turnstate_tasks();
@@ -432,12 +443,14 @@ nh_play_game(int fd)
 
         program_state.in_zero_time_command =
             !!(cmdlist[cmdidx].flags & CMD_NOTIME);
+
+        log_record_command(cmd, &arg);
         command_input(cmdidx, &arg);
+
         program_state.in_zero_time_command = FALSE;
 
-        /* make sure we actually want this command to be logged */
         if (cmdlist[cmdidx].flags & CMD_NOTIME)
-            log_revert_command();   /* nope, cut it out of the log */
+            log_revert_command(); /* make sure it didn't change the gamestate */
         else
             neutral_turnstate_tasks();
     }
