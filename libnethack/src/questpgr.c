@@ -322,21 +322,39 @@ deliver_by_pline(struct qtmsg *qt_msg)
 static void
 deliver_by_window(struct qtmsg *qt_msg)
 {
-    long size;
-    char in_line[BUFSZ];
-    struct menulist menu;
-
-    init_menulist(&menu);
+    char in_line[BUFSZ], msg[BUFSZ * qt_msg->size], *end = msg;
+    boolean new_para = TRUE;
+    int size;
 
     for (size = 0; size < qt_msg->size; size += (long)strlen(in_line)) {
         dlb_fgets(in_line, 80, msg_file);
         char *out_line = convert_line(in_line);
-        add_menutext(&menu, out_line);
+
+        /* We want to strip lone newlines, but leave sequences intact, or
+         * special formatting.
+         *
+         * TODO: This is a huge kluge. Be better at this. */
+        if (!*out_line) {
+            if (!new_para) {
+                *end++ = '\n';
+                *end++ = ' ';
+                *end++ = '\n';
+            }
+            new_para = TRUE;
+        } else {
+            if (out_line[0] == ' ' && !new_para)
+                *end++ = '\n';
+            else if (!new_para)
+                *end++ = ' ';
+            new_para = FALSE;
+        }
+
+        strcpy(end, out_line);
+        end = strchr(end, '\0');
         free(out_line);
     }
-    display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_ANYWHERE,
-                 NULL);
-    free(menu.items);
+
+    display_buffer(msg, TRUE);
 }
 
 void
