@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /*      Copyright (c) 1989 Janet Walz, Mike Threepoint */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -38,7 +38,7 @@ dosounds(void)
             "the splashing of a naiad.",
             "a soda fountain!",
         };
-        You_hear(fountain_msg[rn2(3) + hallu]);
+        You_hear("%s", fountain_msg[rn2(3) + hallu]);
     }
 
     if (has_terrain(level, SINK) && !rn2(300)) {
@@ -47,7 +47,7 @@ dosounds(void)
             "a gurgling noise.",
             "dishes being washed!",
         };
-        You_hear(sink_msg[rn2(2) + hallu]);
+        You_hear("%s", sink_msg[rn2(2) + hallu]);
     }
 
     if (search_special(level, COURT) && !rn2(200)) {
@@ -67,7 +67,7 @@ dosounds(void)
                 int which = rn2(3) + hallu;
 
                 if (which != 2)
-                    You_hear(throne_msg[which]);
+                    You_hear("%s", throne_msg[which]);
                 else
                     pline(throne_msg[2], uhis());
                 return;
@@ -80,7 +80,7 @@ dosounds(void)
             "You smell marsh gas!",     /* so it's a smell... */
             "You hear Donald Duck!",
         };
-        pline(swamp_msg[rn2(2) + hallu]);
+        pline("%s", swamp_msg[rn2(2) + hallu]);
         return;
     }
     if ((sroom = search_special(level, VAULT)) && !rn2(200)) {
@@ -178,7 +178,7 @@ dosounds(void)
             if (is_mercenary(mtmp->data) && mon_in_room(mtmp, BARRACKS) &&
                 /* sleeping implies not-yet-disturbed (usually) */
                 (mtmp->msleeping || ++count > 5)) {
-                You_hear(barracks_msg[rn2(3) + hallu]);
+                You_hear("%s", barracks_msg[rn2(3) + hallu]);
                 return;
             }
         }
@@ -194,7 +194,7 @@ dosounds(void)
                 continue;
             if ((mtmp->msleeping || is_animal(mtmp->data)) &&
                 mon_in_room(mtmp, ZOO)) {
-                You_hear(zoo_msg[rn2(2) + hallu]);
+                You_hear("%s", zoo_msg[rn2(2) + hallu]);
                 return;
             }
         }
@@ -207,7 +207,7 @@ dosounds(void)
                 "the chime of a cash register.",
                 "Neiman and Marcus arguing!",
             };
-            You_hear(shop_msg[rn2(2) + hallu]);
+            You_hear("%s", shop_msg[rn2(2) + hallu]);
         }
         return;
     }
@@ -225,7 +225,7 @@ dosounds(void)
                 "someone say \"No more woodchucks!\"",
                 "a loud ZOT!"   /* both rec.humor.oracle */
             };
-            You_hear(ora_msg[rn2(3) + hallu * 2]);
+            You_hear("%s", ora_msg[rn2(3) + hallu * 2]);
         }
         return;
     }
@@ -793,7 +793,7 @@ domonnoise(struct monst *mtmp)
     if (pline_msg)
         pline("%s %s", Monnam(mtmp), pline_msg);
     else if (verbl_msg)
-        verbalize(verbl_msg);
+        verbalize("%s", verbl_msg);
     return 1;
 }
 

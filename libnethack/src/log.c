@@ -199,6 +199,10 @@ base64_decode(const char *in, char *out, int outlen)
 }
 
 /***** Log I/O *****/
+
+static int lvprintf(const char *fmt, va_list vargs) PRINTFLIKE(1,0);
+static int lprintf(const char *fmt, ...) PRINTFLIKE(1,2);
+
 static long
 get_log_offset(void)
 {

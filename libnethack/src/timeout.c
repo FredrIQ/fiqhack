@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-26 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -34,7 +34,7 @@ stoned_dialogue(void)
     long i = (Stoned & TIMEOUT);
 
     if (i > 0L && i <= SIZE(stoned_texts)) {
-        pline(stoned_texts[SIZE(stoned_texts) - i]);
+        pline("%s", stoned_texts[SIZE(stoned_texts) - i]);
         /* ensure the player is able to act on this message */
         action_interrupted();
     }
@@ -61,7 +61,7 @@ vomiting_dialogue(void)
 
     if ((((Vomiting & TIMEOUT) % 3L) == 2) && (i >= 0)
         && (i < SIZE(vomiting_texts)))
-        pline(vomiting_texts[SIZE(vomiting_texts) - i - 1]);
+        pline("%s", vomiting_texts[SIZE(vomiting_texts) - i - 1]);
 
     switch ((int)i) {
     case 0:
@@ -108,7 +108,7 @@ choke_dialogue(void)
             if (strchr(str, '%'))
                 pline(str, hcolor("blue"));
             else
-                pline(str);
+                pline("%s", str);
         }
     }
     exercise(A_STR, FALSE);
@@ -148,7 +148,7 @@ slime_dialogue(void)
                 }
             }
         } else
-            pline(str);
+            pline("%s", str);
     }
     if (i == 3L) {      /* limbs becoming oozy */
         HFast = 0L;     /* lose intrinsic speed */

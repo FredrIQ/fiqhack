@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-27 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -309,7 +309,8 @@ ghitm(struct monst * mtmp, struct obj * gold)
             } else {
                 if (mtmp->mpeaceful) {
                     ESHK(mtmp)->credit += value;
-                    pline("You have %ld %s in credit.", ESHK(mtmp)->credit,
+                    pline("You have %ld %s in credit.",
+                          (long)ESHK(mtmp)->credit,
                           currency(ESHK(mtmp)->credit));
                 } else
                     verbalize("Thanks, scum!");

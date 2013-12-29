@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-26 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1703,13 +1703,13 @@ canunwearobj(struct obj *otmp, boolean noisy, boolean spoil, boolean cblock)
             if (noisy) {
                 pline("You are unable to take off your gloves "
                       "while wielding that %s.",
-                      "gloves", is_sword(uwep) ? "sword" : "weapon");
+                      is_sword(uwep) ? "sword" : "weapon");
                 uwep->bknown = TRUE;
             }
             return FALSE;
         } else if (Glib) {
             if (noisy)
-                pline("You can't take off the slippery gloves ",
+                pline("You can't take off the slippery gloves "
                       "with your slippery %s.", makeplural(body_part(FINGER)));
             return FALSE;
         }

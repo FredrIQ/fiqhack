@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-26 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -428,7 +428,7 @@ rob_shop(struct monst *shkp)
     total = (addupbill(shkp) + eshkp->debit);
     if (eshkp->credit >= total) {
         pline("Your credit of %ld %s is used to cover your shopping bill.",
-              eshkp->credit, currency(eshkp->credit));
+              (long)eshkp->credit, currency(eshkp->credit));
         total = 0L;     /* credit gets cleared by setpaid() */
     } else {
         pline("You escaped the shop without paying!");
@@ -1245,7 +1245,7 @@ proceed:
                 strcat(sbuf, "for gold picked up and the use of merchandise.");
         } else
             strcat(sbuf, "for the use of merchandise.");
-        pline(sbuf);
+        pline("%s", sbuf);
         if (umoney + eshkp->credit < dtmp) {
             pline("But you don't%s have enough gold%s.",
                   stashed_gold ? " seem to" : "",
@@ -2382,7 +2382,8 @@ stolen_value(struct obj *obj, xchar x, xchar y, boolean peaceful,
             if (credit_use) {
                 if (ESHK(shkp)->credit) {
                     pline("You have %ld %s credit remaining.",
-                          ESHK(shkp)->credit, currency(ESHK(shkp)->credit));
+                          (long)ESHK(shkp)->credit,
+                          currency(ESHK(shkp)->credit));
                     return value;
                 } else if (!value) {
                     pline("You have no credit remaining.");
@@ -3632,10 +3633,10 @@ shk_chat(struct monst *shkp)
               currency(total));
     } else if (eshk->debit)
         pline("%s reminds you that you owe %s %ld %s.", shkname(shkp),
-              mhim(shkp), eshk->debit, currency(eshk->debit));
+              mhim(shkp), (long)eshk->debit, currency(eshk->debit));
     else if (eshk->credit)
         pline("%s encourages you to use your %ld %s of credit.", shkname(shkp),
-              eshk->credit, currency(eshk->credit));
+              (long)eshk->credit, currency(eshk->credit));
     else if (eshk->robbed)
         pline("%s complains about a recent robbery.", shkname(shkp));
     else if ((shkmoney = money_cnt(shkp->minvent)) < 50)

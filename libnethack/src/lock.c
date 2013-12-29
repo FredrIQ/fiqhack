@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -963,7 +963,7 @@ doorlock(struct obj * otmp, int x, int y)
         break;
     }
     if (msg && cansee(x, y)) {
-        pline(msg);
+        pline("%s", msg);
         /* we know whether it's locked now */
         level->locations[x][y].mem_door_l = 1;
         map_background(x, y, TRUE);

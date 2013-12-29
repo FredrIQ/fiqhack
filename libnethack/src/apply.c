@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-26 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -910,7 +910,7 @@ use_candelabrum(struct obj *obj)
     }
     if (Engulfed || obj->cursed) {
         if (!Blind)
-            pline("The %s %s seem to have lit.",
+            pline("The %s %s seem to have lit.", s,
                   obj->spe > 1L ? "don't" : "doesn't");
         else
             pline("The %s %s for a moment, then %s.", s, vtense(s, "flicker"),
@@ -984,7 +984,7 @@ use_candle(struct obj **optr)
         else
             *optr = 0;
         s = (obj->quan != 1) ? "candles" : "candle";
-        pline("You attach %ld%s %s to %s.", obj->quan,
+        pline("You attach %d%s %s to %s.", (int)obj->quan,
               !otmp->spe ? "" : " more", s, the(xname(otmp)));
         if (!otmp->spe || otmp->age > obj->age)
             otmp->age = obj->age;
@@ -2248,7 +2248,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
                 pline("You wrap your bullwhip around %s on the %s.",
                       an(singular(otmp, xname)), surface(u.ux, u.uy));
                 if (rnl(6) || pickup_object(otmp, 1L, TRUE) < 1)
-                    pline(msg_slipsfree);
+                    pline("%s", msg_slipsfree);
                 return 1;
             }
         }
@@ -2299,7 +2299,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
                 enum attack_check_status attack_status =
                     attack(mtmp, dx, dy, apply_interaction_mode());
                 if (attack_status == ac_continue)
-                    pline(msg_snap);
+                    pline("%s", msg_snap);
                 else
                     return attack_status != ac_cancel;
             }
@@ -2324,12 +2324,12 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
                     vision_full_recalc = 1;
                 }
             } else {
-                pline(msg_slipsfree);
+                pline("%s", msg_slipsfree);
             }
             if (mtmp)
                 wakeup(mtmp, FALSE);
         } else
-            pline(msg_snap);
+            pline("%s", msg_snap);
 
     } else if (mtmp) {
         if (!canspotmon(mtmp) && !level->locations[rx][ry].mem_invis) {
@@ -2402,7 +2402,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
                     break;
                 }
             } else {
-                pline(msg_slipsfree);
+                pline("%s", msg_slipsfree);
             }
             wakeup(mtmp, TRUE);
         } else {
@@ -2415,7 +2415,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
                 enum attack_check_status attack_status =
                     attack(mtmp, dx, dy, apply_interaction_mode());
                 if (attack_status == ac_continue)
-                    pline(msg_snap);
+                    pline("%s", msg_snap);
                 else
                     return attack_status != ac_cancel;
             }
@@ -2426,7 +2426,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
         pline("You snap your whip through thin air.");
 
     } else {
-        pline(msg_snap);
+        pline("%s", msg_snap);
 
     }
     return 1;

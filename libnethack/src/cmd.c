@@ -2314,7 +2314,7 @@ get_adjacent_loc(const char *prompt, const char *emsg, xchar x, xchar y,
         cc->y = new_y;
     } else {
         if (emsg)
-            pline(emsg);
+            pline("%s", emsg);
         return 0;
     }
     return 1;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -980,7 +980,8 @@ getobj(const char *let, const char *word, boolean isarg)
             pline("You don't have that object.");
             continue;
         } else if (cnt < 0 || otmp->quan < cnt) {
-            pline("You don't have that many!  You have only %ld.", otmp->quan);
+            pline("You don't have that many!  You have only %ld.",
+                  (long)otmp->quan);
             continue;
         }
         break;
@@ -1826,7 +1827,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
     if (!otmp || is_lava(level, u.ux, u.uy) ||
         (is_pool(level, u.ux, u.uy) && !Underwater)) {
         if (dfeature)
-            pline(fbuf);
+            pline("%s", fbuf);
         read_engr_at(u.ux, u.uy);
         if (!skip_objects && (Blind || !dfeature))
             pline("You %s no objects here.", verb);
@@ -1836,14 +1837,14 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
 
     if (skip_objects) {
         if (dfeature)
-            pline(fbuf);
+            pline("%s", fbuf);
         read_engr_at(u.ux, u.uy);
         pline("There are %s%s objects here.",
               (obj_cnt <= 10) ? "several" : "many", picked_some ? " more" : "");
     } else if (!otmp->nexthere) {
         /* only one object */
         if (dfeature)
-            pline(fbuf);
+            pline("%s", fbuf);
         read_engr_at(u.ux, u.uy);
 #ifdef INVISIBLE_OBJECTS
         if (otmp->oinvis && !See_invisible)

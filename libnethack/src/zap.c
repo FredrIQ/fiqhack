@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-27 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3706,7 +3706,7 @@ zap_over_floor(xchar x, xchar y, int type, boolean * shopdamage)
                 if (cansee(x, y))
                     msgtxt = "The water evaporates.";
             }
-            Norep(msgtxt);
+            Norep("%s", msgtxt);
             if (loc->typ == ROOM)
                 newsym(x, y);
         } else if (IS_FOUNTAIN(loc->typ)) {
@@ -3827,13 +3827,13 @@ zap_over_floor(xchar x, xchar y, int type, boolean * shopdamage)
             loc->doormask = new_doormask;
             unblock_point(x, y);        /* vision */
             if (cansee(x, y)) {
-                pline(see_txt);
+                pline("%s", see_txt);
                 newsym(x, y);
             } else if (sense_txt) {
-                pline(sense_txt);
+                pline("%s", sense_txt);
             } else if (hear_txt) {
                 if (flags.soundok)
-                    You_hear(hear_txt);
+                    You_hear("%s", hear_txt);
             }
         }
     }

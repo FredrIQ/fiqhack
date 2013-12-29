@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-27 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1220,7 +1220,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
             mesg = buf;
         }
         if (mesg)
-            pline(mesg);
+            pline("%s", mesg);
     }
 
     if (new && Is_rogue_level(&u.uz))
@@ -1373,7 +1373,7 @@ deferred_goto(void)
 
         assign_level(&dest, &u.utolev);
         if (dfr_pre_msg)
-            pline(dfr_pre_msg);
+            pline("%s", dfr_pre_msg);
         goto_level(&dest, ! !(typmask & 1), ! !(typmask & 2), ! !(typmask & 4));
         if (typmask & 0200) {   /* remove portal */
             struct trap *t = t_at(level, u.ux, u.uy);
@@ -1384,7 +1384,7 @@ deferred_goto(void)
             }
         }
         if (dfr_post_msg)
-            pline(dfr_post_msg);
+            pline("%s", dfr_post_msg);
     }
     u.utotype = 0;      /* our caller keys off of this */
     if (dfr_pre_msg)

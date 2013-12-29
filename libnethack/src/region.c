@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-27 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) 1996 by Jean-Christophe Collet  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -373,7 +373,7 @@ in_out_region(struct level *lev, xchar x, xchar y)
             !inside_region(lev->regions[i], x, y)) {
             clear_hero_inside(lev->regions[i]);
             if (lev->regions[i]->leave_msg != NULL)
-                pline(lev->regions[i]->leave_msg);
+                pline("%s", lev->regions[i]->leave_msg);
             if ((f_indx = lev->regions[i]->leave_f) != NO_CALLBACK)
                 (void)(*callbacks[f_indx]) (lev->regions[i], 0);
         }
@@ -384,7 +384,7 @@ in_out_region(struct level *lev, xchar x, xchar y)
             inside_region(lev->regions[i], x, y)) {
             set_hero_inside(lev->regions[i]);
             if (lev->regions[i]->enter_msg != NULL)
-                pline(lev->regions[i]->enter_msg);
+                pline("%s", lev->regions[i]->enter_msg);
             if ((f_indx = lev->regions[i]->enter_f) != NO_CALLBACK)
                 (void)(*callbacks[f_indx]) (lev->regions[i], 0);
         }

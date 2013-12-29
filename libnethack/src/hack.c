@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-27 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -412,7 +412,7 @@ still_chewing(xchar x, xchar y)
     unblock_point(x, y);        /* vision */
     newsym(x, y);
     if (digtxt)
-        pline(digtxt);  /* after newsym */
+        pline("%s", digtxt);  /* after newsym */
     if (dmgtxt)
         pay_for_damage(dmgtxt, FALSE);
     u.uoccupation_progress[tos_dig] = 0;
@@ -2576,7 +2576,7 @@ check_capacity(const char *str)
 {
     if (near_capacity() >= EXT_ENCUMBER) {
         if (str)
-            pline(str);
+            pline("%s", str);
         else
             pline("You can't do that while carrying so much stuff.");
         return 1;

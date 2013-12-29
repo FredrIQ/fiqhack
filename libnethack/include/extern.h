@@ -512,7 +512,7 @@ extern void fix_petrification(void);
 
 extern void nonfatal_dump_core(void);
 extern void NORETURN terminate(enum nh_play_status);
-extern void NORETURN panic(const char *, ...);
+extern void NORETURN panic(const char *, ...) PRINTFLIKE(1,2);
 extern int done2(void);
 extern int doquit(const struct nh_cmd_arg *);
 extern void done_in_by(struct monst *);
@@ -633,7 +633,8 @@ extern int dofight(const struct nh_cmd_arg *);
 /* ### history.c ### */
 
 extern int dohistory(const struct nh_cmd_arg *);
-extern void historic_event(boolean hidden, const char *fmt, ...);
+extern void historic_event(boolean hidden, const char *fmt, ...)
+    PRINTFLIKE(2,3);
 extern void save_history(struct memfile *mf);
 extern void restore_history(struct memfile *mf);
 extern void free_history(void);
@@ -761,8 +762,8 @@ extern void log_backup_save(void);
 extern void log_sync(void);
 extern void log_revert_command(void);
 extern void log_bones(const char *bonesbuf, int buflen);
-extern void log_record_input(const char *, ...);
-extern boolean log_replay_input(int, const char *, ...);
+extern void log_record_input(const char *, ...) PRINTFLIKE(1,2);
+extern boolean log_replay_input(int, const char *, ...) SCANFLIKE(2,3);
 extern void log_record_line(const char *);
 extern boolean log_replay_line(char *);
 extern void log_record_menu(boolean, int, const void *);
@@ -1239,14 +1240,14 @@ extern const char *safe_qbuf(const char *, unsigned, const char *, const char *,
 
 /* ### pline.c ### */
 
-extern void pline(const char *, ...);
+extern void pline(const char *, ...) PRINTFLIKE(1,2);
 extern void suppress_more(void);
-extern void impossible(const char *, ...);
-extern void Norep(const char *, ...);
+extern void impossible(const char *, ...) PRINTFLIKE(1,2);
+extern void Norep(const char *, ...) PRINTFLIKE(1,2);
 extern void free_youbuf(void);
-extern void You_hear(const char *, ...);
-extern void verbalize(const char *, ...);
-extern void raw_printf(const char *, ...);
+extern void You_hear(const char *, ...) PRINTFLIKE(1,2);
+extern void verbalize(const char *, ...) PRINTFLIKE(1,2);
+extern void raw_printf(const char *, ...) PRINTFLIKE(1,2);
 extern const char *align_str(aligntyp);
 extern void mstatusline(struct monst *);
 extern void ustatusline(void);

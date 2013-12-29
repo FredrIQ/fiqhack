@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Alex Smith, 2013-12-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -361,7 +361,7 @@ fall_through(boolean td)
         dont_fall = "You are jerked back by your pet!";
     }
     if (dont_fall) {
-        pline(dont_fall);
+        pline("%s", dont_fall);
         /* hero didn't fall through, but any objects here might */
         impact_drop(NULL, u.ux, u.uy, 0);
         if (!td) {

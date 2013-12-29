@@ -852,7 +852,7 @@ cancel_helplessness(const char *msg)
     action_interrupted();
 
     if (*msg)
-        pline(msg);
+        pline("%s", msg);
 
     Helpless = 0;
     u.usleep = 0;
