@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1247,9 +1247,12 @@ ucast_wizard_spell(struct monst *mattk, struct monst *mtmp, int dmg,
                                       mattk->mtame) ? MM_EDOG : NO_MM_FLAGS)) !=
                             0) {
                             mpet->msleeping = 0;
-                            if (yours || mattk->mtame)
-                                initedog(mpet);
-                            else if (mattk->mpeaceful)
+                            if (yours || mattk->mtame) {
+                                /* TODO: We might want to consider taming the
+                                   monster, but that has both balance issues,
+                                   and (if it's covetous) technical issues. */
+                                mpet->mpeaceful = 1;
+                            } else if (mattk->mpeaceful)
                                 mpet->mpeaceful = 1;
                             else
                                 mpet->mpeaceful = mpet->mtame = 0;
