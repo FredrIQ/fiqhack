@@ -409,7 +409,7 @@ static void
 select_enum_value(union nh_optvalue *value, struct nh_option_desc *option)
 {
     struct nh_menulist menu;
-    int i, n, selectidx, *pick_list;
+    int i, n, selectidx;
 
     init_menulist(&menu);
 
@@ -430,7 +430,7 @@ select_enum_value(union nh_optvalue *value, struct nh_option_desc *option)
         add_menu_item(&menu, i + 1, cap, 0, 0);
     }
 
-    pick_list = malloc(sizeof (int) * menu.icount);
+    int pick_list[menu.icount];
     n = curses_display_menu(&menu, option->name, PICK_ONE, PLHINT_RIGHT,
                             pick_list);
     dealloc_menulist(&menu);
@@ -440,7 +440,6 @@ select_enum_value(union nh_optvalue *value, struct nh_option_desc *option)
         selectidx = pick_list[0] - 1;
         value->e = option->e.choices[selectidx].id;
     }
-    free(pick_list);
 }
 
 
@@ -997,7 +996,7 @@ read_config_file(const fnchar * filename)
 {
     FILE *fp;
     int fsize;
-    char *buf, *line;
+    char *line;
 
     fp = fopen(filename, "rb");
     if (!fp)
@@ -1013,11 +1012,7 @@ read_config_file(const fnchar * filename)
         return;
     }
 
-    buf = malloc(fsize + 1);
-    if (!buf) {
-        fclose(fp);
-        return;
-    }
+    char buf[fsize + 1];
 
     fread(buf, fsize, 1, fp);
     fclose(fp);
@@ -1031,8 +1026,6 @@ read_config_file(const fnchar * filename)
 
         line = strtok(NULL, "\n");
     } while (line);
-
-    free(buf);
 }
 
 

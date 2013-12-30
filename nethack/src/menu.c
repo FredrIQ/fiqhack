@@ -273,6 +273,9 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     int i, key, idx, rv, startx, starty, prevcurs, prev_offset;
     nh_bool done, cancelled;
     char sbuf[BUFSZ];
+    char selected[ml->icount];
+
+    memset(selected, 0, sizeof selected);
 
     prevcurs = curs_set(0);
 
@@ -284,7 +287,7 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     mdat->icount = ml->icount;
     mdat->title = title;
     mdat->how = how;
-    mdat->selected = calloc(ml->icount, sizeof (char));
+    mdat->selected = selected;
     mdat->x1 = x1;
     mdat->y1 = y1;
     mdat->x2 = x2;
@@ -438,7 +441,6 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
         }
     }
 
-    free(mdat->selected);
     delete_gamewin(gw);
     redraw_game_windows();
     curs_set(prevcurs);
@@ -735,8 +737,12 @@ curses_display_objects(struct nh_objitem *items, int icount, const char *title,
     int i, key, idx, rv, startx, starty, prevcurs, prev_offset;
     nh_bool done, cancelled;
     char sbuf[BUFSZ];
-    nh_bool inventory_special = title && ! !strstr(title, "Inventory") &&
+    nh_bool inventory_special = title && !!strstr(title, "Inventory") &&
         how == PICK_NONE;
+    int selected[icount];
+
+    memset(selected, 0, sizeof selected);
+
     if (inventory_special)
         placement_hint = PLHINT_INVENTORY;
 
@@ -751,7 +757,7 @@ curses_display_objects(struct nh_objitem *items, int icount, const char *title,
     mdat->title = title;
     mdat->how = how;
     mdat->selcount = -1;
-    mdat->selected = calloc(icount, sizeof (int));
+    mdat->selected = selected;
 
     if (how != PICK_NONE)
         assign_objmenu_accelerators(mdat);
@@ -987,7 +993,6 @@ curses_display_objects(struct nh_objitem *items, int icount, const char *title,
         }
     }
 
-    free(mdat->selected);
     delete_gamewin(gw);
     redraw_game_windows();
     curs_set(prevcurs);

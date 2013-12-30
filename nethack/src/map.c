@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-26 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -256,15 +256,33 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
         NHCR_MOREINFO};
     const char *cp;
     char printbuf[BUFSZ];
-    char *matching = NULL;
     enum nh_direction dir;
-    struct coord *monpos = NULL;
 
-    /* Actually, the initial valus for moncount and monidx are irrelevant
-       because they're never used while monpos == NULL. But a typical compiler
-       can't figure that out, because the control flow is too complex. */
     int moncount = 0, monidx = 0;
     int firstmove = 1;
+    nh_bool first_monidx_change = TRUE;
+
+    int i, j;
+
+    for (i = 0; i < ROWNO; i++)
+        for (j = 0; j < COLNO; j++)
+            if (display_buffer[i][j].mon &&
+                (j != player.x || i != player.y))
+                moncount++;
+
+    struct coord monpos[moncount * sizeof (struct coord)];
+    monidx = 0;
+    for (i = 0; i < ROWNO; i++)
+        for (j = 0; j < COLNO; j++)
+            if (display_buffer[i][j].mon &&
+                (j != player.x || i != player.y)) {
+                monpos[monidx].x = j;
+                monpos[monidx].y = i;
+                monidx++;
+            }
+    qsort(monpos, moncount, sizeof (struct coord),
+          compare_coord_dist);
+    monidx = 0;
 
     if (statuswin) {
         werase(statuswin);
@@ -343,39 +361,19 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
         }
 
         if (key == 'm' || key == 'M') {
-            if (!monpos) {
-                int i, j;
-
-                moncount = 0;
-                for (i = 0; i < ROWNO; i++)
-                    for (j = 0; j < COLNO; j++)
-                        if (display_buffer[i][j].mon &&
-                            (j != player.x || i != player.y))
-                            moncount++;
-                monpos = malloc(moncount * sizeof (struct coord));
-                monidx = 0;
-                for (i = 0; i < ROWNO; i++)
-                    for (j = 0; j < COLNO; j++)
-                        if (display_buffer[i][j].mon &&
-                            (j != player.x || i != player.y)) {
-                            monpos[monidx].x = j;
-                            monpos[monidx].y = i;
-                            monidx++;
-                        }
-                qsort(monpos, moncount, sizeof (struct coord),
-                      compare_coord_dist);
-                /* ready this for first increment/decrement to change to zero */
-                monidx = (key == 'm') ? -1 : 1;
-            }
-
             if (moncount) {     /* there is at least one monster to move to */
-                if (key == 'm') {
-                    monidx = (monidx + 1) % moncount;
-                } else {
-                    monidx--;
-                    if (monidx < 0)
-                        monidx += moncount;
+                if (!first_monidx_change) {
+                    if (key == 'm') {
+                        monidx = (monidx + 1) % moncount;
+                    } else {
+                        monidx--;
+                        if (monidx < 0)
+                            monidx += moncount;
+                    }
                 }
+
+                first_monidx_change = FALSE;
+
                 cx = monpos[monidx].x;
                 cy = monpos[monidx].y;
             }
@@ -383,12 +381,14 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
             int k = 0, tx, ty;
             int pass, lo_x, lo_y, hi_x, hi_y;
 
-            matching = malloc(default_drawing->num_bgelements);
+            char matching[default_drawing->num_bgelements];
             memset(matching, 0, default_drawing->num_bgelements);
+
             for (sidx = default_drawing->bg_feature_offset;
                  sidx < default_drawing->num_bgelements; sidx++)
                 if (key == default_drawing->bgelements[sidx].ch)
                     matching[sidx] = (char)++k;
+
             if (k) {
                 for (pass = 0; pass <= 1; pass++) {
                     /* pass 0: just past current pos to lower right; pass 1:
@@ -405,9 +405,10 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
                                 cy = ty;
                                 goto nxtc;
                             }
-                        }       /* column */
+                        }   /* column */
                     }   /* row */
-                }       /* pass */
+                }   /* pass */
+
                 sprintf(printbuf, "Can't find dungeon feature '%c'.",
                         (char)key);
                 curses_msgwin(printbuf);
@@ -427,10 +428,7 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
 
     *x = cx;
     *y = cy;
-    if (monpos)
-        free(monpos);
-    if (matching)
-        free(matching);
+
     curses_update_status(NULL); /* clear the help message */
     return result;
 }

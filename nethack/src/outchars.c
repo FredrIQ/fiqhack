@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -262,7 +262,7 @@ static void
 read_unisym_config(void)
 {
     fnchar filename[BUFSZ];
-    char *data, *line;
+    char *line;
     int fd, size;
 
     filename[0] = '\0';
@@ -277,7 +277,7 @@ read_unisym_config(void)
     size = lseek(fd, 0, SEEK_END);
     lseek(fd, 0, SEEK_SET);
 
-    data = malloc(size + 1);
+    char data[size + 1];
     read(fd, data, size);
     data[size] = '\0';
     close(fd);
@@ -288,8 +288,6 @@ read_unisym_config(void)
 
         line = strtok(NULL, "\r\n");
     }
-
-    free(data);
 }
 
 

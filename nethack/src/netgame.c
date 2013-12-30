@@ -161,7 +161,7 @@ read_server_list(void)
 {
     fnchar filename[BUFSZ];
     char hnbuf[256], unbuf_enc[256], pwbuf_enc[256], decbuf[256];
-    char *data, *line;
+    char *line;
     int size, scount, port, n;
     struct server_info *servlist;
     FILE *fp;
@@ -183,7 +183,7 @@ read_server_list(void)
     size = ftell(fp);
     rewind(fp);
 
-    data = malloc(size + 1);
+    char data[size + 1];
     fread(data, size, 1, fp);
     data[size] = '\0';
     fclose(fp);
@@ -207,7 +207,6 @@ read_server_list(void)
         line = strtok(NULL, "\r\n");
     }
 
-    free(data);
     memset(&servlist[scount], 0, sizeof (struct server_info));
     return servlist;
 }

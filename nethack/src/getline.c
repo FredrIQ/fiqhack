@@ -314,8 +314,6 @@ static int
 extcmd_via_menu(const char **namelist, const char **desclist, int listlen)
 {
     struct nh_menulist menu;
-    int *pick_list;
-    int *choices;
     char buf[BUFSZ];
     char cbuf[QBUFSZ], prompt[QBUFSZ], fmtstr[20];
     int i, n, nchoices, acount;
@@ -323,7 +321,7 @@ extcmd_via_menu(const char **namelist, const char **desclist, int listlen)
     int accelerator, prevaccelerator;
     int matchlevel = 0;
 
-    choices = malloc((listlen + 1) * sizeof (int));
+    int choices[listlen + 1];
 
     ret = 0;
     cbuf[0] = '\0';
@@ -388,7 +386,7 @@ extcmd_via_menu(const char **namelist, const char **desclist, int listlen)
             add_menu_item(&menu, prevaccelerator, buf, prevaccelerator, FALSE);
         }
 
-        pick_list = malloc(sizeof (int) * menu.icount);
+        int pick_list[menu.icount];
         sprintf(prompt, "Extended Command: %s", cbuf);
         n = curses_display_menu(&menu, prompt, PICK_ONE,
                                 PLHINT_ANYWHERE, pick_list);
@@ -408,10 +406,7 @@ extcmd_via_menu(const char **namelist, const char **desclist, int listlen)
             } else
                 ret = -1;
         }
-        free(pick_list);
     }
-
-    free(choices);
 
     return ret;
 }

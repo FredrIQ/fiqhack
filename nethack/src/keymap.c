@@ -385,23 +385,20 @@ doextcmd(nh_bool include_debug)
     int i, idx, size;
     struct nh_cmd_desc *retval = NULL;
     char cmdbuf[BUFSZ];
-    const char **namelist, **desclist;
     static const char exthelp[] = "?";
-    int *idxmap;
 
     size = 0;
     for (i = 0; i < cmdcount; i++)
         if ((commandlist[i].flags & CMD_EXT) &&
             (include_debug || !(commandlist[i].flags & CMD_DEBUG)))
             size++;
-    namelist = malloc((size + 1) * sizeof (char *));
-    desclist = malloc((size + 1) * sizeof (char *));
-    idxmap = malloc((size + 1) * sizeof (int));
+
+    const char *namelist[size + 1];
+    const char *desclist[size + 1];
 
     /* add help */
     namelist[size] = exthelp;
     desclist[size] = "get this list of extended commands";
-    idxmap[size] = 0;
 
     idx = 0;
     for (i = 0; i < cmdcount; i++) {
@@ -434,10 +431,6 @@ doextcmd(nh_bool include_debug)
             curses_msgwin(msg);
         }
     } while (!retval);
-
-    free(namelist);
-    free(desclist);
-    free(idxmap);
 
     return retval;
 }
@@ -552,7 +545,7 @@ static nh_bool
 read_keymap(void)
 {
     fnchar filename[BUFSZ];
-    char *data, *line, *endptr;
+    char *line, *endptr;
     int fd, size, pos, key, i;
     struct nh_cmd_desc *cmd;
     nh_bool unknown;
@@ -587,7 +580,7 @@ read_keymap(void)
     size = lseek(fd, 0, SEEK_END);
     lseek(fd, 0, SEEK_SET);
 
-    data = malloc(size + 1);
+    char data[size + 1];
     read(fd, data, size);
     data[size] = '\0';
     close(fd);
@@ -674,8 +667,6 @@ read_keymap(void)
         line = strtok(NULL, "\r\n");
     }
 
-
-    free(data);
     return TRUE;
 
 badmap:

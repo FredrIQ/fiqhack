@@ -60,6 +60,9 @@ curses_outrip(struct nh_menulist *ml, nh_bool tombstone, const char *plname,
     clear();
 
     if (tombstone) {
+        /* These allocations are safe because we deallocate them before doing
+           any reading from the user or API calls, thus we don't need to worry
+           about exceptions while they're allocated */
         rip = dp = malloc(sizeof (rip_txt));
         for (x = 0; rip_txt[x]; x++)
             dp[x] = strdup(rip_txt[x]);

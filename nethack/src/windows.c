@@ -53,11 +53,10 @@ static char *tileprefix;
 void
 set_font_file(char *fontfilename)
 {
-    char *namebuf = malloc(strlen(tileprefix) + strlen(fontfilename) + 1);
+    char namebuf[strlen(tileprefix) + strlen(fontfilename) + 1];
     strcpy(namebuf, tileprefix);
     strcat(namebuf, fontfilename);
     set_faketerm_font_file(namebuf);
-    free(namebuf);
 }
 void
 set_tile_file(char *tilefilename)
@@ -66,11 +65,10 @@ set_tile_file(char *tilefilename)
         set_tiles_tile_file(NULL, TILES_PER_ROW, TILES_PER_COL);
         return;
     }
-    char *namebuf = malloc(strlen(tileprefix) + strlen(tilefilename) + 1);
+    char namebuf[strlen(tileprefix) + strlen(tilefilename) + 1];
     strcpy(namebuf, tileprefix);
     strcat(namebuf, tilefilename);
     set_tiles_tile_file(namebuf, TILES_PER_ROW, TILES_PER_COL);
-    free(namebuf);
 }
 
 void
@@ -562,12 +560,13 @@ tabexpand(char *sbuf)
 void
 curses_display_buffer(const char *inbuf, nh_bool trymove)
 {
-    char *line, *buf, **lines;
+    char *line, **lines;
     char linebuf[BUFSZ * ROWNO];
     int lcount, i;
     struct nh_menulist menu;
 
-    buf = strdup(inbuf);
+    char buf[strlen(inbuf) + 1];
+    strcpy(buf, inbuf);
 
     init_menulist(&menu);
 
@@ -586,8 +585,6 @@ curses_display_buffer(const char *inbuf, nh_bool trymove)
 
     curses_display_menu(&menu, NULL, PICK_NONE, PLHINT_ANYWHERE, NULL);
     dealloc_menulist(&menu);
-
-    free(buf);
 }
 
 
