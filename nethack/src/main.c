@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-27 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -290,15 +290,13 @@ mainmenu(void)
 
         menuresult[0] = EXITGAME;       /* default action */
         if (!override_hackdir)
-            n = curses_display_menu_core(mainmenu_items,
-                                         ARRAY_SIZE(mainmenu_items), NULL,
-                                         PICK_ONE, menuresult, 0,
-                                         logoheight - 1, COLS, LINES - 3, NULL);
+            n = curses_display_menu_core(
+                STATIC_MENULIST(mainmenu_items), NULL, PICK_ONE,
+                menuresult, 0, logoheight - 1, COLS, LINES - 3, NULL);
         else
-            n = curses_display_menu_core(mainmenu_items_noclient,
-                                         ARRAY_SIZE(mainmenu_items_noclient),
-                                         NULL, PICK_ONE, menuresult, 0,
-                                         logoheight - 1, COLS, LINES - 3, NULL);
+            n = curses_display_menu_core(
+                STATIC_MENULIST(mainmenu_items_noclient), NULL, PICK_ONE,
+                menuresult, 0, logoheight - 1, COLS, LINES - 3, NULL);
 
         if (n < 1)
             continue;

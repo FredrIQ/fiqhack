@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -512,10 +512,10 @@ loadgame(void)
 {
     char buf[BUFSZ];
     fnchar savedir[BUFSZ], filename[1024], **files;
-    struct nh_menuitem *items;
-    int size, icount, fd, i, n, ret, pick[1];
+    int fd, i, size, n, ret, pick[1];
     enum nh_log_status status;
     struct nh_game_info gi;
+    struct nh_menulist menu;
 
     if (!get_gamedir(SAVE_DIR, savedir)) {
         curses_raw_print("Could not find or create the save directory.");
@@ -528,8 +528,7 @@ loadgame(void)
         return FALSE;
     }
 
-    icount = 0;
-    items = malloc(size * sizeof (struct nh_menuitem));
+    init_menulist(&menu);
 
     for (i = 0; i < size; i++) {
         fd = sys_open(files[i], O_RDWR, FILE_OPEN_MASK);
@@ -537,20 +536,20 @@ loadgame(void)
         close(fd);
 
         describe_game(buf, status, &gi);
-        add_menu_item(items, size, icount,
-                      (status == LS_IN_PROGRESS) ? 0 : icount + 1, buf, 0,
-                      FALSE);
+        add_menu_item(&menu, (status == LS_IN_PROGRESS) ? 0 : menu.icount + 1,
+                      buf, 0, FALSE);
     }
 
-    n = curses_display_menu(items, icount, "saved games", PICK_ONE,
+    n = curses_display_menu(&menu, "saved games", PICK_ONE,
                             PLHINT_ANYWHERE, pick);
-    free(items);
+    dealloc_menulist(&menu);
+
     filename[0] = '\0';
     if (n > 0)
         fnncat(filename, files[pick[0] - 1],
                sizeof (filename) / sizeof (fnchar) - 1);
 
-    for (i = 0; i < icount; i++)
+    for (i = 0; i < size; i++)
         free(files[i]);
     free(files);
     if (n <= 0)

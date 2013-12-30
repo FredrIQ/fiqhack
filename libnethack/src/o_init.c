@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-18 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -419,7 +419,7 @@ dodiscovered(const struct nh_cmd_arg *arg)
     int i, dis;
     int ct = 0;
     char *s, oclass, prev_class, classes[MAXOCLASSES];
-    struct menulist menu;
+    struct nh_menulist menu;
     char buf[BUFSZ];
 
     init_menulist(&menu);
@@ -468,9 +468,9 @@ dodiscovered(const struct nh_cmd_arg *arg)
     if (ct == 0) {
         pline("You haven't discovered anything yet...");
     } else
-        display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_ANYWHERE,
+        display_menu(&menu, NULL, PICK_NONE, PLHINT_ANYWHERE,
                      NULL);
-    free(menu.items);
+    dealloc_menulist(&menu);
 
     return 0;
 }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Alex Smith, 2013-12-30 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -400,6 +400,18 @@ struct nh_menuitem {
     nh_bool selected;
 };
 
+/* Used by the menu functions, and by the memory allocation functions.
+
+   This can either be used in an automatically memory-managed way (either items
+   and size are both NULL/0, or items points to malloc'ed memory and size is the
+   number of elements allocated); or in a manually memory-managed way (size is 0
+   and items points to statically allocated memory). */
+struct nh_menulist {
+    struct nh_menuitem *items;
+    int size;
+    int icount;
+};
+
 struct nh_objitem {
     char caption[BUFSZ];
     int id;
@@ -629,7 +641,7 @@ struct nh_window_procs {
     void (*win_request_command) (nh_bool debug, nh_bool completed,
                                  nh_bool interrupted, char *command,
                                  struct nh_cmd_arg *arg);
-    int (*win_display_menu) (struct nh_menuitem *, int, const char *, int, int,
+    int (*win_display_menu) (struct nh_menulist *, const char *, int, int,
                              int *);
     int (*win_display_objects) (struct nh_objitem *, int, const char *, int,
                                 int, struct nh_objresult *);
@@ -646,7 +658,7 @@ struct nh_window_procs {
     void (*win_getlin) (const char *, char *);
     void (*win_delay) (void);
     void (*win_level_changed) (int displaymode);
-    void (*win_outrip) (struct nh_menuitem * items, int icount,
+    void (*win_outrip) (struct nh_menulist *menulist,
                         nh_bool tombstone, const char *name, int gold,
                         const char *killbuf, int end_how, int year);
     void (*win_print_message_nonblocking) (int turn, const char *msg);

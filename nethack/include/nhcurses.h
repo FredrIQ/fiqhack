@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -73,6 +73,7 @@ typedef wchar_t fnchar;
 
 
 # include "nethack.h"
+# include "menulist.h"
 
 # ifdef NETCLIENT
 #  define NHNET_TRANSPARENT
@@ -93,6 +94,13 @@ typedef wchar_t fnchar;
                                          */
 
 # define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
+
+/* A statically-allocated menulist has a size of 0 and non-null items; that's
+   how the menulist management code knows it's statically allocated. */
+# define STATIC_MENULIST(x) (&(struct nh_menulist){ \
+                .items = (x),                       \
+                .icount = ARRAY_SIZE(x),            \
+                .size = 0})
 
 
 enum game_dirs {
@@ -280,9 +288,9 @@ extern char curses_query_key(const char *query, int *count);
 extern int curses_msgwin(const char *msg);
 
 /* gameover.c */
-extern void curses_outrip(struct nh_menuitem *items, int icount,
-                          nh_bool tombstone, const char *name, int gold,
-                          const char *killbuf, int how, int year);
+extern void curses_outrip(
+    struct nh_menulist *ml, nh_bool tombstone, const char *name, int gold,
+    const char *killbuf, int how, int year);
 
 
 /* getline.c */
@@ -316,14 +324,11 @@ extern void draw_map(int cx, int cy);
 
 /* menu.c */
 extern void draw_menu(struct gamewin *gw);
-extern int curses_display_menu(struct nh_menuitem *items, int icount,
-                               const char *title, int how, int placement_hint,
-                               int *results);
-extern int curses_display_menu_core(struct nh_menuitem *items, int icount,
-                                    const char *title, int how, int *results,
-                                    int x1, int y1, int x2, int y2,
-                                    nh_bool(*changefn) (struct win_menu *,
-                                                        int));
+extern int curses_display_menu(struct nh_menulist *ml, const char *title,
+                               int how, int placement_hint, int *results);
+extern int curses_display_menu_core(
+    struct nh_menulist *ml, const char *title, int how, int *results,
+    int x1, int y1, int x2, int y2, nh_bool(*changefn)(struct win_menu *, int));
 extern int curses_display_objects(struct nh_objitem *items, int icount,
                                   const char *title, int how,
                                   int placement_hint,

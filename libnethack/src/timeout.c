@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1235,7 +1235,7 @@ do_storms(void)
  */
 
 static const char *kind_name(short);
-static void print_queue(struct menulist *menu, timer_element *);
+static void print_queue(struct nh_menulist *menu, timer_element *);
 static void insert_timer(struct level *lev, timer_element * gnu);
 static timer_element *remove_timer(timer_element **, short, void *);
 static timer_element *peek_timer(timer_element **, short, void *);
@@ -1286,7 +1286,7 @@ kind_name(short kind)
 }
 
 static void
-print_queue(struct menulist *menu, timer_element * base)
+print_queue(struct nh_menulist *menu, timer_element * base)
 {
     timer_element *curr;
     char buf[BUFSZ];
@@ -1313,7 +1313,7 @@ int
 wiz_timeout_queue(const struct nh_cmd_arg *arg)
 {
     char buf[BUFSZ];
-    struct menulist menu;
+    struct nh_menulist menu;
 
     (void) arg;
 
@@ -1326,9 +1326,9 @@ wiz_timeout_queue(const struct nh_cmd_arg *arg)
     add_menutext(&menu, "");
     print_queue(&menu, level->lev_timers);
 
-    display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_ANYWHERE,
+    display_menu(&menu, NULL, PICK_NONE, PLHINT_ANYWHERE,
                  NULL);
-    free(menu.items);
+    dealloc_menulist(&menu);
 
     return 0;
 }

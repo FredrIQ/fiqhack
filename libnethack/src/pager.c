@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-26 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -575,7 +575,7 @@ checkfile(const char *inp, struct permonst *pm, boolean user_typed_name,
         }
 
         if (user_typed_name || without_asking || yn("More info?") == 'y') {
-            struct menulist menu;
+            struct nh_menulist menu;
 
             if (dlb_fseek(fp, txt_offset + entry_offset, SEEK_SET) < 0) {
                 pline("? Seek error on 'data' file!");
@@ -594,9 +594,9 @@ checkfile(const char *inp, struct permonst *pm, boolean user_typed_name,
                 add_menutext(&menu, buf + 1);
             }
 
-            display_menu(menu.items, menu.icount, NULL, FALSE, PLHINT_ANYWHERE,
+            display_menu(&menu, NULL, FALSE, PLHINT_ANYWHERE,
                          NULL);
-            free(menu.items);
+            dealloc_menulist(&menu);
         }
     } else if (user_typed_name)
         pline("I don't have any information on those things.");

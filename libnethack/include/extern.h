@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -33,13 +33,13 @@ struct engr;
 struct flag;
 struct level;
 struct memfile;
-struct menulist;
 struct mkroom;
 struct monst;
 struct musable;
 struct nh_autopickup_rules;
 struct nh_cmd_arg;
 struct nh_menuitem;
+struct nh_menulist;
 struct nh_objitem;
 struct nh_objresult;
 struct nh_option_desc;
@@ -115,7 +115,7 @@ extern int spec_abon(struct obj *, struct monst *);
 extern int spec_dbon(struct obj *, struct monst *, int);
 extern void discover_artifact(xchar);
 extern boolean undiscovered_artifact(xchar);
-extern int disp_artifact_discoveries(struct menulist *);
+extern int disp_artifact_discoveries(struct nh_menulist *);
 extern boolean artifact_hit(struct monst *, struct monst *, struct obj *, int *,
                             int);
 extern int doinvoke(const struct nh_cmd_arg *);
@@ -1810,11 +1810,9 @@ extern char yn_function(const char *query, const char *resp, char def);
 extern int getdir(const char *, schar *dx, schar *dy, schar *dz, boolean isarg);
 extern char query_key(const char *query, int *count);
 extern void getlin(const char *query, char *bufp, boolean isarg);
-extern int display_menu(struct nh_menuitem *, int, const char *, int, int,
-                        int *);
+extern int display_menu(struct nh_menulist *, const char *, int, int, int *);
 extern int display_objects(struct nh_objitem *, int, const char *, int, int,
                            struct nh_objresult *);
-extern void init_menulist(struct menulist *m);
 extern boolean win_list_items(struct nh_objitem *items, int icount,
                               boolean invent);
 

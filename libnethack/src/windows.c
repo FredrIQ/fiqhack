@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -233,7 +233,7 @@ yn_function(const char *query, const char *resp, char def)
 
 
 int
-display_menu(struct nh_menuitem *items, int icount, const char *title, int how,
+display_menu(struct nh_menulist *menu, const char *title, int how,
              int placement_hint, int *results)
 {
     int n, j;
@@ -244,7 +244,7 @@ display_menu(struct nh_menuitem *items, int icount, const char *title, int how,
         n = -1;
     else if (!log_replay_menu(FALSE, &n, results)) {
         log_replay_no_more_options();
-        n = (*windowprocs.win_display_menu) (items, icount, title, how,
+        n = (*windowprocs.win_display_menu) (menu, title, how,
                                              placement_hint, results);
     }
 
@@ -260,8 +260,10 @@ display_menu(struct nh_menuitem *items, int icount, const char *title, int how,
         log_record_menu(FALSE, n, results);
 
         if (n == 1) {
-            for (j = 0; j < icount && items[j].id != results[0]; j++) {}
-            strcpy(buf, items[j].caption);
+            for (j = 0;
+                 j < menu->icount && menu->items[j].id != results[0];
+                 j++) {}
+            strcpy(buf, menu->items[j].caption);
         } else if (n > 1)
             sprintf(buf, "(%d selected)", n);
 
@@ -310,14 +312,6 @@ display_objects(struct nh_objitem *items, int icount, const char *title,
         pline("<%s: %s>", title ? title : "List of objects", buf);
     }
     return n;
-}
-
-void
-init_menulist(struct menulist *m)
-{
-    m->size = 10;
-    m->icount = 0;
-    m->items = malloc(m->size * sizeof (struct nh_menuitem));
 }
 
 boolean

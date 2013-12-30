@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-27 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Dean Luick, 1994                                       */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -592,7 +592,7 @@ candle_light_range(struct obj *obj)
 int
 wiz_light_sources(const struct nh_cmd_arg *arg)
 {
-    struct menulist menu;
+    struct nh_menulist menu;
     char buf[BUFSZ];
     light_source *ls;
 
@@ -622,9 +622,9 @@ wiz_light_sources(const struct nh_cmd_arg *arg)
         add_menutext(&menu, "<none>");
 
 
-    display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_ANYWHERE,
+    display_menu(&menu, NULL, PICK_NONE, PLHINT_ANYWHERE,
                  NULL);
-    free(menu.items);
+    dealloc_menulist(&menu);
 
     return 0;
 }

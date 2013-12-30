@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -221,12 +221,6 @@ struct object_pick {
     int count;
 };
 
-struct menulist {
-    struct nh_menuitem *items;
-    int size;
-    int icount;
-};
-
 extern struct permonst pm_leader, pm_guardian, pm_nemesis;
 extern struct permonst pm_you_male, pm_you_female;
 
@@ -277,12 +271,12 @@ extern char toplines[MSGCOUNT][BUFSZ];
 extern int toplines_count[MSGCOUNT];
 extern int curline;
 
-# define add_menuitem(m, i, cap, acc, sel)\
-    add_menu_item((m)->items, (m)->size, (m)->icount, i, cap, acc, sel)
-# define add_menuheading(m, c)\
-    add_menu_txt((m)->items, (m)->size, (m)->icount, c, MI_HEADING)
-# define add_menutext(m, c)\
-    add_menu_txt((m)->items, (m)->size, (m)->icount, c, MI_TEXT)
+# define add_menuitem(m, i, cap, acc, sel)      \
+    add_menu_item((m), i, cap, acc, sel)
+# define add_menuheading(m, c)                  \
+    add_menu_txt((m), c, MI_HEADING)
+# define add_menutext(m, c)                     \
+    add_menu_txt((m), c, MI_TEXT)
 
 # define MEMFILE_HASHTABLE_SIZE 1009
 

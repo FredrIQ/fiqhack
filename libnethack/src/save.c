@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-27 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -31,7 +31,7 @@ int
 dosave(const struct nh_cmd_arg *arg)
 {
     int n, selected[1];
-    struct menulist menu;
+    struct nh_menulist menu;
 
     (void) arg;
 
@@ -40,9 +40,9 @@ dosave(const struct nh_cmd_arg *arg)
     add_menuitem(&menu, 2, "Abandon this game and delete its save file", '!',
                  FALSE);
     add_menuitem(&menu, 3, "Continue playing", 'n', FALSE);
-    n = display_menu(menu.items, menu.icount, "Do you want to stop playing?",
+    n = display_menu(&menu, "Do you want to stop playing?",
                      PICK_ONE, PLHINT_URGENT, selected);
-    free(menu.items);
+    dealloc_menulist(&menu);
     if (n)
         n = selected[0];
     else

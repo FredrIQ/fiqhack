@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -354,7 +354,7 @@ print_option_string(struct nh_option_desc *option, char *buf)
 
 /* add a list of options to the given selection menu */
 static int
-menu_add_options(struct nh_menuitem **items, int *size, int *icount, int listid,
+menu_add_options(struct nh_menulist *menu, int listid,
                  struct nh_option_desc *options, nh_bool birth_only,
                  nh_bool read_only)
 {
@@ -368,13 +368,13 @@ menu_add_options(struct nh_menuitem **items, int *size, int *icount, int listid,
 
         print_option_string(&options[i], optbuf);
         if (read_only)
-            add_menu_txt(*items, *size, *icount, optbuf, MI_TEXT);
+            add_menu_txt(menu, optbuf, MI_TEXT);
         else
-            add_menu_item(*items, *size, *icount, id, optbuf, 0, 0);
+            add_menu_item(menu, id, optbuf, 0, 0);
     }
 
     /* add an empty line */
-    add_menu_txt(*items, *size, *icount, "", MI_TEXT);
+    add_menu_txt(menu, "", MI_TEXT);
 
     return i;
 }
@@ -384,24 +384,19 @@ menu_add_options(struct nh_menuitem **items, int *size, int *icount, int listid,
 static void
 select_boolean_value(union nh_optvalue *value, struct nh_option_desc *option)
 {
-    struct nh_menuitem *items;
-    int icount, size;
+    struct nh_menulist menu;
     int n, pick_list[2];
 
-    icount = 0;
-    size = 4;
-    items = malloc(sizeof (struct nh_menuitem) * size);
+    init_menulist(&menu);
 
-    add_menu_txt(items, size, icount, option->helptxt, MI_TEXT);
-    add_menu_txt(items, size, icount, "", MI_TEXT);
-    add_menu_item(items, size, icount, 1,
-                  option->value.b ? "true (set)" : "true", 't', 0);
-    add_menu_item(items, size, icount, 2,
-                  option->value.b ? "false" : "false (set)", 'f', 0);
+    add_menu_txt(&menu, option->helptxt, MI_TEXT);
+    add_menu_txt(&menu, "", MI_TEXT);
+    add_menu_item(&menu, 1, option->value.b ? "true (set)" : "true", 't', 0);
+    add_menu_item(&menu, 2, option->value.b ? "false" : "false (set)", 'f', 0);
 
-    n = curses_display_menu(items, icount, option->name, PICK_ONE, PLHINT_RIGHT,
+    n = curses_display_menu(&menu, option->name, PICK_ONE, PLHINT_RIGHT,
                             pick_list);
-    free(items);
+    dealloc_menulist(&menu);
 
     value->b = option->value.b; /* in case of ESC */
     if (n == 1)
@@ -413,16 +408,13 @@ select_boolean_value(union nh_optvalue *value, struct nh_option_desc *option)
 static void
 select_enum_value(union nh_optvalue *value, struct nh_option_desc *option)
 {
-    struct nh_menuitem *items;
-    int icount, size;
+    struct nh_menulist menu;
     int i, n, selectidx, *pick_list;
 
-    icount = 0;
-    size = 10;
-    items = malloc(sizeof (struct nh_menuitem) * size);
+    init_menulist(&menu);
 
-    add_menu_txt(items, size, icount, option->helptxt, MI_TEXT);
-    add_menu_txt(items, size, icount, "", MI_TEXT);
+    add_menu_txt(&menu, option->helptxt, MI_TEXT);
+    add_menu_txt(&menu, "", MI_TEXT);
 
     for (i = 0; i < option->e.numchoices; i++) {
         char capbuf[QBUFSZ];
@@ -435,13 +427,13 @@ select_enum_value(union nh_optvalue *value, struct nh_option_desc *option)
             cap = option->e.choices[i].caption;
         }
         /* don't use the choice ids directly, 0 is a valid value for those */
-        add_menu_item(items, size, icount, i + 1, cap, 0, 0);
+        add_menu_item(&menu, i + 1, cap, 0, 0);
     }
 
-    pick_list = malloc(sizeof (int) * icount);
-    n = curses_display_menu(items, icount, option->name, PICK_ONE, PLHINT_RIGHT,
+    pick_list = malloc(sizeof (int) * menu.icount);
+    n = curses_display_menu(&menu, option->name, PICK_ONE, PLHINT_RIGHT,
                             pick_list);
-    free(items);
+    dealloc_menulist(&menu);
 
     value->e = option->value.e; /* in case of ESC */
     if (n == 1) {
@@ -536,48 +528,40 @@ query_new_value(struct win_menu *mdat, int idx)
 void
 display_options(nh_bool change_birth_opt)
 {
-    struct nh_menuitem *items;
-    int icount, size;
+    struct nh_menulist menu;
     struct nh_option_desc *options = curses_get_nh_opts();
     int n;
 
-    size = 10;
-    items = malloc(sizeof (struct nh_menuitem) * size);
-
     do {
-        icount = 0;
+        init_menulist(&menu);
+
         if (!change_birth_opt) {
             /* add general game options */
-            add_menu_txt(items, size, icount, "Game options:", MI_HEADING);
-            menu_add_options(&items, &size, &icount, GAME_OPTS, options,
-                             FALSE, FALSE);
+            add_menu_txt(&menu, "Game options:", MI_HEADING);
+            menu_add_options(&menu, GAME_OPTS, options, FALSE, FALSE);
 
             /* add or display birth options */
-            add_menu_txt(items, size, icount, "Birth options for this game:",
-                         MI_HEADING);
-            menu_add_options(&items, &size, &icount, BIRTH_OPTS, options,
-                             TRUE, TRUE);
+            add_menu_txt(&menu, "Birth options for this game:", MI_HEADING);
+            menu_add_options(&menu, BIRTH_OPTS, options, TRUE, TRUE);
         } else {
             /* add or display birth options */
-            add_menu_txt(items, size, icount, "Birth options:", MI_HEADING);
-            menu_add_options(&items, &size, &icount, BIRTH_OPTS, options,
-                             TRUE, FALSE);
+            add_menu_txt(&menu, "Birth options:", MI_HEADING);
+            menu_add_options(&menu, BIRTH_OPTS, options, TRUE, FALSE);
 
-            add_menu_txt(items, size, icount, "Game options:", MI_HEADING);
-            menu_add_options(&items, &size, &icount, GAME_OPTS, options,
-                             FALSE, FALSE);
+            add_menu_txt(&menu, "Game options:", MI_HEADING);
+            menu_add_options(&menu, GAME_OPTS, options, FALSE, FALSE);
         }
 
         /* add UI specific options */
-        add_menu_txt(items, size, icount, "Interface options:", MI_HEADING);
-        menu_add_options(&items, &size, &icount, UI_OPTS, curses_options,
-                         FALSE, FALSE);
+        add_menu_txt(&menu, "Interface options:", MI_HEADING);
+        menu_add_options(&menu, UI_OPTS, curses_options, FALSE, FALSE);
 
-        n = curses_display_menu_core(items, icount, "Set what options?",
-                                     PICK_ONE, NULL, 0, 0, -1, -1,
-                                     query_new_value);
+        n = curses_display_menu_core(
+            &menu, "Set what options?", PICK_ONE, NULL, 0, 0, -1, -1,
+            query_new_value);
+        dealloc_menulist(&menu);
+
     } while (n > 0);
-    free(items);
 
     write_ui_config();
     if (!game_is_running)
@@ -588,44 +572,42 @@ display_options(nh_bool change_birth_opt)
 void
 print_options(void)
 {
-    struct nh_menuitem *items;
-    int i, icount, size;
+    struct nh_menulist menu;
+    int i;
     char buf[BUFSZ];
     struct nh_option_desc *options = curses_get_nh_opts();
 
-    icount = 0;
-    size = 10;
-    items = malloc(sizeof (struct nh_menuitem) * size);
+    init_menulist(&menu);
 
-    add_menu_txt(items, size, icount, "Birth options:", MI_HEADING);
+    add_menu_txt(&menu, "Birth options:", MI_HEADING);
     for (i = 0; options[i].name; i++) {
         if (!options[i].birth_option)
             continue;
         snprintf(buf, BUFSZ, "%s\t%s", options[i].name, options[i].helptxt);
-        add_menu_txt(items, size, icount, buf, MI_TEXT);
+        add_menu_txt(&menu, buf, MI_TEXT);
     }
-    add_menu_txt(items, size, icount, "", MI_TEXT);
+    add_menu_txt(&menu, "", MI_TEXT);
 
-    add_menu_txt(items, size, icount, "Game options:", MI_HEADING);
+    add_menu_txt(&menu, "Game options:", MI_HEADING);
     for (i = 0; options[i].name; i++) {
         if (options[i].birth_option)
             continue;
         snprintf(buf, BUFSZ, "%s\t%s", options[i].name, options[i].helptxt);
-        add_menu_txt(items, size, icount, buf, MI_TEXT);
+        add_menu_txt(&menu, buf, MI_TEXT);
     }
-    add_menu_txt(items, size, icount, "", MI_TEXT);
+    add_menu_txt(&menu, "", MI_TEXT);
 
     /* add UI specific options */
-    add_menu_txt(items, size, icount, "Interface options:", MI_HEADING);
+    add_menu_txt(&menu, "Interface options:", MI_HEADING);
     for (i = 0; curses_options[i].name; i++) {
         snprintf(buf, BUFSZ, "%s\t%s", curses_options[i].name,
                  curses_options[i].helptxt);
-        add_menu_txt(items, size, icount, buf, MI_TEXT);
+        add_menu_txt(&menu, buf, MI_TEXT);
     }
 
-    curses_display_menu(items, icount, "Available options:", PICK_NONE,
+    curses_display_menu(&menu, "Available options:", PICK_NONE,
                         PLHINT_ANYWHERE, NULL);
-    free(items);
+    dealloc_menulist(&menu);
 }
 
 /*----------------------------------------------------------------------------*/
@@ -672,7 +654,7 @@ autopickup_rules_help(void)
          "You may select any existing rule to edit it, change its position"},
         {0, MI_TEXT, "in the list, or delete it."},
     };
-    curses_display_menu(items, listlen(items), "Autopickup rules help:",
+    curses_display_menu(STATIC_MENULIST(items), "Autopickup rules help:",
                         PICK_NONE, PLHINT_LEFT, NULL);
 }
 
@@ -689,8 +671,8 @@ get_autopickup_buc(enum nh_bucstatus cur)
     };
     int n, selected[1];
 
-    n = curses_display_menu(items, 5, "Beatitude match:", PICK_ONE,
-                            PLHINT_RIGHT, selected);
+    n = curses_display_menu(STATIC_MENULIST(items), "Beatitude match:",
+                            PICK_ONE, PLHINT_RIGHT, selected);
     if (n <= 0)
         return cur;
     return selected[0] - 1;
@@ -700,20 +682,19 @@ get_autopickup_buc(enum nh_bucstatus cur)
 static int
 get_autopickup_oclass(struct nh_autopick_option *desc, int cur)
 {
-    int i, n, size, icount, selected[1];
-    struct nh_menuitem *items;
+    int i, n, selected[1];
+    struct nh_menulist menu;
 
-    size = desc->numclasses;
-    items = malloc(sizeof (struct nh_menuitem) * size);
-    icount = 0;
+    init_menulist(&menu);
 
     for (i = 0; i < desc->numclasses; i++)
-        add_menu_item(items, size, icount, desc->classes[i].id,
-                      desc->classes[i].caption, (char)desc->classes[i].id, 0);
+        add_menu_item(&menu, desc->classes[i].id, desc->classes[i].caption,
+                      (char)desc->classes[i].id, 0);
 
-    n = curses_display_menu(items, icount, "Object class match:", PICK_ONE,
+    n = curses_display_menu(&menu, "Object class match:", PICK_ONE,
                             PLHINT_RIGHT, selected);
-    free(items);
+    dealloc_menulist(&menu);
+
     if (n <= 0)
         return cur;
     return selected[0];
@@ -726,39 +707,39 @@ edit_ap_rule(struct nh_autopick_option *desc, struct nh_autopickup_rules *ar,
 {
     struct nh_autopickup_rule *r = &ar->rules[ruleno];
     struct nh_autopickup_rule tmprule;
-    struct nh_menuitem *items;
-    int i, icount, size = 7, n, selected[1], newpos;
+    struct nh_menulist menu;
+    int i, n, selected[1], newpos;
     char query[BUFSZ], buf[BUFSZ], *classname;
 
-    items = malloc(sizeof (struct nh_menuitem) * size);
-
     do {
-        icount = 0;
+        init_menulist(&menu);
+
         sprintf(buf, "rule position:\t[%d]", ruleno + 1);
-        add_menu_item(items, size, icount, 1, buf, 0, 0);
+        add_menu_item(&menu, 1, buf, 0, 0);
 
         sprintf(buf, "name pattern:\t[%s]", r->pattern);
-        add_menu_item(items, size, icount, 2, buf, 0, 0);
+        add_menu_item(&menu, 2, buf, 0, 0);
 
         classname = NULL;
         for (i = 0; i < desc->numclasses && !classname; i++)
             if (desc->classes[i].id == r->oclass)
                 classname = desc->classes[i].caption;
         sprintf(buf, "object type:\t[%s]", classname);
-        add_menu_item(items, size, icount, 3, buf, 0, 0);
+        add_menu_item(&menu, 3, buf, 0, 0);
 
         sprintf(buf, "beatitude:\t[%s]", bucnames[r->buc]);
-        add_menu_item(items, size, icount, 4, buf, 0, 0);
+        add_menu_item(&menu, 4, buf, 0, 0);
 
         sprintf(buf, "action:\t[%s]", r->action == AP_GRAB ? "GRAB" : "LEAVE");
-        add_menu_item(items, size, icount, 5, buf, 0, 0);
-        add_menu_txt(items, size, icount, "", MI_TEXT);
-        add_menu_item(items, size, icount, 6, "delete this rule", 'x', 0);
+        add_menu_item(&menu, 5, buf, 0, 0);
+        add_menu_txt(&menu, "", MI_TEXT);
+        add_menu_item(&menu, 6, "delete this rule", 'x', 0);
 
-        n = curses_display_menu(items, icount, "Edit rule:", PICK_ONE,
+        n = curses_display_menu(&menu, "Edit rule:", PICK_ONE,
                                 PLHINT_RIGHT, selected);
+        dealloc_menulist(&menu);
         if (n <= 0)
-            break;
+            return;
 
         switch (selected[0]) {
             /* move this rule */
@@ -788,7 +769,7 @@ edit_ap_rule(struct nh_autopick_option *desc, struct nh_autopickup_rules *ar,
                     ar->rules[i] = ar->rules[i - 1];
             }
             ar->rules[newpos] = tmprule;
-            goto out;
+            return;
 
             /* edit the pattern */
         case 2:
@@ -826,20 +807,18 @@ edit_ap_rule(struct nh_autopick_option *desc, struct nh_autopickup_rules *ar,
             ar->rules =
                 realloc(ar->rules,
                         ar->num_rules * sizeof (struct nh_autopickup_rule));
-            goto out;   /* break just beaks the switch .. doh */
+            return; 
         }
 
     } while (n > 0);
-out:
-    free(items);
 }
 
 
 static void
 show_autopickup_menu(struct nh_option_desc *opt)
 {
-    struct nh_menuitem *items;
-    int i, j, n, icount, size, menusize, parts, selected[1], id;
+    struct nh_menulist menu;
+    int i, j, n, parts, selected[1], id;
     struct nh_autopickup_rule *r;
     char buf[BUFSZ];
     struct nh_autopickup_rule *rule;
@@ -850,19 +829,17 @@ show_autopickup_menu(struct nh_option_desc *opt)
     value.ar->num_rules = 0;
     value.ar->rules = NULL;
     if (opt->value.ar) {
+        int size;
         value.ar->num_rules = opt->value.ar->num_rules;
         size = value.ar->num_rules * sizeof (struct nh_autopickup_rule);
         value.ar->rules = malloc(size);
         memcpy(value.ar->rules, opt->value.ar->rules, size);
     }
 
-    menusize = value.ar->num_rules + 4;
-    items = malloc(sizeof (struct nh_menuitem) * menusize);
-
     do {
-        icount = 0;
+        init_menulist(&menu);
 
-        add_menu_txt(items, menusize, icount, "Pos\tRule\tAction", MI_HEADING);
+        add_menu_txt(&menu, "Pos\tRule\tAction", MI_HEADING);
 
         /* list the rules in human-readable form */
         for (i = 0; i < value.ar->num_rules; i++) {
@@ -901,22 +878,25 @@ show_autopickup_menu(struct nh_option_desc *opt)
             else
                 sprintf(buf + strlen(buf), ":\t  LEAVE >");
 
-            add_menu_item(items, menusize, icount, i + 1, buf, 0, 0);
+            add_menu_item(&menu, i + 1, buf, 0, 0);
         }
 
-        add_menu_txt(items, menusize, icount, "", MI_TEXT);
-        add_menu_item(items, menusize, icount, -1, "add a new rule", '!', 0);
-        add_menu_item(items, menusize, icount, -2, "help", '?', 0);
+        add_menu_txt(&menu, "", MI_TEXT);
+        add_menu_item(&menu, -1, "add a new rule", '!', 0);
+        add_menu_item(&menu, -2, "help", '?', 0);
 
         /* TODO */
-        n = curses_display_menu(items, icount, "Autopickup rules:", PICK_ONE,
+        n = curses_display_menu(&menu, "Autopickup rules:", PICK_ONE,
                                 PLHINT_RIGHT, selected);
+        dealloc_menulist(&menu);
         if (n <= 0)
             break;
 
         /* add or edit a rule */
         id = selected[0];
         if (id == -1) {
+            int size;
+
             /* create a new rule */
             id = value.ar->num_rules;
             value.ar->num_rules++;
@@ -941,7 +921,6 @@ show_autopickup_menu(struct nh_option_desc *opt)
 
     free(value.ar->rules);
     free(value.ar);
-    free(items);
 }
 
 /*----------------------------------------------------------------------------*/

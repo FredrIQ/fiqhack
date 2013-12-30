@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Daniel Thaler, 2012 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -106,9 +106,9 @@ account_menu(struct server_info *server)
 
     while (n > 0) {
         menuresult[0] = 3;      /* default action */
-        n = curses_display_menu(netmenu_items, ARRAY_SIZE(netmenu_items),
-                                "Account settings:", PICK_ONE, PLHINT_ANYWHERE,
-                                menuresult);
+        n = curses_display_menu(
+            STATIC_MENULIST(netmenu_items), "Account settings:",
+            PICK_ONE, PLHINT_ANYWHERE, menuresult);
 
         switch (menuresult[0]) {
         case 1:
@@ -346,8 +346,7 @@ add_server_menu(struct server_info **servlist)
 
 
 static void
-list_servers(struct server_info *servlist, struct nh_menuitem **items,
-             int *size, int *icount)
+list_servers(struct server_info *servlist, struct nh_menulist *menu)
 {
     char buf[BUFSZ];
     int i;
@@ -364,25 +363,25 @@ list_servers(struct server_info *servlist, struct nh_menuitem **items,
             sprintf(buf, "%s on %s", servlist[i].username,
                     servlist[i].hostname);
 
-        add_menu_item(*items, *size, *icount, i + 1, buf, 0, 0);
+        add_menu_item(menu, i + 1, buf, 0, 0);
     }
 }
 
 static void
 delete_server_menu(struct server_info *servlist)
 {
-    struct nh_menuitem *items;
-    int icount, size, n, id, selected[1];
+    struct nh_menulist menu;
+    int n, id, icount, selected[1];
 
-    icount = 0;
-    size = 10;
-    items = malloc(size * sizeof (struct nh_menuitem));
+    init_menulist(&menu);
 
-    list_servers(servlist, &items, &size, &icount);
+    list_servers(servlist, &menu);
 
-    n = curses_display_menu(items, icount, "Delete which server?", PICK_ONE,
+    icount = menu.icount;
+
+    n = curses_display_menu(&menu, "Delete which server?", PICK_ONE,
                             PLHINT_ANYWHERE, selected);
-    free(items);
+    dealloc_menulist(&menu);
 
     if (n <= 0)
         return;
@@ -398,24 +397,22 @@ delete_server_menu(struct server_info *servlist)
 static struct server_info *
 connect_server_menu(struct server_info **servlist)
 {
-    struct nh_menuitem *items;
-    int icount, size, n, selected[1];
+    struct nh_menulist menu;
+    int n, selected[1];
     struct server_info *server;
 
     while (1) {
-        icount = 0;
-        size = 10;
-        items = malloc(size * sizeof (struct nh_menuitem));
+        init_menulist(&menu);
 
-        list_servers(*servlist, &items, &size, &icount);
+        list_servers(*servlist, &menu);
 
-        add_menu_txt(items, size, icount, "", MI_NORMAL);
-        add_menu_item(items, size, icount, -1, "Add server", '!', 0);
-        add_menu_item(items, size, icount, -2, "Delete server", '#', 0);
+        add_menu_txt(&menu, "", MI_NORMAL);
+        add_menu_item(&menu, -1, "Add server", '!', 0);
+        add_menu_item(&menu, -2, "Delete server", '#', 0);
 
-        n = curses_display_menu(items, icount, "Connect to which server?",
+        n = curses_display_menu(&menu, "Connect to which server?",
                                 PICK_ONE, PLHINT_ANYWHERE, selected);
-        free(items);
+        dealloc_menulist(&menu);
         if (n <= 0)
             break;
 
@@ -549,7 +546,7 @@ netgame_mainmenu(struct server_info *server)
         snprintf(buf, BUFSZ, "%s on %s:", server->username, server->hostname);
         if (ui_flags.connection_only)
             snprintf(buf, BUFSZ, "Logged in as %s:", server->username);
-        n = curses_display_menu_core(netmenu_items, ARRAY_SIZE(netmenu_items),
+        n = curses_display_menu_core(STATIC_MENULIST(netmenu_items),
                                      buf, PICK_ONE, menuresult, 0, logoheight,
                                      COLS, LINES - 3, NULL);
 

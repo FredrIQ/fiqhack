@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -640,7 +640,7 @@ query_category(const char *qstr,        /* query string */
     boolean do_blessed = FALSE, do_cursed = FALSE, do_uncursed =
         FALSE, do_buc_unknown = FALSE, do_unidentified = FALSE;
     int num_buc_types = 0;
-    struct menulist menu;
+    struct nh_menulist menu;
 
     if (!olist)
         return 0;
@@ -709,7 +709,7 @@ query_category(const char *qstr,        /* query string */
         }
         pack++;
         if (invlet >= 'u') {
-            free(menu.items);
+            dealloc_menulist(&menu);
             impossible("query_category: too many categories");
             return 0;
         }
@@ -743,9 +743,9 @@ query_category(const char *qstr,        /* query string */
     if (do_buc_unknown)
         add_menuitem(&menu, 'X', "Items of unknown B/C/U status", 'X', FALSE);
 
-    n = display_menu(menu.items, menu.icount, qstr, how, PLHINT_INVENTORY,
+    n = display_menu(&menu, qstr, how, PLHINT_INVENTORY,
                      pick_list);
-    free(menu.items);
+    dealloc_menulist(&menu);
     if (n < 0)
         n = 0;  /* callers don't expect -1 */
 
@@ -2083,7 +2083,8 @@ in_or_out_menu(const char *prompt, struct obj *obj, boolean outokay,
         set_menuitem(&items[nr++], 3, MI_NORMAL, "Both of the above", 'b',
                      FALSE);
 
-    n = display_menu(items, nr, prompt, PICK_ONE, PLHINT_CONTAINER, selection);
+    n = display_menu(&(struct nh_menulist){.items = items, .icount = nr},
+                     prompt, PICK_ONE, PLHINT_CONTAINER, selection);
     if (n > 0)
         n = selection[0];
 

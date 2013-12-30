@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-21 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -7,6 +7,7 @@
  */
 
 #include "nhclient.h"
+#include "menulist.h"
 
 struct netcmd {
     const char *name;
@@ -403,31 +404,33 @@ json_read_menuitem(json_t * jobj, struct nh_menuitem *mi)
 static json_t *
 cmd_outrip(json_t * params, int display_only)
 {
-    struct nh_menuitem *items;
-    int icount, end_how, tombstone, gold, year, i;
+    struct nh_menulist menu;
+    int end_how, tombstone, gold, year, i;
     const char *name, *killbuf;
     json_t *jarr;
 
     if (json_unpack
-        (params, "{so,si,si,si,si,si,ss,ss!}", "items", &jarr, "icount",
-         &icount, "tombstone", &tombstone, "gold", &gold, "year", &year, "how",
-         &end_how, "name", &name, "killbuf", &killbuf) == -1) {
+        (params, "{so,si,si,si,si,si,ss,ss!}", "items", &jarr,
+         "icount", &(menu.icount), "tombstone", &tombstone, "gold", &gold,
+         "year", &year, "how", &end_how, "name", &name,
+         "killbuf", &killbuf) == -1) {
         print_error("Incorrect parameter type in cmd_outrip");
         return NULL;
     }
 
-    if (!json_is_array(jarr) || json_array_size(jarr) != icount) {
+    if (!json_is_array(jarr) || json_array_size(jarr) != menu.icount) {
         print_error("Damaged items array in cmd_outrip");
         return NULL;
     }
 
-    items = malloc(icount * sizeof (struct nh_menuitem));
-    for (i = 0; i < icount; i++)
-        json_read_menuitem(json_array_get(jarr, i), &items[i]);
+    menu.size = menu.icount;
+    menu.items = malloc(menu.icount * sizeof (struct nh_menuitem));
+    for (i = 0; i < menu.icount; i++)
+        json_read_menuitem(json_array_get(jarr, i), menu.items + i);
 
-    windowprocs.win_outrip(items, icount, tombstone, name, gold, killbuf,
-                            end_how, year);
-    free(items);
+    windowprocs.win_outrip(&menu, tombstone, name, gold,
+                           killbuf, end_how, year);
+    dealloc_menulist(&menu);
     return NULL;
 }
 
@@ -475,19 +478,20 @@ cmd_request_command(json_t * params, int display_only)
 static json_t *
 cmd_display_menu(json_t * params, int display_only)
 {
-    struct nh_menuitem *items;
-    int icount, i, how, ret, *selected, placement_hint;
+    struct nh_menulist menu;
+    int i, how, ret, *selected, placement_hint;
     const char *title;
     json_t *jarr;
 
     if (json_unpack
-        (params, "{so,si,si,ss,si!}", "items", &jarr, "icount", &icount, "how",
-         &how, "title", &title, "plhint", &placement_hint) == -1) {
+        (params, "{so,si,si,ss,si!}", "items", &jarr, "icount",
+         &(menu.icount), "how", &how, "title", &title,
+         "plhint", &placement_hint) == -1) {
         print_error("Incorrect parameter type in cmd_display_menu");
         return NULL;
     }
 
-    if (!json_is_array(jarr) || json_array_size(jarr) != icount) {
+    if (!json_is_array(jarr) || json_array_size(jarr) != menu.icount) {
         print_error("Damaged items array in cmd_display_menu");
         return NULL;
     }
@@ -495,15 +499,16 @@ cmd_display_menu(json_t * params, int display_only)
     if (!*title)
         title = NULL;
 
-    items = malloc(icount * sizeof (struct nh_menuitem));
-    for (i = 0; i < icount; i++)
-        json_read_menuitem(json_array_get(jarr, i), &items[i]);
+    menu.size = menu.icount;
+    menu.items = malloc(menu.icount * sizeof (struct nh_menuitem));
+    for (i = 0; i < menu.icount; i++)
+        json_read_menuitem(json_array_get(jarr, i), menu.items + i);
 
-    selected = malloc(icount * sizeof (int));
-    ret =
-        windowprocs.win_display_menu(items, icount, title, how, placement_hint,
-                                      selected);
-    free(items);
+    selected = malloc(menu.icount * sizeof (int));
+    ret = windowprocs.win_display_menu(&menu, title, how, placement_hint,
+                                       selected);
+    dealloc_menulist(&menu);
+
     if (display_only) {
         free(selected);
         return NULL;

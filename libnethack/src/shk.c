@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2673,7 +2673,7 @@ doinvbill(int mode)
     struct obj *obj;
     long totused;
     char *buf_p;
-    struct menulist menu;
+    struct nh_menulist menu;
 
     shkp = shop_keeper(level, *u.ushops);
     if (!shkp || !inhishop(shkp)) {
@@ -2738,10 +2738,10 @@ doinvbill(int mode)
     add_menutext(&menu, "");
     add_menutext(&menu, buf_p);
 
-    display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_CONTAINER,
+    display_menu(&menu, NULL, PICK_NONE, PLHINT_CONTAINER,
                  NULL);
 quit:
-    free(menu.items);
+    dealloc_menulist(&menu);
     return 0;
 }
 
@@ -3501,7 +3501,7 @@ price_quote(struct obj *first_obj)
     char buf[BUFSZ], price[40];
     long cost;
     int cnt = 0;
-    struct menulist menu;
+    struct nh_menulist menu;
     struct monst *shkp = shop_keeper(level, inside_shop(level, u.ux, u.uy));
 
     init_menulist(&menu);
@@ -3525,7 +3525,7 @@ price_quote(struct obj *first_obj)
         cnt++;
     }
     if (cnt > 1) {
-        display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_CONTAINER,
+        display_menu(&menu, NULL, PICK_NONE, PLHINT_CONTAINER,
                      NULL);
     } else if (cnt == 1) {
         if (first_obj->no_charge || first_obj == uball || first_obj == uchain) {
@@ -3540,7 +3540,7 @@ price_quote(struct obj *first_obj)
                   shk_embellish(first_obj, cost));
         }
     }
-    free(menu.items);
+    dealloc_menulist(&menu);
 }
 
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-18 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -962,7 +962,7 @@ enhance_weapon_skill(const struct nh_cmd_arg *arg)
         maxxed_cnt, selected[1];
     char buf[BUFSZ], sklnambuf[BUFSZ];
     const char *prefix;
-    struct menulist menu;
+    struct nh_menulist menu;
     boolean speedy = FALSE;
 
     (void) arg;
@@ -1054,9 +1054,8 @@ enhance_weapon_skill(const struct nh_cmd_arg *arg)
         if (!(wizard && speedy))
             sprintf(eos(buf), "  (%d slot%s available)", u.weapon_slots,
                     plur(u.weapon_slots));
-        n = display_menu(menu.items, menu.icount, buf,
-                         to_advance ? PICK_ONE : PICK_NONE, PLHINT_ANYWHERE,
-                         selected);
+        n = display_menu(&menu, buf, to_advance ? PICK_ONE : PICK_NONE,
+                         PLHINT_ANYWHERE, selected);
         if (n == 1) {
             n = selected[0] - 1;        /* get item selected */
             skill_advance(n);
@@ -1072,7 +1071,7 @@ enhance_weapon_skill(const struct nh_cmd_arg *arg)
         }
     } while (speedy && n > 0);
 
-    free(menu.items);
+    dealloc_menulist(&menu);
     return 0;
 }
 
@@ -1082,7 +1081,7 @@ dump_skills(void)
 {
     int pass, i;
     char buf[BUFSZ], sklnambuf[BUFSZ];
-    struct menulist menu;
+    struct nh_menulist menu;
 
     init_menulist(&menu);
 
@@ -1100,10 +1099,10 @@ dump_skills(void)
             sprintf(buf, " %s\t[%s]", P_NAME(i), sklnambuf);
             add_menuitem(&menu, 0, buf, 0, FALSE);
         }
-    display_menu(menu.items, menu.icount, "Your skills at the end:", PICK_NONE,
+    display_menu(&menu, "Your skills at the end:", PICK_NONE,
                  PLHINT_ANYWHERE, NULL);
 
-    free(menu.items);
+    dealloc_menulist(&menu);
     return 0;
 }
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-21 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -9,13 +9,12 @@ static FILE *dumpfp;
 static struct nh_window_procs winprocs_original;
 
 static void dump_status(void);
-static int dump_display_menu(struct nh_menuitem *, int, const char *, int, int,
+static int dump_display_menu(struct nh_menulist *, const char *, int, int,
                              int *);
 static int dump_display_objects(struct nh_objitem *, int, const char *, int,
                                 int, struct nh_objresult *);
-static void dump_outrip(struct nh_menuitem *items, int icount, boolean ts,
-                        const char *name, int gold, const char *killbuf,
-                        int end_how, int year);
+static void dump_outrip(struct nh_menulist *ml, boolean ts, const char *name,
+                        int gold, const char *killbuf, int end_how, int year);
 
 #if !defined(WIN32)
 # define TIMESTAMP_FORMAT "%Y-%m-%d %H:%M"
@@ -159,19 +158,20 @@ dump_catch_menus(boolean intercept)
 
 
 static int
-dump_display_menu(struct nh_menuitem *items, int icount, const char *title,
+dump_display_menu(struct nh_menulist *menu, const char *title,
                   int how, int placement_hint, int *result)
 {
     int i, col, extra;
     int colwidth[10];
     char *start, *tab;
+    struct nh_menuitem *const items = menu->items;
 
     if (!dumpfp)
         return 0;
 
     /* menus may have multiple columns separated by tabs */
     memset(colwidth, 0, sizeof (colwidth));
-    for (i = 0; i < icount; i++) {
+    for (i = 0; i < menu->icount; i++) {
         tab = strchr(items[i].caption, '\t');
         if (!tab && items[i].role == MI_HEADING)
             continue;   /* some headings shouldn't be forced into column 1 */
@@ -192,7 +192,7 @@ dump_display_menu(struct nh_menuitem *items, int icount, const char *title,
 
     /* print the menu content */
     fprintf(dumpfp, "%s\n", title);
-    for (i = 0; i < icount; i++) {
+    for (i = 0; i < menu->icount; i++) {
         tab = strchr(items[i].caption, '\t');
         if (!tab && items[i].role == MI_HEADING) {
             fprintf(dumpfp, "  %s\n", items[i].caption);
@@ -245,9 +245,8 @@ dump_display_objects(struct nh_objitem *items, int icount, const char *title,
 
 
 static void
-dump_outrip(struct nh_menuitem *items, int icount, boolean ts, const char *name,
+dump_outrip(struct nh_menulist *menu, boolean ts, const char *name,
             int gold, const char *killbuf, int end_how, int year)
 {
-    dump_display_menu(items, icount, "Final status:", PICK_NONE,
-                      PLHINT_ANYWHERE, NULL);
+    dump_display_menu(menu, "Final status:", PICK_NONE, PLHINT_ANYWHERE, NULL);
 }

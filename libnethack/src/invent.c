@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1464,7 +1464,7 @@ dounpaid(void)
     int classcount, count, num_so_far;
     int save_unpaid = 0;        /* lint init */
     long cost, totcost;
-    struct menulist menu;
+    struct nh_menulist menu;
 
     count = count_unpaid(invent);
 
@@ -1541,9 +1541,8 @@ dounpaid(void)
     add_menutext(&menu, "");
     add_menutext(&menu, xprname(NULL, "Total:", '*', FALSE, totcost, 0L));
 
-    display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_INVENTORY,
-                 NULL);
-    free(menu.items);
+    display_menu(&menu, NULL, PICK_NONE, PLHINT_INVENTORY, NULL);
+    dealloc_menulist(&menu);
 }
 
 
@@ -2398,7 +2397,8 @@ invdisp_nothing(const char *hdr, const char *txt)
     set_menuitem(&items[1], 0, MI_NORMAL, "", 0, FALSE);
     set_menuitem(&items[2], 0, MI_NORMAL, txt, 0, FALSE);
 
-    display_menu(items, 3, NULL, PICK_NONE, PLHINT_INVENTORY, NULL);
+    display_menu(&(struct nh_menulist){.items = items, .icount = 3},
+                 NULL, PICK_NONE, PLHINT_INVENTORY, NULL);
 
     return;
 }

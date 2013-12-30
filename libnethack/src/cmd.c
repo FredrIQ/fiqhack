@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -43,16 +43,16 @@ static int wiz_togglegen(const struct nh_cmd_arg *);
 static int wiz_show_wmodes(const struct nh_cmd_arg *);
 static int wiz_show_stats(const struct nh_cmd_arg *);
 static void count_obj(struct obj *, long *, long *, boolean, boolean);
-static void obj_chain(struct menulist *, const char *, struct obj *, long *,
+static void obj_chain(struct nh_menulist *, const char *, struct obj *, long *,
                       long *);
-static void mon_invent_chain(struct menulist *, const char *, struct monst *,
+static void mon_invent_chain(struct nh_menulist *, const char *, struct monst *,
                              long *, long *);
-static void mon_chain(struct menulist *, const char *, struct monst *, long *,
-                      long *);
-static void contained(struct menulist *, const char *, long *, long *);
+static void mon_chain(struct nh_menulist *, const char *, struct monst *,
+                      long *, long *);
+static void contained(struct nh_menulist *, const char *, long *, long *);
 static boolean minimal_enlightenment(void);
 
-static void enlght_line(struct menulist *, const char *, const char *,
+static void enlght_line(struct nh_menulist *, const char *, const char *,
                         const char *);
 static char *enlght_combatinc(const char *, int, int, char *);
 
@@ -577,7 +577,7 @@ wiz_polyself(const struct nh_cmd_arg *arg)
 static int
 wiz_show_seenv(const struct nh_cmd_arg *arg)
 {
-    struct menulist menu;
+    struct nh_menulist menu;
     int x, y, v, startx, stopx, curx;
     char row[COLNO + 1];
 
@@ -614,9 +614,9 @@ wiz_show_seenv(const struct nh_cmd_arg *arg)
 
         add_menutext(&menu, row);
     }
-    display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_ANYWHERE,
+    display_menu(&menu, NULL, PICK_NONE, PLHINT_ANYWHERE,
                  NULL);
-    free(menu.items);
+    dealloc_menulist(&menu);
     return 0;
 }
 
@@ -624,7 +624,7 @@ wiz_show_seenv(const struct nh_cmd_arg *arg)
 static int
 wiz_show_vision(const struct nh_cmd_arg *arg)
 {
-    struct menulist menu;
+    struct nh_menulist menu;
     int x, y, v;
     char row[COLNO + 1];
 
@@ -655,9 +655,9 @@ wiz_show_vision(const struct nh_cmd_arg *arg)
 
         add_menutext(&menu, &row[1]);
     }
-    display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_ANYWHERE,
+    display_menu(&menu, NULL, PICK_NONE, PLHINT_ANYWHERE,
                  NULL);
-    free(menu.items);
+    dealloc_menulist(&menu);
     return 0;
 }
 
@@ -665,7 +665,7 @@ wiz_show_vision(const struct nh_cmd_arg *arg)
 static int
 wiz_show_wmodes(const struct nh_cmd_arg *arg)
 {
-    struct menulist menu;
+    struct nh_menulist menu;
     int x, y;
     char row[COLNO + 1];
     struct rm *loc;
@@ -690,9 +690,9 @@ wiz_show_wmodes(const struct nh_cmd_arg *arg)
         row[COLNO] = '\0';
         add_menutext(&menu, row);
     }
-    display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_ANYWHERE,
+    display_menu(&menu, NULL, PICK_NONE, PLHINT_ANYWHERE,
                  NULL);
-    free(menu.items);
+    dealloc_menulist(&menu);
     return 0;
 }
 
@@ -717,7 +717,7 @@ static const char
             enl_msg(menu,You_,have,(const char *)"", something)
 
 static void
-enlght_line(struct menulist *menu, const char *start, const char *middle,
+enlght_line(struct nh_menulist *menu, const char *start, const char *middle,
             const char *end)
 {
     char buf[BUFSZ];
@@ -767,7 +767,7 @@ enlightenment(int final)
 {
     int ltmp;
     char buf[BUFSZ], *title;
-    struct menulist menu;
+    struct nh_menulist menu;
 
     init_menulist(&menu);
     title = final ? "Final Attributes:" : "Current Attributes:";
@@ -1129,9 +1129,9 @@ enlightenment(int final)
             enl_msg(&menu, You_, "have been killed ", p, buf);
     }
 
-    display_menu(menu.items, menu.icount, title, PICK_NONE, PLHINT_ANYWHERE,
+    display_menu(&menu, title, PICK_NONE, PLHINT_ANYWHERE,
                  NULL);
-    free(menu.items);
+    dealloc_menulist(&menu);
     return;
 }
 
@@ -1179,7 +1179,7 @@ static void
 unspoilered_intrinsics(void)
 {
     int n;
-    struct menulist menu;
+    struct nh_menulist menu;
 
     init_menulist(&menu);
 
@@ -1249,9 +1249,9 @@ unspoilered_intrinsics(void)
     if (n == menu.icount)
         add_menutext(&menu, "You have no intrinsic abilities.");
 
-    display_menu(menu.items, menu.icount, "Your Intrinsic Statistics",
+    display_menu(&menu, "Your Intrinsic Statistics",
                  PICK_NONE, PLHINT_ANYWHERE, NULL);
-    free(menu.items);
+    dealloc_menulist(&menu);
 }
 
 /*
@@ -1268,7 +1268,7 @@ minimal_enlightenment(void)
     static const char fmtstr[] = "%-10s: %-12s (originally %s)";
     static const char fmtstr_noorig[] = "%-10s: %s";
     static const char deity_fmtstr[] = "%-17s%s";
-    struct menulist menu;
+    struct nh_menulist menu;
 
     init_menulist(&menu);
 
@@ -1379,7 +1379,7 @@ minimal_enlightenment(void)
     if (wizard || discover)
         add_menuitem(&menu, 'w', "Debug/explore mode spoilers", 'w', FALSE);
 
-    n = display_menu(menu.items, menu.icount, "Your Statistics", PICK_ONE,
+    n = display_menu(&menu, "Your Statistics", PICK_ONE,
                      PLHINT_ANYWHERE, selected);
 
     if (n == 1) {
@@ -1410,7 +1410,7 @@ minimal_enlightenment(void)
         }
     }
 
-    free(menu.items);
+    dealloc_menulist(&menu);
     return n;
 }
 
@@ -1516,7 +1516,7 @@ show_conduct(int final)
 {
     char buf[BUFSZ];
     int ngenocided;
-    struct menulist menu;
+    struct nh_menulist menu;
 
     /* Create the conduct window */
     init_menulist(&menu);
@@ -1615,9 +1615,9 @@ show_conduct(int final)
         enl_msg(&menu, You_, "are ", "were ", "permanently blind");
 
     /* Pop up the window and wait for a key */
-    display_menu(menu.items, menu.icount, "Voluntary challenges:", PICK_NONE,
+    display_menu(&menu, "Voluntary challenges:", PICK_NONE,
                  PLHINT_ANYWHERE, NULL);
-    free(menu.items);
+    dealloc_menulist(&menu);
 }
 
 
@@ -1955,7 +1955,7 @@ count_obj(struct obj *chain, long *total_count, long *total_size, boolean top,
 }
 
 static void
-obj_chain(struct menulist *menu, const char *src, struct obj *chain,
+obj_chain(struct nh_menulist *menu, const char *src, struct obj *chain,
           long *total_count, long *total_size)
 {
     char buf[BUFSZ];
@@ -1969,7 +1969,7 @@ obj_chain(struct menulist *menu, const char *src, struct obj *chain,
 }
 
 static void
-mon_invent_chain(struct menulist *menu, const char *src, struct monst *chain,
+mon_invent_chain(struct nh_menulist *menu, const char *src, struct monst *chain,
                  long *total_count, long *total_size)
 {
     char buf[BUFSZ];
@@ -1985,7 +1985,7 @@ mon_invent_chain(struct menulist *menu, const char *src, struct monst *chain,
 }
 
 static void
-contained(struct menulist *menu, const char *src, long *total_count,
+contained(struct nh_menulist *menu, const char *src, long *total_count,
           long *total_size)
 {
     char buf[BUFSZ];
@@ -2010,7 +2010,7 @@ contained(struct menulist *menu, const char *src, long *total_count,
 }
 
 static void
-mon_chain(struct menulist *menu, const char *src, struct monst *chain,
+mon_chain(struct nh_menulist *menu, const char *src, struct monst *chain,
           long *total_count, long *total_size)
 {
     char buf[BUFSZ];
@@ -2034,7 +2034,7 @@ static int
 wiz_show_stats(const struct nh_cmd_arg *arg)
 {
     char buf[BUFSZ];
-    struct menulist menu;
+    struct nh_menulist menu;
     long total_obj_size = 0, total_obj_count = 0;
     long total_mon_size = 0, total_mon_count = 0;
 
@@ -2079,9 +2079,9 @@ wiz_show_stats(const struct nh_cmd_arg *arg)
     sprintf(buf, template, "Total", total_mon_count, total_mon_size);
     add_menutext(&menu, buf);
 
-    display_menu(menu.items, menu.icount, NULL, PICK_NONE, PLHINT_ANYWHERE,
+    display_menu(&menu, NULL, PICK_NONE, PLHINT_ANYWHERE,
                  NULL);
-    free(menu.items);
+    dealloc_menulist(&menu);
     return 0;
 }
 

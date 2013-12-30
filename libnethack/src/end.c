@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-26 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -43,7 +43,7 @@ static void disclose(int, boolean, long);
 static void dump_disclose(int);
 static void get_valuables(struct obj *);
 static void sort_valuables(struct valuable_data *, int);
-static int artifact_score(struct obj *, boolean, struct menulist *);
+static int artifact_score(struct obj *, boolean, struct nh_menulist *);
 static void savelife(int);
 static boolean check_survival(int how, char *kilbuf);
 static boolean should_query_disclose_options(char *defquery);
@@ -413,7 +413,7 @@ sort_valuables(struct valuable_data list[],
 static int artifact_score(struct obj *list,
                           boolean counting,  /* true => add up points;
                                                 false => display them */
-                          struct menulist *menu) {
+                          struct nh_menulist *menu) {
     char pbuf[BUFSZ];
     struct obj *otmp;
     long value, total;
@@ -461,7 +461,7 @@ calc_score(int how, boolean show, long umoney)
     double category_ratio;
     long category_points;
     double elog2;
-    struct menulist menu;
+    struct nh_menulist menu;
     char buf[BUFSZ];
 
     elog2 = log(2) / 1000.0;
@@ -620,9 +620,9 @@ calc_score(int how, boolean show, long umoney)
     }
     /* Finishing off. */
     if (show) {
-        display_menu(menu.items, menu.icount, "Score breakdown:", PICK_NONE,
+        display_menu(&menu, "Score breakdown:", PICK_NONE,
                      PLHINT_ANYWHERE, NULL);
-        free(menu.items);
+        dealloc_menulist(&menu);
     }
     return total;
 }
@@ -702,7 +702,7 @@ display_rip(int how, char *kilbuf, char *pbuf, long umoney,
 {
     char outrip_buf[BUFSZ];
     boolean show_endwin = FALSE;
-    struct menulist menu;
+    struct nh_menulist menu;
 
     init_menulist(&menu);
 
@@ -858,10 +858,10 @@ display_rip(int how, char *kilbuf, char *pbuf, long umoney,
         add_menutext(&menu, "");
     }
     if (!done_stopprint)
-        outrip(menu.items, menu.icount, how <= GENOCIDED, u.uplname, umoney,
+        outrip(&menu, how <= GENOCIDED, u.uplname, umoney,
                outrip_buf, how, getyear());
 
-    free(menu.items);
+    dealloc_menulist(&menu);
 }
 
 /* Be careful not to call panic from here! */
@@ -1118,7 +1118,7 @@ list_vanquished(char defquery, boolean ask)
     long total_killed = 0L;
     char c;
     char buf[BUFSZ];
-    struct menulist menu;
+    struct nh_menulist menu;
 
     /* get totals first */
     for (i = LOW_PM; i < NUMMONS; i++) {
@@ -1180,9 +1180,9 @@ list_vanquished(char defquery, boolean ask)
                 sprintf(buf, "%ld creatures vanquished.", total_killed);
                 add_menutext(&menu, buf);
             }
-            display_menu(menu.items, menu.icount, "Vanquished creatures:",
+            display_menu(&menu, "Vanquished creatures:",
                          PICK_NONE, PLHINT_ANYWHERE, NULL);
-            free(menu.items);
+            dealloc_menulist(&menu);
         }
     }
 }
@@ -1233,7 +1233,7 @@ list_genocided(char defquery, boolean ask)
     int ngenocided, nextincted;
     char c, *query, *title;
     char buf[BUFSZ];
-    struct menulist menu;
+    struct nh_menulist menu;
 
     ngenocided = nextincted = 0;
     for (i = LOW_PM; i < NUMMONS; ++i) {
@@ -1280,9 +1280,9 @@ list_genocided(char defquery, boolean ask)
             title =
                 nextincted ? "Genocided or extinct species:" :
                 "Genocided species:";
-            display_menu(menu.items, menu.icount, title, PICK_NONE,
+            display_menu(&menu, title, PICK_NONE,
                          PLHINT_ANYWHERE, NULL);
-            free(menu.items);
+            dealloc_menulist(&menu);
         }
     }
 }

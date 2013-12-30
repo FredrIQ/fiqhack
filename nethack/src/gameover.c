@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -46,9 +46,8 @@ center(char *line, char *text)
 
 
 void
-curses_outrip(struct nh_menuitem *items, int icount, nh_bool tombstone,
-              const char *plname, int gold, const char *killbuf, int end_how,
-              int year)
+curses_outrip(struct nh_menulist *ml, nh_bool tombstone, const char *plname,
+              int gold, const char *killbuf, int end_how, int year)
 {
     char **dp, **rip;
     char *dpx;
@@ -113,8 +112,8 @@ curses_outrip(struct nh_menuitem *items, int icount, nh_bool tombstone,
         txtpos = sizeof (rip_txt) / sizeof (rip_txt[0]) + 2;
     }
 
-    for (i = 0; i < icount; i++)
-        mvaddstr(txtpos + i, 0, items[i].caption);
+    for (i = 0; i < ml->icount; i++)
+        mvaddstr(txtpos + i, 0, ml->items[i].caption);
     mvaddstr(LINES - 1, 0, "--More--");
 
     refresh();

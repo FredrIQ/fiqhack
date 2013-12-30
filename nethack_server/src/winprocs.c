@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-21 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -18,15 +18,14 @@ static void srv_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux,
                               int uy);
 static void srv_delay_output(void);
 static void srv_level_changed(int displaymode);
-static void srv_outrip(struct nh_menuitem *items, int icount, nh_bool tombstone,
+static void srv_outrip(struct nh_menulist *ml, nh_bool tombstone,
                        const char *name, int gold, const char *killbuf,
                        int end_how, int year);
 static void srv_request_command(nh_bool debug, nh_bool completed,
                                 nh_bool interrupted, char *command,
                                 struct nh_cmd_arg *arg);
-static int srv_display_menu(struct nh_menuitem *items, int icount,
-                            const char *title, int how, int placement_hint,
-                            int *results);
+static int srv_display_menu(struct nh_menulist *ml, const char *title,
+                            int how, int placement_hint, int *results);
 static int srv_display_objects(struct nh_objitem *items, int icount,
                                const char *title, int how, int placement_hint,
                                struct nh_objresult *pick_list);
@@ -392,20 +391,19 @@ json_menuitem(struct nh_menuitem *mi)
 
 
 static void
-srv_outrip(struct nh_menuitem *items, int icount, nh_bool tombstone,
-           const char *name, int gold, const char *killbuf, int end_how,
-           int year)
+srv_outrip(struct nh_menulist *ml, nh_bool tombstone, const char *name,
+           int gold, const char *killbuf, int end_how, int year)
 {
     int i;
     json_t *jobj, *jarr;
 
     jarr = json_array();
-    for (i = 0; i < icount; i++)
-        json_array_append_new(jarr, json_menuitem(&items[i]));
-    jobj =
-        json_pack("{so,si,si,si,si,si,ss,ss}", "items", jarr, "icount", icount,
-                  "tombstone", tombstone, "gold", gold, "year", year, "how",
-                  end_how, "name", name, "killbuf", killbuf);
+    for (i = 0; i < ml->icount; i++)
+        json_array_append_new(jarr, json_menuitem(ml->items + i));
+    jobj = json_pack("{so,si,si,si,si,si,ss,ss}", "items", jarr,
+                     "icount", ml->icount, "tombstone", tombstone, "gold", gold,
+                     "year", year, "how", end_how, "name", name,
+                     "killbuf", killbuf);
 
     add_display_data("outrip", jobj);
 }
@@ -458,18 +456,19 @@ srv_request_command(nh_bool debug, nh_bool completed, nh_bool interrupted,
 
 
 static int
-srv_display_menu(struct nh_menuitem *items, int icount, const char *title,
+srv_display_menu(struct nh_menulist *ml, const char *title,
                  int how, int placement_hint, int *results)
 {
     int i, ret;
     json_t *jobj, *jarr;
 
     jarr = json_array();
-    for (i = 0; i < icount; i++)
-        json_array_append_new(jarr, json_menuitem(&items[i]));
+    for (i = 0; i < ml->icount; i++)
+        json_array_append_new(jarr, json_menuitem(ml->items + i));
     jobj =
-        json_pack("{so,si,si,ss,si}", "items", jarr, "icount", icount, "how",
-                  how, "title", title ? title : "", "plhint", placement_hint);
+        json_pack("{so,si,si,ss,si}", "items", jarr, "icount", ml->icount,
+                  "how", how, "title", title ? title : "",
+                  "plhint", placement_hint);
 
     if (how == PICK_NONE) {
         add_display_data("display_menu", jobj);

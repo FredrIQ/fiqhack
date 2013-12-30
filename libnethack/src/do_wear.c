@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1962,7 +1962,7 @@ doequip(const struct nh_cmd_arg *arg)
     enum objslot j;
     int n;
     int selected[1];
-    struct menulist menu;
+    struct nh_menulist menu;
     int changes, time_consuming_changes = 0;
     boolean resuming = TRUE;
 
@@ -2019,9 +2019,9 @@ doequip(const struct nh_cmd_arg *arg)
                 &menu, os_last_slot+1 + 3,
                 "Remove all equipment", 'T', FALSE);
             
-            n = display_menu(menu.items, menu.icount, "Your Equipment",
+            n = display_menu(&menu, "Your Equipment",
                              PICK_ONE, PLHINT_INVENTORY, selected);
-            free(menu.items);
+            dealloc_menulist(&menu);
             if (!n) /* no selection made */
                 return 0;
         } else

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -51,7 +51,7 @@ static int possible_places(int, boolean *, struct proto_dungeon *);
 static xchar pick_level(boolean *, int);
 static boolean place_level(int, struct proto_dungeon *);
 static const char *br_string(int);
-static void print_branch(struct menulist *menu, int dnum, int lower_bound,
+static void print_branch(struct nh_menulist *menu, int dnum, int lower_bound,
                          int upper_bound, boolean bymenu,
                          struct lchoice *lchoices);
 
@@ -1633,7 +1633,8 @@ br_string(int type)
 
 /* Print all child branches between the lower and upper bounds. */
 static void
-print_branch(struct menulist *menu, int dnum, int lower_bound, int upper_bound,
+print_branch(struct nh_menulist *menu, int dnum,
+             int lower_bound, int upper_bound,
              boolean bymenu, struct lchoice *lchoices)
 {
     branch *br;
@@ -1676,7 +1677,7 @@ print_dungeon(boolean bymenu, schar * rlev, xchar * rdgn)
     dungeon *dptr;
     branch *br;
     struct lchoice lchoices;
-    struct menulist menu;
+    struct nh_menulist menu;
 
     init_menulist(&menu);
 
@@ -1773,9 +1774,9 @@ print_dungeon(boolean bymenu, schar * rlev, xchar * rdgn)
         int selected[1];
         int idx;
 
-        n = display_menu(menu.items, menu.icount, "Level teleport to where:",
+        n = display_menu(&menu, "Level teleport to where:",
                          PICK_ONE, PLHINT_ANYWHERE, selected);
-        free(menu.items);
+        dealloc_menulist(&menu);
         if (n > 0) {
             idx = selected[0] - 1;
             if (rlev && rdgn) {
@@ -1816,9 +1817,9 @@ print_dungeon(boolean bymenu, schar * rlev, xchar * rdgn)
         add_menutext(&menu, buf);
     }
 
-    display_menu(menu.items, menu.icount, "Level teleport to where:", PICK_NONE,
+    display_menu(&menu, "Level teleport to where:", PICK_NONE,
                  PLHINT_ANYWHERE, NULL);
-    free(menu.items);
+    dealloc_menulist(&menu);
     return 0;
 }
 
@@ -2117,7 +2118,7 @@ int
 dooverview(const struct nh_cmd_arg *arg)
 {
     struct overview_info oinfo;
-    struct menulist menu;
+    struct nh_menulist menu;
     int i, n, x, y, dnum, selected[1];
     char buf[BUFSZ];
     struct level *lev;
@@ -2164,9 +2165,9 @@ dooverview(const struct nh_cmd_arg *arg)
         }
     }
 
-    n = display_menu(menu.items, menu.icount, "Dungeon overview:", PICK_ONE,
+    n = display_menu(&menu, "Dungeon overview:", PICK_ONE,
                      PLHINT_ANYWHERE, selected);
-    free(menu.items);
+    dealloc_menulist(&menu);
     if (n <= 0)
         return 0;
 

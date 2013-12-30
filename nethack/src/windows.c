@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-29 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -564,13 +564,12 @@ curses_display_buffer(const char *inbuf, nh_bool trymove)
 {
     char *line, *buf, **lines;
     char linebuf[BUFSZ * ROWNO];
-    int icount, size, lcount, i;
-    struct nh_menuitem *items;
+    int lcount, i;
+    struct nh_menulist menu;
 
     buf = strdup(inbuf);
-    icount = 0;
-    size = 10;
-    items = malloc(size * sizeof (struct nh_menuitem));
+
+    init_menulist(&menu);
 
     line = strtok(buf, "\n");
     do {
@@ -580,13 +579,14 @@ curses_display_buffer(const char *inbuf, nh_bool trymove)
 
         wrap_text(COLNO - 4, linebuf, &lcount, &lines);
         for (i = 0; i < lcount; ++i)
-            add_menu_txt(items, size, icount, lines[i], MI_TEXT);
+            add_menu_txt(&menu, lines[i], MI_TEXT);
 
         line = strtok(NULL, "\n");
     } while (line);
 
-    curses_display_menu(items, icount, NULL, PICK_NONE, PLHINT_ANYWHERE, NULL);
-    free(items);
+    curses_display_menu(&menu, NULL, PICK_NONE, PLHINT_ANYWHERE, NULL);
+    dealloc_menulist(&menu);
+
     free(buf);
 }
 

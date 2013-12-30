@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-26 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -264,9 +264,8 @@ find_accel(int accel, struct win_menu *mdat)
 
 
 int
-curses_display_menu_core(struct nh_menuitem *items, int icount,
-                         const char *title, int how, int *results, int x1,
-                         int y1, int x2, int y2,
+curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
+                         int *results, int x1, int y1, int x2, int y2,
                          nh_bool(*changefn) (struct win_menu *, int))
 {
     struct gamewin *gw;
@@ -281,11 +280,11 @@ curses_display_menu_core(struct nh_menuitem *items, int icount,
     gw->draw = draw_menu;
     gw->resize = resize_menu;
     mdat = (struct win_menu *)gw->extra;
-    mdat->items = items;
-    mdat->icount = icount;
+    mdat->items = ml->items;
+    mdat->icount = ml->icount;
     mdat->title = title;
     mdat->how = how;
-    mdat->selected = calloc(icount, sizeof (char));
+    mdat->selected = calloc(ml->icount, sizeof (char));
     mdat->x1 = x1;
     mdat->y1 = y1;
     mdat->x2 = x2;
@@ -383,24 +382,24 @@ curses_display_menu_core(struct nh_menuitem *items, int icount,
             /* select all */
         case '.':
             if (mdat->how == PICK_ANY)
-                for (i = 0; i < icount; i++)
+                for (i = 0; i < ml->icount; i++)
                     if (mdat->items[i].role == MI_NORMAL)
                         mdat->selected[i] = TRUE;
             break;
 
             /* select none */
         case '-':
-            for (i = 0; i < icount; i++)
+            for (i = 0; i < ml->icount; i++)
                 mdat->selected[i] = FALSE;
             break;
 
             /* search for a menu item */
         case ':':
             curses_getline("Search:", sbuf);
-            for (i = 0; i < icount; i++)
+            for (i = 0; i < ml->icount; i++)
                 if (strstr(mdat->items[i].caption, sbuf))
                     break;
-            if (i < icount) {
+            if (i < ml->icount) {
                 int end = max(mdat->icount - mdat->innerheight, 0);
 
                 mdat->offset = min(i, end);
@@ -430,10 +429,10 @@ curses_display_menu_core(struct nh_menuitem *items, int icount,
         rv = -1;
     else {
         rv = 0;
-        for (i = 0; i < icount; i++) {
+        for (i = 0; i < ml->icount; i++) {
             if (mdat->selected[i]) {
                 if (results)
-                    results[rv] = items[i].id;
+                    results[rv] = ml->items[i].id;
                 rv++;
             }
         }
@@ -449,7 +448,7 @@ curses_display_menu_core(struct nh_menuitem *items, int icount,
 
 
 int
-curses_display_menu(struct nh_menuitem *items, int icount, const char *title,
+curses_display_menu(struct nh_menulist *ml, const char *title,
                     int how, int placement_hint, int *results)
 {
     int n;
@@ -469,8 +468,7 @@ curses_display_menu(struct nh_menuitem *items, int icount, const char *title,
         y2 = getmaxy(msgwin);
     }
 
-    n = curses_display_menu_core(items, icount, title, how, results, x1, y1, x2,
-                                 y2, NULL);
+    n = curses_display_menu_core(ml, title, how, results, x1, y1, x2, y2, NULL);
     return n;
 }
 
@@ -1004,17 +1002,16 @@ do_item_actions(const struct nh_objitem *item)
     int ccount = 0, i, selected[1];
     struct nh_cmd_desc *obj_cmd = nh_get_object_commands(&ccount, item->accel);
     char title[QBUFSZ];
-    struct nh_menuitem *items;
+    struct nh_menulist menu;
     struct nh_cmd_arg arg;
 
     if (!obj_cmd || !ccount)
         return FALSE;
 
-    items = malloc(sizeof (struct nh_menuitem) * ccount);
+    init_menulist(&menu);
 
     for (i = 0; i < ccount; i++)
-        set_menuitem(&items[i], i + 1, MI_NORMAL, obj_cmd[i].desc,
-                     obj_cmd[i].defkey, FALSE);
+        add_menu_item(&menu, i + 1, obj_cmd[i].desc, obj_cmd[i].defkey, FALSE);
 
     if (settings.invweight && item->weight != -1) {
         snprintf(title, QBUFSZ, "%c - %s {%d}", item->accel, item->caption,
@@ -1022,9 +1019,9 @@ do_item_actions(const struct nh_objitem *item)
     } else {
         snprintf(title, QBUFSZ, "%c - %s", item->accel, item->caption);
     }
-    i = curses_display_menu(items, ccount, title, PICK_ONE, PLHINT_INVENTORY,
+    i = curses_display_menu(&menu, title, PICK_ONE, PLHINT_INVENTORY,
                             selected);
-    free(items);
+    dealloc_menulist(&menu);
 
     if (i <= 0)
         return FALSE;

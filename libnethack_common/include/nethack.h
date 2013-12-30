@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 /* this header defines the interface between libnethack and window ports
@@ -70,31 +70,5 @@ extern nh_topten_entry_p EXPORT(nh_get_topten) (
     int around, nh_bool own);
 
 # undef EXPORT
-
-# define set_menuitem(it, i, r, cap, acc, sel) \
-do {\
-    struct nh_menuitem *_item_ = it;\
-    (_item_)->id = i; (_item_)->role = r; (_item_)->accel = acc;\
-    (_item_)->group_accel = 0; (_item_)->selected = sel;\
-    strncpy((_item_)->caption, cap, BUFSZ - 1); \
-    /* This should never do anything, but safety first! */ \
-    (_item_)->caption[BUFSZ - 1] = '\0'; \
-} while(0)
-
-# define add_menu_item(items, size, icount, id, caption, accel, selected) \
-do {\
-    if (icount >= size) \
-        {size *= 2; (items) = realloc((items), size * sizeof(struct nh_menuitem)); } \
-    set_menuitem(&(items)[icount], id, MI_NORMAL, caption, accel, selected); \
-    (icount)++;\
-} while(0)
-
-# define add_menu_txt(items, size, icount, caption, role) \
-do {\
-    if (icount >= size) \
-        {size *= 2; (items) = realloc((items), size * sizeof(struct nh_menuitem)); } \
-    set_menuitem(&(items)[icount], 0, role, caption, 0, FALSE); \
-    (icount)++;\
-} while(0)
 
 #endif

@@ -1,13 +1,13 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "nhcurses.h"
 
 static void
-topten_add_score(struct nh_topten_entry *entry, struct nh_menuitem **items,
-                 int *size, int *icount, int maxwidth)
+topten_add_score(struct nh_topten_entry *entry, struct nh_menulist *menu,
+                 int maxwidth)
 {
     char line[BUFSZ], txt[BUFSZ], *txt2;
     char fmt[32], hpbuf[16], maxhpbuf[16];
@@ -42,16 +42,16 @@ topten_add_score(struct nh_topten_entry *entry, struct nh_menuitem **items,
 
         sprintf(fmt, "%%4d %%10d  %%-%ds", maxwidth - initialfw);
         sprintf(line, fmt, entry->rank, entry->points, txt);
-        add_menu_txt(*items, *size, *icount, line, role);
+        add_menu_txt(menu, line, role);
 
         sprintf(fmt, "%%%ds%%-%ds %%3s %%5s ", initialfw, txtfw);
         sprintf(line, fmt, "", txt2, hpbuf, maxhpbuf);
-        add_menu_txt(*items, *size, *icount, line, role);
+        add_menu_txt(menu, line, role);
     } else {
         sprintf(fmt, "%%4d %%10d  %%-%ds %%3s %%5s ", txtfw);
         sprintf(line, fmt, entry->rank, entry->points, entry->entrytxt, hpbuf,
                 maxhpbuf);
-        add_menu_txt(*items, *size, *icount, line, role);
+        add_menu_txt(menu, line, role);
     }
 }
 
@@ -75,8 +75,7 @@ show_topten(char *you, int top, int around, nh_bool own)
     struct nh_topten_entry *scores;
     char buf[BUFSZ];
     int i, listlen = 0;
-    struct nh_menuitem *items;
-    int icount, size;
+    struct nh_menulist menu;
 
     scores = nh_get_topten(&listlen, buf, you, top, around, own);
 
@@ -89,27 +88,23 @@ show_topten(char *you, int top, int around, nh_bool own)
     clear();
     refresh();
 
-    icount = 0;
-    size = 4 + listlen * 2;     /* maximum length, only required if every item
-                                   wraps */
-    items = malloc(size * sizeof (struct nh_menuitem));
+    init_menulist(&menu);
 
     /* buf has the topten status if there is one, eg: "you did not beat your
        previous score" */
     if (buf[0]) {
-        add_menu_txt(items, size, icount, buf, MI_TEXT);
-        add_menu_txt(items, size, icount, "", MI_TEXT);
+        add_menu_txt(&menu, buf, MI_TEXT);
+        add_menu_txt(&menu, "", MI_TEXT);
     }
 
     makeheader(buf);
-    add_menu_txt(items, size, icount, buf, MI_HEADING);
+    add_menu_txt(&menu, buf, MI_HEADING);
 
     for (i = 0; i < listlen; i++)
-        topten_add_score(&scores[i], &items, &size, &icount,
-                         min(COLS, BUFSZ) - 4);
-    add_menu_txt(items, size, icount, "", MI_TEXT);
+        topten_add_score(&scores[i], &menu, min(COLS, BUFSZ) - 4);
+    add_menu_txt(&menu, "", MI_TEXT);
 
-    curses_display_menu(items, icount, "Top scores:", PICK_NONE,
+    curses_display_menu(&menu, "Top scores:", PICK_NONE,
                         PLHINT_ANYWHERE, NULL);
-    free(items);
+    dealloc_menulist(&menu);
 }

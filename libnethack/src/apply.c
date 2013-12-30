@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2623,7 +2623,8 @@ use_grapple(struct obj *obj, const struct nh_cmd_arg *arg)
         set_menuitem(&items[2], 3, MI_NORMAL, "a monster", 0, FALSE);
 
         if (display_menu
-            (items, 3, "Aim for what?", PICK_ONE, PLHINT_ANYWHERE, selected) &&
+            (&(struct nh_menulist){.items = items, .icount = 3},
+             "Aim for what?", PICK_ONE, PLHINT_ANYWHERE, selected) &&
             rn2(P_SKILL(typ) > P_SKILLED ? 20 : 2))
             tohit = selected[0] - 1;
     }

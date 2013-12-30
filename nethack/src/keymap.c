@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -360,15 +360,19 @@ static int
 doextlist(const char **namelist, const char **desclist, int listlen)
 {
     char buf[BUFSZ];
-    int i, icount = 0, size = listlen;
-    struct nh_menuitem *items = malloc(sizeof (struct nh_menuitem) * size);
+    int i;
+    struct nh_menulist menu;
+
+    init_menulist(&menu);
 
     for (i = 0; i < listlen; i++) {
         sprintf(buf, " %s\t- %s.", namelist[i], desclist[i]);
-        add_menu_txt(items, size, icount, buf, MI_TEXT);
+        add_menu_txt(&menu, buf, MI_TEXT);
     }
-    curses_display_menu(items, icount, "Extended Commands List", PICK_NONE,
+
+    curses_display_menu(&menu, "Extended Commands List", PICK_NONE,
                         PLHINT_ANYWHERE, NULL);
+    dealloc_menulist(&menu);
 
     return 0;
 }
@@ -458,26 +462,24 @@ show_whatdoes(void)
 static struct nh_cmd_desc *
 show_help(void)
 {
-    struct nh_menuitem *items;
-    int i, n, size, icount, selected[1];
+    struct nh_menulist menu;
+    int i, n, selected[1];
 
-    size = 10;
-    items = malloc(size * sizeof (struct nh_menuitem));
-    icount = 0;
+    init_menulist(&menu);
 
-    add_menu_item(items, size, icount, 1, "List of game commands.", 0, FALSE);
-    add_menu_item(items, size, icount, 2, "Information what a given key does.",
+    add_menu_item(&menu, 1, "List of game commands.", 0, FALSE);
+    add_menu_item(&menu, 2, "Information what a given key does.",
                   0, FALSE);
-    add_menu_item(items, size, icount, 3, "List of options.", 0, FALSE);
+    add_menu_item(&menu, 3, "List of options.", 0, FALSE);
 
     for (i = 0; i < cmdcount; i++)
         if (commandlist[i].flags & CMD_HELP)
-            add_menu_item(items, size, icount, 100 + i, commandlist[i].desc, 0,
+            add_menu_item(&menu, 100 + i, commandlist[i].desc, 0,
                           FALSE);
 
-    n = curses_display_menu(items, icount, "Help topics:", PICK_ONE,
+    n = curses_display_menu(&menu, "Help topics:", PICK_ONE,
                             PLHINT_RIGHT, selected);
-    free(items);
+    dealloc_menulist(&menu);
     if (n <= 0)
         return NULL;
 
@@ -841,7 +843,7 @@ free_keymap(void)
 
 /* add the description of a command to the keymap menu */
 static void
-add_keylist_command(struct nh_cmd_desc *cmd, struct nh_menuitem *item, int id)
+add_keylist_command(struct nh_menulist *menu, struct nh_cmd_desc *cmd, int id)
 {
     char buf[BUFSZ];
     char keys[BUFSZ];
@@ -862,7 +864,7 @@ add_keylist_command(struct nh_cmd_desc *cmd, struct nh_menuitem *item, int id)
 
     sprintf(buf, "%s%.15s\t%.50s\t%.16s", cmd->flags & CMD_EXT ? "#" : "",
             cmd->name, cmd->desc, keys);
-    set_menuitem(item, id, MI_NORMAL, buf, 0, FALSE);
+    add_menu_item(menu, id, buf, 0, FALSE);
 }
 
 
@@ -871,32 +873,36 @@ static void
 command_settings_menu(struct nh_cmd_desc *cmd)
 {
     char buf[BUFSZ];
-    int i, n, size = 10, icount, selection[1];
-    struct nh_menuitem *items = malloc(sizeof (struct nh_menuitem) * size);
+    int i, n, selection[1];
+    struct nh_menulist menu;
 
     do {
-        icount = 0;
+        init_menulist(&menu);
+
         for (i = 0; i < KEY_MAX; i++) {
             if (keymap[i] == cmd) {
                 sprintf(buf, "delete key %s", friendly_keyname(i));
-                add_menu_item(items, size, icount, i, buf, 0, FALSE);
+                add_menu_item(&menu, i, buf, 0, FALSE);
             }
         }
-        if (icount > 0)
-            add_menu_txt(items, size, icount, "", MI_NORMAL);
-        add_menu_item(items, size, icount, -1, "Add a new key", '+', FALSE);
+
+        if (menu.icount > 0)
+            add_menu_txt(&menu, "", MI_NORMAL);
+
+        add_menu_item(&menu, -1, "Add a new key", '+', FALSE);
         if (!(cmd->flags & CMD_UI)) {
             if (cmd->flags & CMD_EXT)
-                add_menu_item(items, size, icount, -2,
+                add_menu_item(&menu, -2,
                               "Don't use as an extended command", 0, FALSE);
             else
-                add_menu_item(items, size, icount, -2,
+                add_menu_item(&menu, -2,
                               "Use as an extended command", 0, FALSE);
         }
 
         sprintf(buf, "Key bindings for %s", cmd->name);
-        n = curses_display_menu(items, icount, buf, PICK_ONE, PLHINT_ANYWHERE,
+        n = curses_display_menu(&menu, buf, PICK_ONE, PLHINT_ANYWHERE,
                                 selection);
+        dealloc_menulist(&menu);
         if (n < 1)
             break;
 
@@ -922,8 +928,6 @@ command_settings_menu(struct nh_cmd_desc *cmd)
         }
 
     } while (n > 0);
-
-    free(items);
 }
 
 
@@ -963,42 +967,36 @@ set_command_keys(struct win_menu *mdat, int idx)
 void
 show_keymap_menu(nh_bool readonly)
 {
-    int i, n, icount;
-    struct nh_menuitem *items;
-
-    items =
-        malloc(sizeof (struct nh_menuitem) *
-               (ARRAY_SIZE(builtin_commands) + cmdcount + 4));
+    int i, n;
+    struct nh_menulist menu;
 
     do {
-        set_menuitem(&items[0], 0, MI_HEADING, "Command\tDescription\tKey", 0,
-                     FALSE);
-        icount = 1;
+        init_menulist(&menu);
+
+        add_menu_txt(&menu, "Command\tDescription\tKey", MI_HEADING);
+
         /* add builtin commands */
-        for (i = 0; i < ARRAY_SIZE(builtin_commands); i++) {
-            add_keylist_command(&builtin_commands[i], &items[icount],
+        for (i = 0; i < ARRAY_SIZE(builtin_commands); i++)
+            add_keylist_command(&menu, &builtin_commands[i],
                                 readonly ? 0 : -(i + 1));
-            icount++;
-        }
 
         /* add NetHack commands */
-        for (i = 0; i < cmdcount; i++) {
-            add_keylist_command(&commandlist[i], &items[icount],
+        for (i = 0; i < cmdcount; i++)
+            add_keylist_command(&menu, &commandlist[i],
                                 readonly ? 0 : (i + 1));
-            icount++;
-        }
 
         if (!readonly) {
-            set_menuitem(&items[icount++], 0, MI_TEXT, "", 0, FALSE);
-            set_menuitem(&items[icount++], RESET_BINDINGS_ID, MI_NORMAL,
-                         "!!!\tReset all key bindings to built-in defaults\t!!!",
-                         '!', FALSE);
+            add_menu_txt(&menu, "", MI_TEXT);
+            add_menu_item(
+                &menu, RESET_BINDINGS_ID,
+                "!!!\tReset all key bindings to built-in defaults\t!!!",
+                '!', FALSE);
         }
-        n = curses_display_menu_core(items, icount, "Keymap",
+        n = curses_display_menu_core(&menu, "Keymap",
                                      readonly ? PICK_NONE : PICK_ONE, NULL, 0,
                                      0, COLS, LINES, set_command_keys);
+        dealloc_menulist(&menu);
     } while (n > 0);
-    free(items);
 
     write_keymap();
 }

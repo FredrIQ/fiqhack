@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -654,8 +654,7 @@ undiscovered_artifact(xchar m)
 
 /* display a list of discovered artifacts; return their count */
 int
-disp_artifact_discoveries(struct menulist *menu /* supplied by dodiscover() */
-    )
+disp_artifact_discoveries(struct nh_menulist *menu)
 {
     int i, m, otyp;
     char buf[BUFSZ];
@@ -1302,19 +1301,16 @@ arti_invoke(struct obj *obj)
                 int i, num_ok_dungeons, last_ok_dungeon = 0;
                 d_level newlev;
                 extern int n_dgns;      /* from dungeon.c */
-                struct nh_menuitem *items;
+                struct nh_menulist menu;
 
-                items = malloc(n_dgns * sizeof (struct nh_menuitem));
+                init_menulist(&menu);
 
                 num_ok_dungeons = 0;
                 for (i = 0; i < n_dgns; i++) {
                     if (!dungeons[i].dunlev_ureached)
                         continue;
-                    items[num_ok_dungeons].id = i + 1;
-                    items[num_ok_dungeons].accel = 0;
-                    items[num_ok_dungeons].role = MI_NORMAL;
-                    items[num_ok_dungeons].selected = FALSE;
-                    strcpy(items[num_ok_dungeons].caption, dungeons[i].dname);
+
+                    add_menu_item(&menu, i + 1, dungeons[i].dname, 0, FALSE);
                     num_ok_dungeons++;
                     last_ok_dungeon = i;
                 }
@@ -1324,18 +1320,17 @@ arti_invoke(struct obj *obj)
                     int n;
                     int selected[1];
 
-                    n = display_menu(items, num_ok_dungeons,
+                    n = display_menu(&menu,
                                      "Open a portal to which dungeon?",
                                      PICK_ONE, PLHINT_ANYWHERE, selected);
-                    free(items);
+                    dealloc_menulist(&menu);
                     if (n <= 0)
                         goto nothing_special;
 
                     i = selected[0] - 1;
                 } else {
-                    free(items);
-                    i = last_ok_dungeon;        /* also first & only OK dungeon 
-                                                 */
+                    dealloc_menulist(&menu);
+                    i = last_ok_dungeon;     /* also first & only OK dungeon */
                 }
 
                 /* 

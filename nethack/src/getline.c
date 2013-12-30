@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -313,8 +313,8 @@ mungspaces(char *bp)
 static int
 extcmd_via_menu(const char **namelist, const char **desclist, int listlen)
 {
-    struct nh_menuitem *items;
-    int icount, size, *pick_list;
+    struct nh_menulist menu;
+    int *pick_list;
     int *choices;
     char buf[BUFSZ];
     char cbuf[QBUFSZ], prompt[QBUFSZ], fmtstr[20];
@@ -323,8 +323,6 @@ extcmd_via_menu(const char **namelist, const char **desclist, int listlen)
     int accelerator, prevaccelerator;
     int matchlevel = 0;
 
-    size = 10;
-    items = malloc(sizeof (struct nh_menuitem) * size);
     choices = malloc((listlen + 1) * sizeof (int));
 
     ret = 0;
@@ -355,7 +353,8 @@ extcmd_via_menu(const char **namelist, const char **desclist, int listlen)
         }
 
         /* otherwise... */
-        icount = 0;
+        init_menulist(&menu);
+
         prevaccelerator = 0;
         acount = 0;
         for (i = 0; i < listlen && choices[i] >= 0; ++i) {
@@ -365,7 +364,7 @@ extcmd_via_menu(const char **namelist, const char **desclist, int listlen)
                     /* flush the extended commands for that letter already in
                        buf */
                     sprintf(buf, fmtstr, prompt);
-                    add_menu_item(items, size, icount, prevaccelerator, buf,
+                    add_menu_item(&menu, prevaccelerator, buf,
                                   prevaccelerator, FALSE);
                     acount = 0;
                 }
@@ -386,13 +385,14 @@ extcmd_via_menu(const char **namelist, const char **desclist, int listlen)
         if (acount) {
             /* flush buf */
             sprintf(buf, fmtstr, prompt);
-            add_menu_item(items, size, icount, prevaccelerator, buf,
-                          prevaccelerator, FALSE);
+            add_menu_item(&menu, prevaccelerator, buf, prevaccelerator, FALSE);
         }
-        pick_list = malloc(sizeof (int) * icount);
+
+        pick_list = malloc(sizeof (int) * menu.icount);
         sprintf(prompt, "Extended Command: %s", cbuf);
-        n = curses_display_menu(items, icount, prompt, PICK_ONE,
+        n = curses_display_menu(&menu, prompt, PICK_ONE,
                                 PLHINT_ANYWHERE, pick_list);
+        dealloc_menulist(&menu);
 
         if (n == 1) {
             if (matchlevel > (QBUFSZ - 2)) {
@@ -412,7 +412,6 @@ extcmd_via_menu(const char **namelist, const char **desclist, int listlen)
     }
 
     free(choices);
-    free(items);
 
     return ret;
 }
