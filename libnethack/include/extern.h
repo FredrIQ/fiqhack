@@ -1224,8 +1224,8 @@ extern int query_category(const char *, struct obj *, int, int *, int);
 extern int obj_compare(const void *, const void *);
 extern int query_objlist(const char *, struct obj *, int, struct object_pick **,
                          int, boolean(*)(const struct obj *));
-extern void add_objitem(struct nh_objitem **, int *, enum nh_menuitem_role, int,
-                        int, char *, struct obj *, boolean);
+extern void add_objitem(struct nh_objlist *, enum nh_menuitem_role, int,
+                        char *, struct obj *, boolean);
 extern struct obj *pick_obj(struct obj *);
 extern void reset_encumber_msg(void);
 extern int encumber_msg(void);
@@ -1811,10 +1811,9 @@ extern int getdir(const char *, schar *dx, schar *dy, schar *dz, boolean isarg);
 extern char query_key(const char *query, int *count);
 extern void getlin(const char *query, char *bufp, boolean isarg);
 extern int display_menu(struct nh_menulist *, const char *, int, int, int *);
-extern int display_objects(struct nh_objitem *, int, const char *, int, int,
+extern int display_objects(struct nh_objlist *, const char *, int, int,
                            struct nh_objresult *);
-extern boolean win_list_items(struct nh_objitem *items, int icount,
-                              boolean invent);
+extern boolean win_list_items(struct nh_objlist *, boolean invent);
 
 /* ### wizard.c ### */
 

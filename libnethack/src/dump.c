@@ -11,7 +11,7 @@ static struct nh_window_procs winprocs_original;
 static void dump_status(void);
 static int dump_display_menu(struct nh_menulist *, const char *, int, int,
                              int *);
-static int dump_display_objects(struct nh_objitem *, int, const char *, int,
+static int dump_display_objects(struct nh_objlist *, const char *, int,
                                 int, struct nh_objresult *);
 static void dump_outrip(struct nh_menulist *ml, boolean ts, const char *name,
                         int gold, const char *killbuf, int end_how, int year);
@@ -220,7 +220,7 @@ dump_display_menu(struct nh_menulist *menu, const char *title,
 
 
 static int
-dump_display_objects(struct nh_objitem *items, int icount, const char *title,
+dump_display_objects(struct nh_objlist *objects, const char *title,
                      int how, int placement_hint, struct nh_objresult *result)
 {
     int i;
@@ -232,11 +232,11 @@ dump_display_objects(struct nh_objitem *items, int icount, const char *title,
         title = "Your Inventory:";
 
     fprintf(dumpfp, "%s\n", title);
-    for (i = 0; i < icount; i++) {
+    for (i = 0; i < objects->icount; i++) {
         fprintf(dumpfp, "  ");
-        if (items[i].accel)
-            fprintf(dumpfp, "%c - ", items[i].accel);
-        fprintf(dumpfp, "%s\n", items[i].caption);
+        if (objects->items[i].accel)
+            fprintf(dumpfp, "%c - ", objects->items[i].accel);
+        fprintf(dumpfp, "%s\n", objects->items[i].caption);
     }
 
     fprintf(dumpfp, "\n");

@@ -375,20 +375,31 @@ autopick(struct obj *olist,     /* the object list */
 
 
 void
-add_objitem(struct nh_objitem **items, int *nr_items,
-            enum nh_menuitem_role role, int idx, int id, char *caption,
+add_objitem(struct nh_objlist *objlist,
+            enum nh_menuitem_role role, int id, char *caption,
             struct obj *obj, boolean use_invlet)
 {
     struct nh_objitem *it;
     struct objclass *ocl;
 
-    if (idx >= *nr_items) {
-        *nr_items = *nr_items * 2;
-        *items = realloc(*items, *nr_items * sizeof (struct nh_objitem));
+    /* objlist->items && !objlist->size means don't try to manage the memory
+       ourselves, let the caller do it */
+    if (objlist->icount >= objlist->size &&
+        (!objlist->items || objlist->size)) {
+        if (objlist->size < 2)
+            objlist->size = 2;
+        objlist->size *= 2;
+        objlist->items =
+            realloc(objlist->items, objlist->size * sizeof (struct nh_objitem));
+        if (!objlist->items)
+            panic("Out of memory");
     }
 
-    it = &((*items)[idx]);
+    it = objlist->items + objlist->icount;
     memset(it, 0, sizeof (struct nh_objitem));
+
+    objlist->icount++;
+
     it->id = id;
     it->weight = -1;
     it->role = role;
@@ -523,10 +534,7 @@ query_objlist(const char *qstr, /* query string */
 {       /* allow function */
     int n = 0, i, prev_oclass, nr_objects;
     struct obj *curr, *last;
-    int nr_items = 0, cur_entry = 0;
-    struct nh_objitem *items = NULL;
-    struct obj **objlist = NULL;
-    struct nh_objresult *selection = NULL;
+    struct nh_objlist objmenu;
 
     *pick_list = NULL;
     if (!olist)
@@ -551,57 +559,58 @@ query_objlist(const char *qstr, /* query string */
 
     /* add all allowed objects to the list */
     nr_objects = 0;
-    objlist = malloc(n * sizeof (struct obj *));
+
+    struct obj *allowed[n];
+
     for (curr = olist; curr; curr = FOLLOW(curr, qflags)) {
         if ((qflags & FEEL_COCKATRICE) && curr->otyp == CORPSE &&
             will_feel_cockatrice(curr, FALSE)) {
-            free(objlist);
             look_here(0, FALSE);
             return 0;
         }
         if ((!(qflags & INVORDER_SORT) || strchr(flags.inv_order, curr->oclass))
             && (*allow) (curr))
-            objlist[nr_objects++] = curr;
+            allowed[nr_objects++] = curr;
     }
 
     /* sort the list in place according to (1) inv_order and... */
     if (qflags & INVORDER_SORT) {
         if (qflags & USE_INVLET)        /* ... (2) only inv_order. */
-            qsort(objlist, nr_objects, sizeof (struct obj *), invo_obj_compare);
+            qsort(allowed, nr_objects, sizeof (struct obj *), invo_obj_compare);
         else    /* ... (2) object name. */
-            qsort(objlist, nr_objects, sizeof (struct obj *), obj_compare);
+            qsort(allowed, nr_objects, sizeof (struct obj *), obj_compare);
     }
 
-    /* nr_items will be greater than nr_objects, because it counts headers, too 
-     */
-    nr_items = nr_objects;
-    items = malloc(nr_items * sizeof (struct nh_objitem));
+    init_objmenulist(&objmenu);
     prev_oclass = -1;
-    cur_entry = 0;
+
     for (i = 0; i < nr_objects; i++) {
-        curr = objlist[i];
+        curr = allowed[i];
         /* if sorting, print type name */
         if ((qflags & INVORDER_SORT) && prev_oclass != curr->oclass)
-            add_objitem(&items, &nr_items, MI_HEADING, cur_entry++, 0,
+            add_objitem(&objmenu, MI_HEADING, 0,
                         let_to_name(curr->oclass, FALSE), curr, FALSE);
         /* add the object to the list */
         examine_object(curr);
-        add_objitem(&items, &nr_items, MI_NORMAL, cur_entry++, i + 1,
+        add_objitem(&objmenu, MI_NORMAL, i + 1,
                     doname(curr), curr, (qflags & USE_INVLET) != 0);
         prev_oclass = curr->oclass;
     }
 
-    if (cur_entry > 0) {
-        selection = malloc(cur_entry * sizeof (struct nh_objresult));
-        n = display_objects(items, cur_entry, qstr, how, PLHINT_INVENTORY,
+    struct nh_objresult selection[objmenu.icount ? objmenu.icount : 1];
+
+    if (objmenu.icount > 0) {
+        n = display_objects(&objmenu, qstr, how, PLHINT_INVENTORY,
                             selection);
-    }
+        dealloc_objmenulist(&objmenu);
+    } else
+        dealloc_objmenulist(&objmenu);
 
     if (n > 0) {
         *pick_list = malloc(n * sizeof (struct object_pick));
 
         for (i = 0; i < n; i++) {
-            curr = objlist[selection[i].id - 1];
+            curr = allowed[selection[i].id - 1];
             (*pick_list)[i].obj = curr;
             if (selection[i].count == -1 || selection[i].count > curr->quan)
                 (*pick_list)[i].count = curr->quan;
@@ -612,9 +621,6 @@ query_objlist(const char *qstr, /* query string */
         /* callers don't expect -1 by this point */
         n = (qflags & SIGNAL_ESCAPE) ? -2 : 0;
     }
-    free(selection);
-    free(objlist);
-    free(items);
 
     return n;
 }

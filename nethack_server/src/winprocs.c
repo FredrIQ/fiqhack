@@ -26,11 +26,10 @@ static void srv_request_command(nh_bool debug, nh_bool completed,
                                 struct nh_cmd_arg *arg);
 static int srv_display_menu(struct nh_menulist *ml, const char *title,
                             int how, int placement_hint, int *results);
-static int srv_display_objects(struct nh_objitem *items, int icount,
+static int srv_display_objects(struct nh_objlist *objlist,
                                const char *title, int how, int placement_hint,
                                struct nh_objresult *pick_list);
-static nh_bool srv_list_items(struct nh_objitem *items, int icount,
-                              nh_bool invent);
+static nh_bool srv_list_items(struct nh_objlist *objlist, nh_bool invent);
 static char srv_query_key(const char *query, int *count);
 static int srv_getpos(int *x, int *y, nh_bool force, const char *goal);
 static enum nh_direction srv_getdir(const char *query, nh_bool restricted);
@@ -503,18 +502,19 @@ json_objitem(struct nh_objitem *oi)
 
 
 static int
-srv_display_objects(struct nh_objitem *items, int icount, const char *title,
+srv_display_objects(struct nh_objlist *objlist, const char *title,
                     int how, int placement_hint, struct nh_objresult *pick_list)
 {
     int i, ret;
     json_t *jobj, *jarr, *jobj2;
 
     jarr = json_array();
-    for (i = 0; i < icount; i++)
-        json_array_append_new(jarr, json_objitem(&items[i]));
+    for (i = 0; i < objlist->icount; i++)
+        json_array_append_new(jarr, json_objitem(objlist->items + i));
     jobj =
-        json_pack("{so,si,si,ss,si}", "items", jarr, "icount", icount, "how",
-                  how, "title", title ? title : "", "plhint", placement_hint);
+        json_pack("{so,si,si,ss,si}", "items", jarr, "icount",
+                  objlist->icount, "how", how, "title", title ? title : "",
+                  "plhint", placement_hint);
 
     if (how == PICK_NONE) {
         add_display_data("display_objects", jobj);
@@ -539,33 +539,36 @@ srv_display_objects(struct nh_objitem *items, int icount, const char *title,
 
 
 static nh_bool
-srv_list_items(struct nh_objitem *items, int icount, nh_bool invent)
+srv_list_items(struct nh_objlist *objlist, nh_bool invent)
 {
     int i;
     json_t *jobj, *jarr;
 
-    if (invent && prev_invent && icount == prev_invent_icount &&
-        !memcmp(items, prev_invent, sizeof (struct nh_objitem) * icount))
+    if (invent && prev_invent && objlist->icount == prev_invent_icount &&
+        !memcmp(objlist->items, prev_invent,
+                sizeof (struct nh_objitem) * objlist->icount))
         return TRUE;
-    if (!invent && icount == 0 && prev_floor_icount == 0)
+
+    if (!invent && objlist->icount == 0 && prev_floor_icount == 0)
         return TRUE;
 
     if (invent) {
-        prev_invent_icount = icount;
+        prev_invent_icount = objlist->icount;
         free(prev_invent);
-        prev_invent = malloc(sizeof (struct nh_objitem) * icount);
-        memcpy(prev_invent, items, sizeof (struct nh_objitem) * icount);
+        prev_invent = malloc(sizeof (struct nh_objitem) * objlist->icount);
+        memcpy(prev_invent, objlist->items,
+               sizeof (struct nh_objitem) * objlist->icount);
     } else
-        prev_floor_icount = icount;
+        prev_floor_icount = objlist->icount;
 
     jarr = json_array();
-    for (i = 0; i < icount; i++)
-        json_array_append_new(jarr, json_objitem(&items[i]));
+    for (i = 0; i < objlist->icount; i++)
+        json_array_append_new(jarr, json_objitem(objlist->items + i));
     jobj =
-        json_pack("{so,si,si}", "items", jarr, "icount", icount, "invent",
-                  invent);
+        json_pack("{so,si,si}", "items", jarr, "icount",
+                  objlist->icount, "invent", invent);
 
-    /* there cold be lots of list_item calls after each other if the player is
+    /* there could be lots of list_item calls after each other if the player is
        picking up or dropping large numbers of items. We only care about the
        last state. */
     if (invent) {

@@ -329,11 +329,11 @@ extern int curses_display_menu(struct nh_menulist *ml, const char *title,
 extern int curses_display_menu_core(
     struct nh_menulist *ml, const char *title, int how, int *results,
     int x1, int y1, int x2, int y2, nh_bool(*changefn)(struct win_menu *, int));
-extern int curses_display_objects(struct nh_objitem *items, int icount,
+extern int curses_display_objects(struct nh_objlist *objlist,
                                   const char *title, int how,
                                   int placement_hint,
                                   struct nh_objresult *pick_list);
-extern void draw_objlist(WINDOW * win, int icount, struct nh_objitem *items,
+extern void draw_objlist(WINDOW * win, struct nh_objlist *objlist,
                          int *selected, int how);
 
 /* messages.c */
@@ -398,10 +398,9 @@ extern enum nh_play_status playgame(int fd_or_gameno);
 
 /* sidebar.c */
 extern void draw_sidebar(void);
-extern nh_bool curses_list_items(struct nh_objitem *items, int icount,
-                                 nh_bool invent);
-extern nh_bool curses_list_items_nonblocking(struct nh_objitem *items,
-                                             int icount, nh_bool invent);
+extern nh_bool curses_list_items(struct nh_objlist *objlist, nh_bool invent);
+extern nh_bool curses_list_items_nonblocking(struct nh_objlist *objlist,
+                                             nh_bool invent);
 extern void cleanup_sidebar(nh_bool dealloc);
 
 /* status.c */

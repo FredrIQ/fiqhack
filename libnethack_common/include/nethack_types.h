@@ -426,6 +426,13 @@ struct nh_objitem {
     nh_bool worn;
 };
 
+/* Works like nh_menulist, but for objitems. */
+struct nh_objlist {
+    struct nh_objitem *items;
+    int size;
+    int icount;
+};
+
 struct nh_objresult {
     int id;
     int count;
@@ -643,10 +650,9 @@ struct nh_window_procs {
                                  struct nh_cmd_arg *arg);
     int (*win_display_menu) (struct nh_menulist *, const char *, int, int,
                              int *);
-    int (*win_display_objects) (struct nh_objitem *, int, const char *, int,
+    int (*win_display_objects) (struct nh_objlist *, const char *, int,
                                 int, struct nh_objresult *);
-    nh_bool(*win_list_items) (struct nh_objitem * items, int icount,
-                              nh_bool invent);
+    nh_bool(*win_list_items) (struct nh_objlist *, nh_bool invent);
     void (*win_update_screen) (struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux,
                                int uy);
     void (*win_raw_print) (const char *str);

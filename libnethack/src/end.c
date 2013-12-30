@@ -1014,9 +1014,8 @@ container_contents(struct obj *list, boolean identified, boolean all_containers)
 {
     struct obj *box, *obj;
     char buf[BUFSZ];
-    int i, nr_items = 10, icount = 0;
-    struct nh_objitem *items = malloc(nr_items * sizeof (struct nh_objitem));
-    struct obj **objlist;
+    int i, icount;
+    struct nh_objlist objmenu;
 
     for (box = list; box; box = box->nobj) {
         if (Is_container(box) || box->otyp == STATUE) {
@@ -1024,10 +1023,12 @@ container_contents(struct obj *list, boolean identified, boolean all_containers)
                 continue;       /* wrong type of container */
             } else if (box->cobj) {
                 /* count contained objects */
+
                 icount = 0;
                 for (obj = box->cobj; obj; obj = obj->nobj)
                     icount++;
-                objlist = malloc(icount * sizeof (struct obj *));
+
+                struct obj *contents[icount];
 
                 /* add the objects to a list */
                 icount = 0;
@@ -1037,23 +1038,27 @@ container_contents(struct obj *list, boolean identified, boolean all_containers)
                         obj->known = obj->bknown = obj->dknown = obj->rknown =
                             1;
                     }
-                    objlist[icount++] = obj;
+                    contents[icount++] = obj;
                 }
 
                 /* sort the list */
-                qsort(objlist, icount, sizeof (struct obj *), obj_compare);
+                qsort(contents, icount, sizeof (struct obj *), obj_compare);
 
                 /* add the sorted objects to the menu */
-                for (i = 0; i < icount; i++)
-                    add_objitem(&items, &nr_items, MI_NORMAL, i, i + 1,
-                                doname(objlist[i]), objlist[i], FALSE);
+                init_objmenulist(&objmenu);
 
-                free(objlist);
+                for (i = 0; i < icount; i++)
+                    add_objitem(&objmenu, MI_NORMAL, i + 1,
+                                doname(contents[i]), contents[i], FALSE);
+
                 sprintf(buf, "Contents of %s:", the(xname(box)));
-                display_objects(items, icount, buf, PICK_NONE, PLHINT_CONTAINER,
+                display_objects(&objmenu, buf, PICK_NONE, PLHINT_CONTAINER,
                                 NULL);
+                dealloc_objmenulist(&objmenu);
+
                 if (all_containers)
                     container_contents(box->cobj, identified, TRUE);
+
             } else if (!done_stopprint) {
                 pline("%s empty.", Tobjnam(box, "are"));
                 win_pause_output(P_MESSAGE);
@@ -1062,8 +1067,6 @@ container_contents(struct obj *list, boolean identified, boolean all_containers)
         if (!all_containers)
             break;
     }
-
-    free(items);
 }
 
 

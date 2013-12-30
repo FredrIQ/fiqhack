@@ -535,8 +535,7 @@ layout_objmenu(struct gamewin *gw)
 
 
 void
-draw_objlist(WINDOW * win, int icount, struct nh_objitem *items, int *selected,
-             int how)
+draw_objlist(WINDOW * win, struct nh_objlist *objlist, int *selected, int how)
 {
     int i, maxitem, txtattr, width, pos;
 
@@ -544,50 +543,52 @@ draw_objlist(WINDOW * win, int icount, struct nh_objitem *items, int *selected,
     werase(win);
 
     /* draw menu items */
-    maxitem = min(getmaxy(win), icount);
+    maxitem = min(getmaxy(win), objlist->icount);
     for (i = 0; i < maxitem; i++) {
+        struct nh_objitem *const olii = objlist->items + i;
+
         pos = 4;        /* assume that an accel will be added ("a - ") */
         wmove(win, i, 0);
         wattrset(win, 0);
         txtattr = A_NORMAL;
 
-        if (items[i].role != MI_NORMAL) {
-            if (items[i].role == MI_HEADING)
+        if (olii->role != MI_NORMAL) {
+            if (olii->role == MI_HEADING)
                 txtattr = settings.menu_headings;
             wattron(win, txtattr);
-            waddstr(win, items[i].caption);
-            if (items[i].group_accel)
-                wprintw(win, " '%c'", items[i].group_accel);
+            waddstr(win, olii->caption);
+            if (olii->group_accel)
+                wprintw(win, " '%c'", olii->group_accel);
             wattroff(win, txtattr);
             continue;
         }
 
-        if (how != PICK_NONE && selected && items[i].accel)
+        if (how != PICK_NONE && selected && olii->accel)
             switch (selected[i]) {
             case -1:
-                wprintw(win, "%c + ", items[i].accel);
+                wprintw(win, "%c + ", olii->accel);
                 break;
             case 0:
-                wprintw(win, "%c - ", items[i].accel);
+                wprintw(win, "%c - ", olii->accel);
                 break;
             default:
-                wprintw(win, "%c # ", items[i].accel);
+                wprintw(win, "%c # ", olii->accel);
                 break;
-        } else if (items[i].accel)
-            wprintw(win, "%c - ", items[i].accel);
+        } else if (olii->accel)
+            wprintw(win, "%c - ", olii->accel);
         else
             pos = 0;    /* no accel after all */
 
-        if (items[i].otype) {
-            print_sym(win, &cur_drawing->objects[items[i].otype - 1], A_NORMAL,
-                      0);
+        if (olii->otype) {
+            print_sym(win, &cur_drawing->objects[olii->otype - 1],
+                      A_NORMAL, 0);
             waddch(win, ' ');
             pos += 2;
         }
 
-        if (items[i].worn)
+        if (olii->worn)
             txtattr |= A_BOLD;
-        switch (items[i].buc) {
+        switch (olii->buc) {
         case B_CURSED:
             txtattr |= COLOR_PAIR(2);
             break;
@@ -598,12 +599,12 @@ draw_objlist(WINDOW * win, int icount, struct nh_objitem *items, int *selected,
             break;
         }
         wattron(win, txtattr);
-        wprintw(win, "%-.*s", width - pos, items[i].caption);
-        pos += min(strlen(items[i].caption), width - pos);
+        wprintw(win, "%-.*s", width - pos, olii->caption);
+        pos += min(strlen(olii->caption), width - pos);
         wattroff(win, txtattr);
 
-        if (settings.invweight && items[i].weight != -1 && width > pos + 3)
-            wprintw(win, " {%d}", items[i].weight);
+        if (settings.invweight && olii->weight != -1 && width > pos + 3)
+            wprintw(win, " {%d}", olii->weight);
     }
     wnoutrefresh(win);
 }
@@ -624,9 +625,10 @@ draw_objmenu(struct gamewin *gw)
         wattroff(gw->win, A_UNDERLINE);
     }
 
-    draw_objlist(mdat->content, mdat->icount - mdat->offset,
-                 &mdat->items[mdat->offset], &mdat->selected[mdat->offset],
-                 mdat->how);
+    draw_objlist(mdat->content,
+                 &(struct nh_objlist){.icount = mdat->icount - mdat->offset,
+                                      .items  = mdat->items  + mdat->offset},
+                 mdat->selected + mdat->offset, mdat->how);
 
     if (mdat->selcount > 0) {
         wmove(gw->win, getmaxy(gw->win) - 1, 1);
@@ -728,7 +730,7 @@ find_objaccel(int accel, struct win_objmenu *mdat)
 
 
 int
-curses_display_objects(struct nh_objitem *items, int icount, const char *title,
+curses_display_objects(struct nh_objlist *objlist, const char *title,
                        int how, int placement_hint,
                        struct nh_objresult *results)
 {
@@ -739,7 +741,7 @@ curses_display_objects(struct nh_objitem *items, int icount, const char *title,
     char sbuf[BUFSZ];
     nh_bool inventory_special = title && !!strstr(title, "Inventory") &&
         how == PICK_NONE;
-    int selected[icount];
+    int selected[objlist->icount];
 
     memset(selected, 0, sizeof selected);
 
@@ -752,8 +754,8 @@ curses_display_objects(struct nh_objitem *items, int icount, const char *title,
     gw->draw = draw_objmenu;
     gw->resize = resize_objmenu;
     mdat = (struct win_objmenu *)gw->extra;
-    mdat->items = items;
-    mdat->icount = icount;
+    mdat->items = objlist->items;
+    mdat->icount = objlist->icount;
     mdat->title = title;
     mdat->how = how;
     mdat->selcount = -1;
@@ -854,21 +856,21 @@ curses_display_objects(struct nh_objitem *items, int icount, const char *title,
             /* select all */
         case '.':
             if (mdat->how == PICK_ANY)
-                for (i = 0; i < icount; i++)
+                for (i = 0; i < objlist->icount; i++)
                     if (mdat->items[i].oclass != -1)
                         mdat->selected[i] = -1;
             break;
 
             /* select none */
         case '-':
-            for (i = 0; i < icount; i++)
+            for (i = 0; i < objlist->icount; i++)
                 mdat->selected[i] = 0;
             break;
 
             /* invert all */
         case '@':
             if (mdat->how == PICK_ANY)
-                for (i = 0; i < icount; i++)
+                for (i = 0; i < objlist->icount; i++)
                     if (mdat->items[i].oclass != -1)
                         mdat->selected[i] = mdat->selected[i] ? 0 : -1;
             break;
@@ -879,7 +881,8 @@ curses_display_objects(struct nh_objitem *items, int icount, const char *title,
                 break;
 
             for (i = mdat->offset;
-                 i < icount && i < mdat->offset + mdat->innerheight; i++)
+                 i < objlist->icount && i < mdat->offset + mdat->innerheight;
+                 i++)
                 if (mdat->items[i].oclass != -1)
                     mdat->selected[i] = -1;
             break;
@@ -887,7 +890,8 @@ curses_display_objects(struct nh_objitem *items, int icount, const char *title,
             /* deselect page */
         case '\\':
             for (i = mdat->offset;
-                 i < icount && i < mdat->offset + mdat->innerheight; i++)
+                 i < objlist->icount && i < mdat->offset + mdat->innerheight;
+                 i++)
                 if (mdat->items[i].oclass != -1)
                     mdat->selected[i] = 0;
             break;
@@ -898,7 +902,8 @@ curses_display_objects(struct nh_objitem *items, int icount, const char *title,
                 break;
 
             for (i = mdat->offset;
-                 i < icount && i < mdat->offset + mdat->innerheight; i++)
+                 i < objlist->icount && i < mdat->offset + mdat->innerheight;
+                 i++)
                 if (mdat->items[i].oclass != -1)
                     mdat->selected[i] = mdat->selected[i] ? 0 : -1;
             break;
@@ -906,10 +911,10 @@ curses_display_objects(struct nh_objitem *items, int icount, const char *title,
             /* search for a menu item */
         case ':':
             curses_getline("Search:", sbuf);
-            for (i = 0; i < icount; i++)
+            for (i = 0; i < objlist->icount; i++)
                 if (strstr(mdat->items[i].caption, sbuf))
                     break;
-            if (i < icount) {
+            if (i < objlist->icount) {
                 int end = max(mdat->icount - mdat->innerheight, 0);
 
                 mdat->offset = min(i, end);
@@ -958,7 +963,7 @@ curses_display_objects(struct nh_objitem *items, int icount, const char *title,
                 int grouphits = 0;
 
                 for (i = 0; i < mdat->icount; i++) {
-                    if (items[i].group_accel == key &&
+                    if (mdat->items[i].group_accel == key &&
                         mdat->items[i].oclass != -1) {
                         if (mdat->selected[i] == mdat->selcount)
                             mdat->selected[i] = 0;
@@ -982,10 +987,10 @@ curses_display_objects(struct nh_objitem *items, int icount, const char *title,
         rv = -1;
     else {
         rv = 0;
-        for (i = 0; i < icount; i++) {
+        for (i = 0; i < objlist->icount; i++) {
             if (mdat->selected[i]) {
                 if (results) {
-                    results[rv].id = items[i].id;
+                    results[rv].id = objlist->items[i].id;
                     results[rv].count = mdat->selected[i];
                 }
                 rv++;

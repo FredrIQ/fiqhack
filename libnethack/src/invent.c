@@ -1259,14 +1259,13 @@ find_unpaid(struct obj *list, struct obj **last_found)
 }
 
 
-static struct nh_objitem *
-make_invlist(const char *lets, int *icount)
+static void
+make_invlist(struct nh_objlist *objlist, const char *lets)
 {
     struct obj *otmp;
     char ilet;
-    int nr_items = 10, cur_entry = 0, classcount;
+    int classcount;
     const char *invlet = flags.inv_order;
-    struct nh_objitem *items = malloc(nr_items * sizeof (struct nh_objitem));
 
 nextclass:
     classcount = 0;
@@ -1275,12 +1274,12 @@ nextclass:
         if (!lets || !*lets || strchr(lets, ilet)) {
             if (!flags.sortpack || otmp->oclass == *invlet) {
                 if (flags.sortpack && !classcount) {
-                    add_objitem(&items, &nr_items, MI_HEADING, cur_entry++, 0,
+                    add_objitem(objlist, MI_HEADING, 0,
                                 let_to_name(*invlet, FALSE), otmp, FALSE);
                     classcount++;
                 }
                 examine_object(otmp);
-                add_objitem(&items, &nr_items, MI_NORMAL, cur_entry++, ilet,
+                add_objitem(objlist, MI_NORMAL, ilet,
                             doname(otmp), otmp, TRUE);
             }
         }
@@ -1293,9 +1292,6 @@ nextclass:
             goto nextclass;
         }
     }
-
-    *icount = cur_entry;
-    return items;
 }
 
 
@@ -1310,9 +1306,7 @@ display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
     struct obj *otmp;
     char ret;
     int n = 0;
-    int icount = 0;
-    struct nh_objitem *items;
-    struct nh_objresult *selected = NULL;
+    struct nh_objlist objlist;
 
     /* 
        Exit early if no inventory -- but keep going if we are doing a permanent 
@@ -1342,14 +1336,19 @@ display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
         return ret;
     }
 
-    items = make_invlist(lets, &icount);
+    init_objmenulist(&objlist);
+    make_invlist(&objlist, lets);
 
-    if (icount) {
-        selected = malloc(icount * sizeof (struct nh_objresult));
-        n = display_objects(items, icount, want_reply ? NULL : "Inventory:",
+    struct nh_objresult selected[objlist.icount ? objlist.icount : 0];
+
+    if (objlist.icount) {
+        n = display_objects(&objlist, want_reply ? NULL : "Inventory:",
                             want_reply ? PICK_ONE : PICK_NONE, PLHINT_INVENTORY,
                             selected);
-    }
+        dealloc_objmenulist(&objlist);
+    } else
+        dealloc_objmenulist(&objlist);
+
     if (n > 0) {
         ret = (char)selected[0].id;
         if (out_cnt)
@@ -1357,8 +1356,7 @@ display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
     } else
         ret = !n ? '\0' : '\033';       /* cancelled */
 
-    free(selected);
-    free(items);
+
     return ret;
 }
 
@@ -1379,17 +1377,15 @@ display_inventory(const char *lets, boolean want_reply)
 void
 update_inventory(void)
 {
-    int icount = 0;
-    struct nh_objitem *items;
+    struct nh_objlist objlist;
 
     if (!windowprocs.win_list_items || program_state.suppress_screen_updates)
         return;
 
-    items = make_invlist(NULL, &icount);
-    win_list_items(items, icount, TRUE);
-    free(items);
-
-    return;
+    init_objmenulist(&objlist);
+    make_invlist(&objlist, NULL);
+    win_list_items(&objlist, TRUE);
+    dealloc_objmenulist(&objlist);
 }
 
 
@@ -1695,22 +1691,23 @@ update_location(boolean all_objects)
     struct trap *trap;
     char buf[BUFSZ], fbuf[BUFSZ];
     const char *dfeature = NULL;
-    int ocount, icount = 0, size = 10;
-    struct nh_objitem *items;
+    int ocount;
+    struct nh_objlist objlist;
 
     if (Blind && !can_reach_floor()) {
-        win_list_items(NULL, 0, FALSE);
+        win_list_items(NULL, FALSE);
         return FALSE;
     }
 
-    items = malloc(size * sizeof (struct nh_objitem));
+    init_objmenulist(&objlist);
+
     if (Engulfed && u.ustuck) {
         otmp = u.ustuck->minvent;
         minv = TRUE;
     } else {
         if ((trap = t_at(level, u.ux, u.uy)) && trap->tseen) {
             sprintf(buf, "There is %s here.", an(trapexplain[trap->ttyp - 1]));
-            add_objitem(&items, &size, MI_TEXT, icount++, 0, buf, NULL, FALSE);
+            add_objitem(&objlist, MI_TEXT, 0, buf, NULL, FALSE);
         }
 
         dfeature = dfeature_at(u.ux, u.uy, fbuf);
@@ -1718,17 +1715,17 @@ update_location(boolean all_objects)
             dfeature = NULL;
         if (dfeature) {
             sprintf(buf, "There is %s here.", an(dfeature));
-            add_objitem(&items, &size, MI_TEXT, icount++, 0, buf, NULL, FALSE);
+            add_objitem(&objlist, MI_TEXT, 0, buf, NULL, FALSE);
         }
 
-        if (icount && otmp)
-            add_objitem(&items, &size, MI_TEXT, icount++, 0, "", NULL, FALSE);
+        if (objlist.icount && otmp)
+            add_objitem(&objlist, MI_TEXT, 0, "", NULL, FALSE);
     }
 
     for (ocount = 0; otmp; otmp = minv ? otmp->nobj : otmp->nexthere) {
         examine_object(otmp);
         if (!Blind || all_objects || ocount < 5)
-            add_objitem(&items, &size, MI_NORMAL, icount++, 0,
+            add_objitem(&objlist, MI_NORMAL, 0,
                         doname_price(otmp), otmp, FALSE);
         ocount++;
     }
@@ -1736,11 +1733,12 @@ update_location(boolean all_objects)
     if (Blind && !all_objects && ocount >= 5) {
         sprintf(buf, "There are %s other objects here.",
                 (ocount <= 10) ? "several" : "many");
-        add_objitem(&items, &size, MI_TEXT, icount++, 0, buf, NULL, FALSE);
+        add_objitem(&objlist, MI_TEXT, 0, buf, NULL, FALSE);
     }
 
-    ret = win_list_items(items, icount, FALSE);
-    free(items);
+    ret = win_list_items(&objlist, FALSE);
+    dealloc_objmenulist(&objlist);
+
     return ret;
 }
 
@@ -1757,9 +1755,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
     const char *dfeature = NULL;
     char fbuf[BUFSZ], fbuf2[BUFSZ];
     boolean skip_objects = (obj_cnt >= 5), felt_cockatrice = FALSE;
-    int icount = 0;
-    int size = 10;
-    struct nh_objitem *items = NULL;
+    struct nh_objlist objlist;
     const char *title =
         Blind ? "Things that you feel here:" : "Things that are here:";
 
@@ -1853,10 +1849,12 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
         if (otmp->otyp == CORPSE)
             feel_cockatrice(otmp, FALSE);
     } else {
-        items = malloc(size * sizeof (struct nh_objitem));
+
+        init_objmenulist(&objlist);
+
         if (dfeature) {
-            add_objitem(&items, &size, MI_TEXT, icount++, 0, fbuf, NULL, FALSE);
-            add_objitem(&items, &size, MI_TEXT, icount++, 0, "", NULL, FALSE);
+            add_objitem(&objlist, MI_TEXT, 0, fbuf, NULL, FALSE);
+            add_objitem(&objlist, MI_TEXT, 0, "", NULL, FALSE);
         }
 
         for (; otmp; otmp = otmp->nexthere) {
@@ -1866,18 +1864,15 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
                 felt_cockatrice = TRUE;
                 strcpy(buf, doname_price(otmp));
                 strcat(buf, "...");
-                add_objitem(&items, &size, MI_NORMAL, icount++, 0, fbuf, otmp,
-                            FALSE);
+                add_objitem(&objlist, MI_NORMAL, 0, fbuf, otmp, FALSE);
                 break;
             }
-            add_objitem(&items, &size, MI_NORMAL, icount++, 0, doname(otmp),
-                        otmp, FALSE);
+            add_objitem(&objlist, MI_NORMAL, 0, doname(otmp), otmp, FALSE);
         }
 
         if (!skip_win || felt_cockatrice)
-            display_objects(items, icount, title, PICK_NONE, PLHINT_CONTAINER,
-                            NULL);
-        free(items);
+            display_objects(&objlist, title, PICK_NONE, PLHINT_CONTAINER, NULL);
+        dealloc_objmenulist(&objlist);
 
         if (felt_cockatrice)
             feel_cockatrice(otmp, FALSE);

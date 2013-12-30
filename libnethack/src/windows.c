@@ -276,7 +276,7 @@ display_menu(struct nh_menulist *menu, const char *title, int how,
 
 
 int
-display_objects(struct nh_objitem *items, int icount, const char *title,
+display_objects(struct nh_objlist *objlist, const char *title,
                 int how, int placement_hint, struct nh_objresult *pick_list)
 {
     int n, j;
@@ -287,7 +287,7 @@ display_objects(struct nh_objitem *items, int icount, const char *title,
         n = -1;
     else if (!log_replay_menu(TRUE, &n, pick_list)) {
         log_replay_no_more_options();
-        n = (*windowprocs.win_display_objects) (items, icount, title, how,
+        n = (*windowprocs.win_display_objects) (objlist, title, how,
                                                 placement_hint, pick_list);
     }
 
@@ -303,11 +303,13 @@ display_objects(struct nh_objitem *items, int icount, const char *title,
         log_record_menu(TRUE, n, pick_list);
 
         if (n == 1) {
-            for (j = 0; j < icount && items[j].id != pick_list[0].id; j++) {
-            }
-            sprintf(buf, "%c", items[j].accel);
+            for (j = 0;
+                 j < objlist->icount && objlist->items[j].id != pick_list[0].id;
+                 j++) {}
+            sprintf(buf, "%c", objlist->items[j].accel);
         } else if (n > 1)
             sprintf(buf, "(%d selected)", n);
+
         suppress_more();
         pline("<%s: %s>", title ? title : "List of objects", buf);
     }
@@ -315,12 +317,19 @@ display_objects(struct nh_objitem *items, int icount, const char *title,
 }
 
 boolean
-win_list_items(struct nh_objitem * items, int icount, boolean is_invent)
+win_list_items(struct nh_objlist *objlist, boolean is_invent)
 {
+    struct nh_objlist zero_objlist;
+
     if (!windowprocs.win_list_items)
         return FALSE;
 
-    return (*windowprocs.win_list_items) (items, icount, is_invent);
+    if (!objlist) {
+        init_objmenulist(&zero_objlist);
+        objlist = &zero_objlist;
+    }
+
+    return (*windowprocs.win_list_items) (objlist, is_invent);
 }
 
 /*windows.c*/

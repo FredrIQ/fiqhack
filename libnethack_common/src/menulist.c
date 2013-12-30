@@ -42,6 +42,26 @@ dealloc_menulist(struct nh_menulist *ml)
     init_menulist(ml);
 }
 
+
+void
+init_objmenulist(struct nh_objlist *ml)
+{
+    ml->items = 0;
+    ml->size = 0;
+    ml->icount = 0;
+}
+
+void
+dealloc_objmenulist(struct nh_objlist *ml)
+{
+    if (!ml->size && ml->items)
+        return;  /* memory is managed statically */
+
+    free(ml->items);
+    init_objmenulist(ml);
+}
+
+
 void
 set_menuitem(struct nh_menuitem *item, int id, enum nh_menuitem_role role,
              const char *caption, char accel, nh_bool selected)

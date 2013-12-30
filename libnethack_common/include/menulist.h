@@ -17,4 +17,7 @@ extern void add_menu_txt(struct nh_menulist *, const char *,
 extern void init_menulist(struct nh_menulist *);
 extern void dealloc_menulist(struct nh_menulist *);
 
+extern void init_objmenulist(struct nh_objlist *);
+extern void dealloc_objmenulist(struct nh_objlist *);
+
 #endif
