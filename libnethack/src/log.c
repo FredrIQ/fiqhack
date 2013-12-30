@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Alex Smith, 2013-12-30 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -940,10 +940,12 @@ log_replay_command(char *cmd, struct nh_cmd_arg *arg)
         lp += 2;
         switch (lp[-1]) {
         case 'D':
+            arg->argtype |= CMD_ARG_DIR;
             arg->dir = parse_decimal_number(&lp);
             break;
 
         case 'P':
+            arg->argtype |= CMD_ARG_POS;
             arg->pos.x = parse_decimal_number(&lp);
             if (*(lp++) != ',')
                 error_reading_save("No comma in position argument\n");
@@ -951,10 +953,12 @@ log_replay_command(char *cmd, struct nh_cmd_arg *arg)
             break;
 
         case 'I':
+            arg->argtype |= CMD_ARG_OBJ;
             arg->invlet = *(lp++);
             break;
 
         case 'T':
+            arg->argtype |= CMD_ARG_STR;
             lp2 = lp;
             while (*lp2 != ' ' && *lp2)
                 lp2++;
@@ -966,10 +970,12 @@ log_replay_command(char *cmd, struct nh_cmd_arg *arg)
             break;
 
         case 'S':
+            arg->argtype |= CMD_ARG_SPELL;
             arg->spelllet = *(lp++);
             break;
 
         case 'L':
+            arg->argtype |= CMD_ARG_LIMIT;
             arg->limit = parse_decimal_number(&lp);
             break;
 
