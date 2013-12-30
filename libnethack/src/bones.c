@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-27 */
+/* Last modified by Sean Hunt, 2013-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -39,11 +39,14 @@ no_bones_level(d_level * lev)
                       || !dungeons[lev->dnum].boneid
                       /* no bones on the last or multiway branch levels */
                       /* in any dungeon (level 1 isn't multiway).  */
-                      || Is_botlevel(lev) || (Is_branchlev(lev) &&
-                                              lev->dlevel > 1)
+                      || Is_botlevel(lev)
+                      || (Is_branchlev(lev) && lev->dlevel > 1)
                       /* no bones in the invocation level */
                       || (In_hell(lev) &&
                           lev->dlevel == dunlevs_in_dungeon(lev) - 1)
+                      /* no bones on the first level */
+                      /* TODO: remove hardcoding in dungeon rewrite */
+                      || (lev->dnum == 0 && lev->dlevel == 1)
         );
 }
 
@@ -370,9 +373,7 @@ getbones(d_level * levnum)
     int ok;
     char c, bonesid[10], oldbonesid[10];
     struct memfile mf;
-
-    /* TODO: Make bones reading work like the rest of the input routines*/
-    return 0;
+    boolean from_file = FALSE;
 
     mnew(&mf, NULL);
 
@@ -389,17 +390,24 @@ getbones(d_level * levnum)
 
     make_bones_id(bonesid, levnum);
 
-    {
+    if (log_replay_input(0, "B!")) {
+    record_fail:
+        log_record_input("B!");
+        return 0;
+    } else if (!log_replay_bones(&mf)) {
         int fd = open_bonesfile(bonesid);
 
         if (fd == -1)
-            return 0;
+            goto record_fail;
         mf.buf = loadfile(fd, &mf.len);
         close(fd);
         if (!mf.buf)
-            return 0;
-        log_bones(mf.buf, mf.len);
+            goto record_fail;
+
+        from_file = TRUE;
     }
+
+    log_record_bones(&mf);
 
     if ((ok = uptodate(&mf, bones)) == 0) {
         if (!wizard)
@@ -454,7 +462,7 @@ getbones(d_level * levnum)
             return ok;
         }
     }
-    if (!delete_bonesfile(bonesid)) {
+    if (from_file && !delete_bonesfile(bonesid)) {
         /* When N games try to simultaneously restore the same bones file, N-1
            of them will fail to delete it (the first N-1 under AmigaDOS, the
            last N-1 under UNIX). So no point in a mysterious message for a

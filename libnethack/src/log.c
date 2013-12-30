@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-30 */
+/* Last modified by Sean Hunt, 2013-12-30 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -577,11 +577,23 @@ log_revert_command(void)
 
 /* Bones files must also be logged, since they are an input into the game state */
 void
-log_bones(const char *bonesbuf, int buflen)
+log_record_bones(struct memfile *mf)
 {
-#ifdef TODO
-    log_binary(bonesbuf, buflen);
-#endif
+    if (program_state.in_zero_time_command || program_state.viewing)
+        return;
+
+    if (program_state.input_was_just_replayed) {
+        program_state.input_was_just_replayed = FALSE;
+        return;
+    }
+
+    start_updating_logfile();
+
+    lprintf("B");
+    log_binary(mf->buf, mf->len);
+    lprintf("\x0a");
+
+    stop_updating_logfile(1);
 }
 
 void
@@ -775,6 +787,24 @@ parse_hex_number(char **ptr)
             rv += **ptr - 'a' + 10;
     }
     return (int32_t)rv;
+}
+
+boolean
+log_replay_bones(struct memfile *mf)
+{
+    char *logline = start_replaying_logfile('B');
+    if (!logline)
+        return FALSE;
+
+    mf->len = base64_strlen(logline + 1);
+    mf->buf = malloc(mf->len);
+    base64_decode(logline + 1, mf->buf, mf->len);
+
+    stop_replaying_logfile();
+
+    free(logline);
+
+    return TRUE;
 }
 
 boolean
