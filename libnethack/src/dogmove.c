@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Sean Hunt, 2013-12-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -277,7 +277,7 @@ int
 dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
 {
     struct edog *edog = EDOG(mtmp);
-    boolean poly = FALSE, grow = FALSE, heal = FALSE;
+    boolean poly = FALSE, grow = FALSE, heal = FALSE, was_starving = FALSE;
     int nutrit;
 
     if (edog->hungrytime < moves)
@@ -298,6 +298,7 @@ dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
         /* no longer starving */
         mtmp->mhpmax += edog->mhpmax_penalty;
         edog->mhpmax_penalty = 0;
+        was_starving = TRUE;
     }
     if (mtmp->mflee && mtmp->mfleetim > 1)
         mtmp->mfleetim /= 2;
@@ -307,18 +308,23 @@ dog_eat(struct monst *mtmp, struct obj *obj, int x, int y, boolean devour)
         newsym(x, y);
         newsym(mtmp->mx, mtmp->my);
     }
+
     if (is_pool(level, x, y) && !Underwater) {
         /* Don't print obj */
         /* TODO: Reveal presence of sea monster (especially sharks) */
-    } else
+    } else if (cansee(x, y) || cansee(mtmp->mx, mtmp->my)) {
         /* hack: observe the action if either new or old location is in view */
         /* However, invisible monsters should still be "it" even though out of
            sight locations should not. */
-    if (cansee(x, y) || cansee(mtmp->mx, mtmp->my))
-        pline("%s %s %s.", mon_visible(mtmp) ? noit_Monnam(mtmp) : "It",
-              devour ? "devours" : "eats",
-              (obj->oclass == FOOD_CLASS) ?
-              singular(obj, doname) : doname(obj));
+        if (mon_visible(mtmp) && tunnels(mtmp->data) && was_starving)
+            pline("%s digs in!", Monnam(mtmp));
+        else
+            pline("%s %s %s.", mon_visible(mtmp) ? noit_Monnam(mtmp) : "It",
+                  devour ? "devours" : "eats",
+                  (obj->oclass == FOOD_CLASS) ?
+                  singular(obj, doname) : doname(obj));
+    }
+
     /* It's a reward if it's DOGFOOD and the player dropped/threw it. */
     /* We know the player had it if invlet is set -dlc */
     if (dogfood(mtmp, obj) == DOGFOOD && obj->invlet)
