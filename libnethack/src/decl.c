@@ -100,9 +100,6 @@ char catname[PL_PSIZ];
 char horsename[PL_PSIZ];
 char preferred_pet;     /* '\0', 'c', 'd', 'n' (none) */
 
-/* monsters that went down/up together with @ */
-struct monst *mydogs;
-
 /* monsters that are moving to another dungeon level */
 struct monst *migrating_mons;
 
@@ -174,6 +171,7 @@ static const struct turnstate default_turnstate = {
     .tracked = {0},
     .continue_message = TRUE,
     .vision_full_recalc = FALSE,
+    .migrating_pets = NULL,
 };
 
 struct turnstate turnstate;
@@ -198,6 +196,8 @@ neutral_turnstate_tasks(void)
         impossible("turnstate.continue_message persisted between turns");
     if (turnstate.vision_full_recalc)
         impossible("vision not recalculated when needed during a turn");
+    if (turnstate.migrating_pets)
+        impossible("pets still migrating between turns");
 
     /* TODO: clean up memory */
 
@@ -247,7 +247,7 @@ init_data(boolean including_program_state)
     wailmsg = 0;
     bhitpos.x = bhitpos.y = 0;
     preferred_pet = 0;
-    migrating_mons = mydogs = NULL;
+    migrating_mons = NULL;
     artilist = NULL;
     branch_id = 0;
     histevents = NULL;

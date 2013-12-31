@@ -1624,8 +1624,7 @@ mon_is_local(struct monst *mon)
     for (curr = migrating_mons; curr; curr = curr->nmon)
         if (curr == mon)
             return FALSE;
-    /* `mydogs' is used during level changes, never saved and restored */
-    for (curr = mydogs; curr; curr = curr->nmon)
+    for (curr = turnstate.migrating_pets; curr; curr = curr->nmon)
         if (curr == mon)
             return FALSE;
     return TRUE;

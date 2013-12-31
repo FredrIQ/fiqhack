@@ -767,7 +767,7 @@ display_rip(int how, char *kilbuf, char *pbuf, long umoney,
 
         keepdogs(TRUE);
         viz_array[0][0] |= IN_SIGHT;    /* need visibility for naming */
-        mtmp = mydogs;
+        mtmp = turnstate.migrating_pets;
         if (!done_stopprint)
             strcpy(pbuf, "You");
         if (mtmp) {

@@ -595,7 +595,7 @@ clear_bypasses(void)
                so don't bother with this */
         }
     }
-    /* invent and mydogs chains shouldn't matter here */
+    /* invent and migrating_pets chains shouldn't matter here */
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
         if (DEADMONSTER(mtmp))
             continue;

@@ -223,7 +223,7 @@ find_mid(struct level *lev, unsigned nid, unsigned fmflags)
             if (mtmp->m_id == nid)
                 return mtmp;
     if (fmflags & FM_MYDOGS)
-        for (mtmp = mydogs; mtmp; mtmp = mtmp->nmon)
+        for (mtmp = turnstate.migrating_pets; mtmp; mtmp = mtmp->nmon)
             if (mtmp->m_id == nid)
                 return mtmp;
     return NULL;
