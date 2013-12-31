@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-30 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -13,8 +13,7 @@
  *
  * log_record_input(...)
  *
- * suppress_more();
- * pline([a text description of the input])
+ * pline_nomore([a text description of the input])
  *
  * if (!program_state.in_zero_time_command && isarg) {
  *   flags.last_arg = ...
@@ -73,11 +72,10 @@ getpos(coord *cc, boolean force, const char *goal, boolean isarg)
     else
         log_record_input("P%d,%d%c", x, y, accept_chars[rv]);
 
-    suppress_more();
     if (rv == NHCR_CLIENT_CANCEL)
-        pline("<position: (cancelled)>");
+        pline_nomore("<position: (cancelled)>");
     else
-        pline("<position: (%d, %d)>", cc->x, cc->y);
+        pline_nomore("<position: (%d, %d)>", cc->x, cc->y);
 
     cc->x = x;
     cc->y = y;
@@ -120,8 +118,7 @@ getdir(const char *s, schar * dx, schar * dy, schar * dz, boolean isarg)
     if (!program_state.in_zero_time_command && isarg)
         flags.last_arg.argtype &= ~CMD_ARG_DIR;
 
-    suppress_more();
-    pline("<%s: %s>", query, dirnames[dir + 1]);
+    pline_nomore("<%s: %s>", query, dirnames[dir + 1]);
 
     *dz = 0;
     if (!dir_to_delta(dir, dx, dy, dz))
@@ -163,11 +160,10 @@ query_key(const char *query, int *count)
     else
         log_record_input("K%d,%d", key, *count);
 
-    suppress_more();
     if (count && *count != -1)
-        pline("<%s: %d %c>", query, *count, key);
+        pline_nomore("<%s: %d %c>", query, *count, key);
     else
-        pline("<%s: %c>", query, key);
+        pline_nomore("<%s: %c>", query, key);
 
     return key;
 }
@@ -183,8 +179,7 @@ getlin(const char *query, char *bufp, boolean isarg)
 
     log_record_line(bufp);
 
-    suppress_more();
-    pline("<%s: %s>", query, bufp[0] == '\033' ? "(escaped)" : bufp);
+    pline_nomore("<%s: %s>", query, bufp[0] == '\033' ? "(escaped)" : bufp);
 
     if (isarg && !program_state.in_zero_time_command) {
         if (*bufp == '\033')
@@ -226,8 +221,7 @@ yn_function(const char *query, const char *resp, char def)
 
     log_record_input("Y%c", key);
 
-    suppress_more();
-    pline("<%s [%s]: %c>", qbuf, resp, key);
+    pline_nomore("<%s [%s]: %c>", qbuf, resp, key);
     return key;
 }
 
@@ -252,8 +246,7 @@ display_menu(struct nh_menulist *menu, const char *title, int how,
         log_record_input("M");
     else if (n == -1) {
         log_record_input("M!");
-        suppress_more();
-        pline("<%s: cancelled>", title ? title : "List of objects");
+        pline_nomore("<%s: cancelled>", title ? title : "List of objects");
     } else {
         char buf[BUFSZ] = "(none selected)";
 
@@ -267,8 +260,7 @@ display_menu(struct nh_menulist *menu, const char *title, int how,
         } else if (n > 1)
             sprintf(buf, "(%d selected)", n);
 
-        suppress_more();
-        pline("<%s: %s>", title ? title : "Untitled menu", buf);
+        pline_nomore("<%s: %s>", title ? title : "Untitled menu", buf);
     }
 
     return n;
@@ -295,8 +287,7 @@ display_objects(struct nh_objlist *objlist, const char *title,
         log_record_input("O");
     else if (n == -1) {
         log_record_input("O!");
-        suppress_more();
-        pline("<%s: cancelled>", title ? title : "List of objects");
+        pline_nomore("<%s: cancelled>", title ? title : "List of objects");
     } else {
         char buf[BUFSZ] = "(none selected)";
 
@@ -310,8 +301,7 @@ display_objects(struct nh_objlist *objlist, const char *title,
         } else if (n > 1)
             sprintf(buf, "(%d selected)", n);
 
-        suppress_more();
-        pline("<%s: %s>", title ? title : "List of objects", buf);
+        pline_nomore("<%s: %s>", title ? title : "List of objects", buf);
     }
     return n;
 }

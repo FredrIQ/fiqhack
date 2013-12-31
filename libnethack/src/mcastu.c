@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-30 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -68,7 +68,7 @@ cursetxt(struct monst *mtmp, boolean undirected)
         pline("%s points %s.", Monnam(mtmp), point_msg);
     } else if (!(moves % 4) || !rn2(4)) {
         if (flags.soundok)
-            Norep("You hear a mumbled curse.");
+            pline_once("You hear a mumbled curse.");
     }
 }
 
@@ -892,7 +892,7 @@ castmm(struct monst *mtmp, struct monst *mdef, const struct attack *mattk)
 
         } else if ((!(moves % 4) || !rn2(4))) {
             if (flags.soundok)
-                Norep("You hear a mumbled curse.");
+                pline_once("You hear a mumbled curse.");
         }
         return (0);
     }

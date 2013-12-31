@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -151,7 +151,7 @@ awaken_soldiers(void)
             if (canseemon(mtmp))
                 pline("%s is now ready for battle!", Monnam(mtmp));
             else
-                Norep("You hear the rattle of battle gear being readied.");
+                pline_once("You hear the rattle of battle gear being readied.");
         }
         mtmp = mtmp->nmon;
     }

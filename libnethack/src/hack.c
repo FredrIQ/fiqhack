@@ -41,7 +41,7 @@ revive_nasty(int x, int y, const char *msg)
                 enexto(&cc, level, x, y, mtmp->data))
                 rloc_to(mtmp, cc.x, cc.y);
             if (msg)
-                Norep("%s", msg);
+                pline_once("%s", msg);
             revived = revive_corpse(otmp);
         }
     }
@@ -1440,20 +1440,21 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
                 vision_full_recalc = 1; /* vision limits change */
             } else if (flags.verbose) {
                 if (u.usteed)
-                    Norep("%s is still in a pit.", upstart(y_monnam(u.usteed)));
+                    pline_once("%s is still in a pit.",
+                               upstart(y_monnam(u.usteed)));
                 else
-                    Norep((Hallucination &&
-                           !rn2(5)) ? "You've fallen, and you can't get up." :
-                          "You are still in a pit.");
+                    pline_once((Hallucination && !rn2(5)) ?
+                               "You've fallen, and you can't get up." :
+                               "You are still in a pit.");
             }
         } else if (u.utraptype == TT_LAVA) {
             if (flags.verbose) {
                 predicament = "stuck in the lava";
                 if (u.usteed)
-                    Norep("%s is %s.", upstart(y_monnam(u.usteed)),
+                    pline_once("%s is %s.", upstart(y_monnam(u.usteed)),
                           predicament);
                 else
-                    Norep("You are %s.", predicament);
+                    pline_once("You are %s.", predicament);
             }
             if (!is_lava(level, x, y)) {
                 u.utrap--;
@@ -1477,10 +1478,10 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
                 if (flags.verbose) {
                     predicament = "stuck to the web";
                     if (u.usteed)
-                        Norep("%s is %s.", upstart(y_monnam(u.usteed)),
-                              predicament);
+                        pline_once("%s is %s.", upstart(y_monnam(u.usteed)),
+                                   predicament);
                     else
-                        Norep("You are %s.", predicament);
+                        pline_once("You are %s.", predicament);
                 }
             } else {
                 if (u.usteed)
@@ -1494,11 +1495,11 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
                 if (flags.verbose) {
                     predicament = "stuck in the";
                     if (u.usteed)
-                        Norep("%s is %s %s.", upstart(y_monnam(u.usteed)),
-                              predicament, surface(u.ux, u.uy));
+                        pline_once("%s is %s %s.", upstart(y_monnam(u.usteed)),
+                                   predicament, surface(u.ux, u.uy));
                     else
-                        Norep("You are %s %s.", predicament,
-                              surface(u.ux, u.uy));
+                        pline_once("You are %s %s.", predicament,
+                                   surface(u.ux, u.uy));
                 }
             } else {
                 if (u.usteed)
@@ -1511,10 +1512,10 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
             if (flags.verbose) {
                 predicament = "caught in a bear trap";
                 if (u.usteed)
-                    Norep("%s is %s.", upstart(y_monnam(u.usteed)),
-                          predicament);
+                    pline_once("%s is %s.", upstart(y_monnam(u.usteed)),
+                               predicament);
                 else
-                    Norep("You are %s.", predicament);
+                    pline_once("You are %s.", predicament);
             }
             if ((dx && dy) || !rn2(5))
                 u.utrap--;

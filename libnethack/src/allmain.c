@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -756,7 +756,7 @@ handle_lava_trap(boolean didmove)
             pline("You sink below the surface and die.");
             done(DISSOLVED);
         } else if (didmove && !u.umoved) {
-            Norep("You sink deeper into the lava.");
+            pline_once("You sink deeper into the lava.");
             u.utrap += rnd(4);
         }
     }
@@ -988,10 +988,6 @@ command_input(int cmdidx, struct nh_cmd_arg *arg)
         you_moved();
 
     /* actual time passed */
-    /****************************************/
-    /* once-per-player-input things go here */
-    /****************************************/
-    iflags.next_msg_nonblocking = 0;
 
     /* prepare for the next move */
     pre_move_tasks(didmove);

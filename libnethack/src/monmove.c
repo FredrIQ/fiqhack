@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-26 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1133,10 +1133,10 @@ postmov:
                 }
             } else if (level->locations[mtmp->mx][mtmp->my].typ == IRONBARS) {
                 if (flags.verbose && canseemon(mtmp))
-                    Norep("%s %s %s the iron bars.", Monnam(mtmp),
-                          /* pluralization fakes verb conjugation */
-                          makeplural(locomotion(ptr, "pass")),
-                          passes_walls(ptr) ? "through" : "between");
+                    pline_once("%s %s %s the iron bars.", Monnam(mtmp),
+                               /* pluralization fakes verb conjugation */
+                               makeplural(locomotion(ptr, "pass")),
+                               passes_walls(ptr) ? "through" : "between");
             }
 
             /* possibly dig */

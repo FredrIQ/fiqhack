@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,8 +7,6 @@
 #include "epri.h"
 #include "emin.h"
 #include "edog.h"
-
-static boolean no_repeat = FALSE;
 
 static char *You_buf(int);
 
@@ -18,20 +16,49 @@ static char *You_buf(int);
  * of the variable argument handling stuff in "tradstdc.h"
  */
 
-static void vpline(const char *, va_list) PRINTFLIKE(1,0);
+static void vpline(boolean nonblocking, boolean norepeat, const char *, va_list)
+    PRINTFLIKE(3,0);
+
+
+#define pline_body(line, nonblocking, norepeat) \
+    do { \
+    va_list the_args; \
+    va_start (the_args, line); \
+    vpline(nonblocking, norepeat, line, the_args); \
+    va_end(the_args); \
+    } while (0)
+
 
 void
 pline(const char *line, ...)
 {
-    va_list the_args;
-
-    va_start(the_args, line);
-    vpline(line, the_args);
-    va_end(the_args);
+    pline_body(line, FALSE, FALSE);
 }
 
+
+void
+pline_nomore(const char *line, ...)
+{
+    pline_body(line, TRUE, FALSE);
+}
+
+
+void
+pline_once(const char *line, ...)
+{
+    pline_body(line, FALSE, TRUE);
+}
+
+
+void
+pline_once_nomore(const char *line, ...)
+{
+    pline_body(line, TRUE, TRUE);
+}
+
+
 static void
-vpline(const char *line, va_list the_args)
+vpline(boolean nonblocking, boolean norepeat, const char *line, va_list the_args)
 {
     char pbuf[BUFSZ], *c;
     boolean repeated;
@@ -57,7 +84,7 @@ vpline(const char *line, va_list the_args)
     line = pbuf;
 
     repeated = !strcmp(line, toplines[lastline]);
-    if (no_repeat && repeated)
+    if (norepeat && repeated)
         return;
     if (vision_full_recalc)
         vision_recalc(0);
@@ -72,32 +99,12 @@ vpline(const char *line, va_list the_args)
         curline++;
         curline %= MSGCOUNT;
     }
-    if (iflags.next_msg_nonblocking)
+    if (nonblocking)
         (*windowprocs.win_print_message_nonblocking) (moves, line);
     else
         print_message(moves, line);
-    iflags.next_msg_nonblocking = 0;
 }
 
-void
-suppress_more(void)
-{
-    iflags.next_msg_nonblocking = 1;
-}
-
-/*VARARGS1*/
-void
-Norep(const char *line, ...)
-{
-    va_list the_args;
-
-    va_start(the_args, line);
-    no_repeat = TRUE;
-    vpline(line, the_args);
-    no_repeat = FALSE;
-    va_end(the_args);
-    return;
-}
 
 /* work buffer for You(), &c and verbalize() */
 static char *you_buf = 0;
@@ -144,7 +151,7 @@ You_hear(const char *line, ...)
         YouPrefix(tmp, "You dream that you hear ", line);
     else
         YouPrefix(tmp, "You hear ", line);
-    vpline(strcat(tmp, line), the_args);
+    vpline(FALSE, FALSE, strcat(tmp, line), the_args);
     va_end(the_args);
 }
 
@@ -162,7 +169,7 @@ verbalize(const char *line, ...)
     strcpy(tmp, "\"");
     strcat(tmp, line);
     strcat(tmp, "\"");
-    vpline(tmp, the_args);
+    vpline(FALSE, FALSE, tmp, the_args);
     va_end(the_args);
 }
 
@@ -212,7 +219,7 @@ impossible(const char *s, ...)
     }
     va_end(the_args);
     va_start(the_args, s);
-    vpline(s, the_args);
+    vpline(FALSE, FALSE, s, the_args);
     pline("Program in disorder - perhaps you'd better save.");
     program_state.in_impossible = 0;
     va_end(the_args);

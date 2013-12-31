@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-30 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2403,10 +2403,10 @@ stolen_value(struct obj *obj, xchar x, xchar y, boolean peaceful,
 
         if (!silent) {
             if (cansee(shkp->mx, shkp->my)) {
-                Norep("%s booms: \"%s, you are a thief!\"", Monnam(shkp),
-                      u.uplname);
+                pline_once("%s booms: \"%s, you are a thief!\"", Monnam(shkp),
+                           u.uplname);
             } else
-                Norep("You hear a scream, \"Thief!\"");
+                pline_once("You hear a scream, \"Thief!\"");
         }
         hot_pursuit(shkp);
         angry_guards(FALSE);
@@ -2937,7 +2937,7 @@ remove_damage(struct monst *shkp, boolean croaked)
         else if (inside_shop(level, u.ux, u.uy) == ESHK(shkp)->shoproom)
             pline("You feel more claustrophobic than before.");
         else if (flags.soundok && !rn2(10))
-            Norep("The dungeon acoustics noticeably change.");
+            pline_once("The dungeon acoustics noticeably change.");
     }
 }
 

@@ -187,9 +187,6 @@ struct flag {
  */
 struct instance_flags {
     boolean vision_inited;      /* true if vision is ready */
-    boolean next_msg_nonblocking;       /* suppress a --More-- after this
-                                           message */
-
     boolean botl;       /* redo status line */
 };
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -803,7 +803,7 @@ costly_cancel(struct obj *obj)
             shkp = shop_keeper(level, *u.ushops);
             if (!shkp)
                 return;
-            Norep("You cancel an unpaid object, you pay for it!");
+            pline_once("You cancel an unpaid object, you pay for it!");
             bill_dummy_object(obj);
         }
         break;
@@ -815,7 +815,7 @@ costly_cancel(struct obj *obj)
         /* "if costly_spot(u.ux, u.uy)" is correct. It checks whether shk can
            force the player to pay for the item by blocking the door. */
         if (costly_spot(u.ux, u.uy) && objroom == *u.ushops) {
-            Norep("You cancel it, you pay for it!");
+            pline_once("You cancel it, you pay for it!");
             bill_dummy_object(obj);
         } else
             stolen_value(obj, obj->ox, obj->oy, FALSE, FALSE);
@@ -1474,7 +1474,7 @@ poly_obj(struct obj *obj, int id)
                     hot_pursuit(shkp);
                 }
             } else
-                Norep("%s is furious!", Monnam(shkp));
+                pline_once("%s is furious!", Monnam(shkp));
         }
     }
     delobj(obj);
@@ -1588,9 +1588,9 @@ hito_stone_to_flesh(struct obj *obj)
         if (herbivorous(youmonst.data) &&
             (!carnivorous(youmonst.data) || Role_if(PM_MONK) ||
              !u.uconduct.unvegetarian))
-            Norep("You smell the odor of meat.");
+            pline_once("You smell the odor of meat.");
         else
-            Norep("You smell a delicious smell.");
+            pline_once("You smell a delicious smell.");
     }
 
     newsym(refresh_x, refresh_y);
@@ -3646,7 +3646,7 @@ melt_ice(struct level *lev, xchar x, xchar y)
         vision_recalc(1);
     newsym(x, y);
     if (visible)
-        Norep("The ice crackles and melts.");
+        pline_once("The ice crackles and melts.");
     if ((otmp = sobj_at(BOULDER, level, x, y)) != 0) {
         if (visible)
             pline("%s settles...", An(xname(otmp)));
@@ -3682,7 +3682,7 @@ zap_over_floor(xchar x, xchar y, int type, boolean * shopdamage)
         if (t && t->ttyp == WEB) {
             /* a burning web is too flimsy to notice if you can't see it */
             if (cansee(x, y))
-                Norep("A web bursts into flames!");
+                pline_once("A web bursts into flames!");
             delfloortrap(level, t);
             if (cansee(x, y))
                 newsym(x, y);
@@ -3706,7 +3706,7 @@ zap_over_floor(xchar x, xchar y, int type, boolean * shopdamage)
                 if (cansee(x, y))
                     msgtxt = "The water evaporates.";
             }
-            Norep("%s", msgtxt);
+            pline_once("%s", msgtxt);
             if (loc->typ == ROOM)
                 newsym(x, y);
         } else if (IS_FOUNTAIN(loc->typ)) {
@@ -3740,11 +3740,11 @@ zap_over_floor(xchar x, xchar y, int type, boolean * shopdamage)
             bury_objs(level, x, y);
             if (cansee(x, y)) {
                 if (moat)
-                    Norep("The moat is bridged with ice!");
+                    pline_once("The moat is bridged with ice!");
                 else if (lava)
-                    Norep("The lava cools and solidifies.");
+                    pline_once("The lava cools and solidifies.");
                 else
-                    Norep("The water freezes.");
+                    pline_once("The water freezes.");
                 newsym(x, y);
             } else if (flags.soundok && !lava)
                 You_hear("a crackling sound.");
