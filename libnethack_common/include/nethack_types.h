@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-01 */
+/* Last modified by Sean Hunt, 2014-01-01 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -532,6 +532,9 @@ struct nh_cmd_arg {
 # define NH_BRANDING_UNLOCKED  0x0004
 # define NH_BRANDING_TRAPPED   0x0008   /* for door traps and the like */
 # define NH_BRANDING_UNTRAPPED 0x0010   /* probably not worth drawing */
+# define NH_BRANDING_SEEN      0x0020   /* a square that is seen */
+# define NH_BRANDING_LIT       0x0040   /* a square that is permanently lit */
+# define NH_BRANDING_TEMP_LIT  0x0080   /* a square that is temporarily lit */
 /* monster attitude could go here, but is in monflags instead as
    that's a more appropriate place */
 

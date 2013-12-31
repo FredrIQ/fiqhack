@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-01-01 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -287,7 +287,7 @@ extern void dbuf_set(int x, int y, int bg, int trap, int obj, int obj_mn,
                      boolean invis, int mon, int monflags, int effect,
                      int branding);
 extern void dbuf_set_effect(int x, int y, int eglyph);
-extern short dbuf_branding(struct rm *loc);
+extern short dbuf_branding(int x, int y);
 extern int dbuf_get_mon(int x, int y);
 extern boolean warning_at(int x, int y);
 extern void clear_display_buffer(void);

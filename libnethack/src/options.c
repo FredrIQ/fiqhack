@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-01 */
+/* Last modified by Sean Hunt, 2014-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -157,8 +157,6 @@ static const struct nh_option_desc const_options[] = {
      OPTTYPE_ENUM, {.e = DISCLOSE_PROMPT_DEFAULT_YES}},
     {"fruit", "the name of a fruit you enjoy eating", FALSE, OPTTYPE_STRING,
      {"slime mold"}},
-    {"lit_corridor", "show a dark corridor as lit if in sight", FALSE,
-     OPTTYPE_BOOL, {.b = FALSE}},
     {"menustyle", "user interface for object selection", FALSE, OPTTYPE_ENUM,
      {.e = MENU_FULL}},
     {"movecommand", "what the movement keys do", FALSE, OPTTYPE_ENUM,
@@ -229,7 +227,6 @@ static const struct nhlib_boolopt_map boolopt_map[] = {
     {"autoquiver", &flags.autoquiver},
     {"corridorbranch", &flags.corridorbranch},
     {"legacy", &flags.legacy},
-    {"lit_corridor", &flags.lit_corridor},
     {"pickup_thrown", &flags.pickup_thrown},
     {"prayconfirm", &flags.prayconfirm},
     {"pushweapon", &flags.pushweapon},
@@ -435,8 +432,6 @@ set_option(const char *name, union nh_optvalue value)
         }
         *bvar = option->value.b;
 
-        if (!strcmp("lit_corridor", option->name))
-            doredraw();
         return TRUE;
     } else if (!strcmp("disclose", option->name)) {
         flags.end_disclose = option->value.e;

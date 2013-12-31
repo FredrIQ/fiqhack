@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-01-01 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -173,13 +173,6 @@ magic_map_background(xchar x, xchar y, int show)
      * Correct for out of sight lit corridors and rooms that the hero
      * doesn't remember as lit.
      */
-    if (!cansee(x, y) && !loc->waslit) {
-        /* Floor spaces are dark if unlit.  Corridors are dark if unlit. */
-        if (loc->typ == ROOM && cmap == S_room)
-            cmap = S_darkroom;
-        else if (loc->typ == CORR && cmap == S_litcorr)
-            cmap = S_corr;
-    }
     loc->mem_bg = cmap;
     if (cmap == S_vodoor || cmap == S_hodoor || cmap == S_vcdoor ||
         cmap == S_hcdoor) {
@@ -192,7 +185,7 @@ magic_map_background(xchar x, xchar y, int show)
     }
 
     if (show)
-        dbuf_set(x, y, cmap, 0, 0, 0, 0, 0, 0, 0, dbuf_branding(loc));
+        dbuf_set(x, y, cmap, 0, 0, 0, 0, 0, 0, 0, dbuf_branding(x, y));
 }
 
 /* FIXME: some of these use xchars for x and y, and some use ints.  Make
@@ -228,7 +221,7 @@ map_background(xchar x, xchar y, int show)
     }
 
     if (show)
-        dbuf_set(x, y, cmap, 0, 0, 0, 0, 0, 0, 0, dbuf_branding(loc));
+        dbuf_set(x, y, cmap, 0, 0, 0, 0, 0, 0, 0, dbuf_branding(x, y));
 
 }
 
@@ -254,7 +247,7 @@ map_trap(struct trap *trap, int show)
     loc->mem_trap = trapid;
     if (show)
         dbuf_set(x, y, loc->mem_bg, loc->mem_trap, 0, 0, 0, 0, 0, 0,
-                 dbuf_branding(loc));
+                 dbuf_branding(x, y));
 }
 
 /*
@@ -289,7 +282,7 @@ map_object(struct obj *obj, int show)
 
     if (show)
         dbuf_set(x, y, loc->mem_bg, loc->mem_trap, loc->mem_obj,
-                 loc->mem_obj_mn, 0, 0, 0, 0, dbuf_branding(loc));
+                 loc->mem_obj_mn, 0, 0, 0, 0, dbuf_branding(x, y));
 }
 
 /*
@@ -311,7 +304,7 @@ map_invisible(xchar x, xchar y)
                  level->locations[x][y].mem_trap,
                  level->locations[x][y].mem_obj,
                  level->locations[x][y].mem_obj_mn, 1, 0, 0, 0,
-                 dbuf_branding(&level->locations[x][y]));
+                 dbuf_branding(x, y));
     }
 }
 
@@ -459,7 +452,7 @@ display_monster(xchar x, xchar y,       /* display position */
                      level->locations[x][y].mem_obj_mn, 0,
                      what_mon((int)mon->mappearance) + 1,
                      mon->mtame ? MON_TAME : mon->mpeaceful ? MON_PEACEFUL : 0,
-                     0, dbuf_branding(&level->locations[x][y]));
+                     0, dbuf_branding(x, y));
             break;
         }
 
@@ -494,7 +487,7 @@ display_monster(xchar x, xchar y,       /* display position */
                  level->locations[x][y].mem_trap,
                  level->locations[x][y].mem_obj,
                  level->locations[x][y].mem_obj_mn, 0, what_mon(monnum) + 1,
-                 mflag, 0, dbuf_branding(&level->locations[x][y]));
+                 mflag, 0, dbuf_branding(x, y));
     }
 }
 
@@ -534,7 +527,7 @@ display_warning(struct monst *mon)
     dbuf_set(x, y, level->locations[x][y].mem_bg,
              level->locations[x][y].mem_trap, level->locations[x][y].mem_obj,
              level->locations[x][y].mem_obj_mn, 0, monnum, mflag, 0,
-             dbuf_branding(&level->locations[x][y]));
+             dbuf_branding(x, y));
 }
 
 /*
@@ -594,59 +587,9 @@ feel_location(xchar x, xchar y)
             map_background(x, y, 1);
         } else if ((boulder = sobj_at(BOULDER, level, x, y)) != 0) {
             map_object(boulder, 1);
-        } else if (IS_DOOR(loc->typ)) {
-            map_background(x, y, 1);
-        } else if (IS_ROOM(loc->typ) || IS_POOL(loc->typ)) {
-            /* 
-             * An open room or water location.  Normally we wouldn't touch
-             * this, but we have to get rid of remembered boulder symbols.
-             * This will only occur in rare occations when the hero goes
-             * blind and doesn't find a boulder where expected (something
-             * came along and picked it up).  We know that there is not a
-             * boulder at this location.  Show fountains, pools, etc.
-             * underneath if already seen.  Otherwise, show the appropriate
-             * floor symbol.
-             *
-             * Similarly, if the hero digs a hole in a wall or feels a location
-             * that used to contain an unseen monster.  In these cases,
-             * there's no reason to assume anything was underneath, so
-             * just show the appropriate floor symbol.  If something was
-             * embedded in the wall, the glyph will probably already
-             * reflect that.  Don't change the symbol in this case.
-             *
-             * This isn't quite correct.  If the boulder was on top of some
-             * other objects they should be seen once the boulder is removed.
-             * However, we have no way of knowing that what is there now
-             * was there then.  So we let the hero have a lapse of memory.
-             * We could also just display what is currently on the top of the
-             * object stack (if anything).
-             */
-            if (loc->mem_obj - 1 == BOULDER) {
-                if (loc->typ != ROOM && loc->seenv) {
-                    map_background(x, y, 1);
-                } else {
-                    loc->mem_bg = loc->waslit ? S_room : S_darkroom;
-                    loc->mem_door_l = 0;
-                    loc->mem_door_t = 0;
-                    dbuf_set_loc(x, y);
-                }
-            } else if (loc->mem_bg < S_room || loc->mem_invis) {
-                loc->mem_bg = loc->waslit ? S_room : S_darkroom;
-                loc->mem_door_l = 0;
-                loc->mem_door_t = 0;
-                dbuf_set_loc(x, y);
-            }
         } else {
-            /* We feel it (I think hallways are the only things left). */
+            /* We feel it */
             map_background(x, y, 1);
-            /* Corridors are never felt as lit (unless remembered that way) */
-            /* (lit_corridor only).  */
-            if (loc->typ == CORR && loc->mem_bg == S_litcorr && !loc->waslit) {
-                loc->mem_bg = S_corr;
-                loc->mem_door_l = 0;
-                loc->mem_door_t = 0;
-                dbuf_set_loc(x, y);
-            }
         }
     } else {
         map_location(x, y, 1);
@@ -671,19 +614,6 @@ feel_location(xchar x, xchar y)
                 else
                     u.bc_felt &= ~BC_BALL;      /* do not feel the ball */
             }
-        }
-
-        /* Floor spaces are dark if unlit.  Corridors are dark if unlit. */
-        if (loc->typ == ROOM && loc->mem_bg == S_room && !loc->waslit) {
-            loc->mem_bg = S_darkroom;
-            loc->mem_door_l = 0;
-            loc->mem_door_t = 0;
-            dbuf_set_loc(x, y);
-        } else if (loc->typ == CORR && loc->mem_bg == S_litcorr && !loc->waslit) {
-            loc->mem_bg = S_corr;
-            loc->mem_door_l = 0;
-            loc->mem_door_t = 0;
-            dbuf_set_loc(x, y);
         }
     }
     /* draw monster on top if we can sense it */
@@ -809,45 +739,7 @@ newsym(int x, int y)
         } else if ((mon = m_at(level, x, y)) && mon_warning(mon) &&
                    !is_worm_tail(mon)) {
             display_warning(mon);
-        }
-
-        /* 
-         * If the location is remembered as being both dark (waslit is false)
-         * and lit (glyph is a lit room or lit corridor) then it was either:
-         *
-         *      (1) A dark location that the hero could see through night
-         *          vision.
-         *
-         *      (2) Darkened while out of the hero's sight.  This can happen
-         *          when cursed scroll of light is read.
-         *
-         * In either case, we have to manually correct the hero's memory to
-         * match waslit.  Deciding when to change waslit is non-trivial.
-         *
-         *  Note:  If flags.lit_corridor is set, then corridors act like room
-         *         squares.  That is, they light up if in night vision range.
-         *         If flags.lit_corridor is not set, then corridors will
-         *         remain dark unless lit by a light spell and may darken
-         *         again, as discussed above.
-         *
-         * These checks and changes must be here and not in back_to_glyph().
-         * They are dependent on the position being out of sight.
-         */
-        else if (!loc->waslit) {
-            if (loc->mem_bg == S_litcorr && loc->typ == CORR) {
-                loc->mem_bg = S_corr;
-                loc->mem_door_l = 0;
-                loc->mem_door_t = 0;
-                dbuf_set_loc(x, y);
-            } else if (loc->mem_bg == S_room && loc->typ == ROOM) {
-                loc->mem_bg = S_darkroom;
-                loc->mem_door_l = 0;
-                loc->mem_door_t = 0;
-                dbuf_set_loc(x, y);
-            } else
-                goto show_mem;
         } else {
-        show_mem:
             dbuf_set_loc(x, y);
         }
     }
@@ -1298,7 +1190,7 @@ display_self(void)
                  level->locations[x][y].mem_obj,
                  level->locations[x][y].mem_obj_mn, 0,
                  what_mon(u.usteed->mnum) + 1, MON_RIDDEN, 0,
-                 dbuf_branding(&level->locations[x][y]));
+                 dbuf_branding(x, y));
     } else if (youmonst.m_ap_type == M_AP_NOTHING) {
         int monnum = (Upolyd || !flags.showrace) ? u.umonnum :
             (u.ufemale && urace.femalenum != NON_PM) ?
@@ -1307,20 +1199,20 @@ display_self(void)
                  level->locations[x][y].mem_trap,
                  level->locations[x][y].mem_obj,
                  level->locations[x][y].mem_obj_mn, 0, monnum + 1, 0, 0,
-                 dbuf_branding(&level->locations[x][y]));
+                 dbuf_branding(x, y));
     } else if (youmonst.m_ap_type == M_AP_FURNITURE) {
         dbuf_set(x, y, youmonst.mappearance, 0, 0, 0, 0, 0, 0, 0,
-                 dbuf_branding(&level->locations[x][y]));
+                 dbuf_branding(x, y));
     } else if (youmonst.m_ap_type == M_AP_OBJECT) {
         dbuf_set(x, y, level->locations[x][y].mem_bg,
                  level->locations[x][y].mem_trap, youmonst.mappearance + 1, 0,
-                 0, 0, 0, 0, dbuf_branding(&level->locations[x][y]));
+                 0, 0, 0, 0, dbuf_branding(x, y));
     } else      /* M_AP_MONSTER */
         dbuf_set(x, y, level->locations[x][y].mem_bg,
                  level->locations[x][y].mem_trap,
                  level->locations[x][y].mem_obj,
                  level->locations[x][y].mem_obj_mn, 0, youmonst.mappearance + 1,
-                 0, 0, dbuf_branding(&level->locations[x][y]));
+                 0, 0, dbuf_branding(x, y));
 }
 
 int
@@ -1511,7 +1403,7 @@ dbuf_set_loc(int x, int y)
              level->locations[x][y].mem_trap, level->locations[x][y].mem_obj,
              level->locations[x][y].mem_obj_mn,
              level->locations[x][y].mem_invis, 0, 0, 0,
-             dbuf_branding(&level->locations[x][y]));
+             dbuf_branding(x, y));
 }
 
 
@@ -1519,20 +1411,32 @@ dbuf_set_loc(int x, int y)
  * Calculate the branding information for a location.
  */
 short
-dbuf_branding(struct rm *loc)
+dbuf_branding(int x, int y)
 {
     short b = 0;
+    struct rm *loc = &level->locations[x][y];
 
     if (loc->mem_stepped)
         b |= NH_BRANDING_STEPPED;
+
     if (loc->mem_door_l && (loc->flags & D_LOCKED))
         b |= NH_BRANDING_LOCKED;
     else if (loc->mem_door_l)
         b |= NH_BRANDING_UNLOCKED;
+
     if (loc->mem_door_t && (loc->flags & D_TRAPPED))
         b |= NH_BRANDING_TRAPPED;
     else if (loc->mem_door_t)
         b |= NH_BRANDING_UNTRAPPED;
+
+    if (cansee(x, y))
+        b |= NH_BRANDING_SEEN;
+
+    if (loc->waslit)
+        b |= NH_BRANDING_LIT;
+    else if (cansee(x, y) && templit(x, y))
+        b |= NH_BRANDING_TEMP_LIT;
+
     return b;
 }
 
@@ -1654,10 +1558,10 @@ back_to_cmap(struct level *lev, xchar x, xchar y)
         idx = lev->flags.arboreal ? S_tree : S_stone;
         break;
     case ROOM:
-        idx = (!cansee(x, y) && !ptr->waslit) ? S_darkroom : S_room;
+        idx = S_room;
         break;
     case CORR:
-        idx = (ptr->waslit || flags.lit_corridor) ? S_litcorr : S_corr;
+        idx = S_corr;
         break;
     case HWALL:
     case VWALL:
@@ -1748,7 +1652,7 @@ back_to_cmap(struct level *lev, xchar x, xchar y)
             idx = S_ice;
             break;
         case DB_FLOOR:
-            idx = (!cansee(x, y) && !ptr->waslit) ? S_darkroom : S_room;
+            idx = S_room;
             break;
         default:
             impossible("Strange db-under: %d", ptr->drawbridgemask & DB_UNDER);

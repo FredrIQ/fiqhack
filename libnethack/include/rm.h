@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-11-16 */
+/* Last modified by Sean Hunt, 2014-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -107,11 +107,10 @@
 /*
  * The screen symbols may be the default or defined at game startup time.
  * See drawing.c for defaults.
- * Note: {ibm|dec}_graphics[] arrays (also in drawing.c) must be kept in synch.
+ * Note: various arrays (also in drawing.c) must be kept in synch.
  */
 
 /* begin dungeon characters */
-/* note: when changing these, also update brandings.c */
 enum dungeon_symbols {
 /* 0*/ S_unexplored,
     S_stone,
@@ -127,9 +126,7 @@ enum dungeon_symbols {
     S_tlwall,
     S_trwall,
     S_corr,
-    S_litcorr,
     S_room,
-    S_darkroom,
     S_pool,
     S_air,
     S_cloud,

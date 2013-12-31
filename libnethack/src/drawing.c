@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Sean Hunt, 2014-01-01 */
 /* Copyright (c) NetHack Development Team 1992.                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -98,9 +98,7 @@ const char *const defexplain[] = {
              "wall",                /* tlwall */
              "wall",                /* trwall */
              "corridor",            /* dark corr */
-             "lit corridor",        /* lit corr */
              "the floor of a room", /* room */
-             "dark part of a room", /* darkroom */
              "water",               /* pool */
              "air",                 /* open air */
              "cloud",               /* [part of] a cloud */
@@ -177,9 +175,7 @@ const struct nh_symdef defsyms[] = {
     {'|', "tlwall", CLR_GRAY},
     {'|', "trwall", CLR_GRAY},
     {'#', "corr", CLR_GRAY},
-    {'#', "litcorr", CLR_WHITE},
     {'.', "room", CLR_GRAY},
-    {'.', "darkroom", CLR_BLACK},
     {'}', "pool", CLR_BLUE},
     {' ', "air", CLR_CYAN},
     {'#', "cloud", CLR_GRAY},
