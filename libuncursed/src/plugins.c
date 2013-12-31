@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-12 */
+/* Last modified by Alex Smith, 2013-12-31 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -25,6 +25,21 @@
 # include <windows.h>
 #endif
 
+#ifdef AIMAKE_BUILDOS_linux
+# define DLLEXT ".so"
+#else
+# ifdef AIMAKE_BUILDOS_MSWin32
+#  define DLLEXT ".dll"
+# else
+#  ifdef AIMAKE_BUILDOS_darwin
+#   define DLLEXT ".dylib"
+#  else
+#   error plugins.c requires dynamic library loading code for your OS.
+#  endif
+# endif
+#endif
+
+
 #define MAX_PLUGINS 10
 
 static int plugins_dynamically_loaded = 0;
@@ -33,7 +48,7 @@ static void *plugin_handles[MAX_PLUGINS];
 static void
 unload_handle(void *handle)
 {
-#ifdef AIMAKE_BUILDOS_linux
+#if defined(AIMAKE_BUILDOS_linux) || defined(AIMAKE_BUILDOS_darwin)
     dlclose(handle);
 #else
 # ifdef AIMAKE_BUILDOS_MSWin32
@@ -77,29 +92,24 @@ uncursed_load_plugin(const char *plugin_name)
 
     void *handle = NULL;
 
-#ifdef AIMAKE_BUILDOS_linux
+    char fname[strlen("libuncursed_") + strlen(plugin_name) +
+               strlen(DLLEXT) + 1];
+
+    strcpy(fname, "libuncursed_");
+    strcat(fname, plugin_name);
+    strcat(fname, DLLEXT);
+
+#if defined(AIMAKE_BUILDOS_linux) || defined(AIMAKE_BUILDOS_darwin)
 
     /* dlopen() uses much the same search path rules as ld.so, so this will
        look for the plugins in the rpath, which includes the libdir where they
        should have been installed. */
-    char fname[strlen("libuncursed_") + strlen(plugin_name) + strlen(".so") +
-               1];
-    strcpy(fname, "libuncursed_");
-    strcat(fname, plugin_name);
-    strcat(fname, ".so");
-
     handle = dlopen(fname, RTLD_NOW);
     if (!handle)
         fprintf(stderr, "Warning: could not load %s: %s\n", fname, dlerror());
 
 #else
 # ifdef AIMAKE_BUILDOS_MSWin32
-
-    char fname[strlen("libuncursed_") + strlen(plugin_name) + strlen(".dll") +
-               1];
-    strcpy(fname, "libuncursed_");
-    strcat(fname, plugin_name);
-    strcat(fname, ".dll");
 
     handle = malloc(sizeof (HMODULE));
     if (handle) {
