@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-01 */
+/* Last modified by Sean Hunt, 2014-01-01 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -172,7 +172,7 @@ struct curses_symdef {
 struct curses_drawing_info {
     /* background layer symbols: nh_dbuf_entry.bg */
     struct curses_symdef *bgelements;
-    /* background layer symbols: nh_dbuf_entry.bg */
+    /* trap layer symbols: nh_dbuf_entry.trap */
     struct curses_symdef *traps;
     /* object layer symbols: nh_dbuf_entry.obj */
     struct curses_symdef *objects;
