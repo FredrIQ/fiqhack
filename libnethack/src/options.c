@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-30 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -393,7 +393,7 @@ initoptions(void)
 {
     flags.mon_generation = 1;
 
-    iflags.travelcc.x = iflags.travelcc.y = -1;
+    flags.travelcc.x = flags.travelcc.y = -1;
 
     /* init flags.inv_order this way, as setting it via the option requires a
        preexisting order */

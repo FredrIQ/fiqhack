@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -168,6 +168,7 @@ struct flag {
     int last_cmd;                             /* this or previous command */
     struct nh_cmd_arg last_arg;              /* this or previous argument */
     enum occupation occupation; /* internal code for a multi-turn command */
+    coord travelcc;             /* previously traveled-to square */
 
     /* === BIRTH OPTIONS === */
     boolean elbereth_enabled;   /* should the E-word repel monsters? */
@@ -186,7 +187,6 @@ struct flag {
  */
 struct instance_flags {
     boolean vision_inited;      /* true if vision is ready */
-    coord travelcc;     /* coordinates for travel_cache */
     boolean next_msg_nonblocking;       /* suppress a --More-- after this
                                            message */
 
