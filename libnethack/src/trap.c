@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2501,11 +2501,11 @@ dofiretrap(struct obj *box)
         if (alt > num)
             num = alt;
         if (u.mhmax > mons[u.umonnum].mlevel)
-            u.mhmax -= rn2(min(u.mhmax, num + 1)), iflags.botl = 1;
+            u.mhmax -= rn2(min(u.mhmax, num + 1));
     } else {
         num = dice(2, 4);
         if (u.uhpmax > u.ulevel)
-            u.uhpmax -= rn2(min(u.uhpmax, num + 1)), iflags.botl = 1;
+            u.uhpmax -= rn2(min(u.uhpmax, num + 1));
     }
     if (!num)
         pline("You are uninjured.");
@@ -3025,7 +3025,6 @@ drain_en(int n)
             u.uenmax = 0;
         u.uen = 0;
     }
-    iflags.botl = 1;
 }
 
 /* disarm a trap */

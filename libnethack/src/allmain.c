@@ -574,7 +574,6 @@ you_moved(void)
 
             if (u.ublesscnt)
                 u.ublesscnt--;
-            iflags.botl = 1;
 
             /* One possible result of prayer is healing. Whether or not you get
                healed depends on your current hit points. If you are allowed to
@@ -589,7 +588,6 @@ you_moved(void)
                        !is_pool(level, u.ux, u.uy) && !Is_waterlevel(&u.uz)) {
                 if (u.mh > 1) {
                     u.mh--;
-                    iflags.botl = 1;
                 } else if (u.mh < 1)
                     rehumanize();
             } else if (Upolyd && u.mh < u.mhmax) {
@@ -597,7 +595,6 @@ you_moved(void)
                     rehumanize();
                 else if (Regeneration ||
                          (wtcap < MOD_ENCUMBER && !(moves % 20))) {
-                    iflags.botl = 1;
                     u.mh++;
                 }
             } else if (u.uhp < u.uhpmax &&
@@ -612,14 +609,12 @@ you_moved(void)
                         if (heal > u.ulevel - 9)
                             heal = u.ulevel - 9;
                     }
-                    iflags.botl = 1;
                     u.uhp += heal;
                     if (u.uhp > u.uhpmax)
                         u.uhp = u.uhpmax;
                 } else if (Regeneration ||
                            (u.ulevel <= 9 &&
                             !(moves % ((MAXULEV + 12) / (u.ulevel + 2) + 1)))) {
-                    iflags.botl = 1;
                     u.uhp++;
                 }
             }
@@ -648,7 +643,6 @@ you_moved(void)
                 u.uen += rn1((int)(ACURR(A_WIS) + ACURR(A_INT)) / 15 + 1, 1);
                 if (u.uen > u.uenmax)
                     u.uen = u.uenmax;
-                iflags.botl = 1;
             }
 
             if (!u.uinvulnerable) {
@@ -660,7 +654,6 @@ you_moved(void)
                         if (!next_to_u()) {
                             check_leash(old_ux, old_uy);
                         }
-                        iflags.botl = 1;
                     }
                 }
                 /* delayed change may not be valid anymore */
@@ -793,8 +786,7 @@ pre_move_tasks(boolean didmove)
     /* hallucination, etc. */
     special_vision_handling();
 
-    if (iflags.botl)
-        bot();
+    bot();
 
     if (didmove && Clairvoyant && !In_endgame(&u.uz) && !(moves % 15) &&
         !rn2(2))
@@ -819,8 +811,6 @@ pre_move_tasks(boolean didmove)
         else if (monster_nearby())
             action_interrupted();
     }
-
-    iflags.botl = 1;
 
     if (didmove && moves % 100 == 0)
         realtime_tasks();
@@ -1027,8 +1017,6 @@ newgame(void)
     u_on_upstairs();
     vision_reset();     /* set up internals for level (after mklev) */
     check_special_room(FALSE);
-
-    iflags.botl = 1;
 
     /* Move the monster from under you or else makedog() will fail when it
        calls makemon().  - ucsfcgl!kneller */

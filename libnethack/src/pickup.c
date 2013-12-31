@@ -1080,9 +1080,6 @@ pickup_object(struct obj *obj, long count, boolean telekinesis)
     if ((res = lift_object(obj, NULL, &count, telekinesis)) <= 0)
         return res;
 
-    /* Whats left of the special case for gold :-) */
-    if (obj->oclass == COIN_CLASS)
-        iflags.botl = 1;
     if (obj->quan != count && obj->otyp != LOADSTONE)
         obj = splitobj(obj, count);
 
@@ -1161,7 +1158,6 @@ encumber_msg(void)
                   newcap == 4 ? "can barely" : "can't even");
             break;
         }
-        iflags.botl = 1;
     } else if (u.oldcap > newcap) {
         switch (newcap) {
         case 0:
@@ -1178,7 +1174,6 @@ encumber_msg(void)
                   stagger(youmonst.data, "stagger"));
             break;
         }
-        iflags.botl = 1;
     }
 
     u.oldcap = newcap;

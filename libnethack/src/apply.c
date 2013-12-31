@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-30 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1670,7 +1670,6 @@ use_unicorn_horn(struct obj *obj)
     else if (!did_prop)
         pline("Nothing seems to happen.");
 
-    iflags.botl = (did_attr || did_prop);
 #undef PROP_COUNT
 #undef ATTR_COUNT
 #undef prop2trbl
@@ -2258,7 +2257,6 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
         pline("You hit your %s with your bullwhip.", body_part(FOOT));
         sprintf(buf, "killed %sself with %s bullwhip", uhim(), uhis());
         losehp(dam, buf, NO_KILLER_PREFIX);
-        iflags.botl = 1;
         return 1;
 
     } else if ((Fumbling || Glib) && !rn2(5)) {
@@ -2810,24 +2808,21 @@ do_break_wand(struct obj *obj)
                 if (obj->otyp == WAN_TELEPORTATION && affects_objects &&
                     level->objects[x][y]) {
                     bhitpile(obj, bhito, x, y);
-                    if (iflags.botl)
-                        bot();  /* potion effects */
+                    bot();  /* potion effects */
                 }
                 damage = zapyourself(obj, FALSE);
                 if (damage) {
                     sprintf(buf, "killed %sself by breaking a wand", uhim());
                     losehp(damage, buf, NO_KILLER_PREFIX);
                 }
-                if (iflags.botl)
-                    bot();      /* blindness */
+                bot();      /* blindness */
             } else if ((mon = m_at(level, x, y)) != 0) {
                 bhitm(mon, obj);
-                /* if (iflags.botl) bot(); */
+                /* bot(); */
             }
             if (affects_objects && level->objects[x][y]) {
                 bhitpile(obj, bhito, x, y);
-                if (iflags.botl)
-                    bot();      /* potion effects */
+                bot();      /* potion effects */
             }
         }
     }

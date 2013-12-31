@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -604,11 +604,9 @@ dismount_steed(int reason)
         in_steed_dismounting = TRUE;
         float_down(0L);
         in_steed_dismounting = FALSE;
-        iflags.botl = 1;
         encumber_msg();
         vision_full_recalc = 1;
     } else
-        iflags.botl = 1;
     /* polearms behave differently when not mounted */
     if (uwep && is_pole(uwep))
         unweapon = TRUE;

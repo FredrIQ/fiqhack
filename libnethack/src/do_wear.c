@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-30 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -344,7 +344,6 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
            takes trained arrogance to pull it off, and the actual enchantment
            of the hat is irrelevant. */
         ABON(A_CHA) += equipsgn * (Role_if(PM_WIZARD) ? 1 : -1);
-        iflags.botl = 1;
         makeknown(otyp);
         break;
     case HELM_OF_OPPOSITE_ALIGNMENT:
@@ -368,7 +367,6 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
             curse(o);
             o->bknown = TRUE;
         }
-        iflags.botl = 1;        /* reveal new alignment or INT & WIS */
         if (Hallucination) {
             pline("My brain hurts!");   /* Monty Python's Flying Circus */
         } else if (equipping && otyp == DUNCE_CAP) {
@@ -392,7 +390,6 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     case GAUNTLETS_OF_POWER:
         makeknown(otyp);
         encumber_msg();
-        iflags.botl = 1;        /* taken care of in attrib.c */
         break;
     case GAUNTLETS_OF_DEXTERITY:
         if (o->spe)
@@ -411,10 +408,8 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     case FAKE_AMULET_OF_YENDOR:
         break;
     case AMULET_OF_UNCHANGING:
-        if (Slimed && equipping) {
+        if (Slimed && equipping)
             Slimed = 0;
-            iflags.botl = 1;
-        }
         break;
     case AMULET_OF_CHANGE:
         if (equipping) {
@@ -435,7 +430,6 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
             destroyed = 1;
             makeknown(otyp);
             useup(o);
-            iflags.botl = 1;
         }
         break;
     case AMULET_OF_STRANGULATION:
@@ -530,7 +524,6 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         old_attrib = ACURR(which);
         ABON(which) += equipsgn * o->spe;
         if (ACURR(which) != old_attrib) {
-            iflags.botl = 1;
             makeknown(otyp);
             if (ACURR(which) != 3 && ACURR(which) != 25)
                 o->known = 1;
@@ -556,7 +549,6 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         break;
     case RIN_PROTECTION:
         if (o->spe || objects[otyp].oc_name_known) {
-            iflags.botl = 1;
             makeknown(RIN_PROTECTION);
             o->known = 1;
             update_inventory();
@@ -580,7 +572,6 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         if (Blind_telepat || Infravision)
             see_monsters();
         vision_full_recalc = 1; /* recalc vision limits */
-        iflags.botl = 1;
         break;
 
         /* Shields, shirts, body armour: no special cases! */
@@ -1501,7 +1492,6 @@ canwearobj(struct obj *otmp, long *mask,
                       "and change your mind.");
             u.ublessed = 0; /* lose your god's protection */
             makeknown(otmp->otyp);
-            iflags.botl = 1;
             return FALSE;
         }
         break;
@@ -1809,10 +1799,8 @@ find_ac(void)
     uac -= u.uspellprot;
     if (uac < -128)
         uac = -128;     /* u.uac is an schar */
-    if (uac != u.uac) {
-        u.uac = uac;
-        iflags.botl = 1;
-    }
+
+    u.uac = uac;
 }
 
 
@@ -2144,20 +2132,15 @@ destroy_arm(struct obj *atmp)
 void
 adj_abon(struct obj *otmp, schar delta)
 {
-    if (uarmg && uarmg == otmp && otmp->otyp == GAUNTLETS_OF_DEXTERITY) {
-        if (delta) {
-            makeknown(uarmg->otyp);
-            ABON(A_DEX) += (delta);
-        }
-        iflags.botl = 1;
+    if (uarmg && uarmg == otmp && otmp->otyp == GAUNTLETS_OF_DEXTERITY &&
+        delta) {
+        makeknown(uarmg->otyp);
+        ABON(A_DEX) += (delta);
     }
-    if (uarmh && uarmh == otmp && otmp->otyp == HELM_OF_BRILLIANCE) {
-        if (delta) {
-            makeknown(uarmh->otyp);
-            ABON(A_INT) += (delta);
-            ABON(A_WIS) += (delta);
-        }
-        iflags.botl = 1;
+    if (uarmh && uarmh == otmp && otmp->otyp == HELM_OF_BRILLIANCE && delta) {
+        makeknown(uarmh->otyp);
+        ABON(A_INT) += (delta);
+        ABON(A_WIS) += (delta);
     }
 }
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-26 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -279,13 +279,11 @@ fix_worst_trouble(int trouble)
     case TROUBLE_STONED:
         pline("You feel more limber.");
         Stoned = 0;
-        iflags.botl = 1;
         delayed_killer = 0;
         break;
     case TROUBLE_SLIMED:
         pline("The slime disappears.");
         Slimed = 0;
-        iflags.botl = 1;
         delayed_killer = 0;
         break;
     case TROUBLE_STRANGLED:
@@ -295,7 +293,6 @@ fix_worst_trouble(int trouble)
         }
         pline("You can breathe again.");
         Strangled = 0;
-        iflags.botl = 1;
         break;
     case TROUBLE_LAVA:
         pline("You are back on solid ground.");
@@ -309,7 +306,6 @@ fix_worst_trouble(int trouble)
     case TROUBLE_HUNGRY:
         pline("Your %s feels content.", body_part(STOMACH));
         init_uhunger();
-        iflags.botl = 1;
         break;
     case TROUBLE_SICK:
         pline("You feel better.");
@@ -330,11 +326,9 @@ fix_worst_trouble(int trouble)
         if (u.uhpmax <= 5)
             u.uhpmax = 5 + 1;
         u.uhp = u.uhpmax;
-        iflags.botl = 1;
         break;
     case TROUBLE_COLLAPSING:
         ABASE(A_STR) = AMAX(A_STR);
-        iflags.botl = 1;
         break;
     case TROUBLE_STUCK_IN_WALL:
         pline("Your surroundings change.");
@@ -413,12 +407,9 @@ fix_worst_trouble(int trouble)
             pline("There's a tiger in your tank.");
         else
             pline("You feel in good health again.");
-        for (i = 0; i < A_MAX; i++) {
-            if (ABASE(i) < AMAX(i)) {
+        for (i = 0; i < A_MAX; i++)
+            if (ABASE(i) < AMAX(i))
                 ABASE(i) = AMAX(i);
-                iflags.botl = 1;
-            }
-        }
         encumber_msg();
         break;
     case TROUBLE_BLIND:
@@ -957,7 +948,6 @@ pleased(aligntyp g_align)
             if (u.uluck < 0)
                 u.uluck = 0;
             make_blinded(0L, TRUE);
-            iflags.botl = 1;
             break;
         case 4:{
                 struct obj *otmp;
@@ -1434,7 +1424,6 @@ dosacrifice(const struct nh_cmd_arg *arg)
                     else
                         u.ualign.type = u.ualignbase[A_CURRENT] = altaralign;
                     u.ublessed = 0;
-                    iflags.botl = 1;
 
                     pline("You have a sudden sense of a new direction.");
                     /* Beware, Conversion is costly */

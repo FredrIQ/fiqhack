@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-30 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -788,7 +788,6 @@ magicbane_hit(struct monst *magr,       /* attacker */
                     u.uenmax--;
                     if (u.uen > 0)
                         u.uen--;
-                    iflags.botl = 1;
                 }
             } else {
                 if (mdef->data == &mons[PM_CLAY_GOLEM])
@@ -797,7 +796,6 @@ magicbane_hit(struct monst *magr,       /* attacker */
                     pline("You absorb magical energy!");
                     u.uenmax++;
                     u.uen++;
-                    iflags.botl = 1;
                 }
             }
         }
@@ -1254,7 +1252,6 @@ arti_invoke(struct obj *obj)
                     Slimed = 0L;
                 if (Blinded > creamed)
                     make_blinded(creamed, FALSE);
-                iflags.botl = 1;
                 break;
             }
         case ENERGY_BOOST:{
@@ -1267,7 +1264,6 @@ arti_invoke(struct obj *obj)
                 if (epboost) {
                     pline("You feel re-energized.");
                     u.uen += epboost;
-                    iflags.botl = 1;
                 } else
                     goto nothing_special;
                 break;

@@ -478,9 +478,6 @@ drop(struct obj *obj)
             if (flags.verbose)
                 pline("You drop %s.", doname(obj));
 
-            /* Ensure update when we drop gold objects */
-            if (obj->oclass == COIN_CLASS)
-                iflags.botl = 1;
             freeinv(obj);
             hitfloor(obj);
             return 1;
@@ -497,9 +494,6 @@ drop(struct obj *obj)
 void
 dropx(struct obj *obj)
 {
-    /* Ensure update when we drop gold objects */
-    if (obj->oclass == COIN_CLASS)
-        iflags.botl = 1;
     freeinv(obj);
     if (!Engulfed) {
         if (ship_object(obj, u.ux, u.uy, FALSE))
@@ -1568,10 +1562,8 @@ set_wounded_legs(long side, int timex)
        still call this function, but don't lose hp. Caller is also responsible
        for adjusting messages. */
 
-    if (!Wounded_legs) {
+    if (!Wounded_legs)
         ATEMP(A_DEX)--;
-        iflags.botl = 1;
-    }
 
     if (side & LEFT_SIDE)
         if (!LWounded_legs || (LWounded_legs & TIMEOUT))
@@ -1588,10 +1580,8 @@ void
 heal_legs(void)
 {
     if (Wounded_legs) {
-        if (ATEMP(A_DEX) < 0) {
+        if (ATEMP(A_DEX) < 0)
             ATEMP(A_DEX)++;
-            iflags.botl = 1;
-        }
 
         if (!u.usteed) {
             /* KMH, intrinsics patch */

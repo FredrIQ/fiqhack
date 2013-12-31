@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -99,7 +99,6 @@ void
 more_experienced(int exp, int rexp)
 {
     u.uexp += exp;
-    iflags.botl = 1;
     if (u.uexp >= (Role_if(PM_WIZARD) ? 250 : 500))
         flags.beginner = 0;
 }
@@ -162,7 +161,6 @@ losexp(const char *drainer)
 
     if (u.uexp > 0)
         u.uexp = newuexp(u.ulevel) - 1;
-    iflags.botl = 1;
 }
 
 /*
@@ -224,7 +222,6 @@ pluslvl(boolean incr)
         adjabil(u.ulevel - 1, u.ulevel);        /* give new intrinsics */
         reset_rndmonst(NON_PM); /* new monster selection */
     }
-    iflags.botl = 1;
 }
 
 /* compute a random amount of experience points suitable for the hero's

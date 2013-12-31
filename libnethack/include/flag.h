@@ -187,7 +187,6 @@ struct flag {
  */
 struct instance_flags {
     boolean vision_inited;      /* true if vision is ready */
-    boolean botl;       /* redo status line */
 };
 
 extern struct flag flags;

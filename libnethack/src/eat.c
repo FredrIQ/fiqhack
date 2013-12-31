@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -439,7 +439,6 @@ cprefx(int pm)
             youmonst.data != &mons[PM_GREEN_SLIME]) {
             pline("You don't feel very well.");
             Slimed = 10L;
-            iflags.botl = 1;
         }
         /* Fall through */
     default:
@@ -639,10 +638,8 @@ cpostfx(int pm)
                     u.uenmax++;
                 u.uen = u.uenmax;
             }
-            if (old_uen != u.uen) {
+            if (old_uen != u.uen)
                 pline("You feel a mild buzz.");
-                iflags.botl = 1;
-            }
         }
         break;
     case PM_WRAITH:
@@ -665,7 +662,6 @@ cpostfx(int pm)
             u.mh = u.mhmax;
         else
             u.uhp = u.uhpmax;
-        iflags.botl = 1;
         break;
     case PM_STALKER:
         if (!Invis) {
@@ -1389,7 +1385,6 @@ eataccessory(struct obj *otmp)
             accessory_has_effect(otmp);
             HProtection |= FROMOUTSIDE;
             u.ublessed += otmp->spe;
-            iflags.botl = 1;
             break;
         case RIN_FREE_ACTION:
             /* Give sleep resistance instead */
@@ -1405,7 +1400,6 @@ eataccessory(struct obj *otmp)
             change_sex();
             pline("You are suddenly very %s!",
                   u.ufemale ? "feminine" : "masculine");
-            iflags.botl = 1;
             break;
         case AMULET_OF_UNCHANGING:
             /* un-change: it's a pun */
@@ -2106,7 +2100,6 @@ newuhs(boolean incr)
             }
         } else if (u.uhunger < -(int)(200 + 20 * ACURR(A_CON))) {
             u.uhs = STARVED;
-            iflags.botl = 1;
             bot();
             pline("You die from starvation.");
             killer_format = KILLED_BY;
@@ -2153,7 +2146,6 @@ newuhs(boolean incr)
             break;
         }
         u.uhs = newhs;
-        iflags.botl = 1;
         bot();
         if ((Upolyd ? u.mh : u.uhp) < 1) {
             pline("You die from hunger and exhaustion.");

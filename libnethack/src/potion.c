@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -62,8 +62,6 @@ make_confused(long xtime, boolean talk)
             pline("You feel less %s now.",
                   Hallucination ? "trippy" : "confused");
     }
-    if ((xtime && !old) || (!xtime && old))
-        iflags.botl = TRUE;
 
     set_itimeout(&HConfusion, xtime);
 }
@@ -87,8 +85,6 @@ make_stunned(long xtime, boolean talk)
                 pline("You %s...", stagger(youmonst.data, "stagger"));
         }
     }
-    if ((!xtime && old) || (xtime && !old))
-        iflags.botl = TRUE;
 
     set_itimeout(&HStun, xtime);
 }
@@ -113,7 +109,6 @@ make_sick(long xtime, const char *cause, boolean talk, int type)
         }
         set_itimeout(&Sick, xtime);
         u.usick_type |= type;
-        iflags.botl = TRUE;
     } else if (old && (type & u.usick_type)) {
         /* was sick, now not */
         u.usick_type &= ~type;
@@ -126,7 +121,6 @@ make_sick(long xtime, const char *cause, boolean talk, int type)
                 pline("What a relief!");
             Sick = 0L;  /* set_itimeout(&Sick, 0L) */
         }
-        iflags.botl = TRUE;
     }
 
     if (Sick) {
@@ -227,7 +221,6 @@ make_blinded(long xtime, boolean talk)
     set_itimeout(&Blinded, xtime);
 
     if (u_could_see ^ can_see_now) {    /* one or the other but not both */
-        iflags.botl = 1;
         vision_full_recalc = 1; /* blindness just got toggled */
         if (Blind_telepat || Infravision)
             see_monsters();
@@ -283,7 +276,6 @@ make_hallucinated(long xtime,   /* nonzero if this is an attempt to turn on
            items display) */
         update_inventory();
 
-        iflags.botl = 1;
         if (talk)
             pline(message, verb);
     }
@@ -446,7 +438,6 @@ peffects(struct obj *otmp)
                     --lim;      /* WEAK */
                 if (ABASE(i) < lim) {
                     ABASE(i) = lim;
-                    iflags.botl = 1;
                     /* only first found if not blessed */
                     if (!otmp->blessed)
                         break;
@@ -875,7 +866,6 @@ peffects(struct obj *otmp)
                 u.uenmax = 0;
             if (u.uen <= 0)
                 u.uen = 0;
-            iflags.botl = 1;
             exercise(A_WIS, TRUE);
         }
         break;
@@ -945,7 +935,6 @@ healup(int nhp, int nxtra, boolean curesick, boolean cureblind)
         make_blinded(0L, TRUE);
     if (curesick)
         make_sick(0L, NULL, TRUE, SICK_ALL);
-    iflags.botl = 1;
     return;
 }
 
@@ -1245,7 +1234,6 @@ potionbreathe(struct obj *obj)
                     ABASE(i)++;
                     /* only first found if not blessed */
                     isdone = !(obj->blessed);
-                    iflags.botl = 1;
                 }
                 if (++i >= A_MAX)
                     i = 0;
@@ -1254,21 +1242,21 @@ potionbreathe(struct obj *obj)
         break;
     case POT_FULL_HEALING:
         if (Upolyd && u.mh < u.mhmax)
-            u.mh++, iflags.botl = 1;
+            u.mh++;
         if (u.uhp < u.uhpmax)
-            u.uhp++, iflags.botl = 1;
+            u.uhp++;
         /* FALL THROUGH */
     case POT_EXTRA_HEALING:
         if (Upolyd && u.mh < u.mhmax)
-            u.mh++, iflags.botl = 1;
+            u.mh++;
         if (u.uhp < u.uhpmax)
-            u.uhp++, iflags.botl = 1;
+            u.uhp++;
         /* FALL THROUGH */
     case POT_HEALING:
         if (Upolyd && u.mh < u.mhmax)
-            u.mh++, iflags.botl = 1;
+            u.mh++;
         if (u.uhp < u.uhpmax)
-            u.uhp++, iflags.botl = 1;
+            u.uhp++;
         exercise(A_CON, TRUE);
         break;
     case POT_SICKNESS:
@@ -1284,7 +1272,6 @@ potionbreathe(struct obj *obj)
                 else
                     u.uhp -= 5;
             }
-            iflags.botl = 1;
             exercise(A_CON, FALSE);
         }
         break;
@@ -2056,7 +2043,6 @@ split_mon(struct monst *mon,    /* monster being split */
         if (mtmp2) {
             mtmp2->mhpmax = u.mhmax / 2;
             u.mhmax -= mtmp2->mhpmax;
-            iflags.botl = 1;
             pline("You multiply%s!", reason);
         }
     } else {

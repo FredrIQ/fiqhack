@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-26 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2201,7 +2201,6 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
         otmp = mksobj(level, GOLD_PIECE, FALSE, FALSE);
         otmp->quan = cnt;
         otmp->owt = weight(otmp);
-        iflags.botl = 1;
         return otmp;
     }
     if (strlen(bp) == 1 && (i = def_char_to_objclass(*bp)) < MAXOCLASSES &&

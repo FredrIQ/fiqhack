@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-30 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -244,9 +244,7 @@ merged(struct obj **potmp, struct obj **pobj)
 static void
 addinv_stats(struct obj *obj)
 {
-    if (obj->oclass == COIN_CLASS) {
-        iflags.botl = 1;
-    } else if (obj->otyp == AMULET_OF_YENDOR) {
+    if (obj->otyp == AMULET_OF_YENDOR) {
         historic_event(!obj->known, "gained the Amulet of Yendor!");
     } else if (obj->oartifact) {
         if (is_quest_artifact(obj)) {
@@ -465,10 +463,7 @@ Should think of a better name...
 static void
 freeinv_stats(struct obj *obj)
 {
-    if (obj->oclass == COIN_CLASS) {
-        iflags.botl = 1;
-        return;
-    } else if (obj->otyp == AMULET_OF_YENDOR) {
+    if (obj->otyp == AMULET_OF_YENDOR) {
         /* Minor information leak about the Amulet of Yendor (vs fakes). You
            don't get any more info than you do by turning on show_uncursed
            though. */
@@ -481,7 +476,6 @@ freeinv_stats(struct obj *obj)
         curse(obj);
     } else if (confers_luck(obj)) {
         set_moreluck();
-        iflags.botl = 1;
     } else if (obj->otyp == FIGURINE && obj->timed) {
         stop_timer(obj->olev, FIG_TRANSFORM, obj);
     }
@@ -971,7 +965,6 @@ getobj(const char *let, const char *word, boolean isarg)
                 continue;
             }
         }
-        iflags.botl = 1;        /* May have changed the amount of money */
 
         for (otmp = invent; otmp; otmp = otmp->nobj)
             if (otmp->invlet == ilet)

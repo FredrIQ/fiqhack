@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1599,7 +1599,6 @@ damageum(struct monst *mdef, const struct attack *mattk)
             ABASE(A_INT) += rnd(4);
             if (ABASE(A_INT) > AMAX(A_INT))
                 ABASE(A_INT) = AMAX(A_INT);
-            iflags.botl = 1;
         }
         exercise(A_WIS, TRUE);
         break;
@@ -1866,7 +1865,6 @@ gulpum(struct monst *mdef, const struct attack *mattk)
                         if (!Unchanging && !unsolid(youmonst.data) &&
                             level->locations[u.ux][u.uy].typ != LAVAPOOL) {
                             Slimed = 5L;
-                            iflags.botl = 1;
                         }
                     } else
                         exercise(A_CON, TRUE);

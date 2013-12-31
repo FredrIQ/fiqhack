@@ -833,22 +833,16 @@ cancel_item(struct obj *obj)
 
     switch (obj->otyp) {
     case RIN_GAIN_STRENGTH:
-        if (obj_worn_as_ring) {
+        if (obj_worn_as_ring)
             ABON(A_STR) -= obj->spe;
-            iflags.botl = 1;
-        }
         break;
     case RIN_GAIN_CONSTITUTION:
-        if (obj_worn_as_ring) {
+        if (obj_worn_as_ring)
             ABON(A_CON) -= obj->spe;
-            iflags.botl = 1;
-        }
         break;
     case RIN_ADORNMENT:
-        if (obj_worn_as_ring) {
+        if (obj_worn_as_ring)
             ABON(A_CHA) -= obj->spe;
-            iflags.botl = 1;
-        }
         break;
     case RIN_INCREASE_ACCURACY:
         if (obj_worn_as_ring)
@@ -859,17 +853,13 @@ cancel_item(struct obj *obj)
             u.udaminc -= obj->spe;
         break;
     case GAUNTLETS_OF_DEXTERITY:
-        if (obj_worn_on(obj, os_armg)) {
+        if (obj_worn_on(obj, os_armg))
             ABON(A_DEX) -= obj->spe;
-            iflags.botl = 1;
-        }
         break;
     case HELM_OF_BRILLIANCE:
-        if (obj_worn_on(obj, os_armh)) {
+        if (obj_worn_on(obj, os_armh))
             ABON(A_INT) -= obj->spe;
             ABON(A_WIS) -= obj->spe;
-            iflags.botl = 1;
-        }
         break;
         /* case RIN_PROTECTION: not needed */
     }
@@ -950,22 +940,16 @@ drain_item(struct obj * obj)
 
     switch (obj->otyp) {
     case RIN_GAIN_STRENGTH:
-        if (obj_worn_as_ring) {
+        if (obj_worn_as_ring)
             ABON(A_STR)--;
-            iflags.botl = 1;
-        }
         break;
     case RIN_GAIN_CONSTITUTION:
-        if (obj_worn_as_ring) {
+        if (obj_worn_as_ring)
             ABON(A_CON)--;
-            iflags.botl = 1;
-        }
         break;
     case RIN_ADORNMENT:
-        if (obj_worn_as_ring) {
+        if (obj_worn_as_ring)
             ABON(A_CHA)--;
-            iflags.botl = 1;
-        }
         break;
     case RIN_INCREASE_ACCURACY:
         if (obj_worn_as_ring)
@@ -976,20 +960,13 @@ drain_item(struct obj * obj)
             u.udaminc--;
         break;
     case HELM_OF_BRILLIANCE:
-        if (obj_worn_on(obj, os_armh)) {
+        if (obj_worn_on(obj, os_armh))
             ABON(A_INT)--;
             ABON(A_WIS)--;
-            iflags.botl = 1;
-        }
         break;
     case GAUNTLETS_OF_DEXTERITY:
-        if (obj_worn_on(obj, os_armg)) {
+        if (obj_worn_on(obj, os_armg))
             ABON(A_DEX)--;
-            iflags.botl = 1;
-        }
-        break;
-    case RIN_PROTECTION:
-        iflags.botl = 1;
         break;
     }
     if (carried(obj))
@@ -2333,10 +2310,8 @@ cancel_monst(struct monst * mdef, struct obj * obj, boolean youattack,
         for (otmp = (youdefend ? invent : mdef->minvent); otmp;
              otmp = otmp->nobj)
             cancel_item(otmp);
-        if (youdefend) {
-            iflags.botl = 1;    /* potential AC change */
+        if (youdefend)
             find_ac();
-        }
     }
 
     /* now handle special cases */

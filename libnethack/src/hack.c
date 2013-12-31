@@ -2460,7 +2460,6 @@ losehp(int n, const char *knam, boolean k_format)
         u.mh -= n;
         if (u.mhmax < u.mh)
             u.mhmax = u.mh;
-        iflags.botl = 1;
         if (u.mh < 1)
             rehumanize();
         else if (n > 0 && u.mh * 10 < u.mhmax && Unchanging)
@@ -2473,7 +2472,6 @@ losehp(int n, const char *knam, boolean k_format)
         u.uhpmax = u.uhp;       /* perhaps n was negative */
     else
         action_interrupted(); /* taking damage stops command repeat */
-    iflags.botl = 1;
     if (u.uhp < 1) {
         killer_format = k_format;
         killer = knam;  /* the thing that killed you */

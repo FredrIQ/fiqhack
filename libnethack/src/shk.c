@@ -95,7 +95,6 @@ money2mon(struct monst *mon, long amount)
         remove_worn_item(ygold, FALSE); /* quiver */
     freeinv(ygold);
     add_to_minv(mon, ygold);
-    iflags.botl = 1;
     return amount;
 }
 
@@ -127,10 +126,8 @@ money2u(struct monst *mon, long amount)
     if (!can_hold(mongold)) {
         pline("You have no room for the money!");
         dropy(mongold);
-    } else {
+    } else
         addinv(mongold);
-        iflags.botl = 1;
-    }
 }
 
 
@@ -830,7 +827,6 @@ pay(long tmp, struct monst *shkp)
     else if (balance < 0)
         money2u(shkp, -balance);
 
-    iflags.botl = 1;
     if (robbed) {
         robbed -= tmp;
         if (robbed < 0)
@@ -1262,7 +1258,6 @@ proceed:
                 eshkp->debit = 0L;
                 eshkp->loan = 0L;
                 pline("You pay that debt.");
-                iflags.botl = 1;
             } else {
                 dtmp -= eshkp->credit;
                 eshkp->credit = 0L;
@@ -1271,7 +1266,6 @@ proceed:
                 eshkp->loan = 0L;
                 pline("That debt is partially offset by your credit.");
                 pline("You pay the remainder.");
-                iflags.botl = 1;
             }
             paid = TRUE;
         }
@@ -1577,14 +1571,12 @@ inherits(struct monst *shkp, int numsk, int croaked)
                 eshkp->robbed = 0L;
             if (umoney > 0)
                 money2mon(shkp, umoney);
-            iflags.botl = 1;
             pline("%s %s all your possessions.", shkname(shkp), takes);
             taken = TRUE;
             /* where to put player's invent (after disclosure) */
             set_repo_loc(eshkp);
         } else {
             money2mon(shkp, loss);
-            iflags.botl = 1;
             pline("%s %s the %ld %s %sowed %s.", Monnam(shkp), takes, loss,
                   currency(loss), strncmp(eshkp->customer, u.uplname,
                                           PL_NSIZ) ? "" : "you ",
@@ -3441,7 +3433,6 @@ pay_for_damage(const char *dmgstr, boolean cant_mollify)
     if (yn(qbuf) != 'n') {
         cost_of_damage = check_credit(cost_of_damage, shkp);
         money2mon(shkp, cost_of_damage);
-        iflags.botl = 1;
         pline("Mollified, %s accepts your restitution.", shkname(shkp));
         /* move shk back to his home loc */
         home_shk(shkp, FALSE);

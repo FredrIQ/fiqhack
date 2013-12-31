@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -221,7 +221,6 @@ newman(void)
         pline("Your body transforms, but there is still slime on you.");
         Slimed = 10L;
     }
-    iflags.botl = 1;
     see_monsters();
     encumber_msg();
 }
@@ -442,11 +441,9 @@ polymon(int mntmp)
         if (flaming(youmonst.data)) {
             pline("The slime burns away!");
             Slimed = 0L;
-            iflags.botl = 1;
         } else if (mntmp == PM_GREEN_SLIME || unsolid(youmonst.data)) {
             /* do it silently */
             Slimed = 0L;
-            iflags.botl = 1;
         }
     }
     if (nohands(youmonst.data))
@@ -592,7 +589,6 @@ polymon(int mntmp)
         pline("You orient yourself on the web.");
         u.utrap = 0;
     }
-    iflags.botl = 1;
     vision_full_recalc = 1;
     see_monsters();
     exercise(A_CON, FALSE);
@@ -761,7 +757,6 @@ rehumanize(void)
     }
     action_interrupted();
 
-    iflags.botl = 1;
     vision_full_recalc = 1;
     encumber_msg();
 }
@@ -781,7 +776,6 @@ dobreathe(const struct nh_cmd_arg *arg)
         return 0;
     }
     u.uen -= 15;
-    iflags.botl = 1;
 
     if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
@@ -952,7 +946,6 @@ dosummon(void)
         return 0;
     }
     u.uen -= 10;
-    iflags.botl = 1;
 
     pline("You call upon your brethren for help!");
     exercise(A_WIS, TRUE);
@@ -989,7 +982,6 @@ dogaze(enum u_interaction_mode uim)
         return 0;
     }
     u.uen -= 15;
-    iflags.botl = 1;
 
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
         if (DEADMONSTER(mtmp))
@@ -1112,7 +1104,6 @@ domindblast(void)
         return 0;
     }
     u.uen -= 10;
-    iflags.botl = 1;
 
     pline("You concentrate.");
     pline("A wave of psychic energy pours out.");
@@ -1318,7 +1309,6 @@ ugolemeffects(int damtype, int dam)
         u.mh += heal;
         if (u.mh > u.mhmax)
             u.mh = u.mhmax;
-        iflags.botl = 1;
         pline("Strangely, you feel better than before.");
         exercise(A_STR, TRUE);
     }

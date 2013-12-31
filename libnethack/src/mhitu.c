@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -692,8 +692,7 @@ mattacku(struct monst *mtmp)
         default:       /* no attack */
             break;
         }
-        if (iflags.botl)
-            bot();
+        bot();
         /* give player a chance of waking up before dying -kaa */
         if (sum[i] == 1) {      /* successful attack */
             if (u.usleep && u.usleep < moves && !rn2(10))
@@ -964,7 +963,6 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                     if (dmg > 1)
                         exercise(A_STR, FALSE);
                     u.mh -= dmg;
-                    iflags.botl = 1;
                     dmg = 0;
                     if (cloneu())
                         pline("You divide as %s hits you!", mon_nam(mtmp));
@@ -1422,7 +1420,6 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                 exercise(A_CON, TRUE);
             if (Sick)
                 make_sick(0L, NULL, FALSE, SICK_ALL);
-            iflags.botl = 1;
             if (goaway) {
                 mongone(mtmp);
                 return 2;
@@ -1565,7 +1562,6 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         } else if (!Slimed) {
             pline("You don't feel very well.");
             Slimed = 10L;
-            iflags.botl = 1;
             killer_format = KILLED_BY_AN;
             delayed_killer = mtmp->data->mname;
         } else
@@ -1639,7 +1635,6 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             else if (*hpmax_p > lowerlimit)
                 *hpmax_p = lowerlimit;
             /* else already at or below minimum threshold; do nothing */
-            iflags.botl = 1;
         }
 
         mdamageu(mtmp, dmg);
@@ -2108,7 +2103,6 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
 void
 mdamageu(struct monst *mtmp, int n)
 {
-    iflags.botl = 1;
     if (Upolyd) {
         u.mh -= n;
         if (u.mh < 1)
@@ -2355,13 +2349,11 @@ doseduce(struct monst *mon)
             pline("You are down in the dumps.");
             adjattrib(A_CON, -1, TRUE);
             exercise(A_CON, FALSE);
-            iflags.botl = 1;
             break;
         case 2:
             pline("Your senses are dulled.");
             adjattrib(A_WIS, -1, TRUE);
             exercise(A_WIS, FALSE);
-            iflags.botl = 1;
             break;
         case 3:
             if (!resists_drli(&youmonst)) {
@@ -2396,13 +2388,11 @@ doseduce(struct monst *mon)
             pline("You feel good enough to do it again.");
             adjattrib(A_CON, 1, TRUE);
             exercise(A_CON, TRUE);
-            iflags.botl = 1;
             break;
         case 2:
             pline("You will always remember %s...", noit_mon_nam(mon));
             adjattrib(A_WIS, 1, TRUE);
             exercise(A_WIS, TRUE);
-            iflags.botl = 1;
             break;
         case 3:
             pline("That was a very educational experience.");
@@ -2415,7 +2405,6 @@ doseduce(struct monst *mon)
             if (Upolyd)
                 u.mh = u.mhmax;
             exercise(A_STR, TRUE);
-            iflags.botl = 1;
             break;
         }
     }
@@ -2448,7 +2437,6 @@ doseduce(struct monst *mon)
             pline("%s takes %ld %s for services rendered!", noit_Monnam(mon),
                   cost, currency(cost));
             money2mon(mon, cost);
-            iflags.botl = 1;
         }
     }
     if (!rn2(25))
@@ -2683,7 +2671,6 @@ cloneu(void)
         mon->mhpmax = u.mhmax;
         mon->mhp = u.mh / 2;
         u.mh -= mon->mhp;
-        iflags.botl = 1;
     }
     return mon;
 }
