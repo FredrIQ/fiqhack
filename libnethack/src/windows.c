@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Alex Smith, 2013-12-31 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -232,13 +232,25 @@ display_menu(struct nh_menulist *menu, const char *title, int how,
 {
     int n, j;
 
+    /* Memory management: we need a stack-allocated copy of the menu items in
+       case terminate() gets called, and because we need to be able to refer to
+       them even after win_display_menu (which deallocates the menu items)
+       returns. */
+    struct nh_menuitem item_copy[menu->icount ? menu->icount : 1];
+    struct nh_menulist menu_copy = {.items = menu->icount ? item_copy : NULL,
+                                    .icount = menu->icount,
+                                    .size = 0}; /* size = 0: don't free it */
+    if (menu->icount)
+        memcpy(item_copy, menu->items, sizeof item_copy);
+    dealloc_menulist(menu);
+
     if (how == PICK_NONE && log_replay_input(0, "M"))
         n = 0;
     else if (log_replay_input(0, "M!"))
         n = -1;
     else if (!log_replay_menu(FALSE, &n, results)) {
         log_replay_no_more_options();
-        n = (*windowprocs.win_display_menu) (menu, title, how,
+        n = (*windowprocs.win_display_menu) (&menu_copy, title, how,
                                              placement_hint, results);
     }
 
@@ -246,7 +258,7 @@ display_menu(struct nh_menulist *menu, const char *title, int how,
         log_record_input("M");
     else if (n == -1) {
         log_record_input("M!");
-        pline_nomore("<%s: cancelled>", title ? title : "List of objects");
+        pline_nomore("<%s: cancelled>", title ? title : "Untitled menu");
     } else {
         char buf[BUFSZ] = "(none selected)";
 
@@ -254,9 +266,9 @@ display_menu(struct nh_menulist *menu, const char *title, int how,
 
         if (n == 1) {
             for (j = 0;
-                 j < menu->icount && menu->items[j].id != results[0];
+                 j < menu_copy.icount && item_copy[j].id != results[0];
                  j++) {}
-            strcpy(buf, menu->items[j].caption);
+            strcpy(buf, item_copy[j].caption);
         } else if (n > 1)
             sprintf(buf, "(%d selected)", n);
 
@@ -273,13 +285,22 @@ display_objects(struct nh_objlist *objlist, const char *title,
 {
     int n, j;
 
+    /* As in display_menu. */
+    struct nh_objitem item_copy[objlist->icount ? objlist->icount : 1];
+    struct nh_objlist menu_copy = {.items = objlist->icount ? item_copy : NULL,
+                                   .icount = objlist->icount,
+                                   .size = 0}; /* size = 0: don't free it */
+    if (objlist->icount)
+        memcpy(item_copy, objlist->items, sizeof item_copy);
+    dealloc_objmenulist(objlist);
+
     if (how == PICK_NONE && log_replay_input(0, "O"))
         n = 0;
     else if (log_replay_input(0, "O!"))
         n = -1;
     else if (!log_replay_menu(TRUE, &n, pick_list)) {
         log_replay_no_more_options();
-        n = (*windowprocs.win_display_objects) (objlist, title, how,
+        n = (*windowprocs.win_display_objects) (&menu_copy, title, how,
                                                 placement_hint, pick_list);
     }
 
@@ -289,16 +310,18 @@ display_objects(struct nh_objlist *objlist, const char *title,
         log_record_input("O!");
         pline_nomore("<%s: cancelled>", title ? title : "List of objects");
     } else {
-        char buf[BUFSZ] = "(none selected)";
+        char buf[BUFSZ] = "";
 
         log_record_menu(TRUE, n, pick_list);
 
-        if (n == 1) {
+        /* We show the exact inventory letters chosen, so long as there aren't
+           too many. */
+        if (n >= 1 && n <= 20) {
             for (j = 0;
-                 j < objlist->icount && objlist->items[j].id != pick_list[0].id;
+                 j < menu_copy.icount && item_copy[j].id != pick_list[0].id;
                  j++) {}
-            sprintf(buf, "%c", objlist->items[j].accel);
-        } else if (n > 1)
+            sprintf(eos(buf), "%c", item_copy[j].accel);
+        } else
             sprintf(buf, "(%d selected)", n);
 
         pline_nomore("<%s: %s>", title ? title : "List of objects", buf);
@@ -311,8 +334,10 @@ win_list_items(struct nh_objlist *objlist, boolean is_invent)
 {
     struct nh_objlist zero_objlist;
 
-    if (!windowprocs.win_list_items)
+    if (!windowprocs.win_list_items) {
+        dealloc_objmenulist(objlist);
         return FALSE;
+    }
 
     if (!objlist) {
         init_objmenulist(&zero_objlist);

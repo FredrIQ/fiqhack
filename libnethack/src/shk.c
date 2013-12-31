@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Alex Smith, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2698,7 +2698,8 @@ doinvbill(int mode)
         obj = bp_to_obj(bp);
         if (!obj) {
             impossible("Bad shopkeeper administration.");
-            goto quit;
+            dealloc_menulist(&menu);
+            return 0;
         }
         if (bp->useup || bp->bquan > obj->quan) {
             long oquan, uquan, thisused;
@@ -2732,8 +2733,6 @@ doinvbill(int mode)
 
     display_menu(&menu, NULL, PICK_NONE, PLHINT_CONTAINER,
                  NULL);
-quit:
-    dealloc_menulist(&menu);
     return 0;
 }
 
@@ -3496,6 +3495,7 @@ price_quote(struct obj *first_obj)
     struct monst *shkp = shop_keeper(level, inside_shop(level, u.ux, u.uy));
 
     init_menulist(&menu);
+
     add_menutext(&menu, "Fine goods for sale:");
     add_menutext(&menu, "");
     for (otmp = first_obj; otmp; otmp = otmp->nexthere) {
@@ -3515,10 +3515,11 @@ price_quote(struct obj *first_obj)
         add_menutext(&menu, buf);
         cnt++;
     }
+
     if (cnt > 1) {
-        display_menu(&menu, NULL, PICK_NONE, PLHINT_CONTAINER,
-                     NULL);
+        display_menu(&menu, NULL, PICK_NONE, PLHINT_CONTAINER, NULL);
     } else if (cnt == 1) {
+        dealloc_menulist(&menu);
         if (first_obj->no_charge || first_obj == uball || first_obj == uchain) {
             pline("%s!", buf);  /* buf still contains the string */
         } else {
@@ -3530,8 +3531,8 @@ price_quote(struct obj *first_obj)
                   currency(cost), first_obj->quan > 1L ? " each" : "",
                   shk_embellish(first_obj, cost));
         }
-    }
-    dealloc_menulist(&menu);
+    } else
+        dealloc_menulist(&menu);
 }
 
 

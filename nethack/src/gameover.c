@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-30 */
+/* Last modified by Alex Smith, 2013-12-31 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -118,6 +118,8 @@ curses_outrip(struct nh_menulist *ml, nh_bool tombstone, const char *plname,
     for (i = 0; i < ml->icount; i++)
         mvaddstr(txtpos + i, 0, ml->items[i].caption);
     mvaddstr(LINES - 1, 0, "--More--");
+
+    dealloc_menulist(ml); /* must come before getch() */
 
     refresh();
     getch();

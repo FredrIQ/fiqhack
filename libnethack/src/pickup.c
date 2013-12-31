@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Alex Smith, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -599,11 +599,10 @@ query_objlist(const char *qstr, /* query string */
 
     struct nh_objresult selection[objmenu.icount ? objmenu.icount : 1];
 
-    if (objmenu.icount > 0) {
+    if (objmenu.icount > 0)
         n = display_objects(&objmenu, qstr, how, PLHINT_INVENTORY,
                             selection);
-        dealloc_objmenulist(&objmenu);
-    } else
+    else
         dealloc_objmenulist(&objmenu);
 
     if (n > 0) {
@@ -751,7 +750,7 @@ query_category(const char *qstr,        /* query string */
 
     n = display_menu(&menu, qstr, how, PLHINT_INVENTORY,
                      pick_list);
-    dealloc_menulist(&menu);
+
     if (n < 0)
         n = 0;  /* callers don't expect -1 */
 

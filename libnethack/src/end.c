@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Alex Smith, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -465,9 +465,9 @@ calc_score(int how, boolean show, long umoney)
 
     elog2 = log(2) / 1000.0;
     /* Initialise the explanation window, if show is true. */
-    if (show) {
+    if (show)
         init_menulist(&menu);
-    }
+
     /* Gold. x gold scores log2(x+1)*1000 points (maxing at 30000 for MAXINT
        gold; just in case gold can be 64-bit, we cap it at the 32-bit MAXINT
        first). This counts profit from starting inventory, rather than the
@@ -480,20 +480,24 @@ calc_score(int how, boolean show, long umoney)
     if (category_points > 30000)
         category_points = 30000;
     total += category_points;
+
     if (show) {
         sprintf(buf, "Gold:            %10ld                    (%5ld points)",
                 category_raw, category_points);
         add_menutext(&menu, buf);
     }
+
     /* Experience. Although this maxes at 30, the ratio isn't displayed. */
     category_raw = u.ulevel;
     category_points = sqrt((u.ulevel - 1.0) / 29.0) * 30000.0 + 0.5;
     total += category_points;
+
     if (show) {
         sprintf(buf, "Experience:      %10ld level%s             (%5ld points)",
                 category_raw, category_raw == 1 ? " " : "s", category_points);
         add_menutext(&menu, buf);
     }
+
     /* Exploration. This is based on the ratio of the Sanctum depth to the
        deepest level reached, and is based on the square root of the ratio. */
     category_raw = deepest_lev_reached(FALSE);
@@ -502,12 +506,14 @@ calc_score(int how, boolean show, long umoney)
         sqrt((category_raw - 1) / (double)(depth(&sanctum_level) -
                                            1)) * 30000.0 + 0.5;
     total += category_points;
+
     if (show) {
         sprintf(buf, "Exploration:     %10ld level%s   (%6.2f%%) (%5ld points)",
                 category_raw, category_raw == 1 ? " " : "s", category_ratio,
                 category_points);
         add_menutext(&menu, buf);
     }
+
     /* Discoveries. Based on the ratio of the number of items discovered, to
        the maximum possible number of items discovered. */
     {
@@ -519,12 +525,14 @@ calc_score(int how, boolean show, long umoney)
         category_points = sqrt(category_ratio) * 3000.0 + 0.5;
     }
     total += category_points;
+
     if (show) {
         sprintf(buf, "Discoveries:     %10ld item%s    (%6.2f%%) (%5ld points)",
                 category_raw, category_raw == 1 ? " " : "s", category_ratio,
                 category_points);
         add_menutext(&menu, buf);
     }
+
     /* Valuables. Scored the same way as gold, based on their gp values. Scores 
        only on ascension or escape. */
     category_raw = 0;
@@ -545,6 +553,7 @@ calc_score(int how, boolean show, long umoney)
                         (long)objects[val->list[i].typ].oc_cost;
         category_points = log(category_raw + 1) / elog2 + 0.5;
         total += category_points;
+
         if (show) {
             sprintf(buf,
                     "Valuables value: %10ld                    (%5ld points)",
@@ -555,15 +564,18 @@ calc_score(int how, boolean show, long umoney)
         add_menutext(&menu,
                      "Valuables value: (no points given unless you survive)");
     }
+
     /* Artifacts. */
     category_raw = artifact_score(invent, TRUE, 0);
     category_points = log(category_raw + 1) / elog2 + 0.5;
     total += category_points;
+
     if (show) {
         sprintf(buf, "Artifact value:  %10ld                    (%5ld points)",
                 category_raw, category_points);
         add_menutext(&menu, buf);
     }
+
     /* Variety of monsters vanquished. (All that matters is whether or not a
        monster was killed, so people can't farm this score up indefinitely; and
        this counts vanquished not killed so that pacifists aren't penalised for
@@ -580,21 +592,25 @@ calc_score(int how, boolean show, long umoney)
     category_ratio = category_raw * 100.0 / (NUMMONS - LOW_PM);
     category_points = sqrt(category_ratio) * 3000.0 + 0.5;
     total += category_points;
+
     if (show) {
         sprintf(buf, "Variety of kills:%10ld monster%s (%6.2f%%) (%5ld points)",
                 category_raw, category_raw == 1 ? " " : "s", category_ratio,
                 category_points);
         add_menutext(&menu, buf);
     }
+
     /* Time penalty. */
     category_raw = moves;
     category_points = log(max(moves, 2000) / 2000.0) / elog2;
     total -= category_points;
+
     if (show) {
         sprintf(buf, "Time penalty:    %10ld turn%s              (%5ld points)",
                 category_raw, category_raw == 1 ? " " : "s", -category_points);
         add_menutext(&menu, buf);
     }
+
     /* Survival. A multiplier. */
     if (how == ASCENDED)
         category_raw = 200;
@@ -606,6 +622,7 @@ calc_score(int how, boolean show, long umoney)
         category_raw = 80;
     total *= category_raw;
     total /= 100;
+
     if (show) {
         sprintf(buf, "Survival:        %10s  (score multiplied by %3ld%%)",
                 category_raw == 80 ? (how ==
@@ -617,12 +634,12 @@ calc_score(int how, boolean show, long umoney)
         sprintf(buf, "Total score:                               %10ld", total);
         add_menutext(&menu, buf);
     }
+
     /* Finishing off. */
-    if (show) {
+    if (show)
         display_menu(&menu, "Score breakdown:", PICK_NONE,
                      PLHINT_ANYWHERE, NULL);
-        dealloc_menulist(&menu);
-    }
+
     return total;
 }
 
@@ -856,11 +873,12 @@ display_rip(int how, char *kilbuf, char *pbuf, long umoney,
         add_menutext(&menu, pbuf);
         add_menutext(&menu, "");
     }
+
     if (!done_stopprint)
         outrip(&menu, how <= GENOCIDED, u.uplname, umoney,
                outrip_buf, how, getyear());
-
-    dealloc_menulist(&menu);
+    else
+        dealloc_menulist(&menu);
 }
 
 /* Be careful not to call panic from here! */
@@ -1051,7 +1069,6 @@ container_contents(struct obj *list, boolean identified, boolean all_containers)
                 sprintf(buf, "Contents of %s:", the(xname(box)));
                 display_objects(&objmenu, buf, PICK_NONE, PLHINT_CONTAINER,
                                 NULL);
-                dealloc_objmenulist(&objmenu);
 
                 if (all_containers)
                     container_contents(box->cobj, identified, TRUE);
@@ -1182,7 +1199,6 @@ list_vanquished(char defquery, boolean ask)
             }
             display_menu(&menu, "Vanquished creatures:",
                          PICK_NONE, PLHINT_ANYWHERE, NULL);
-            dealloc_menulist(&menu);
         }
     }
 }
@@ -1282,7 +1298,6 @@ list_genocided(char defquery, boolean ask)
                 "Genocided species:";
             display_menu(&menu, title, PICK_NONE,
                          PLHINT_ANYWHERE, NULL);
-            dealloc_menulist(&menu);
         }
     }
 }

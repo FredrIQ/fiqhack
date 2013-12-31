@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Alex Smith, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1334,12 +1334,11 @@ display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
 
     struct nh_objresult selected[objlist.icount ? objlist.icount : 0];
 
-    if (objlist.icount) {
+    if (objlist.icount)
         n = display_objects(&objlist, want_reply ? NULL : "Inventory:",
                             want_reply ? PICK_ONE : PICK_NONE, PLHINT_INVENTORY,
                             selected);
-        dealloc_objmenulist(&objlist);
-    } else
+    else
         dealloc_objmenulist(&objlist);
 
     if (n > 0) {
@@ -1378,7 +1377,6 @@ update_inventory(void)
     init_objmenulist(&objlist);
     make_invlist(&objlist, NULL);
     win_list_items(&objlist, TRUE);
-    dealloc_objmenulist(&objlist);
 }
 
 
@@ -1476,6 +1474,7 @@ dounpaid(void)
     num_so_far = 0;     /* count of # printed so far */
 
     init_menulist(&menu);
+
     do {
         classcount = 0;
         for (otmp = invent; otmp; otmp = otmp->nobj) {
@@ -1531,7 +1530,6 @@ dounpaid(void)
     add_menutext(&menu, xprname(NULL, "Total:", '*', FALSE, totcost, 0L));
 
     display_menu(&menu, NULL, PICK_NONE, PLHINT_INVENTORY, NULL);
-    dealloc_menulist(&menu);
 }
 
 
@@ -1670,12 +1668,11 @@ dfeature_at(int x, int y, char *buf)
 }
 
 
-/* update_location()
- * companion to look_here, this function will fully describe the location
- * for win_list_items,including traps and features. It does not call pline.
- * This function will only list up to 4 items if Blind, unless the caller sets
- * all_objects to TRUE. In that case the caller should also perform cockatrice
- * checks. */
+/* A companion to look_here, this function will fully describe the location for
+   win_list_items, including traps and features. It does not call pline. This
+   function will only list up to 4 items if Blind, unless the caller sets
+   all_objects to TRUE. In that case the caller should also perform cockatrice
+   checks. */
 boolean
 update_location(boolean all_objects)
 {
@@ -1730,7 +1727,6 @@ update_location(boolean all_objects)
     }
 
     ret = win_list_items(&objlist, FALSE);
-    dealloc_objmenulist(&objlist);
 
     return ret;
 }
@@ -1865,7 +1861,8 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
 
         if (!skip_win || felt_cockatrice)
             display_objects(&objlist, title, PICK_NONE, PLHINT_CONTAINER, NULL);
-        dealloc_objmenulist(&objlist);
+        else
+            dealloc_objmenulist(&objlist);
 
         if (felt_cockatrice)
             feel_cockatrice(otmp, FALSE);
@@ -2387,8 +2384,6 @@ invdisp_nothing(const char *hdr, const char *txt)
 
     display_menu(&(struct nh_menulist){.items = items, .icount = 3},
                  NULL, PICK_NONE, PLHINT_INVENTORY, NULL);
-
-    return;
 }
 
 /* query_objlist callback: return things that could possibly be worn/wielded */

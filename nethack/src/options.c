@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-30 */
+/* Last modified by Alex Smith, 2013-12-31 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -396,7 +396,6 @@ select_boolean_value(union nh_optvalue *value, struct nh_option_desc *option)
 
     n = curses_display_menu(&menu, option->name, PICK_ONE, PLHINT_RIGHT,
                             pick_list);
-    dealloc_menulist(&menu);
 
     value->b = option->value.b; /* in case of ESC */
     if (n == 1)
@@ -433,7 +432,6 @@ select_enum_value(union nh_optvalue *value, struct nh_option_desc *option)
     int pick_list[menu.icount];
     n = curses_display_menu(&menu, option->name, PICK_ONE, PLHINT_RIGHT,
                             pick_list);
-    dealloc_menulist(&menu);
 
     value->e = option->value.e; /* in case of ESC */
     if (n == 1) {
@@ -558,7 +556,6 @@ display_options(nh_bool change_birth_opt)
         n = curses_display_menu_core(
             &menu, "Set what options?", PICK_ONE, NULL, 0, 0, -1, -1,
             query_new_value);
-        dealloc_menulist(&menu);
 
     } while (n > 0);
 
@@ -606,7 +603,6 @@ print_options(void)
 
     curses_display_menu(&menu, "Available options:", PICK_NONE,
                         PLHINT_ANYWHERE, NULL);
-    dealloc_menulist(&menu);
 }
 
 /*----------------------------------------------------------------------------*/
@@ -692,7 +688,6 @@ get_autopickup_oclass(struct nh_autopick_option *desc, int cur)
 
     n = curses_display_menu(&menu, "Object class match:", PICK_ONE,
                             PLHINT_RIGHT, selected);
-    dealloc_menulist(&menu);
 
     if (n <= 0)
         return cur;
@@ -736,7 +731,6 @@ edit_ap_rule(struct nh_autopick_option *desc, struct nh_autopickup_rules *ar,
 
         n = curses_display_menu(&menu, "Edit rule:", PICK_ONE,
                                 PLHINT_RIGHT, selected);
-        dealloc_menulist(&menu);
         if (n <= 0)
             return;
 
@@ -887,7 +881,6 @@ show_autopickup_menu(struct nh_option_desc *opt)
         /* TODO */
         n = curses_display_menu(&menu, "Autopickup rules:", PICK_ONE,
                                 PLHINT_RIGHT, selected);
-        dealloc_menulist(&menu);
         if (n <= 0)
             break;
 

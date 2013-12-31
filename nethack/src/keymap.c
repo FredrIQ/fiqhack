@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-30 */
+/* Last modified by Alex Smith, 2013-12-31 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -372,7 +372,6 @@ doextlist(const char **namelist, const char **desclist, int listlen)
 
     curses_display_menu(&menu, "Extended Commands List", PICK_NONE,
                         PLHINT_ANYWHERE, NULL);
-    dealloc_menulist(&menu);
 
     return 0;
 }
@@ -472,7 +471,7 @@ show_help(void)
 
     n = curses_display_menu(&menu, "Help topics:", PICK_ONE,
                             PLHINT_RIGHT, selected);
-    dealloc_menulist(&menu);
+
     if (n <= 0)
         return NULL;
 
@@ -893,7 +892,7 @@ command_settings_menu(struct nh_cmd_desc *cmd)
         sprintf(buf, "Key bindings for %s", cmd->name);
         n = curses_display_menu(&menu, buf, PICK_ONE, PLHINT_ANYWHERE,
                                 selection);
-        dealloc_menulist(&menu);
+
         if (n < 1)
             break;
 
@@ -986,7 +985,7 @@ show_keymap_menu(nh_bool readonly)
         n = curses_display_menu_core(&menu, "Keymap",
                                      readonly ? PICK_NONE : PICK_ONE, NULL, 0,
                                      0, COLS, LINES, set_command_keys);
-        dealloc_menulist(&menu);
+
     } while (n > 0);
 
     write_keymap();

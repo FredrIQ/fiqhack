@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Alex Smith, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -616,7 +616,6 @@ wiz_show_seenv(const struct nh_cmd_arg *arg)
     }
     display_menu(&menu, NULL, PICK_NONE, PLHINT_ANYWHERE,
                  NULL);
-    dealloc_menulist(&menu);
     return 0;
 }
 
@@ -657,7 +656,6 @@ wiz_show_vision(const struct nh_cmd_arg *arg)
     }
     display_menu(&menu, NULL, PICK_NONE, PLHINT_ANYWHERE,
                  NULL);
-    dealloc_menulist(&menu);
     return 0;
 }
 
@@ -692,7 +690,6 @@ wiz_show_wmodes(const struct nh_cmd_arg *arg)
     }
     display_menu(&menu, NULL, PICK_NONE, PLHINT_ANYWHERE,
                  NULL);
-    dealloc_menulist(&menu);
     return 0;
 }
 
@@ -1131,7 +1128,6 @@ enlightenment(int final)
 
     display_menu(&menu, title, PICK_NONE, PLHINT_ANYWHERE,
                  NULL);
-    dealloc_menulist(&menu);
     return;
 }
 
@@ -1251,7 +1247,6 @@ unspoilered_intrinsics(void)
 
     display_menu(&menu, "Your Intrinsic Statistics",
                  PICK_NONE, PLHINT_ANYWHERE, NULL);
-    dealloc_menulist(&menu);
 }
 
 /*
@@ -1410,7 +1405,6 @@ minimal_enlightenment(void)
         }
     }
 
-    dealloc_menulist(&menu);
     return n;
 }
 
@@ -1617,7 +1611,6 @@ show_conduct(int final)
     /* Pop up the window and wait for a key */
     display_menu(&menu, "Voluntary challenges:", PICK_NONE,
                  PLHINT_ANYWHERE, NULL);
-    dealloc_menulist(&menu);
 }
 
 
@@ -2081,7 +2074,6 @@ wiz_show_stats(const struct nh_cmd_arg *arg)
 
     display_menu(&menu, NULL, PICK_NONE, PLHINT_ANYWHERE,
                  NULL);
-    dealloc_menulist(&menu);
     return 0;
 }
 

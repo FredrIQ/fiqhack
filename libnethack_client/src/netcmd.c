@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-30 */
+/* Last modified by Alex Smith, 2013-12-31 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -430,7 +430,7 @@ cmd_outrip(json_t *params, int display_only)
 
     windowprocs.win_outrip(&menu, tombstone, name, gold,
                            killbuf, end_how, year);
-    dealloc_menulist(&menu);
+
     return NULL;
 }
 
@@ -507,7 +507,6 @@ cmd_display_menu(json_t *params, int display_only)
     int selected[menu.icount];
     ret = windowprocs.win_display_menu(&menu, title, how, placement_hint,
                                        selected);
-    dealloc_menulist(&menu);
 
     if (display_only)
         return NULL;
@@ -572,7 +571,6 @@ cmd_display_objects(json_t *params, int display_only)
     struct nh_objresult pick_list[objlist.icount];
     ret = windowprocs.win_display_objects(&objlist, title, how,
                                           placement_hint, pick_list);
-    dealloc_objmenulist(&objlist);
 
     if (display_only)
         return NULL;
@@ -614,7 +612,6 @@ cmd_list_items(json_t *params, int display_only)
     for (i = 0; i < objlist.icount; i++)
         json_read_objitem(json_array_get(jarr, i), objlist.items + i);
     windowprocs.win_list_items(&objlist, invent);
-    dealloc_objmenulist(&objlist);
 
     return NULL;
 }

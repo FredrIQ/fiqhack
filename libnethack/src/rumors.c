@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Alex Smith, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -280,6 +280,7 @@ outoracle(boolean special, boolean delphi)
             oracle_loc[oracle_idx] = oracle_loc[--oracle_cnt];
 
         init_menulist(&menu);
+
         if (delphi)
             add_menutext(&menu,
                          special ?
@@ -295,9 +296,9 @@ outoracle(boolean special, boolean delphi)
                 *endp = 0;
             add_menutext(&menu, xcrypt(line, xbuf));
         }
+
         display_menu(&menu, NULL, PICK_NONE, PLHINT_ANYWHERE,
                      NULL);
-        dealloc_menulist(&menu);
         dlb_fclose(oracles);
     } else {
         pline("Can't open oracles file!");

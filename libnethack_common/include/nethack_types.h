@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-30 */
+/* Last modified by Alex Smith, 2013-12-31 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -640,6 +640,10 @@ struct nh_topten_entry {
     nh_bool highlight;
 };
 
+/* Any nh_menulist *, nh_objlist * have their "items" elements freed by the
+   callee, unless they're marked as statically allocated (items non-NULL, size
+   0), or are empty lists and so were never allocated in the first place (items
+   NULL). */
 struct nh_window_procs {
     void (*win_pause) (enum nh_pause_reason reason);
     void (*win_display_buffer) (const char *buf, nh_bool trymove);

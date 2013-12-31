@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-30 */
+/* Last modified by Alex Smith, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1776,7 +1776,6 @@ print_dungeon(boolean bymenu, schar * rlev, xchar * rdgn)
 
         n = display_menu(&menu, "Level teleport to where:",
                          PICK_ONE, PLHINT_ANYWHERE, selected);
-        dealloc_menulist(&menu);
         if (n > 0) {
             idx = selected[0] - 1;
             if (rlev && rdgn) {
@@ -1819,7 +1818,6 @@ print_dungeon(boolean bymenu, schar * rlev, xchar * rdgn)
 
     display_menu(&menu, "Level teleport to where:", PICK_NONE,
                  PLHINT_ANYWHERE, NULL);
-    dealloc_menulist(&menu);
     return 0;
 }
 
@@ -2167,7 +2165,6 @@ dooverview(const struct nh_cmd_arg *arg)
 
     n = display_menu(&menu, "Dungeon overview:", PICK_ONE,
                      PLHINT_ANYWHERE, selected);
-    dealloc_menulist(&menu);
     if (n <= 0)
         return 0;
 

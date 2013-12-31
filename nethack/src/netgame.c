@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-30 */
+/* Last modified by Alex Smith, 2013-12-31 */
 /* Copyright (c) Daniel Thaler, 2012 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -380,7 +380,6 @@ delete_server_menu(struct server_info *servlist)
 
     n = curses_display_menu(&menu, "Delete which server?", PICK_ONE,
                             PLHINT_ANYWHERE, selected);
-    dealloc_menulist(&menu);
 
     if (n <= 0)
         return;
@@ -411,7 +410,7 @@ connect_server_menu(struct server_info **servlist)
 
         n = curses_display_menu(&menu, "Connect to which server?",
                                 PICK_ONE, PLHINT_ANYWHERE, selected);
-        dealloc_menulist(&menu);
+
         if (n <= 0)
             break;
 

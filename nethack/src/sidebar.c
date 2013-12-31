@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-30 */
+/* Last modified by Alex Smith, 2013-12-31 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -29,6 +29,8 @@ curses_list_items_core(struct nh_objlist *objlist, nh_bool invent, nh_bool draw)
         memcpy(list->items, objlist->items,
                objlist->icount * sizeof (struct nh_objitem));
     }
+
+    dealloc_objmenulist(objlist);
 
     if (draw)
         draw_sidebar();

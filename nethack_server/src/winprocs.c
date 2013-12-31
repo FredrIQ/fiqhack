@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-30 */
+/* Last modified by Alex Smith, 2013-12-31 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -7,7 +7,7 @@
  */
 
 #include "nhserver.h"
-
+#include "menulist.h"
 
 static void srv_raw_print(const char *str);
 static void srv_pause(enum nh_pause_reason r);
@@ -404,6 +404,8 @@ srv_outrip(struct nh_menulist *ml, nh_bool tombstone, const char *name,
                      "year", year, "how", end_how, "name", name,
                      "killbuf", killbuf);
 
+    dealloc_menulist(ml);
+
     add_display_data("outrip", jobj);
 }
 
@@ -469,6 +471,8 @@ srv_display_menu(struct nh_menulist *ml, const char *title,
                   "how", how, "title", title ? title : "",
                   "plhint", placement_hint);
 
+    dealloc_menulist(ml);
+
     if (how == PICK_NONE) {
         add_display_data("display_menu", jobj);
         return 0;
@@ -516,6 +520,8 @@ srv_display_objects(struct nh_objlist *objlist, const char *title,
                   objlist->icount, "how", how, "title", title ? title : "",
                   "plhint", placement_hint);
 
+    dealloc_objmenulist(objlist);
+
     if (how == PICK_NONE) {
         add_display_data("display_objects", jobj);
         return 0;
@@ -546,11 +552,15 @@ srv_list_items(struct nh_objlist *objlist, nh_bool invent)
 
     if (invent && prev_invent && objlist->icount == prev_invent_icount &&
         !memcmp(objlist->items, prev_invent,
-                sizeof (struct nh_objitem) * objlist->icount))
+                sizeof (struct nh_objitem) * objlist->icount)) {
+        dealloc_objmenulist(objlist);
         return TRUE;
+    }
 
-    if (!invent && objlist->icount == 0 && prev_floor_icount == 0)
+    if (!invent && objlist->icount == 0 && prev_floor_icount == 0) {
+        dealloc_objmenulist(objlist);
         return TRUE;
+    }
 
     if (invent) {
         prev_invent_icount = objlist->icount;
@@ -567,6 +577,8 @@ srv_list_items(struct nh_objlist *objlist, nh_bool invent)
     jobj =
         json_pack("{so,si,si}", "items", jarr, "icount",
                   objlist->icount, "invent", invent);
+
+    dealloc_objmenulist(objlist);
 
     /* there could be lots of list_item calls after each other if the player is
        picking up or dropping large numbers of items. We only care about the

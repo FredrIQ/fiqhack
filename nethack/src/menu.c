@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-30 */
+/* Last modified by Alex Smith, 2013-12-31 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -273,7 +273,13 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     int i, key, idx, rv, startx, starty, prevcurs, prev_offset;
     nh_bool done, cancelled;
     char sbuf[BUFSZ];
-    char selected[ml->icount];
+    char selected[ml->icount ? ml->icount : 1];
+
+    /* Make a stack-allocated copy of the menulist, in case we end up longjmping
+       out of here before we get a chance to deallocate it. */
+    struct nh_menuitem item_copy[ml->icount ? ml->icount : 1];
+    if (ml->icount)
+        memcpy(item_copy, ml->items, sizeof item_copy);
 
     memset(selected, 0, sizeof selected);
 
@@ -283,7 +289,7 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     gw->draw = draw_menu;
     gw->resize = resize_menu;
     mdat = (struct win_menu *)gw->extra;
-    mdat->items = ml->items;
+    mdat->items = item_copy;
     mdat->icount = ml->icount;
     mdat->title = title;
     mdat->how = how;
@@ -292,6 +298,8 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     mdat->y1 = y1;
     mdat->x2 = x2;
     mdat->y2 = y2;
+
+    dealloc_menulist(ml);
 
     if (x1 < 0)
         x1 = 0;
@@ -385,24 +393,24 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
             /* select all */
         case '.':
             if (mdat->how == PICK_ANY)
-                for (i = 0; i < ml->icount; i++)
+                for (i = 0; i < mdat->icount; i++)
                     if (mdat->items[i].role == MI_NORMAL)
                         mdat->selected[i] = TRUE;
             break;
 
             /* select none */
         case '-':
-            for (i = 0; i < ml->icount; i++)
+            for (i = 0; i < mdat->icount; i++)
                 mdat->selected[i] = FALSE;
             break;
 
             /* search for a menu item */
         case ':':
             curses_getline("Search:", sbuf);
-            for (i = 0; i < ml->icount; i++)
+            for (i = 0; i < mdat->icount; i++)
                 if (strstr(mdat->items[i].caption, sbuf))
                     break;
-            if (i < ml->icount) {
+            if (i < mdat->icount) {
                 int end = max(mdat->icount - mdat->innerheight, 0);
 
                 mdat->offset = min(i, end);
@@ -432,10 +440,10 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
         rv = -1;
     else {
         rv = 0;
-        for (i = 0; i < ml->icount; i++) {
+        for (i = 0; i < mdat->icount; i++) {
             if (mdat->selected[i]) {
                 if (results)
-                    results[rv] = ml->items[i].id;
+                    results[rv] = mdat->items[i].id;
                 rv++;
             }
         }
@@ -741,7 +749,13 @@ curses_display_objects(struct nh_objlist *objlist, const char *title,
     char sbuf[BUFSZ];
     nh_bool inventory_special = title && !!strstr(title, "Inventory") &&
         how == PICK_NONE;
-    int selected[objlist->icount];
+    int selected[objlist->icount ? objlist->icount : 1];
+
+    /* Make a stack-allocated copy of the objlist, in case we end up longjmping
+       out of here before we get a chance to deallocate it. */
+    struct nh_objitem item_copy[objlist->icount ? objlist->icount : 1];
+    if (objlist->icount)
+        memcpy(item_copy, objlist->items, sizeof item_copy);
 
     memset(selected, 0, sizeof selected);
 
@@ -754,12 +768,14 @@ curses_display_objects(struct nh_objlist *objlist, const char *title,
     gw->draw = draw_objmenu;
     gw->resize = resize_objmenu;
     mdat = (struct win_objmenu *)gw->extra;
-    mdat->items = objlist->items;
+    mdat->items = item_copy;
     mdat->icount = objlist->icount;
     mdat->title = title;
     mdat->how = how;
     mdat->selcount = -1;
     mdat->selected = selected;
+
+    dealloc_objmenulist(objlist);
 
     if (how != PICK_NONE)
         assign_objmenu_accelerators(mdat);
@@ -856,21 +872,21 @@ curses_display_objects(struct nh_objlist *objlist, const char *title,
             /* select all */
         case '.':
             if (mdat->how == PICK_ANY)
-                for (i = 0; i < objlist->icount; i++)
+                for (i = 0; i < mdat->icount; i++)
                     if (mdat->items[i].oclass != -1)
                         mdat->selected[i] = -1;
             break;
 
             /* select none */
         case '-':
-            for (i = 0; i < objlist->icount; i++)
+            for (i = 0; i < mdat->icount; i++)
                 mdat->selected[i] = 0;
             break;
 
             /* invert all */
         case '@':
             if (mdat->how == PICK_ANY)
-                for (i = 0; i < objlist->icount; i++)
+                for (i = 0; i < mdat->icount; i++)
                     if (mdat->items[i].oclass != -1)
                         mdat->selected[i] = mdat->selected[i] ? 0 : -1;
             break;
@@ -881,7 +897,7 @@ curses_display_objects(struct nh_objlist *objlist, const char *title,
                 break;
 
             for (i = mdat->offset;
-                 i < objlist->icount && i < mdat->offset + mdat->innerheight;
+                 i < mdat->icount && i < mdat->offset + mdat->innerheight;
                  i++)
                 if (mdat->items[i].oclass != -1)
                     mdat->selected[i] = -1;
@@ -890,7 +906,7 @@ curses_display_objects(struct nh_objlist *objlist, const char *title,
             /* deselect page */
         case '\\':
             for (i = mdat->offset;
-                 i < objlist->icount && i < mdat->offset + mdat->innerheight;
+                 i < mdat->icount && i < mdat->offset + mdat->innerheight;
                  i++)
                 if (mdat->items[i].oclass != -1)
                     mdat->selected[i] = 0;
@@ -902,7 +918,7 @@ curses_display_objects(struct nh_objlist *objlist, const char *title,
                 break;
 
             for (i = mdat->offset;
-                 i < objlist->icount && i < mdat->offset + mdat->innerheight;
+                 i < mdat->icount && i < mdat->offset + mdat->innerheight;
                  i++)
                 if (mdat->items[i].oclass != -1)
                     mdat->selected[i] = mdat->selected[i] ? 0 : -1;
@@ -911,10 +927,10 @@ curses_display_objects(struct nh_objlist *objlist, const char *title,
             /* search for a menu item */
         case ':':
             curses_getline("Search:", sbuf);
-            for (i = 0; i < objlist->icount; i++)
+            for (i = 0; i < mdat->icount; i++)
                 if (strstr(mdat->items[i].caption, sbuf))
                     break;
-            if (i < objlist->icount) {
+            if (i < mdat->icount) {
                 int end = max(mdat->icount - mdat->innerheight, 0);
 
                 mdat->offset = min(i, end);
@@ -987,10 +1003,10 @@ curses_display_objects(struct nh_objlist *objlist, const char *title,
         rv = -1;
     else {
         rv = 0;
-        for (i = 0; i < objlist->icount; i++) {
+        for (i = 0; i < mdat->icount; i++) {
             if (mdat->selected[i]) {
                 if (results) {
-                    results[rv].id = objlist->items[i].id;
+                    results[rv].id = mdat->items[i].id;
                     results[rv].count = mdat->selected[i];
                 }
                 rv++;
@@ -1031,7 +1047,6 @@ do_item_actions(const struct nh_objitem *item)
     }
     i = curses_display_menu(&menu, title, PICK_ONE, PLHINT_INVENTORY,
                             selected);
-    dealloc_menulist(&menu);
 
     if (i <= 0)
         return FALSE;

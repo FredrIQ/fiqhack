@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-30 */
+/* Last modified by Alex Smith, 2013-12-31 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -166,8 +166,10 @@ dump_display_menu(struct nh_menulist *menu, const char *title,
     char *start, *tab;
     struct nh_menuitem *const items = menu->items;
 
-    if (!dumpfp)
+    if (!dumpfp) {
+        dealloc_menulist(menu);
         return 0;
+    }
 
     /* menus may have multiple columns separated by tabs */
     memset(colwidth, 0, sizeof (colwidth));
@@ -215,6 +217,9 @@ dump_display_menu(struct nh_menulist *menu, const char *title,
     }
 
     fprintf(dumpfp, "\n");
+
+    dealloc_menulist(menu);
+
     return 0;
 }
 
@@ -225,8 +230,10 @@ dump_display_objects(struct nh_objlist *objects, const char *title,
 {
     int i;
 
-    if (!dumpfp)
+    if (!dumpfp) {
+        dealloc_objmenulist(objects);
         return 0;
+    }
 
     if (!title)
         title = "Your Inventory:";
@@ -240,6 +247,9 @@ dump_display_objects(struct nh_objlist *objects, const char *title,
     }
 
     fprintf(dumpfp, "\n");
+
+    dealloc_objmenulist(objects);
+
     return 0;
 }
 
