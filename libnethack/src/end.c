@@ -901,8 +901,6 @@ done_noreturn(int how)
     if (how == PANICKED)
         panic("done(PANICKED) called");
 
-    /* render vision subsystem inoperative */
-    iflags.vision_inited = 0;
     /* might have been killed while using a disposable item, so make sure it's
        gone prior to inventory disclosure and creation of bones data */
     inven_inuse(TRUE);

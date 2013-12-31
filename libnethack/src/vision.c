@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-17 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Dean Luick, with acknowledgements to Dave Cohrs, 1990. */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -226,7 +226,6 @@ vision_reset(void)
         }
     }
 
-    iflags.vision_inited = 1;   /* vision is ready */
     vision_full_recalc = 1;     /* we want to run vision_recalc() */
 }
 
@@ -502,7 +501,7 @@ vision_recalc(int control)
     int oldseenv;       /* previous seenv value */
 
     vision_full_recalc = 0;     /* reset flag */
-    if (in_mklev || !iflags.vision_inited)
+    if (in_mklev)
         return;
 
     /* 

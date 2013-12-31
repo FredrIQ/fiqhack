@@ -180,17 +180,7 @@ struct flag {
 };
 
 
-/*
- * Flags that are set each time the game is started.
- * These are not saved with the game.
- *
- */
-struct instance_flags {
-    boolean vision_inited;      /* true if vision is ready */
-};
-
 extern struct flag flags;
-extern struct instance_flags iflags;
 
 /* runmode options */
 # define RUN_TPORT      0       /* don't update display until movement stops */
