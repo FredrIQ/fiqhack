@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -487,7 +487,7 @@ mcalcdistress(void)
         /* must check non-moving monsters once/turn in case they managed to end 
            up in liquid */
         if (mtmp->data->mmove == 0) {
-            if (vision_full_recalc)
+            if (turnstate.vision_full_recalc)
                 vision_recalc(0);
             if (minliquid(mtmp))
                 continue;
@@ -551,7 +551,7 @@ movemon(void)
         if (mtmp->movement >= NORMAL_SPEED)
             somebody_can_move = TRUE;
 
-        if (vision_full_recalc)
+        if (turnstate.vision_full_recalc)
             vision_recalc(0);   /* vision! */
 
         if (minliquid(mtmp))
@@ -584,7 +584,7 @@ movemon(void)
     }
 
     if (any_light_source())
-        vision_full_recalc = 1; /* in case a mon moved with a light source */
+        turnstate.vision_full_recalc = TRUE; /* in case a mon moved with a light source */
     dmonsfree(level);   /* remove all dead monsters */
 
     /* a monster may have levteleported player -dlc */
@@ -1714,7 +1714,7 @@ unstuck(struct monst *mtmp)
             u.uswldtim = 0;
             if (Punished)
                 placebc();
-            vision_full_recalc = 1;
+            turnstate.vision_full_recalc = TRUE;
             doredraw();
         }
         u.ustuck = 0;

@@ -921,7 +921,7 @@ dotrap(struct trap *trap, unsigned trflags)
                 placebc();
             }
             selftouch("Falling, you", "falling into a pit while wielding");
-            vision_full_recalc = 1;     /* vision limits change */
+            turnstate.vision_full_recalc = TRUE;     /* vision limits change */
             exercise(A_STR, FALSE);
             exercise(A_DEX, FALSE);
         }
@@ -2279,7 +2279,7 @@ float_up(void)
         if (u.utraptype == TT_PIT) {
             u.utrap = 0;
             pline("You float up, out of the pit!");
-            vision_full_recalc = 1;     /* vision limits change */
+            turnstate.vision_full_recalc = TRUE;     /* vision limits change */
             fill_pit(level, u.ux, u.uy);
         } else if (u.utraptype == TT_INFLOOR) {
             pline("Your body pulls upward, but your %s are still stuck.",
@@ -2359,7 +2359,7 @@ float_down(long hmask)
         u.uy = uball->oy;
         movobj(uchain, uball->ox, uball->oy);
         newsym(u.ux0, u.uy0);
-        vision_full_recalc = 1; /* in case the hero moved. */
+        turnstate.vision_full_recalc = TRUE; /* in case the hero moved. */
     }
     /* check for falling into pool - added by GAN 10/20/86 */
     if (!Flying) {
@@ -2925,7 +2925,7 @@ drown(void)
         vision_recalc(2);       /* unsee old position */
         u.uinwater = 1;
         under_water(1);
-        vision_full_recalc = 1;
+        turnstate.vision_full_recalc = TRUE;
         return FALSE;
     }
     if ((Teleportation || can_teleport(youmonst.data)) && !u.usleep &&

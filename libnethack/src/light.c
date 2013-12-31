@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-30 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Dean Luick, 1994                                       */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -76,7 +76,7 @@ new_light_source(struct level *lev, xchar x, xchar y, int range, int type,
     ls->flags = 0;
     lev->lev_lights = ls;
 
-    vision_full_recalc = 1;     /* make the source show up */
+    turnstate.vision_full_recalc = TRUE;     /* make the source show up */
 }
 
 /*
@@ -114,7 +114,7 @@ del_light_source(struct level *lev, int type, void *id)
                 lev->lev_lights = curr->next;
 
             free(curr);
-            vision_full_recalc = 1;
+            turnstate.vision_full_recalc = TRUE;
             return;
         }
     }
@@ -520,7 +520,7 @@ obj_split_light_source(struct obj *src, struct obj *dest)
                 /* split candles may emit less light than original group */
                 ls->range = candle_light_range(src);
                 new_ls->range = candle_light_range(dest);
-                vision_full_recalc = 1; /* in case range changed */
+                turnstate.vision_full_recalc = TRUE; /* in case range changed */
             }
             new_ls->id = dest;
             new_ls->next = level->lev_lights;
@@ -543,7 +543,7 @@ obj_merge_light_sources(struct obj *src, struct obj *dest)
     for (ls = level->lev_lights; ls; ls = ls->next)
         if (ls->type == LS_OBJECT && ls->id == dest) {
             ls->range = candle_light_range(dest);
-            vision_full_recalc = 1;     /* in case range changed */
+            turnstate.vision_full_recalc = TRUE;     /* in case range changed */
             break;
         }
 }

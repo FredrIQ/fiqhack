@@ -771,7 +771,7 @@ special_vision_handling(void)
     } else if (Warning || Warn_of_mon)
         see_monsters();
 
-    if (vision_full_recalc)
+    if (turnstate.vision_full_recalc)
         vision_recalc(0);       /* vision! */
 }
 
@@ -866,7 +866,7 @@ cancel_helplessness(const char *msg)
     if (previously_unconscious) {
         see_monsters();
         see_objects();
-        vision_full_recalc = 1;
+        turnstate.vision_full_recalc = TRUE;
     }
 
     /* Were we mimicking something? */
@@ -971,7 +971,7 @@ command_input(int cmdidx, struct nh_cmd_arg *arg)
     if (u.utotype)      /* change dungeon level */
         deferred_goto();        /* after rhack() */
 
-    if (vision_full_recalc)
+    if (turnstate.vision_full_recalc)
         vision_recalc(0);       /* vision! */
 
     if (didmove)

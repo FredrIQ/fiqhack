@@ -381,7 +381,7 @@ fall_asleep(int how_long, boolean wakeup_msg)
              wakeup_msg ? "You wake up." : NULL);
     see_monsters();
     see_objects();
-    vision_full_recalc = 1;
+    turnstate.vision_full_recalc = TRUE;
 }
 
 /* Attach an egg hatch timeout to the given egg. */

@@ -1089,7 +1089,7 @@ rottenfood(struct obj *obj)
                  "You are conscious again.");
         see_monsters();
         see_objects();
-        vision_full_recalc = 1;
+        turnstate.vision_full_recalc = TRUE;
         return 1;
     }
     return 0;

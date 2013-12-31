@@ -221,7 +221,7 @@ make_blinded(long xtime, boolean talk)
     set_itimeout(&Blinded, xtime);
 
     if (u_could_see ^ can_see_now) {    /* one or the other but not both */
-        vision_full_recalc = 1; /* blindness just got toggled */
+        turnstate.vision_full_recalc = TRUE; /* blindness just got toggled */
         if (Blind_telepat || Infravision)
             see_monsters();
     }
@@ -521,7 +521,7 @@ peffects(struct obj *otmp)
             helpless(rnd(15), "drunk", "You awake with a headache.");
             see_monsters();
             see_objects();
-            vision_full_recalc = 1;
+            turnstate.vision_full_recalc = TRUE;
         }
         break;
     case POT_ENLIGHTENMENT:

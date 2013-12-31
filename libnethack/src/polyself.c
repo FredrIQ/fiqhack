@@ -452,7 +452,7 @@ polymon(int mntmp)
     if (Passes_walls && u.utraptype == TT_PIT) {
         u.utraptype = 0;
         u.utrap = 0;
-        vision_full_recalc = 1;
+        turnstate.vision_full_recalc = TRUE;
     }
 
     /* 
@@ -589,7 +589,7 @@ polymon(int mntmp)
         pline("You orient yourself on the web.");
         u.utrap = 0;
     }
-    vision_full_recalc = 1;
+    turnstate.vision_full_recalc = TRUE;
     see_monsters();
     exercise(A_CON, FALSE);
     exercise(A_WIS, TRUE);
@@ -757,7 +757,7 @@ rehumanize(void)
     }
     action_interrupted();
 
-    vision_full_recalc = 1;
+    turnstate.vision_full_recalc = TRUE;
     encumber_msg();
 }
 

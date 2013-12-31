@@ -1381,7 +1381,7 @@ do_it:
             move_bc(0, 0, uball->ox, uball->oy, uchain->ox, uchain->oy);
     }
 
-    vision_full_recalc = 1;     /* delayed vision recalculation */
+    turnstate.vision_full_recalc = TRUE; /* delayed vision recalculation */
 }
 
 

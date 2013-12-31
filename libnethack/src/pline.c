@@ -86,7 +86,7 @@ vpline(boolean nonblocking, boolean norepeat, const char *line, va_list the_args
     repeated = !strcmp(line, toplines[lastline]);
     if (norepeat && repeated)
         return;
-    if (vision_full_recalc)
+    if (turnstate.vision_full_recalc)
         vision_recalc(0);
     if (u.ux)
         flush_screen();

@@ -139,7 +139,7 @@ mkcavearea(boolean rockit)
         newsym(u.ux, u.uy);     /* in case player is invisible */
     }
 
-    vision_full_recalc = 1;     /* everything changed */
+    turnstate.vision_full_recalc = TRUE;     /* everything changed */
 }
 
 /* When digging into location <x,y>, what are you actually digging into? */
@@ -556,7 +556,7 @@ digactualhole(int x, int y, struct monst *madeby, int ttyp)
                 if (!Passes_walls)
                     u.utrap = rn1(4, 2);
                 u.utraptype = TT_PIT;
-                vision_full_recalc = 1; /* vision limits change */
+                turnstate.vision_full_recalc = TRUE; /* vision limits change */
             } else
                 u.utrap = 0;
             if (oldobjs != newobjs)     /* something unearthed */

@@ -83,6 +83,8 @@ struct turnstate {
     struct obj *tracked[ttos_last_slot + 1];
     /* TRUE if continuing a multi-turn action should print a message. */
     boolean continue_message;
+    /* TRUE if we need to do a complete vision recalculation. */
+    boolean vision_full_recalc;
 };
 
 extern struct turnstate turnstate;

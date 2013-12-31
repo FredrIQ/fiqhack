@@ -3730,7 +3730,7 @@ zap_over_floor(xchar x, xchar y, int type, boolean * shopdamage)
                     u.uinwater = 0;
                     u.uundetected = 0;
                     doredraw();
-                    vision_full_recalc = 1;
+                    turnstate.vision_full_recalc = TRUE;
                 } else if (u.utrap && u.utraptype == TT_LAVA) {
                     if (Passes_walls) {
                         pline("You pass through the now-solid rock.");

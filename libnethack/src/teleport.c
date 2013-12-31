@@ -318,7 +318,7 @@ teleds(int nux, int nuy, boolean allow_drag)
      */
     newsym(u.ux0, u.uy0);
     see_monsters();
-    vision_full_recalc = 1;
+    turnstate.vision_full_recalc = TRUE;
     action_interrupted();
     vision_recalc(0);   /* vision before effects */
     spoteffects(TRUE);

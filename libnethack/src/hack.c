@@ -1437,7 +1437,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
                       "struggle against the air currents and float" : u.usteed ?
                       "ride" : "crawl");
                 fill_pit(level, u.ux, u.uy);
-                vision_full_recalc = 1; /* vision limits change */
+                turnstate.vision_full_recalc = TRUE; /* vision limits change */
             } else if (flags.verbose) {
                 if (u.usteed)
                     pline_once("%s is still in a pit.",
@@ -1811,7 +1811,7 @@ spoteffects(boolean pick)
         u.uinwater = 0; /* leave the water */
         if (was_underwater) {   /* restore vision */
             doredraw();
-            vision_full_recalc = 1;
+            turnstate.vision_full_recalc = TRUE;
         }
     }
 

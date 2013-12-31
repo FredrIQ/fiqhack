@@ -100,7 +100,7 @@ boulder_hits_pool(struct obj * otmp, int rx, int ry, boolean pushing)
             if (fills_up && u.uinwater && distu(rx, ry) == 0) {
                 u.uinwater = 0;
                 doredraw();
-                vision_full_recalc = 1;
+                turnstate.vision_full_recalc = TRUE;
                 pline("You find yourself on dry land again!");
             } else if (lava && distu(rx, ry) <= 2) {
                 pline("You are hit by molten lava%c",
@@ -1007,7 +1007,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
 
     /* do this prior to level-change pline messages */
     vision_reset();     /* clear old level's line-of-sight */
-    vision_full_recalc = 0;     /* don't let that reenable vision yet */
+    turnstate.vision_full_recalc = FALSE; /* don't let that reenable vision yet */
     flush_screen_disable();     /* ensure all map flushes are postponed */
 
     if (portal && !In_endgame(&u.uz)) {

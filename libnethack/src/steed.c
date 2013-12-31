@@ -605,7 +605,7 @@ dismount_steed(int reason)
         float_down(0L);
         in_steed_dismounting = FALSE;
         encumber_msg();
-        vision_full_recalc = 1;
+        turnstate.vision_full_recalc = TRUE;
     } else
     /* polearms behave differently when not mounted */
     if (uwep && is_pole(uwep))

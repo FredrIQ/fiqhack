@@ -2319,7 +2319,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
                     pline("You yank yourself out of the pit!");
                     teleds(cc.x, cc.y, TRUE);
                     u.utrap = 0;
-                    vision_full_recalc = 1;
+                    turnstate.vision_full_recalc = TRUE;
                 }
             } else {
                 pline("%s", msg_slipsfree);

@@ -139,7 +139,6 @@ const char *const materialnm[] = {
 };
 
 /* Vision */
-boolean vision_full_recalc;
 char **viz_array;       /* used in cansee() and couldsee() macros */
 
 char *fqn_prefix[PREFIX_COUNT] = { NULL, NULL, NULL, NULL, NULL };
@@ -174,6 +173,7 @@ int curline;
 static const struct turnstate default_turnstate = {
     .tracked = {0},
     .continue_message = TRUE,
+    .vision_full_recalc = FALSE,
 };
 
 struct turnstate turnstate;
@@ -196,6 +196,8 @@ neutral_turnstate_tasks(void)
         impossible("turnstate.tracked persisted between turns");
     if (!turnstate.continue_message)
         impossible("turnstate.continue_message persisted between turns");
+    if (turnstate.vision_full_recalc)
+        impossible("vision not recalculated when needed during a turn");
 
     /* TODO: clean up memory */
 
@@ -216,7 +218,6 @@ init_data(boolean including_program_state)
         memset(toplines, 0, sizeof (toplines));
         memset(toplines_count, 0, sizeof (toplines_count));
 
-        vision_full_recalc = FALSE;
         viz_array = NULL;
     }
 

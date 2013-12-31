@@ -571,7 +571,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         }
         if (Blind_telepat || Infravision)
             see_monsters();
-        vision_full_recalc = 1; /* recalc vision limits */
+        turnstate.vision_full_recalc = TRUE; /* recalc vision limits */
         break;
 
         /* Shields, shirts, body armour: no special cases! */

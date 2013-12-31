@@ -127,7 +127,6 @@ vision_init(void)
     viz_rmin = cs_rmin0;
     viz_rmax = cs_rmax0;
 
-    vision_full_recalc = 0;
     memset(could_see, 0, sizeof (could_see));
 }
 
@@ -226,7 +225,7 @@ vision_reset(void)
         }
     }
 
-    vision_full_recalc = 1;     /* we want to run vision_recalc() */
+    turnstate.vision_full_recalc = TRUE;     /* we want to run vision_recalc() */
 }
 
 
@@ -500,7 +499,7 @@ vision_recalc(int control)
     unsigned char *sv;  /* ptr to seen angle bits */
     int oldseenv;       /* previous seenv value */
 
-    vision_full_recalc = 0;     /* reset flag */
+    turnstate.vision_full_recalc = FALSE;     /* reset flag */
     if (in_mklev)
         return;
 
@@ -823,7 +822,7 @@ block_point(int x, int y)
      * see the lit room.
      */
     if (viz_array[y][x])
-        vision_full_recalc = 1;
+        turnstate.vision_full_recalc = TRUE;
 }
 
 /*
@@ -839,7 +838,7 @@ unblock_point(int x, int y)
     /* recalc light sources here? */
 
     if (viz_array[y][x])
-        vision_full_recalc = 1;
+        turnstate.vision_full_recalc = TRUE;
 }
 
 
@@ -1790,7 +1789,7 @@ do_clear_area(int scol, int srow, int range, void (*func) (int, int, void *),
 
         if (range > MAX_RADIUS || range < 1)
             panic("do_clear_area:  illegal range %d", range);
-        if (vision_full_recalc)
+        if (turnstate.vision_full_recalc)
             vision_recalc(0);   /* recalc vision if dirty */
         limits = circle_ptr(range);
         if ((max_y = (srow + range)) >= ROWNO)
