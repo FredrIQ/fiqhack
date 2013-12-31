@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-25 */
+/* Last modified by Alex Smith, 2013-12-31 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -368,7 +368,7 @@ static char *KEYSTRING_OTHERFD = keystrings + 4;
 static int inited_when_stopped = 0;
 
 static char *
-platform_specific_getkeystring(int timeout_ms)
+platform_specific_getkeystring(int timeout_ms, int ignore_signals)
 {
     /* We want to wait for a character from the terminal (i.e. a keypress or
        mouse click), or for a signal (we handle SIGWINCH, SIGTSTP/SIGCONT, and
@@ -405,9 +405,11 @@ platform_specific_getkeystring(int timeout_ms)
         if (r == keystring) {
             /* Look for something on the selfpipe, as well as the "rest" of
                the key */
-            FD_SET(selfpipe[0], &readfds);
-            if (max < selfpipe[0])
-                max = selfpipe[0];
+            if (!ignore_signals) {
+                FD_SET(selfpipe[0], &readfds);
+                if (max < selfpipe[0])
+                    max = selfpipe[0];
+            }
 
         } else {
             /* Ignore the selfpipe; wait 200ms for the rest of the key */
@@ -692,6 +694,8 @@ tty_hook_positioncursor(int y, int x)
     last_x = x;
 }
 
+static int getkeyorcodepoint_inner(int, int);
+
 void
 tty_hook_init(int *h, int *w, char *title)
 {
@@ -756,7 +760,7 @@ tty_hook_init(int *h, int *w, char *title)
     while (kp != (KEY_PF3 | (KEY_SHIFT * 2)) && kp != KEY_HANGUP &&
            kp != (KEY_PF3 | (KEY_SHIFT * 4)) && kp != KEY_SILENCE) {
 
-        kp = tty_hook_getkeyorcodepoint(2000);
+        kp = getkeyorcodepoint_inner(2000, 1);
 
         if (kp < 0x110000)
             kp = 0;
@@ -839,12 +843,12 @@ tty_hook_rawsignals(int raw)
     platform_specific_rawsignals(raw);
 }
 
-int
-tty_hook_getkeyorcodepoint(int timeout_ms)
+static int
+getkeyorcodepoint_inner(int timeout_ms, int ignore_signals)
 {
     last_color = -1;    /* send a new SGR on the next redraw */
 
-    char *ks = platform_specific_getkeystring(timeout_ms);
+    char *ks = platform_specific_getkeystring(timeout_ms, ignore_signals);
 
     if (ks == KEYSTRING_SIGNAL)
         return KEY_SIGNAL + KEY_BIAS;
@@ -953,6 +957,12 @@ tty_hook_getkeyorcodepoint(int timeout_ms)
 
     /* Unreachable, but gcc seems not to realise that */
     return KEY_BIAS + KEY_INVALID;
+}
+
+int
+tty_hook_getkeyorcodepoint(int timeout_ms)
+{
+    return getkeyorcodepoint_inner(timeout_ms, 0);
 }
 
 void
