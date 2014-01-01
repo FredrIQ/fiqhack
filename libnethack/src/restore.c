@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Alex Smith, 2014-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -705,8 +705,12 @@ restore_autopickup_rules(struct memfile *mf, struct nh_autopickup_rules *ar)
     int len = mread32(mf), i;
     ar->num_rules = len;
     ar->rules = malloc(len * sizeof(struct nh_autopickup_rule));
-    for (i = 0; i < len; ++i)
-        mread(mf, &ar->rules[i], sizeof (struct nh_autopickup_rule));
+    for (i = 0; i < len; ++i) {
+        mread(mf, ar->rules[i].pattern, sizeof (ar->rules[i].pattern));
+        ar->rules[i].oclass = mread16(mf);
+        ar->rules[i].buc = mread8(mf);
+        ar->rules[i].action = mread8(mf);
+    }
 }
 
 

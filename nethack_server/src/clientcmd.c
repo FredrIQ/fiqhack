@@ -152,7 +152,9 @@ read_json_option(json_t * jobj, struct nh_option_desc *opt)
             jelem = json_array_get(joptval, i);
             json_unpack(jelem, "{ss,si,si,si!}", "pattern", &strval, "oclass",
                         &r->oclass, "buc", &r->buc, "action", &r->action);
+            memset(r->pattern, 0, sizeof (r->pattern));
             strncpy(r->pattern, strval, sizeof (r->pattern) - 1);
+            r->pattern[sizeof (r->pattern) - 1] = 0;
         }
 
         break;
@@ -789,7 +791,9 @@ ccmd_set_option(json_t * params)
                      &pattern, "oclass", &r->oclass, "buc", &r->buc, "action",
                      &r->action) == -1)
                     exit_client("Error unpacking autopickup rule");
+                memset(r->pattern, 0, sizeof (r->pattern));
                 strncpy(r->pattern, pattern, sizeof (r->pattern) - 1);
+                r->pattern[sizeof (r->pattern) - 1] = 0;
             }
         } else
             value.ar = NULL;

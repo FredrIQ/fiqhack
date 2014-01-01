@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-31 */
+/* Last modified by Alex Smith, 2014-01-01 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -769,6 +769,7 @@ edit_ap_rule(struct nh_autopick_option *desc, struct nh_autopickup_rules *ar,
             sprintf(query, "New name pattern (empty matches everything):");
             buf[0] = '\0';
             curses_getline(query, buf);
+            memset(r->pattern, 0, sizeof (r->pattern));
             if (*buf != '\033')
                 strncpy(r->pattern, buf, sizeof (r->pattern));
             r->pattern[sizeof (r->pattern) - 1] = '\0';
@@ -896,7 +897,7 @@ show_autopickup_menu(struct nh_option_desc *opt)
             value.ar->rules = realloc(value.ar->rules, size);
 
             rule = &value.ar->rules[id];
-            rule->pattern[0] = '\0';
+            memset(rule->pattern, 0, sizeof(rule->pattern));
             rule->oclass = OCLASS_ANY;
             rule->buc = B_DONT_CARE;
             rule->action = AP_GRAB;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Alex Smith, 2014-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -111,6 +111,7 @@ autopickup_to_string(const struct nh_autopickup_rules *ar)
 
     for (i = 0; i < ar->num_rules; i++) {
         strncpy(pattern, ar->rules[i].pattern, sizeof (pattern));
+        pattern[(sizeof pattern) - 1] = 0;
 
         /* remove '"' and ';' from the pattern by replacing them by '?' (single 
            character wildcard), to simplify parsing */
@@ -208,6 +209,10 @@ nhlib_parse_autopickup_rules(const char *str)
 
     while ((semi = strchr(start, ';')) && i < rcount) {
         *semi++ = '\0';
+        /* This memset is mostly unnecessary, but it ensures that pattern is
+           fully initialized, thus allowing us to copy the spare bytes into
+           the save file without reading uninitialized data. */
+        memset(out->rules[i].pattern, 0, sizeof (out->rules[i].pattern));
         sscanf(start, "(\"%39[^,],%d,%u,%u);", out->rules[i].pattern,
                &out->rules[i].oclass, &buc, &action);
         /* since %[ in sscanf requires a nonempty match, we allowed it to match
