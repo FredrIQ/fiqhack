@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Alex Smith, 2014-01-01 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -32,7 +32,7 @@ int ex_jmp_buf_valid;
 
 static jmp_buf playgame_jmp_buf;
 static int playgame_jmp_buf_valid = 0;
-static json_t *send_receive_current_jobj;
+static json_t *send_receive_recent_response;
 
 void
 print_error(const char *msg)
@@ -193,8 +193,7 @@ receive_json_msg(void)
 json_t *
 send_receive_msg(const char *const msgtype, json_t *volatile jmsg)
 {
-    json_t *recv_msg, *jdisplay;
-    const char *sendkey;
+    const char *volatile sendkey;
     char key[BUFSZ];
     void *iter;
     int retry_count = 3;
@@ -212,18 +211,18 @@ send_receive_msg(const char *const msgtype, json_t *volatile jmsg)
     sendkey = msgtype;
     while (1) {
         /* send the message; keep the reference to jmsg */
-        send_receive_current_jobj = json_pack("{sO}", sendkey, jmsg);
-        if (!send_json_msg(send_receive_current_jobj)) {
-            json_decref(send_receive_current_jobj);
+        json_t *send_msg = json_pack("{sO}", sendkey, jmsg);
+        if (!send_json_msg(send_msg)) {
+            json_decref(send_msg);
             if (retry_count-- > 0 && restart_connection())
                 continue;
             goto error;
         }
+        json_decref(send_msg);
 
         /* receive the response */
-        recv_msg = receive_json_msg();
+        json_t *recv_msg = receive_json_msg();
         if (!recv_msg) {
-            json_decref(send_receive_current_jobj);
             /* If no data is received, there must have been a network error.
                Presumably the send didn't succeed either and the sent data
                vanished, so reconnect. restart_connection() can longjmp back to
@@ -233,8 +232,7 @@ send_receive_msg(const char *const msgtype, json_t *volatile jmsg)
             goto error;
         }
 
-        json_decref(send_receive_current_jobj);
-        jdisplay = json_object_get(recv_msg, "display");
+        json_t *jdisplay = json_object_get(recv_msg, "display");
         if (jdisplay) {
             if (json_is_array(jdisplay))
                 handle_display_list(jdisplay);
@@ -256,13 +254,13 @@ send_receive_msg(const char *const msgtype, json_t *volatile jmsg)
            recv_msg exists. Since we still want the value afterwards, it must
            be copied. */
         strncpy(key, json_object_iter_key(iter), BUFSZ - 1);
-        send_receive_current_jobj = json_object_iter_value(iter);
+        send_receive_recent_response = json_object_iter_value(iter);
 
         if (json_object_iter_next(recv_msg, iter))
             print_error("Too many JSON objects in response data.");
 
         /* keep only the core of the response and throw away the wrapper */
-        json_incref(send_receive_current_jobj);
+        json_incref(send_receive_recent_response);
         json_decref(recv_msg);
 
         if (strcmp(sendkey, "play_game") == 0) {
@@ -274,6 +272,7 @@ send_receive_msg(const char *const msgtype, json_t *volatile jmsg)
                 /* key, sendkey might have any value right now, but we know what
                    they should be from the position in the control flow */
                 sendkey = "play_game";
+                memset(key, 0, sizeof key);
                 strcpy(key, "play_game");
             }
         }
@@ -291,32 +290,33 @@ send_receive_msg(const char *const msgtype, json_t *volatile jmsg)
             longjmp(playgame_jmp_buf, 1);
 
         if (strcmp(key, msgtype)) {
-            /* handle_netcmd may clobber send_receive_current_jobj via a
-               recursive call to send_receive_command, but that's OK because we
-               discard its value here anyway */
-            send_receive_current_jobj =
-                handle_netcmd(key, send_receive_current_jobj);
-            if (!send_receive_current_jobj) {     /* server error */
+            json_t *srvmsg = send_receive_recent_response;
+            /* The next line is unneccessary, but makes the control flow easier
+               to follow in a debugger. */
+            send_receive_recent_response = 0;
+            json_t *newmsg = handle_netcmd(key, srvmsg);
+            if (!newmsg) {     /* server error */
                 if (error_retry_ok && retry_count-- > 0 && restart_connection())
-                    continue;
-
-                json_decref(jmsg);
-                playgame_jmp_buf_valid = 0;
-                return NULL;
+                    continue;  /* jmsg is still alive, use it again */
+                goto error;
             }
 
             json_decref(jmsg);
-            jmsg = send_receive_current_jobj;
+            jmsg = newmsg;
             sendkey = key;
 
             /* send the callback data to the server and get a new response */
             continue;
         }
+
         json_decref(jmsg);
         break;  /* only loop via continue */
     }
 
-    return send_receive_current_jobj;
+    json_t *response = send_receive_recent_response;
+    send_receive_recent_response = 0;
+
+    return response;
 
 error:
     json_decref(jmsg);
@@ -595,7 +595,7 @@ restart_connection(void)
        open at the time (yay, disconnection works correctly at prompts now!),
        and getting the client's main loop to reconnect. */
     if (ret == AUTH_SUCCESS_NEW && playgame_jmp_buf_valid) {
-        send_receive_current_jobj =
+        send_receive_recent_response =
             json_pack("{si}", "return", RESTART_PLAY);
         longjmp(playgame_jmp_buf, 1);
     }
