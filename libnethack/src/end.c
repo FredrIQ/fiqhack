@@ -1100,6 +1100,7 @@ terminate(enum nh_play_status playstatus)
         dlb_cleanup();
 
         /* Reset options to their default state. */
+        cleanup_opt_struct();
         init_opt_struct();
     }
 

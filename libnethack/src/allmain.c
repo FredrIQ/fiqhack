@@ -267,6 +267,7 @@ nh_create_game(int fd, struct nh_option_desc *opts)
         !validalign(u.initrole, u.initrace, u.initalign) ||
         (!*u.uplname && !wizard)) {
         /* Reset options that we just clobbered. */
+        cleanup_opt_struct();
         init_opt_struct();
         API_EXIT();
         return NHCREATE_INVALID;
