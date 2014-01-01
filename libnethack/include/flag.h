@@ -185,10 +185,4 @@ struct flag {
 
 extern struct flag flags;
 
-/* runmode options */
-# define RUN_TPORT      0       /* don't update display until movement stops */
-# define RUN_LEAP       1       /* update display every 7 steps */
-# define RUN_STEP       2       /* update display every single step */
-# define RUN_CRAWL      3       /* walk w/ extra delay after each update */
-
 #endif /* FLAG_H */

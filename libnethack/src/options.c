@@ -56,15 +56,6 @@ static const struct nh_listitem movecommand_list[] = {
 static const struct nh_enum_option movecommand_spec =
     { movecommand_list, listlen(movecommand_list) };
 
-static const struct nh_listitem runmode_list[] = {
-    {RUN_CRAWL, "crawl"},
-    {RUN_STEP, "step"},
-    {RUN_LEAP, "leap"},
-    {RUN_TPORT, "teleport"}
-};
-static const struct nh_enum_option runmode_spec =
-    { runmode_list, listlen(runmode_list) };
-
 static const struct nh_listitem mode_list[] = {
     {MODE_NORMAL, "normal"},
     {MODE_EXPLORE, "explore"},
@@ -171,8 +162,6 @@ static const struct nh_option_desc const_options[] = {
      OPTTYPE_BOOL, {.b = TRUE}},
     {"pushweapon", "offhand the old weapon when wielding a new one", FALSE,
      OPTTYPE_BOOL, {.b = FALSE}},
-    {"runmode", "display frequency when `running' or `travelling'", FALSE,
-     OPTTYPE_ENUM, {.e = RUN_LEAP}},
     {"show_uncursed", "always show uncursed status", FALSE, OPTTYPE_BOOL,
      {.b = FALSE}},
     {"showrace", "show yourself by your race rather than by role", FALSE,
@@ -352,7 +341,6 @@ init_opt_struct(void)
     nhlib_find_option(options, "movecommand")->e = movecommand_spec;
     nhlib_find_option(options, "pickup_burden")->e = pickup_burden_spec;
     nhlib_find_option(options, "packorder")->s.maxlen = MAXOCLASSES;
-    nhlib_find_option(options, "runmode")->e = runmode_spec;
     nhlib_find_option(options, "autopickup_rules")->a = autopickup_spec;
 
     nhlib_find_option(options, "name")->s.maxlen = PL_NSIZ;
