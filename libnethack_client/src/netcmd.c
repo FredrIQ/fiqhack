@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-31 */
+/* Last modified by Alex Smith, 2014-01-01 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -445,7 +445,7 @@ cmd_request_command(json_t *params, int display_only)
     struct nh_cmd_arg arg;
     json_t *jarg;
 
-    if (json_unpack(params, "{sb,sb,sb}", "debug", &debug, "completed",
+    if (json_unpack(params, "{sb,sb,sb*}", "debug", &debug, "completed",
                     &completed, "interrupted", &interrupted) == -1) {
         print_error("Incorrect parameter type in cmd_request_command");
         return NULL;
@@ -471,7 +471,7 @@ cmd_request_command(json_t *params, int display_only)
     if (arg.argtype & CMD_ARG_LIMIT)
         json_object_set_new(jarg, "limit", json_integer(arg.limit));
 
-    return json_pack("{ss,so,si}", "command", command, "arg", jarg);
+    return json_pack("{ss,so}", "command", command, "arg", jarg);
 }
 
 

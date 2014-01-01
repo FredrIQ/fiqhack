@@ -134,7 +134,7 @@ nhnet_list_games(int done, int show_all, int *count)
             strncpy(gb->i.plrace, plrace, PLRBUFSZ - 1);
             strncpy(gb->i.plgend, plgend, PLRBUFSZ - 1);
             strncpy(gb->i.plalign, plalign, PLRBUFSZ - 1);
-            strncpy(gb->i.game_state, plalign, COLNO - 1);
+            strncpy(gb->i.game_state, game_state, COLNO - 1);
         }
     }
     json_decref(jmsg);

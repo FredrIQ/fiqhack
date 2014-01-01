@@ -399,12 +399,11 @@ ccmd_list_games(json_t * params)
         }
 
         status = nh_get_savegame_status(fd, &gi);
-        jobj =
-            json_pack("{si,si,si,ss,ss,ss,ss,ss}", "gameid", files[i].gid,
-                      "status", status, "playmode", gi.playmode, "plname",
-                      gi.name, "plrole", gi.plrole, "plrace", gi.plrace,
-                      "plgend", gi.plgend, "plalign", gi.plalign,
-                      "game_state", gi.game_state);
+        jobj = json_pack(
+            "{si,si,si,ss,ss,ss,ss,ss,ss}", "gameid", files[i].gid, "status",
+            status, "playmode", gi.playmode, "plname", gi.name, "plrole",
+            gi.plrole, "plrace", gi.plrace, "plgend", gi.plgend, "plalign",
+            gi.plalign, "game_state", gi.game_state);
         json_array_append_new(jarr, jobj);
 
         free((void *)files[i].username);

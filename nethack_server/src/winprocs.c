@@ -424,7 +424,7 @@ srv_request_command(nh_bool debug, nh_bool completed, nh_bool interrupted,
                      "interrupted", interrupted);
     jobj = client_request("request_command", jobj);
 
-    if (json_unpack(jobj, "{ss,so,si!}", "command", &cmd, "arg", &jarg))
+    if (json_unpack(jobj, "{ss,so!}", "command", &cmd, "arg", &jarg))
         exit_client("Bad set of parameters for request_command");
 
     arg->argtype = 0;
