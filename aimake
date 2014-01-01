@@ -1,11 +1,11 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2013-11-13
+# Last modified by Alex Smith, 2014-01-01
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
 
 # aimake: automated build system for C programs
-# Copyright Ⓒ 2013 Alex Smith.
+# Copyright © 2013 Alex Smith.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -826,6 +826,14 @@ persuading linkers to actually try to link the library while it's being
 searched for.)  aimake assumes that these are interchangeable the same way
 C<searchfile:>s are.
 
+=item C<standardlib:>
+
+A library that is linked by default.  This works the same way as C<spath:> in
+terms of what file it refers to, but these libraries are omitted from linker
+command lines, in the knowledge that the linker will link them in anyway.
+(This is mostly just for neatness on Linux or Windows, but on some platforms,
+such as recent versions of OS X, it's required for the compile to complete.)
+
 =item C<extend:>
 
 A filename that's produced from another filename.  This is formed out of an
@@ -855,7 +863,7 @@ dependencies produced via code like C<#include "foo.h">.  It is possible for
 multiple rules to provide the same C<file:> object.  (The difference between
 C<file:> and C<searchfile:> is that if an unknown file is included, that'll
 I<produce> a C<searchfile:> object to let aimake know to search for it, and
-I<depend on> a C<file:> object to let aimake know to use it once it's found.
+I<depend on> a C<file:> object to let aimake know to use it once it's found.)
 
 =item C<symbol:>
 
@@ -1352,13 +1360,15 @@ in tthe code).  There are also some predefined variables, which hold
 platform-specific extensions: $exeext (executables), $objext (object files),
 $libext (static libraries), $dllext (dynamic libraries), $impext (import
 libraries; on many systems, this is the same as $dllext because the dynamic
-libraries are their own import libraries, but on some systems it differs).
-(In order to catch mistakes due to omitting $exeext, it will never be set to
-the null string, but rather to an arbitrary string on platforms that do not
-normally use a special extension for executables.  This extension will be
-removed when installing the executable.)  These are followed by a single
-dictionary with two keys, C<options> and C<rules>.  Here's a simple example
-C<aimake.rules>:
+libraries are their own import libraries, but on some systems it differs);
+there is also $symbolprefix, which is an underscore on systems in which
+symbols have their names prefixed with underscores in libraries, and an empty
+string otherwise.  (In order to catch mistakes due to omitting $exeext, it
+will never be set to the null string, but rather to an arbitrary string on
+platforms that do not normally use a special extension for executables.  This
+extension will be removed when installing the executable.)  These are followed
+by a single dictionary with two keys, C<options> and C<rules>.  Here's a
+simple example C<aimake.rules>:
 
     $version = "1.2.3";        # variable definition
 
@@ -1422,9 +1432,10 @@ need to be run to determine the dependencies, and/or a C<dependsarg>.  Either
 can have a C<inner>, C<linesep>, C<lineskip>, C<linemax>, C<unescape>,
 C<avoid_rules>, C<avoid_built_from>, C<filter>, C<filter_absolute>,
 C<filter_text_files>, C<filter_nonexistent_files>, C<output_as_searchfile>,
-C<filter_spath>, C<require_match> and/or C<low_message_priority>, and can
-specify C<force_locale>, C<fail_silently>, C<also_match_stderr>, and/or
-C<ignore_warnings> if they have a C<command>.
+C<output_as_standardlib>, C<filter_spath>, C<require_match>, C<debug_trace>,
+and/or C<low_message_priority>, and can specify C<force_locale>,
+C<fail_silently>, C<also_match_stderr>, and/or C<ignore_warnings> if they have
+a C<command>.
 
 A rule itself is a dictionary with a number of keys:
 
@@ -1764,6 +1775,13 @@ rules that make aimake aware of objects on the C<spath:>, mostly.)  There is
 no point in specifying this for dependency rules, because those messages
 require a verbosity level of 1 or more to be printed anyway.
 
+=item debug_trace
+
+The opposite of low_message_priority; unless the verbosity level is negative,
+information about this rule, and what commands it's running, will be printed
+even if they normally wouldn't be. This is not recommended for production use,
+but can be useful when trying to debug an aimake ruleset.
+
 =item avoid_rules
 
 Can be set to a regular expression that matches the names of rules.  Provided
@@ -1904,6 +1922,11 @@ dependency rules).  It should be set to 1 or omitted.
 
 Causes any C<file:> objects that would be output to be output as
 C<searchfile:> objects instead.
+
+=item output_as_standardlib
+
+Causes any C<spath:> objects that would be output to be output as
+C<standardlib:> objects instead.
 
 =item filter_spath
 
@@ -2708,8 +2731,7 @@ my ($codeset, $text_layers, $binary_layers,
     $utf8_layers, $ascii_layers); # encodings
 my ($path, $bpath, $ipath, $singledir, $cwd); # important paths
 my $installing;                   # mode of operation
-my %config_hashes = ();           # configuration parser state
-my %conditions = ();              # which bits of the build system are enabled
+my %config_hashes = ();           # configuration
 my ($state, $state_fh, $config);  # state and configuration handling
 
 ####### Subroutines
@@ -2835,19 +2857,22 @@ my %objtype_nested = (
     direct_symbol => 0, shared_symbol => 0, symbolset => 1, symbol_in_object
     => 1, namehint => 1, config_option => 0, config_rule => 0, cmd => 0, tool
     => 0, intcmd => 0, optstring => 0, optpath => 1, optionset => 0, sys => 0,
-    searchpath => 0, searchfile => 0, searchlib => 1, dependencies => 1);
+    searchpath => 0, searchfile => 0, standardlib => 0, searchlib => 1,
+    dependencies => 1);
 my %objtype_provided = (
     path => 0, bpath => 0, spath => 0, extend => 0, file => 1, symbol => 1,
     direct_symbol => 1, shared_symbol => 1, symbolset => 1, symbol_in_object
     => 1, namehint => 0, config_option => 0, config_rule => 0, cmd => 0, tool
     => 1, intcmd => 0, optstring => 0, optpath => 0, optionset => 1, sys => 0,
-    searchpath => 1, searchfile => 1, searchlib => 1, dependencies => 1);
+    searchpath => 1, searchfile => 1, standardlib => 0, searchlib => 1,
+    dependencies => 1);
 my %objtype_is_special = ( # TODO: existence check for (int)?cmd:?
     path => 0, bpath => 0, spath => 0, extend => 1, file => 0, symbol => 0,
     direct_symbol => 1, shared_symbol => 0, symbolset => 0, symbol_in_object
     => 0, namehint => 1, config_option => 0, config_rule => 0, cmd => 1, tool
     => 0, intcmd => 1, optstring => 1, optpath => 1, optionset => 0, sys => 1,
-    searchpath => 0, searchfile => 0, searchlib => 0, dependencies => 0);
+    searchpath => 0, searchfile => 0, standardlib => 0, searchlib => 0,
+    dependencies => 0);
 
 # Some object types allow multiple interchangeable providers, in which
 # case we merge the outdepends of each provider. This is done via a
@@ -2855,6 +2880,7 @@ my %objtype_is_special = ( # TODO: existence check for (int)?cmd:?
 # inner loop.
 use constant multiple_providers_ok_regex =>
     qr/^(?> s(?:earch(?:file|lib) |
+             tandardlib |
              ymbolset |
              hared_symbol |
              path) |
@@ -2987,6 +3013,7 @@ sub friendly_objname {
     $objtype eq  'path' and return aipath2ospath "bpath:$objvalue", 'bpath:';
     $objtype eq 'bpath' and return aipath2ospath "bpath:$objvalue", 'bpath:';
     $objtype eq 'spath' and return aipath2ospath "spath:$objvalue";
+    $objtype eq 'standardlib' and return aipath2ospath "spath:$objvalue";
 
     $objtype eq 'symbol'           and return $objvalue;
     $objtype eq 'symbol_in_object' and return $objvalue;
@@ -3046,7 +3073,8 @@ sub parse_aipath;
 sub parse_aipath {
     my $aipath = shift;
     my ($objtype, $objvalue, $objinner) = parse_objname $aipath;
-    $objtype =~ /^[bs]?path$/ or croak "Invalid path type $objtype";
+    $objtype =~ /^[bs]?path$/ or $objtype =~ 'standardlib' or
+        croak "Invalid path type $objtype";
     my @aipath = ();
     push @aipath, $1 while $objvalue =~ m=((?:[^\\\/:]|\\.)*)( / | $ )=gsx;
     pop @aipath; # remove a null string at the end
@@ -3176,7 +3204,8 @@ sub aipath_parent {
     my $aipath = shift;
     my @aipath = (parse_aipath $aipath);
     pop @aipath;
-    scalar @aipath < 1 || $aipath[0] eq 'spath' && scalar @aipath < 2
+    scalar @aipath < 1 || ($aipath[0] =~ /(?:spath|standardlib)/ &&
+                           scalar @aipath < 2)
         and croak "Tried to take the parent of root '" .
         friendly_objname($aipath) . "'";
     return deparse_aipath @aipath;
@@ -3206,7 +3235,7 @@ sub verify_writable {
     my $aipath_c = cleanup_aipath $aipath;
     my $fon = friendly_objname $aipath_c;
     $aipath_c =~ /^path:/ and croak "Attempt to overwrite source file '$fon'";
-    $aipath_c =~ /^spath:/ and !$installing and croak
+    $aipath_c =~ /^(spath|standardlib):/ and !$installing and croak
         "Attempt to overwrite system file '$fon'";
     1; # return true so we can use this with &&
 }
@@ -3349,6 +3378,7 @@ memoize('locate_command');
 # \ "locale:$l"     Use $l as the locale for running the command.
 # \ "relpaths"      Use relative paths. (By default, absolute paths are used.)
 # \ "cmdline"       Return the command line, and take no other action.
+# \ "debug_trace"   Print details about what's happening even at verbosity 0.
 #
 # Irrelevant objects can be given, and will simply be ignored. intcmd and cmd
 # objects take precedence when determining which is a command; otherwise, we
@@ -3724,8 +3754,8 @@ sub run_command {
                 aipath2ospath($intopts{cwd}, 'bpath:') .
                 "': $!", undef, undef);
     }
-    progress_report 2, "Running $cmdline (wd: '" .
-        aipath2ospath($cwd, 'bpath:') . "')";
+    progress_report +($intopts{'debug_trace'} ? 0 : 2),
+        "Running $cmdline (wd: '" . aipath2ospath($cwd, 'bpath:') . "')";
 
     # If we get information in the wrong encoding, treat that like a compile
     # error.
@@ -3800,7 +3830,9 @@ sub run_command {
         $failreason = "Command crashed with signal " .
             signal_name($sysreturn & 127);
     }
-    progress_report 2, (defined_or($failreason, "Command succeeded").".");
+    progress_report +($intopts{'debug_trace'} ? 0 : 2),
+        (defined_or($failreason, "Command succeeded") . ".");
+
     return ($failreason, $stdout, $stderr);
 }
 
@@ -4389,10 +4421,12 @@ sub appropriate_pairs_for_object {
         my ($prule, $obj) = parse_pairname $provider;
         my ($objtype, $objvalue, $objinner) = parse_objname $obj;
         my $score = 0;
-        if ($objtype eq 'spath') {
+        if ($objtype eq 'spath' || $objtype eq 'standardlib') {
             # Avoid if possible. It's better than an entirely virtual
-            # provider, though.
+            # provider, though, and standardlibs are better than spath objects.
             $score = 1;
+            $objtype eq 'standardlib' and $score = 2;
+
             my @aipath = parse_aipath $obj;
             # We add some bonuses based on the name. In particular, we prefer
             # to use libraries following the lib... naming convention, to
@@ -4409,7 +4443,7 @@ sub appropriate_pairs_for_object {
             my ($utype, $uvalue, $uinner) = parse_objname $user;
             ($utype, $uvalue, $uinner) = parse_objname $uinner
                 while $utype eq 'symbolset';
-            $score = 2;
+            $score = 3;
             while ($uvalue ne '' && $objvalue ne '' &&
                    substr($uvalue, 0, 1, '') eq substr($objvalue, 0, 1, '')) {
                 $score++;
@@ -4446,16 +4480,16 @@ sub appropriate_pairs_for_object {
 }
 
 # Determines which hash of an object we're supposed to be building from. This
-# is used for produced bpath:,path:,spath: objects to determine whether the
-# file has changed on disk.
+# is used for produced bpath:,path:,spath:,standardlib: objects to determine
+# whether the file has changed on disk.
 sub xuse_hash {
     my $pair = shift;
     my $obj = shift;
     return unless $state->{hash_by_object}->{$obj};
     die "Produced object $obj produced by more than one rule"
-        unless 1 == keys $state->{hash_by_object}->{$obj} ||
+        unless 1 == keys %{$state->{hash_by_object}->{$obj}} ||
         $obj =~ multiple_providers_ok_regex;
-    return (values $state->{hash_by_object}->{$obj})[0];
+    return (values %{$state->{hash_by_object}->{$obj}})[0];
 }
 
 ### Dependency calculations
@@ -5037,6 +5071,9 @@ if (!defined $path) {
     # directory is empty.
     opendir my $dh, File::Spec->curdir or die "Cannot open '.': $!";
     my @offending_files = File::Spec->no_upwards(readdir($dh));
+    # nytprof.out is a special case; it's produced as a side effect of
+    # running a Perl program when profiling, and thus can exist even
+    # if the directory was empty.
     @offending_files = grep ospath2aipath($_) ne statefilename &&
         ospath2aipath($_) ne 'bpath:nytprof.out',
         @offending_files;
@@ -5083,14 +5120,17 @@ our $exeext = $Config{_exe};
 $exeext eq '' and $exeext = '.bin';
 # a UUID generated for the purpose of avoiding clashes with other things
 our $longrandomstring = 'AIMAKE_e15d5ce8_c8f0_40c9_9a3f_3b568bcd59d5_';
-our $dllext = {MSWin32 => '.dll',
-               linux   => '.so',
-               darwin  => '.dylib'}->{$^O};
-our $impext = {MSWin32 => '.dll.a', # MinGW uses this
-               linux   => '.so',
-               darwin  => '.dylib'}->{$^O};
+our $dllext =       {MSWin32 => '.dll',
+                     linux   => '.so',
+                     darwin  => '.dylib'}->{$^O};
+our $impext =       {MSWin32 => '.dll.a', # MinGW uses this
+                     linux   => '.so',
+                     darwin  => '.dylib'}->{$^O};
+our $symbolprefix = {MSWin32 => '',
+                     linux   => '',
+                     darwin  => '_'}->{$^O};
 $configsafe->share('$libext', '$objext', '$exeext', '$dllext', '$impext',
-                   '$longrandomstring');
+                   '$symbolprefix', '$longrandomstring');
 
 # Parse the global config file, from our <DATA>
 $! = 0;
@@ -5239,15 +5279,6 @@ for my $rulename (keys %{$config->{rules}}) {
         if (exists $rule->{output} || exists $rule->{output_from_optpath})
         && exists $rule->{depends};
 }
-
-# Delete any rules outright if they violate conditions. This is how we
-# configure the build system.
-for my $rulename (keys %{$config->{rules}}) {
-    my $rule = $config->{rules}->{$rulename};
-    $rule->{condition} and !$conditions{$rule->{condition}} and
-        delete $config->{rules}->{$rulename};
-}
-
 $config_hashes{"config_rule:$_"} = sv_hash $config->{rules}->{$_}
     for keys %{$config->{rules}};
 $config_hashes{"config_option:$_"} = sv_hash $config->{options}->{$_}
@@ -5410,7 +5441,7 @@ MAINLOOP: while (1) {
                     # certainly indicates that a build rule has got its inputs and
                     # outputs muddled up).
                     my ($objtype, undef) = parse_objname($obj);
-                    if ($objtype =~ /^[bs]?path$/) {
+                    if ($objtype =~ /^(?:[bs]?path|standardlib)$/) {
                         my $hash_on_disk = file_hash($obj);
                         my $desired_hash = xuse_hash($curpair, $obj);
                         if ($hash_on_disk ne $desired_hash) {
@@ -5422,7 +5453,7 @@ MAINLOOP: while (1) {
                                 progress_report -1, "Warning! Someone seems to " .
                                 "have tampered with the build directory (" .
                                 friendly_objname($obj) . ")";
-                            $objtype eq 'spath' and
+                            $objtype eq 'spath' || $objtype eq 'standardlib' and
                                 progress_report 1, "Regenerating files built " .
                                 "via changed system file " .
                                 friendly_objname($obj);
@@ -5490,6 +5521,7 @@ MAINLOOP: while (1) {
         $level = 0;
     }
     $rule->{low_message_priority} and $level = 1;
+    $rule->{debug_trace} and $level = 0;
 
     progress_report +($level == 1 ? 0.5 : 0), "$whatmsg...";
 
@@ -5609,6 +5641,7 @@ MAINLOOP: while (1) {
         \ ("cwd:" . $rule->{in_subdir}), \ "relpaths";
     defined $rule->{force_locale} and push @rcargs,
         \ ("locale:" . $rule->{force_locale});
+    defined $rule->{debug_trace} and push @rcargs, \ "debug_trace";
 
     # Run the command.
     my ($failreason, $stdout, $stderr) = run_command(@rcargs);
@@ -5680,7 +5713,7 @@ MAINLOOP: while (1) {
                     and $linesep = qr/\Q$linesep\E/;
                 if (defined $rule->{unescape}) {
                     my @out = ();
-                    push @out, $1 while
+                    (push @out, $1) while
                         $out =~ m/((?:[^\\]|\\.)*?)(?:$linesep | $ )/gsx;
                     $out = \@out;
                 } else {
@@ -5730,6 +5763,8 @@ MAINLOOP: while (1) {
                     }
                     $n =~ /^file:/ and $rule->{output_as_searchfile}
                         and $n = "search$n";
+                    $n =~ /^spath:/ and $rule->{output_as_standardlib}
+                        and $n =~ s/^spath:/standardlib:/;
                     push @$rxreplace, $n unless
                         ($n =~ /^spath:/ && $rule->{filter_spath}) ||
                         ($n !~ /^(search)?file:/ &&
@@ -5866,7 +5901,7 @@ MAINLOOP: while (1) {
                 my ($otype, undef) = parse_objname $o;
                 if ($objtype_provided{$otype}) {
                     $outhashes{$o} = \@depends;
-                } elsif ($otype =~ /^[bs]?path/) {
+                } elsif ($otype =~ /^(?:[bs]?path|standardlib)/) {
                     $outhashes{$o} = file_hash $o;
                 } else {
                     croak "Rule $rulename output the wrong " .
@@ -6596,7 +6631,7 @@ __DATA__
             # situation in the first place.)
             object => qr/^searchlib:/,
             command => ['intcmd:echo', 'optpath::'],
-            depends => 'optstring:-Wl,-u,',
+            depends => "optstring:-Wl,-u,$symbolprefix",
             dependsarg => qr/^searchlib:[^:]+:symbol:(.*)$/s,
             require_match => 1,
         },
@@ -6621,6 +6656,7 @@ __DATA__
             # recognise the object files via the extension, and the fact that
             # they're existing, binary files.
             output => qr/^(?:(?:-l|lib)[^ ]+ )?\(?(.*?\/.*?(?<!aimake_1)(?:\Q$libext\E|\Q$objext\E|\Q$dllext\E)(?:\.[0-9]+)?)(?:\)|\([^\/]*\)|\z)/s,
+            output_as_standardlib => 1,
             filter_text_files => 1,
             filter_nonexistent_files => 1,
             force_locale => 'C',
@@ -6630,6 +6666,29 @@ __DATA__
             # can't require_match; if the library doesn't exist on OS X, we
             # get an error output with no matches, and require_match overrides
             # fail_silently (not that it would be useful even if it didn't)
+            information_only => 1,
+            low_message_priority => 1,
+        },
+        find_default_dynamic_libraries => {
+            # Like the above case, but to find standard libraries on linkers
+            # which don't understand --whole-archive.
+            command => ['tool:c_linker', "bpath:aimake/aimake_1$objext",
+                        "optpath::bpath:aimake/aimake_1$objext",
+                        "optpath:-o :bpath:aimake/aimake_1$exeext",
+                        "optstring:-Wl,-t"],
+            output => qr/^(?:(?:-l|lib)[^ ]+ )?\(?(.*?\/.*?(?<!aimake_1)(?:\Q$libext\E|\Q$objext\E|\Q$dllext\E)(?:\.[0-9]+)?)(?:\)|\([^\/]*\)|\z)/s,
+            output_as_standardlib => 1,
+            filter_text_files => 1,
+            filter_nonexistent_files => 1,
+            force_locale => 'C',
+            verb => 'found',
+            # Note: no fail_silently, because we want to ensure that the linker
+            # works; and require_match is set because if we don't find at least
+            # one library, it's probably due to a parse error, and in the
+            # pathological case of no libraries we won't be able to find the
+            # symbols in libc anyway
+            require_match => 1,
+            also_match_stderr => 1,
             information_only => 1,
             low_message_priority => 1,
         },
@@ -6835,7 +6894,6 @@ __DATA__
             output => 'tool:c_precompile',
             outdepends => ['tool:c_toolchain', 'optionset:CFLAGS'],
             verb => 'found',
-            condition => 'compile_headers',
         },
         precompile_headers => {
             object => qr/^bpath:(?!aimake).*\.h$/s,
@@ -6846,7 +6904,6 @@ __DATA__
             # so this is safe (also necessary to avoid dependency loops).
             avoid_rules => qr/^headers_depend_on_precompiled_headers$/,
             output_from_optpath => '-o ',
-            condition => 'compile_headers',
         },
         # We use one of the following two dependencies for each header,
         # depending on which rule cares about them.
@@ -6855,19 +6912,16 @@ __DATA__
             output => 'dependencies:precompiled_header:',
             outdepends => [],
             propagate_usedeps => 2,
-            condition => 'compile_headers',
         },
         headers_depend_on_precompiled_headers => {
             object => qr/^bpath:(?!aimake).*\.h$/s,
             output => 'dependencies:precompiled_header:',
             outdepends => 'extend:.h.gch:',
             propagate_usedeps => 2,
-            condition => 'compile_headers',
         },
         add_precompiled_header_dependencies => {
             object => qr/^bpath:(?!aimake).*\.h$/s,
             depends => 'dependencies:precompiled_header:',
-            condition => 'compile_headers',
         },
 
         # OS detection
@@ -7158,7 +7212,7 @@ __DATA__
             preference => 80,
         },
         a_file_provisions => {
-            object => qr/^spath:.*\Q$libext\E\z/s,
+            object => qr/^(?:spath|standardlib):.*\Q$libext\E\z/s,
             command => ['cmd:nm', 'optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
             outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] ((?>_?(?:_imp_+)?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*))',
@@ -7170,7 +7224,7 @@ __DATA__
             preference => 30,
         },
         shared_object_provisions_nondynamic => {
-            object => qr/^spath:.*\Q$dllext\E(?:\z|\.)[\d.]*\z/s,
+            object => qr/^(spath|standardlib):.*\Q$dllext\E(?:\z|\.)[\d.]*\z/s,
             command => ['cmd:nm', 'optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
             outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] ((?>_?(?:_imp_+)?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*))',
@@ -7182,7 +7236,7 @@ __DATA__
             preference => 50,
         },
         shared_object_provisions_dynamic => {
-            object => qr/^spath:.*\Q$dllext\E(?:\z|\.)[\d.]*\z/s,
+            object => qr/^(spath|standardlib):.*\Q$dllext\E(?:\z|\.)[\d.]*\z/s,
             command => ['cmd:nm','optstring:-D','optpath::'],
             output => ['symbol:', 'symbol_in_object:'],
             outputarg => qr'^[[:xdigit:]]*\s+[ABCDGRSTVWiI] ((?>_?(?:_imp_+)?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*))',
@@ -7225,6 +7279,8 @@ __DATA__
             avoid_rules => qr/^linux_library_finding_link$/,
         },
 
+        # Note: no standardlib_library_option, that's the whole reason that
+        # standardlib: exists
         spath_library_option => {
             object => qr/^spath:.*(?:\Q$dllext\E|\Q$libext\E)(?:\z|\.)[\d.]*\z/s,
             depends => 'dependencies:library_option:',
