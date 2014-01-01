@@ -477,11 +477,11 @@ struct nh_game_info {
 struct nh_roles_info {
     int num_roles, num_races, num_genders, num_aligns;
     int def_role, def_race, def_gend, def_align;
-    const char *const *rolenames_m;
-    const char *const *rolenames_f;
-    const char *const *racenames;
-    const char *const *gendnames;
-    const char *const *alignnames;
+    const char **rolenames_m;
+    const char **rolenames_f;
+    const char **racenames;
+    const char **gendnames;
+    const char **alignnames;
 
     /* race/role/gend/align compatibility matrix size = num_role * num_races *
        num_genders * num_aligns */

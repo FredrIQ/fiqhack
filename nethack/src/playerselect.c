@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-31 */
+/* Last modified by Alex Smith, 2014-01-01 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -199,6 +199,20 @@ validate_character_presets(const struct nh_roles_info *ri, int *role, int *race,
         *align = list[0].id;
 }
 
+static int
+strlennull(const char *s) {
+    if (!s) return 0;
+    return strlen(s) + 1;
+}
+
+static char *
+fill_strcpy(char *base, int *pos, const char *s) {
+    if (!s) return 0;
+    char *target = base + *pos;
+    *pos += strlen(s) + 1;
+    strcpy(target, s);
+    return target;
+}
 
 nh_bool
 player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
@@ -214,6 +228,64 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
     int pick_list[2];
     int role, race, gend, align;
     const struct nh_roles_info *ri = nh_get_roles();
+
+    /* Copy ri, so that it persists through future API calls; otherwise it has
+       a tendency to be deallocated early. */
+    struct nh_roles_info ri_copy;
+    const char *nameptrs[ri->num_roles * 2 + ri->num_races +
+                         ri->num_genders + ri->num_aligns];
+    i = 0;
+    ri_copy.rolenames_m = nameptrs + i;
+    i += ri->num_roles;
+    ri_copy.rolenames_f = nameptrs + i;
+    i += ri->num_roles;
+    ri_copy.racenames = nameptrs + i;
+    i += ri->num_races;
+    ri_copy.gendnames = nameptrs + i;
+    i += ri->num_genders;
+    ri_copy.alignnames = nameptrs + i;
+    i += ri->num_aligns;
+
+    int total_len = 0;
+    for (i = 0; i < ri->num_roles; i++) {
+        total_len += strlennull(ri->rolenames_m[i]);
+        total_len += strlennull(ri->rolenames_f[i]);
+    }
+    for (i = 0; i < ri->num_races; i++)
+        total_len += strlennull(ri->racenames[i]);
+    for (i = 0; i < ri->num_genders; i++)
+        total_len += strlennull(ri->gendnames[i]);
+    for (i = 0; i < ri->num_aligns; i++)
+        total_len += strlennull(ri->alignnames[i]);
+
+    char names[total_len];
+    n = 0;
+    for (i = 0; i < ri->num_roles; i++) {
+        ri_copy.rolenames_m[i] = fill_strcpy(names, &n, ri->rolenames_m[i]);
+        ri_copy.rolenames_f[i] = fill_strcpy(names, &n, ri->rolenames_f[i]);
+    }
+    for (i = 0; i < ri->num_races; i++)
+        ri_copy.racenames[i] = fill_strcpy(names, &n, ri->racenames[i]);
+    for (i = 0; i < ri->num_genders; i++)
+        ri_copy.gendnames[i] = fill_strcpy(names, &n, ri->gendnames[i]);
+    for (i = 0; i < ri->num_aligns; i++)
+        ri_copy.alignnames[i] = fill_strcpy(names, &n, ri->alignnames[i]);
+
+    ri_copy.num_roles   = ri->num_roles;
+    ri_copy.num_races   = ri->num_races;
+    ri_copy.num_genders = ri->num_genders;
+    ri_copy.num_aligns  = ri->num_aligns;
+    ri_copy.def_role    = ri->def_role;
+    ri_copy.def_race    = ri->def_race;
+    ri_copy.def_gend    = ri->def_gend;
+    ri_copy.def_align   = ri->def_align;
+
+    nh_bool matrix[ri->num_roles * ri->num_races *
+                   ri->num_genders * ri->num_aligns];
+    ri_copy.matrix = matrix;
+    memcpy(matrix, ri->matrix, sizeof matrix);
+
+    ri = &ri_copy;
 
     role = *out_role;
     race = *out_race;

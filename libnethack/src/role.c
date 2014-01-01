@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Alex Smith, 2014-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -870,6 +870,8 @@ nh_root_plselection_prompt(char *suppliedbuf, int buflen, int rolenum,
     static const char err_ret[] = " character's";
     boolean donefirst = FALSE;
 
+    xmalloc_cleanup(&api_blocklist);
+
     if (!suppliedbuf || buflen < 1)
         return err_ret;
 
@@ -1001,6 +1003,8 @@ nh_build_plselection_prompt(char *buf, int buflen, int rolenum, int racenum,
     const char *defprompt = "Shall I pick a character for you?";
     int num_post_attribs = 0;
     char tmpbuf[BUFSZ];
+
+    xmalloc_cleanup(&api_blocklist);
 
     if (buflen < QBUFSZ)
         return (char *)defprompt;

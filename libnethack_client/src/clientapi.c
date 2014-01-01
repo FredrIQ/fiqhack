@@ -739,8 +739,6 @@ read_string_array(json_t * jarr)
     char *buf;
     int size, i;
 
-    xmalloc_cleanup(&xm_blocklist);
-
     size = json_array_size(jarr);
     array = xmalloc(&xm_blocklist, sizeof (char *) * size);
     for (i = 0; i < size; i++) {
