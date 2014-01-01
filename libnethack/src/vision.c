@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-01-01 */
 /* Copyright (c) Dean Luick, with acknowledgements to Dave Cohrs, 1990. */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -700,17 +700,13 @@ vision_recalc(int control)
         sv = &seenv_matrix[dy + 1][start < u.ux ? 0 : (start > u.ux ? 2 : 1)];
 
         for (col = start; col <= stop; loc += ROWNO, sv += (int)colbump[++col]) {
+            oldseenv = loc->seenv;
             if (next_row[col] & IN_SIGHT) {
                 /* 
                  * We see this position because of night- or xray-vision.
                  */
-                oldseenv = loc->seenv;
                 /* update seen angle */
                 loc->seenv |= new_angle(loc, sv, row, col);
-
-                /* Update pos if previously not in sight or new angle. */
-                if (!(old_row[col] & IN_SIGHT) || oldseenv != loc->seenv)
-                    newsym(col, row);
             }
 
             else if ((next_row[col] & COULD_SEE)
@@ -732,25 +728,12 @@ vision_recalc(int control)
                     if (flev->lit || next_array[row + dy][col + dx] & TEMP_LIT) {
                         next_row[col] |= IN_SIGHT;      /* we see it */
 
-                        oldseenv = loc->seenv;
                         loc->seenv |= new_angle(loc, sv, row, col);
-
-                        /* Update pos if previously not in sight or new angle. */
-                        if (!(old_row[col] & IN_SIGHT) ||
-                            oldseenv != loc->seenv)
-                            newsym(col, row);
-                    } else
-                        goto not_in_sight;      /* we don't see it */
-
+                    }
                 } else {
                     next_row[col] |= IN_SIGHT;  /* we see it */
 
-                    oldseenv = loc->seenv;
                     loc->seenv |= new_angle(loc, sv, row, col);
-
-                    /* Update pos if previously not in sight or new angle. */
-                    if (!(old_row[col] & IN_SIGHT) || oldseenv != loc->seenv)
-                        newsym(col, row);
                 }
             } else if ((next_row[col] & COULD_SEE) && loc->waslit) {
                 /* 
@@ -763,27 +746,10 @@ vision_recalc(int control)
                 loc->waslit = 0;        /* remember lit condition */
                 newsym(col, row);
             }
-            /* 
-             * At this point we know that the row position is *not* in normal
-             * sight.  That is, the position is could be seen, but is dark
-             * or LOS is just plain blocked.
-             *
-             * Update the position if:
-             * o If the old one *was* in sight.  We may need to clean up
-             *   the glyph -- E.g. darken room spot, etc.
-             * o If we now could see the location (yet the location is not
-             *   lit), but previously we couldn't see the location, or vice
-             *   versa.  Update the spot because there there may be an infared
-             *   monster there.
-             */
-            else {
-            not_in_sight:
-                if ((old_row[col] & IN_SIGHT)
-                    || ((next_row[col] & COULD_SEE)
-                        ^ (old_row[col] & COULD_SEE)))
-                    newsym(col, row);
-            }
 
+            /* Update if anything changed. */
+            if (oldseenv != loc->seenv || old_row[col] != next_row[col])
+                newsym(col, row);
         }       /* end for col . . */
     }   /* end for row . .  */
     colbump[u.ux] = colbump[u.ux + 1] = 0;
