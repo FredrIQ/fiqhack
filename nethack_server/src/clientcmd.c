@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Alex Smith, 2014-01-01 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -33,7 +33,7 @@ const struct client_command clientcmd[] = {
 
     {"create_game", ccmd_create_game, 0},
     {"play_game", ccmd_play_game, 0},
-    {"exit_game", ccmd_exit_game, 0},
+    {"exit_game", ccmd_exit_game, 1},
     {"list_games", ccmd_list_games, 0},
 
     {"get_drawing_info", ccmd_get_drawing_info, 1},
@@ -355,7 +355,7 @@ ccmd_exit_game(json_t * params)
         gamefd = -1;
     }
 
-    client_msg("exit_game", json_pack("{si}", "return", status));
+    client_msg("exit_game", json_pack("{sb}", "return", status));
 }
 
 

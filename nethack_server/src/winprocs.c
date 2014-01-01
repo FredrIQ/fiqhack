@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-31 */
+/* Last modified by Alex Smith, 2014-01-01 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -94,14 +94,12 @@ client_request(const char *funcname, json_t * request_msg)
         if (clientcmd[i].name) {
             /* The received object contains a valid command in the toplevel
                context. For some commands, we can and should process them even
-               with the game waiting for input. We have a problem, though, if
-               we can't. What to do? Longjumping around is fugly and where
-               would we jump to? Alternative: exit without an error status and
-               hope the client retries the command... */
+               with the game waiting for input. Otherwise, tell the client to
+               behave itself. */
             if (clientcmd[i].can_run_async)
                 clientcmd[i].func(json_object_iter_value(iter));
             else {
-                exit_client(NULL);
+                exit_client("Command sent out of sequence");
                 break;
             }
         } else {
@@ -113,7 +111,8 @@ client_request(const char *funcname, json_t * request_msg)
         jobj = json_object_get(jret, funcname);
     }
 
-    json_incref(jobj);
+    if (jobj)
+        json_incref(jobj);
     json_decref(jret);
 
     return jobj;

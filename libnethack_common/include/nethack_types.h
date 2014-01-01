@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-31 */
+/* Last modified by Alex Smith, 2014-01-01 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -262,7 +262,7 @@ enum nh_exit_types {
     EXIT_FORCE_SAVE,
     EXIT_REQUEST_QUIT,
     EXIT_FORCE_QUIT,
-    EXIT_PANIC
+    EXIT_PANIC,
 };
 
 enum nh_play_status {

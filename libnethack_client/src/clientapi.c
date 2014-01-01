@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Alex Smith, 2014-01-01 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -74,13 +74,13 @@ nhnet_exit_game(int exit_type)
         return nh_exit_game(exit_type);
 
     if (!api_entry())
-        return 0;
+        return 1;
 
     jmsg = json_pack("{si}", "exit_type", exit_type);
     jmsg = send_receive_msg("exit_game", jmsg);
-    if (json_unpack(jmsg, "{si!}", "return", &ret) == -1) {
+    if (json_unpack(jmsg, "{sb!}", "return", &ret) == -1) {
         print_error("Incorrect return object in nhnet_exit_game");
-        ret = 0;
+        ret = 1;
     }
     json_decref(jmsg);
 
