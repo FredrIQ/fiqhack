@@ -1104,8 +1104,6 @@ terminate(enum nh_play_status playstatus)
         init_opt_struct();
     }
 
-    program_state.game_running = 0;
-
     /* try to leave gracefully - this should return control to the ui code */
     if (exit_jmp_buf_valid) {
         exit_jmp_buf_valid = 0;

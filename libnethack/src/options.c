@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Alex Smith, 2014-01-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -519,7 +519,7 @@ struct nh_option_desc *
 nh_get_options(void)
 {
     /* Outside of a game, don't attempt to recover options from state; all
-     * options should have default values. */
+       options should have default values. */
     if (!program_state.game_running)
         return options;
 

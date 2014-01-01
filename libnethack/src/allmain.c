@@ -139,7 +139,6 @@ startup_common(boolean including_program_state)
     reset_rndmonst(NON_PM);
     free_dungeon();     /* clean up stray dungeon data */
 
-    program_state.game_running = 0;
     initoptions();
 
     dlb_init(); /* must be before newgame() */
@@ -1038,11 +1037,8 @@ newgame(void)
     /* prepare for the first move */
     set_wear();
 
-    program_state.game_running = TRUE;
     youmonst.movement = NORMAL_SPEED;   /* give the hero some movement points */
     post_init_tasks();
-
-    return;
 }
 
 /*allmain.c*/
