@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-31 */
+/* Last modified by Alex Smith, 2014-01-01 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -75,6 +75,7 @@
 #include <sys/select.h>
 #include <termios.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <signal.h>
 
 /* Linux, and maybe other UNIX, -specific headers */
@@ -212,8 +213,6 @@ platform_specific_rawsignals(int raw)
     raw_isig = raw;
 }
 
-/* TODO: make selfpipe non-blocking for writes, so that being spammed signals
-   doesn't lock up the program; this is particularly important with SIGPIPE */
 static void
 handle_sigwinch(int unused)
 {
@@ -266,18 +265,23 @@ tty_hook_watch_fd(int fd, int watch)
         FD_CLR(fd, &watchfds);
         while (watchfd_max && !FD_ISSET(watchfd_max - 1, &watchfds))
             watchfd_max--;
-    }   
+    }
 }
 
 static void
 platform_specific_init(void)
 {
-    /* Set up the self-pipe. (Do this first, so we can exit early if it fails. */
+    /* Set up the self-pipe. (Do this first, so we can exit early if it fails.)
+       We make it non-blocking; for reads this avoids spurious read issues from
+       select(), and for writes, it avoids the program locking up due to being
+       spammed with SIGWINCH really fast. */
     if (selfpipe[0] == -1) {
         if (pipe(selfpipe) != 0) {
             perror("Could not initialise uncursed tty library");
             exit(1);
         }
+        fcntl(selfpipe[0], F_SETFL, O_NONBLOCK);
+        fcntl(selfpipe[1], F_SETFL, O_NONBLOCK);
     }
 
     /* We initially aren't watching any FDs. */
@@ -392,15 +396,24 @@ platform_specific_getkeystring(int timeout_ms, int ignore_signals)
     static char keystring[80];
     char *r = keystring;
 
+    char signalcode[1];
+
     while (1) {
         if (sighup_mode)
             return KEYSTRING_HANGUP;
 
         fd_set readfds;
         memcpy(&readfds, &watchfds, sizeof (fd_set));
-        FD_SET(fileno(ifile), &readfds);
+        int ifileno = fileno(ifile);
 
-        int max = fileno(ifile);
+        if (ifileno < 0) {
+            sighup_mode = 1;
+            return KEYSTRING_HANGUP;
+        }
+
+        FD_SET(ifileno, &readfds);
+
+        int max = ifileno;
 
         if (r == keystring) {
             /* Look for something on the selfpipe, as well as the "rest" of
@@ -432,10 +445,8 @@ platform_specific_getkeystring(int timeout_ms, int ignore_signals)
            pipe anyway, so no need to worry about handling a partial character
            read on a signal. If it is the first character, signals take
            precedence, and we just leave any character in the input queue. */
-        if (FD_ISSET(selfpipe[0], &readfds)) {
-
-            char signalcode[1];
-            read(selfpipe[0], signalcode, 1);
+        if (FD_ISSET(selfpipe[0], &readfds) &&
+            read(selfpipe[0], signalcode, 1) == 1) {
 
             switch (*signalcode) {
             case 'g':  /* uncursed_signal_getch */
@@ -473,12 +484,13 @@ platform_specific_getkeystring(int timeout_ms, int ignore_signals)
                 break;
             }
 
-        } else if (!FD_ISSET(fileno(ifile), &readfds)) {
+        } else if (!FD_ISSET(ifileno, &readfds) &&
+                   !FD_ISSET(selfpipe[0], &readfds)) {
 
             /* Activity on one of the watch fds. */
             return KEYSTRING_OTHERFD;
 
-        } else {
+        } else if (FD_ISSET(ifileno, &readfds)) {
             /*
              * The user pressed a key. We need to return immediately if:
              * - It wasn't ESC, and was the last character of a UTF-8
@@ -491,9 +503,9 @@ platform_specific_getkeystring(int timeout_ms, int ignore_signals)
              *   input).
              */
 
-            if (read(fileno(ifile), r++, 1) == 0) {
-                /* EOF on the input is unrecoverable, so the best we can do is
-                   to treat it as a hangup. */
+            if (read(ifileno, r++, 1) <= 0) {
+                /* EOF or errors on the input are unrecoverable, so the best we
+                   can do is to treat it as a hangup. */
                 sighup_mode = 1;
                 return KEYSTRING_HANGUP;
             }
