@@ -350,8 +350,8 @@ nh_play_game(int fd)
     IF_API_EXCEPTION(ERR_RESTORE_FAILED):
         ret = ERR_RESTORE_FAILED;
         goto normal_exit;
-    IF_API_EXCEPTION(ERR_REPLAY_FAILED):
-        ret = ERR_REPLAY_FAILED;
+    IF_API_EXCEPTION(ERR_RECOVER_REFUSED):
+        ret = ERR_RECOVER_REFUSED;
         goto normal_exit;
 
         /* Catchall. This should never happen. We can't call panic() because the

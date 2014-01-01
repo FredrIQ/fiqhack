@@ -264,7 +264,7 @@ static const char *const play_status_names[] = {
     [ERR_BAD_FILE] = "file on disk was unreadable",
     [ERR_IN_PROGRESS] = "locking issues",
     [ERR_RESTORE_FAILED] = "manual recovery failed",
-    [ERR_REPLAY_FAILED] = "automatic recovery refused",
+    [ERR_RECOVER_REFUSED] = "automatic recovery refused",
 };
 static void
 ccmd_play_game(json_t * params)

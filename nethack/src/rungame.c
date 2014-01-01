@@ -173,13 +173,63 @@ curses_request_command(nh_bool debug, nh_bool completed, nh_bool interrupted,
 }
 
 
-static void
-game_ended(int status, fnchar * filename)
+/* Called when detaching from a game. In network play, net is TRUE and filename
+   is null; otherwise, filename is the game's filename and net is FALSE. */
+void
+game_ended(int status, fnchar *filename, nh_bool net)
 {
 #ifndef WIN32
     fnchar fncopy[1024], *fname;
 #endif
     fnchar logname[1024], savedir[BUFSZ], *bp;
+
+    switch (status) {
+    case GAME_DETACHED:
+    case GAME_ALREADY_OVER:
+        /* Normal termination, due to saving a running game, or ceasing to
+           load a completed game. */
+        return;
+
+    case GAME_OVER:
+        /* Handled below. */
+        break;
+
+    /* Error statuses */
+    case ERR_BAD_ARGS:
+        curses_raw_print("Error: Could not find the save file.");
+        return;
+    case ERR_BAD_FILE:
+        curses_raw_print("Error: This does not look like a NetHack 4 save file.");
+        return;
+    case ERR_IN_PROGRESS:
+        curses_raw_print("Error: Could not attach to the game file.");
+        curses_raw_print("(Maybe someone else is playing it?");
+        return;
+    case ERR_RESTORE_FAILED:
+        curses_raw_print("Error: This game requires manual recovery.");
+        if (net)
+            curses_raw_print("Please contact the server administrator.");
+        else
+            curses_raw_print("If you cannot recover it yourself, contact "
+                             "the NetHack 4 developers for advice.");
+        return;
+    case ERR_RECOVER_REFUSED:
+        /* The user has declined recovery, so we've already had a message
+           printed. */
+        return;
+    case ERR_CREATE_FAILED:
+        curses_raw_print("Error: Could not create the save file.");
+        return;
+    case ERR_NETWORK_ERROR:
+        curses_raw_print("Error: Could not re-establish connection to server.");
+        return;
+
+        /* Impossible statuses: internal-only values like ERR_CREATE_FAILED,
+           and also RESTART_PLAY (which should not be reachable). */
+    default:
+        curses_impossible("Game ended in an impossible way?");
+        return;
+    }
 
     if (status != GAME_OVER)
         return;
@@ -187,11 +237,12 @@ game_ended(int status, fnchar * filename)
     show_topten(player.plname, settings.end_top, settings.end_around,
                 settings.end_own);
 
-    /* 
-     * The game ended terminally. Now it would be nice to move the saved game
-     * out of the save/ dir and into the log/ dir, since it's only use now is as
-     * a tropy.
-     */
+    if (net)
+        return;
+
+    /* The game ended terminally. Now it would be nice to move the saved game
+       out of the save/ dir and into the log/ dir, since its only use now is as
+       a trophy. */
 #if !defined(WIN32)
     /* dirname and basename may modify the input string, depending on the
        system */
@@ -329,7 +380,7 @@ rungame(nh_bool net)
     modeopt->value.e = playmode;
      
     /* Create the game, then immediately load it. */
-    ret = ERR_BAD_FILE;
+    ret = ERR_CREATE_FAILED;
     if (net) {
         fd = nhnet_create_game(new_opts);
         if (fd >= 0)
@@ -343,12 +394,8 @@ rungame(nh_bool net)
 
     destroy_game_windows();
     cleanup_messages();
-    if (net) {
-        show_topten(player.plname, settings.end_top, settings.end_around,
-                    settings.end_own);
-    } else {
-        game_ended(ret, filename);
-    }
+
+    game_ended(ret, net ? NULL : filename, net);
 
 cleanup:
     /* avoid freeing stack memory */
@@ -563,7 +610,7 @@ loadgame(void)
 
     destroy_game_windows();
     cleanup_messages();
-    game_ended(ret, filename);
+    game_ended(ret, filename, FALSE);
 
     return TRUE;
 }

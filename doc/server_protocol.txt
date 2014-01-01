@@ -566,7 +566,8 @@ Note that a `play_game` response may happen at any time after a unresponded
 `play_game` command, even if there are unresponded requests in the meantime.
 (This corresponds to a `longjmp` back to `nh_play_game` in the libnethack
 API.)  The unresponded requests simply vanish, and the client should act as
-though they never happened.  This can happen in a few different situations:
+though they never happened (removing menus that they opened from the screen,
+forgetting messages, etc.).  This can happen in a few different situations:
   * If the client requests a save or quit (via `exit_game`), perhaps while a
     prompt is open;
   * If the server needs to close a prompt that it put up without user input
@@ -606,8 +607,11 @@ Response arguments:
         else is currently playing the game
       * `ERR_RESTORE_FAILED` = 7: the game is completely corrupted and needs
         manual recovery
-      * `ERR_REPLAY_FAILED` = 8: the game is partially corrupted, and the user
-        chose not to rewind it when prompted about whether to rewind it
+      * `ERR_RECOVER_REFUSED` = 8: the game is partially corrupted, and the
+        user chose not to rewind it when prompted about whether to rewind it
+      * (`ERR_NETWORK_ERROR` = 9`: never sent over the network, but the
+        client library simulates this return value if it has to detach the
+        game due to network issues and cannot subsequently re-attach it)
 
 
 set_email
