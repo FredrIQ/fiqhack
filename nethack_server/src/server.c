@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-23 */
+/* Last modified by Alex Smith, 2014-01-01 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -341,7 +341,7 @@ fork_client(struct client_data *client, int epfd)
     link_client_data(client, &connected_list_head);
 
     /* register the pipe fds for monitoring by epoll */
-    ev.data.ptr = NULL;
+    memset(&ev, 0, sizeof ev);
     ev.events = EPOLLIN | EPOLLRDHUP | EPOLLET;
     ev.data.fd = client->pipe_out;
     epoll_ctl(epfd, EPOLL_CTL_ADD, client->pipe_out, &ev);
@@ -383,7 +383,7 @@ server_socket_event(int server_fd, int epfd)
            ready yet. Additionally, as the socket is local, it gets a higher
            level of trust. */
         ev.events = EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET;
-        ev.data.ptr = NULL;
+        memset(&ev, 0, sizeof ev);
         ev.data.fd = newfd;
         if (epoll_ctl(epfd, EPOLL_CTL_ADD, newfd, &ev) == -1) {
             log_msg("Error in epoll_ctl for %s: %s", addr2str(&addr),
@@ -462,8 +462,8 @@ handle_new_connection(int newfd, int epfd)
     }
 
     /* user ok, we'll keep this socket */
+    memset(&ev, 0, sizeof ev);
     ev.events = EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLET;
-    ev.data.ptr = NULL;
     ev.data.fd = newfd;
     if (epoll_ctl(epfd, EPOLL_CTL_ADD, newfd, &ev) == -1) {
         log_msg("Error in epoll_ctl for %s: %s", addr2str(&addr),
@@ -720,7 +720,7 @@ handle_communication(int fd, int epfd, unsigned int event_mask)
                 /* re-arm pipe_in notification: there may be more data to send
                    in the pipe for which an event was already received but not
                    acted upon */
-                ev.data.ptr = NULL;
+                memset(&ev, 0, sizeof ev);
                 ev.events = EPOLLIN | EPOLLRDHUP | EPOLLET;
                 ev.data.fd = client->pipe_in;
                 epoll_ctl(epfd, EPOLL_CTL_MOD, client->pipe_in, &ev);
@@ -780,7 +780,7 @@ setup_server_sockets(int *ipv4fd, int *ipv6fd, int *unixfd, int epfd)
 {
     struct epoll_event ev;
 
-    ev.data.ptr = NULL;
+    memset(&ev, 0, sizeof ev);
     ev.events = EPOLLIN | EPOLLET;      /* epoll_wait waits for EPOLLERR and
                                            EPOLLHUP as well */
 
@@ -811,9 +811,10 @@ setup_server_sockets(int *ipv4fd, int *ipv6fd, int *unixfd, int epfd)
         if (*unixfd != -1)
             epoll_ctl(epfd, EPOLL_CTL_ADD, *unixfd, &ev);
         umask(prevmask);
-    }
+    } else
+        *unixfd = -1;
 
-    if (*ipv4fd == -1 && *ipv6fd == -1) {
+    if (*ipv4fd == -1 && *ipv6fd == -1 && *unixfd == -1) {
         log_msg
             ("Failed to create any listening socket. Nothing to do except shut down.");
         return FALSE;
@@ -874,7 +875,7 @@ runserver(void)
 
     fd_to_client_max = 64;      /* will be doubled every time it becomes too
                                    small */
-    fd_to_client = malloc(fd_to_client_max * sizeof (struct client_data *));
+    fd_to_client = calloc(fd_to_client_max, sizeof (struct client_data *));
 
     epfd = epoll_create1(EPOLL_CLOEXEC);
     if (epfd == -1) {
