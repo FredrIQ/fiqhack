@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-30 */
+/* Last modified by Sean Hunt, 2014-01-01 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -23,6 +23,13 @@ static int room_id, darkroom_id, corr_id, litcorr_id;
 struct curses_drawing_info *default_drawing, *cur_drawing;
 static struct curses_drawing_info *unicode_drawing, *rogue_drawing;
 
+
+/* Additionaly glyphs not present in the NetHack core but that we want
+ * to include to allow for customizability. */
+static struct curses_symdef extra_bg_syms[] = {
+    {"darkroom", CLR_DARK_GRAY, {0x00B7, 0}, 0},   /* · centered dot */
+    {"litcorr", CLR_WHITE, {0x2592, 0}, 0},    /* ▒ medium shading */
+};
 
 static struct curses_symdef default_ovr[] = {
     {"boulder", -1, {0x0030, 0}, '0'}   /* backtick is the worst for boulders */
@@ -66,9 +73,7 @@ static struct curses_symdef unicode_graphics_ovr[] = {
     {"bars", -1, {0x2261, 0}, 0},       /* ≡ equivalence symbol */
     {"fountain", -1, {0x2320, 0}, 0},   /* ⌠ top half of integral */
     {"room", -1, {0x00B7, 0}, 0},       /* · centered dot */
-    {"darkroom", -1, {0x00B7, 0}, 0},   /* · centered dot */
     {"corr", -1, {0x2591, 0}, 0},       /* ░ light shading */
-    {"litcorr", -1, {0x2592, 0}, 0},    /* ▒ medium shading */
     {"upladder", -1, {0x2264, 0}, 0},   /* ≤ less-than-or-equals */
     {"dnladder", -1, {0x2265, 0}, 0},   /* ≥ greater-than-or-equals */
     {"altar", -1, {0x03A9, 0}, 0},      /* Ω GREEK CAPITAL LETTER OMEGA */
@@ -105,6 +110,42 @@ static struct curses_symdef unicode_graphics_ovr[] = {
     /* objects */
     {"boulder", -1, {0x0030, 0}, 0},    /* 0 zero */
 };
+
+#define listlen(list) (sizeof(list)/sizeof(list[0]))
+
+static void
+add_sym_list(struct curses_symdef **list, int len,
+             const struct curses_symdef *adtnl, int num)
+{
+    int i;
+
+    struct curses_symdef *newlist =
+        malloc((len + num) * sizeof (struct curses_symdef));
+
+    for (i = 0; i < len; i++)
+        newlist[i] = (*list)[i];
+    for (i = 0; i < num; i++) {
+        newlist[i + len] = adtnl[i];
+        /* We need to reallocate these because they will be freed */
+        char *name = newlist[i + len].symname;
+        newlist[i + len].symname = malloc(strlen(name) + 1);
+        strcpy(newlist[i + len].symname, name);
+    }
+
+    free(*list);
+    *list = newlist;
+}
+
+
+static void
+add_extra_syms(struct curses_drawing_info *di)
+{
+    int num_bg = listlen(extra_bg_syms);
+
+    add_sym_list(&di->bgelements, di->num_bgelements, extra_bg_syms, num_bg);
+
+    di->num_bgelements += num_bg;
+}
 
 
 static nh_bool
@@ -354,6 +395,10 @@ init_displaychars(void)
     unicode_drawing = load_nh_drawing_info(dinfo);
     rogue_drawing = load_nh_drawing_info(dinfo);
 
+    add_extra_syms(default_drawing);
+    add_extra_syms(unicode_drawing);
+    add_extra_syms(rogue_drawing);
+
     apply_override(default_drawing, default_ovr, array_size(default_ovr),
                    FALSE);
     apply_override(unicode_drawing, unicode_graphics_ovr,
@@ -571,6 +616,7 @@ mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms, int *bg_color)
     /* omit the background symbol from the list if it is boring */
     if (count == 0 || dbe->bg >= cur_drawing->bg_feature_offset) {
         syms[count++] = cur_drawing->bgelements[dbe->bg];
+
         /* overrides for branding; note that although we're told whether open
            doors are locked/unlocked, it doesn't make much sense to display
            that */
@@ -582,17 +628,34 @@ mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms, int *bg_color)
             else if (dbe->branding & NH_BRANDING_UNLOCKED)
                 syms[count - 1].color = CLR_GREEN;
         }
+
+        /* Implement lighting display. */
+        int stepped_color = CLR_BROWN;
+        if (dbe->bg == room_id || dbe->bg == corr_id) {
+            boolean room = dbe->bg == room_id;
+            boolean seen = dbe->branding & NH_BRANDING_SEEN;
+            boolean lit = (dbe->branding & NH_BRANDING_LIT) ||
+                          (dbe->branding & NH_BRANDING_TEMP_LIT);
+            struct curses_symdef *dark_sym =
+                &cur_drawing->bgelements [room ? darkroom_id : corr_id];
+            struct curses_symdef *lit_sym =
+                &cur_drawing->bgelements [room ? room_id : litcorr_id];
+
+            if ((room && (seen || lit)) || (!room && lit))
+                syms[count - 1] = *lit_sym;
+            else if (room) {
+                syms[count - 1] = *dark_sym;
+                stepped_color = CLR_BLUE;
+            } else
+                syms[count - 1] = *dark_sym;
+        }
+
         /* Override darkroom for stepped-on squares, so the player can see
            where they stepped. */
-        if (settings.floorcolor) {
-            if (dbe->bg == darkroom_id && dbe->branding & NH_BRANDING_STEPPED)
-                syms[count - 1].color = CLR_BLUE;
-            if ((dbe->bg == room_id || dbe->bg == ndoor_id || dbe->bg == corr_id
-                 || dbe->bg == litcorr_id)
-                && dbe->branding & NH_BRANDING_STEPPED) {
-                syms[count - 1].color = CLR_BROWN;
-            }
-        }
+        if (settings.floorcolor && (dbe->branding & NH_BRANDING_STEPPED) &&
+            (dbe->bg == room_id || dbe->bg == ndoor_id || dbe->bg == corr_id))
+                syms[count - 1].color = stepped_color;
+
         if (dbe->bg == upstair_id || dbe->bg == dnstair_id ||
             dbe->bg == upladder_id || dbe->bg == dnladder_id ||
             dbe->bg == upsstair_id || dbe->bg == dnsstair_id) {
