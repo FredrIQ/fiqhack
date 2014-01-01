@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Sean Hunt, 2013-12-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -197,8 +197,8 @@ losedogs(void)
 {
     struct monst *mtmp, *mtmp0 = 0, *mtmp2;
 
-    while ((mtmp = mydogs) != 0) {
-        mydogs = mtmp->nmon;
+    while ((mtmp = turnstate.migrating_pets) != 0) {
+        turnstate.migrating_pets = mtmp->nmon;
         mon_arrive(mtmp, TRUE);
     }
 
@@ -566,8 +566,8 @@ keepdogs(boolean pets_only)
             mtmp->mx = mtmp->my = 0;    /* avoid mnexto()/MON_AT() problem */
             mtmp->wormno = num_segs;
             mtmp->mlstmv = moves;
-            mtmp->nmon = mydogs;
-            mydogs = mtmp;
+            mtmp->nmon = turnstate.migrating_pets;
+            turnstate.migrating_pets = mtmp;
         } else if (mtmp->iswiz) {
             /* we want to be able to find him when his next resurrection chance 
                comes up, but have him resume his present location if player

@@ -85,6 +85,8 @@ struct turnstate {
     boolean continue_message;
     /* TRUE if we need to do a complete vision recalculation. */
     boolean vision_full_recalc;
+    /* pets migrating with their owner between levels. */
+    struct monst *migrating_pets;
 };
 
 extern struct turnstate turnstate;

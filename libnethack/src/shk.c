@@ -1704,7 +1704,7 @@ find_oid(unsigned id)
     for (mon = migrating_mons; mon; mon = mon->nmon)
         if ((obj = o_on(id, mon->minvent)))
             return obj;
-    for (mon = mydogs; mon; mon = mon->nmon)
+    for (mon = turnstate.migrating_pets; mon; mon = mon->nmon)
         if ((obj = o_on(id, mon->minvent)))
             return obj;
 

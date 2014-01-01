@@ -171,7 +171,7 @@ extern struct you u;
 # endif
 
 extern struct monst youmonst;   /* init'd and defined in decl.c */
-extern struct monst *mydogs, *migrating_mons;
+extern struct monst *migrating_mons;
 
 extern struct mvitals {
     uchar born;
