@@ -250,13 +250,13 @@ rungame(nh_bool net)
     }
 
     if (role == ROLE_NONE)
-        role = roleopt->value.i;
+        role = roleopt->value.e;
     if (race == ROLE_NONE)
-        race = raceopt->value.i;
+        race = raceopt->value.e;
     if (align == ROLE_NONE)
-        align = alignopt->value.i;
+        align = alignopt->value.e;
     if (gend == ROLE_NONE)
-        gend = gendopt->value.i;
+        gend = gendopt->value.e;
     if (cmdline_name[0]) {
         strncpy(plname, cmdline_name, BUFSZ);
         plname[BUFSZ - 1] = '\0';

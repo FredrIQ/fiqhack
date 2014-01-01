@@ -186,6 +186,7 @@ ccmd_create_game(json_t * params)
         jobj = json_array_get(jarr, i);
         read_json_option(jobj, &opts[i]);
     }
+    opts[i].name = 0;
 
     struct nh_option_desc *modeopt = nhlib_find_option(opts, "mode");
     if (modeopt && modeopt->value.e == MODE_WIZARD) {
@@ -213,23 +214,21 @@ ccmd_create_game(json_t * params)
 
     ret = nh_create_game(fd, opts);
     close(fd);
-    nhlib_free_optlist(opts);
 
     if (ret == NHCREATE_OK) {
-        opts = nh_get_options();
 
         struct nh_option_desc
             *roleopt = nhlib_find_option(opts, "role"),
             *raceopt = nhlib_find_option(opts, "race"),
             *alignopt = nhlib_find_option(opts, "align"),
-            *gendopt = nhlib_find_option(opts, "gend"),
+            *gendopt = nhlib_find_option(opts, "gender"),
             *modeopt = nhlib_find_option(opts, "mode");
         struct nh_roles_info *ri = nh_get_roles();
 
-        int role = roleopt->value.i;
-        int race = raceopt->value.i;
-        int gend = gendopt->value.i;
-        int align = alignopt->value.i;
+        int role = roleopt->value.e;
+        int race = raceopt->value.e;
+        int gend = gendopt->value.e;
+        int align = alignopt->value.e;
         int mode = modeopt->value.e;
 
         const char *rolename = (gend &&
@@ -247,6 +246,8 @@ ccmd_create_game(json_t * params)
         unlink(filename);
         j_msg = json_pack("{si}", "return", ret);
     }
+
+    nhlib_free_optlist(opts);
 
     client_msg("create_game", j_msg);
 }

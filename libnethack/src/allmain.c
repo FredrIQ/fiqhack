@@ -233,7 +233,7 @@ nh_create_game(int fd, struct nh_option_desc *opts)
     int i;
 
     API_ENTRY_CHECKPOINT() {
-        IF_API_EXCEPTION(GAME_DETACHED):
+        IF_API_EXCEPTION(GAME_CREATED):
             return NHCREATE_OK;
 
         IF_ANY_API_EXCEPTION():
@@ -255,7 +255,7 @@ nh_create_game(int fd, struct nh_option_desc *opts)
     startup_common(TRUE);
     /* Set defaults in case list of options from client was incomplete. */
     for (i = 0; options[i].name; i++)
-        nh_set_option(options[i].name, opts[i].value);
+        nh_set_option(options[i].name, options[i].value);
     for (i = 0; opts[i].name; i++)
         nh_set_option(opts[i].name, opts[i].value);
 
@@ -286,7 +286,7 @@ nh_create_game(int fd, struct nh_option_desc *opts)
 
     program_state.suppress_screen_updates = FALSE;
 
-    terminate(GAME_DETACHED);
+    terminate(GAME_CREATED);
 }
 
 enum nh_play_status

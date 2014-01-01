@@ -279,6 +279,9 @@ enum nh_play_status {
     ERR_IN_PROGRESS,    /* locking issues attaching to the game */
     ERR_RESTORE_FAILED, /* game needs manual recovery */
     ERR_REPLAY_FAILED,  /* automatic recovery was declined */
+
+    /* Special statuses, used internally only */
+    GAME_CREATED,       /* end of the newgame sequence was reached */
 };
 
 enum nh_log_status {
