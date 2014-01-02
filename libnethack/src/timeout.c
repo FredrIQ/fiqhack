@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-31 */
+/* Last modified by Alex Smith, 2014-01-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1687,14 +1687,21 @@ maybe_write_timer(struct memfile *mf, struct level *lev, int range,
 
 
 void
-transfer_timers(struct level *oldlev, struct level *newlev)
+transfer_timers(struct level *oldlev, struct level *newlev,
+                unsigned int obj_id)
 {
     timer_element *curr, *prev = NULL, *next_timer = NULL;
+
+    if (newlev == oldlev)
+        return;
 
     for (curr = oldlev->lev_timers; curr; curr = next_timer) {
         next_timer = curr->next;        /* in case curr is removed */
 
-        if (!timer_is_local(curr)) {
+	/* transfer global timers or timers of requested object */
+	if ((!obj_id && !timer_is_local(curr)) ||
+	    (obj_id && curr->kind == TIMER_OBJECT &&
+	     ((struct obj *)curr->arg)->o_id == obj_id)) {
             if (prev)
                 prev->next = curr->next;
             else

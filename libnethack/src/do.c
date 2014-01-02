@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Alex Smith, 2014-01-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1002,8 +1002,8 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
 
     /* some timers and lights might need to be transferred to the new level if
        they are attached to objects the hero is carrying */
-    transfer_timers(origlev, level);
-    transfer_lights(origlev, level);
+    transfer_timers(origlev, level, 0);
+    transfer_lights(origlev, level, 0);
 
     /* do this prior to level-change pline messages */
     vision_reset();     /* clear old level's line-of-sight */

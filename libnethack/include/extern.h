@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-01 */
+/* Last modified by Alex Smith, 2014-01-12 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -718,7 +718,8 @@ extern void del_light_source(struct level *lev, int type, void *id);
 extern void do_light_sources(char **);
 extern struct monst *find_mid(struct level *lev, unsigned nid,
                               unsigned fmflags);
-extern void transfer_lights(struct level *oldlev, struct level *newlev);
+extern void transfer_lights(struct level *oldlev, struct level *newlev,
+                            unigned int obj_id);
 extern void save_light_sources(struct memfile *mf, struct level *lev,
                                int range);
 extern void free_light_sources(struct level *lev);
@@ -1629,7 +1630,8 @@ extern void obj_move_timers(struct obj *, struct obj *);
 extern void obj_split_timers(struct obj *, struct obj *);
 extern void obj_stop_timers(struct obj *);
 extern boolean obj_is_local(struct obj *);
-extern void transfer_timers(struct level *oldlev, struct level *newlev);
+extern void transfer_timers(struct level *oldlev, struct level *newlev,
+			    unsigned int obj_id);
 extern void save_timers(struct memfile *mf, struct level *lev, int range);
 extern void free_timers(struct level *lev);
 extern void restore_timers(struct memfile *mf, struct level *lev, int range,
