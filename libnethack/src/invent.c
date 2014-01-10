@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-31 */
+/* Last modified by Alex Smith, 2014-01-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2238,7 +2238,6 @@ static const char organizable[] = {
     FOOD_CLASS, 0
 };
 
-/* TODO: Allow a CMD_ARG_LIMIT on this to split stacks? */
 int
 doorganize(const struct nh_cmd_arg *arg)
 {       /* inventory organizer by Del Lamb */
@@ -2249,7 +2248,8 @@ doorganize(const struct nh_cmd_arg *arg)
     char qbuf[QBUFSZ];
     const char *adj_type;
 
-    /* get a pointer to the object the user wants to organize */
+    /* get a pointer to the object the user wants to organize; this can split
+       the stack if the user specifies a count */
     if (!(obj = getargobj(arg, organizable, "adjust")))
         return 0;
 
@@ -2297,10 +2297,8 @@ doorganize(const struct nh_cmd_arg *arg)
 
     /* change the inventory and print the resulting item */
 
-    /* 
-     * don't use freeinv/addinv to avoid double-touching artifacts,
-     * dousing lamps, losing luck, cursing loadstone, etc.
-     */
+    /* don't use freeinv/addinv to avoid double-touching artifacts, dousing
+       lamps, losing luck, cursing loadstone, etc. */
     extract_nobj(obj, &invent);
 
     if (let == obj->invlet) {
@@ -2338,8 +2336,6 @@ doorganize(const struct nh_cmd_arg *arg)
 
             adj_type = "Displacing:";
 
-            /* Here be a nasty hack; solutions that don't * require duplication 
-               of assigninvlet's code * here are welcome. */
             assigninvlet(obj);
 
             if (obj->invlet == NOINVSYM) {
