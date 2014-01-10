@@ -1,5 +1,5 @@
 NetHack History file for release 4.3.0
-This file was last updated by Alex Smith, 2013-11-12
+This file was last updated by Alex Smith, 2014-01-10
 
 Behold, mortal, the origins of NetHack...
 
@@ -180,8 +180,26 @@ the interface with a more fully-featured curses-based one.
 
 It quickly became clear that AceHack and NitroHack had similar goals, and had
 implemented different parts of the work first, so it made sense to try to
-merge them.  NetHack 4 is the result, a combination of AceHack and NitroHack.
-We hope you have fun playing it!
+merge them.  NetHack 4 was the result, a combination of AceHack and NitroHack.
+
+Of course, development did not stop there.  One notable development was that
+the variant GruntHack (by Grunt) resumed active development (although it has
+since ceased again); and although its goals are rather different from NetHack
+4's, it also contained a large number of bugfixes, most of which have been
+ported over to NetHack 4, helping reduce the number of issues inherited from
+3.4.3.  Another was the creation of DynaHack, by Tung Nguyen; originally a
+merge of UnNetHack and NitroHack, it has since taken on a life of its own, and
+has become a fruitful source both for taking changes from UnNetHack, and of
+bugfixes in and interface improvements to the NitroHack code on which NetHack
+4 is based.
+
+Finally, of course, there are many changes made specifically for NetHack 4;
+Alex Smith moved over from AceHack and now contributes mostly to NetHack 4
+among the variants, and more recently Sean Hunt has been making major
+improvements to NetHack 4 as well.  We would also like to thank all the
+playtesters on nethack4.org (especially Zsbán Ambrus, who is responsible for a
+major proportion of the bug reports).  And finally, thank you for playing our
+game.  We hope you have fun!
 
 			   - - - - - - - - - -
 
@@ -230,14 +248,16 @@ in this, the list of Dungeoneers:
 
 NetHack 4 also contains code written by:
 
-    Alex Smith                Hojita Discordia          Patric Müller
-    Andrew Apted              J. Ali Harlow             Ray Chason
-    Brent Dalager             Jafet                     Roderick Schertler
-    Christian Stegen          Jared Minch               Russell Harmon
-    Clive Crous               Jeroen Demeyer            Ryan Karl
-    Corey Casto               Jukka Lahtinen            Sean Hunt
-    Daniel Thaler             Marcin Kościelnicki       Sgeo
-    Derek Ray                 Marco Bonetti             Stanislav Traykov
-    Edoardo Spadolini         Mathew Hodson             Stephen Demos
-    GreyKnight                Michael Deutschmann       Trevor Cook
-    Grunt                     Pasi Kallinnen            Zsbán Ambrus
+    Alex Smith                J. Ali Harlow             quuxplusone
+    Andrew Apted              Jafet                     Ray Chason
+    Brent Dalager             Jared Minch               Roderick Schertler
+    Christian Stegen          Jeroen Demeyer            Russell Harmon
+    Clive Crous               Jukka Lahtinen            Ryan Karl
+    Corey Casto               Marcin Kościelnicki       Sam Dennis
+    Daniel Thaler             Marco Bonetti             Sean Hunt
+    Derek Ray                 Mathew Hodson             Sgeo
+    Edoardo Spadolini         Michael Deutschmann       Stanislav Traykov
+    GreyKnight                Nephi                     Stephen Demos
+    Grunt                     Pasi Kallinnen            Trevor Cook
+    Hojita Discordia          Patric Müller             Tung Nguyen
+                                                        Zsbán Ambrus
