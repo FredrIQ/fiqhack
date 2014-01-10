@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-31 */
+/* Last modified by Alex Smith, 2014-01-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2173,7 +2173,7 @@ getarglin(const struct nh_cmd_arg *arg, const char *query, char *bufp)
     /* Did the user specify a string? Ensure that it isn't empty, nor a cancel
        string, and that it fits inside the buffer (i.e. contains a NUL
        somewhere). */
-    if ((arg->argtype && CMD_ARG_STR) && *(arg->str) != '\033' &&
+    if ((arg->argtype & CMD_ARG_STR) && *(arg->str) != '\033' &&
         *(arg->str) && memchr(arg->str, '\0', BUFSZ)) {
         strcpy(bufp, arg->str);
         return;

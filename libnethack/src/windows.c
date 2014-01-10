@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-31 */
+/* Last modified by Alex Smith, 2014-01-10 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -81,7 +81,7 @@ getpos(coord *cc, boolean force, const char *goal, boolean isarg)
     cc->y = y;
 
     if (isarg && !program_state.in_zero_time_command) {
-        if (rv == -1)
+        if (rv == NHCR_CLIENT_CANCEL)
             flags.last_arg.argtype &= ~CMD_ARG_POS;
         else {
             flags.last_arg.argtype |= CMD_ARG_POS;
