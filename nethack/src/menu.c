@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-31 */
+/* Last modified by Alex Smith, 2014-01-12 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -586,13 +586,6 @@ draw_objlist(WINDOW * win, struct nh_objlist *objlist, int *selected, int how)
             wprintw(win, "%c - ", olii->accel);
         else
             pos = 0;    /* no accel after all */
-
-        if (olii->otype) {
-            print_sym(win, &cur_drawing->objects[olii->otype - 1],
-                      A_NORMAL, 0);
-            waddch(win, ' ');
-            pos += 2;
-        }
 
         if (olii->worn)
             txtattr |= A_BOLD;
