@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Alex Smith, 2013-11-16
+Last-Modified: Last modified by Alex Smith, 2014-01-12
 
 Files: libnethack_client/*
 License: NHGPL or GPL-2+
@@ -412,9 +412,39 @@ Copyright:
  Copyright (C) 2013 Alex Smith, in addition to the copyright on the tiles from
  Slash'EM on which these files are based (see tilesets/dat/tiles/s-*.txt).
 
-Files: tileset/dat/catalogues/*.txt
+Files: tilesets/dat/tiles/dawnhack-*.txt
+License: CC-BY-3.0
+ Licensed under the Creative Commons Attribution 3.0 Unported license
+ See <http://creativecommons.org/licenses/by/3.0/> for license information
+Copyright:
+ Copyright (C) Andrew Rios, 2014
+Comment:
+ It is unclear whether CC-BY-3.0 is compatible with the NHGPL (although it is
+ not against the spirit of either license to include CC-BY-3.0 data in an
+ NHGPL file, there may be incompatibilities in the letter).  However, there is
+ no need for license compatibility in this case, because these files only
+ specify artwork, which is entirely independent of the rest of the program
+ (and is replaceable without changes to any program code or binaries, an
+ operation that was often performed in practice in previous versions).
+
+Files: tilesets/dat/catalogues/*.txt
 License: NHGPL
-Copyright: Copyright (C) 2013 Alex Smith
+Copyright: Copyright (C) 2013, 2014 Alex Smith
+
+Files: tileset/dat/maps/*.txt
+License: NHGPL
+Copyright:
+ It's unclear whether these files are copyrightable at all, being a list of
+ short phrases in an order required for interoperability (this lists the
+ sequence of tiles used in existing tile images used in previous versions of
+ NetHack).  Thus, they may well be public domain.  If not, they are definitely
+ NHGPL-compatible, given that all the sources on which they are based are
+ NHGPL; the main original sources are libnethack/src/{objects,mon,drawing}.c,
+ which would give the following combined copyright:
+ .
+ Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ Copyright (c) Mike Threepoint, 1989.
+ Copyright (c) NetHack Development Team 1992.
 
 Files: tilesets/dat/fonts/*.txt
 License: NHGPL
@@ -452,6 +482,10 @@ Copyright:
 Files: tilesets/util/convert_tileset.c
 License: NHGPL
 Copyright: Copyright (C) J. Ali Harlow 2000
+
+Files: tilesets/util/import_tileset.c
+License: NHGPL
+Copyright: Copyright (C) 2014 Alex Smith
 
 Files: tilesets/include/tilesequence.h
 License: NHGPL

@@ -1,5 +1,5 @@
 NetHack History file for release 4.3.0
-This file was last updated by Alex Smith, 2014-01-10
+This file was last updated by Alex Smith, 2014-01-12
 
 Behold, mortal, the origins of NetHack...
 
@@ -246,18 +246,18 @@ in this, the list of Dungeoneers:
     Helge Hafting             Mike Gallop
     Irina Rempt-Drijfhout     Mike Passaretti
 
-NetHack 4 also contains code written by:
+NetHack 4's source also contains contributions from:
 
     Alex Smith                J. Ali Harlow             quuxplusone
     Andrew Apted              Jafet                     Ray Chason
-    Brent Dalager             Jared Minch               Roderick Schertler
-    Christian Stegen          Jeroen Demeyer            Russell Harmon
-    Clive Crous               Jukka Lahtinen            Ryan Karl
-    Corey Casto               Marcin Kościelnicki       Sam Dennis
-    Daniel Thaler             Marco Bonetti             Sean Hunt
-    Derek Ray                 Mathew Hodson             Sgeo
-    Edoardo Spadolini         Michael Deutschmann       Stanislav Traykov
-    GreyKnight                Nephi                     Stephen Demos
-    Grunt                     Pasi Kallinnen            Trevor Cook
-    Hojita Discordia          Patric Müller             Tung Nguyen
-                                                        Zsbán Ambrus
+    Andrew Rios               Jared Minch               Roderick Schertler
+    Brent Dalager             Jeroen Demeyer            Russell Harmon
+    Christian Stegen          Jukka Lahtinen            Ryan Karl
+    Clive Crous               Marcin Kościelnicki       Sam Dennis
+    Corey Casto               Marco Bonetti             Sean Hunt
+    Daniel Thaler             Mathew Hodson             Sgeo
+    Derek Ray                 Michael Deutschmann       Stanislav Traykov
+    Edoardo Spadolini         Nephi                     Stephen Demos
+    GreyKnight                Pasi Kallinnen            Trevor Cook
+    Grunt                     Patric Müller             Tung Nguyen
+    Hojita Discordia                                    Zsbán Ambrus
