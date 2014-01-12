@@ -375,6 +375,7 @@ extern void set_rogue_level(nh_bool enable);
 extern void switch_graphics(enum nh_text_mode mode);
 extern void print_tile(WINDOW *win, struct curses_symdef *api_name,
                        struct curses_symdef *api_type, int offset);
+extern void print_background_tile(WINDOW *win, struct nh_dbuf_entry *dbe);
 extern void print_low_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe);
 extern void print_high_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe);
 extern void print_sym(WINDOW *win, struct curses_symdef *sym, int extra_attrs,

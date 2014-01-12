@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-23 */
+/* Last modified by Alex Smith, 2014-01-12 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* Copyright (c) 2013 Alex Smith. */
@@ -29,7 +29,9 @@
 # include "brandings.h"
 
 /* In stacking order: */
-# define TILESEQ_CMAP_SIZE       S_cmap_COUNT                /* backgrounds */
+/* We add 2 to the number of backgrounds because there are two more background
+   /tiles/ than background /cmaps/: lit corridor and unlit room. */
+# define TILESEQ_CMAP_SIZE       (S_cmap_COUNT + 2)          /* backgrounds */
 # define TILESEQ_GENBRAND_SIZE   NHCURSES_GENBRANDING_COUNT  /* gen brandings */
 # define TILESEQ_TRAP_SIZE       (TRAPNUM-1)                 /* traps */
 # define TILESEQ_OBJ_SIZE        NUM_OBJECTS                 /* objects */

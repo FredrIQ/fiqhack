@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-30 */
+/* Last modified by Alex Smith, 2014-01-12 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -113,14 +113,12 @@ draw_map(int cx, int cy)
                or vice versa) */
             wmove(mapwin, y, x - 1);
 
-            /* draw the tile first, because doing that doesn't move the
-               cursor; we always draw floor as the extreme background so as to
-               avoid issues with transparency */
-            wset_tiles_tile(mapwin, tileno_from_name(
-                                "the floor of a room", TILESEQ_CMAP_OFF));
-            /* cmap */
-            print_tile(mapwin, cur_drawing->bgelements + dbyx->bg,
-                       NULL, TILESEQ_CMAP_OFF);
+            /* draw the tile first, because doing that doesn't move the cursor;
+               backgrounds are special because they can be composed from
+               multiple tiles (e.g. dark room + fountain), or have no
+               correpondence to the API key (e.g. lit corridor) */
+            print_background_tile(mapwin, dbyx);
+
             /* low-priority general brandings */
             print_low_priority_brandings(mapwin, dbyx);
             /* traps */

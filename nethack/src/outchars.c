@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-01 */
+/* Last modified by Alex Smith, 2014-01-12 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -545,6 +545,27 @@ print_high_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe)
                             TILESEQ_GENBRAND_OFF));
 }
 
+/* What is the bottom-most, opaque background of a map square? This takes
+   background and brandings into account. */
+static enum {
+    fb_litroom,
+    fb_darkroom,
+    fb_litcorr,
+    fb_darkcorr,
+}
+furthest_background(const struct nh_dbuf_entry *dbe)
+{
+    boolean room = dbe->bg != corr_id;
+    boolean seen = dbe->branding & NH_BRANDING_SEEN;
+    boolean lit = (dbe->branding & NH_BRANDING_LIT) ||
+        (dbe->branding & NH_BRANDING_TEMP_LIT);
+
+    if (lit || (room && seen))
+        return room ? fb_litroom : fb_litcorr;
+    else
+        return room ? fb_darkroom : fb_darkcorr;
+}
+
 int
 mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms, int *bg_color)
 {
@@ -629,25 +650,23 @@ mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms, int *bg_color)
                 syms[count - 1].color = CLR_GREEN;
         }
 
-        /* Implement lighting display. */
+        /* Implement lighting display. We override the background of dark room
+           and light corridor tiles. */
         int stepped_color = CLR_BROWN;
-        if (dbe->bg == room_id || dbe->bg == corr_id) {
-            boolean room = dbe->bg == room_id;
-            boolean seen = dbe->branding & NH_BRANDING_SEEN;
-            boolean lit = (dbe->branding & NH_BRANDING_LIT) ||
-                          (dbe->branding & NH_BRANDING_TEMP_LIT);
-            struct curses_symdef *dark_sym =
-                &cur_drawing->bgelements [room ? darkroom_id : corr_id];
-            struct curses_symdef *lit_sym =
-                &cur_drawing->bgelements [room ? room_id : litcorr_id];
-
-            if ((room && (seen || lit)) || (!room && lit))
-                syms[count - 1] = *lit_sym;
-            else if (room) {
-                syms[count - 1] = *dark_sym;
-                stepped_color = CLR_BLUE;
-            } else
-                syms[count - 1] = *dark_sym;
+        switch (furthest_background(dbe)) {
+        case fb_litroom:
+            break;
+        case fb_darkroom:
+            if (dbe->bg == room_id)
+                syms[count-1] = cur_drawing->bgelements[darkroom_id];
+            stepped_color = CLR_BLUE;
+            break;
+        case fb_litcorr:
+            if (dbe->bg == corr_id)
+                syms[count-1] = cur_drawing->bgelements[litcorr_id];
+            break;
+        case fb_darkcorr:
+            break;
         }
 
         /* Override darkroom for stepped-on squares, so the player can see
@@ -743,6 +762,23 @@ print_tile(WINDOW *win, struct curses_symdef *api_name,
        area tile */
     if (tileno == TILESEQ_INVALID_OFF) tileno = 0;
     wset_tiles_tile(win, tileno);
+}
+
+void
+print_background_tile(WINDOW *win, struct nh_dbuf_entry *dbe)
+{
+    char *furthest_backgrounds[] = {
+        [fb_litroom] = "the floor of a room",
+        [fb_darkroom] = "dark part of a room",
+        [fb_litcorr] = "lit corridor",
+        [fb_darkcorr] = "corridor",
+    };
+    wset_tiles_tile(win, tileno_from_name(
+                        furthest_backgrounds[
+                            furthest_background(dbe)], TILESEQ_CMAP_OFF));
+    if (dbe->bg != room_id && dbe->bg != corr_id)
+        print_tile(win, cur_drawing->bgelements + dbe->bg,
+                   NULL, TILESEQ_CMAP_OFF);
 }
 
 /* outchars.c */

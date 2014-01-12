@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-09 */
+/* Last modified by Alex Smith, 2014-01-12 */
 /* Copyright (c) 2013 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -29,7 +29,7 @@ struct symdef_array {
 };
 
 const struct symdef_array symdef_arrays[] = {
-    {TILESEQ_CMAP_OFF,    defsyms,       NULL, TILESEQ_CMAP_SIZE, 0},
+    {TILESEQ_CMAP_OFF,    defsyms,       NULL, TILESEQ_CMAP_SIZE - 2, 0},
     {TILESEQ_TRAP_OFF,    trapsyms,      NULL, TILESEQ_TRAP_SIZE, 0},
     {TILESEQ_WARN_OFF,    warnsyms,      NULL, TILESEQ_WARN_SIZE, 0},
     {TILESEQ_EFFECT_OFF,  effectsyms,    NULL, TILESEQ_EFFECT_SIZE, 0},
@@ -84,7 +84,8 @@ tileno_from_obj_mon_name(const char *name, int offset)
    Explosions and zaps have a name/type pair; otherwise the type is null.
    The offset specifies what sort of tile it is, if known.
 
-   This cannot find a branding, because those don't have API names. */
+   This cannot find a branding, nor lit corridor / dark room, because those
+   don't have API names. */
 int
 tileno_from_api_name(const char *name, const char *type, int offset)
 {
@@ -123,11 +124,21 @@ tileno_from_name(const char *name, int offset)
        (there's a lot of "wall" in the defexplain array, for instance; in the
        tilesets, this is "walls 0" .. "walls 10"). We rely on the fact that
        where disambiguation is required, the repeated descriptions are always
-       consecutive. */
+       consecutive.
+
+       We also add two additional tiles to the backgrounds list that aren't
+       sent by the game engine, because lit corridors and dark rooms look
+       different from unlit corridors and light rooms. */
     if (offset == TILESEQ_INVALID_OFF || offset == TILESEQ_CMAP_OFF) {
         int consecutive = 0;
         char buf[80];
-        for (i = 0; i < TILESEQ_CMAP_SIZE; i++) {
+
+        if (!strcmp(name, "lit corridor"))
+            return TILESEQ_CMAP_OFF + TILESEQ_CMAP_SIZE - 1;
+        if (!strcmp(name, "dark part of a room"))
+            return TILESEQ_CMAP_OFF + TILESEQ_CMAP_SIZE - 2;
+
+        for (i = 0; i < TILESEQ_CMAP_SIZE - 2; i++) {
             if (i > 0 && !strcmp(defexplain[i], defexplain[i-1]))
                 consecutive++;
             else
@@ -204,8 +215,12 @@ name_from_tileno_internal(int tileno)
     if (i >= 0 && i < TILESEQ_TRAP_SIZE) return trapexplain[i];
     i = tileno - TILESEQ_CMAP_OFF;
     if (i >= 0 && i < TILESEQ_CMAP_SIZE) {
+        if (i == TILESEQ_CMAP_SIZE - 1)
+            return "lit corridor";
+        if (i == TILESEQ_CMAP_SIZE - 2)
+            return "dark part of a room";
         if ((i == 0 || strcmp(defexplain[i], defexplain[i-1]) != 0) &&
-            (i == TILESEQ_CMAP_SIZE - 1 ||
+            (i == TILESEQ_CMAP_SIZE - 3 ||
              strcmp(defexplain[i], defexplain[i+1]) != 0))
             return defexplain[i];
         int j = 0;
