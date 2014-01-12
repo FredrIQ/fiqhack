@@ -582,6 +582,10 @@ sdl_hook_draw_tile_at(int tile, void *r, int y, int x)
         SDL_SetRenderTarget(render, region->texture);
     rendertarget = region->texture;
 
+    /* If we're drawing over the cursor, it clobbers the cursor. */
+    if (r->cursortile_x == x && r->cursortile_y == y)
+        r->cursortile_x = -1;
+
     SDL_RenderCopy(render, region->tileset,
                    &(SDL_Rect) {       /* source */
                        .x = (tile % region->tileset_cols) * region->tilesize_w,
@@ -989,12 +993,13 @@ update_region(struct sdl_tile_region *r)
         if (nctx != r->cursortile_x || ncty != r->cursortile_y) {
             if (r->cursortile_x > -1) {
                 /* Force a redraw of the location where the cursor was */
+                int oldtile =
+                    r->tiles[r->cursortile_x +
+                             r->cursortile_y * r->tilecount_w];
                 r->tiles[r->cursortile_x +
                          r->cursortile_y * r->tilecount_w] = -1;
-                sdl_hook_draw_tile_at(
-                    r-> tiles[r->cursortile_x +
-                              r->cursortile_y * r->tilecount_w],
-                    r, r->cursortile_y, r->cursortile_x);
+                sdl_hook_draw_tile_at(oldtile, r,
+                                      r->cursortile_y, r->cursortile_x);
             }
             if (nctx > -1) {
                 /* Draw a new cursor */
