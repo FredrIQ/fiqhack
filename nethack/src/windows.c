@@ -279,6 +279,7 @@ create_game_windows(void)
     }
 
     setup_tiles();
+    mark_mapwin_for_full_refresh();
 
     keypad(mapwin, TRUE);
     keypad(msgwin, TRUE);
@@ -355,6 +356,7 @@ resize_game_windows(void)
     }
 
     if (mapwin) setup_tiles();
+    mark_mapwin_for_full_refresh();
 
     if (statuswin)
         leaveok(statuswin, TRUE);

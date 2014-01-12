@@ -21,6 +21,8 @@ struct coord {
 };
 
 static struct nh_dbuf_entry (*display_buffer)[COLNO] = NULL;
+static struct nh_dbuf_entry onscreen_display_buffer[ROWNO][COLNO];
+static nh_bool fully_refresh_display_buffer = 1;
 static const int mxdir[DIR_SELF + 1] = { -1, -1, 0, 1, 1, 1, 0, -1, 0, 0 };
 static const int mydir[DIR_SELF + 1] = { 0, -1, -1, -1, 0, 1, 1, 1, 0, 0 };
 
@@ -86,6 +88,11 @@ curses_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy)
     wnoutrefresh(mapwin);
 }
 
+void
+mark_mapwin_for_full_refresh(void)
+{
+    fully_refresh_display_buffer = 1;
+}
 
 void
 draw_map(int cx, int cy)
@@ -100,13 +107,22 @@ draw_map(int cx, int cy)
     getyx(mapwin, cursy, cursx);
 
     frame = 0;
-    if (settings.blink)
+    if (settings.blink) {
         frame = get_milliseconds() / 666;
+        fully_refresh_display_buffer = 1;
+    }
 
     for (y = 0; y < ROWNO; y++) {
         for (x = 1; x < COLNO; x++) {
             int bg_color = 0;
             struct nh_dbuf_entry *dbyx = &(display_buffer[y][x]);
+
+            if (!fully_refresh_display_buffer &&
+                memcmp(dbyx, &(onscreen_display_buffer[y][x]),
+                       sizeof *dbyx) == 0)
+                continue; /* no need to redraw an unchanged tile */
+
+            onscreen_display_buffer[y][x] = *dbyx;
 
             /* set the position for each character to prevent incorrect
                positioning due to charset issues (IBM chars on a unicode term
@@ -195,6 +211,7 @@ draw_map(int cx, int cy)
         }
     }
 
+    fully_refresh_display_buffer = 0;
     wmove(mapwin, cursy, cursx);
     wnoutrefresh(mapwin);
 }

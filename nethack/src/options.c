@@ -190,6 +190,10 @@ curses_set_option(const char *name, union nh_optvalue value)
     if (game_option)
         return TRUE;
 
+    /* In case the option affects graphics; this is pretty cheap if we don't do
+       it every turn */
+    mark_mapwin_for_full_refresh();
+
     if (option->type == OPTTYPE_BOOL) {
         nh_bool *var = nhlib_find_boolopt(boolopt_map, option->name);
         if (!var) {

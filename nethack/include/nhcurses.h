@@ -325,6 +325,7 @@ extern void curses_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO],
                                  int ux, int uy);
 extern int curses_getpos(int *x, int *y, nh_bool force, const char *goal);
 extern void draw_map(int cx, int cy);
+extern void mark_mapwin_for_full_refresh(void);
 
 /* menu.c */
 extern void draw_menu(struct gamewin *gw);
