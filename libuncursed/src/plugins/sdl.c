@@ -73,6 +73,7 @@ struct sdl_tile_region {
     int loc_w, loc_h, loc_l, loc_t;
 
     SDL_Texture *texture;
+    SDL_Texture *cursor;
     SDL_Texture *tileset;
     int *tiles;
 
@@ -457,9 +458,28 @@ sdl_hook_exit(void)
        and it's possible to do that behind the SDL window anyway. So do
        nothing; the atexit wil shut it down at actual system exit if the hook
        is called because the program is exiting, and otherwise we're going to
-       have init called in the near future. (Perhaps we should hide the window, 
-       in case the code takes console input while the window's hidden, but even 
+       have init called in the near future. (Perhaps we should hide the window,
+       in case the code takes console input while the window's hidden, but even
        that would look weird.) */
+}
+
+static void
+initialize_cursor_texture(struct sdl_tile_region *region)
+{
+    /* Fill the cursor texture with transparent pixels. */
+    if (rendertarget != region->cursor)
+        SDL_SetRenderTarget(render, region->cursor);
+    rendertarget = region->cursor;
+
+    SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_NONE);
+    SDL_SetRenderDrawColor(render, 0, 0, 0, 0);              /* transparent */
+    SDL_RenderFillRect(render, &(SDL_Rect) {
+            .x = 0,
+            .y = 0,
+            .w = region->texsize_w,
+            .h = region->texsize_h,
+        });
+    SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_BLEND);
 }
 
 void
@@ -500,8 +520,8 @@ void *
 sdl_hook_allocate_tiles_region(int height, int width, int loc_h, int loc_w,
                                int loc_t, int loc_l)
 {
-    /* TODO: We could gain some performance by refcounting tilesets. This comes 
-       up rarely enough in practice that it's not a high priority to implement. 
+    /* TODO: We could gain some performance by refcounting tilesets. This comes
+       up rarely enough in practice that it's not a high priority to implement.
      */
     struct sdl_tile_region *region;
 
@@ -543,6 +563,19 @@ sdl_hook_allocate_tiles_region(int height, int width, int loc_h, int loc_w,
         return NULL;
     }
 
+    region->cursor =
+        SDL_CreateTexture(render, SDL_PIXELFORMAT_RGBA8888,
+                          SDL_TEXTUREACCESS_TARGET, region->texsize_w,
+                          region->texsize_h);
+    if (!region->cursor) {
+        SDL_DestroyTexture(region->texture);
+        SDL_DestroyTexture(region->tileset);
+        free(region->tiles);
+        free(region);
+        return NULL;
+    }
+    SDL_SetTextureBlendMode(region->cursor, SDL_BLENDMODE_BLEND);
+
     region->loc_w = loc_w;
     region->loc_h = loc_h;
     region->loc_l = loc_l;
@@ -556,6 +589,8 @@ sdl_hook_allocate_tiles_region(int height, int width, int loc_h, int loc_w,
     region->pixelshift_timestamp = cursor_timestamp - 1;
     region->dirty = 1;
 
+    initialize_cursor_texture(region);
+
     return region;
 }
 
@@ -563,6 +598,7 @@ void
 sdl_hook_deallocate_tiles_region(void *region)
 {
     SDL_DestroyTexture(((struct sdl_tile_region *)region)->texture);
+    SDL_DestroyTexture(((struct sdl_tile_region *)region)->cursor);
     SDL_DestroyTexture(((struct sdl_tile_region *)region)->tileset);
     free(((struct sdl_tile_region *)region)->tiles);
     free(region);
@@ -581,10 +617,6 @@ sdl_hook_draw_tile_at(int tile, void *r, int y, int x)
     if (rendertarget != region->texture)
         SDL_SetRenderTarget(render, region->texture);
     rendertarget = region->texture;
-
-    /* If we're drawing over the cursor, it clobbers the cursor. */
-    if (r->cursortile_x == x && r->cursortile_y == y)
-        r->cursortile_x = -1;
 
     SDL_RenderCopy(render, region->tileset,
                    &(SDL_Rect) {       /* source */
@@ -748,8 +780,8 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
         case SDL_KEYDOWN:
 
             /* We care about this if it's a function key (i.e. not
-               corresponding to text), but not if it's used as part of an input 
-               method. The heuristic used is to try to handle the key itself if 
+               corresponding to text), but not if it's used as part of an input
+               method. The heuristic used is to try to handle the key itself if
                it didn't cause an SDL_TEXTEDITING or SDL_TEXTINPUT within 2 ms.
 
                First, though, in case that event doesn't happen, we try to
@@ -809,9 +841,9 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
                 break;
 
             default:
-                /* Other keys are either printables, or else keys that uncursed 
+                /* Other keys are either printables, or else keys that uncursed
                    doesn't know about. If they're printables, we just store
-                   them as is in kc. Otherwise, we synthesize a number for them 
+                   them as is in kc. Otherwise, we synthesize a number for them
                    via masking off SLK_SCANCODE_MASK and adding
                    KEY_LAST_FUNCTION. If that goes to 512 or higher, we give
                    up. */
@@ -991,21 +1023,17 @@ update_region(struct sdl_tile_region *r)
         }
 
         if (nctx != r->cursortile_x || ncty != r->cursortile_y) {
-            if (r->cursortile_x > -1) {
-                /* Force a redraw of the location where the cursor was */
-                int oldtile =
-                    r->tiles[r->cursortile_x +
-                             r->cursortile_y * r->tilecount_w];
-                r->tiles[r->cursortile_x +
-                         r->cursortile_y * r->tilecount_w] = -1;
-                sdl_hook_draw_tile_at(oldtile, r,
-                                      r->cursortile_y, r->cursortile_x);
-            }
+
+            /* Remove any existing cursor, if necessary. */
+            if (r->cursortile_x > -1)
+                initialize_cursor_texture(r);
+
             if (nctx > -1) {
-                /* Draw a new cursor */
-                if (rendertarget != r->texture)
-                    SDL_SetRenderTarget(render, r->texture);
-                rendertarget = r->texture;
+                /* Draw a new cursor. */
+                if (rendertarget != r->cursor)
+                    SDL_SetRenderTarget(render, r->cursor);
+                rendertarget = r->cursor;
+
                 SDL_SetRenderDrawColor(render, 255, 255, 255, SDL_ALPHA_OPAQUE);
                 SDL_RenderDrawRect(render,
                                    &(SDL_Rect) {
@@ -1048,10 +1076,14 @@ update_region(struct sdl_tile_region *r)
         if (tf + h > r->texsize_h)
             h -= (tf + h - r->texsize_h);
 
-        if (w > 0 && h > 0)
+        if (w > 0 && h > 0) {
             SDL_RenderCopy(render, r->texture,
                            &(SDL_Rect) {.x = lf, .y = tf, .w = w, .h = h},
                            &(SDL_Rect) {.x = lt, .y = tt, .w = w, .h = h});
+            SDL_RenderCopy(render, r->cursor,
+                           &(SDL_Rect) {.x = lf, .y = tf, .w = w, .h = h},
+                           &(SDL_Rect) {.x = lt, .y = tt, .w = w, .h = h});
+        }
 
         /* Now draw any cells that contain something other than tiles. */
         int i, j;
