@@ -522,25 +522,31 @@ nh_get_options(void)
         else if (!strcmp("disclose", option->name)) {
             option->value.e = flags.end_disclose;
         } else if (!strcmp("fruit", option->name)) {
+
             if (option->value.s)
                 free(option->value.s);
             option->value.s = malloc(PL_FSIZ);
+
             strncpy(option->value.s, pl_fruit, PL_FSIZ-1);
             option->value.s[PL_FSIZ - 1] = '\0';
+
         } else if (!strcmp("menustyle", option->name)) {
             option->value.e = flags.menu_style;
         } else if (!strcmp("movecommand", option->name)) {
             option->value.e = flags.interaction_mode;
         } else if (!strcmp("packorder", option->name)) {
+
             int i;
 
             if (option->value.s)
                 free(option->value.s);
+            option->value.s = malloc(MAXOCLASSES + 1);
 
             for (i = 0; i < MAXOCLASSES; ++i)
                 option->value.s[i] = def_oc_syms[(int)flags.inv_order[i]];
 
-            option->value.s[MAXOCLASSES - 1] = '\0';
+            option->value.s[MAXOCLASSES] = '\0';
+
         } else if (!strcmp("pickup_burden", option->name)) {
             option->value.e = flags.pickup_burden;
         } else if (!strcmp("autopickup_rules", option->name)) {
@@ -562,29 +568,41 @@ nh_get_options(void)
         } else if (!strcmp("role", option->name)) {
             option->value.e = u.initrole;
         } else if (!strcmp("name", option->name)) {
+
             if (option->value.s)
                 free(option->value.s);
             option->value.s = malloc(PL_NSIZ);
+
             strncpy(option->value.s, u.uplname, PL_NSIZ-1);
             option->value.s[PL_NSIZ - 1] = '\0';
+
         } else if (!strcmp("catname", option->name)) {
+
             if (option->value.s)
                 free(option->value.s);
             option->value.s = malloc(PL_PSIZ);
+
             strncpy(option->value.s, catname, PL_PSIZ-1);
             option->value.s[PL_PSIZ - 1] = '\0';
+
         } else if (!strcmp("dogname", option->name)) {
+
             if (option->value.s)
                 free(option->value.s);
             option->value.s = malloc(PL_PSIZ);
+
             strncpy(option->value.s, dogname, PL_PSIZ-1);
             option->value.s[PL_PSIZ - 1] = '\0';
+
         } else if (!strcmp("horsename", option->name)) {
+
             if (option->value.s)
                 free(option->value.s);
             option->value.s = malloc(PL_PSIZ);
+
             strncpy(option->value.s, horsename, PL_PSIZ-1);
             option->value.s[PL_PSIZ - 1] = '\0';
+
         } else if (!strcmp("pettype", option->name)) {
             option->value.e = preferred_pet;
         } else
