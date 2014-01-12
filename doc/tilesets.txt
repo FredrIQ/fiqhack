@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2013-11-23
+Last modified by Alex Smith, 2014-01-12
 
 The tiles code in this directory was originally taken from Slash'EM, and has
 been modified by Alex Smith for use in NetHack 4.  (This documentation file
@@ -169,10 +169,11 @@ A tilemap file is just a sequence of tile names, one per line.  (This format
 is intentionally incompatible with that used by previous versions, because the
 tile names in the maps of previous versions are different from the tile names
 in the tile files, making them not particularly useful.)  Unlike with the
-text-based format, no name repetition is allowed; all the names must be
-unique. The old format had lines starting with "tile" and a number, and
-double-quoted the names; this format should be detected and rejected by
-tilemap manipulation code.
+text-based format, no name repetition is allowed (except with import_tileset,
+which just copies tile names from the map into the output file literally); all
+the names must be unique.  The old format had lines starting with "tile" and a
+number, and double-quoted the names; this format should be detected and
+rejected by tilemap manipulation code.
 
 There are also "catalogue files", stored in `tilesets/dat/catalogues`, which
 specify which .txt files make up which tilesets.  These catalogue files are

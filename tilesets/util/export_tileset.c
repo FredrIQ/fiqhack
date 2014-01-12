@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-29 */
+/* Last modified by Alex Smith, 2014-01-12 */
 /*
  * Copyright (C) Andrew Apted <ajapted@users.sourceforge.net> 2002
  *		 Slash'EM Development Team 2003
@@ -163,8 +163,7 @@ failed:
 
 /* -------------------------------------------------------------------- */
 
-/* Convert the tiles in the file to our RGBA format.
- */
+/* Convert the tiles in the file to our RGBA format. */
 static int
 convert_tiles(void)
 {
@@ -235,8 +234,7 @@ convert_tiles(void)
 }
 
 
-/* Open the given file, read & merge the colormap, convert the tiles. 
- */
+/* Open the given file, read & merge the colormap, convert the tiles. */
 static void
 process_file(const char *fname)
 {
