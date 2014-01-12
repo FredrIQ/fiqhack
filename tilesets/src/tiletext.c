@@ -287,10 +287,14 @@ read_txttile(FILE *txtfile, pixel (*pixels)[MAX_TILE_X])
     if (map_file) {
         /* check tile name; the number is ignored (although these routines
            number consecutively, that is not required) */
-        ok = !!fgets(expected, TILEBUFSZ-1, map_file);
-        expected[TILEBUFSZ-1] = 0;
-        if (!ok) strcpy(expected, "<eof>");
-        else if (strrchr(expected, '\n')) *(strrchr(expected, '\n')) = 0;
+        do {
+            *expected = 0;
+            ok = !!fgets(expected, TILEBUFSZ-1, map_file);
+            expected[TILEBUFSZ-1] = 0;
+            if (!ok) strcpy(expected, "<eof>");
+            else if (strrchr(expected, '\n')) *(strrchr(expected, '\n')) = 0;
+        } while (*expected == '!');
+
         if (strcmp(expected, buf) != 0) {
             Fprintf(stderr, "warning: for tile %d (numbered %d),\n",
                     tile_map_indx, i);
@@ -356,10 +360,13 @@ write_txttile(FILE *txtfile, pixel(*pixels)[MAX_TILE_X])
     if (!map_file) {
         strcpy(tilename, "unknown");
     } else {
-        ok = !!fgets(tilename, TILEBUFSZ-1, map_file);
-        tilename[TILEBUFSZ-1] = 0;
-        if (!ok) strcpy(tilename, "<eof>");
-        else if (strrchr(tilename, '\n')) *(strrchr(tilename, '\n')) = 0;
+        do {
+            *tilename = 0;
+            ok = !!fgets(tilename, TILEBUFSZ-1, map_file);
+            tilename[TILEBUFSZ-1] = 0;
+            if (!ok) strcpy(tilename, "<eof>");
+            else if (strrchr(tilename, '\n')) *(strrchr(tilename, '\n')) = 0;
+        } while (*tilename == '!');
     }
 
     if (strcmp(tilename, "<eof>") != 0) {

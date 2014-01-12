@@ -128,6 +128,9 @@ read_mapfile(char *mapfile)
         }
         name[i] = 0;
 
+        if (*name == '!')
+            continue;
+
         if (no_tiles == alloc_tiles) {
             if (alloc_tiles)
                 alloc_tiles *= 2;
