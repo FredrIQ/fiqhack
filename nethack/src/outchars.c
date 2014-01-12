@@ -21,6 +21,7 @@ static int dnstair_id, dnladder_id, dnsstair_id;
 static int mportal_id, vibsquare_id;
 static int room_id, darkroom_id, corr_id, litcorr_id;
 struct curses_drawing_info *default_drawing, *cur_drawing;
+int curses_level_display_mode;
 static struct curses_drawing_info *unicode_drawing, *rogue_drawing;
 
 
@@ -698,6 +699,8 @@ void
 curses_notify_level_changed(int dmode)
 {
     set_rogue_level(dmode == LDM_ROGUE);
+    mark_mapwin_for_full_refresh();
+    curses_level_display_mode = dmode;
 }
 
 

@@ -268,6 +268,7 @@ extern const char quit_chars[];
 extern struct nh_window_procs curses_windowprocs;
 extern WINDOW *basewin, *mapwin, *msgwin, *statuswin, *sidebar;
 extern struct curses_drawing_info *default_drawing, *cur_drawing;
+extern int curses_level_display_mode;
 extern struct nh_player_info player;
 extern int cmdline_role, cmdline_race, cmdline_gend, cmdline_align;
 extern char cmdline_name[];
