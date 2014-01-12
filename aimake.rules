@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2013-10-29
+# Last modified by Alex Smith, 2014-01-12
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -261,15 +261,21 @@
             object => qr=^path:tilesets/dat/catalogues/.*\.txt$=s,
             command => ["intcmd:cat", "optpath::"],
             lineskip => 1,
-            depends => "optpath::path:tilesets/dat/tiles/",
+            depends => ["optpath::path:tilesets/dat/tiles/",
+                        "path:tilesets/dat/tiles/"],
             dependsarg => qr=^(.+)$=s,
             require_match => 1,
         },
+        _slashem_catalogue_file_palette => {
+            object => qr=^path:tilesets/dat/catalogues/slashem-.*\.txt$=s,
+            depends => ["optpath:-p :path:tilesets/dat/palette.txt",
+                        "path:tilesets/dat/palette.txt"],
+        },
         _merge_tilesets => {
-            object => qr=^path:tilesets/dat/catalogues/tile-16\.txt$=s,
+            object => qr=^path:tilesets/dat/catalogues/.*\.txt$=s,
             command => ["bpath:tilesets/util/convert_tileset.c/convert_tileset$exeext",
-                        "optpath:-p :path:tilesets/dat/palette.txt",
-                        "optpath:-m :bpath:tilesets/dat/maps/nethack4.map"],
+                        "optpath:-m :bpath:tilesets/dat/maps/nethack4.map",
+                        "bpath:tilesets/dat/maps/nethack4.map"],
             output_from_optpath => '-o ',
             verb => 'merged',
         },

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-01 */
+/* Last modified by Alex Smith, 2014-01-12 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -209,9 +209,13 @@ struct curses_drawing_info {
 enum nh_text_mode {
     ASCII_GRAPHICS,     /* ASCII only */
     UNICODE_GRAPHICS,   /* Unicode; default symbols should be CP437 */
-    TILESET_16,         /* 16x16 tiles, or Unicode on non-tiles ports */
-    TILESET_32,         /* 32x32 tiles, or Unicode on non-tiles ports */
-    TILESET_3D,         /*    3D tiles, or Unicode on non-tiles ports */
+    /* Tilesets, defaulting to Unicode if tiles are not available */
+    TILESET_DAWNHACK_16, /* DawnHack by DragonDePlatino */
+    TILESET_DAWNHACK_32, /* The same, upscaled */
+    /* Slash'EM has its own tilesets (many of which are unfinished) */
+    TILESET_SLASHEM_16,
+    TILESET_SLASHEM_32,
+    TILESET_SLASHEM_3D,
 };
 
 typedef nh_bool(*getlin_hook_proc) (char *, void *);

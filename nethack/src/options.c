@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-01 */
+/* Last modified by Alex Smith, 2014-01-12 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -50,8 +50,11 @@ static struct nh_enum_option menu_headings_spec =
 static struct nh_listitem graphics_list[] = {
     {ASCII_GRAPHICS, "Text (ASCII only)"},
     {UNICODE_GRAPHICS, "Text (Unicode)"},
-    {TILESET_16, "Tiles (16x16)"},
-/*    {TILESET_32, "Tiles (32x32)"},
+    {TILESET_DAWNHACK_16, "Tiles (DawnHack, 16px)"},
+    {TILESET_DAWNHACK_32, "Tiles (DawnHack, 32px)"},
+    {TILESET_SLASHEM_16, "Tiles (Slash'EM, 16px)"},
+/*    Tilesets with missing images or rendering issues:
+      {TILESET_32, "Tiles (32x32)"},
       {TILESET_3D, "Tiles (3D effect)"}, */
 };
 static struct nh_enum_option graphics_spec =
