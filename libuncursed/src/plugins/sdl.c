@@ -1203,7 +1203,7 @@ update_cell(int y, int x, struct sdl_tile_region *current_region)
         SDL_SetRenderDrawColor(render, fgcolor[0], fgcolor[1], fgcolor[2],
                                SDL_ALPHA_OPAQUE);
         SDL_RenderDrawLine(render, x * fontwidth, (y + 1) * fontheight - 2,
-                           (x + 1) * fontwidth, (y + 1) * fontheight - 2);
+                           (x + 1) * fontwidth - 1, (y + 1) * fontheight - 2);
     }
 
     /* Draw a cursor, if necessary. */
