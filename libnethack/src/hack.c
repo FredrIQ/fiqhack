@@ -2666,6 +2666,33 @@ dofight(const struct nh_cmd_arg *arg)
     return domove(arg, uim_forcefight);
 }
 
+
+/* This is used by commands that need occupation-like behaviour when given a
+   numeric prefix. For instance, if the user sends "20s", they should get a "You
+   stop searching." if interrupted, the save file should be a little less
+   aggressive about recording diffs until it's finished, and so on. */
+void
+limited_turns(const struct nh_cmd_arg *arg, enum occupation occ)
+{
+    char *verb =
+        occ == occ_move ? "running" :
+        occ == occ_search ? "searching" : "waiting";
+
+    if (turnstate.continue_message) /* start of the occupation */
+        u.uoccupation_progress[tos_limit] = 0;
+
+    if (arg->argtype & CMD_ARG_LIMIT) {
+        u.uoccupation_progress[tos_limit]++;
+        if (u.uoccupation_progress[tos_limit] >= arg->limit) {
+            u.uoccupation_progress[tos_limit] = 0;
+            pline("You finish %s.", verb);
+            action_completed();
+        } else {
+            action_incomplete(verb, occ);
+        }
+    }
+}
+
 /* TODO: pre_move_tasks() currently uses a hardcoded list of movement commands.
    For the time being, keep it in sync with this list. Hopefully there will
    eventually be a better solution. */
@@ -2673,13 +2700,16 @@ dofight(const struct nh_cmd_arg *arg)
 int
 domovecmd(const struct nh_cmd_arg *arg)
 {
-    return domove(arg, turnstate.continue_message ?
+    limited_turns(arg, occ_move);
+    return domove(arg, turnstate.continue_message &&
+                  !(arg->argtype & CMD_ARG_LIMIT) ?
                   flags.interaction_mode : exploration_interaction_status());
 }
 
 int
 domovecmd_nopickup(const struct nh_cmd_arg *arg)
 {
+    limited_turns(arg, occ_move);
     return domove(arg, uim_nointeraction);
 }
 

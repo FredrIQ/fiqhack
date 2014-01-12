@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-26 */
+/* Last modified by Alex Smith, 2014-01-12 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -145,6 +145,8 @@ enum tracked_object_slots {
     tos_lock,    /* chest we were interrupted lockpicking or forcing */
     tos_ball,    /* iron ball we're punished with */
     tos_chain,   /* chain the ball is attached with */
+    tos_limit,   /* occupation progress for wait/search/move; the tracked
+                    object is not used, just the progress */
 
     tos_first_equip,   /* equipment we were interrupted equipping */
     tos_last_equip = tos_first_equip + os_last_maskable,
@@ -181,6 +183,8 @@ enum occupation {
     occ_travel,      /* travelling */
     occ_autoexplore, /* autoexploring */
     occ_wipe,        /* wiping your face */
+    occ_wait,        /* waiting */
+    occ_search,      /* searching */
 };
 
 /* Occupations generally track objects, but some track locations, or both. */

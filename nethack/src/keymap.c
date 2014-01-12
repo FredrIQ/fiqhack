@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-31 */
+/* Last modified by Alex Smith, 2014-01-12 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -302,7 +302,7 @@ get_command(struct nh_cmd_arg *arg, nh_bool include_debug)
             /* if the command requres an arg AND the arg isn't set yet (by
                handle_internal_cmd) */
             if (cmd->flags & CMD_ARG_DIR && cmd->flags & CMD_MOVE &&
-                arg->argtype != CMD_ARG_DIR) {
+                !(arg->argtype & CMD_ARG_DIR)) {
                 key2 = get_map_key(TRUE);
                 if (key2 == '\033')     /* cancel silently */
                     continue;

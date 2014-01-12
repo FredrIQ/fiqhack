@@ -10,21 +10,14 @@
 # include "global.h"
 # include "align.h"
 # include "dungeon.h"
+# include "prop.h"
+# include "iomodes.h"
+# include "decl.h"
 
 /* hacklib.h now contains extern definitions for hacklib */
 # include "hacklib.h"
 
-/* forward definitions of structures and enums */
-enum attack_check_status;
-enum equipmsg;
-enum locktype;
-enum memfile_tagtype;
-enum nh_direction;
-enum nh_log_status;
-enum nh_menuitem_role;
-enum objslot;
-enum occupation;
-enum u_interaction_mode;
+/* forward definitions of structures */
 struct attack;
 struct damage;
 struct def_skill;
@@ -625,6 +618,7 @@ extern boolean check_capacity(const char *);
 extern int inv_cnt(boolean);
 extern long money_cnt(struct obj *);
 extern enum u_interaction_mode exploration_interaction_status(void);
+extern void limited_turns(const struct nh_cmd_arg *, enum occupation);
 extern int domovecmd(const struct nh_cmd_arg *);
 extern int domovecmd_nopickup(const struct nh_cmd_arg *);
 extern int dorun(const struct nh_cmd_arg *);

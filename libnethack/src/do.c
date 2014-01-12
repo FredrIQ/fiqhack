@@ -1510,7 +1510,7 @@ revive_mon(void *arg, long timeout)
 int
 donull(const struct nh_cmd_arg *arg)
 {
-    (void) arg;
+    limited_turns(arg, occ_wait);
     return 1;   /* Do nothing, but let other things happen */
 }
 

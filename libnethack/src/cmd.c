@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-10 */
+/* Last modified by Alex Smith, 2014-01-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -65,7 +65,7 @@ static char *enlght_combatinc(const char *, int, int, char *);
 #endif
 
 const struct cmd_desc cmdlist[] = {
-    /* "str", "", defkey, altkey, wiz, buried, func, arg */
+    /* "str", "", defkey, altkey, wiz, buried, func, flags */
     {"adjust", "adjust inventory letters", M('a'), 0, TRUE, doorganize,
      CMD_ARG_OBJ | CMD_EXT},
     {"annotate", "name the current level", 0, 0, TRUE, donamelevel,
@@ -171,7 +171,7 @@ const struct cmd_desc cmdlist[] = {
        must not alter the save file itself */
     {"save", "save the game and exit", 'S', 0, TRUE, dosave, CMD_NOTIME},
     {"search", "search for hidden doors and traps", 's', 0, TRUE, dosearch,
-     0, "searching"},
+     CMD_ARG_LIMIT},
     {"showamulets", "list your worn amulet", '"', 0, TRUE,
      dopramulet, CMD_NOTIME},
     {"showarmor", "list your worn armor", '[', 0, TRUE, doprarm,
@@ -206,8 +206,7 @@ const struct cmd_desc cmdlist[] = {
      CMD_HELP | CMD_NOTIME | CMD_EXT},
     {"verhistory", "display the version history", 0, 0, TRUE, doverhistory,
      CMD_HELP | CMD_NOTIME | CMD_EXT},
-    {"wait", "do nothing for one turn", '.', 0, TRUE, donull, 0,
-     "waiting"},
+    {"wait", "do nothing for one turn", '.', 0, TRUE, donull, CMD_ARG_LIMIT},
     {"wear", "wear clothing, armor, or accessories", 'W', 'P', FALSE, dowear,
      CMD_ARG_OBJ},
     {"wield", "hold an item in your hands", 'w', 0, FALSE, dowield,
@@ -219,13 +218,14 @@ const struct cmd_desc cmdlist[] = {
     {"zap", "zap a wand to use its magic", 'z', 0, FALSE, dozap,
      CMD_ARG_OBJ | CMD_ARG_DIR},
 
-    {"move", "move one step", 0, 0, FALSE, domovecmd, CMD_ARG_DIR | CMD_MOVE},
+    {"move", "move one step", 0, 0, FALSE, domovecmd,
+     CMD_ARG_DIR | CMD_MOVE | CMD_ARG_LIMIT},
     {"moveonly", "move, but don't fight or pick anything up", 'm', 0,
-     FALSE, domovecmd_nopickup, CMD_ARG_DIR | CMD_MOVE},
+     FALSE, domovecmd_nopickup, CMD_ARG_DIR | CMD_MOVE | CMD_ARG_LIMIT},
     {"run", "run, interacting with things found on the way", 0, 0, FALSE, dorun,
-     CMD_ARG_DIR | CMD_MOVE},
+     CMD_ARG_DIR | CMD_MOVE | CMD_ARG_LIMIT},
     {"go", "run until something happens, cautiously", 'g', 'G', FALSE, dogo,
-     CMD_ARG_DIR | CMD_MOVE},
+     CMD_ARG_DIR | CMD_MOVE | CMD_ARG_LIMIT},
 
     {"welcome", "(internal) display the 'welcome back!' message", 0, 0, TRUE,
      dowelcome, CMD_INTERNAL},
@@ -273,7 +273,7 @@ const struct cmd_desc cmdlist[] = {
     {"wmode", "(DEBUG) show wall modes", 0, 0, TRUE, wiz_show_wmodes,
      CMD_DEBUG | CMD_EXT | CMD_NOTIME},
 
-    {NULL, NULL, 0, 0, 0, 0, 0, NULL}
+    {NULL, NULL, 0, 0, 0, 0, 0}
 };
 
 /* Several occupations cannot be meaningfully continued if you move (anything
