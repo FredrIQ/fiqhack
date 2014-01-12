@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-01 */
+/* Last modified by Alex Smith, 2014-01-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -529,7 +529,7 @@ nh_get_options(void)
             option->value.s[PL_FSIZ - 1] = '\0';
         } else if (!strcmp("menustyle", option->name)) {
             option->value.e = flags.menu_style;
-        } else if (!strcmp("pickup_burden", option->name)) {
+        } else if (!strcmp("movecommand", option->name)) {
             option->value.e = flags.interaction_mode;
         } else if (!strcmp("packorder", option->name)) {
             int i;
