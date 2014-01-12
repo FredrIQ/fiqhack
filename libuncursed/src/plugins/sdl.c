@@ -1084,7 +1084,6 @@ update_cell(int y, int x, struct sdl_tile_region *current_region)
         fgcolor = palette[7];
     if (a & 512)
         bgcolor = palette[0];
-    /* TODO: Underlining (1024s bit) */
 
     if (rendertarget != screen)
         SDL_SetRenderTarget(render, screen);
@@ -1102,7 +1101,7 @@ update_cell(int y, int x, struct sdl_tile_region *current_region)
                            .x = x * fontwidth,
                            .y = y * fontheight,
                            .w = fontwidth,
-                               .h = fontheight});
+                           .h = fontheight});
 
     /* Draw the foreground. */
     if (region) {
@@ -1160,6 +1159,14 @@ update_cell(int y, int x, struct sdl_tile_region *current_region)
                            .y = y * fontheight,
                            .w = fontwidth,
                            .h = fontheight});
+    }
+
+    /* Draw underlining if necessary. */
+    if (a & 1024 && !region) {
+        SDL_SetRenderDrawColor(render, fgcolor[0], fgcolor[1], fgcolor[2],
+                               SDL_ALPHA_OPAQUE);
+        SDL_RenderDrawLine(render, x * fontwidth, (y + 1) * fontheight - 2,
+                           (x + 1) * fontwidth, (y + 1) * fontheight - 2);
     }
 
     /* Draw a cursor, if necessary. */
