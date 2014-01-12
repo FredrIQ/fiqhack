@@ -517,9 +517,8 @@ print_low_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe)
             branding = nhcurses_genbranding_stepped;
     }
     if (branding != nhcurses_no_branding) {
-        wset_tiles_tile(win, tileno_from_name(
-                            nhcurses_branding_names[branding],
-                            TILESEQ_GENBRAND_OFF));
+        wset_tiles_tile(win, TILESEQ_GENBRAND_OFF +
+                        branding - nhcurses_genbranding_first);
     }
 }
 
@@ -533,16 +532,14 @@ print_high_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe)
         branding = nhcurses_monbranding_peaceful;
 
     if (branding != nhcurses_no_branding) {
-        wset_tiles_tile(win, tileno_from_name(
-                            nhcurses_branding_names[branding],
-                            TILESEQ_MONBRAND_OFF));
+        wset_tiles_tile(win, TILESEQ_MONBRAND_OFF +
+                        branding - nhcurses_monbranding_first);
     }
 
     if (dbe->trap || (dbe->branding & NH_BRANDING_TRAPPED))
-        wset_tiles_tile(win, tileno_from_name(
-                            nhcurses_branding_names[
-                                nhcurses_genbranding_trapped],
-                            TILESEQ_GENBRAND_OFF));
+        wset_tiles_tile(win, TILESEQ_GENBRAND_OFF +
+                        nhcurses_genbranding_trapped -
+                        nhcurses_genbranding_first);
 }
 
 /* What is the bottom-most, opaque background of a map square? This takes
@@ -764,18 +761,31 @@ print_tile(WINDOW *win, struct curses_symdef *api_name,
     wset_tiles_tile(win, tileno);
 }
 
+const char *const furthest_backgrounds[] = {
+    [fb_litroom] = "the floor of a room",
+    [fb_darkroom] = "dark part of a room",
+    [fb_litcorr] = "lit corridor",
+    [fb_darkcorr] = "corridor",
+};
+
+static int furthest_background_tileno[sizeof furthest_backgrounds /
+                                      sizeof *furthest_backgrounds];
+static nh_bool furthest_background_tileno_needs_initializing = 1;
+
 void
 print_background_tile(WINDOW *win, struct nh_dbuf_entry *dbe)
 {
-    char *furthest_backgrounds[] = {
-        [fb_litroom] = "the floor of a room",
-        [fb_darkroom] = "dark part of a room",
-        [fb_litcorr] = "lit corridor",
-        [fb_darkcorr] = "corridor",
-    };
-    wset_tiles_tile(win, tileno_from_name(
-                        furthest_backgrounds[
-                            furthest_background(dbe)], TILESEQ_CMAP_OFF));
+    if (furthest_background_tileno_needs_initializing) {
+        int i;
+        for (i = 0; i < sizeof furthest_backgrounds /
+                 sizeof *furthest_backgrounds; i++) {
+            furthest_background_tileno[i] =
+                tileno_from_name(furthest_backgrounds[i], TILESEQ_CMAP_OFF);
+        }
+        furthest_background_tileno_needs_initializing = 0;
+    }
+
+    wset_tiles_tile(win, furthest_background_tileno[furthest_background(dbe)]);
     if (dbe->bg != room_id && dbe->bg != corr_id)
         print_tile(win, cur_drawing->bgelements + dbe->bg,
                    NULL, TILESEQ_CMAP_OFF);
