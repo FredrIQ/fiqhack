@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-01 */
+/* Last modified by Alex Smith, 2014-01-12 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -1267,17 +1267,26 @@ doredraw(void)
 static struct nh_dbuf_entry dbuf[ROWNO][COLNO];
 
 
-/* 
- * object ids need to be obfuscated for non-identified types to prevent
- * visual identification in tile ports:
- * if a worthless piece of red glass and a ruby have different tile images
- * even when the glass rock is unidentified, describing both as "red gem" is
- * useless.
- * Additionally, it is better if descriptions match up with tiles for potions etc.
- * so that a potion described as "milky" will actually be ablt to look milky.
- * 
- * also used in pickup.c and invent.c
- */
+/* The game engine internally uses object types, but for presenting objects to
+   the user, we need to ensure that the images we show the user match up with
+   object descriptions, rather than types. This function does the conversions
+   required.
+
+   Design principles: randomized-appearance objects always show the appearance
+   rather than the type; for equal-appearance objects (like gray stones), we
+   normally show the plainest type until the object is identified, when we show
+   something appropriate to the type.  (This is most visible with horns in the
+   DawnHack tileset; they look like a plain horn until identified, when they can
+   show clear evidence of being a frost horn, fire horn, etc.).  The exception
+   is objects that exist in pairs in which one is a genuine object, and one is a
+   fake imitation; the fake imitations look genuine until identified, under the
+   assumption that a fake would try to be realistic.
+
+   To find equal-appearance objects, the simplest method is to search for "s 0"
+   in the nethack4.map file that is produced by the tiles code; it lists all the
+   objects in the game (among other things), using "s" and a number to
+   distinguish between equal-appearance objects.  This list is maintained in
+   tiles order in order to make finding missing entries easier. */
 int
 obfuscate_object(int otyp)
 {
@@ -1289,6 +1298,16 @@ obfuscate_object(int otyp)
 
     if (!objects[otyp].oc_name_known) {
         switch (otyp) {
+        case DUNCE_CAP:
+        case CORNUTHAUM:
+            otyp = CORNUTHAUM;
+            break;
+
+        case AMULET_OF_YENDOR:
+        case FAKE_AMULET_OF_YENDOR:
+            otyp = AMULET_OF_YENDOR;
+            break;
+
         case SACK:
         case OILSKIN_SACK:
         case BAG_OF_TRICKS:
@@ -1296,11 +1315,9 @@ obfuscate_object(int otyp)
             otyp = SACK;
             break;
 
-        case LOADSTONE:
-        case LUCKSTONE:
-        case FLINT:
-        case TOUCHSTONE:
-            otyp = FLINT;
+        case TALLOW_CANDLE:
+        case WAX_CANDLE:
+            otyp = TALLOW_CANDLE;
             break;
 
         case OIL_LAMP:
@@ -1313,7 +1330,36 @@ obfuscate_object(int otyp)
             otyp = TIN_WHISTLE;
             break;
 
-            /* all gems initially look like pieces of glass */
+        case WOODEN_FLUTE:
+        case MAGIC_FLUTE:
+            otyp = WOODEN_FLUTE;
+            break;
+
+        case TOOLED_HORN:
+        case FROST_HORN:
+        case FIRE_HORN:
+        case HORN_OF_PLENTY:
+            otyp = TOOLED_HORN;
+            break;
+
+        case WOODEN_HARP:
+        case MAGIC_HARP:
+            otyp = WOODEN_HARP;
+            break;
+
+        case LEATHER_DRUM:
+        case DRUM_OF_EARTHQUAKE:
+            otyp = LEATHER_DRUM;
+            break;
+
+        case LOADSTONE:
+        case LUCKSTONE:
+        case FLINT:
+        case TOUCHSTONE:
+            otyp = FLINT;
+            break;
+
+        /* all gems initially look like pieces of glass */
         case DILITHIUM_CRYSTAL:
         case DIAMOND:
         case RUBY:
@@ -1366,6 +1412,8 @@ obfuscate_object(int otyp)
                 break;
             }
             break;
+
+        /* venom does not need obfuscating */
         }
     }
 
