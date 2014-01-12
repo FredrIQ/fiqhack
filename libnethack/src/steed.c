@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Alex Smith, 2014-01-12 */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -241,7 +241,8 @@ mount_steed(struct monst * mtmp,        /* The animal */
     }
     if (Engulfed || u.ustuck || u.utrap || Punished ||
         !test_move(u.ux, u.uy, mtmp->mx - u.ux, mtmp->my - u.uy, 0,
-                   TEST_MOVE, uim_standard)) {
+                   TEST_MOVE, uim_standard, !!Blind, !!Stunned, !!Fumbling,
+                   !!Hallucination, !!Passes_walls, !!Ground_based)) {
         if (Punished || !(Engulfed || u.ustuck || u.utrap))
             pline("You are unable to swing your %s over.", body_part(LEG));
         else

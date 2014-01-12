@@ -604,7 +604,8 @@ extern boolean bad_rock(const struct permonst *, xchar, xchar);
 extern boolean invocation_pos(const d_level * dlev, xchar x, xchar y);
 extern boolean travelling(void);
 extern boolean test_move(
-    int, int, int, int, int, int, enum u_interaction_mode);
+    int, int, int, int, int, int, enum u_interaction_mode,
+    boolean, boolean, boolean, boolean, boolean, boolean);
 extern int domove(const struct nh_cmd_arg *, enum u_interaction_mode);
 extern void invocation_message(void);
 extern void spoteffects(boolean);
@@ -719,7 +720,7 @@ extern void do_light_sources(char **);
 extern struct monst *find_mid(struct level *lev, unsigned nid,
                               unsigned fmflags);
 extern void transfer_lights(struct level *oldlev, struct level *newlev,
-                            unigned int obj_id);
+                            unsigned int obj_id);
 extern void save_light_sources(struct memfile *mf, struct level *lev,
                                int range);
 extern void free_light_sources(struct level *lev);

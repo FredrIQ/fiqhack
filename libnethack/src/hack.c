@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-01 */
+/* Last modified by Alex Smith, 2014-01-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -518,12 +518,16 @@ travelling(void)
         flags.occupation == occ_autoexplore;
 }
 
-/* return TRUE if (dx,dy) is an OK place to move
- * mode is one of DO_MOVE, TEST_MOVE, TEST_TRAV or TEST_TRAP
- */
+/* Return TRUE if (dx,dy) is an OK place to move. Mode is one of DO_MOVE,
+   TEST_MOVE, TEST_TRAV or TEST_TRAP.
+
+   This function takes the values of Blind, Stunned, Fumbling, Hallucination,
+   Passes_walls, and Ground_based as arguments; repeatedly recalculating them
+   was taking up 34% of the runtime of the entire program before this change. */
 boolean
 test_move(int ux, int uy, int dx, int dy, int dz, int mode,
-          enum u_interaction_mode uim)
+          enum u_interaction_mode uim, boolean blind, boolean stunned,
+          boolean fumbling, boolean halluc, boolean passwall, boolean grounded)
 {
     int x = ux + dx;
     int y = uy + dy;
@@ -534,12 +538,12 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
      *  Check for physical obstacles.  First, the place we are going.
      */
     if (IS_ROCK(tmpr->typ) || tmpr->typ == IRONBARS) {
-        if (Blind && mode == DO_MOVE)
+        if (blind && mode == DO_MOVE)
             feel_location(x, y);
-        if (Passes_walls && may_passwall(level, x, y)) {
+        if (passwall && may_passwall(level, x, y)) {
             ;   /* do nothing */
         } else if (tmpr->typ == IRONBARS) {
-            if (!(Passes_walls || passes_bars(youmonst.data)))
+            if (!(passwall || passes_bars(youmonst.data)))
                 return FALSE;
         } else if (tunnels(youmonst.data) && !needspick(youmonst.data)) {
             /* Eat the rock. */
@@ -558,7 +562,7 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
             if (mode == DO_MOVE) {
                 if (Is_stronghold(&u.uz) && is_db_wall(x, y))
                     pline("The drawbridge is up!");
-                if (Passes_walls && !may_passwall(level, x, y) &&
+                if (passwall && !may_passwall(level, x, y) &&
                     In_sokoban(&u.uz))
                     pline("The Sokoban walls resist your ability.");
             }
@@ -566,9 +570,10 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
         }
     } else if (IS_DOOR(tmpr->typ)) {
         if (closed_door(level, x, y)) {
-            if (Blind && mode == DO_MOVE)
+            if (blind && mode == DO_MOVE)
                 feel_location(x, y);
-            if (Passes_walls) ; /* do nothing */
+            if (passwall)
+                ; /* do nothing */
             else if (can_ooze(&youmonst)) {
                 if (mode == DO_MOVE)
                     pline("You ooze under the door.");
@@ -582,7 +587,7 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
                         pline
                             ("You try to ooze under the door, but can't squeeze your possessions through.");
                     else if (x == ux || y == uy) {
-                        if (Blind || Stunned || ACURR(A_DEX) < 10 || Fumbling) {
+                        if (blind || stunned || ACURR(A_DEX) < 10 || fumbling) {
                             if (u.usteed) {
                                 pline
                                     ("You can't lead %s through that closed door.",
@@ -600,11 +605,11 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
             }
         } else {
         testdiag:
-            if (dx && dy && !Passes_walls && ((tmpr->doormask & ~D_BROKEN)
-                                              || Is_rogue_level(&u.uz)
-                                              || block_door(x, y))) {
+            if (dx && dy && !passwall && ((tmpr->doormask & ~D_BROKEN)
+                                          || Is_rogue_level(&u.uz)
+                                          || block_door(x, y))) {
                 /* Diagonal moves into a door are not allowed. */
-                if (Blind && mode == DO_MOVE)
+                if (blind && mode == DO_MOVE)
                     feel_location(x, y);
                 return FALSE;
             }
@@ -636,7 +641,7 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
         struct trap *t = t_at(level, x, y);
 
         if ((t && t->tseen) ||
-            (!Levitation && !Flying && !is_clinger(youmonst.data) &&
+            (grounded &&
              (is_pool(level, x, y) || is_lava(level, x, y)) &&
              level->locations[x][y].seenv)) {
             if (mode == DO_MOVE) {
@@ -657,7 +662,7 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
     ust = &level->locations[ux][uy];
 
     /* Now see if other things block our way . . */
-    if (dx && dy && !Passes_walls &&
+    if (dx && dy && !passwall &&
         (IS_DOOR(ust->typ) && ((ust->doormask & ~D_BROKEN)
                                || Is_rogue_level(&u.uz)
                                || block_entry(x, y))
@@ -668,8 +673,8 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
         return FALSE;
     }
 
-    if (sobj_at(BOULDER, level, x, y) && (In_sokoban(&u.uz) || !Passes_walls)) {
-        if (!(Blind || Hallucination) && !ITEM_INTERACTIVE(uim) &&
+    if (sobj_at(BOULDER, level, x, y) && (In_sokoban(&u.uz) || !passwall)) {
+        if (!(blind || halluc) && !ITEM_INTERACTIVE(uim) &&
             mode != TEST_TRAV) {
             if (sobj_at(BOULDER, level, x, y) && mode == DO_MOVE)
                 autoexplore_msg("a boulder", mode);
@@ -692,7 +697,7 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
 
             /* don't pick two boulders in a row, unless there's a way thru */
             if (sobj_at(BOULDER, level, ux, uy) && !In_sokoban(&u.uz)) {
-                if (!Passes_walls &&
+                if (!passwall &&
                     !(tunnels(youmonst.data) && !needspick(youmonst.data)) &&
                     !carrying(PICK_AXE) && !carrying(DWARVISH_MATTOCK) &&
                     !((obj = carrying(WAN_DIGGING)) &&
@@ -815,6 +820,14 @@ static boolean
 findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy,
                enum u_interaction_mode uim)
 {
+    /* Property caches; recalculating these took up a really noticeable amount
+       of time, according to the profiler. */
+    boolean blind = !!Blind;
+    boolean stunned = !!Stunned;
+    boolean fumbling = !!Fumbling;
+    boolean halluc = !!Hallucination;
+    boolean passwall = !!Passes_walls;
+    boolean grounded = !!Ground_based;
     /* If a travel command is sent to an adjacent, reachable location
        (i.e. continue_message is TRUE, meaning that this isn't an implicitly
        continued action), use normal movement rules (and reset the interaction
@@ -823,7 +836,8 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy,
     if (!guess && turnstate.continue_message &&
         distmin(u.ux, u.uy, u.tx, u.ty) == 1) {
         if (test_move(u.ux, u.uy, u.tx - u.ux, u.ty - u.uy,
-                      0, TEST_MOVE, flags.interaction_mode)) {
+                      0, TEST_MOVE, flags.interaction_mode,
+                      blind, stunned, fumbling, halluc, passwall, grounded)) {
             *dx = u.tx - u.ux;
             *dy = u.ty - u.uy;
             action_completed();
@@ -916,10 +930,12 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy,
                         (guess == couldsee_func && !guess(nx, ny)))
                         continue;
 
-                    if ((!Passes_walls && !can_ooze(&youmonst) &&
+                    if ((!passwall && !can_ooze(&youmonst) &&
                          closed_door(level, nx, ny)) ||
                         sobj_at(BOULDER, level, nx, ny) ||
-                        test_move(x, y, nx - x, ny - y, 0, TEST_TRAP, uim)) {
+                        test_move(x, y, nx - x, ny - y, 0, TEST_TRAP, uim,
+                                  blind, stunned, fumbling, halluc,
+                                  passwall, grounded)) {
                         /* closed doors and boulders usually cause a delay, so
                            prefer another path */
                         if ((int)travel[x][y] > radius - 5) {
@@ -933,10 +949,14 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy,
                             continue;
                         }
                     }
-                    if (test_move(x, y, nx - x, ny - y, 0, TEST_TRAP, uim) ||
-                        test_move(x, y, nx - x, ny - y, 0, TEST_TRAV, uim)) {
+                    if (test_move(x, y, nx - x, ny - y, 0, TEST_TRAP, uim,
+                                  blind, stunned, fumbling, halluc,
+                                  passwall, grounded) ||
+                        test_move(x, y, nx - x, ny - y, 0, TEST_TRAV, uim,
+                                  blind, stunned, fumbling, halluc,
+                                  passwall, grounded)) {
                         if ((level->locations[nx][ny].seenv ||
-                             (!Blind && couldsee(nx, ny)))) {
+                             (!blind && couldsee(nx, ny)))) {
                             if (nx == ux && ny == uy) {
                                 if (!guess) {
                                     *dx = x - ux;
@@ -1009,7 +1029,9 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy,
                     action_completed();
                     return FALSE;
                 }
-                if (test_move(u.ux, u.uy, *dx, *dy, 0, TEST_MOVE, uim))
+                if (test_move(u.ux, u.uy, *dx, *dy, 0, TEST_MOVE, uim,
+                              blind, stunned, fumbling, halluc,
+                              passwall, grounded))
                     return TRUE;
                 goto found;
             }
@@ -1536,7 +1558,9 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
         return 1;
     }
 
-    if (!test_move(u.ux, u.uy, dx, dy, dz, DO_MOVE, uim)) {
+    if (!test_move(u.ux, u.uy, dx, dy, dz, DO_MOVE, uim, !!Blind,
+                   !!Stunned, !!Fumbling, !!Hallucination,
+                   !!Passes_walls, !!Ground_based)) {
         action_completed();
         return 0;
     }

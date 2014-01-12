@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Alex Smith, 2014-01-12 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -241,6 +241,9 @@
 # define Flying                 (EFlying || is_flyer(youmonst.data) || \
                                  (u.usteed && is_flyer(u.usteed->data)))
         /* May touch surface; does not override any others */
+
+# define Ground_based           (!Levitation && !Flying && \
+                                 !is_clinger(youmonst.data))
 
 # define Wwalking               (worn_extrinsic(WWALKING) && \
                                  !Is_waterlevel(&u.uz))
