@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Alex Smith, 2014-01-12 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -952,7 +952,8 @@ update_region(struct sdl_tile_region *r)
         int ncty = -1;
 
         if (cursor_x >= r->loc_l && cursor_x < r->loc_l + r->loc_w &&
-            cursor_y >= r->loc_t && cursor_y < r->loc_t + r->loc_h) {
+            cursor_y >= r->loc_t && cursor_y < r->loc_t + r->loc_h &&
+            uncursed_rhook_region_at(cursor_y, cursor_x) == r) {
             nctx = cursor_x - r->loc_l;
             ncty = cursor_y - r->loc_t;
 
