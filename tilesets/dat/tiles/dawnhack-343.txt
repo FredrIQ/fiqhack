@@ -1,8 +1,11 @@
-! Last modified by Alex Smith, 2014-01-12
+! Last modified by Alex Smith, 2014-01-14
 !
 ! Copyright (C) Andrew Rios, 2014
-! Licensed under the Creative Commons Attribution 3.0 Unported license
-! See <http://creativecommons.org/licenses/by/3.0/> for license information
+! This work is licensed under the Creative Commons Attribution 3.0
+! Unported License. To view a copy of this license, visit
+! http://creativecommons.org/licenses/by/3.0/ or send a letter to
+! Creative Commons, 444 Castro Street, Suite 900, Mountain View,
+! California, 94041, USA.
 !
 ! Dawnbringer texture by DragonDePlatino
 ! Send requests and hate mail to: DragonDePlatino@gmail.com

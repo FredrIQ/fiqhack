@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2014-01-12
+# Last modified by Alex Smith, 2014-01-14
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -268,8 +268,13 @@
         },
         _slashem_catalogue_file_palette => {
             object => qr=^path:tilesets/dat/catalogues/slashem-.*\.txt$=s,
-            depends => ["optpath:-p :path:tilesets/dat/palette.txt",
-                        "path:tilesets/dat/palette.txt"],
+            depends => ["optpath:-p :path:tilesets/dat/palettes/slashem.txt",
+                        "path:tilesets/dat/palettes/slashem.txt"],
+        },
+        _dawnhack_catalogue_file_palette => {
+            object => qr=^path:tilesets/dat/catalogues/dawnhack-.*\.txt$=s,
+            depends => ["optpath:-p :path:tilesets/dat/palettes/dawnhack.txt",
+                        "path:tilesets/dat/palettes/dawnhack.txt"],
         },
         _merge_tilesets => {
             object => qr=^path:tilesets/dat/catalogues/.*\.txt$=s,

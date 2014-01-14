@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Alex Smith, 2014-01-12
+Last-Modified: Last modified by Alex Smith, 2014-01-14
 
 Files: libnethack_client/*
 License: NHGPL or GPL-2+
@@ -356,7 +356,7 @@ Files: nethack_server/*
 License: NHGPL or GPL-2+
 Copyright: Copyright (c) Daniel Thaler, 2011
 
-Files: tilesets/dat/tiles/s-*.txt tilesets/dat/palette.txt
+Files: tilesets/dat/tiles/s-*.txt tilesets/dat/palettes/slashem.txt
 License: NHGPL
 Copyright: These tiles were copied from an NHGPL Slash'EM release that was
  Copyright (C) J. Ali Harlow 2000-2006, which gives the following
@@ -412,10 +412,13 @@ Copyright:
  Copyright (C) 2013 Alex Smith, in addition to the copyright on the tiles from
  Slash'EM on which these files are based (see tilesets/dat/tiles/s-*.txt).
 
-Files: tilesets/dat/tiles/dawnhack-*.txt
+Files: tilesets/dat/tiles/dawnhack-*.txt tilesets/dat/palettes/dawnhack.txt
 License: CC-BY-3.0
- Licensed under the Creative Commons Attribution 3.0 Unported license
- See <http://creativecommons.org/licenses/by/3.0/> for license information
+ This work is licensed under the Creative Commons Attribution 3.0
+ Unported License. To view a copy of this license, visit
+ http://creativecommons.org/licenses/by/3.0/ or send a letter to
+ Creative Commons, 444 Castro Street, Suite 900, Mountain View,
+ California, 94041, USA.
 Copyright:
  Copyright (C) Andrew Rios, 2014
 Comment:
