@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-12 */
+/* Last modified by Alex Smith, 2014-01-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -542,6 +542,7 @@ nh_get_options(void)
                 free(option->value.s);
             option->value.s = malloc(MAXOCLASSES + 1);
 
+            option->value.s = malloc(MAXOCLASSES + 1);
             for (i = 0; i < MAXOCLASSES; ++i)
                 option->value.s[i] = def_oc_syms[(int)flags.inv_order[i]];
 
@@ -605,8 +606,10 @@ nh_get_options(void)
 
         } else if (!strcmp("pettype", option->name)) {
             option->value.e = preferred_pet;
-        } else
+        } else {
             impossible("unknown option '%s'", option->name);
+            memset(&option->value, 0, sizeof option->value);
+        }
     }
 
     return options;
