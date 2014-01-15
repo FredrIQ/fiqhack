@@ -1,5 +1,5 @@
 About this document:
-Last modified by Sean Hunt, 2013-12-27
+Last modified by Sean Hunt, 2014-01-15
 
 Copyright (C) 2013 Sean Hunt
 
@@ -165,13 +165,11 @@ easily handled through some aspect of this method:
  - Some bits of spoteffects
  - Portals on planes not letting through coelementals and the Amulet
  - the valley's and the invocation level's level teleport blocking effects
- - the wizard's different interventions on Astral
  - wizard tower migration
  - Vlad not using wands of digging in his own tower
  - Clairvoyance/branchport/levelport not working in the endgame
  - The behaviour of the D:1 upstair
  - Different naming/inventory/talking of monster players in the endgame
- - Extra monster HP in the endgame
  - Samurai lacquered armor in their Quest
  - The mysterious force
 
@@ -210,6 +208,7 @@ Things that need to be in the level flags:
 
 Things that need to be in the level manager:
  - Generation (at least mklev() through mineralize())
+   - Generation of terrain and monsters should be done independently
  - Hook to do each turn
  - Hook for loading
  - Hook for unloading
@@ -220,10 +219,12 @@ Things that need to be in the level manager:
    portal/vibrating square location
  - Some monster generation controls (rogue monster inventories/letters,
    elemental plane restrictions, alignment restrictions, pickaxes for
-   elvenkings on Earth)
+   elvenkings on Earth, wands of digging for minotaurs on Earth, extra HP for
+   Ds and Es in the endgame)
  - Some item generation controls (rogue/hellprobs)
  - Some trap generation controls (a set of flags at the very least)
  - Saving/loading
+ - How the Wizard performs an intervention
 
 Other things that need more thought:
  - Handling of water, generally. See is_moat, is_pool, waterbody_name, and
