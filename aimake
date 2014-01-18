@@ -6785,12 +6785,25 @@ __DATA__
         # For shared libraries to work on 64-bit Linux, we need -fPIC; we may
         # as well just use it unconditionally, because there's hardly any
         # performance penalty on that platform.
-        linux64_fpic => {
+        default_linux_fpic_option => {
+            output => 'optionset:linux_fpic_option',
+            outdepends => [], # sometimes no option is needed
+        },
+        linux_fpic_option => {
             command => ['intcmd:assert_equal', 'optstring:64',
-                        "optstring:$pointerbits", 'optionset:os_linux'],
-            object => 'optionset:CFLAGS',
+                        "optstring:$pointerbits"],
+            object => 'optionset:linux_fpic_option',
             depends => 'optstring:-fPIC',
             fail_silently => 1,
+            debug_trace => 1,
+        },
+        linux_clflags_depends_on_fpic => {
+            object => qr/^optionset:[CL]FLAGS$/,
+            command => ['intcmd:assert_equal', 'optstring:linux',
+                        "optstring:$^O"],
+            depends => 'optionset:linux_fpic_option',
+            fail_silently => 1,
+            debug_trace => 1,
         },
 
         default_libraries => {
