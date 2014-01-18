@@ -1,11 +1,11 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2014-01-01
+# Last modified by Alex Smith, 2014-01-18
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
 
 # aimake: automated build system for C programs
-# Copyright © 2013 Alex Smith.
+# Copyright © 2013, 2014 Alex Smith.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,6 +36,11 @@ aimake - build and/or install C programs with minimal configuration
 The most common way to build and install a program using aimake is:
 
 B<mkdir> F<build>; B<cd> F<build>; F<../aimake> B<-i> F<installdir>
+
+or to install for all users, rather than just yourself:
+
+B<mkdir> F<build>; B<cd> F<build>; F<../aimake> B<-i> F</usr/local>
+B<-S> B<sudo>
 
 Commonly used options:
 
@@ -126,9 +131,14 @@ debugging aimake itself.
 
 =item B<-i> F<directory>, B<--install=>F<directory>
 
-After building (if necessary), install the project into the given directory.
-The directory can be omitted, in which case it will use the same install
-directory as last time.
+Specifies the install directory for the project being built.  If this option
+is not given, aimake will use the same directory as last time, or a default
+directory on the first build.  It is also possible to give B<-i> with no
+directory; this is equivalent to explicitly specifying the same directory as
+last time.
+
+If the directory in question does not exist, it must be given with an absolute
+path.  (Relative paths are OK if the directory already exists.)
 
 The specific directories to install in are deduced from the directory given.
 For instance, if on a UNIX/Linux system you gave F</usr/local> as the
@@ -137,6 +147,38 @@ files under F</var/local>, whereas installing into F</usr> would put them
 under F</var/lib>, and installing into F</home/user/package> would put them
 inside the install directory.  You can control the details of the install with
 the B<--directory-layout> option or "directory_layout" configuration option.
+
+This option, together with B<-S>, control whether aimake will attempt to
+install the project, or just build it:
+
+=over 4
+
+=item *
+
+If B<-i> is not given, the project will not be installed by this run of
+aimake.
+
+=item *
+
+If B<-i> and B<-S> are both given, the project will always be installed by
+this run of aimake.
+
+=item *
+
+If B<-i> is given but B<-S> is not given, the project will be installed if and
+only if the specified directory is writable by the user running aimake.
+
+=back
+
+=item B<-S> I<command>, B<--elevate-permissions=>I<command>
+
+Specifies an appropriate command to use to elevate permissions (on UNIX-like
+systems, normally B<su>, B<sudo> or B<gksu>, but depending on what you're
+trying to do you might want to use B<fakeroot> or even B<sudo checkinstall>).
+If this option is not given, aimake will not be able to install into a
+location that isn't writable by normal users.  (You should not run aimake
+directly as root; doing that means that the files in the build directory are
+written as root, which normally causes problems.)
 
 =item B<-W> I<regexp>, B<--show-warnings>=I<regexp>
 
@@ -231,6 +273,12 @@ Show the license/copyright information for aimake.
 
 Don't use carriage returns to provide progress information.  (This is mostly
 only useful if stdout is not a terminal).
+
+=item B<--install-only>
+
+Don't run any rules but install rules, even if they're marked using
+C<sys:always_rebuild>.  This is used by aimake internally when it elevates
+permissions.
 
 =item B<--dump-status>
 
@@ -1363,12 +1411,13 @@ libraries; on many systems, this is the same as $dllext because the dynamic
 libraries are their own import libraries, but on some systems it differs);
 there is also $symbolprefix, which is an underscore on systems in which
 symbols have their names prefixed with underscores in libraries, and an empty
-string otherwise.  (In order to catch mistakes due to omitting $exeext, it
-will never be set to the null string, but rather to an arbitrary string on
-platforms that do not normally use a special extension for executables.  This
-extension will be removed when installing the executable.)  These are followed
-by a single dictionary with two keys, C<options> and C<rules>.  Here's a
-simple example C<aimake.rules>:
+string otherwise, and $pointerbits, which allows the rules to learn whether
+they're running on a 32- or 64-bit platform.  (In order to catch mistakes due
+to omitting $exeext, it will never be set to the null string, but rather to an
+arbitrary string on platforms that do not normally use a special extension for
+executables.  This extension will be removed when installing the executable.)
+These are followed by a single dictionary with two keys, C<options> and
+C<rules>.  Here's a simple example C<aimake.rules>:
 
     $version = "1.2.3";        # variable definition
 
@@ -1435,7 +1484,9 @@ C<filter_text_files>, C<filter_nonexistent_files>, C<output_as_searchfile>,
 C<output_as_standardlib>, C<filter_spath>, C<require_match>, C<debug_trace>,
 and/or C<low_message_priority>, and can specify C<force_locale>,
 C<fail_silently>, C<also_match_stderr>, and/or C<ignore_warnings> if they have
-a C<command>.
+a C<command>.  Install rules must have C<install_dir>, and can have
+C<install_name>, C<install_readable>, C<install_permission>, and/or
+C<install_elevation>.
 
 A rule itself is a dictionary with a number of keys:
 
@@ -1668,6 +1719,12 @@ A directory used for documentation in GNU Info format.
 A directory used for general architecture-independent data files that are both
 read and written by the program (and that are shared between all users).
 
+Note that in many cases, this directory will be administrator-owned;
+therefore, your program will not actually be able to write to this directory
+unless it's being run with administrator permissions, or you use the
+C<install_permission> option in order to grant write permissions to a wider
+audience.
+
 =item rootbindir
 
 Like C<bindir>, but for executables designed to be run with elevated
@@ -1675,7 +1732,9 @@ permissions.  (This doesn't actually do anything to elevate the permissions,
 nor to prevent users without elevated permissions running the executables;
 however, on many systems, users who don't have elevated permissions will be
 prevented from running the program by accident, even though they can still do
-so intentionally.)
+so intentionally.  You can additionally use C<install_permission> if you wish
+to require administrator permissions, or some other elevated permissions, to
+be able to execute the program.)
 
 =item gamesbindir
 
@@ -1719,6 +1778,67 @@ The basename to install a file under, if it isn't the same as the basename of
 the C<object>. This can include forward slashes to install into a subdirectory
 (regardless of what the path separator happens to be on the system in
 question).
+
+=item install_permission
+
+A value that causes aimake to adjust the permissions on installed files.  In
+most cases, this refers to who can read or execute the resulting files; in the
+case of C<statedir> and similarly writable directories, this additionally
+refers to who can write them.
+
+Options for this field include "ADMINISTRATOR" (only administrators can
+read/execute/write the files), and "ANYONE" (anyone can read/execute the
+files, and write files in the C<statedir>).  Leaving the field blank allows
+anyone to read or execute the files, but only adminstrators able to write
+them.  Other values may be understood, depending on the operating system; for
+instance, "games" is common under UNIX-like operating systems, meaning that
+the file should only be readable/writable by games, not by players directly;
+this can be used to protect the integrity of high score tables, for instance.
+
+If a user is installing for their own use (via `-i` into a directory they own,
+rather than a public one), aimake will not do any special permissions handling
+(i.e. C<install_permission> and C<install_elevated> will be ignored); that
+user will be able to do what they like with the installed files, other users
+will not be able to write those files (and may or may not be able to read or
+execute them depending on how that user has configured the permissions on the
+install directory).
+
+This option is currently unimplemented (and thus ignored) on Windows, even
+though it makes sense in that context.  Permissions are implemented as groups
+on UNIX-like operating systems (apart from "ADMINISTRATOR", which is
+implemented using the user with a UID of 0, and "ANYONE", which does not need
+a user/group to correspond to), and thus only exist where a group with the
+same name exists.  You may need to create the group separately before running
+aimake.
+
+If the permission in question does not exist, aimake will print a warning and
+substitute the default setting (anyone can read/execute, but only
+administrators can write).
+
+=item install_readable
+
+If set, causes C<install_permission> to control only write and execute
+permissions; anyone will be able to read the file.  This makes
+C<install_permission> redundant except on execuables or on writable files.
+
+=item install_elevated
+
+A value that causes aimake to attempt to grant permissions to the executables
+it installs.  (Granting permissions to a non-executable is meaningless, and
+thus ignored.)  The values are the same as for C<install_permission>; an
+executable with a given C<install_elevated> can read, write, and execute files
+with a matching C<install_permission>.  Thus, if you want to protect a file so
+that it can only be read/written by means of the executables you install, give
+the executables an C<install_elevated> matching the C<install_permission> of
+the file.  (Operating-system-specific techniques may be needed to cause the
+permission to exist in the first place.)
+
+For technical reasons, C<install_permission> and C<install_elevated> cannot
+both be given for the same file.
+
+Although C<aimake> supports an C<install_elevated> value of "ADMINISTRATOR",
+we strongly recommend that you do not do this, because it nearly always leads
+to security problems unless the elevated executables are very well written.
 
 =item inner
 
@@ -2698,7 +2818,7 @@ use File::Temp qw/tempfile/;
 use File::Find qw/finddepth/;
 use Cwd qw/cwd realpath/;
 use Fcntl qw/:DEFAULT :flock :seek/;
-use FindBin qw'$RealBin';
+use FindBin qw'$RealBin $RealScript';
 use ExtUtils::MakeMaker;
 use Memoize;
 use Carp;
@@ -2726,6 +2846,7 @@ select STDOUT;
 
 my ($opt_verbose, $opt_install, $opt_prefix, $opt_dump, @opt_warnings,
     $opt_ignore_builtin_config, $opt_version, $opt_dlayout,
+    $opt_install_only, $opt_elevate_permissions,
     $opt_nocr, @opt_rebuild, $opt_documentation, $opt_license);  # options
 my ($codeset, $text_layers, $binary_layers,
     $utf8_layers, $ascii_layers); # encodings
@@ -3254,6 +3375,7 @@ sub ensure_directory {
     my $aipath = shift;
     my $containing_only = shift;
     my $installing = shift;
+    my $dont_die = shift;
 
     my ($objtype, undef) = parse_objname $aipath;
     $objtype =~ /^[bs]?path$/ or return;
@@ -3265,8 +3387,14 @@ sub ensure_directory {
 
     return if -d $ospath; # avoid a useless message
     die "Found a non-directory at '$fon'" if -e $ospath;
-    progress_report 1, "Creating directory '$fon'...";
-    make_path $ospath or die "Could not create directory '$fon': $!";
+    $dont_die or progress_report 1, "Creating directory '$fon'...";
+    $@ = undef;
+    unless (eval {make_path $ospath}) {
+        $dont_die and return 0;
+        die "Could not create directory '$fon': ".defined_or($@,$!);
+    }
+    progress_report 1, "Created directory '$fon'.";
+    return 1;
 }
 
 # Takes the hash of a file on disk. This modifies state, so should be
@@ -3333,6 +3461,8 @@ sub file_hash {
 }
 
 ##### Interfacing with OS facilities
+
+### Commands
 
 # Finds the executable for a command, or undef if the command doesn't exist on
 # the system. MakeMaker's used to search for the command because it
@@ -3834,6 +3964,79 @@ sub run_command {
         (defined_or($failreason, "Command succeeded") . ".");
 
     return ($failreason, $stdout, $stderr);
+}
+
+### Permissions
+
+sub restrict_to_permission
+{
+    my $permname = shift;
+    my $aipath = shift;
+    my $readable = shift;
+    my $in_statedir = shift;
+
+    my $ospath = aipath2ospath $aipath;
+
+    $< == 0 or return 1; # if we're not elevated, don't bother changing perms
+
+    $! = 0;
+    if ($permname eq 'ANYONE') {
+        chown 0, 0, $ospath or return 0;
+        if (-x $ospath || -d $ospath) {
+            return chmod 0777, $ospath;
+        } elsif ($in_statedir) {
+            return chmod 0666, $ospath;
+        } else {
+            return chmod 0644, $ospath;
+        }
+    } elsif ($permname eq 'ADMINISTRATOR') {
+        chown 0, 0, $ospath or return 0;
+        if (-d $ospath) {
+            return chmod +($readable ? 0755 : 0700), $ospath;
+        } elsif (-x $ospath) {
+            return chmod +($readable ? 0744 : 0700), $ospath;
+        } else {
+            return chmod +($readable ? 0644 : 0600), $ospath;
+        }
+    } else {
+        my $gid = getgrnam $permname;
+        $gid or return 0;
+        chown 0, $gid, $ospath or return 0;
+        if (-d $ospath) {
+            return chmod +($readable ? 0775 : 0770), $ospath;
+        } elsif (-x $ospath) {
+            return chmod +($readable ? 0774 : 0770), $ospath;
+        } elsif ($in_statedir) {
+            return chmod +($readable ? 0664 : 0660), $ospath;
+        } else {
+            return chmod +($readable ? 0640 : 0644), $ospath;
+        }
+    }
+}
+
+sub elevate_to_permission
+{
+    my $permname = shift;
+    my $aipath = shift;
+
+    my $ospath = aipath2ospath $aipath;
+
+    $< == 0 or return 1;
+    -x $ospath && !-d $ospath or (progress_report -1,
+        "Warning: " . (friendly_objname $aipath) . " is not an executable " .
+        "and so cannot be granted permissions"), return 1;
+
+    $! = 0;
+    if ($permname eq 'ANYONE') {
+        # nothing to do
+    } elsif ($permname eq 'ADMINISTRATOR') {
+        return chmod 04755, $ospath;
+    } else {
+        my $gid = getgrnam $permname;
+        $gid or return 0;
+        chown 0, $gid, $ospath or return 0;
+        return chmod 02755, $ospath;
+    }
 }
 
 ##### Statefile handling
@@ -4985,6 +5188,8 @@ $opt_verbose = 0;
 $opt_install = undef;
 $opt_prefix = undef;
 $opt_dump = undef;
+$opt_install_only = 0;
+$opt_elevate_permissions = undef;
 $opt_ignore_builtin_config = 0;
 @opt_warnings = (); # TODO: unimplemented
 $opt_nocr = 0;
@@ -4995,6 +5200,8 @@ $opt_license = 0;
 $opt_version = 0;
 GetOptions('verbose|v:+' => \$opt_verbose,
            'install|i:s' => \$opt_install,
+           'elevate-permissions|S=s' => \$opt_elevate_permissions,
+           'install-only' => \$opt_install_only,
            'destdir=s' => \$opt_prefix,
            'dump-status:s' => \$opt_dump,
            'show-warnings|W' => \@opt_warnings,
@@ -5116,6 +5323,7 @@ $configsafe->permit_only(qw/null stub scalar pushmark const undef list qr
 our $libext = $Config{_a};
 our $objext = $Config{_o};
 our $exeext = $Config{_exe};
+our $pointerbits = $Config{ptrsize};
 # Make sure that exeext is non-null, to reduce porting mistakes
 $exeext eq '' and $exeext = '.bin';
 # a UUID generated for the purpose of avoiding clashes with other things
@@ -5130,7 +5338,7 @@ our $symbolprefix = {MSWin32 => '',
                      linux   => '',
                      darwin  => '_'}->{$^O};
 $configsafe->share('$libext', '$objext', '$exeext', '$dllext', '$impext',
-                   '$symbolprefix', '$longrandomstring');
+                   '$symbolprefix', '$pointerbits', '$longrandomstring');
 
 # Parse the global config file, from our <DATA>
 $! = 0;
@@ -5197,6 +5405,19 @@ defined($config->{options}->{packagename}) or
 $installing = defined $opt_install;
 $ipath = undef;
 $opt_install and $ipath = ospath2aipath($opt_install);
+
+# Complain if someone tries to build as root.
+if ($> == 0 && !$opt_install_only) {
+    die "Please do not run aimake as root; to install as root, use '-S su'/'-S sudo'";
+}
+
+# If a directory does not already exist, it must be specified as an absolute
+# path.
+if (defined $opt_install && !-e $opt_install) {
+    File::Spec->file_name_is_absolute($opt_install) or die
+        "Install path '$opt_install' is not an absolute path and does not exist";
+}
+
 $singledir = 0;
 atomically {
     $ipath ||= $state->{_installdir};
@@ -5231,11 +5452,21 @@ atomically {
     $state->{_installdir} = $ipath;
 };
 
+# -i does not mean "install" if an unwritable directory is given, and
+# -S is not also given. However, if we can create the directory, it isn't
+# unwritable. (And if it is writable, it clearly already exists.) This creates
+# the install directory early, but that's not a problem if we're installing.
+if ($installing && !defined $opt_elevate_permissions &&
+    !-w (aipath2ospath $ipath)) {
+    ensure_directory $ipath, 0, 1, 1 or $installing = 0;
+}
+
 # Directory options need substitutions.
 for my $option (keys %{$config->{options}}) {
     if ($option =~ /dir$/) {
         1 while $config->{options}->{$option} =~
-            s/\$([a-z]+)/$config->{options}->{$1}/g;
+            s/\$([a-z]+)/$config->{options}->{$1} or die
+                        "No config directory '$1'"/ge;
     }
 }
 
@@ -5278,6 +5509,9 @@ for my $rulename (keys %{$config->{rules}}) {
     croak "Rule $rulename has both output and depends"
         if (exists $rule->{output} || exists $rule->{output_from_optpath})
         && exists $rule->{depends};
+    croak "Rule $rulename has both install permisison and elevation"
+        if exists $rule->{install_permission} &&
+        exists $rule->{install_elevation};
 }
 $config_hashes{"config_rule:$_"} = sv_hash $config->{rules}->{$_}
     for keys %{$config->{rules}};
@@ -5286,13 +5520,18 @@ $config_hashes{"config_option:$_"} = sv_hash $config->{options}->{$_}
 atomically {
     my $runcount = $state->{hash_by_pair}->
         {'parse_configuration sys:no_object'}->{'sys:always_rebuild'};
+    my $installcount = $state->{hash_by_pair}->
+        {'parse_configuration sys:no_object'}->{'sys:installing'};
     $runcount ||= 0;
-    $runcount++;
+    $installcount ||= $runcount;
+    $runcount++ unless $opt_install_only;
+    $installcount++;
     $config_hashes{'sys:always_rebuild'} = $runcount;
     $config_hashes{'sys:rebuild_late'} = $runcount;
-    $config_hashes{'sys:installing'} = $runcount;
+    $config_hashes{'sys:installing'} = $installcount;
     record_pair_outputs 'parse_configuration sys:no_object', \%config_hashes;
-    mark_object_unsure 'parse_configuration sys:no_object', 'sys:rebuild_late';
+    mark_object_unsure 'parse_configuration sys:no_object', 'sys:rebuild_late'
+        unless $opt_install_only;
     mark_object_unsure 'parse_configuration sys:no_object', 'sys:installing';
 };
 
@@ -5387,6 +5626,15 @@ MAINLOOP: while (1) {
             # Work out whether we're running, cleaning, or deleting it.
             my ($rule, $object) = parse_pairname $curpair;
             my $runnable = 1;
+
+            if ($opt_install_only &&
+                !($config->{rules}->{$rule}->{install_dir})) {
+                # We can't run the rule because we're in install only mode and
+                # it isn't an install rule, perhaps because we have elevated
+                # permissions.
+                $runnable = 0;
+            }
+
             if (!(rule_applies_to_object $rule, $object) ||
                 !(object_exists $object) ||
                 !(object_exists "config_rule:$rule")) {
@@ -5490,6 +5738,80 @@ MAINLOOP: while (1) {
     my ($rulename, $objname) = parse_pairname $curpair;
     my $rule = $config->{rules}->{$rulename};
 
+    if ($rule->{install_dir} && $opt_elevate_permissions) {
+        # We have to elevate permissions at this point, and that can only be
+        # done by exiting the process and restarting it with higher
+        # permissions. To accomplish this, we exec the permission elevation
+        # program, splitting its name on spaces (in case the user needs to
+        # nest elevation programs); then we get it to re-exec aimake with
+        # different arguments.
+
+        # Record the current state of the program.
+        write_statefile;
+        defined $state_fh and flock $state_fh, LOCK_UN;
+        defined $state_fh and close $state_fh;
+        $state_fh = undef;
+
+        # Work out the arguments we need:
+        # - The command the user asked us to run.
+        my @eprog = split ' ', $opt_elevate_permissions;
+        # - The path to Perl itself. (Algorithm from the Perl manual.)
+        my $rprog = $Config{perlpath};
+        $rprog .= $Config{_exe} unless
+            $rprog =~ m/$Config{_exe}$/i || $^O eq 'VMS';
+        push @eprog, '--';
+        push @eprog, $rprog;
+        # - The path to aimake.
+        push @eprog, File::Spec->rel2abs($RealScript, $RealBin);
+        # - The arguments:
+        #   - Preserve message-related arguments.
+        push @eprog, "--verbose=$opt_verbose";
+        push @eprog, "--no-carriage-return" if $opt_nocr;
+        #   - Preserve config files.
+        push @eprog, "--ignore-builtin-config"
+            if $opt_ignore_builtin_config;
+        #   - Preserve install locations (which may have been calculated rather
+        #     than specified on the command line).
+        push @eprog, "--install=" . aipath2ospath($ipath);
+        push @eprog, "--destdir=$opt_prefix" if $opt_prefix;
+        push @eprog, "--directory-layout=$opt_dlayout" if $opt_dlayout;
+        #   - Always specify --install-only; we don't want to build with
+        #     elevated permissions, only install.
+        push @eprog, "--install-only";
+        #   - Source directory.
+        push @eprog, "--";
+        push @eprog, aipath2ospath('path:');
+        #   We do /not/ preserve: help options (--documentation, etc.), because
+        #   we don't even reach this point if they're specified; rebuild
+        #   options, because installs are always done in full; and
+        #   --elevate-permissions itself (else we'd go into an infinite loop of
+        #   permission elevation).
+
+        # There are two styles of passing arguments to our elevation program.
+        # Most of them want them as separate arguments, preceded by --. A few
+        # (notably su) want them as one argument preceded by -c, which is
+        # annoying because we have to shell-escape them manually. We assume
+        # that if su exists at all, it wants to use sh-style escaping (because
+        # it's hard to make a guess about what su does to its arguments on
+        # platforms where sh doesn't exist.)
+        if ($eprog[0] eq 'su') {
+            # Change "su ... -- ..." to "su ... -c '...'".
+            my @eprog2 = ();
+            push @eprog2, (shift @eprog)
+                while $eprog2[-1] ne '--';
+            $eprog2[-1] = '-c';
+            map s/'/'\\''/g, @eprog;
+            @eprog = map "'$_'", @eprog;
+            @eprog = (@eprog2, join ' ', @eprog);
+        }
+        my $eprog_as_string = join ' ', map {/ / ? "\"$_\"" : $_} @eprog;
+        progress_report 0,
+            "Elevating permissions... (if this fails, the program will exit)";
+        progress_report 2, "Using command: $eprog_as_string";
+        exec {$eprog[0]} @eprog;
+        die "Could not elevate permissions using command: $eprog_as_string";
+    }
+
     # Give an appropriate progress message.
     my $shortobject = friendly_objname($objname);
     my $level;
@@ -5589,9 +5911,18 @@ MAINLOOP: while (1) {
     # If we're installing, install now.
     if (defined $rule->{install_dir}) {
         my ($objtype, undef) = parse_objname $objname;
+        my $fon = friendly_objname $output_target->[0];
+
         if ($objtype ne 'sys') {
             my $ospathfrom = aipath2ospath $objname;
             my $ospathto = aipath2ospath $output_target->[0];
+
+            # Delete the target file/link before installing over it, so that
+            # we can replace executables on UNIXy systems, and so that we
+            # don't end up following symlinks and making a mess.
+            -e $ospathto and (unlink $ospathto or die
+                              "Could not unlink '$ospathto': $!");
+
             if (-l $ospathfrom) {
                 # To install a symlink, we need to create a new symlink with
                 # the same target.
@@ -5630,6 +5961,19 @@ MAINLOOP: while (1) {
         } else {
             die "System object '$objname' cannot be installed";
         }
+
+        # If necessary, elevate or restrict permissions.
+        $rule->{install_permission} and
+            (restrict_to_permission $rule->{install_permission},
+             $output_target->[0], $rule->{install_readable},
+             scalar ($rule->{install_dir} =~ /(?:state|lock|log)dir$/)
+             or progress_report -1,
+             "Could not alter permissions of $fon: $!");
+        $rule->{install_elevation} and
+            (elevate_to_permission $rule->{install_elevation},
+             $output_target->[0] or progress_report -1,
+             "Could not grant permissions to $fon: $!");
+
         # Make the rule into a production rule that produces nothing.
         $installed_into = $output_target;
         $output_target = [];
@@ -5867,7 +6211,7 @@ MAINLOOP: while (1) {
                 friendly_objname($installed_into->[0]);
             # Silently failing rules can give us a better message here.
             $failing_silently and $msg =
-                "The rule was skipped because it was inapplicable";
+                "Skipped the rule because it is disabled in this configuration.";
         } elsif (scalar @shortened <= 4) {
             $msg = ucfirst $verb . " " . join ', ', @shortened;
         } else {
@@ -6203,8 +6547,8 @@ __DATA__
             statedir => '$staterootdir/lib/$packagename',
             gamesstatedir => '$staterootdir/games/$packagename',
             logdir => '$staterootdir/log',
-            lockdir => '$staterootdir/run',
-            specificlockdir => '$staterootdir/run/$packagename',
+            lockdir => '$staterootdir/run/lock',
+            specificlockdir => '$staterootdir/run/lock/$packagename',
         },
 
         # FHS layout, non-package-manager version. There's a set of
@@ -6227,7 +6571,7 @@ __DATA__
 
             # Relative to -i on the command line.
             bindir => '$installdir/bin',
-            rootbindir => '$installir/sbin',
+            rootbindir => '$installdir/sbin',
             gamesbindir => '$installdir/games',
             libdir => '$installdir/lib',
             specificlibdir => '$installdir/lib/$packagename',
@@ -6252,11 +6596,11 @@ __DATA__
             gamesstatedir => '$staterootdir/local/games/$packagename',
             # Logs likely need rotation. I'm not 100% sure this is correct.
             logdir => '$staterootdir/log',
-            # lockdir needs to be /var/run because it's probably a symlink
-            # to /run (and being a transient directory anyway, a package
-            # manager can't meaningfully manage it).
-            lockdir => '$staterootdir/run',
-            specificlockdir => '$staterootdir/run/$packagename',
+            # lockdir needs to be /var/run/lock because it's probably a
+            # symlink to /run/lock (and being a transient directory anyway, a
+            # package manager can't meaningfully manage it).
+            lockdir => '$staterootdir/run/lock',
+            specificlockdir => '$staterootdir/run/lock/$packagename',
         },
 
         # Add-on package layout on FHS systems. This puts most things in an
@@ -6300,11 +6644,11 @@ __DATA__
             gamesstatedir => '$staterootdir',
             logdir => '$staterootdir/log',
 
-            # Relative to /var/run. (On many systems, it's /run nowadays, but
-            # the /var name has a longer history and is likely to be a symlink
-            # for the forseeable future.)
-            lockdir => 'spath:/var/run',
-            specificlockdir => 'spath:/var/run/$packagename',
+            # Relative to /var/run/lock. (On many systems, it's /run/lock
+            # nowadays, but the /var name has a longer history and is likely
+            # to be a symlink for the forseeable future.)
+            lockdir => 'spath:/var/run/lock',
+            specificlockdir => 'spath:/var/run/lock/$packagename',
         },
 
         # Installing for just one user. Unlike the FHS installs, this one
@@ -6397,6 +6741,11 @@ __DATA__
             output => 'optionset:CFLAGS',
             outdepends => ['optstring:-g',
                            'optstring:-O2',
+                           # -fno-common enforces that "extern" is added when
+                           # appropriate, which is important because aimake
+                           # doesn't work otherwise, and nor do OS X shared
+                           # libraries.
+                           'optstring:-fno-common',
                            'optstring:-Wall'],
             verb => 'determined',
             low_message_priority => 1,
@@ -6431,6 +6780,17 @@ __DATA__
             object => 'optionset:CXXFLAGS',
             depends => 'optionset:IFLAGS',
             verb => 'determined',
+        },
+
+        # For shared libraries to work on 64-bit Linux, we need -fPIC; we may
+        # as well just use it unconditionally, because there's hardly any
+        # performance penalty on that platform.
+        linux64_fpic => {
+            command => ['intcmd:assert_equal', 'optstring:64',
+                        "optstring:$pointerbits", 'optionset:os_linux'],
+            object => 'optionset:CFLAGS',
+            depends => 'optstring:-fPIC',
+            fail_silently => 1,
         },
 
         default_libraries => {
@@ -7196,7 +7556,8 @@ __DATA__
             depends => 'symbol:',
             # To make things work on Windows, omit symbols that start with a
             # double underscore, apart from DLL import hooks (__imp_.*).
-            dependsarg => qr'^[[:xdigit:]]*\s+U ((?>_?(?:_imp_+)?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*))',
+            # To make things work on 64-bit Linux, omit _GLOBAL_OFFSET_TABLE_.
+            dependsarg => qr'^[[:xdigit:]]*\s+U ((?>_?(?!GLOBAL_OFFSET_TABLE)(?:_imp_+)?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*))',
         },
         o_file_provisions => {
             object => qr/^bpath:(?!aimake).*\Q$objext\E\z/,
