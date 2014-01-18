@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-01 */
+/* Last modified by Alex Smith, 2014-01-18 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -626,6 +626,10 @@ playgame(int fd_or_gameno)
     welcomed = 0;
     do {
         ret = nh_play_game(fd_or_gameno);
+
+        /* Clean up any game windows that might be lying around.  This can
+           happen if the server cancels a menu or prompt. */
+        delete_all_gamewins();
 
         /* We reconnect if the server asked us to restart the connection; and we
            make a limited number of reconnection attempts if the network went

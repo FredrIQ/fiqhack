@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-12 */
+/* Last modified by Alex Smith, 2014-01-18 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -225,7 +225,7 @@ typedef nh_bool(*getlin_hook_proc) (char *, void *);
 struct gamewin {
     void (*draw) (struct gamewin * gw);
     void (*resize) (struct gamewin * gw);
-    WINDOW *win;
+    WINDOW *win, *win2;
     struct gamewin *next, *prev;
     void *extra[];
 };
@@ -233,7 +233,6 @@ struct gamewin {
 
 # define MAXCOLS 16
 struct win_menu {
-    WINDOW *content;
     struct nh_menuitem *items;
     char *selected;
     const char *title;
@@ -244,7 +243,6 @@ struct win_menu {
 };
 
 struct win_objmenu {
-    WINDOW *content;
     struct nh_objitem *items;
     int *selected;
     const char *title;
@@ -431,6 +429,7 @@ extern void rebuild_ui(void);
 extern int nh_wgetch(WINDOW * win);
 extern struct gamewin *alloc_gamewin(int extra);
 extern void delete_gamewin(struct gamewin *win);
+extern void delete_all_gamewins(void);
 extern void curses_pause(enum nh_pause_reason reason);
 extern void curses_display_buffer(const char *buf, nh_bool trymove);
 extern void curses_raw_print(const char *str);
