@@ -6797,7 +6797,7 @@ __DATA__
             fail_silently => 1,
         },
         linux_clflags_depends_on_fpic => {
-            object => qr/^optionset:[CL]FLAGS$/,
+            object => qr/^optionset:(?:[CL]|CXX)FLAGS$/,
             command => ['intcmd:assert_equal', 'optstring:linux',
                         "optstring:$^O"],
             depends => 'optionset:linux_fpic_option',
