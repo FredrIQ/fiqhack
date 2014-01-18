@@ -5323,7 +5323,7 @@ $configsafe->permit_only(qw/null stub scalar pushmark const undef list qr
 our $libext = $Config{_a};
 our $objext = $Config{_o};
 our $exeext = $Config{_exe};
-our $pointerbits = $Config{ptrsize};
+our $pointerbits = $Config{ptrsize} * 8;
 # Make sure that exeext is non-null, to reduce porting mistakes
 $exeext eq '' and $exeext = '.bin';
 # a UUID generated for the purpose of avoiding clashes with other things
