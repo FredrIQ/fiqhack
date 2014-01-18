@@ -6795,7 +6795,6 @@ __DATA__
             object => 'optionset:linux_fpic_option',
             depends => 'optstring:-fPIC',
             fail_silently => 1,
-            debug_trace => 1,
         },
         linux_clflags_depends_on_fpic => {
             object => qr/^optionset:[CL]FLAGS$/,
@@ -6803,7 +6802,6 @@ __DATA__
                         "optstring:$^O"],
             depends => 'optionset:linux_fpic_option',
             fail_silently => 1,
-            debug_trace => 1,
         },
 
         default_libraries => {
