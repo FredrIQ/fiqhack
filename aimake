@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2014-01-18
+# Last modified by Alex Smith, 2014-01-19
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
@@ -3586,7 +3586,7 @@ sub run_command {
             return (undef, '', '');
         } elsif ($cmd eq 'intcmd:echo') {
             map +(s/^optstring: ?// ||
-                  s/^optpath: ?-w://e ||
+                  s/^optpath: ?-w:// ||
                   s/^optpath: ?-t([^:]*):(.*)$/$1.((parse_objname $2)[0])/es ||
                   s/^optpath: ?-a([^:]*):(.*)$/$1.((parse_objname $2)[1])/es ||
                   s/^optpath: ?-i([^:]*):(.*)$/$1.((parse_objname $2)[2])/es ||
@@ -3962,6 +3962,11 @@ sub run_command {
     }
     progress_report +($intopts{'debug_trace'} ? 0 : 2),
         (defined_or($failreason, "Command succeeded") . ".");
+
+    if ($intopts{'debug_trace'}) {
+        print STDERR "stdout was:\n", defined_or($stdout, '(empty)');
+        print STDERR "stderr was:\n", defined_or($stderr, '(empty)');
+    }
 
     return ($failreason, $stdout, $stderr);
 }
@@ -6180,6 +6185,12 @@ MAINLOOP: while (1) {
         parse_objname $o; # check it's a well-formed object name
     }
 
+    # For dependency rules, the output is always known (it's the dependencies:
+    # object in output_target). Normally it's correct at this point, but in a
+    # very few cases it won't be (e.g. if the rule has an inner that fails to
+    # match).
+    $rule->{depends} and @output = @$output_target;
+
     # Some rules may produce lots of duplicate output dependencies.
     # This has the same meaning as non-duplicate dependencies, so we can
     # just remove the copies. Make sure to keep them in the same order.
@@ -7182,9 +7193,70 @@ __DATA__
             propagate_usedeps => 2,
         },
 
+        # Preprocessors fall back to system includes if they can't find a local
+        # include for a #include "file.h" line. This is a problem when we want
+        # to find dependencies, if a system and local header have the same name.
+        # The solution is to create a directory of header stubs that will be
+        # found with higher priority.
+        dependencies_use_headerstubs => {
+            object => qr/^bpath:(?!aimake).*\.[ch](?:xx)?$/s,
+            command => ['intcmd:cat', 'optpath::'],
+            depends => 'dependencies:headerstub_created:',
+            inner => qr/^\s*#\s*include\s*"((?:[^"]|\\.)+)"/,
+            unescape => 'backslash',
+            low_message_priority => 1,
+            propagate_usedeps => 2,
+        },
+        find_headerstubs => {
+            object => qr/^bpath:(?!aimake).*\.[ch](?:xx)?$/s,
+            command => ['intcmd:cat', 'optpath::'],
+            output => 'dependencies:find_headerstubs:',
+            inner => qr/^\s*#\s*include\s*"((?:[^"]|\\.)+)"/,
+            outdepends => [],
+            unescape => 'backslash',
+            low_message_priority => 1,
+            propagate_usedeps => 2,
+        },
+        headerstub_name => {
+            object => qr/^dependencies:find_headerstubs:/,
+            command => ['intcmd:echo', 'optpath:-i:'],
+            depends => 'optpath::bpath:aimake/stubs/',
+            dependsarg => qr/^file:(.*)/s,
+            require_match => 1,
+        },
+        create_headerstubs => {
+            object => qr/^dependencies:find_headerstubs:/,
+            command => ['intcmd:writefile', 'optstring:/*_stub_*/', ''],
+            output_from_optpath => '',
+            low_message_priority => 1,
+        },
+
+        # A dependency on a stub creates a dependency on the file name of that
+        # stub. To preserve the C-defined behaviour that #include "file" falls
+        # back to #include <file>, we also create a searchfile: dependency.
+        headerstub_dependencies => {
+            object => qr=^bpath:aimake/stubs/=,
+            command => ['intcmd:echo', 'optpath:-w:'],
+            depends => 'file:',
+            dependsarg => qr=^bpath:aimake/stubs/(.*)=s,
+        },
+        record_headerstub_creation => {
+            object => qr=^bpath:aimake/stubs/=,
+            command => ['intcmd:echo', 'optpath:-w:'],
+            output => ['searchfile:', 'dependencies:headerstub_created:file:'],
+            outputarg => qr=^bpath:aimake/stubs/(.*)=s,
+            outdepends => [],
+            propagate_usedeps => 2,
+        },
+
         ch_file_dependencies => {
             object => qr/^bpath:(?!aimake).*\.[ch](?:xx)?$/s,
-            command => ['tool:c_dependencies', 'optpath::'],
+            # We want this dependency rule to respect the dependencies from
+            # dependencies_use_headerstubs, so we add that manually (by
+            # default, dependency rules don't respect each other).
+            command => ['tool:c_dependencies', 'optpath::',
+                        'dependencies:dependencies_use_headerstubs:',
+                        'optpath:-iquote :bpath:aimake/stubs'],
             # A little aimake magic here: this outputs relative paths for
             # non-found files, and those become file: objects, whereas
             # absolute paths for files it did find will become the appropriate
@@ -7194,13 +7266,12 @@ __DATA__
             unescape => 'backslash_whitespace',
             depends => qr/^(.+)$/s,
             filter_spath => 1,
-            # I'm not sure if this propagate_usedeps is needed, but it won't
-            # hurt.
             propagate_usedeps => 2,
         },
         ch_file_searchfiles => {
             object => qr/^bpath:(?!aimake).*\.[ch](?:xx)?$/s,
-            command => ['tool:c_dependencies', 'optpath::'],
+            command => ['tool:c_dependencies', 'optpath::',
+                        'optpath:-iquote :bpath:aimake/stubs'],
             linesep => ' ', lineskip => 2, unescape => 'backslash_whitespace',
             output => qr/^(.+)$/s,
             outdepends => [],
@@ -7225,7 +7296,7 @@ __DATA__
             dependsarg => qr/^(.*)$/,
         },
         header_files_are_files => {
-            object => qr/^[bs]path:.*\.h(?:xx)?/,
+            object => qr/^[bs]path:(?!aimake).*\.h(?:xx)?/,
             command => ['intcmd:echo', 'optpath::'],
             output => 'file:',
             outputarg => qr/^[bs]path:
