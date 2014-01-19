@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-12 */
+/* Last modified by Alex Smith, 2014-01-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -625,7 +625,7 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif)
                 otmp->corpsenm = rndmonnum(&lev->z);
                 if (!verysmall(&mons[otmp->corpsenm]) &&
                     rn2(level_difficulty(&lev->z) / 2 + 10) > 10)
-                    add_to_container(otmp, mkobj(level, SPBOOK_CLASS, FALSE));
+                    add_to_container(otmp, mkobj(lev, SPBOOK_CLASS, FALSE));
             }
             break;
         case COIN_CLASS:
@@ -1471,8 +1471,11 @@ set_obj_level(struct level *lev, struct obj *obj)
 {
     struct obj *cobj;
 
-    transfer_timers(obj->olev, lev, obj->o_id);
-    transfer_lights(obj->olev, lev, obj->o_id);
+    if (obj->timed)
+	transfer_timers(obj->olev, lev, obj->o_id);
+    if (obj->lamplit)
+	transfer_lights(obj->olev, lev, obj->o_id);
+
     obj->olev = lev;
 
     for (cobj = obj->cobj; cobj; cobj = cobj->nobj)
