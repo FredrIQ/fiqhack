@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-12 */
+/* Last modified by Sean Hunt, 2014-01-19 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -358,6 +358,7 @@ extern void free_wrap(char **wrap_output);
 
 /* options.c */
 extern struct nh_option_desc *curses_get_nh_opts(void);
+extern void curses_free_nh_opts(struct nh_option_desc *opts);
 extern nh_bool curses_set_option(const char *name, union nh_optvalue value);
 extern void display_options(nh_bool change_birth_opt);
 extern void print_options(void);

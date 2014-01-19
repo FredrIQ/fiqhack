@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-12 */
+/* Last modified by Sean Hunt, 2014-01-19 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -158,6 +158,21 @@ curses_get_nh_opts(void)
         return nh_get_options();
     else
         return nh_options;
+}
+
+
+void
+curses_free_nh_opts(struct nh_option_desc *opts)
+{
+    if (game_is_running) {
+        if (opts == nh_options)
+            curses_impossible("Freeing non-game options during a game!");
+        else
+            free(opts);
+    } else if (opts != nh_options) {
+        curses_impossible("Freeing game options outside a game!");
+        free(opts);
+    }
 }
 
 
@@ -459,6 +474,7 @@ query_new_value(struct win_menu *mdat, int idx)
     int id = mdat->items[idx].id & 0x1ff;
     char strbuf[BUFSZ];
     int prev_optstyle = settings.optstyle;
+    nh_bool ret = FALSE;
 
     switch (listid) {
     case BIRTH_OPTS:
@@ -487,7 +503,7 @@ query_new_value(struct win_menu *mdat, int idx)
         sprintf(buf, "%d", value.i);
         curses_getline(query, buf);
         if (buf[0] == '\033')
-            return FALSE;
+            goto free;
         sscanf(buf, "%d", &value.i);
         break;
 
@@ -499,19 +515,19 @@ query_new_value(struct win_menu *mdat, int idx)
         sprintf(query, "New value for %s (text)", option->name);
         curses_getline(query, value.s);
         if (value.s[0] == '\033')
-            return FALSE;
+            goto free;
         break;
 
     case OPTTYPE_AUTOPICKUP_RULES:
         show_autopickup_menu(option);
-        return FALSE;
+        goto free;
 
     case OPTTYPE_KEYMAP:
         show_keymap_menu(FALSE);
-        return FALSE;
+        goto free;
 
     default:
-        return FALSE;
+        goto free;
     }
 
     if (!curses_set_option(option->name, value)) {
@@ -522,9 +538,13 @@ query_new_value(struct win_menu *mdat, int idx)
 
     /* special case: directly redo option menu appearance */
     if (settings.optstyle != prev_optstyle)
-        return TRUE;
+        ret = TRUE;
 
-    return FALSE;
+free:
+    if (listid == GAME_OPTS || listid == BIRTH_OPTS)
+        curses_free_nh_opts(optlist);
+
+    return ret;
 }
 
 
@@ -569,6 +589,8 @@ display_options(nh_bool change_birth_opt)
     write_ui_config();
     if (!game_is_running)
         write_nh_config();
+
+    curses_free_nh_opts(options);
 }
 
 
@@ -610,6 +632,8 @@ print_options(void)
 
     curses_display_menu(&menu, "Available options:", PICK_NONE,
                         PLHINT_ANYWHERE, NULL);
+
+    curses_free_nh_opts(options);
 }
 
 /*----------------------------------------------------------------------------*/
@@ -931,7 +955,7 @@ read_config_line(char *line)
 {
     char *comment, *delim, *name, *value;
     struct nh_option_desc *option;
-    struct nh_option_desc *optlist;
+    struct nh_option_desc *optlist = NULL;
     union nh_optvalue optval;
 
     comment = strchr(line, '#');
@@ -988,6 +1012,9 @@ read_config_line(char *line)
         free(optval.ar->rules);
         free(optval.ar);
     }
+
+    if (optlist)
+        curses_free_nh_opts(optlist);
 }
 
 

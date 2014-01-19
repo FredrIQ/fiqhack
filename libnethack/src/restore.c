@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-01 */
+/* Last modified by Sean Hunt, 2014-01-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,8 +7,6 @@
 #include "lev.h"
 #include <stdint.h>
 
-static void restore_options(struct memfile *mf);
-static void restore_option(struct memfile *mf, struct nh_option_desc *opt);
 static void restore_autopickup_rules(struct memfile *mf,
                                      struct nh_autopickup_rules *r);
 static void restore_utracked(struct memfile *mf, struct you *you);
@@ -682,24 +680,6 @@ restore_utracked(struct memfile *mf, struct you *y)
 
 
 static void
-restore_options(struct memfile *mf)
-{
-    int i, num;
-    num = mread32(mf);
-
-    for (i = 0; i < num; ++i) {
-        if (!options[i].name)
-            impossible("restore_options: too few saved options");
-
-        restore_option(mf, &options[i]);
-    }
-
-    if (options[i].name)
-            impossible("restore_options: too many saved options");
-}
-
-
-static void
 restore_autopickup_rules(struct memfile *mf, struct nh_autopickup_rules *ar)
 {
     int len = mread32(mf), i;
@@ -710,38 +690,6 @@ restore_autopickup_rules(struct memfile *mf, struct nh_autopickup_rules *ar)
         ar->rules[i].oclass = mread16(mf);
         ar->rules[i].buc = mread8(mf);
         ar->rules[i].action = mread8(mf);
-    }
-}
-
-
-static void
-restore_option(struct memfile *mf, struct nh_option_desc *opt)
-{
-    int len;
-
-    switch (opt->type) {
-    case OPTTYPE_BOOL:
-        /* Insure against boolean sizing shenanigans. */
-        opt->value.b = mread8(mf);
-        break;
-    case OPTTYPE_INT:
-    case OPTTYPE_ENUM:
-        opt->value.i = mread32(mf); /* equivalent to opt->value.e */
-        break;
-    case OPTTYPE_STRING:
-        free(opt->value.s);
-        len = mread32(mf);
-        if (len) {
-            opt->value.s = malloc(len + 1);
-            mread(mf, opt->value.s, len);
-            opt->value.s[len] = '\0';
-        } else
-            opt->value.s = NULL;
-        break;
-    case OPTTYPE_AUTOPICKUP_RULES:
-        free(opt->value.ar->rules);
-        restore_autopickup_rules(mf, opt->value.ar);
-        break;
     }
 }
 
@@ -852,8 +800,6 @@ dorecover(struct memfile *mf)
     restore_you(mf, &u);
     role_init();        /* Reset the initial role, race, gender, and alignment */
     pantheon_init(FALSE);
-
-    restore_options(mf);
 
     mtmp = restore_mon(mf);
     youmonst = *mtmp;

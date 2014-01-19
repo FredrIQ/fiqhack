@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-01 */
+/* Last modified by Sean Hunt, 2014-01-19 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -288,13 +288,15 @@ rungame(nh_bool net)
     long t;
     struct nh_roles_info *info;
 
-    struct nh_option_desc *new_opts = nhlib_clone_optlist(curses_get_nh_opts()),
+    struct nh_option_desc *old_opts = curses_get_nh_opts(),
+                          *new_opts = nhlib_clone_optlist(old_opts),
                           *roleopt = nhlib_find_option(new_opts, "role"),
                           *raceopt = nhlib_find_option(new_opts, "race"),
                           *alignopt = nhlib_find_option(new_opts, "align"),
                           *gendopt = nhlib_find_option(new_opts, "gender"),
                           *nameopt = nhlib_find_option(new_opts, "name"),
                           *modeopt = nhlib_find_option(new_opts, "mode");
+    curses_free_nh_opts(old_opts);
     if (!roleopt || !raceopt || !alignopt || !gendopt || !nameopt || !modeopt) {
         curses_raw_print("Creation options not available?");
         goto cleanup;

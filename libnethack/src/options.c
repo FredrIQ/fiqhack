@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-15 */
+/* Last modified by Sean Hunt, 2014-01-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -10,6 +10,7 @@
 #define WINTYPELEN 16
 
 static int change_inv_order(char *op);
+static struct nh_option_desc *new_opt_struct(void);
 
 /* -------------------------------------------------------------------------- */
 
@@ -244,17 +245,6 @@ static const char def_inv_order[MAXOCLASSES] = {
     TOOL_CLASS, GEM_CLASS, ROCK_CLASS, BALL_CLASS, CHAIN_CLASS, 0,
 };
 
-/* This global has a funny set of rules. Because it can be given to the client
- * for use in configuration when a game is not in progress, it must be valid at
- * all times when a game is not in play. Accordingly, it is reset in program
- * initialization and in terminate().
- *
- * Additionally, the set of values contained within is not necessarily up to
- * date. Actual option values are stored elsewhere (such as on flags or u).
- * Calling nh_get_options() is required to update the values to match reality.
- */
-struct nh_option_desc *options = 0;
-
 
 /* most environment variables will eventually be printed in an error
  * message if they don't work, and most error message paths go through
@@ -323,13 +313,10 @@ build_race_spec(void)
 }
 
 
-void
-init_opt_struct(void)
+struct nh_option_desc *
+new_opt_struct(void)
 {
-    if (options)
-        nhlib_free_optlist(options);
-
-    options = nhlib_clone_optlist(const_options);
+    struct nh_option_desc *options = nhlib_clone_optlist(const_options);
 
     build_role_spec();
     build_race_spec();
@@ -354,28 +341,18 @@ init_opt_struct(void)
     nhlib_find_option(options, "dogname")->s.maxlen = PL_PSIZ;
     nhlib_find_option(options, "horsename")->s.maxlen = PL_PSIZ;
 
-    /* If no config file exists, these values will not get set until they have
-       already been used during game startup.  (-1) is a much better default,
-       as 0 will always cause a lawful male Archologist to be created */
-    u.initalign = u.initgend = u.initrace = u.initrole = -1;
-}
-
-
-void
-cleanup_opt_struct(void)
-{
-    free((void *)role_spec.choices);
-    role_spec.choices = NULL;
-    free((void *)race_spec.choices);
-    race_spec.choices = NULL;
-    nhlib_free_optlist(options);
-    options = NULL;
+    return options;
 }
 
 
 void
 initoptions(void)
 {
+    /* If no config file exists, these values will not get set until they have
+       already been used during game startup.  (-1) is a much better default,
+       as 0 will always cause a lawful male Archologist to be created */
+    u.initalign = u.initgend = u.initrace = u.initrole = -1;
+
     flags.mon_generation = 1;
 
     flags.travelcc.x = flags.travelcc.y = -1;
@@ -392,22 +369,23 @@ initoptions(void)
 static boolean
 set_option(const char *name, union nh_optvalue value)
 {
-    struct nh_option_desc *option = NULL;
+    struct nh_option_desc *option = NULL, *options = new_opt_struct();
+    boolean ret = FALSE;
 
     /* if this option change affects game options and happens during a 
        replay (program_state.viewing) and the change isn't triggered by the
        replay (!program_state.restoring) */
     if (program_state.viewing)
-        return FALSE;   /* Nope, sorry. That would mess up the replay */
+        goto free;   /* Nope, sorry. That would mess up the replay */
 
     if (options)
         option = nhlib_find_option(options, name);
 
     if (!option || (option->birth_option && program_state.game_running))
-        return FALSE;
+        goto free;
 
     if (!nhlib_option_value_ok(option, value))
-        return FALSE;
+        goto free;
 
     nhlib_copy_option_value(option, value);
 
@@ -416,11 +394,12 @@ set_option(const char *name, union nh_optvalue value)
 
         if (!bvar) {
             impossible("no boolean for option '%s'", option->name);
-            return FALSE;
+            goto free;
         }
         *bvar = option->value.b;
 
-        return TRUE;
+        ret = TRUE;
+        goto free;
     } else if (!strcmp("disclose", option->name)) {
         flags.end_disclose = option->value.e;
     } else if (!strcmp("fruit", option->name)) {
@@ -434,7 +413,7 @@ set_option(const char *name, union nh_optvalue value)
         flags.interaction_mode = option->value.e;
     } else if (!strcmp("packorder", option->name)) {
         if (!change_inv_order(option->value.s))
-            return FALSE;
+            goto free;
     } else if (!strcmp("pickup_burden", option->name)) {
         flags.pickup_burden = option->value.e;
     } else if (!strcmp("autopickup_rules", option->name)) {
@@ -477,10 +456,15 @@ set_option(const char *name, union nh_optvalue value)
 
     else
         /* unrecognized option */
-        return FALSE;
+        goto free;
 
     /* assume that any recognized option has been handled. */
-    return TRUE;
+    ret = TRUE;
+
+free:
+    nhlib_free_optlist(options);
+
+    return ret;
 }
 
 
@@ -499,8 +483,17 @@ nh_set_option(const char *name, union nh_optvalue value)
 
 
 struct nh_option_desc *
+default_options(void)
+{
+    return new_opt_struct();
+}
+
+
+struct nh_option_desc *
 nh_get_options(void)
 {
+    struct nh_option_desc *options = new_opt_struct();
+
     /* Outside of a game, don't attempt to recover options from state; all
        options should have default values. */
     if (!program_state.game_running)

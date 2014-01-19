@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-01 */
+/* Last modified by Sean Hunt, 2014-01-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,6 +7,7 @@
 
 #include "hack.h"
 #include "hungerstatus.h"
+#include "common_options.h"
 
 #include <sys/stat.h>
 
@@ -46,7 +47,6 @@ nh_lib_init(const struct nh_window_procs *procs, char **paths)
         fqn_prefix[i] = strdup(paths[i]);
 
     u.uhp = 1;  /* prevent RIP on early quits */
-    init_opt_struct();
     turntime = 0;
 
     API_EXIT();
@@ -66,8 +66,6 @@ nh_lib_exit(void)
         free(fqn_prefix[i]);
         fqn_prefix[i] = NULL;
     }
-
-    cleanup_opt_struct();
 }
 
 
@@ -253,8 +251,10 @@ nh_create_game(int fd, struct nh_option_desc *opts)
 
     startup_common(TRUE);
     /* Set defaults in case list of options from client was incomplete. */
-    for (i = 0; options[i].name; i++)
-        nh_set_option(options[i].name, options[i].value);
+    struct nh_option_desc *defaults = default_options();
+    for (i = 0; defaults[i].name; i++)
+        nh_set_option(defaults[i].name, defaults[i].value);
+    nhlib_free_optlist(defaults);
     for (i = 0; opts[i].name; i++)
         nh_set_option(opts[i].name, opts[i].value);
 
@@ -265,9 +265,6 @@ nh_create_game(int fd, struct nh_option_desc *opts)
         !validgend(u.initrole, u.initrace, u.initgend) ||
         !validalign(u.initrole, u.initrace, u.initalign) ||
         (!*u.uplname && !wizard)) {
-        /* Reset options that we just clobbered. */
-        cleanup_opt_struct();
-        init_opt_struct();
         API_EXIT();
         return NHCREATE_INVALID;
     }

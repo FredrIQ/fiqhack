@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-01 */
+/* Last modified by Sean Hunt, 2014-01-19 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -744,7 +744,8 @@ ccmd_set_option(json_t * params)
     const char *optname, *pattern;
     json_t *jmsg, *joval, *jopt;
     int  i, ret;
-    const struct nh_option_desc *opts, *option;
+    struct nh_option_desc *opts;
+    const struct nh_option_desc *option;
     union nh_optvalue value;
     struct nh_autopickup_rules ar = { NULL, 0 };
     struct nh_autopickup_rule *r;
@@ -760,6 +761,7 @@ ccmd_set_option(json_t * params)
     if (!option) {
         jmsg = json_pack("{si,so}", "return", FALSE, "option", json_object());
         client_msg("set_option", jmsg);
+        nhlib_free_optlist(opts);
         return;
     }
 
@@ -803,6 +805,7 @@ ccmd_set_option(json_t * params)
     if (option->type == OPTTYPE_AUTOPICKUP_RULES)
         free(ar.rules);
 
+    nhlib_free_optlist(opts);
     opts = nh_get_options();
     option = nhlib_const_find_option(opts, optname);
 
@@ -813,6 +816,8 @@ ccmd_set_option(json_t * params)
        separate get_option_string message unneccessary */
     jmsg = json_pack("{si,so}", "return", ret, "option", jopt);
     client_msg("set_option", jmsg);
+
+    nhlib_free_optlist(opts);
 }
 
 
@@ -820,7 +825,7 @@ static void
 ccmd_get_options(json_t * params)
 {
     int i;
-    const struct nh_option_desc *options;
+    struct nh_option_desc *options;
     json_t *jmsg, *jarr;
 
     void *iter = json_object_iter(params);
@@ -833,6 +838,7 @@ ccmd_get_options(json_t * params)
         json_array_append_new(jarr, json_option(&options[i]));
     jmsg = json_pack("{so}", "options", jarr);
     client_msg("get_options", jmsg);
+    nhlib_free_optlist(options);
 }
 
 

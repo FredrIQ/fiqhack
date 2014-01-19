@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-12 */
+/* Last modified by Sean Hunt, 2014-01-19 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1196,9 +1196,8 @@ extern const char *mimic_obj_name(const struct monst *mimic);
 /* ### options.c ### */
 
 extern char *nh_getenv(const char *);
-extern void init_opt_struct(void);
-extern void cleanup_opt_struct(void);
 extern void initoptions(void);
+extern struct nh_option_desc *default_options(void);
 extern int fruitadd(const char *str);
 
 /* ### pager.c ### */

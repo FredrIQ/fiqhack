@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-01 */
+/* Last modified by Sean Hunt, 2014-01-19 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -644,11 +644,8 @@ nhnet_get_options(void)
     if (!nhnet_active())
         return nh_get_options();
 
-    if (option_list)
-        return option_list;
-
     if (!api_entry()) {
-        olist = xmalloc(&xm_blocklist, sizeof (struct nh_option_desc));
+        olist = malloc( sizeof (struct nh_option_desc));
         memset(olist, 0, sizeof (struct nh_option_desc));
         return olist;
     }
@@ -657,12 +654,11 @@ nhnet_get_options(void)
     if (json_unpack(jmsg, "{so!}", "options", &jarr) == -1 ||
         !json_is_array(jarr)) {
         print_error("Incorrect return object in nhnet_get_options");
-        olist = xmalloc(&xm_blocklist, sizeof (struct nh_option_desc));
+        olist = malloc(sizeof (struct nh_option_desc));
         memset(olist, 0, sizeof (struct nh_option_desc));
     } else {
         count = json_array_size(jarr);
-        option_list = olist =
-            malloc(sizeof (struct nh_option_desc) * (count + 1));
+        olist = malloc(sizeof (struct nh_option_desc) * (count + 1));
         memset(olist, 0, sizeof (struct nh_option_desc) * (count + 1));
         for (i = 0; i < count; i++) {
             jobj = json_array_get(jarr, i);
