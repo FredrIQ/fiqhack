@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-18 */
+/* Last modified by Alex Smith, 2014-01-19 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -8,11 +8,12 @@
 #include <limits.h>
 
 
+/* Create a new dialog, or reposition an existing one, in an appropriate position
+   for showing prompts. Also draw a border aound it. */
 WINDOW *
-newdialog(int height, int width)
+newdialog(int height, int width, WINDOW *win)
 {
     int starty, startx;
-    WINDOW *win;
 
     if (height < 3)
         height = 3;
@@ -38,7 +39,13 @@ newdialog(int height, int width)
         startx = (COLS - width) / 2;
     }
 
-    win = newwin(height, width, starty, startx);
+    if (!win)
+        win = newwin(height, width, starty, startx);
+    else {
+        mvwin(win, starty, startx);
+        wresize(win, height, width);
+    }
+
     keypad(win, TRUE);
     meta(win, TRUE);
     wattron(win, FRAME_ATTRS);
@@ -47,15 +54,63 @@ newdialog(int height, int width)
     return win;
 }
 
+static void
+layout_curses_msgwin(struct win_msgwin *wmw, int *linecount, char ***lines,
+                     nh_bool recalc)
+{
+    int width = strlen(wmw->msg) + 4;
+    if (width > COLNO - 1)
+        width = COLNO - 1;
+    if (width > getmaxx(stdscr) - 2)
+        width = getmaxx(stdscr) - 2;
+
+    if (!recalc)
+        width = wmw->layout_width;
+
+    wrap_text(width - 4, wmw->msg, linecount, lines);
+
+    if (recalc) {
+        wmw->layout_width = width;
+        wmw->layout_height = *linecount + 2;
+    }
+}
+
+static void
+draw_curses_msgwin(struct gamewin *gw)
+{
+    int i;
+
+    int linecount;
+    char **lines;
+    struct win_msgwin *wmw = (struct win_msgwin *)gw->extra;
+
+    layout_curses_msgwin(wmw, &linecount, &lines, 0);
+
+    for (i = 0; i < linecount; i++)
+        mvwaddstr(gw->win, 1 + i, 2, lines[i]);
+    wrefresh(gw->win);
+
+    free_wrap(lines);
+}
+
+static void
+resize_curses_msgwin(struct gamewin *gw)
+{
+    int linecount;
+    char **lines;
+    struct win_msgwin *wmw = (struct win_msgwin *)gw->extra;
+
+    layout_curses_msgwin(wmw, &linecount, &lines, 1);
+    free_wrap(lines);
+
+    gw->win = newdialog(wmw->layout_height, wmw->layout_width, gw->win);
+}
 
 static int
 curses_msgwin_generic(const char *msg, int (*validator)(int, void *),
                       void *arg, nh_bool cursor_visible)
 {
-    int rv, width, height, i;
-
-    int linecount;
-    char **lines;
+    int rv;
 
     /* We don't know whether the window system is inited right now. So ask.
        isendwin() is one of the few uncursed functions that works no matter
@@ -65,29 +120,26 @@ curses_msgwin_generic(const char *msg, int (*validator)(int, void *),
         return validator('\x1b', arg);
     }
 
-    /* Wrap the text. */
-    width = strlen(msg) + 4;
-    if (width > COLNO - 1)
-        width = COLNO - 1;
-    if (width > getmaxx(stdscr) - 2)
-        width = getmaxx(stdscr) - 2;
-
-    wrap_text(width - 4, msg, &linecount, &lines);
-    height = linecount + 2;
-
     int prevcurs = curs_set(cursor_visible);
-    WINDOW *win = newdialog(height, width);
 
-    for (i = 0; i < linecount; i++)
-        mvwaddstr(win, 1 + i, 2, lines[i]);
-    wrefresh(win);
+    struct gamewin *gw = alloc_gamewin(sizeof (struct win_msgwin));
+    struct win_msgwin *wmw = (struct win_msgwin *)gw->extra;
+    wmw->msg = msg;
+    gw->draw = draw_curses_msgwin;
+    gw->resize = resize_curses_msgwin;
+
+    gw->win = 0;
+    /* resize_curses_msgwin sets the layout_{width,height}, and because gw->win
+       is 0, allocates gw->win. */
+    resize_curses_msgwin(gw);
+    draw_curses_msgwin(gw);
 
     rv = -1;
     while (rv == -1)
-        rv = validator(nh_wgetch(win), arg);
+        rv = validator(nh_wgetch(gw->win), arg);
 
-    delwin(win);
-    free_wrap(lines);
+    delete_gamewin(gw);
+
     curs_set(prevcurs);
     redraw_game_windows();
 

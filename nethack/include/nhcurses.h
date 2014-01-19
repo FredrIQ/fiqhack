@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-18 */
+/* Last modified by Alex Smith, 2014-01-19 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -257,6 +257,12 @@ struct win_getline {
     int pos;
 };
 
+struct win_msgwin {
+    const char *msg;
+    int layout_width;
+    int layout_height;
+};
+
 /*----------------------------------------------------------------------------*/
 
 extern struct settings settings;
@@ -284,7 +290,7 @@ extern int curses_color_attr(int nh_color, int bg_color);
 extern void set_darkgray(void);
 
 /* dialog.c */
-extern WINDOW *newdialog(int height, int width);
+extern WINDOW *newdialog(int height, int width, WINDOW *old);
 extern enum nh_direction curses_getdir(const char *query, nh_bool restricted);
 extern char curses_yn_function(const char *query, const char *resp, char def);
 extern char curses_query_key(const char *query, int *count);
