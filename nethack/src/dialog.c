@@ -46,6 +46,7 @@ newdialog(int height, int width, WINDOW *win)
         wresize(win, height, width);
     }
 
+    werase(win);
     keypad(win, TRUE);
     meta(win, TRUE);
     wattron(win, FRAME_ATTRS);
