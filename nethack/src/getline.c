@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-31 */
+/* Last modified by Alex Smith, 2014-01-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -94,28 +94,10 @@ draw_getline_noecho(struct gamewin *gw)
 static void
 resize_getline(struct gamewin *gw)
 {
-    int height, width, startx, starty;
+    int height, width;
 
     getmaxyx(gw->win, height, width);
-    if (height > LINES)
-        height = LINES;
-    if (width > COLS)
-        width = COLS;
-
-    /* TODO: this does pretty much the same thing as newdialog() in terms of
-       planning the window size.  Maybe merge? */
-
-    if (game_is_running) {
-        startx = 0;
-        // starty = max(0, (getmaxy(msgwin) - height) / 2);
-        starty = 0;
-    } else {
-        starty = (LINES - height) / 2;
-        startx = (COLS - width) / 2;
-    }
-
-    mvwin(gw->win, starty, startx);
-    wresize(gw->win, height, width);
+    newdialog(height, width, gw->win);
 }
 
 
@@ -147,7 +129,7 @@ hooked_curses_getlin(const char *query, char *buf, getlin_hook_proc hook,
     width = COLNO;
 
     gw = alloc_gamewin(sizeof (struct win_getline));
-    gw->win = newdialog(height, width);
+    gw->win = newdialog(height, width, 0);
     gw->draw = echo ? draw_getline : draw_getline_noecho;
     gw->resize = resize_getline;
     gldat = (struct win_getline *)gw->extra;
@@ -236,7 +218,6 @@ hooked_curses_getlin(const char *query, char *buf, getlin_hook_proc hook,
 
     curs_set(prev_curs);
 
-    delwin(gw->win);
     delete_gamewin(gw);
     redraw_game_windows();
 }

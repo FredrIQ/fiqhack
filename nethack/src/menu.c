@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-12 */
+/* Last modified by Alex Smith, 2014-01-18 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -120,7 +120,7 @@ draw_menu(struct gamewin *gw)
         wattroff(gw->win, A_UNDERLINE);
     }
 
-    werase(mdat->content);
+    werase(gw->win2);
     /* draw menu items */
     item = &mdat->items[mdat->offset];
     for (i = 0; i < mdat->innerheight; i++, item++) {
@@ -136,25 +136,25 @@ draw_menu(struct gamewin *gw)
         }
 
         if (item->role == MI_HEADING)
-            wattron(mdat->content, settings.menu_headings);
+            wattron(gw->win2, settings.menu_headings);
 
-        wmove(mdat->content, i, 0);
+        wmove(gw->win2, i, 0);
         if (mdat->how != PICK_NONE && item->role == MI_NORMAL && item->accel)
-            wprintw(mdat->content, "%c %c ", item->accel,
+            wprintw(gw->win2, "%c %c ", item->accel,
                     mdat->selected[mdat->offset + i] ? '+' : '-');
 
         if (col) {
             for (j = 0; j <= col; j++) {
-                waddnstr(mdat->content, colstrs[j],
+                waddnstr(gw->win2, colstrs[j],
                          mdat->colpos[j + 1] - mdat->colpos[j] - 1);
                 if (j < col)
-                    wmove(mdat->content, i, mdat->colpos[j + 1]);
+                    wmove(gw->win2, i, mdat->colpos[j + 1]);
             }
         } else
-            waddnstr(mdat->content, caption, mdat->innerwidth);
+            waddnstr(gw->win2, caption, mdat->innerwidth);
 
         if (item->role == MI_HEADING)
-            wattroff(mdat->content, settings.menu_headings);
+            wattroff(gw->win2, settings.menu_headings);
     }
 
     if (mdat->icount <= mdat->innerheight)
@@ -187,9 +187,9 @@ resize_menu(struct gamewin *gw)
     if (mdat->offset > mdat->icount - mdat->innerheight)
         mdat->offset = mdat->icount - mdat->innerheight;
 
-    delwin(mdat->content);
+    delwin(gw->win2);
     wresize(gw->win, mdat->height, mdat->width);
-    mdat->content =
+    gw->win2 =
         derwin(gw->win, mdat->innerheight, mdat->innerwidth,
                mdat->frameheight - 1, 2);
 
@@ -322,11 +322,11 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     wattron(gw->win, FRAME_ATTRS);
     box(gw->win, 0, 0);
     wattroff(gw->win, FRAME_ATTRS);
-    mdat->content =
+    gw->win2 =
         derwin(gw->win, mdat->innerheight, mdat->innerwidth,
                mdat->frameheight - 1, 2);
     leaveok(gw->win, TRUE);
-    leaveok(mdat->content, TRUE);
+    leaveok(gw->win2, TRUE);
     done = FALSE;
     cancelled = FALSE;
     while (!done && !cancelled) {
@@ -432,9 +432,6 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
             break;
         }
     }
-
-    delwin(mdat->content);
-    delwin(gw->win);
 
     if (cancelled)
         rv = -1;
@@ -626,7 +623,7 @@ draw_objmenu(struct gamewin *gw)
         wattroff(gw->win, A_UNDERLINE);
     }
 
-    draw_objlist(mdat->content,
+    draw_objlist(gw->win2,
                  &(struct nh_objlist){.icount = mdat->icount - mdat->offset,
                                       .items  = mdat->items  + mdat->offset},
                  mdat->selected + mdat->offset, mdat->how);
@@ -663,9 +660,9 @@ resize_objmenu(struct gamewin *gw)
 
     layout_objmenu(gw);
 
-    delwin(mdat->content);
+    delwin(gw->win2);
     wresize(gw->win, mdat->height, mdat->width);
-    mdat->content =
+    gw->win2 =
         derwin(gw->win, mdat->innerheight, mdat->innerwidth,
                mdat->frameheight - 1, 2);
 
@@ -793,11 +790,11 @@ curses_display_objects(struct nh_objlist *objlist, const char *title,
     wattron(gw->win, FRAME_ATTRS);
     box(gw->win, 0, 0);
     wattroff(gw->win, FRAME_ATTRS);
-    mdat->content =
+    gw->win2 =
         derwin(gw->win, mdat->innerheight, mdat->innerwidth,
                mdat->frameheight - 1, 2);
     leaveok(gw->win, TRUE);
-    leaveok(mdat->content, TRUE);
+    leaveok(gw->win2, TRUE);
 
     done = FALSE;
     cancelled = FALSE;
@@ -988,9 +985,6 @@ curses_display_objects(struct nh_objlist *objlist, const char *title,
             break;
         }
     }
-
-    delwin(mdat->content);
-    delwin(gw->win);
 
     if (cancelled)
         rv = -1;

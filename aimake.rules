@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2014-01-14
+# Last modified by Alex Smith, 2014-01-18
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -322,11 +322,13 @@
             object => "bpath:nethack/src/main.c/main$exeext",
             install_dir => "gamesbindir",
             install_name => "nethack4$exeext",
+            install_elevation => "games",
         },
         _install_server => {
             object => "bpath:nethack_server/src/srvmain.c/srvmain$exeext",
             install_dir => "gamesbindir",
             install_name => "nethack4-server$exeext",
+            install_permission => "games",
         },
         _install_nhdat => {
             object => "bpath:libnethack/dat/nhdat",
@@ -344,11 +346,15 @@
             object => "sys:ensure_exists",
             install_dir => "gamesstatedir",
             install_name => "record",
+            install_permission => "games",
+            install_readable => 1,
         },
         _install_xlogfile => {
             object => "sys:ensure_exists",
             install_dir => "gamesstatedir",
             install_name => "xlogfile",
+            install_permission => "games",
+            install_readable => 1,
         },
         _install_server_config => {
             object => "sys:ensure_exists",
@@ -363,6 +369,7 @@
                         "bpath:nethack_server/src/srvmain.c/srvmain$exeext"],
             install_dir => "logdir",
             install_name => "nethack4.log",
+            install_permission => "games",
         },
         _install_server_lockfile => {
             object => "sys:touch_only",
@@ -376,6 +383,25 @@
                         "bpath:nethack_server/src/srvmain.c/srvmain$exeext"],
             install_dir => "gamesstatedir",
             install_name => "dumps",
+            install_permission => "games",
+            install_readable => 1,
+        },
+        _install_server_completed => {
+            object => "sys:create_subdir",
+            command => ["intcmd:nop",
+                        "bpath:nethack_server/src/srvmain.c/srvmain$exeext"],
+            install_dir => "gamesstatedir",
+            install_name => "completed",
+            install_permission => "games",
+            install_readable => 1,
+        },
+        _install_server_save => {
+            object => "sys:create_subdir",
+            command => ["intcmd:nop",
+                        "bpath:nethack_server/src/srvmain.c/srvmain$exeext"],
+            install_dir => "gamesstatedir",
+            install_name => "save",
+            install_permission => "games",
         },
         _install_dumps_note => {
             object => "bpath:readme-dumps",

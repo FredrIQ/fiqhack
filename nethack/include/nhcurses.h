@@ -225,7 +225,7 @@ typedef nh_bool(*getlin_hook_proc) (char *, void *);
 struct gamewin {
     void (*draw) (struct gamewin * gw);
     void (*resize) (struct gamewin * gw);
-    WINDOW *win;
+    WINDOW *win, *win2;
     struct gamewin *next, *prev;
     void *extra[];
 };
@@ -233,7 +233,6 @@ struct gamewin {
 
 # define MAXCOLS 16
 struct win_menu {
-    WINDOW *content;
     struct nh_menuitem *items;
     char *selected;
     const char *title;
@@ -244,7 +243,6 @@ struct win_menu {
 };
 
 struct win_objmenu {
-    WINDOW *content;
     struct nh_objitem *items;
     int *selected;
     const char *title;
@@ -257,6 +255,12 @@ struct win_getline {
     char *buf;
     const char *query;
     int pos;
+};
+
+struct win_msgwin {
+    const char *msg;
+    int layout_width;
+    int layout_height;
 };
 
 /*----------------------------------------------------------------------------*/
@@ -286,7 +290,7 @@ extern int curses_color_attr(int nh_color, int bg_color);
 extern void set_darkgray(void);
 
 /* dialog.c */
-extern WINDOW *newdialog(int height, int width);
+extern WINDOW *newdialog(int height, int width, WINDOW *old);
 extern enum nh_direction curses_getdir(const char *query, nh_bool restricted);
 extern char curses_yn_function(const char *query, const char *resp, char def);
 extern char curses_query_key(const char *query, int *count);
@@ -432,6 +436,7 @@ extern void rebuild_ui(void);
 extern int nh_wgetch(WINDOW * win);
 extern struct gamewin *alloc_gamewin(int extra);
 extern void delete_gamewin(struct gamewin *win);
+extern void delete_all_gamewins(void);
 extern void curses_pause(enum nh_pause_reason reason);
 extern void curses_display_buffer(const char *buf, nh_bool trymove);
 extern void curses_raw_print(const char *str);

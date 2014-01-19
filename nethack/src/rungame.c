@@ -629,6 +629,10 @@ playgame(int fd_or_gameno)
     do {
         ret = nh_play_game(fd_or_gameno);
 
+        /* Clean up any game windows that might be lying around.  This can
+           happen if the server cancels a menu or prompt. */
+        delete_all_gamewins();
+
         /* We reconnect if the server asked us to restart the connection; and we
            make a limited number of reconnection attempts if the network went
            down. TODO: Perhaps this behaviour should be in the client library

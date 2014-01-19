@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-12 */
+/* Last modified by Alex Smith, 2014-01-18 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -489,6 +489,15 @@ nh_wgetch(WINDOW * win)
 }
 
 
+/* It's possible for us to longjmp out of a menu handler, etc., while its game
+   window is still allocated; and we also need to be able to keep track of the
+   stack of windows to redraw/resize it.  Thus, we keep track of the windows
+   allocated for this purpose in the firstgw chain.
+
+   Note that alloc_gamewin and delete_gamewin aren't quite opposites (although
+   delete_ cancels alloc_'s effect); delete_gamewin deletes the windows itself,
+   whereas alloc_gamewin does not create the windows itself. */
+
 struct gamewin *
 alloc_gamewin(int extra)
 {
@@ -511,6 +520,12 @@ alloc_gamewin(int extra)
 void
 delete_gamewin(struct gamewin *gw)
 {
+    /* We must free win2 first, because it may be a child of win1. */
+    if (gw->win2)
+        delwin(gw->win2);
+    if (gw->win)
+        delwin(gw->win);
+
     if (firstgw == gw)
         firstgw = gw->next;
     if (lastgw == gw)
@@ -522,6 +537,14 @@ delete_gamewin(struct gamewin *gw)
         gw->next->prev = gw->prev;
 
     free(gw);
+}
+
+
+void
+delete_all_gamewins(void)
+{
+    while (firstgw)
+        delete_gamewin(firstgw);
 }
 
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-26 */
+/* Last modified by Alex Smith, 2014-01-19 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -8,11 +8,12 @@
 #include <limits.h>
 
 
+/* Create a new dialog, or reposition an existing one, in an appropriate position
+   for showing prompts. Also draw a border aound it. */
 WINDOW *
-newdialog(int height, int width)
+newdialog(int height, int width, WINDOW *win)
 {
     int starty, startx;
-    WINDOW *win;
 
     if (height < 3)
         height = 3;
@@ -26,7 +27,10 @@ newdialog(int height, int width)
            message */
         fresh_message_line(FALSE);
         draw_msgwin();
-        width = getmaxx(msgwin) + (ui_flags.draw_frame ? 2 : 0);
+        if (getmaxx(msgwin) < getmaxx(stdscr))
+            width = getmaxx(msgwin) + (ui_flags.draw_frame ? 2 : 0);
+        else
+            width = getmaxx(stdscr);
         startx = 0;
         starty = getmaxy(msgwin) - (ui_flags.draw_frame ? 0 : 1);
     } else {
@@ -35,13 +39,112 @@ newdialog(int height, int width)
         startx = (COLS - width) / 2;
     }
 
-    win = newwin(height, width, starty, startx);
+    if (!win)
+        win = newwin(height, width, starty, startx);
+    else {
+        mvwin(win, starty, startx);
+        wresize(win, height, width);
+    }
+
+    werase(win);
     keypad(win, TRUE);
     meta(win, TRUE);
     wattron(win, FRAME_ATTRS);
     box(win, 0, 0);
     wattroff(win, FRAME_ATTRS);
     return win;
+}
+
+static void
+layout_curses_msgwin(struct win_msgwin *wmw, int *linecount, char ***lines,
+                     nh_bool recalc)
+{
+    int width = strlen(wmw->msg) + 4;
+    if (width > COLNO - 1)
+        width = COLNO - 1;
+    if (width > getmaxx(stdscr) - 2)
+        width = getmaxx(stdscr) - 2;
+
+    if (!recalc)
+        width = wmw->layout_width;
+
+    wrap_text(width - 4, wmw->msg, linecount, lines);
+
+    if (recalc) {
+        wmw->layout_width = width;
+        wmw->layout_height = *linecount + 2;
+    }
+}
+
+static void
+draw_curses_msgwin(struct gamewin *gw)
+{
+    int i;
+
+    int linecount;
+    char **lines;
+    struct win_msgwin *wmw = (struct win_msgwin *)gw->extra;
+
+    layout_curses_msgwin(wmw, &linecount, &lines, 0);
+
+    for (i = 0; i < linecount; i++)
+        mvwaddstr(gw->win, 1 + i, 2, lines[i]);
+    wrefresh(gw->win);
+
+    free_wrap(lines);
+}
+
+static void
+resize_curses_msgwin(struct gamewin *gw)
+{
+    int linecount;
+    char **lines;
+    struct win_msgwin *wmw = (struct win_msgwin *)gw->extra;
+
+    layout_curses_msgwin(wmw, &linecount, &lines, 1);
+    free_wrap(lines);
+
+    gw->win = newdialog(wmw->layout_height, wmw->layout_width, gw->win);
+}
+
+static int
+curses_msgwin_generic(const char *msg, int (*validator)(int, void *),
+                      void *arg, nh_bool cursor_visible)
+{
+    int rv;
+
+    /* We don't know whether the window system is inited right now. So ask.
+       isendwin() is one of the few uncursed functions that works no matter
+       what. */
+    if (isendwin()) {
+        fprintf(stderr, "%s\n", msg);
+        return validator('\x1b', arg);
+    }
+
+    int prevcurs = curs_set(cursor_visible);
+
+    struct gamewin *gw = alloc_gamewin(sizeof (struct win_msgwin));
+    struct win_msgwin *wmw = (struct win_msgwin *)gw->extra;
+    wmw->msg = msg;
+    gw->draw = draw_curses_msgwin;
+    gw->resize = resize_curses_msgwin;
+
+    gw->win = 0;
+    /* resize_curses_msgwin sets the layout_{width,height}, and because gw->win
+       is 0, allocates gw->win. */
+    resize_curses_msgwin(gw);
+    draw_curses_msgwin(gw);
+
+    rv = -1;
+    while (rv == -1)
+        rv = validator(nh_wgetch(gw->win), arg);
+
+    delete_gamewin(gw);
+
+    curs_set(prevcurs);
+    redraw_game_windows();
+
+    return rv;
 }
 
 
@@ -68,132 +171,95 @@ curses_getdir(const char *query, nh_bool restricted)
     return dir;
 }
 
+
+static int
+curses_yn_function_validator(int key, void *resp)
+{
+    if (key == '\x1b') {
+        if (strchr(resp, 'q'))
+            return 'q';
+        if (strchr(resp, 'n'))
+            return 'n';
+        return -2; /* interpreted as default by curses_yn_function */
+    } else if (strchr(quit_chars, key))
+        return -2;
+
+    if (!strchr(resp, key))
+        return -1; /* reject the key */
+
+    return key;
+}
+
 char
 curses_yn_function(const char *query, const char *resp, char def)
 {
-    int width, height, key, output_count, idx;
-    WINDOW *win;
-    char prompt[QBUFSZ];
-    char *rb, respbuf[QBUFSZ];
-    char **output;
+    int key;
+    char prompt[strlen(query) + strlen(resp) + 8];
+    char *rb;
+    char respbuf[strlen(resp) + 1];
 
     strcpy(respbuf, resp);
     /* any acceptable responses that follow <esc> aren't displayed */
     if ((rb = strchr(respbuf, '\033')) != 0)
         *rb = '\0';
+
     sprintf(prompt, "%s [%s] ", query, respbuf);
     if (def)
         sprintf(prompt + strlen(prompt), "(%c) ", def);
 
-    wrap_text(COLNO - 5, prompt, &output_count, &output);
+    strcpy(respbuf, resp);
+    key = curses_msgwin_generic(prompt, curses_yn_function_validator,
+                                respbuf, 1);
+    if (key == -2)
+        key = def;
 
-    width = COLNO - 1;
-    height = output_count + 2;
-    win = newdialog(height, width);
-    for (idx = 0; idx < output_count; idx++)
-        mvwprintw(win, idx + 1, 2, output[idx]);
-    wrefresh(win);
-
-    do {
-        key = tolower(nh_wgetch(win));
-
-        if (key == '\033') {
-            if (strchr(resp, 'q'))
-                key = 'q';
-            else if (strchr(resp, 'n'))
-                key = 'n';
-            else
-                key = def;
-            break;
-        } else if (strchr(quit_chars, key)) {
-            key = def;
-            break;
-        }
-
-        if (!strchr(resp, key))
-            key = 0;
-
-    } while (!key);
-
-    delwin(win);
-    free_wrap(output);
-    redraw_game_windows();
     return key;
 }
 
+
+static int
+curses_query_key_validator(int key, void *count)
+{
+    if (!count || (!isdigit(key) && key != KEY_BACKSPACE))
+        return key;
+
+    if (isdigit(key)) {
+        if (*(int *)count == -1)
+            *(int *)count = 0;
+        if (*(int *)count < INT_MAX / 10 ||
+            (*(int *)count == INT_MAX / 10 && (key - '0') <= INT_MAX % 10))
+            *(int *)count = 10 * *(int *)count + (key - '0');
+        else
+            *(int *)count = INT_MAX;
+    } else {
+        if (*(int *)count <= 0)
+            *(int *)count = -1;
+        else
+            *(int *)count /= 10;
+    }
+
+    return -1; /* prompt for another key */
+}
 
 char
 curses_query_key(const char *query, int *count)
 {
-    int width, height, key;
-    WINDOW *win;
-    int cnt = 0;
-    nh_bool hascount = FALSE;
+    if (count)
+        *count = -1;
 
-    height = 3;
-    width = strlen(query) + 4;
-    win = newdialog(height, width);
-    mvwprintw(win, 1, 2, query);
-    wrefresh(win);
-
-    key = nh_wgetch(win);
-    while ((isdigit(key) || key == KEY_BACKSPACE) && count != NULL) {
-        if (isdigit(key)) {
-            hascount = TRUE;
-            /* prevent int overflow */
-            if (cnt < INT_MAX / 10 ||
-                (cnt == INT_MAX / 10 && (key - '0') <= INT_MAX % 10))
-                cnt = 10 * cnt + (key - '0');
-            else
-                cnt = INT_MAX;
-        } else {
-            hascount = (cnt > 0);
-            cnt /= 10;
-        }
-        key = nh_wgetch(win);
-        hascount = TRUE;
-    }
-
-    if (count != NULL) {
-        if (!hascount && !cnt)
-            cnt = -1;   /* signal to caller that no count was given */
-        *count = cnt;
-    }
-
-    delwin(win);
-    redraw_game_windows();
-    return key;
+    return curses_msgwin_generic(query, curses_query_key_validator, count, 1);
 }
 
+
+static int
+curses_msgwin_validator(int key, void *unused)
+{
+    (void) unused;
+    return key;
+}
 
 int
 curses_msgwin(const char *msg)
 {
-    int key, len;
-    int width = strlen(msg) + 4;
-
-    /* We don't know whether the window system is inited right now. So ask.
-       isendwin() is one of the few uncursed functions that works no matter
-       what. */
-    if (isendwin()) {
-        fprintf(stderr, "%s\n", msg);
-        return '\x1b';
-    }
-
-    int prevcurs = curs_set(0);
-    WINDOW *win = newdialog(3, width);
-
-    len = strlen(msg);
-    while (isspace(msg[len - 1]))
-        len--;
-
-    mvwaddnstr(win, 1, 2, msg, len);
-    wrefresh(win);
-    key = nh_wgetch(win);       /* wait for any key */
-
-    delwin(win);
-    curs_set(prevcurs);
-    redraw_game_windows();
-
-    return key;
+    return curses_msgwin_generic(msg, curses_msgwin_validator, NULL, 0);
 }
