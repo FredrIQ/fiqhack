@@ -960,7 +960,7 @@ read_config_line(char *line)
 
     comment = strchr(line, '#');
     if (comment)
-        comment = '\0';
+        *comment = '\0';
     delim = strchr(line, '=');
     if (!delim)
         return; /* could whine about junk chars in the config, but why bother */
