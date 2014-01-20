@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-01 */
+/* Last modified by Sean Hunt, 2014-01-19 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -478,7 +478,6 @@ struct nh_game_info {
 
 struct nh_roles_info {
     int num_roles, num_races, num_genders, num_aligns;
-    int def_role, def_race, def_gend, def_align;
     const char **rolenames_m;
     const char **rolenames_f;
     const char **racenames;

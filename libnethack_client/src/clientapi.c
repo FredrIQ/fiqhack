@@ -774,14 +774,13 @@ nhnet_get_roles(void)
     if (json_unpack
         (jmsg, "{si,si,si,si,si,si,si,si,so,so,so,so,so,so}", "num_roles",
          &ri->num_roles, "num_races", &ri->num_races, "num_genders",
-         &ri->num_genders, "num_aligns", &ri->num_aligns, "def_role",
-         &ri->def_role, "def_race", &ri->def_race, "def_gend", &ri->def_gend,
-         "def_align", &ri->def_align, "rolenames_m", &jroles_m, "rolenames_f",
-         &jroles_f, "racenames", &jraces, "gendnames", &jgenders, "alignnames",
-         &jaligns, "matrix", &jmatrix) == -1 || !json_is_array(jroles_m) ||
-        !json_is_array(jroles_f) || !json_is_array(jraces) ||
-        !json_is_array(jgenders) || !json_is_array(jaligns) ||
-        !json_is_array(jmatrix) || json_array_size(jroles_m) != ri->num_roles ||
+         &ri->num_genders, "num_aligns", &ri->num_aligns, "rolenames_m",
+         &jroles_m, "rolenames_f", &jroles_f, "racenames", &jraces, "gendnames",
+         &jgenders, "alignnames", &jaligns, "matrix", &jmatrix) == -1 ||
+        !json_is_array(jroles_m) || !json_is_array(jroles_f) ||
+        !json_is_array(jraces) || !json_is_array(jgenders) ||
+        !json_is_array(jaligns) || !json_is_array(jmatrix) ||
+        json_array_size(jroles_m) != ri->num_roles ||
         json_array_size(jroles_f) != ri->num_roles ||
         json_array_size(jraces) != ri->num_races ||
         json_array_size(jgenders) != ri->num_genders ||

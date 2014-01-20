@@ -496,9 +496,7 @@ ccmd_get_roles(json_t * params)
     jmsg =
         json_pack("{si,si,si,si,si,si,si,si}", "num_roles", ri->num_roles,
                   "num_races", ri->num_races, "num_genders", ri->num_genders,
-                  "num_aligns", ri->num_aligns, "def_role", ri->def_role,
-                  "def_race", ri->def_race, "def_gend", ri->def_gend,
-                  "def_align", ri->def_align);
+                  "num_aligns", ri->num_aligns);
 
     /* rolenames_m */
     jarr = json_array();

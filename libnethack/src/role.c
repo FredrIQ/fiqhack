@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-01 */
+/* Last modified by Sean Hunt, 2014-01-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -771,12 +771,6 @@ nh_get_roles(void)
     for (i = 0; i < info->num_aligns; i++)
         names[i] = aligns[i].adj;
     info->alignnames = names;
-
-    /* default choices */
-    info->def_role = u.initrole;
-    info->def_race = u.initrace;
-    info->def_gend = u.initgend;
-    info->def_align = u.initalign;
 
     /* valid combinations of choices */
     arrsize =

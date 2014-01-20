@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-01 */
+/* Last modified by Sean Hunt, 2014-01-19 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -275,10 +275,6 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
     ri_copy.num_races   = ri->num_races;
     ri_copy.num_genders = ri->num_genders;
     ri_copy.num_aligns  = ri->num_aligns;
-    ri_copy.def_role    = ri->def_role;
-    ri_copy.def_race    = ri->def_race;
-    ri_copy.def_gend    = ri->def_gend;
-    ri_copy.def_align   = ri->def_align;
 
     nh_bool matrix[ri->num_roles * ri->num_races *
                    ri->num_genders * ri->num_aligns];
@@ -291,14 +287,6 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
     race = *out_race;
     align = *out_align;
     gend = *out_gend;
-    if (role == ROLE_NONE)
-        role = ri->def_role;
-    if (race == ROLE_NONE)
-        race = ri->def_race;
-    if (gend == ROLE_NONE)
-        gend = ri->def_gend;
-    if (align == ROLE_NONE)
-        align = ri->def_align;
 
     validate_character_presets(ri, &role, &race, &gend, &align);
 

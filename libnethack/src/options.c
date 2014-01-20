@@ -348,11 +348,6 @@ new_opt_struct(void)
 void
 initoptions(void)
 {
-    /* If no config file exists, these values will not get set until they have
-       already been used during game startup.  (-1) is a much better default,
-       as 0 will always cause a lawful male Archologist to be created */
-    u.initalign = u.initgend = u.initrace = u.initrole = -1;
-
     flags.mon_generation = 1;
 
     flags.travelcc.x = flags.travelcc.y = -1;
