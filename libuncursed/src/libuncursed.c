@@ -807,9 +807,8 @@ add_wch, (const cchar_t *ch), (ch))
             win->y++;
         }
 
-        /* Nothing in the documentation implies that we need to scroll in this
-           situation... */
         if (win->y > win->maxy) {
+            scroll(win);
             win->y--;
         }
 
@@ -1007,7 +1006,7 @@ addchnstr, (const chtype *charray, int n), (charray, n))
         n = win->maxx - win->x + 1;
 
     for (i = 0; i < n; i++) {
-        p->attr = charray[i] & ~(A_CHARTEXT);
+        p->attr = (charray[i] & ~(A_CHARTEXT)) | win->current_attr;
         p->chars[0] = cp437[charray[i] & A_CHARTEXT];
         p->chars[1] = 0;
         p++;
@@ -1152,18 +1151,18 @@ border,               (chtype ls, chtype rs, chtype ts, chtype bs,
     int i;
 
     for (i = 1; i < win->maxx; i++) {
-        mvwaddch(win, 0, i, ts);
-        mvwaddch(win, win->maxy, i, bs);
+        mvwaddchnstr(win, 0, i, &ts, 1);
+        mvwaddchnstr(win, win->maxy, i, &bs, 1);
     }
     for (i = 1; i < win->maxy; i++) {
-        mvwaddch(win, i, 0, ls);
-        mvwaddch(win, i, win->maxx, rs);
+        mvwaddchnstr(win, i, 0, &ls, 1);
+        mvwaddchnstr(win, i, win->maxx, &rs, 1);
     }
 
-    mvwaddch(win, 0, 0, tl);
-    mvwaddch(win, 0, win->maxx, tr);
-    mvwaddch(win, win->maxy, 0, bl);
-    mvwaddch(win, win->maxy, win->maxx, br);
+    mvwaddchnstr(win, 0, 0, &tl, 1);
+    mvwaddchnstr(win, 0, win->maxx, &tr, 1);
+    mvwaddchnstr(win, win->maxy, 0, &bl, 1);
+    mvwaddchnstr(win, win->maxy, win->maxx, &br, 1);
 
     win->x = sx;
     win->y = sy;
@@ -1868,7 +1867,7 @@ insdelln, (int n), (n))
                    win->chararray + (j + n) * win->stride,
                    win->maxx * sizeof *(win->chararray));
         else
-            for (i = 0; i < win->maxx; i++) {
+            for (i = 0; i <= win->maxx; i++) {
                 win->chararray[i + j * win->stride].attr = win->current_attr;
                 win->chararray[i + j * win->stride].chars[0] = 32;
                 win->chararray[i + j * win->stride].chars[1] = 0;
