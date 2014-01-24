@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-01-10
+Last modified by Alex Smith, 2014-02-21
 
 Copyright (C) 2013 Alex Smith.
 
@@ -135,8 +135,11 @@ SC343-12, be3e353)
 `E`: Wresting a wand via engraving with it now takes time. (Bilious, C343-246,
 a93e3bc)
 
-`r`: Spellbooks can now be read even if spell memory is not low (although doing so
-still damages the spellbook). (Ace, 7cd834e)
+`r`: Spellbooks can now be read even if spell memory is not low (although
+doing so still damages the spellbook). (Ace, 7cd834e)
+
+`r`: Spellbooks that are completely worn out can no longer be used to learn
+new spells for the first time. (4, SC343-?, 301c198)
 
 `x`: No longer costs time (in order to avoid the need to toggle the
 `pushweapon` option repeately in order to set up weapons for two-weapon
@@ -1070,6 +1073,9 @@ game explains what is wrong. (Un and 4, 21bc711, bdd6251, fd16f77)
 the character has gained, or what monsters the character has killed) that
 could have been (and often was) tracked manually by the player using
 out-of-game notes. (Ace, e894514..a7a0ce7, cd9df40)
+
+`Z`: Directional and positional spells can now be cancelled at the prompt that
+requests a direction or position. (4, ace8c29..021612e)
 
 `#history`: The game now stores a list of major events that happened during
 the game (levelling up, wishes, etc.), viewable in-game with the `#history`
