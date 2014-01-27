@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-20 */
+/* Last modified by Sean Hunt, 2014-01-27 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -658,6 +658,15 @@ pair_content(uncursed_color pairnum, uncursed_color *fgcolor,
     return OK;
 }
 
+static int
+add_window_attrs(int attr, int wattr)
+{
+    if (PAIR_NUMBER(attr))
+        return attr | (wattr & ~(COLOR_PAIR(PAIR_NUMBER(wattr))));
+    else
+        return attr | wattr;
+}
+
 /* manual page 3ncurses attr */
 UNCURSED_ANDWINDOWDEF(int,
 attrset, (attr_t attr), (attr))
@@ -799,8 +808,10 @@ add_wch, (const cchar_t *ch), (ch))
            respect to cursor motion; it'd make more sense to combine into the
            previous character.) */
 
-        memcpy(win->chararray + win->y * win->stride + win->x, ch, sizeof *ch);
-        win->chararray[win->y * win->stride + win->x].attr |= win->current_attr;
+        int idx = win->y * win->stride + win->x;
+        memcpy(win->chararray + idx, ch, sizeof *ch);
+        win->chararray[idx].attr =
+            add_window_attrs(win->chararray[idx].attr, win->current_attr);
         win->x++;
         if (win->x > win->maxx) {
             win->x = 0;
@@ -1006,7 +1017,7 @@ addchnstr, (const chtype *charray, int n), (charray, n))
         n = win->maxx - win->x + 1;
 
     for (i = 0; i < n; i++) {
-        p->attr = (charray[i] & ~(A_CHARTEXT)) | win->current_attr;
+        p->attr = add_window_attrs(charray[i] & ~(A_CHARTEXT), win->current_attr);
         p->chars[0] = cp437[charray[i] & A_CHARTEXT];
         p->chars[1] = 0;
         p++;
