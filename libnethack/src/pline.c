@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-27 */
+/* Last modified by Alex Smith, 2014-01-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -261,9 +261,6 @@ mstatusline(struct monst *mtmp)
     }
 
     info[0] = 0;
-    /* Identity theft */
-    if (Role_if(PM_ROGUE) && carrying_questart())
-        sprintf(eos(info), ", Social Security number %d", mtmp->m_id);
     if (mtmp->mtame) {
         strcat(info, ", tame");
         if (wizard) {
