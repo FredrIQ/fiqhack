@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2014-01-18
+# Last modified by Alex Smith, 2014-01-28
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -60,7 +60,7 @@
                         'path:libnethack/util/checkglobals.sh',
                         'optpath::path:libnethack/util/checkglobals.sh',
                         'optpath::'],
-            propagate_usedeps => 1,
+            object_dependency => 'nowhere',
             output => [],
         },
 
@@ -75,7 +75,7 @@
                         'bpath:libnethack/include/artinames.h/artinames.h'],
             output_from_optpath => '-o ',
             verb => 'generated',
-            propagate_usedeps => 2, # ignore the usual dependencies
+            object_dependency => 'nowhere',
         },
 
         _statically_link_uncursed_plugins => {
@@ -98,8 +98,8 @@
             object => qr=^bpath:libuncursed/src/plugins/
                       (?:wincon|tty)\.c/.+\Q$objext\E$=xs,
             output => 'optionset:_uncursed_static_plugins',
-            propagate_usedeps => 1,
-            outdepends => ['', 'optpath::']
+            object_dependency => 'outdepends',
+            outdepends => 'optpath::'
         },
         _uncursed_plugins_to_link_dynamically => {
             object => qr=^bpath:libuncursed/src/plugins/
@@ -107,8 +107,8 @@
             command => ['intcmd:echo', 'optpath::'],
             output => "symbolset::bpath:libuncursed/src/plugins/libuncursed_",
             outputarg => qr=^bpath:libuncursed/src/plugins/(.*)\.c=,
-            propagate_usedeps => 2,
-            outdepends => ['', 'optpath::'],
+            object_dependency => 'outdepends',
+            outdepends => 'optpath::'
         },
 
         _build_desfile => {
@@ -133,7 +133,7 @@
         _git_hash => {
             object => 'optionset:specific_version',
             command => ["cmd:git", "optstring:rev-parse HEAD"],
-            fail_silently => 1,
+            on_failure => 'conditional',
             in_subdir => 'path:',
             depends => 'optstring: ',
             dependsarg => qr/^([0-9a-f]{8})/,
