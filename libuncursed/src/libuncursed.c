@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-26 */
+/* Last modified by Sean Hunt, 2014-01-27 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -658,6 +658,15 @@ pair_content(uncursed_color pairnum, uncursed_color *fgcolor,
     return OK;
 }
 
+static int
+add_window_attrs(int attr, int wattr)
+{
+    if (PAIR_NUMBER(attr))
+        return attr | (wattr & ~(COLOR_PAIR(PAIR_NUMBER(wattr))));
+    else
+        return attr | wattr;
+}
+
 /* manual page 3ncurses attr */
 UNCURSED_ANDWINDOWDEF(int,
 attrset, (attr_t attr), (attr))
@@ -799,17 +808,18 @@ add_wch, (const cchar_t *ch), (ch))
            respect to cursor motion; it'd make more sense to combine into the
            previous character.) */
 
-        memcpy(win->chararray + win->y * win->stride + win->x, ch, sizeof *ch);
-        win->chararray[win->y * win->stride + win->x].attr |= win->current_attr;
+        int idx = win->y * win->stride + win->x;
+        memcpy(win->chararray + idx, ch, sizeof *ch);
+        win->chararray[idx].attr =
+            add_window_attrs(win->chararray[idx].attr, win->current_attr);
         win->x++;
         if (win->x > win->maxx) {
             win->x = 0;
             win->y++;
         }
 
-        /* Nothing in the documentation implies that we need to scroll in this
-           situation... */
         if (win->y > win->maxy) {
+            scroll(win);
             win->y--;
         }
 
@@ -1007,7 +1017,7 @@ addchnstr, (const chtype *charray, int n), (charray, n))
         n = win->maxx - win->x + 1;
 
     for (i = 0; i < n; i++) {
-        p->attr = charray[i] & ~(A_CHARTEXT);
+        p->attr = add_window_attrs(charray[i] & ~(A_CHARTEXT), win->current_attr);
         p->chars[0] = cp437[charray[i] & A_CHARTEXT];
         p->chars[1] = 0;
         p++;
@@ -1152,18 +1162,18 @@ border,               (chtype ls, chtype rs, chtype ts, chtype bs,
     int i;
 
     for (i = 1; i < win->maxx; i++) {
-        mvwaddch(win, 0, i, ts);
-        mvwaddch(win, win->maxy, i, bs);
+        mvwaddchnstr(win, 0, i, &ts, 1);
+        mvwaddchnstr(win, win->maxy, i, &bs, 1);
     }
     for (i = 1; i < win->maxy; i++) {
-        mvwaddch(win, i, 0, ls);
-        mvwaddch(win, i, win->maxx, rs);
+        mvwaddchnstr(win, i, 0, &ls, 1);
+        mvwaddchnstr(win, i, win->maxx, &rs, 1);
     }
 
-    mvwaddch(win, 0, 0, tl);
-    mvwaddch(win, 0, win->maxx, tr);
-    mvwaddch(win, win->maxy, 0, bl);
-    mvwaddch(win, win->maxy, win->maxx, br);
+    mvwaddchnstr(win, 0, 0, &tl, 1);
+    mvwaddchnstr(win, 0, win->maxx, &tr, 1);
+    mvwaddchnstr(win, win->maxy, 0, &bl, 1);
+    mvwaddchnstr(win, win->maxy, win->maxx, &br, 1);
 
     win->x = sx;
     win->y = sy;
@@ -1184,19 +1194,12 @@ hline, (chtype ch, int n), (ch, n))
     if (ch == 8 || ch == 9 || ch == 10)
         return ERR;
 
-    int sx = win->x;
-    int sy = win->y;
+    int sx = win->x--;
 
-    while (n > 0) {
-        if (win->x == win->maxx)
-            n = 1;
-
-        waddch(win, ch);
-        n--;
-    }
+    while (n-- > 0 && ++win->x <= win->maxx)
+        mvwaddchnstr(win, win->y, win->x, &ch, 1);
 
     win->x = sx;
-    win->y = sy;
     return OK;
 }
 
@@ -1206,23 +1209,11 @@ vline, (chtype ch, int n), (ch, n))
     if (ch == 8 || ch == 9 || ch == 10)
         return ERR;
 
-    int sx = win->x;
-    int sy = win->y;
+    int sy = win->y--;
 
-    while (n > 0) {
-        int ny = win->y + 1;
+    while (n-- > 0 && ++win->y <= win->maxy)
+        mvwaddchnstr(win, win->y, win->x, &ch, 1);
 
-        if (win->y == win->maxy)
-            n = 1;
-
-        waddch(win, ch);
-        n--;
-
-        if (n > 0)
-            wmove(win, ny, sx);
-    }
-
-    win->x = sx;
     win->y = sy;
     return OK;
 }
@@ -1887,7 +1878,7 @@ insdelln, (int n), (n))
                    win->chararray + (j + n) * win->stride,
                    win->maxx * sizeof *(win->chararray));
         else
-            for (i = 0; i < win->maxx; i++) {
+            for (i = 0; i <= win->maxx; i++) {
                 win->chararray[i + j * win->stride].attr = win->current_attr;
                 win->chararray[i + j * win->stride].chars[0] = 32;
                 win->chararray[i + j * win->stride].chars[1] = 0;

@@ -543,6 +543,7 @@ void
 draw_objlist(WINDOW * win, struct nh_objlist *objlist, int *selected, int how)
 {
     int i, maxitem, txtattr, width, pos;
+    char buf[BUFSZ];
 
     width = getmaxx(win);
     werase(win);
@@ -552,8 +553,8 @@ draw_objlist(WINDOW * win, struct nh_objlist *objlist, int *selected, int how)
     for (i = 0; i < maxitem; i++) {
         struct nh_objitem *const olii = objlist->items + i;
 
-        pos = 4;        /* assume that an accel will be added ("a - ") */
         wmove(win, i, 0);
+        pos = 0;
         wattrset(win, 0);
         txtattr = A_NORMAL;
 
@@ -561,9 +562,10 @@ draw_objlist(WINDOW * win, struct nh_objlist *objlist, int *selected, int how)
             if (olii->role == MI_HEADING)
                 txtattr = settings.menu_headings;
             wattron(win, txtattr);
-            waddstr(win, olii->caption);
+            pos += snprintf(buf + pos, BUFSZ - pos, "%s", olii->caption);
             if (olii->group_accel)
-                wprintw(win, " '%c'", olii->group_accel);
+                snprintf(buf + pos, BUFSZ - pos, " '%c'", olii->group_accel);
+            waddnstr(win, buf, width);
             wattroff(win, txtattr);
             continue;
         }
@@ -571,18 +573,16 @@ draw_objlist(WINDOW * win, struct nh_objlist *objlist, int *selected, int how)
         if (how != PICK_NONE && selected && olii->accel)
             switch (selected[i]) {
             case -1:
-                wprintw(win, "%c + ", olii->accel);
+                pos += snprintf(buf + pos, BUFSZ - pos, "%c + ", olii->accel);
                 break;
             case 0:
-                wprintw(win, "%c - ", olii->accel);
+                pos += snprintf(buf + pos, BUFSZ - pos, "%c - ", olii->accel);
                 break;
             default:
-                wprintw(win, "%c # ", olii->accel);
+                pos += snprintf(buf + pos, BUFSZ - pos, "%c # ", olii->accel);
                 break;
         } else if (olii->accel)
-            wprintw(win, "%c - ", olii->accel);
-        else
-            pos = 0;    /* no accel after all */
+            pos += snprintf(buf + pos, BUFSZ - pos, "%c - ", olii->accel);
 
         if (olii->worn)
             txtattr |= A_BOLD;
@@ -597,12 +597,12 @@ draw_objlist(WINDOW * win, struct nh_objlist *objlist, int *selected, int how)
             break;
         }
         wattron(win, txtattr);
-        wprintw(win, "%-.*s", width - pos, olii->caption);
-        pos += min(strlen(olii->caption), width - pos);
+        pos += snprintf(buf + pos, BUFSZ - pos, "%s", olii->caption);
+        if (settings.invweight && olii->weight != -1) {
+            pos += snprintf(buf + pos, BUFSZ - pos, " {%d}", olii->weight);
+        }
+        waddnstr(win, buf, width - 1);
         wattroff(win, txtattr);
-
-        if (settings.invweight && olii->weight != -1 && width > pos + 3)
-            wprintw(win, " {%d}", olii->weight);
     }
     wnoutrefresh(win);
 }

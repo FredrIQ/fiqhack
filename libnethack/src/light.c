@@ -308,7 +308,18 @@ restore_light_sources(struct memfile *mf, struct level *lev)
 {
     int count;
     intptr_t id;
-    light_source *ls, *prev = NULL;
+    /* we need to restore and preserve order *but* we don't need
+     * to preserve the absolute order, only the relative orders of all
+     * global lights and all local lights---this is because global
+     * lights are for stored on the level and moved around as you do.
+     * As a result, they are saved in different places, and consequently
+     * it will *not* cause a desync as long as relative order is preserved.
+     * So it doesn't actually matter that we retain relative order to other
+     * light sources on the level, only that we restore the light sources here
+     * in reverse order. Inserting immediately after the first light leads to
+     * the simplest code.
+     */
+    light_source *ls, *prev = lev->lev_lights;
 
     /* restore elements */
     count = mread32(mf);
