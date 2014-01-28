@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-01-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -233,6 +233,7 @@ dig(void)
     const char *verb = (!uwep || is_pick(uwep)) ? "dig into" : "chop through";
     loc = &level->locations[dpx][dpy];
     boolean down = u.ux == dpx && u.uy == dpy;
+    boolean new_dig = u.uoccupation_progress[tos_dig] == 0;
 
     /* perhaps a nymph stole your pick-axe while you were busy digging */
     /* or perhaps you teleported away */
@@ -438,6 +439,8 @@ dig(void)
             }
         } else if (!IS_ROCK(loc->typ) && dig_target == DIGTYP_ROCK)
             return 0;   /* statue or boulder got taken */
+        if (new_dig)
+            pline("You hit the %s with all your might.", d_target[dig_target]);
     }
     return 1;
 }
