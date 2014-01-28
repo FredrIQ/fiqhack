@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-27 */
+/* Last modified by Alex Smith, 2014-01-28 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -1194,10 +1194,13 @@ hline, (chtype ch, int n), (ch, n))
     if (ch == 8 || ch == 9 || ch == 10)
         return ERR;
 
-    int sx = win->x--;
+    int sx = win->x;
 
-    while (n-- > 0 && ++win->x <= win->maxx)
+    while (n > 0 && win->x <= win->maxx) {
         mvwaddchnstr(win, win->y, win->x, &ch, 1);
+        n--;
+        win->x++;
+    }
 
     win->x = sx;
     return OK;
@@ -1209,10 +1212,13 @@ vline, (chtype ch, int n), (ch, n))
     if (ch == 8 || ch == 9 || ch == 10)
         return ERR;
 
-    int sy = win->y--;
+    int sy = win->y;
 
-    while (n-- > 0 && ++win->y <= win->maxy)
+    while (n > 0 && win->y <= win->maxy) {
         mvwaddchnstr(win, win->y, win->x, &ch, 1);
+        n--;
+        win->y++;
+    }
 
     win->y = sy;
     return OK;
