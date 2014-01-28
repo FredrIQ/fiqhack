@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-28 */
+/* Last modified by Sean Hunt, 2014-01-28 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -52,6 +52,10 @@ static WINDOW *disp_win = 0;        /* Window drawn onto by doupdate */
 /* uncursed hook handling */
 struct uncursed_hooks *uncursed_hook_list = NULL;
 static int uncursed_hooks_inited = 0;
+
+/* an intermediate return value; should never escape this file */
+#define SCREND 3
+static int add_wch_core(WINDOW *win, const cchar_t *ch);
 
 void
 initialize_uncursed(int *p_argc, char **argv)
@@ -768,6 +772,16 @@ int TABSIZE = 8;        /* externally visible */
 UNCURSED_ANDMVWINDOWDEF(int,
 add_wch, (const cchar_t *ch), (ch))
 {
+    int res = add_wch_core(win, ch);
+    if (res == ERR)
+        return ERR;
+    else
+        return OK;
+}
+
+static
+int add_wch_core(WINDOW * win, const cchar_t *ch)
+{
     if (ch->chars[0] == 8) {    // backspace
 
         if (win->x > 0)
@@ -780,6 +794,8 @@ add_wch, (const cchar_t *ch), (ch))
             win->x = win->maxx;
 
     } else if (ch->chars[0] == 10) {
+        if (!win->scrollok && win->y == win->maxy)
+            return SCREND;
 
         wclrtoeol(win);
         win->y++;
@@ -793,14 +809,17 @@ add_wch, (const cchar_t *ch), (ch))
 
     } else if (ch->chars[0] < 32 ||     /* nonprintable characters */
                (ch->chars[0] >= 127 && ch->chars[0] < 160)) {
-
-        if (waddch(win, ch->attr | '^') == ERR)
+        switch (add_wch_core(win, &(cchar_t){ch->attr, {'^'}})) {
+        case ERR:
             return ERR;
+        case SCREND:
+            return SCREND;
+        case OK:
+            break;
+        }
 
-        return waddch(win, ch->attr | (ch->chars[0] + 64));
-
+        return add_wch_core(win, &(cchar_t){ch->attr, {ch->chars[0] + 64}});
     } else {
-
         /* TODO: Detect whether ch contains only combining and zero-width
            characters, and combine them into the current character rather than
            replacing the current character with them, as well as not moving the
@@ -819,7 +838,13 @@ add_wch, (const cchar_t *ch), (ch))
         }
 
         if (win->y > win->maxy) {
-            scroll(win);
+            if (win->scrollok)
+                scroll(win);
+            else {
+                win->x = win->maxx;
+                return SCREND;
+            }
+
             win->y--;
         }
 
@@ -1030,8 +1055,14 @@ UNCURSED_ANDMVWINDOWDEF(int,
 addstr, (const char *s), (s))
 {
     while (*s)
-        if (waddch(win, *s++) == ERR)
+        switch (add_wch_core(win, &(cchar_t){0, {*s++}})) {
+        case ERR:
             return ERR;
+        case SCREND:
+            return OK;
+        case OK:
+            break;
+        }
 
     return OK;
 }
@@ -1040,10 +1071,18 @@ UNCURSED_ANDMVWINDOWDEF(int,
 addnstr, (const char *s, int n), (s, n))
 {
     while (*s && n-- != 0) {
-        if (waddch(win, *s++) == ERR)
+        switch (add_wch_core(win, &(cchar_t){0, {*s++}})) {
+        case ERR:
             return ERR;
+        case SCREND:
+            return OK;
+        case OK:
+            break;
+        }
 
         /* Negative n means write until the end of the line. */
+        /* BUG: this does not handle control characters, which become two
+         * characters, correctly */
         if (n < 0 && win->x == 0)
             return OK;
     }
@@ -1550,6 +1589,13 @@ clearok(WINDOW *win, uncursed_bool clear_on_refresh)
 }
 
 int
+scrollok(WINDOW *win, uncursed_bool scrollok)
+{
+    win->scrollok = scrollok;
+    return OK;
+}
+
+int
 nonl(void)
 {
     return OK;
@@ -2015,6 +2061,7 @@ newwin(int h, int w, int t, int l)
     win->sibling = 0;
     win->timeout = -1;  /* input in this WINDOW is initially blocking */
     win->clear_on_refresh = 0;
+    win->scrollok = 0;
 
     werase(win);
 
@@ -2056,6 +2103,7 @@ subwin(WINDOW *parent, int h, int w, int t, int l)
     win->region = 0;
     win->timeout = -1;
     win->clear_on_refresh = 0;
+    win->scrollok = 0;
 
     return win;
 }
@@ -2757,6 +2805,9 @@ scroll(WINDOW *win)
 UNCURSED_ANDWINDOWDEF(int,
 scrl, (int n), (n))
 {
+    if (!win->scrollok)
+        return OK;
+
     int y = win->y;
 
     win->y = 0;

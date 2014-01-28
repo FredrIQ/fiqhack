@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-13 */
+/* Last modified by Sean Hunt, 2014-01-28 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -98,6 +98,7 @@ typedef struct WINDOW {
     void **regionarray; /* like chararray, but for tile regions */
     int timeout;
     uncursed_bool clear_on_refresh;
+    uncursed_bool scrollok;
 } WINDOW, *uncursed_WINDOW_p;
 
 typedef char *uncursed_char_p;
@@ -318,6 +319,7 @@ UNCURSED_ANDWINDOWV(int, clrtoeol);
 
 /* manual page 3ncurses outopts: only clearok implemented */
 extern int EI(clearok) (WINDOW *, uncursed_bool);
+extern int EI(scrollok) (WINDOW *, uncursed_bool);
 extern int EI(nonl) (void);                             /* ignored */
 extern int EI(leaveok) (WINDOW *, uncursed_bool);       /* ignored */
 

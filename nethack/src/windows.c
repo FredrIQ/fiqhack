@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-18 */
+/* Last modified by Sean Hunt, 2014-01-28 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -258,6 +258,8 @@ create_game_windows(void)
                 derwin(basewin, ui_flags.viewheight, COLS - COLNO - 3, 1,
                        COLNO + 2);
 
+        scrollok(msgwin, 1);
+
         draw_frame();
     } else {
         msgwin = newwin(ui_flags.msgheight, COLNO, 0, 0);
@@ -272,6 +274,8 @@ create_game_windows(void)
             statuswin =
                 derwin(basewin, statusheight, COLNO,
                        ui_flags.msgheight + ROWNO, 0);
+
+        scrollok(msgwin, 1);
 
         if (ui_flags.draw_sidebar)
             sidebar =
