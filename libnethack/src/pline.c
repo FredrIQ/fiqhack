@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-28 */
+/* Last modified by Sean Hunt, 2014-02-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -141,14 +141,16 @@ free_youbuf(void)
 void
 You_hear(const char *line, ...)
 {
+    /* You can't hear while unconscious. */
+    if (!canhear())
+        return;
+
     va_list the_args;
     char *tmp;
 
     va_start(the_args, line);
     if (Underwater)
         YouPrefix(tmp, "You barely hear ", line);
-    else if (u.usleep)
-        YouPrefix(tmp, "You dream that you hear ", line);
     else
         YouPrefix(tmp, "You hear ", line);
     vpline(FALSE, FALSE, strcat(tmp, line), the_args);
@@ -162,8 +164,9 @@ verbalize(const char *line, ...)
     va_list the_args;
     char *tmp;
 
-    if (!flags.soundok)
+    if (!canhear())
         return;
+
     va_start(the_args, line);
     tmp = You_buf((int)strlen(line) + sizeof "\"\"");
     strcpy(tmp, "\"");

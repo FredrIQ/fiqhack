@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Sean Hunt, 2014-02-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -861,7 +861,7 @@ spitmu(struct monst *mtmp, const struct attack *mattk)
 
     if (mtmp->mcan) {
 
-        if (flags.soundok)
+        if (canhear())
             pline("A dry rattle comes from %s throat.",
                   s_suffix(mon_nam(mtmp)));
         return 0;
@@ -899,7 +899,7 @@ spitmm(struct monst *mtmp, struct monst *mdef, const struct attack *mattk)
     struct obj *otmp;
 
     if (mtmp->mcan) {
-        if (flags.soundok)
+        if (canhear())
             pline("A dry rattle comes from %s throat.",
                   s_suffix(mon_nam(mtmp)));
         return 0;
@@ -942,7 +942,7 @@ breamu(struct monst *mtmp, const struct attack *mattk)
     if (lined_up(mtmp)) {
 
         if (mtmp->mcan) {
-            if (flags.soundok) {
+            if (canhear()) {
                 if (canseemon(mtmp))
                     pline("%s coughs.", Monnam(mtmp));
                 else
@@ -983,7 +983,7 @@ breamm(struct monst *mtmp, struct monst *mdef, const struct attack *mattk)
 
     if (mlined_up(mtmp, mdef, TRUE)) {
         if (mtmp->mcan) {
-            if (flags.soundok) {
+            if (canhear()) {
                 if (canseemon(mtmp))
                     pline("%s coughs.", Monnam(mtmp));
                 else

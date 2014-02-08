@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -293,7 +293,7 @@ call_kops(struct monst *shkp, boolean nearshop)
     if (!shkp)
         return;
 
-    if (flags.soundok)
+    if (canhear())
         pline("An alarm sounds!");
 
     nokops = ((mvitals[PM_KEYSTONE_KOP].mvflags & G_GONE) &&
@@ -301,8 +301,8 @@ call_kops(struct monst *shkp, boolean nearshop)
               (mvitals[PM_KOP_LIEUTENANT].mvflags & G_GONE) &&
               (mvitals[PM_KOP_KAPTAIN].mvflags & G_GONE));
 
-    if (!angry_guards(!flags.soundok) && nokops) {
-        if (flags.verbose && flags.soundok)
+    if (!angry_guards(!canhear()) && nokops) {
+        if (flags.verbose && canhear())
             pline("But no one seems to respond to it.");
         return;
     }
@@ -2927,7 +2927,7 @@ remove_damage(struct monst *shkp, boolean croaked)
             pline("Suddenly, the trap is removed from the floor!");
         else if (inside_shop(level, u.ux, u.uy) == ESHK(shkp)->shoproom)
             pline("You feel more claustrophobic than before.");
-        else if (flags.soundok && !rn2(10))
+        else if (canhear() && !rn2(10))
             pline_once("The dungeon acoustics noticeably change.");
     }
 }
@@ -3403,10 +3403,8 @@ pay_for_damage(const char *dmgstr, boolean cant_mollify)
          * yanked the hapless critter out of the way.
          */
         if (MON_AT(level, x, y)) {
-            if (flags.soundok) {
-                You_hear("an angry voice:");
-                verbalize("Out of my way, scum!");
-            }
+            You_hear("an angry voice:");
+            verbalize("Out of my way, scum!");
         }
         mnearto(shkp, x, y, TRUE);
     }

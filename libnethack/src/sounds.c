@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Sean Hunt, 2014-02-08 */
 /*      Copyright (c) 1989 Janet Walz, Mike Threepoint */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,7 +7,6 @@
 #include "edog.h"
 
 static int domonnoise(struct monst *);
-static int dochat(const struct nh_cmd_arg *);
 static int mon_in_room(struct monst *, int);
 
 /* this easily could be a macro, but it might overtax dumb compilers */
@@ -26,7 +25,7 @@ dosounds(void)
     int hallu, vx, vy;
     struct monst *mtmp;
 
-    if (!flags.soundok || Engulfed || Underwater)
+    if (!canhear() || Engulfed || Underwater)
         return;
 
     hallu = Hallucination ? 1 : 0;
@@ -284,10 +283,11 @@ growl(struct monst *mtmp)
 {
     const char *growl_verb = 0;
 
-    if (mtmp->msleeping || !mtmp->mcanmove || !mtmp->data->msound)
+    if (mtmp->msleeping || !mtmp->mcanmove || !mtmp->data->msound ||
+        !canhear())
         return;
 
-    /* presumably nearness and soundok checks have already been made */
+    /* presumably nearness checks have already been made */
     if (Hallucination)
         growl_verb = h_sounds[rn2(SIZE(h_sounds))];
     else
@@ -305,10 +305,11 @@ yelp(struct monst *mtmp)
 {
     const char *yelp_verb = 0;
 
-    if (mtmp->msleeping || !mtmp->mcanmove || !mtmp->data->msound)
+    if (mtmp->msleeping || !mtmp->mcanmove || !mtmp->data->msound ||
+        !canhear())
         return;
 
-    /* presumably nearness and soundok checks have already been made */
+    /* presumably nearness checks have already been made */
     if (Hallucination)
         yelp_verb = h_sounds[rn2(SIZE(h_sounds))];
     else
@@ -346,10 +347,11 @@ whimper(struct monst *mtmp)
 {
     const char *whimper_verb = 0;
 
-    if (mtmp->msleeping || !mtmp->mcanmove || !mtmp->data->msound)
+    if (mtmp->msleeping || !mtmp->mcanmove || !mtmp->data->msound ||
+        !canhear())
         return;
 
-    /* presumably nearness and soundok checks have already been made */
+    /* presumably nearness checks have already been made */
     if (Hallucination)
         whimper_verb = h_sounds[rn2(SIZE(h_sounds))];
     else
@@ -380,7 +382,7 @@ beg(struct monst *mtmp)
         !(carnivorous(mtmp->data) || herbivorous(mtmp->data)))
         return;
 
-    /* presumably nearness and soundok checks have already been made */
+    /* presumably nearness checks have already been made */
     if (!is_silent(mtmp->data) && mtmp->data->msound <= MS_ANIMAL)
         domonnoise(mtmp);
     else if (mtmp->data->msound >= MS_HUMANOID) {
@@ -398,8 +400,8 @@ domonnoise(struct monst *mtmp)
     const struct permonst *ptr = mtmp->data;
     char verbuf[BUFSZ];
 
-    /* presumably nearness and sleep checks have already been made */
-    if (!flags.soundok)
+    /* presumably nearness checks have already been made */
+    if (!canhear())
         return 0;
     if (is_silent(ptr))
         return 0;
@@ -800,18 +802,6 @@ domonnoise(struct monst *mtmp)
 
 int
 dotalk(const struct nh_cmd_arg *arg)
-{
-    int result;
-    boolean save_soundok = flags.soundok;
-
-    flags.soundok = 1;  /* always allow sounds while chatting */
-    result = dochat(arg);
-    flags.soundok = save_soundok;
-    return result;
-}
-
-static int
-dochat(const struct nh_cmd_arg *arg)
 {
     struct monst *mtmp;
     int tx, ty;

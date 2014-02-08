@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1084,7 +1084,6 @@ rottenfood(struct obj *obj)
             what = "you slap against the", where =
                 (u.usteed) ? "saddle" : surface(u.ux, u.uy);
         pline("The world spins and %s %s.", what, where);
-        flags.soundok = 0;
         helpless(rnd(10), "unconscious from rotten food",
                  "You are conscious again.");
         see_monsters();
@@ -2091,7 +2090,6 @@ newuhs(boolean incr)
                 /* stop what you're doing, then faint */
                 action_interrupted();
                 pline("You faint from lack of food.");
-                flags.soundok = 0;
                 newhs = u.uhs = FAINTED;
                 helpless(10 - (u.uhunger / 10), "fainted from lack of food",
                          "You regain consciousness.");

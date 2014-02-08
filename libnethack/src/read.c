@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1168,7 +1168,7 @@ seffects(struct obj *sobj, boolean * known)
                                                 ("Fortunately, %s is wearing a hard %s.",
                                                  mon_nam(mtmp),
                                                  helmet_name(helmet));
-                                        else if (flags.soundok)
+                                        else
                                             You_hear("a clanging sound.");
                                         if (mdmg > 2)
                                             mdmg = 2;
@@ -1612,7 +1612,7 @@ do_genocide(int how)
                 adjalign(sgn(u.ualign.type));
 
             if (!(ptr->geno & G_GENO)) {
-                if (flags.soundok) {
+                if (canhear()) {
                     /* fixme: unconditional "caverns" will be silly in some
                        circumstances */
                     if (flags.verbose)

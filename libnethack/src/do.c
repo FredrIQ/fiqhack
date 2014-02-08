@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-12 */
+/* Last modified by Sean Hunt, 2014-02-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -92,7 +92,7 @@ boulder_hits_pool(struct obj * otmp, int rx, int ry, boolean pushing)
                     pline("There is a large splash as %s %s the %s.",
                           the(xname(otmp)), fills_up ? "fills" : "falls into",
                           what);
-                } else if (flags.soundok)
+                } else
                     You_hear("a%s splash.", lava ? " sizzling" : "");
                 wake_nearto(rx, ry, 40);
             }
@@ -167,19 +167,16 @@ flooreffects(struct obj * obj, int x, int y, const char *verb)
         }
         if (*verb) {
             if (Blind && couldsee(x, y)) {
-                if (flags.soundok) {
-                    if ((x == u.ux) && (y == u.uy))
-                        You_hear("a CRASH! beneath you.");
-                    else
-                        You_hear("a nearby CRASH!");
-                }
-            } else if (cansee(x, y)) {
+                if ((x == u.ux) && (y == u.uy))
+                    You_hear("a CRASH! beneath you.");
+                else
+                    You_hear("a nearby CRASH!");
+            } else if (cansee(x, y))
                 pline("The boulder %s%s.", t->tseen ? "" : "triggers and ",
                       t->ttyp == TRAPDOOR ? "plugs a trap door" : t->ttyp ==
                       HOLE ? "plugs a hole" : "fills a pit");
-            } else if (flags.soundok) {
+            else
                 You_hear("a distant CRASH!");
-            }
         }
         deltrap(lev, t);
         obfree(obj, NULL);
@@ -192,7 +189,7 @@ flooreffects(struct obj * obj, int x, int y, const char *verb)
         /* Reasonably bulky objects (arbitrary) splash when dropped. If you're
            floating above the water even small things make noise. Stuff dropped 
            near fountains always misses */
-        if ((Blind || (Levitation || Flying)) && flags.soundok &&
+        if ((Blind || (Levitation || Flying)) && canhear() &&
             ((x == u.ux) && (y == u.uy))) {
             if (!Underwater) {
                 if (weight(obj) > 9) {
@@ -209,7 +206,7 @@ flooreffects(struct obj * obj, int x, int y, const char *verb)
                (t = t_at(lev, x, y)) != 0 && t->tseen &&
                (t->ttyp == PIT || t->ttyp == SPIKED_PIT)) {
         /* you escaped a pit and are standing on the precipice */
-        if (Blind && flags.soundok)
+        if (Blind)
             You_hear("%s tumble downwards.", the(xname(obj)));
         else
             pline("%s %s into %s pit.", The(xname(obj)), otense(obj, "tumble"),

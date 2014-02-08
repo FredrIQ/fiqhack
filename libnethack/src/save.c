@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-19 */
+/* Last modified by Sean Hunt, 2014-02-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -146,20 +146,19 @@ save_flags(struct memfile *mf)
     mwrite8(mf, flags.showrace);              /* 62 */
     mwrite8(mf, flags.show_uncursed);         /* 63 */
     mwrite8(mf, flags.sortpack);              /* 64 */
-    mwrite8(mf, flags.soundok);               /* 65 */
-    mwrite8(mf, flags.sparkle);               /* 66 */
-    mwrite8(mf, flags.tombstone);             /* 67 */
-    mwrite8(mf, flags.travel_interrupt);      /* 68 */
-    mwrite8(mf, flags.verbose);               /* 69 */
-    mwrite(mf, flags.inv_order, sizeof (flags.inv_order)); /* 87 */
+    mwrite8(mf, flags.sparkle);               /* 65 */
+    mwrite8(mf, flags.tombstone);             /* 66 */
+    mwrite8(mf, flags.travel_interrupt);      /* 67 */
+    mwrite8(mf, flags.verbose);               /* 68 */
+    mwrite(mf, flags.inv_order, sizeof (flags.inv_order)); /* 86 */
 
-    mwrite32(mf, flags.last_arg.argtype);     /* 91 */
-    mwrite32(mf, flags.last_arg.dir);         /* 95 */
-    mwrite16(mf, flags.last_arg.pos.x);       /* 97 */
-    mwrite16(mf, flags.last_arg.pos.y);       /* 99 */
-    mwrite8(mf, flags.last_arg.invlet);       /* 100 */
-    mwrite8(mf, flags.last_arg.spelllet);     /* 101 */
-    mwrite32(mf, flags.last_arg.limit);       /* 105 */
+    mwrite32(mf, flags.last_arg.argtype);     /* 90 */
+    mwrite32(mf, flags.last_arg.dir);         /* 94 */
+    mwrite16(mf, flags.last_arg.pos.x);       /* 96 */
+    mwrite16(mf, flags.last_arg.pos.y);       /* 98 */
+    mwrite8(mf, flags.last_arg.invlet);       /* 99 */
+    mwrite8(mf, flags.last_arg.spelllet);     /* 100 */
+    mwrite32(mf, flags.last_arg.limit);       /* 104 */
 
     mwrite(mf, flags.last_arg.str, sizeof flags.last_arg.str);
 

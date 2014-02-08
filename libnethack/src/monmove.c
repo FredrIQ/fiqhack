@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -24,7 +24,7 @@ mb_trapped(struct monst *mtmp)
     if (flags.verbose) {
         if (cansee(mtmp->mx, mtmp->my))
             pline("KABOOM!!  You see a door explode.");
-        else if (flags.soundok)
+        else
             You_hear("a distant explosion.");
     }
     wake_nearto(mtmp->mx, mtmp->my, 7 * 7);
@@ -1080,7 +1080,7 @@ postmov:
                         if (flags.verbose) {
                             if (canseeit)
                                 pline("You see a door unlock and open.");
-                            else if (flags.soundok)
+                            else
                                 You_hear("a door unlock and open.");
                         }
                         here->doormask = D_ISOPEN;
@@ -1098,7 +1098,7 @@ postmov:
                         if (flags.verbose) {
                             if (canseeit)
                                 pline("You see a door open.");
-                            else if (flags.soundok)
+                            else
                                 You_hear("a door open.");
                         }
                         here->doormask = D_ISOPEN;
@@ -1117,7 +1117,7 @@ postmov:
                         if (flags.verbose) {
                             if (canseeit)
                                 pline("You see a door crash open.");
-                            else if (flags.soundok)
+                            else
                                 You_hear("a door crash open.");
                         }
                         if (here->doormask & D_LOCKED && !rn2(2))

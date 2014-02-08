@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3990,6 +3990,12 @@ unconscious(void)
     return u.usleep || !strncmp(u.umoveagain, "You regain con", 14) ||
         !strncmp(u.umoveagain, "You awake with a headache", 25) ||
         !strncmp(u.umoveagain, "You are consci", 14);
+}
+
+boolean
+canhear(void)
+{
+    return !unconscious();
 }
 
 static const char lava_killer[] = "molten lava";

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-28 */
+/* Last modified by Sean Hunt, 2014-02-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1028,7 +1028,7 @@ watch_warn(struct monst *mtmp, xchar x, xchar y, boolean zap)
             if (zap || mtmp->msuspicious) {
 
                 verbalize("Halt, vandal!  You're under arrest!");
-                angry_guards(!(flags.soundok));
+                angry_guards(!canhear());
 
             } else {
                 const char *str;
@@ -1098,7 +1098,7 @@ mdig_tunnel(struct monst *mtmp)
 
     if (IS_WALL(here->typ)) {
         /* KMH -- Okay on arboreal levels (room walls are still stone) */
-        if (flags.soundok && flags.verbose && !rn2(5))
+        if (flags.verbose && !rn2(5))
             You_hear("crashing rock.");
         if (*in_rooms(level, mtmp->mx, mtmp->my, SHOPBASE))
             add_damage(mtmp->mx, mtmp->my, 0L);

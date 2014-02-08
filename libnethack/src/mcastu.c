@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -66,8 +66,7 @@ cursetxt(struct monst *mtmp, boolean undirected)
             point_msg = "at you, then curses";
 
         pline("%s points %s.", Monnam(mtmp), point_msg);
-    } else if (!(moves % 4) || !rn2(4)) {
-        if (flags.soundok)
+    } else if ((!(moves % 4) || !rn2(4)) && canhear()) {
             pline_once("You hear a mumbled curse.");
     }
 }
@@ -224,7 +223,7 @@ castmu(struct monst *mtmp, const struct attack *mattk,
     action_interrupted();
 
     if (rn2(ml * 10) < (mtmp->mconf ? 100 : 20)) {      /* fumbled attack */
-        if (canseemon(mtmp) && flags.soundok)
+        if (canseemon(mtmp) && canhear())
             pline("The air crackles around %s.", mon_nam(mtmp));
         return 0;
     }
@@ -891,7 +890,7 @@ castmm(struct monst *mtmp, struct monst *mdef, const struct attack *mattk)
                 pline("%s points at %s, then curses.", buf, mon_nam(mdef));
 
         } else if ((!(moves % 4) || !rn2(4))) {
-            if (flags.soundok)
+            if (canhear())
                 pline_once("You hear a mumbled curse.");
         }
         return (0);
@@ -904,7 +903,7 @@ castmm(struct monst *mtmp, struct monst *mdef, const struct attack *mattk)
     }
 
     if (rn2(ml * 10) < (mtmp->mconf ? 100 : 20)) {      /* fumbled attack */
-        if (canseemon(mtmp) && flags.soundok)
+        if (canseemon(mtmp) && canhear())
             pline("The air crackles around %s.", mon_nam(mtmp));
         return (0);
     }

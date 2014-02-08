@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -644,7 +644,7 @@ meatmetal(struct monst *mtmp)
                 if (cansee(mtmp->mx, mtmp->my) && flags.verbose)
                     pline("%s eats %s!", Monnam(mtmp),
                           distant_name(otmp, doname));
-                else if (flags.soundok && flags.verbose)
+                else if (flags.verbose)
                     You_hear("a crunching sound.");
                 mtmp->meating = otmp->owt / 2 + 1;
                 /* Heal up to the object's weight in hp */
@@ -726,7 +726,7 @@ meatobj(struct monst *mtmp)
             ++count;
             if (cansee(mtmp->mx, mtmp->my) && flags.verbose)
                 pline("%s eats %s!", Monnam(mtmp), distant_name(otmp, doname));
-            else if (flags.soundok && flags.verbose)
+            else if (flags.verbose)
                 You_hear("a slurping sound.");
             /* Heal up to the object's weight in hp */
             if (mtmp->mhp < mtmp->mhpmax) {
@@ -772,7 +772,7 @@ meatobj(struct monst *mtmp)
                     pline("%s attempts to engulf %s.", Monnam(mtmp),
                           distant_name(otmp, doname));
                     pline("%s dies!", Monnam(mtmp));
-                } else if (flags.soundok && flags.verbose) {
+                } else if (flags.verbose) {
                     You_hear("a slurping sound abruptly stop.");
                     if (mtmp->mtame) {
                         pline
@@ -799,7 +799,7 @@ meatobj(struct monst *mtmp)
     if (ecount > 0) {
         if (cansee(mtmp->mx, mtmp->my) && flags.verbose && buf[0])
             pline("%s", buf);
-        else if (flags.soundok && flags.verbose)
+        else if (flags.verbose)
             You_hear("%s slurping sound%s.", ecount == 1 ? "a" : "several",
                      ecount == 1 ? "" : "s");
     }
@@ -1527,8 +1527,7 @@ corpse_chance(struct monst *mon,
                         tmp = (tmp + 1) / 2;
                     losehp(tmp, killer_buf, KILLED_BY_AN);
                 } else {
-                    if (flags.soundok)
-                        You_hear("an explosion.");
+                    You_hear("an explosion.");
                     magr->mhp -= tmp;
                     if (magr->mhp < 1)
                         mondied(magr);
@@ -2057,7 +2056,7 @@ void
 m_respond(struct monst *mtmp)
 {
     if (mtmp->data->msound == MS_SHRIEK) {
-        if (flags.soundok) {
+        if (canhear()) {
             pline("%s shrieks.", Monnam(mtmp));
             action_interrupted();
         }
@@ -2101,7 +2100,7 @@ setmangry(struct monst *mtmp)
     if (couldsee(mtmp->mx, mtmp->my)) {
         if (humanoid(mtmp->data) || mtmp->isshk || mtmp->isgd)
             pline("%s gets angry!", Monnam(mtmp));
-        else if (flags.verbose && flags.soundok)
+        else if (flags.verbose)
             growl(mtmp);
     }
 
@@ -2754,7 +2753,7 @@ angry_guards(boolean silent)
                 else if (!Blind)
                     pline("You see %sangry guard%s approaching!",
                           sct == 1 ? "an " : "", sct > 1 ? "s" : "");
-            } else if (flags.soundok)
+            } else
                 You_hear("the shrill sound of a guard's whistle.");
         }
         return TRUE;

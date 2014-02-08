@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Sean Hunt, 2014-02-08 */
 /* Copyright (c) 1989 by Jean-Christophe Collet                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -537,7 +537,7 @@ do_entity(struct entity *etmp)
                 if (e_inview)
                     pline("%s crushed by the falling portcullis!",
                           E_phrase(etmp, "are"));
-                else if (flags.soundok)
+                else
                     You_hear("a crushing sound.");
                 e_died(etmp, e_inview ? 3 : 2, CRUSHING);
                 /* no corpse */
@@ -613,8 +613,7 @@ do_entity(struct entity *etmp)
         }
     } else {
         if (is_pool(level, etmp->ex, etmp->ey) && !e_inview)
-            if (flags.soundok)
-                You_hear("a splash.");
+            You_hear("a splash.");
         if (e_survives_at(etmp, etmp->ex, etmp->ey)) {
             if (e_inview && !is_flyer(etmp->edata) && !is_floater(etmp->edata))
                 pline("%s from the bridge.", E_phrase(etmp, "fall"));
@@ -682,7 +681,7 @@ close_drawbridge(int x, int y)
     do_entity(&(occupants[0])); /* Do set_entity after first */
     set_entity(x2, y2, &(occupants[1]));        /* do_entity for worm tail */
     do_entity(&(occupants[1]));
-    if (OBJ_AT(x, y) && flags.soundok)
+    if (OBJ_AT(x, y))
         You_hear("smashing and crushing.");
     revive_nasty(x, y, NULL);
     revive_nasty(x2, y2, NULL);
@@ -766,13 +765,13 @@ destroy_drawbridge(int x, int y)
             if (cansee(x2, y2))
                 pline("The portcullis of the drawbridge falls into the %s!",
                       lava ? "lava" : waterbody_name(x2, y2));
-            else if (flags.soundok)
+            else
                 You_hear("a loud *SPLASH*!");
         } else {
             if (cansee(x, y))
                 pline("The drawbridge collapses into the %s!",
                       lava ? "lava" : waterbody_name(x, y));
-            else if (flags.soundok)
+            else
                 You_hear("a loud *SPLASH*!");
         }
         loc1->typ = lava ? LAVAPOOL : MOAT;
@@ -826,7 +825,7 @@ destroy_drawbridge(int x, int y)
                     pline("%s hit by a huge chunk of metal!",
                           E_phrase(etmp1, "are"));
             } else {
-                if (flags.soundok && !is_u(etmp1) && !is_pool(level, x, y))
+                if (!is_u(etmp1) && !is_pool(level, x, y))
                     You_hear("a crushing sound.");
             }
             killer_format = KILLED_BY_AN;

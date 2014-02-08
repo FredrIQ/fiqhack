@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-08 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -303,7 +303,7 @@ do_earthquake(int force)
                             mtmp->mtrapped = 1;
                             if (cansee(x, y))
                                 pline("%s falls into a chasm!", Monnam(mtmp));
-                            else if (flags.soundok && humanoid(mtmp->data))
+                            else if (humanoid(mtmp->data))
                                 You_hear("a scream!");
                             mselftouch(mtmp, "Falling, ", TRUE);
                             if (mtmp->mhp > 0)
@@ -519,7 +519,7 @@ do_play_instrument(struct obj *instr, const struct nh_cmd_arg *arg)
                                     open_drawbridge(x, y);
                                 return 1;
                             }
-            } else if (flags.soundok) {
+            } else if (canhear()) {
                 if (u.uevent.uheard_tune < 1)
                     u.uevent.uheard_tune = 1;
                 /* Okay, it wasn't the right tune, but perhaps we can give the

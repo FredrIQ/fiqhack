@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Sean Hunt, 2014-02-08 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -110,7 +110,8 @@ precheck(struct monst *mon, struct obj *obj, struct musable *m)
             } else {
                 if (vis)
                     pline("In a cloud of smoke, %s emerges!", a_monnam(mtmp));
-                pline("%s speaks.", vis ? Monnam(mtmp) : "Something");
+                if (canhear())
+                    pline("%s speaks.", vis ? Monnam(mtmp) : "Something");
                 /* I suspect few players will be upset that monsters */
                 /* can't wish for wands of death here.... */
                 if (rn2(2)) {
@@ -130,7 +131,7 @@ precheck(struct monst *mon, struct obj *obj, struct musable *m)
     if (obj->oclass == WAND_CLASS && obj->cursed && !rn2(100)) {
         int dam = dice(obj->spe + 2, 6);
 
-        if (flags.soundok) {
+        if (canhear()) {
             if (vis)
                 pline("%s zaps %s, which suddenly explodes!", Monnam(mon),
                       an(xname(obj)));
@@ -153,10 +154,9 @@ static void
 mzapmsg(struct monst *mtmp, struct obj *otmp, boolean self)
 {
     if (!canseemon(mtmp)) {
-        if (flags.soundok)
-            You_hear("a %s zap.",
-                     (distu(mtmp->mx, mtmp->my) <=
-                      (BOLT_LIM + 1) * (BOLT_LIM + 1)) ? "nearby" : "distant");
+        You_hear("a %s zap.",
+                    (distu(mtmp->mx, mtmp->my) <=
+                    (BOLT_LIM + 1) * (BOLT_LIM + 1)) ? "nearby" : "distant");
     } else if (self)
         pline("%s zaps %sself with %s!", Monnam(mtmp), mhim(mtmp),
               doname(otmp));
@@ -174,7 +174,7 @@ mreadmsg(struct monst *mtmp, struct obj *otmp)
     short saverole;
     unsigned savebknown;
 
-    if (!vismon && !flags.soundok)
+    if (!vismon && !canhear())
         return; /* no feedback */
 
     otmp->dknown = 1;   /* seeing or hearing it read reveals its label */
@@ -210,7 +210,7 @@ mquaffmsg(struct monst *mtmp, struct obj *otmp)
     if (canseemon(mtmp)) {
         otmp->dknown = 1;
         pline("%s drinks %s!", Monnam(mtmp), singular(otmp, doname));
-    } else if (flags.soundok)
+    } else
         You_hear("a chugging sound.");
 }
 
@@ -543,7 +543,7 @@ use_defensive(struct monst *mtmp, struct musable *m)
     case MUSE_BUGLE:
         if (vismon)
             pline("%s plays %s!", Monnam(mtmp), doname(otmp));
-        else if (flags.soundok)
+        else
             You_hear("a bugle playing reveille!");
         awaken_soldiers();
         return 2;
@@ -650,7 +650,7 @@ use_defensive(struct monst *mtmp, struct musable *m)
                       surface(mtmp->mx, mtmp->my));
                 pline("%s %s through...", Monnam(mtmp),
                       is_flyer(mtmp->data) ? "dives" : "falls");
-            } else if (flags.soundok)
+            } else
                 You_hear("something crash through the %s.",
                          surface(mtmp->mx, mtmp->my));
             /* we made sure that there is a level for mtmp to go to */
@@ -1375,7 +1375,7 @@ use_offensive(struct monst *mtmp, struct musable *m)
                                         pline("Fortunately, %s is wearing "
                                               "a hard %s.", mon_nam(mtmp2),
                                               helmet_name(helmet));
-                                    else if (flags.soundok)
+                                    else
                                         You_hear("a clanging sound.");
                                     if (mdmg > 2)
                                         mdmg = 2;
@@ -2128,7 +2128,7 @@ mon_consume_unstone(struct monst *mon, struct obj *obj, boolean by_you,
               (obj->otyp == POT_ACID) ? "quaff" : "eat", distant_name(obj,
                                                                       doname));
         obj->quan = save_quan;
-    } else if (flags.soundok)
+    } else
         You_hear("%s.", (obj->otyp == POT_ACID) ? "drinking" : "chewing");
     m_useup(mon, obj);
     if (((obj->otyp == POT_ACID) || acidic(&mons[obj->corpsenm])) &&

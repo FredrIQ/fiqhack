@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-28 */
+/* Last modified by Sean Hunt, 2014-02-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -61,7 +61,7 @@ noises(struct monst *magr, const struct attack *mattk)
 {
     boolean farq = (distu(magr->mx, magr->my) > 15);
 
-    if (flags.soundok && (farq != far_noise || moves - noisetime > 10)) {
+    if (farq != far_noise || moves - noisetime > 10) {
         far_noise = farq;
         noisetime = moves;
         You_hear("%s%s.",
@@ -713,7 +713,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                 pline(brief_feeling, "queasy");
             return MM_AGR_DIED;
         }
-        if (flags.verbose && flags.soundok)
+        if (flags.verbose)
             verbalize("Burrrrp!");
         tmp = mdef->mhp;
         /* Use up amulet of life saving */
@@ -1040,7 +1040,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                     pline(brief_feeling, "strangely sad");
                 return (MM_DEF_DIED | (grow_up(magr, mdef) ? 0 : MM_AGR_DIED));
             }
-            if (flags.soundok) {
+            if (canhear()) {
                 if (!vis)
                     You_hear("laughter.");
                 else

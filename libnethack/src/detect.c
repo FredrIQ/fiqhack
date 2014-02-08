@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-12 */
+/* Last modified by Sean Hunt, 2014-02-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1082,7 +1082,7 @@ openone(int zx, int zy, void *num)
             else
                 pline_once("You %s an explosion!",
                            cansee(zx, zy) ? "see" :
-                           (flags.soundok ? "hear" : "feel the shock of"));
+                           (canhear() ? "hear" : "feel the shock of"));
             wake_nearto(zx, zy, 11 * 11);
             level->locations[zx][zy].doormask = D_NODOOR;
         } else

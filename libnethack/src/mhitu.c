@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -512,7 +512,7 @@ mattacku(struct monst *mtmp)
             } else {
                 const char *from_nowhere;
 
-                if (flags.soundok) {
+                if (canhear()) {
                     pline("Something %s!", makeplural(growl_sound(mtmp)));
                     from_nowhere = "";
                 } else
@@ -1191,12 +1191,10 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     case AD_STON:      /* cockatrice */
         hitmsg(mtmp, mattk);
         if (!rn2(3)) {
-            if (mtmp->mcan) {
-                if (flags.soundok)
-                    You_hear("a cough from %s!", mon_nam(mtmp));
-            } else {
-                if (flags.soundok)
-                    You_hear("%s hissing!", s_suffix(mon_nam(mtmp)));
+            if (mtmp->mcan)
+                You_hear("a cough from %s!", mon_nam(mtmp));
+            else {
+                You_hear("%s hissing!", s_suffix(mon_nam(mtmp)));
                 if (!rn2(10) || (flags.moonphase == NEW_MOON && !have_lizard())) {
                 do_stone:
                     if (!Stoned && !Stone_resistance &&
@@ -1433,7 +1431,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             passiveum(olduasmon, mtmp, mattk);
         } else {
             if (Role_if(PM_HEALER)) {
-                if (flags.soundok && !(moves % 5))
+                if (!(moves % 5))
                     verbalize("Doc, I can't help you unless you cooperate.");
                 dmg = 0;
             } else
@@ -1445,7 +1443,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         if (!night() && mdat == &mons[PM_GREMLIN])
             break;
         if (!mtmp->mcan && !rn2(10)) {
-            if (flags.soundok) {
+            if (canhear()) {
                 if (Blind)
                     You_hear("laughter.");
                 else

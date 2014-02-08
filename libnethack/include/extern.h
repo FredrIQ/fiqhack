@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-19 */
+/* Last modified by Sean Hunt, 2014-02-08 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1681,6 +1681,7 @@ extern boolean delfloortrap(struct level *, struct trap *);
 extern struct trap *t_at(struct level *lev, int x, int y);
 extern void b_trapped(const char *, int);
 extern boolean unconscious(void);
+extern boolean canhear(void);
 extern boolean lava_effects(void);
 extern void blow_up_landmine(struct trap *);
 extern void cnv_trap_obj(struct level *lev, int otyp, int cnt,
