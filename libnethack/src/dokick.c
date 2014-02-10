@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-08 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -165,7 +165,7 @@ kick_monster(xchar x, xchar y, schar dx, schar dy, enum u_interaction_mode uim)
         for (i = 0; i < NATTK; i++) {
             /* first of two kicks might have provoked counterattack that has
                incapacitated the hero (ie, floating eye) */
-            if (Helpless)
+            if (u_helpless(hm_all))
                 break;
 
             uattk = &youmonst.data->mattk[i];

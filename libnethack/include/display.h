@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -28,10 +28,11 @@
  * monsters that are hiding or mimicing other monsters.
  */
 # define tp_sensemon(mon) (     /* The hero can always sense a monster IF:  */\
-    (mon->dlevel == level) &&   /* 1. the monster is on the same level      */\
+    (mon->dlevel == level) &&   /* 1. the monster is on the same level AND  */\
     (!mindless(mon->data)) &&   /* 2. the monster has a brain to sense AND  */\
-      ((Blind && Blind_telepat) || /* 3a. hero is blind and telepathic OR   */\
-                                /* 3b. hero is using a telepathy inducing   */\
+    (!u_helpless(hm_unconscious)) && /* 3. the hero is conscious AND        */\
+      ((Blind && Blind_telepat) || /* 4a. hero is blind and telepathic OR   */\
+                                /* 4b. hero is using a telepathy inducing   */\
                                 /*       object and in range                */\
        (Unblind_telepat &&                                              \
         (distu(mon->mx, mon->my) <= (BOLT_LIM * BOLT_LIM))))            \

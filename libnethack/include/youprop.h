@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-12 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -9,7 +9,6 @@
 # include "prop.h"
 # include "permonst.h"
 # include "mondata.h"
-# include "pm.h"
 
 
 /* KMH, intrinsics patch.
@@ -99,7 +98,7 @@
                 /* ...means blind because of a cover */
 # define Blind  (((Blinded || Blindfolded || !haseyes(youmonst.data)) && \
                  !(ublindf && ublindf->oartifact == ART_EYES_OF_THE_OVERWORLD)) || \
-                 flags.permablind || unconscious())
+                 flags.permablind || u_helpless(hm_unconscious))
                 /* ...the Eyes operate even when you really are blind or don't
                    have any eyes, but get beaten by game options or
                    unconsciousness */
@@ -110,8 +109,6 @@
 # define Vomiting               u.uintrinsic[VOMITING]
 # define Glib                   u.uintrinsic[GLIB]
 # define Slimed                 u.uintrinsic[SLIMED]      /* [Tom] */
-
-# define Helpless               u.uhelpless
 
 /* Hallucination is solely a timeout; its resistance is extrinsic */
 # define HHallucination         u.uintrinsic[HALLUC]
@@ -349,5 +346,36 @@
 #define Uhave_book              carrying(SPE_BOOK_OF_THE_DEAD)
 #define Uhave_menorah           carrying(CANDELABRUM_OF_INVOCATION)
 #define Uhave_questart          carrying_questart()
+
+/* Reasons to be helpless */
+enum helpless_reason {
+    hr_first = 0,
+    hr_asleep = hr_first,
+    hr_fainted,
+    hr_paralyzed,
+    hr_moving,
+    hr_mimicking,
+    hr_busy,
+    hr_engraving,
+    hr_praying,
+    hr_last = hr_praying
+};
+
+/* Masks for clearing helplessness */
+/* This must match helpless_reason exactly */
+#define HM(reason) hm_##reason = 1 << (hr_##reason - 1)
+enum helpless_mask {
+    hm_none = 0,
+    HM(asleep),
+    HM(fainted),
+    hm_unconscious = hm_asleep | hm_fainted,
+    HM(paralyzed),
+    HM(moving),
+    HM(mimicking),
+    HM(busy),
+    HM(engraving),
+    HM(praying),
+    hm_all = 0x7f
+};
 
 #endif /* YOUPROP_H */

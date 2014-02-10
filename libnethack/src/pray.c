@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-08 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1257,7 +1257,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                     if (sgn(u.ualign.type) == sgn(dmon->data->maligntyp))
                         dmon->mpeaceful = TRUE;
                     pline("You are terrified, and unable to move.");
-                    helpless(3, "being terrified of a demon", NULL);
+                    helpless(3, hr_paralyzed, "being terrified of a demon", NULL);
                 } else
                     pline("The %s.", demonless_msg);
             }
@@ -1834,7 +1834,7 @@ doturn(const struct nh_cmd_arg *arg)
             }
         }
     }
-    helpless(5, "trying to turn the monsters", NULL);
+    helpless(5, hr_busy, "trying to turn the monsters", NULL);
     return 1;
 }
 

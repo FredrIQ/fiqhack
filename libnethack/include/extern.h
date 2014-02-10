@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-08 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -13,6 +13,7 @@
 # include "prop.h"
 # include "iomodes.h"
 # include "decl.h"
+# include "youprop.h"
 
 /* hacklib.h now contains extern definitions for hacklib */
 # include "hacklib.h"
@@ -56,8 +57,11 @@ extern void action_incomplete(const char *gerund, enum occupation occupation);
 extern void action_interrupted(void);
 extern void action_completed(void);
 extern void one_occupation_turn(int (*)(void), const char *, enum occupation);
-extern void helpless(int turns, const char *reason, const char *done);
-extern void cancel_helplessness(const char *done);
+extern void helpless(int turns, enum helpless_reason reason, const char *cause,
+                     const char *endmsg);
+extern void cancel_helplessness(enum helpless_mask mask, const char *msg);
+extern boolean u_helpless(enum helpless_mask mask);
+extern boolean canhear(void);
 
 /* ### apply.c ### */
 
@@ -1607,7 +1611,6 @@ extern boolean u_teleport_mon(struct monst *, boolean);
 
 extern void burn_away_slime(void);
 extern void nh_timeout(void);
-extern void fall_asleep(int, boolean);
 extern void attach_egg_hatch_timeout(struct obj *);
 extern void attach_fig_transform_timeout(struct obj *);
 extern void kill_egg(struct obj *);
@@ -1680,8 +1683,6 @@ extern void deltrap(struct level *, struct trap *);
 extern boolean delfloortrap(struct level *, struct trap *);
 extern struct trap *t_at(struct level *lev, int x, int y);
 extern void b_trapped(const char *, int);
-extern boolean unconscious(void);
-extern boolean canhear(void);
 extern boolean lava_effects(void);
 extern void blow_up_landmine(struct trap *);
 extern void cnv_trap_obj(struct level *lev, int otyp, int cnt,

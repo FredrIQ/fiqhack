@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-08 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -878,7 +878,7 @@ use_crystal_ball(struct obj *obj)
         return;
     }
     pline("You peer into %s...", the(xname(obj)));
-    helpless(rnd(10), "gazing into a crystal ball",
+    helpless(rnd(10), hr_busy, "gazing into a crystal ball",
              "You finish your crystal-gazing.");
     if (obj->spe <= 0)
         pline("The vision is unclear.");

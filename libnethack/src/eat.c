@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-08 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -705,7 +705,7 @@ cpostfx(int pm)
                     "You suddenly dread being peeled and mimic %s again!" :
                     "You now prefer mimicking %s again.",
                     an(Upolyd ? youmonst.data->mname : urace.noun));
-            helpless(tmp, "pretending to be a pile of gold", buf);
+            helpless(tmp, hr_mimicking, "pretending to be a pile of gold", buf);
             youmonst.m_ap_type = M_AP_OBJECT;
             youmonst.mappearance = Hallucination ? ORANGE : GOLD_PIECE;
             newsym(u.ux, u.uy);
@@ -1084,8 +1084,7 @@ rottenfood(struct obj *obj)
             what = "you slap against the", where =
                 (u.usteed) ? "saddle" : surface(u.ux, u.uy);
         pline("The world spins and %s %s.", what, where);
-        helpless(rnd(10), "unconscious from rotten food",
-                 "You are conscious again.");
+        helpless(rnd(10), hr_fainted, "unconscious from rotten food", NULL);
         see_monsters();
         see_objects();
         turnstate.vision_full_recalc = TRUE;
@@ -1980,7 +1979,7 @@ gethungry(void)
     if (u.uinvulnerable)
         return; /* you don't feel hungrier */
 
-    if ((!u.usleep || !rn2(10)) /* slow metabolic rate while asleep */
+    if ((!u_helpless(hm_asleep) || !rn2(10)) /* slow metabolic rate while asleep */
         &&(carnivorous(youmonst.data) || herbivorous(youmonst.data))
         && !Slow_digestion)
         u.uhunger--;    /* ordinary food consumption */
@@ -2086,13 +2085,13 @@ newuhs(boolean incr)
 
     if (newhs == FAINTING) {
         if (u.uhs <= WEAK || rn2(20 - u.uhunger / 10) >= 19) {
-            if (u.uhs != FAINTED && !Helpless) {
+            if (u.uhs != FAINTED && !u_helpless(hm_all)) {
                 /* stop what you're doing, then faint */
                 action_interrupted();
                 pline("You faint from lack of food.");
                 newhs = u.uhs = FAINTED;
-                helpless(10 - (u.uhunger / 10), "fainted from lack of food",
-                         "You regain consciousness.");
+                helpless(10 - (u.uhunger / 10), hr_fainted,
+                         "fainted from lack of food", NULL);
                 /* cancel_helplessness puts it back to FAINTING if the character
                    is revived for any reason */
             }
@@ -2291,7 +2290,7 @@ void
 vomit(void)
 {       /* A good idea from David Neves */
     make_sick(0L, NULL, TRUE, SICK_VOMITABLE);
-    helpless(2, "vomiting", "You're done throwing up.");
+    helpless(2, hr_busy, "vomiting", "You're done throwing up.");
 }
 
 int

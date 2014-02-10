@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-08 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -991,7 +991,7 @@ find_offensive(struct monst * mtmp, struct musable * m)
                 m->has_offense = MUSE_WAN_DEATH;
             }
             nomore(MUSE_WAN_SLEEP);
-            if (obj->otyp == WAN_SLEEP && obj->spe > 0 && !Helpless) {
+            if (obj->otyp == WAN_SLEEP && obj->spe > 0 && !u_helpless(hm_all)) {
                 m->offensive = obj;
                 m->has_offense = MUSE_WAN_SLEEP;
             }
@@ -1034,7 +1034,7 @@ find_offensive(struct monst * mtmp, struct musable * m)
             m->has_offense = MUSE_WAN_STRIKING;
         }
         nomore(MUSE_POT_PARALYSIS);
-        if (obj->otyp == POT_PARALYSIS && !Helpless) {
+        if (obj->otyp == POT_PARALYSIS && !u_helpless(hm_all)) {
             m->offensive = obj;
             m->has_offense = MUSE_POT_PARALYSIS;
         }
@@ -1891,9 +1891,8 @@ you_aggravate(struct monst *mtmp)
     pline("You feel aggravated at %s.", noit_mon_nam(mtmp));
     win_pause_output(P_MAP);
     doredraw();
-    if (unconscious())
-        cancel_helplessness(
-            "Aggravated, you are jolted into full consciousness.");
+    cancel_helplessness(hm_unconscious,
+                        "Aggravated, you are jolted into full consciousness.");
 
     newsym(mtmp->mx, mtmp->my);
     if (!canspotmon(mtmp))

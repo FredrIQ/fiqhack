@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -101,9 +101,9 @@ struct you {
 
     /* uwhybusy is reason for helplessness, "killed by ..., while uwhybusy", or
        reason for occupation, "You stop uwhybusy."; which is determined by
-       Helpless and flags.occupation. (You can't be helpless and occupied at the
+       u_helpless(hm_all) and flags.occupation. (You can't be helpless and occupied at the
        same time; the definition of helplessness precludes the character from
-       doing anything.) If neither Helpless nor flags.occupation is nonzero,
+       doing anything.) If neither u_helpless(hm_all) nor flags.occupation is nonzero,
        this is meaningless (which is OK, because it's initialized in both
        action_incomplete() and helpless()). */
     char uwhybusy[BUFSZ];
@@ -137,7 +137,6 @@ struct you {
 
     unsigned ucreamed;
     unsigned uswldtim;  /* time you have been swallowed */
-    unsigned uhelpless;
 
     unsigned uswallow:1;        /* true if swallowed */
     unsigned uinwater:1;        /* if you're currently in water (only
@@ -190,7 +189,6 @@ struct you {
     int umoney0;
     int uexp, urexp;
     int ucleansed;      /* to record moves when player was cleansed */
-    int usleep; /* sleeping; monstermove you last started */
     int uinvault;
     struct monst *ustuck;
     struct monst *usteed;

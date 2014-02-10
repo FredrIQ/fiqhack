@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-08 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -784,7 +784,7 @@ dotrap(struct trap *trap, unsigned trflags)
             break;
         }
         pline("A cloud of gas puts you to sleep!");
-        fall_asleep(-rnd(25), TRUE);
+        helpless(rnd(25), hr_asleep, "sleeping", NULL);
         steedintrap(trap, NULL);
         break;
 
@@ -1807,8 +1807,7 @@ mintrap(struct monst *mtmp)
                     seetrap(trap);
                 } else {
                     if ((mptr == &mons[PM_OWLBEAR]
-                         || mptr == &mons[PM_BUGBEAR])
-                        && flags.soundok)
+                         || mptr == &mons[PM_BUGBEAR]))
                         You_hear("the roaring of an angry bear!");
                 }
             }
@@ -2148,8 +2147,8 @@ mintrap(struct monst *mtmp)
                     minliquid(mtmp);
                 if (mtmp->mhp <= 0)
                     trapkilled = TRUE;
-                if (unconscious())
-                    cancel_helplessness("The explosion awakens you!");
+                cancel_helplessness(hm_unconscious,
+                                    "The explosion awakens you!");
                 break;
             }
         case POLY_TRAP:
@@ -2928,8 +2927,8 @@ drown(void)
         turnstate.vision_full_recalc = TRUE;
         return FALSE;
     }
-    if ((Teleportation || can_teleport(youmonst.data)) && !u.usleep &&
-        (Teleport_control || rn2(3) < Luck + 2)) {
+    if ((Teleportation || can_teleport(youmonst.data)) &&
+        u_helpless(hm_unconscious) && (Teleport_control || rn2(3) < Luck + 2)) {
         pline("You attempt a teleport spell."); /* utcsri!carroll */
         if (!level->flags.noteleport) {
             dotele(&(struct nh_cmd_arg){.argtype = 0});
@@ -2946,12 +2945,10 @@ drown(void)
     crawl_ok = FALSE;
     x = y = 0;  /* lint suppression */
     /* if sleeping, wake up now so that we don't crawl out of water while still 
-       asleep; we can't do that the same way that waking due to combat is
-       handled; note cancel_helplessness clears u.usleep */
-    if (u.usleep)
-        cancel_helplessness("Suddenly you wake up!");
+       asleep */
+    cancel_helplessness(hm_unconscious, "Suddenly you wake up!");
     /* can't crawl if unable to move (crawl_ok flag stays false) */
-    if (Helpless || (Upolyd && !youmonst.data->mmove))
+    if (u_helpless(hm_all) || (Upolyd && !youmonst.data->mmove))
         goto crawl;
     /* look around for a place to crawl to */
     for (i = 0; i < 100; i++) {
@@ -3823,7 +3820,7 @@ chest_trap(struct obj * obj, int bodypart, boolean disarm)
         case 3:
             if (!Free_action) {
                 pline("Suddenly you are frozen in place!");
-                helpless(dice(5, 6), "frozen by a trap", NULL);
+                helpless(dice(5, 6), hr_paralyzed, "frozen by a trap", NULL);
                 exercise(A_DEX, FALSE);
             } else
                 pline("You momentarily stiffen.");
@@ -3980,22 +3977,6 @@ thitm(int tlev, struct monst *mon, struct obj *obj, int d_override,
         dealloc_obj(obj);
 
     return trapkilled;
-}
-
-boolean
-unconscious(void)
-{
-    if (!Helpless)
-        return FALSE;
-    return u.usleep || !strncmp(u.umoveagain, "You regain con", 14) ||
-        !strncmp(u.umoveagain, "You awake with a headache", 25) ||
-        !strncmp(u.umoveagain, "You are consci", 14);
-}
-
-boolean
-canhear(void)
-{
-    return !unconscious();
 }
 
 static const char lava_killer[] = "molten lava";

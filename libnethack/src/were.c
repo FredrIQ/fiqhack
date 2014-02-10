@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -16,7 +16,7 @@ were_change(struct monst *mon)
             !rn2(night()? (flags.moonphase == FULL_MOON ? 3 : 30)
                  : (flags.moonphase == FULL_MOON ? 10 : 50))) {
             new_were(mon);      /* change into animal form */
-            if (flags.soundok && !canseemon(mon)) {
+            if (!canseemon(mon)) {
                 const char *howler;
 
                 switch (mon->mnum) {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -665,7 +665,7 @@ use_mirror(struct obj *obj, const struct nh_cmd_arg *arg)
                               simple_typename(obj->otyp));
                     else
                         pline("Yikes!  You've frozen yourself!");
-                    helpless(rnd((MAXULEV + 6) - u.ulevel),
+                    helpless(rnd((MAXULEV + 6) - u.ulevel), hr_paralyzed,
                              "gazing into a mirror", NULL);
                 } else
                     pline("You stiffen momentarily under your gaze.");
@@ -821,7 +821,7 @@ use_bell(struct obj **optr)
                     break;
                 case 2:
                     pline("You freeze for a moment in surprise.");
-                    helpless(rnd(2), "summoning a nymph", NULL);
+                    helpless(rnd(2), hr_paralyzed, "surprised by a nymph", NULL);
                     break;
                 }
         }
@@ -1432,7 +1432,7 @@ jump(const struct nh_cmd_arg *arg, int magic)
             change_luck(-1);
 
         teleds(cc.x, cc.y, TRUE);
-        helpless(1, "jumping around", "");
+        helpless(1, hr_moving, "jumping around", NULL);
         morehungry(rnd(25));
         return 1;
     }

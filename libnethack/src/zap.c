@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-12 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2096,7 +2096,7 @@ zapyourself(struct obj *obj, boolean ordinary)
             pline("You don't feel sleepy!");
         } else {
             pline("The sleep ray hits you!");
-            fall_asleep(-rnd(50), TRUE);
+            helpless(rnd(50), hr_asleep, "sleeping", NULL);
         }
         break;
 
@@ -3174,7 +3174,7 @@ zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy)
             shieldeff(u.ux, u.uy);
             pline("You don't feel sleepy.");
         } else {
-            fall_asleep(-dice(nd, 25), TRUE);   /* sleep ray */
+            helpless(dice(nd, 25), hr_asleep, "sleeping", NULL);   /* sleep ray */
         }
         break;
     case ZT_DEATH:
@@ -3723,7 +3723,7 @@ zap_over_floor(xchar x, xchar y, int type, boolean * shopdamage)
                 else
                     pline_once("The water freezes.");
                 newsym(x, y);
-            } else if (flags.soundok && !lava)
+            } else if (!lava)
                 You_hear("a crackling sound.");
 
             if (x == u.ux && y == u.uy) {
@@ -3809,8 +3809,7 @@ zap_over_floor(xchar x, xchar y, int type, boolean * shopdamage)
             } else if (sense_txt) {
                 pline("%s", sense_txt);
             } else if (hear_txt) {
-                if (flags.soundok)
-                    You_hear("%s", hear_txt);
+                You_hear("%s", hear_txt);
             }
         }
     }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-01 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -11,6 +11,7 @@
 # include "coord.h"
 # include "objclass.h"
 # include "prop.h"
+# include "youprop.h"
 
 /* Argument to functions that handle attack-like actions, that specifies the
    extent to which the player is trying to interact with monsters; and to
@@ -87,6 +88,12 @@ struct turnstate {
     boolean vision_full_recalc;
     /* pets migrating with their owner between levels. */
     struct monst *migrating_pets;
+    /* timers for helplessness */
+    unsigned helpless_timers[hr_last + 1];
+    /* causes of helplessness */
+    char helpless_causes[hr_last + 1][BUFSZ];
+    /* messages to print when helplessness ends */
+    char helpless_endmsgs[hr_last + 1][BUFSZ];
 };
 
 extern struct turnstate turnstate;
@@ -135,7 +142,6 @@ struct flag {
     boolean showrace;   /* show hero glyph by race rather than by role */
     boolean show_uncursed;      /* always show uncursed items as such */
     boolean sortpack;   /* sorted inventory */
-    boolean soundok;    /* ok to tell about sounds heard */
     boolean sparkle;    /* show "resisting" special FX (Scott Bigham) */
     boolean tombstone;  /* print tombstone */
     boolean travel_interrupt;   /* Interrupt travel if there is a hostile *

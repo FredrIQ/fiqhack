@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-08 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -354,7 +354,7 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
             if (singleobj->oclass == GEM_CLASS &&
                 singleobj->otyp <= LAST_GEM + 9
                 /* 9 glass colors */
-                && is_unicorn(youmonst.data) && !Helpless) {
+                && is_unicorn(youmonst.data) && !u_helpless(hm_all)) {
                 if (singleobj->otyp > LAST_GEM) {
                     pline("You catch the %s.", xname(singleobj));
                     pline("You are not interested in %s junk.",

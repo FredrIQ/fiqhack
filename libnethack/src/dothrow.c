@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -600,7 +600,7 @@ hurtle(int dx, int dy, int range, boolean verbose)
     if (!range || (!dx && !dy) || u.ustuck)
         return; /* paranoia */
 
-    helpless(range, "moving through the air", "");
+    helpless(range, hr_moving, "moving through the air", NULL);
     if (verbose)
         pline("You %s in the opposite direction.",
               range > 1 ? "hurtle" : "float");

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1041,11 +1041,13 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
     switch (type) {
     default:
         if (len / 10)
-            helpless(len / 10, "engraving", "You finish your weird engraving.");
+            helpless(len / 10, hr_engraving,
+                     "engraving", "You finish your weird engraving.");
         break;
     case DUST:
         if (len / 10)
-            helpless(len / 10, "engraving", "You finish writing in the dust.");
+            helpless(len / 10, hr_engraving,
+                     "engraving", "You finish writing in the dust.");
         break;
     case HEADSTONE:
     case ENGRAVE:
@@ -1077,11 +1079,12 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
         } else if ((otmp->oclass == RING_CLASS) || (otmp->oclass == GEM_CLASS))
             helpless_time = len;
         if (helpless_time)
-            helpless(helpless_time, "engraving", "You finish engraving.");
+            helpless(helpless_time, hr_engraving,
+                     "engraving", "You finish engraving.");
         break;
     case BURN:
         if (len / 10)
-            helpless(len / 10, "engraving",
+            helpless(len / 10, hr_engraving, "engraving",
                      is_ice(level, u.ux, u.uy) ?
                      "You finish melting your message into the ice." :
                      "You finish burning your message into the floor.");
@@ -1100,12 +1103,13 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                 otmp->spe -= 1; /* Prevent infinite grafitti */
         }
         if (helpless_time)
-            helpless(helpless_time, "engraving",
+            helpless(helpless_time, hr_engraving, "engraving",
                      "You finish defacing the dungeon.");
         break;
     case ENGR_BLOOD:
         if (len / 10)
-            helpless(len / 10, "engraving", "You finish scrawling.");
+            helpless(len / 10, hr_engraving, "engraving",
+                     "You finish scrawling.");
         break;
     }
 
@@ -1116,7 +1120,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                 maxelen--;
         if (!maxelen && *sp) {
             *sp = (char)0;
-            if (Helpless)
+            if (u_helpless(hm_all))
                 strcpy(u.umoveagain, "You cannot write any more.");
             pline("You only are able to write \"%s\"", ebuf);
         }
@@ -1128,7 +1132,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
 
     strncat(buf, ebuf, (BUFSZ - (int)strlen(buf) - 1));
 
-    make_engr_at(level, u.ux, u.uy, buf, (moves + Helpless), type);
+    make_engr_at(level, u.ux, u.uy, buf, (moves + u_helpless(hm_all)), type);
 
     if (strstri(buf, "Elbereth")) {
         u.uconduct.elbereths++;

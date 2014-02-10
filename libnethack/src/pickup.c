@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -212,7 +212,7 @@ pickup(int what, enum u_interaction_mode uim)
 
         /* Don't autopick up while teleporting while helpless, or if the player
            explicitly turned autopickup off. */
-        if (Helpless || (autopickup && !flags.pickup)) {
+        if (u_helpless(hm_all) || (autopickup && !flags.pickup)) {
             check_here(FALSE);
             return 0;
         }
@@ -1313,7 +1313,7 @@ lootcont:
 
                 pline("You carefully open %s...", the(xname(cobj)));
                 timepassed |= use_container(cobj, 0);
-                if (Helpless) {        /* e.g. a chest trap */
+                if (u_helpless(hm_all)) {        /* e.g. a chest trap */
                     free(lootlist);
                     return 1;
                 }
@@ -1680,8 +1680,7 @@ in_container(struct obj *obj)
         losehp(dice(6, 6), "magical explosion", KILLED_BY_AN);
         current_container = NULL;       /* baggone = TRUE; */
 
-        /* stop multi-looting; other containers might be destroyed */
-        helpless(1, "blowing up a magical bag", "");
+        action_interrupted();
     }
 
     if (current_container) {
@@ -1880,7 +1879,7 @@ use_container(struct obj *obj, int held)
             pline("You open %s...", the(xname(obj)));
         chest_trap(obj, HAND, FALSE);
         /* even if the trap fails, you've used up this turn */
-        helpless(1, "opening a trapped container", "");
+        action_interrupted();
         return 1;
     }
     current_container = obj;    /* for use by in/out_container */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -246,10 +246,9 @@ gotobj:
 
                 otmp->cursed = 0;
                 /* can't charm you without first waking you */
-                if (u.uhs == FAINTED)
-                    cancel_helplessness("Someone revives you.");
-                slowly = (armordelay >= 1 || Helpless);
-                if (Helpless) {
+                cancel_helplessness(hm_fainted, "Someone revives you.");
+                slowly = (armordelay >= 1 || u_helpless(hm_all));
+                if (u_helpless(hm_all)) {
                     pline
                         ("%s tries to %s you, but is dismayed by your lack of response.",
                          !seen ? "She" : Monnam(mtmp),
@@ -268,7 +267,7 @@ gotobj:
                           "you start taking" : "you take", equipname(otmp));
                 named++;
                 if (armordelay)
-                    helpless(armordelay, "taking off clothes",
+                    helpless(armordelay, hr_busy, "taking off clothes",
                              "You finish disrobing.");
                 remove_worn_item(otmp, TRUE);
                 otmp->cursed = curssv;
@@ -279,7 +278,7 @@ gotobj:
                    bugs. Instead, we just go down the normal codepath; you lose
                    the item, and you're left helpless for the length of time it
                    should have taken to remove. The nymph will stay around (due
-                   to the slowly || Helpless check at the end of the
+                   to the slowly || u_helpless(hm_all) check at the end of the
                    function). */
             }
             break;
@@ -306,7 +305,7 @@ gotobj:
         minstapetrify(mtmp, TRUE);
         return -1;
     }
-    return (slowly || Helpless) ? 0 : 1;
+    return (slowly || u_helpless(hm_all)) ? 0 : 1;
 }
 
 

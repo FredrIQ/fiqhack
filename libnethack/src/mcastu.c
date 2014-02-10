@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-08 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -597,16 +597,16 @@ cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
     case CLC_PARALYZE:
         if (Antimagic || Free_action) {
             shieldeff(u.ux, u.uy);
-            if (!Helpless)
+            if (!u_helpless(hm_all))
                 pline("You stiffen briefly.");
-            helpless(1, "paralyzed by a monster", NULL);
+            helpless(1, hr_paralyzed, "paralyzed by a monster", NULL);
         } else {
-            if (!Helpless)
+            if (!u_helpless(hm_all))
                 pline("You are frozen in place!");
             dmg = 4 + (int)mtmp->m_lev;
             if (Half_spell_damage)
                 dmg = (dmg + 1) / 2;
-            helpless(dmg, "paralyzed by a monster", NULL);
+            helpless(dmg, hr_paralyzed, "paralyzed by a monster", NULL);
         }
         dmg = 0;
         break;

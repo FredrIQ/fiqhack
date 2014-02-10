@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-03 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -510,7 +510,7 @@ hmon(struct monst * mon, struct obj * obj, int thrown)
     if (mon->ispriest && !rn2(2))
         ghod_hitsu(mon);
     if (anger_guards)
-        angry_guards(!flags.soundok);
+        angry_guards(!canhear());
     return result;
 }
 
@@ -1856,7 +1856,7 @@ gulpum(struct monst *mdef, const struct attack *mattk)
                         pline("You digest %s.", mon_nam(mdef));
                         if (Slow_digestion)
                             tmp *= 2;
-                        helpless(tmp, "digesting something", msgbuf);
+                        helpless(tmp, hr_busy, "digesting something", msgbuf);
                     } else
                         pline("%s", msgbuf);
                     if (mdef->data == &mons[PM_GREEN_SLIME]) {
@@ -2155,7 +2155,7 @@ hmonas(struct monst *mon, int tmp, schar dx, schar dy)
         }
         if (!Upolyd)
             break;      /* No extra attacks if no longer a monster */
-        if (Helpless)
+        if (u_helpless(hm_all))
             break;      /* If paralyzed while attacking, i.e. floating eye */
     }
     return (boolean) (nsum != 0);
@@ -2315,7 +2315,8 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
                 pline("You momentarily stiffen.");
             } else {    /* gelatinous cube */
                 pline("You are frozen by %s!", mon_nam(mon));
-                helpless(tmp, "frozen by attacking a monster", NULL);
+                helpless(tmp, hr_paralyzed, "frozen by attacking a monster",
+                         NULL);
                 exercise(A_DEX, FALSE);
             }
             break;

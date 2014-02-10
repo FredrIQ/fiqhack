@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-08 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -431,9 +431,7 @@ mattacku(struct monst *mtmp)
             pline("Wait, %s!  That's a %s named %s!", m_monnam(mtmp),
                   youmonst.data->mname, u.uplname);
         u.ustuck = mtmp;
-        youmonst.m_ap_type = M_AP_NOTHING;
-        youmonst.mappearance = 0;
-        newsym(u.ux, u.uy);
+        cancel_helplessness(hm_mimicking, "");
         return 0;
     }
 
@@ -448,22 +446,21 @@ mattacku(struct monst *mtmp)
             pline("Wait, %s!  That %s is really %s named %s!", m_monnam(mtmp),
                   mimic_obj_name(&youmonst), an(mons[u.umonnum].mname),
                   u.uplname);
-        if (Helpless) {        /* this should always be the case */
-            char buf[BUFSZ];
 
-            sprintf(buf, "You appear to be %s again.",
-                    Upolyd ? (const char *)an(youmonst.
-                                              data->mname) : (const char *)
-                    "yourself");
-            cancel_helplessness(buf); /* immediately stop mimicking */
-        }
+        char buf[BUFSZ];
+        sprintf(buf, "You appear to be %s again.",
+                Upolyd ? (const char *)an(youmonst.
+                                            data->mname) : (const char *)
+                "yourself");
+        cancel_helplessness(hm_mimicking, buf); /* immediately stop mimicking */
+
         return 0;
     }
 
 /* Work out the armor class differential   */
     tmp = AC_VALUE(u.uac) + 10; /* tmp ~= 0 - 20 */
     tmp += mtmp->m_lev;
-    if (Helpless)
+    if (u_helpless(hm_all))
         tmp += 4;
     if ((Invis && !perceives(mdat)) || !mtmp->mcansee)
         tmp -= 2;
@@ -695,8 +692,9 @@ mattacku(struct monst *mtmp)
         bot();
         /* give player a chance of waking up before dying -kaa */
         if (sum[i] == 1) {      /* successful attack */
-            if (u.usleep && u.usleep < moves && !rn2(10))
-                cancel_helplessness("The combat suddenly awakens you.");
+            if (u_helpless(hm_asleep) &&
+                turnstate.helpless_timers[hr_asleep] < moves && !rn2(10))
+                cancel_helplessness(hm_asleep, "The combat suddenly awakens you.");
         }
         if (sum[i] == 2)
             return 1;   /* attacker dead */
@@ -1031,10 +1029,10 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_SLEE:
         hitmsg(mtmp, mattk);
-        if (uncancelled && !Helpless && !rn2(5)) {
+        if (uncancelled && !u_helpless(hm_all) && !rn2(5)) {
             if (Sleep_resistance)
                 break;
-            fall_asleep(-rnd(10), TRUE);
+            helpless(rnd(10), hr_asleep, "sleeping", NULL);
             if (Blind)
                 pline("You are put to sleep!");
             else
@@ -1128,7 +1126,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_PLYS:
         hitmsg(mtmp, mattk);
-        if (uncancelled && !Helpless && !rn2(3)) {
+        if (uncancelled && !u_helpless(hm_all) && !rn2(3)) {
             if (Free_action) {
                 pline("You momentarily stiffen.");
             } else {
@@ -1136,7 +1134,8 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                     pline("You are frozen!");
                 else
                     pline("You are frozen by %s!", mon_nam(mtmp));
-                helpless(10, "paralyzed by a monster's touch", NULL);
+                helpless(10, hr_paralyzed, "paralyzed by a monster's touch", 
+                         NULL);
                 exercise(A_DEX, FALSE);
             }
         }
@@ -2074,9 +2073,9 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
 #ifdef PM_BEHOLDER      /* work in progress */
     case AD_SLEE:
         if (!mtmp->mcan && canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my) &&
-            mtmp->mcansee && !Helpless && !rn2(5) && !Sleep_resistance) {
+            mtmp->mcansee && !u_helpless(hm_all) && !rn2(5) && !Sleep_resistance) {
 
-            fall_asleep(-rnd(10), TRUE);
+            helpless(rnd(10), hr_asleep, "sleeping", NULL);
             pline("%s gaze makes you very sleepy...", s_suffix(Monnam(mtmp)));
         }
         break;
@@ -2211,7 +2210,7 @@ doseduce(struct monst *mon)
         return 0;
     }
 
-    if (Helpless) {
+    if (u_helpless(hm_all)) {
         pline("%s seems dismayed at your lack of response.", Monnam(mon));
         return 0;
     }

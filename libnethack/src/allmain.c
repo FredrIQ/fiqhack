@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-08 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -10,6 +10,7 @@
 #include "common_options.h"
 
 #include <sys/stat.h>
+#include <limits.h>
 
 #include "dlb.h"
 #include "patchlevel.h"
@@ -26,6 +27,8 @@ static void newgame(void);
 static void handle_lava_trap(boolean didmove);
 
 static void command_input(int cmdidx, struct nh_cmd_arg *arg);
+
+static void decrement_helplessness(void);
 
 const char *const *
 nh_get_copyright_banner(void)
@@ -118,7 +121,7 @@ nh_exit_game(int exit_type)
         /* Calling terminate() will get us out of nested contexts safely. I'm
            not sure if this can happen with no game running, but it doesn't hurt
            to code for the possibility it might (via jumping back to the
-           checkpoint with terminate(). */
+           checkpoint with terminate()). */
         terminate(GAME_ALREADY_OVER); /* doesn't return */
     }
 }
@@ -394,7 +397,7 @@ nh_play_game(int fd)
 
         int cmdidx;
 
-        if (Helpless && !program_state.viewing) {
+        if (u_helpless(hm_all) && !program_state.viewing) {
             cmdidx = get_command_idx("wait");
             arg.argtype = 0;
         } else {
@@ -454,11 +457,11 @@ nh_play_game(int fd)
             !!(cmdlist[cmdidx].flags & CMD_NOTIME);
 
         /* We can't record a command if we didn't prompt for one; it creates
-           desyncs when replaying. (If we /did/ prompt or one, it's OK to record
+           desyncs when replaying. (If we /did/ prompt for one, it's OK to record
            a different one, which is why the record of "interrupt" above is OK;
            it's not OK to record two, but log_record_command won't record
            zero-time commands.) */
-        if (!Helpless)
+        if (!u_helpless(hm_all))
             log_record_command(cmd, &arg);
 
         command_input(cmdidx, &arg);
@@ -467,7 +470,7 @@ nh_play_game(int fd)
 
         if (cmdlist[cmdidx].flags & CMD_NOTIME)
             log_revert_command(); /* make sure it didn't change the gamestate */
-        else if ((!flags.incomplete || flags.interrupted) && !Helpless)
+        else if ((!flags.incomplete || flags.interrupted) && !u_helpless(hm_all))
             neutral_turnstate_tasks();
     }
 
@@ -630,7 +633,7 @@ you_moved(void)
                     } else {
                         pline("You pass out from exertion!");
                         exercise(A_CON, FALSE);
-                        fall_asleep(-10, FALSE);
+                        helpless(10, hr_fainted, "passed out from exertion", NULL);
                     }
                 }
             }
@@ -667,7 +670,7 @@ you_moved(void)
                          !rn2(80 - (20 * night())))
                     change = 2;
                 if (change && !Unchanging) {
-                    if (!Helpless) {
+                    if (!u_helpless(hm_all)) {
                         action_interrupted();
                         if (change == 1)
                             polyself(FALSE);
@@ -678,7 +681,7 @@ you_moved(void)
                 }
             }
 
-            if (Searching && !Helpless)
+            if (Searching && !u_helpless(hm_all))
                 dosearch0(1);
             dosounds();
             do_storms();
@@ -716,15 +719,7 @@ you_moved(void)
             }
 
             /* when immobile, count is in turns */
-            if (Helpless) {
-                Helpless--;
-                if (!Helpless) {     /* finished yet? */
-                    cancel_helplessness(u.umoveagain);
-                    /* if doing that caused a level change, take it now */
-                    if (u.utotype)
-                        deferred_goto();
-                }
-            }
+            decrement_helplessness();
         }
     } while (youmonst.movement < NORMAL_SPEED); /* hero can't move loop */
 
@@ -831,52 +826,152 @@ pre_move_tasks(boolean didmove)
 
 
 void
-helpless(int turns, const char *reason, const char *done)
+helpless(int turns, enum helpless_reason reason, const char *cause,
+         const char *endmsg)
 {
-    if (turns < Helpless)
+    if (turns < 0) {
+        impossible("Helpless for negative time; using absolute value instead");
+        if (turns <= -INT_MAX)
+            turns = INT_MAX;
+        else
+            turns = -turns;
+    }
+
+    if (turns < turnstate.helpless_timers[reason])
         return;
 
     action_interrupted();
 
-    u.uinvulnerable = FALSE;
-    u.usleep = 0;
-    Helpless = turns;
+    turnstate.helpless_timers[reason] = turns;
 
-    strcpy(u.uwhybusy, reason);
-    if (done)
-        strcpy(u.umoveagain, done);
+    if (reason != hr_praying)
+        cancel_helplessness(hm_praying, "");
+    if (reason == hr_asleep || reason == hr_fainted || reason == hr_paralyzed)
+        cancel_helplessness(hm_busy | hm_engraving | hm_praying | hm_mimicking,
+                            "");
+
+    if (reason == hr_asleep || reason == hr_fainted) {
+        turnstate.vision_full_recalc = 1;
+        see_monsters();
+        see_objects();
+    }
+
+    strcpy(turnstate.helpless_causes[reason], cause);
+    if (endmsg)
+        strcpy(turnstate.helpless_endmsgs[reason], endmsg);
     else
-        strcpy(u.umoveagain, "You can move again.");
+        switch (reason) {
+        case hr_paralyzed:
+            strcpy(turnstate.helpless_endmsgs[reason], "You can move again.");
+            break;
+        case hr_asleep:
+            strcpy(turnstate.helpless_endmsgs[reason], "You wake up.");
+            break;
+        case hr_fainted:
+            strcpy(turnstate.helpless_endmsgs[reason], "You come to.");
+            break;
+        default:
+            strcpy(turnstate.helpless_endmsgs[reason], "");
+        }
 }
 
-
+/* Cancel all helplessness that matches the given mask.
+ *
+ * If msg is null, then the saved message given to helpless() is printed.
+ * This is used to indicate that the helplessness is expiring naturally.
+ *
+ * If msg is non-null and non-empty, then it will be printed if any form of
+ * helplessness is canceled.
+ *
+ * In any case, this will perform necessary cleanups upon the respective form of
+ * helplessness being canceled, such as activating a prayer's effect or ending
+ * mimcry.
+ */
 void
-cancel_helplessness(const char *msg)
+cancel_helplessness(enum helpless_mask mask, const char *msg)
 {
-    boolean previously_unconscious = unconscious();
+    boolean previously_unconscious = u_helpless(hm_unconscious);
+    int i;
 
     action_interrupted();
 
-    if (*msg)
+    for (i = hr_first; i < hr_last; ++i)
+        if (mask & (1 << i)) {
+            if (!u_helpless(1 << i)) {
+                if (turnstate.helpless_timers[i])
+                    impossible("Helpless with time but no cause at index %d", i);
+                /* We update mask to remove this reason, so that later
+                 * processing won't treat this reason as having been canceled.
+                 */
+                mask &= ~(1 << i);
+                continue;
+            }
+
+            turnstate.helpless_timers[i] = 0;
+            *turnstate.helpless_causes[i] = '\0';
+            if (!msg && *turnstate.helpless_endmsgs[i])
+                pline("%s", turnstate.helpless_endmsgs[i]);
+            *turnstate.helpless_endmsgs[i] = '\0';
+        }
+
+    if (mask && msg && *msg)
         pline("%s", msg);
 
-    Helpless = 0;
-    u.usleep = 0;
-
-    if (previously_unconscious) {
+    if (previously_unconscious && !u_helpless(hm_unconscious)) {
+        turnstate.vision_full_recalc = 1;
         see_monsters();
         see_objects();
-        turnstate.vision_full_recalc = TRUE;
     }
 
     /* Were we mimicking something? */
-    if (youmonst.m_ap_type) {
+    if ((mask & hm_mimicking) && youmonst.m_ap_type) {
         youmonst.m_ap_type = M_AP_NOTHING;
+        youmonst.mappearance = 0;
         newsym(u.ux, u.uy);
     }
 
-    if (u.uhs == FAINTED)
+    if ((mask & hm_fainted) && u.uhs == FAINTED)
         u.uhs = FAINTING;
+}
+
+
+static void
+decrement_helplessness()
+{
+    int i;
+    enum helpless_mask mask = hm_none;
+
+    for (i = hr_first; i < hr_last; ++i)
+        if (turnstate.helpless_timers[i])
+            if (!--turnstate.helpless_timers[i])
+                mask |= 1 << i;
+
+    if (mask)
+        cancel_helplessness(mask, NULL);
+}
+
+
+boolean
+u_helpless(enum helpless_mask mask)
+{
+    int i;
+
+    /* A lack of a cause canonically indicates that we weren't actually helpless
+     * for this reason. We may not have an endmsg, and the timer may already
+     * have expired but the helplessness not yet been canceled, so we can't use
+     * these as indications. */
+    for (i = hr_first; i < hr_last; ++i)
+        if ((mask & (1 << i)) && *turnstate.helpless_causes[i])
+            return TRUE;
+
+    return FALSE;
+}
+
+
+boolean
+canhear(void)
+{
+    return !u_helpless(hm_unconscious);
 }
 
 
@@ -945,7 +1040,7 @@ command_input(int cmdidx, struct nh_cmd_arg *arg)
     boolean didmove = TRUE;
 
     flags.occupation = occ_none;
-    if (!Helpless) {
+    if (!u_helpless(hm_all)) {
         switch (do_command(cmdidx, arg)) {
         case COMMAND_UNKNOWN:
             pline("Unrecognised command.");

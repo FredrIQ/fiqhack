@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-12 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1329,10 +1329,10 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
             } else {
                 pline("You pass out from exertion!");
                 exercise(A_CON, FALSE);
-                fall_asleep(-10, FALSE);
+                helpless(10, hr_fainted, "passed out from exertion", NULL);
             }
         }
-        if (Helpless)
+        if (u_helpless(hm_all))
             return 1;       /* we just fainted */
 
         if (!is_safepet(mtmp, uim)) {
@@ -1769,7 +1769,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
     /* delay next move because of ball dragging */
     /* must come after we finished picking up, in spoteffects() */
     if (cause_delay)
-        helpless(2, "dragging an iron ball", "");
+        helpless(2, hr_moving, "dragging an iron ball", NULL);
 
     return 1;
 }

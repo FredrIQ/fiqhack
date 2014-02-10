@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-19 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -41,7 +41,8 @@ stoned_dialogue(void)
     if (i == 5L)
         HFast = 0L;
     if (i == 3L)
-        helpless(3, "unable to move due to turning to stone", NULL);
+        helpless(3, hr_paralyzed, "unable to move due to turning to stone",
+                 NULL);
     exercise(A_DEX, FALSE);
 }
 
@@ -324,12 +325,12 @@ nh_timeout(void)
                 action_interrupted();
                 break;
             case SLEEPING:
-                if (unconscious() || Sleep_resistance)
+                if (u_helpless(hm_unconscious) || Sleep_resistance)
                     HSleeping += rnd(100);
                 else if (Sleeping) {
                     pline("You fall asleep.");
                     sleeptime = rnd(20);
-                    fall_asleep(-sleeptime, TRUE);
+                    helpless(sleeptime, hr_asleep, "sleeping", NULL);
                     HSleeping += sleeptime + rnd(100);
                 }
                 break;
@@ -346,7 +347,7 @@ nh_timeout(void)
                 /* otherwise handle fumbling msgs locally. */
                 if (u.umoved && !Levitation) {
                     slip_or_trip();
-                    helpless(2, "fumbling", "");
+                    helpless(2, hr_moving, "fumbling", "");
                     /* The more you are carrying the more likely you are to
                        make noise when you fumble.  Adjustments to this number
                        must be thoroughly play tested. */
@@ -370,19 +371,6 @@ nh_timeout(void)
     run_timers();
 }
 
-
-void
-fall_asleep(int how_long, boolean wakeup_msg)
-{
-    /* early wakeup from combat won't be possible until next monster turn */
-    u.usleep = moves;
-    flags.soundok = 0;
-    helpless(how_long, "sleeping",
-             wakeup_msg ? "You wake up." : NULL);
-    see_monsters();
-    see_objects();
-    turnstate.vision_full_recalc = TRUE;
-}
 
 /* Attach an egg hatch timeout to the given egg. */
 void
@@ -1169,7 +1157,7 @@ do_storms(void)
         /* inside a cloud during a thunder storm is deafening */
         pline("Kaboom!!!  Boom!!  Boom!!");
         if (!u.uinvulnerable)
-            helpless(3, "hiding from a thunderstorm", NULL);
+            helpless(3, hr_paralyzed, "hiding from a thunderstorm", NULL);
     } else
         You_hear("a rumbling noise.");
 }

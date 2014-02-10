@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-19 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -147,7 +147,7 @@ done_in_by(struct monst *mtmp)
             sprintf(eos(buf), " called %s", NAME(mtmp));
     }
 
-    if (Helpless)
+    if (u_helpless(hm_all))
         sprintf(eos(buf), ", while %s", u.uwhybusy);
 
     killer = buf;
@@ -339,7 +339,8 @@ savelife(int how)
 
     /* Note: this is different timing properties from 3.4.3. Mostly because the
        timing properties in 3.4.3 don't make sense at all. */
-    cancel_helplessness("You survived that attempt on your life.");
+    pline("You survived that attempt on your life.");
+    cancel_helplessness(hm_all, "");
 
     if (u.utrap && u.utraptype == TT_LAVA)
         u.utrap = 0;

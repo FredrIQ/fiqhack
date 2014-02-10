@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -166,7 +166,7 @@ make_blinded(long xtime, boolean talk)
     can_see_now = !Blind;
     Blinded = old;      /* restore */
 
-    if (u.usleep)
+    if (u_helpless(hm_unconscious))
         talk = FALSE;
 
     if (can_see_now && !u_could_see) {  /* regaining sight */
@@ -311,7 +311,8 @@ ghost_from_bottle(void)
     if (flags.verbose)
         pline("You are frightened to death, and unable to move.");
 
-    helpless(3, "being frightened to death", "You regain your composure.");
+    helpless(3, hr_paralyzed, "being frightened to death",
+             "You regain your composure.");
 }
 
 
@@ -518,7 +519,8 @@ peffects(struct obj *otmp)
         exercise(A_WIS, FALSE);
         if (otmp->cursed) {
             pline("You pass out.");
-            helpless(rnd(15), "drunk", "You awake with a headache.");
+            helpless(rnd(15), hr_fainted, "drunk",
+                     "You awake with a headache.");
             see_monsters();
             see_objects();
             turnstate.vision_full_recalc = TRUE;
@@ -613,7 +615,7 @@ peffects(struct obj *otmp)
             else
                 pline("Your %s are frozen to the %s!",
                       makeplural(body_part(FOOT)), surface(u.ux, u.uy));
-            helpless(rn1(10, 25 - 12 * bcsign(otmp)),
+            helpless(rn1(10, 25 - 12 * bcsign(otmp)), hr_paralyzed,
                      "frozen by a potion", NULL);
             exercise(A_DEX, FALSE);
         }
@@ -623,7 +625,8 @@ peffects(struct obj *otmp)
             pline("You yawn.");
         else {
             pline("You suddenly fall asleep!");
-            fall_asleep(-rn1(10, 25 - 12 * bcsign(otmp)), TRUE);
+            helpless(rn1(10, 25 - 12 * bcsign(otmp)), hr_asleep, "sleeping",
+                     NULL);
         }
         break;
     case POT_MONSTER_DETECTION:
@@ -1296,7 +1299,7 @@ potionbreathe(struct obj *obj)
         kn++;
         if (!Free_action) {
             pline("Something seems to be holding you.");
-            helpless(5, "frozen by potion vapours", NULL);
+            helpless(5, hr_paralyzed, "frozen by potion vapours", NULL);
             exercise(A_DEX, FALSE);
         } else
             pline("You stiffen momentarily.");
@@ -1305,7 +1308,7 @@ potionbreathe(struct obj *obj)
         kn++;
         if (!Free_action && !Sleep_resistance) {
             pline("You feel rather tired.");
-            helpless(5, "sleeping off potion vapours", NULL);
+            helpless(5, hr_asleep, "sleeping off potion vapours", NULL);
             exercise(A_DEX, FALSE);
         } else
             pline("You yawn.");
@@ -1317,12 +1320,12 @@ potionbreathe(struct obj *obj)
         exercise(A_DEX, TRUE);
         break;
     case POT_BLINDNESS:
-        if (!Blind && !u.usleep) {
+        if (!Blind) {
             kn++;
             pline("It suddenly gets dark.");
         }
         make_blinded(itimeout_incr(Blinded, rnd(5)), FALSE);
-        if (!Blind && !u.usleep)
+        if (!Blind)
             pline("Your vision quickly clears.");
         break;
     case POT_WATER:

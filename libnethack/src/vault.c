@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -285,10 +285,11 @@ invault(void)
            sense; instead, that's treated like normal helplessness */
         if (canspotmon(guard))
             pline("Suddenly one of the Vault's guards enters!");
-        else if (flags.soundok)
+        else if (canhear())
             You_hear("someone else enter the Vault.");
         else
             messages = FALSE;
+
         newsym(guard->mx, guard->my);
         if (youmonst.m_ap_type == M_AP_OBJECT || u.uundetected || u.uburied) {
             if (youmonst.m_ap_type == M_AP_OBJECT &&
@@ -309,7 +310,7 @@ invault(void)
             mongone(guard);
             return;
         }
-        if (Strangled || is_silent(youmonst.data) || Helpless) {
+        if (Strangled || is_silent(youmonst.data) || u_helpless(hm_all)) {
             /* [we ought to record whether this this message has already been
                given in order to vary it upon repeat visits, but discarding the 
                monster and its egd data renders that hard] */
@@ -465,7 +466,7 @@ wallify_vault(struct monst *grd)
     if (movedgold || fixed) {
         if (canseemon(grd))
             pline("%s whispers an incantation.", Monnam(grd));
-        else if (flags.soundok)
+        else
             You_hear("a %s chant.", in_fcorridor(grd, grd->mx, grd->my)
                      ? "nearby" : "distant");
         if (movedgold)
@@ -538,7 +539,7 @@ gd_move(struct monst *grd)
                 return -1;
             }
             /* not fair to get mad when (s)he's fainted or paralyzed */
-            if (!Helpless)
+            if (!u_helpless(hm_all))
                 egrd->warncnt++;
             return 0;
         }

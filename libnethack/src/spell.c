@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -352,7 +352,8 @@ learn(void)
     if (Confusion) {    /* became confused while learning */
         confused_book(u.utracked[tos_book]);
         u.utracked[tos_book] = 0;       /* no longer studying */
-        helpless(-u.uoccupation_progress[tos_book], "absorbed in a spellbook",
+        helpless(-u.uoccupation_progress[tos_book], hr_busy,
+                 "absorbed in a spellbook",
                  "You're finally able to put the book down.");
         u.uoccupation_progress[tos_book] = 0;
         return 0;
@@ -504,8 +505,8 @@ study_book(struct obj *spellbook, const struct nh_cmd_arg *arg)
         if (too_hard) {
             boolean gone = cursed_book(spellbook);
 
-            helpless(-u.uoccupation_progress[tos_book],
-                     "frozen by a spellbook", 0);
+            helpless(-u.uoccupation_progress[tos_book], hr_paralyzed,
+                     "frozen by a spellbook", NULL);
             u.uoccupation_progress[tos_book] = 0;
             if (gone || !rn2(3)) {
                 if (!gone)
@@ -521,7 +522,7 @@ study_book(struct obj *spellbook, const struct nh_cmd_arg *arg)
             if (!confused_book(spellbook)) {
                 spellbook->in_use = FALSE;
             }
-            helpless(-u.uoccupation_progress[tos_book],
+            helpless(-u.uoccupation_progress[tos_book], hr_busy,
                      "absorbed in a spellbook",
                      "You're finally able to put the book down.");
             u.uoccupation_progress[tos_book] = 0;

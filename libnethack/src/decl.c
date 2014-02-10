@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-08 */
+/* Last modified by Sean Hunt, 2014-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -172,6 +172,9 @@ static const struct turnstate default_turnstate = {
     .continue_message = TRUE,
     .vision_full_recalc = FALSE,
     .migrating_pets = NULL,
+    .helpless_timers = {},
+    .helpless_causes = {},
+    .helpless_endmsgs = {},
 };
 
 struct turnstate turnstate;
@@ -185,6 +188,8 @@ init_turnstate(void)
 void
 neutral_turnstate_tasks(void)
 {
+    int i;
+
     /* We want to compare turnstate to the default for effective equality:
        integers are equal, strings are equal up to the first NUL, tagged
        unions are equal up to the tag and the bits containing its associated
@@ -198,6 +203,15 @@ neutral_turnstate_tasks(void)
         impossible("vision not recalculated when needed during a turn");
     if (turnstate.migrating_pets)
         impossible("pets still migrating between turns");
+
+    for (i = hr_first; i <= hr_last; ++i) {
+        if (turnstate.helpless_timers[i])
+            impossible("helpless timer %d nonzero between turns", i);
+        if (*turnstate.helpless_causes[i])
+            impossible("helpless cause %d nonzero between turns", i);
+        if (*turnstate.helpless_endmsgs[i])
+            impossible("helpless endmsg %d nonzero between turns", i);
+    }
 
     /* TODO: clean up memory */
 
