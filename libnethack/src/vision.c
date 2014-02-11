@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-01 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Dean Luick, with acknowledgements to Dave Cohrs, 1990. */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -169,8 +169,8 @@ does_block(struct level *lev, int x, int y)
 /*
  * vision_reset()
  *
- * This must be called *after* the level->locations[][] structure is set with the new
- * level and the level monsters and objects are in place.
+ * This must be called *after* the level->locations[][] structure is set with
+ * the new level and the level monsters and objects are in place.
  */
 void
 vision_reset(void)
@@ -225,7 +225,7 @@ vision_reset(void)
         }
     }
 
-    turnstate.vision_full_recalc = TRUE;     /* we want to run vision_recalc() */
+    turnstate.vision_full_recalc = TRUE;    /* we want to run vision_recalc() */
 }
 
 
@@ -699,7 +699,8 @@ vision_recalc(int control)
 
         sv = &seenv_matrix[dy + 1][start < u.ux ? 0 : (start > u.ux ? 2 : 1)];
 
-        for (col = start; col <= stop; loc += ROWNO, sv += (int)colbump[++col]) {
+        for (col = start; col <= stop;
+             loc += ROWNO, sv += (int)colbump[++col]) {
             oldseenv = loc->seenv;
             if (next_row[col] & IN_SIGHT) {
                 /* 
@@ -725,7 +726,8 @@ vision_recalc(int control)
                     dx = u.ux - col;
                     dx = sign(dx);
                     flev = &(level->locations[col + dx][row + dy]);
-                    if (flev->lit || next_array[row + dy][col + dx] & TEMP_LIT) {
+                    if (flev->lit ||
+                        next_array[row + dy][col + dx] & TEMP_LIT) {
                         next_row[col] |= IN_SIGHT;      /* we see it */
 
                         loc->seenv |= new_angle(loc, sv, row, col);
@@ -1641,10 +1643,10 @@ left_side(int row, int left_mark, int right, const char *limits)
  * array provided.
  */
 static void
-view_from(int srow, int scol,   /* starting row and column */
-          char **loc_cs_rows,   /* pointers to the rows of the could_see array */
-          char *left_most,      /* min mark on each row */
-          char *right_most,     /* max mark on each row */
+view_from(int srow, int scol,  /* starting row and column */
+          char **loc_cs_rows,  /* pointers to the rows of the could_see array */
+          char *left_most,     /* min mark on each row */
+          char *right_most,    /* max mark on each row */
           int range,    /* 0 if unlimited */
           void (*func) (int, int, void *), void *arg)
 {

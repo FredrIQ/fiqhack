@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -221,8 +221,8 @@ moverock(schar dx, schar dy)
             if (boulder_hits_pool(otmp, rx, ry, TRUE))
                 continue;
             /* 
-             * Re-link at top of level->objlist chain so that pile order is preserved
-             * when level is restored.
+             * Re-link at top of level->objlist chain so that pile order is
+             * preserved when level is restored.
              */
             if (otmp != level->objlist) {
                 remove_object(otmp);
@@ -584,14 +584,14 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
             } else {
                 if (mode == DO_MOVE) {
                     if (amorphous(youmonst.data))
-                        pline
-                            ("You try to ooze under the door, but can't squeeze your possessions through.");
+                        pline("You try to ooze under the door, but can't "
+                              "squeeze your possessions through.");
                     else if (x == ux || y == uy) {
                         if (blind || stunned || ACURR(A_DEX) < 10 || fumbling) {
                             if (u.usteed) {
-                                pline
-                                    ("You can't lead %s through that closed door.",
-                                     y_monnam(u.usteed));
+                                pline("You can't lead %s through that closed "
+                                      "door.",
+                                      y_monnam(u.usteed));
                             } else {
                                 pline("Ouch!  You bump into a door.");
                                 exercise(A_DEX, FALSE);
@@ -897,8 +897,8 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy,
                      * that would never be picked as a guessed target in the
                      * travel matrix describing player-reachable spaces.
                      * This stops travel from getting confused and moving the
-                     * player back and forth in certain degenerate configurations
-                     * of sight-blocking obstacles, e.g.
+                     * player back and forth in certain degenerate
+                     * configurations of sight-blocking obstacles, e.g.
                      *
                      *    T         1. Dig this out and carry enough to not be
                      *      ####       able to squeeze through diagonal gaps.
@@ -908,23 +908,25 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy,
                      *
                      *    T         2. couldsee() marks spaces marked a and x as
                      *      ####       eligible guess spaces to move the player
-                     *      a--.---    towards.  Space a is closest to T, so it gets
-                     *       @xxxxx    chosen.  Travel system moves @ right to travel
-                     *       |xxxxx    to space a.
+                     *      a--.---    towards.  Space a is closest to T, so it
+                     *       @xxxxx    gets chosen.  Travel system moves
+                     *       |xxxxx    right to travel to space a.
                      *
                      *    T         3. couldsee() marks spaces marked b, c and x
-                     *      ####       as eligible guess spaces to move the player
-                     *      a--c---    towards.  Since findtravelpath() is called
-                     *       b@xxxx    repeatedly during travel, it doesn't remember
-                     *       |xxxxx    that it wanted to go to space a, so in
-                     *                 comparing spaces b and c, b is chosen, since
-                     *                 it seems like the closest eligible space to T.
-                     *                 Travel system moves @ left to go to space b.
+                     *      ####       as eligible guess spaces to move the
+                     *      a--c---    player towards.  Since findtravelpath()
+                     *       b@xxxx    is called repeatedly during travel, it
+                     *       |xxxxx    doesn't remember that it wanted to go to
+                     *                 space a, so in comparing spaces b and c,
+                     *                 b is chosen, since it seems like the
+                     *                 closest eligible space to T. Travel
+                     *                 system moves @ left to go to space b.
                      *
                      *              4. Go to 2.
                      *
-                     * By limiting the travel matrix here, space a in the example
-                     * above is never included in it, preventing the cycle.
+                     * By limiting the travel matrix here, space a in the
+                     * example above is never included in it, preventing the
+                     * cycle.
                      */
                     if (!isok(nx, ny) ||
                         (guess == couldsee_func && !guess(nx, ny)))
@@ -1115,8 +1117,8 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
                 return 0;
             }
             if (In_sokoban(&u.uz)) {
-                pline
-                    ("You somehow know the layout of this place without exploring.");
+                pline("You somehow know the layout of this place without "
+                      "exploring.");
                 action_completed();
                 return 0;
             }
@@ -1260,7 +1262,8 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
                 /* If holder is asleep or paralyzed: 37.5% chance of getting
                    away, 12.5% chance of waking/releasing it; otherwise: 7.5%
                    chance of getting away. [strength ought to be a factor] If
-                   holder is tame and there is no conflict, guaranteed escape. */
+                   holder is tame and there is no conflict, guaranteed escape.
+                   */
                 switch (rn2(!u.ustuck->mcanmove ? 8 : 40)) {
                 case 0:
                 case 1:
@@ -1934,7 +1937,8 @@ in_rooms(struct level *lev, xchar x, xchar y, int typewanted)
     struct rm *loc;
 
 #define goodtype(rno) (!typewanted || \
-            ((typefound = lev->rooms[rno - ROOMOFFSET].rtype) == typewanted) || \
+            ((typefound = lev->rooms[rno - ROOMOFFSET].rtype) == \
+                typewanted) || \
             ((typewanted == SHOPBASE) && (typefound > SHOPBASE)))
 
     switch (rno = lev->locations[x][y].roomno) {

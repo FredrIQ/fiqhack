@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Izchak Miller, Steve Linhart, 1989.              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -60,7 +60,7 @@ move_special(struct monst *mtmp, boolean in_his_shop, schar appr,
         allowflags |= BUSTDOOR;
     cnt = mfndpos(mtmp, poss, info, allowflags);
 
-    if (mtmp->isshk && avoid && uondoor) {      /* perhaps we cannot avoid him */
+    if (mtmp->isshk && avoid && uondoor) {    /* perhaps we cannot avoid him */
         for (i = 0; i < cnt; i++)
             if (!(info[i] & NOTONL))
                 goto pick_move;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -410,7 +410,8 @@ dochug(struct monst *mtmp)
                 continue;
             if (m2 == mtmp)
                 continue;
-            if ((telepathic(m2->data) && (rn2(2) || m2->mblinded)) || !rn2(10)) {
+            if ((telepathic(m2->data) && (rn2(2) || m2->mblinded)) ||
+                !rn2(10)) {
                 if (cansee(m2->mx, m2->my))
                     pline("It locks on to %s.", mon_nam(m2));
                 m2->mhp -= rnd(15);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) Robert Patrick Rankin, 1991                      */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -39,7 +39,8 @@
         boolean         pmatch          (const char *, const char *)
         int             strncmpi        (const char *, const char *, int)
         char *          strstri         (const char *, const char *)
-        boolean         fuzzymatch      (const char *,const char *,const char *,boolean)
+        boolean         fuzzymatch      (const char *,const char *,const char *,
+                                         boolean)
         void            setrandom       (void)
         unsigned int    get_seedval     (void)
 =*/

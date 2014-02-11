@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3174,7 +3174,7 @@ zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy)
             shieldeff(u.ux, u.uy);
             pline("You don't feel sleepy.");
         } else {
-            helpless(dice(nd, 25), hr_asleep, "sleeping", NULL);   /* sleep ray */
+            helpless(dice(nd, 25), hr_asleep, "sleeping", NULL);
         }
         break;
     case ZT_DEATH:
@@ -3431,7 +3431,8 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy)
                     boolean mon_could_move = mon->mcanmove;
                     int tmp = zap_hit_mon(mon, type, nd, &otmp);
 
-                    if (is_rider(mon->data) && abs(type) == ZT_BREATH(ZT_DEATH)) {
+                    if (is_rider(mon->data) &&
+                        abs(type) == ZT_BREATH(ZT_DEATH)) {
                         if (canseemon(mon)) {
                             hit(fltxt, mon, ".");
                             pline("%s disintegrates.", Monnam(mon));
@@ -3545,7 +3546,8 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy)
             action_interrupted();
         }
 
-        if (!ZAP_POS(loc->typ) || (closed_door(level, sx, sy) && (range >= 0))) {
+        if (!ZAP_POS(loc->typ) ||
+            (closed_door(level, sx, sy) && (range >= 0))) {
             int bounce;
             uchar rmn;
 

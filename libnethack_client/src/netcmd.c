@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-01 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -162,7 +162,8 @@ cmd_display_buffer(json_t *params, int display_only)
     const char *buf;
     int trymove;
 
-    if (json_unpack(params, "{ss,si!}", "buf", &buf, "trymove", &trymove) == -1) {
+    if (json_unpack(params, "{ss,si!}", "buf", &buf, "trymove",
+                    &trymove) == -1) {
         print_error("Incorrect parameters in cmd_display_buffer");
         return NULL;
     }

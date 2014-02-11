@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -269,7 +269,7 @@ move_bc(int before, int control, xchar ballx, xchar bally, xchar chainx,
                         level->locations[uball->ox][uball->oy].mem_obj =
                             u.bglyph;
                     } else if (u.bc_order == BCPOS_BALL) {
-                        if (u.bc_felt & BC_CHAIN) {     /* know chain is there */
+                        if (u.bc_felt & BC_CHAIN) {    /* know chain is there */
                             map_object(uchain, 0);
                         } else {
                             level->locations[uball->ox][uball->oy].mem_obj =
@@ -336,7 +336,8 @@ move_bc(int before, int control, xchar ballx, xchar bally, xchar chainx,
         } else {
             int on_floor = !carried(uball);
 
-            if ((control & BC_CHAIN) || (!control && u.bc_order == BCPOS_CHAIN)) {
+            if ((control & BC_CHAIN) ||
+                (!control && u.bc_order == BCPOS_CHAIN)) {
                 /* If the chain moved or nothing moved & chain on top. */
                 if (on_floor)
                     place_object(uball, level, ballx, bally);
@@ -402,9 +403,11 @@ drag_ball(xchar x, xchar y, int *bc_control, xchar * ballx, xchar * bally,
             return TRUE;
         }
 #define CHAIN_IN_MIDDLE(chx, chy) \
-(distmin(x, y, chx, chy) <= 1 && distmin(chx, chy, uball->ox, uball->oy) <= 1)
+    (distmin(x, y, chx, chy) <= 1 && \
+     distmin(chx, chy, uball->ox, uball->oy) <= 1)
 #define IS_CHAIN_ROCK(x,y) \
-(IS_ROCK(level->locations[x][y].typ) || (IS_DOOR(level->locations[x][y].typ) && \
+    (IS_ROCK(level->locations[x][y].typ) || \
+     (IS_DOOR(level->locations[x][y].typ) && \
       (level->locations[x][y].doormask & (D_CLOSED|D_LOCKED))))
 /* Don't ever move the chain into solid rock.  If we have to, then instead
  * undo the move_bc() and jump to the drag ball code.  Note that this also
@@ -666,7 +669,8 @@ drop_ball(xchar x, xchar y, schar dx, schar dy)
                               (side == LEFT_SIDE) ? "left" : "right",
                               body_part(LEG));
                         losehp(2,
-                               "leg damage from being pulled out of a bear trap",
+                               "leg damage from being pulled out of a bear "
+                               "trap",
                                KILLED_BY);
                     }
                     break;

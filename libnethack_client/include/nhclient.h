@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 #ifndef NHCLIENT_H
 # define NHCLIENT_H
 
@@ -29,7 +29,8 @@
 #  include <Ws2def.h>
 #  include <Ws2tcpip.h>
 
-#  define snprintf(buf, len, fmt, ...) _snprintf_s(buf, len, len-1, fmt, __VA_ARGS__)
+#  define snprintf(buf, len, fmt, ...) \
+    _snprintf_s(buf, len, len-1, fmt, __VA_ARGS__)
 #  define close closesocket
 
 /* TODO: Find the header file this is defined in, and include it. */

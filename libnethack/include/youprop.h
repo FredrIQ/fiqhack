@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -97,7 +97,8 @@
 # define Blindfolded            (ublindf && ublindf->otyp != LENSES)
                 /* ...means blind because of a cover */
 # define Blind  (((Blinded || Blindfolded || !haseyes(youmonst.data)) && \
-                 !(ublindf && ublindf->oartifact == ART_EYES_OF_THE_OVERWORLD)) || \
+                 !(ublindf && \
+                   ublindf->oartifact == ART_EYES_OF_THE_OVERWORLD)) || \
                  flags.permablind || u_helpless(hm_unconscious))
                 /* ...the Eyes operate even when you really are blind or don't
                    have any eyes, but get beaten by game options or
@@ -279,7 +280,7 @@
 /*** Physical attributes ***/
 # define HSlow_digestion        u.uintrinsic[SLOW_DIGESTION]
 # define ESlow_digestion        worn_extrinsic(SLOW_DIGESTION)
-# define Slow_digestion         (HSlow_digestion || ESlow_digestion)    /* KMH */
+# define Slow_digestion         (HSlow_digestion || ESlow_digestion)   /* KMH */
 
 # define HHalf_spell_damage     u.uintrinsic[HALF_SPDAM]
 # define EHalf_spell_damage     worn_extrinsic(HALF_SPDAM)

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-19 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -932,7 +932,8 @@ nh_root_plselection_prompt(char *suppliedbuf, int buflen, int rolenum,
     /* <your lawful female> */
 
     if (racenum != ROLE_NONE && racenum != ROLE_RANDOM) {
-        if (validrole(rolenum) && ok_race(rolenum, racenum, gendnum, alignnum)) {
+        if (validrole(rolenum) &&
+            ok_race(rolenum, racenum, gendnum, alignnum)) {
             if (donefirst)
                 strcat(buf, " ");
             strcat(buf,
@@ -976,7 +977,8 @@ nh_root_plselection_prompt(char *suppliedbuf, int buflen, int rolenum,
         post_attribs++;
     }
 
-    if ((racenum == ROLE_NONE || racenum == ROLE_RANDOM) && !validrole(rolenum)) {
+    if ((racenum == ROLE_NONE || racenum == ROLE_RANDOM) &&
+        !validrole(rolenum)) {
         if (donefirst)
             strcat(buf, " ");
         strcat(buf, "character");

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-19 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -218,7 +218,8 @@ curses_set_option(const char *name, union nh_optvalue value)
 
         *var = value.b;
 
-        if (!strcmp(option->name, "frame") || !strcmp(option->name, "status3") ||
+        if (!strcmp(option->name, "frame") ||
+            !strcmp(option->name, "status3") ||
             !strcmp(option->name, "sidebar")) {
             rebuild_ui();
         } else if (!strcmp(option->name, "darkgray")) {
@@ -669,8 +670,8 @@ autopickup_rules_help(void)
         {0, MI_TEXT, "it won't be picked up and rule 3 won't be considered."},
         {0, MI_TEXT,
          "(Strictly speaking, the \"type is food\" part of these rules is not"},
-        {0, MI_TEXT,
-         "necessary; it's purpose here is to make the example more interesting.)"},
+        {0, MI_TEXT, "necessary; it's purpose here is to make the example more "
+         "interesting.)"},
         {0, MI_TEXT, ""},
         {0, MI_TEXT,
          "A dagger will not match any of these rules and so it won't"},

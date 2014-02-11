@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -882,9 +882,9 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
         pline("%s %sturns to dust.", The(xname(otmp)),
               Blind ? "" : "glows violently, then ");
         if (!IS_GRAVE(level->locations[u.ux][u.uy].typ))
-            pline
-                ("You are not going to get anywhere trying to write in the %s with your dust.",
-                 is_ice(level, u.ux, u.uy) ? "frost" : "dust");
+            pline("You are not going to get anywhere trying to write in the "
+                  "%s with your dust.",
+                  is_ice(level, u.ux, u.uy) ? "frost" : "dust");
         useup(otmp);
         ptext = FALSE;
     }
@@ -932,9 +932,11 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                     del_engr(oep, level);
                     oep = NULL;
                 } else
-                    /* Don't delete engr until after we *know* we're engraving */
+                    /* Don't delete engr until after we *know* we're engraving
+                       */
                     eow = TRUE;
-            } else if ((type == DUST) || (type == MARK) || (type == ENGR_BLOOD)) {
+            } else if ((type == DUST) || (type == MARK) ||
+                       (type == ENGR_BLOOD)) {
                 pline("You cannot wipe out the message that is %s the %s here.",
                       oep->engr_type == BURN ? (is_ice(level, u.ux, u.uy) ?
                                                 "melted into" : "burned into") :
@@ -1244,7 +1246,8 @@ rest_engravings(struct memfile *mf, struct level *lev)
         ep->engr_time = moves;
     }
 
-    /* engravings loaded above are reversed, so put it back in the right order */
+    /* engravings loaded above are reversed, so put it back in the right order
+       */
     ep = lev->lev_engr;
     eprev = NULL;
     while (ep) {
@@ -1311,8 +1314,10 @@ static const char *const epitaphs[] = {
     "Beetlejuice Beetlejuice Beetlejuice",
     "Look out below!",
     "Please don't dig me up. I'm perfectly happy down here. -- Resident",
-    "Postman, please note forwarding address: Gehennom, Asmodeus's Fortress, fifth lemure on the left",
-    "Mary had a little lamb/Its fleece was white as snow/When Mary was in trouble/The lamb was first to go",
+    "Postman, please note forwarding address: Gehennom, Asmodeus's Fortress, "
+        "fifth lemure on the left",
+    "Mary had a little lamb/Its fleece was white as snow/When Mary was in "
+        "trouble/The lamb was first to go",
     "Be careful, or this could happen to you!",
     "Soon you'll join this fellow in hell! -- the Wizard of Yendor",
     "Caution! This grave contains toxic waste",
@@ -1324,7 +1329,8 @@ static const char *const epitaphs[] = {
     "He always lied while on the earth and now he's lying in it",
     "I made an ash of myself",
     "Soon ripe. Soon rotten. Soon gone. But not forgotten.",
-    "Here lies the body of Jonathan Blake. Stepped on the gas instead of the brake.",
+    "Here lies the body of Jonathan Blake. Stepped on the gas instead of the "
+        "brake.",
     "Go away!"
 };
 

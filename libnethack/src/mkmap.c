@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) J. C. Collet, M. Stephenson and D. Cohrs, 1992   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -257,7 +257,8 @@ wallify_map(struct level *lev)
             if (lev->locations[x][y].typ == STONE) {
                 for (yy = y - 1; yy <= y + 1; yy++)
                     for (xx = x - 1; xx <= x + 1; xx++)
-                        if (isok(xx, yy) && lev->locations[xx][yy].typ == ROOM) {
+                        if (isok(xx, yy) &&
+                            lev->locations[xx][yy].typ == ROOM) {
                             if (yy != y)
                                 lev->locations[x][y].typ = HWALL;
                             else
@@ -400,8 +401,8 @@ remove_rooms(struct level *lev, int lx, int ly, int hx, int hy)
 }
 
 /*
- * Remove roomno from the level->rooms array, decrementing level->nroom.  Also updates
- * all level roomno values of affected higher numbered rooms.  Assumes
+ * Remove roomno from the level->rooms array, decrementing level->nroom.  Also
+ * updates all level roomno values of affected higher numbered rooms.  Assumes
  * level structure contents corresponding to roomno have already been reset.
  * Currently handles only the removal of rooms that have no subrooms.
  */

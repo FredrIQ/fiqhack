@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-29 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -283,7 +283,8 @@ static boolean
 readentry(char *line, struct toptenentry *tt)
 {
     /* 
-     * "3.4.3 77 0 1 1 0 15 1 20110727 20110727 1000 Bar Orc Mal Cha daniel,killed by a newt"
+     * "3.4.3 77 0 1 1 0 15 1 20110727 20110727 \
+     * 1000 Bar Orc Mal Cha daniel,killed by a newt"
      */
     static const char fmt[] =
         "%d.%d.%d %d %d %d %d %d %d %d %d"
@@ -365,7 +366,8 @@ fill_topten_entry(struct toptenentry *newtt, int how)
     /* deepest_lev_reached() is in terms of depth(), and reporting the deepest
        level reached in the dungeon death occurred in doesn't seem right, so we 
        have to report the death level in depth() terms as well (which also
-       seems reasonable since that's all the player sees on the screen anyway) */
+       seems reasonable since that's all the player sees on the screen anyway)
+       */
     newtt->ver_major = VERSION_MAJOR;
     newtt->ver_minor = VERSION_MINOR;
     newtt->patchlevel = PATCHLEVEL;

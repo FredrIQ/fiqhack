@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-19 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -915,7 +915,8 @@ nhnet_get_topten(int *out_len, char *statusbuf, const char *volatile player,
         for (i = 0; i < len; i++) {
             jobj = json_array_get(jarr, i);
             json_unpack(jobj,
-                        "{si,si,si,si,si,si,si,si,si,si,si,si,si,ss,ss,ss,ss,ss,ss,ss,si!}",
+                        "{si,si,si,si,si,si,si,si,si,si,si,si,si,ss,ss,ss,ss,"
+                        "ss,ss,ss,si!}",
                         "rank", &ttlist[i].rank, "points", &ttlist[i].points,
                         "maxlvl", &ttlist[i].maxlvl, "hp", &ttlist[i].hp,
                         "maxhp", &ttlist[i].maxhp, "deaths", &ttlist[i].deaths,

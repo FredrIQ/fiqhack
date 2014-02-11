@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -119,7 +119,8 @@ fqname(const char *filename, int whichprefix, int buffnum)
         impossible("Invalid fqn_filename_buffer specified: %d", buffnum);
         buffnum = 0;
     }
-    if (strlen(fqn_prefix[whichprefix]) + strlen(filename) >= FQN_MAX_FILENAME) {
+    if (strlen(fqn_prefix[whichprefix]) + strlen(filename) >=
+            FQN_MAX_FILENAME) {
         impossible("fqname too long: %s + %s", fqn_prefix[whichprefix],
                    filename);
         return filename;        /* XXX */

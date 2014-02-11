@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -694,7 +694,8 @@ check_survival(int how, char *kilbuf)
             killer = 0;
             killer_format = 0;
             historic_event(FALSE,
-                           "were saved from death by your amulet of life saving!");
+                           "were saved from death by your amulet of life "
+                           "saving!");
             return TRUE;
         }
     }
@@ -870,7 +871,8 @@ display_rip(int how, char *kilbuf, char *pbuf, long umoney,
     }
     if (!done_stopprint) {
         sprintf(pbuf,
-                "You were level %d with a maximum of %d hit point%s when you %s.",
+                "You were level %d with a maximum of %d hit point%s when you "
+                "%s.",
                 u.ulevel, u.uhpmax, plur(u.uhpmax), ends[how]);
         add_menutext(&menu, pbuf);
         add_menutext(&menu, "");
@@ -952,7 +954,8 @@ done_noreturn(int how)
                         urace.femalenum !=
                         NON_PM) ? urace.femalenum : urace.malenum;
             }
-            corpse = mk_named_object(CORPSE, &mons[mnum], u.ux, u.uy, u.uplname);
+            corpse = mk_named_object(CORPSE, &mons[mnum], u.ux, u.uy,
+                                     u.uplname);
             sprintf(pbuf, "%s, %s%s", u.uplname,
                     killer_format ==
                     NO_KILLER_PREFIX ? "" : killed_by_prefix[how],

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /*      Copyright (c) 1989 Janet Walz, Mike Threepoint */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -695,7 +695,8 @@ domonnoise(struct monst *mtmp)
                 break;
             case PM_ARCHEOLOGIST:
                 pline_msg =
-                    "describes a recent article in \"Spelunker Today\" magazine.";
+                    "describes a recent article in \"Spelunker Today\" "
+                    "magazine.";
                 break;
             case PM_TOURIST:
                 verbl_msg = "Aloha.";
@@ -856,15 +857,11 @@ dotalk(const struct nh_cmd_arg *arg)
     }
 
     if (dx == 0 && dy == 0) {
-/*
- * Let's not include this.  It raises all sorts of questions: can you wear
- * 2 helmets, 2 amulets, 3 pairs of gloves or 6 rings as a marilith,
- * etc...  --KAA
         if (u.umonnum == PM_ETTIN) {
             pline("You discover that your other head makes boring conversation.");
-            return 1;
+            return 0;
         }
-*/
+
         pline("Talking to yourself is a bad habit for a dungeoneer.");
         return 0;
     }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 #ifndef NHSERVER_H
 # define NHSERVER_H
 
@@ -11,7 +11,8 @@
 # endif
 
 # ifdef WIN32
-#  error !AIMAKE_FAIL_SILENTLY! The server code does not currently work on Windows.
+#  error !AIMAKE_FAIL_SILENTLY! \
+    The server code does not currently work on Windows.
 # endif
 
 
@@ -49,13 +50,16 @@
 # endif
 
 # ifdef AIMAKE_OPTION_configdir
-#  define DEFAULT_CONFIG_FILE STRINGIFY_OPTION(AIMAKE_OPTION_configdir) "/nethack4.conf"
+#  define DEFAULT_CONFIG_FILE STRINGIFY_OPTION(AIMAKE_OPTION_configdir) \
+    "/nethack4.conf"
 # endif
 # ifdef AIMAKE_OPTION_logdir
-#  define DEFAULT_LOG_FILE STRINGIFY_OPTION(AIMAKE_OPTION_logdir) "/nethack4.log"
+#  define DEFAULT_LOG_FILE STRINGIFY_OPTION(AIMAKE_OPTION_logdir) \
+    "/nethack4.log"
 # endif
 # ifdef AIMAKE_OPTION_lockdir
-#  define DEFAULT_PID_FILE STRINGIFY_OPTION(AIMAKE_OPTION_lockdir) "/nethack4.pid"
+#  define DEFAULT_PID_FILE STRINGIFY_OPTION(AIMAKE_OPTION_lockdir) \
+    "/nethack4.pid"
 # endif
 # ifdef AIMAKE_OPTION_gamesstatedir
 #  define DEFAULT_WORK_DIR STRINGIFY_OPTION(AIMAKE_OPTION_gamesstatedir)

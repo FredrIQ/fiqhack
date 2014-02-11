@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -821,7 +821,8 @@ use_bell(struct obj **optr)
                     break;
                 case 2:
                     pline("You freeze for a moment in surprise.");
-                    helpless(rnd(2), hr_paralyzed, "surprised by a nymph", NULL);
+                    helpless(rnd(2), hr_paralyzed, "surprised by a nymph",
+                             NULL);
                     break;
                 }
         }
@@ -1533,7 +1534,8 @@ use_unicorn_horn(struct obj *obj)
 
         switch (rn2(6)) {
         case 0:
-            make_sick(Sick ? Sick / 3L + 1L : (unsigned long)rn1(ACURR(A_CON), 20),
+            make_sick(Sick ? Sick / 3L + 1L
+                           : (unsigned long)rn1(ACURR(A_CON), 20),
                       xname(obj), TRUE, SICK_NONVOMITABLE);
             break;
         case 1:
@@ -1697,7 +1699,7 @@ fig_transform(void *arg, long timeout)
     if (timeout < 0)
         silent = TRUE;
     else
-        silent = ((unsigned long)timeout != moves);     /* happened while away */
+        silent = ((unsigned long)timeout != moves);    /* happened while away */
 
     okay_spot = get_obj_location(figurine, &cc.x, &cc.y, 0);
     if (figurine->where == OBJ_INVENT || figurine->where == OBJ_MINVENT)
@@ -3015,13 +3017,13 @@ doapply(const struct nh_cmd_arg *arg)
             pline("You have no tin to open.");
             goto xit;
         }
-        pline
-            ("You cannot open a tin without eating or discarding its contents.");
+        pline("You cannot open a tin without eating or discarding its "
+              "contents.");
         if (flags.verbose)
             pline("In order to eat, use the 'e' command.");
         if (obj != uwep)
-            pline
-                ("Opening the tin will be much easier if you wield the tin opener.");
+            pline("Opening the tin will be much easier if you wield the tin "
+                  "opener.");
         goto xit;
 
     case FIGURINE:
@@ -3122,7 +3124,8 @@ unfixable_trouble_count(boolean is_horn)
         unfixable_trbl++;
     if (Slimed)
         unfixable_trbl++;
-    /* lycanthropy is not desirable, but it doesn't actually make you feel bad */
+    /* lycanthropy is not desirable, but it doesn't actually make you feel
+       bad */
 
     /* we'll assume that intrinsic stunning from being a bat/stalker doesn't
        make you feel bad */

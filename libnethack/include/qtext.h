@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Mike Stephenson 1991.                            */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -31,13 +31,18 @@ struct qthdr {
 };
 
 /* Error message macros */
-#  define CREC_IN_MSG     "Control record encountered during message - line %d\n"
+#  define CREC_IN_MSG \
+    "Control record encountered during message - line %d\n"
 #  define DUP_MSG         "Duplicate message number at line %d\n"
 #  define END_NOT_IN_MSG  "End record encountered before message - line %d\n"
 #  define TEXT_NOT_IN_MSG "Text encountered outside message - line %d\n"
 #  define UNREC_CREC      "Unrecognized Control record at line %d\n"
-#  define OUT_OF_HEADERS  "Too many message types (line %d)\nAdjust N_HDR in qtext.h and recompile.\n"
-#  define OUT_OF_MESSAGES "Too many messages in class (line %d)\nAdjust N_MSG in qtext.h and recompile.\n"
+#  define OUT_OF_HEADERS \
+    "Too many message types (line %d)\nAdjust N_HDR in qtext.h and " \
+    "recompile.\n"
+#  define OUT_OF_MESSAGES \
+    "Too many messages in class (line %d)\nAdjust N_MSG in qtext.h and " \
+    "recompile.\n"
 
 
 # else  /***** !MAKEDEFS *****/

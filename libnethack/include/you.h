@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -101,11 +101,11 @@ struct you {
 
     /* uwhybusy is reason for helplessness, "killed by ..., while uwhybusy", or
        reason for occupation, "You stop uwhybusy."; which is determined by
-       u_helpless(hm_all) and flags.occupation. (You can't be helpless and occupied at the
-       same time; the definition of helplessness precludes the character from
-       doing anything.) If neither u_helpless(hm_all) nor flags.occupation is nonzero,
-       this is meaningless (which is OK, because it's initialized in both
-       action_incomplete() and helpless()). */
+       u_helpless(hm_all) and flags.occupation. (You can't be helpless and
+       occupied at the same time; the definition of helplessness precludes the
+       character from doing anything.) If neither u_helpless(hm_all) nor
+       flags.occupation is nonzero, this is meaningless (which is OK, because
+       it's initialized in both action_incomplete() and helpless()). */
     char uwhybusy[BUFSZ];
     char umoveagain[BUFSZ];
 
@@ -161,7 +161,7 @@ struct you {
             amax,       /* your max attributes (eg. str) */
             atemp,      /* used for temporary loss/gain */
             atime;      /* used for loss/gain countdown */
-    int next_attr_check;        /* number of turns until exerchk can run again */
+    int next_attr_check; /* number of turns until exerchk can run again */
     align ualign;       /* character alignment */
 # define CONVERT        2
 # define A_ORIGINAL     1

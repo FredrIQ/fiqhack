@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-29 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -94,10 +94,10 @@ typedef struct branch {
 /* dungeon overview information, generated and used by dooverview */
 struct overview_info {
     char fountains, sinks, thrones, trees, temples;
-    char altars;        /* no of altars outside of temple */
-    char altaralign;    /* any combinaton of AM_CHAOTIC, AM_NEUTRAL, AM_LAWFUL */
+    char altars;       /* no of altars outside of temple */
+    char altaralign;   /* any combinaton of AM_CHAOTIC, AM_NEUTRAL, AM_LAWFUL */
     char shopcount;
-    schar shoptype;     /* -1: multiple shops */
+    schar shoptype;    /* -1: multiple shops */
     boolean branch, portal;     /* branch, magic portal on this level */
     struct d_level branch_dst, portal_dst;      /* where to? */
     boolean branch_dst_known, portal_dst_known; /* destination known? */

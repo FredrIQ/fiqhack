@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-19 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -304,7 +304,8 @@ ccmd_play_game(json_t * params)
     if (status == ERR_RESTORE_FAILED) {
         log_msg("Failed to restore saved game %d, file %s", gid, filename);
         if (srv_yn_function
-            ("Restoring the game failed. Would you like to remove it from the list?",
+            ("Restoring the game failed. Would you like to remove it from the "
+             "list?",
              "yn", 'n') == 'y') {
             db_delete_game(user_info.uid, gid);
             log_msg("%s has chosen to remove game %d from the database",

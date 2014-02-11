@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-12 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "config.h"
@@ -80,7 +80,8 @@ static void write_txttile(FILE *, pixel(*)[MAX_TILE_X]);
 
 /* Ugh.  DICE doesn't like %[A-Z], so we have to spell it out... */
 #define FORMAT_STRING \
-"%2[_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$] = (%d, %d, %d) "
+"%2[_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$] " \
+"= (%d, %d, %d) "
 
 static char
 bysx2char(int i)
@@ -196,7 +197,8 @@ peek_txttile_info(FILE *txtfile, char ttype[TILEBUFSZ],
     int retval;
 
     offset = ftell(txtfile);
-    retval = fscanf(txtfile, "# %20s %d (%200[^)\n])", ttype, number, name) == 3;
+    retval =
+        fscanf(txtfile, "# %20s %d (%200[^)\n])", ttype, number, name) == 3;
     if (retval && !strncmp(name, "cmap / ", 7))
         memmove(name, name+7, strlen(name)-6);
     if (retval && strstr(name, " / ")) *(strstr(name, " / ")) = 0;
@@ -243,8 +245,8 @@ read_txttile_info(FILE *txtfile, pixel (*pixels)[MAX_TILE_X],
             else
                 k = -1;
             if (k == -1)
-                Fprintf(stderr, "warning: %s %d (%s): color %s not in colormap!\n",
-                        ttype, *number, name, c);
+                Fprintf(stderr, "warning: %s %d (%s): color %s not in "
+                        "colormap!\n", ttype, *number, name, c);
             else {
                 pixels[j][i].r = ColorMap[CM_RED][k];
                 pixels[j][i].g = ColorMap[CM_GREEN][k];

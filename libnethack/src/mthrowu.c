@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -342,7 +342,7 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
        careful not to use either one after it's been freed. */
     tsym = tmpsym_initobj(singleobj);
 
-    while (range-- > 0) {       /* Actually the loop is always exited by break */
+    while (range-- > 0) {      /* Actually the loop is always exited by break */
         bhitpos.x += dx;
         bhitpos.y += dy;
         if ((mtmp = m_at(level, bhitpos.x, bhitpos.y)) != 0) {
@@ -362,9 +362,8 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
                     makeknown(singleobj->otyp);
                     dropy(singleobj);
                 } else {
-                    pline
-                        ("You accept %s gift in the spirit in which it was intended.",
-                         s_suffix(mon_nam(mon)));
+                    pline("You accept %s gift in the spirit in which it was "
+                          "intended.", s_suffix(mon_nam(mon)));
                     hold_another_object(singleobj, "You catch, but drop, %s.",
                                         xname(singleobj), "You catch:");
                 }
@@ -1122,7 +1121,7 @@ m_carrying(struct monst *mtmp, int type)
 
 /* TRUE iff thrown/kicked/rolled object doesn't pass through iron bars */
 boolean
-hits_bars(struct obj ** obj_p,  /* *obj_p will be set to NULL if object breaks */
+hits_bars(struct obj ** obj_p, /* *obj_p will be set to NULL if object breaks */
           int x, int y, int always_hit, /* caller can force a hit for items
                                            which would fit through */
           int whodidit)

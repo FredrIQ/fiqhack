@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -27,7 +27,8 @@
    "horse corpse", "horse corpses"
    cxname(obj): xname, but with specific corpse naming
    "potion of sickness", "horse corpses"
-   killer_xname(obj): name from the game's view, minus info like BCU and greasedness
+   killer_xname(obj): name from the game's view, minus info like BCU and
+       greasedness
    "scroll of mail" (even if un-IDed)
    singular(obj,func): name one object of a stack as per func
    an(str): prefix "a" or "an" to str, if necessary
@@ -197,7 +198,7 @@ obj_typename(int otyp)
     /* here for ring/scroll/potion/wand */
     if (nn) {
         if (ocl->oc_unique)
-            strcpy(buf, actualn);       /* avoid spellbook of Book of the Dead */
+            strcpy(buf, actualn);      /* avoid spellbook of Book of the Dead */
         else
             sprintf(eos(buf), " of %s", actualn);
     }
@@ -380,7 +381,8 @@ xname2(const struct obj *obj, boolean ignore_oquan)
         if (is_boots(obj) || is_gloves(obj))
             strcpy(buf, "pair of ");
 
-        if (obj->otyp >= ELVEN_SHIELD && obj->otyp <= ORCISH_SHIELD && !dknown) {
+        if (obj->otyp >= ELVEN_SHIELD && obj->otyp <= ORCISH_SHIELD &&
+            !dknown) {
             strcpy(buf, "shield");
             break;
         }
@@ -466,7 +468,8 @@ xname2(const struct obj *obj, boolean ignore_oquan)
                 break;
             if (nn) {
                 strcat(buf, " of ");
-                if (typ == POT_WATER && bknown && (obj->blessed || obj->cursed)) {
+                if (typ == POT_WATER && bknown &&
+                    (obj->blessed || obj->cursed)) {
                     strcat(buf, obj->blessed ? "holy " : "unholy ");
                 }
                 strcat(buf, actualn);
@@ -2129,7 +2132,8 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
                                 bp += 2;
                             else if (!strncmpi(bp, "es ", 3))
                                 bp += 3;
-                            else if (!*bp && !actualn && !dn && !un && !oclass) {
+                            else if (!*bp && !actualn && !dn && !un &&
+                                     !oclass) {
                                 /* no referent; they don't really mean a
                                    monster type */
                                 bp = obp;
@@ -2317,7 +2321,8 @@ srch:
             typ = i;
             goto typfnd;
         }
-        if (un && (zn = objects[i].oc_uname) != 0 && wishymatch(un, zn, FALSE)) {
+        if (un && (zn = objects[i].oc_uname) != 0 &&
+            wishymatch(un, zn, FALSE)) {
             typ = i;
             goto typfnd;
         }
@@ -2560,7 +2565,7 @@ typfnd:
     if (islit &&
         (typ == OIL_LAMP || typ == MAGIC_LAMP || typ == BRASS_LANTERN ||
          Is_candle(otmp) || typ == POT_OIL)) {
-        place_object(otmp, level, u.ux, u.uy);  /* make it viable light source */
+        place_object(otmp, level, u.ux, u.uy); /* make it viable light source */
         begin_burn(otmp, FALSE);
         obj_extract_self(otmp); /* now release it for caller's use */
     }

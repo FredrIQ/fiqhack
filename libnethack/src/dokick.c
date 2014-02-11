@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1256,7 +1256,8 @@ impact_drop(struct obj *missile, xchar x, xchar y, xchar dlev)
        if needed, in this fn, since stolen_value is called under the 'silent'
        flag to avoid unsavory pline repetitions. */
     if (costly) {
-        if ((shkp = shop_keeper(level, *in_rooms(level, x, y, SHOPBASE))) != 0) {
+        if ((shkp = shop_keeper(level, *in_rooms(level, x, y, SHOPBASE)))
+                != 0) {
             debit = ESHK(shkp)->debit;
             robbed = ESHK(shkp)->robbed;
             angry = !shkp->mpeaceful;

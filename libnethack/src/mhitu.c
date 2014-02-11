@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -321,7 +321,8 @@ mattacku(struct monst *mtmp)
             /* Your steed won't attack you */
             return 0;
         /* Orcs like to steal and eat horses and the like */
-        if (!rn2(is_orc(mtmp->data) ? 2 : 4) && distu(mtmp->mx, mtmp->my) <= 2) {
+        if (!rn2(is_orc(mtmp->data) ? 2 : 4) &&
+            distu(mtmp->mx, mtmp->my) <= 2) {
             /* Attack your steed instead */
             i = mattackm(mtmp, u.usteed);
             if ((i & MM_AGR_DIED))
@@ -410,10 +411,9 @@ mattacku(struct monst *mtmp)
                         pline("Wait, %s!  There's a hidden %s named %s there!",
                               m_monnam(mtmp), youmonst.data->mname, u.uplname);
                     else
-                        pline
-                            ("Wait, %s!  There's a %s named %s hiding under %s!",
-                             m_monnam(mtmp), youmonst.data->mname, u.uplname,
-                             doname(level->objects[u.ux][u.uy]));
+                        pline("Wait, %s!  There's a %s named %s hiding under "
+                              "%s!", m_monnam(mtmp), youmonst.data->mname,
+                              u.uplname, doname(level->objects[u.ux][u.uy]));
                     if (obj)
                         obj->spe = save_spe;
                 } else
@@ -694,7 +694,8 @@ mattacku(struct monst *mtmp)
         if (sum[i] == 1) {      /* successful attack */
             if (u_helpless(hm_asleep) &&
                 turnstate.helpless_timers[hr_asleep] < moves && !rn2(10))
-                cancel_helplessness(hm_asleep, "The combat suddenly awakens you.");
+                cancel_helplessness(hm_asleep,
+                                    "The combat suddenly awakens you.");
         }
         if (sum[i] == 2)
             return 1;   /* attacker dead */
@@ -866,7 +867,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
 
     if (!flags.seduce_enabled && mattk->adtyp == AD_SSEX) {
         noseduce = *mattk;
-        noseduce.adtyp = AD_DRLI;       /* seduction becoms drain life instead */
+        noseduce.adtyp = AD_DRLI;      /* seduction becoms drain life instead */
         mattk = &noseduce;
     }
 
@@ -1194,7 +1195,8 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                 You_hear("a cough from %s!", mon_nam(mtmp));
             else {
                 You_hear("%s hissing!", s_suffix(mon_nam(mtmp)));
-                if (!rn2(10) || (flags.moonphase == NEW_MOON && !have_lizard())) {
+                if (!rn2(10) ||
+                    (flags.moonphase == NEW_MOON && !have_lizard())) {
                 do_stone:
                     if (!Stoned && !Stone_resistance &&
                         !(poly_when_stoned(youmonst.data) &&
@@ -1981,9 +1983,8 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
                 break;
             if (!m_canseeu(mtmp)) {     /* probably you're invisible */
                 if (useeit)
-                    pline
-                        ("%s doesn't seem to notice that %s gaze was reflected.",
-                         Monnam(mtmp), mhis(mtmp));
+                    pline("%s doesn't seem to notice that %s gaze was "
+                          "reflected.", Monnam(mtmp), mhis(mtmp));
                 break;
             }
             if (useeit)
@@ -2073,8 +2074,8 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
 #ifdef PM_BEHOLDER      /* work in progress */
     case AD_SLEE:
         if (!mtmp->mcan && canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my) &&
-            mtmp->mcansee && !u_helpless(hm_all) && !rn2(5) && !Sleep_resistance) {
-
+            mtmp->mcansee && !u_helpless(hm_all) && !rn2(5) &&
+            !Sleep_resistance) {
             helpless(rnd(10), hr_asleep, "sleeping", NULL);
             pline("%s gaze makes you very sleepy...", s_suffix(Monnam(mtmp)));
         }
@@ -2255,9 +2256,8 @@ doseduce(struct monst *mon)
             if (rn2(20) < ACURR(A_CHA)) {
                 sprintf(qbuf,
                         "\"That %s looks pretty.  Would you wear it for me?\"",
-                        safe_qbuf("",
-                                  sizeof
-                                  ("\"That  looks pretty.  Would you wear it for me?\""),
+                        safe_qbuf("", sizeof ("\"That  looks pretty.  Would "
+                                              "you wear it for me?\""),
                                   xname(ring), simple_typename(ring->otyp),
                                   "ring"));
                 makeknown(RIN_ADORNMENT);

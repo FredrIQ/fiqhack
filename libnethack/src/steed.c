@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-12 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -394,7 +394,8 @@ kick_steed(void)
         u.usteed->mtame--;
     if (!u.usteed->mtame && u.usteed->mleashed)
         m_unleash(u.usteed, TRUE);
-    if (!u.usteed->mtame || (u.ulevel + u.usteed->mtame < rnd(MAXULEV / 2 + 5))) {
+    if (!u.usteed->mtame ||
+        (u.ulevel + u.usteed->mtame < rnd(MAXULEV / 2 + 5))) {
         newsym(u.usteed->mx, u.usteed->my);
         dismount_steed(DISMOUNT_THROWN);
         return;

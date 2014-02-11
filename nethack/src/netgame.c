@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Daniel Thaler, 2012 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -78,7 +78,8 @@ base64_decode(const char *in, char *out)
     int i, len = strlen(in), pos = 0;
 
     for (i = 0; i < len; i += 4) {
-        /* decode blocks; padding '=' are converted to 0 in the decoding table */
+        /* decode blocks; padding '=' are converted to 0 in the decoding table
+           */
         out[pos] = b64d[(int)in[i]] << 2 | b64d[(int)in[i + 1]] >> 4;
         out[pos + 1] = b64d[(int)in[i + 1]] << 4 | b64d[(int)in[i + 2]] >> 2;
         out[pos + 2] =
@@ -136,8 +137,8 @@ account_menu(struct server_info *server)
             if (buf2[0] == '\033' || buf2[0] == '\0')
                 curses_msgwin("Password change cancelled.");
             else if (strcmp(buf1, buf2))
-                curses_msgwin
-                    ("The passwords didn't match. The password was not changed.");
+                curses_msgwin("The passwords didn't match. The password was "
+                              "not changed.");
             else {
                 nhnet_change_password(buf1);
                 free((void *)server->password);
@@ -467,9 +468,8 @@ connect_server(struct server_info *server)
             sprintf(buf, "The account \"%s\" will be created for you.",
                     server->username);
             curses_msgwin(buf);
-            curses_getline
-                ("(Optional) You may give an email address for password resets:",
-                 buf);
+            curses_getline("(Optional) You may give an email address for "
+                           "password resets:", buf);
             ret =
                 nhnet_connect(server->hostname, server->port, server->username,
                               server->password, buf, TRUE);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-16 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -39,7 +39,8 @@
 
 #define NewTab(type, size)    malloc(sizeof(type *) * size)
 #define Free(ptr)             if (ptr) free((ptr))
-#define Write(fd, item, size) if (write(fd, (item), size) != (intmax_t) size) return FALSE;
+#define Write(fd, item, size) \
+    if (write(fd, (item), size) != (intmax_t) size) return FALSE;
 
 #define MAX_ERRORS            25
 
@@ -593,8 +594,8 @@ check_subrooms(void)
                     n_subrooms++;
                     if (n_subrooms > MAX_SUBROOMS) {
 
-                        sprintf(msg,
-                                "Subroom error: too many subrooms attached to parent room '%s'!",
+                        sprintf(msg, "Subroom error: too many subrooms "
+                                "attached to parent room '%s'!",
                                 tmproom[i]->parent);
                         yyerror(msg);
                         last_parent = tmproom[i]->parent;
@@ -1091,7 +1092,8 @@ write_maze(int fd, specialmaze * maze)
         Write(fd, &(pt->xsize), sizeof (pt->xsize));
         Write(fd, &(pt->ysize), sizeof (pt->ysize));
         for (j = 0; j < pt->ysize; j++) {
-            if (!maze->init_lev.init_present || pt->xsize > 1 || pt->ysize > 1) {
+            if (!maze->init_lev.init_present || pt->xsize > 1 ||
+                pt->ysize > 1) {
 #if !defined(_MSC_VER)
                 Write(fd, pt->map[j], pt->xsize * sizeof *pt->map[j]);
 #else

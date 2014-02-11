@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -112,9 +112,12 @@ but that's really hard.
  */
 
 #define ugod_is_angry() (u.ualign.record < 0)
-#define on_altar()      (IS_ALTAR(level->locations[u.ux][u.uy].typ) && !Engulfed)
-#define on_shrine()     ((level->locations[u.ux][u.uy].altarmask & AM_SHRINE) != 0)
-#define a_align(x,y)    ((aligntyp)Amask2align(level->locations[x][y].altarmask & AM_MASK))
+#define on_altar()      (IS_ALTAR(level->locations[u.ux][u.uy].typ) && \
+                         !Engulfed)
+#define on_shrine()     ((level->locations[u.ux][u.uy].altarmask & AM_SHRINE) \
+                            != 0)
+#define a_align(x,y)    ((aligntyp)Amask2align( \
+                            level->locations[x][y].altarmask & AM_MASK))
 
 static int
 in_trouble(void)
@@ -460,8 +463,8 @@ static void
 god_zaps_you(aligntyp resp_god)
 {
     if (Engulfed) {
-        pline
-            ("Suddenly a bolt of lightning comes down at you from the heavens!");
+        pline("Suddenly a bolt of lightning comes down at you from the "
+              "heavens!");
         pline("It strikes %s!", mon_nam(u.ustuck));
         if (!resists_elec(u.ustuck)) {
             pline("%s fries to a crisp!", Monnam(u.ustuck));
@@ -1126,16 +1129,16 @@ consume_offering(struct obj *otmp)
     if (Hallucination)
         switch (rn2(3)) {
         case 0:
-            pline
-                ("Your sacrifice sprouts wings and a propeller and roars away!");
+            pline("Your sacrifice sprouts wings and a propeller and roars "
+                  "away!");
             break;
         case 1:
-            pline
-                ("Your sacrifice puffs up, swelling bigger and bigger, and pops!");
+            pline("Your sacrifice puffs up, swelling bigger and bigger, and "
+                  "pops!");
             break;
         case 2:
-            pline
-                ("Your sacrifice collapses into a cloud of dancing particles and fades away!");
+            pline("Your sacrifice collapses into a cloud of dancing particles "
+                  "and fades away!");
             break;
     } else if (Blind && u.ualign.type == A_LAWFUL)
         pline("Your sacrifice disappears!");
@@ -1236,9 +1239,8 @@ dosacrifice(const struct nh_cmd_arg *arg)
                 /* is equivalent to demon summoning */
                 if (altaralign == A_CHAOTIC && u.ualign.type != A_CHAOTIC &&
                     !sanctum) {
-                    pline
-                        ("The blood floods the altar, which vanishes in %s cloud!",
-                         an(hcolor("black")));
+                    pline("The blood floods the altar, which vanishes in %s "
+                          "cloud!", an(hcolor("black")));
                     level->locations[u.ux][u.uy].typ = ROOM;
                     level->locations[u.ux][u.uy].altarmask = 0;
                     newsym(u.ux, u.uy);
@@ -1257,7 +1259,8 @@ dosacrifice(const struct nh_cmd_arg *arg)
                     if (sgn(u.ualign.type) == sgn(dmon->data->maligntyp))
                         dmon->mpeaceful = TRUE;
                     pline("You are terrified, and unable to move.");
-                    helpless(3, hr_paralyzed, "being terrified of a demon", NULL);
+                    helpless(3, hr_paralyzed, "being terrified of a demon",
+                             NULL);
                 } else
                     pline("The %s.", demonless_msg);
             }
@@ -1348,12 +1351,12 @@ dosacrifice(const struct nh_cmd_arg *arg)
                 done(ESCAPED);
             } else {    /* super big win */
                 adjalign(10);
-                pline
-                    ("An invisible choir sings, and you are bathed in radiance...");
+                pline("An invisible choir sings, and you are bathed in "
+                      "radiance...");
                 godvoice(altaralign, "Congratulations, mortal!");
                 win_pause_output(P_MESSAGE);
-                verbalize
-                    ("In return for thy service, I grant thee the gift of Immortality!");
+                verbalize("In return for thy service, I grant thee the gift "
+                          "of Immortality!");
                 pline("You ascend to the status of Demigod%s...",
                       u.ufemale ? "dess" : "");
                 historic_event(FALSE,
@@ -1525,8 +1528,8 @@ dosacrifice(const struct nh_cmd_arg *arg)
             if (u.ublesscnt != saved_cnt) {
                 if (u.ublesscnt) {
                     if (Hallucination)
-                        pline
-                            ("You realize that the gods are not like you and I.");
+                        pline("You realize that the gods are not like you and "
+                              "I.");
                     else
                         pline("You have a hopeful feeling.");
                     if ((int)u.uluck < 0)
@@ -1578,7 +1581,8 @@ dosacrifice(const struct nh_cmd_arg *arg)
                           body_part(FOOT));
                 else
                     pline(Hallucination ?
-                          "You see crabgrass at your %s.  A funny thing in a dungeon."
+                          "You see crabgrass at your %s.  A funny thing in a "
+                          "dungeon."
                           : "You glimpse a four-leaf clover at your %s.",
                           makeplural(body_part(FOOT)));
             }

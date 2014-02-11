@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -88,7 +88,8 @@ setworn(struct obj *obj, long mask)
         }
 
     if (!program_state.restoring_binary_save) {
-        turnstate.vision_full_recalc = TRUE; /* this might have changed the XRAY property */
+        /* this might have changed the XRAY property */
+        turnstate.vision_full_recalc = TRUE;
         see_monsters();         /* or the WARN_OF_MON property */
         update_inventory();     /* and it definitely changed equip slots */
     }

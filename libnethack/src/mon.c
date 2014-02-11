@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-08 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -584,7 +584,8 @@ movemon(void)
     }
 
     if (any_light_source())
-        turnstate.vision_full_recalc = TRUE; /* in case a mon moved with a light source */
+        /* in case a mon moved with a light source */
+        turnstate.vision_full_recalc = TRUE;
     dmonsfree(level);   /* remove all dead monsters */
 
     /* a monster may have levteleported player -dlc */
@@ -621,7 +622,8 @@ meatmetal(struct monst *mtmp)
         return 0;
 
     /* Eats topmost metal object if it is there */
-    for (otmp = level->objects[mtmp->mx][mtmp->my]; otmp; otmp = otmp->nexthere) {
+    for (otmp = level->objects[mtmp->mx][mtmp->my]; otmp;
+         otmp = otmp->nexthere) {
         if (mtmp->data == &mons[PM_RUST_MONSTER] && !is_rustprone(otmp))
             continue;
         if (is_metallic(otmp) && !obj_resists(otmp, 5, 95) &&
@@ -775,8 +777,8 @@ meatobj(struct monst *mtmp)
                 } else if (flags.verbose) {
                     You_hear("a slurping sound abruptly stop.");
                     if (mtmp->mtame) {
-                        pline
-                            ("You have a queasy feeling for a moment, then it passes.");
+                        pline("You have a queasy feeling for a moment, then "
+                              "it passes.");
                     }
                 }
                 mondied(mtmp);
@@ -1130,9 +1132,8 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
 
                     if (ttmp) {
                         if (ttmp->ttyp >= TRAPNUM || ttmp->ttyp == 0) {
-                            impossible
-                                ("A monster looked at a very strange trap of type %d.",
-                                 ttmp->ttyp);
+                            impossible("A monster looked at a very strange "
+                                       "trap of type %d.", ttmp->ttyp);
                             continue;
                         }
                         if ((ttmp->ttyp != RUST_TRAP ||

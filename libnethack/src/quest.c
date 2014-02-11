@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-27 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright 1991, M. Stephenson */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -379,7 +379,8 @@ chat_with_guardian(void)
 static void
 prisoner_speaks(struct monst *mtmp)
 {
-    if (mtmp->data == &mons[PM_PRISONER] && (mtmp->mstrategy & STRAT_WAITMASK)) {
+    if (mtmp->data == &mons[PM_PRISONER] &&
+        (mtmp->mstrategy & STRAT_WAITMASK)) {
         /* Awaken the prisoner */
         if (canseemon(mtmp))
             pline("%s speaks:", Monnam(mtmp));

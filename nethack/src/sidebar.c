@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -90,7 +90,8 @@ draw_sidebar(void)
     if (flooritems.icount && inventory.icount) {
         invheight = min(inventory.icount + 1, ui_flags.viewheight / 2);
         flheight = min(flooritems.icount + 1, (ui_flags.viewheight - 1) / 2);
-        /* if there is need and available space, expand the floor item list up */
+        /* if there is need and available space, expand the floor item list up
+           */
         if (flooritems.icount + 1 > flheight &&
             invheight < (ui_flags.viewheight + 1) / 2)
             flheight =

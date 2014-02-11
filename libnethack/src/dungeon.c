@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-01 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -323,7 +323,8 @@ Fread(void *ptr, int size, int nitems, dlb * stream)
 
     if ((cnt = dlb_fread(ptr, size, nitems, stream)) != nitems) {
         panic
-            ("Premature EOF on dungeon description file!\r\nExpected %d bytes - got %d.",
+            ("Premature EOF on dungeon description file!\r\nExpected %d bytes "
+             "- got %d.",
              (size * nitems), (size * cnt));
     }
 }
@@ -1969,7 +1970,8 @@ overview_print_dun(char *buf, const struct level *lev)
     int entry_depth, reached_depth;
 
     if (dnum == quest_dnum || dnum == knox_level.dnum)
-        /* The quest and knox should appear to be level 1 to match other text. */
+        /* The quest and knox should appear to be level 1 to match other text.
+           */
         depthstart = 1;
 
     entry_depth = depthstart + dungeons[dnum].entry_lev - 1;
@@ -1992,7 +1994,8 @@ overview_print_lev(char *buf, const struct level *lev)
 
     depthstart = dungeons[lev->z.dnum].depth_start;
     if (lev->z.dnum == quest_dnum || lev->z.dnum == knox_level.dnum)
-        /* The quest and knox should appear to be level 1 to match other text. */
+        /* The quest and knox should appear to be level 1 to match other text.
+           */
         depthstart = 1;
 
     /* calculate level number */
@@ -2040,8 +2043,8 @@ seen_string(xchar x, const char *obj)
 
 #define COMMA (i++ > 0 ? ", " : "      ")
 #define ADDNTOBUF(nam, var) do { if (var)                               \
-            sprintf(eos(buf), "%s%s " nam "%s", COMMA, seen_string((var), (nam)), \
-                    ((var) != 1 ? "s" : "")); } while(0)
+            sprintf(eos(buf), "%s%s " nam "%s", COMMA, seen_string((var), \
+                    (nam)), ((var) != 1 ? "s" : "")); } while(0)
 
 #if MAXRTYPE != CANDLESHOP
 # warning you must extend the shopnames array!

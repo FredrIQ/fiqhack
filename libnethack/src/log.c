@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-30 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -153,7 +153,8 @@ base64_decode(const char *in, char *out, int outlen)
         if (in[i] == '$')
             for (i += 2; in[i - 1] != '$' && in[i]; i++) {}
 
-        /* decode blocks; padding '=' are converted to 0 in the decoding table */
+        /* decode blocks; padding '=' are converted to 0 in the decoding table
+           */
         if (pos < olen)
             o[pos] = b64d[(int)in[i]] << 2 | b64d[(int)in[i + 1]] >> 4;
         if (pos + 1 < olen)
@@ -575,7 +576,8 @@ log_revert_command(void)
     mfree(&mf);
 }
 
-/* Bones files must also be logged, since they are an input into the game state */
+/* Bones files must also be logged, since they are an input into the game state
+   */
 void
 log_record_bones(struct memfile *mf)
 {

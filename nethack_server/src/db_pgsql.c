@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -53,7 +53,8 @@ static const char SQL_check_pgcrypto[] =
 
 static const char SQL_register_user[] =
     "INSERT INTO users (name, pwhash, email, ts, reg_ts) "
-    "VALUES ($1::varchar(50), crypt($2::text, gen_salt('bf', 8)), $3::text, 'now', 'now');";
+    "VALUES ($1::varchar(50), crypt($2::text, gen_salt('bf', 8)), $3::text, "
+    "'now', 'now');";
 
 static const char SQL_last_reg_id[] = "SELECT currval('users_uid_seq');";
 
@@ -87,8 +88,8 @@ static const char SQL_last_game_id[] = "SELECT currval('games_gid_seq');";
 
 static const char SQL_update_game[] =
     "UPDATE games "
-    "SET ts = 'now', moves = $2::integer, depth = $3::integer, level_desc = $4::text "
-    "WHERE gid = $1::integer;";
+    "SET ts = 'now', moves = $2::integer, depth = $3::integer, level_desc = "
+    "$4::text WHERE gid = $1::integer;";
 
 static const char SQL_get_game_filename[] =
     "SELECT filename " "FROM games "
@@ -104,8 +105,8 @@ static const char SQL_list_games[] =
     "ORDER BY g.ts DESC " "LIMIT $3::integer;";
 
 static const char SQL_add_topten_entry[] =
-    "INSERT INTO topten (gid, points, hp, maxhp, deaths, end_how, death, entrytxt) "
-    "VALUES ($1::integer, $2::integer, $3::integer, $4::integer, "
+    "INSERT INTO topten (gid, points, hp, maxhp, deaths, end_how, death, "
+    "entrytxt) VALUES ($1::integer, $2::integer, $3::integer, $4::integer, "
     "$5::integer, $6::integer, $7::text, $8::text);";
 
 

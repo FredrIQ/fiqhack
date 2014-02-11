@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -331,7 +331,8 @@ find_defensive(struct monst *mtmp, struct musable *m)
         if (x == lev->dnladder.sx && y == lev->dnladder.sy &&
             !is_floater(mtmp->data))
             m->has_defense = MUSE_DN_LADDER;
-    } else if (lev->sstairs.sx && lev->sstairs.sx == x && lev->sstairs.sy == y) {
+    } else if (lev->sstairs.sx && lev->sstairs.sx == x &&
+               lev->sstairs.sy == y) {
         m->has_defense = MUSE_SSTAIRS;
     } else if (!stuck && !immobile) {
         /* Note: trap doors take precedence over teleport traps. */
@@ -378,7 +379,8 @@ find_defensive(struct monst *mtmp, struct musable *m)
         struct monst *mon;
 
         /* Distance is arbitrary.  What we really want to do is have the
-           soldier play the bugle when it sees or remembers soldiers nearby... */
+           soldier play the bugle when it sees or remembers soldiers nearby...
+           */
         for (xx = x - 3; xx <= x + 3; xx++)
             for (yy = y - 3; yy <= y + 3; yy++)
                 if (isok(xx, yy))
@@ -763,9 +765,8 @@ use_defensive(struct monst *mtmp, struct musable *m)
         if (Inhell && mon_has_amulet(mtmp) && !rn2(4) &&
             (dunlev(&u.uz) < dunlevs_in_dungeon(&u.uz) - 3)) {
             if (vismon)
-                pline
-                    ("As %s climbs the stairs, a mysterious force momentarily surrounds %s...",
-                     mon_nam(mtmp), mhim(mtmp));
+                pline("As %s climbs the stairs, a mysterious force momentarily "
+                      "surrounds %s...", mon_nam(mtmp), mhim(mtmp));
             /* simpler than for the player; this will usually be the Wizard and 
                he'll immediately go right to the upstairs, so there's not much
                point in having any chance for a random position on the current
@@ -1130,7 +1131,8 @@ mbhitm(struct monst *mtmp, struct obj *otmp)
             tele();
         } else {
             /* for consistency with zap.c, don't identify */
-            if (mtmp->ispriest && *in_rooms(level, mtmp->mx, mtmp->my, TEMPLE)) {
+            if (mtmp->ispriest &&
+                *in_rooms(level, mtmp->mx, mtmp->my, TEMPLE)) {
                 if (cansee(mtmp->mx, mtmp->my))
                     pline("%s resists the magic!", Monnam(mtmp));
                 mtmp->msleeping = 0;
@@ -1859,7 +1861,8 @@ use_misc(struct monst *mtmp, struct musable *m)
                 /* gold isn't subject to cursing and blessing */
                 if (obj->oclass == COIN_CLASS)
                     continue;
-                if (otmp->blessed || otmp->owornmask || obj->otyp == LOADSTONE) {
+                if (otmp->blessed || otmp->owornmask ||
+                    obj->otyp == LOADSTONE) {
                     if (mtmp->mconf)
                         blessorcurse(obj, 2);
                     else
@@ -1937,11 +1940,9 @@ searches_for_item(struct monst * mon, struct obj * obj)
 {
     int typ = obj->otyp;
 
-    if (is_animal(mon->data) || mindless(mon->data) || mon->data == &mons[PM_GHOST])    /* don't 
-                                                                                           loot 
-                                                                                           bones 
-                                                                                           piles 
-                                                                                         */
+    /* don't loot bones piles */
+    if (is_animal(mon->data) || mindless(mon->data) ||
+        mon->data == &mons[PM_GHOST])
         return FALSE;
 
     if (typ == WAN_MAKE_INVISIBLE || typ == POT_INVISIBILITY)

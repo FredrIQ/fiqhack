@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-13 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -8,7 +8,8 @@
  * If you obtained uncursed as part of NetHack 4, you can find these licenses in
  * the files libnethack/dat/license and libnethack/dat/gpl respectively.
  */
-/* This is a test file in order to check that uncursed is operating correctly. */
+/* This is a test file in order to check that uncursed is operating correctly.
+   */
 
 #include "uncursed.h"
 #include <stdio.h>

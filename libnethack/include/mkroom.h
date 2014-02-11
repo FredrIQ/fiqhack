@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-29 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -82,12 +82,13 @@ struct shclass {
                                    square searching required */
 
 # define ROOMOFFSET     3       /* 
-                                 * (level->locations[x][y].roomno - ROOMOFFSET) gives
-                                 * rooms[] index, for inside-squares and
+                                 * (level->locations[x][y].roomno - ROOMOFFSET)
+                                 * gives rooms[] index, for inside-squares and
                                  * non-shared boundaries.
                                  */
 
-# define IS_ROOM_PTR(x)         ((x) >= level->rooms && (x) < level->rooms + MAXNROFROOMS)
+# define IS_ROOM_PTR(x) \
+    ((x) >= level->rooms && (x) < level->rooms + MAXNROFROOMS)
 # define IS_ROOM_INDEX(x)       ((x) >= 0 && (x) < MAXNROFROOMS)
 # define IS_SUBROOM_PTR(x)      ((x) >= level->subrooms && \
                                  (x) < level->subrooms + MAXNROFROOMS)
@@ -95,6 +96,7 @@ struct shclass {
 # define ROOM_INDEX(x)          ((x) - level->rooms)
 # define SUBROOM_INDEX(x)       ((x) - level->subrooms)
 # define IS_LAST_ROOM_PTR(x)    (ROOM_INDEX(x) == level->nroom)
-# define IS_LAST_SUBROOM_PTR(x) (!level->nsubroom || SUBROOM_INDEX(x) == level->nsubroom)
+# define IS_LAST_SUBROOM_PTR(x) \
+    (!level->nsubroom || SUBROOM_INDEX(x) == level->nsubroom)
 
 #endif /* MKROOM_H */

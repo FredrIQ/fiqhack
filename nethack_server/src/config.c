@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -110,9 +110,8 @@ parse_config_line(char *line)
         if (!settings.port)
             settings.port = atoi(val);
         if (settings.port < 1 || settings.port > 65535) {
-            fprintf(stderr,
-                    "Error: Port %d is outside the range of valid port numbers [1-65535].\n",
-                    settings.port);
+            fprintf(stderr, "Error: Port %d is outside the range of valid port "
+                    "numbers [1-65535].\n", settings.port);
             return FALSE;
         }
     }
@@ -147,9 +146,8 @@ parse_config_line(char *line)
         else if (!settings.disable_ipv6 && !strcmp(val, "v6"))
             settings.disable_ipv6 = TRUE;
         else if (strcmp(val, "v4") && strcmp(val, "v6")) {
-            fprintf(stderr,
-                    "Error: the value for disable_family is either v4 or v6, not %s.\n",
-                    val);
+            fprintf(stderr, "Error: the value for disable_family is either v4 "
+                    "or v6, not %s.\n", val);
         }
     }
 
@@ -243,9 +241,8 @@ read_config(char *confname)
     fd = open(filename, O_RDONLY);
     if (fd == -1) {
         if (!confname) {
-            fprintf(stderr,
-                    "Warning: Could not open %s. %s. Default settings will be used.\n",
-                    filename, strerror(errno));
+            fprintf(stderr, "Warning: Could not open %s. %s. Default settings "
+                    "will be used.\n", filename, strerror(errno));
             return TRUE;        /* nonexistent default config need not be an
                                    error */
         }
@@ -285,9 +282,8 @@ read_config(char *confname)
     /* check for trailing junk */
     line = trim(line);
     if (strlen(line))
-        fprintf(stderr,
-                "Warning: trailing junk (\"%s\") after last config line ignored.\n",
-                line);
+        fprintf(stderr, "Warning: trailing junk (\"%s\") after last config "
+                "line ignored.\n", line);
 
     free(data);
     return TRUE;

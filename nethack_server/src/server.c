@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-01 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -68,7 +68,8 @@ get_open_max(void)
 
 /* a username + password with some fluff should always fit in 500 bytes */
 #define AUTH_MAXLEN 500
-/* make the buffer slightly bigger to detect when the client sends too much data */
+/* make the buffer slightly bigger to detect when the client sends too much data
+   */
 #define AUTHBUFSIZE 512
 
 enum comm_status {
@@ -357,7 +358,8 @@ fork_client(struct client_data *client, int epfd)
 
 
 /*
- * Accept and authenticate a new client connection on one of the listening sockets.
+ * Accept and authenticate a new client connection on one of the listening
+ * sockets.
  */
 static void
 server_socket_event(int server_fd, int epfd)
@@ -585,7 +587,8 @@ close_client_pipe(struct client_data *client, int epfd)
 
 
     if (client->sock)
-        /* allow a send to complete (incl retransmits). close() is too brutal. */
+        /* allow a send to complete (incl retransmits). close() is too brutal.
+           */
         shutdown(client->sock, SHUT_RDWR);
     else {
         /* don't try to send a signal in cleanup_game_process - the process may
@@ -706,9 +709,9 @@ handle_communication(int fd, int epfd, unsigned int event_mask)
                     } while (write_count < read_ret);
                 } while (read_ret == sizeof (buf) && write_ret != -1);
                 if (read_ret <= 0 || write_ret == -1) {
-                    log_msg
-                        ("data transfer error for game process %d (read = %d, write = %d): %s",
-                         client->pid, read_ret, write_ret, strerror(errno));
+                    log_msg("data transfer error for game process %d (read = "
+                            "%d, write = %d): %s", client->pid, read_ret,
+                            write_ret, strerror(errno));
                     cleanup_game_process(client, epfd);
                 }
             }
@@ -815,8 +818,8 @@ setup_server_sockets(int *ipv4fd, int *ipv6fd, int *unixfd, int epfd)
         *unixfd = -1;
 
     if (*ipv4fd == -1 && *ipv6fd == -1 && *unixfd == -1) {
-        log_msg
-            ("Failed to create any listening socket. Nothing to do except shut down.");
+        log_msg("Failed to create any listening socket. Nothing to do except "
+                "shut down.");
         return FALSE;
     }
 

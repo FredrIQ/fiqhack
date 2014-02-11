@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -169,7 +169,8 @@ castmu(struct monst *mtmp, const struct attack *mattk,
        Select a spell once.  Don't keep searching; if that spell is not useful
        (or if it's directed), return and do something else. Since most spells
        are directed, this means that a monster that isn't attacking casts
-       spells only a small portion of the time that an attacking monster does. */
+       spells only a small portion of the time that an attacking monster does.
+       */
     if ((mattk->adtyp == AD_SPEL || mattk->adtyp == AD_CLRC) && ml) {
         int cnt = 40;
 
@@ -184,8 +185,8 @@ castmu(struct monst *mtmp, const struct attack *mattk,
                 if (!is_undirected_spell(mattk->adtyp, spellnum) ||
                     spell_would_be_useless(mtmp, mattk->adtyp, spellnum)) {
                     if (foundyou)
-                        impossible
-                            ("spellcasting monster found you and doesn't know it?");
+                        impossible("spellcasting monster found you and doesn't "
+                                   "know it?");
                     return 0;
                 }
                 break;
@@ -247,9 +248,8 @@ castmu(struct monst *mtmp, const struct attack *mattk,
     if (!foundyou) {
         dmg = 0;
         if (mattk->adtyp != AD_SPEL && mattk->adtyp != AD_CLRC) {
-            impossible
-                ("%s casting non-hand-to-hand version of hand-to-hand spell %d?",
-                 Monnam(mtmp), mattk->adtyp);
+            impossible("%s casting non-hand-to-hand version of hand-to-hand "
+                       "spell %d?", Monnam(mtmp), mattk->adtyp);
             return 0;
         }
     } else if (mattk->damd)
@@ -1008,7 +1008,8 @@ castum(struct monst *mtmp, const struct attack *mattk)
        Select a spell once.  Don't keep searching; if that spell is not useful
        (or if it's directed), return and do something else. Since most spells
        are directed, this means that a monster that isn't attacking casts
-       spells only a small portion of the time that an attacking monster does. */
+       spells only a small portion of the time that an attacking monster does.
+       */
     if ((mattk->adtyp == AD_SPEL || mattk->adtyp == AD_CLRC) && ml) {
         int cnt = 40;
 

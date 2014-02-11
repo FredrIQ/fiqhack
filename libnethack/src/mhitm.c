@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -231,15 +231,15 @@ mattackm(struct monst *magr, struct monst *mdef)
     }
 
     /* undetect monsters become un-hidden if they are attacked */
-    if (mdef->mundetected && dist2(mdef->mx, mdef->my, magr->mx, magr->my) > 2) {
+    if (mdef->mundetected &&
+        dist2(mdef->mx, mdef->my, magr->mx, magr->my) > 2) {
         mdef->mundetected = 0;
         newsym(mdef->mx, mdef->my);
         if (canseemon(mdef) && !sensemon(mdef)) {
             if (u_helpless(hm_asleep))
                 pline("You dream of %s.",
-                      (mdef->
-                       data->geno & G_UNIQ) ? a_monnam(mdef) :
-                      makeplural(m_monnam(mdef)));
+                      (mdef-> data->geno & G_UNIQ) ? a_monnam(mdef) :
+                          makeplural(m_monnam(mdef)));
             else
                 pline("Suddenly, you notice %s.", a_monnam(mdef));
         }
@@ -541,9 +541,8 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             }
             if (mdef->minvis && !perceives(magr->data)) {
                 if (canseemon(magr)) {
-                    pline
-                        ("%s doesn't seem to notice that %s gaze was reflected.",
-                         Monnam(magr), mhis(magr));
+                    pline("%s doesn't seem to notice that %s gaze was "
+                          "reflected.", Monnam(magr), mhis(magr));
                 }
                 return MM_MISS;
             }

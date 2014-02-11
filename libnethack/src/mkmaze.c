@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -93,14 +93,14 @@ extend_spine(int locale[3][3], int wall_there, int dx, int dy)
     if (wall_there) {   /* wall in that direction */
         if (dx) {
             if (locale[1][0] && locale[1][2] && /* EW are wall/stone */
-                locale[nx][0] && locale[nx][2]) {       /* diag are wall/stone */
+                locale[nx][0] && locale[nx][2]) {      /* diag are wall/stone */
                 spine = 0;
             } else {
                 spine = 1;
             }
         } else {        /* dy */
             if (locale[0][1] && locale[2][1] && /* NS are wall/stone */
-                locale[0][ny] && locale[2][ny]) {       /* diag are wall/stone */
+                locale[0][ny] && locale[2][ny]) {      /* diag are wall/stone */
                 spine = 0;
             } else {
                 spine = 1;

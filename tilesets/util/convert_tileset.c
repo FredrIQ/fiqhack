@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-12 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /*   Copyright (c) J. Ali Harlow 2000                               */
 /*   NetHack may be freely redistributed.  See license for details. */
 
@@ -324,9 +324,8 @@ main(int argc, char **argv)
     }
     if (argc - argn < 1 || !outfile || !mapfile ||
         target_tile_x <= 0 || target_tile_y <= 0) {
-        Fprintf(stderr,
-                "usage: convert_tileset [-p palette-file] -o outfile -m mapfile "
-                "-z width height [[-b<bg>] infile] ...\n");
+        Fprintf(stderr, "usage: convert_tileset [-p palette-file] -o outfile "
+                "-m mapfile -z width height [[-b<bg>] infile] ...\n");
         exit(EXIT_FAILURE);
     }
 

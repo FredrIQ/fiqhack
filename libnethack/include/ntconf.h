@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-29 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) NetHack PC Development Team 1993, 1994.  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -53,7 +53,8 @@
                                 /* unreferenced label */
 #  endif
 #  define YY_NO_UNISTD_H
-#  define snprintf(buf, len, fmt, ...) _snprintf_s(buf, len, len-1, fmt, __VA_ARGS__)
+#  define snprintf(buf, len, fmt, ...) \
+    _snprintf_s(buf, len, len-1, fmt, __VA_ARGS__)
 # endif
 
 #endif /* NTCONF_H */

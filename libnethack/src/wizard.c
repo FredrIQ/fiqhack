@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -430,7 +430,7 @@ nasty(struct monst *mcast)
         msummon(NULL, &level->z);       /* summons like WoY */
         count++;
     } else {
-        tmp = (u.ulevel > 3) ? u.ulevel / 3 : 1;        /* just in case -- rph */
+        tmp = (u.ulevel > 3) ? u.ulevel / 3 : 1;       /* just in case -- rph */
         /* if we don't have a casting monster, the nasties appear around you */
         bypos.x = u.ux;
         bypos.y = u.uy;
@@ -487,7 +487,8 @@ resurrect(void)
         while ((mtmp = *mmtmp) != 0) {
             if (mtmp->iswiz &&
                 /* if he has the Amulet, he won't bring it to you */
-                !mon_has_amulet(mtmp) && (elapsed = moves - mtmp->mlstmv) > 0L) {
+                !mon_has_amulet(mtmp) &&
+                (elapsed = moves - mtmp->mlstmv) > 0L) {
                 mon_catchup_elapsed_time(mtmp, elapsed);
                 if (elapsed >= LARGEST_INT)
                     elapsed = LARGEST_INT - 1;

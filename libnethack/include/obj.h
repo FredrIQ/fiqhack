@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-12 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -66,7 +66,9 @@ struct obj {
 
     unsigned oeroded:2;         /* rusted/burnt weapon/armor */
     unsigned oeroded2:2;        /* corroded/rotted weapon/armor */
-# define greatest_erosion(otmp) (int)((otmp)->oeroded > (otmp)->oeroded2 ? (otmp)->oeroded : (otmp)->oeroded2)
+# define greatest_erosion(otmp) \
+    (int)((otmp)->oeroded > (otmp)->oeroded2 ? (otmp)->oeroded \
+                                             : (otmp)->oeroded2)
 # define MAX_ERODE 3
 # define orotten oeroded        /* rotten food */
 # define odiluted oeroded       /* diluted potions */
@@ -207,8 +209,9 @@ struct obj {
                                  || (otmp)->otyp == DWARVISH_ROUNDSHIELD)
 # define is_gnomish_armor(otmp)  (FALSE)
 
-# define helmet_name(otmp) (is_metallic(otmp) && \
-                           (otmp)->otyp != DWARVISH_IRON_HELM ? "helmet" : "hat")
+# define helmet_name(otmp) \
+    (is_metallic(otmp) && \
+     (otmp)->otyp != DWARVISH_IRON_HELM ? "helmet" : "hat")
 # define maybe_helmet_name(otmp) ((otmp) ? helmet_name((otmp)) : "helmet")
 
 

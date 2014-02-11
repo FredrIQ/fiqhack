@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-08 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -56,9 +56,11 @@ doread(const struct nh_cmd_arg *arg)
         return 1;
     } else if (scroll->otyp == T_SHIRT) {
         static const char *const shirt_msgs[] = {       /* Scott Bigham */
-            "I explored the Dungeons of Doom and all I got was this lousy T-shirt!",
+            "I explored the Dungeons of Doom and all I got was this lousy "
+                "T-shirt!",
             "Is that Mjollnir in your pocket or are you just happy to see me?",
-            "It's not the size of your sword, it's how #enhance'd you are with it.",
+            "It's not the size of your sword, it's how #enhance'd you are "
+                "with it.",
             "Madame Elvira's House O' Succubi Lifetime Customer",
             "Madame Elvira's House O' Succubi Employee of the Month",
             "Ludios Vault Guards Do It In Small, Dark Rooms",
@@ -90,7 +92,8 @@ doread(const struct nh_cmd_arg *arg)
                          scroll->o_id ^ (unsigned)u.ubirthday);
         pline("\"%s\"", buf);
         return 1;
-    } else if (scroll->oclass != SCROLL_CLASS && scroll->oclass != SPBOOK_CLASS) {
+    } else if (scroll->oclass != SCROLL_CLASS &&
+               scroll->oclass != SPBOOK_CLASS) {
         pline("That is a silly thing to read.");
         return 0;
     } else if (Blind) {
@@ -812,8 +815,8 @@ seffects(struct obj *sobj, boolean * known)
         }
     case SCR_BLANK_PAPER:
         if (Blind)
-            pline
-                ("You don't remember there being any magic words on this scroll.");
+            pline("You don't remember there being any magic words on this "
+                  "scroll.");
         else
             pline("This scroll seems to be blank.");
         *known = TRUE;
@@ -1067,8 +1070,8 @@ seffects(struct obj *sobj, boolean * known)
         if (Hallucination)      /* Ommmmmm! */
             pline("Your mind releases itself from mundane concerns.");
         else if (!strncmpi(u.uplname, "Maud", 4))
-            pline
-                ("As your mind turns inward on itself, you forget everything else.");
+            pline("As your mind turns inward on itself, you forget everything "
+                  "else.");
         else if (rn2(2))
             pline("Who was that Maud person anyway?");
         else
@@ -1127,7 +1130,6 @@ seffects(struct obj *sobj, boolean * known)
             if (!sobj->cursed)
                 for (x = u.ux - 1; x <= u.ux + 1; x++) {
                     for (y = u.uy - 1; y <= u.uy + 1; y++) {
-
                         /* Is this a suitable spot? */
                         if (isok(x, y) && !closed_door(level, x, y) &&
                             !IS_ROCK(level->locations[x][y].typ) &&
@@ -1164,10 +1166,10 @@ seffects(struct obj *sobj, boolean * known)
                                 if (helmet) {
                                     if (is_metallic(helmet)) {
                                         if (canspotmon(mtmp))
-                                            pline
-                                                ("Fortunately, %s is wearing a hard %s.",
-                                                 mon_nam(mtmp),
-                                                 helmet_name(helmet));
+                                            pline("Fortunately, %s is wearing "
+                                                  "a hard %s.",
+                                                  mon_nam(mtmp),
+                                                  helmet_name(helmet));
                                         else
                                             You_hear("a clanging sound.");
                                         if (mdmg > 2)
@@ -1639,7 +1641,7 @@ do_genocide(int how)
             buf[0] = lowc(buf[0]);
         }
     } else {
-        strcpy(buf, ptr->mname);        /* make sure we have standard singular */
+        strcpy(buf, ptr->mname);       /* make sure we have standard singular */
         if ((ptr->geno & G_UNIQ) && ptr != &mons[PM_HIGH_PRIEST])
             which = !type_is_pname(ptr) ? "the " : "";
     }

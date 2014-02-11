@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-12 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -707,7 +707,8 @@ static const char
 #define you_are(menu,attr)            enl_msg(menu,You_,are,were,attr)
 #define you_have(menu,attr)           enl_msg(menu,You_,have,had,attr)
 #define you_can(menu,attr)            enl_msg(menu,You_,can,could,attr)
-#define you_have_been(menu,goodthing) enl_msg(menu,You_,have_been,were,goodthing)
+#define you_have_been(menu,goodthing) enl_msg(menu,You_,have_been,were, \
+                                              goodthing)
 #define you_have_never(menu,badthing) \
             enl_msg(menu,You_,have_never,never,badthing)
 #define you_have_X(menu,something) \
@@ -1090,7 +1091,7 @@ enlightenment(int final)
         const char *p;
 
         buf[0] = '\0';
-        if (final < 2) {        /* still in progress, or quit/escaped/ascended */
+        if (final < 2) {       /* still in progress, or quit/escaped/ascended */
             p = "survived after being killed ";
             switch (u.umortality) {
             case 0:
@@ -2129,7 +2130,8 @@ getargdir(const struct nh_cmd_arg *arg, const char *query,
 }
 
 int
-getargpos(const struct nh_cmd_arg *arg, coord *cc, boolean force, const char *goal)
+getargpos(const struct nh_cmd_arg *arg, coord *cc, boolean force,
+          const char *goal)
 {
     /* Did the client specify an (in bounds) position? */
     if ((arg->argtype & CMD_ARG_POS) && isok(cc->x, cc->y)) {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -773,8 +773,8 @@ cpostfx(int pm)
                second, otherwise you keep the first for 3 you have a 1 in 3
                chance of getting the third, otherwise you keep the first or the
                second for n+1 you have a 1 in n+1 chance of getting the (n+1)st,
-               otherwise you keep the previous one. Elliott Kleinrock, October 5,
-               1990 */
+               otherwise you keep the previous one. Elliott Kleinrock, October
+               5, 1990 */
 
             count = 0;  /* number of possible intrinsics */
             tmp = 0;    /* which one we will try to give */
@@ -891,8 +891,8 @@ eat_tin_one_turn(void)
             costly_tin(NULL);
             goto use_me;
         }
-        r = u.utracked[tos_tin]->cursed ? ROTTEN_TIN : /* always rotten if cursed */
-            (u.utracked[tos_tin]->spe == -1) ? HOMEMADE_TIN :   /* player made it */
+        r = u.utracked[tos_tin]->cursed ? ROTTEN_TIN : /* cursed => rotten */
+            (u.utracked[tos_tin]->spe == -1) ? HOMEMADE_TIN :  /* player made it */
             rn2(TTSZ - 1);      /* else take your pick */
         if (r == ROTTEN_TIN &&
             (u.utracked[tos_tin]->corpsenm == PM_LIZARD ||
@@ -914,7 +914,8 @@ eat_tin_one_turn(void)
         } else {
             what = mons[u.utracked[tos_tin]->corpsenm].mname;
             if (mons[u.utracked[tos_tin]->corpsenm].geno & G_UNIQ)
-                which = type_is_pname(&mons[u.utracked[tos_tin]->corpsenm]) ? 1 : 2;
+                which =
+                    type_is_pname(&mons[u.utracked[tos_tin]->corpsenm]) ? 1 : 2;
         }
         if (which == 0)
             what = makeplural(what);
@@ -1335,7 +1336,8 @@ eataccessory(struct obj *otmp)
                 }
                 break;
             case RIN_INVISIBILITY:
-                if (!oldprop && !EInvis && !BInvis && !See_invisible && !Blind) {
+                if (!oldprop && !EInvis && !BInvis && !See_invisible &&
+                    !Blind) {
                     newsym(u.ux, u.uy);
                     pline("Your body takes on a %s transparency...",
                           Hallucination ? "normal" : "strange");
@@ -1782,7 +1784,8 @@ doeat(const struct nh_cmd_arg *arg)
         pline("You can't eat something you're wearing.");
         return 0;
     }
-    if (is_metallic(otmp) && u.umonnum == PM_RUST_MONSTER && otmp->oerodeproof) {
+    if (is_metallic(otmp) && u.umonnum == PM_RUST_MONSTER &&
+        otmp->oerodeproof) {
         otmp->rknown = TRUE;
         if (otmp->quan > 1L) {
             if (!carried(otmp))
@@ -1836,7 +1839,8 @@ doeat(const struct nh_cmd_arg *arg)
             basenutrit = objects[otmp->otyp].oc_nutrition;
 
         material = objects[otmp->otyp].oc_material;
-        if (material == LEATHER || material == BONE || material == DRAGON_HIDE) {
+        if (material == LEATHER || material == BONE ||
+            material == DRAGON_HIDE) {
             u.uconduct.unvegan++;
             violated_vegetarian();
         } else if (material == WAX)
@@ -1979,7 +1983,7 @@ gethungry(void)
     if (u.uinvulnerable)
         return; /* you don't feel hungrier */
 
-    if ((!u_helpless(hm_asleep) || !rn2(10)) /* slow metabolic rate while asleep */
+    if ((!u_helpless(hm_asleep) || !rn2(10)) /* slow metabolism while asleep */
         &&(carnivorous(youmonst.data) || herbivorous(youmonst.data))
         && !Slow_digestion)
         u.uhunger--;    /* ordinary food consumption */
@@ -2128,7 +2132,8 @@ newuhs(boolean incr)
         case WEAK:
             if (Hallucination)
                 pline((!incr) ? "You still have the munchies." :
-                      "The munchies are interfering with your motor capabilities.");
+                      "The munchies are interfering with your motor "
+                      "capabilities.");
             else if (incr &&
                      (Role_if(PM_WIZARD) || Race_if(PM_ELF) ||
                       Role_if(PM_VALKYRIE)))

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -35,7 +35,8 @@ extern boolean notonhead;       /* for long worms */
 /* Throw the selected object, taking direction and maximum multishot from
    the provided argument */
 static int
-throw_obj(struct obj *obj, const struct nh_cmd_arg *arg, boolean cancel_unquivers)
+throw_obj(struct obj *obj, const struct nh_cmd_arg *arg,
+          boolean cancel_unquivers)
 {
     struct obj *otmp;
     int multishot = 1;
@@ -787,7 +788,8 @@ toss_up(struct obj *obj, boolean hitsroof)
                        !(obj->otyp == CORPSE &&
                          touch_petrifies(&mons[obj->corpsenm])))
                 pline("Your %s does not protect you.", xname(uarmh));
-        } else if (obj->otyp == CORPSE && touch_petrifies(&mons[obj->corpsenm])) {
+        } else if (obj->otyp == CORPSE &&
+                   touch_petrifies(&mons[obj->corpsenm])) {
             if (!Stone_resistance &&
                 !(poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))) {
             petrify:
@@ -1015,7 +1017,8 @@ throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang
             mpickobj(u.ustuck, obj);
     } else {
         /* the code following might become part of dropy() */
-        if (obj->oartifact == ART_MJOLLNIR && Role_if(PM_VALKYRIE) && rn2(100)) {
+        if (obj->oartifact == ART_MJOLLNIR && Role_if(PM_VALKYRIE) &&
+            rn2(100)) {
             /* we must be wearing Gauntlets of Power to get here */
             sho_obj_return_to_u(obj, dx, dy);   /* display its flight */
 

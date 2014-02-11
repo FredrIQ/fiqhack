@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-13 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -94,17 +94,17 @@ typedef void *uncursed_hook_void_p;
 /***** Calls from implementation plugins into uncursed.c *****/
 extern uncursed_hooks_p HOOK_EI(uncursed_hook_list);
 
-extern char HOOK_EI(uncursed_rhook_cp437_at) (int, int);    /* y, x */
-extern uncursed_hook_char_p HOOK_EI(uncursed_rhook_utf8_at) (int, int); /* y, x */
-extern unsigned short HOOK_EI(uncursed_rhook_ucs2_at) (int, int); /* y, x */
+extern char HOOK_EI(uncursed_rhook_cp437_at) (int y, int x);
+extern uncursed_hook_char_p HOOK_EI(uncursed_rhook_utf8_at) (int y, int x);
+extern unsigned short HOOK_EI(uncursed_rhook_ucs2_at) (int y, int x);
 /* This returns fg|bg<<5|ul<<10; i.e. color and underlining information.
    Default color is given as 16, not as -1. */
-extern int HOOK_EI(uncursed_rhook_color_at) (int, int);     /* y, x */
-extern uncursed_hook_void_p HOOK_EI(uncursed_rhook_region_at) (int, int); /* y, x */
-extern int HOOK_EI(uncursed_rhook_needsupdate) (int, int);  /* y, x */
+extern int HOOK_EI(uncursed_rhook_color_at) (int y, int x);
+extern uncursed_hook_void_p HOOK_EI(uncursed_rhook_region_at) (int y, int x);
+extern int HOOK_EI(uncursed_rhook_needsupdate) (int y, int x);
 
-extern void HOOK_EI(uncursed_rhook_updated) (int, int);     /* y, x */
-extern void HOOK_EI(uncursed_rhook_setsize) (int, int);     /* rows, columns */
+extern void HOOK_EI(uncursed_rhook_updated) (int y, int x);
+extern void HOOK_EI(uncursed_rhook_setsize) (int rows, int cols);
 
 /***** Calls from uncursed.c into plugins.c *****/
 extern int uncursed_load_plugin(const char *);  /* plugin name; 1 on success */

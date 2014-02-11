@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2262,7 +2262,8 @@ mselftouch(struct monst *mon, const char *arg, boolean byplayer)
 {
     struct obj *mwep = MON_WEP(mon);
 
-    if (mwep && mwep->otyp == CORPSE && touch_petrifies(&mons[mwep->corpsenm])) {
+    if (mwep && mwep->otyp == CORPSE &&
+        touch_petrifies(&mons[mwep->corpsenm])) {
         if (cansee(mon->mx, mon->my)) {
             pline("%s%s touches the %s corpse.", arg ? arg : "",
                   arg ? mon_nam(mon) : Monnam(mon), mons[mwep->corpsenm].mname);
@@ -2464,7 +2465,8 @@ dofiretrap(struct obj *box)
  * to be done upon its contents.
  */
 
-    if ((box && !carried(box)) ? is_pool(level, box->ox, box->oy) : Underwater) {
+    if ((box && !carried(box)) ? is_pool(level, box->ox, box->oy)
+                               : Underwater) {
         pline("A cascade of steamy bubbles erupts from %s!",
               the(box ? xname(box) : surface(u.ux, u.uy)));
         if (Fire_resistance)
@@ -3180,8 +3182,8 @@ try_disarm(struct trap *ttmp, boolean force_failure, schar dx, schar dy)
                         struct trap *ttmp2 = maketrap(level, u.ux, u.uy, WEB);
 
                         if (ttmp2) {
-                            pline
-                                ("The webbing sticks to you. You're caught too!");
+                            pline("The webbing sticks to you. You're caught "
+                                  "too!");
                             dotrap(ttmp2, NOWEBMSG);
                             if (u.usteed && u.utrap) {
                                 /* you, not steed, are trapped */

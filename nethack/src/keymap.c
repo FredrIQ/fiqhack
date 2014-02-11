@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-12 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -421,7 +421,8 @@ doextcmd(nh_bool include_debug)
 
         retval = find_command(cmdbuf);
 
-        /* don't allow ui commands: they wouldn't be handled properly later on */
+        /* don't allow ui commands: they wouldn't be handled properly later on
+           */
         if (!retval || (retval->flags & CMD_UI)) {
             char msg[BUFSZ];
 
@@ -590,7 +591,8 @@ read_keymap(void)
     /* read the file */
     line = strtok(data, "\r\n");
     while (line) {
-        /* find the first non-space after the first space (ie the second word) */
+        /* find the first non-space after the first space (ie the second word)
+           */
         pos = 0;
         while (line[pos] && !isspace(line[pos]))
             pos++;
@@ -624,7 +626,8 @@ read_keymap(void)
                        (unknown_size - unknown_count));
 
                 /* since unknown_commands has been realloc'd, pointers must be
-                   adjusted to point to the new list rather than free'd memory */
+                   adjusted to point to the new list rather than free'd memory
+                   */
                 ptrdiff =
                     (char *)unknown_commands - (char *)unknown_commands_prev;
                 for (i = 0; i < KEY_MAX; i++) {

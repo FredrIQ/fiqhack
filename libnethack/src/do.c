@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-08 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -379,8 +379,8 @@ dosinkring(struct obj *obj)  /* obj is a ring being dropped over a sink */
             pline("The sink momentarily looks like a fountain.");
             break;
         case RIN_POLYMORPH_CONTROL:
-            pline
-                ("The sink momentarily looks like a regularly erupting geyser.");
+            pline ("The sink momentarily looks like a regularly erupting "
+                   "geyser.");
             break;
         }
     }
@@ -763,7 +763,7 @@ dodown(enum u_interaction_mode uim)
                     arg_from_delta(0, 0, 1, &arg);
                     return use_pick_axe(uwep, &arg);
                 } else {
-                    pline("You are already in the pit.");       /* YAFM needed */
+                    pline("You are already in the pit.");      /* YAFM needed */
                 }
             } else {
                 u.utrap = 1;
@@ -1004,7 +1004,8 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
 
     /* do this prior to level-change pline messages */
     vision_reset();     /* clear old level's line-of-sight */
-    turnstate.vision_full_recalc = FALSE; /* don't let that reenable vision yet */
+    /* don't let that reenable vision yet */
+    turnstate.vision_full_recalc = FALSE; 
     flush_screen_disable();     /* ensure all map flushes are postponed */
 
     if (portal && !In_endgame(&u.uz)) {
@@ -1110,7 +1111,8 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
     if (Punished)
         placebc();
 
-    /* only matters if falling; place objects that fell with the player nearby */
+    /* only matters if falling; place objects that fell with the player nearby
+       */
     while (level->objects[0][0])
         deliver_object(level->objects[0][0], u.uz.dnum, u.uz.dlevel,
                        MIGR_NEAR_PLAYER);

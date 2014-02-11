@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -92,41 +92,36 @@ print_usage(const char *progname)
     printf("                     Default: \"" DEFAULT_CONFIG_FILE "\"\n");
     printf("  -d <\"v4\"|\"v6\">   -d v4: disable ipv4; -d v6 disable ipv6.\n");
     printf("  -k               Kill a previously started server daemon.\n");
-    printf
-        ("                     The -p parameter and the config file will be\n");
-    printf
-        ("                     used to find the pid file of the server to kill.\n");
+    printf("                     The -p parameter and the config file will\n");
+    printf("                     be used to find the pid file of the server\n");
+    printf("                     to kill.\n");
     printf("  -l <file name>   Alternate log file name. Default: \""
            DEFAULT_LOG_FILE "\"\n");
     printf("  -m               Send a message to all connected clients.\n");
-    printf
-        ("                     All clients will display the content of the file\n");
+    printf("                     All clients will display the content of the\n");
+    printf("                     file\n");
     printf("                     <workdir>/message.\n");
     printf("  -n               Don't detach from the terminal.\n");
-    printf
-        ("                     If this parameter is set, no pidfile is created.\n");
+    printf("                     If this parameter is set, no pidfile is\n");
+    printf("                     created.\n");
     printf("  -P <number>      Port number. Default: %d\n", DEFAULT_PORT);
-    printf
-        ("  -p <file name>   Name of the file used to store the pid of a running\n");
-    printf("                     server daemon.\n");
+    printf("  -p <file name>   Name of the file used to store the pid of a\n");
+    printf("                     running server daemon.\n");
     printf("  -t <seconds>     Client timeout in seconds. Default: %d.\n",
            DEFAULT_CLIENT_TIMEOUT);
-    printf
-        ("  -w <directory>   Working directory which will store user details,\n");
-    printf("                     saved games, high score etc.\n");
+    printf("  -w <directory>   Working directory which will store user\n");
+    printf("                     details, saved games, high score etc.\n");
     printf("\n");
     printf("  Database connection settings:\n");
-    printf
-        ("  -H <string>      Hostname, ip address (v4 or v6) or unix socket name\n");
-    printf("                     of the PostgreSQL database server.\n");
-    printf
-        ("  -o <string>      Port number to connect to at the PostgreSQL server, or\n");
-    printf
-        ("                     socket file name extension for Unix-domain connections.\n");
+    printf("  -H <string>      Hostname, ip address (v4 or v6) or unix socket\n");
+    printf("                     name of the PostgreSQL database server.\n");
+    printf("  -o <string>      Port number to connect to at the PostgreSQL\n");
+    printf("                     server, or socket file name extension for\n");
+    printf("                     Unix-domain connections.\n");
     printf("  -u <string>      PostgreSQL user name to connect as.\n");
     printf("  -a <string>      Password for the given user name.\n");
-    printf
-        ("  -D <string>      Database name. Default: the same as the user name.\n");
+    printf("  -D <string>      Database name. Default: the same as the user\n");
+    printf("                     name.\n");
     printf("\n");
     printf("  -h               Show this message.\n");
 }
@@ -213,9 +208,8 @@ read_parameters(int argc, char *argv[], char **conffile, int *request_kill,
         case 'P':      /* port number */
             settings.port = atoi(optarg);
             if (settings.port < 1 || settings.port > 65535) {
-                fprintf(stderr,
-                        "Error: Port %d is outside the range of valid port numbers [1-65535].\n",
-                        settings.port);
+                fprintf(stderr, "Error: Port %d is outside the range of valid "
+                        "port numbers [1-65535].\n", settings.port);
                 return FALSE;
             }
             break;

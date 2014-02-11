@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -163,8 +163,8 @@ confused_book(struct obj *spellbook)
 
     if (!rn2(3) && spellbook->otyp != SPE_BOOK_OF_THE_DEAD) {
         spellbook->in_use = TRUE;       /* in case called from learn */
-        pline
-            ("Being confused you have difficulties in controlling your actions.");
+        pline("Being confused you have difficulties in controlling your "
+              "actions.");
         win_pause_output(P_MESSAGE);
         pline("You accidentally tear the spellbook to pieces.");
         if (!objects[spellbook->otyp].oc_name_known &&
@@ -487,8 +487,8 @@ study_book(struct obj *spellbook, const struct nh_cmd_arg *arg)
                 if (Role_if(PM_WIZARD) && read_ability < 20 && !confused) {
                     char qbuf[QBUFSZ];
 
-                    sprintf(qbuf,
-                            "This spellbook is %sdifficult to comprehend. Continue?",
+                    sprintf(qbuf, "This spellbook is %sdifficult to "
+                            "comprehend. Continue?",
                             (read_ability < 12 ? "very " : ""));
                     if (yn(qbuf) != 'y') {
                         spellbook->in_use = FALSE;

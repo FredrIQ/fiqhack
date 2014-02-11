@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-23 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Mike Threepoint, 1989.                           */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -59,7 +59,8 @@ const struct objclass const_objects[] = {
            0, ILLOBJ_CLASS, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
 
 /* weapons ... */
-#define WEAPON(name,app,kn,mg,bi,prob,wt,cost,sdam,ldam,hitbon,typ,sub,metal,color) \
+#define WEAPON(name,app,kn,mg,bi,prob,wt,cost,sdam,ldam,hitbon,typ,sub,metal, \
+               color) \
         OBJECT( \
             OBJ(name,app), BITS(kn,mg,1,0,0,1,0,0,bi,0,typ,sub,metal), 0, \
             WEAPON_CLASS, prob, 0, \
@@ -279,21 +280,27 @@ const struct objclass const_objects[] = {
  * Only COPPER (including brass) corrodes.
  * Some creatures are vulnerable to SILVER.
  */
-#define ARMOR(name,desc,kn,mgc,blk,power,prob,delay,wt,cost,ac,can,sub,metal,c) \
+#define ARMOR(name,desc,kn,mgc,blk,power,prob,delay,wt,cost,ac,can,sub,metal, \
+              c) \
         OBJECT( \
-                OBJ(name,desc), BITS(kn,0,1,0,mgc,1,0,0,blk,0,0,sub,metal), power, \
-                ARMOR_CLASS, prob, delay, wt, cost, \
-                0, 0, 10 - ac, can, wt, c )
+                OBJ(name,desc), BITS(kn,0,1,0,mgc,1,0,0,blk,0,0,sub,metal), \
+                power, ARMOR_CLASS, prob, delay, wt, cost, 0, 0, 10 - ac, can, \
+                wt, c )
 #define HELM(name,desc,kn,mgc,power,prob,delay,wt,cost,ac,can,metal,c) \
-        ARMOR(name,desc,kn,mgc,0,power,prob,delay,wt,cost,ac,can,ARM_HELM,metal,c)
+        ARMOR(name,desc,kn,mgc,0,power,prob,delay,wt,cost,ac,can,ARM_HELM, \
+              metal,c)
 #define CLOAK(name,desc,kn,mgc,power,prob,delay,wt,cost,ac,can,metal,c) \
-        ARMOR(name,desc,kn,mgc,0,power,prob,delay,wt,cost,ac,can,ARM_CLOAK,metal,c)
+        ARMOR(name,desc,kn,mgc,0,power,prob,delay,wt,cost,ac,can,ARM_CLOAK, \
+              metal,c)
 #define SHIELD(name,desc,kn,mgc,blk,power,prob,delay,wt,cost,ac,can,metal,c) \
-        ARMOR(name,desc,kn,mgc,blk,power,prob,delay,wt,cost,ac,can,ARM_SHIELD,metal,c)
+        ARMOR(name,desc,kn,mgc,blk,power,prob,delay,wt,cost,ac,can,ARM_SHIELD, \
+              metal,c)
 #define GLOVES(name,desc,kn,mgc,power,prob,delay,wt,cost,ac,can,metal,c) \
-        ARMOR(name,desc,kn,mgc,0,power,prob,delay,wt,cost,ac,can,ARM_GLOVES,metal,c)
+        ARMOR(name,desc,kn,mgc,0,power,prob,delay,wt,cost,ac,can,ARM_GLOVES, \
+              metal,c)
 #define BOOTS(name,desc,kn,mgc,power,prob,delay,wt,cost,ac,can,metal,c) \
-        ARMOR(name,desc,kn,mgc,0,power,prob,delay,wt,cost,ac,can,ARM_BOOTS,metal,c)
+        ARMOR(name,desc,kn,mgc,0,power,prob,delay,wt,cost,ac,can,ARM_BOOTS, \
+              metal,c)
 
 /* helmets */
     HELM("elven leather helm", "leather hat",
@@ -331,7 +338,8 @@ const struct objclass const_objects[] = {
  *          the same defined in monst.c.
  */
 #define DRGN_ARMR(name,mgc,power,cost,ac,color) \
-        ARMOR(name,NULL,1,mgc,1,power,0,5,40,cost,ac,0,ARM_SUIT,DRAGON_HIDE,color)
+        ARMOR(name,NULL,1,mgc,1,power,0,5,40,cost,ac,0,ARM_SUIT,DRAGON_HIDE, \
+              color)
 /* 3.4.1: dragon scale mail reclassified as "magic" since magic is
    needed to create them */
     DRGN_ARMR("gray dragon scale mail", 1, ANTIMAGIC, 1200, 1, CLR_GRAY),
@@ -911,8 +919,8 @@ const struct objclass const_objects[] = {
         OBJ(name,desc), \
             BITS(0,1,0,0,0,0,0,0,0,HARDGEM(mohs),0,-P_SLING,glass), 0, \
             GEM_CLASS, prob, 0, 1, gval, 3, 3, 0, 0, nutr, color )
-#define ROCK(name,desc,kn,prob,wt,gval,sdam,ldam,mgc,nutr,mohs,glass,color) OBJECT( \
-        OBJ(name,desc), \
+#define ROCK(name,desc,kn,prob,wt,gval,sdam,ldam,mgc,nutr,mohs,glass,color) \
+        OBJECT( OBJ(name,desc), \
             BITS(kn,1,0,0,mgc,0,0,0,0,HARDGEM(mohs),0,-P_SLING,glass), 0, \
             GEM_CLASS, prob, 0, wt, gval, sdam, ldam, 0, 0, nutr, color )
     GEM("dilithium crystal", "white", 2, 1, 4500, 15, 5, GEMSTONE, CLR_WHITE),

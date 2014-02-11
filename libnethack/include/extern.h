@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -183,7 +183,8 @@ extern void dtoxy(coord *, int);
 extern void confdir(schar * dx, schar * dy);
 extern int get_adjacent_loc(const char *, const char *, xchar, xchar, coord *,
                             schar *);
-extern void arg_from_delta(schar dx, schar dy, schar dz, struct nh_cmd_arg *arg);
+extern void arg_from_delta(schar dx, schar dy, schar dz,
+                           struct nh_cmd_arg *arg);
 extern int getargdir(const struct nh_cmd_arg *arg, const char *query,
                      schar *dx, schar *dy, schar *dz);
 extern int getargpos(const struct nh_cmd_arg *arg, coord *cc, boolean force,

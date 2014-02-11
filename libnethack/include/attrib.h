@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-29 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright 1988, Mike Stephenson                                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -42,7 +42,9 @@ struct attribs {
     schar a[A_MAX];
 };
 
-# define ATTRMAX(x) ((x == A_STR && Upolyd && strongmonst(youmonst.data)) ? STR18(100) : urace.attrmax[x])
+# define ATTRMAX(x) \
+    ((x == A_STR && Upolyd && strongmonst(youmonst.data)) ? STR18(100) \
+                                                          : urace.attrmax[x])
 # define ATTRMIN(x) (urace.attrmin[x])
 
 #endif /* ATTRIB_H */

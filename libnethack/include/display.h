@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -18,7 +18,8 @@
 # define dbuf_monid(mon) (what_mon(mon->mnum) + 1)
 # define dbuf_objid(obj) (what_obj(obj->otyp) + 1)
 # define dbuf_effect(type, id) ((type << 16) | (id + 1))
-# define dbuf_explosion(etype, id) ((E_EXPLOSION << 16) | (etype * NUMEXPCHARS + id + 1))
+# define dbuf_explosion(etype, id) \
+    ((E_EXPLOSION << 16) | (etype * NUMEXPCHARS + id + 1))
 
 
 /*
@@ -174,21 +175,22 @@
  * These routines are true if what is really at the given location will
  * "cover" any objects or traps that might be there.
  */
-# define covers_objects(lev,xx,yy)                                                    \
-    ((is_pool(lev,xx,yy) && !Underwater) || (lev->locations[xx][yy].typ == LAVAPOOL))
+# define covers_objects(lev,xx,yy) \
+    ((is_pool(lev,xx,yy) && !Underwater) || \
+     (lev->locations[xx][yy].typ == LAVAPOOL))
 
 # define covers_traps(lev,xx,yy)        covers_objects(lev,xx,yy)
 
 /*
  * tmp_at() display styles
  */
-# define DISP_BEAM    (-1)      /* Keep all symbols showing & clean up at end. */
-# define DISP_FLASH   (-2)      /* Clean up each symbol before displaying new
-                                   one. */
-# define DISP_ALWAYS  (-3)      /* Like flash, but still displayed if not
-                                   visible. */
-# define DISP_OBJECT  (-4)      /* Like flash, but shows an object instead of
-                                   an effect symbol */
+# define DISP_BEAM    (-1)     /* Keep all symbols showing & clean up at end. */
+# define DISP_FLASH   (-2)     /* Clean up each symbol before displaying new
+                                  one. */
+# define DISP_ALWAYS  (-3)     /* Like flash, but still displayed if not
+                                  visible. */
+# define DISP_OBJECT  (-4)     /* Like flash, but shows an object instead of
+                                  an effect symbol */
 
 /* Macros for explosion types */
 /* Moved from hack.h, because the tileset code needs access to it */

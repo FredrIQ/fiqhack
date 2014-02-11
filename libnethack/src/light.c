@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-19 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Dean Luick, 1994                                       */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -104,10 +104,12 @@ del_light_source(struct level *lev, int type, void *id)
         break;
     }
 
-    for (prev = 0, curr = lev->lev_lights; curr; prev = curr, curr = curr->next) {
+    for (prev = 0, curr = lev->lev_lights; curr;
+         prev = curr, curr = curr->next) {
         if (curr->type != type)
             continue;
-        if (curr->id == ((curr->flags & LSF_NEEDS_FIXUP) ? (void *)tmp_id : id)) {
+        if (curr->id ==
+               ((curr->flags & LSF_NEEDS_FIXUP) ? (void *)tmp_id : id)) {
             if (prev)
                 prev->next = curr->next;
             else

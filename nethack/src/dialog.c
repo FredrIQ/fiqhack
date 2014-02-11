@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-19 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -8,8 +8,8 @@
 #include <limits.h>
 
 
-/* Create a new dialog, or reposition an existing one, in an appropriate position
-   for showing prompts. Also draw a border aound it. */
+/* Create a new dialog, or reposition an existing one, in an appropriate
+   position for showing prompts. Also draw a border aound it. */
 WINDOW *
 newdialog(int height, int width, WINDOW *win)
 {

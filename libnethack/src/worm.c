@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-27 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -629,7 +629,7 @@ place_worm_tail_randomly(struct monst *worm, xchar x, xchar y)
             new_tail = lev->wtails[wnum];
             newsym(nx, ny);
         } else {        /* Oops.  Truncate because there was */
-            toss_wsegs(lev, curr, FALSE);       /* no place for the rest of it */
+            toss_wsegs(lev, curr, FALSE);      /* no place for the rest of it */
             curr = NULL;
         }
     }

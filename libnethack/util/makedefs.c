@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-29 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) M. Stephenson, 1990, 1991.                       */
 /* Copyright (c) Dean Luick, 1990.                                */
@@ -113,9 +113,8 @@ usage(char *argv0, char mode, int expected)
     size_t i;
 
     if (expected)
-        fprintf(stderr,
-                "Error: incorrect number of args for mode -%c: %d args required\n",
-                mode, expected);
+        fprintf(stderr, "Error: incorrect number of args for mode -%c: "
+                "%d args required\n", mode, expected);
 
     for (i = 0; i < sizeof (usage_info) / sizeof (usage_info[0]); i++)
         fprintf(stderr, usage_info[i], argv0);
@@ -399,13 +398,13 @@ d_filter(char *line)
     *
     New format (v3.1) of 'data' file which allows much faster lookups [pr]
     "do not edit"               first record is a comment line
-    01234567            hexadecimal formatted offset to text area
+    01234567                    hexadecimal formatted offset to text area
     name-a                      first name of interest
     123,4                       offset to name's text, and number of lines for it
     name-b                      next name of interest
     name-c                      multiple names which share same description also
     456,7                       share a single offset,count line
-    .                   sentinel to mark end of names
+    .                           sentinel to mark end of names
     789,0                       dummy record containing offset, count of EOF
     text-a                      4 lines of descriptive text for name-a
     text-a                      at file position 0x01234567L + 123L
@@ -533,7 +532,7 @@ static const char *special_oracle[] = {
     "  (2)  P(B) != NP(B)",
     "",
     "This provides impressive evidence that the techniques that are",
-    "currently available will not suffice for proving that P != NP or          ",
+    "currently available will not suffice for proving that P != NP or",
     "that P == NP.\"  [Garey and Johnson, p. 185.]"
 };
 

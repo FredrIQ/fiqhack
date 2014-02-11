@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-01 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -362,7 +362,7 @@ platform_specific_exit(void)
     tcsetattr(fileno(ofile), TCSADRAIN, &to_orig);
 }
 
-static char keystrings[5];      /* used to create unique pointers as sentinels */
+static char keystrings[5];     /* used to create unique pointers as sentinels */
 static char *KEYSTRING_HANGUP = keystrings + 0;
 static char *KEYSTRING_RESIZE = keystrings + 1;
 static char *KEYSTRING_INVALID = keystrings + 2;
@@ -764,7 +764,8 @@ tty_hook_init(int *h, int *w, char *title)
        KEY_PF3 | (KEY_SHIFT*4)). VT100 is weird!
 
        If we get a hangup at this prompt, we continue anyway to avoid an
-       infinite loop; we don't exit so that the process can do a safe shutdown. */
+       infinite loop; we don't exit so that the process can do a safe shutdown.
+       */
 
     supports_utf8 = 0;
     int kp = 0;

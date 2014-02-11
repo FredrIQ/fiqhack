@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-19 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -108,7 +108,8 @@ get_gamedir(enum game_dirs dirtype, char *buf)
     mask = umask(0);
     if (mkdir(buf, 0755) == -1 && errno != EEXIST) {
         /* try to create the parent directory too. This ist the only problem we
-           can fix here - permission problems etc. all requre user intervention */
+           can fix here - permission problems etc. all requre user intervention
+           */
         char dirbuf[BUFSZ], *basedir;
 
         strcpy(dirbuf, buf);
@@ -199,7 +200,8 @@ game_ended(int status, fnchar *filename, nh_bool net)
         curses_raw_print("Error: Could not find the save file.");
         return;
     case ERR_BAD_FILE:
-        curses_raw_print("Error: This does not look like a NetHack 4 save file.");
+        curses_raw_print("Error: This does not look like a NetHack 4 save "
+                         "file.");
         return;
     case ERR_IN_PROGRESS:
         curses_raw_print("Error: Could not attach to the game file.");

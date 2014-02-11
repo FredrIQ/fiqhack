@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -42,7 +42,8 @@ o_in(struct obj *obj, char oclass)
     return NULL;
 }
 
-/* Recursively search obj for an object made of specified material and return 1st found */
+/* Recursively search obj for an object made of specified material and return
+ * 1st found */
 static struct obj *
 o_material(struct obj *obj, unsigned material)
 {
@@ -856,8 +857,8 @@ use_crystal_ball(struct obj *obj)
                 pline("You see goldfish swimming above fluorescent rocks.");
                 break;
             case 5:
-                pline
-                    ("You see tiny snowflakes spinning around a miniature farmhouse.");
+                pline ("You see tiny snowflakes spinning around a miniature "
+                       "farmhouse.");
                 break;
             default:
                 pline("Oh wow... like a kaleidoscope!");
@@ -1019,7 +1020,7 @@ findone(int zx, int zy, void *num)
     struct monst *mtmp;
 
     if (level->locations[zx][zy].typ == SDOOR) {
-        cvt_sdoor_to_door(&level->locations[zx][zy], &u.uz);    /* .typ = DOOR */
+        cvt_sdoor_to_door(&level->locations[zx][zy], &u.uz);   /* .typ = DOOR */
         magic_map_background(zx, zy, 0);
         newsym(zx, zy);
         (*(int *)num)++;
@@ -1230,7 +1231,8 @@ dosearch0(int aflag)
                                            Logically, this should still take
                                            time and lead to a return(1), but if
                                            we did that the player would keep
-                                           finding the same monster every turn. */
+                                           finding the same monster every turn.
+                                           */
                                         continue;
                                     } else {
                                         pline("You feel an unseen monster!");

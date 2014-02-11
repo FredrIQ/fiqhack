@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-08 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -510,8 +510,8 @@ do_play_instrument(struct obj *instr, const struct nh_cmd_arg *arg)
                     for (x = u.ux - 1; x <= u.ux + 1; x++)
                         if (isok(x, y))
                             if (find_drawbridge(&x, &y)) {
-                                u.uevent.uheard_tune = 2;       /* tune now
-                                                                   fully known */
+                                /* tune now fully known */
+                                u.uevent.uheard_tune = 2;
                                 if (level->locations[x][y].typ ==
                                     DRAWBRIDGE_DOWN)
                                     close_drawbridge(x, y);

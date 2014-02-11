@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-08 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1622,8 +1622,8 @@ set_repo_loc(struct eshk *eshkp)
     repo_location.y = oy;
 }
 
-/* Dump inventory to the floor, called at game exit, after inventory disclosure but
- * before making bones */
+/* Dump inventory to the floor, called at game exit, after inventory disclosure
+ * but before making bones */
 void
 finish_paybill(void)
 {
@@ -1761,7 +1761,8 @@ get_cost(const struct obj *obj, struct monst *shkp)
     /* shopkeeper may notice if the player isn't very knowledgeable -
        especially when gem prices are concerned */
     if (!obj->dknown || !objects[obj->otyp].oc_name_known) {
-        if (obj->oclass == GEM_CLASS && objects[obj->otyp].oc_material == GLASS) {
+        if (obj->oclass == GEM_CLASS &&
+            objects[obj->otyp].oc_material == GLASS) {
             int i;
 
             /* get a value that's 'random' from game to game, but the same
@@ -2500,8 +2501,8 @@ sellobj(struct obj *obj, xchar x, xchar y)
         if ((eshkp->robbed -= offer < 0L))
             eshkp->robbed = 0L;
         if (offer)
-            verbalize
-                ("Thank you for your contribution to restock this recently plundered shop.");
+            verbalize("Thank you for your contribution to restock this "
+                      "recently plundered shop.");
         subfrombill(obj, shkp);
         return;
     }
@@ -2584,8 +2585,9 @@ move_on:
                           (sell_how !=
                            SELL_NORMAL) ?
                           "You traded %s for %ld zorkmid%s in %scredit." :
-                          "You relinquish %s and acquire %ld zorkmid%s in %scredit.",
-                          tmpcr, (eshkp->credit > 0L) ? "additional " : "");
+                          "You relinquish %s and acquire %ld zorkmid%s in "
+                          "%scredit.", tmpcr,
+                          (eshkp->credit > 0L) ? "additional " : "");
             eshkp->credit += tmpcr;
             subfrombill(obj, shkp);
         } else {

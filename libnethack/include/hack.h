@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -181,10 +181,10 @@ enum attack_check_status {
                                    turn */
 
 /* Flags to control test_move in hack.c */
-# define DO_MOVE          0     /* really doing the move */
-# define TEST_MOVE        1     /* test a normal move (move there next) */
-# define TEST_TRAV        2     /* test a future travel location */
-# define TEST_TRAP        3     /* check if a future travel location is a trap */
+# define DO_MOVE          0    /* really doing the move */
+# define TEST_MOVE        1    /* test a normal move (move there next) */
+# define TEST_TRAV        2    /* test a future travel location */
+# define TEST_TRAP        3    /* check if a future travel location is a trap */
 
 /*** some utility macros ***/
 # define yn(query) yn_function(query,ynchars, 'n')
@@ -281,7 +281,8 @@ enum attack_check_status {
 /* If endian.h exists (on Linux for example and perhaps on other UNIX) and is
    indirectly included via the system headers, we may be able to find out what
    the endianness is.  Otherwise define IS_BIG_ENDIAN in config.h */
-# if defined(__BYTE_ORDER) && defined(__BIG_ENDIAN) && __BYTE_ORDER == __BIG_ENDIAN
+# if defined(__BYTE_ORDER) && defined(__BIG_ENDIAN) && \
+    __BYTE_ORDER == __BIG_ENDIAN
 #  define IS_BIG_ENDIAN
 # endif
 

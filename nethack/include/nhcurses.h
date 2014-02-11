@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-19 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -35,7 +35,8 @@
 /* If we're using the Microsoft compiler, we also get the Microsoft C lib which
  * doesn't have plain snprintf.  Note that this macro is an MSVC-style variadic
  * macro, which is not understood by gcc (it uses a different notation). */
-#   define snprintf(buf, len, fmt, ...) _snprintf_s(buf, len, len-1, fmt, __VA_ARGS__)
+#   define snprintf(buf, len, fmt, ...) \
+    _snprintf_s(buf, len, len-1, fmt, __VA_ARGS__)
 #   define snwprintf _snwprintf
 #   define strncasecmp _strnicmp
 #  endif
@@ -124,10 +125,10 @@ struct interface_flags {
     int playmode;
     int viewheight;
     int msgheight;      /* actual height */
-    int connection_only;        /* connect to localhost, don't play normally */
+    int connection_only;       /* connect to localhost, don't play normally */
     int no_stop;        /* do not allow the process to stop itself (as in
                            SIGSTOP) */
-    char username[BUFSZ];       /* username being used in connection-only mode */
+    char username[BUFSZ];      /* username being used in connection-only mode */
 };
 
 struct settings {
@@ -140,7 +141,8 @@ struct settings {
     int optstyle;       /* option display style */
     int win_height;     /* window height, PDCurses on WIN32 only */
     int win_width;      /* window height, PDCurses on WIN32 only */
-    nh_bool darkgray;   /* use bolded black instead of dark blue for CLR_BLACK */
+    /* use bolded black instead of dark blue for CLR_BLACK */
+    nh_bool darkgray;
     nh_bool extmenu;    /* extended commands use menu interface */
     nh_bool hilite_pet; /* hilight pets */
     nh_bool showexp;    /* show experience points */
@@ -150,7 +152,8 @@ struct settings {
     nh_bool use_inverse;        /* use inverse video for some things */
     nh_bool invweight;  /* show item weight in the inventory */
     nh_bool bgbranding; /* show hidden traps/stairs with background */
-    nh_bool blink;      /* show multiple symbols for each location by blinking */
+    /* show multiple symbols for each location by blinking */
+    nh_bool blink;
     nh_bool floorcolor; /* draw stepped-on information for the floor */
     nh_bool sidebar;    /* draw the inventory sidebar */
     nh_bool frame;      /* draw a frame around the window sections */
@@ -185,12 +188,12 @@ struct curses_drawing_info {
     /* effect layer symbols: nh_dbuf_entry.effect NH_EFFECT_TYPE */
     struct curses_symdef *explsyms;
     struct curses_symdef *expltypes;
-    struct curses_symdef *zapsyms;      /* default zap symbols; no color info */
-    struct curses_symdef *zaptypes;     /* zap beam types + colors. no symbols */
-    struct curses_symdef *effects;      /* shield, boomerang, digbeam,
-                                           flashbeam, gascloud */
-    struct curses_symdef *swallowsyms;  /* no color info: use the color of the
-                                           swallower */
+    struct curses_symdef *zapsyms;     /* default zap symbols; no color info */
+    struct curses_symdef *zaptypes;    /* zap beam types + colors. no symbols */
+    struct curses_symdef *effects;     /* shield, boomerang, digbeam,
+                                          flashbeam, gascloud */
+    struct curses_symdef *swallowsyms; /* no color info: use the color of the
+                                          swallower */
     int num_bgelements;
     int num_traps;
     int num_objects;
@@ -383,8 +386,10 @@ extern void switch_graphics(enum nh_text_mode mode);
 extern void print_tile(WINDOW *win, struct curses_symdef *api_name,
                        struct curses_symdef *api_type, int offset);
 extern void print_background_tile(WINDOW *win, struct nh_dbuf_entry *dbe);
-extern void print_low_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe);
-extern void print_high_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe);
+extern void print_low_priority_brandings(WINDOW *win,
+                                         struct nh_dbuf_entry *dbe);
+extern void print_high_priority_brandings(WINDOW *win,
+                                          struct nh_dbuf_entry *dbe);
 extern void print_sym(WINDOW *win, struct curses_symdef *sym, int extra_attrs,
                       int bg_color);
 extern void curses_notify_level_changed(int dmode);

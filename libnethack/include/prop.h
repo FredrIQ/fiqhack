@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-12 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -233,13 +233,13 @@ enum tracked_location {
 /* Flags for intrinsics */
 
 /* Timed properties */
-# define TIMEOUT      0x00ffffffU       /* Up to 16 million turns */
+# define TIMEOUT      0x00ffffffU      /* Up to 16 million turns */
 /* Permanent properties */
-# define FROMEXPER    0x01000000U       /* Gain/lose with experience, for role */
-# define FROMRACE     0x02000000U       /* Gain/lose with experience, for race */
-# define FROMOUTSIDE  0x04000000U       /* By corpses, prayer, thrones, etc. */
+# define FROMEXPER    0x01000000U      /* Gain/lose with experience, for role */
+# define FROMRACE     0x02000000U      /* Gain/lose with experience, for race */
+# define FROMOUTSIDE  0x04000000U      /* By corpses, prayer, thrones, etc. */
 # define INTRINSIC    (FROMOUTSIDE|FROMRACE|FROMEXPER)
 /* Control flags */
-# define I_SPECIAL    0x10000000U       /* Property is controllable */
+# define I_SPECIAL    0x10000000U      /* Property is controllable */
 
 #endif /* PROP_H */

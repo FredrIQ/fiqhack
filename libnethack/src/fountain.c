@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright Scott R. Turner, srt@ucla, 10/27/86                  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -55,7 +55,8 @@ dowaterdemon(void)
             else
                 pline("You feel the presence of evil.");
 
-            /* Give those on low levels a (slightly) better chance of survival */
+            /* Give those on low levels a (slightly) better chance of survival
+               */
             if (rnd(100) > (80 + level_difficulty(&u.uz))) {
                 pline("Grateful for %s release, %s grants you a wish!",
                       mhis(mtmp), mhe(mtmp));
@@ -365,8 +366,8 @@ dipfountain(struct obj *obj)
 
         if (u.ualign.type != A_LAWFUL) {
             /* Ha! Trying to cheat her. */
-            pline
-                ("A freezing mist rises from the water and envelopes the sword.");
+            pline("A freezing mist rises from the water and envelopes the "
+                  "sword.");
             pline("The fountain disappears!");
             curse(obj);
             if (obj->spe > -6 && !rn2(3))
@@ -376,8 +377,8 @@ dipfountain(struct obj *obj)
         } else {
             /* The lady of the lake acts! - Eric Backus */
             /* Be *REAL* nice */
-            pline
-                ("From the murky depths, a hand reaches up to bless the sword.");
+            pline("From the murky depths, a hand reaches up to bless the "
+                  "sword.");
             pline("As the hand retreats, the fountain disappears!");
             obj = oname(obj, artiname(ART_EXCALIBUR));
             discover_artifact(ART_EXCALIBUR);

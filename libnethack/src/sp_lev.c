@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-16 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /*      Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -49,7 +49,8 @@ static boolean create_subroom(struct level *lev, struct mkroom *, xchar, xchar,
 #define XLIM    4
 #define YLIM    3
 
-#define Fread(ptr, size, count, stream)  if (dlb_fread(ptr,size,count,stream) != count) goto err_out;
+#define Fread(ptr, size, count, stream) \
+    if (dlb_fread(ptr,size,count,stream) != count) goto err_out;
 #define Fgetc                            (schar)dlb_fgetc
 #define New(type)                        malloc(sizeof(type))
 #define NewTab(type, size)               malloc(sizeof(type *) * (unsigned)size)
@@ -832,9 +833,8 @@ create_monster(struct level *lev, monster * m, struct mkroom *croom)
 
                 switch (m->appear) {
                 case M_AP_NOTHING:
-                    impossible
-                        ("create_monster: mon has an appearance, \"%s\", but no type",
-                         m->appear_as.str);
+                    impossible("create_monster: mon has an appearance, \"%s\", "
+                               "but no type", m->appear_as.str);
                     break;
 
                 case M_AP_FURNITURE:
@@ -868,9 +868,8 @@ create_monster(struct level *lev, monster * m, struct mkroom *croom)
                     /* note: mimics don't appear as monsters! */
                     /* (but chameleons can :-) */
                 default:
-                    impossible
-                        ("create_monster: unimplemented mon appear type [%d,\"%s\"]",
-                         m->appear, m->appear_as.str);
+                    impossible("create_monster: unimplemented mon appear type "
+                               "[%d,\"%s\"]", m->appear, m->appear_as.str);
                     break;
                 }
                 if (does_block(lev, x, y))
@@ -967,7 +966,8 @@ create_object(struct level *lev, object * o, struct mkroom *croom)
         else if (o->corpsenm != NON_PM)
             otmp->corpsenm = o->corpsenm;
 
-        /* assume we wouldn't be given an egg corpsenm unless it was hatchable */
+        /* assume we wouldn't be given an egg corpsenm unless it was hatchable
+           */
         if (otmp->otyp == EGG && otmp->corpsenm != NON_PM) {
             if (dead_species(otmp->otyp, TRUE))
                 kill_egg(otmp); /* make sure nothing hatches */
@@ -2179,7 +2179,8 @@ load_maze(struct level *lev, dlb * fd)
                 for (x = xstart; x < xstart + xsize; x++) {
                     lev->locations[x][y].typ = Fgetc(fd);
                     lev->locations[x][y].lit = FALSE;
-                    /* clear out lev->locations: load_common_data may set them */
+                    /* clear out lev->locations: load_common_data may set them
+                       */
                     lev->locations[x][y].flags = 0;
                     lev->locations[x][y].horizontal = 0;
                     lev->locations[x][y].roomno = 0;

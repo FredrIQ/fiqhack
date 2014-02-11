@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -457,9 +457,9 @@ nh_play_game(int fd)
             !!(cmdlist[cmdidx].flags & CMD_NOTIME);
 
         /* We can't record a command if we didn't prompt for one; it creates
-           desyncs when replaying. (If we /did/ prompt for one, it's OK to record
-           a different one, which is why the record of "interrupt" above is OK;
-           it's not OK to record two, but log_record_command won't record
+           desyncs when replaying. (If we /did/ prompt for one, it's OK to
+           record a different one, which is why the record of "interrupt" above
+           is OK; it's not OK to record two, but log_record_command won't record
            zero-time commands.) */
         if (!u_helpless(hm_all))
             log_record_command(cmd, &arg);
@@ -470,7 +470,8 @@ nh_play_game(int fd)
 
         if (cmdlist[cmdidx].flags & CMD_NOTIME)
             log_revert_command(); /* make sure it didn't change the gamestate */
-        else if ((!flags.incomplete || flags.interrupted) && !u_helpless(hm_all))
+        else if ((!flags.incomplete || flags.interrupted) &&
+                 !u_helpless(hm_all))
             neutral_turnstate_tasks();
     }
 
@@ -633,7 +634,8 @@ you_moved(void)
                     } else {
                         pline("You pass out from exertion!");
                         exercise(A_CON, FALSE);
-                        helpless(10, hr_fainted, "passed out from exertion", NULL);
+                        helpless(10, hr_fainted, "passed out from exertion",
+                                 NULL);
                     }
                 }
             }
@@ -711,7 +713,8 @@ you_moved(void)
             else if (u.uburied)
                 under_ground(0);
 
-            if (!u.umoved && (Is_waterlevel(&u.uz) || !(Flying || Levitation))) {
+            if (!u.umoved && (Is_waterlevel(&u.uz) ||
+                              !(Flying || Levitation))) {
                 if (Underwater)
                     drown();
                 else if (is_lava(level, u.ux, u.uy))
@@ -899,7 +902,8 @@ cancel_helplessness(enum helpless_mask mask, const char *msg)
         if (mask & (1 << i)) {
             if (!u_helpless(1 << i)) {
                 if (turnstate.helpless_timers[i])
-                    impossible("Helpless with time but no cause at index %d", i);
+                    impossible("Helpless with time but no cause at index %d",
+                               i);
                 /* We update mask to remove this reason, so that later
                  * processing won't treat this reason as having been canceled.
                  */
@@ -1123,7 +1127,8 @@ newgame(void)
     level->locations[u.ux][u.uy].mem_stepped = 1;
 
     historic_event(FALSE,
-                   "entered the Dungeons of Doom to retrieve the Amulet of Yendor!");
+                   "entered the Dungeons of Doom to retrieve the Amulet of "
+                   "Yendor!");
 
     /* prepare for the first move */
     set_wear();

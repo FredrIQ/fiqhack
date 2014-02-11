@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -574,7 +574,8 @@ spec_applies(const struct artifact *weap, struct monst *mtmp)
     return 0;
 }
 
-/* return the M2 flags of monster that an artifact's special attacks apply against */
+/* return the M2 flags of monster that an artifact's special attacks apply
+ * against */
 static long
 spec_m2(struct obj *otmp)
 {
@@ -605,7 +606,7 @@ spec_dbon(struct obj *otmp, struct monst *mon, int tmp)
 {
     const struct artifact *weap = get_artifact(otmp);
 
-    if (!weap || (weap->attk.adtyp == AD_PHYS &&        /* check for `NO_ATTK' */
+    if (!weap || (weap->attk.adtyp == AD_PHYS &&       /* check for `NO_ATTK' */
                   weap->attk.damn == 0 && weap->attk.damd == 0))
         spec_dbon_applies = FALSE;
     else
