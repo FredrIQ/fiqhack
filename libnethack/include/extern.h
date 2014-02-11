@@ -1302,6 +1302,7 @@ extern const char *bottlename(void);
 extern int dosacrifice(const struct nh_cmd_arg *);
 extern boolean can_pray(boolean);
 extern int dopray(const struct nh_cmd_arg *);
+extern void prayer_done(void);
 extern const char *u_gname(void);
 extern int doturn(const struct nh_cmd_arg *);
 extern const char *a_gname(void);

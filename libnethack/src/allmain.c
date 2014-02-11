@@ -903,7 +903,7 @@ cancel_helplessness(enum helpless_mask mask, const char *msg)
 
     action_interrupted();
 
-    for (i = hr_first; i < hr_last; ++i)
+    for (i = hr_first; i <= hr_last; ++i)
         if (mask & (1 << i)) {
             if (!u_helpless(1 << i)) {
                 if (turnstate.helpless_timers[i])
@@ -941,6 +941,14 @@ cancel_helplessness(enum helpless_mask mask, const char *msg)
 
     if ((mask & hm_fainted) && u.uhs == FAINTED)
         u.uhs = FAINTING;
+
+    if (mask & hm_praying) {
+        prayer_done();
+        if (u.uinvulnerable) {
+            impossible("prayer_done did not clear invulnerability");
+            u.uinvulnerable = FALSE;
+        }
+    }
 }
 
 
@@ -950,7 +958,7 @@ decrement_helplessness()
     int i;
     enum helpless_mask mask = hm_none;
 
-    for (i = hr_first; i < hr_last; ++i)
+    for (i = hr_first; i <= hr_last; ++i)
         if (turnstate.helpless_timers[i])
             if (!--turnstate.helpless_timers[i])
                 mask |= 1 << i;
@@ -969,7 +977,7 @@ u_helpless(enum helpless_mask mask)
      * for this reason. We may not have an endmsg, and the timer may already
      * have expired but the helplessness not yet been canceled, so we can't use
      * these as indications. */
-    for (i = hr_first; i < hr_last; ++i)
+    for (i = hr_first; i <= hr_last; ++i)
         if ((mask & (1 << i)) && *turnstate.helpless_causes[i])
             return TRUE;
 

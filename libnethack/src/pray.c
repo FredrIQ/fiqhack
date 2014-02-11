@@ -7,9 +7,8 @@
 #include "epri.h"
 #include "hungerstatus.h"
 
-static int prayer_done(void);
 static struct obj *worst_cursed_item(void);
-static int in_trouble(void);
+static enum pray_trouble in_trouble(void);
 static void fix_worst_trouble(int);
 static void angrygods(aligntyp);
 static void at_your_feet(const char *);
@@ -53,48 +52,10 @@ static const char *const godvoices[] = {
     "booms",
 };
 
-/* values calculated when prayer starts, and used when completed */
-static aligntyp p_aligntyp;
-static int p_trouble;
-static int p_type;      /* (-1)-3: (-1)=really naughty, 3=really good */
-
 #define PIOUS 20
 #define DEVOUT 14
 #define FERVENT 9
 #define STRIDENT 4
-
-/*
- * The actual trouble priority is determined by the order of the
- * checks performed in in_trouble() rather than by these numeric
- * values, so keep that code and these values synchronized in
- * order to have the values be meaningful.
- */
-
-#define TROUBLE_STONED                  13
-#define TROUBLE_SLIMED                  12
-#define TROUBLE_STRANGLED               11
-#define TROUBLE_LAVA                    10
-#define TROUBLE_SICK                     9
-#define TROUBLE_STARVING                 8
-#define TROUBLE_HIT                      7
-#define TROUBLE_LYCANTHROPE              6
-#define TROUBLE_COLLAPSING               5
-#define TROUBLE_STUCK_IN_WALL            4
-#define TROUBLE_CURSED_LEVITATION        3
-#define TROUBLE_UNUSEABLE_HANDS          2
-#define TROUBLE_CURSED_BLINDFOLD         1
-
-#define TROUBLE_PUNISHED               (-1)
-#define TROUBLE_FUMBLING               (-2)
-#define TROUBLE_CURSED_ITEMS           (-3)
-#define TROUBLE_SADDLE                 (-4)
-#define TROUBLE_BLIND                  (-5)
-#define TROUBLE_POISONED               (-6)
-#define TROUBLE_WOUNDED_LEGS           (-7)
-#define TROUBLE_HUNGRY                 (-8)
-#define TROUBLE_STUNNED                (-9)
-#define TROUBLE_CONFUSED              (-10)
-#define TROUBLE_HALLUCINATION         (-11)
 
 /* We could force rehumanize of polyselfed people, but we can't tell
    unintentional shape changes from the other kind. Oh well.
@@ -119,7 +80,7 @@ but that's really hard.
 #define a_align(x,y)    ((aligntyp)Amask2align( \
                             level->locations[x][y].altarmask & AM_MASK))
 
-static int
+static enum pray_trouble
 in_trouble(void)
 {
     struct obj *otmp;
@@ -129,24 +90,24 @@ in_trouble(void)
      * major troubles
      */
     if (Stoned)
-        return TROUBLE_STONED;
+        return ptr_stoned;
     if (Slimed)
-        return TROUBLE_SLIMED;
+        return ptr_slimed;
     if (Strangled)
-        return TROUBLE_STRANGLED;
+        return ptr_strangled;
     if (u.utrap && u.utraptype == TT_LAVA)
-        return TROUBLE_LAVA;
+        return ptr_lava;
     if (Sick)
-        return TROUBLE_SICK;
+        return ptr_sick;
     if (u.uhs >= WEAK)
-        return TROUBLE_STARVING;
+        return ptr_starving;
     if (Upolyd ? (u.mh <= 5 || u.mh * 7 <= u.mhmax)
         : (u.uhp <= 5 || u.uhp * 7 <= u.uhpmax))
-        return TROUBLE_HIT;
+        return ptr_hit;
     if (u.ulycn >= LOW_PM)
-        return TROUBLE_LYCANTHROPE;
+        return ptr_lycanthrope;
     if (near_capacity() >= EXT_ENCUMBER && AMAX(A_STR) - ABASE(A_STR) > 3)
-        return TROUBLE_COLLAPSING;
+        return ptr_collapsing;
 
     for (i = -1; i <= 1; i++)
         for (j = -1; j <= 1; j++) {
@@ -158,59 +119,59 @@ in_trouble(void)
                 count++;
         }
     if (count == 8 && !Passes_walls)
-        return TROUBLE_STUCK_IN_WALL;
+        return ptr_stuck;
 
     if (Cursed_obj(uarmf, LEVITATION_BOOTS) || stuck_ring(uleft, RIN_LEVITATION)
         || stuck_ring(uright, RIN_LEVITATION))
-        return TROUBLE_CURSED_LEVITATION;
+        return ptr_levitation;
     if (nohands(youmonst.data) || !freehand()) {
         /* for bag/box access [cf use_container()]... make sure it's a case
            that we know how to handle; otherwise "fix all troubles" would get
            stuck in a loop */
         if (welded(uwep))
-            return TROUBLE_UNUSEABLE_HANDS;
+            return ptr_hands;
         if (Upolyd && nohands(youmonst.data) &&
             (!Unchanging || ((otmp = unchanger()) != 0 && otmp->cursed)))
-            return TROUBLE_UNUSEABLE_HANDS;
+            return ptr_hands;
     }
     if (Blindfolded && ublindf->cursed)
-        return TROUBLE_CURSED_BLINDFOLD;
+        return ptr_blindfold;
 
     /* 
      * minor troubles
      */
     if (Punished)
-        return TROUBLE_PUNISHED;
+        return ptr_punished;
     if (Cursed_obj(uarmg, GAUNTLETS_OF_FUMBLING) ||
         Cursed_obj(uarmf, FUMBLE_BOOTS))
-        return TROUBLE_FUMBLING;
+        return ptr_fumbling;
     if (worst_cursed_item())
-        return TROUBLE_CURSED_ITEMS;
+        return ptr_cursed;
     if (u.usteed) {     /* can't voluntarily dismount from a cursed saddle */
         otmp = which_armor(u.usteed, os_saddle);
         if (Cursed_obj(otmp, SADDLE))
-            return TROUBLE_SADDLE;
+            return ptr_saddle;
     }
 
     if (Blinded > 1 && haseyes(youmonst.data))
-        return TROUBLE_BLIND;
+        return ptr_blind;
     for (i = 0; i < A_MAX; i++)
         if (ABASE(i) < AMAX(i))
-            return TROUBLE_POISONED;
+            return ptr_poisoned;
     if (Wounded_legs && !u.usteed)
-        return TROUBLE_WOUNDED_LEGS;
+        return ptr_wounded_legs;
     if (u.uhs >= HUNGRY)
-        return TROUBLE_HUNGRY;
+        return ptr_hungry;
     if (HStun)
-        return TROUBLE_STUNNED;
+        return ptr_stunned;
     if (HConfusion)
-        return TROUBLE_CONFUSED;
+        return ptr_confused;
     if (Hallucination)
-        return TROUBLE_HALLUCINATION;
-    return 0;
+        return ptr_hallucinating;
+    return ptr_invalid;
 }
 
-/* select an item for TROUBLE_CURSED_ITEMS */
+/* select an item for ptr_cursed */
 static struct obj *
 worst_cursed_item(void)
 {
@@ -279,17 +240,17 @@ fix_worst_trouble(int trouble)
         "right ring softly glows";
 
     switch (trouble) {
-    case TROUBLE_STONED:
+    case ptr_stoned:
         pline("You feel more limber.");
         Stoned = 0;
         delayed_killer = 0;
         break;
-    case TROUBLE_SLIMED:
+    case ptr_slimed:
         pline("The slime disappears.");
         Slimed = 0;
         delayed_killer = 0;
         break;
-    case TROUBLE_STRANGLED:
+    case ptr_strangled:
         if (uamul && uamul->otyp == AMULET_OF_STRANGULATION) {
             pline("Your amulet vanishes!");
             useup(uamul);
@@ -297,24 +258,24 @@ fix_worst_trouble(int trouble)
         pline("You can breathe again.");
         Strangled = 0;
         break;
-    case TROUBLE_LAVA:
+    case ptr_lava:
         pline("You are back on solid ground.");
         /* teleport should always succeed, but if not, just untrap them. */
         if (!safe_teleds(FALSE))
             u.utrap = 0;
         break;
-    case TROUBLE_STARVING:
+    case ptr_starving:
         losestr(-1);
         /* fall into... */
-    case TROUBLE_HUNGRY:
+    case ptr_hungry:
         pline("Your %s feels content.", body_part(STOMACH));
         init_uhunger();
         break;
-    case TROUBLE_SICK:
+    case ptr_sick:
         pline("You feel better.");
         make_sick(0L, NULL, FALSE, SICK_ALL);
         break;
-    case TROUBLE_HIT:
+    case ptr_hit:
         /* "fix all troubles" will keep trying if hero has 5 or less hit
            points, so make sure they're always boosted to be more than that */
         pline("You feel much better.");
@@ -330,15 +291,15 @@ fix_worst_trouble(int trouble)
             u.uhpmax = 5 + 1;
         u.uhp = u.uhpmax;
         break;
-    case TROUBLE_COLLAPSING:
+    case ptr_collapsing:
         ABASE(A_STR) = AMAX(A_STR);
         break;
-    case TROUBLE_STUCK_IN_WALL:
+    case ptr_stuck:
         pline("Your surroundings change.");
         /* no control, but works on no-teleport levels */
         safe_teleds(FALSE);
         break;
-    case TROUBLE_CURSED_LEVITATION:
+    case ptr_levitation:
         if (Cursed_obj(uarmf, LEVITATION_BOOTS)) {
             otmp = uarmf;
         } else if ((otmp = stuck_ring(uleft, RIN_LEVITATION)) != 0) {
@@ -349,7 +310,7 @@ fix_worst_trouble(int trouble)
                 what = rightglow;
         }
         goto decurse;
-    case TROUBLE_UNUSEABLE_HANDS:
+    case ptr_hands:
         if (welded(uwep)) {
             otmp = uwep;
             goto decurse;
@@ -366,26 +327,26 @@ fix_worst_trouble(int trouble)
         if (nohands(youmonst.data) || !freehand())
             impossible("fix_worst_trouble: couldn't cure hands.");
         break;
-    case TROUBLE_CURSED_BLINDFOLD:
+    case ptr_blindfold:
         otmp = ublindf;
         goto decurse;
-    case TROUBLE_LYCANTHROPE:
+    case ptr_lycanthrope:
         you_unwere(TRUE);
         break;
         /* 
          */
-    case TROUBLE_PUNISHED:
+    case ptr_punished:
         pline("Your chain disappears.");
         unpunish();
         break;
-    case TROUBLE_FUMBLING:
+    case ptr_fumbling:
         if (Cursed_obj(uarmg, GAUNTLETS_OF_FUMBLING))
             otmp = uarmg;
         else if (Cursed_obj(uarmf, FUMBLE_BOOTS))
             otmp = uarmf;
         goto decurse;
          /*NOTREACHED*/ break;
-    case TROUBLE_CURSED_ITEMS:
+    case ptr_cursed:
         otmp = worst_cursed_item();
         if (otmp == uright)
             what = rightglow;
@@ -405,7 +366,7 @@ fix_worst_trouble(int trouble)
         }
         update_inventory();
         break;
-    case TROUBLE_POISONED:
+    case ptr_poisoned:
         if (Hallucination)
             pline("There's a tiger in your tank.");
         else
@@ -415,7 +376,7 @@ fix_worst_trouble(int trouble)
                 ABASE(i) = AMAX(i);
         encumber_msg();
         break;
-    case TROUBLE_BLIND:
+    case ptr_blind:
         {
             int num_eyes = eyecount(youmonst.data);
             const char *eye = body_part(EYE);
@@ -427,20 +388,20 @@ fix_worst_trouble(int trouble)
             make_blinded(0L, FALSE);
             break;
         }
-    case TROUBLE_WOUNDED_LEGS:
+    case ptr_wounded_legs:
         heal_legs();
         break;
-    case TROUBLE_STUNNED:
+    case ptr_stunned:
         make_stunned(0L, TRUE);
         break;
-    case TROUBLE_CONFUSED:
+    case ptr_confused:
         make_confused(0L, TRUE);
         break;
-    case TROUBLE_HALLUCINATION:
+    case ptr_hallucinating:
         pline("Looks like you are back in Kansas.");
         make_hallucinated(0L, FALSE);
         break;
-    case TROUBLE_SADDLE:
+    case ptr_saddle:
         otmp = which_armor(u.usteed, os_saddle);
         uncurse(otmp);
         if (!Blind) {
@@ -448,6 +409,9 @@ fix_worst_trouble(int trouble)
                   aobjnam(otmp, "softly glow"), hcolor("amber"));
             otmp->bknown = TRUE;
         }
+        break;
+    default:
+        impossible("Invalid trouble in fix_worst_trouble");
         break;
     }
 }
@@ -790,7 +754,7 @@ gcrownu(void)
 static void
 pleased(aligntyp g_align)
 {
-    /* don't use p_trouble, worst trouble may get fixed while praying */
+    /* don't use saved trouble, worst trouble may get fixed while praying */
     int trouble = in_trouble(); /* what's your worst difficulty? */
     int pat_on_head = 0, kick_on_butt;
 
@@ -802,7 +766,7 @@ pleased(aligntyp g_align)
           "full" : "satisfied");
 
     /* not your deity */
-    if (on_altar() && p_aligntyp != u.ualign.type) {
+    if (on_altar() && turnstate.pray.align != u.ualign.type) {
         adjalign(-1);
         return;
     } else if (u.ualign.record < 2 && trouble <= 0)
@@ -819,9 +783,9 @@ pleased(aligntyp g_align)
        If your luck is at least 0, then you are guaranteed rescued from your
        worst major problem. */
 
-    if (!trouble && u.ualign.record >= DEVOUT) {
+    if (trouble == ptr_invalid && u.ualign.record >= DEVOUT) {
         /* if hero was in trouble, but got better, no special favor */
-        if (p_trouble == 0)
+        if (turnstate.pray.trouble == ptr_invalid)
             pat_on_head = 1;
     } else {
         int action = rn1(Luck + (on_altar()? 3 + on_shrine() : 2), 1);
@@ -1599,48 +1563,51 @@ can_pray(boolean praying)
 {
     int alignment;
 
-    p_aligntyp = on_altar()? a_align(u.ux, u.uy) : u.ualign.type;
-    p_trouble = in_trouble();
+    aligntyp align = on_altar()? a_align(u.ux, u.uy) : u.ualign.type;
+    turnstate.pray.align = align;
+    enum pray_trouble trouble = in_trouble();
+    turnstate.pray.trouble = trouble;
 
-    if (is_demon(youmonst.data) && (p_aligntyp != A_CHAOTIC)) {
+    if (is_demon(youmonst.data) && (align != A_CHAOTIC)) {
         if (praying)
             pline("The very idea of praying to a %s god is repugnant to you.",
-                  p_aligntyp ? "lawful" : "neutral");
+                  align ? "lawful" : "neutral");
         return FALSE;
     }
 
     if (praying)
-        pline("You begin praying to %s.", align_gname(p_aligntyp));
+        pline("You begin praying to %s.", align_gname(align));
 
-    if (u.ualign.type && u.ualign.type == -p_aligntyp)
+    if (u.ualign.type && u.ualign.type == -align)
         alignment = -u.ualign.record;   /* Opposite alignment altar */
-    else if (u.ualign.type != p_aligntyp)
+    else if (u.ualign.type != align)
         alignment = u.ualign.record / 2;        /* Different alignment altar */
     else
         alignment = u.ualign.record;
 
-    if ((p_trouble > 0) ? (u.ublesscnt > 200) : /* big trouble */
-        (p_trouble < 0) ? (u.ublesscnt > 100) : /* minor difficulties */
-        (u.ublesscnt > 0))      /* not in trouble */
-        p_type = 0;     /* too soon... */
-    else if ((int)Luck < 0 || u.ugangr || alignment < 0)
-        p_type = 1;     /* too naughty... */
+    if ((trouble >= ptr_first_major && trouble <= ptr_last_major)
+          ? (u.ublesscnt > 200) : /* big trouble */
+        (trouble >= ptr_first_minor && trouble <= ptr_last_minor)
+          ? (u.ublesscnt > 100) : /* minor difficulties */
+        (u.ublesscnt > 0)) {     /* not in trouble */
+        turnstate.pray.type = pty_too_soon;     /* too soon... */
+    } else if ((int)Luck < 0 || u.ugangr || alignment < 0)
+        turnstate.pray.type = pty_anger;     /* too naughty... */
     else {      /* alignment >= 0 */
-
-        if (on_altar() && u.ualign.type != p_aligntyp)
-            p_type = 2;
+        if (on_altar() && u.ualign.type != align)
+            turnstate.pray.type = pty_conversion;
         else
-            p_type = 3;
+            turnstate.pray.type = pty_favour;
     }
 
     if (is_undead(youmonst.data) && !Inhell &&
-        (p_aligntyp == A_LAWFUL || (p_aligntyp == A_NEUTRAL && !rn2(10))))
-        p_type = -1;
+        (align == A_LAWFUL || (align == A_NEUTRAL && !rn2(10))))
+        turnstate.pray.type = pty_smite_undead;
     /* Note: when !praying, the random factor for neutrals makes the return
        value a non-deterministic approximation for enlightenment. This case
        should be uncommon enough to live with... */
 
-    return !praying ? (boolean) (p_type == 3 && !Inhell) : TRUE;
+    return !praying ? turnstate.pray.type == pty_favour && !Inhell : TRUE;
 }
 
 int
@@ -1655,11 +1622,11 @@ dopray(const struct nh_cmd_arg *arg)
 
     u.uconduct.gnostic++;
 
-    /* set up p_type and p_alignment */
+    /* set up turnstate alignment and trouble */
     if (!can_pray(TRUE))
         return 0;
 
-    if (wizard && p_type >= 0) {
+    if (wizard && turnstate.pray.type != pty_smite_undead) {
         if (yn("Force the gods to be pleased?") == 'y') {
             u.ublesscnt = 0;
             if (u.uluck < 0)
@@ -1667,31 +1634,30 @@ dopray(const struct nh_cmd_arg *arg)
             if (u.ualign.record <= 0)
                 u.ualign.record = 1;
             u.ugangr = 0;
-            if (p_type < 2)
-                p_type = 3;
+            turnstate.pray.type = pty_favour;
         }
     }
 
-    pline("TODO: Prayer is currently unimplemented.");
-    return 0;
-
-    if (p_type == 3 && !Inhell) {
+    if (turnstate.pray.type == pty_favour && !Inhell) {
         /* if you've been true to your god you can't die while you pray */
         if (!Blind)
             pline("You are surrounded by a shimmering light.");
         u.uinvulnerable = TRUE;
     }
 
+    helpless(3, hr_praying, "praying", NULL);
+
     return 1;
 }
 
-static int
+void
 prayer_done(void)
 {
-    aligntyp alignment = p_aligntyp;
+    aligntyp alignment = turnstate.pray.align;
 
     u.uinvulnerable = FALSE;
-    if (p_type == -1) {
+
+    if (turnstate.pray.type == pty_smite_undead) {
         godvoice(alignment,
                  alignment ==
                  A_LAWFUL ? "Vile creature, thou durst call upon me?" :
@@ -1701,28 +1667,23 @@ prayer_done(void)
         rehumanize();
         losehp(rnd(20), "residual undead turning effect", KILLED_BY_AN);
         exercise(A_CON, FALSE);
-        return 1;
-    }
-    if (Inhell) {
+    } else if (Inhell) {
         pline("Since you are in Gehennom, %s won't help you.",
               align_gname(alignment));
         /* haltingly aligned is least likely to anger */
         if (u.ualign.record <= 0 || rnl(u.ualign.record))
             angrygods(u.ualign.type);
-        return 0;
-    }
-
-    if (p_type == 0) {
+    } else if (turnstate.pray.type == pty_too_soon) {
         if (on_altar() && u.ualign.type != alignment)
             water_prayer(FALSE);
         u.ublesscnt += rnz(250);
         change_luck(-3);
         gods_upset(u.ualign.type);
-    } else if (p_type == 1) {
+    } else if (turnstate.pray.type == pty_anger) {
         if (on_altar() && u.ualign.type != alignment)
             water_prayer(FALSE);
         angrygods(u.ualign.type);       /* naughty */
-    } else if (p_type == 2) {
+    } else if (turnstate.pray.type == pty_conversion) {
         if (water_prayer(FALSE)) {
             /* attempted water prayer on a non-coaligned altar */
             u.ublesscnt += rnz(250);
@@ -1730,13 +1691,18 @@ prayer_done(void)
             gods_upset(u.ualign.type);
         } else
             pleased(alignment);
-    } else {
+    } else if (turnstate.pray.type == pty_favour) {
         /* coaligned */
         if (on_altar())
             water_prayer(TRUE);
         pleased(alignment);     /* nice */
+    } else {
+        impossible("Invalid prayer type in prayer_done");
     }
-    return 1;
+
+    turnstate.pray.align = A_NONE;
+    turnstate.pray.type = pty_invalid;
+    turnstate.pray.trouble = ptr_invalid;
 }
 
 int

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -74,6 +74,50 @@ enum u_interaction_mode {
      (uim) == uim_standard)
 #define UIM_AGGRESSIVE(uim) ((uim) >= uim_attackonly)
 
+enum pray_type {
+    pty_invalid = 0,
+    pty_too_soon,
+    pty_anger,
+    pty_conversion,
+    pty_favour,
+    pty_smite_undead
+};
+
+enum pray_trouble {
+    ptr_invalid = 0,
+
+    ptr_first_major,
+    ptr_stoned = ptr_first_major,
+    ptr_slimed,
+    ptr_strangled,
+    ptr_lava,
+    ptr_sick,
+    ptr_starving,
+    ptr_hit,
+    ptr_lycanthrope,
+    ptr_collapsing,
+    ptr_stuck,
+    ptr_levitation,
+    ptr_hands,
+    ptr_blindfold,
+    ptr_last_major = ptr_blindfold,
+
+    ptr_first_minor,
+    ptr_punished = ptr_first_minor,
+    ptr_fumbling,
+    ptr_cursed,
+    ptr_saddle,
+    ptr_blind,
+    ptr_poisoned,
+    ptr_wounded_legs,
+    ptr_hungry,
+    ptr_stunned,
+    ptr_confused,
+    ptr_hallucinating,
+    ptr_last_minor = ptr_hallucinating,
+};
+    
+
 /* Information that is reset every time the user has a chance to give commands
    (from default_turnstate).  This is never saved in a binary save; if it needs
    to be reconstructed, the reconstruction is done via replaying user actions
@@ -94,6 +138,12 @@ struct turnstate {
     char helpless_causes[hr_last + 1][BUFSZ];
     /* messages to print when helplessness ends */
     char helpless_endmsgs[hr_last + 1][BUFSZ];
+    /* prayer state */
+    struct prayer_info {
+        aligntyp align;
+        enum pray_trouble trouble;
+        enum pray_type type;
+    } pray;
 };
 
 extern struct turnstate turnstate;
