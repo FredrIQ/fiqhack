@@ -807,7 +807,7 @@ magicbane_hit(struct monst *magr,       /* attacker */
             if (Antimagic) {
                 resisted = TRUE;
             } else {
-                helpless(3, hr_paralyzed, "being scared stiff",
+                helpless(3, hr_afraid, "being scared stiff",
                          "You regain your composure.");
                 if (magr && magr == u.ustuck && sticks(youmonst.data)) {
                     u.ustuck = NULL;

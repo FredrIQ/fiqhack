@@ -992,7 +992,8 @@ find_offensive(struct monst * mtmp, struct musable * m)
                 m->has_offense = MUSE_WAN_DEATH;
             }
             nomore(MUSE_WAN_SLEEP);
-            if (obj->otyp == WAN_SLEEP && obj->spe > 0 && !u_helpless(hm_all)) {
+            if (obj->otyp == WAN_SLEEP && obj->spe > 0 &&
+                !u_helpless(hm_paralyzed | hm_unconscious)) {
                 m->offensive = obj;
                 m->has_offense = MUSE_WAN_SLEEP;
             }
@@ -1035,7 +1036,8 @@ find_offensive(struct monst * mtmp, struct musable * m)
             m->has_offense = MUSE_WAN_STRIKING;
         }
         nomore(MUSE_POT_PARALYSIS);
-        if (obj->otyp == POT_PARALYSIS && !u_helpless(hm_all)) {
+        if (obj->otyp == POT_PARALYSIS &&
+            !u_helpless(hm_paralyzed | hm_unconscious)) {
             m->offensive = obj;
             m->has_offense = MUSE_POT_PARALYSIS;
         }

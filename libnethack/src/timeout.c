@@ -1157,7 +1157,7 @@ do_storms(void)
         /* inside a cloud during a thunder storm is deafening */
         pline("Kaboom!!!  Boom!!  Boom!!");
         if (!u.uinvulnerable)
-            helpless(3, hr_paralyzed, "hiding from a thunderstorm", NULL);
+            helpless(3, hr_afraid, "hiding from a thunderstorm", NULL);
     } else
         You_hear("a rumbling noise.");
 }

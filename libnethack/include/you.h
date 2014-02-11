@@ -107,7 +107,6 @@ struct you {
        flags.occupation is nonzero, this is meaningless (which is OK, because
        it's initialized in both action_incomplete() and helpless()). */
     char uwhybusy[BUFSZ];
-    char umoveagain[BUFSZ];
 
     char usick_cause[PL_PSIZ + 20];     /* sizeof "unicorn horn named "+1 */
 # define SICK_VOMITABLE 0x01

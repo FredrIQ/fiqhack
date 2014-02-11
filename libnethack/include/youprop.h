@@ -354,6 +354,7 @@ enum helpless_reason {
     hr_asleep = hr_first,
     hr_fainted,
     hr_paralyzed,
+    hr_afraid,
     hr_moving,
     hr_mimicking,
     hr_busy,
@@ -364,19 +365,20 @@ enum helpless_reason {
 
 /* Masks for clearing helplessness */
 /* This must match helpless_reason exactly */
-#define HM(reason) hm_##reason = 1 << (hr_##reason - 1)
+#define HM(reason) hm_##reason = 1 << hr_##reason
 enum helpless_mask {
     hm_none = 0,
     HM(asleep),
     HM(fainted),
     hm_unconscious = hm_asleep | hm_fainted,
     HM(paralyzed),
+    HM(afraid),
     HM(moving),
     HM(mimicking),
     HM(busy),
     HM(engraving),
     HM(praying),
-    hm_all = 0x7f
+    hm_all = (1 << (hr_last + 1)) - 1,
 };
 
 #endif /* YOUPROP_H */

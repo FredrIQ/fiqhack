@@ -840,18 +840,12 @@ helpless(int turns, enum helpless_reason reason, const char *cause,
             turns = -turns;
     }
 
-    if (turns < turnstate.helpless_timers[reason])
+    if (turns <= turnstate.helpless_timers[reason])
         return;
 
     action_interrupted();
 
     turnstate.helpless_timers[reason] = turns;
-
-    if (reason != hr_praying)
-        cancel_helplessness(hm_praying, "");
-    if (reason == hr_asleep || reason == hr_fainted || reason == hr_paralyzed)
-        cancel_helplessness(hm_busy | hm_engraving | hm_praying | hm_mimicking,
-                            "");
 
     if (reason == hr_asleep || reason == hr_fainted) {
         turnstate.vision_full_recalc = 1;
@@ -876,6 +870,17 @@ helpless(int turns, enum helpless_reason reason, const char *cause,
         default:
             strcpy(turnstate.helpless_endmsgs[reason], "");
         }
+
+    /* This should come last in case we end up cancelling this helplessness as a
+     * result of cancelling the old one (e.g. if, hypothetically, a prayer
+     * completes and your god intervenes to unparalyze you)
+     */
+    enum helpless_mask mask = 0;
+    if (reason != hr_praying)
+        mask |= hm_praying;
+    if (reason == hr_asleep || reason == hr_fainted || reason == hr_paralyzed)
+        mask |= hm_busy | hm_engraving | hm_praying | hm_mimicking | hm_afraid;
+    cancel_helplessness(mask, "");
 }
 
 /* Cancel all helplessness that matches the given mask.

@@ -606,7 +606,7 @@ domonnoise(struct monst *mtmp)
     case MS_BONES:
         pline("%s rattles noisily.", Monnam(mtmp));
         pline("You freeze for a moment.");
-        helpless(2, hr_paralyzed, "scared by rattling", NULL);
+        helpless(2, hr_afraid, "scared by rattling", NULL);
         break;
     case MS_LAUGH:
         {

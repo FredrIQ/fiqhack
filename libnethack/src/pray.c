@@ -1259,7 +1259,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                     if (sgn(u.ualign.type) == sgn(dmon->data->maligntyp))
                         dmon->mpeaceful = TRUE;
                     pline("You are terrified, and unable to move.");
-                    helpless(3, hr_paralyzed, "being terrified of a demon",
+                    helpless(3, hr_afraid, "being terrified of a demon",
                              NULL);
                 } else
                     pline("The %s.", demonless_msg);

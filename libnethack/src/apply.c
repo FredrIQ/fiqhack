@@ -821,7 +821,7 @@ use_bell(struct obj **optr)
                     break;
                 case 2:
                     pline("You freeze for a moment in surprise.");
-                    helpless(rnd(2), hr_paralyzed, "surprised by a nymph",
+                    helpless(rnd(2), hr_afraid, "surprised by a nymph",
                              NULL);
                     break;
                 }

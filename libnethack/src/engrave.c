@@ -473,6 +473,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
     int len;    /* # of nonspace chars of new engraving text */
     int maxelen;        /* Max allowable length of engraving text */
     int helpless_time;  /* Temporary for calculating helplessness */
+    const char *helpless_endmsg; /* Temporary for helpless end message */
     struct engr *oep = engr_at(level, u.ux, u.uy);
     struct obj *otmp;
 
@@ -1040,20 +1041,17 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
 
     /* Figure out how long it took to engrave, and if player has engraved too
        much. */
+    helpless_time = len / 10;
+    helpless_endmsg = NULL;
     switch (type) {
     default:
-        if (len / 10)
-            helpless(len / 10, hr_engraving,
-                     "engraving", "You finish your weird engraving.");
+        helpless_endmsg = "You finish your weird engraving.";
         break;
     case DUST:
-        if (len / 10)
-            helpless(len / 10, hr_engraving,
-                     "engraving", "You finish writing in the dust.");
+        helpless_endmsg = "You finish writing in the dust.";
         break;
     case HEADSTONE:
     case ENGRAVE:
-        helpless_time = len / 10;
         if ((otmp->oclass == WEAPON_CLASS) &&
             ((otmp->otyp != ATHAME) || otmp->cursed)) {
             helpless_time = len;
@@ -1080,19 +1078,14 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                 otmp->spe -= 1; /* Prevent infinite engraving */
         } else if ((otmp->oclass == RING_CLASS) || (otmp->oclass == GEM_CLASS))
             helpless_time = len;
-        if (helpless_time)
-            helpless(helpless_time, hr_engraving,
-                     "engraving", "You finish engraving.");
+        helpless_endmsg = "You finish engraving.";
         break;
     case BURN:
-        if (len / 10)
-            helpless(len / 10, hr_engraving, "engraving",
-                     is_ice(level, u.ux, u.uy) ?
-                     "You finish melting your message into the ice." :
-                     "You finish burning your message into the floor.");
+        helpless_endmsg =  is_ice(level, u.ux, u.uy) ?
+            "You finish melting your message into the ice." :
+            "You finish burning your message into the floor.";
         break;
     case MARK:
-        helpless_time = len / 10;
         if ((otmp->oclass == TOOL_CLASS) && (otmp->otyp == MAGIC_MARKER)) {
             maxelen = (otmp->spe) * 2;  /* one charge / 2 letters */
             if (len > maxelen) {
@@ -1104,14 +1097,10 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
             else
                 otmp->spe -= 1; /* Prevent infinite grafitti */
         }
-        if (helpless_time)
-            helpless(helpless_time, hr_engraving, "engraving",
-                     "You finish defacing the dungeon.");
+        helpless_endmsg = "You finish defacing the dungeon.";
         break;
     case ENGR_BLOOD:
-        if (len / 10)
-            helpless(len / 10, hr_engraving, "engraving",
-                     "You finish scrawling.");
+        helpless_endmsg = "You finish scrawling.";
         break;
     }
 
@@ -1122,11 +1111,12 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                 maxelen--;
         if (!maxelen && *sp) {
             *sp = (char)0;
-            if (u_helpless(hm_all))
-                strcpy(u.umoveagain, "You cannot write any more.");
+            helpless_endmsg = "You cannot write any more.";
             pline("You only are able to write \"%s\"", ebuf);
         }
     }
+
+    helpless(helpless_time, hr_engraving, "engraving", helpless_endmsg);
 
     /* Add to existing engraving */
     if (oep)
@@ -1134,7 +1124,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
 
     strncat(buf, ebuf, (BUFSZ - (int)strlen(buf) - 1));
 
-    make_engr_at(level, u.ux, u.uy, buf, (moves + u_helpless(hm_all)), type);
+    make_engr_at(level, u.ux, u.uy, buf, moves + helpless_time, type);
 
     if (strstri(buf, "Elbereth")) {
         u.uconduct.elbereths++;

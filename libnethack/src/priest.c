@@ -416,7 +416,7 @@ intemple(int roomno)
                 set_malign(mtmp);
                 if (flags.verbose)
                     pline("You are frightened to death, and unable to move.");
-                helpless(3, hr_paralyzed, "frightened to death",
+                helpless(3, hr_afraid, "frightened to death",
                          "You regain your composure.");
             }
         }

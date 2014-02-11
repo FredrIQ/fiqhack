@@ -622,7 +622,6 @@ restore_you(struct memfile *mf, struct you *y)
     y->twoweap = mread8(mf);
 
     mread(mf, y->uwhybusy, sizeof (y->uwhybusy));
-    mread(mf, y->umoveagain, sizeof (y->umoveagain));
     mread(mf, y->usick_cause, sizeof (y->usick_cause));
     mread(mf, y->urooms, sizeof (y->urooms));
     mread(mf, y->urooms0, sizeof (y->urooms0));
