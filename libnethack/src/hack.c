@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-12 */
+/* Last modified by Sean Hunt, 2014-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -549,15 +549,6 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
             /* Eat the rock. */
             if (mode == DO_MOVE && still_chewing(x, y))
                 return FALSE;
-        } else if (flags.autodig && ITEM_INTERACTIVE(uim) &&
-                   flags.occupation != occ_move && uwep && is_pick(uwep)) {
-            /* MRKR: Automatic digging when wielding the appropriate tool */
-            if (mode == DO_MOVE) {
-                struct nh_cmd_arg arg;
-                arg_from_delta(dx, dy, dz, &arg);
-                return use_pick_axe(uwep, &arg);
-            }
-            return FALSE;
         } else {
             if (mode == DO_MOVE) {
                 if (Is_stronghold(&u.uz) && is_db_wall(x, y))
@@ -1561,6 +1552,14 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
     if (!test_move(u.ux, u.uy, dx, dy, dz, DO_MOVE, uim, !!Blind,
                    !!Stunned, !!Fumbling, !!Hallucination,
                    !!Passes_walls, !!Ground_based)) {
+        // We can't move there... but maybe we can dig.
+        if (flags.autodig && ITEM_INTERACTIVE(uim) &&
+            flags.occupation != occ_move && uwep && is_pick(uwep)) {
+            /* MRKR: Automatic digging when wielding the appropriate tool */
+            struct nh_cmd_arg arg;
+            arg_from_delta(dx, dy, dz, &arg);
+            return use_pick_axe(uwep, &arg);
+        }
         action_completed();
         return 0;
     }
