@@ -1882,7 +1882,7 @@ stillinwater:
                 ;
             else if (uarmh && is_metallic(uarmh))
                 pline("Its blow glances off your %s.", helmet_name(uarmh));
-            else if (u.uac + 3 <= rnd(20))
+            else if (get_player_ac() + 3 <= rnd(20))
                 pline("You are almost hit by %s!",
                       x_monnam(mtmp, ARTICLE_A, "falling", 0, TRUE));
             else {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -461,7 +461,7 @@ mattacku(struct monst *mtmp)
     }
 
 /* Work out the armor class differential   */
-    tmp = AC_VALUE(u.uac) + 10; /* tmp ~= 0 - 20 */
+    tmp = AC_VALUE(get_player_ac()) + 10; /* tmp ~= 0 - 20 */
     tmp += mtmp->m_lev;
     if (Helpless)
         tmp += 4;
@@ -950,14 +950,15 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                     hitmsg(mtmp, mattk);
                 if (!dmg)
                     break;
-                if (u.mh > 1 && u.mh > ((u.uac > 0) ? dmg : dmg + u.uac) &&
+                if (u.mh > 1 && u.mh > ((get_player_ac() > 0) ?
+                                            dmg : dmg + get_player_ac()) &&
                     objects[otmp->otyp].oc_material == IRON &&
                     (u.umonnum == PM_BLACK_PUDDING ||
                      u.umonnum == PM_BROWN_PUDDING)) {
                     /* This redundancy necessary because you have to take the
                        damage _before_ being cloned. */
-                    if (u.uac < 0)
-                        dmg += u.uac;
+                    if (get_player_ac() < 0)
+                        dmg += get_player_ac();
                     if (dmg < 1)
                         dmg = 1;
                     if (dmg > 1)
@@ -1589,8 +1590,8 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
 /* Negative armor class reduces damage done instead of fully protecting
  * against hits.
  */
-    if (dmg && u.uac < 0) {
-        dmg -= rnd(-u.uac);
+    if (dmg && get_player_ac() < 0) {
+        dmg -= rnd(-get_player_ac());
         if (dmg < 1)
             dmg = 1;
     }
@@ -1724,7 +1725,7 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
             tim_tmp = rnd(tim_tmp) / 2;
         else if (tim_tmp < 0)
             tim_tmp = -(rnd(-tim_tmp) / 2);
-        tim_tmp += -u.uac + 10;
+        tim_tmp += -get_player_ac() + 10;
         u.uswldtim = (unsigned)((tim_tmp < 2) ? 2 : tim_tmp);
         swallowed(1);
         for (otmp2 = invent; otmp2; otmp2 = otmp2->nobj)

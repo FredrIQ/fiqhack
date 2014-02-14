@@ -740,6 +740,17 @@ acurrstr(void)
         return (schar) (str - 100);
 }
 
+// Return the player's effective AC rating.  DO NOT REFERENCE
+// u.uac DIRECTLY.  USE THIS INSTEAD.
+// TODO: Make protection not directly alter u.uac; add its effect here.
+// It'd probably be best if the armor effects of find_ac in do_wear.c were
+// put here too.
+schar
+get_player_ac(void)
+{
+    return u.uac;
+}
+
 /* avoid possible problems with alignment overflow, and provide a centralized
  * location for any future alignment limits
  */
