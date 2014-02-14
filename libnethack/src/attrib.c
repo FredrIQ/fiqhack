@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-17 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -25,65 +25,108 @@ static
     schar ulevel;
     unsigned int *ability;
     const char *gainstr, *losestr;
-} arc_abil[] = { {
-1, &(HStealth), "", ""}, {
-1, &(HFast), "", ""}, {
-10, &(HSearching), "perceptive", ""}, {
-0, 0, 0, 0}}, bar_abil[] = { {
-1, &(HPoison_resistance), "", ""}, {
-7, &(HFast), "quick", "slow"}, {
-15, &(HStealth), "stealthy", ""}, {
-0, 0, 0, 0}}, cav_abil[] = { {
-7, &(HFast), "quick", "slow"}, {
-15, &(HWarning), "sensitive", ""}, {
-0, 0, 0, 0}}, hea_abil[] = { {
-1, &(HPoison_resistance), "", ""}, {
-15, &(HWarning), "sensitive", ""}, {
-0, 0, 0, 0}}, kni_abil[] = { {
-7, &(HFast), "quick", "slow"}, {
-0, 0, 0, 0}}, mon_abil[] = { {
-1, &(HFast), "", ""}, {
-1, &(HSleep_resistance), "", ""}, {
-1, &(HSee_invisible), "", ""}, {
-3, &(HPoison_resistance), "healthy", ""}, {
-5, &(HStealth), "stealthy", ""}, {
-7, &(HWarning), "sensitive", ""}, {
-9, &(HSearching), "perceptive", "unaware"}, {
-11, &(HFire_resistance), "cool", "warmer"}, {
-13, &(HCold_resistance), "warm", "cooler"}, {
-15, &(HShock_resistance), "insulated", "conductive"}, {
-17, &(HTeleport_control), "controlled", "uncontrolled"}, {
-0, 0, 0, 0}}, pri_abil[] = { {
-15, &(HWarning), "sensitive", ""}, {
-20, &(HFire_resistance), "cool", "warmer"}, {
-0, 0, 0, 0}}, ran_abil[] = { {
-1, &(HSearching), "", ""}, {
-7, &(HStealth), "stealthy", ""}, {
-15, &(HSee_invisible), "", ""}, {
-0, 0, 0, 0}}, rog_abil[] = { {
-1, &(HStealth), "", ""}, {
-10, &(HSearching), "perceptive", ""}, {
-0, 0, 0, 0}}, sam_abil[] = { {
-1, &(HFast), "", ""}, {
-15, &(HStealth), "stealthy", ""}, {
-0, 0, 0, 0}}, tou_abil[] = { {
-10, &(HSearching), "perceptive", ""}, {
-20, &(HPoison_resistance), "hardy", ""}, {
-0, 0, 0, 0}}, val_abil[] = { {
-1, &(HCold_resistance), "", ""}, {
-1, &(HStealth), "", ""}, {
-7, &(HFast), "quick", "slow"}, {
-0, 0, 0, 0}}, wiz_abil[] = { {
-15, &(HWarning), "sensitive", ""}, {
-17, &(HTeleport_control), "controlled", "uncontrolled"}, {
-0, 0, 0, 0}},
+};
 
-    /* Intrinsics conferred by race */
-    elf_abil[] = { {
-4, &(HSleep_resistance), "awake", "tired"}, {
-0, 0, 0, 0}}, orc_abil[] = { {
-1, &(HPoison_resistance), "", ""}, {
-0, 0, 0, 0}};
+struct innate arc_abil[] = { 
+    {1, &(HStealth), "", ""},
+    {1, &(HFast), "", ""},
+    {10, &(HSearching), "perceptive", ""},
+    {0, 0, 0, 0}
+};
+
+struct innate bar_abil[] = {
+    {1, &(HPoison_resistance), "", ""},
+    {7, &(HFast), "quick", "slow"},
+    {15, &(HStealth), "stealthy", ""},
+    {0, 0, 0, 0}
+};
+
+struct innate cav_abil[] = {
+    {7, &(HFast), "quick", "slow"},
+    {15, &(HWarning), "sensitive", ""},
+    {0, 0, 0, 0}
+};
+
+struct innate hea_abil[] = {
+    {1, &(HPoison_resistance), "", ""},
+    {15, &(HWarning), "sensitive", ""},
+    {0, 0, 0, 0}
+};
+
+struct innate kni_abil[] = {
+    {7, &(HFast), "quick", "slow"},
+    {0, 0, 0, 0}
+};
+
+struct innate mon_abil[] = {
+    {1, &(HFast), "", ""},
+    {1, &(HSleep_resistance), "", ""},
+    {1, &(HSee_invisible), "", ""},
+    {3, &(HPoison_resistance), "healthy", ""},
+    {5, &(HStealth), "stealthy", ""},
+    {7, &(HWarning), "sensitive", ""},
+    {9, &(HSearching), "perceptive", "unaware"},
+    {11, &(HFire_resistance), "cool", "warmer"},
+    {13, &(HCold_resistance), "warm", "cooler"},
+    {15, &(HShock_resistance), "insulated", "conductive"},
+    {17, &(HTeleport_control), "controlled", "uncontrolled"},
+    {0, 0, 0, 0}
+};
+
+struct innate pri_abil[] = {
+    {15, &(HWarning), "sensitive", ""},
+    {20, &(HFire_resistance), "cool", "warmer"},
+    {0, 0, 0, 0}
+};
+
+struct innate ran_abil[] = {
+    {1, &(HSearching), "", ""},
+    {7, &(HStealth), "stealthy", ""},
+    {15, &(HSee_invisible), "", ""},
+    {0, 0, 0, 0}
+};
+
+struct innate rog_abil[] = {
+    {1, &(HStealth), "", ""},
+    {10, &(HSearching), "perceptive", ""},
+    {0, 0, 0, 0}
+};
+
+struct innate sam_abil[] = {
+    {1, &(HFast), "", ""},
+    {15, &(HStealth), "stealthy", ""},
+    {0, 0, 0, 0}
+};
+
+struct innate tou_abil[] = {
+    {10, &(HSearching), "perceptive", ""},
+    {20, &(HPoison_resistance), "hardy", ""},
+    {0, 0, 0, 0}
+};
+
+struct innate val_abil[] = {
+    {1, &(HCold_resistance), "", ""},
+    {1, &(HStealth), "", ""},
+    {7, &(HFast), "quick", "slow"},
+    {0, 0, 0, 0}
+};
+
+struct innate wiz_abil[] = {
+    {15, &(HWarning), "sensitive", ""},
+    {17, &(HTeleport_control), "controlled", "uncontrolled"},
+    {0, 0, 0, 0}
+};
+
+/* Intrinsics conferred by race */
+struct innate elf_abil[] = {
+    {4, &(HSleep_resistance), "awake", "tired"},
+    {0, 0, 0, 0}
+};
+
+struct innate orc_abil[] = {
+    {1, &(HPoison_resistance), "", ""},
+    {0, 0, 0, 0}
+};
 
 static void exerper(void);
 static void postadjabil(unsigned int *);
