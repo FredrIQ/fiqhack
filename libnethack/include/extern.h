@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-19 */
+/* Last modified by Sean Hunt, 2014-02-17 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -65,6 +65,9 @@ extern enum u_interaction_mode apply_interaction_mode(void);
 extern int doapply(const struct nh_cmd_arg *);
 extern int dorub(const struct nh_cmd_arg *);
 extern int dojump(const struct nh_cmd_arg *);
+extern int get_jump_coords(const struct nh_cmd_arg *arg, coord *cc,
+                           int magic);
+extern void jump_to_coords(coord *cc);
 extern int jump(const struct nh_cmd_arg *, int);
 extern int number_leashed(void);
 extern void o_unleash(struct obj *);
