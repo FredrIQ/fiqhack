@@ -666,7 +666,6 @@ cast_protection(void)
             P_SKILL(spell_skilltype(SPE_PROTECTION)) == P_EXPERT ? 20 : 10;
         if (!u.usptime)
             u.usptime = u.uspmtime;
-        find_ac();
     } else {
         pline("Your skin feels warm for a moment.");
     }

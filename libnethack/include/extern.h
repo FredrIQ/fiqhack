@@ -368,7 +368,6 @@ extern int doequip(const struct nh_cmd_arg *);
 extern int equip_in_slot(struct obj *otmp, enum objslot);
 extern boolean canwearobj(struct obj *, long *, boolean, boolean, boolean);
 extern boolean canunwearobj(struct obj *, boolean, boolean, boolean);
-extern void find_ac(void);
 extern void glibr(void);
 extern struct obj *some_armor(struct monst *);
 extern void erode_armor(struct monst *, boolean);

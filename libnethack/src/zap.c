@@ -2310,8 +2310,6 @@ cancel_monst(struct monst * mdef, struct obj * obj, boolean youattack,
         for (otmp = (youdefend ? invent : mdef->minvent); otmp;
              otmp = otmp->nobj)
             cancel_item(otmp);
-        if (youdefend)
-            find_ac();
     }
 
     /* now handle special cases */
