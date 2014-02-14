@@ -833,25 +833,13 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
             intell = acurr(A_INT);
             if (!Role_if(PM_WIZARD))
                 intell = 10;
-            switch (intell) {
-            case 25:
-            case 24:
-            case 23:
-            case 22:
-            case 21:
-            case 20:
-            case 19:
-            case 18:
-            case 17:
+            if (intell >= 17)
                 hungr = 0;
-                break;
-            case 16:
+            else if (intell == 16)
                 hungr /= 4;
-                break;
-            case 15:
+            else if (intell == 15)
                 hungr /= 2;
-                break;
-            }
+
             /* don't put player (quite) into fainting from casting a spell,
                particularly since they might not even be hungry at the
                beginning; however, this is low enough that they must eat before
