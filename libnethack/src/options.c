@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-19 */
+/* Last modified by Sean Hunt, 2014-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -143,7 +143,7 @@ static const struct nh_option_desc const_options[] = {
     {"autoquiver",
      "when firing with an empty quiver, select something suitable", FALSE,
      OPTTYPE_BOOL, {.b = FALSE}},
-    {"corridorbranch", "branching corridors stop farmove", FALSE,
+    {"corridorbranch", "branching corridors do not stop farmove", FALSE,
      OPTTYPE_BOOL, {.b = TRUE}},
     {"disclose", "whether to disclose information at end of game", FALSE,
      OPTTYPE_ENUM, {.e = DISCLOSE_PROMPT_DEFAULT_YES}},
