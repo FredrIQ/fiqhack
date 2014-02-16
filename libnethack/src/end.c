@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Sean Hunt, 2014-02-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -976,7 +976,7 @@ done_noreturn(int how)
     if (how == ESCAPED)
         killer_format = NO_KILLER_PREFIX;
 
-    describe_death(kbuf, how, COLNO-1);
+    describe_death(kbuf, how, COLNO);
     log_game_over(kbuf);
 
     /* these affect score and/or bones, but avoid them during panic */

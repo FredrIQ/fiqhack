@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-10 */
+/* Last modified by Sean Hunt, 2014-02-16 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -64,7 +64,7 @@ getpos(coord *cc, boolean force, const char *goal, boolean isarg)
         do {
             rv = (*windowprocs.win_getpos) (&x, &y, force, goal);
         } while (force && (rv == NHCR_CLIENT_CANCEL ||
-                           x < 1 || y < 1 || x > COLNO || y > ROWNO));
+                           x < 0 || y < 0 || x > COLNO - 1 || y > ROWNO - 1));
     }
 
     if (rv == NHCR_CLIENT_CANCEL)
@@ -75,7 +75,7 @@ getpos(coord *cc, boolean force, const char *goal, boolean isarg)
     if (rv == NHCR_CLIENT_CANCEL)
         pline_nomore("<position: (cancelled)>");
     else
-        pline_nomore("<position: (%d, %d)>", cc->x, cc->y);
+        pline_nomore("<position: (%d, %d)>", x, y);
 
     cc->x = x;
     cc->y = y;

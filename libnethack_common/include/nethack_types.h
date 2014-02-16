@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-19 */
+/* Last modified by Sean Hunt, 2014-02-16 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -28,8 +28,8 @@
 #  define TRUE  ((nh_bool)!0)
 # endif
 
-/* size of terminal screen is (at least) (ROWNO+3) by COLNO */
-# define COLNO          80
+/* size of terminal screen is (at least) (ROWNO+3) by (COLNO+1) */
+# define COLNO          79
 # define ROWNO          21
 
 # define BUFSZ          256     /* for getlin buffers */

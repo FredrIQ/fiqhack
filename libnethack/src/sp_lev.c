@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Sean Hunt, 2014-02-16 */
 /*      Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -314,8 +314,8 @@ check_room(struct level *lev, xchar * lowx, xchar * ddx, xchar * lowy,
     xlim = XLIM + (vault ? 1 : 0);
     ylim = YLIM + (vault ? 1 : 0);
 
-    if (*lowx < 3)
-        *lowx = 3;
+    if (*lowx < 2)
+        *lowx = 2;
     if (*lowy < 2)
         *lowy = 2;
     if (hix > COLNO - 3)
@@ -1656,7 +1656,7 @@ light_region(struct level *lev, region * tmpregion)
 
     if (litstate) {
         /* adjust region size for walls, but only if lighted */
-        lowx = max(lowx - 1, 1);
+        lowx = max(lowx - 1, 0);
         hix = min(hix + 1, COLNO - 1);
         lowy = max(lowy - 1, 0);
         hiy = min(hiy + 1, ROWNO - 1);
@@ -2169,9 +2169,9 @@ load_maze(struct level *lev, dlb * fd)
         has_bounds = FALSE;
 
         if (init_lev.init_present && xsize <= 1 && ysize <= 1) {
-            xstart = 1;
+            xstart = 0;
             ystart = 0;
-            xsize = COLNO - 1;
+            xsize = COLNO;
             ysize = ROWNO;
         } else {
             /* Load the map */
@@ -2587,7 +2587,7 @@ load_maze(struct level *lev, dlb * fd)
 
         walkfrom(lev, x, y);
     }
-    wallification(lev, 1, 0, COLNO - 1, ROWNO - 1);
+    wallification(lev, 0, 0, COLNO - 1, ROWNO - 1);
 
     /* 
      * If there's a significant portion of maze unused by the special level,

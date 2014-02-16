@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Sean Hunt, 2014-02-16 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -323,7 +323,7 @@ get_command(struct nh_cmd_arg *arg, nh_bool include_debug)
         }
     } while (!cmd);
 
-    wmove(mapwin, player.y, player.x - 1);
+    wmove(mapwin, player.y, player.x);
 
     return cmd->name;
 }

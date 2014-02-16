@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Sean Hunt, 2014-02-16 */
 /* Copyright (c) Dean Luick, with acknowledgements to Dave Cohrs, 1990. */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -194,7 +194,7 @@ vision_reset(void)
         dig_left = 0;
         block = TRUE;   /* location (0,y) is always stone; it's !isok() */
         loc = &level->locations[1][y];
-        for (x = 1; x < COLNO; x++, loc += ROWNO)
+        for (x = 0; x < COLNO; x++, loc += ROWNO)
             if (block != (IS_ROCK(loc->typ) || does_block(level, x, y))) {
                 if (block) {
                     for (i = dig_left; i < x; i++) {
@@ -309,7 +309,7 @@ rogue_vision(char **next,       /* could_see array pointers */
     /* Can always see adjacent. */
     ylo = max(u.uy - 1, 0);
     yhi = min(u.uy + 1, ROWNO - 1);
-    xlo = max(u.ux - 1, 1);
+    xlo = max(u.ux - 1, 0);
     xhi = min(u.ux + 1, COLNO - 1);
     for (zy = ylo; zy <= yhi; zy++) {
         if (xlo < rmin[zy])

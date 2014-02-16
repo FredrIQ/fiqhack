@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Sean Hunt, 2014-02-16 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -199,10 +199,10 @@ do_earthquake(int force)
     start_y = u.uy - (force * 2);
     end_x = u.ux + (force * 2);
     end_y = u.uy + (force * 2);
-    if (start_x < 1)
-        start_x = 1;
-    if (start_y < 1)
-        start_y = 1;
+    if (start_x < 0)
+        start_x = 0;
+    if (start_y < 0)
+        start_y = 0;
     if (end_x >= COLNO)
         end_x = COLNO - 1;
     if (end_y >= ROWNO)

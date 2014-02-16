@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Sean Hunt, 2014-02-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -648,17 +648,17 @@ random_dir(xchar x, xchar y, xchar * nx, xchar * ny)
     *nx = x;
     *ny = y;
 
-    *nx += (x > 1 ?     /* extreme left ? */
-            (x < COLNO ?        /* extreme right ? */
-             (rn2(3) - 1)       /* neither so +1, 0, or -1 */
+    *nx += (x > 0 ?     /* extreme left ? */
+            (x < COLNO - 1 ?        /* extreme right ? */
+             (rn1(3, -1))       /* neither so +1, 0, or -1 */
              : -rn2(2)) /* 0, or -1 */
             : rn2(2));  /* 0, or 1 */
 
     *ny += (*nx == x ?  /* same kind of thing with y */
-            (y > 1 ? (y < ROWNO ? (rn2(2) ? 1 : -1)
+            (y > 0 ? (y < ROWNO - 1 ? (rn2(2) ? 1 : -1)
                       : -1)
              : 1)
-            : (y > 1 ? (y < ROWNO ? (rn2(3) - 1)
+            : (y > 0 ? (y < ROWNO - 1 ? (rn1(3, -1))
                         : -rn2(2))
                : rn2(2)));
 }

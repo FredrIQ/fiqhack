@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Sean Hunt, 2014-02-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -803,7 +803,7 @@ mineralize(struct level *lev)
     /* Place kelp, except on the plane of water */
     if (In_endgame(&lev->z))
         return;
-    for (x = 2; x < (COLNO - 2); x++)
+    for (x = 1; x < (COLNO - 1); x++)
         for (y = 1; y < (ROWNO - 1); y++)
             if ((lev->locations[x][y].typ == POOL && !rn2(10)) ||
                 (lev->locations[x][y].typ == MOAT && !rn2(30)))
@@ -836,7 +836,7 @@ mineralize(struct level *lev)
      * We use fairly low level object handling to avoid unnecessary
      * overhead from placing things in the floor chain prior to burial.
      */
-    for (x = 2; x < (COLNO - 2); x++)
+    for (x = 1; x < (COLNO - 1); x++)
         for (y = 1; y < (ROWNO - 1); y++)
             if (lev->locations[x][y + 1].typ != STONE) {
                 /* <x,y> spot not eligible */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Sean Hunt, 2014-02-16 */
 /* Copyright (c) Izchak Miller, 1992.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -325,7 +325,7 @@ create_mplayers(int num, boolean special)
 
         /* roll for an available location */
         do {
-            x = rn1(COLNO - 4, 2);
+            x = rnd(COLNO - 2);
             y = rnd(ROWNO - 2);
         } while (!goodpos(level, x, y, &fakemon, 0) && tryct++ <= 50);
 

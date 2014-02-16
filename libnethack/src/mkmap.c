@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Sean Hunt, 2014-02-16 */
 /* Copyright (c) J. C. Collet, M. Stephenson and D. Cohrs, 1992   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,7 +7,7 @@
 #include "sp_lev.h"
 
 #define HEIGHT  (ROWNO - 1)
-#define WIDTH   (COLNO - 2)
+#define WIDTH   (COLNO - 1)
 
 static void init_map(struct level *lev, schar bg_typ);
 static void init_fill(struct level *lev, schar bg_typ, schar fg_typ);
@@ -29,7 +29,7 @@ init_map(struct level *lev, schar bg_typ)
 {
     int i, j;
 
-    for (i = 1; i < COLNO; i++)
+    for (i = 0; i < COLNO; i++)
         for (j = 0; j < ROWNO; j++)
             lev->locations[i][j].typ = bg_typ;
 }
@@ -252,7 +252,7 @@ wallify_map(struct level *lev)
 
     int x, y, xx, yy;
 
-    for (x = 1; x < COLNO; x++)
+    for (x = 0; x < COLNO; x++)
         for (y = 0; y < ROWNO; y++)
             if (lev->locations[x][y].typ == STONE) {
                 for (yy = y - 1; yy <= y + 1; yy++)
@@ -349,7 +349,7 @@ finish_map(struct level *lev, schar fg_typ, schar bg_typ, boolean lit,
         wallify_map(lev);
 
     if (lit) {
-        for (i = 1; i < COLNO; i++)
+        for (i = 0; i < COLNO; i++)
             for (j = 0; j < ROWNO; j++)
                 if ((!IS_ROCK(fg_typ) && lev->locations[i][j].typ == fg_typ) ||
                     (!IS_ROCK(bg_typ) && lev->locations[i][j].typ == bg_typ) ||
@@ -360,7 +360,7 @@ finish_map(struct level *lev, schar fg_typ, schar bg_typ, boolean lit,
             lev->rooms[i].rlit = 1;
     }
     /* light lava even if everything's otherwise unlit */
-    for (i = 1; i < COLNO; i++)
+    for (i = 0; i < COLNO; i++)
         for (j = 0; j < ROWNO; j++)
             if (lev->locations[i][j].typ == LAVAPOOL)
                 lev->locations[i][j].lit = TRUE;

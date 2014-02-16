@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Sean Hunt, 2014-02-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -998,7 +998,7 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy,
                 dist = INT_MAX;
                 d2 = INT_MAX;
             }
-            for (tx = 1; tx < COLNO; ++tx) {
+            for (tx = 0; tx < COLNO; ++tx) {
                 for (ty = 0; ty < ROWNO; ++ty) {
                     if (travel[tx][ty]) {
                         nxtdist = distmin(ux, uy, tx, ty);
@@ -1958,7 +1958,7 @@ in_rooms(struct level *lev, xchar x, xchar y, int typewanted)
 
     min_x = x - 1;
     max_x = x + 1;
-    if (x < 1)
+    if (x < 0)
         min_x += step;
     else if (x >= COLNO)
         max_x -= step;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-12 */
+/* Last modified by Sean Hunt, 2014-02-16 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -56,7 +56,7 @@ get_map_key(int place_cursor)
         wtimeout(mapwin, 666);  /* wait 2/3 of a second before switching */
 
     if (player.x && place_cursor) {     /* x == 0 is not a valid coordinate */
-        wmove(mapwin, player.y, player.x - 1);
+        wmove(mapwin, player.y, player.x);
         curs_set(1);
     }
 
@@ -81,7 +81,7 @@ curses_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy)
     draw_map(ux, uy);
 
     if (ux > 0) {
-        wmove(mapwin, uy, ux - 1);
+        wmove(mapwin, uy, ux);
         curs_set(1);
     } else
         curs_set(0);
@@ -113,7 +113,7 @@ draw_map(int cx, int cy)
     }
 
     for (y = 0; y < ROWNO; y++) {
-        for (x = 1; x < COLNO; x++) {
+        for (x = 0; x < COLNO; x++) {
             int bg_color = 0;
             struct nh_dbuf_entry *dbyx = &(display_buffer[y][x]);
 
@@ -127,7 +127,7 @@ draw_map(int cx, int cy)
             /* set the position for each character to prevent incorrect
                positioning due to charset issues (IBM chars on a unicode term
                or vice versa) */
-            wmove(mapwin, y, x - 1);
+            wmove(mapwin, y, x);
 
             /* draw the tile first, because doing that doesn't move the cursor;
                backgrounds are special because they can be composed from
@@ -310,9 +310,9 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
         wrefresh(statuswin);
     }
 
-    cx = *x >= 1 ? *x : player.x;
-    cy = *y >= 0 ? *y : player.y;
-    wmove(mapwin, cy, cx - 1);
+    cx = *x >= 0 && *x < COLNO ? *x : player.x;
+    cy = *y >= 0 && *y < ROWNO ? *y : player.y;
+    wmove(mapwin, cy, cx);
 
     while (1) {
         if (!firstmove) {
@@ -332,7 +332,7 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
                 wrefresh(statuswin);
             }
 
-            wmove(mapwin, cy, cx - 1);
+            wmove(mapwin, cy, cx);
         }
         firstmove = 0;
         dx = dy = 0;
@@ -362,14 +362,14 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
 
         if (dx || dy) {
             /* truncate at map edge */
-            if (cx + dx < 1)
-                dx = 1 - cx;
+            if (cx + dx < 0)
+                dx = 0;
             if (cx + dx > COLNO - 1)
-                dx = COLNO - 1 - cx;
+                dx = 0;
             if (cy + dy < 0)
-                dy = -cy;
+                dy = 0;
             if (cy + dy > ROWNO - 1)
-                dy = ROWNO - 1 - cy;
+                dy = 0;
             cx += dx;
             cy += dy;
             goto nxtc;
@@ -411,7 +411,7 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
                     lo_y = (pass == 0) ? cy : 0;
                     hi_y = (pass == 0) ? ROWNO - 1 : cy;
                     for (ty = lo_y; ty <= hi_y; ty++) {
-                        lo_x = (pass == 0 && ty == lo_y) ? cx + 1 : 1;
+                        lo_x = (pass == 0 && ty == lo_y) ? cx : 0;
                         hi_x = (pass == 1 && ty == hi_y) ? cx : COLNO - 1;
                         for (tx = lo_x; tx <= hi_x; tx++) {
                             k = display_buffer[ty][tx].bg;
@@ -437,7 +437,7 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
            cause us to abort (that's what ESC is for) */
 
     nxtc:
-        wmove(mapwin, cy, cx - 1);
+        wmove(mapwin, cy, cx);
         wrefresh(mapwin);
     }
 

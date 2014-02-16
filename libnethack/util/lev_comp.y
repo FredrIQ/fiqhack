@@ -1,5 +1,5 @@
 %{
-/* Last modified by Alex Smith, 2014-01-01 */
+/* Last modified by Sean Hunt, 2014-02-16 */
 /*	Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 #include "hack.h"
@@ -1268,11 +1268,11 @@ lev_region	: region
 		  {
 /* This series of if statements is a hack for MSC 5.1.  It seems that its
    tiny little brain cannot compile if these are all one big if statement. */
-			if ($3 <= 0 || $3 >= COLNO)
+			if ($3 < 0 || $3 >= COLNO)
 				yyerror("Region out of level range!");
 			else if ($5 < 0 || $5 >= ROWNO)
 				yyerror("Region out of level range!");
-			else if ($7 <= 0 || $7 >= COLNO)
+			else if ($7 < 0 || $7 >= COLNO)
 				yyerror("Region out of level range!");
 			else if ($9 < 0 || $9 >= ROWNO)
 				yyerror("Region out of level range!");

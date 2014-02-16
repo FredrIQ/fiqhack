@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2013-09-21
+# Last modified by Sean Hunt, 2014-02-16
 #	Copyright (c) 1992 by Dean Luick
 # NetHack may be freely redistributed.  See license for details.
 #
@@ -306,7 +306,7 @@ ENDMAP
 # Dungeon Description
 REGION:(00,00,75,20),lit,"ordinary"
 # Stairs
-STAIR:levregion(01,00,15,20),(01,18,04,20),up
+STAIR:levregion(00,00,14,20),(01,18,04,20),up
 # Doors
 # Non diggable walls
 NON_DIGGABLE:(00,00,75,20)

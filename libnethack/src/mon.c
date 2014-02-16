@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Sean Hunt, 2014-02-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1017,7 +1017,7 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
         flag |= ALLOW_SSM;
     maxx = min(x + 1, COLNO - 1);
     maxy = min(y + 1, ROWNO - 1);
-    for (nx = max(1, x - 1); nx <= maxx; nx++)
+    for (nx = max(0, x - 1); nx <= maxx; nx++)
         for (ny = max(0, y - 1); ny <= maxy; ny++) {
             if (nx == x && ny == y)
                 continue;

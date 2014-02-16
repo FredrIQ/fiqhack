@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Sean Hunt, 2014-02-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -120,7 +120,7 @@ enexto_core(coord * cc, struct level *lev, xchar xx, xchar yy,
      * radius range.  Stop when we find at least one valid position.
      */
     do {
-        xmin = max(1, xx - range);
+        xmin = max(0, xx - range);
         xmax = min(COLNO - 1, xx + range);
         ymin = max(0, yy - range);
         ymax = min(ROWNO - 1, yy + range);
@@ -331,7 +331,7 @@ safe_teleds(boolean allow_drag)
     int nux, nuy, tcnt = 0;
 
     do {
-        nux = rnd(COLNO - 1);
+        nux = rn2(COLNO);
         nuy = rn2(ROWNO);
     } while (!teleok(nux, nuy, (boolean) (tcnt > 200)) && ++tcnt <= 400);
 
@@ -958,7 +958,7 @@ rloc(struct monst *mtmp,        /* mx==0 implies migrating monster arrival */
 
     trycount = 0;
     do {
-        x = rn1(COLNO - 3, 2);
+        x = rn2(COLNO);
         y = rn2(ROWNO);
         if ((trycount < 500) ? rloc_pos_ok(x, y, mtmp)
             : goodpos(level, x, y, mtmp, 0))
@@ -966,7 +966,7 @@ rloc(struct monst *mtmp,        /* mx==0 implies migrating monster arrival */
     } while (++trycount < 1000);
 
     /* last ditch attempt to find a good place */
-    for (x = 2; x < COLNO - 1; x++)
+    for (x = 0; x < COLNO; x++)
         for (y = 0; y < ROWNO; y++)
             if (goodpos(level, x, y, mtmp, 0))
                 goto found_xy;
@@ -1111,7 +1111,7 @@ rloco_pos(struct level *lev, struct obj *obj, int *nx, int *ny)
     otx = obj->ox;
     restricted_fall = (otx == 0 && lev->dndest.lx);
     do {
-        tx = rn1(COLNO - 3, 2);
+        tx = rn2(COLNO);
         ty = rn2(ROWNO);
         if (!--try_limit)
             break;

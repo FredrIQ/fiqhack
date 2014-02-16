@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2013-09-21
+# Last modified by Sean Hunt, 2014-02-16
 #	Copyright (c) 1989-95 by Jean-Christophe Collet
 #	Copyright (c) 1991-95 by M. Stephenson
 # NetHack may be freely redistributed.  See license for details.
@@ -525,8 +525,8 @@ MAP
 ENDMAP
 
 REGION:(00,00,38,15),lit,"ordinary"
-STAIR:levregion(01,03,20,19),(0,0,39,15),up
-STAIR:levregion(61,03,75,19),(0,0,39,15),down
+STAIR:levregion(00,03,19,19),(0,0,39,15),up
+STAIR:levregion(60,03,74,19),(0,0,39,15),down
 FOUNTAIN:(22,07)
 FOUNTAIN:(09,13)
 REGION:(13,5,14,6),unlit,"ordinary"

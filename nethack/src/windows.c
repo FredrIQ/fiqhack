@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Sean Hunt, 2014-02-16 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -89,7 +89,7 @@ init_curses_ui(char *dataprefix)
     set_tile_file(NULL);
     set_font_file("font14.png");
 
-    if (LINES < 24 || COLS < COLNO) {
+    if (LINES < ROWNO + 3 || COLS < COLNO + 1) {
         fprintf(stderr,
                 "Sorry, your terminal is too small for NetHack 4. Current: "
                 "(%x, %x)\n", COLS, LINES);

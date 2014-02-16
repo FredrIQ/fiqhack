@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Sean Hunt, 2014-02-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -137,7 +137,7 @@ clear_stale_map(char oclass, unsigned material)
     int zx, zy;
     boolean change_made = FALSE;
 
-    for (zx = 1; zx < COLNO; zx++)
+    for (zx = 0; zx < COLNO; zx++)
         for (zy = 0; zy < ROWNO; zy++)
             if (check_map_spot(zx, zy, oclass, material)) {
                 unmap_object(zx, zy);
@@ -493,7 +493,7 @@ object_detect(struct obj *detector,     /* object doing the detecting */
      *
      * Objects on the floor override buried objects.
      */
-    for (x = 1; x < COLNO; x++)
+    for (x = 0; x < COLNO; x++)
         for (y = 0; y < ROWNO; y++)
             for (obj = level->objects[x][y]; obj; obj = obj->nexthere)
                 if (!class || (otmp = o_in(obj, class))) {
@@ -961,7 +961,7 @@ do_mapping(void)
     int uw = u.uinwater;
 
     u.uinwater = 0;
-    for (zx = 1; zx < COLNO; zx++)
+    for (zx = 0; zx < COLNO; zx++)
         for (zy = 0; zy < ROWNO; zy++)
             show_map_spot(zx, zy);
     exercise(A_WIS, TRUE);
@@ -980,7 +980,7 @@ do_vicinity_map(void)
     int zx, zy;
     int lo_y = (u.uy - 5 < 0 ? 0 : u.uy - 5),
         hi_y = (u.uy + 6 > ROWNO ? ROWNO : u.uy + 6),
-        lo_x = (u.ux - 9 < 1 ? 1 : u.ux - 9), /* avoid column 0 */
+        lo_x = (u.ux - 9 < 0 ? 0 : u.ux - 9),
         hi_x = (u.ux + 10 > COLNO ? COLNO : u.ux + 10);
 
     for (zx = lo_x; zx < hi_x; zx++)
@@ -1298,7 +1298,7 @@ sokoban_detect(struct level *lev)
     struct obj *obj;
 
     /* Map the background and boulders */
-    for (x = 1; x < COLNO; x++)
+    for (x = 0; x < COLNO; x++)
         for (y = 0; y < ROWNO; y++) {
             int cmap;
 

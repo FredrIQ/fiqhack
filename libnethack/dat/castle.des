@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2013-09-21
+# Last modified by Sean Hunt, 2014-02-16
 #	Copyright (c) 1989 by Jean-Christophe Collet
 # NetHack may be freely redistributed.  See license for details.
 #
@@ -44,9 +44,9 @@ RANDOM_OBJECTS:'[',')','*','%'
 RANDOM_PLACES:(04,02),(58,02),(04,14),(58,14)
 RANDOM_MONSTERS:'L','N','E','H','M','O','R','T','X','Z'
 
-TELEPORT_REGION:levregion(01,00,10,20),(1,1,61,15),down
-TELEPORT_REGION:levregion(69,00,79,20),(1,1,61,15),up
-STAIR:levregion(01,00,10,20),(0,0,62,16),up
+TELEPORT_REGION:levregion(00,00,9,20),(1,1,61,15),down
+TELEPORT_REGION:levregion(68,00,78,20),(1,1,61,15),up
+STAIR:levregion(00,00,9,20),(0,0,62,16),up
 FOUNTAIN:(10,08)
 # Doors
 DOOR:closed,(07,03)

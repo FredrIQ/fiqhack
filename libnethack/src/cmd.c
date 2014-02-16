@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Sean Hunt, 2014-02-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -588,7 +588,7 @@ wiz_show_seenv(const struct nh_cmd_arg *arg)
      * Each seenv description takes up 2 characters, so center
      * the seenv display around the hero.
      */
-    startx = max(1, u.ux - (COLNO / 4));
+    startx = max(0, u.ux - (COLNO / 4));
     stopx = min(startx + (COLNO / 2), COLNO);
     /* can't have a line exactly 80 chars long */
     if (stopx - startx == COLNO / 2)
@@ -635,7 +635,7 @@ wiz_show_vision(const struct nh_cmd_arg *arg)
     add_menutext(&menu, row);
     add_menutext(&menu, "");
     for (y = 0; y < ROWNO; y++) {
-        for (x = 1; x < COLNO; x++) {
+        for (x = 0; x < COLNO; x++) {
             if (x == u.ux && y == u.uy)
                 row[x] = '@';
             else {
@@ -647,7 +647,7 @@ wiz_show_vision(const struct nh_cmd_arg *arg)
             }
         }
         /* remove trailing spaces */
-        for (x = COLNO - 1; x >= 1; x--)
+        for (x = COLNO - 1; x >= 0; x--)
             if (row[x] != ' ')
                 break;
         row[x + 1] = '\0';
