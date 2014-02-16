@@ -1687,7 +1687,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
     }
 
     reset_occupations(TRUE);
-    if (flags.occupation == occ_move || flags.occupation == occ_travel) {
+    if (flags.occupation == occ_move) {
         if (IS_DOOR(tmpr->typ) || IS_ROCK(tmpr->typ) ||
             IS_FURNITURE(tmpr->typ))
             action_completed();
