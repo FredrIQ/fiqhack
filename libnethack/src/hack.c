@@ -1131,6 +1131,11 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
         }
     }
 
+    // Farmove and friends don't actually need u.dx and u.dy to sort of work,
+    // but lookaround likes to know what direction we're going.
+    u.dx = dx;
+    u.dy = dy;
+
     /* Travel hit an obstacle, or domove() was called with dx, dy and dz all
        zero, which they shouldn't do. */
     if (dx == 0 && dy == 0) {   /* dz is always zero here from above */
@@ -2368,13 +2373,11 @@ lookaround(enum u_interaction_mode uim)
                     ((y == u.uy - u.dy) && (x != u.ux + u.dx)))
                     continue;
             }
-        stop:
-            action_completed();
-            return;
         }       /* end for loops */
 
-    if (corrct > 1 && go2)
+    if (corrct > 1 && !flags.corridorbranch)
         goto stop;
+
     if (!go2 && !noturn && !m0 && i0 &&
         (corrct == 1 || (corrct == 2 && i0 == 1))) {
         /* make sure that we do not turn too far */
@@ -2403,6 +2406,11 @@ lookaround(enum u_interaction_mode uim)
             u.dy = y0 - u.uy;
         }
     }
+    return;
+
+stop:
+    action_completed();
+    return;
 }
 
 /* Check whether the monster should be considered a threat and interrupt
