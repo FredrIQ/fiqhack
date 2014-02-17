@@ -542,7 +542,6 @@ restore_you(struct memfile *mf, struct you *y)
     y->mhmax = mread32(mf);
     y->mtimedone = mread32(mf);
     y->ulycn = mread32(mf);
-    y->last_str_turn = mread32(mf);
     y->utrap = mread32(mf);
     y->utraptype = mread32(mf);
     y->uhunger = mread32(mf);

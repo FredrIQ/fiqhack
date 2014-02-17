@@ -63,7 +63,7 @@ thitu(int tlev, int dam, struct obj *obj, const char *name)
       (obj && obj->quan > 1L) ? name : an(name);
     is_acid = (obj && obj->otyp == ACID_VENOM);
 
-    if (u.uac + tlev <= rnd(20)) {
+    if (get_player_ac() + tlev <= rnd(20)) {
         if (Blind || !flags.verbose)
             pline("It misses.");
         else

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-17 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -54,7 +54,6 @@ polyman(const char *fmt, const char *arg)
 
     if (sticky)
         uunstick();
-    find_ac();
     cancel_helplessness(hm_mimicking, "");
 
     newsym(u.ux, u.uy);
@@ -545,7 +544,6 @@ polymon(int mntmp)
         /* make queen bees recognize killer bee eggs */
         learn_egg_type(egg_type_from_parent(u.umonnum, TRUE));
     }
-    find_ac();
     if ((!Levitation && !u.ustuck && !Flying &&
          (is_pool(level, u.ux, u.uy) || is_lava(level, u.ux, u.uy))) ||
         (Underwater && !Swimming))

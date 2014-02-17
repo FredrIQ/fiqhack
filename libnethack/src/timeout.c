@@ -219,7 +219,6 @@ nh_timeout(void)
         if (--u.usptime == 0 && u.uspellprot) {
             u.usptime = u.uspmtime;
             u.uspellprot--;
-            find_ac();
             if (!Blind)
                 pline_once("The %s haze around you %s.", hcolor("golden"),
                            u.uspellprot ? "becomes less dense" : "disappears");

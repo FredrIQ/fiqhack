@@ -549,15 +549,6 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
             /* Eat the rock. */
             if (mode == DO_MOVE && still_chewing(x, y))
                 return FALSE;
-        } else if (flags.autodig && ITEM_INTERACTIVE(uim) &&
-                   flags.occupation != occ_move && uwep && is_pick(uwep)) {
-            /* MRKR: Automatic digging when wielding the appropriate tool */
-            if (mode == DO_MOVE) {
-                struct nh_cmd_arg arg;
-                arg_from_delta(dx, dy, dz, &arg);
-                return use_pick_axe(uwep, &arg);
-            }
-            return FALSE;
         } else {
             if (mode == DO_MOVE) {
                 if (Is_stronghold(&u.uz) && is_db_wall(x, y))
@@ -1142,6 +1133,11 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
         }
     }
 
+    // Farmove and friends don't actually need u.dx and u.dy to sort of work,
+    // but lookaround likes to know what direction we're going.
+    u.dx = dx;
+    u.dy = dy;
+
     /* Travel hit an obstacle, or domove() was called with dx, dy and dz all
        zero, which they shouldn't do. */
     if (dx == 0 && dy == 0) {   /* dz is always zero here from above */
@@ -1564,6 +1560,14 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
     if (!test_move(u.ux, u.uy, dx, dy, dz, DO_MOVE, uim, !!Blind,
                    !!Stunned, !!Fumbling, !!Hallucination,
                    !!Passes_walls, !!Ground_based)) {
+        // We can't move there... but maybe we can dig.
+        if (flags.autodig && ITEM_INTERACTIVE(uim) &&
+            flags.occupation != occ_move && uwep && is_pick(uwep)) {
+            /* MRKR: Automatic digging when wielding the appropriate tool */
+            struct nh_cmd_arg arg;
+            arg_from_delta(dx, dy, dz, &arg);
+            return use_pick_axe(uwep, &arg);
+        }
         action_completed();
         return 0;
     }
@@ -1691,7 +1695,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
     }
 
     reset_occupations(TRUE);
-    if (flags.occupation == occ_move || flags.occupation == occ_travel) {
+    if (flags.occupation == occ_move) {
         if (IS_DOOR(tmpr->typ) || IS_ROCK(tmpr->typ) ||
             IS_FURNITURE(tmpr->typ))
             action_completed();
@@ -1886,7 +1890,7 @@ stillinwater:
                 ;
             else if (uarmh && is_metallic(uarmh))
                 pline("Its blow glances off your %s.", helmet_name(uarmh));
-            else if (u.uac + 3 <= rnd(20))
+            else if (get_player_ac() + 3 <= rnd(20))
                 pline("You are almost hit by %s!",
                       x_monnam(mtmp, ARTICLE_A, "falling", 0, TRUE));
             else {
@@ -2256,16 +2260,44 @@ dopickup(const struct nh_cmd_arg *arg)
    "go" and "go2"; the commands are noticeably different from aggressive farmove
    (and widely used), but players tend to use them interchangeably.
 */
+/* Look around you.
+ * Look around you.
+ * Just look around you.
+ * Have you worked out what we're looking for?
+ * Correct!  The answer is: autotravel obstacles.
+ */
 void
 lookaround(enum u_interaction_mode uim)
 {
+    /* x0 and y0 are candidate spaces to move into next; while u.dx and u.dy
+     * define the desired direction of movement, that might not actually be
+     * possible.
+     *
+     * m0 simply tracks whether there's a monster of any sort in the space
+     * we wind up picking, if we're considering changing directions.
+
+     * i0 is the square of the distance between the current-best option
+     * for x0 and y0 and the desired movement space.  Initially set high,
+     * x0 and y0 selection optimizes it to be as low as possible.
+     */
     int x, y, i, x0 = 0, y0 = 0, m0 = 1, i0 = 9;
+
+    // corrct: The number of corridor spaces we've found around us.
+    // noturn: Set to 1 if we shouldn't divert from the u.dx, u.dy plan.
     int corrct = 0, noturn = 0;
     struct monst *mtmp;
     struct trap *trap;
+    // farmoving: occ_move, occ_travel, occ_autoexplore.
     boolean farmoving = travelling() || flags.occupation == occ_move;
+    // aggressive_farmoving: I'm... not actually sure when this is true in any
+    // case that would matter.  Tempted to delete it with prejudice.
     boolean aggressive_farmoving = ITEM_INTERACTIVE(uim) && !travelling();
-    boolean go2 = !flags.corridorbranch;
+
+    /* We need to do three things here.  First, make a few checks that are
+     * independent of the surrounding terrain.  Second, check whether the
+     * terrain around us makes us want to stop.  And third, if we're doing
+     * an aggressive directional farmove, make sure we round corners properly.
+     */
 
     /* Grid bugs stop if trying to move diagonal, even if blind.  Maybe */
     /* they polymorphed while in the middle of a long move. */
@@ -2292,15 +2324,22 @@ lookaround(enum u_interaction_mode uim)
 
     for (x = u.ux - 1; x <= u.ux + 1; x++)
         for (y = u.uy - 1; y <= u.uy + 1; y++) {
+            // Ignore squares that aren't within the boundary.
             if (!isok(x, y))
                 continue;
 
+            // If you're a grid bug, ignore diagonals.
             if (u.umonnum == PM_GRID_BUG && x != u.ux && y != u.uy)
                 continue;
 
+            // Don't care about the square we're already on.
             if (x == u.ux && y == u.uy)
                 continue;
 
+            /* We already checked for hostile monsters above.
+             * Interrupt non-aggressive moves if we're going to run into a
+             * *peaceful* monster.
+             */
             if ((mtmp = m_at(level, x, y)) && mtmp->m_ap_type != M_AP_FURNITURE
                 && mtmp->m_ap_type != M_AP_OBJECT &&
                 (!mtmp->minvis || See_invisible) && !mtmp->mundetected) {
@@ -2309,15 +2348,30 @@ lookaround(enum u_interaction_mode uim)
                     goto stop;
             }
 
+            // Adjacent stone won't interrupt anything.
             if (level->locations[x][y].typ == STONE)
                 continue;
+
+            /* We don't need to check the space in the opposite direction of the
+             * one we're thinking of entering.
+             * IMPORTANT NOTE: This means corrct shouldn't count corridor
+             * directly behind us.  If you're moving along a corridor with no
+             * branches, corrct will be 1.
+             */
             if (x == u.ux - u.dx && y == u.uy - u.dy)
                 continue;
 
+            // More boring cases that don't interrupt anything.
             if (IS_ROCK(level->locations[x][y].typ) ||
                 (level->locations[x][y].typ == ROOM) ||
                 IS_AIR(level->locations[x][y].typ))
                 continue;
+
+            /* Closed doors, or things we think are closed doors, can interrupt
+             * travel if orthogonally adjacent (but not diagonally).
+             * For some reason, we might want to count the door as a corridor,
+             * or possibly not.  I mean, obviously.
+             */
             else if (closed_door(level, x, y) ||
                      (mtmp && mtmp->m_ap_type == M_AP_FURNITURE &&
                       (mtmp->mappearance == S_hcdoor ||
@@ -2326,16 +2380,33 @@ lookaround(enum u_interaction_mode uim)
                     continue;
                 if (!aggressive_farmoving)
                     goto stop;
+                // We're orthogonal.  If we're in a corridor, count the door
+                // as a corridor.
                 goto bcorr;
             } else if (level->locations[x][y].typ == CORR) {
+            // Count the square we're looking at now as a corridor.
             bcorr:
                 if (level->locations[u.ux][u.uy].typ != ROOM) {
-                    if (!go2) {
+                    /* If we're okay with changing directions at a branch,
+                     * we need to figure out whether we're at one and if so
+                     * what kind.
+                     * To that end, we check all the corridor spaces around us,
+                     * and see which one comes closest to the one we came into
+                     * this function intending to walk into.
+                     */
+                    if (flags.corridorbranch) {
+                        /* i = Euclidean distance between intended space and
+                         * current candidate.  Use Euclidean distance so that
+                         * directly adjacent spaces get priority over diagonally
+                         * adjacent spaces.
+                         * If candidate isn't adjacent at all to desired, just
+                         * skip it.
+                         */
                         i = dist2(x, y, u.ux + u.dx, u.uy + u.dy);
                         if (i > 2)
                             continue;
                         if (corrct == 1 && dist2(x, y, x0, y0) != 1)
-                            noturn = 1;
+                            noturn = 1; // XXX study this harder
                         if (i < i0) {
                             i0 = i;
                             x0 = x;
@@ -2343,10 +2414,19 @@ lookaround(enum u_interaction_mode uim)
                             m0 = mtmp ? 1 : 0;
                         }
                     }
+                    /* Regardless of whether we've got corridorbranch active,
+                     * add to the corridor tally.
+                     * If the above corridorbranch stuff didn't run, this
+                     * corrct still gets used below
+                     */
                     corrct++;
                 }
                 continue;
             } else if ((trap = t_at(level, x, y)) && trap->tseen) {
+                /* If there's a known trap at the square we'll either mark it as
+                 * a corridor(?) or halt our movement if we were about to step
+                 * in it.
+                 */
                 if (aggressive_farmoving)
                     goto bcorr; /* if you must */
                 if (x == u.ux + u.dx && y == u.uy + u.dy)
@@ -2360,6 +2440,8 @@ lookaround(enum u_interaction_mode uim)
                     /* No Wwalking check; otherwise they'd be able to test
                        boots by trying to SHIFT-direction into a pool and
                        seeing if the game allowed it */
+                    // TODO: It'd probably be better to check for *known* water
+                    // walking boots.
                     goto stop;
                 continue;
             } else {    /* e.g. objects or trap or stairs */
@@ -2373,41 +2455,27 @@ lookaround(enum u_interaction_mode uim)
                     ((y == u.uy - u.dy) && (x != u.ux + u.dx)))
                     continue;
             }
-        stop:
-            action_completed();
-            return;
         }       /* end for loops */
 
-    if (corrct > 1 && go2)
+    if (corrct > 1 && !flags.corridorbranch)
+        /* Whoops, we found a branch; we hates those, precious.  Better stop.
+         * This behavior is going to be incredibly annoying, and it'd probably
+         * be better to fix it so that directed (not directional) fartravel
+         * ignores this.
+         */
         goto stop;
+
+    // Check whether it's time to turn.
     if (!go2 && !noturn && !m0 && i0 &&
         (corrct == 1 || (corrct == 2 && i0 == 1))) {
-        /* make sure that we do not turn too far */
-        if (i0 == 2) {
-            if (u.dx == y0 - u.uy && u.dy == u.ux - x0)
-                i = 2;  /* straight turn right */
-            else
-                i = -2; /* straight turn left */
-        } else if (u.dx && u.dy) {
-            if ((u.dx == u.dy && y0 == u.uy) || (u.dx != u.dy && y0 != u.uy))
-                i = -1; /* half turn left */
-            else
-                i = 1;  /* half turn right */
-        } else {
-            if ((x0 - u.ux == y0 - u.uy && !u.dy) ||
-                (x0 - u.ux != y0 - u.uy && u.dy))
-                i = 1;  /* half turn right */
-            else
-                i = -1; /* half turn left */
-        }
-
-        i += u.last_str_turn;
-        if (i <= 2 && i >= -2) {
-            u.last_str_turn = i;
-            u.dx = x0 - u.ux;
-            u.dy = y0 - u.uy;
-        }
+        u.dx = x0 - u.ux;
+        u.dy = y0 - u.uy;
     }
+    return;
+
+stop:
+    action_completed();
+    return;
 }
 
 /* Check whether the monster should be considered a threat and interrupt

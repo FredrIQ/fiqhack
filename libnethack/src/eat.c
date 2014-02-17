@@ -1384,7 +1384,7 @@ eataccessory(struct obj *otmp)
         case RIN_PROTECTION:
             accessory_has_effect(otmp);
             HProtection |= FROMOUTSIDE;
-            u.ublessed += otmp->spe;
+            u.uac -= otmp->spe;
             break;
         case RIN_FREE_ACTION:
             /* Give sleep resistance instead */

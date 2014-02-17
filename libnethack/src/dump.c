@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-31 */
+/* Last modified by Sean Hunt, 2014-02-17 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -100,7 +100,7 @@ dump_status(void)
     fprintf(dumpfp, "  Health: %d(%d)\n", hp < 0 ? 0 : hp,
             Upolyd ? u.mhmax : u.uhpmax);
     fprintf(dumpfp, "  Energy: %d(%d)\n", u.uen, u.uenmax);
-    fprintf(dumpfp, "  Def: %d\n", 10 - u.uac);
+    fprintf(dumpfp, "  Def: %d\n", 10 - get_player_ac());
     fprintf(dumpfp, "  Gold: %ld\n", money_cnt(invent));
     fprintf(dumpfp, "  Moves: %u\n", moves);
 

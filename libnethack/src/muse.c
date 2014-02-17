@@ -1102,7 +1102,7 @@ mbhitm(struct monst *mtmp, struct obj *otmp)
             if (Antimagic) {
                 shieldeff(u.ux, u.uy);
                 pline("Boing!");
-            } else if (rnd(20) < 10 + u.uac) {
+            } else if (rnd(20) < 10 + get_player_ac()) {
                 pline("The wand hits you!");
                 tmp = dice(2, 12);
                 if (Half_spell_damage)

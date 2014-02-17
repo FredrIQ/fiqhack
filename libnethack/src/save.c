@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Sean Hunt, 2014-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -366,12 +366,11 @@ save_you(struct memfile *mf, struct you *y)
     mwrite32(mf, y->mhmax);                                      /*  64 */
     mwrite32(mf, y->mtimedone);                                  /*  68 */
     mwrite32(mf, y->ulycn);                                      /*  72 */
-    mwrite32(mf, y->last_str_turn);                              /*  76 */
-    mwrite32(mf, y->utrap);                                      /*  80 */
-    mwrite32(mf, y->utraptype);                                  /*  84 */
-    mwrite32(mf, y->uhunger);                                    /*  88 */
-    mwrite32(mf, y->uhs);                                        /*  92 */
-    mwrite32(mf, y->oldcap);                                     /*  94 */
+    mwrite32(mf, y->utrap);                                      /*  76 */
+    mwrite32(mf, y->utraptype);                                  /*  80 */
+    mwrite32(mf, y->uhunger);                                    /*  84 */
+    mwrite32(mf, y->uhs);                                        /*  88 */
+    mwrite32(mf, y->oldcap);                                     /*  92 */
     mwrite32(mf, y->umconf);                                     /*  96 */
     mwrite32(mf, y->nv_range);                                   /* 100 */
     mwrite32(mf, y->bglyph);                                     /* 104 */
@@ -399,50 +398,50 @@ save_you(struct memfile *mf, struct you *y)
     mwrite32(mf, y->initrace);                                   /* 192 */
     mwrite32(mf, y->initgend);                                   /* 196 */
     mwrite32(mf, y->initalign);                                  /* 200 */
-    mwrite32(mf, y->upantheon);                                  /* 208 */
-    mwrite32(mf, y->uconduct.unvegetarian);                      /* 212 */
-    mwrite32(mf, y->uconduct.unvegan);                           /* 216 */
-    mwrite32(mf, y->uconduct.food);                              /* 220 */
-    mwrite32(mf, y->uconduct.gnostic);                           /* 224 */
-    mwrite32(mf, y->uconduct.weaphit);                           /* 228 */
-    mwrite32(mf, y->uconduct.killer);                            /* 232 */
-    mwrite32(mf, y->uconduct.literate);                          /* 236 */
-    mwrite32(mf, y->uconduct.polypiles);                         /* 240 */
-    mwrite32(mf, y->uconduct.polyselfs);                         /* 244 */
-    mwrite32(mf, y->uconduct.wishes);                            /* 248 */
-    mwrite32(mf, y->uconduct.wisharti);                          /* 252 */
-    mwrite32(mf, y->uconduct.elbereths);                         /* 256 */
-    mwrite32(mf, y->uconduct.puddings);                          /* 260 */
+    mwrite32(mf, y->upantheon);                                  /* 204 */
+    mwrite32(mf, y->uconduct.unvegetarian);                      /* 208 */
+    mwrite32(mf, y->uconduct.unvegan);                           /* 212 */
+    mwrite32(mf, y->uconduct.food);                              /* 216 */
+    mwrite32(mf, y->uconduct.gnostic);                           /* 220 */
+    mwrite32(mf, y->uconduct.weaphit);                           /* 224 */
+    mwrite32(mf, y->uconduct.killer);                            /* 228 */
+    mwrite32(mf, y->uconduct.literate);                          /* 232 */
+    mwrite32(mf, y->uconduct.polypiles);                         /* 236 */
+    mwrite32(mf, y->uconduct.polyselfs);                         /* 240 */
+    mwrite32(mf, y->uconduct.wishes);                            /* 244 */
+    mwrite32(mf, y->uconduct.wisharti);                          /* 248 */
+    mwrite32(mf, y->uconduct.elbereths);                         /* 252 */
+    mwrite32(mf, y->uconduct.puddings);                          /* 256 */
 
-    mwrite32(mf, y->ustuck ? y->ustuck->m_id : 0);               /* 264 */
-    mwrite32(mf, y->usteed ? y->usteed->m_id : 0);               /* 268 */
+    mwrite32(mf, y->ustuck ? y->ustuck->m_id : 0);               /* 260 */
+    mwrite32(mf, y->usteed ? y->usteed->m_id : 0);               /* 264 */
 
-    mwrite8(mf, y->ux);                                          /* 272 */
-    mwrite8(mf, y->uy);                                          /* 273 */
-    mwrite8(mf, y->dx);                                          /* 274 */
-    mwrite8(mf, y->dy);                                          /* 275 */
-    mwrite8(mf, y->tx);                                          /* 276 */
-    mwrite8(mf, y->ty);                                          /* 277 */
-    mwrite8(mf, y->ux0);                                         /* 278 */
-    mwrite8(mf, y->uy0);                                         /* 279 */
-    mwrite8(mf, y->uz.dnum);                                     /* 280 */
-    mwrite8(mf, y->uz.dlevel);                                   /* 281 */
-    mwrite8(mf, y->utolev.dnum);                                 /* 282 */
-    mwrite8(mf, y->utolev.dlevel);                               /* 283 */
-    mwrite8(mf, y->utotype);                                     /* 284 */
-    mwrite8(mf, y->umoved);                                      /* 285 */
-    mwrite8(mf, y->ualign.type);                                 /* 286 */
-    mwrite8(mf, y->ualignbase[0]);                               /* 287 */
-    mwrite8(mf, y->ualignbase[1]);                               /* 288 */
-    mwrite8(mf, y->uluck);                                       /* 289 */
-    mwrite8(mf, y->moreluck);                                    /* 290 */
-    mwrite8(mf, y->uhitinc);                                     /* 291 */
-    mwrite8(mf, y->udaminc);                                     /* 292 */
-    mwrite8(mf, y->uac);                                         /* 293 */
-    mwrite8(mf, y->uspellprot);                                  /* 294 */
-    mwrite8(mf, y->usptime);                                     /* 295 */
-    mwrite8(mf, y->uspmtime);                                    /* 296 */
-    mwrite8(mf, y->twoweap);                                     /* 297 */
+    mwrite8(mf, y->ux);                                          /* 268 */
+    mwrite8(mf, y->uy);                                          /* 269 */
+    mwrite8(mf, y->dx);                                          /* 270 */
+    mwrite8(mf, y->dy);                                          /* 271 */
+    mwrite8(mf, y->tx);                                          /* 272 */
+    mwrite8(mf, y->ty);                                          /* 273 */
+    mwrite8(mf, y->ux0);                                         /* 274 */
+    mwrite8(mf, y->uy0);                                         /* 275 */
+    mwrite8(mf, y->uz.dnum);                                     /* 276 */
+    mwrite8(mf, y->uz.dlevel);                                   /* 277 */
+    mwrite8(mf, y->utolev.dnum);                                 /* 278 */
+    mwrite8(mf, y->utolev.dlevel);                               /* 279 */
+    mwrite8(mf, y->utotype);                                     /* 280 */
+    mwrite8(mf, y->umoved);                                      /* 281 */
+    mwrite8(mf, y->ualign.type);                                 /* 282 */
+    mwrite8(mf, y->ualignbase[0]);                               /* 283 */
+    mwrite8(mf, y->ualignbase[1]);                               /* 284 */
+    mwrite8(mf, y->uluck);                                       /* 285 */
+    mwrite8(mf, y->moreluck);                                    /* 286 */
+    mwrite8(mf, y->uhitinc);                                     /* 287 */
+    mwrite8(mf, y->udaminc);                                     /* 288 */
+    mwrite8(mf, y->uac);                                         /* 289 */
+    mwrite8(mf, y->uspellprot);                                  /* 290 */
+    mwrite8(mf, y->usptime);                                     /* 291 */
+    mwrite8(mf, y->uspmtime);                                    /* 292 */
+    mwrite8(mf, y->twoweap);                                     /* 293 */
 
     mwrite(mf, y->uwhybusy, (sizeof y->uwhybusy));
     mwrite(mf, y->usick_cause, sizeof (y->usick_cause));

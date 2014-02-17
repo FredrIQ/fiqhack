@@ -2310,8 +2310,6 @@ cancel_monst(struct monst * mdef, struct obj * obj, boolean youattack,
         for (otmp = (youdefend ? invent : mdef->minvent); otmp;
              otmp = otmp->nobj)
             cancel_item(otmp);
-        if (youdefend)
-            find_ac();
     }
 
     /* now handle special cases */
@@ -3520,7 +3518,7 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy)
             if (u.usteed && !rn2(3) && !mon_reflects(u.usteed, NULL)) {
                 mon = u.usteed;
                 goto buzzmonst;
-            } else if (zap_hit_check((int)u.uac, 0)) {
+            } else if (zap_hit_check((int)get_player_ac(), 0)) {
                 range -= 2;
                 pline("%s hits you!", The(fltxt));
                 if (Reflecting) {

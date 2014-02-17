@@ -2334,8 +2334,6 @@ doautoexplore(const struct nh_cmd_arg *arg)
 {
     (void) arg;
 
-    u.last_str_turn = 0;
-
     action_incomplete("exploring", occ_autoexplore);
     domove(&(struct nh_cmd_arg){.argtype = CMD_ARG_DIR, .dir = DIR_SELF},
            exploration_interaction_status());
@@ -2367,8 +2365,6 @@ dotravel(const struct nh_cmd_arg *arg)
     }
     flags.travelcc.x = u.tx = cc.x;
     flags.travelcc.y = u.ty = cc.y;
-
-    u.last_str_turn = 0;
 
     action_incomplete("travelling", occ_travel);
     return domove(&(struct nh_cmd_arg){.argtype = CMD_ARG_DIR, .dir = DIR_SELF},

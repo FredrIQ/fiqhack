@@ -780,7 +780,6 @@ pre_move_tasks(boolean didmove)
 {
     /* recalc attribute bonuses from items */
     calc_attr_bonus();
-    find_ac();
     
     /* hallucination, etc. */
     special_vision_handling();

@@ -25,65 +25,108 @@ static
     schar ulevel;
     unsigned int *ability;
     const char *gainstr, *losestr;
-} arc_abil[] = { {
-1, &(HStealth), "", ""}, {
-1, &(HFast), "", ""}, {
-10, &(HSearching), "perceptive", ""}, {
-0, 0, 0, 0}}, bar_abil[] = { {
-1, &(HPoison_resistance), "", ""}, {
-7, &(HFast), "quick", "slow"}, {
-15, &(HStealth), "stealthy", ""}, {
-0, 0, 0, 0}}, cav_abil[] = { {
-7, &(HFast), "quick", "slow"}, {
-15, &(HWarning), "sensitive", ""}, {
-0, 0, 0, 0}}, hea_abil[] = { {
-1, &(HPoison_resistance), "", ""}, {
-15, &(HWarning), "sensitive", ""}, {
-0, 0, 0, 0}}, kni_abil[] = { {
-7, &(HFast), "quick", "slow"}, {
-0, 0, 0, 0}}, mon_abil[] = { {
-1, &(HFast), "", ""}, {
-1, &(HSleep_resistance), "", ""}, {
-1, &(HSee_invisible), "", ""}, {
-3, &(HPoison_resistance), "healthy", ""}, {
-5, &(HStealth), "stealthy", ""}, {
-7, &(HWarning), "sensitive", ""}, {
-9, &(HSearching), "perceptive", "unaware"}, {
-11, &(HFire_resistance), "cool", "warmer"}, {
-13, &(HCold_resistance), "warm", "cooler"}, {
-15, &(HShock_resistance), "insulated", "conductive"}, {
-17, &(HTeleport_control), "controlled", "uncontrolled"}, {
-0, 0, 0, 0}}, pri_abil[] = { {
-15, &(HWarning), "sensitive", ""}, {
-20, &(HFire_resistance), "cool", "warmer"}, {
-0, 0, 0, 0}}, ran_abil[] = { {
-1, &(HSearching), "", ""}, {
-7, &(HStealth), "stealthy", ""}, {
-15, &(HSee_invisible), "", ""}, {
-0, 0, 0, 0}}, rog_abil[] = { {
-1, &(HStealth), "", ""}, {
-10, &(HSearching), "perceptive", ""}, {
-0, 0, 0, 0}}, sam_abil[] = { {
-1, &(HFast), "", ""}, {
-15, &(HStealth), "stealthy", ""}, {
-0, 0, 0, 0}}, tou_abil[] = { {
-10, &(HSearching), "perceptive", ""}, {
-20, &(HPoison_resistance), "hardy", ""}, {
-0, 0, 0, 0}}, val_abil[] = { {
-1, &(HCold_resistance), "", ""}, {
-1, &(HStealth), "", ""}, {
-7, &(HFast), "quick", "slow"}, {
-0, 0, 0, 0}}, wiz_abil[] = { {
-15, &(HWarning), "sensitive", ""}, {
-17, &(HTeleport_control), "controlled", "uncontrolled"}, {
-0, 0, 0, 0}},
+};
 
-    /* Intrinsics conferred by race */
-    elf_abil[] = { {
-4, &(HSleep_resistance), "awake", "tired"}, {
-0, 0, 0, 0}}, orc_abil[] = { {
-1, &(HPoison_resistance), "", ""}, {
-0, 0, 0, 0}};
+struct innate arc_abil[] = { 
+    {1, &(HStealth), "", ""},
+    {1, &(HFast), "", ""},
+    {10, &(HSearching), "perceptive", ""},
+    {0, 0, 0, 0}
+};
+
+struct innate bar_abil[] = {
+    {1, &(HPoison_resistance), "", ""},
+    {7, &(HFast), "quick", "slow"},
+    {15, &(HStealth), "stealthy", ""},
+    {0, 0, 0, 0}
+};
+
+struct innate cav_abil[] = {
+    {7, &(HFast), "quick", "slow"},
+    {15, &(HWarning), "sensitive", ""},
+    {0, 0, 0, 0}
+};
+
+struct innate hea_abil[] = {
+    {1, &(HPoison_resistance), "", ""},
+    {15, &(HWarning), "sensitive", ""},
+    {0, 0, 0, 0}
+};
+
+struct innate kni_abil[] = {
+    {7, &(HFast), "quick", "slow"},
+    {0, 0, 0, 0}
+};
+
+struct innate mon_abil[] = {
+    {1, &(HFast), "", ""},
+    {1, &(HSleep_resistance), "", ""},
+    {1, &(HSee_invisible), "", ""},
+    {3, &(HPoison_resistance), "healthy", ""},
+    {5, &(HStealth), "stealthy", ""},
+    {7, &(HWarning), "sensitive", ""},
+    {9, &(HSearching), "perceptive", "unaware"},
+    {11, &(HFire_resistance), "cool", "warmer"},
+    {13, &(HCold_resistance), "warm", "cooler"},
+    {15, &(HShock_resistance), "insulated", "conductive"},
+    {17, &(HTeleport_control), "controlled", "uncontrolled"},
+    {0, 0, 0, 0}
+};
+
+struct innate pri_abil[] = {
+    {15, &(HWarning), "sensitive", ""},
+    {20, &(HFire_resistance), "cool", "warmer"},
+    {0, 0, 0, 0}
+};
+
+struct innate ran_abil[] = {
+    {1, &(HSearching), "", ""},
+    {7, &(HStealth), "stealthy", ""},
+    {15, &(HSee_invisible), "", ""},
+    {0, 0, 0, 0}
+};
+
+struct innate rog_abil[] = {
+    {1, &(HStealth), "", ""},
+    {10, &(HSearching), "perceptive", ""},
+    {0, 0, 0, 0}
+};
+
+struct innate sam_abil[] = {
+    {1, &(HFast), "", ""},
+    {15, &(HStealth), "stealthy", ""},
+    {0, 0, 0, 0}
+};
+
+struct innate tou_abil[] = {
+    {10, &(HSearching), "perceptive", ""},
+    {20, &(HPoison_resistance), "hardy", ""},
+    {0, 0, 0, 0}
+};
+
+struct innate val_abil[] = {
+    {1, &(HCold_resistance), "", ""},
+    {1, &(HStealth), "", ""},
+    {7, &(HFast), "quick", "slow"},
+    {0, 0, 0, 0}
+};
+
+struct innate wiz_abil[] = {
+    {15, &(HWarning), "sensitive", ""},
+    {17, &(HTeleport_control), "controlled", "uncontrolled"},
+    {0, 0, 0, 0}
+};
+
+/* Intrinsics conferred by race */
+struct innate elf_abil[] = {
+    {4, &(HSleep_resistance), "awake", "tired"},
+    {0, 0, 0, 0}
+};
+
+struct innate orc_abil[] = {
+    {1, &(HPoison_resistance), "", ""},
+    {0, 0, 0, 0}
+};
 
 static void exerper(void);
 static void postadjabil(unsigned int *);
@@ -695,6 +738,59 @@ acurrstr(void)
         return (schar) (19 + str / 50); /* map to 19-21 */
     else
         return (schar) (str - 100);
+}
+
+// Return the player's effective AC rating.
+// Use in place of u.uac.
+schar
+get_player_ac(void)
+{
+    /* Do internal AC calculations with int instead of schar to prevent
+     * overflow.
+     * Return schar because that's what everything expects to see.
+     * Start with intrinsic AC, which might not be 10 from eating rings.
+     */
+    int player_ac = (int)u.uac;
+
+    // If polymorphed, get the AC bonus from that.
+    player_ac -= (10 - mons[u.umonnum].ac);
+
+    // If wearing rings of protection, get the AC bonus from them.
+    if (uleft && uleft->otyp == RIN_PROTECTION)
+        player_ac -= uleft->spe;
+    if (uright && uright->otyp == RIN_PROTECTION)
+        player_ac -= uright->spe;
+
+    // If casting Protection, get the AC bonus from that.
+    player_ac -= u.uspellprot;
+
+    // If the player has divine protection, get the AC bonus from that.
+    player_ac -= u.ublessed;
+
+    /* Armor transformed into dragon skin gives no AC bonus. TODO: Should it at
+       least give a bonus/penalty from its enchantment? */
+    if (uarm && !uskin())
+        player_ac -= ARM_BONUS(uarm);
+    if (uarmc)
+        player_ac -= ARM_BONUS(uarmc);
+    if (uarmh)
+        player_ac -= ARM_BONUS(uarmh);
+    if (uarmf)
+        player_ac -= ARM_BONUS(uarmf);
+    if (uarms)
+        player_ac -= ARM_BONUS(uarms);
+    if (uarmg)
+        player_ac -= ARM_BONUS(uarmg);
+    if (uarmu)
+        player_ac -= ARM_BONUS(uarmu);
+
+    // Trim to valid schar range.
+    if (player_ac < -128)
+        player_ac = -128;
+    if (player_ac > 127)
+        player_ac = 127;
+
+    return (schar)player_ac;
 }
 
 /* avoid possible problems with alignment overflow, and provide a centralized

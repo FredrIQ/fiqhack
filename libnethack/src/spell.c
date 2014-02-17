@@ -629,7 +629,7 @@ cast_protection(void)
 {
     int loglev = 0;
     int l = u.ulevel;
-    int natac = u.uac - u.uspellprot;
+    int natac = get_player_ac() - u.uspellprot;
     int gain;
 
     /* loglev=log2(u.ulevel)+1 (1..5) */
@@ -667,7 +667,6 @@ cast_protection(void)
             P_SKILL(spell_skilltype(SPE_PROTECTION)) == P_EXPERT ? 20 : 10;
         if (!u.usptime)
             u.usptime = u.uspmtime;
-        find_ac();
     } else {
         pline("Your skin feels warm for a moment.");
     }
@@ -716,7 +715,73 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     coord cc;
     schar dx, dy, dz;
 
-    /* 
+    /*
+     * Find the skill the hero has in a spell type category.
+     * See spell_skilltype for categories.
+     */
+    skill = spell_skilltype(spellid(spell));
+    role_skill = P_SKILL(skill);
+
+    // Get the direction or target, if applicable.
+    // We want to do this *before* determining spell success,
+    // both for interface consistency and to cut down on needless
+    // mksobj calls.
+    switch (spellid(spell)) {
+ 
+    // These spells ask the user to target a specific space.
+    case SPE_CONE_OF_COLD:
+    case SPE_FIREBALL:
+        // If Skilled or better, get a specific space.
+        if (role_skill >= P_SKILLED) {
+            if (throwspell(&dx, &dy, arg)) {
+                dz = 0;
+                break;
+            }
+            else {
+                // Decided not to target anything.  Abort the spell.
+                pline("Spell canceled.");
+                return 0;
+            }
+        }
+        // If not Skilled, fall through.
+    case SPE_FORCE_BOLT:
+    case SPE_SLEEP:
+    case SPE_MAGIC_MISSILE:
+    case SPE_KNOCK:
+    case SPE_SLOW_MONSTER:
+    case SPE_WIZARD_LOCK:
+    case SPE_DIG:
+    case SPE_TURN_UNDEAD:
+    case SPE_POLYMORPH:
+    case SPE_TELEPORT_AWAY:
+    case SPE_CANCELLATION:
+    case SPE_FINGER_OF_DEATH:
+    case SPE_HEALING:
+    case SPE_EXTRA_HEALING:
+    case SPE_DRAIN_LIFE:
+    case SPE_STONE_TO_FLESH:
+        if (atme)
+            dx = dy = dz = 0;
+        else if (!getargdir(arg, NULL, &dx, &dy, &dz)) {
+            /* getdir cancelled, abort */
+            pline("Spell canceled.");
+            return 0;
+        }
+        break;
+    case SPE_JUMPING:
+        if(!get_jump_coords(arg, &cc, max(role_skill, 1))) {
+            // No jumping after all, I guess.
+            pline("Spell canceled.");
+            return 0;
+        }
+        break;
+    // The rest of the spells don't have targeting.
+    default:
+        break;
+    }
+ 
+
+    /*
      * Spell casting no longer affects knowledge of the spell. A
      * decrement of spell knowledge is done every turn.
      */
@@ -768,25 +833,13 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
             intell = acurr(A_INT);
             if (!Role_if(PM_WIZARD))
                 intell = 10;
-            switch (intell) {
-            case 25:
-            case 24:
-            case 23:
-            case 22:
-            case 21:
-            case 20:
-            case 19:
-            case 18:
-            case 17:
+            if (intell >= 17)
                 hungr = 0;
-                break;
-            case 16:
+            else if (intell == 16)
                 hungr /= 4;
-                break;
-            case 15:
+            else if (intell == 15)
                 hungr /= 2;
-                break;
-            }
+
             /* don't put player (quite) into fainting from casting a spell,
                particularly since they might not even be hungry at the
                beginning; however, this is low enough that they must eat before
@@ -810,12 +863,6 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     pseudo = mksobj(level, spellid(spell), FALSE, FALSE);
     pseudo->blessed = pseudo->cursed = 0;
     pseudo->quan = 20L; /* do not let useup get it */
-    /* 
-     * Find the skill the hero has in a spell type category.
-     * See spell_skilltype for categories.
-     */
-    skill = spell_skilltype(pseudo->otyp);
-    role_skill = P_SKILL(skill);
 
     switch (pseudo->otyp) {
         /* 
@@ -827,33 +874,30 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     case SPE_CONE_OF_COLD:
     case SPE_FIREBALL:
         if (role_skill >= P_SKILLED) {
-            if (throwspell(&dx, &dy, arg)) {
-                dz = 0;
-                cc.x = dx;
-                cc.y = dy;
-                n = rnd(8) + 1;
-                while (n--) {
-                    if (!dx && !dy && !dz) {
-                        if ((damage = zapyourself(pseudo, TRUE)) != 0) {
-                            char buf[BUFSZ];
+            cc.x = dx;
+            cc.y = dy;
+            n = rnd(8) + 1;
+            while (n--) {
+                if (!dx && !dy && !dz) {
+                    if ((damage = zapyourself(pseudo, TRUE)) != 0) {
+                        char buf[BUFSZ];
 
-                            sprintf(buf, "zapped %sself with a spell", uhim());
-                            losehp(damage, buf, NO_KILLER_PREFIX);
-                        }
-                    } else {
-                        explode(dx, dy, pseudo->otyp - SPE_MAGIC_MISSILE + 10,
-                                u.ulevel / 2 + 1 + spell_damage_bonus(), 0,
-                                (pseudo->otyp ==
-                                 SPE_CONE_OF_COLD) ? EXPL_FROSTY : EXPL_FIERY);
+                        sprintf(buf, "zapped %sself with a spell", uhim());
+                        losehp(damage, buf, NO_KILLER_PREFIX);
                     }
-                    dx = cc.x + rnd(3) - 2;
-                    dy = cc.y + rnd(3) - 2;
-                    if (!isok(dx, dy) || !cansee(dx, dy) ||
-                        IS_STWALL(level->locations[dx][dy].typ) || Engulfed) {
-                        /* Spell is reflected back to center */
-                        dx = cc.x;
-                        dy = cc.y;
-                    }
+                } else {
+                    explode(dx, dy, pseudo->otyp - SPE_MAGIC_MISSILE + 10,
+                            u.ulevel / 2 + 1 + spell_damage_bonus(), 0,
+                            (pseudo->otyp ==
+                             SPE_CONE_OF_COLD) ? EXPL_FROSTY : EXPL_FIERY);
+                }
+                dx = cc.x + rnd(3) - 2;
+                dy = cc.y + rnd(3) - 2;
+                if (!isok(dx, dy) || !cansee(dx, dy) ||
+                    IS_STWALL(level->locations[dx][dy].typ) || Engulfed) {
+                    /* Spell is reflected back to center */
+                    dx = cc.x;
+                    dy = cc.y;
                 }
             }
             break;
@@ -880,14 +924,6 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     case SPE_DRAIN_LIFE:
     case SPE_STONE_TO_FLESH:
         if (objects[pseudo->otyp].oc_dir != NODIR) {
-            if (atme)
-                dx = dy = dz = 0;
-            else if (!getargdir(arg, NULL, &dx, &dy, &dz)) {
-                /* getdir cancelled, generate a random direction */
-                dz = 0;
-                confdir(&dx, &dy);
-                pline("The magical energy is released!");
-            }
             if (!dx && !dy && !dz) {
                 if ((damage = zapyourself(pseudo, TRUE)) != 0) {
                     char buf[BUFSZ];
@@ -958,8 +994,7 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
         cast_protection();
         break;
     case SPE_JUMPING:
-        if (!jump(&(struct nh_cmd_arg){.argtype = 0}, max(role_skill, 1)))
-            pline("Nothing happens.");
+        jump_to_coords(&cc);
         break;
     default:
         impossible("Unknown spell %d attempted.", spell);
@@ -991,7 +1026,7 @@ throwspell(schar *dx, schar *dy, const struct nh_cmd_arg *arg)
     pline("Where do you want to cast the spell?");
     cc.x = u.ux;
     cc.y = u.uy;
-    if (getargpos(arg, &cc, TRUE, "the desired position") == NHCR_CLIENT_CANCEL)
+    if (getargpos(arg, &cc, FALSE, "the desired position") == NHCR_CLIENT_CANCEL)
         return 0;       /* user pressed ESC */
     /* The number of moves from hero to where the spell drops. */
     if (distmin(u.ux, u.uy, cc.x, cc.y) > 10) {

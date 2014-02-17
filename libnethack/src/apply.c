@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Sean Hunt, 2014-02-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1286,11 +1286,10 @@ dojump(const struct nh_cmd_arg *arg)
 }
 
 /* Meaning of "magic" argument: 0 means physical; otherwise skill level */
+// Returns 0 if the jump should be aborted.
 int
-jump(const struct nh_cmd_arg *arg, int magic)
+get_jump_coords(const struct nh_cmd_arg *arg, coord *cc, int magic)
 {
-    coord cc;
-
     if (!magic && (nolimbs(youmonst.data) || slithy(youmonst.data))) {
         /* normally (nolimbs || slithy) implies !Jumping, but that isn't
            necessarily the case for knights */
@@ -1300,17 +1299,9 @@ jump(const struct nh_cmd_arg *arg, int magic)
         pline("You can't jump very far.");
         return 0;
     } else if (Engulfed) {
-        if (magic) {
-            pline("You bounce around a little.");
-            return 1;
-        }
         pline("You've got to be kidding!");
         return 0;
     } else if (u.uinwater) {
-        if (magic) {
-            pline("You swish around a little.");
-            return 1;
-        }
         pline("This calls for swimming, not jumping!");
         return 0;
     } else if (u.ustuck) {
@@ -1319,17 +1310,9 @@ jump(const struct nh_cmd_arg *arg, int magic)
             u.ustuck = 0;
             return 1;
         }
-        if (magic) {
-            pline("You writhe a little in the grasp of %s!", mon_nam(u.ustuck));
-            return 1;
-        }
         pline("You cannot escape from %s!", mon_nam(u.ustuck));
         return 0;
     } else if (Levitation || Is_airlevel(&u.uz) || Is_waterlevel(&u.uz)) {
-        if (magic) {
-            pline("You flail around a little.");
-            return 1;
-        }
         pline("You don't have enough traction to jump.");
         return 0;
     } else if (!magic && near_capacity() > UNENCUMBERED) {
@@ -1357,30 +1340,29 @@ jump(const struct nh_cmd_arg *arg, int magic)
     }
 
     pline("Where do you want to jump?");
-    cc.x = u.ux;
-    cc.y = u.uy;
-    if (getargpos(arg, &cc, TRUE, "the desired position") == NHCR_CLIENT_CANCEL)
+    cc->x = u.ux;
+    cc->y = u.uy;
+    if (getargpos(arg, cc, FALSE, "the desired position") == NHCR_CLIENT_CANCEL)
         return 0;       /* user pressed ESC */
     if (!magic && !(HJumping & ~INTRINSIC) && !EJumping &&
-        distu(cc.x, cc.y) != 5) {
+        distu(cc->x, cc->y) != 5) {
         /* The Knight jumping restriction still applies when riding a horse.
            After all, what shape is the knight piece in chess? */
         pline("Illegal move!");
         return 0;
-    } else if (distu(cc.x, cc.y) > (magic ? 6 + magic * 3 : 9)) {
+    } else if (distu(cc->x, cc->y) > (magic ? 6 + magic * 3 : 9)) {
         pline("Too far!");
         return 0;
-    } else if (!cansee(cc.x, cc.y)) {
+    } else if (!cansee(cc->x, cc->y)) {
         pline("You cannot see where to land!");
         return 0;
-    } else if (!isok(cc.x, cc.y)) {
+    } else if (!isok(cc->x, cc->y)) {
         pline("You cannot jump there!");
         return 0;
     } else {
-        coord uc;
         int range, temp;
 
-        if (u.utrap)
+        if (u.utrap) {
             switch (u.utraptype) {
             case TT_BEARTRAP:{
                     long side = rn2(3) ? LEFT_SIDE : RIGHT_SIDE;
@@ -1407,36 +1389,58 @@ jump(const struct nh_cmd_arg *arg, int magic)
                      makeplural(body_part(LEG)));
                 set_wounded_legs(LEFT_SIDE, rn1(10, 11));
                 set_wounded_legs(RIGHT_SIDE, rn1(10, 11));
-                return 1;
             }
-
-        /* 
-         * Check the path from uc to cc, calling hurtle_step at each
-         * location.  The final position actually reached will be
-         * in cc.
-         */
-        uc.x = u.ux;
-        uc.y = u.uy;
-        /* calculate max(abs(dx), abs(dy)) as the range */
-        range = cc.x - uc.x;
-        if (range < 0)
-            range = -range;
-        temp = cc.y - uc.y;
-        if (temp < 0)
-            temp = -temp;
-        if (range < temp)
-            range = temp;
-        walk_path(&uc, &cc, hurtle_step, &range);
-
-        /* A little Sokoban guilt... */
-        if (In_sokoban(&u.uz))
-            change_luck(-1);
-
-        teleds(cc.x, cc.y, TRUE);
-        helpless(1, hr_moving, "jumping around", NULL);
-        morehungry(rnd(25));
-        return 1;
+        }
     }
+    return 1;
+}
+
+void
+jump_to_coords(coord *cc)
+{
+    coord uc;
+    int range, temp;
+
+    /*
+     * Check the path from uc to cc, calling hurtle_step at each
+     * location.  The final position actually reached will be
+     * in cc.
+     */
+    uc.x = u.ux;
+    uc.y = u.uy;
+    /* calculate max(abs(dx), abs(dy)) as the range */
+    range = cc->x - uc.x;
+    if (range < 0)
+        range = -range;
+    temp = cc->y - uc.y;
+    if (temp < 0)
+        temp = -temp;
+    if (range < temp)
+        range = temp;
+    walk_path(&uc, cc, hurtle_step, &range);
+
+    /* A little Sokoban guilt... */
+    if (In_sokoban(&u.uz))
+        change_luck(-1);
+
+    teleds(cc->x, cc->y, TRUE);
+    helpless(1, hr_moving, "jumping around", NULL);
+    morehungry(rnd(25));
+}
+
+/* Meaning of "magic" argument: 0 means physical; otherwise skill level */
+int
+jump(const struct nh_cmd_arg *arg, int magic)
+{
+    coord cc;
+
+    //Get the coordinates.  This might involve aborting.
+    if(!get_jump_coords(arg, &cc, magic))
+        return 0;
+
+    //Now do the actual jumping.
+    jump_to_coords(&cc);
+    return 1;
 }
 
 boolean
