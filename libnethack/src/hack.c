@@ -2464,29 +2464,8 @@ lookaround(enum u_interaction_mode uim)
     // Check whether it's time to turn.
     if (!go2 && !noturn && !m0 && i0 &&
         (corrct == 1 || (corrct == 2 && i0 == 1))) {
-        /* make sure that we do not turn too far */
-        if (i0 == 2) {
-            if (u.dx == y0 - u.uy && u.dy == u.ux - x0)
-                i = 2;  /* straight turn right */
-            else
-                i = -2; /* straight turn left */
-        } else if (u.dx && u.dy) {
-            if ((u.dx == u.dy && y0 == u.uy) || (u.dx != u.dy && y0 != u.uy))
-                i = -1; /* half turn left */
-            else
-                i = 1;  /* half turn right */
-        } else {
-            if ((x0 - u.ux == y0 - u.uy && !u.dy) ||
-                (x0 - u.ux != y0 - u.uy && u.dy))
-                i = 1;  /* half turn right */
-            else
-                i = -1; /* half turn left */
-        }
-
-        if (i <= 2 && i >= -2) {
-            u.dx = x0 - u.ux;
-            u.dy = y0 - u.uy;
-        }
+        u.dx = x0 - u.ux;
+        u.dy = y0 - u.uy;
     }
     return;
 
