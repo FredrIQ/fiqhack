@@ -2483,9 +2483,7 @@ lookaround(enum u_interaction_mode uim)
                 i = -1; /* half turn left */
         }
 
-        i += u.last_str_turn;
         if (i <= 2 && i >= -2) {
-            u.last_str_turn = i;
             u.dx = x0 - u.ux;
             u.dy = y0 - u.uy;
         }

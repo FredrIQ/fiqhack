@@ -67,7 +67,6 @@ struct you {
     d_level utolev;     /* level monster teleported you to, or uz */
     uchar utotype;      /* bitmask of goto_level() flags for utolev */
     boolean umoved;     /* changed map location (post-move) */
-    int last_str_turn;  /* 0: none, 1: half turn, 2: full turn */
     /* +: turn right, -: turn left */
     int ulevel;         /* 1 to MAXULEV */
     int ulevelmax;
