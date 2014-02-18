@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-16 */
+/* Last modified by Sean Hunt, 2014-02-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2466,7 +2466,7 @@ lookaround(enum u_interaction_mode uim)
         goto stop;
 
     // Check whether it's time to turn.
-    if (!go2 && !noturn && !m0 && i0 &&
+    if (flags.corridorbranch && !noturn && !m0 && i0 &&
         (corrct == 1 || (corrct == 2 && i0 == 1))) {
         u.dx = x0 - u.ux;
         u.dy = y0 - u.uy;

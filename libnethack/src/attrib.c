@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Sean Hunt, 2014-02-18 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -20,45 +20,44 @@ const char *const plusattr[] = {
 };
 
 
-static
-    const struct innate {
+struct innate {
     schar ulevel;
     unsigned int *ability;
     const char *gainstr, *losestr;
 };
 
-struct innate arc_abil[] = { 
+static const struct innate arc_abil[] = { 
     {1, &(HStealth), "", ""},
     {1, &(HFast), "", ""},
     {10, &(HSearching), "perceptive", ""},
     {0, 0, 0, 0}
 };
 
-struct innate bar_abil[] = {
+static const struct innate bar_abil[] = {
     {1, &(HPoison_resistance), "", ""},
     {7, &(HFast), "quick", "slow"},
     {15, &(HStealth), "stealthy", ""},
     {0, 0, 0, 0}
 };
 
-struct innate cav_abil[] = {
+static const struct innate cav_abil[] = {
     {7, &(HFast), "quick", "slow"},
     {15, &(HWarning), "sensitive", ""},
     {0, 0, 0, 0}
 };
 
-struct innate hea_abil[] = {
+static const struct innate hea_abil[] = {
     {1, &(HPoison_resistance), "", ""},
     {15, &(HWarning), "sensitive", ""},
     {0, 0, 0, 0}
 };
 
-struct innate kni_abil[] = {
+static const struct innate kni_abil[] = {
     {7, &(HFast), "quick", "slow"},
     {0, 0, 0, 0}
 };
 
-struct innate mon_abil[] = {
+static const struct innate mon_abil[] = {
     {1, &(HFast), "", ""},
     {1, &(HSleep_resistance), "", ""},
     {1, &(HSee_invisible), "", ""},
@@ -73,57 +72,57 @@ struct innate mon_abil[] = {
     {0, 0, 0, 0}
 };
 
-struct innate pri_abil[] = {
+static const struct innate pri_abil[] = {
     {15, &(HWarning), "sensitive", ""},
     {20, &(HFire_resistance), "cool", "warmer"},
     {0, 0, 0, 0}
 };
 
-struct innate ran_abil[] = {
+static const struct innate ran_abil[] = {
     {1, &(HSearching), "", ""},
     {7, &(HStealth), "stealthy", ""},
     {15, &(HSee_invisible), "", ""},
     {0, 0, 0, 0}
 };
 
-struct innate rog_abil[] = {
+static const struct innate rog_abil[] = {
     {1, &(HStealth), "", ""},
     {10, &(HSearching), "perceptive", ""},
     {0, 0, 0, 0}
 };
 
-struct innate sam_abil[] = {
+static const struct innate sam_abil[] = {
     {1, &(HFast), "", ""},
     {15, &(HStealth), "stealthy", ""},
     {0, 0, 0, 0}
 };
 
-struct innate tou_abil[] = {
+static const struct innate tou_abil[] = {
     {10, &(HSearching), "perceptive", ""},
     {20, &(HPoison_resistance), "hardy", ""},
     {0, 0, 0, 0}
 };
 
-struct innate val_abil[] = {
+static const struct innate val_abil[] = {
     {1, &(HCold_resistance), "", ""},
     {1, &(HStealth), "", ""},
     {7, &(HFast), "quick", "slow"},
     {0, 0, 0, 0}
 };
 
-struct innate wiz_abil[] = {
+static const struct innate wiz_abil[] = {
     {15, &(HWarning), "sensitive", ""},
     {17, &(HTeleport_control), "controlled", "uncontrolled"},
     {0, 0, 0, 0}
 };
 
 /* Intrinsics conferred by race */
-struct innate elf_abil[] = {
+static const struct innate elf_abil[] = {
     {4, &(HSleep_resistance), "awake", "tired"},
     {0, 0, 0, 0}
 };
 
-struct innate orc_abil[] = {
+static const struct innate orc_abil[] = {
     {1, &(HPoison_resistance), "", ""},
     {0, 0, 0, 0}
 };
