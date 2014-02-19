@@ -619,6 +619,11 @@ wiz_show_seenv(const struct nh_cmd_arg *arg)
     return 0;
 }
 
+static char hex[] = {
+    ' ', '1', '2', '3', '4', '5', '6', '7',
+    '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+};
+
 /* #vision command */
 static int
 wiz_show_vision(const struct nh_cmd_arg *arg)
@@ -630,7 +635,7 @@ wiz_show_vision(const struct nh_cmd_arg *arg)
     (void) arg;
 
     init_menulist(&menu);
-    sprintf(row, "Flags: 0x%x could see, 0x%x in sight, 0x%x temp lit",
+    sprintf(row, "Flags: 0x%x could see, 0x%x in sight, 0x%x temp lit, 0x8 tile lit",
             COULD_SEE, IN_SIGHT, TEMP_LIT);
     add_menutext(&menu, row);
     add_menutext(&menu, "");
@@ -640,10 +645,8 @@ wiz_show_vision(const struct nh_cmd_arg *arg)
                 row[x] = '@';
             else {
                 v = viz_array[y][x];    /* data access should be hidden */
-                if (v == 0)
-                    row[x] = ' ';
-                else
-                    row[x] = '0' + viz_array[y][x];
+                v += 8 * level->locations[x][y].lit;
+                row[x] = hex[v];
             }
         }
         /* remove trailing spaces */

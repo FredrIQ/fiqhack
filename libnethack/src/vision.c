@@ -192,8 +192,8 @@ vision_reset(void)
     /* Dig the level */
     for (y = 0; y < ROWNO; y++) {
         dig_left = 0;
-        block = TRUE;   /* location (0,y) is always stone; it's !isok() */
-        loc = &level->locations[1][y];
+        block = TRUE;   /* the left edge blocks always stone; it's !isok() */
+        loc = &level->locations[0][y];
         for (x = 0; x < COLNO; x++, loc += ROWNO)
             if (block != (IS_ROCK(loc->typ) || does_block(level, x, y))) {
                 if (block) {
