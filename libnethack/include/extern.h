@@ -53,6 +53,7 @@ struct you;
 /* ### allmain.c ### */
 
 extern void startup_common(boolean);
+extern void realtime_messages(boolean, boolean);
 extern void action_incomplete(const char *gerund, enum occupation occupation);
 extern void action_interrupted(void);
 extern void action_completed(void);

@@ -158,7 +158,7 @@ startup_common(boolean including_program_state)
 }
 
 
-static void
+void
 realtime_messages(boolean moon, boolean fri13)
 {
     if (moon) {
@@ -178,7 +178,7 @@ realtime_messages(boolean moon, boolean fri13)
 
 
 static void
-realtime_tasks(void)
+realtime_tasks(boolean print)
 {
     int prev_moonphase = flags.moonphase;
     int prev_friday13 = flags.friday13;
@@ -205,7 +205,8 @@ realtime_tasks(void)
         msg_friday13 = FALSE;
     }
 
-    realtime_messages(msg_moonphase, msg_friday13);
+    if (print)
+        realtime_messages(msg_moonphase, msg_friday13);
 }
 
 
@@ -385,7 +386,7 @@ nh_play_game(int fd)
     bot();
     flush_screen();
 
-    realtime_messages(TRUE, TRUE);
+    realtime_tasks(FALSE);
     update_inventory();
 
     /* The main loop. */
@@ -816,7 +817,7 @@ pre_move_tasks(boolean didmove)
         clear_travel_direction();    
 
     if (didmove && moves % 100 == 0)
-        realtime_tasks();
+        realtime_tasks(TRUE);
 
     update_inventory();
     update_location(FALSE);
