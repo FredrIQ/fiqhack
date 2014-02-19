@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-16 */
+/* Last modified by Derrick Sund, 2014-02-18 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -411,7 +411,7 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
                     lo_y = (pass == 0) ? cy : 0;
                     hi_y = (pass == 0) ? ROWNO - 1 : cy;
                     for (ty = lo_y; ty <= hi_y; ty++) {
-                        lo_x = (pass == 0 && ty == lo_y) ? cx : 0;
+                        lo_x = (pass == 0 && ty == lo_y) ? cx + 1 : 0;
                         hi_x = (pass == 1 && ty == hi_y) ? cx : COLNO - 1;
                         for (tx = lo_x; tx <= hi_x; tx++) {
                             k = display_buffer[ty][tx].bg;
