@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Derrick Sund, 2014-02-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -807,173 +807,134 @@ static struct {
     const boolean pname;
 } bogusmons[] = {
     /* misc. */
-    {
-    "jumbo shrip", FALSE}, {
-    "giant pigmy", FALSE}, {
-    "gnu", FALSE}, {
-    "killer penguin", FALSE}, {
-    "giant cockroach", FALSE}, {
-    "giant slug", FALSE}, {
-    "maggot", FALSE}, {
-    "pterodactyl", FALSE}, {
-    "tyrannosaurus rex", FALSE}, {
-    "basilisk", FALSE}, {
-    "beholder", FALSE}, {
-    "nightmare", FALSE}, {
-    "efreeti", FALSE}, {
-    "marid", FALSE}, {
-    "rot grub", FALSE}, {
-    "bookworm", FALSE}, {
-    "master lichen", FALSE}, {
-    "shadow", FALSE}, {
-    "hologram", FALSE}, {
-    "jester", FALSE}, {
-    "attorney", FALSE}, {
-    "sleazoid", FALSE}, {
-    "killer tomato", FALSE}, {
-    "amazon", FALSE}, {
-    "robot", FALSE}, {
-    "battlemech", FALSE}, {
-    "rhinovirus", FALSE}, {
-    "harpy", FALSE}, {
-    "lion-dog", FALSE}, {
-    "rat-ant", FALSE}, {
-    "Y2K bug", FALSE},
+    {"jumbo shrip", FALSE},
+    {"giant pigmy", FALSE},
+    {"gnu", FALSE},
+    {"killer penguin", FALSE},
+    {"giant cockroach", FALSE},
+    {"giant slug", FALSE},
+    {"maggot", FALSE},
+    {"pterodactyl", FALSE},
+    {"tyrannosaurus rex", FALSE},
+    {"basilisk", FALSE},
+    {"beholder", FALSE},
+    {"nightmare", FALSE},
+    {"efreeti", FALSE},
+    {"marid", FALSE},
+    {"rot grub", FALSE},
+    {"bookworm", FALSE},
+    {"master lichen", FALSE},
+    {"shadow", FALSE},
+    {"hologram", FALSE},
+    {"jester", FALSE},
+    {"attorney", FALSE},
+    {"sleazoid", FALSE},
+    {"killer tomato", FALSE},
+    {"amazon", FALSE},
+    {"robot", FALSE},
+    {"battlemech", FALSE},
+    {"rhinovirus", FALSE},
+    {"harpy", FALSE},
+    {"lion-dog", FALSE},
+    {"rat-ant", FALSE},
+    {"Y2K bug", FALSE},
         /* Quendor (Zork, &c.) */
-    {
-    "grue", FALSE}, {
-    "Christmas-tree monster", FALSE}, {
-    "luck sucker", FALSE}, {
-    "paskald", FALSE}, {
-    "brogmoid", FALSE}, {
-    "dornbeast", FALSE},
+    {"grue", FALSE},
+    {"Christmas-tree monster", FALSE},
+    {"luck sucker", FALSE},
+    {"paskald", FALSE},
+    {"brogmoid", FALSE},
+    {"dornbeast", FALSE},
         /* Moria */
-    {
-    "Ancient Multi-Hued Dragon", FALSE}, {
-    "Evil Iggy", FALSE},
+    {"Ancient Multi-Hued Dragon", FALSE},
+    {"Evil Iggy", FALSE},
         /* Rogue */
-    {
-    "emu", FALSE}, {
-    "kestrel", FALSE}, {
-    "xeroc", FALSE}, {
-    "venus flytrap", FALSE},
+    {"emu", FALSE},
+    {"kestrel", FALSE},
+    {"xeroc", FALSE},
+    {"venus flytrap", FALSE},
         /* Wizardry */
-    {
-    "creeping coins", FALSE},
+    {"creeping coins", FALSE},
         /* Greek legend */
-    {
-    "hydra", FALSE}, {
-    "siren", FALSE},
+    {"hydra", FALSE},
+    {"siren", FALSE},
         /* Monty Python */
-    {
-    "killer bunny", FALSE},
+    {"killer bunny", FALSE},
         /* The Princess Bride */
-    {
-    "rodent of unusual size", FALSE},
+    {"rodent of unusual size", FALSE},
         /* "Only you can prevent forest fires!" */
-    {
-    "Smokey the bear", TRUE},
+    {"Smokey the bear", TRUE},
         /* Discworld */
-    {
-    "Luggage", FALSE},
+    {"Luggage", FALSE},
         /* Lord of the Rings */
-    {
-    "Ent", FALSE},
+    {"Ent", FALSE},
         /* Xanth */
-    {
-    "tangle tree", FALSE}, {
-    "nickelpede", FALSE}, {
-    "wiggle", FALSE},
+    {"tangle tree", FALSE},
+    {"nickelpede", FALSE},
+    {"wiggle", FALSE},
         /* Lewis Carroll */
-    {
-    "white rabbit", FALSE}, {
-    "snark", FALSE},
+    {"white rabbit", FALSE},
+    {"snark", FALSE},
         /* Dr. Dolittle */
-    {
-    "pushmi-pullyu", FALSE},
+    {"pushmi-pullyu", FALSE},
         /* The Smurfs */
-    {
-    "smurf", FALSE},
+    {"smurf", FALSE},
         /* Star Trek */
-    {
-    "tribble", FALSE}, {
-    "Klingon", FALSE}, {
-    "Borg", FALSE},
+    {"tribble", FALSE},
+    {"Klingon", FALSE},
+    {"Borg", FALSE},
         /* Star Wars */
-    {
-    "Ewok", FALSE},
+    {"Ewok", FALSE},
         /* Tonari no Totoro */
-    {
-    "Totoro", FALSE},
+    {"Totoro", FALSE},
         /* Nausicaa */
-    {
-    "ohmu", FALSE},
+    {"ohmu", FALSE},
         /* Sailor Moon */
-    {
-    "youma", FALSE},
+    {"youma", FALSE},
         /* Pokemon (Meowth) */
-    {
-    "nyaasu", FALSE},
+    {"nyaasu", FALSE},
         /* monster movies */
-    {
-    "Godzilla", TRUE}, {
-    "King Kong", TRUE},
+    {"Godzilla", TRUE},
+    {"King Kong", TRUE},
         /* old L of SH */
-    {
-    "earthquake beast", FALSE},
+    {"earthquake beast", FALSE},
         /* Robotech */
-    {
-    "Invid", FALSE},
+    {"Invid", FALSE},
         /* The Terminator */
-    {
-    "Terminator", FALSE},
+    {"Terminator", FALSE},
         /* Bubblegum Crisis */
-    {
-    "boomer", FALSE},
+    {"boomer", FALSE},
         /* Dr. Who ("Exterminate!") */
-    {
-    "Dalek", FALSE},
+    {"Dalek", FALSE},
         /* Hitchhiker's Guide to the Galaxy */
-    {
-    "microscopic space fleet", FALSE}, {
-    "Ravenous Bugblatter Beast of Traal", FALSE},
+    {"microscopic space fleet", FALSE},
+    {"Ravenous Bugblatter Beast of Traal", FALSE},
         /* TMNT */
-    {
-    "teenage mutant ninja turtle", FALSE},
+    {"teenage mutant ninja turtle", FALSE},
         /* Usagi Yojimbo */
-    {
-    "samurai rabbit", FALSE},
+    {"samurai rabbit", FALSE},
         /* Cerebus */
-    {
-    "aardvark", FALSE},
+    {"aardvark", FALSE},
         /* Little Shop of Horrors */
-    {
-    "Audrey II", TRUE},
+    {"Audrey II", TRUE},
         /* 50's rock 'n' roll */
-    {
-    "witch doctor", FALSE}, {
-    "one-eyed one-horned flying purple people eater", FALSE},
+    {"witch doctor", FALSE},
+    {"one-eyed one-horned flying purple people eater", FALSE},
         /* saccharine kiddy TV */
-    {
-    "Barney the dinosaur", TRUE},
+    {"Barney the dinosaur", TRUE},
         /* Angband */
-    {
-    "Morgoth", TRUE},
+    {"Morgoth", TRUE},
         /* Babylon 5 */
-    {
-    "Vorlon", FALSE},
+    {"Vorlon", FALSE},
         /* King Arthur */
-    {
-    "questing beast", FALSE},
+    {"questing beast", FALSE},
         /* Movie */
-    {
-    "Predator", FALSE},
+    {"Predator", FALSE},
         /* common pest */
-    {
-    "mother-in-law", FALSE},
+    {"mother-in-law", FALSE},
         /* Battlestar Galactica */
-    {
-"cylon", FALSE},};
+    {"cylon", FALSE},
+};
 
 
 /* Return a random monster name, for hallucination.
