@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-18 */
+/* Last modified by Derrick Sund, 2014-02-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -22,6 +22,18 @@ static void move_update(boolean);
 
 #define IS_SHOP(x) (level->rooms[x].rtype >= SHOPBASE)
 
+/* These variables need to be persistent across domove calls, or else rounding
+ * corners breaks.
+ */
+static schar dx;
+static schar dy;
+
+void
+clear_travel_direction(void)
+{
+    dx = 0;
+    dy = 0;
+}
 
 boolean
 revive_nasty(int x, int y, const char *msg)
@@ -1067,9 +1079,12 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
     int bc_control;     /* control for ball&chain */
     boolean cause_delay = FALSE;        /* dragging ball will skip a move */
     const char *predicament;
-    schar dx, dy, dz;
+    schar dz;
 
-    if (!getargdir(arg, NULL, &dx, &dy, &dz))
+    /* If we already have values for dx and dy, it means we're running.
+     * We don't want to overwrite them in that case, or else turning corners
+     * breaks. */
+    if (!dx && !dy && !getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
 
     if (dz) {
@@ -1132,11 +1147,6 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
             return 0;
         }
     }
-
-    // Farmove and friends don't actually need u.dx and u.dy to sort of work,
-    // but lookaround likes to know what direction we're going.
-    u.dx = dx;
-    u.dy = dy;
 
     /* Travel hit an obstacle, or domove() was called with dx, dy and dz all
        zero, which they shouldn't do. */
@@ -1286,6 +1296,17 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
 
         mtmp = m_at(level, x, y);
         /* Checks for confirm, autoexplore have moved to attack_checks(). */
+    }
+
+    /* Call lookaround here if running, because we need to know whether to
+     * change directions to round a corner. */
+    if (last_command_was("run")) {
+        lookaround(uim_displace);
+        if (flags.interrupted) {
+            dx = 0;
+            dy = 0;
+            return 0;
+        }
     }
 
     u.ux0 = u.ux;
@@ -2269,7 +2290,7 @@ dopickup(const struct nh_cmd_arg *arg)
 void
 lookaround(enum u_interaction_mode uim)
 {
-    /* x0 and y0 are candidate spaces to move into next; while u.dx and u.dy
+    /* x0 and y0 are candidate spaces to move into next; while dx and dy
      * define the desired direction of movement, that might not actually be
      * possible.
      *
@@ -2283,7 +2304,7 @@ lookaround(enum u_interaction_mode uim)
     int x, y, i, x0 = 0, y0 = 0, m0 = 1, i0 = 9;
 
     // corrct: The number of corridor spaces we've found around us.
-    // noturn: Set to 1 if we shouldn't divert from the u.dx, u.dy plan.
+    // noturn: Set to 1 if we shouldn't divert from the dx, dy plan.
     int corrct = 0, noturn = 0;
     struct monst *mtmp;
     struct trap *trap;
@@ -2301,7 +2322,7 @@ lookaround(enum u_interaction_mode uim)
 
     /* Grid bugs stop if trying to move diagonal, even if blind.  Maybe */
     /* they polymorphed while in the middle of a long move. */
-    if (u.umonnum == PM_GRID_BUG && u.dx && u.dy) {
+    if (u.umonnum == PM_GRID_BUG && dx && dy) {
         action_completed();
         return;
     }
@@ -2344,7 +2365,7 @@ lookaround(enum u_interaction_mode uim)
                 && mtmp->m_ap_type != M_AP_OBJECT &&
                 (!mtmp->minvis || See_invisible) && !mtmp->mundetected) {
                 if ((!aggressive_farmoving && check_interrupt(mtmp)) ||
-                    (x == u.ux + u.dx && y == u.uy + u.dy && !travelling()))
+                    (x == u.ux + dx && y == u.uy + dy && !travelling()))
                     goto stop;
             }
 
@@ -2358,7 +2379,7 @@ lookaround(enum u_interaction_mode uim)
              * directly behind us.  If you're moving along a corridor with no
              * branches, corrct will be 1.
              */
-            if (x == u.ux - u.dx && y == u.uy - u.dy)
+            if (x == u.ux - dx && y == u.uy - dy)
                 continue;
 
             // More boring cases that don't interrupt anything.
@@ -2402,7 +2423,7 @@ lookaround(enum u_interaction_mode uim)
                          * If candidate isn't adjacent at all to desired, just
                          * skip it.
                          */
-                        i = dist2(x, y, u.ux + u.dx, u.uy + u.dy);
+                        i = dist2(x, y, u.ux + dx, u.uy + dy);
                         if (i > 2)
                             continue;
                         if (corrct == 1 && dist2(x, y, x0, y0) != 1)
@@ -2429,14 +2450,14 @@ lookaround(enum u_interaction_mode uim)
                  */
                 if (aggressive_farmoving)
                     goto bcorr; /* if you must */
-                if (x == u.ux + u.dx && y == u.uy + u.dy)
+                if (x == u.ux + dx && y == u.uy + dy)
                     goto stop;
                 continue;
             } else if (is_pool(level, x, y) || is_lava(level, x, y)) {
                 /* water and lava only stop you if directly in front, and stop
                    you even if you are running */
                 if (!Levitation && !Flying && !is_clinger(youmonst.data) &&
-                    x == u.ux + u.dx && y == u.uy + u.dy)
+                    x == u.ux + dx && y == u.uy + dy)
                     /* No Wwalking check; otherwise they'd be able to test
                        boots by trying to SHIFT-direction into a pool and
                        seeing if the game allowed it */
@@ -2451,8 +2472,8 @@ lookaround(enum u_interaction_mode uim)
                     continue;
                 if (mtmp)
                     continue;   /* d */
-                if (((x == u.ux - u.dx) && (y != u.uy + u.dy)) ||
-                    ((y == u.uy - u.dy) && (x != u.ux + u.dx)))
+                if (((x == u.ux - dx) && (y != u.uy + dy)) ||
+                    ((y == u.uy - dy) && (x != u.ux + dx)))
                     continue;
             }
         }       /* end for loops */
@@ -2468,8 +2489,8 @@ lookaround(enum u_interaction_mode uim)
     // Check whether it's time to turn.
     if (flags.corridorbranch && !noturn && !m0 && i0 &&
         (corrct == 1 || (corrct == 2 && i0 == 1))) {
-        u.dx = x0 - u.ux;
-        u.dy = y0 - u.uy;
+        dx = x0 - u.ux;
+        dy = y0 - u.uy;
     }
     return;
 

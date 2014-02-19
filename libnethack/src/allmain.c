@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Derrick Sund, 2014-02-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -809,6 +809,11 @@ pre_move_tasks(boolean didmove)
         else if (monster_nearby())
             action_interrupted();
     }
+
+    /* Running is the only thing that needs or wants persistence in
+     * travel direction. */
+    if (flags.interrupted || !last_command_was("run"))
+        clear_travel_direction();    
 
     if (didmove && moves % 100 == 0)
         realtime_tasks();

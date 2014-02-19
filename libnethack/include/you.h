@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Derrick Sund, 2014-02-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -60,7 +60,6 @@ struct u_conduct {      /* number of times... */
 /*** Information about the player ***/
 struct you {
     xchar ux, uy;
-    schar dx, dy;       /* direction of the ongoing multi-turn move */
     xchar tx, ty;       /* destination of travel */
     xchar ux0, uy0;     /* initial position of a move */
     d_level uz;    /* your level on this and the previous turn */
