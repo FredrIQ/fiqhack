@@ -384,7 +384,7 @@ enum helpless_mask {
 /* The game's player conducts.
  * Editing this enum will break save compatibility. */
 enum player_conduct {
-    conduct_first = 0;
+    conduct_first = 0,
     conduct_vegetarian = conduct_first,  /* eaten any animal */
     conduct_vegan,                       /* ... or any animal byproduct */
     conduct_food,                        /* ... or any comestible */
