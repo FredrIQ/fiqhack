@@ -77,7 +77,6 @@ interface of the application.  You can specify this in several ways:
 
 Here are the main interface plugins available:
 
-
 tty
 ---
 
@@ -96,9 +95,8 @@ This interface is tested and known to work on the following terminals:
         for the text consoles if no graphical interface is loaded;
       * The terminal used to render text by DOSBox (the terminal used by DOS
         itself probably also works if ANSI.SYS is loaded, but this is very
-        hard to test because it would require either building libuncursed on
-        DOS, or else finding an old DOS implementation with a working network
-        stack and telnet implementation);
+        hard to test because it would require finding an old DOS
+        implementation with a working network stack and telnet program);
   * Terminal emulation software:
       * `xterm` (traditionally used as the terminal emulator under X11, the
         most commonly used graphical interface under Linux and BSD);
@@ -162,7 +160,6 @@ what the terminal supports.  It cannot (for obvious reasons) handle features
 like tiles support that require a GUI, and will just ignore any information
 about fonts or tiles that the application sends it.
 
-
 wincon
 ------
 
@@ -200,7 +197,6 @@ the entire underlying terminal and ignoring the viewport size, meaning that
 you can scroll around within the view or have a view larger than the screen,
 but will not be able to resize the terminal via dragging the window borders
 until you restart the program.
-
 
 sdl
 ---
@@ -515,7 +511,7 @@ as a capital 'A' (code 65) with 128 added to it, and rendered by applications
 as `Meta-A`.  (It could also mean an 'Á', Unicode and Latin-1 codepoint 193,
 but this is less likely; perhaps the most reasonable behaviour for an
 application is to use the Unicode/Latin-1 behaviour if they were expecting
-text to be input, and to treat it as a Meta-modified haracter otherwise.)
+text to be input, and to treat it as a Meta-modified character otherwise.)
 uncursed will attempt to, as far as possible, distinguish between Meta and
 Alt, to help avoid this problem (Alt-A will, if possible, send the key code
 `KEY_ALT | 'A'`, rather than the printable character code 193), but on some
@@ -530,8 +526,8 @@ keyboard and numeric keypad 9; distinguishing which 9 was pressed is more
 useful to most roguelikes, which would want to use the numeric keypad 9 for
 movement but not the main keyboard 9.)  There are commonly used terminals
 (such as `gnome-terminal`) for which it is impossible to distinguish; thus,
-the key in question would be sent as the printable `'9'` if NumLock was on, or
-as the key code `KEY_PPAGE` if NumLock was off.
+the key in question would be sent as the printable `'9'` if NumLock were on,
+or as the key code `KEY_PPAGE` if NumLock were off.
 
 There are also `KEY_ALT`, `KEY_SHIFT`, `KEY_CTRL`, that can be bitwise-ORed
 into any nonprintable key code.  For printable keys, Shift and Ctrl tend to
@@ -999,8 +995,8 @@ include the color pair portion of `cchar` in both `pairum` and `attr`.)
 
 When drawing to a window, the attribute used for newly drawn characters is
 based on the character's attributes and the window's default attributes
-(simply bitwise-ORed together; as such, it is best to ensure that either the
-character or the window always has a color pair number of 0).
+(boolean attributes are simply bitwise-ORed together; it is not recommended to
+set a nonzero color pair number on both the character and the window).
 `attrset`/`wattrset` will set the default attributes for `stdscr` or for
 another window to the given value; `attron` and `attroff` include or exclude
 the given attributes from the window's set of default attributes, leaving any
@@ -1046,13 +1042,13 @@ use a `mv` prefix to move the cursor first, a `w` prefix to output to a window
 other than `stdscr`; the string functions use an `n` infix to bound the length
 of the string, much like `strnlen` does.)
 
-In general, the functions that use attributed characters wil ignore the
+In general, the functions that use attributed characters will ignore the
 current default attribute of the window, whereas the functions that just use
 plain `wchar_t` or `char` wil respect it.  The `addch` family is an exception,
 for curses backwards compatibility; it will combine the window's default
-attributes with the attributes given (which wil lead to bizarre results if
-either has a nonzero color pair).  (Sticking to the Unicode functions, as
-recommended, will allow you to avoid this special case.)
+attributes with the attributes given (which might lead to bizarre results if
+either has a nonzero color pair).  Sticking to the Unicode functions, as
+recommended, will allow you to avoid this special case.
 
 Outputting characters normally moves the cursor; backspace (codepoint 8) moves
 it backwards, tab (codepoint 9) moves it to the next multiple of `TAB_STOP`,
@@ -1065,7 +1061,7 @@ window, rather than wrapping onto the following line.
 
 There are also `echo_wchar`, `echochar` variants of `add_wch`, `addch`, that
 call `refresh` (or `wrefresh` for `wecho_wchar` or `wechochar`) after
-outputing the charater, and otherwise work identically.
+outputing the character, and otherwise work identically.
 
     int [mv][w]printw([WINDOW *win], [int y, int x], const char *format, ...)
     int vw_printw(WINDOW *win, const char *format, va_list args)
@@ -1118,7 +1114,7 @@ will fit into the window.
 
 These funtions replace the entire window contents, the window contents from
 the cursor onwards (the rest of the line, and all lines below), and the rest
-of the line (respectively), with blanks (spaces with no attributes).
+of the line (respectively) with blanks (spaces with no attributes).
 
     int clearok(WINDOW *win)
     int [w]clear([WINDOW *win])
@@ -1194,7 +1190,7 @@ right edge of the sreen respectively.  For `derwin`, the `height` and `width`
 must be positive, and the `top` and `left` values are measured relative to the
 parent window's suggested screen location. (Remember that although the
 `height` and `width` are important and determine how much storage is allocated
-or the window, the `top` and `left` are only suggestions, and only relevant
+for the window, the `top` and `left` are only suggestions, and only relevant
 upon drawing the window to the screen.)
 
     WINDOW *mvderwin(WINDOW *win, int top, int left)
@@ -1230,7 +1226,7 @@ deleted first.)
 
 This funtion resizes a window.  The contents of the window will stay the same
 as far as possible, keeping the top-left the same; resizing a subwindow will
-fill any gained space with contents form its parent, resizing a non-subwindow
+fill any gained space with contents from its parent, resizing a non-subwindow
 will fill any gained space with blanks.
 
     void wcursyncup(WINDOW *win)
@@ -1240,7 +1236,7 @@ synchronizing windows and their subwindows; in uncursed, windows and their
 subwindows are automatically synchronized, so this is an unnecessary operation
 (and those functions are no-ops).  However, uncursed (as with curses) allows a
 subwindow's cursor location to be in a different location from its parents'.
-`wcursyncup` will recursively set the cursor loation of all the parents of a
+`wcursyncup` will recursively set the cursor location of all the parents of a
 subwindow to be the same as that of the subwindow itself.
 
 ### Tiles support
@@ -1310,7 +1306,7 @@ related functions.
 
     int curs_set(int visibility)
 
-This function changes whether the cursor is visible.  Technially, the legal
+This function changes whether the cursor is visible.  Technically, the legal
 vaues are 0 (invisible), 1 (visible), 2 (very visible); however, 1 and 2 tend
 to have the same implementations in interface plugins in practice.
 
@@ -1346,13 +1342,14 @@ These functions (which use `int` rather than `uncursed_color` for ncurses
 compatibility) allow the application to change the meaning of color pair 0.
 `assume_default_colors` sets the foreground and background of color pair 0 to
 the given values (-1 means the default value for the terminal);
-`use_default_colors` sets them both to the defualt value for the terminal.
+`use_default_colors` sets them both to the default value for the terminal.
 
 Note that on many terminals, the default color is not one of the 16 colors in
 the terminal palette (and it can even be something bizarre like "transparent"
-or "background image"); note also that setting a foreground color but not a
-background color, or vice versa, is a recipe for having some users unable to
-see your text because its color is too similar to the background.
+or "background image"), and it may (in fact, normally does) look different as
+a foreground and as a background; note also that setting a foreground color
+but not a background color, or vice versa, is a recipe for having some users
+unable to see your text because its color is too similar to the background.
 
 After calling `use_default_colors`, -1 also becomes accepted as a color value
 for init_pair.  (In fact, uncursed also accepts it even without calling
@@ -1378,12 +1375,12 @@ Writing a new plugin for uncursed
 libuncursed is eventually intended to support multiple kinds of plugins, but
 at the moment it only supports interface plugins (as they are known
 internally, "input plugins", because they produce input to the program in
-addition to copying output).
+addition to handling output).
 
 Plugins should include the `"uncursed_hooks.h"` file, create a new `struct
 uncursed_hooks` structure, and send it to the main part of libuncursed via the
 `uncursed_hook_list` variable.  (To accomplish this, a C++ wrapper file is
-used that does the importing, because C files canont have side effects upon
+used that does the importing, because C files cannot have side effects upon
 being loaded; the wrapper is both very simple and highly regimented in
 structure, so it's best to simply copy and modify an existing wrapper.)
 
@@ -1439,10 +1436,10 @@ the entire screen from scratch (which might or might not be different from
 `updating` each character individually, depending on the plugin); `flush` will
 be called at the end of a series of updates, and interface plugins may if they
 wish postpone any actual updating until the `flush` is called (or do it
-immediately, or at any time in between).  (For instance, double-buffered
+immediately, or at any time in between).  For instance, double-buffered
 interfaces would swap buffers on a `flush`; the `tty` interface uses stdio
 buffering for its output, which might be flushed by the stdio library when the
-buffers get full, and flushes the buffers itself manually on a `flush`.)
+buffers get full, and flushes the buffers itself manually on a `flush`.
 
 These functions do not contain any information about what the plugin should
 draw; rather, it needs to obtain that information by calling back into
@@ -1531,10 +1528,10 @@ function such as `usleep`.)
     void (*rawsignals)(int capture_all_keys)
 
 The argument to this function is an int-like-boolean, which specifies whether
-the interface plugin should attempt to input *all* keys including combinations
-with special meanings such as Control-C (`capture_all_keys` is 1), or only the
-keys which are normally intended as input to applications (`capture_all_keys`
-is 0).
+the interface plugin should attempt to input *all* keys, including
+combinations with special meanings such as Control-C (`capture_all_keys` is
+1); or only the keys which are normally intended as input to applications
+(`capture_all_keys` is 0).
 
 ### Future expansion
 
