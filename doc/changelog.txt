@@ -774,6 +774,10 @@ Accuracy bonuses from martial arts / bare-handed skill are now taken into
 account (in 3.4.3, there was code to calculate them, but the code for
 attacking forgot to call it). (Spork, 757c4d6)
 
+Helplessness sources are now tracked independently (thus, it's no longer the
+case that 4 turn of sleep + 20 turns of paralysis = 20 turns of sleep, as in
+previous versions of NetHack). (4, 971d4e9, c55c327)
+
 
 Messages
 --------
@@ -1063,16 +1067,16 @@ dffe879, 6bf8e3d)
 `V`: Now also allows you to rub items, if they're suitable for rubbing rather
 than invoking, and is the new way to break wands. (4, 120cdac)
 
-`X`: The `X` command for entering explore mode no longer exists; `X` is now bound
-to `#twoweapon`. (Nitro and Ace, a2c8999, 74dea97)
+`X`: The `X` command for entering explore mode no longer exists; `X` is now
+bound to `#twoweapon`. (Nitro and Ace, a2c8999, 74dea97)
 
 `X`: When attempting to enter two-weapon mode with an invalid character, the
 game explains what is wrong. (Un and 4, 21bc711, bdd6251, fd16f77)
 
-`^X`: The `^X` command now records a range of information (such as which intrinsics
-the character has gained, or what monsters the character has killed) that
-could have been (and often was) tracked manually by the player using
-out-of-game notes. (Ace, e894514..a7a0ce7, cd9df40)
+`^X`: The `^X` command now records a range of information (such as which
+intrinsics the character has gained, or what monsters the character has
+killed) that could have been (and often was) tracked manually by the player
+using out-of-game notes. (Ace, e894514..a7a0ce7, cd9df40)
 
 `Z`: Directional and positional spells can now be cancelled at the prompt that
 requests a direction or position. (4, e75e808..00cb03c)
@@ -1111,8 +1115,8 @@ The code now always uses a menu upon pressing `?` at an object prompt, rather
 than using the message area when there's exctly one possibility. (Nitro,
 50e5cba)
 
-It is possible to use the `m`/`M` keys to cycle between monsters when asked for a
-position. (Nitro and Dyna, c9737d1, b63723b)
+It is possible to use the `m`/`M` keys to cycle between monsters when asked
+for a position. (Nitro and Dyna, c9737d1, b63723b)
 
 All commands are now rebindable; they can be rebound via the keymap menu
 in-game (a submenu of the options menu), and these changes will be saved for
@@ -1391,6 +1395,9 @@ f651183)
 Light and darkness are now properties of a map square, rather than of a
 background; the main practical benefit of this is improved rendering of
 unusual dungeon features in unusual lighting condition. (4, 3c06767, 3b11dc1)
+
+x coordinates and y coordinates now use the same storage internally. (4,
+e61bcb3 and others)
 
 
 Client/Server Structure and API
