@@ -385,9 +385,9 @@ enum helpless_mask {
  * Editing this enum will break save compatibility. */
 enum player_conduct {
     conduct_first = 0,
-    conduct_vegetarian = conduct_first,  /* eaten any animal */
+    conduct_food = conduct_first,        /* eaten any comestible */
     conduct_vegan,                       /* ... or any animal byproduct */
-    conduct_food,                        /* ... or any comestible */
+    conduct_vegetarian,                  /* ... or any meat */
     conduct_gnostic,                     /* used prayer, priest, or altar */
     conduct_weaphit,                     /* hit a monster with a weapon */
     conduct_killer,                      /* killed a monster yourself */
