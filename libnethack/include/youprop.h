@@ -381,7 +381,8 @@ enum helpless_mask {
     hm_all = (1 << (hr_last + 1)) - 1,
 };
 
-/* The game's player conducts. */
+/* The game's player conducts.
+ * Editing this enum will break save compatibility. */
 enum player_conduct {
     conduct_vegetarian,     /* eaten any animal */
     conduct_vegan,          /* ... or any animal byproduct */

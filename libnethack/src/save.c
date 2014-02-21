@@ -3,6 +3,12 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
+/* To anyone editing this file: please write anything involving a sizeof
+ * as late as possible, so savemap.pl can generate a useful mapping file.
+ * In general, a long list of writes such as that found in save_flags should
+ * write the tag first, then do things that can be done with the mwrite##
+ * family, and only then start using mwrite. */
+
 #include "hack.h"
 #include "lev.h"
 #include "quest.h"
