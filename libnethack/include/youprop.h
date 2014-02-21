@@ -384,20 +384,21 @@ enum helpless_mask {
 /* The game's player conducts.
  * Editing this enum will break save compatibility. */
 enum player_conduct {
-    conduct_vegetarian,     /* eaten any animal */
-    conduct_vegan,          /* ... or any animal byproduct */
-    conduct_food,           /* ... or any comestible */
-    conduct_gnostic,        /* used prayer, priest, or altar */
-    conduct_weaphit,        /* hit a monster with a weapon */
-    conduct_killer,         /* killed a monster yourself */
-    conduct_illiterate,     /* read something (other than BotD) */
-    conduct_polypile,       /* polymorphed an object */
-    conduct_polyself,       /* transformed yourself */
-    conduct_wish,           /* used a wish */
-    conduct_artiwish,       /* wished for an artifact */
-    conduct_genocide,       /* committed genocide */
-    conduct_elbereth,       /* wrote an elbereth */
-    conduct_puddingsplit,   /* split a pudding */
+    conduct_first = 0;
+    conduct_vegetarian = conduct_first,  /* eaten any animal */
+    conduct_vegan,                       /* ... or any animal byproduct */
+    conduct_food,                        /* ... or any comestible */
+    conduct_gnostic,                     /* used prayer, priest, or altar */
+    conduct_weaphit,                     /* hit a monster with a weapon */
+    conduct_killer,                      /* killed a monster yourself */
+    conduct_illiterate,                  /* read something (other than BotD) */
+    conduct_polypile,                    /* polymorphed an object */
+    conduct_polyself,                    /* transformed yourself */
+    conduct_wish,                        /* used a wish */
+    conduct_artiwish,                    /* wished for an artifact */
+    conduct_genocide,                    /* committed genocide */
+    conduct_elbereth,                    /* wrote an elbereth */
+    conduct_puddingsplit,                /* split a pudding */
     num_conducts,
 };
 
