@@ -1138,40 +1138,13 @@ enlightenment(int final)
 unsigned long
 encode_conduct(void)
 {
+    enum player_conduct cond = conduct_first;
     unsigned long c = 0UL;
 
-    if (!u.uconduct[conduct_food])
-        c |= 0x0001UL;
-    if (!u.uconduct[conduct_vegan])
-        c |= 0x0002UL;
-    if (!u.uconduct[conduct_vegetarian])
-        c |= 0x0004UL;
-    if (!u.uconduct[conduct_gnostic])
-        c |= 0x0008UL;
-    if (!u.uconduct[conduct_weaphit])
-        c |= 0x0010UL;
-    if (!u.uconduct[conduct_killer])
-        c |= 0x0020UL;
-    if (!u.uconduct[conduct_illiterate])
-        c |= 0x0040UL;
-    /* Elbereths, genocides are given a higher number later on to avoid
-       clashing with the "traditional" conduct encoding */
-    if (!u.uconduct[conduct_polypile])
-        c |= 0x0080UL;
-    if (!u.uconduct[conduct_polyself])
-        c |= 0x0100UL;
-    if (!u.uconduct[conduct_wish])
-        c |= 0x0200UL;
-    if (!u.uconduct[conduct_artiwish])
-        c |= 0x0400UL;
-    if (!num_genocides())
-        c |= 0x0800UL;
-    /* Slash'EM xlogfile does not record celibacy, presumably either by mistake
-       or for compatibility with vanilla. So it's safe to just take the next
-       available number for elbereths. */
-    if (!u.uconduct[conduct_elbereth])
-        c |= 0x1000UL;
-
+    for(; cond < num_conducts; cond++) {
+        if(!u.uconduct[cond])
+            c |= 1UL << cond;
+    }
     return c;
 }
 
