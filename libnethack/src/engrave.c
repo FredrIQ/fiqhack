@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-16 */
+/* Last modified by Derrick Sund, 2014-02-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1019,7 +1019,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
 
     /* A single `x' is the traditional signature of an illiterate person */
     if (len != 1 || (!strchr(ebuf, 'x') && !strchr(ebuf, 'X')))
-        u.uconduct.literate++;
+        break_conduct(conduct_illiterate);
 
     /* Mix up engraving if surface or state of mind is unsound. Note: this
        won't add or remove any spaces. */
@@ -1127,7 +1127,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
     make_engr_at(level, u.ux, u.uy, buf, moves + helpless_time, type);
 
     if (strstri(buf, "Elbereth")) {
-        u.uconduct.elbereths++;
+        break_conduct(conduct_elbereth);
     }
 
     if (post_engr_text[0])

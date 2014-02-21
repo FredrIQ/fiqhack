@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-19 */
+/* Last modified by Derrick Sund, 2014-02-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1053,6 +1053,21 @@ one_occupation_turn(int (*callback)(void), const char *gerund,
     action_incomplete(gerund, ocode);
     if (!callback())
         action_completed();
+}
+
+/* Record if/when a given conduct was broken. */
+void
+break_conduct(enum player_conduct conduct)
+{
+    u.uconduct[conduct]++;
+    if(!u.uconduct_time[conduct])
+        u.uconduct_time[conduct] = moves;
+    
+    /* Monks avoid breaking vegetarian conduct. */
+    if(conduct == conduct_vegetarian && Role_if(PM_MONK)) {
+        pline("You feel guilty.");
+        adjalign(-1);
+    }
 }
 
 /* perform the command given by cmdidx (an index into cmdlist in cmd.c) */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-18 */
+/* Last modified by Derrick Sund, 2014-02-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -596,7 +596,8 @@ check_leash(xchar x, xchar y)
             } else if (otmp->cursed && !breathless(mtmp->data)) {
                 if (um_dist(mtmp->mx, mtmp->my, 5) ||
                     (mtmp->mhp -= rnd(2)) <= 0) {
-                    long save_pacifism = u.uconduct.killer;
+                    int save_pacifism = u.uconduct[conduct_killer];
+                    int turn = u.uconduct_time[conduct_killer];
 
                     pline("Your leash chokes %s to death!", mon_nam(mtmp));
                     /* hero might not have intended to kill pet, but that's the 
@@ -605,8 +606,10 @@ check_leash(xchar x, xchar y)
                        remain tame after revival */
                     xkilled(mtmp, 0);   /* no "you kill it" message */
                     /* life-saving doesn't ordinarily reset this */
-                    if (mtmp->mhp > 0)
-                        u.uconduct.killer = save_pacifism;
+                    if (mtmp->mhp > 0) {
+                        u.uconduct[conduct_killer] = save_pacifism;
+                        u.uconduct_time[conduct_killer] = turn;
+                    }
                 } else {
                     pline("%s chokes on the leash!", Monnam(mtmp));
                     /* tameness eventually drops to 1 here (never 0) */
@@ -2512,7 +2515,7 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
            indication of whether it hit.  Not perfect (what if it's a
            non-silver weapon on a shade?) */
         if (mtmp->mhp < oldhp)
-            u.uconduct.weaphit++;
+            break_conduct(conduct_weaphit);
     } else
         /* Now you know that nothing is there... */
         pline("Nothing happens.");

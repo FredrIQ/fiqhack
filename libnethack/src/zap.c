@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Derrick Sund, 2014-02-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1564,7 +1564,7 @@ hito_stone_to_flesh(struct obj *obj)
     if (smell) {
         if (herbivorous(youmonst.data) &&
             (!carnivorous(youmonst.data) || Role_if(PM_MONK) ||
-             !u.uconduct.unvegetarian))
+             !u.uconduct[conduct_vegetarian]))
             pline_once("You smell the odor of meat.");
         else
             pline_once("You smell a delicious smell.");
@@ -1628,7 +1628,7 @@ bhito(struct obj *obj, struct obj *otmp)
                 break;
             }
             /* KMH, conduct */
-            u.uconduct.polypiles++;
+            break_conduct(conduct_polypile);
             /* any saved lock context will be dangerously obsolete */
             if (Is_box(obj))
                 boxlock(obj, otmp);
@@ -4238,7 +4238,7 @@ retry:
         historic_event(FALSE, "wished for \"%s\".", origbuf);
 
     /* KMH, conduct */
-    u.uconduct.wishes++;
+    break_conduct(conduct_wish);
 
     if (otmp != &zeroobj) {
         examine_object(otmp);

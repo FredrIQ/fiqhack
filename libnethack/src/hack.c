@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-19 */
+/* Last modified by Derrick Sund, 2014-02-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -354,7 +354,7 @@ still_chewing(xchar x, xchar y)
     }
 
     /* Okay, you've chewed through something */
-    u.uconduct.food++;
+    break_conduct(conduct_food);
     u.uhunger += rnd(20);
 
     if (boulder) {
@@ -1706,7 +1706,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
 
                 /* you killed your pet by direct action. minliquid and mintrap
                    don't know to do this */
-                u.uconduct.killer++;
+                break_conduct(conduct_killer);
                 break;
             default:
                 pline("that's strange, unknown mintrap result!");

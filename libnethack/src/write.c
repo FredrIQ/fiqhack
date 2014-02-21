@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-21 */
+/* Last modified by Derrick Sund, 2014-02-20 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
@@ -154,7 +154,7 @@ found:
     }
 
     /* KMH, conduct */
-    u.uconduct.literate++;
+    break_conduct(conduct_illiterate);
 
     new_obj = mksobj(level, i, FALSE, FALSE);
     new_obj->bknown = (paper->bknown && pen->bknown);

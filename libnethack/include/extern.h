@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-19 */
+/* Last modified by Derrick Sund, 2014-02-20 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -63,6 +63,7 @@ extern void helpless(int turns, enum helpless_reason reason, const char *cause,
 extern void cancel_helplessness(enum helpless_mask mask, const char *msg);
 extern boolean u_helpless(enum helpless_mask mask);
 extern boolean canhear(void);
+extern void break_conduct(enum player_conduct);
 
 /* ### apply.c ### */
 
@@ -502,7 +503,6 @@ extern void init_uhunger(void);
 extern int doeat(const struct nh_cmd_arg *);
 extern void gethungry(void);
 extern void morehungry(int);
-extern void violated_vegetarian(void);
 extern void newuhs(boolean);
 extern boolean can_sacrifice(const struct obj *);
 extern struct obj *floorfood(const char *, const struct nh_cmd_arg *);

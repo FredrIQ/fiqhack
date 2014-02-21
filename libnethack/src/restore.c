@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-19 */
+/* Last modified by Derrick Sund, 2014-02-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -575,19 +575,6 @@ restore_you(struct memfile *mf, struct you *y)
     y->initgend = mread32(mf);
     y->initalign = mread32(mf);
     y->upantheon = mread32(mf);
-    y->uconduct.unvegetarian = mread32(mf);
-    y->uconduct.unvegan = mread32(mf);
-    y->uconduct.food = mread32(mf);
-    y->uconduct.gnostic = mread32(mf);
-    y->uconduct.weaphit = mread32(mf);
-    y->uconduct.killer = mread32(mf);
-    y->uconduct.literate = mread32(mf);
-    y->uconduct.polypiles = mread32(mf);
-    y->uconduct.polyselfs = mread32(mf);
-    y->uconduct.wishes = mread32(mf);
-    y->uconduct.wisharti = mread32(mf);
-    y->uconduct.elbereths = mread32(mf);
-    y->uconduct.puddings = mread32(mf);
 
     /* at this point, ustuck and usteed are mon ids rather than pointers */
     y->ustuck = (void *)(intptr_t) mread32(mf);
@@ -618,6 +605,8 @@ restore_you(struct memfile *mf, struct you *y)
     y->uspmtime = mread8(mf);
     y->twoweap = mread8(mf);
 
+    mread(mf, y->uconduct, sizeof (y->uconduct));
+    mread(mf, y->uconduct_time, sizeof (y->uconduct_time));
     mread(mf, y->uwhybusy, sizeof (y->uwhybusy));
     mread(mf, y->usick_cause, sizeof (y->usick_cause));
     mread(mf, y->urooms, sizeof (y->urooms));

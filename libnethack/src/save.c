@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-19 */
+/* Last modified by Derrick Sund, 2014-02-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -400,19 +400,6 @@ save_you(struct memfile *mf, struct you *y)
     mwrite32(mf, y->initgend);
     mwrite32(mf, y->initalign);
     mwrite32(mf, y->upantheon);
-    mwrite32(mf, y->uconduct.unvegetarian);
-    mwrite32(mf, y->uconduct.unvegan);
-    mwrite32(mf, y->uconduct.food);
-    mwrite32(mf, y->uconduct.gnostic);
-    mwrite32(mf, y->uconduct.weaphit);
-    mwrite32(mf, y->uconduct.killer);
-    mwrite32(mf, y->uconduct.literate);
-    mwrite32(mf, y->uconduct.polypiles);
-    mwrite32(mf, y->uconduct.polyselfs);
-    mwrite32(mf, y->uconduct.wishes);
-    mwrite32(mf, y->uconduct.wisharti);
-    mwrite32(mf, y->uconduct.elbereths);
-    mwrite32(mf, y->uconduct.puddings);
 
     mwrite32(mf, y->ustuck ? y->ustuck->m_id : 0);
     mwrite32(mf, y->usteed ? y->usteed->m_id : 0);
@@ -442,6 +429,8 @@ save_you(struct memfile *mf, struct you *y)
     mwrite8(mf, y->uspmtime);
     mwrite8(mf, y->twoweap);
 
+    mwrite(mf, y->uconduct, (sizeof y->uconduct));
+    mwrite(mf, y->uconduct_time, (sizeof y->uconduct_time));
     mwrite(mf, y->uwhybusy, (sizeof y->uwhybusy));
     mwrite(mf, y->usick_cause, sizeof (y->usick_cause));
     mwrite(mf, y->urooms, sizeof (y->urooms));
