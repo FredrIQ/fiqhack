@@ -1075,7 +1075,7 @@ could have been (and often was) tracked manually by the player using
 out-of-game notes. (Ace, e894514..a7a0ce7, cd9df40)
 
 `Z`: Directional and positional spells can now be cancelled at the prompt that
-requests a direction or position. (4, ace8c29..021612e)
+requests a direction or position. (4, e75e808..00cb03c)
 
 `#history`: The game now stores a list of major events that happened during
 the game (levelling up, wishes, etc.), viewable in-game with the `#history`
