@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2013-11-27
+Last modified by Alex Smith, 2014-02-21
 
 This documentation for the uncursed rendering library is provided under the
 same terms as libuncursed itself: it may be distributed under either of the
@@ -1167,6 +1167,12 @@ with blanks (spaces with no attributes).
 This function will delete the character at the current window cursor location,
 scrolling the rest of the line to the left to compensate (and adding a blank
 at the end of the line).
+
+    scrollok(WINDOW *win, bool ok_to_scroll)
+
+In addition to scrolling a window manually, windows can also scroll
+automatically when text is written past their last line.  The `scrollok`
+function can be used to turn this behaviour on or off.
 
 ### Window management
 
