@@ -132,6 +132,9 @@ C343-318, 878e409)
 `C`: The `C` command no longer identifies high priests at range. (Nitro,
 SC343-12, be3e353)
 
+`e`: Protection from eaten rings is no longer considered to be divinely
+sourced. (4, f66dbaf)
+
 `E`: Wresting a wand via engraving with it now takes time. (Bilious, C343-246,
 a93e3bc)
 
