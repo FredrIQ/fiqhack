@@ -138,9 +138,6 @@ a93e3bc)
 `r`: Spellbooks can now be read even if spell memory is not low (although
 doing so still damages the spellbook). (Ace, 7cd834e)
 
-`r`: Spellbooks that are completely worn out can no longer be used to learn
-new spells for the first time. (4, SC343-?, 301c198)
-
 `x`: No longer costs time (in order to avoid the need to toggle the
 `pushweapon` option repeately in order to set up weapons for two-weapon
 fighting as fast as possible). (Ace, 8c894a3)
