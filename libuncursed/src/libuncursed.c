@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-02-21 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -782,12 +782,12 @@ add_wch, (const cchar_t *ch), (ch))
 static
 int add_wch_core(WINDOW * win, const cchar_t *ch)
 {
-    if (ch->chars[0] == 8) {    // backspace
+    if (ch->chars[0] == 8) {    /* backspace */
 
         if (win->x > 0)
             win->x--;
 
-    } else if (ch->chars[0] == 9) {     // tab
+    } else if (ch->chars[0] == 9) {     /* tab */
 
         win->x += TABSIZE - (win->x % TABSIZE);
         if (win->x > win->maxx)
