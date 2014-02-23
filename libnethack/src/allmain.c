@@ -158,7 +158,7 @@ startup_common(boolean including_program_state)
 }
 
 
-static void
+void
 realtime_messages(boolean moon, boolean fri13)
 {
     if (moon) {
@@ -178,7 +178,7 @@ realtime_messages(boolean moon, boolean fri13)
 
 
 static void
-realtime_tasks(void)
+realtime_tasks(boolean print)
 {
     int prev_moonphase = flags.moonphase;
     int prev_friday13 = flags.friday13;
@@ -205,7 +205,8 @@ realtime_tasks(void)
         msg_friday13 = FALSE;
     }
 
-    realtime_messages(msg_moonphase, msg_friday13);
+    if (print)
+        realtime_messages(msg_moonphase, msg_friday13);
 }
 
 
@@ -385,7 +386,7 @@ nh_play_game(int fd)
     bot();
     flush_screen();
 
-    realtime_messages(TRUE, TRUE);
+    realtime_tasks(FALSE);
     update_inventory();
 
     /* The main loop. */
@@ -810,8 +811,13 @@ pre_move_tasks(boolean didmove)
             action_interrupted();
     }
 
+    /* Running is the only thing that needs or wants persistence in
+     * travel direction. */
+    if (flags.interrupted || !last_command_was("run"))
+        clear_travel_direction();    
+
     if (didmove && moves % 100 == 0)
-        realtime_tasks();
+        realtime_tasks(TRUE);
 
     update_inventory();
     update_location(FALSE);
@@ -1047,6 +1053,21 @@ one_occupation_turn(int (*callback)(void), const char *gerund,
     action_incomplete(gerund, ocode);
     if (!callback())
         action_completed();
+}
+
+/* Record if/when a given conduct was broken. */
+void
+break_conduct(enum player_conduct conduct)
+{
+    u.uconduct[conduct]++;
+    if(!u.uconduct_time[conduct])
+        u.uconduct_time[conduct] = moves;
+    
+    /* Monks avoid breaking vegetarian conduct. */
+    if(conduct == conduct_vegetarian && Role_if(PM_MONK)) {
+        pline("You feel guilty.");
+        adjalign(-1);
+    }
 }
 
 /* perform the command given by cmdidx (an index into cmdlist in cmd.c) */

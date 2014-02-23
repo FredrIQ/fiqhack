@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Derrick Sund, 2014-02-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -441,9 +441,15 @@ known_hitum(struct monst *mon, int *mhit, const struct attack *uattk, schar dx,
         int x = u.ux + dx;
         int y = u.uy + dy;
 
+        /* Save current conduct state in case we revert it later on a forced
+         * miss. */
+
+        int curr_weaphit = u.uconduct[conduct_weaphit];
+        int turn = u.uconduct_time[conduct_weaphit];
+
         /* KMH, conduct */
         if (uwep && (uwep->oclass == WEAPON_CLASS || is_weptool(uwep)))
-            u.uconduct.weaphit++;
+            break_conduct(conduct_weaphit);
 
         /* we hit the monster; be careful: it might die or be knocked into a
            different location */
@@ -470,8 +476,11 @@ known_hitum(struct monst *mon, int *mhit, const struct attack *uattk, schar dx,
             if (mon->mhp == oldhp) {
                 *mhit = 0;
                 /* a miss does not break conduct */
-                if (uwep && (uwep->oclass == WEAPON_CLASS || is_weptool(uwep)))
-                    --u.uconduct.weaphit;
+                if (uwep && (uwep->oclass == WEAPON_CLASS ||
+                    is_weptool(uwep))) {
+                    u.uconduct[conduct_weaphit] = curr_weaphit;
+                    u.uconduct_time[conduct_weaphit] = turn;
+                }
             }
             if (mon->wormno && *mhit)
                 cutworm(mon, x, y, uwep);
@@ -1037,7 +1046,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
         if (clone_mon(mon, 0, 0)) {
             pline("%s divides as you hit it!", Monnam(mon));
             hittxt = TRUE;
-            u.uconduct.puddings++;
+            break_conduct(conduct_puddingsplit);
         }
     }
 
@@ -1577,16 +1586,16 @@ damageum(struct monst *mdef, const struct attack *mattk)
         }
 
         pline("You eat %s brain!", s_suffix(mon_nam(mdef)));
-        u.uconduct.food++;
+        break_conduct(conduct_food);
         if (touch_petrifies(mdef->data) && !Stone_resistance && !Stoned) {
             Stoned = 5;
             killer_format = KILLED_BY_AN;
             delayed_killer = mdef->data->mname;
         }
         if (!vegan(mdef->data))
-            u.uconduct.unvegan++;
+            break_conduct(conduct_vegan);
         if (!vegetarian(mdef->data))
-            violated_vegetarian();
+            break_conduct(conduct_vegetarian);
         if (mindless(mdef->data)) {
             pline("%s doesn't notice.", Monnam(mdef));
             break;
@@ -1802,11 +1811,11 @@ gulpum(struct monst *mdef, const struct attack *mattk)
 
         /* KMH, conduct */
         if (mattk->adtyp == AD_DGST) {
-            u.uconduct.food++;
+            break_conduct(conduct_food);
             if (!vegan(mdef->data))
-                u.uconduct.unvegan++;
+                break_conduct(conduct_vegan);
             if (!vegetarian(mdef->data))
-                violated_vegetarian();
+                break_conduct(conduct_vegetarian);
         }
 
         if (!touch_petrifies(mdef->data) || Stone_resistance) {

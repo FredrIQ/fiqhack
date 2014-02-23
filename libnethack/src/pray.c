@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Derrick Sund, 2014-02-20 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1164,7 +1164,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
         extern const int monstr[];
 
         /* KMH, conduct */
-        u.uconduct.gnostic++;
+        break_conduct(conduct_gnostic);
 
         /* you're handling this corpse, even if it was killed upon the altar */
         feel_cockatrice(otmp, TRUE);
@@ -1620,7 +1620,7 @@ dopray(const struct nh_cmd_arg *arg)
         if (yn("Are you sure you want to pray?") == 'n')
             return 0;
 
-    u.uconduct.gnostic++;
+    break_conduct(conduct_gnostic);
 
     /* set up turnstate alignment and trouble */
     if (!can_pray(TRUE))
@@ -1730,7 +1730,7 @@ doturn(const struct nh_cmd_arg *arg)
         pline("You don't know how to turn undead!");
         return 0;
     }
-    u.uconduct.gnostic++;
+    break_conduct(conduct_gnostic);
 
     if ((u.ualign.type != A_CHAOTIC &&
          (is_demon(youmonst.data) || is_undead(youmonst.data))) ||

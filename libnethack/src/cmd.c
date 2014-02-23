@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-16 */
+/* Last modified by Derrick Sund, 2014-02-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -619,6 +619,11 @@ wiz_show_seenv(const struct nh_cmd_arg *arg)
     return 0;
 }
 
+static char hex[] = {
+    ' ', '1', '2', '3', '4', '5', '6', '7',
+    '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+};
+
 /* #vision command */
 static int
 wiz_show_vision(const struct nh_cmd_arg *arg)
@@ -630,7 +635,7 @@ wiz_show_vision(const struct nh_cmd_arg *arg)
     (void) arg;
 
     init_menulist(&menu);
-    sprintf(row, "Flags: 0x%x could see, 0x%x in sight, 0x%x temp lit",
+    sprintf(row, "Flags: 0x%x could see, 0x%x in sight, 0x%x temp lit, 0x8 tile lit",
             COULD_SEE, IN_SIGHT, TEMP_LIT);
     add_menutext(&menu, row);
     add_menutext(&menu, "");
@@ -640,10 +645,8 @@ wiz_show_vision(const struct nh_cmd_arg *arg)
                 row[x] = '@';
             else {
                 v = viz_array[y][x];    /* data access should be hidden */
-                if (v == 0)
-                    row[x] = ' ';
-                else
-                    row[x] = '0' + viz_array[y][x];
+                v += 8 * level->locations[x][y].lit;
+                row[x] = hex[v];
             }
         }
         /* remove trailing spaces */
@@ -1135,40 +1138,13 @@ enlightenment(int final)
 unsigned long
 encode_conduct(void)
 {
+    enum player_conduct cond = conduct_first;
     unsigned long c = 0UL;
 
-    if (!u.uconduct.food)
-        c |= 0x0001UL;
-    if (!u.uconduct.unvegan)
-        c |= 0x0002UL;
-    if (!u.uconduct.unvegetarian)
-        c |= 0x0004UL;
-    if (!u.uconduct.gnostic)
-        c |= 0x0008UL;
-    if (!u.uconduct.weaphit)
-        c |= 0x0010UL;
-    if (!u.uconduct.killer)
-        c |= 0x0020UL;
-    if (!u.uconduct.literate)
-        c |= 0x0040UL;
-    /* heptagrams, genocides are given a higher number later on to avoid
-       clashing with the "traditional" conduct encoding */
-    if (!u.uconduct.polypiles)
-        c |= 0x0080UL;
-    if (!u.uconduct.polyselfs)
-        c |= 0x0100UL;
-    if (!u.uconduct.wishes)
-        c |= 0x0200UL;
-    if (!u.uconduct.wisharti)
-        c |= 0x0400UL;
-    if (!num_genocides())
-        c |= 0x0800UL;
-    /* Slash'EM xlogfile does not record celibacy, presumably either by mistake
-       or for compatibility with vanilla. So it's safe to just take the next
-       available number for elbereths. */
-    if (!u.uconduct.elbereths)
-        c |= 0x1000UL;
-
+    for(; cond < num_conducts; cond++) {
+        if(!u.uconduct[cond])
+            c |= 1UL << cond;
+    }
     return c;
 }
 
@@ -1457,6 +1433,8 @@ dowelcome(const struct nh_cmd_arg *arg)
           u.uplname, buf, urace.adj,
           (currentgend && urole.name.f) ? urole.name.f : urole.name.m);
 
+    realtime_messages(TRUE, TRUE);
+
     if (discover)
         pline("You are in non-scoring discovery mode.");
 
@@ -1516,32 +1494,61 @@ show_conduct(int final)
     /* Create the conduct window */
     init_menulist(&menu);
 
-    if (!u.uconduct.food)
+    if (!u.uconduct[conduct_food])
         enl_msg(&menu, You_, "have gone", "went", " without food");
     /* But beverages are okay */
-    else if (!u.uconduct.unvegan)
+    else if (!u.uconduct[conduct_vegan])
         you_have_X(&menu, "followed a strict vegan diet");
-    else if (!u.uconduct.unvegetarian)
+    else if (!u.uconduct[conduct_vegetarian])
         you_have_been(&menu, "vegetarian");
+    if (u.uconduct_time[conduct_food] > 1800) {
+        sprintf(buf, "did not eat until turn %d",
+                u.uconduct_time[conduct_food]);
+        enl_msg(&menu, You_, "", "had ", buf);
+    }
+    if (u.uconduct_time[conduct_vegan] > 1800) {
+        sprintf(buf, "followed a strict vegan diet until turn %d",
+                u.uconduct_time[conduct_vegan]);
+        enl_msg(&menu, You_, "", "had ", buf);
+    }
+    if (u.uconduct_time[conduct_vegetarian] > 1800) {
+        sprintf(buf, "followed a strict vegetarian diet until turn %d",
+                u.uconduct_time[conduct_vegetarian]);
+        enl_msg(&menu, You_, "", "had ", buf);
+    }
 
-    if (!u.uconduct.gnostic)
+    if (!u.uconduct[conduct_gnostic])
         you_have_been(&menu, "an atheist");
+    if (u.uconduct_time[conduct_gnostic] > 1800) {
+        sprintf(buf, "an atheist until turn %d",
+                u.uconduct_time[conduct_gnostic]);
+        enl_msg(&menu, You_, "were ", "had been ", buf);
+    }
 
-    if (!u.uconduct.weaphit)
+    if (!u.uconduct[conduct_weaphit])
         you_have_never(&menu, "hit with a wielded weapon");
     else {
-        sprintf(buf, "used a wielded weapon %u time%s", u.uconduct.weaphit,
-                plur(u.uconduct.weaphit));
+        sprintf(buf, "used a wielded weapon %d time%s, starting on turn %d",
+                u.uconduct[conduct_weaphit],
+                plur(u.uconduct[conduct_weaphit]),
+                u.uconduct_time[conduct_weaphit]);
         you_have_X(&menu, buf);
     }
-    if (!u.uconduct.killer)
+    if (!u.uconduct[conduct_killer])
         you_have_been(&menu, "a pacifist");
+    if (u.uconduct_time[conduct_killer] > 1800) {
+        sprintf(buf, "a pacifist until turn %d",
+                u.uconduct_time[conduct_killer]);
+        enl_msg(&menu, You_, "were ", "had been ", buf);
+    }
 
-    if (!u.uconduct.literate)
+    if (!u.uconduct[conduct_illiterate])
         you_have_been(&menu, "illiterate");
     else {
-        sprintf(buf, "read items or engraved %u time%s", u.uconduct.literate,
-                plur(u.uconduct.literate));
+        sprintf(buf, "read items or engraved %d time%s, starting on turn %d",
+                u.uconduct[conduct_illiterate],
+                plur(u.uconduct[conduct_illiterate]),
+                u.uconduct_time[conduct_illiterate]);
         you_have_X(&menu, buf);
     }
 
@@ -1549,53 +1556,69 @@ show_conduct(int final)
     if (ngenocided == 0) {
         you_have_never(&menu, "genocided any monsters");
     } else {
-        sprintf(buf, "genocided %d type%s of monster%s", ngenocided,
-                plur(ngenocided), plur(ngenocided));
+        sprintf(buf, "genocided %d type%s of monster%s, starting on turn %d",
+                ngenocided, plur(ngenocided), plur(ngenocided),
+                u.uconduct_time[conduct_genocide]);
         you_have_X(&menu, buf);
     }
 
-    if (!u.uconduct.polypiles)
+    if (!u.uconduct[conduct_polypile])
         you_have_never(&menu, "polymorphed an object");
     else {
-        sprintf(buf, "polymorphed %u item%s", u.uconduct.polypiles,
-                plur(u.uconduct.polypiles));
+        sprintf(buf, "polymorphed %d item%s, starting on turn %d",
+                u.uconduct[conduct_polypile],
+                plur(u.uconduct[conduct_polypile]),
+                u.uconduct_time[conduct_polypile]);
         you_have_X(&menu, buf);
     }
 
-    if (!u.uconduct.polyselfs)
+    if (!u.uconduct[conduct_polyself])
         you_have_never(&menu, "changed form");
     else {
-        sprintf(buf, "changed form %u time%s", u.uconduct.polyselfs,
-                plur(u.uconduct.polyselfs));
+        sprintf(buf, "changed form %d time%s, starting on turn %d",
+                u.uconduct[conduct_polyself],
+                plur(u.uconduct[conduct_polyself]),
+                u.uconduct_time[conduct_polyself]);
         you_have_X(&menu, buf);
     }
 
-    if (!u.uconduct.wishes)
+    if (!u.uconduct[conduct_wish])
         you_have_X(&menu, "used no wishes");
     else {
-        sprintf(buf, "used %u wish%s", u.uconduct.wishes,
-                (u.uconduct.wishes > 1L) ? "es" : "");
+        sprintf(buf, "used %u wish%s, starting on turn %d",
+                u.uconduct[conduct_wish],
+                (u.uconduct[conduct_wish] > 1) ? "es" : "",
+                u.uconduct_time[conduct_wish]);
         you_have_X(&menu, buf);
 
-        if (!u.uconduct.wisharti)
+        if (!u.uconduct[conduct_artiwish])
             enl_msg(&menu, You_, "have not wished", "did not wish",
                     " for any artifacts");
+        else {
+            sprintf(buf, "wished for your your first artifact on turn %d",
+                    u.uconduct_time[conduct_artiwish]);
+            you_have_X(&menu, buf);
+        }
     }
 
-    if (!u.uconduct.puddings)
+    if (!u.uconduct[conduct_puddingsplit])
         you_have_never(&menu, "split a pudding");
     else {
-        sprintf(buf, "split %u pudding%s", u.uconduct.puddings,
-                plur(u.uconduct.puddings));
+        sprintf(buf, "split %u pudding%s, starting on turn %d",
+                u.uconduct[conduct_puddingsplit],
+                plur(u.uconduct[conduct_puddingsplit]),
+                u.uconduct_time[conduct_puddingsplit]);
         you_have_X(&menu, buf);
     }
 
-    if (!u.uconduct.elbereths)
+    if (!u.uconduct[conduct_elbereth])
         enl_msg(&menu, You_, "have never written", "never wrote",
                 " Elbereth's name");
     else {
-        sprintf(buf, " Elbereth's name %u time%s", u.uconduct.elbereths,
-                plur(u.uconduct.elbereths));
+        sprintf(buf, " Elbereth's name %u time%s, starting on turn %d",
+                u.uconduct[conduct_elbereth],
+                plur(u.uconduct[conduct_elbereth]),
+                u.uconduct_time[conduct_elbereth]);
         enl_msg(&menu, You_, "have written", "wrote", buf);
     }
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Derrick Sund, 2014-02-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -807,17 +807,6 @@ cpostfx(int pm)
     return;
 }
 
-void
-violated_vegetarian(void)
-{
-    u.uconduct.unvegetarian++;
-    if (Role_if(PM_MONK)) {
-        pline("You feel guilty.");
-        adjalign(-1);
-    }
-    return;
-}
-
 /* common code to check and possibly charge for 1 tin, will split() the tin if
    necessary */
 static void
@@ -936,11 +925,11 @@ eat_tin_one_turn(void)
               mons[u.utracked[tos_tin]->corpsenm].mname);
 
         /* KMH, conduct */
-        u.uconduct.food++;
+        break_conduct(conduct_food);
         if (!vegan(&mons[u.utracked[tos_tin]->corpsenm]))
-            u.uconduct.unvegan++;
+            break_conduct(conduct_vegan);
         if (!vegetarian(&mons[u.utracked[tos_tin]->corpsenm]))
-            violated_vegetarian();
+            break_conduct(conduct_vegetarian);
 
         u.utracked[tos_tin]->dknown = u.utracked[tos_tin]->known = TRUE;
         cprefx(u.utracked[tos_tin]->corpsenm);
@@ -985,7 +974,7 @@ eat_tin_one_turn(void)
                   Hallucination ? "Swee'pea" : "Popeye");
         lesshungry(600, u.utracked[tos_tin]);
         gainstr(u.utracked[tos_tin], 0);
-        u.uconduct.food++;
+        break_conduct(conduct_food);
     }
 use_me:
     if (carried(u.utracked[tos_tin]))
@@ -1108,9 +1097,9 @@ eatcorpse(void)
 
     /* KMH, conduct */
     if (!vegan(&mons[mnum]))
-        u.uconduct.unvegan++;
+        break_conduct(conduct_vegan);
     if (!vegetarian(&mons[mnum]))
-        violated_vegetarian();
+        break_conduct(conduct_vegetarian);
 
     if (mnum != PM_LIZARD && mnum != PM_LICHEN) {
         long age = peek_at_iced_corpse_age(otmp);
@@ -1518,7 +1507,7 @@ fpostfx(struct obj *otmp)
     case FORTUNE_COOKIE:
         outrumor(bcsign(otmp), BY_COOKIE);
         if (!Blind)
-            u.uconduct.literate++;
+            break_conduct(conduct_illiterate);
         break;
     case LUMP_OF_ROYAL_JELLY:
         /* This stuff seems to be VERY healthy! */
@@ -1664,8 +1653,8 @@ edibility_prompts(struct obj *otmp)
         else
             return 2;
     }
-    if (cadaver && !vegetarian(&mons[mnum]) && !u.uconduct.unvegetarian &&
-        Role_if(PM_MONK)) {
+    if (cadaver && !vegetarian(&mons[mnum]) &&
+        !u.uconduct[conduct_vegetarian] && Role_if(PM_MONK)) {
         sprintf(buf, "%s unsuitable for a vegetarian monk. %s", foodsmell,
                 eat_it_anyway);
         if (yn_function(buf, ynchars, 'n') == 'n')
@@ -1709,7 +1698,7 @@ edibility_prompts(struct obj *otmp)
      * Breaks conduct, but otherwise safe.
      */
 
-    if (!u.uconduct.unvegetarian && moves > 1800 &&
+    if (!u.uconduct[conduct_vegetarian] && moves > 1800 &&
         ((material == LEATHER || material == BONE || material == DRAGON_HIDE) ||
          (cadaver && !vegetarian(&mons[mnum])))) {
         sprintf(buf, "%s of meat. %s", foodsmell, eat_it_anyway);
@@ -1719,7 +1708,7 @@ edibility_prompts(struct obj *otmp)
             return 2;
     }
 
-    if (!u.uconduct.unvegan && moves > 1800 &&
+    if (!u.uconduct[conduct_vegan] && moves > 1800 &&
         ((material == LEATHER || material == BONE || material == DRAGON_HIDE ||
           material == WAX) || (cadaver && !vegan(&mons[mnum])))) {
         sprintf(buf, "%s like an animal byproduct. %s", foodsmell,
@@ -1841,11 +1830,11 @@ doeat(const struct nh_cmd_arg *arg)
         material = objects[otmp->otyp].oc_material;
         if (material == LEATHER || material == BONE ||
             material == DRAGON_HIDE) {
-            u.uconduct.unvegan++;
-            violated_vegetarian();
+            break_conduct(conduct_vegan);
+            break_conduct(conduct_vegetarian);
         } else if (material == WAX)
-            u.uconduct.unvegan++;
-        u.uconduct.food++;
+            break_conduct(conduct_vegan);
+        break_conduct(conduct_food);
 
         if (otmp->cursed)
             rottenfood(otmp);
@@ -1925,9 +1914,9 @@ doeat(const struct nh_cmd_arg *arg)
                handled in the != FOOD_CLASS case, above */
             switch (objects[otmp->otyp].oc_material) {
             case FLESH:
-                u.uconduct.unvegan++;
+                break_conduct(conduct_vegan);
                 if (otmp->otyp != EGG) {
-                    violated_vegetarian();
+                    break_conduct(conduct_vegetarian);
                 }
                 break;
                 
@@ -1937,7 +1926,7 @@ doeat(const struct nh_cmd_arg *arg)
                     otmp->otyp == CREAM_PIE ||
                     otmp->otyp == CANDY_BAR ||   /* milk */
                     otmp->otyp == LUMP_OF_ROYAL_JELLY)
-                    u.uconduct.unvegan++;
+                    break_conduct(conduct_vegan);
                 break;
             }
 
@@ -1960,7 +1949,7 @@ doeat(const struct nh_cmd_arg *arg)
 
         /* Conduct check has been moved here for 3.4.3 so that you aren't
            charged for the conduct per-bite. */
-        u.uconduct.food++;
+        break_conduct(conduct_food);
     }
 
     /* Mark the food as partly eaten, and move it into a stack of its own, so

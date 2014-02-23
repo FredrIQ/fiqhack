@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Derrick Sund, 2014-02-20 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -53,6 +53,7 @@ struct you;
 /* ### allmain.c ### */
 
 extern void startup_common(boolean);
+extern void realtime_messages(boolean, boolean);
 extern void action_incomplete(const char *gerund, enum occupation occupation);
 extern void action_interrupted(void);
 extern void action_completed(void);
@@ -62,6 +63,7 @@ extern void helpless(int turns, enum helpless_reason reason, const char *cause,
 extern void cancel_helplessness(enum helpless_mask mask, const char *msg);
 extern boolean u_helpless(enum helpless_mask mask);
 extern boolean canhear(void);
+extern void break_conduct(enum player_conduct);
 
 /* ### apply.c ### */
 
@@ -501,7 +503,6 @@ extern void init_uhunger(void);
 extern int doeat(const struct nh_cmd_arg *);
 extern void gethungry(void);
 extern void morehungry(int);
-extern void violated_vegetarian(void);
 extern void newuhs(boolean);
 extern boolean can_sacrifice(const struct obj *);
 extern struct obj *floorfood(const char *, const struct nh_cmd_arg *);
@@ -597,6 +598,7 @@ extern void drinksink(void);
 
 /* ### hack.c ### */
 
+extern void clear_travel_direction(void);
 extern boolean revive_nasty(int, int, const char *);
 extern void movobj(struct obj *, xchar, xchar);
 extern boolean may_dig(struct level *lev, xchar x, xchar y);

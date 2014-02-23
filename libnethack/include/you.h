@@ -13,6 +13,7 @@
 # include "skills.h"
 # include "dungeon.h"
 # include "quest.h"
+# include "youprop.h"  /* for conducts */
 
 # include <time.h>
 
@@ -35,32 +36,9 @@ struct u_event {
     unsigned ascended:1;        /* has offered the Amulet */
 };
 
-/* KMH, conduct --
- * These are voluntary challenges.  Each field denotes the number of
- * times a challenge has been violated.
- */
-struct u_conduct {      /* number of times... */
-    unsigned int unvegetarian;  /* eaten any animal */
-    unsigned int unvegan;       /* ... or any animal byproduct */
-    unsigned int food;  /* ... or any comestible */
-    unsigned int gnostic;       /* used prayer, priest, or altar */
-    unsigned int weaphit;       /* hit a monster with a weapon */
-    unsigned int killer;        /* killed a monster yourself */
-    unsigned int literate;      /* read something (other than BotD) */
-    unsigned int polypiles;     /* polymorphed an object */
-    unsigned int polyselfs;     /* transformed yourself */
-    unsigned int wishes;        /* used a wish */
-    unsigned int wisharti;      /* wished for an artifact */
-    /* genocides already listed at end of game */
-    unsigned int elbereths;     /* wrote an elbereth */
-    unsigned int puddings;      /* split a pudding */
-};
-
-
 /*** Information about the player ***/
 struct you {
     xchar ux, uy;
-    schar dx, dy;       /* direction of the ongoing multi-turn move */
     xchar tx, ty;       /* destination of travel */
     xchar ux0, uy0;     /* initial position of a move */
     d_level uz;    /* your level on this and the previous turn */
@@ -152,7 +130,8 @@ struct you {
 
     unsigned udg_cnt;   /* how long you have been demigod */
     struct u_event uevent;      /* certain events have happened */
-    struct u_conduct uconduct;  /* KMH, conduct */
+    int uconduct[num_conducts];       /* KMH, conduct */
+    int uconduct_time[num_conducts];  /* when each conduct was first broken */
     struct attribs acurr,       /* your current attributes (eg. str) */
             aexe,       /* for gain/loss via "exercise" */
             abon,       /* your bonus attributes (eg. str) */

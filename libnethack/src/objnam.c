@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Derrick Sund, 2014-02-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2653,6 +2653,14 @@ typfnd:
             }
             break;
         case CORPSE:
+            /* Undead like zombies and vampires all have G_NOCORPSE as their
+             * corpses are special-cased.  Note that undead_to_corpse
+             * returns its own input if it doesn't correspond to a valid
+             * undead. */
+            if (undead_to_corpse(mntmp) != mntmp) {
+                mntmp = undead_to_corpse(mntmp);
+                otmp->age -= 100;
+            }
             if (!(mons[mntmp].geno & G_UNIQ) &&
                 !(mvitals[mntmp].mvflags & G_NOCORPSE)) {
                 /* beware of random troll or lizard corpse, or of ordinary one
@@ -2763,7 +2771,7 @@ typfnd:
         otmp = oname(otmp, name);
         if (otmp->oartifact) {
             otmp->quan = 1L;
-            u.uconduct.wisharti++;      /* KMH, conduct */
+            break_conduct(conduct_artiwish);      /* KMH, conduct */
         }
     }
 

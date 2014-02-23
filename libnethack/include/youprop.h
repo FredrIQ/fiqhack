@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Derrick Sund, 2014-02-20 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -379,6 +379,27 @@ enum helpless_mask {
     HM(engraving),
     HM(praying),
     hm_all = (1 << (hr_last + 1)) - 1,
+};
+
+/* The game's player conducts.
+ * Editing this enum will break save compatibility. */
+enum player_conduct {
+    conduct_first = 0,
+    conduct_food = conduct_first,        /* eaten any comestible */
+    conduct_vegan,                       /* ... or any animal byproduct */
+    conduct_vegetarian,                  /* ... or any meat */
+    conduct_gnostic,                     /* used prayer, priest, or altar */
+    conduct_weaphit,                     /* hit a monster with a weapon */
+    conduct_killer,                      /* killed a monster yourself */
+    conduct_illiterate,                  /* read something (other than BotD) */
+    conduct_polypile,                    /* polymorphed an object */
+    conduct_polyself,                    /* transformed yourself */
+    conduct_wish,                        /* used a wish */
+    conduct_artiwish,                    /* wished for an artifact */
+    conduct_genocide,                    /* committed genocide */
+    conduct_elbereth,                    /* wrote an elbereth */
+    conduct_puddingsplit,                /* split a pudding */
+    num_conducts,
 };
 
 #endif /* YOUPROP_H */

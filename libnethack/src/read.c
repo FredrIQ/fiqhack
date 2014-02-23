@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-16 */
+/* Last modified by Derrick Sund, 2014-02-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -51,7 +51,7 @@ doread(const struct nh_cmd_arg *arg)
             pline("You break up the cookie and throw away the pieces.");
         outrumor(bcsign(scroll), BY_COOKIE);
         if (!Blind)
-            u.uconduct.literate++;
+            break_conduct(conduct_illiterate);
         useup(scroll);
         return 1;
     } else if (scroll->otyp == T_SHIRT) {
@@ -82,7 +82,7 @@ doread(const struct nh_cmd_arg *arg)
             pline("You can't feel any Braille writing.");
             return 0;
         }
-        u.uconduct.literate++;
+        break_conduct(conduct_illiterate);
         if (flags.verbose)
             pline("It reads:");
         strcpy(buf, shirt_msgs[scroll->o_id % SIZE(shirt_msgs)]);
@@ -111,13 +111,14 @@ doread(const struct nh_cmd_arg *arg)
 
     /* TODO: When we add a conduct assistance option, add a condition here.  Or 
        better yet, check for all reading of things. */
-    if (scroll->otyp == SPE_BOOK_OF_THE_DEAD && !u.uconduct.literate &&
+    if (scroll->otyp == SPE_BOOK_OF_THE_DEAD &&
+        !u.uconduct[conduct_illiterate] &&
         yn("You are currently illiterate and could invoke the Book "
            "instead. Read it nonetheless?") != 'y')
         return 0;
 
     if (scroll->otyp != SPE_BLANK_PAPER && scroll->otyp != SCR_BLANK_PAPER)
-        u.uconduct.literate++;
+        break_conduct(conduct_illiterate);
 
     confused = (Confusion != 0);
     if (scroll->oclass == SPBOOK_CLASS)
@@ -1468,6 +1469,11 @@ do_class_genocide(void)
                     reset_rndmonst(i);
                     kill_genocided_monsters();
                     update_inventory(); /* eggs & tins */
+                    /* While endgame messages track whether you genocided
+                     * by means other than looking at u.uconduct, call
+                     * break_conduct anyway to correctly note the first turn
+                     * in which it happened. */
+                    break_conduct(conduct_genocide);
                     pline("Wiped out all %s.", nam);
                     if (Upolyd && i == u.umonnum) {
                         u.mh = -1;
@@ -1687,6 +1693,11 @@ do_genocide(int how)
             rehumanize();
         }
         reset_rndmonst(mndx);
+        /* While endgame messages track whether you genocided
+         * by means other than looking at u.uconduct, call
+         * break_conduct anyway to correctly note the first turn
+         * in which it happened. */
+        break_conduct(conduct_genocide);
         kill_genocided_monsters();
         update_inventory();     /* in case identified eggs were affected */
     } else {
