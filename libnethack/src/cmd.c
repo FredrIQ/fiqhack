@@ -2135,7 +2135,7 @@ getargdir(const struct nh_cmd_arg *arg, const char *query,
     /* Is there a reasonable direction specified already? */
     if ((arg->argtype & CMD_ARG_DIR) &&
         dir_to_delta(arg->dir, dx, dy, dz) &&
-        (!dx || !dy || u.umonnum != PM_GRID_BUG)) {
+        (!*dx || !*dy || u.umonnum != PM_GRID_BUG)) {
 
         /* getdir() has a stun/confusion check; replicate that here.
 
