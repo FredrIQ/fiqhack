@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-02-21
+Last modified by Alex Smith, 2014-02-23
 
 Copyright (C) 2013 Alex Smith.
 
@@ -1290,7 +1290,8 @@ happened. (Grunt, 0128f35)
 
 The game now generates an extended logfile that stores more detail about what
 happened in the games played on that installation (or server), for statistical
-and tournament scoring purposes. (Bilious and Ace, 33350a2)
+and tournament scoring purposes. (Bilious, Ace and 4, 33350a2,
+e25fe11..b405854)
 
 
 Internals Improvements
