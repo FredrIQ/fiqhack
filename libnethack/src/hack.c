@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-23 */
+/* Last modified by Derrick Sund, 2014-02-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -27,6 +27,8 @@ clear_travel_direction(void)
 {
     turnstate.dx = 0;
     turnstate.dy = 0;
+    turnstate.stop_x = -1;
+    turnstate.stop_y = -1;
 }
 
 boolean
@@ -1074,6 +1076,13 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
     boolean cause_delay = FALSE;        /* dragging ball will skip a move */
     const char *predicament;
     schar dz;
+
+    /* If we're just starting a run, mark a run-stopping space to prevent
+       infinite loops. */
+    if (last_command_was("run") && !turnstate.dx && !turnstate.dy) {
+        turnstate.stop_x = u.ux;
+        turnstate.stop_y = u.uy;
+    }
 
     /* If we already have values for dx and dy, it means we're running.
      * We don't want to overwrite them in that case, or else turning corners
@@ -2326,6 +2335,13 @@ lookaround(enum u_interaction_mode uim)
         return;
     }
 
+    /* If we're about to step into the run-stopping space, stop. */
+    if (u.ux + turnstate.dx == turnstate.stop_x &&
+        u.uy + turnstate.dy == turnstate.stop_y) {
+        action_interrupted();
+        return;
+    }
+
     /* If travel_interrupt is set, then stop if there is a hostile nearby.
        Exception: item-interactive (i.e. aggressive) farmoves, such as
        shift-direction. */
@@ -2485,6 +2501,14 @@ lookaround(enum u_interaction_mode uim)
          * ignores this.
          */
         goto stop;
+
+    if (corrct > 2 && last_command_was("run")) {
+        /* We're in a true branch, which is a pretty good place to set a new
+           stop space; otherwise we might run into a case where a corridor
+           leads diagonally into a loop. */
+        turnstate.stop_x = u.ux;
+        turnstate.stop_y = u.uy;
+    }
 
     // Check whether it's time to turn.
     if (flags.corridorbranch && !noturn && !m0 && i0 &&
