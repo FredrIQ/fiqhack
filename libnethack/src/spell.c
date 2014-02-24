@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-02-21 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -722,28 +722,30 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     skill = spell_skilltype(spellid(spell));
     role_skill = P_SKILL(skill);
 
-    // Get the direction or target, if applicable.
-    // We want to do this *before* determining spell success,
-    // both for interface consistency and to cut down on needless
-    // mksobj calls.
+    /* Get the direction or target, if applicable.
+       
+       We want to do this *before* determining spell success, both for interface
+       consistency and to cut down on needless mksobj calls. */
     switch (spellid(spell)) {
  
-    // These spells ask the user to target a specific space.
+    /* These spells ask the user to target a specific space. */
     case SPE_CONE_OF_COLD:
     case SPE_FIREBALL:
-        // If Skilled or better, get a specific space.
+        /* If Skilled or better, get a specific space. */
         if (role_skill >= P_SKILLED) {
             if (throwspell(&dx, &dy, arg)) {
                 dz = 0;
                 break;
             }
             else {
-                // Decided not to target anything.  Abort the spell.
+                /* Decided not to target anything.  Abort the spell. */
                 pline("Spell canceled.");
                 return 0;
             }
         }
-        // If not Skilled, fall through.
+        /* If not Skilled, fall through. */
+
+    /* These spells ask the user to target a direction. */
     case SPE_FORCE_BOLT:
     case SPE_SLEEP:
     case SPE_MAGIC_MISSILE:
@@ -770,21 +772,20 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
         break;
     case SPE_JUMPING:
         if(!get_jump_coords(arg, &cc, max(role_skill, 1))) {
-            // No jumping after all, I guess.
+            /* No jumping after all, I guess. */
             pline("Spell canceled.");
             return 0;
         }
         break;
-    // The rest of the spells don't have targeting.
+
+    /* The rest of the spells don't have targeting. */
     default:
         break;
     }
  
 
-    /*
-     * Spell casting no longer affects knowledge of the spell. A
-     * decrement of spell knowledge is done every turn.
-     */
+    /* Spell casting no longer affects knowledge of the spell. A decrement of
+       spell knowledge is done every turn. */
     if (spellknow(spell) <= 0) {
         pline("Your knowledge of this spell is twisted.");
         pline("It invokes nightmarish images in your mind...");

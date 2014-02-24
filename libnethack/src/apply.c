@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-20 */
+/* Last modified by Alex Smith, 2014-02-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1288,8 +1288,8 @@ dojump(const struct nh_cmd_arg *arg)
     return jump(arg, 0);
 }
 
-/* Meaning of "magic" argument: 0 means physical; otherwise skill level */
-// Returns 0 if the jump should be aborted.
+/* Meaning of "magic" argument: 0 means physical; otherwise skill level.
+   Returns 0 if the jump should be aborted. */
 int
 get_jump_coords(const struct nh_cmd_arg *arg, coord *cc, int magic)
 {
@@ -1435,11 +1435,11 @@ jump(const struct nh_cmd_arg *arg, int magic)
 {
     coord cc;
 
-    //Get the coordinates.  This might involve aborting.
+    /* Get the coordinates.  This might involve aborting. */
     if(!get_jump_coords(arg, &cc, magic))
         return 0;
 
-    //Now do the actual jumping.
+    /* Now do the actual jumping. */
     jump_to_coords(&cc);
     return 1;
 }

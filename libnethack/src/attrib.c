@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-18 */
+/* Last modified by Alex Smith, 2014-02-21 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -739,31 +739,31 @@ acurrstr(void)
         return (schar) (str - 100);
 }
 
-// Return the player's effective AC rating.
-// Use in place of u.uac.
+/* Returns the player's effective AC rating. Use in place of u.uac. */
 schar
 get_player_ac(void)
 {
-    /* Do internal AC calculations with int instead of schar to prevent
+    /*
+     * Do internal AC calculations with int instead of schar to prevent
      * overflow.
      * Return schar because that's what everything expects to see.
      * Start with intrinsic AC, which might not be 10 from eating rings.
      */
     int player_ac = (int)u.uac;
 
-    // If polymorphed, get the AC bonus from that.
+    /* If polymorphed, get the AC bonus from that. */
     player_ac -= (10 - mons[u.umonnum].ac);
 
-    // If wearing rings of protection, get the AC bonus from them.
+    /* If wearing rings of protection, get the AC bonus from them. */
     if (uleft && uleft->otyp == RIN_PROTECTION)
         player_ac -= uleft->spe;
     if (uright && uright->otyp == RIN_PROTECTION)
         player_ac -= uright->spe;
 
-    // If casting Protection, get the AC bonus from that.
+    /* If casting Protection, get the AC bonus from that. */
     player_ac -= u.uspellprot;
 
-    // If the player has divine protection, get the AC bonus from that.
+    /* If the player has divine protection, get the AC bonus from that. */
     player_ac -= u.ublessed;
 
     /* Armor transformed into dragon skin gives no AC bonus. TODO: Should it at
@@ -783,7 +783,7 @@ get_player_ac(void)
     if (uarmu)
         player_ac -= ARM_BONUS(uarmu);
 
-    // Trim to valid schar range.
+    /* Trim to valid schar range. */
     if (player_ac < -128)
         player_ac = -128;
     if (player_ac > 127)
@@ -792,9 +792,8 @@ get_player_ac(void)
     return (schar)player_ac;
 }
 
-/* avoid possible problems with alignment overflow, and provide a centralized
- * location for any future alignment limits
- */
+/* Avoid possible problems with alignment overflow, and provide a centralized
+   location for any future alignment limits. */
 void
 adjalign(int n)
 {
