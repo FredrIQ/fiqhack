@@ -1275,7 +1275,8 @@ dosacrifice(const struct nh_cmd_arg *arg)
                 /* your alignment, your god gets angry and it's a conversion */
             if (unicalign == u.ualign.type) {
                 for (int count = 0; count <= u.ualign.record; count++) {
-                    break_conduct(conduct_lostalign); }
+                    break_conduct(conduct_lostalign);
+                }
                 u.ualign.record = -1;
                 value = 1;
             } else
