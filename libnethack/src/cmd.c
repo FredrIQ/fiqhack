@@ -1650,6 +1650,17 @@ show_conduct(int final)
         enl_msg(&menu, You_, "have written", "wrote", buf);
     }
 
+    if (!u.uconduct[conduct_lostalign])
+        enl_msg(&menu, You_, "have never violated", "never violated",
+                " your personal moral code");
+    else {
+        sprintf(buf, " your moral code, losing %u point%s of alignment, starting on turn %d",
+                u.uconduct[conduct_lostalign],
+                plur(u.uconduct[conduct_lostalign]),
+                u.uconduct_time[conduct_lostalign]);
+        enl_msg(&menu, You_, "have violated", "violated", buf);
+    }
+
     /* birth options */
     if (!flags.bones_enabled)
         you_have_X(&menu, "disabled loading bones files");

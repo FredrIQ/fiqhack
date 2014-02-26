@@ -802,6 +802,8 @@ adjalign(int n)
     if (n < 0) {
         if (newalign < u.ualign.record)
             u.ualign.record = newalign;
+        for (int c = newalign; c < u.ualign.record; c++) {
+            break_conduct(conduct_lostalign); }
     } else if (newalign > u.ualign.record) {
         u.ualign.record = newalign;
         if (u.ualign.record > ALIGNLIM)
