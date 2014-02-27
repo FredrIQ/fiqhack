@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-02-21 */
+/* Last modified by Derrick Sund, 2014-02-27 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -638,14 +638,28 @@ cast_protection(void)
         l /= 2;
     }
 
-    /* The more u.uspellprot you already have, the less you get, and the better 
-       your natural ac, the less you get.  LEVEL AC SPELLPROT from sucessive
-       SPE_PROTECTION casts 1 10 0, 1, 2, 3, 4 1 0 0, 1, 2, 3 1 -10 0, 1, 2 2-3 
-       10 0, 2, 4, 5, 6, 7, 8 2-3 0 0, 2, 4, 5, 6 2-3 -10 0, 2, 3, 4 4-7 10 0,
-       3, 6, 8, 9, 10, 11, 12 4-7 0 0, 3, 5, 7, 8, 9 4-7 -10 0, 3, 5, 6 7-15
-       -10 0, 3, 5, 6 8-15 10 0, 4, 7, 10, 12, 13, 14, 15, 16 8-15 0 0, 4, 7,
-       9, 10, 11, 12 8-15 -10 0, 4, 6, 7, 8 16-30 10 0, 5, 9, 12, 14, 16, 17,
-       18, 19, 20 16-30 0 0, 5, 9, 11, 13, 14, 15 16-30 -10 0, 5, 8, 9, 10 */
+    /*
+     * The more u.uspellprot you already have, the less you get,
+     * and the better your natural ac, the less you get.
+     *
+     *	LEVEL AC    SPELLPROT from sucessive SPE_PROTECTION casts
+     *      1     10    0,  1,  2,  3,  4
+     *      1      0    0,  1,  2,  3
+     *      1    -10    0,  1,  2
+     *      2-3   10    0,  2,  4,  5,  6,  7,  8
+     *      2-3    0    0,  2,  4,  5,  6
+     *      2-3  -10    0,  2,  3,  4
+     *      4-7   10    0,  3,  6,  8,  9, 10, 11, 12
+     *      4-7    0    0,  3,  5,  7,  8,  9
+     *      4-7  -10    0,  3,  5,  6
+     *      7-15 -10    0,  3,  5,  6
+     *      8-15  10    0,  4,  7, 10, 12, 13, 14, 15, 16
+     *      8-15   0    0,  4,  7,  9, 10, 11, 12
+     *      8-15 -10    0,  4,  6,  7,  8
+     *     16-30  10    0,  5,  9, 12, 14, 16, 17, 18, 19, 20
+     *     16-30   0    0,  5,  9, 11, 13, 14, 15
+     *     16-30 -10    0,  5,  8,  9, 10
+     */
     gain = loglev - (int)u.uspellprot / (4 - min(3, (10 - natac) / 10));
 
     if (gain > 0) {
@@ -824,13 +838,20 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
         if (spellid(spell) != SPE_DETECT_FOOD) {
             int hungr = energy * 2;
 
-            /* If hero is a wizard, their current intelligence (bonuses +
-               temporary + current) affects hunger reduction in casting a
-               spell. 1. int = 17-18 no reduction 2. int = 16 1/4 hungr 3. int
-               = 15 1/2 hungr 4. int = 1-14 normal reduction The reason for
-               this is: a) Intelligence affects the amount of exertion in
-               thinking. b) Wizards have spent their life at magic and
-               understand quite well how to cast spells. */
+            /*
+             * If hero is a wizard, their current intelligence
+             * (bonuses + temporary + current)
+             * affects hunger reduction in casting a spell.
+             * 1. int = 17-18 no reduction
+             * 2. int = 16    1/4 hungr
+             * 3. int = 15    1/2 hungr
+             * 4. int = 1-14  normal reduction
+             * The reason for this is:
+             * a) Intelligence affects the amount of exertion
+             * in thinking.
+             * b) Wizards have spent their life at magic and
+             * understand quite well how to cast spells.
+             */
             intell = acurr(A_INT);
             if (!Role_if(PM_WIZARD))
                 intell = 10;

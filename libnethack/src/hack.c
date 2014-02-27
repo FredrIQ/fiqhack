@@ -2334,7 +2334,7 @@ lookaround(enum u_interaction_mode uim)
 
 
     /* Grid bugs stop if trying to move diagonal, even if blind.  Maybe
-    /* they polymorphed while in the middle of a long move. */
+       they polymorphed while in the middle of a long move. */
     if (u.umonnum == PM_GRID_BUG && turnstate.dx && turnstate.dy) {
         action_completed();
         return;
