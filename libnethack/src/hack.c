@@ -1,9 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-<<<<<<< HEAD
-/* Last modified by Derrick Sund, 2014-02-24 */
-=======
-/* Last modified by Alex Smith, 2014-02-23 */
->>>>>>> remotes/ais523/savebreak
+/* Last modified by Derrick Sund, 2014-02-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2437,21 +2433,11 @@ lookaround(enum u_interaction_mode uim)
                        this function intending to walk into. */
                     if (flags.corridorbranch) {
                         /* i = Euclidean distance between intended space and
-<<<<<<< HEAD
-                         * current candidate.  Use Euclidean distance so that
-                         * directly adjacent spaces get priority over diagonally
-                         * adjacent spaces.
-                         * If candidate isn't adjacent at all to desired, just
-                         * skip it.
-                         */
-                        i = dist2(x, y, u.ux + turnstate.dx, u.uy + turnstate.dy);
-=======
                            current candidate.  Use Euclidean distance so that
                            directly adjacent spaces get priority over diagonally
                            adjacent spaces. If candidate isn't adjacent at all
                            to desired, just skip it. */
-                        i = dist2(x, y, u.ux + dx, u.uy + dy);
->>>>>>> remotes/ais523/savebreak
+                        i = dist2(x, y, u.ux + turnstate.dx, u.uy + turnstate.dy);
                         if (i > 2)
                             continue;
                         if (corrct == 1 && dist2(x, y, x0, y0) != 1)
@@ -2510,7 +2496,6 @@ lookaround(enum u_interaction_mode uim)
            ignores this. */
         goto stop;
 
-<<<<<<< HEAD
     if (corrct > 2 && last_command_was("run")) {
         /* We're in a true branch, which is a pretty good place to set a new
            stop space; otherwise we might run into a case where a corridor
@@ -2519,10 +2504,7 @@ lookaround(enum u_interaction_mode uim)
         turnstate.stop_y = u.uy;
     }
 
-    // Check whether it's time to turn.
-=======
     /* Check whether it's time to turn. */
->>>>>>> remotes/ais523/savebreak
     if (flags.corridorbranch && !noturn && !m0 && i0 &&
         (corrct == 1 || (corrct == 2 && i0 == 1))) {
         turnstate.dx = x0 - u.ux;
