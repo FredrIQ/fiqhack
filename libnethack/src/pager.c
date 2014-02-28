@@ -232,7 +232,8 @@ describe_object(int x, int y, int votyp, char *buf, int known_embed)
         if (votyp == STRANGE_OBJECT) {
             strcpy(buf, "strange object");
         } else {
-            otmp = mksobj(level, votyp, FALSE, FALSE);
+            otmp = mksobj_basic(level, votyp, FALSE, FALSE);
+            /* (basic object only, no random features) */
             if (otmp->oclass == COIN_CLASS)
                 otmp->quan = 1L;        /* to force pluralization off */
             else if (otmp->otyp == SLIME_MOLD)
