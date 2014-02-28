@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Derrick Sund, 2014-02-27 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -420,6 +420,15 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
             /* try to find an item for this key and, if one is found, select it 
              */
         default:
+            if (mdat->how == PICK_LETTER) {
+                if (key >= 'a' && key <= 'z') {
+                    results[0] = key - 'a' + 1;
+                    break;
+                } else if (key >= 'A' && key <= 'Z') {
+                    results[0] = key - 'A' + 27;
+                    break;
+                }
+            }
             idx = find_accel(key, mdat);
 
             if (idx != -1 &&    /* valid accelerator */
