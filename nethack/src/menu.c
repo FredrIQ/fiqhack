@@ -334,18 +334,6 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
 
         key = nh_wgetch(gw->win);
 
-        if (mdat->how == PICK_LETTER) {
-            if (key >= 'a' && key <= 'z') {
-                results[0] = key - 'a' + 1;
-                rv = 1;
-                goto cleanup_and_return;
-            } else if (key >= 'A' && key <= 'Z') {
-                results[0] = key - 'A' + 27;
-                rv = 1;
-                goto cleanup_and_return;
-            }
-        }
-
         switch (key) {
             /* one line up */
         case KEY_UP:
@@ -432,6 +420,15 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
             /* try to find an item for this key and, if one is found, select it 
              */
         default:
+            if (mdat->how == PICK_LETTER) {
+                if (key >= 'a' && key <= 'z') {
+                    results[0] = key - 'a' + 1;
+                    break;
+                } else if (key >= 'A' && key <= 'Z') {
+                    results[0] = key - 'A' + 27;
+                    break;
+                }
+            }
             idx = find_accel(key, mdat);
 
             if (idx != -1 &&    /* valid accelerator */
@@ -458,7 +455,6 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
         }
     }
 
-cleanup_and_return:
     delete_gamewin(gw);
     redraw_game_windows();
     curs_set(prevcurs);
