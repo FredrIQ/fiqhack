@@ -344,6 +344,9 @@ learn(void)
     short booktype;
     char splname[BUFSZ];
     boolean costly = TRUE;
+    boolean already_known = FALSE;
+    int first_unknown = MAXSPELL;
+    int known_spells = 0;
 
     /* JDS: lenses give 50% faster reading; 33% smaller read time */
     if (u.uoccupation_progress[tos_book] &&
@@ -377,6 +380,7 @@ learn(void)
             OBJ_NAME(objects[booktype]));
     for (i = 0; i < MAXSPELL; i++) {
         if (spellid(i) == booktype) {
+            already_known = TRUE;
             if (u.utracked[tos_book]->spestudied > MAX_SPELL_STUDY) {
                 pline("This spellbook is too faint to be read any more.");
                 u.utracked[tos_book]->otyp = booktype = SPE_BLANK_PAPER;
@@ -398,19 +402,24 @@ learn(void)
                amnesia made you forget the book */
             makeknown((int)booktype);
             break;
-        } else if (spellid(i) == NO_SPELL) {
-            spl_book[i].sp_id = booktype;
-            spl_book[i].sp_lev = objects[booktype].oc_level;
-            incrnknow(i);
-            u.utracked[tos_book]->spestudied++;
-            pline(i > 0 ? "You add %s to your repertoire." : "You learn %s.",
-                  splname);
-            makeknown((int)booktype);
-            break;
-        }
+        } else if (spellid(i) == NO_SPELL && i < first_unknown)
+            first_unknown = i;
+        else
+            known_spells++;
     }
-    if (i == MAXSPELL)
+
+    if (first_unknown == MAXSPELL)
         impossible("Too many spells memorized!");
+
+    if (!already_known) {
+        spl_book[first_unknown].sp_id = booktype;
+        spl_book[first_unknown].sp_lev = objects[booktype].oc_level;
+        incrnknow(first_unknown);
+        u.utracked[tos_book]->spestudied++;
+        pline(known_spells > 0 ? "You add %s to your repertoire." :
+              "You learn %s.", splname);
+        makeknown((int)booktype);
+    }
 
     if (u.utracked[tos_book]->cursed) { /* maybe a demon cursed it */
         if (cursed_book(u.utracked[tos_book])) {
@@ -554,10 +563,28 @@ age_spells(void)
      * The hero's speed, rest status, conscious status etc.
      * does not alter the loss of memory.
      */
-    for (i = 0; i < MAXSPELL && spellid(i) != NO_SPELL; i++)
+    for (i = 0; i < MAXSPELL; i++) {
+        if (spellid(i) == NO_SPELL)
+            continue;
         if (spellknow(i))
             decrnknow(i);
+    }
     return;
+}
+
+/*
+ * Return TRUE if the player knows (or, at least, knew) at least one spell.
+ * Otherwise return FALSE.
+ */
+static boolean
+knows_spells(void)
+{
+    for (i = 0; i < MAXSPELL; i++) {
+        if (spellid(i) != NO_SPELL) {
+            return TRUE;
+        }
+    }
+    return FALSE;
 }
 
 /*
@@ -567,7 +594,7 @@ age_spells(void)
 static boolean
 getspell(int *spell_no)
 {
-    if (spellid(0) == NO_SPELL) {
+    if (!knows_spells()) {
         pline("You don't know any spells right now.");
         return FALSE;
     }
@@ -1077,22 +1104,11 @@ throwspell(schar *dx, schar *dy, const struct nh_cmd_arg *arg)
 void
 losespells(void)
 {
-    boolean confused = (Confusion != 0);
-    int n, nzap, i;
-
-    u.utracked[tos_book] = 0;
-    for (n = 0; n < MAXSPELL && spellid(n) != NO_SPELL; n++)
-        continue;
-    if (n) {
-        nzap = rnd(n) + confused ? 1 : 0;
-        if (nzap > n)
-            nzap = n;
-        for (i = 0; i < n; i++) {
-            if (rnd(n) <= nzap) {
-                spellknow(i) = 0;
-                exercise(A_WIS, FALSE);     /* ouch! */
-            }
-        }
+    int n;
+    for (n = 0; n < MAXSPELL; n++) {
+        if(spellid(n) == NO_SPELL)
+            continue;
+        spellknow(n) = rnd(spellknow(n));
     }
 }
 
@@ -1106,11 +1122,11 @@ dovspell(const struct nh_cmd_arg *arg)
 
     (void) arg;
 
-    if (spellid(0) == NO_SPELL)
+    if (!knows_spells())
         pline("You don't know any spells right now.");
     else {
         while (dospellmenu("Currently known spells", SPELLMENU_VIEW, &splnum)) {
-            sprintf(qbuf, "Reordering spells; swap '%c' with", spellet(splnum));
+            sprintf(qbuf, "Reordering spells; adjust '%c' to", spellet(splnum));
             if (!dospellmenu(qbuf, splnum, &othnum))
                 break;
 
@@ -1135,20 +1151,21 @@ dospellmenu(const char *prompt,
 
     sprintf(buf, "Name\tLevel\tCategory\tFail\tMemory");
     set_menuitem(&items[count++], 0, MI_HEADING, buf, 0, FALSE);
-    for (i = 0; i < MAXSPELL && spellid(i) != NO_SPELL; i++) {
+    for (i = 0; i < MAXSPELL; i++) {
+        if (spellid(i) == NO_SPELL)
+            continue;
         sprintf(buf, "%s\t%-d%s\t%s\t%-d%%\t%-d%%", spellname(i), spellev(i),
                 spellknow(i) ? " " : "*",
                 spelltypemnemonic(spell_skilltype(spellid(i))),
                 100 - percent_success(i),
                 (spellknow(i) * 100 + (KEEN - 1)) / KEEN);
-
-        set_menuitem(&items[count++], i + 1, MI_NORMAL, buf, 0,
-                     (i == splaction) ? TRUE : FALSE);
+        set_menuitem(&items[count++], i + 1, MI_NORMAL, buf,
+                     i <= 26 ? i + 'a' : i + 'A' - 26, FALSE);
     }
 
     how = PICK_ONE;
-    if (splaction == SPELLMENU_VIEW && spellid(1) == NO_SPELL)
-        how = PICK_NONE;        /* only one spell => nothing to swap with */
+    if (splaction >= 0)
+        how = PICK_LETTER;      /* We're swapping spells. */
 
     n = display_menu(&(struct nh_menulist){.items = items, .icount = count},
                      prompt, how, PLHINT_ANYWHERE, selected);

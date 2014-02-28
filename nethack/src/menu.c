@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Derrick Sund, 2014-02-27 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -334,6 +334,18 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
 
         key = nh_wgetch(gw->win);
 
+        if (mdat->how == PICK_LETTER) {
+            if (key >= 'a' && key <= 'z') {
+                results[0] = key - 'a' + 1;
+                rv = 1;
+                goto cleanup_and_return;
+            } else if (key >= 'A' && key <= 'Z') {
+                results[0] = key - 'A' + 27;
+                rv = 1;
+                goto cleanup_and_return;
+            }
+        }
+
         switch (key) {
             /* one line up */
         case KEY_UP:
@@ -446,6 +458,7 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
         }
     }
 
+cleanup_and_return:
     delete_gamewin(gw);
     redraw_game_windows();
     curs_set(prevcurs);

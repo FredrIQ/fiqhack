@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Derrick Sund, 2014-02-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) M. Stephenson, 1990, 1991.                       */
 /* Copyright (c) Dean Luick, 1990.                                */
@@ -1208,7 +1208,6 @@ do_objs(const char *outfile)
 {
     int i, sum = 0;
     char *c, *objnam;
-    int nspell = 0;
     int prefix = 0;
     char class = '\0';
     boolean sumerr = FALSE;
@@ -1259,7 +1258,6 @@ do_objs(const char *outfile)
         case SPBOOK_CLASS:
             fprintf(ofp, "#define\tSPE_");
             prefix = 1;
-            nspell++;
             break;
         case SCROLL_CLASS:
             fprintf(ofp, "#define\tSCR_");
@@ -1292,7 +1290,6 @@ do_objs(const char *outfile)
     }
 
     fprintf(ofp, "#define\tLAST_GEM\t(JADE)\n");
-    fprintf(ofp, "#define\tMAXSPELL\t%d\n", nspell + 1);
     fprintf(ofp, "#define\tNUM_OBJECTS\t%d\n", i);
 
     fprintf(ofp, "\n/* Artifacts (unique objects) */\n\n");
