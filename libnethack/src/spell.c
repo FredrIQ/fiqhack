@@ -579,6 +579,7 @@ age_spells(void)
 static boolean
 knows_spells(void)
 {
+    int i;
     for (i = 0; i < MAXSPELL; i++) {
         if (spellid(i) != NO_SPELL) {
             return TRUE;
