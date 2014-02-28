@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-02-23
+Last modified by Derrick Sund, 2014-02-27
 
 Copyright (C) 2013 Alex Smith.
 
@@ -344,6 +344,9 @@ Commands
 
 `>`: The game no longer discloses information about the ground when pressing
 `>` when blind and levitating. (Grunt, C343-32, 4feb4aa)
+
+`+`: The player may now assign known spells to any letter, not just swap the
+letters of known spells. (4, 6a5eec7)
 
 `a`: Candles can now be placed into candelabra even underwater. (Bilious,
 C343-238, 5c6ed21)
