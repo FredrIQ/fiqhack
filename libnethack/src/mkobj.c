@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-02-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -371,9 +371,11 @@ static const char dknowns[] = {
 
 struct obj *
 mksobj_basic(struct level *lev, int otyp, boolean init)
-{ /* Just create the basic object, do not do anything that
-   * might be random, like beatitude, enchantment, etc.  */
+{
+    /* Just create the basic object, do not do anything that might be random,
+       like beatitude, enchantment, etc. */
     struct obj *otmp;
+    const char let = objects[otyp].oc_class;
 
     otmp = newobj(0);
     *otmp = zeroobj;
@@ -389,10 +391,10 @@ mksobj_basic(struct level *lev, int otyp, boolean init)
     otmp->dknown = strchr(dknowns, let) ? 0 : 1;
     otmp->lastused = 0;
     /* In most situations the following defaults (and in some cases a couple of
-     * the above ones also) will get overridden by mksobj, but there are a
-     * couple of cases where that won't happen, such as when we're creating a
-     * temporary object for display purposes.  So we go ahead here and
-     * initialize things to basic safe values...  */
+       the above ones also) will get overridden by mksobj, but there are a
+       couple of cases where that won't happen, such as when we're creating a
+       temporary object for display purposes.  So we go ahead here and
+       initialize things to basic safe values...  */
     otmp->spe = 0;
     otmp->blessed = 0;
     if (init)
@@ -451,7 +453,7 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif)
 {
     int mndx, tryct;
     struct obj *otmp;
-    char let = objects[otyp].oc_class;
+    const char let = objects[otyp].oc_class;
 
     otmp = mksobj_basic(lev, otyp, init);
 
