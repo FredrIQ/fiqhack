@@ -95,7 +95,7 @@ mksobj_at(int otyp, struct level *lev, int x, int y, boolean init,
 struct obj *
 mkobj(struct level *lev, char oclass, boolean artif)
 {
-    int tprob, i, prob = rnd(1000);
+    int tprob;
 
     if (oclass == RANDOM_CLASS) {
         const struct icp *iprobs =
@@ -105,6 +105,18 @@ mkobj(struct level *lev, char oclass, boolean artif)
 
         for (tprob = rnd(100); (tprob -= iprobs->iprob) > 0; iprobs++) ;
         oclass = iprobs->iclass;
+    }
+
+    return mkobj_of_class(lev, oclass, artif);
+}
+
+struct obj *
+mkobj_of_class(struct level *lev, char oclass, boolean artif)
+{
+    int i, prob = rnd(1000);
+
+    if (oclass == RANDOM_CLASS) {
+        impossible("mkobj_of_class called with RANDOM_CLASS");
     }
 
     i = bases[(int)oclass];
