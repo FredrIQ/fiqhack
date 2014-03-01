@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-16 */
+/* Last modified by Sean Hunt, 2014-02-20 */
 /* Copyright (c) J. C. Collet, M. Stephenson and D. Cohrs, 1992   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -43,7 +43,7 @@ init_fill(struct level *lev, schar bg_typ, schar fg_typ)
     limit = (WIDTH * HEIGHT * 2) / 5;
     count = 0;
     while (count < limit) {
-        i = rn1(WIDTH - 1, 2);
+        i = rnd(WIDTH - 1);
         j = rnd(HEIGHT - 1);
         if (lev->locations[i][j].typ == bg_typ) {
             lev->locations[i][j].typ = fg_typ;
@@ -72,7 +72,7 @@ pass_one(struct level *lev, schar bg_typ, schar fg_typ)
     int i, j;
     short count, dr;
 
-    for (i = 2; i <= WIDTH; i++)
+    for (i = 1; i <= WIDTH; i++)
         for (j = 1; j < HEIGHT; j++) {
             for (count = 0, dr = 0; dr < 8; dr++)
                 if (get_map
@@ -106,7 +106,7 @@ pass_two(struct level *lev, schar bg_typ, schar fg_typ)
     int i, j;
     short count, dr;
 
-    for (i = 2; i <= WIDTH; i++)
+    for (i = 1; i <= WIDTH; i++)
         for (j = 1; j < HEIGHT; j++) {
             for (count = 0, dr = 0; dr < 8; dr++)
                 if (get_map
@@ -119,7 +119,7 @@ pass_two(struct level *lev, schar bg_typ, schar fg_typ)
                 new_loc(i, j) = get_map(lev, i, j, bg_typ);
         }
 
-    for (i = 2; i <= WIDTH; i++)
+    for (i = 1; i <= WIDTH; i++)
         for (j = 1; j < HEIGHT; j++)
             lev->locations[i][j].typ = new_loc(i, j);
 }
@@ -130,7 +130,7 @@ pass_three(struct level *lev, schar bg_typ, schar fg_typ)
     int i, j;
     short count, dr;
 
-    for (i = 2; i <= WIDTH; i++)
+    for (i = 1; i <= WIDTH; i++)
         for (j = 1; j < HEIGHT; j++) {
             for (count = 0, dr = 0; dr < 8; dr++)
                 if (get_map
@@ -143,7 +143,7 @@ pass_three(struct level *lev, schar bg_typ, schar fg_typ)
                 new_loc(i, j) = get_map(lev, i, j, bg_typ);
         }
 
-    for (i = 2; i <= WIDTH; i++)
+    for (i = 1; i <= WIDTH; i++)
         for (j = 1; j < HEIGHT; j++)
             lev->locations[i][j].typ = new_loc(i, j);
 }
@@ -163,7 +163,7 @@ flood_fill_rm(struct level *lev, int sx, int sy, int rmno, boolean lit,
     schar fg_typ = lev->locations[sx][sy].typ;
 
     /* back up to find leftmost uninitialized location */
-    while (sx > 0 &&
+    while (sx >= 0 &&
            (anyroom ? IS_ROOM(lev->locations[sx][sy].typ) :
             lev->locations[sx][sy].typ == fg_typ) &&
            (int)lev->locations[sx][sy].roomno != rmno)
@@ -277,7 +277,7 @@ join_map(struct level *lev, schar bg_typ, schar fg_typ)
     coord sm, em;
 
     /* first, use flood filling to find all of the regions that need joining */
-    for (i = 2; i <= WIDTH; i++)
+    for (i = 1; i <= WIDTH; i++)
         for (j = 1; j < HEIGHT; j++) {
             if (lev->locations[i][j].typ == fg_typ &&
                 lev->locations[i][j].roomno == NO_ROOM) {

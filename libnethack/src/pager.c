@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-02-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -232,7 +232,8 @@ describe_object(int x, int y, int votyp, char *buf, int known_embed)
         if (votyp == STRANGE_OBJECT) {
             strcpy(buf, "strange object");
         } else {
-            otmp = mksobj(level, votyp, FALSE, FALSE);
+            otmp = mksobj_basic(level, votyp, FALSE);
+            /* (basic object only, no random features) */
             if (otmp->oclass == COIN_CLASS)
                 otmp->quan = 1L;        /* to force pluralization off */
             else if (otmp->otyp == SLIME_MOLD)

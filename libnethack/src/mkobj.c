@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-02-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -95,7 +95,7 @@ mksobj_at(int otyp, struct level *lev, int x, int y, boolean init,
 struct obj *
 mkobj(struct level *lev, char oclass, boolean artif)
 {
-    int tprob, i, prob = rnd(1000);
+    int tprob;
 
     if (oclass == RANDOM_CLASS) {
         const struct icp *iprobs =
@@ -105,6 +105,18 @@ mkobj(struct level *lev, char oclass, boolean artif)
 
         for (tprob = rnd(100); (tprob -= iprobs->iprob) > 0; iprobs++) ;
         oclass = iprobs->iclass;
+    }
+
+    return mkobj_of_class(lev, oclass, artif);
+}
+
+struct obj *
+mkobj_of_class(struct level *lev, char oclass, boolean artif)
+{
+    int i, prob = rnd(1000);
+
+    if (oclass == RANDOM_CLASS) {
+        impossible("mkobj_of_class called with RANDOM_CLASS");
     }
 
     i = bases[(int)oclass];
@@ -358,11 +370,12 @@ static const char dknowns[] = {
 };
 
 struct obj *
-mksobj(struct level *lev, int otyp, boolean init, boolean artif)
+mksobj_basic(struct level *lev, int otyp, boolean init)
 {
-    int mndx, tryct;
+    /* Just create the basic object, do not do anything that might be random,
+       like beatitude, enchantment, etc. */
     struct obj *otmp;
-    char let = objects[otyp].oc_class;
+    const char let = objects[otyp].oc_class;
 
     otmp = newobj(0);
     *otmp = zeroobj;
@@ -377,6 +390,73 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif)
     otmp->olev = lev;
     otmp->dknown = strchr(dknowns, let) ? 0 : 1;
     otmp->lastused = 0;
+    /* In most situations the following defaults (and in some cases a couple of
+       the above ones also) will get overridden by mksobj, but there are a
+       couple of cases where that won't happen, such as when we're creating a
+       temporary object for display purposes.  So we go ahead here and
+       initialize things to basic safe values...  */
+    otmp->spe = 0;
+    otmp->blessed = 0;
+    if (init)
+        switch (let) {
+        case FOOD_CLASS:
+            otmp->oeaten = 0;
+            switch (otmp->otyp) {
+            case CORPSE:
+                otmp->corpsenm = PM_HUMAN;
+                break;
+            case EGG:
+            case TIN:
+                otmp->corpsenm = NON_PM;
+                break;
+            case SLIME_MOLD:
+                otmp->spe = current_fruit;
+                break;
+            }
+            break;
+        case TOOL_CLASS:
+            switch (otmp->otyp) {
+            case TALLOW_CANDLE:
+            case WAX_CANDLE:
+            case BRASS_LANTERN:
+            case OIL_LAMP:
+                otmp->lamplit = 0;
+                break;
+            case CHEST:
+            case LARGE_BOX:
+                otmp->olocked = 0;
+                otmp->otrapped = 0;
+                break;
+            case FIGURINE:
+                otmp->corpsenm = PM_HUMAN;
+                break;
+            }
+            break;
+        case WAND_CLASS:
+            otmp->recharged = 0;
+            break;
+        case ROCK_CLASS:
+            switch (otmp->otyp) {
+            case STATUE:
+                otmp->corpsenm = PM_HUMAN;
+                break;
+            }
+            break;
+        }
+
+    otmp->owt = weight(otmp);
+    return otmp;
+}
+
+struct obj *
+mksobj(struct level *lev, int otyp, boolean init, boolean artif)
+{
+    int mndx, tryct;
+    struct obj *otmp;
+    const char let = objects[otyp].oc_class;
+
+    otmp = mksobj_basic(lev, otyp, init);
+
     if ((otmp->otyp >= ELVEN_SHIELD && otmp->otyp <= ORCISH_SHIELD) ||
         otmp->otyp == SHIELD_OF_REFLECTION)
         otmp->dknown = 0;
@@ -646,7 +726,8 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif)
     /* unique objects may have an associated artifact entry */
     if (objects[otyp].oc_unique && !otmp->oartifact)
         otmp = mk_artifact(lev, otmp, (aligntyp) A_NONE);
-    otmp->owt = weight(otmp);
+
+    otmp->owt = weight(otmp); /* update, in case we changed it */
     return otmp;
 }
 

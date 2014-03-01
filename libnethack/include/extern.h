@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-20 */
+/* Last modified by Alex Smith, 2014-02-28 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -929,10 +929,12 @@ extern struct obj *mkobj_at(char let, struct level *lev, int x, int y,
                             boolean artif);
 extern struct obj *mksobj_at(int, struct level *, int, int, boolean, boolean);
 extern struct obj *mkobj(struct level *lev, char oclass, boolean artif);
+extern struct obj *mkobj_of_class(struct level *lev, char oclass, boolean artif);
 extern int rndmonnum(const d_level * dlev);
 extern struct obj *splitobj(struct obj *, long);
 extern void replace_object(struct obj *, struct obj *);
 extern void bill_dummy_object(struct obj *);
+extern struct obj *mksobj_basic(struct level *lev, int otyp, boolean init);
 extern struct obj *mksobj(struct level *lev, int otyp, boolean init,
                           boolean artif);
 extern int bcsign(struct obj *);
