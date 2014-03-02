@@ -380,7 +380,7 @@ mksobj_basic(struct level *lev, int otyp, boolean init)
     otmp = newobj(0);
     *otmp = zeroobj;
     otmp->age = moves;
-    otmp->o_id = flags.ident++;
+    otmp->o_id = 1;
     if (!otmp->o_id)
         otmp->o_id = flags.ident++;     /* ident overflowed */
     otmp->quan = 1L;
