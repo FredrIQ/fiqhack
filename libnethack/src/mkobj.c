@@ -381,8 +381,6 @@ mksobj_basic(struct level *lev, int otyp, boolean init)
     *otmp = zeroobj;
     otmp->age = moves;
     otmp->o_id = 1; /* temporary ID, no good for saving */
-    if (!otmp->o_id)
-        otmp->o_id = flags.ident++;     /* ident overflowed */
     otmp->quan = 1L;
     otmp->oclass = let;
     otmp->otyp = otyp;
