@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Sean Hunt, 2014-03-01 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -534,8 +534,15 @@ query_new_value(struct win_menu *mdat, int idx)
     if (!curses_set_option(option->name, value)) {
         sprintf(strbuf, "new value for %s rejected", option->name);
         curses_msgwin(strbuf);
-    } else
+    } else {
+        if (listid != UI_OPTS) {
+            curses_free_nh_opts(optlist);
+            optlist = nh_get_options();
+            option = &optlist[id];
+        }
+
         print_option_string(option, mdat->items[idx].caption);
+    }
 
     /* special case: directly redo option menu appearance */
     if (settings.optstyle != prev_optstyle)

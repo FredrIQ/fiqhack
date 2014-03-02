@@ -1,15 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-27 */
+/* Last modified by Sean Hunt, 2014-03-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef GLOBAL_H
 # define GLOBAL_H
-
-# if defined(__linux__) && defined(__GNUC__) && !defined(_GNU_SOURCE)
-/* ensure _GNU_SOURCE is defined before including any system headers */
-#  define _GNU_SOURCE
-# endif
 
 # include <stdio.h>
 # include <setjmp.h>

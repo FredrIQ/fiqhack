@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-20 */
+/* Last modified by Sean Hunt, 2014-03-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1466,6 +1466,7 @@ hito_stone_to_flesh(struct obj *obj)
     boolean smell = FALSE;
     xchar refresh_x = obj->ox;
     xchar refresh_y = obj->oy;
+    xchar oox = -1, ooy = -1;
 
     if (objects[obj->otyp].oc_material != MINERAL &&
         objects[obj->otyp].oc_material != GEMSTONE)
@@ -1479,7 +1480,6 @@ hito_stone_to_flesh(struct obj *obj)
             smell = TRUE;
             break;
         } else if (obj->otyp == STATUE) {
-            xchar oox, ooy;
 
             get_obj_location(obj, &oox, &ooy, 0);
             refresh_x = oox;
@@ -1490,25 +1490,8 @@ hito_stone_to_flesh(struct obj *obj)
                 smell = TRUE;
                 break;
             }
-            if (!animate_statue(obj, oox, ooy, ANIMATE_SPELL, NULL)) {
-                struct obj *item;
-
-            makecorpse:
-                if (mons[obj->corpsenm].geno & (G_NOCORPSE | G_UNIQ)) {
-                    res = 0;
-                    break;
-                }
-                /* Unlikely to get here since genociding
-                 * monsters also sets the G_NOCORPSE flag.
-                 * Drop the contents, poly_obj loses them.
-                 */
-                while ((item = obj->cobj) != 0) {
-                    obj_extract_self(item);
-                    place_object(item, level, oox, ooy);
-                }
-                poly_obj(obj, CORPSE);
-                break;
-            }
+            if (!animate_statue(obj, oox, ooy, ANIMATE_SPELL, NULL))
+                goto makecorpse;
         } else {        /* new rock class object... */
             /* impossible? */
             res = 0;
@@ -1517,7 +1500,6 @@ hito_stone_to_flesh(struct obj *obj)
     case TOOL_CLASS:   /* figurine */
         {
             struct monst *mon;
-            xchar oox, ooy;
 
             if (obj->otyp != FIGURINE) {
                 res = 0;
@@ -1561,6 +1543,7 @@ hito_stone_to_flesh(struct obj *obj)
         break;
     }
 
+end:
     if (smell) {
         if (herbivorous(youmonst.data) &&
             (!carnivorous(youmonst.data) || Role_if(PM_MONK) ||
@@ -1572,6 +1555,23 @@ hito_stone_to_flesh(struct obj *obj)
 
     newsym(refresh_x, refresh_y);
     return res;
+
+makecorpse:;
+    struct obj *item;
+
+    if (mons[obj->corpsenm].geno & (G_NOCORPSE | G_UNIQ)) {
+        res = 0;
+        goto end;
+    }
+    /* Unlikely to get here since genociding
+       monsters also sets the G_NOCORPSE flag.
+       Drop the contents, poly_obj loses them. */
+    while ((item = obj->cobj) != 0) {
+        obj_extract_self(item);
+        place_object(item, level, oox, ooy);
+    }
+    poly_obj(obj, CORPSE);
+    goto end;
 }
 
 /*

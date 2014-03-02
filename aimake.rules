@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2014-01-28
+# Last modified by Sean Hunt, 2014-03-01
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -10,12 +10,22 @@
     rules => {
         _iflags => {
             object => 'optionset:IFLAGS',
-            depends => 'optstring:-DNETCLIENT',
+            depends => [
+                'optstring:-DNETCLIENT',
+            ],
             verb => 'determined',
+        },
+        _xopen => {
+            object => 'optionset:CFLAGS',
+            command => ['intcmd:assert_equal','optstring:linux', "optstring:$^O"],
+            depends => 'optstring:-D_XOPEN_SOURCE=700',
+            on_failure => 'conditional'
         },
         _cflags => {
             object => 'optionset:CFLAGS',
             depends => [
+                'optstring:-fdiagnostics-show-option',
+                'optstring:-std=c11',
                 'optstring:-Wall',
                 'optstring:-Wextra',
                 'optstring:-Wno-missing-field-initializers',
@@ -23,7 +33,6 @@
                 # but have too many false positives to be able to show
                 # them right now
                 'optstring:-Wno-unused-parameter',
-                # 'optstring:-Wno-unused-result', # doesn't exist on old gcc
                 'optstring:-Wno-sign-compare',
                 'optstring:-Wold-style-definition',
                 'optstring:-Wstrict-prototypes',

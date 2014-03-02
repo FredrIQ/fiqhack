@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-27 */
+/* Last modified by Sean Hunt, 2014-03-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1071,11 +1071,11 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
     struct trap *trap;
     int wtcap;
     boolean on_ice;
-    xchar chainx, chainy, ballx, bally; /* ball&chain new positions */
-    int bc_control;     /* control for ball&chain */
+    xchar chainx = -1, chainy = -1, ballx = -1, bally = -1;
+    int bc_control = 0;     /* control for ball&chain */
     boolean cause_delay = FALSE;        /* dragging ball will skip a move */
     const char *predicament;
-    schar dz;
+    schar dz = 0;
 
     /* If we're just starting a run, mark a run-stopping space to prevent
        infinite loops. */

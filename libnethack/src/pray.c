@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-27 */
+/* Last modified by Sean Hunt, 2014-03-01 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -345,7 +345,6 @@ fix_worst_trouble(int trouble)
         else if (Cursed_obj(uarmf, FUMBLE_BOOTS))
             otmp = uarmf;
         goto decurse;
-         /*NOTREACHED*/ break;
     case ptr_cursed:
         otmp = worst_cursed_item();
         if (otmp == uright)

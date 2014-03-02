@@ -1123,7 +1123,7 @@ newgame(void)
 {
     int i;
 
-    flags.ident = 1;
+    flags.ident = 2; /* 1 is reserved for temporary objects, see mkobj_basic */
 
     for (i = 0; i < NUMMONS; i++)
         mvitals[i].mvflags = mons[i].geno & G_NOCORPSE;

@@ -6,7 +6,6 @@
 #include "hack.h"
 
 static const char see_yourself[] = "see yourself";
-static const char unknown_type[] = "Unknown type of %s (%d)";
 
 /* Slot name for messages like "You are already wearing a shirt". */
 static const char * const c_slotnames[] = {

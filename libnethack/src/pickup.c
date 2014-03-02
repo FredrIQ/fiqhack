@@ -1336,7 +1336,7 @@ lootcont:
             freeinv(goldob);
 
             if (IS_THRONE(level->locations[u.ux][u.uy].typ)) {
-                struct obj *coffers;
+                struct obj *coffers = NULL;
                 int pass;
 
                 /* find the original coffers chest, or any chest */

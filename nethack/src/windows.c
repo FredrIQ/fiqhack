@@ -6,6 +6,7 @@
 #include "nhcurses.h"
 #include <signal.h>
 #include <locale.h>
+#include <time.h>
 #include "tile.h"
 
 #if !defined(PDCURSES)
@@ -638,6 +639,6 @@ curses_delay_output(void)
 #if defined(WIN32)
     Sleep(45);
 #else
-    usleep(50 * 1000);
+    nanosleep(&(struct timespec){ .tv_nsec = 50 * 1000 * 1000}, NULL);
 #endif
 }

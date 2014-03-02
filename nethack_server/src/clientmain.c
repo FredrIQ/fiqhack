@@ -1,10 +1,15 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-23 */
+/* Last modified by Sean Hunt, 2014-03-01 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
  *  - the GNU General Public license v2 or later
  */
+
+/* For POLLRDHUP */
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
 
 #include "nhserver.h"
 #include <ctype.h>
