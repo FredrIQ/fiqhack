@@ -1,10 +1,13 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Sean Hunt, 2014-03-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef HACK_H
 # define HACK_H
+
+/* This is needed because we redefine yn */
+# include <math.h>
 
 # ifndef CONFIG_H
 #  include "config.h"
@@ -187,6 +190,12 @@ enum attack_check_status {
 # define TEST_TRAP        3    /* check if a future travel location is a trap */
 
 /*** some utility macros ***/
+
+/* POSIX specifies that yn() is a Bessel function of the second kind. */
+# ifdef yn
+#  undef yn
+# endif
+
 # define yn(query) yn_function(query,ynchars, 'n')
 # define ynq(query) yn_function(query,ynqchars, 'q')
 # define ynaq(query) yn_function(query,ynaqchars, 'y')

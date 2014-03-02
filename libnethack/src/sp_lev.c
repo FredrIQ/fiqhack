@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-16 */
+/* Last modified by Sean Hunt, 2014-03-01 */
 /*      Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -367,7 +367,7 @@ boolean
 create_room(struct level * lev, xchar x, xchar y, xchar w, xchar h, xchar xal,
             xchar yal, xchar rtype, xchar rlit)
 {
-    xchar xabs, yabs;
+    xchar xabs = 0, yabs = 0;
     int wtmp, htmp, xaltmp, yaltmp, xtmp, ytmp;
     struct nhrect *r1 = NULL, r2;
     int trycnt = 0;
@@ -1009,7 +1009,7 @@ create_object(struct level *lev, object * o, struct mkroom *croom)
            other contents, but that can be specified as an empty container. */
         if (o->id == STATUE && Is_medusa_level(&lev->z) &&
             o->corpsenm == NON_PM) {
-            struct monst *was;
+            struct monst *was = NULL;
             struct obj *obj;
             int wastyp;
             int i;

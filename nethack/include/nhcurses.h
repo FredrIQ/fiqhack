@@ -1,13 +1,11 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Sean Hunt, 2014-03-01 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef NHCURSES_H
 # define NHCURSES_H
 
-/* _GNU_SOURCE activates lots of stuff in the in glibc headers. */
-# define _GNU_SOURCE
 # define UNICODE
 # define _CRT_SECURE_NO_WARNINGS  /* huge warning spew from MS CRT otherwise */
 
@@ -17,6 +15,7 @@
 
 # if !defined(WIN32)    /* UNIX + APPLE */
 #  include <unistd.h>
+#  include <strings.h>
 #  define FILE_OPEN_MASK 0660
 # else/* WINDOWS */
 

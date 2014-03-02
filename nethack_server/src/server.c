@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Sean Hunt, 2014-03-01 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -42,6 +42,11 @@
  * When the connection is re-established, the client's requests get forwarded
  * again.
  */
+
+/* For accept4 and timersub */
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
 
 #include "nhserver.h"
 
@@ -290,8 +295,8 @@ fork_client(struct client_data *client, int epfd)
     int pipe_in_fd[2];
     struct epoll_event ev;
 
-    ret1 = pipe2(pipe_out_fd, O_NONBLOCK);
-    ret2 = pipe2(pipe_in_fd, O_NONBLOCK);
+    ret1 = pipe(pipe_out_fd);
+    ret2 = pipe(pipe_in_fd);
     if (ret1 == -1 || ret2 == -1) {
         if (!ret1) {
             close(pipe_out_fd[0]);
@@ -307,6 +312,10 @@ fork_client(struct client_data *client, int epfd)
     }
 
     /* pipe[0] read side - pipe[1] write side */
+    fcntl(pipe_in_fd[0], F_SETFL, O_NONBLOCK);
+    fcntl(pipe_out_fd[1], F_SETFL, O_NONBLOCK);
+    fcntl(pipe_in_fd[0], F_SETFL, O_NONBLOCK);
+    fcntl(pipe_out_fd[1], F_SETFL, O_NONBLOCK);
     fcntl(pipe_in_fd[0], F_SETFD, FD_CLOEXEC);
     fcntl(pipe_out_fd[1], F_SETFD, FD_CLOEXEC); /* client does not need to
                                                    inherit this */

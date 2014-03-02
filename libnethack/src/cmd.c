@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-02-23 */
+/* Last modified by Sean Hunt, 2014-03-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -513,7 +513,7 @@ static int
 wiz_level_change(const struct nh_cmd_arg *arg)
 {
     char buf[BUFSZ];
-    int newlevel;
+    int newlevel = u.ulevel;
     int ret;
 
     getarglin(arg, "To what experience level do you want to be set?", buf);

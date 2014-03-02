@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Sean Hunt, 2014-03-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2674,7 +2674,6 @@ fire_damage(struct obj *chain, boolean force, boolean here, xchar x, xchar y)
             switch (obj->otyp) {
             case ICE_BOX:
                 continue;       /* Immune */
-                 /*NOTREACHED*/ break;
             case CHEST:
                 chance = 40;
                 break;
@@ -3105,8 +3104,8 @@ cnv_trap_obj(struct level *lev, int otyp, int cnt, struct trap *ttmp)
 static void
 move_into_trap(struct trap *ttmp)
 {
-    int bc;
-    xchar x = ttmp->tx, y = ttmp->ty, bx, by, cx, cy;
+    int bc = 0;
+    xchar x = ttmp->tx, y = ttmp->ty, bx = -1, by = -1, cx = -1, cy = -1;
     boolean unused;
 
     /* we know there's no monster in the way, and we're not trapped */
