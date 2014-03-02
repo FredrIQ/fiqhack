@@ -373,16 +373,14 @@ struct obj *
 mksobj_basic(struct level *lev, int otyp, boolean init)
 {
     /* Just create the basic object, do not do anything that might be random,
-       like beatitude, enchantment, etc. */
+       like beatitude, enchantment, etc. or disrupt game state. */
     struct obj *otmp;
     const char let = objects[otyp].oc_class;
 
     otmp = newobj(0);
     *otmp = zeroobj;
     otmp->age = moves;
-    otmp->o_id = flags.ident++;
-    if (!otmp->o_id)
-        otmp->o_id = flags.ident++;     /* ident overflowed */
+    otmp->o_id = 1; /* temporary ID, no good for saving */
     otmp->quan = 1L;
     otmp->oclass = let;
     otmp->otyp = otyp;
