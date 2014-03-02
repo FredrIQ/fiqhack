@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-02-28 */
+/* Last modified by Derrick Sund, 2014-03-01 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -687,7 +687,7 @@ extern struct obj *display_cinventory(struct obj *);
 extern struct obj *display_minventory(struct monst *, int, char *);
 extern int dotypeinv(const struct nh_cmd_arg *arg);
 extern boolean update_location(boolean all_objects);
-extern int look_here(int, boolean);
+extern int look_here(int, boolean, boolean);
 extern int dolook(const struct nh_cmd_arg *);
 extern boolean will_feel_cockatrice(struct obj *, boolean);
 extern void feel_cockatrice(struct obj *, boolean);
