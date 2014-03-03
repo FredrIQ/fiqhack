@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-24 */
+/* Last modified by Derrick Sund, 2014-03-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -144,13 +144,17 @@ struct turnstate {
         enum pray_trouble trouble;
         enum pray_type type;
     } pray;
-    /* State for farmoving things; which direction we're going */
-    schar dx, dy;
-    /* More state for farmoving things: a square that should halt running if
-       it is entered.  Initially set to the square the run started in, reset
-       to current location at each fork.  This should prevent any infinite
-       running loops. */
-    schar stop_x, stop_y;
+
+    /* State for farmove-related stuff. */
+    struct move_info {
+        /* which direction we're going */
+        schar dx, dy;
+        /* Squares that should halt running if entered.  Initially, this array
+           is all FALSE; individual entries are set to TRUE when the
+           corresponding space is stepped on.  If running would enter a TRUE
+           space, it stops.  This should prevent any infinite run loops. */
+        boolean stepped_on[COLNO][ROWNO];
+    } move;
 };
 
 extern struct turnstate turnstate;

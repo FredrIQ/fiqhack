@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-24 */
+/* Last modified by Derrick Sund, 2014-03-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -176,13 +176,7 @@ static const struct turnstate default_turnstate = {
     .helpless_causes = {},
     .helpless_endmsgs = {},
     .pray = { .align = A_NONE, .type = pty_invalid, .trouble = ptr_invalid },
-    .dx = 0,
-    .dy = 0,
-    /* stop_x and stop_y default to negative values (that is, outside the
-       valid level boundary) to ensure the player never must stop running
-       immediately. */
-    .stop_x = -1,
-    .stop_y = -1,
+    .move = { .dx = 0, .dy = 0, .stepped_on = {} },
 };
 
 struct turnstate turnstate;
@@ -196,7 +190,7 @@ init_turnstate(void)
 void
 neutral_turnstate_tasks(void)
 {
-    int i;
+    int i, j;
 
     /* We want to compare turnstate to the default for effective equality:
        integers are equal, strings are equal up to the first NUL, tagged
@@ -228,11 +222,13 @@ neutral_turnstate_tasks(void)
     if (turnstate.pray.trouble != ptr_invalid)
         impossible("prayer trouble persisted between turns");
 
-    if (turnstate.dx || turnstate.dy)
+    if (turnstate.move.dx || turnstate.move.dy)
         impossible("turnstate dx and dy persisted between turns");
 
-    if (turnstate.stop_x != -1 || turnstate.stop_y != -1)
-        impossible("turnstate run-stopping space persisted between turns");
+    for (i = 0; i < COLNO; i++)
+        for (j = 0; j < ROWNO; j++)
+            if (turnstate.move.stepped_on[i][j])
+                impossible("turnstate stepped-on persisted between turns");
     /* TODO: clean up memory */
 
     log_neutral_turnstate();
