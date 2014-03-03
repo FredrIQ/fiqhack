@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-29 */
+/* Last modified by Derrick Sund, 2014-03-03 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -460,7 +460,26 @@ pause_messages(void)
 void
 doprev_message(void)
 {
-    /* TODO */
+    int i, j, lines = 0;
+    struct nh_menulist menu;
+    char **buf;
+
+    init_menulist(&menu);
+
+    if (!histlines)
+        alloc_hist_array();
+
+    for (i = 0; i < settings.msghistory; i++) {
+        if (!histlines[i].message)
+            continue;
+        wrap_text(getmaxx(msgwin), histlines[i].message,
+                          &lines, &buf);
+        for (j = 0; j < lines; j++)
+            add_menu_txt(&menu, buf[j], MI_TEXT);
+    }
+
+    curses_display_menu(&menu, "Previous messages:", PICK_NONE,
+                        PLHINT_ANYWHERE, NULL);
 }
 
 /* Given the string "input", generate a series of strings of the given maximum
