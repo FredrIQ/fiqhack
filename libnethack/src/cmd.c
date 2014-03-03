@@ -50,7 +50,6 @@ static void mon_invent_chain(struct nh_menulist *, const char *, struct monst *,
 static void mon_chain(struct nh_menulist *, const char *, struct monst *,
                       long *, long *);
 static void contained(struct nh_menulist *, const char *, long *, long *);
-static boolean minimal_enlightenment(void);
 
 static void enlght_line(struct nh_menulist *, const char *, const char *,
                         const char *);
@@ -1230,14 +1229,91 @@ unspoilered_intrinsics(void)
                  PICK_NONE, PLHINT_ANYWHERE, NULL);
 }
 
+/* Shows legacy, "welcome [back] to NetHack" messages when a save file is
+   restored; the client sends this command to record the times that the game was
+   restored via voluntary action rather than via reconnecting a timed-out
+   connection.
+
+   It is important that this command does not affect anything other than
+   messages (it may affect parts of the gamestate that affect only messages,
+   such as u.uwelcomed). Otherwise, it would be possible to use a hacked client
+   to send this command at inappropriate times in order to modify the gamestate
+   in ways that would not be available to a normal player. Hacking in order to
+   get welcome messages at inappropriate times is pointless :-) */
+static int
+dowelcome(const struct nh_cmd_arg *arg)
+{
+    char buf[BUFSZ];
+    boolean currentgend = Upolyd ? u.mfemale : u.ufemale;
+    boolean new_game = !u.uwelcomed;
+
+    (void) arg;
+
+    u.uwelcomed = 1;
+
+    if (new_game && flags.legacy) {
+        flush_screen();
+        com_pager(1);
+    }
+
+    /*
+     * The "welcome back" message always describes your innate form
+     * even when polymorphed or wearing a helm of opposite alignment.
+     * Alignment is shown unconditionally for new games; for restores
+     * it's only shown if it has changed from its original value.
+     * Sex is shown for new games except when it is redundant; for
+     * restores it's only shown if different from its original value.
+     */
+    *buf = '\0';
+    if (new_game || u.ualignbase[A_ORIGINAL] != u.ualignbase[A_CURRENT])
+        sprintf(eos(buf), " %s", align_str(u.ualignbase[A_ORIGINAL]));
+    if (!urole.name.f &&
+        (new_game ? (urole.allow & ROLE_GENDMASK) ==
+         (ROLE_MALE | ROLE_FEMALE) : currentgend != u.initgend))
+        sprintf(eos(buf), " %s", genders[currentgend].adj);
+
+    pline(new_game ? "%s %s, welcome to NetHack!  You are a%s %s %s." :
+          "%s %s, the%s %s %s, welcome back to NetHack!", Hello(NULL),
+          u.uplname, buf, urace.adj,
+          (currentgend && urole.name.f) ? urole.name.f : urole.name.m);
+
+    realtime_messages(TRUE, TRUE);
+
+    if (discover)
+        pline("You are in non-scoring discovery mode.");
+
+    if (*level->levname)
+        pline("You named this level: %s.", level->levname);
+
+    return 0;
+}
+
+/* Normally, we don't want commands like "inventory" to change the save data.
+   However, there's one respect in which they must: if you use them to break up
+   a multi-turn action, you don't want the action immediately restarting after
+   viewing your inventory, yet the action would continue if you didn't (and the
+   client ddidn't intervene). Thus, we need to insert a command whose purpose is
+   to capture this side effect of a notime action. It can also be sent
+   explicitly by the client in order to print a "You stop running." message, or
+   the like. */
+static int
+dointerrupt(const struct nh_cmd_arg *arg)
+{
+    (void) arg;
+
+    action_interrupted();
+    return 0;
+}
+
 /*
  * Courtesy function for non-debug, non-explorer mode players
  * to help refresh them about who/what they are.
- * Returns FALSE if menu cancelled (dismissed with ESC), TRUE otherwise.
  */
-static boolean
-minimal_enlightenment(void)
+static int
+doattributes(const struct nh_cmd_arg *arg)
 {
+    (void) arg;
+
     int genidx, n, wcu, selected[1];
     long wc;
     char buf[BUFSZ], buf2[BUFSZ];
@@ -1359,7 +1435,6 @@ minimal_enlightenment(void)
                      PLHINT_ANYWHERE, selected);
 
     if (n == 1) {
-        n = 0;
         switch (*selected) {
         case 'i':
             n = ddoinv(&(struct nh_cmd_arg){.argtype = 0});
@@ -1386,94 +1461,6 @@ minimal_enlightenment(void)
         }
     }
 
-    return n;
-}
-
-/* Shows legacy, "welcome [back] to NetHack" messages when a save file is
-   restored; the client sends this command to record the times that the game was
-   restored via voluntary action rather than via reconnecting a timed-out
-   connection.
-
-   It is important that this command does not affect anything other than
-   messages (it may affect parts of the gamestate that affect only messages,
-   such as u.uwelcomed). Otherwise, it would be possible to use a hacked client
-   to send this command at inappropriate times in order to modify the gamestate
-   in ways that would not be available to a normal player. Hacking in order to
-   get welcome messages at inappropriate times is pointless :-) */
-static int
-dowelcome(const struct nh_cmd_arg *arg)
-{
-    char buf[BUFSZ];
-    boolean currentgend = Upolyd ? u.mfemale : u.ufemale;
-    boolean new_game = !u.uwelcomed;
-
-    (void) arg;
-
-    u.uwelcomed = 1;
-
-    if (new_game && flags.legacy) {
-        flush_screen();
-        com_pager(1);
-    }
-
-    /*
-     * The "welcome back" message always describes your innate form
-     * even when polymorphed or wearing a helm of opposite alignment.
-     * Alignment is shown unconditionally for new games; for restores
-     * it's only shown if it has changed from its original value.
-     * Sex is shown for new games except when it is redundant; for
-     * restores it's only shown if different from its original value.
-     */
-    *buf = '\0';
-    if (new_game || u.ualignbase[A_ORIGINAL] != u.ualignbase[A_CURRENT])
-        sprintf(eos(buf), " %s", align_str(u.ualignbase[A_ORIGINAL]));
-    if (!urole.name.f &&
-        (new_game ? (urole.allow & ROLE_GENDMASK) ==
-         (ROLE_MALE | ROLE_FEMALE) : currentgend != u.initgend))
-        sprintf(eos(buf), " %s", genders[currentgend].adj);
-
-    pline(new_game ? "%s %s, welcome to NetHack!  You are a%s %s %s." :
-          "%s %s, the%s %s %s, welcome back to NetHack!", Hello(NULL),
-          u.uplname, buf, urace.adj,
-          (currentgend && urole.name.f) ? urole.name.f : urole.name.m);
-
-    realtime_messages(TRUE, TRUE);
-
-    if (discover)
-        pline("You are in non-scoring discovery mode.");
-
-    if (*level->levname)
-        pline("You named this level: %s.", level->levname);
-
-    return 0;
-}
-
-/* Normally, we don't want commands like "inventory" to change the save data.
-   However, there's one respect in which they must: if you use them to break up
-   a multi-turn action, you don't want the action immediately restarting after
-   viewing your inventory, yet the action would continue if you didn't (and the
-   client ddidn't intervene). Thus, we need to insert a command whose purpose is
-   to capture this side effect of a notime action. It can also be sent
-   explicitly by the client in order to print a "You stop running." message, or
-   the like. */
-static int
-dointerrupt(const struct nh_cmd_arg *arg)
-{
-    (void) arg;
-
-    action_interrupted();
-    return 0;
-}
-
-
-static int
-doattributes(const struct nh_cmd_arg *arg)
-{
-    (void) arg;
-    if (!minimal_enlightenment())
-        return 0;
-    if (wizard || discover)
-        enlightenment(0);
     return 0;
 }
 
