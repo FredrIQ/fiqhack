@@ -469,14 +469,18 @@ doprev_message(void)
     if (!histlines)
         alloc_hist_array();
 
-    for (i = 0; i < settings.msghistory; i++) {
-        if (!histlines[i].message)
+    i = histlines_pointer;
+    do {
+        if (!histlines[i].message) {
+            i = (i + 1) % settings.msghistory;
             continue;
+        }
         wrap_text(getmaxx(msgwin), histlines[i].message,
-                          &lines, &buf);
+                  &lines, &buf);
         for (j = 0; j < lines; j++)
             add_menu_txt(&menu, buf[j], MI_TEXT);
-    }
+        i = (i + 1) % settings.msghistory;
+    } while (i != histlines_pointer);
 
     curses_display_menu(&menu, "Previous messages:", PICK_NONE,
                         PLHINT_ANYWHERE, NULL);
