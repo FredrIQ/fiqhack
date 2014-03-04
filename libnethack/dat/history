@@ -248,11 +248,11 @@ in this, the list of Dungeoneers:
 
 NetHack 4's source also contains contributions from:
 
-    Alex Smith                Hojita Discordia          quuxplusone
-    Andrew Apted              J. Ali Harlow             Ray Chason
-    Andrew Rios               Jafet                     Roderick Schertler
-    Brent Dalager             Jared Minch               Russell Harmon
-    Christian Stegen          Jeroen Demeyer            Ryan Karl
+    Alex Smith                J. Ali Harlow             quuxplusone
+    Andrew Apted              Jafet                     Ray Chason
+    Andrew Rios               Jared Minch               Roderick Schertler
+    Brent Dalager             Jeroen Demeyer            Russell Harmon
+    Christian Stegen          Jonadab the Unsightly One Ryan Karl
     Clive Crous               Jukka Lahtinen            Sam Dennis
     Corey Casto               Marcin Kościelnicki       Sean Hunt
     Daniel Thaler             Marco Bonetti             Sgeo
@@ -261,3 +261,4 @@ NetHack 4's source also contains contributions from:
     Edoardo Spadolini         Nephi                     Trevor Cook
     GreyKnight                Pasi Kallinnen            Tung Nguyen
     Grunt                     Patric Müller             Zsbán Ambrus
+    Hojita Discordia
