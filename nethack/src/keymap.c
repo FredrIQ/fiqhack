@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-16 */
+/* Last modified by Derrick Sund, 2014-03-04 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -987,7 +987,7 @@ show_keymap_menu(nh_bool readonly)
         }
         n = curses_display_menu_core(&menu, "Keymap",
                                      readonly ? PICK_NONE : PICK_ONE, NULL, 0,
-                                     0, COLS, LINES, set_command_keys);
+                                     0, COLS, LINES, FALSE, set_command_keys);
 
     } while (n > 0);
 

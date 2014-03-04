@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-01 */
+/* Last modified by Derrick Sund, 2014-03-04 */
 /* Copyright (c) Daniel Thaler, 2012 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -547,7 +547,7 @@ netgame_mainmenu(struct server_info *server)
             snprintf(buf, BUFSZ, "Logged in as %s:", server->username);
         n = curses_display_menu_core(STATIC_MENULIST(netmenu_items),
                                      buf, PICK_ONE, menuresult, 0, logoheight,
-                                     COLS, LINES - 3, NULL);
+                                     COLS, LINES - 3, FALSE, NULL);
 
         switch (menuresult[0]) {
         case NEWGAME:

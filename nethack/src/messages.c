@@ -489,8 +489,8 @@ doprev_message(void)
         i = (i + 1) % settings.msghistory;
     } while (i != histlines_pointer);
 
-    curses_display_menu(&menu, "Previous messages:", PICK_NONE,
-                        PLHINT_ANYWHERE, NULL);
+    curses_display_menu_core(&menu, "Previous messages:", PICK_NONE, NULL, 0, 0,
+                             -1, -1, TRUE, NULL);
 }
 
 /* Given the string "input", generate a series of strings of the given maximum
