@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-01 */
+/* Last modified by Derrick Sund, 2014-03-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -25,10 +25,9 @@ static void move_update(boolean);
 void
 clear_travel_direction(void)
 {
-    turnstate.dx = 0;
-    turnstate.dy = 0;
-    turnstate.stop_x = -1;
-    turnstate.stop_y = -1;
+    turnstate.move.dx = 0;
+    turnstate.move.dy = 0;
+    memset(turnstate.move.stepped_on, FALSE, sizeof(turnstate.move.stepped_on));
 }
 
 boolean
@@ -1077,18 +1076,15 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
     const char *predicament;
     schar dz = 0;
 
-    /* If we're just starting a run, mark a run-stopping space to prevent
-       infinite loops. */
-    if (last_command_was("run") && !turnstate.dx && !turnstate.dy) {
-        turnstate.stop_x = u.ux;
-        turnstate.stop_y = u.uy;
-    }
+    /* If we're running, mark the current space to avoid infinite loops. */
+    if (last_command_was("run"))
+        turnstate.move.stepped_on[u.ux][u.uy] = TRUE;
 
     /* If we already have values for dx and dy, it means we're running.
      * We don't want to overwrite them in that case, or else turning corners
      * breaks. */
-    if (!turnstate.dx && !turnstate.dy && 
-        !getargdir(arg, NULL, &turnstate.dx, &turnstate.dy, &dz))
+    if (!turnstate.move.dx && !turnstate.move.dy &&
+        !getargdir(arg, NULL, &turnstate.move.dx, &turnstate.move.dy, &dz))
         return 0;
 
     if (dz) {
@@ -1139,15 +1135,18 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
             }
             u.tx = u.ux;
             u.ty = u.uy;
-            if (!findtravelpath(unexplored, &turnstate.dx, 
-                &turnstate.dy, uim)) {
+            if (!findtravelpath(unexplored, &turnstate.move.dx,
+                &turnstate.move.dy, uim)) {
                 pline
                     ("Nowhere else around here can be automatically explored.");
             }
-        } else if (!findtravelpath(NULL, &turnstate.dx, &turnstate.dy, uim))
-            findtravelpath(couldsee_func, &turnstate.dx, &turnstate.dy, uim);
+        } else if (!findtravelpath(NULL, &turnstate.move.dx,
+                   &turnstate.move.dy, uim)) {
+            findtravelpath(couldsee_func, &turnstate.move.dx,
+                           &turnstate.move.dy, uim);
+        }
 
-        if (turnstate.dx == 0 && turnstate.dy == 0) {
+        if (turnstate.move.dx == 0 && turnstate.move.dy == 0) {
             action_completed();
             return 0;
         }
@@ -1155,7 +1154,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
 
     /* Travel hit an obstacle, or domove() was called with dx, dy and dz all
        zero, which they shouldn't do. */
-    if (turnstate.dx == 0 && turnstate.dy == 0) {
+    if (turnstate.move.dx == 0 && turnstate.move.dy == 0) {
         /* dz is always zero here from above */
         action_completed();
         return 0;
@@ -1174,7 +1173,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
         return 1;
     }
     if (Engulfed) {
-        turnstate.dx = turnstate.dy = 0;
+        turnstate.move.dx = turnstate.move.dy = 0;
         u.ux = x = u.ustuck->mx;
         u.uy = y = u.ustuck->my;
         mtmp = u.ustuck;
@@ -1217,8 +1216,8 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
         if (!on_ice && (HFumbling & FROMOUTSIDE))
             HFumbling &= ~FROMOUTSIDE;
 
-        x = u.ux + turnstate.dx;
-        y = u.uy + turnstate.dy;
+        x = u.ux + turnstate.move.dx;
+        y = u.uy + turnstate.move.dy;
         if (Stunned || (Confusion && !rn2(5))) {
             int tries = 0;
 
@@ -1227,20 +1226,20 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
                     action_completed();
                     return 1;
                 }
-                confdir(&turnstate.dx, &turnstate.dy);
-                x = u.ux + turnstate.dx;
-                y = u.uy + turnstate.dy;
+                confdir(&turnstate.move.dx, &turnstate.move.dy);
+                x = u.ux + turnstate.move.dx;
+                y = u.uy + turnstate.move.dy;
             } while (!isok(x, y) || bad_rock(youmonst.data, x, y));
         }
         /* turbulence might alter your actual destination */
         if (u.uinwater) {
-            water_friction(&turnstate.dx, &turnstate.dy);
-            if (!turnstate.dx && !turnstate.dy) {
+            water_friction(&turnstate.move.dx, &turnstate.move.dy);
+            if (!turnstate.move.dx && !turnstate.move.dy) {
                 action_completed();
                 return 1;
             }
-            x = u.ux + turnstate.dx;
-            y = u.uy + turnstate.dy;
+            x = u.ux + turnstate.move.dx;
+            y = u.uy + turnstate.move.dy;
         }
         if (!isok(x, y)) {
             action_completed();
@@ -1309,8 +1308,8 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
     if (last_command_was("run")) {
         lookaround(uim_displace);
         if (flags.interrupted) {
-            turnstate.dx = 0;
-            turnstate.dy = 0;
+            turnstate.move.dx = 0;
+            turnstate.move.dy = 0;
             return 0;
         }
     }
@@ -1330,8 +1329,8 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
         enum attack_check_status attack_status = ac_continue;
 
         if (!is_safepet(mtmp, uim)) {
-            attack_status = attack_checks(mtmp, uwep, turnstate.dx,
-                                          turnstate.dy, uim);
+            attack_status = attack_checks(mtmp, uwep, turnstate.move.dx,
+                                          turnstate.move.dy, uim);
             action_completed();
         }
 
@@ -1370,8 +1369,8 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
                necessary to avoid double peaceful prompts (and also in the
                dubious situation where there's an invisible-monster I over a
                peaceful mimic). */
-            attack_status = attack(mtmp, turnstate.dx,
-                                   turnstate.dy, uim_indiscriminate);
+            attack_status = attack(mtmp, turnstate.move.dx,
+                                   turnstate.move.dy, uim_indiscriminate);
             if (attack_status != ac_continue)
                 return attack_status != ac_cancel;
             
@@ -1464,7 +1463,8 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
     }
 
     /* Not attacking a monster, for whatever reason; we try to move. */
-    if (u.usteed && !u.usteed->mcanmove && (turnstate.dx || turnstate.dy)) {
+    if (u.usteed && !u.usteed->mcanmove &&
+        (turnstate.move.dx || turnstate.move.dy)) {
         pline("%s won't move!", upstart(y_monnam(u.usteed)));
         action_completed();
         return 1;
@@ -1567,7 +1567,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
                 else
                     pline_once("You are %s.", predicament);
             }
-            if ((turnstate.dx && turnstate.dy) || !rn2(5))
+            if ((turnstate.move.dx && turnstate.move.dy) || !rn2(5))
                 u.utrap--;
         }
         return 1;
@@ -1578,7 +1578,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
         tmpr->doormask != D_NODOOR && tmpr->doormask != D_ISOPEN &&
         ITEM_INTERACTIVE(uim)) {
         struct nh_cmd_arg arg;
-        arg_from_delta(turnstate.dx, turnstate.dy, dz, &arg);
+        arg_from_delta(turnstate.move.dx, turnstate.move.dy, dz, &arg);
         if (!doopen(&arg)) {
             action_completed();
             return 0;
@@ -1586,15 +1586,15 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
         return 1;
     }
 
-    if (!test_move(u.ux, u.uy, turnstate.dx, turnstate.dy, dz, DO_MOVE, uim,
-                   !!Blind, !!Stunned, !!Fumbling, !!Hallucination,
-                   !!Passes_walls, !!Ground_based)) {
+    if (!test_move(u.ux, u.uy, turnstate.move.dx, turnstate.move.dy, dz,
+                   DO_MOVE, uim, !!Blind, !!Stunned, !!Fumbling,
+                   !!Hallucination, !!Passes_walls, !!Ground_based)) {
         /* We can't move there... but maybe we can dig. */
         if (flags.autodig && ITEM_INTERACTIVE(uim) &&
             flags.occupation != occ_move && uwep && is_pick(uwep)) {
             /* MRKR: Automatic digging when wielding the appropriate tool */
             struct nh_cmd_arg arg;
-            arg_from_delta(turnstate.dx, turnstate.dy, dz, &arg);
+            arg_from_delta(turnstate.move.dx, turnstate.move.dy, dz, &arg);
             return use_pick_axe(uwep, &arg);
         }
         action_completed();
@@ -1632,8 +1632,8 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
 
     /* now move the hero */
     mtmp = m_at(level, x, y);
-    u.ux += turnstate.dx;
-    u.uy += turnstate.dy;
+    u.ux += turnstate.move.dx;
+    u.uy += turnstate.move.dy;
     /* Move your steed, too */
     if (u.usteed) {
         u.usteed->mx = u.ux;
@@ -1773,7 +1773,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
         u.uundetected = OBJ_AT(u.ux, u.uy);
     else if (youmonst.data->mlet == S_EEL)
         u.uundetected = is_pool(level, u.ux, u.uy) && !Is_waterlevel(&u.uz);
-    else if (turnstate.dx || turnstate.dy)
+    else if (turnstate.move.dx || turnstate.move.dy)
         u.uundetected = 0;
 
     /* 
@@ -1781,7 +1781,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
      * imitating something that doesn't move.  We could extend this
      * to non-moving monsters...
      */
-    if ((turnstate.dx || turnstate.dy) &&
+    if ((turnstate.move.dx || turnstate.move.dy) &&
         (youmonst.m_ap_type == M_AP_OBJECT ||
          youmonst.m_ap_type == M_AP_FURNITURE))
         youmonst.m_ap_type = M_AP_NOTHING;
@@ -2331,14 +2331,14 @@ lookaround(enum u_interaction_mode uim)
 
     /* Grid bugs stop if trying to move diagonal, even if blind.  Maybe
        they polymorphed while in the middle of a long move. */
-    if (u.umonnum == PM_GRID_BUG && turnstate.dx && turnstate.dy) {
+    if (u.umonnum == PM_GRID_BUG && turnstate.move.dx && turnstate.move.dy) {
         action_completed();
         return;
     }
 
-    /* If we're about to step into the run-stopping space, stop. */
-    if (u.ux + turnstate.dx == turnstate.stop_x &&
-        u.uy + turnstate.dy == turnstate.stop_y) {
+    /* If we're about to step into a run-stopping space, stop. */
+    if (turnstate.move.stepped_on[u.ux + turnstate.move.dx]
+                                 [u.uy + turnstate.move.dy]) {
         action_interrupted();
         return;
     }
@@ -2380,8 +2380,8 @@ lookaround(enum u_interaction_mode uim)
                 && mtmp->m_ap_type != M_AP_OBJECT &&
                 (!mtmp->minvis || See_invisible) && !mtmp->mundetected) {
                 if ((!aggressive_farmoving && check_interrupt(mtmp)) ||
-                    (x == u.ux + turnstate.dx && y == u.uy + turnstate.dy &&
-                     !travelling()))
+                    (x == u.ux + turnstate.move.dx &&
+                     y == u.uy + turnstate.move.dy && !travelling()))
                     goto stop;
             }
 
@@ -2396,7 +2396,7 @@ lookaround(enum u_interaction_mode uim)
              * directly behind us.  If you're moving along a corridor with no
              * branches, corrct will be 1.
              */
-            if (x == u.ux - turnstate.dx && y == u.uy - turnstate.dy)
+            if (x == u.ux - turnstate.move.dx && y == u.uy - turnstate.move.dy)
                 continue;
 
             /*  More boring cases that don't interrupt anything. */
@@ -2437,7 +2437,8 @@ lookaround(enum u_interaction_mode uim)
                            directly adjacent spaces get priority over diagonally
                            adjacent spaces. If candidate isn't adjacent at all
                            to desired, just skip it. */
-                        i = dist2(x, y, u.ux + turnstate.dx, u.uy + turnstate.dy);
+                        i = dist2(x, y, u.ux + turnstate.move.dx,
+                                  u.uy + turnstate.move.dy);
                         if (i > 2)
                             continue;
                         if (corrct == 1 && dist2(x, y, x0, y0) != 1)
@@ -2461,14 +2462,16 @@ lookaround(enum u_interaction_mode uim)
                    in it. */
                 if (aggressive_farmoving)
                     goto bcorr; /* if you must */
-                if (x == u.ux + turnstate.dx && y == u.uy + turnstate.dy)
+                if (x == u.ux + turnstate.move.dx &&
+                    y == u.uy + turnstate.move.dy)
                     goto stop;
                 continue;
             } else if (is_pool(level, x, y) || is_lava(level, x, y)) {
                 /* Water and lava only stop you if directly in front, and stop
                    you even if you are running. */
                 if (!Levitation && !Flying && !is_clinger(youmonst.data) &&
-                    x == u.ux + turnstate.dx && y == u.uy + turnstate.dy)
+                    x == u.ux + turnstate.move.dx &&
+                    y == u.uy + turnstate.move.dy)
                     /* No Wwalking check; otherwise they'd be able to test
                        boots by trying to SHIFT-direction into a pool and
                        seeing if the game allowed it. */
@@ -2483,8 +2486,10 @@ lookaround(enum u_interaction_mode uim)
                     continue;
                 if (mtmp)
                     continue;   /* d */
-                if (((x == u.ux - turnstate.dx) && (y != u.uy + turnstate.dy)) ||
-                    ((y == u.uy - turnstate.dy) && (x != u.ux + turnstate.dx)))
+                if (((x == u.ux - turnstate.move.dx) &&
+                     (y != u.uy + turnstate.move.dy)) ||
+                    ((y == u.uy - turnstate.move.dy) &&
+                     (x != u.ux + turnstate.move.dx)))
                     continue;
             }
         }       /* end for loops */
@@ -2496,6 +2501,7 @@ lookaround(enum u_interaction_mode uim)
            ignores this. */
         goto stop;
 
+#if 0
     if (corrct > 2 && last_command_was("run")) {
         /* We're in a true branch, which is a pretty good place to set a new
            stop space; otherwise we might run into a case where a corridor
@@ -2503,12 +2509,12 @@ lookaround(enum u_interaction_mode uim)
         turnstate.stop_x = u.ux;
         turnstate.stop_y = u.uy;
     }
-
+#endif
     /* Check whether it's time to turn. */
     if (flags.corridorbranch && !noturn && !m0 && i0 &&
         (corrct == 1 || (corrct == 2 && i0 == 1))) {
-        turnstate.dx = x0 - u.ux;
-        turnstate.dy = y0 - u.uy;
+        turnstate.move.dx = x0 - u.ux;
+        turnstate.move.dy = y0 - u.uy;
     }
     return;
 
