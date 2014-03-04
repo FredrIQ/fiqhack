@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-03-04 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -69,7 +69,9 @@
 #endif
 
 /* UNIX-specific headers */
-#define _POSIX_SOURCE 1
+#define _POSIX_C_SOURCE 199309L /* should be implied by default anyway, but
+                                   needed to work around bugs in certain
+                                   libc versions */
 #define _DARWIN_C_SOURCE 1      /* needed for SIGWINCH on OS X; no effect on
                                    Linux */
 #include <sys/select.h>
