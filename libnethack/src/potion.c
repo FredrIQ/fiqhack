@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-20 */
+/* Last modified by Derrick Sund, 2014-03-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1279,6 +1279,7 @@ potionbreathe(struct obj *obj)
         }
         break;
     case POT_HALLUCINATION:
+        kn++;
         pline("You have a momentary vision.");
         break;
     case POT_CONFUSION:
@@ -1314,8 +1315,10 @@ potionbreathe(struct obj *obj)
             pline("You yawn.");
         break;
     case POT_SPEED:
-        if (!Fast)
+        if (!Fast) {
             pline("Your knees seem more flexible now.");
+            kn++;
+        }
         incr_itimeout(&HFast, rnd(5));
         exercise(A_DEX, TRUE);
         break;
@@ -1341,7 +1344,15 @@ potionbreathe(struct obj *obj)
         }
         break;
     case POT_ACID:
+        /* Acid damage handled elsewhere. */
+        if (!Acid_resistance)
+            kn++;
+        exercise(A_CON, FALSE);
+        break;
     case POT_POLYMORPH:
+        /* Potion of polymorph always gives a unique message, even if
+           unchanging. */
+        kn++;
         exercise(A_CON, FALSE);
         break;
 /*
