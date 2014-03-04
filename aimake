@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2014-01-28
+# Last modified by Alex Smith, 2014-03-04
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
@@ -1060,6 +1060,16 @@ A rule in the config file.  Every rule implicitly includes itself as a use
 dependency.  That way, if the config file is changed, files are recompiled
 accordingly.  Each rule has its own name for this purpose.
 
+=item C<hash_on_disk:>
+
+Generated as a dummy output dependency of produced objects to record the hash
+of the file on disk that they created; these objects are used to detect when a
+file is modified on disk outside aimake.  These objects should not be used
+except via aimake's engine internals (in particular, they should not appear in
+any part of a configuration rule, because this will not give the desired
+behaviour; these objects will be ignored as build or use dependencies, and
+never exist as C<object>s of a rule).
+
 =item C<sys:>
 
 Things like dummy targets, file-like objects that aren't files, and so on.
@@ -1923,6 +1933,21 @@ actions, and up to one dependency action; alternatively, it can contain a
 single install action (in which case using C<actions> is pointless; you could
 simply specify the install action directly).
 
+=item actiontype
+
+I<Available for: any sort of action>
+
+Normally, aimake will automatically attempt to determine which sort of action
+is which, by looking for the C<output>, C<outdepends>, C<install_dir>, and
+C<depends> field.  However, there is a potential ambiguity in cases where both
+C<output> and C<outdepends> are specified.  aimake will assume that such
+actions are provision actions, by default; in the case where this is actually
+a production action, an explicit C<actiontype => 'produce'> must be given.
+
+Any type of action can have an explicit C<actiontype> setting that specifies
+the type of action explicitly: the action types are C<provide>, C<produce>,
+C<depend>, and C<install>.
+
 =item output
 
 I<Available for: provision actions, production actions>
@@ -1990,7 +2015,7 @@ not changing them, and so not error out.  The default is 0.
 
 =item outdepends
 
-I<Available for: provision actions>
+I<Available for: provision actions, production actions>
 
 Provision actions don't generate files on disk; they just say "objects X can
 be used to provide object Y".  In this case, object Y is the C<output>;
@@ -1998,10 +2023,10 @@ C<outdepends> specifies what objects X, the use dependencies of object Y, are.
 This is in exactly the same format as the C<output>, although instead of being
 concatenated with C<outputarg> and maybe C<inner>, it uses C<dependsarg> and
 C<inner> instead.  C<outdepends> is required for provision actions (although
-it can be set to an empty list C<[]>), and cannot be used with other sorts of
-actions.  (It makes logical sense to use it with production actions, and doing
-that would even be very occasionally useful, but that case is not yet
-implemented.)
+it can be set to an empty list C<[]>).  It can also be used with production
+actions; this is typically only useful when the way in which an output file
+must be handled depends on which rule was used to produce it, a situation
+which is rare but not unthinkable.
 
 =item depends
 
@@ -2245,7 +2270,7 @@ missing the C<inner>).
 
 =item dependsarg
 
-I<Available for: provision actions, dependency actions>
+I<Available for: production, provision, and dependency actions>
 
 Works exactly like C<outputarg>, except for C<depends> and C<outdepends>
 rather than C<output>.
@@ -3296,21 +3321,21 @@ my %objtype_nested = (
     => 1, namehint => 1, config_option => 0, config_rule => 0, cmd => 0, tool
     => 0, intcmd => 0, optstring => 0, optpath => 1, optionset => 0, sys => 0,
     searchpath => 0, searchfile => 0, standardlib => 0, searchlib => 1,
-    dependencies => 1);
+    dependencies => 1, hash_on_disk => 1);
 my %objtype_provided = (
     path => 0, bpath => 0, spath => 0, extend => 0, file => 1, symbol => 1,
     direct_symbol => 1, shared_symbol => 1, symbolset => 1, symbol_in_object
     => 1, namehint => 0, config_option => 0, config_rule => 0, cmd => 0, tool
     => 1, intcmd => 0, optstring => 0, optpath => 0, optionset => 1, sys => 0,
     searchpath => 1, searchfile => 1, standardlib => 0, searchlib => 1,
-    dependencies => 1);
+    dependencies => 1, hash_on_disk => 0);
 my %objtype_is_special = ( # TODO: existence check for (int)?cmd:?
     path => 0, bpath => 0, spath => 0, extend => 1, file => 0, symbol => 0,
-    direct_symbol => 1, shared_symbol => 0, symbolset => 0, symbol_in_object
+    direct_symbol => 0, shared_symbol => 0, symbolset => 0, symbol_in_object
     => 0, namehint => 1, config_option => 0, config_rule => 0, cmd => 1, tool
     => 0, intcmd => 1, optstring => 1, optpath => 1, optionset => 0, sys => 1,
     searchpath => 0, searchfile => 0, standardlib => 0, searchlib => 0,
-    dependencies => 0);
+    dependencies => 0, hash_on_disk => 1);
 
 # Some object types allow multiple interchangeable providers, in which
 # case we merge the outdepends of each provider. This is done via a
@@ -4524,7 +4549,7 @@ sub objects_for_rule {
     my $objpattern = $config->{rules}{$rulename}{object};
     my $objvalue = 'sys:no_object';
     (ref $objpattern) !~ /\bRegexp$/ and $objvalue = $objpattern;
-    for my $object (keys %{$state->{hash_by_object}}, $objvalue) {
+    for my $object (keys %{$state->{outdep_by_object}}, $objvalue) {
         rule_applies_to_object $rulename, $object or next;
         push @rv, $object;
     }
@@ -4592,7 +4617,8 @@ sub prioritize_object {
 # pairs have it as unsure (->{unsure_by_pair}, ->{unsure_count_by_object})
 #
 # Each pair knows which objects it proviced last time it ran (and with which
-# hashes); each object knows which pairs proviced it (->{hash_by_pair}, etc.)
+# output dependencies); each object knows which pairs proviced it
+# (->{outdep_by_pair}, etc.)
 #
 # Each pair knows what errors or warnings it output last time it ran; that's
 # in ->{errwarn_by_pair}. Warnings have 'W:' at the start; errors have 'E:'.
@@ -4620,9 +4646,9 @@ sub prioritize_object {
 #
 # Out of these various interesting statefile elements, some are read-only
 # (i.e. you can change the value, but not change /within/ the value), and
-# others cannot be shared. The read-only elements are hashes (i.e. $state
-# ->{hash_by_$x}{$y}{$z}, and xuse_by_pair lists; everything else cannot
-# share.
+# others cannot be shared. The read-only elements are output dependencies
+# (i.e. $state->{outdep_by_$x}{$y}{$z}, and xuse_by_pair lists; everything
+# else cannot share.
 
 ### Mutators
 # In order to prevent things getting out of sync, we use mutators for all
@@ -4743,7 +4769,7 @@ sub mark_pair_changed {
     # which violates our invariants. This optimization is also unsafe if the
     # pair has a rule that doesn't apply to the object, or if the object does
     # not exist.
-    if (!$state->{hash_by_pair}{$pair} && object_exists($objname) &&
+    if (!$state->{outdep_by_pair}{$pair} && object_exists($objname) &&
         defined $state->{xuse_by_pair}{$pair} &&
         rule_applies_to_object $rulename, $objname) {
         $state->{unsure_count_by_object}{$_} or object_exists($_)
@@ -4757,7 +4783,7 @@ sub mark_pair_changed {
     # already know the xuse, this is pointless, as we'll already have left
     # if it matters. Again, we require the object itself to exist and the rule
     # to match the object.
-    elsif (!$state->{hash_by_pair}{$pair} && object_exists($objname) &&
+    elsif (!$state->{outdep_by_pair}{$pair} && object_exists($objname) &&
            rule_applies_to_object $rulename, $objname) {
         my $cmd = $config->{rules}{$rulename}{command};
         if ($cmd) {
@@ -4775,11 +4801,11 @@ sub mark_pair_changed {
     }
 
     $state->{changed_pairs}{$pair} = 'has not been checked yet';
-    for my $obj (keys %{$state->{hash_by_pair}{$pair}}) {
+    for my $obj (keys %{$state->{outdep_by_pair}{$pair}}) {
         mark_object_unsure $pair, $obj, "pair changed";
     }
-    delete $state->{hash_by_pair}{$pair}
-        unless keys %{$state->{hash_by_pair}{$pair}};
+    delete $state->{outdep_by_pair}{$pair}
+        unless keys %{$state->{outdep_by_pair}{$pair}};
 }
 sub mark_pair_unchanged {
     my $pair = shift;
@@ -4795,10 +4821,10 @@ sub mark_pair_unchanged {
     }
 }
 sub inappropriate_prevpair;
-sub set_proviced_hash {
+sub set_proviced_outdeps {
     my $pair = shift;
     my $obj = shift;
-    my $hash = shift; # can be undef if the rule no longer provices the object
+    my $outdeps = shift; # undef if the rule no longer provices the object
     my ($objtype, $objvalue) = parse_objname $obj;
 
     progress_report 4, "Want to set hash of $obj via $pair...";
@@ -4810,17 +4836,14 @@ sub set_proviced_hash {
 
     # There's no need to change anything but the sureness flag if the hash
     # didn't change.
-    my $oldhash = $state->{hash_by_pair}{$pair}{$obj};
-    delete $state->{hash_by_pair}{$pair}
-        unless keys %{$state->{hash_by_pair}{$pair}};
-    if (!defined $hash && !defined $oldhash) {
-        mark_object_sure $pair, $obj, "hash stayed undef";
+    my $old_outdeps = $state->{outdep_by_pair}{$pair}{$obj};
+    delete $state->{outdep_by_pair}{$pair}
+        unless keys %{$state->{outdep_by_pair}{$pair}};
+    if (!defined $outdeps && !defined $old_outdeps) {
+        mark_object_sure $pair, $obj, "outdeps stayed undef";
         return;
     }
-    progress_report 4, "oldhash $oldhash hash $hash"
-        unless ref $oldhash || ref $hash ||
-        !defined $oldhash || !defined $hash;
-    if (deepequals($hash, $oldhash)) {
+    if (deepequals($outdeps, $old_outdeps)) {
         mark_object_sure $pair, $obj, "hash stayed the same";
         return;
     }
@@ -4829,17 +4852,17 @@ sub set_proviced_hash {
 
     invalidate_pair_or_object_sureness $obj;
 
-    # Set hash_by_pair, hash_by_object.
-    if (defined $hash) {
-        $state->{hash_by_pair}{$pair}{$obj} = $hash;
-        $state->{hash_by_object}{$obj}{$pair} = $hash;
+    # Set outdep_by_pair, outdep_by_object.
+    if (defined $outdeps) {
+        $state->{outdep_by_pair}{$pair}{$obj} = $outdeps;
+        $state->{outdep_by_object}{$obj}{$pair} = $outdeps;
     } else {
-        delete $state->{hash_by_pair}{$pair}{$obj};
-        delete $state->{hash_by_pair}{$pair}
-            unless keys %{$state->{hash_by_pair}{$pair}};
-        delete $state->{hash_by_object}{$obj}{$pair};
-        delete $state->{hash_by_object}{$obj}
-            unless keys %{$state->{hash_by_object}{$obj}};
+        delete $state->{outdep_by_pair}{$pair}{$obj};
+        delete $state->{outdep_by_pair}{$pair}
+            unless keys %{$state->{outdep_by_pair}{$pair}};
+        delete $state->{outdep_by_object}{$obj}{$pair};
+        delete $state->{outdep_by_object}{$obj}
+            unless keys %{$state->{outdep_by_object}{$obj}};
     }
 
     mark_object_sure $pair, $obj, "hash changed";
@@ -4848,16 +4871,16 @@ sub set_proviced_hash {
     # again.
     for my $cpair (keys %{$state->{blocked_by_object}{$obj}}) {
         mark_pair_unchanged $cpair, "unblocked by changed hash";
-        mark_pair_xuse_unknown $cpair, "unblocked by provided object"
-            if $objtype_provided{$objtype};
+        mark_pair_xuse_unknown $cpair, "unblocked by non-special object"
+            if !$objtype_is_special{$objtype};
         mark_pair_changed $cpair, "unblocked but is still changed";
     }
 
-    # Changing the object changes pairs that depend on it. If it's a provided
-    # object, it can also change the expanded use dependencies of pairs that
-    # depend on it (although not with respect to that object, only with
-    # respect to other objects). This must be done after hash_by_object is
-    # set, so that mark_pair_changed won't defer the changed setting until
+    # Changing the object changes pairs that depend on it. Unless it's a
+    # special object, it can also change the expanded use dependencies of
+    # pairs that depend on it (although not with respect to that object, only
+    # with respect to other objects). This must be done after outdep_by_object
+    # is set, so that mark_pair_changed won't defer the changed setting until
     # this object comes into existence (falsely believing it not to exist).
     # However, we can (and should, for efficiency reasons) skip any pairs that
     # cannot possibly look at the object via $pair.
@@ -4872,13 +4895,13 @@ sub set_proviced_hash {
         # mark_pair_changed will recalculate the xuse and mark the xuse as
         # known again.)
         mark_pair_xuse_unknown $cpair, "old xuse changed hash"
-            if $objtype_provided{$objtype};
+            if !$objtype_is_special{$objtype};
         mark_pair_changed $cpair, "xuse changed hash";
     }
 
     # If an object comes into existence, we need to add pairs and recalculate
     # those.
-    if (!defined $oldhash) {
+    if (!defined $old_outdeps) {
         my @rules = rules_that_apply_to $obj;
         for my $rule (@rules) {
             my $cpair = "$rule $obj";
@@ -4918,7 +4941,7 @@ sub set_proviced_hash {
                     unless (exists $state->{xuse_by_object}{$dep}{$dpair}) {
                         # Unautovifify $dep's xuse_by_object.
                         delete $state->{xuse_by_object}{$dep}
-                            unless keys $state->{xuse_by_object}{$dep};
+                            unless keys %{$state->{xuse_by_object}{$dep}};
                         mark_pair_xuse_unknown $dpair,
                             "object gained a new dependency via rule change";
                         mark_pair_changed $dpair,
@@ -4949,33 +4972,35 @@ sub set_proviced_hash {
 # successfully. Also set the pair's warning messages (if any).
 sub record_pair_outputs {
     my $pair = shift;
-    my %obj_to_hash = %{+shift};
+    my %obj_to_outdeps = %{+shift};
     my $warnings = shift;
 
     progress_report 4, "Setting hashes for successful run of $pair.";
 
-    for my $oldobj (keys %{$state->{hash_by_pair}{$pair}}) {
+    for my $oldobj (keys %{$state->{outdep_by_pair}{$pair}}) {
         # Force the keys to exist for any object that was there before.
-        $obj_to_hash{$oldobj} = defined_or($obj_to_hash{$oldobj}, undef);
+        $obj_to_outdeps{$oldobj} = undef
+            unless exists $obj_to_outdeps{$oldobj};
     }
     if (defined $state->{unsure_by_pair}{$pair}) {
         for my $oldobj (keys %{$state->{unsure_by_pair}{$pair}}) {
-            # Force the keys to exist for any object's unsure via the pair, even
-            # if it isn't being output (this can happen when there was previously
-            # a dependency loop).
-            $obj_to_hash{$oldobj} = defined_or($obj_to_hash{$oldobj}, undef);
+            # Force the keys to exist for any objects unsure via the pair,
+            # even if it isn't being output (this can happen when there was
+            # previously a dependency loop).
+            $obj_to_outdeps{$oldobj} = undef
+                unless exists $obj_to_outdeps{$oldobj};
         }
     }
-    set_proviced_hash $pair, $_, $obj_to_hash{$_}
-        for keys %obj_to_hash;
+    set_proviced_outdeps $pair, $_, $obj_to_outdeps{$_}
+        for keys %obj_to_outdeps;
     mark_pair_unchanged $pair, "recording pair outputs";
     if (defined $warnings && $warnings ne '') {
         $state->{errwarn_by_pair}{$pair} = "W:$warnings";
     } else {
         delete $state->{errwarn_by_pair}{$pair};
     }
-    delete $state->{hash_by_pair}{$pair}
-        unless keys %{$state->{hash_by_pair}{$pair}};
+    delete $state->{outdep_by_pair}{$pair}
+        unless keys %{$state->{outdep_by_pair}{$pair}};
 }
 # Called when a pair errors out. Marks all its old outputs as unsure, but the
 # rule itself as unchanged (thus forcing all those outputs' indirect
@@ -4987,11 +5012,11 @@ sub record_pair_error {
     progress_report 4, "Setting hashes for unsuccessful run of $pair...";
 
     mark_pair_unchanged $pair, "recording pair error";
-    for my $obj (keys %{$state->{hash_by_pair}{$pair}}) {
+    for my $obj (keys %{$state->{outdep_by_pair}{$pair}}) {
         mark_object_unsure $pair, $obj, "unsure due to error";
     }
-    delete $state->{hash_by_pair}{$pair}
-        unless keys %{$state->{hash_by_pair}{$pair}};
+    delete $state->{outdep_by_pair}{$pair}
+        unless keys %{$state->{outdep_by_pair}{$pair}};
 
     !defined $errmsg || $errmsg eq '' and
         croak "record_pair_error needs an error message";
@@ -5085,8 +5110,8 @@ sub appropriate_pairs_for_object {
         # outdepends (this is to make the placeholder symbols for reverse
         # imports work correctly). Otherwise, it's a problem.
         if ($score == $bestscore && (parse_pairname $best)[1] ne $obj &&
-            (not_empty_array($state->{hash_by_object}{$provided}{$provider}) ||
-             not_empty_array($state->{hash_by_object}{$provided}{$best}))) {
+            (not_empty_array($state->{outdep_by_object}{$provided}{$provider}) ||
+             not_empty_array($state->{outdep_by_object}{$provided}{$best}))) {
             push @tie, $provider;
         } elsif ($score > $bestscore) {
             @tie = ();
@@ -5107,14 +5132,15 @@ sub appropriate_pairs_for_object {
 # Determines which hash of an object we're supposed to be building from. This
 # is used for produced bpath:,path:,spath:,standardlib: objects to determine
 # whether the file has changed on disk.
-sub xuse_hash {
-    my $pair = shift;
+sub find_hash_on_disk {
     my $obj = shift;
-    return unless $state->{hash_by_object}{$obj};
+    return unless $state->{outdep_by_object}{$obj};
     die "Produced object $obj produced by more than one rule"
-        unless 1 == keys %{$state->{hash_by_object}{$obj}} ||
+        unless 1 == keys %{$state->{outdep_by_object}{$obj}} ||
         $obj =~ multiple_providers_ok_regex;
-    return (values %{$state->{hash_by_object}{$obj}})[0];
+    my @outdeps = @{(values %{$state->{outdep_by_object}{$obj}})[0]};
+    /^hash_on_disk:([^:]+):\Q$obj\E$/ and return $1 for @outdeps;
+    die "Produced object $obj has no hash_on_disk: dependency";
 }
 
 ### Dependency calculations
@@ -5139,8 +5165,8 @@ sub inappropriate_prevpair {
             return 1 if $avoid_objects eq $obj2;
         }
     }
-    return unless $state->{hash_by_object}{$obj2};
-    $state->{hash_by_object}{$obj2}{$pair} and
+    return unless $state->{outdep_by_object}{$obj2};
+    $state->{outdep_by_object}{$obj2}{$pair} and
         progress_report 5, "($pair,$pair2) inappropriate: output"
         and return 1;
     return;
@@ -5156,14 +5182,9 @@ sub inappropriate_prevpair {
 # - The pair's rule;
 # - Any dependencies: object that could possibly refer to an object in the set
 #   (this can be determined statically);
-# - Any outdepends that were added by the pair that provided an object in the
+# - Any outdepends that were added by the pair that proviced an object in the
 #   set (this is the hash of a provided object);
-# - sys:clean, if there's a nonexistent provided object in the set.
-#   (Nonexistent produced objects should also cause a clean, but that happens
-#   when the rule is run; it can't be set now because produced objects don't
-#   affect expanded use dependencies. Meanwhile, the produced objects have to
-#   be checked for changes on disk, and their nonexistence hashwise will be
-#   noticed then, something that doesn't happen with provided objects.)
+# - sys:clean, if there's a nonexistent proviced object in the set.
 #
 # In the case where there are multiple reasonable possible ancestors, we hold
 # off on choosing an ancestor immediately, and then try again once the set of
@@ -5203,9 +5224,9 @@ sub recalculate_pair_xuse {
         # avoids.
         my ($objtype, undef, undef) = parse_objname $obj;
         if ($r->{avoid_rules} && !$objtype_provided{$obj} &&
-            $state->{hash_by_object}->{$obj}) {
+            $state->{outdep_by_object}->{$obj}) {
             my ($producer, undef) = keys %{
-                $state->{hash_by_object}->{$obj}};
+                $state->{outdep_by_object}->{$obj}};
             my ($prodrule, undef) = parse_pairname $producer;
             if ($prodrule =~ $r->{avoid_rules}) {
                 $xuse{'sys:clean'} or push @xuse, 'sys:clean';
@@ -5231,13 +5252,15 @@ sub recalculate_pair_xuse {
             next if $xuse{$o};
             my ($otype, undef) = parse_objname $o;
 
-            # Add provided outdepends to the list. (Or postpone it for later
-            # if we have multiple reasonable possibilities and we're still on
-            # the first pass.)
-            if ($objtype_provided{$otype}) {
-                my @ancestors = sort keys %{$state->{hash_by_object}{$o}};
-                delete $state->{hash_by_object}{$o} unless
-                    keys %{$state->{hash_by_object}{$o}};
+            # Add the outdepends to the list, if any. (Or postpone it for
+            # later if we have multiple reasonable possibilities and we're
+            # still on the first pass.)  This is possible when the object is
+            # provided or produced, but not if it's special (because it won't
+            # have any outdep_by_objet hash to check the outdepends from).
+            if (!$objtype_is_special{$otype}) {
+                my @ancestors = sort keys %{$state->{outdep_by_object}{$o}};
+                delete $state->{outdep_by_object}{$o} unless
+                    keys %{$state->{outdep_by_object}{$o}};
                 @ancestors = grep !inappropriate_prevpair($pair, $_),
                     @ancestors;
                 if ($pass == 2 && $o !~ multiple_providers_ok_regex) {
@@ -5258,7 +5281,7 @@ sub recalculate_pair_xuse {
                         'nonexistent sys:fuse';
                     my %udeps = ();
                     for my $ancestor (@ancestors) {
-                        for my $udep (@{$state->{hash_by_pair}
+                        for my $udep (@{$state->{outdep_by_pair}
                                         {$ancestor}{$o}}) {
                             push @command, $udep unless $udeps{$udep};
                             $udeps{$udep} = 1;
@@ -5276,7 +5299,7 @@ sub recalculate_pair_xuse {
                 } elsif (@ancestors == 1) {
                     $pass == 1 and $pass1_xuse_pairs{$ancestors[0]} = 1;
                     $state->{xuse_prevpair}{$pair}{$o} = $ancestors[0];
-                    my @udeps = @{$state->{hash_by_pair}{$ancestors[0]}{$o}};
+                    my @udeps = @{$state->{outdep_by_pair}{$ancestors[0]}{$o}};
                     push @command, @udeps;
                     $xuse_reason{$_} = $o for @udeps;
                 } else {
@@ -5287,6 +5310,7 @@ sub recalculate_pair_xuse {
                     $xuse{'sys:clean'} = $o; # nothing provides it
                 }
             }
+
             # Add dependencies: objects to the list.
             # These are sorted for determinism.
             my @drules = rules_that_apply_to($o);
@@ -5429,7 +5453,7 @@ sub pair_is_sure {
     @sureness_list{@xuses} = ();
     for my $xuse (@xuses) {
         my @providers = ();
-        my $phash = $state->{hash_by_object}{$xuse};
+        my $phash = $state->{outdep_by_object}{$xuse};
         next unless $phash; # if the object doesn't exist, it's sure
         @providers = keys %$phash;
 
@@ -5452,7 +5476,7 @@ sub pair_is_sure {
                 croak "No xuse_prevpair from $pair for an object $xuse " .
                     "with multiple prevpairs " .
                     (join ', ',
-                     keys %{$state->{hash_by_object}{$xuse}});
+                     keys %{$state->{outdep_by_object}{$xuse}});
             }
             next if $prevpair eq 'nonexistent sys:clean';
             if ($state->{unsure_by_pair}{$prevpair} &&
@@ -5494,7 +5518,7 @@ sub pair_is_sure {
             my %outdepends_because = ();
             my %outdepends_unsurelist = ();
             for my $provider (@providers) {
-                my $outdepends = $state->{hash_by_object}{$xuse}{$provider};
+                my $outdepends = $state->{outdep_by_object}{$xuse}{$provider};
                 $outdepends = serialize_sv($outdepends);
                 next if $outdepends_seen{$outdepends};
 
@@ -5557,7 +5581,7 @@ sub pair_is_sure {
 ### Object existence and contents
 #
 # Ideally, we'd treat objects as existing only if some rule produced them (and
-# thus be able to check entirely via hash_by_object), but this doesn't work in
+# thus be able to check entirely via outdep_by_object), but this doesn't work in
 # practice, most obviously because the regress has to start somewhere. Object
 # existence mustn't change without aimake being informed of it; in most cases,
 # special objects are considered to always exist. The main exception here is
@@ -5573,7 +5597,7 @@ sub pair_is_sure {
 sub object_exists {
     my $obj = shift;
     my ($objtype, undef) = parse_objname $obj;
-    return $state->{hash_by_object}{$obj}
+    return $state->{outdep_by_object}{$obj}
         unless $objtype_is_special{$objtype};
     return 0 if $obj eq 'sys:clean';
     return 1;
@@ -5588,6 +5612,7 @@ sub object_exists {
 # \ 'string'  Allowed values are strings and regexes, default 'string'
 # ['string']  Allowed values are string+regex lists, default 'string'
 #             (a single string or regex is treated as a 1-element list)
+# []          Allowed values are string+regex lists, default is an empty list
 # undef       Allowed values are strings and undef, default undef
 # \ undef     Allowed values are strings, regexes and undef, default undef
 # 0           Allowed values are ints, default 0
@@ -5684,6 +5709,7 @@ my %rulekeys = (
     'also_match_stderr' => 0,
 );
 my %actionkeys = (
+    'actiontype' => '',
     'output' => [],
     'output_from_optpath' => [],
     'information_only' => 0,
@@ -5714,10 +5740,11 @@ my %actionkeys = (
     'filter_text_files' => 0,
 );
 my %actiontypes = (
+    'actiontype' => [qw/provide produce depend install/],
     'output' => [qw/provide produce/],
     'output_from_optpath' => [qw/produce/],
     'information_only' => [qw/produce/],
-    'outdepends' => [qw/provide/],
+    'outdepends' => [qw/provide produce/],
     'depends' => [qw/depend/],
     'install_dir' => [qw/install/],
     'install_name' => [qw/install/],
@@ -5726,7 +5753,7 @@ my %actiontypes = (
     'install_elevation' => [qw/install/],
     'inner' => [qw/provide produce depend/],
     'outputarg' => [qw/provide produce/],
-    'dependsarg' => [qw/provide depend/],
+    'dependsarg' => [qw/provide produce depend/],
     'on_failure' => [qw/provide produce depend/],
     'preference' => [qw/provide/],
     'output_as_searchfile' => [qw/provide/],
@@ -5796,12 +5823,7 @@ eval {
 # We use the stock option parser, Getopt::Std, to parse the command
 # line arguments.
 
-read_statefile;
-atomic_read {
-    $path = $state->{_srcdir};
-};
-
-$::VERSION = '3.0';
+$::VERSION = '3.1';
 Getopt::Long::Configure('bundling', 'permute', 'auto_help');
 $opt_verbose = 0;
 $opt_install = undef;
@@ -5849,6 +5871,23 @@ EOF
     exit 0;
 }
 $opt_verbose = defined_or($opt_verbose, 0);
+
+read_statefile;
+atomic_read {
+    $path = $state->{_srcdir};
+    # A nonexistent statefile was created by us, so it's format $::VERSION.
+    # An existent statefile came from version 3.0; versions pre-3 used a
+    # different filename, versions post-3.0 stored the version in the
+    # statefile.
+    my $version = defined_or($state->{_version},
+                             keys %$state ? "3.0" : $::VERSION);
+    $version eq $::VERSION or
+        die "This is version $::VERSION of aimake, but the existing statefile " .
+        "comes from version $version of aimake; please use a clean build " .
+        "directory (or empty this one).";
+    $state->{_version} = $version; # in case it's a new statefile
+};
+
 if (defined $opt_dump) {
     atomic_read {
         $Data::Dumper::Indent = 1;   # to help keep it on the screen
@@ -5874,6 +5913,7 @@ if (defined $opt_dump) {
     };
     exit 0;
 }
+
 
 ##### Locating the source directory
 #
@@ -6153,6 +6193,8 @@ for my $rulename (keys %{$config->{rules}}) {
             (defined $a->{output} || defined $a->{output_from_optpath}) ?
             'produce' : die "Action $anum of rule '$rulename' has no ".
             "output, depends, or install directory";
+        $a->{actiontype} and $actiontype = $a->{actiontype};
+
         # Check that there are no extra or inappropriate fields given.
         for my $k (keys %$a) {
             if (!exists $actionkeys_per_type{$actiontype}{$k}) {
@@ -6215,10 +6257,8 @@ $config_hashes{"config_rule:$_"} = sv_hash $config->{rules}{$_}
 $config_hashes{"config_option:$_"} = sv_hash $config->{options}{$_}
     for keys %{$config->{options}};
 atomically {
-    my $runcount = $state->{hash_by_pair}
-        {'parse_configuration sys:no_object'}{'sys:always_rebuild'};
-    my $installcount = $state->{hash_by_pair}
-        {'parse_configuration sys:no_object'}{'sys:installing'};
+    my $runcount = find_hash_on_disk('sys:always_rebuild');
+    my $installcount = find_hash_on_disk('sys:installing');
     $runcount ||= 0;
     $installcount ||= $runcount;
     $runcount++ unless $opt_install_only;
@@ -6226,7 +6266,11 @@ atomically {
     $config_hashes{'sys:always_rebuild'} = $runcount;
     $config_hashes{'sys:rebuild_late'} = $runcount;
     $config_hashes{'sys:installing'} = $installcount;
-    record_pair_outputs 'parse_configuration sys:no_object', \%config_hashes;
+    my %config_hash_on_disk = ();
+    $config_hash_on_disk{$_} =
+        ["hash_on_disk:$config_hashes{$_}:$_"] for keys %config_hashes;
+    record_pair_outputs 'parse_configuration sys:no_object',
+        \%config_hash_on_disk;
     mark_object_unsure 'parse_configuration sys:no_object',
         'sys:rebuild_late', 'initial config'
         unless $opt_install_only;
@@ -6325,7 +6369,7 @@ MAINLOOP: while (1) {
                 delete $likely_runnable{$curpair};
                 $find_another = 1;
             } else {
-                if (!$state->{hash_by_pair}->{$curpair} &&
+                if (!$state->{outdep_by_pair}->{$curpair} &&
                     !$sure_pair_cache{$curpair} &&
                     !$unsure_pair_cache{$curpair}) {
                     # If a pair currently has no outputs, and it has at least
@@ -6406,8 +6450,8 @@ MAINLOOP: while (1) {
                 # lists:
                 # err_warn: report_pair_outputs sets/clears it
                 # changed_pairs: record_pair_outputs marks unchanged
-                # unsure: set_proviced_hash marks sure
-                # hash: record_pair_outputs sets undef for all existing hashes
+                # unsure: set_proviced_outdeps marks sure
+                # outdeps: record_pair_outputs handles this
                 # The remaining list is xuse, which we need to clean up ourself.
                 reset_pair_xuse $curpair;
                 # And now, the pair isn't mentioned anywhere at all, so we can
@@ -6427,7 +6471,7 @@ MAINLOOP: while (1) {
                         # from right now (and cannot be built from at all this
                         # compile unless we find a new file that provides its
                         # output). Clean it.
-                        if (exists $state->{hash_by_pair}{$curpair}) {
+                        if (exists $state->{outdep_by_pair}{$curpair}) {
                             # If the pair was already outputting nothing, the
                             # clean is a no-op. This situation happens when a
                             # rule is created for the first time.
@@ -6440,20 +6484,20 @@ MAINLOOP: while (1) {
                     }
                     # The object always has the right hash unless it's on disk.
                     # This check makes sense for path: objects ("somebody edited
-                    # the source tree while we were running), and bpath: objects
-                    # ("somebody edited the build tree, including between runs");
-                    # for spath:, it means "somebody edited system files we rely
-                    # on between runs". For edited bpath: objects we regenerate
-                    # them, for edited spath: objects we should probably rebuild
-                    # other pairs that use them (as well as this pair), and for
-                    # path: objects we should error out (because it almost
-                    # certainly indicates that a build rule has got its inputs and
-                    # outputs muddled up).
+                    # the source tree while we were running"), and bpath:
+                    # objects ("somebody edited the build tree, including
+                    # between runs"); for spath:, it means "somebody edited
+                    # system files we rely on between runs". For edited bpath:
+                    # objects we regenerate them, for edited spath: objects we
+                    # should probably rebuild other pairs that use them (as well
+                    # as this pair), and for path: objects we should error out
+                    # (because it almost certainly indicates that a build rule
+                    # has got its inputs and outputs muddled up).
                     my ($objtype, undef) = parse_objname($obj);
                     if ($objtype =~ /^(?:[bs]?path|standardlib)$/) {
                         my $hash_on_disk = file_hash($obj);
-                        my $desired_hash = xuse_hash($curpair, $obj);
-                        if ($hash_on_disk ne $desired_hash) {
+                        my $desired_hash = find_hash_on_disk($obj);
+                        if (defined_or($hash_on_disk,'') ne $desired_hash) {
                             $objtype eq 'path' and croak
                                 "Source file '" . friendly_objname($obj) .
                                 "' was overwritten during the build, make sure " .
@@ -6470,7 +6514,7 @@ MAINLOOP: while (1) {
                             # question as changed (and thus the object itself as
                             # unsure).
                             mark_pair_changed $_, 'hash change on disk' for
-                                keys %{$state->{hash_by_object}{$obj}};
+                                keys %{$state->{outdep_by_object}{$obj}};
                             # And we can't continue, due to having an unsure
                             # ancestor.
                             $runnable = 0;
@@ -6926,6 +6970,7 @@ MAINLOOP: while (1) {
 
         # Construct an output and an outdepends.
         $a->{outdepends} or $a->{outdepends} = [];
+
         my @output = ();
         my @outdepends = ();
         for my $ostem (@{$a->{output}}) {
@@ -6954,6 +6999,7 @@ MAINLOOP: while (1) {
                 }
             }
         }
+
         $rule->{object_dependency} eq 'outdepends' and
             push @outdepends, $objname;
         @output = grep {$_ ne $objname} @output;
@@ -7057,7 +7103,8 @@ MAINLOOP: while (1) {
                 if ($objtype_provided{$otype}) {
                     # do nothing, the hash is already correct
                 } elsif ($otype =~ /^(?:[bs]?path|standardlib)/) {
-                    $outhashes{$o} = file_hash $o;
+                    unshift @{$outhashes{$o}},
+                        "hash_on_disk:" . (file_hash $o) . ":$o";
                 } else {
                     croak "Rule $rulename output the wrong " .
                         "type of object: $o";
@@ -7111,11 +7158,10 @@ atomic_read {
 
 ### Dependency problems
 #
-# A pair has dependency problems if it's non-changed, all objects in its
-# command exist, and at least one object in its xuse doesn't exist. (There are
-# a few more things true about such pairs, e.g. they don't appear in
-# hash_by_pair, but we don't need to worry about that when presenting our
-# output.)
+# A pair has dependency problems if it's non-changed, all objects in its command
+# exist, and at least one object in its xuse doesn't exist. (There are a few
+# more things true about such pairs, e.g. they don't appear in outdep_by_pair,
+# but we don't need to worry about that when presenting our output.)
 
 atomically {
     my $ewprinted = 0;
@@ -7832,7 +7878,7 @@ __DATA__
             # Incidentally, this actually crashes mingw ld, but the crash
             # comes after the information we need is already available; it
             # happens during the link proper, rather than during the trace.
-            command => ['tool:c_linker', "bpath:aimake/aimake_1$objext",
+            command => ['tool:c_cxx_linker', "bpath:aimake/aimake_1$objext",
                         "optpath::bpath:aimake/aimake_1$objext",
                         "optpath:-o :bpath:aimake/aimake_1$exeext",
                         'optstring:-Wl,-t,--whole-archive,--allow-multiple-definition'],
@@ -7857,7 +7903,7 @@ __DATA__
         find_default_dynamic_libraries => {
             # Like the above case, but to find standard libraries on linkers
             # which don't understand --whole-archive.
-            command => ['tool:c_linker', "bpath:aimake/aimake_1$objext",
+            command => ['tool:c_cxx_linker', "bpath:aimake/aimake_1$objext",
                         "optpath::bpath:aimake/aimake_1$objext",
                         "optpath:-o :bpath:aimake/aimake_1$exeext",
                         "optstring:-Wl,-t"],
@@ -7879,7 +7925,7 @@ __DATA__
         },
         find_libraries => {
             object => qr/^searchlib:/,
-            command => ['tool:c_linker', "bpath:aimake/aimake_1$objext",
+            command => ['tool:c_cxx_linker', "bpath:aimake/aimake_1$objext",
                         "optpath::bpath:aimake/aimake_1$objext",
                         "optpath:-o :bpath:aimake/aimake_1$exeext",
                         'optpath:-l:',
@@ -7915,9 +7961,14 @@ __DATA__
         },
 
         # Compiling C and C++.
-        c_cxx_toolchain => {
+        c_toolchain => {
             output => 'tool:c_toolchain',
             outdepends => 'cmd:gcc',
+            verb => 'found',
+        },
+        cxx_toolchain => {
+            output => 'tool:cxx_toolchain',
+            outdepends => 'cmd:g++',
             verb => 'found',
         },
         c_compiler_tool => {
@@ -7927,7 +7978,7 @@ __DATA__
         },
         cxx_compiler_tool => {
             output => 'tool:cxx_compiler',
-            outdepends => ['tool:c_toolchain', 'optionset:CXXFLAGS', 'optstring:-c'],
+            outdepends => ['tool:cxx_toolchain', 'optionset:CXXFLAGS', 'optstring:-c'],
             verb => 'found',
         },
         c_cxx_dependencies_tool => {
@@ -8275,7 +8326,7 @@ __DATA__
 
         link_shared_library_linux => {
             object => qr/^symbolset:/,
-            command => ['tool:c_linker', 'optstring:-shared',
+            command => ['tool:c_cxx_linker', 'optstring:-shared',
                         'dependencies:symbolset_soname_linux:',
                         'dependencies:symbolset_output_linux:'],
             output_from_optpath => '-o ',
@@ -8286,7 +8337,7 @@ __DATA__
         },
         link_shared_library_windows => {
             object => qr/^symbolset:/,
-            command => ['tool:c_linker', 'optstring:-shared',
+            command => ['tool:c_cxx_linker', 'optstring:-shared',
                         "optpath:-o :extend:$dllext:",
                         'optionset:os_windows'],
             output_from_optpath => '-o ',
@@ -8430,10 +8481,12 @@ __DATA__
         #     verb => 'chose',
         # },
 
-        # Linking.
-        c_link_tool => {
-            output => 'tool:c_linker',
-            outdepends => ['tool:c_toolchain', 'optionset:LFLAGS'],
+        # Linking. aimake can only support one linker at a time, so by default,
+        # we use a C++ linker, as that works for C too. If no C++ linker is
+        # supported, it's perfectly fine to use a C linker instead.
+        c_cxx_link_tool => {
+            output => 'tool:c_cxx_linker',
+            outdepends => ['tool:cxx_toolchain', 'optionset:LFLAGS'],
             verb => 'found',
         },
         object_dependencies => {
@@ -8601,7 +8654,7 @@ __DATA__
 
         link_c => {
             object => qr/^bpath:(?!aimake).*\Q$objext\E/,
-            command => ['symbol_in_object:main:', 'tool:c_linker',
+            command => ['symbol_in_object:main:', 'tool:c_cxx_linker',
                         'optpath::', "optpath:-o :extend:$exeext:"],
             output => "extend:$exeext:",
             verb => 'linked',
@@ -8615,7 +8668,7 @@ __DATA__
         # trouble anyway.)
         link_mangled_c => {
             object => qr/^bpath:(?!aimake).*\Q$objext\E/,
-            command => ['symbol_in_object:_main:', 'tool:c_linker',
+            command => ['symbol_in_object:_main:', 'tool:c_cxx_linker',
                         'optpath::', "optpath:-o :extend:$exeext:"],
             output => "extend:$exeext:",
             verb => 'linked',
