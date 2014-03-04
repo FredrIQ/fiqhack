@@ -1,5 +1,5 @@
 About this document:
-Last modified by Derrick Sund, 2014-02-27
+Last modified by Derrick Sund, 2014-03-04
 
 Copyright (C) 2013 Alex Smith.
 
@@ -161,7 +161,7 @@ lava. (Nitro, f4754b2, 86b2d0c)
 Items
 -----
 
-Scrolls of destroy armour no longer give permanent boosts to stats
+Scrolls of destroy armor no longer give permanent boosts to stats
 when wearing cursed stat-boosting items. (Ace, C343-30, 90ee9a8)
 
 Jumping boots and potions of oil now automatically ID (upon equipping them and
@@ -572,7 +572,7 @@ Monsters and Polyforms
 `A`: The alignment of angels is now correctly displayed regardless of whether
 they are sent by particular gods or not. (Grunt, C343-122, 6f19361)
 
-`A`: Ki-rins and couatls no longer wear armour. (Grunt, C341-18, 3df1f97)
+`A`: Ki-rins and couatls no longer wear armor. (Grunt, C341-18, 3df1f97)
 
 `b`: Gelatinous cubes now die if they attempt to engulf Rider corpses (thus
 preventing the player from indirectly destroying the corpse). (Grunt,
@@ -657,7 +657,7 @@ sometimes generating peaceful if the character is neutral). (Grunt, c9456af)
 
 Monsters "shrieking in pain" now create noise. (Grunt, C343-65, 3e0ea7b)
 
-Monsters can no longer equip shirts in zero time while wearing armour. (Grunt,
+Monsters can no longer equip shirts in zero time while wearing armor. (Grunt,
 C343-360, 1da4ce4)
 
 Tame monsters can no longer dig on the Rogue level, if they couldn't dig there

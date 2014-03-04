@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-12 */
+/* Last modified by Derrick Sund, 2014-03-04 */
 #ifndef ROLE_H
 # define ROLE_H
 
@@ -77,7 +77,7 @@ struct Role {
     int spelbase;       /* base spellcasting penalty */
     int spelheal;       /* penalty (-bonus) for healing spells */
     int spelshld;       /* penalty for wearing any shield */
-    int spelarmr;       /* penalty for wearing metal armour */
+    int spelarmr;       /* penalty for wearing metal armor */
     int spelstat;       /* which stat (A_) is used */
     int spelspec;       /* spell (SPE_) the class excels at */
     int spelsbon;       /* penalty (-bonus) for that spell */

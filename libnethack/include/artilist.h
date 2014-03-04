@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-12 */
+/* Last modified by Derrick Sund, 2014-03-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -44,7 +44,7 @@ static const struct artifact const_artilist[] = {
  * 3.  Chaotic artifacts are inflated due to scarcity (and balance).
  */
 
-/* Note: If you ever add an artifact that can be equipped in an armour slot and
+/* Note: If you ever add an artifact that can be equipped in an armor slot and
    also has an effect that toggles when invoking, you need to update setequip in
    do_wear.c to add behaviour for what happens when it is unequipped while
    invoked. (This combination should probably be avoided, because setequip does

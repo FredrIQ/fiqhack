@@ -1,5 +1,5 @@
 # Emacs, the format of this file is: -*- mode:text;fill-column:86;tab-width:8;indent-tabs-mode:t -*-
-# Last modified by Alex Smith, 2013-09-21
+# Last modified by Derrick Sund, 2014-03-04
 #	Copyright (c) 2010 by Alex Smith
 #	NetHack may be freely redistributed.
 #       See license for details.
@@ -112,7 +112,7 @@ apple
 apron
 	A simple but heavily reinforced cloth apron, showing marks of discolouration
 	where it has been splashed with all sorts of strange liquids over the years,
-	designed to be worn as a cloak above body armour.
+	designed to be worn as a cloak above body armor.
 arrow
 	An iron projectile with a fledged tail and a pointed tip, designed to be fired
 	from a bow (throwing it by hand will only do minimal damage). It sometimes
@@ -156,7 +156,7 @@ banana
 	discarded. It is about as filling as an orange, and noticeably more so than an
 	apple.
 banded mail
-	A suit of body armour made out of overlapping strips of iron, providing
+	A suit of body armor made out of overlapping strips of iron, providing
 	extremely good protection against attack, almost as good as plate mail and
 	equivalent to splint mail, although it cannot block special attacks of
 	monsters. Its metallic construction interferes with spellcasting.
