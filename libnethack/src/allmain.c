@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-02-21 */
+/* Last modified by Alex Smith, 2014-03-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1123,7 +1123,7 @@ newgame(void)
 {
     int i;
 
-    flags.ident = 2; /* 1 is reserved for temporary objects, see mkobj_basic */
+    flags.ident = FIRST_PERMANENT_IDENT; /* lower values are temporaries */
 
     for (i = 0; i < NUMMONS; i++)
         mvitals[i].mvflags = mons[i].geno & G_NOCORPSE;

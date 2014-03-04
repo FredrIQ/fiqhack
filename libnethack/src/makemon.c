@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-16 */
+/* Last modified by Alex Smith, 2014-03-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -771,9 +771,7 @@ clone_mon(struct monst *mon, xchar x, xchar y)
     *m2 = *mon; /* copy condition of old monster */
     m2->nmon = level->monlist;
     level->monlist = m2;
-    m2->m_id = flags.ident++;
-    if (!m2->m_id)
-        m2->m_id = flags.ident++;       /* ident overflowed */
+    m2->m_id = next_ident();
     m2->mx = mm.x;
     m2->my = mm.y;
 
@@ -974,9 +972,7 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
     mtmp = newmonst(xtyp, 0);
     mtmp->nmon = lev->monlist;
     lev->monlist = mtmp;
-    mtmp->m_id = flags.ident++;
-    if (!mtmp->m_id)
-        mtmp->m_id = flags.ident++;     /* ident overflowed */
+    mtmp->m_id = next_ident();
     set_mon_data(mtmp, ptr, 0);
 
     if (mtmp->data->msound == MS_LEADER)

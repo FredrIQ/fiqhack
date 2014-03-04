@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-01 */
+/* Last modified by Alex Smith, 2014-03-04 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -925,6 +925,7 @@ extern const char *waterbody_name(xchar, xchar);
 
 /* ### mkobj.c ### */
 
+extern unsigned next_ident(void);
 extern struct obj *mkobj_at(char let, struct level *lev, int x, int y,
                             boolean artif);
 extern struct obj *mksobj_at(int, struct level *, int, int, boolean, boolean);

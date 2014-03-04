@@ -1,10 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-02-28 */
+/* Last modified by Alex Smith, 2014-03-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "prop.h"
+
+#include <limits.h>
 
 static void mkbox_cnts(struct obj *);
 static void obj_timer_checks(struct obj *, xchar, xchar, int);
@@ -70,6 +72,14 @@ const struct icp hellprobs[] = {
     {8, RING_CLASS},
     {4, AMULET_CLASS}
 };
+
+unsigned
+next_ident(void)
+{
+    if (flags.ident == UINT_MAX)
+        flags.ident = FIRST_PERMANENT_IDENT;
+    return flags.ident++;
+}
 
 struct obj *
 mkobj_at(char let, struct level *lev, int x, int y, boolean artif)
@@ -245,9 +255,7 @@ splitobj(struct obj *obj, long num)
         panic("splitobj");      /* can't split containers */
     otmp = newobj(obj->oxlth + obj->onamelth);
     *otmp = *obj;       /* copies whole structure */
-    otmp->o_id = flags.ident++;
-    if (!otmp->o_id)
-        otmp->o_id = flags.ident++;     /* ident overflowed */
+    otmp->o_id = next_ident();
     otmp->timed = 0;    /* not timed, yet */
     otmp->lamplit = 0;  /* ditto */
     otmp->owornmask = 0L;       /* new object isn't worn */
@@ -347,9 +355,7 @@ bill_dummy_object(struct obj *otmp)
     dummy = newobj(otmp->oxlth + otmp->onamelth);
     *dummy = *otmp;
     dummy->where = OBJ_FREE;
-    dummy->o_id = flags.ident++;
-    if (!dummy->o_id)
-        dummy->o_id = flags.ident++;    /* ident overflowed */
+    dummy->o_id = next_ident();
     dummy->timed = 0;
     if (otmp->oxlth)
         memcpy(dummy->oextra, otmp->oextra, otmp->oxlth);
@@ -454,6 +460,7 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif)
     const char let = objects[otyp].oc_class;
 
     otmp = mksobj_basic(lev, otyp, init);
+    otmp->o_id = next_ident();
 
     if ((otmp->otyp >= ELVEN_SHIELD && otmp->otyp <= ORCISH_SHIELD) ||
         otmp->otyp == SHIELD_OF_REFLECTION)
