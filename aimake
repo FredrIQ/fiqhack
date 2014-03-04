@@ -6955,10 +6955,11 @@ MAINLOOP: while (1) {
                             ($n !~ /^(search)?file:/ &&
                              $a->{filter_absolute}) ||
                              ($a->{filter_nonexistent_files} &&
-                              $n =~ /^[bs]?path:/ &&
+                              $n =~ /^(?:[bs]?path|standardlib):/ &&
                               (!-e aipath2ospath($n) || (!-f _ && !-l _))) ||
                               ($a->{filter_text_files} &&
-                               $n =~ /^[bs]?path:/ && -T aipath2ospath($n));
+                               $n =~ /^(?:[bs]?path|standardlib):/ &&
+                               -T aipath2ospath($n));
                     }
                 }
                 $matched or !$rule->{require_match} or
