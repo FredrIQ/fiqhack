@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-01 */
+/* Last modified by Derrick Sund, 2014-03-04 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -479,7 +479,7 @@ god_zaps_you(aligntyp resp_god)
         if (!Disint_resistance)
             fry_by_god(resp_god);
         else {
-            pline("You bask in its black glow for a minute...");
+            pline("You bask in its %s glow for a minute...", hcolor("black"));
             godvoice(resp_god, "I believe it not!");
         }
         if (has_sanctum(level, Align2amask(resp_god))) {
