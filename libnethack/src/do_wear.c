@@ -442,7 +442,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         }
         break;
     case AMULET_OF_RESTFUL_SLEEP:
-        if (!ESleeping && !(HSleeping & INTRINSIC))
+        if (!redundant_extrinsic && !(HSleeping & INTRINSIC))
             HSleeping = equipping ? rnd(100) : 0;
         break;
     case AMULET_OF_YENDOR:

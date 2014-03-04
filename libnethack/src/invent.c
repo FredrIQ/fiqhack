@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Derrick Sund, 2014-03-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1736,7 +1736,7 @@ update_location(boolean all_objects)
    don't show them unless obj_cnt is 0 */
 int
 look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
-          boolean picked_some)
+          boolean picked_some, boolean show_weight)
 {
     struct obj *otmp;
     struct trap *trap;
@@ -1834,7 +1834,11 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
         if (otmp->oinvis && !See_invisible)
             verb = "feel";
 #endif
-        pline("You %s here %s.", verb, doname_price(otmp));
+        /* Don't show weight if the player shouldn't know what the weight is. */
+        if (show_weight && (objects[otmp->otyp].oc_name_known || otmp->invlet))
+            pline("You %s here %s {%d}.", verb, doname_price(otmp), otmp->owt);
+        else 
+            pline("You %s here %s.", verb, doname_price(otmp));
         if (otmp->otyp == CORPSE)
             feel_cockatrice(otmp, FALSE);
     } else {
@@ -1876,7 +1880,7 @@ int
 dolook(const struct nh_cmd_arg *arg)
 {
     (void) arg;
-    return look_here(0, FALSE);
+    return look_here(0, FALSE, TRUE);
 }
 
 boolean

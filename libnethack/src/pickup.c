@@ -68,7 +68,7 @@ check_here(boolean picked_some)
         if (flags.occupation == occ_move || travelling())
             action_completed();
         flush_screen();
-        look_here(ct, picked_some);
+        look_here(ct, picked_some, FALSE);
     } else {
         read_engr_at(u.ux, u.uy);
     }
@@ -565,7 +565,7 @@ query_objlist(const char *qstr, /* query string */
     for (curr = olist; curr; curr = FOLLOW(curr, qflags)) {
         if ((qflags & FEEL_COCKATRICE) && curr->otyp == CORPSE &&
             will_feel_cockatrice(curr, FALSE)) {
-            look_here(0, FALSE);
+            look_here(0, FALSE, TRUE);
             return 0;
         }
         if ((!(qflags & INVORDER_SORT) || strchr(flags.inv_order, curr->oclass))
