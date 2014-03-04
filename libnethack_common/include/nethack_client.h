@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-01 */
+/* Last modified by Alex Smith, 2014-03-04 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef NETHACK_CLIENT_H
@@ -51,8 +51,6 @@ extern nh_bool EXPORT(nhnet_exit_game) (int exit_type);
 extern int EXPORT(nhnet_play_game) (int gid);
 extern enum nh_create_response EXPORT(nhnet_create_game) (
     struct nh_option_desc *opts);
-extern int EXPORT(nhnet_command) (const char *cmd, int rep,
-                                  struct nh_cmd_arg *arg);
 /* no nhnet_get_copyright_banner; the client should display its own copyright */
 extern nh_cmd_desc_p EXPORT(nhnet_get_commands) (int *count);
 extern nh_cmd_desc_p EXPORT(nhnet_get_object_commands) (
