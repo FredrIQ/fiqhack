@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Derrick Sund, 2014-03-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -149,6 +149,22 @@ mk_artifact(
             else
                 eligible[n++] = m;
         }
+
+    /* If we didn't get any eligible artifacts, it's possible that the only
+       valid first sacrifice gift was already generated.  Let's try again
+       with looser restrictions. */
+    if (n == 0)
+        for (n = 0, a = artilist + 1, m = 1; a->otyp; a++, m++)
+            if ((!by_align ? a->otyp ==
+                 o_typ : (a->alignment == alignment || a->alignment == A_NONE)) &&
+                (!(a->spfx & SPFX_NOGEN) || unique) && !artiexist[m]) {
+                if (by_align && a->race != NON_PM && race_hostile(&mons[a->race]))
+                    continue;       /* skip enemies' equipment */
+                else if (by_align && Role_if(a->role))
+                    goto make_artif;        /* 'a' points to the desired one */
+                else
+                    eligible[n++] = m;
+            }
 
     if (n) {    /* found at least one candidate */
         m = eligible[rn2(n)];   /* [0..n-1] */
