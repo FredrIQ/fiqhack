@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-01 */
+/* Last modified by Derrick Sund, 2014-03-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3270,9 +3270,10 @@ disarm_landmine(struct trap *ttmp, schar dx, schar dy)
     if (fails < 2)
         return fails;
     pline("You disarm %s land mine.", the_your[ttmp->madeby_u]);
-    level->locations[u.ux + dx][u.uy + dy].mem_trap = NO_TRAP;
-    makeknown(LAND_MINE);
     cnv_trap_obj(level, LAND_MINE, 1, ttmp);
+    level->locations[u.ux + dx][u.uy + dy].mem_trap = NO_TRAP;
+    newsym(u.ux + dx, u.uy + dy);
+    makeknown(LAND_MINE);
     return 1;
 }
 
@@ -3324,8 +3325,9 @@ disarm_shooting_trap(struct trap *ttmp, int otyp, schar dx, schar dy)
     if (fails < 2)
         return fails;
     pline("You disarm %s trap.", the_your[ttmp->madeby_u]);
-    level->locations[u.ux + dx][u.uy + dy].mem_trap = NO_TRAP;
     cnv_trap_obj(level, otyp, 50 - rnl(50), ttmp);
+    level->locations[u.ux + dx][u.uy + dy].mem_trap = NO_TRAP;
+    newsym(u.ux + dx, u.uy + dy);
     return 1;
 }
 
