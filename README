@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2013-12-29
+Last modified by Derrick Sund, 2014-03-04
 
 Copyright (C) 2013 Alex Smith.
 
@@ -159,8 +159,8 @@ listed below.
             or between `R` and `T`; they're interchangeable now.  In fact, you
             no longer have to remember any of those commands, nor `w`, `x`, or
             `Q`, because you can now change your equipment around using `A`.
-            Also, your character will temporarily unequip armour in order to
-            manipulate armour beneath it, meaning that you don't have to
+            Also, your character will temporarily unequip armor in order to
+            manipulate armor beneath it, meaning that you don't have to
             explicitly remove a suit in order to take off a shirt.
 
           * There's no need to explicitly open doors any more; just use the

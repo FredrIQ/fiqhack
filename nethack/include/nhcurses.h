@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-01 */
+/* Last modified by Derrick Sund, 2014-03-04 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -340,7 +340,8 @@ extern int curses_display_menu(struct nh_menulist *ml, const char *title,
                                int how, int placement_hint, int *results);
 extern int curses_display_menu_core(
     struct nh_menulist *ml, const char *title, int how, int *results,
-    int x1, int y1, int x2, int y2, nh_bool(*changefn)(struct win_menu *, int));
+    int x1, int y1, int x2, int y2, nh_bool bottom,
+    nh_bool(*changefn)(struct win_menu *, int));
 extern int curses_display_objects(struct nh_objlist *objlist,
                                   const char *title, int how,
                                   int placement_hint,

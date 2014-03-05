@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Derrick Sund, 2014-03-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -488,7 +488,7 @@ outer_break:
     if (!best || best == old)
         return;
 
-    /* If wearing body armour, account for time spent removing and wearing it
+    /* If wearing body armor, account for time spent removing and wearing it
        when putting on a shirt. */
     if ((slot == os_armu) && (mon->misc_worn_check & W_MASK(os_arm)))
         m_delay += 2 * objects[which_armor(mon, os_arm)->otyp].oc_delay;

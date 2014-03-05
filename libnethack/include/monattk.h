@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Derrick Sund, 2014-03-04 */
 /* NetHack may be freely redistributed.  See license for details. */
 /* Copyright 1988, M. Stephenson */
 
@@ -59,7 +59,7 @@
 # define AD_SITM 21     /* steals item (nymphs) */
 # define AD_SEDU 22     /* seduces & steals multiple items */
 # define AD_TLPT 23     /* teleports you (Quantum Mech.) */
-# define AD_RUST 24     /* rusts armour (Rust Monster) */
+# define AD_RUST 24     /* rusts armor (Rust Monster) */
 # define AD_CONF 25     /* confuses (Umber Hulk) */
 # define AD_DGST 26     /* digests opponent (trapper, etc.) */
 # define AD_HEAL 27     /* heals opponent's wounds (nurse) */

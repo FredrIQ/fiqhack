@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-03 */
+/* Last modified by Derrick Sund, 2014-03-04 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -475,15 +475,22 @@ doprev_message(void)
             i = (i + 1) % settings.msghistory;
             continue;
         }
-        wrap_text(getmaxx(msgwin), histlines[i].message,
-                  &lines, &buf);
-        for (j = 0; j < lines; j++)
-            add_menu_txt(&menu, buf[j], MI_TEXT);
+        /* Subtracting 3 is necessary to prevent curses_display_menu in
+           smallterm games from eating the last part of the message here.
+           Subtracting 4 allows slight indentation where appropriate. */
+        wrap_text(getmaxx(msgwin) - 4, histlines[i].message, &lines, &buf);
+        for (j = 0; j < lines; j++) {
+            /* If a message wraps, very slightly indent the additional lines
+               to make them obvious. */
+            char tempstr[getmaxx(msgwin)];
+            sprintf(tempstr, "%s%s", j == 0 ? "" : " ", buf[j]);
+            add_menu_txt(&menu, tempstr, MI_TEXT);
+        }
         i = (i + 1) % settings.msghistory;
     } while (i != histlines_pointer);
 
-    curses_display_menu(&menu, "Previous messages:", PICK_NONE,
-                        PLHINT_ANYWHERE, NULL);
+    curses_display_menu_core(&menu, "Previous messages:", PICK_NONE, NULL, 0, 0,
+                             -1, -1, TRUE, NULL);
 }
 
 /* Given the string "input", generate a series of strings of the given maximum

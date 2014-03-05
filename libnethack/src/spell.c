@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-01 */
+/* Last modified by Derrick Sund, 2014-03-04 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -73,7 +73,7 @@ static int isqrt(int);
  *      See percent_success() below for more comments.
  *
  *  uarmbon, uarmsbon, uarmhbon, uarmgbon, uarmfbon:
- *      Fighters find body armour & shield a little less limiting.
+ *      Fighters find body armor & shield a little less limiting.
  *      Headgear, Gauntlets and Footwear are not role-specific (but
  *      still have an effect, except helm of brilliance, which is designed
  *      to permit magic-use).

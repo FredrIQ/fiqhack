@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-21 */
+/* Last modified by Derrick Sund, 2014-03-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -653,7 +653,7 @@ doname_base(const struct obj *obj, boolean with_price)
 
     if (with_price && (obj->unpaid || shop_item_cost(obj) > 0)) {
         /* If this item has a unique /base/ price for items within its class,
-           and isn't a gem (shks lie about those) or a weapon or armour (and
+           and isn't a gem (shks lie about those) or a weapon or armor (and
            thus possibly enchanted), we automatically ID it. This takes weight
            into account too (as it's shown in inventory listings), which
            conveniently happens to distinguish between different description

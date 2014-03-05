@@ -27,7 +27,7 @@ static const char * const c_slotnames[] = {
 
 /* Slot name as it appears in the doequip() menu */
 static const char * const c_slotnames_menu[] = {
-    [os_arm]     = "Armour",
+    [os_arm]     = "Armor",
     [os_armc]    = "Cloak",
     [os_armh]    = "Helmet",
     [os_arms]    = "Shield",
@@ -62,7 +62,7 @@ const struct equip_order {
     enum equip_direction direction;
 } equip_order [] = {
     /* Tool comes first and last, because you'd typically want to be able to
-       see what you're doing when switching out armour. */
+       see what you're doing when switching out armor. */
     {os_tool,    ed_unequip},
 
     /* Hand slots. The weapon doesn't cover the glove slot (i.e. wielding a
@@ -160,7 +160,7 @@ on_msg(struct obj *otmp)
    magically, being destroyed, or something similar.) The main reason for the
    existence of this function is to print messages (if msgtype != em_silent),
    and to trigger side effects of equipping (such as identifying the enchantment
-   of equipped armour, or changing the gender of a player who equips an amulet
+   of equipped armor, or changing the gender of a player who equips an amulet
    of change).
 
    This function currently only works for A_WORN slots (not weapon, secondary
@@ -206,7 +206,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         /* It's not obvious whether we should uninvoke or not here. We need to
            uninvoke if the item is being destroyed or dropped, but not
            otherwise. However, of the items with togglable invokes, the Sceptre
-           of Might is a weapon (thus doesn't go into armour slots); the Heart
+           of Might is a weapon (thus doesn't go into armor slots); the Heart
            of Ahriman is a luckstone and thus can't be worn; and the Orb of
            Detection is a crystal ball and thus also can't be worn.
 
@@ -224,11 +224,11 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
                   slot == os_tool ? body_part(FACE) : "body");
     }
 
-    /* Equipping armour makes its enchantment obvious. */
+    /* Equipping armor makes its enchantment obvious. */
     if (slot <= os_last_armor)
         o->known = TRUE;
 
-    /* Side effects for all armour in the game.
+    /* Side effects for all armor in the game.
 
        WARNING: Some of these can destroy objects. That includes the object
        we're trying to equip! Thus, o and otmp should not be used after this
@@ -573,7 +573,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         turnstate.vision_full_recalc = TRUE; /* recalc vision limits */
         break;
 
-        /* Shields, shirts, body armour: no special cases! */
+        /* Shields, shirts, body armor: no special cases! */
     default:
         if (slot != os_arms && slot != os_armu && slot != os_arm) {
             impossible("otyp %d is missing equip code in setequip()",
@@ -872,7 +872,7 @@ equip_heartbeat(void)
          * The timings in NetHack 4.3 depend on the slot, not the command, and
          * are always measured entirely in actions (technically, because that's
          * how occupation callbacks work; but it also makes sense in that speed
-         * should allow you to put on armour faster):
+         * should allow you to put on armor faster):
          *
          * os_quiver               0 for equip, unequip, change
          * os_wep/swapwep          0 if swapping os_wep and os_swapwep
@@ -1035,7 +1035,7 @@ equip_heartbeat(void)
                immediate re-equip because the equip and unequip have separate
                lines on the table.) */
             setequip(islot, NULL, em_voluntary);
-            /* Unequipping artifact armour will succeed despite a blast, but
+            /* Unequipping artifact armor will succeed despite a blast, but
                you still get blasted. */
             if (current->oartifact)
                 touch_artifact(current, &youmonst);
@@ -1380,8 +1380,8 @@ slot_count(struct monst *mon, enum objslot slot, boolean noisy)
  * You can get different outcomes from this function using the cblock value.
  * With cblock == TRUE, the return values are based on what could be
  * accomplished via removing items in other slots. With cblock == FALSE, the
- * return values are based on what could be accomplished right now (e.g. armour
- * will be blocked by a perfectly removable suit of armour or a cloak). cblock
+ * return values are based on what could be accomplished right now (e.g. armor
+ * will be blocked by a perfectly removable suit of armor or a cloak). cblock
  * is mutually exclusive with spoil; if you're trying to move the item right
  * now, it's important that the slot is unblocked even if you theoretically
  * could unblock it.
@@ -1423,7 +1423,7 @@ canwearobj(struct obj *otmp, long *mask,
              otmp->otyp == TOWEL)
         slot = os_tool;
 
-    /* Generic checks: wearing armour is possible; the armour is not already
+    /* Generic checks: wearing armor is possible; the armor is not already
        equipped (if !cblock); the item is equippable; the equip is not blocked
        by a cursed two-handed weapon */
     if (slot_count(&youmonst, slot, noisy) == 0) {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-27 */
+/* Last modified by Derrick Sund, 2014-03-04 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -266,6 +266,7 @@ find_accel(int accel, struct win_menu *mdat)
 int
 curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
                          int *results, int x1, int y1, int x2, int y2,
+                         nh_bool bottom,
                          nh_bool(*changefn) (struct win_menu *, int))
 {
     struct gamewin *gw;
@@ -329,6 +330,9 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     leaveok(gw->win2, TRUE);
     done = FALSE;
     cancelled = FALSE;
+
+    if (bottom && mdat->icount - mdat->innerheight > 0)
+        mdat->offset = mdat->icount - mdat->innerheight;
     while (!done && !cancelled) {
         draw_menu(gw);
 
@@ -484,7 +488,8 @@ curses_display_menu(struct nh_menulist *ml, const char *title,
         y2 = getmaxy(msgwin);
     }
 
-    n = curses_display_menu_core(ml, title, how, results, x1, y1, x2, y2, NULL);
+    n = curses_display_menu_core(ml, title, how, results, x1, y1, x2, y2, FALSE,
+                                 NULL);
     return n;
 }
 
