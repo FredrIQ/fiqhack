@@ -923,6 +923,7 @@ const struct objclass const_objects[] = {
         OBJECT( OBJ(name,desc), \
             BITS(kn,1,0,0,mgc,0,0,0,0,HARDGEM(mohs),0,-P_SLING,glass), 0, \
             GEM_CLASS, prob, 0, wt, gval, sdam, ldam, 0, 0, nutr, color )
+    /* makedefs and mkobj assume that all true gems come first */
     GEM("dilithium crystal", "white", 2, 1, 4500, 15, 5, GEMSTONE, CLR_WHITE),
     GEM("diamond", "white", 3, 1, 4000, 15, 10, GEMSTONE, CLR_WHITE),
     GEM("ruby", "red", 4, 1, 3500, 15, 9, GEMSTONE, CLR_RED),

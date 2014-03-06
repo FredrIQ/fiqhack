@@ -1211,6 +1211,7 @@ do_objs(const char *outfile)
     int prefix = 0;
     char class = '\0';
     boolean sumerr = FALSE;
+    char last_gem[128] = "";
 
     if (!(ofp = fopen(outfile, WRTMODE))) {
         perror(outfile);
@@ -1272,6 +1273,10 @@ do_objs(const char *outfile)
                 break;
             }
             break;
+        case GEM_CLASS:
+            if (objects[i].oc_material == GEMSTONE) {
+                strcpy(last_gem, objnam);
+            }
         default:
             fprintf(ofp, "#define\t");
         }
@@ -1289,7 +1294,14 @@ do_objs(const char *outfile)
         sumerr = TRUE;
     }
 
-    fprintf(ofp, "#define\tLAST_GEM\t(JADE)\n");
+    if (!*last_gem) {
+        fprintf(stderr, "no gems at all");
+        fflush(stderr);
+        sumerr = TRUE;
+        /* Put in something that won't completely break things */
+        sprintf(last_gem, "%d", i - 1);
+    }
+    fprintf(ofp, "#define\tLAST_GEM\t%s\n", last_gem);
     fprintf(ofp, "#define\tNUM_OBJECTS\t%d\n", i);
 
     fprintf(ofp, "\n/* Artifacts (unique objects) */\n\n");
