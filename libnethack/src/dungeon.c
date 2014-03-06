@@ -2081,7 +2081,7 @@ static void
 overview_print_gods(char *buf, const struct overview_info *oi)
 {
     int i, num_gods = 0;
-    char god_names[4][80];
+    char god_names[4][BUFSZ];
     if (oi->lawful_altar) {
         sprintf(god_names[num_gods], "%s", align_gname(A_LAWFUL));
         num_gods++;
