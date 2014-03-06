@@ -1,5 +1,5 @@
 About this document:
-Last modified by Derrick Sund, 2014-03-04
+Last modified by Derrick Sund, 2014-03-06
 
 Copyright (C) 2013 Alex Smith.
 
@@ -1151,6 +1151,11 @@ Boulders now render as `0` by default. (4, 5d5b740)
 Thrown projectiles automatically requiver even if the quiver empties entirely,
 so long as they're autopickedup by means of the `pickup_thrown` option. (Dyna,
 3b5634b, 234d32f)
+
+To help prevent typos, inventory letter assignment now tends to steer food items
+away from the letters eyYnN; potions away from qyYnN; scrolls from r; wands from
+z; and armor, gems, rocks, balls, and chains toward these problem letters. (4,
+894d615)
 
 
 Options
