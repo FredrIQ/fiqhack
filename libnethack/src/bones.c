@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-30 */
+/* Last modified by Derrick Sund, 2014-03-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -250,6 +250,9 @@ make_bones:
     if (u.usteed)
         dismount_steed(DISMOUNT_BONES);
     dmonsfree(level);   /* discard dead or gone monsters */
+
+    /* clear level annotation */
+    level->levname[0] = '\0';
 
     /* mark all fruits as nonexistent; when we come to them we'll mark them as
        existing (using goodfruit()) */
