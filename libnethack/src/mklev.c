@@ -550,7 +550,6 @@ makelevel(struct level *lev)
 
     if (wiz1_level.dlevel == 0)
         init_dungeons();
-    oinit(lev); /* assign level dependent obj probabilities */
 
     {
         s_level *slevnum = Is_special(&lev->z);

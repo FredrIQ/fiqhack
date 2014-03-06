@@ -6,35 +6,10 @@
 #include "hack.h"
 #include "lev.h"        /* save & restore info */
 
-static void setgemprobs(const d_level * dlev);
 static void shuffle(int, int, boolean);
 static void shuffle_all(void);
 static boolean interesting_to_discover(int);
 
-
-static void
-setgemprobs(const d_level * dlev)
-{
-    int j, first, lev;
-
-    if (dlev)
-        lev = (ledger_no(dlev) > maxledgerno())
-            ? maxledgerno() : ledger_no(dlev);
-    else
-        lev = 0;
-    first = bases[GEM_CLASS];
-
-    for (j = 0; j < 9 - lev / 3; j++)
-        objects[first + j].oc_prob = 0;
-    first += j;
-    if (first > LAST_GEM || objects[first].oc_class != GEM_CLASS ||
-        OBJ_NAME(objects[first]) == NULL) {
-        raw_printf("Not enough gems? - first=%d j=%d LAST_GEM=%d\n", first, j,
-                   LAST_GEM);
-    }
-    for (j = first; j <= LAST_GEM; j++)
-        objects[j].oc_prob = (171 + j - first) / (LAST_GEM + 1 - first);
-}
 
 /* shuffle descriptions on objects o_low to o_high */
 static void
@@ -99,8 +74,6 @@ init_objects(void)
             last++;
 
         if (oclass == GEM_CLASS) {
-            setgemprobs(NULL);
-
             if (rn2(2)) {       /* change turquoise from green to blue? */
                 COPY_OBJ_DESCR(objects[TURQUOISE], objects[SAPPHIRE]);
             }
@@ -197,12 +170,6 @@ find_skates(void)
 
     impossible("snow boots not found?");
     return -1;  /* not 0, or caller would try again each move */
-}
-
-void
-oinit(const struct level *lev)
-{       /* level dependent initialization */
-    setgemprobs(&lev->z);
 }
 
 

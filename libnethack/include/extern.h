@@ -1156,7 +1156,6 @@ extern int do_play_instrument(struct obj *, const struct nh_cmd_arg *);
 
 extern void init_objects(void);
 extern int find_skates(void);
-extern void oinit(const struct level *lev);
 extern void freenames(void);
 extern void savenames(struct memfile *mf);
 extern void restnames(struct memfile *mf);
