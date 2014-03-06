@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-01 */
+/* Last modified by Derrick Sund, 2014-03-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -49,7 +49,23 @@ void
 assigninvlet(struct obj *otmp)
 {
     boolean inuse[52];
-    int i;
+    /*
+     * Preferentially assign letters as follows:
+     * Food should not be assigned to e, y, Y, n, or N.
+     * (Eating from ground used to be a y/n prompt.)
+     * Potions should not be assigned to q, y, Y, n, or N.
+     * (Quaffing from fountains used to be a y/n prompt.)
+     * Scrolls and spellbooks should not be assigned to r.
+     * Wands should not be assigned to z.
+     * Armor, gems, rocks, and balls/chains should try to be assigned to one of
+     * these letters.
+     * (Players only infrequently care about their inventory letters.)
+     * Update danger_letters if the list of letters we care about changes.
+     */
+    boolean deprecated[52];
+    boolean should_displace = FALSE;
+    char *danger_letters = "enqryzNY";
+    int i, to_use;
     struct obj *obj;
 
     /* There is only one of these in inventory... */
@@ -58,8 +74,34 @@ assigninvlet(struct obj *otmp)
         return;
     }
 
-    for (i = 0; i < 52; i++)
+    for (i = 0; i < 52; i++) {
         inuse[i] = FALSE;
+        deprecated[i] = FALSE;
+    }
+
+    if (otmp->oclass == FOOD_CLASS) {
+        deprecated['e' - 'a'] = TRUE;
+        deprecated['n' - 'a'] = TRUE;
+        deprecated['y' - 'a'] = TRUE;
+        deprecated['N' - 'A' + 26] = TRUE;
+        deprecated['Y' - 'A' + 26] = TRUE;
+    }
+    if (otmp->oclass == POTION_CLASS) {
+        deprecated['q' - 'a'] = TRUE;
+        deprecated['n' - 'a'] = TRUE;
+        deprecated['y' - 'a'] = TRUE;
+        deprecated['N' - 'A' + 26] = TRUE;
+        deprecated['Y' - 'A' + 26] = TRUE;
+    }
+    if (otmp->oclass == SCROLL_CLASS || otmp->oclass == SPBOOK_CLASS)
+        deprecated['r' - 'a'] = TRUE;
+    if (otmp->oclass == WAND_CLASS)
+        deprecated['z' - 'a'] = TRUE;
+    if (otmp->oclass == ARMOR_CLASS || otmp->oclass == GEM_CLASS ||
+        otmp->oclass == ROCK_CLASS || otmp->oclass == BALL_CLASS ||
+        otmp->oclass == CHAIN_CLASS)
+        should_displace = TRUE;
+
     for (obj = invent; obj; obj = obj->nobj)
         if (obj != otmp) {
             i = obj->invlet;
@@ -70,20 +112,41 @@ assigninvlet(struct obj *otmp)
             if (i == otmp->invlet)
                 otmp->invlet = 0;
         }
+    /* First, if the item's been in inventory before, assign its old letter
+       if possible. */
     if ((i = otmp->invlet) &&
         (('a' <= i && i <= 'z') || ('A' <= i && i <= 'Z')))
         return;
-    for (i = u.lastinvnr + 1; i != u.lastinvnr; i++) {
+    /* If the item should take up the dangerous letters, see if one of them
+       is free.
+       Don't change u.lastinvnr in this case; that'd cause unnecessary trampling
+       of other invlets. */
+    if (should_displace) {
+        char *cur;
+        for (cur = danger_letters; *cur; cur++) {
+            if (('a' <= *cur && *cur <= 'z' && !inuse[*cur - 'a']) ||
+                ('A' <= *cur && *cur <= 'Z' && !inuse[*cur - 'A' + 26])) {
+                otmp->invlet = *cur;
+                return;
+            }
+        }
+    }
+    for (to_use = i = u.lastinvnr + 1; i != u.lastinvnr; i++) {
         if (i == 52) {
             i = -1;
             continue;
         }
-        if (!inuse[i])
-            break;
+        if (!inuse[i]) {
+            to_use = i;
+            /* If this letter is deprecated, keep looking. */
+            if (!deprecated[i])
+                break;
+        }
     }
     otmp->invlet =
-        (inuse[i] ? NOINVSYM : (i < 26) ? ('a' + i) : ('A' + i - 26));
-    u.lastinvnr = i;
+        (inuse[to_use] ? NOINVSYM : (to_use < 26) ? ('a' + to_use)
+                                                  : ('A' + to_use - 26));
+    u.lastinvnr = to_use;
 }
 
 
