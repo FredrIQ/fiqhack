@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-04 */
+/* Last modified by Derrick Sund, 2014-03-07 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -486,6 +486,7 @@ doprev_message(void)
             sprintf(tempstr, "%s%s", j == 0 ? "" : " ", buf[j]);
             add_menu_txt(&menu, tempstr, MI_TEXT);
         }
+        free_wrap(buf);
         i = (i + 1) % settings.msghistory;
     } while (i != histlines_pointer);
 
