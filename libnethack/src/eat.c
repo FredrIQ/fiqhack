@@ -183,10 +183,15 @@ choke(struct obj *food)
             if (food->oclass == COIN_CLASS) {
                 killer = "very rich meal";
             } else {
-                killer = food_xname(food, FALSE);
-                if (food->otyp == CORPSE &&
-                    (mons[food->corpsenm].geno & G_UNIQ)) {
-                    if (!type_is_pname(&mons[food->corpsenm]))
+                killer = killer_buf;
+                strcpy(killer_buf, "");
+                strcat(killer, food_xname(food, FALSE));
+                if ((food->otyp == CORPSE &&
+                    (mons[food->corpsenm].geno & G_UNIQ)) ||
+                    (obj_is_pname(food) ||
+                     the_unique_obj(food))) {
+                    if ((food->otyp == CORPSE &&
+                        !type_is_pname(&mons[food->corpsenm])))
                         killer = the(killer);
                     killer_format = KILLED_BY;
                 }
