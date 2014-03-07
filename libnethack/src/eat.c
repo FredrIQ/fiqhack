@@ -185,14 +185,19 @@ choke(struct obj *food)
             } else {
                 killer = killer_buf;
                 strcpy(killer_buf, "");
-                strcat(killer, food_xname(food, FALSE));
+                strcat(killer_buf, food_xname(food, FALSE));
                 if ((food->otyp == CORPSE &&
                     (mons[food->corpsenm].geno & G_UNIQ)) ||
                     (obj_is_pname(food) ||
                      the_unique_obj(food))) {
+                    boolean qarti = (food->oartifact &&
+                                     !strncmp(ONAME(food), "The ", 4));
                     if ((food->otyp == CORPSE &&
-                        !type_is_pname(&mons[food->corpsenm])))
-                        killer = the(killer);
+                        !type_is_pname(&mons[food->corpsenm]))
+                        ||
+                        (food->otyp != CORPSE &&
+                        (qarti || the_unique_obj(food))))
+                        killer = qarti ? The(killer) : the(killer);
                     killer_format = KILLED_BY;
                 }
             }
