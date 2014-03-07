@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-04 */
+/* Last modified by Sean Hunt, 2014-03-07 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -119,7 +119,7 @@ realloc_strcat(char **first, int *first_alloclen, char *second)
    doesn't exist), FALSE otherwise. This respects last_line_reserved with
    space_for_more FALSE, and draws a --More-- otherwise. */
 static nh_bool
-layout_msgwin(nh_bool dodraw, int offset, nh_bool more, nh_bool mark_seen)
+layout_msgwin(nh_bool dodraw, int offset, nh_bool more)
 {
     int ypos = getmaxy(msgwin) - 1;
     int hp = histlines_pointer;
@@ -226,7 +226,7 @@ layout_msgwin(nh_bool dodraw, int offset, nh_bool more, nh_bool mark_seen)
                     ypos--;
                 }
 
-                if (ypos >= -1 && ypos < getmaxy(msgwin) - 1 && mark_seen) {
+                if (ypos >= -1 && ypos < getmaxy(msgwin) - 1 && dodraw) {
                     /* The first characters of each of these lines were written
                        onto the screen. Mark them as seen. (If we have ypos <
                        -1, then we only drew part of the line, so it's not
@@ -252,7 +252,7 @@ layout_msgwin(nh_bool dodraw, int offset, nh_bool more, nh_bool mark_seen)
                        TRUE, and find the new first unseen line (which may be
                        the same as the old one. */
                     rv = 1;
-                    if (mark_seen && ypos < getmaxy(msgwin) - 1) {
+                    if (dodraw && ypos < getmaxy(msgwin) - 1) {
 
                         /* Find the new first unseen line, if any. */
                         hp2 = histlines_pointer;
@@ -316,20 +316,20 @@ keypress_at_more(void)
    (via displaying them, with --More-- if necessary), finally leaving the last
    onscreen. If more is set, draw a --More-- after the last set, too. */
 static void
-force_seen(nh_bool more, nh_bool mark_last_screenful_seen) {
-    if (!layout_msgwin(0, 0, more, 0)) {
+force_seen(nh_bool more) {
+    if (!layout_msgwin(0, 0, more)) {
         /* The text so far doesn't fit onto the screen. Draw it, followed by a
            --More--. */
         int offset = 1;
-        while (!layout_msgwin(0, offset, 1, 0))
+        while (!layout_msgwin(0, offset, 1))
             offset++;
         while (offset > 0) {
-            layout_msgwin(1, offset, 1, 1); /* sets unseen to 0 */
+            layout_msgwin(1, offset, 1); /* sets unseen to 0 */
             keypress_at_more();
             offset -= getmaxy(msgwin);
         }
     }
-    layout_msgwin(1, 0, more, mark_last_screenful_seen);
+    layout_msgwin(1, 0, more);
 }
 
 /* Draws messages on the screen. Any messages drawn since the last call to
@@ -343,7 +343,7 @@ force_seen(nh_bool more, nh_bool mark_last_screenful_seen) {
 void
 draw_msgwin(void)
 {
-    layout_msgwin(1, 0, 0, 0);
+    layout_msgwin(1, 0, 0);
 }
 
 /* When called, previous messages should be blued out. Assumes that there has
@@ -373,7 +373,7 @@ new_action(void)
     first_new = -1;
     stopmore = 0;
 
-    layout_msgwin(1, 0, 0, 1);
+    layout_msgwin(1, 0, 0);
 }
 
 /* Make sure the bottom message line is empty. If this would scroll something
@@ -381,13 +381,13 @@ new_action(void)
 void
 fresh_message_line(nh_bool canblock)
 {
-    force_seen(0, 0);
+    force_seen(0);
     last_line_reserved = 1;
-    if (!layout_msgwin(0, 0, 0, 0)) {
-        layout_msgwin(1, 0, 1, 1);
+    if (!layout_msgwin(0, 0, 0) && canblock) {
+        layout_msgwin(1, 0, 1);
         keypress_at_more();
     }
-    layout_msgwin(1, 0, 0, 1);
+    layout_msgwin(1, 0, 0);
 }
 
 static void
@@ -421,10 +421,10 @@ curses_print_message_core(int turn, const char *msg, nh_bool canblock)
     free(histlines[histlines_pointer].message);
     histlines[histlines_pointer].message = 0;
 
-    if (!layout_msgwin(0, 0, 0, 0))
-        force_seen(0, 0); /* print a --More-- at the appropriate point */
+    if (!layout_msgwin(0, 0, 0))
+        force_seen(0); /* print a --More-- at the appropriate point */
     else
-        layout_msgwin(1, 0, 0, 0);
+        layout_msgwin(1, 0, 0);
 }
 
 /* Prints a message onto the screen, and into message history. The code will
@@ -449,7 +449,7 @@ void
 pause_messages(void)
 {
     if (first_unseen != -1) {
-        force_seen(1, 1);
+        force_seen(1);
         stopmore = 0;
         keypress_at_more();
     }
