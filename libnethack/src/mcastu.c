@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Derrick Sund, 2014-03-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -515,14 +515,19 @@ cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
             if (reflects || Shock_resistance) {
                 shieldeff(u.ux, u.uy);
                 dmg = 0;
-                if (reflects)
-                    break;
             } else
                 dmg = dice(8, 6);
-            if (Half_spell_damage)
-                dmg = (dmg + 1) / 2;
-            destroy_item(WAND_CLASS, AD_ELEC);
-            destroy_item(RING_CLASS, AD_ELEC);
+            if (!reflects) {
+                if (Half_spell_damage) dmg = (dmg + 1) / 2;
+                destroy_item(WAND_CLASS, AD_ELEC);
+                destroy_item(RING_CLASS, AD_ELEC);
+            }
+            if (!resists_blnd(&youmonst)) {
+                pline("You are blinded by the flash!");
+                make_blinded((long)rnd(100),FALSE);
+                if (!Blind)
+                    pline("Your vision quickly clears.");
+            }
             break;
         }
     case CLC_CURSE_ITEMS:
@@ -1501,12 +1506,20 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
             if (reflects || resists_elec(mtmp)) {
                 shieldeff(u.ux, u.uy);
                 dmg = 0;
-                if (reflects)
-                    break;
             } else
                 dmg = dice(8, 6);
-            destroy_mitem(mtmp, WAND_CLASS, AD_ELEC);
-            destroy_mitem(mtmp, RING_CLASS, AD_ELEC);
+            if (!reflects) {
+                destroy_mitem(mtmp, WAND_CLASS, AD_ELEC);
+                destroy_mitem(mtmp, RING_CLASS, AD_ELEC);
+            }
+            if (!resists_blnd(mtmp)) { 
+                unsigned rnd_tmp = rnd(50);
+                mtmp->mcansee = 0;
+                if((mtmp->mblinded + rnd_tmp) > 127)
+                    mtmp->mblinded = 127;
+                else
+                    mtmp->mblinded += rnd_tmp;
+            }
             break;
         }
     case CLC_CURSE_ITEMS:
