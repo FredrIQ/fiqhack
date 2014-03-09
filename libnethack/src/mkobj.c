@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-03-04 */
+/* Last modified by Sean Hunt, 2014-03-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -9,6 +9,7 @@
 #include <limits.h>
 
 static void mkbox_cnts(struct obj *);
+static struct obj *mksobj_basic(struct level *lev, int otyp, boolean init);
 static void obj_timer_checks(struct obj *, xchar, xchar, int);
 static void container_weight(struct obj *);
 static struct obj *save_mtraits(struct obj *, struct monst *);
@@ -363,6 +364,11 @@ replace_object(struct obj *obj, struct obj *otmp)
         extract_nobj(obj, &obj->olev->objlist);
         extract_nexthere(obj, &obj->olev->objects[obj->ox][obj->oy]);
         break;
+    case OBJ_MIGRATING:
+        otmp->nobj = obj->nobj;
+        obj->nobj = otmp;
+        extract_nobj(obj, &turnstate.migrating_objs);
+        break;
     default:
         panic("replace_object: obj position");
         break;
@@ -413,7 +419,7 @@ static const char dknowns[] = {
     GEM_CLASS, SPBOOK_CLASS, WEAPON_CLASS, TOOL_CLASS, 0
 };
 
-struct obj *
+static struct obj *
 mksobj_basic(struct level *lev, int otyp, boolean init)
 {
     /* Just create the basic object, do not do anything that might be random,
@@ -424,7 +430,7 @@ mksobj_basic(struct level *lev, int otyp, boolean init)
     otmp = newobj(0);
     *otmp = zeroobj;
     otmp->age = moves;
-    otmp->o_id = 1; /* temporary ID, no good for saving */
+    otmp->o_id = TEMPORARY_IDENT; /* temporary ID, no good for saving */
     otmp->quan = 1L;
     otmp->oclass = let;
     otmp->otyp = otyp;
@@ -772,6 +778,11 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif)
 
     otmp->owt = weight(otmp); /* update, in case we changed it */
     return otmp;
+}
+
+struct obj *
+mktemp_sobj(struct level *lev, int otyp) {
+    return mksobj_basic(lev, otyp, FALSE);
 }
 
 /*
@@ -1217,6 +1228,8 @@ place_object(struct obj *otmp, struct level *lev, int x, int y)
 
     if (otmp->where != OBJ_FREE)
         panic("place_object: obj not free");
+    if (!isok(x, y))
+        panic("placing object at bad position");
 
     obj_no_longer_held(otmp);
     if (otmp->otyp == BOULDER && lev == level)
@@ -1397,6 +1410,7 @@ discard_minvent(struct monst *mtmp)
  *      OBJ_MINVENT     monster's invent chain
  *      OBJ_BURIED      level->buriedobjs chain
  *      OBJ_ONBILL      on billobjs chain
+ *      OBJ_MIGRATING   on migrating_objects chain
  */
 void
 obj_extract_self(struct obj *obj)
@@ -1422,6 +1436,9 @@ obj_extract_self(struct obj *obj)
         break;
     case OBJ_ONBILL:
         extract_nobj(obj, &obj->olev->billobjs);
+        break;
+    case OBJ_MIGRATING:
+        extract_nobj(obj, &turnstate.migrating_objs);
         break;
     default:
         panic("obj_extract_self");
@@ -1689,6 +1706,11 @@ void
 save_obj(struct memfile *mf, struct obj *obj)
 {
     unsigned int oflags;
+
+    if (obj->o_id == TEMPORARY_IDENT) {
+        impossible("Temporary object encountered in save code!");
+        return;
+    }
 
     oflags =
         (obj->cursed << 31) | (obj->blessed << 30) |

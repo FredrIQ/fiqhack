@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-18 */
+/* Last modified by Sean Hunt, 2014-03-09 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -20,7 +20,7 @@ struct coord {
     int x, y;
 };
 
-static struct nh_dbuf_entry (*display_buffer)[COLNO] = NULL;
+static struct nh_dbuf_entry display_buffer[ROWNO][COLNO];
 static struct nh_dbuf_entry onscreen_display_buffer[ROWNO][COLNO];
 static nh_bool fully_refresh_display_buffer = 1;
 static const int mxdir[DIR_SELF + 1] = { -1, -1, 0, 1, 1, 1, 0, -1, 0, 0 };
@@ -77,10 +77,10 @@ get_map_key(int place_cursor)
 void
 curses_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy)
 {
-    display_buffer = dbuf;
+    memcpy(display_buffer, dbuf, sizeof (struct nh_dbuf_entry) * ROWNO * COLNO);
     draw_map(ux, uy);
 
-    if (ux > 0) {
+    if (ux >= 0) {
         wmove(mapwin, uy, ux);
         curs_set(1);
     } else
@@ -101,7 +101,7 @@ draw_map(int cx, int cy)
     unsigned int frame;
     struct curses_symdef syms[4];
 
-    if (!display_buffer || !mapwin)
+    if (!mapwin)
         return;
 
     getyx(mapwin, cursy, cursx);

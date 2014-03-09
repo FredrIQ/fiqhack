@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-03 */
+/* Last modified by Sean Hunt, 2014-03-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -171,7 +171,9 @@ static const struct turnstate default_turnstate = {
     .tracked = {0},
     .continue_message = TRUE,
     .vision_full_recalc = FALSE,
+    .delay_flushing = FALSE,
     .migrating_pets = NULL,
+    .migrating_objs = NULL,
     .helpless_timers = {},
     .helpless_causes = {},
     .helpless_endmsgs = {},
@@ -203,8 +205,12 @@ neutral_turnstate_tasks(void)
         impossible("turnstate.continue_message persisted between turns");
     if (turnstate.vision_full_recalc)
         impossible("vision not recalculated when needed during a turn");
+    if (turnstate.delay_flushing)
+        impossible("flushing delayed over a turn");
     if (turnstate.migrating_pets)
         impossible("pets still migrating between turns");
+    if (turnstate.migrating_objs)
+        impossible("objects still migrating between turns");
 
     for (i = hr_first; i <= hr_last; ++i) {
         if (turnstate.helpless_timers[i])

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-16 */
+/* Last modified by Sean Hunt, 2014-03-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1109,7 +1109,7 @@ rloco_pos(struct level *lev, struct obj *obj, int *nx, int *ny)
     int try_limit = 4000;
 
     otx = obj->ox;
-    restricted_fall = (otx == 0 && lev->dndest.lx);
+    restricted_fall = (otx == -1 && lev->dndest.lx);
     do {
         tx = rn2(COLNO);
         ty = rn2(ROWNO);

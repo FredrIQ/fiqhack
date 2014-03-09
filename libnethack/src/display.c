@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-16 */
+/* Last modified by Sean Hunt, 2014-03-09 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -124,8 +124,6 @@ static void t_warn(struct rm *);
 static int wall_angle(struct rm *);
 static void dbuf_set_object(int x, int y, int oid, int omn);
 static void dbuf_set_loc(int x, int y);
-
-static boolean delay_flushing;
 
 #ifdef INVISIBLE_OBJECTS
 /*
@@ -1543,14 +1541,14 @@ cls(void)
 void
 flush_screen_disable(void)
 {
-    delay_flushing = TRUE;
+    turnstate.delay_flushing = TRUE;
 }
 
 
 void
 flush_screen_enable(void)
 {
-    delay_flushing = FALSE;
+    turnstate.delay_flushing = FALSE;
 }
 
 
@@ -1560,7 +1558,7 @@ flush_screen_enable(void)
 void
 flush_screen(void)
 {
-    if (delay_flushing)
+    if (turnstate.delay_flushing)
         return;
 
     update_screen(dbuf, u.ux, u.uy);

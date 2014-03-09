@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-04 */
+/* Last modified by Sean Hunt, 2014-03-07 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -68,6 +68,7 @@ newmonst(int extyp, int namelen)
     mon->mxtyp = extyp;
     mon->mxlth = xlen;
     mon->mnamelth = namelen;
+    mon->m_id = TEMPORARY_IDENT;
 
     return mon;
 }
@@ -2118,6 +2119,11 @@ save_mon(struct memfile *mf, const struct monst *mon)
     int idx, i;
     unsigned int mflags;
     struct eshk *shk;
+
+    if (mon->m_id == TEMPORARY_IDENT) {
+        impossible("temporary monster encountered in save code!");
+        return;
+    }
 
     mtag(mf, mon->m_id, MTAG_MON);
     mfmagic_set(mf, MON_MAGIC);
