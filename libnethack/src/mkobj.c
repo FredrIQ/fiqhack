@@ -437,7 +437,6 @@ mksobj_basic(struct level *lev, int otyp)
     otmp->otyp = otyp;
     otmp->where = OBJ_FREE;
     otmp->olev = lev;
-    otmp->dknown = strchr(dknowns, let) ? 0 : 1;
     /* In most situations the following defaults (and in some cases a couple of
        the above ones also) will get overridden by mksobj, but there are a
        couple of cases where that won't happen, such as when we're creating a
@@ -461,6 +460,9 @@ mksobj_basic(struct level *lev, int otyp)
     if ((otmp->otyp >= ELVEN_SHIELD && otmp->otyp <= ORCISH_SHIELD) ||
         otmp->otyp == SHIELD_OF_REFLECTION)
         otmp->dknown = 0;
+    else
+        otmp->dknown = strchr(dknowns, let) ? 0 : 1;
+
     if (!objects[otmp->otyp].oc_uses_known)
         otmp->known = 1;
 

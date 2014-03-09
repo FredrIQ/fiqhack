@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-05 */
+/* Last modified by Sean Hunt, 2014-03-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2629,15 +2629,15 @@ domagictrap(void)
         case 20:
             /* uncurse stuff */
             {
-                struct obj pseudo;
+                struct obj *pseudo = mktemp_sobj(NULL, SCR_REMOVE_CURSE);
                 boolean dummy;
                 long save_conf = HConfusion;
 
-                pseudo = zeroobj;       /* neither cursed nor blessed */
-                pseudo.otyp = SCR_REMOVE_CURSE;
                 HConfusion = 0L;
-                seffects(&pseudo, &dummy);
+                seffects(pseudo, &dummy);
                 HConfusion = save_conf;
+
+                obfree(pseudo, NULL);
                 break;
             }
         default:
