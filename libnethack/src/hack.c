@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-03 */
+/* Last modified by Derrick Sund, 2014-03-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -574,7 +574,8 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
                 ; /* do nothing */
             else if (can_ooze(&youmonst)) {
                 if (mode == DO_MOVE)
-                    pline("You ooze under the door.");
+                    pline("You ooze %s the door.",
+                          can_reach_floor() ? "under" : "around");
             } else if (tunnels(youmonst.data) && !needspick(youmonst.data)) {
                 /* Eat the door. */
                 if (mode == DO_MOVE && still_chewing(x, y))
@@ -582,8 +583,9 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
             } else {
                 if (mode == DO_MOVE) {
                     if (amorphous(youmonst.data))
-                        pline("You try to ooze under the door, but can't "
-                              "squeeze your possessions through.");
+                        pline("You try to ooze %s the door, but can't "
+                              "squeeze your possessions through.",
+                              can_reach_floor() ? "under" : "around");
                     else if (x == ux || y == uy) {
                         if (blind || stunned || ACURR(A_DEX) < 10 || fumbling) {
                             if (u.usteed) {
