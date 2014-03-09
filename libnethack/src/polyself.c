@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-20 */
+/* Last modified by Derrick Sund, 2014-03-08 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -58,7 +58,6 @@ polyman(const char *fmt, const char *arg)
 
     newsym(u.ux, u.uy);
 
-    pline(fmt, arg);
     /* check whether player foolishly genocided self while poly'd */
     if ((mvitals[urole.malenum].mvflags & G_GENOD) ||
         (urole.femalenum != NON_PM &&
@@ -67,13 +66,19 @@ polyman(const char *fmt, const char *arg)
         (urace.femalenum != NON_PM &&
          (mvitals[urace.femalenum].mvflags & G_GENOD))) {
         /* intervening activity might have clobbered genocide info */
+        char buf[BUFSZ];
+        sprintf(buf, "As you %s", fmt);
+        buf[strlen(buf)-1] = '\0'; /* remove the ! */
+        strcat(buf, ", you die.");
+        pline(buf, arg);
         killer = delayed_killer;
         if (!killer || !strstri(killer, "genocid")) {
             killer_format = KILLED_BY;
             killer = "self-genocide";
         }
         done(GENOCIDED);
-    }
+    } else
+        pline(fmt, arg);
 
     if (u.twoweap && !could_twoweap(youmonst.data))
         untwoweapon();
