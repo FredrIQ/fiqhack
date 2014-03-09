@@ -80,7 +80,7 @@ curses_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy)
     memcpy(display_buffer, dbuf, sizeof (struct nh_dbuf_entry) * ROWNO * COLNO);
     draw_map(ux, uy);
 
-    if (ux > 0) {
+    if (ux >= 0) {
         wmove(mapwin, uy, ux);
         curs_set(1);
     } else
