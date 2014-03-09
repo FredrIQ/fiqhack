@@ -207,10 +207,27 @@ neutral_turnstate_tasks(void)
         impossible("vision not recalculated when needed during a turn");
     if (turnstate.delay_flushing)
         impossible("flushing delayed over a turn");
-    if (turnstate.migrating_pets)
-        impossible("pets still migrating between turns");
-    if (turnstate.migrating_objs)
+
+    if (turnstate.migrating_pets) {
+        int count = 0;
+        while (turnstate.migrating_pets) {
+            struct monst *mtmp = turnstate.migrating_pets;
+            turnstate.migrating_pets = mtmp->nmon;
+            dealloc_monst(mtmp);
+            ++count;
+        }
+        impossible("%d pets still migrating between turns", count);
+    }
+    if (turnstate.migrating_objs) {
+        int count = 0;
+        while (turnstate.migrating_objs) {
+            struct obj *otmp = turnstate.migrating_objs;
+            obj_extract_self(otmp);
+            obfree(otmp);
+            ++count;
+        }
         impossible("objects still migrating between turns");
+    }
 
     for (i = hr_first; i <= hr_last; ++i) {
         if (turnstate.helpless_timers[i])
@@ -235,7 +252,8 @@ neutral_turnstate_tasks(void)
         for (j = 0; j < ROWNO; j++)
             if (turnstate.move.stepped_on[i][j])
                 impossible("turnstate stepped-on persisted between turns");
-    /* TODO: clean up memory */
+
+    memcpy(&turnstate, &default_turnstate, sizeof turnstate);
 
     log_neutral_turnstate();
 }
