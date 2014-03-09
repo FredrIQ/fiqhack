@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Sean Hunt, 2014-03-09 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -285,7 +285,7 @@ cmd_print_message_nonblocking(json_t *params, int display_only)
 static json_t *
 cmd_update_screen(json_t *params, int display_only)
 {
-    static struct nh_dbuf_entry dbuf[ROWNO][COLNO];
+    struct nh_dbuf_entry dbuf[ROWNO][COLNO];
     int ux, uy;
     int x, y, effect, bg, trap, obj, obj_mn, mon, monflags, branding, invis,
         visible;
