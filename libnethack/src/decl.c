@@ -223,7 +223,7 @@ neutral_turnstate_tasks(void)
         while (turnstate.migrating_objs) {
             struct obj *otmp = turnstate.migrating_objs;
             obj_extract_self(otmp);
-            obfree(otmp);
+            obfree(otmp, NULL);
             ++count;
         }
         impossible("objects still migrating between turns");
@@ -255,6 +255,13 @@ neutral_turnstate_tasks(void)
 
     memcpy(&turnstate, &default_turnstate, sizeof turnstate);
 
+    struct obj zero;
+    memset(&zero, 0, sizeof zero);
+    if (memcmp(&zeroobj, &zero, sizeof zero)) {
+        impossible("zeroobj no longer zero at turn boundary");
+        memset(&zeroobj, sizeof zeroobj, 0);
+    }
+
     log_neutral_turnstate();
 }
 
@@ -283,7 +290,6 @@ init_data(boolean including_program_state)
     memset(catname, 0, sizeof (catname));
     memset(horsename, 0, sizeof (horsename));
     memset(&youmonst, 0, sizeof (youmonst));
-    memset(&zeroobj, 0, sizeof (zeroobj));
     memset(mvitals, 0, sizeof (mvitals));
     memset(spl_book, 0, sizeof (spl_book));
     memset(disco, 0, sizeof (disco));

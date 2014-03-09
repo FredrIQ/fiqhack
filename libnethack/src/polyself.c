@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-08 */
+/* Last modified by Sean Hunt, 2014-03-09 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -788,9 +788,8 @@ dospit(const struct nh_cmd_arg *arg)
 
     if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
-    otmp =
-        mksobj(level, u.umonnum == PM_COBRA ? BLINDING_VENOM : ACID_VENOM, TRUE,
-               FALSE);
+    otmp = mktemp_sobj(level,
+                       u.umonnum == PM_COBRA ? BLINDING_VENOM : ACID_VENOM);
     otmp->spe = 1;      /* to indicate it's yours */
     throwit(otmp, 0L, FALSE, dx, dy, dz);
     return 1;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-04 */
+/* Last modified by Sean Hunt, 2014-03-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1629,7 +1629,6 @@ static const struct o_range o_ranges[] = {
     {"dragon scale mail",
      ARMOR_CLASS, GRAY_DRAGON_SCALE_MAIL, YELLOW_DRAGON_SCALE_MAIL},
     {"sword", WEAPON_CLASS, SHORT_SWORD, KATANA},
-    {"venom", VENOM_CLASS, BLINDING_VENOM, ACID_VENOM},
     {"gray stone", GEM_CLASS, LUCKSTONE, FLINT},
     {"grey stone", GEM_CLASS, LUCKSTONE, FLINT},
 };
@@ -2208,7 +2207,7 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
         return otmp;
     }
     if (strlen(bp) == 1 && (i = def_char_to_objclass(*bp)) < MAXOCLASSES &&
-        i > ILLOBJ_CLASS && (wizard || i != VENOM_CLASS)) {
+        i > ILLOBJ_CLASS && i != VENOM_CLASS) {
         oclass = i;
         goto any;
     }
@@ -2575,9 +2574,6 @@ typfnd:
          (cnt <= 20 && ((oclass == WEAPON_CLASS && is_ammo(otmp))
                         || typ == ROCK || is_missile(otmp)))))
         otmp->quan = (long)cnt;
-
-    if (oclass == VENOM_CLASS)
-        otmp->spe = 1;
 
     if (spesgn == 0)
         spe = otmp->spe;
