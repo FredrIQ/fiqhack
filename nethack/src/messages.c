@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-07 */
+/* Last modified by Derrick Sund, 2014-03-07 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -460,9 +460,10 @@ pause_messages(void)
 void
 doprev_message(void)
 {
-    int i, j, lines = 0;
+    int i, j, curlinelen = 0, lines = 0;
     struct nh_menulist menu;
-    char **buf;
+    char *curline = NULL;
+    char **buf = NULL;
 
     init_menulist(&menu);
 
@@ -475,10 +476,25 @@ doprev_message(void)
             i = (i + 1) % settings.msghistory;
             continue;
         }
+        realloc_strcat(&curline, &curlinelen, histlines[i].message);
+        /* This'll mean the string always has two spaces at the end, but
+           wrap_text will take care of them for us. */
+        realloc_strcat(&curline, &curlinelen, "  ");
+        /* If either the next line is where we wrap around or the next line
+           is the start of a new turn's worth of messages, quit appending.
+           Otherwise, make another append pass. */
+        if (!histlines[i].nomerge &&
+            ((i + 1) % settings.msghistory != histlines_pointer)) {
+            i = (i + 1) % settings.msghistory;
+            continue;
+        }
         /* Subtracting 3 is necessary to prevent curses_display_menu in
            smallterm games from eating the last part of the message here.
            Subtracting 4 allows slight indentation where appropriate. */
-        wrap_text(getmaxx(msgwin) - 4, histlines[i].message, &lines, &buf);
+        wrap_text(getmaxx(msgwin) - 4, curline, &lines, &buf);
+        free(curline);
+        curline = NULL;
+        curlinelen = 0;
         for (j = 0; j < lines; j++) {
             /* If a message wraps, very slightly indent the additional lines
                to make them obvious. */
@@ -486,6 +502,8 @@ doprev_message(void)
             sprintf(tempstr, "%s%s", j == 0 ? "" : " ", buf[j]);
             add_menu_txt(&menu, tempstr, MI_TEXT);
         }
+        free_wrap(buf);
+        buf = NULL;
         i = (i + 1) % settings.msghistory;
     } while (i != histlines_pointer);
 

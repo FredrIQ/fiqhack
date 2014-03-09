@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-20 */
+/* Last modified by Derrick Sund, 2014-03-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -26,7 +26,7 @@ static void accessory_has_effect(struct obj *);
 static void fpostfx(struct obj *);
 static int edibility_prompts(struct obj *);
 static int rottenfood(struct obj *);
-static void eatspecial(int);
+static void eatspecial(int, struct obj *);
 static void eataccessory(struct obj *);
 static const char *foodword(struct obj *);
 static boolean maybe_cannibal(int, boolean);
@@ -183,11 +183,21 @@ choke(struct obj *food)
             if (food->oclass == COIN_CLASS) {
                 killer = "very rich meal";
             } else {
-                killer = food_xname(food, FALSE);
-                if (food->otyp == CORPSE &&
-                    (mons[food->corpsenm].geno & G_UNIQ)) {
-                    if (!type_is_pname(&mons[food->corpsenm]))
-                        killer = the(killer);
+                killer = killer_buf;
+                strcpy(killer_buf, "");
+                strcat(killer_buf, food_xname(food, FALSE));
+                if ((food->otyp == CORPSE &&
+                    (mons[food->corpsenm].geno & G_UNIQ)) ||
+                    (obj_is_pname(food) ||
+                     the_unique_obj(food))) {
+                    boolean qarti = (food->oartifact &&
+                                     !strncmp(ONAME(food), "The ", 4));
+                    if ((food->otyp == CORPSE &&
+                        !type_is_pname(&mons[food->corpsenm]))
+                        ||
+                        (food->otyp != CORPSE &&
+                        (qarti || the_unique_obj(food))))
+                        killer = qarti ? The(killer) : the(killer);
                     killer_format = KILLED_BY;
                 }
             }
@@ -1417,14 +1427,11 @@ eataccessory(struct obj *otmp)
     }
 }
 
-/* Caled after eating non-food. */
+/* Called after eating non-food. */
 static void
-eatspecial(int nutrition)
+eatspecial(int nutrition, struct obj *otmp)
 {
-    struct obj *otmp = u.utracked[tos_food];
-
     lesshungry(nutrition, otmp);
-    u.utracked[tos_food] = NULL;
 
     if (otmp->oclass == COIN_CLASS) {
         if (otmp->where == OBJ_FREE)
@@ -1851,7 +1858,7 @@ doeat(const struct nh_cmd_arg *arg)
                   otmp->oclass == COIN_CLASS ? foodword(otmp) :
                   singular(otmp, xname));
 
-        eatspecial(basenutrit);
+        eatspecial(basenutrit, otmp);
         return 1;
     }
 

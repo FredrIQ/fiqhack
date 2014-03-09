@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-16 */
+/* Last modified by Derrick Sund, 2014-03-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1918,8 +1918,22 @@ overview_scan(const struct level *lev, struct overview_info *oi)
                 break;
 
             case S_altar:
+                if (lev->locations[x][y].altarmask & AM_SANCTUM) {
+                    oi->high_altars++;
+                    /* Don't count high altars as altars to avoid leaking
+                       alignment information. */
+                    break;
+                }
                 oi->altars++;
-                oi->altaralign |= (lev->locations[x][y].altarmask & AM_MASK);
+                /* Check altar's alignment. */
+                if (lev->locations[x][y].altarmask & AM_LAWFUL)
+                    oi->lawful_altar = TRUE;
+                else if (lev->locations[x][y].altarmask & AM_NEUTRAL)
+                    oi->neutral_altar = TRUE;
+                else if (lev->locations[x][y].altarmask & AM_CHAOTIC)
+                    oi->chaotic_altar = TRUE;
+                else
+                    oi->unaligned_altar = TRUE;
                 rnum = lev->locations[x][y].roomno;
                 if (rnum >= ROOMOFFSET &&
                     lev->rooms[rnum - ROOMOFFSET].rtype == TEMPLE)
@@ -2064,6 +2078,37 @@ static const char *const shopnames[] = {
 };
 
 static void
+overview_print_gods(char *buf, const struct overview_info *oi)
+{
+    int i, num_gods = 0;
+    char god_names[4][BUFSZ];
+    if (oi->lawful_altar) {
+        sprintf(god_names[num_gods], "%s", align_gname(A_LAWFUL));
+        num_gods++;
+    }
+    if (oi->neutral_altar) {
+        sprintf(god_names[num_gods], "%s", align_gname(A_NEUTRAL));
+        num_gods++;
+    }
+    if (oi->chaotic_altar) {
+        sprintf(god_names[num_gods], "%s", align_gname(A_CHAOTIC));
+        num_gods++;
+    }
+    if (oi->unaligned_altar) {
+        sprintf(god_names[num_gods], "Moloch");
+        num_gods++;
+    }
+    for (i = 0; i < num_gods; i++) {
+        sprintf(eos(buf), "%s", god_names[i]);
+        if (i < num_gods - 1 && num_gods > 2)
+            sprintf(eos(buf), ",");
+        sprintf(eos(buf), " ");
+        if (i == num_gods - 2)
+            sprintf(eos(buf), "and ");
+    }
+}
+
+static void
 overview_print_info(char *buf, const struct overview_info *oi)
 {
     int i = 0;
@@ -2075,6 +2120,8 @@ overview_print_info(char *buf, const struct overview_info *oi)
     else if (oi->shopcount == 1)
         sprintf(eos(buf), "%s%s", COMMA, shopnames[oi->shoptype]);
 
+    ADDNTOBUF("high altar", oi->high_altars);
+
     /* Temples + non-temple altars get munged into just "altars" */
     if (!oi->temples || oi->temples != oi->altars)
         ADDNTOBUF("altar", oi->altars);
@@ -2082,8 +2129,10 @@ overview_print_info(char *buf, const struct overview_info *oi)
         ADDNTOBUF("temple", oi->temples);
 
     /* only print out altar's god if they are all to your god */
-    if (oi->altars && oi->altaralign == Align2amask(u.ualign.type))
-        sprintf(eos(buf), " to %s", align_gname(u.ualign.type));
+    if (oi->altars) {
+        sprintf(eos(buf), " to ");
+        overview_print_gods(buf, oi);
+    }
 
     ADDNTOBUF("fountain", oi->fountains);
     ADDNTOBUF("sink", oi->sinks);

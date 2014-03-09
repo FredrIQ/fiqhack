@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-20 */
+/* Last modified by Derrick Sund, 2014-03-08 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
@@ -71,7 +71,7 @@ dowrite(struct obj *pen, const struct nh_cmd_arg *arg)
     int curseval;
     char qbuf[QBUFSZ];
     int first, last, i;
-    boolean by_descr = FALSE;
+    boolean by_descr = FALSE, by_name = FALSE;
     const char *typeword;
 
     if (nohands(youmonst.data)) {
@@ -133,6 +133,11 @@ dowrite(struct obj *pen, const struct nh_cmd_arg *arg)
             by_descr = TRUE;
             goto found;
         }
+        if (objects[i].oc_uname &&
+            !strcmpi(objects[i].oc_uname, nm)) {
+            by_name = TRUE;
+            goto found;
+        }
     }
 
     pline("There is no such %s!", typeword);
@@ -146,7 +151,7 @@ found:
     } else if (i == SPE_BOOK_OF_THE_DEAD) {
         pline("No mere dungeon adventurer could write that.");
         return 1;
-    } else if (by_descr && paper->oclass == SPBOOK_CLASS &&
+    } else if ((by_descr || by_name) && paper->oclass == SPBOOK_CLASS &&
                !objects[i].oc_name_known) {
         /* can't write unknown spellbooks by description */
         pline("Unfortunately you don't have enough information to go on.");
@@ -193,7 +198,6 @@ found:
 
     /* can't write if we don't know it - unless we're lucky */
     if (!(objects[new_obj->otyp].oc_name_known) &&
-        !(objects[new_obj->otyp].oc_uname) &&
         (rnl(Role_if(PM_WIZARD) ? 3 : 15))) {
         pline("You %s to write that!", by_descr ? "fail" : "don't know how");
         /* scrolls disappear, spellbooks don't */
