@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-01 */
+/* Last modified by Sean Hunt, 2014-03-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -453,6 +453,8 @@ object_dlevel(struct obj *obj)
         return obj->ocarry->dlevel;
     case OBJ_ONBILL:
         panic("Object on bill in object_dlevel");
+    case OBJ_MIGRATING:
+        panic("Migrating object in object_dlevel");
     case OBJ_FREE:
     default:
         panic("Object is nowhere in object_dlevel");

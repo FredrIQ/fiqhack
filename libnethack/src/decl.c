@@ -173,6 +173,7 @@ static const struct turnstate default_turnstate = {
     .vision_full_recalc = FALSE,
     .delay_flushing = FALSE,
     .migrating_pets = NULL,
+    .migrating_objs = NULL,
     .helpless_timers = {},
     .helpless_causes = {},
     .helpless_endmsgs = {},
@@ -208,6 +209,8 @@ neutral_turnstate_tasks(void)
         impossible("flushing delayed over a turn");
     if (turnstate.migrating_pets)
         impossible("pets still migrating between turns");
+    if (turnstate.migrating_objs)
+        impossible("objects still migrating between turns");
 
     for (i = hr_first; i <= hr_last; ++i) {
         if (turnstate.helpless_timers[i])

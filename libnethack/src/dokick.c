@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Sean Hunt, 2014-03-09 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1202,7 +1202,7 @@ drop_to(coord * cc, schar loc)
             cc->y = valley_level.dlevel;
             break;
         } else if (In_endgame(&u.uz) || Is_botlevel(&u.uz)) {
-            cc->y = cc->x = 0;
+            cc->y = cc->x = -1;
             break;
         }       /* else fall to the next cases */
     case MIGR_STAIRS_UP:
@@ -1217,7 +1217,7 @@ drop_to(coord * cc, schar loc)
     default:
     case MIGR_NOWHERE:
         /* y==0 means "nowhere", in which case x doesn't matter */
-        cc->y = cc->x = 0;
+        cc->y = cc->x = -1;
         break;
     }
 }
@@ -1492,27 +1492,26 @@ deliver_object(struct obj *obj, xchar dnum, xchar dlevel, int where)
         if (level == lev) {
             nx = u.ux;
             ny = u.uy;
-        } else
-            /* there is no other way for objects to be placed on position
-               (0,0), so it can serve a temporary position for items that
-               should be placed near the player later. */
-            nx = ny = 0;
+        } else {
+            obj->where = OBJ_MIGRATING;
+            obj->nobj = turnstate.migrating_objs;
+            turnstate.migrating_objs = obj;
+            return;
+        }
         break;
 
     default:
     case MIGR_RANDOM:
         /* set dummy coordinates because there's no current position for
            rloco() to update */
-        obj->ox = obj->oy = 0;
+        obj->ox = obj->oy = -1;
         rloco_pos(lev, obj, &nx, &ny);
         break;
     }
 
     place_object(obj, lev, nx, ny);
-    if (nx > 0) {
-        stackobj(obj);
-        scatter(nx, ny, rnd(2), 0, obj);
-    }
+    stackobj(obj);
+    scatter(nx, ny, rnd(2), 0, obj);
 }
 
 

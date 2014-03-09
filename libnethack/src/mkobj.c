@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-07 */
+/* Last modified by Sean Hunt, 2014-03-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -363,6 +363,11 @@ replace_object(struct obj *obj, struct obj *otmp)
         obj->nexthere = otmp;
         extract_nobj(obj, &obj->olev->objlist);
         extract_nexthere(obj, &obj->olev->objects[obj->ox][obj->oy]);
+        break;
+    case OBJ_MIGRATING:
+        otmp->nobj = obj->nobj;
+        obj->nobj = otmp;
+        extract_nobj(obj, &turnstate.migrating_objs);
         break;
     default:
         panic("replace_object: obj position");
@@ -1223,6 +1228,8 @@ place_object(struct obj *otmp, struct level *lev, int x, int y)
 
     if (otmp->where != OBJ_FREE)
         panic("place_object: obj not free");
+    if (!isok(x, y))
+        panic("placing object at bad position");
 
     obj_no_longer_held(otmp);
     if (otmp->otyp == BOULDER && lev == level)
@@ -1403,6 +1410,7 @@ discard_minvent(struct monst *mtmp)
  *      OBJ_MINVENT     monster's invent chain
  *      OBJ_BURIED      level->buriedobjs chain
  *      OBJ_ONBILL      on billobjs chain
+ *      OBJ_MIGRATING   on migrating_objects chain
  */
 void
 obj_extract_self(struct obj *obj)
@@ -1428,6 +1436,9 @@ obj_extract_self(struct obj *obj)
         break;
     case OBJ_ONBILL:
         extract_nobj(obj, &obj->olev->billobjs);
+        break;
+    case OBJ_MIGRATING:
+        extract_nobj(obj, &turnstate.migrating_objs);
         break;
     default:
         panic("obj_extract_self");

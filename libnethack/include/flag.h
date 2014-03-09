@@ -132,8 +132,12 @@ struct turnstate {
     boolean vision_full_recalc;
     /* TRUE if we should avoid flushing the display buffer. */
     boolean delay_flushing;
+
     /* pets migrating with their owner between levels. */
     struct monst *migrating_pets;
+    /* Objects falling between levels. */
+    struct obj *migrating_objs;
+
     /* timers for helplessness */
     unsigned helpless_timers[hr_last + 1];
     /* causes of helplessness */
