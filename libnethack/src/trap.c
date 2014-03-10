@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-05 */
+/* Last modified by Derrick Sund, 2014-03-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3995,26 +3995,26 @@ lava_effects(void)
     if (likes_lava(youmonst.data))
         return FALSE;
 
+    /* Check whether we should burn away boots *first* so we know whether to
+       make the player sink into the lava.  Assumption: water walking only comes
+       from boots. */
+    if (Wwalking && uarmf && is_organic(uarmf) && !uarmf->oerodeproof) {
+        obj = uarmf;
+        pline("Your %s into flame!", aobjnam(obj, "burst"));
+        setequip(os_armf, NULL, em_silent);
+        useupall(obj);
+    }
+
     if (!Fire_resistance) {
-        /* assumption: water walking only comes from boots */
-        if (Wwalking && uarmf && (!is_organic(uarmf) || uarmf->oerodeproof)) {
+        if (Wwalking) {
             dmg = dice(6, 6);
             pline("The lava here burns you!");
             if (dmg < u.uhp) {
                 losehp(dmg, lava_killer, KILLED_BY);
                 goto burn_stuff;
             }
-        } else {
-            if (uarmf && is_organic(uarmf)) {
-                obj = uarmf;
-                /* always display this, as it explains why you're falling into
-                   the lava */
-                pline("Your %s into flame!", aobjnam(obj, "burst"));
-                setequip(os_armf, NULL, em_silent);
-                useupall(obj);
-            }
+        } else
             pline("You fall into the lava!");
-        }
 
         usurvive = Lifesaved || discover;
         if (wizard)
