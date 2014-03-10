@@ -9,7 +9,7 @@
 #include <limits.h>
 
 static void mkbox_cnts(struct obj *);
-static struct obj *mksobj_basic(struct level *lev, int otyp, boolean init);
+static struct obj *mksobj_basic(struct level *lev, int otyp);
 static void obj_timer_checks(struct obj *, xchar, xchar, int);
 static void container_weight(struct obj *);
 static struct obj *save_mtraits(struct obj *, struct monst *);
@@ -420,7 +420,7 @@ static const char dknowns[] = {
 };
 
 static struct obj *
-mksobj_basic(struct level *lev, int otyp, boolean init)
+mksobj_basic(struct level *lev, int otyp)
 {
     /* Just create the basic object, do not do anything that might be random,
        like beatitude, enchantment, etc. or disrupt game state. */
@@ -428,6 +428,7 @@ mksobj_basic(struct level *lev, int otyp, boolean init)
     const char let = objects[otyp].oc_class;
 
     otmp = newobj(0);
+    /* This zeroes it out, so no need to explicitly zero other things. */
     *otmp = zeroobj;
     otmp->age = moves;
     otmp->o_id = TEMPORARY_IDENT; /* temporary ID, no good for saving */
@@ -436,63 +437,35 @@ mksobj_basic(struct level *lev, int otyp, boolean init)
     otmp->otyp = otyp;
     otmp->where = OBJ_FREE;
     otmp->olev = lev;
-    otmp->dknown = strchr(dknowns, let) ? 0 : 1;
-    otmp->lastused = 0;
     /* In most situations the following defaults (and in some cases a couple of
        the above ones also) will get overridden by mksobj, but there are a
        couple of cases where that won't happen, such as when we're creating a
        temporary object for display purposes.  So we go ahead here and
        initialize things to basic safe values...  */
-    otmp->spe = 0;
-    otmp->blessed = 0;
-    if (init)
-        switch (let) {
-        case FOOD_CLASS:
-            otmp->oeaten = 0;
-            switch (otmp->otyp) {
-            case CORPSE:
-                otmp->corpsenm = PM_HUMAN;
-                break;
-            case EGG:
-            case TIN:
-                otmp->corpsenm = NON_PM;
-                break;
-            case SLIME_MOLD:
-                otmp->spe = current_fruit;
-                break;
-            }
-            break;
-        case TOOL_CLASS:
-            switch (otmp->otyp) {
-            case TALLOW_CANDLE:
-            case WAX_CANDLE:
-            case BRASS_LANTERN:
-            case OIL_LAMP:
-                otmp->lamplit = 0;
-                break;
-            case CHEST:
-            case LARGE_BOX:
-                otmp->olocked = 0;
-                otmp->otrapped = 0;
-                break;
-            case FIGURINE:
-                otmp->corpsenm = PM_HUMAN;
-                break;
-            }
-            break;
-        case WAND_CLASS:
-            otmp->recharged = 0;
-            break;
-        case ROCK_CLASS:
-            switch (otmp->otyp) {
-            case STATUE:
-                otmp->corpsenm = PM_HUMAN;
-                break;
-            }
-            break;
-        }
+    switch (otmp->otyp) {
+    case CORPSE:
+    case EGG:
+    case TIN:
+    case FIGURINE:
+    case STATUE:
+        otmp->corpsenm = NON_PM;
+        break;
+    case SLIME_MOLD:
+        otmp->spe = current_fruit;
+        break;
+    }
 
     otmp->owt = weight(otmp);
+
+    if ((otmp->otyp >= ELVEN_SHIELD && otmp->otyp <= ORCISH_SHIELD) ||
+        otmp->otyp == SHIELD_OF_REFLECTION)
+        otmp->dknown = 0;
+    else
+        otmp->dknown = strchr(dknowns, let) ? 0 : 1;
+
+    if (!objects[otmp->otyp].oc_uses_known)
+        otmp->known = 1;
+
     return otmp;
 }
 
@@ -503,18 +476,13 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif)
     struct obj *otmp;
     const char let = objects[otyp].oc_class;
 
-    otmp = mksobj_basic(lev, otyp, init);
+    otmp = mksobj_basic(lev, otyp);
     otmp->o_id = next_ident();
 
-    if ((otmp->otyp >= ELVEN_SHIELD && otmp->otyp <= ORCISH_SHIELD) ||
-        otmp->otyp == SHIELD_OF_REFLECTION)
-        otmp->dknown = 0;
-    if (!objects[otmp->otyp].oc_uses_known)
-        otmp->known = 1;
+    if (init) {
 #ifdef INVISIBLE_OBJECTS
-    otmp->oinvis = !rn2(1250);
+        otmp->oinvis = !rn2(1250);
 #endif
-    if (init)
         switch (let) {
         case WEAPON_CLASS:
             otmp->quan = is_multigen(otmp) ? (long)rn1(6, 6) : 1L;
@@ -682,6 +650,8 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif)
             } else
                 blessorcurse(otmp, 10);
         case VENOM_CLASS:
+            impossible("Making permanent venom object!");
+            break;
         case CHAIN_CLASS:
         case BALL_CLASS:
             break;
@@ -764,6 +734,7 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif)
                        objects[otmp->otyp].oc_class);
             return NULL;
         }
+    }
 
     /* Some things must get done (timers) even if init = 0 */
     switch (otmp->otyp) {
@@ -782,7 +753,7 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif)
 
 struct obj *
 mktemp_sobj(struct level *lev, int otyp) {
-    return mksobj_basic(lev, otyp, FALSE);
+    return mksobj_basic(lev, otyp);
 }
 
 /*

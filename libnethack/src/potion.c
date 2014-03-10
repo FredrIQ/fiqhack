@@ -1962,13 +1962,11 @@ more_dips:
                   more_than_one ? " that you dipped into" : "", newbuf);
             if (!objects[old_otyp].oc_uname && !objects[old_otyp].oc_name_known
                 && old_dknown) {
-                struct obj fakeobj;
+                struct obj *fakeobj = mktemp_sobj(NULL, old_otyp);
 
-                fakeobj = zeroobj;
-                fakeobj.dknown = 1;
-                fakeobj.otyp = old_otyp;
-                fakeobj.oclass = POTION_CLASS;
-                docall(&fakeobj);
+                fakeobj->dknown = 1;
+                docall(fakeobj);
+                obfree(fakeobj, NULL);
             }
         }
         obj_extract_self(singlepotion);

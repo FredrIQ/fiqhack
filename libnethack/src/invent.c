@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-09 */
+/* Last modified by Sean Hunt, 2014-03-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -35,15 +35,6 @@ enum obj_use_status {
     IMPOSSIBLE_USE,            /* using this object is impossible forever */
 };
 
-
-/* wizards can wish for venom, which will become an invisible inventory
- * item without this.  putting it in inv_order would mean venom would
- * suddenly become a choice for all the inventory-class commands, which
- * would probably cause mass confusion.  the test for inventory venom
- * is not wizard because the wizard can leave venom lying
- * around on a bones level for normal players to find.
- */
-static const char venom_inv[] = { VENOM_CLASS, 0 };     /* (constant) */
 
 void
 assigninvlet(struct obj *otmp)
@@ -1346,10 +1337,6 @@ nextclass:
     if (flags.sortpack) {
         if (*++invlet)
             goto nextclass;
-        if (--invlet != venom_inv) {
-            invlet = venom_inv;
-            goto nextclass;
-        }
     }
 }
 
@@ -2304,8 +2291,7 @@ free_invbuf(void)
 static const char organizable[] = {
     ALLOW_COUNT, SCROLL_CLASS, POTION_CLASS, WAND_CLASS, RING_CLASS,
     AMULET_CLASS, GEM_CLASS, SPBOOK_CLASS, ARMOR_CLASS, TOOL_CLASS,
-    WEAPON_CLASS, ROCK_CLASS, CHAIN_CLASS, BALL_CLASS, VENOM_CLASS,
-    FOOD_CLASS, 0
+    WEAPON_CLASS, ROCK_CLASS, CHAIN_CLASS, BALL_CLASS, FOOD_CLASS, 0
 };
 
 int

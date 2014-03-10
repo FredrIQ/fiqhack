@@ -207,10 +207,27 @@ neutral_turnstate_tasks(void)
         impossible("vision not recalculated when needed during a turn");
     if (turnstate.delay_flushing)
         impossible("flushing delayed over a turn");
-    if (turnstate.migrating_pets)
-        impossible("pets still migrating between turns");
-    if (turnstate.migrating_objs)
+
+    if (turnstate.migrating_pets) {
+        int count = 0;
+        while (turnstate.migrating_pets) {
+            struct monst *mtmp = turnstate.migrating_pets;
+            turnstate.migrating_pets = mtmp->nmon;
+            dealloc_monst(mtmp);
+            ++count;
+        }
+        impossible("%d pets still migrating between turns", count);
+    }
+    if (turnstate.migrating_objs) {
+        int count = 0;
+        while (turnstate.migrating_objs) {
+            struct obj *otmp = turnstate.migrating_objs;
+            obj_extract_self(otmp);
+            obfree(otmp, NULL);
+            ++count;
+        }
         impossible("objects still migrating between turns");
+    }
 
     for (i = hr_first; i <= hr_last; ++i) {
         if (turnstate.helpless_timers[i])
@@ -235,7 +252,15 @@ neutral_turnstate_tasks(void)
         for (j = 0; j < ROWNO; j++)
             if (turnstate.move.stepped_on[i][j])
                 impossible("turnstate stepped-on persisted between turns");
-    /* TODO: clean up memory */
+
+    memcpy(&turnstate, &default_turnstate, sizeof turnstate);
+
+    struct obj zero;
+    memset(&zero, 0, sizeof zero);
+    if (memcmp(&zeroobj, &zero, sizeof zero)) {
+        impossible("zeroobj no longer zero at turn boundary");
+        memset(&zeroobj, sizeof zeroobj, 0);
+    }
 
     log_neutral_turnstate();
 }
@@ -265,7 +290,6 @@ init_data(boolean including_program_state)
     memset(catname, 0, sizeof (catname));
     memset(horsename, 0, sizeof (horsename));
     memset(&youmonst, 0, sizeof (youmonst));
-    memset(&zeroobj, 0, sizeof (zeroobj));
     memset(mvitals, 0, sizeof (mvitals));
     memset(spl_book, 0, sizeof (spl_book));
     memset(disco, 0, sizeof (disco));

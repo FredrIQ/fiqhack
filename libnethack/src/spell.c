@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-05 */
+/* Last modified by Sean Hunt, 2014-03-09 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -910,7 +910,7 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     u.uen -= energy;
     exercise(A_WIS, TRUE);
     /* pseudo is a temporary "false" object containing the spell stats */
-    pseudo = mksobj(level, spellid(spell), FALSE, FALSE);
+    pseudo = mktemp_sobj(level, spellid(spell));
     pseudo->blessed = pseudo->cursed = 0;
     pseudo->quan = 20L; /* do not let useup get it */
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-10 */
+/* Last modified by Alex Smith, 2014-03-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2629,15 +2629,15 @@ domagictrap(void)
         case 20:
             /* uncurse stuff */
             {
-                struct obj pseudo;
+                struct obj *pseudo = mktemp_sobj(NULL, SCR_REMOVE_CURSE);
                 boolean dummy;
                 long save_conf = HConfusion;
 
-                pseudo = zeroobj;       /* neither cursed nor blessed */
-                pseudo.otyp = SCR_REMOVE_CURSE;
                 HConfusion = 0L;
-                seffects(&pseudo, &dummy);
+                seffects(pseudo, &dummy);
                 HConfusion = save_conf;
+
+                obfree(pseudo, NULL);
                 break;
             }
         default:
@@ -3989,7 +3989,6 @@ lava_effects(void)
 {
     struct obj *obj, *obj2;
     int dmg;
-    boolean usurvive;
 
     burn_away_slime();
     if (likes_lava(youmonst.data))
@@ -3999,6 +3998,7 @@ lava_effects(void)
        make the player sink into the lava.  Assumption: water walking only comes
        from boots. */
     if (Wwalking && uarmf && is_organic(uarmf) && !uarmf->oerodeproof) {
+        /* save uarmf value because setequip sets uarmf to null */
         obj = uarmf;
         pline("Your %s into flame!", aobjnam(obj, "burst"));
         setequip(os_armf, NULL, em_silent);
@@ -4015,10 +4015,7 @@ lava_effects(void)
             }
         } else
             pline("You fall into the lava!");
-
-        usurvive = Lifesaved || discover;
-        if (wizard)
-            usurvive = TRUE;
+        }
 
         for (obj = invent; obj; obj = obj2) {
             obj2 = obj->nobj;
@@ -4027,14 +4024,13 @@ lava_effects(void)
                and this code may be unreachable for a draconic player anyway. */
             if (is_organic(obj) && !obj->oerodeproof && obj != uskin()) {
                 if (obj->otyp == SPE_BOOK_OF_THE_DEAD) {
-                    if (!Blind && usurvive)
+                    if (!Blind)
                         pline("%s glows a strange %s, but remains intact.",
                               The(xname(obj)), hcolor("dark red"));
                     continue;
                 }
                 if (obj->owornmask) {
-                    if (usurvive)
-                        pline("Your %s into flame!", aobjnam(obj, "burst"));
+                    pline("Your %s into flame!", aobjnam(obj, "burst"));
 
                     unwield_silently(obj);
                     setunequip(obj);
@@ -4055,25 +4051,15 @@ lava_effects(void)
         }
         pline("You find yourself back on solid %s.", surface(u.ux, u.uy));
         return TRUE;
-    }
-
-    if (!Wwalking && (!u.utrap || u.utraptype != TT_LAVA)) {
+    } else if (!Wwalking && (!u.utrap || u.utraptype != TT_LAVA)) {
         u.utrap = rn1(4, 4) + (rn1(4, 12) << 8);
         u.utraptype = TT_LAVA;
         pline("You sink into the lava, but it only burns slightly!");
         if (u.uhp > 1)
             losehp(1, lava_killer, KILLED_BY);
     }
-    /* just want to burn boots, not all armor; destroy_item doesn't work on
-       armor anyway */
+
 burn_stuff:
-    if (uarmf && !uarmf->oerodeproof && is_organic(uarmf)) {
-        /* save uarmf value because setequip sets uarmf to null */
-        obj = uarmf;
-        pline("Your %s burst into flame!", xname(obj));
-        setequip(os_armf, NULL, em_silent);
-        useup(obj);
-    }
     destroy_item(SCROLL_CLASS, AD_FIRE);
     destroy_item(SPBOOK_CLASS, AD_FIRE);
     destroy_item(POTION_CLASS, AD_FIRE);
