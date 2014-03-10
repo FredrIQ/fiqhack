@@ -3989,7 +3989,6 @@ lava_effects(void)
 {
     struct obj *obj, *obj2;
     int dmg;
-    boolean usurvive = FALSE;
 
     burn_away_slime();
     if (likes_lava(youmonst.data))
@@ -4015,8 +4014,6 @@ lava_effects(void)
             }
         }
 
-        usurvive = Lifesaved || discover || wizard;
-
         for (obj = invent; obj; obj = obj2) {
             obj2 = obj->nobj;
             /* 3.4.3 doesn't have a uskin check here. It's not clear what to do
@@ -4024,14 +4021,13 @@ lava_effects(void)
                and this code may be unreachable for a draconic player anyway. */
             if (is_organic(obj) && !obj->oerodeproof && obj != uskin()) {
                 if (obj->otyp == SPE_BOOK_OF_THE_DEAD) {
-                    if (!Blind && usurvive)
+                    if (!Blind)
                         pline("%s glows a strange %s, but remains intact.",
                               The(xname(obj)), hcolor("dark red"));
                     continue;
                 }
                 if (obj->owornmask) {
-                    if (usurvive)
-                        pline("Your %s into flame!", aobjnam(obj, "burst"));
+                    pline("Your %s into flame!", aobjnam(obj, "burst"));
 
                     unwield_silently(obj);
                     setunequip(obj);
