@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-09 */
+/* Last modified by Sean Hunt, 2014-03-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3989,36 +3989,33 @@ lava_effects(void)
 {
     struct obj *obj, *obj2;
     int dmg;
-    boolean usurvive;
+    boolean usurvive = FALSE;
 
     burn_away_slime();
     if (likes_lava(youmonst.data))
         return FALSE;
 
+    /* just want to burn boots, not all armor; destroy_item doesn't work on
+       armor anyway */
+    if (uarmf && !uarmf->oerodeproof && is_organic(uarmf)) {
+        /* save uarmf value because setequip sets uarmf to null */
+        obj = uarmf;
+        pline("Your %s burst into flame!", aobjnam(obj, "burst"));
+        setequip(os_armf, NULL, em_silent);
+        useupall(obj);
+    }
+
     if (!Fire_resistance) {
-        /* assumption: water walking only comes from boots */
-        if (Wwalking && uarmf && (!is_organic(uarmf) || uarmf->oerodeproof)) {
+        if (Wwalking) {
             dmg = dice(6, 6);
             pline("The lava here burns you!");
             if (dmg < u.uhp) {
                 losehp(dmg, lava_killer, KILLED_BY);
                 goto burn_stuff;
             }
-        } else {
-            if (uarmf && is_organic(uarmf)) {
-                obj = uarmf;
-                /* always display this, as it explains why you're falling into
-                   the lava */
-                pline("Your %s into flame!", aobjnam(obj, "burst"));
-                setequip(os_armf, NULL, em_silent);
-                useupall(obj);
-            }
-            pline("You fall into the lava!");
         }
 
-        usurvive = Lifesaved || discover;
-        if (wizard)
-            usurvive = TRUE;
+        usurvive = Lifesaved || discover || wizard;
 
         for (obj = invent; obj; obj = obj2) {
             obj2 = obj->nobj;
@@ -4055,25 +4052,15 @@ lava_effects(void)
         }
         pline("You find yourself back on solid %s.", surface(u.ux, u.uy));
         return TRUE;
-    }
-
-    if (!Wwalking && (!u.utrap || u.utraptype != TT_LAVA)) {
+    } else if (!Wwalking && (!u.utrap || u.utraptype != TT_LAVA)) {
         u.utrap = rn1(4, 4) + (rn1(4, 12) << 8);
         u.utraptype = TT_LAVA;
         pline("You sink into the lava, but it only burns slightly!");
         if (u.uhp > 1)
             losehp(1, lava_killer, KILLED_BY);
     }
-    /* just want to burn boots, not all armor; destroy_item doesn't work on
-       armor anyway */
+
 burn_stuff:
-    if (uarmf && !uarmf->oerodeproof && is_organic(uarmf)) {
-        /* save uarmf value because setequip sets uarmf to null */
-        obj = uarmf;
-        pline("Your %s burst into flame!", xname(obj));
-        setequip(os_armf, NULL, em_silent);
-        useup(obj);
-    }
     destroy_item(SCROLL_CLASS, AD_FIRE);
     destroy_item(SPBOOK_CLASS, AD_FIRE);
     destroy_item(POTION_CLASS, AD_FIRE);
