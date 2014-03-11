@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-10 */
+/* Last modified by Sean Hunt, 2014-03-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -291,7 +291,7 @@ restmonchn(struct memfile *mf, struct level *lev, boolean ghostly)
 
         if (ghostly) {
             /* these cases are from makemon.c */
-            mtmp->mpeaceful = peace_minded(mtmp);
+            mtmp->mpeaceful = peace_minded(mtmp->data);
             if (is_unicorn(mtmp->data) &&
                 sgn(u.ualign.type) == sgn(mtmp->data->maligntyp))
                 mtmp->mpeaceful = TRUE;
