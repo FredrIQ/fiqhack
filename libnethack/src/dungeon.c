@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-03-10 */
+/* Last modified by Alex Smith, 2014-03-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2128,7 +2128,6 @@ overview_print_info(char *buf, const struct overview_info *oi)
     else
         ADDNTOBUF("temple", oi->temples);
 
-    /* only print out altar's god if they are all to your god */
     if (oi->altars) {
         sprintf(eos(buf), " to ");
         overview_print_gods(buf, oi);
