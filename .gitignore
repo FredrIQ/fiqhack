@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2013-11-27
+# Last modified by Alex Smith, 2014-03-11
 build/*
 *.swp
 *.kate-swp
@@ -14,4 +14,4 @@ cmake_install.cmake
 install_manifest.txt
 tags
 TAGS
-
+libnethack/util/savemap.txt
