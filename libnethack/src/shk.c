@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-03-04 */
+/* Last modified by Alex Smith, 2014-03-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2027,9 +2027,8 @@ add_to_billobjs(struct obj *obj)
     if (obj->timed)
         obj_stop_timers(obj);
 
-    obj->nobj = obj->olev->billobjs;
-    obj->olev->billobjs = obj;
-    obj->where = OBJ_ONBILL;
+    extract_nobj(obj, &turnstate.floating_objects,
+                 &obj->olev->billobjs, OBJ_ONBILL);
 }
 
 /* recursive billing of objects within containers. */
@@ -2248,10 +2247,8 @@ sub_one_frombill(struct obj *obj, struct monst *shkp)
 
         obj->unpaid = 0;
         if (bp->bquan > obj->quan) {
-            otmp = newobj(0);
-            *otmp = *obj;
+            otmp = newobj(0, obj);
             bp->bo_id = otmp->o_id = next_ident();
-            otmp->where = OBJ_FREE;
             otmp->quan = (bp->bquan -= obj->quan);
             otmp->owt = 0;      /* superfluous */
             otmp->onamelth = 0;

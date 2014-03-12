@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-09 */
+/* Last modified by Alex Smith, 2014-03-12 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1493,9 +1493,8 @@ deliver_object(struct obj *obj, xchar dnum, xchar dlevel, int where)
             nx = u.ux;
             ny = u.uy;
         } else {
-            obj->where = OBJ_MIGRATING;
-            obj->nobj = turnstate.migrating_objs;
-            turnstate.migrating_objs = obj;
+            extract_nobj(obj, &turnstate.floating_objects,
+                         &turnstate.migrating_objs, OBJ_MIGRATING);
             return;
         }
         break;

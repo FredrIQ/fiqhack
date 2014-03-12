@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-09 */
+/* Last modified by Alex Smith, 2014-03-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -137,8 +137,10 @@ flooreffects(struct obj * obj, int x, int y, const char *verb)
     if (obj->where != OBJ_FREE)
         panic("flooreffects: obj not free");
 
-    /* make sure things like water_damage() have no pointers to follow */
-    obj->nobj = obj->nexthere = NULL;
+    /* We can't set obj->nobj to NULL like is done in 3.4.3; that has the effect
+       of breaking the floating_objects chain. Instead, we set nexthere to NULL,
+       and tell fire_damage and water_damage to follow the nexthere chain. */
+    obj->nexthere = NULL;
 
     if (obj->otyp == BOULDER && boulder_hits_pool(obj, x, y, FALSE))
         return TRUE;
@@ -184,7 +186,7 @@ flooreffects(struct obj * obj, int x, int y, const char *verb)
         newsym(x, y);
         return TRUE;
     } else if (is_lava(lev, x, y)) {
-        return fire_damage(obj, FALSE, FALSE, x, y);
+        return fire_damage(obj, FALSE, TRUE, x, y);
     } else if (is_pool(lev, x, y)) {
         /* Reasonably bulky objects (arbitrary) splash when dropped. If you're
            floating above the water even small things make noise. Stuff dropped 
@@ -201,7 +203,7 @@ flooreffects(struct obj * obj, int x, int y, const char *verb)
             map_background(x, y, 0);
             newsym(x, y);
         }
-        return water_damage(obj, FALSE, FALSE);
+        return water_damage(obj, FALSE, TRUE);
     } else if (u.ux == x && u.uy == y && (!u.utrap || u.utraptype != TT_PIT) &&
                (t = t_at(lev, x, y)) != 0 && t->tseen &&
                (t->ttyp == PIT || t->ttyp == SPIKED_PIT)) {

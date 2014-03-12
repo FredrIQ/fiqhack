@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-09 */
+/* Last modified by Alex Smith, 2014-03-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -342,10 +342,8 @@ addinv(struct obj *obj)
 
     /* didn't merge, so insert into chain */
     assigninvlet(obj);
-    obj->nobj = invent; /* insert at beginning */
-    invent = obj;
+    extract_nobj(obj, &turnstate.floating_objects, &invent, OBJ_INVENT);
     reorder_invent();
-    obj->where = OBJ_INVENT;
 
     /* fill empty quiver if obj was thrown */
     if (flags.pickup_thrown && !uquiver && obj_was_thrown &&
@@ -539,7 +537,7 @@ freeinv_stats(struct obj *obj)
 void
 freeinv(struct obj *obj)
 {
-    extract_nobj(obj, &invent);
+    extract_nobj(obj, &invent, &turnstate.floating_objects, OBJ_FREE);
     if (uwep == obj)
         setuwep(NULL);
     if (uswapwep == obj)
@@ -2355,7 +2353,7 @@ doorganize(const struct nh_cmd_arg *arg)
 
     /* don't use freeinv/addinv to avoid double-touching artifacts, dousing
        lamps, losing luck, cursing loadstone, etc. */
-    extract_nobj(obj, &invent);
+    extract_nobj(obj, &invent, &turnstate.floating_objects, OBJ_FREE);
 
     if (let == obj->invlet) {
         otmp = obj;
@@ -2372,7 +2370,8 @@ doorganize(const struct nh_cmd_arg *arg)
             if (merged(&otmp, &obj)) {
                 obj = otmp;
                 otmp = otmp->nobj;
-                extract_nobj(obj, &invent);
+                extract_nobj(obj, &invent,
+                             &turnstate.floating_objects, OBJ_FREE);
             } else {
                 otmp = otmp->nobj;
             }
@@ -2380,7 +2379,7 @@ doorganize(const struct nh_cmd_arg *arg)
     } else if (merged(&otmp, &obj)) {
         adj_type = "Merging:";
         obj = otmp;
-        extract_nobj(obj, &invent);
+        extract_nobj(obj, &invent, &turnstate.floating_objects, OBJ_FREE);
     } else {
         struct obj *otmp2;
 
@@ -2406,9 +2405,7 @@ doorganize(const struct nh_cmd_arg *arg)
 
     /* inline addinv (assuming !merged) */
     obj->invlet = let;
-    obj->nobj = invent; /* insert at beginning */
-    obj->where = OBJ_INVENT;
-    invent = obj;
+    extract_nobj(obj, &turnstate.floating_objects, &invent, OBJ_INVENT);
     reorder_invent();
 
     prinv(adj_type, obj, 0L);

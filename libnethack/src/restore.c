@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-10 */
+/* Last modified by Alex Smith, 2014-03-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -13,8 +13,8 @@ static void restore_utracked(struct memfile *mf, struct you *you);
 static void find_lev_obj(struct level *lev);
 static void restlevchn(struct memfile *mf);
 static void restdamage(struct memfile *mf, struct level *lev, boolean ghostly);
-static struct obj *restobjchn(struct memfile *mf, struct level *lev,
-                              boolean ghostly, boolean frozen);
+static void restobjchn(struct memfile *mf, struct level *lev,
+                       boolean ghostly, boolean frozen, struct obj **chain);
 static struct monst *restmonchn(struct memfile *mf, struct level *lev,
                                 boolean ghostly);
 static struct fruit *loadfruitchn(struct memfile *mf);
@@ -65,18 +65,25 @@ find_lev_obj(struct level *lev)
      * Reverse the entire lev->objlist chain, which is necessary so that we can
      * place the objects in the proper order.  Make all obj in chain
      * OBJ_FREE so place_object will work correctly.
+     *
+     * TODO: This is currently a quadratic algorithm due to the extract_nobj
+     * on the floating objects list in place_object.
      */
     while ((otmp = lev->objlist) != 0) {
         lev->objlist = otmp->nobj;
-        otmp->nobj = fobjtmp;
+        /* We use nexthere for the temporary lev->objlist chain, because nobj
+           is required to keep track of floating objects. */
+        otmp->nexthere = fobjtmp;
         otmp->where = OBJ_FREE;
+        otmp->nobj = turnstate.floating_objects;
+        turnstate.floating_objects = otmp;
         fobjtmp = otmp;
     }
     /* lev->objlist should now be empty */
 
     /* Set lev->objects (as well as reversing the chain back again) */
     while ((otmp = fobjtmp) != 0) {
-        fobjtmp = otmp->nobj;
+        fobjtmp = otmp->nexthere;
         place_object(otmp, lev, otmp->ox, otmp->oy);
     }
 }
@@ -181,24 +188,29 @@ restdamage(struct memfile *mf, struct level *lev, boolean ghostly)
 }
 
 
-static struct obj *
+static void
 restobjchn(struct memfile *mf, struct level *lev, boolean ghostly,
-           boolean frozen)
+           boolean frozen, struct obj **chainloc)
 {
-    struct obj *otmp, *otmp2 = 0;
-    struct obj *first = NULL;
+    struct obj *otmp;
     unsigned int count;
 
     mfmagic_check(mf, OBJCHAIN_MAGIC);
     count = mread32(mf);
 
+    *chainloc = NULL;
+
     while (count--) {
         otmp = restore_obj(mf);
+
+        /* Move the object from the floating objects chain onto the
+           *chainloc chain. */
+        extract_nobj(otmp, &turnstate.floating_objects, NULL, 0);
+        *chainloc = otmp;
+        chainloc = &(otmp->nobj);
+        otmp->nobj = NULL;
+
         otmp->olev = lev;
-        if (!first)
-            first = otmp;
-        else
-            otmp2->nobj = otmp;
 
         if (ghostly) {
             unsigned nid = next_ident();
@@ -208,9 +220,9 @@ restobjchn(struct memfile *mf, struct level *lev, boolean ghostly,
         }
         if (ghostly && otmp->otyp == SLIME_MOLD)
             ghostfruit(otmp);
-        /* Ghost levels get object age shifted from old player's clock * to new 
-           player's clock.  Assumption: new player arrived * immediately after
-           old player died. */
+        /* Ghost levels get object age shifted from old player's clock to new
+           player's clock.  Assumption: new player arrived immediately after old
+           player died. */
         if (ghostly && !frozen && !age_is_relative(otmp))
             otmp->age = moves - lev->lastmoves + otmp->age;
 
@@ -218,22 +230,14 @@ restobjchn(struct memfile *mf, struct level *lev, boolean ghostly,
         if (Has_contents(otmp)) {
             struct obj *otmp3;
 
-            otmp->cobj = restobjchn(mf, lev, ghostly, Is_IceBox(otmp));
+            restobjchn(mf, lev, ghostly, Is_IceBox(otmp), &otmp->cobj);
             /* restore container back pointers */
             for (otmp3 = otmp->cobj; otmp3; otmp3 = otmp3->nobj)
                 otmp3->ocontainer = otmp;
         }
         if (otmp->bypass)
             otmp->bypass = 0;
-
-        otmp2 = otmp;
     }
-    if (first && otmp2->nobj) {
-        impossible("Restobjchn: error reading objchn.");
-        otmp2->nobj = 0;
-    }
-
-    return first;
 }
 
 
@@ -271,7 +275,7 @@ restmonchn(struct memfile *mf, struct level *lev, boolean ghostly)
         }
 
         if (mtmp->minvent) {
-            mtmp->minvent = restobjchn(mf, lev, ghostly, FALSE);
+            restobjchn(mf, lev, ghostly, FALSE, &(mtmp->minvent));
             /* restore monster back pointer */
             for (obj = mtmp->minvent; obj; obj = obj->nobj)
                 obj->ocarry = mtmp;
@@ -448,7 +452,7 @@ restgamestate(struct memfile *mf)
     /* this stuff comes after potential aborted restore attempts */
     restore_timers(mf, lev, RANGE_GLOBAL, FALSE, 0L);
     restore_light_sources(mf, lev);
-    invent = restobjchn(mf, lev, FALSE, FALSE);
+    restobjchn(mf, lev, FALSE, FALSE, &invent);
     migrating_mons = restmonchn(mf, lev, FALSE);
     restore_mvitals(mf);
 
@@ -1096,12 +1100,12 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
 
     rest_worm(mf, lev); /* restore worm information */
     lev->lev_traps = restore_traps(mf);
-    lev->objlist = restobjchn(mf, lev, ghostly, FALSE);
+    restobjchn(mf, lev, ghostly, FALSE, &lev->objlist);
     find_lev_obj(lev);
     /* restobjchn()'s `frozen' argument probably ought to be a callback routine 
        so that we can check for objects being buried under ice */
-    lev->buriedobjlist = restobjchn(mf, lev, ghostly, FALSE);
-    lev->billobjs = restobjchn(mf, lev, ghostly, FALSE);
+    restobjchn(mf, lev, ghostly, FALSE, &lev->buriedobjlist);
+    restobjchn(mf, lev, ghostly, FALSE, &lev->billobjs);
     rest_engravings(mf, lev);
 
     /* reset level->monsters for new level */

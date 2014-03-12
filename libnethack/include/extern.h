@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-07 */
+/* Last modified by Alex Smith, 2014-03-12 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -14,6 +14,7 @@
 # include "iomodes.h"
 # include "decl.h"
 # include "youprop.h"
+# include "obj.h"
 
 /* hacklib.h now contains extern definitions for hacklib */
 # include "hacklib.h"
@@ -962,10 +963,12 @@ extern void place_object(struct obj *otmp, struct level *lev, int x, int y);
 extern void remove_object(struct obj *);
 extern void discard_minvent(struct monst *);
 extern void obj_extract_self(struct obj *);
-extern void extract_nobj(struct obj *, struct obj **);
+extern void extract_nobj(struct obj *, struct obj **,
+                         struct obj **, enum obj_where);
 extern int add_to_minv(struct monst *, struct obj *);
 extern struct obj *add_to_container(struct obj *, struct obj *);
 extern void add_to_buried(struct obj *obj);
+extern struct obj *newobj(int, struct obj *);
 extern void dealloc_obj(struct obj *);
 extern void obj_ice_effects(struct level *, int, int, boolean);
 extern long peek_at_iced_corpse_age(struct obj *);

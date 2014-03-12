@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-03-11 */
+/* Last modified by Alex Smith, 2014-03-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -292,8 +292,11 @@ splitobj(struct obj *obj, long num)
 
     if (obj->cobj || num <= 0L || obj->quan <= num)
         panic("splitobj");      /* can't split containers */
-    otmp = newobj(obj->oxlth + obj->onamelth);
-    *otmp = *obj;       /* copies whole structure */
+    otmp = newobj(obj->oxlth + obj->onamelth, obj);
+    extract_nobj(otmp, &turnstate.floating_objects, NULL, 0);
+    otmp->nobj = obj->nobj;
+    obj->nobj = otmp;
+    otmp->where = obj->where;
     otmp->o_id = next_ident();
     otmp->timed = 0;    /* not timed, yet */
     otmp->lamplit = 0;  /* ditto */
@@ -302,7 +305,7 @@ splitobj(struct obj *obj, long num)
     obj->owt = weight(obj);
     otmp->quan = num;
     otmp->owt = weight(otmp);   /* -= obj->owt ? */
-    obj->nobj = otmp;
+
     /* Only set nexthere when on the floor, nexthere is also used */
     /* as a back pointer to the container object when contained. */
     if (obj->where == OBJ_FLOOR)
@@ -324,7 +327,8 @@ splitobj(struct obj *obj, long num)
  * Insert otmp right after obj in whatever chain(s) it is on.  Then extract
  * obj from the chain(s).  This function does a literal swap.  It is up to
  * the caller to provide a valid context for the swap.  When done, obj will
- * still exist, but not on any chain.
+ * still exist, but as a floating item. Before calling, otmp should be a
+ * floating item.
  *
  * Note:  Don't use use obj_extract_self() -- we are doing an in-place swap,
  * not actually moving something.
@@ -332,6 +336,8 @@ splitobj(struct obj *obj, long num)
 void
 replace_object(struct obj *obj, struct obj *otmp)
 {
+    extract_nobj(otmp, &turnstate.floating_objects, NULL, 0);
+
     otmp->where = obj->where;
     switch (obj->where) {
     case OBJ_FREE:
@@ -340,19 +346,21 @@ replace_object(struct obj *obj, struct obj *otmp)
     case OBJ_INVENT:
         otmp->nobj = obj->nobj;
         obj->nobj = otmp;
-        extract_nobj(obj, &invent);
+        extract_nobj(obj, &invent, &turnstate.floating_objects, OBJ_FREE);
         break;
     case OBJ_CONTAINED:
         otmp->nobj = obj->nobj;
         otmp->ocontainer = obj->ocontainer;
         obj->nobj = otmp;
-        extract_nobj(obj, &obj->ocontainer->cobj);
+        extract_nobj(obj, &obj->ocontainer->cobj,
+                     &turnstate.floating_objects, OBJ_FREE);
         break;
     case OBJ_MINVENT:
         otmp->nobj = obj->nobj;
         otmp->ocarry = obj->ocarry;
         obj->nobj = otmp;
-        extract_nobj(obj, &obj->ocarry->minvent);
+        extract_nobj(obj, &obj->ocarry->minvent,
+                     &turnstate.floating_objects, OBJ_FREE);
         break;
     case OBJ_FLOOR:
         otmp->nobj = obj->nobj;
@@ -361,13 +369,15 @@ replace_object(struct obj *obj, struct obj *otmp)
         otmp->oy = obj->oy;
         obj->nobj = otmp;
         obj->nexthere = otmp;
-        extract_nobj(obj, &obj->olev->objlist);
+        extract_nobj(obj, &obj->olev->objlist,
+                     &turnstate.floating_objects, OBJ_FREE);
         extract_nexthere(obj, &obj->olev->objects[obj->ox][obj->oy]);
         break;
     case OBJ_MIGRATING:
         otmp->nobj = obj->nobj;
         obj->nobj = otmp;
-        extract_nobj(obj, &turnstate.migrating_objs);
+        extract_nobj(obj, &turnstate.migrating_objs,
+                     &turnstate.floating_objects, OBJ_FREE);
         break;
     default:
         panic("replace_object: obj position");
@@ -396,9 +406,7 @@ bill_dummy_object(struct obj *otmp)
 
     if (otmp->unpaid)
         subfrombill(otmp, shop_keeper(level, *u.ushops));
-    dummy = newobj(otmp->oxlth + otmp->onamelth);
-    *dummy = *otmp;
-    dummy->where = OBJ_FREE;
+    dummy = newobj(otmp->oxlth + otmp->onamelth, otmp);
     dummy->o_id = next_ident();
     dummy->timed = 0;
     if (otmp->oxlth)
@@ -427,15 +435,12 @@ mksobj_basic(struct level *lev, int otyp)
     struct obj *otmp;
     const char let = objects[otyp].oc_class;
 
-    otmp = newobj(0);
-    /* This zeroes it out, so no need to explicitly zero other things. */
-    *otmp = zeroobj;
+    otmp = newobj(0, &zeroobj);
     otmp->age = moves;
     otmp->o_id = TEMPORARY_IDENT; /* temporary ID, no good for saving */
     otmp->quan = 1L;
     otmp->oclass = let;
     otmp->otyp = otyp;
-    otmp->where = OBJ_FREE;
     otmp->olev = lev;
     /* In most situations the following defaults (and in some cases a couple of
        the above ones also) will get overridden by mksobj, but there are a
@@ -1221,12 +1226,9 @@ place_object(struct obj *otmp, struct level *lev, int x, int y)
     otmp->ox = x;
     otmp->oy = y;
 
-    otmp->where = OBJ_FLOOR;
     set_obj_level(lev, otmp);   /* set the level recursively for containers */
+    extract_nobj(otmp, &turnstate.floating_objects, &lev->objlist, OBJ_FLOOR);
 
-    /* add to floor chain */
-    otmp->nobj = lev->objlist;
-    lev->objlist = otmp;
     if (otmp->timed)
         obj_timer_checks(otmp, x, y, 0);
 }
@@ -1348,7 +1350,8 @@ remove_object(struct obj *otmp)
     if (otmp->where != OBJ_FLOOR)
         panic("remove_object: obj not on floor");
     extract_nexthere(otmp, &otmp->olev->objects[x][y]);
-    extract_nobj(otmp, &otmp->olev->objlist);
+    extract_nobj(otmp, &otmp->olev->objlist,
+                 &turnstate.floating_objects, OBJ_FREE);
     if (otmp->otyp == BOULDER && otmp->olev == level &&
         !sobj_at(BOULDER, level, x, y)) /* vision */
         unblock_point(x, y);
@@ -1370,12 +1373,16 @@ discard_minvent(struct monst *mtmp)
 
 /*
  * Free obj from whatever list it is on in preperation of deleting it or
- * moving it elsewhere.  This will perform all high-level consequences
- * involved with removing the item.  E.g. if the object is in the hero's
- * inventory and confers heat resistance, the hero will lose it.
+ * moving it elsewhere. 
+ *
+ * [The documentation here previously said "this will perform all high-level
+ * consequences involved with removing the item.  E.g. if the object is in the
+ * hero's inventory and confers heat resistance, the hero will lose it." This
+ * needs to be treated with caution, e.g. freeinv() doesn't have a call to
+ * setnotworn().]
  *
  * Object positions:
- *      OBJ_FREE        not on any list
+ *      OBJ_FREE        turnstate->floating_objects
  *      OBJ_FLOOR       level->objlist, level->locations[][] chains (use
  *                      remove_object)
  *      OBJ_CONTAINED   cobj chain of container object
@@ -1395,23 +1402,28 @@ obj_extract_self(struct obj *obj)
         remove_object(obj);
         break;
     case OBJ_CONTAINED:
-        extract_nobj(obj, &obj->ocontainer->cobj);
+        extract_nobj(obj, &obj->ocontainer->cobj,
+                     &turnstate.floating_objects, OBJ_FREE);
         container_weight(obj->ocontainer);
         break;
     case OBJ_INVENT:
         freeinv(obj);
         break;
     case OBJ_MINVENT:
-        extract_nobj(obj, &obj->ocarry->minvent);
+        extract_nobj(obj, &obj->ocarry->minvent,
+                     &turnstate.floating_objects, OBJ_FREE);
         break;
     case OBJ_BURIED:
-        extract_nobj(obj, &obj->olev->buriedobjlist);
+        extract_nobj(obj, &obj->olev->buriedobjlist,
+                     &turnstate.floating_objects, OBJ_FREE);
         break;
     case OBJ_ONBILL:
-        extract_nobj(obj, &obj->olev->billobjs);
+        extract_nobj(obj, &obj->olev->billobjs,
+                     &turnstate.floating_objects, OBJ_FREE);
         break;
     case OBJ_MIGRATING:
-        extract_nobj(obj, &turnstate.migrating_objs);
+        extract_nobj(obj, &turnstate.migrating_objs,
+                     &turnstate.floating_objects, OBJ_FREE);
         break;
     default:
         panic("obj_extract_self");
@@ -1420,9 +1432,11 @@ obj_extract_self(struct obj *obj)
 }
 
 
-/* Extract the given object from the chain, following nobj chain. */
+/* Extract the given object from the chain, following nobj chain. This puts the
+   object onto the given alternative chain instead (which can be NULL). */
 void
-extract_nobj(struct obj *obj, struct obj **head_ptr)
+extract_nobj(struct obj *obj, struct obj **head_ptr,
+             struct obj **new_chain, enum obj_where where)
 {
     struct obj *curr, *prev;
 
@@ -1438,7 +1452,12 @@ extract_nobj(struct obj *obj, struct obj **head_ptr)
     }
     if (!curr)
         panic("extract_nobj: object lost");
-    obj->where = OBJ_FREE;
+
+    if (new_chain) {
+        obj->nobj = *new_chain;
+        *new_chain = obj;
+        obj->where = where;
+    }
 }
 
 
@@ -1486,10 +1505,9 @@ add_to_minv(struct monst *mon, struct obj *obj)
         if (merged(&otmp, &obj))
             return 1;   /* obj merged and then free'd */
     /* else insert; don't bother forcing it to end of chain */
-    obj->where = OBJ_MINVENT;
+    extract_nobj(obj, &turnstate.floating_objects, &mon->minvent, OBJ_MINVENT);
     obj->ocarry = mon;
-    obj->nobj = mon->minvent;
-    mon->minvent = obj;
+
     return 0;   /* obj on mon's inventory chain */
 }
 
@@ -1513,10 +1531,9 @@ add_to_container(struct obj *container, struct obj *obj)
         if (merged(&otmp, &obj))
             return otmp;
 
-    obj->where = OBJ_CONTAINED;
+    extract_nobj(obj, &turnstate.floating_objects,
+                 &container->cobj, OBJ_CONTAINED);
     obj->ocontainer = container;
-    obj->nobj = container->cobj;
-    container->cobj = obj;
     return obj;
 }
 
@@ -1527,9 +1544,8 @@ add_to_buried(struct obj *obj)
     if (obj->where != OBJ_FREE)
         panic("add_to_buried: obj not free");
 
-    obj->where = OBJ_BURIED;
-    obj->nobj = obj->olev->buriedobjlist;
-    obj->olev->buriedobjlist = obj;
+    extract_nobj(obj, &turnstate.floating_objects,
+                 &obj->olev->buriedobjlist, OBJ_BURIED);
 }
 
 
@@ -1546,10 +1562,21 @@ container_weight(struct obj *container)
 */
 }
 
-/*
- * Deallocate the object.  _All_ objects should be run through here for
- * them to be deallocated.
- */
+/* Allocates an object. */
+struct obj *
+newobj(int extra_bytes, struct obj *initfrom)
+{
+    struct obj *otmp = malloc((unsigned)extra_bytes + sizeof(struct obj));
+    *otmp = *initfrom;
+    /* note: extra data not copied by newobj */
+    otmp->where = OBJ_FREE;
+    otmp->nobj = turnstate.floating_objects;
+    turnstate.floating_objects = otmp;
+    return otmp;
+}
+
+/* Deallocates an object. _All_ objects should be run through here for
+   them to be deallocated. */
 void
 dealloc_obj(struct obj *obj)
 {
@@ -1573,6 +1600,8 @@ dealloc_obj(struct obj *obj)
 
     if (obj == thrownobj)
         thrownobj = NULL;
+
+    extract_nobj(obj, &turnstate.floating_objects, NULL, 0);
 
     free(obj);
 }
@@ -1598,6 +1627,8 @@ set_obj_level(struct level *lev, struct obj *obj)
 }
 
 
+/* Loads an object onto the floating objects chain, but with the OBJ_WHERE from
+   the save file. */
 struct obj *
 restore_obj(struct memfile *mf)
 {
@@ -1608,8 +1639,8 @@ restore_obj(struct memfile *mf)
     mfmagic_check(mf, OBJ_MAGIC);
 
     namelen = mread32(mf);
-    otmp = newobj(namelen);
-    memset(otmp, 0, namelen + sizeof (struct obj));
+    otmp = newobj(namelen, &zeroobj);
+    memset(otmp + sizeof (struct obj), 0, namelen);
 
     otmp->o_id = mread32(mf);
     otmp->owt = mread32(mf);
