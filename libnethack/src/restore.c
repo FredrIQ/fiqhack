@@ -295,7 +295,7 @@ restmonchn(struct memfile *mf, struct level *lev, boolean ghostly)
 
         if (ghostly) {
             /* these cases are from makemon.c */
-            mtmp->mpeaceful = peace_minded(mtmp);
+            mtmp->mpeaceful = peace_minded(mtmp->data);
             if (is_unicorn(mtmp->data) &&
                 sgn(u.ualign.type) == sgn(mtmp->data->maligntyp))
                 mtmp->mpeaceful = TRUE;

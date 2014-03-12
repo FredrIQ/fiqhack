@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-16 */
+/* Last modified by Sean Hunt, 2014-03-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -866,7 +866,7 @@ use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
     if (Underwater) {
         pline("Turbulence torpedoes your %s attempts.", verbing);
     } else if (dz < 0) {
-        if (Levitation)
+        if (Levitation || Flying)
             pline("You don't have enough leverage.");
         else
             pline("You can't reach the %s.", ceiling(u.ux, u.uy));
@@ -960,9 +960,23 @@ use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
     } else if (!can_reach_floor()) {
         pline("You can't reach the %s.", surface(u.ux, u.uy));
     } else if (is_pool(level, u.ux, u.uy) || is_lava(level, u.ux, u.uy)) {
-        /* Monsters which swim also happen not to be able to dig */
-        pline("You cannot stay under%s long enough.",
-              is_pool(level, u.ux, u.uy) ? "water" : " the lava");
+        pline("You swing your %s through the %s below.", aobjnam(obj, NULL),
+                is_pool(level, u.ux, u.uy) ? "water" : "lava");
+
+        if (is_lava(level, u.ux, u.uy) && is_organic(obj) &&
+            !obj->oerodeproof) {
+            if (obj->otyp == SPE_BOOK_OF_THE_DEAD) {
+                if (!Blind)
+                    pline("%s glows a strange %s, but remains intact.",
+                            The(xname(obj)), hcolor("dark red"));
+            } else {
+                pline("It bursts into flame!");
+
+                unwield_silently(obj);
+                setunequip(obj);
+                useupall(obj);
+            }
+        }
     } else if (!ispick) {
         pline("Your %s merely scratches the %s.", aobjnam(obj, NULL),
               surface(u.ux, u.uy));
@@ -1145,6 +1159,7 @@ zap_dig(schar dx, schar dy, schar dz)
     int zx, zy, digdepth;
     boolean shopdoor, shopwall, maze_dig;
 
+    /* swallowed */
     if (Engulfed) {
         mtmp = u.ustuck;
 
@@ -1157,7 +1172,8 @@ zap_dig(schar dx, schar dy, schar dz)
         }
         return;
     }
-    /* swallowed */
+
+    /* up or down */
     if (dz) {
         if (!Is_airlevel(&u.uz) && !Is_waterlevel(&u.uz) && !Underwater) {
             if (dz < 0 || On_stairs(u.ux, u.uy)) {
@@ -1184,7 +1200,6 @@ zap_dig(schar dx, schar dy, schar dz)
         return;
     }
 
-    /* up or down */
     /* normal case: digging across the level */
     shopdoor = shopwall = FALSE;
     maze_dig = level->flags.is_maze_lev && !Is_earthlevel(&u.uz);

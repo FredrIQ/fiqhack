@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-09 */
+/* Last modified by Derrick Sund, 2014-03-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1442,11 +1442,75 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
         (level->locations[x][y].mem_invis && UIM_AGGRESSIVE(uim))) {
         boolean expl = (Upolyd && attacktype(youmonst.data, AT_EXPL));
         char buf[BUFSZ];
+        struct nh_cmd_arg arg;
+        arg_from_delta(turnstate.move.dx, turnstate.move.dy, dz, &arg);
 
-        sprintf(buf, "a vacant spot on the %s", surface(x, y));
-        pline("You %s %s.", expl ? "explode at" : "attack",
-              !Underwater ? "thin air" : is_pool(level, x,
-                                                 y) ? "empty water" : buf);
+        boolean hitsomething = FALSE, ouch = FALSE;
+        struct obj *boulder = (sobj_at(BOULDER, level, x, y));
+        if (!boulder)
+            boulder = sobj_at(STATUE, level, x, y);
+        if (boulder) {
+            hitsomething = TRUE;
+            if (uwep && (is_pick(uwep) || is_axe(uwep)) &&
+                use_pick_axe(uwep, &arg));
+                /* use_pick_axe succeeded, don't do anything else */
+            else if (uwep) {
+                ouch = !rn2(3);
+                pline("%s whack the %s.",
+                      objects[uwep->otyp].oc_material == IRON ?
+                      "Sparks fly as you" : "You",
+                      boulder->otyp == STATUE ? "statue" : "boulder");
+                if (ouch)
+                    sprintf(killer_buf, "hitting %s", killer_xname(boulder));
+            } else {
+                pline("You %s the %s.", Role_if(PM_MONK) ? "strike" : "bash",
+                      boulder->otyp == STATUE ? "statue" : "boulder");
+                ouch = TRUE;
+                sprintf(killer_buf, "hitting %s", killer_xname(boulder));
+            }
+            /* TODO: Possibly make the player hurtle after striking. */
+        }
+        if (!hitsomething && 
+            ((level->locations[x][y].typ == STAIRS) ||
+             ((level->locations[x][y].typ == LADDER) &&
+               (level->locations[x][y].ladder != LA_DOWN)) ||
+             IS_STWALL(level->locations[x][y].typ) ||
+             (level->locations[x][y].typ == DOOR &&
+              !!(level->locations[x][y].doormask & (D_CLOSED|D_LOCKED)))))
+        {
+            hitsomething = TRUE;
+            if (uwep && (is_pick(uwep) || is_axe(uwep)) &&
+                use_pick_axe(uwep, &arg));
+                /* use_pick_axe succeeded, don't do anything else */
+            else {
+                ouch = (uwep) ? !rn2(3) : TRUE;
+                pline("%s %s the %s.",
+                      uwep && objects[uwep->otyp].oc_material == IRON ? 
+                      "Sparks fly as you" : "You",
+                      uwep ? "whack" : Role_if(PM_MONK) ? "strike" : "bash",
+                      level->locations[x][y].typ == STAIRS ? "stairs" :
+                      level->locations[x][y].typ == LADDER ? "ladder" :
+                      level->locations[x][y].typ == DOOR ? "door" : "wall");
+                sprintf(killer_buf, "hitting %s", 
+                        level->locations[x][y].typ == STAIRS ? "the stairs" :
+                        level->locations[x][y].typ == LADDER ? "a ladder" :
+                        level->locations[x][y].typ == DOOR ? "a door" : "a wall");
+            }
+        }
+        if (ouch) {
+            if (uwep)
+                pline("%s %s violently!", Yname2(uwep),
+                      otense(uwep, "vibrate"));
+            else
+                pline("Ouch!  That hurts!");
+            losehp(2, killer_buf, KILLED_BY);
+        } else if (!hitsomething) {
+            sprintf(buf,"a vacant spot on the %s", surface(x,y));
+            pline("You %s %s.", expl ? "explode at" : "attack",
+                  !Underwater ? "thin air" :
+                  is_pool(level, x, y) ? "empty water" : buf);
+        }
+
         unmap_object(x, y);     /* known empty -- remove 'I' if present */
         newsym(x, y);
         action_completed();

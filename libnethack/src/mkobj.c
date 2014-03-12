@@ -656,6 +656,7 @@ mksobj(struct level *lev, int otyp, boolean init, boolean artif)
                 curse(otmp);
             } else
                 blessorcurse(otmp, 10);
+            break;
         case VENOM_CLASS:
             impossible("Making permanent venom object!");
             break;
