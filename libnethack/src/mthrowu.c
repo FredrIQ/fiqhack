@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-09 */
+/* Last modified by Derrick Sund, 2014-03-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1104,6 +1104,13 @@ mlined_up(struct monst * mtmp, struct monst * mdef, boolean breath)
 boolean
 lined_up(struct monst * mtmp)
 {
+    /* Don't use ranged attacks against hiding players.
+       TODO: Possibly make monsters not use ranged attacks against hiding
+       monsters. */
+    if (u.uundetected || ((youmonst.data->mlet == S_MIMIC) &&
+        (youmonst.m_ap_type != M_AP_NOTHING)))
+        return FALSE;
+
     return linedup(mtmp->mux, mtmp->muy, mtmp->mx, mtmp->my);
 }
 
