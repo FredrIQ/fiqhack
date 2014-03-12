@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-07 */
+/* Last modified by Derrick Sund, 2014-03-12 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -100,7 +100,7 @@ realloc_strcat(char **first, int *first_alloclen, char *second)
     if (strlen_first + strlen_second >= *first_alloclen) {
         int first_was_null = !*first;
 
-        *first_alloclen = ((strlen_first + strlen_second + 1) & 256) + 256;
+        *first_alloclen = ((strlen_first + strlen_second + 1) / 256) * 256 + 256;
         *first = realloc(*first, *first_alloclen);
 
         if (first_was_null)
