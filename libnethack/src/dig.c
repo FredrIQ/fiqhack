@@ -1159,6 +1159,7 @@ zap_dig(schar dx, schar dy, schar dz)
     int zx, zy, digdepth;
     boolean shopdoor, shopwall, maze_dig;
 
+    /* swallowed */
     if (Engulfed) {
         mtmp = u.ustuck;
 
@@ -1171,7 +1172,8 @@ zap_dig(schar dx, schar dy, schar dz)
         }
         return;
     }
-    /* swallowed */
+
+    /* up or down */
     if (dz) {
         if (!Is_airlevel(&u.uz) && !Is_waterlevel(&u.uz) && !Underwater) {
             if (dz < 0 || On_stairs(u.ux, u.uy)) {
@@ -1198,7 +1200,6 @@ zap_dig(schar dx, schar dy, schar dz)
         return;
     }
 
-    /* up or down */
     /* normal case: digging across the level */
     shopdoor = shopwall = FALSE;
     maze_dig = level->flags.is_maze_lev && !Is_earthlevel(&u.uz);
