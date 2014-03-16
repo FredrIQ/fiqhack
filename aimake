@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2014-03-04
+# Last modified by Alex Smith, 2014-03-16
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
@@ -3383,6 +3383,13 @@ sub parse_pairname {
     return ($1, $2);
 }
 
+# Returns the object name, or the rule name if the object is boring.
+sub extract_interesting_pair_component {
+    my ($rulename, $objname) = parse_pairname +shift;
+    $objname ne 'sys:no_object' and return $objname;
+    return $rulename;
+}
+
 # Resolve an extend: object. Other objects are returned unchanged.
 # extend: objects are either used to find parent directories (value = ..), or
 # used to construct filenames in the build directory (other values).
@@ -5037,18 +5044,16 @@ sub not_empty_array {
 # objects, too). For produced objects, this is an error (they'd overwrite each
 # other on the filesystem), but for provided objects, we work out which to use
 # based on filename similarity. This takes two object names as arguments (the
-# provided object, and the object that wants to use it), a flag indicating
-# whether it's OK to have a tie in score, and the list of possible pairs, and
-# returns a list of top-scoring pairs to use. (This will be empty if there are
-# no usable pairs, a single element unless there is a tie, and all tied
-# elements otherwise.)
+# provided object, and the object that wants to use it), and the list of
+# possible pairs, and returns a list of top-scoring pairs to use. (This will
+# be empty if there are no usable pairs, a single element unless there is a
+# tie, and all tied elements otherwise.)
 #
 # This routine is only called from recalculate_pair_xuse, but is placed in a
 # separate subroutine for clarity.
 sub appropriate_pairs_for_object {
     my $provided = shift;
     my $user = shift;
-    my $ties_ok = shift;
     my @providers = @_;
 
     scalar @providers == 0 and return ();
@@ -5109,7 +5114,8 @@ sub appropriate_pairs_for_object {
         # isn't sys:no_object; it's also benign if both rules have an empty
         # outdepends (this is to make the placeholder symbols for reverse
         # imports work correctly). Otherwise, it's a problem.
-        if ($score == $bestscore && (parse_pairname $best)[1] ne $obj &&
+        if ($score == $bestscore &&
+            ((parse_pairname $best)[1] ne $obj || $obj eq 'sys:no_object') &&
             (not_empty_array($state->{outdep_by_object}{$provided}{$provider}) ||
              not_empty_array($state->{outdep_by_object}{$provided}{$best}))) {
             push @tie, $provider;
@@ -5121,9 +5127,7 @@ sub appropriate_pairs_for_object {
     }
     if (@tie) {
         unshift @tie, $best;
-        $ties_ok and return @tie;
-        croak "Multiple equally good pairs are available to build ".
-            "$provided (user $user): [@tie]";
+        return @tie;
     }
     return $best if defined $best;
     return ();
@@ -5197,7 +5201,7 @@ sub inappropriate_prevpair {
 # sigificant. (xuse_by_object is unordered.)
 sub recalculate_pair_xuse {
     my $pair = shift;
-    my $ties_ok = shift;
+    my $report_ties = shift;
     my ($rule, $obj) = parse_pairname($pair);
     progress_report 4, "Calculating xuse of $pair";
     reset_pair_xuse($pair); # invalidates sureness caches too
@@ -5273,7 +5277,7 @@ sub recalculate_pair_xuse {
                         grep $pass1_xuse_pairs{$_}, @ancestors;
                     @filtered_ancestors and @ancestors = @filtered_ancestors;
                     @ancestors = appropriate_pairs_for_object $o, $obj,
-                        $ties_ok, @ancestors;
+                         @ancestors;
                 }
                 if (@ancestors > 1 && $o =~ multiple_providers_ok_regex) {
                     # Fuse the output from the various providers.
@@ -5291,19 +5295,17 @@ sub recalculate_pair_xuse {
                 } elsif (@ancestors > 1 && $pass == 1) {
                     push @postponed, $o;
                     next;
-                } elsif (@ancestors > 1 && $pass == 2) {
-                    mark_pair_xuse_unknown $pair,
-                        "xuse calculation ended in a tie";
-                    return 0 unless wantarray;
-                    return (0, $o, $obj, \@ancestors);
                 } elsif (@ancestors == 1) {
                     $pass == 1 and $pass1_xuse_pairs{$ancestors[0]} = 1;
                     $state->{xuse_prevpair}{$pair}{$o} = $ancestors[0];
                     my @udeps = @{$state->{outdep_by_pair}{$ancestors[0]}{$o}};
                     push @command, @udeps;
                     $xuse_reason{$_} = $o for @udeps;
+                } elsif (@ancestors > 1 && $pass == 2 && $report_ties) {
+                    return (1, $o, $obj, \@ancestors);
                 } else {
-                    # Nothing provides the object; add sys:clean to the list.
+                    # Nothing provides the object, or there's an unresolvable
+                    # tie; add sys:clean to the list in both cases.
                     $state->{xuse_prevpair}{$pair}{$o} =
                         'nonexistent sys:clean';
                     $xuse{'sys:clean'} or push @xuse, 'sys:clean';
@@ -5331,7 +5333,7 @@ sub recalculate_pair_xuse {
     for my $xuse (keys %xuse) {
         $state->{xuse_by_object}{$xuse}{$pair} = $xuse{$xuse};
     }
-    return 1;
+    return 0;
 }
 
 # Resets the xuse of a pair. This is called for two reasons: either because
@@ -5380,11 +5382,22 @@ sub mark_pair_xuse_unknown {
 
 sub ensure_pair_has_xuse {
     my $pair = shift;
-    my $ties_ok = shift;
     if (!defined $state->{xuse_by_pair}{$pair}) {
-        return recalculate_pair_xuse $pair, $ties_ok;
+        recalculate_pair_xuse $pair, 0;
     }
-    return 1;
+}
+
+sub check_xuse_ties {
+    my $pair = shift;
+    if (!defined $state->{xuse_by_pair}{$pair}) {
+        return recalculate_pair_xuse $pair, 1;
+    } elsif (grep $_ eq 'sys:clean', @{$state->{xuse_by_pair}{$pair}}) {
+        # We need to recalculate the xuse to get at which objects were tied.
+        return recalculate_pair_xuse $pair, 1;
+    } else {
+        # If there's no sys:clean present, there can't be a tie.
+        return 0;
+    }
 }
 
 ### Sureness calculations
@@ -5433,14 +5446,7 @@ sub pair_is_sure {
     $pair eq 'parse_configuration sys:no_object' and return (1, []);
 
     # Recursive case.
-    unless (ensure_pair_has_xuse $pair, 1) {
-        # If we have a tie, we're not sure how to resolve it.
-        my $unsure_list = ['tie'];
-        $unsure_pair_cache{$pair} = [@$unsure_list];
-        delete $pair_is_sure_seen{$pair};
-        progress_report 4, "pair_is_sure: $pair is unsure due to tie";
-        return (0, $unsure_list);
-    }
+    ensure_pair_has_xuse $pair;
     $pair_is_sure_seen{$pair} = 1; # avoid an infinite regress
     my @xuses = @{$state->{xuse_by_pair}{$pair}};
     # %sureness_list is a hash from elements that affect $pair's sureness, to
@@ -5871,6 +5877,15 @@ EOF
     exit 0;
 }
 $opt_verbose = defined_or($opt_verbose, 0);
+
+# Don't create an aimake.objects in the source directory, it leads to
+# problems. We need to do this check before establishing the lock, because the
+# lock requires aimake.objects to exits.
+if (-f 'aimake') {
+    die ("You cannot run aimake with the build directory as the source " .
+         "directory.\nCreate a build directory elsewhere, then " .
+         "run aimake from there.");
+}
 
 read_statefile;
 atomic_read {
@@ -7183,10 +7198,10 @@ atomically {
             $state->{blocked_by_pair}{$pair} . "', existence '" .
             ((object_exists $state->{blocked_by_pair}{$pair}) ?
              'yes' : 'no') . "', command [@$command]";
-        my ($has_xuse, $wanted, $user, $tied) = ensure_pair_has_xuse $pair, 1;
+        my ($is_tied, $wanted, $user, $objects_in_tie) = check_xuse_ties $pair;
         my @missing_deps;
         my $verb = 'missing';
-        if ($has_xuse) {
+        if (!$is_tied) {
             @missing_deps = sort grep +((!object_exists $_) && $_ ne 'sys:clean'),
                 @{$state->{xuse_by_pair}{$pair}};
 
@@ -7197,11 +7212,11 @@ atomically {
                   friendly_objname($_))
                 for @missing_deps;
         } else {
-            @missing_deps = @$tied;
+            @missing_deps = @$objects_in_tie;
             $verb = "multiple possibilities for " .
                 friendly_objname($wanted) . ':';
-            (undef, $_) = parse_pairname $_ for @missing_deps;
-            $_ = friendly_objname($_) for @missing_deps;
+            $_ = extract_interesting_pair_component $_ for @missing_deps;
+            /:/ and $_ = friendly_objname($_) for @missing_deps;
         }
         (scalar @missing_deps) or next;
 
