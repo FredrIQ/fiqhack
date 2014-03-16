@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-03-04 */
+/* Last modified by Derrick Sund, 2014-03-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -989,6 +989,31 @@ u_helpless(enum helpless_mask mask)
     return FALSE;
 }
 
+/* Cancel mimicking.  You can't just call cancel_helplessness with hm_helpless
+   to do this in all cases because it'll fail in cases where mimicking doesn't
+   actually make you helpless (for instance, #monster while polymorphed while
+   polymorphed into a mimic). */
+void
+cancel_mimicking(const char* msg)
+{
+    /* Make sure we're actually mimicking. */
+    if (youmonst.m_ap_type) {
+        int i = 1 << hr_mimicking;
+        turnstate.helpless_timers[i] = 0;
+        *turnstate.helpless_causes[i] = '\0';
+        if (!msg && *turnstate.helpless_endmsgs[i])
+            pline("%s", turnstate.helpless_endmsgs[i]);
+        *turnstate.helpless_endmsgs[i] = '\0';
+        youmonst.m_ap_type = M_AP_NOTHING;
+        youmonst.mappearance = 0;
+        newsym(u.ux, u.uy);
+    }
+    else
+        return;
+
+    if (msg && *msg)
+        pline("%s", msg);
+}
 
 boolean
 canhear(void)

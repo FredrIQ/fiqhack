@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-09 */
+/* Last modified by Derrick Sund, 2014-03-16 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -54,7 +54,7 @@ polyman(const char *fmt, const char *arg)
 
     if (sticky)
         uunstick();
-    cancel_helplessness(hm_mimicking, "");
+    cancel_mimicking("");
 
     newsym(u.ux, u.uy);
 
@@ -379,7 +379,7 @@ polymon(int mntmp)
         u.ufemale = u.mfemale;
     }
 
-    cancel_helplessness(hm_mimicking, "");
+    cancel_mimicking("");
     if (is_male(&mons[mntmp])) {
         if (u.ufemale)
             dochange = TRUE;
