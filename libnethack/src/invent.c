@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-03-12 */
+/* Last modified by Derrick Sund, 2014-03-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1787,17 +1787,23 @@ update_location(boolean all_objects)
    don't show them unless obj_cnt is 0 */
 int
 look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
-          boolean picked_some, boolean show_weight)
+          boolean picked_some, boolean show_weight, boolean feeling)
 {
     struct obj *otmp;
     struct trap *trap;
-    const char *verb = Blind ? "feel" : "see";
+    const char *verb = feeling ? "feel" : "see";
     const char *dfeature = NULL;
     char fbuf[BUFSZ], fbuf2[BUFSZ];
     boolean skip_objects = (obj_cnt >= 5), felt_cockatrice = FALSE;
     struct nh_objlist objlist;
     const char *title =
-        Blind ? "Things that you feel here:" : "Things that are here:";
+        feeling ? "Things that you feel here:" : "Things that are here:";
+
+    if (Blind && !feeling) {
+        pline("You can't see!  (You can feel around with 'grope', typically on"
+              " Alt-g.)");
+        return 0;
+    }
 
     /* show the "things that are here" window iff - the player didn't get the
        info via update_location -OR- - it was explicitly requested (obj_cnt ==
@@ -1811,23 +1817,23 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
                 mbodypart(mtmp, STOMACH));
         /* Skip "Contents of " by using fbuf index 12 */
         pline("You %s to %s what is lying in %s.",
-              Blind ? "try" : "look around", verb, &fbuf[12]);
+              feeling ? "try" : "look around", verb, &fbuf[12]);
         otmp = mtmp->minvent;
         if (otmp) {
             for (; otmp; otmp = otmp->nobj) {
                 /* If swallower is an animal, it should have become stone
                    but... */
                 if (otmp->otyp == CORPSE)
-                    feel_cockatrice(otmp, FALSE);
+                    feel_cockatrice(otmp, feeling);
             }
-            if (Blind)
+            if (feeling)
                 strcpy(fbuf, "You feel");
             strcat(fbuf, ":");
             display_minventory(mtmp, MINV_ALL, fbuf);
         } else {
             pline("You %s no objects here.", verb);
         }
-        return ! !Blind;
+        return !feeling;
     }
     if (!skip_objects && (trap = t_at(level, u.ux, u.uy)) && trap->tseen)
         pline("There is %s here.", an(trapexplain[trap->ttyp - 1]));
@@ -1837,7 +1843,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
     if (dfeature && !strcmp(dfeature, "pool of water") && Underwater)
         dfeature = NULL;
 
-    if (Blind) {
+    if (feeling) {
         boolean drift = Is_airlevel(&u.uz) || Is_waterlevel(&u.uz);
 
         if (dfeature && !strncmp(dfeature, "altar ", 6)) {
@@ -1864,9 +1870,9 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
         if (dfeature)
             pline("%s", fbuf);
         read_engr_at(u.ux, u.uy);
-        if (!skip_objects && (Blind || !dfeature))
+        if (!skip_objects && (feeling || !dfeature))
             pline("You %s no objects here.", verb);
-        return ! !Blind;
+        return !feeling;
     }
     /* we know there is something here */
 
@@ -1891,7 +1897,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
         else 
             pline("You %s here %s.", verb, doname_price(otmp));
         if (otmp->otyp == CORPSE)
-            feel_cockatrice(otmp, FALSE);
+            feel_cockatrice(otmp, feeling);
     } else {
 
         init_objmenulist(&objlist);
@@ -1902,7 +1908,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
         }
 
         for (; otmp; otmp = otmp->nexthere) {
-            if (otmp->otyp == CORPSE && will_feel_cockatrice(otmp, FALSE)) {
+            if (otmp->otyp == CORPSE && will_feel_cockatrice(otmp, feeling)) {
                 char buf[BUFSZ];
 
                 felt_cockatrice = TRUE;
@@ -1920,18 +1926,29 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
             dealloc_objmenulist(&objlist);
 
         if (felt_cockatrice)
-            feel_cockatrice(otmp, FALSE);
+            feel_cockatrice(otmp, feeling);
         read_engr_at(u.ux, u.uy);
     }
-    return ! !Blind;
+    return !feeling;
 }
 
-/* explicilty look at what is here, including all objects */
+/* Explicilty look at what is here, including all objects.  This is called by a
+   CMD_NOTIME command, so it should never take any time. */
 int
 dolook(const struct nh_cmd_arg *arg)
 {
     (void) arg;
-    return look_here(0, FALSE, TRUE);
+    if (look_here(0, FALSE, TRUE, FALSE))
+        impossible("dolook wanted to take time");
+    return 0;
+}
+
+/* Feel around for what's at your feet, as with : when blind formerly. */
+int
+dofeel(const struct nh_cmd_arg *arg)
+{
+    (void) arg;
+    return look_here(0, FALSE, TRUE, TRUE);
 }
 
 boolean

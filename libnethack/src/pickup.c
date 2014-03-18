@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-01 */
+/* Last modified by Derrick Sund, 2014-03-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -68,7 +68,7 @@ check_here(boolean picked_some)
         if (flags.occupation == occ_move || travelling())
             action_completed();
         flush_screen();
-        look_here(ct, picked_some, FALSE);
+        look_here(ct, picked_some, FALSE, Blind);
     } else {
         read_engr_at(u.ux, u.uy);
     }
@@ -565,7 +565,7 @@ query_objlist(const char *qstr, /* query string */
     for (curr = olist; curr; curr = FOLLOW(curr, qflags)) {
         if ((qflags & FEEL_COCKATRICE) && curr->otyp == CORPSE &&
             will_feel_cockatrice(curr, FALSE)) {
-            look_here(0, FALSE, TRUE);
+            look_here(0, FALSE, TRUE, Blind);
             return 0;
         }
         if ((!(qflags & INVORDER_SORT) || strchr(flags.inv_order, curr->oclass))
