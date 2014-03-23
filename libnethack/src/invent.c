@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-17 */
+/* Last modified by Derrick Sund, 2014-03-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1833,7 +1833,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
         } else {
             pline("You %s no objects here.", verb);
         }
-        return !feeling;
+        return ! !feeling;
     }
     if (!skip_objects && (trap = t_at(level, u.ux, u.uy)) && trap->tseen)
         pline("There is %s here.", an(trapexplain[trap->ttyp - 1]));
@@ -1872,7 +1872,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
         read_engr_at(u.ux, u.uy);
         if (!skip_objects && (feeling || !dfeature))
             pline("You %s no objects here.", verb);
-        return !feeling;
+        return ! !feeling;
     }
     /* we know there is something here */
 
@@ -1929,7 +1929,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
             feel_cockatrice(otmp, feeling);
         read_engr_at(u.ux, u.uy);
     }
-    return !feeling;
+    return ! !feeling;
 }
 
 /* Explicilty look at what is here, including all objects.  This is called by a
