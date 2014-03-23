@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-12 */
+/* Last modified by Derrick Sund, 2014-03-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -201,6 +201,12 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         setworn(o, W_MASK(slot));
         if (msgtype != em_silent)
             on_msg(o);
+        if (o->cursed && !o->bknown) {
+            o->bknown = TRUE;
+            if (msgtype != em_silent)
+                pline("Oops; %s deathly cold.", is_plural(o) ? "they feel"
+                                                             : "that feels");
+        }
     } else {
         setworn(NULL, W_MASK(slot));
         /* It's not obvious whether we should uninvoke or not here. We need to
