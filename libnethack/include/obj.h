@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-03-12 */
+/* Last modified by Derrick Sund, 2014-03-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -305,7 +305,8 @@ struct obj {
 
 /* helpers, simple enough to be macros */
 # define is_plural(o)   ((o)->quan > 1 || \
-                         (o)->oartifact == ART_EYES_OF_THE_OVERWORLD)
+                         (o)->oartifact == ART_EYES_OF_THE_OVERWORLD || \
+                         is_boots(o) || is_gloves(o))
 
 /* Flags for get_obj_location(). */
 # define CONTAINED_TOO  0x1
