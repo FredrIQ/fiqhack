@@ -1872,7 +1872,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
         read_engr_at(u.ux, u.uy);
         if (!skip_objects && (feeling || !dfeature))
             pline("You %s no objects here.", verb);
-        return !feeling;
+        return feeling;
     }
     /* we know there is something here */
 
@@ -1929,7 +1929,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
             feel_cockatrice(otmp, feeling);
         read_engr_at(u.ux, u.uy);
     }
-    return !feeling;
+    return feeling;
 }
 
 /* Explicitly look at what is here, including all objects.  This is called by a
