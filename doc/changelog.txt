@@ -25,12 +25,13 @@ Changes are divided into categories:
     scoring or conducts, in order to adjust for the effects of an improved
     interface, in order to allow the player to avoid using a convoluted
     sequence of actions to do something they could mostly do anyway (e.g. you
-    can now interrupt a multi-turn action voluntarily, if it would be
-    interrupted by a monster) or on occasion to remove circumstances where the
-    game is unwinnable, or almost so.  If in doubt, we erred on the side of
-    making these changes only when it benefits the player.  The NetHack 4.4
-    series will have intentional gameplay changes of its own (although still
-    intends to be conservative compared to other variants).
+    can now interrupt a multi-turn action voluntarily, if it's the sort of
+    action that can be interrupted by a monster) or on occasion to remove
+    circumstances where the game is unwinnable, or almost so.  If in doubt, we
+    erred on the side of making these changes only when it benefits the
+    player.  The NetHack 4.4 series will have intentional gameplay changes of
+    its own (although still intends to be conservative compared to other
+    variants).
 
   * Gameplay changes in alternative game modes.
 
@@ -142,7 +143,7 @@ a93e3bc)
 doing so still damages the spellbook). (Ace, 7cd834e)
 
 `x`: No longer costs time (in order to avoid the need to toggle the
-`pushweapon` option repeately in order to set up weapons for two-weapon
+`pushweapon` option repeatedly in order to set up weapons for two-weapon
 fighting as fast as possible). (Ace, 8c894a3)
 
 `Z`: Spells that ask for a position can now target monsters that are visible
@@ -199,13 +200,14 @@ C343-106, 5e430da)
 Monsters and Polyforms
 ----------------------
 
-`e`: Floating eyes are now impossible for the player to hit with melee attacks,
-unless they have protection from gazes. This is because a good interface would
-require confirmation to attack them, thus rendering them almost entirely
-unthreatening, so something else had to be done in order to ensure that they
-remained dangerous; the old and new implementations both effectively make them
-impossible to eliminate via melee without gaze protection, but the new
-implementation is a lot less typo-sensitive. (Ace, d83177f)
+`e`: Floating eyes are now impossible for the player to hit with melee
+attacks, unless the player is protected from gazes. This is because a good
+interface would require confirmation to attack them, thus rendering them
+almost entirely unthreatening, so something else had to be done in order to
+ensure that they remained dangerous; the old and new implementations both
+effectively make them impossible to eliminate via melee without gaze
+protection, but the new implementation is a lot less typo-sensitive. (Ace,
+d83177f)
 
 `G`: Gnomes now have a chance at generating with candles (although unlike in
 AceHack, they don't actually use them, in order to avoid inventory clutter);
@@ -233,13 +235,13 @@ Dungeon
 -------
 
 Stairways that lead between branches are now a different map entity from
-stairways that move within a branch (and thus look different, and are
-described differently on farlook); this is a gameplay change because there's
-no longer a need to take them to see where they lead. (Ace, 6929bda)
+stairways that lead to another level within a branch (and thus look different,
+and are described differently on farlook); this is a gameplay change because
+there's no longer a need to take them to see where they lead. (Ace, 6929bda)
 
 The Vibrating Square is now classified as a trap (and thus shows up in the
 player's memory after finding it, avoiding the need to mark it, and can be
-detected via means of trap detection). (Ace, e219111)
+detected via means of trap detection). (4, e219111)
 
 
 Options
@@ -285,8 +287,9 @@ teleportation that would not be allowed in regular play.  In order to teleport
 without restrictions in wizard mode, use `^F`. (4, 3cf2f4a, bfdc807)
 
 Monster creation in wizard mode now only prompts for which type of monster to
-create if the `^G` command is used explicitly; and the `^G` command now allows
-a quantity of monster to be specified at the prompt. (4, d179170)
+create if the `#genesis` command is used explicitly; and the `#genesis`
+command now allows a quantity of monster to be specified at the prompt. (4,
+d179170)
 
 Two new wizard mode commands are added in order to reduce interference of
 monsters: `#levelcide` to destroy all monsters on the level (saving you from
@@ -332,8 +335,8 @@ of items in bones files.) (Bilious, Nitro, Un and Dyna, 1ae9b87, e274847,
 4d26cb4, 1c153d6)
 
 Inventory displays now show the weight of the item they're displaying.
-(probably Nitro and 34f1e85)  Some items had their weights adjusted in order
-to avoid spoilers from this. (4, 5a6e10f)
+(probably Nitro, 34f1e85 and others).  Some items had their weights adjusted
+in order to avoid spoilers from this. (4, 5a6e10f)
 
 Items in shops now have price tags attached, without needing to have to chat
 to the shopkeeper or pick them up to get a price quote. (Un, 9d7ef39)
@@ -363,8 +366,8 @@ identified. (4, C343-124, C343-130, dc752a1)
 
 `a`: You can now use each stethoscope in your inventory for free once per
 turn, rather than being able to use one stethoscope total (unless you saved
-and restored in between, in which case you could use the same stethoscope as
-often as you liked). (Nitro and 4, f342510, 18db100)
+and restored in between, in which case in 3.4.3 you could use the same
+stethoscope as often as you liked). (Nitro and 4, f342510, 18db100)
 
 `A`: Now allows equipping items into arbitrary slots (e.g. changing your
 secondary weapon slot while wielding cursed weapon), in addition to
@@ -410,12 +413,12 @@ now shown on the skill enhancement menu. (Ace and Dyna, 529b276, a9047bf)
 engulfed. (Grunt, C343-63, 8c03941)
 
 `s`: Finding a mimic via a search no longer wakes it; this is to enable
-players/interfaces to un-bind the `wait` command if they need to save keys.
+players/interfaces to un-bind the `wait` command if they wish to free up keys.
 (Ace, 8208917)
 
-`S`: Saving no longer resets the character's movement energy to 12, causing
-them to lose any bonus actions they might have that turn and any progress
-towards accumulating bonus actions on future turns. (Nitro, 0cd2e80)
+`S`: Saving no longer resets the character's movement energy to 12, and thus
+no longer loses any bonus actions the character might have that turn nor any
+progress towards accumulating bonus actions on future turns. (Nitro, 0cd2e80)
 
 `S`: Saving no longer blocks the ability to resume the following commands
 after interruption: `r`. (Nitro, 5c56a81)
@@ -424,8 +427,8 @@ after interruption: `r`. (Nitro, 5c56a81)
 
 `T`: Has had its timing rules change, because they were inconsistent in 3.4.3;
 now takes the same time as the new `A` command would take, which is typically
-faster than `T` from 3.4.3 (unless in a slow polyform), but slower than `A`
-from 3.4.3. (4, e5262d7)
+faster than `T` from 3.4.3 (except when in a slow polyform), but slower than
+`A` from 3.4.3. (4, e5262d7)
 
 `z`: Now formally IDs a wand as teleport if you zap yourself under the same
 circumstances as if you zap your steed. (4, b7347be)
@@ -471,8 +474,8 @@ in their weight and price range. (Ace, 767aa23, 5a6e10f)
 
 Cursed light sources will be marked as such when they fail to light (affecting
 gameplay in a marginal way if they subsequently get cancelled and then
-randomly cursed, because the player will know that the random curse hit them).
-(Ace, 5736180)
+randomly cursed, because the player will know that the random curse hit that
+item in particular). (Ace, 5736180)
 
 The Candelabrum of Invocation no longer becomes permanently unusable if you
 take it to the Vibrating Square when it has exactly one turn left. (Grunt,
@@ -613,7 +616,7 @@ locations (such as a fountain or boulder over a pit). (Grunt, C343-37,
 they polymorph into a non-mimic. (4, C343-391, 89eef0f)
 
 `m`: Mimics mimicking objects that block sight (such as boulders and doors) no
-longer continue block sight after being genocided. (Dyna, 2f9436c)
+longer continue to block sight after being genocided. (Dyna, 2f9436c)
 
 `n`,`&`: Demon princes no longer demand bribes from helpless players, and
 foocubi and nymphs no longer attempt to seduce or charm them. (Grunt,
@@ -778,7 +781,7 @@ account (in 3.4.3, there was code to calculate them, but the code for
 attacking forgot to call it). (Spork, 757c4d6)
 
 Helplessness sources are now tracked independently (thus, it's no longer the
-case that 4 turn of sleep + 20 turns of paralysis = 20 turns of sleep, as in
+case that 4 turns of sleep + 20 turns of paralysis = 20 turns of sleep, as in
 previous versions of NetHack). (4, 971d4e9, c55c327)
 
 
@@ -856,7 +859,7 @@ hits a monster. (Un, C343-100, 44fef77)
 
 The game no longer corrupts memory when destroying the following items while
 wielded: cream pie via `a`; candle or potion of oil via burn timeout; figurine
-via autotransformation; poytion of polymorph via quaffing (and transforming
+via autotransformation; potion of polymorph via quaffing (and transforming
 into something with no hands). (Un and Ace, C343-218, C343-275, C343-276,
 C343-398, 0fcbbbf, 71cf898)
 
@@ -937,7 +940,7 @@ movement would. (4, 6860cd2)
 `:`: Has been split into two commands: `:` (lists what is here without feeling
 the square, equivalent to the old `:` when sighted), and `^G` (feels the
 ground, costing a turn and touching items on it, equivalent to the old `:`
-when blind). (4, 955a4e7, f394be6)
+when blind). (4, 955a4e7, f394be6, 1c76f8f)
 
 `;`: Now shows a quick description of map cells as the cursor is moved over
 them, so that there's no need to select a number of cells you want to identify
@@ -974,7 +977,7 @@ behaviour via rebinding keys. (NAO, Nitro and 4, c1e315a, fe36496, 9c7596c)
 
 `C`: Items with randomized appearances can now be type-named even if you don't
 have a copy of the item handy to type-name (thus saving you from having to
-remember until another item with the same appearance finds its way to you
+remember until another item with the same appearance finds its way to your
 inventory); because of this, randomized-appearance items no longer prompt for
 names when destroyed (rather, there is a shortcut in the `C` menu to name the
 most recently destroyed randomized-appearance item). (Ace, 9562e5c)
@@ -998,6 +1001,9 @@ Dyna, 1115668, c489412)
 intersections) is now controlled via the `corridorbranch` option, not which
 command you use, and the three are now identical (freeing up any of them to be
 rebound, should you need more keys for whatever reason).
+
+`^G`: The old `^G` (debug mode create monster) was moved to `#genesis`; `^G`
+now feels the ground for items. (4, f394be6, 1c76f8f)
 
 `h`, etc.: Walking into a closed door is now interpreted as an attempt to open
 it. (Ace, cea2284)
@@ -1036,15 +1042,15 @@ cut down on typo-related item destruction and death. (Ace, eadc0ef)
 that the character has seen on levels they have visited, via a new command
 `^O`/`#overview`; additionally, a character can select a level from this menu
 to view their memory of it, and name levels using the `#annotate` or `Cf`
-commands. (Bilious, Un, Dyna, and Nitro, a155515, c461257, 5083a8e, 05472d5,
-3e4a189, b015a4c, a765dbf)
+commands. (Bilious, Un, Dyna, Nitro and 4, a155515, c461257, 5083a8e, 05472d5,
+3e4a189, b015a4c, a765dbf and others)
 
 `p`: The `p` command can now be cancelled without having to say "no" to each item
 individually. (Ace, 962456a)
 
 `P`,`R`,`T`,`W`: The `W`/`P` commands have been merged, as have the `T`/`R`
 commands. By default, the two keybindings for each of the merged commands are
-entirely interchangeable, but this frees up keys to that you could rebind them
+entirely interchangeable, but this frees up keys so that you could rebind them
 to something else if you wanted to. (4, 24c4359)
 
 `P`,`R`,`T`,`W`: Can now equip and unequip items in slots blocked by other
@@ -1215,8 +1221,8 @@ lesser-used information, giving room for HP and Pw bars (that also change
 color as they get lower). (Nitro and Ace, cd19816 and a13501c)
 
 The character's AC is now shown as a "Defence" value, that counts up from 0,
-rather than down from 10; there are no changes to anything other than the
-display in 4.3. (4, 25161ad)
+rather than down from 10; there are currently no changes to the AC formula, it
+merely displays differently. (4, 25161ad)
 
 The status area now lists many more statuses than before, such as
 "Levitating", and colors them appropriately. (Ace and 4, fd746b7, f9402ec,
@@ -1263,14 +1269,17 @@ The message area (and `^P`) now show which selections were made at prompts,
 menus, etc.. (4 and Dyna, 58295ae, 7ea9a49)
 
 The game now tracks the player's knowledge about whether doors are locked,
-unlocked, and/or trapped, drawing it via coloring the doors (as red, green,
-cyan respectively). (Ace, 599c3d1)
+unlocked, and/or trapped; in console play, this is accomplished via via
+coloring the doors (as red, green, cyan respectively), and there is a similar
+indicator in tiles. (Ace, 599c3d1)
 
-Background colors are now used to show information about the game: red =
-"there are stairs on this square" (including under items); brown = "this
-monster is peaceful"; blue = "this monster is tame"; magenta = "this monster
-is detected"; cyan = "this square is trapped". This is controlled by the
-`bgbranding`, `hilite_pet`, and `use_inverse` options. (4, b30c90a, a919baf)
+In console play, background colors are now used to show information about the
+game: red = "there are stairs on this square" (including under items); brown =
+"this monster is peaceful"; blue = "this monster is tame"; magenta = "this
+monster is detected"; cyan = "this square is trapped".  Similar information is
+available in tiles play, via the use of overlays on the tiles.  This is
+controlled by the `bgbranding`, `hilite_pet`, and `use_inverse` options. (4,
+b30c90a, a919baf)
 
 Map squares that the player has stepped on are now drawn differently in order
 to communicate this fact (controllable via the `floorcolor` option). (4,
@@ -1278,8 +1287,8 @@ a146d59, 5da195e)
 
 Menus are now drawn on a screen location that aims to avoid hiding important
 information; for instance, the inventory menu is drawn over the inventory
-sidebar (if there is one), so that you can still see the map in the process.
-(4, 69841a7, 4e77ee8)
+sidebar (if there is one), so that it does not hide the map or messages.  (4,
+69841a7, 4e77ee8)
 
 
 Outside the Game
@@ -1334,8 +1343,8 @@ The coding style was made more consistent. (Nitro, a73c088, d8dbbfe)
 The indentation and whitespace were made consistent across all files;
 previously, the code used a mix of 4-space indents, 1-tab indents, and
 4-spaces-for-1-indent-1-tab-for-2-indents styles, now everything uses 4-space
-indents and a consistent set of rules for thing like which lines to put braces
-on. (4, 4daa09e, 656fd82, d540858)
+indents and a consistent set of rules for things like which lines to put
+braces on. (4, 4daa09e, 656fd82, d540858)
 
 Dead (or mostly dead) code, constants, and variables (especially global
 variables) were removed. (Nitro and 4, 487ec18, b056309, 3160d45, 03367af and
@@ -1408,7 +1417,7 @@ f651183)
 
 Light and darkness are now properties of a map square, rather than of a
 background; the main practical benefit of this is improved rendering of
-unusual dungeon features in unusual lighting condition. (4, 3c06767, 3b11dc1)
+unusual dungeon features in unusual lighting conditions. (4, 3c06767, 3b11dc1)
 
 x coordinates and y coordinates now use the same storage internally. (4,
 e61bcb3 and others)
