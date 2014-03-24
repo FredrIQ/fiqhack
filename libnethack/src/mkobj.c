@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-03-12 */
+/* Last modified by Alex Smith, 2014-03-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -336,12 +336,15 @@ splitobj(struct obj *obj, long num)
 void
 replace_object(struct obj *obj, struct obj *otmp)
 {
+    if (obj->where == OBJ_FREE)
+        return; /* nothing to do */
+
     extract_nobj(otmp, &turnstate.floating_objects, NULL, 0);
 
     otmp->where = obj->where;
     switch (obj->where) {
     case OBJ_FREE:
-        /* do nothing */
+        panic("extracting otmp from floating_objects freed obj");
         break;
     case OBJ_INVENT:
         otmp->nobj = obj->nobj;
