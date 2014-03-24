@@ -1,5 +1,5 @@
 About this document:
-Last modified by Derrick Sund, 2014-03-06
+Last modified by Alex Smith, 2014-03-24
 
 Copyright (C) 2013 Alex Smith.
 
@@ -933,6 +933,11 @@ before. (Dyna, 2d5d701)
 `_`: Travel (and farmove and autoexplore) now respect the `movecommand`
 option, meaning (among other things) that they will displace pets if normal
 movement would. (4, 6860cd2)
+
+`:`: Has been split into two commands: `:` (lists what is here without feeling
+the square, equivalent to the old `:` when sighted), and `^G` (feels the
+ground, costing a turn and touching items on it, equivalent to the old `:`
+when blind). (4, 955a4e7, f394be6)
 
 `;`: Now shows a quick description of map cells as the cursor is moved over
 them, so that there's no need to select a number of cells you want to identify
