@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2014-03-16
+# Last modified by Alex Smith, 2014-03-31
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
@@ -3246,25 +3246,28 @@ sub run_command;
 ### Scalar manipulation
 
 # Deep compare on two scalars (a bit like a deep copy); returns true if they
-# are copies of each other (deep, shallow, or in between)
+# are copies of each other (deep, shallow, or in between).  $omitting can be
+# a regex that specifies hash keys that are considered to be irrelevant for
+# the purposes of the comparison.
 sub deepequals {
     my $x1 = shift;
     my $x2 = shift;
+    my $omitting = shift;
     !defined $x1 and return !defined $x2;
     !defined $x2 and return;
     !ref $x1 && !ref $x2 and return $x1 eq $x2; # neither is a reference
     !ref $x1 || !ref $x2 and return; # one is a reference, the other isn't
     ref $x1 ne ref $x2 and return; # they're different types of reference
-    ref $x1 eq 'SCALAR' and return deepequals($$x1, $$x2);
+    ref $x1 eq 'SCALAR' and return deepequals($$x1, $$x2, $omitting);
     if (ref $x1 eq 'ARRAY') {
         return unless $#$x1 == $#$x2;
-        deepequals($x1->[$_], $x2->[$_]) or return for 0..$#$x1;
+        deepequals($x1->[$_], $x2->[$_], $omitting) or return for 0..$#$x1;
         return 1;
     }
     if (ref $x1 eq 'HASH') {
-        my @keys1 = sort keys %$x1;
-        my @keys2 = sort keys %$x2;
-        return unless deepequals(\@keys1, \@keys2);
+        my @keys1 = sort grep {!$omitting || !/$omitting/} keys %$x1;
+        my @keys2 = sort grep {!$omitting || !/$omitting/} keys %$x2;
+        return unless deepequals(\@keys1, \@keys2, $omitting);
         deepequals($x1->{$_}, $x2->{$_}) or return for @keys1;
         return 1;
     }
@@ -4833,6 +4836,7 @@ sub set_proviced_outdeps {
     my $obj = shift;
     my $outdeps = shift; # undef if the rule no longer provices the object
     my ($objtype, $objvalue) = parse_objname $obj;
+    my $outdepends_changed = 1;
 
     progress_report 4, "Want to set hash of $obj via $pair...";
 
@@ -4853,6 +4857,10 @@ sub set_proviced_outdeps {
     if (deepequals($outdeps, $old_outdeps)) {
         mark_object_sure $pair, $obj, "hash stayed the same";
         return;
+    }
+
+    if (deepequals($outdeps, $old_outdeps, qr/^hash_on_disk:/)) {
+        $outdepends_changed = 0;
     }
 
     progress_report 4, "Setting hash of $obj via $pair.";
@@ -4900,9 +4908,10 @@ sub set_proviced_outdeps {
         # could cause mark_pair_changed to be a no-op) but the new xuse only
         # contains existing objects. (If the pair is not already changed, then
         # mark_pair_changed will recalculate the xuse and mark the xuse as
-        # known again.)
+        # known again.)  Exception: if the outdepends stay the same, we know
+        # the xuse calculation will too.
         mark_pair_xuse_unknown $cpair, "old xuse changed hash"
-            if !$objtype_is_special{$objtype};
+            if !$objtype_is_special{$objtype} && $outdepends_changed;
         mark_pair_changed $cpair, "xuse changed hash";
     }
 
@@ -7119,6 +7128,7 @@ MAINLOOP: while (1) {
                 if ($objtype_provided{$otype}) {
                     # do nothing, the hash is already correct
                 } elsif ($otype =~ /^(?:[bs]?path|standardlib)/) {
+                    $outhashes{$o} = deepclone($outhashes{$o});
                     unshift @{$outhashes{$o}},
                         "hash_on_disk:" . (file_hash $o) . ":$o";
                 } else {
