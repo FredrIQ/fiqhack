@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-26 */
+/* Last modified by Derrick Sund, 2014-03-17 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -198,13 +198,13 @@ curses_update_status(struct nh_player_info *pi)
     if (pi)
         player = *pi;
 
-    if (player.x == 0)
+    if (!game_is_running)
         return; /* called before the game is running */
 
     draw_status(&player, ui_flags.status3);
 
     /* prevent the cursor from flickering in the status line */
-    wmove(mapwin, player.y, player.x - 1);
+    wmove(mapwin, player.y, player.x);
 
     if (statuswin)
         wnoutrefresh(statuswin);

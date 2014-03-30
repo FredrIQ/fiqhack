@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-09 */
+/* Last modified by Derrick Sund, 2014-03-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1108,7 +1108,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
         if (!maxelen && *sp) {
             *sp = (char)0;
             helpless_endmsg = "You cannot write any more.";
-            pline("You only are able to write \"%s\"", ebuf);
+            pline("You are only able to write \"%s\".", ebuf);
         }
     }
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-04 */
+/* Last modified by Derrick Sund, 2014-03-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -64,7 +64,7 @@ static char *enlght_combatinc(const char *, int, int, char *);
 #endif
 
 const struct cmd_desc cmdlist[] = {
-    /* "str", "", defkey, altkey, wiz, buried, func, flags */
+    /* "str", "", defkey, altkey, buried, func, flags */
     {"adjust", "adjust inventory letters", M('a'), 0, TRUE, doorganize,
      CMD_ARG_OBJ | CMD_EXT},
     {"annotate", "name the current level", 0, 0, TRUE, donamelevel,
@@ -109,6 +109,8 @@ const struct cmd_desc cmdlist[] = {
      CMD_ARG_DIR | CMD_ARG_LIMIT},
     {"force", "force a lock", M('f'), 0, FALSE, doforce,
      CMD_EXT},
+    {"grope", "feel around blindly for things at your feet", M('g'), 0, FALSE,
+     dofeel, 0},
     {"history", "show a list of your historic deeds", 0, 0, TRUE, dohistory,
      CMD_EXT | CMD_NOTIME},
     {"idtrap", "identify a trap", '^', 0, TRUE, doidtrap,

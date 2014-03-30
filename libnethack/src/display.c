@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-09 */
+/* Last modified by Derrick Sund, 2014-03-18 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -1224,9 +1224,6 @@ int
 doredraw(void)
 {
     int x, y;
-
-    if (!u.ux)
-        return 0;       /* display isn't ready yet */
 
     if (Engulfed) {
         swallowed(1);
