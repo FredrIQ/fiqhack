@@ -47,6 +47,26 @@ error_reading_save(char *reason)
 static void NORETURN
 log_desync(void)
 {
+    /*
+     * The behaviour we want for this function:
+     *
+     * - If there is a save diff or backup beyond this point, move the
+     *   gamestate position forwards to the next such save diff or backup;
+     *
+     * - If we have write control over the save file (probably mutually
+     *   exclusive with the previous case, but should defer to it if we
+     *   implement a feature where it isn't), truncate the log to the
+     *   start of the turn;
+     *
+     * - Otherwise, ignore the rest of the current turn.
+     *
+     * The idea is that if the save file doesn't reflect the engine we're
+     * using, then either updating it is our job, in which case we need to
+     * switch over to our engine even if that involves replaying the turn;
+     * or updating it isn't our job, in which case we simply reproduce the
+     * output of some more qualified engine.
+     */
+
     panic("log_desync unimplemented");
 }
 
@@ -578,8 +598,9 @@ log_neutral_turnstate(void)
 
 
 /* Ensure that a command that was meant to have no effect actually did have no
-   effect. If it did have an effect, complain and revert the command (via use of
-   impossible()). */
+   effect. If it did have an effect, complain and restart the turn, which will
+   have the effect of undoing the command (as informational-only commands are
+   not saved anywhere). */
 void
 log_revert_command(void)
 {
@@ -591,14 +612,14 @@ log_revert_command(void)
     if (!mequal(&program_state.binary_save, &mf, TRUE)) {
         mfree(&mf);
         impossible("Informational command changed the gamestate");
-        terminate(RESTART_PLAY); /* for now */
+        terminate(RESTART_PLAY);
     }
 
     mfree(&mf);
 }
 
-/* Bones files must also be logged, since they are an input into the game state
-   */
+/* Bones files must also be logged, since they are an input into the game
+   state */
 void
 log_record_bones(struct memfile *mf)
 {
