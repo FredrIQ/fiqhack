@@ -787,6 +787,7 @@ start_replaying_logfile(char firstchar)
     if (logline && firstchar && firstchar != *logline) {
         /* Desync: the log contains one sort of input, but the engine is
            requesting another. */
+        free(logline);
         log_desync();
     }
 
@@ -993,8 +994,10 @@ log_replay_command(char *cmd, struct nh_cmd_arg *arg)
     if (!logline)
         return FALSE;
 
-    if (*logline < 'a' || *logline > 'z')
+    if (*logline < 'a' || *logline > 'z') {
+        free(logline)
         log_desync();
+    }
 
     lp = logline;
     lp2 = cmd;
@@ -1071,8 +1074,11 @@ log_replay_command(char *cmd, struct nh_cmd_arg *arg)
 void
 log_replay_no_more_options(void)
 {
-    if (start_replaying_logfile(0))
+    void *logline = start_replaying_logfile(0);
+    if (logline) {
+        free(logline);
         log_desync();
+    }
 }
 
 
