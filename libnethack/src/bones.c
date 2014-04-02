@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-05-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -261,8 +261,10 @@ make_bones:
         f->fid = -f->fid;
 
     /* check iron balls separately--maybe they're not carrying it */
-    if (uball)
-        uball->owornmask = uchain->owornmask = 0;
+    if (uball) {
+        uball->owornmask &= ~W_BALL;
+        uchain->owornmask &= ~W_CHAIN;
+    }
 
     /* dispose of your possessions, usually cursed */
     if (u.ugrave_arise == (NON_PM - 1)) {
