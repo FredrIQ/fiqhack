@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-02 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -249,6 +249,12 @@ full_write(int fd, const void *buffer, int len)
     return full_write(fd, ((const char *)buffer) + rv, len - rv);
 }
 
+/* TODO: Let's get rid of the hardcoded buffer length here some time.
+
+   Warning to anyone attempting this: vsnprintf's return value is broken on
+   Windows, so you'll need to use a loop expanding the buffer size there. (See
+   libuncursed for an example of the technique.)
+*/
 static int
 lvprintf(const char *fmt, va_list vargs)
 {
@@ -306,6 +312,8 @@ lgetline_malloc(int fd)
     long inbuflen = 0;  /* number of bytes read */
     long fpos = 0;      /* file pointer, relative to its original location */
     void *nlloc = NULL;
+    boolean at_eof = FALSE;
+
     do {
         inbuflen += 4;
         inbuflen *= 3;
@@ -313,22 +321,33 @@ lgetline_malloc(int fd)
         inbuf = realloc(inbuf, inbuflen);
         if (!inbuf)
             panic("Out of memory in lgetline_malloc");
+
         /* Return values from read:
            negative return = error
            zero return = EOF
            positive return = success, even if it didn't return as many
            bytes as expected (in which case we must rerun read) */
         inbuflen = read(fd, inbuf + fpos, inbuflen - fpos) + fpos;
-        /* TODO: EINTR */
-        if (inbuflen < fpos) { /* error */
-            free(inbuf);
-            return NULL;
+
+        /* Most errors are a problem. However, if the read is interrupted with
+           zero bytes read, then this is reported as an "error" EINTR rather
+           than a count of zero, so as to distinguish it from EOF. (This API
+           could have been better designed, really, but we're stuck with it
+           now.) */
+        at_eof = inbuflen == fpos;
+
+        if (inbuflen < fpos) {
+            if (errno != EINTR) {
+                free(inbuf);
+                return NULL;
+            }
+            inbuflen = fpos; /* we successfully read 0 bytes */
         }
 
         /* We want to break out of the loop if we're at EOF (inbuflen ==
            fpos) or if a newline was found. */
         nlloc = memchr(inbuf, '\x0a', fpos);
-        if (inbuflen == fpos)
+        if (at_eof)
             break;
 
         fpos = inbuflen;
@@ -428,9 +447,11 @@ log_newgame(unsigned long long start_time, unsigned int seed)
     const char *role;
     long start_of_third_line;
 
-    /* There's no portable way to print an unsigned long long. The standards
-       say %llu / %llx, but Windows doesn't follow them. It does, however,
-       correctly obey the standards for unit_least64_t. */
+    /* There's no portable way to print an unsigned long long. The standards say
+       %llu / %llx, but Windows doesn't follow them. It does, however, correctly
+       obey the standards for uint_least64_t (because those require the
+       specifier to be provided by a header file, which compensates for the fact
+       that it's nonstandard). */
     uint_least64_t start_time_l64 = (uint_least64_t) start_time;
 
     if (u.initgend == 1 && roles[u.initrole].name.f)
