@@ -21,7 +21,11 @@
 static void log_reset(void);
 static void log_binary(const char *buf, int buflen);
 static long get_log_offset(void);
+static long get_log_last_newline(void);
 static void load_gamestate_from_binary_save(boolean maybe_old_version);
+
+static boolean full_read(int fd, void *buffer, int len);
+static boolean full_write(int fd, const void *buffer, int len);
 
 /* We assume ASCII. (The whole log thing is done in binary.) */
 static_assert('A' == 65 && 'a' == 97,
@@ -42,6 +46,126 @@ error_reading_save(char *reason)
     terminate(ERR_RESTORE_FAILED);
 }
 
+/*
+ * The save file is too long, and the end needs to be removed. This happens in
+ * three cases:
+ *
+ * - The save file was mostly in a correct format, but contains incomplete lines
+ *   or some similar issue that prevents us reading the end of it;
+ *
+ * - The save file contains a partial turn from a version of the game engine
+ *   that the process responsible for updating it doesn't know how to replay;
+ *
+ * - A wizard-mode user has explicitly said "this save file needs its end
+ *   removing".
+ *
+ * The argument is an offset just past a newline (get_log_last_newline(),
+ * get_log_start_of_turn_offset(), program_state.end_of_gamestate_location
+ * respectively for the three cases above).
+ *
+ * In every case, the user will be prompted to confirm the recovery, and given a
+ * chance to decline it. If the recovery is declined, the game will be
+ * terminated (ERR_RECOVER_REFUSED). If the recovery is accepted, it will be
+ * performed, and then the engine will reload the game via RESTART_PLAY.
+ *
+ * This function must not call panic(), because it is called /from/ panic().
+ */
+void NORETURN
+log_recover(long offset)
+{
+    int n, selected[1];
+    char buf[BUFSZ];
+    struct nh_menulist menu;
+    boolean ok = TRUE;
+
+    /* Check to make sure that the offset we were given is actually sane.
+       If it isn't, the recover will have to be done manually. */
+
+    if (offset > 0) {
+        lseek(program_state.logfile, offset - 1, SEEK_SET);
+        ok = full_read(program_state.logfile, buf, 1);
+        if (ok && *buf != '\n')
+            ok = FALSE;
+    } else
+        ok = FALSE;
+
+    if (!ok)
+        error_reading_save("Trying to recover from corrupted backup save");
+
+    /* Treat everything that happens here as outside the main flow of the game;
+       we don't want to replay a recovery that happens in one process in another
+       process.  (This works correctly even if multiple processes reach this
+       menu at the same time; in that case, if any recovers the file, the menu
+       will close for all the others and they will reload from the newly
+       recovered file.) */
+    program_state.in_zero_time_command = TRUE;
+
+    init_menulist(&menu);
+
+    add_menutext(&menu,
+                 "The gamestate or save file is internally inconsistent.");
+    add_menutext(&menu,
+                 "However, the game can be recovered from a backup save.");
+    sprintf(buf, "This will lose approximately %.4g%% of your progress.",
+            1.0 - ((float)offset /
+                   (float)lseek(program_state.logfile, 0, SEEK_END)));
+    add_menutext(&menu, buf);
+    add_menutext(&menu, "");
+
+    add_menuitem(&menu, 1, "Automatically recover the save file", 'R', FALSE);
+    add_menuitem(&menu, 2, "Leave the save file to be recovered manually", 'Q',
+                 FALSE);
+
+    n = display_menu(&menu, "The save file is corrupted...",
+                     PICK_ONE, PLHINT_URGENT, selected);
+
+    if (n && selected[0] == 1) {
+        /* Automatic recovery. */
+
+        char buf[BUFSZ];
+
+        /* Get a lock on the file. This is a little like start_updating_logfile,
+           but without so many checks (because we /expect/ the file to be
+           inconsistent in some way); we don't care that the file hasn't
+           lengthened, and we don't care whether we're viewing or not (any
+           process is allowed to recover a corrupted file). */
+
+        if (!change_fd_lock(program_state.logfile, LT_WRITE, 2))
+            panic("Could not upgrade to write lock on logfile");
+
+        /* TODO: check recovery count */
+
+        /* Increase the recovery count. */
+
+        program_state.expected_recovery_count++;
+        sprintf(buf, "NHGAME %08x %d.%03d.%03d\x0a",
+                program_state.expected_recovery_count,
+                VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
+
+        lseek(program_state.logfile, 0, SEEK_SET);
+        if (!full_write(program_state.logfile, buf, strlen(buf))) {
+            /* This is bad enough to panic, but we can't panic, so... */
+            raw_printf("Could not write to save file to recover it!\n");
+            terminate(ERR_RESTORE_FAILED);
+        }
+
+        /* Truncate the file. */
+        if (ftruncate(program_state.logfile, offset) < 0) {
+            raw_printf("Could not truncate save file during recovery!\n");
+            terminate(ERR_RESTORE_FAILED);
+        }
+
+        /* Relinquish the lock, and reload the file. */
+        if (!change_fd_lock(program_state.logfile, LT_READ, 1))
+            panic("Could not downgrade to read lock on logfile");
+        terminate(RESTART_PLAY);
+
+    } else {
+        /* Manual recovery. */
+        terminate(ERR_RECOVER_REFUSED);
+    }
+}
+
 /* The save file was in a correct format, but referred to something that
    couldn't possibly happen in the gamestate. */
 static void NORETURN
@@ -56,7 +180,7 @@ log_desync(void)
      * - If we have write control over the save file (probably mutually
      *   exclusive with the previous case, but should defer to it if we
      *   implement a feature where it isn't), truncate the log to the
-     *   start of the turn;
+     *   start of the turn (i.e. just use log_recover);
      *
      * - Otherwise, ignore the rest of the current turn.
      *
@@ -224,12 +348,6 @@ base64_decode(const char *in, char *out, int outlen)
 static int lvprintf(const char *fmt, va_list vargs) PRINTFLIKE(1,0);
 static int lprintf(const char *fmt, ...) PRINTFLIKE(1,2);
 
-static long
-get_log_offset(void)
-{
-    return lseek(program_state.logfile, 0, SEEK_CUR);
-}
-
 /* full_read and full_write are versions of the POSIX read/write that never do
    short reads or short writes. They return TRUE if all the bytes requested were
    read/written; FALSE if something went wrong (either because there weren't
@@ -268,6 +386,7 @@ full_write(int fd, const void *buffer, int len)
         return TRUE;
     return full_write(fd, ((const char *)buffer) + rv, len - rv);
 }
+
 
 /* TODO: Let's get rid of the hardcoded buffer length here some time.
 
@@ -373,7 +492,16 @@ lgetline_malloc(int fd)
         fpos = inbuflen;
     } while (!nlloc);
 
-    if (!nlloc) {
+    if (!nlloc && fpos > 0) {
+        /* The save file ends with a partial line, something that should never
+           happen in normal operation (it indicates that a process crashed in
+           the middle of a write). Get rid of the partial line. */
+
+        free(inbuf);
+        log_recover(get_log_last_newline());
+
+    } else if (!nlloc && fpos == 0) {
+        /* At EOF, which is at the start of the line. */
         free(inbuf);
         return NULL;
     }
@@ -387,6 +515,83 @@ lgetline_malloc(int fd)
 
     return inbuf;
 }
+
+
+/* Returns the offset to the current file pointer in the log. */
+static long
+get_log_offset(void)
+{
+    return lseek(program_state.logfile, 0, SEEK_CUR);
+}
+
+/* Returns the offset just past the end of the last valid line in the log.  This
+   is used to determine how much of the save file is meaningful after a process
+   crashes during a write. */
+static long
+get_log_last_newline(void)
+{
+    long o = get_log_offset();
+    long rv;
+    char inchar[2] = {0, 0};
+    lseek(program_state.logfile, -1, SEEK_END);
+
+    /* Run through the file backwards, reading one char at a time until we find
+       a newline. (This is rather less efficient than reading blocks at a time
+       and scanning them backwards, but the code is much simpler, and given that
+       this only runs in very exceptional circumstances and most lines are short
+       it's unlikely to be a performance bottleneck.) */
+
+    while (full_read(program_state.logfile, inchar, 1) && *inchar != '\n')
+        if (!lseek(program_state.logfile, -2, SEEK_CUR))
+            break;
+
+    if (*inchar == '\n') {
+        /* We found our newline. The file pointer is now just past it. */
+        rv = get_log_offset();
+        lseek(program_state.logfile, o, SEEK_SET);
+        return rv;
+    }
+
+    /* We didn't find any newlines in the file. This is pretty massively bad.
+       However, it can only happen if we crashed right at the start of the new
+       game process, in which case, may as well just start a new game. */
+    error_reading_save("save file header is incomplete");
+}
+
+/* Returns the offset corresponding to the start of the current turn
+   (technically speaking, the most recent neutral turnstate). This is
+   program_state.binary_save_location plus one line.
+
+   This function assumes we have at least a read lock on the log, but that's
+   always the case during normal gameplay. */
+long
+get_log_start_of_turn_offset(void)
+{
+    long o = get_log_offset();
+    long rv;
+    void *save_diff_line;
+
+    lseek(program_state.logfile, program_state.binary_save_location, SEEK_SET);
+
+    /* Move forwards one line. In the exceptional case that we have a binary save
+       location without a matching binary save (which is probably impossible, but
+       may as well handle it just in case it isn't), we treat it the same way as
+       an incomplete line. */
+
+    save_diff_line = lgetline_malloc(program_state.logfile);
+
+    if (!save_diff_line)
+        log_recover(get_log_last_newline());
+
+    free(save_diff_line);
+
+    /* Now return the offset we found, taking care to restore the file
+       pointer. */
+    rv = get_log_offset();
+    lseek(program_state.logfile, o, SEEK_SET);
+    return rv;
+}
+
 
 /***** Locking *****/
 
@@ -495,6 +700,8 @@ log_newgame(unsigned long long start_time, unsigned int seed)
        invariant now. */
     program_state.gamestate_location = start_of_third_line;
     program_state.end_of_gamestate_location = get_log_offset();
+
+    program_state.expected_recovery_count = 1;
 }
 
 void
@@ -721,7 +928,7 @@ log_record_menu(boolean isobjmenu, int itemcount, const void *el)
 
     lprintf("\x0a");
 
-    stop_updating_logfile(1);    
+    stop_updating_logfile(1);
 }
 
 void
@@ -939,7 +1146,7 @@ log_replay_menu(boolean isobjmenu, int *itemcount, void *el)
 
     if (!logline)
         return FALSE;
-    
+
     *itemcount = 0;
 
     lp = logline + 1;
@@ -995,7 +1202,7 @@ log_replay_command(char *cmd, struct nh_cmd_arg *arg)
         return FALSE;
 
     if (*logline < 'a' || *logline > 'z') {
-        free(logline)
+        free(logline);
         log_desync();
     }
 
@@ -1084,7 +1291,8 @@ log_replay_no_more_options(void)
 
 /* Code common to nh_get_savegame_status and log loading */
 static enum nh_log_status
-read_log_header(int fd, struct nh_game_info *si, boolean do_locking)
+read_log_header(int fd, struct nh_game_info *si,
+                int *recovery_count, boolean do_locking)
 {
     char *logline, *p;
     char namebuf[BUFSZ];
@@ -1098,8 +1306,8 @@ read_log_header(int fd, struct nh_game_info *si, boolean do_locking)
     if (!logline)
         goto invalid_log;
 
-    if (sscanf(logline, "NHGAME %*8x %d.%3d.%3d",
-               &version_major, &version_minor, &version_patchlevel) != 3)
+    if (sscanf(logline, "NHGAME %8x %d.%3d.%3d", recovery_count,
+               &version_major, &version_minor, &version_patchlevel) != 4)
         goto invalid_logline;
 
     free(logline);
@@ -1152,9 +1360,10 @@ enum nh_log_status
 nh_get_savegame_status(int fd, struct nh_game_info *si)
 {
     struct nh_game_info dummy;
+    int dummy2;
     if (!si)
         si = &dummy;
-    return read_log_header(fd, si, TRUE);
+    return read_log_header(fd, si, &dummy2, TRUE);
 }
 
 /* Sets the gamestate pointer and the actual gamestate from the binary save
@@ -1489,7 +1698,9 @@ log_sync(void)
     if (program_state.binary_save_location == 0) {
         /* Check it's a valid save file; simultaneously, move the file
            pointer to the start of line 4 (the first save backup). */
-        if (read_log_header(program_state.logfile, &si, FALSE) != LS_SAVED)
+        if (read_log_header(program_state.logfile, &si,
+                            &program_state.expected_recovery_count,
+                            FALSE) != LS_SAVED)
             error_reading_save(
                 "logfile has a bad header (is it from an old version?)\n");
 
@@ -1554,7 +1765,7 @@ log_sync(void)
        TODO: We could increase the loading speed via caching the end location of
        the save diff / backup, rather than skipping it each time round the
        loop. That isn't implemented yet in order to start off by getting the
-       simplest possilbe version of the code working. */
+       simplest possible version of the code working. */
     sloc = program_state.binary_save_location;
     while (relative_to_target(program_state.binary_save_location) < 0) {
         lseek(program_state.logfile, sloc, SEEK_SET);
@@ -1635,6 +1846,7 @@ log_reset(void)
     program_state.ok_to_diff = FALSE;
     program_state.input_was_just_replayed = FALSE;
 
+    program_state.expected_recovery_count = 0;
     program_state.save_backup_location = 0;
     program_state.binary_save_location = 0;
     program_state.gamestate_location = 0;

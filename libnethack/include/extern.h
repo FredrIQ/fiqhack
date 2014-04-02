@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-17 */
+/* Last modified by Alex Smith, 2014-04-02 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -768,8 +768,13 @@ extern void log_newgame(unsigned long long start_time,
                         unsigned int seed);
 extern void log_neutral_turnstate(void);
 extern void log_backup_save(void);
+
 extern void log_sync(void);
+
 extern void log_revert_command(void);
+extern void NORETURN log_recover(long);
+extern long get_log_start_of_turn_offset(void);
+
 extern void log_record_bones(struct memfile *mf);
 extern boolean log_replay_bones(struct memfile *mf);
 extern void log_record_input(const char *, ...) PRINTFLIKE(1,2);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-19 */
+/* Last modified by Alex Smith, 2014-04-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -407,6 +407,7 @@ extern struct sinfo {
     int logfile;                                      /* file descriptor */
     struct memfile binary_save;
     boolean binary_save_allocated;
+    int expected_recovery_count;
     long last_save_backup_location_location; /* bytes from start of file */
     long save_backup_location;               /* bytes from start of file */
     long binary_save_location;               /* bytes from start of file */

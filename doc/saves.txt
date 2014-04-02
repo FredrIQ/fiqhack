@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2013-12-29
+Last modified by Alex Smith, 2014-04-02
 
 Copyright (C) 2013 Alex Smith.
 
@@ -331,13 +331,13 @@ NetHack save files need to follow the following rules:
   * If a process ever discovers that the recovery count in the file header has
     increased since its last read (and holds at least a read lock on the
     file), either because it just recovered it or because some other process
-    discovered it, it should discard its entire knowledge about the contents
-    of the file and reread it from scratch.  (This prevents corruption at the
-    end of the file if a process recovers a file, then writes to the end of
-    it, and happens to leave the file the same length as some other process
-    was expecting.)  It may, someday, be worth changing this rule to allow
-    some sort of method of communicating how much of the file was deleted;
-    this might be needed for reasonable performance in multiplayer, where
+    recovered it, it should discard its entire knowledge about the contents of
+    the file and reread it from scratch.  (This prevents corruption at the end
+    of the file if a process recovers a file, then writes to the end of it,
+    and happens to leave the file the same length as some other process was
+    expecting.)  It may, someday, be worth changing this rule to allow some
+    sort of method of communicating how much of the file was deleted; this
+    might be needed for reasonable performance in multiplayer, where
     recoveries happen every time one player completes a turn while the other
     player is halfway through theirs.
 
@@ -345,10 +345,10 @@ NetHack save files need to follow the following rules:
     If a write lock is held for more than a second, something has gone wrong;
     a process that notices a long-held write lock on a save file should notify
     the user with a phrase such as "stuck process", "undergoing maintenance",
-    or the like (depending on whether the proces holding the lock is a NetHack
-    4 process or something else).  In the case of a stuck process, it may
-    attempt to free the lock using `SIGHUP`, `SIGTERM` or `SIGKILL` (in that
-    order), but only upon request from the user.
+    or the like (depending on whether the process holding the lock is a
+    NetHack 4 process or something else).  In the case of a stuck process, it
+    may attempt to free the lock using `SIGHUP`, `SIGTERM` or `SIGKILL` (in
+    that order), but only upon request from the user.
 
   * A process may not even read from a save file, not even to check the status
     in the header, unless it has a read lock on it.  (It is possible for
@@ -568,17 +568,17 @@ into the following categories:
     name, not index, in the NetHack 4.3 series; any options that are not saved
     in the save file will be assumed to be newly introduced options and given
     default values, and unrecognised options will be assumed to be recently
-    deleted options and ignored.
+    deleted options and ignored.  (TODO: This description does not appear to
+    match the current reality.)
 
   * State that tracks the current progress of commands being executed, in the
     global variable `turnstate`.  This contains information about, say,
-    whether the pathfinding is doing a travel or an autoexplore, or whether
-    the player has consumed any gametime yet in their turn.  There are two
-    special fields here, `occupation` and `multi`; either being nonzero means
-    that the command is not complete yet (even if the action is), and thus
-    that a binary save should not be produced.  When a command is complete (or
-    when a new game is started or a binary save is loaded), all the fields are
-    reset.
+    whether the pathfinding is doing a travel or an autoexplore, or whether a
+    prayer is responsive.  This also stores helplessness; while the player is
+    helpless, we treat the command as not necessarily being complete yet (even
+    if the action the player performed is), and thus that a binary save should
+    not be produced.  When a command is complete (or when a new game is
+    started or a binary save is loaded), all the fields are reset.
 
   * Information about an entire dungeon, a single dungeon level, or a single
     player within the dungeon.  (In previous versions of NetHack, dungeons
@@ -591,7 +591,9 @@ into the following categories:
     While the program is running, these are stored in `gamestate`, `levels`,
     and `us` respectively.  (`level` is a pointer into `levels`, and `u` a
     pointer into `us`, that describe the current player's dungeon level, and
-    the current player, respectively.)
+    the current player, respectively.  Currently `us` is not implemented, and
+    the code just uses `&u` instead; this will change when multiplayer is
+    implemented.)
 
   * State involved with managing the save system (current log file descriptor,
     target location, information about whether a state is being loaded, etc.).
@@ -609,10 +611,15 @@ into the following categories:
     playing, the target location is always at the end of the file.)
 
   * State involved with communicating with the interface (for instance, the
-    list of extra option values to reply with to the UI option parsing code).
-    This is never saved, and might not even be reset between games; instead,
-    it is valid between `nh_lib_init` and `nh_lib_exit`.  None of this
-    information may ever be allowed to affect gameplay in any way.  This is
-    stored in `uistate`, apart from `windowprocs` (which a special case,
-    because it's part of the API), which is a variable of its own.
+    list of extra option values to reply with to the UI option parsing code in
+    an older version of the options code).  This is never saved, and might not
+    even be reset between games; instead, it is valid between `nh_lib_init`
+    and `nh_lib_exit`.  None of this information may ever be allowed to affect
+    gameplay in any way.  Currently, this is just `windowprocs` (which a
+    special case, because it's part of the API), which is a variable of its
+    own, because we removed all the other uses of those sorts of variable; we
+    will invent a new namespace for this if it ever become necessary again.
+
+  * Global and static variables we haven't got around to removing yet.  There
+    are so many of them :-(
 
