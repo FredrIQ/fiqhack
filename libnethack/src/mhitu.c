@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-16 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -447,11 +447,11 @@ mattacku(struct monst *mtmp)
                   mimic_obj_name(&youmonst), an(mons[u.umonnum].mname),
                   u.uplname);
 
-        char buf[BUFSZ];
-        sprintf(buf, "You appear to be %s again.",
-                Upolyd ? (const char *)an(youmonst.
-                                            data->mname) : (const char *)
-                "yourself");
+        const char *buf;
+        buf = msgprintf("You appear to be %s again.",
+                        Upolyd ?
+                        (const char *)an(youmonst.data->mname) :
+                        (const char *)"yourself");
         cancel_mimicking(buf); /* immediately stop mimicking */
 
         return 0;
@@ -495,10 +495,11 @@ mattacku(struct monst *mtmp)
 
         if (!rn2(10) && !mtmp->mcan) {
             int numseen, numhelp;
-            char buf[BUFSZ], genericwere[BUFSZ];
+            const char *buf, *genericwere;
 
-            strcpy(genericwere, "creature");
-            numhelp = were_summon(mdat, FALSE, &numseen, genericwere);
+            genericwere = "creature";
+
+            numhelp = were_summon(mdat, FALSE, &numseen, &genericwere);
             if (youseeit) {
                 pline("%s summons help!", Monnam(mtmp));
                 if (numhelp > 0) {
@@ -514,17 +515,21 @@ mattacku(struct monst *mtmp)
                     from_nowhere = "";
                 } else
                     from_nowhere = " from nowhere";
+
                 if (numhelp > 0) {
                     if (numseen < 1)
                         pline("You feel hemmed in.");
                     else {
                         if (numseen == 1)
-                            sprintf(buf, "%s appears", an(genericwere));
+                            buf = msgprintf("%s appears", an(genericwere));
                         else
-                            sprintf(buf, "%s appear", makeplural(genericwere));
-                        pline("%s%s!", upstart(buf), from_nowhere);
+                            buf = msgprintf("%s appear",
+                                            makeplural(genericwere));
+                        pline("%s%s!", msgupcasefirst(buf), from_nowhere);
                     }
-                }       /* else no help came; but you didn't know it tried */
+                }
+                /* else no help came; but you didn't know it tried */
+
             }
         }
     }
@@ -860,7 +865,6 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     const struct permonst *mdat = mtmp->data;
     int uncancelled, ptmp;
     int dmg, armpro, permdmg;
-    char buf[BUFSZ];
     const struct permonst *olduasmon = youmonst.data;
     int res;
     struct attack noseduce;
@@ -1062,9 +1066,9 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     dopois:
         hitmsg(mtmp, mattk);
         if (uncancelled && !rn2(8)) {
-            sprintf(buf, "%s %s", s_suffix(Monnam(mtmp)),
-                    mpoisons_subj(mtmp, mattk));
-            poisoned(buf, ptmp, mdat->mname, 30);
+            poisoned(msgprintf("%s %s", s_suffix(Monnam(mtmp)),
+                               mpoisons_subj(mtmp, mattk)),
+                     ptmp, mdat->mname, 30);
         }
         break;
     case AD_DRIN:
@@ -1205,14 +1209,10 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                         Stoned = 5;
                         delayed_killer = mtmp->data->mname;
                         if (mtmp->data->geno & G_UNIQ) {
-                            if (!type_is_pname(mtmp->data)) {
-                                static char kbuf[BUFSZ];
-
-                                /* "the" buffer may be reallocated */
-                                strcpy(kbuf, the(delayed_killer));
-                                delayed_killer = kbuf;
-                            }
-                            killer_format = KILLED_BY;
+                            if (!type_is_pname(mtmp->data))
+                                killer_format = KILLED_BY_THE;
+                            else
+                                killer_format = KILLED_BY;
                         } else
                             killer_format = KILLED_BY_AN;
                         return 1;
@@ -1242,11 +1242,11 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                     !Amphibious) {
                     pline("%s drowns you...", Monnam(mtmp));
                     killer_format = waterbody_prefix(mtmp->mx, mtmp->my);
-                    sprintf(buf, "%s by %s",
-                            Is_waterlevel(&u.uz) ? "the Plane of Water" :
-                            waterbody_name(mtmp->mx, mtmp->my),
-                            an(mtmp->data->mname));
-                    killer = buf;
+                    killer = msgprintf(
+                        "%s by %s",
+                        Is_waterlevel(&u.uz) ? "the Plane of Water" :
+                        waterbody_name(mtmp->mx, mtmp->my),
+                        an(mtmp->data->mname));
                     done(DROWNING);
                 } else if (mattk->aatyp == AT_HUGS)
                     pline("You are being crushed.");
@@ -1307,22 +1307,26 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             }
             break;
         }
-        buf[0] = '\0';
-        switch (steal(mtmp, buf)) {
-        case -1:
-            return 2;
-        case 0:
-            break;
-        default:
-            if (!is_animal(mtmp->data) && !tele_restrict(mtmp))
-                rloc(mtmp, FALSE);
-            if (is_animal(mtmp->data) && *buf) {
-                if (canseemon(mtmp))
-                    pline("%s tries to %s away with %s.", Monnam(mtmp),
-                          locomotion(mtmp->data, "run"), buf);
+
+        {
+            const char *buf = "";
+            
+            switch (steal(mtmp, &buf)) {
+            case -1:
+                return 2;
+            case 0:
+                break;
+            default:
+                if (!is_animal(mtmp->data) && !tele_restrict(mtmp))
+                    rloc(mtmp, FALSE);
+                if (is_animal(mtmp->data) && *buf) {
+                    if (canseemon(mtmp))
+                        pline("%s tries to %s away with %s.", Monnam(mtmp),
+                              locomotion(mtmp->data, "run"), buf);
+                }
+                monflee(mtmp, 0, FALSE, FALSE);
+                return 3;
             }
-            monflee(mtmp, 0, FALSE, FALSE);
-            return 3;
         }
         break;
 
@@ -1675,13 +1679,10 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
         newsym(mtmp->mx, mtmp->my);
 
         if (is_animal(mtmp->data) && u.usteed) {
-            char buf[BUFSZ];
-
             /* Too many quirks presently if hero and steed are swallowed.
                Pretend purple worms don't like horses for now :-) */
-            strcpy(buf, mon_nam(u.usteed));
-            pline("%s lunges forward and plucks you off %s!", Monnam(mtmp),
-                  buf);
+            pline("%s lunges forward and plucks you off %s!",
+                  Monnam(mtmp), mon_nam(u.usteed));
             dismount_steed(DISMOUNT_ENGULFED);
         } else
             pline("%s engulfs you!", Monnam(mtmp));
@@ -2204,7 +2205,7 @@ doseduce(struct monst *mon)
 {
     struct obj *ring, *nring;
     boolean fem = (mon->data == &mons[PM_SUCCUBUS]);    /* otherwise incubus */
-    char qbuf[QBUFSZ];
+    const char *qbuf;
 
     if (mon->mcan || mon->mspec_used) {
         pline("%s acts as though %s has got a %sheadache.", Monnam(mon),
@@ -2228,12 +2229,13 @@ doseduce(struct monst *mon)
             continue;
         if (fem) {
             if (rn2(20) < ACURR(A_CHA)) {
-                sprintf(qbuf, "\"That %s looks pretty.  May I have it?\"",
-                        safe_qbuf("",
-                                  sizeof
-                                  ("\"That  looks pretty.  May I have it?\""),
-                                  xname(ring), simple_typename(ring->otyp),
-                                  "ring"));
+                qbuf = msgprintf(
+                    "\"That %s looks pretty.  May I have it?\"",
+                    safe_qbuf("",
+                              sizeof
+                              ("\"That  looks pretty.  May I have it?\""),
+                              xname(ring), simple_typename(ring->otyp),
+                              "ring"));
                 makeknown(RIN_ADORNMENT);
                 if (yn(qbuf) == 'n')
                     continue;
@@ -2246,7 +2248,6 @@ doseduce(struct monst *mon)
             freeinv(ring);
             mpickobj(mon, ring);
         } else {
-            char buf[BUFSZ];
             enum objslot slot = os_invalid;
 
             if (uleft && uright && uleft->otyp == RIN_ADORNMENT &&
@@ -2255,12 +2256,12 @@ doseduce(struct monst *mon)
             if (ring == uleft || ring == uright)
                 continue;
             if (rn2(20) < ACURR(A_CHA)) {
-                sprintf(qbuf,
-                        "\"That %s looks pretty.  Would you wear it for me?\"",
-                        safe_qbuf("", sizeof ("\"That  looks pretty.  Would "
-                                              "you wear it for me?\""),
-                                  xname(ring), simple_typename(ring->otyp),
-                                  "ring"));
+                qbuf = msgprintf(
+                    "\"That %s looks pretty.  Would you wear it for me?\"",
+                    safe_qbuf("", sizeof ("\"That  looks pretty.  Would "
+                                          "you wear it for me?\""),
+                              xname(ring), simple_typename(ring->otyp),
+                              "ring"));
                 makeknown(RIN_ADORNMENT);
                 if (yn(qbuf) == 'n')
                     continue;
@@ -2280,15 +2281,13 @@ doseduce(struct monst *mon)
                       the(xname(ring)), body_part(HAND));
                 slot = os_ringl;
             } else if (uright && uright->otyp != RIN_ADORNMENT) {
-                strcpy(buf, xname(uright));
                 pline("%s replaces your %s with your %s.",
-                      Blind ? "He" : Monnam(mon), buf, xname(ring));
+                      Blind ? "He" : Monnam(mon), xname(uright), xname(ring));
                 setunequip(uright);
                 slot = os_ringr;
             } else if (uleft && uleft->otyp != RIN_ADORNMENT) {
-                strcpy(buf, xname(uleft));
                 pline("%s replaces your %s with your %s.",
-                      Blind ? "He" : Monnam(mon), buf, xname(ring));
+                      Blind ? "He" : Monnam(mon), xname(uleft), xname(ring));
                 setunequip(uleft);
                 slot = os_ringl;
             } else {
@@ -2447,21 +2446,21 @@ doseduce(struct monst *mon)
 static void
 mayberem(struct obj *obj, const char *str)
 {
-    char qbuf[QBUFSZ];
+    const char *qbuf;
 
     if (!obj || !obj->owornmask)
         return;
 
     if (rn2(20) < ACURR(A_CHA)) {
-        sprintf(qbuf, "\"Shall I remove your %s, %s?\"", str,
-                (!rn2(2) ? "lover" : !rn2(2) ? "dear" : "sweetheart"));
+        qbuf = msgprintf("\"Shall I remove your %s, %s?\"", str,
+                         (!rn2(2) ? "lover" : !rn2(2) ? "dear" : "sweetheart"));
         if (yn(qbuf) == 'n')
             return;
     } else {
-        char hairbuf[BUFSZ];
+        const char *hairbuf;
 
-        sprintf(hairbuf, "let me run my fingers through your %s",
-                body_part(HAIR));
+        hairbuf = msgprintf("let me run my fingers through your %s",
+                            body_part(HAIR));
         verbalize("Take off your %s; %s.", str,
                   (obj == uarm) ? "let's get a little closer" :
                   (obj == uarmc || obj == uarms) ? "it's in the way" :
@@ -2675,3 +2674,4 @@ cloneu(void)
 
 
 /*mhitu.c*/
+

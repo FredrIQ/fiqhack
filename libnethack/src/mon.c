@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-20 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -706,9 +706,8 @@ meatobj(struct monst *mtmp)
     struct obj *otmp, *otmp2;
     const struct permonst *ptr;
     int poly, grow, heal, count = 0, ecount = 0;
-    char buf[BUFSZ];
+    const char *buf = "";
 
-    buf[0] = '\0';
     /* If a pet, eating is handled separately, in dog.c */
     if (mtmp->mtame)
         return 0;
@@ -769,7 +768,7 @@ meatobj(struct monst *mtmp)
         } else if (otmp->oclass != ROCK_CLASS && otmp != uball &&
                    otmp != uchain) {
             if ((otmp->otyp == CORPSE) && is_rider(&mons[otmp->corpsenm])) {
-                strcpy(buf, "");
+                buf = "";
                 if (cansee(mtmp->mx, mtmp->my)) {
                     pline("%s attempts to engulf %s.", Monnam(mtmp),
                           distant_name(otmp, doname));
@@ -787,10 +786,10 @@ meatobj(struct monst *mtmp)
             }
             ++ecount;
             if (ecount == 1) {
-                sprintf(buf, "%s engulfs %s.", Monnam(mtmp),
-                        distant_name(otmp, doname));
+                buf = msgprintf("%s engulfs %s.", Monnam(mtmp),
+                                distant_name(otmp, doname));
             } else if (ecount == 2)
-                sprintf(buf, "%s engulfs several objects.", Monnam(mtmp));
+                buf = msgprintf("%s engulfs several objects.", Monnam(mtmp));
             obj_extract_self(otmp);
             mpickobj(mtmp, otmp);       /* slurp */
         }
@@ -1523,10 +1522,10 @@ corpse_chance(struct monst *mon,
                 if (magr == &youmonst) {
                     pline("There is an explosion in your %s!",
                           body_part(STOMACH));
-                    sprintf(killer_buf, "%s explosion", s_suffix(mdat->mname));
+                    killer = msgprintf("%s explosion", s_suffix(mdat->mname));
                     if (Half_physical_damage)
                         tmp = (tmp + 1) / 2;
-                    losehp(tmp, killer_buf, KILLED_BY_AN);
+                    losehp(tmp, killer, KILLED_BY_AN);
                 } else {
                     You_hear("an explosion.");
                     magr->mhp -= tmp;
@@ -1542,8 +1541,7 @@ corpse_chance(struct monst *mon,
                 return FALSE;
             }
 
-            sprintf(killer_buf, "%s explosion", s_suffix(mdat->mname));
-            killer = killer_buf;
+            killer = msgcat(s_suffix(mdat->mname), " explosion");
             killer_format = KILLED_BY_AN;
             explode(mon->mx, mon->my, -1, tmp, MON_EXPLODE, EXPL_NOXIOUS);
             return FALSE;
@@ -2345,15 +2343,16 @@ select_newcham_form(struct monst *mon)
         break;
     }
 
-    /* For debugging only: allow control of polymorphed monster; not saved */
+    /* For debugging only: allow control of polymorphed monster */
     if (wizard && flags.mon_polycontrol) {
-        char pprompt[BUFSZ], buf[BUFSZ];
+        char buf[BUFSZ];
+        const char *pprompt;
         int tries = 0;
 
         do {
-            sprintf(pprompt,
-                    "Change %s into what kind of monster? [type the name]",
-                    mon_nam(mon));
+            pprompt = msgprintf(
+                "Change %s into what kind of monster? [type the name]",
+                mon_nam(mon));
             getlin(pprompt, buf, FALSE);
             mndx = name_to_mon(buf);
             if (mndx < LOW_PM)
@@ -2380,14 +2379,11 @@ newcham(struct monst *mtmp, const struct permonst *mdat,
     int mhp, hpn, hpd;
     int mndx, tryct;
     const struct permonst *olddata = mtmp->data;
-    char oldname[BUFSZ];
+    const char *oldname;
 
-    if (msg) {
-        /* like Monnam() but never mention saddle */
-        strcpy(oldname,
-               x_monnam(mtmp, ARTICLE_THE, NULL, SUPPRESS_SADDLE, FALSE));
-        oldname[0] = highc(oldname[0]);
-    }
+    /* like Monnam() but never mention saddle */
+    oldname = x_monnam(mtmp, ARTICLE_THE, NULL, SUPPRESS_SADDLE, FALSE);
+    oldname = msgupcasefirst(oldname);
 
     /* mdat = 0 -> caller wants a random monster shape */
     tryct = 0;
@@ -2796,3 +2792,4 @@ mimic_hit_msg(struct monst *mtmp, short otyp)
 }
 
 /*mon.c*/
+

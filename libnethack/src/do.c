@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-03-12 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -74,11 +74,10 @@ boulder_hits_pool(struct obj * otmp, int rx, int ry, boolean pushing)
             newsym(rx, ry);
             if (pushing) {
                 if (u.usteed) {
-                    char *bp = y_monnam(u.usteed);
+                    const char *bp = y_monnam(u.usteed);
 
-                    *bp = highc(*bp);   /* bp points to a static buffer */
-                    pline("%s pushes %s into the %s.", bp, the(xname(otmp)),
-                          what);
+                    pline("%s pushes %s into the %s.",
+                          msgupcasefirst(bp), the(xname(otmp)), what);
                 } else
                     pline("You push %s into the %s.", the(xname(otmp)), what);
                 if (flags.verbose && !Blind)
@@ -460,12 +459,8 @@ drop(struct obj *obj)
     if (Engulfed) {
         /* barrier between you and the floor */
         if (flags.verbose) {
-            char buf[BUFSZ];
-
-            /* doname can call s_suffix, reusing its buffer */
-            strcpy(buf, s_suffix(mon_nam(u.ustuck)));
-            pline("You drop %s into %s %s.", doname(obj), buf,
-                  mbodypart(u.ustuck, STOMACH));
+            pline("You drop %s into %s %s.", doname(obj),
+                  s_suffix(mon_nam(u.ustuck)), mbodypart(u.ustuck, STOMACH));
         }
     } else {
         if ((obj->oclass == RING_CLASS || obj->otyp == MEAT_RING) &&
@@ -1104,10 +1099,10 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
                           level->dndest.nly, level->dndest.nhx,
                           level->dndest.nhy, LR_DOWNTELE, NULL);
         if (falling) {
-            char kbuf[BUFSZ];
+            const char *kbuf;
 
-            sprintf(kbuf, "falling through a %s while wielding",
-                    at_trapdoor ? "trap door" : "hole");
+            kbuf = msgprintf("falling through a %s while wielding",
+                             at_trapdoor ? "trap door" : "hole");
             if (Punished)
                 ballfall();
             selftouch("Falling, you", kbuf);
@@ -1209,8 +1204,8 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
             "Gee, this %s like uncle Conan's place...",
             0   /* no message */
         };
+        
         const char *mesg;
-        char buf[BUFSZ];
         int which = rn2(4);
 
         if (Hallucination)
@@ -1218,8 +1213,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
         else
             mesg = fam_msgs[which];
         if (mesg && strchr(mesg, '%')) {
-            sprintf(buf, mesg, !Blind ? "looks" : "seems");
-            mesg = buf;
+            mesg = (msgprintf)(mesg, !Blind ? "looks" : "seems");
         }
         if (mesg)
             pline("%s", mesg);
@@ -1406,7 +1400,7 @@ revive_corpse(struct obj *corpse)
     struct monst *mtmp, *mcarry;
     boolean is_uwep, chewed;
     xchar where;
-    char *cname, cname_buf[BUFSZ];
+    const char *cname;
     struct obj *container = NULL;
     int container_where = 0;
 
@@ -1416,8 +1410,7 @@ revive_corpse(struct obj *corpse)
 
     where = corpse->where;
     is_uwep = corpse == uwep;
-    cname = eos(strcpy(cname_buf, "bite-covered "));
-    strcpy(cname, corpse_xname(corpse, TRUE));
+    cname = corpse_xname(corpse, TRUE); 
     mcarry = (where == OBJ_MINVENT) ? corpse->ocarry : 0;
 
     if (where == OBJ_CONTAINED) {
@@ -1435,7 +1428,7 @@ revive_corpse(struct obj *corpse)
     if (mtmp) {
         chewed = (mtmp->mhp < mtmp->mhpmax);
         if (chewed)
-            cname = cname_buf;  /* include "bite-covered" prefix */
+            cname = msgcat("bite-covered ", cname);
         switch (where) {
         case OBJ_INVENT:
             if (is_uwep)
@@ -1468,24 +1461,19 @@ revive_corpse(struct obj *corpse)
         case OBJ_CONTAINED:
             if (container_where == OBJ_MINVENT && cansee(mtmp->mx, mtmp->my) &&
                 mcarry && canseemon(mcarry) && container) {
-                char sackname[BUFSZ];
+                const char *sackname;
 
-                sprintf(sackname, "%s %s", s_suffix(mon_nam(mcarry)),
-                        xname(container));
+                sackname = msgprintf("%s %s", s_suffix(mon_nam(mcarry)),
+                                     xname(container));
                 pline("%s writhes out of %s!", Amonnam(mtmp), sackname);
             } else if (container_where == OBJ_INVENT && container) {
-                char sackname[BUFSZ];
-
-                strcpy(sackname, an(xname(container)));
                 pline("%s %s out of %s in your pack!",
                       Blind ? "Something" : Amonnam(mtmp),
-                      locomotion(mtmp->data, "writhes"), sackname);
+                      locomotion(mtmp->data, "writhes"), an(xname(container)));
             } else if (container_where == OBJ_FLOOR && container &&
                        cansee(mtmp->mx, mtmp->my)) {
-                char sackname[BUFSZ];
-
-                strcpy(sackname, an(xname(container)));
-                pline("%s escapes from %s!", Amonnam(mtmp), sackname);
+                pline("%s escapes from %s!", Amonnam(mtmp),
+                      an(xname(container)));
             }
             break;
         default:
@@ -1525,7 +1513,6 @@ donull(const struct nh_cmd_arg *arg)
 int
 dowipe(const struct nh_cmd_arg *arg)
 {
-    char buf[BUFSZ];
     (void) arg;
 
     if (!u.ucreamed) {
@@ -1557,7 +1544,7 @@ dowipe(const struct nh_cmd_arg *arg)
 
     } else {
 
-        sprintf(buf, "wiping off your %s", body_part(FACE));
+        const char *buf = msgprintf("wiping off your %s", body_part(FACE));
         action_incomplete(buf, occ_wipe);
         return 1;
     }
@@ -1620,3 +1607,4 @@ heal_one_leg(int side)
 }
 
 /*do.c*/
+

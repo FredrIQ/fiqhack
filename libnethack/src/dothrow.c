@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -87,9 +87,8 @@ throw_obj(struct obj *obj, const struct nh_cmd_arg *arg,
         (obj->otyp == CORPSE && touch_petrifies(&mons[obj->corpsenm]))) {
         pline("You throw the %s corpse with your bare %s.",
               mons[obj->corpsenm].mname, body_part(HAND));
-        sprintf(killer_buf, "throwing %s corpse without gloves",
-                an(mons[obj->corpsenm].mname));
-        instapetrify(killer_buf);
+        instapetrify(msgprintf("throwing %s corpse without gloves",
+                               an(mons[obj->corpsenm].mname)));
     }
     if (welded(obj)) {
         weldmsg(obj);
@@ -1427,7 +1426,6 @@ thitmonst(struct monst *mon, struct obj *obj)
 static int
 gem_accept(struct monst *mon, struct obj *obj)
 {
-    char buf[BUFSZ];
     boolean is_buddy = sgn(mon->data->maligntyp) == sgn(u.ualign.type);
     boolean is_gem = objects[obj->otyp].oc_material == GEMSTONE;
     int ret = 0;
@@ -1436,8 +1434,8 @@ gem_accept(struct monst *mon, struct obj *obj)
     static const char maybeluck[] = " hesitatingly";
     static const char noluck[] = " graciously";
     static const char addluck[] = " gratefully";
+    const char *buf = Monnam(mon);
 
-    strcpy(buf, Monnam(mon));
     mon->mpeaceful = 1;
     mon->mavenge = 0;
 
@@ -1445,45 +1443,45 @@ gem_accept(struct monst *mon, struct obj *obj)
     if (obj->dknown && objects[obj->otyp].oc_name_known) {
         if (is_gem) {
             if (is_buddy) {
-                strcat(buf, addluck);
+                buf = msgcat(buf, addluck);
                 change_luck(5);
             } else {
-                strcat(buf, maybeluck);
+                buf = msgcat(buf, maybeluck);
                 change_luck(rn2(7) - 3);
             }
         } else {
-            strcat(buf, nogood);
+            buf = msgcat(buf, nogood);
             goto nopick;
         }
         /* making guesses */
     } else if (obj->onamelth || objects[obj->otyp].oc_uname) {
         if (is_gem) {
             if (is_buddy) {
-                strcat(buf, addluck);
+                buf = msgcat(buf, addluck);
                 change_luck(2);
             } else {
-                strcat(buf, maybeluck);
+                buf = msgcat(buf, maybeluck);
                 change_luck(rn2(3) - 1);
             }
         } else {
-            strcat(buf, nogood);
+            buf = msgcat(buf, nogood);
             goto nopick;
         }
         /* value completely unknown to @ */
     } else {
         if (is_gem) {
             if (is_buddy) {
-                strcat(buf, addluck);
+                buf = msgcat(buf, addluck);
                 change_luck(1);
             } else {
-                strcat(buf, maybeluck);
+                buf = msgcat(buf, maybeluck);
                 change_luck(rn2(3) - 1);
             }
         } else {
-            strcat(buf, noluck);
+            buf = msgcat(buf, noluck);
         }
     }
-    strcat(buf, acceptgift);
+    buf = msgcat(buf, acceptgift);
     if (*u.ushops)
         check_shop_obj(obj, mon->mx, mon->my, TRUE);
     mpickobj(mon, obj); /* may merge and free obj */
@@ -1771,3 +1769,4 @@ throw_gold(struct obj *obj, schar dx, schar dy, schar dz)
 }
 
 /*dothrow.c*/
+

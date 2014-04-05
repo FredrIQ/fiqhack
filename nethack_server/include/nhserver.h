@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-01 */
+/* Last modified by Alex Smith, 2014-04-05 */
 #ifndef NHSERVER_H
 # define NHSERVER_H
 
@@ -36,6 +36,7 @@
 
 # include <jansson.h>
 
+# include "compilers.h"
 # include "nethack.h"
 # include "nethack_client.h"    /* for enum authresult */
 
@@ -143,13 +144,13 @@ extern void auth_send_result(int sockfd, enum authresult, int is_reg,
                              int connid);
 
 /* clientmain.c */
-extern void client_main(int userid, int infd, int outfd);
-extern void exit_client(const char *err);
+extern noreturn void client_main(int userid, int infd, int outfd);
+extern noreturn void exit_client(const char *err);
 extern void client_msg(const char *key, json_t * value);
 extern json_t *read_input(void);
 
 /* config.c */
-extern int read_config(char *confname);
+extern int read_config(const char *confname);
 extern void setup_defaults(void);
 extern void free_config(void);
 extern int parse_ip_addr(const char *str, struct sockaddr *out, int want_v4);

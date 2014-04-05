@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-03-24 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -53,7 +53,7 @@ static void contained(struct nh_menulist *, const char *, long *, long *);
 
 static void enlght_line(struct nh_menulist *, const char *, const char *,
                         const char *);
-static char *enlght_combatinc(const char *, int, int, char *);
+static const char *enlght_combatinc(const char *, int, int);
 
 
 #ifndef M
@@ -722,22 +722,20 @@ static void
 enlght_line(struct nh_menulist *menu, const char *start, const char *middle,
             const char *end)
 {
-    char buf[BUFSZ];
+    const char *buf;
 
-    sprintf(buf, "%s%s%s.", start, middle, end);
+    buf = msgprintf("%s%s%s.", start, middle, end);
     add_menutext(menu, buf);
 }
 
 /* format increased damage or chance to hit */
-static char *
-enlght_combatinc(const char *inctyp, int incamt, int final, char *outbuf)
+static const char *
+enlght_combatinc(const char *inctyp, int incamt, int final)
 {
-    char numbuf[24];
     const char *modif, *bonus;
 
     if (final || wizard) {
-        sprintf(numbuf, "%s%d", (incamt > 0) ? "+" : "", incamt);
-        modif = (const char *)numbuf;
+        modif = msgprintf("%+d", incamt);
     } else {
         int absamt = abs(incamt);
 
@@ -758,8 +756,7 @@ enlght_combatinc(const char *inctyp, int incamt, int final, char *outbuf)
         inctyp = bonus;
         bonus = ctmp;
     }
-    sprintf(outbuf, "%s %s %s", an(modif), bonus, inctyp);
-    return outbuf;
+    return msgprintf("%s %s %s", an(modif), bonus, inctyp);
 }
 
 
@@ -768,7 +765,7 @@ enlightenment(int final)
     /* final: 0 => still in progress; 1 => over, survived; 2 => dead */
 {
     int ltmp;
-    char buf[BUFSZ], *title;
+    const char *title;
     struct nh_menulist menu;
 
     init_menulist(&menu);
@@ -805,10 +802,10 @@ enlightenment(int final)
     else
         you_have(&menu, "transgressed");
     if (wizard) {
-        sprintf(buf, " %d", u.uhunger);
+        const char *buf = msgprintf(" %d", u.uhunger);
         enl_msg(&menu, "Hunger level ", "is", "was", buf);
 
-        sprintf(buf, " %d / %ld", u.ualign.record, ALIGNLIM);
+        buf = msgprintf(" %d / %ld", u.ualign.record, ALIGNLIM);
         enl_msg(&menu, "Your alignment ", "is", "was", buf);
     }
 
@@ -865,22 +862,17 @@ enlightenment(int final)
         you_are(&menu, "turning into slime");
     if (Strangled)
         you_are(&menu, (u.uburied) ? "buried" : "being strangled");
-    if (Glib) {
-        sprintf(buf, "slippery %s", makeplural(body_part(FINGER)));
-        you_have(&menu, buf);
-    }
+    if (Glib)
+        you_have(&menu, msgcat("slippery ", makeplural(body_part(FINGER))));
     if (Fumbling)
         enl_msg(&menu, "You fumble", "", "d", "");
-    if (Wounded_legs && !u.usteed) {
-        sprintf(buf, "wounded %s", makeplural(body_part(LEG)));
-        you_have(&menu, buf);
-    }
+    if (Wounded_legs && !u.usteed)
+        you_have(&menu, msgcat("wounded", makeplural(body_part(LEG))));;
     if (Wounded_legs && u.usteed && wizard) {
-        strcpy(buf,
-               x_monnam(u.usteed, ARTICLE_YOUR, NULL,
-                        SUPPRESS_SADDLE | SUPPRESS_HALLUCINATION, FALSE));
-        *buf = highc(*buf);
-        enl_msg(&menu, buf, " has", " had", " wounded legs");
+        const char *buf =
+            x_monnam(u.usteed, ARTICLE_YOUR, NULL,
+                     SUPPRESS_SADDLE | SUPPRESS_HALLUCINATION, FALSE);
+        enl_msg(&menu, msgupcasefirst(buf), " has", " had", " wounded legs");
     }
 
     if (Sleeping)
@@ -897,9 +889,10 @@ enlightenment(int final)
         you_are(&menu, "warned");
     if (Warn_of_mon) {
         int warntype = worn_warntype();
-        sprintf(buf, "aware of the presence of %s",
-                (warntype & M2_ORC) ? "orcs" :
-                (warntype & M2_DEMON) ? "demons" : "something");
+        const char *buf = msgcat(
+            "aware of the presence of ",
+            (warntype & M2_ORC) ? "orcs" :
+            (warntype & M2_DEMON) ? "demons" : "something");
         you_are(&menu, buf);
     }
     if (Undead_warning)
@@ -972,28 +965,22 @@ enlightenment(int final)
     /* If you die while dismounting, u.usteed is still set.  Since several
        places in the done() sequence depend on u.usteed, just detect this
        special case. */
-    if (u.usteed && (final < 2 || strcmp(killer, "riding accident"))) {
-        sprintf(buf, "riding %s", y_monnam(u.usteed));
-        you_are(&menu, buf);
-    }
-    if (Engulfed) {
-        sprintf(buf, "swallowed by %s", a_monnam(u.ustuck));
-        if (wizard)
-            sprintf(eos(buf), " (%u)", u.uswldtim);
-        you_are(&menu, buf);
-    } else if (u.ustuck) {
-        sprintf(buf, "%s %s",
-                (Upolyd &&
-                 sticks(youmonst.data)) ? "holding" : "held by",
-                a_monnam(u.ustuck));
+    if (u.usteed && (final < 2 || strcmp(killer, "riding accident")))
+        you_are(&menu, msgcat("riding ", y_monnam(u.usteed)));
+    if (Engulfed)
+        you_are(&menu, msgcat("swallowed by ", a_monnam(u.ustuck)));
+    else if (u.ustuck) {
+        const char *buf = msgprintf(
+            "%s %s", (Upolyd && sticks(youmonst.data)) ? "holding" : "held by",
+            a_monnam(u.ustuck));
         you_are(&menu, buf);
     }
 
         /*** Physical attributes ***/
     if (u.uhitinc)
-        you_have(&menu, enlght_combatinc("to hit", u.uhitinc, final, buf));
+        you_have(&menu, enlght_combatinc("to hit", u.uhitinc, final));
     if (u.udaminc)
-        you_have(&menu, enlght_combatinc("damage", u.udaminc, final, buf));
+        you_have(&menu, enlght_combatinc("damage", u.udaminc, final));
     if (Slow_digestion)
         you_have(&menu, "slower digestion");
     if (Regeneration)
@@ -1020,17 +1007,16 @@ enlightenment(int final)
         you_are(&menu, "polymorphing");
     if (Polymorph_control)
         you_have(&menu, "polymorph control");
-    if (u.ulycn >= LOW_PM) {
-        strcpy(buf, an(mons[u.ulycn].mname));
-        you_are(&menu, buf);
-    }
+    if (u.ulycn >= LOW_PM)
+        you_are(&menu, an(mons[u.ulycn].mname));
     if (Upolyd) {
+        const char *buf;
         if (u.umonnum == u.ulycn)
-            strcpy(buf, "in beast form");
+            buf = "in beast form";
         else
-            sprintf(buf, "polymorphed into %s", an(youmonst.data->mname));
+            buf = msgprintf("polymorphed into %s", an(youmonst.data->mname));
         if (wizard)
-            sprintf(eos(buf), " (%d)", u.mtimedone);
+            buf = msgprintf("%s (%d)", buf, u.mtimedone);
         you_are(&menu, buf);
     }
     if (Unchanging)
@@ -1051,11 +1037,12 @@ enlightenment(int final)
         /*** Miscellany ***/
     if (Luck) {
         ltmp = abs((int)Luck);
-        sprintf(buf, "%s%slucky",
-                ltmp >= 10 ? "extremely " : ltmp >= 5 ? "very " : "",
-                Luck < 0 ? "un" : "");
+        const char *buf = msgprintf(
+            "%s%slucky",
+            ltmp >= 10 ? "extremely " : ltmp >= 5 ? "very " : "",
+            Luck < 0 ? "un" : "");
         if (wizard)
-            sprintf(eos(buf), " (%d)", Luck);
+            buf = msgprintf("%s (%d)", buf, Luck);
         you_are(&menu, buf);
     } else if (wizard)
         enl_msg(&menu, "Your luck ", "is", "was", " zero");
@@ -1073,10 +1060,11 @@ enlightenment(int final)
     }
 
     if (u.ugangr) {
-        sprintf(buf, " %sangry with you",
-                u.ugangr > 6 ? "extremely " : u.ugangr > 3 ? "very " : "");
+        const char *buf = msgprintf(
+            " %sangry with you",
+            u.ugangr > 6 ? "extremely " : u.ugangr > 3 ? "very " : "");
         if (wizard)
-            sprintf(eos(buf), " (%d)", u.ugangr);
+            buf = msgprintf("%s (%d)", buf, u.ugangr);
         enl_msg(&menu, u_gname(), " is", " was", buf);
     } else
         /*
@@ -1085,20 +1073,20 @@ enlightenment(int final)
          * resulting in a false claim that you could have prayed safely.
          */
     if (!final) {
-        sprintf(buf, "%ssafely pray", can_pray(FALSE) ? "" : "not ");
+        const char *buf = msgprintf(
+            "%ssafely pray", can_pray(FALSE) ? "" : "not ");
         /* can_pray sets some turnstate that needs to be reset. */
         turnstate.pray.align = A_NONE;
         turnstate.pray.type = pty_invalid;
         turnstate.pray.trouble = ptr_invalid;
         if (wizard)
-            sprintf(eos(buf), " (%d)", u.ublesscnt);
+            buf = msgprintf("%s (%d)", buf, u.ublesscnt);
         you_can(&menu, buf);
     }
 
     {
-        const char *p;
+        const char *p, *buf = "";
 
-        buf[0] = '\0';
         if (final < 2) {       /* still in progress, or quit/escaped/ascended */
             p = "survived after being killed ";
             switch (u.umortality) {
@@ -1106,16 +1094,16 @@ enlightenment(int final)
                 p = !final ? NULL : "survived";
                 break;
             case 1:
-                strcpy(buf, "once");
+                buf = "once";
                 break;
             case 2:
-                strcpy(buf, "twice");
+                buf = "twice";
                 break;
             case 3:
-                strcpy(buf, "thrice");
+                buf = "thrice";
                 break;
             default:
-                sprintf(buf, "%d times", u.umortality);
+                buf = msgprintf("%d times", u.umortality);
                 break;
             }
         } else {        /* game ended in character's death */
@@ -1126,8 +1114,8 @@ enlightenment(int final)
             case 1:
                 break;  /* just "are dead" */
             default:
-                sprintf(buf, " (%d%s time!)", u.umortality,
-                        ordin(u.umortality));
+                buf = msgprintf(" (%d%s time!)", u.umortality,
+                                ordin(u.umortality));
                 break;
             }
         }
@@ -1245,7 +1233,7 @@ unspoilered_intrinsics(void)
 static int
 dowelcome(const struct nh_cmd_arg *arg)
 {
-    char buf[BUFSZ];
+    const char *buf;
     boolean currentgend = Upolyd ? u.mfemale : u.ufemale;
     boolean new_game = !u.uwelcomed;
 
@@ -1266,13 +1254,13 @@ dowelcome(const struct nh_cmd_arg *arg)
      * Sex is shown for new games except when it is redundant; for
      * restores it's only shown if different from its original value.
      */
-    *buf = '\0';
+    buf = "";
     if (new_game || u.ualignbase[A_ORIGINAL] != u.ualignbase[A_CURRENT])
-        sprintf(eos(buf), " %s", align_str(u.ualignbase[A_ORIGINAL]));
+        buf = msgprintf("%s %s", buf, align_str(u.ualignbase[A_ORIGINAL]));
     if (!urole.name.f &&
         (new_game ? (urole.allow & ROLE_GENDMASK) ==
          (ROLE_MALE | ROLE_FEMALE) : currentgend != u.initgend))
-        sprintf(eos(buf), " %s", genders[currentgend].adj);
+        buf = msgprintf("%s %s", buf, genders[currentgend].adj);
 
     pline(new_game ? "%s %s, welcome to NetHack!  You are a%s %s %s." :
           "%s %s, the%s %s %s, welcome back to NetHack!", Hello(NULL),
@@ -1318,7 +1306,7 @@ doattributes(const struct nh_cmd_arg *arg)
 
     int genidx, n, wcu, selected[1];
     long wc;
-    char buf[BUFSZ], buf2[BUFSZ];
+    const char *buf;
     static const char fmtstr[] = "%-10s: %-12s (originally %s)";
     static const char fmtstr_noorig[] = "%-10s: %s";
     static const char deity_fmtstr[] = "%-17s%s";
@@ -1326,98 +1314,100 @@ doattributes(const struct nh_cmd_arg *arg)
 
     init_menulist(&menu);
 
-    buf[0] = buf2[0] = '\0';
     add_menuheading(&menu, "Stats");
 
     /* Starting and current name, race, role, gender, alignment, abilities */
-    sprintf(buf, fmtstr_noorig, "name", u.uplname);
+    buf = msgprintf(fmtstr_noorig, "name", u.uplname);
     add_menutext(&menu, buf);
-    sprintf(buf, fmtstr, "race", Upolyd ? youmonst.data->mname : urace.noun,
-            urace.noun);
+    buf = msgprintf(fmtstr, "race", Upolyd ? youmonst.data->mname : urace.noun,
+                    urace.noun);
     add_menutext(&menu, buf);
-    sprintf(buf, fmtstr_noorig, "role",
-            ((Upolyd ? u.mfemale : u.ufemale) &&
-             urole.name.f) ? urole.name.f : urole.name.m);
+    buf = msgprintf(fmtstr_noorig, "role",
+                    ((Upolyd ? u.mfemale : u.ufemale) &&
+                     urole.name.f) ? urole.name.f : urole.name.m);
     add_menutext(&menu, buf);
     genidx = is_neuter(youmonst.data) ? 2 : u.ufemale;
-    sprintf(buf, fmtstr, "gender", genders[genidx].adj,
-            genders[u.initgend].adj);
+    buf = msgprintf(fmtstr, "gender", genders[genidx].adj,
+                    genders[u.initgend].adj);
     add_menutext(&menu, buf);
-    sprintf(buf, fmtstr, "alignment", align_str(u.ualign.type),
-            align_str(u.ualignbase[A_ORIGINAL]));
+    buf = msgprintf(fmtstr, "alignment", align_str(u.ualign.type),
+                    align_str(u.ualignbase[A_ORIGINAL]));
     add_menutext(&menu, buf);
     if (ACURR(A_STR) > 18) {
         if (ACURR(A_STR) > STR18(100))
-            sprintf(buf, "abilities : St:%2d ", ACURR(A_STR) - 100);
+            buf = msgprintf("abilities : St:%2d ", ACURR(A_STR) - 100);
         else if (ACURR(A_STR) < STR18(100))
-            sprintf(buf, "abilities : St:18/%02d ", ACURR(A_STR) - 18);
+            buf = msgprintf("abilities : St:18/%02d ", ACURR(A_STR) - 18);
         else
-            sprintf(buf, "abilities : St:18/** ");
+            buf = msgprintf("abilities : St:18/** ");
     } else
-        sprintf(buf, "abilities : St:%-1d ", ACURR(A_STR));
-    sprintf(eos(buf), "Dx:%-1d Co:%-1d In:%-1d Wi:%-1d Ch:%-1d", ACURR(A_DEX),
-            ACURR(A_CON), ACURR(A_INT), ACURR(A_WIS), ACURR(A_CHA));
+        buf = msgprintf("abilities : St:%-1d ", ACURR(A_STR));
+
+    buf = msgprintf("%s Dx:%-1d Co:%-1d In:%-1d Wi:%-1d Ch:%-1d",
+                    buf, ACURR(A_DEX), ACURR(A_CON),
+                    ACURR(A_INT), ACURR(A_WIS), ACURR(A_CHA));
     add_menutext(&menu, buf);
     if (u.ulevel < 30)
-        sprintf(buf, "%-10s: %d (exp: %d, %ld needed)", "level", u.ulevel,
-                u.uexp, newuexp(u.ulevel));
+        buf = msgprintf("%-10s: %d (exp: %d, %ld needed)", "level", u.ulevel,
+                        u.uexp, newuexp(u.ulevel));
     else
-        sprintf(buf, "%-10s: %d (exp: %d)", "level", u.ulevel, u.uexp);
+        buf = msgprintf("%-10s: %d (exp: %d)", "level", u.ulevel, u.uexp);
     add_menutext(&menu, buf);
 
     wc = weight_cap();
-    sprintf(buf, "%-10s: %ld (", "burden", wc + inv_weight());
+    buf = msgprintf("%-10s: %ld (", "burden", wc + inv_weight());
+
     switch (calc_capacity(wc / 4)) {
     case UNENCUMBERED:
     case SLT_ENCUMBER:
-        sprintf(eos(buf), "burdened at ");
+        buf = msgcat(buf, "burdened at ");
         wcu = 2;
         break;
     case MOD_ENCUMBER:
-        sprintf(eos(buf), "stressed at ");
+        buf = msgcat(buf, "stressed at ");
         wcu = 3;
         break;
     case HVY_ENCUMBER:
-        sprintf(eos(buf), "strained at ");
+        buf = msgcat(buf, "strained at ");
         wcu = 4;
         break;
     case EXT_ENCUMBER:
-        sprintf(eos(buf), "overtaxed at ");
+        buf = msgcat(buf, "overtaxed at ");
         wcu = 5;
         break;
     default:
-        sprintf(eos(buf), "overloaded at ");
+        buf = msgcat(buf, "overloaded at ");
         wcu = 6;
         break;
     }
-    sprintf(eos(buf), "%ld)", wc * wcu / 2 + 1);
+    buf = msgprintf("%s %ld)", buf, wc * wcu / 2 + 1);
     add_menutext(&menu, buf);
 
     /* Deity list */
     add_menutext(&menu, "");
     add_menuheading(&menu, "Deities");
-    sprintf(buf2, deity_fmtstr, align_gname(A_CHAOTIC),
-            (u.ualignbase[A_ORIGINAL] == u.ualign.type &&
-             u.ualign.type == A_CHAOTIC) ? " (s,c)" :
-            (u.ualignbase[A_ORIGINAL] == A_CHAOTIC) ? " (s)" :
-            (u.ualign.type == A_CHAOTIC) ? " (c)" : "");
-    sprintf(buf, fmtstr_noorig, "Chaotic", buf2);
+    buf = msgprintf(deity_fmtstr, align_gname(A_CHAOTIC),
+                    (u.ualignbase[A_ORIGINAL] == u.ualign.type &&
+                     u.ualign.type == A_CHAOTIC) ? " (s,c)" :
+                    (u.ualignbase[A_ORIGINAL] == A_CHAOTIC) ? " (s)" :
+                    (u.ualign.type == A_CHAOTIC) ? " (c)" : "");
+    buf = msgprintf(fmtstr_noorig, "Chaotic", buf);
     add_menutext(&menu, buf);
 
-    sprintf(buf2, deity_fmtstr, align_gname(A_NEUTRAL),
-            (u.ualignbase[A_ORIGINAL] == u.ualign.type &&
-             u.ualign.type == A_NEUTRAL) ? " (s,c)" :
-            (u.ualignbase[A_ORIGINAL] == A_NEUTRAL) ? " (s)" :
-            (u.ualign.type == A_NEUTRAL) ? " (c)" : "");
-    sprintf(buf, fmtstr_noorig, "Neutral", buf2);
+    buf = msgprintf(deity_fmtstr, align_gname(A_NEUTRAL),
+                    (u.ualignbase[A_ORIGINAL] == u.ualign.type &&
+                     u.ualign.type == A_NEUTRAL) ? " (s,c)" :
+                    (u.ualignbase[A_ORIGINAL] == A_NEUTRAL) ? " (s)" :
+                    (u.ualign.type == A_NEUTRAL) ? " (c)" : "");
+    buf = msgprintf(fmtstr_noorig, "Neutral", buf);
     add_menutext(&menu, buf);
 
-    sprintf(buf2, deity_fmtstr, align_gname(A_LAWFUL),
-            (u.ualignbase[A_ORIGINAL] == u.ualign.type &&
-             u.ualign.type == A_LAWFUL) ? " (s,c)" :
-            (u.ualignbase[A_ORIGINAL] == A_LAWFUL) ? " (s)" :
-            (u.ualign.type == A_LAWFUL) ? " (c)" : "");
-    sprintf(buf, fmtstr_noorig, "Lawful", buf2);
+    buf = msgprintf(deity_fmtstr, align_gname(A_LAWFUL),
+                    (u.ualignbase[A_ORIGINAL] == u.ualign.type &&
+                     u.ualign.type == A_LAWFUL) ? " (s,c)" :
+                    (u.ualignbase[A_ORIGINAL] == A_LAWFUL) ? " (s)" :
+                    (u.ualign.type == A_LAWFUL) ? " (c)" : "");
+    buf = msgprintf(fmtstr_noorig, "Lawful", buf);
     add_menutext(&menu, buf);
 
     add_menutext(&menu, "");
@@ -1480,9 +1470,9 @@ doconduct(const struct nh_cmd_arg *arg)
 void
 show_conduct(int final)
 {
-    char buf[BUFSZ];
     int ngenocided;
     struct nh_menulist menu;
+    const char *buf;
 
     /* Create the conduct window */
     init_menulist(&menu);
@@ -1495,53 +1485,53 @@ show_conduct(int final)
     else if (!u.uconduct[conduct_vegetarian])
         you_have_been(&menu, "vegetarian");
     if (u.uconduct_time[conduct_food] > 1800) {
-        sprintf(buf, "did not eat until turn %d",
-                u.uconduct_time[conduct_food]);
+        buf = msgprintf("did not eat until turn %d",
+                        u.uconduct_time[conduct_food]);
         enl_msg(&menu, You_, "", "had ", buf);
     }
     if (u.uconduct_time[conduct_vegan] > 1800) {
-        sprintf(buf, "followed a strict vegan diet until turn %d",
-                u.uconduct_time[conduct_vegan]);
+        buf = msgprintf("followed a strict vegan diet until turn %d",
+                        u.uconduct_time[conduct_vegan]);
         enl_msg(&menu, You_, "", "had ", buf);
     }
     if (u.uconduct_time[conduct_vegetarian] > 1800) {
-        sprintf(buf, "followed a strict vegetarian diet until turn %d",
-                u.uconduct_time[conduct_vegetarian]);
+        buf = msgprintf("followed a strict vegetarian diet until turn %d",
+                        u.uconduct_time[conduct_vegetarian]);
         enl_msg(&menu, You_, "", "had ", buf);
     }
 
     if (!u.uconduct[conduct_gnostic])
         you_have_been(&menu, "an atheist");
     if (u.uconduct_time[conduct_gnostic] > 1800) {
-        sprintf(buf, "an atheist until turn %d",
-                u.uconduct_time[conduct_gnostic]);
+        buf = msgprintf("an atheist until turn %d",
+                        u.uconduct_time[conduct_gnostic]);
         enl_msg(&menu, You_, "were ", "had been ", buf);
     }
 
     if (!u.uconduct[conduct_weaphit])
         you_have_never(&menu, "hit with a wielded weapon");
     else {
-        sprintf(buf, "used a wielded weapon %d time%s, starting on turn %d",
-                u.uconduct[conduct_weaphit],
-                plur(u.uconduct[conduct_weaphit]),
-                u.uconduct_time[conduct_weaphit]);
+        buf = msgprintf("used a wielded weapon %d time%s, starting on turn %d",
+                        u.uconduct[conduct_weaphit],
+                        plur(u.uconduct[conduct_weaphit]),
+                        u.uconduct_time[conduct_weaphit]);
         you_have_X(&menu, buf);
     }
     if (!u.uconduct[conduct_killer])
         you_have_been(&menu, "a pacifist");
     if (u.uconduct_time[conduct_killer] > 1800) {
-        sprintf(buf, "a pacifist until turn %d",
-                u.uconduct_time[conduct_killer]);
+        buf = msgprintf("a pacifist until turn %d",
+                        u.uconduct_time[conduct_killer]);
         enl_msg(&menu, You_, "were ", "had been ", buf);
     }
 
     if (!u.uconduct[conduct_illiterate])
         you_have_been(&menu, "illiterate");
     else {
-        sprintf(buf, "read items or engraved %d time%s, starting on turn %d",
-                u.uconduct[conduct_illiterate],
-                plur(u.uconduct[conduct_illiterate]),
-                u.uconduct_time[conduct_illiterate]);
+        buf = msgprintf("read items or engraved %d time%s, starting on turn %d",
+                        u.uconduct[conduct_illiterate],
+                        plur(u.uconduct[conduct_illiterate]),
+                        u.uconduct_time[conduct_illiterate]);
         you_have_X(&menu, buf);
     }
 
@@ -1549,47 +1539,47 @@ show_conduct(int final)
     if (ngenocided == 0) {
         you_have_never(&menu, "genocided any monsters");
     } else {
-        sprintf(buf, "genocided %d type%s of monster%s, starting on turn %d",
-                ngenocided, plur(ngenocided), plur(ngenocided),
-                u.uconduct_time[conduct_genocide]);
+        buf = msgprintf("genocided %d type%s of monster%s, starting on turn %d",
+                        ngenocided, plur(ngenocided), plur(ngenocided),
+                        u.uconduct_time[conduct_genocide]);
         you_have_X(&menu, buf);
     }
 
     if (!u.uconduct[conduct_polypile])
         you_have_never(&menu, "polymorphed an object");
     else {
-        sprintf(buf, "polymorphed %d item%s, starting on turn %d",
-                u.uconduct[conduct_polypile],
-                plur(u.uconduct[conduct_polypile]),
-                u.uconduct_time[conduct_polypile]);
+        buf = msgprintf("polymorphed %d item%s, starting on turn %d",
+                        u.uconduct[conduct_polypile],
+                        plur(u.uconduct[conduct_polypile]),
+                        u.uconduct_time[conduct_polypile]);
         you_have_X(&menu, buf);
     }
 
     if (!u.uconduct[conduct_polyself])
         you_have_never(&menu, "changed form");
     else {
-        sprintf(buf, "changed form %d time%s, starting on turn %d",
-                u.uconduct[conduct_polyself],
-                plur(u.uconduct[conduct_polyself]),
-                u.uconduct_time[conduct_polyself]);
+        buf = msgprintf("changed form %d time%s, starting on turn %d",
+                        u.uconduct[conduct_polyself],
+                        plur(u.uconduct[conduct_polyself]),
+                        u.uconduct_time[conduct_polyself]);
         you_have_X(&menu, buf);
     }
 
     if (!u.uconduct[conduct_wish])
         you_have_X(&menu, "used no wishes");
     else {
-        sprintf(buf, "used %u wish%s, starting on turn %d",
-                u.uconduct[conduct_wish],
-                (u.uconduct[conduct_wish] > 1) ? "es" : "",
-                u.uconduct_time[conduct_wish]);
+        buf = msgprintf("used %u wish%s, starting on turn %d",
+                        u.uconduct[conduct_wish],
+                        (u.uconduct[conduct_wish] > 1) ? "es" : "",
+                        u.uconduct_time[conduct_wish]);
         you_have_X(&menu, buf);
 
         if (!u.uconduct[conduct_artiwish])
             enl_msg(&menu, You_, "have not wished", "did not wish",
                     " for any artifacts");
         else {
-            sprintf(buf, "wished for your your first artifact on turn %d",
-                    u.uconduct_time[conduct_artiwish]);
+            buf = msgprintf("wished for your your first artifact on turn %d",
+                            u.uconduct_time[conduct_artiwish]);
             you_have_X(&menu, buf);
         }
     }
@@ -1597,10 +1587,10 @@ show_conduct(int final)
     if (!u.uconduct[conduct_puddingsplit])
         you_have_never(&menu, "split a pudding");
     else {
-        sprintf(buf, "split %u pudding%s, starting on turn %d",
-                u.uconduct[conduct_puddingsplit],
-                plur(u.uconduct[conduct_puddingsplit]),
-                u.uconduct_time[conduct_puddingsplit]);
+        buf = msgprintf("split %u pudding%s, starting on turn %d",
+                        u.uconduct[conduct_puddingsplit],
+                        plur(u.uconduct[conduct_puddingsplit]),
+                        u.uconduct_time[conduct_puddingsplit]);
         you_have_X(&menu, buf);
     }
 
@@ -1608,10 +1598,10 @@ show_conduct(int final)
         enl_msg(&menu, You_, "have never written", "never wrote",
                 " Elbereth's name");
     else {
-        sprintf(buf, " Elbereth's name %u time%s, starting on turn %d",
-                u.uconduct[conduct_elbereth],
-                plur(u.uconduct[conduct_elbereth]),
-                u.uconduct_time[conduct_elbereth]);
+        buf = msgprintf(" Elbereth's name %u time%s, starting on turn %d",
+                        u.uconduct[conduct_elbereth],
+                        plur(u.uconduct[conduct_elbereth]),
+                        u.uconduct_time[conduct_elbereth]);
         enl_msg(&menu, You_, "have written", "wrote", buf);
     }
 
@@ -1968,13 +1958,13 @@ static void
 obj_chain(struct nh_menulist *menu, const char *src, struct obj *chain,
           long *total_count, long *total_size)
 {
-    char buf[BUFSZ];
+    const char *buf;
     long count = 0, size = 0;
 
     count_obj(chain, &count, &size, TRUE, FALSE);
     *total_count += count;
     *total_size += size;
-    sprintf(buf, template, src, count, size);
+    buf = msgprintf(template, src, count, size);
     add_menutext(menu, buf);
 }
 
@@ -1982,7 +1972,7 @@ static void
 mon_invent_chain(struct nh_menulist *menu, const char *src, struct monst *chain,
                  long *total_count, long *total_size)
 {
-    char buf[BUFSZ];
+    const char *buf;
     long count = 0, size = 0;
     struct monst *mon;
 
@@ -1990,7 +1980,7 @@ mon_invent_chain(struct nh_menulist *menu, const char *src, struct monst *chain,
         count_obj(mon->minvent, &count, &size, TRUE, FALSE);
     *total_count += count;
     *total_size += size;
-    sprintf(buf, template, src, count, size);
+    buf = msgprintf(template, src, count, size);
     add_menutext(menu, buf);
 }
 
@@ -1998,7 +1988,7 @@ static void
 contained(struct nh_menulist *menu, const char *src, long *total_count,
           long *total_size)
 {
-    char buf[BUFSZ];
+    const char *buf;
     long count = 0, size = 0;
     struct monst *mon;
 
@@ -2015,7 +2005,7 @@ contained(struct nh_menulist *menu, const char *src, long *total_count,
     *total_count += count;
     *total_size += size;
 
-    sprintf(buf, template, src, count, size);
+    buf = msgprintf(template, src, count, size);
     add_menutext(menu, buf);
 }
 
@@ -2023,7 +2013,7 @@ static void
 mon_chain(struct nh_menulist *menu, const char *src, struct monst *chain,
           long *total_count, long *total_size)
 {
-    char buf[BUFSZ];
+    const char *buf;
     long count, size;
     struct monst *mon;
 
@@ -2033,7 +2023,7 @@ mon_chain(struct nh_menulist *menu, const char *src, struct monst *chain,
     }
     *total_count += count;
     *total_size += size;
-    sprintf(buf, template, src, count, size);
+    buf = msgprintf(template, src, count, size);
     add_menutext(menu, buf);
 }
 
@@ -2043,7 +2033,7 @@ mon_chain(struct nh_menulist *menu, const char *src, struct monst *chain,
 static int
 wiz_show_stats(const struct nh_cmd_arg *arg)
 {
-    char buf[BUFSZ];
+    const char *buf;
     struct nh_menulist menu;
     long total_obj_size = 0, total_obj_count = 0;
     long total_mon_size = 0, total_mon_count = 0;
@@ -2053,7 +2043,7 @@ wiz_show_stats(const struct nh_cmd_arg *arg)
     init_menulist(&menu);
     add_menutext(&menu, "Current memory statistics:");
     add_menutext(&menu, "");
-    sprintf(buf, "Objects, size %d", (int)sizeof (struct obj));
+    buf = msgprintf("Objects, size %d", (int)sizeof (struct obj));
     add_menutext(&menu, buf);
     add_menutext(&menu, "");
     add_menutext(&menu, count_str);
@@ -2071,12 +2061,12 @@ wiz_show_stats(const struct nh_cmd_arg *arg)
     contained(&menu, "contained", &total_obj_count, &total_obj_size);
 
     add_menutext(&menu, separator);
-    sprintf(buf, template, "Total", total_obj_count, total_obj_size);
+    buf = msgprintf(template, "Total", total_obj_count, total_obj_size);
     add_menutext(&menu, buf);
 
     add_menutext(&menu, "");
     add_menutext(&menu, "");
-    sprintf(buf, "Monsters, size %d", (int)sizeof (struct monst));
+    buf = msgprintf("Monsters, size %d", (int)sizeof (struct monst));
     add_menutext(&menu, buf);
     add_menutext(&menu, "");
 
@@ -2086,7 +2076,7 @@ wiz_show_stats(const struct nh_cmd_arg *arg)
               &total_mon_size);
 
     add_menutext(&menu, separator);
-    sprintf(buf, template, "Total", total_mon_count, total_mon_size);
+    buf = msgprintf(template, "Total", total_mon_count, total_mon_size);
     add_menutext(&menu, buf);
 
     display_menu(&menu, NULL, PICK_NONE, PLHINT_ANYWHERE,
@@ -2386,3 +2376,4 @@ dotravel(const struct nh_cmd_arg *arg)
 }
 
 /*cmd.c*/
+

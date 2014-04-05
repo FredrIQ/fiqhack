@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-22 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -171,7 +171,8 @@ struct monst {
 # define MSLOW 1/* slow monster */
 # define MFAST 2/* speeded monster */
 
-# define NAME(mtmp)       (((char *)(mtmp)->mextra) + (mtmp)->mxlth)
+# define NAME(mtmp)         (((const char *)(mtmp)->mextra) + (mtmp)->mxlth)
+# define NAME_MUTABLE(mtmp) (((char *)(mtmp)->mextra) + (mtmp)->mxlth)
 
 # define MON_WEP(mon)     ((mon)->mw)
 # define MON_NOWEP(mon)   ((mon)->mw = NULL)
@@ -179,3 +180,4 @@ struct monst {
 # define DEADMONSTER(mon) ((mon)->mhp < 1)
 
 #endif /* MONST_H */
+

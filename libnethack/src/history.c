@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-31 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -12,7 +12,6 @@ dohistory(const struct nh_cmd_arg *arg)
     struct nh_menulist menu;
     boolean over = program_state.gameover;
     boolean showall = over || wizard;
-    char buf[BUFSZ];
     int i;
 
     (void) arg;
@@ -30,9 +29,8 @@ dohistory(const struct nh_cmd_arg *arg)
     for (i = 0; i < histcount; i++) {
         if (histevents[i].hidden && !showall)
             continue;
-        snprintf(buf, BUFSZ, "On T:%u you %s", histevents[i].when,
-                 histevents[i].what);
-        add_menutext(&menu, buf);
+        add_menutext(&menu, msgprintf("On T:%u you %s", histevents[i].when,
+                                      histevents[i].what));
     }
 
     display_menu(&menu, "History has recorded:", PICK_NONE,
@@ -45,11 +43,11 @@ dohistory(const struct nh_cmd_arg *arg)
 void
 historic_event(boolean hidden, const char *fmt, ...)
 {
-    char hbuf[BUFSZ];
+    const char *hbuf;
     va_list vargs;
 
     va_start(vargs, fmt);
-    vsnprintf(hbuf, BUFSZ, fmt, vargs);
+    hbuf = msgvprintf(fmt, vargs, TRUE);
     va_end(vargs);
 
     histevents =
@@ -121,31 +119,30 @@ free_history(void)
 const char *
 hist_lev_name(const d_level * l, boolean in_or_on)
 {
-    static char hlnbuf[BUFSZ];
-    char *bufptr;
+    const char *hlnbuf;
 
     if (Is_astralevel(l))
-        strcpy(hlnbuf, "on the Astral Plane");
+        hlnbuf = "on the Astral Plane";
     else if (Is_waterlevel(l))
-        strcpy(hlnbuf, "on the Plane of Water");
+        hlnbuf = "on the Plane of Water";
     else if (Is_firelevel(l))
-        strcpy(hlnbuf, "on the Plane of Fire");
+        hlnbuf = "on the Plane of Fire";
     else if (Is_airlevel(l))
-        strcpy(hlnbuf, "on the Plane of Air");
+        hlnbuf = "on the Plane of Air";
     else if (Is_earthlevel(l))
-        strcpy(hlnbuf, "on the Plane of Earth");
+        hlnbuf = "on the Plane of Earth";
     else if (Is_knox(l))
-        strcpy(hlnbuf, "in Fort Knox");
+        hlnbuf = "in Fort Knox";
     else if (Is_stronghold(l))
-        strcpy(hlnbuf, "in The Castle");
+        hlnbuf = "in The Castle";
     else if (Is_valley(l))
-        strcpy(hlnbuf, "in The Valley of the Dead");
+        hlnbuf = "in The Valley of the Dead";
     else
-        sprintf(hlnbuf, "on level %d of %s", l->dlevel,
-                dungeons[l->dnum].dname);
+        hlnbuf = msgprintf("on level %d of %s", l->dlevel,
+                           dungeons[l->dnum].dname);
 
-    bufptr = in_or_on ? hlnbuf : (hlnbuf + 3);
-    return bufptr;
+    return hlnbuf;
 }
 
 /* history.c */
+

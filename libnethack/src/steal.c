@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -119,14 +119,14 @@ remove_worn_item(struct obj *obj, boolean unchain_ball)
  * Avoid stealing the object stealoid
  */
 int
-steal(struct monst *mtmp, char *objnambuf)
+steal(struct monst *mtmp, const char **objnambuf)
 {
     struct obj *otmp;
     int tmp, could_petrify, named = 0, armordelay, slowly = 0;
     boolean monkey_business;    /* true iff an animal is doing the thievery */
 
     if (objnambuf)
-        *objnambuf = '\0';
+        *objnambuf = "";
     /* the following is true if successful on first of two attacks. */
     if (!monnear(mtmp, u.ux, u.uy))
         return 0;
@@ -290,7 +290,7 @@ gotobj:
 
     /* do this before removing it from inventory */
     if (objnambuf)
-        strcpy(objnambuf, yname(otmp));
+        *objnambuf = yname(otmp);
     /* set mavenge bit so knights won't suffer an alignment penalty during
        retaliation; */
     mtmp->mavenge = 1;
@@ -499,3 +499,4 @@ relobj(struct monst *mtmp, int show, boolean is_pet)
 }
 
 /*steal.c*/
+

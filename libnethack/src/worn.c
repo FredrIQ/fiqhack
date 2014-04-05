@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-04 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -411,13 +411,13 @@ m_dowear_type(struct monst *mon, enum objslot slot, boolean creation,
     struct obj *old, *best, *obj;
     int m_delay = 0;
     int unseen = !canseemon(mon);
-    char nambuf[BUFSZ];
+    const char *nambuf;
 
     if (mon->mfrozen)
         return; /* probably putting previous item on */
 
     /* Get a copy of monster's name before altering its visibility */
-    strcpy(nambuf, See_invisible ? Monnam(mon) : mon_nam(mon));
+    nambuf = See_invisible ? Monnam(mon) : mon_nam(mon);
 
     old = which_armor(mon, slot);
     if (old && old->cursed)
@@ -506,12 +506,12 @@ outer_break:
         old->owornmask = 0L;
     if (!creation) {
         if (canseemon(mon)) {
-            char buf[BUFSZ];
+            const char *buf;
 
             if (old)
-                sprintf(buf, " removes %s and", distant_name(old, doname));
+                buf = msgprintf(" removes %s and", distant_name(old, doname));
             else
-                buf[0] = '\0';
+                buf = "";
             pline("%s%s puts on %s.", Monnam(mon), buf,
                   distant_name(best, doname));
         }       /* can see it */
@@ -778,11 +778,8 @@ mon_break_armor(struct monst *mon, boolean polyspot)
     noride:
         pline("You can no longer ride %s.", mon_nam(mon));
         if (touch_petrifies(u.usteed->data) && !Stone_resistance && rnl(3)) {
-            char buf[BUFSZ];
-
             pline("You touch %s.", mon_nam(u.usteed));
-            sprintf(buf, "falling off %s", an(u.usteed->data->mname));
-            instapetrify(buf);
+            instapetrify(msgcat("falling of ", an(u.usteed->data->mname)));
         }
         dismount_steed(DISMOUNT_FELL);
     }
@@ -826,3 +823,4 @@ racial_exception(struct monst *mon, struct obj *obj)
 }
 
 /*worn.c*/
+

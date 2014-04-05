@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-19 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -296,7 +296,7 @@ extcmd_via_menu(const char **namelist, const char **desclist, int listlen)
 {
     struct nh_menulist menu;
     char buf[BUFSZ];
-    char cbuf[QBUFSZ], prompt[QBUFSZ], fmtstr[20];
+    char cbuf[QBUFSZ], prompt[QBUFSZ];
     int i, n, nchoices, acount;
     int ret, biggest;
     int accelerator, prevaccelerator;
@@ -315,7 +315,6 @@ extcmd_via_menu(const char **namelist, const char **desclist, int listlen)
                 choices[nchoices++] = i;
                 if (strlen(desclist[i]) > biggest) {
                     biggest = strlen(desclist[i]);
-                    sprintf(fmtstr, "%%-%ds", biggest + 15);
                 }
             }
         }
@@ -342,7 +341,7 @@ extcmd_via_menu(const char **namelist, const char **desclist, int listlen)
                 if (acount) {
                     /* flush the extended commands for that letter already in
                        buf */
-                    sprintf(buf, fmtstr, prompt);
+                    sprintf(buf, "%-*s", biggest + 15, prompt);
                     add_menu_item(&menu, prevaccelerator, buf,
                                   prevaccelerator, FALSE);
                     acount = 0;
@@ -363,7 +362,7 @@ extcmd_via_menu(const char **namelist, const char **desclist, int listlen)
         }
         if (acount) {
             /* flush buf */
-            sprintf(buf, fmtstr, prompt);
+            sprintf(buf, "%-*s", biggest + 15, prompt);
             add_menu_item(&menu, prevaccelerator, buf, prevaccelerator, FALSE);
         }
 

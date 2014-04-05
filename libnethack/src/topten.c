@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -139,7 +139,7 @@ encode_carried(void)
 {
     unsigned long c = 0UL;
 
-    /* this encodes important items potentially owned by the player at the time 
+    /* this encodes important items potentially owned by the player at the time
        of death */
     if (Uhave_amulet)
         c |= 0x0001UL;  /* real Amulet of Yendor */
@@ -159,7 +159,7 @@ static void
 write_xlentry(FILE * rfile, const struct toptenentry *tt, unsigned long carried)
 {
     char buf[DTHSZ + 1];
-    char *uname;
+    const char *uname;
 
     /* regular logfile data */
     fprintf(rfile,
@@ -282,7 +282,7 @@ update_xlog(const struct toptenentry *newtt, unsigned long carried)
 static boolean
 readentry(char *line, struct toptenentry *tt)
 {
-    /* 
+    /*
      * "3.4.3 77 0 1 1 0 15 1 20110727 20110727 \
      * 1000 Bar Orc Mal Cha daniel,killed by a newt"
      */
@@ -330,29 +330,30 @@ read_topten(int fd, int limit)
 }
 
 
-void
-describe_death(char *death, int how, int maxlen)
+const char *
+describe_death(int how, int maxlen)
 {
     const char *k = killer;
-    death[0] = '\0';
+    const char *death = killed_by_prefix[how];
     if (!k)
         k = "";
     switch (killer_format) {
     default:
         impossible("bad killer format?");
     case KILLED_BY_AN:
-        strcat(death, killed_by_prefix[how]);
-        strncat(death, an(k), maxlen - strlen(death) - 1);
+        death = msgcat(death, an(k));
         break;
     case KILLED_BY:
-        strcat(death, killed_by_prefix[how]);
-        strncat(death, k, maxlen - strlen(death) - 1);
+        death = msgcat(death, k);
+        break;
+    case KILLED_BY_THE:
+        death = msgcat(death, the(k));
         break;
     case NO_KILLER_PREFIX:
-        strncat(death, k, maxlen - 1);
+        death = k;
         break;
     }
-    death[maxlen-1] = '\0';
+    return death;
 }
 
 
@@ -364,7 +365,7 @@ fill_topten_entry(struct toptenentry *newtt, int how)
     memset(newtt, 0, sizeof (struct toptenentry));
 
     /* deepest_lev_reached() is in terms of depth(), and reporting the deepest
-       level reached in the dungeon death occurred in doesn't seem right, so we 
+       level reached in the dungeon death occurred in doesn't seem right, so we
        have to report the death level in depth() terms as well (which also
        seems reasonable since that's all the player sees on the screen anyway)
        */
@@ -393,7 +394,8 @@ fill_topten_entry(struct toptenentry *newtt, int how)
     newtt->plalign[ROLESZ] = '\0';
     strncpy(newtt->name, u.uplname, NAMSZ);
     newtt->name[NAMSZ] = '\0';
-    describe_death(newtt->death, how, DTHSZ);
+    strncpy(newtt->death, describe_death(how, DTHSZ), DTHSZ);
+    newtt->death[DTHSZ] = '\0';
     newtt->birthdate = yyyymmdd(u.ubirthday);
     newtt->deathdate = yyyymmdd((time_t) 0L);
     time(&deathtime_internal);
@@ -548,7 +550,7 @@ tt_oname(struct obj *otmp)
 
 
 /* append the level name to outbuf */
-void
+static void
 topten_level_name(int dnum, int dlev, char *outbuf)
 {
     if (dnum == astral_level.dnum) {
@@ -575,11 +577,11 @@ topten_level_name(int dnum, int dlev, char *outbuf)
             arg = "Void";
             break;
         }
-        sprintf(eos(outbuf), fmt, arg);
+        sprintf(outbuf + strlen(outbuf), fmt, arg);
     } else {
-        sprintf(eos(outbuf), "in %s", dungeons[dnum].dname);
+        sprintf(outbuf + strlen(outbuf), "in %s", dungeons[dnum].dname);
         if (dnum != knox_level.dnum)
-            sprintf(eos(outbuf), " on level %d", dlev);
+            sprintf(outbuf + strlen(outbuf), " on level %d", dlev);
     }
 }
 
@@ -592,11 +594,12 @@ topten_death_description(struct toptenentry *in, char *outbuf)
 
     outbuf[0] = '\0';
 
-    sprintf(eos(outbuf), "%.16s %s-%s-%s-%s ", in->name, in->plrole, in->plrace,
+    sprintf(outbuf, "%.16s %s-%s-%s-%s ", in->name, in->plrole, in->plrace,
             in->plgend, in->plalign);
 
     if (!strncmp("escaped", in->death, 7)) {
-        sprintf(eos(outbuf), "escaped the dungeon %s[max level %d]",
+        sprintf(outbuf + strlen(outbuf),
+                "escaped the dungeon %s[max level %d]",
                 !strncmp(" (", in->death + 7, 2) ? in->death + 7 + 2 : "",
                 in->maxlvl);
         /* fixup for closing paren in "escaped... with...Amulet)[max..." */
@@ -604,7 +607,7 @@ topten_death_description(struct toptenentry *in, char *outbuf)
             *bp = (in->deathdnum == astral_level.dnum) ? '\0' : ' ';
         second_line = FALSE;
     } else if (!strncmp("ascended", in->death, 8)) {
-        sprintf(eos(outbuf), "ascended to demigod%s-hood",
+        sprintf(outbuf + strlen(outbuf), "ascended to demigod%s-hood",
                 (in->plgend[0] == 'F') ? "dess" : "");
         second_line = FALSE;
     } else {
@@ -615,7 +618,7 @@ topten_death_description(struct toptenentry *in, char *outbuf)
             strcat(outbuf, "starved to death");
             second_line = FALSE;
         } else if (!strncmp(in->death, "choked", 6)) {
-            sprintf(eos(outbuf), "choked on h%s food",
+            sprintf(outbuf + strlen(outbuf), "choked on h%s food",
                     (in->plgend[0] == 'F') ? "er" : "is");
         } else if (!strncmp(in->death, "poisoned", 8)) {
             strcat(outbuf, "was poisoned");
@@ -629,7 +632,7 @@ topten_death_description(struct toptenentry *in, char *outbuf)
         strcat(outbuf, " ");
         topten_level_name(in->deathdnum, in->deathlev, outbuf);
         if (in->deathlev != in->maxlvl)
-            sprintf(eos(outbuf), " [max %d]", in->maxlvl);
+            sprintf(outbuf + strlen(outbuf), " [max %d]", in->maxlvl);
 
         /* kludge for "quit while already on Charon's boat" */
         if (!strncmp(in->death, "quit ", 5))
@@ -639,7 +642,8 @@ topten_death_description(struct toptenentry *in, char *outbuf)
 
     /* Quit, starved, ascended, and escaped contain no second line */
     if (second_line)
-        sprintf(eos(outbuf), "  %c%s.", highc(*(in->death)), in->death + 1);
+        sprintf(outbuf + strlen(outbuf),
+                "  %c%s.", highc(*(in->death)), in->death + 1);
 }
 
 
@@ -805,3 +809,4 @@ nh_get_topten(int *out_len, char *statusbuf, const char *volatile player,
 
 
 /* topten.c */
+

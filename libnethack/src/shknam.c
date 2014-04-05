@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -380,7 +380,6 @@ stock_room(int shp_indx, struct level *lev, struct mkroom *sroom)
      * door get objects).
      */
     int sx, sy, sh;
-    char buf[BUFSZ];
     int rmno = (sroom - lev->rooms) + ROOMOFFSET;
     const struct shclass *shp = &shtypes[shp_indx];
 
@@ -415,8 +414,7 @@ stock_room(int shp_indx, struct level *lev, struct mkroom *sroom)
             n--;
         else if (inside_shop(lev, sx, sy - 1))
             n++;
-        sprintf(buf, "Closed for inventory");
-        make_engr_at(lev, m, n, buf, 0L, DUST);
+        make_engr_at(lev, m, n, "Closed for inventory", 0L, DUST);
     }
 
     for (sx = sroom->lx; sx <= sroom->hx; sx++)
@@ -474,3 +472,4 @@ get_shop_item(int type)
 }
 
 /*shknam.c*/
+

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-06 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -210,10 +210,11 @@ savebones(struct obj *corpse)
     struct monst *mtmp;
     const struct permonst *mptr;
     struct fruit *f;
-    char c, whynot[BUFSZ], bonesid[10];
+    char c, bonesid[10];
     struct memfile mf;
     struct obj *statue = 0;
     uchar cnamelth = 0, snamelth = 0;
+    const char *whynot;
 
     mnew(&mf, NULL);
 
@@ -342,7 +343,7 @@ make_bones:
             clear_memory_glyph(x, y, S_unexplored);
         }
 
-    fd = create_bonesfile(bonesid, whynot);
+    fd = create_bonesfile(bonesid, &whynot);
     if (fd < 0) {
         if (wizard)
             pline("%s", whynot);
@@ -427,10 +428,10 @@ getbones(d_level * levnum)
         c = mread8(&mf);       /* length incl. '\0' */
         mread(&mf, oldbonesid, (unsigned)c);    /* DD.nnn */
         if (strcmp(bonesid, oldbonesid) != 0) {
-            char errbuf[BUFSZ];
+            const char *errbuf;
 
-            sprintf(errbuf, "This is bones level '%s', not '%s'!", oldbonesid,
-                    bonesid);
+            errbuf = msgprintf("This is bones level '%s', not '%s'!",
+                               oldbonesid, bonesid);
 
             if (wizard) {
                 pline("%s", errbuf);
@@ -478,3 +479,4 @@ getbones(d_level * levnum)
 }
 
 /*bones.c*/
+

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-02 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -220,6 +220,7 @@ extern void destroy_drawbridge(int, int);
 /* ### decl.c ### */
 
 extern void init_turnstate(void);
+extern void abort_turnstate(void);
 extern void neutral_turnstate_tasks(void);
 extern void init_data(boolean);
 
@@ -343,18 +344,19 @@ extern struct obj *oname(struct obj *, const char *);
 extern int do_naming(const struct nh_cmd_arg *);
 extern void docall(struct obj *);
 extern const char *rndghostname(void);
-extern char *x_monnam(const struct monst *mon, int, const char *, int, boolean);
-extern char *l_monnam(const struct monst *);
-extern char *mon_nam(const struct monst *);
-extern char *noit_mon_nam(const struct monst *);
-extern char *Monnam(const struct monst *);
-extern char *noit_Monnam(const struct monst *);
-extern char *m_monnam(const struct monst *);
-extern char *y_monnam(const struct monst *);
-extern char *Adjmonnam(const struct monst *, const char *);
-extern char *Amonnam(const struct monst *);
-extern char *a_monnam(const struct monst *);
-extern char *distant_monnam(const struct monst *, int, char *);
+extern const char *x_monnam(const struct monst *mon, int, const char *, int, boolean);
+extern const char *l_monnam(const struct monst *);
+extern const char *mon_nam(const struct monst *);
+extern const char *noit_mon_nam(const struct monst *);
+extern const char *Monnam(const struct monst *);
+extern const char *noit_Monnam(const struct monst *);
+extern const char *m_monnam(const struct monst *);
+extern const char *y_monnam(const struct monst *);
+extern const char *Adjmonnam(const struct monst *, const char *);
+extern const char *Amonnam(const struct monst *);
+extern const char *a_monnam(const struct monst *);
+extern const char *distant_monnam(const struct monst *, int);
+extern const char *s_suffix(const char *);
 extern int rndmonidx(void);
 extern const char *monnam_for_index(int);
 extern boolean monnam_is_pname(int);
@@ -362,7 +364,7 @@ extern const char *hcolor(const char *);
 extern const char *rndcolor(void);
 extern const char *roguename(void);
 extern struct obj *realloc_obj(struct obj *, int, void *, int, const char *);
-extern char *coyotename(const struct monst *, char *);
+extern const char *coyotename(const struct monst *);
 
 /* ### do_wear.c ### */
 
@@ -440,7 +442,7 @@ extern boolean hurtle_step(void *, int, int);
 /* ### dump.c ### */
 
 extern void begin_dump(int);
-extern void end_dump(int, char *, char *, long, unsigned long);
+extern void end_dump(int, long, unsigned long);
 extern void dump_catch_menus(boolean);
 
 /* ### dungeon.c ### */
@@ -515,8 +517,8 @@ extern void fix_petrification(void);
 /* ### end.c ### */
 
 extern void nonfatal_dump_core(void);
-extern void NORETURN terminate(enum nh_play_status);
-extern void NORETURN panic(const char *, ...) PRINTFLIKE(1,2);
+extern noreturn void terminate(enum nh_play_status);
+extern noreturn void panic(const char *, ...) PRINTFLIKE(1,2);
 extern int done2(void);
 extern int doquit(const struct nh_cmd_arg *);
 extern void done_in_by(struct monst *);
@@ -526,13 +528,13 @@ extern int num_genocides(void);
 extern int num_extinctions(void);
 extern void list_vanquished(char, boolean);
 extern void list_genocided(char, boolean);
-extern void display_rip(int, char *, char *, long, unsigned long);
+extern void display_rip(int, long, unsigned long);
 extern long calc_score(int, boolean, long);
 
 /* ### engrave.c ### */
 
-extern char *random_engraving(char *);
-extern void wipeout_text(char *, int, unsigned);
+extern const char *random_engraving(void);
+extern const char *wipeout_text(const char *, int, unsigned);
 extern boolean can_reach_floor(void);
 extern const char *surface(int, int);
 extern const char *ceiling(int, int);
@@ -581,7 +583,7 @@ extern void display_file(const char *, boolean);
 extern FILE *fopen_datafile(const char *filename, const char *mode, int prefix);
 extern int open_datafile(const char *filename, int flags, int prefix);
 extern char *loadfile(int fd, int *datasize);
-extern int create_bonesfile(char *bonesid, char errbuf[]);
+extern int create_bonesfile(const char *bonesid, const char **errbuf);
 extern void commit_bonesfile(char *bonesid);
 extern int open_bonesfile(char *bonesid);
 extern int delete_bonesfile(char *bonesid);
@@ -680,13 +682,14 @@ extern boolean validate_object(struct obj *obj, const char *lets,
 extern void fully_identify_obj(struct obj *);
 extern void identify_pack(int);
 extern void prinv(const char *, struct obj *, long);
-extern char *xprname(struct obj *, const char *, char, boolean, long, long);
+extern const char *xprname(
+    struct obj *, const char *, char, boolean, long, long);
 extern int ddoinv(const struct nh_cmd_arg *);
 extern char display_inventory(const char *, boolean);
 extern void update_inventory(void);
 extern int display_binventory(int, int, boolean);
 extern struct obj *display_cinventory(struct obj *);
-extern struct obj *display_minventory(struct monst *, int, char *);
+extern struct obj *display_minventory(struct monst *, int, const char *);
 extern int dotypeinv(const struct nh_cmd_arg *arg);
 extern boolean update_location(boolean all_objects);
 extern int look_here(int, boolean, boolean, boolean);
@@ -772,7 +775,7 @@ extern void log_backup_save(void);
 extern void log_sync(void);
 
 extern void log_revert_command(void);
-extern void NORETURN log_recover(long);
+extern noreturn void log_recover(long);
 extern long get_log_start_of_turn_offset(void);
 
 extern void log_record_bones(struct memfile *mf);
@@ -789,7 +792,7 @@ extern void log_replay_no_more_options(void);
 
 extern void log_init(int fd);
 extern void log_uninit(void);
-extern void log_game_over(char *death);
+extern void log_game_over(const char *death);
 
 /* ### makemon.c ### */
 
@@ -850,6 +853,26 @@ extern int64_t mread64(struct memfile *mf);
 extern void mfmagic_check(struct memfile *mf, int32_t magic);
 extern void mfmagic_set(struct memfile *mf, int32_t magic);
 extern boolean mequal(struct memfile *mf1, struct memfile *mf2, boolean noisy);
+
+/* ### messages.c ### */
+
+extern const char *msg_from_string(const char *string);
+extern const char *msgvprintf(const char *fmt, va_list args,
+                              boolean sanitize_whitespace) PRINTFLIKE(1,0);
+extern const char *msgprintf(const char *fmt, ...) PRINTFLIKE(1,2);
+extern const char *msgstrftime(const char *fmt, const struct tm *tm)
+    STRFTIMELIKE(1,0);
+extern const char *msgcat(const char *first, const char *second);
+extern const char *msgcat_many(const char *first, ...);
+extern const char *msgkitten(const char *first, char second);
+extern const char *msgchop(const char *message, int count);
+extern const char *msgtitlecase(const char *message);
+extern const char *msgupcasefirst(const char *message);
+extern const char *msglowercase(const char *message);
+extern const char *msgcaseconv(const char *message,
+                               char (*firstcharcaseconv)(char),
+                               char (*insidewordcaseconv)(char),
+                               char (*wordstartcaseconv)(char));
 
 /* ### mhitm.c ### */
 
@@ -1176,40 +1199,40 @@ extern void count_discovered_objects(int *, int *);
 
 /* ### objnam.c ### */
 
-extern char *obj_typename(int);
-extern char *simple_typename(int);
+extern const char *obj_typename(int);
+extern const char *simple_typename(int);
 extern boolean obj_is_pname(const struct obj *);
-extern char *distant_name(const struct obj *obj,
-                          char *(*func) (const struct obj *));
-extern char *fruitname(boolean);
+extern const char *distant_name(const struct obj *obj,
+                                const char *(*func) (const struct obj *));
+extern const char *fruitname(boolean);
 extern void examine_object(struct obj *obj);
-extern char *xname(const struct obj *);
-extern char *mshot_xname(const struct obj *);
+extern const char *xname(const struct obj *);
+extern const char *mshot_xname(const struct obj *);
 extern boolean the_unique_obj(const struct obj *obj);
-extern char *doname(const struct obj *obj);
-extern char *doname_price(const struct obj *obj);
+extern const char *doname(const struct obj *obj);
+extern const char *doname_price(const struct obj *obj);
 extern boolean not_fully_identified_core(const struct obj *otmp,
                                          boolean ignore_bknown);
 extern boolean not_fully_identified(const struct obj *otmp);
-extern char *corpse_xname(const struct obj *, boolean);
-extern char *cxname(const struct obj *);
-extern char *cxname2(const struct obj *obj);
-extern char *killer_xname(const struct obj *obj_orig);
-extern const char *singular(struct obj *, char *(*)(const struct obj *));
-extern char *an(const char *);
-extern char *An(const char *);
-extern char *The(const char *);
-extern char *the(const char *);
-extern char *aobjnam(const struct obj *, const char *);
-extern char *Tobjnam(const struct obj *, const char *);
-extern char *otense(const struct obj *, const char *);
-extern char *vtense(const char *, const char *);
-extern char *Doname2(const struct obj *);
-extern char *yname(const struct obj *);
-extern char *Yname2(const struct obj *);
-extern char *ysimple_name(const struct obj *);
-extern char *makeplural(const char *);
-extern char *makesingular(const char *);
+extern const char *corpse_xname(const struct obj *, boolean);
+extern const char *cxname(const struct obj *);
+extern const char *cxname2(const struct obj *obj);
+extern const char *killer_xname(const struct obj *obj_orig);
+extern const char *singular(struct obj *, const char *(*)(const struct obj *));
+extern const char *an(const char *);
+extern const char *An(const char *);
+extern const char *The(const char *);
+extern const char *the(const char *);
+extern const char *aobjnam(const struct obj *, const char *);
+extern const char *Tobjnam(const struct obj *, const char *);
+extern const char *otense(const struct obj *, const char *);
+extern const char *vtense(const char *, const char *);
+extern const char *Doname2(const struct obj *);
+extern const char *yname(const struct obj *);
+extern const char *Yname2(const struct obj *);
+extern const char *ysimple_name(const struct obj *);
+extern const char *makeplural(const char *);
+extern const char *makesingular(const char *);
 extern struct obj *readobjnam(char *bp, struct obj *no_wish, boolean from_user);
 extern int rnd_class(int, int);
 extern const char *cloak_simple_name(const struct obj *cloak);
@@ -1243,7 +1266,7 @@ extern int obj_compare(const void *, const void *);
 extern int query_objlist(const char *, struct obj *, int, struct object_pick **,
                          int, boolean(*)(const struct obj *));
 extern void add_objitem(struct nh_objlist *, enum nh_menuitem_role, int,
-                        char *, struct obj *, boolean);
+                        const char *, struct obj *, boolean);
 extern struct obj *pick_obj(struct obj *);
 extern void reset_encumber_msg(void);
 extern int encumber_msg(void);
@@ -1337,7 +1360,7 @@ extern int move_special(struct monst *, boolean, schar, boolean, boolean, xchar,
 extern char temple_occupied(char *);
 extern int pri_move(struct monst *);
 extern void priestini(struct level *lev, struct mkroom *, int, int, boolean);
-extern char *priestname(const struct monst *, char *, boolean);
+extern const char *priestname(const struct monst *, boolean);
 extern boolean p_coaligned(const struct monst *mon);
 extern struct monst *findpriest(char);
 extern void intemple(int);
@@ -1413,7 +1436,7 @@ extern struct region *create_gas_cloud(struct level *lev, xchar, xchar, int,
 
 extern void inven_inuse(boolean);
 extern int dorecover(struct memfile *mf);
-extern void trickery(char *);
+extern void trickery(const char *);
 extern void restore_flags(struct memfile *mf, struct flag *f);
 extern void restore_you(struct memfile *mf, struct you *y);
 extern void restore_coords(struct memfile *mf, coord *c, int n);
@@ -1438,7 +1461,7 @@ extern const char *Goodbye(void);
 
 /* ### rumors.c ### */
 
-extern char *getrumor(int, char *, boolean, int *);
+extern const char *getrumor(int, boolean, int *);
 extern void outrumor(int, int);
 extern void save_oracles(struct memfile *mf);
 extern void free_oracles(void);
@@ -1459,7 +1482,7 @@ extern void freedynamicdata(void);
 
 extern long money2mon(struct monst *, long);
 extern void money2u(struct monst *, long);
-extern char *shkname(const struct monst *);
+extern const char *shkname(const struct monst *);
 extern void shkgone(struct monst *);
 extern void set_residency(struct monst *, boolean);
 extern void replshk(struct monst *, struct monst *);
@@ -1514,8 +1537,8 @@ extern void check_unpaid(struct obj *);
 extern void costly_gold(xchar, xchar, long);
 extern boolean block_door(xchar, xchar);
 extern boolean block_entry(xchar, xchar);
-extern char *shk_your(char *, const struct obj *);
-extern char *Shk_Your(char *, const struct obj *);
+extern const char *shk_your(const struct obj *);
+extern const char *Shk_Your(const struct obj *);
 extern void adjust_bill_val(struct obj *);
 extern void costly_damage_obj(struct obj *);
 
@@ -1574,7 +1597,7 @@ extern void initialspell(struct obj *);
 extern long somegold(long);
 extern void stealgold(struct monst *);
 extern void remove_worn_item(struct obj *, boolean);
-extern int steal(struct monst *, char *);
+extern int steal(struct monst *, const char **);
 extern int mpickobj(struct monst *, struct obj *);
 extern void stealamulet(struct monst *);
 extern void mdrop_special_objs(struct monst *);
@@ -1640,7 +1663,7 @@ extern void do_storms(void);
 extern boolean start_timer(struct level *lev, long when, short kind,
                            short func_index, void *arg);
 extern long stop_timer(struct level *lev, short func_index, void *arg);
-extern long report_timer(struct level *lev, short func_index, void *arg);
+extern long report_timer(struct level *lev, short func_index, const void *arg);
 extern void run_timers(void);
 extern void obj_move_timers(struct obj *, struct obj *);
 extern void obj_split_timers(struct obj *, struct obj *);
@@ -1660,8 +1683,7 @@ extern int wiz_timeout_queue(const struct nh_cmd_arg *);
 extern void update_topten(int how, unsigned long carried);
 extern struct obj *tt_oname(struct obj *);
 extern unsigned long encode_carried(void);
-extern void topten_level_name(int dnum, int dlev, char *outbuf);
-extern void describe_death(char *death, int how, int maxlen);
+extern const char *describe_death(int how, int maxlen);
 
 /* ### track.c ### */
 
@@ -1743,7 +1765,7 @@ extern boolean gd_sound(void);
 
 /* ### version.c ### */
 
-extern char *version_string(char *);
+extern const char *version_string(void);
 extern int doversion(const struct nh_cmd_arg *);
 extern boolean check_version(struct version_info *, const char *, boolean);
 extern boolean uptodate(struct memfile *mf, const char *);
@@ -1790,7 +1812,7 @@ extern boolean would_prefer_rwep(struct monst *, struct obj *);
 
 extern void were_change(struct monst *);
 extern void new_were(struct monst *);
-extern int were_summon(const struct permonst *, boolean, int *, char *);
+extern int were_summon(const struct permonst *, boolean, int *, const char **);
 extern void you_were(void);
 extern void you_unwere(boolean);
 
@@ -1941,3 +1963,4 @@ extern int resist(struct monst *, char, int, int);
 extern void makewish(void);
 
 #endif /* EXTERN_H */
+

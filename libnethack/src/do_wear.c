@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-12 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -142,11 +142,11 @@ static void
 on_msg(struct obj *otmp)
 {
     if (flags.verbose) {
-        char how[BUFSZ];
+        const char *how = "";
 
-        how[0] = '\0';
         if (otmp->otyp == TOWEL)
-            sprintf(how, " around your %s", body_part(HEAD));
+            how = msgprintf(" around your %s", body_part(HEAD));
+
         pline("You are now %s %s%s.",
               otmp->owornmask & W_MASK(os_arms) ? "holding" : "wearing",
               obj_is_pname(otmp) ? the(xname(otmp)) : an(xname(otmp)), how);
@@ -586,12 +586,12 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     /* Prevent wielding cockatrice when not wearing gloves */
     if (uwep && uwep->otyp == CORPSE &&
         touch_petrifies(&mons[uwep->corpsenm])) {
-        char kbuf[BUFSZ];
+        const char *kbuf;
 
         pline("You wield the %s in your bare %s.", corpse_xname(uwep, TRUE),
               makeplural(body_part(HAND)));
-        sprintf(kbuf, "removing %s gloves while wielding %s", uhis(),
-                an(corpse_xname(uwep, TRUE)));
+        kbuf = msgprintf("removing %s gloves while wielding %s", uhis(),
+                         an(corpse_xname(uwep, TRUE)));
         instapetrify(kbuf);
         uwepgone();     /* life-saved still doesn't allow touching cockatrice */
     }
@@ -599,12 +599,12 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     /* KMH -- ...or your secondary weapon when you're wielding it */
     if (u.twoweap && uswapwep && uswapwep->otyp == CORPSE &&
         touch_petrifies(&mons[uswapwep->corpsenm])) {
-        char kbuf[BUFSZ];
+        const char *kbuf;
 
         pline("You wield the %s in your bare %s.", corpse_xname(uswapwep, TRUE),
               body_part(HAND));
-        sprintf(kbuf, "removing %s gloves while wielding %s", uhis(),
-                an(corpse_xname(uwep, TRUE)));
+        kbuf = msgprintf("removing %s gloves while wielding %s", uhis(),
+                         an(corpse_xname(uwep, TRUE)));
         instapetrify(kbuf);
         uswapwepgone(); /* lifesaved still doesn't allow touching cockatrice */
     }
@@ -1651,7 +1651,6 @@ boolean
 canunwearobj(struct obj *otmp, boolean noisy, boolean spoil, boolean cblock)
 {
     struct obj *why;
-    char buf[BUFSZ];
 
     if (!otmp || otmp == &zeroobj)
         return FALSE;
@@ -1661,10 +1660,10 @@ canunwearobj(struct obj *otmp, boolean noisy, boolean spoil, boolean cblock)
         return FALSE;
     }
 
-    *buf = '\0';        /* lint suppresion */
-
     /* special ring checks */
     if (otmp->owornmask & W_RING) {
+        const char *buf;
+
         if (nolimbs(youmonst.data)) {
             if (noisy)
                 pline("The ring is stuck.");
@@ -1673,11 +1672,14 @@ canunwearobj(struct obj *otmp, boolean noisy, boolean spoil, boolean cblock)
         why = 0;        /* the item which prevents ring removal */
         if ((otmp == uright || (uwep && bimanual(uwep))) &&
             known_welded(spoil)) {
-            sprintf(buf, "free a weapon %s", body_part(HAND));
+            buf = msgprintf("free a weapon %s", body_part(HAND));
             why = uwep;
         } else if (uarmg && uarmg->cursed && (spoil || uarmg->bknown)) {
-            sprintf(buf, "take off your gloves");
+            buf = msgprintf("take off your gloves");
             why = uarmg;
+        } else {
+            impossible("ring stuck in an unknown way?");
+            buf = "manage";
         }
         if (why) {
             if (noisy)
@@ -1721,19 +1723,20 @@ canunwearobj(struct obj *otmp, boolean noisy, boolean spoil, boolean cblock)
     /* special suit and shirt checks */
     if (otmp->owornmask & (W_MASK(os_arm) | W_MASK(os_armu))) {
         why = 0;        /* the item which prevents disrobing */
+        const char *buf;
         if (CBLOCK(uarmc)) {
-            sprintf(buf, "remove your %s", cloak_simple_name(uarmc));
+            buf = msgcat("remove your ", cloak_simple_name(uarmc));
             why = uarmc;
         } else if ((otmp->owornmask & W_MASK(os_armu)) && CBLOCK(uarm)) {
             /* We could add a different message for removing a shirt underneath
                skin, but that scenario is kind-of absurd and currently can't
                happen, because draconic forms break shirts. */
-            sprintf(buf, "remove your armor");
+            buf = "remove your armor";
             why = uarm;
         } else if (uwep && bimanual(uwep) && known_welded(spoil)) {
-            sprintf(buf, "release your %s",
-                    is_sword(uwep) ? "sword" :
-                    (uwep->otyp == BATTLE_AXE) ? "axe" : "weapon");
+            buf = msgcat("release your ",
+                         is_sword(uwep) ? "sword" :
+                         (uwep->otyp == BATTLE_AXE) ? "axe" : "weapon");
             why = uwep;
         }
         if (why) {
@@ -1924,26 +1927,31 @@ doequip(const struct nh_cmd_arg *arg)
         resuming = FALSE;
 
         if (turnstate.continue_message)
+
             init_menulist(&menu);
 
         for (j = 0; j <= os_last_equip; j++) {
-            char buf[BUFSZ];
+            const char *buf;
             struct obj *otmp = EQUIP(j);
-            sprintf(buf, "%*s: %.*s", LONGEST_SLOTNAME,
-                    c_slotnames_menu[j],
-                    BUFSZ - LONGEST_SLOTNAME - 4,
-                    otmp ? doname(otmp) : "(empty)");
+            const int linelen = 80; /* don't produce lines longer than this */
+
+            buf = msgprintf("%*s: %.*s", LONGEST_SLOTNAME,
+                            c_slotnames_menu[j],
+                            linelen - LONGEST_SLOTNAME - 4,
+                            otmp ? doname(otmp) : "(empty)");
+
             if (turnstate.continue_message)
                 add_menuitem(&menu, j+1, buf, 0, FALSE);
+
             if (u.utracked[tos_first_equip + j]) {
                 boolean progress = !!u.uoccupation_progress[
                     tos_first_equip + j];
-                sprintf(buf, "%*s %.*s%s", LONGEST_SLOTNAME + 5,
-                        "->", BUFSZ - LONGEST_SLOTNAME - 7 -
-                        (int)strlen(" (in progress)"),
-                        u.utracked[tos_first_equip + j] != &zeroobj ?
-                        doname(u.utracked[tos_first_equip + j]) :
-                        "(empty)",
+                buf = msgprintf("%*s %.*s%s", LONGEST_SLOTNAME + 5,
+                                "->", linelen - LONGEST_SLOTNAME - 7 -
+                                (int)strlen(" (in progress)"),
+                                u.utracked[tos_first_equip + j] != &zeroobj ?
+                                doname(u.utracked[tos_first_equip + j]) :
+                                "(empty)",
                         progress ? " (in progress)" : "" );
                 if (turnstate.continue_message)
                     add_menuitem(&menu, 0, buf, 0, FALSE);
@@ -2069,9 +2077,9 @@ destroy_arm(struct obj *atmp)
         setunequip(otmp);
         useup(otmp);
     } else if (DESTROY_ARM(uarmg)) {
-        char kbuf[BUFSZ];
+        const char *kbuf;
 
-        sprintf(kbuf, "losing %s gloves while wielding", uhis());
+        kbuf = msgprintf("losing %s gloves while wielding", uhis());
         pline("Your gloves vanish!");
         setunequip(otmp);
         useup(otmp);
@@ -2109,3 +2117,4 @@ adj_abon(struct obj *otmp, schar delta)
 }
 
 /*do_wear.c*/
+

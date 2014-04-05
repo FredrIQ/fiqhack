@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-10 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -151,13 +151,20 @@ static const char vismsg[] =
     "Your vision seems to %s for a moment but is %s now.";
 static const char eyemsg[] = "Your %s momentarily %s.";
 
+static void
+eyepline(const char *verb_one_eye, const char *verb_two_eyes)
+{
+    if (eyecount(youmonst.data) == 1)
+        pline(eyemsg, body_part(EYE), verb_one_eye);
+    else
+        pline(eyemsg, makeplural(body_part(EYE)), verb_two_eyes);
+}
+
 void
 make_blinded(long xtime, boolean talk)
 {
     long old = Blinded;
     boolean u_could_see, can_see_now;
-    int eyecnt;
-    char buf[BUFSZ];
 
     /* we need to probe ahead in case the Eyes of the Overworld are or will be
        overriding blindness */
@@ -182,10 +189,7 @@ make_blinded(long xtime, boolean talk)
             if (!haseyes(youmonst.data)) {
                 strange_feeling(NULL, NULL);
             } else if (Blindfolded) {
-                strcpy(buf, body_part(EYE));
-                eyecnt = eyecount(youmonst.data);
-                pline(eyemsg, (eyecnt == 1) ? buf : makeplural(buf),
-                      (eyecnt == 1) ? "itches" : "itch");
+                eyepline("itches", "itch");
             } else {    /* Eyes of the Overworld */
                 pline(vismsg, "brighten", Hallucination ? "sadder" : "normal");
             }
@@ -208,10 +212,7 @@ make_blinded(long xtime, boolean talk)
             if (!haseyes(youmonst.data)) {
                 strange_feeling(NULL, NULL);
             } else if (Blindfolded) {
-                strcpy(buf, body_part(EYE));
-                eyecnt = eyecount(youmonst.data);
-                pline(eyemsg, (eyecnt == 1) ? buf : makeplural(buf),
-                      (eyecnt == 1) ? "twitches" : "twitch");
+                eyepline("twitches", "twitch");
             } else {    /* Eyes of the Overworld */
                 pline(vismsg, "dim", Hallucination ? "happier" : "normal");
             }
@@ -251,12 +252,7 @@ make_hallucinated(long xtime,   /* nonzero if this is an attempt to turn on
         if (!haseyes(youmonst.data)) {
             strange_feeling(NULL, NULL);
         } else if (Blind) {
-            char buf[BUFSZ];
-            int eyecnt = eyecount(youmonst.data);
-            
-            strcpy(buf, body_part(EYE));
-            pline(eyemsg, (eyecnt == 1) ? buf : makeplural(buf),
-                  (eyecnt == 1) ? "itches" : "itch");
+            eyepline("itches", "itch");
         } else {    /* Grayswandir */
             pline(vismsg, "flatten", "normal");
         }
@@ -994,15 +990,15 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
         if (!cansee(mon->mx, mon->my))
             pline("Crash!");
         else {
-            char *mnam = mon_nam(mon);
-            char buf[BUFSZ];
+            const char *mnam = mon_nam(mon);
+            const char *buf;
 
-            if (has_head(mon->data)) {
-                sprintf(buf, "%s %s", s_suffix(mnam),
-                        (notonhead ? "body" : "head"));
-            } else {
-                strcpy(buf, mnam);
-            }
+            if (has_head(mon->data))
+                buf = msgprintf("%s %s", s_suffix(mnam),
+                                (notonhead ? "body" : "head"));
+            else
+                buf = mnam;
+
             pline("The %s crashes on %s and breaks into shards.", botlnam, buf);
         }
         if (rn2(5) && mon->mhp > 1)
@@ -1477,8 +1473,6 @@ boolean
 get_wet(struct obj * obj)
 /* returns TRUE if something happened (potion should be used up) */
 {
-    char Your_buf[BUFSZ];
-
     if (snuff_lit(obj))
         return TRUE;
 
@@ -1486,7 +1480,7 @@ get_wet(struct obj * obj)
         grease_protect(obj, NULL, &youmonst);
         return FALSE;
     }
-    Shk_Your(Your_buf, obj);
+    const char *Your_buf = Shk_Your(obj);
     /* (Rusting shop goods ought to be charged for.) */
     switch (obj->oclass) {
     case POTION_CLASS:
@@ -1584,7 +1578,7 @@ dodip(const struct nh_cmd_arg *arg)
     uchar here;
     char allowall[2] = { ALL_CLASSES, 0 };
     short mixture;
-    char qbuf[QBUFSZ], Your_buf[BUFSZ];
+    const char *qbuf, *Your_buf;
 
     /* The dip /into/ is taken from arg; the object to dip must therefore
        be propmted for each time.
@@ -1598,20 +1592,23 @@ dodip(const struct nh_cmd_arg *arg)
         here = level->locations[u.ux][u.uy].typ;
         /* Is there a fountain to dip into here? */
         if (IS_FOUNTAIN(here)) {
-            sprintf(qbuf, "Dip %s into the fountain?",
-                    safe_qbuf("", sizeof ("Dip  into the fountain?"),
-                              the(xname(obj)), the(simple_typename(obj->otyp)),
-                              "this item"));
+            qbuf = msgprintf("Dip %s into the fountain?",
+                             safe_qbuf("", sizeof ("Dip  into the fountain?"),
+                                       the(xname(obj)),
+                                       the(simple_typename(obj->otyp)),
+                                       "this item"));
             if (yn(qbuf) == 'y') {
                 dipfountain(obj);
                 return 1;
             }
         } else if (is_pool(level, u.ux, u.uy)) {
             tmp = waterbody_name(u.ux, u.uy);
-            sprintf(qbuf, "Dip %s into the %s?",
-                    safe_qbuf("", sizeof ("Dip  into the pool of water?"),
-                              the(xname(obj)), the(simple_typename(obj->otyp)),
-                              "this item"), tmp);
+            qbuf = msgprintf("Dip %s into the %s?",
+                             safe_qbuf("",
+                                       sizeof ("Dip  into the pool of water?"),
+                                       the(xname(obj)),
+                                       the(simple_typename(obj->otyp)),
+                                       "this item"), tmp);
             if (yn(qbuf) == 'y') {
                 if (Levitation) {
                     floating_above(tmp);
@@ -1627,9 +1624,9 @@ dodip(const struct nh_cmd_arg *arg)
             }
         }
     }
-    sprintf(qbuf, "dip %s into",
-            safe_qbuf("", sizeof ("dip  into"), the(xname(obj)),
-                      the(simple_typename(obj->otyp)), "this item"));
+    qbuf = msgprintf("dip %s into",
+                     safe_qbuf("", sizeof ("dip  into"), the(xname(obj)),
+                               the(simple_typename(obj->otyp)), "this item"));
     potion = getargobj(arg, beverages, qbuf);
     if (!potion)
         return 0;
@@ -1643,7 +1640,7 @@ dodip(const struct nh_cmd_arg *arg)
         boolean useeit = !Blind;
 
         if (useeit)
-            Shk_Your(Your_buf, obj);
+            Your_buf = Shk_Your(obj);
         if (potion->blessed) {
             if (obj->cursed) {
                 if (useeit)
@@ -1801,12 +1798,12 @@ dodip(const struct nh_cmd_arg *arg)
 
     if (is_poisonable(obj)) {
         if (potion->otyp == POT_SICKNESS && !obj->opoisoned) {
-            char buf[BUFSZ];
+            const char *buf;
 
             if (potion->quan > 1L)
-                sprintf(buf, "One of %s", the(xname(potion)));
+                buf = msgcat("One of ", the(xname(potion)));
             else
-                strcpy(buf, The(xname(potion)));
+                buf = The(xname(potion));
             pline("%s forms a coating on %s.", buf, the(xname(obj)));
             obj->opoisoned = TRUE;
             goto poof;
@@ -1922,15 +1919,15 @@ more_dips:
     potion->in_use = FALSE;     /* didn't go poof */
     if ((obj->otyp == UNICORN_HORN || obj->otyp == AMETHYST) &&
         (mixture = mixtype(obj, potion)) != 0) {
-        char oldbuf[BUFSZ], newbuf[BUFSZ];
         short old_otyp = potion->otyp;
         boolean old_dknown = FALSE;
         boolean more_than_one = potion->quan > 1;
+        const char *oldbuf, *newbuf;
 
-        oldbuf[0] = '\0';
+        oldbuf = "";
         if (potion->dknown) {
             old_dknown = TRUE;
-            sprintf(oldbuf, "%s ", hcolor(OBJ_DESCR(objects[potion->otyp])));
+            oldbuf = msgcat(hcolor(OBJ_DESCR(objects[potion->otyp])), " ");
         }
         /* with multiple merged potions, split off one and just clear it */
         if (potion->quan > 1L) {
@@ -1954,10 +1951,9 @@ more_dips:
         } else {
             singlepotion->dknown = !Hallucination;
             if (mixture == POT_WATER && singlepotion->dknown)
-                sprintf(newbuf, "clears");
+                newbuf = "clears";
             else
-                sprintf(newbuf, "turns %s",
-                        hcolor(OBJ_DESCR(objects[mixture])));
+                newbuf = msgcat("turns ", hcolor(OBJ_DESCR(objects[mixture])));
             pline("The %spotion%s %s.", oldbuf,
                   more_than_one ? " that you dipped into" : "", newbuf);
             if (!objects[old_otyp].oc_uname && !objects[old_otyp].oc_name_known
@@ -2042,13 +2038,13 @@ split_mon(struct monst *mon,    /* monster being split */
           struct monst *mtmp)
 {       /* optional attacker whose heat triggered it */
     struct monst *mtmp2;
-    char reason[BUFSZ];
+    const char *reason;
 
-    reason[0] = '\0';
+    reason = "";
     if (mtmp)
-        sprintf(reason, " from %s heat",
-                (mtmp == &youmonst) ? (const char *)"your" : (const char *)
-                s_suffix(mon_nam(mtmp)));
+        reason = msgprintf(" from %s heat", (mtmp == &youmonst) ?
+                           (const char *)"your" :
+                           (const char *)s_suffix(mon_nam(mtmp)));
 
     if (mon == &youmonst) {
         mtmp2 = cloneu();
@@ -2070,3 +2066,4 @@ split_mon(struct monst *mon,    /* monster being split */
 }
 
 /*potion.c*/
+

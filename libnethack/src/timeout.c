@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-16 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -459,17 +459,18 @@ hatch_egg(void *arg, long timeout)
     }
 
     if (mon) {
-        char monnambuf[BUFSZ], carriedby[BUFSZ];
+        const char *monnambuf, *carriedby;
         boolean siblings = (hatchcount > 1), redraw = FALSE;
 
-        if (cansee_hatchspot) {
-            sprintf(monnambuf, "%s%s", siblings ? "some " : "",
-                    siblings ? makeplural(m_monnam(mon)) : an(m_monnam(mon)));
-            /* we don't learn the egg type here because learning an egg type
-               requires either seeing the egg hatch or being familiar with the
-               egg already, as well as being able to see the resulting monster, 
-               checked below */
-        }
+
+        monnambuf = msgcat(siblings ? "some " : "",
+                           siblings ? makeplural(m_monnam(mon)) :
+                           an(m_monnam(mon)));
+        /* we don't learn the egg type here because learning an egg type
+           requires either seeing the egg hatch or being familiar with the
+           egg already, as well as being able to see the resulting monster, 
+           checked below */
+
         switch (egg->where) {
         case OBJ_INVENT:
             knows_egg = TRUE;   /* true even if you are blind */
@@ -500,13 +501,13 @@ hatch_egg(void *arg, long timeout)
             if (cansee_hatchspot) {
                 /* egg carring monster might be invisible */
                 if (canseemon(egg->ocarry)) {
-                    sprintf(carriedby, "%s pack",
-                            s_suffix(a_monnam(egg->ocarry)));
+                    carriedby = msgcat(s_suffix(a_monnam(egg->ocarry)),
+                                       " pack");
                     knows_egg = TRUE;
                 } else if (is_pool(level, mon->mx, mon->my))
-                    strcpy(carriedby, "empty water");
+                    carriedby = "empty water";
                 else
-                    strcpy(carriedby, "thin air");
+                    carriedby = "thin air";
                 pline("You see %s %s out of %s!", monnambuf,
                       locomotion(mon->data, "drop"), carriedby);
             }
@@ -574,7 +575,6 @@ slip_or_trip(void)
 {
     struct obj *otmp = vobj_at(u.ux, u.uy);
     const char *what, *pronoun;
-    char buf[BUFSZ];
     boolean on_foot = TRUE;
 
     if (u.usteed)
@@ -596,9 +596,7 @@ slip_or_trip(void)
             ((otmp = sobj_at(ROCK, level, u.ux, u.uy)) == 0 ? "something" :
              (otmp-> quan == 1L ? "a rock" : "some rocks"));
         if (Hallucination) {
-            what = strcpy(buf, what);
-            buf[0] = highc(buf[0]);
-            pline("Egads!  %s bite%s your %s!", what,
+            pline("Egads!  %s bite%s your %s!", msgupcasefirst(what),
                   (!otmp || otmp->quan == 1L) ? "s" : "", body_part(FOOT));
         } else {
             pline("You trip over %s.", what);
@@ -606,10 +604,10 @@ slip_or_trip(void)
     } else if (rn2(3) && is_ice(level, u.ux, u.uy)) {
         pline("%s %s%s on the ice.",
               u.usteed ?
-              upstart(x_monnam(u.usteed,
-                               u.usteed->mnamelth ?
-                               ARTICLE_NONE : ARTICLE_THE, NULL,
-                               SUPPRESS_SADDLE, FALSE)) : "You",
+              msgupcasefirst(x_monnam(u.usteed,
+                                      u.usteed->mnamelth ?
+                                      ARTICLE_NONE : ARTICLE_THE, NULL,
+                                      SUPPRESS_SADDLE, FALSE)) : "You",
               rn2(2) ? "slip" : "slide", on_foot ? "" : "s");
     } else {
         if (on_foot) {
@@ -701,7 +699,7 @@ burn_object(void *arg, long timeout)
     struct obj *obj = (struct obj *)arg;
     boolean canseeit, many, menorah, need_newsym;
     xchar x, y;
-    char whose[BUFSZ];
+    const char *whose;
 
     menorah = obj->otyp == CANDELABRUM_OF_INVOCATION;
     many = menorah ? obj->spe > 1 : obj->quan > 1L;
@@ -730,11 +728,12 @@ burn_object(void *arg, long timeout)
         return;
     }
 
+    /* set up `whose[]' to be "Your" or "Fred's" or "The goblin's" */
+    whose = Shk_Your(obj);
+
     /* only interested in INVENT, FLOOR, and MINVENT */
     if (get_obj_location(obj, &x, &y, 0)) {
         canseeit = !Blind && cansee(x, y);
-        /* set up `whose[]' to be "Your" or "Fred's" or "The goblin's" */
-        Shk_Your(whose, obj);
     } else {
         canseeit = FALSE;
     }
@@ -1225,7 +1224,7 @@ static const char *kind_name(short);
 static void print_queue(struct nh_menulist *menu, timer_element *);
 static void insert_timer(struct level *lev, timer_element * gnu);
 static timer_element *remove_timer(timer_element **, short, void *);
-static timer_element *peek_timer(timer_element **, short, void *);
+static timer_element *peek_timer(timer_element **, short, const void *);
 static void write_timer(struct memfile *mf, timer_element *);
 static boolean mon_is_local(struct monst *);
 static boolean timer_is_local(timer_element *);
@@ -1269,17 +1268,16 @@ static void
 print_queue(struct nh_menulist *menu, timer_element * base)
 {
     timer_element *curr;
-    char buf[BUFSZ];
 
     if (!base) {
         add_menutext(menu, "<empty>");
     } else {
         add_menutext(menu, "timeout\tid\tkind\tcall");
         for (curr = base; curr; curr = curr->next) {
-            sprintf(buf, " %4u\t%4u\t%-6s #%d\t%s(%p)", curr->timeout,
-                    curr->tid, kind_name(curr->kind), curr->func_index,
-                    timeout_funcs[curr->func_index].name, curr->arg);
-            add_menutext(menu, buf);
+            add_menutext(menu, msgprintf(
+                             " %4u\t%4u\t%-6s #%d\t%s(%p)", curr->timeout,
+                             curr->tid, kind_name(curr->kind), curr->func_index,
+                             timeout_funcs[curr->func_index].name, curr->arg));
         }
     }
 }
@@ -1287,15 +1285,13 @@ print_queue(struct nh_menulist *menu, timer_element * base)
 int
 wiz_timeout_queue(const struct nh_cmd_arg *arg)
 {
-    char buf[BUFSZ];
     struct nh_menulist menu;
 
     (void) arg;
 
     init_menulist(&menu);
 
-    sprintf(buf, "Current time = %u.", moves);
-    add_menutext(&menu, buf);
+    add_menutext(&menu, msgprintf("Current time = %u.", moves));
     add_menutext(&menu, "");
     add_menutext(&menu, "Active timeout queue:");
     add_menutext(&menu, "");
@@ -1393,7 +1389,7 @@ stop_timer(struct level *lev, short func_index, void *arg)
  * scheduled to go off, 0 if not found.
  */
 long
-report_timer(struct level *lev, short func_index, void *arg)
+report_timer(struct level *lev, short func_index, const void *arg)
 {
     timer_element *checking;
 
@@ -1514,7 +1510,7 @@ remove_timer(timer_element ** base, short func_index, void *arg)
 }
 
 static timer_element *
-peek_timer(timer_element ** base, short func_index, void *arg)
+peek_timer(timer_element ** base, short func_index, const void *arg)
 {
     timer_element *curr;
 
@@ -1796,3 +1792,4 @@ relink_timers(boolean ghostly, struct level *lev)
 }
 
 /*timeout.c*/
+

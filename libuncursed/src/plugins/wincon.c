@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-12 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -69,7 +69,7 @@ wincon_hook_positioncursor(int y, int x)
 }
 
 void
-wincon_hook_init(int *h, int *w, char *title)
+wincon_hook_init(int *h, int *w, const char *title)
 {
     (void)title;
     COORD c;

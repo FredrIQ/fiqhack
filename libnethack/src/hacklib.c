@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) Robert Patrick Rankin, 1991                      */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -14,23 +14,23 @@
 /*=
     Assorted 'small' utility routines.  They're entirely independent of NetHack.
 
+    (Some routines have been deleted from this file due to not being entirely
+    independent of NetHack; some were unused, others trivial and virtually
+    unused, and two (s_suffix, upstart) used in so many places that it made
+    sense to hook it up to libnethack's memory management systems and thus it
+    was no longer appropriate for this file.)
+
       return type     routine name    argument type(s)
         boolean         digit           (char)
         boolean         letter          (char)
         char            highc           (char)
         char            lowc            (char)
-        char *          lcase           (char *)
-        char *          upstart         (char *)
         char *          mungspaces      (char *)
-        char *          eos             (char *)
-        char *          strkitten       (char *,char)
-        char *          s_suffix        (const char *)
         char *          xcrypt          (const char *, char *)
         boolean         onlyspace       (const char *)
         char *          tabexpand       (char *)
         char *          visctrl         (char)
         const char *    ordin           (int)
-        char *          sitoa           (int)
         int             sgn             (int)
         int             rounddiv        (long, int)
         int             distmin         (int, int, int, int)
@@ -71,25 +71,6 @@ lowc(char c)
 }
 
 
-char *
-lcase(char *s)
-{       /* convert a string into all lowercase */
-    char *p;
-
-    for (p = s; *p; p++)
-        if ('A' <= *p && *p <= 'Z')
-            *p |= 040;
-    return s;
-}
-
-char *
-upstart(char *s)
-{       /* convert first character of a string to uppercase */
-    if (s)
-        *s = highc(*s);
-    return s;
-}
-
 /* remove excess whitespace from a string buffer (in place) */
 char *
 mungspaces(char *bp)
@@ -110,33 +91,13 @@ mungspaces(char *bp)
     return bp;
 }
 
-
-char *
-eos(char *s)
-{       /* return the end of a string (pointing at '\0') */
-    while (*s)
-        s++;    /* s += strlen(s); */
-    return s;
-}
-
-char *
-s_suffix(const char *s)
-{       /* return a name converted to possessive */
-    static char buf[BUFSZ];
-
-    strcpy(buf, s);
-    if (!strcmpi(buf, "it"))
-        strcat(buf, "s");
-    else if (*(eos(buf) - 1) == 's')
-        strcat(buf, "'");
-    else
-        strcat(buf, "'s");
-    return buf;
-}
-
+/* Trivial text encryption routine (see makedefs). This does not obey the normal
+   memory management behaviour, because it's needed outside libnethack; instead,
+   it encrypts str into buf, and returns buf. buf must be at least large
+   enough to hold str plus a NUL. */
 char *
 xcrypt(const char *str, char *buf)
-{       /* trivial text encryption routine (see makedefs) */
+{
     const char *p;
     char *q;
     int bitmask;
@@ -198,15 +159,6 @@ ordin(int n)
         (dd == 1) ? "st" : (dd == 2) ? "nd" : "rd";
 }
 
-
-char *
-sitoa(int n)
-{       /* make a signed digit string from a number */
-    static char buf[13];
-
-    sprintf(buf, (n < 0) ? "%d" : "+%d", n);
-    return buf;
-}
 
 int
 sgn(int n)
@@ -306,7 +258,7 @@ pmatch_top:
 
 #ifndef STRSTRI
 /* case insensitive substring search */
-char *
+const char *
 strstri(const char *str, const char *sub)
 {
     const char *s1, *s2;
@@ -317,7 +269,7 @@ strstri(const char *str, const char *sub)
 
     /* special case: empty substring */
     if (!*sub)
-        return (char *)str;
+        return str;
 
     /* do some useful work while determining relative lengths */
     for (i = 0; i < TABSIZ; i++)
@@ -340,11 +292,52 @@ strstri(const char *str, const char *sub)
         s2 = sub;
         while (lowc(*s1++) == lowc(*s2++))
             if (!*s2)
-                return (char *)&str[i]; /* full match */
+                return &str[i]; /* full match */
     }
     return NULL;        /* not found */
 }
 #endif /* STRSTRI */
+
+/* ditto, on mutable strings*/
+char *
+strstri_mutable(char *str, const char *sub)
+{
+    const char *s1, *s2;
+    int i, k;
+
+# define TABSIZ 0x20    /* 0x40 would be case-sensitive */
+    char tstr[TABSIZ], tsub[TABSIZ];    /* nibble count tables */
+
+    /* special case: empty substring */
+    if (!*sub)
+        return str;
+
+    /* do some useful work while determining relative lengths */
+    for (i = 0; i < TABSIZ; i++)
+        tstr[i] = tsub[i] = 0;  /* init */
+    for (k = 0, s1 = str; *s1; k++)
+        tstr[*s1++ & (TABSIZ - 1)]++;
+    for (s2 = sub; *s2; --k)
+        tsub[*s2++ & (TABSIZ - 1)]++;
+
+    /* evaluate the info we've collected */
+    if (k < 0)
+        return NULL;    /* sub longer than str, so can't match */
+    for (i = 0; i < TABSIZ; i++)        /* does sub have more 'x's than str? */
+        if (tsub[i] > tstr[i])
+            return NULL;        /* match not possible */
+
+    /* now actually compare the substring repeatedly to parts of the string */
+    for (i = 0; i <= k; i++) {
+        s1 = &str[i];
+        s2 = sub;
+        while (lowc(*s1++) == lowc(*s2++))
+            if (!*s2)
+                return &str[i]; /* full match */
+    }
+    return NULL;        /* not found */
+}
+
 
 /* compare two strings for equality, ignoring the presence of specified
    characters (typically whitespace) and possibly ignoring case */
@@ -388,3 +381,4 @@ get_seedval(void)
 }
 
 /*hacklib.c*/
+

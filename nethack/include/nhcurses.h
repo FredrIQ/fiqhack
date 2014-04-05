@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-04 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -162,7 +162,7 @@ struct settings {
 
 /* curses_symdef is like nh_symdef, but with extra unicode sauce */
 struct curses_symdef {
-    char *symname;
+    const char *symname;
     int color;
     wchar_t unichar[CCHARW_MAX + 1];
     short ch;   /* for non-unicode displays */
@@ -429,10 +429,10 @@ extern void curses_update_status_silent(struct nh_player_info *pi);
 extern void show_topten(char *player, int top, int around, nh_bool own);
 
 /* windows.c */
-extern void init_curses_ui(char *dataprefix);
+extern void init_curses_ui(const char *dataprefix);
 extern void exit_curses_ui(void);
-extern void set_font_file(char *);
-extern void set_tile_file(char *);
+extern void set_font_file(const char *);
+extern void set_tile_file(const char *);
 extern void create_game_windows(void);
 extern void destroy_game_windows(void);
 extern void redraw_game_windows(void);

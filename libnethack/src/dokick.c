@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-03-12 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -19,7 +19,7 @@ static void kickdmg(struct monst *, boolean, schar, schar);
 static enum attack_check_status kick_monster(
     xchar, xchar, schar, schar, enum u_interaction_mode);
 static int kick_object(xchar, xchar, schar, schar);
-static char *kickstr(char *);
+static const char *kickstr(void);
 static void otransit_msg(struct obj *, boolean, long);
 static void drop_to(coord *, schar);
 
@@ -450,7 +450,6 @@ kick_object(xchar x, xchar y, schar dx, schar dy)
 
     if (kickobj->otyp == CORPSE && touch_petrifies(&mons[kickobj->corpsenm])
         && !Stone_resistance && !uarmf) {
-        char kbuf[BUFSZ];
 
         pline("You kick the %s with your bare %s.", corpse_xname(kickobj, TRUE),
               makeplural(body_part(FOOT)));
@@ -458,9 +457,8 @@ kick_object(xchar x, xchar y, schar dx, schar dy)
             pline("You turn to stone...");
             killer_format = KILLED_BY;
             /* KMH -- otmp should be kickobj */
-            sprintf(kbuf, "kicking %s without boots",
-                    an(corpse_xname(kickobj, TRUE)));
-            killer = kbuf;
+            killer = msgprintf("kicking %s without boots",
+                               an(corpse_xname(kickobj, TRUE)));
             done(STONING);
         }
     }
@@ -630,8 +628,8 @@ kick_object(xchar x, xchar y, schar dx, schar dy)
     return 1;
 }
 
-static char *
-kickstr(char *buf)
+static const char *
+kickstr(void)
 {
     const char *what;
 
@@ -665,7 +663,7 @@ kickstr(char *buf)
         what = "an iron bar";
     else
         what = "something weird";
-    return strcat(strcpy(buf, "kicking "), what);
+    return msgcat("kicking ", what);
 }
 
 int
@@ -675,7 +673,6 @@ dokick(const struct nh_cmd_arg *arg)
     int avrg_attrib;
     struct monst *mtmp;
     boolean no_kick = FALSE;
-    char buf[BUFSZ];
     schar dx, dy, dz;
 
     if (nolimbs(youmonst.data) || slithy(youmonst.data)) {
@@ -1084,7 +1081,7 @@ dokick(const struct nh_cmd_arg *arg)
             }
             if (!rn2(3))
                 set_wounded_legs(RIGHT_SIDE, 5 + rnd(5));
-            losehp(rnd(ACURR(A_CON) > 15 ? 3 : 5), kickstr(buf), KILLED_BY);
+            losehp(rnd(ACURR(A_CON) > 15 ? 3 : 5), kickstr(), KILLED_BY);
             if (Is_airlevel(&u.uz) || Levitation)
                 hurtle(-dx, -dy, rn1(2, 4), TRUE);      /* assume it's heavy */
             return 1;
@@ -1517,17 +1514,16 @@ deliver_object(struct obj *obj, xchar dnum, xchar dlevel, int where)
 static void
 otransit_msg(struct obj *otmp, boolean nodrop, long num)
 {
-    char obuf[BUFSZ];
-
-    sprintf(obuf, "The %s", xname(otmp));
+    const char *obuf = msgprintf("The %s", xname(otmp));
 
     if (num) {  /* means: other objects are impacted */
-        sprintf(eos(obuf), " %s %s object%s", otense(otmp, "hit"),
+        obuf = msgprintf("%s %s %s object%s", obuf, otense(otmp, "hit"),
                 num == 1L ? "another" : "other", num > 1L ? "s" : "");
         if (nodrop)
-            sprintf(eos(obuf), ".");
+            obuf = msgcat(obuf, ".");
         else
-            sprintf(eos(obuf), " and %s %s.", otense(otmp, "fall"), gate_str);
+            obuf = msgprintf("%s and %s %s.", obuf,
+                             otense(otmp, "fall"), gate_str);
         pline("%s", obuf);
     } else if (!nodrop)
         pline("%s %s %s.", obuf, otense(otmp, "fall"), gate_str);
@@ -1567,3 +1563,4 @@ down_gate(xchar x, xchar y)
 }
 
 /*dokick.c*/
+

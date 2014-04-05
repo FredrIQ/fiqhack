@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-03-12 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -166,9 +166,11 @@ char toplines[MSGCOUNT][BUFSZ];
 int toplines_count[MSGCOUNT];
 int curline;
 
-/* When changing this, also change neutral_turnstate_tasks. */
+/* When changing this, also change neutral_turnstate_tasks; if your change has
+   memory management properties, also change abort_turnstate. */
 static const struct turnstate default_turnstate = {
     .tracked = {0},
+    .message_chain = NULL,
     .continue_message = TRUE,
     .vision_full_recalc = FALSE,
     .delay_flushing = FALSE,
@@ -183,16 +185,53 @@ static const struct turnstate default_turnstate = {
 
 struct turnstate turnstate;
 
+/* Sets turnstate to its between-turn values. Assumes turnstate's previous value
+   is indeterminate and meaningless (i.e. any pointers that appear to be there
+   are just random bit-patterns and don't need deallocation). Called at
+   startup. */
 void
 init_turnstate(void)
 {
     memcpy(&turnstate, &default_turnstate, sizeof turnstate);
 }
 
+/* Called to cleanup turnstate if a turn has to be aborted partway through
+   (e.g. midturn save, savefile recovery, rewind).
+
+   This should do less consistency checking than usual, on the basis that the
+   turn may not be in a consistent state anyway. */
+void
+abort_turnstate(void)
+{
+    while (turnstate.migrating_pets) {
+        struct monst *mtmp = turnstate.migrating_pets;
+        turnstate.migrating_pets = mtmp->nmon;
+        dealloc_monst(mtmp);
+    }
+    while (turnstate.migrating_objs) {
+        struct obj *otmp = turnstate.migrating_objs;
+        obj_extract_self(otmp);
+        obfree(otmp, NULL);
+    }
+    while (turnstate.floating_objects) {
+        struct obj *otmp = turnstate.floating_objects;
+        /* don't obj_extract_self, they're already floating */
+        obfree(otmp, NULL);
+    }
+
+    xmalloc_cleanup(&turnstate.message_chain);
+}
+
+/* Called between turns (i.e. when turnstate becomes neutral). Most of this is
+   verifying the invariants on turnstate, but it also updates the save file and
+   does garbage collection on messages (easy, because they're all garbage at
+   this point). */
 void
 neutral_turnstate_tasks(void)
 {
     int i, j;
+
+    xmalloc_cleanup(&turnstate.message_chain);
 
     /* We want to compare turnstate to the default for effective equality:
        integers are equal, strings are equal up to the first NUL, tagged
@@ -332,3 +371,4 @@ init_data(boolean including_program_state)
 }
 
 /*decl.c*/
+

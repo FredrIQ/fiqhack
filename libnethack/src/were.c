@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -96,7 +96,7 @@ new_were(struct monst *mon)
 int
 were_summon(const struct permonst *ptr, boolean yours,
             int *visible,    /* number of visible helpers created */
-            char *genbuf)
+            const char **genbuf)
 {
     int i, typ, pm = monsndx(ptr);
     struct monst *mtmp;
@@ -112,19 +112,19 @@ were_summon(const struct permonst *ptr, boolean yours,
         case PM_HUMAN_WERERAT:
             typ = rn2(3) ? PM_SEWER_RAT : rn2(3) ? PM_GIANT_RAT : PM_RABID_RAT;
             if (genbuf)
-                strcpy(genbuf, "rat");
+                *genbuf = "rat";
             break;
         case PM_WEREJACKAL:
         case PM_HUMAN_WEREJACKAL:
             typ = PM_JACKAL;
             if (genbuf)
-                strcpy(genbuf, "jackal");
+                *genbuf = "jackal";
             break;
         case PM_WEREWOLF:
         case PM_HUMAN_WEREWOLF:
             typ = rn2(5) ? PM_WOLF : PM_WINTER_WOLF;
             if (genbuf)
-                strcpy(genbuf, "wolf");
+                *genbuf = "wolf";
             break;
         default:
             continue;
@@ -144,14 +144,14 @@ were_summon(const struct permonst *ptr, boolean yours,
 void
 you_were(void)
 {
-    char qbuf[QBUFSZ];
+    const char *qbuf;
 
     if (Unchanging || (u.umonnum == u.ulycn))
         return;
     if (Polymorph_control) {
         /* `+4' => skip "were" prefix to get name of beast */
-        sprintf(qbuf, "Do you want to change into %s? ",
-                an(mons[u.ulycn].mname + 4));
+        qbuf = msgprintf("Do you want to change into %s? ",
+                         an(mons[u.ulycn].mname + 4));
         if (yn(qbuf) == 'n')
             return;
     }
@@ -171,3 +171,4 @@ you_unwere(boolean purify)
 }
 
 /*were.c*/
+

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-03-04 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -157,7 +157,7 @@ parse_utf8(char *s)
 
 static int chars_since_flush = 0;
 static void
-ofile_output(char *format, ...)
+ofile_output(const char *format, ...)
 {
     va_list v;
 
@@ -176,7 +176,7 @@ ofile_output(char *format, ...)
 }
 
 static void
-ofile_outputs(char *s)
+ofile_outputs(const char *s)
 {
     ofile_output("%s", s);
 }
@@ -711,7 +711,7 @@ tty_hook_positioncursor(int y, int x)
 static int getkeyorcodepoint_inner(int, int);
 
 void
-tty_hook_init(int *h, int *w, char *title)
+tty_hook_init(int *h, int *w, const char *title)
 {
     (void)title;
 

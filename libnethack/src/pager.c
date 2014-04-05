@@ -1,10 +1,13 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-07 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
-/* This file contains the command routines dowhatis() and dohelp() and */
-/* a few other help related facilities */
+/* This file contains the command routines dowhatis() and dohelp() and a few
+   other help related facilities. It also handles farlooking for the API, and
+   thus cannot use the msg* functions for string handing; it works using
+   fixed-size buffers instead, which never escape this file into the rest of
+   libnethack (although they do end up in the client). */
 
 #include "hack.h"
 #include "dlb.h"
@@ -291,7 +294,7 @@ static void
 describe_mon(int x, int y, int monnum, char *buf)
 {
     char race[QBUFSZ];
-    char *name, monnambuf[BUFSZ];
+    const char *name;
     boolean accurate = !Hallucination;
     char steedbuf[BUFSZ];
     struct monst *mtmp;
@@ -329,7 +332,7 @@ describe_mon(int x, int y, int monnum, char *buf)
                 how |= 4;
 
             if (how)
-                sprintf(eos(buf), " [seen: %s%s%s%s%s]",
+                sprintf(buf + strlen(buf), " [seen: %s%s%s%s%s]",
                         (how & 1) ? "infravision" : "",
                         /* add comma if telep and infrav */
                         ((how & 3) > 2) ? ", " : "",
@@ -349,9 +352,9 @@ describe_mon(int x, int y, int monnum, char *buf)
         bhitpos.y = y;
 
         if (mtmp->data == &mons[PM_COYOTE] && accurate)
-            name = coyotename(mtmp, monnambuf);
+            name = coyotename(mtmp);
         else
-            name = distant_monnam(mtmp, ARTICLE_NONE, monnambuf);
+            name = distant_monnam(mtmp, ARTICLE_NONE);
 
         sprintf(buf, "%s%s%s",
                 (mtmp->mx != x || mtmp->my != y) ?
@@ -371,7 +374,8 @@ describe_mon(int x, int y, int monnum, char *buf)
 
             /* newsym lets you know of the trap, so mention it here */
             if (tt == BEAR_TRAP || tt == PIT || tt == SPIKED_PIT || tt == WEB)
-                sprintf(eos(buf), ", trapped in %s", an(trapexplain[tt]));
+                sprintf(buf + strlen(buf),
+                        ", trapped in %s", an(trapexplain[tt]));
         }
 
         mon_vision_summary(mtmp, visionbuf);
@@ -471,7 +475,9 @@ checkfile(const char *inp, struct permonst *pm, boolean user_typed_name,
         dbase_str = strcpy(newstr, pm->mname);
     else
         dbase_str = strcpy(newstr, inp);
-    lcase(dbase_str);
+
+    for (ep = dbase_str; *ep; ep++)
+        *ep = lowc(*ep);
 
     if (!strncmp(dbase_str, "interior of ", 12))
         dbase_str += 12;
@@ -496,17 +502,17 @@ checkfile(const char *inp, struct permonst *pm, boolean user_typed_name,
     if (*dbase_str) {
         /* adjust the input to remove " [seen" and "named " and convert to
            lower case */
-        char *alt = 0;  /* alternate description */
+        const char *alt = 0;  /* alternate description */
 
-        if ((ep = strstri(dbase_str, " [seen")) != 0)
+        if ((ep = strstri_mutable(dbase_str, " [seen")) != 0)
             *ep = '\0';
 
-        if ((ep = strstri(dbase_str, " named ")) != 0)
+        if ((ep = strstri_mutable(dbase_str, " named ")) != 0)
             alt = ep + 7;
         else
-            ep = strstri(dbase_str, " called ");
+            ep = strstri_mutable(dbase_str, " called ");
         if (!ep)
-            ep = strstri(dbase_str, ", ");
+            ep = strstri_mutable(dbase_str, ", ");
         if (ep && ep > dbase_str)
             *ep = '\0';
 
@@ -521,7 +527,7 @@ checkfile(const char *inp, struct permonst *pm, boolean user_typed_name,
         if (!alt)
             alt = makesingular(dbase_str);
         else if (user_typed_name)
-            lcase(alt);
+            alt = msglowercase(alt);
 
         /* skip first record; read second */
         txt_offset = 0L;
@@ -804,3 +810,4 @@ doverhistory(const struct nh_cmd_arg *arg)
 }
 
 /*pager.c*/
+

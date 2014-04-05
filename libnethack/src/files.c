@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -161,14 +161,14 @@ open_datafile(const char *filename, int oflags, int prefix)
 /* ----------  BEGIN BONES FILE HANDLING ----------- */
 
 int
-create_bonesfile(char *bonesid, char errbuf[])
+create_bonesfile(const char *bonesid, const char **errbuf)
 {
     const char *file;
     char tempname[PL_NSIZ + 32];
     int fd;
 
     if (errbuf)
-        *errbuf = '\0';
+        *errbuf = "";
     sprintf(bones, "bon%s", bonesid);
     sprintf(tempname, "%d%s.bn", (int)getuid(), u.uplname);
     file = fqname(tempname, BONESPREFIX, 0);
@@ -181,8 +181,8 @@ create_bonesfile(char *bonesid, char errbuf[])
     fd = creat(file, FCMASK);
 #endif
     if (fd < 0 && errbuf)       /* failure explanation */
-        sprintf(errbuf, "Cannot create bones id %s (errno %d).", bonesid,
-                errno);
+        *errbuf = msgprintf("Cannot create bones id %s (errno %d).",
+                            bonesid, errno);
 
     return fd;
 }
@@ -329,13 +329,12 @@ paniclog(const char *type,      /* panic, impossible, trickery */
 {       /* explanation */
 #ifdef PANICLOG
     FILE *lfile;
-    char buf[BUFSZ];
 
     if (!program_state.in_paniclog) {
         program_state.in_paniclog = 1;
         lfile = fopen_datafile(PANICLOG, "a", TROUBLEPREFIX);
         if (lfile) {
-            fprintf(lfile, "%s %08ld: %s %s\n", version_string(buf),
+            fprintf(lfile, "%s %08ld: %s %s\n", version_string(),
                     yyyymmdd((time_t) 0L), type, reason);
             fclose(lfile);
         }
@@ -348,3 +347,4 @@ paniclog(const char *type,      /* panic, impossible, trickery */
 /* ----------  END PANIC/IMPOSSIBLE LOG ----------- */
 
 /*files.c*/
+

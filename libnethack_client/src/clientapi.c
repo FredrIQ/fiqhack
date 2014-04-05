@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -11,7 +11,6 @@
 
 struct nh_window_procs windowprocs;
 int current_game;
-struct nh_option_desc *option_list;
 
 #ifdef UNIX
 # include <signal.h>
@@ -550,7 +549,7 @@ free_option_data(struct nh_option_desc *opt)
 
     case OPTTYPE_ENUM:
         for (i = 0; i < opt->e.numchoices; i++)
-            free(opt->e.choices[i].caption);
+            free((void *)opt->e.choices[i].caption);
         free((void *)opt->e.choices);
         break;
 
@@ -561,7 +560,7 @@ free_option_data(struct nh_option_desc *opt)
 
     case OPTTYPE_AUTOPICKUP_RULES:
         for (i = 0; i < opt->a.numclasses; i++)
-            free(opt->a.classes[i].caption);
+            free((void *)opt->a.classes[i].caption);
         free((void *)opt->a.classes);
 
         if (opt->value.ar) {
@@ -669,22 +668,6 @@ nhnet_get_options(void)
 
     api_exit();
     return olist;
-}
-
-
-void
-free_option_lists(void)
-{
-    int i;
-
-    xmalloc_cleanup(&xm_blocklist);
-
-    if (option_list) {
-        for (i = 0; option_list[i].name; i++)
-            free_option_data(&option_list[i]);
-        free(option_list);
-        option_list = NULL;
-    }
 }
 
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-09 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -413,12 +413,8 @@ tele_impl(boolean wizard_tele)
         if (u_helpless(hm_unconscious)) {
             pline("Being unconscious, you cannot control your teleport.");
         } else {
-            char buf[BUFSZ];
-
-            if (u.usteed)
-                sprintf(buf, " and %s", mon_nam(u.usteed));
             pline("To what position do you%s want to be teleported?",
-                  u.usteed ? buf : "");
+                  u.usteed ? msgcat(" and ", mon_nam(u.usteed)) : "");
             cc.x = u.ux;
             cc.y = u.uy;
             if (getpos(&cc, TRUE, "the desired position", FALSE)
@@ -541,8 +537,8 @@ level_tele_impl(boolean wizard_tele)
     int newlev;
     d_level newlevel;
     const char *escape_by_flying = 0;   /* when surviving dest of -N */
-    char buf[BUFSZ];
     boolean force_dest = FALSE;
+    char buf[BUFSZ];
 
     if ((Uhave_amulet || In_endgame(&u.uz) || In_sokoban(&u.uz))
         && !wizard_tele) {
@@ -550,18 +546,14 @@ level_tele_impl(boolean wizard_tele)
         return;
     }
     if ((Teleport_control && !Stunned) || wizard_tele) {
-        char qbuf[BUFSZ];
         int trycnt = 0;
-
-        strcpy(qbuf, "To what level do you want to teleport?");
+        const char *qbuf = "To what level do you want to teleport?";
         do {
             if (++trycnt == 2) {
-
                 if (wizard_tele)
-                    strcat(qbuf, " [type a number or ? for a menu]");
+                    qbuf = msgcat(qbuf, " [type a number or ? for a menu]");
                 else
-
-                    strcat(qbuf, " [type a number]");
+                    qbuf = msgcat(qbuf, " [type a number]");
             }
             getlin(qbuf, buf, FALSE);
             if (!strcmp(buf, "\033")) { /* cancelled */
@@ -585,18 +577,18 @@ level_tele_impl(boolean wizard_tele)
                     newlevel.dnum = destdnum;
                     newlevel.dlevel = destlev;
                     if (In_endgame(&newlevel) && !In_endgame(&u.uz)) {
-                        sprintf(buf, "Destination is earth level");
+                        const char *dest = "Destination is earth level";
                         if (!Uhave_amulet) {
                             struct obj *obj;
 
                             obj = mksobj(level, AMULET_OF_YENDOR, TRUE, FALSE);
                             if (obj) {
                                 addinv(obj);
-                                strcat(buf, " with the amulet");
+                                dest = msgcat(dest, " with the amulet");
                             }
                         }
                         assign_level(&newlevel, &earth_level);
-                        pline("%s.", buf);
+                        pline("%s.", dest);
                     }
                     force_dest = TRUE;
                 } else
@@ -701,9 +693,8 @@ level_tele_impl(boolean wizard_tele)
         } else {
             pline("Unfortunately, you don't know how to fly.");
             pline("You plummet a few thousand feet to your death.");
-            sprintf(buf, "teleported out of the dungeon and fell to %s death",
-                    uhis());
-            killer = buf;
+            killer = msgcat_many("teleported out of the dungeon and fell to ",
+                                 uhis(), " death", NULL);
             killer_format = NO_KILLER_PREFIX;
         }
     }
@@ -1010,7 +1001,7 @@ tele_restrict(struct monst * mon)
 void
 mtele_trap(struct monst *mtmp, struct trap *trap, int in_sight)
 {
-    char *monname;
+    const char *monname;
 
     if (tele_restrict(mtmp))
         return;
@@ -1018,8 +1009,8 @@ mtele_trap(struct monst *mtmp, struct trap *trap, int in_sight)
         /* save name with pre-movement visibility */
         monname = Monnam(mtmp);
 
-        /* Note: don't remove the trap if a vault.  Other- wise the monster
-           will be stuck there, since the guard isn't going to come for it... */
+        /* Note: don't remove the trap if a vault.  Otherwise the monster will
+           be stuck there, since the guard isn't going to come for it... */
         if (trap->once)
             mvault_tele(mtmp);
         else
@@ -1248,3 +1239,4 @@ u_teleport_mon(struct monst * mtmp, boolean give_feedback)
 }
 
 /*teleport.c*/
+

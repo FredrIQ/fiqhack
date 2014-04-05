@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-06 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -31,8 +31,6 @@ static void eataccessory(struct obj *);
 static const char *foodword(struct obj *);
 static boolean maybe_cannibal(int, boolean);
 static void lesshungry(int, struct obj *);
-
-char msgbuf[BUFSZ];
 
 /* also used to see if you're allowed to eat cats and dogs */
 #define CANNIBAL_ALLOWED() (Role_if (PM_CAVEMAN) || Race_if(PM_ORC))
@@ -128,14 +126,10 @@ food_xname(struct obj *food, boolean the_pfx)
     int mnum = food->corpsenm;
 
     if (food->otyp == CORPSE && (mons[mnum].geno & G_UNIQ)) {
-        /* grab xname()'s modifiable return buffer for our own use */
-        char *bufp = xname(food);
-
-        sprintf(bufp, "%s%s corpse",
-                (the_pfx &&
-                 !type_is_pname(&mons[mnum])) ? "the " : "",
-                s_suffix(mons[mnum].mname));
-        result = bufp;
+        result = msgprintf("%s%s corpse",
+                           (the_pfx && !type_is_pname(&mons[mnum])) ?
+                           "the " : "",
+                           s_suffix(mons[mnum].mname));
     } else {
         /* the ordinary case */
         result = singular(food, xname);
@@ -183,9 +177,7 @@ choke(struct obj *food)
             if (food->oclass == COIN_CLASS) {
                 killer = "very rich meal";
             } else {
-                killer = killer_buf;
-                strcpy(killer_buf, "");
-                strcat(killer_buf, food_xname(food, FALSE));
+                killer = food_xname(food, FALSE);
                 if ((food->otyp == CORPSE &&
                     (mons[food->corpsenm].geno & G_UNIQ)) ||
                     (obj_is_pname(food) ||
@@ -398,9 +390,8 @@ cprefx(int pm)
     if (touch_petrifies(&mons[pm]) || pm == PM_MEDUSA) {
         if (!Stone_resistance &&
             !(poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))) {
-            sprintf(killer_buf, "tasting %s meat", mons[pm].mname);
+            killer = msgprintf("tasting %s meat", mons[pm].mname);
             killer_format = KILLED_BY;
-            killer = killer_buf;
             pline("You turn to stone.");
             done(STONING);
             return;     /* lifesaved */
@@ -428,11 +419,8 @@ cprefx(int pm)
     case PM_PESTILENCE:
     case PM_FAMINE:
         {
-            char buf[BUFSZ];
-
             pline("Eating that is instantly fatal.");
-            sprintf(buf, "unwisely ate the body of %s", mons[pm].mname);
-            killer = buf;
+            killer = msgprintf("unwisely ate the body of %s", mons[pm].mname);
             killer_format = NO_KILLER_PREFIX;
             done(DIED);
             /* It so happens that since we know these monsters cannot appear in
@@ -703,18 +691,18 @@ cpostfx(int pm)
     case PM_SMALL_MIMIC:
         tmp += 20;
         if (youmonst.data->mlet != S_MIMIC && !Unchanging) {
-            char buf[BUFSZ];
+            const char *buf;
 
             pline("You can't resist the temptation to mimic %s.",
                   Hallucination ? "an orange" : "a pile of gold");
             /* A pile of gold can't ride. */
             if (u.usteed)
                 dismount_steed(DISMOUNT_FELL);
-            sprintf(buf,
-                    Hallucination ?
-                    "You suddenly dread being peeled and mimic %s again!" :
-                    "You now prefer mimicking %s again.",
-                    an(Upolyd ? youmonst.data->mname : urace.noun));
+            buf = msgprintf(
+                Hallucination ?
+                "You suddenly dread being peeled and mimic %s again!" :
+                "You now prefer mimicking %s again.",
+                an(Upolyd ? youmonst.data->mname : urace.noun));
             helpless(tmp, hr_mimicking, "pretending to be a pile of gold", buf);
             youmonst.m_ap_type = M_AP_OBJECT;
             youmonst.mappearance = Hallucination ? ORANGE : GOLD_PIECE;
@@ -1131,7 +1119,7 @@ eatcorpse(void)
         if (Sick_resistance) {
             pline("It doesn't seem at all sickening, though...");
         } else {
-            char buf[BUFSZ];
+            const char *buf;
             long sick_time;
 
             sick_time = (long)rn1(10, 10);
@@ -1139,11 +1127,11 @@ eatcorpse(void)
             if (Sick && (sick_time > Sick))
                 sick_time = (Sick > 1L) ? Sick - 1L : 1L;
             if (!uniq)
-                sprintf(buf, "rotted %s", corpse_xname(otmp, TRUE));
+                buf = msgprintf("rotted %s", corpse_xname(otmp, TRUE));
             else
-                sprintf(buf, "%s%s rotted corpse",
-                        !type_is_pname(&mons[mnum]) ? "the " : "",
-                        s_suffix(mons[mnum].mname));
+                buf = msgprintf("%s%s rotted corpse",
+                                !type_is_pname(&mons[mnum]) ? "the " : "",
+                                s_suffix(mons[mnum].mname));
             make_sick(sick_time, buf, TRUE, SICK_VOMITABLE);
         }
         if (carried(otmp))
@@ -1550,8 +1538,11 @@ fpostfx(struct obj *otmp)
                 if (!Stoned)
                     Stoned = 5;
                 killer_format = KILLED_BY_AN;
+                delayed_killer = "egg";
+#ifdef TODO
                 sprintf(killer_buf, "%s egg", mons[otmp->corpsenm].mname);
                 delayed_killer = killer_buf;
+#endif
             }
         }
         break;
@@ -1583,16 +1574,16 @@ edibility_prompts(struct obj *otmp)
     /* blessed food detection granted you a one-use ability to detect food that 
        is unfit for consumption or dangerous and avoid it. */
 
-    char buf[BUFSZ], foodsmell[BUFSZ], it_or_they[QBUFSZ],
-        eat_it_anyway[QBUFSZ];
+    const char *buf, *foodsmell, *it_or_they, *eat_it_anyway;
     boolean cadaver = (otmp->otyp == CORPSE), stoneorslime = FALSE;
     int material = objects[otmp->otyp].oc_material, mnum = otmp->corpsenm;
     long rotted = 0L;
 
-    strcpy(foodsmell, Tobjnam(otmp, "smell"));
-    strcpy(it_or_they, (otmp->quan == 1L) ? "it" : "they");
-    sprintf(eat_it_anyway, "Eat %s anyway?",
-            (otmp->quan == 1L || otmp->oclass == COIN_CLASS) ? "it" : "one");
+    foodsmell = Tobjnam(otmp, "smell");
+    it_or_they = (otmp->quan == 1L) ? "it" : "they";
+    eat_it_anyway = msgprintf(
+        "Eat %s anyway?",
+        (otmp->quan == 1L || otmp->oclass == COIN_CLASS) ? "it" : "one");
 
     /* edibility's needed to ID the contents of eggs and tins */
     if (cadaver || (otmp->otyp == EGG && u.uedibility) ||
@@ -1627,16 +1618,16 @@ edibility_prompts(struct obj *otmp)
     if (cadaver && mnum != PM_ACID_BLOB && rotted > (u.uedibility ? 5L : 3L) &&
         !Sick_resistance) {
         /* Tainted meat */
-        sprintf(buf, "%s like %s could be tainted! %s", foodsmell, it_or_they,
-                eat_it_anyway);
+        buf = msgprintf("%s like %s could be tainted! %s",
+                        foodsmell, it_or_they, eat_it_anyway);
         if (yn_function(buf, ynchars, 'n') == 'n')
             return 1;
         else
             return 2;
     }
     if (stoneorslime) {
-        sprintf(buf, "%s like %s could be something very dangerous! %s",
-                foodsmell, it_or_they, eat_it_anyway);
+        buf = msgprintf("%s like %s could be something very dangerous! %s",
+                        foodsmell, it_or_they, eat_it_anyway);
         if (yn_function(buf, ynchars, 'n') == 'n')
             return 1;
         else
@@ -1644,8 +1635,8 @@ edibility_prompts(struct obj *otmp)
     }
     if (u.uedibility && (otmp->orotten || (cadaver && rotted > 3L))) {
         /* Rotten */
-        sprintf(buf, "%s like %s could be rotten! %s", foodsmell, it_or_they,
-                eat_it_anyway);
+        buf = msgprintf("%s like %s could be rotten! %s", foodsmell,
+                        it_or_they, eat_it_anyway);
         if (yn_function(buf, ynchars, 'n') == 'n')
             return 1;
         else
@@ -1653,8 +1644,8 @@ edibility_prompts(struct obj *otmp)
     }
     if (cadaver && poisonous(&mons[mnum]) && !Poison_resistance) {
         /* poisonous */
-        sprintf(buf, "%s like %s might be poisonous! %s", foodsmell, it_or_they,
-                eat_it_anyway);
+        buf = msgprintf("%s like %s might be poisonous! %s", foodsmell,
+                        it_or_they, eat_it_anyway);
         if (yn_function(buf, ynchars, 'n') == 'n')
             return 1;
         else
@@ -1662,8 +1653,8 @@ edibility_prompts(struct obj *otmp)
     }
     if (cadaver && !vegetarian(&mons[mnum]) &&
         !u.uconduct[conduct_vegetarian] && Role_if(PM_MONK)) {
-        sprintf(buf, "%s unsuitable for a vegetarian monk. %s", foodsmell,
-                eat_it_anyway);
+        buf = msgprintf("%s unsuitable for a vegetarian monk. %s",
+                        foodsmell, eat_it_anyway);
         if (yn_function(buf, ynchars, 'n') == 'n')
             return 1;
         else
@@ -1671,8 +1662,8 @@ edibility_prompts(struct obj *otmp)
     }
     /* HP check is needed to stop this being annoying */
     if (cadaver && acidic(&mons[mnum]) && !Acid_resistance && u.uhp < -20) {
-        sprintf(buf, "%s rather acidic, and you're low on health. %s",
-                foodsmell, eat_it_anyway);
+        buf = msgprintf("%s rather acidic, and you're low on health. %s",
+                        foodsmell, eat_it_anyway);
         if (yn_function(buf, ynchars, 'n') == 'n')
             return 1;
         else
@@ -1680,8 +1671,8 @@ edibility_prompts(struct obj *otmp)
     }
     if (Upolyd && u.umonnum == PM_RUST_MONSTER && is_metallic(otmp) &&
         otmp->oerodeproof && u.uedibility) {
-        sprintf(buf, "%s disgusting to you right now. %s", foodsmell,
-                eat_it_anyway);
+        buf = msgprintf("%s disgusting to you right now. %s", foodsmell,
+                        eat_it_anyway);
         if (yn_function(buf, ynchars, 'n') == 'n')
             return 1;
         else
@@ -1692,8 +1683,8 @@ edibility_prompts(struct obj *otmp)
      * Potentially fatal for other reasons.
      */
     if (u.uhs == SATIATED) {
-        sprintf(buf, "You are not really in the mood to eat. %s",
-                eat_it_anyway);
+        buf = msgprintf("You are not really in the mood to eat. %s",
+                        eat_it_anyway);
         if (yn_function(buf, ynchars, 'n') == 'n')
             return 1;
         else
@@ -1708,7 +1699,7 @@ edibility_prompts(struct obj *otmp)
     if (!u.uconduct[conduct_vegetarian] && moves > 1800 &&
         ((material == LEATHER || material == BONE || material == DRAGON_HIDE) ||
          (cadaver && !vegetarian(&mons[mnum])))) {
-        sprintf(buf, "%s of meat. %s", foodsmell, eat_it_anyway);
+        buf = msgprintf("%s of meat. %s", foodsmell, eat_it_anyway);
         if (yn_function(buf, ynchars, 'n') == 'n')
             return 1;
         else
@@ -1718,8 +1709,8 @@ edibility_prompts(struct obj *otmp)
     if (!u.uconduct[conduct_vegan] && moves > 1800 &&
         ((material == LEATHER || material == BONE || material == DRAGON_HIDE ||
           material == WAX) || (cadaver && !vegan(&mons[mnum])))) {
-        sprintf(buf, "%s like an animal byproduct. %s", foodsmell,
-                eat_it_anyway);
+        buf = msgprintf("%s like an animal byproduct. %s", foodsmell,
+                        eat_it_anyway);
         if (yn_function(buf, ynchars, 'n') == 'n')
             return 1;
         else
@@ -1729,8 +1720,8 @@ edibility_prompts(struct obj *otmp)
     if (cadaver && mnum != PM_ACID_BLOB && rotted > 5L && Sick_resistance &&
         u.uedibility) {
         /* Tainted meat with Sick_resistance */
-        sprintf(buf, "%s like %s could be tainted! %s", foodsmell, it_or_they,
-                eat_it_anyway);
+        buf = msgprintf("%s like %s could be tainted! %s", foodsmell,
+                        it_or_they, eat_it_anyway);
         if (yn_function(buf, ynchars, 'n') == 'n')
             return 1;
         else
@@ -2174,7 +2165,7 @@ struct obj *
 floorfood(const char *verb, const struct nh_cmd_arg *arg)
 {
     struct obj *otmp;
-    char qbuf[QBUFSZ];
+    const char *qbuf;
     char c;
     struct trap *ttmp = t_at(level, u.ux, u.uy);
     boolean feeding = (!strcmp(verb, "eat"));
@@ -2217,9 +2208,9 @@ eat_floorfood:
                 /* If not already stuck in the trap, perhaps there should be a
                    chance to becoming trapped? Probably not, because then the
                    trap would just get eaten on the _next_ turn... */
-                sprintf(qbuf, "There is a bear trap here (%s); eat it?",
-                        (u.utrap &&
-                         u.utraptype == TT_BEARTRAP) ? "holding you" : "armed");
+                qbuf = msgprintf("There is a bear trap here (%s); eat it?",
+                                 (u.utrap && u.utraptype == TT_BEARTRAP) ?
+                                 "holding you" : "armed");
                 if ((c = yn_function(qbuf, ynqchars, 'n')) == 'y') {
                     u.utrap = u.utraptype = 0;
                     deltrap(level, ttmp);
@@ -2241,10 +2232,9 @@ eat_floorfood:
         }
     } else {
         struct object_pick *floorfood_list;
-        char qbuf[QBUFSZ];
         int n;
 
-        sprintf(qbuf, "%c%s what?", highc(*verb), verb + 1);
+        qbuf = msgprintf("%c%s what?", highc(*verb), verb + 1);
         n = query_objlist(qbuf, level->objects[u.ux][u.uy],
                           BY_NEXTHERE | INVORDER_SORT | AUTOSELECT_SINGLE,
                           &floorfood_list, PICK_ONE, floorfood_check);
@@ -2317,3 +2307,4 @@ eaten_stat(int base, struct obj *obj)
 }
 
 /*eat.c*/
+

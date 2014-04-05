@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-16 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -201,12 +201,11 @@ invault(void)
     vaultroom -= ROOMOFFSET;
 
     guard = findgd();
-    if (++u.uinvault % 30 == 0 && !guard) {     /* if time ok and no guard now. 
-                                                 */
-        char buf[BUFSZ];
+    if (++u.uinvault % 30 == 0 && !guard) {  /* if time ok and no guard now. */
         int x, y, gx, gy;
         xchar rx, ry;
         long umoney;
+        char buf[BUFSZ];
 
         /* first find the goal for the guard */
         if (!find_guard_dest(NULL, &rx, &ry))
@@ -333,9 +332,8 @@ invault(void)
             adjalign(-1);       /* Liar! */
         }
 
-        if (!strcmpi(buf, "Croesus") || !strcmpi(buf, "Kroisos")
-            || !strcmpi(buf, "Creosote")
-            ) {
+        if (!strcmpi(buf, "Croesus") || !strcmpi(buf, "Kroisos") ||
+            !strcmpi(buf, "Creosote")) {
             if (!mvitals[PM_CROESUS].died) {
                 verbalize("Oh, yes, of course.  Sorry to have disturbed you.");
                 mongone(guard);
@@ -799,7 +797,6 @@ paygd(void)
     long umoney = money_cnt(invent);
     struct obj *coins, *nextcoins;
     int gx, gy;
-    char buf[BUFSZ];
 
     if (!umoney || !grd)
         return;
@@ -818,11 +815,12 @@ paygd(void)
         pline("%s remits your gold to the vault.", Monnam(grd));
         gx = level->rooms[EGD(grd)->vroom].lx + rn2(2);
         gy = level->rooms[EGD(grd)->vroom].ly + rn2(2);
-        sprintf(buf, "To Croesus: here's the gold recovered from %s the %s.",
-                u.uplname, mons[u.umonster].mname);
-        make_grave(level, gx, gy, buf);
+        make_grave(level, gx, gy,
+                   msgprintf(
+                       "To Croesus: here's the gold recovered from %s the %s.",
+                       u.uplname, mons[u.umonster].mname));
     }
-
+    
     for (coins = invent; coins; coins = nextcoins) {
         nextcoins = coins->nobj;
         if (objects[coins->otyp].oc_class == COIN_CLASS) {
@@ -861,3 +859,4 @@ gd_sound(void)
 }
 
 /*vault.c*/
+

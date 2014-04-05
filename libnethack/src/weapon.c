@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -84,7 +84,7 @@ give_may_advance_msg(int skill)
 static boolean could_advance(int);
 static boolean peaked_skill(int);
 static int slots_required(int);
-static char *skill_level_name(int, char *);
+static const char *skill_level_name(int);
 static void skill_advance(int);
 
 #define P_NAME(type) ((skill_names_indices[type] > 0) ? \
@@ -726,13 +726,14 @@ mon_wield_item(struct monst *mon)
            and needn't even bother trying. Still.... */
         if (mw_tmp && mw_tmp->cursed && mw_tmp->otyp != CORPSE) {
             if (canseemon(mon)) {
-                char welded_buf[BUFSZ];
+                const char *welded_buf;
                 const char *mon_hand = mbodypart(mon, HAND);
 
                 if (bimanual(mw_tmp))
                     mon_hand = makeplural(mon_hand);
-                sprintf(welded_buf, "%s welded to %s %s", otense(mw_tmp, "are"),
-                        mhis(mon), mon_hand);
+                welded_buf = msgprintf(
+                    "%s welded to %s %s", otense(mw_tmp, "are"),
+                    mhis(mon), mon_hand);
 
                 if (obj->otyp == PICK_AXE) {
                     pline("Since %s weapon%s %s,", s_suffix(mon_nam(mon)),
@@ -840,38 +841,27 @@ dbon(void)
 }
 
 
-/* copy the skill level name into the given buffer */
-static char *
-skill_level_name(int skill, char *buf)
+/* return the level name for the given skill */
+static const char *
+skill_level_name(int skill)
 {
-    const char *ptr;
-
     switch (P_SKILL(skill)) {
     case P_UNSKILLED:
-        ptr = "Unskilled";
-        break;
+        return "Unskilled";
     case P_BASIC:
-        ptr = "Basic";
-        break;
+        return "Basic";
     case P_SKILLED:
-        ptr = "Skilled";
-        break;
+        return "Skilled";
     case P_EXPERT:
-        ptr = "Expert";
-        break;
+        return "Expert";
         /* these are for unarmed combat/martial arts only */
     case P_MASTER:
-        ptr = "Master";
-        break;
+        return "Master";
     case P_GRAND_MASTER:
-        ptr = "Grand Master";
-        break;
+        return "Grand Master";
     default:
-        ptr = "Unknown";
-        break;
+        return "Unknown";
     }
-    strcpy(buf, ptr);
-    return buf;
 }
 
 /* return the # of slots required to advance the skill */
@@ -960,8 +950,7 @@ enhance_weapon_skill(const struct nh_cmd_arg *arg)
 {
     int pass, i, n, len, longest, id, to_advance, eventually_advance,
         maxxed_cnt, selected[1];
-    char buf[BUFSZ], sklnambuf[BUFSZ];
-    const char *prefix;
+    const char *prefix, *buf;
     struct nh_menulist menu;
     boolean speedy = FALSE;
 
@@ -992,16 +981,17 @@ enhance_weapon_skill(const struct nh_cmd_arg *arg)
            below */
         if (eventually_advance > 0 || maxxed_cnt > 0) {
             if (eventually_advance > 0) {
-                sprintf(buf, "(Skill%s flagged by \"*\" may be enhanced %s.)",
-                        plur(eventually_advance),
-                        (u.ulevel <
-                         MAXULEV) ? "when you're more experienced" :
-                        "if skill slots become available");
+                buf = msgprintf(
+                    "(Skill%s flagged by \"*\" may be enhanced %s.)",
+                    plur(eventually_advance),
+                    (u.ulevel < MAXULEV) ? "when you're more experienced" :
+                    "if skill slots become available");
                 add_menutext(&menu, buf);
             }
             if (maxxed_cnt > 0) {
-                sprintf(buf, "(Skill%s flagged by \"#\" cannot be enhanced any "
-                        "further.)", plur(maxxed_cnt));
+                buf = msgprintf(
+                    "(Skill%s flagged by \"#\" cannot "
+                    "be enhanced any further.)", plur(maxxed_cnt));
                 add_menutext(&menu, buf);
             }
             add_menutext(&menu, "");
@@ -1019,6 +1009,7 @@ enhance_weapon_skill(const struct nh_cmd_arg *arg)
 
                 if (P_RESTRICTED(i))
                     continue;
+
                 /* 
                  * The 12 is the longest skill level name.
                  * The "    " is room for a selection letter and dash, "a - ".
@@ -1033,26 +1024,27 @@ enhance_weapon_skill(const struct nh_cmd_arg *arg)
                     prefix =
                         (to_advance + eventually_advance + maxxed_cnt >
                          0) ? "    " : "";
-                skill_level_name(i, sklnambuf);
-                if (wizard) {
-                    sprintf(buf, " %s%s\t%s\t%5d(%4d)", prefix, P_NAME(i),
-                            sklnambuf, P_ADVANCE(i),
-                            practice_needed_to_advance(P_SKILL(i)));
-                } else {
-                    sprintf(buf, " %s%s\t[%s]", prefix, P_NAME(i), sklnambuf);
-                }
+
+                if (wizard)
+                    buf = msgprintf(" %s%s\t%s\t%5d(%4d)", prefix, P_NAME(i),
+                                    skill_level_name(i), P_ADVANCE(i),
+                                    practice_needed_to_advance(P_SKILL(i)));
+                else
+                    buf = msgprintf(" %s%s\t[%s]", prefix, P_NAME(i),
+                                    skill_level_name(i));
+
                 if (could_advance(i) || can_advance(i, speedy))
-                    sprintf(eos(buf), " (%d to advance)", slots_required(i));
+                    buf = msgprintf("%s (%d to advance)",
+                                    buf, slots_required(i));
+
                 id = can_advance(i, speedy) ? i + 1 : 0;
                 add_menuitem(&menu, id, buf, 0, FALSE);
             }
 
-        strcpy(buf,
-               (to_advance >
-                0) ? "Pick a skill to advance:" : "Current skills:");
+        buf = (to_advance > 0) ? "Pick a skill to advance:" : "Current skills:";
         if (!(wizard && speedy))
-            sprintf(eos(buf), "  (%d slot%s available)", u.weapon_slots,
-                    plur(u.weapon_slots));
+            buf = msgprintf("%s  (%d slot%s available)", buf,
+                            u.weapon_slots, plur(u.weapon_slots));
         n = display_menu(&menu, buf, to_advance ? PICK_ONE : PICK_NONE,
                          PLHINT_ANYWHERE, selected);
         if (n == 1) {
@@ -1078,7 +1070,7 @@ int
 dump_skills(void)
 {
     int pass, i;
-    char buf[BUFSZ], sklnambuf[BUFSZ];
+    const char *buf;
     struct nh_menulist menu;
 
     init_menulist(&menu);
@@ -1093,8 +1085,7 @@ dump_skills(void)
             if (P_RESTRICTED(i) || u.weapon_skills[i].skill == P_UNSKILLED)
                 continue;
 
-            skill_level_name(i, sklnambuf);
-            sprintf(buf, " %s\t[%s]", P_NAME(i), sklnambuf);
+            buf = msgprintf(" %s\t[%s]", P_NAME(i), skill_level_name(i));
             add_menuitem(&menu, 0, buf, 0, FALSE);
         }
 
@@ -1501,3 +1492,4 @@ setmnotwielded(struct monst *mon, struct obj *obj)
 }
 
 /*weapon.c*/
+

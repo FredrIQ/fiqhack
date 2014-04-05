@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -30,7 +30,7 @@ struct uncursed_hooks {
 
     /* Note: init can be called multiple times, with exit in between; also
        init is allowed to exit the program in case of disaster */
-    void (*init) (int *, int *, char *);    /* rows, columns, title */
+    void (*init) (int *, int *, const char *);    /* rows, columns, title */
     void (*exit) (void);
 
     void (*beep) (void);
@@ -50,8 +50,8 @@ struct uncursed_hooks {
 
     /* Only graphical interfaces care about these; the others can ignore
        them via setting them to NULL */
-    void (*set_faketerm_font_file) (char *);
-    void (*set_tiles_tile_file) (char *, int, int);
+    void (*set_faketerm_font_file) (const char *);
+    void (*set_tiles_tile_file) (const char *, int, int);
     void *(*allocate_tiles_region) (int, int, int, int, int, int);
     void (*deallocate_tiles_region) (void *);
     void (*draw_tile_at) (int, void *, int, int);

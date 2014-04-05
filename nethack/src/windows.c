@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-01 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -52,7 +52,7 @@ struct nh_window_procs curses_windowprocs = {
 static char *tileprefix;
 
 void
-set_font_file(char *fontfilename)
+set_font_file(const char *fontfilename)
 {
     char namebuf[strlen(tileprefix) + strlen(fontfilename) + 1];
     strcpy(namebuf, tileprefix);
@@ -60,7 +60,7 @@ set_font_file(char *fontfilename)
     set_faketerm_font_file(namebuf);
 }
 void
-set_tile_file(char *tilefilename)
+set_tile_file(const char *tilefilename)
 {
     if (!tilefilename) {
         set_tiles_tile_file(NULL, TILES_PER_ROW, TILES_PER_COL);
@@ -73,7 +73,7 @@ set_tile_file(char *tilefilename)
 }
 
 void
-init_curses_ui(char *dataprefix)
+init_curses_ui(const char *dataprefix)
 {
     /* set up the default system locale by reading the environment variables */
     setlocale(LC_ALL, "");

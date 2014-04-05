@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-01 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -286,7 +286,6 @@ enum attack_check_status {
                            (((x) & 0x00ff000000000000LLU) << 40) | \
                            (((x) & 0xff00000000000000LLU) << 56))
 
-
 /* If endian.h exists (on Linux for example and perhaps on other UNIX) and is
    indirectly included via the system headers, we may be able to find out what
    the endianness is.  Otherwise define IS_BIG_ENDIAN in config.h */
@@ -338,3 +337,4 @@ enum attack_check_status {
 # define API_EXIT() do {--exit_jmp_buf_valid; } while(0)
 
 #endif /* HACK_H */
+

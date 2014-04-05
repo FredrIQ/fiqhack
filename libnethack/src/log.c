@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-02 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -34,8 +34,8 @@ static_assert('A' == 65 && 'a' == 97,
 /***** Error handling *****/
 
 /* The save file format was incorrect. */
-static void NORETURN
-error_reading_save(char *reason)
+static noreturn void
+error_reading_save(const char *reason)
 {
     if (strchr(reason, '%'))
         raw_printf(reason, get_log_offset());
@@ -70,11 +70,12 @@ error_reading_save(char *reason)
  *
  * This function must not call panic(), because it is called /from/ panic().
  */
-void NORETURN
+noreturn void
 log_recover(long offset)
 {
     int n, selected[1];
-    char buf[BUFSZ];
+    char newline_check[2];
+    const char *buf;
     struct nh_menulist menu;
     boolean ok = TRUE;
 
@@ -83,8 +84,8 @@ log_recover(long offset)
 
     if (offset > 0) {
         lseek(program_state.logfile, offset - 1, SEEK_SET);
-        ok = full_read(program_state.logfile, buf, 1);
-        if (ok && *buf != '\n')
+        ok = full_read(program_state.logfile, newline_check, 1);
+        if (ok && *newline_check != '\n')
             ok = FALSE;
     } else
         ok = FALSE;
@@ -106,9 +107,9 @@ log_recover(long offset)
                  "The gamestate or save file is internally inconsistent.");
     add_menutext(&menu,
                  "However, the game can be recovered from a backup save.");
-    sprintf(buf, "This will lose approximately %.4g%% of your progress.",
-            1.0 - ((float)offset /
-                   (float)lseek(program_state.logfile, 0, SEEK_END)));
+    buf = msgprintf("This will lose approximately %.4g%% of your progress.",
+                    1.0 - ((float)offset /
+                           (float)lseek(program_state.logfile, 0, SEEK_END)));
     add_menutext(&menu, buf);
     add_menutext(&menu, "");
 
@@ -121,8 +122,6 @@ log_recover(long offset)
 
     if (n && selected[0] == 1) {
         /* Automatic recovery. */
-
-        char buf[BUFSZ];
 
         /* Get a lock on the file. This is a little like start_updating_logfile,
            but without so many checks (because we /expect/ the file to be
@@ -138,9 +137,9 @@ log_recover(long offset)
         /* Increase the recovery count. */
 
         program_state.expected_recovery_count++;
-        sprintf(buf, "NHGAME %08x %d.%03d.%03d\x0a",
-                program_state.expected_recovery_count,
-                VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
+        buf = msgprintf("NHGAME %08x %d.%03d.%03d\x0a",
+                        program_state.expected_recovery_count,
+                        VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
 
         lseek(program_state.logfile, 0, SEEK_SET);
         if (!full_write(program_state.logfile, buf, strlen(buf))) {
@@ -168,7 +167,7 @@ log_recover(long offset)
 
 /* The save file was in a correct format, but referred to something that
    couldn't possibly happen in the gamestate. */
-static void NORETURN
+static noreturn void
 log_desync(void)
 {
     /*
@@ -705,7 +704,7 @@ log_newgame(unsigned long long start_time, unsigned int seed)
 }
 
 void
-log_game_over(char *death)
+log_game_over(const char *death)
 {
     start_updating_logfile();
     lseek(program_state.logfile,
@@ -1064,7 +1063,7 @@ log_replay_input(int count, const char *fmt, ...)
 {
     char *logline;
     va_list vargs;
-    char fmtbuf[BUFSZ];
+    char fmtbuf[strlen(fmt) * 2 + 1];
     int actual_count;
     char *p1;
     const char *p2;
@@ -1295,7 +1294,7 @@ read_log_header(int fd, struct nh_game_info *si,
                 int *recovery_count, boolean do_locking)
 {
     char *logline, *p;
-    char namebuf[BUFSZ];
+    char namebuf[65]; /* matches %64s later */
     int playmode, version_major, version_minor, version_patchlevel;
 
     if (do_locking && !change_fd_lock(fd, LT_READ, 1))
@@ -1875,3 +1874,4 @@ log_uninit(void)
 
     program_state.logfile = -1;
 }
+

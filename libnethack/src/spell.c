@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-09 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -342,11 +342,11 @@ learn(void)
 {
     int i;
     short booktype;
-    char splname[BUFSZ];
     boolean costly = TRUE;
     boolean already_known = FALSE;
     int first_unknown = MAXSPELL;
     int known_spells = 0;
+    const char *splname;
 
     /* JDS: lenses give 50% faster reading; 33% smaller read time */
     if (u.uoccupation_progress[tos_book] &&
@@ -375,9 +375,9 @@ learn(void)
 
     exercise(A_WIS, TRUE);      /* you're studying. */
 
-    sprintf(splname,
-            objects[booktype].oc_name_known ? "\"%s\"" : "the \"%s\" spell",
-            OBJ_NAME(objects[booktype]));
+    splname = msgprintf(objects[booktype].oc_name_known ?
+                        "\"%s\"" : "the \"%s\" spell",
+                        OBJ_NAME(objects[booktype]));
     for (i = 0; i < MAXSPELL; i++) {
         if (spellid(i) == booktype) {
             already_known = TRUE;
@@ -494,11 +494,11 @@ study_book(struct obj *spellbook, const struct nh_cmd_arg *arg)
                     ((ublindf && ublindf->otyp == LENSES) ? 2 : 0);
                 /* only wizards know if a spell is too difficult */
                 if (Role_if(PM_WIZARD) && read_ability < 20 && !confused) {
-                    char qbuf[QBUFSZ];
+                    const char *qbuf;
 
-                    sprintf(qbuf, "This spellbook is %sdifficult to "
-                            "comprehend. Continue?",
-                            (read_ability < 12 ? "very " : ""));
+                    qbuf = msgprintf("This spellbook is %sdifficult to "
+                                     "comprehend. Continue?",
+                                     (read_ability < 12 ? "very " : ""));
                     if (yn(qbuf) != 'y') {
                         spellbook->in_use = FALSE;
                         return 1;
@@ -929,12 +929,10 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
             n = rnd(8) + 1;
             while (n--) {
                 if (!dx && !dy && !dz) {
-                    if ((damage = zapyourself(pseudo, TRUE)) != 0) {
-                        char buf[BUFSZ];
-
-                        sprintf(buf, "zapped %sself with a spell", uhim());
-                        losehp(damage, buf, NO_KILLER_PREFIX);
-                    }
+                    if ((damage = zapyourself(pseudo, TRUE)) != 0)
+                        losehp(damage, msgprintf(
+                                   "zapped %sself with a spell", uhim()),
+                               NO_KILLER_PREFIX);
                 } else {
                     explode(dx, dy, pseudo->otyp - SPE_MAGIC_MISSILE + 10,
                             u.ulevel / 2 + 1 + spell_damage_bonus(), 0,
@@ -976,10 +974,9 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
         if (objects[pseudo->otyp].oc_dir != NODIR) {
             if (!dx && !dy && !dz) {
                 if ((damage = zapyourself(pseudo, TRUE)) != 0) {
-                    char buf[BUFSZ];
-
-                    sprintf(buf, "zapped %sself with a spell", uhim());
-                    losehp(damage, buf, NO_KILLER_PREFIX);
+                    losehp(damage, msgprintf(
+                               "zapped %sself with a spell", uhim()),
+                           NO_KILLER_PREFIX);
                 }
             } else
                 weffects(pseudo, dx, dy, dz);
@@ -1117,7 +1114,7 @@ losespells(void)
 int
 dovspell(const struct nh_cmd_arg *arg)
 {
-    char qbuf[QBUFSZ];
+    const char *qbuf;
     int splnum, othnum;
     struct spell spl_tmp;
 
@@ -1127,7 +1124,8 @@ dovspell(const struct nh_cmd_arg *arg)
         pline("You don't know any spells right now.");
     else {
         while (dospellmenu("Currently known spells", SPELLMENU_VIEW, &splnum)) {
-            sprintf(qbuf, "Reordering spells; adjust '%c' to", spellet(splnum));
+            qbuf = msgprintf("Reordering spells; adjust '%c' to",
+                             spellet(splnum));
             if (!dospellmenu(qbuf, splnum, &othnum))
                 break;
 
@@ -1146,20 +1144,20 @@ dospellmenu(const char *prompt,
             int *spell_no)
 {
     int i, n, how, count = 0;
-    char buf[BUFSZ];
     struct nh_menuitem items[MAXSPELL + 1];
     int selected[MAXSPELL + 1];
 
-    sprintf(buf, "Name\tLevel\tCategory\tFail\tMemory");
-    set_menuitem(&items[count++], 0, MI_HEADING, buf, 0, FALSE);
+    set_menuitem(&items[count++], 0, MI_HEADING,
+                 "Name\tLevel\tCategory\tFail\tMemory", 0, FALSE);
     for (i = 0; i < MAXSPELL; i++) {
         if (spellid(i) == NO_SPELL)
             continue;
-        sprintf(buf, "%s\t%-d%s\t%s\t%-d%%\t%-d%%", spellname(i), spellev(i),
-                spellknow(i) ? " " : "*",
-                spelltypemnemonic(spell_skilltype(spellid(i))),
-                100 - percent_success(i),
-                (spellknow(i) * 100 + (KEEN - 1)) / KEEN);
+        const char *buf = msgprintf(
+            "%s\t%-d%s\t%s\t%-d%%\t%-d%%", spellname(i), spellev(i),
+            spellknow(i) ? " " : "*",
+            spelltypemnemonic(spell_skilltype(spellid(i))),
+            100 - percent_success(i),
+            (spellknow(i) * 100 + (KEEN - 1)) / KEEN);
         set_menuitem(&items[count++], i + 1, MI_NORMAL, buf,
                      i <= 26 ? i + 'a' : i + 'A' - 26, FALSE);
     }
@@ -1349,3 +1347,4 @@ initialspell(struct obj *obj)
 }
 
 /*spell.c*/
+

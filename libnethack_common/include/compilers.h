@@ -1,0 +1,82 @@
+/* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
+/* Last modified by Alex Smith, 2014-04-05 */
+/* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
+/* Copyright (c) Alex Smith 2014. */
+/* NetHack may be freely redistributed.  See license for details. */
+
+/* This file contains compatibility macros that translate between compilers. */
+
+# include <assert.h>
+
+/* C11 compatibility. */
+
+/* <assert.h> should define static_assert in C11. If it doesn't (say due to a
+   pre-C11 compiler), we can construct a static assert on our own like this: */
+# ifndef static_assert
+#  define static_assert(cond, msg) \
+    extern const int static_assertion_##__LINE__[cond ? 1 : -1]
+# endif
+
+/* noreturn is defined in stdnoreturn.h, but that's not available on pre-C11
+   systems.
+
+   TODO: Get aimake to feature-check this. */
+# if __STDC_VERSION__ + 0L >= 201112L
+#  define noreturn _Noreturn
+# else
+#  ifdef __GNUC__
+#   define noreturn __attribute__((noreturn))
+#  else
+#   define noreturn
+#  endif
+# endif
+
+/* Optimization and warning markers. noreturn is standard, but there are a bunch
+   of useful nonstandard markers too (unlike the standard "noreturn", these are
+   allcaps): */
+# ifndef __GNUC__
+/*
+ * These macros indicate functions that have no side effects:
+ *
+ * - PURE means that the function is effectively an accessor function; it can
+ *   look at globals and any storage it's given access to via pointer arguments,
+ *   but cannot modify memory at all (besides its own locals).
+ *
+ * - VERYPURE is a stronger PURE, and means that the function is effectively
+ *   arithmetic-only (typically a lookup table); it must always produce the same
+ *   result with the same arguments, even if those arguments are pointers and
+ *   the memory they point to has changed.  In other words, it does not access
+ *   any storage at all (apart from constants and its own locals).
+ *
+ * Additionally, functions marked PURE or VERYPURE must return normally (no
+ * infinite loops, longjmps, etc.). In particular, they must not be able to
+ * panic.
+ */
+#  define PURE
+#  define VERYPURE
+
+/* These macros indicate that a function uses the same varargs convention as
+   printf, scanf, or strftime respectively; "f" is the index of the format
+   string, and "a" is the index of the ... argument, or 0 if the function
+   takes a va_list instead.
+
+   Using them when appropriate means that compilers that understand them will
+   warn about mistakes in the format string (and can also help catch common
+   mistakes like adding an extra argument to msgprintf; it has one fewer
+   argument than the similar sprintf does). */
+#  define PRINTFLIKE(f,a)
+#  define SCANFLIKE(f,a)
+#  define STRFTIMELIKE(f,a)
+# else
+#  define PURE __attribute__((pure))
+#  define VERYPURE __attribute__((const))
+#  ifdef AIMAKE_BUILDOS_MSWin32
+#   define PRINTFLIKE(f,a) __attribute__((format (ms_printf, f, a)))
+#   define SCANFLIKE(f,a) __attribute__((format (ms_scanf, f, a)))
+#   define STRFTIMELIKE(f,a) __attribute__((format (strftime, f, a)))
+#  else
+#   define PRINTFLIKE(f,a) __attribute__((format (printf, f, a)))
+#   define SCANFLIKE(f,a) __attribute__((format (scanf, f, a)))
+#   define STRFTIMELIKE(f,a) __attribute__((format (strftime, f, a)))
+#  endif
+# endif

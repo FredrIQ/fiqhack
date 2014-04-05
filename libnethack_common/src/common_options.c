@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-01 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -133,9 +133,9 @@ char *
 nhlib_optvalue_to_string(const struct nh_option_desc *option)
 {
     char valbuf[10], *outstr;
-    char *valstr = NULL;
+    const char *valstr = NULL;
+    char *valstr_malloced = NULL;
     int i;
-    nh_bool freestr = FALSE;
 
     switch (option->type) {
     case OPTTYPE_BOOL:
@@ -162,18 +162,18 @@ nhlib_optvalue_to_string(const struct nh_option_desc *option)
         break;
 
     case OPTTYPE_AUTOPICKUP_RULES:
-        freestr = TRUE;
-        valstr = autopickup_to_string(option->value.ar);
+        valstr_malloced = autopickup_to_string(option->value.ar);
         break;
 
     default:   /* custom option type defined by the client? */
         return NULL;
     }
 
+    if (valstr_malloced)
+        return valstr_malloced;
+
     outstr = malloc(strlen(valstr) + 1);
     strcpy(outstr, valstr);
-    if (freestr)
-        free(valstr);
     return outstr;
 }
 

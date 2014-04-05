@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -170,8 +170,8 @@ static void
 mreadmsg(struct monst *mtmp, struct obj *otmp)
 {
     boolean vismon = canseemon(mtmp);
-    char onambuf[BUFSZ];
     short saverole;
+    const char *onambuf;
     unsigned savebknown;
 
     if (!vismon && !canhear())
@@ -187,7 +187,7 @@ mreadmsg(struct monst *mtmp, struct obj *otmp)
         if (Role_if(PM_PRIEST))
             Role_switch = 0;
     }
-    strcpy(onambuf, singular(otmp, doname));
+    onambuf = singular(otmp, doname);
     Role_switch = saverole;
     otmp->bknown = savebknown;
 
@@ -1659,7 +1659,7 @@ use_misc(struct monst *mtmp, struct musable *m)
     int i;
     struct obj *otmp = m->misc;
     boolean vis, vismon, oseen;
-    char nambuf[BUFSZ];
+    const char *nambuf;
 
     if ((i = precheck(mtmp, otmp, m)) != 0)
         return i;
@@ -1718,8 +1718,8 @@ use_misc(struct monst *mtmp, struct musable *m)
         } else
             mquaffmsg(mtmp, otmp);
         /* format monster's name before altering its visibility */
-        strcpy(nambuf, See_invisible ||
-               tp_sensemon(mtmp) ? Monnam(mtmp) : mon_nam(mtmp));
+        nambuf = (See_invisible || tp_sensemon(mtmp)) ?
+            Monnam(mtmp) : mon_nam(mtmp);
         mon_set_minvis(mtmp);
         if (vismon && mtmp->minvis) {   /* was seen, now invisible */
             if (See_invisible)
@@ -1793,9 +1793,8 @@ use_misc(struct monst *mtmp, struct musable *m)
             int where_to = rn2(4);
             struct obj *obj = uwep;
             const char *hand;
-            char the_weapon[BUFSZ];
+            const char *the_weapon = the(xname(obj));
 
-            strcpy(the_weapon, the(xname(obj)));
             hand = body_part(HAND);
             if (bimanual(obj))
                 hand = makeplural(hand);
@@ -2170,3 +2169,4 @@ mon_consume_unstone(struct monst *mon, struct obj *obj, boolean by_you,
 }
 
 /*muse.c*/
+

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-12 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -89,7 +89,7 @@ cleanup_messages(void)
    must point to a valid char pointer. If second is NULL, the function returns
    without doing anything. */
 static void
-realloc_strcat(char **first, int *first_alloclen, char *second)
+realloc_strcat(char **first, int *first_alloclen, const char *second)
 {
     int strlen_first = *first ? strlen(*first) : 0;
     int strlen_second = second ? strlen(second) : 0;
@@ -206,7 +206,7 @@ layout_msgwin(nh_bool dodraw, int offset, nh_bool more)
 
                 while (wrap_linecount--) {
                     if (dodraw && ypos >= 0 && ypos < getmaxy(msgwin)) {
-                        char *p = wrapped_nextline[wrap_linecount];
+                        const char *p = wrapped_nextline[wrap_linecount];
 
                         wmove(msgwin, ypos, 0);
 

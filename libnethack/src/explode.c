@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (C) 1990 by Ken Arromdee                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -28,7 +28,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
     boolean visible, any_shield;
     int uhurt = 0;      /* 0=unhurt, 1=items damaged, 2=you and items damaged */
     const char *str;
-    char dispbuf[BUFSZ];
+    const char *dispbuf = "";   /* lint suppression; I think the code's OK */
     boolean expl_needs_the = TRUE;
     int idamres, idamnonres;
     struct monst *mtmp;
@@ -61,10 +61,10 @@ explode(int x, int y, int type, /* the same as in zap.c */
         if (Hallucination) {
             int name = rndmonidx();
 
-            sprintf(dispbuf, "%s explosion", s_suffix(monnam_for_index(name)));
+            dispbuf = msgcat(s_suffix(monnam_for_index(name)), " explosion");
             expl_needs_the = !monnam_is_pname(name);
         } else {
-            strcpy(dispbuf, str);
+            dispbuf = str;
         }
     } else {
         int whattype = abs(type) % 10;
@@ -107,7 +107,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
             return;
         }
         if (!done) {
-            strcpy(dispbuf, str);
+            dispbuf = str;
             done = TRUE;
             if (hallu) {
                 whattype = adtyp - 1;
@@ -388,22 +388,21 @@ explode(int x, int y, int type, /* the same as in zap.c */
             } else {
                 if (olet == MON_EXPLODE) {
                     /* killer handled by caller */
-                    if (str != killer_buf && !generic)
-                        strcpy(killer_buf, str);
+                    if (!generic)
+                        killer = str;
                     killer_format = KILLED_BY_AN;
                 } else if (type >= 0 && olet != SCROLL_CLASS) {
                     killer_format = NO_KILLER_PREFIX;
-                    sprintf(killer_buf, "caught %sself in %s own %s", uhim(),
-                            uhis(), str);
+                    killer = msgprintf("caught %sself in %s own %s", uhim(),
+                                       uhis(), str);
                 } else if (!strncmpi(str, "tower of flame", 8) ||
                            !strncmpi(str, "fireball", 8)) {
                     killer_format = KILLED_BY_AN;
-                    strcpy(killer_buf, str);
+                    killer = str;
                 } else {
                     killer_format = KILLED_BY;
-                    strcpy(killer_buf, str);
+                    killer = str;
                 }
-                killer = killer_buf;
                 /* Known BUG: BURNING suppresses corpse in bones data, but done 
                    does not handle killer reason correctly */
                 done((adtyp == AD_FIRE) ? BURNING : DIED);
@@ -628,3 +627,4 @@ splatter_burning_oil(int x, int y)
 }
 
 /*explode.c*/
+

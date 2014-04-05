@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-03-24 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -313,7 +313,7 @@ splitobj(struct obj *obj, long num)
     if (obj->oxlth)
         memcpy(otmp->oextra, (void *)obj->oextra, obj->oxlth);
     if (obj->onamelth)
-        strncpy(ONAME(otmp), ONAME(obj), (int)obj->onamelth);
+        strncpy(ONAME_MUTABLE(otmp), ONAME(obj), (int)obj->onamelth);
     if (obj->unpaid)
         splitbill(obj, otmp);
     if (obj->timed)
@@ -415,7 +415,7 @@ bill_dummy_object(struct obj *otmp)
     if (otmp->oxlth)
         memcpy(dummy->oextra, otmp->oextra, otmp->oxlth);
     if (otmp->onamelth)
-        strncpy(ONAME(dummy), ONAME(otmp), (int)otmp->onamelth);
+        strncpy(ONAME_MUTABLE(dummy), ONAME(otmp), (int)otmp->onamelth);
     if (Is_candle(dummy))
         dummy->lamplit = 0;
     addtobill(dummy, FALSE, TRUE, TRUE);
@@ -1692,7 +1692,7 @@ restore_obj(struct memfile *mf)
     otmp->bypass = (oflags >> 6) & 1;
 
     if (otmp->onamelth)
-        mread(mf, ONAME(otmp), otmp->onamelth);
+        mread(mf, ONAME_MUTABLE(otmp), otmp->onamelth);
 
     if (otmp->oattached == OATTACHED_MONST) {
         struct monst *mtmp = restore_mon(mf);
@@ -1774,3 +1774,4 @@ save_obj(struct memfile *mf, struct obj *obj)
 }
 
 /*mkobj.c*/
+

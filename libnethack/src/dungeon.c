@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-03-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -758,15 +758,10 @@ init_dungeons(void)
 
     dgn_file = dlb_fopen(DUNGEON_FILE, RDBMODE);
     if (!dgn_file) {
-        char tbuf[BUFSZ];
-
-        sprintf(tbuf, "Cannot open dungeon description - \"%s", DUNGEON_FILE);
-        strcat(tbuf, "\" from ");
-        strcat(tbuf, "\n\"");
-        if (fqn_prefix[DATAPREFIX])
-            strcat(tbuf, fqn_prefix[DATAPREFIX]);
-        strcat(tbuf, DLBFILE);
-        strcat(tbuf, "\" file!");
+        const char *tbuf = msgcat_many(
+            "Cannot open dungeon description - \"", DUNGEON_FILE, "\" from\n",
+            "\"", fqn_prefix[DATAPREFIX] ? fqn_prefix[DATAPREFIX] : "",
+            DLBFILE, "\" file!", NULL);
         panic("%s", tbuf);
     }
 
@@ -1548,8 +1543,8 @@ level_difficulty(const d_level * dlev)
 }
 
 /* Take one word and try to match it to a level.
- * Recognized levels are as shown by print_dungeon().
- */
+
+   Recognized levels are as shown by print_dungeon(). */
 schar
 lev_by_name(const char *nam)
 {
@@ -1558,15 +1553,13 @@ lev_by_name(const char *nam)
     d_level dlev;
     const char *p;
     int idx, idxtoo;
-    char buf[BUFSZ];
 
     /* allow strings like "the oracle level" to find "oracle" */
     if (!strncmpi(nam, "the ", 4))
         nam += 4;
-    if ((p = strstri(nam, " level")) != 0 && p == eos((char *)nam) - 6) {
-        nam = strcpy(buf, nam);
-        *(eos(buf) - 6) = '\0';
-    }
+    if ((p = strstri(nam, " level")) != 0 && p == nam + strlen(nam) - 6)
+        nam = msgchop(nam, -6);
+
     /* hell is the old name, and wouldn't match; gehennom would match its
        branch, yielding the castle level instead of the valley of the dead */
     if (!strcmpi(nam, "gehennom") || !strcmpi(nam, "hell")) {
@@ -1639,14 +1632,14 @@ print_branch(struct nh_menulist *menu, int dnum,
              boolean bymenu, struct lchoice *lchoices)
 {
     branch *br;
-    char buf[BUFSZ];
+    const char *buf;
 
     /* This assumes that end1 is the "parent". */
     for (br = branches; br; br = br->next) {
         if (br->end1.dnum == dnum && lower_bound < br->end1.dlevel &&
             br->end1.dlevel <= upper_bound) {
-            sprintf(buf, "   %s to %s: %d", br_string(br->type),
-                    dungeons[br->end2.dnum].dname, depth(&br->end1));
+            buf = msgprintf("   %s to %s: %d", br_string(br->type),
+                            dungeons[br->end2.dnum].dname, depth(&br->end1));
             if (bymenu) {
                 lchoices->lev[lchoices->idx] = br->end1.dlevel;
                 lchoices->dgn[lchoices->idx] = br->end1.dnum;
@@ -1672,13 +1665,13 @@ schar
 print_dungeon(boolean bymenu, schar * rlev, xchar * rdgn)
 {
     int i, last_level, nlev;
-    char buf[BUFSZ];
     boolean first;
     s_level *slev;
     dungeon *dptr;
     branch *br;
     struct lchoice lchoices;
     struct nh_menulist menu;
+    const char *buf;
 
     init_menulist(&menu);
 
@@ -1690,18 +1683,18 @@ print_dungeon(boolean bymenu, schar * rlev, xchar * rdgn)
     for (i = 0, dptr = dungeons; i < n_dgns; i++, dptr++) {
         nlev = dptr->num_dunlevs;
         if (nlev > 1)
-            sprintf(buf, "%s: levels %d to %d", dptr->dname, dptr->depth_start,
-                    dptr->depth_start + nlev - 1);
+            buf = msgprintf("%s: levels %d to %d", dptr->dname,
+                            dptr->depth_start, dptr->depth_start + nlev - 1);
         else
-            sprintf(buf, "%s: level %d", dptr->dname, dptr->depth_start);
+            buf = msgprintf("%s: level %d", dptr->dname, dptr->depth_start);
 
         /* Most entrances are uninteresting. */
         if (dptr->entry_lev != 1) {
             if (dptr->entry_lev == nlev)
-                strcat(buf, ", entrance from below");
+                buf = msgcat(buf, ", entrance from below");
             else
-                sprintf(eos(buf), ", entrance on %d",
-                        dptr->depth_start + dptr->entry_lev - 1);
+                buf = msgprintf("%s, entrance on %d", buf,
+                                dptr->depth_start + dptr->entry_lev - 1);
         }
         if (bymenu) {
             add_menuheading(&menu, buf);
@@ -1720,9 +1713,9 @@ print_dungeon(boolean bymenu, schar * rlev, xchar * rdgn)
             print_branch(&menu, i, last_level, slev->dlevel.dlevel, bymenu,
                          &lchoices);
 
-            sprintf(buf, "   %s: %d", slev->proto, depth(&slev->dlevel));
+            buf = msgprintf("   %s: %d", slev->proto, depth(&slev->dlevel));
             if (Is_stronghold(&slev->dlevel))
-                sprintf(eos(buf), " (tune %s)", tune);
+                buf = msgprintf("%s (tune %s)", buf, tune);
             if (bymenu) {
                 /* If other floating branches are added, this will need to
                    change */
@@ -1763,8 +1756,8 @@ print_dungeon(boolean bymenu, schar * rlev, xchar * rdgn)
                 }
                 first = FALSE;
             }
-            sprintf(buf, "   %s to %s", br_string(br->type),
-                    dungeons[br->end2.dnum].dname);
+            buf = msgprintf("   %s to %s", br_string(br->type),
+                            dungeons[br->end2.dnum].dname);
             if (!bymenu)
                 add_menutext(&menu, buf);
         }
@@ -1791,8 +1784,8 @@ print_dungeon(boolean bymenu, schar * rlev, xchar * rdgn)
     /* I hate searching for the invocation pos while debugging. -dean */
     if (Invocation_lev(&u.uz)) {
         add_menutext(&menu, "");
-        sprintf(buf, "Invocation position @ (%d,%d), hero @ (%d,%d)", inv_pos.x,
-                inv_pos.y, u.ux, u.uy);
+        buf = msgprintf("Invocation position @ (%d,%d), hero @ (%d,%d)",
+                        inv_pos.x, inv_pos.y, u.ux, u.uy);
         add_menutext(&menu, buf);
     }
     /* 
@@ -1810,10 +1803,10 @@ print_dungeon(boolean bymenu, schar * rlev, xchar * rdgn)
 
         add_menutext(&menu, "");
         if (trap)
-            sprintf(buf, "Portal @ (%d,%d), hero @ (%d,%d)", trap->tx, trap->ty,
-                    u.ux, u.uy);
+            buf = msgprintf("Portal @ (%d,%d), hero @ (%d,%d)",
+                            trap->tx, trap->ty, u.ux, u.uy);
         else
-            sprintf(buf, "No portal found.");
+            buf = "No portal found.";
         add_menutext(&menu, buf);
     }
 
@@ -1827,12 +1820,13 @@ print_dungeon(boolean bymenu, schar * rlev, xchar * rdgn)
 int
 donamelevel(const struct nh_cmd_arg *arg)
 {
-    char query[QBUFSZ], buf[BUFSZ];
+    char buf[BUFSZ];
+    const char *query;
 
     if (level->levname[0])
-        sprintf(query, "Replace previous name \"%s\" with?", level->levname);
+        query = msgprintf("Replace previous name \"%s\" with?", level->levname);
     else
-        sprintf(query, "What do you want to call this dungeon level?");
+        query = "What do you want to call this dungeon level?";
     getarglin(arg, query, buf);
 
     if (buf[0] == '\033')
@@ -1976,12 +1970,13 @@ overview_scan(const struct level *lev, struct overview_info *oi)
 }
 
 
-static void
-overview_print_dun(char *buf, const struct level *lev)
+static const char *
+overview_print_dun(const struct level *lev)
 {
     int dnum = lev->z.dnum;
     int depthstart = dungeons[dnum].depth_start;
     int entry_depth, reached_depth;
+    const char *rv;
 
     if (dnum == quest_dnum || dnum == knox_level.dnum)
         /* The quest and knox should appear to be level 1 to match other text.
@@ -1992,19 +1987,22 @@ overview_print_dun(char *buf, const struct level *lev)
     reached_depth = depthstart + dungeons[dnum].dunlev_ureached - 1;
     if (entry_depth == reached_depth || In_endgame(&lev->z))
         /* Suppress the negative numbers in the endgame. */
-        sprintf(buf, "%s:", dungeons[dnum].dname);
+        rv = msgcat(dungeons[dnum].dname, ":");
     else {
-        sprintf(buf, "%s: levels %d to %d", dungeons[dnum].dname,
-                entry_depth < reached_depth ? entry_depth : reached_depth,
-                entry_depth < reached_depth ? reached_depth : entry_depth);
+        rv = msgprintf(
+            "%s: levels %d to %d", dungeons[dnum].dname,
+            entry_depth < reached_depth ? entry_depth : reached_depth,
+            entry_depth < reached_depth ? reached_depth : entry_depth);
     }
+    return rv;
 }
 
 
-static void
-overview_print_lev(char *buf, const struct level *lev)
+static const char *
+overview_print_lev(const struct level *lev)
 {
     int i, depthstart;
+    const char *buf;
 
     depthstart = dungeons[lev->z.dnum].depth_start;
     if (lev->z.dnum == quest_dnum || lev->z.dnum == knox_level.dnum)
@@ -2015,28 +2013,29 @@ overview_print_lev(char *buf, const struct level *lev)
     /* calculate level number */
     i = depthstart + lev->z.dlevel - 1;
     if (Is_astralevel(&lev->z))
-        sprintf(buf, "Astral Plane");
+        buf = "Astral Plane";
     else if (In_endgame(&lev->z))
         /* Negative numbers are mildly confusing, since they are never shown to 
            the player, except in wizard mode.  We could show "Level -1" for the 
            earth plane, for example.  Instead, show "Plane 1" for the earth
            plane to differentiate from level 1.  There's not much to show, but
            maybe the player wants to #annotate them for some bizarre reason. */
-        sprintf(buf, "Plane %i", -i);
+        buf = msgprintf("Plane %i", -i);
     else
-        sprintf(buf, "Level %d", i);
+        buf = msgprintf("Level %d", i);
 
     if (*lev->levname)
-        sprintf(eos(buf), " (%s)", lev->levname);
+        buf = msgprintf("%s (%s)", buf, lev->levname);
 
-    sprintf(eos(buf), "%s",
-            lev ==
-            level ? (program_state.gameover ? " <- You were here" :
-                     " <- You are here") : "");
+    if (lev == level)
+        buf = msgcat(buf, (program_state.gameover ? " <- You were here" :
+                           " <- You are here"));
+
+    return buf;
 }
 
 
-static char *
+static const char *
 seen_string(xchar x, const char *obj)
 {
     /* players are computer scientists: 0, 1, 2, n */
@@ -2056,9 +2055,12 @@ seen_string(xchar x, const char *obj)
 
 
 #define COMMA (i++ > 0 ? ", " : "      ")
-#define ADDNTOBUF(nam, var) do { if (var)                               \
-            sprintf(eos(buf), "%s%s " nam "%s", COMMA, seen_string((var), \
-                    (nam)), ((var) != 1 ? "s" : "")); } while(0)
+#define ADDNTOBUF(nam, var) do { \
+        if (var)                                                        \
+            buf = msgprintf("%s%s%s " nam "%s", buf, COMMA,             \
+                            seen_string((var), (nam)),                  \
+                            ((var) != 1 ? "s" : ""));                   \
+    } while(0)
 
 #if MAXRTYPE != CANDLESHOP
 # warning you must extend the shopnames array!
@@ -2077,48 +2079,50 @@ static const char *const shopnames[] = {
     /* CANDLESHOP */ "a lighting shop"
 };
 
-static void
-overview_print_gods(char *buf, const struct overview_info *oi)
+static const char *
+overview_print_gods(const struct overview_info *oi)
 {
     int i, num_gods = 0;
-    char god_names[4][BUFSZ];
+    const char *(god_names[4]);
+    const char *buf = "";
     if (oi->lawful_altar) {
-        sprintf(god_names[num_gods], "%s", align_gname(A_LAWFUL));
+        god_names[num_gods] = align_gname(A_LAWFUL);
         num_gods++;
     }
     if (oi->neutral_altar) {
-        sprintf(god_names[num_gods], "%s", align_gname(A_NEUTRAL));
+        god_names[num_gods] = align_gname(A_NEUTRAL);
         num_gods++;
     }
     if (oi->chaotic_altar) {
-        sprintf(god_names[num_gods], "%s", align_gname(A_CHAOTIC));
+        god_names[num_gods] = align_gname(A_CHAOTIC);
         num_gods++;
     }
     if (oi->unaligned_altar) {
-        sprintf(god_names[num_gods], "Moloch");
+        god_names[num_gods] = "Moloch";
         num_gods++;
     }
     for (i = 0; i < num_gods; i++) {
-        sprintf(eos(buf), "%s", god_names[i]);
+        buf = msgcat(buf, god_names[i]);
         if (i < num_gods - 1 && num_gods > 2)
-            sprintf(eos(buf), ",");
-        sprintf(eos(buf), " ");
+            buf = msgcat(buf, ",");
+        buf = msgcat(buf, " ");
         if (i == num_gods - 2)
-            sprintf(eos(buf), "and ");
+            buf = msgcat(buf, "and ");
     }
+    return buf;
 }
 
-static void
-overview_print_info(char *buf, const struct overview_info *oi)
+static const char *
+overview_print_info(const struct overview_info *oi)
 {
     int i = 0;
 
-    buf[0] = '\0';
+    const char *buf = "";
 
     if (oi->shopcount > 1)
         ADDNTOBUF("shop", oi->shopcount);
     else if (oi->shopcount == 1)
-        sprintf(eos(buf), "%s%s", COMMA, shopnames[oi->shoptype]);
+        buf = msgcat_many(buf, COMMA, shopnames[oi->shoptype], NULL);
 
     ADDNTOBUF("high altar", oi->high_altars);
 
@@ -2129,36 +2133,44 @@ overview_print_info(char *buf, const struct overview_info *oi)
         ADDNTOBUF("temple", oi->temples);
 
     if (oi->altars) {
-        sprintf(eos(buf), " to ");
-        overview_print_gods(buf, oi);
+        buf = msgcat(buf, " to ");
+        buf = msgcat(buf, overview_print_gods(oi));
     }
 
     ADDNTOBUF("fountain", oi->fountains);
     ADDNTOBUF("sink", oi->sinks);
     ADDNTOBUF("throne", oi->thrones);
     ADDNTOBUF("tree", oi->trees);
+
+    return buf;
 }
 
 
-static void
-overview_print_branch(char *buf, const struct overview_info *oi)
+static const char *
+overview_print_branch(const struct overview_info *oi)
 {
+    const char *buf;
+
     if (oi->portal) {
         if (oi->portal_dst_known) {
-            sprintf(buf, "      portal to %s",
-                    dungeons[oi->portal_dst.dnum].dname);
+            buf = msgprintf("      portal to %s",
+                            dungeons[oi->portal_dst.dnum].dname);
         } else {
-            sprintf(buf, "      a magic portal");
+            buf = "      a magic portal";
         }
-    }
-    if (oi->branch) {
+    } else if (oi->branch) {
         if (oi->branch_dst_known) {
-            sprintf(buf, "      stairs to %s",
-                    dungeons[oi->branch_dst.dnum].dname);
+            buf = msgprintf("      stairs to %s",
+                            dungeons[oi->branch_dst.dnum].dname);
         } else {
-            sprintf(buf, "      a long staircase");
+            buf = "      a long staircase";
         }
+    } else {
+        impossible("branch connected badly?");
+        buf = "      a connection";
     }
+
+    return buf;
 }
 
 
@@ -2169,8 +2181,8 @@ dooverview(const struct nh_cmd_arg *arg)
     struct overview_info oinfo;
     struct nh_menulist menu;
     int i, n, x, y, dnum, selected[1];
-    char buf[BUFSZ];
     struct level *lev;
+    const char *buf;
 
     (void) arg;
 
@@ -2190,26 +2202,26 @@ dooverview(const struct nh_cmd_arg *arg)
         if (levels[i]->z.dnum != dnum) {
             if (i > 0)
                 add_menutext(&menu, "");
-            overview_print_dun(buf, levels[i]);
+            buf = overview_print_dun(levels[i]);
             add_menuheading(&menu, buf);
             dnum = levels[i]->z.dnum;
         }
 
         /* "Level 3 (my level name)" */
-        overview_print_lev(buf, levels[i]);
+        buf = overview_print_lev(levels[i]);
         add_menuitem(&menu, i + 1, buf, 0, FALSE);
 
         if (!overview_is_interesting(levels[i], &oinfo))
             continue;
 
         /* "some fountains, an altar" */
-        overview_print_info(buf, &oinfo);
+        buf = overview_print_info(&oinfo);
         if (*buf)
             add_menutext(&menu, buf);
 
         /* "Stairs to the Gnomish Mines" */
         if (oinfo.branch || oinfo.portal) {
-            overview_print_branch(buf, &oinfo);
+            buf = overview_print_branch(&oinfo);
             add_menutext(&menu, buf);
         }
     }
@@ -2234,7 +2246,7 @@ dooverview(const struct nh_cmd_arg *arg)
                      lev->locations[x][y].mem_invis, 0, 0, 0,
                      dbuf_branding(x, y));
 
-    overview_print_lev(buf, lev);
+    buf = overview_print_lev(lev);
     pline("Now viewing %s%s.  Press any key to return.",
           Is_astralevel(&lev->z) ? "the " : "", buf);
     notify_levelchange(&lev->z);
@@ -2247,3 +2259,4 @@ dooverview(const struct nh_cmd_arg *arg)
 }
 
 /*dungeon.c*/
+

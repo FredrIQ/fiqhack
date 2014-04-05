@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-08 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -885,14 +885,11 @@ castmm(struct monst *mtmp, struct monst *mdef, const struct attack *mattk)
     /* monster unable to cast spells? */
     if (mtmp->mcan || mtmp->mspec_used || !ml) {
         if (canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my)) {
-            char buf[BUFSZ];
-
-            sprintf(buf, "%s", Monnam(mtmp));
-
             if (is_undirected_spell(mattk->adtyp, spellnum))
-                pline("%s points all around, then curses.", buf);
+                pline("%s points all around, then curses.", Monnam(mtmp));
             else
-                pline("%s points at %s, then curses.", buf, mon_nam(mdef));
+                pline("%s points at %s, then curses.",
+                      Monnam(mtmp), mon_nam(mdef));
 
         } else if ((!(moves % 4) || !rn2(4))) {
             if (canhear())
@@ -913,13 +910,10 @@ castmm(struct monst *mtmp, struct monst *mdef, const struct attack *mattk)
         return (0);
     }
     if (canspotmon(mtmp) || canspotmon(mdef)) {
-        char buf[BUFSZ];
-
-        sprintf(buf, " at ");
-        strcat(buf, mon_nam(mdef));
         pline("%s casts a spell%s!",
               canspotmon(mtmp) ? Monnam(mtmp) : "Something",
-              is_undirected_spell(mattk->adtyp, spellnum) ? "" : buf);
+              is_undirected_spell(mattk->adtyp, spellnum) ? "" :
+              msgcat(" at ", mon_nam(mdef)));
     }
 
     if (mattk->damd)
@@ -1177,11 +1171,11 @@ ucast_wizard_spell(struct monst *mattk, struct monst *mtmp, int dmg,
         if (yours)
             pline("You're using the touch of death!");
         else if (canseemon(mattk)) {
-            char buf[BUFSZ];
+            const char *buf;
 
-            sprintf(buf, "%s%s", mtmp->mtame ? "Oh no, " : "", mhe(mattk));
+            buf = msgprintf("%s%s", mtmp->mtame ? "Oh no, " : "", mhe(mattk));
             if (!mtmp->mtame)
-                *buf = highc(*buf);
+                buf = msgupcasefirst(buf);
 
             pline("%s's using the touch of death!", buf);
         }
@@ -1699,3 +1693,4 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
 
 
 /*mcastu.c*/
+

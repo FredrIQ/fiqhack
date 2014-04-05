@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-17 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -26,8 +26,7 @@ static void dump_outrip(struct nh_menulist *ml, boolean ts, const char *name,
 void
 begin_dump(int how)
 {
-    char dumpname[BUFSZ], timestamp[BUFSZ], *status;
-    const char *rolename;
+    const char *timestamp, *dumpname, *status, *rolename;
     time_t t;
     struct tm *tmp;
 
@@ -37,8 +36,11 @@ begin_dump(int how)
     /* make a timestamp like "2011-11-30 18:45" */
     t = time(NULL);
     tmp = localtime(&t);
-    if (!tmp || !strftime(timestamp, sizeof (timestamp), TIMESTAMP_FORMAT, tmp))
-        strcpy(timestamp, "???");
+    if (tmp)
+        timestamp = msgstrftime(TIMESTAMP_FORMAT, tmp);
+    else
+        timestamp = "unknown time"; /* previously "???" but that's illegal
+                                       on many filesystems */
 
     switch (how) {
     case ASCENDED:
@@ -55,9 +57,10 @@ begin_dump(int how)
         break;
     }
 
-    sprintf(dumpname, "%s, %s-%s-%s-%s-%s, %s.txt", timestamp, u.uplname,
-            urole.filecode, urace.filecode, genders[u.ufemale].filecode,
-            aligns[1 - u.ualign.type].filecode, status);
+    dumpname = msgprintf("%s, %s-%s-%s-%s-%s, %s.txt",
+                         timestamp, u.uplname, urole.filecode, urace.filecode,
+                         genders[u.ufemale].filecode,
+                         aligns[1 - u.ualign.type].filecode, status);
     dumpfp = fopen_datafile(dumpname, "w+", DUMPPREFIX);
     if (!dumpfp)
         return;
@@ -109,7 +112,7 @@ dump_status(void)
 
 
 void
-end_dump(int how, char *killbuf, char *pbuf, long umoney, unsigned long carried)
+end_dump(int how, long umoney, unsigned long carried)
 {
     int saved_stopprint, i, line;
 
@@ -134,7 +137,7 @@ end_dump(int how, char *killbuf, char *pbuf, long umoney, unsigned long carried)
     saved_stopprint = program_state.stopprint;
     program_state.stopprint = 0;
 
-    display_rip(how, killbuf, pbuf, umoney, carried);
+    display_rip(how, umoney, carried);
 
     program_state.stopprint = saved_stopprint;
     dump_catch_menus(FALSE);
@@ -260,3 +263,4 @@ dump_outrip(struct nh_menulist *menu, boolean ts, const char *name,
 {
     dump_display_menu(menu, "Final status:", PICK_NONE, PLHINT_ANYWHERE, NULL);
 }
+

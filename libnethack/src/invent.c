@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-03-24 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -12,7 +12,7 @@ static boolean mergable(struct obj *, struct obj *);
 static void invdisp_nothing(const char *, const char *);
 static boolean worn_wield_only(const struct obj *);
 static boolean only_here(const struct obj *);
-static void compactify(char *);
+static const char *compactify(const char *);
 static char display_pickinv(const char *, boolean, long *);
 static boolean this_type_only(const struct obj *);
 static void dounpaid(void);
@@ -21,7 +21,7 @@ static void menu_identify(int);
 static boolean tool_in_use(struct obj *);
 static char obj_to_let(struct obj *);
 static int identify(struct obj *);
-static const char *dfeature_at(int, int, char *);
+static const char *dfeature_at(int, int);
 
 static void addinv_stats(struct obj *);
 static void freeinv_stats(struct obj *);
@@ -55,7 +55,7 @@ assigninvlet(struct obj *otmp)
      */
     boolean deprecated[52];
     boolean should_displace = FALSE;
-    char *danger_letters = "enqryzNY";
+    const char *danger_letters = "enqryzNY";
     int i, to_use;
     struct obj *obj;
 
@@ -113,7 +113,7 @@ assigninvlet(struct obj *otmp)
        Don't change u.lastinvnr in this case; that'd cause unnecessary trampling
        of other invlets. */
     if (should_displace) {
-        char *cur;
+        const char *cur;
         for (cur = danger_letters; *cur; cur++) {
             if (('a' <= *cur && *cur <= 'z' && !inuse[*cur - 'a']) ||
                 ('A' <= *cur && *cur <= 'Z' && !inuse[*cur - 'A' + 26])) {
@@ -399,8 +399,6 @@ struct obj *
 hold_another_object(struct obj *obj, const char *drop_fmt, const char *drop_arg,
                     const char *hold_msg)
 {
-    char buf[BUFSZ];
-
     if (!Blind)
         obj->dknown = 1;        /* maximize mergibility */
     if (obj->oartifact) {
@@ -442,10 +440,6 @@ hold_another_object(struct obj *obj, const char *drop_fmt, const char *drop_arg,
            current_value, stressed ) */
         if (prev_encumbr < MOD_ENCUMBER)
             prev_encumbr = MOD_ENCUMBER;
-        /* addinv() may redraw the entire inventory, overwriting drop_arg when
-           it comes from something like doname() */
-        if (drop_arg)
-            drop_arg = strcpy(buf, drop_arg);
 
         obj = addinv(obj);
         if (obj->invlet == NOINVSYM || ((obj->otyp != LOADSTONE || !obj->cursed)
@@ -713,11 +707,13 @@ gold_at(struct level *lev, int x, int y)
 
 
 /* compact a string of inventory letters by dashing runs of letters */
-static void
-compactify(char *buf)
+static const char *
+compactify(const char *buf_orig)
 {
     int i1 = 0, i2 = 0;
     char ilet, ilet1, ilet2;
+    char buf[strlen(buf_orig)+1];
+    strcpy(buf, buf_orig);
 
     ilet2 = buf[0];
     ilet1 = buf[1];
@@ -740,6 +736,8 @@ compactify(char *buf)
         buf[++i2] = buf[++i1];
         ilet = buf[i1];
     }
+
+    return msg_from_string(buf);
 }
 
 /* ugly checks that were pulled out of getobj. The intent is to determine
@@ -876,10 +874,7 @@ getobj(const char *let, const char *word, boolean isarg)
 {
     struct obj *otmp;
     char ilet;
-    char buf[BUFSZ], qbuf[QBUFSZ];
-    char lets[BUFSZ], altlets[BUFSZ], *ap;
-    int foo = 0;
-    char *bp = buf;
+    const char *qbuf;
     xchar allowcnt = 0; /* 0, 1 or 2 */
     boolean allowall = FALSE;
     boolean allownone = FALSE;
@@ -899,54 +894,71 @@ getobj(const char *let, const char *word, boolean isarg)
     if (*let == NONE_ON_COMMA)
         let++, nonechar = ',';
 
-    if (allownone) {
-        *bp++ = nonechar;
-        *bp++ = ' ';
-    }
-    ap = altlets;
+    /* Count the number of items that may end up in "buf". */
+    int bufmaxlen = 0;
+    for (otmp = invent; otmp; otmp = otmp->nobj)
+        bufmaxlen++;
+    bufmaxlen += 9; /* ", " ITEMS " or ?*\0" */
 
+    /* Calculate two buffers:
+       - "buf" lists OBJECT_USABLE objects only
+       - "altbuf" also lists NONSENSIBLE_USE objects
+    */
+    char buf[bufmaxlen];
+    char *bp = buf;
+    char altbuf[bufmaxlen];
+    char *ap = altbuf;
+
+    int buflen = 0; /* number of item in buf, not counting nonechar */
+
+    if (allownone) {
+        *bp++ = *ap++ = nonechar;
+        *bp++ = *ap++ = ' ';
+    }
+
+    /* This code is massively refactored from the 3.4.3 version because the
+       old version was such a pain to follow (e.g. "bp" and "ap" used entirely
+       different storage). */
     for (otmp = invent; otmp; otmp = otmp->nobj) {
         if (!*let || strchr(let, otmp->oclass)) {
-            bp[foo++] = otmp->invlet;
-
             switch (object_selection_checks(otmp, word)) {
             case CURRENTLY_NOT_USABLE:
             case IMPOSSIBLE_USE:
-                foo--;
                 break;
 
             case NONSENSIBLE_USE:
-                foo--;
                 *ap++ = otmp->invlet;
                 break;
 
             case OBJECT_USABLE:
-                *ap++ = otmp->invlet;
+                *ap++ = *bp++ = otmp->invlet;
+                buflen++;
                 break;
             }
         }
     }
-    bp[foo] = 0;
-    if (foo == 0 && bp > buf && bp[-1] == ' ')
+
+    *ap = *bp = '\0';
+    if (!buflen && bp > buf && bp[-1] == ' ')
         *--bp = 0;
-    strcpy(lets, bp);   /* necessary since we destroy buf */
-    if (foo > 5)        /* compactify string */
-        compactify(bp);
-    *ap = '\0';
+
+    const char *buf_compact = buflen > 5 ? compactify(buf) : buf;
 
     /* TODO: Get rid of this! */
-    if (!*altlets && !allowall && !allownone) {
+    if (!*altbuf && !allowall) {
         pline("You don't have anything to %s.", word);
         return NULL;
     }
+
     for (;;) {
         cnt = 0;
         if (allowcnt == 2)
             allowcnt = 1;       /* abort previous count */
         if (!buf[0]) {
-            sprintf(qbuf, "What do you want to %s? [*]", word);
+            qbuf = msgprintf("What do you want to %s? [*]", word);
         } else {
-            sprintf(qbuf, "What do you want to %s? [%s or ?*]", word, buf);
+            qbuf = msgprintf("What do you want to %s? [%s or ?*]",
+                             word, buf_compact);
         }
         ilet = query_key(qbuf, allowcnt ? &cnt : NULL);
         if (allowcnt == 1 && cnt != -1) {
@@ -983,7 +995,7 @@ getobj(const char *let, const char *word, boolean isarg)
             }
         }
         if (ilet == '?' || ilet == '*') {
-            char *allowed_choices = (ilet == '?') ? lets : altlets;
+            char *allowed_choices = (ilet == '?') ? buf : altbuf;
             long ctmp = 0;
 
             ilet =
@@ -1136,13 +1148,13 @@ menu_identify(int id_limit)
 {
     struct object_pick *pick_list;
     int n, i, first = 1;
-    char buf[BUFSZ];
+    const char *buf;
 
     /* assumptions: id_limit > 0 and at least one unID'd item is present */
 
     while (id_limit) {
-        sprintf(buf, "What would you like to identify %s?",
-                first ? "first" : "next");
+        buf = msgprintf("What would you like to identify %s?",
+                        first ? "first" : "next");
         n = query_objlist(buf, invent,
                           SIGNAL_NOMENU | USE_INVLET | INVORDER_SORT,
                           &pick_list, PICK_ANY, not_fully_identified);
@@ -1221,15 +1233,14 @@ prinv(const char *prefix, struct obj *obj, long quan)
 
 
 
-char *xprname(struct obj *obj, const char *txt, /* text to print instead of obj 
-                                                 */
-              char let, /* inventory letter */
-              boolean dot,      /* append period; (dot && cost => Iu) */
-              long cost,        /* cost (for inventory of unpaid or expended
-                                   items) */
-              long quan) {      /* if non-0, print this quantity, not obj->quan 
-                                 */
-    static char li[BUFSZ];
+const char *
+xprname(struct obj *obj, const char *txt, /* text to print instead of obj */
+        char let, /* inventory letter */
+        boolean dot,      /* append period; (dot && cost => Iu) */
+        long cost,        /* cost (for inventory of unpaid or expended
+                             items) */
+        long quan) {      /* if non-0, print this quantity, not obj->quan */
+    const char *li;
     boolean use_invlet = let != CONTAINED_SYM;
     long savequan = 0;
 
@@ -1245,14 +1256,13 @@ char *xprname(struct obj *obj, const char *txt, /* text to print instead of obj
      */
     if (cost != 0 || let == '*') {
         /* if dot is true, we're doing Iu, otherwise Ix */
-        sprintf(li, "%c - %-45s %6ld %s",
-                (dot &&
-                 use_invlet ? obj->invlet : let), (txt ? txt : doname(obj)),
-                cost, currency(cost));
+        li = msgprintf("%c - %-45s %6ld %s",
+                       (dot && use_invlet ? obj->invlet : let),
+                       (txt ? txt : doname(obj)), cost, currency(cost));
     } else {
         /* ordinary inventory display or pickup message */
-        sprintf(li, "%c - %s%s", (use_invlet ? obj->invlet : let),
-                (txt ? txt : doname(obj)), (dot ? "." : ""));
+        li = msgprintf("%c - %s%s", (use_invlet ? obj->invlet : let),
+                       (txt ? txt : doname(obj)), (dot ? "." : ""));
     }
     if (savequan)
         obj->quan = savequan;
@@ -1645,13 +1655,12 @@ dotypeinv(const struct nh_cmd_arg *arg)
 
 /* return a string describing the dungeon feature at <x,y> if there
    is one worth mentioning at that location; otherwise null */
-const char *
-dfeature_at(int x, int y, char *buf)
+static const char *
+dfeature_at(int x, int y)
 {
     struct rm *loc = &level->locations[x][y];
     int ltyp = loc->typ, cmap = -1;
-    const char *dfeature = 0;
-    static char altbuf[BUFSZ];
+    const char *dfeature = NULL;
 
     if (IS_DOOR(ltyp)) {
         switch (loc->doormask) {
@@ -1683,11 +1692,10 @@ dfeature_at(int x, int y, char *buf)
         dfeature = "pool of water";
     else if (IS_SINK(ltyp))
         cmap = S_sink;  /* "sink" */
-    else if (IS_ALTAR(ltyp)) {
-        sprintf(altbuf, "altar to %s (%s)", a_gname(),
-                align_str(Amask2align(loc->altarmask & AM_MASK)));
-        dfeature = altbuf;
-    } else if (x == level->sstairs.sx && y == level->sstairs.sy &&
+    else if (IS_ALTAR(ltyp))
+        dfeature = msgprintf("altar to %s (%s)", a_gname(),
+                             align_str(Amask2align(loc->altarmask & AM_MASK)));
+    else if (x == level->sstairs.sx && y == level->sstairs.sy &&
                level->sstairs.up)
         cmap = S_upsstair;      /* "long ladder up" */
     else if (x == level->sstairs.sx && y == level->sstairs.sy)
@@ -1713,8 +1721,6 @@ dfeature_at(int x, int y, char *buf)
 
     if (cmap >= 0)
         dfeature = defexplain[cmap];
-    if (dfeature)
-        strcpy(buf, dfeature);
     return dfeature;
 }
 
@@ -1730,7 +1736,6 @@ update_location(boolean all_objects)
     boolean ret, minv = FALSE;
     struct obj *otmp = level->objects[u.ux][u.uy];
     struct trap *trap;
-    char buf[BUFSZ], fbuf[BUFSZ];
     const char *dfeature = NULL;
     int ocount;
     struct nh_objlist objlist;
@@ -1747,15 +1752,18 @@ update_location(boolean all_objects)
         minv = TRUE;
     } else {
         if ((trap = t_at(level, u.ux, u.uy)) && trap->tseen) {
-            sprintf(buf, "There is %s here.", an(trapexplain[trap->ttyp - 1]));
+            const char *buf;
+            buf = msgprintf("There is %s here.",
+                            an(trapexplain[trap->ttyp - 1]));
             add_objitem(&objlist, MI_TEXT, 0, buf, NULL, FALSE);
         }
 
-        dfeature = dfeature_at(u.ux, u.uy, fbuf);
+        dfeature = dfeature_at(u.ux, u.uy);
         if (dfeature && !strcmp(dfeature, "pool of water") && Underwater)
             dfeature = NULL;
         if (dfeature) {
-            sprintf(buf, "There is %s here.", an(dfeature));
+            const char *buf;
+            buf = msgprintf("There is %s here.", an(dfeature));
             add_objitem(&objlist, MI_TEXT, 0, buf, NULL, FALSE);
         }
 
@@ -1772,8 +1780,9 @@ update_location(boolean all_objects)
     }
 
     if (Blind && !all_objects && ocount >= 5) {
-        sprintf(buf, "There are %s other objects here.",
-                (ocount <= 10) ? "several" : "many");
+        const char *buf;
+        buf = msgprintf("There are %s other objects here.",
+                        (ocount <= 10) ? "several" : "many");
         add_objitem(&objlist, MI_TEXT, 0, buf, NULL, FALSE);
     }
 
@@ -1793,9 +1802,9 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
     struct trap *trap;
     const char *verb = feeling ? "feel" : "see";
     const char *dfeature = NULL;
-    char fbuf[BUFSZ], fbuf2[BUFSZ];
     boolean skip_objects = (obj_cnt >= 5), felt_cockatrice = FALSE;
     struct nh_objlist objlist;
+    const char *fbuf;
     const char *title =
         feeling ? "Things that you feel here:" : "Things that are here:";
 
@@ -1813,11 +1822,11 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
     if (Engulfed && u.ustuck) {
         struct monst *mtmp = u.ustuck;
 
-        sprintf(fbuf, "Contents of %s %s", s_suffix(mon_nam(mtmp)),
-                mbodypart(mtmp, STOMACH));
+        fbuf = msgprintf("Contents of %s %s", s_suffix(mon_nam(mtmp)),
+                         mbodypart(mtmp, STOMACH));
         /* Skip "Contents of " by using fbuf index 12 */
         pline("You %s to %s what is lying in %s.",
-              feeling ? "try" : "look around", verb, &fbuf[12]);
+              feeling ? "try" : "look around", verb, fbuf + 12);
         otmp = mtmp->minvent;
         if (otmp) {
             for (; otmp; otmp = otmp->nobj) {
@@ -1827,9 +1836,8 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
                     feel_cockatrice(otmp, feeling);
             }
             if (feeling)
-                strcpy(fbuf, "You feel");
-            strcat(fbuf, ":");
-            display_minventory(mtmp, MINV_ALL, fbuf);
+                fbuf = "You feel";
+            display_minventory(mtmp, MINV_ALL, msgcat(fbuf, ":"));
         } else {
             pline("You %s no objects here.", verb);
         }
@@ -1839,7 +1847,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
         pline("There is %s here.", an(trapexplain[trap->ttyp - 1]));
 
     otmp = level->objects[u.ux][u.uy];
-    dfeature = dfeature_at(u.ux, u.uy, fbuf2);
+    dfeature = dfeature_at(u.ux, u.uy);
     if (dfeature && !strcmp(dfeature, "pool of water") && Underwater)
         dfeature = NULL;
 
@@ -1863,7 +1871,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
     }
 
     if (dfeature)
-        sprintf(fbuf, "There is %s here.", an(dfeature));
+        fbuf = msgprintf("There is %s here.", an(dfeature));
 
     if (!otmp || is_lava(level, u.ux, u.uy) ||
         (is_pool(level, u.ux, u.uy) && !Underwater)) {
@@ -1909,12 +1917,11 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
 
         for (; otmp; otmp = otmp->nexthere) {
             if (otmp->otyp == CORPSE && will_feel_cockatrice(otmp, feeling)) {
-                char buf[BUFSZ];
+                const char *buf;
 
                 felt_cockatrice = TRUE;
-                strcpy(buf, doname_price(otmp));
-                strcat(buf, "...");
-                add_objitem(&objlist, MI_NORMAL, 0, fbuf, otmp, FALSE);
+                buf = msgcat(doname_price(otmp), "...");
+                add_objitem(&objlist, MI_NORMAL, 0, buf, otmp, FALSE);
                 break;
             }
             add_objitem(&objlist, MI_NORMAL, 0, doname(otmp), otmp, FALSE);
@@ -1963,8 +1970,6 @@ will_feel_cockatrice(struct obj * otmp, boolean force_touch)
 void
 feel_cockatrice(struct obj *otmp, boolean force_touch)
 {
-    char kbuf[BUFSZ];
-
     if (will_feel_cockatrice(otmp, force_touch)) {
         if (poly_when_stoned(youmonst.data))
             pline("You touched the %s corpse with your bare %s.",
@@ -1972,8 +1977,7 @@ feel_cockatrice(struct obj *otmp, boolean force_touch)
         else
             pline("Touching the %s corpse is a fatal mistake...",
                   mons[otmp->corpsenm].mname);
-        sprintf(kbuf, "%s corpse", an(mons[otmp->corpsenm].mname));
-        instapetrify(kbuf);
+        instapetrify(msgcat(an(mons[otmp->corpsenm].mname), " corpse"));
     }
 }
 
@@ -2316,7 +2320,7 @@ doorganize(const struct nh_cmd_arg *arg)
     int ix, cur;
     char let;
     char alphabet[52 + 1], buf[52 + 1];
-    char qbuf[QBUFSZ];
+    const char *qbuf;
     const char *adj_type;
 
     /* get a pointer to the object the user wants to organize; this can split
@@ -2354,7 +2358,7 @@ doorganize(const struct nh_cmd_arg *arg)
 
     /* get new letter to use as inventory letter */
     for (;;) {
-        sprintf(qbuf, "Adjust letter to what [%s]?", buf);
+        qbuf = msgprintf("Adjust letter to what [%s]?", buf);
         let = query_key(qbuf, NULL);
         if (strchr(quitchars, let)) {
             pline("Never mind.");
@@ -2473,16 +2477,16 @@ worn_wield_only(const struct obj *obj)
  *      MINV_ALL        - display all inventory
  */
 struct obj *
-display_minventory(struct monst *mon, int dflags, char *title)
+display_minventory(struct monst *mon, int dflags, const char *title)
 {
     struct obj *ret;
-    char tmp[QBUFSZ];
+    const char *qbuf;
     int n;
     struct object_pick *selected = NULL;
     int do_all = (dflags & MINV_ALL) != 0;
 
-    sprintf(tmp, "%s %s:", s_suffix(noit_Monnam(mon)),
-            do_all ? "possessions" : "armament");
+    qbuf = msgprintf("%s %s:", s_suffix(noit_Monnam(mon)),
+                     do_all ? "possessions" : "armament");
 
     if (do_all ? (mon->minvent != 0)
         : (mon->misc_worn_check || MON_WEP(mon))) {
@@ -2490,14 +2494,14 @@ display_minventory(struct monst *mon, int dflags, char *title)
            etc. properly. */
         youmonst.data = mon->data;
 
-        n = query_objlist(title ? title : tmp, mon->minvent, INVORDER_SORT,
+        n = query_objlist(title ? title : qbuf, mon->minvent, INVORDER_SORT,
                           &selected,
                           (dflags & MINV_NOLET) ? PICK_NONE : PICK_ONE,
                           do_all ? allow_all : worn_wield_only);
 
         set_uasmon();
     } else {
-        invdisp_nothing(title ? title : tmp, "(none)");
+        invdisp_nothing(title ? title : qbuf, "(none)");
         n = 0;
     }
 
@@ -2517,17 +2521,15 @@ struct obj *
 display_cinventory(struct obj *obj)
 {
     struct obj *ret = NULL;
-    char tmp[QBUFSZ];
+    const char *qbuf = msgprintf("Contents of %s:", doname(obj));
     int n;
     struct object_pick *selected = 0;
 
-    sprintf(tmp, "Contents of %s:", doname(obj));
-
     if (obj->cobj) {
-        n = query_objlist(tmp, obj->cobj, INVORDER_SORT, &selected, PICK_NONE,
-                          allow_all);
+        n = query_objlist(qbuf, obj->cobj, INVORDER_SORT, &selected,
+                          PICK_NONE, allow_all);
     } else {
-        invdisp_nothing(tmp, "(empty)");
+        invdisp_nothing(qbuf, "(empty)");
         n = 0;
     }
 
@@ -2582,3 +2584,4 @@ display_binventory(int x, int y, boolean as_if_seen)
 }
 
 /*invent.c*/
+

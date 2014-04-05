@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-22 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -30,18 +30,17 @@ static const char *const random_mesg[] = {
     "As if!",   /* Clueless */
 };
 
-char *
-random_engraving(char *outbuf)
+const char *
+random_engraving(void)
 {
     const char *rumor;
 
     /* a random engraving may come from the "rumors" file, or from the list
        above */
-    if (!rn2(4) || !(rumor = getrumor(0, outbuf, TRUE, NULL)) || !*rumor)
-        strcpy(outbuf, random_mesg[rn2(SIZE(random_mesg))]);
+    if (!rn2(4) || !(rumor = getrumor(0, TRUE, NULL)) || !*rumor)
+        rumor = random_mesg[rn2(SIZE(random_mesg))];
 
-    wipeout_text(outbuf, (int)(strlen(outbuf) / 4), 0);
-    return outbuf;
+    return wipeout_text(rumor, (int)(strlen(rumor) / 4), 0);
 }
 
 /* Partial rubouts for engraving characters. -3. */
@@ -95,11 +94,14 @@ static const struct {
     '8', "3o"}
 };
 
-void
-wipeout_text(char *engr, int cnt, unsigned seed)
+const char *
+wipeout_text(const char *engr, int cnt, unsigned seed)
 {       /* for semi-controlled randomization */
+    char mutable_engr[strlen(engr) + 1];
     char *s;
     int i, j, nxt, use_rubout, lth = (int)strlen(engr);
+
+    strcpy(mutable_engr, engr);
 
     if (lth && cnt > 0) {
         while (cnt--) {
@@ -113,10 +115,11 @@ wipeout_text(char *engr, int cnt, unsigned seed)
                    supplying the same arguments later, or a pseudo-random
                    sequence by varying any of them */
                 nxt = seed % lth;
-                seed *= 31, seed %= (BUFSZ - 1);
+                seed *= 31;
+                seed %= 255; /* previously BUFSZ-1 */
                 use_rubout = seed & 3;
             }
-            s = &engr[nxt];
+            s = &mutable_engr[nxt];
             if (*s == ' ')
                 continue;
 
@@ -137,7 +140,8 @@ wipeout_text(char *engr, int cnt, unsigned seed)
                         if (!seed)
                             j = rn2(strlen(rubouts[i].wipeto));
                         else {
-                            seed *= 31, seed %= (BUFSZ - 1);
+                            seed *= 31;
+                            seed %= 255;
                             j = seed % (strlen(rubouts[i].wipeto));
                         }
                         *s = rubouts[i].wipeto[j];
@@ -151,8 +155,10 @@ wipeout_text(char *engr, int cnt, unsigned seed)
     }
 
     /* trim trailing spaces */
-    while (lth && engr[lth - 1] == ' ')
-        engr[--lth] = 0;
+    while (lth && mutable_engr[lth - 1] == ' ')
+        mutable_engr[--lth] = 0;
+
+    return msg_from_string(mutable_engr);
 }
 
 boolean
@@ -284,7 +290,6 @@ read_engr_at(int x, int y)
 {
     struct engr *ep = engr_at(level, x, y);
     int sensed = 0;
-    char buf[BUFSZ];
 
     /* Sensing an engraving does not require sight, nor does it necessarily
        imply comprehension (literacy). */
@@ -332,15 +337,9 @@ read_engr_at(int x, int y)
             sensed = 1;
         }
         if (sensed) {
-            char *et;
-            unsigned maxelen = BUFSZ - sizeof ("You feel the words: \"\". ");
-
-            if (strlen(ep->engr_txt) > maxelen) {
-                strncpy(buf, ep->engr_txt, (int)maxelen);
-                buf[maxelen] = '\0';
-                et = buf;
-            } else
-                et = ep->engr_txt;
+            /* AIS: Bounds check removed, because pline can now handle
+               arbitrary-length strings */
+            char *et = ep->engr_txt;
             pline("You %s: \"%s\".", (Blind) ? "feel the words" : "read", et);
             /* TODO: For now, engravings stop farmove, autoexplore, and
                travel. This can get quite spammy, though. */
@@ -364,8 +363,6 @@ make_engr_at(struct level *lev, int x, int y, const char *s, long e_time,
         return;
 
     engr_len = strlen(s);
-    if (engr_len > BUFSZ - 1)
-        engr_len = BUFSZ - 1;
 
     if ((ep = engr_at(lev, x, y)) != 0)
         del_engr(ep, lev);
@@ -456,34 +453,35 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
     boolean doblind = FALSE;    /* TRUE if engraving blinds the player */
     boolean doknown = FALSE;    /* TRUE if we identify the stylus */
     boolean doknown_after = FALSE;      /* TRUE if we identify the stylus after
-                                           * successfully engraving. */
+                                           successfully engraving. */
     boolean eow = FALSE;        /* TRUE if we are overwriting oep */
     boolean jello = FALSE;      /* TRUE if we are engraving in slime */
     boolean ptext = TRUE;       /* TRUE if we must prompt for engrave text */
     boolean teleengr = FALSE;   /* TRUE if we move the old engraving */
     boolean zapwand = FALSE;    /* TRUE if we remove a wand charge */
-    xchar type = DUST;  /* Type of engraving made */
-    char buf[BUFSZ];    /* Buffer for final/poly engraving text */
-    char ebuf[BUFSZ];   /* Buffer for initial engraving text */
-    char qbuf[QBUFSZ];  /* Buffer for query text */
-    char post_engr_text[BUFSZ]; /* Text displayed after engraving prompt */
-    const char *everb;  /* Present tense of engraving type */
-    const char *eloc;   /* Where the engraving is (ie dust/floor/...) */
-    char *sp;   /* Place holder for space count of engr text */
-    int len;    /* # of nonspace chars of new engraving text */
-    int maxelen;        /* Max allowable length of engraving text */
-    int helpless_time;  /* Temporary for calculating helplessness */
-    const char *helpless_endmsg; /* Temporary for helpless end message */
+    xchar type = DUST;          /* Type of engraving made */
+    const char *buf;            /* Buffer for final/poly engraving text */
+    char ebuf[BUFSZ];           /* Buffer for initial engraving text */
+    const char *qbuf;           /* Buffer for query text */
+    const char *post_engr_text; /* Text displayed after engraving prompt */
+    const char *everb;          /* Present tense of engraving type */
+    const char *eloc;           /* Where the engraving is (ie dust/floor/...) */
+    char *sp;                   /* Iterator over ebuf; mostly handles spaces */
+    int len;                    /* # of nonspace chars of new engraving text */
+    int maxelen;                /* Max allowable length of engraving text */
+    int helpless_time;          /* Temporary for calculating helplessness */
+    const char *helpless_endmsg;/* Temporary for helpless end message */
     struct engr *oep = engr_at(level, u.ux, u.uy);
     struct obj *otmp;
 
     /* The current engraving */
-    char *writer;
+    const char *writer;
 
-    buf[0] = (char)0;
-    ebuf[0] = (char)0;
-    post_engr_text[0] = (char)0;
-    maxelen = BUFSZ - 1;
+    buf = "";
+    ebuf[0] = '\0';
+    post_engr_text = "";
+    maxelen = 255; /* same value as in 3.4.3 */
+
     if (is_demon(youmonst.data) || youmonst.data->mlet == S_VAMPIRE)
         type = ENGR_BLOOD;
 
@@ -643,21 +641,21 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                 /* If wand is "IMMEDIATE", remember to affect the previous
                    engraving even if turning to dust. */
             case WAN_STRIKING:
-                strcpy(post_engr_text,
-                       "The wand unsuccessfully fights your attempt to write!");
+                post_engr_text =
+                    "The wand unsuccessfully fights your attempt to write!";
                 doknown_after = TRUE;
                 break;
             case WAN_SLOW_MONSTER:
                 if (!Blind) {
-                    sprintf(post_engr_text, "The bugs on the %s slow down!",
-                            surface(u.ux, u.uy));
+                    post_engr_text = msgprintf("The bugs on the %s slow down!",
+                                               surface(u.ux, u.uy));
                     doknown_after = TRUE;
                 }
                 break;
             case WAN_SPEED_MONSTER:
                 if (!Blind) {
-                    sprintf(post_engr_text, "The bugs on the %s speed up!",
-                            surface(u.ux, u.uy));
+                    post_engr_text = msgprintf("The bugs on the %s speed up!",
+                                               surface(u.ux, u.uy));
                     doknown_after = TRUE;
                 }
                 break;
@@ -665,7 +663,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                 if (oep) {
                     if (!Blind) {
                         type = (xchar) 0;       /* random */
-                        random_engraving(buf);
+                        buf = random_engraving();
                         doknown = TRUE;
                     }
                     dengr = TRUE;
@@ -682,9 +680,9 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
             case WAN_MAGIC_MISSILE:
                 ptext = TRUE;
                 if (!Blind) {
-                    sprintf(post_engr_text,
-                            "The %s is riddled by bullet holes!",
-                            surface(u.ux, u.uy));
+                    post_engr_text = msgprintf(
+                        "The %s is riddled by bullet holes!",
+                        surface(u.ux, u.uy));
                     doknown_after = TRUE;
                 }
                 break;
@@ -693,15 +691,14 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
             case WAN_SLEEP:
             case WAN_DEATH:
                 if (!Blind) {
-                    sprintf(post_engr_text, "The bugs on the %s stop moving!",
-                            surface(u.ux, u.uy));
+                    post_engr_text = msgprintf(
+                        "The bugs on the %s stop moving!", surface(u.ux, u.uy));
                 }
                 break;
 
             case WAN_COLD:
                 if (!Blind) {
-                    strcpy(post_engr_text,
-                           "A few ice cubes drop from the wand.");
+                    post_engr_text = "A few ice cubes drop from the wand.";
                     doknown_after = TRUE;
                 }
                 if (!oep || (oep->engr_type != BURN))
@@ -734,15 +731,14 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                     doknown = TRUE;
                 }
                 if (!Blind)
-                    strcpy(post_engr_text,
-                           IS_GRAVE(level->locations[u.ux][u.uy].
-                                    typ) ? "Chips fly out from the headstone." :
-                           is_ice(level, u.ux,
-                                  u.
-                                  uy) ? "Ice chips fly up from the ice surface!"
-                           : "Gravel flies up from the floor.");
+                    post_engr_text =
+                        IS_GRAVE(level->locations[u.ux][u.uy].typ) ?
+                        "Chips fly out from the headstone." :
+                        is_ice(level, u.ux, u.uy) ?
+                        "Ice chips fly up from the ice surface!" :
+                        "Gravel flies up from the floor.";
                 else
-                    strcpy(post_engr_text, "You hear drilling!");
+                    post_engr_text = "You hear drilling!";
                 break;
 
                 /* type = BURN wands */
@@ -754,9 +750,9 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                         pline("This %s is a wand of fire!", xname(otmp));
                     doknown = TRUE;
                 }
-                strcpy(post_engr_text,
-                       Blind ? "You feel the wand heat up." :
-                       "Flames fly from the wand.");
+                post_engr_text = Blind ?
+                    "You feel the wand heat up." :
+                    "Flames fly from the wand.";
                 break;
             case WAN_LIGHTNING:
                 ptext = TRUE;
@@ -767,25 +763,25 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                     doknown = TRUE;
                 }
                 if (!Blind) {
-                    strcpy(post_engr_text, "Lightning arcs from the wand.");
+                    post_engr_text = "Lightning arcs from the wand.";
                     doblind = TRUE;
                 } else
-                    strcpy(post_engr_text, "You hear crackling!");
+                    post_engr_text = "You hear crackling!";
                 break;
-
+            
                 /* type = MARK wands */
                 /* type = ENGR_BLOOD wands */
             }
         } else /* end if zappable */ if (!can_reach_floor()) {
-            pline("You can't reach the %s!", surface(u.ux, u.uy));
-            /* If it's a wrestable wand, the player wasted a turn trying. */
-            if (wrestable(otmp))
-                return 1;
-            else
-                return 0;
-        }
+                pline("You can't reach the %s!", surface(u.ux, u.uy));
+                /* If it's a wrestable wand, the player wasted a turn trying. */
+                if (wrestable(otmp))
+                    return 1;
+                else
+                    return 0;
+            }
         break;
-
+    
     case WEAPON_CLASS:
         if (is_blade(otmp)) {
             if ((int)otmp->spe > -3)
@@ -846,7 +842,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
             type = DUST;
             dengr = FALSE;
             teleengr = FALSE;
-            buf[0] = (char)0;
+            buf = "";
         }
     }
 
@@ -986,7 +982,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
               makeplural(body_part(FINGER)));
 
     /* Prompt for engraving! */
-    sprintf(qbuf, "What do you want to %s the %s here?", everb, eloc);
+    qbuf = msgprintf("What do you want to %s the %s here?", everb, eloc);
     if (auto_elbereth)
         strcpy(ebuf, "Elbereth");
     else
@@ -1116,9 +1112,9 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
 
     /* Add to existing engraving */
     if (oep)
-        strcpy(buf, oep->engr_txt);
+        buf = msg_from_string(oep->engr_txt);
 
-    strncat(buf, ebuf, (BUFSZ - (int)strlen(buf) - 1));
+    buf = msgcat(buf, msg_from_string(ebuf));
 
     make_engr_at(level, u.ux, u.uy, buf, moves + helpless_time, type);
 
@@ -1212,8 +1208,6 @@ rest_engravings(struct memfile *mf, struct level *lev)
         lth = mread32(mf);
         if (!lth)       /* no more engravings */
             break;
-        if (lth > BUFSZ)
-            panic("rest_engravings: engraving length too long! (%d)", lth);
 
         ep = newengr(lth);
         ep->engr_lth = lth;
@@ -1228,7 +1222,11 @@ rest_engravings(struct memfile *mf, struct level *lev)
         while (ep->engr_txt[0] == ' ')
             ep->engr_txt++;
         /* mark as finished for bones levels -- no problem for normal levels as 
-           the player must have finished engraving to be able to move again */
+           the player must have finished engraving to be able to move again 
+        
+           TODO: This comment isn't correct due to lifesaving, but this whole
+           code is a mess anyway, and the whole engr_time system needs a rewrite
+           (and an occupation callback). */
         ep->engr_time = moves;
     }
 
@@ -1343,3 +1341,4 @@ make_grave(struct level *lev, int x, int y, const char *str)
 }
 
 /*engrave.c*/
+

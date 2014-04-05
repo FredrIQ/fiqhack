@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-12 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -98,7 +98,7 @@ static SDL_Texture *screen = NULL;
 static SDL_Texture *rendertarget = NULL; /* most recently used render target */
 
 static SDL_Texture *
-load_png_file_to_texture(char *filename, int *w, int *h)
+load_png_file_to_texture(const char *filename, int *w, int *h)
 {
     /* Based on a public domain example that ships with libpng */
     volatile png_structp png_ptr;
@@ -348,7 +348,7 @@ exit_handler(void)
 }
 
 void
-sdl_hook_init(int *h, int *w, char *title)
+sdl_hook_init(int *h, int *w, const char *title)
 {
     if (!win) {
         debug = !!getenv("UNCURSED_SDL_DEBUG");
@@ -483,7 +483,7 @@ initialize_cursor_texture(struct sdl_tile_region *region)
 }
 
 void
-sdl_hook_set_faketerm_font_file(char *filename)
+sdl_hook_set_faketerm_font_file(const char *filename)
 {
     int w, h;
     SDL_Texture *t = load_png_file_to_texture(filename, &w, &h);
@@ -502,7 +502,7 @@ sdl_hook_set_faketerm_font_file(char *filename)
 }
 
 void
-sdl_hook_set_tiles_tile_file(char *filename, int rows, int columns)
+sdl_hook_set_tiles_tile_file(const char *filename, int rows, int columns)
 {
     if (tileset_filename)
         free(tileset_filename);

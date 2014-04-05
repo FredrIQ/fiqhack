@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-12 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -491,7 +491,7 @@ digactualhole(int x, int y, struct monst *madeby, int ttyp)
 {
     struct obj *oldobjs, *newobjs;
     struct trap *ttmp;
-    char surface_type[BUFSZ];
+    const char *surface_type;
     struct rm *loc = &level->locations[x][y];
     boolean shopdoor;
     struct monst *mtmp = m_at(level, x, y);     /* may be madeby */
@@ -531,9 +531,9 @@ digactualhole(int x, int y, struct monst *madeby, int ttyp)
     /* maketrap(level, ) might change it, also, in this situation, surface()
        returns an inappropriate string for a grave */
     if (IS_GRAVE(loc->typ))
-        strcpy(surface_type, "grave");
+        surface_type = "grave";
     else
-        strcpy(surface_type, surface(x, y));
+        surface_type = surface(x, y);
     shopdoor = IS_DOOR(loc->typ) && *in_rooms(level, x, y, SHOPBASE);
     oldobjs = level->objects[x][y];
     ttmp = maketrap(level, x, y, ttyp);
@@ -824,7 +824,7 @@ int
 use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
 {
     boolean ispick;
-    char qbuf[QBUFSZ];
+    const char *qbuf;
     int res = 0;
     const char *verb;
     schar dx, dy, dz;
@@ -852,7 +852,7 @@ use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
         return res;
     }
 
-    sprintf(qbuf, "In what direction do you want to %s?", verb);
+    qbuf = msgprintf("In what direction do you want to %s?", verb);
     if (!getargdir(arg, qbuf, &dx, &dy, &dz))
         return res;
 
@@ -871,14 +871,14 @@ use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
         else
             pline("You can't reach the %s.", ceiling(u.ux, u.uy));
     } else if (!dx && !dy && !dz) {
-        char buf[BUFSZ];
+        const char *buf;
         int dam;
 
         dam = rnd(2) + dbon() + obj->spe;
         if (dam <= 0)
             dam = 1;
         pline("You hit yourself with %s.", yname(uwep));
-        sprintf(buf, "%s own %s", uhis(), OBJ_NAME(objects[obj->otyp]));
+        buf = msgprintf("%s own %s", uhis(), OBJ_NAME(objects[obj->otyp]));
         losehp(dam, buf, KILLED_BY);
         return 1;
     } else if (dz == 0) {
@@ -1428,7 +1428,7 @@ rot_corpse(void *arg, long timeout)
         }
     } else if (in_invent) {
         if (flags.verbose) {
-            char *cname = corpse_xname(obj, FALSE);
+            const char *cname = corpse_xname(obj, FALSE);
 
             pline("Your %s%s %s away%c", obj == uwep ? "wielded " : nul, cname,
                   otense(obj, "rot"), obj == uwep ? '!' : '.');
@@ -1457,3 +1457,4 @@ rot_corpse(void *arg, long timeout)
 }
 
 /*dig.c*/
+

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-16 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -394,9 +394,8 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
                 break;
             } else if (!dx && !dy && !dz) {
                 if ((damage = zapyourself(instr, TRUE)) != 0) {
-                    char buf[BUFSZ];
-
-                    sprintf(buf, "using a magical horn on %sself", uhim());
+                    const char *buf = msgprintf(
+                        "using a magical horn on %sself", uhim());
                     losehp(damage, buf, KILLED_BY);
                 }
             } else {
@@ -578,3 +577,4 @@ do_play_instrument(struct obj *instr, const struct nh_cmd_arg *arg)
 }
 
 /*music.c*/
+

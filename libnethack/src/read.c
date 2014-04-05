@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-01 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -75,7 +75,7 @@ doread(const struct nh_cmd_arg *arg)
             "Furinkan High School Athletic Dept.",      /* Ranma 1/2 */
             "Hel-LOOO, Nurse!", /* Animaniacs */
         };
-        char buf[BUFSZ];
+        const char *buf;
         int erosion;
 
         if (Blind) {
@@ -85,11 +85,12 @@ doread(const struct nh_cmd_arg *arg)
         break_conduct(conduct_illiterate);
         if (flags.verbose)
             pline("It reads:");
-        strcpy(buf, shirt_msgs[scroll->o_id % SIZE(shirt_msgs)]);
+        buf = shirt_msgs[scroll->o_id % SIZE(shirt_msgs)];
         erosion = greatest_erosion(scroll);
         if (erosion)
-            wipeout_text(buf, (int)(strlen(buf) * erosion / (2 * MAX_ERODE)),
-                         scroll->o_id ^ (unsigned)u.ubirthday);
+            buf = wipeout_text(buf,
+                               (int)(strlen(buf) * erosion / (2 * MAX_ERODE)),
+                               scroll->o_id ^ (unsigned)u.ubirthday);
         pline("\"%s\"", buf);
         return 1;
     } else if (scroll->oclass != SCROLL_CLASS &&
@@ -461,7 +462,7 @@ recharge(struct obj *obj, int curse_bless)
 static void
 forget_single_object(int obj_id)
 {
-    char *knownname;
+    const char *knownname;
     char *new_uname;
 
     if (!objects[obj_id].oc_name_known)
@@ -1413,11 +1414,11 @@ do_class_genocide(void)
                 buf[0] = def_monsyms[S_MIMIC];
             class = def_char_to_monclass(buf[0]);
         } else {
-            char buf2[BUFSZ];
-
             class = 0;
-            strcpy(buf2, makesingular(buf));
-            strcpy(buf, buf2);
+            /* TODO: Potential buffer overflow here if the input is just
+               marginally below BUFSZ and gets longer when singularized.
+               Imagine "djinn" with a lot of adjectives. */
+            strcpy(buf, makesingular(buf));
         }
         immunecnt = gonecnt = goodcnt = 0;
         for (i = LOW_PM; i < NUMMONS; i++) {
@@ -1454,9 +1455,8 @@ do_class_genocide(void)
 
         for (i = LOW_PM; i < NUMMONS; i++) {
             if (mons[i].mlet == class) {
-                char nam[BUFSZ];
+                const char *nam = makeplural(mons[i].mname);
 
-                strcpy(nam, makeplural(mons[i].mname));
                 /* Although "genus" is Latin for race, the hero benefits from
                    both race and role; thus genocide affects either. */
                 if (Your_Own_Role(i) || Your_Own_Race(i) ||
@@ -1879,3 +1879,4 @@ create_particular(const struct nh_cmd_arg *arg)
 }
 
 /*read.c*/
+

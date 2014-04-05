@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-04 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -345,7 +345,6 @@ get_display_string(struct nh_option_desc *option)
 static void
 print_option_string(struct nh_option_desc *option, char *buf)
 {
-    char fmt[16];
     const char *opttxt;
     char *valstr = get_display_string(option);
 
@@ -355,19 +354,17 @@ print_option_string(struct nh_option_desc *option, char *buf)
         if (!opttxt || strlen(opttxt) < 2)
             opttxt = option->name;
 
-        sprintf(fmt, "%%.%ds\t[%%s]", COLS - 21);
-        snprintf(buf, BUFSZ, fmt, opttxt, valstr);
+        snprintf(buf, BUFSZ, "%.*s\t[%s]", COLS - 21, opttxt, valstr);
         break;
 
     case OPTSTYLE_NAME:
-        sprintf(fmt, "%%.%ds\t[%%s]", COLS - 21);
-        snprintf(buf, BUFSZ, fmt, option->name, valstr);
+        snprintf(buf, BUFSZ, "%.*s\t[%s]", COLS - 21, option->name, valstr);
         break;
 
     default:
     case OPTSTYLE_FULL:
-        sprintf(fmt, "%%s\t[%%s]\t%%.%ds", COLS - 42);
-        snprintf(buf, BUFSZ, fmt, option->name, valstr, option->helptxt);
+        snprintf(buf, BUFSZ, "%s\t[%s]\t%.*s", option->name, valstr,
+                 COLS - 42, option->helptxt);
         break;
     }
 
@@ -440,7 +437,7 @@ select_enum_value(union nh_optvalue *value, struct nh_option_desc *option)
 
     for (i = 0; i < option->e.numchoices; i++) {
         char capbuf[QBUFSZ];
-        char *cap;
+        const char *cap;
 
         if (option->value.e == option->e.choices[i].id) {
             snprintf(capbuf, QBUFSZ, "%s (set)", option->e.choices[i].caption);
@@ -742,7 +739,8 @@ edit_ap_rule(struct nh_autopick_option *desc, struct nh_autopickup_rules *ar,
     struct nh_autopickup_rule tmprule;
     struct nh_menulist menu;
     int i, n, selected[1], newpos;
-    char query[BUFSZ], buf[BUFSZ], *classname;
+    char query[BUFSZ], buf[BUFSZ];
+    const char *classname;
 
     do {
         init_menulist(&menu);
@@ -886,7 +884,7 @@ show_autopickup_menu(struct nh_option_desc *opt)
             }
 
             if (r->oclass != OCLASS_ANY) {
-                char *classname = NULL;
+                const char *classname = NULL;
 
                 for (j = 0; j < opt->a.numclasses && !classname; j++)
                     if (opt->a.classes[j].id == r->oclass)

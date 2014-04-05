@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-16 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -193,15 +193,14 @@ gold_detect(struct obj *sobj, boolean * scr_known)
     if (!*scr_known) {
         /* no gold found on floor or monster's inventory. adjust message if you 
            have gold in your inventory */
-        char buf[BUFSZ];
+        const char *buf;
 
         if (youmonst.data == &mons[PM_GOLD_GOLEM]) {
-            sprintf(buf, "You feel like a million %s!", currency(2L));
+            buf = msgprintf("You feel like a million %s!", currency(2L));
         } else if (hidden_gold() || money_cnt(invent))
-            strcpy(buf,
-                   "You feel worried about your future financial situation.");
+            buf = "You feel worried about your future financial situation.";
         else
-            strcpy(buf, "You feel materially poor.");
+            buf = "You feel materially poor.";
         strange_feeling(sobj, buf);
         return 1;
     }
@@ -311,11 +310,11 @@ food_detect(struct obj *sobj, boolean * scr_known)
                 u.uedibility = 1;
             }
         } else if (sobj) {
-            char buf[BUFSZ];
+            const char *buf;
 
-            sprintf(buf, "Your %s twitches%s.", body_part(NOSE),
-                    (sobj->blessed &&
-                     !u.uedibility) ? " then starts to tingle" : "");
+            buf = msgprintf("Your %s twitches%s.", body_part(NOSE),
+                            (sobj->blessed &&
+                             !u.uedibility) ? " then starts to tingle" : "");
             if (sobj->blessed && !u.uedibility) {
                 /* prevent non-delivery of message */
                 boolean savebeginner = flags.beginner;
@@ -394,7 +393,7 @@ object_detect(struct obj *detector,     /* object doing the detecting */
               int class /* an object class, 0 for all */ )
 {
     int x, y;
-    char stuff[BUFSZ];
+    const char *stuff;
     int is_cursed = (detector && detector->cursed);
     int do_dknown = (detector &&
                      (detector->oclass == POTION_CLASS ||
@@ -410,9 +409,9 @@ object_detect(struct obj *detector,     /* object doing the detecting */
     }
 
     if (Hallucination || (Confusion && class == SCROLL_CLASS))
-        strcpy(stuff, "something");
+        stuff = "something";
     else
-        strcpy(stuff, class ? oclass_names[class] : "objects");
+        stuff = class ? oclass_names[class] : "objects";
 
     if (do_dknown)
         for (obj = invent; obj; obj = obj->nobj)
@@ -1333,3 +1332,4 @@ sokoban_detect(struct level *lev)
 
 
 /*detect.c*/
+

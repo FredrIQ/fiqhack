@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -303,7 +303,7 @@ pick_lock(struct obj *pick, const struct nh_cmd_arg *arg)
     schar dx, dy, dz;
     struct rm *door;
     struct obj *otmp;
-    char qbuf[QBUFSZ];
+    const char *qbuf;
 
     if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
@@ -394,11 +394,12 @@ pick_lock(struct obj *pick, const struct nh_cmd_arg *arg)
                     verb = "unlock", it = 1;
                 else
                     verb = "pick";
-                sprintf(qbuf, "There is %s here, %s %s?",
-                        safe_qbuf("",
-                                  sizeof ("There is  here, unlock its lock?"),
-                                  doname(otmp), an(simple_typename(otmp->otyp)),
-                                  "a box"), verb, it ? "it" : "its lock");
+                qbuf = msgprintf(
+                    "There is %s here, %s %s?",
+                    safe_qbuf("",
+                              sizeof ("There is  here, unlock its lock?"),
+                              doname(otmp), an(simple_typename(otmp->otyp)),
+                              "a box"), verb, it ? "it" : "its lock");
 
                 c = ynq(qbuf);
                 if (c == 'q')
@@ -498,7 +499,7 @@ doforce(const struct nh_cmd_arg *arg)
 {
     struct obj *otmp;
     int c;
-    char qbuf[QBUFSZ];
+    const char *qbuf;
 
     if (!uwep_can_force())
         return 0;
@@ -520,10 +521,11 @@ doforce(const struct nh_cmd_arg *arg)
                       doname(otmp), otmp->obroken ? "broken" : "unlocked");
                 continue;
             }
-            sprintf(qbuf, "There is %s here, force its lock?",
-                    safe_qbuf("", sizeof ("There is  here, force its lock?"),
-                              doname(otmp), an(simple_typename(otmp->otyp)),
-                              "a box"));
+            qbuf = msgprintf(
+                "There is %s here, force its lock?",
+                safe_qbuf("", sizeof ("There is  here, force its lock?"),
+                          doname(otmp), an(simple_typename(otmp->otyp)),
+                          "a box"));
 
             c = ynq(qbuf);
             if (c == 'q')
@@ -1025,3 +1027,4 @@ chest_shatter_msg(struct obj *otmp)
 }
 
 /*lock.c*/
+

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-04 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -404,7 +404,8 @@ fix_worst_trouble(int trouble)
         otmp = which_armor(u.usteed, os_saddle);
         uncurse(otmp);
         if (!Blind) {
-            pline("%s %s %s.", s_suffix(upstart(y_monnam(u.usteed))),
+            pline("%s %s %s.", s_suffix(
+                      msgupcasefirst(y_monnam(u.usteed))),
                   aobjnam(otmp, "softly glow"), hcolor("amber"));
             otmp->bknown = TRUE;
         }
@@ -704,9 +705,8 @@ gcrownu(void)
         break;
     case A_CHAOTIC:
         {
-            char swordbuf[BUFSZ];
+            const char *swordbuf = msgcat(hcolor("black"), " sword");
 
-            sprintf(swordbuf, "%s sword", hcolor("black"));
             if (class_gift != STRANGE_OBJECT) {
                 ;       /* already got bonus above */
             } else if (in_hand) {
@@ -829,12 +829,11 @@ pleased(aligntyp g_align)
             if (uwep &&
                 (welded(uwep) || uwep->oclass == WEAPON_CLASS ||
                  is_weptool(uwep))) {
-                char repair_buf[BUFSZ];
+                const char *repair_buf = "";
 
-                *repair_buf = '\0';
                 if (uwep->oeroded || uwep->oeroded2)
-                    sprintf(repair_buf, " and %s now as good as new",
-                            otense(uwep, "are"));
+                    repair_buf = msgprintf(" and %s now as good as new",
+                                           otense(uwep, "are"));
 
                 if (uwep->cursed) {
                     uncurse(uwep);
@@ -845,7 +844,7 @@ pleased(aligntyp g_align)
                     else
                         pline("You feel the power of %s over your %s.",
                               u_gname(), xname(uwep));
-                    *repair_buf = '\0';
+                    repair_buf = "";
                 } else if (!uwep->blessed) {
                     bless(uwep);
                     uwep->bknown = TRUE;
@@ -856,7 +855,7 @@ pleased(aligntyp g_align)
                     else
                         pline("You feel the blessing of %s over your %s.",
                               u_gname(), xname(uwep));
-                    *repair_buf = '\0';
+                    repair_buf = "";
                 }
 
                 /* fix any rust/burn/rot damage, but don't protect against
@@ -1997,3 +1996,4 @@ blocked_boulder(int dx, int dy)
 }
 
 /*pray.c*/
+

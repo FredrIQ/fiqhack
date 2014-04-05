@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-03-12 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -45,7 +45,6 @@ boolean
 burnarmor(struct monst *victim)
 {
     struct obj *item;
-    char buf[BUFSZ];
     int mat_idx;
 
     if (!victim)
@@ -55,11 +54,11 @@ burnarmor(struct monst *victim)
         switch (rn2(5)) {
         case 0:
             item = which_armor(victim, os_armh);
-            if (item) {
+            if (item)
                 mat_idx = objects[item->otyp].oc_material;
-                sprintf(buf, "%s %s", materialnm[mat_idx], helmet_name(item));
-            }
-            if (!burn_dmg(item, item ? buf : "helmet"))
+            if (!burn_dmg(item, item ?
+                          msgcat_many(materialnm[mat_idx], " ",
+                                      helmet_name(item), NULL) : "helmet"))
                 continue;
             break;
         case 1:
@@ -323,9 +322,9 @@ void
 fall_through(boolean td)
 {       /* td == TRUE : trap door or hole */
     d_level dtmp;
-    char msgbuf[BUFSZ];
     const char *dont_fall = NULL;
     int newlevel = dunlev(&u.uz);
+    const char *msgbuf;
 
     /* KMH -- You can't escape the Sokoban level traps */
     if (Blind && Levitation && !In_sokoban(&u.uz))
@@ -380,9 +379,11 @@ fall_through(boolean td)
         dtmp.dlevel = newlevel;
     }
     if (!td)
-        sprintf(msgbuf, "The hole in the %s above you closes up.",
-                ceiling(u.ux, u.uy));
-    schedule_goto(&dtmp, FALSE, TRUE, 0, NULL, !td ? msgbuf : NULL);
+        msgbuf = msgprintf("The hole in the %s above you closes up.",
+                           ceiling(u.ux, u.uy));
+    else
+        msgbuf = NULL;
+    schedule_goto(&dtmp, FALSE, TRUE, 0, NULL, msgbuf);
 }
 
 /*
@@ -410,9 +411,7 @@ animate_statue(struct obj *statue, xchar x, xchar y, int cause,
     coord cc;
     boolean historic = (Role_if(PM_ARCHEOLOGIST) && !flags.mon_moving &&
                         (statue->spe & STATUE_HISTORIC));
-    char statuename[BUFSZ];
-
-    strcpy(statuename, the(xname(statue)));
+    const char *statuename = the(xname(statue));
 
     if (statue->oxlth && statue->oattached == OATTACHED_MONST) {
         cc.x = x, cc.y = y;
@@ -494,7 +493,7 @@ animate_statue(struct obj *statue, xchar x, xchar y, int cause,
         const char *comes_to_life =
             nonliving(mon->data) ? "moves" : "comes to life";
         if (cause == ANIMATE_SPELL)
-            pline("%s %s!", upstart(statuename),
+            pline("%s %s!", msgupcasefirst(statuename),
                   canspotmon(mon) ? comes_to_life : "disappears");
         else
             pline("The statue %s!",
@@ -865,23 +864,25 @@ dotrap(struct trap *trap, unsigned trflags)
             break;
         }
         if (!In_sokoban(&u.uz)) {
-            char verbbuf[BUFSZ];
+            const char *verbbuf;
 
             if (u.usteed) {
                 if ((trflags & RECURSIVETRAP) != 0)
-                    sprintf(verbbuf, "and %s fall",
-                            x_monnam(u.usteed,
-                                     u.usteed->mnamelth ? ARTICLE_NONE :
-                                     ARTICLE_THE, NULL, SUPPRESS_SADDLE,
-                                     FALSE));
+                    verbbuf = msgprintf(
+                        "and %s fall",
+                        x_monnam(u.usteed,
+                                 u.usteed->mnamelth ? ARTICLE_NONE :
+                                 ARTICLE_THE, NULL, SUPPRESS_SADDLE,
+                                 FALSE));
                 else
-                    sprintf(verbbuf, "lead %s",
-                            x_monnam(u.usteed,
-                                     u.usteed->mnamelth ? ARTICLE_NONE :
-                                     ARTICLE_THE, "poor", SUPPRESS_SADDLE,
-                                     FALSE));
+                    verbbuf = msgcat(
+                        "lead ",
+                        x_monnam(u.usteed,
+                                 u.usteed->mnamelth ? ARTICLE_NONE :
+                                 ARTICLE_THE, "poor", SUPPRESS_SADDLE,
+                                 FALSE));
             } else
-                strcpy(verbbuf, "fall");
+                verbbuf = "fall";
             pline("You %s into %s pit!", verbbuf, a_your[trap->madeby_u]);
         }
         /* wumpus reference */
@@ -896,10 +897,11 @@ dotrap(struct trap *trap, unsigned trflags)
 
             if (u.usteed) {
                 pline("%s lands %s!",
-                      upstart(x_monnam
-                              (u.usteed,
-                               u.usteed->mnamelth ? ARTICLE_NONE : ARTICLE_THE,
-                               "poor", SUPPRESS_SADDLE, FALSE)), predicament);
+                      msgupcasefirst(
+                          x_monnam(
+                              u.usteed,
+                              u.usteed->mnamelth ? ARTICLE_NONE : ARTICLE_THE,
+                              "poor", SUPPRESS_SADDLE, FALSE)), predicament);
             } else
                 pline("You land %s!", predicament);
         }
@@ -973,21 +975,18 @@ dotrap(struct trap *trap, unsigned trflags)
             break;
         }
         if (webmsgok) {
-            char verbbuf[BUFSZ];
-
-            verbbuf[0] = '\0';
+            const char *verbbuf;
 
             if (u.usteed)
-                sprintf(verbbuf, "lead %s",
-                        x_monnam(u.usteed,
-                                 u.usteed->
-                                 mnamelth ? ARTICLE_NONE : ARTICLE_THE, "poor",
-                                 SUPPRESS_SADDLE, FALSE));
+                verbbuf = msgcat(
+                    "lead ",
+                    x_monnam(u.usteed,
+                             u.usteed->
+                             mnamelth ? ARTICLE_NONE : ARTICLE_THE, "poor",
+                             SUPPRESS_SADDLE, FALSE));
             else
-
-                sprintf(verbbuf, "%s",
-                        Levitation ? (const char *)"float" :
-                        locomotion(youmonst.data, "stumble"));
+                verbbuf = Levitation ? (const char *)"float" :
+                    locomotion(youmonst.data, "stumble");
             pline("You %s into %s spider web!", verbbuf,
                   a_your[trap->madeby_u]);
         }
@@ -1073,19 +1072,20 @@ dotrap(struct trap *trap, unsigned trflags)
         break;
 
     case POLY_TRAP:{
-            char verbbuf[BUFSZ];
+            const char *verbbuf;
 
             seetrap(trap);
             if (u.usteed)
-                sprintf(verbbuf, "lead %s",
-                        x_monnam(u.usteed,
-                                 u.usteed->
-                                 mnamelth ? ARTICLE_NONE : ARTICLE_THE, NULL,
-                                 SUPPRESS_SADDLE, FALSE));
+                verbbuf = msgcat(
+                    "lead ",
+                    x_monnam(u.usteed,
+                             u.usteed->
+                             mnamelth ? ARTICLE_NONE : ARTICLE_THE, NULL,
+                             SUPPRESS_SADDLE, FALSE));
             else
-                sprintf(verbbuf, "%s",
-                        Levitation ? (const char *)"float" :
-                        locomotion(youmonst.data, "step"));
+                verbbuf = 
+                    Levitation ? (const char *)"float" :
+                    locomotion(youmonst.data, "step");
             pline("You %s onto a polymorph trap!", verbbuf);
             if (Antimagic || Unchanging) {
                 shieldeff(u.ux, u.uy);
@@ -1536,12 +1536,8 @@ launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
         newsym(x2, y2);
     }
 
-    if (damage) {
-        char *knm, knmbuf[BUFSZ];
-
-        knm = strcpy(knmbuf, killer_xname(singleobj));
-        losehp(damage, knm, KILLED_BY);
-    }
+    if (damage)
+        losehp(damage, killer_xname(singleobj), KILLED_BY);
 
     if (!used_up) {
         return 1;
@@ -2234,13 +2230,13 @@ minstapetrify(struct monst *mon, boolean byplayer)
 void
 selftouch(const char *arg, const char *deathtype)
 {
-    char kbuf[BUFSZ];
+    const char *kbuf;
 
     if (uwep && uwep->otyp == CORPSE && touch_petrifies(&mons[uwep->corpsenm])
         && !Stone_resistance) {
         pline("%s touch the %s corpse.", arg, mons[uwep->corpsenm].mname);
-        sprintf(kbuf, "%s %s corpse", deathtype,
-                an(mons[uwep->corpsenm].mname));
+        kbuf = msgprintf("%s %s corpse", deathtype,
+                         an(mons[uwep->corpsenm].mname));
         instapetrify(kbuf);
         if (!Stone_resistance)
             uwepgone();
@@ -2249,8 +2245,8 @@ selftouch(const char *arg, const char *deathtype)
     if (u.twoweap && uswapwep && uswapwep->otyp == CORPSE &&
         touch_petrifies(&mons[uswapwep->corpsenm]) && !Stone_resistance) {
         pline("%s touch the %s corpse.", arg, mons[uswapwep->corpsenm].mname);
-        sprintf(kbuf, "%s %s corpse", deathtype,
-                an(mons[uswapwep->corpsenm].mname));
+        kbuf = msgprintf("%s %s corpse", deathtype,
+                         an(mons[uswapwep->corpsenm].mname));
         instapetrify(kbuf);
         if (!Stone_resistance)
             uswapwepgone();
@@ -3399,10 +3395,10 @@ help_monster_out(struct monst *mtmp, struct trap *ttmp)
         if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
             win_pause_output(P_MESSAGE);
         else {
-            char kbuf[BUFSZ];
+            const char *kbuf;
 
-            sprintf(kbuf, "trying to help %s out of a pit",
-                    an(mtmp->data->mname));
+            kbuf = msgprintf("trying to help %s out of a pit",
+                             an(mtmp->data->mname));
             instapetrify(kbuf);
             return 1;
         }
@@ -3461,7 +3457,7 @@ untrap(const struct nh_cmd_arg *arg, boolean force)
     boolean trap_skipped = FALSE;
     boolean box_here = FALSE;
     boolean deal_with_floor_trap = FALSE;
-    char the_trap[BUFSZ], qbuf[QBUFSZ];
+    const char *the_trap, *qbuf;
     int containercnt = 0;
     schar dx, dy, dz;
 
@@ -3481,7 +3477,7 @@ untrap(const struct nh_cmd_arg *arg, boolean force)
 
     if ((ttmp = t_at(level, x, y)) && ttmp->tseen) {
         deal_with_floor_trap = TRUE;
-        strcpy(the_trap, the(trapexplain[ttmp->ttyp - 1]));
+        the_trap = the(trapexplain[ttmp->ttyp - 1]);
         if (box_here) {
             if (ttmp->ttyp == PIT || ttmp->ttyp == SPIKED_PIT) {
                 pline("You can't do much about %s%s.", the_trap,
@@ -3490,11 +3486,12 @@ untrap(const struct nh_cmd_arg *arg, boolean force)
                 trap_skipped = TRUE;
                 deal_with_floor_trap = FALSE;
             } else {
-                sprintf(qbuf, "There %s and %s here. %s %s?",
-                        (containercnt ==
-                         1) ? "is a container" : "are containers",
-                        an(trapexplain[ttmp->ttyp - 1]),
-                        ttmp->ttyp == WEB ? "Remove" : "Disarm", the_trap);
+                qbuf = msgprintf("There %s and %s here. %s %s?",
+                                 (containercnt == 1) ? 
+                                 "is a container" : "are containers",
+                                 an(trapexplain[ttmp->ttyp - 1]),
+                                 ttmp->ttyp == WEB ? "Remove" : "Disarm",
+                                 the_trap);
                 switch (ynq(qbuf)) {
                 case 'q':
                     return 0;
@@ -3545,12 +3542,12 @@ untrap(const struct nh_cmd_arg *arg, boolean force)
     if (!dx && !dy) {
         for (otmp = level->objects[x][y]; otmp; otmp = otmp->nexthere)
             if (Is_box(otmp)) {
-                sprintf(qbuf, "There is %s here. Check it for traps?",
-                        safe_qbuf("",
-                                  sizeof
-                                  ("There is  here. Check it for traps?"),
-                                  doname(otmp), an(simple_typename(otmp->otyp)),
-                                  "a box"));
+                qbuf = msgprintf(
+                    "There is %s here. Check it for traps?",
+                    safe_qbuf("",
+                              sizeof ("There is  here. Check it for traps?"),
+                              doname(otmp), an(simple_typename(otmp->otyp)),
+                              "a box"));
                 switch (ynq(qbuf)) {
                 case 'q':
                     return 0;
@@ -4066,3 +4063,4 @@ burn_stuff:
 }
 
 /*trap.c*/
+

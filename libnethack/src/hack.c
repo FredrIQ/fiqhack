@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -202,7 +202,8 @@ moverock(schar dx, schar dy)
                 case TELEP_TRAP:
                     if (u.usteed)
                         pline("%s pushes %s and suddenly it disappears!",
-                              upstart(y_monnam(u.usteed)), the(xname(otmp)));
+                              msgupcasefirst(y_monnam(u.usteed)),
+                              the(xname(otmp)));
                     else
                         pline("You push %s and suddenly it disappears!",
                               the(xname(otmp)));
@@ -247,7 +248,8 @@ moverock(schar dx, schar dy)
                               the(xname(otmp)));
                     exercise(A_STR, TRUE);
                 } else
-                    pline("%s moves %s.", upstart(y_monnam(u.usteed)),
+                    pline("%s moves %s.",
+                          msgupcasefirst(y_monnam(u.usteed)),
                           the(xname(otmp)));
                 lastmovetime = moves;
             }
@@ -266,7 +268,8 @@ moverock(schar dx, schar dy)
         nopushmsg:
             if (u.usteed)
                 pline("%s tries to move %s, but cannot.",
-                      upstart(y_monnam(u.usteed)), the(xname(otmp)));
+                      msgupcasefirst(y_monnam(u.usteed)),
+                      the(xname(otmp)));
             else
                 pline("You try to move %s, but in vain.", the(xname(otmp)));
             if (Blind)
@@ -511,10 +514,7 @@ static void
 autoexplore_msg(const char *text, int mode)
 {
     if (flags.occupation == occ_autoexplore) {
-        char tmp[BUFSZ];
-
-        strcpy(tmp, text);
-        pline("%s blocks your way.", upstart(tmp));
+        pline("%s blocks your way.", msgupcasefirst(text));
     }
 }
 
@@ -1417,12 +1417,9 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
             if (inshop || foo ||
                 (IS_ROCK(level->locations[u.ux][u.uy].typ) &&
                  !passes_walls(mtmp->data))) {
-                char buf[BUFSZ];
-
                 monflee(mtmp, rnd(6), FALSE, FALSE);
-                strcpy(buf, y_monnam(mtmp));
-                buf[0] = highc(buf[0]);
-                pline("You stop.  %s is in the way!", buf);
+                pline("You stop.  %s is in the way!",
+                      msgupcasefirst(y_monnam(mtmp)));
                 action_completed();
                 return 0;
             } else if ((mtmp->mfrozen || (!mtmp->mcanmove)
@@ -1441,7 +1438,6 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
     if (uim == uim_forcefight ||
         (level->locations[x][y].mem_invis && UIM_AGGRESSIVE(uim))) {
         boolean expl = (Upolyd && attacktype(youmonst.data, AT_EXPL));
-        char buf[BUFSZ];
         struct nh_cmd_arg arg;
         arg_from_delta(turnstate.move.dx, turnstate.move.dy, dz, &arg);
 
@@ -1461,12 +1457,12 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
                       "Sparks fly as you" : "You",
                       boulder->otyp == STATUE ? "statue" : "boulder");
                 if (ouch)
-                    sprintf(killer_buf, "hitting %s", killer_xname(boulder));
+                    killer = msgprintf("hitting %s", killer_xname(boulder));
             } else {
                 pline("You %s the %s.", Role_if(PM_MONK) ? "strike" : "bash",
                       boulder->otyp == STATUE ? "statue" : "boulder");
                 ouch = TRUE;
-                sprintf(killer_buf, "hitting %s", killer_xname(boulder));
+                killer = msgprintf( "hitting %s", killer_xname(boulder));
             }
             /* TODO: Possibly make the player hurtle after striking. */
         }
@@ -1491,10 +1487,11 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
                       level->locations[x][y].typ == STAIRS ? "stairs" :
                       level->locations[x][y].typ == LADDER ? "ladder" :
                       level->locations[x][y].typ == DOOR ? "door" : "wall");
-                sprintf(killer_buf, "hitting %s", 
-                        level->locations[x][y].typ == STAIRS ? "the stairs" :
-                        level->locations[x][y].typ == LADDER ? "a ladder" :
-                        level->locations[x][y].typ == DOOR ? "a door" : "a wall");
+                killer = msgprintf(
+                    "hitting %s", 
+                    level->locations[x][y].typ == STAIRS ? "the stairs" :
+                    level->locations[x][y].typ == LADDER ? "a ladder" :
+                    level->locations[x][y].typ == DOOR ? "a door" : "a wall");
             }
         }
         if (ouch) {
@@ -1503,9 +1500,9 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
                       otense(uwep, "vibrate"));
             else
                 pline("Ouch!  That hurts!");
-            losehp(2, killer_buf, KILLED_BY);
+            losehp(2, killer, KILLED_BY);
         } else if (!hitsomething) {
-            sprintf(buf,"a vacant spot on the %s", surface(x,y));
+            const char *buf = msgcat("a vacant spot on the ", surface(x,y));
             pline("You %s %s.", expl ? "explode at" : "attack",
                   !Underwater ? "thin air" :
                   is_pool(level, x, y) ? "empty water" : buf);
@@ -1531,7 +1528,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
     /* Not attacking a monster, for whatever reason; we try to move. */
     if (u.usteed && !u.usteed->mcanmove &&
         (turnstate.move.dx || turnstate.move.dy)) {
-        pline("%s won't move!", upstart(y_monnam(u.usteed)));
+        pline("%s won't move!", msgupcasefirst(y_monnam(u.usteed)));
         action_completed();
         return 1;
     } else if (!youmonst.data->mmove) {
@@ -1557,7 +1554,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
             } else if (flags.verbose) {
                 if (u.usteed)
                     pline_once("%s is still in a pit.",
-                               upstart(y_monnam(u.usteed)));
+                               msgupcasefirst(y_monnam(u.usteed)));
                 else
                     pline_once((Hallucination && !rn2(5)) ?
                                "You've fallen, and you can't get up." :
@@ -1567,7 +1564,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
             if (flags.verbose) {
                 predicament = "stuck in the lava";
                 if (u.usteed)
-                    pline_once("%s is %s.", upstart(y_monnam(u.usteed)),
+                    pline_once("%s is %s.", msgupcasefirst(y_monnam(u.usteed)),
                           predicament);
                 else
                     pline_once("You are %s.", predicament);
@@ -1594,7 +1591,8 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
                 if (flags.verbose) {
                     predicament = "stuck to the web";
                     if (u.usteed)
-                        pline_once("%s is %s.", upstart(y_monnam(u.usteed)),
+                        pline_once("%s is %s.",
+                                   msgupcasefirst(y_monnam(u.usteed)),
                                    predicament);
                     else
                         pline_once("You are %s.", predicament);
@@ -1602,7 +1600,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
             } else {
                 if (u.usteed)
                     pline("%s breaks out of the web.",
-                          upstart(y_monnam(u.usteed)));
+                          msgupcasefirst(y_monnam(u.usteed)));
                 else
                     pline("You disentangle yourself.");
             }
@@ -1611,7 +1609,8 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
                 if (flags.verbose) {
                     predicament = "stuck in the";
                     if (u.usteed)
-                        pline_once("%s is %s %s.", upstart(y_monnam(u.usteed)),
+                        pline_once("%s is %s %s.",
+                                   msgupcasefirst(y_monnam(u.usteed)),
                                    predicament, surface(u.ux, u.uy));
                     else
                         pline_once("You are %s %s.", predicament,
@@ -1620,7 +1619,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
             } else {
                 if (u.usteed)
                     pline("%s finally wiggles free.",
-                          upstart(y_monnam(u.usteed)));
+                          msgupcasefirst(y_monnam(u.usteed)));
                 else
                     pline("You finally wiggle free.");
             }
@@ -1628,7 +1627,8 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
             if (flags.verbose) {
                 predicament = "caught in a bear trap";
                 if (u.usteed)
-                    pline_once("%s is %s.", upstart(y_monnam(u.usteed)),
+                    pline_once("%s is %s.",
+                               msgupcasefirst(y_monnam(u.usteed)),
                                predicament);
                 else
                     pline_once("You are %s.", predicament);
@@ -1748,12 +1748,12 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
                    (bigmonst(mtmp->data) || (curr_mon_load(mtmp) > 600))) {
             /* can't swap places when pet won't fit thru the opening */
             u.ux = u.ux0, u.uy = u.uy0; /* didn't move after all */
-            pline("You stop.  %s won't fit through.", upstart(y_monnam(mtmp)));
+            pline("You stop.  %s won't fit through.",
+                  msgupcasefirst(y_monnam(mtmp)));
         } else {
-            char pnambuf[BUFSZ];
-
             /* save its current description in case of polymorph */
-            strcpy(pnambuf, y_monnam(mtmp));
+            const char *pnambuf = y_monnam(mtmp);
+
             mtmp->mtrapped = 0;
             remove_monster(level, x, y);
             place_monster(mtmp, u.ux0, u.uy0);
@@ -1881,7 +1881,7 @@ invocation_message(void)
 {
     /* a special clue-msg when on the Invocation position */
     if (invocation_pos(&u.uz, u.ux, u.uy) && !On_stairs(u.ux, u.uy)) {
-        char buf[BUFSZ];
+        const char *buf;
         struct obj *otmp = carrying(CANDELABRUM_OF_INVOCATION);
 
         if (flags.occupation == occ_move ||
@@ -1890,11 +1890,11 @@ invocation_message(void)
             action_completed();
 
         if (u.usteed)
-            sprintf(buf, "beneath %s", y_monnam(u.usteed));
+            buf = msgprintf("beneath %s", y_monnam(u.usteed));
         else if (Levitation || Flying)
-            strcpy(buf, "beneath you");
+            buf = "beneath you";
         else
-            sprintf(buf, "under your %s", makeplural(body_part(FOOT)));
+            buf = msgprintf("under your %s", makeplural(body_part(FOOT)));
 
         pline("You feel a strange vibration %s.", buf);
         if (otmp && otmp->spe == 7 && otmp->lamplit)
@@ -2857,7 +2857,7 @@ dofight(const struct nh_cmd_arg *arg)
 void
 limited_turns(const struct nh_cmd_arg *arg, enum occupation occ)
 {
-    char *verb =
+    const char *verb =
         occ == occ_move ? "running" :
         occ == occ_search ? "searching" : "waiting";
 
@@ -2917,3 +2917,4 @@ dogo(const struct nh_cmd_arg *arg)
 }
 
 /*hack.c*/
+

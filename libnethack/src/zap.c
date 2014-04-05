@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-09 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -204,10 +204,9 @@ bhitm(struct monst *mtmp, struct obj *otmp)
     case WAN_MAKE_INVISIBLE:
         {
             int oldinvis = mtmp->minvis;
-            char nambuf[BUFSZ];
-
             /* format monster's name before altering its visibility */
-            strcpy(nambuf, Monnam(mtmp));
+            const char *nambuf = Monnam(mtmp);
+
             mon_set_minvis(mtmp);
             if (!oldinvis && knowninvisible(mtmp)) {
                 pline("%s turns transparent!", nambuf);
@@ -298,7 +297,7 @@ bhitm(struct monst *mtmp, struct obj *otmp)
         break;
     case SPE_STONE_TO_FLESH:
         if (monsndx(mtmp->data) == PM_STONE_GOLEM) {
-            char *name = Monnam(mtmp);
+            const char *name = Monnam(mtmp);
 
             /* turn into flesh golem */
             if (newcham(mtmp, &mons[PM_FLESH_GOLEM], FALSE, FALSE)) {
@@ -755,9 +754,9 @@ unturn_dead(struct monst *mon)
 {
     struct obj *otmp, *otmp2;
     struct monst *mtmp2;
-    char owner[BUFSZ], corpse[BUFSZ];
     boolean youseeit;
     int once = 0, res = 0;
+    const char *owner, *corpse;
 
     youseeit = (mon == &youmonst) ? TRUE : canseemon(mon);
     otmp2 = (mon == &youmonst) ? invent : mon->minvent;
@@ -770,16 +769,16 @@ unturn_dead(struct monst *mon)
             continue;
         /* save the name; the object is liable to go away */
         if (youseeit)
-            strcpy(corpse, corpse_xname(otmp, TRUE));
+            corpse = corpse_xname(otmp, TRUE);
 
         /* for a merged group, only one is revived; should this be fixed? */
         if ((mtmp2 = revive(otmp)) != 0) {
             ++res;
             if (youseeit) {
-                if (!once++)
-                    strcpy(owner,
-                           (mon == &youmonst) ? "Your" : s_suffix(Monnam(mon)));
-                pline("%s %s suddenly comes alive!", owner, corpse);
+                if (!once++) {
+                    owner = (mon == &youmonst) ? "Your" : s_suffix(Monnam(mon));
+                    pline("%s %s suddenly comes alive!", owner, corpse);
+                }
             } else if (canseemon(mtmp2))
                 pline("%s suddenly appears!", Amonnam(mtmp2));
         }
@@ -1916,12 +1915,9 @@ dozap(const struct nh_cmd_arg *arg)
             pline("%s glows and fades.", The(xname(obj)));
         /* make him pay for knowing !NODIR */
     } else if (!dx && !dy && !dz && !(objects[obj->otyp].oc_dir == NODIR)) {
-        if ((damage = zapyourself(obj, TRUE)) != 0) {
-            char buf[BUFSZ];
-
-            sprintf(buf, "zapped %sself with a wand", uhim());
-            losehp(damage, buf, NO_KILLER_PREFIX);
-        }
+        if ((damage = zapyourself(obj, TRUE)) != 0)
+            losehp(damage, msgprintf("zapped %sself with a wand", uhim()),
+                   NO_KILLER_PREFIX);
     } else {
 
         /* Are we having fun yet? weffects -> buzz(obj->otyp) -> zhitm (temple
@@ -1945,7 +1941,6 @@ int
 zapyourself(struct obj *obj, boolean ordinary)
 {
     int damage = 0;
-    char buf[BUFSZ];
 
     switch (obj->otyp) {
     case WAN_STRIKING:
@@ -2127,8 +2122,7 @@ zapyourself(struct obj *obj, boolean ordinary)
                   "You seem no deader than before.");
             break;
         }
-        sprintf(buf, "shot %sself with a death ray", uhim());
-        killer = buf;
+        killer = msgprintf("shot %sself with a death ray", uhim());
         killer_format = NO_KILLER_PREFIX;
         pline("You irradiate yourself with pure energy!");
         pline("You die.");
@@ -2356,7 +2350,6 @@ zap_updown(struct obj *obj, schar dz)
     struct obj *otmp;
     struct engr *e;
     struct trap *ttmp;
-    char buf[BUFSZ];
 
     /* some wands have special effects other than normal bhitpile */
     /* drawbridge might change <u.ux,u.uy> */
@@ -2471,7 +2464,7 @@ zap_updown(struct obj *obj, schar dz)
             case WAN_POLYMORPH:
             case SPE_POLYMORPH:
                 del_engr(e, level);
-                make_engr_at(level, x, y, random_engraving(buf), moves,
+                make_engr_at(level, x, y, random_engraving(), moves,
                              (xchar) 0);
                 break;
             case WAN_CANCELLATION:
@@ -3268,8 +3261,8 @@ burn_floor_paper(struct level *lev, int x, int y,
                  boolean u_caused)
 {
     struct obj *obj, *obj2;
+    const char *buf1 = "", *buf2 = "";  /* lint suppression */
     long i, scrquan, delquan;
-    char buf1[BUFSZ], buf2[BUFSZ];
     int cnt = 0;
 
     for (obj = lev->objects[x][y]; obj; obj = obj2) {
@@ -3287,13 +3280,12 @@ burn_floor_paper(struct level *lev, int x, int y,
                 /* save name before potential delobj() */
                 if (give_feedback) {
                     obj->quan = 1;
-                    strcpy(buf1,
-                           (x == u.ux &&
-                            y == u.uy) ? xname(obj) : distant_name(obj, xname));
+
+                    buf1 = (x == u.ux && y == u.uy) ?
+                        xname(obj) : distant_name(obj, xname);
                     obj->quan = 2;
-                    strcpy(buf2,
-                           (x == u.ux &&
-                            y == u.uy) ? xname(obj) : distant_name(obj, xname));
+                    buf2 = (x == u.ux && y == u.uy) ?
+                        xname(obj) : distant_name(obj, xname);
                     obj->quan = scrquan;
                 }
                 /* useupf(), which charges, only if hero caused damage */
@@ -4201,7 +4193,8 @@ resist(struct monst *mtmp, char oclass, int damage, int domsg)
 void
 makewish(void)
 {
-    char buf[BUFSZ], origbuf[BUFSZ];
+    char buf[BUFSZ];
+    const char *origbuf;
     struct obj *otmp, nothing;
     int tries = 0;
 
@@ -4214,7 +4207,7 @@ retry:
 
     if (buf[0] == '\033')
         buf[0] = 0;
-    strcpy(origbuf, buf);
+    origbuf = msg_from_string(buf);
 
     /* 
      *  Note: if they wished for and got a non-object successfully,
@@ -4260,3 +4253,4 @@ retry:
 }
 
 /*zap.c*/
+

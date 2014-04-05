@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -61,7 +61,7 @@ static void
 vpline(boolean nonblocking, boolean norepeat, const char *line,
        va_list the_args)
 {
-    char pbuf[BUFSZ], *c;
+    const char *pbuf;
     boolean repeated;
     int lastline;
 
@@ -72,15 +72,7 @@ vpline(boolean nonblocking, boolean norepeat, const char *line,
     if (!line || !*line)
         return;
 
-
-    vsnprintf(pbuf, BUFSZ, line, the_args);
-
-    /* Sanitize, otherwise the line can mess up the message window and message
-       history. */
-    for (c = pbuf; *c && c < pbuf + BUFSZ; c++) {
-        if (*c == '\n' || *c == '\t')
-            *c = ' ';
-    }
+    pbuf = msgvprintf(line, the_args, TRUE);
 
     line = pbuf;
 
@@ -195,10 +187,18 @@ vraw_printf(const char *line, va_list the_args)
     if (!strchr(line, '%'))
         raw_print(line);
     else {
-        char pbuf[BUFSZ];
+        /* We can't use msgvprintf here because the game might not be
+           running. We use xmvasprintf instead (vasprintf would be a little more
+           appropriate but might not be available), then transfer to the stack,
+           so that there are no untracked allocations when we make the API
+           call. */
+        struct xmalloc_block *xm_temp = NULL;
+        const char *fmtline = xmvasprintf(&xm_temp, line, the_args);
+        char fmtline_onstack[strlen(fmtline) + 1];
+        strcpy(fmtline_onstack, fmtline);
+        xmalloc_cleanup(&xm_temp);
 
-        vsprintf(pbuf, line, the_args);
-        raw_print(pbuf);
+        raw_print(fmtline_onstack);
     }
 }
 
@@ -209,26 +209,24 @@ impossible(const char *s, ...)
 {
     nonfatal_dump_core();
 
-    va_list the_args;
+    va_list args, args2;
+    const char *pbuf;
 
-    va_start(the_args, s);
+    va_start(args, s);
+    va_copy(args2, args);
     if (program_state.in_impossible)
         panic("impossible called impossible");
     program_state.in_impossible = 1;
-    {
-        char pbuf[BUFSZ];
+    
+    pbuf = msgvprintf(s, args, TRUE);
+    paniclog("impossible", pbuf);
+    DEBUG_LOG_BACKTRACE("impossible() called: %s\n", pbuf);
 
-        vsprintf(pbuf, s, the_args);
-        paniclog("impossible", pbuf);
-
-        DEBUG_LOG_BACKTRACE("impossible() called: %s\n", pbuf);
-    }
-    va_end(the_args);
-    va_start(the_args, s);
-    vpline(FALSE, FALSE, s, the_args);
+    va_end(args);
+    vpline(FALSE, FALSE, s, args2);
     pline("Program in disorder - perhaps you'd better save.");
     program_state.in_impossible = 0;
-    va_end(the_args);
+    va_end(args2);
 }
 
 const char *
@@ -251,73 +249,72 @@ void
 mstatusline(struct monst *mtmp)
 {
     aligntyp alignment;
-    char info[BUFSZ], monnambuf[BUFSZ];
+    const char *info, *monnambuf;
 
     if (mtmp->ispriest || (mtmp->isminion && roamer_type(mtmp->data)))
-        alignment = EPRI(mtmp)->shralign;
+        alignment = CONST_EPRI(mtmp)->shralign;
     else if (mtmp->isminion)
         alignment = EMIN(mtmp)->min_align;
     else {
         alignment = mtmp->data->maligntyp;
         alignment =
-            (alignment > 0) ? A_LAWFUL : (alignment <
-                                          0) ? A_CHAOTIC : A_NEUTRAL;
+            (alignment > 0) ? A_LAWFUL :
+            (alignment < 0) ? A_CHAOTIC : A_NEUTRAL;
     }
 
-    info[0] = 0;
+    info = "";
     if (mtmp->mtame) {
-        strcat(info, ", tame");
+        info = msgcat(info, ", tame");
         if (wizard) {
-            sprintf(eos(info), " (%d", mtmp->mtame);
+            info = msgprintf("%s (%d", info, mtmp->mtame);
             if (!mtmp->isminion)
-                sprintf(eos(info), "; hungry %u; apport %d",
-                        EDOG(mtmp)->hungrytime, EDOG(mtmp)->apport);
-            strcat(info, ")");
+                info = msgprintf("%s; hungry %u; apport %d", info,
+                                 EDOG(mtmp)->hungrytime, EDOG(mtmp)->apport);
+            info = msgcat(info, ")");
         }
     } else if (mtmp->mpeaceful)
-        strcat(info, ", peaceful");
+        info = msgcat(info, ", peaceful");
     if (mtmp->meating)
-        strcat(info, ", eating");
+        info = msgcat(info, ", eating");
     if (mtmp->mcan)
-        strcat(info, ", cancelled");
+        info = msgcat(info, ", cancelled");
     if (mtmp->mconf)
-        strcat(info, ", confused");
+        info = msgcat(info, ", confused");
     if (mtmp->mblinded || !mtmp->mcansee)
-        strcat(info, ", blind");
+        info = msgcat(info, ", blind");
     if (mtmp->mstun)
-        strcat(info, ", stunned");
+        info = msgcat(info, ", stunned");
     if (mtmp->msleeping)
-        strcat(info, ", asleep");
+        info = msgcat(info, ", asleep");
     else if (mtmp->mfrozen || !mtmp->mcanmove)
-        strcat(info, ", can't move");
+        info = msgcat(info, ", can't move");
     /* [arbitrary reason why it isn't moving] */
     else if (mtmp->mstrategy & STRAT_WAITMASK)
-        strcat(info, ", meditating");
+        info = msgcat(info, ", meditating");
     else if (mtmp->mflee)
-        strcat(info, ", scared");
+        info = msgcat(info, ", scared");
     if (mtmp->mtrapped)
-        strcat(info, ", trapped");
+        info = msgcat(info, ", trapped");
     if (mtmp->mspeed)
-        strcat(info,
-               mtmp->mspeed == MFAST ? ", fast" : mtmp->mspeed ==
-               MSLOW ? ", slow" : ", ???? speed");
+        info = msgcat(info,
+                      mtmp->mspeed == MFAST ? ", fast" :
+                      mtmp->mspeed == MSLOW ? ", slow" : ", ???? speed");
     if (mtmp->mundetected)
-        strcat(info, ", concealed");
+        info = msgcat(info, ", concealed");
     if (mtmp->minvis)
-        strcat(info, ", invisible");
+        info = msgcat(info, ", invisible");
     if (mtmp == u.ustuck)
-        strcat(info,
-               (sticks(youmonst.data)) ? ", held by you" : Engulfed
-               ? (is_animal(u.ustuck->data) ? ", swallowed you" :
-                  ", engulfed you") : ", holding you");
+        info = msgcat(info,
+                      (sticks(youmonst.data)) ? ", held by you" : Engulfed
+                      ? (is_animal(u.ustuck->data) ? ", swallowed you" :
+                         ", engulfed you") : ", holding you");
     if (mtmp == u.usteed)
-        strcat(info, ", carrying you");
+        info = msgcat(info, ", carrying you");
 
     /* avoid "Status of the invisible newt ..., invisible" */
     /* and unlike a normal mon_nam, use "saddled" even if it has a name */
-    strcpy(monnambuf,
-           x_monnam(mtmp, ARTICLE_THE, NULL, (SUPPRESS_IT | SUPPRESS_INVISIBLE),
-                    FALSE));
+    monnambuf = x_monnam(mtmp, ARTICLE_THE, NULL,
+                         (SUPPRESS_IT | SUPPRESS_INVISIBLE), FALSE);
 
     pline("Status of %s (%s):  Level %d  HP %d(%d)  Def %d%s.", monnambuf,
           align_str(alignment), mtmp->m_lev, mtmp->mhp, mtmp->mhpmax,
@@ -327,63 +324,63 @@ mstatusline(struct monst *mtmp)
 void
 ustatusline(void)
 {
-    char info[BUFSZ];
+    const char *info = "";
 
-    info[0] = '\0';
     if (Sick) {
-        strcat(info, ", dying from");
+        info = msgcat(info, ", dying from");
         if (u.usick_type & SICK_VOMITABLE)
-            strcat(info, " food poisoning");
+            info = msgcat(info, " food poisoning");
         if (u.usick_type & SICK_NONVOMITABLE) {
             if (u.usick_type & SICK_VOMITABLE)
-                strcat(info, " and");
-            strcat(info, " illness");
+                info = msgcat(info, " and");
+            info = msgcat(info, " illness");
         }
     }
     if (Stoned)
-        strcat(info, ", solidifying");
+        info = msgcat(info, ", solidifying");
     if (Slimed)
-        strcat(info, ", becoming slimy");
+        info = msgcat(info, ", becoming slimy");
     if (Strangled)
-        strcat(info, ", being strangled");
+        info = msgcat(info, ", being strangled");
     if (Vomiting)
-        strcat(info, ", nauseated");    /* !"nauseous" */
+        info = msgcat(info, ", nauseated");    /* !"nauseous" */
     if (Confusion)
-        strcat(info, ", confused");
+        info = msgcat(info, ", confused");
     if (Blind) {
-        strcat(info, ", blind");
+        info = msgcat(info, ", blind");
         if (u.ucreamed) {
             if ((long)u.ucreamed < Blinded || Blindfolded ||
                 !haseyes(youmonst.data))
-                strcat(info, ", cover");
-            strcat(info, "ed by sticky goop");
+                info = msgcat(info, ", cover");
+            info = msgcat(info, "ed by sticky goop");
         }       /* note: "goop" == "glop"; variation is intentional */
     }
     if (Stunned)
-        strcat(info, ", stunned");
+        info = msgcat(info, ", stunned");
     if (!u.usteed && Wounded_legs) {
         const char *what = body_part(LEG);
 
         if (LWounded_legs && RWounded_legs)
             what = makeplural(what);
-        sprintf(eos(info), ", injured %s", what);
+        info = msgcat_many(info, ", injured ", what, NULL);
     }
     if (Glib)
-        sprintf(eos(info), ", slippery %s", makeplural(body_part(HAND)));
+        info = msgcat_many(info, ", slippery ",
+                           makeplural(body_part(HAND)), NULL);
     if (u.utrap)
-        strcat(info, ", trapped");
+        info = msgcat(info, ", trapped");
     if (Fast)
-        strcat(info, Very_fast ? ", very fast" : ", fast");
+        info = msgcat(info, Very_fast ? ", very fast" : ", fast");
     if (u.uundetected)
-        strcat(info, ", concealed");
+        info = msgcat(info, ", concealed");
     if (Invis)
-        strcat(info, ", invisible");
+        info = msgcat(info, ", invisible");
     if (u.ustuck) {
         if (sticks(youmonst.data))
-            strcat(info, ", holding ");
+            info = msgcat(info, ", holding ");
         else
-            strcat(info, ", held by ");
-        strcat(info, mon_nam(u.ustuck));
+            info = msgcat(info, ", held by ");
+        info = msgcat(info, mon_nam(u.ustuck));
     }
 
     pline("Status of %s (%s%s):  Level %d  HP %d(%d)  Def %d%s.", u.uplname,
@@ -409,3 +406,4 @@ self_invis_message(void)
 }
 
 /*pline.c*/
+

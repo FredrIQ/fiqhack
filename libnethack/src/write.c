@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-08 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
@@ -69,7 +69,7 @@ dowrite(struct obj *pen, const struct nh_cmd_arg *arg)
     struct obj *new_obj;
     int basecost, actualcost;
     int curseval;
-    char qbuf[QBUFSZ];
+    const char *qbuf;
     int first, last, i;
     boolean by_descr = FALSE, by_name = FALSE;
     const char *typeword;
@@ -102,7 +102,7 @@ dowrite(struct obj *pen, const struct nh_cmd_arg *arg)
     }
 
     /* what to write */
-    sprintf(qbuf, "What type of %s do you want to write?", typeword);
+    qbuf = msgprintf("What type of %s do you want to write?", typeword);
     getarglin(arg, qbuf, namebuf);
     mungspaces(namebuf);        /* remove any excess whitespace */
     if (namebuf[0] == '\033' || !namebuf[0])
@@ -115,7 +115,7 @@ dowrite(struct obj *pen, const struct nh_cmd_arg *arg)
     if (!strncmpi(nm, "of ", 3))
         nm += 3;
 
-    if ((bp = strstri(nm, " armour")) != 0) {
+    if ((bp = strstri_mutable(nm, " armour")) != 0) {
         strncpy(bp, " armor ", 7);      /* won't add '\0' */
         mungspaces(bp + 1);     /* remove the extra space */
     }
@@ -206,12 +206,14 @@ found:
                   "\"My Diary\", but it quickly fades.");
             update_inventory(); /* pen charges */
         } else {
+            const char *written;
             if (by_descr) {
-                strcpy(namebuf, OBJ_DESCR(objects[new_obj->otyp]));
-                wipeout_text(namebuf, (6 + MAXULEV - u.ulevel) / 6, 0);
+                written = OBJ_DESCR(objects[new_obj->otyp]);
+                written = wipeout_text(written,
+                                       (6 + MAXULEV - u.ulevel) / 6, 0);
             } else
-                sprintf(namebuf, "%s was here!", u.uplname);
-            pline("You write \"%s\" and the scroll disappears.", namebuf);
+                written = msgprintf("%s was here!", u.uplname);
+            pline("You write \"%s\" and the scroll disappears.", written);
             useup(paper);
         }
         obfree(new_obj, NULL);
@@ -235,3 +237,4 @@ found:
 }
 
 /*write.c*/
+

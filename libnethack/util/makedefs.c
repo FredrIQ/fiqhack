@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-27 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) M. Stephenson, 1990, 1991.                       */
 /* Copyright (c) Dean Luick, 1990.                                */
@@ -9,6 +9,7 @@
 /* #define DEBUG */     /* uncomment for debugging info */
 
 #include "config.h"
+#include "compilers.h"
 #include "permonst.h"
 #include "objclass.h"
 #include "monsym.h"
@@ -20,12 +21,6 @@
 #include "flag.h"
 #include "dlb.h"
 #include "nethack_types.h"
-
-#ifdef __GNUC__
-# define noreturn __attribute__((noreturn))
-#else
-# define noreturn
-#endif
 
 /* version information */
 #include "nethack.h"
@@ -217,7 +212,8 @@ main(int argc, char *argv[])
 
 
 /* trivial text encryption routine which can't be broken with `tr' */
-/* duplicated in src/hacklib.c */
+/* the algorithm is duplicated in src/hacklib.c, with different memory
+   management properties*/
 static char *
 xcrypt(const char *str)
 {
@@ -1350,3 +1346,4 @@ struct attribs attrmax, attrmin;
 #endif /* STRICT_REF_DEF */
 
 /*makedefs.c*/
+

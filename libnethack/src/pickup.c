@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-17 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -252,11 +252,11 @@ pickup(int what, enum u_interaction_mode uim)
     }
 
     if (count) {        /* looking for N of something */
-        char buf[QBUFSZ];
+        const char *qbuf;
 
-        sprintf(buf, "Pick %d of what?", count);
+        qbuf = msgprintf("Pick %d of what?", count);
         val_for_n_or_more = count;      /* set up callback selector */
-        n = query_objlist(buf, objchain,
+        n = query_objlist(qbuf, objchain,
                           traverse_how | AUTOSELECT_SINGLE | INVORDER_SORT,
                           &pick_list, PICK_ONE, n_or_more);
         /* correct counts, if any given */
@@ -308,7 +308,7 @@ autopickup_match(struct obj *obj)
 {
     int i;
     struct nh_autopickup_rule *r;
-    char *objdesc;
+    const char *objdesc;
     enum nh_bucstatus objbuc;
 
     if (!flags.ap_rules)
@@ -325,8 +325,8 @@ autopickup_match(struct obj *obj)
     } else
         objbuc = B_UNKNOWN;
 
-    /* test the aotupickup rules in order. If any of the rules matches this
-       object, return the result */
+    /* Test the autopickup rules in order. If any of the rules matches this
+       object, return the result. */
     r = &flags.ap_rules->rules[0];
     for (i = 0; i < flags.ap_rules->num_rules; i++, r++) {
         if ((!strlen(r->pattern) || pmatch(r->pattern, objdesc)) &&
@@ -376,7 +376,7 @@ autopick(struct obj *olist,     /* the object list */
 
 void
 add_objitem(struct nh_objlist *objlist,
-            enum nh_menuitem_role role, int id, char *caption,
+            enum nh_menuitem_role role, int id, const char *caption,
             struct obj *obj, boolean use_invlet)
 {
     struct nh_objitem *it;
@@ -443,8 +443,8 @@ add_objitem(struct nh_objlist *objlist,
 static int
 invo_obj_compare(const void *o1, const void *o2)
 {
-    struct obj *obj1 = *(struct obj **)o1;
-    struct obj *obj2 = *(struct obj **)o2;
+    struct obj *obj1 = *(struct obj *const *)o1;
+    struct obj *obj2 = *(struct obj *const *)o2;
 
     /* compare positions in inv_order */
     char *pos1 = strchr(flags.inv_order, obj1->oclass);
@@ -461,8 +461,8 @@ int
 obj_compare(const void *o1, const void *o2)
 {
     int cmp, val1, val2;
-    struct obj *obj1 = *(struct obj **)o1;
-    struct obj *obj2 = *(struct obj **)o2;
+    struct obj *obj1 = *(struct obj *const *)o1;
+    struct obj *obj2 = *(struct obj *const *)o2;
 
     /* compare positions in inv_order */
     int inv_order_cmp = invo_obj_compare(o1, o2);
@@ -796,8 +796,7 @@ carry_count(struct obj *obj,    /* object to pick up */
     long qq, savequan;
     long umoney = money_cnt(invent);
     unsigned saveowt;
-    const char *verb, *prefx1, *prefx2, *suffx;
-    char obj_nambuf[BUFSZ], where[BUFSZ];
+    const char *verb, *prefx1, *prefx2, *suffx, *obj_nambuf, *where;
 
     savequan = obj->quan;
     saveowt = obj->owt;
@@ -881,18 +880,17 @@ carry_count(struct obj *obj,    /* object to pick up */
 
     if (qq < count) {
         /* some message will be given */
-        strcpy(obj_nambuf, doname(obj));
+        obj_nambuf = doname(obj);
         if (container) {
-            sprintf(where, "in %s", the(xname(container)));
+            where = msgprintf("in %s", the(xname(container)));
             verb = "carry";
         } else {
-            strcpy(where, "lying here");
+            where = "lying here";
             verb = telekinesis ? "acquire" : "lift";
         }
     } else {
         /* lint supppression */
-        *obj_nambuf = *where = '\0';
-        verb = "";
+        obj_nambuf = where = verb = "";
     }
     /* we can carry qq of them */
     if (qq > 0) {
@@ -904,7 +902,7 @@ carry_count(struct obj *obj,    /* object to pick up */
     }
 
     if (!container)
-        strcpy(where, "here");  /* slightly shorter form */
+        where = "here";  /* slightly shorter form */
     if (invent || umoney) {
         prefx1 = "you cannot ";
         prefx2 = "";
@@ -955,17 +953,18 @@ lift_object(struct obj *obj, struct obj *container, long *cnt_p,
             if (telekinesis) {
                 result = 0;     /* don't lift */
             } else {
-                char qbuf[BUFSZ];
+                const char *qbuf;
                 long savequan = obj->quan;
 
                 obj->quan = *cnt_p;
-                strcpy(qbuf,
-                       (next_encumbr > HVY_ENCUMBER) ? overloadmsg :
-                       (next_encumbr > MOD_ENCUMBER) ? nearloadmsg :
-                       moderateloadmsg);
-                sprintf(eos(qbuf), " %s. Continue?",
-                        safe_qbuf(qbuf, sizeof (" . Continue?"), doname(obj),
-                                  an(simple_typename(obj->otyp)), "something"));
+                qbuf = ((next_encumbr > HVY_ENCUMBER) ? overloadmsg :
+                        (next_encumbr > MOD_ENCUMBER) ? nearloadmsg :
+                        moderateloadmsg);
+                qbuf = msgprintf("%s %s. Continue?", qbuf,
+                                 safe_qbuf(qbuf, sizeof (" . Continue?"),
+                                           doname(obj),
+                                           an(simple_typename(obj->otyp)),
+                                           "something"));
                 obj->quan = savequan;
                 switch (ynq(qbuf)) {
                 case 'q':
@@ -986,11 +985,11 @@ lift_object(struct obj *obj, struct obj *container, long *cnt_p,
     return result;
 }
 
-/* To prevent qbuf overflow in prompts use planA only
- * if it fits, or planB if PlanA doesn't fit,
- * finally using the fallback as a last resort.
- * last_restort is expected to be very short.
- */
+/* Shortens a prompt if it would be very long. This function was previously used
+   to avoid buffer overflows; nowadays, its use is to keep the interface neater,
+   because the buffers are no longer of fixed size. Thus, the limit is now
+   COLNO-10 (a string that fits comfortably onscreen) rather than a fixed
+   128. */
 const char *
 safe_qbuf(const char *qbuf, unsigned padlength, const char *planA,
           const char *planB, const char *last_resort)
@@ -999,7 +998,7 @@ safe_qbuf(const char *qbuf, unsigned padlength, const char *planA,
     unsigned len_qbuf = (unsigned)strlen(qbuf), len_planA =
         (unsigned)strlen(planA), len_planB =
         (unsigned)strlen(planB), len_lastR = (unsigned)strlen(last_resort);
-    unsigned textleft = QBUFSZ - (len_qbuf + padlength);
+    unsigned textleft = COLNO - 10 - (len_qbuf + padlength);
 
     if (len_lastR >= textleft) {
         impossible("safe_qbuf: last_resort too large at %u characters.",
@@ -1044,9 +1043,7 @@ pickup_object(struct obj *obj, long count, boolean telekinesis)
             if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
                 win_pause_output(P_MESSAGE);
             else {
-                char kbuf[BUFSZ];
-
-                strcpy(kbuf, an(corpse_xname(obj, TRUE)));
+                const char *kbuf = an(corpse_xname(obj, TRUE));
                 pline("Touching %s is a fatal mistake.", kbuf);
                 instapetrify(kbuf);
                 return -1;
@@ -1421,15 +1418,14 @@ lootcont:
     return timepassed;
 }
 
-/* loot_mon() returns amount of time passed.
- */
+/* loot_mon() returns amount of time passed. */
 int
 loot_mon(struct monst *mtmp, int *passed_info, boolean * prev_loot)
 {
     int c = -1;
     int timepassed = 0;
     struct obj *otmp;
-    char qbuf[QBUFSZ];
+    const char *qbuf;
 
     /* 3.3.1 introduced the ability to remove saddle from a steed */
     /* *passed_info is set to TRUE if a loot query was given.  */
@@ -1439,8 +1435,9 @@ loot_mon(struct monst *mtmp, int *passed_info, boolean * prev_loot)
 
         if (passed_info)
             *passed_info = 1;
-        sprintf(qbuf, "Do you want to remove the saddle from %s?",
-                x_monnam(mtmp, ARTICLE_THE, NULL, SUPPRESS_SADDLE, FALSE));
+        qbuf = msgprintf("Do you want to remove the saddle from %s?",
+                         x_monnam(mtmp, ARTICLE_THE, NULL,
+                                  SUPPRESS_SADDLE, FALSE));
         if ((c = yn_function(qbuf, ynqchars, 'n')) == 'y') {
             if (nolimbs(youmonst.data)) {
                 pline("You can't do that without limbs.");
@@ -1545,7 +1542,6 @@ in_container(struct obj *obj)
     boolean floor_container = !carried(current_container);
     boolean was_unpaid = FALSE;
     int mbag_explodes_reason = 0;
-    char buf[BUFSZ];
 
     if (obj == uball || obj == uchain) {
         pline("You must be kidding.");
@@ -1608,9 +1604,7 @@ in_container(struct obj *obj)
             if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
                 win_pause_output(P_MESSAGE);
             else {
-                char kbuf[BUFSZ];
-
-                strcpy(kbuf, an(corpse_xname(obj, TRUE)));
+                const char *kbuf = an(corpse_xname(obj, TRUE));
                 pline("Touching %s is a fatal mistake.", kbuf);
                 instapetrify(kbuf);
                 return -1;
@@ -1621,14 +1615,9 @@ in_container(struct obj *obj)
     /* boxes, boulders, and big statues can't fit into any container */
     if (obj->otyp == ICE_BOX || Is_box(obj) || obj->otyp == BOULDER ||
         (obj->otyp == STATUE && bigmonst(&mons[obj->corpsenm]))) {
-        /* 
-         *  xname() uses a static result array.  Save obj's name
-         *  before current_container's name is computed.  Don't
-         *  use the result of strcpy() within You() --- the order
-         *  of evaluation of the parameters is undefined.
-         */
-        strcpy(buf, the(xname(obj)));
-        pline("You cannot fit %s into %s.", buf, the(xname(current_container)));
+        pline("You cannot fit %s into %s.",
+              the(xname(obj)),
+              the(xname(current_container)));
         return 0;
     }
 
@@ -1684,8 +1673,8 @@ in_container(struct obj *obj)
     }
 
     if (current_container) {
-        strcpy(buf, the(xname(current_container)));
-        pline("You put %s into %s.", doname(obj), buf);
+        pline("You put %s into %s.", doname(obj),
+              the(xname(current_container)));
 
         /* gold in container always needs to be added to credit */
         if (floor_container && obj->oclass == COIN_CLASS)
@@ -1727,9 +1716,7 @@ out_container(struct obj *obj)
             if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
                 win_pause_output(P_MESSAGE);
             else {
-                char kbuf[BUFSZ];
-
-                strcpy(kbuf, an(corpse_xname(obj, TRUE)));
+                const char *kbuf = an(corpse_xname(obj, TRUE));
                 pline("Touching %s is a fatal mistake.", kbuf);
                 instapetrify(kbuf);
                 return -1;
@@ -1857,11 +1844,11 @@ use_container(struct obj *obj, int held)
 {
     struct obj *curr, *otmp;
     boolean quantum_cat = FALSE, loot_out = FALSE, loot_in = FALSE;
-    char qbuf[BUFSZ], emptymsg[BUFSZ];
+    const char *qbuf, *emptymsg;
     long loss = 0L;
     int cnt = 0, used = 0, menu_on_request;
 
-    emptymsg[0] = '\0';
+    emptymsg = "";
     if (nohands(youmonst.data)) {
         pline("You have no hands!");    /* not `body_part(HAND)' */
         return 0;
@@ -1907,13 +1894,14 @@ use_container(struct obj *obj, int held)
     obj->owt = weight(obj);     /* in case any items were lost */
 
     if (!cnt)
-        sprintf(emptymsg, "%s is %sempty.", Yname2(obj),
-                quantum_cat ? "now " : "");
+        emptymsg = msgprintf("%s is %sempty.", Yname2(obj),
+                             quantum_cat ? "now " : "");
 
     if (cnt || flags.menu_style == MENU_FULL) {
-        strcpy(qbuf, "Do you want to take something out of ");
-        sprintf(eos(qbuf), "%s?",
-                safe_qbuf(qbuf, 1, yname(obj), ysimple_name(obj), "it"));
+        qbuf = "Do you want to take something out of ";
+        qbuf = msgprintf("%s%s?", qbuf,
+                         safe_qbuf(qbuf, 1, yname(obj),
+                                   ysimple_name(obj), "it"));
 
         if (flags.menu_style == MENU_FULL) {
             int t;
@@ -1954,7 +1942,7 @@ use_container(struct obj *obj, int held)
         return used;
     }
     if (flags.menu_style != MENU_FULL) {
-        sprintf(qbuf, "Do you wish to put something in?");
+        qbuf = "Do you wish to put something in?";
 
         switch (yn_function(qbuf, ynqchars, 'n')) {
         case 'y':
@@ -1990,7 +1978,7 @@ menu_loot(int retry, struct obj *container, boolean put_in)
 {
     int n, i, n_looted = 0;
     boolean all_categories = TRUE, loot_everything = FALSE;
-    char buf[BUFSZ];
+    const char *buf;
     const char *takeout = "Take out", *putin = "Put in";
     struct obj *otmp, *otmp2;
     int pick_list[30];
@@ -2002,7 +1990,7 @@ menu_loot(int retry, struct obj *container, boolean put_in)
         all_categories = (retry == -2);
     } else if (flags.menu_style == MENU_FULL) {
         all_categories = FALSE;
-        sprintf(buf, "%s what type of objects?", put_in ? putin : takeout);
+        buf = msgprintf("%s what type of objects?", put_in ? putin : takeout);
         mflags =
             put_in ? ALL_TYPES | BUC_ALLBKNOWN | BUC_UNKNOWN | UNIDENTIFIED :
             ALL_TYPES | CHOOSE_ALL | BUC_ALLBKNOWN | BUC_UNKNOWN | UNIDENTIFIED;
@@ -2031,7 +2019,7 @@ menu_loot(int retry, struct obj *container, boolean put_in)
         mflags = INVORDER_SORT;
         if (put_in)
             mflags |= USE_INVLET;
-        sprintf(buf, "%s what?", put_in ? putin : takeout);
+        buf = msgprintf("%s what?", put_in ? putin : takeout);
         n = query_objlist(buf, put_in ? invent : container->cobj, mflags,
                           &obj_pick_list, PICK_ANY,
                           all_categories ? allow_all : allow_category);
@@ -2065,16 +2053,16 @@ in_or_out_menu(const char *prompt, struct obj *obj, boolean outokay,
 {
     struct nh_menuitem items[3];
     int selection[1];
-    char buf[BUFSZ];
+    const char *buf;
     int n, nr = 0;
 
     if (outokay) {
-        sprintf(buf, "Take something out of %s", the(xname(obj)));
+        buf = msgprintf("Take something out of %s", the(xname(obj)));
         set_menuitem(&items[nr++], 1, MI_NORMAL, buf, 'o', FALSE);
     }
 
     if (inokay) {
-        sprintf(buf, "Put something into %s", the(xname(obj)));
+        buf = msgprintf("Put something into %s", the(xname(obj)));
         set_menuitem(&items[nr++], 2, MI_NORMAL, buf, 'i', FALSE);
     }
 
@@ -2091,3 +2079,4 @@ in_or_out_menu(const char *prompt, struct obj *obj, boolean outokay,
 }
 
 /*pickup.c*/
+

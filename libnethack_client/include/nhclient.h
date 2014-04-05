@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-01 */
+/* Last modified by Alex Smith, 2014-04-05 */
 #ifndef NHCLIENT_H
 # define NHCLIENT_H
 
@@ -50,9 +50,6 @@ extern int ex_jmp_buf_valid;
 extern int conn_err;
 extern int error_retry_ok;
 extern char saved_password[];
-
-/* clientapi.c */
-extern void free_option_lists(void);
 
 /* connection.c */
 extern void print_error(const char *msg);

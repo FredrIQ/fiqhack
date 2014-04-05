@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -419,7 +419,7 @@ ccmd_list_games(json_t * params)
 
 
 static json_t *
-json_symarray(struct nh_symdef *array, int len)
+json_symarray(const struct nh_symdef *array, int len)
 {
     int i;
     json_t *jarr, *jobj;

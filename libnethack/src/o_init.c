@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-09 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -387,7 +387,6 @@ dodiscovered(const struct nh_cmd_arg *arg)
     int ct = 0;
     char *s, oclass, prev_class, classes[MAXOCLASSES];
     struct nh_menulist menu;
-    char buf[BUFSZ];
 
     init_menulist(&menu);
     add_menutext(&menu, "Discoveries");
@@ -399,8 +398,8 @@ dodiscovered(const struct nh_cmd_arg *arg)
         if (objects[uniq_objs[i]].oc_name_known) {
             if (!dis++)
                 add_menuheading(&menu, "Unique Items");
-            sprintf(buf, "  %s", OBJ_NAME(objects[uniq_objs[i]]));
-            add_menutext(&menu, buf);
+            add_menutext(
+                &menu, msgprintf("  %s", OBJ_NAME(objects[uniq_objs[i]])));
             ++ct;
         }
     /* display any known artifacts as another pseudo-class */
@@ -419,10 +418,11 @@ dodiscovered(const struct nh_cmd_arg *arg)
                     add_menuheading(&menu, let_to_name(oclass, FALSE));
                     prev_class = oclass;
                 }
-                sprintf(buf, "%s %s",
+                add_menutext(
+                    &menu, msgprintf(
+                        "%s %s",
                         (objects[dis].oc_pre_discovered ? "*" : " "),
-                        obj_typename(dis));
-                add_menutext(&menu, buf);
+                        obj_typename(dis)));
             }
         }
     }
@@ -461,3 +461,4 @@ count_discovered_objects(int *curp, int *maxp)
 }
 
 /*o_init.c*/
+

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-16 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -66,10 +66,9 @@ polyman(const char *fmt, const char *arg)
         (urace.femalenum != NON_PM &&
          (mvitals[urace.femalenum].mvflags & G_GENOD))) {
         /* intervening activity might have clobbered genocide info */
-        char buf[BUFSZ];
-        sprintf(buf, "As you %s", fmt);
-        buf[strlen(buf)-1] = '\0'; /* remove the ! */
-        strcat(buf, ", you die.");
+        const char *buf = msgcat("As you ", fmt);
+        buf = msgchop(buf, -1); /* remove the ! */
+        buf = msgcat(buf, ", you die.");
         pline(buf, arg);
         killer = delayed_killer;
         if (!killer || !strstri(killer, "genocid")) {
@@ -100,9 +99,8 @@ polyman(const char *fmt, const char *arg)
     see_monsters();
 
     if (!uarmg) {
-        char kbuf[BUFSZ];
-
-        sprintf(kbuf, "returning to %s form while wielding", urace.adj);
+        const char *kbuf = msgprintf("returning to %s form while wielding",
+                                     urace.adj);
         selftouch("No longer petrify-resistant, you", kbuf);
     }
 }
@@ -320,13 +318,13 @@ polyself(boolean forcecontrol)
         return;
 
     if (!uarmg) {
-        char kbuf[BUFSZ];
+        const char *kbuf;
 
         if (Upolyd) {
-            sprintf(kbuf, "polymorphing into %s while wielding",
-                    an(mons[u.umonnum].mname));
+            kbuf = msgprintf("polymorphing into %s while wielding",
+                             an(mons[u.umonnum].mname));
         } else {
-            sprintf(kbuf, "returning to %s form while wielding", urace.adj);
+            kbuf = msgprintf("returning to %s form while wielding", urace.adj);
         }
         selftouch("No longer petrify-resistant, you", kbuf);
     }
@@ -501,12 +499,9 @@ polymon(int mntmp)
         uunstick();
     if (u.usteed) {
         if (touch_petrifies(u.usteed->data) && !Stone_resistance && rnl(3)) {
-            char buf[BUFSZ];
-
             pline("No longer petrifying-resistant, you touch %s.",
                   mon_nam(u.usteed));
-            sprintf(buf, "riding %s", an(u.usteed->data->mname));
-            instapetrify(buf);
+            instapetrify(msgcat("riding ", an(u.usteed->data->mname)));
         }
         if (!can_ride(u.usteed))
             dismount_steed(DISMOUNT_POLY);
@@ -643,12 +638,12 @@ break_armor(void)
     if (has_horns(youmonst.data)) {
         if ((otmp = uarmh) != 0) {
             if (is_flimsy(otmp)) {
-                char hornbuf[BUFSZ], yourbuf[BUFSZ];
+                const char *hornbuf;
 
                 /* Future possiblities: This could damage/destroy helmet */
-                sprintf(hornbuf, "horn%s", plur(num_horns(youmonst.data)));
+                hornbuf = msgcat("horn%s", plur(num_horns(youmonst.data)));
                 pline("Your %s %s through %s %s.", hornbuf,
-                      vtense(hornbuf, "pierce"), shk_your(yourbuf, otmp),
+                      vtense(hornbuf, "pierce"), shk_your(otmp),
                       xname(otmp));
             } else {
                 pline("Your %s falls to the %s!", helmet_name(otmp),
@@ -1342,3 +1337,4 @@ armor_to_dragon(int atyp)
 }
 
 /*polyself.c*/
+

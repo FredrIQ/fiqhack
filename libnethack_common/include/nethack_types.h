@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-02-27 */
+/* Last modified by Alex Smith, 2014-04-05 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -341,7 +341,7 @@ typedef signed char nh_bool;    /* 0 or 1 */
 
 struct nh_listitem {
     int id;
-    char *caption;
+    const char *caption;
 };
 
 struct nh_int_option {
@@ -567,26 +567,26 @@ struct nh_symdef {
  * in an nh_dbuf_entry */
 struct nh_drawing_info {
     /* background layer symbols: nh_dbuf_entry.bg */
-    struct nh_symdef *bgelements;
+    const struct nh_symdef *bgelements;
     /* background layer symbols: nh_dbuf_entry.bg */
-    struct nh_symdef *traps;
+    const struct nh_symdef *traps;
     /* object layer symbols: nh_dbuf_entry.obj */
-    struct nh_symdef *objects;
+    const struct nh_symdef *objects;
     /* invisible monster symbol: show this if nh_dbuf_entry.invis is true */
-    struct nh_symdef *invis;
+    const struct nh_symdef *invis;
     /* monster layer symbols: nh_dbuf_entry.mon symbols with id <= num_monsters 
        are actual monsters, followed by warnings */
-    struct nh_symdef *monsters;
-    struct nh_symdef *warnings;
+    const struct nh_symdef *monsters;
+    const struct nh_symdef *warnings;
     /* effect layer symbols: nh_dbuf_entry.effect NH_EFFECT_TYPE */
-    struct nh_symdef *explsyms;
-    struct nh_symdef *expltypes;
-    struct nh_symdef *zapsyms;  /* default zap symbols; no color info */
-    struct nh_symdef *zaptypes; /* zap beam types + colors. no symbols */
-    struct nh_symdef *effects;  /* shield, boomerang, digbeam, flashbeam,
-                                   gascloud */
-    struct nh_symdef *swallowsyms;      /* no color info: use the color of the
-                                           swallower */
+    const struct nh_symdef *explsyms;
+    const struct nh_symdef *expltypes;
+    const struct nh_symdef *zapsyms;  /* default zap symbols; no color info */
+    const struct nh_symdef *zaptypes; /* zap beam types + colors. no symbols */
+    const struct nh_symdef *effects;  /* shield, boomerang, digbeam, flashbeam,
+                                         gascloud */
+    const struct nh_symdef *swallowsyms;  /* no color info: use the color of the
+                                             swallower */
     int num_bgelements;
     int num_traps;
     int num_objects;

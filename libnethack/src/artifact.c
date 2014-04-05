@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-09 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -21,7 +21,7 @@ extern boolean notonhead;       /* for long worms */
 static int spec_applies(const struct artifact *, struct monst *);
 static int arti_invoke(struct obj *);
 static boolean magicbane_hit(struct monst *magr, struct monst *mdef,
-                             struct obj *, int *, int, boolean, char *);
+                             struct obj *, int *, int, boolean, const char *);
 static long spec_m2(struct obj *);
 
 /* The amount added to the victim's total hit points to insure that the
@@ -512,13 +512,13 @@ touch_artifact(struct obj *obj, struct monst *mon)
     if (((badclass || badalign) && self_willed) ||
         (badalign && (!yours || !rn2(4)))) {
         int dmg;
-        char buf[BUFSZ];
+        const char *buf;
 
         if (!yours)
             return 0;
         pline("You are blasted by %s power!", s_suffix(the(xname(obj))));
         dmg = dice((Antimagic ? 2 : 4), (self_willed ? 10 : 4));
-        sprintf(buf, "touching %s", oart->name);
+        buf = msgprintf("touching %s", oart->name);
         losehp(dmg, buf, KILLED_BY);
         exercise(A_WIS, FALSE);
     }
@@ -674,7 +674,7 @@ int
 disp_artifact_discoveries(struct nh_menulist *menu)
 {
     int i, m, otyp;
-    char buf[BUFSZ];
+    const char *buf;
 
     for (i = 0; i < NROFARTIFACTS; i++) {
         if (artidisco[i] == 0)
@@ -683,8 +683,9 @@ disp_artifact_discoveries(struct nh_menulist *menu)
             add_menuheading(menu, "Artifacts");
         m = artidisco[i];
         otyp = artilist[m].otyp;
-        sprintf(buf, "  %s [%s %s]", artiname(m),
-                align_str(artilist[m].alignment), simple_typename(otyp));
+        buf = msgprintf("  %s [%s %s]", artiname(m),
+                        align_str(artilist[m].alignment),
+                        simple_typename(otyp));
         add_menutext(menu, buf);
     }
     return i;
@@ -724,13 +725,13 @@ static const char *const mb_verb[2][4] = {
 
 /* called when someone is being hit by Magicbane */
 static boolean
-magicbane_hit(struct monst *magr,       /* attacker */
-              struct monst *mdef,       /* defender */
-              struct obj *mb,   /* Magicbane */
-              int *dmgptr,      /* extra damage target will suffer */
-              int dieroll,      /* d20 that has already scored a hit */
-              boolean vis,      /* whether the action can be seen */
-              char *hittee      /* target's name: "you" or mon_nam(mdef) */
+magicbane_hit(struct monst *magr,   /* attacker */
+              struct monst *mdef,   /* defender */
+              struct obj *mb,       /* Magicbane */
+              int *dmgptr,          /* extra damage target will suffer */
+              int dieroll,          /* d20 that has already scored a hit */
+              boolean vis,          /* whether the action can be seen */
+              const char *hittee    /* target's name: "you" or mon_nam(mdef) */
     )
 {
     const struct permonst *old_uasmon;
@@ -872,23 +873,24 @@ magicbane_hit(struct monst *magr,       /* attacker */
     }
 
     if (youattack || youdefend || vis) {
-        upstart(hittee);        /* capitalize */
+        hittee = msgupcasefirst(hittee);
         if (resisted) {
             pline("%s %s!", hittee, vtense(hittee, "resist"));
             shieldeff(youdefend ? u.ux : mdef->mx, youdefend ? u.uy : mdef->my);
         }
-        if ((do_stun || do_confuse) && flags.verbose) {
-            char buf[BUFSZ];
+        if (flags.verbose) {
+            const char *buf = NULL;
 
-            buf[0] = '\0';
-            if (do_stun)
-                strcat(buf, "stunned");
             if (do_stun && do_confuse)
-                strcat(buf, " and ");
-            if (do_confuse)
-                strcat(buf, "confused");
-            pline("%s %s %s%c", hittee, vtense(hittee, "are"), buf,
-                  (do_stun && do_confuse) ? '!' : '.');
+                buf = "stunned and confused";
+            else if (do_stun)
+                buf = "stunned";
+            else if (do_confuse)
+                buf = "confused";
+
+            if (buf)
+                pline("%s %s %s%c", hittee, vtense(hittee, "are"), buf,
+                      (do_stun && do_confuse) ? '!' : '.');
         }
     }
 
@@ -907,9 +909,7 @@ artifact_hit_behead(struct monst *magr, struct monst *mdef, struct obj *otmp,
         || (!youdefend && cansee(mdef->mx, mdef->my))
         || (youattack && Engulfed && mdef == u.ustuck && !Blind);
     const char *wepdesc;
-    char hittee[BUFSZ];
-
-    strcpy(hittee, youdefend ? "you" : mon_nam(mdef));
+    const char *hittee = youdefend ? "you" : mon_nam(mdef);
 
     /* We really want "on a natural 20" but Nethack does it in reverse from
        AD&D. */
@@ -1080,9 +1080,7 @@ artifact_hit(struct monst * magr, struct monst * mdef, struct obj * otmp,
         || (!youdefend && cansee(mdef->mx, mdef->my))
         || (youattack && Engulfed && mdef == u.ustuck && !Blind);
     boolean realizes_damage;
-    char hittee[BUFSZ];
-
-    strcpy(hittee, youdefend ? "you" : mon_nam(mdef));
+    const char *hittee = youdefend ? "you" : mon_nam(mdef);
 
     /* The following takes care of most of the damage, but not all-- the
        exception being for level draining, which is specially handled. Messages 
@@ -1466,15 +1464,13 @@ arti_speak(struct obj *obj)
 {
     const struct artifact *oart = get_artifact(obj);
     const char *line;
-    char buf[BUFSZ];
     int truth;
-
 
     /* Is this a speaking artifact? */
     if (!oart || !(oart->spfx & SPFX_SPEAK))
         return;
 
-    line = getrumor(bcsign(obj), buf, TRUE, &truth);
+    line = getrumor(bcsign(obj), TRUE, &truth);
     if (truth)
         exercise(A_WIS, truth == 1);
     if (!*line)
@@ -1505,3 +1501,4 @@ arti_cost(const struct obj *otmp)
 }
 
 /*artifact.c*/
+

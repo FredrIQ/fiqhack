@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-01 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -42,8 +42,9 @@ int can_send_msg;
 static char **
 init_game_paths(void)
 {
-    char **pathlist = malloc(sizeof (char *) * PREFIX_COUNT);
-    char *dir = NULL, *tmp;
+    const char *pathlist[PREFIX_COUNT];
+    char **pathlist_copy = malloc(sizeof (char *) * PREFIX_COUNT);
+    const char *dir = NULL;
     int i, len;
 
     if (getgid() == getegid()) {
@@ -71,22 +72,21 @@ init_game_paths(void)
 
     /* alloc memory for the paths and append slashes as required */
     for (i = 0; i < PREFIX_COUNT; i++) {
-        tmp = pathlist[i];
-        len = strlen(tmp);
-        pathlist[i] = malloc(len + (i == DUMPPREFIX ? 8 : 2));
+        len = strlen(pathlist[i]);
+        pathlist_copy[i] = malloc(len + (i == DUMPPREFIX ? 8 : 2));
 
-        strcpy(pathlist[i], tmp);
-        if (pathlist[i][len - 1] != '/') {
-            pathlist[i][len] = '/';
-            pathlist[i][len + 1] = '\0';
+        strcpy(pathlist_copy[i], pathlist[i]);
+        if (pathlist_copy[i][len - 1] != '/') {
+            pathlist_copy[i][len] = '/';
+            pathlist_copy[i][len + 1] = '\0';
             len++;
         }
         if (i == DUMPPREFIX) {
-            sprintf(pathlist[i] + len, "dumps/");
+            sprintf(pathlist_copy[i] + len, "dumps/");
         }
     }
 
-    return pathlist;
+    return pathlist_copy;
 }
 
 
@@ -135,7 +135,7 @@ client_msg(const char *key, json_t * value)
     free(jsonstr);
 }
 
-void
+noreturn void
 exit_client(const char *err)
 {
     const char *msg = err ? err : "";
@@ -290,7 +290,7 @@ client_main_loop(void)
  * An instance of NetHack will run in this process under the control of the
  * remote player. 
  */
-void
+noreturn void
 client_main(int userid, int _infd, int _outfd)
 {
     char **gamepaths;
@@ -315,5 +315,4 @@ client_main(int userid, int _infd, int _outfd)
     client_main_loop();
 
     exit_client(NULL);
-     /*NOTREACHED*/ return;
 }

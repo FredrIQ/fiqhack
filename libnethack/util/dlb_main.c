@@ -1,17 +1,18 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-01 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Kenneth Lorber, Bethesda, Maryland, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 /* data librarian; only useful if you are making the library version, DLBLIB */
 
 #include "config.h"
+#include "compilers.h"
 #include "dlb.h"
 #if !defined(O_WRONLY)
 # include <fcntl.h>
 #endif
 
-static void xexit(int);
+static noreturn void xexit(int);
 
 #define DLB_DIRECTORY "Directory"       /* name of lib directory */
 #define LIBLISTFILE "dlb.lst"   /* default list file */
@@ -20,8 +21,8 @@ static void xexit(int);
 extern boolean open_library(const char *, library *);
 extern void close_library(library *);
 
-/* from hacklib.c */
-extern char *eos(char *);
+extern char *eos(char *str);
+char *eos(char *str) { return str + strlen(str); }
 
 FILE *fopen_datafile(const char *, const char *);
 
@@ -459,10 +460,11 @@ write_dlb_directory(int out, int nfiles, libdir * ld, long slen, long dir_size,
     }
 }
 
-static void NORETURN
+static noreturn void
 xexit(int retcd)
 {
     exit(retcd);
 }
 
 /*dlb_main.c*/
+

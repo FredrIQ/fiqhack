@@ -1,5 +1,5 @@
 %{
-/* Last modified by Sean Hunt, 2014-02-16 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /*	Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 #include "hack.h"
@@ -1689,3 +1689,4 @@ region		: '(' INTEGER ',' INTEGER ',' INTEGER ',' INTEGER ')'
 %%
 
 /*lev_comp.y*/
+

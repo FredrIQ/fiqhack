@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -76,13 +76,10 @@ use_saddle(struct obj *otmp, const struct nh_cmd_arg *arg)
     }
     ptr = mtmp->data;
     if (touch_petrifies(ptr) && !uarmg && !Stone_resistance) {
-        char kbuf[BUFSZ];
-
         pline("You touch %s.", mon_nam(mtmp));
-        if (!(poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))) {
-            sprintf(kbuf, "attempting to saddle %s", an(mtmp->data->mname));
-            instapetrify(kbuf);
-        }
+        if (!(poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM)))
+            instapetrify(
+                msgcat("attempting to saddle ", an(mtmp->data->mname)));
     }
     if (ptr == &mons[PM_INCUBUS] || ptr == &mons[PM_SUCCUBUS]) {
         pline("Shame on you!");
@@ -190,7 +187,6 @@ mount_steed(struct monst * mtmp,        /* The animal */
             boolean force)
 {       /* Quietly force this animal */
     struct obj *otmp;
-    char buf[BUFSZ];
     const struct permonst *ptr;
 
     /* Sanity checks */
@@ -258,11 +254,8 @@ mount_steed(struct monst * mtmp,        /* The animal */
     }
     ptr = mtmp->data;
     if (touch_petrifies(ptr) && !Stone_resistance) {
-        char kbuf[BUFSZ];
-
         pline("You touch %s.", mon_nam(mtmp));
-        sprintf(kbuf, "attempting to ride %s", an(mtmp->data->mname));
-        instapetrify(kbuf);
+        instapetrify(msgcat("attempting to ride %s", an(mtmp->data->mname)));
     }
     if (!mtmp->mtame || mtmp->isminion) {
         pline("I think %s would mind.", mon_nam(mtmp));
@@ -314,11 +307,12 @@ mount_steed(struct monst * mtmp,        /* The animal */
         }
         pline("You slip while trying to get on %s.", mon_nam(mtmp));
 
-        sprintf(buf, "slipped while mounting %s",
-                /* "a saddled mumak" or "a saddled pony called Dobbin" */
-                x_monnam(mtmp, ARTICLE_A, NULL,
-                         SUPPRESS_IT | SUPPRESS_INVISIBLE |
-                         SUPPRESS_HALLUCINATION, TRUE));
+        const char *buf = msgcat(
+            "slipped while mounting %s",
+            /* "a saddled mumak" or "a saddled pony called Dobbin" */
+            x_monnam(mtmp, ARTICLE_A, NULL,
+                     SUPPRESS_IT | SUPPRESS_INVISIBLE |
+                     SUPPRESS_HALLUCINATION, TRUE));
         losehp(rn1(5, 10), buf, NO_KILLER_PREFIX);
         return FALSE;
     }
@@ -632,3 +626,4 @@ place_monster(struct monst *mon, int x, int y)
 }
 
 /*steed.c*/
+

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-04 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -132,14 +132,18 @@ setup_signals(void)
 #endif
 
 
+/* TODO: This leaks memory, pretty obviously if you try to work out how to
+   handle the contents of pathlist. */
 static char **
 init_game_paths(const char *argv0)
 {
 #ifdef WIN32
     char dirbuf[1024], docpath[MAX_PATH], *pos;
 #endif
-    char **pathlist = malloc(sizeof (char *) * PREFIX_COUNT);
-    char *dir = NULL;
+    const char *pathlist[PREFIX_COUNT];
+    char **pathlist_copy = malloc(sizeof (char *) * PREFIX_COUNT);
+    const char *dir = NULL;
+    char *tmp;
     int i;
 
 #if defined(UNIX)
@@ -156,9 +160,9 @@ init_game_paths(const char *argv0)
     for (i = 0; i < PREFIX_COUNT; i++)
         pathlist[i] = dir;
 
-    pathlist[DUMPPREFIX] = malloc(BUFSZ);
-    if (!get_gamedir(DUMP_DIR, pathlist[DUMPPREFIX])) {
-        free(pathlist[DUMPPREFIX]);
+    pathlist[DUMPPREFIX] = tmp = malloc(BUFSZ);
+    if (!get_gamedir(DUMP_DIR, tmp)) {
+        free(tmp);
         pathlist[DUMPPREFIX] = getenv("HOME");
         if (!pathlist[DUMPPREFIX])
             pathlist[DUMPPREFIX] = "./";
@@ -234,14 +238,12 @@ init_game_paths(const char *argv0)
 
     /* alloc memory for the paths and append slashes as required */
     for (i = 0; i < PREFIX_COUNT; i++) {
-        char *tmp = pathlist[i];
-
-        pathlist[i] = malloc(strlen(tmp) + 2);
-        strcpy(pathlist[i], tmp);
-        append_slash(pathlist[i]);
+        pathlist_copy[i] = malloc(strlen(pathlist[i]) + 2);
+        strcpy(pathlist_copy[i], pathlist[i]);
+        append_slash(pathlist_copy[i]);
     }
 
-    return pathlist;
+    return pathlist_copy;
 }
 
 #define str_macro(val) #val

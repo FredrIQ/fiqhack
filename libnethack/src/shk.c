@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-03-12 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -31,8 +31,8 @@ static void pacify_shk(struct monst *);
 static struct bill_x *onbill(const struct obj *, struct monst *, boolean);
 static struct monst *next_shkp(struct monst *, boolean);
 static long shop_debt(struct eshk *);
-static char *shk_owns(char *, const struct obj *);
-static char *mon_owns(char *, const struct obj *);
+static const char *shk_owns(const struct obj *);
+static const char *mon_owns(const struct obj *);
 static void clear_unpaid(struct monst *, struct obj *);
 static long check_credit(long, struct monst *);
 static void pay(long, struct monst *);
@@ -154,10 +154,10 @@ next_shkp(struct monst *shkp, boolean withbill)
 }
 
 /* called in do_name.c */
-char *
+const char *
 shkname(const struct monst *mtmp)
 {
-    return ESHK(mtmp)->shknam;
+    return msg_from_string(CONST_ESHK(mtmp)->shknam);
 }
 
 /* called in mon.c */
@@ -927,10 +927,9 @@ make_happy_shk(struct monst *shkp, boolean silentkops)
     if (!Role_if(PM_ROGUE))
         adjalign(sgn(u.ualign.type));
     if (!inhishop(shkp)) {
-        char shk_nam[BUFSZ];
         boolean vanished = canseemon(shkp);
 
-        strcpy(shk_nam, mon_nam(shkp));
+        const char *shk_nam = mon_nam(shkp);
         if (on_level(&eshkp->shoplevel, &shkp->dlevel->z)) {
             home_shk(shkp, FALSE);
             /* didn't disappear if shk can still be seen */
@@ -1229,18 +1228,19 @@ proceed:
     if (eshkp->debit) {
         long dtmp = eshkp->debit;
         long loan = eshkp->loan;
-        char sbuf[BUFSZ];
+        const char *sbuf;
 
         umoney = money_cnt(invent);
-        sprintf(sbuf, "You owe %s %ld %s ", shkname(shkp), dtmp,
-                currency(dtmp));
+        sbuf = msgprintf("You owe %s %ld %s ", shkname(shkp), dtmp,
+                         currency(dtmp));
         if (loan) {
             if (loan == dtmp)
-                strcat(sbuf, "you picked up in the store.");
+                sbuf = msgcat(sbuf, "you picked up in the store.");
             else
-                strcat(sbuf, "for gold picked up and the use of merchandise.");
+                sbuf = msgcat(sbuf,
+                              "for gold picked up and the use of merchandise.");
         } else
-            strcat(sbuf, "for the use of merchandise.");
+            sbuf = msgcat(sbuf, "for the use of merchandise.");
         pline("%s", sbuf);
         if (umoney + eshkp->credit < dtmp) {
             pline("But you don't%s have enough gold%s.",
@@ -1412,10 +1412,11 @@ dopayobj(struct monst *shkp, struct bill_x *bp, struct obj **obj_p,
     buy = PAY_BUY;      /* flag; if changed then return early */
 
     if (itemize) {
-        char qbuf[BUFSZ];
+        const char *qbuf;
 
-        sprintf(qbuf, "%s for %ld %s.  Pay?",
-                quan == 1L ? Doname2(obj) : doname(obj), ltmp, currency(ltmp));
+        qbuf = msgprintf("%s for %ld %s.  Pay?",
+                         quan == 1L ? Doname2(obj) : doname(obj),
+                         ltmp, currency(ltmp));
         if (yn(qbuf) == 'n') {
             buy = PAY_SKIP;     /* don't want to buy */
         } else if (quan < bp->bquan && !consumed) {     /* partly used goods */
@@ -1517,7 +1518,6 @@ inherits(struct monst *shkp, int numsk, int croaked)
     struct eshk *eshkp = ESHK(shkp);
     boolean take = FALSE, taken = FALSE;
     int roomno = *u.ushops;
-    char takes[BUFSZ];
 
     /* the simplifying principle is that first-come */
     /* already took everything you had.  */
@@ -1558,12 +1558,11 @@ inherits(struct monst *shkp, int numsk, int croaked)
         if (!invent)
             goto skip;
         umoney = money_cnt(invent);
-        takes[0] = '\0';
-        if (!shkp->mcanmove || shkp->msleeping)
-            strcat(takes, "wakes up and ");
+        const char *takes = "takes";
         if (distu(shkp->mx, shkp->my) > 2)
-            strcat(takes, "comes and ");
-        strcat(takes, "takes");
+            takes = msgcat("comes and ", takes);
+        if (!shkp->mcanmove || shkp->msleeping)
+            takes = msgcat("wakes up and ", takes);
 
         if (loss > umoney || !loss || roomno == eshkp->shoproom) {
             eshkp->robbed -= umoney;
@@ -2058,7 +2057,7 @@ shk_names_obj(struct monst *shkp, struct obj *obj,
                                       amt, plur(amt), arg */
               long amt, const char *arg)
 {
-    char *obj_name, fmtbuf[BUFSZ];
+    const char *obj_name;
     boolean was_unknown = !obj->dknown;
 
     obj->dknown = TRUE;
@@ -2075,8 +2074,8 @@ shk_names_obj(struct monst *shkp, struct obj *obj,
     obj_name = doname(obj);
     /* Use an alternate message when extra information is being provided */
     if (was_unknown) {
-        sprintf(fmtbuf, "%%s; %c%s", lowc(fmt[0]), fmt + 1);
-        obj_name[0] = highc(obj_name[0]);
+        const char *fmtbuf = msgprintf("%%s; %c%s", lowc(fmt[0]), fmt + 1);
+        obj_name = msgupcasefirst(obj_name);
         pline(fmtbuf, obj_name, (obj->quan > 1) ? "them" : "it", amt, plur(amt),
               arg);
     } else {
@@ -2160,25 +2159,25 @@ addtobill(struct obj *obj, boolean ininv, boolean dummy, boolean silent)
         add_one_tobill(obj, dummy);
 speak:
     if (shkp->mcanmove && !shkp->msleeping && !silent) {
-        char buf[BUFSZ];
+        const char *buf;
 
         if (!ltmp) {
             pline("%s has no interest in %s.", Monnam(shkp), the(xname(obj)));
             return;
         }
-        strcpy(buf, "\"For you, ");
+        buf = "\"For you, ";
         if (ANGRY(shkp))
-            strcat(buf, "scum ");
+            buf = msgcat(buf, "scum ");
         else {
             static const char *const honored[5] = {
                 "good", "honored", "most gracious", "esteemed",
                 "most renowned and sacred"
             };
-            strcat(buf, honored[rn2(4) + u.uevent.udemigod]);
+            buf = msgcat(buf, honored[rn2(4) + u.uevent.udemigod]);
             if (!is_human(youmonst.data))
-                strcat(buf, " creature");
+                buf = msgcat(buf, " creature");
             else
-                strcat(buf, (u.ufemale) ? " lady" : " sir");
+                buf = msgcat(buf, (u.ufemale) ? " lady" : " sir");
         }
         if (ininv) {
             long quan = obj->quan;
@@ -2557,15 +2556,16 @@ move_on:
     }
 
     if (!money_cnt(shkp->minvent)) {
-        char c, qbuf[BUFSZ];
+        char c;
+        const char *qbuf;
         long tmpcr = ((offer * 9L) / 10L) + (offer <= 1L);
 
         if (sell_how == SELL_NORMAL || auto_credit) {
             c = sell_response = 'y';
         } else if (sell_response != 'n') {
             pline("%s cannot pay you at present.", Monnam(shkp));
-            sprintf(qbuf, "Will you accept %ld %s in credit for %s?", tmpcr,
-                    currency(tmpcr), doname(obj));
+            qbuf = msgprintf("Will you accept %ld %s in credit for %s?",
+                             tmpcr, currency(tmpcr), doname(obj));
             /* won't accept 'a' response here */
             /* KLY - 3/2000 yes, we will, it's a damn nuisance to have to
                constantly hit 'y' to sell for credit */
@@ -2597,7 +2597,7 @@ move_on:
             subfrombill(obj, shkp);
         }
     } else {
-        char qbuf[BUFSZ];
+        const char *qbuf;
         long shkmoney = money_cnt(shkp->minvent);
         boolean short_funds = (offer > shkmoney);
 
@@ -2607,18 +2607,18 @@ move_on:
             only_partially_your_contents =
                 (contained_cost(obj, shkp, 0L, FALSE, FALSE) !=
                  contained_cost(obj, shkp, 0L, FALSE, TRUE));
-            sprintf(qbuf, "%s offers%s %ld gold piece%s for%s %s %s.  Sell %s?",
-                    Monnam(shkp), short_funds ? " only" : "", offer,
-                    plur(offer), (!ltmp && cltmp &&
-                                  only_partially_your_contents) ?
-                    " your items in" : (!ltmp &&
-                                        cltmp) ? " the contents of" : "",
-                    obj->unpaid ? "the" : "your", cxname(obj),
-                    (obj->quan == 1L && !(!ltmp && cltmp &&
-                                          only_partially_your_contents))
-                    ? "it" : "them");
+            qbuf = msgprintf("%s offers%s %ld gold piece%s for%s %s %s.  "
+                             "Sell %s?", Monnam(shkp), short_funds ?
+                             " only" : "", offer, plur(offer),
+                             (!ltmp && cltmp && only_partially_your_contents) ?
+                             " your items in" : (!ltmp && cltmp) ?
+                             " the contents of" : "",
+                             obj->unpaid ? "the" : "your", cxname(obj),
+                             (obj->quan == 1L &&
+                              !(!ltmp && cltmp && only_partially_your_contents))
+                             ? "it" : "them");
         } else
-            qbuf[0] = '\0';     /* just to pacify lint */
+            qbuf = "";     /* just to pacify lint */
 
         switch (sell_response ? sell_response : ynaq(qbuf)) {
         case 'q':
@@ -2663,7 +2663,7 @@ doinvbill(int mode)
     struct bill_x *bp, *end_bp;
     struct obj *obj;
     long totused;
-    char *buf_p;
+    const char *buf_p;
     struct nh_menulist menu;
 
     shkp = shop_keeper(level, *u.ushops);
@@ -3485,11 +3485,12 @@ void
 price_quote(struct obj *first_obj)
 {
     struct obj *otmp;
-    char buf[BUFSZ], price[40];
+    char price[40];
     long cost;
     int cnt = 0;
     struct nh_menulist menu;
     struct monst *shkp = shop_keeper(level, inside_shop(level, u.ux, u.uy));
+    const char *buf = ""; /* lint suppression */
 
     init_menulist(&menu);
 
@@ -3508,7 +3509,7 @@ price_quote(struct obj *first_obj)
             sprintf(price, "%ld %s%s", cost, currency(cost),
                     otmp->quan > 1L ? " each" : "");
         }
-        sprintf(buf, "%s, %s", doname(otmp), price);
+        buf = msgcat_many(doname(otmp), ", ", price, NULL);
         add_menutext(&menu, buf);
         cnt++;
     }
@@ -3859,24 +3860,26 @@ block_entry(xchar x, xchar y)
     return FALSE;
 }
 
-char *
-shk_your(char *buf, const struct obj *obj)
+const char *
+shk_your(const struct obj *obj)
 {
-    if (!shk_owns(buf, obj) && !mon_owns(buf, obj))
-        strcpy(buf, carried(obj) ? "your" : "the");
-    return buf;
+    const char *rv;
+    rv = shk_owns(obj);
+    if (!rv)
+        rv = mon_owns(obj);
+    if (!rv)
+        rv = carried(obj) ? "your" : "the";
+    return rv;
 }
 
-char *
-Shk_Your(char *buf, const struct obj *obj)
+const char *
+Shk_Your(const struct obj *obj)
 {
-    shk_your(buf, obj);
-    *buf = highc(*buf);
-    return buf;
+    return msgupcasefirst(shk_your(obj));
 }
 
-static char *
-shk_owns(char *buf, const struct obj *obj)
+static const char *
+shk_owns(const struct obj *obj)
 {
     struct monst *shkp;
     xchar x, y;
@@ -3885,16 +3888,16 @@ shk_owns(char *buf, const struct obj *obj)
         (obj->unpaid ||
          (obj->where == OBJ_FLOOR && !obj->no_charge && costly_spot(x, y)))) {
         shkp = shop_keeper(level, inside_shop(level, x, y));
-        return strcpy(buf, shkp ? s_suffix(shkname(shkp)) : "the");
+        return shkp ? s_suffix(shkname(shkp)) : "the";
     }
     return NULL;
 }
 
-static char *
-mon_owns(char *buf, const struct obj *obj)
+static const char *
+mon_owns(const struct obj *obj)
 {
     if (obj->where == OBJ_MINVENT)
-        return strcpy(buf, s_suffix(mon_nam(obj->ocarry)));
+        return s_suffix(mon_nam(obj->ocarry));
     return NULL;
 }
 
@@ -3945,3 +3948,4 @@ costly_damage_obj(struct obj *obj)
 }
 
 /*shk.c*/
+

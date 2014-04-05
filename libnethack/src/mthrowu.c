@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -43,14 +43,12 @@ thitu(int tlev, int dam, struct obj *obj, const char *name)
     const char *onm, *knm;
     boolean is_acid;
     int kprefix = KILLED_BY_AN;
-    char onmbuf[BUFSZ], knmbuf[BUFSZ];
 
     if (!name) {
         if (!obj)
             panic("thitu: name & obj both null?");
-        name =
-            strcpy(onmbuf, (obj->quan > 1L) ? doname(obj) : mshot_xname(obj));
-        knm = strcpy(knmbuf, killer_xname(obj));
+        name = (obj->quan > 1L) ? doname(obj) : mshot_xname(obj);
+        knm = killer_xname(obj);
         kprefix = KILLED_BY;    /* killer_name supplies "an" if warranted */
     } else {
         knm = name;
@@ -411,11 +409,8 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
                 hitu = thitu(hitv, dam, singleobj, NULL);
             }
             if (hitu && singleobj->opoisoned && is_poisonable(singleobj)) {
-                char onmbuf[BUFSZ], knmbuf[BUFSZ];
-
-                strcpy(onmbuf, xname(singleobj));
-                strcpy(knmbuf, killer_xname(singleobj));
-                poisoned(onmbuf, A_STR, knmbuf, -10);
+                poisoned(xname(singleobj), A_STR,
+                         killer_xname(singleobj), -10);
             }
             if (hitu &&
                 can_blnd(NULL, &youmonst,
@@ -616,13 +611,10 @@ thrwmu(struct monst *mtmp)
     }
 
     if (canseemon(mtmp)) {
-        char onmbuf[BUFSZ];
-
         if (multishot > 1) {
             /* "N arrows"; multishot > 1 implies otmp->quan > 1, so xname()'s
                result will already be pluralized */
-            sprintf(onmbuf, "%d %s", multishot, xname(otmp));
-            onm = onmbuf;
+            onm = msgprintf("%d %s", multishot, xname(otmp));
         } else {
             /* "an arrow" */
             onm = singular(otmp, xname);
@@ -822,13 +814,10 @@ thrwmm(struct monst *mtmp, struct monst *mdef)
     }
 
     if (canseemon(mtmp)) {
-        char onmbuf[BUFSZ];
-
         if (multishot > 1) {
             /* "N arrows"; multishot > 1 implies otmp->quan > 1, so xname()'s
                result will already be pluralized */
-            sprintf(onmbuf, "%d %s", multishot, xname(otmp));
-            onm = onmbuf;
+            onm = msgprintf("%d %s", multishot, xname(otmp));
         } else {
             /* "an arrow" */
             onm = singular(otmp, xname);
@@ -1197,3 +1186,4 @@ hits_bars(struct obj ** obj_p, /* *obj_p will be set to NULL if object breaks */
 }
 
 /*mthrowu.c*/
+

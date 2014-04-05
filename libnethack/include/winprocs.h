@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-29 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) David Cohrs, 1992                                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -19,3 +19,4 @@ extern struct nh_window_procs AIMAKE_REVERSE_IMPORT(windowprocs);
 # define win_delay_output (*windowprocs.win_delay)
 
 #endif /* WINPROCS_H */
+

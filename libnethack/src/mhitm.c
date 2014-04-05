@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-04 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -17,7 +17,7 @@ static struct obj *otmp;
 static const char brief_feeling[] =
     "You have a %s feeling for a moment, then it passes.";
 
-static char *mon_nam_too(char *, struct monst *, struct monst *);
+static const char *mon_nam_too(struct monst *, struct monst *);
 static void mrustm(struct monst *, struct monst *, struct obj *);
 static int hitmm(struct monst *, struct monst *, const struct attack *);
 static int gazemm(struct monst *, struct monst *, const struct attack *);
@@ -37,23 +37,22 @@ static int dieroll;
 
 /* returns mon_nam(mon) relative to other_mon; normal name unless they're
    the same, in which case the reference is to {him|her|it} self */
-static char *
-mon_nam_too(char *outbuf, struct monst *mon, struct monst *other_mon)
+static const char *
+mon_nam_too(struct monst *mon, struct monst *other_mon)
 {
-    strcpy(outbuf, mon_nam(mon));
     if (mon == other_mon)
         switch (pronoun_gender(mon)) {
         case 0:
-            strcpy(outbuf, "himself");
+            return "himself";
             break;
         case 1:
-            strcpy(outbuf, "herself");
+            return "herself";
             break;
         default:
-            strcpy(outbuf, "itself");
+            return "itself";
             break;
         }
-    return outbuf;
+    return mon_nam(mon);
 }
 
 static void
@@ -73,8 +72,7 @@ noises(struct monst *magr, const struct attack *mattk)
 static void
 missmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 {
-    const char *fmt;
-    char buf[BUFSZ], mdef_name[BUFSZ];
+    const char *fmt, *buf;
 
     if (vis) {
         if (!canspotmon(magr))
@@ -87,8 +85,8 @@ missmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             seemimic(magr);
         fmt = (could_seduce(magr, mdef, mattk) &&
                !magr->mcan) ? "%s pretends to be friendly to" : "%s misses";
-        sprintf(buf, fmt, Monnam(magr));
-        pline("%s %s.", buf, mon_nam_too(mdef_name, mdef, magr));
+        buf = msgprintf(fmt, Monnam(magr));
+        pline("%s %s.", buf, mon_nam_too(mdef, magr));
     } else
         noises(magr, mattk);
 }
@@ -330,11 +328,8 @@ mattackm(struct monst *magr, struct monst *mdef)
                     mdef->mhp > 1 && !mdef->mcan) {
                     if (clone_mon(mdef, 0, 0)) {
                         if (vis) {
-                            char buf[BUFSZ];
-
-                            strcpy(buf, Monnam(mdef));
-                            pline("%s divides as %s hits it!", buf,
-                                  mon_nam(magr));
+                            pline("%s divides as %s hits it!",
+                                  Monnam(mdef), mon_nam(magr));
                         }
                     }
                 }
@@ -461,7 +456,6 @@ hitmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 {
     if (vis) {
         int compat;
-        char buf[BUFSZ], mdef_name[BUFSZ];
 
         if (!canspotmon(magr))
             map_invisible(magr->mx, magr->my);
@@ -472,39 +466,38 @@ hitmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         if (magr->m_ap_type)
             seemimic(magr);
         if ((compat = could_seduce(magr, mdef, mattk)) && !magr->mcan) {
-            sprintf(buf, "%s %s", Monnam(magr),
-                    mdef->mcansee ? "smiles at" : "talks to");
-            pline("%s %s %s.", buf, mon_nam(mdef),
+            pline("%s %s %s %s.", Monnam(magr),
+                  mdef->mcansee ? "smiles at" : "talks to", mon_nam(mdef),
                   compat == 2 ? "engagingly" : "seductively");
         } else {
-            char magr_name[BUFSZ];
+            const char *buf = Monnam(magr);
 
-            strcpy(magr_name, Monnam(magr));
             switch (mattk->aatyp) {
             case AT_BITE:
-                sprintf(buf, "%s bites", magr_name);
+                buf = msgcat(buf, " bites");
                 break;
             case AT_STNG:
-                sprintf(buf, "%s stings", magr_name);
+                buf = msgcat(buf, " stings");
                 break;
             case AT_BUTT:
-                sprintf(buf, "%s butts", magr_name);
+                buf = msgcat(buf, " butts");
                 break;
             case AT_TUCH:
-                sprintf(buf, "%s touches", magr_name);
+                buf = msgcat(buf, " touches");
                 break;
             case AT_TENT:
-                sprintf(buf, "%s tentacles suck", s_suffix(magr_name));
+                buf = msgcat(s_suffix(buf), " tentacles suck");
                 break;
             case AT_HUGS:
                 if (magr != u.ustuck) {
-                    sprintf(buf, "%s squeezes", magr_name);
+                    buf = msgcat(buf, " squeezes");
                     break;
                 }
+                /* fall through */
             default:
-                sprintf(buf, "%s hits", magr_name);
+                buf = msgcat(buf, " hits");
             }
-            pline("%s %s.", buf, mon_nam_too(mdef_name, mdef, magr));
+            pline("%s %s.", buf, mon_nam_too(mdef, magr));
         }
     } else
         noises(magr, mattk);
@@ -516,11 +509,8 @@ hitmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 static int
 gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 {
-    char buf[BUFSZ];
-
     if (vis) {
-        sprintf(buf, "%s gazes at", Monnam(magr));
-        pline("%s %s...", buf, mon_nam(mdef));
+        pline("%s gazes at %s...", Monnam(magr), mon_nam(mdef));
     }
 
     if (magr->mcan || !magr->mcansee || (magr->minvis && !perceives(mdef->data))
@@ -564,16 +554,14 @@ gulpmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 {
     xchar ax, ay, dx, dy;
     int status;
-    char buf[BUFSZ];
     struct obj *obj;
 
     if (mdef->data->msize >= MZ_HUGE)
         return MM_MISS;
 
-    if (vis) {
-        sprintf(buf, "%s swallows", Monnam(magr));
-        pline("%s %s.", buf, mon_nam(mdef));
-    }
+    if (vis)
+        pline("%s swallows %s.", Monnam(magr), mon_nam(mdef));
+
     for (obj = mdef->minvent; obj; obj = obj->nobj)
         snuff_lit(obj);
 
@@ -658,7 +646,6 @@ static int
 mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 {
     struct obj *obj;
-    char buf[BUFSZ];
     const struct permonst *pa = magr->data;
     const struct permonst *pd = mdef->data;
     int armpro, num, tmp = dice((int)mattk->damn, (int)mattk->damd);
@@ -939,12 +926,10 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         break;
     case AD_TLPT:
         if (!cancelled && tmp < mdef->mhp && !tele_restrict(mdef)) {
-            char mdef_Monnam[BUFSZ];
-
+            const char *mdef_Monnam = Monnam(mdef);
             /* save the name before monster teleports, otherwise we'll get "it" 
                in the suddenly disappears message */
-            if (vis)
-                strcpy(mdef_Monnam, Monnam(mdef));
+
             mdef->mstrategy &= ~STRAT_WAITFORU;
             rloc(mdef, FALSE);
             if (vis && !canspotmon(mdef) && mdef != u.usteed)
@@ -953,20 +938,18 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         break;
     case AD_SLEE:
         if (!cancelled && !mdef->msleeping && sleep_monst(mdef, rnd(10), -1)) {
-            if (vis) {
-                strcpy(buf, Monnam(mdef));
-                pline("%s is put to sleep by %s.", buf, mon_nam(magr));
-            }
+            if (vis)
+                pline("%s is put to sleep by %s.", Monnam(mdef), mon_nam(magr));
+
             mdef->mstrategy &= ~STRAT_WAITFORU;
             slept_monst(mdef);
         }
         break;
     case AD_PLYS:
         if (!cancelled && mdef->mcanmove) {
-            if (vis) {
-                strcpy(buf, Monnam(mdef));
-                pline("%s is frozen by %s.", buf, mon_nam(magr));
-            }
+            if (vis)
+                pline("%s is frozen by %s.", Monnam(mdef), mon_nam(magr));
+
             mdef->mcanmove = 0;
             mdef->mfrozen = rnd(10);
             mdef->mstrategy &= ~STRAT_WAITFORU;
@@ -1062,14 +1045,15 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             add_to_minv(magr, gold);
         }
         mdef->mstrategy &= ~STRAT_WAITFORU;
-        if (vis) {
-            strcpy(buf, Monnam(magr));
-            pline("%s steals some gold from %s.", buf, mon_nam(mdef));
-        }
+        const char *magr_Monnam = Monnam(magr); /* name pre-rloc() */
+
+        if (vis)
+            pline("%s steals some gold from %s.", magr_Monnam, mon_nam(mdef));
+
         if (!tele_restrict(magr)) {
             rloc(magr, FALSE);
             if (vis && !canspotmon(magr))
-                pline("%s suddenly disappears!", buf);
+                pline("%s suddenly disappears!", magr_Monnam);
         }
         break;
     case AD_DRLI:
@@ -1096,11 +1080,10 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                 break;
 
         if (obj) {
-            char onambuf[BUFSZ], mdefnambuf[BUFSZ];
-
             /* make a special x_monnam() call that never omits the saddle, and
                save it for later messages */
-            strcpy(mdefnambuf, x_monnam(mdef, ARTICLE_THE, NULL, 0, FALSE));
+            const char *mdefnambuf =
+                x_monnam(mdef, ARTICLE_THE, NULL, 0, FALSE);
 
             otmp = obj;
             if (u.usteed == mdef && otmp == which_armor(mdef, os_saddle))
@@ -1114,14 +1097,19 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                 otmp->owornmask = 0L;
                 update_mon_intrinsics(mdef, otmp, FALSE, FALSE);
             }
+
             /* add_to_minv() might free otmp [if it merges] */
-            if (vis)
-                strcpy(onambuf, doname(otmp));
+            const char *onambuf = doname(otmp);
             add_to_minv(magr, otmp);
+
+            /* In case of teleport */
+            const char *magr_Monnam = Monnam(magr);
+
             if (vis) {
-                strcpy(buf, Monnam(magr));
-                pline("%s steals %s from %s!", buf, onambuf, mdefnambuf);
+                pline("%s steals %s from %s!",
+                      magr_Monnam, onambuf, mdefnambuf);
             }
+
             possibly_unwield(mdef, FALSE);
             mdef->mstrategy &= ~STRAT_WAITFORU;
             mselftouch(mdef, NULL, FALSE);
@@ -1130,7 +1118,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             if (magr->data->mlet == S_NYMPH && !tele_restrict(magr)) {
                 rloc(magr, FALSE);
                 if (vis && !canspotmon(magr))
-                    pline("%s suddenly disappears!", buf);
+                    pline("%s suddenly disappears!", magr_Monnam);
             }
         }
         tmp = 0;
@@ -1167,8 +1155,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         }
         if ((mdef->misc_worn_check & W_MASK(os_armh)) && rn2(8)) {
             if (vis) {
-                strcpy(buf, s_suffix(Monnam(mdef)));
-                pline("%s %s blocks %s attack to %s head.", buf,
+                pline("%s %s blocks %s attack to %s head.",
+                      s_suffix(Monnam(mdef)),
                       helmet_name(which_armor(mdef, os_armh)),
                       s_suffix(mon_nam(magr)), mhis(mdef));
             }
@@ -1227,10 +1215,9 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         }
         break;
     case AD_PEST:
-        strcpy(buf, mon_nam(mdef));
         if (vis)
             pline("%s reaches out, and %s looks rather ill.", Monnam(magr),
-                  buf);
+                  mon_nam(mdef));
         if ((mdef->mhpmax > 3) && !resist(mdef, 0, 0, NOTELL))
             mdef->mhpmax /= 2;
         if ((mdef->mhp > 2) && !resist(mdef, 0, 0, NOTELL))
@@ -1239,9 +1226,9 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             mdef->mhp = mdef->mhpmax;
         break;
     case AD_FAMN:
-        strcpy(buf, s_suffix(mon_nam(mdef)));
         if (vis)
-            pline("%s reaches out, and %s body shrivels.", Monnam(magr), buf);
+            pline("%s reaches out, and %s body shrivels.",
+                  Monnam(magr), s_suffix(mon_nam(mdef)));
         if (mdef->mtame && !mdef->isminion)
             EDOG(mdef)->hungrytime -= rn1(120, 120);
         else {
@@ -1396,14 +1383,12 @@ mrustm(struct monst *magr, struct monst *mdef, struct obj *obj)
 static void
 mswingsm(struct monst *magr, struct monst *mdef, struct obj *otemp)
 {
-    char buf[BUFSZ];
-
     if (!flags.verbose || Blind || !mon_visible(magr))
         return;
-    strcpy(buf, mon_nam(mdef));
+
     pline("%s %s %s %s at %s.", Monnam(magr),
           (objects[otemp->otyp].oc_dir & PIERCE) ? "thrusts" : "swings",
-          mhis(magr), singular(otemp, xname), buf);
+          mhis(magr), singular(otemp, xname), mon_nam(mdef));
 }
 
 /*
@@ -1415,7 +1400,6 @@ passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
 {
     const struct permonst *mddat = mdef->data;
     const struct permonst *madat = magr->data;
-    char buf[BUFSZ];
     int i, tmp;
 
     for (i = 0;; i++) {
@@ -1435,9 +1419,8 @@ passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
     switch (mddat->mattk[i].adtyp) {
     case AD_ACID:
         if (mhit && !rn2(2)) {
-            strcpy(buf, Monnam(magr));
             if (canseemon(magr))
-                pline("%s is splashed by %s acid!", buf,
+                pline("%s is splashed by %s acid!", Monnam(magr),
                       s_suffix(mon_nam(mdef)));
             if (resists_acid(magr)) {
                 if (canseemon(magr))
@@ -1490,22 +1473,21 @@ passivemm(struct monst *magr, struct monst *mdef, boolean mhit, int mdead)
                     tmp = 127;
                 if (magr->mcansee && haseyes(madat) && mdef->mcansee &&
                     (perceives(madat) || !mdef->minvis)) {
-                    sprintf(buf, "%s gaze is reflected by %%s %%s.",
-                            s_suffix(mon_nam(mdef)));
+                    const char *buf;
+                    buf = msgprintf("%s gaze is reflected by %%s %%s.",
+                                    s_suffix(mon_nam(mdef)));
                     if (mon_reflects(magr, canseemon(magr) ? buf : NULL))
                         return mdead | mhit;
-                    strcpy(buf, Monnam(magr));
                     if (canseemon(magr))
-                        pline("%s is frozen by %s gaze!", buf,
+                        pline("%s is frozen by %s gaze!", Monnam(magr),
                               s_suffix(mon_nam(mdef)));
                     magr->mcanmove = 0;
                     magr->mfrozen = tmp;
                     return mdead | mhit;
                 }
             } else {    /* gelatinous cube */
-                strcpy(buf, Monnam(magr));
                 if (canseemon(magr))
-                    pline("%s is frozen by %s.", buf, mon_nam(mdef));
+                    pline("%s is frozen by %s.", Monnam(magr), mon_nam(mdef));
                 magr->mcanmove = 0;
                 magr->mfrozen = tmp;
                 return mdead | mhit;
@@ -1619,3 +1601,4 @@ attk_protection(int aatyp)
 }
 
 /*mhitm.c*/
+

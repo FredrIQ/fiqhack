@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Dean Luick, 1994                                       */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -615,14 +615,14 @@ int
 wiz_light_sources(const struct nh_cmd_arg *arg)
 {
     struct nh_menulist menu;
-    char buf[BUFSZ];
+    const char *buf;
     light_source *ls;
 
     (void) arg;
 
     init_menulist(&menu);
 
-    sprintf(buf, "Mobile light sources: hero @ (%2d,%2d)", u.ux, u.uy);
+    buf = msgprintf("Mobile light sources: hero @ (%2d,%2d)", u.ux, u.uy);
     add_menutext(&menu, buf);
     add_menutext(&menu, "");
 
@@ -630,7 +630,7 @@ wiz_light_sources(const struct nh_cmd_arg *arg)
         add_menutext(&menu, "location range flags  type    id");
         add_menutext(&menu, "-------- ----- ------ ----  -------");
         for (ls = level->lev_lights; ls; ls = ls->next) {
-            sprintf(buf, "  %2d,%2d   %2d   0x%04x  %s  %p",
+            buf = msgprintf("  %2d,%2d   %2d   0x%04x  %s  %p",
                     ls->x, ls->y, ls->range, ls->flags,
                     (ls->type == LS_OBJECT ? "obj" :
                      ls->type == LS_MONSTER ? (
@@ -651,3 +651,4 @@ wiz_light_sources(const struct nh_cmd_arg *arg)
 }
 
 /*light.c*/
+

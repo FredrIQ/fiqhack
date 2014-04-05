@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-16 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -198,6 +198,7 @@ getlin(const char *query, char *bufp, boolean isarg)
 char
 yn_function(const char *query, const char *resp, char def)
 {
+    /* This is a genuine QBUFSZ buffer because it communicates over the API. */
     char qbuf[QBUFSZ], key;
     unsigned truncspot, reduction = sizeof (" [N]  ?") + 1;
 
@@ -260,7 +261,7 @@ display_menu(struct nh_menulist *menu, const char *title, int how,
         log_record_input("M!");
         pline_nomore("<%s: cancelled>", title ? title : "Untitled menu");
     } else {
-        char buf[BUFSZ] = "(none selected)";
+        const char *buf = "(none selected)";
 
         log_record_menu(FALSE, n, results);
 
@@ -268,9 +269,9 @@ display_menu(struct nh_menulist *menu, const char *title, int how,
             for (j = 0;
                  j < menu_copy.icount && item_copy[j].id != results[0];
                  j++) {}
-            strcpy(buf, item_copy[j].caption);
+            buf = item_copy[j].caption;
         } else if (n > 1)
-            sprintf(buf, "(%d selected)", n);
+            buf = msgprintf("(%d selected)", n);
 
         pline_nomore("<%s: %s>", title ? title : "Untitled menu", buf);
     }
@@ -310,19 +311,19 @@ display_objects(struct nh_objlist *objlist, const char *title,
         log_record_input("O!");
         pline_nomore("<%s: cancelled>", title ? title : "List of objects");
     } else {
-        char buf[BUFSZ] = "";
+        const char *buf = "";
 
         log_record_menu(TRUE, n, pick_list);
 
         /* We show the exact inventory letters chosen, so long as there aren't
-           too many. */
+           too many. TODO: The loop here looks wrong. */
         if (n >= 1 && n <= 20) {
             for (j = 0;
                  j < menu_copy.icount && item_copy[j].id != pick_list[0].id;
                  j++) {}
-            sprintf(eos(buf), "%c", item_copy[j].accel);
+            buf = msgprintf("%c", item_copy[j].accel);
         } else
-            sprintf(buf, "(%d selected)", n);
+            buf = msgprintf("(%d selected)", n);
 
         pline_nomore("<%s: %s>", title ? title : "List of objects", buf);
     }
@@ -348,3 +349,4 @@ win_list_items(struct nh_objlist *objlist, boolean is_invent)
 }
 
 /*windows.c*/
+

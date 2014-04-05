@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -23,7 +23,7 @@
 # define is_lminion(mon)        (is_minion((mon)->data) && \
                                  (mon)->data->maligntyp >= A_COALIGNED && \
                                  ((mon)->data != &mons[PM_ANGEL] || \
-                                  EPRI(mon)->shralign > 0))
+                                  CONST_EPRI(mon)->shralign > 0))
 
 # define is_flyer(ptr)          (((ptr)->mflags1 & M1_FLY) != 0L)
 # define is_floater(ptr)        ((ptr)->mlet == S_EYE)
@@ -202,3 +202,4 @@
                                       is_domestic(ptr))
 
 #endif /* MONDATA_H */
+

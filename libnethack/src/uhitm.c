@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-08 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -94,15 +94,12 @@ hurtmarmor(struct monst *mdef, int attk)
 boolean
 confirm_attack(struct monst *mtmp, enum u_interaction_mode uim)
 {
-    char qbuf[QBUFSZ];
-
     if (!UIM_AGGRESSIVE(uim)) {
         pline("You take care not to attack %s.", mon_nam(mtmp));
         return FALSE; /* pacifists never confirm attacks */
     }
     if (mtmp->mpeaceful && !Hallucination && uim <= uim_standard) {
-        sprintf(qbuf, "Really attack %s?", mon_nam(mtmp));
-        if (yn(qbuf) != 'y')
+        if (yn(msgprintf("Really attack %s?", mon_nam(mtmp))) != 'y')
             return FALSE;
     }
 
@@ -544,12 +541,10 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
     int jousting = 0;
     int wtype;
     struct obj *monwep;
-    char yourbuf[BUFSZ];
-    char unconventional[BUFSZ]; /* substituted for word "attack" in msg */
-    char saved_oname[BUFSZ];
+    const char *unconventional, *saved_oname;
 
-    unconventional[0] = '\0';
-    saved_oname[0] = '\0';
+    unconventional = "";
+    saved_oname = "";
 
     wakeup(mon, TRUE);
     if (!obj) { /* attack with bare hands */
@@ -576,7 +571,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
             }
         }
     } else {
-        strcpy(saved_oname, cxname(obj));
+        saved_oname = cxname(obj);
         if (obj->oclass == WEAPON_CLASS || is_weptool(obj) ||
             obj->oclass == GEM_CLASS) {
 
@@ -610,7 +605,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 
                     pline("As you hit %s, %s%s %s breaks into splinters.",
                           mon_nam(mon), more_than_1 ? "one of " : "",
-                          shk_your(yourbuf, obj), xname(obj));
+                          shk_your(obj), xname(obj));
                     if (!more_than_1)
                         uwepgone();     /* set unweapon */
                     useup(obj);
@@ -713,7 +708,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
         } else {
             if (mdat == &mons[PM_SHADE] && !shade_aware(obj)) {
                 tmp = 0;
-                strcpy(unconventional, cxname(obj));
+                unconventional = cxname(obj);
             } else {
                 switch (obj->otyp) {
                 case BOULDER:  /* 1d20 */
@@ -724,7 +719,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
                 case MIRROR:
                     if (breaktest(obj)) {
                         pline("You break %s %s.  That's bad luck!",
-                              shk_your(yourbuf, obj),
+                              shk_your(obj),
                               simple_typename(obj->otyp));
                         change_luck(-2);
                         useup(obj);
@@ -737,7 +732,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
                     break;
                 case EXPENSIVE_CAMERA:
                     pline("You succeed in destroying %s camera. "
-                          "Congratulations!", shk_your(yourbuf, obj));
+                          "Congratulations!", shk_your(obj));
                     useup(obj);
                     return TRUE;
                 case CORPSE:   /* fixed by polder@cs.vu.nl */
@@ -847,17 +842,17 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
                             pline("The venom blinds %s%s!", mon_nam(mon),
                                   mon->mcansee ? "" : " further");
                         } else {
-                            char *whom = mon_nam(mon);
-                            char *what = The(xname(obj));
+                            const char *whom = mon_nam(mon);
+                            const char *what = The(xname(obj));
 
                             if (!thrown && obj->quan > 1)
                                 what = An(singular(obj, xname));
                             /* note: s_suffix returns a modifiable buffer */
                             if (haseyes(mdat)
                                 && mdat != &mons[PM_FLOATING_EYE])
-                                whom =
-                                    strcat(strcat(s_suffix(whom), " "),
-                                           mbodypart(mon, FACE));
+                                whom = msgcat_many(
+                                    s_suffix(whom), " ",
+                                    mbodypart(mon, FACE), NULL);
                             pline("%s %s over %s!", what,
                                   vtense(what, "splash"), whom);
                         }
@@ -974,7 +969,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
         if (mdat == &mons[PM_SHADE]) {
             if (!hittxt) {
                 const char *what =
-                    unconventional[0] ? unconventional : "attack";
+                    *unconventional ? unconventional : "attack";
                 pline("Your %s %s harmlessly through %s.", what,
                       vtense(what, "pass"), mon_nam(mon));
                 hittxt = TRUE;
@@ -1062,28 +1057,25 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
 
     if (silvermsg) {
         const char *fmt;
-        char *whom = mon_nam(mon);
-        char silverobjbuf[BUFSZ];
+        const char *whom = mon_nam(mon);
 
         if (canspotmon(mon)) {
             if (barehand_silver_rings == 1)
                 fmt = "Your silver ring sears %s!";
             else if (barehand_silver_rings == 2)
                 fmt = "Your silver rings sear %s!";
-            else if (silverobj && saved_oname[0]) {
-                sprintf(silverobjbuf, "Your %s%s %s %%s!",
-                        strstri(saved_oname, "silver") ? "" : "silver ",
-                        saved_oname, vtense(saved_oname, "sear"));
-                fmt = silverobjbuf;
+            else if (silverobj && *saved_oname) {
+                fmt = msgprintf("Your %s%s %s %%s!",
+                                strstri(saved_oname, "silver") ? "" : "silver ",
+                                saved_oname, vtense(saved_oname, "sear"));
             } else
                 fmt = "The silver sears %s!";
         } else {
-            *whom = highc(*whom);       /* "it" -> "It" */
+            whom = msgupcasefirst(whom);       /* "it" -> "It" */
             fmt = "%s is seared!";
         }
-        /* note: s_suffix returns a modifiable buffer */
         if (!noncorporeal(mdat))
-            whom = strcat(s_suffix(whom), " flesh");
+            whom = msgcat(s_suffix(whom), " flesh");
         pline(fmt, whom);
     }
 
@@ -1301,9 +1293,10 @@ steal_it(struct monst *mdef, const struct attack *mattk)
             continue;
         if (otmp->otyp == CORPSE && touch_petrifies(&mons[otmp->corpsenm]) &&
             !uarmg) {
-            char kbuf[BUFSZ];
+            const char *kbuf;
 
-            sprintf(kbuf, "stealing %s corpse", an(mons[otmp->corpsenm].mname));
+            kbuf = msgprintf("stealing %s corpse",
+                             an(mons[otmp->corpsenm].mname));
             instapetrify(kbuf);
             break;      /* stop the theft even if hero survives */
         }
@@ -1471,11 +1464,11 @@ damageum(struct monst *mdef, const struct attack *mattk)
         if (tmp <= 0)
             tmp = 1;
         if (!negated && tmp < mdef->mhp) {
-            char nambuf[BUFSZ];
+            const char *nambuf;
             boolean u_saw_mon = canseemon(mdef) ||
                 (Engulfed && u.ustuck == mdef);
             /* record the name before losing sight of monster */
-            strcpy(nambuf, Monnam(mdef));
+            nambuf = Monnam(mdef);
             if (u_teleport_mon(mdef, FALSE) && u_saw_mon) {
                 boolean can_see_mon = canseemon(mdef) ||
                     (Engulfed && u.ustuck == mdef);
@@ -1817,8 +1810,6 @@ gulpum(struct monst *mdef, const struct attack *mattk)
         }
 
         if (!touch_petrifies(mdef->data) || Stone_resistance) {
-            static char msgbuf[BUFSZ];
-
             start_engulf(mdef);
             switch (mattk->adtyp) {
             case AD_DGST:
@@ -1826,9 +1817,8 @@ gulpum(struct monst *mdef, const struct attack *mattk)
                 if (is_rider(mdef->data)) {
                     pline("Unfortunately, digesting any of it is fatal.");
                     end_engulf(mdef);
-                    sprintf(msgbuf, "unwisely tried to eat %s",
-                            mdef->data->mname);
-                    killer = msgbuf;
+                    killer = msgcat("unwisely tried to eat ",
+                                    mdef->data->mname);
                     killer_format = NO_KILLER_PREFIX;
                     done(DIED);
                     return 0;   /* lifesaved */
@@ -1840,7 +1830,7 @@ gulpum(struct monst *mdef, const struct attack *mattk)
                 }
 
                 /* Use up amulet of life saving */
-                if (! !(otmp = mlifesaver(mdef)))
+                if (((otmp = mlifesaver(mdef))) != NULL)
                     m_useup(mdef, otmp);
 
                 newuhs(FALSE);
@@ -1856,7 +1846,8 @@ gulpum(struct monst *mdef, const struct attack *mattk)
                         u.uhunger += (mdef->data->cnutrit + 1) / 2;
                     } else
                         tmp = 0;
-                    sprintf(msgbuf, "You totally digest %s.", mon_nam(mdef));
+                    const char *msgbuf =
+                        msgprintf("You totally digest %s.", mon_nam(mdef));
                     if (tmp != 0) {
                         pline("You digest %s.", mon_nam(mdef));
                         if (Slow_digestion)
@@ -1954,10 +1945,10 @@ gulpum(struct monst *mdef, const struct attack *mattk)
                       s_suffix(mon_nam(mdef)));
             }
         } else {
-            char kbuf[BUFSZ];
+            const char *kbuf;
 
             pline("You bite into %s.", mon_nam(mdef));
-            sprintf(kbuf, "swallowing %s whole", an(mdef->data->mname));
+            kbuf = msgprintf("swallowing %s whole", an(mdef->data->mname));
             instapetrify(kbuf);
         }
     }
@@ -2480,7 +2471,7 @@ stumble_onto_mimic(struct monst *mtmp, schar dx, schar dy)
 static void
 nohandglow(struct monst *mon)
 {
-    char *hands = makeplural(body_part(HAND));
+    const char *hands = makeplural(body_part(HAND));
 
     if (!u.umconf || mon->mconf)
         return;
@@ -2551,3 +2542,4 @@ flash_hits_mon(struct monst *mtmp, struct obj *otmp)
 }
 
 /*uhitm.c*/
+

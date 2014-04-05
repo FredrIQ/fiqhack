@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-01 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -9,14 +9,9 @@
 # include <stdio.h>
 # include <setjmp.h>
 # include <stdarg.h>
-# include <assert.h>
 
 # include "nethack_types.h"
-
-# ifndef static_assert
-#  define static_assert(cond, msg) \
-    extern const int static_assertion_##__LINE__[cond ? 1 : -1]
-# endif
+# include "compilers.h"
 
 /*
  * Files expected to exist in the playground directory.
@@ -94,21 +89,6 @@ typedef schar xchar;
 #  endif
 # endif
 
-# ifdef _MSC_VER
-#  define NORETURN __declspec(noreturn)
-#  define PRINTFLIKE(f,a)
-#  define SCANFLIKE(f,a)
-# else
-#  define NORETURN __attribute__((noreturn))
-#  ifdef AIMAKE_BUILDOS_MSWin32
-#   define PRINTFLIKE(f,a) __attribute__((format (ms_printf, f, a)))
-#   define SCANFLIKE(f,a) __attribute__((format (ms_scanf, f, a)))
-#  else
-#   define PRINTFLIKE(f,a) __attribute__((format (printf, f, a)))
-#   define SCANFLIKE(f,a) __attribute__((format (scanf, f, a)))
-#  endif
-# endif
-
 /* Used for consistency checks of various data files; declare it here so
    that utility programs which include config.h but not hack.h can see it. */
 struct version_info {
@@ -163,3 +143,4 @@ struct version_info {
 # define MAXSPELL       52      /* maximum spell index */
 
 #endif /* GLOBAL_H */
+

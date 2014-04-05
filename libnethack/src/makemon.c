@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-07 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -825,8 +825,8 @@ clone_mon(struct monst *mon, xchar x, xchar y)
             m3->mxtyp = MX_EPRI;
             m3->mxlth = sizeof (struct epri);
             if (m2->mnamelth)
-                strcpy(NAME(m3), NAME(m2));
-            *(EPRI(m3)) = *(EPRI(mon));
+                strcpy(NAME_MUTABLE(m3), NAME(m2));
+            *(EPRI(m3)) = *(CONST_EPRI(mon));
             replmon(m2, m3);
             m2 = m3;
         } else {
@@ -1693,7 +1693,7 @@ set_malign(struct monst *mtmp)
     if (mtmp->ispriest || mtmp->isminion) {
         /* some monsters have individual alignments; check them */
         if (mtmp->ispriest || (mtmp->isminion && roamer_type(mtmp->data)))
-            mal = EPRI(mtmp)->shralign;
+            mal = CONST_EPRI(mtmp)->shralign;
         else if (mtmp->isminion)
             mal = EMIN(mtmp)->min_align;
         /* unless alignment is none, set mal to -5,0,5 */
@@ -1984,7 +1984,7 @@ restore_mon(struct memfile *mf)
     mon->mw = mread8(mf) ? (void *)1 : NULL;    /* 85 */
 
     if (mon->mnamelth)
-        mread(mf, NAME(mon), mon->mnamelth);
+        mread(mf, NAME_MUTABLE(mon), mon->mnamelth);
 
     switch (mon->mxtyp) {
     case MX_EPRI:
@@ -2118,7 +2118,7 @@ save_mon(struct memfile *mf, const struct monst *mon)
 {
     int idx, i;
     unsigned int mflags;
-    struct eshk *shk;
+    const struct eshk *shk;
 
     if (mon->m_id == TEMPORARY_IDENT) {
         impossible("temporary monster encountered in save code!");
@@ -2209,34 +2209,34 @@ save_mon(struct memfile *mf, const struct monst *mon)
 
     switch (mon->mxtyp) {
     case MX_EPRI:
-        mwrite8(mf, EPRI(mon)->shralign);
-        mwrite8(mf, EPRI(mon)->shroom);
-        mwrite8(mf, EPRI(mon)->shrpos.x);
-        mwrite8(mf, EPRI(mon)->shrpos.y);
-        mwrite8(mf, EPRI(mon)->shrlevel.dnum);
-        mwrite8(mf, EPRI(mon)->shrlevel.dlevel);
+        mwrite8(mf, CONST_EPRI(mon)->shralign);
+        mwrite8(mf, CONST_EPRI(mon)->shroom);
+        mwrite8(mf, CONST_EPRI(mon)->shrpos.x);
+        mwrite8(mf, CONST_EPRI(mon)->shrpos.y);
+        mwrite8(mf, CONST_EPRI(mon)->shrlevel.dnum);
+        mwrite8(mf, CONST_EPRI(mon)->shrlevel.dlevel);
         break;
 
     case MX_EMIN:
-        mwrite8(mf, EMIN(mon)->min_align);
+        mwrite8(mf, CONST_EMIN(mon)->min_align);
         break;
 
     case MX_EDOG:
-        mwrite32(mf, EDOG(mon)->droptime);
-        mwrite32(mf, EDOG(mon)->dropdist);
-        mwrite32(mf, EDOG(mon)->apport);
-        mwrite32(mf, EDOG(mon)->whistletime);
-        mwrite32(mf, EDOG(mon)->hungrytime);
-        mwrite32(mf, EDOG(mon)->abuse);
-        mwrite32(mf, EDOG(mon)->revivals);
-        mwrite32(mf, EDOG(mon)->mhpmax_penalty);
-        mwrite8(mf, EDOG(mon)->ogoal.x);
-        mwrite8(mf, EDOG(mon)->ogoal.y);
-        mwrite8(mf, EDOG(mon)->killed_by_u);
+        mwrite32(mf, CONST_EDOG(mon)->droptime);
+        mwrite32(mf, CONST_EDOG(mon)->dropdist);
+        mwrite32(mf, CONST_EDOG(mon)->apport);
+        mwrite32(mf, CONST_EDOG(mon)->whistletime);
+        mwrite32(mf, CONST_EDOG(mon)->hungrytime);
+        mwrite32(mf, CONST_EDOG(mon)->abuse);
+        mwrite32(mf, CONST_EDOG(mon)->revivals);
+        mwrite32(mf, CONST_EDOG(mon)->mhpmax_penalty);
+        mwrite8(mf, CONST_EDOG(mon)->ogoal.x);
+        mwrite8(mf, CONST_EDOG(mon)->ogoal.y);
+        mwrite8(mf, CONST_EDOG(mon)->killed_by_u);
         break;
 
     case MX_ESHK:
-        shk = ESHK(mon);
+        shk = CONST_ESHK(mon);
         mwrite32(mf,
                  (shk->bill_p ==
                   (struct bill_x *)-1000) ? -1000 : !shk->bill_p ? -2000
@@ -2264,21 +2264,22 @@ save_mon(struct memfile *mf, const struct monst *mon)
         break;
 
     case MX_EGD:
-        mwrite32(mf, EGD(mon)->fcbeg);
-        mwrite32(mf, EGD(mon)->fcend);
-        mwrite32(mf, EGD(mon)->vroom);
-        mwrite8(mf, EGD(mon)->gdx);
-        mwrite8(mf, EGD(mon)->gdy);
-        mwrite8(mf, EGD(mon)->ogx);
-        mwrite8(mf, EGD(mon)->ogy);
-        mwrite8(mf, EGD(mon)->gdlevel.dnum);
-        mwrite8(mf, EGD(mon)->gdlevel.dlevel);
-        mwrite8(mf, EGD(mon)->warncnt);
-        mwrite8(mf, EGD(mon)->gddone);
+        mwrite32(mf, CONST_EGD(mon)->fcbeg);
+        mwrite32(mf, CONST_EGD(mon)->fcend);
+        mwrite32(mf, CONST_EGD(mon)->vroom);
+        mwrite8(mf, CONST_EGD(mon)->gdx);
+        mwrite8(mf, CONST_EGD(mon)->gdy);
+        mwrite8(mf, CONST_EGD(mon)->ogx);
+        mwrite8(mf, CONST_EGD(mon)->ogy);
+        mwrite8(mf, CONST_EGD(mon)->gdlevel.dnum);
+        mwrite8(mf, CONST_EGD(mon)->gdlevel.dlevel);
+        mwrite8(mf, CONST_EGD(mon)->warncnt);
+        mwrite8(mf, CONST_EGD(mon)->gddone);
         for (i = 0; i < FCSIZ; i++)
-            save_fcorr(mf, &EGD(mon)->fakecorr[i]);
+            save_fcorr(mf, &CONST_EGD(mon)->fakecorr[i]);
         break;
     }
 }
 
 /*makemon.c*/
+

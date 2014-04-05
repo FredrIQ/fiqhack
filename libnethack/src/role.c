@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -855,6 +855,8 @@ race_alignmentcount(int racenum)
 }
 
 
+/* This uses a hardcoded BUFSZ, not the msg* functions, because it runs
+   outside the main game sequence. */
 const char *
 nh_root_plselection_prompt(char *suppliedbuf, int buflen, int rolenum,
                            int racenum, int gendnum, int alignnum)
@@ -992,6 +994,8 @@ nh_root_plselection_prompt(char *suppliedbuf, int buflen, int rolenum,
         return err_ret;
 }
 
+/* This uses a hardcoded BUFSZ, not the msg* functions, because it runs
+   outside the main game sequence. */
 char *
 nh_build_plselection_prompt(char *buf, int buflen, int rolenum, int racenum,
                             int gendnum, int alignnum)
@@ -1002,8 +1006,11 @@ nh_build_plselection_prompt(char *buf, int buflen, int rolenum, int racenum,
 
     xmalloc_cleanup(&api_blocklist);
 
-    if (buflen < QBUFSZ)
-        return (char *)defprompt;
+    if (buflen < QBUFSZ) {
+        strncpy(buf, defprompt, buflen);
+        buf[buflen-1] = '\0'; /* strncpy doesn't \0-terminate on overflow */
+        return buf;
+    }
 
     strcpy(tmpbuf, "Shall I pick ");
     if (racenum != ROLE_NONE || validrole(rolenum))
@@ -1013,8 +1020,9 @@ nh_build_plselection_prompt(char *buf, int buflen, int rolenum, int racenum,
     }
     /* <your> */
 
-    nh_root_plselection_prompt(eos(tmpbuf), buflen - strlen(tmpbuf), rolenum,
-                               racenum, gendnum, alignnum);
+    nh_root_plselection_prompt(
+        tmpbuf + strlen(tmpbuf), buflen - strlen(tmpbuf),
+        rolenum, racenum, gendnum, alignnum);
     sprintf(buf, "%s", s_suffix(tmpbuf));
 
     /* buf should now be: < your lawful female gnomish cavewoman's> || <your
@@ -1024,19 +1032,19 @@ nh_build_plselection_prompt(char *buf, int buflen, int rolenum, int racenum,
     num_post_attribs = post_attribs;
     if (post_attribs) {
         if (pa[BP_RACE]) {
-            promptsep(eos(buf), num_post_attribs);
+            promptsep(buf + strlen(buf), num_post_attribs);
             strcat(buf, "race");
         }
         if (pa[BP_ROLE]) {
-            promptsep(eos(buf), num_post_attribs);
+            promptsep(buf + strlen(buf), num_post_attribs);
             strcat(buf, "role");
         }
         if (pa[BP_GEND]) {
-            promptsep(eos(buf), num_post_attribs);
+            promptsep(buf + strlen(buf), num_post_attribs);
             strcat(buf, "gender");
         }
         if (pa[BP_ALIGN]) {
-            promptsep(eos(buf), num_post_attribs);
+            promptsep(buf + strlen(buf), num_post_attribs);
             strcat(buf, "alignment");
         }
     }
@@ -1187,3 +1195,4 @@ Goodbye(void)
 }
 
 /* role.c */
+

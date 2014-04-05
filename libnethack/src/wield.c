@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2013-12-26 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -225,12 +225,12 @@ ready_weapon(struct obj *wep)
                touch_petrifies(&mons[wep->corpsenm]) &&
                !(poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))) {
         /* Prevent wielding cockatrice when not wearing gloves --KAA */
-        char kbuf[BUFSZ];
+        const char *kbuf;
 
         pline("You wield the %s corpse in your bare %s.",
               mons[wep->corpsenm].mname, makeplural(body_part(HAND)));
-        sprintf(kbuf, "wielding %s corpse without gloves",
-                an(mons[wep->corpsenm].mname));
+        kbuf = msgprintf("wielding %s corpse without gloves",
+                         an(mons[wep->corpsenm].mname));
         instapetrify(kbuf);
         /* if the player lifesaves from that, don't wield */
     } else if (wep->oartifact && !touch_artifact(wep, &youmonst)) {
@@ -375,10 +375,8 @@ wield_tool(struct obj * obj, const char *verb)
                    strstri(what, "s of ") != 0);
 
     if (obj->owornmask & W_WORN) {
-        char yourbuf[BUFSZ];
-
         pline("You can't %s %s %s while wearing %s.", verb,
-              shk_your(yourbuf, obj), what, more_than_1 ? "them" : "it");
+              shk_your(obj), what, more_than_1 ? "them" : "it");
         return FALSE;
     }
     if (welded(uwep)) {
@@ -436,17 +434,15 @@ can_twoweapon(void)
 
 #define NOT_WEAPON(obj) (!is_weptool(obj) && obj->oclass != WEAPON_CLASS)
     if (!could_twoweap(youmonst.data)) {
-        if (cantwield(youmonst.data)) {
+        if (cantwield(youmonst.data))
             pline("Don't be ridiculous!");
-        } else if (Upolyd) {
+        else if (Upolyd)
             pline("You can't use two weapons in your current form.");
-        } else {
-            char buf[BUFSZ];
-            strcpy(buf, (u.ufemale && urole.name.f) ?
-                   urole.name.f : urole.name.m);
+        else
             pline("%s aren't able to use two weapons at once.",
-                  upstart(makeplural(buf)));
-        }
+                  msgupcasefirst(makeplural(
+                                     (u.ufemale && urole.name.f) ?
+                                     urole.name.f : urole.name.m)));
     } else if (!uwep || !uswapwep)
         pline("Your %s%s%s empty.", uwep ? "left " : uswapwep ? "right " : "",
               body_part(HAND), (!uwep && !uswapwep) ? "s are" : " is");
@@ -465,12 +461,12 @@ can_twoweapon(void)
     else if (!uarmg && !Stone_resistance &&
              (uswapwep->otyp == CORPSE &&
               touch_petrifies(&mons[uswapwep->corpsenm]))) {
-        char kbuf[BUFSZ];
+        const char *kbuf;
 
         pline("You wield the %s corpse with your bare %s.",
               mons[uswapwep->corpsenm].mname, body_part(HAND));
-        sprintf(kbuf, "wielding %s corpse without gloves",
-                an(mons[uswapwep->corpsenm].mname));
+        kbuf = msgprintf("wielding %s corpse without gloves",
+                         an(mons[uswapwep->corpsenm].mname));
         instapetrify(kbuf);
     } else if (Glib || uswapwep->cursed) {
         if (!Glib)
@@ -484,12 +480,10 @@ can_twoweapon(void)
 void
 drop_uswapwep(void)
 {
-    char str[BUFSZ];
     struct obj *obj = uswapwep;
 
-    /* Avoid trashing makeplural's static buffer */
-    strcpy(str, makeplural(body_part(HAND)));
-    pline("Your %s from your %s!", aobjnam(obj, "slip"), str);
+    pline("Your %s from your %s!",
+          aobjnam(obj, "slip"), makeplural(body_part(HAND)));
     dropx(obj);
 }
 
@@ -660,10 +654,9 @@ chwepon(struct obj *otmp, int amount)
     int otyp = STRANGE_OBJECT;
 
     if (!uwep || (uwep->oclass != WEAPON_CLASS && !is_weptool(uwep))) {
-        char buf[BUFSZ];
-
-        sprintf(buf, "Your %s %s.", makeplural(body_part(HAND)),
-                (amount >= 0) ? "twitch" : "itch");
+        const char *buf = msgprintf(
+            "Your %s %s.", makeplural(body_part(HAND)),
+            (amount >= 0) ? "twitch" : "itch");
         strange_feeling(otmp, buf);
         exercise(A_DEX, (boolean) (amount >= 0));
         return 0;
@@ -791,3 +784,4 @@ unwield_silently(struct obj *obj)
 }
 
 /*wield.c*/
+

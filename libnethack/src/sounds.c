@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /*      Copyright (c) 1989 Janet Walz, Mike Threepoint */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -398,7 +398,6 @@ domonnoise(struct monst *mtmp)
     const char *pline_msg = 0,  /* Monnam(mtmp) will be prepended */
         *verbl_msg = 0; /* verbalize() */
     const struct permonst *ptr = mtmp->data;
-    char verbuf[BUFSZ];
 
     /* presumably nearness checks have already been made */
     if (!canhear())
@@ -450,30 +449,25 @@ domonnoise(struct monst *mtmp)
                 m : urace.noun;
 
             if (mtmp->mtame) {
-                if (kindred) {
-                    sprintf(verbuf, "Good %s to you Master%s",
-                            isnight ? "evening" : "day",
-                            isnight ? "!" : ".  Why do we not rest?");
-                    verbl_msg = verbuf;
-                } else {
-                    sprintf(verbuf, "%s%s",
-                            nightchild ? "Child of the night, " : "",
-                            midnight()? "I can stand this craving no longer!" :
-                            isnight ?
-                            "I beg you, help me satisfy this growing craving!" :
-                            "I find myself growing a little weary.");
-                    verbl_msg = verbuf;
-                }
+                if (kindred)
+                    verbl_msg = msgprintf("Good %s to you Master%s",
+                                          isnight ? "evening" : "day",
+                                          isnight ? "!" :
+                                          ".  Why do we not rest?");
+                else
+                    verbl_msg = msgcat(
+                        nightchild ? "Child of the night, " : "",
+                        midnight()? "I can stand this craving no longer!" :
+                        isnight ?
+                        "I beg you, help me satisfy this growing craving!" :
+                        "I find myself growing a little weary.");
             } else if (mtmp->mpeaceful) {
-                if (kindred && isnight) {
-                    sprintf(verbuf, "Good feeding %s!",
-                            u.ufemale ? "sister" : "brother");
-                    verbl_msg = verbuf;
-                } else if (nightchild && isnight) {
-                    sprintf(verbuf,
-                            "How nice to hear you, child of the night!");
-                    verbl_msg = verbuf;
-                } else
+                if (kindred && isnight)
+                    verbl_msg = msgprintf("Good feeding %s!",
+                                          u.ufemale ? "sister" : "brother");
+                else if (nightchild && isnight)
+                    verbl_msg = "How nice to hear you, child of the night!";
+                else
                     verbl_msg = "I only drink... potions.";
             } else {
                 int vampindex;
@@ -490,21 +484,19 @@ domonnoise(struct monst *mtmp)
                 else if (youmonst.data == &mons[PM_SILVER_DRAGON] ||
                          youmonst.data == &mons[PM_BABY_SILVER_DRAGON]) {
                     /* Silver dragons are silver in color, not made of silver */
-                    sprintf(verbuf,
-                            "%s! Your silver sheen does not frighten me!",
-                            youmonst.data ==
-                            &mons[PM_SILVER_DRAGON] ? "Fool" : "Young Fool");
-                    verbl_msg = verbuf;
+                    verbl_msg = msgprintf(
+                        "%s! Your silver sheen does not frighten me!",
+                        youmonst.data ==
+                        &mons[PM_SILVER_DRAGON] ? "Fool" : "Young Fool");
                 } else {
                     vampindex = rn2(SIZE(vampmsg));
                     if (vampindex == 0) {
-                        sprintf(verbuf, vampmsg[vampindex], body_part(BLOOD));
-                        verbl_msg = verbuf;
+                        verbl_msg = msgprintf(
+                            vampmsg[vampindex], body_part(BLOOD));
                     } else if (vampindex == 1) {
-                        sprintf(verbuf, vampmsg[vampindex],
-                                Upolyd ? an(mons[u.umonnum].mname) :
-                                an(racenoun));
-                        verbl_msg = verbuf;
+                        verbl_msg = msgprintf(
+                            vampmsg[vampindex],
+                            Upolyd ? an(mons[u.umonnum].mname) : an(racenoun));
                     } else
                         verbl_msg = vampmsg[vampindex];
                 }
@@ -900,3 +892,4 @@ dotalk(const struct nh_cmd_arg *arg)
 }
 
 /*sounds.c*/
+

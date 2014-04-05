@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -72,7 +72,7 @@ get_gamedir(enum game_dirs dirtype, wchar_t * buf)
 nh_bool
 get_gamedir(enum game_dirs dirtype, char *buf)
 {
-    char *envval, *subdir;
+    const char *envval, *subdir;
     mode_t mask;
 
     switch (dirtype) {
@@ -505,8 +505,8 @@ list_gamefiles(wchar_t * dir, int *count)
 static int
 compare_filetime(const void *arg1, const void *arg2)
 {
-    const char *file1 = *(const char **)arg1;
-    const char *file2 = *(const char **)arg2;
+    const char *file1 = *(const char *const *)arg1;
+    const char *file2 = *(const char *const *)arg2;
 
     struct stat s1, s2;
 

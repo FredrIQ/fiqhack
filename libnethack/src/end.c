@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-09 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -46,10 +46,10 @@ static void get_valuables(struct obj *);
 static void sort_valuables(struct valuable_data *, int);
 static int artifact_score(struct obj *, boolean, struct nh_menulist *);
 static void savelife(int);
-static boolean check_survival(int how, char *kilbuf);
+static boolean check_survival(int how, const char *kilbuf);
 static boolean should_query_disclose_options(char *defquery);
 static void container_contents(struct obj *, boolean, boolean);
-static void NORETURN done_noreturn(int how);
+static noreturn void done_noreturn(int how);
 
 #define done_stopprint program_state.stopprint
 
@@ -72,8 +72,6 @@ static const char *const ends[] = {     /* "when you..." */
     "quit", "escaped", "ascended"
 };
 
-static char killbuf[BUFSZ];
-
 extern const char *const killed_by_prefix[];    /* from topten.c */
 
 
@@ -87,11 +85,8 @@ done2(void)
         return 0;
     }
 
-    /* check_survival does this as a side effect. TODO: Make the information
-       flow more sensible. For bonus points, "killbuf" and "kilbuf" both exist,
-       and don't mean quite the same thing. */
-    killer = killbuf;
-    strcpy(killbuf, deaths[QUIT]);
+    /* check_survival does this as a side effect. */
+    killer = deaths[QUIT];
     done_noreturn(QUIT);
 }
 
@@ -105,51 +100,51 @@ doquit(const struct nh_cmd_arg *arg)
 void
 done_in_by(struct monst *mtmp)
 {
-    char buf[BUFSZ];
+    const char *buf = "";
     boolean distorted = (boolean) (Hallucination && canspotmon(mtmp));
 
     pline("You die...");
-    buf[0] = '\0';
     killer_format = KILLED_BY_AN;
     /* "killed by the high priest of Crom" is okay, "killed by the high priest" 
        alone isn't */
     if ((mtmp->data->geno & G_UNIQ) != 0 &&
         !(mtmp->data == &mons[PM_HIGH_PRIEST] && !mtmp->ispriest)) {
         if (!type_is_pname(mtmp->data))
-            strcat(buf, "the ");
+            buf = "the ";
         killer_format = KILLED_BY;
     }
     /* _the_ <invisible> <distorted> ghost of Dudley */
     if (mtmp->data == &mons[PM_GHOST] && mtmp->mnamelth) {
-        strcat(buf, "the ");
+        buf = "the ";
         killer_format = KILLED_BY;
     }
     if (mtmp->minvis)
-        strcat(buf, "invisible ");
+        buf = msgcat(buf, "invisible ");
     if (distorted)
-        strcat(buf, "hallucinogen-distorted ");
+        buf = msgcat(buf, "hallucinogen-distorted ");
 
     if (mtmp->data == &mons[PM_GHOST]) {
-        strcat(buf, "ghost");
+        buf = msgcat(buf, "ghost");
         if (mtmp->mnamelth)
-            sprintf(eos(buf), " of %s", NAME(mtmp));
+            buf = msgprintf("%sof %s", buf, NAME(mtmp));
     } else if (mtmp->isshk) {
-        sprintf(eos(buf), "%s %s, the shopkeeper",
-                (mtmp->female ? "Ms." : "Mr."), shkname(mtmp));
+        buf = msgprintf("%s%s %s, the shopkeeper", buf,
+                        (mtmp->female ? "Ms." : "Mr."), shkname(mtmp));
         killer_format = KILLED_BY;
     } else if (mtmp->ispriest || mtmp->isminion) {
         /* m_monnam() suppresses "the" prefix plus "invisible", and it
            overrides the effect of Hallucination on priestname() */
         killer = m_monnam(mtmp);
-        strcat(buf, killer);
+        buf = msgcat(buf, killer);
     } else {
-        strcat(buf, mtmp->data->mname);
+        buf = msgcat(buf, mtmp->data->mname);
         if (mtmp->mnamelth)
-            sprintf(eos(buf), " called %s", NAME(mtmp));
+            buf = msgcat_many(buf, " called ", NAME(mtmp), NULL);
     }
 
+    /* TODO: This should be using helpless_causes */
     if (u_helpless(hm_all))
-        sprintf(eos(buf), ", while %s", u.uwhybusy);
+        buf = msgcat_many(buf, ", while ", u.uwhybusy, NULL);
 
     killer = buf;
     if (mtmp->data->mlet == S_WRAITH && !noncorporeal(mtmp->data))
@@ -174,10 +169,10 @@ done_in_by(struct monst *mtmp)
 void
 panic(const char *str, ...)
 {
-    nonfatal_dump_core();
-
-    char buf[BUFSZ];
     va_list the_args;
+    const char *buf;
+
+    nonfatal_dump_core();
 
     va_start(the_args, str);
 
@@ -188,7 +183,7 @@ panic(const char *str, ...)
     if (!wizard)
         raw_printf("You can report this error at <http://trac.nethack4.org>.");
 
-    vsprintf(buf, str, the_args);
+    buf = msgvprintf(str, the_args, TRUE);
     raw_print(buf);
     paniclog("panic", buf);
     DEBUG_LOG_BACKTRACE("panic() called: %s\n", buf);
@@ -227,15 +222,20 @@ static void
 disclose(int how, boolean taken, long umoney)
 {
     char c = 0, defquery;
-    char qbuf[QBUFSZ];
+    const char *qbuf;
     boolean ask = should_query_disclose_options(&defquery);
 
     if (invent) {
         if (taken)
-            sprintf(qbuf, "Do you want to see what you had when you %s?",
-                    (how == QUIT) ? "quit" : "died");
+            qbuf = msgprintf("Do you want to see what you had when you %s?",
+                             (how == QUIT) ? "quit" : "died");
         else
-            strcpy(qbuf, "Do you want your possessions identified?");
+            /* This phrase is so fundamentally NetHack, I felt a huge sense of
+               pride when I got to edit it, even though I was just changing it
+               from a stack allocation to a string literal. Then I felt I should
+               add a comment to it because it feels important enough to be
+               dignified with one. So here it is. --AIS */
+            qbuf = "Do you want your possessions identified?";
 
         if (!done_stopprint) {
             c = ask ? yn_function(qbuf, ynqchars, defquery) : defquery;
@@ -416,7 +416,7 @@ static int artifact_score(struct obj *list,
                           boolean counting,  /* true => add up points;
                                                 false => display them */
                           struct nh_menulist *menu) {
-    char pbuf[BUFSZ];
+    const char *pbuf;
     struct obj *otmp;
     long value, total;
     short dummy;        /* object type returned by artifact_name() */
@@ -434,11 +434,12 @@ static int artifact_score(struct obj *list,
                 makeknown(otmp->otyp);
                 otmp->known = otmp->dknown = otmp->bknown = otmp->rknown = 1;
                 /* assumes artifacts don't have quan > 1 */
-                sprintf(pbuf, "%s%s (worth %ld %s)",
-                        the_unique_obj(otmp) ? "The " : "",
-                        otmp->oartifact ?
-                        artifact_name(xname(otmp), &dummy) :
-                        OBJ_NAME(objects[otmp->otyp]), value, currency(value));
+                pbuf = msgprintf("%s%s (worth %ld %s)",
+                                 the_unique_obj(otmp) ? "The " : "",
+                                 otmp->oartifact ?
+                                 artifact_name(xname(otmp), &dummy) :
+                                 OBJ_NAME(objects[otmp->otyp]),
+                                 value, currency(value));
                 add_menutext(menu, pbuf);
             }
         }
@@ -464,7 +465,7 @@ calc_score(int how, boolean show, long umoney)
     long category_points;
     double elog2;
     struct nh_menulist menu;
-    char buf[BUFSZ];
+    const char *buf;
 
     elog2 = log(2) / 1000.0;
     /* Initialise the explanation window, if show is true. */
@@ -485,8 +486,9 @@ calc_score(int how, boolean show, long umoney)
     total += category_points;
 
     if (show) {
-        sprintf(buf, "Gold:            %10ld                    (%5ld points)",
-                category_raw, category_points);
+        buf = msgprintf(
+            "Gold:            %10ld                    (%5ld points)",
+            category_raw, category_points);
         add_menutext(&menu, buf);
     }
 
@@ -496,8 +498,9 @@ calc_score(int how, boolean show, long umoney)
     total += category_points;
 
     if (show) {
-        sprintf(buf, "Experience:      %10ld level%s             (%5ld points)",
-                category_raw, category_raw == 1 ? " " : "s", category_points);
+        buf = msgprintf(
+            "Experience:      %10ld level%s             (%5ld points)",
+            category_raw, category_raw == 1 ? " " : "s", category_points);
         add_menutext(&menu, buf);
     }
 
@@ -511,9 +514,10 @@ calc_score(int how, boolean show, long umoney)
     total += category_points;
 
     if (show) {
-        sprintf(buf, "Exploration:     %10ld level%s   (%6.2f%%) (%5ld points)",
-                category_raw, category_raw == 1 ? " " : "s", category_ratio,
-                category_points);
+        buf = msgprintf(
+            "Exploration:     %10ld level%s   (%6.2f%%) (%5ld points)",
+            category_raw, category_raw == 1 ? " " : "s", category_ratio,
+            category_points);
         add_menutext(&menu, buf);
     }
 
@@ -530,9 +534,10 @@ calc_score(int how, boolean show, long umoney)
     total += category_points;
 
     if (show) {
-        sprintf(buf, "Discoveries:     %10ld item%s    (%6.2f%%) (%5ld points)",
-                category_raw, category_raw == 1 ? " " : "s", category_ratio,
-                category_points);
+        buf = msgprintf(
+            "Discoveries:     %10ld item%s    (%6.2f%%) (%5ld points)",
+            category_raw, category_raw == 1 ? " " : "s", category_ratio,
+            category_points);
         add_menutext(&menu, buf);
     }
 
@@ -558,9 +563,9 @@ calc_score(int how, boolean show, long umoney)
         total += category_points;
 
         if (show) {
-            sprintf(buf,
-                    "Valuables value: %10ld                    (%5ld points)",
-                    category_raw, category_points);
+            buf = msgprintf(
+                "Valuables value: %10ld                    (%5ld points)",
+                category_raw, category_points);
             add_menutext(&menu, buf);
         }
     } else if (show) {
@@ -574,8 +579,9 @@ calc_score(int how, boolean show, long umoney)
     total += category_points;
 
     if (show) {
-        sprintf(buf, "Artifact value:  %10ld                    (%5ld points)",
-                category_raw, category_points);
+        buf = msgprintf(
+            "Artifact value:  %10ld                    (%5ld points)",
+            category_raw, category_points);
         add_menutext(&menu, buf);
     }
 
@@ -597,9 +603,10 @@ calc_score(int how, boolean show, long umoney)
     total += category_points;
 
     if (show) {
-        sprintf(buf, "Variety of kills:%10ld monster%s (%6.2f%%) (%5ld points)",
-                category_raw, category_raw == 1 ? " " : "s", category_ratio,
-                category_points);
+        buf = msgprintf(
+            "Variety of kills:%10ld monster%s (%6.2f%%) (%5ld points)",
+            category_raw, category_raw == 1 ? " " : "s", category_ratio,
+            category_points);
         add_menutext(&menu, buf);
     }
 
@@ -609,8 +616,9 @@ calc_score(int how, boolean show, long umoney)
     total -= category_points;
 
     if (show) {
-        sprintf(buf, "Time penalty:    %10ld turn%s              (%5ld points)",
-                category_raw, category_raw == 1 ? " " : "s", -category_points);
+        buf = msgprintf(
+            "Time penalty:    %10ld turn%s              (%5ld points)",
+            category_raw, category_raw == 1 ? " " : "s", -category_points);
         add_menutext(&menu, buf);
     }
 
@@ -627,14 +635,16 @@ calc_score(int how, boolean show, long umoney)
     total /= 100;
 
     if (show) {
-        sprintf(buf, "Survival:        %10s  (score multiplied by %3ld%%)",
-                category_raw == 80 ? (how ==
-                                      -1 ? "unknown" : "died") : category_raw ==
-                90 ? "quit" : category_raw == 200 ? "ascended" : "survived",
-                category_raw);
+        buf = msgprintf(
+            "Survival:        %10s  (score multiplied by %3ld%%)",
+            category_raw == 80 ? (how ==
+                                  -1 ? "unknown" : "died") : category_raw ==
+            90 ? "quit" : category_raw == 200 ? "ascended" : "survived",
+            category_raw);
         add_menutext(&menu, buf);
         add_menutext(&menu, "");
-        sprintf(buf, "Total score:                               %10ld", total);
+        buf = msgprintf("Total score:                               %10ld",
+                        total);
         add_menutext(&menu, buf);
     }
 
@@ -647,7 +657,7 @@ calc_score(int how, boolean show, long umoney)
 }
 
 static boolean
-check_survival(int how, char *kilbuf)
+check_survival(int how, const char *kilbuf)
 {
     if (how == TRICKED) {
         if (killer) {
@@ -660,17 +670,13 @@ check_survival(int how, char *kilbuf)
         }
     }
 
-    /* kilbuf: used to copy killer in case it comes from something like
-       xname(), which would otherwise get overwritten when we call xname() when 
-       listing possessions pbuf: holds sprintf'd output for raw_print and
-       putstr */
     if (how == ASCENDED || (!killer && how == GENOCIDED))
         killer_format = NO_KILLER_PREFIX;
     /* Avoid killed by "a" burning or "a" starvation */
     if (!killer && (how == STARVING || how == BURNING))
         killer_format = KILLED_BY;
-    strcpy(kilbuf, (!killer || how >= PANICKED ? deaths[how] : killer));
-    killer = kilbuf;
+    if (!killer || how >= PANICKED)
+        killer = deaths[how];
 
     if (how < PANICKED)
         u.umortality++;
@@ -717,10 +723,9 @@ check_survival(int how, char *kilbuf)
 }
 
 void
-display_rip(int how, char *kilbuf, char *pbuf, long umoney,
-            unsigned long carried)
+display_rip(int how, long umoney, unsigned long carried)
 {
-    char outrip_buf[BUFSZ];
+    const char *outrip_buf = "", *pbuf;
     boolean show_endwin = FALSE;
     struct nh_menulist menu;
 
@@ -738,44 +743,49 @@ display_rip(int how, char *kilbuf, char *pbuf, long umoney,
             switch (killer_format) {
             default:
                 impossible("bad killer format?");
+                outrip_buf = killed_by_prefix[how];
+                break;
             case KILLED_BY_AN:
-                strcpy(outrip_buf, killed_by_prefix[how]);
-                strcat(outrip_buf, an(killer));
+                outrip_buf = msgcat(killed_by_prefix[how], an(killer));
                 break;
             case KILLED_BY:
-                strcpy(outrip_buf, killed_by_prefix[how]);
-                strcat(outrip_buf, killer);
+                outrip_buf = msgcat(killed_by_prefix[how], killer);
+                break;
+            case KILLED_BY_THE:
+                outrip_buf = msgcat(killed_by_prefix[how], the(killer));
                 break;
             case NO_KILLER_PREFIX:
-                strcpy(outrip_buf, killer);
+                outrip_buf = killer;
                 break;
             }
         }
     } else
         done_stopprint = 1;
-
-/* changing kilbuf really changes killer. we do it this way because
-   killer is declared a (const char *)
-*/
+    
+    /* TODO: I'm reasonably sure these end up getting appended twice. I'm
+       in the middle of a large rewrite right now and don't want to change
+       more than I have to (that's burnt me before), but if someone sees
+       this comment lying around in the codebase, complain at me --AIS */
     if (carried & 0x0001UL) /* real Amulet of Yendor */
-        strcat(kilbuf, " (with the Amulet)");
+        killer = msgcat(killer, " (with the Amulet)");
     else if (how == ESCAPED) {
         /* Note: the fake Amulet check relies on bones not having been
            created; this is safe for escapes, but not safe in general */
         if (Is_astralevel(&u.uz))       /* offered Amulet to wrong deity */
-            strcat(kilbuf, " (in celestial disgrace)");
+            killer = msgcat(killer, " (in celestial disgrace)");
         else if (carrying(FAKE_AMULET_OF_YENDOR))
-            strcat(kilbuf, " (with a fake Amulet)");
+            killer = msgcat(killer, " (with a fake Amulet)");
         /* don't bother counting to see whether it should be plural */
     }
 
     if (!done_stopprint) {
-        sprintf(pbuf, "%s %s the %s...", Goodbye(), u.uplname,
-                how !=
-                ASCENDED ? (const char *)((u.ufemale && urole.name.f) ?
-                                          urole.name.f : urole.name.m) :
-                (const char *)(u.ufemale ?
-                               "Demigoddess" : "Demigod"));
+        const char *pbuf;
+        pbuf = msgprintf("%s %s the %s...", Goodbye(), u.uplname,
+                         how != ASCENDED ?
+                         (const char *)((u.ufemale && urole.name.f) ?
+                                        urole.name.f : urole.name.m) :
+                         (const char *)(u.ufemale ?
+                                        "Demigoddess" : "Demigod"));
         add_menutext(&menu, pbuf);
         add_menutext(&menu, "");
     }
@@ -790,25 +800,25 @@ display_rip(int how, char *kilbuf, char *pbuf, long umoney,
         viz_array[0][0] |= IN_SIGHT;    /* need visibility for naming */
         mtmp = turnstate.migrating_pets;
         if (!done_stopprint)
-            strcpy(pbuf, "You");
+            pbuf = "You";
         if (mtmp) {
             while (mtmp) {
                 if (!done_stopprint)
-                    sprintf(eos(pbuf), " and %s", mon_nam(mtmp));
+                    pbuf = msgcat_many(pbuf, " and ", mon_nam(mtmp), NULL);
                 mtmp = mtmp->nmon;
             }
             if (!done_stopprint)
                 add_menutext(&menu, pbuf);
-            pbuf[0] = '\0';
+            pbuf = "";
         } else {
             if (!done_stopprint)
-                strcat(pbuf, " ");
+                pbuf = "You ";
         }
         if (!done_stopprint) {
-            sprintf(eos(pbuf), "%s with %d point%s,",
-                    how ==
-                    ASCENDED ? "went to your reward" :
-                    "escaped from the dungeon", u.urexp, plur(u.urexp));
+            pbuf = msgprintf("%s%s with %d point%s,", pbuf,
+                             how == ASCENDED ? "went to your reward" :
+                             "escaped from the dungeon",
+                             u.urexp, plur(u.urexp));
             add_menutext(&menu, pbuf);
         }
 
@@ -831,12 +841,13 @@ display_rip(int how, char *kilbuf, char *pbuf, long umoney,
                     otmp->dknown = 1;   /* seen it (blindness fix) */
                     otmp->onamelth = 0;
                     otmp->quan = count;
-                    sprintf(pbuf, "%8ld %s (worth %ld %s),", count, xname(otmp),
-                            count * (long)objects[typ].oc_cost, currency(2L));
+                    pbuf = msgprintf("%8ld %s (worth %ld %s),", count,
+                                     xname(otmp), count *
+                                     (long)objects[typ].oc_cost, currency(2L));
                     obfree(otmp, NULL);
                 } else {
-                    sprintf(pbuf, "%8ld worthless piece%s of colored glass,",
-                            count, plur(count));
+                    pbuf = msgprintf("%8ld worthless piece%s of colored glass,",
+                                     count, plur(count));
                 }
                 add_menutext(&menu, pbuf);
             }
@@ -847,34 +858,34 @@ display_rip(int how, char *kilbuf, char *pbuf, long umoney,
         if (u.uz.dnum == 0 && u.uz.dlevel <= 0) {
             /* level teleported out of the dungeon; `how' is DIED, due to
                falling or to "arriving at heaven prematurely" */
-            sprintf(pbuf, "You %s beyond the confines of the dungeon",
-                    (u.uz.dlevel < 0) ? "passed away" : ends[how]);
+            pbuf = msgprintf("You %s beyond the confines of the dungeon",
+                             (u.uz.dlevel < 0) ? "passed away" : ends[how]);
         } else {
             /* more conventional demise */
             const char *where = dungeons[u.uz.dnum].dname;
 
             if (Is_astralevel(&u.uz))
                 where = "The Astral Plane";
-            sprintf(pbuf, "You %s in %s", ends[how], where);
+            pbuf = msgprintf("You %s in %s", ends[how], where);
             if (!In_endgame(&u.uz) && !Is_knox(&u.uz))
-                sprintf(eos(pbuf), " on dungeon level %d",
-                        In_quest(&u.uz) ? dunlev(&u.uz) : depth(&u.uz));
+                pbuf = msgprintf("%s on dungeon level %d", pbuf,
+                                 In_quest(&u.uz) ?
+                                 dunlev(&u.uz) : depth(&u.uz));
         }
 
-        sprintf(eos(pbuf), " with %d point%s,", u.urexp, plur(u.urexp));
+        pbuf = msgprintf(" with %d point%s,", u.urexp, plur(u.urexp));
         add_menutext(&menu, pbuf);
     }
 
     if (!done_stopprint) {
-        sprintf(pbuf, "and %ld piece%s of gold, after %u move%s.", umoney,
-                plur(umoney), moves, plur(moves));
+        pbuf = msgprintf("and %ld piece%s of gold, after %u move%s.", umoney,
+                         plur(umoney), moves, plur(moves));
         add_menutext(&menu, pbuf);
     }
     if (!done_stopprint) {
-        sprintf(pbuf,
-                "You were level %d with a maximum of %d hit point%s when you "
-                "%s.",
-                u.ulevel, u.uhpmax, plur(u.uhpmax), ends[how]);
+        pbuf = msgprintf("You were level %d with a maximum of %d "
+                         "hit point%s when you %s.",
+                         u.ulevel, u.uhpmax, plur(u.uhpmax), ends[how]);
         add_menutext(&menu, pbuf);
         add_menutext(&menu, "");
     }
@@ -890,19 +901,17 @@ display_rip(int how, char *kilbuf, char *pbuf, long umoney,
 void
 done(int how)
 {
-    if (check_survival(how, killbuf))
+    if (check_survival(how, killer))
         return;
 
     done_noreturn(how);
 }
 
 /* Be careful not to call panic from here! */
-static void NORETURN
+static noreturn void
 done_noreturn(int how)
 {
     boolean taken;
-    char pbuf[BUFSZ];
-    char kbuf[BUFSZ];
     boolean bones_ok;
     struct obj *corpse = NULL;
     long umoney;
@@ -946,6 +955,7 @@ done_noreturn(int how)
         else if (u.ugrave_arise == NON_PM &&
                  !(mvitals[u.umonnum].mvflags & G_NOCORPSE)) {
             int mnum = u.umonnum;
+            const char *pbuf;
 
             if (!Upolyd) {
                 /* Base corpse on race when not poly'd since original u.umonnum 
@@ -956,10 +966,11 @@ done_noreturn(int how)
             }
             corpse = mk_named_object(CORPSE, &mons[mnum], u.ux, u.uy,
                                      u.uplname);
-            sprintf(pbuf, "%s, %s%s", u.uplname,
-                    killer_format ==
-                    NO_KILLER_PREFIX ? "" : killed_by_prefix[how],
-                    killer_format == KILLED_BY_AN ? an(killer) : killer);
+            pbuf = msgprintf("%s, %s%s", u.uplname,
+                             killer_format == NO_KILLER_PREFIX ? "" :
+                             killed_by_prefix[how],
+                             killer_format == KILLED_BY_AN ?
+                             an(killer) : killer);
             make_grave(level, u.ux, u.uy, pbuf);
         }
     }
@@ -970,14 +981,13 @@ done_noreturn(int how)
             how = DIED;
             u.umortality++;     /* skipped above when how==QUIT */
             /* note that killer is pointing at killbuf */
-            strcpy(killbuf, "quit while already on Charon's boat");
+            killer = "quit while already on Charon's boat";
         }
     }
     if (how == ESCAPED)
         killer_format = NO_KILLER_PREFIX;
 
-    describe_death(kbuf, how, COLNO);
-    log_game_over(kbuf);
+    log_game_over(describe_death(how, COLNO));
 
     /* these affect score and/or bones, but avoid them during panic */
     taken = paybill((how == ESCAPED) ? -1 : (how != QUIT));
@@ -1018,8 +1028,8 @@ done_noreturn(int how)
        (containers will be gone by then if bones just got saved...) */
     done_money = umoney;
 
-    end_dump(how, killbuf, pbuf, umoney, carried);
-    display_rip(how, killbuf, pbuf, umoney, carried);
+    end_dump(how, umoney, carried);
+    display_rip(how, umoney, carried);
 
     /* generate a topten entry for this game. update_topten does not display
        anything. */
@@ -1033,7 +1043,6 @@ static void
 container_contents(struct obj *list, boolean identified, boolean all_containers)
 {
     struct obj *box, *obj;
-    char buf[BUFSZ];
     int i, icount;
     struct nh_objlist objmenu;
 
@@ -1071,9 +1080,9 @@ container_contents(struct obj *list, boolean identified, boolean all_containers)
                     add_objitem(&objmenu, MI_NORMAL, i + 1,
                                 doname(contents[i]), contents[i], FALSE);
 
-                sprintf(buf, "Contents of %s:", the(xname(box)));
-                display_objects(&objmenu, buf, PICK_NONE, PLHINT_CONTAINER,
-                                NULL);
+                display_objects(&objmenu,
+                                msgprintf("Contents of %s:", the(xname(box))),
+                                PICK_NONE, PLHINT_CONTAINER, NULL);
 
                 if (all_containers)
                     container_contents(box->cobj, identified, TRUE);
@@ -1102,6 +1111,7 @@ terminate(enum nh_play_status playstatus)
     if (!program_state.panicking) {
         freedynamicdata();
         dlb_cleanup();
+        abort_turnstate();
     }
 
     /* try to leave gracefully - this should return control to the ui code */
@@ -1121,7 +1131,7 @@ void nonfatal_dump_core(void)
 #ifndef AIMAKE_BUILDOS_MSWin32
     if (!fork()) {
         /* We want to make no assumptions about program state, so don't do
-         * anything on an error. */
+           anything on an error. */
         abort();
     }
 #endif
@@ -1134,7 +1144,7 @@ list_vanquished(char defquery, boolean ask)
     int ntypes = 0, max_lev = 0, nkilled;
     long total_killed = 0L;
     char c;
-    char buf[BUFSZ];
+    const char *buf;
     struct nh_menulist menu;
 
     /* get totals first */
@@ -1162,20 +1172,20 @@ list_vanquished(char defquery, boolean ask)
                     if (mons[i].mlevel == lev &&
                         (nkilled = mvitals[i].died) > 0) {
                         if ((mons[i].geno & G_UNIQ) && i != PM_HIGH_PRIEST) {
-                            sprintf(buf, "%s%s",
-                                    !type_is_pname(&mons[i]) ? "The " : "",
-                                    mons[i].mname);
+                            buf = msgcat(!type_is_pname(&mons[i]) ? "The " : "",
+                                         mons[i].mname);
                             if (nkilled > 1) {
                                 switch (nkilled) {
                                 case 2:
-                                    sprintf(eos(buf), " (twice)");
+                                    buf = msgcat(buf, " (twice");
                                     break;
                                 case 3:
-                                    sprintf(eos(buf), " (thrice)");
+                                    buf = msgcat(buf, " (thrice)");
                                     break;
                                 default:
-                                    sprintf(eos(buf), " (%d time%s)", nkilled,
-                                            plur(nkilled));
+                                    buf = msgprintf("%s (%d time%s)",
+                                                    buf, nkilled,
+                                                    plur(nkilled));
                                     break;
                                 }
                             }
@@ -1183,10 +1193,10 @@ list_vanquished(char defquery, boolean ask)
                             /* trolls or undead might have come back, but we
                                don't keep track of that */
                             if (nkilled == 1)
-                                strcpy(buf, an(mons[i].mname));
+                                buf = an(mons[i].mname);
                             else
-                                sprintf(buf, "%d %s", nkilled,
-                                        makeplural(mons[i].mname));
+                                buf = msgprintf("%d %s", nkilled,
+                                                makeplural(mons[i].mname));
                         }
                         add_menutext(&menu, buf);
                     }
@@ -1194,8 +1204,8 @@ list_vanquished(char defquery, boolean ask)
                 add_menutext(&menu, "and a partridge in a pear tree");
             if (ntypes > 1) {
                 add_menutext(&menu, "");
-                sprintf(buf, "%ld creatures vanquished.", total_killed);
-                add_menutext(&menu, buf);
+                add_menutext(&menu, msgprintf("%ld creatures vanquished.",
+                                              total_killed));
             }
             display_menu(&menu, "Vanquished creatures:",
                          PICK_NONE, PLHINT_ANYWHERE, NULL);
@@ -1247,8 +1257,8 @@ list_genocided(char defquery, boolean ask)
 {
     int i;
     int ngenocided, nextincted;
-    char c, *query, *title;
-    char buf[BUFSZ];
+    char c;
+    const char *query, *title, *buf;
     struct nh_menulist menu;
 
     ngenocided = nextincted = 0;
@@ -1274,22 +1284,21 @@ list_genocided(char defquery, boolean ask)
                     ((mvitals[i].mvflags & G_EXTINCT) &&
                      !(mons[i].geno & G_UNIQ))) {
                     if ((mons[i].geno & G_UNIQ) && i != PM_HIGH_PRIEST)
-                        sprintf(buf, "%s%s",
-                                !type_is_pname(&mons[i]) ? "" : "the ",
-                                mons[i].mname);
+                        buf = msgcat( !type_is_pname(&mons[i]) ? "" : "the ",
+                                      mons[i].mname);
                     else
-                        strcpy(buf, makeplural(mons[i].mname));
+                        buf = makeplural(mons[i].mname);
 
                     if (!(mvitals[i].mvflags & G_GENOD))
-                        strcat(buf, " (extinct)");
+                        buf = msgcat(buf, " (extinct)");
                     add_menutext(&menu, buf);
                 }
 
             add_menutext(&menu, "");
-            sprintf(buf, "%d species genocided.", ngenocided);
+            buf = msgprintf("%d species genocided.", ngenocided);
             if (ngenocided)
                 add_menutext(&menu, buf);
-            sprintf(buf, "%d species extinct.", nextincted);
+            buf = msgprintf("%d species extinct.", nextincted);
             if (nextincted)
                 add_menutext(&menu, buf);
 
@@ -1303,3 +1312,4 @@ list_genocided(char defquery, boolean ask)
 }
 
 /*end.c*/
+

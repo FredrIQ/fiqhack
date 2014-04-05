@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-05 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Kenneth Lorber, Bethesda, Maryland, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -64,10 +64,6 @@ static long lib_dlb_ftell(dlb *);
 /* not static because shared with dlb_main.c */
 boolean open_library(const char *lib_name, library * lp);
 void close_library(library * lp);
-
-/* without extern.h via hack.h, these haven't been declared for us */
-extern char *eos(char *);
-
 
 
 /*
@@ -142,7 +138,7 @@ readlibdir(library * lp)
             lp->sspace = NULL;
             return FALSE;
         }
-        sp = eos(sp) + 1;
+        sp = sp + strlen(sp) + 1;
     }
 
     /* calculate file sizes using offset information */
@@ -512,3 +508,4 @@ dlb_ftell(dlb * dp)
 }
 
 /*dlb.c*/
+

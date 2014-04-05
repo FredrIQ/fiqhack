@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* This is the ``Mersenne Twister'' random number generator MT19937, which
    generates pseudorandom integers uniformly distributed in 0..(2^32 - 1)
    starting from any odd seed in 0..(2^32 - 1).  This version is adapted from
@@ -153,3 +153,4 @@ display_rng(int x)
 
     return lcg_val % x;
 }
+

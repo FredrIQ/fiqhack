@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-16 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -463,7 +463,7 @@ mon_catchup_elapsed_time(struct monst *mtmp, long nmv)
        dying the next time we call dog_move() */
     if (mtmp->mtame && !mtmp->isminion &&
         (carnivorous(mtmp->data) || herbivorous(mtmp->data))) {
-        struct edog *edog = EDOG(mtmp);
+        const struct edog *edog = CONST_EDOG(mtmp);
 
         if ((moves > edog->hungrytime + 500 && mtmp->mhp < 3) ||
             (moves > edog->hungrytime + 750))
@@ -670,7 +670,8 @@ dogfood(struct monst *mon, struct obj *obj)
             return obj->cursed ? UNDEF : APPORT;
 
         /* a starving pet will eat almost anything */
-        starving = (mon->mtame && !mon->isminion && EDOG(mon)->mhpmax_penalty);
+        starving = (mon->mtame && !mon->isminion &&
+                    CONST_EDOG(mon)->mhpmax_penalty);
 
         switch (obj->otyp) {
         case TRIPE_RATION:
@@ -781,7 +782,7 @@ tamedog(struct monst *mtmp, struct obj *obj)
 
         if (mtmp->mcanmove && !mtmp->mconf && !mtmp->meating &&
             ((tasty = dogfood(mtmp, obj)) == DOGFOOD ||
-             (tasty <= ACCFOOD && EDOG(mtmp)->hungrytime <= moves))) {
+             (tasty <= ACCFOOD && CONST_EDOG(mtmp)->hungrytime <= moves))) {
             /* pet will "catch" and eat this thrown food */
             if (canseemon(mtmp)) {
                 boolean big_corpse = (obj->otyp == CORPSE &&
@@ -820,7 +821,7 @@ tamedog(struct monst *mtmp, struct obj *obj)
     mtmp2->mxtyp = MX_EDOG;
     mtmp2->mxlth = sizeof (struct edog);
     if (mtmp->mnamelth)
-        strcpy(NAME(mtmp2), NAME(mtmp));
+        strcpy(NAME_MUTABLE(mtmp2), NAME(mtmp));
     initedog(mtmp2);
     replmon(mtmp, mtmp2);
     /* `mtmp' is now obsolete */
@@ -944,3 +945,4 @@ abuse_dog(struct monst *mtmp)
 }
 
 /*dog.c*/
+

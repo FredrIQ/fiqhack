@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-17 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -51,12 +51,12 @@ xlev_to_rank(int xlev)
 const char *
 rank_of(int lev, short monnum, boolean female)
 {
-    struct Role *role;
+    const struct Role *role;
     int i;
 
 
     /* Find the role */
-    for (role = (struct Role *)roles; role->name.m; role++)
+    for (role = roles; role->name.m; role++)
         if (monnum == role->malenum || monnum == role->femalenum)
             break;
     if (!role->name.m)
@@ -196,17 +196,8 @@ make_player_info(struct nh_player_info *pi)
     pi->z = u.uz.dlevel;
 
     if (Upolyd) {
-        char mbot[BUFSZ];
-        int k = 0;
-
-        strcpy(mbot, mons[u.umonnum].mname);
-        while (mbot[k] != 0) {
-            if ((k == 0 || (k > 0 && mbot[k - 1] == ' ')) && 'a' <= mbot[k] &&
-                mbot[k] <= 'z')
-                mbot[k] += 'A' - 'a';
-            k++;
-        }
-        strncpy(pi->rank, mbot, sizeof (pi->rank));
+        strncpy(pi->rank, msgtitlecase(mons[u.umonnum].mname),
+                sizeof (pi->rank));
     } else
         strncpy(pi->rank, rank(), sizeof (pi->rank));
 
@@ -325,3 +316,4 @@ bot(void)
 }
 
 /*botl.c*/
+

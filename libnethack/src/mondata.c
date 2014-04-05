@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-10 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -403,10 +403,11 @@ name_to_mon(const char *in_str)
     int i;
     int mntmp = NON_PM;
     char *s, *str, *term;
-    char buf[BUFSZ];
+    /* Note: these bounds assume that we never lengthen str. */
+    char mutable_in_str[strlen(in_str) + 1];
     int len, slen;
 
-    str = strcpy(buf, in_str);
+    str = strcpy(mutable_in_str, in_str);
 
     if (!strncmp(str, "a ", 2))
         str += 2;
@@ -416,7 +417,7 @@ name_to_mon(const char *in_str)
     slen = strlen(str);
     term = str + slen;
 
-    if ((s = strstri(str, "vortices")) != 0)
+    if ((s = strstri_mutable(str, "vortices")) != 0)
         strcpy(s + 4, "ex");
     /* be careful with "ies"; "priest", "zombies" */
     else if (slen > 3 && !strcmpi(term - 3, "ies") &&
@@ -713,3 +714,4 @@ on_fire(const struct permonst *mptr, const struct attack *mattk)
 
 
 /*mondata.c*/
+

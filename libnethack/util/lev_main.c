@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -142,7 +142,7 @@ static struct {
 };
 
 const char *fname = "(stdin)";
-static char *outprefix = "";
+static const char *outprefix = "";
 int fatal_error = 0;
 int want_warnings = 0;
 
@@ -1040,8 +1040,8 @@ write_level_file(char *filename, splev * room_level, specialmaze * maze_level)
 
     lbuf[0] = '\0';
     strcat(lbuf, outprefix);
-    if (eos(lbuf)[-1] == ' ')
-        eos(lbuf)[-1] = '\0';
+    if ((lbuf + strlen(lbuf))[-1] == ' ')
+        (lbuf + strlen(lbuf))[-1] = '\0';
     strcat(lbuf, filename);
     strcat(lbuf, LEV_EXT);
 
@@ -1496,3 +1496,4 @@ short ospeed;
 #endif /* STRICT_REF_DEF */
 
 /*lev_main.c*/
+

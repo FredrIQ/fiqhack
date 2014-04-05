@@ -1,5 +1,5 @@
 %{
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /*	Copyright (c) 1989 by Jean-Christophe Collet */
 /*	Copyright (c) 1990 by M. Stephenson	     */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -88,3 +88,4 @@ void init_yyout( FILE *output_f )
 }
 
 /*dgn_comp.l*/
+

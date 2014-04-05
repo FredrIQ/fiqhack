@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) NetHack Development Team 1992.                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -371,7 +371,8 @@ initialize_unique_object_names(void)
             if (object_matches_descr_of[otyp] ==
                 object_matches_descr_of[otyp2]) nth++;
         }
-        snprintf(eos(target), UNIQUE_OBJECT_NAME_LENGTH - strlen(target),
+        snprintf(target + strlen(target),
+                 UNIQUE_OBJECT_NAME_LENGTH - strlen(target),
                  "s %d", nth);
     }
 }
@@ -412,10 +413,10 @@ nh_get_drawing_info(void)
     di = xmalloc(&xm_drawing, sizeof (struct nh_drawing_info));
 
     di->num_bgelements = SIZE(defsyms);
-    di->bgelements = (struct nh_symdef *)defsyms;
+    di->bgelements = defsyms;
 
     di->num_traps = SIZE(trapsyms);
-    di->traps = (struct nh_symdef *)trapsyms;
+    di->traps = trapsyms;
 
     di->num_objects = NUM_OBJECTS;
     tmp = xmalloc(&xm_drawing, sizeof (struct nh_symdef) * di->num_objects);
@@ -442,20 +443,20 @@ nh_get_drawing_info(void)
     di->monsters = tmp;
 
     di->num_warnings = SIZE(warnsyms);
-    di->warnings = (struct nh_symdef *)warnsyms;
+    di->warnings = warnsyms;
 
     di->num_expltypes = SIZE(expltypes);
-    di->expltypes = (struct nh_symdef *)expltypes;
-    di->explsyms = (struct nh_symdef *)explsyms;
+    di->expltypes = expltypes;
+    di->explsyms = explsyms;
 
     di->num_zaptypes = SIZE(zaptypes);
-    di->zaptypes = (struct nh_symdef *)zaptypes;
-    di->zapsyms = (struct nh_symdef *)zapsyms;
+    di->zaptypes = zaptypes;
+    di->zapsyms = zapsyms;
 
     di->num_effects = SIZE(effectsyms);
-    di->effects = (struct nh_symdef *)effectsyms;
+    di->effects = effectsyms;
 
-    di->swallowsyms = (struct nh_symdef *)swallowsyms;
+    di->swallowsyms = swallowsyms;
 
     di->bg_feature_offset = DUNGEON_FEATURE_OFFSET;
 
@@ -463,3 +464,4 @@ nh_get_drawing_info(void)
 }
 
 /*drawing.c*/
+

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-17 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -9,7 +9,7 @@
 
 #define WINTYPELEN 16
 
-static int change_inv_order(char *op);
+static int change_inv_order(const char *op);
 static struct nh_option_desc *new_opt_struct(void);
 
 /* -------------------------------------------------------------------------- */
@@ -246,19 +246,16 @@ static const char def_inv_order[MAXOCLASSES] = {
 };
 
 
-/* most environment variables will eventually be printed in an error
- * message if they don't work, and most error message paths go through
- * BUFSZ buffers, which could be overflowed by a maliciously long
- * environment variable.  if a variable can legitimately be long, or
- * if it's put in a smaller buffer, the responsible code will have to
- * bounds-check itself.
- */
+/* Most environment variables will eventually be printed in an error message if
+   they don't work. Error messages now tend to be bounds-checked correctly, but
+   we nonetheless don't want to parrot maliciously long messages back to the
+   user because it spams their terminals. */
 char *
 nh_getenv(const char *ev)
 {
     char *getev = getenv(ev);
 
-    if (getev && strlen(getev) <= (BUFSZ / 2))
+    if (getev && strlen(getev) <= 128) /* same as 4.2 */
         return getev;
     else
         return NULL;
@@ -278,9 +275,9 @@ build_role_spec(void)
     for (i = 0; roles[i].name.m || roles[i].name.f; i++) {
         choices[i].id = i;
         if (roles[i].name.m)
-            choices[i].caption = (char *)roles[i].name.m;
+            choices[i].caption = roles[i].name.m;
         else
-            choices[i].caption = (char *)roles[i].name.f;
+            choices[i].caption = roles[i].name.f;
     }
     choices[i].id = ROLE_NONE;
     choices[i].caption = "ask";
@@ -302,7 +299,7 @@ build_race_spec(void)
     choices = malloc((i + 2) * sizeof (struct nh_listitem));
     for (i = 0; races[i].noun; i++) {
         choices[i].id = i;
-        choices[i].caption = (char *)races[i].noun;
+        choices[i].caption = races[i].noun;
     }
     choices[i].id = ROLE_NONE;
     choices[i].caption = "ask";
@@ -684,10 +681,11 @@ nonew:
 
 
 static int
-change_inv_order(char *op)
+change_inv_order(const char *op)
 {
     int oc_sym, num;
-    char *sp, buf[BUFSZ];
+    char buf[MAXOCLASSES];
+    const char *sp;
 
     num = 0;
 
@@ -715,3 +713,4 @@ change_inv_order(char *op)
 }
 
 /*options.c*/
+

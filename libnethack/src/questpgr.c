@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-01 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /*      Copyright 1991, M. Stephenson             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -15,8 +15,8 @@
 static void Fread(void *, int, int, dlb *);
 static struct qtmsg *construct_qtlist(long);
 static struct qtmsg *msg_in(struct qtmsg *, int);
-static void convert_arg(char c, char *buf);
-static char *convert_line(const char *in_line);
+static const char *convert_arg(char c);
+static const char *convert_line(const char *in_line);
 static void deliver_by_pline(struct qtmsg *);
 static void deliver_by_window(struct qtmsg *);
 
@@ -142,178 +142,157 @@ msg_in(struct qtmsg *qtm_list, int msgnum)
     return NULL;
 }
 
-static void
-convert_arg(char c, char *buf)
+static const char *
+convert_arg(char c)
 {
     switch (c) {
     case 'p':
-        strcpy(buf, u.uplname);
-        break;
+        return msg_from_string(u.uplname);
     case 'c':
-        strcpy(buf, (u.ufemale && urole.name.f) ? urole.name.f : urole.name.m);
-        break;
+        return (u.ufemale && urole.name.f) ? urole.name.f : urole.name.m;
     case 'r':
-        strcpy(buf, rank_of(u.ulevel, Role_switch, u.ufemale));
-        break;
+        return rank_of(u.ulevel, Role_switch, u.ufemale);
     case 'R':
-        strcpy(buf, rank_of(MIN_QUEST_LEVEL, Role_switch, u.ufemale));
-        break;
+        return rank_of(MIN_QUEST_LEVEL, Role_switch, u.ufemale);
     case 's':
-        strcpy(buf, (u.ufemale) ? "sister" : "brother");
-        break;
+        return (u.ufemale) ? "sister" : "brother";
     case 'S':
-        strcpy(buf, (u.ufemale) ? "daughter" : "son");
-        break;
+        return (u.ufemale) ? "daughter" : "son";
     case 'l':
     case 'n': {
         int i = c == 'l' ? urole.ldrnum : urole.neminum;;
-        if (snprintf(buf, BUFSZ, "%s%s", type_is_pname(&mons[i]) ? "" : "the ",
-                     mons[i].mname) >= BUFSZ)
-            impossible("Quest monster name exceeds BUFSZ");
-        break;
+        return msgcat(type_is_pname(&mons[i]) ? "" : "the ",
+                      mons[i].mname);
     }
     case 'i':
-        strcpy(buf, urole.intermed);
-        break;
+        return urole.intermed;
     case 'o':
-        strcpy(buf, the(artiname(urole.questarti)));
-        break;
+        return the(artiname(urole.questarti));
     case 'g':
-        strcpy(buf, mons[urole.guardnum].mname);
-        break;
+        return mons[urole.guardnum].mname;
     case 'G':
-        strcpy(buf, align_gtitle(u.ualignbase[A_ORIGINAL]));
-        break;
+        return align_gtitle(u.ualignbase[A_ORIGINAL]);
     case 'H':
-        strcpy(buf, urole.homebase);
-        break;
+        return urole.homebase;
     case 'a':
-        strcpy(buf, align_str(u.ualignbase[A_ORIGINAL]));
-        break;
+        return align_str(u.ualignbase[A_ORIGINAL]);
     case 'A':
-        strcpy(buf, align_str(u.ualign.type));
-        break;
+        return align_str(u.ualign.type);
     case 'd':
-        strcpy(buf, align_gname(u.ualignbase[A_ORIGINAL]));
-        break;
+        return align_gname(u.ualignbase[A_ORIGINAL]);
     case 'D':
-        strcpy(buf, align_gname(A_LAWFUL));
-        break;
+        return align_gname(A_LAWFUL);
     case 'C':
-        strcpy(buf, "chaotic");
-        break;
+        return "chaotic";
     case 'N':
-        strcpy(buf, "neutral");
-        break;
+        return "neutral";
     case 'L':
-        strcpy(buf, "lawful");
-        break;
+        return "lawful";
     case 'x':
-        strcpy(buf, Blind ? "sense" : "see");
-        break;
+        return Blind ? "sense" : "see";
     case 'Z':
-        strcpy(buf, dungeons[0].dname);
-        break;
+        return msg_from_string(dungeons[0].dname);
     case '%':
-        strcpy(buf, "%");
-        break;
+        return "%";
     default:
-        strcpy(buf, "");
-        break;
+        return "";
     }
 }
 
-static char *
+static const char *
 convert_line(const char *in_line)
 {
-    char *c, *cc, *out_line = malloc(BUFSZ * 2);
-    char xbuf[BUFSZ], buf[BUFSZ];
+    /* xcrypt needs us to allocate a buffer for it */
+    char decrypted_line[strlen(in_line)+1];
+    xcrypt(in_line, decrypted_line);
+    const char *rv = "";
+    char *c;
 
-    cc = out_line;
-    for (c = xcrypt(in_line, xbuf); *c; c++) {
+    /* Tokenize the decrypted line; we stop at \r, \n, or \0, and do
+       special handling of "%" characters.
 
-        *cc = 0;
+       The algorithm used here is quadratic (when linear is possible), but
+       given that the lines are only 80 characters long, I feel that a clear
+       algorithm is superior to a low computational complexity algorithm. */
+
+    for (c = xcrypt(in_line, decrypted_line); ; c++) {
+
         switch (*c) {
 
         case '\r':
         case '\n':
-            *(++cc) = 0;
-            return out_line;
+        case '\0':
+            return rv;
 
         case '%':
-            if (*(c + 1)) {
-                convert_arg(*(++c), buf);
+            if (c[1]) {
+                const char *conversion = convert_arg(*(++c));
                 switch (*(++c)) {
 
                     /* insert "a"/"an" prefix */
                 case 'A':
-                    strcat(cc, An(buf));
-                    cc += strlen(cc);
-                    continue;   /* for */
+                    rv = msgcat(rv, An(conversion));
+                    break;
                 case 'a':
-                    strcat(cc, an(buf));
-                    cc += strlen(cc);
-                    continue;   /* for */
+                    rv = msgcat(rv, an(conversion));
+                    break;
 
                     /* capitalize */
                 case 'C':
-                    buf[0] = highc(buf[0]);
+                    rv = msgcat(rv, msgupcasefirst(conversion));
                     break;
 
                     /* pluralize */
                 case 'P':
-                    buf[0] = highc(buf[0]);
+                    /* Note: makeplural doesn't work on arbitrarily capitalized
+                       strings */
+                    rv = msgcat(rv, msgupcasefirst(makeplural(conversion)));
+                    break;
                 case 'p':
-                    strcpy(buf, makeplural(buf));
+                    rv = msgcat(rv, makeplural(conversion));
                     break;
 
                     /* append possessive suffix */
                 case 'S':
-                    buf[0] = highc(buf[0]);
+                    conversion = msgupcasefirst(conversion);
+                    /* fall through */
                 case 's':
-                    strcpy(buf, s_suffix(buf));
+                    rv = msgcat(rv, s_suffix(conversion));
                     break;
 
                     /* strip any "the" prefix */
                 case 't':
-                    if (!strncmpi(buf, "the ", 4)) {
-                        strcat(cc, &buf[4]);
-                        cc += strlen(cc);
-                        continue;       /* for */
-                    }
+                    if (!strncmpi(conversion, "the ", 4))
+                        rv = msgcat(rv, conversion + 4);
+                    else
+                        rv = msgcat(rv, conversion);
                     break;
 
                 default:
                     --c;        /* undo switch increment */
+                    rv = msgcat(rv, conversion);
                     break;
                 }
-                strcat(cc, buf);
-                cc += strlen(buf);
                 break;
             }
             /* else fall through */
         default:
-            *cc++ = *c;
+            rv = msgkitten(rv, *c);
             break;
         }
     }
-    if (cc >= out_line + sizeof out_line)
-        panic("convert_line: overflow");
-    *cc = 0;
-    return out_line;
 }
 
 static void
 deliver_by_pline(struct qtmsg *qt_msg)
 {
     long size;
-    char in_line[BUFSZ];
+    char in_line[81]; /* to match the fgets call below */
 
     for (size = 0; size < qt_msg->size; size += (long)strlen(in_line)) {
         dlb_fgets(in_line, 80, msg_file);
-        char *out_line = convert_line(in_line);
+        const char *out_line = convert_line(in_line);
         pline("%s", out_line);
-        free(out_line);
     }
 
 }
@@ -321,36 +300,32 @@ deliver_by_pline(struct qtmsg *qt_msg)
 static void
 deliver_by_window(struct qtmsg *qt_msg)
 {
-    char in_line[BUFSZ], msg[BUFSZ * qt_msg->size], *end = msg;
+    char in_line[81];
     boolean new_para = TRUE;
+    const char *msg = "";
     int size;
 
     for (size = 0; size < qt_msg->size; size += (long)strlen(in_line)) {
         dlb_fgets(in_line, 80, msg_file);
-        char *out_line = convert_line(in_line);
+        const char *out_line = convert_line(in_line);
 
         /* We want to strip lone newlines, but leave sequences intact, or
          * special formatting.
          *
          * TODO: This is a huge kluge. Be better at this. */
         if (!*out_line) {
-            if (!new_para) {
-                *end++ = '\n';
-                *end++ = ' ';
-                *end++ = '\n';
-            }
+            if (!new_para)
+                msg = msgcat(msg, "\n \n");
             new_para = TRUE;
         } else {
             if (out_line[0] == ' ' && !new_para)
-                *end++ = '\n';
+                msg = msgkitten(msg, '\n');
             else if (!new_para)
-                *end++ = ' ';
+                msg = msgkitten(msg, ' ');
             new_para = FALSE;
         }
 
-        strcpy(end, out_line);
-        end = strchr(end, '\0');
-        free(out_line);
+        msg = msgcat(msg, out_line);
     }
 
     display_buffer(msg, TRUE);
@@ -410,3 +385,4 @@ qt_montype(const d_level * dlev)
 }
 
 /*questpgr.c*/
+

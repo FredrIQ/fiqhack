@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-28 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -109,11 +109,11 @@ extern uncursed_WINDOW_p EI(stdscr);
 
 /* uncursed-specific */
 extern void EI(initialize_uncursed) (int *, char **);
-extern void EI(uncursed_set_title) (char *);
+extern void EI(uncursed_set_title) (const char *);
 
-extern void EI(set_faketerm_font_file) (char *);
+extern void EI(set_faketerm_font_file) (const char *);
 
-extern void EI(set_tiles_tile_file) (char *, int, int);
+extern void EI(set_tiles_tile_file) (const char *, int, int);
 UNCURSED_ANDWINDOW(int, set_tiles_region,
                    int, int, int, int, int, int, int, int);
 UNCURSED_ANDWINDOWV(int, delete_tiles_region);

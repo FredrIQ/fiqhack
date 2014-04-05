@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-03-12 */
+/* Last modified by Alex Smith, 2014-04-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -954,7 +954,7 @@ use_candle(struct obj **optr)
     struct obj *obj = *optr;
     struct obj *otmp;
     const char *s;
-    char qbuf[QBUFSZ];
+    const char *qbuf;
 
     if (Engulfed) {
         pline(no_elbow_room);
@@ -970,10 +970,11 @@ use_candle(struct obj **optr)
         return use_lamp(obj);
     }
 
-    sprintf(qbuf, "Attach %s", the(xname(obj)));
-    sprintf(eos(qbuf), " to %s?",
+    qbuf = msgprintf("Attach %s", the(xname(obj)));
+    qbuf = msgprintf("%s to %s?", qbuf,
             safe_qbuf(qbuf, sizeof (" to ?"), the(xname(otmp)),
                       the(simple_typename(otmp->otyp)), "it"));
+
     if (yn(qbuf) == 'n') {
         if (Underwater) {
             pline("Sorry, fire and water don't mix.");
@@ -1025,13 +1026,12 @@ snuff_candle(struct obj * otmp)
     boolean candle = Is_candle(otmp);
 
     if ((candle || otmp->otyp == CANDELABRUM_OF_INVOCATION) && otmp->lamplit) {
-        char buf[BUFSZ];
         xchar x, y;
         boolean many = candle ? otmp->quan > 1L : otmp->spe > 1;
 
         get_obj_location(otmp, &x, &y, 0);
         if (otmp->where == OBJ_MINVENT ? cansee(x, y) : !Blind)
-            pline("%s %scandle%s flame%s extinguished.", Shk_Your(buf, otmp),
+            pline("%s %scandle%s flame%s extinguished.", Shk_Your(otmp),
                   (candle ? "" : "candelabrum's "), (many ? "s'" : "'s"),
                   (many ? "s are" : " is"));
         end_burn(otmp, TRUE);
@@ -1104,8 +1104,6 @@ catch_lit(struct obj * obj)
 static int
 use_lamp(struct obj *obj)
 {
-    char buf[BUFSZ];
-
     if (Underwater) {
         pline("This is not a diving lamp.");
         return 0;
@@ -1113,7 +1111,7 @@ use_lamp(struct obj *obj)
     if (obj->lamplit) {
         if (obj->otyp == OIL_LAMP || obj->otyp == MAGIC_LAMP ||
             obj->otyp == BRASS_LANTERN)
-            pline("%s lamp is now off.", Shk_Your(buf, obj));
+            pline("%s lamp is now off.", Shk_Your(obj));
         else
             pline("You snuff out %s.", yname(obj));
         end_burn(obj, TRUE);
@@ -1161,7 +1159,7 @@ use_lamp(struct obj *obj)
         if (obj->otyp == OIL_LAMP || obj->otyp == MAGIC_LAMP ||
             obj->otyp == BRASS_LANTERN) {
             check_unpaid(obj);
-            pline("%s lamp is now on.", Shk_Your(buf, obj));
+            pline("%s lamp is now on.", Shk_Your(obj));
         } else {        /* candle(s) */
             pline("%s flame%s %s%s", s_suffix(Yname2(obj)), plur(obj->quan),
                   otense(obj, "burn"), Blind ? "." : " brightly!");
@@ -1181,8 +1179,6 @@ use_lamp(struct obj *obj)
 static int
 light_cocktail(struct obj *obj)
 {       /* obj is a potion of oil */
-    char buf[BUFSZ];
-
     if (Engulfed) {
         pline(no_elbow_room);
         return 0;
@@ -1204,7 +1200,7 @@ light_cocktail(struct obj *obj)
         return 0;
     }
 
-    pline("You light %s potion.%s", shk_your(buf, obj),
+    pline("You light %s potion.%s", shk_your(obj),
           Blind ? "" : "  It gives off a dim light.");
     if (obj->unpaid && costly_spot(u.ux, u.uy)) {
         /* Normally, we shouldn't both partially and fully charge for an item,
@@ -1476,17 +1472,18 @@ use_tinning_kit(struct obj *obj)
     }
     if (touch_petrifies(&mons[corpse->corpsenm])
         && !Stone_resistance && !uarmg) {
-        char kbuf[BUFSZ];
+        const char *kbuf;
+
+        kbuf = msgprintf("trying to tin %s without gloves",
+                         an(mons[corpse->corpsenm].mname));
 
         if (poly_when_stoned(youmonst.data))
             pline("You tin %s without wearing gloves.",
                   an(mons[corpse->corpsenm].mname));
-        else {
+        else
             pline("Tinning %s without wearing gloves is a fatal mistake...",
                   an(mons[corpse->corpsenm].mname));
-            sprintf(kbuf, "trying to tin %s without gloves",
-                    an(mons[corpse->corpsenm].mname));
-        }
+
         instapetrify(kbuf);
     }
     if (is_rider(&mons[corpse->corpsenm])) {
@@ -1695,7 +1692,7 @@ fig_transform(void *arg, long timeout)
     coord cc;
     boolean cansee_spot, silent, okay_spot;
     boolean redraw = FALSE;
-    char monnambuf[BUFSZ], carriedby[BUFSZ];
+    const char *monnambuf, *carriedby;
 
     if (!figurine)
         return;
@@ -1718,7 +1715,7 @@ fig_transform(void *arg, long timeout)
     cansee_spot = cansee(cc.x, cc.y);
     mtmp = make_familiar(figurine, cc.x, cc.y, TRUE);
     if (mtmp) {
-        sprintf(monnambuf, "%s", an(m_monnam(mtmp)));
+        monnambuf = msgprintf("%s", an(m_monnam(mtmp)));
         switch (figurine->where) {
         case OBJ_INVENT:
             if (Blind)
@@ -1744,11 +1741,11 @@ fig_transform(void *arg, long timeout)
                 mon = figurine->ocarry;
                 /* figurine carring monster might be invisible */
                 if (canseemon(figurine->ocarry)) {
-                    sprintf(carriedby, "%s pack", s_suffix(a_monnam(mon)));
+                    carriedby = msgprintf("%s pack", s_suffix(a_monnam(mon)));
                 } else if (is_pool(level, mon->mx, mon->my))
-                    strcpy(carriedby, "empty water");
+                    carriedby = "empty water";
                 else
-                    strcpy(carriedby, "thin air");
+                    carriedby = "thin air";
                 pline("You see %s %s out of %s!", monnambuf,
                       locomotion(mtmp->data, "drop"), carriedby);
             }
@@ -1856,7 +1853,6 @@ static int
 use_grease(struct obj *obj)
 {
     struct obj *otmp;
-    char buf[BUFSZ];
     int res = 0;
 
     if (Glib) {
@@ -1879,15 +1875,15 @@ use_grease(struct obj *obj)
         if (!otmp)
             return 0;
         if ((otmp->owornmask & W_MASK(os_arm)) && uarmc) {
-            strcpy(buf, xname(uarmc));
-            pline(need_to_remove_outer_armor, buf, xname(otmp));
+            pline(need_to_remove_outer_armor, xname(uarmc), xname(otmp));
             return 0;
         }
         if ((otmp->owornmask & W_MASK(os_armu)) && (uarmc || uarm)) {
-            strcpy(buf, uarmc ? xname(uarmc) : "");
+            const char *buf;
+            buf = uarmc ? xname(uarmc) : "";
             if (uarmc && uarm)
-                strcat(buf, " and ");
-            strcat(buf, uarm ? xname(uarm) : "");
+                buf = msgcat(buf, " and ");
+            buf = msgcat(buf, uarm ? xname(uarm) : "");
             pline(need_to_remove_outer_armor, buf, xname(otmp));
             return 0;
         }
@@ -1924,7 +1920,7 @@ use_stone(struct obj *tstone)
     struct obj *obj;
     boolean do_scratch;
     const char *streak_color, *choices;
-    char stonebuf[QBUFSZ];
+    const char *stonebuf;
     static const char scritch[] = "\"scritch, scritch\"";
     static const char allowall[3] = { ALL_CLASSES, 0 };
     static const char justgems[3] = { ALL_CLASSES, GEM_CLASS, 0 };
@@ -1936,7 +1932,7 @@ use_stone(struct obj *tstone)
        likely candidates for rubbing */
     choices = (tstone->otyp == TOUCHSTONE && tstone->dknown &&
                objects[TOUCHSTONE].oc_name_known) ? justgems : allowall;
-    sprintf(stonebuf, "rub on the stone%s", plur(tstone->quan));
+    stonebuf = msgprintf("rub on the stone%s", plur(tstone->quan));
     if ((obj = getobj(choices, stonebuf, FALSE)) == 0)
         return 0;
 
@@ -2030,7 +2026,7 @@ use_stone(struct obj *tstone)
         break;  /* default oclass */
     }
 
-    sprintf(stonebuf, "stone%s", plur(tstone->quan));
+    stonebuf = msgprintf("stone%s", plur(tstone->quan));
     if (do_scratch)
         pline("You make %s%sscratch marks on the %s.",
               streak_color ? streak_color : (const char *)"",
@@ -2048,7 +2044,6 @@ use_trap(struct obj *otmp, const struct nh_cmd_arg *arg)
 {
     int ttyp, tmp;
     const char *what = NULL;
-    char buf[BUFSZ];
     const char *occutext = "setting the trap";
 
     if (nohands(youmonst.data))
@@ -2083,7 +2078,7 @@ use_trap(struct obj *otmp, const struct nh_cmd_arg *arg)
         u.ux == u.utracked_location[tl_trap].x &&
         u.uy == u.utracked_location[tl_trap].y) {
         if (turnstate.continue_message)
-            pline("You resume setting %s %s.", shk_your(buf, otmp),
+            pline("You resume setting %s %s.", shk_your(otmp),
                   trapexplain[what_trap(ttyp) - 1]);
         one_occupation_turn(set_trap, occutext, occ_trap);
         return 1;
@@ -2103,6 +2098,7 @@ use_trap(struct obj *otmp, const struct nh_cmd_arg *arg)
        incorporated here instead of in set_trap] */
     if (u.usteed && P_SKILL(P_RIDING) < P_BASIC) {
         boolean chance;
+        const char *buf;
 
         if (Fumbling || otmp->cursed)
             chance = (rnl(10) > 3);
@@ -2110,8 +2106,8 @@ use_trap(struct obj *otmp, const struct nh_cmd_arg *arg)
             chance = (rnl(10) > 5);
         pline("You aren't very skilled at reaching from %s.",
               mon_nam(u.usteed));
-        sprintf(buf, "Continue your attempt to set %s?",
-                the(trapexplain[what_trap(ttyp) - 1]));
+        buf = msgprintf("Continue your attempt to set %s?",
+                        the(trapexplain[what_trap(ttyp) - 1]));
         if (yn(buf) == 'y') {
             if (chance) {
                 switch (ttyp) {
@@ -2132,7 +2128,7 @@ use_trap(struct obj *otmp, const struct nh_cmd_arg *arg)
         }
     }
 
-    pline("You begin setting %s %s.", shk_your(buf, otmp),
+    pline("You begin setting %s %s.", shk_your(otmp),
           trapexplain[what_trap(ttyp) - 1]);
     one_occupation_turn(set_trap, occutext, occ_trap);
     return 1;
@@ -2182,13 +2178,13 @@ set_trap(void)
 static int
 use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
 {
-    char buf[BUFSZ];
     struct monst *mtmp;
     struct obj *otmp;
     int rx, ry, proficient, res = 0;
     const char *msg_slipsfree = "The bullwhip slips free.";
     const char *msg_snap = "Snap!";
     schar dx, dy, dz;
+    const char *buf;
 
     if (obj != uwep) {
         if (!wield_tool(obj, "lash"))
@@ -2261,7 +2257,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
         if (dam <= 0)
             dam = 1;
         pline("You hit your %s with your bullwhip.", body_part(FOOT));
-        sprintf(buf, "killed %sself with %s bullwhip", uhim(), uhis());
+        buf = msgprintf("killed %sself with %s bullwhip", uhim(), uhis());
         losehp(dam, buf, NO_KILLER_PREFIX);
         return 1;
 
@@ -2298,7 +2294,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
 
         if (mtmp) {
             if (bigmonst(mtmp->data)) {
-                wrapped_what = strcpy(buf, mon_nam(mtmp));
+                wrapped_what = mon_nam(mtmp);
             } else if (proficient) {
                 enum attack_check_status attack_status =
                     attack(mtmp, dx, dy, apply_interaction_mode());
@@ -2342,11 +2338,10 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
         }
         otmp = MON_WEP(mtmp);   /* can be null */
         if (otmp) {
-            char onambuf[BUFSZ];
+            const char *onambuf = cxname(otmp);
             const char *mon_hand;
             boolean gotit = proficient && (!Fumbling || !rn2(10));
 
-            strcpy(onambuf, cxname(otmp));
             if (gotit) {
                 mon_hand = mbodypart(mtmp, HAND);
                 if (bimanual(otmp))
@@ -2385,10 +2380,10 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
                         touch_petrifies(&mons[otmp->corpsenm]) && !uarmg &&
                         !Stone_resistance && !(poly_when_stoned(youmonst.data)
                                                && polymon(PM_STONE_GOLEM))) {
-                        char kbuf[BUFSZ];
+                        const char *kbuf;
 
-                        sprintf(kbuf, "snatching %s corpse",
-                                an(mons[otmp->corpsenm].mname));
+                        kbuf = msgprintf("snatching %s corpse",
+                                         an(mons[otmp->corpsenm].mname));
                         pline("Snatching %s corpse is a fatal mistake.",
                               an(mons[otmp->corpsenm].mname));
                         instapetrify(kbuf);
@@ -2698,12 +2693,13 @@ do_break_wand(struct obj *obj)
     boolean affects_objects;
     boolean shop_damage = FALSE;
     int expltype = EXPL_MAGICAL;
-    char confirm[QBUFSZ], the_wand[BUFSZ], buf[BUFSZ];
+    const char *confirm, *the_wand, *buf;
 
-    strcpy(the_wand, yname(obj));
-    sprintf(confirm, "Are you really sure you want to break %s?",
-            safe_qbuf("", sizeof ("Are you really sure you want to break ?"),
-                      the_wand, ysimple_name(obj), "the wand"));
+    the_wand = yname(obj);
+    confirm = msgprintf("Are you really sure you want to break %s?",
+                        safe_qbuf("", sizeof
+                                  "Are you really sure you want to break ?",
+                                  the_wand, ysimple_name(obj), "the wand"));
     if (yn(confirm) == 'n')
         return 0;
 
@@ -2818,7 +2814,7 @@ do_break_wand(struct obj *obj)
                 }
                 damage = zapyourself(obj, FALSE);
                 if (damage) {
-                    sprintf(buf, "killed %sself by breaking a wand", uhim());
+                    buf = msgprintf("killed %sself by breaking a wand", uhim());
                     losehp(damage, buf, NO_KILLER_PREFIX);
                 }
                 bot();      /* blindness */
@@ -2967,9 +2963,7 @@ doapply(const struct nh_cmd_arg *arg)
             /* sometimes the blessing will be worn off */
             if (!rn2(49)) {
                 if (!Blind) {
-                    char buf[BUFSZ];
-
-                    pline("%s %s %s.", Shk_Your(buf, obj), aobjnam(obj, "glow"),
+                    pline("%s %s %s.", Shk_Your(obj), aobjnam(obj, "glow"),
                           hcolor("brown"));
                     obj->bknown = 1;
                 }
@@ -3149,3 +3143,4 @@ unfixable_trouble_count(boolean is_horn)
 }
 
 /*apply.c*/
+
