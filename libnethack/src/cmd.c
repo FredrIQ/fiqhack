@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1267,7 +1267,13 @@ dowelcome(const struct nh_cmd_arg *arg)
           u.uplname, buf, urace.adj,
           (currentgend && urole.name.f) ? urole.name.f : urole.name.m);
 
-    realtime_messages(TRUE, TRUE);
+    /* Realtime messages are no longer printed in dowelcome(); rather, there's a
+       special case in pre_move_tasks to print them at the next realtime status
+       update, which happens before the player gets any more chances to provide
+       input (and thus /looks/ like it was part of the welcome). This allows for
+       the situation where a game was saved on a new moon and reloaded on a full
+       moon, or something similar; the player will get only one message (the one
+       for the time when it's loaded), not two.*/
 
     if (discover)
         pline("You are in non-scoring discovery mode.");
@@ -1282,7 +1288,7 @@ dowelcome(const struct nh_cmd_arg *arg)
    However, there's one respect in which they must: if you use them to break up
    a multi-turn action, you don't want the action immediately restarting after
    viewing your inventory, yet the action would continue if you didn't (and the
-   client ddidn't intervene). Thus, we need to insert a command whose purpose is
+   client didn't intervene). Thus, we need to insert a command whose purpose is
    to capture this side effect of a notime action. It can also be sent
    explicitly by the client in order to print a "You stop running." message, or
    the like. */

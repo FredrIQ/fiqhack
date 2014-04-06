@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-06 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -12,6 +12,7 @@
  * else {log_replay_no_more_options(); [ask for the value] }
  *
  * log_record_input(...)
+ * log_time_line()
  *
  * pline_nomore([a text description of the input])
  *
@@ -72,6 +73,8 @@ getpos(coord *cc, boolean force, const char *goal, boolean isarg)
     else
         log_record_input("P%d,%d%c", x, y, accept_chars[rv]);
 
+    log_time_line();
+
     if (rv == NHCR_CLIENT_CANCEL)
         pline_nomore("<position: (cancelled)>");
     else
@@ -114,6 +117,8 @@ getdir(const char *s, schar * dx, schar * dy, schar * dz, boolean isarg)
     }
 
     log_record_input("D%d", (int)dir);
+
+    log_time_line();
 
     if (!program_state.in_zero_time_command && isarg)
         flags.last_arg.argtype &= ~CMD_ARG_DIR;
@@ -160,6 +165,8 @@ query_key(const char *query, int *count)
     else
         log_record_input("K%d,%d", key, *count);
 
+    log_time_line();
+
     if (count && *count != -1)
         pline_nomore("<%s: %d %c>", query, *count, key);
     else
@@ -178,6 +185,8 @@ getlin(const char *query, char *bufp, boolean isarg)
     }
 
     log_record_line(bufp);
+
+    log_time_line();
 
     pline_nomore("<%s: %s>", query, bufp[0] == '\033' ? "(escaped)" : bufp);
 
@@ -222,6 +231,8 @@ yn_function(const char *query, const char *resp, char def)
 
     log_record_input("Y%c", key);
 
+    log_time_line();
+
     pline_nomore("<%s [%s]: %c>", qbuf, resp, key);
     return key;
 }
@@ -255,15 +266,18 @@ display_menu(struct nh_menulist *menu, const char *title, int how,
                                              placement_hint, results);
     }
 
-    if (how == PICK_NONE)
+    if (how == PICK_NONE) {
         log_record_input("M");
-    else if (n == -1) {
+        log_time_line();
+    } else if (n == -1) {
         log_record_input("M!");
+        log_time_line();
         pline_nomore("<%s: cancelled>", title ? title : "Untitled menu");
     } else {
         const char *buf = "(none selected)";
 
         log_record_menu(FALSE, n, results);
+        log_time_line();
 
         if (n == 1) {
             for (j = 0;
@@ -305,15 +319,18 @@ display_objects(struct nh_objlist *objlist, const char *title,
                                                 placement_hint, pick_list);
     }
 
-    if (how == PICK_NONE)
+    if (how == PICK_NONE) {
         log_record_input("O");
-    else if (n == -1) {
+        log_time_line();
+    } else if (n == -1) {
         log_record_input("O!");
+        log_time_line();
         pline_nomore("<%s: cancelled>", title ? title : "List of objects");
     } else {
         const char *buf = "";
 
         log_record_menu(TRUE, n, pick_list);
+        log_time_line();
 
         /* We show the exact inventory letters chosen, so long as there aren't
            too many. TODO: The loop here looks wrong. */

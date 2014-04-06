@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-06 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -54,7 +54,6 @@ struct you;
 /* ### allmain.c ### */
 
 extern void startup_common(boolean);
-extern void realtime_messages(boolean, boolean);
 extern void action_incomplete(const char *gerund, enum occupation occupation);
 extern void action_interrupted(void);
 extern void action_completed(void);
@@ -748,13 +747,14 @@ extern int wiz_light_sources(const struct nh_cmd_arg *);
 
 /* ### localtime.c ### */
 
-extern long get_tz_offset(void);
 extern int getyear(void);
-extern long yyyymmdd(time_t);
+extern long yyyymmdd(microseconds);
 extern int phase_of_the_moon(void);
 extern boolean friday_13th(void);
-extern int night(void);
-extern int midnight(void);
+extern boolean night(void);
+extern boolean midnight(void);
+extern microseconds utc_time(void);
+extern microseconds time_for_time_line(void);
 
 /* ### lock.c ### */
 
@@ -767,7 +767,7 @@ extern int doclose(const struct nh_cmd_arg *);
 
 /* ### log.c ### */
 
-extern void log_newgame(unsigned long long start_time,
+extern void log_newgame(microseconds start_time,
                         unsigned int seed);
 extern void log_neutral_turnstate(void);
 extern void log_backup_save(void);
@@ -789,6 +789,8 @@ extern boolean log_replay_menu(boolean, int *, void *);
 extern void log_record_command(const char *cmd, const struct nh_cmd_arg *arg);
 extern boolean log_replay_command(char *cmd, struct nh_cmd_arg *arg);
 extern void log_replay_no_more_options(void);
+
+extern void log_time_line(void);
 
 extern void log_init(int fd);
 extern void log_uninit(void);
@@ -1731,7 +1733,7 @@ extern void cnv_trap_obj(struct level *lev, int otyp, int cnt,
 
 /* ### u_init.c ### */
 
-extern void u_init(void);
+extern void u_init(microseconds birthday);
 extern void u_init_inv_skills(void);
 
 /* ### uhitm.c ### */

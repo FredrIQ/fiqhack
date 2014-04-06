@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -529,7 +529,7 @@ knows_class(char sym)
 }
 
 void
-u_init(void)
+u_init(microseconds birthday)
 {
     int i;
 
@@ -576,7 +576,7 @@ u_init(void)
         aligns[u.initalign].value;
     u.ulycn = NON_PM;
 
-    u.ubirthday = turntime;
+    u.ubirthday = birthday;
 
     /* For now, everyone starts out with a night vision range of 1. */
     u.nv_range = 1;

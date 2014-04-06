@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-06 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -20,7 +20,7 @@ static void dump_outrip(struct nh_menulist *ml, boolean ts, const char *name,
 # define TIMESTAMP_FORMAT "%Y-%m-%d %H:%M"
 #else
 /* windows doesn't allow ':' in filenames */
-# define TIMESTAMP_FORMAT "%Y-%m-%d %H_%M"
+# define TIMESTAMP_FORMAT "%Y-%m-%d %H_%M_%S"
 #endif
 
 void
@@ -33,9 +33,14 @@ begin_dump(int how)
     /* back up the window procs */
     winprocs_original = windowprocs;
 
-    /* make a timestamp like "2011-11-30 18:45" */
-    t = time(NULL);
-    tmp = localtime(&t);
+    /* Make a timestamp like "2011-11-30 18:45:00".  This now uses UTC time, in
+       accordance with the timebase rules (in particular, we never look at the
+       system timezone). This also avoids clashes when there are two games an
+       hour apart and DST changed in between. (It doesn't help when there are
+       two games in the same second, but that only happens as a result of
+       extreme startscumming.) */
+    t = (time_t)(utc_time() / 1000000LL);
+    tmp = gmtime(&t);
     if (tmp)
         timestamp = msgstrftime(TIMESTAMP_FORMAT, tmp);
     else

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -22,7 +22,7 @@ static const char *const copyright_banner[] =
 
 static void pre_move_tasks(boolean);
 
-static void newgame(void);
+static void newgame(microseconds birthday);
 
 static void handle_lava_trap(boolean didmove);
 
@@ -50,7 +50,6 @@ nh_lib_init(const struct nh_window_procs *procs, char **paths)
         fqn_prefix[i] = strdup(paths[i]);
 
     u.uhp = 1;  /* prevent RIP on early quits */
-    turntime = 0;
 
     API_EXIT();
 }
@@ -158,7 +157,7 @@ startup_common(boolean including_program_state)
 }
 
 
-void
+static void
 realtime_messages(boolean moon, boolean fri13)
 {
     if (moon) {
@@ -176,9 +175,16 @@ realtime_messages(boolean moon, boolean fri13)
         pline("Watch out!  Bad things can happen on Friday the 13th.");
 }
 
-
+/* Called at the end of each command to synchronize the game to realtime.  (This
+   is based on flags.turntime, which was updated during the running of the
+   command.)  The messages are always printed if we just ran a 'welcome'
+   command; otherwise, they are printed only if they changed. (This makes the
+   'welcome' command unexploitable; /omitting/ a welcome is slightly exploitable
+   in that it can be used to delay the effect of a change in realtime for one
+   command, but fixing that makes the time behaviour so much more complex that
+   it probably isn't worth it.) */
 static void
-realtime_tasks(boolean print)
+realtime_tasks(boolean always_print)
 {
     int prev_moonphase = flags.moonphase;
     int prev_friday13 = flags.friday13;
@@ -205,8 +211,8 @@ realtime_tasks(boolean print)
         msg_friday13 = FALSE;
     }
 
-    if (print)
-        realtime_messages(msg_moonphase, msg_friday13);
+    realtime_messages(msg_moonphase || always_print,
+                      msg_friday13 || always_print);
 }
 
 
@@ -231,6 +237,7 @@ enum nh_create_response
 nh_create_game(int fd, struct nh_option_desc *opts)
 {
     unsigned int seed = 0;
+    microseconds birthday;
     int i;
 
     API_ENTRY_CHECKPOINT() {
@@ -247,10 +254,15 @@ nh_create_game(int fd, struct nh_option_desc *opts)
     }
 
     program_state.suppress_screen_updates = TRUE;
+    birthday = utc_time();
 
-    turntime = (unsigned long long)time(NULL);
-    seed = turntime ^ get_seedval();
-    /* initialize the random number generator */
+    /* Initialize the random number generator. This can use any algorithm we
+       like, and is not constrained by timing rules; but the birthday is a
+       sensible input to use. The low-order decimal digits may potentially be
+       all zeros, so we XOR them with the high-order decimal digits to get a
+       seed that's unpredictable if we have low-order digits available and
+       different between games even if we don't. */
+    seed = (unsigned)(birthday / 1000000LL) ^ (unsigned)(birthday % 1000000LL);
     mt_srand(seed);
 
     startup_common(TRUE);
@@ -276,9 +288,9 @@ nh_create_game(int fd, struct nh_option_desc *opts)
     /* We create a new save file that saves the state immediately after
        newgame() is called. */
     log_init(fd);
-    log_newgame(turntime, seed);
+    log_newgame(birthday, seed);
 
-    newgame();
+    newgame(birthday);
 
     /* We need a full backup save after creating the new game, because we
        don't have anything to diff against. */
@@ -332,7 +344,7 @@ nh_play_game(int fd)
         /* This happens if the game needs to escape from a deeply nested
            context. The longjmp() is not enough by itself in case the network
            API is involved (returning from nh_play_game out of sequence causes
-           the longjmp() to propagate across the newtork). */
+           the longjmp() to propagate across the network). */
     IF_API_EXCEPTION(RESTART_PLAY):
         ret = RESTART_PLAY;
         goto normal_exit;
@@ -386,7 +398,6 @@ nh_play_game(int fd)
     bot();
     flush_screen();
 
-    realtime_tasks(FALSE);
     update_inventory();
 
     /* The main loop. */
@@ -421,9 +432,6 @@ nh_play_game(int fd)
                   cmd);
             continue;
         }
-
-        /* TODO: Better resolution for turntime */
-        turntime = time(NULL);
 
         /* Make sure the client hasn't given extra arguments on top of the ones
            that we'd normally accept. To simplify things, we just silently drop
@@ -462,8 +470,10 @@ nh_play_game(int fd)
            record a different one, which is why the record of "interrupt" above
            is OK; it's not OK to record two, but log_record_command won't record
            zero-time commands.) */
-        if (!u_helpless(hm_all))
+        if (!u_helpless(hm_all)) {
             log_record_command(cmd, &arg);
+            log_time_line();
+        }
 
         command_input(cmdidx, &arg);
 
@@ -812,12 +822,14 @@ pre_move_tasks(boolean didmove)
     }
 
     /* Running is the only thing that needs or wants persistence in
-     * travel direction. */
+       travel direction. */
     if (flags.interrupted || !last_command_was("run"))
         clear_travel_direction();    
 
-    if (didmove && moves % 100 == 0)
-        realtime_tasks(TRUE);
+    /* Handle realtime change now. If we just loaded a save, always print the
+       messages. Otherwise, print them only on change. */
+    if (!program_state.in_zero_time_command)
+        realtime_tasks(last_command_was("welcome"));
 
     update_inventory();
     update_location(FALSE);
@@ -915,8 +927,8 @@ cancel_helplessness(enum helpless_mask mask, const char *msg)
                     impossible("Helpless with time but no cause at index %d",
                                i);
                 /* We update mask to remove this reason, so that later
-                 * processing won't treat this reason as having been canceled.
-                 */
+                   processing won't treat this reason as having been
+                   cancelled. */
                 mask &= ~(1 << i);
                 continue;
             }
@@ -1144,7 +1156,7 @@ command_input(int cmdidx, struct nh_cmd_arg *arg)
 
 
 static void
-newgame(void)
+newgame(microseconds birthday)
 {
     int i;
 
@@ -1152,6 +1164,8 @@ newgame(void)
 
     for (i = 0; i < NUMMONS; i++)
         mvitals[i].mvflags = mons[i].geno & G_NOCORPSE;
+
+    flags.turntime = birthday;       /* get realtime right for level gen */
 
     init_objects();     /* must be before u_init() */
 
@@ -1162,8 +1176,8 @@ newgame(void)
                            odd monsters for any tins and eggs in hero's initial 
                            inventory */
     init_artifacts();
-    u_init();   /* struct you must have some basic data for mklev to work right 
-                 */
+    u_init(birthday);   /* struct you must have some basic data for mklev to
+                           work right */
     pantheon_init(TRUE);
 
     load_qtlist();      /* load up the quest text info */

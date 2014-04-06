@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-04-02
+Last modified by Alex Smith, 2014-04-06
 
 Copyright (C) 2013 Alex Smith.
 
@@ -108,14 +108,14 @@ right-justified via padding it to the left with spaces. (The fixed width makes
 it possible to overwrite it without having to move all the rest of the data in
 the file.)
 
-The third line of the file is also a header, and lists summary
-information for use in identifying the game: start time, initial RNG seed,
-game play mode (an `enum nh_game_modes` stored as a hexadecimal integer),
-player name (encoded in base 64), and class, race, gender, and alignment, as
-ASCII strings.  The start time, and all other times in the save format, are
-encoded in hexadecimal and count UTC UNIX time in millseconds (that is,
-milliseconds since the epoch, except that time around leap seconds is
-distorted such that each day appears to be 86400000 milliseconds long).
+The third line of the file is also a header, and lists summary information for
+use in identifying the game: start time, initial RNG seed, game play mode (an
+`enum nh_game_modes` stored as a hexadecimal integer), player name (encoded in
+base 64), and class, race, gender, and alignment, as ASCII strings.  The start
+time, and all other times in the save format, are encoded in hexadecimal and
+count UTC UNIX time in microseconds (that is, microseconds since the epoch,
+except that time around leap seconds is distorted such that each day appears
+to be 86400000000 microseconds long).
 
 The NitroHack/NetHack 4.2 save systems contained other header information, but
 this is not the case with the 4.3 system, which moves straight on to a list of
@@ -159,9 +159,12 @@ lines, separated by newlines:
   * A 'save diff' line starts with `~`, followed by a binary save diff against
     the previous save diff or (if more recent) save backup line, and encoded
     in (potentially compressed) base 64.  It contains no whitespace.  These
-    lines are generated whenever a command completes running, unless the only
-    change it makes to the gamestate is to the current time (in which case a
-    time line, being shorter, will be used instead).
+    lines are generated whenever a command completes running.  (Commands with
+    no effect on the gamestate do not appear in the save file at all, so nor
+    does the save diff that comes immediately after them.  In a few cases,
+    such as when a multiple-turn action is interrupted by the client, there is
+    a need to record a minimal change to the gamestate, done via an internal
+    `interrupt` command, purely so that a save diff line becomes legal.)
 
     These lines (and save backup lines) explicitly may not be used in any
     circumstance where a binary save would not load correctly: this includes
@@ -184,14 +187,11 @@ lines, separated by newlines:
       * A spell letter is `S` followed by that letter;
       * A limit is `L` followed by the limit (in decimal).
       
-  * A 'time' line starts with `+`, and contains a number of milliseconds in
+  * A 'time' line starts with `+`, and contains a number of microseconds in
     hexadecimal; this is a relative offset from the previous save backup, save
     diff, or time line in the file (whichever is most recent), and lists the
-    time at which future lines occurred.  Although legal in any context
-    (except right at the start of the file), these are typically only
-    generated in situations where the engine is waiting for user input, to
-    indicate when it arrived, and only when the time isn't given by a save
-    diff or backup line instead.
+    time at which future lines occurred.  These appear immediately after user
+    input, which is when the engine samples the current time.
 
   * A 'message' line starts with a hyphen, and is followed by a message that
     was output by the game, in plaintext; the line ends at a newline.  (The

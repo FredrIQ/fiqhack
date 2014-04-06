@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -159,7 +159,6 @@ short disco[NUM_OBJECTS];       /* discovered objects */
 unsigned int histcount;
 struct histevent *histevents;
 
-unsigned long long turntime;
 unsigned int timer_id = 1;
 
 char toplines[MSGCOUNT][BUFSZ];
@@ -366,8 +365,10 @@ init_data(boolean including_program_state)
     timer_id = 1;
     curline = 0;
 
-    flags.moonphase = 10;       /* invalid value, so that the first call to
-                                   realtime_tasks will dtrt */
+    flags.moonphase = 2;  /* half moon; this needs to be valid because
+                             realtime_tasks won't be called until after
+                             dungeon generation, and shouldn't be new or
+                             full for the same reason */
 }
 
 /*decl.c*/

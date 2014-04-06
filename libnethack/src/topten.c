@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -9,6 +9,7 @@
 #include "dlb.h"
 
 #include <fcntl.h>
+#include <inttypes.h>
 
 /* 10000 highscore entries should be enough for _anybody_
  * <500 bytes per entry * 10000 ~= 5MB max file size. Seems reasonable. */
@@ -27,6 +28,7 @@ struct toptenentry {
     int maxlvl, hp, maxhp, deaths;
     int ver_major, ver_minor, patchlevel;
     int deathdate, birthdate;
+    microseconds deathtime;
     int uid;
     int moves;
     int how;
@@ -63,8 +65,6 @@ const char *const killed_by_prefix[] = {
 };
 
 static int end_how;
-
-static time_t deathtime_internal = 0;
 
 /* xlogfile writing. Based on the xlogfile patch by Aardvark Joe. */
 
@@ -197,8 +197,14 @@ write_xlentry(FILE * rfile, const struct toptenentry *tt, unsigned long carried)
     fprintf(rfile, SEP "event=%ld", encode_uevent());
     fprintf(rfile, SEP "carried=%ld", carried);
 
-    fprintf(rfile, SEP "starttime=%ld" SEP "endtime=%ld", (long)u.ubirthday,
-            (long)deathtime_internal);
+    /* This uses the same trick to print long longs portably as in log.c.
+       These are now microsecond-accurate, so we use "starttimeus",
+       "endtimeus". */
+
+    fprintf(rfile, SEP "starttimeus=%" PRIdLEAST64
+                   SEP "endtimeus=%" PRIdLEAST64,
+            (int_least64_t)u.ubirthday,
+            (int_least64_t)tt->deathtime);
 
     fprintf(rfile, SEP "gender0=%s", genders[u.initgend].filecode);
     fprintf(rfile, SEP "align0=%s",
@@ -396,9 +402,9 @@ fill_topten_entry(struct toptenentry *newtt, int how)
     newtt->name[NAMSZ] = '\0';
     strncpy(newtt->death, describe_death(how, DTHSZ), DTHSZ);
     newtt->death[DTHSZ] = '\0';
+    newtt->deathtime = utc_time();
     newtt->birthdate = yyyymmdd(u.ubirthday);
-    newtt->deathdate = yyyymmdd((time_t) 0L);
-    time(&deathtime_internal);
+    newtt->deathdate = yyyymmdd(newtt->deathtime);
 }
 
 

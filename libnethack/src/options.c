@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -97,6 +97,10 @@ static const struct nh_listitem pettype_list[] = {
 static const struct nh_enum_option pettype_spec =
     { pettype_list, listlen(pettype_list) };
 
+/* timezone_list, timezone_spec are generated in readonly.c */
+extern const struct nh_listitem timezone_list[];
+extern const struct nh_enum_option timezone_spec;
+
 static const struct nh_listitem ap_object_class_list[] = {
     {OCLASS_ANY, "any"},
     {GOLD_SYM, "gold"},
@@ -129,6 +133,7 @@ static struct nh_autopickup_rule def_ap_ruleset[] = {
 };
 static struct nh_autopickup_rules def_autopickup =
     { def_ap_ruleset, SIZE(def_ap_ruleset) };
+
 
 static const struct nh_option_desc const_options[] = {
     {"autodig", "dig if moving and wielding digging tool", FALSE, OPTTYPE_BOOL,
@@ -180,6 +185,8 @@ static const struct nh_option_desc const_options[] = {
 
     {"name", "character name", TRUE, OPTTYPE_STRING, {.s = NULL}},
     {"mode", "game mode", TRUE, OPTTYPE_ENUM, {.e = MODE_NORMAL}},
+    {"timezone", "time zone to use for time-dependent effects",
+     TRUE, OPTTYPE_ENUM, {.e = 0}},
     {"elbereth", "difficulty: the E-word repels monsters", TRUE, OPTTYPE_BOOL,
      {.b = TRUE}},
     {"reincarnation", "Special Rogue-like levels", TRUE, OPTTYPE_BOOL,
@@ -329,6 +336,7 @@ new_opt_struct(void)
 
     nhlib_find_option(options, "name")->s.maxlen = PL_NSIZ;
     nhlib_find_option(options, "mode")->e = mode_spec;
+    nhlib_find_option(options, "timezone")->e = timezone_spec;
     nhlib_find_option(options, "align")->e = align_spec;
     nhlib_find_option(options, "gender")->e = gender_spec;
     nhlib_find_option(options, "role")->e = role_spec;
@@ -444,6 +452,8 @@ set_option(const char *name, union nh_optvalue value)
         horsename[PL_PSIZ - 1] = '\0';
     } else if (!strcmp("pettype", option->name)) {
         preferred_pet = (char)option->value.e;
+    } else if (!strcmp("timezone", option->name)) {
+        flags.timezone = option->value.e;
     }
 
     else
@@ -545,6 +555,8 @@ nh_get_options(void)
             option->value.e =
                 flags.debug ? MODE_WIZARD :
                 flags.explore ? MODE_EXPLORE : MODE_NORMAL;
+        } else if (!strcmp("timezone", option->name)) {
+            option->value.e = flags.timezone;
         } else if (!strcmp("align", option->name)) {
             option->value.e = u.initalign;
         } else if (!strcmp("gender", option->name)) {

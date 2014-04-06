@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -243,10 +243,10 @@ nameshk(struct monst *shk, const char *const *nlp, struct level *lev)
         shk->female = FALSE;
     } else {
         /* We want variation from game to game, without needing the save and
-           restore support which would be necessary for randomization; try not
-           to make too many assumptions about time_t's internals; use ledger_no 
-           rather than depth to keep mine town distinct. */
-        int nseed = (int)((long)u.ubirthday / 257L);
+           restore support which would be necessary for randomization; thus use
+           ubirthday for deterministic random numbers, and use ledger_no rather
+           than depth to keep mine town distinct. */
+        int nseed = ((unsigned)u.ubirthday / 257U);
 
         name_wanted = ledger_no(&lev->z) + (nseed % 13) - (nseed % 5);
         if (name_wanted < 0)

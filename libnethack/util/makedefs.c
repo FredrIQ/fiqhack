@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) M. Stephenson, 1990, 1991.                       */
 /* Copyright (c) Dean Luick, 1990.                                */
@@ -818,8 +818,9 @@ mstrength(const struct permonst *ptr)
 
 /* Generate the following read-only data tables:
  *
- * monstr:    mstrength values for monsters
- * bases:     the first object of each class
+ * monstr:                       mstrength values for monsters
+ * bases:                        the first object of each class
+ * timezone_list, timezone_spec: timezones
  */
 void
 do_readonly(const char *outfile)
@@ -871,6 +872,34 @@ do_readonly(const char *outfile)
         }
     }
     fprintf(ofp, "%s};\n", j > 0 ? "\n" : "");
+
+    /* timezones */
+
+    /* We don't bother trying to handle DST; the only timezones we support are
+       UTC offsets. (This also avoids exploits due to timezones with malicious
+       DST rules; timezones are under user control on some systems.)
+       
+       We support timezones from UTC-1300 to UTC+1300 in 15 minute intervals. I
+       think that's sufficient to cover the entire world (if I've missed a
+       country near the dateline or one with a weird offset, let me
+       know). Allowing the range to be too wide allows some silly
+       full-moon-related offsets, where you can extend the range of a full moon
+       up to a day.
+
+       Although this will inevitably be slightly exploitable no matter what,
+       making this a birth option cuts down on timezone-related shenanigans. */
+    fprintf(ofp, "\nconst struct nh_listitem timezone_list[] = {\n");
+    fprintf(ofp, "    {0, \"UTC\"},\n");
+    for (i = -3600 * 13; i <= 3600 * 13; i += 3600 / 4) {
+        if (i == 0)
+            continue;
+        fprintf(ofp, "    {%d, \"UTC%c%02d%02d\"},\n", i,
+                i < 0 ? '-' : '+', abs(i) / 3600, abs(i) % 3600 / 60);
+    }
+    fprintf(ofp, "};\n");
+    fprintf(ofp, "const struct nh_enum_option timezone_spec =\n");
+    fprintf(ofp, "    { timezone_list, "
+            "sizeof timezone_list / sizeof *timezone_list };\n\n");
 
     /* x_maze_max, y_maze_max */
     fprintf(ofp, "const int x_maze_max = %d;\n", (COLNO - 1) & ~1);

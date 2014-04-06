@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -107,9 +107,11 @@ savegame(struct memfile *mf)
 static void
 save_flags(struct memfile *mf)
 {
-    /* this is a fixed difference after version, but we tag it anyway to
-       make debugging easier */
+    /* this is a fixed distane after version, but we tag it anyway to make
+       debugging easier */
     mtag(mf, 0, MTAG_FLAGS);
+
+    mwrite64(mf, flags.turntime);
 
     mwrite32(mf, flags.djinni_count);
     mwrite32(mf, flags.ghost_count);

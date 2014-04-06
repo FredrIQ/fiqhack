@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1226,7 +1226,7 @@ demonpet(void)
  * otherwise, take one object.  [Is this really the behavior we want?]
  *
  * This routine implicitly assumes that there is no way to be able to
- * resist petfication (ie, be polymorphed into a xorn or golem) at the
+ * resist petrification (ie, be polymorphed into a xorn or golem) at the
  * same time as being able to steal (poly'd into nymph or succubus).
  * If that ever changes, the check for touching a cockatrice corpse
  * will need to be smarter about whether to break out of the theft loop.

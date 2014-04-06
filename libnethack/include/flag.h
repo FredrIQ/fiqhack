@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -222,6 +222,7 @@ struct flag {
     boolean verbose;    /* max battle info */
 
     /* 32-bit values: integers, etc. */
+    int timezone;       /* UTC plus this many seconds */
     unsigned ident;     /* social security number for each monster/object */
 # define TEMPORARY_IDENT 1 /* identification number for temporary things */
 # define FIRST_PERMANENT_IDENT 2 /* lower values are temporaries */
@@ -252,15 +253,20 @@ struct flag {
     int last_cmd;                             /* this or previous command */
     struct nh_cmd_arg last_arg;              /* this or previous argument */
     enum occupation occupation; /* internal code for a multi-turn command */
-    coord travelcc;             /* previously traveled-to square */
+    coord travelcc;                      /* previously traveled-to square */
+
+    /* The current time is not part of the multi-turn command state, but has
+       identical save properties (it persists to the start of the next
+       command). */
+    microseconds turntime;
 
     /* === BIRTH OPTIONS === */
     boolean elbereth_enabled;   /* should the E-word repel monsters? */
     boolean rogue_enabled;      /* create a rogue level */
-    boolean seduce_enabled;     /* succubus sduction */
+    boolean seduce_enabled;     /* succubus seduction */
     boolean bones_enabled;      /* allow loading bones levels */
-    boolean permablind; /* stay permanently blind */
-    boolean permahallu; /* stay permanently hallucinating */
+    boolean permablind;         /* stay permanently blind */
+    boolean permahallu;         /* stay permanently hallucinating */
 };
 
 

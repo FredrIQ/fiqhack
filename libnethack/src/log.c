@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-06 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -665,7 +665,7 @@ stop_updating_logfile(int lines_added)
 static_assert(SECOND_LOGLINE_LEN < COLNO, "SECOND_LOGLINE_LEN too long");
 
 void
-log_newgame(unsigned long long start_time, unsigned int seed)
+log_newgame(microseconds start_time, unsigned int seed)
 {
     char encbuf[ENCBUFSZ];
     const char *role;
@@ -802,6 +802,29 @@ log_neutral_turnstate(void)
     /* TODO: Periodically update the second line of the logfile. */
 }
 
+/* Update turntime in a manner that's safe within the log. */
+void
+log_time_line(void)
+{
+    uint_least64_t timediff;
+
+    /* If we're in a zero-time command, this function would change turntime
+       without logging it, which isn't what we'd want. Don't change it and don't
+       log it either; we'll change it on the next real command instead. */
+    if (program_state.in_zero_time_command)
+        return;
+
+    if (log_replay_input(1, "+%" SCNxLEAST64, &timediff)) {
+        flags.turntime += timediff;
+        return;
+    }
+
+    log_replay_no_more_options();
+
+    timediff = time_for_time_line() - flags.turntime;
+    flags.turntime += timediff;
+    log_record_input("+%" PRIxLEAST64, timediff);
+}
 
 /* Ensure that a command that was meant to have no effect actually did have no
    effect. If it did have an effect, complain and restart the turn, which will
@@ -1375,7 +1398,7 @@ nh_get_savegame_status(int fd, struct nh_game_info *si)
    this helps catch errors where the gamestate is not saved correctly. If it's
    true, then we allow backwards-compatible changes to the save format; if
    loading and immediately re-saving does not produce an identical file, we
-   force the next save-related line to be a diff not a backup. */
+   force the next save-related line to be a backup not a diff. */
 static void
 load_gamestate_from_binary_save(boolean maybe_old_version)
 {
@@ -1419,7 +1442,7 @@ load_gamestate_from_binary_save(boolean maybe_old_version)
 
 /* Decodes the given save diff into program_state.binary_save. The caller should
    check that the string actually is a representation of a save diff, is
-   responsibe for fixing the invariants on program_state, and must move the
+   responsible for fixing the invariants on program_state, and must move the
    binary save out of the way for safekeeping first.
 
    TODO: Perhaps this function would make more sense in memfile.c (with a
