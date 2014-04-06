@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -988,6 +988,11 @@ done_noreturn(int how)
         killer_format = NO_KILLER_PREFIX;
 
     log_game_over(describe_death(how, COLNO));
+    /* Don't log anything from now on (in particular, don't log the DYWYPI). If
+       you do, then the above log_game_over call assumes that the DYWYPI should
+       have been replayed already, and gets into an infinite loop restarting the
+       turn. */
+    program_state.in_zero_time_command = TRUE;
 
     /* these affect score and/or bones, but avoid them during panic */
     taken = paybill((how == ESCAPED) ? -1 : (how != QUIT));
