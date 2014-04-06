@@ -306,7 +306,8 @@ struct obj {
 
 /* helpers, simple enough to be macros */
 # define is_plural(o)   ((o)->quan > 1 || \
-                         (o)->oartifact == ART_EYES_OF_THE_OVERWORLD)
+                         (o)->oartifact == ART_EYES_OF_THE_OVERWORLD || \
+                         is_boots(o) || is_gloves(o))
 
 /* Flags for get_obj_location(). */
 # define CONTAINED_TOO  0x1

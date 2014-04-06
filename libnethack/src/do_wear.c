@@ -201,6 +201,12 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
         setworn(o, W_MASK(slot));
         if (msgtype != em_silent)
             on_msg(o);
+        if (o->cursed && !o->bknown) {
+            o->bknown = TRUE;
+            if (msgtype != em_silent)
+                pline("Oops; %s deathly cold.", is_plural(o) ? "they feel"
+                                                             : "that feels");
+        }
     } else {
         setworn(NULL, W_MASK(slot));
         /* It's not obvious whether we should uninvoke or not here. We need to
