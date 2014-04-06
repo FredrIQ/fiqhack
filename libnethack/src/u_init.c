@@ -935,6 +935,10 @@ ini_inv(const struct trobj *trop, short nocreate[4])
                     }
             }
             obj = mksobj(level, otyp, TRUE, FALSE);
+
+            /* lacquered armour */
+            if (obj->otyp == SPLINT_MAIL && Role_if(PM_SAMURAI))
+                obj->oerodeproof = obj->rknown = 1;
         } else {        /* UNDEF_TYP */
             /* 
              * For random objects, do not create certain overly powerful
