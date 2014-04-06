@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2014-03-31
+# Last modified by Alex Smith, 2014-04-06
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
@@ -5213,7 +5213,13 @@ sub recalculate_pair_xuse {
     my $report_ties = shift;
     my ($rule, $obj) = parse_pairname($pair);
     progress_report 4, "Calculating xuse of $pair";
-    reset_pair_xuse($pair); # invalidates sureness caches too
+
+    # If we aren't reporting ties, we reset the xuse, invalidating sureness
+    # caches too. If we are, we can't reset the xuse, or the pair ends up
+    # dropping off the face of the aimake.objects file altogether;
+    # xuse_by_pair is meant to be set for all unchanged pairs.
+    $report_ties or reset_pair_xuse($pair);
+
     my $r = $config->{rules}{$rule};
     # Add the pair's rule to the list.
     my %xuse = ("config_rule:$rule" => $obj);
@@ -5269,7 +5275,7 @@ sub recalculate_pair_xuse {
             # later if we have multiple reasonable possibilities and we're
             # still on the first pass.)  This is possible when the object is
             # provided or produced, but not if it's special (because it won't
-            # have any outdep_by_objet hash to check the outdepends from).
+            # have any outdep_by_object hash to check the outdepends from).
             if (!$objtype_is_special{$otype}) {
                 my @ancestors = sort keys %{$state->{outdep_by_object}{$o}};
                 delete $state->{outdep_by_object}{$o} unless
@@ -5290,7 +5296,8 @@ sub recalculate_pair_xuse {
                 }
                 if (@ancestors > 1 && $o =~ multiple_providers_ok_regex) {
                     # Fuse the output from the various providers.
-                    $state->{xuse_prevpair}{$pair}{$o} =
+                    $report_ties or
+                        $state->{xuse_prevpair}{$pair}{$o} =
                         'nonexistent sys:fuse';
                     my %udeps = ();
                     for my $ancestor (@ancestors) {
@@ -5306,13 +5313,14 @@ sub recalculate_pair_xuse {
                     next;
                 } elsif (@ancestors == 1) {
                     $pass == 1 and $pass1_xuse_pairs{$ancestors[0]} = 1;
-                    $state->{xuse_prevpair}{$pair}{$o} = $ancestors[0];
+                    $report_ties or
+                        $state->{xuse_prevpair}{$pair}{$o} = $ancestors[0];
                     my @udeps = @{$state->{outdep_by_pair}{$ancestors[0]}{$o}};
                     push @command, @udeps;
                     $xuse_reason{$_} = $o for @udeps;
                 } elsif (@ancestors > 1 && $pass == 2 && $report_ties) {
                     return (1, $o, $obj, \@ancestors);
-                } else {
+                } elsif (!$report_ties) {
                     # Nothing provides the object, or there's an unresolvable
                     # tie; add sys:clean to the list in both cases.
                     $state->{xuse_prevpair}{$pair}{$o} =
@@ -5334,13 +5342,17 @@ sub recalculate_pair_xuse {
             push @xuse, $o;
         }
     }
-    unless ($xuse{$obj}) {
-        $xuse{$obj} = "config_rule:$rule";
-        push @xuse, $obj;
-    }
-    $state->{xuse_by_pair}{$pair} = \@xuse;
-    for my $xuse (keys %xuse) {
-        $state->{xuse_by_object}{$xuse}{$pair} = $xuse{$xuse};
+
+    # If we're doing things rather than reporting, do them.
+    if (!$report_ties) {
+        unless ($xuse{$obj}) {
+            $xuse{$obj} = "config_rule:$rule";
+            push @xuse, $obj;
+        }
+        $state->{xuse_by_pair}{$pair} = \@xuse;
+        for my $xuse (keys %xuse) {
+            $state->{xuse_by_object}{$xuse}{$pair} = $xuse{$xuse};
+        }
     }
     return 0;
 }
@@ -6418,8 +6430,8 @@ MAINLOOP: while (1) {
                             # record_pair_outputs marks it as unchanged
                             record_pair_outputs $curpair, {};
                             # In case it immediately becomes changed again, we
-                            # want to postpone it. There's no restriction is
-                            # restricted to changed pairs.
+                            # want to postpone it. There's no restriction on
+                            # what sort of pairs can be in unlikely_runnable.
                             $unlikely_runnable{$curpair} = 1;
                             goto FIND_ANOTHER_RULE;
                         }
@@ -7139,7 +7151,9 @@ MAINLOOP: while (1) {
             !defined $stderr || $stderr eq '' || $hide_stderr
                 and $stderr = undef;
             defined $stderr and
-                $stderr = "$whatmsg produced warnings:\n$stderr";
+                $stderr = "$whatmsg produced warnings, with the following ".
+                "command line:\n" . run_command(@rcargs, \ "cmdline") .
+                "\n" .$stderr;
             record_pair_outputs $curpair, \%outhashes, $stderr;
         }
 
@@ -7256,8 +7270,9 @@ atomically {
         my @objs = keys %{$bad_rule_deps{$msg}};
         if (0 == scalar @objs) {
             progress_report -1, $msg;
-        } elsif (1 == scalar @objs) {
-            $msg =~ s/#OBJECT#/'object '.friendly_objname($objs[0])/e;
+        } elsif (scalar @objs <= 3) {
+            $msg =~ s/#OBJECT#/
+                join(', ', map friendly_objname($_), @objs)/e;
             progress_report -1, $msg;
         } else {
             $msg =~ s/#OBJECT#/(scalar @objs).' objects'/e;
@@ -8062,6 +8077,12 @@ __DATA__
         #   directly, as it wishes.) Normally, this wouldn't be a problem
         #   anyway, but it could be if there are things like object files
         #   sitting around in the source directory.
+        #
+        # I recently discovered a secret seventh purpose: when you
+        # accidentally tell your VCS to revert rather than commit your work,
+        # you can recover it from the isolation directory. I don't think this
+        # should count as aimake's job, but it's nonetheless a useful
+        # safeguard.
         isolate_file => {
             object => qr/^path:.*\.(?:c|h|cxx|l|y)$/s,
             command => ['intcmd:writefile',
