@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-06 */
+/* Last modified by Alex Smith, 2014-04-08 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -17,7 +17,7 @@ static void dump_outrip(struct nh_menulist *ml, boolean ts, const char *name,
                         int gold, const char *killbuf, int end_how, int year);
 
 #if !defined(WIN32)
-# define TIMESTAMP_FORMAT "%Y-%m-%d %H:%M"
+# define TIMESTAMP_FORMAT "%Y-%m-%d %H:%M:%S"
 #else
 /* windows doesn't allow ':' in filenames */
 # define TIMESTAMP_FORMAT "%Y-%m-%d %H_%M_%S"
