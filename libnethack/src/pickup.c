@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Alex Smith, 2014-05-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -413,7 +413,8 @@ add_objitem(struct nh_objlist *objlist,
         it->group_accel = def_oc_syms[(int)obj->oclass];
         it->otype = obfuscate_object(obj->otyp + 1);
         it->oclass = obj->oclass;
-        it->worn = ! !(obj->owornmask & ~(u.twoweap ? 0 : W_MASK(os_swapwep)));
+        it->worn = (obj->owornmask & ~(u.twoweap ? 0 : W_MASK(os_swapwep))) ||
+            obj->lamplit;
 
         /* don't unconditionally reveal weight, otherwise lodestones on the
            floor could be identified by their weight in the pickup dialog */

@@ -1255,6 +1255,9 @@ Thrown projectiles automatically requiver even if the quiver empties entirely,
 so long as they're autopickedup by means of the `pickup_thrown` option. (Dyna,
 3b5634b, 234d32f)
 
+Lit objects are now treated like equipped objects for the purpose of
+highlighting equipped objects in inventory menus. (Dyna, b999769)
+
 To help prevent typos, inventory letter assignment now tends to steer food items
 away from the letters eyYnN; potions away from qyYnN; scrolls from r; wands from
 z; and armor, gems, rocks, balls, and chains toward these problem letters. (4,
