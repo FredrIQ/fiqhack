@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-01-01
+Last modified by Alex Smith, 2014-04-09
 
 This document documents the version of the network protocol used in
 NetHack 4.3, and was written by Daniel Thaler, GreyKnight, Alex Smith.
@@ -38,7 +38,7 @@ Interaction
 ===========
 
 Once the client has connected to the server, it must send either an `auth` or
-a `register` command.  If the client sends a successful register command, a
+a `register` command.  If the client sends a successful `register` command, a
 following `auth` command is not necessary.  When the client is authenticated
 any other command may be sent to the server.
 
@@ -526,10 +526,6 @@ Response arguments:
           * `LS_INVALID` = -1: something is badly wrong with the save file
           * `LS_CRASHED` = -2: the save file needs manual recovery
 
-Arguments marked as (optional) with no elaboration will normally be available,
-but might not be if the save file is invalid or requires recovery.
-
-
 create_game
 -----------
 
@@ -538,10 +534,10 @@ order to start a new game.  This mostly corresponds to the `nh_create_game`
 API call in libnethack (although it has a slightly different calling
 convention).
 
-TODO: The API of this function is under revision.
-
 Command arguments:
-  * Under revision
+  * `struct nh_option_desc[] options`: the options this game should initially
+    be created with (including game mode, character, and character name); any
+    options omitted wil be filled in with defaults
 
 Response arguments:
   * `int gameid`: The game ID, for use with future `play_game` calls; if this
@@ -619,7 +615,7 @@ set_email
 
 Change the email address associated with the authenticated user.  (This
 address is not used by the game, but is available to server admins in case
-they need to verify a uer's identity, e.g. for a password reset request.)
+they need to verify a user's identity, e.g. for a password reset request.)
 
 Command arguments:
   * `string email`: the new email address
@@ -1031,7 +1027,7 @@ look at the map.
 TODO: This has a pretty weird interaction with server cancel requests.  It
 should probably be made a server request, not a display element.
 
-Arguments: an enum nh_pause_reason:
+Arguments: an `enum nh_pause_reason`:
   * `P_MESSAGE` = 0: give the user a chance to read the message area
   * `P_MAP` = 1: give the user a chance to look at the map
 
@@ -1075,8 +1071,7 @@ Change what is displayed at a particular map location.
 
 Arguments: an object:
   * `mapdelta dbuf`: the map delta, in compressed form (see below)
-  * `coordinate ux`: the character's x location; if this is 0, instead hide
-    the cursor altogether
+  * `coordinate ux`: the character's x location
   * `coordinate uy`: the character's y location
 
 A map delta can be an integer 0 if nothing at all has changed.  Otherwise it
