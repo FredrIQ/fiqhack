@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -405,7 +405,7 @@ static void
 select_boolean_value(union nh_optvalue *value, struct nh_option_desc *option)
 {
     struct nh_menulist menu;
-    int n, pick_list[2];
+    int pick_list[1];
 
     init_menulist(&menu);
 
@@ -414,11 +414,11 @@ select_boolean_value(union nh_optvalue *value, struct nh_option_desc *option)
     add_menu_item(&menu, 1, option->value.b ? "true (set)" : "true", 't', 0);
     add_menu_item(&menu, 2, option->value.b ? "false" : "false (set)", 'f', 0);
 
-    n = curses_display_menu(&menu, option->name, PICK_ONE, PLHINT_RIGHT,
-                            pick_list);
+    curses_display_menu(&menu, option->name, PICK_ONE, PLHINT_RIGHT,
+                        pick_list, curses_menu_callback);
 
     value->b = option->value.b; /* in case of ESC */
-    if (n == 1)
+    if (pick_list[0] != CURSES_MENU_CANCELLED)
         value->b = pick_list[0] == 1;
 }
 
@@ -428,7 +428,7 @@ static void
 select_enum_value(union nh_optvalue *value, struct nh_option_desc *option)
 {
     struct nh_menulist menu;
-    int i, n, selectidx;
+    int i, selectidx;
 
     init_menulist(&menu);
 
@@ -449,28 +449,51 @@ select_enum_value(union nh_optvalue *value, struct nh_option_desc *option)
         add_menu_item(&menu, i + 1, cap, 0, 0);
     }
 
-    int pick_list[menu.icount];
-    n = curses_display_menu(&menu, option->name, PICK_ONE, PLHINT_RIGHT,
-                            pick_list);
+    int pick_list[1];
+    curses_display_menu(&menu, option->name, PICK_ONE, PLHINT_RIGHT, pick_list,
+                        curses_menu_callback);
 
     value->e = option->value.e; /* in case of ESC */
-    if (n == 1) {
+    if (pick_list[0] != CURSES_MENU_CANCELLED) {
         selectidx = pick_list[0] - 1;
         value->e = option->e.choices[selectidx].id;
     }
 }
 
 
+static void
+getlin_option_callback(const char *str, void *option_void)
+{
+    struct nh_option_desc **option_p = option_void;
+    struct nh_option_desc *option = *option_p;
+
+    if (!*str || (*str == '\033' && option->type != OPTTYPE_STRING)) {
+        /* The user cancelled. */
+        *option_p = NULL;
+        return;
+    }
+
+    if (option->type == OPTTYPE_STRING) {
+        option->value.s = strdup(str);
+    } else if (option->type == OPTTYPE_INT) {
+        errno = 0;
+        long l = strtol(str, NULL, 0);
+        if (!errno && l >= option->i.min && l <= option->i.max)
+            option->value.i = (int)l;
+        else
+            *option_p = NULL;
+    }
+}
+
 /* get a new value of the appropriate type for the given option */
 static nh_bool
 query_new_value(struct win_menu *mdat, int idx)
 {
-    char buf[BUFSZ], query[BUFSZ];
-    union nh_optvalue value;
     struct nh_option_desc *option, *optlist;
+    struct nh_option_desc optioncopy;
+    struct nh_option_desc *optioncopy_p = &optioncopy;
     int listid = mdat->items[idx].id >> 10;
     int id = mdat->items[idx].id & 0x1ff;
-    char strbuf[BUFSZ];
     int prev_optstyle = settings.optstyle;
     nh_bool ret = FALSE;
 
@@ -488,32 +511,39 @@ query_new_value(struct win_menu *mdat, int idx)
     }
 
     option = &optlist[id];
-    value.s = strbuf;
+    /* optioncopy holds the new option we're planning to set */
+    optioncopy = *option;
 
-    switch ((int)option->type) {
+    switch ((int)optioncopy.type) {
     case OPTTYPE_BOOL:
-        select_boolean_value(&value, option);
+        select_boolean_value(&optioncopy.value, &optioncopy);
         break;
-
+        
     case OPTTYPE_INT:
-        sprintf(query, "New value for %s (number from %d to %d)", option->name,
-                option->i.min, option->i.max);
-        sprintf(buf, "%d", value.i);
-        curses_getline(query, buf);
-        if (buf[0] == '\033')
-            goto free;
-        sscanf(buf, "%d", &value.i);
+        if (optioncopy.i.min >= -2147483647-1 &&
+            optioncopy.i.max <= 2147483647)
+        {
+            /* Maximum length of a number as text is 11 chars */
+            char query[11 + 1 + strlen(optioncopy.name) +
+                       sizeof "New value for  (number from  to )"];
+            sprintf(query, "New value for %s (number from %d to %d)",
+                    optioncopy.name, optioncopy.i.min, optioncopy.i.max);
+            curses_getline(query, &optioncopy_p, getlin_option_callback);
+        }
         break;
 
     case OPTTYPE_ENUM:
-        select_enum_value(&value, option);
+        select_enum_value(&optioncopy.value, option);
         break;
 
     case OPTTYPE_STRING:
-        sprintf(query, "New value for %s (text)", option->name);
-        curses_getline(query, value.s);
-        if (value.s[0] == '\033')
-            goto free;
+        {
+            char query[strlen(optioncopy.name) + 1 +
+                       sizeof "New value for  (text)"];
+            sprintf(query, "New value for %s (text)", optioncopy.name);
+            optioncopy.value.s = NULL;
+            curses_getline(query, &optioncopy_p, getlin_option_callback);
+        }
         break;
 
     case OPTTYPE_AUTOPICKUP_RULES:
@@ -528,10 +558,14 @@ query_new_value(struct win_menu *mdat, int idx)
         goto free;
     }
 
-    if (!curses_set_option(option->name, value)) {
-        sprintf(strbuf, "new value for %s rejected", option->name);
-        curses_msgwin(strbuf);
-    } else {
+    /* getlin_option_callback NULLs out optioncopy_p to indicate that setting
+       was cancelled */
+    if (optioncopy_p && !curses_set_option(optioncopy.name, optioncopy.value)) {
+        char query[strlen(optioncopy.name) + 1 + 
+                   sizeof "new value for  rejected"];
+        sprintf(query, "new value for %s rejected", optioncopy.name);
+        curses_msgwin(query);
+    } else if (optioncopy_p) {
         if (listid != UI_OPTS) {
             curses_free_nh_opts(optlist);
             optlist = nh_get_options();
@@ -540,6 +574,11 @@ query_new_value(struct win_menu *mdat, int idx)
 
         print_option_string(option, mdat->items[idx].caption);
     }
+
+    /* We need to deallocate any string that might have been allocated by
+       the getlin callback. */
+    if (optioncopy.type == OPTTYPE_STRING && optioncopy.value.s)
+        free(optioncopy.value.s);
 
     /* special case: directly redo option menu appearance */
     if (settings.optstyle != prev_optstyle)
@@ -559,7 +598,7 @@ display_options(nh_bool change_birth_opt)
 {
     struct nh_menulist menu;
     struct nh_option_desc *options = curses_get_nh_opts();
-    int n;
+    int selected[1];
 
     do {
         init_menulist(&menu);
@@ -585,11 +624,11 @@ display_options(nh_bool change_birth_opt)
         add_menu_txt(&menu, "Interface options:", MI_HEADING);
         menu_add_options(&menu, UI_OPTS, curses_options, FALSE, FALSE);
 
-        n = curses_display_menu_core(
-            &menu, "Set what options?", PICK_ONE, NULL, 0, 0, -1, -1, FALSE,
-            query_new_value);
+        curses_display_menu_core(
+            &menu, "Set what options?", PICK_ONE, selected,
+            curses_menu_callback, 0, 0, -1, -1, FALSE, query_new_value);
 
-    } while (n > 0);
+    } while (*selected != CURSES_MENU_CANCELLED);
 
     write_ui_config();
     if (!game_is_running)
@@ -636,7 +675,7 @@ print_options(void)
     }
 
     curses_display_menu(&menu, "Available options:", PICK_NONE,
-                        PLHINT_ANYWHERE, NULL);
+                        PLHINT_ANYWHERE, NULL, null_menu_callback);
 
     curses_free_nh_opts(options);
 }
@@ -686,7 +725,7 @@ autopickup_rules_help(void)
         {0, MI_TEXT, "in the list, or delete it."},
     };
     curses_display_menu(STATIC_MENULIST(items), "Autopickup rules help:",
-                        PICK_NONE, PLHINT_LEFT, NULL);
+                        PICK_NONE, PLHINT_LEFT, NULL, null_menu_callback);
 }
 
 
@@ -700,11 +739,11 @@ get_autopickup_buc(enum nh_bucstatus cur)
         {B_UNCURSED + 1, MI_NORMAL, "uncursed", 'u'},
         {B_UNKNOWN + 1, MI_NORMAL, "unknown", 'U'}
     };
-    int n, selected[1];
+    int selected[1];
 
-    n = curses_display_menu(STATIC_MENULIST(items), "Beatitude match:",
-                            PICK_ONE, PLHINT_RIGHT, selected);
-    if (n <= 0)
+    curses_display_menu(STATIC_MENULIST(items), "Beatitude match:",
+                        PICK_ONE, PLHINT_RIGHT, selected, curses_menu_callback);
+    if (*selected == CURSES_MENU_CANCELLED)
         return cur;
     return selected[0] - 1;
 }
@@ -713,7 +752,7 @@ get_autopickup_buc(enum nh_bucstatus cur)
 static int
 get_autopickup_oclass(struct nh_autopick_option *desc, int cur)
 {
-    int i, n, selected[1];
+    int i, selected[1];
     struct nh_menulist menu;
 
     init_menulist(&menu);
@@ -722,14 +761,51 @@ get_autopickup_oclass(struct nh_autopick_option *desc, int cur)
         add_menu_item(&menu, desc->classes[i].id, desc->classes[i].caption,
                       (char)desc->classes[i].id, 0);
 
-    n = curses_display_menu(&menu, "Object class match:", PICK_ONE,
-                            PLHINT_RIGHT, selected);
+    curses_display_menu(&menu, "Object class match:", PICK_ONE,
+                        PLHINT_RIGHT, selected, curses_menu_callback);
 
-    if (n <= 0)
+    if (*selected == CURSES_MENU_CANCELLED)
         return cur;
     return selected[0];
 }
 
+
+/* pos holds maximum position on call, chosen position or -1 on return */
+static void
+rule_position_callback(const char *str, void *pos_void)
+{
+    int *pos = pos_void;
+    long l;
+
+    if (!*str || *str == '\033') {
+        *pos = -1;
+        return;
+    }
+
+    l = strtol(str, NULL, 0);
+    if (l >= 1 && l <= *pos)
+        *pos = (int)l;
+    else {
+        curses_msgwin("Invalid rule position.");
+        *pos = -1;
+    }
+}
+
+static void
+rule_pattern_callback(const char *str, void *pat_void)
+{
+    char *pat = pat_void;
+
+    if (*str == '\033')
+        return;
+    if (strlen(str) >= AUTOPICKUP_PATTERNSZ) {
+        curses_msgwin("That pattern is too long.");
+        return;
+    }
+
+    memset(pat, 0, AUTOPICKUP_PATTERNSZ);
+    strcpy(pat, str);
+}
 
 static void
 edit_ap_rule(struct nh_autopick_option *desc, struct nh_autopickup_rules *ar,
@@ -738,7 +814,7 @@ edit_ap_rule(struct nh_autopick_option *desc, struct nh_autopickup_rules *ar,
     struct nh_autopickup_rule *r = &ar->rules[ruleno];
     struct nh_autopickup_rule tmprule;
     struct nh_menulist menu;
-    int i, n, selected[1], newpos;
+    int i, selected[1], newpos;
     char query[BUFSZ], buf[BUFSZ];
     const char *classname;
 
@@ -766,9 +842,9 @@ edit_ap_rule(struct nh_autopick_option *desc, struct nh_autopickup_rules *ar,
         add_menu_txt(&menu, "", MI_TEXT);
         add_menu_item(&menu, 6, "delete this rule", 'x', 0);
 
-        n = curses_display_menu(&menu, "Edit rule:", PICK_ONE,
-                                PLHINT_RIGHT, selected);
-        if (n <= 0)
+        curses_display_menu(&menu, "Edit rule:", PICK_ONE, PLHINT_RIGHT,
+                            selected, curses_menu_callback);
+        if (*selected == CURSES_MENU_CANCELLED)
             return;
 
         switch (selected[0]) {
@@ -776,17 +852,10 @@ edit_ap_rule(struct nh_autopick_option *desc, struct nh_autopickup_rules *ar,
         case 1:
             sprintf(query, "New rule position: (1 - %d), currently: %d",
                     ar->num_rules, ruleno + 1);
-            buf[0] = '\0';
-            curses_getline(query, buf);
-            if (!*buf || *buf == '\033')
-                break;
-            newpos = atoi(buf);
-            if (newpos <= 0 || newpos > ar->num_rules) {
-                curses_msgwin("Invalid rule position.");
-                break;
-            }
+            newpos = ar->num_rules;
+            curses_getline(query, &newpos, rule_position_callback);
             newpos--;
-            if (newpos == ruleno)
+            if (newpos == ruleno || newpos < 0)
                 break;
 
             tmprule = ar->rules[ruleno];
@@ -804,12 +873,7 @@ edit_ap_rule(struct nh_autopick_option *desc, struct nh_autopickup_rules *ar,
             /* edit the pattern */
         case 2:
             sprintf(query, "New name pattern (empty matches everything):");
-            buf[0] = '\0';
-            curses_getline(query, buf);
-            memset(r->pattern, 0, sizeof (r->pattern));
-            if (*buf != '\033')
-                strncpy(r->pattern, buf, sizeof (r->pattern));
-            r->pattern[sizeof (r->pattern) - 1] = '\0';
+            curses_getline(query, r->pattern, rule_pattern_callback);
             break;
 
             /* edit object class match */
@@ -841,7 +905,7 @@ edit_ap_rule(struct nh_autopick_option *desc, struct nh_autopickup_rules *ar,
             return; 
         }
 
-    } while (n > 0);
+    } while (1);
 }
 
 
@@ -849,7 +913,7 @@ static void
 show_autopickup_menu(struct nh_option_desc *opt)
 {
     struct nh_menulist menu;
-    int i, j, n, parts, selected[1], id;
+    int i, j, parts, selected[1], id;
     struct nh_autopickup_rule *r;
     char buf[BUFSZ];
     struct nh_autopickup_rule *rule;
@@ -917,9 +981,9 @@ show_autopickup_menu(struct nh_option_desc *opt)
         add_menu_item(&menu, -2, "help", '?', 0);
 
         /* TODO */
-        n = curses_display_menu(&menu, "Autopickup rules:", PICK_ONE,
-                                PLHINT_RIGHT, selected);
-        if (n <= 0)
+        curses_display_menu(&menu, "Autopickup rules:", PICK_ONE,
+                            PLHINT_RIGHT, selected, curses_menu_callback);
+        if (*selected == CURSES_MENU_CANCELLED)
             break;
 
         /* add or edit a rule */
@@ -945,7 +1009,7 @@ show_autopickup_menu(struct nh_option_desc *opt)
             id--;
 
         edit_ap_rule(&opt->a, value.ar, id);
-    } while (n > 0);
+    } while (1);
 
     curses_set_option(opt->name, value);
 

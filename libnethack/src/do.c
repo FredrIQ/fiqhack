@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -604,7 +604,7 @@ menu_drop(int retry)
     int n, i, n_dropped = 0;
     long cnt;
     struct obj *otmp, *otmp2;
-    int pick_list[30];
+    const int *pick_list;
     struct object_pick *obj_pick_list;
     boolean all_categories = TRUE;
     boolean drop_everything = FALSE;
@@ -616,7 +616,7 @@ menu_drop(int retry)
         n = query_category("Drop what type of items?", invent,
                            UNPAID_TYPES | ALL_TYPES | CHOOSE_ALL | UNIDENTIFIED
                            | BUC_BLESSED | BUC_CURSED | BUC_UNCURSED |
-                           BUC_UNKNOWN, pick_list, PICK_ANY);
+                           BUC_UNKNOWN, &pick_list, PICK_ANY);
         if (!n)
             goto drop_done;
         for (i = 0; i < n; i++) {

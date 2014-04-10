@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -597,11 +597,11 @@ query_objlist(const char *qstr, /* query string */
         prev_oclass = curr->oclass;
     }
 
-    struct nh_objresult selection[objmenu.icount ? objmenu.icount : 1];
+    const struct nh_objresult *selection;
 
     if (objmenu.icount > 0)
         n = display_objects(&objmenu, qstr, how, PLHINT_INVENTORY,
-                            selection);
+                            &selection);
     else
         dealloc_objmenulist(&objmenu);
 
@@ -626,13 +626,12 @@ query_objlist(const char *qstr, /* query string */
 
 /*
  * allow menu-based category (class) selection (for Drop,take off etc.)
- *
  */
 int
 query_category(const char *qstr,        /* query string */
                struct obj *olist,       /* the list to pick from */
-               int qflags,      /* behaviour modification flags */
-               int *pick_list,  /* return list of items picked */
+               int qflags,              /* behaviour modification flags */
+               const int **pick_list,   /* return list of items picked */
                int how)
 {       /* type of query */
     int n;
@@ -680,7 +679,9 @@ query_category(const char *qstr,        /* query string */
             break;
         }
         if (curr) {
-            pick_list[0] = curr->oclass;
+            int *pl = xmalloc(&turnstate.message_chain, sizeof (int));
+            pl[0] = curr->oclass;
+            *pick_list = pl;
             return 1;
         }
         return 0;
@@ -1981,7 +1982,7 @@ menu_loot(int retry, struct obj *container, boolean put_in)
     const char *buf;
     const char *takeout = "Take out", *putin = "Put in";
     struct obj *otmp, *otmp2;
-    int pick_list[30];
+    const int *pick_list;
     struct object_pick *obj_pick_list;
     int mflags, res;
     long count;
@@ -1995,7 +1996,7 @@ menu_loot(int retry, struct obj *container, boolean put_in)
             put_in ? ALL_TYPES | BUC_ALLBKNOWN | BUC_UNKNOWN | UNIDENTIFIED :
             ALL_TYPES | CHOOSE_ALL | BUC_ALLBKNOWN | BUC_UNKNOWN | UNIDENTIFIED;
         n = query_category(buf, put_in ? invent : container->cobj, mflags,
-                           pick_list, PICK_ANY);
+                           &pick_list, PICK_ANY);
         if (!n)
             return 0;
         for (i = 0; i < n; i++) {
@@ -2052,7 +2053,7 @@ in_or_out_menu(const char *prompt, struct obj *obj, boolean outokay,
                boolean inokay)
 {
     struct nh_menuitem items[3];
-    int selection[1];
+    const int *selection;
     const char *buf;
     int n, nr = 0;
 
@@ -2071,7 +2072,7 @@ in_or_out_menu(const char *prompt, struct obj *obj, boolean outokay,
                      FALSE);
 
     n = display_menu(&(struct nh_menulist){.items = items, .icount = nr},
-                     prompt, PICK_ONE, PLHINT_CONTAINER, selection);
+                     prompt, PICK_ONE, PLHINT_CONTAINER, &selection);
     if (n > 0)
         n = selection[0];
 

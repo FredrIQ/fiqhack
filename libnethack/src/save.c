@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-06 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -34,7 +34,8 @@ static void freefruitchn(void);
 int
 dosave(const struct nh_cmd_arg *arg)
 {
-    int n, selected[1];
+    int n;
+    const int *selected;
     struct nh_menulist menu;
 
     (void) arg;
@@ -45,7 +46,7 @@ dosave(const struct nh_cmd_arg *arg)
                  FALSE);
     add_menuitem(&menu, 3, "Continue playing", 'n', FALSE);
     n = display_menu(&menu, "Do you want to stop playing?",
-                     PICK_ONE, PLHINT_URGENT, selected);
+                     PICK_ONE, PLHINT_URGENT, &selected);
 
     if (n)
         n = selected[0];
@@ -169,7 +170,12 @@ save_flags(struct memfile *mf)
 
     mwrite(mf, flags.inv_order, sizeof (flags.inv_order));
 
-    mwrite(mf, flags.last_arg.str, sizeof flags.last_arg.str);
+    if (!flags.last_str_buf) {
+        flags.last_str_buf = malloc(1);
+        *(flags.last_str_buf) = '\0';
+    }
+    mwrite32(mf, strlen(flags.last_str_buf));
+    mwrite(mf, flags.last_str_buf, strlen(flags.last_str_buf));
 
     save_autopickup_rules(mf, flags.ap_rules);
     save_coords(mf, &flags.travelcc, 1);
@@ -896,12 +902,17 @@ freedynamicdata(void)
     free_dungeon();
     free_history();
 
+    if (flags.last_str_buf) {
+        free(flags.last_str_buf);
+        flags.last_str_buf = NULL;
+    }
     if (flags.ap_rules) {
         free(flags.ap_rules->rules);
         flags.ap_rules->rules = NULL;
         free(flags.ap_rules);
+        flags.ap_rules = NULL;
     }
-    flags.ap_rules = NULL;
+
     free(artilist);
     free(objects);
     objects = NULL;

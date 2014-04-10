@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-06 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -127,7 +127,8 @@ struct turnstate {
     /* Objects that might potentially be destroyed or otherwise changed during
        a turn. */
     struct obj *tracked[ttos_last_slot + 1];
-    /* Messages that are scheduled for deallocation at the end of the turn. */
+    /* Messages (and a few other things, like menu selections) that are
+       scheduled for deallocation at the end of the turn. */
     struct xmalloc_block *message_chain;
 
     /* TRUE if continuing a multi-turn action should print a message. */
@@ -249,9 +250,16 @@ struct flag {
        processed). last_arg is initially the argument that the user entered for
        that command, but it is modified in response to user input (i.e. if the
        server prompts for an argument, it's handled the same way as if the
-       client had volunteered it.) */
+       client had volunteered it.)
+
+       Whenever last_arg.argtype & CMD_ARG_STR, last_arg.str must point to
+       last_str_buf, in order to handle memory access for the arguments
+       correctly. last_str_buf itself is always either NULL or malloc'ed; it
+       does not necessarily have to be deallocated once last_arg.str is no
+       longer relevant, although it can be. */
     int last_cmd;                             /* this or previous command */
     struct nh_cmd_arg last_arg;              /* this or previous argument */
+    char *last_str_buf;       /* mutable last_arg.str, so it can be freed */
     enum occupation occupation; /* internal code for a multi-turn command */
     coord travelcc;                      /* previously traveled-to square */
 

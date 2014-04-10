@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-10 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -34,9 +34,11 @@
 
 # define BUFSZ          256     /* for getlin buffers */
 # define QBUFSZ         128     /* for building question text */
-# define PL_NSIZ        32
-                                /* name of player, ghost, shopkeeper */
+# define PL_NSIZ        32      /* name of player, ghost, shopkeeper */
 # define PLRBUFSZ       16      /* player race/role names */
+
+# define AUTOPICKUP_PATTERNSZ   40
+                                
 
 # define FCMASK         0660    /* file creation mask */
 
@@ -364,7 +366,7 @@ struct nh_autopick_option {
 };
 
 struct nh_autopickup_rule {
-    char pattern[40];
+    char pattern[AUTOPICKUP_PATTERNSZ];
     int oclass; /* valid values are those given in the a.classes list */
     enum nh_bucstatus buc;
     enum autopickup_action action;
@@ -520,9 +522,14 @@ struct nh_cmd_arg {
     enum nh_direction dir;     /* CMD_ARG_DIR */
     struct nh_cmdarg_pos pos;  /* CMD_ARG_POS */
     char invlet;               /* CMD_ARG_OBJ */
-    char str[BUFSZ];           /* CMD_ARG_STR */
+    const char *str;           /* CMD_ARG_STR */
     char spelllet;             /* CMD_ARG_SPELL */
     int limit;                 /* CMD_ARG_LIMIT */
+};
+
+struct nh_cmd_and_arg {
+    const char *cmd;
+    struct nh_cmd_arg arg;
 };
 
 /* various extra information that the character knows, and the 
@@ -648,32 +655,63 @@ struct nh_topten_entry {
     nh_bool highlight;
 };
 
+/*
+ * return type for win_query_key()
+ */
+struct nh_query_key_result {
+    int key; /* ASCII only */
+    int count;
+};
+
+/*
+ * return type for win_getpos()
+ */
+struct nh_getpos_result {
+    enum nh_client_response howclosed;
+    short x;
+    short y;
+};
+
 /* Any nh_menulist *, nh_objlist * have their "items" elements freed by the
    callee, unless they're marked as statically allocated (items non-NULL, size
    0), or are empty lists and so were never allocated in the first place (items
-   NULL). */
+   NULL).
+
+   Any variably-sized that are transmitted from the callee to the caller are
+   transmitted by means of a callback function, in order to avoid memory
+   allocation issues. */
 struct nh_window_procs {
     void (*win_pause) (enum nh_pause_reason reason);
     void (*win_display_buffer) (const char *buf, nh_bool trymove);
     void (*win_update_status) (struct nh_player_info * pi);
     void (*win_print_message) (int turn, const char *msg);
     void (*win_request_command) (nh_bool debug, nh_bool completed,
-                                 nh_bool interrupted, char *command,
-                                 struct nh_cmd_arg *arg);
-    int (*win_display_menu) (struct nh_menulist *, const char *, int, int,
-                             int *);
-    int (*win_display_objects) (struct nh_objlist *, const char *, int,
-                                int, struct nh_objresult *);
-    nh_bool(*win_list_items) (struct nh_objlist *, nh_bool invent);
-    void (*win_update_screen) (struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux,
-                               int uy);
+                                 nh_bool interrupted, void *callbackarg,
+                                 void (*callback)(
+                                     const struct nh_cmd_and_arg *cmd,
+                                     void *callbackarg));
+    void (*win_display_menu) (
+        struct nh_menulist *menulist, const char *title, int how,
+        int placement_hint, void *callbackarg,
+        void (*callback)(const int *results, int nresults, void *callbackarg));
+    void (*win_display_objects) (
+        struct nh_objlist *menulist, const char *title, int how,
+        int placement_hint, void *callback_arg,
+        void (*callback)(const struct nh_objresult *results, int nresults,
+                         void *callbackarg));
+    nh_bool (*win_list_items) (struct nh_objlist *itemlist, nh_bool invent);
+    void (*win_update_screen) (struct nh_dbuf_entry dbuf[ROWNO][COLNO],
+                               int ux, int uy);
     void (*win_raw_print) (const char *str);
-    char (*win_query_key) (const char *query, int *count);
-    int (*win_getpos) (int *, int *, nh_bool, const char *);
+    struct nh_query_key_result (*win_query_key) (const char *query,
+                                                 nh_bool count_allowed);
+    struct nh_getpos_result (*win_getpos) (int origx, int origy,
+                                           nh_bool force, const char *goal);
     enum nh_direction (*win_getdir) (const char *, nh_bool);
     char (*win_yn_function) (const char *query, const char *rset,
                              char defchoice);
-    void (*win_getlin) (const char *, char *);
+    void (*win_getlin) (const char *query, void *callbackarg,
+                        void (*callback)(const char *lin, void *callbackarg));
     void (*win_delay) (void);
     void (*win_level_changed) (int displaymode);
     void (*win_outrip) (struct nh_menulist *menulist,

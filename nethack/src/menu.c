@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-04 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -263,18 +263,52 @@ find_accel(int accel, struct win_menu *mdat)
 }
 
 
-int
+static void
+menu_search_callback(const char *sbuf, void *mdat_void)
+{
+    struct win_menu *mdat = mdat_void;
+    int i;
+
+    for (i = 0; i < mdat->icount; i++)
+        if (strstr(mdat->items[i].caption, sbuf))
+            break;
+    if (i < mdat->icount) {
+        int end = max(mdat->icount - mdat->innerheight, 0);
+        
+        mdat->offset = min(i, end);
+    }
+}
+
+static void
+objmenu_search_callback(const char *sbuf, void *mdat_void)
+{
+    struct win_objmenu *mdat = mdat_void;
+    int i;
+
+    for (i = 0; i < mdat->icount; i++)
+        if (strstr(mdat->items[i].caption, sbuf))
+            break;
+    if (i < mdat->icount) {
+        int end = max(mdat->icount - mdat->innerheight, 0);
+        
+        mdat->offset = min(i, end);
+    }
+}
+
+
+void
 curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
-                         int *results, int x1, int y1, int x2, int y2,
-                         nh_bool bottom,
+                         void *callbackarg,
+                         void (*callback)(const int *, int, void *),
+                         int x1, int y1, int x2, int y2, nh_bool bottom,
                          nh_bool(*changefn) (struct win_menu *, int))
 {
     struct gamewin *gw;
     struct win_menu *mdat;
     int i, key, idx, rv, startx, starty, prevcurs, prev_offset;
     nh_bool done, cancelled;
-    char sbuf[BUFSZ];
     char selected[ml->icount ? ml->icount : 1];
+    int results[ml->icount ? ml->icount : 1];
 
     /* Make a stack-allocated copy of the menulist, in case we end up longjmping
        out of here before we get a chance to deallocate it. */
@@ -410,15 +444,7 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
 
             /* search for a menu item */
         case ':':
-            curses_getline("Search:", sbuf);
-            for (i = 0; i < mdat->icount; i++)
-                if (strstr(mdat->items[i].caption, sbuf))
-                    break;
-            if (i < mdat->icount) {
-                int end = max(mdat->icount - mdat->innerheight, 0);
-
-                mdat->offset = min(i, end);
-            }
+            curses_getline("Search:", mdat, menu_search_callback);
             break;
 
             /* try to find an item for this key and, if one is found, select it 
@@ -452,8 +478,7 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
         rv = 0;
         for (i = 0; i < mdat->icount; i++) {
             if (mdat->selected[i]) {
-                if (results)
-                    results[rv] = mdat->items[i].id;
+                results[rv] = mdat->items[i].id;
                 rv++;
             }
         }
@@ -463,15 +488,25 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     redraw_game_windows();
     curs_set(prevcurs);
 
-    return rv;
+    callback(results, rv, callbackarg);
 }
 
 
-int
-curses_display_menu(struct nh_menulist *ml, const char *title,
-                    int how, int placement_hint, int *results)
+void
+curses_menu_callback(const int *results, int nresults, void *arg)
 {
-    int n;
+    if (nresults > 0)
+        memcpy(arg, results, nresults * sizeof *results);
+    else
+        *(int *)arg = CURSES_MENU_CANCELLED;
+}
+
+
+void
+curses_display_menu(struct nh_menulist *ml, const char *title,
+                    int how, int placement_hint, void *callbackarg,
+                    void (*callback)(const int *, int, void *))
+{
     int x1 = 0, y1 = 0, x2 = -1, y2 = -1;
 
     if (placement_hint == PLHINT_INVENTORY ||
@@ -488,9 +523,8 @@ curses_display_menu(struct nh_menulist *ml, const char *title,
         y2 = getmaxy(msgwin);
     }
 
-    n = curses_display_menu_core(ml, title, how, results, x1, y1, x2, y2, FALSE,
-                                 NULL);
-    return n;
+    curses_display_menu_core(ml, title, how, callbackarg, callback,
+                             x1, y1, x2, y2, FALSE, NULL);
 }
 
 /******************************************************************************
@@ -741,19 +775,20 @@ find_objaccel(int accel, struct win_objmenu *mdat)
 }
 
 
-int
-curses_display_objects(struct nh_objlist *objlist, const char *title,
-                       int how, int placement_hint,
-                       struct nh_objresult *results)
+void
+curses_display_objects(
+    struct nh_objlist *objlist, const char *title, int how,
+    int placement_hint, void *callbackarg,
+    void (*callback)(const struct nh_objresult *, int, void *))
 {
     struct gamewin *gw;
     struct win_objmenu *mdat;
     int i, key, idx, rv, startx, starty, prevcurs, prev_offset;
     nh_bool done, cancelled;
-    char sbuf[BUFSZ];
     nh_bool inventory_special = title && !!strstr(title, "Inventory") &&
         how == PICK_NONE;
     int selected[objlist->icount ? objlist->icount : 1];
+    struct nh_objresult results[objlist->icount ? objlist->icount : 1];
 
     /* Make a stack-allocated copy of the objlist, in case we end up longjmping
        out of here before we get a chance to deallocate it. */
@@ -930,15 +965,7 @@ curses_display_objects(struct nh_objlist *objlist, const char *title,
 
             /* search for a menu item */
         case ':':
-            curses_getline("Search:", sbuf);
-            for (i = 0; i < mdat->icount; i++)
-                if (strstr(mdat->items[i].caption, sbuf))
-                    break;
-            if (i < mdat->icount) {
-                int end = max(mdat->icount - mdat->innerheight, 0);
-
-                mdat->offset = min(i, end);
-            }
+            curses_getline("Search:", mdat, objmenu_search_callback);
             break;
 
             /* edit selection count */
@@ -1006,10 +1033,8 @@ curses_display_objects(struct nh_objlist *objlist, const char *title,
         rv = 0;
         for (i = 0; i < mdat->icount; i++) {
             if (mdat->selected[i]) {
-                if (results) {
-                    results[rv].id = mdat->items[i].id;
-                    results[rv].count = mdat->selected[i];
-                }
+                results[rv].id = mdat->items[i].id;
+                results[rv].count = mdat->selected[i];
                 rv++;
             }
         }
@@ -1019,7 +1044,7 @@ curses_display_objects(struct nh_objlist *objlist, const char *title,
     redraw_game_windows();
     curs_set(prevcurs);
 
-    return rv;
+    callback(results, rv, callbackarg);
 }
 
 
@@ -1046,10 +1071,10 @@ do_item_actions(const struct nh_objitem *item)
     } else {
         snprintf(title, QBUFSZ, "%c - %s", item->accel, item->caption);
     }
-    i = curses_display_menu(&menu, title, PICK_ONE, PLHINT_INVENTORY,
-                            selected);
+    curses_display_menu(&menu, title, PICK_ONE, PLHINT_INVENTORY,
+                        selected, curses_menu_callback);
 
-    if (i <= 0)
+    if (*selected == CURSES_MENU_CANCELLED)
         return FALSE;
 
     arg.argtype = CMD_ARG_OBJ;

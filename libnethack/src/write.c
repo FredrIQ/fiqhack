@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
@@ -65,7 +65,7 @@ int
 dowrite(struct obj *pen, const struct nh_cmd_arg *arg)
 {
     struct obj *paper;
-    char namebuf[BUFSZ], *nm, *bp;
+    const char *namebuf, *nm, *bp;
     struct obj *new_obj;
     int basecost, actualcost;
     int curseval;
@@ -103,8 +103,8 @@ dowrite(struct obj *pen, const struct nh_cmd_arg *arg)
 
     /* what to write */
     qbuf = msgprintf("What type of %s do you want to write?", typeword);
-    getarglin(arg, qbuf, namebuf);
-    mungspaces(namebuf);        /* remove any excess whitespace */
+    namebuf = getarglin(arg, qbuf);
+    namebuf = msgmungspaces(namebuf);   /* remove any excess whitespace */
     if (namebuf[0] == '\033' || !namebuf[0])
         return 1;
     nm = namebuf;
@@ -115,10 +115,8 @@ dowrite(struct obj *pen, const struct nh_cmd_arg *arg)
     if (!strncmpi(nm, "of ", 3))
         nm += 3;
 
-    if ((bp = strstri_mutable(nm, " armour")) != 0) {
-        strncpy(bp, " armor ", 7);      /* won't add '\0' */
-        mungspaces(bp + 1);     /* remove the extra space */
-    }
+    if ((bp = strstri(nm, " armour")) != 0)
+        nm = msgcat_many(msgchop(nm, bp-nm), " armor", bp+7, NULL);
 
     first = bases[(int)paper->oclass];
     last = bases[(int)paper->oclass + 1] - 1;

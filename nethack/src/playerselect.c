@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-01-19 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -219,13 +219,13 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
                  int randomall)
 {
     struct nh_menulist menu;
-    int i, k, n, listlen, id;
+    int i, k, listlen, id;
     char pick4u = 'n', thisch, lastch = 0;
     char pbuf[QBUFSZ], plbuf[QBUFSZ];
     struct nh_listitem list[LISTSZ];    /* need enough space for lists of roles 
                                            or races */
     char listbuffers[LISTSZ][256];
-    int pick_list[2];
+    int pick_list[1];
     int role, race, gend, align;
     const struct nh_roles_info *ri = nh_get_roles();
 
@@ -259,7 +259,7 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
         total_len += strlennull(ri->alignnames[i]);
 
     char names[total_len];
-    n = 0;
+    int n = 0;
     for (i = 0; i < ri->num_roles; i++) {
         ri_copy.rolenames_m[i] = fill_strcpy(names, &n, ri->rolenames_m[i]);
         ri_copy.rolenames_f[i] = fill_strcpy(names, &n, ri->rolenames_f[i]);
@@ -340,11 +340,11 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
             add_menu_item(&menu, -1, "Quit", 'q', 0);
 
             sprintf(pbuf, "Pick a role for your %s", plbuf);
-            n = curses_display_menu(&menu, pbuf, PICK_ONE,
-                                    PLHINT_ANYWHERE, pick_list);
+            curses_display_menu(&menu, pbuf, PICK_ONE, PLHINT_ANYWHERE,
+                                pick_list, curses_menu_callback);
 
             /* Process the choice */
-            if (n == -1 || pick_list[0] == -1)
+            if (pick_list[0] == CURSES_MENU_CANCELLED || pick_list[0] == -1)
                 return FALSE;
 
             role = pick_list[0] - 1;
@@ -377,10 +377,10 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
                 add_menu_item(&menu, -1, "Quit", 'q', 0);
 
                 sprintf(pbuf, "Pick the race of your %s", plbuf);
-                n = curses_display_menu(&menu, pbuf, PICK_ONE,
-                                        PLHINT_ANYWHERE, pick_list);
+                curses_display_menu(&menu, pbuf, PICK_ONE, PLHINT_ANYWHERE,
+                                    pick_list, curses_menu_callback);
 
-                if (n == -1 || pick_list[0] == -1)
+                if (pick_list[0] == CURSES_MENU_CANCELLED || pick_list[0] == -1)
                     return FALSE;
 
                 k = pick_list[0] - 1;
@@ -415,10 +415,10 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
                 add_menu_item(&menu, -1, "Quit", 'q', 0);
 
                 sprintf(pbuf, "Pick the gender of your %s", plbuf);
-                n = curses_display_menu(&menu, pbuf, PICK_ONE,
-                                        PLHINT_ANYWHERE, pick_list);
+                curses_display_menu(&menu, pbuf, PICK_ONE, PLHINT_ANYWHERE,
+                                    pick_list, curses_menu_callback);
 
-                if (n == -1 || pick_list[0] == -1)
+                if (pick_list[0] == CURSES_MENU_CANCELLED || pick_list[0] == -1)
                     return FALSE;
 
                 k = pick_list[0] - 1;
@@ -453,10 +453,10 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
                 add_menu_item(&menu, -1, "Quit", 'q', 0);
 
                 sprintf(pbuf, "Pick the alignment of your %s", plbuf);
-                n = curses_display_menu(&menu, pbuf, PICK_ONE,
-                                        PLHINT_ANYWHERE, pick_list);
+                curses_display_menu(&menu, pbuf, PICK_ONE, PLHINT_ANYWHERE,
+                                    pick_list, curses_menu_callback);
 
-                if (n == -1 || pick_list[0] == -1)
+                if (pick_list[0] == CURSES_MENU_CANCELLED || pick_list[0] == -1)
                     return FALSE;
 
                 k = pick_list[0] - 1;

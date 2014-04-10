@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -226,7 +226,7 @@ newman(void)
 void
 polyself(boolean forcecontrol)
 {
-    char buf[BUFSZ];
+    const char *buf;
     int old_light, new_light;
     int mntmp = NON_PM;
     int tries = 0;
@@ -250,7 +250,7 @@ polyself(boolean forcecontrol)
 
     if (Polymorph_control || forcecontrol) {
         do {
-            getlin("Become what kind of monster? [type the name]", buf, FALSE);
+            buf = getlin("Become what kind of monster? [type the name]", FALSE);
             if (forcecontrol && !strncmp("new ", buf, 4)) {
                 newman();
                 goto made_change;

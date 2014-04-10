@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -949,7 +949,8 @@ int
 enhance_weapon_skill(const struct nh_cmd_arg *arg)
 {
     int pass, i, n, len, longest, id, to_advance, eventually_advance,
-        maxxed_cnt, selected[1];
+        maxxed_cnt;
+    const int *selected;
     const char *prefix, *buf;
     struct nh_menulist menu;
     boolean speedy = FALSE;
@@ -1046,7 +1047,7 @@ enhance_weapon_skill(const struct nh_cmd_arg *arg)
             buf = msgprintf("%s  (%d slot%s available)", buf,
                             u.weapon_slots, plur(u.weapon_slots));
         n = display_menu(&menu, buf, to_advance ? PICK_ONE : PICK_NONE,
-                         PLHINT_ANYWHERE, selected);
+                         PLHINT_ANYWHERE, &selected);
         if (n == 1) {
             n = selected[0] - 1;        /* get item selected */
             skill_advance(n);

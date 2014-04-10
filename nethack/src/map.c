@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-09 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -253,8 +253,8 @@ place_desc_message(WINDOW * win, int *x, int *y, char *b)
     }
 }
 
-int
-curses_getpos(int *x, int *y, nh_bool force, const char *goal)
+struct nh_getpos_result
+curses_getpos(int xorig, int yorig, nh_bool force, const char *goal)
 {
     int result = NHCR_ACCEPTED;
     int cx, cy;
@@ -310,8 +310,8 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
         wrefresh(statuswin);
     }
 
-    cx = *x >= 0 && *x < COLNO ? *x : player.x;
-    cy = *y >= 0 && *y < ROWNO ? *y : player.y;
+    cx = xorig >= 0 && xorig < COLNO ? xorig : player.x;
+    cy = yorig >= 0 && yorig < ROWNO ? yorig : player.y;
     wmove(mapwin, cy, cx);
 
     while (1) {
@@ -441,9 +441,6 @@ curses_getpos(int *x, int *y, nh_bool force, const char *goal)
         wrefresh(mapwin);
     }
 
-    *x = cx;
-    *y = cy;
-
     curses_update_status(NULL); /* clear the help message */
-    return result;
+    return (struct nh_getpos_result){.x = cx, .y = cy, .howclosed = result};
 }

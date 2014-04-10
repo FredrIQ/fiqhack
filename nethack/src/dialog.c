@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -241,13 +241,16 @@ curses_query_key_validator(int key, void *count)
     return -1; /* prompt for another key */
 }
 
-char
-curses_query_key(const char *query, int *count)
+struct nh_query_key_result
+curses_query_key(const char *query, nh_bool allow_count)
 {
-    if (count)
-        *count = -1;
+    struct nh_query_key_result nqkr;
 
-    return curses_msgwin_generic(query, curses_query_key_validator, count, 1);
+    nqkr.count = -1;
+
+    nqkr.key = curses_msgwin_generic(query, curses_query_key_validator,
+                                     allow_count ? &(nqkr.count) : NULL, 1);
+    return nqkr;
 }
 
 

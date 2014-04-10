@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -235,24 +235,31 @@ handle_internal_cmd(struct nh_cmd_desc **cmd,
 }
 
 
-const char *
-get_command(struct nh_cmd_arg *arg, nh_bool include_debug)
+void
+get_command(void *callbackarg,
+            void (*callback)(const struct nh_cmd_and_arg *, void *),
+            nh_bool include_debug)
 {
     int key, key2, multi;
     char line[BUFSZ];
     struct nh_cmd_desc *cmd, *cmd2;
+    struct nh_cmd_and_arg ncaa;
+
+    int save_repeats = repeats_remaining;
+    repeats_remaining = 0;
 
     /* inventory item actions may set the next command */
     if (have_next_command) {
         have_next_command = FALSE;
-        *arg = next_command_arg;
-        return next_command_name;
+        callback(&(struct nh_cmd_and_arg){next_command_name, next_command_arg},
+                 callbackarg);
+        return;
     }
 
     do {
         multi = 0;
         cmd = NULL;
-        arg->argtype = 0;
+        ncaa.arg.argtype = 0;
 
         key = get_map_key(TRUE);
         while ((key >= '0' && key <= '9') ||
@@ -279,14 +286,14 @@ get_command(struct nh_cmd_arg *arg, nh_bool include_debug)
             /* handle internal commands. The command handler may alter *cmd, and
                arg (although not all this functionality is currently used) */
             if (cmd->flags & CMD_UI) {
-                handle_internal_cmd(&cmd, arg, include_debug);
+                handle_internal_cmd(&cmd, &ncaa.arg, include_debug);
                 if (!cmd)       /* command was fully handled internally */
                     continue;
             }
 
             if (multi && cmd->flags & CMD_ARG_LIMIT) {
-                arg->argtype |= CMD_ARG_LIMIT;
-                arg->limit = multi;
+                ncaa.arg.argtype |= CMD_ARG_LIMIT;
+                ncaa.arg.limit = multi;
             } else {
                 repeats_remaining = multi;
             }
@@ -299,18 +306,22 @@ get_command(struct nh_cmd_arg *arg, nh_bool include_debug)
                 doupdate();
             }
 
+            if (cmd == find_command("repeat")) {
+                repeats_remaining = save_repeats;
+            }
+
             /* if the command requres an arg AND the arg isn't set yet (by
                handle_internal_cmd) */
             if (cmd->flags & CMD_ARG_DIR && cmd->flags & CMD_MOVE &&
-                !(arg->argtype & CMD_ARG_DIR)) {
+                !(ncaa.arg.argtype & CMD_ARG_DIR)) {
                 key2 = get_map_key(TRUE);
                 if (key2 == '\033')     /* cancel silently */
                     continue;
 
                 cmd2 = keymap[key2];
                 if (cmd2 && (cmd2->flags & CMD_UI) && (cmd2->flags & DIRCMD)) {
-                    arg->argtype |= CMD_ARG_DIR;
-                    arg->dir =
+                    ncaa.arg.argtype |= CMD_ARG_DIR;
+                    ncaa.arg.dir =
                         (enum nh_direction)(cmd2->flags & ~(CMD_UI | DIRCMD));
                 } else
                     cmd = NULL;
@@ -325,7 +336,8 @@ get_command(struct nh_cmd_arg *arg, nh_bool include_debug)
 
     wmove(mapwin, player.y, player.x);
 
-    return cmd->name;
+    ncaa.cmd = cmd->name;
+    callback(&ncaa, callbackarg);
 }
 
 
@@ -371,11 +383,36 @@ doextlist(const char **namelist, const char **desclist, int listlen)
     }
 
     curses_display_menu(&menu, "Extended Commands List", PICK_NONE,
-                        PLHINT_ANYWHERE, NULL);
+                        PLHINT_ANYWHERE, NULL, null_menu_callback);
 
     return 0;
 }
 
+
+static void
+doextcmd_callback(const char *cmdname, void *retval_void)
+{
+    struct nh_cmd_desc **retval = retval_void;
+
+    if (*cmdname == '\033' || !*cmdname) {
+        *retval = NULL; /* break out of the loop */
+        return;
+    }
+
+    if (!strcmp(cmdname, "?")) /* help */
+        return; /* unchanged *retval = do help */
+
+    *retval = find_command(cmdname);
+
+    /* don't allow ui commands: they wouldn't be handled properly later on */
+    if (!*retval || ((*retval)->flags & CMD_UI)) {
+        char msg[strlen(cmdname) + 1 +
+                 sizeof ": unknown extended command."];
+        sprintf(msg, "%s: unknown extended command.", cmdname);
+        curses_msgwin(msg);
+        *retval = NULL; /* break out of the loop */
+    }
+}
 
 /* here after # - now read a full-word command */
 static struct nh_cmd_desc *
@@ -383,7 +420,7 @@ doextcmd(nh_bool include_debug)
 {
     int i, idx, size;
     struct nh_cmd_desc *retval = NULL;
-    char cmdbuf[BUFSZ];
+    struct nh_cmd_desc retval_for_help; /* only the address matters */
     static const char exthelp[] = "?";
 
     size = 0;
@@ -411,27 +448,13 @@ doextcmd(nh_bool include_debug)
 
     /* keep repeating until we don't run help */
     do {
-        if (!curses_get_ext_cmd(cmdbuf, namelist, desclist, size + 1))
-            break;
-
-        if (!strcmp(cmdbuf, exthelp)) {
+        retval = &retval_for_help;
+        curses_get_ext_cmd(namelist, desclist, size + 1,
+                           &retval, doextcmd_callback);
+        if (retval == &retval_for_help)
             doextlist(namelist, desclist, size + 1);
-            continue;
-        }
-
-        retval = find_command(cmdbuf);
-
-        /* don't allow ui commands: they wouldn't be handled properly later on
-           */
-        if (!retval || (retval->flags & CMD_UI)) {
-            char msg[BUFSZ];
-
-            retval = NULL;
-            sprintf(msg, "%s: unknown extended command.", cmdbuf);
-            curses_msgwin(msg);
-        }
-    } while (!retval);
-
+    } while (retval == &retval_for_help);
+    
     return retval;
 }
 
@@ -456,7 +479,7 @@ static struct nh_cmd_desc *
 show_help(void)
 {
     struct nh_menulist menu;
-    int i, n, selected[1];
+    int i, selected[1];
 
     init_menulist(&menu);
 
@@ -470,10 +493,10 @@ show_help(void)
             add_menu_item(&menu, 100 + i, commandlist[i].desc, 0,
                           FALSE);
 
-    n = curses_display_menu(&menu, "Help topics:", PICK_ONE,
-                            PLHINT_RIGHT, selected);
+    curses_display_menu(&menu, "Help topics:", PICK_ONE,
+                        PLHINT_RIGHT, selected, curses_menu_callback);
 
-    if (n <= 0)
+    if (*selected == CURSES_MENU_CANCELLED)
         return NULL;
 
     switch (selected[0]) {
@@ -490,9 +513,8 @@ show_help(void)
         break;
 
     default:
-        n = selected[0] - 100;
-        if (n >= 0 && n < cmdcount)
-            return &commandlist[n];
+        if (selected[0] >= 100 && selected[0] < cmdcount + 100)
+            return &commandlist[selected[0] - 100];
         break;
     }
 
@@ -867,7 +889,7 @@ static void
 command_settings_menu(struct nh_cmd_desc *cmd)
 {
     char buf[BUFSZ];
-    int i, n, selection[1];
+    int i, selection[1];
     struct nh_menulist menu;
 
     do {
@@ -894,14 +916,15 @@ command_settings_menu(struct nh_cmd_desc *cmd)
         }
 
         sprintf(buf, "Key bindings for %s", cmd->name);
-        n = curses_display_menu(&menu, buf, PICK_ONE, PLHINT_ANYWHERE,
-                                selection);
+        curses_display_menu(&menu, buf, PICK_ONE, PLHINT_ANYWHERE,
+                            selection, curses_menu_callback);
 
-        if (n < 1)
+        if (*selection == CURSES_MENU_CANCELLED)
             break;
 
         /* int this menu, ids > 0 are used for "delete key" items and id is the
-           actual key. Negative ids are used for the 2 static menu items */
+           actual key. Negative ids are used for the 2 static menu items and
+           for CURSES_MENU_CANCELLED */
         if (selection[0] > 0)   /* delete a key */
             keymap[selection[0]] = NULL;
         else if (selection[0] == -1) {  /* add a key */
@@ -921,7 +944,7 @@ command_settings_menu(struct nh_cmd_desc *cmd)
             cmd->flags = (cmd->flags ^ CMD_EXT);
         }
 
-    } while (n > 0);
+    } while (1);
 }
 
 
@@ -961,7 +984,8 @@ set_command_keys(struct win_menu *mdat, int idx)
 void
 show_keymap_menu(nh_bool readonly)
 {
-    int i, n;
+    int i;
+    int selected[1];
     struct nh_menulist menu;
 
     do {
@@ -986,11 +1010,12 @@ show_keymap_menu(nh_bool readonly)
                 "!!!\tReset all key bindings to built-in defaults\t!!!",
                 '!', FALSE);
         }
-        n = curses_display_menu_core(&menu, "Keymap",
-                                     readonly ? PICK_NONE : PICK_ONE, NULL, 0,
-                                     0, COLS, LINES, FALSE, set_command_keys);
+        curses_display_menu_core(
+            &menu, "Keymap", readonly ? PICK_NONE : PICK_ONE,
+            selected, curses_menu_callback, 0,
+            0, COLS, LINES, FALSE, set_command_keys);
 
-    } while (n > 0);
+    } while (*selected != CURSES_MENU_CANCELLED);
 
     write_keymap();
 }

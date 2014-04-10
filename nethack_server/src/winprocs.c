@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-01 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -22,18 +22,24 @@ static void srv_outrip(struct nh_menulist *ml, nh_bool tombstone,
                        const char *name, int gold, const char *killbuf,
                        int end_how, int year);
 static void srv_request_command(nh_bool debug, nh_bool completed,
-                                nh_bool interrupted, char *command,
-                                struct nh_cmd_arg *arg);
-static int srv_display_menu(struct nh_menulist *ml, const char *title,
-                            int how, int placement_hint, int *results);
-static int srv_display_objects(struct nh_objlist *objlist,
-                               const char *title, int how, int placement_hint,
-                               struct nh_objresult *pick_list);
+                                nh_bool interrupted, void *callbackarg,
+                                void (*)(const struct nh_cmd_and_arg *arg,
+                                         void *callbackarg));
+static void srv_display_menu(struct nh_menulist *ml, const char *title,
+                             int how, int placement_hint, void *callbackarg,
+                             void (*)(const int *, int, void *));
+static void srv_display_objects(struct nh_objlist *objlist, const char *title,
+                                int how, int placement_hint, void *callbackarg,
+                                void (*)(const struct nh_objresult *,
+                                         int, void *));
 static nh_bool srv_list_items(struct nh_objlist *objlist, nh_bool invent);
-static char srv_query_key(const char *query, int *count);
-static int srv_getpos(int *x, int *y, nh_bool force, const char *goal);
+static struct nh_query_key_result srv_query_key(const char *query,
+                                                nh_bool allow_count);
+static struct nh_getpos_result srv_getpos(int xorig, int yorig,
+                                          nh_bool force, const char *goal);
 static enum nh_direction srv_getdir(const char *query, nh_bool restricted);
-static void srv_getline(const char *query, char *buf);
+static void srv_getline(const char *query, void *callbackarg,
+                        void (*callback)(const char *, void *));
 
 /*---------------------------------------------------------------------------*/
 
@@ -415,10 +421,12 @@ srv_outrip(struct nh_menulist *ml, nh_bool tombstone, const char *name,
 
 static void
 srv_request_command(nh_bool debug, nh_bool completed, nh_bool interrupted,
-                    char *command, struct nh_cmd_arg *arg)
+                    void *callbackarg,
+                    void (*callback)(const struct nh_cmd_and_arg *, void *))
 {
     json_t *jarg, *jobj;
     const char *cmd, *str;
+    struct nh_cmd_and_arg ncaa;
 
     jobj = json_pack("{sb,sb,sb}", "debug", debug, "completed", completed,
                      "interrupted", interrupted);
@@ -427,37 +435,38 @@ srv_request_command(nh_bool debug, nh_bool completed, nh_bool interrupted,
     if (json_unpack(jobj, "{ss,so!}", "command", &cmd, "arg", &jarg))
         exit_client("Bad set of parameters for request_command");
 
-    arg->argtype = 0;
+    ncaa.arg.argtype = 0;
 
-    if (json_unpack(jarg, "{si*}", "d", &(arg->dir)) != -1)
-        arg->argtype |= CMD_ARG_DIR;
+    if (json_unpack(jarg, "{si*}", "d", &(ncaa.arg.dir)) != -1)
+        ncaa.arg.argtype |= CMD_ARG_DIR;
     if (json_unpack(jarg, "{si,si*}",
-                    "x", &(arg->pos.x), "y", &(arg->pos.y)) != -1)
-        arg->argtype |= CMD_ARG_POS;
-    if (json_unpack(jarg, "{si*}", "invlet", &(arg->invlet)) != -1)
-        arg->argtype |= CMD_ARG_OBJ;
+                    "x", &(ncaa.arg.pos.x), "y", &(ncaa.arg.pos.y)) != -1)
+        ncaa.arg.argtype |= CMD_ARG_POS;
+    if (json_unpack(jarg, "{si*}", "invlet", &(ncaa.arg.invlet)) != -1)
+        ncaa.arg.argtype |= CMD_ARG_OBJ;
     if (json_unpack(jarg, "{ss*}", "str", &str) != -1 && strlen(str) < BUFSZ) {
-        strcpy(arg->str, str);
-        arg->argtype |= CMD_ARG_STR;
+        ncaa.arg.str = str;
+        ncaa.arg.argtype |= CMD_ARG_STR;
     }
-    if (json_unpack(jarg, "{si*}", "spellet", &(arg->spelllet)) != -1)
-        arg->argtype |= CMD_ARG_SPELL;
-    if (json_unpack(jarg, "{si*}", "limit", &(arg->limit)) != -1)
-        arg->argtype |= CMD_ARG_LIMIT;
+    if (json_unpack(jarg, "{si*}", "spellet", &(ncaa.arg.spelllet)) != -1)
+        ncaa.arg.argtype |= CMD_ARG_SPELL;
+    if (json_unpack(jarg, "{si*}", "limit", &(ncaa.arg.limit)) != -1)
+        ncaa.arg.argtype |= CMD_ARG_LIMIT;
 
-    if (cmd != NULL && strlen(cmd) < 60) {
-        /* avoid remote buffer overflow attacks, and remote commands with
-           bad characters in */
-        strcpy(command, cmd);
-        command[strspn(command, "abcdefghijklmnopqrstuvwxyz0123456789")] = 0;
-    } else
-        *command = '\0';
+    ncaa.cmd = cmd;
+    /* sanitize for implausible/malicious input */
+    if (strlen(cmd) >= 60 ||
+        strspn(cmd, "abcdefghijklmnopqrstuvwxyz") != strlen(cmd))
+        ncaa.cmd = "invalid";
+
+    callback(&ncaa, callbackarg);
 }
 
 
-static int
-srv_display_menu(struct nh_menulist *ml, const char *title,
-                 int how, int placement_hint, int *results)
+static void
+srv_display_menu(struct nh_menulist *ml, const char *title, int how,
+                 int placement_hint, void *callbackarg,
+                 void (*callback)(const int *, int, void *))
 {
     int i, ret;
     json_t *jobj, *jarr;
@@ -474,18 +483,24 @@ srv_display_menu(struct nh_menulist *ml, const char *title,
 
     if (how == PICK_NONE) {
         add_display_data("display_menu", jobj);
-        return 0;
+        callback(NULL, 0, callbackarg);
+        return;
     }
 
     jobj = client_request("display_menu", jobj);
-    if (json_unpack(jobj, "{si,so!}", "return", &ret, "results", &jarr) == -1)
+    if (json_unpack(jobj, "{si,so!}", "howclosed", &ret, "results", &jarr) == -1
+        || !json_is_array(jarr))
         exit_client("Bad parameter for display_menu");
 
+    int results[json_array_size(jarr) < 1 ? 1 :
+                json_array_size(jarr)];
     for (i = 0; i < json_array_size(jarr); i++)
         results[i] = json_integer_value(json_array_get(jarr, i));
 
+    callback(results, ret == NHCR_CLIENT_CANCEL ? -1 :
+             json_array_size(jarr), callbackarg);
+
     json_decref(jobj);
-    return ret;
 }
 
 
@@ -504,9 +519,10 @@ json_objitem(struct nh_objitem *oi)
 }
 
 
-static int
+static void
 srv_display_objects(struct nh_objlist *objlist, const char *title,
-                    int how, int placement_hint, struct nh_objresult *pick_list)
+                    int how, int placement_hint, void *callbackarg,
+                    void (*callback)(const struct nh_objresult *, int, void *))
 {
     int i, ret;
     json_t *jobj, *jarr, *jobj2;
@@ -523,13 +539,17 @@ srv_display_objects(struct nh_objlist *objlist, const char *title,
 
     if (how == PICK_NONE) {
         add_display_data("display_objects", jobj);
-        return 0;
+        callback(NULL, 0, callbackarg);
+        return;
     }
 
     jobj = client_request("display_objects", jobj);
-    if (json_unpack(jobj, "{si,so!}", "return", &ret, "pick_list", &jarr) == -1)
+    if (json_unpack(jobj, "{si,so!}", "howclosed", &ret, "pick_list", &jarr)
+        == -1 || !json_is_array(jarr))
         exit_client("Bad parameter for display_objects");
 
+    struct nh_objresult pick_list[json_array_size(jarr) > 0 ?
+                                  json_array_size(jarr) : 1];
     for (i = 0; i < json_array_size(jarr); i++) {
         jobj2 = json_array_get(jarr, i);
         if (json_unpack
@@ -538,8 +558,10 @@ srv_display_objects(struct nh_objlist *objlist, const char *title,
             exit_client("Bad pick_list in display_objects");
     }
 
+    callback(pick_list, ret == NHCR_CLIENT_CANCEL ? -1 :
+             json_array_size(jarr), callbackarg);
+
     json_decref(jobj);
-    return ret;
 }
 
 
@@ -602,42 +624,40 @@ srv_list_items(struct nh_objlist *objlist, nh_bool invent)
 }
 
 
-static char
-srv_query_key(const char *query, int *count)
+static struct nh_query_key_result
+srv_query_key(const char *query, nh_bool allow_count)
 {
     int ret, c;
     json_t *jobj;
 
-    jobj = json_pack("{ss,sb}", "query", query, "allow_count", ! !count);
+    jobj = json_pack("{ss,sb}", "query", query,
+                     "allow_count", (int)allow_count);
 
     jobj = client_request("query_key", jobj);
     if (json_unpack(jobj, "{si,si!}", "return", &ret, "count", &c) == -1)
         exit_client("Bad parameters for query_key");
     json_decref(jobj);
 
-    if (count)
-        *count = c;
-
-    return ret;
+    return (struct nh_query_key_result){.key = ret, .count = c};
 }
 
 
-static int
-srv_getpos(int *x, int *y, nh_bool force, const char *goal)
+static struct nh_getpos_result
+srv_getpos(int origx, int origy, nh_bool force, const char *goal)
 {
-    int ret;
+    int ret, x, y;
     json_t *jobj;
 
-    jobj =
-        json_pack("{ss,si,si,si}", "goal", goal, "force", force, "x", *x, "y",
-                  *y);
+    jobj = json_pack("{ss,si,si,si}", "goal", goal, "force", force,
+                     "x", origx, "y", origy);
     jobj = client_request("getpos", jobj);
 
-    if (json_unpack(jobj, "{si,si,si!}", "return", &ret, "x", x, "y", y) == -1)
+    if (json_unpack(jobj, "{si,si,si!}",
+                    "return", &ret, "x", &x, "y", &y) == -1)
         exit_client("Bad parameters for getpos");
 
     json_decref(jobj);
-    return ret;
+    return (struct nh_getpos_result){.howclosed = ret, .x = x, .y = y};
 }
 
 
@@ -676,7 +696,8 @@ srv_yn_function(const char *query, const char *set, char def)
 
 
 static void
-srv_getline(const char *query, char *buf)
+srv_getline(const char *query, void *callbackarg,
+            void (*callback)(const char *, void *))
 {
     json_t *jobj;
     const char *str;
@@ -687,7 +708,7 @@ srv_getline(const char *query, char *buf)
     if (json_unpack(jobj, "{ss!}", "line", &str) == -1)
         exit_client("Bad parameters for getline");
 
-    strncpy(buf, str, BUFSZ - 1);
+    callback(str, callbackarg);
     json_decref(jobj);
 }
 

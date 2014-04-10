@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1145,7 +1145,7 @@ dospellmenu(const char *prompt,
 {
     int i, n, how, count = 0;
     struct nh_menuitem items[MAXSPELL + 1];
-    int selected[MAXSPELL + 1];
+    const int *selected;
 
     set_menuitem(&items[count++], 0, MI_HEADING,
                  "Name\tLevel\tCategory\tFail\tMemory", 0, FALSE);
@@ -1167,7 +1167,7 @@ dospellmenu(const char *prompt,
         how = PICK_LETTER;      /* We're swapping spells. */
 
     n = display_menu(&(struct nh_menulist){.items = items, .icount = count},
-                     prompt, how, PLHINT_ANYWHERE, selected);
+                     prompt, how, PLHINT_ANYWHERE, &selected);
 
     if (n > 0) {
         *spell_no = selected[0] - 1;

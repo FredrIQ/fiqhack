@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -132,14 +132,14 @@ get_gamedir(enum game_dirs dirtype, char *buf)
 
 static int welcomed;
 void
-curses_request_command(nh_bool debug, nh_bool completed, nh_bool interrupted,
-                       char *cmd, struct nh_cmd_arg *cmdarg)
+curses_request_command(
+    nh_bool debug, nh_bool completed, nh_bool interrupted,
+    void *callbackarg, void (*callback)(const struct nh_cmd_and_arg *, void *))
 {
-    int save_repeats;
-    cmdarg->argtype = 0;
+    struct nh_cmd_arg arg = {.argtype = 0};
 
     if (!welcomed) {
-        strcpy(cmd, "welcome");
+        callback(&(struct nh_cmd_and_arg){"welcome", arg}, callbackarg);
         welcomed = 1;
         return;
     }
@@ -155,22 +155,17 @@ curses_request_command(nh_bool debug, nh_bool completed, nh_bool interrupted,
      *   weren't interrupted.
      */
     if (!interrupted && !completed && !repeats_remaining) {
-        strcpy(cmd, "repeat");
+        callback(&(struct nh_cmd_and_arg){"repeat", arg}, callbackarg);
         return;
     }
     if (!interrupted && repeats_remaining && --repeats_remaining) {
-        strcpy(cmd, "repeat");
+        callback(&(struct nh_cmd_and_arg){"welcome", arg}, callbackarg);
         return;
     }
 
-    save_repeats = repeats_remaining;
-    repeats_remaining = 0;
-
-    /* This also sets repeats_remaining. */
-    strcpy(cmd, get_command(cmdarg, debug));
-
-    if (!strcmp(cmd, "repeat"))
-        repeats_remaining = save_repeats;
+    /* This clears/sets repeats_remaining except when returning "repeat",
+       where it maintains it. */
+    get_command(callbackarg, callback, debug);
 }
 
 
@@ -278,13 +273,33 @@ game_ended(int status, fnchar *filename, nh_bool net)
 }
 
 
+static void
+plname_handler(const char *str, void *plname_void)
+{
+    char **plname = plname_void;
+
+    if (*str == '\033') /* cancelled */
+        return;
+
+    if (*str && strlen(str) < PL_NSIZ) { /* ok */
+        *plname = strdup(str);
+        return;
+    }
+
+    if (*str)
+        curses_msgwin("That name is too long.");
+
+    *plname = strdup("");
+    return;
+}
+
 void
 rungame(nh_bool net)
 {
     int ret, role = cmdline_role, race = cmdline_race, gend = cmdline_gend,
         align = cmdline_align, playmode = ui_flags.playmode;
     int fd = -1;
-    char plname[BUFSZ] = {0}, prompt[BUFSZ] = "You are a ";
+    char prompt[BUFSZ] = "You are a ";
     fnchar filename[1024];
     fnchar savedir[BUFSZ];
     long t;
@@ -313,11 +328,9 @@ rungame(nh_bool net)
     if (gend == ROLE_NONE)
         gend = gendopt->value.e;
     if (cmdline_name[0]) {
-        strncpy(plname, cmdline_name, BUFSZ);
-        plname[BUFSZ - 1] = '\0';
-    } else if (nameopt->value.s) {
-        strncpy(plname, nameopt->value.s, BUFSZ);
-        plname[BUFSZ - 1] = '\0';
+        if (nameopt->value.s)
+            free(nameopt->value.s);
+        nameopt->value.s = strdup(cmdline_name);
     }
     if (playmode == MODE_NORMAL)
         playmode = modeopt->value.e;
@@ -352,18 +365,42 @@ rungame(nh_bool net)
                                     rolenames_f[role] ? info->rolenames_f :
                                     info->rolenames_m)[role]);
 
-    /* In wizard mode, the name is provided automatically by the engine. */
-    while (!plname[0] && playmode != MODE_WIZARD)
-        curses_getline(prompt, plname);
-    if (plname[0] == '\033')    /* canceled */
-        goto cleanup;
+    if (nameopt->value.s && !*nameopt->value.s) {
+        free(nameopt->value.s);
+        nameopt->value.s = NULL;
+    }
+
+    if (!nameopt->value.s) {
+        /* In wizard mode, the name is provided automatically by the engine. */
+        if (playmode != MODE_WIZARD)
+            do {
+                /* We don't allow the null string as a name. */
+                if (nameopt->value.s) {
+                    free(nameopt->value.s);
+                    nameopt->value.s = NULL;
+                }
+                curses_getline(prompt, &(nameopt->value.s), plname_handler);
+            } while (nameopt->value.s && !*(nameopt->value.s));
+
+        /* Make sure we always have an allocated name. */
+        if (!nameopt->value.s) {
+            char *nullname = malloc(1);
+            *nullname = '\0';
+            nameopt->value.s = nullname;
+        }
+
+        if (!*nameopt->value.s && playmode != MODE_WIZARD)
+            goto cleanup; /* cancelled */
+    }
 
     if (!net) {
         t = (long)time(NULL);
 #if defined(WIN32)
-        snwprintf(filename, 1024, L"%ls%ld_%hs.nhgame", savedir, t, plname);
+        snwprintf(filename, 1024, L"%ls%ld_%hs.nhgame",
+                  savedir, t, nameopt->value.s);
 #else
-        snprintf(filename, 1024, "%s%ld_%s.nhgame", savedir, t, plname);
+        snprintf(filename, 1024, "%s%ld_%s.nhgame",
+                 savedir, t, nameopt->value.s);
 #endif
         fd = sys_open(filename, O_TRUNC | O_CREAT | O_RDWR, FILE_OPEN_MASK);
         if (fd == -1) {
@@ -378,9 +415,6 @@ rungame(nh_bool net)
     raceopt->value.i = race;
     alignopt->value.i = align;
     gendopt->value.i = gend;
-    if (nameopt->value.s)
-        free(nameopt->value.s);
-    nameopt->value.s = plname;
     modeopt->value.e = playmode;
      
     /* Create the game, then immediately load it. */
@@ -402,8 +436,6 @@ rungame(nh_bool net)
     game_ended(ret, net ? NULL : filename, net);
 
 cleanup:
-    /* avoid freeing stack memory */
-    nameopt->value.s = NULL;
     nhlib_free_optlist(new_opts);
 }
 
@@ -563,7 +595,7 @@ loadgame(void)
 {
     char buf[BUFSZ];
     fnchar savedir[BUFSZ], filename[1024], **files;
-    int fd, i, size, n, ret, pick[1];
+    int fd, i, size, ret, pick[1];
     enum nh_log_status status;
     struct nh_game_info gi;
     struct nh_menulist menu;
@@ -591,18 +623,19 @@ loadgame(void)
                       buf, 0, FALSE);
     }
 
-    n = curses_display_menu(&menu, "saved games", PICK_ONE,
-                            PLHINT_ANYWHERE, pick);
+    curses_display_menu(&menu, "saved games", PICK_ONE,
+                        PLHINT_ANYWHERE, pick, curses_menu_callback);
 
     filename[0] = '\0';
-    if (n > 0)
+    if (pick[0] != CURSES_MENU_CANCELLED)
         fnncat(filename, files[pick[0] - 1],
                sizeof (filename) / sizeof (fnchar) - 1);
 
     for (i = 0; i < size; i++)
         free(files[i]);
     free(files);
-    if (n <= 0)
+
+    if (pick[0] == CURSES_MENU_CANCELLED)
         return FALSE;
 
     fd = sys_open(filename, O_RDWR, FILE_OPEN_MASK);

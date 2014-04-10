@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-01 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Daniel Thaler, 2012 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -11,7 +11,7 @@ net_loadgame(void)
     char buf[BUFSZ];
     struct nhnet_game *gamelist;
     struct nh_menulist menu;
-    int id, size, i, n, ret, pick[1];
+    int id, size, i, ret, pick[1];
 
     gamelist = nhnet_list_games(FALSE, FALSE, &size);
     if (!size) {
@@ -29,10 +29,10 @@ net_loadgame(void)
         add_menu_item(&menu, id, buf, 0, FALSE);
     }
 
-    n = curses_display_menu(&menu, "saved games", PICK_ONE,
-                            PLHINT_ANYWHERE, pick);
+    curses_display_menu(&menu, "saved games", PICK_ONE, PLHINT_ANYWHERE, pick,
+                        curses_menu_callback);
 
-    if (n <= 0)
+    if (*pick == CURSES_MENU_CANCELLED)
         return;
 
     id = pick[0];

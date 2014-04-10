@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-06 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -63,6 +63,11 @@ static const char *enlght_combatinc(const char *, int, int);
 # define C(c)           (0x1f & (c))
 #endif
 
+/* Note: command names must consist of lowercase letters only; the network API
+   sanitizes them to that subset. Likewise, there's a maximum length of 59
+   characters, because longer names are assumed to be malicious and rejected
+   (mostly as a precaution; there are no fixed size buffers involved any
+   more). */
 const struct cmd_desc cmdlist[] = {
     /* "str", "", defkey, altkey, buried, func, flags */
     {"adjust", "adjust inventory letters", M('a'), 0, TRUE, doorganize,
@@ -513,12 +518,12 @@ wiz_togglegen(const struct nh_cmd_arg *arg)
 static int
 wiz_level_change(const struct nh_cmd_arg *arg)
 {
-    char buf[BUFSZ];
+    const char *buf;
     int newlevel = u.ulevel;
     int ret;
 
-    getarglin(arg, "To what experience level do you want to be set?", buf);
-    mungspaces(buf);
+    buf = getarglin(arg, "To what experience level do you want to be set?");
+    buf = msgmungspaces(buf);
     if (buf[0] == '\033' || buf[0] == '\0')
         ret = 0;
     else
@@ -1310,7 +1315,8 @@ doattributes(const struct nh_cmd_arg *arg)
 {
     (void) arg;
 
-    int genidx, n, wcu, selected[1];
+    int genidx, n, wcu;
+    const int *selected;
     long wc;
     const char *buf;
     static const char fmtstr[] = "%-10s: %-12s (originally %s)";
@@ -1430,7 +1436,7 @@ doattributes(const struct nh_cmd_arg *arg)
         add_menuitem(&menu, 'w', "Debug/explore mode spoilers", 'w', FALSE);
 
     n = display_menu(&menu, "Your Statistics", PICK_ONE,
-                     PLHINT_ANYWHERE, selected);
+                     PLHINT_ANYWHERE, &selected);
 
     if (n == 1) {
         switch (*selected) {
@@ -2181,20 +2187,17 @@ getargobj(const struct nh_cmd_arg *arg, const char *let, const char *word)
     return getobj(let, word, TRUE);
 }
 
-void
-getarglin(const struct nh_cmd_arg *arg, const char *query, char *bufp)
+const char *
+getarglin(const struct nh_cmd_arg *arg, const char *query)
 {
     /* Did the user specify a string? Ensure that it isn't empty, nor a cancel
-       string, and that it fits inside the buffer (i.e. contains a NUL
-       somewhere). */
-    if ((arg->argtype & CMD_ARG_STR) && *(arg->str) != '\033' &&
-        *(arg->str) && memchr(arg->str, '\0', BUFSZ)) {
-        strcpy(bufp, arg->str);
-        return;
-    }
+       string. */
+    if ((arg->argtype & CMD_ARG_STR) &&
+        *(arg->str) != '\033' && *(arg->str))
+        return msg_from_string(arg->str);
 
     /* Otherwise, prompt for one. */
-    getlin(query, bufp, TRUE);
+    return getlin(query, TRUE);
 }
 
 int
@@ -2249,6 +2252,34 @@ do_command(int command, struct nh_cmd_arg *arg)
     } else if (!(cmdlist[command].flags & (CMD_INTERNAL | CMD_NOTIME))) {
         flags.last_cmd = command;
         flags.last_arg = *arg;
+
+        /* Make sure we have a locally allocated copy of the string argument,
+           if necessary. */
+        if (flags.last_str_buf)
+            free(flags.last_str_buf);
+        if (flags.last_arg.argtype & CMD_ARG_STR) {
+            flags.last_str_buf = malloc(strlen(flags.last_arg.str) + 1);
+            strcpy(flags.last_str_buf, flags.last_arg.str);
+            flags.last_arg.str = flags.last_str_buf;
+        } else {
+            flags.last_arg.str = NULL; /* unnecessary right now, but... */
+            flags.last_str_buf = NULL;
+        }
+
+        /* Zero out any unused fields; the value doesn't matter, but they're
+           saved in the save file, thus must be defined. */
+        if (!(flags.last_arg.argtype & CMD_ARG_DIR))
+            flags.last_arg.dir = 0;
+        if (!(flags.last_arg.argtype & CMD_ARG_POS)) {
+            flags.last_arg.pos.x = 0;
+            flags.last_arg.pos.y = 0;
+        }
+        if (!(flags.last_arg.argtype & CMD_ARG_OBJ))
+            flags.last_arg.invlet = 0;
+        if (!(flags.last_arg.argtype & CMD_ARG_SPELL))
+            flags.last_arg.spelllet = 0;
+        if (!(flags.last_arg.argtype & CMD_ARG_LIMIT))
+            flags.last_arg.limit = 0;
     }
 
     /* Debug commands are now restricted to wizard mode here, rather than with

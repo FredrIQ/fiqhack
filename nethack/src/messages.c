@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -507,8 +507,8 @@ doprev_message(void)
         i = (i + 1) % settings.msghistory;
     } while (i != histlines_pointer);
 
-    curses_display_menu_core(&menu, "Previous messages:", PICK_NONE, NULL, 0, 0,
-                             -1, -1, TRUE, NULL);
+    curses_display_menu_core(&menu, "Previous messages:", PICK_NONE, NULL,
+                             null_menu_callback, 0, 0, -1, -1, TRUE, NULL);
 }
 
 /* Given the string "input", generate a series of strings of the given maximum

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -12,7 +12,8 @@
 #include "hack.h"
 #include "dlb.h"
 
-static int append_str(char *buf, const char *new_str, int is_plur, int is_in);
+static boolean append_str(const char **buf, const char *new_str,
+                          int is_plur, int is_in);
 static void mon_vision_summary(const struct monst *mtmp, char *outbuf);
 static void describe_bg(int x, int y, int bg, char *buf);
 static int describe_object(int x, int y, int votyp, char *buf, int known_embed);
@@ -74,31 +75,25 @@ const char *const objexplain[] = {      /* these match def_oc_syms */
     "splash of venom"
 };
 
-/*
- * Append new_str to the end of buf if new_str doesn't already exist as
- * a substring of buf.  Return 1 if the string was appended, 0 otherwise.
- * It is expected that buf is of size BUFSZ.
- */
-static int
-append_str(char *buf, const char *new_str, int is_plur, int is_in)
+/* Concatenates new_str to *buf, returning the result back in *buf, with some
+   grammatical fixes. (The previous documentation said "if new_str doesn't
+   already exist as a substring of buf", but this appears to be inaccurate.)
+   Returns TRUE if the string was appended, FALSE otherwise. */
+static boolean
+append_str(const char **buf, const char *new_str, int is_plur, int is_in)
 {
-    int space_left;     /* space remaining in buf */
-
     if (!new_str || !new_str[0])
-        return 0;
+        return FALSE;
 
-    space_left = BUFSZ - strlen(buf) - 1;
-    if (buf[0]) {
-        strncat(buf, is_in ? " in " : " on ", space_left);
-        space_left -= 4;
-    }
+    if (**buf)
+        *buf = msgcat(*buf, is_in ? " in " : " on ");
 
     if (is_plur)
-        strncat(buf, new_str, space_left);
+        *buf = msgcat(*buf, new_str);
     else
-        strncat(buf, an(new_str), space_left);
+        *buf = msgcat(*buf, an(new_str));
 
-    return 1;
+    return TRUE;
 }
 
 
@@ -621,10 +616,9 @@ const char what_is_an_unknown_object[] = "an unknown object";
 static int
 do_look(boolean quick, const struct nh_cmd_arg *arg)
 {
-    char out_str[BUFSZ];
-    char firstmatch[BUFSZ];
+    const char *out_str;
+    const char *firstmatch;
     int i, ans = 0, objplur = 0, is_in;
-    int found;  /* count of matching syms found */
     coord cc;   /* screen pos of unknown glyph */
     boolean save_verbose;       /* saved value of flags.verbose */
     boolean from_screen;        /* question from the screen */
@@ -644,7 +638,7 @@ do_look(boolean quick, const struct nh_cmd_arg *arg)
         cc.x = u.ux;
         cc.y = u.uy;
     } else {
-        getarglin(arg, "Specify what? (type the word)", out_str);
+        out_str = getarglin(arg, "Specify what? (type the word)");
         if (out_str[0] == '\0' || out_str[0] == '\033')
             return 0;
 
@@ -664,8 +658,7 @@ do_look(boolean quick, const struct nh_cmd_arg *arg)
      */
     do {
         /* Reset some variables. */
-        found = 0;
-        out_str[0] = '\0';
+        firstmatch = NULL;
         objplur = 0;
 
         if (flags.verbose)
@@ -688,41 +681,36 @@ do_look(boolean quick, const struct nh_cmd_arg *arg)
         if (otmp && is_plural(otmp))
             objplur = 1;
 
-        out_str[0] = '\0';
-        if (append_str(out_str, descbuf.effectdesc, 0, 0))
-            if (++found == 1)
-                strcpy(firstmatch, descbuf.effectdesc);
+        out_str = "";
+        if (append_str(&out_str, descbuf.effectdesc, 0, 0))
+            if (!firstmatch)
+                firstmatch = descbuf.effectdesc;
 
-        if (append_str(out_str, descbuf.invisdesc, 0, 0))
-            if (++found == 1)
-                strcpy(firstmatch, descbuf.invisdesc);
+        if (append_str(&out_str, descbuf.invisdesc, 0, 0))
+            if (!firstmatch)
+                firstmatch = descbuf.invisdesc;
 
-        if (append_str(out_str, descbuf.mondesc, 0, 0))
-            if (++found == 1)
-                strcpy(firstmatch, descbuf.mondesc);
+        if (append_str(&out_str, descbuf.mondesc, 0, 0))
+            if (!firstmatch)
+                firstmatch = descbuf.mondesc;
 
-        if (append_str(out_str, descbuf.objdesc, objplur, 0))
-            if (++found == 1)
-                strcpy(firstmatch, descbuf.objdesc);
+        if (append_str(&out_str, descbuf.objdesc, objplur, 0))
+            if (!firstmatch)
+                firstmatch = descbuf.objdesc;
 
-        if (append_str(out_str, descbuf.trapdesc, 0, 0))
-            if (++found == 1)
-                strcpy(firstmatch, descbuf.trapdesc);
+        if (append_str(&out_str, descbuf.trapdesc, 0, 0))
+            if (!firstmatch)
+                firstmatch = descbuf.trapdesc;
 
-        if (append_str(out_str, descbuf.bgdesc, 0, is_in))
-            if (!found) {
-                found++;       /* only increment found if nothing else was
-                                  seen, so that checkfile can be called below */
-                strcpy(firstmatch, descbuf.bgdesc);
-            }
-
+        if (append_str(&out_str, descbuf.bgdesc, 0, is_in))
+            if (!firstmatch)
+                firstmatch = descbuf.bgdesc;
 
         /* Finally, print out our explanation. */
-        if (found) {
-            out_str[0] = highc(out_str[0]);
-            pline("%s.", out_str);
+        if (firstmatch) {
+            pline("%s.", msgupcasefirst(out_str));
             /* check the data file for information about this thing */
-            if (found == 1 && ans != NHCR_CONTINUE &&
+            if (firstmatch && ans != NHCR_CONTINUE &&
                 (ans == NHCR_MOREINFO ||
                  ans == NHCR_MOREINFO_CONTINUE || !quick)) {
                 checkfile(firstmatch, NULL, FALSE,

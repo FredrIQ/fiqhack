@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2345,7 +2345,7 @@ select_newcham_form(struct monst *mon)
 
     /* For debugging only: allow control of polymorphed monster */
     if (wizard && flags.mon_polycontrol) {
-        char buf[BUFSZ];
+        const char *buf;
         const char *pprompt;
         int tries = 0;
 
@@ -2353,7 +2353,7 @@ select_newcham_form(struct monst *mon)
             pprompt = msgprintf(
                 "Change %s into what kind of monster? [type the name]",
                 mon_nam(mon));
-            getlin(pprompt, buf, FALSE);
+            buf = getlin(pprompt, FALSE);
             mndx = name_to_mon(buf);
             if (mndx < LOW_PM)
                 pline("You cannot polymorph %s into that.", mon_nam(mon));

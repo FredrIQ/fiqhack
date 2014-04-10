@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-06 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -402,34 +402,32 @@ nh_play_game(int fd)
 
     /* The main loop. */
     while (1) {
-        char cmd[BUFSZ];
-        /* We must initialize arg because it can end up being copied into the
-           save file. */
-        struct nh_cmd_arg arg = {0};
-
+        struct nh_cmd_and_arg cmd;
         int cmdidx;
 
         if (u_helpless(hm_all) && !program_state.viewing) {
+            cmd.cmd = "wait";
             cmdidx = get_command_idx("wait");
-            arg.argtype = 0;
+            cmd.arg.argtype = 0;
         } else {
 
-            if (!log_replay_command(cmd, &arg))
+            if (!log_replay_command(&cmd))
                 (*windowprocs.win_request_command)
-                    (wizard, !flags.incomplete, flags.interrupted, cmd, &arg);
+                    (wizard, !flags.incomplete, flags.interrupted,
+                     &cmd, msg_request_command_callback);
 
-            cmdidx = get_command_idx(cmd);
+            cmdidx = get_command_idx(cmd.cmd);
         }
 
         if (cmdidx < 0) {
-            pline("Unrecognised command '%s'", cmd);
+            pline("Unrecognised command '%s'", cmd.cmd);
             continue;
         }
 
         if (program_state.viewing &&
             (cmdidx < 0 || !(cmdlist[cmdidx].flags & CMD_NOTIME))) {
             pline("Command '%s' unavailable while watching/replaying a game.",
-                  cmd);
+                  cmd.cmd);
             continue;
         }
 
@@ -437,7 +435,7 @@ nh_play_game(int fd)
            that we'd normally accept. To simplify things, we just silently drop
            any additional arguments. We do this before logging so that the
            extra arguments aren't recorded in the save file. */
-        arg.argtype &= cmdlist[cmdidx].flags;
+        cmd.arg.argtype &= cmdlist[cmdidx].flags;
 
         if (cmdlist[cmdidx].flags & CMD_NOTIME &&
             (flags.incomplete || !flags.interrupted || flags.occupation)) {
@@ -471,11 +469,11 @@ nh_play_game(int fd)
            is OK; it's not OK to record two, but log_record_command won't record
            zero-time commands.) */
         if (!u_helpless(hm_all)) {
-            log_record_command(cmd, &arg);
+            log_record_command(cmd.cmd, &(cmd.arg));
             log_time_line();
         }
 
-        command_input(cmdidx, &arg);
+        command_input(cmdidx, &(cmd.arg));
 
         program_state.in_zero_time_command = FALSE;
 
@@ -484,6 +482,9 @@ nh_play_game(int fd)
         else if ((!flags.incomplete || flags.interrupted) &&
                  !u_helpless(hm_all))
             neutral_turnstate_tasks();
+        /* Note: neutral_turnstate_tasks() frees cmd (because it frees all
+           messages, and we made cmd a message in our callback above), so don't
+           use it past this point */
     }
 
 normal_exit:

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-06 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -30,6 +30,7 @@ enum nh_client_response
 getpos(coord *cc, boolean force, const char *goal, boolean isarg)
 {
     int x, y, ask = 1;
+    struct nh_getpos_result ngr;
     enum nh_client_response rv = NHCR_CLIENT_CANCEL;
     char c[2];
 
@@ -63,9 +64,12 @@ getpos(coord *cc, boolean force, const char *goal, boolean isarg)
 
     if (ask) {
         do {
-            rv = (*windowprocs.win_getpos) (&x, &y, force, goal);
+            ngr = (*windowprocs.win_getpos) (x, y, force, goal);
+            rv = ngr.howclosed;
         } while (force && (rv == NHCR_CLIENT_CANCEL ||
                            x < 0 || y < 0 || x > COLNO - 1 || y > ROWNO - 1));
+        x = ngr.x;
+        y = ngr.y;
     }
 
     if (rv == NHCR_CLIENT_CANCEL)
@@ -149,55 +153,62 @@ getdir(const char *s, schar * dx, schar * dy, schar * dz, boolean isarg)
 char
 query_key(const char *query, int *count)
 {
-    int key;
+    struct nh_query_key_result qkr = {.count = -1};
 
-    if (count)
-        *count = -1;
-
-    if (!log_replay_input(1, "K%d", &key) &&
-        (!count || !log_replay_input(2, "K%d,%d", &key, count))) {
+    if (!log_replay_input(1, "K%d", &(qkr.key)) &&
+        (!count || !log_replay_input(2, "K%d,%d", &(qkr.key), &(qkr.count)))) {
         log_replay_no_more_options();
-        key = (*windowprocs.win_query_key) (query, count);
+        qkr = (*windowprocs.win_query_key) (query, !!count);
     }
 
-    if (!count || *count == -1)
-        log_record_input("K%d", key);
+    if (!count)
+        log_record_input("K%d", qkr.key);
     else
-        log_record_input("K%d,%d", key, *count);
+        log_record_input("K%d,%d", qkr.key, qkr.count);
 
     log_time_line();
 
-    if (count && *count != -1)
-        pline_nomore("<%s: %d %c>", query, *count, key);
+    if (count && qkr.count != -1)
+        pline_nomore("<%s: %d %c>", query, qkr.count, qkr.key);
     else
-        pline_nomore("<%s: %c>", query, key);
+        pline_nomore("<%s: %c>", query, qkr.key);
 
-    return key;
+    if (count)
+        *count = qkr.count;
+
+    return qkr.key;
 }
 
 
-void
-getlin(const char *query, char *bufp, boolean isarg)
+const char *
+getlin(const char *query, boolean isarg)
 {
-    if (!log_replay_line(bufp)) {
+    const char *res;
+    if (!log_replay_line(&res)) {
         log_replay_no_more_options();
-        (*windowprocs.win_getlin) (query, bufp);
+        (*windowprocs.win_getlin) (query, &res, msg_getlin_callback);
     }
 
-    log_record_line(bufp);
+    log_record_line(res);
 
     log_time_line();
 
-    pline_nomore("<%s: %s>", query, bufp[0] == '\033' ? "(escaped)" : bufp);
+    pline_nomore("<%s: %s>", query, res[0] == '\033' ? "(escaped)" : res);
 
     if (isarg && !program_state.in_zero_time_command) {
-        if (*bufp == '\033')
+        if (*res == '\033')
             flags.last_arg.argtype &= ~CMD_ARG_STR;
         else {
             flags.last_arg.argtype |= CMD_ARG_STR;
-            strcpy(flags.last_arg.str, bufp);
+            if (flags.last_str_buf)
+                free(flags.last_str_buf);
+            flags.last_str_buf = malloc(strlen(res) + 1);
+            strcpy(flags.last_str_buf, res);
+            flags.last_arg.str = flags.last_str_buf;
         }
     }
+
+    return res;
 }
 
 
@@ -240,9 +251,10 @@ yn_function(const char *query, const char *resp, char def)
 
 int
 display_menu(struct nh_menulist *menu, const char *title, int how,
-             int placement_hint, int *results)
+             int placement_hint, const int **results)
 {
-    int n, j;
+    int j;
+    struct display_menu_callback_data dmcd;
 
     /* Memory management: we need a stack-allocated copy of the menu items in
        case terminate() gets called, and because we need to be able to refer to
@@ -252,99 +264,106 @@ display_menu(struct nh_menulist *menu, const char *title, int how,
     struct nh_menulist menu_copy = {.items = menu->icount ? item_copy : NULL,
                                     .icount = menu->icount,
                                     .size = 0}; /* size = 0: don't free it */
+
     if (menu->icount)
         memcpy(item_copy, menu->items, sizeof item_copy);
     dealloc_menulist(menu);
 
     if (how == PICK_NONE && log_replay_input(0, "M"))
-        n = 0;
+        dmcd.nresults = 0;
     else if (log_replay_input(0, "M!"))
-        n = -1;
-    else if (!log_replay_menu(FALSE, &n, results)) {
+        dmcd.nresults = -1;
+    else if (!log_replay_menu(FALSE, &dmcd)) {
         log_replay_no_more_options();
-        n = (*windowprocs.win_display_menu) (&menu_copy, title, how,
-                                             placement_hint, results);
+        (*windowprocs.win_display_menu) (
+            &menu_copy, title, how, placement_hint, &dmcd,
+            msg_display_menu_callback);
     }
+
+    if (results)
+        *results = dmcd.results;
 
     if (how == PICK_NONE) {
         log_record_input("M");
         log_time_line();
-    } else if (n == -1) {
+    } else if (dmcd.nresults == -1) {
         log_record_input("M!");
         log_time_line();
         pline_nomore("<%s: cancelled>", title ? title : "Untitled menu");
     } else {
         const char *buf = "(none selected)";
 
-        log_record_menu(FALSE, n, results);
+        log_record_menu(FALSE, &dmcd);
         log_time_line();
 
-        if (n == 1) {
+        if (dmcd.nresults == 1) {
             for (j = 0;
-                 j < menu_copy.icount && item_copy[j].id != results[0];
+                 j < menu_copy.icount && item_copy[j].id != dmcd.results[0];
                  j++) {}
             buf = item_copy[j].caption;
-        } else if (n > 1)
-            buf = msgprintf("(%d selected)", n);
+        } else if (dmcd.nresults > 1)
+            buf = msgprintf("(%d selected)", dmcd.nresults);
 
         pline_nomore("<%s: %s>", title ? title : "Untitled menu", buf);
     }
 
-    return n;
+    return dmcd.nresults;
 }
 
-
 int
-display_objects(struct nh_objlist *objlist, const char *title,
-                int how, int placement_hint, struct nh_objresult *pick_list)
+display_objects(struct nh_objlist *objlist, const char *title, int how,
+                int placement_hint, const struct nh_objresult **results)
 {
-    int n, j;
+    struct display_objects_callback_data docd;
 
-    /* As in display_menu. */
+    /* Memory management: we need a stack-allocated copy of the menu items in
+       case terminate() gets called, and because we need to be able to refer to
+       them even after win_display_menu (which deallocates the menu items)
+       returns. */
     struct nh_objitem item_copy[objlist->icount ? objlist->icount : 1];
     struct nh_objlist menu_copy = {.items = objlist->icount ? item_copy : NULL,
                                    .icount = objlist->icount,
                                    .size = 0}; /* size = 0: don't free it */
+
     if (objlist->icount)
         memcpy(item_copy, objlist->items, sizeof item_copy);
     dealloc_objmenulist(objlist);
 
     if (how == PICK_NONE && log_replay_input(0, "O"))
-        n = 0;
+        docd.nresults = 0;
     else if (log_replay_input(0, "O!"))
-        n = -1;
-    else if (!log_replay_menu(TRUE, &n, pick_list)) {
+        docd.nresults = -1;
+    else if (!log_replay_menu(TRUE, &docd)) {
         log_replay_no_more_options();
-        n = (*windowprocs.win_display_objects) (&menu_copy, title, how,
-                                                placement_hint, pick_list);
+        (*windowprocs.win_display_objects) (
+            &menu_copy, title, how, placement_hint, &docd,
+            msg_display_objects_callback);
     }
+
+    if (results)
+        *results = docd.results;
 
     if (how == PICK_NONE) {
         log_record_input("O");
         log_time_line();
-    } else if (n == -1) {
+    } else if (docd.nresults == -1) {
         log_record_input("O!");
         log_time_line();
         pline_nomore("<%s: cancelled>", title ? title : "List of objects");
     } else {
-        const char *buf = "";
+        const char *buf = "(none selected)";
 
-        log_record_menu(TRUE, n, pick_list);
+        log_record_menu(TRUE, &docd);
         log_time_line();
 
-        /* We show the exact inventory letters chosen, so long as there aren't
-           too many. TODO: The loop here looks wrong. */
-        if (n >= 1 && n <= 20) {
-            for (j = 0;
-                 j < menu_copy.icount && item_copy[j].id != pick_list[0].id;
-                 j++) {}
-            buf = msgprintf("%c", item_copy[j].accel);
-        } else
-            buf = msgprintf("(%d selected)", n);
+        /* TODO: Show the object letters that were selected. */
+        if (docd.nresults >= 1)
+            buf = msgprintf("(%d selected)", docd.nresults);
 
-        pline_nomore("<%s: %s>", title ? title : "List of objects", buf);
+        pline_nomore("<%s: %s>", title ? title : "Untitled menu", buf);
     }
-    return n;
+
+    return docd.nresults;
 }
 
 boolean

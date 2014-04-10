@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -40,11 +40,10 @@ christen_monst(struct monst *mtmp, const char *name)
 int
 do_mname(const struct nh_cmd_arg *arg)
 {
-    char buf[BUFSZ];
     coord cc;
     int cx, cy;
     struct monst *mtmp;
-    const char *qbuf;
+    const char *qbuf, *buf;
 
     if (Hallucination) {
         pline("You would never recognize it anyway.");
@@ -79,11 +78,11 @@ do_mname(const struct nh_cmd_arg *arg)
     /* special case similar to the one in lookat() */
     qbuf = distant_monnam(mtmp, ARTICLE_THE);
     qbuf = msgprintf("What do you want to call %s?", qbuf);
-    getarglin(arg, qbuf, buf);
+    buf = getarglin(arg, qbuf);
     if (!*buf || *buf == '\033')
         return 0;
     /* strip leading and trailing spaces; unnames monster if all spaces */
-    mungspaces(buf);
+    buf = msgmungspaces(buf);
 
     if (mtmp->data->geno & G_UNIQ) {
         qbuf = msgupcasefirst(distant_monnam(mtmp, ARTICLE_THE));
@@ -108,8 +107,7 @@ static const char nameable[] = {
 int
 do_oname(const struct nh_cmd_arg *arg)
 {
-    char buf[BUFSZ];
-    const char *qbuf;
+    const char *qbuf, *buf;
     const char *aname;
     short objtyp;
     struct obj *obj;
@@ -123,15 +121,15 @@ do_oname(const struct nh_cmd_arg *arg)
                      safe_qbuf("", sizeof("What do you want to name these ?"),
                                xname(obj), simple_typename(obj->otyp),
                                is_plural(obj) ? "things" : "thing"));
-    getarglin(arg, qbuf, buf);
+    buf = getarglin(arg, qbuf);
     if (!*buf || *buf == '\033')
         return 0;
     /* strip leading and trailing spaces; unnames item if all spaces */
-    mungspaces(buf);
+    buf = msgmungspaces(buf);
 
     /* relax restrictions over proper capitalization for artifacts */
     if ((aname = artifact_name(buf, &objtyp)) != 0 && objtyp == obj->otyp)
-        strcpy(buf, aname);
+        buf = aname;
 
     if (obj->oartifact) {
         pline("The artifact seems to resist the attempt.");
@@ -139,15 +137,18 @@ do_oname(const struct nh_cmd_arg *arg)
     } else if (restrict_name(obj, buf) || exist_artifact(obj->otyp, buf)) {
         int n = rn2((int)strlen(buf));
         char c1, c2;
+        char slipbuf[strlen(buf) + 1];
+        strcpy(slipbuf, buf);
 
         c1 = lowc(buf[n]);
         do
             c2 = 'a' + rn2('z' - 'a' + 1);
         while (c1 == c2);
-        buf[n] = (buf[n] == c1) ? c2 : highc(c2);       /* keep same case */
+
+        slipbuf[n] = (slipbuf[n] == c1) ? c2 : highc(c2);   /* keep same case */
         pline("While engraving your %s slips.", body_part(HAND));
         win_pause_output(P_MESSAGE);
-        pline("You engrave: \"%s\".", buf);
+        pline("You engrave: \"%s\".", slipbuf);
     }
     oname(obj, buf);
     return 0;
@@ -278,8 +279,7 @@ oname(struct obj *obj, const char *name)
 static void
 docall_inner(const struct nh_cmd_arg *arg, int otyp)
 {
-    char buf[BUFSZ];
-    const char *qbuf;
+    const char *qbuf, *buf;
     char **str1;
     const char *ot = obj_typename(otyp);
 
@@ -290,7 +290,7 @@ docall_inner(const struct nh_cmd_arg *arg, int otyp)
         qbuf = msgcat(qbuf, an(ot));
 
     qbuf = msgcat(qbuf, ":");
-    getarglin(arg, qbuf, buf);
+    buf = getarglin(arg, qbuf);
     if (!*buf || *buf == '\033')
         return;
 
@@ -300,7 +300,7 @@ docall_inner(const struct nh_cmd_arg *arg, int otyp)
         free(*str1);
 
     /* strip leading and trailing spaces; uncalls item if all spaces */
-    (void)mungspaces(buf);
+    buf = msgmungspaces(buf);
     if (!*buf) {
         if (*str1) {    /* had name, so possibly remove from disco[] */
             /* strip name first, for the update_inventory() call from
@@ -340,7 +340,8 @@ do_tname(const struct nh_cmd_arg *arg)
 int
 do_naming(const struct nh_cmd_arg *arg)
 {
-    int n, selected[1];
+    int n;
+    const int *selected;
     char classes[20], *s;
     struct nh_menulist menu;
 
@@ -362,7 +363,7 @@ do_naming(const struct nh_cmd_arg *arg)
     }
 
     n = display_menu(&menu, "What do you wish to name?",
-                     PICK_ONE, PLHINT_ANYWHERE, selected);
+                     PICK_ONE, PLHINT_ANYWHERE, &selected);
     if (n > 0)
         n = selected[0] - 1;
     else
@@ -433,7 +434,7 @@ do_naming(const struct nh_cmd_arg *arg)
         }
         n = display_menu(&menu,
                          "Name items with which appearance?", PICK_ONE,
-                         PLHINT_INVENTORY, selected);
+                         PLHINT_INVENTORY, &selected);
         if (n == 1)
             docall_inner(&(struct nh_cmd_arg){.argtype = 0},
                          selected[0]);

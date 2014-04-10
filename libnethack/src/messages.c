@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) 2014 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -27,7 +27,10 @@ struct tm; /* no need to include time.h, we never inspect a struct tm */
    Messages are immutable once created. This means that when returning a
    message, if you make no changes to it, it's safe to return a message you were
    given as an argument directly. (They can be mutable during the creation
-   process, but are immutable upon leaving this file.) */
+   process, but are immutable upon leaving this file.)
+
+   Selections made from menus are not strings, but have the same lifetime
+   properties as messages, and thus are also handled by this file. */
 
 static char *msgcat_core(va_list args, size_t preceding);
 static char charid(char c);
@@ -172,6 +175,16 @@ msgchop(const char *message, int count)
     return rv;
 }
 
+/* Performs mungspaces() on a message, returning the new munged message. */
+const char *
+msgmungspaces(const char *message)
+{
+    char msgcopy[strlen(message) + 1];
+    strcpy(msgcopy, message);
+    mungspaces(msgcopy);
+    return msg_from_string(msgcopy);
+}
+
 /* Returns a message equal to the given message except with the first letter and
    all letters immediately after spaces capitalized. */
 const char *
@@ -225,4 +238,59 @@ static char
 charid(char c)
 {
     return c;
+}
+
+
+/* Callbacks that convert the API's allocation scheme into messages. */
+void
+msg_request_command_callback(const struct nh_cmd_and_arg *cmd,
+                             void *ncaa_to_fill)
+{
+    struct nh_cmd_and_arg *ncaa = ncaa_to_fill;
+    ncaa->cmd = msg_from_string(cmd->cmd);
+    ncaa->arg = cmd->arg;
+    if (ncaa->arg.argtype & CMD_ARG_STR)
+        ncaa->arg.str = msg_from_string(ncaa->arg.str);
+    else
+        ncaa->arg.str = NULL;
+}
+void
+msg_getlin_callback(const char *str, void *msg_to_fill)
+{
+    const char **msg = msg_to_fill;
+    *msg = msg_from_string(str);
+}
+
+void
+msg_display_menu_callback(const int *results, int nresults, void *dmcd_to_fill)
+{
+    struct display_menu_callback_data *dmcd = dmcd_to_fill;
+    int *msg_results;
+
+    dmcd->nresults = nresults;
+    if (nresults <= 0)
+        return;
+
+    msg_results = xmalloc(&turnstate.message_chain, nresults * sizeof *results);
+    memcpy(msg_results, results, nresults * sizeof *results);
+
+    dmcd->results = msg_results;
+    dmcd->nresults = nresults;
+}
+
+void
+msg_display_objects_callback(const struct nh_objresult *results, int nresults,
+                             void *docd_to_fill)
+{
+    struct display_objects_callback_data *docd = docd_to_fill;
+    struct nh_objresult *msg_results;
+
+    docd->nresults = nresults;
+    if (nresults <= 0)
+        return;
+
+    msg_results = xmalloc(&turnstate.message_chain, nresults * sizeof *results);
+    memcpy(msg_results, results, nresults * sizeof *results);
+
+    docd->results = msg_results;
 }

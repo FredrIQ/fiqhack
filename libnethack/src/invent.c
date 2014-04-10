@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-06 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1393,12 +1393,12 @@ display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
     init_objmenulist(&objlist);
     make_invlist(&objlist, lets);
 
-    struct nh_objresult selected[objlist.icount ? objlist.icount : 0];
+    const struct nh_objresult *selected;
 
     if (objlist.icount)
         n = display_objects(&objlist, want_reply ? NULL : "Inventory:",
                             want_reply ? PICK_ONE : PICK_NONE, PLHINT_INVENTORY,
-                            selected);
+                            &selected);
     else
         dealloc_objmenulist(&objlist);
 
@@ -1611,7 +1611,7 @@ dotypeinv(const struct nh_cmd_arg *arg)
     int n, i = 0;
     int unpaid_count;
     boolean billx = *u.ushops && doinvbill(0);
-    int pick_list[30];
+    const int *pick_list;
     struct object_pick *dummy;
     const char *prompt = "What type of object do you want an inventory of?";
 
@@ -1626,7 +1626,7 @@ dotypeinv(const struct nh_cmd_arg *arg)
     i = UNPAID_TYPES;
     if (billx)
         i |= BILLED_TYPES;
-    n = query_category(prompt, invent, i, pick_list, PICK_ONE);
+    n = query_category(prompt, invent, i, &pick_list, PICK_ONE);
     if (!n)
         return 0;
     this_type = c = pick_list[0];

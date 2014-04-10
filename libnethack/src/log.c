@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-06 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -73,7 +73,8 @@ error_reading_save(const char *reason)
 noreturn void
 log_recover(long offset)
 {
-    int n, selected[1];
+    int n;
+    const int *selected;
     char newline_check[2];
     const char *buf;
     struct nh_menulist menu;
@@ -118,7 +119,7 @@ log_recover(long offset)
                  FALSE);
 
     n = display_menu(&menu, "The save file is corrupted...",
-                     PICK_ONE, PLHINT_URGENT, selected);
+                     PICK_ONE, PLHINT_URGENT, &selected);
 
     if (n && selected[0] == 1) {
         /* Automatic recovery. */
@@ -913,8 +914,22 @@ log_record_line(const char *l)
 }
 
 void
-log_record_menu(boolean isobjmenu, int itemcount, const void *el)
+log_record_menu(boolean isobjmenu, const void *el)
 {
+    int nresults;
+    const struct nh_objresult *cur_objresult = NULL; /* lint suppression */
+    const int *cur_menuresult = NULL; /* lint suppression */
+
+    if (isobjmenu) {
+        const struct display_objects_callback_data *elcast = el;
+        nresults = elcast->nresults;
+        cur_objresult = elcast->results;
+    } else {
+        const struct display_menu_callback_data *elcast = el;
+        nresults = elcast->nresults;
+        cur_menuresult = elcast->results;
+    }
+
     if (program_state.in_zero_time_command)
         return;
 
@@ -927,24 +942,23 @@ log_record_menu(boolean isobjmenu, int itemcount, const void *el)
 
     lprintf(isobjmenu ? "O" : "M");
 
-    while (itemcount) {
+    while (nresults) {
         if (isobjmenu) {
-            const struct nh_objresult *elcast = el;
-            if (elcast->count == -1)
+            if (cur_objresult->count == -1)
                 lprintf("%" PRIx32,
-                        (int32_t)(elcast->id + MENU_ID_OFFSET));
-            else if (elcast->count >= 0)
+                        (int32_t)(cur_objresult->id + MENU_ID_OFFSET));
+            else if (cur_objresult->count >= 0)
                 lprintf("%" PRIx32 ",%d",
-                        (int32_t)(elcast->id + MENU_ID_OFFSET), elcast->count);
+                        (int32_t)(cur_objresult->id + MENU_ID_OFFSET),
+                        cur_objresult->count);
             else
                 panic("negative count in log_record_menu");
-            el = elcast + 1;
+            cur_objresult++;
         } else {
-            const int *elcast = el;
-            lprintf("%" PRIx32, (*elcast + MENU_ID_OFFSET));
-            el = elcast + 1;
+            lprintf("%" PRIx32, (*cur_menuresult + MENU_ID_OFFSET));
+            cur_menuresult++;
         }
-        if (--itemcount)
+        if (--nresults)
             lprintf(":");
     }
 
@@ -1145,13 +1159,16 @@ log_replay_input(int count, const char *fmt, ...)
 }
 
 boolean
-log_replay_line(char *buf)
+log_replay_line(const char **buf)
 {
     char *logline = start_replaying_logfile('L');
     if (!logline)
         return FALSE;
 
-    base64_decode(logline+1, buf, BUFSZ);
+    /* The string must be shorter in plain than in base 64. */
+    char decode_buffer[strlen(logline + 1) + 2];
+    base64_decode(logline+1, decode_buffer, (sizeof decode_buffer) - 1);
+    *buf = msg_from_string(decode_buffer);
 
     stop_replaying_logfile();
 
@@ -1161,15 +1178,35 @@ log_replay_line(char *buf)
 }
 
 boolean
-log_replay_menu(boolean isobjmenu, int *itemcount, void *el)
+log_replay_menu(boolean isobjmenu, void *el)
 {
     char *logline = start_replaying_logfile(isobjmenu ? 'O' : 'M');
     char *lp;
 
-    if (!logline)
-        return FALSE;
+    int *itemcount;
+    const struct nh_objresult **objresultlist = 0;
+    struct nh_objresult *orl;
+    const int **menuresultlist = 0;
+    int *mrl;
+
+    if (isobjmenu) {
+        struct display_objects_callback_data *elcast = el;
+        itemcount = &(elcast->nresults);
+        objresultlist = &(elcast->results);
+        *objresultlist = NULL;
+        orl = NULL;
+    } else {
+        struct display_menu_callback_data *elcast = el;
+        itemcount = &(elcast->nresults);
+        menuresultlist = &(elcast->results);
+        *menuresultlist = NULL;
+        mrl = NULL;
+    }
 
     *itemcount = 0;
+
+    if (!logline)
+        return FALSE;
 
     lp = logline + 1;
 
@@ -1179,30 +1216,34 @@ log_replay_menu(boolean isobjmenu, int *itemcount, void *el)
 
         id = parse_decimal_number(&lp);
 
+        (*itemcount)++;
+
         if (*lp == ',') {
 
-            if (!isobjmenu)
+            if (!isobjmenu) {
+                free(logline);
                 error_reading_save("non-obj menu has counts\n");
+            }
 
             lp++;
             count = parse_hex_number(&lp);
         }
 
-        if (*lp != ':' && *lp)
+        if (*lp != ':' && *lp) {
+            free(logline);
             error_reading_save("bad number format in menu\n");
-
-        if (isobjmenu) {
-            struct nh_objresult *elcast = el;
-            elcast->id = ((int32_t)id) - MENU_ID_OFFSET;
-            elcast->count = count;
-            el = elcast + 1;
-        } else {
-            int *elcast = el;
-            *elcast = ((int32_t)id) - MENU_ID_OFFSET;
-            el = elcast + 1;
         }
 
-        (*itemcount)++;
+        if (isobjmenu) {
+            orl = xrealloc(&turnstate.message_chain, orl,
+                           *itemcount * sizeof *orl);
+            orl[*itemcount-1].id = ((int32_t)id) - MENU_ID_OFFSET;
+            orl[*itemcount-1].count = count;
+        } else {
+            mrl = xrealloc(&turnstate.message_chain, mrl,
+                           *itemcount * sizeof *mrl);
+            mrl[*itemcount-1] = ((int32_t)id) - MENU_ID_OFFSET;
+        }
 
         if (*lp)
             lp++;
@@ -1211,14 +1252,21 @@ log_replay_menu(boolean isobjmenu, int *itemcount, void *el)
     stop_replaying_logfile();
 
     free(logline);
+
+    if (isobjmenu)
+        *objresultlist = orl;
+    else
+        *menuresultlist = mrl;
+
     return TRUE;
 }
 
 boolean
-log_replay_command(char *cmd, struct nh_cmd_arg *arg)
+log_replay_command(struct nh_cmd_and_arg *cmd)
 {
     char *logline = start_replaying_logfile(0);
-    char *lp, *lp2, c;
+    char *lp, *lp2;
+    char c;
 
     if (!logline)
         return FALSE;
@@ -1228,64 +1276,70 @@ log_replay_command(char *cmd, struct nh_cmd_arg *arg)
         log_desync();
     }
 
-    lp = logline;
-    lp2 = cmd;
+    lp = strchr(logline, ' ');
+    cmd->cmd = lp ?
+        msgchop(msg_from_string(logline), lp - logline) :
+        msg_from_string(logline);
 
-    while (*lp && *lp != ' ') {
-        *(lp2++) = *(lp++);
-        if (lp2 - cmd > 60) /* sanity check */
-            error_reading_save("Command name was too long\n");
-    }
-    *lp2 = '\0';
+    if (strlen(cmd->cmd) > 60) /* sanity check */
+        error_reading_save("Command name was too long\n");
 
     /* Zero the argtype, and make sure the rest of the structure is
        initialized. */
-    memset(arg, 0, sizeof (struct nh_cmd_arg));
+    memset(&(cmd->arg), 0, sizeof (struct nh_cmd_arg));
 
-    while (*lp == ' ') {
+    while (lp && *lp == ' ') {
         lp += 2;
         switch (lp[-1]) {
         case 'D':
-            arg->argtype |= CMD_ARG_DIR;
-            arg->dir = parse_decimal_number(&lp);
+            cmd->arg.argtype |= CMD_ARG_DIR;
+            cmd->arg.dir = parse_decimal_number(&lp);
             break;
 
         case 'P':
-            arg->argtype |= CMD_ARG_POS;
-            arg->pos.x = parse_decimal_number(&lp);
-            if (*(lp++) != ',')
+            cmd->arg.argtype |= CMD_ARG_POS;
+            cmd->arg.pos.x = parse_decimal_number(&lp);
+            if (*(lp++) != ',') {
+                free(logline);
                 error_reading_save("No comma in position argument\n");
-            arg->pos.y = parse_decimal_number(&lp);
+            }
+            cmd->arg.pos.y = parse_decimal_number(&lp);
             break;
 
         case 'I':
-            arg->argtype |= CMD_ARG_OBJ;
-            arg->invlet = *(lp++);
+            cmd->arg.argtype |= CMD_ARG_OBJ;
+            cmd->arg.invlet = *(lp++);
             break;
 
         case 'T':
-            arg->argtype |= CMD_ARG_STR;
+            cmd->arg.argtype |= CMD_ARG_STR;
             lp2 = lp;
             while (*lp2 != ' ' && *lp2)
                 lp2++;
             c = *lp2;
             *lp2 = '\0';
-            base64_decode(lp, arg->str, sizeof arg->str);
+            /* A string is always shorter in plaintext than in base 64 */
+            {
+                char decode_buf[strlen(lp) + 2];
+                base64_decode(lp, decode_buf, (sizeof decode_buf) - 1);
+                cmd->arg.str = msg_from_string(decode_buf);
+            }
             *lp2 = c;
             lp = lp2;
             break;
 
         case 'S':
-            arg->argtype |= CMD_ARG_SPELL;
-            arg->spelllet = *(lp++);
+            cmd->arg.argtype |= CMD_ARG_SPELL;
+            cmd->arg.spelllet = *(lp++);
             break;
 
         case 'L':
-            arg->argtype |= CMD_ARG_LIMIT;
-            arg->limit = parse_decimal_number(&lp);
+            cmd->arg.argtype |= CMD_ARG_LIMIT;
+            cmd->arg.limit = parse_decimal_number(&lp);
             break;
 
         default:
+            free(logline);
             error_reading_save("Unrecognised command argument\n");
         }
     }

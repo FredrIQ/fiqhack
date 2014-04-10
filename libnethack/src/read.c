@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1392,7 +1392,8 @@ static void
 do_class_genocide(void)
 {
     int i, j, immunecnt, gonecnt, goodcnt, class, feel_dead = 0;
-    char buf[BUFSZ];
+    const char *buf;
+    const char mimic_buf[] = {def_monsyms[S_MIMIC], '\0'};
     boolean gameover = FALSE;   /* true iff killed self */
 
     for (j = 0;; j++) {
@@ -1401,9 +1402,9 @@ do_class_genocide(void)
             return;
         }
         do {
-            getlin("What class of monsters do you wish to genocide?",
-                   buf, FALSE); /* not meaningfully repeatable... */
-            mungspaces(buf);
+            buf = getlin("What class of monsters do you wish to genocide?",
+                         FALSE); /* not meaningfully repeatable... */
+            buf = msgmungspaces(buf);
         } while (buf[0] == '\033' || !buf[0]);
         /* choosing "none" preserves genocideless conduct */
         if (!strcmpi(buf, "none") || !strcmpi(buf, "nothing"))
@@ -1411,14 +1412,14 @@ do_class_genocide(void)
 
         if (strlen(buf) == 1) {
             if (buf[0] == ILLOBJ_SYM)
-                buf[0] = def_monsyms[S_MIMIC];
+                buf = mimic_buf;
             class = def_char_to_monclass(buf[0]);
         } else {
             class = 0;
             /* TODO: Potential buffer overflow here if the input is just
                marginally below BUFSZ and gets longer when singularized.
                Imagine "djinn" with a lot of adjectives. */
-            strcpy(buf, makesingular(buf));
+            buf = makesingular(buf);
         }
         immunecnt = gonecnt = goodcnt = 0;
         for (i = LOW_PM; i < NUMMONS; i++) {
@@ -1567,7 +1568,7 @@ do_level_genocide(void)
 void
 do_genocide(int how)
 {
-    char buf[BUFSZ];
+    const char *buf;
     int i, killplayer = 0;
     int mndx;
     const struct permonst *ptr;
@@ -1576,7 +1577,7 @@ do_genocide(int how)
     if (how & PLAYER) {
         mndx = u.umonster;      /* non-polymorphed mon num */
         ptr = &mons[mndx];
-        strcpy(buf, ptr->mname);
+        buf = msg_from_string(ptr->mname);
         killplayer++;
     } else {
         for (i = 0;; i++) {
@@ -1584,9 +1585,9 @@ do_genocide(int how)
                 pline("That's enough tries!");
                 return;
             }
-            getlin("What monster do you want to genocide? [type the name]",
-                   buf, FALSE); /* not meaningfully repeatable... */
-            mungspaces(buf);
+            buf = getlin("What monster do you want to genocide? [type the name]",
+                         FALSE); /* not meaningfully repeatable... */
+            buf = msgmungspaces(buf);
             /* choosing "none" preserves genocideless conduct */
             if (!strcmpi(buf, "none") || !strcmpi(buf, "nothing")) {
                 /* ... but no free pass if cursed */
@@ -1638,15 +1639,13 @@ do_genocide(int how)
     which = "all ";
     if (Hallucination) {
         if (Upolyd)
-            strcpy(buf, youmonst.data->mname);
+            buf = youmonst.data->mname;
         else {
-            strcpy(buf,
-                   (u.ufemale &&
-                    urole.name.f) ? urole.name.f : urole.name.m);
-            buf[0] = lowc(buf[0]);
+            buf = (u.ufemale && urole.name.f) ? urole.name.f : urole.name.m;
+            buf = msglowercase(msg_from_string(buf));
         }
     } else {
-        strcpy(buf, ptr->mname);       /* make sure we have standard singular */
+        buf = ptr->mname;       /* make sure we have standard singular */
         if ((ptr->geno & G_UNIQ) && ptr != &mons[PM_HIGH_PRIEST])
             which = !type_is_pname(ptr) ? "the " : "";
     }
@@ -1793,7 +1792,8 @@ cant_create(int *mtype, boolean revival)
 boolean
 create_particular(const struct nh_cmd_arg *arg)
 {
-    char buf[BUFSZ], *bufp, monclass = MAXMCLASSES;
+    char monclass = MAXMCLASSES;
+    const char *buf, *bufp;
     int which, tries, i;
     const struct permonst *whichpm;
     struct monst *mtmp;
@@ -1808,9 +1808,9 @@ create_particular(const struct nh_cmd_arg *arg)
     do {
         which = urole.malenum;  /* an arbitrary index into mons[] */
         maketame = makepeaceful = makehostile = FALSE;
-        getarglin(arg, "Create what kind of monster? [type the name or symbol]",
-                  buf);
-        bufp = mungspaces(buf);
+        buf = getarglin(
+            arg, "Create what kind of monster? [type the name or symbol]");
+        bufp = msgmungspaces(buf);
         if (*bufp == '\033')
             return FALSE;
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-06 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -32,6 +32,7 @@ struct mkroom;
 struct monst;
 struct musable;
 struct nh_autopickup_rules;
+struct nh_cmd_and_arg;
 struct nh_cmd_arg;
 struct nh_menuitem;
 struct nh_menulist;
@@ -198,8 +199,7 @@ extern int getargpos(const struct nh_cmd_arg *arg, coord *cc, boolean force,
                      const char *goal);
 extern struct obj *getargobj(const struct nh_cmd_arg *arg, const char *let,
                              const char *word);
-extern void getarglin(const struct nh_cmd_arg *arg, const char *query,
-                      char *bufp);
+extern const char *getarglin(const struct nh_cmd_arg *arg, const char *query);
 
 /* ### dbridge.c ### */
 
@@ -783,11 +783,11 @@ extern boolean log_replay_bones(struct memfile *mf);
 extern void log_record_input(const char *, ...) PRINTFLIKE(1,2);
 extern boolean log_replay_input(int, const char *, ...) SCANFLIKE(2,3);
 extern void log_record_line(const char *);
-extern boolean log_replay_line(char *);
-extern void log_record_menu(boolean, int, const void *);
-extern boolean log_replay_menu(boolean, int *, void *);
+extern boolean log_replay_line(const char **);
+extern void log_record_menu(boolean, const void *);
+extern boolean log_replay_menu(boolean, void *);
 extern void log_record_command(const char *cmd, const struct nh_cmd_arg *arg);
-extern boolean log_replay_command(char *cmd, struct nh_cmd_arg *arg);
+extern boolean log_replay_command(struct nh_cmd_and_arg *cmd);
 extern void log_replay_no_more_options(void);
 
 extern void log_time_line(void);
@@ -869,12 +869,21 @@ extern const char *msgcat_many(const char *first, ...);
 extern const char *msgkitten(const char *first, char second);
 extern const char *msgchop(const char *message, int count);
 extern const char *msgtitlecase(const char *message);
+extern const char *msgmungspaces(const char *message);
 extern const char *msgupcasefirst(const char *message);
 extern const char *msglowercase(const char *message);
 extern const char *msgcaseconv(const char *message,
                                char (*firstcharcaseconv)(char),
                                char (*insidewordcaseconv)(char),
                                char (*wordstartcaseconv)(char));
+extern void msg_request_command_callback(const struct nh_cmd_and_arg *cmd,
+                                         void *ncaa_to_fill);
+extern void msg_getlin_callback(const char *str, void *msg_to_fill);
+extern void msg_display_menu_callback(const int *results, int nresults,
+                                      void *dmcd_to_fill);
+extern void msg_display_objects_callback(const struct nh_objresult *results,
+                                         int nresults,
+                                         void *docd_to_fill);
 
 /* ### mhitm.c ### */
 
@@ -1263,7 +1272,8 @@ extern boolean allow_category(const struct obj *);
 extern boolean is_worn_by_type(const struct obj *);
 extern int pickup(int, enum u_interaction_mode);
 extern int pickup_object(struct obj *, long, boolean);
-extern int query_category(const char *, struct obj *, int, int *, int);
+extern int query_category(const char *, struct obj *, int,
+                          const int **, int);
 extern int obj_compare(const void *, const void *);
 extern int query_objlist(const char *, struct obj *, int, struct object_pick **,
                          int, boolean(*)(const struct obj *));
@@ -1852,10 +1862,11 @@ extern enum nh_client_response getpos(coord *cc, boolean, const char *,
 extern char yn_function(const char *query, const char *resp, char def);
 extern int getdir(const char *, schar *dx, schar *dy, schar *dz, boolean isarg);
 extern char query_key(const char *query, int *count);
-extern void getlin(const char *query, char *bufp, boolean isarg);
-extern int display_menu(struct nh_menulist *, const char *, int, int, int *);
+extern const char *getlin(const char *query, boolean isarg);
+extern int display_menu(struct nh_menulist *, const char *, int, int,
+                        const int **);
 extern int display_objects(struct nh_objlist *, const char *, int, int,
-                           struct nh_objresult *);
+                           const struct nh_objresult **);
 extern boolean win_list_items(struct nh_objlist *, boolean invent);
 
 /* ### wizard.c ### */

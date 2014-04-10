@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-09 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -435,6 +435,32 @@ cmd_outrip(json_t *params, int display_only)
     return NULL;
 }
 
+static void
+cmd_request_command_inner(const struct nh_cmd_and_arg *cmd, 
+                          void *json_t_to_fill)
+{
+    json_t **json_t_p = json_t_to_fill;
+    json_t *jarg;
+
+    jarg = json_object();
+
+    if (cmd->arg.argtype & CMD_ARG_DIR)
+        json_object_set_new(jarg, "d", json_integer(cmd->arg.dir));
+    if (cmd->arg.argtype & CMD_ARG_POS) {
+        json_object_set_new(jarg, "x", json_integer(cmd->arg.pos.x));
+        json_object_set_new(jarg, "y", json_integer(cmd->arg.pos.y));
+    }
+    if (cmd->arg.argtype & CMD_ARG_OBJ)
+        json_object_set_new(jarg, "invlet", json_integer(cmd->arg.invlet));
+    if (cmd->arg.argtype & CMD_ARG_STR)
+        json_object_set_new(jarg, "str", json_string(cmd->arg.str));
+    if (cmd->arg.argtype & CMD_ARG_SPELL)
+        json_object_set_new(jarg, "spell", json_integer(cmd->arg.spelllet));
+    if (cmd->arg.argtype & CMD_ARG_LIMIT)
+        json_object_set_new(jarg, "limit", json_integer(cmd->arg.limit));
+
+    *json_t_p = json_pack("{ss,so}", "command", cmd->cmd, "arg", jarg);
+}
 
 static json_t *
 cmd_request_command(json_t *params, int display_only)
@@ -442,9 +468,7 @@ cmd_request_command(json_t *params, int display_only)
     int debug;
     int completed;
     int interrupted;
-    char command[256];
-    struct nh_cmd_arg arg;
-    json_t *jarg;
+    json_t *jobj;
 
     if (json_unpack(params, "{sb,sb,sb*}", "debug", &debug, "completed",
                     &completed, "interrupted", &interrupted) == -1) {
@@ -453,46 +477,46 @@ cmd_request_command(json_t *params, int display_only)
     }
 
     windowprocs.win_request_command(debug, completed, interrupted,
-                                     command, &arg);
-
-    jarg = json_object();
-
-    if (arg.argtype & CMD_ARG_DIR)
-        json_object_set_new(jarg, "d", json_integer(arg.dir));
-    if (arg.argtype & CMD_ARG_POS) {
-        json_object_set_new(jarg, "x", json_integer(arg.pos.x));
-        json_object_set_new(jarg, "y", json_integer(arg.pos.y));
-    }
-    if (arg.argtype & CMD_ARG_OBJ)
-        json_object_set_new(jarg, "invlet", json_integer(arg.invlet));
-    if (arg.argtype & CMD_ARG_STR)
-        json_object_set_new(jarg, "str", json_string(arg.str));
-    if (arg.argtype & CMD_ARG_SPELL)
-        json_object_set_new(jarg, "spell", json_integer(arg.spelllet));
-    if (arg.argtype & CMD_ARG_LIMIT)
-        json_object_set_new(jarg, "limit", json_integer(arg.limit));
-
-    return json_pack("{ss,so}", "command", command, "arg", jarg);
+                                    &jobj, cmd_request_command_inner);
+    return jobj;
 }
 
+
+static void
+cmd_display_menu_inner(const int *results, int nresults, void *json_t_to_fill)
+{
+    json_t **json_t_p = json_t_to_fill;
+    json_t *jarr;
+    int i;
+
+    if (!json_t_p)
+        return;
+
+    jarr = json_array();
+    for (i = 0; i < nresults; i++)
+        json_array_append_new(jarr, json_integer(results[i]));
+
+    *json_t_p = json_pack("{so,si}", "results", jarr, "howclosed",
+                          nresults == -1 ? NHCR_CLIENT_CANCEL : NHCR_ACCEPTED);
+}
 
 static json_t *
 cmd_display_menu(json_t *params, int display_only)
 {
     struct nh_menulist menu;
-    int i, how, ret, placement_hint;
+    int how, placement_hint;
     const char *title;
-    json_t *jarr;
+    json_t *jarr, *jobj = NULL;
+    int i;
 
     if (json_unpack
-        (params, "{so,si,si,ss,si!}", "items", &jarr, "icount",
-         &(menu.icount), "how", &how, "title", &title,
-         "plhint", &placement_hint) == -1) {
+        (params, "{so,si,si,ss,si!}", "items", &jarr, "how", &how,
+         "title", &title, "plhint", &placement_hint) == -1) {
         print_error("Incorrect parameter type in cmd_display_menu");
         return NULL;
     }
 
-    if (!json_is_array(jarr) || json_array_size(jarr) != menu.icount) {
+    if (!json_is_array(jarr)) {
         print_error("Damaged items array in cmd_display_menu");
         return NULL;
     }
@@ -500,23 +524,15 @@ cmd_display_menu(json_t *params, int display_only)
     if (!*title)
         title = NULL;
 
-    menu.size = menu.icount;
+    menu.size = menu.icount = json_array_size(jarr);
     menu.items = malloc(menu.icount * sizeof (struct nh_menuitem));
     for (i = 0; i < menu.icount; i++)
         json_read_menuitem(json_array_get(jarr, i), menu.items + i);
 
-    int selected[menu.icount];
-    ret = windowprocs.win_display_menu(&menu, title, how, placement_hint,
-                                       selected);
-
-    if (display_only)
-        return NULL;
-
-    jarr = json_array();
-    for (i = 0; i < ret; i++)
-        json_array_append_new(jarr, json_integer(selected[i]));
-
-    return json_pack("{si,so}", "return", ret, "results", jarr);
+    windowprocs.win_display_menu(&menu, title, how, placement_hint,
+                                 display_only ? NULL : &jobj,
+                                 cmd_display_menu_inner);
+    return jobj;
 }
 
 
@@ -538,24 +554,44 @@ json_read_objitem(json_t * jobj, struct nh_objitem *oi)
     oi->worn = worn;
 }
 
+static void
+cmd_display_objects_inner(const struct nh_objresult *results, int nresults,
+                          void *json_t_to_fill)
+{
+    json_t **json_t_p = json_t_to_fill;
+    json_t *jarr, *jobj;
+    int i;
+
+    if (!json_t_p)
+        return;
+
+    jarr = json_array();
+    for (i = 0; i < nresults; i++) {
+        jobj = json_pack("{si,si}", "id", results[i].id,
+                         "count", results[i].count);
+        json_array_append_new(jarr, jobj);
+    }
+
+    *json_t_p = json_pack("{so,si}", "pick_list", jarr, "howclosed",
+                          nresults == -1 ? NHCR_CLIENT_CANCEL : NHCR_ACCEPTED);
+}
 
 static json_t *
 cmd_display_objects(json_t *params, int display_only)
 {
     struct nh_objlist objlist;
-    int i, how, ret, placement_hint;
+    int i, how, placement_hint;
     const char *title;
-    json_t *jarr, *jobj;
+    json_t *jarr, *jobj = NULL;
 
     if (json_unpack
-        (params, "{so,si,si,ss,si!}", "items", &jarr,
-         "icount", &(objlist.icount), "how", &how, "title", &title,
-         "plhint", &placement_hint) == -1) {
+        (params, "{so,si,si,ss,si!}", "items", &jarr, "how", &how,
+         "title", &title, "plhint", &placement_hint) == -1) {
         print_error("Incorrect parameter type in cmd_display_menu");
         return NULL;
     }
 
-    if (!json_is_array(jarr) || json_array_size(jarr) != objlist.icount) {
+    if (!json_is_array(jarr)) {
         print_error("Damaged items array in cmd_display_menu");
         return NULL;
     }
@@ -563,28 +599,16 @@ cmd_display_objects(json_t *params, int display_only)
     if (!*title)
         title = NULL;
 
+    objlist.size = objlist.icount = json_array_size(jarr);
     objlist.items = malloc(objlist.icount * sizeof (struct nh_objitem));
-    objlist.size = objlist.icount;
 
     for (i = 0; i < objlist.icount; i++)
         json_read_objitem(json_array_get(jarr, i), objlist.items + i);
 
-    struct nh_objresult pick_list[objlist.icount];
-    ret = windowprocs.win_display_objects(&objlist, title, how,
-                                          placement_hint, pick_list);
-
-    if (display_only)
-        return NULL;
-
-    jarr = json_array();
-    for (i = 0; i < ret; i++) {
-        jobj =
-            json_pack("{si,si}", "id", pick_list[i].id, "count",
-                      pick_list[i].count);
-        json_array_append_new(jarr, jobj);
-    }
-
-    return json_pack("{si,so}", "return", ret, "pick_list", jarr);
+    windowprocs.win_display_objects(&objlist, title, how, placement_hint,
+                                    display_only ? NULL : &jobj,
+                                    cmd_display_objects_inner);
+    return jobj;
 }
 
 
@@ -622,7 +646,8 @@ static json_t *
 cmd_query_key(json_t *params, int display_only)
 {
     const char *query;
-    int allow_count, ret, count;
+    int allow_count;
+    struct nh_query_key_result ret;
 
     if (display_only) {
         print_error
@@ -637,10 +662,9 @@ cmd_query_key(json_t *params, int display_only)
         return NULL;
     }
 
-    count = 0;
-    ret = windowprocs.win_query_key(query, allow_count ? &count : NULL);
+    ret = windowprocs.win_query_key(query, allow_count);
 
-    return json_pack("{si,si}", "return", ret, "count", count);
+    return json_pack("{si,si}", "return", ret.key, "count", ret.count);
 }
 
 
@@ -648,7 +672,8 @@ static json_t *
 cmd_getpos(json_t *params, int display_only)
 {
     const char *goal;
-    int x, y, force, ret;
+    int x, y, force;
+    struct nh_getpos_result ret;
 
     if (display_only) {
         print_error("cmd_getpos called when a return value was not expected.");
@@ -662,8 +687,9 @@ cmd_getpos(json_t *params, int display_only)
         return NULL;
     }
 
-    ret = windowprocs.win_getpos(&x, &y, force, goal);
-    return json_pack("{si,si,si}", "return", ret, "x", x, "y", y);
+    ret = windowprocs.win_getpos(x, y, force, goal);
+    return json_pack("{si,si,si}", "return", ret.howclosed,
+                     "x", ret.x, "y", ret.y);
 }
 
 
@@ -713,11 +739,18 @@ cmd_yn_function(json_t *params, int display_only)
 }
 
 
+static void
+cmd_getline_inner(const char *str, void *json_t_to_fill)
+{
+    json_t **json_t_p = json_t_to_fill;
+    *json_t_p = json_pack("{ss}", "line", str);
+}
+
 static json_t *
 cmd_getline(json_t *params, int display_only)
 {
     const char *query;
-    char linebuf[2 * BUFSZ];
+    json_t *jobj;
 
     if (display_only) {
         print_error("cmd_getline called when a return value was not expected.");
@@ -729,9 +762,8 @@ cmd_getline(json_t *params, int display_only)
         return NULL;
     }
 
-    linebuf[0] = '\0';
-    windowprocs.win_getlin(query, linebuf);
-    return json_pack("{ss}", "line", linebuf);
+    windowprocs.win_getlin(query, &jobj, cmd_getline_inner);
+    return jobj;
 }
 
 

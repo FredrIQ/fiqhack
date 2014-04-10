@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-04-09
+Last modified by Alex Smith, 2014-04-10
 
 This document documents the version of the network protocol used in
 NetHack 4.3, and was written by Daniel Thaler, GreyKnight, Alex Smith.
@@ -716,8 +716,6 @@ Requests the client to display a menu to the user (either simply for display,
 or to allow them to make a selection), until the user makes a selection or the
 server cancels the request using a `play_game` response.
 
-TODO: The API is inherently prone to buffer length mismatches.
-
 Request arguments:
   * `enum nh_pick_type how`: a specification of how many items the user can
     choose from the menu:     
@@ -725,7 +723,6 @@ Request arguments:
         to present information to the user;
       * `PICK_ONE` = 1: the user can pick one item from the menu;
       * `PICK_ANY` = 2: the user can pick zero or more items from the menu
-  * `int icount`: the length of `items`
   * `struct nh_menuitem[] items`: the menu items:
       * `charcode accel`: a recommended accelerator for this menu entry
       * `string caption`: the text of the menu entry
@@ -761,7 +758,7 @@ Response arguments:
     was closed; this should be empty for `PICK_NONE` or if the menu was
     cancelled via server or client, empty or a single element for `PICK_ONE`,
     and any subset of elements for `PICK_ANY`,
-  * `enum nh_client_response return`: an explanation of how the menu was
+  * `enum nh_client_response howclosed`: an explanation of how the menu was
     closed:
       * `NHCR_ACCEPTED` = 0: pressing Return (or similar), scrolling off the
         end, or (for `PICK_ONE`) selecting an item;
@@ -802,7 +799,7 @@ Response arguments:
       * `int count`: the size of a partial stack specified for this item, or
         -1 to select the entire stack; should be -1, or between 1 and the stack
         size minus 1
-  * `enum nh_client_response return`: as in `display_menu`
+  * `enum nh_client_response howclosed`: as in `display_menu`
 
 
 getdir

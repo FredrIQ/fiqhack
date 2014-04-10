@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-06 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -696,6 +696,7 @@ void
 restore_flags(struct memfile *mf, struct flag *f)
 {
     struct nh_autopickup_rules *ar = f->ap_rules;
+    int lsbl;
     if (ar)
         free(ar->rules);
     memset(f, 0, sizeof (struct flag));
@@ -758,7 +759,13 @@ restore_flags(struct memfile *mf, struct flag *f)
 
     mread(mf, f->inv_order, sizeof (f->inv_order));
 
-    mread(mf, f->last_arg.str, sizeof f->last_arg.str);
+    lsbl = mread32(mf);
+    if (f->last_str_buf)
+        free(f->last_str_buf);
+    f->last_str_buf = malloc(lsbl + 1);
+    mread(mf, f->last_str_buf, lsbl);
+    f->last_str_buf[lsbl] = '\0';
+    f->last_arg.str = f->last_str_buf;
 
     if (!ar)
         ar = malloc(sizeof(struct nh_autopickup_rules));

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -456,14 +456,21 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
     return 2;   /* That takes time */
 }
 
+static char
+highc_htob(char c)
+{
+    c = highc(c);
+    return c == 'H' ? 'B' : c;
+}
+
 /*
  * So you want music...
  */
 int
 do_play_instrument(struct obj *instr, const struct nh_cmd_arg *arg)
 {
-    char buf[BUFSZ], c = 'y';
-    char *s;
+    char c = 'y';
+    const char *buf;
     int x, y;
     boolean ok;
 
@@ -484,18 +491,16 @@ do_play_instrument(struct obj *instr, const struct nh_cmd_arg *arg)
     }
     if (c == 'n') {
         if (u.uevent.uheard_tune == 2 && yn("Play the passtune?") == 'y') {
-            strcpy(buf, tune);
+            buf = msg_from_string(tune);
         } else {
             /* Note: This is explicitly not getarglin(); we don't want
                command repeat to repeat the tune. */
-            getlin("What tune are you playing? [5 notes, A-G]", buf, FALSE);
-            mungspaces(buf);
+            buf = getlin("What tune are you playing? [5 notes, A-G]", FALSE);
+            if (*buf == '\033')
+                buf = "";
+            buf = msgmungspaces(buf);
             /* convert to uppercase and change any "H" to the expected "B" */
-            for (s = buf; *s; s++) {
-                *s = highc(*s);
-                if (*s == 'H')
-                    *s = 'B';
-            }
+            buf = msgcaseconv(buf, highc_htob, highc_htob, highc_htob);
         }
         pline("You extract a strange sound from %s!", the(xname(instr)));
 

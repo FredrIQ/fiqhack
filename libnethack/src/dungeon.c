@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1765,11 +1765,11 @@ print_dungeon(boolean bymenu, schar * rlev, xchar * rdgn)
 
     if (bymenu) {
         int n;
-        int selected[1];
+        const int *selected;
         int idx;
 
         n = display_menu(&menu, "Level teleport to where:",
-                         PICK_ONE, PLHINT_ANYWHERE, selected);
+                         PICK_ONE, PLHINT_ANYWHERE, &selected);
         if (n > 0) {
             idx = selected[0] - 1;
             if (rlev && rdgn) {
@@ -1820,14 +1820,13 @@ print_dungeon(boolean bymenu, schar * rlev, xchar * rdgn)
 int
 donamelevel(const struct nh_cmd_arg *arg)
 {
-    char buf[BUFSZ];
-    const char *query;
+    const char *query, *buf;
 
     if (level->levname[0])
         query = msgprintf("Replace previous name \"%s\" with?", level->levname);
     else
         query = "What do you want to call this dungeon level?";
-    getarglin(arg, query, buf);
+    buf = getarglin(arg, query);
 
     if (buf[0] == '\033')
         return 0;
@@ -2180,7 +2179,8 @@ dooverview(const struct nh_cmd_arg *arg)
 {
     struct overview_info oinfo;
     struct nh_menulist menu;
-    int i, n, x, y, dnum, selected[1];
+    int i, n, x, y, dnum;
+    const int *selected;
     struct level *lev;
     const char *buf;
 
@@ -2227,7 +2227,7 @@ dooverview(const struct nh_cmd_arg *arg)
     }
 
     n = display_menu(&menu, "Dungeon overview:", PICK_ONE,
-                     PLHINT_ANYWHERE, selected);
+                     PLHINT_ANYWHERE, &selected);
     if (n <= 0)
         return 0;
 

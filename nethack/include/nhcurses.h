@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -12,6 +12,7 @@
 # include <stdlib.h>
 # include <string.h>
 # include <stdio.h>
+# include <limits.h>
 
 # if !defined(WIN32)    /* UNIX + APPLE */
 #  include <unistd.h>
@@ -102,6 +103,8 @@ typedef wchar_t fnchar;
                 .icount = ARRAY_SIZE(x),            \
                 .size = 0})
 
+/* For curses_menu_callback, chosen to reduce clashes */
+# define CURSES_MENU_CANCELLED (INT_MIN + 3)
 
 enum game_dirs {
     CONFIG_DIR,
@@ -220,8 +223,6 @@ enum nh_text_mode {
     TILESET_SLASHEM_3D,
 };
 
-typedef nh_bool(*getlin_hook_proc) (char *, void *);
-
 
 
 struct gamewin {
@@ -255,6 +256,7 @@ struct win_objmenu {
 
 struct win_getline {
     char *buf;
+    size_t buf_alloclen;
     const char *query;
     int pos;
 };
@@ -264,6 +266,8 @@ struct win_msgwin {
     int layout_width;
     int layout_height;
 };
+
+typedef nh_bool(*getlin_hook_proc) (struct win_getline *, void *);
 
 /*----------------------------------------------------------------------------*/
 
@@ -295,7 +299,8 @@ extern void set_darkgray(void);
 extern WINDOW *newdialog(int height, int width, WINDOW *old);
 extern enum nh_direction curses_getdir(const char *query, nh_bool restricted);
 extern char curses_yn_function(const char *query, const char *resp, char def);
-extern char curses_query_key(const char *query, int *count);
+extern struct nh_query_key_result curses_query_key(const char *query,
+                                                   nh_bool count_allowed);
 extern int curses_msgwin(const char *msg);
 
 /* gameover.c */
@@ -306,17 +311,22 @@ extern void curses_outrip(
 
 /* getline.c */
 extern void draw_getline(struct gamewin *gw);
-extern nh_bool curses_get_ext_cmd(char *cmd_out, const char **namelist,
-                                  const char **desclist, int listlen);
-extern void curses_getline(const char *query, char *buffer);
-extern void curses_getline_pw(const char *query, char *buffer);
+extern void curses_get_ext_cmd(
+    const char **namelist, const char **desclist, int listlen,
+    void *callbackarg, void (*callback)(const char *, void *));
+extern void curses_getline(const char *query, void *callbackarg,
+                           void (*callback)(const char *, void *));
+extern void curses_getline_pw(const char *query, void *callbackarg,
+                              void (*callback)(const char *, void *));
 
 /* keymap.c */
 extern const char *curses_keyname(int key);
 extern void handle_internal_cmd(struct nh_cmd_desc **cmd,
                                 struct nh_cmd_arg *arg,
                                 nh_bool include_debug);
-extern const char *get_command(struct nh_cmd_arg *arg, nh_bool include_debug);
+extern void get_command(void *callbackarg,
+                        void (*callback)(const struct nh_cmd_and_arg *, void *),
+                        nh_bool include_debug);
 extern void set_next_command(const char *cmd, struct nh_cmd_arg *arg);
 extern void load_keymap(void);
 extern void free_keymap(void);
@@ -330,22 +340,26 @@ extern void curses_impossible(const char *msg);
 extern int get_map_key(int place_cursor);
 extern void curses_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO],
                                  int ux, int uy);
-extern int curses_getpos(int *x, int *y, nh_bool force, const char *goal);
+extern struct nh_getpos_result curses_getpos(int x, int y, nh_bool force,
+                                             const char *goal);
 extern void draw_map(int cx, int cy);
 extern void mark_mapwin_for_full_refresh(void);
 
 /* menu.c */
 extern void draw_menu(struct gamewin *gw);
-extern int curses_display_menu(struct nh_menulist *ml, const char *title,
-                               int how, int placement_hint, int *results);
-extern int curses_display_menu_core(
-    struct nh_menulist *ml, const char *title, int how, int *results,
+extern void curses_menu_callback(const int *results, int nresults, void *arg);
+extern void curses_display_menu(
+    struct nh_menulist *ml, const char *title, int how, int placement_hint,
+    void *callbackarg, void (*callback)(const int *, int, void *));
+extern void curses_display_menu_core(
+    struct nh_menulist *ml, const char *title, int how,
+    void *callbackarg, void (*callback)(const int *, int, void *),
     int x1, int y1, int x2, int y2, nh_bool bottom,
     nh_bool(*changefn)(struct win_menu *, int));
-extern int curses_display_objects(struct nh_objlist *objlist,
-                                  const char *title, int how,
-                                  int placement_hint,
-                                  struct nh_objresult *pick_list);
+extern void curses_display_objects(
+    struct nh_objlist *objlist, const char *title, int how, int placement_hint,
+    void *callbackarg, void (*callback)(const struct nh_objresult *,
+                                        int, void *));
 extern void draw_objlist(WINDOW * win, struct nh_objlist *objlist,
                          int *selected, int how);
 
@@ -404,8 +418,9 @@ extern void replay(void);
 /* rungame.c */
 extern nh_bool get_gamedir(enum game_dirs dirtype, fnchar * buf);
 extern void curses_request_command(nh_bool debug, nh_bool completed,
-                                   nh_bool interrupted, char *cmd,
-                                   struct nh_cmd_arg *cmdarg);
+                                   nh_bool interrupted, void *callbackarg,
+                                   void (*)(const struct nh_cmd_and_arg *cmd,
+                                            void *callbackarg));
 extern void describe_game(char *buf, enum nh_log_status status,
                           struct nh_game_info *gi);
 extern void rungame(nh_bool net);

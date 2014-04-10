@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -461,12 +461,13 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
     boolean zapwand = FALSE;    /* TRUE if we remove a wand charge */
     xchar type = DUST;          /* Type of engraving made */
     const char *buf;            /* Buffer for final/poly engraving text */
-    char ebuf[BUFSZ];           /* Buffer for initial engraving text */
+    const char *ebuf;           /* Buffer for initial engraving text */
     const char *qbuf;           /* Buffer for query text */
     const char *post_engr_text; /* Text displayed after engraving prompt */
     const char *everb;          /* Present tense of engraving type */
     const char *eloc;           /* Where the engraving is (ie dust/floor/...) */
-    char *sp;                   /* Iterator over ebuf; mostly handles spaces */
+    const char *esp;            /* Iterator over ebuf; mostly handles spaces */
+    char *sp;                   /* Ditto for mutable copies of ebuf */
     int len;                    /* # of nonspace chars of new engraving text */
     int maxelen;                /* Max allowable length of engraving text */
     int helpless_time;          /* Temporary for calculating helplessness */
@@ -478,7 +479,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
     const char *writer;
 
     buf = "";
-    ebuf[0] = '\0';
+    ebuf = "";
     post_engr_text = "";
     maxelen = 255; /* same value as in 3.4.3 */
 
@@ -984,14 +985,14 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
     /* Prompt for engraving! */
     qbuf = msgprintf("What do you want to %s the %s here?", everb, eloc);
     if (auto_elbereth)
-        strcpy(ebuf, "Elbereth");
+        ebuf = "Elbereth";
     else
-        getarglin(arg, qbuf, ebuf);
+        ebuf = getarglin(arg, qbuf);
 
     /* Count the actual # of chars engraved not including spaces */
     len = strlen(ebuf);
-    for (sp = ebuf; *sp; sp++)
-        if (isspace(*sp))
+    for (esp = ebuf; *esp; esp++)
+        if (isspace(*esp))
             len -= 1;
 
     if (len == 0 || strchr(ebuf, '\033')) {
@@ -1015,7 +1016,10 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
 
     /* Mix up engraving if surface or state of mind is unsound. Note: this
        won't add or remove any spaces. */
-    for (sp = ebuf; *sp; sp++) {
+
+    char ebuf_copy[strlen(ebuf) + 1];
+    strcpy(ebuf_copy, ebuf);
+    for (sp = ebuf_copy; *sp; sp++) {
         if (isspace(*sp))
             continue;
         if (((type == DUST || type == ENGR_BLOOD) && !rn2(25)) ||
@@ -1098,13 +1102,13 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
 
     /* Chop engraving down to size if necessary */
     if (len > maxelen) {
-        for (sp = ebuf; (maxelen && *sp); sp++)
+        for (sp = ebuf_copy; (maxelen && *sp); sp++)
             if (!isspace(*sp))
                 maxelen--;
         if (!maxelen && *sp) {
             *sp = (char)0;
             helpless_endmsg = "You cannot write any more.";
-            pline("You are only able to write \"%s\".", ebuf);
+            pline("You are only able to write \"%s\".", ebuf_copy);
         }
     }
 
@@ -1114,7 +1118,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
     if (oep)
         buf = msg_from_string(oep->engr_txt);
 
-    buf = msgcat(buf, msg_from_string(ebuf));
+    buf = msgcat(buf, msg_from_string(ebuf_copy));
 
     make_engr_at(level, u.ux, u.uy, buf, moves + helpless_time, type);
 

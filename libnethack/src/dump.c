@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-08 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -9,10 +9,11 @@ static FILE *dumpfp;
 static struct nh_window_procs winprocs_original;
 
 static void dump_status(void);
-static int dump_display_menu(struct nh_menulist *, const char *, int, int,
-                             int *);
-static int dump_display_objects(struct nh_objlist *, const char *, int,
-                                int, struct nh_objresult *);
+static void dump_display_menu(struct nh_menulist *, const char *, int, int,
+                             void *, void (*)(const int *, int, void *));
+static void dump_display_objects(
+    struct nh_objlist *, const char *, int, int, void *,
+    void (*)(const struct nh_objresult *, int, void *));
 static void dump_outrip(struct nh_menulist *ml, boolean ts, const char *name,
                         int gold, const char *killbuf, int end_how, int year);
 
@@ -165,9 +166,10 @@ dump_catch_menus(boolean intercept)
 }
 
 
-static int
+static void
 dump_display_menu(struct nh_menulist *menu, const char *title,
-                  int how, int placement_hint, int *result)
+                  int how, int placement_hint, void *callbackarg,
+                  void (*callback)(const int *, int, void *))
 {
     int i, col, extra;
     int colwidth[10];
@@ -176,7 +178,8 @@ dump_display_menu(struct nh_menulist *menu, const char *title,
 
     if (!dumpfp) {
         dealloc_menulist(menu);
-        return 0;
+        callback(NULL, 0, callbackarg);
+        return;
     }
 
     /* menus may have multiple columns separated by tabs */
@@ -228,19 +231,21 @@ dump_display_menu(struct nh_menulist *menu, const char *title,
 
     dealloc_menulist(menu);
 
-    return 0;
+    callback(NULL, 0, callbackarg);
 }
 
 
-static int
+static void
 dump_display_objects(struct nh_objlist *objects, const char *title,
-                     int how, int placement_hint, struct nh_objresult *result)
+                     int how, int placement_hint, void *callbackarg,
+                     void (*callback)(const struct nh_objresult *, int, void *))
 {
     int i;
 
     if (!dumpfp) {
         dealloc_objmenulist(objects);
-        return 0;
+        callback(NULL, 0, callbackarg);
+        return;
     }
 
     if (!title)
@@ -257,15 +262,14 @@ dump_display_objects(struct nh_objlist *objects, const char *title,
     fprintf(dumpfp, "\n");
 
     dealloc_objmenulist(objects);
-
-    return 0;
+    callback(NULL, 0, callbackarg);
 }
-
 
 static void
 dump_outrip(struct nh_menulist *menu, boolean ts, const char *name,
             int gold, const char *killbuf, int end_how, int year)
 {
-    dump_display_menu(menu, "Final status:", PICK_NONE, PLHINT_ANYWHERE, NULL);
+    dump_display_menu(menu, "Final status:", PICK_NONE, PLHINT_ANYWHERE, NULL,
+                      null_menu_callback);
 }
 
