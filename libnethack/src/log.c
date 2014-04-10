@@ -1947,5 +1947,14 @@ log_uninit(void)
         change_fd_lock(program_state.logfile, LT_NONE, 0);
 
     program_state.logfile = -1;
+
+    /* We need to do this so that init_data doesn't leak memory when it's told
+       to reinitialize the program_state; it can't rely on program_state.
+       binary_save_allocated because for all it knows, that's uninitialized
+       data. */
+    if (program_state.binary_save_allocated) {
+        mfree(&program_state.binary_save);
+        program_state.binary_save_allocated = 0;
+    }
 }
 
