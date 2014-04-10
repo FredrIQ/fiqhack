@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -11,6 +11,7 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #define array_size(x) (sizeof(x)/sizeof(x[0]))
 
@@ -321,7 +322,16 @@ read_unisym_config(void)
     lseek(fd, 0, SEEK_SET);
 
     char data[size + 1];
-    read(fd, data, size);
+    int dptr = 0, rrv;
+    while (dptr < size) {
+        errno = 0;
+        rrv = read(fd, data + dptr, size - dptr);
+        if (rrv < 0 && errno != EINTR) {
+            curses_msgwin("Could not read unicode.conf!");
+            return;
+        }
+        dptr += rrv;
+    }
     data[size] = '\0';
     close(fd);
 
@@ -334,7 +344,7 @@ read_unisym_config(void)
 }
 
 
-static void
+static nh_bool
 write_symlist(int fd, const struct curses_symdef *list, int len)
 {
     char buf[BUFSZ];
@@ -343,8 +353,13 @@ write_symlist(int fd, const struct curses_symdef *list, int len)
     for (i = 0; i < len; i++) {
         sprintf(buf, "%c\"%s\"\t%d\t%04x\n", list[i].custom ? '!' : '#',
                 list[i].symname, list[i].color, (int)list[i].unichar[0]);
-        write(fd, buf, strlen(buf));
+        
+        if (write(fd, buf, strlen(buf)) < 0) {
+            curses_msgwin("Could not write unicode.conf.");
+            return 0;
+        }
     }
+    return 1;
 }
 
 static const char uniconf_header[] =
@@ -367,21 +382,32 @@ write_unisym_config(void)
     if (fd == -1)
         return;
 
-    write(fd, uniconf_header, strlen(uniconf_header));
-    write_symlist(fd, unicode_drawing->bgelements,
-                  unicode_drawing->num_bgelements);
-    write_symlist(fd, unicode_drawing->traps, unicode_drawing->num_traps);
-    write_symlist(fd, unicode_drawing->objects, unicode_drawing->num_objects);
-    write_symlist(fd, unicode_drawing->monsters, unicode_drawing->num_monsters);
-    write_symlist(fd, unicode_drawing->warnings, unicode_drawing->num_warnings);
-    write_symlist(fd, unicode_drawing->invis, 1);
-    write_symlist(fd, unicode_drawing->effects, unicode_drawing->num_effects);
-    write_symlist(fd, unicode_drawing->expltypes,
-                  unicode_drawing->num_expltypes);
-    write_symlist(fd, unicode_drawing->explsyms, NUMEXPCHARS);
-    write_symlist(fd, unicode_drawing->zaptypes, unicode_drawing->num_zaptypes);
-    write_symlist(fd, unicode_drawing->zapsyms, NUMZAPCHARS);
-    write_symlist(fd, unicode_drawing->swallowsyms, NUMSWALLOWCHARS);
+    if (write(fd, uniconf_header, strlen(uniconf_header)) < 0) {
+        curses_msgwin("Could not write unicode.conf.");
+        return;
+    }
+    /* write_symlist returns 0 on error; thus && has the right semantics to run
+       until we get an error */
+    (void)(
+        write_symlist(fd, unicode_drawing->bgelements,
+                  unicode_drawing->num_bgelements) &&
+        write_symlist(fd, unicode_drawing->traps, unicode_drawing->num_traps) &&
+        write_symlist(fd, unicode_drawing->objects,
+                      unicode_drawing->num_objects) &&
+        write_symlist(fd, unicode_drawing->monsters,
+                      unicode_drawing->num_monsters) &&
+        write_symlist(fd, unicode_drawing->warnings,
+                      unicode_drawing->num_warnings) &&
+        write_symlist(fd, unicode_drawing->invis, 1) &&
+        write_symlist(fd, unicode_drawing->effects,
+                      unicode_drawing->num_effects) &&
+        write_symlist(fd, unicode_drawing->expltypes,
+                      unicode_drawing->num_expltypes) &&
+        write_symlist(fd, unicode_drawing->explsyms, NUMEXPCHARS) &&
+        write_symlist(fd, unicode_drawing->zaptypes,
+                      unicode_drawing->num_zaptypes) &&
+        write_symlist(fd, unicode_drawing->zapsyms, NUMZAPCHARS) &&
+        write_symlist(fd, unicode_drawing->swallowsyms, NUMSWALLOWCHARS));
 
     close(fd);
 }

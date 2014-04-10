@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) Alex Smith 2014. */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -38,6 +38,12 @@
 /*
  * These macros indicate functions that have no side effects:
  *
+ * - USE_RETVAL indicates that the function may change global memory in minor
+ *   ways (e.g. allocating onto an xmalloc chain), but has no useful effect
+ *   apart from calculating the return values. It can thus be seen as meaning
+ *   "this function may be implemented in an impure way, but is pure from the
+ *   point of view of the caller".
+ *
  * - PURE means that the function is effectively an accessor function; it can
  *   look at globals and any storage it's given access to via pointer arguments,
  *   but cannot modify memory at all (besides its own locals).
@@ -52,6 +58,7 @@
  * infinite loops, longjmps, etc.). In particular, they must not be able to
  * panic.
  */
+#  define USE_RETVAL
 #  define PURE
 #  define VERYPURE
 
@@ -68,6 +75,7 @@
 #  define SCANFLIKE(f,a)
 #  define STRFTIMELIKE(f,a)
 # else
+#  define USE_RETVAL __attribute__((warn_unused_result))
 #  define PURE __attribute__((pure))
 #  define VERYPURE __attribute__((const))
 #  ifdef AIMAKE_BUILDOS_MSWin32

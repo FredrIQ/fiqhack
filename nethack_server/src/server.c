@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-01 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -506,8 +506,11 @@ handle_new_connection(int newfd, int epfd)
         client->state = CLIENT_CONNECTED;
         unlink_client_data(client);
         link_client_data(client, &connected_list_head);
-        write(client->pipe_out, "\033", 1);     /* signal to reset the read
-                                                   buffer */
+
+        /* signal to reset the read buffer */
+        if (write(client->pipe_out, "\033", 1) < 0)
+            log_msg("Could not reset the read buffer for game at pid %d, "
+                    "user %d", client->pid, client->userid);
 
         log_msg("Connection to game at pid %d reestablished for user %d",
                 client->pid, client->userid);

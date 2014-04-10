@@ -220,7 +220,11 @@ read_server_list(void)
     rewind(fp);
 
     char data[size + 1];
-    fread(data, size, 1, fp);
+    if (fread(data, 1, size, fp) < size) {
+        fclose(fp);
+        curses_msgwin("warning: servers.conf is corrupted");
+        return servlist;
+    }
     data[size] = '\0';
     fclose(fp);
 

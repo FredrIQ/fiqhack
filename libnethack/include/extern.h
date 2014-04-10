@@ -858,24 +858,27 @@ extern boolean mequal(struct memfile *mf1, struct memfile *mf2, boolean noisy);
 
 /* ### messages.c ### */
 
-extern const char *msg_from_string(const char *string);
+extern const char *msg_from_string(const char *string) USE_RETVAL;
 extern const char *msgvprintf(const char *fmt, va_list args,
-                              boolean sanitize_whitespace) PRINTFLIKE(1,0);
-extern const char *msgprintf(const char *fmt, ...) PRINTFLIKE(1,2);
+                              boolean sanitize_whitespace)
+    USE_RETVAL PRINTFLIKE(1,0);
+extern const char *msgprintf(const char *fmt, ...)
+    USE_RETVAL PRINTFLIKE(1,2);
 extern const char *msgstrftime(const char *fmt, const struct tm *tm)
-    STRFTIMELIKE(1,0);
-extern const char *msgcat(const char *first, const char *second);
-extern const char *msgcat_many(const char *first, ...);
-extern const char *msgkitten(const char *first, char second);
-extern const char *msgchop(const char *message, int count);
-extern const char *msgtitlecase(const char *message);
-extern const char *msgmungspaces(const char *message);
-extern const char *msgupcasefirst(const char *message);
-extern const char *msglowercase(const char *message);
+    USE_RETVAL STRFTIMELIKE(1,0);
+extern const char *msgcat(const char *first, const char *second)
+    USE_RETVAL;
+extern const char *msgcat_many(const char *first, ...) USE_RETVAL;
+extern const char *msgkitten(const char *first, char second) USE_RETVAL;
+extern const char *msgchop(const char *message, int count) USE_RETVAL;
+extern const char *msgtitlecase(const char *message) USE_RETVAL;
+extern const char *msgmungspaces(const char *message) USE_RETVAL;
+extern const char *msgupcasefirst(const char *message) USE_RETVAL;
+extern const char *msglowercase(const char *message) USE_RETVAL;
 extern const char *msgcaseconv(const char *message,
                                char (*firstcharcaseconv)(char),
                                char (*insidewordcaseconv)(char),
-                               char (*wordstartcaseconv)(char));
+                               char (*wordstartcaseconv)(char)) USE_RETVAL;
 extern void msg_request_command_callback(const struct nh_cmd_and_arg *cmd,
                                          void *ncaa_to_fill);
 extern void msg_getlin_callback(const char *str, void *msg_to_fill);

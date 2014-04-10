@@ -1112,7 +1112,13 @@ read_config_file(const fnchar * filename)
 
     char buf[fsize + 1];
 
-    fread(buf, fsize, 1, fp);
+    if (fread(buf, 1, fsize, fp) < fsize) {
+        /* This can only happen if the file shrinks while it's open; let's just
+           not read the file at all, because it's probably corrupted */
+        curses_msgwin("warning: corrupted configuration file");
+        fclose(fp);        
+        return;
+    }
     fclose(fp);
 
     buf[fsize] = '\0';
