@@ -150,11 +150,12 @@ hooked_curses_getlin(const char *query, void *callbackarg,
     gldat->buf_alloclen = 0;
     lengthen_getlin_buffer(gldat, 0);
     gldat->buf[0] = '\0';
+    /* Tell delete_gamewin to free gldat->buf if we get an exception. */
+    gw->dyndata = &(gldat->buf);
 
     while (!done) {
         draw_getline_inner(gw, echo);
         errno = 0;
-        /* TODO: Protect gldat->buf from exceptions here */
         key = nh_wgetch(gw->win);
 
         switch (key) {
@@ -236,8 +237,9 @@ hooked_curses_getlin(const char *query, void *callbackarg,
     curs_set(prev_curs);
 
     char *bufcopy = gldat->buf;
-
+    gw->dyndata = NULL; /* don't free gldat->buf */ 
     delete_gamewin(gw); /* frees gldat */
+
     redraw_game_windows();
 
     callback(bufcopy, callbackarg);

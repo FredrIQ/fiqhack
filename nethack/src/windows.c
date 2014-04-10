@@ -527,6 +527,12 @@ delete_gamewin(struct gamewin *gw)
     if (gw->win)
         delwin(gw->win);
 
+    /* Some windows have extra associated dynamic data (e.g. text being
+       entered at a getlin prompt). If that's present, free that too.
+       dyndata is a pointer to the data that needs freeing. */
+    if (gw->dyndata && *(gw->dyndata))
+        free(*(gw->dyndata));
+
     if (firstgw == gw)
         firstgw = gw->next;
     if (lastgw == gw)

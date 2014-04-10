@@ -230,6 +230,7 @@ struct gamewin {
     void (*resize) (struct gamewin * gw);
     WINDOW *win, *win2;
     struct gamewin *next, *prev;
+    char **dyndata;
     void *extra[];
 };
 
