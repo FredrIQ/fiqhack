@@ -815,14 +815,11 @@ log_time_line(void)
     if (program_state.in_zero_time_command)
         return;
 
-    if (log_replay_input(1, "+%" SCNxLEAST64, &timediff)) {
-        flags.turntime += timediff;
-        return;
+    if (!log_replay_input(1, "+%" SCNxLEAST64, &timediff)) {
+        log_replay_no_more_options();
+        timediff = time_for_time_line() - flags.turntime;
     }
 
-    log_replay_no_more_options();
-
-    timediff = time_for_time_line() - flags.turntime;
     flags.turntime += timediff;
     log_record_input("+%" PRIxLEAST64, timediff);
 }
