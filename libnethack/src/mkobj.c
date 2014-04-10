@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-04-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1637,14 +1637,14 @@ struct obj *
 restore_obj(struct memfile *mf)
 {
     unsigned int oflags;
-    char namelen;
+    int namelen;
     struct obj *otmp;
 
     mfmagic_check(mf, OBJ_MAGIC);
 
     namelen = mread32(mf);
     otmp = newobj(namelen, &zeroobj);
-    memset(otmp + sizeof (struct obj), 0, namelen);
+    memset(otmp, 0, namelen + sizeof (struct obj));
 
     otmp->o_id = mread32(mf);
     otmp->owt = mread32(mf);
