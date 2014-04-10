@@ -159,7 +159,7 @@ curses_request_command(
         return;
     }
     if (!interrupted && repeats_remaining && --repeats_remaining) {
-        callback(&(struct nh_cmd_and_arg){"welcome", arg}, callbackarg);
+        callback(&(struct nh_cmd_and_arg){"repeat", arg}, callbackarg);
         return;
     }
 
