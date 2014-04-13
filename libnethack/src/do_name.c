@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Sean Hunt, 2014-04-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -620,7 +620,7 @@ x_monnam(const struct monst *mtmp,
             name_at_start = (boolean) type_is_pname(mdat);
         } else if (is_mplayer(mdat) && ((bp = strstri(name, " the "))) != 0) {
             /* <name> the <adjective> <invisible> <saddled> <rank> */
-            buf = msgprintf("%.*s %s%s", bp - name + 5, name, buf,
+            buf = msgprintf("%.*s %s%s", (int) (bp - name + 5), name, buf,
                             bp + 5);
             article = ARTICLE_NONE;
             name_at_start = TRUE;
