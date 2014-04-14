@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Sean Hunt, 2014-04-14 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -26,6 +26,9 @@ static void load_gamestate_from_binary_save(boolean maybe_old_version);
 
 static boolean full_read(int fd, void *buffer, int len);
 static boolean full_write(int fd, const void *buffer, int len);
+
+static const char * status_string(enum nh_log_status state);
+static enum nh_log_status status_from_string(const char * str);
 
 /* We assume ASCII. (The whole log thing is done in binary.) */
 static_assert('A' == 65 && 'a' == 97,
@@ -665,6 +668,33 @@ stop_updating_logfile(int lines_added)
 #define SECOND_LOGLINE_LEN_STR "78"
 static_assert(SECOND_LOGLINE_LEN < COLNO, "SECOND_LOGLINE_LEN too long");
 
+
+#define STATUS_LEN 4
+#define STATUS_LEN_STR "4"
+const char *
+status_string(enum nh_log_status state) {
+    switch (state) {
+    case LS_SAVED:
+        return "save";
+    case LS_DONE:
+        return "done";
+    default:
+        return 0;
+    }
+}
+
+
+enum nh_log_status
+status_from_string(const char * str) {
+    if (!strcmp(str, "save"))
+        return LS_SAVED;
+    else if (!strcmp(str, "done"))
+        return LS_DONE;
+    else
+        return LS_INVALID;
+}
+
+
 void
 log_newgame(microseconds start_time, unsigned int seed)
 {
@@ -684,8 +714,9 @@ log_newgame(microseconds start_time, unsigned int seed)
     else
         role = roles[u.initrole].name.m;
 
-    lprintf("NHGAME 00000001 %d.%03d.%03d\x0a",
-            VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
+    lprintf("NHGAME %" STATUS_LEN_STR "." STATUS_LEN_STR "s "
+            "00000001 %d.%03d.%03d\x0a",
+            status_string(LS_SAVED), VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
     lprintf("%" SECOND_LOGLINE_LEN_STR "s\x0a", "(new game)");
     start_of_third_line = get_log_offset();
 
@@ -709,7 +740,11 @@ log_game_over(const char *death)
 {
     start_updating_logfile();
     lseek(program_state.logfile,
-          strlen("NHGAME 00000001 4.000.000\x0a"), SEEK_SET);
+          strlen("NHGAME "), SEEK_SET);
+    lprintf("%" STATUS_LEN_STR "." STATUS_LEN_STR "s", status_string(LS_DONE));
+
+    lseek(program_state.logfile,
+          strlen("NHGAME  00000001 4.000.000\x0a") + STATUS_LEN, SEEK_SET);
     lprintf("%" SECOND_LOGLINE_LEN_STR "." SECOND_LOGLINE_LEN_STR "s", death);
     stop_updating_logfile(0);
 }
@@ -1369,7 +1404,9 @@ read_log_header(int fd, struct nh_game_info *si,
 {
     char *logline, *p;
     char namebuf[65]; /* matches %64s later */
+    char statusbuf[STATUS_LEN + 1];
     int playmode, version_major, version_minor, version_patchlevel;
+    enum nh_log_status result;
 
     if (do_locking && !change_fd_lock(fd, LT_READ, 1))
         return LS_IN_PROGRESS;
@@ -1379,11 +1416,15 @@ read_log_header(int fd, struct nh_game_info *si,
     if (!logline)
         goto invalid_log;
 
-    if (sscanf(logline, "NHGAME %8x %d.%3d.%3d", recovery_count,
-               &version_major, &version_minor, &version_patchlevel) != 4)
+    if (sscanf(logline, "NHGAME %" STATUS_LEN_STR "s %8x %d.%3d.%3d", statusbuf,
+               recovery_count, &version_major, &version_minor,
+               &version_patchlevel) != 5)
         goto invalid_logline;
 
     free(logline);
+
+    if ((result = status_from_string(statusbuf)) == LS_INVALID)
+        goto invalid_log;
 
     logline = lgetline_malloc(fd);
     if (!logline)
@@ -1419,7 +1460,7 @@ read_log_header(int fd, struct nh_game_info *si,
 
     if (do_locking)
         change_fd_lock(fd, LT_NONE, 0);
-    return LS_SAVED;
+    return result;
 
 invalid_logline:
     free(logline);
