@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Sean Hunt, 2014-04-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -184,7 +184,7 @@ p_glow2(struct obj *otmp, const char *color)
 {
     pline("Your %s %s%s%s for a moment.", xname(otmp),
           otense(otmp, Blind ? "vibrate" : "glow"), Blind ? "" : " ",
-          Blind ? nul : hcolor(color));
+          Blind ? "" : hcolor(color));
 }
 
 /* Is the object chargeable?  For purposes of inventory display; it is */
@@ -647,8 +647,8 @@ seffects(struct obj *sobj, boolean * known)
             if (s > (special_armor ? 5 : 3) && rn2(s)) {
                 pline("Your %s violently %s%s%s for a while, then %s.",
                       xname(otmp), otense(otmp, Blind ? "vibrate" : "glow"),
-                      (!Blind && !same_color) ? " " : nul,
-                      (Blind || same_color) ? nul :
+                      (!Blind && !same_color) ? " " : "",
+                      (Blind || same_color) ? "" :
                       hcolor(sobj->cursed ? "black" : "silver"),
                       otense(otmp, "evaporate"));
                 setunequip(otmp);
@@ -680,10 +680,10 @@ seffects(struct obj *sobj, boolean * known)
                 break;
             }
             pline("Your %s %s%s%s%s for a %s.", xname(otmp),
-                  s == 0 ? "violently " : nul,
+                  s == 0 ? "violently " : "",
                   otense(otmp, Blind ? "vibrate" : "glow"),
-                  (!Blind && !same_color) ? " " : nul,
-                  (Blind || same_color) ? nul :
+                  (!Blind && !same_color) ? " " : "",
+                  (Blind || same_color) ? "" :
                   hcolor(sobj->cursed ? "black" : "silver"),
                   (s * s > 1) ? "while" : "moment");
             otmp->cursed = sobj->cursed;
@@ -754,10 +754,10 @@ seffects(struct obj *sobj, boolean * known)
             if (!sobj->blessed) {
                 pline("Your %s begin to %s%s.", makeplural(body_part(HAND)),
                       Blind ? "tingle" : "glow ",
-                      Blind ? nul : hcolor("purple"));
+                      Blind ? "" : hcolor("purple"));
                 make_confused(HConfusion + rnd(100), FALSE);
             } else {
-                pline("A %s%s surrounds your %s.", Blind ? nul : hcolor("red"),
+                pline("A %s%s surrounds your %s.", Blind ? "" : hcolor("red"),
                       Blind ? "faint buzz" : " glow", body_part(HEAD));
                 make_confused(0L, TRUE);
             }

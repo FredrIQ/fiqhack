@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Sean Hunt, 2014-04-14 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -123,10 +123,7 @@ change_sex(void)
     if (already_polyd)  /* poly'd: also change saved sex */
         u.mfemale = !u.mfemale;
     max_rank_sz();      /* [this appears to be superfluous] */
-    if ((already_polyd ? u.mfemale : u.ufemale) && urole.name.f)
-        strcpy(pl_character, urole.name.f);
-    else
-        strcpy(pl_character, urole.name.m);
+
     u.umonster = ((already_polyd ? u.mfemale : u.ufemale) &&
                   urole.femalenum != NON_PM) ? urole.femalenum : urole.malenum;
     if (!already_polyd) {

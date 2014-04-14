@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-06 */
+/* Last modified by Sean Hunt, 2014-04-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1028,10 +1028,6 @@ done_noreturn(int how)
          */
         corpse = NULL;
     }
-
-    /* update gold for the rip output, which can't use hidden_gold()
-       (containers will be gone by then if bones just got saved...) */
-    done_money = umoney;
 
     end_dump(how, umoney, carried);
     display_rip(how, umoney, carried);
