@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-14 */
+/* Last modified by Sean Hunt, 2014-04-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -258,7 +258,7 @@ disclose(int how, boolean taken, long umoney)
         c = ask ? yn_function("Do you want to see your attributes?", ynqchars,
                               defquery) : defquery;
         if (c == 'y')
-            enlightenment(how >= PANICKED ? 1 : 2);     /* final */
+            enlightenment(how > LAST_KILLER  ? 1 : 2);     /* final */
         if (c == 'q')
             done_stopprint++;
     }
@@ -273,7 +273,7 @@ disclose(int how, boolean taken, long umoney)
         c = ask ? yn_function("Do you want to see your conduct?", ynqchars,
                               defquery) : defquery;
         if (c == 'y')
-            show_conduct(how >= PANICKED ? 1 : 2);
+            show_conduct(how > LAST_KILLER ? 1 : 2);
         if (c == 'q')
             done_stopprint++;
     }
@@ -307,10 +307,10 @@ dump_disclose(int how)
     container_contents(invent, TRUE, TRUE);
     dump_spells();
     dump_skills();
-    enlightenment(how >= PANICKED ? 1 : 2);     /* final */
+    enlightenment(how > LAST_KILLER ? 1 : 2);     /* final */
     list_vanquished('y', FALSE);
     list_genocided('y', FALSE);
-    show_conduct(how >= PANICKED ? 1 : 2);
+    show_conduct(how > LAST_KILLER ? 1 : 2);
     dooverview(&(struct nh_cmd_arg){.argtype = 0});
     dohistory(&(struct nh_cmd_arg){.argtype = 0});
     calc_score(how, TRUE, money_cnt(invent) + hidden_gold());
@@ -675,38 +675,39 @@ check_survival(int how, const char *kilbuf)
     /* Avoid killed by "a" burning or "a" starvation */
     if (!killer && (how == STARVING || how == BURNING))
         killer_format = KILLED_BY;
-    if (!killer || how >= PANICKED)
+    if (!killer || how > LAST_KILLER)
         killer = deaths[how];
 
-    if (how < PANICKED)
+    if (how <= LAST_KILLER) {
         u.umortality++;
-    if (Lifesaved && (how <= GENOCIDED)) {
-        pline("But wait...");
-        makeknown(AMULET_OF_LIFE_SAVING);
-        pline("Your medallion %s!", !Blind ? "begins to glow" : "feels warm");
-        if (how == CHOKING)
-            pline("You vomit ...");
-        pline("You feel much better!");
-        pline("The medallion crumbles to dust!");
-        if (uamul)
-            useup(uamul);
+        if (Lifesaved) {
+            pline("But wait...");
+            makeknown(AMULET_OF_LIFE_SAVING);
+            pline("Your medallion %s!", !Blind ? "begins to glow" : "feels warm");
+            if (how == CHOKING)
+                pline("You vomit ...");
+            pline("You feel much better!");
+            pline("The medallion crumbles to dust!");
+            if (uamul)
+                useup(uamul);
 
-        adjattrib(A_CON, -1, TRUE);
-        if (u.uhpmax <= 0)
-            u.uhpmax = 10;      /* arbitrary */
-        savelife(how);
-        if (how == GENOCIDED)
-            pline("Unfortunately you are still genocided...");
-        else {
-            killer = 0;
-            killer_format = 0;
-            historic_event(FALSE,
-                           "were saved from death by your amulet of life "
-                           "saving!");
-            return TRUE;
+            adjattrib(A_CON, -1, TRUE);
+            if (u.uhpmax <= 0)
+                u.uhpmax = 10;      /* arbitrary */
+            savelife(how);
+            if (how == GENOCIDED)
+                pline("Unfortunately you are still genocided...");
+            else {
+                killer = 0;
+                killer_format = 0;
+                historic_event(FALSE,
+                            "were saved from death by your amulet of life "
+                            "saving!");
+                return TRUE;
+            }
         }
     }
-    if ((wizard || discover) && (how <= GENOCIDED)) {
+    if ((wizard || discover) && (how <= LAST_KILLER)) {
         if (yn("Die?") == 'y')
             return FALSE;
         pline("OK, so you don't %s.", (how == CHOKING) ? "choke" : "die");
@@ -738,7 +739,7 @@ display_rip(int how, long umoney, unsigned long carried)
         if (!done_stopprint || flags.tombstone)
             show_endwin = TRUE;
 
-        if (how <= GENOCIDED && flags.tombstone && show_endwin) {
+        if (how <= LAST_KILLER && flags.tombstone && show_endwin) {
             /* Put together death description */
             switch (killer_format) {
             default:
@@ -891,7 +892,7 @@ display_rip(int how, long umoney, unsigned long carried)
     }
 
     if (!done_stopprint)
-        outrip(&menu, how <= GENOCIDED, u.uplname, umoney,
+        outrip(&menu, how <= LAST_KILLER, u.uplname, umoney,
                outrip_buf, how, getyear());
     else
         dealloc_menulist(&menu);
@@ -938,10 +939,10 @@ done_noreturn(int how)
 
     /* Sometimes you die on the first move.  Life's not fair. On those rare
        occasions you get hosed immediately, go out smiling... :-) -3. */
-    if (moves <= 1 && how < PANICKED)   /* You die... --More-- */
+    if (moves <= 1 && how <= LAST_KILLER)   /* You die... --More-- */
         pline("Do not pass go.  Do not collect 200 %s.", currency(200L));
 
-    bones_ok = (how < GENOCIDED) && can_make_bones(&u.uz);
+    bones_ok = how <= LAST_KILLER && how != GENOCIDED && can_make_bones(&u.uz);
 
     if (how == TURNED_SLIME)
         u.ugrave_arise = PM_GREEN_SLIME;

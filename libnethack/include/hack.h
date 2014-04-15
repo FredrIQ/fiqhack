@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -57,10 +57,11 @@
 
 /*
  * This is the way the game ends.  If these are rearranged, the arrays
- * in end.c and topten.c will need to be changed.  Some parts of the
- * code assume that PANIC separates the deaths from the non-deaths.
+ * in end.c and topten.c will need to be changed.
  */
 # define DIED            0
+# define FIRST_ENDING    (DIED)
+# define FIRST_KILLER    (DIED)
 # define CHOKING         1
 # define POISONING       2
 # define STARVING        3
@@ -71,11 +72,15 @@
 # define STONING         8
 # define TURNED_SLIME    9
 # define GENOCIDED      10
+# define LAST_KILLER    (GENOCIDED)
+# define NUM_KILLERS    (LAST_KILLER + 1)
 # define PANICKED       11
 # define TRICKED        12
 # define QUIT           13
 # define ESCAPED        14
 # define ASCENDED       15
+# define LAST_ENDING    (ASCENDED)
+# define NUM_ENDINGS    (LAST_ENDING + 1)
 
 # include "align.h"
 # include "dungeon.h"
