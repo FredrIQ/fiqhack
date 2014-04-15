@@ -60,16 +60,14 @@ static const char *const deaths[] = {   /* the array of death */
     "died", "choked", "poisoned", "starvation", "drowning",
     "burning", "dissolving under the heat and pressure",
     "crushed", "turned to stone", "turned into slime",
-    "genocided", "panic", "trickery",
-    "quit", "escaped", "ascended"
+    "genocided", "trickery", "quit", "escaped", "ascended"
 };
 
 static const char *const ends[] = {     /* "when you..." */
     "died", "choked", "were poisoned", "starved", "drowned",
     "burned", "dissolved in the lava",
     "were crushed", "turned to stone", "turned into slime",
-    "were genocided", "panicked", "were tricked",
-    "quit", "escaped", "ascended"
+    "were genocided", "were tricked", "quit", "escaped", "ascended"
 };
 
 extern const char *const killed_by_prefix[];    /* from topten.c */
@@ -926,12 +924,6 @@ done_noreturn(int how)
      *      The game is now over...
      */
     program_state.gameover = 1;
-
-    /* done(PANICKED) should no longer be called on any codepath. We pass back
-       to panic() (which is no longer coded in terms of done()) if it somehow is
-       anyway. */
-    if (how == PANICKED)
-        panic("done(PANICKED) called");
 
     /* might have been killed while using a disposable item, so make sure it's
        gone prior to inventory disclosure and creation of bones data */

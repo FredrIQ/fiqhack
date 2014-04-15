@@ -74,11 +74,10 @@
 # define GENOCIDED      10
 # define LAST_KILLER    (GENOCIDED)
 # define NUM_KILLERS    (LAST_KILLER + 1)
-# define PANICKED       11
-# define TRICKED        12
-# define QUIT           13
-# define ESCAPED        14
-# define ASCENDED       15
+# define TRICKED        11
+# define QUIT           12
+# define ESCAPED        13
+# define ASCENDED       14
 # define LAST_ENDING    (ASCENDED)
 # define NUM_ENDINGS    (LAST_ENDING + 1)
 
