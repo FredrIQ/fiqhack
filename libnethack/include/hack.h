@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-15 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -63,11 +63,17 @@
 # define FIRST_ENDING    (DIED)
 # define FIRST_KILLER    (DIED)
 # define CHOKING         1
+/* POISONING is overloaded; it's also used for illness */
 # define POISONING       2
+/* STARVING is overloaded; it's used for any loss of vital resources like food
+ * or air, except for drowning. */
 # define STARVING        3
 # define DROWNING        4
 # define BURNING         5
+/* DISSOLVED is for dissolving in a pool of lava */
 # define DISSOLVED       6
+/* CRUSHING is specifically for drawbridge-related deaths, even if they aren't
+ * technically a death by crushing */
 # define CRUSHING        7
 # define STONING         8
 # define TURNED_SLIME    9

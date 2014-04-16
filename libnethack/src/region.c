@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) 1996 by Jean-Christophe Collet  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -729,7 +729,7 @@ inside_gas_cloud(void *p1, void *p2)
         if (!Poison_resistance) {
             pline("Something is burning your %s!", makeplural(body_part(LUNG)));
             pline("You cough and spit blood!");
-            losehp(rnd(dam) + 5, "gas cloud", KILLED_BY_AN);
+            losehp(rnd(dam) + 5, killer_msg(DIED, "a gas cloud"));
             return FALSE;
         } else {
             pline("You cough!");

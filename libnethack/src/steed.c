@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -313,7 +313,7 @@ mount_steed(struct monst * mtmp,        /* The animal */
             x_monnam(mtmp, ARTICLE_A, NULL,
                      SUPPRESS_IT | SUPPRESS_INVISIBLE |
                      SUPPRESS_HALLUCINATION, TRUE));
-        losehp(rn1(5, 10), buf, NO_KILLER_PREFIX);
+        losehp(rn1(5, 10), buf);
         return FALSE;
     }
 
@@ -477,7 +477,7 @@ dismount_steed(int reason)
         pline("You %s off of %s!", verb, mon_nam(mtmp));
         if (!have_spot)
             have_spot = landing_spot(&cc, reason, 1);
-        losehp(rn1(10, 10), "riding accident", KILLED_BY_AN);
+        losehp(rn1(10, 10), "killed in a riding accident");
         set_wounded_legs(LEFT_SIDE, (int)LWounded_legs + rn1(5, 5));
         set_wounded_legs(RIGHT_SIDE, (int)RWounded_legs + rn1(5, 5));
         repair_leg_damage = FALSE;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -455,11 +455,11 @@ kick_object(xchar x, xchar y, schar dx, schar dy)
               makeplural(body_part(FOOT)));
         if (!(poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))) {
             pline("You turn to stone...");
-            killer_format = KILLED_BY;
             /* KMH -- otmp should be kickobj */
-            killer = msgprintf("kicking %s without boots",
-                               an(corpse_xname(kickobj, TRUE)));
-            done(STONING);
+            done(STONING,
+                 killer_msg(STONING,
+                            msgprintf("kicking %s without boots",
+                                      an(corpse_xname(kickobj, TRUE)))));
         }
     }
 
@@ -1081,7 +1081,7 @@ dokick(const struct nh_cmd_arg *arg)
             }
             if (!rn2(3))
                 set_wounded_legs(RIGHT_SIDE, 5 + rnd(5));
-            losehp(rnd(ACURR(A_CON) > 15 ? 3 : 5), kickstr(), KILLED_BY);
+            losehp(rnd(ACURR(A_CON) > 15 ? 3 : 5), killer_msg(DIED, kickstr()));
             if (Is_airlevel(&u.uz) || Levitation)
                 hurtle(-dx, -dy, rn1(2, 4), TRUE);      /* assume it's heavy */
             return 1;

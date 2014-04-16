@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-06 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -581,6 +581,9 @@ u_init(microseconds birthday)
     /* For now, everyone starts out with a night vision range of 1. */
     u.nv_range = 1;
     u.next_attr_check = 600;    /* arbitrary initial setting */
+
+    u.delayed_killers.genocide = u.delayed_killers.illness =
+    u.delayed_killers.stoning = u.delayed_killers.sliming = NULL;
 }
 
 

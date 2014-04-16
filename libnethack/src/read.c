@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-14 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -297,7 +297,7 @@ recharge(struct obj *obj, int curse_bless)
                 setunequip(obj);
             s = rnd(3 * abs(obj->spe)); /* amount of damage */
             useup(obj);
-            losehp(s, "exploding ring", KILLED_BY_AN);
+            losehp(s, killer_msg(DIED, "an exploding ring"));
         } else {
             enum objslot slot = obj == uleft ? os_ringl : os_ringr;
 
@@ -1101,7 +1101,7 @@ seffects(struct obj *sobj, boolean * known)
             } else {
                 pline("The scroll catches fire and you burn your %s.",
                       makeplural(body_part(HAND)));
-                losehp(1, "scroll of fire", KILLED_BY_AN);
+                losehp(1, killer_msg(DIED, "a scroll of fire"));
             }
             return 1;
         }
@@ -1112,7 +1112,7 @@ seffects(struct obj *sobj, boolean * known)
             burn_away_slime();
         }
         explode(u.ux, u.uy, 11, (2 * (rn1(3, 3) + 2 * cval) + 1) / 3,
-                SCROLL_CLASS, EXPL_FIERY);
+                SCROLL_CLASS, EXPL_FIERY, NULL);
         return 1;
     case SCR_EARTH:
         /* TODO: handle steeds */
@@ -1231,7 +1231,7 @@ seffects(struct obj *sobj, boolean * known)
                     newsym(u.ux, u.uy);
                 }
                 if (dmg)
-                    losehp(dmg, "scroll of earth", KILLED_BY_AN);
+                    losehp(dmg, killer_msg(DIED, "a scroll of earth"));
             }
         }
         break;
@@ -1275,7 +1275,7 @@ wand_explode(struct obj *obj)
 {
     obj->in_use = TRUE; /* in case losehp() is fatal */
     pline("Your %s vibrates violently, and explodes!", xname(obj));
-    losehp(rnd(2 * (u.uhpmax + 1) / 3), "exploding wand", KILLED_BY_AN);
+    losehp(rnd(2 * (u.uhpmax + 1) / 3), killer_msg(DIED, "an exploding wand"));
     useup(obj);
     exercise(A_STR, FALSE);
 }
@@ -1531,10 +1531,7 @@ do_class_genocide(void)
             }
         }
         if (gameover || u.uhp == -1) {
-            killer_format = KILLED_BY_AN;
-            killer = "scroll of genocide";
-            if (gameover)
-                done(GENOCIDED);
+            (gameover ? done : set_delayed_killer)(GENOCIDED, "scroll of genocide");
         }
         return;
     }
@@ -1667,26 +1664,24 @@ do_genocide(int how)
                 mvitals[urace.malenum].mvflags |= (G_GENOD | G_NOCORPSE);
 
             u.uhp = -1;
+
+            const char *killer;
             if (how & PLAYER) {
-                killer_format = KILLED_BY;
-                killer = "genocidal confusion";
+                killer = killer_msg(GENOCIDED, "genocidal confusion");
             } else if (how & ONTHRONE) {
                 /* player selected while on a throne */
-                killer_format = KILLED_BY_AN;
-                killer = "imperious order";
+                killer = killer_msg(GENOCIDED, "an imperious order");
             } else {    /* selected player deliberately, not confused */
-                killer_format = KILLED_BY_AN;
-                killer = "scroll of genocide";
+                killer = killer_msg(GENOCIDED, "a scroll of genocide");
             }
 
             /* Polymorphed characters will die as soon as they're rehumanized. */
             /* KMH -- Unchanging prevents rehumanization */
             if (Upolyd && ptr != youmonst.data) {
-                delayed_killer = killer;
-                killer = 0;
                 pline("You feel dead inside.");
+                set_delayed_killer(GENOCIDED, killer);
             } else
-                done(GENOCIDED);
+                done(GENOCIDED, killer);
         } else if (ptr == youmonst.data) {
             rehumanize();
         }

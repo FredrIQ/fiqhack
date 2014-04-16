@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -538,7 +538,7 @@ level_tele_impl(boolean wizard_tele)
     d_level newlevel;
     const char *escape_by_flying = 0;   /* when surviving dest of -N */
     boolean force_dest = FALSE;
-    const char *buf;
+    const char *buf, *killer = NULL;
 
     if ((Uhave_amulet || In_endgame(&u.uz) || In_sokoban(&u.uz))
         && !wizard_tele) {
@@ -611,9 +611,7 @@ level_tele_impl(boolean wizard_tele)
             if (invent)
                 pline("Your possessions land on the %s with a thud.",
                       surface(u.ux, u.uy));
-            killer_format = NO_KILLER_PREFIX;
-            killer = "committed suicide";
-            done(DIED);
+            done(DIED, "committed suicide");
             pline("An energized cloud of dust begins to coalesce.");
             pline("Your body rematerializes%s.",
                   invent ? ", and you gather up all your possessions" : "");
@@ -661,8 +659,6 @@ level_tele_impl(boolean wizard_tele)
         return;
     }
 
-    killer = 0; /* still alive, so far... */
-
     if (newlev < 0 && !force_dest) {
         if (*u.ushops0) {
             /* take unpaid inventory items off of shop bills */
@@ -675,7 +671,6 @@ level_tele_impl(boolean wizard_tele)
         if (newlev <= -10) {
             pline("You arrive in heaven.");
             verbalize("Thou art early, but we'll admit thee.");
-            killer_format = NO_KILLER_PREFIX;
             killer = "went to heaven prematurely";
         } else if (newlev == -9) {
             pline("You feel deliriously happy. ");
@@ -695,7 +690,6 @@ level_tele_impl(boolean wizard_tele)
             pline("You plummet a few thousand feet to your death.");
             killer = msgcat_many("teleported out of the dungeon and fell to ",
                                  uhis(), " death", NULL);
-            killer_format = NO_KILLER_PREFIX;
         }
     }
 
@@ -706,7 +700,7 @@ level_tele_impl(boolean wizard_tele)
         lsav = u.uz;    /* save current level, see below */
         u.uz.dnum = 0;  /* main dungeon */
         u.uz.dlevel = (newlev <= -10) ? -10 : 0;        /* heaven or surface */
-        done(DIED);
+        done(DIED, killer);
         /* can only get here via life-saving (or declining to die in
            explore|debug mode); the hero has now left the dungeon... */
         escape_by_flying = "find yourself back on the surface";

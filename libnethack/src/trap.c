@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -683,7 +683,8 @@ dotrap(struct trap *trap, unsigned trflags)
             ;
         else if (thitu(7, dmgval(otmp, &youmonst), otmp, "little dart")) {
             if (otmp->opoisoned)
-                poisoned("dart", A_CON, "little dart", -10);
+                poisoned("dart", A_CON, killer_msg(POISONING, "a little dart"),
+                         -10);
             obfree(otmp, NULL);
         } else {
             place_object(otmp, level, u.ux, u.uy);
@@ -726,7 +727,7 @@ dotrap(struct trap *trap, unsigned trflags)
             stackobj(otmp);
             newsym(u.ux, u.uy); /* map the rock */
 
-            losehp(dmg, "falling rock", KILLED_BY_AN);
+            losehp(dmg, killer_msg(DIED, "a falling rock"));
             exercise(A_STR, FALSE);
         }
         break;
@@ -796,7 +797,7 @@ dotrap(struct trap *trap, unsigned trflags)
             pline("You are covered with rust!");
             if (Half_physical_damage)
                 dam = (dam + 1) / 2;
-            losehp(dam, "rusting away", KILLED_BY);
+            losehp(dam, killer_msg(DIED, "rusting away"));
             break;
         } else if (u.umonnum == PM_GREMLIN && rn2(3)) {
             pline("%s you!", A_gush_of_water_hits);
@@ -911,12 +912,13 @@ dotrap(struct trap *trap, unsigned trflags)
         }
         if (!steedintrap(trap, NULL)) {
             if (ttype == SPIKED_PIT) {
-                losehp(rnd(10), "fell into a pit of iron spikes",
-                       NO_KILLER_PREFIX);
+                losehp(rnd(10), "fell into a pit of iron spikes");
                 if (!rn2(6))
-                    poisoned("spikes", A_STR, "fall onto poison spikes", 8);
+                    poisoned("spikes", A_STR,
+                             killer_msg(DIED, "a fall onto poison spikes"),
+                             8);
             } else
-                losehp(rnd(6), "fell into a pit", NO_KILLER_PREFIX);
+                losehp(rnd(6), "fell into a pit");
             if (Punished && !carried(uball)) {
                 unplacebc();
                 ballfall();
@@ -1054,7 +1056,7 @@ dotrap(struct trap *trap, unsigned trflags)
             deltrap(level, trap);
             newsym(u.ux, u.uy); /* update position */
             pline("You are caught in a magical explosion!");
-            losehp(rnd(10), "magical explosion", KILLED_BY_AN);
+            losehp(rnd(10), killer_msg(DIED, "a magical explosion"));
             pline("Your body absorbs some of the magical energy!");
             u.uen = (u.uenmax += 2);
         } else
@@ -1145,7 +1147,7 @@ dotrap(struct trap *trap, unsigned trflags)
             if (steed_mid && saddle && !u.usteed)
                 keep_saddle_with_steedcorpse(steed_mid, level->objlist, saddle);
             newsym(u.ux, u.uy); /* update trap symbol */
-            losehp(rnd(16), "land mine", KILLED_BY_AN);
+            losehp(rnd(16), killer_msg(DIED, "a land mine"));
             /* fall recursively into the pit... */
             if ((trap = t_at(level, u.ux, u.uy)) != 0) {
                 dotrap(trap, RECURSIVETRAP);
@@ -1537,7 +1539,7 @@ launch_obj(short otyp, int x1, int y1, int x2, int y2, int style)
     }
 
     if (damage)
-        losehp(damage, killer_xname(singleobj), KILLED_BY);
+        losehp(damage, killer_msg_obj(DIED, singleobj));
 
     if (!used_up) {
         return 1;
@@ -2199,9 +2201,7 @@ instapetrify(const char *str)
     if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
         return;
     pline("You turn to stone...");
-    killer_format = KILLED_BY;
-    killer = str;
-    done(STONING);
+    done(STONING, killer_msg(STONING, str));
 }
 
 void
@@ -2413,7 +2413,7 @@ float_down(long hmask)
                            unexpected additional force of the air currents once 
                            leviation ceases knocks you off your feet. */
                         pline("You fall over.");
-                        losehp(rnd(2), "dangerous winds", KILLED_BY);
+                        losehp(rnd(2), killer_msg(DIED, "dangerous winds"));
                         if (u.usteed)
                             dismount_steed(DISMOUNT_FELL);
                         selftouch("As you fall, you", "being blown into");
@@ -2468,7 +2468,7 @@ dofiretrap(struct obj *box)
         if (Fire_resistance)
             pline("You are uninjured.");
         else
-            losehp(rnd(3), "boiling water", KILLED_BY);
+            losehp(rnd(3), killer_msg(DIED, "boiling water"));
         return;
     }
     pline("A %s %s from %s!", tower_of_flame, box ? "bursts" : "erupts",
@@ -2507,7 +2507,7 @@ dofiretrap(struct obj *box)
     if (!num)
         pline("You are uninjured.");
     else
-        losehp(num, tower_of_flame, KILLED_BY_AN);
+        losehp(num, killer_msg(DIED, an(tower_of_flame)));
     burn_away_slime();
 
     if (burnarmor(&youmonst) || rn2(3)) {
@@ -2892,7 +2892,7 @@ drown(void)
         i = dice(2, 6);
         if (u.mhmax > i)
             u.mhmax -= i;
-        losehp(i, "rusting away", KILLED_BY);
+        losehp(i, killer_msg(DIED, "rusting away"));
     }
     if (inpool_ok)
         return FALSE;
@@ -2983,20 +2983,17 @@ crawl:
     }
     u.uinwater = 1;
     pline("You drown.");
-    killer_format = waterbody_prefix(u.ux, u.uy);
-    killer = Is_waterlevel(&u.uz) ? "the Plane of Water" :
-        waterbody_name(u.ux, u.uy);
-    done(DROWNING);
+    done(DROWNING,
+         killer_msg(DROWNING, 
+                    Is_waterlevel(&u.uz) ? "the Plane of Water"
+                                         : a_waterbody(u.ux, u.uy)));
     /* oops, we're still alive.  better get out of the water. */
     while (!safe_teleds(TRUE)) {
         pline("You're still drowning.");
-        killer = waterbody_name(u.ux, u.uy);
-        killer_format = Is_waterlevel(&u.uz) ||
-            !strcmp(waterbody_name(u.ux, u.uy),
-                    "water") ? KILLED_BY : KILLED_BY_AN;
-        killer = Is_waterlevel(&u.uz) ? "the Plane of Water" :
-            waterbody_name(u.ux, u.uy);
-        done(DROWNING);
+        done(DROWNING,
+             killer_msg(DROWNING, 
+                        Is_waterlevel(&u.uz) ? "the Plane of Water"
+                                             : a_waterbody(u.ux, u.uy)));
     }
     if (u.uinwater) {
         u.uinwater = 0;
@@ -3761,7 +3758,7 @@ chest_trap(struct obj * obj, int bodypart, boolean disarm)
                     delobj(otmp);
                 }
                 wake_nearby();
-                losehp(dice(6, 6), buf, KILLED_BY_AN);
+                losehp(dice(6, 6), killer_msg(DIED, an(buf)));
                 exercise(A_STR, FALSE);
                 if (costly && loss) {
                     if (insider)
@@ -3780,7 +3777,8 @@ chest_trap(struct obj * obj, int bodypart, boolean disarm)
         case 18:
         case 17:
             pline("A cloud of noxious gas billows from %s.", the(xname(obj)));
-            poisoned("gas cloud", A_STR, "cloud of poison gas", 15);
+            poisoned("gas cloud", A_STR,
+                     killer_msg(DIED, "a cloud of poison gas"), 15);
             exercise(A_CON, FALSE);
             break;
         case 16:
@@ -3788,7 +3786,8 @@ chest_trap(struct obj * obj, int bodypart, boolean disarm)
         case 14:
         case 13:
             pline("You feel a needle prick your %s.", body_part(bodypart));
-            poisoned("needle", A_CON, "poisoned needle", 10);
+            poisoned("needle", A_CON,
+                     killer_msg(DIED, "a poisoned needle"), 10);
             exercise(A_CON, FALSE);
             break;
         case 12:
@@ -3812,7 +3811,7 @@ chest_trap(struct obj * obj, int bodypart, boolean disarm)
                 destroy_item(RING_CLASS, AD_ELEC);
                 destroy_item(WAND_CLASS, AD_ELEC);
                 if (dmg)
-                    losehp(dmg, "electric shock", KILLED_BY_AN);
+                    losehp(dmg, killer_msg(DIED, "an electric shock"));
                 break;
             }
         case 5:
@@ -3919,7 +3918,7 @@ b_trapped(const char *item, int bodypart)
 
     pline("KABOOM!!  %s was booby-trapped!", The(item));
     wake_nearby();
-    losehp(dmg, "explosion", KILLED_BY_AN);
+    losehp(dmg, killer_msg(DIED, "an explosion"));
     exercise(A_STR, FALSE);
     if (bodypart)
         exercise(A_CON, FALSE);
@@ -4007,7 +4006,7 @@ lava_effects(void)
             dmg = dice(6, 6);
             pline("The lava here burns you!");
             if (dmg < u.uhp) {
-                losehp(dmg, lava_killer, KILLED_BY);
+                losehp(dmg, killer_msg(DIED, lava_killer));
                 goto burn_stuff;
             }
         } else
@@ -4037,13 +4036,11 @@ lava_effects(void)
 
         /* s/he died... */
         u.uhp = -1;
-        killer_format = KILLED_BY;
-        killer = lava_killer;
         pline("You burn to a crisp...");
-        done(BURNING);
+        done(BURNING, killer_msg(BURNING, lava_killer));
         while (!safe_teleds(TRUE)) {
             pline("You're still burning.");
-            done(BURNING);
+            done(BURNING, killer_msg(BURNING, lava_killer));
         }
         pline("You find yourself back on solid %s.", surface(u.ux, u.uy));
         return TRUE;
@@ -4052,7 +4049,7 @@ lava_effects(void)
         u.utraptype = TT_LAVA;
         pline("You sink into the lava, but it only burns slightly!");
         if (u.uhp > 1)
-            losehp(1, lava_killer, KILLED_BY);
+            losehp(1, killer_msg(DIED, lava_killer));
     }
 
 burn_stuff:

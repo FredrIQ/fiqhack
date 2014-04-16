@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1107,7 +1107,7 @@ mbhitm(struct monst *mtmp, struct obj *otmp)
                 tmp = dice(2, 12);
                 if (Half_spell_damage)
                     tmp = (tmp + 1) / 2;
-                losehp(tmp, "wand", KILLED_BY_AN);
+                losehp(tmp, killer_msg(DIED, "a wand"));
             } else
                 pline("The wand misses you.");
             action_interrupted();
@@ -1440,7 +1440,7 @@ use_offensive(struct monst *mtmp, struct musable *m)
                     newsym(u.ux, u.uy);
                 }
                 if (dmg)
-                    losehp(dmg, "scroll of earth", KILLED_BY_AN);
+                    losehp(dmg, killer_msg(DIED, "scroll of earth"));
             }
         xxx_noobj:
 

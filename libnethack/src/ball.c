@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -39,7 +39,7 @@ ballfall(void)
             } else if (flags.verbose)
                 pline("Your %s does not protect you.", xname(uarmh));
         }
-        losehp(dmg, "crunched in the head by an iron ball", NO_KILLER_PREFIX);
+        losehp(dmg, "crunched in the head by an iron ball");
     }
 }
 
@@ -668,10 +668,8 @@ drop_ball(xchar x, xchar y, schar dx, schar dy)
                         pline("Your %s %s is severely damaged.",
                               (side == LEFT_SIDE) ? "left" : "right",
                               body_part(LEG));
-                        losehp(2,
-                               "leg damage from being pulled out of a bear "
-                               "trap",
-                               KILLED_BY);
+                        losehp(2, killer_msg(DIED, "leg damage from being "
+                                             "pulled out of a bear trap"));
                     }
                     break;
                 }
@@ -761,21 +759,19 @@ drag_down(void)
     if (forward) {
         if (rn2(6)) {
             pline("The iron ball drags you downstairs!");
-            losehp(rnd(6), "dragged downstairs by an iron ball",
-                   NO_KILLER_PREFIX);
+            losehp(rnd(6), "dragged downstairs by an iron ball");
             litter();
         }
     } else {
         if (rn2(2)) {
             pline("The iron ball smacks into you!");
-            losehp(rnd(20), "iron ball collision", KILLED_BY_AN);
+            losehp(rnd(20), killer_msg(DIED, "iron ball collision"));
             exercise(A_STR, FALSE);
             dragchance -= 2;
         }
         if ((int)dragchance >= rnd(6)) {
             pline("The iron ball drags you downstairs!");
-            losehp(rnd(3), "dragged downstairs by an iron ball",
-                   NO_KILLER_PREFIX);
+            losehp(rnd(3), "dragged downstairs by an iron ball");
             exercise(A_STR, FALSE);
             litter();
         }

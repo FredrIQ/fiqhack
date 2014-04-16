@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-14 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -622,7 +622,6 @@ restore_you(struct memfile *mf, struct you *y)
     mread(mf, y->uconduct, sizeof (y->uconduct));
     mread(mf, y->uconduct_time, sizeof (y->uconduct_time));
     mread(mf, y->uwhybusy, sizeof (y->uwhybusy));
-    mread(mf, y->usick_cause, sizeof (y->usick_cause));
     mread(mf, y->urooms, sizeof (y->urooms));
     mread(mf, y->urooms0, sizeof (y->urooms0));
     mread(mf, y->uentered, sizeof (y->uentered));
@@ -651,6 +650,46 @@ restore_you(struct memfile *mf, struct you *y)
     }
 
     restore_quest_status(mf, &y->quest_status);
+
+    int len = mread32(mf);
+    if (len > 0) {
+        char *buf = malloc(len + 1);
+        mread(mf, buf, len);
+        buf[len] = '\0';
+        y->delayed_killers.stoning = buf;
+    } else {
+        y->delayed_killers.stoning = NULL;
+    }
+
+    len = mread32(mf);
+    if (len > 0) {
+        char *buf = malloc(len + 1);
+        mread(mf, buf, len);
+        buf[len] = '\0';
+        y->delayed_killers.sliming = buf;
+    } else {
+        y->delayed_killers.stoning = NULL;
+    }
+
+    len = mread32(mf);
+    if (len > 0) {
+        char *buf = malloc(len + 1);
+        mread(mf, buf, len);
+        buf[len] = '\0';
+        y->delayed_killers.illness = buf;
+    } else {
+        y->delayed_killers.illness = NULL;
+    }
+
+    len = mread32(mf);
+    if (len > 0) {
+        char *buf = malloc(len + 1);
+        mread(mf, buf, len);
+        buf[len] = '\0';
+        y->delayed_killers.genocide = buf;
+    } else {
+        y->delayed_killers.genocide = NULL;
+    }
 
     y->lastinvnr = mread32(mf);
 }
@@ -864,8 +903,8 @@ trickery(const char *reason)
     pline("Strange, this map is not as I remember it.");
     pline("Somebody is trying some trickery here...");
     pline("This game is void.");
-    killer = reason;
-    done(TRICKED);
+    pline("%s", reason);
+    done(TRICKED, NULL);
 }
 
 

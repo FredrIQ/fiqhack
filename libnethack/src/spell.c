@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -134,8 +134,8 @@ cursed_book(struct obj *bp)
         /* temp disable in_use; death should not destroy the book */
         bp->in_use = FALSE;
         losestr(Poison_resistance ? rn1(2, 1) : rn1(4, 3));
-        losehp(rnd(Poison_resistance ? 6 : 10), "contact-poisoned spellbook",
-               KILLED_BY_AN);
+        losehp(rnd(Poison_resistance ? 6 : 10),
+               killer_msg(DIED, "a contact-poisoned spellbook"));
         bp->in_use = TRUE;
         break;
     case 6:
@@ -145,7 +145,7 @@ cursed_book(struct obj *bp)
         } else {
             pline("As you read the book, it %s in your %s!", explodes,
                   body_part(FACE));
-            losehp(2 * rnd(10) + 5, "exploding rune", KILLED_BY_AN);
+            losehp(2 * rnd(10) + 5, killer_msg(DIED, "an exploding rune"));
         }
         return TRUE;
     default:
@@ -930,14 +930,14 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
             while (n--) {
                 if (!dx && !dy && !dz) {
                     if ((damage = zapyourself(pseudo, TRUE)) != 0)
-                        losehp(damage, msgprintf(
-                                   "zapped %sself with a spell", uhim()),
-                               NO_KILLER_PREFIX);
+                        losehp(damage, msgprintf("zapped %sself with a spell",
+                                                 uhim()));
                 } else {
                     explode(dx, dy, pseudo->otyp - SPE_MAGIC_MISSILE + 10,
                             u.ulevel / 2 + 1 + spell_damage_bonus(), 0,
                             (pseudo->otyp ==
-                             SPE_CONE_OF_COLD) ? EXPL_FROSTY : EXPL_FIERY);
+                             SPE_CONE_OF_COLD) ? EXPL_FROSTY : EXPL_FIERY,
+                            NULL);
                 }
                 dx = cc.x + rnd(3) - 2;
                 dy = cc.y + rnd(3) - 2;
@@ -974,9 +974,8 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
         if (objects[pseudo->otyp].oc_dir != NODIR) {
             if (!dx && !dy && !dz) {
                 if ((damage = zapyourself(pseudo, TRUE)) != 0) {
-                    losehp(damage, msgprintf(
-                               "zapped %sself with a spell", uhim()),
-                           NO_KILLER_PREFIX);
+                    losehp(damage, msgprintf("zapped %sself with a spell",
+                                             uhim()));
                 }
             } else
                 weffects(pseudo, dx, dy, dz);

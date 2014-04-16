@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -441,7 +441,7 @@ extern boolean hurtle_step(void *, int, int);
 /* ### dump.c ### */
 
 extern void begin_dump(int);
-extern void end_dump(int, long, unsigned long);
+extern void end_dump(int, long, const char *);
 extern void dump_catch_menus(boolean);
 
 /* ### dungeon.c ### */
@@ -515,19 +515,25 @@ extern void fix_petrification(void);
 
 /* ### end.c ### */
 
+extern const char *killer_msg(int how, const char *killer);
+extern const char *killer_msg_mon(int how, struct monst *mon);
+extern const char *killer_msg_obj(int how, struct obj *obj);
+extern void set_delayed_killer(int how, const char *killer);
+extern const char *delayed_killer(int how);
+extern void clear_delayed_killers(void);
 extern void nonfatal_dump_core(void);
 extern noreturn void terminate(enum nh_play_status);
 extern noreturn void panic(const char *, ...) PRINTFLIKE(1,2);
 extern int done2(void);
 extern int doquit(const struct nh_cmd_arg *);
 extern void done_in_by(struct monst *);
-extern void done(int);
+extern void done(int, const char *killer);
 extern int num_vanquished(void);
 extern int num_genocides(void);
 extern int num_extinctions(void);
 extern void list_vanquished(char, boolean);
 extern void list_genocided(char, boolean);
-extern void display_rip(int, long, unsigned long);
+extern void display_rip(int, long, const char *);
 extern long calc_score(int, boolean, long);
 
 /* ### engrave.c ### */
@@ -559,7 +565,7 @@ extern void make_grave(struct level *lev, int x, int y, const char *str);
 
 extern int experience(struct monst *, int);
 extern void more_experienced(int, int);
-extern void losexp(const char *);
+extern void losexp(const char *killer, boolean overrid_res);
 extern void newexplevel(void);
 extern void pluslvl(boolean);
 extern long rndexp(boolean);
@@ -567,7 +573,7 @@ extern long newuexp(int);
 
 /* ### explode.c ### */
 
-extern void explode(int, int, int, int, char, int);
+extern void explode(int, int, int, int, char, int, const char *);
 extern long scatter(int, int, int, unsigned int, struct obj *);
 extern void splatter_burning_oil(int, int);
 
@@ -621,7 +627,7 @@ extern void check_special_room(boolean);
 extern int dopickup(const struct nh_cmd_arg *);
 extern void lookaround(enum u_interaction_mode);
 extern int monster_nearby(void);
-extern void losehp(int, const char *, boolean);
+extern void losehp(int, const char *);
 extern int weight_cap(void);
 extern int inv_weight(void);
 extern int near_capacity(void);
@@ -965,7 +971,7 @@ extern void water_friction(schar *, schar *);
 extern void free_waterlevel(void);
 extern void save_waterlevel(struct memfile *mf);
 extern void restore_waterlevel(struct memfile *mf, struct level *lev);
-extern int waterbody_prefix(xchar, xchar);
+extern const char *a_waterbody(xchar, xchar);
 extern const char *waterbody_name(xchar, xchar);
 
 /* ### mkobj.c ### */
@@ -1695,7 +1701,7 @@ extern int wiz_timeout_queue(const struct nh_cmd_arg *);
 
 /* ### topten.c ### */
 
-extern void update_topten(int how, unsigned long carried);
+extern void update_topten(int how, const char *killer, unsigned long carried);
 extern struct obj *tt_oname(struct obj *);
 extern unsigned long encode_carried(void);
 extern const char *describe_death(int how, int maxlen);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-14 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -445,7 +445,6 @@ save_you(struct memfile *mf, struct you *y)
     mwrite(mf, y->uconduct, (sizeof y->uconduct));
     mwrite(mf, y->uconduct_time, (sizeof y->uconduct_time));
     mwrite(mf, y->uwhybusy, (sizeof y->uwhybusy));
-    mwrite(mf, y->usick_cause, sizeof (y->usick_cause));
     mwrite(mf, y->urooms, sizeof (y->urooms));
     mwrite(mf, y->urooms0, sizeof (y->urooms0));
     mwrite(mf, y->uentered, sizeof (y->uentered));
@@ -474,6 +473,34 @@ save_you(struct memfile *mf, struct you *y)
     }
 
     save_quest_status(mf, &y->quest_status);
+
+    if (y->delayed_killers.stoning) {
+        int len = strlen(y->delayed_killers.stoning);
+        mwrite32(mf, len);
+        mwrite(mf, y->delayed_killers.stoning, len);
+    } else
+        mwrite32(mf, 0);
+
+    if (y->delayed_killers.sliming) {
+        int len = strlen(y->delayed_killers.sliming);
+        mwrite32(mf, len);
+        mwrite(mf, y->delayed_killers.sliming, len);
+    } else
+        mwrite32(mf, 0);
+
+    if (y->delayed_killers.illness) {
+        int len = strlen(y->delayed_killers.illness);
+        mwrite32(mf, len);
+        mwrite(mf, y->delayed_killers.illness, len);
+    } else
+        mwrite32(mf, 0);
+
+    if (y->delayed_killers.genocide) {
+        int len = strlen(y->delayed_killers.genocide);
+        mwrite32(mf, len);
+        mwrite(mf, y->delayed_killers.genocide, len);
+    } else
+        mwrite32(mf, 0);
 
     mwrite32(mf, y->lastinvnr);
 }
@@ -862,6 +889,7 @@ freedynamicdata(void)
     free_invbuf();      /* let_to_name (invent.c) */
     free_youbuf();      /* You_buf,&c (pline.c) */
     tmpsym_freeall();   /* temporary display effects */
+    clear_delayed_killers();
 #define free_animals()   mon_animal_list(FALSE)
 
     for (i = 0; i < MAXLINFO; i++) {

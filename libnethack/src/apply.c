@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1364,7 +1364,7 @@ get_jump_coords(const struct nh_cmd_arg *arg, coord *cc, int magic)
                     long side = rn2(3) ? LEFT_SIDE : RIGHT_SIDE;
 
                     pline("You rip yourself free of the bear trap!  Ouch!");
-                    losehp(rnd(10), "jumping out of a bear trap", KILLED_BY);
+                    losehp(rnd(10), killer_msg(DIED, "jumping out of a bear trap"));
                     set_wounded_legs(side, rn1(1000, 500));
                     break;
                 }
@@ -2258,7 +2258,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
             dam = 1;
         pline("You hit your %s with your bullwhip.", body_part(FOOT));
         buf = msgprintf("killed %sself with %s bullwhip", uhim(), uhis());
-        losehp(dam, buf, NO_KILLER_PREFIX);
+        losehp(dam, buf);
         return 1;
 
     } else if ((Fumbling || Glib) && !rn2(5)) {
@@ -2670,7 +2670,7 @@ use_grapple(struct obj *obj, const struct nh_cmd_arg *arg)
     default:   /* Yourself (oops!) */
         if (P_SKILL(typ) <= P_BASIC) {
             pline("You hook yourself!");
-            losehp(rn1(10, 10), "a grappling hook", KILLED_BY);
+            losehp(rn1(10, 10), killer_msg(DIED, "a grappling hook"));
             return 1;
         }
         break;
@@ -2756,7 +2756,7 @@ do_break_wand(struct obj *obj)
     case WAN_MAGIC_MISSILE:
     wanexpl:
         explode(u.ux, u.uy, (obj->otyp - WAN_MAGIC_MISSILE), dmg, WAND_CLASS,
-                expltype);
+                expltype, NULL);
         makeknown(obj->otyp);   /* explode described the effect */
         goto discard_broken_wand;
     case WAN_STRIKING:
@@ -2774,7 +2774,7 @@ do_break_wand(struct obj *obj)
     }
 
     /* magical explosion and its visual effect occur before specific effects */
-    explode(obj->ox, obj->oy, 0, rnd(dmg), WAND_CLASS, EXPL_MAGICAL);
+    explode(obj->ox, obj->oy, 0, rnd(dmg), WAND_CLASS, EXPL_MAGICAL, NULL);
 
     /* this makes it hit us last, so that we can see the action first */
     for (i = 0; i <= 8; i++) {
@@ -2815,7 +2815,7 @@ do_break_wand(struct obj *obj)
                 damage = zapyourself(obj, FALSE);
                 if (damage) {
                     buf = msgprintf("killed %sself by breaking a wand", uhim());
-                    losehp(damage, buf, NO_KILLER_PREFIX);
+                    losehp(damage, buf);
                 }
                 bot();      /* blindness */
             } else if ((mon = m_at(level, x, y)) != 0) {

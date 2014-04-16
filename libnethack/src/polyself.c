@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-14 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -65,17 +65,8 @@ polyman(const char *fmt, const char *arg)
         (mvitals[urace.malenum].mvflags & G_GENOD) ||
         (urace.femalenum != NON_PM &&
          (mvitals[urace.femalenum].mvflags & G_GENOD))) {
-        /* intervening activity might have clobbered genocide info */
-        const char *buf = msgcat("As you ", fmt);
-        buf = msgchop(buf, -1); /* remove the ! */
-        buf = msgcat(buf, ", you die.");
-        pline(buf, arg);
-        killer = delayed_killer;
-        if (!killer || !strstri(killer, "genocid")) {
-            killer_format = KILLED_BY;
-            killer = "self-genocide";
-        }
-        done(GENOCIDED);
+        pline("As you return to %s form, you die!", urace.adj);
+        done(GENOCIDED, delayed_killer(GENOCIDED));
     } else
         pline(fmt, arg);
 
@@ -189,7 +180,7 @@ newman(void)
     if (Sick)
         make_sick(0L, NULL, FALSE, SICK_ALL);
     Stoned = 0;
-    delayed_killer = 0;
+    set_delayed_killer(STONING, NULL);
     if (u.uhp <= 0 || u.uhpmax <= 0) {
         if (Polymorph_control) {
             if (u.uhp <= 0)
@@ -200,9 +191,7 @@ newman(void)
         dead:  /* we come directly here if their experience level went to 0 or 
                    less */
             pline("Your new form doesn't seem healthy enough to survive.");
-            killer_format = KILLED_BY_AN;
-            killer = "unsuccessful polymorph";
-            done(DIED);
+            done(DIED, killer_msg(DIED, "unsuccessful polymorph"));
             newuhs(FALSE);
             return;     /* lifesaved */
         }
@@ -238,7 +227,7 @@ polyself(boolean forcecontrol)
     if (!Polymorph_control && !forcecontrol && !draconian && !iswere && !isvamp) {
         if (rn2(20) > ACURR(A_CON)) {
             pline("You shudder for a moment.");
-            losehp(rnd(30), "system shock", KILLED_BY_AN);
+            losehp(rnd(30), killer_msg(DIED, "a system shock"));
             exercise(A_CON, FALSE);
             return;
         }
@@ -403,7 +392,7 @@ polymon(int mntmp)
         pline("You turn to stone!");
         mntmp = PM_STONE_GOLEM;
         Stoned = 0;
-        delayed_killer = 0;
+        set_delayed_killer(STONING, NULL);
     }
 
     u.mtimedone = rn1(500, 500);
@@ -417,7 +406,7 @@ polymon(int mntmp)
 
     if (Stone_resistance && Stoned) {   /* parnes@eniac.seas.upenn.edu */
         Stoned = 0;
-        delayed_killer = 0;
+        set_delayed_killer(STONING, NULL);
         pline("You no longer seem to be petrifying.");
     }
     if (Sick_resistance && Sick) {
@@ -720,24 +709,18 @@ void
 rehumanize(void)
 {
     /* You can't revert back while unchanging */
-    if (Unchanging && (u.mh < 1)) {
-        killer_format = NO_KILLER_PREFIX;
-        killer = "killed while stuck in creature form";
-        done(DIED);
-    }
+    if (Unchanging && (u.mh < 1))
+        done(DIED, NULL);
 
     if (emits_light(youmonst.data))
         del_light_source(level, LS_MONSTER, &youmonst);
     polyman("You return to %s form!", urace.adj);
 
-    if (u.uhp < 1) {
-        char kbuf[256];
+    if (u.uhp < 1)
+        done(DIED,
+             killer_msg(DIED, msgcat_many("reverting to unhealthy ", urace.adj,
+                                          " form", NULL)));
 
-        sprintf(kbuf, "reverting to unhealthy %s form", urace.adj);
-        killer_format = KILLED_BY;
-        killer = kbuf;
-        done(DIED);
-    }
     action_interrupted();
 
     turnstate.vision_full_recalc = TRUE;
@@ -1046,9 +1029,9 @@ dogaze(enum u_interaction_mode uim)
                           l_monnam(mtmp));
                     /* as if gazing at a sleeping anything is fruitful... */
                     pline("You turn to stone...");
-                    killer_format = KILLED_BY;
-                    killer = "deliberately meeting Medusa's gaze";
-                    done(STONING);
+                    done(STONING,
+                         killer_msg(STONING,
+                                    "deliberately meeting Medusa's gaze"));
                 }
             }
         }

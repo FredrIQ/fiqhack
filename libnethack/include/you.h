@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-06 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -85,7 +85,6 @@ struct you {
        it's initialized in both action_incomplete() and helpless()). */
     char uwhybusy[BUFSZ];
 
-    char usick_cause[PL_PSIZ + 20];     /* sizeof "unicorn horn named "+1 */
 # define SICK_VOMITABLE 0x01
 # define SICK_NONVOMITABLE 0x02
 # define SICK_ALL 0x03
@@ -190,6 +189,17 @@ struct you {
     struct q_score quest_status;
 
     char uplname[PL_NSIZ];       /* player name */
+
+    /* These pointers own the strings pointed to since they persist across turns
+     * on occaision. Only the code in end.c, as well as save/restore code, should
+     * manipulate these directly
+     */
+    struct {
+        const char *stoning;
+        const char *sliming;
+        const char *illness;
+        const char *genocide;
+    } delayed_killers;
 
     int lastinvnr;
 };      /* end of `struct you' */

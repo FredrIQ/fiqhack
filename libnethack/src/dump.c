@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -118,7 +118,7 @@ dump_status(void)
 
 
 void
-end_dump(int how, long umoney, unsigned long carried)
+end_dump(int how, long umoney, const char *killer)
 {
     int saved_stopprint, i, line;
 
@@ -143,7 +143,7 @@ end_dump(int how, long umoney, unsigned long carried)
     saved_stopprint = program_state.stopprint;
     program_state.stopprint = 0;
 
-    display_rip(how, umoney, carried);
+    display_rip(how, umoney, killer);
 
     program_state.stopprint = saved_stopprint;
     dump_catch_menus(FALSE);

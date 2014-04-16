@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1068,7 +1068,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         if (uncancelled && !rn2(8)) {
             poisoned(msgprintf("%s %s", s_suffix(Monnam(mtmp)),
                                mpoisons_subj(mtmp, mattk)),
-                     ptmp, mdat->mname, 30);
+                     ptmp, killer_msg_mon(POISONING, mtmp), 30);
         }
         break;
     case AD_DRIN:
@@ -1118,9 +1118,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                         pline("Unfortunately your brain is still gone.");
                     else
                         pline("Your last thought fades away.");
-                    killer = "brainlessness";
-                    killer_format = KILLED_BY;
-                    done(DIED);
+                    done(DIED, killer_msg(DIED, "brainlessness"));
                     lifesaved++;
                 }
             }
@@ -1149,7 +1147,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     case AD_DRLI:
         hitmsg(mtmp, mattk);
         if (uncancelled && !rn2(3) && !Drain_resistance) {
-            losexp("life drainage");
+            losexp(killer_msg(DIED, "life drainage"), FALSE);
         }
         break;
     case AD_LEGS:
@@ -1207,17 +1205,9 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                         !(poly_when_stoned(youmonst.data) &&
                           polymon(PM_STONE_GOLEM))) {
                         Stoned = 5;
-                        delayed_killer = mtmp->data->mname;
-                        if (mtmp->data->geno & G_UNIQ) {
-                            if (!type_is_pname(mtmp->data))
-                                killer_format = KILLED_BY_THE;
-                            else
-                                killer_format = KILLED_BY;
-                        } else
-                            killer_format = KILLED_BY_AN;
+                        set_delayed_killer(STONING,
+                                           killer_msg_mon(STONING, mtmp));
                         return 1;
-                        /* pline("You turn to stone..."); */
-                        /* done_in_by(mtmp); */
                     }
                 }
             }
@@ -1241,13 +1231,11 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                 if (is_pool(level, mtmp->mx, mtmp->my) && !Swimming &&
                     !Amphibious) {
                     pline("%s drowns you...", Monnam(mtmp));
-                    killer_format = waterbody_prefix(mtmp->mx, mtmp->my);
-                    killer = msgprintf(
-                        "%s by %s",
-                        Is_waterlevel(&u.uz) ? "the Plane of Water" :
-                        waterbody_name(mtmp->mx, mtmp->my),
-                        an(mtmp->data->mname));
-                    done(DROWNING);
+                    done(DROWNING,
+                         msgprintf("%s by %s", Is_waterlevel(&u.uz)
+                                      ? "the Plane of Water"
+                                      : a_waterbody(mtmp->mx, mtmp->my),
+                                   an(mtmp->data->mname)));
                 } else if (mattk->aatyp == AT_HUGS)
                     pline("You are being crushed.");
             } else {
@@ -1518,9 +1506,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         case 18:
         case 17:
             if (!Antimagic) {
-                killer_format = KILLED_BY_AN;
-                killer = "touch of death";
-                done(DIED);
+                done(DIED, killer_msg(DIED, "the touch of death"));
                 dmg = 0;
                 break;
             }   /* else FALLTHRU */
@@ -1566,8 +1552,8 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         } else if (!Slimed) {
             pline("You don't feel very well.");
             Slimed = 10L;
-            killer_format = KILLED_BY_AN;
-            delayed_killer = mtmp->data->mname;
+            set_delayed_killer(TURNED_SLIME,
+                               killer_msg_mon(TURNED_SLIME, mtmp));
         } else
             pline("Yuck!");
         break;
@@ -2005,9 +1991,7 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
             if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
                 break;
             pline("You turn to stone...");
-            killer_format = KILLED_BY;
-            killer = mtmp->data->mname;
-            done(STONING);
+            done(STONING, killer_msg_mon(STONING, mtmp));
         }
         break;
     case AD_CONF:
@@ -2355,7 +2339,7 @@ doseduce(struct monst *mon)
         case 3:
             if (!resists_drli(&youmonst)) {
                 pline("You feel out of shape.");
-                losexp("overexertion");
+                losexp(killer_msg(DIED, "overexertion"), FALSE);
             } else {
                 pline("You have a curious feeling...");
             }
@@ -2368,7 +2352,7 @@ doseduce(struct monst *mon)
                 tmp = rn1(10, 6);
                 if (Half_physical_damage)
                     tmp = (tmp + 1) / 2;
-                losehp(tmp, "exhaustion", KILLED_BY);
+                losehp(tmp, killer_msg(DIED, "exhaustion"));
                 break;
             }
         }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-06 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -167,38 +167,24 @@ choke(struct obj *food)
         morehungry(1000);       /* you just got *very* sick! */
         vomit();
     } else {
-        killer_format = KILLED_BY_AN;
         /* 
          * Note all "killer"s below read "Choked on a/an %s" on the
          * high score list & tombstone.  So plan accordingly.
          */
+        const char *killer;
         if (food) {
             pline("You choke over your %s.", foodword(food));
             if (food->oclass == COIN_CLASS) {
-                killer = "very rich meal";
+                killer = killer_msg(CHOKING, "very rich meal");
             } else {
-                killer = food_xname(food, FALSE);
-                if ((food->otyp == CORPSE &&
-                    (mons[food->corpsenm].geno & G_UNIQ)) ||
-                    (obj_is_pname(food) ||
-                     the_unique_obj(food))) {
-                    boolean qarti = (food->oartifact &&
-                                     !strncmp(ONAME(food), "The ", 4));
-                    if ((food->otyp == CORPSE &&
-                        !type_is_pname(&mons[food->corpsenm]))
-                        ||
-                        (food->otyp != CORPSE &&
-                        (qarti || the_unique_obj(food))))
-                        killer = qarti ? The(killer) : the(killer);
-                    killer_format = KILLED_BY;
-                }
+                killer = killer_msg_obj(CHOKING, food);
             }
         } else {
             pline("You choke over it.");
-            killer = "quick snack";
+            killer = killer_msg(CHOKING, "a quick snack");
         }
         pline("You die...");
-        done(CHOKING);
+        done(CHOKING, killer);
     }
 }
 
@@ -390,10 +376,11 @@ cprefx(int pm)
     if (touch_petrifies(&mons[pm]) || pm == PM_MEDUSA) {
         if (!Stone_resistance &&
             !(poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))) {
-            killer = msgprintf("tasting %s meat", mons[pm].mname);
-            killer_format = KILLED_BY;
             pline("You turn to stone.");
-            done(STONING);
+            done(STONING,
+                 killer_msg(STONING,
+                            msgcat_many("tasting ", mons[pm].mname,
+                                        " meat", NULL)));
             return;     /* lifesaved */
         }
     }
@@ -420,9 +407,7 @@ cprefx(int pm)
     case PM_FAMINE:
         {
             pline("Eating that is instantly fatal.");
-            killer = msgprintf("unwisely ate the body of %s", mons[pm].mname);
-            killer_format = NO_KILLER_PREFIX;
-            done(DIED);
+            done(DIED, msgcat("unwisely ate the body of ", mons[pm].mname));
             /* It so happens that since we know these monsters cannot appear in
                tins, u.utracked[tos_food] will always be what we want, which is
                not generally true. */
@@ -450,7 +435,7 @@ void
 fix_petrification(void)
 {
     Stoned = 0;
-    delayed_killer = 0;
+    set_delayed_killer(STONING, NULL);
     if (Hallucination)
         pline("What a pity - you just ruined a future piece of %sart!",
               ACURR(A_CHA) > 15 ? "fine " : "");
@@ -1143,13 +1128,13 @@ eatcorpse(void)
         tp++;
         pline("You have a very bad case of stomach acid.");
         /* not body_part() */
-        losehp(rnd(15), "acidic corpse", KILLED_BY_AN);
+        losehp(rnd(15), killer_msg(DIED, "acidic corpse"));
     } else if (poisonous(&mons[mnum]) && rn2(5)) {
         tp++;
         pline("Ecch - that must have been poisonous!");
         if (!Poison_resistance) {
             losestr(rnd(4));
-            losehp(rnd(15), "poisonous corpse", KILLED_BY_AN);
+            losehp(rnd(15), killer_msg(DIED, "poisonous corpse"));
         } else
             pline("You seem unaffected by the poison.");
         /* now any corpse left too long will make you mildly ill */
@@ -1157,7 +1142,7 @@ eatcorpse(void)
                && !Sick_resistance) {
         tp++;
         pline("You feel %ssick.", (Sick) ? "very " : "");
-        losehp(rnd(8), "cadaver", KILLED_BY_AN);
+        losehp(rnd(8), killer_msg(DIED, "a cadaver"));
     }
 
     if (!tp && mnum != PM_LIZARD && mnum != PM_LICHEN &&
@@ -1523,9 +1508,8 @@ fpostfx(struct obj *otmp)
                     u.uhpmax++;
                 u.uhp = u.uhpmax;
             } else if (u.uhp <= 0) {
-                killer_format = KILLED_BY_AN;
-                killer = "rotten lump of royal jelly";
-                done(POISONING);
+                done(POISONING,
+                     killer_msg(POISONING, "rotten lump of royal jelly"));
             }
         }
         if (!otmp->cursed)
@@ -1537,12 +1521,7 @@ fpostfx(struct obj *otmp)
                 !(poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))) {
                 if (!Stoned)
                     Stoned = 5;
-                killer_format = KILLED_BY_AN;
-                delayed_killer = "egg";
-#ifdef TODO
-                sprintf(killer_buf, "%s egg", mons[otmp->corpsenm].mname);
-                delayed_killer = killer_buf;
-#endif
+                set_delayed_killer(STONING, killer_msg_obj(STONING, otmp));
             }
         }
         break;
@@ -1841,7 +1820,7 @@ doeat(const struct nh_cmd_arg *arg)
             pline("Ecch - that must have been poisonous!");
             if (!Poison_resistance) {
                 losestr(rnd(4));
-                losehp(rnd(15), xname(otmp), KILLED_BY_AN);
+                losehp(rnd(15), killer_msg_obj(DIED, otmp));
             } else
                 pline("You seem unaffected by the poison.");
         } else if (!otmp->cursed)
@@ -2090,9 +2069,7 @@ newuhs(boolean incr)
             u.uhs = STARVED;
             bot();
             pline("You die from starvation.");
-            killer_format = KILLED_BY;
-            killer = "starvation";
-            done(STARVING);
+            done(STARVING, killer_msg(STARVING, "starvation"));
             /* if we return, we lifesaved, and that calls newuhs */
             return;
         }
@@ -2138,9 +2115,7 @@ newuhs(boolean incr)
         bot();
         if ((Upolyd ? u.mh : u.uhp) < 1) {
             pline("You die from hunger and exhaustion.");
-            killer_format = KILLED_BY;
-            killer = "exhaustion";
-            done(STARVING);
+            done(STARVING, killer_msg(STARVING, "exhaustion"));
             return;
         }
     }

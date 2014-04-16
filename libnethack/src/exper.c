@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -104,17 +104,12 @@ more_experienced(int exp, int rexp)
 }
 
 /* e.g., hit by drain life attack */
-/* drainer: cause of death, if drain should be fatal */
 void
-losexp(const char *drainer)
+losexp(const char *killer, boolean override_res)
 {
     int num;
 
-    /* override life-drain resistance when handling an explicit wizard mode
-       request to reduce level; never fatal though */
-    if (drainer && !strcmp(drainer, "#levelchange"))
-        drainer = 0;
-    else if (resists_drli(&youmonst))
+    if (!override_res && resists_drli(&youmonst))
         return;
 
     if (u.ulevel > 1) {
@@ -123,11 +118,9 @@ losexp(const char *drainer)
         adjabil(u.ulevel + 1, u.ulevel);
         reset_rndmonst(NON_PM); /* new monster selection */
     } else {
-        if (drainer) {
-            killer_format = KILLED_BY;
-            killer = drainer;
-            done(DIED);
-        }
+        if (killer)
+            done(DIED, killer);
+
         /* no drainer or lifesaved */
         u.uexp = 0;
     }

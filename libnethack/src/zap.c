@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1874,10 +1874,10 @@ backfire(struct obj *otmp)
          */
         pline("%s suddenly produces a violent outburst of energy!",
               The(xname(otmp)));
-        losehp(dice(otmp->spe + 4, 8), "outbursting wand", KILLED_BY_AN);
+        losehp(dice(otmp->spe + 4, 8), killer_msg(DIED, "outbursting wand"));
     } else {
         pline("%s suddenly explodes!", The(xname(otmp)));
-        losehp(dice(otmp->spe + 2, 6), "exploding wand", KILLED_BY_AN);
+        losehp(dice(otmp->spe + 2, 6), killer_msg(DIED, "exploding wand"));
         useup(otmp);
     }
 }
@@ -1916,8 +1916,7 @@ dozap(const struct nh_cmd_arg *arg)
         /* make him pay for knowing !NODIR */
     } else if (!dx && !dy && !dz && !(objects[obj->otyp].oc_dir == NODIR)) {
         if ((damage = zapyourself(obj, TRUE)) != 0)
-            losehp(damage, msgprintf("zapped %sself with a wand", uhim()),
-                   NO_KILLER_PREFIX);
+            losehp(damage, msgprintf("zapped %sself with a wand", uhim()));
     } else {
 
         /* Are we having fun yet? weffects -> buzz(obj->otyp) -> zhitm (temple
@@ -1982,7 +1981,7 @@ zapyourself(struct obj *obj, boolean ordinary)
 
     case SPE_FIREBALL:
         pline("You explode a fireball on top of yourself!");
-        explode(u.ux, u.uy, 11, dice(6, 6), WAND_CLASS, EXPL_FIERY);
+        explode(u.ux, u.uy, 11, dice(6, 6), WAND_CLASS, EXPL_FIERY, NULL);
         break;
     case WAN_FIRE:
         makeknown(WAN_FIRE);
@@ -2044,7 +2043,10 @@ zapyourself(struct obj *obj, boolean ordinary)
 
     case SPE_DRAIN_LIFE:
         if (!Drain_resistance) {
-            losexp("life drainage");
+            losexp(killer_msg(DIED,
+                              msgcat_many("drained ", uhis(),
+                                          " own life", NULL)),
+                   FALSE);
             makeknown(obj->otyp);
         }
         damage = 0;     /* No additional damage */
@@ -2122,13 +2124,13 @@ zapyourself(struct obj *obj, boolean ordinary)
                   "You seem no deader than before.");
             break;
         }
-        killer = msgprintf("shot %sself with a death ray", uhim());
-        killer_format = NO_KILLER_PREFIX;
         pline("You irradiate yourself with pure energy!");
         pline("You die.");
         makeknown(obj->otyp);
         /* They might survive with an amulet of life saving */
-        done(DIED);
+        done(DIED,
+             killer_msg(DIED, msgcat_many("shot ", uhim(),
+                                          "self with a death ray", NULL)));
         break;
     case WAN_UNDEAD_TURNING:
         makeknown(WAN_UNDEAD_TURNING);
@@ -2404,8 +2406,8 @@ zap_updown(struct obj *obj, schar dz)
             /* similar to zap_dig() */
             pline("A rock is dislodged from the %s and falls on your %s.",
                   ceiling(x, y), body_part(HEAD));
-            losehp(rnd((uarmh && is_metallic(uarmh)) ? 2 : 6), "falling rock",
-                   KILLED_BY_AN);
+            losehp(rnd((uarmh && is_metallic(uarmh)) ? 2 : 6),
+                   killer_msg(DIED, "falling rock"));
             if ((otmp = mksobj_at(ROCK, level, x, y, FALSE, FALSE)) != 0) {
                 xname(otmp);    /* set dknown, maybe bknown */
                 stackobj(otmp);
@@ -3201,11 +3203,9 @@ zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy)
             pline("You aren't affected.");
             break;
         }
-        killer_format = KILLED_BY_AN;
-        killer = fltxt;
         /* when killed by disintegration breath, don't leave corpse */
         u.ugrave_arise = (type == -ZT_BREATH(ZT_DEATH)) ? -3 : NON_PM;
-        done(DIED);
+        done(DIED, killer_msg(DIED, an(fltxt)));
         return; /* lifesaved */
     case ZT_LIGHTNING:
         if (Shock_resistance) {
@@ -3222,7 +3222,7 @@ zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy)
             destroy_item(RING_CLASS, AD_ELEC);
         break;
     case ZT_POISON_GAS:
-        poisoned("blast", A_DEX, "poisoned blast", 15);
+        poisoned("blast", A_DEX, killer_msg(DIED, "a poisoned blast"), 15);
         break;
     case ZT_ACID:
         if (Acid_resistance) {
@@ -3245,7 +3245,7 @@ zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy)
     if (Half_spell_damage && dam && type < 0 && (type > -20 || type < -29))
         /* !Breath */
         dam = (dam + 1) / 2;
-    losehp(dam, fltxt, KILLED_BY_AN);
+    losehp(dam, killer_msg(DIED, an(fltxt)));
     return;
 }
 
@@ -3589,7 +3589,7 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy)
     }
     tmpsym_end(tsym);
     if (type == ZT_SPELL(ZT_FIRE))
-        explode(sx, sy, type, dice(12, 6), 0, EXPL_FIERY);
+        explode(sx, sy, type, dice(12, 6), 0, EXPL_FIERY, NULL);
     if (shopdamage)
         pay_for_damage(abstype == ZT_FIRE ? "burn away" : abstype ==
                        ZT_COLD ? "shatter" : abstype ==
@@ -4016,8 +4016,10 @@ destroy_item(int osym, int dmgtyp)
                     const char *how = destroy_strings[dindx * 3 + 2];
                     boolean one = (cnt == 1L);
 
-                    losehp(dmg, one ? how : (const char *)makeplural(how),
-                           one ? KILLED_BY_AN : KILLED_BY);
+                    losehp(dmg,
+                           killer_msg(DIED,
+                                      one ? an(how)
+                                          : (const char *)makeplural(how)));
                     exercise(A_STR, FALSE);
                 }
             }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-14 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -25,8 +25,6 @@ extern const char ynqchars[];
 extern const char ynaqchars[];
 
 extern const char disclosure_options[];
-
-extern const char nul[];
 
 extern const schar xdir[], ydir[], zdir[];
 
@@ -108,14 +106,6 @@ extern char tune[6];
 
 extern int smeq[];
 
-# define KILLED_BY_AN    0
-# define KILLED_BY       1
-# define KILLED_BY_THE   2
-# define NO_KILLER_PREFIX 3
-extern int killer_format;
-extern const char *killer;         /* message (in the sense of messages.c) */
-extern const char *delayed_killer; /* must be a string literal */
-extern int done_money;
 extern const char *configfile;
 extern char dogname[];
 extern char catname[];

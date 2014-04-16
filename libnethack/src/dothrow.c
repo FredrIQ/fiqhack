@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -451,24 +451,24 @@ hurtle_step(void *arg, int x, int y)
                 s = "bumping into a wall";
             else
                 s = "bumping into a door";
-            losehp(rnd(2 + *range), s, KILLED_BY);
+            losehp(rnd(2 + *range), killer_msg(DIED, s));
             return FALSE;
         }
         if (level->locations[x][y].typ == IRONBARS) {
             pline("You crash into some iron bars.  Ouch!");
-            losehp(rnd(2 + *range), "crashing into iron bars", KILLED_BY);
+            losehp(rnd(2 + *range), killer_msg(DIED, "crashing into iron bars"));
             return FALSE;
         }
         if ((obj = sobj_at(BOULDER, level, x, y)) != 0) {
             pline("You bump into a %s.  Ouch!", xname(obj));
-            losehp(rnd(2 + *range), "bumping into a boulder", KILLED_BY);
+            losehp(rnd(2 + *range), killer_msg(DIED, "bumping into a boulder"));
             return FALSE;
         }
         if (!may_pass) {
             /* did we hit a no-dig non-wall position? */
             pline("You smack into something!");
-            losehp(rnd(2 + *range), "touching the edge of the universe",
-                   KILLED_BY);
+            losehp(rnd(2 + *range),
+                   killer_msg(DIED, "touching the edge of the universe"));
             return FALSE;
         }
         if ((u.ux - x) && (u.uy - y) && bad_rock(youmonst.data, u.ux, y) &&
@@ -479,8 +479,7 @@ hurtle_step(void *arg, int x, int y)
             if (bigmonst(youmonst.data) || too_much) {
                 pline("You %sget forcefully wedged into a crevice.",
                       too_much ? "and all your belongings " : "");
-                losehp(rnd(2 + *range), "wedging into a narrow crevice",
-                       KILLED_BY);
+                losehp(rnd(2 + *range), killer_msg(DIED, "wedging into a narrow crevice"));
                 return FALSE;
             }
         }
@@ -792,17 +791,16 @@ toss_up(struct obj *obj, boolean hitsroof)
             if (!Stone_resistance &&
                 !(poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))) {
             petrify:
-                killer_format = KILLED_BY;
-                killer = "elementary physics";  /* "what goes up..." */
+                /* "what goes up..." */
                 pline("You turn to stone.");
                 if (obj)
                     dropy(obj); /* bypass most of hitfloor() */
-                done(STONING);
+                done(STONING, killer_msg(STONING, "elementary physics"));
                 return obj ? TRUE : FALSE;
             }
         }
         hitfloor(obj);
-        losehp(dmg, "falling object", KILLED_BY_AN);
+        losehp(dmg, killer_msg(DIED, "falling object"));
     }
     return TRUE;
 }
@@ -1045,8 +1043,7 @@ throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang
                           Tobjnam(obj, Blind ? "hit" : "fly"),
                           body_part(ARM));
                     artifact_hit(NULL, &youmonst, obj, &dmg, 0);
-                    losehp(dmg, xname(obj),
-                           obj_is_pname(obj) ? KILLED_BY : KILLED_BY_AN);
+                    losehp(dmg, killer_msg_obj(DIED, obj));
                 }
                 if (ship_object(obj, u.ux, u.uy, FALSE)) {
                     thrownobj = NULL;
