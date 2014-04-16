@@ -868,7 +868,7 @@ extern const char *msgstrftime(const char *fmt, const struct tm *tm)
     USE_RETVAL STRFTIMELIKE(1,0);
 extern const char *msgcat(const char *first, const char *second)
     USE_RETVAL;
-extern const char *msgcat_many(const char *first, ...) USE_RETVAL;
+extern const char *msgcat_many(const char *first, ...) USE_RETVAL SENTINEL;
 extern const char *msgkitten(const char *first, char second) USE_RETVAL;
 extern const char *msgchop(const char *message, int count) USE_RETVAL;
 extern const char *msgtitlecase(const char *message) USE_RETVAL;

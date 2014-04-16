@@ -74,6 +74,10 @@
 #  define PRINTFLIKE(f,a)
 #  define SCANFLIKE(f,a)
 #  define STRFTIMELIKE(f,a)
+/* This macro indicates that the function requires a sentinel on the arguments;
+ * that is, the last variadic argument must be a null pointer.
+ */
+#  define SENTINEL
 # else
 #  define USE_RETVAL __attribute__((warn_unused_result))
 #  define PURE __attribute__((pure))
@@ -87,4 +91,5 @@
 #   define SCANFLIKE(f,a) __attribute__((format (scanf, f, a)))
 #   define STRFTIMELIKE(f,a) __attribute__((format (strftime, f, a)))
 #  endif
+#  define SENTINEL __attribute__((sentinel))
 # endif
