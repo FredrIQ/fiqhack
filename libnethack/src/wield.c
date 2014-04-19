@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -225,13 +225,11 @@ ready_weapon(struct obj *wep)
                touch_petrifies(&mons[wep->corpsenm]) &&
                !(poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))) {
         /* Prevent wielding cockatrice when not wearing gloves --KAA */
-        const char *kbuf;
-
         pline("You wield the %s corpse in your bare %s.",
               mons[wep->corpsenm].mname, makeplural(body_part(HAND)));
-        kbuf = msgprintf("wielding %s corpse without gloves",
-                         an(mons[wep->corpsenm].mname));
-        instapetrify(kbuf);
+        instapetrify(killer_msg(STONING,
+            msgprintf("wielding %s corpse without gloves",
+                      an(mons[wep->corpsenm].mname))));
         /* if the player lifesaves from that, don't wield */
     } else if (wep->oartifact && !touch_artifact(wep, &youmonst)) {
         ; /* you got blasted, don't attempt to wield */
@@ -461,13 +459,11 @@ can_twoweapon(void)
     else if (!uarmg && !Stone_resistance &&
              (uswapwep->otyp == CORPSE &&
               touch_petrifies(&mons[uswapwep->corpsenm]))) {
-        const char *kbuf;
-
         pline("You wield the %s corpse with your bare %s.",
               mons[uswapwep->corpsenm].mname, body_part(HAND));
-        kbuf = msgprintf("wielding %s corpse without gloves",
-                         an(mons[uswapwep->corpsenm].mname));
-        instapetrify(kbuf);
+        instapetrify(killer_msg(STONING,
+            msgprintf("wielding %s corpse without gloves",
+                      an(mons[uswapwep->corpsenm].mname))));
     } else if (Glib || uswapwep->cursed) {
         if (!Glib)
             uswapwep->bknown = TRUE;

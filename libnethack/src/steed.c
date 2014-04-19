@@ -78,8 +78,8 @@ use_saddle(struct obj *otmp, const struct nh_cmd_arg *arg)
     if (touch_petrifies(ptr) && !uarmg && !Stone_resistance) {
         pline("You touch %s.", mon_nam(mtmp));
         if (!(poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM)))
-            instapetrify(
-                msgcat("attempting to saddle ", an(mtmp->data->mname)));
+            instapetrify(killer_msg(STONING,
+                msgcat("attempting to saddle ", an(mtmp->data->mname))));
     }
     if (ptr == &mons[PM_INCUBUS] || ptr == &mons[PM_SUCCUBUS]) {
         pline("Shame on you!");
@@ -255,7 +255,8 @@ mount_steed(struct monst * mtmp,        /* The animal */
     ptr = mtmp->data;
     if (touch_petrifies(ptr) && !Stone_resistance) {
         pline("You touch %s.", mon_nam(mtmp));
-        instapetrify(msgcat("attempting to ride %s", an(mtmp->data->mname)));
+        instapetrify(killer_msg(STONING,
+            msgcat("attempting to ride %s", an(mtmp->data->mname))));
     }
     if (!mtmp->mtame || mtmp->isminion) {
         pline("I think %s would mind.", mon_nam(mtmp));

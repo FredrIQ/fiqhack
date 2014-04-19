@@ -1293,11 +1293,9 @@ steal_it(struct monst *mdef, const struct attack *mattk)
             continue;
         if (otmp->otyp == CORPSE && touch_petrifies(&mons[otmp->corpsenm]) &&
             !uarmg) {
-            const char *kbuf;
-
-            kbuf = msgprintf("stealing %s corpse",
-                             an(mons[otmp->corpsenm].mname));
-            instapetrify(kbuf);
+            instapetrify(killer_msg(STONING,
+                msgprintf("stealing %s corpse",
+                          an(mons[otmp->corpsenm].mname))));
             break;      /* stop the theft even if hero survives */
         }
         /* more take-away handling, after theft message */
@@ -1943,11 +1941,9 @@ gulpum(struct monst *mdef, const struct attack *mattk)
                       s_suffix(mon_nam(mdef)));
             }
         } else {
-            const char *kbuf;
-
             pline("You bite into %s.", mon_nam(mdef));
-            kbuf = msgprintf("swallowing %s whole", an(mdef->data->mname));
-            instapetrify(kbuf);
+            instapetrify(killer_msg(STONING,
+                msgprintf("swallowing %s whole", an(mdef->data->mname))));
         }
     }
     return 0;

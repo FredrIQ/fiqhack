@@ -1044,9 +1044,9 @@ pickup_object(struct obj *obj, long count, boolean telekinesis)
             if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
                 win_pause_output(P_MESSAGE);
             else {
-                const char *kbuf = an(corpse_xname(obj, TRUE));
-                pline("Touching %s is a fatal mistake.", kbuf);
-                instapetrify(kbuf);
+                pline("Touching %s is a fatal mistake.",
+                      the(corpse_xname(obj, TRUE)));
+                instapetrify(killer_msg_obj(STONING, obj));
                 return -1;
             }
         } else if (is_rider(&mons[obj->corpsenm])) {
@@ -1605,9 +1605,9 @@ in_container(struct obj *obj)
             if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
                 win_pause_output(P_MESSAGE);
             else {
-                const char *kbuf = an(corpse_xname(obj, TRUE));
-                pline("Touching %s is a fatal mistake.", kbuf);
-                instapetrify(kbuf);
+                pline("Touching %s is a fatal mistake.",
+                      the(corpse_xname(obj, TRUE)));
+                instapetrify(killer_msg_obj(STONING, obj));
                 return -1;
             }
         }
@@ -1717,9 +1717,9 @@ out_container(struct obj *obj)
             if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
                 win_pause_output(P_MESSAGE);
             else {
-                const char *kbuf = an(corpse_xname(obj, TRUE));
-                pline("Touching %s is a fatal mistake.", kbuf);
-                instapetrify(kbuf);
+                pline("Touching %s is a fatal mistake.",
+                      the(corpse_xname(obj, TRUE)));
+                instapetrify(killer_msg_obj(STONING, obj));
                 return -1;
             }
         }

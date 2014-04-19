@@ -87,8 +87,9 @@ throw_obj(struct obj *obj, const struct nh_cmd_arg *arg,
         (obj->otyp == CORPSE && touch_petrifies(&mons[obj->corpsenm]))) {
         pline("You throw the %s corpse with your bare %s.",
               mons[obj->corpsenm].mname, body_part(HAND));
-        instapetrify(msgprintf("throwing %s corpse without gloves",
-                               an(mons[obj->corpsenm].mname)));
+        instapetrify(killer_msg(STONING,
+            msgprintf("throwing %s corpse without gloves",
+                      an(mons[obj->corpsenm].mname))));
     }
     if (welded(obj)) {
         weldmsg(obj);

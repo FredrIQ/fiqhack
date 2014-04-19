@@ -487,7 +487,8 @@ polymon(int mntmp)
         if (touch_petrifies(u.usteed->data) && !Stone_resistance && rnl(3)) {
             pline("No longer petrifying-resistant, you touch %s.",
                   mon_nam(u.usteed));
-            instapetrify(msgcat("riding ", an(u.usteed->data->mname)));
+            instapetrify(killer_msg(STONING,
+                msgcat("riding ", an(u.usteed->data->mname))));
         }
         if (!can_ride(u.usteed))
             dismount_steed(DISMOUNT_POLY);

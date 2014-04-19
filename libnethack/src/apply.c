@@ -1472,11 +1472,6 @@ use_tinning_kit(struct obj *obj)
     }
     if (touch_petrifies(&mons[corpse->corpsenm])
         && !Stone_resistance && !uarmg) {
-        const char *kbuf;
-
-        kbuf = msgprintf("trying to tin %s without gloves",
-                         an(mons[corpse->corpsenm].mname));
-
         if (poly_when_stoned(youmonst.data))
             pline("You tin %s without wearing gloves.",
                   an(mons[corpse->corpsenm].mname));
@@ -1484,7 +1479,9 @@ use_tinning_kit(struct obj *obj)
             pline("Tinning %s without wearing gloves is a fatal mistake...",
                   an(mons[corpse->corpsenm].mname));
 
-        instapetrify(kbuf);
+        instapetrify(killer_msg(STONING,
+                                msgprintf("trying to tin %s without gloves",
+                                          an(mons[corpse->corpsenm].mname))));
     }
     if (is_rider(&mons[corpse->corpsenm])) {
         revive_corpse(corpse);
@@ -2380,13 +2377,11 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
                         touch_petrifies(&mons[otmp->corpsenm]) && !uarmg &&
                         !Stone_resistance && !(poly_when_stoned(youmonst.data)
                                                && polymon(PM_STONE_GOLEM))) {
-                        const char *kbuf;
-
-                        kbuf = msgprintf("snatching %s corpse",
-                                         an(mons[otmp->corpsenm].mname));
                         pline("Snatching %s corpse is a fatal mistake.",
                               an(mons[otmp->corpsenm].mname));
-                        instapetrify(kbuf);
+                        instapetrify( killer_msg(STONING,
+                            msgprintf("snatching %s corpse",
+                                      an(mons[otmp->corpsenm].mname))));
                     }
                     hold_another_object(otmp, "You drop %s!", doname(otmp),
                                         NULL);

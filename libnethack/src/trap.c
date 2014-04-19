@@ -2201,7 +2201,7 @@ instapetrify(const char *str)
     if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
         return;
     pline("You turn to stone...");
-    done(STONING, killer_msg(STONING, str));
+    done(STONING, str);
 }
 
 void
@@ -2230,14 +2230,12 @@ minstapetrify(struct monst *mon, boolean byplayer)
 void
 selftouch(const char *arg, const char *deathtype)
 {
-    const char *kbuf;
-
     if (uwep && uwep->otyp == CORPSE && touch_petrifies(&mons[uwep->corpsenm])
         && !Stone_resistance) {
         pline("%s touch the %s corpse.", arg, mons[uwep->corpsenm].mname);
-        kbuf = msgprintf("%s %s corpse", deathtype,
-                         an(mons[uwep->corpsenm].mname));
-        instapetrify(kbuf);
+        instapetrify(killer_msg(STONING,
+            msgprintf("%s %s corpse", deathtype,
+                      an(mons[uwep->corpsenm].mname))));
         if (!Stone_resistance)
             uwepgone();
     }
@@ -2245,9 +2243,9 @@ selftouch(const char *arg, const char *deathtype)
     if (u.twoweap && uswapwep && uswapwep->otyp == CORPSE &&
         touch_petrifies(&mons[uswapwep->corpsenm]) && !Stone_resistance) {
         pline("%s touch the %s corpse.", arg, mons[uswapwep->corpsenm].mname);
-        kbuf = msgprintf("%s %s corpse", deathtype,
-                         an(mons[uswapwep->corpsenm].mname));
-        instapetrify(kbuf);
+        instapetrify(killer_msg(STONING,
+            msgprintf("%s %s corpse", deathtype,
+                      an(mons[uswapwep->corpsenm].mname))));
         if (!Stone_resistance)
             uswapwepgone();
     }
@@ -3392,11 +3390,9 @@ help_monster_out(struct monst *mtmp, struct trap *ttmp)
         if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
             win_pause_output(P_MESSAGE);
         else {
-            const char *kbuf;
-
-            kbuf = msgprintf("trying to help %s out of a pit",
-                             an(mtmp->data->mname));
-            instapetrify(kbuf);
+            instapetrify(killer_msg(STONING,
+                msgprintf("trying to help %s out of a pit",
+                          an(mtmp->data->mname))));
             return 1;
         }
     }
