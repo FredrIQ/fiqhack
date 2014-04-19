@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1299,7 +1299,6 @@ extern void pline_nomore(const char *, ...) PRINTFLIKE(1,2);
 extern void pline_once(const char *, ...) PRINTFLIKE(1,2);
 extern void pline_once_nomore(const char *, ...) PRINTFLIKE(1,2);
 extern void impossible(const char *, ...) PRINTFLIKE(1,2);
-extern void free_youbuf(void);
 extern void You_hear(const char *, ...) PRINTFLIKE(1,2);
 extern void verbalize(const char *, ...) PRINTFLIKE(1,2);
 extern void raw_printf(const char *, ...) PRINTFLIKE(1,2);

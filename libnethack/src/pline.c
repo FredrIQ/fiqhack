@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,8 +7,6 @@
 #include "epri.h"
 #include "emin.h"
 #include "edog.h"
-
-static char *You_buf(int);
 
 
 /*VARARGS1*/
@@ -99,37 +97,6 @@ vpline(boolean nonblocking, boolean norepeat, const char *line,
 }
 
 
-/* work buffer for You(), &c and verbalize() */
-static char *you_buf = 0;
-static int you_buf_siz = 0;
-
-static char *
-You_buf(int siz)
-{
-    if (siz > you_buf_siz) {
-        if (you_buf)
-            free(you_buf);
-        you_buf_siz = siz + 10;
-        you_buf = malloc((unsigned)you_buf_siz);
-    }
-    return you_buf;
-}
-
-void
-free_youbuf(void)
-{
-    if (you_buf)
-        free(you_buf), you_buf = NULL;
-    you_buf_siz = 0;
-}
-
-/* `prefix' must be a string literal, not a pointer */
-#define YouPrefix(pointer,prefix,text) \
- strcpy((pointer = You_buf((int)(strlen(text) + sizeof prefix))), prefix)
-
-#define YouMessage(pointer,prefix,text) \
- strcat((YouPrefix(pointer, prefix, text), pointer), text)
-
 /*VARARGS1*/
 void
 You_hear(const char *line, ...)
@@ -139,14 +106,10 @@ You_hear(const char *line, ...)
         return;
 
     va_list the_args;
-    char *tmp;
 
     va_start(the_args, line);
-    if (Underwater)
-        YouPrefix(tmp, "You barely hear ", line);
-    else
-        YouPrefix(tmp, "You hear ", line);
-    vpline(FALSE, FALSE, strcat(tmp, line), the_args);
+    vpline(FALSE, FALSE, msgcat_many("You ", Underwater ? "barely " : "",
+                                     "hear ", line, NULL), the_args);
     va_end(the_args);
 }
 
@@ -155,17 +118,12 @@ void
 verbalize(const char *line, ...)
 {
     va_list the_args;
-    char *tmp;
 
     if (!canhear())
         return;
 
     va_start(the_args, line);
-    tmp = You_buf((int)strlen(line) + sizeof "\"\"");
-    strcpy(tmp, "\"");
-    strcat(tmp, line);
-    strcat(tmp, "\"");
-    vpline(FALSE, FALSE, tmp, the_args);
+    vpline(FALSE, FALSE, msgcat_many("\"", line, "\"", NULL), the_args);
     va_end(the_args);
 }
 
