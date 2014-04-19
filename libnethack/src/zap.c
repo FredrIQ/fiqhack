@@ -2128,9 +2128,7 @@ zapyourself(struct obj *obj, boolean ordinary)
         pline("You die.");
         makeknown(obj->otyp);
         /* They might survive with an amulet of life saving */
-        done(DIED,
-             killer_msg(DIED, msgcat_many("shot ", uhim(),
-                                          "self with a death ray", NULL)));
+        done(DIED, msgcat_many("shot ", uhim(), "self with a death ray", NULL));
         break;
     case WAN_UNDEAD_TURNING:
         makeknown(WAN_UNDEAD_TURNING);
