@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-06 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1293,11 +1293,9 @@ steal_it(struct monst *mdef, const struct attack *mattk)
             continue;
         if (otmp->otyp == CORPSE && touch_petrifies(&mons[otmp->corpsenm]) &&
             !uarmg) {
-            const char *kbuf;
-
-            kbuf = msgprintf("stealing %s corpse",
-                             an(mons[otmp->corpsenm].mname));
-            instapetrify(kbuf);
+            instapetrify(killer_msg(STONING,
+                msgprintf("stealing %s corpse",
+                          an(mons[otmp->corpsenm].mname))));
             break;      /* stop the theft even if hero survives */
         }
         /* more take-away handling, after theft message */
@@ -1581,8 +1579,7 @@ damageum(struct monst *mdef, const struct attack *mattk)
         break_conduct(conduct_food);
         if (touch_petrifies(mdef->data) && !Stone_resistance && !Stoned) {
             Stoned = 5;
-            killer_format = KILLED_BY_AN;
-            delayed_killer = mdef->data->mname;
+            killer_msg_mon(STONING, mdef);
         }
         if (!vegan(mdef->data))
             break_conduct(conduct_vegan);
@@ -1817,10 +1814,9 @@ gulpum(struct monst *mdef, const struct attack *mattk)
                 if (is_rider(mdef->data)) {
                     pline("Unfortunately, digesting any of it is fatal.");
                     end_engulf(mdef);
-                    killer = msgcat("unwisely tried to eat ",
-                                    mdef->data->mname);
-                    killer_format = NO_KILLER_PREFIX;
-                    done(DIED);
+                    done(DIED,
+                         killer_msg(DIED, msgcat("unwisely tried to eat ",
+                                                 mdef->data->mname)));
                     return 0;   /* lifesaved */
                 }
 
@@ -1945,11 +1941,9 @@ gulpum(struct monst *mdef, const struct attack *mattk)
                       s_suffix(mon_nam(mdef)));
             }
         } else {
-            const char *kbuf;
-
             pline("You bite into %s.", mon_nam(mdef));
-            kbuf = msgprintf("swallowing %s whole", an(mdef->data->mname));
-            instapetrify(kbuf);
+            instapetrify(killer_msg(STONING,
+                msgprintf("swallowing %s whole", an(mdef->data->mname))));
         }
     }
     return 0;

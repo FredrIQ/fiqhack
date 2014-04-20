@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -175,7 +175,6 @@ nh_timeout(void)
 {
     unsigned *upp;
     int sleeptime;
-    int m_idx;
     int baseluck = (flags.moonphase == FULL_MOON) ? 1 : 0;
 
     if (flags.friday13)
@@ -234,47 +233,17 @@ nh_timeout(void)
         if ((*upp & TIMEOUT) && !(--*upp & TIMEOUT)) {
             switch (upp - u.uintrinsic) {
             case STONED:
-                if (delayed_killer && !killer) {
-                    killer = delayed_killer;
-                    delayed_killer = 0;
-                }
-                if (!killer) {
-                    /* leaving killer_format would make it "petrified by
-                       petrification" */
-                    killer_format = NO_KILLER_PREFIX;
-                    killer = "killed by petrification";
-                }
-                done(STONING);
+                done(STONING, delayed_killer(STONING));
                 break;
             case SLIMED:
-                if (delayed_killer && !killer) {
-                    killer = delayed_killer;
-                    delayed_killer = 0;
-                }
-                if (!killer) {
-                    killer_format = NO_KILLER_PREFIX;
-                    killer = "turned into green slime";
-                }
-                done(TURNED_SLIME);
+                done(TURNED_SLIME, delayed_killer(TURNED_SLIME));
                 break;
             case VOMITING:
                 make_vomiting(0L, TRUE);
                 break;
             case SICK:
                 pline("You die from your illness.");
-                killer_format = KILLED_BY_AN;
-                killer = u.usick_cause;
-                if ((m_idx = name_to_mon(killer)) >= LOW_PM) {
-                    if (type_is_pname(&mons[m_idx])) {
-                        killer_format = KILLED_BY;
-                    } else if (mons[m_idx].geno & G_UNIQ) {
-                        killer = the(killer);
-                        strcpy(u.usick_cause, killer);
-                        killer_format = KILLED_BY;
-                    }
-                }
-                u.usick_type = 0;
-                done(POISONING);
+                done(POISONING, delayed_killer(POISONING));
                 break;
             case FAST:
                 if (!Very_fast)
@@ -337,9 +306,9 @@ nh_timeout(void)
                 float_down(I_SPECIAL | TIMEOUT);
                 break;
             case STRANGLED:
-                killer_format = KILLED_BY;
-                killer = (u.uburied) ? "suffocation" : "strangulation";
-                done(DIED);
+                done(STARVING, killer_msg(STARVING,
+                                          u.uburied ? "suffocation"
+                                                    : "strangulation"));
                 break;
             case FUMBLING:
                 /* call this only when a move took place.  */

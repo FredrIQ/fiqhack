@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -100,7 +100,7 @@ nh_exit_game(int exit_type)
             break;
 
         case EXIT_FORCE_QUIT:
-            done(QUIT);
+            done(QUIT, NULL);
             break;      /* not reached; quitting can't be lifesaved */
 
         case EXIT_PANIC:
@@ -755,10 +755,8 @@ handle_lava_trap(boolean didmove)
     else if (!u.uinvulnerable) {
         u.utrap -= 1 << 8;
         if (u.utrap < 1 << 8) {
-            killer_format = KILLED_BY;
-            killer = "molten lava";
             pline("You sink below the surface and die.");
-            done(DISSOLVED);
+            done(DISSOLVED, killer_msg(DISSOLVED, "molten lava"));
         } else if (didmove && !u.umoved) {
             pline_once("You sink deeper into the lava.");
             u.utrap += rnd(4);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (C) 1990 by Ken Arromdee                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -19,10 +19,13 @@ static const int explosion[3][3] = {
  * they don't supply enough information--was it a player or a monster that
  * did it, and with a wand, spell, or breath weapon?  Object types share both
  * these disadvantages....
+ *
+ * The descr argument should be used to describe the explosion. It should be
+ * a string suitable for use with an().
  */
 void
 explode(int x, int y, int type, /* the same as in zap.c */
-        int dam, char olet, int expltype)
+        int dam, char olet, int expltype, const char *descr)
 {
     int i, j, k, damu = dam;
     boolean visible, any_shield;
@@ -37,7 +40,6 @@ explode(int x, int y, int type, /* the same as in zap.c */
 
     /* 0=normal explosion, 1=do shieldeff, 2=do nothing */
     boolean shopdamage = FALSE;
-    boolean generic = FALSE;
 
     if (olet == WAND_CLASS)     /* retributive strike */
         switch (Role_switch) {
@@ -55,8 +57,7 @@ explode(int x, int y, int type, /* the same as in zap.c */
         }
 
     if (olet == MON_EXPLODE) {
-        str = killer;
-        killer = 0;     /* set again later as needed */
+        str = descr;
         adtyp = AD_PHYS;
         if (Hallucination) {
             int name = rndmonidx();
@@ -261,7 +262,6 @@ explode(int x, int y, int type, /* the same as in zap.c */
     } else {
         if (olet == MON_EXPLODE) {
             str = "explosion";
-            generic = TRUE;
         }
         You_hear("a blast.");
     }
@@ -386,26 +386,23 @@ explode(int x, int y, int type, /* the same as in zap.c */
             if (Upolyd) {
                 rehumanize();
             } else {
+                int death = adtyp == AD_FIRE ? BURNING : DIED;
+                const char *killer;
+
                 if (olet == MON_EXPLODE) {
-                    /* killer handled by caller */
-                    if (!generic)
-                        killer = str;
-                    killer_format = KILLED_BY_AN;
+                    killer = killer_msg(death, an(str));
                 } else if (type >= 0 && olet != SCROLL_CLASS) {
-                    killer_format = NO_KILLER_PREFIX;
                     killer = msgprintf("caught %sself in %s own %s", uhim(),
                                        uhis(), str);
-                } else if (!strncmpi(str, "tower of flame", 8) ||
-                           !strncmpi(str, "fireball", 8)) {
-                    killer_format = KILLED_BY_AN;
-                    killer = str;
+                } else if (!strcmp(str, "burning oil")) {
+                    /* This manual check hack really sucks */
+                    killer = killer_msg(death, str);
                 } else {
-                    killer_format = KILLED_BY;
-                    killer = str;
+                    killer = killer_msg(death, an(str));
                 }
                 /* Known BUG: BURNING suppresses corpse in bones data, but done 
                    does not handle killer reason correctly */
-                done((adtyp == AD_FIRE) ? BURNING : DIED);
+                done(death, killer);
             }
         }
         exercise(A_STR, FALSE);
@@ -623,7 +620,7 @@ splatter_burning_oil(int x, int y)
 {
 /* ZT_SPELL(ZT_FIRE) = ZT_SPELL(AD_FIRE-1) = 10+(2-1) = 11 */
 #define ZT_SPELL_O_FIRE 11      /* value kludge, see zap.c */
-    explode(x, y, ZT_SPELL_O_FIRE, dice(4, 4), BURNING_OIL, EXPL_FIERY);
+    explode(x, y, ZT_SPELL_O_FIRE, dice(4, 4), BURNING_OIL, EXPL_FIERY, NULL);
 }
 
 /*explode.c*/

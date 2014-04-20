@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -105,8 +105,8 @@ boulder_hits_pool(struct obj * otmp, int rx, int ry, boolean pushing)
                 pline("You are hit by molten lava%c",
                       Fire_resistance ? '.' : '!');
                 burn_away_slime();
-                losehp(dice((Fire_resistance ? 1 : 3), 6), "molten lava",
-                       KILLED_BY);
+                losehp(dice((Fire_resistance ? 1 : 3), 6),
+                       killer_msg(DIED, "molten lava"));
             } else if (!fills_up && flags.verbose &&
                        (pushing ? !Blind : cansee(rx, ry)))
                 pline("It sinks without a trace!");
@@ -159,8 +159,7 @@ flooreffects(struct obj * obj, int x, int y, const char *verb)
                 mtmp->mtrapped = 0;
             } else {
                 if (!Passes_walls && !throws_rocks(youmonst.data)) {
-                    losehp(rnd(15), "squished under a boulder",
-                           NO_KILLER_PREFIX);
+                    losehp(rnd(15), "squished under a boulder");
                     return FALSE;       /* player remains trapped */
                 } else
                     u.utrap = 0;
@@ -886,7 +885,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
     }
     new_ledger = ledger_no(newlevel);
     if (new_ledger <= 0)
-        done(ESCAPED);  /* in fact < 0 is impossible */
+        done(ESCAPED, NULL);  /* in fact < 0 is impossible */
 
     /* If you have the amulet and are trying to get out of Gehennom, going up a 
        set of stairs sometimes does some very strange things! Biased against
@@ -1077,7 +1076,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
                 if (u.usteed)
                     dismount_steed(DISMOUNT_FELL);
                 else
-                    losehp(rnd(3), "falling downstairs", KILLED_BY);
+                    losehp(rnd(3), killer_msg(DIED, "falling downstairs"));
                 selftouch("Falling, you", "falling downstairs while wielding");
             }
         }

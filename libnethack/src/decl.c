@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-14 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -16,11 +16,6 @@ struct xmalloc_block *api_blocklist = NULL;
 struct dgn_topology dungeon_topology;
 
 int smeq[MAXNROFROOMS + 1];
-
-int killer_format;
-const char *killer;
-const char *delayed_killer;
-char killer_buf[BUFSZ];
 
 char pl_fruit[PL_FSIZ];
 int current_fruit;
@@ -342,8 +337,6 @@ init_data(boolean including_program_state)
     memset(&inv_pos, 0, sizeof (inv_pos));
 
     level = NULL;
-    killer_format = 0;
-    killer = NULL;
     ffruit = NULL;
     current_fruit = 0;
     sp_levchn = NULL;

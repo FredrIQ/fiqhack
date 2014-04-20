@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -126,12 +126,11 @@ make_sick(long xtime, const char *cause, boolean talk, int type)
     if (Sick) {
         exercise(A_CON, FALSE);
         if (cause) {
-            strncpy(u.usick_cause, cause, sizeof (u.usick_cause));
-            u.usick_cause[sizeof (u.usick_cause) - 1] = 0;
+            set_delayed_killer(POISONING, cause);
         } else
-            u.usick_cause[0] = 0;
+            set_delayed_killer(POISONING, NULL);
     } else
-        u.usick_cause[0] = 0;
+        set_delayed_killer(POISONING, NULL);
 }
 
 
@@ -471,7 +470,7 @@ peffects(struct obj *otmp)
                         you_unwere(FALSE);
                     u.ulycn = NON_PM;   /* cure lycanthropy */
                 }
-                losehp(dice(2, 6), "potion of holy water", KILLED_BY_AN);
+                losehp(dice(2, 6), killer_msg(DIED, "a potion of holy water"));
             } else if (otmp->cursed) {
                 pline("You feel quite proud of yourself.");
                 healup(dice(2, 6), 0, 0, 0);
@@ -491,7 +490,7 @@ peffects(struct obj *otmp)
             } else {
                 if (u.ualign.type == A_LAWFUL) {
                     pline("This burns like acid!");
-                    losehp(dice(2, 6), "potion of unholy water", KILLED_BY_AN);
+                    losehp(dice(2, 6), killer_msg(DIED, "potion of unholy water"));
                 } else
                     pline("You feel full of dread.");
                 if (u.ulycn >= LOW_PM && !Upolyd)
@@ -670,7 +669,7 @@ peffects(struct obj *otmp)
             pline("(But in fact it was mildly stale %s.)", fruitname(TRUE));
             if (!Poison_resistance && !Role_if(PM_HEALER)) {
                 /* NB: blessed otmp->fromsink is not possible */
-                losehp(1, "mildly contaminated potion", KILLED_BY_AN);
+                losehp(1, killer_msg(DIED, "a mildly contaminated potion"));
             }
         } else {
             if (Poison_resistance)
@@ -688,10 +687,10 @@ peffects(struct obj *otmp)
                 if (!Poison_resistance) {
                     if (otmp->fromsink)
                         losehp(rnd(10) + 5 * ! !(otmp->cursed),
-                               "contaminated tap water", KILLED_BY);
+                               killer_msg(DIED, "contaminated tap water"));
                     else
                         losehp(rnd(10) + 5 * ! !(otmp->cursed),
-                               "contaminated potion", KILLED_BY_AN);
+                               killer_msg(DIED, "contaminated potion"));
                 }
                 exercise(A_CON, FALSE);
             }
@@ -836,8 +835,8 @@ peffects(struct obj *otmp)
                     ) {
                     pline("You hit your %s on the %s.", body_part(HEAD),
                           ceiling(u.ux, u.uy));
-                    losehp(uarmh ? 1 : rnd(10), "colliding with the ceiling",
-                           KILLED_BY);
+                    losehp(uarmh ? 1 : rnd(10),
+                           killer_msg(DIED, "colliding with the ceiling"));
                 } else
                     doup(flags.interaction_mode);
             }
@@ -879,7 +878,7 @@ peffects(struct obj *otmp)
                 } else {
                     pline("You burn your %s.", body_part(FACE));
                     losehp(dice(Fire_resistance ? 1 : 3, 4),
-                           "burning potion of oil", KILLED_BY_AN);
+                           killer_msg(DIED, "a burning potion of oil"));
                 }
             } else if (otmp->cursed)
                 pline("This tastes like castor oil.");
@@ -897,7 +896,7 @@ peffects(struct obj *otmp)
                   otmp->blessed ? " a little" : otmp->
                   cursed ? " a lot" : " like acid");
             losehp(dice(otmp->cursed ? 2 : 1, otmp->blessed ? 4 : 8),
-                   "potion of acid", KILLED_BY_AN);
+                   killer_msg(DIED, "a potion of acid"));
             exercise(A_CON, FALSE);
         }
         if (Stoned)
@@ -984,7 +983,7 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
         distance = 0;
         pline("The %s crashes on your %s and breaks into shards.", botlnam,
               body_part(HEAD));
-        losehp(rnd(2), "thrown potion", KILLED_BY_AN);
+        losehp(rnd(2), killer_msg(DIED, "a thrown potion"));
     } else {
         distance = distu(mon->mx, mon->my);
         if (!cansee(mon->mx, mon->my))
@@ -1026,7 +1025,7 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
                 pline("This burns%s!",
                       obj->blessed ? " a little" : obj->cursed ? " a lot" : "");
                 losehp(dice(obj->cursed ? 2 : 1, obj->blessed ? 4 : 8),
-                       "potion of acid", KILLED_BY_AN);
+                       killer_msg(DIED, "a potion of acid"));
             }
             break;
         }
@@ -1491,7 +1490,7 @@ get_wet(struct obj * obj)
             pline("It boils vigorously!");
             pline("You are caught in the explosion!");
             wake_nearby();
-            losehp(rnd(10), "elementary chemistry", KILLED_BY);
+            losehp(rnd(10), killer_msg(DIED, "elementary chemistry"));
             makeknown(obj->otyp);
             update_inventory();
             return TRUE;
@@ -1724,7 +1723,7 @@ dodip(const struct nh_cmd_arg *arg)
                 potionbreathe(obj);
             useup(obj);
             useup(potion);
-            losehp(rnd(10), "alchemic blast", KILLED_BY_AN);
+            losehp(rnd(10), killer_msg(DIED, "an alchemic blast"));
             return 1;
         }
 
@@ -1889,7 +1888,7 @@ more_dips:
         /* Turn off engine before fueling, turn off fuel too :-) */
         if (obj->lamplit || potion->lamplit) {
             useup(potion);
-            explode(u.ux, u.uy, 11, dice(6, 6), 0, EXPL_FIERY);
+            explode(u.ux, u.uy, 11, dice(6, 6), 0, EXPL_FIERY, NULL);
             exercise(A_WIS, FALSE);
             return 1;
         }

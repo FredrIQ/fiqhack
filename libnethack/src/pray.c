@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -243,12 +243,12 @@ fix_worst_trouble(int trouble)
     case ptr_stoned:
         pline("You feel more limber.");
         Stoned = 0;
-        delayed_killer = 0;
+        set_delayed_killer(STONING, NULL);
         break;
     case ptr_slimed:
         pline("The slime disappears.");
         Slimed = 0;
-        delayed_killer = 0;
+        set_delayed_killer(TURNED_SLIME, NULL);
         break;
     case ptr_strangled:
         if (uamul && uamul->otyp == AMULET_OF_STRANGULATION) {
@@ -497,13 +497,9 @@ god_zaps_you(aligntyp resp_god)
 static void
 fry_by_god(aligntyp resp_god)
 {
-    char killerbuf[64];
-
     pline("You fry to a crisp.");
-    killer_format = KILLED_BY;
-    sprintf(killerbuf, "the wrath of %s", align_gname(resp_god));
-    killer = killerbuf;
-    done(DIED);
+    done(DIED, killer_msg(DIED,
+                          msgcat("the wrath of ", align_gname(resp_god))));
 }
 
 static void
@@ -542,7 +538,7 @@ angrygods(aligntyp resp_god)
               youmonst.data->mlet == S_HUMAN ? "mortal" : "creature");
         verbalize("Thou must relearn thy lessons!");
         adjattrib(A_WIS, -1, FALSE);
-        losexp(NULL);
+        losexp(NULL, FALSE);
         break;
     case 6:
         if (!Punished) {
@@ -1310,7 +1306,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                 pline("%s is enraged...", u_gname());
                 pline("Fortunately, %s permits you to live...", a_gname());
                 pline("A cloud of %s smoke surrounds you...", hcolor("orange"));
-                done(ESCAPED);
+                done(ESCAPED, NULL);
             } else {    /* super big win */
                 adjalign(10);
                 pline("An invisible choir sings, and you are bathed in "
@@ -1325,7 +1321,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                                "offered the Amulet of Yendor to %s and ascended"
                                " to the status of Demigod%s!", u_gname(),
                                u.ufemale ? "dess" : "");
-                done(ASCENDED);
+                done(ASCENDED, NULL);
             }
         }
     }
@@ -1663,7 +1659,7 @@ prayer_done(void)
         pline("You feel like you are falling apart.");
         /* KMH -- Gods have mastery over unchanging */
         rehumanize();
-        losehp(rnd(20), "residual undead turning effect", KILLED_BY_AN);
+        losehp(rnd(20), killer_msg(DIED, "an residual undead turning effect"));
         exercise(A_CON, FALSE);
     } else if (Inhell) {
         pline("Since you are in Gehennom, %s won't help you.",

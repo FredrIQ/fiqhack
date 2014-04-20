@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1522,10 +1522,9 @@ corpse_chance(struct monst *mon,
                 if (magr == &youmonst) {
                     pline("There is an explosion in your %s!",
                           body_part(STOMACH));
-                    killer = msgprintf("%s explosion", s_suffix(mdat->mname));
                     if (Half_physical_damage)
                         tmp = (tmp + 1) / 2;
-                    losehp(tmp, killer, KILLED_BY_AN);
+                    losehp(tmp, msgprintf("%s explosion", s_suffix(mdat->mname)));
                 } else {
                     You_hear("an explosion.");
                     magr->mhp -= tmp;
@@ -1541,9 +1540,8 @@ corpse_chance(struct monst *mon,
                 return FALSE;
             }
 
-            killer = msgcat(s_suffix(mdat->mname), " explosion");
-            killer_format = KILLED_BY_AN;
-            explode(mon->mx, mon->my, -1, tmp, MON_EXPLODE, EXPL_NOXIOUS);
+            explode(mon->mx, mon->my, -1, tmp, MON_EXPLODE, EXPL_NOXIOUS,
+                    msgcat(s_suffix(mdat->mname), " explosion"));
             return FALSE;
         }
     }
@@ -1993,10 +1991,14 @@ poisontell(int typ)
     pline("You%s.", poiseff[typ]);
 }
 
+/* Cause should be a string suitable for passing to killer_msg,
+ * because the actual death mechanism may vary. It should have
+ * an article if appropriate.
+ */
 void
-poisoned(const char *string, int typ, const char *pname, int fatal)
+poisoned(const char *string, int typ, const char *killer, int fatal)
 {
-    int i, plural, kprefix = KILLED_BY_AN;
+    int i, plural;
     boolean thrown_weapon = (fatal < 0);
 
     if (thrown_weapon)
@@ -2016,20 +2018,11 @@ poisoned(const char *string, int typ, const char *pname, int fatal)
         pline("The poison doesn't seem to affect you.");
         return;
     }
-    /* suppress killer prefix if it already has one */
-    if ((i = name_to_mon(pname)) >= LOW_PM && mons[i].geno & G_UNIQ) {
-        kprefix = KILLED_BY;
-        if (!type_is_pname(&mons[i]))
-            pname = the(pname);
-    } else if (!strncmpi(pname, "the ", 4) || !strncmpi(pname, "an ", 3) ||
-               !strncmpi(pname, "a ", 2)) {
-        /* [ does this need a plural check too? ] */
-        kprefix = KILLED_BY;
-    }
+
     i = rn2(fatal + 20 * thrown_weapon);
     if (i == 0 && typ != A_CHA) {
-        u.uhp = -1;
         pline("The poison was deadly...");
+        done(POISONING, killer);
     } else if (i <= 5) {
         /* Check that a stat change was made */
         if (adjattrib(typ, thrown_weapon ? -1 : -rn1(3, 3), 1))
@@ -2038,13 +2031,12 @@ poisoned(const char *string, int typ, const char *pname, int fatal)
         i = thrown_weapon ? rnd(6) : rn1(10, 6);
         if (Half_physical_damage)
             i = (i + 1) / 2;
-        losehp(i, pname, kprefix);
+        losehp(i, killer);
     }
+
     if (u.uhp < 1) {
-        killer_format = kprefix;
-        killer = pname;
-        /* "Poisoned by a poisoned ___" is redundant */
-        done(strstri(pname, "poison") ? DIED : POISONING);
+        impossible("Survived to the end of poisoned() with negative HP");
+        done(DIED, killer);
     }
     encumber_msg();
 }

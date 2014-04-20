@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -78,8 +78,8 @@ use_saddle(struct obj *otmp, const struct nh_cmd_arg *arg)
     if (touch_petrifies(ptr) && !uarmg && !Stone_resistance) {
         pline("You touch %s.", mon_nam(mtmp));
         if (!(poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM)))
-            instapetrify(
-                msgcat("attempting to saddle ", an(mtmp->data->mname)));
+            instapetrify(killer_msg(STONING,
+                msgcat("attempting to saddle ", an(mtmp->data->mname))));
     }
     if (ptr == &mons[PM_INCUBUS] || ptr == &mons[PM_SUCCUBUS]) {
         pline("Shame on you!");
@@ -255,7 +255,8 @@ mount_steed(struct monst * mtmp,        /* The animal */
     ptr = mtmp->data;
     if (touch_petrifies(ptr) && !Stone_resistance) {
         pline("You touch %s.", mon_nam(mtmp));
-        instapetrify(msgcat("attempting to ride %s", an(mtmp->data->mname)));
+        instapetrify(killer_msg(STONING,
+            msgcat("attempting to ride %s", an(mtmp->data->mname))));
     }
     if (!mtmp->mtame || mtmp->isminion) {
         pline("I think %s would mind.", mon_nam(mtmp));
@@ -313,7 +314,7 @@ mount_steed(struct monst * mtmp,        /* The animal */
             x_monnam(mtmp, ARTICLE_A, NULL,
                      SUPPRESS_IT | SUPPRESS_INVISIBLE |
                      SUPPRESS_HALLUCINATION, TRUE));
-        losehp(rn1(5, 10), buf, NO_KILLER_PREFIX);
+        losehp(rn1(5, 10), buf);
         return FALSE;
     }
 
@@ -477,7 +478,7 @@ dismount_steed(int reason)
         pline("You %s off of %s!", verb, mon_nam(mtmp));
         if (!have_spot)
             have_spot = landing_spot(&cc, reason, 1);
-        losehp(rn1(10, 10), "riding accident", KILLED_BY_AN);
+        losehp(rn1(10, 10), "killed in a riding accident");
         set_wounded_legs(LEFT_SIDE, (int)LWounded_legs + rn1(5, 5));
         set_wounded_legs(RIGHT_SIDE, (int)RWounded_legs + rn1(5, 5));
         repair_leg_damage = FALSE;

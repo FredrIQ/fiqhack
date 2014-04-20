@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -47,7 +47,8 @@ static void write_topten(int fd, const struct toptenentry *ttlist);
 static void update_log(const struct toptenentry *newtt);
 static boolean readentry(char *line, struct toptenentry *tt);
 static struct toptenentry *read_topten(int fd, int limit);
-static void fill_topten_entry(struct toptenentry *newtt, int how);
+static void fill_topten_entry(struct toptenentry *newtt, int how,
+                              const char *killer);
 static boolean toptenlist_insert(struct toptenentry *ttlist,
                                  struct toptenentry *newtt);
 static int classmon(char *plch, boolean fem);
@@ -57,14 +58,8 @@ static void fill_nh_score_entry(struct toptenentry *in,
                                 boolean highlight);
 
 
-/* must fit with end.c; used in rip.c */
-const char *const killed_by_prefix[] = {
-    "killed by ", "choked on ", "poisoned by ", "died of ", "drowned in ",
-    "burned by ", "dissolved in ", "crushed to death by ", "petrified by ",
-    "turned to slime by ", "killed by ", "", "", "", "", ""
-};
-
 static int end_how;
+static char end_killer[DTHSZ + 1] = {0};
 
 /* xlogfile writing. Based on the xlogfile patch by Aardvark Joe. */
 
@@ -338,35 +333,8 @@ read_topten(int fd, int limit)
 }
 
 
-const char *
-describe_death(int how, int maxlen)
-{
-    const char *k = killer;
-    const char *death = killed_by_prefix[how];
-    if (!k)
-        k = "";
-    switch (killer_format) {
-    default:
-        impossible("bad killer format?");
-    case KILLED_BY_AN:
-        death = msgcat(death, an(k));
-        break;
-    case KILLED_BY:
-        death = msgcat(death, k);
-        break;
-    case KILLED_BY_THE:
-        death = msgcat(death, the(k));
-        break;
-    case NO_KILLER_PREFIX:
-        death = k;
-        break;
-    }
-    return death;
-}
-
-
 static void
-fill_topten_entry(struct toptenentry *newtt, int how)
+fill_topten_entry(struct toptenentry *newtt, int how, const char *killer)
 {
     int uid = getuid();
 
@@ -402,7 +370,7 @@ fill_topten_entry(struct toptenentry *newtt, int how)
     newtt->plalign[ROLESZ] = '\0';
     strncpy(newtt->name, u.uplname, NAMSZ);
     newtt->name[NAMSZ] = '\0';
-    strncpy(newtt->death, describe_death(how, DTHSZ), DTHSZ);
+    strncpy(newtt->death, killer, DTHSZ);
     newtt->death[DTHSZ] = '\0';
     newtt->deathtime = utc_time();
     newtt->birthdate = yyyymmdd(u.ubirthday);
@@ -456,7 +424,7 @@ toptenlist_insert(struct toptenentry *ttlist, struct toptenentry *newtt)
  * Add the result of the current game to the score list
  */
 void
-update_topten(int how, unsigned long carried)
+update_topten(int how, const char *killer, unsigned long carried)
 {
     struct toptenentry *toptenlist, newtt;
     boolean need_rewrite;
@@ -466,14 +434,16 @@ update_topten(int how, unsigned long carried)
         return;
 
     end_how = how;      /* save how for nh_get_topten */
+    strncpy(end_killer, killer, DTHSZ);
+    end_killer[DTHSZ] = '\0';
 
-    fill_topten_entry(&newtt, how);
+    fill_topten_entry(&newtt, how, killer);
     update_log(&newtt);
     update_xlog(&newtt, carried);
 
     /* nothing more to do for non-scoring games */
     if (wizard || discover)
-        return;
+       return;
 
     fd = open_datafile(RECORD, O_RDWR | O_CREAT, SCOREPREFIX);
     if (!change_fd_lock(fd, LT_WRITE, 30)) {
@@ -743,7 +713,7 @@ nh_get_topten(int *out_len, char *statusbuf, const char *volatile player,
 
     /* find the rank of a completed game in the score list */
     if (game_complete && !strcmp(player, u.uplname)) {
-        fill_topten_entry(&newtt, end_how);
+        fill_topten_entry(&newtt, end_how, end_killer);
 
         /* find this entry in the list */
         for (i = 0; i < TTLISTLEN && validentry(ttlist[i]); i++)

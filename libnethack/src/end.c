@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-14 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -32,47 +32,198 @@ static const struct val_list {
     struct valuable_data *list;
     int size;
 } valuables[] = {
-    {
-    gems, sizeof gems / sizeof *gems}
-    , {
-    amulets, sizeof amulets / sizeof *amulets}
-    , {
-    0, 0}
+    {gems, sizeof gems / sizeof *gems},
+    {amulets, sizeof amulets / sizeof *amulets},
+    {0, 0}
 };
 
+static const char *add_killer_notes(int how, boolean carried,
+                                    const char *killer);
+static const char **delayed_killer_var(int how);
 static void disclose(int, boolean, long);
 static void dump_disclose(int);
 static void get_valuables(struct obj *);
 static void sort_valuables(struct valuable_data *, int);
 static int artifact_score(struct obj *, boolean, struct nh_menulist *);
 static void savelife(int);
-static boolean check_survival(int how, const char *kilbuf);
+static boolean check_survival(int how);
 static boolean should_query_disclose_options(char *defquery);
 static void container_contents(struct obj *, boolean, boolean);
-static noreturn void done_noreturn(int how);
+static noreturn void done_noreturn(int how, const char *killer);
 
 #define done_stopprint program_state.stopprint
 
 /*
  * The order of these needs to match the macros in hack.h.
  */
-static const char *const deaths[] = {   /* the array of death */
-    "died", "choked", "poisoned", "starvation", "drowning",
-    "burning", "dissolving under the heat and pressure",
-    "crushed", "turned to stone", "turned into slime",
-    "genocided", "panic", "trickery",
-    "quit", "escaped", "ascended"
-};
 
 static const char *const ends[] = {     /* "when you..." */
-    "died", "choked", "were poisoned", "starved", "drowned",
-    "burned", "dissolved in the lava",
-    "were crushed", "turned to stone", "turned into slime",
-    "were genocided", "panicked", "were tricked",
-    "quit", "escaped", "ascended"
+    "died", "choked", "were poisoned", "starved", "drowned", "burned",
+    "dissolved", "were crushed", "turned to stone", "turned into slime",
+    "were wiped out", "were tricked", "quit", "escaped", "ascended"
 };
 
-extern const char *const killed_by_prefix[];    /* from topten.c */
+const char *const killer_verb[] = {
+    "killed", "choked", "poisoned", "died", "drowned", "burned",
+    "dissolved", "crushed to death", "petrified", "turned to slime",
+    "wiped out", "committed trickery", "quit", "escaped", "ascended"
+};
+
+const char *const killer_preposition[] = {
+    "by", "on", "by", "of", "in", "by", "in", "by", "by", "by", "by", "",
+    "", "", ""
+};
+
+
+static const char *
+add_killer_notes(int how, boolean carried, const char *killer) {
+    if (how == QUIT && u.uhp < 1)
+        killer = msgcat(killer, " while already on Charon's boat");
+
+    boolean already_helpless = FALSE;
+    int i;
+    for (i = hr_first; i <= hr_last; ++i)
+        if (turnstate.helpless_timers[i]) {
+            killer = msgcat_many(killer,
+                                 already_helpless ? " and " : ", while ",
+                                 turnstate.helpless_causes[i], NULL);
+            already_helpless = TRUE;
+        }
+
+    if (Unchanging && (u.mh < 1))
+        killer = msgcat(killer, ", while stuck in monster form");
+
+    if (carried & 0x0001UL) /* real Amulet of Yendor */
+        killer = msgcat(killer, " (with the Amulet)");
+    else if (how == ESCAPED) {
+        /* Note: the fake Amulet check relies on bones not having been
+           created; this is safe for escapes, but not safe in general */
+        if (Is_astralevel(&u.uz))       /* offered Amulet to wrong deity */
+            killer = msgcat(killer, " (in celestial disgrace)");
+        else if (carrying(FAKE_AMULET_OF_YENDOR))
+            killer = msgcat(killer, " (with a fake Amulet)");
+        /* don't bother counting to see whether it should be plural */
+    }
+
+    return killer;
+}
+
+
+const char *
+killer_msg(int how, const char *killer) {
+    return msgcat(killer_verb[how],
+                  killer ? msgcat_many(" ", killer_preposition[how], " ",
+                                       killer, NULL) : "");
+}
+
+
+const char *
+killer_msg_mon(int how, struct monst *mtmp) {
+    const char *buf = "";
+    boolean distorted = (boolean) (Hallucination && canspotmon(mtmp));
+    boolean article = FALSE;
+
+    if ((mtmp->data->geno & G_UNIQ) != 0 &&
+        !(mtmp->data == &mons[PM_HIGH_PRIEST] && !mtmp->ispriest)) {
+        /* "killed by the high priest of Crom" is okay, "killed by the high
+         * priest" alone isn't */
+        if (!type_is_pname(mtmp->data))
+            buf = "the ";
+    }
+    else if (mtmp->data == &mons[PM_GHOST] && mtmp->mnamelth) {
+        /* _the_ <invisible> <distorted> ghost of Dudley */
+        buf = "the ";
+    } else if (!(mtmp->data->geno & G_UNIQ)) {
+        article = TRUE;
+    }
+
+    if (mtmp->minvis)
+        buf = msgcat(buf, "invisible ");
+    if (distorted)
+        buf = msgcat(buf, "hallucinogen-distorted ");
+
+    if (mtmp->data == &mons[PM_GHOST]) {
+        buf = msgcat(buf, "ghost");
+        if (mtmp->mnamelth)
+            buf = msgprintf("%sof %s", buf, NAME(mtmp));
+    } else if (mtmp->isshk) {
+        buf = msgprintf("%s%s %s, the shopkeeper", buf,
+                        (mtmp->female ? "Ms." : "Mr."), shkname(mtmp));
+    } else if (mtmp->ispriest || mtmp->isminion) {
+        /* m_monnam() suppresses "the" prefix plus "invisible", and it
+           overrides the effect of Hallucination on priestname() */
+        buf = msgcat(buf, m_monnam(mtmp));
+    } else {
+        buf = msgcat(buf, mtmp->data->mname);
+        if (mtmp->mnamelth)
+            buf = msgcat_many(buf, " called ", NAME(mtmp), NULL);
+    }
+
+    return killer_msg(how, article ? an(buf) : buf);
+}
+
+
+const char *
+killer_msg_obj(int how, struct obj *obj) {
+    return killer_msg(how, an(killer_xname(obj)));
+}
+
+
+static const char**
+delayed_killer_var(int how) {
+    switch (how) {
+    case POISONING:
+        return &u.delayed_killers.illness;
+
+    case STONING:
+        return &u.delayed_killers.stoning;
+
+    case TURNED_SLIME:
+        return &u.delayed_killers.sliming;
+
+    case GENOCIDED:
+        return &u.delayed_killers.genocide;
+
+    default:
+        impossible("Illegal delayed killer type: %d", how);
+        return 0;
+    }
+}
+
+
+void set_delayed_killer(int how, const char *killer) {
+    const char **var = delayed_killer_var(how);
+
+    if (!var)
+        return;
+
+    if (*var) {
+        free((char*)*var);
+        *var = NULL;
+    }
+
+    if (killer) {
+        int len = strlen(killer) + 1;
+        char *buf = malloc(len);
+        memcpy(buf, killer, len);
+        *var = buf;
+    }
+}
+
+
+const char *delayed_killer(int how) {
+    const char **var = delayed_killer_var(how);
+
+    return var ? *var : NULL;
+}
+
+
+void clear_delayed_killers(void) {
+    set_delayed_killer(POISONING, NULL);
+    set_delayed_killer(STONING, NULL);
+    set_delayed_killer(TURNED_SLIME, NULL);
+    set_delayed_killer(GENOCIDED, NULL);
+}
 
 
 /* "#quit" command or keyboard interrupt */
@@ -86,9 +237,9 @@ done2(void)
     }
 
     /* check_survival does this as a side effect. */
-    killer = deaths[QUIT];
-    done_noreturn(QUIT);
+    done_noreturn(QUIT, NULL);
 }
+
 
 int
 doquit(const struct nh_cmd_arg *arg)
@@ -97,56 +248,12 @@ doquit(const struct nh_cmd_arg *arg)
     return done2();
 }
 
+
 void
 done_in_by(struct monst *mtmp)
 {
-    const char *buf = "";
-    boolean distorted = (boolean) (Hallucination && canspotmon(mtmp));
-
     pline("You die...");
-    killer_format = KILLED_BY_AN;
-    /* "killed by the high priest of Crom" is okay, "killed by the high priest" 
-       alone isn't */
-    if ((mtmp->data->geno & G_UNIQ) != 0 &&
-        !(mtmp->data == &mons[PM_HIGH_PRIEST] && !mtmp->ispriest)) {
-        if (!type_is_pname(mtmp->data))
-            buf = "the ";
-        killer_format = KILLED_BY;
-    }
-    /* _the_ <invisible> <distorted> ghost of Dudley */
-    if (mtmp->data == &mons[PM_GHOST] && mtmp->mnamelth) {
-        buf = "the ";
-        killer_format = KILLED_BY;
-    }
-    if (mtmp->minvis)
-        buf = msgcat(buf, "invisible ");
-    if (distorted)
-        buf = msgcat(buf, "hallucinogen-distorted ");
 
-    if (mtmp->data == &mons[PM_GHOST]) {
-        buf = msgcat(buf, "ghost");
-        if (mtmp->mnamelth)
-            buf = msgprintf("%sof %s", buf, NAME(mtmp));
-    } else if (mtmp->isshk) {
-        buf = msgprintf("%s%s %s, the shopkeeper", buf,
-                        (mtmp->female ? "Ms." : "Mr."), shkname(mtmp));
-        killer_format = KILLED_BY;
-    } else if (mtmp->ispriest || mtmp->isminion) {
-        /* m_monnam() suppresses "the" prefix plus "invisible", and it
-           overrides the effect of Hallucination on priestname() */
-        killer = m_monnam(mtmp);
-        buf = msgcat(buf, killer);
-    } else {
-        buf = msgcat(buf, mtmp->data->mname);
-        if (mtmp->mnamelth)
-            buf = msgcat_many(buf, " called ", NAME(mtmp), NULL);
-    }
-
-    /* TODO: This should be using helpless_causes */
-    if (u_helpless(hm_all))
-        buf = msgcat_many(buf, ", while ", u.uwhybusy, NULL);
-
-    killer = buf;
     if (mtmp->data->mlet == S_WRAITH && !noncorporeal(mtmp->data))
         u.ugrave_arise = PM_WRAITH;
     else if (mtmp->data->mlet == S_MUMMY && urace.mummynum != NON_PM)
@@ -157,10 +264,13 @@ done_in_by(struct monst *mtmp)
         u.ugrave_arise = PM_GHOUL;
     if (u.ugrave_arise >= LOW_PM && (mvitals[u.ugrave_arise].mvflags & G_GENOD))
         u.ugrave_arise = NON_PM;
-    if (touch_petrifies(mtmp->data))
-        done(STONING);
-    else
-        done(DIED);
+
+    if (touch_petrifies(mtmp->data)) {
+        done(STONING, killer_msg_mon(STONING, mtmp));
+    } else {
+        done(DIED, killer_msg_mon(DIED, mtmp));
+    }
+
     return;
 }
 
@@ -258,7 +368,7 @@ disclose(int how, boolean taken, long umoney)
         c = ask ? yn_function("Do you want to see your attributes?", ynqchars,
                               defquery) : defquery;
         if (c == 'y')
-            enlightenment(how >= PANICKED ? 1 : 2);     /* final */
+            enlightenment(how > LAST_KILLER  ? 1 : 2);     /* final */
         if (c == 'q')
             done_stopprint++;
     }
@@ -273,7 +383,7 @@ disclose(int how, boolean taken, long umoney)
         c = ask ? yn_function("Do you want to see your conduct?", ynqchars,
                               defquery) : defquery;
         if (c == 'y')
-            show_conduct(how >= PANICKED ? 1 : 2);
+            show_conduct(how > LAST_KILLER ? 1 : 2);
         if (c == 'q')
             done_stopprint++;
     }
@@ -307,10 +417,10 @@ dump_disclose(int how)
     container_contents(invent, TRUE, TRUE);
     dump_spells();
     dump_skills();
-    enlightenment(how >= PANICKED ? 1 : 2);     /* final */
+    enlightenment(how > LAST_KILLER ? 1 : 2);     /* final */
     list_vanquished('y', FALSE);
     list_genocided('y', FALSE);
-    show_conduct(how >= PANICKED ? 1 : 2);
+    show_conduct(how > LAST_KILLER ? 1 : 2);
     dooverview(&(struct nh_cmd_arg){.argtype = 0});
     dohistory(&(struct nh_cmd_arg){.argtype = 0});
     calc_score(how, TRUE, money_cnt(invent) + hidden_gold());
@@ -657,64 +767,49 @@ calc_score(int how, boolean show, long umoney)
 }
 
 static boolean
-check_survival(int how, const char *kilbuf)
+check_survival(int how)
 {
     if (how == TRICKED) {
-        if (killer) {
-            paniclog("trickery", killer);
-            killer = 0;
-        }
         if (wizard) {
             pline("You are a very tricky wizard, it seems.");
             return TRUE;
         }
     }
 
-    if (how == ASCENDED || (!killer && how == GENOCIDED))
-        killer_format = NO_KILLER_PREFIX;
-    /* Avoid killed by "a" burning or "a" starvation */
-    if (!killer && (how == STARVING || how == BURNING))
-        killer_format = KILLED_BY;
-    if (!killer || how >= PANICKED)
-        killer = deaths[how];
-
-    if (how < PANICKED)
+    if (how <= LAST_KILLER) {
         u.umortality++;
-    if (Lifesaved && (how <= GENOCIDED)) {
-        pline("But wait...");
-        makeknown(AMULET_OF_LIFE_SAVING);
-        pline("Your medallion %s!", !Blind ? "begins to glow" : "feels warm");
-        if (how == CHOKING)
-            pline("You vomit ...");
-        pline("You feel much better!");
-        pline("The medallion crumbles to dust!");
-        if (uamul)
-            useup(uamul);
+        if (Lifesaved) {
+            pline("But wait...");
+            makeknown(AMULET_OF_LIFE_SAVING);
+            pline("Your medallion %s!", !Blind ? "begins to glow" : "feels warm");
+            if (how == CHOKING)
+                pline("You vomit ...");
+            pline("You feel much better!");
+            pline("The medallion crumbles to dust!");
+            if (uamul)
+                useup(uamul);
 
-        adjattrib(A_CON, -1, TRUE);
-        if (u.uhpmax <= 0)
-            u.uhpmax = 10;      /* arbitrary */
-        savelife(how);
-        if (how == GENOCIDED)
-            pline("Unfortunately you are still genocided...");
-        else {
-            killer = 0;
-            killer_format = 0;
-            historic_event(FALSE,
-                           "were saved from death by your amulet of life "
-                           "saving!");
-            return TRUE;
+            adjattrib(A_CON, -1, TRUE);
+            if (u.uhpmax <= 0)
+                u.uhpmax = 10;      /* arbitrary */
+            savelife(how);
+            if (how == GENOCIDED)
+                pline("Unfortunately you are still genocided...");
+            else {
+                historic_event(FALSE,
+                            "were saved from death by your amulet of life "
+                            "saving!");
+                return TRUE;
+            }
         }
     }
-    if ((wizard || discover) && (how <= GENOCIDED)) {
+    if ((wizard || discover) && (how <= LAST_KILLER)) {
         if (yn("Die?") == 'y')
             return FALSE;
         pline("OK, so you don't %s.", (how == CHOKING) ? "choke" : "die");
         if (u.uhpmax <= 0)
             u.uhpmax = u.ulevel * 8;    /* arbitrary */
         savelife(how);
-        killer = 0;
-        killer_format = 0;
         historic_event(FALSE, "were saved from death by your wizard powers!");
         return TRUE;
     }
@@ -723,9 +818,9 @@ check_survival(int how, const char *kilbuf)
 }
 
 void
-display_rip(int how, long umoney, unsigned long carried)
+display_rip(int how, long umoney, const char *killer)
 {
-    const char *outrip_buf = "", *pbuf;
+    const char *pbuf;
     boolean show_endwin = FALSE;
     struct nh_menulist menu;
 
@@ -737,28 +832,6 @@ display_rip(int how, long umoney, unsigned long carried)
 
         if (!done_stopprint || flags.tombstone)
             show_endwin = TRUE;
-
-        if (how <= GENOCIDED && flags.tombstone && show_endwin) {
-            /* Put together death description */
-            switch (killer_format) {
-            default:
-                impossible("bad killer format?");
-                outrip_buf = killed_by_prefix[how];
-                break;
-            case KILLED_BY_AN:
-                outrip_buf = msgcat(killed_by_prefix[how], an(killer));
-                break;
-            case KILLED_BY:
-                outrip_buf = msgcat(killed_by_prefix[how], killer);
-                break;
-            case KILLED_BY_THE:
-                outrip_buf = msgcat(killed_by_prefix[how], the(killer));
-                break;
-            case NO_KILLER_PREFIX:
-                outrip_buf = killer;
-                break;
-            }
-        }
     } else
         done_stopprint = 1;
     
@@ -766,17 +839,6 @@ display_rip(int how, long umoney, unsigned long carried)
        in the middle of a large rewrite right now and don't want to change
        more than I have to (that's burnt me before), but if someone sees
        this comment lying around in the codebase, complain at me --AIS */
-    if (carried & 0x0001UL) /* real Amulet of Yendor */
-        killer = msgcat(killer, " (with the Amulet)");
-    else if (how == ESCAPED) {
-        /* Note: the fake Amulet check relies on bones not having been
-           created; this is safe for escapes, but not safe in general */
-        if (Is_astralevel(&u.uz))       /* offered Amulet to wrong deity */
-            killer = msgcat(killer, " (in celestial disgrace)");
-        else if (carrying(FAKE_AMULET_OF_YENDOR))
-            killer = msgcat(killer, " (with a fake Amulet)");
-        /* don't bother counting to see whether it should be plural */
-    }
 
     if (!done_stopprint) {
         const char *pbuf;
@@ -891,25 +953,25 @@ display_rip(int how, long umoney, unsigned long carried)
     }
 
     if (!done_stopprint)
-        outrip(&menu, how <= GENOCIDED, u.uplname, umoney,
-               outrip_buf, how, getyear());
+        outrip(&menu, how <= LAST_KILLER, u.uplname, umoney,
+               show_endwin ? killer : "", how, getyear());
     else
         dealloc_menulist(&menu);
 }
 
 /* Be careful not to call panic from here! */
 void
-done(int how)
+done(int how, const char *killer)
 {
-    if (check_survival(how, killer))
+    if (check_survival(how))
         return;
 
-    done_noreturn(how);
+    done_noreturn(how, killer);
 }
 
 /* Be careful not to call panic from here! */
 static noreturn void
-done_noreturn(int how)
+done_noreturn(int how, const char *killer)
 {
     boolean taken;
     boolean bones_ok;
@@ -926,22 +988,19 @@ done_noreturn(int how)
      */
     program_state.gameover = 1;
 
-    /* done(PANICKED) should no longer be called on any codepath. We pass back
-       to panic() (which is no longer coded in terms of done()) if it somehow is
-       anyway. */
-    if (how == PANICKED)
-        panic("done(PANICKED) called");
-
     /* might have been killed while using a disposable item, so make sure it's
        gone prior to inventory disclosure and creation of bones data */
     inven_inuse(TRUE);
 
     /* Sometimes you die on the first move.  Life's not fair. On those rare
        occasions you get hosed immediately, go out smiling... :-) -3. */
-    if (moves <= 1 && how < PANICKED)   /* You die... --More-- */
+    if (moves <= 1 && how <= LAST_KILLER)   /* You die... --More-- */
         pline("Do not pass go.  Do not collect 200 %s.", currency(200L));
 
-    bones_ok = (how < GENOCIDED) && can_make_bones(&u.uz);
+    bones_ok = how <= LAST_KILLER && how != GENOCIDED && can_make_bones(&u.uz);
+
+    if (!killer)
+        killer = killer_msg(how, NULL);
 
     if (how == TURNED_SLIME)
         u.ugrave_arise = PM_GREEN_SLIME;
@@ -966,28 +1025,20 @@ done_noreturn(int how)
             }
             corpse = mk_named_object(CORPSE, &mons[mnum], u.ux, u.uy,
                                      u.uplname);
-            pbuf = msgprintf("%s, %s%s", u.uplname,
-                             killer_format == NO_KILLER_PREFIX ? "" :
-                             killed_by_prefix[how],
-                             killer_format == KILLED_BY_AN ?
-                             an(killer) : killer);
+            /* how <= LAST_KILLER is required for bones_ok */
+            pbuf = msgcat_many(u.uplname, ", ", killer, NULL);
             make_grave(level, u.ux, u.uy, pbuf);
         }
     }
 
-    if (how == QUIT) {
-        killer_format = NO_KILLER_PREFIX;
-        if (u.uhp < 1) {
-            how = DIED;
-            u.umortality++;     /* skipped above when how==QUIT */
-            /* note that killer is pointing at killbuf */
-            killer = "quit while already on Charon's boat";
-        }
-    }
-    if (how == ESCAPED)
-        killer_format = NO_KILLER_PREFIX;
+    /* The "carried at death" field of the xlog needs to have remembered
+       values from before leaving bones; if the Candelabrum, etc., is dropped
+       on the ground and transformed into a candle, Uhave_menorah will be 0,
+       whereas we want 1 in the disclose */
+    unsigned long carried = encode_carried();
 
-    log_game_over(describe_death(how, COLNO));
+    const char *noted_killer = add_killer_notes(how, carried, killer);
+    log_game_over(noted_killer);
     /* Don't log anything from now on (in particular, don't log the DYWYPI). If
        you do, then the above log_game_over call assumes that the DYWYPI should
        have been replayed already, and gets into an infinite loop restarting the
@@ -1015,12 +1066,6 @@ done_noreturn(int how)
     if (bones_ok && taken)
         finish_paybill();
 
-    /* The "carried at death" field of the xlog needs to have remembered
-       values from before leaving bones; if the Candelabrum, etc., is dropped
-       on the ground and transformed into a candle, Uhave_menorah will be 0,
-       whereas we want 1 in the disclose */
-    unsigned long carried = encode_carried();
-
     if (bones_ok && !discover) {
         if (!wizard || yn("Save bones?") == 'y')
             savebones(corpse);
@@ -1029,12 +1074,12 @@ done_noreturn(int how)
         corpse = NULL;
     }
 
-    end_dump(how, umoney, carried);
-    display_rip(how, umoney, carried);
+    end_dump(how, umoney, killer);
+    display_rip(how, umoney, killer);
 
     /* generate a topten entry for this game. update_topten does not display
        anything. */
-    update_topten(how, carried);
+    update_topten(how, noted_killer, carried);
 
     terminate(GAME_OVER);
 }

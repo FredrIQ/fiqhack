@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-14 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -879,7 +879,7 @@ use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
             dam = 1;
         pline("You hit yourself with %s.", yname(uwep));
         buf = msgprintf("%s own %s", uhis(), OBJ_NAME(objects[obj->otyp]));
-        losehp(dam, buf, KILLED_BY);
+        losehp(dam, killer_msg(DIED, buf));
         return 1;
     } else if (dz == 0) {
         if (Stunned || (Confusion && !rn2(5)))
@@ -928,7 +928,7 @@ use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
                       sobj_at(STATUE, level, rx, ry) ? "statue" : "boulder",
                       vibrate ? " The axe-handle vibrates violently!" : "");
                 if (vibrate)
-                    losehp(2, "axing a hard object", KILLED_BY);
+                    losehp(2, killer_msg(DIED, "axing a hard object"));
             } else
                 pline("You swing your %s through thin air.",
                       aobjnam(obj, NULL));
@@ -1185,7 +1185,7 @@ zap_dig(schar dx, schar dy, schar dz)
                 pline("You loosen a rock from the %s.", ceiling(u.ux, u.uy));
                 pline("It falls on your %s!", body_part(HEAD));
                 losehp(rnd((uarmh && is_metallic(uarmh)) ? 2 : 6),
-                       "falling rock", KILLED_BY_AN);
+                       killer_msg(DIED, "falling rock"));
                 otmp = mksobj_at(ROCK, level, u.ux, u.uy, FALSE, FALSE);
                 if (otmp) {
                     xname(otmp);        /* set dknown, maybe bknown */

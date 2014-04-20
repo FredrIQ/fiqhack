@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -80,7 +80,7 @@ dosit(const struct nh_cmd_arg *arg)
             } else if (u.utraptype == TT_PIT) {
                 if (trap->ttyp == SPIKED_PIT) {
                     pline("You sit down on a spike.  Ouch!");
-                    losehp(1, "sitting on an iron spike", KILLED_BY);
+                    losehp(1, killer_msg(DIED, "sitting on an iron spike"));
                     exercise(A_STR, FALSE);
                 } else
                     pline("You sit down in the pit.");
@@ -92,7 +92,7 @@ dosit(const struct nh_cmd_arg *arg)
                 /* Must have fire resistance or they'd be dead already */
                 pline("You sit in the lava!");
                 u.utrap += rnd(4);
-                losehp(dice(2, 10), "sitting in lava", KILLED_BY);
+                losehp(dice(2, 10), killer_msg(DIED, "sitting in lava"));
             } else if (u.utraptype == TT_INFLOOR) {
                 pline("You can't maneuver to sit!");
                 u.utrap++;
@@ -145,8 +145,8 @@ dosit(const struct nh_cmd_arg *arg)
             return 1;
         }
         pline("The lava burns you!");
-        losehp(dice((Fire_resistance ? 2 : 10), 10), "sitting on lava",
-               KILLED_BY);
+        losehp(dice((Fire_resistance ? 2 : 10), 10),
+               killer_msg(DIED, "sitting on lava"));
 
     } else if (is_ice(level, u.ux, u.uy)) {
 
@@ -166,7 +166,7 @@ dosit(const struct nh_cmd_arg *arg)
             case 1:
                 attrib = rn2(A_MAX);
                 adjattrib(attrib, -rn1(4, 3), FALSE);
-                losehp(rnd(10), "cursed throne", KILLED_BY_AN);
+                losehp(rnd(10), killer_msg(DIED, "a cursed throne"));
                 break;
             case 2:
                 adjattrib(rn2(A_MAX), 1, FALSE);
@@ -174,8 +174,8 @@ dosit(const struct nh_cmd_arg *arg)
             case 3:
                 pline("A%s electric shock shoots through your body!",
                       (Shock_resistance) ? "n" : " massive");
-                losehp(Shock_resistance ? rnd(6) : rnd(30), "electric chair",
-                       KILLED_BY_AN);
+                losehp(Shock_resistance ? rnd(6) : rnd(30),
+                       killer_msg(DIED, "an electric chair"));
                 exercise(A_CON, FALSE);
                 break;
             case 4:

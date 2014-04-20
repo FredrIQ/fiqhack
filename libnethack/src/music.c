@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -329,8 +329,7 @@ do_earthquake(int force)
                             pline("You fall into a chasm!");
                             u.utrap = rn1(6, 2);
                             u.utraptype = TT_PIT;
-                            losehp(rnd(6), "fell into a chasm",
-                                   NO_KILLER_PREFIX);
+                            losehp(rnd(6), "fell into a chasm");
                             selftouch("Falling, you",
                                       "falling into a chasm while wielding");
                         }
@@ -394,9 +393,8 @@ do_improvisation(struct obj *instr, const struct nh_cmd_arg *arg)
                 break;
             } else if (!dx && !dy && !dz) {
                 if ((damage = zapyourself(instr, TRUE)) != 0) {
-                    const char *buf = msgprintf(
-                        "using a magical horn on %sself", uhim());
-                    losehp(damage, buf, KILLED_BY);
+                    losehp(damage,
+                           msgprintf("using a magical horn on %sself", uhim()));
                 }
             } else {
                 buzz((instr->otyp == FROST_HORN) ? AD_COLD - 1 : AD_FIRE - 1,

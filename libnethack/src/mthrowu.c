@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -40,22 +40,16 @@ ai_use_at_range(int n)
 int
 thitu(int tlev, int dam, struct obj *obj, const char *name)
 {       /* if null, then format `obj' */
-    const char *onm, *knm;
+    const char *onm, *killer;
     boolean is_acid;
-    int kprefix = KILLED_BY_AN;
 
     if (!name) {
         if (!obj)
             panic("thitu: name & obj both null?");
         name = (obj->quan > 1L) ? doname(obj) : mshot_xname(obj);
-        knm = killer_xname(obj);
-        kprefix = KILLED_BY;    /* killer_name supplies "an" if warranted */
+        killer = killer_msg_obj(DIED, obj);
     } else {
-        knm = name;
-        /* [perhaps ought to check for plural here too] */
-        if (!strncmpi(name, "the ", 4) || !strncmpi(name, "an ", 3) ||
-            !strncmpi(name, "a ", 2))
-            kprefix = KILLED_BY;
+        killer = killer_msg(DIED, an(name));
     }
     onm = (obj && obj_is_pname(obj)) ? the(name) :
       (obj && obj->quan > 1L) ? name : an(name);
@@ -86,7 +80,7 @@ thitu(int tlev, int dam, struct obj *obj, const char *name)
                 pline("It burns!");
             if (Half_physical_damage)
                 dam = (dam + 1) / 2;
-            losehp(dam, knm, kprefix);
+            losehp(dam, killer);
             exercise(A_STR, FALSE);
         }
         return 1;
@@ -410,7 +404,7 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
             }
             if (hitu && singleobj->opoisoned && is_poisonable(singleobj)) {
                 poisoned(xname(singleobj), A_STR,
-                         killer_xname(singleobj), -10);
+                         killer_msg_obj(POISONING, singleobj), -10);
             }
             if (hitu &&
                 can_blnd(NULL, &youmonst,
@@ -442,7 +436,6 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
                     !(poly_when_stoned(youmonst.data) &&
                       polymon(PM_STONE_GOLEM))) {
                     Stoned = 5;
-                    killer = NULL;
                 }
             }
             action_interrupted();

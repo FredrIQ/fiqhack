@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -25,6 +25,7 @@ static void move(int *, int *, int);
 static void setup_waterlevel(struct level *lev);
 static boolean bad_location(struct level *lev, xchar x, xchar y, xchar lx,
                             xchar ly, xchar hx, xchar hy);
+static const char * waterbody_impl(xchar x, xchar y, boolean article);
 
 
 static boolean bubble_up;
@@ -1128,22 +1129,15 @@ restore_waterlevel(struct memfile *mf, struct level *lev)
     was_waterlevel = TRUE;
 }
 
-int
-waterbody_prefix(xchar x, xchar y)
-{
-    return (Is_waterlevel(&u.uz) || is_lava(level, x, y) ||
-            !strcmp(waterbody_name(x, y), "water"))
-        ? KILLED_BY : KILLED_BY_AN;
-}
 
-const char *
-waterbody_name(xchar x, xchar y)
+static const char *
+waterbody_impl(xchar x, xchar y, boolean article)
 {
     struct rm *loc;
     schar ltyp;
 
-    if (!isok(x, y))
-        return "drink"; /* should never happen */
+    if (!isok(x, y)) /* should never happen */
+        return msgcat(article ? "a " : "", "drink");
     loc = &level->locations[x][y];
     ltyp = loc->typ;
 
@@ -1152,13 +1146,27 @@ waterbody_name(xchar x, xchar y)
     else if (is_ice(level, x, y))
         return "ice";
     else if (is_moat(level, x, y))
-        return "moat";
+        return msgcat(article ? "a " : "", "moat");
     else if ((ltyp != POOL) && (ltyp != WATER) && Is_juiblex_level(&u.uz))
-        return "swamp";
+        return msgcat(article ? "a " : "", "swamp");
     else if (ltyp == POOL)
-        return "pool of water";
+        return msgcat(article ? "a " : "", "pool of water");
     else
         return "water";
+}
+
+
+const char *
+a_waterbody(xchar x, xchar y)
+{
+    return waterbody_impl(x, y, TRUE);
+}
+
+
+const char *
+waterbody_name(xchar x, xchar y)
+{
+    return waterbody_impl(x, y, FALSE);
 }
 
 static void

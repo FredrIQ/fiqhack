@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright Scott R. Turner, srt@ucla, 10/27/86                  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -261,11 +261,12 @@ drinkfountain(void)
             if (Poison_resistance) {
                 pline("Perhaps it is runoff from the nearby %s farm.",
                       fruitname(FALSE));
-                losehp(rnd(4), "unrefrigerated sip of juice", KILLED_BY_AN);
+                losehp(rnd(4),
+                       killer_msg(DIED, "an unrefrigerated sip of juice"));
                 break;
             }
             losestr(rn1(4, 3));
-            losehp(rnd(10), "contaminated water", KILLED_BY);
+            losehp(rnd(10), killer_msg(DIED, "contaminated water"));
             exercise(A_CON, FALSE);
             break;
 
@@ -523,7 +524,7 @@ drinksink(void)
         if (Fire_resistance)
             pline("It seems quite tasty.");
         else
-            losehp(rnd(6), "sipping boiling water", KILLED_BY);
+            losehp(rnd(6), killer_msg(DIED, "sipping boiling water"));
         break;
     case 3:
         if (mvitals[PM_SEWER_RAT].mvflags & G_GONE)

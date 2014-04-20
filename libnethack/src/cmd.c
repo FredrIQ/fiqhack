@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -543,7 +543,7 @@ wiz_level_change(const struct nh_cmd_arg *arg)
         if (newlevel < 1)
             newlevel = 1;
         while (u.ulevel > newlevel)
-            losexp("#levelchange");
+            losexp(NULL, TRUE);
     } else {
         if (u.ulevel >= MAXULEV) {
             pline("You are already as experienced as you can get.");
@@ -967,10 +967,8 @@ enlightenment(int final)
     if (Passes_walls)
         you_can(&menu, "walk through walls");
 
-    /* If you die while dismounting, u.usteed is still set.  Since several
-       places in the done() sequence depend on u.usteed, just detect this
-       special case. */
-    if (u.usteed && (final < 2 || strcmp(killer, "riding accident")))
+    /* FIXME: This is printed even if you die in a riding accident. */
+    if (u.usteed)
         you_are(&menu, msgcat("riding ", y_monnam(u.usteed)));
     if (Engulfed)
         you_are(&menu, msgcat("swallowed by ", a_monnam(u.ustuck)));

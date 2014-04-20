@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-14 */
+/* Last modified by Sean Hunt, 2014-04-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -464,13 +464,13 @@ dosinkfall(void)
         pline("You wobble unsteadily for a moment.");
     } else {
         pline("You crash to the floor!");
-        losehp(rn1(8, 25 - (int)ACURR(A_CON)), fell_on_sink, NO_KILLER_PREFIX);
+        losehp(rn1(8, 25 - (int)ACURR(A_CON)), fell_on_sink);
         exercise(A_DEX, FALSE);
         selftouch("Falling, you", "crashing to the floor while wielding");
         for (obj = level->objects[u.ux][u.uy]; obj; obj = obj->nexthere)
             if (obj->oclass == WEAPON_CLASS || is_weptool(obj)) {
                 pline("You fell on %s.", doname(obj));
-                losehp(rnd(3), fell_on_sink, NO_KILLER_PREFIX);
+                losehp(rnd(3), fell_on_sink);
                 exercise(A_CON, FALSE);
             }
     }
@@ -1075,7 +1075,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
     xchar chainx = -1, chainy = -1, ballx = -1, bally = -1;
     int bc_control = 0;     /* control for ball&chain */
     boolean cause_delay = FALSE;        /* dragging ball will skip a move */
-    const char *predicament;
+    const char *predicament, *killer = 0;
     schar dz = 0;
 
     /* If we're running, mark the current space to avoid infinite loops. */
@@ -1500,7 +1500,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
                       otense(uwep, "vibrate"));
             else
                 pline("Ouch!  That hurts!");
-            losehp(2, killer, KILLED_BY);
+            losehp(2, killer);
         } else if (!hitsomething) {
             const char *buf = msgcat("a vacant spot on the ", surface(x,y));
             pline("You %s %s.", expl ? "explode at" : "attack",
@@ -2661,7 +2661,7 @@ maybe_wail(void)
 }
 
 void
-losehp(int n, const char *knam, boolean k_format)
+losehp(int n, const char *killer)
 {
     if (Upolyd) {
         u.mh -= n;
@@ -2680,10 +2680,8 @@ losehp(int n, const char *knam, boolean k_format)
     else
         action_interrupted(); /* taking damage stops command repeat */
     if (u.uhp < 1) {
-        killer_format = k_format;
-        killer = knam;  /* the thing that killed you */
         pline("You die...");
-        done(DIED);
+        done(DIED, killer);
     } else if (n > 0 && u.uhp * 10 < u.uhpmax) {
         maybe_wail();
     }
