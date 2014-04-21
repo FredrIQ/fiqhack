@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Sean Hunt, 2014-04-21 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1123,49 +1123,50 @@ mbodypart(struct monst *mon, int part)
         *const humanoid_parts[] = { "arm", "eye", "face", "finger",
         "fingertip", "foot", "hand", "handed", "head", "leg",
         "light headed", "neck", "spine", "toe", "hair",
-        "blood", "lung", "nose", "stomach"
+        "blood", "lung", "nose", "stomach", "hide"
     }, *const jelly_parts[] = { "pseudopod", "dark spot", "front",
         "pseudopod extension", "pseudopod extremity",
         "pseudopod root", "grasp", "grasped", "cerebral area",
         "lower pseudopod", "viscous", "middle", "surface",
         "pseudopod extremity", "ripples", "juices",
-        "surface", "sensor", "stomach"
+        "surface", "sensor", "stomach", "surface"
     }, *const animal_parts[] =
         { "forelimb", "eye", "face", "foreclaw", "claw tip",
         "rear claw", "foreclaw", "clawed", "head", "rear limb",
         "light headed", "neck", "spine", "rear claw tip",
-        "fur", "blood", "lung", "nose", "stomach"
+        "fur", "blood", "lung", "nose", "stomach", "hide"
     }, *const bird_parts[] = { "wing", "eye", "face", "wing", "wing tip",
         "foot", "wing", "winged", "head", "leg",
         "light headed", "neck", "spine", "toe",
-        "feathers", "blood", "lung", "bill", "stomach"
+        "feathers", "blood", "lung", "bill", "stomach", "plumage"
     }, *const horse_parts[] =
         { "foreleg", "eye", "face", "forehoof", "hoof tip",
         "rear hoof", "forehoof", "hooved", "head", "rear leg",
         "light headed", "neck", "backbone", "rear hoof tip",
-        "mane", "blood", "lung", "nose", "stomach"
+        "mane", "blood", "lung", "nose", "stomach", "hide"
     }, *const sphere_parts[] = { "appendage", "optic nerve", "body", "tentacle",
         "tentacle tip", "lower appendage", "tentacle", "tentacled",
         "body", "lower tentacle", "rotational", "equator", "body",
         "lower tentacle tip", "cilia", "life force", "retina",
-        "olfactory nerve", "interior"
+        "olfactory nerve", "interior", "cornea"
     }, *const fungus_parts[] = { "mycelium", "visual area", "front", "hypha",
         "hypha", "root", "strand", "stranded", "cap area",
         "rhizome", "sporulated", "stalk", "root", "rhizome tip",
-        "spores", "juices", "gill", "gill", "interior"
+        "spores", "juices", "gill", "gill", "interior", "zest"
     }, *const vortex_parts[] = { "region", "eye", "front", "minor current",
         "minor current", "lower current", "swirl", "swirled",
         "central core", "lower current", "addled", "center",
         "currents", "edge", "currents", "life force",
-        "center", "leading edge", "interior"
+        "center", "leading edge", "interior", "wisps"
     }, *const snake_parts[] = { "vestigial limb", "eye", "face", "large scale",
         "large scale tip", "rear region", "scale gap", "scale gapped",
         "head", "rear region", "light headed", "neck", "length",
-        "rear scale", "scales", "blood", "lung", "forked tongue", "stomach"
+        "rear scale", "scales", "blood", "lung", "forked tongue", "stomach",
+        "scales"
     }, *const fish_parts[] = { "fin", "eye", "premaxillary", "pelvic axillary",
         "pelvic fin", "anal fin", "pectoral fin", "finned", "head", "peduncle",
         "played out", "gills", "dorsal fin", "caudal fin",
-        "scales", "blood", "gill", "nostril", "stomach"
+        "scales", "blood", "gill", "nostril", "stomach", "scales"
     };
     /* claw attacks are overloaded in mons[]; most humanoids with such attacks
        should still reference hands rather than claws */
@@ -1188,8 +1189,13 @@ mbodypart(struct monst *mon, int part)
     }
     if ((mptr == &mons[PM_MUMAK] || mptr == &mons[PM_MASTODON]) && part == NOSE)
         return "trunk";
-    if (mptr == &mons[PM_SHARK] && part == HAIR)
-        return "skin";  /* sharks don't have scales */
+    if (mptr == &mons[PM_SHARK]) {
+        /* sharks don't have scales */
+        if (part == HAIR)
+            return "skin";
+        if (part == HIDE)
+            return "hide";
+    }
     if (mptr == &mons[PM_JELLYFISH] &&
         (part == ARM || part == FINGER || part == HAND || part == FOOT ||
          part == TOE))
@@ -1211,12 +1217,14 @@ mbodypart(struct monst *mon, int part)
         else if (part == ARM || part == FINGER || part == FINGERTIP ||
                  part == HAND)
             return "ray";
+        else if (part == HIDE)
+            return "glow";
         else
             return "beam";
     }
     if (mptr->mlet == S_EEL && mptr != &mons[PM_JELLYFISH])
         return fish_parts[part];
-    if (slithy(mptr) || (mptr->mlet == S_DRAGON && part == HAIR))
+    if (slithy(mptr) || (mptr->mlet == S_DRAGON && (part == HAIR || part == HIDE)))
         return snake_parts[part];
     if (mptr->mlet == S_EYE)
         return sphere_parts[part];
