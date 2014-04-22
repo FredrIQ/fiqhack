@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Sean Hunt, 2014-04-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -441,6 +441,7 @@ save_you(struct memfile *mf, struct you *y)
     mwrite8(mf, y->usptime);
     mwrite8(mf, y->uspmtime);
     mwrite8(mf, y->twoweap);
+    mwrite8(mf, y->bashmsg);
 
     mwrite(mf, y->uconduct, (sizeof y->uconduct));
     mwrite(mf, y->uconduct_time, (sizeof y->uconduct_time));

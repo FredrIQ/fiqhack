@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Sean Hunt, 2014-04-22 */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -327,7 +327,7 @@ mount_steed(struct monst * mtmp,        /* The animal */
     }
     /* setuwep handles polearms differently when you're mounted */
     if (uwep && is_pole(uwep))
-        unweapon = FALSE;
+        u.bashmsg = TRUE;
     u.usteed = mtmp;
     remove_monster(level, mtmp->mx, mtmp->my);
     teleds(mtmp->mx, mtmp->my, TRUE);
@@ -606,7 +606,7 @@ dismount_steed(int reason)
     } else
     /* polearms behave differently when not mounted */
     if (uwep && is_pole(uwep))
-        unweapon = TRUE;
+        u.bashmsg = FALSE;
     return;
 }
 

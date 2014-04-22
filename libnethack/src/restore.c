@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Sean Hunt, 2014-04-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -461,8 +461,6 @@ restgamestate(struct memfile *mf)
         if (otmp->owornmask)
             setworn(otmp, otmp->owornmask);
 
-    /* TODO: save/restore unweapon */
-
     restore_spellbook(mf);
     restore_artifacts(mf);
     restore_oracles(mf);
@@ -618,6 +616,7 @@ restore_you(struct memfile *mf, struct you *y)
     y->usptime = mread8(mf);
     y->uspmtime = mread8(mf);
     y->twoweap = mread8(mf);
+    y->bashmsg = mread8(mf);
 
     mread(mf, y->uconduct, sizeof (y->uconduct));
     mread(mf, y->uconduct_time, sizeof (y->uconduct_time));

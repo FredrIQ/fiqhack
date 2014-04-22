@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Sean Hunt, 2014-04-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -376,8 +376,8 @@ attack(struct monst * mtmp, schar dx, schar dy, enum u_interaction_mode uim)
     if (u.twoweap && !can_twoweapon())
         untwoweapon();
 
-    if (unweapon) {
-        unweapon = FALSE;
+    if (u.bashmsg) {
+        u.bashmsg = FALSE;
         if (flags.verbose) {
             if (uwep)
                 pline("You begin bashing monsters with your %s.",
@@ -607,7 +607,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
                           mon_nam(mon), more_than_1 ? "one of " : "",
                           shk_your(obj), xname(obj));
                     if (!more_than_1)
-                        uwepgone();     /* set unweapon */
+                        uwepgone();     /* set bashmsg */
                     useup(obj);
                     if (!more_than_1)
                         obj = NULL;
@@ -770,7 +770,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
                         /* egg is always either used up or transformed, so next
                            hand-to-hand attack should yield a "bashing" mesg */
                         if (obj == uwep)
-                            unweapon = TRUE;
+                            u.bashmsg = FALSE;
                         if (obj->spe && obj->corpsenm >= LOW_PM) {
                             if (obj->quan < 5)
                                 change_luck((schar) - (obj->quan));
@@ -989,7 +989,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
             /* (must be either primary or secondary weapon to get here) */
             u.twoweap = FALSE;  /* untwoweapon() is too verbose here */
             if (obj == uwep)
-                uwepgone();     /* set unweapon */
+                uwepgone();     /* set bashmsg */
             /* minor side-effect: broken lance won't split puddings */
             useup(obj);
             obj = 0;

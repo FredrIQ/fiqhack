@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Sean Hunt, 2014-04-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -79,7 +79,7 @@ setuwep(struct obj *obj)
     struct obj *olduwep = uwep;
 
     if (obj == uwep)
-        return; /* necessary to not set unweapon */
+        return; /* necessary to not set bashmsg */
     /* This message isn't printed in the caller because it happens *whenever*
        Sunsword is unwielded, from whatever cause. */
     setworn(obj, W_MASK(os_wep));
@@ -92,12 +92,9 @@ setuwep(struct obj *obj)
        Wielding one via 'a'pplying it will. 3.2.2: Wielding arbitrary objects
        will give bashing message too. */
     if (obj) {
-        unweapon = (obj->oclass == WEAPON_CLASS) ? is_launcher(obj) ||
-            is_ammo(obj) || is_missile(obj) || (is_pole(obj)
-                                                && !u.usteed) :
-            !is_weptool(obj);
+        u.bashmsg = !is_wep(obj);
     } else
-        unweapon = TRUE;        /* for "bare hands" message */
+        u.bashmsg = TRUE;        /* for "bare hands" message */
     update_inventory();
 }
 
@@ -421,7 +418,7 @@ wield_tool(struct obj * obj, const char *verb)
     if (u.twoweap && !can_twoweapon())
         untwoweapon();
     if (obj->oclass != WEAPON_CLASS)
-        unweapon = TRUE;
+        u.bashmsg = FALSE;
     return TRUE;
 }
 
@@ -523,7 +520,7 @@ uwepgone(void)
                 pline("%s glowing.", Tobjnam(uwep, "stop"));
         }
         setworn(NULL, W_MASK(os_wep));
-        unweapon = TRUE;
+        u.bashmsg = FALSE;
         update_inventory();
     }
 }

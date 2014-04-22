@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Sean Hunt, 2014-04-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -180,6 +180,7 @@ struct you {
     xchar skill_record[P_SKILL_LIMIT];  /* skill advancements */
     struct skills weapon_skills[P_NUM_SKILLS];
     boolean twoweap;    /* KMH -- Using two-weapon combat */
+    boolean bashmsg;    /* control for the "begin bashing mosnters" message */
 
     int initrole;       /* starting role (index into roles[]) */
     int initrace;       /* starting race (index into races[]) */
