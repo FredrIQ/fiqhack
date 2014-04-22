@@ -1,5 +1,5 @@
 # Emacs, the format of this file is: -*- mode:text;fill-column:86;tab-width:8;indent-tabs-mode:t -*-
-# Last modified by Derrick Sund, 2014-03-04
+# Last modified by Sean Hunt, 2014-04-22
 #	Copyright (c) 2010 by Alex Smith
 #	NetHack may be freely redistributed.
 #       See license for details.
@@ -1146,8 +1146,8 @@ lucern hammer
 	a slightly larger bonus than a battle-axe or bec de corbin.
 luckstone
 	This stone is enchanted to provide luck to its wearer, making several random
-	events happen give slightly better results on average. In addition, it
-	prevents luck wearing off over time.
+    events give slightly better results on average. In addition, it prevents
+    natural luck wearing off over time.
 lump of royal jelly
 	Food produced by bees to feed baby bee princesses, designed to make them grow
 	up into a queen bee. Eating it provides a moderate amount of nutrition, around
