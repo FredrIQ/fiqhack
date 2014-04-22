@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Sean Hunt, 2014-04-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,13 +7,14 @@
 #include "edog.h"
 #include "hungerstatus.h"
 
-static const char tools[] = { ALL_CLASSES, ALLOW_NONE, NONE_ON_COMMA,
+static const char tools[] = {
+    ALLOW_COUNT, ALL_CLASSES, ALLOW_NONE, NONE_ON_COMMA,
     TOOL_CLASS, WEAPON_CLASS, 0
 };
 
-static const char tools_too[] = { ALL_CLASSES, ALLOW_NONE, NONE_ON_COMMA,
-    TOOL_CLASS, POTION_CLASS,
-    WEAPON_CLASS, WAND_CLASS, GEM_CLASS, 0
+static const char tools_too[] = {
+    ALLOW_COUNT, ALL_CLASSES, ALLOW_NONE, NONE_ON_COMMA,
+    TOOL_CLASS, POTION_CLASS, WEAPON_CLASS, WAND_CLASS, GEM_CLASS, 0
 };
 
 static int use_camera(struct obj *, const struct nh_cmd_arg *);
