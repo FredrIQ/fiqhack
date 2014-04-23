@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-03-24
+Last modified by Sean Hunt, 2014-04-23
 
 Copyright (C) 2013 Alex Smith.
 
@@ -734,6 +734,9 @@ than with a 1-turn delay. (Grunt, cd40b25)
 Shopkeepers no longer sometimes forget about pits dug in their shops. (Grunt,
 7d66e21)
 
+Lava no longer gives an extra turn of survival if your water walking boots burn
+up (Grunt, a6951c6)
+
 
 Character
 ---------
@@ -804,11 +807,11 @@ teleporting an engulfing monster using a quantum mechanic polyform, being
 attacked by a monster with no attacks while praying, farlooking a monster seen
 only via astral vision, observing a monster turn invisible via telepathy,
 dying in a shop with multiple shopkeepers on the level, chatting to a sleeping
-steed, removing levitation while riding a flying steed or pushing a boulder
-into a pool while riding. (Ace, Un, Grunt and 4, C343-7, C343-15, C343-18,
-C343-50, C343-56 C343-69, C343-72, C343-152, C343-174, C343-233, d35ea64,
-75888c3, 50b8255, a546d6b, 85054d7, 8c6d549, c0fa205, 3e7219f, 065bac4,
-73156d5, 0a8ecf8, 7515046)
+steed, removing levitation while riding a flying steed, pushing a boulder
+into a pool while riding, or using a pickaxe when standing on water. (Ace, Un,
+Grunt and 4, C343-7, C343-15, C343-18, C343-50, C343-56 C343-69, C343-72,
+C343-152, C343-174, C343-233, d35ea64, 75888c3, 50b8255, a546d6b, 85054d7,
+8c6d549, c0fa205, 3e7219f, 065bac4, 73156d5, 0a8ecf8, 7515046, 4ed3165)
 
 Climbing a ladder no longer produces redundant messages. (Ace, 6f55aca)
 
@@ -846,6 +849,15 @@ riders are always aware of their steed. (Grunt, c063835)
 
 When rumour sources want to exercise or abuse wisdom, this is now correctly
 tied to the truthfulness/usefulness of the rumour. (4, C343-178, 125b1c9)
+
+The message for a shopkeeper being after your hide now respects polymorphed
+forms. (4, 10eb057)
+
+The game now keeps better track of causes of death across turns, preventing you
+from being turned to slime by a scroll of genocide, among others. (4, 75e737c)
+
+Objects on lava burning up now always have messages printed for them. (4,
+a6951c6)
 
 
 Crash / Memory Corruption Fixes
@@ -965,6 +977,9 @@ chance of typos. (Ace and 4, 120cdac, 5a49ff0)
 
 `a`: Now respects the `movecommand` (formerly `confirm`) option when pounding
 monsters with a polearm. (Grunt, C343-305, dca24d1)
+
+`a`: Now accepts a count, allowing in particular lighting some of a stack of
+candles. (4, c0a22a4)
 
 `^A`: Now actually works. It remembers arguments to a command in order to be
 able to repeat them; and can also now be used to resume an interrupted
@@ -1421,6 +1436,10 @@ unusual dungeon features in unusual lighting conditions. (4, 3c06767, 3b11dc1)
 
 x coordinates and y coordinates now use the same storage internally. (4,
 e61bcb3 and others)
+
+Objects intended to exist only briefly are now allocated separately and checks
+occur that they do not survive for more than a turn. Additionally, venom now
+must be temporary and accordingly cannot be wished for. (b4fd8ec, 6a04b22)
 
 
 Client/Server Structure and API
