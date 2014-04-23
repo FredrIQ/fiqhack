@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-05-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -37,7 +37,6 @@ static void mk_knox_portal(struct level *lev, xchar, xchar);
 #define create_vault(lev) create_room(lev, -1, -1, 2, 2, -1, -1, VAULT, TRUE)
 #define do_vault()        (vault_x != -1)
 static xchar vault_x, vault_y;
-boolean goldseen;
 static boolean made_branch;     /* used only during level creation */
 
 /* Args must be (const void *) so that qsort will always be happy. */
@@ -706,13 +705,12 @@ skip0:
                 maketrap(lev, x, y, WEB);
         }
         /* put traps and mimics inside */
-        goldseen = FALSE;
         x = 8 - (level_difficulty(&lev->z) / 6);
         if (x <= 1)
             x = 2;
         while (!rn2(x))
             mktrap(lev, 0, 0, croom, NULL);
-        if (!goldseen && !rn2(3)) {
+        if (!rn2(3)) {
             y = somey(croom);
             x = somex(croom);
             mkgold(0L, lev, x, y);
