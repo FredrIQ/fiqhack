@@ -707,11 +707,15 @@ drop_weapon(int alone)
 }
 
 void
-rehumanize(void)
+rehumanize(int how, const char *killer)
 {
+    if (!killer && u.mh < 1)
+        impossible("Monster HP dropped to 0 without a check for death");
+
     /* You can't revert back while unchanging */
-    if (Unchanging && (u.mh < 1))
-        done(DIED, NULL);
+    if (Unchanging && u.mh < 1) {
+        done(how, killer);
+    }
 
     if (emits_light(youmonst.data))
         del_light_source(level, LS_MONSTER, &youmonst);

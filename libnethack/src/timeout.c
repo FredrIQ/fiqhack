@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -208,7 +208,7 @@ nh_timeout(void)
         if (Unchanging)
             u.mtimedone = rnd(100 * youmonst.data->mlevel + 1);
         else
-            rehumanize();
+            rehumanize(DIED, NULL);
     }
     if (u.ucreamed)
         u.ucreamed--;
@@ -306,9 +306,9 @@ nh_timeout(void)
                 float_down(I_SPECIAL | TIMEOUT);
                 break;
             case STRANGLED:
-                done(STARVING, killer_msg(STARVING,
-                                          u.uburied ? "suffocation"
-                                                    : "strangulation"));
+                done(SUFFOCATION, killer_msg(
+                         SUFFOCATION, u.uburied ?
+                         "suffocation" : "strangulation"));
                 break;
             case FUMBLING:
                 /* call this only when a move took place.  */

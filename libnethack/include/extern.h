@@ -1320,7 +1320,7 @@ extern void set_uasmon(void);
 extern void change_sex(void);
 extern void polyself(boolean);
 extern int polymon(int);
-extern void rehumanize(void);
+extern void rehumanize(int how, const char *killer);
 extern int dobreathe(const struct nh_cmd_arg *);
 extern int dospit(const struct nh_cmd_arg *);
 extern int doremove(void);

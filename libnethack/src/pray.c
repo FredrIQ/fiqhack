@@ -318,7 +318,7 @@ fix_worst_trouble(int trouble)
         if (Upolyd && nohands(youmonst.data)) {
             if (!Unchanging) {
                 pline("Your shape becomes uncertain.");
-                rehumanize();   /* "You return to {normal} form." */
+                rehumanize(DIED, NULL);   /* "You return to {normal} form." */
             } else if ((otmp = unchanger()) != 0 && otmp->cursed) {
                 /* otmp is an amulet of unchanging */
                 goto decurse;
@@ -1659,7 +1659,7 @@ prayer_done(void)
                  "Walk no more, perversion of nature!");
         pline("You feel like you are falling apart.");
         /* KMH -- Gods have mastery over unchanging */
-        rehumanize();
+        rehumanize(DIED, NULL);
         losehp(rnd(20), killer_msg(DIED, "an residual undead turning effect"));
         exercise(A_CON, FALSE);
     } else if (Inhell) {

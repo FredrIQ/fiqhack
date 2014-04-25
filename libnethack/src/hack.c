@@ -1513,7 +1513,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
         action_completed();
         if (expl) {
             u.mh = -1;  /* dead in the current form */
-            rehumanize();
+            rehumanize(EXPLODED, "exploded in a futile attempt to attack");
         }
         return 1;
     }
@@ -2668,7 +2668,7 @@ losehp(int n, const char *killer)
         if (u.mhmax < u.mh)
             u.mhmax = u.mh;
         if (u.mh < 1)
-            rehumanize();
+            rehumanize(DIED, killer);
         else if (n > 0 && u.mh * 10 < u.mhmax && Unchanging)
             maybe_wail();
         return;

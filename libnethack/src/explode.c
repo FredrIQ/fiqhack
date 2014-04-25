@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (C) 1990 by Ken Arromdee                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -383,25 +383,25 @@ explode(int x, int y, int type, /* the same as in zap.c */
         }
 
         if (u.uhp <= 0 || (Upolyd && u.mh <= 0)) {
-            if (Upolyd) {
-                rehumanize();
-            } else {
-                int death = adtyp == AD_FIRE ? BURNING : DIED;
-                const char *killer;
+            int death = adtyp == AD_FIRE ? BURNING : DIED;
+            const char *killer;
 
-                if (olet == MON_EXPLODE) {
-                    killer = killer_msg(death, an(str));
-                } else if (type >= 0 && olet != SCROLL_CLASS) {
-                    killer = msgprintf("caught %sself in %s own %s", uhim(),
-                                       uhis(), str);
-                } else if (!strcmp(str, "burning oil")) {
-                    /* This manual check hack really sucks */
-                    killer = killer_msg(death, str);
-                } else {
-                    killer = killer_msg(death, an(str));
-                }
-                /* Known BUG: BURNING suppresses corpse in bones data, but done 
-                   does not handle killer reason correctly */
+            if (olet == MON_EXPLODE) {
+                killer = killer_msg(death, an(str));
+            } else if (type >= 0 && olet != SCROLL_CLASS) {
+                killer = msgprintf("caught %sself in %s own %s", uhim(),
+                                   uhis(), str);
+            } else if (!strcmp(str, "burning oil")) {
+                /* This manual check hack really sucks */
+                killer = killer_msg(death, str);
+            } else {
+                killer = killer_msg(death, an(str));
+            }
+            /* Known BUG: BURNING suppresses corpse in bones data, but done 
+               does not handle killer reason correctly */
+            if (Upolyd) {
+                rehumanize(death, killer);
+            } else {
                 done(death, killer);
             }
         }

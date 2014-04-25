@@ -1374,7 +1374,7 @@ eataccessory(struct obj *otmp)
             if (!Unchanging && Upolyd) {
                 accessory_has_effect(otmp);
                 makeknown(typ);
-                rehumanize();
+                rehumanize(DIED, NULL);
             }
             break;
         case AMULET_OF_STRANGULATION:  /* bad idea! */
@@ -1495,7 +1495,7 @@ fpostfx(struct obj *otmp)
                     u.mhmax++;
                 u.mh = u.mhmax;
             } else if (u.mh <= 0) {
-                rehumanize();
+                rehumanize(POISONING, "a rotten lump of royal jelly");
             }
         } else {
             u.uhp += otmp->cursed ? -rnd(20) : rnd(20);

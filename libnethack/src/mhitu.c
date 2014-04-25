@@ -988,8 +988,8 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             if (youmonst.data == &mons[PM_STRAW_GOLEM] ||
                 youmonst.data == &mons[PM_PAPER_GOLEM]) {
                 pline("You roast!");
-                /* KMH -- this is okay with unchanging */
-                rehumanize();
+                rehumanize(BURNING, msgcat("roasted to death by ",
+                                           k_monnam(mtmp)));
                 break;
             } else if (Fire_resistance) {
                 pline("The fire doesn't feel hot!");
@@ -1347,8 +1347,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             break;
         if (u.umonnum == PM_IRON_GOLEM) {
             pline("You rust!");
-            /* KMH -- this is okay with unchanging */
-            rehumanize();
+            rehumanize(DIED, msgcat("rusted to death by ", k_monnam(mtmp)));
             break;
         }
         hurtarmor(AD_RUST);
@@ -1365,8 +1364,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             break;
         if (u.umonnum == PM_WOOD_GOLEM || u.umonnum == PM_LEATHER_GOLEM) {
             pline("You rot!");
-            /* KMH -- this is okay with unchanging */
-            rehumanize();
+            rehumanize(DIED, msgcat("rotted to death by ", k_monnam(mtmp)));
             break;
         }
         hurtarmor(AD_DCAY);
@@ -1445,8 +1443,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             }
             if (u.umonnum == PM_CLAY_GOLEM) {
                 pline("Some writing vanishes from your head!");
-                /* KMH -- this is okay with unchanging */
-                rehumanize();
+                rehumanize(DIED, msgcat("deactivated by ", k_monnam(mtmp)));
                 break;
             }
             attrcurse();
@@ -2092,7 +2089,7 @@ mdamageu(struct monst *mtmp, int n)
     if (Upolyd) {
         u.mh -= n;
         if (u.mh < 1)
-            rehumanize();
+            rehumanize(DIED, killer_msg_mon(DIED, mtmp));
     } else {
         u.uhp -= n;
         if (u.uhp < 1)
@@ -2540,8 +2537,8 @@ passiveum(const struct permonst *olduasmon, struct monst *mtmp,
         case AD_PHYS:
             if (youmonst.data->mattk[i].aatyp == AT_BOOM) {
                 pline("You explode!");
-                /* KMH, balance patch -- this is okay with unchanging */
-                rehumanize();
+                u.mh = -1;
+                rehumanize(EXPLODED, killer_msg_mon(EXPLODED, mtmp));
                 goto assess_dmg;
             }
             break;

@@ -2315,7 +2315,7 @@ cancel_monst(struct monst * mdef, struct obj * obj, boolean youattack,
             if (Unchanging)
                 pline("Your amulet grows hot for a moment, then cools.");
             else
-                rehumanize();
+                rehumanize(DIED, NULL);
         }
     } else {
         mdef->mcan = TRUE;

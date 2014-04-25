@@ -2137,7 +2137,7 @@ hmonas(struct monst *mon, int tmp, schar dx, schar dy)
         }
         if (dhit == -1) {
             u.mh = -1;  /* dead in the current form */
-            rehumanize();
+            rehumanize(EXPLODED, "used a suicidal attack");
         }
         if (sum[i] == 2)
             return (boolean) passive(mon, 1, 0, mattk->aatyp);

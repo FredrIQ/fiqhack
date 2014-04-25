@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-21 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -55,35 +55,33 @@
 # define SELL_DELIBERATE        (1)
 # define SELL_DONTSELL          (2)
 
-/*
- * This is the way the game ends.  If these are rearranged, the arrays
- * in end.c and topten.c will need to be changed.
- */
+/* This is the way the game ends.  If these are rearranged or new entries are
+   added, the arrays in end.c will need to be changed. */
 # define DIED            0
 # define FIRST_ENDING    (DIED)
 # define FIRST_KILLER    (DIED)
 # define CHOKING         1
 /* POISONING is overloaded; it's also used for illness */
 # define POISONING       2
-/* STARVING is overloaded; it's used for any loss of vital resources like food
- * or air, except for drowning. */
 # define STARVING        3
 # define DROWNING        4
-# define BURNING         5
+# define SUFFOCATION     5
+# define BURNING         6
 /* DISSOLVED is for dissolving in a pool of lava */
-# define DISSOLVED       6
+# define DISSOLVED       7
 /* CRUSHING is specifically for drawbridge-related deaths, even if they aren't
  * technically a death by crushing */
-# define CRUSHING        7
-# define STONING         8
-# define TURNED_SLIME    9
-# define GENOCIDED      10
+# define CRUSHING        8
+# define STONING         9
+# define TURNED_SLIME   10
+# define EXPLODED       11
+# define GENOCIDED      12
 # define LAST_KILLER    (GENOCIDED)
 # define NUM_KILLERS    (LAST_KILLER + 1)
-# define TRICKED        11
-# define QUIT           12
-# define ESCAPED        13
-# define ASCENDED       14
+# define TRICKED        13
+# define QUIT           14
+# define ESCAPED        15
+# define ASCENDED       16
 # define LAST_ENDING    (ASCENDED)
 # define NUM_ENDINGS    (LAST_ENDING + 1)
 

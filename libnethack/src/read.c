@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1484,7 +1484,13 @@ do_class_genocide(void)
                                ultimately dying */
                             gameover = TRUE;
                         } else
-                            rehumanize();
+                            /* Cannot cause a "stuck in monster form" death
+                               (!Unchanging); but cannot have a null reason
+                               (u.mh just got damaged). Thus we use a
+                               searchable string for the death reason that
+                               looks out of place, because it should never
+                               show up. */
+                            rehumanize(GENOCIDED, "arbitrary death reason");
                     }
                     /* Self-genocide if it matches either your race or role.
                        Assumption: male and female forms share same monster
@@ -1683,7 +1689,8 @@ do_genocide(int how)
             } else
                 done(GENOCIDED, killer);
         } else if (ptr == youmonst.data) {
-            rehumanize();
+            /* As above: the death reason should never be relevant. */
+            rehumanize(GENOCIDED, "arbitrary death reason");
         }
         reset_rndmonst(mndx);
         /* While endgame messages track whether you genocided

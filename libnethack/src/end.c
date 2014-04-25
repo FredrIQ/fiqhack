@@ -58,20 +58,21 @@ static noreturn void done_noreturn(int how, const char *killer);
  */
 
 static const char *const ends[] = {     /* "when you..." */
-    "died", "choked", "were poisoned", "starved", "drowned", "burned",
-    "dissolved", "were crushed", "turned to stone", "turned into slime",
-    "were wiped out", "were tricked", "quit", "escaped", "ascended"
+    "died", "choked", "were poisoned", "starved", "drowned", "suffocated",
+    "burned", "dissolved", "were crushed", "turned to stone",
+    "turned into slime", "exploded", "were wiped out", "were tricked",
+    "quit", "escaped", "ascended"
 };
 
 const char *const killer_verb[] = {
-    "killed", "choked", "poisoned", "died", "drowned", "burned",
+    "killed", "choked", "poisoned", "died", "drowned", "died", "burned",
     "dissolved", "crushed to death", "petrified", "turned to slime",
-    "wiped out", "committed trickery", "quit", "escaped", "ascended"
+    "exploded", "wiped out", "committed trickery", "quit", "escaped", "ascended"
 };
 
 const char *const killer_preposition[] = {
-    "by", "on", "by", "of", "in", "by", "in", "by", "by", "by", "by", "",
-    "", "", ""
+    "by", "on", "by", "of", "in", "of", "by", "in", "by", "by", "by", "by",
+    "by", "", "", "", ""
 };
 
 
