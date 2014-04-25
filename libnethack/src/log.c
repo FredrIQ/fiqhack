@@ -617,8 +617,8 @@ get_log_start_of_turn_offset(void)
  * current game and the game has been synced to a target location of EOF
  * (i.e. !viewing).
  */
-static void
-start_updating_logfile(void)
+static boolean
+start_updating_logfile(boolean ok_not_at_end)
 {
     long o;
 
@@ -637,10 +637,15 @@ start_updating_logfile(void)
     o = get_log_offset();
 
     if (o != lseek(program_state.logfile, 0, SEEK_END)) {
+        if (ok_not_at_end)
+            return FALSE;
+
         if (!change_fd_lock(program_state.logfile, LT_READ, 1))
             panic("Could not downgrade to read lock on logfile");
         terminate(RESTART_PLAY);
     }
+
+    return TRUE;
 }
 
 static void
@@ -738,7 +743,7 @@ log_newgame(microseconds start_time, unsigned int seed)
 void
 log_game_over(const char *death)
 {
-    start_updating_logfile();
+    start_updating_logfile(FALSE);
     lseek(program_state.logfile,
           strlen("NHGAME "), SEEK_SET);
     lprintf("%" STATUS_LEN_STR "." STATUS_LEN_STR "s", status_string(LS_DONE));
@@ -755,7 +760,8 @@ log_backup_save(void)
     if (program_state.logfile == -1)
         panic("log_backup_save called with no logfile");
 
-    start_updating_logfile();
+    if (!start_updating_logfile(TRUE))
+        return;
 
     program_state.binary_save_location = 0;
     if (program_state.binary_save_allocated)
@@ -806,7 +812,8 @@ log_neutral_turnstate(void)
 
         /* start_updating_logfile can cause a turn restart, so place it
            outside the allocation of the new binary save */
-        start_updating_logfile();
+        if (!start_updating_logfile(TRUE))
+            return;
 
         mnew(&program_state.binary_save, &mf);
         program_state.binary_save_location = 0;
@@ -893,7 +900,7 @@ log_record_bones(struct memfile *mf)
         return;
     }
 
-    start_updating_logfile();
+    start_updating_logfile(FALSE);
 
     lprintf("B");
     log_binary(mf->buf, mf->len);
@@ -915,7 +922,7 @@ log_record_input(const char *fmt, ...)
         return;
     }
 
-    start_updating_logfile();
+    start_updating_logfile(FALSE);
 
     va_start(vargs, fmt);
     lvprintf(fmt, vargs);
@@ -936,7 +943,7 @@ log_record_line(const char *l)
         return;
     }
 
-    start_updating_logfile();
+    start_updating_logfile(FALSE);
 
     lprintf("L");
     log_binary(l, strlen(l) + 1);
@@ -970,7 +977,7 @@ log_record_menu(boolean isobjmenu, const void *el)
         return;
     }
 
-    start_updating_logfile();
+    start_updating_logfile(FALSE);
 
     lprintf(isobjmenu ? "O" : "M");
 
@@ -1010,7 +1017,7 @@ log_record_command(const char *cmd, const struct nh_cmd_arg *arg)
         return;
     }
 
-    start_updating_logfile();
+    start_updating_logfile(FALSE);
 
     if (*cmd < 'a' || *cmd > 'z')
         panic("command '%s' does not start with lowercase letter", cmd);
