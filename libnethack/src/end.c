@@ -782,35 +782,31 @@ check_survival(int how)
     return FALSE;
 }
 
+/* No longer cares about done_stopprint, mostly because it's pretty common
+   to want to 'q' through the disclose but see the tombstone */
 void
 display_rip(int how, long umoney, const char *killer)
 {
     const char *pbuf;
-    boolean show_endwin = FALSE;
+    boolean show_endwin = flags.tombstone;
     struct nh_menulist menu;
+
+    if (!program_state.game_running)
+        return;
+
+    /* clean up unneeded windows */
+    win_pause_output(P_MESSAGE);
 
     init_menulist(&menu);
 
-    /* clean up unneeded windows */
-    if (program_state.game_running) {
-        win_pause_output(P_MESSAGE);
-
-        if (!done_stopprint || flags.tombstone)
-            show_endwin = TRUE;
-    } else
-        done_stopprint = 1;
-    
-    if (!done_stopprint) {
-        const char *pbuf;
-        pbuf = msgprintf("%s %s the %s...", Goodbye(), u.uplname,
-                         how != ASCENDED ?
-                         (const char *)((u.ufemale && urole.name.f) ?
-                                        urole.name.f : urole.name.m) :
-                         (const char *)(u.ufemale ?
-                                        "Demigoddess" : "Demigod"));
-        add_menutext(&menu, pbuf);
-        add_menutext(&menu, "");
-    }
+    pbuf = msgprintf("%s %s the %s...", Goodbye(), u.uplname,
+                     how != ASCENDED ?
+                     (const char *)((u.ufemale && urole.name.f) ?
+                                    urole.name.f : urole.name.m) :
+                     (const char *)(u.ufemale ?
+                                    "Demigoddess" : "Demigod"));
+    add_menutext(&menu, pbuf);
+    add_menutext(&menu, "");
 
     if (how == ESCAPED || how == ASCENDED) {
         struct monst *mtmp;
@@ -819,33 +815,29 @@ display_rip(int how, long umoney, const char *killer)
         int i;
 
         keepdogs(TRUE);
+        /* TODO: This next line is highly dubious. */
         viz_array[0][0] |= IN_SIGHT;    /* need visibility for naming */
         mtmp = turnstate.migrating_pets;
-        if (!done_stopprint)
-            pbuf = "You";
+        pbuf = "You";
         if (mtmp) {
             while (mtmp) {
-                if (!done_stopprint)
-                    pbuf = msgcat_many(pbuf, " and ", mon_nam(mtmp), NULL);
+                pbuf = msgcat_many(pbuf, " and ", mon_nam(mtmp), NULL);
                 mtmp = mtmp->nmon;
             }
             if (!done_stopprint)
                 add_menutext(&menu, pbuf);
             pbuf = "";
         } else {
-            if (!done_stopprint)
-                pbuf = "You ";
-        }
-        if (!done_stopprint) {
-            pbuf = msgprintf("%s%s with %d point%s,", pbuf,
-                             how == ASCENDED ? "went to your reward" :
-                             "escaped from the dungeon",
-                             u.urexp, plur(u.urexp));
-            add_menutext(&menu, pbuf);
+            pbuf = "You ";
         }
 
-        if (!done_stopprint)
-            artifact_score(invent, FALSE, &menu);       /* list artifacts */
+        pbuf = msgprintf("%s%s with %d point%s,", pbuf,
+                         how == ASCENDED ? "went to your reward" :
+                         "escaped from the dungeon",
+                         u.urexp, plur(u.urexp));
+        add_menutext(&menu, pbuf);
+
+        artifact_score(invent, FALSE, &menu);       /* list artifacts */
 
         /* list valuables here */
         for (val = valuables; val->list; val++) {
@@ -875,7 +867,7 @@ display_rip(int how, long umoney, const char *killer)
             }
         }
 
-    } else if (!done_stopprint) {
+    } else {
         /* did not escape or ascend */
         if (u.uz.dnum == 0 && u.uz.dlevel <= 0) {
             /* level teleported out of the dungeon; `how' is DIED, due to
@@ -895,28 +887,21 @@ display_rip(int how, long umoney, const char *killer)
                                  dunlev(&u.uz) : depth(&u.uz));
         }
 
-        pbuf = msgprintf(" with %d point%s,", u.urexp, plur(u.urexp));
+        pbuf = msgprintf("%s with %d point%s,", pbuf, u.urexp, plur(u.urexp));
         add_menutext(&menu, pbuf);
     }
 
-    if (!done_stopprint) {
-        pbuf = msgprintf("and %ld piece%s of gold, after %u move%s.", umoney,
-                         plur(umoney), moves, plur(moves));
-        add_menutext(&menu, pbuf);
-    }
-    if (!done_stopprint) {
-        pbuf = msgprintf("You were level %d with a maximum of %d "
-                         "hit point%s when you %s.",
-                         u.ulevel, u.uhpmax, plur(u.uhpmax), ends[how]);
-        add_menutext(&menu, pbuf);
-        add_menutext(&menu, "");
-    }
-
-    if (!done_stopprint)
-        outrip(&menu, how <= LAST_KILLER, u.uplname, umoney,
-               show_endwin ? killer : "", how, getyear());
-    else
-        dealloc_menulist(&menu);
+    pbuf = msgprintf("and %ld piece%s of gold, after %u move%s.", umoney,
+                     plur(umoney), moves, plur(moves));
+    add_menutext(&menu, pbuf);
+    pbuf = msgprintf("You were level %d with a maximum of %d "
+                     "hit point%s when you %s.",
+                     u.ulevel, u.uhpmax, plur(u.uhpmax), ends[how]);
+    add_menutext(&menu, pbuf);
+    add_menutext(&menu, "");
+    
+    outrip(&menu, how <= LAST_KILLER, u.uplname, umoney,
+           show_endwin ? killer : "", how, getyear());
 }
 
 void
