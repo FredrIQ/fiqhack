@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -34,6 +34,7 @@ static int wiz_detect(const struct nh_cmd_arg *);
 static int wiz_panic(const struct nh_cmd_arg *);
 static int wiz_polyself(const struct nh_cmd_arg *);
 static int wiz_teleport(const struct nh_cmd_arg *);
+static int wiz_hpset(const struct nh_cmd_arg *);
 static int wiz_level_tele(const struct nh_cmd_arg *);
 static int wiz_level_change(const struct nh_cmd_arg *);
 static int wiz_show_seenv(const struct nh_cmd_arg *);
@@ -242,6 +243,8 @@ const struct cmd_desc cmdlist[] = {
      CMD_DEBUG | CMD_EXT},
     {"genesis", "(DEBUG) create a monster", 0, 0, TRUE, wiz_genesis,
      CMD_DEBUG | CMD_ARG_LIMIT | CMD_ARG_STR | CMD_EXT},
+    {"hpset", "(DEBUG) refill or change your current HP", 0, 0, TRUE,
+     wiz_hpset, CMD_DEBUG | CMD_EXT | CMD_ARG_LIMIT},
     {"identify", "(DEBUG) identify all items in the inventory", C('i'), 0, TRUE,
      wiz_identify, CMD_DEBUG | CMD_EXT},
     {"levelchange", "(DEBUG) change experience level", 0, 0, TRUE,
@@ -511,6 +514,28 @@ wiz_togglegen(const struct nh_cmd_arg *arg)
     pline("Monster generation is %s.",
           flags.mon_generation ? "on" : "off");
 
+    return 0;
+}
+
+/* #hpset command - refill current HP, or change it with a prefix */
+static int
+wiz_hpset(const struct nh_cmd_arg *arg)
+{
+    int *hp = Upolyd ? &u.mh : &u.uhp;
+    int *hpmax = Upolyd ? &u.mhmax : &u.uhpmax;
+    if (arg->argtype & CMD_ARG_LIMIT)
+        *hp = arg->limit;
+    else
+        *hp = *hpmax;
+
+    if (*hp < 1)
+        *hp = 1;
+    if (*hp >= *hpmax) {
+        *hp = *hpmax;
+        pline("You feel entirely healed.");
+    } else {
+        pline("You feel very precisely wounded.");
+    }
     return 0;
 }
 
