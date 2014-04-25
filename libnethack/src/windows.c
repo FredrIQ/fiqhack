@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -113,11 +113,11 @@ getdir(const char *s, schar * dx, schar * dy, schar * dz, boolean isarg)
     enum nh_direction dir;
     int dirint;
 
-    if (!log_replay_input(0, "D%d", &dirint))
-        dir = (*windowprocs.win_getdir) (query, restricted);
+    if (log_replay_input(1, "D%d", &dirint))
+        dir = dirint;
     else {
         log_replay_no_more_options();
-        dir = dirint;
+        dir = (*windowprocs.win_getdir) (query, restricted);
     }
 
     log_record_input("D%d", (int)dir);
