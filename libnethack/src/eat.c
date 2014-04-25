@@ -167,10 +167,6 @@ choke(struct obj *food)
         morehungry(1000);       /* you just got *very* sick! */
         vomit();
     } else {
-        /* 
-         * Note all "killer"s below read "Choked on a/an %s" on the
-         * high score list & tombstone.  So plan accordingly.
-         */
         const char *killer;
         if (food) {
             pline("You choke over your %s.", foodword(food));

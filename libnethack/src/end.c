@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -126,7 +126,7 @@ killer_msg_mon(int how, struct monst *mtmp) {
     if ((mtmp->data->geno & G_UNIQ) != 0 &&
         !(mtmp->data == &mons[PM_HIGH_PRIEST] && !mtmp->ispriest)) {
         /* "killed by the high priest of Crom" is okay, "killed by the high
-         * priest" alone isn't */
+           priest" alone isn't */
         if (!type_is_pname(mtmp->data))
             buf = "the ";
     }
@@ -211,14 +211,16 @@ void set_delayed_killer(int how, const char *killer) {
 }
 
 
-const char *delayed_killer(int how) {
-    const char **var = delayed_killer_var(how);
+const char *
+delayed_killer(int how) {
+    char **var = delayed_killer_var(how);
 
     return var ? *var : NULL;
 }
 
 
-void clear_delayed_killers(void) {
+void
+clear_delayed_killers(void) {
     set_delayed_killer(POISONING, NULL);
     set_delayed_killer(STONING, NULL);
     set_delayed_killer(TURNED_SLIME, NULL);
@@ -797,8 +799,8 @@ check_survival(int how)
                 pline("Unfortunately you are still genocided...");
             else {
                 historic_event(FALSE,
-                            "were saved from death by your amulet of life "
-                            "saving!");
+                               "were saved from death by your amulet of life "
+                               "saving!");
                 return TRUE;
             }
         }
@@ -835,11 +837,6 @@ display_rip(int how, long umoney, const char *killer)
     } else
         done_stopprint = 1;
     
-    /* TODO: I'm reasonably sure these end up getting appended twice. I'm
-       in the middle of a large rewrite right now and don't want to change
-       more than I have to (that's burnt me before), but if someone sees
-       this comment lying around in the codebase, complain at me --AIS */
-
     if (!done_stopprint) {
         const char *pbuf;
         pbuf = msgprintf("%s %s the %s...", Goodbye(), u.uplname,
@@ -959,7 +956,6 @@ display_rip(int how, long umoney, const char *killer)
         dealloc_menulist(&menu);
 }
 
-/* Be careful not to call panic from here! */
 void
 done(int how, const char *killer)
 {
@@ -969,7 +965,6 @@ done(int how, const char *killer)
     done_noreturn(how, killer);
 }
 
-/* Be careful not to call panic from here! */
 static noreturn void
 done_noreturn(int how, const char *killer)
 {
@@ -1069,8 +1064,8 @@ done_noreturn(int how, const char *killer)
     if (bones_ok && !discover) {
         if (!wizard || yn("Save bones?") == 'y')
             savebones(corpse);
-        /* corpse may be invalid pointer now so ensure that it isn't used again 
-         */
+        /* corpse may be invalid pointer now, so ensure that it isn't used
+           again */
         corpse = NULL;
     }
 

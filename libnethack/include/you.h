@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-22 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -76,13 +76,10 @@ struct you {
 
     unsigned umconf;
 
-    /* uwhybusy is reason for helplessness, "killed by ..., while uwhybusy", or
-       reason for occupation, "You stop uwhybusy."; which is determined by
-       u_helpless(hm_all) and flags.occupation. (You can't be helpless and
-       occupied at the same time; the definition of helplessness precludes the
-       character from doing anything.) If neither u_helpless(hm_all) nor
-       flags.occupation is nonzero, this is meaningless (which is OK, because
-       it's initialized in both action_incomplete() and helpless()). */
+    /* uwhybusy is the reason for an occupation occuring (e.g.  "You stop
+       uwhybusy.") This is undefined when flags.occupation is zero.
+    
+       TODO: This needs a better memory allocation scheme. */
     char uwhybusy[BUFSZ];
 
 # define SICK_VOMITABLE 0x01
@@ -92,9 +89,7 @@ struct you {
     /* This range can never be more than MAX_RANGE (vision.h). */
     int nv_range;       /* current night vision range */
 
-    /* 
-     * These variables are valid globally only when punished and blind.
-     */
+    /* These variables are valid globally only when punished and blind. */
 # define BC_BALL  0x01  /* bit mask for ball in 'bc_felt' below */
 # define BC_CHAIN 0x02  /* bit mask for chain in 'bc_felt' below */
     int bglyph; /* glyph under the ball */
@@ -192,9 +187,8 @@ struct you {
     char uplname[PL_NSIZ];       /* player name */
 
     /* These pointers own the strings pointed to since they persist across turns
-     * on occaision. Only the code in end.c, as well as save/restore code, should
-     * manipulate these directly
-     */
+       on occasion (allocation is via malloc). Only the code in end.c, as well
+       as save/restore code, should manipulate these directly. */
     struct {
         const char *stoning;
         const char *sliming;
