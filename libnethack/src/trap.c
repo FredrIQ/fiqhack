@@ -797,7 +797,7 @@ dotrap(struct trap *trap, unsigned trflags)
             pline("You are covered with rust!");
             if (Half_physical_damage)
                 dam = (dam + 1) / 2;
-            losehp(dam, killer_msg(DIED, "rusting away"));
+            losehp(dam, "rusted away by a rust trap");
             break;
         } else if (u.umonnum == PM_GREMLIN && rn2(3)) {
             pline("%s you!", A_gush_of_water_hits);
@@ -2890,7 +2890,9 @@ drown(void)
         i = dice(2, 6);
         if (u.mhmax > i)
             u.mhmax -= i;
-        losehp(i, killer_msg(DIED, "rusting away"));
+        losehp(i, killer_msg(DIED, msgcat("rusted away in ",
+                                          Is_waterlevel(&u.uz) ? "water" :
+                                          a_waterbody(u.ux, u.uy))));
     }
     if (inpool_ok)
         return FALSE;

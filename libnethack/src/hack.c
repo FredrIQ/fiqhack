@@ -1500,7 +1500,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
                       otense(uwep, "vibrate"));
             else
                 pline("Ouch!  That hurts!");
-            losehp(2, killer);
+            losehp(2, killer_msg(DIED, killer));
         } else if (!hitsomething) {
             const char *buf = msgcat("a vacant spot on the ", surface(x,y));
             pline("You %s %s.", expl ? "explode at" : "attack",
