@@ -190,10 +190,10 @@ struct you {
        on occasion (allocation is via malloc). Only the code in end.c, as well
        as save/restore code, should manipulate these directly. */
     struct {
-        const char *stoning;
-        const char *sliming;
-        const char *illness;
-        const char *genocide;
+        char *stoning;
+        char *sliming;
+        char *illness;
+        char *genocide;
     } delayed_killers;
 
     int lastinvnr;

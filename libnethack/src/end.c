@@ -39,7 +39,7 @@ static const struct val_list {
 
 static const char *add_killer_notes(int how, boolean carried,
                                     const char *killer);
-static const char **delayed_killer_var(int how);
+static char **delayed_killer_var(int how);
 static void disclose(int, boolean, long);
 static void dump_disclose(int);
 static void get_valuables(struct obj *);
@@ -169,7 +169,7 @@ killer_msg_obj(int how, struct obj *obj) {
 }
 
 
-static const char**
+static char**
 delayed_killer_var(int how) {
     switch (how) {
     case POISONING:
@@ -191,14 +191,15 @@ delayed_killer_var(int how) {
 }
 
 
-void set_delayed_killer(int how, const char *killer) {
-    const char **var = delayed_killer_var(how);
+void
+set_delayed_killer(int how, const char *killer) {
+    char **var = delayed_killer_var(how);
 
     if (!var)
         return;
 
     if (*var) {
-        free((char*)*var);
+        free(*var);
         *var = NULL;
     }
 
