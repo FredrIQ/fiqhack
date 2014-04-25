@@ -788,7 +788,6 @@ void
 display_rip(int how, long umoney, const char *killer)
 {
     const char *pbuf;
-    boolean show_endwin = flags.tombstone;
     struct nh_menulist menu;
 
     if (!program_state.game_running)
@@ -799,12 +798,13 @@ display_rip(int how, long umoney, const char *killer)
 
     init_menulist(&menu);
 
-    pbuf = msgprintf("%s %s the %s...", Goodbye(), u.uplname,
+    pbuf = msgprintf("%s %s the %s, %s...", Goodbye(), u.uplname,
                      how != ASCENDED ?
                      (const char *)((u.ufemale && urole.name.f) ?
                                     urole.name.f : urole.name.m) :
                      (const char *)(u.ufemale ?
-                                    "Demigoddess" : "Demigod"));
+                                    "Demigoddess" : "Demigod"),
+                     killer);
     add_menutext(&menu, pbuf);
     add_menutext(&menu, "");
 
@@ -900,8 +900,8 @@ display_rip(int how, long umoney, const char *killer)
     add_menutext(&menu, pbuf);
     add_menutext(&menu, "");
     
-    outrip(&menu, how <= LAST_KILLER, u.uplname, umoney,
-           show_endwin ? killer : "", how, getyear());
+    outrip(&menu, how <= LAST_KILLER && flags.tombstone, 
+           u.uplname, umoney, killer, how, getyear());
 }
 
 void
@@ -1017,8 +1017,8 @@ done_noreturn(int how, const char *killer)
         corpse = NULL;
     }
 
-    end_dump(how, umoney, killer);
-    display_rip(how, umoney, killer);
+    end_dump(how, umoney, noted_killer);
+    display_rip(how, umoney, noted_killer);
 
     /* generate a topten entry for this game. update_topten does not display
        anything. */
