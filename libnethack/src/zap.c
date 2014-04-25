@@ -2403,7 +2403,7 @@ zap_updown(struct obj *obj, schar dz)
             pline("A rock is dislodged from the %s and falls on your %s.",
                   ceiling(x, y), body_part(HEAD));
             losehp(rnd((uarmh && is_metallic(uarmh)) ? 2 : 6),
-                   killer_msg(DIED, "a falling rock"));
+                   killer_msg(DIED, "smashing up the ceiling"));
             if ((otmp = mksobj_at(ROCK, level, x, y, FALSE, FALSE)) != 0) {
                 xname(otmp);    /* set dknown, maybe bknown */
                 stackobj(otmp);

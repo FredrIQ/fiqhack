@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -355,6 +355,7 @@ extern const char *Adjmonnam(const struct monst *, const char *);
 extern const char *Amonnam(const struct monst *);
 extern const char *a_monnam(const struct monst *);
 extern const char *distant_monnam(const struct monst *, int);
+extern const char *k_monnam(const struct monst *);
 extern const char *s_suffix(const char *);
 extern int rndmonidx(void);
 extern const char *monnam_for_index(int);
@@ -526,7 +527,7 @@ extern noreturn void terminate(enum nh_play_status);
 extern noreturn void panic(const char *, ...) PRINTFLIKE(1,2);
 extern int done2(void);
 extern int doquit(const struct nh_cmd_arg *);
-extern void done_in_by(struct monst *);
+extern void done_in_by(struct monst *, const char *);
 extern void done(int, const char *killer);
 extern int num_vanquished(void);
 extern int num_genocides(void);
@@ -701,7 +702,7 @@ extern int look_here(int, boolean, boolean, boolean);
 extern int dolook(const struct nh_cmd_arg *);
 extern int dofeel(const struct nh_cmd_arg *);
 extern boolean will_feel_cockatrice(struct obj *, boolean);
-extern void feel_cockatrice(struct obj *, boolean);
+extern boolean feel_cockatrice(struct obj *, boolean, const char *verbing);
 extern void stackobj(struct obj *obj);
 extern int doprgold(const struct nh_cmd_arg *);
 extern int doprwep(const struct nh_cmd_arg *);

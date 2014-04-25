@@ -533,7 +533,7 @@ do_entity(struct entity *etmp)
                 else
                     You_hear("a crushing sound.");
                 e_died(etmp, e_inview ? 3 : 2, CRUSHING,
-                       killer_msg(CRUSHING, "a falling drawbridge"));
+                       killer_msg(CRUSHING, "a falling portcullis"));
                 /* no corpse */
                 return;
             }

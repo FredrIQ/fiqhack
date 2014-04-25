@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -930,8 +930,9 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
             while (n--) {
                 if (!dx && !dy && !dz) {
                     if ((damage = zapyourself(pseudo, TRUE)) != 0)
-                        losehp(damage, msgprintf("zapped %sself with a spell",
-                                                 uhim()));
+                        losehp(damage, msgprintf(
+                                   "zapped %sself with an exploding spell",
+                                   uhim()));
                 } else {
                     explode(dx, dy, pseudo->otyp - SPE_MAGIC_MISSILE + 10,
                             u.ulevel / 2 + 1 + spell_damage_bonus(), 0,

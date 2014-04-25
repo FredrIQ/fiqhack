@@ -119,53 +119,13 @@ killer_msg(int how, const char *killer) {
 
 const char *
 killer_msg_mon(int how, struct monst *mtmp) {
-    const char *buf = "";
-    boolean distorted = (boolean) (Hallucination && canspotmon(mtmp));
-    boolean article = FALSE;
-
-    if ((mtmp->data->geno & G_UNIQ) != 0 &&
-        !(mtmp->data == &mons[PM_HIGH_PRIEST] && !mtmp->ispriest)) {
-        /* "killed by the high priest of Crom" is okay, "killed by the high
-           priest" alone isn't */
-        if (!type_is_pname(mtmp->data))
-            buf = "the ";
-    }
-    else if (mtmp->data == &mons[PM_GHOST] && mtmp->mnamelth) {
-        /* _the_ <invisible> <distorted> ghost of Dudley */
-        buf = "the ";
-    } else if (!(mtmp->data->geno & G_UNIQ)) {
-        article = TRUE;
-    }
-
-    if (mtmp->minvis)
-        buf = msgcat(buf, "invisible ");
-    if (distorted)
-        buf = msgcat(buf, "hallucinogen-distorted ");
-
-    if (mtmp->data == &mons[PM_GHOST]) {
-        buf = msgcat(buf, "ghost");
-        if (mtmp->mnamelth)
-            buf = msgprintf("%sof %s", buf, NAME(mtmp));
-    } else if (mtmp->isshk) {
-        buf = msgprintf("%s%s %s, the shopkeeper", buf,
-                        (mtmp->female ? "Ms." : "Mr."), shkname(mtmp));
-    } else if (mtmp->ispriest || mtmp->isminion) {
-        /* m_monnam() suppresses "the" prefix plus "invisible", and it
-           overrides the effect of Hallucination on priestname() */
-        buf = msgcat(buf, m_monnam(mtmp));
-    } else {
-        buf = msgcat(buf, mtmp->data->mname);
-        if (mtmp->mnamelth)
-            buf = msgcat_many(buf, " called ", NAME(mtmp), NULL);
-    }
-
-    return killer_msg(how, article ? an(buf) : buf);
+    return killer_msg(how, k_monnam(mtmp));
 }
 
 
 const char *
 killer_msg_obj(int how, struct obj *obj) {
-    return killer_msg(how, an(killer_xname(obj)));
+    return killer_msg(how, killer_xname(obj));
 }
 
 
@@ -254,7 +214,7 @@ doquit(const struct nh_cmd_arg *arg)
 
 
 void
-done_in_by(struct monst *mtmp)
+done_in_by(struct monst *mtmp, const char *override_msg)
 {
     pline("You die...");
 
@@ -270,9 +230,10 @@ done_in_by(struct monst *mtmp)
         u.ugrave_arise = NON_PM;
 
     if (touch_petrifies(mtmp->data)) {
-        done(STONING, killer_msg_mon(STONING, mtmp));
+        done(STONING, override_msg ? override_msg :
+             killer_msg_mon(STONING, mtmp));
     } else {
-        done(DIED, killer_msg_mon(DIED, mtmp));
+        done(DIED, override_msg ? override_msg : killer_msg_mon(DIED, mtmp));
     }
 
     return;

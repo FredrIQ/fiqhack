@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-22 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2380,7 +2380,7 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
                                                && polymon(PM_STONE_GOLEM))) {
                         pline("Snatching %s corpse is a fatal mistake.",
                               an(mons[otmp->corpsenm].mname));
-                        instapetrify( killer_msg(STONING,
+                        instapetrify(killer_msg(STONING,
                             msgprintf("snatching %s corpse",
                                       an(mons[otmp->corpsenm].mname))));
                     }

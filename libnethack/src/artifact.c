@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -519,7 +519,7 @@ touch_artifact(struct obj *obj, struct monst *mon)
         pline("You are blasted by %s power!", s_suffix(the(xname(obj))));
         dmg = dice((Antimagic ? 2 : 4), (self_willed ? 10 : 4));
         buf = msgprintf("touching %s", oart->name);
-        losehp(dmg, buf);
+        losehp(dmg, killer_msg(DIED, buf));
         exercise(A_WIS, FALSE);
     }
 
@@ -1049,7 +1049,7 @@ artifact_hit_drainlife(struct monst *magr, struct monst *mdef, struct obj *otmp,
             pline("The %s blade drains your life!", hcolor("black"));
         else
             pline("%s drains your life!", The(distant_name(otmp, xname)));
-        losexp(killer_msg(DIED, "life drainage"), FALSE);
+        losexp(msgcat("drained of life by ", artiname(otmp->oartifact)), FALSE);
         if (magr && magr->mhp < magr->mhpmax) {
             magr->mhp += (oldhpmax - u.uhpmax) / 2;
             if (magr->mhp > magr->mhpmax)

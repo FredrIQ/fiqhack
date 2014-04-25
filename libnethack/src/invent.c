@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1833,7 +1833,10 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
                 /* If swallower is an animal, it should have become stone
                    but... */
                 if (otmp->otyp == CORPSE)
-                    feel_cockatrice(otmp, feeling);
+                    feel_cockatrice(otmp, feeling,
+                                    msgcat_many("searching a monster's ",
+                                                mbodypart(mtmp, STOMACH),
+                                                " for", NULL));
             }
             if (feeling)
                 fbuf = "You feel";
@@ -1904,8 +1907,11 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
             pline("You %s here %s {%d}.", verb, doname_price(otmp), otmp->owt);
         else 
             pline("You %s here %s.", verb, doname_price(otmp));
+        /* This is the same death message as beow, contrary to the normal rules
+           for death messages, because petrifying yourself on a cockatrice works
+           the same way whether there's on or many items on the square. */
         if (otmp->otyp == CORPSE)
-            feel_cockatrice(otmp, feeling);
+            feel_cockatrice(otmp, feeling, "feeling around for");
     } else {
 
         init_objmenulist(&objlist);
@@ -1933,7 +1939,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
             dealloc_objmenulist(&objlist);
 
         if (felt_cockatrice)
-            feel_cockatrice(otmp, feeling);
+            feel_cockatrice(otmp, feeling, "feeling around for");
         read_engr_at(u.ux, u.uy);
     }
     return ! !feeling;
@@ -1967,21 +1973,27 @@ will_feel_cockatrice(struct obj * otmp, boolean force_touch)
     return FALSE;
 }
 
-void
-feel_cockatrice(struct obj *otmp, boolean force_touch)
+/* Returns TRUE if the action in question was aborted via the stoning
+   process. */
+boolean
+feel_cockatrice(struct obj *otmp, boolean force_touch, const char *verbing)
 {
+    boolean rv = FALSE;
     if (will_feel_cockatrice(otmp, force_touch)) {
         if (poly_when_stoned(youmonst.data))
             pline("You touched the %s corpse with your bare %s.",
                   mons[otmp->corpsenm].mname, makeplural(body_part(HAND)));
-        else
+        else {
             pline("Touching the %s corpse is a fatal mistake...",
                   mons[otmp->corpsenm].mname);
-        instapetrify(killer_msg_obj(STONING, otmp));
+            rv = TRUE;
+        }
+        instapetrify(killer_msg(STONING,
+                                msgcat_many(verbing, " ",
+                                            killer_xname(otmp), NULL)));
     }
+    return rv;
 }
-
-
 
 void
 stackobj(struct obj *obj)

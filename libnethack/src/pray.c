@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -416,7 +416,8 @@ fix_worst_trouble(int trouble)
     }
 }
 
-/* "I am sometimes shocked by...  the nuns who never take a bath without
+/*
+ * "I am sometimes shocked by...  the nuns who never take a bath without
  * wearing a bathrobe all the time.  When asked why, since no man can see them,
  * they reply 'Oh, but you forget the good God'.  Apparently they conceive of
  * the Deity as a Peeping Tom, whose omnipotence enables Him to see through
@@ -1161,7 +1162,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
         break_conduct(conduct_gnostic);
 
         /* you're handling this corpse, even if it was killed upon the altar */
-        feel_cockatrice(otmp, TRUE);
+        feel_cockatrice(otmp, TRUE, "sacrificing");
 
         if (otmp->corpsenm == PM_ACID_BLOB ||
             (moves <= peek_at_iced_corpse_age(otmp) + 50)) {
@@ -1306,7 +1307,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                 pline("%s is enraged...", u_gname());
                 pline("Fortunately, %s permits you to live...", a_gname());
                 pline("A cloud of %s smoke surrounds you...", hcolor("orange"));
-                done(ESCAPED, NULL);
+                done(ESCAPED, NULL); /* "in celestial disgrace" added later */
             } else {    /* super big win */
                 adjalign(10);
                 pline("An invisible choir sings, and you are bathed in "

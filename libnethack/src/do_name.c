@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-13 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -494,7 +494,7 @@ rndghostname(void)
  *                seen        unseen       detected               named
  * mon_nam:     the newt        it      the invisible orc       Fido
  * noit_mon_nam:the newt (as if detected) the invisible orc     Fido
- * l_monnam:    newt            it      invisible orc           dog called fido
+ * l_monnam:    newt            it      invisible orc           dog called Fido
  * Monnam:      The newt        It      The invisible orc       Fido
  * noit_Monnam: The newt (as if detected) The invisible orc     Fido
  * Adjmonnam:   The poor newt   It      The poor invisible orc  The poor Fido
@@ -502,6 +502,7 @@ rndghostname(void)
  * a_monnam:    a newt          it      an invisible orc        Fido
  * m_monnam:    newt            xan     orc                     Fido
  * y_monnam:    your newt     your xan  your invisible orc      Fido
+ * k_monnam:    a newt        a xan     an invisible orc     a dog called "Fido"
  */
 
 /* Bug: if the monster is a priest or shopkeeper, not every one of these
@@ -762,6 +763,53 @@ distant_monnam(const struct monst *mon, int article)
         return x_monnam(mon, article, NULL, 0, TRUE);
     }
 }
+
+/* appropriate monster name for a death message */
+const char *
+k_monnam(const struct monst *mtmp) {
+    const char *buf = "";
+    boolean distorted = (boolean) (Hallucination && canspotmon(mtmp));
+    boolean article = FALSE;
+
+    if ((mtmp->data->geno & G_UNIQ) != 0 &&
+        !(mtmp->data == &mons[PM_HIGH_PRIEST] && !mtmp->ispriest)) {
+        /* "killed by the high priest of Crom" is okay, "killed by the high
+           priest" alone isn't */
+        if (!type_is_pname(mtmp->data))
+            buf = "the ";
+    }
+    else if (mtmp->data == &mons[PM_GHOST] && mtmp->mnamelth) {
+        /* _the_ <invisible> <distorted> ghost of Dudley */
+        buf = "the ";
+    } else if (!(mtmp->data->geno & G_UNIQ)) {
+        article = TRUE;
+    }
+
+    if (mtmp->minvis)
+        buf = msgcat(buf, "invisible ");
+    if (distorted)
+        buf = msgcat(buf, "hallucinogen-distorted ");
+
+    if (mtmp->data == &mons[PM_GHOST]) {
+        buf = msgcat(buf, "ghost");
+        if (mtmp->mnamelth)
+            buf = msgprintf("%sof %s", buf, NAME(mtmp));
+    } else if (mtmp->isshk) {
+        buf = msgprintf("%s%s %s, the shopkeeper", buf,
+                        (mtmp->female ? "Ms." : "Mr."), shkname(mtmp));
+    } else if (mtmp->ispriest || mtmp->isminion) {
+        /* m_monnam() suppresses "the" prefix plus "invisible", and it
+           overrides the effect of Hallucination on priestname() */
+        buf = msgcat(buf, m_monnam(mtmp));
+    } else {
+        buf = msgcat(buf, mtmp->data->mname);
+        if (mtmp->mnamelth)
+            buf = msgcat_many(buf, " called \"", NAME(mtmp), "\"", NULL);
+    }
+
+    return article ? an(buf) : buf;
+}
+
 
 /* Returns a name converted to possessive. Moved here from hacklib so that it's
    allowed to use the msg* functions; it's only called from libnethack

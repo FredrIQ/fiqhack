@@ -1185,7 +1185,9 @@ zap_dig(schar dx, schar dy, schar dz)
                 pline("You loosen a rock from the %s.", ceiling(u.ux, u.uy));
                 pline("It falls on your %s!", body_part(HEAD));
                 losehp(rnd((uarmh && is_metallic(uarmh)) ? 2 : 6),
-                       killer_msg(DIED, "a falling rock"));
+                       killer_msg(DIED, msgcat_many(
+                                      "collapsing the ceiling on top of ",
+                                      uhim(), "self", NULL)));
                 otmp = mksobj_at(ROCK, level, u.ux, u.uy, FALSE, FALSE);
                 if (otmp) {
                     xname(otmp);        /* set dknown, maybe bknown */

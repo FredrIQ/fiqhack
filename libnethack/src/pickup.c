@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1039,17 +1039,11 @@ pickup_object(struct obj *obj, long count, boolean telekinesis)
     } else if (obj->oartifact && !touch_artifact(obj, &youmonst)) {
         return 0;
     } else if (obj->otyp == CORPSE) {
-        if ((touch_petrifies(&mons[obj->corpsenm])) && !uarmg &&
-            !Stone_resistance && !telekinesis) {
-            if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
-                win_pause_output(P_MESSAGE);
-            else {
-                pline("Touching %s is a fatal mistake.",
-                      the(corpse_xname(obj, TRUE)));
-                instapetrify(killer_msg_obj(STONING, obj));
-                return -1;
-            }
-        } else if (is_rider(&mons[obj->corpsenm])) {
+        if (feel_cockatrice(obj, TRUE, telekinesis ? "pulling in" :
+                            "picking up"))
+            return -1;
+
+        if (is_rider(&mons[obj->corpsenm])) {
             pline("At your %s, the corpse suddenly moves...",
                   telekinesis ? "attempted acquisition" : "touch");
             revive_corpse(obj);
@@ -1600,17 +1594,8 @@ in_container(struct obj *obj)
     }
 
     if (obj->otyp == CORPSE) {
-        if ((touch_petrifies(&mons[obj->corpsenm])) && !uarmg &&
-            !Stone_resistance) {
-            if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
-                win_pause_output(P_MESSAGE);
-            else {
-                pline("Touching %s is a fatal mistake.",
-                      the(corpse_xname(obj, TRUE)));
-                instapetrify(killer_msg_obj(STONING, obj));
-                return -1;
-            }
-        }
+        if (feel_cockatrice(obj, TRUE, "stashing away"))
+            return -1;
     }
 
     /* boxes, boulders, and big statues can't fit into any container */
@@ -1712,17 +1697,8 @@ out_container(struct obj *obj)
         return 0;
 
     if (obj->otyp == CORPSE) {
-        if ((touch_petrifies(&mons[obj->corpsenm])) && !uarmg &&
-            !Stone_resistance) {
-            if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
-                win_pause_output(P_MESSAGE);
-            else {
-                pline("Touching %s is a fatal mistake.",
-                      the(corpse_xname(obj, TRUE)));
-                instapetrify(killer_msg_obj(STONING, obj));
-                return -1;
-            }
-        }
+        if (feel_cockatrice(obj, TRUE, "retrieving"))
+            return -1;
     }
 
     count = obj->quan;

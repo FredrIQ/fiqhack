@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-22 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1579,7 +1579,10 @@ damageum(struct monst *mdef, const struct attack *mattk)
         break_conduct(conduct_food);
         if (touch_petrifies(mdef->data) && !Stone_resistance && !Stoned) {
             Stoned = 5;
-            killer_msg_mon(STONING, mdef);
+            set_delayed_killer(STONING,
+                               killer_msg(STONING,
+                                          msgcat("eating the brain of ",
+                                                 k_monnam(mdef))));
         }
         if (!vegan(mdef->data))
             break_conduct(conduct_vegan);
@@ -2214,13 +2217,19 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
                 (protector == W_MASK(os_armh) && !uarmh) ||
                 (protector == (W_MASK(os_armc) | W_MASK(os_armg)) &&
                  (!uarmc || !uarmg))) {
-                if (!Stone_resistance &&
-                    !(poly_when_stoned(youmonst.data) &&
-                      polymon(PM_STONE_GOLEM))) {
-                    pline("You turn to stone...");
-                    done_in_by(mon);
-                    return 2;
-                }
+                const char *killer = "attacking %s directly";
+                if (protector == W_MASK(os_armg))
+                    killer = "punching %s barehanded";
+                else if (protector == W_MASK(os_armf))
+                    killer = "kicking %s barefoot";
+                else if (protector == W_MASK(os_armh))
+                    killer = "headbutting %s with no helmet";
+                else if (protector == (W_MASK(os_armc) | W_MASK(os_armg)))
+                    killer = uarmc ? "hugging %s without gloves" :
+                        "hugging %s without a cloak";
+                killer = msgprintf(killer, k_monnam(mon));
+                instapetrify(killer_msg(STONING, killer));
+                return 2;
             }
         }
         break;

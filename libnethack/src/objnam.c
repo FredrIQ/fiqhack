@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-06 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -28,7 +28,7 @@
    cxname(obj): xname, but with specific corpse naming
    "potion of sickness", "horse corpses"
    killer_xname(obj): name from the game's view, minus info like BCU and
-       greasedness
+       greasedness, and any user-controlled portions in quotes
    "scroll of mail" (even if un-IDed)
    singular(obj,func): name one object of a stack as per func
    an(str): prefix "a" or "an" to str, if necessary
@@ -70,7 +70,8 @@
 
 static boolean wishymatch(const char *, const char *, boolean);
 static const char *add_erosion_words(const struct obj *obj, const char *);
-static const char *xname2(const struct obj *obj, boolean ignore_oquan);
+static const char *xname2(const struct obj *obj,
+                          boolean ignore_oquan, boolean mark_user);
 
 struct Jitem {
     int item;
@@ -265,12 +266,12 @@ examine_object(struct obj *obj)
 const char *
 xname(const struct obj *obj)
 {
-    return xname2(obj, FALSE);
+    return xname2(obj, FALSE, FALSE);
 }
 
 
 static const char *
-xname2(const struct obj *obj, boolean ignore_oquan)
+xname2(const struct obj *obj, boolean ignore_oquan, boolean mark_user)
 {
     const char *buf;
     int typ = obj->otyp;
@@ -287,6 +288,9 @@ xname2(const struct obj *obj, boolean ignore_oquan)
         actualn = Japanese_item_name(typ);
 
     buf = "";
+
+    if (un && mark_user)
+        un = msgcat_many("\"", un, "\"", NULL);
 
     /* Clean up known when it's tied to oc_name_known, eg after AD_DRIN. This
        is only required for unique objects since the article printed for the
@@ -391,6 +395,8 @@ xname2(const struct obj *obj, boolean ignore_oquan)
             }
             if (!f)
                 impossible("Bad fruit #%d?", obj->spe);
+            if (mark_user)
+                buf = msgcat_many("\"", buf, "\"", NULL);
             break;
         }
 
@@ -540,7 +546,10 @@ xname2(const struct obj *obj, boolean ignore_oquan)
     if (obj->onamelth && dknown) {
         buf = msgcat(buf, " named ");
     nameit:
-        buf = msgcat(buf, ONAME(obj));
+        if (mark_user)
+            buf = msgcat_many(buf, "\"", ONAME(obj), "\"", NULL);
+        else
+            buf = msgcat(buf, ONAME(obj));
     }
 
     if (!strncmpi(buf, "the ", 4))
@@ -963,7 +972,7 @@ cxname2(const struct obj *obj)
 {
     if (obj->otyp == CORPSE)
         return corpse_xname(obj, TRUE);
-    return xname2(obj, TRUE);
+    return xname2(obj, TRUE, FALSE);
 }
 
 
@@ -1002,7 +1011,11 @@ killer_xname(const struct obj *obj_orig)
     save_ocuname = objects[obj->otyp].oc_uname;
     objects[obj->otyp].oc_uname = 0;    /* avoid "foo called bar" */
 
-    buf = cxname(obj);
+    if (obj->otyp == CORPSE)
+        buf = corpse_xname(obj, FALSE);
+    else
+        buf = xname(obj);
+
     if (obj->quan == 1L)
         buf = obj_is_pname(obj) ? the(buf) : an(buf);
 

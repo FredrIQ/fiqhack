@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -18,12 +18,10 @@ extern boolean notonhead;       /* for long worms */
 static void kickdmg(struct monst *, boolean, schar, schar);
 static enum attack_check_status kick_monster(
     xchar, xchar, schar, schar, enum u_interaction_mode);
-static int kick_object(xchar, xchar, schar, schar);
-static const char *kickstr(void);
+static int kick_object(xchar, xchar, schar, schar, struct obj **);
+static const char *kickstr(struct obj *);
 static void otransit_msg(struct obj *, boolean, long);
 static void drop_to(coord *, schar);
-
-static struct obj *kickobj;
 
 static const char kick_passes_thru[] = "kick passes harmlessly through";
 
@@ -417,7 +415,7 @@ container_impact_dmg(struct obj *obj)
 }
 
 static int
-kick_object(xchar x, xchar y, schar dx, schar dy)
+kick_object(xchar x, xchar y, schar dx, schar dy, struct obj **kickobj_p)
 {
     int range;
     struct monst *mon, *shkp;
@@ -426,9 +424,10 @@ kick_object(xchar x, xchar y, schar dx, schar dy)
     boolean costly, isgold, slide = FALSE, air = FALSE;
 
     /* if a pile, the "top" object gets kicked */
-    kickobj = level->objects[x][y];
+    struct obj *kickobj = level->objects[x][y];
+    *kickobj_p = kickobj;
 
-    /* kickobj should always be set due to conditions of call */
+    /* *kickobj_p should always be set due to conditions of call */
     if (!kickobj || kickobj->otyp == BOULDER || kickobj == uball ||
         kickobj == uchain)
         return 0;
@@ -459,7 +458,7 @@ kick_object(xchar x, xchar y, schar dx, schar dy)
             done(STONING,
                  killer_msg(STONING,
                             msgprintf("kicking %s without boots",
-                                      an(corpse_xname(kickobj, TRUE)))));
+                                      killer_xname(kickobj))));
         }
     }
 
@@ -629,12 +628,12 @@ kick_object(xchar x, xchar y, schar dx, schar dy)
 }
 
 static const char *
-kickstr(void)
+kickstr(struct obj *kickobj)
 {
     const char *what;
 
     if (kickobj)
-        what = distant_name(kickobj, doname);
+        what = killer_xname(kickobj);
     else if (IS_DOOR(maploc->typ))
         what = "a door";
     else if (IS_TREE(maploc->typ))
@@ -674,6 +673,7 @@ dokick(const struct nh_cmd_arg *arg)
     struct monst *mtmp;
     boolean no_kick = FALSE;
     schar dx, dy, dz;
+    struct obj *kickobj = NULL;
 
     if (nolimbs(youmonst.data) || slithy(youmonst.data)) {
         pline("You have no legs to kick with.");
@@ -830,11 +830,10 @@ dokick(const struct nh_cmd_arg *arg)
         return 1;
     }
 
-    kickobj = NULL;
     if (OBJ_AT(x, y) &&
         (!Levitation || Is_airlevel(&u.uz) || Is_waterlevel(&u.uz)
          || sobj_at(BOULDER, level, x, y))) {
-        if (kick_object(x, y, dx, dy)) {
+        if (kick_object(x, y, dx, dy, &kickobj)) {
             if (Is_airlevel(&u.uz))
                 hurtle(-dx, -dy, 1, TRUE);      /* assume it's light */
             return 1;
@@ -1081,7 +1080,8 @@ dokick(const struct nh_cmd_arg *arg)
             }
             if (!rn2(3))
                 set_wounded_legs(RIGHT_SIDE, 5 + rnd(5));
-            losehp(rnd(ACURR(A_CON) > 15 ? 3 : 5), killer_msg(DIED, kickstr()));
+            losehp(rnd(ACURR(A_CON) > 15 ? 3 : 5),
+                   killer_msg(DIED, kickstr(kickobj)));
             if (Is_airlevel(&u.uz) || Levitation)
                 hurtle(-dx, -dy, rn1(2, 4), TRUE);      /* assume it's heavy */
             return 1;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -490,7 +490,8 @@ peffects(struct obj *otmp)
             } else {
                 if (u.ualign.type == A_LAWFUL) {
                     pline("This burns like acid!");
-                    losehp(dice(2, 6), killer_msg(DIED, "potion of unholy water"));
+                    losehp(dice(2, 6),
+                           killer_msg(DIED, "a potion of unholy water"));
                 } else
                     pline("You feel full of dread.");
                 if (u.ulycn >= LOW_PM && !Upolyd)
@@ -896,7 +897,7 @@ peffects(struct obj *otmp)
                   otmp->blessed ? " a little" : otmp->
                   cursed ? " a lot" : " like acid");
             losehp(dice(otmp->cursed ? 2 : 1, otmp->blessed ? 4 : 8),
-                   killer_msg(DIED, "a potion of acid"));
+                   killer_msg(DIED, "drinking acid"));
             exercise(A_CON, FALSE);
         }
         if (Stoned)
@@ -1025,7 +1026,7 @@ potionhit(struct monst *mon, struct obj *obj, boolean your_fault)
                 pline("This burns%s!",
                       obj->blessed ? " a little" : obj->cursed ? " a lot" : "");
                 losehp(dice(obj->cursed ? 2 : 1, obj->blessed ? 4 : 8),
-                       killer_msg(DIED, "a potion of acid"));
+                       killer_msg(DIED, "being doused in acid"));
             }
             break;
         }

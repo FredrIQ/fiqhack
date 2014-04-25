@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1147,7 +1147,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     case AD_DRLI:
         hitmsg(mtmp, mattk);
         if (uncancelled && !rn2(3) && !Drain_resistance) {
-            losexp(killer_msg(DIED, "life drainage"), FALSE);
+            losexp(msgcat("drained of life by ", k_monnam(mtmp)), FALSE);
         }
         break;
     case AD_LEGS:
@@ -1506,7 +1506,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         case 18:
         case 17:
             if (!Antimagic) {
-                done(DIED, killer_msg(DIED, "the touch of death"));
+                done(DIED, killer_msg(DIED, "the touch of Death"));
                 dmg = 0;
                 break;
             }   /* else FALLTHRU */
@@ -1573,8 +1573,11 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         dmg = 0;
         break;
     }
+
+    /* TODO: This is the same message as mdamageu() below. We should be
+       consistent about when the damage is applied. */
     if (u.uhp < 1)
-        done_in_by(mtmp);
+        done_in_by(mtmp, NULL);
 
 /* Negative armor class reduces damage done instead of fully protecting
  * against hits.
@@ -1988,10 +1991,9 @@ gazemu(struct monst *mtmp, const struct attack *mattk)
             !Stone_resistance) {
             pline("You meet %s gaze.", s_suffix(mon_nam(mtmp)));
             action_interrupted();
-            if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
-                break;
-            pline("You turn to stone...");
-            done(STONING, killer_msg_mon(STONING, mtmp));
+            instapetrify(killer_msg(
+                             STONING, msgprintf(
+                                 "catching the eye of %s", k_monnam(mtmp))));
         }
         break;
     case AD_CONF:
@@ -2094,7 +2096,7 @@ mdamageu(struct monst *mtmp, int n)
     } else {
         u.uhp -= n;
         if (u.uhp < 1)
-            done_in_by(mtmp);
+            done_in_by(mtmp, NULL);
     }
 }
 
