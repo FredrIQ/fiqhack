@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-22 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -256,7 +256,7 @@ mount_steed(struct monst * mtmp,        /* The animal */
     if (touch_petrifies(ptr) && !Stone_resistance) {
         pline("You touch %s.", mon_nam(mtmp));
         instapetrify(killer_msg(STONING,
-            msgcat("attempting to ride %s", an(mtmp->data->mname))));
+            msgcat("attempting to ride ", an(mtmp->data->mname))));
     }
     if (!mtmp->mtame || mtmp->isminion) {
         pline("I think %s would mind.", mon_nam(mtmp));
@@ -309,7 +309,7 @@ mount_steed(struct monst * mtmp,        /* The animal */
         pline("You slip while trying to get on %s.", mon_nam(mtmp));
 
         const char *buf = msgcat(
-            "slipped while mounting %s",
+            "slipped while mounting ",
             /* "a saddled mumak" or "a saddled pony called Dobbin" */
             x_monnam(mtmp, ARTICLE_A, NULL,
                      SUPPRESS_IT | SUPPRESS_INVISIBLE |

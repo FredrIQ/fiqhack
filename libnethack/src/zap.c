@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1874,10 +1874,10 @@ backfire(struct obj *otmp)
          */
         pline("%s suddenly produces a violent outburst of energy!",
               The(xname(otmp)));
-        losehp(dice(otmp->spe + 4, 8), killer_msg(DIED, "outbursting wand"));
+        losehp(dice(otmp->spe + 4, 8), killer_msg(DIED, "an outbursting wand"));
     } else {
         pline("%s suddenly explodes!", The(xname(otmp)));
-        losehp(dice(otmp->spe + 2, 6), killer_msg(DIED, "exploding wand"));
+        losehp(dice(otmp->spe + 2, 6), killer_msg(DIED, "an exploding wand"));
         useup(otmp);
     }
 }
@@ -2043,9 +2043,7 @@ zapyourself(struct obj *obj, boolean ordinary)
 
     case SPE_DRAIN_LIFE:
         if (!Drain_resistance) {
-            losexp(killer_msg(DIED,
-                              msgcat_many("drained ", uhis(),
-                                          " own life", NULL)),
+            losexp(msgcat_many("drained ", uhis(), " own life", NULL),
                    FALSE);
             makeknown(obj->otyp);
         }
@@ -2405,7 +2403,7 @@ zap_updown(struct obj *obj, schar dz)
             pline("A rock is dislodged from the %s and falls on your %s.",
                   ceiling(x, y), body_part(HEAD));
             losehp(rnd((uarmh && is_metallic(uarmh)) ? 2 : 6),
-                   killer_msg(DIED, "falling rock"));
+                   killer_msg(DIED, "a falling rock"));
             if ((otmp = mksobj_at(ROCK, level, x, y, FALSE, FALSE)) != 0) {
                 xname(otmp);    /* set dknown, maybe bknown */
                 stackobj(otmp);

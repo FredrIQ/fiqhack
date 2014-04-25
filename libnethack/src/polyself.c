@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-21 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -191,7 +191,7 @@ newman(void)
         dead:  /* we come directly here if their experience level went to 0 or 
                    less */
             pline("Your new form doesn't seem healthy enough to survive.");
-            done(DIED, killer_msg(DIED, "unsuccessful polymorph"));
+            done(DIED, killer_msg(DIED, "an unsuccessful polymorph"));
             newuhs(FALSE);
             return;     /* lifesaved */
         }
@@ -628,7 +628,7 @@ break_armor(void)
                 const char *hornbuf;
 
                 /* Future possiblities: This could damage/destroy helmet */
-                hornbuf = msgcat("horn%s", plur(num_horns(youmonst.data)));
+                hornbuf = msgcat("horn", plur(num_horns(youmonst.data)));
                 pline("Your %s %s through %s %s.", hornbuf,
                       vtense(hornbuf, "pierce"), shk_your(otmp),
                       xname(otmp));

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -175,7 +175,7 @@ choke(struct obj *food)
         if (food) {
             pline("You choke over your %s.", foodword(food));
             if (food->oclass == COIN_CLASS) {
-                killer = killer_msg(CHOKING, "very rich meal");
+                killer = killer_msg(CHOKING, "a very rich meal");
             } else {
                 killer = killer_msg_obj(CHOKING, food);
             }
@@ -1128,13 +1128,13 @@ eatcorpse(void)
         tp++;
         pline("You have a very bad case of stomach acid.");
         /* not body_part() */
-        losehp(rnd(15), killer_msg(DIED, "acidic corpse"));
+        losehp(rnd(15), killer_msg(DIED, "an acidic corpse"));
     } else if (poisonous(&mons[mnum]) && rn2(5)) {
         tp++;
         pline("Ecch - that must have been poisonous!");
         if (!Poison_resistance) {
             losestr(rnd(4));
-            losehp(rnd(15), killer_msg(DIED, "poisonous corpse"));
+            losehp(rnd(15), killer_msg(DIED, "a poisonous corpse"));
         } else
             pline("You seem unaffected by the poison.");
         /* now any corpse left too long will make you mildly ill */
@@ -1509,7 +1509,7 @@ fpostfx(struct obj *otmp)
                 u.uhp = u.uhpmax;
             } else if (u.uhp <= 0) {
                 done(POISONING,
-                     killer_msg(POISONING, "rotten lump of royal jelly"));
+                     killer_msg(POISONING, "a rotten lump of royal jelly"));
             }
         }
         if (!otmp->cursed)

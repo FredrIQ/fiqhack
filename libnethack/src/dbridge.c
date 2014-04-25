@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Alex Smith, 2014-04-25 */
 /* Copyright (c) 1989 by Jean-Christophe Collet                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -517,7 +517,7 @@ do_entity(struct entity *etmp)
             pline("%s crushed underneath the drawbridge.",
                   E_phrase(etmp, "are")); /* no jump */
             e_died(etmp, e_inview ? 3 : 2, CRUSHING,
-                   killer_msg(CRUSHING, "falling drawbridge"));  /* no corpse */
+                   killer_msg(CRUSHING, "a falling drawbridge"));  /* no corpse */
             return;     /* Note: Beyond this point, we know we're */
         }       /* not at an opened drawbridge, since all */
         must_jump = TRUE;       /* *missable* creatures survive on the */
@@ -533,7 +533,7 @@ do_entity(struct entity *etmp)
                 else
                     You_hear("a crushing sound.");
                 e_died(etmp, e_inview ? 3 : 2, CRUSHING,
-                       killer_msg(CRUSHING, "falling drawbridge"));
+                       killer_msg(CRUSHING, "a falling drawbridge"));
                 /* no corpse */
                 return;
             }
@@ -601,7 +601,7 @@ do_entity(struct entity *etmp)
         }
         if (!e_survives_at(etmp, etmp->ex, etmp->ey)) {
             e_died(etmp, 0, CRUSHING,
-                   killer_msg(CRUSHING, "closing drawbridge"));
+                   killer_msg(CRUSHING, "a closing drawbridge"));
             return;
         }
     } else {
@@ -801,7 +801,7 @@ destroy_drawbridge(int x, int y)
                 pline("%s blown apart by flying debris.",
                       E_phrase(etmp2, "are"));
             e_died(etmp2, e_inview ? 3 : 2, CRUSHING,
-                   killer_msg(CRUSHING, "exploding drawbridge"));
+                   killer_msg(CRUSHING, "an exploding drawbridge"));
         }       /* nothing which is vulnerable can survive this */
     }
     set_entity(x, y, etmp1);
@@ -819,7 +819,7 @@ destroy_drawbridge(int x, int y)
                     You_hear("a crushing sound.");
             }
             e_died(etmp1, e_inview ? 3 : 2, CRUSHING,
-                   killer_msg(CRUSHING, "collapsing drawbridge"));
+                   killer_msg(CRUSHING, "a collapsing drawbridge"));
             /* if (loc1->typ == MOAT) do_entity(etmp1); */
         }
         if (is_u(etmp1))
