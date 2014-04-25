@@ -229,7 +229,8 @@ clear_delayed_killers(void) {
 }
 
 
-/* "#quit" command or keyboard interrupt */
+/* Called for a "quit and request confirmation" via any codepath: currently
+   this can be called by #quit, S!, or EXIT_REQUEST_QUIT */
 int
 done2(void)
 {
