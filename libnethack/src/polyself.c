@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-21 */
+/* Last modified by Sean Hunt, 2014-04-25 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -764,8 +764,27 @@ dospit(const struct nh_cmd_arg *arg)
 
     if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
-    otmp = mktemp_sobj(level,
-                       u.umonnum == PM_COBRA ? BLINDING_VENOM : ACID_VENOM);
+
+    const struct attack *at = attacktype_fordmg(youmonst.data, AT_SPIT, AD_ANY);
+
+    if (!at) {
+        impossible ("dospit: no spitting attack");
+        return 0;
+    }
+
+    switch (at->adtyp) {
+    case AD_BLND:
+    case AD_DRST:
+        otmp = mktemp_sobj(level, BLINDING_VENOM);
+        break;
+    default:
+        impossible("dospit: bad damage type");
+        /* fall-through */
+    case AD_ACID:
+        otmp = mktemp_sobj(level, ACID_VENOM);
+        break;
+    }
+
     otmp->spe = 1;      /* to indicate it's yours */
     throwit(otmp, 0L, FALSE, dx, dy, dz);
     return 1;
