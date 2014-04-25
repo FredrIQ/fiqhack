@@ -1153,7 +1153,6 @@ terminate(enum nh_play_status playstatus)
     if (!program_state.panicking) {
         freedynamicdata();
         dlb_cleanup();
-        abort_turnstate();
     }
 
     /* try to leave gracefully - this should return control to the ui code */
