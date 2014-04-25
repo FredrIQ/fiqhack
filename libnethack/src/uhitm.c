@@ -235,7 +235,8 @@ attack_checks(struct monst *mtmp,
             }
             if (always_peaceful(mtmp->data) && mtmp->mpeaceful) {
                 if (mtmp->data->msound == MS_PRIEST)
-                    pline("The priest mutters a prayer.");
+                    pline("The priest%s mutters a prayer.",
+                          mtmp->female ? "ess" : "");
                 else {
                     struct nh_cmd_arg arg;
                     arg_from_delta(dx, dy, 0, &arg);
