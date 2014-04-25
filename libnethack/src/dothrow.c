@@ -530,9 +530,13 @@ hurtle_step(void *arg, int x, int y)
             return TRUE;
         } else {
             if (ttmp->tseen)
-                pline("You pass right over %s %s.",
-                      (ttmp->ttyp == ARROW_TRAP) ? "an" : "a",
-                      trapexplain[ttmp->ttyp - 1]);
+                if (ttmp->ttyp == ROCKTRAP)
+                    pline("You avoid triggering a %s.",
+                          trapexplain[ttmp->ttyp - 1]);
+                else pline("You pass right over %s %s.",
+                           ((ttmp->ttyp == ARROW_TRAP) ||
+                            (ttmp->ttyp == ANTI_MAGIC)) ? "an" : "a",
+                           trapexplain[ttmp->ttyp - 1]);
         }
     }
     if (--*range < 0)   /* make sure our range never goes negative */
