@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-02 */
+/* Last modified by Sean Hunt, 2014-04-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -49,7 +49,7 @@ burnarmor(struct monst *victim)
 
     if (!victim)
         return 0;
-#define burn_dmg(obj,descr) rust_dmg(obj, descr, 0, FALSE, victim)
+#define burn_dmg(obj,descr) rust_dmg(obj, descr, 0, FALSE)
     while (1) {
         switch (rn2(5)) {
         case 0:
@@ -104,8 +104,7 @@ burnarmor(struct monst *victim)
  * returned only for rustable items.
  */
 boolean
-rust_dmg(struct obj * otmp, const char *ostr, int type, boolean print,
-         struct monst * victim)
+rust_dmg(struct obj * otmp, const char *ostr, int type, boolean print)
 {
     static const char *const action[] =
         { "smoulder", "rust", "rot", "corrode" };
@@ -114,6 +113,8 @@ rust_dmg(struct obj * otmp, const char *ostr, int type, boolean print,
     boolean vulnerable = FALSE;
     boolean grprot = FALSE;
     boolean is_primary = TRUE;
+    struct monst *victim =
+        carried(otmp) ? &youmonst : mcarried(otmp) ? otmp->ocarry : NULL;
     boolean vismon = (victim != &youmonst) && canseemon(victim);
     int erosion;
 
@@ -811,16 +812,16 @@ dotrap(struct trap *trap, unsigned trflags)
         switch (rn2(5)) {
         case 0:
             pline("%s you on the %s!", A_gush_of_water_hits, body_part(HEAD));
-            rust_dmg(uarmh, maybe_helmet_name(uarmh), 1, TRUE, &youmonst);
+            rust_dmg(uarmh, maybe_helmet_name(uarmh), 1, TRUE);
             break;
         case 1:
             pline("%s your left %s!", A_gush_of_water_hits, body_part(ARM));
-            if (rust_dmg(uarms, "shield", 1, TRUE, &youmonst))
+            if (rust_dmg(uarms, "shield", 1, TRUE))
                 break;
             if (u.twoweap || (uwep && bimanual(uwep)))
                 erode_obj(u.twoweap ? uswapwep : uwep, FALSE, TRUE);
-        glovecheck:rust_dmg(uarmg, "gauntlets", 1, TRUE,
-                     &youmonst);
+        glovecheck:
+            rust_dmg(uarmg, "gauntlets", 1, TRUE);
             /* Not "metal gauntlets" since it gets called even if it's leather
                for the message */
             break;
@@ -833,11 +834,11 @@ dotrap(struct trap *trap, unsigned trflags)
             for (otmp = invent; otmp; otmp = otmp->nobj)
                 snuff_lit(otmp);
             if (uarmc)
-                rust_dmg(uarmc, cloak_simple_name(uarmc), 1, TRUE, &youmonst);
+                rust_dmg(uarmc, cloak_simple_name(uarmc), 1, TRUE);
             else if (uarm)
-                rust_dmg(uarm, "armor", 1, TRUE, &youmonst);
+                rust_dmg(uarm, "armor", 1, TRUE);
             else if (uarmu)
-                rust_dmg(uarmu, "shirt", 1, TRUE, &youmonst);
+                rust_dmg(uarmu, "shirt", 1, TRUE);
         }
         update_inventory();
         break;
@@ -1835,14 +1836,14 @@ mintrap(struct monst *mtmp)
                         pline("%s %s on the %s!", A_gush_of_water_hits,
                               mon_nam(mtmp), mbodypart(mtmp, HEAD));
                     target = which_armor(mtmp, os_armh);
-                    rust_dmg(target, maybe_helmet_name(target), 1, TRUE, mtmp);
+                    rust_dmg(target, maybe_helmet_name(target), 1, TRUE);
                     break;
                 case 1:
                     if (in_sight)
                         pline("%s %s's left %s!", A_gush_of_water_hits,
                               mon_nam(mtmp), mbodypart(mtmp, ARM));
                     target = which_armor(mtmp, os_arms);
-                    if (rust_dmg(target, "shield", 1, TRUE, mtmp))
+                    if (rust_dmg(target, "shield", 1, TRUE))
                         break;
                     target = MON_WEP(mtmp);
                     if (target && bimanual(target))
@@ -1850,7 +1851,7 @@ mintrap(struct monst *mtmp)
                 glovecheck:
                     target =
                         which_armor(mtmp, os_armg);
-                    rust_dmg(target, "gauntlets", 1, TRUE, mtmp);
+                    rust_dmg(target, "gauntlets", 1, TRUE);
                     break;
                 case 2:
                     if (in_sight)
@@ -1865,15 +1866,14 @@ mintrap(struct monst *mtmp)
                         snuff_lit(otmp);
                     target = which_armor(mtmp, os_armc);
                     if (target)
-                        rust_dmg(target, cloak_simple_name(target), 1, TRUE,
-                                 mtmp);
+                        rust_dmg(target, cloak_simple_name(target), 1, TRUE);
                     else {
                         target = which_armor(mtmp, os_arm);
                         if (target)
-                            rust_dmg(target, "armor", 1, TRUE, mtmp);
+                            rust_dmg(target, "armor", 1, TRUE);
                         else {
                             target = which_armor(mtmp, os_armu);
-                            rust_dmg(target, "shirt", 1, TRUE, mtmp);
+                            rust_dmg(target, "shirt", 1, TRUE);
                         }
                     }
                 }
