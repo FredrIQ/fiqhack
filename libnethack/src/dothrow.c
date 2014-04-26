@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-25 */
+/* Last modified by Sean Hunt, 2014-04-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -520,21 +520,20 @@ hurtle_step(void *arg, int x, int y)
             dotrap(ttmp, 0);    /* doesn't print messages */
         } else if (ttmp->ttyp == FIRE_TRAP) {
             dotrap(ttmp, 0);
-        } else
-            if ((ttmp->ttyp == PIT || ttmp->ttyp == SPIKED_PIT ||
-                 ttmp->ttyp == HOLE || ttmp->ttyp == TRAPDOOR) &&
-                In_sokoban(&u.uz)) {
+        } else if ((ttmp->ttyp == PIT || ttmp->ttyp == SPIKED_PIT ||
+                    ttmp->ttyp == HOLE || ttmp->ttyp == TRAPDOOR) &&
+                   In_sokoban(&u.uz)) {
             /* Air currents overcome the recoil */
             dotrap(ttmp, 0);
             *range = 0;
             return TRUE;
-        } else {
-            if (ttmp->tseen)
-                if (ttmp->ttyp == ROCKTRAP)
-                    pline("You avoid triggering %s.",
-                          an(trapexplain[ttmp->ttyp - 1]));
-                else pline("You pass right over %s.",
-                           an(trapexplain[ttmp->ttyp - 1]));
+        } else if (ttmp->tseen) {
+            if (ttmp->ttyp == ROCKTRAP)
+                pline("You avoid triggering %s.",
+                        an(trapexplain[ttmp->ttyp - 1]));
+            else
+                pline("You pass right over %s.",
+                        an(trapexplain[ttmp->ttyp - 1]));
         }
     }
     if (--*range < 0)   /* make sure our range never goes negative */
