@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-25 */
+/* Last modified by Sean Hunt, 2014-04-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1819,9 +1819,7 @@ gulpum(struct monst *mdef, const struct attack *mattk)
                 if (is_rider(mdef->data)) {
                     pline("Unfortunately, digesting any of it is fatal.");
                     end_engulf(mdef);
-                    done(DIED,
-                         killer_msg(DIED, msgcat("unwisely tried to eat ",
-                                                 mdef->data->mname)));
+                    done(DIED, msgcat("unwisely tried to eat ", mdef->data->mname));
                     return 0;   /* lifesaved */
                 }
 
