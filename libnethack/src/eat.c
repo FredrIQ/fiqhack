@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Alex Smith, 2014-04-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1108,11 +1108,11 @@ eatcorpse(void)
             if (Sick && (sick_time > Sick))
                 sick_time = (Sick > 1L) ? Sick - 1L : 1L;
             if (!uniq)
-                buf = msgprintf("rotted %s", corpse_xname(otmp, TRUE));
+                buf = msgprintf("a rotted %s", corpse_xname(otmp, TRUE));
             else
-                buf = msgprintf("%s%s rotted corpse",
+                buf = msgprintf("the rotted corpse of %s%s",
                                 !type_is_pname(&mons[mnum]) ? "the " : "",
-                                s_suffix(mons[mnum].mname));
+                                mons[mnum].mname);
             make_sick(sick_time, buf, TRUE, SICK_VOMITABLE);
         }
         if (carried(otmp))
