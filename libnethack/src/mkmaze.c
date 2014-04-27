@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Sean Hunt, 2014-04-26 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -477,6 +477,18 @@ fixup_special(struct level *lev)
         lev->flags.graveyard = 1;
     } else if (Is_stronghold(&lev->z)) {
         lev->flags.graveyard = 1;
+
+        /* ensure that the wand of wishing chest is not trapped */
+        struct obj *cont;
+        for (cont = lev->objlist; cont; cont = cont->nobj) {
+            if (cont->otyp == CHEST) {
+                struct obj *otmp;
+                for (otmp = cont->cobj; otmp; otmp = otmp->nobj) {
+                    if (otmp->otyp == WAN_WISHING)
+                        cont->otrapped = 0;
+                }
+            }
+        }
     } else if (Is_sanctum(&lev->z)) {
         croom = search_special(lev, TEMPLE);
 
