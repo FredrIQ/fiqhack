@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-26 */
+/* Last modified by Sean Hunt, 2014-04-28 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1715,8 +1715,8 @@ extern void restore_track(struct memfile *mf);
 /* ### trap.c ### */
 
 extern boolean burnarmor(struct monst *);
-extern boolean rust_dmg(struct obj *, const char *, int, boolean);
-extern void grease_protect(struct obj *, const char *, struct monst *);
+extern boolean rust_dmg(struct obj *, const char *, enum erode_type, boolean);
+extern boolean grease_protect(struct obj *, const char *, struct monst *);
 extern struct trap *maketrap(struct level *lev, int x, int y, int typ);
 extern void fall_through(boolean);
 extern struct monst *animate_statue(struct obj *, xchar, xchar, int, int *);

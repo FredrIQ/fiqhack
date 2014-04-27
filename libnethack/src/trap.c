@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-26 */
+/* Last modified by Sean Hunt, 2014-04-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -98,103 +98,132 @@ burnarmor(struct monst *victim)
 #undef burn_dmg
 }
 
-/* Generic rust-armor function.  Returns TRUE if a message was printed;
- * "print", if set, means to print a message (and thus to return TRUE) even
- * if the item could not be rusted; otherwise a message is printed and TRUE is
- * returned only for rustable items.
+/* Generic erode-item function.  Returns TRUE if any change in state occurred.
+ * "print", if set, means to print a message even if no change occurs.
  */
 boolean
-rust_dmg(struct obj * otmp, const char *ostr, int type, boolean print)
+rust_dmg(struct obj * otmp, const char *ostr, enum erode_type type,
+         boolean print)
 {
     static const char *const action[] =
         { "smoulder", "rust", "rot", "corrode" };
     static const char *const msg[] =
         { "burnt", "rusted", "rotten", "corroded" };
-    boolean vulnerable = FALSE;
-    boolean grprot = FALSE;
-    boolean is_primary = TRUE;
-    struct monst *victim =
-        carried(otmp) ? &youmonst : mcarried(otmp) ? otmp->ocarry : NULL;
-    boolean vismon = (victim != &youmonst) && canseemon(victim);
-    int erosion;
 
     if (!otmp)
         return FALSE;
+
+    boolean vulnerable = FALSE;
+    boolean grprot = FALSE;
+    boolean primary = TRUE;
+
+    struct monst *victim =
+        carried(otmp) ? &youmonst : mcarried(otmp) ? otmp->ocarry : NULL;
+    boolean vismon = victim && (victim != &youmonst) && canseemon(victim);
+    /* FIXME: bhitpos is stupid, but due to the throwing code, we must use it */
+    boolean visobj = !victim && cansee(bhitpos.x, bhitpos.y);
+
     switch (type) {
-    case 0:
+    case ERODE_BURN:
         vulnerable = is_flammable(otmp);
         break;
-    case 1:
+    case ERODE_RUST:
         vulnerable = is_rustprone(otmp);
         grprot = TRUE;
         break;
-    case 2:
+    case ERODE_ROT:
         vulnerable = is_rottable(otmp);
-        is_primary = FALSE;
+        primary = FALSE;
         break;
-    case 3:
+    case ERODE_CORRODE:
         vulnerable = is_corrodeable(otmp);
+        primary = FALSE;
         grprot = TRUE;
-        is_primary = FALSE;
         break;
-    }
-    erosion = is_primary ? otmp->oeroded : otmp->oeroded2;
-
-    if (!print && (!vulnerable || otmp->oerodeproof || erosion == MAX_ERODE))
+    default:
+        impossible("Invalid erosion type in rust_dmg");
         return FALSE;
+    }
 
-    if (!vulnerable) {
-        if (flags.verbose) {
+    int erosion = primary ? otmp->oeroded : otmp->oeroded2;
+    if (!ostr)
+        ostr = cxname(otmp);
+
+    if (grprot && otmp->greased) {
+        return grease_protect(otmp, ostr, victim);
+    } else if (!vulnerable || (otmp->oerodeproof && otmp->rknown)) {
+        if (print && flags.verbose) {
             if (victim == &youmonst)
                 pline("Your %s %s not affected.", ostr, vtense(ostr, "are"));
             else if (vismon)
                 pline("%s's %s %s not affected.", Monnam(victim), ostr,
                       vtense(ostr, "are"));
         }
-    } else if (grprot && otmp->greased) {
-        grease_protect(otmp, ostr, victim);
+        return FALSE;
     } else if (otmp->oerodeproof || (otmp->blessed && !rnl(4))) {
-        if (flags.verbose) {
+        if (flags.verbose && (print || otmp->oerodeproof)) {
             if (victim == &youmonst)
                 pline("Somehow, your %s %s not affected.", ostr,
                       vtense(ostr, "are"));
             else if (vismon)
                 pline("Somehow, %s's %s %s not affected.", mon_nam(victim),
                       ostr, vtense(ostr, "are"));
+            else if (visobj)
+                pline("Somehow, the %s %s not affected.", ostr,
+                      vtense(ostr, "are"));
         }
+        /* We assume here that if the object is protected because it is blessed,
+         * it still shows some minor signs of wear, and the hero can distinguish
+         * this from an object that is actually proof against damage.
+         */
+        if (otmp->oerodeproof)
+            otmp->rknown = TRUE;
+        return FALSE;
     } else if (erosion < MAX_ERODE) {
+        const char *adverb = erosion + 1 == MAX_ERODE ?
+            " completely" : erosion ? " further" : "";
         if (victim == &youmonst)
-            pline("Your %s %s%s!", ostr, vtense(ostr, action[type]),
-                  erosion + 1 ==
-                  MAX_ERODE ? " completely" : erosion ? " further" : "");
+            pline("Your %s %s%s!", ostr, vtense(ostr, action[type]), adverb);
         else if (vismon)
             pline("%s's %s %s%s!", Monnam(victim), ostr,
-                  vtense(ostr, action[type]),
-                  erosion + 1 ==
-                  MAX_ERODE ? " completely" : erosion ? " further" : "");
-        if (is_primary)
+                  vtense(ostr, action[type]), adverb);
+        else if (visobj)
+            pline("The %s %s%s!", ostr, vtense(ostr, action[type]), adverb);
+
+        if (primary)
             otmp->oeroded++;
         else
             otmp->oeroded2++;
+
         if (otmp->unpaid)
             costly_damage_obj(otmp);
         update_inventory();
+        return TRUE;
     } else {
-        if (flags.verbose) {
+        if (flags.verbose && print) {
             if (victim == &youmonst)
                 pline("Your %s %s completely %s.", ostr,
                       vtense(ostr, Blind ? "feel" : "look"), msg[type]);
             else if (vismon)
                 pline("%s's %s %s completely %s.", Monnam(victim), ostr,
                       vtense(ostr, "look"), msg[type]);
+            else if (visobj)
+                pline("The %s %s completely %s.", ostr, vtense(ostr, "look"),
+                      msg[type]);
         }
-        if (otmp->unpaid)
+        if (otmp->unpaid) {
             costly_damage_obj(otmp);
+            update_inventory();
+            return TRUE;
+        }
+        return FALSE;
     }
-    return TRUE;
 }
 
-void
+/* Protect an item from erosion with grease. Returns TRUE if the grease
+ * wears off.
+ */
+boolean
 grease_protect(struct obj *otmp, const char *ostr, struct monst *victim)
 {
     static const char txt[] = "protected by the layer of grease!";
@@ -218,7 +247,9 @@ grease_protect(struct obj *otmp, const char *ostr, struct monst *victim)
             pline("The grease dissolves.");
             update_inventory();
         }
+        return TRUE;
     }
+    return FALSE;
 }
 
 struct trap *
