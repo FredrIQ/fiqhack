@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-27 */
 /* Copyright (c) Dean Luick, 1994                                       */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -321,7 +321,7 @@ restore_light_sources(struct memfile *mf, struct level *lev)
      * in reverse order. Inserting immediately after the first light leads to
      * the simplest code.
      */
-    light_source *ls, *prev = lev->lev_lights;
+    light_source *ls, *prev = lev->lev_lights, *rest = prev ? prev->next : NULL;
 
     /* restore elements */
     count = mread32(mf);
@@ -336,7 +336,7 @@ restore_light_sources(struct memfile *mf, struct level *lev)
         ls->x = mread8(mf);
         ls->y = mread8(mf);
 
-        ls->next = NULL;
+        ls->next = rest;
         if (prev)
             prev->next = ls;
         else
