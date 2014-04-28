@@ -28,68 +28,6 @@ static int dieroll;
 
 #define PROJECTILE(obj) ((obj) && is_ammo(obj))
 
-/* modified from hurtarmor() in mhitu.c */
-/* This is not static because it is also used for monsters rusting monsters */
-void
-hurtmarmor(struct monst *mdef, int attk)
-{
-    int hurt;
-    struct obj *target;
-
-    switch (attk) {
-        /* 0 is burning, which we should never be called with */
-    case AD_RUST:
-        hurt = ERODE_RUST;
-        break;
-    case AD_CORR:
-        hurt = ERODE_CORRODE;
-        break;
-    default:
-        hurt = ERODE_ROT;
-        break;
-    }
-    /* What the following code does: it keeps looping until it finds a target
-       for the rust monster. Head, feet, etc... not covered by metal, or
-       covered by rusty metal, are not targets.  However, your body always is,
-       no matter what covers it. */
-    while (1) {
-        switch (rn2(5)) {
-        case 0:
-            target = which_armor(mdef, os_armh);
-            if (!target || !rust_dmg(target, xname(target), hurt, TRUE, FALSE))
-                continue;
-            break;
-        case 1:
-            target = which_armor(mdef, os_armc);
-            if (target) {
-                rust_dmg(target, xname(target), hurt, TRUE, TRUE);
-                break;
-            }
-            if ((target = which_armor(mdef, os_arm)) != NULL) {
-                rust_dmg(target, xname(target), hurt, TRUE, TRUE);
-            } else if ((target = which_armor(mdef, os_armu)) != NULL) {
-                rust_dmg(target, xname(target), hurt, TRUE, TRUE);
-            }
-            break;
-        case 2:
-            target = which_armor(mdef, os_arms);
-            if (!target || !rust_dmg(target, xname(target), hurt, TRUE, FALSE))
-                continue;
-            break;
-        case 3:
-            target = which_armor(mdef, os_armg);
-            if (!target || !rust_dmg(target, xname(target), hurt, TRUE, FALSE))
-                continue;
-            break;
-        case 4:
-            target = which_armor(mdef, os_armf);
-            if (!target || !rust_dmg(target, xname(target), hurt, TRUE, FALSE))
-                continue;
-            break;
-        }
-        break;  /* Out of while loop */
-    }
-}
 
 boolean
 confirm_attack(struct monst *mtmp, enum u_interaction_mode uim)
@@ -1523,11 +1461,11 @@ damageum(struct monst *mdef, const struct attack *mattk)
             pline("%s falls to pieces!", Monnam(mdef));
             xkilled(mdef, 0);
         }
-        hurtmarmor(mdef, AD_RUST);
+        hurtarmor(mdef, ERODE_RUST);
         tmp = 0;
         break;
     case AD_CORR:
-        hurtmarmor(mdef, AD_CORR);
+        hurtarmor(mdef, ERODE_CORRODE);
         tmp = 0;
         break;
     case AD_DCAY:
@@ -1535,7 +1473,7 @@ damageum(struct monst *mdef, const struct attack *mattk)
             pline("%s falls to pieces!", Monnam(mdef));
             xkilled(mdef, 0);
         }
-        hurtmarmor(mdef, AD_DCAY);
+        hurtarmor(mdef, ERODE_ROT);
         tmp = 0;
         break;
     case AD_DRST:

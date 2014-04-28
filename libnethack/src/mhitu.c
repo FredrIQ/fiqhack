@@ -23,7 +23,6 @@ static void missmu(struct monst *, boolean, const struct attack *);
 static void mswings(struct monst *, struct obj *);
 static void wildmiss(struct monst *, const struct attack *);
 
-static void hurtarmor(int);
 static void hitmsg(struct monst *, const struct attack *);
 
 /* See comment in mhitm.c.  If we use this a lot it probably should be */
@@ -712,27 +711,10 @@ mattacku(struct monst *mtmp)
 }
 
 
-/*
- * helper function for some compilers that have trouble with hitmu
- */
-
-static void
-hurtarmor(int attk)
+void
+hurtarmor(struct monst *mdef, enum erode_type type)
 {
-    enum erode_type hurt;
-
-    switch (attk) {
-        /* 0 is burning, which we should never be called with */
-    case AD_RUST:
-        hurt = ERODE_RUST;
-        break;
-    case AD_CORR:
-        hurt = ERODE_CORRODE;
-        break;
-    default:
-        hurt = ERODE_ROT;
-        break;
-    }
+    struct obj *target;
 
     /* What the following code does: it keeps looping until it finds a target
        for the rust monster. Head, feet, etc... not covered by metal, or
@@ -741,43 +723,41 @@ hurtarmor(int attk)
     while (1) {
         switch (rn2(5)) {
         case 0:
-            if (!uarmh ||
-                !rust_dmg(uarmh, xname(uarmh), hurt, TRUE, FALSE))
+            target = which_armor(mdef, os_armh);
+            if (!target || !rust_dmg(target, xname(target), type, TRUE, FALSE))
                 continue;
             break;
         case 1:
-            if (uarmc) {
-                rust_dmg(uarmc, xname(uarmc), hurt, TRUE, TRUE);
+            target = which_armor(mdef, os_armc);
+            if (target) {
+                rust_dmg(target, xname(target), type, TRUE, TRUE);
                 break;
             }
-            /* Note the difference between break and continue; break means it
-               was hit and didn't rust; continue means it wasn't a target and
-               though it didn't rust something else did. */
-            if (uarm)
-                rust_dmg(uarm, xname(uarm), hurt, TRUE, TRUE);
-            else if (uarmu)
-                rust_dmg(uarmu, xname(uarmu), hurt, TRUE, TRUE);
+            if ((target = which_armor(mdef, os_arm)) != NULL) {
+                rust_dmg(target, xname(target), type, TRUE, TRUE);
+            } else if ((target = which_armor(mdef, os_armu)) != NULL) {
+                rust_dmg(target, xname(target), type, TRUE, TRUE);
+            }
             break;
         case 2:
-            if (!uarms ||
-                !rust_dmg(uarms, xname(uarms), hurt, TRUE, FALSE))
+            target = which_armor(mdef, os_arms);
+            if (!target || !rust_dmg(target, xname(target), type, TRUE, FALSE))
                 continue;
             break;
         case 3:
-            if (!uarmg ||
-                !rust_dmg(uarmg, xname(uarmg), hurt, TRUE, FALSE))
+            target = which_armor(mdef, os_armg);
+            if (!target || !rust_dmg(target, xname(target), type, TRUE, FALSE))
                 continue;
             break;
         case 4:
-            if (!uarmf ||
-                !rust_dmg(uarmf, xname(uarmf), hurt, TRUE, FALSE))
+            target = which_armor(mdef, os_armf);
+            if (!target || !rust_dmg(target, xname(target), type, TRUE, FALSE))
                 continue;
             break;
         }
         break;  /* Out of while loop */
     }
 }
-
 
 
 static boolean
@@ -1350,13 +1330,13 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             rehumanize(DIED, msgcat("rusted to death by ", k_monnam(mtmp)));
             break;
         }
-        hurtarmor(AD_RUST);
+        hurtarmor(&youmonst, ERODE_RUST);
         break;
     case AD_CORR:
         hitmsg(mtmp, mattk);
         if (mtmp->mcan)
             break;
-        hurtarmor(AD_CORR);
+        hurtarmor(&youmonst, ERODE_CORRODE);
         break;
     case AD_DCAY:
         hitmsg(mtmp, mattk);
@@ -1367,7 +1347,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             rehumanize(DIED, msgcat("rotted to death by ", k_monnam(mtmp)));
             break;
         }
-        hurtarmor(AD_DCAY);
+        hurtarmor(&youmonst, ERODE_ROT);
         break;
     case AD_HEAL:
         /* a cancelled nurse is just an ordinary monster */
