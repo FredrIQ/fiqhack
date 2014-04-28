@@ -99,7 +99,7 @@ burnarmor(struct monst *victim)
 }
 
 /* Generic erode-item function.  Returns TRUE if any change in state occurred,
- * including grease wearing off.
+ * or if grease protected item.
  * "check_grease", if FALSE, means that grease is not checked for.
  * "print", if set, means to print a message even if no change occurs.
  */
@@ -151,7 +151,8 @@ rust_dmg(struct obj * otmp, const char *ostr, enum erode_type type,
         ostr = cxname(otmp);
 
     if (check_grease && otmp->greased) {
-        return grease_protect(otmp, ostr, victim);
+        grease_protect(otmp, ostr, victim);
+        return TRUE;
     } else if (!vulnerable || (otmp->oerodeproof && otmp->rknown)) {
         if (print && flags.verbose) {
             if (victim == &youmonst)
@@ -2775,8 +2776,9 @@ fire_damage(struct obj *chain, boolean force, boolean here, xchar x, xchar y)
 
 /* returns:
  *  0 if obj is unaffected
- *  1 if obj is changed but survived
- *  2 if obj is destroyed
+ *  1 if obj is protected by grease
+ *  2 if obj is changed but survived
+ *  3 if obj is destroyed
  */
 boolean
 water_damage(struct obj * obj, const char *ostr, boolean force)
@@ -2805,7 +2807,7 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
         obj->spe = 0;
         if (carried(obj))
             update_inventory();
-        return 1;
+        return 2;
     } else if (obj->oclass == SPBOOK_CLASS) {
         if (obj->otyp == SPE_BOOK_OF_THE_DEAD) {
             pline("Steam rises from %s.", the(xname(obj)));
@@ -2814,7 +2816,7 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
             obj->otyp = SPE_BLANK_PAPER;
             if (carried(obj))
                 update_inventory();
-            return 1;
+            return 2;
         }
     } else if (obj->oclass == POTION_CLASS) {
         if (obj->otyp == POT_ACID) {
@@ -2824,22 +2826,22 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
             delobj(obj);
             if (update)
                 update_inventory();
-            return 2;
+            return 3;
         } else if (obj->odiluted) {
             obj->otyp = POT_WATER;
             obj->blessed = obj->cursed = 0;
             obj->odiluted = 0;
             if (carried(obj))
                 update_inventory();
-            return 1;
+            return 2;
         } else if (obj->otyp != POT_WATER) {
             obj->odiluted++;
             if (carried(obj))
                 update_inventory();
-            return 1;
+            return 2;
         }
     } else {
-        return ! !rust_dmg(obj, ostr, ERODE_RUST, FALSE, FALSE);
+        return rust_dmg(obj, ostr, ERODE_RUST, FALSE, FALSE) ? 2 : 0;
     }
     
     return 0;
