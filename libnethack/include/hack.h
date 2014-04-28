@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Sean Hunt, 2014-04-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -262,6 +262,8 @@ enum attack_check_status {
 #  define min(x,y) ((x) < (y) ? (x) : (y))
 # endif
 # define plur(x) (((x) == 1) ? "" : "s")
+
+# define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
 # define ARM_BONUS(obj)   (objects[(obj)->otyp].a_ac + (obj)->spe \
              - min((int)greatest_erosion(obj),objects[(obj)->otyp].a_ac))

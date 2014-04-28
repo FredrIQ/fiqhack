@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Sean Hunt, 2014-04-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -876,6 +876,7 @@ getobj(const char *let, const char *word, boolean isarg)
     char ilet;
     const char *qbuf;
     xchar allowcnt = 0; /* 0, 1 or 2 */
+    boolean split_letter = FALSE;
     boolean allowall = FALSE;
     boolean allownone = FALSE;
     char nonechar = '-';
@@ -885,14 +886,20 @@ getobj(const char *let, const char *word, boolean isarg)
     if (isarg && !program_state.in_zero_time_command)
         flags.last_arg.argtype &= ~CMD_ARG_OBJ;
 
-    if (*let == ALLOW_COUNT)
-        let++, allowcnt = 1;
-    if (*let == ALL_CLASSES)
-        let++, allowall = TRUE;
-    if (*let == ALLOW_NONE)
-        let++, allownone = TRUE;
-    if (*let == NONE_ON_COMMA)
-        let++, nonechar = ',';
+    for (; *let > MAXOCLASSES; ++let) {
+        if (*let == ALLOW_COUNT)
+            allowcnt = 1;
+        else if (*let == ALL_CLASSES)
+            allowall = TRUE;
+        else if (*let == ALLOW_NONE)
+            allownone = TRUE;
+        else if (*let == NONE_ON_COMMA)
+            nonechar = ',';
+        else if (*let == SPLIT_LETTER)
+            split_letter = TRUE;
+        else
+            panic("invalid class parameter to getobj(): %d", (int)*let);
+    }
 
     /* Count the number of items that may end up in "buf". */
     int bufmaxlen = 0;
@@ -1051,12 +1058,28 @@ getobj(const char *let, const char *word, boolean isarg)
         if (cnt == 0)
             return NULL;
         if (cnt != otmp->quan) {
-            /* don't split a stack of cursed loadstones */
-            if (otmp->otyp == LOADSTONE && otmp->cursed)
-                /* kludge for canletgo()'s can't-drop-this message */
-                otmp->corpsenm = (int)cnt;
-            else
+            if (split_letter) {
+                if (otmp->otyp == LOADSTONE && otmp->cursed) {
+                    pline("You can't seem to get them apart.");
+                    return NULL;
+                }
+                else if (inv_cnt(TRUE) >= 52) {
+                    pline("You don't have room to handle those separately.");
+                    return NULL;
+                }
+
                 otmp = splitobj(otmp, cnt);
+                assigninvlet(otmp);
+                reorder_invent();
+                update_inventory();
+            } else {
+                /* don't split a stack of cursed loadstones */
+                if (otmp->otyp == LOADSTONE && otmp->cursed)
+                    /* kludge for canletgo()'s can't-drop-this message */
+                    otmp->corpsenm = (int)cnt;
+                else
+                    otmp = splitobj(otmp, cnt);
+            }
         }
     }
 

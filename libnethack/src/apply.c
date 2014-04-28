@@ -1,21 +1,11 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-26 */
+/* Last modified by Sean Hunt, 2014-04-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "edog.h"
 #include "hungerstatus.h"
-
-static const char tools[] = {
-    ALLOW_COUNT, ALL_CLASSES, ALLOW_NONE, NONE_ON_COMMA,
-    TOOL_CLASS, WEAPON_CLASS, 0
-};
-
-static const char tools_too[] = {
-    ALLOW_COUNT, ALL_CLASSES, ALLOW_NONE, NONE_ON_COMMA,
-    TOOL_CLASS, POTION_CLASS, WEAPON_CLASS, WAND_CLASS, GEM_CLASS, 0
-};
 
 static int use_camera(struct obj *, const struct nh_cmd_arg *);
 static int use_towel(struct obj *);
@@ -42,7 +32,6 @@ static int use_cream_pie(struct obj **);
 static int use_grapple(struct obj *, const struct nh_cmd_arg *);
 static boolean figurine_location_checks(struct obj *, coord *, boolean);
 static boolean uhave_graystone(void);
-static void add_class(char *, char);
 
 static const char no_elbow_room[] =
     "You don't have enough elbow-room to maneuver.";
@@ -2853,32 +2842,32 @@ uhave_graystone(void)
     return FALSE;
 }
 
-static void
-add_class(char *cl, char class)
-{
-    char tmp[2];
-
-    tmp[0] = class;
-    tmp[1] = '\0';
-    strcat(cl, tmp);
-}
-
 int
 doapply(const struct nh_cmd_arg *arg)
 {
+    static const char tools[] = {
+        ALLOW_COUNT, ALL_CLASSES, ALLOW_NONE, NONE_ON_COMMA, SPLIT_LETTER,
+        TOOL_CLASS, WEAPON_CLASS, 0
+    };
+
+    static const char tools_too[] = {
+        ALLOW_COUNT, ALL_CLASSES, ALLOW_NONE, NONE_ON_COMMA, SPLIT_LETTER,
+        TOOL_CLASS, POTION_CLASS, WEAPON_CLASS, WAND_CLASS, GEM_CLASS, 0
+    };
+
     int res = 1;
-    char class_list[MAXOCLASSES + 2];
+    const char *class_list;
     struct obj *obj;
 
     if (check_capacity(NULL))
         return 0;
 
     if (carrying(POT_OIL) || uhave_graystone())
-        strcpy(class_list, tools_too);
+        class_list = tools_too;
     else
-        strcpy(class_list, tools);
+        class_list = tools;
     if (carrying(CREAM_PIE) || carrying(EUCALYPTUS_LEAF))
-        add_class(class_list, FOOD_CLASS);
+        class_list = msgkitten(class_list, FOOD_CLASS);
 
     obj = getargobj(arg, class_list, "use or apply");
     if (!obj)

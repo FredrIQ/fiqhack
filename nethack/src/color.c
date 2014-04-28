@@ -1,11 +1,9 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Sean Hunt, 2014-04-28 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "nhcurses.h"
-
-#define array_size(x) (sizeof(x)/sizeof(x[0]))
 
 short colorlist[] = { COLOR_BLACK, COLOR_RED, COLOR_GREEN, COLOR_YELLOW,
     COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN, COLOR_WHITE,
@@ -78,7 +76,7 @@ read_colormap(struct ColorMap *map)
             defType = 0;
         }
 
-        for (idx = 0, colorIndex = -1; idx < array_size(colorNames); idx++) {
+        for (idx = 0, colorIndex = -1; idx < ARRAY_SIZE(colorNames); idx++) {
             if (colorNames[idx] &&
                 !strncmp(colorname, colorNames[idx], strlen(colorNames[idx]))) {
                 colorIndex = idx;

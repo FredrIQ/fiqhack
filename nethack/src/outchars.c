@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Sean Hunt, 2014-04-28 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -12,8 +12,6 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <errno.h>
-
-#define array_size(x) (sizeof(x)/sizeof(x[0]))
 
 
 static int corpse_id, vcdoor_id, hcdoor_id, ndoor_id;
@@ -427,12 +425,12 @@ init_displaychars(void)
     add_extra_syms(unicode_drawing);
     add_extra_syms(rogue_drawing);
 
-    apply_override(default_drawing, default_ovr, array_size(default_ovr),
+    apply_override(default_drawing, default_ovr, ARRAY_SIZE(default_ovr),
                    FALSE);
     apply_override(unicode_drawing, unicode_graphics_ovr,
-                   array_size(unicode_graphics_ovr), FALSE);
+                   ARRAY_SIZE(unicode_graphics_ovr), FALSE);
     apply_override(rogue_drawing, rogue_graphics_ovr,
-                   array_size(rogue_graphics_ovr), FALSE);
+                   ARRAY_SIZE(rogue_graphics_ovr), FALSE);
 
     read_unisym_config();
 
