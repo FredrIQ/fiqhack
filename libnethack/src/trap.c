@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-28 */
+/* Last modified by Sean Hunt, 2014-05-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -49,7 +49,7 @@ burnarmor(struct monst *victim)
 
     if (!victim)
         return 0;
-#define burn_dmg(obj,descr) rust_dmg(obj, descr, ERODE_BURN, TRUE, FALSE)
+#define burn_dmg(obj,descr) erode_obj(obj, descr, ERODE_BURN, TRUE, FALSE)
     while (1) {
         switch (rn2(5)) {
         case 0:
@@ -104,8 +104,8 @@ burnarmor(struct monst *victim)
  * "print", if set, means to print a message even if no change occurs.
  */
 boolean
-rust_dmg(struct obj * otmp, const char *ostr, enum erode_type type,
-         boolean check_grease, boolean print)
+erode_obj(struct obj * otmp, const char *ostr, enum erode_type type,
+          boolean check_grease, boolean print)
 {
     static const char *const action[] =
         { "smoulder", "rust", "rot", "corrode" };
@@ -142,7 +142,7 @@ rust_dmg(struct obj * otmp, const char *ostr, enum erode_type type,
         primary = FALSE;
         break;
     default:
-        impossible("Invalid erosion type in rust_dmg");
+        impossible("Invalid erosion type in erode_obj");
         return FALSE;
     }
 
@@ -838,7 +838,7 @@ dotrap(struct trap *trap, unsigned trflags)
             if (water_damage(uarms, "shield", TRUE))
                 break;
             if (u.twoweap || (uwep && bimanual(uwep)))
-                erode_obj(u.twoweap ? uswapwep : uwep, FALSE, TRUE);
+                water_damage(u.twoweap ? uswapwep : uwep, NULL, TRUE);
         glovecheck:
             water_damage(uarmg, "gauntlets", TRUE);
             /* Not "metal gauntlets" since it gets called even if it's leather
@@ -846,7 +846,7 @@ dotrap(struct trap *trap, unsigned trflags)
             break;
         case 2:
             pline("%s your right %s!", A_gush_of_water_hits, body_part(ARM));
-            erode_obj(uwep, FALSE, TRUE);
+            water_damage(uwep, NULL, TRUE);
             goto glovecheck;
         default:
             pline("%s you!", A_gush_of_water_hits);
@@ -1879,7 +1879,7 @@ mintrap(struct monst *mtmp)
                         break;
                     target = MON_WEP(mtmp);
                     if (target && bimanual(target))
-                        erode_obj(target, FALSE, TRUE);
+                        water_damage(target, NULL, TRUE);
                 glovecheck:
                     target =
                         which_armor(mtmp, os_armg);
@@ -1889,7 +1889,7 @@ mintrap(struct monst *mtmp)
                     if (in_sight)
                         pline("%s %s's right %s!", A_gush_of_water_hits,
                               mon_nam(mtmp), mbodypart(mtmp, ARM));
-                    erode_obj(MON_WEP(mtmp), FALSE, TRUE);
+                    water_damage(MON_WEP(mtmp), NULL, TRUE);
                     goto glovecheck;
                 default:
                     if (in_sight)
@@ -2757,22 +2757,42 @@ fire_damage(struct obj *chain, boolean force, boolean here, xchar x, xchar y)
                                             1] : destroy_strings[dindx * 3]);
             delobj(obj);
             retval++;
-        } else if (is_flammable(obj) && obj->oeroded < MAX_ERODE &&
-                   !(obj->oerodeproof || (obj->blessed && !rnl(4)))) {
-            if (in_sight) {
-                pline("%s %s%s.", Yname2(obj), otense(obj, "burn"),
-                      obj->oeroded + 1 ==
-                      MAX_ERODE ? " completely" : obj->oeroded ? " further" :
-                      "");
-            }
-            obj->oeroded++;
-        }
+        } else
+            erode_obj(obj, NULL, ERODE_BURN, FALSE, TRUE);
     }
 
     if (retval && !in_sight)
         pline("You smell smoke.");
     return retval;
 }
+
+
+void
+acid_damage(struct obj *obj) {
+    /* Scrolls (but not spellbooks) fade. There is no particular reason for this
+     * other than to preserve vanilla behaviour. See ticket #454.
+     */
+    struct monst *victim =
+        carried(obj) ? &youmonst : mcarried(obj) ? obj->ocarry : NULL;
+    boolean vismon = victim && (victim != &youmonst) && canseemon(victim);
+
+    if (obj->greased)
+        grease_protect(obj, NULL, victim);
+    else if (obj->oclass == SCROLL_CLASS && obj->otyp != SCR_BLANK_PAPER) {
+        if (obj->otyp != SCR_BLANK_PAPER) {
+            if (!Blind) {
+                if (victim == &youmonst)
+                    pline("Your %s.", aobjnam(obj, "fade"));
+                else if (vismon)
+                    pline("%s's %s.", Monnam(victim), aobjnam(obj, "fade"));
+            }
+            obj->otyp = SCR_BLANK_PAPER;
+            obj->spe = 0;
+        }
+    } else
+        erode_obj(obj, NULL, ERODE_CORRODE, TRUE, TRUE);
+}
+
 
 /* returns:
  *  0 if obj is unaffected
@@ -2841,7 +2861,7 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
             return 2;
         }
     } else {
-        return rust_dmg(obj, ostr, ERODE_RUST, FALSE, FALSE) ? 2 : 0;
+        return erode_obj(obj, ostr, ERODE_RUST, FALSE, FALSE) ? 2 : 0;
     }
     
     return 0;

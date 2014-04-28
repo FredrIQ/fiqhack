@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-28 */
+/* Last modified by Sean Hunt, 2014-05-01 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -911,8 +911,8 @@ extern struct monst *cloneu(void);
 extern void expels(struct monst *, const struct permonst *, boolean);
 extern const struct attack *getmattk(const struct permonst *, int, int *,
                                      struct attack *);
-extern void hurtmarmor(struct monst *, enum erode_type);
 extern int mattacku(struct monst *);
+extern void hurtarmor(struct monst *, enum erode_type);
 extern int magic_negation(struct monst *);
 extern int gazemu(struct monst *, const struct attack *);
 extern void mdamageu(struct monst *, int);
@@ -1715,8 +1715,8 @@ extern void restore_track(struct memfile *mf);
 /* ### trap.c ### */
 
 extern boolean burnarmor(struct monst *);
-extern boolean rust_dmg(struct obj *, const char *, enum erode_type, boolean,
-                        boolean);
+extern boolean erode_obj(struct obj *, const char *, enum erode_type, boolean,
+                         boolean);
 extern boolean grease_protect(struct obj *, const char *, struct monst *);
 extern struct trap *maketrap(struct level *lev, int x, int y, int typ);
 extern void fall_through(boolean);
@@ -1733,6 +1733,7 @@ extern void float_up(void);
 extern void fill_pit(struct level *lev, int x, int y);
 extern int float_down(long);
 extern int fire_damage(struct obj *, boolean, boolean, xchar, xchar);
+extern void acid_damage(struct obj *);
 extern boolean water_damage(struct obj *, const char *, boolean);
 extern void water_damage_chain(struct obj *, boolean);
 extern boolean drown(void);
@@ -1854,7 +1855,6 @@ extern void uwepgone(void);
 extern void uswapwepgone(void);
 extern void uqwepgone(void);
 extern void untwoweapon(void);
-extern void erode_obj(struct obj *, boolean, boolean);
 extern int chwepon(struct obj *, int);
 extern int welded(struct obj *);
 extern void weldmsg(struct obj *);

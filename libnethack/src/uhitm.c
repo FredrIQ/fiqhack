@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-28 */
+/* Last modified by Sean Hunt, 2014-05-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2133,7 +2133,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
         if (mhit) {
             if (aatyp == AT_KICK) {
                 if (uarmf && !rn2(6))
-                    rust_dmg(uarmf, xname(uarmf), ERODE_CORRODE, TRUE, TRUE);
+                    erode_obj(uarmf, xname(uarmf), ERODE_CORRODE, TRUE, TRUE);
             } else if (aatyp == AT_WEAP || aatyp == AT_CLAW || aatyp == AT_MAGC
                        || aatyp == AT_TUCH)
                 passive_obj(mon, NULL, &(ptr->mattk[i]));
@@ -2175,7 +2175,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
         if (mhit && !mon->mcan) {
             if (aatyp == AT_KICK) {
                 if (uarmf)
-                    rust_dmg(uarmf, xname(uarmf), ERODE_RUST, TRUE, TRUE);
+                    erode_obj(uarmf, xname(uarmf), ERODE_RUST, TRUE, TRUE);
             } else if (aatyp == AT_WEAP || aatyp == AT_CLAW || aatyp == AT_MAGC
                        || aatyp == AT_TUCH)
                 passive_obj(mon, NULL, &(ptr->mattk[i]));
@@ -2185,7 +2185,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
         if (mhit && !mon->mcan) {
             if (aatyp == AT_KICK) {
                 if (uarmf)
-                    rust_dmg(uarmf, xname(uarmf), ERODE_CORRODE, TRUE, TRUE);
+                    erode_obj(uarmf, xname(uarmf), ERODE_CORRODE, TRUE, TRUE);
             } else if (aatyp == AT_WEAP || aatyp == AT_CLAW || aatyp == AT_MAGC
                        || aatyp == AT_TUCH)
                 passive_obj(mon, NULL, &(ptr->mattk[i]));
@@ -2345,17 +2345,17 @@ passive_obj(struct monst *mon,
 
     case AD_ACID:
         if (!rn2(6)) {
-            erode_obj(obj, TRUE, FALSE);
+            erode_obj(obj, NULL, ERODE_CORRODE, TRUE, TRUE);
         }
         break;
     case AD_RUST:
         if (!mon->mcan) {
-            erode_obj(obj, FALSE, FALSE);
+            erode_obj(obj, NULL, ERODE_RUST, TRUE, TRUE);
         }
         break;
     case AD_CORR:
         if (!mon->mcan) {
-            erode_obj(obj, TRUE, FALSE);
+            erode_obj(obj, NULL, ERODE_CORRODE, TRUE, TRUE);
         }
         break;
     case AD_ENCH:

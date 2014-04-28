@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-28 */
+/* Last modified by Sean Hunt, 2014-05-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -724,34 +724,34 @@ hurtarmor(struct monst *mdef, enum erode_type type)
         switch (rn2(5)) {
         case 0:
             target = which_armor(mdef, os_armh);
-            if (!target || !rust_dmg(target, xname(target), type, TRUE, FALSE))
+            if (!target || !erode_obj(target, xname(target), type, TRUE, FALSE))
                 continue;
             break;
         case 1:
             target = which_armor(mdef, os_armc);
             if (target) {
-                rust_dmg(target, xname(target), type, TRUE, TRUE);
+                erode_obj(target, xname(target), type, TRUE, TRUE);
                 break;
             }
             if ((target = which_armor(mdef, os_arm)) != NULL) {
-                rust_dmg(target, xname(target), type, TRUE, TRUE);
+                erode_obj(target, xname(target), type, TRUE, TRUE);
             } else if ((target = which_armor(mdef, os_armu)) != NULL) {
-                rust_dmg(target, xname(target), type, TRUE, TRUE);
+                erode_obj(target, xname(target), type, TRUE, TRUE);
             }
             break;
         case 2:
             target = which_armor(mdef, os_arms);
-            if (!target || !rust_dmg(target, xname(target), type, TRUE, FALSE))
+            if (!target || !erode_obj(target, xname(target), type, TRUE, FALSE))
                 continue;
             break;
         case 3:
             target = which_armor(mdef, os_armg);
-            if (!target || !rust_dmg(target, xname(target), type, TRUE, FALSE))
+            if (!target || !erode_obj(target, xname(target), type, TRUE, FALSE))
                 continue;
             break;
         case 4:
             target = which_armor(mdef, os_armf);
-            if (!target || !rust_dmg(target, xname(target), type, TRUE, FALSE))
+            if (!target || !erode_obj(target, xname(target), type, TRUE, FALSE))
                 continue;
             break;
         }
@@ -2472,7 +2472,7 @@ passiveum(const struct permonst *olduasmon, struct monst *mtmp,
         if (!rn2(30))
             hurtarmor(mtmp, ERODE_CORRODE);
         if (!rn2(6))
-            erode_obj(MON_WEP(mtmp), TRUE, TRUE);
+            erode_obj(MON_WEP(mtmp), NULL, ERODE_CORRODE, TRUE, TRUE);
         goto assess_dmg;
     case AD_STON:      /* cockatrice */
         {

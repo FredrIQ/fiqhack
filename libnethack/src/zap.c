@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-28 */
+/* Last modified by Sean Hunt, 2014-05-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3099,7 +3099,7 @@ zap_hit_mon(struct monst *mon, int type, int nd, struct obj **ootmp)
         }
         tmp = dice(nd, 6);
         if (!rn2(6))
-            erode_obj(MON_WEP(mon), TRUE, TRUE);
+            acid_damage(MON_WEP(mon));
         if (!rn2(6))
             hurtarmor(mon, ERODE_CORRODE);
         break;
@@ -3231,9 +3231,9 @@ zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy)
         }
         /* using two weapons at once makes both of them more vulnerable */
         if (!rn2(u.twoweap ? 3 : 6))
-            erode_obj(uwep, TRUE, TRUE);
+            acid_damage(uwep);
         if (u.twoweap && !rn2(3))
-            erode_obj(uswapwep, TRUE, TRUE);
+            acid_damage(uswapwep);
         if (!rn2(6))
             hurtarmor(&youmonst, ERODE_CORRODE);
         break;
