@@ -127,7 +127,7 @@ gush(int x, int y, void *poolcnt)
     level->locations[x][y].typ = POOL;
     /* No kelp! */
     del_engr_at(level, x, y);
-    water_damage_chain(level->objects[x][y], FALSE, TRUE);
+    water_damage_chain(level->objects[x][y], TRUE);
 
     if ((mtmp = m_at(level, x, y)) != 0)
         minliquid(mtmp);

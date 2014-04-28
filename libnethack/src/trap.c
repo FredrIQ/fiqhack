@@ -2787,12 +2787,14 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
     if (obj->otyp == CAN_OF_GREASE && obj->spe > 0) {
         return 0;
     } else if (obj->greased) {
-        if (force || !rn2(2))
+        if (!rn2(2))
             obj->greased = 0;
+        if (carried(obj))
+            update_inventory();
         return 1;
     } else if (Is_container(obj) && !Is_box(obj) &&
                 (obj->otyp != OILSKIN_SACK || (obj->cursed && !rn2(3)))) {
-        water_damage_chain(obj->cobj, force, FALSE);
+        water_damage_chain(obj->cobj, FALSE);
         return 0;
     } else if (!force && (Luck + 5) > rn2(20)) {
         /* chance per item of sustaining damage: max luck (full moon): 5%
@@ -2802,6 +2804,8 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
     } else if (obj->oclass == SCROLL_CLASS) {
         obj->otyp = SCR_BLANK_PAPER;
         obj->spe = 0;
+        if (carried(obj))
+            update_inventory();
         return 1;
     } else if (obj->oclass == SPBOOK_CLASS) {
         if (obj->otyp == SPE_BOOK_OF_THE_DEAD) {
@@ -2809,21 +2813,30 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
             return 0;
         } else {
             obj->otyp = SPE_BLANK_PAPER;
+            if (carried(obj))
+                update_inventory();
             return 1;
         }
     } else if (obj->oclass == POTION_CLASS) {
         if (obj->otyp == POT_ACID) {
             /* damage player/monster? */
             pline("A potion explodes!");
+            boolean update = carried(obj);
             delobj(obj);
+            if (update)
+                update_inventory();
             return 2;
         } else if (obj->odiluted) {
             obj->otyp = POT_WATER;
             obj->blessed = obj->cursed = 0;
             obj->odiluted = 0;
+            if (carried(obj))
+                update_inventory();
             return 1;
         } else if (obj->otyp != POT_WATER) {
             obj->odiluted++;
+            if (carried(obj))
+                update_inventory();
             return 1;
         }
     } else {
@@ -2834,14 +2847,14 @@ water_damage(struct obj * obj, const char *ostr, boolean force)
 }
 
 void
-water_damage_chain(struct obj *obj, boolean force, boolean here)
+water_damage_chain(struct obj *obj, boolean here)
 {
     struct obj *otmp;
 
     for (; obj; obj = otmp) {
         otmp = here ? obj->nexthere : obj->nobj;
 
-        water_damage(obj, NULL, force);
+        water_damage(obj, NULL, FALSE);
     }
 }
 
@@ -2923,7 +2936,7 @@ drown(void)
                   Hallucination ? "the Titanic" : "a rock");
     }
 
-    water_damage_chain(invent, FALSE, FALSE);
+    water_damage_chain(invent, FALSE);
 
     if (u.umonnum == PM_GREMLIN && rn2(3))
         split_mon(&youmonst, NULL);
