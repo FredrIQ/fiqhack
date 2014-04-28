@@ -1715,7 +1715,8 @@ extern void restore_track(struct memfile *mf);
 /* ### trap.c ### */
 
 extern boolean burnarmor(struct monst *);
-extern boolean rust_dmg(struct obj *, const char *, enum erode_type, boolean);
+extern boolean rust_dmg(struct obj *, const char *, enum erode_type, boolean,
+                        boolean);
 extern boolean grease_protect(struct obj *, const char *, struct monst *);
 extern struct trap *maketrap(struct level *lev, int x, int y, int typ);
 extern void fall_through(boolean);
@@ -1732,7 +1733,8 @@ extern void float_up(void);
 extern void fill_pit(struct level *lev, int x, int y);
 extern int float_down(long);
 extern int fire_damage(struct obj *, boolean, boolean, xchar, xchar);
-extern boolean water_damage(struct obj *, boolean, boolean);
+extern boolean water_damage(struct obj *, const char *, boolean);
+extern void water_damage_chain(struct obj *, boolean, boolean);
 extern boolean drown(void);
 extern void drain_en(int);
 extern int dountrap(const struct nh_cmd_arg *);

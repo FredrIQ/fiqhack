@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-26 */
+/* Last modified by Sean Hunt, 2014-04-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -719,18 +719,18 @@ mattacku(struct monst *mtmp)
 static void
 hurtarmor(int attk)
 {
-    int hurt;
+    enum erode_type hurt;
 
     switch (attk) {
         /* 0 is burning, which we should never be called with */
     case AD_RUST:
-        hurt = 1;
+        hurt = ERODE_RUST;
         break;
     case AD_CORR:
-        hurt = 3;
+        hurt = ERODE_CORRODE;
         break;
     default:
-        hurt = 2;
+        hurt = ERODE_ROT;
         break;
     }
 
@@ -742,35 +742,35 @@ hurtarmor(int attk)
         switch (rn2(5)) {
         case 0:
             if (!uarmh ||
-                !rust_dmg(uarmh, xname(uarmh), hurt, FALSE))
+                !rust_dmg(uarmh, xname(uarmh), hurt, TRUE, FALSE))
                 continue;
             break;
         case 1:
             if (uarmc) {
-                rust_dmg(uarmc, xname(uarmc), hurt, TRUE);
+                rust_dmg(uarmc, xname(uarmc), hurt, TRUE, TRUE);
                 break;
             }
             /* Note the difference between break and continue; break means it
                was hit and didn't rust; continue means it wasn't a target and
                though it didn't rust something else did. */
             if (uarm)
-                rust_dmg(uarm, xname(uarm), hurt, TRUE);
+                rust_dmg(uarm, xname(uarm), hurt, TRUE, TRUE);
             else if (uarmu)
-                rust_dmg(uarmu, xname(uarmu), hurt, TRUE);
+                rust_dmg(uarmu, xname(uarmu), hurt, TRUE, TRUE);
             break;
         case 2:
             if (!uarms ||
-                !rust_dmg(uarms, xname(uarms), hurt, FALSE))
+                !rust_dmg(uarms, xname(uarms), hurt, TRUE, FALSE))
                 continue;
             break;
         case 3:
             if (!uarmg ||
-                !rust_dmg(uarmg, xname(uarmg), hurt, FALSE))
+                !rust_dmg(uarmg, xname(uarmg), hurt, TRUE, FALSE))
                 continue;
             break;
         case 4:
             if (!uarmf ||
-                !rust_dmg(uarmf, xname(uarmf), hurt, FALSE))
+                !rust_dmg(uarmf, xname(uarmf), hurt, TRUE, FALSE))
                 continue;
             break;
         }

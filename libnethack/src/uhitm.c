@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-26 */
+/* Last modified by Sean Hunt, 2014-04-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -39,13 +39,13 @@ hurtmarmor(struct monst *mdef, int attk)
     switch (attk) {
         /* 0 is burning, which we should never be called with */
     case AD_RUST:
-        hurt = 1;
+        hurt = ERODE_RUST;
         break;
     case AD_CORR:
-        hurt = 3;
+        hurt = ERODE_CORRODE;
         break;
     default:
-        hurt = 2;
+        hurt = ERODE_ROT;
         break;
     }
     /* What the following code does: it keeps looping until it finds a target
@@ -56,34 +56,34 @@ hurtmarmor(struct monst *mdef, int attk)
         switch (rn2(5)) {
         case 0:
             target = which_armor(mdef, os_armh);
-            if (!target || !rust_dmg(target, xname(target), hurt, FALSE))
+            if (!target || !rust_dmg(target, xname(target), hurt, TRUE, FALSE))
                 continue;
             break;
         case 1:
             target = which_armor(mdef, os_armc);
             if (target) {
-                rust_dmg(target, xname(target), hurt, TRUE);
+                rust_dmg(target, xname(target), hurt, TRUE, TRUE);
                 break;
             }
             if ((target = which_armor(mdef, os_arm)) != NULL) {
-                rust_dmg(target, xname(target), hurt, TRUE);
+                rust_dmg(target, xname(target), hurt, TRUE, TRUE);
             } else if ((target = which_armor(mdef, os_armu)) != NULL) {
-                rust_dmg(target, xname(target), hurt, TRUE);
+                rust_dmg(target, xname(target), hurt, TRUE, TRUE);
             }
             break;
         case 2:
             target = which_armor(mdef, os_arms);
-            if (!target || !rust_dmg(target, xname(target), hurt, FALSE))
+            if (!target || !rust_dmg(target, xname(target), hurt, TRUE, FALSE))
                 continue;
             break;
         case 3:
             target = which_armor(mdef, os_armg);
-            if (!target || !rust_dmg(target, xname(target), hurt, FALSE))
+            if (!target || !rust_dmg(target, xname(target), hurt, TRUE, FALSE))
                 continue;
             break;
         case 4:
             target = which_armor(mdef, os_armf);
-            if (!target || !rust_dmg(target, xname(target), hurt, FALSE))
+            if (!target || !rust_dmg(target, xname(target), hurt, TRUE, FALSE))
                 continue;
             break;
         }
@@ -2195,7 +2195,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
         if (mhit) {
             if (aatyp == AT_KICK) {
                 if (uarmf && !rn2(6))
-                    rust_dmg(uarmf, xname(uarmf), 3, TRUE);
+                    rust_dmg(uarmf, xname(uarmf), ERODE_CORRODE, TRUE, TRUE);
             } else if (aatyp == AT_WEAP || aatyp == AT_CLAW || aatyp == AT_MAGC
                        || aatyp == AT_TUCH)
                 passive_obj(mon, NULL, &(ptr->mattk[i]));
@@ -2237,7 +2237,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
         if (mhit && !mon->mcan) {
             if (aatyp == AT_KICK) {
                 if (uarmf)
-                    rust_dmg(uarmf, xname(uarmf), 1, TRUE);
+                    rust_dmg(uarmf, xname(uarmf), ERODE_RUST, TRUE, TRUE);
             } else if (aatyp == AT_WEAP || aatyp == AT_CLAW || aatyp == AT_MAGC
                        || aatyp == AT_TUCH)
                 passive_obj(mon, NULL, &(ptr->mattk[i]));
@@ -2247,7 +2247,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
         if (mhit && !mon->mcan) {
             if (aatyp == AT_KICK) {
                 if (uarmf)
-                    rust_dmg(uarmf, xname(uarmf), 3, TRUE);
+                    rust_dmg(uarmf, xname(uarmf), ERODE_CORRODE, TRUE, TRUE);
             } else if (aatyp == AT_WEAP || aatyp == AT_CLAW || aatyp == AT_MAGC
                        || aatyp == AT_TUCH)
                 passive_obj(mon, NULL, &(ptr->mattk[i]));

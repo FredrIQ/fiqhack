@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Sean Hunt, 2014-04-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -201,7 +201,7 @@ flooreffects(struct obj * obj, int x, int y, const char *verb)
             map_background(x, y, 0);
             newsym(x, y);
         }
-        return water_damage(obj, FALSE, TRUE);
+        return water_damage(obj, NULL, FALSE) == 2;
     } else if (u.ux == x && u.uy == y && (!u.utrap || u.utraptype != TT_PIT) &&
                (t = t_at(lev, x, y)) != 0 && t->tseen &&
                (t->ttyp == PIT || t->ttyp == SPIKED_PIT)) {

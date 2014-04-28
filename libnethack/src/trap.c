@@ -49,7 +49,7 @@ burnarmor(struct monst *victim)
 
     if (!victim)
         return 0;
-#define burn_dmg(obj,descr) rust_dmg(obj, descr, 0, FALSE)
+#define burn_dmg(obj,descr) rust_dmg(obj, descr, ERODE_BURN, TRUE, FALSE)
     while (1) {
         switch (rn2(5)) {
         case 0:
@@ -98,12 +98,14 @@ burnarmor(struct monst *victim)
 #undef burn_dmg
 }
 
-/* Generic erode-item function.  Returns TRUE if any change in state occurred.
+/* Generic erode-item function.  Returns TRUE if any change in state occurred,
+ * including grease wearing off.
+ * "check_grease", if FALSE, means that grease is not checked for.
  * "print", if set, means to print a message even if no change occurs.
  */
 boolean
 rust_dmg(struct obj * otmp, const char *ostr, enum erode_type type,
-         boolean print)
+         boolean check_grease, boolean print)
 {
     static const char *const action[] =
         { "smoulder", "rust", "rot", "corrode" };
@@ -114,7 +116,6 @@ rust_dmg(struct obj * otmp, const char *ostr, enum erode_type type,
         return FALSE;
 
     boolean vulnerable = FALSE;
-    boolean grprot = FALSE;
     boolean primary = TRUE;
 
     struct monst *victim =
@@ -126,19 +127,19 @@ rust_dmg(struct obj * otmp, const char *ostr, enum erode_type type,
     switch (type) {
     case ERODE_BURN:
         vulnerable = is_flammable(otmp);
+        check_grease = FALSE;
         break;
     case ERODE_RUST:
         vulnerable = is_rustprone(otmp);
-        grprot = TRUE;
         break;
     case ERODE_ROT:
         vulnerable = is_rottable(otmp);
+        check_grease = FALSE;
         primary = FALSE;
         break;
     case ERODE_CORRODE:
         vulnerable = is_corrodeable(otmp);
         primary = FALSE;
-        grprot = TRUE;
         break;
     default:
         impossible("Invalid erosion type in rust_dmg");
@@ -149,7 +150,7 @@ rust_dmg(struct obj * otmp, const char *ostr, enum erode_type type,
     if (!ostr)
         ostr = cxname(otmp);
 
-    if (grprot && otmp->greased) {
+    if (check_grease && otmp->greased) {
         return grease_protect(otmp, ostr, victim);
     } else if (!vulnerable || (otmp->oerodeproof && otmp->rknown)) {
         if (print && flags.verbose) {
@@ -843,16 +844,16 @@ dotrap(struct trap *trap, unsigned trflags)
         switch (rn2(5)) {
         case 0:
             pline("%s you on the %s!", A_gush_of_water_hits, body_part(HEAD));
-            rust_dmg(uarmh, maybe_helmet_name(uarmh), 1, TRUE);
+            water_damage(uarmh, maybe_helmet_name(uarmh), TRUE);
             break;
         case 1:
             pline("%s your left %s!", A_gush_of_water_hits, body_part(ARM));
-            if (rust_dmg(uarms, "shield", 1, TRUE))
+            if (water_damage(uarms, "shield", TRUE))
                 break;
             if (u.twoweap || (uwep && bimanual(uwep)))
                 erode_obj(u.twoweap ? uswapwep : uwep, FALSE, TRUE);
         glovecheck:
-            rust_dmg(uarmg, "gauntlets", 1, TRUE);
+            water_damage(uarmg, "gauntlets", TRUE);
             /* Not "metal gauntlets" since it gets called even if it's leather
                for the message */
             break;
@@ -865,11 +866,11 @@ dotrap(struct trap *trap, unsigned trflags)
             for (otmp = invent; otmp; otmp = otmp->nobj)
                 snuff_lit(otmp);
             if (uarmc)
-                rust_dmg(uarmc, cloak_simple_name(uarmc), 1, TRUE);
+                water_damage(uarmc, cloak_simple_name(uarmc), TRUE);
             else if (uarm)
-                rust_dmg(uarm, "armor", 1, TRUE);
+                water_damage(uarm, "armor", TRUE);
             else if (uarmu)
-                rust_dmg(uarmu, "shirt", 1, TRUE);
+                water_damage(uarmu, "shirt", TRUE);
         }
         update_inventory();
         break;
@@ -1867,14 +1868,14 @@ mintrap(struct monst *mtmp)
                         pline("%s %s on the %s!", A_gush_of_water_hits,
                               mon_nam(mtmp), mbodypart(mtmp, HEAD));
                     target = which_armor(mtmp, os_armh);
-                    rust_dmg(target, maybe_helmet_name(target), 1, TRUE);
+                    water_damage(target, maybe_helmet_name(target), TRUE);
                     break;
                 case 1:
                     if (in_sight)
                         pline("%s %s's left %s!", A_gush_of_water_hits,
                               mon_nam(mtmp), mbodypart(mtmp, ARM));
                     target = which_armor(mtmp, os_arms);
-                    if (rust_dmg(target, "shield", 1, TRUE))
+                    if (water_damage(target, "shield", TRUE))
                         break;
                     target = MON_WEP(mtmp);
                     if (target && bimanual(target))
@@ -1882,7 +1883,7 @@ mintrap(struct monst *mtmp)
                 glovecheck:
                     target =
                         which_armor(mtmp, os_armg);
-                    rust_dmg(target, "gauntlets", 1, TRUE);
+                    water_damage(target, "gauntlets", TRUE);
                     break;
                 case 2:
                     if (in_sight)
@@ -1897,14 +1898,14 @@ mintrap(struct monst *mtmp)
                         snuff_lit(otmp);
                     target = which_armor(mtmp, os_armc);
                     if (target)
-                        rust_dmg(target, cloak_simple_name(target), 1, TRUE);
+                        water_damage(target, cloak_simple_name(target), TRUE);
                     else {
                         target = which_armor(mtmp, os_arm);
                         if (target)
-                            rust_dmg(target, "armor", 1, TRUE);
+                            water_damage(target, "armor", TRUE);
                         else {
                             target = which_armor(mtmp, os_armu);
-                            rust_dmg(target, "shirt", 1, TRUE);
+                            water_damage(target, "shirt", TRUE);
                         }
                     }
                 }
@@ -2773,65 +2774,75 @@ fire_damage(struct obj *chain, boolean force, boolean here, xchar x, xchar y)
     return retval;
 }
 
-/* returns TRUE if obj is destroyed */
+/* returns:
+ *  0 if obj is unaffected
+ *  1 if obj is changed but survived
+ *  2 if obj is destroyed
+ */
 boolean
-water_damage(struct obj * obj, boolean force, boolean here)
+water_damage(struct obj * obj, const char *ostr, boolean force)
 {
-    struct obj *otmp, *obj_original = obj;
-    boolean obj_destroyed = FALSE;
+    snuff_lit(obj);
 
-    /* Scrolls, spellbooks, potions, weapons and pieces of armor may get
-       affected by the water */
+    if (obj->otyp == CAN_OF_GREASE && obj->spe > 0) {
+        return 0;
+    } else if (obj->greased) {
+        if (force || !rn2(2))
+            obj->greased = 0;
+        return 1;
+    } else if (Is_container(obj) && !Is_box(obj) &&
+                (obj->otyp != OILSKIN_SACK || (obj->cursed && !rn2(3)))) {
+        water_damage_chain(obj->cobj, force, FALSE);
+        return 0;
+    } else if (!force && (Luck + 5) > rn2(20)) {
+        /* chance per item of sustaining damage: max luck (full moon): 5%
+            max luck (elsewhen): 10% avg luck (Luck==0): 75% awful luck
+            (Luck<-4): 100% */
+        return 0;
+    } else if (obj->oclass == SCROLL_CLASS) {
+        obj->otyp = SCR_BLANK_PAPER;
+        obj->spe = 0;
+        return 1;
+    } else if (obj->oclass == SPBOOK_CLASS) {
+        if (obj->otyp == SPE_BOOK_OF_THE_DEAD) {
+            pline("Steam rises from %s.", the(xname(obj)));
+            return 0;
+        } else {
+            obj->otyp = SPE_BLANK_PAPER;
+            return 1;
+        }
+    } else if (obj->oclass == POTION_CLASS) {
+        if (obj->otyp == POT_ACID) {
+            /* damage player/monster? */
+            pline("A potion explodes!");
+            delobj(obj);
+            return 2;
+        } else if (obj->odiluted) {
+            obj->otyp = POT_WATER;
+            obj->blessed = obj->cursed = 0;
+            obj->odiluted = 0;
+            return 1;
+        } else if (obj->otyp != POT_WATER) {
+            obj->odiluted++;
+            return 1;
+        }
+    } else {
+        return ! !rust_dmg(obj, ostr, ERODE_RUST, FALSE, FALSE);
+    }
+    
+    return 0;
+}
+
+void
+water_damage_chain(struct obj *obj, boolean force, boolean here)
+{
+    struct obj *otmp;
+
     for (; obj; obj = otmp) {
         otmp = here ? obj->nexthere : obj->nobj;
 
-        snuff_lit(obj);
-
-        if (obj->otyp == CAN_OF_GREASE && obj->spe > 0) {
-            continue;
-        } else if (obj->greased) {
-            if (force || !rn2(2))
-                obj->greased = 0;
-        } else if (Is_container(obj) && !Is_box(obj) &&
-                   (obj->otyp != OILSKIN_SACK || (obj->cursed && !rn2(3)))) {
-            water_damage(obj->cobj, force, FALSE);
-        } else if (!force && (Luck + 5) > rn2(20)) {
-            /* chance per item of sustaining damage: max luck (full moon): 5%
-               max luck (elsewhen): 10% avg luck (Luck==0): 75% awful luck
-               (Luck<-4): 100% */
-            continue;
-        } else if (obj->oclass == SCROLL_CLASS) {
-            obj->otyp = SCR_BLANK_PAPER;
-            obj->spe = 0;
-        } else if (obj->oclass == SPBOOK_CLASS) {
-            if (obj->otyp == SPE_BOOK_OF_THE_DEAD)
-                pline("Steam rises from %s.", the(xname(obj)));
-            else
-                obj->otyp = SPE_BLANK_PAPER;
-        } else if (obj->oclass == POTION_CLASS) {
-            if (obj->otyp == POT_ACID) {
-                /* damage player/monster? */
-                pline("A potion explodes!");
-                delobj(obj);
-                obj_destroyed = (obj == obj_original);
-                continue;
-            } else if (obj->odiluted) {
-                obj->otyp = POT_WATER;
-                obj->blessed = obj->cursed = 0;
-                obj->odiluted = 0;
-            } else if (obj->otyp != POT_WATER)
-                obj->odiluted++;
-        } else if (is_rustprone(obj) && obj->oeroded < MAX_ERODE &&
-                   !(obj->oerodeproof || (obj->blessed && !rnl(4)))) {
-            /* all metal stuff and armor except (body armor protected by
-               oilskin cloak) */
-            if (obj->oclass != ARMOR_CLASS || obj != uarm || !uarmc ||
-                uarmc->otyp != OILSKIN_CLOAK || (uarmc->cursed && !rn2(3)))
-                obj->oeroded++;
-        }
-        obj_destroyed = FALSE;
+        water_damage(obj, NULL, force);
     }
-    return obj_destroyed;
 }
 
 /*
@@ -2912,7 +2923,7 @@ drown(void)
                   Hallucination ? "the Titanic" : "a rock");
     }
 
-    water_damage(invent, FALSE, FALSE);
+    water_damage_chain(invent, FALSE, FALSE);
 
     if (u.umonnum == PM_GREMLIN && rn2(3))
         split_mon(&youmonst, NULL);
