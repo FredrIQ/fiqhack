@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -365,7 +365,7 @@ mon_arrive(struct monst *mtmp, boolean with_you)
         }
     }
     /* moved a bit */
-    mtmp->mx = 0;       /* (already is 0) */
+    mtmp->mx = COLNO;       /* (already is 0) */
     mtmp->my = xyflags;
     if (xlocale)
         mnearto(mtmp, xlocale, ylocale, FALSE);
@@ -563,7 +563,8 @@ keepdogs(boolean pets_only)
 
             relmon(mtmp);
             newsym(mtmp->mx, mtmp->my);
-            mtmp->mx = mtmp->my = 0;    /* avoid mnexto()/MON_AT() problem */
+            mtmp->mx = COLNO;    /* avoid mnexto()/MON_AT() problem */
+            mtmp->my = ROWNO;
             mtmp->wormno = num_segs;
             mtmp->mlstmv = moves;
             mtmp->nmon = turnstate.migrating_pets;
@@ -636,7 +637,8 @@ migrate_to_level(struct monst *mtmp, xchar tolev,       /* destination level */
     mtmp->mtrack[0].y = xyflags;
     mtmp->mux = new_lev.dnum;
     mtmp->muy = new_lev.dlevel;
-    mtmp->mx = mtmp->my = 0;    /* this implies migration */
+    mtmp->mx = COLNO;
+    mtmp->my = ROWNO;    /* this implies migration */
 }
 
 
@@ -933,7 +935,7 @@ abuse_dog(struct monst *mtmp)
 
     /* don't make a sound if pet is in the middle of leaving the level */
     /* newsym isn't necessary in this case either */
-    if (mtmp->mx != 0) {
+    if (mtmp->mx != COLNO) {
         if (mtmp->mtame && rn2(mtmp->mtame))
             yelp(mtmp);
         else

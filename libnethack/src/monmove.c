@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Sean Hunt, 2014-04-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -503,7 +503,7 @@ toofar:
             /* for pets, case 0 and 3 are equivalent */
             /* vault guard might have vanished */
             if (mtmp->isgd &&
-                (mtmp->mhp < 1 || (mtmp->mx == 0 && mtmp->my == 0)))
+                (mtmp->mhp < 1 || (mtmp->mx == COLNO && mtmp->my == ROWNO)))
                 return 1;       /* behave as if it died */
             /* During hallucination, monster appearance should still change -
                even if it doesn't move. */

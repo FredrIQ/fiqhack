@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Sean Hunt, 2014-04-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -917,7 +917,7 @@ rloc_to(struct monst *mtmp, int x, int y)
 /* place a monster at a random location, typically due to teleport */
 /* return TRUE if successful, FALSE if not */
 boolean
-rloc(struct monst *mtmp,        /* mx==0 implies migrating monster arrival */
+rloc(struct monst *mtmp,        /* mx==COLNO implies migrating monster arrival */
      boolean suppress_impossible)
 {
     int x, y, trycount;
@@ -927,7 +927,7 @@ rloc(struct monst *mtmp,        /* mx==0 implies migrating monster arrival */
         return TRUE;
     }
 
-    if (mtmp->iswiz && mtmp->mx) {      /* Wizard, not just arriving */
+    if (mtmp->iswiz && mtmp->mx != COLNO) {      /* Wizard, not just arriving */
         if (!In_W_tower(u.ux, u.uy, &u.uz))
             x = level->upstair.sx, y = level->upstair.sy;
         else if (!level->dnladder.sx)   /* bottom level of tower */

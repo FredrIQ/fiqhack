@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1782,7 +1782,7 @@ set_mimic_sym(struct monst *mtmp, struct level *lev)
          *  location, then the mimic mimics a horizontal closed door.
          *  This does not allow doors to be in corners of rooms.
          */
-        else if (mx != 0 &&
+        else if (mx > 0 &&
                  (lev->locations[mx - 1][my].typ == HWALL ||
                   lev->locations[mx - 1][my].typ == TLCORNER ||
                   lev->locations[mx - 1][my].typ == TRWALL ||

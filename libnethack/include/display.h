@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-28 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -29,11 +29,12 @@
  * monsters that are hiding or mimicing other monsters.
  */
 # define tp_sensemon(mon) (     /* The hero can always sense a monster IF:  */\
-    (mon->dlevel == level) &&   /* 1. the monster is on the same level AND  */\
-    (!mindless(mon->data)) &&   /* 2. the monster has a brain to sense AND  */\
-    (!u_helpless(hm_unconscious)) && /* 3. the hero is conscious AND        */\
-      ((Blind && Blind_telepat) || /* 4a. hero is blind and telepathic OR   */\
-                                /* 4b. hero is using a telepathy inducing   */\
+    (onmap(mon))           &&   /* 1. the monster is actually present  AND  */\
+    (mon->dlevel == level) &&   /* 2. the monster is on the same level AND  */\
+    (!mindless(mon->data)) &&   /* 3. the monster has a brain to sense AND  */\
+    (!u_helpless(hm_unconscious)) && /* 4. the hero is conscious AND        */\
+      ((Blind && Blind_telepat) || /* 5a. hero is blind and telepathic OR   */\
+                                /* 5b. hero is using a telepathy inducing   */\
                                 /*       object and in range                */\
        (Unblind_telepat &&                                              \
         (distu(mon->mx, mon->my) <= (BOLT_LIM * BOLT_LIM))))            \
@@ -75,7 +76,9 @@
  * invisible to infravision), because this is usually called from within
  * canseemon() or canspotmon() which already check that.
  */
-# define see_with_infrared(mon) (!Blind && Infravision && infravisible(mon->data) && couldsee(mon->mx, mon->my))
+# define see_with_infrared(mon) (!Blind && Infravision && \
+                                 infravisible(mon->data) && \
+                                 couldsee(mon->mx, mon->my))
 
 
 /*
@@ -86,7 +89,7 @@
  * location instead of assuming it.  (And also considers worms.)
  */
 # define canseemon(mon) \
-    (mon->dlevel == level && \
+    (onmap(mon) && mon->dlevel == level && \
      (mon->wormno ? worm_known(mon) : \
          (cansee(mon->mx, mon->my) || see_with_infrared(mon))) \
      && mon_visible(mon))
@@ -99,7 +102,7 @@
  * telepathy, and is what you usually call for monsters about which nothing is
  * known.
  */
-# define canspotmon(mon) (canseemon(mon) || sensemon(mon))
+# define canspotmon(mon) (onmap(mon) && (canseemon(mon) || sensemon(mon)))
 
 /* knowninvisible(mon)
  * This one checks to see if you know a monster is both there and invisible.
@@ -112,7 +115,7 @@
  * invisible to infravision.
  */
 # define knowninvisible(mon) \
-    (mtmp->minvis && \
+    (onmap(mon) && (mon)->minvis && \
         ((cansee(mon->mx, mon->my) && (See_invisible || Detect_monsters)) || \
         (!Blind && (HTelepat & ~INTRINSIC) && \
             distu(mon->mx, mon->my) <= (BOLT_LIM * BOLT_LIM) \

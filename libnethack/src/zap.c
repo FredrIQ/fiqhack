@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Sean Hunt, 2014-04-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -427,12 +427,13 @@ get_mon_location(struct monst * mon, xchar * xp, xchar * yp, int locflags)
         *xp = u.ux;
         *yp = u.uy;
         return TRUE;
-    } else if (mon->mx > 0 && (!mon->mburied || locflags)) {
+    } else if (mon->mx != COLNO && (!mon->mburied || locflags)) {
         *xp = mon->mx;
         *yp = mon->my;
         return TRUE;
     } else {    /* migrating or buried */
-        *xp = *yp = 0;
+        *xp = COLNO;
+        *yp = ROWNO;
         return FALSE;
     }
 }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Sean Hunt, 2014-04-28 */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -614,16 +614,17 @@ dismount_steed(int reason)
 void
 place_monster(struct monst *mon, int x, int y)
 {
-    if (mon == u.usteed ||
-        /* special case is for convoluted vault guard handling */
-        (DEADMONSTER(mon) && !(mon->isgd && x == 0 && y == 0))) {
+    if (mon == u.usteed || DEADMONSTER(mon) ) {
         impossible("placing %s onto map?",
                    (mon == u.usteed) ? "steed" : "defunct monster");
         return;
     }
     mon->mx = x;
     mon->my = y;
-    mon->dlevel->monsters[x][y] = mon;
+    if (isok(x, y))
+        mon->dlevel->monsters[x][y] = mon;
+    else
+        impossible("placing monster on invalid spot (%d,%d)", x, y);
 }
 
 /*steed.c*/

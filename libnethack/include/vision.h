@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-04-28 */
 /* Copyright (c) Dean Luick, with acknowledgements to Dave Cohrs, 1990. */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -22,9 +22,9 @@
  *  couldsee()  - Returns true if the hero has a clear line of sight to
  *                the location.
  */
-# define cansee(x,y)   (viz_array[y][x] & IN_SIGHT)
-# define couldsee(x,y) (viz_array[y][x] & COULD_SEE)
-# define templit(x,y)  (viz_array[y][x] & TEMP_LIT)
+# define cansee(x,y)   (isok(x, y) && viz_array[y][x] & IN_SIGHT)
+# define couldsee(x,y) (isok(x, y) && viz_array[y][x] & COULD_SEE)
+# define templit(x,y)  (isok(x, y) && viz_array[y][x] & TEMP_LIT)
 
 /*
  *  The following assume the monster is not blind.

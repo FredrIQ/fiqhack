@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-27 */
+/* Last modified by Sean Hunt, 2014-04-28 */
 /* Copyright (c) Dean Luick, 1994                                       */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -206,8 +206,8 @@ do_light_sources(char **cs_rows)
     }
 }
 
-/* (mon->mx == 0) implies migrating */
-#define mon_is_local(mon) ((mon)->mx > 0)
+/* (mon->mx == COLNO) implies migrating */
+#define mon_is_local(mon) ((mon)->mx != COLNO)
 
 struct monst *
 find_mid(struct level *lev, unsigned nid, unsigned fmflags)
