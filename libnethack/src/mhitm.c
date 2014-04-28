@@ -855,7 +855,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             pline("It burns %s!", mon_nam(mdef));
         }
         if (!rn2(30))
-            erode_armor(mdef, TRUE);
+            hurtarmor(mdef, ERODE_CORRODE);
         if (!rn2(6))
             erode_obj(MON_WEP(mdef), TRUE, TRUE);
         break;

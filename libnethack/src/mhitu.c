@@ -2470,7 +2470,7 @@ passiveum(const struct permonst *olduasmon, struct monst *mtmp,
         } else
             tmp = 0;
         if (!rn2(30))
-            erode_armor(mtmp, TRUE);
+            hurtarmor(mtmp, ERODE_CORRODE);
         if (!rn2(6))
             erode_obj(MON_WEP(mtmp), TRUE, TRUE);
         goto assess_dmg;

@@ -2128,7 +2128,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
             if (!Acid_resistance)
                 mdamageu(mon, tmp);
             if (!rn2(30))
-                erode_armor(&youmonst, TRUE);
+                hurtarmor(&youmonst, ERODE_CORRODE);
         }
         if (mhit) {
             if (aatyp == AT_KICK) {

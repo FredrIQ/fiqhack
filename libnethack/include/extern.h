@@ -381,7 +381,6 @@ extern boolean canwearobj(struct obj *, long *, boolean, boolean, boolean);
 extern boolean canunwearobj(struct obj *, boolean, boolean, boolean);
 extern void glibr(void);
 extern struct obj *some_armor(struct monst *);
-extern void erode_armor(struct monst *, boolean);
 extern struct obj *stuck_ring(struct obj *, int);
 extern struct obj *unchanger(void);
 extern int destroy_arm(struct obj *);
