@@ -823,20 +823,6 @@ dotrap(struct trap *trap, unsigned trflags)
 
     case RUST_TRAP:
         seetrap(trap);
-        if (u.umonnum == PM_IRON_GOLEM) {
-            int dam = u.mhmax;
-
-            pline("%s you!", A_gush_of_water_hits);
-            pline("You are covered with rust!");
-            if (Half_physical_damage)
-                dam = (dam + 1) / 2;
-            losehp(dam, "rusted away by a rust trap");
-            break;
-        } else if (u.umonnum == PM_GREMLIN && rn2(3)) {
-            pline("%s you!", A_gush_of_water_hits);
-            split_mon(&youmonst, NULL);
-            break;
-        }
 
         /* Unlike monsters, traps cannot aim their rust attacks at you, so
            instead of looping through and taking either the first rustable one
@@ -873,6 +859,19 @@ dotrap(struct trap *trap, unsigned trflags)
                 water_damage(uarmu, "shirt", TRUE);
         }
         update_inventory();
+
+        if (u.umonnum == PM_IRON_GOLEM) {
+            int dam = u.mhmax;
+
+            pline("You are covered with rust!");
+            if (Half_physical_damage)
+                dam = (dam + 1) / 2;
+            losehp(dam, "rusted away by a rust trap");
+            break;
+        } else if (u.umonnum == PM_GREMLIN && rn2(3)) {
+            split_mon(&youmonst, NULL);
+            break;
+        }
         break;
 
     case FIRE_TRAP:
