@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Luke Franceschini, 2014-04-30 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -118,6 +118,8 @@ kickdmg(struct monst *mon, boolean clumsy, schar dx, schar dy)
                 if (mintrap(mon) == 2)
                     trapkilled = TRUE;
             }
+            if (uarmf && uarmf == KICKING_BOOTS)
+                makeknown (KICKINGBOOTS);
         }
     }
 
