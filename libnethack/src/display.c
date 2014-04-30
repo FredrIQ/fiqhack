@@ -640,6 +640,10 @@ newsym(int x, int y)
         return;
     }
 
+    if (!level) {
+        impossible("Calling newsym without a valid level.");
+    }
+
     if (in_mklev)
         return;
 

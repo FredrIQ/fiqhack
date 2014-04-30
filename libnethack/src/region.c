@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Sean Hunt, 2014-04-30 */
 /* Copyright (c) 1996 by Jean-Christophe Collet  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -263,7 +263,7 @@ remove_region(struct region *reg)
         return;
 
     /* Update screen if necessary */
-    if (reg->visible)
+    if (reg->visible && level == lev)
         for (x = reg->bounding_box.lx; x <= reg->bounding_box.hx; x++)
             for (y = reg->bounding_box.ly; y <= reg->bounding_box.hy; y++)
                 if (isok(x, y) && inside_region(reg, x, y) && cansee(x, y))
@@ -651,13 +651,8 @@ rest_regions(struct memfile *mf, struct level *lev, boolean ghostly)
             clear_heros_fault(r);
         }
     }
-    /* remove expired lev->regions, do not trigger the expire_f callback
-       (yet!); also update monster lists if this data is coming from a bones
-       file */
     for (i = lev->n_regions - 1; i >= 0; i--)
-        if (lev->regions[i]->ttl == 0)
-            remove_region(lev->regions[i]);
-        else if (ghostly && lev->regions[i]->n_monst > 0)
+        if (ghostly && lev->regions[i]->n_monst > 0)
             reset_region_mids(lev->regions[i]);
 }
 
@@ -720,11 +715,14 @@ inside_gas_cloud(void *p1, void *p2)
     reg = (struct region *)p1;
     dam = (long)reg->arg;
     if (p2 == NULL) {   /* This means *YOU* Bozo! */
-        if (nonliving(youmonst.data) || Breathless)
+        if (nonliving(youmonst.data) || u.uinvulnerable)
             return FALSE;
-        if (!Blind)
-            make_blinded(1L, FALSE);
-        if (u.uinvulnerable)
+        /* If you will unblind next turn, extend the blindness so that you do
+         * not get a "You can see again!" message immediately before being
+         * blinded again. */
+        if (!Blind || Blinded == 1)
+            make_blinded(2L, FALSE);
+        if (Breathless)
             return FALSE;
         if (!Poison_resistance) {
             pline("Something is burning your %s!", makeplural(body_part(LUNG)));
