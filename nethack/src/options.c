@@ -580,12 +580,14 @@ query_new_value(struct win_menu *mdat, int idx)
     if (optioncopy.type == OPTTYPE_STRING && optioncopy.value.s)
         free(optioncopy.value.s);
 
-    /* special case: directly redo option menu appearance */
-    if (settings.optstyle != prev_optstyle)
+    /* If we're changing the option menu appearance, or if we changed game
+     * options, we need to reload and redraw the menu. */
+    if (settings.optstyle != prev_optstyle ||
+        (game_is_running && listid != UI_OPTS))
         ret = TRUE;
 
 free:
-    if (listid == GAME_OPTS || listid == BIRTH_OPTS)
+    if (listid != UI_OPTS)
         curses_free_nh_opts(optlist);
 
     return ret;
@@ -597,11 +599,12 @@ void
 display_options(nh_bool change_birth_opt)
 {
     struct nh_menulist menu;
-    struct nh_option_desc *options = curses_get_nh_opts();
+    struct nh_option_desc *options;
     int selected[1];
 
     do {
         init_menulist(&menu);
+        options = curses_get_nh_opts();
 
         if (!change_birth_opt) {
             /* add general game options */
@@ -628,13 +631,12 @@ display_options(nh_bool change_birth_opt)
             &menu, "Set what options?", PICK_ONE, selected,
             curses_menu_callback, 0, 0, -1, -1, FALSE, query_new_value);
 
+        curses_free_nh_opts(options);
     } while (*selected != CURSES_MENU_CANCELLED);
 
     write_ui_config();
     if (!game_is_running)
         write_nh_config();
-
-    curses_free_nh_opts(options);
 }
 
 
