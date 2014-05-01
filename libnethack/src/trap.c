@@ -2800,10 +2800,11 @@ acid_damage(struct obj *obj) {
  *  2 if obj is changed but survived
  *  3 if obj is destroyed
  */
-boolean
+int
 water_damage(struct obj * obj, const char *ostr, boolean force)
 {
-    snuff_lit(obj);
+    if (snuff_lit(obj))
+        return 2;
 
     if (obj->otyp == CAN_OF_GREASE && obj->spe > 0) {
         return 0;
