@@ -1358,6 +1358,8 @@ mrustm(struct monst *magr, struct monst *mdef, struct obj *obj)
     else
         return;
 
+    impossible("mrustm did something?");
+
     if (!mdef->mcan && (is_acid ? is_corrodeable(obj) : is_rustprone(obj)) &&
         (is_acid ? obj->oeroded2 : obj->oeroded) < MAX_ERODE) {
         if (obj->greased || obj->oerodeproof || (obj->blessed && rn2(3))) {

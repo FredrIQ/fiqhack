@@ -2093,6 +2093,8 @@ urustm(struct monst *mon, struct obj *obj)
     else
         return;
 
+    impossible("urustm did something?"); 
+
     vis = cansee(mon->mx, mon->my);
 
     if ((is_acid ? is_corrodeable(obj) : is_rustprone(obj)) &&
