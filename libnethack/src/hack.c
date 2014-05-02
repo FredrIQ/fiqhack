@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Luke Franceschini, 2014-05-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -198,7 +198,6 @@ moverock(schar dx, schar dy)
                     if (cansee(rx, ry))
                         newsym(rx, ry);
                     continue;
-                case LEVEL_TELEP:
                 case TELEP_TRAP:
                     if (u.usteed)
                         pline("%s pushes %s and suddenly it disappears!",
@@ -207,20 +206,35 @@ moverock(schar dx, schar dy)
                     else
                         pline("You push %s and suddenly it disappears!",
                               the(xname(otmp)));
-                    if (ttmp->ttyp == TELEP_TRAP)
-                        rloco(otmp);
-                    else {
-                        int newlev = random_teleport_level();
-                        d_level dest;
-
-                        if (newlev == depth(&u.uz) || In_endgame(&u.uz))
-                            continue;
-                        obj_extract_self(otmp);
-
-                        get_level(&dest, newlev);
-                        deliver_object(otmp, dest.dnum, dest.dlevel,
-                                       MIGR_RANDOM);
+                    rloco(otmp);
+                    seetrap(ttmp);
+                    continue;
+                case LEVEL_TELEP:
+                    if (In_endgame(&u.uz)) {
+                        pline ("%s strains, but fails to escape the plane.",
+                            msgupcasefirst(the(xname(otmp))));
+                        deltrap(level, ttmp);
+                        goto skipmsg; /*don't print move message*/
                     }
+
+                    int newlev;
+                    d_level dest;
+                    do 
+                        newlev = random_teleport_level();
+                    while (newlev == depth(&u.uz));
+
+                    if (u.usteed)
+                        pline("%s pushes %s and suddenly it disappears!",
+                              msgupcasefirst(y_monnam(u.usteed)),
+                              the(xname(otmp)));
+                    else
+                        pline("You push %s and suddenly it disappears!",
+                              the(xname(otmp)));
+ 
+                    obj_extract_self(otmp);
+                    get_level(&dest, newlev);
+                    deliver_object(otmp, dest.dnum, dest.dlevel,
+                                   MIGR_RANDOM);
                     seetrap(ttmp);
                     continue;
                 }
@@ -228,14 +242,6 @@ moverock(schar dx, schar dy)
                 goto nopushmsg;
             if (boulder_hits_pool(otmp, rx, ry, TRUE))
                 continue;
-            /* 
-             * Re-link at top of level->objlist chain so that pile order is
-             * preserved when level is restored.
-             */
-            if (otmp != level->objlist) {
-                remove_object(otmp);
-                place_object(otmp, level, otmp->ox, otmp->oy);
-            }
 
             {
                 /* note: reset to zero after save/restore cycle */
@@ -252,6 +258,16 @@ moverock(schar dx, schar dy)
                           msgupcasefirst(y_monnam(u.usteed)),
                           the(xname(otmp)));
                 lastmovetime = moves;
+            }
+
+        skipmsg:
+            /* 
+             * Re-link at top of level->objlist chain so that pile order is
+             * preserved when level is restored.
+             */
+            if (otmp != level->objlist) {
+                remove_object(otmp);
+                place_object(otmp, level, otmp->ox, otmp->oy);
             }
 
             /* Move the boulder *after* the message. */
