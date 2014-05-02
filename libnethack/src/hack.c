@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Sean Hunt, 2014-05-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -77,7 +77,7 @@ moverock(schar dx, schar dy)
     sx = u.ux + dx;
     sy = u.uy + dy;     /* boulder starting position */
     while ((otmp = sobj_at(BOULDER, level, sx, sy)) != 0) {
-        /* There's a boulder at (sx, sy), so make sure the point stays blocked. 
+        /* There's a boulder at (sx, sy), so make sure the point stays blocked.
            This should only happen where there's multiple boulders on a tile. */
 #ifdef INVISIBLE_OBJECTS
         if (!otmp->oinvis)
@@ -198,7 +198,6 @@ moverock(schar dx, schar dy)
                     if (cansee(rx, ry))
                         newsym(rx, ry);
                     continue;
-                case LEVEL_TELEP:
                 case TELEP_TRAP:
                     if (u.usteed)
                         pline("%s pushes %s and suddenly it disappears!",
@@ -207,20 +206,35 @@ moverock(schar dx, schar dy)
                     else
                         pline("You push %s and suddenly it disappears!",
                               the(xname(otmp)));
-                    if (ttmp->ttyp == TELEP_TRAP)
-                        rloco(otmp);
-                    else {
-                        int newlev = random_teleport_level();
-                        d_level dest;
-
-                        if (newlev == depth(&u.uz) || In_endgame(&u.uz))
-                            continue;
-                        obj_extract_self(otmp);
-
-                        get_level(&dest, newlev);
-                        deliver_object(otmp, dest.dnum, dest.dlevel,
-                                       MIGR_RANDOM);
+                    rloco(otmp);
+                    seetrap(ttmp);
+                    continue;
+                case LEVEL_TELEP:
+                    if (In_endgame(&u.uz)) {
+                        pline ("%s strains, but fails to escape the plane.",
+                            msgupcasefirst(the(xname(otmp))));
+                        deltrap(level, ttmp);
+                        goto skipmsg; /*don't print move message*/
                     }
+
+                    int newlev;
+                    d_level dest;
+                    do
+                        newlev = random_teleport_level();
+                    while (newlev == depth(&u.uz));
+
+                    if (u.usteed)
+                        pline("%s pushes %s and suddenly it disappears!",
+                              msgupcasefirst(y_monnam(u.usteed)),
+                              the(xname(otmp)));
+                    else
+                        pline("You push %s and suddenly it disappears!",
+                              the(xname(otmp)));
+
+                    obj_extract_self(otmp);
+                    get_level(&dest, newlev);
+                    deliver_object(otmp, dest.dnum, dest.dlevel,
+                                   MIGR_RANDOM);
                     seetrap(ttmp);
                     continue;
                 }
@@ -228,14 +242,6 @@ moverock(schar dx, schar dy)
                 goto nopushmsg;
             if (boulder_hits_pool(otmp, rx, ry, TRUE))
                 continue;
-            /* 
-             * Re-link at top of level->objlist chain so that pile order is
-             * preserved when level is restored.
-             */
-            if (otmp != level->objlist) {
-                remove_object(otmp);
-                place_object(otmp, level, otmp->ox, otmp->oy);
-            }
 
             {
                 /* note: reset to zero after save/restore cycle */
@@ -252,6 +258,16 @@ moverock(schar dx, schar dy)
                           msgupcasefirst(y_monnam(u.usteed)),
                           the(xname(otmp)));
                 lastmovetime = moves;
+            }
+
+        skipmsg:
+            /*
+             * Re-link at top of level->objlist chain so that pile order is
+             * preserved when level is restored.
+             */
+            if (otmp != level->objlist) {
+                remove_object(otmp);
+                place_object(otmp, level, otmp->ox, otmp->oy);
             }
 
             /* Move the boulder *after* the message. */
@@ -359,7 +375,7 @@ still_chewing(xchar x, xchar y)
         delobj(boulder);        /* boulder goes bye-bye */
         pline("You eat the boulder.");  /* yum */
 
-        /* 
+        /*
          *  The location could still block because of
          *      1. More than one boulder
          *      2. Boulder stuck in a wall/stone/door.
@@ -541,7 +557,7 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
     struct rm *tmpr = &level->locations[x][y];
     struct rm *ust;
 
-    /* 
+    /*
      *  Check for physical obstacles.  First, the place we are going.
      */
     if (IS_ROCK(tmpr->typ) || tmpr->typ == IRONBARS) {
@@ -891,7 +907,7 @@ findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy,
                     int nx = x + xdir[ordered[dir]];
                     int ny = y + ydir[ordered[dir]];
 
-                    /* 
+                    /*
                      * When guessing and trying to travel as close as possible
                      * to an unreachable target space, don't include spaces
                      * that would never be picked as a guessed target in the
@@ -1347,7 +1363,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
            attack. This causes displacement to have the same nutrition/exertion
            penalties as attacking, which is 3.4.3 behaviour; it may well have
            been an accident, but players have grown to expect it. */
-        
+
         gethungry();
         if (wtcap >= HVY_ENCUMBER && moves % 3) {
             if (Upolyd && u.mh > 1) {
@@ -1375,7 +1391,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
                                    turnstate.move.dy, uim_indiscriminate);
             if (attack_status != ac_continue)
                 return attack_status != ac_cancel;
-            
+
             /* This point is only reached if the monster dodged, or is a
                safepet. It used to be that you could cheese stumbling when
                dodged via always using an explicit F when attacking leprechauns,
@@ -1466,7 +1482,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
             }
             /* TODO: Possibly make the player hurtle after striking. */
         }
-        if (!hitsomething && 
+        if (!hitsomething &&
             ((level->locations[x][y].typ == STAIRS) ||
              ((level->locations[x][y].typ == LADDER) &&
                (level->locations[x][y].ladder != LA_DOWN)) ||
@@ -1481,14 +1497,14 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
             else {
                 ouch = (uwep) ? !rn2(3) : TRUE;
                 pline("%s %s the %s.",
-                      uwep && objects[uwep->otyp].oc_material == IRON ? 
+                      uwep && objects[uwep->otyp].oc_material == IRON ?
                       "Sparks fly as you" : "You",
                       uwep ? "whack" : Role_if(PM_MONK) ? "strike" : "bash",
                       level->locations[x][y].typ == STAIRS ? "stairs" :
                       level->locations[x][y].typ == LADDER ? "ladder" :
                       level->locations[x][y].typ == DOOR ? "door" : "wall");
                 killer = msgprintf(
-                    "hitting %s", 
+                    "hitting %s",
                     level->locations[x][y].typ == STAIRS ? "the stairs" :
                     level->locations[x][y].typ == LADDER ? "a ladder" :
                     level->locations[x][y].typ == DOOR ? "a door" : "a wall");
@@ -1707,7 +1723,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
         exercise_steed();
     }
 
-    /* 
+    /*
      * If safepet at destination then move the pet to the hero's
      * previous location using the same conditions as in attack().
      * there are special extenuating circumstances:
@@ -1821,7 +1837,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
                 ! !sobj_at(BOULDER, level, u.ux, u.uy + 1) * 3;
         if (wallcount >= 3)
             action_completed();
-        /* 
+        /*
          * More autoexplore stoppers: interesting dungeon features
          * that haven't been stepped on yet.
          */
@@ -1842,7 +1858,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
     else if (turnstate.move.dx || turnstate.move.dy)
         u.uundetected = 0;
 
-    /* 
+    /*
      * Mimics (or whatever) become noticeable if they move and are
      * imitating something that doesn't move.  We could extend this
      * to non-moving monsters...
@@ -2103,7 +2119,7 @@ in_town(int x, int y)
     if (!slev || !slev->flags.town)
         return FALSE;
 
-    /* 
+    /*
      * See if (x,y) is in a room with subrooms, if so, assume it's the
      * town.  If there are no subrooms, the whole level is in town.
      */
@@ -2310,7 +2326,7 @@ dopickup(const struct nh_cmd_arg *arg)
     }
 
     if (traphere && traphere->tseen) {
-        /* Allow pickup from holes and trap doors that you escaped from because 
+        /* Allow pickup from holes and trap doors that you escaped from because
            that stuff is teetering on the edge just like you, but not pits,
            because there is an elevation discrepancy with stuff in pits. */
         if ((traphere->ttyp == PIT || traphere->ttyp == SPIKED_PIT) &&
@@ -2367,7 +2383,7 @@ lookaround(enum u_interaction_mode uim)
     /* x0 and y0 are candidate spaces to move into next; while dx and dy
        define the desired direction of movement, that might not actually be
        possible.
-     
+
        m0 simply tracks whether there's a monster of any sort in the space we
        wind up picking, if we're considering changing directions.
 
@@ -2493,7 +2509,7 @@ lookaround(enum u_interaction_mode uim)
                     /* If we're okay with changing directions at a branch,
                        we need to figure out whether we're at one and if so
                        what kind.
-                     
+
                        To that end, we check all the corridor spaces around us,
                        and see which one comes closest to the one we came into
                        this function intending to walk into. */

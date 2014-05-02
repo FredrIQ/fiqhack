@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Sean Hunt, 2014-05-02 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -118,6 +118,8 @@ kickdmg(struct monst *mon, boolean clumsy, schar dx, schar dy)
                 if (mintrap(mon) == 2)
                     trapkilled = TRUE;
             }
+            if (uarmf && uarmf->otyp == KICKING_BOOTS)
+                makeknown(KICKING_BOOTS);
         }
     }
 
@@ -153,7 +155,7 @@ kick_monster(xchar x, xchar y, schar dx, schar dy, enum u_interaction_mode uim)
     /* Kick attacks by kicking monsters are normal attacks, not special. This
        is almost always worthless, since you can either take one turn and do
        all your kicks, or else take one turn and attack the monster normally,
-       getting all your attacks _including_ all your kicks. If you have >1 kick 
+       getting all your attacks _including_ all your kicks. If you have >1 kick
        attack, you get all of them. */
     if (Upolyd && attacktype(youmonst.data, AT_KICK)) {
         const struct attack *uattk;
@@ -387,7 +389,7 @@ container_impact_dmg(struct obj *obj)
             if (otmp->otyp == MIRROR)
                 change_luck(-2);
 
-            /* eggs laid by you.  penalty is -1 per egg, max 5, but it's always 
+            /* eggs laid by you.  penalty is -1 per egg, max 5, but it's always
                exactly 1 that breaks */
             if (otmp->otyp == EGG && otmp->spe && otmp->corpsenm >= LOW_PM)
                 change_luck(-1);
@@ -1443,7 +1445,7 @@ ship_object(struct obj *otmp, xchar x, xchar y, boolean shop_floor_obj)
 
     if (impact) {
         /* the objs impacted may be in a shop other than the one in which the
-           hero is located.  another check for a shk is made in impact_drop. it 
+           hero is located.  another check for a shk is made in impact_drop. it
            is, e.g., possible to kick/throw an object belonging to one shop
            into another shop through a gap in the wall, and cause objects
            belonging to the other shop to fall down a trap door--thereby

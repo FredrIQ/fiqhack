@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Sean Hunt, 2014-05-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -289,7 +289,7 @@ maketrap(struct level *lev, int x, int y, int typ)
         if (IS_ROOM(loc->typ))  /* && !IS_AIR(loc->typ) */
             loc->typ = ROOM;
 
-        /* 
+        /*
          * some cases which can happen when digging
          * down while phazing thru solid areas
          */
@@ -424,7 +424,7 @@ animate_statue(struct obj *statue, xchar x, xchar y, int cause,
             mptr = &mons[PM_FLESH_GOLEM];
         else
             mptr = &mons[statue->corpsenm];
-        /* 
+        /*
          * Guard against someone wishing for a statue of a unique monster
          * (which is allowed in normal play) and then tossing it onto the
          * [detected or guessed] location of a statue trap.  Normally the
@@ -532,7 +532,7 @@ activate_statue_trap(struct trap *trap, xchar x, xchar y, boolean shatter)
     struct obj *otmp = sobj_at(STATUE, level, x, y);
     int fail_reason;
 
-    /* 
+    /*
      * Try to animate the first valid statue.  Stop the loop when we
      * actually create something or the failure cause is not because
      * the mon was unique.
@@ -607,7 +607,7 @@ dotrap(struct trap *trap, unsigned trflags)
         (ttype == PIT || ttype == SPIKED_PIT || ttype == HOLE ||
          ttype == TRAPDOOR)) {
         /* The "air currents" message is still appropriate -- even when the
-           hero isn't flying or levitating -- because it conveys the reason why 
+           hero isn't flying or levitating -- because it conveys the reason why
            the player cannot escape the trap with a dexterity check, clinging
            to the ceiling, etc. */
         pline("Air currents pull you down into %s %s!", a_your[trap->madeby_u],
@@ -1002,7 +1002,7 @@ dotrap(struct trap *trap, unsigned trflags)
                work.  If mtrapped is set as a result, unset it and set utrap
                instead.  In the case of a strongmonst and mintrap said it's
                trapped, use a short but non-zero trap time.  Otherwise,
-               monsters have no specific strength, so use player strength. This 
+               monsters have no specific strength, so use player strength. This
                gets skipped for webmsgok, which implies that the steed isn't a
                factor. */
             if (u.usteed && webmsgok) {
@@ -1085,7 +1085,7 @@ dotrap(struct trap *trap, unsigned trflags)
                              mnamelth ? ARTICLE_NONE : ARTICLE_THE, NULL,
                              SUPPRESS_SADDLE, FALSE));
             else
-                verbbuf = 
+                verbbuf =
                     Levitation ? (const char *)"float" :
                     locomotion(youmonst.data, "step");
             pline("You %s onto a polymorph trap!", verbbuf);
@@ -1934,7 +1934,7 @@ mintrap(struct monst *mtmp)
                 if (thitm(0, mtmp, NULL, num, immolate))
                     trapkilled = TRUE;
                 else
-                    /* we know mhp is at least `num' below mhpmax, so no (mhp > 
+                    /* we know mhp is at least `num' below mhpmax, so no (mhp >
                        mhpmax) check is needed here */
                     mtmp->mhpmax -= rn2(num + 1);
             }
@@ -2367,8 +2367,8 @@ float_down(long hmask)
             u.ustuck = 0;
         }
         /* kludge alert: drown() and lava_effects() print various messages
-           almost every time they're called which conflict with the "fall into" 
-           message below.  Thus, we want to avoid printing confusing, duplicate 
+           almost every time they're called which conflict with the "fall into"
+           message below.  Thus, we want to avoid printing confusing, duplicate
            or out-of-order messages. Use knowledge of the two routines as a
            hack -- this should really be handled differently -dlc */
         if (is_pool(level, u.ux, u.uy) && !Wwalking && !Swimming && !u.uinwater)
@@ -2408,7 +2408,7 @@ float_down(long hmask)
                     } else {
                         /* Justification elsewhere for Sokoban traps is based
                            on air currents. This is consistent with that. The
-                           unexpected additional force of the air currents once 
+                           unexpected additional force of the air currents once
                            leviation ceases knocks you off your feet. */
                         pline("You fall over.");
                         losehp(rnd(2), killer_msg(DIED, "dangerous winds"));
@@ -2941,7 +2941,7 @@ drown(void)
     }
     crawl_ok = FALSE;
     x = y = 0;  /* lint suppression */
-    /* if sleeping, wake up now so that we don't crawl out of water while still 
+    /* if sleeping, wake up now so that we don't crawl out of water while still
        asleep */
     cancel_helplessness(hm_unconscious, "Suddenly you wake up!");
     /* can't crawl if unable to move (crawl_ok flag stays false) */
@@ -2984,14 +2984,14 @@ crawl:
     u.uinwater = 1;
     pline("You drown.");
     done(DROWNING,
-         killer_msg(DROWNING, 
+         killer_msg(DROWNING,
                     Is_waterlevel(&u.uz) ? "the Plane of Water"
                                          : a_waterbody(u.ux, u.uy)));
     /* oops, we're still alive.  better get out of the water. */
     while (!safe_teleds(TRUE)) {
         pline("You're still drowning.");
         done(DROWNING,
-             killer_msg(DROWNING, 
+             killer_msg(DROWNING,
                         msgcat(Is_waterlevel(&u.uz) ? "the Plane of Water"
                                : a_waterbody(u.ux, u.uy),
                                " despite being life-saved")));
@@ -3212,7 +3212,7 @@ reward_untrap(struct trap *ttmp, struct monst *mtmp)
             set_malign(mtmp);   /* reset alignment */
             pline("%s is grateful.", Monnam(mtmp));
         }
-        /* Helping someone out of a trap is a nice thing to do, A lawful may be 
+        /* Helping someone out of a trap is a nice thing to do, A lawful may be
            rewarded, but not too often.  */
         if (!rn2(3) && !rnl(8) && u.ualign.type == A_LAWFUL) {
             adjalign(1);
@@ -3355,7 +3355,7 @@ help_monster_out(struct monst *mtmp, struct trap *ttmp)
     struct obj *otmp;
     boolean uprob;
 
-    /* 
+    /*
      * This works when levitating too -- consistent with the ability
      * to hit monsters while levitating.
      *
@@ -3483,7 +3483,7 @@ untrap(const struct nh_cmd_arg *arg, boolean force)
                 deal_with_floor_trap = FALSE;
             } else {
                 qbuf = msgprintf("There %s and %s here. %s %s?",
-                                 (containercnt == 1) ? 
+                                 (containercnt == 1) ?
                                  "is a container" : "are containers",
                                  an(trapexplain[ttmp->ttyp - 1]),
                                  ttmp->ttyp == WEB ? "Remove" : "Disarm",
@@ -3741,7 +3741,7 @@ chest_trap(struct obj * obj, int bodypart, boolean disarm)
                 /* we're about to delete all things at this location, which
                    could include the ball & chain. If we attempt to call
                    unpunish() in the for-loop below we can end up with otmp2
-                   being invalid once the chain is gone. Deal with ball & chain 
+                   being invalid once the chain is gone. Deal with ball & chain
                    right now instead. */
                 if (Punished && !carried(uball) &&
                     ((uchain->ox == u.ux && uchain->oy == u.uy) ||
@@ -3999,7 +3999,7 @@ lava_effects(void)
         setequip(os_armf, NULL, em_silent);
         useupall(obj);
     }
-    
+
     if (!Fire_resistance) {
         if (Wwalking) {
             dmg = dice(6, 6);
