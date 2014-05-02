@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-27 */
+/* Last modified by Sean Hunt, 2014-05-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -889,7 +889,6 @@ freedynamicdata(void)
     abort_turnstate();
 
     unload_qtlist();
-    free_invbuf();      /* let_to_name (invent.c) */
     tmpsym_freeall();   /* temporary display effects */
     clear_delayed_killers();
 #define free_animals()   mon_animal_list(FALSE)

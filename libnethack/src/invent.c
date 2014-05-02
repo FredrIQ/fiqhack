@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-28 */
+/* Last modified by Sean Hunt, 2014-05-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2300,16 +2300,12 @@ static const char *const oth_names[] = {
     "Bagged/Boxed items"
 };
 
-static char *invbuf = NULL;
-static unsigned invbufsiz = 0;
-
-char *
+const char *
 let_to_name(char let, boolean unpaid)
 {
     const char *class_name;
     const char *pos;
     int oclass = (let >= 1 && let < MAXOCLASSES) ? let : 0;
-    unsigned len;
 
     if (oclass)
         class_name = names[oclass];
@@ -2318,26 +2314,7 @@ let_to_name(char let, boolean unpaid)
     else
         class_name = names[0];
 
-    len = strlen(class_name) + (unpaid ? sizeof "unpaid_" : sizeof "");
-    if (len > invbufsiz) {
-        if (invbuf)
-            free(invbuf);
-        invbufsiz = len + 10;   /* add slop to reduce incremental realloc */
-        invbuf = malloc(invbufsiz);
-    }
-    if (unpaid)
-        strcat(strcpy(invbuf, "Unpaid "), class_name);
-    else
-        strcpy(invbuf, class_name);
-    return invbuf;
-}
-
-void
-free_invbuf(void)
-{
-    if (invbuf)
-        free(invbuf), invbuf = NULL;
-    invbufsiz = 0;
+    return unpaid ? msgcat("Unpaid ", class_name) : class_name;
 }
 
 
