@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-25 */
+/* Last modified by Sean Hunt, 2014-05-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -835,135 +835,63 @@ thrwmm(struct monst *mtmp, struct monst *mdef)
     action_interrupted();
 }
 
-/* monster spits substance at you */
+
 int
-spitmu(struct monst *mtmp, const struct attack *mattk)
+spitm(struct monst *mtmp, struct monst *mdef, const struct attack *mattk)
 {
     struct obj *otmp;
 
     if (mtmp->mcan) {
-
         if (canhear())
             pline("A dry rattle comes from %s throat.",
                   s_suffix(mon_nam(mtmp)));
         return 0;
     }
-    if (lined_up(mtmp)) {
+    boolean linedup =
+        mdef == &youmonst ? lined_up(mtmp) : mlined_up(mtmp, mdef, FALSE);
+    if (linedup &&
+        ai_use_at_range(BOLT_LIM - distmin(mtmp->mx, mtmp->my,
+                                           mtmp->mux, mtmp->muy))) {
         switch (mattk->adtyp) {
         case AD_BLND:
         case AD_DRST:
             otmp = mktemp_sobj(level, BLINDING_VENOM);
             break;
         default:
-            impossible("bad attack type in spitmu");
+            impossible("bad attack type in spitm");
             /* fall through */
         case AD_ACID:
             otmp = mktemp_sobj(level, ACID_VENOM);
             break;
         }
-        if (ai_use_at_range
-            (BOLT_LIM - distmin(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy))) {
-            if (canseemon(mtmp))
-                pline("%s spits venom!", Monnam(mtmp));
-            m_throw(mtmp, mtmp->mx, mtmp->my, sgn(tbx), sgn(tby),
-                    distmin(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy), otmp,
-                    TRUE);
+
+        if (canseemon(mtmp)) {
+            pline("%s spits venom!", Monnam(mtmp));
             action_interrupted();
-            return 0;
         }
-    }
-    return 0;
-}
-
-int
-spitmm(struct monst *mtmp, struct monst *mdef, const struct attack *mattk)
-{
-    struct obj *otmp;
-
-    if (mtmp->mcan) {
-        if (canhear())
-            pline("A dry rattle comes from %s throat.",
-                  s_suffix(mon_nam(mtmp)));
+        m_throw(mtmp, mtmp->mx, mtmp->my, sgn(tbx), sgn(tby),
+                distmin(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy), otmp,
+                FALSE);
         return 0;
-    }
-    if (mlined_up(mtmp, mdef, FALSE)) {
-        switch (mattk->adtyp) {
-        case AD_BLND:
-        case AD_DRST:
-            otmp = mktemp_sobj(level, BLINDING_VENOM);
-            break;
-        default:
-            impossible("bad attack type in spitmm");
-            /* fall through */
-        case AD_ACID:
-            otmp = mktemp_sobj(level, ACID_VENOM);
-            break;
         }
-        if (ai_use_at_range
-            (BOLT_LIM - distmin(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy))) {
-            if (canseemon(mtmp)) {
-                pline("%s spits venom!", Monnam(mtmp));
-                action_interrupted();
-            }
-            m_throw(mtmp, mtmp->mx, mtmp->my, sgn(tbx), sgn(tby),
-                    distmin(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy), otmp,
-                    FALSE);
-            return 0;
-        }
-    }
     return 0;
 }
 
-/* monster breathes at you (ranged) */
+
 int
-breamu(struct monst *mtmp, const struct attack *mattk)
+bream(struct monst *mtmp, struct monst *mdef, const struct attack *mattk)
 {
     /* if new breath types are added, change AD_ACID to max type */
     int typ = (mattk->adtyp == AD_RBRE) ? rnd(AD_ACID) : mattk->adtyp;
 
-    if (lined_up(mtmp)) {
+    boolean youdef = mdef == &youmonst;
 
-        if (mtmp->mcan) {
-            if (canhear()) {
-                if (canseemon(mtmp))
-                    pline("%s coughs.", Monnam(mtmp));
-                else
-                    You_hear("a cough.");
-            }
-            return 0;
-        }
-        if (!mtmp->mspec_used && rn2(3)) {
-
-            if ((typ >= AD_MAGM) && (typ <= AD_ACID)) {
-
-                if (canseemon(mtmp))
-                    pline("%s breathes %s!", Monnam(mtmp), breathwep[typ - 1]);
-                buzz((int)(-20 - (typ - 1)), (int)mattk->damn, mtmp->mx,
-                     mtmp->my, sgn(tbx), sgn(tby));
-                action_interrupted();
-                /* breath runs out sometimes. Also, give monster some cunning;
-                   don't breath if the player fell asleep. */
-                if (!rn2(3))
-                    mtmp->mspec_used = 10 + rn2(20);
-                if (typ == AD_SLEE && !Sleep_resistance)
-                    mtmp->mspec_used += rnd(20);
-            } else
-                impossible("Breath weapon %d used", typ - 1);
-        }
-    }
-    return 1;
-}
-
-int
-breamm(struct monst *mtmp, struct monst *mdef, const struct attack *mattk)
-{
-    /* if new breath types are added, change AD_ACID to max type */
-    int typ = (mattk->adtyp == AD_RBRE) ? rnd(AD_ACID) : mattk->adtyp;
-
-    if (distmin(mtmp->mx, mtmp->my, mdef->mx, mdef->my) < 3)
+    if (!youdef && distmin(mtmp->mx, mtmp->my, mdef->mx, mdef->my) < 3)
         return 0;
 
-    if (mlined_up(mtmp, mdef, TRUE)) {
+    boolean linedup = youdef ? lined_up(mtmp) : mlined_up(mtmp, mdef, FALSE);
+
+    if (linedup) {
         if (mtmp->mcan) {
             if (canhear()) {
                 if (canseemon(mtmp))
@@ -982,10 +910,12 @@ breamm(struct monst *mtmp, struct monst *mdef, const struct attack *mattk)
                 buzz((int)(-20 - (typ - 1)), (int)mattk->damn, mtmp->mx,
                      mtmp->my, sgn(tbx), sgn(tby));
                 /* breath runs out sometimes. Also, give monster some cunning;
-                   don't breath if the player fell asleep. */
+                   don't breath if the target fell asleep. */
                 if (!rn2(3))
                     mtmp->mspec_used = 10 + rn2(20);
-                if (typ == AD_SLEE && !Sleep_resistance)
+                boolean sleeping =
+                    youdef ? u_helpless(hm_asleep) : mdef->msleeping;
+                if (typ == AD_SLEE && sleeping)
                     mtmp->mspec_used += rnd(20);
             } else
                 impossible("Breath weapon %d used", typ - 1);

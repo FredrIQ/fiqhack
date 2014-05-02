@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Sean Hunt, 2014-05-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -639,12 +639,12 @@ mattacku(struct monst *mtmp)
             break;
         case AT_BREA:
             if (range2)
-                sum[i] = breamu(mtmp, mattk);
+                sum[i] = bream(mtmp, &youmonst, mattk);
             /* Note: breamu takes care of displacement */
             break;
         case AT_SPIT:
             if (range2)
-                sum[i] = spitmu(mtmp, mattk);
+                sum[i] = spitm(mtmp, &youmonst, mattk);
             /* Note: spitmu takes care of displacement */
             break;
         case AT_WEAP:

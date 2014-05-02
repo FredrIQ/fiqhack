@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Sean Hunt, 2014-05-02 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1161,10 +1161,8 @@ extern int thitu(int, int, struct obj *, const char *);
 extern int ohitmon(struct monst *, struct obj *, int, boolean);
 extern void thrwmu(struct monst *);
 extern void thrwmm(struct monst *, struct monst *);
-extern int spitmu(struct monst *, const struct attack *);
-extern int spitmm(struct monst *, struct monst *, const struct attack *);
-extern int breamu(struct monst *, const struct attack *);
-extern int breamm(struct monst *, struct monst *, const struct attack *);
+extern int spitm(struct monst *, struct monst *, const struct attack *);
+extern int bream(struct monst *, struct monst *, const struct attack *);
 extern struct monst *mfind_target(struct monst *);
 extern boolean linedup(xchar, xchar, xchar, xchar);
 extern boolean lined_up(struct monst *);
