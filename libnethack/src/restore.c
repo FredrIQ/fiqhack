@@ -441,7 +441,6 @@ restore_spellbook(struct memfile *mf)
 static void
 restgamestate(struct memfile *mf)
 {
-    struct obj *otmp;
     struct monst *mtmp;
     struct level *lev;
 
