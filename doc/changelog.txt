@@ -461,6 +461,9 @@ now takes the same time as the new `A` command would take, which is typically
 faster than `T` from 3.4.3 (except when in a slow polyform), but slower than
 `A` from 3.4.3. (4, e5262d7)
 
+`^T`: No longer teleports leashed pets adjacent to you if the teleport fails
+(e.g. due to being on a no-teleport level) or is cancelled. (4, c3bdbc4)
+
 `z`: Now formally IDs a wand as teleport if you zap yourself under the same
 circumstances as if you zap your steed. (4, b7347be)
 
