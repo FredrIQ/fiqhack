@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-30 */
+/* Last modified by Alex Smith, 2014-05-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -382,14 +382,14 @@ teleport_pet(struct monst * mtmp, boolean force_it)
     return TRUE;
 }
 
-void
+int
 tele(void)
 {
-    tele_impl(FALSE);
+    return tele_impl(FALSE, FALSE);
 }
 
-void
-tele_impl(boolean wizard_tele)
+int
+tele_impl(boolean wizard_tele, boolean run_next_to_u)
 {
     coord cc;
 
@@ -397,7 +397,7 @@ tele_impl(boolean wizard_tele)
     if (level->flags.noteleport) {
         if (!wizard_tele) {
             pline("A mysterious force prevents you from teleporting!");
-            return;
+            return 1;
         }
     }
 
@@ -407,7 +407,7 @@ tele_impl(boolean wizard_tele)
 
     if ((Uhave_amulet || On_W_tower_level(&u.uz)) && !rn2(3)) {
         pline("You feel disoriented for a moment.");
-        return;
+        return 1;
     }
     if ((Teleport_control && !Stunned) || wizard_tele) {
         if (u_helpless(hm_unconscious)) {
@@ -419,18 +419,27 @@ tele_impl(boolean wizard_tele)
             cc.y = u.uy;
             if (getpos(&cc, TRUE, "the desired position", FALSE)
                 == NHCR_CLIENT_CANCEL)
-                return; /* abort */
+                return 0; /* abort */
+
+            if (run_next_to_u) {
+                if (!next_to_u()) {
+                    pline("You shudder for a moment.");
+                    return 1;
+                }
+            }
+
             /* possible extensions: introduce a small error if magic power is
                low; allow transfer to solid rock */
             if (teleok(cc.x, cc.y, FALSE)) {
                 teleds(cc.x, cc.y, FALSE);
-                return;
+                return 1;
             }
             pline("Sorry...");
         }
     }
 
     safe_teleds(FALSE);
+    return 1;
 }
 
 /* TODO: Perhaps work out some way to let controlled teleport in on a
@@ -509,16 +518,17 @@ dotele(const struct nh_cmd_arg *arg)
             u.uen -= energy;
     }
 
-    if (next_to_u()) {
-        if (trap && trap->once)
+    if (trap && trap->once) {
+        if (next_to_u())
             vault_tele();
         else
-            tele();
-        next_to_u();
-    } else {
-        pline("You shudder for a moment.");
-        return 0;
+            pline("You shudder for a moment.");
     }
+
+    if (!tele_impl(TRUE, TRUE))
+        return 0;
+    next_to_u();
+
     if (!trap)
         morehungry(100);
     return 1;

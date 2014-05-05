@@ -440,6 +440,9 @@ or `W`.) (4, c0d5ee2)
 `q`, `#pray`: These commands no longer interact with dungeon features while
 engulfed. (Grunt, C343-63, 8c03941)
 
+`r`: Now formally identifies enchant armour scrolls when they are used to
+create DSM. (Dyna, c9ffd37)
+
 `s`: Finding a mimic via a search no longer wakes it; this is to enable
 players/interfaces to un-bind the `wait` command if they wish to free up keys.
 (Ace, 8208917)
@@ -1163,6 +1166,9 @@ one possibility, so that objects will not be removed due to typos. (Nitro,
 `S`: The `S` command now also allows quitting the game, `S!y` (chosen to be
 hard to type, and thus unlikely to be typed by mistake). (Ace, a07c105,
 0b37bc4)
+
+`^T`: Cancelling a controlled `^T` command with Escape no longer costs a
+turn. (Dyna, 5f60575)
 
 `v`: The game now has an "autoexplore" command, bound to `v` by default, that
 automatically explores until it finds something interesting or is interrupted

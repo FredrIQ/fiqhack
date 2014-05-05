@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-02 */
+/* Last modified by Alex Smith, 2014-05-05 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1649,8 +1649,8 @@ extern boolean enexto_core(coord * cc, struct level *lev, xchar xx, xchar yy,
 extern void teleds(int, int, boolean);
 extern boolean safe_teleds(boolean);
 extern boolean teleport_pet(struct monst *, boolean);
-extern void tele(void);
-extern void tele_impl(boolean wizard_tele);
+extern int tele(void);
+extern int tele_impl(boolean wizard_tele, boolean next_to_u);
 extern int dotele(const struct nh_cmd_arg *);
 extern void level_tele(void);
 extern void level_tele_impl(boolean wizard_tele);
