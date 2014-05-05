@@ -393,7 +393,7 @@ because the 3.4.3 version of `A` contained a bug in its timing
 calculations. (4, 983bdde)
 
 `C`: If your finger slips while naming an object, the replacement name now
-includes `z` as a possible letter for the resulting random typo. (4, C343-161,
+includes `z` as a possible letter for the resulting random typo. (4, C343-364,
 a26b2a4)
 
 `d`: Dropping a container on an altar now reveals the beatitude of the items
@@ -580,7 +580,7 @@ C343-418, cb6a6c9)
 
 Drums of earthquake can no longer create pits inside holes or trapdoors, and
 no longer destroy beartraps (they disarm them instead, if they create a pit on
-the same square). (4, C343-174, 277a41f)
+the same square). (4, 277a41f)
 
 Landmines and bear traps now have (nonrandomized, and distinct) unidentified
 appearances; this is mostly so that a land mine (the object) and a land mine
@@ -641,7 +641,7 @@ SC343-16, 7536ccc)
 
 `e`,`y`: Exploding monsters are no longer visible while the effects of the
 explosion are calculated (so that, for instance, you will not hallucinate a
-random monster in the location where a black light exploded). (Grunt, C343-33,
+random monster in the location where a black light exploded). (Grunt, C343-64,
 a143c93)
 
 `e`,`y`: Exploding monsters are now correctly masked by hallucination. (Grunt,
@@ -663,7 +663,7 @@ overflow slots. (Grunt, C343-225, 5338c20)
 lock or unlock them. (Grunt, C343-409, 23a2051)
 
 `m`: If a mimic is somehow lead to the Rogue level, it will now pretend to be an
-open doorway rather than a door if placed into a doorway. (4, C343-34,
+open doorway rather than a door if placed into a doorway. (4, C343-34, C343-380,
 81e5261)
 
 `m`: Mimics will no longer pretend to be items or furniture in impossible
@@ -707,8 +707,8 @@ C343-81, 53922d0)
 (Grunt, C343-98, 7c72caa)
 
 `@`: Vault guard handling has been reworked to fix many of the outstanding
-bugs in it. (Grunt, C343-23, C343-125, C343-127, C343-166, C343-333, C343-399,
-C343-432, C343-433, C343-435, b3dd07d, 7867ff7, 3775d40)
+bugs in it. (Grunt, C343-23, C343-125, C343-127, C343-166, C343-333, C343-432,
+C343-433, C343-435, b3dd07d, 7867ff7, 3775d40)
 
 `@`: Nurses now take passive damage when healing players in passively damaging
 polyforms. (Grunt, SC343-15, e44e1cc)
@@ -832,7 +832,7 @@ Unconcious characters can no longer see. (Grunt, C343-101, fccd7a4)
 Characters in lava can no longer be slimed. (Grunt, C343-232, 6533efe)
 
 Levitation now stacks correctly with flying, and interrupts multi-turn
-commands when it ends. (Grunt, C343-72, C343-151, e90f457)
+commands when it ends. (Grunt, e90f457)
 
 Hunger now interrupts multi-turn actions. (Dyna, f80ea2f)
 
@@ -871,9 +871,9 @@ speed of the character. (4, 2415414)
 Messages
 --------
 
-Some messages have had typo fixes. (Un, Ace, Grunt, 4 and Dyna, C342-16,
-C343-8, C343-24, C343-45, C343-54, C343-55, C343-57, C343-58, C343-77,
-C343-90, C343-104, C343-109, C343-111, C343-116, C343-123, C343-131, C343-136,
+Some messages have had typo fixes. (Un, Ace, Grunt, 4 and Dyna, C343-8,
+C343-24, C343-45, C343-54, C343-55, C343-57, C343-58, C343-77, C343-90,
+C343-104, C343-109, C343-111, C343-116, C343-123, C343-131, C343-136,
 C343-155, C343-183, C343-211, C343-235, C343-258, C343-259, C343-345,
 C343-379, C343-399, C343-438, 9528d39, f18503d, 63329da, 6069675, 25bd1d0,
 b7dafb1, 1ab7536, 660ac1f, adce07d, d35ea64, 09b7802, ed3c54c, 2cce8e1,
@@ -1432,6 +1432,9 @@ it, avoiding the need to repeatedly press `n` to get to the tombstone. (4,
 There have been grammar improvements to death messages caused by choking on
 artifacts. (Grunt, 1f9636f, ef35a26)
 
+Self-genocide while polymorphed no longer creates a corrupted tombstone. (4,
+C342-16, c3bdbc4)
+
 
 Internals Improvements
 ======================
@@ -1631,7 +1634,7 @@ in the binary save (that represents the gamestate) from one command to the
 next.  This means that it can be rewound (e.g. for bug reproduction and
 recovering broken games), and that the game can be saved just by exiting the
 process (meaning that games are unlikely to be lost due to segfaults, hangups,
-or similar situations). (4, 9923807, 22053c2 and others)
+or similar situations). (4, C342-13, 9923807, 22053c2 and others)
 
 It is now possible to save in the middle of a turn; the game tracks the
 choices made during the partially completed turn, and replays them upon
