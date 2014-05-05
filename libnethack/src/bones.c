@@ -260,12 +260,6 @@ make_bones:
     for (f = ffruit; f; f = f->nextf)
         f->fid = -f->fid;
 
-    /* check iron balls separately--maybe they're not carrying it */
-    if (uball) {
-        uball->owornmask &= ~W_BALL;
-        uchain->owornmask &= ~W_CHAIN;
-    }
-
     /* dispose of your possessions, usually cursed */
     if (u.ugrave_arise == (NON_PM - 1)) {
         /* embed your possessions in your statue */
