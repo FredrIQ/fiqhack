@@ -1,5 +1,5 @@
 About this document:
-Last modified by Sean Hunt, 2014-04-23
+Last modified by Alex Smith, 2014-05-05
 
 Copyright (C) 2013 Alex Smith.
 
@@ -243,6 +243,9 @@ The Vibrating Square is now classified as a trap (and thus shows up in the
 player's memory after finding it, avoiding the need to mark it, and can be
 detected via means of trap detection). (4, e219111)
 
+The chest in the Castle that contains the wand of wishing can no longer be
+trapped. (4, 8ec73b5)
+
 
 Options
 -------
@@ -296,6 +299,10 @@ monsters: `#levelcide` to destroy all monsters on the level (saving you from
 having to wish up a scroll of genocide), and `#togglegen` to stop monsters
 generating altogether (so that you don't have to interrupt whatever you were
 doing to levelcide). (4, 2a6738b, c4b063c)
+
+A new wizard mode command `#hpset` fully heals the character; alternatively, a
+count can be given to precisely set the character's HP to some other
+value. (4, ad21853)
 
 In the wizard mode spoilers on `^X`, the current alignment cap and the
 player's hunger level are now visible. (Un, 145e145, 6ec5736)
@@ -396,6 +403,9 @@ prompting the player to informally identify it). (Un, 4f0a367)
 use for movement (i.e. it responds to travel, and moving one square at a time,
 the same way). (4, 6860cd2)
 
+`^D`: Causing a monster to reel via kicking it with kicking boots now
+identifies the boots as kicking boots. (4, 243d312..e7c4029)
+
 `e`: Now warns upon dangerous attempts to eat food. (Ace, 649a6b7)
 
 `e`: No longer works on artifacts that can't be touched. (Grunt, C343-244,
@@ -408,6 +418,10 @@ unique message. (Ace, 1e34184)
 
 `^E`: The number of slots remaining (and available for enhancing skills) is
 now shown on the skill enhancement menu. (Ace and Dyna, 529b276, a9047bf)
+
+`P`, `W`: Now prints a message if you just equipped a cursed set of armour.
+(The `A` and `i` commands will also print the message, if used to emulate `P`
+or `W`.) (4, c0d5ee2)
 
 `q`, `#pray`: These commands no longer interact with dungeon features while
 engulfed. (Grunt, C343-63, 8c03941)
@@ -449,6 +463,9 @@ clouds. (Grunt, 3f358cc)
 
 Interruptible multi-turn commands are now interrupted by the process of
 turning to stone. (Un, C343-74, f203351)
+
+Interruptible multi-turn commands are no longer interrupted if an unseen
+monster misses the player with a breath or spit attack. (4, 39d6010)
 
 
 Items
@@ -565,6 +582,9 @@ Items on the D:1 upstairs are no longer autopickedup before the first turn of
 the game (in 3.4.3, they would be picked up even with autopickup off!). (4,
 3769725)
 
+Randomly generated splint mail on D:1 no longer generates rustproof for
+samurai. (4, 820b493)
+
 
 Monsters and Polyforms
 ----------------------
@@ -621,6 +641,9 @@ longer continue to block sight after being genocided. (Dyna, 2f9436c)
 `n`,`&`: Demon princes no longer demand bribes from helpless players, and
 foocubi and nymphs no longer attempt to seduce or charm them. (Grunt,
 C343-137, e41bd77, 6092b66, 3d53054)
+
+`N`: Players in guardian naga form now spit the correct sort of venom. (4,
+C343-153, 56eb207)
 
 `t`: Players in trapper polyform are no longer described as hiding on the
 ceiling. (Grunt, C342-51, 3df1f97)
@@ -735,7 +758,13 @@ Shopkeepers no longer sometimes forget about pits dug in their shops. (Grunt,
 7d66e21)
 
 Lava no longer gives an extra turn of survival if your water walking boots burn
-up (Grunt, a6951c6)
+up. (Grunt, a6951c6)
+
+The time in the dungeon (for things like moon phase and werewolf
+transformations) is now specified as an offset from UTC (the "timezone" birth
+option), rather than using the local time of the server; this both allows
+remote players to get moon phases more in line with their local time, and
+removes exploits from malicious daylight saving definitions. (4, 236c80b)
 
 
 Character
@@ -787,17 +816,21 @@ Helplessness sources are now tracked independently (thus, it's no longer the
 case that 4 turns of sleep + 20 turns of paralysis = 20 turns of sleep, as in
 previous versions of NetHack). (4, 971d4e9, c55c327)
 
+The blindness from stinking clouds now works consistently regardless of the
+speed of the character. (4, 2415414)
+
 
 Messages
 --------
 
 Some messages have had typo fixes. (Un, Ace, Grunt, 4 and Dyna, C343-8,
 C343-24, C343-45, C343-54, C343-55, C343-57, C343-58, C343-77, C343-90,
-C343-109, C343-111, C343-116, C343-123, C343-136, C343-155, C343-211,
-C343-235, C343-258, C343-259, C343-345, C343-379, C343-399, C343-438, 9528d39,
-f18503d, 63329da, 6069675, 25bd1d0, b7dafb1, 1ab7536, 660ac1f, adce07d,
-d35ea64, 09b7802, ed3c54c, 2cce8e1, 0c2f758, e95ea48, 0333ed2, 07fe690,
-f809ede, e609855, a78bfcf, 02e6a13, 5d40e9f)
+C343-104, C343-109, C343-111, C343-116, C343-123, C343-136, C343-155,
+C343-183, C343-211, C343-235, C343-258, C343-259, C343-345, C343-379,
+C343-399, C343-438, 9528d39, f18503d, 63329da, 6069675, 25bd1d0, b7dafb1,
+1ab7536, 660ac1f, adce07d, d35ea64, 09b7802, ed3c54c, 2cce8e1, 0c2f758,
+e95ea48, 0333ed2, 07fe690, f809ede, e609855, a78bfcf, 02e6a13, 5d40e9f,
+e785e38, 6ada174)
 
 The game no longer produces misleading messages when healing an invisible
 monster, scaring a mimicking mimic, using a drum of earthquake while trapped,
@@ -807,11 +840,12 @@ teleporting an engulfing monster using a quantum mechanic polyform, being
 attacked by a monster with no attacks while praying, farlooking a monster seen
 only via astral vision, observing a monster turn invisible via telepathy,
 dying in a shop with multiple shopkeepers on the level, chatting to a sleeping
-steed, removing levitation while riding a flying steed, pushing a boulder
-into a pool while riding, or using a pickaxe when standing on water. (Ace, Un,
-Grunt and 4, C343-7, C343-15, C343-18, C343-50, C343-56 C343-69, C343-72,
-C343-152, C343-174, C343-233, d35ea64, 75888c3, 50b8255, a546d6b, 85054d7,
-8c6d549, c0fa205, 3e7219f, 065bac4, 73156d5, 0a8ecf8, 7515046, 4ed3165)
+steed, removing levitation while riding a flying steed, pushing a boulder into
+a pool while riding, pushing a boulder onto a level teleporter, or using a
+pickaxe when standing on water. (Ace, Un, Grunt and 4, C343-7, C343-15,
+C343-18, C343-50, C343-56 C343-69, C343-72, C343-152, C343-174, C343-202,
+C343-233, d35ea64, 75888c3, 50b8255, a546d6b, 85054d7, 8c6d549, c0fa205,
+3e7219f, 065bac4, 73156d5, 0a8ecf8, 7515046, 4ed3165, 71b9a83)
 
 Climbing a ladder no longer produces redundant messages. (Ace, 6f55aca)
 
@@ -853,8 +887,9 @@ tied to the truthfulness/usefulness of the rumour. (4, C343-178, 125b1c9)
 The message for a shopkeeper being after your hide now respects polymorphed
 forms. (4, 10eb057)
 
-The game now keeps better track of causes of death across turns, preventing you
-from being turned to slime by a scroll of genocide, among others. (4, 75e737c)
+The game now keeps better track of causes of death across turns, preventing
+you from being turned to slime by a scroll of genocide, among others. (4,
+C343-219, 75e737c, 24ac31b, 21cbbca)
 
 Objects on lava burning up now always have messages printed for them. (4,
 a6951c6)
@@ -1316,19 +1351,29 @@ The death reason now records more specific information on what caused
 helplessness than just "while helpless". (Bilious, 7ccecee)
 
 The game now automatically records a dumplog showing information about the
-game when the player ends. (Nitro and Dyna, 28c01f1, 3ddd389, 5dc4448,
-653784f, 00fa98f)
+game when the player ends. (Nitro, Dyna and 4, 28c01f1, 3ddd389, 5dc4448,
+653784f, 00fa98f, 97fd16d)
 
 Extinct creatures are now listed in the end-game dumps, in addition to
 genocided creatures. (Bilious, 594f040)
 
-Deaths to cockatrice corpses now contain more detail as to what exactly
-happened. (Grunt, 0128f35)
+Death messages are now more precise, hopefully making unique deaths
+competitions more interesting; for instance, deaths such as "touching a
+cockatrice corpse" have been made more specific (e.g. "searching a monster's
+interior for a cockatrice corpse").  Additionally, portions of the death
+message under user control have been marked to avoid tournament parser
+exploits (e.g. "killed by kicking a "slime mold (with the Amulet)""). (Grunt
+and 4, 0128f35, e6b2994, caac7d0, c278fd2)
 
 The game now generates an extended logfile that stores more detail about what
 happened in the games played on that installation (or server), for statistical
 and tournament scoring purposes. (Bilious, Ace and 4, 33350a2,
 e25fe11..b405854)
+
+Pressing `q` during the "Do you want your possessions identified?" sequence
+now skips to the final screen with the tombstone, rather than skipping past
+it, avoiding the need to repeatedly press `n` to get to the tombstone. (4,
+5925b5c)
 
 
 Internals Improvements
@@ -1362,11 +1407,14 @@ indents and a consistent set of rules for things like which lines to put
 braces on. (4, 4daa09e, 656fd82, d540858)
 
 Dead (or mostly dead) code, constants, and variables (especially global
-variables) were removed. (Nitro and 4, 487ec18, b056309, 3160d45, 03367af and
+variables) were removed. (Nitro and 4, 487ec18, b056309, 3160d45, 03367af,
+088afe6 and others)
+
+Many variables have been marked as `const`. (Nitro and 4, 3916bcf, 072167e and
 others)
 
-Many variables have been marked as `const`. (Nitro, 3916bcf, 072167e and
-others)
+The code is now almost entirely const-correct (a few exceptions still
+remain). (4, 0c75ca2, e622855)
 
 The code now uses standard C functions in place of their pre-standard
 equivalents. (Nitro, 1b49dfb, 0f2b938)
@@ -1374,6 +1422,9 @@ equivalents. (Nitro, 1b49dfb, 0f2b938)
 `pline` is now used directly to output messages, rather than using functions
 like `You` and `The` for outputting strings that start with specific words and
 `pline` only in the general case. (Nitro, 6d548b7)
+
+Instead of using static buffers to store strings, the vast majority of buffers
+are now dynamically allocated and have no length limit. (4, 0c75ca2, 6e90958)
 
 All functions are now explicitly marked `static` or `extern`. (Nitro, 476bc4a)
 
@@ -1495,6 +1546,9 @@ to ease debugging), but attempt to continue to execute anyway. (4, 2e14a0c)
 The code now contains debug hooks for valgrind (not compiled by default, use
 `-DVALGRIND_ANNOTATIONS`, meaning that `impossible`/`panic` will be observable
 when running under that debugger). (4, 2383605)
+
+The game can now detect a truncated save file, and automatically recover (via
+loading the most recent backup that remains intact). (4, 3cdad9c)
 
 
 Saves and Replays
