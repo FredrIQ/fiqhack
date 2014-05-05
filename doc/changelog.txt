@@ -130,6 +130,12 @@ C343-12, a8e8089, 827f0fe, cad32dd, dd56886)
 `a`: Opening and closing the Castle drawbridge via music now takes time. (Un,
 C343-318, 878e409)
 
+`a`: When writing a scroll by its actual type (e.g. `scroll of identify`),
+having seen an unidentified but type-named scroll of the same sort
+(e.g. `scroll called unknown 1` that is actualy, unbeknownst to the character,
+a scroll of identify) no longer guarantess success in writing the
+scroll. (Grunt, C343-403, 0aa9c5e)
+
 `C`: The `C` command no longer identifies high priests at range. (Nitro,
 SC343-12, be3e353)
 
@@ -310,6 +316,9 @@ player's hunger level are now visible. (Un, 145e145, 6ec5736)
 While in wizard mode, confused level teleport on the Planes no longer has a
 chance of crashing the game. (Grunt, C343-5, 3df1f97)
 
+The `#vision` command now additionally shows which areas are considered by the
+game to be lit. (4, 35cdb4f)
+
 
 New Game Modes
 --------------
@@ -419,6 +428,11 @@ unique message. (Ace, 1e34184)
 `^E`: The number of slots remaining (and available for enhancing skills) is
 now shown on the skill enhancement menu. (Ace and Dyna, 529b276, a9047bf)
 
+`F`: Can now be used to force attacks upon terrain.  This is mostly only
+useful as a shortcut for applying a wielded pick-axe; however, it opens some
+new (admittedly, likely useless) possibilities, like whacking a wall with a
+sword, which were not previously possible. (Grunt, C343-322, f7ffd31)
+
 `P`, `W`: Now prints a message if you just equipped a cursed set of armour.
 (The `A` and `i` commands will also print the message, if used to emulate `P`
 or `W`.) (4, c0d5ee2)
@@ -454,6 +468,11 @@ nearest point where burden level changes. (Ace, 237951d)
 
 `#force`: Now charged for if used on an unpaid item. (Grunt, C343-241,
 7704a8f)
+
+`#offer`: If the character should be given a sacrifice gift but no coaligned
+artifacts are available, they will now be given an unaligned artifact as a
+gift, rather than the game becoming confused and failing to give a gift at
+all. (4, C343-358, aa45966)
 
 `#pray`: The invulnerability period (if any) now protects against stinking
 clouds. (Grunt, 3f358cc)
@@ -513,11 +532,16 @@ C343-47, 661239e)
 Magic lamps now cease being magic in bones if the player died as a result of
 making a wish from them. (Grunt, C343-95, 3d7a853)
 
+The wish parser now accepts undead monster corpses (e.g. "elf zombie corpse"),
+producing a corpse that could have been be produced as the result of killing
+that species of undead. (4, 83e49d2)
+
 The Book of the Dead is now immune to lava even if the character holding it
 does not have fire resistance. (Grunt, a9267e4, 1b6f60e)
 
 It's no longer possible to stand on lava with the aid of non-fireproof water
-walking boots and sufficiently many hitpoints. (Grunt, SC343-3, 919fdb5)
+walking boots and sufficiently many hitpoints. (Grunt and 4, SC343-3, 919fdb5,
+a591080)
 
 Auto-cursing items now treat monsters the same way as players. (Grunt,
 C343-91, 69180c4)
@@ -563,6 +587,10 @@ to be in 3.4.3, but there's a typo in the relevant code). (Un, ab81299)
 Potions of blindness no longer grant blindness immunity when wielded or
 carried in the alternate weapon slot. (Dyna, 96fe8fe)
 
+Players who cannot die to cursed or uncursed potions of sickness (due to
+poison resistance) now cannot die to blessed potions of sickness either. (4,
+SC343-2, c66219b)
+
 Polymorphed equipped items remain equipped, if the new item fits into the same
 slot on the body. (4, b7e605c)
 
@@ -577,6 +605,10 @@ will become known immediately. (4, 8c25729)
 
 Whistles are now identified upon use (because magic and tin whistles produce
 different messages). (4, 096007e)
+
+Potions are now identified when thrown by a monster at the character, if this
+causes a unique message to be printed and the character was able to see the
+potion before it hit. (4, 3071b59)
 
 Items on the D:1 upstairs are no longer autopickedup before the first turn of
 the game (in 3.4.3, they would be picked up even with autopickup off!). (4,
@@ -654,6 +686,10 @@ invisible). (Grunt, bdf06c2)
 `u`: Unicorns can no longer catch gems while helpless. (Grunt, C343-115,
 b977028)
 
+`u`: Unicorns in bones files are now correctly peaceful or hostile based on
+the alignment of the new player arriving on the level. (Grunt, C343-66,
+0a9a09b)
+
 `w`: The chance of long worms being cut is now based on the type of damage
 they take (slashing having more of a chance to cut them), then the shape of
 the weapon that attacks them. (4, 8782996)
@@ -723,6 +759,12 @@ Monsters that can ooze under doors can also ooze through diagonal gaps.
 (Grunt, C343-144, 892c156)
 
 Monsters no longer get stuck in corridors while fleeing. (Dyna, f71440b)
+
+Monsters will no longer attack hiding players with ranged
+attacks. (Grunt, C343-377, 81f437f)
+
+The monster clerical "lightning" spell now works consistently with other forms
+of lightning with respect to blinding the player. (Grunt, C342-46, 7438364)
 
 
 Dungeon
@@ -823,14 +865,14 @@ speed of the character. (4, 2415414)
 Messages
 --------
 
-Some messages have had typo fixes. (Un, Ace, Grunt, 4 and Dyna, C343-8,
-C343-24, C343-45, C343-54, C343-55, C343-57, C343-58, C343-77, C343-90,
-C343-104, C343-109, C343-111, C343-116, C343-123, C343-136, C343-155,
-C343-183, C343-211, C343-235, C343-258, C343-259, C343-345, C343-379,
-C343-399, C343-438, 9528d39, f18503d, 63329da, 6069675, 25bd1d0, b7dafb1,
-1ab7536, 660ac1f, adce07d, d35ea64, 09b7802, ed3c54c, 2cce8e1, 0c2f758,
-e95ea48, 0333ed2, 07fe690, f809ede, e609855, a78bfcf, 02e6a13, 5d40e9f,
-e785e38, 6ada174)
+Some messages have had typo fixes. (Un, Ace, Grunt, 4 and Dyna, C342-16,
+C343-8, C343-24, C343-45, C343-54, C343-55, C343-57, C343-58, C343-77,
+C343-90, C343-104, C343-109, C343-111, C343-116, C343-123, C343-131, C343-136,
+C343-155, C343-183, C343-211, C343-235, C343-258, C343-259, C343-345,
+C343-379, C343-399, C343-438, 9528d39, f18503d, 63329da, 6069675, 25bd1d0,
+b7dafb1, 1ab7536, 660ac1f, adce07d, d35ea64, 09b7802, ed3c54c, 2cce8e1,
+0c2f758, e95ea48, 0333ed2, 07fe690, f809ede, e609855, a78bfcf, 02e6a13,
+5d40e9f, e785e38, 6ada174, 4c37976, 6140ba9)
 
 The game no longer produces misleading messages when healing an invisible
 monster, scaring a mimicking mimic, using a drum of earthquake while trapped,
@@ -892,7 +934,7 @@ you from being turned to slime by a scroll of genocide, among others. (4,
 C343-219, 75e737c, 24ac31b, 21cbbca)
 
 Objects on lava burning up now always have messages printed for them. (4,
-a6951c6)
+a6951c6, 8d7b8d9)
 
 
 Crash / Memory Corruption Fixes
@@ -1093,7 +1135,7 @@ that the character has seen on levels they have visited, via a new command
 `^O`/`#overview`; additionally, a character can select a level from this menu
 to view their memory of it, and name levels using the `#annotate` or `Cf`
 commands. (Bilious, Un, Dyna, Nitro and 4, a155515, c461257, 5083a8e, 05472d5,
-3e4a189, b015a4c, a765dbf and others)
+3e4a189, b015a4c, a765dbf, 8fb4e51, and others)
 
 `p`: The `p` command can now be cancelled without having to say "no" to each item
 individually. (Ace, 962456a)
@@ -1375,6 +1417,9 @@ now skips to the final screen with the tombstone, rather than skipping past
 it, avoiding the need to repeatedly press `n` to get to the tombstone. (4,
 5925b5c)
 
+There have been grammar improvements to death messages caused by choking on
+artifacts. (Grunt, 1f9636f, ef35a26)
+
 
 Internals Improvements
 ======================
@@ -1485,12 +1530,19 @@ Light and darkness are now properties of a map square, rather than of a
 background; the main practical benefit of this is improved rendering of
 unusual dungeon features in unusual lighting conditions. (4, 3c06767, 3b11dc1)
 
-x coordinates and y coordinates now use the same storage internally. (4,
-e61bcb3 and others)
+x coordinates and y coordinates now use the same storage internally; in
+particular, x = 0 no longer means "off the map", because y = 0 is on the
+map. (4, e61bcb3, f12c528 and others)
 
 Objects intended to exist only briefly are now allocated separately and checks
 occur that they do not survive for more than a turn. Additionally, venom now
-must be temporary and accordingly cannot be wished for. (b4fd8ec, 6a04b22)
+must be temporary and accordingly cannot be wished for. (4, b4fd8ec, 6a04b22)
+
+Objects are now always stored on an object chain, rather than sometimes just
+stored on the stack or the like; this mean that any object-related memory
+leaks will be discovered, and that temporary objects can be correctly
+deallocated if the game ends while they are allocated (say, due to
+hangup). (4, 301962c)
 
 
 Client/Server Structure and API
@@ -1612,6 +1664,14 @@ The game's tiles system is now capable of handling multiple sizes of tile,
 and transparent tiles, in addition to referring to tiles by name rather than
 number (reducing tiles-related mistakes when adding new features to the
 game). (Slash'EM and 4, 267b5a1..9e69e72)
+
+The code is now written to specific levels of library support (in general,
+X/Open `_XOPEN_SOURCE=700` and C11, although exceptions are made in some
+places, such as the server code), rather than the mix that had built up over
+the years in earlier versions. In general, this only affects the windowports;
+the game engine aims to be as portable as possible among C11 systems, and
+hardly uses platform-specific calls (although there are some exceptions, such
+as save file locking). (4, b85714a)
 
 
 Build System
