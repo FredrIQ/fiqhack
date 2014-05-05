@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Alex Smith, 2014-05-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -888,9 +888,8 @@ helpless(int turns, enum helpless_reason reason, const char *cause,
         }
 
     /* This should come last in case we end up cancelling this helplessness as a
-     * result of cancelling the old one (e.g. if, hypothetically, a prayer
-     * completes and your god intervenes to unparalyze you)
-     */
+       result of cancelling the old one (e.g. if, hypothetically, a prayer
+       completes and your god intervenes to unparalyze you) */
     enum helpless_mask mask = 0;
     if (reason != hr_praying)
         mask |= hm_praying;
@@ -899,7 +898,8 @@ helpless(int turns, enum helpless_reason reason, const char *cause,
     cancel_helplessness(mask, "");
 }
 
-/* Cancel all helplessness that matches the given mask.
+/*
+ * Cancel all helplessness that matches the given mask.
  *
  * If msg is null, then the saved message given to helpless() is printed.
  * This is used to indicate that the helplessness is expiring naturally.
@@ -990,9 +990,9 @@ u_helpless(enum helpless_mask mask)
     int i;
 
     /* A lack of a cause canonically indicates that we weren't actually helpless
-     * for this reason. We may not have an endmsg, and the timer may already
-     * have expired but the helplessness not yet been canceled, so we can't use
-     * these as indications. */
+       for this reason. We may not have an endmsg, and the timer may already
+       have expired but the helplessness not yet been canceled, so we can't use
+       these as indications. */
     for (i = hr_first; i <= hr_last; ++i)
         if ((mask & (1 << i)) && *turnstate.helpless_causes[i])
             return TRUE;
@@ -1009,7 +1009,7 @@ cancel_mimicking(const char* msg)
 {
     /* Make sure we're actually mimicking. */
     if (youmonst.m_ap_type) {
-        int i = 1 << hr_mimicking;
+        const int i = 1 << hr_mimicking;
         turnstate.helpless_timers[i] = 0;
         *turnstate.helpless_causes[i] = '\0';
         if (!msg && *turnstate.helpless_endmsgs[i])
