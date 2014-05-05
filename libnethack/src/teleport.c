@@ -417,7 +417,7 @@ tele_impl(boolean wizard_tele, boolean run_next_to_u)
                   u.usteed ? msgcat(" and ", mon_nam(u.usteed)) : "");
             cc.x = u.ux;
             cc.y = u.uy;
-            if (getpos(&cc, TRUE, "the desired position", FALSE)
+            if (getpos(&cc, FALSE, "the desired position", FALSE)
                 == NHCR_CLIENT_CANCEL)
                 return 0; /* abort */
 
