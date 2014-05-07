@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-07 */
+/* Last modified by Alex Smith, 2014-05-08 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -123,6 +123,82 @@ exit_curses_ui(void)
 }
 
 
+enum framechars {
+    FC_HLINE, FC_VLINE,
+    FC_ULCORNER, FC_URCORNER, FC_LLCORNER, FC_LRCORNER,
+    FC_LTEE, FC_RTEE, FC_TTEE, FC_BTEE
+};
+
+static const char ascii_borders[] = {
+    [FC_HLINE] = '-', [FC_VLINE] = '|',
+    [FC_ULCORNER] = '-', [FC_URCORNER] = '-',
+    [FC_LLCORNER] = '-', [FC_LRCORNER] = '-',
+    [FC_LTEE] = '|', [FC_RTEE] = '|', [FC_TTEE] = '-', [FC_BTEE] = '-',
+};
+static const cchar_t *const *const unicode_borders[] = {
+    [FC_HLINE] = &WACS_HLINE , [FC_VLINE] = &WACS_VLINE,
+    [FC_ULCORNER] = &WACS_ULCORNER, [FC_URCORNER] = &WACS_URCORNER,
+    [FC_LLCORNER] = &WACS_LLCORNER, [FC_LRCORNER] = &WACS_LRCORNER,
+    [FC_LTEE] = &WACS_LTEE, [FC_RTEE] = &WACS_RTEE,
+    [FC_TTEE] = &WACS_TTEE, [FC_BTEE] = &WACS_BTEE,
+};
+
+static void
+set_frame_cchar(cchar_t *cchar, enum framechars which, nh_bool mainframe)
+{
+    if (settings.graphics == ASCII_GRAPHICS) {
+        wchar_t w[2] = {ascii_borders[which], 0};
+        setcchar(cchar, w, (attr_t)0, mainframe ? MAINFRAME_PAIR : FRAME_PAIR,
+                 NULL);
+    } else {
+        int wchar_count = getcchar(*unicode_borders[which],
+                                   NULL, NULL, NULL, NULL);
+        wchar_t w[wchar_count + 1];
+        attr_t attr;
+        short pairnum;
+        getcchar(*unicode_borders[which], w, &attr, &pairnum, NULL);
+        attr = 0;
+        pairnum = mainframe ? MAINFRAME_PAIR : FRAME_PAIR;
+        setcchar(cchar, w, attr, pairnum, NULL);
+    }
+}
+
+/* All these functions draw in MAINFRAME_PAIR on basewin or sidebar,
+   FRAME_PAIR otherwise */
+void
+nh_mvwvline(WINDOW *win, int y, int x, int len)
+{
+    cchar_t c;
+    set_frame_cchar(&c, FC_VLINE, win == basewin || win == sidebar);
+    mvwvline_set(win, y, x, &c, len);
+}
+void
+nh_mvwhline(WINDOW *win, int y, int x, int len)
+{
+    cchar_t c;
+    set_frame_cchar(&c, FC_HLINE, win == basewin || win == sidebar);
+    mvwhline_set(win, y, x, &c, len);
+}
+void
+nh_box(WINDOW *win)
+{
+    cchar_t c[6];
+    set_frame_cchar(c+0, FC_VLINE, win == basewin || win == sidebar);
+    set_frame_cchar(c+1, FC_HLINE, win == basewin || win == sidebar);
+    set_frame_cchar(c+2, FC_ULCORNER, win == basewin || win == sidebar);
+    set_frame_cchar(c+3, FC_URCORNER, win == basewin || win == sidebar);
+    set_frame_cchar(c+4, FC_LLCORNER, win == basewin || win == sidebar);
+    set_frame_cchar(c+5, FC_LRCORNER, win == basewin || win == sidebar);
+    wborder_set(win, c+0, c+0, c+1, c+1, c+2, c+3, c+4, c+5);
+}
+static void
+nh_mvwaddch(WINDOW *win, int y, int x, enum framechars which)
+{
+    cchar_t c;
+    set_frame_cchar(&c, which, win == basewin || win == sidebar);
+    mvwadd_wch(win, y, x, &c);
+}
+
 static void
 draw_frame(void)
 {
@@ -130,41 +206,41 @@ draw_frame(void)
         return;
 
     /* vertical lines */
-    mvwvline(basewin, 1, 0, ACS_VLINE, ui_flags.viewheight);
-    mvwvline(basewin, 1, COLNO + 1, ACS_VLINE, ui_flags.viewheight);
+    nh_mvwvline(basewin, 1, 0, ui_flags.viewheight);
+    nh_mvwvline(basewin, 1, COLNO + 1, ui_flags.viewheight);
 
     /* horizontal top line above the message win */
-    mvwaddch(basewin, 0, 0, ACS_ULCORNER);
-    whline(basewin, ACS_HLINE, COLNO);
-    mvwaddch(basewin, 0, COLNO + 1, ACS_URCORNER);
+    nh_mvwhline(basewin, 0, 1, COLNO);
+    nh_mvwaddch(basewin, 0, 0, FC_ULCORNER);
+    nh_mvwaddch(basewin, 0, COLNO + 1, FC_URCORNER);
 
     /* horizontal line between message and map windows */
-    mvwaddch(basewin, 1 + ui_flags.msgheight, 0, ACS_LTEE);
-    whline(basewin, ACS_HLINE, COLNO);
-    mvwaddch(basewin, 1 + ui_flags.msgheight, COLNO + 1, ACS_RTEE);
+    nh_mvwhline(basewin, 1 + ui_flags.msgheight, 1, COLNO);
+    nh_mvwaddch(basewin, 1 + ui_flags.msgheight, 0, FC_LTEE);
+    nh_mvwaddch(basewin, 1 + ui_flags.msgheight, COLNO + 1, FC_RTEE);
 
     /* horizontal line between map and status */
-    mvwaddch(basewin, 2 + ui_flags.msgheight + ROWNO, 0, ACS_LTEE);
-    whline(basewin, ACS_HLINE, COLNO);
-    mvwaddch(basewin, 2 + ui_flags.msgheight + ROWNO, COLNO + 1, ACS_RTEE);
+    nh_mvwhline(basewin, 2 + ui_flags.msgheight + ROWNO, 1, COLNO);
+    nh_mvwaddch(basewin, 2 + ui_flags.msgheight + ROWNO, 0, FC_LTEE);
+    nh_mvwaddch(basewin, 2 + ui_flags.msgheight + ROWNO, COLNO + 1, FC_RTEE);
 
     /* horizontal bottom line */
-    mvwaddch(basewin, ui_flags.viewheight + 1, 0, ACS_LLCORNER);
-    whline(basewin, ACS_HLINE, COLNO);
-    mvwaddch(basewin, ui_flags.viewheight + 1, COLNO + 1, ACS_LRCORNER);
+    nh_mvwhline(basewin, ui_flags.viewheight + 1, 1, COLNO);
+    nh_mvwaddch(basewin, ui_flags.viewheight + 1, 0, FC_LLCORNER);
+    nh_mvwaddch(basewin, ui_flags.viewheight + 1, COLNO + 1, FC_LRCORNER);
 
     if (!ui_flags.draw_sidebar)
         return;
 
-    mvwaddch(basewin, 0, COLNO + 1, ACS_TTEE);
-    whline(basewin, ACS_HLINE, COLS - COLNO - 3);
-    mvwaddch(basewin, 0, COLS - 1, ACS_URCORNER);
+    nh_mvwhline(basewin, 0, COLNO + 2, COLS - COLNO - 3);
+    nh_mvwaddch(basewin, 0, COLNO + 1, FC_TTEE);
+    nh_mvwaddch(basewin, 0, COLS - 1, FC_URCORNER);
 
-    mvwaddch(basewin, ui_flags.viewheight + 1, COLNO + 1, ACS_BTEE);
-    whline(basewin, ACS_HLINE, COLS - COLNO - 3);
-    mvwaddch(basewin, ui_flags.viewheight + 1, COLS - 1, ACS_LRCORNER);
+    nh_mvwhline(basewin, ui_flags.viewheight + 1, COLNO + 2, COLS - COLNO - 3);
+    nh_mvwaddch(basewin, ui_flags.viewheight + 1, COLNO + 1, FC_BTEE);
+    nh_mvwaddch(basewin, ui_flags.viewheight + 1, COLS - 1, FC_LRCORNER);
 
-    mvwvline(basewin, 1, COLS - 1, ACS_VLINE, ui_flags.viewheight);
+    nh_mvwvline(basewin, 1, COLS - 1, ui_flags.viewheight);
 }
 
 

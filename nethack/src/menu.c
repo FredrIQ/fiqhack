@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Alex Smith, 2014-05-08 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -111,9 +111,7 @@ draw_menu(struct gamewin *gw)
     int i, j, col, scrlheight, scrlpos, scrltop, attr;
     char *tab;
 
-    wattron(gw->win, FRAME_ATTRS);
-    box(gw->win, 0, 0);
-    wattroff(gw->win, FRAME_ATTRS);
+    nh_box(gw->win);
     if (mdat->title) {
         wattron(gw->win, A_UNDERLINE);
         mvwaddnstr(gw->win, 1, 2, mdat->title, mdat->width - 4);
@@ -165,11 +163,16 @@ draw_menu(struct gamewin *gw)
     scrlpos = mdat->offset * (mdat->innerheight - scrlheight) /
         (mdat->icount - mdat->innerheight);
     for (i = 0; i < mdat->innerheight; i++) {
+        char ch = ' ';
         attr = A_NORMAL;
-        if (i >= scrlpos && i < scrlpos + scrlheight)
-            attr = A_REVERSE;
+        if (i >= scrlpos && i < scrlpos + scrlheight) {
+            if (settings.graphics == ASCII_GRAPHICS)
+                ch = '#';
+            else
+                attr = A_REVERSE;
+        }
         wattron(gw->win, attr);
-        mvwaddch(gw->win, i + scrltop, mdat->innerwidth + 2, ' ');
+        mvwaddch(gw->win, i + scrltop, mdat->innerwidth + 2, ch);
         wattroff(gw->win, attr);
     }
 }
@@ -354,9 +357,7 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
 
     gw->win = newwin(mdat->height, mdat->width, starty, startx);
     keypad(gw->win, TRUE);
-    wattron(gw->win, FRAME_ATTRS);
-    box(gw->win, 0, 0);
-    wattroff(gw->win, FRAME_ATTRS);
+    nh_box(gw->win);
     gw->win2 =
         derwin(gw->win, mdat->innerheight, mdat->innerwidth,
                mdat->frameheight - 1, 2);
@@ -662,9 +663,7 @@ draw_objmenu(struct gamewin *gw)
     struct win_objmenu *mdat = (struct win_objmenu *)gw->extra;
     int i, scrlheight, scrlpos, scrltop, attr;
 
-    wattron(gw->win, FRAME_ATTRS);
-    box(gw->win, 0, 0);
-    wattroff(gw->win, FRAME_ATTRS);
+    nh_box(gw->win);
     if (mdat->title) {
         wattron(gw->win, A_UNDERLINE);
         mvwaddnstr(gw->win, 1, 2, mdat->title, mdat->width - 4);
@@ -836,9 +835,7 @@ curses_display_objects(
 
     gw->win = newwin(mdat->height, mdat->width, starty, startx);
     keypad(gw->win, TRUE);
-    wattron(gw->win, FRAME_ATTRS);
-    box(gw->win, 0, 0);
-    wattroff(gw->win, FRAME_ATTRS);
+    nh_box(gw->win);
     gw->win2 =
         derwin(gw->win, mdat->innerheight, mdat->innerwidth,
                mdat->frameheight - 1, 2);

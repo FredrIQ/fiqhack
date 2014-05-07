@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Alex Smith, 2014-05-08 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -49,9 +49,7 @@ newdialog(int height, int width, WINDOW *win)
     werase(win);
     keypad(win, TRUE);
     meta(win, TRUE);
-    wattron(win, FRAME_ATTRS);
-    box(win, 0, 0);
-    wattroff(win, FRAME_ATTRS);
+    nh_box(win);
     return win;
 }
 

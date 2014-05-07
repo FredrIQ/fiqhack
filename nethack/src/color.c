@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-28 */
+/* Last modified by Alex Smith, 2014-05-08 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -140,6 +140,14 @@ apply_colormap(struct ColorMap *map)
             init_pair(bg * (COLORS >= 16 ? 16 : 8) + fg + 1, fgColor, bgColor);
         }
     }
+
+    /* If we have at least 114 colour pairs, then we use pair 113 for the main
+       background frame; this allows us to change its color to warn about
+       critical situations via palette changes (which saves having to do a
+       bunch of complex redrawing). The default color of the frame is color 7
+       from the color map (light gray, if no explicit color was specified). */
+    if (COLOR_PAIRS > MAINFRAME_PAIR)
+        init_pair(MAINFRAME_PAIR, map->fgColors[7], map->fgColors[0]);
 
     return;
 }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-07 */
+/* Last modified by Alex Smith, 2014-05-08 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -91,8 +91,8 @@ typedef wchar_t fnchar;
 # endif
 
 /* attributes for dialog frames */
-# define FRAME_ATTRS  (COLOR_PAIR(6))   /* magenta frames for better visibility 
-                                         */
+# define FRAME_PAIR     6             /* magenta frames for better visibility */
+# define MAINFRAME_PAIR 113           /* 16 * 7 + 1 */
 
 # define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
 
@@ -451,6 +451,9 @@ extern void init_curses_ui(const char *dataprefix);
 extern void exit_curses_ui(void);
 extern void set_font_file(const char *);
 extern void set_tile_file(const char *);
+extern void nh_mvwvline(WINDOW *, int, int, int);
+extern void nh_mvwhline(WINDOW *, int, int, int);
+extern void nh_box(WINDOW *);
 extern void create_game_windows(void);
 extern void destroy_game_windows(void);
 extern void redraw_game_windows(void);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-05-08 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -779,8 +779,8 @@ add_wch, (const cchar_t *ch), (ch))
         return OK;
 }
 
-static
-int add_wch_core(WINDOW * win, const cchar_t *ch)
+static int
+add_wch_core(WINDOW * win, const cchar_t *ch)
 {
     if (ch->chars[0] == 8) {    /* backspace */
 
@@ -864,81 +864,81 @@ static const cchar_t WACS[] = {
     {0, {0x25ae, 0}}, {0, {0x2592, 0}}, {0, {0x2534, 0}}, {0, {0x00b7, 0}},
     {0, {0x2592, 0}}, {0, {0x2193, 0}}, {0, {0x00b0, 0}}, {0, {0x25c6, 0}},
     {0, {0x2265, 0}}, {0, {0x2500, 0}}, {0, {0x2603, 0}}, {0, {0x2190, 0}},
-    {0, {0x2264, 0}}, {0, {0x2514, 0}}, {0, {0x2518, 0}}, {0, {0x2524, 0}},
+    {0, {0x2264, 0}}, {0, {0x2514, 0}}, {0, {0x2518, 0}}, {0, {0x251c, 0}},
     {0, {0x2260, 0}}, {0, {0x03c0, 0}}, {0, {0x00b1, 0}}, {0, {0x253c, 0}},
-    {0, {0x2192, 0}}, {0, {0x251c, 0}}, {0, {0x23ba, 0}}, {0, {0x23bb, 0}},
+    {0, {0x2192, 0}}, {0, {0x2524, 0}}, {0, {0x23ba, 0}}, {0, {0x23bb, 0}},
     {0, {0x23bc, 0}}, {0, {0x23bd, 0}}, {0, {0x00a3, 0}}, {0, {0x252c, 0}},
     {0, {0x2191, 0}}, {0, {0x250c, 0}}, {0, {0x2510, 0}}, {0, {0x2502, 0}}
 };
 
-const uncursed_cchar_tp WACS_BLOCK = WACS + 0;
-const uncursed_cchar_tp WACS_BOARD = WACS + 1;
-const uncursed_cchar_tp WACS_BTEE = WACS + 2;
-const uncursed_cchar_tp WACS_BULLET = WACS + 3;
-const uncursed_cchar_tp WACS_CKBOARD = WACS + 4;
-const uncursed_cchar_tp WACS_DARROW = WACS + 5;
-const uncursed_cchar_tp WACS_DEGREE = WACS + 6;
-const uncursed_cchar_tp WACS_DIAMOND = WACS + 7;
-const uncursed_cchar_tp WACS_GEQUAL = WACS + 8;
-const uncursed_cchar_tp WACS_HLINE = WACS + 9;
-const uncursed_cchar_tp WACS_LANTERN = WACS + 10;
-const uncursed_cchar_tp WACS_LARROW = WACS + 11;
-const uncursed_cchar_tp WACS_LEQUAL = WACS + 12;
-const uncursed_cchar_tp WACS_LLCORNER = WACS + 13;
-const uncursed_cchar_tp WACS_LRCORNER = WACS + 14;
-const uncursed_cchar_tp WACS_LTEE = WACS + 15;
-const uncursed_cchar_tp WACS_NEQUAL = WACS + 16;
-const uncursed_cchar_tp WACS_PI = WACS + 17;
-const uncursed_cchar_tp WACS_PLMINUS = WACS + 18;
-const uncursed_cchar_tp WACS_PLUS = WACS + 19;
-const uncursed_cchar_tp WACS_RARROW = WACS + 20;
-const uncursed_cchar_tp WACS_RTEE = WACS + 21;
-const uncursed_cchar_tp WACS_S1 = WACS + 22;
-const uncursed_cchar_tp WACS_S3 = WACS + 23;
-const uncursed_cchar_tp WACS_S7 = WACS + 24;
-const uncursed_cchar_tp WACS_S9 = WACS + 25;
-const uncursed_cchar_tp WACS_STERLING = WACS + 26;
-const uncursed_cchar_tp WACS_TTEE = WACS + 27;
-const uncursed_cchar_tp WACS_UARROW = WACS + 28;
-const uncursed_cchar_tp WACS_ULCORNER = WACS + 29;
-const uncursed_cchar_tp WACS_URCORNER = WACS + 30;
-const uncursed_cchar_tp WACS_VLINE = WACS + 31;
+const uncursed_cchar_tp WACS_BLOCK = WACS + 0;        /* ▮ */
+const uncursed_cchar_tp WACS_BOARD = WACS + 1;        /* ▒ */
+const uncursed_cchar_tp WACS_BTEE = WACS + 2;         /* ┴ */
+const uncursed_cchar_tp WACS_BULLET = WACS + 3;       /* · */
+const uncursed_cchar_tp WACS_CKBOARD = WACS + 4;      /* ▒ */
+const uncursed_cchar_tp WACS_DARROW = WACS + 5;       /* ↓ */
+const uncursed_cchar_tp WACS_DEGREE = WACS + 6;       /* ° */
+const uncursed_cchar_tp WACS_DIAMOND = WACS + 7;      /* ◆ */
+const uncursed_cchar_tp WACS_GEQUAL = WACS + 8;       /* ≥ */
+const uncursed_cchar_tp WACS_HLINE = WACS + 9;        /* ─ */
+const uncursed_cchar_tp WACS_LANTERN = WACS + 10;     /* ☃ */
+const uncursed_cchar_tp WACS_LARROW = WACS + 11;      /* ← */
+const uncursed_cchar_tp WACS_LEQUAL = WACS + 12;      /* ≤ */
+const uncursed_cchar_tp WACS_LLCORNER = WACS + 13;    /* └ */
+const uncursed_cchar_tp WACS_LRCORNER = WACS + 14;    /* ┘ */
+const uncursed_cchar_tp WACS_LTEE = WACS + 15;        /* ├ */
+const uncursed_cchar_tp WACS_NEQUAL = WACS + 16;      /* ≠ */
+const uncursed_cchar_tp WACS_PI = WACS + 17;          /* π */
+const uncursed_cchar_tp WACS_PLMINUS = WACS + 18;     /* ± */
+const uncursed_cchar_tp WACS_PLUS = WACS + 19;        /* ┼ */
+const uncursed_cchar_tp WACS_RARROW = WACS + 20;      /* → */
+const uncursed_cchar_tp WACS_RTEE = WACS + 21;        /* ┤ */
+const uncursed_cchar_tp WACS_S1 = WACS + 22;          /* ⎺ */
+const uncursed_cchar_tp WACS_S3 = WACS + 23;          /* ⎻ */
+const uncursed_cchar_tp WACS_S7 = WACS + 24;          /* ⎼ */
+const uncursed_cchar_tp WACS_S9 = WACS + 25;          /* ⎽ */
+const uncursed_cchar_tp WACS_STERLING = WACS + 26;    /* £ */
+const uncursed_cchar_tp WACS_TTEE = WACS + 27;        /* ┬ */
+const uncursed_cchar_tp WACS_UARROW = WACS + 28;      /* ↑ */
+const uncursed_cchar_tp WACS_ULCORNER = WACS + 29;    /* ┌ */
+const uncursed_cchar_tp WACS_URCORNER = WACS + 30;    /* ┐ */
+const uncursed_cchar_tp WACS_VLINE = WACS + 31;       /* │ */
 
 static const cchar_t WACS_T[] = {
     {0, {0x250f, 0}}, {0, {0x2517, 0}}, {0, {0x2513, 0}}, {0, {0x251b, 0}},
-    {0, {0x252b, 0}}, {0, {0x2523, 0}}, {0, {0x253b, 0}}, {0, {0x2533, 0}},
+    {0, {0x2523, 0}}, {0, {0x252b, 0}}, {0, {0x253b, 0}}, {0, {0x2533, 0}},
     {0, {0x2501, 0}}, {0, {0x2503, 0}}, {0, {0x254b, 0}}
 };
 
-const uncursed_cchar_tp WACS_T_ULCORNER = WACS_T + 0;
-const uncursed_cchar_tp WACS_T_LLCORNER = WACS_T + 1;
-const uncursed_cchar_tp WACS_T_URCORNER = WACS_T + 2;
-const uncursed_cchar_tp WACS_T_LRCORNER = WACS_T + 3;
-const uncursed_cchar_tp WACS_T_LTEE = WACS_T + 4;
-const uncursed_cchar_tp WACS_T_RTEE = WACS_T + 5;
-const uncursed_cchar_tp WACS_T_BTEE = WACS_T + 6;
-const uncursed_cchar_tp WACS_T_TTEE = WACS_T + 7;
-const uncursed_cchar_tp WACS_T_HLINE = WACS_T + 8;
-const uncursed_cchar_tp WACS_T_VLINE = WACS_T + 9;
-const uncursed_cchar_tp WACS_T_PLUS = WACS_T + 10;
+const uncursed_cchar_tp WACS_T_ULCORNER = WACS_T + 0; /* ┏ */
+const uncursed_cchar_tp WACS_T_LLCORNER = WACS_T + 1; /* ┗ */
+const uncursed_cchar_tp WACS_T_URCORNER = WACS_T + 2; /* ┓ */
+const uncursed_cchar_tp WACS_T_LRCORNER = WACS_T + 3; /* ┛ */
+const uncursed_cchar_tp WACS_T_LTEE = WACS_T + 4;     /* ┣ */
+const uncursed_cchar_tp WACS_T_RTEE = WACS_T + 5;     /* ┫ */
+const uncursed_cchar_tp WACS_T_BTEE = WACS_T + 6;     /* ┻ */
+const uncursed_cchar_tp WACS_T_TTEE = WACS_T + 7;     /* ┳ */
+const uncursed_cchar_tp WACS_T_HLINE = WACS_T + 8;    /* ━ */
+const uncursed_cchar_tp WACS_T_VLINE = WACS_T + 9;    /* ┃ */
+const uncursed_cchar_tp WACS_T_PLUS = WACS_T + 10;    /* ╋ */
 
 static const cchar_t WACS_D[] = {
     {0, {0x2554, 0}}, {0, {0x255a, 0}}, {0, {0x2557, 0}}, {0, {0x255d, 0}},
-    {0, {0x2563, 0}}, {0, {0x2560, 0}}, {0, {0x2569, 0}}, {0, {0x2566, 0}},
+    {0, {0x2560, 0}}, {0, {0x2563, 0}}, {0, {0x2569, 0}}, {0, {0x2566, 0}},
     {0, {0x2550, 0}}, {0, {0x2551, 0}}, {0, {0x256c, 0}}
 };
 
-const uncursed_cchar_tp WACS_D_ULCORNER = WACS_D + 0;
-const uncursed_cchar_tp WACS_D_LLCORNER = WACS_D + 1;
-const uncursed_cchar_tp WACS_D_URCORNER = WACS_D + 2;
-const uncursed_cchar_tp WACS_D_LRCORNER = WACS_D + 3;
-const uncursed_cchar_tp WACS_D_LTEE = WACS_D + 4;
-const uncursed_cchar_tp WACS_D_RTEE = WACS_D + 5;
-const uncursed_cchar_tp WACS_D_BTEE = WACS_D + 6;
-const uncursed_cchar_tp WACS_D_TTEE = WACS_D + 7;
-const uncursed_cchar_tp WACS_D_HLINE = WACS_D + 8;
-const uncursed_cchar_tp WACS_D_VLINE = WACS_D + 9;
-const uncursed_cchar_tp WACS_D_PLUS = WACS_D + 10;
+const uncursed_cchar_tp WACS_D_ULCORNER = WACS_D + 0; /* ╔ */
+const uncursed_cchar_tp WACS_D_LLCORNER = WACS_D + 1; /* ╚ */
+const uncursed_cchar_tp WACS_D_URCORNER = WACS_D + 2; /* ╗ */
+const uncursed_cchar_tp WACS_D_LRCORNER = WACS_D + 3; /* ╝ */
+const uncursed_cchar_tp WACS_D_LTEE = WACS_D + 4;     /* ╠ */
+const uncursed_cchar_tp WACS_D_RTEE = WACS_D + 5;     /* ╣ */
+const uncursed_cchar_tp WACS_D_BTEE = WACS_D + 6;     /* ╩ */
+const uncursed_cchar_tp WACS_D_TTEE = WACS_D + 7;     /* ╦ */
+const uncursed_cchar_tp WACS_D_HLINE = WACS_D + 8;    /* ═ */
+const uncursed_cchar_tp WACS_D_VLINE = WACS_D + 9;    /* ║ */
+const uncursed_cchar_tp WACS_D_PLUS = WACS_D + 10;    /* ╬ */
 
 /* manual page 3ncurses add_wchstr */
 UNCURSED_ANDMVWINDOWDEF(int,
@@ -1350,10 +1350,11 @@ vline_set, (const cchar_t *ch, int n), (ch, n))
     int sy = win->y;
 
     while (n > 0) {
-        if (win->x == win->maxx)
+        int oy = win->y;
+        if (win->y == win->maxy)
             n = 1;
         wadd_wch(win, ch);
-        wmove(win, win->x - 1, win->y + 1);
+        wmove(win, oy + 1, sx);
         n--;
     }
 
