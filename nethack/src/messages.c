@@ -616,13 +616,14 @@ doprev_message(void)
 void
 wrap_text(int width, const char *input, int *output_count, char ***output)
 {
-    const int min_width = 20, max_wrap = 20;
+    const int min_width = 20;
+    int wrap_alloclen = 2;
     int len = strlen(input);
     int input_idx, input_lidx;
     int idx, outcount;
 
-    *output = malloc(max_wrap * sizeof (char *));
-    for (idx = 0; idx < max_wrap; idx++)
+    *output = malloc(wrap_alloclen * sizeof (char *));
+    for (idx = 0; idx < wrap_alloclen; idx++)
         (*output)[idx] = NULL;
 
     input_idx = 0;
@@ -647,8 +648,17 @@ wrap_text(int width, const char *input, int *output_count, char ***output)
         outcount++;
 
         for (input_idx = input_lidx; isspace(input[input_idx]); input_idx++) {}
-    } while (input[input_idx] && outcount < max_wrap);
 
+        if (outcount == wrap_alloclen - 1) {
+            idx = wrap_alloclen;
+            wrap_alloclen *= 2;
+            *output = realloc(*output, wrap_alloclen * sizeof (char *));
+            for (; idx < wrap_alloclen; idx++)
+                (*output)[idx] = NULL;
+        }
+    } while (input[input_idx]);
+
+    (*output)[outcount] = NULL;
     *output_count = outcount;
 }
 
@@ -659,12 +669,8 @@ free_wrap(char **wrap_output)
     if (!wrap_output)
         return;
 
-    const int max_wrap = 20;
     int idx;
-
-    for (idx = 0; idx < max_wrap; idx++) {
-        if (!wrap_output[idx])
-            break;
+    for (idx = 0; wrap_output[idx]; idx++) {
         free(wrap_output[idx]);
     }
     free(wrap_output);
