@@ -18,7 +18,6 @@ struct msghist_entry {
 static struct msghist_entry *histlines; /* circular buffer */
 static int histlines_alloclen;          /* allocated length of histlines */
 static int histlines_pointer;           /* next unused histline entry */
-static nh_bool last_line_reserved;      /* keep the last line of msgwin blank */
 static int first_unseen = -1;           /* first unseen histline entry */
 static int first_new = -1;              /* first non-"old" histline entry */
 static nh_bool stopmore = 0;            /* stop doing input at --More-- */
@@ -27,7 +26,7 @@ static struct msghist_entry *showlines; /* lines to be displayed; noncircular.
                                            showlines[0] is bottom message. */
 static int num_showlines;               /* number of lines in the message buf */
 
-static char* more_text = " --More--";   /* The string to use in more
+static const char* more_text = " --More--";   /* The string to use in more
                                                  prompts */
 
 /* Allocates space for settings.msghistory lines of message history, or adjusts
@@ -173,7 +172,7 @@ show_msgwin(nh_bool more)
         wmove(msgwin, num_showlines - 1 - i, 0);
         if(!showlines[i].message)
             continue;
-        char *p = showlines[i].message;
+        const char *p = showlines[i].message;
         attr_t color_attr = showlines[i].old ?
             curses_color_attr(COLOR_BLACK, 0) :
             curses_color_attr(COLOR_WHITE, 0);
