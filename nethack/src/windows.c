@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Alex Smith, 2014-05-07 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -293,6 +293,7 @@ create_game_windows(void)
         leaveok(sidebar, TRUE);
 
     ui_flags.ingame = TRUE;
+    setup_showlines();
     redraw_game_windows();
 }
 
@@ -364,6 +365,7 @@ resize_game_windows(void)
     if (sidebar)
         leaveok(sidebar, TRUE);
 
+    redo_showlines();
     redraw_game_windows();
     doupdate();
 }

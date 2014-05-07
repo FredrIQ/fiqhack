@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Alex Smith, 2014-05-07 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -366,6 +366,8 @@ extern void draw_objlist(WINDOW * win, struct nh_objlist *objlist,
 
 /* messages.c */
 extern void alloc_hist_array(void);
+extern void setup_showlines(void);
+extern void redo_showlines(void);
 extern void curses_print_message(int turn, const char *msg);
 extern void curses_print_message_nonblocking(int turn, const char *inmsg);
 extern void draw_msgwin(void);
