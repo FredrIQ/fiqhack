@@ -469,7 +469,13 @@ nh_wgetch(WINDOW * win)
         key = wgetch(win);
         if (key == KEY_HANGUP) {
             nh_exit_game(EXIT_FORCE_SAVE);
-            /* EXIT_FORCE_SAVE should not return, but if it does... */
+            /* If we're in a game, EXIT_FORCE_SAVE will longjmp out to the
+               normal game saved/over sequence, and eventually the control will
+               get back here outside a game (if KEY_HANGUP is returned from any
+               wgetch call, it will be returned from all future wgetch calls).
+
+               If we're not in a game, EXIT_FORCE_SAVE will return normally,
+               and from there, we exit the program. */
             nh_lib_exit();
             exit(0);
         }
