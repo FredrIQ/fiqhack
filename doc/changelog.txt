@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-05-05
+Last modified by Alex Smith, 2014-05-08
 
 Copyright (C) 2013 Alex Smith.
 
@@ -1323,6 +1323,9 @@ The status area has been redesigned, allowing either a 3-line status area with
 full information shown, or a compact 2-line status area that omits some
 lesser-used information, giving room for HP and Pw bars (that also change
 color as they get lower). (Nitro and Ace, cd19816 and a13501c)
+
+When using a large terminal, the border of the screen will change color to
+warn of low health and particularly pressing status effects. (4, 6c0a9a3)
 
 The character's AC is now shown as a "Defence" value, that counts up from 0,
 rather than down from 10; there are currently no changes to the AC formula, it
