@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-03-17 */
+/* Last modified by Alex Smith, 2014-05-08 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -18,8 +18,14 @@ draw_bar(int barlen, int val_cur, int val_max, nh_bool ishp)
     if (val_max > 0 && val_cur > 0)
         fill_len = bl * val_cur / val_max;
 
-    /* Rules: HP Pw max white white >2/3 green cyan >1/3 yellow blue >1/7 red
-       magenta <=1/7 br.red br.magenta */
+    /*
+     * Rules:  HP     Pw
+     *    max  white  white
+     *   >2/3  green  cyan
+     *   >1/3  yellow blue
+     *   >1/7  red    magenta
+     *  <=1/7  br.red br.magenta
+     */
     if (val_cur == val_max)
         color = CLR_GRAY;
     else if (val_cur * 3 > val_max * 2)
@@ -66,50 +72,66 @@ Pw:[     5 / 5     ] $4294967295 S:480000 T:4294967295         Burdened Starving
 
 Leaving the "gnomish" out for now because that information is awkward to get at
 (it's given in a format the client doesn't understand).
+
+The statuses on the status lines have associated colors, and can also affect the
+main frame color. The rules are as follows:
+
+- The main frame is only affected by things that are likely to lead to imminent
+  death. Most of these are statuses; delayed instadeaths are bright magenta,
+  hunger has its own color. Low HP also affects frame color, because that can
+  also cause imminent death; and the frame is black when watching or replaying
+  a game, to indicate that commands cannot be input.
+
+- Statuses are colored depending on whether they are good/bad/neutral, how
+  serious they are, and how they time out. There's no 100% set pattern, but
+  looking at the existing statuses should give an idea of how the color scheme
+  normally works.
+
 */
 
 static const struct {
     const char *name;
     int color;
+    int framecolor; /* -1 if this doesn't affect the frame */
 } statuscolors[] = {
-    /* encumberance */
-    { "Burdened", CLR_BROWN },
-    { "Stressed", CLR_RED },
-    { "Strained", CLR_ORANGE },
-    { "Overtaxed", CLR_ORANGE },
-    { "Overloaded", CLR_ORANGE },
-    /* hunger */
-    { "Satiated", CLR_RED },
-    { "Hungry", CLR_RED },
-    { "Weak", CLR_ORANGE },
-    { "Fainting", CLR_BRIGHT_MAGENTA },
-    { "Fainted", CLR_BRIGHT_MAGENTA },
-    { "Starved", CLR_BRIGHT_MAGENTA },
-    /* misc */
-    { "Unarmed", CLR_MAGENTA },
-    { "Lev", CLR_BROWN },
-    { "Fly", CLR_GREEN },
-    /* trapped */
-    { "Held", CLR_RED },
-    { "Pit", CLR_RED },
-    { "Bear", CLR_RED },
-    { "Web", CLR_RED },
-    { "Infloor", CLR_RED },
-    { "Lava", CLR_BRIGHT_MAGENTA },
-    /* misc bad */
-    { "Greasy", CLR_BRIGHT_BLUE },
-    { "Blind", CLR_BRIGHT_BLUE },
-    { "Conf", CLR_BRIGHT_BLUE },
-    { "Lame", CLR_BRIGHT_BLUE },
-    { "Stun", CLR_BRIGHT_BLUE },
-    { "Hallu", CLR_BRIGHT_BLUE },
-    /* misc fatal */
-    { "FoodPois", CLR_BRIGHT_MAGENTA },
-    { "Ill", CLR_BRIGHT_MAGENTA },
-    { "Strangle", CLR_BRIGHT_MAGENTA },
-    { "Slime", CLR_BRIGHT_MAGENTA },
-    { "Petrify", CLR_BRIGHT_MAGENTA },
-    { NULL, 0 }
+      /* encumberance */
+      { "Burdened", CLR_RED, -1 },
+      { "Stressed", CLR_RED, -1 },
+      { "Strained", CLR_ORANGE, -1 },
+      { "Overtaxed", CLR_ORANGE, -1 },
+      { "Overloaded", CLR_ORANGE, -1 },
+      /* hunger */
+      { "Satiated", CLR_RED, -1 },
+      { "Hungry", CLR_RED, -1 },
+      { "Weak", CLR_ORANGE, CLR_YELLOW },
+      { "Fainting", CLR_BRIGHT_MAGENTA, CLR_YELLOW },
+      { "Fainted", CLR_BRIGHT_MAGENTA, CLR_YELLOW },
+      { "Starved", CLR_BRIGHT_MAGENTA, CLR_YELLOW },
+      /* misc */
+      { "Unarmed", CLR_MAGENTA, -1 },
+      { "Lev", CLR_BROWN, -1 },
+      { "Fly", CLR_GREEN, -1 },
+      /* trapped */
+      { "Held", CLR_RED, -1 },
+      { "Pit", CLR_RED, -1 },
+      { "Bear", CLR_RED, -1 },
+      { "Web", CLR_RED, -1 },
+      { "Infloor", CLR_RED, -1 },
+      { "Lava", CLR_BRIGHT_MAGENTA, CLR_BRIGHT_MAGENTA },
+      /* misc bad */
+      { "Greasy", CLR_BRIGHT_BLUE, -1 },
+      { "Blind", CLR_BRIGHT_BLUE, -1 },
+      { "Conf", CLR_BRIGHT_BLUE, -1 },
+      { "Lame", CLR_BRIGHT_BLUE, -1 },
+      { "Stun", CLR_BRIGHT_BLUE, -1 },
+      { "Hallu", CLR_BRIGHT_BLUE, -1 },
+      /* misc fatal */
+      { "FoodPois", CLR_BRIGHT_MAGENTA, CLR_BRIGHT_MAGENTA },
+      { "Ill", CLR_BRIGHT_MAGENTA, CLR_BRIGHT_MAGENTA },
+      { "Strangle", CLR_BRIGHT_MAGENTA, CLR_BRIGHT_MAGENTA },
+      { "Slime", CLR_BRIGHT_MAGENTA, CLR_BRIGHT_MAGENTA },
+      { "Petrify", CLR_BRIGHT_MAGENTA, CLR_BRIGHT_MAGENTA },
+      { NULL, 0 }
 };
 
 static void
@@ -148,6 +170,7 @@ draw_status(struct nh_player_info *pi, nh_bool threeline)
         wclrtoeol(statuswin);
 
     /* status */
+    int mainframe_color = CLR_GRAY;
     j = getmaxx(statuswin) + 1;
     for (i = 0; i < pi->nr_items; i++) {
         int color = CLR_WHITE, colorattr;
@@ -156,6 +179,8 @@ draw_status(struct nh_player_info *pi, nh_bool threeline)
         for (k = 0; statuscolors[k].name; k++) {
             if (!strcmp(pi->statusitems[i], statuscolors[k].name)) {
                 color = statuscolors[k].color;
+                if (statuscolors[k].framecolor != -1)
+                    mainframe_color = statuscolors[k].framecolor;
                 break;
             }
         }
@@ -165,6 +190,20 @@ draw_status(struct nh_player_info *pi, nh_bool threeline)
         wprintw(statuswin, "%s", pi->statusitems[i]);
         wattroff(statuswin, colorattr);
     }
+
+    /* frame color */
+    if (pi->hp * 7 <= pi->hpmax)
+        mainframe_color = CLR_ORANGE;
+    else if (pi->hp * 3 <= pi->hpmax)
+        mainframe_color = CLR_RED;
+
+    /* We change the frame color via palette manipulation, because it's awkward
+       to correctly redraw otherwise. However, we don't want to do color
+       mapping logic here. So we copy an existing palette entry. */
+    uncursed_color fgcode, bgcode;
+    pair_content(PAIR_NUMBER(curses_color_attr(mainframe_color, 0)),
+                 &fgcode, &bgcode);
+    init_pair(MAINFRAME_PAIR, fgcode, bgcode);
 
     /* name */
     if (threeline) {
