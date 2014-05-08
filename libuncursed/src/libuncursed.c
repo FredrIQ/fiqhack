@@ -550,6 +550,53 @@ start_color(void)
     return OK;
 }       /* no-op */
 
+/* We use an internal color format for communicating with plugins; we use 5 bits
+   for foreground, 5 for background, and 1 for underline (which is treated like
+   a color). */
+static unsigned short
+color_on_screen_for_attr(attr_t a)
+{
+    int p = PAIR_NUMBER(a);
+    uncursed_color f, b;
+
+    pair_content(p, &f, &b);
+
+    /* Many attributes are simulated with color. */
+
+    if (a & A_REVERSE) { int t = f; f = b; b = t; }
+
+    /* For portability, we have bright implies bold, bold implies bright. The
+       implementation libraries know this, so we just send the brightness. */
+    if (a & A_BOLD)
+        f |= 8;
+
+    if (a & A_INVIS)
+        f = b;
+
+    if (f == -1)
+        f = 16;
+    if (b == -1)
+        b = 16;
+
+    return f | (b << 5) | (!!(a & A_UNDERLINE) << 10);
+}
+
+/* Handle the palette when the palette or screen changes. */
+static void
+recolor_nout_win(int ymin, int ymax, int xmin, int xmax)
+{
+    int y, x;
+    if (!nout_win)
+        return;
+
+    for (y = ymin; y <= ymax; y++)
+        for (x = xmin; x <= xmax; x++) {
+            cchar_t *nwct = nout_win->chararray + y * nout_win->stride + x;
+            nwct->color_on_screen = color_on_screen_for_attr(nwct->attr);
+        }
+}
+
+
 #define DEFAULT_FOREGROUND COLOR_WHITE
 #define DEFAULT_BACKGROUND COLOR_BLACK
 int
@@ -589,6 +636,9 @@ init_pair(uncursed_color pairnum,
 
     pair_content_list[pairnum][0] = fgcolor;
     pair_content_list[pairnum][1] = bgcolor;
+
+    if (nout_win)
+        recolor_nout_win(0, nout_win->maxy, 0, nout_win->maxx);
 
     return OK;
 }
@@ -2262,6 +2312,8 @@ wnoutrefresh(WINDOW *win)
     win->clear_on_refresh = 0;
     copywin(win, nout_win, 0, 0, win->scry, win->scrx, win->scry + win->maxy,
             win->scrx + win->maxx, 0);
+    recolor_nout_win(win->scry, win->scry + win->maxy,
+                     win->scrx, win->scrx + win->maxx);
 
     return wmove(nout_win, win->scry + win->y, win->scrx + win->x);
 }
@@ -2286,7 +2338,8 @@ doupdate(void)
         for (i = 0; i <= nout_win->maxx; i++) {
             int k;
 
-            if (p->attr != q->attr || *rp != *rq || *rq == &invalid_region)
+            if (p->color_on_screen != q->color_on_screen ||
+                *rp != *rq || *rq == &invalid_region)
                 uncursed_hook_update(j, i);
 
             for (k = 0; k < CCHARW_MAX; k++) {
@@ -2326,7 +2379,7 @@ uncursed_rhook_needsupdate(int y, int x)
     cchar_t *p = nout_win->chararray + x + y * nout_win->stride;
     cchar_t *q = disp_win->chararray + x + y * disp_win->stride;
 
-    if (p->attr != q->attr)
+    if (p->color_on_screen != q->color_on_screen)
         return 1;
 
     if (disp_win->regionarray[x + y * (disp_win->maxx + 1)] ==
@@ -2364,30 +2417,7 @@ uncursed_rhook_color_at(int y, int x)
     if (y > nout_win->maxy || x > nout_win->maxx)
         return 0;
 
-    attr_t a = nout_win->chararray[x + y * nout_win->stride].attr;
-    int p = PAIR_NUMBER(a);
-    uncursed_color f, b;
-
-    pair_content(p, &f, &b);
-
-    /* Many attributes are simulated with color. */
-
-    if (a & A_REVERSE) { int t = f; f = b; b = t; }
-
-    /* For portability, we have bright implies bold, bold implies bright. The
-       implementation libraries know this, so we just send the brightness. */
-    if (a & A_BOLD)
-        f |= 8;
-
-    if (a & A_INVIS)
-        f = b;
-
-    if (f == -1)
-        f = 16;
-    if (b == -1)
-        b = 16;
-
-    return f | (b << 5) | (! !(a & A_UNDERLINE) << 10);
+    return nout_win->chararray[x + y * nout_win->stride].color_on_screen;
 }
 
 char

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-05-08 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -79,6 +79,7 @@ typedef unsigned long chtype;   /* attr_t | char */
 typedef struct {
     attr_t attr;
     wchar_t chars[CCHARW_MAX];
+    unsigned short color_on_screen; /* used only for disp_win, nout_win */
 } cchar_t;
 
 typedef struct WINDOW {
