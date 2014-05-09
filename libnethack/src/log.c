@@ -111,11 +111,8 @@ log_recover(long offset)
 
 
     /* Treat everything that happens here as outside the main flow of the game;
-       we don't want to replay a recovery that happens in one process in another
-       process.  (This works correctly even if multiple processes reach this
-       menu at the same time; in that case, if any recovers the file, the menu
-       will close for all the others and they will reload from the newly
-       recovered file.) */
+       otherwise, we get desyncs in the recovered file, because it isn't in need
+       of recovery after being recovered. */
     program_state.in_zero_time_command = TRUE;
 
     init_menulist(&menu);
@@ -152,7 +149,9 @@ log_recover(long offset)
             terminate(ERR_IN_PROGRESS);
         }
 
-        /* TODO: check recovery count */
+        /* TODO: check recovery count; if we don't do this, multiple processes
+           may end up truncating the file for each other (and not noticing
+           because they both left the recovery count the same) */
 
         /* Increase the recovery count. */
 

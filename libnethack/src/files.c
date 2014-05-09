@@ -441,7 +441,10 @@ handle_sigrtmin1(int signum)
         abort();                                    /* abort is safe */
     }
 
-    (windowprocs.win_server_cancel)();
+    /* While running a zero-time command, instead of following the other
+       process "live", we freeze the gamestate until the command ends. */
+    if (program_state.game_running && !program_state.in_zero_time_command)
+        (windowprocs.win_server_cancel)();
 }
 
 static volatile sig_atomic_t alarmed = 0;
