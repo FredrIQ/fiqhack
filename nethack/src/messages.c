@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-09 */
+/* Last modified by Derrick Sund, 2014-05-09 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -87,6 +87,12 @@ cleanup_messages(void)
     histlines_pointer = 0;
     first_unseen = -1;
     first_new = -1;
+
+    if (showlines)
+        for (i = 0; i < num_showlines; i++)
+            free(showlines[i].message);
+    free(showlines);
+    num_showlines = 0;
 }
 
 /* Allocate showlines. */
