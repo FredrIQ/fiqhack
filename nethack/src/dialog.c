@@ -145,28 +145,35 @@ curses_msgwin_generic(const char *msg, int (*validator)(int, void *),
     return rv;
 }
 
+static int
+curses_getdir_validator(int key, void *unused)
+{
+    int dir;
+
+    (void) unused;
+    if (key == KEY_ESCAPE || key == '\x1b')
+        return DIR_NONE + 5;
+    else if (key == KEY_SIGNAL)
+        return DIR_SERVERCANCEL + 5;
+    else if (key == '.' || key == 's' || key == '5')
+        return DIR_SELF + 5;
+    dir = key_to_dir(key);
+    if (dir != DIR_NONE)
+        return dir + 5;
+
+    return -1;
+}
 
 enum nh_direction
 curses_getdir(const char *query, nh_bool restricted)
 {
-    int key;
-    enum nh_direction dir;
+    int rv;
     char qbuf[QBUFSZ];
 
     snprintf(qbuf, QBUFSZ, "%s", query ? query : "In what direction?");
-    key = curses_msgwin(qbuf);
-    if (key == '.' || key == 's') {
-        return DIR_SELF;
-    } else if (key == KEY_ESCAPE) {
-        return DIR_NONE;
-    }
+    rv = curses_msgwin_generic(qbuf, curses_getdir_validator, NULL, 0);
 
-    dir = key_to_dir(key);
-    if (dir == DIR_NONE) {
-        curses_msgwin("What a strange direction!");
-    }
-
-    return dir;
+    return rv - 5;
 }
 
 
