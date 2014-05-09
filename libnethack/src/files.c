@@ -312,7 +312,7 @@ static volatile sig_atomic_t unmatched_sigrtmin1s = 0;
 /* WARNING: This function can be called async-signal on UNIX. Thus, all system
    calls it makes must be async-signal-safe, and it can't touch globals. */
 static int
-sigrtmin1_some_locker(int fd)
+sigrtmin1_some_locker(int fd, boolean unlock_before_sending)
 {
     struct flock sflock;
     int ok;
@@ -325,6 +325,19 @@ sigrtmin1_some_locker(int fd)
                           to let valgrind know what's happening */
 
     ok = fcntl(fd, F_GETLK, &sflock) >= 0;                   /* fcntl is safe */
+
+    if (unlock_before_sending) {
+        /* Suppose process A sends to process B, then process B looks for a
+           process C to relay to. Process B can't unlock the file before
+           determining process C; if it does, then process A may lock the file,
+           do what it wants to do with it, then drop back to monitoring the file
+           all before process B locates process C, and then process B may decide
+           that C=A, which causes a deadlock. Process B can't signal process C
+           before unlocking the file; otherwise, process C may signal process B,
+           causing an infinite loop. Thus, we have to unlock the file in the
+           middle of sigrtmin1_some_locker. */
+        change_fd_lock(fd, TRUE, LT_NONE, 0);
+    }
 
     if (!ok)
         return -1;    /* can't really do much else here */
@@ -386,15 +399,11 @@ handle_sigrtmin1(int signum)
 
     unmatched_sigrtmin1s++;
 
-    /* Give up the lock. (change_fd_lock is async-signal-safe specifically
-       because it is called from this function; program_state.logfile is
-       volatile for the same reason.) */
-    change_fd_lock(program_state.logfile, TRUE, LT_NONE, 0);
-
     /* Tell any other processes that have the lock (other than the one that
        wants it) to give up the lock. (sigrtmin1_some_locker is also
-       async-signal-safe for this reason.) */
-    pid = sigrtmin1_some_locker(program_state.logfile);
+       async-signal-safe for this reason.) Give up the lock ourselves in th
+       middle of this (see the comments in sigrtmin1_some_locker). */
+    pid = sigrtmin1_some_locker(program_state.logfile, TRUE);
 
     /* Wait until all SIGRTMIN+1s are unmatched, or 3 seconds elapse with no
        signal (in which case we assume that either we missed it, perhaps due to
@@ -551,7 +560,7 @@ change_fd_lock(int fd, boolean on_logfile, enum locktype type, int timeout)
     do {
         /* When writing, tell monitoring processes to release their locks. */
         if (on_logfile && type == LT_WRITE) {
-            int pid2 = sigrtmin1_some_locker(fd);
+            int pid2 = sigrtmin1_some_locker(fd, FALSE);
             if (pid2 != -1)
                 pid = pid2;
             alarmed = 0;
