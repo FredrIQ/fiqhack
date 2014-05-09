@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-05 */
+/* Last modified by Sean Hunt, 2014-05-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -381,7 +381,8 @@ dosdoor(struct level *lev, xchar x, xchar y, struct mkroom *aroom, int type)
                     set_mimic_sym(mtmp, lev);
             }
         }
-        /* newsym(x,y); */
+        if (level == lev)
+            newsym(x,y);
     } else {    /* SDOOR */
         if (shdoor || !rn2(5))
             lev->locations[x][y].doormask = D_LOCKED;
