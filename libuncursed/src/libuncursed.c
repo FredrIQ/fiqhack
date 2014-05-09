@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-08 */
+/* Last modified by Alex Smith, 2014-05-09 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -1602,6 +1602,7 @@ UNCURSED_ANDWINDOWVDEF(int,
 clrtobot)
 {
     int j, i;
+    unsigned short cosfa = color_on_screen_for_attr(win->current_attr);
 
     wclrtoeol(win);
 
@@ -1610,6 +1611,7 @@ clrtobot)
             win->chararray[i + j * win->stride].attr = win->current_attr;
             win->chararray[i + j * win->stride].chars[0] = 32;
             win->chararray[i + j * win->stride].chars[1] = 0;
+            win->chararray[i + j * win->stride].color_on_screen = cosfa;
         }
     }
 
@@ -1621,11 +1623,13 @@ clrtoeol)
 {
     int maxpos = win->maxx + win->y * win->stride;
     int curpos = win->x + win->y * win->stride;
+    unsigned short cosfa = color_on_screen_for_attr(win->current_attr);
 
     while (curpos <= maxpos) {
         win->chararray[curpos].attr = win->current_attr;
         win->chararray[curpos].chars[0] = 32;
         win->chararray[curpos].chars[1] = 0;
+        win->chararray[curpos].color_on_screen = cosfa;
         curpos++;
     }
 
@@ -2283,8 +2287,11 @@ wredrawln(WINDOW *win, int first, int num)
         if (j >= 0)
             for (i = win->scrx;
                  i <= win->scrx + win->maxx && i <= disp_win->maxx; i++) {
-                if (i >= 0)
+                if (i >= 0) {
                     disp_win->chararray[i + j * win->stride].attr = -1;
+                    disp_win->chararray[i + j * win->stride].color_on_screen =
+                        (unsigned short)-1;
+                }
             }
     }
     return touchline(win, first, num);
