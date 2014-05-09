@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-08 */
+/* Last modified by Alex Smith, 2014-05-09 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -45,6 +45,7 @@ struct nh_window_procs curses_windowprocs = {
     curses_notify_level_changed,
     curses_outrip,
     curses_print_message_nonblocking,
+    curses_server_cancel,
 };
 
 /*----------------------------------------------------------------------------*/
@@ -648,9 +649,11 @@ curses_pause(enum nh_pause_reason reason)
     doupdate();
     if (reason == P_MESSAGE && msgwin != NULL)
         pause_messages();
-    else if (mapwin != NULL)
+    else if (mapwin != NULL) {
         /* P_MAP: pause to show the result of detection or similar */
-        get_map_key(FALSE);
+        if (get_map_key(FALSE) == KEY_SIGNAL)
+            uncursed_signal_getch();
+    }
 }
 
 
@@ -732,4 +735,11 @@ curses_delay_output(void)
 #else
     nanosleep(&(struct timespec){ .tv_nsec = 50 * 1000 * 1000}, NULL);
 #endif
+}
+
+
+void
+curses_server_cancel(void)
+{
+    uncursed_signal_getch();
 }

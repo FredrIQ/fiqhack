@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Alex Smith, 2014-05-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -260,9 +260,9 @@ update_log(const struct toptenentry *newtt)
     /* used for debugging (who dies of what, where) */
     int fd = open_datafile(LOGFILE, O_CREAT | O_APPEND | O_WRONLY, SCOREPREFIX);
 
-    if (change_fd_lock(fd, LT_WRITE, 10)) {
+    if (change_fd_lock(fd, FALSE, LT_WRITE, 10)) {
         writeentry(fd, newtt);
-        change_fd_lock(fd, LT_NONE, 0);
+        change_fd_lock(fd, FALSE, LT_NONE, 0);
         close(fd);
     }
 }
@@ -273,11 +273,11 @@ update_xlog(const struct toptenentry *newtt, unsigned long carried)
     /* used for statistical purposes and tournament scoring */
     int fd =
         open_datafile(XLOGFILE, O_CREAT | O_APPEND | O_WRONLY, SCOREPREFIX);
-    if (change_fd_lock(fd, LT_WRITE, 10)) {
+    if (change_fd_lock(fd, FALSE, LT_WRITE, 10)) {
         FILE *xlfile = fdopen(fd, "a");
 
         write_xlentry(xlfile, newtt, carried);
-        change_fd_lock(fd, LT_NONE, 0);
+        change_fd_lock(fd, FALSE, LT_NONE, 0);
         fclose(xlfile); /* also closes fd */
     }
 }
@@ -446,7 +446,7 @@ update_topten(int how, const char *killer, unsigned long carried)
         return;
 
     fd = open_datafile(RECORD, O_RDWR | O_CREAT, SCOREPREFIX);
-    if (!change_fd_lock(fd, LT_WRITE, 30)) {
+    if (!change_fd_lock(fd, FALSE, LT_WRITE, 30)) {
         close(fd);
         return;
     }
@@ -458,7 +458,7 @@ update_topten(int how, const char *killer, unsigned long carried)
     if (need_rewrite)
         write_topten(fd, toptenlist);
 
-    change_fd_lock(fd, LT_NONE, 0);
+    change_fd_lock(fd, FALSE, LT_NONE, 0);
     close(fd);
     free(toptenlist);
 }

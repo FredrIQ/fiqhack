@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Alex Smith, 2014-05-09 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -22,7 +22,9 @@ static void log_reset(void);
 static void log_binary(const char *buf, int buflen);
 static long get_log_offset(void);
 static long get_log_last_newline(void);
+
 static void load_gamestate_from_binary_save(boolean maybe_old_version);
+static void log_replay_save_line(void);
 
 static boolean full_read(int fd, void *buffer, int len);
 static boolean full_write(int fd, const void *buffer, int len);
@@ -83,6 +85,11 @@ log_recover(long offset)
     struct nh_menulist menu;
     boolean ok = TRUE;
 
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_READ, 2)) {
+        raw_printf("Could not upgrade to read lock to recover logfile\n");
+        terminate(ERR_IN_PROGRESS);
+    }
+
     /* Check to make sure that the offset we were given is actually sane.
        If it isn't, the recover will have to be done manually. */
 
@@ -96,6 +103,12 @@ log_recover(long offset)
 
     if (!ok)
         error_reading_save("Trying to recover from corrupted backup save");
+
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2)) {
+        raw_printf("Could not downgrade to monitor lock in logfile recovery");
+        terminate(ERR_IN_PROGRESS); /* cannot panic */
+    }
+
 
     /* Treat everything that happens here as outside the main flow of the game;
        we don't want to replay a recovery that happens in one process in another
@@ -112,8 +125,9 @@ log_recover(long offset)
     add_menutext(&menu,
                  "However, the game can be recovered from a backup save.");
     buf = msgprintf("This will lose approximately %.4g%% of your progress.",
-                    1.0 - ((float)offset /
-                           (float)lseek(program_state.logfile, 0, SEEK_END)));
+                    100.0 * 
+                    (1.0 - ((float)offset /
+                            (float)lseek(program_state.logfile, 0, SEEK_END))));
     add_menutext(&menu, buf);
     add_menutext(&menu, "");
 
@@ -133,8 +147,10 @@ log_recover(long offset)
            lengthened, and we don't care whether we're viewing or not (any
            process is allowed to recover a corrupted file). */
 
-        if (!change_fd_lock(program_state.logfile, LT_WRITE, 2))
-            panic("Could not upgrade to write lock on logfile");
+        if (!change_fd_lock(program_state.logfile, TRUE, LT_WRITE, 2)) {
+            raw_printf("Could not upgrade to write lock to recover logfile\n");
+            terminate(ERR_IN_PROGRESS);
+        }
 
         /* TODO: check recovery count */
 
@@ -159,8 +175,11 @@ log_recover(long offset)
         }
 
         /* Relinquish the lock, and reload the file. */
-        if (!change_fd_lock(program_state.logfile, LT_READ, 1))
-            panic("Could not downgrade to read lock on logfile");
+        if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 1)) {
+            raw_printf("Could not downgrade to monitor lock on logfile\n");
+            terminate(ERR_IN_PROGRESS);
+        }
+
         terminate(RESTART_PLAY);
 
     } else {
@@ -172,8 +191,14 @@ log_recover(long offset)
 /* The save file was in a correct format, but referred to something that
    couldn't possibly happen in the gamestate. */
 static noreturn void
-log_desync(void)
+log_desync(char found, char expected)
 {
+    /* If desyncs shouldn't be happening, warn the user.
+
+       Right now, they shouldn't be happening. */
+    raw_printf("Warning: Desync in save file: found '%c' expected '%c'\n",
+               found, expected);
+
     /*
      * The behaviour we want for this function:
      *
@@ -396,6 +421,9 @@ full_write(int fd, const void *buffer, int len)
    Warning to anyone attempting this: vsnprintf's return value is broken on
    Windows, so you'll need to use a loop expanding the buffer size there. (See
    libuncursed for an example of the technique.)
+
+   Note: now that xmvasprintf exists, that would be the obvious function to
+   use.
 */
 static int
 lvprintf(const char *fmt, va_list vargs)
@@ -536,6 +564,10 @@ get_log_last_newline(void)
     long o = get_log_offset();
     long rv;
     char inchar[2] = {0, 0};
+
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_READ, 2))
+        panic("Could not upgrade to read lock on logfile");
+
     lseek(program_state.logfile, -1, SEEK_END);
 
     /* Run through the file backwards, reading one char at a time until we find
@@ -552,6 +584,10 @@ get_log_last_newline(void)
         /* We found our newline. The file pointer is now just past it. */
         rv = get_log_offset();
         lseek(program_state.logfile, o, SEEK_SET);
+
+        if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
+            panic("Could not downgrade to monitor lock on logfile");
+
         return rv;
     }
 
@@ -570,6 +606,9 @@ get_log_last_newline(void)
 long
 get_log_start_of_turn_offset(void)
 {
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_READ, 2))
+        panic("Could not upgrade to read lock on logfile");
+
     long o = get_log_offset();
     long rv;
     void *save_diff_line;
@@ -592,6 +631,10 @@ get_log_start_of_turn_offset(void)
        pointer. */
     rv = get_log_offset();
     lseek(program_state.logfile, o, SEEK_SET);
+
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
+        panic("Could not downgrade to monitor lock on logfile");
+
     return rv;
 }
 
@@ -606,12 +649,14 @@ get_log_start_of_turn_offset(void)
  *   no lines past the one that starts at the gamestate location)
  * * The recovery count is what we expect it to be.
  *
- * change_fd_lock is responsible for doing the necessary complexities to
- * grab the lock, but if something goes wrong with the other two rules, that
- * isn't an error: it just means that we're working from the wrong gamestate.
- * In some cases, the caller could recover via rereading the current line, but
- * a generic mechanism that works in all cases is simply to use terminate() to
- * replay the turn.
+ * change_fd_lock is responsible for doing the necessary complexities to grab
+ * the lock, but if something goes wrong with the other two rules, that isn't an
+ * error: it just means that we're working from the wrong gamestate. In some
+ * cases, the caller could recover via rereading the current line, but a generic
+ * mechanism that works in all cases is simply to use terminate() to replay the
+ * turn. (The "reread the current line" method is nonetheless used in cases
+ * where we know it works, but that's handled by windows.c rather than log.c; if
+ * such a condition reaches log.c, we fall back to the generic mechanism.)
  *
  * Before calling this function, ensure that the current connection can play the
  * current game and the game has been synced to a target location of EOF
@@ -625,7 +670,7 @@ start_updating_logfile(boolean ok_not_at_end)
     if (program_state.viewing)
         panic("Logfile update while watching a game");
 
-    if (!change_fd_lock(program_state.logfile, LT_WRITE, 2))
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_WRITE, 2))
         panic("Could not upgrade to write lock on logfile");
 
     /* TODO: check recovery count */
@@ -637,11 +682,11 @@ start_updating_logfile(boolean ok_not_at_end)
     o = get_log_offset();
 
     if (o != lseek(program_state.logfile, 0, SEEK_END)) {
+        if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 1))
+            panic("Could not downgrade to monitor lock on logfile");
+
         if (ok_not_at_end)
             return FALSE;
-
-        if (!change_fd_lock(program_state.logfile, LT_READ, 1))
-            panic("Could not downgrade to read lock on logfile");
         terminate(RESTART_PLAY);
     }
 
@@ -663,8 +708,8 @@ stop_updating_logfile(int lines_added)
         panic("logfile updates may add at most 1 line");
     }
 
-    if (!change_fd_lock(program_state.logfile, LT_READ, 1))
-        panic("Could not downgrade to read lock on logfile");
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 1))
+        panic("Could not downgrade to monitor lock on logfile");
 }
 
 /***** Creating specific log entries *****/
@@ -699,13 +744,15 @@ status_from_string(const char * str) {
         return LS_INVALID;
 }
 
-
 void
 log_newgame(microseconds start_time, unsigned int seed)
 {
     char encbuf[ENCBUFSZ];
     const char *role;
     long start_of_third_line;
+
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_WRITE, 2))
+        panic("Could not upgrade to write lock on logfile");
 
     /* There's no portable way to print an unsigned long long. The standards say
        %llu / %llx, but Windows doesn't follow them. It does, however, correctly
@@ -738,6 +785,9 @@ log_newgame(microseconds start_time, unsigned int seed)
     program_state.end_of_gamestate_location = get_log_offset();
 
     program_state.expected_recovery_count = 1;
+
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
+        panic("Could not downgrade to monitor lock on logfile");
 }
 
 void
@@ -760,8 +810,10 @@ log_backup_save(void)
     if (program_state.logfile == -1)
         panic("log_backup_save called with no logfile");
 
-    if (!start_updating_logfile(TRUE))
+    if (!start_updating_logfile(TRUE)) {
+        log_replay_save_line();
         return;
+    }
 
     program_state.binary_save_location = 0;
     if (program_state.binary_save_allocated)
@@ -812,8 +864,10 @@ log_neutral_turnstate(void)
 
         /* start_updating_logfile can cause a turn restart, so place it
            outside the allocation of the new binary save */
-        if (!start_updating_logfile(TRUE))
+        if (!start_updating_logfile(TRUE)) {
+            log_replay_save_line();
             return;
+        }
 
         mnew(&program_state.binary_save, &mf);
         program_state.binary_save_location = 0;
@@ -1061,16 +1115,23 @@ start_replaying_logfile(char firstchar)
     if (program_state.input_was_just_replayed)
         panic("log_replay_* was not followed by a call to log_record_*");
 
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_READ, 2))
+        panic("Could not upgrade to read lock on logfile");
+
     lseek(program_state.logfile,
           program_state.end_of_gamestate_location, SEEK_SET);
 
     logline = lgetline_malloc(program_state.logfile);
 
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
+        panic("Could not downgrade to monitor lock on logfile");
+
     if (logline && firstchar && firstchar != *logline) {
         /* Desync: the log contains one sort of input, but the engine is
            requesting another. */
+        char c = *logline;
         free(logline);
-        log_desync();
+        log_desync(c, firstchar);
     }
 
     return logline;
@@ -1312,8 +1373,9 @@ log_replay_command(struct nh_cmd_and_arg *cmd)
         return FALSE;
 
     if (*logline < 'a' || *logline > 'z') {
+        c = *logline;
         free(logline);
-        log_desync();
+        log_desync(c, 'a');
     }
 
     lp = strchr(logline, ' ');
@@ -1397,13 +1459,15 @@ log_replay_command(struct nh_cmd_and_arg *cmd)
 void
 log_replay_no_more_options(void)
 {
-    void *logline = start_replaying_logfile(0);
+    char *logline = start_replaying_logfile(0);
     if (logline) {
+        char c = *logline;
         free(logline);
-        log_desync();
+        log_desync(c, '?');
     }
 }
 
+/***** Reading logs from disk *****/
 
 /* Code common to nh_get_savegame_status and log loading */
 static enum nh_log_status
@@ -1416,7 +1480,7 @@ read_log_header(int fd, struct nh_game_info *si,
     int playmode, version_major, version_minor, version_patchlevel;
     enum nh_log_status result;
 
-    if (do_locking && !change_fd_lock(fd, LT_READ, 1))
+    if (do_locking && !change_fd_lock(fd, FALSE, LT_READ, 1))
         return LS_IN_PROGRESS;
 
     lseek(fd, 0, SEEK_SET);
@@ -1467,14 +1531,14 @@ read_log_header(int fd, struct nh_game_info *si,
     base64_decode(namebuf, si->name, sizeof (si->name));
 
     if (do_locking)
-        change_fd_lock(fd, LT_NONE, 0);
+        change_fd_lock(fd, FALSE, LT_NONE, 0);
     return result;
 
 invalid_logline:
     free(logline);
 invalid_log:
     if (do_locking)
-        change_fd_lock(fd, LT_NONE, 0);
+        change_fd_lock(fd, FALSE, LT_NONE, 0);
     return LS_INVALID;
 }
 
@@ -1487,6 +1551,9 @@ nh_get_savegame_status(int fd, struct nh_game_info *si)
         si = &dummy;
     return read_log_header(fd, si, &dummy2, TRUE);
 }
+
+
+/***** Gamestate handling *****/
 
 /* Sets the gamestate pointer and the actual gamestate from the binary save
    pointer and binary save. This function restores the gamestate-related
@@ -1674,9 +1741,10 @@ load_save_backup_from_offset(long offset)
 
     program_state.binary_save_location = offset;
     program_state.save_backup_location = offset;
-    lseek(program_state.logfile, offset, SEEK_SET);
 
+    lseek(program_state.logfile, offset, SEEK_SET);
     logline = lgetline_malloc(program_state.logfile);
+
     if (!logline)
         error_reading_save("EOF when reading save backup\n");
 
@@ -1695,6 +1763,9 @@ get_save_backup_offset(long offset)
     char sbbuf[11];
     long sbloc;
     char *sbptr;
+
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_READ, 2))
+        panic("Could not upgrade to read lock on logfile");
 
     if (lseek(program_state.logfile, offset, SEEK_SET) < 0)
         goto cleanup;
@@ -1720,6 +1791,10 @@ get_save_backup_offset(long offset)
 
 cleanup:
     lseek(program_state.logfile, oldoffset, SEEK_SET);
+
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
+        panic("Could not downgrade to monitor lock on logfile");
+
     return rv;
 }
 
@@ -1812,6 +1887,9 @@ log_sync(void)
     struct memfile bsave;
     long sloc, loglineloc;
     char *logline;
+
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_READ, 2))
+        panic("Could not upgrade to read lock on logfile");
 
     /* If the file is newly loaded, fill the locations with correct values
        rather than zeroes. TODO: Perhaps we should also do this when seeking to
@@ -1909,6 +1987,8 @@ log_sync(void)
                correct, so we just need to get the gamestate and its location
                correct. */
             load_gamestate_from_binary_save(TRUE);
+            if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
+                panic("Could not downgrade to monitor lock on logfile");
             return;
         }
 
@@ -1939,6 +2019,8 @@ log_sync(void)
             program_state.binary_save = bsave;
 
             load_gamestate_from_binary_save(TRUE);
+            if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
+                panic("Could not downgrade to monitor lock on logfile");
             return;
 
         } else {
@@ -1954,10 +2036,65 @@ log_sync(void)
         free(logline);
     }
 
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
+        panic("Could not downgrade to monitor lock on logfile");
+
     /* Fix the invariant on the gamestate. */
     load_gamestate_from_binary_save(TRUE);
 }
 
+
+/* This is called in situations where we wanted to produce a save backup or
+   diff, but found there was already something there.
+
+   If the existing line isn't a backup or diff, we do nothing; we assume that
+   somebody manually deleted it (most likely as part of a manual recovery of the
+   save).  Otherwise, we replay it, allowing it to overwrite the current
+   gamestate.
+*/
+void
+log_replay_save_line(void)
+{
+    char *logline;
+    struct memfile bsave;
+
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_READ, 2))
+        panic("Could not upgrade to read lock on logfile");
+
+    lseek(program_state.logfile,
+          program_state.end_of_gamestate_location, SEEK_SET);
+
+    logline = lgetline_malloc(program_state.logfile);
+
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
+        panic("Could not downgrade to monitor lock on logfile");
+
+    if (*logline == '~') {
+
+        bsave = program_state.binary_save;
+        program_state.binary_save_allocated = FALSE;
+        apply_save_diff(logline, &bsave);
+        mfree(&bsave);
+        program_state.binary_save_location =
+            program_state.end_of_gamestate_location;
+        load_gamestate_from_binary_save(TRUE);
+
+    } else if (*logline == '*') {
+
+        load_save_backup_from_string(logline);
+        program_state.binary_save_location =
+            program_state.save_backup_location =
+            program_state.end_of_gamestate_location;
+        load_gamestate_from_binary_save(TRUE);
+
+    }
+
+    free(logline);
+
+    /* otherwise do nothing */
+}
+
+/***** Memory management *****/
 
 static void
 log_reset(void)
@@ -1980,8 +2117,7 @@ log_reset(void)
 void
 log_init(int logfd)
 {
-
-    if (!change_fd_lock(logfd, LT_READ, 2))
+    if (!change_fd_lock(logfd, TRUE, LT_MONITOR, 2))
         terminate(ERR_IN_PROGRESS);
 
     log_reset();
@@ -1993,7 +2129,7 @@ void
 log_uninit(void)
 {
     if (program_state.logfile > -1)
-        change_fd_lock(program_state.logfile, LT_NONE, 0);
+        change_fd_lock(program_state.logfile, TRUE, LT_NONE, 0);
 
     program_state.logfile = -1;
 

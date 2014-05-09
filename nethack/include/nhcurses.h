@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-08 */
+/* Last modified by Alex Smith, 2014-05-09 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -42,6 +42,8 @@
 #  endif
 #  define FILE_OPEN_MASK (_S_IREAD | _S_IWRITE)
 # endif
+
+# include "compilers.h"
 
 /* File handling compatibility.
  * On UNIX + APPLE, the normal API can handle multibyte strings, so no special
@@ -467,6 +469,7 @@ extern void curses_pause(enum nh_pause_reason reason);
 extern void curses_display_buffer(const char *buf, nh_bool trymove);
 extern void curses_raw_print(const char *str);
 extern void curses_delay_output(void);
+extern void curses_server_cancel(void);
 
 # if defined(NETCLIENT)
 /* netgame.c */

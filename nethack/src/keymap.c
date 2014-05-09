@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Alex Smith, 2014-05-09 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -20,8 +20,12 @@ enum internal_commands {
     UICMD_PREVMSG,
     UICMD_WHATDOES,
     UICMD_TOGGLEPICKUP,
-    UICMD_NOTHING
+    UICMD_NOTHING,
+    UICMD_SERVERCANCEL,
 };
+
+static_assert(UICMD_SERVERCANCEL < CMD_UI, "CMD_UI too small");
+static_assert(UICMD_SERVERCANCEL < CMD_INTERNAL, "CMD_INTERNAL too small"); 
 
 #define RESET_BINDINGS_ID (-10000)
 
@@ -86,8 +90,7 @@ struct nh_cmd_desc builtin_commands[] = {
     {"go_south_west", "run southwest until something interesting is seen",
      Ctrl('b'), 0, CMD_UI | DIRCMD_CTRL | DIR_SW},
     {"go_west", "run west until something interesting is seen", Ctrl('h'), 0,
-     CMD_UI | DIRCMD_CTRL | DIR_W},     /* nutty konsole sends KEY_BACKSPACE
-                                           when ^H is pressed...  */
+     CMD_UI | DIRCMD_CTRL | DIR_W},
 
     {"extcommand", "perform an extended command", '#', 0,
      CMD_UI | UICMD_EXTCMD},
@@ -102,6 +105,9 @@ struct nh_cmd_desc builtin_commands[] = {
     {"whatdoes", "describe what a key does", '&', 0, CMD_UI | UICMD_WHATDOES},
     {"(nothing)", "bind keys to this command to suppress \"Bad command\".", 0,
      0, CMD_UI | UICMD_NOTHING},
+
+    {"servercancel", "(internal use only) the server already has a command",
+     0, 0, CMD_UI | CMD_INTERNAL | UICMD_SERVERCANCEL},
 };
 
 
@@ -275,12 +281,16 @@ get_command(void *callbackarg,
             key = curses_msgwin(line);
         };
 
-        if (key == '\033' || key == KEY_ESCAPE)
+        if (key == '\x1b' || key == KEY_ESCAPE)
             continue;
 
-        new_action();   /* use a new message line for this action */
-        cmd = keymap[key];
-        current_cmd_key = key;
+        if (key == KEY_SIGNAL)
+            cmd = find_command("servercancel");
+        else {
+            new_action();   /* use a new message line for this action */
+            cmd = keymap[key];
+            current_cmd_key = key;
+        }
 
         if (cmd != NULL) {
             /* handle internal commands. The command handler may alter *cmd, and
@@ -315,16 +325,22 @@ get_command(void *callbackarg,
             if (cmd->flags & CMD_ARG_DIR && cmd->flags & CMD_MOVE &&
                 !(ncaa.arg.argtype & CMD_ARG_DIR)) {
                 key2 = get_map_key(TRUE);
-                if (key2 == '\033')     /* cancel silently */
-                    continue;
 
-                cmd2 = keymap[key2];
-                if (cmd2 && (cmd2->flags & CMD_UI) && (cmd2->flags & DIRCMD)) {
-                    ncaa.arg.argtype |= CMD_ARG_DIR;
-                    ncaa.arg.dir =
-                        (enum nh_direction)(cmd2->flags & ~(CMD_UI | DIRCMD));
-                } else
-                    cmd = NULL;
+                if (key2 == '\x1b' || key2 == KEY_ESCAPE) /* cancel silently */
+                    continue;
+                if (key2 == KEY_SIGNAL) {
+                    cmd = find_command("servercancel");
+                } else {
+
+                    cmd2 = keymap[key2];
+                    if (cmd2 && (cmd2->flags & CMD_UI) &&
+                        (cmd2->flags & DIRCMD)) {
+                        ncaa.arg.argtype |= CMD_ARG_DIR;
+                        ncaa.arg.dir = (enum nh_direction)
+                            (cmd2->flags & ~(CMD_UI | DIRCMD));
+                    } else
+                        cmd = NULL;
+                }
             }
         }
 

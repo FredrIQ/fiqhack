@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-05 */
+/* Last modified by Alex Smith, 2014-05-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -17,6 +17,7 @@
 
 #define CMD_TRAVEL (char)0x90
 
+static int doservercancel(const struct nh_cmd_arg *);
 static int domonability(const struct nh_cmd_arg *);
 static int dotravel(const struct nh_cmd_arg *);
 static int doautoexplore(const struct nh_cmd_arg *);
@@ -238,6 +239,8 @@ const struct cmd_desc cmdlist[] = {
      dowelcome, CMD_INTERNAL},
     {"interrupt", "(internal) cancels a multi-turn command", 0, 0, TRUE,
      dointerrupt, CMD_INTERNAL},
+    {"servercancel", "(internal) reread the replay, someone moved", 0, 0, TRUE,
+     doservercancel, CMD_INTERNAL | CMD_NOTIME},
 
     {"detect", "(DEBUG) detect monsters", 0, 0, TRUE, wiz_detect,
      CMD_DEBUG | CMD_EXT},
@@ -328,6 +331,13 @@ reset_occupations(boolean u_changed_location)
 
     /* Eating, reading, and opening tins can be resumed even if you lose the
        item in the meantime. */
+}
+
+static int
+doservercancel(const struct nh_cmd_arg *arg)
+{
+    (void) arg;
+    return 0;
 }
 
 /* #monster command - use special monster ability while polymorphed */
@@ -2319,8 +2329,11 @@ do_command(int command, struct nh_cmd_arg *arg)
     }
 
     /* If the command takes no time, most likely it was cancelled, and there's
-       probably not much sense in repeat-counting it anyway. */
-    if (!res)
+       probably not much sense in repeat-counting it anyway.
+
+       Exception: server cancels are a true no-op, and mustn't tinker with
+       the "completed" flag. */
+    if (!res && !(cmdlist[command].flags & CMD_INTERNAL))
         action_completed();
 
     turnstate.continue_message = TRUE;

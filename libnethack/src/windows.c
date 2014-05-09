@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Alex Smith, 2014-05-09 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -10,6 +10,9 @@
  *
  * if (log_replay_input(...)) [use that value]
  * else {log_replay_no_more_options(); [ask for the value] }
+ *
+ * if ([there was a server cancel])
+ *    [go back to the start and try again]
  *
  * log_record_input(...)
  * log_time_line()
@@ -31,7 +34,7 @@ getpos(coord *cc, boolean force, const char *goal, boolean isarg)
 {
     int x, y, ask = 1;
     struct nh_getpos_result ngr;
-    enum nh_client_response rv = NHCR_CLIENT_CANCEL;
+    enum nh_client_response rv = NHCR_SERVER_CANCEL;
     char c[2];
 
     char accept_chars[] = {
@@ -47,29 +50,32 @@ getpos(coord *cc, boolean force, const char *goal, boolean isarg)
         [';'] = NHCR_MOREINFO_CONTINUE,
     };
 
-    if (log_replay_input(0, "P!"))
-        ask = 0;
-    else if (log_replay_input(3, "P%d,%d%1[.,:;]", &x, &y, c) && *c) {
-        cc->x = x;
-        cc->y = y;
-        rv = accept_codes[(int)*c];
-        ask = 0;
-    } else
-        log_replay_no_more_options();
+    while (rv == NHCR_SERVER_CANCEL) {
+        if (log_replay_input(0, "P!")) {
+            ask = 0;
+            rv = NHCR_CLIENT_CANCEL;
+        } else if (log_replay_input(3, "P%d,%d%1[.,:;]", &x, &y, c) && *c) {
+            cc->x = x;
+            cc->y = y;
+            rv = accept_codes[(int)*c];
+            ask = 0;
+        } else
+            log_replay_no_more_options();
 
-    x = cc->x;
-    y = cc->y;
-
-    flush_screen();
-
-    if (ask) {
-        do {
-            ngr = (*windowprocs.win_getpos) (x, y, force, goal);
-            rv = ngr.howclosed;
-        } while (force && (rv == NHCR_CLIENT_CANCEL ||
-                           x < 0 || y < 0 || x > COLNO - 1 || y > ROWNO - 1));
-        x = ngr.x;
-        y = ngr.y;
+        x = cc->x;
+        y = cc->y;
+        
+        flush_screen();
+        
+        if (ask) {
+            do {
+                ngr = (*windowprocs.win_getpos) (x, y, force, goal);
+                rv = ngr.howclosed;
+            } while (force && (rv == NHCR_CLIENT_CANCEL || x < 0 || y < 0 ||
+                               x > COLNO - 1 || y > ROWNO - 1));
+            x = ngr.x;
+            y = ngr.y;
+        }
     }
 
     if (rv == NHCR_CLIENT_CANCEL)
@@ -110,14 +116,17 @@ getdir(const char *s, schar * dx, schar * dy, schar * dz, boolean isarg)
     };
     const char *query = s ? s : "In what direction?";
     boolean restricted = u.umonnum == PM_GRID_BUG;
-    enum nh_direction dir;
+    enum nh_direction dir = DIR_SERVERCANCEL;
     int dirint;
 
-    if (log_replay_input(1, "D%d", &dirint))
-        dir = dirint;
-    else {
-        log_replay_no_more_options();
-        dir = (*windowprocs.win_getdir) (query, restricted);
+    while (dir == DIR_SERVERCANCEL) {
+
+        if (log_replay_input(1, "D%d", &dirint))
+            dir = dirint;
+        else {
+            log_replay_no_more_options();
+            dir = (*windowprocs.win_getdir) (query, restricted);
+        }
     }
 
     log_record_input("D%d", (int)dir);
@@ -153,13 +162,15 @@ getdir(const char *s, schar * dx, schar * dy, schar * dz, boolean isarg)
 char
 query_key(const char *query, int *count)
 {
-    struct nh_query_key_result qkr = {.count = -1};
+    struct nh_query_key_result qkr = {.key = SERVERCANCEL_CHAR, .count = -1};
 
-    if (!log_replay_input(1, "K%d", &(qkr.key)) &&
-        (!count || !log_replay_input(2, "K%d,%d", &(qkr.key), &(qkr.count)))) {
-        log_replay_no_more_options();
-        qkr = (*windowprocs.win_query_key) (query, !!count);
-    }
+    while (qkr.key == SERVERCANCEL_CHAR)
+        if (!log_replay_input(1, "K%d", &(qkr.key)) &&
+            (!count || !log_replay_input(2, "K%d,%d",
+                                         &(qkr.key), &(qkr.count)))) {
+            log_replay_no_more_options();
+            qkr = (*windowprocs.win_query_key) (query, !!count);
+        }
 
     if (!count)
         log_record_input("K%d", qkr.key);
@@ -183,10 +194,14 @@ query_key(const char *query, int *count)
 const char *
 getlin(const char *query, boolean isarg)
 {
-    const char *res;
-    if (!log_replay_line(&res)) {
-        log_replay_no_more_options();
-        (*windowprocs.win_getlin) (query, &res, msg_getlin_callback);
+    const char servercancel_res[] = {SERVERCANCEL_CHAR, 0};
+    const char *res = servercancel_res;
+
+    while (*res == SERVERCANCEL_CHAR) {
+        if (!log_replay_line(&res)) {
+            log_replay_no_more_options();
+            (*windowprocs.win_getlin) (query, &res, msg_getlin_callback);
+        }
     }
 
     log_record_line(res);
@@ -218,8 +233,9 @@ getlin(const char *query, boolean isarg)
 char
 yn_function(const char *query, const char *resp, char def)
 {
-    /* This is a genuine QBUFSZ buffer because it communicates over the API. */
-    char qbuf[QBUFSZ], key;
+    /* This is a genuine QBUFSZ buffer because it communicates over the API.
+       TODO: Change the API so that this hardcoded limit doesn't exist. */
+    char qbuf[QBUFSZ], key = SERVERCANCEL_CHAR;
     unsigned truncspot, reduction = sizeof (" [N]  ?") + 1;
 
     if (resp)
@@ -235,10 +251,11 @@ yn_function(const char *query, const char *resp, char def)
     } else
         strcpy(qbuf, query);
 
-    if (!log_replay_input(1, "Y%c", &key)) {
-        log_replay_no_more_options();
-        key = (*windowprocs.win_yn_function) (qbuf, resp, def);
-    }
+    while (key == SERVERCANCEL_CHAR)
+        if (!log_replay_input(1, "Y%c", &key)) {
+            log_replay_no_more_options();
+            key = (*windowprocs.win_yn_function) (qbuf, resp, def);
+        }
 
     log_record_input("Y%c", key);
 
@@ -269,16 +286,18 @@ display_menu(struct nh_menulist *menu, const char *title, int how,
         memcpy(item_copy, menu->items, sizeof item_copy);
     dealloc_menulist(menu);
 
-    if (how == PICK_NONE && log_replay_input(0, "M"))
-        dmcd.nresults = 0;
-    else if (log_replay_input(0, "M!"))
-        dmcd.nresults = -1;
-    else if (!log_replay_menu(FALSE, &dmcd)) {
-        log_replay_no_more_options();
-        (*windowprocs.win_display_menu) (
-            &menu_copy, title, how, placement_hint, &dmcd,
-            msg_display_menu_callback);
-    }
+    do {
+        if (how == PICK_NONE && log_replay_input(0, "M"))
+            dmcd.nresults = 0;
+        else if (log_replay_input(0, "M!"))
+            dmcd.nresults = -1;
+        else if (!log_replay_menu(FALSE, &dmcd)) {
+            log_replay_no_more_options();
+            (*windowprocs.win_display_menu) (
+                &menu_copy, title, how, placement_hint, &dmcd,
+                msg_display_menu_callback);
+        }
+    } while (dmcd.nresults == -2); /* server cancel */
 
     if (results)
         *results = dmcd.results;
@@ -329,16 +348,18 @@ display_objects(struct nh_objlist *objlist, const char *title, int how,
         memcpy(item_copy, objlist->items, sizeof item_copy);
     dealloc_objmenulist(objlist);
 
-    if (how == PICK_NONE && log_replay_input(0, "O"))
-        docd.nresults = 0;
-    else if (log_replay_input(0, "O!"))
-        docd.nresults = -1;
-    else if (!log_replay_menu(TRUE, &docd)) {
-        log_replay_no_more_options();
-        (*windowprocs.win_display_objects) (
-            &menu_copy, title, how, placement_hint, &docd,
-            msg_display_objects_callback);
-    }
+    do {
+        if (how == PICK_NONE && log_replay_input(0, "O"))
+            docd.nresults = 0;
+        else if (log_replay_input(0, "O!"))
+            docd.nresults = -1;
+        else if (!log_replay_menu(TRUE, &docd)) {
+            log_replay_no_more_options();
+            (*windowprocs.win_display_objects) (
+                &menu_copy, title, how, placement_hint, &docd,
+                msg_display_objects_callback);
+        }
+    } while (docd.nresults == -2); /* server cancel */
 
     if (results)
         *results = docd.results;

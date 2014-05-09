@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-04-10
+Last modified by Alex Smith, 2014-05-09
 
 This document documents the version of the network protocol used in
 NetHack 4.3, and was written by Daniel Thaler, GreyKnight, Alex Smith.
@@ -375,7 +375,7 @@ set_option
 
 Changes a (non-interface) option on the server.  This corresponds to the
 `nh_set_option` API call in libnethack.  TODO: This command should only be
-runnable as a followup to `request_command` is legal, except possibly for
+runnable if a followup to `request_command` is legal, except possibly for
 setting birth options; this needs more thought.
 
 Command arguments:
@@ -566,8 +566,6 @@ though they never happened (removing menus that they opened from the screen,
 forgetting messages, etc.).  This can happen in a few different situations:
   * If the client requests a save or quit (via `exit_game`), perhaps while a
     prompt is open;
-  * If the server needs to close a prompt that it put up without user input
-    dismissing it, e.g. when watching a game;
   * If something goes wrong and the server needs to rewind the save file
     mid-turn;
   * During network play, if the network connection breaks or times out on the
@@ -641,8 +639,9 @@ Response arrguments:
 shutdown
 --------
 
-Exits the server and closes the connection.  (If there is an active game, the
-server will attempt to save it before exiting).
+Exits the server process responsible for dealing with this client process and
+closes the connection.  (If there is an active game, the server will attempt
+to save it before exiting).
 
 Command arguments: none
 
@@ -655,10 +654,40 @@ Server requests
 
 These requests are sent by the server, expecting a response from the client.
 Normally they will only be sent as followups to a response from the client;
-the only exception is `server_error`, which can be sent at any time (except to
-interrupt the request half of a server request or response half of a server
-response, in which case they will be delayed until the server is done sending
-its current request/response).
+the only exceptions are `server_error` and `server_cancel`, which can be sent
+at any time (except to interrupt the request half of a server request or
+response half of a server response, in which case they will be delayed until
+the server is done sending its current request/response).
+
+
+server_cancel
+-------------
+
+Sending an `nh_play_game` response can be used by the server to retroactively
+wipe out the state of a connection, e.g. to handle save file recovery, or a
+mid-turn save.  However, sometimes the server only wants to countermand one
+request; the typical example is when watching a game which opened a menu, and
+then the player being watched makes a selection from the menu (in which case
+the server needs to, effectively, undo the opening of the menu).
+
+In this case, the server will send a `server_cancel` request.  The client
+should treat any response-requiring server request it is currently processing,
+or the next such request if it is not currently processing such a request, as
+being cancelled by the server, and should thus give the appropriate
+"cancelled" response to that request.
+
+Be aware of possible race conditions: if the client finishes processing a
+request just as the server tries to cancel it, then the server will end up
+accidentally cancelling its next request instead.  This is why "client
+cancelled" and "server cancelled" responses look different: so if the server
+spuriously cancels a request, it can just send the request again.
+
+The response to the `server_cancel` call itself should be sent before the
+response to the call that is cancelled.
+
+Request arguments: none
+
+Response arguments: none
 
 
 request_command
@@ -688,6 +717,12 @@ Response arguments:
         should be sent spontaneously by the client as the first command if the
         game was restored due to player action (rather than due to a network
         timeout or the like), rather than in response to user input
+      * `"repeat"`: Continue a multiple-turn command, or repeat the last
+        command in other circumstances; clients will typically want to send
+        this without further user interaction if `completed` and `interrupted`
+        are both false, but may allow the user to override this if they wish
+      * `"servercancel"`: Sent as a response if the server cancelled the API
+        call using a `server_cancel` call
   * `struct nh_cmd_arg arg`: a set of arguments to the command (any subset of
     the arguments that `nh_get_command` specified were acceptable)
       * `enum nh_direction d`: [optional] a direction argument
@@ -763,6 +798,7 @@ Response arguments:
       * `NHCR_ACCEPTED` = 0: pressing Return (or similar), scrolling off the
         end, or (for `PICK_ONE`) selecting an item;
       * `NHCR_CLIENT_CANCEL` = 1: pressing Escape (or similar)
+      * `NHCR_SERVER_CANCEL` = 5: by a `server_cancel` request
 
 
 display_objects
@@ -831,6 +867,7 @@ Response arguments:
       * `DIR_DOWN` = 9: down (`>`)
       * `DIR_SELF` = 10: at self (`.` or `s`)
       * `DIR_NONE` = -1: the user cancelled the prompt
+      * `DIR_SERVERCANCEL` = -2: the server cancelled the prompt
 
 
 getline
@@ -845,7 +882,9 @@ Request arguments:
 Response arguments:
   * `string line`: The line of input from the user. Is the null string if the
     null string was entered, a single ESC character (hex 1B) if the user
+    cancelled the prompt, a single ASCII 28 character (hex 1C) if the server
     cancelled the prompt, or otherwise the user's input.
+
 
 getpos
 ------
@@ -871,7 +910,8 @@ Response arguments:
       * `NHCR_MOREINFO` = 3: the user accepted the location, requesting more
         information about it (normally accomplished via `:`);
       * `NHCR_MOREINFO_CONTINUE` = 4: a combination of the two previous cases
-        (normally accomplished via `;`).
+        (normally accomplished via `;`);
+      * `NHCR_SERVER_CANCEL` = 5: the server cancelled the prompt.
   * `coordinate x`: the x coordinate chosen by the user
   * `coordinate y`: the y coordinate chosen by the user
 
@@ -893,7 +933,7 @@ Response arguments:
     even if `allow_count` is false, but is always -1 in that case and should
     be ignored
   * `charcode return`: the key the user pressed; this is ESC if cancelled by
-    the user
+    the user, ASCII 28 if cancelled by the server
 
 
 yn
@@ -912,7 +952,7 @@ Request arguments:
 
 Response arguments:
   * `charcode return`: the choice the user chose; this is `def` if cancelled
-    by the user
+    by the user, ASCII 28 if cancelled by the server
 
 
 server_error

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Alex Smith, 2014-05-09 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -172,7 +172,10 @@
                                            point at random memory */
 # define OCLASS_ANY 'a' /* for autopickup */
 
+# define SERVERCANCEL_CHAR '\x1c'
+
 enum nh_direction {
+    DIR_SERVERCANCEL = -2,
     DIR_NONE = -1,
     DIR_W = 0,
     DIR_NW,
@@ -335,6 +338,7 @@ enum nh_client_response {
     NHCR_CONTINUE, 
     NHCR_MOREINFO,
     NHCR_MOREINFO_CONTINUE,
+    NHCR_SERVER_CANCEL,
 };
 
 /* the name "boolean" is too common to use here */
@@ -718,6 +722,7 @@ struct nh_window_procs {
                         nh_bool tombstone, const char *name, int gold,
                         const char *killbuf, int end_how, int year);
     void (*win_print_message_nonblocking) (int turn, const char *msg);
+    void (*win_server_cancel) (void);
 };
 
 /* typedefs for import/export */

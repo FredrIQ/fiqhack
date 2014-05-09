@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-08 */
+/* Last modified by Alex Smith, 2014-05-09 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -173,7 +173,10 @@ curses_getdir(const char *query, nh_bool restricted)
 static int
 curses_yn_function_validator(int key, void *resp)
 {
-    if (key == '\x1b') {
+    if (key == KEY_SIGNAL)
+        return SERVERCANCEL_CHAR;
+
+    if (key == KEY_ESCAPE || key == '\x1b') {
         if (strchr(resp, 'q'))
             return 'q';
         if (strchr(resp, 'n'))
@@ -181,6 +184,9 @@ curses_yn_function_validator(int key, void *resp)
         return -2; /* interpreted as default by curses_yn_function */
     } else if (strchr(quit_chars, key))
         return -2;
+
+    if (key > 128)
+        return -1;
 
     if (!strchr(resp, key))
         return -1; /* reject the key */
@@ -218,6 +224,15 @@ curses_yn_function(const char *query, const char *resp, char def)
 static int
 curses_query_key_validator(int key, void *count)
 {
+    if (key == KEY_SIGNAL)
+        return SERVERCANCEL_CHAR;
+
+    if (key == KEY_ESCAPE || key == '\x1b')
+        return '\x1b';
+
+    if (key > 128)
+        return -1;
+
     if (!count || (!isdigit(key) && key != KEY_BACKSPACE))
         return key;
 
@@ -256,6 +271,12 @@ static int
 curses_msgwin_validator(int key, void *unused)
 {
     (void) unused;
+    if (key == KEY_SIGNAL) {
+        /* Clear the message immediately, and signal the next user input
+           that happens */
+        if (ui_flags.ingame)
+            uncursed_signal_getch();
+    }
     return key;
 }
 

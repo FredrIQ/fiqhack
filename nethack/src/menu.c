@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-08 */
+/* Last modified by Alex Smith, 2014-05-09 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -309,7 +309,7 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     struct gamewin *gw;
     struct win_menu *mdat;
     int i, key, idx, rv, startx, starty, prevcurs, prev_offset;
-    nh_bool done, cancelled;
+    nh_bool done, cancelled, servercancelled;
     char selected[ml->icount ? ml->icount : 1];
     int results[ml->icount ? ml->icount : 1];
 
@@ -364,7 +364,7 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     leaveok(gw->win, TRUE);
     leaveok(gw->win2, TRUE);
     done = FALSE;
-    cancelled = FALSE;
+    cancelled = servercancelled = FALSE;
 
     if (bottom && mdat->icount - mdat->innerheight > 0)
         mdat->offset = mdat->icount - mdat->innerheight;
@@ -420,7 +420,13 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
 
             /* cancel */
         case KEY_ESCAPE:
+        case '\x1b':
             cancelled = TRUE;
+            break;
+
+        case KEY_SIGNAL:
+            cancelled = TRUE;
+            servercancelled = TRUE;
             break;
 
             /* confirm */
@@ -474,7 +480,7 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     }
 
     if (cancelled)
-        rv = -1;
+        rv = servercancelled ? -2 : -1;
     else {
         rv = 0;
         for (i = 0; i < mdat->icount; i++) {
@@ -498,8 +504,18 @@ curses_menu_callback(const int *results, int nresults, void *arg)
 {
     if (nresults > 0)
         memcpy(arg, results, nresults * sizeof *results);
-    else
+    else {
+        /* Getting a server cancel while in one of our own menus is awkward.
+           This could potentially happen if someone opens the options menu
+           while watching a game, and the watched game starts taking turns.
+           Our current approach is just to close the menu as if cancelled,
+           and propagate the cancel forwards to the next server request.
+
+           TODO: Reopen the menu again, if possible. (This is not easy.) */
+        if (nresults == -2 && ui_flags.ingame)
+            uncursed_signal_getch();
         *(int *)arg = CURSES_MENU_CANCELLED;
+    }
 }
 
 
@@ -783,7 +799,7 @@ curses_display_objects(
     struct gamewin *gw;
     struct win_objmenu *mdat;
     int i, key, idx, rv, startx, starty, prevcurs, prev_offset;
-    nh_bool done, cancelled;
+    nh_bool done, cancelled, servercancelled;
     nh_bool inventory_special = title && !!strstr(title, "Inventory") &&
         how == PICK_NONE;
     int selected[objlist->icount ? objlist->icount : 1];
@@ -843,7 +859,7 @@ curses_display_objects(
     leaveok(gw->win2, TRUE);
 
     done = FALSE;
-    cancelled = FALSE;
+    cancelled = servercancelled = FALSE;
     while (!done && !cancelled) {
         draw_objmenu(gw);
 
@@ -896,7 +912,13 @@ curses_display_objects(
 
             /* cancel */
         case KEY_ESCAPE:
+        case '\x1b':
             cancelled = TRUE;
+            break;
+
+        case KEY_SIGNAL:
+            cancelled = TRUE;
+            servercancelled = TRUE;
             break;
 
             /* confirm */
@@ -1025,7 +1047,7 @@ curses_display_objects(
     }
 
     if (cancelled)
-        rv = -1;
+        rv = servercancelled ? -2 : -1;
     else {
         rv = 0;
         for (i = 0; i < mdat->icount; i++) {

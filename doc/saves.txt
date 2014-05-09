@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-04-06
+Last modified by Alex Smith, 2014-05-09
 
 Copyright (C) 2013 Alex Smith.
 
@@ -380,30 +380,30 @@ NetHack save files need to follow the following rules:
       
       * If there are one or more conflicting read locks, then the process
         should request all existing readers to relinquish their lock.  The way
-        in which this is done is to send SIGUSR1 to one reader, then block on
-        the placement of the lock.  To protect against a very unlikely race
+        in which this is done is to send SIGRTMIN+1 to one reader, then block
+        on the placement of the lock.  To protect against a very unlikely race
         condition (the file becoming completly unlocked, then some new process
         placing a read lock before its write lock establishes), it should
         repeat this check every 500 milliseconds for 2 seconds.  If it cannot
         place the lock within 2 seconds, it should complain that something is
         wrong.  If it does manage to place the lock correctly, it should send
-        SIGUSR2 to the process or processes it sent SIGUSR1 before it does any
-        actual writing.
+        SIGRTMIN+2 to the process or processes it sent SIGRTMIN+1 before it
+        does any actual writing.
 
     On systems where it is impossible to determine which process is holding a
     lock, this entire procedure is unavailable, and instead the process should
     just block for 2 seconds on grabbing the lock, and complain if it cannot
     grab it within that time.
 
-  * Whenever a process holding a read lock receives SIGUSR1, it should
+  * Whenever a process holding a read lock receives SIGRTMIN+1, it should
     relinquish its read lock as soon as possible, then check to see if any
-    other processes are holding read locks, and send SIGUSR1 to one of them.
-    This means that eventually, every process holding a read lock will be
-    signalled.  It should then wait for a SIGUSR2 signal, or for 1 second,
-    before re-establishing the lock; before re-establishing the lock, it
-    should send SIGUSR2 to any process it sent SIGUSR1 to.  This way, every
-    monitoring process will be notified about changes to the file (via
-    SIGUSR2) as soon as it is written to.
+    other processes are holding read locks, and send SIGRTMIN+1 to one of
+    them.  This means that eventually, every process holding a read lock will
+    be signalled.  It should then wait for a SIGRTMIN+2 signal, or for 1
+    second, before re-establishing the lock; before re-establishing the lock,
+    it should send SIGRTMIN+2 to any process it sent SIGRTMIN+1 to.  This way,
+    every monitoring process will be notified about changes to the file (via
+    SIGRTMIN+2) as soon as it is written to.
 
 These rules collectively ensure that processes will never operate on an
 inconsistent view of the file, and can (on operating systems with appropriate

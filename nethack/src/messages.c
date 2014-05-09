@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-07 */
+/* Last modified by Alex Smith, 2014-05-09 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -211,10 +211,26 @@ keypress_at_more(void)
 
     while (continue_looping) {
         switch (get_map_key(FALSE)) {
-        case KEY_ESCAPE:
+        case KEY_SIGNAL:
+            /* This happens when a watcher is stuck at a --More-- when the
+               watchee gives a command. Just move on, so we don't end up behind
+               forever; and repeat the signal, because it's still relevant.
+
+               This mechanism is needed even when we don't think we're watching;
+               disconnected processes get forced into implicit watch mode if the
+               user reconnects before the process times out, and so a process
+               that thought it was playing might unexpectely get a signal. */
+            uncursed_signal_getch();
             stopmore = 1;
             continue_looping = 0;
             break;
+
+        case KEY_ESCAPE:
+        case '\x1b':
+            stopmore = 1;
+            continue_looping = 0;
+            break;
+
         case ' ':
         case 10:
         case 13:

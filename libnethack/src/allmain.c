@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-05 */
+/* Last modified by Alex Smith, 2014-05-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -50,6 +50,17 @@ nh_lib_init(const struct nh_window_procs *procs, char **paths)
         fqn_prefix[i] = strdup(paths[i]);
 
     u.uhp = 1;  /* prevent RIP on early quits */
+
+#ifdef UNIX
+    /* SIGRTMIN+{1,2} are used by the lock monitoring code. This means that we
+       could end up with spurious signals due to race conditions after a game
+       exits or when reading save files in the main menu of the client. In such
+       cases, we just ignore the signals; we're not doing any lock monitoring
+       anyway, so this is safe unless the process is stuck (in which case,
+       things are broken anyway). */
+    signal(SIGRTMIN+1, SIG_IGN);
+    signal(SIGRTMIN+2, SIG_IGN);
+#endif
 
     API_EXIT();
 }
@@ -239,12 +250,17 @@ nh_create_game(int fd, struct nh_option_desc *opts)
     unsigned int seed = 0;
     microseconds birthday;
     int i;
+    volatile int log_inited;
 
     API_ENTRY_CHECKPOINT() {
         IF_API_EXCEPTION(GAME_CREATED):
+            if (log_inited)
+                log_uninit();
             return NHCREATE_OK;
 
         IF_ANY_API_EXCEPTION():
+            if (log_inited)
+                log_uninit();
             return NHCREATE_FAIL;
     }
 
@@ -288,6 +304,7 @@ nh_create_game(int fd, struct nh_option_desc *opts)
     /* We create a new save file that saves the state immediately after
        newgame() is called. */
     log_init(fd);
+    log_inited = 1;
     log_newgame(birthday, seed);
 
     newgame(birthday);
@@ -295,7 +312,6 @@ nh_create_game(int fd, struct nh_option_desc *opts)
     /* We need a full backup save after creating the new game, because we
        don't have anything to diff against. */
     log_backup_save();
-    log_uninit();
 
     program_state.suppress_screen_updates = FALSE;
 
@@ -405,7 +421,7 @@ nh_play_game(int fd)
         struct nh_cmd_and_arg cmd;
         int cmdidx;
 
-        if (u_helpless(hm_all) && !program_state.viewing) {
+        if (u_helpless(hm_all)) {
             cmd.cmd = "wait";
             cmdidx = get_command_idx("wait");
             cmd.arg.argtype = 0;
@@ -424,8 +440,7 @@ nh_play_game(int fd)
             continue;
         }
 
-        if (program_state.viewing &&
-            (cmdidx < 0 || !(cmdlist[cmdidx].flags & CMD_NOTIME))) {
+        if (program_state.viewing && !(cmdlist[cmdidx].flags & CMD_NOTIME)) {
             pline("Command '%s' unavailable while watching/replaying a game.",
                   cmd.cmd);
             continue;
@@ -438,25 +453,32 @@ nh_play_game(int fd)
         cmd.arg.argtype &= cmdlist[cmdidx].flags;
 
         if (cmdlist[cmdidx].flags & CMD_NOTIME &&
+            !(cmdlist[cmdidx].flags & CMD_INTERNAL) &&
             (flags.incomplete || !flags.interrupted || flags.occupation)) {
 
             /* CMD_NOTIME actions don't set last_cmd/last_arg, so we need to
                ensure we interrupt them in order to avoid screwing up command
-               repeat. We accomplish this via logging an "interrupt" command. */
+               repeat. We accomplish this via logging an "interrupt" command.
+
+               Exception: server cancels, which are a literal no-op. */
 
             flags.incomplete = FALSE;
             flags.interrupted = FALSE; /* set to true by "interrupt" */
+            flags.occupation = occ_none;
 
             log_record_command("interrupt",
                                &(struct nh_cmd_arg){.argtype = 0});
+            log_time_line();
             command_input(get_command_idx("interrupt"),
                           &(struct nh_cmd_arg){.argtype = 0});
             neutral_turnstate_tasks();
 
-        } else {
+        } else if (!(cmdlist[cmdidx].flags & CMD_NOTIME) ||
+                   !(cmdlist[cmdidx].flags & CMD_INTERNAL)) {
 
             flags.incomplete = FALSE;
             flags.interrupted = FALSE;
+            flags.occupation = occ_none;
 
         }
 
@@ -1112,7 +1134,6 @@ command_input(int cmdidx, struct nh_cmd_arg *arg)
 {
     boolean didmove = TRUE;
 
-    flags.occupation = occ_none;
     if (!u_helpless(hm_all)) {
         switch (do_command(cmdidx, arg)) {
         case COMMAND_UNKNOWN:
