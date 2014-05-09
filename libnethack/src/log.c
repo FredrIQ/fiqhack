@@ -195,8 +195,9 @@ log_desync(char found, char expected)
     /* If desyncs shouldn't be happening, warn the user.
 
        Right now, they shouldn't be happening. */
-    raw_printf("Warning: Desync in save file: found '%c' expected '%c'\n",
-               found, expected);
+    raw_printf("Warning: Desync in save file: "
+               "found '%c' expected '%c' offset %ld\n",
+               found, expected, (long)program_state.gamestate_location);
 
     /*
      * The behaviour we want for this function:
