@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Sean Hunt, 2014-05-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1672,6 +1672,7 @@ canunwearobj(struct obj *otmp, boolean noisy, boolean spoil, boolean cblock)
                 pline("The ring is stuck.");
             return 0;
         }
+
         why = 0;        /* the item which prevents ring removal */
         if ((otmp == uright || (uwep && bimanual(uwep))) &&
             known_welded(spoil)) {
@@ -1680,10 +1681,8 @@ canunwearobj(struct obj *otmp, boolean noisy, boolean spoil, boolean cblock)
         } else if (uarmg && uarmg->cursed && (spoil || uarmg->bknown)) {
             buf = msgprintf("take off your gloves");
             why = uarmg;
-        } else {
-            impossible("ring stuck in an unknown way?");
-            buf = "manage";
         }
+
         if (why) {
             if (noisy)
                 pline("You cannot %s to remove the ring.", buf);
