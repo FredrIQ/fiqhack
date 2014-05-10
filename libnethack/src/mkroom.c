@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-06 */
+/* Last modified by Alex Smith, 2014-05-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -98,64 +98,6 @@ mkshop(struct level *lev)
 
     /* first determine shoptype */
     styp = -1;
-    if (wizard) {
-        ep = nh_getenv("SHOPTYPE");
-        if (ep) {
-            int i;
-
-            for (i = 0; shtypes[i].name; i++) {
-                if (!strcmp(shtypes[i].name, ep) ||
-                    ep[0] == def_oc_syms[(int)shtypes[i].symb]) {
-                    styp = i;
-                    goto gottype;
-                }
-            }
-            if (ep[0] == 'z' || ep[0] == 'Z') {
-                mkzoo(lev, ZOO);
-                return;
-            }
-            if (ep[0] == 'm' || ep[0] == 'M') {
-                mkzoo(lev, MORGUE);
-                return;
-            }
-            if (ep[0] == 'b' || ep[0] == 'B') {
-                mkzoo(lev, BEEHIVE);
-                return;
-            }
-            if (ep[0] == 't' || ep[0] == 'T') {
-                mkzoo(lev, COURT);
-                return;
-            }
-            if (ep[0] == 's' || ep[0] == 'S') {
-                mkzoo(lev, BARRACKS);
-                return;
-            }
-            if (ep[0] == 'a' || ep[0] == 'A') {
-                mkzoo(lev, ANTHOLE);
-                return;
-            }
-            if (ep[0] == 'c' || ep[0] == 'C') {
-                mkzoo(lev, COCKNEST);
-                return;
-            }
-            if (ep[0] == 'l' || ep[0] == 'L') {
-                mkzoo(lev, LEPREHALL);
-                return;
-            }
-            if (ep[0] == '_') {
-                mktemple(lev);
-                return;
-            }
-            if (ep[0] == '}') {
-                mkswamp(lev);
-                return;
-            }
-            if (ep[0] == 'g' || ep[0] == 'G')
-                styp = 0;
-            else
-                styp = -1;
-        }
-    }
 gottype:
     for (sroom = &lev->rooms[0];; sroom++) {
         if (sroom->hx < 0)
