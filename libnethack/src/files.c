@@ -491,7 +491,7 @@ handle_sigalrm(int signum)
 }
 
 /* WARNING: This function can be called async-signal on UNIX. Thus, all system
-   calls it makes must be async-signal-safe (except if !on_logfile, we can be a
+   calls it makes must be async-signal-safe (except if on_logfile, we can be a
    little laxer then), and it can't touch globals.
 
    All system calls have an "is safe" comment added when they are verified to be
@@ -565,10 +565,15 @@ change_fd_lock(int fd, boolean on_logfile, enum locktype type, int timeout)
         sigemptyset(&sigset);                         /* sigemptyset is safe */
         sigaddset(&sigset, SIGRTMIN+1);               /* sigaddset is safe */
         sigaddset(&sigset, SIGRTMIN+2);               /* sigaddset is safe */
+
+        /* pthread_sigmask is *not* async-signal-safe (which is ridiculous,
+           given that sigprocmask is). However, we only call this if we're doing
+           monitor handling (i.e. on_logfile is true), in which case this
+           isn't a signal handler, so we're OK. */
         if (type == LT_READ || type == LT_WRITE)
-            sigprocmask(SIG_BLOCK, &sigset, NULL);    /* sigprocmask is safe */
+            pthread_sigmask(SIG_BLOCK, &sigset, NULL);
         else
-            sigprocmask(SIG_UNBLOCK, &sigset, NULL);  /* sigprocmask is safe */
+            pthread_sigmask(SIG_UNBLOCK, &sigset, NULL);
     }
 
     saction.sa_handler = handle_sigalrm;

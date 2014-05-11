@@ -39,6 +39,7 @@
                 'optstring:-Wmissing-prototypes',
                 'optstring:-Wmissing-declarations',
                 'optstring:-Wpointer-arith',
+                'optstring:-D_REENTRANT',
             ],
             verb => 'determined',
         },
