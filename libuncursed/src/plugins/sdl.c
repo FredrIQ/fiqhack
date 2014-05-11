@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-05-11 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -31,6 +31,7 @@
 # include <Ws2def.h>
 #else
 # include <sys/select.h>
+# include <signal.h>
 #endif
 
 #define debugprintf(...) do {                   \
@@ -353,10 +354,26 @@ sdl_hook_init(int *h, int *w, const char *title)
     if (!win) {
         debug = !!getenv("UNCURSED_SDL_DEBUG");
 
+#ifndef AIMAKE_BUILDOS_MSWin32
+        /* It's possible that the program using libuncursed will want to install
+           signal handlers. However, SDL doesn't pay attention to this, and
+           creates threads unprotected; and there's a chance that the signals
+           will go to one of SDL's threads, rather than one of the user
+           program's. Thus, while initializing SDL, we mark all new threads as
+           being unable to receive signals. */
+        sigset_t sigset, oldsigset;
+        sigfillset(&sigset);
+        pthread_sigmask(SIG_SETMASK, &sigset, &oldsigset);
+#endif
+
         if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) {
             fprintf(stderr, "Error initializing SDL: %s\n", SDL_GetError());
             exit(EXIT_FAILURE);
         }
+
+#ifndef AIMAKE_BUILDOS_MSWin32
+        pthread_sigmask(SIG_SETMASK, &oldsigset, NULL);
+#endif
 
         win = SDL_CreateWindow(title,   /* title */
                                SDL_WINDOWPOS_UNDEFINED, /* initial x */
