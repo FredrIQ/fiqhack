@@ -649,6 +649,7 @@ change_fd_lock(int fd, boolean on_logfile, enum locktype type, int timeout)
             if (pid2 != -1)
                 pid = pid2;
             alarmed = 0;
+            sigaction(SIGALRM, &saction, NULL);        /* sigaction is safe */
             alarm(1);
         }
 
