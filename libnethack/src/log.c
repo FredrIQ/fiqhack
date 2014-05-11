@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-09 */
+/* Last modified by Alex Smith, 2014-05-11 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2117,12 +2117,14 @@ log_reset(void)
 void
 log_init(int logfd)
 {
-    if (!change_fd_lock(logfd, TRUE, LT_MONITOR, 2))
+    program_state.logfile = logfd;
+
+    if (!change_fd_lock(logfd, TRUE, LT_MONITOR, 2)) {
+        program_state.logfile = -1;
         terminate(ERR_IN_PROGRESS);
+    }
 
     log_reset();
-
-    program_state.logfile = logfd;
 }
 
 void
