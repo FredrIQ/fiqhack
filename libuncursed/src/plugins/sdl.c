@@ -63,6 +63,9 @@ static int tileset_cols;
 
 static int hangup_mode = 0;
 
+static fd_set monitored_fds;
+static int monitored_fds_count_or_max;
+
 static int debug = 0;
 
 /* force the minimum size as 80x24; many programs don't function properly with
@@ -91,12 +94,14 @@ struct sdl_tile_region {
 };
 
 static void update_cell(int y, int x, struct sdl_tile_region *current_region);
+static Uint32 timer_callback(Uint32, void *);
 
 static SDL_Window *win = NULL;
 static SDL_Renderer *render = NULL;
 static SDL_Texture *font = NULL;
 static SDL_Texture *screen = NULL;
 static SDL_Texture *rendertarget = NULL; /* most recently used render target */
+
 
 static SDL_Texture *
 load_png_file_to_texture(const char *filename, int *w, int *h)
@@ -388,6 +393,15 @@ sdl_hook_init(int *h, int *w, const char *title)
         }
 
         atexit(exit_handler);
+
+        /* Sadly, some things are impossible in SDL without polling; it has no
+           async-signal-safe way to send events (it's thread-safe, but cannot
+           handle an interupted malloc). However, SDL does a bunch of polling
+           anyway, on a 10ms interval. Thus, there isn't a huge penalty to
+           contributing to the polling mess. */
+        FD_ZERO(&monitored_fds);
+        monitored_fds_count_or_max = 0;
+        SDL_AddTimer(10, timer_callback, NULL);
 
         winwidth = winheight = 0;
         update_window_sizes(1);
@@ -924,59 +938,65 @@ signal_event_loop(int key)
     SDL_PushEvent(&(union SDL_Event){.user = ue});
 }
 
+static volatile sig_atomic_t getch_signal_count = 0;
+
+static Uint32
+timer_callback(Uint32 interval, void *unused) {
+    fd_set monitored_fds_copy;
+    struct timeval zerotime = {0, 0};
+    SDL_Event event_buffer;
+
+    (void) unused;
+
+    while (getch_signal_count) {
+        getch_signal_count--;
+        signal_event_loop(KEY_SIGNAL);
+    }
+
+    /* Add KEY_OTHERFD to the queue only if we don't have a user event pending
+       already; we want to avoid spamming the queue with OTHERFD faster than
+       the user program can handle it */
+    if (SDL_PeepEvents(&event_buffer, 1, SDL_PEEKEVENT,
+                       SDL_USEREVENT, SDL_USEREVENT) == 0) {
+        memcpy(&monitored_fds_copy, &monitored_fds, sizeof monitored_fds);
+        if (select(monitored_fds_count_or_max, &monitored_fds_copy, 0, 0,
+                   &zerotime))
+            signal_event_loop(KEY_OTHERFD);
+    }
+
+    return interval;
+}
+
 void
 sdl_hook_signal_getch(void)
 {
-    signal_event_loop(KEY_SIGNAL);
-}
-
-static SDL_Thread *watching_threads[FD_SETSIZE] = {0};
-
-static int
-fd_watcher(void *thread_watch_pointer)
-{
-    int fd_to_watch = (SDL_Thread **)thread_watch_pointer - watching_threads;
-    while (*(SDL_Thread **)thread_watch_pointer) {
-        fd_set readfds;
-        struct timeval t;
-
-        t.tv_sec = 0;
-        t.tv_usec = 500000; /* poll for thread shutdown every 500ms */
-
-        FD_ZERO(&readfds);
-        FD_SET(fd_to_watch, &readfds);
-
-        int s = select(fd_to_watch + 1, &readfds, 0, 0, &t);
-        if (s > 0)
-            signal_event_loop(KEY_OTHERFD);
-    }
-    return 0;
+    getch_signal_count++;
 }
 
 void
 sdl_hook_watch_fd(int fd, int watch)
 {
+    /* In a typical case of nonportability, select() has apparently the same
+       signature on Windows and Linux/UNIX, but the arguments mean different
+       things. In particular, monitored_fds_count_or_max needs to be the number
+       of FDs on Windows, or the highest number among the FDs plus 1 on
+       Linux/UNIX. */
+
+#ifdef AIMAKE_BUILDOS_MSWin32
+    if (watch && !FD_ISSET(fd, &monitored_fds))
+        monitored_fds_count_or_max++;
+    if (!watch && FD_ISSET(fd, &monitored_fds)
+        monitored_fds_count_or_max--;
+#else
     if (fd >= FD_SETSIZE)
         abort();
-
-    if (watch) {
-        /* To reduce polling, we spin off a thread whose purpose is to watch the
-           file descriptor in question. select() is defined as thread-safe by
-           POSIX, and is hopefully thread-safe on Windows too (and if it isn't,
-           we don't have another option anyway).
-
-           We still have to poll to see when the thread is exited, because we
-           can't portably signal a specific thread. */
-        watching_threads[fd] = SDL_CreateThread(
-            fd_watcher, "FD Watcher", watching_threads + fd);
-        /* If it fails, it leaves NULL in watching_threads, like we'd want. */
-
-    } else if (watching_threads[fd]) {
-        SDL_Thread *t = watching_threads[fd];
-        watching_threads[fd] = 0; /* tell the thread to exit */
-        if (t)
-            SDL_WaitThread(t, 0);
-    }
+    if (fd >= monitored_fds_count_or_max)
+        monitored_fds_count_or_max = fd + 1;
+#endif
+    if (watch)
+        FD_SET(fd, &monitored_fds);
+    else
+        FD_CLR(fd, &monitored_fds);
 }
 
 /* copied from tty.c; perhaps this should go in a header somewhere */
