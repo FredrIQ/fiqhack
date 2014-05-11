@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-09 */
+/* Last modified by Alex Smith, 2014-05-11 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -8,8 +8,9 @@
 /*
  * Standard template for these functions:
  *
- * if (log_replay_input(...)) [use that value]
- * else {log_replay_no_more_options(); [ask for the value] }
+ * if (!log_want_replay([expected first character])) [ask for the value]
+ * else if (log_replay_input(...)) [use that value]
+ * else log_replay_no_more_options();
  *
  * if ([there was a server cancel])
  *    [go back to the start and try again]
@@ -51,16 +52,17 @@ getpos(coord *cc, boolean force, const char *goal, boolean isarg)
     };
 
     while (rv == NHCR_SERVER_CANCEL) {
-        if (log_replay_input(0, "P!")) {
-            ask = 0;
-            rv = NHCR_CLIENT_CANCEL;
-        } else if (log_replay_input(3, "P%d,%d%1[.,:;]", &x, &y, c) && *c) {
-            cc->x = x;
-            cc->y = y;
-            rv = accept_codes[(int)*c];
-            ask = 0;
-        } else
-            log_replay_no_more_options();
+        ask = !log_want_replay('P');
+        if (!ask) {
+            if (log_replay_input(0, "P!")) {
+                rv = NHCR_CLIENT_CANCEL;
+            } else if (log_replay_input(3, "P%d,%d%1[.,:;]", &x, &y, c) && *c) {
+                cc->x = x;
+                cc->y = y;
+                rv = accept_codes[(int)*c];
+            } else
+                log_replay_no_more_options();
+        }
 
         x = cc->x;
         y = cc->y;
@@ -120,13 +122,12 @@ getdir(const char *s, schar * dx, schar * dy, schar * dz, boolean isarg)
     int dirint;
 
     while (dir == DIR_SERVERCANCEL) {
-
-        if (log_replay_input(1, "D%d", &dirint))
-            dir = dirint;
-        else {
-            log_replay_no_more_options();
+        if (!log_want_replay('D'))
             dir = (*windowprocs.win_getdir) (query, restricted);
-        }
+        else if (log_replay_input(1, "D%d", &dirint))
+            dir = dirint;
+        else
+            log_replay_no_more_options();
     }
 
     log_record_input("D%d", (int)dir);
@@ -164,13 +165,14 @@ query_key(const char *query, int *count)
 {
     struct nh_query_key_result qkr = {.key = SERVERCANCEL_CHAR, .count = -1};
 
-    while (qkr.key == SERVERCANCEL_CHAR)
-        if (!log_replay_input(1, "K%d", &(qkr.key)) &&
-            (!count || !log_replay_input(2, "K%d,%d",
-                                         &(qkr.key), &(qkr.count)))) {
-            log_replay_no_more_options();
+    while (qkr.key == SERVERCANCEL_CHAR) {
+        if (!log_want_replay('K'))
             qkr = (*windowprocs.win_query_key) (query, !!count);
-        }
+        else if (!log_replay_input(1, "K%d", &(qkr.key)) &&
+            (!count || !log_replay_input(2, "K%d,%d",
+                                         &(qkr.key), &(qkr.count))))
+            log_replay_no_more_options();
+    }
 
     if (!count)
         log_record_input("K%d", qkr.key);
@@ -198,10 +200,10 @@ getlin(const char *query, boolean isarg)
     const char *res = servercancel_res;
 
     while (*res == SERVERCANCEL_CHAR) {
-        if (!log_replay_line(&res)) {
-            log_replay_no_more_options();
+        if (!log_want_replay('L'))
             (*windowprocs.win_getlin) (query, &res, msg_getlin_callback);
-        }
+        else if (!log_replay_line(&res))
+            log_replay_no_more_options();
     }
 
     log_record_line(res);
@@ -251,11 +253,12 @@ yn_function(const char *query, const char *resp, char def)
     } else
         strcpy(qbuf, query);
 
-    while (key == SERVERCANCEL_CHAR)
-        if (!log_replay_input(1, "Y%c", &key)) {
-            log_replay_no_more_options();
+    while (key == SERVERCANCEL_CHAR) {
+        if (!log_want_replay('Y'))
             key = (*windowprocs.win_yn_function) (qbuf, resp, def);
-        }
+        else if (!log_replay_input(1, "Y%c", &key))
+            log_replay_no_more_options();
+    }
 
     log_record_input("Y%c", key);
 
@@ -287,16 +290,16 @@ display_menu(struct nh_menulist *menu, const char *title, int how,
     dealloc_menulist(menu);
 
     do {
-        if (how == PICK_NONE && log_replay_input(0, "M"))
-            dmcd.nresults = 0;
-        else if (log_replay_input(0, "M!"))
-            dmcd.nresults = -1;
-        else if (!log_replay_menu(FALSE, &dmcd)) {
-            log_replay_no_more_options();
+        if (!log_want_replay('M'))
             (*windowprocs.win_display_menu) (
                 &menu_copy, title, how, placement_hint, &dmcd,
                 msg_display_menu_callback);
-        }
+        else if (how == PICK_NONE && log_replay_input(0, "M"))
+            dmcd.nresults = 0;
+        else if (log_replay_input(0, "M!"))
+            dmcd.nresults = -1;
+        else if (!log_replay_menu(FALSE, &dmcd))
+            log_replay_no_more_options();
     } while (dmcd.nresults == -2); /* server cancel */
 
     if (results)
@@ -349,16 +352,16 @@ display_objects(struct nh_objlist *objlist, const char *title, int how,
     dealloc_objmenulist(objlist);
 
     do {
-        if (how == PICK_NONE && log_replay_input(0, "O"))
-            docd.nresults = 0;
-        else if (log_replay_input(0, "O!"))
-            docd.nresults = -1;
-        else if (!log_replay_menu(TRUE, &docd)) {
-            log_replay_no_more_options();
+        if (!log_want_replay('O'))
             (*windowprocs.win_display_objects) (
                 &menu_copy, title, how, placement_hint, &docd,
                 msg_display_objects_callback);
-        }
+        else if (how == PICK_NONE && log_replay_input(0, "O"))
+            docd.nresults = 0;
+        else if (log_replay_input(0, "O!"))
+            docd.nresults = -1;
+        else if (!log_replay_menu(TRUE, &docd))
+            log_replay_no_more_options();
     } while (docd.nresults == -2); /* server cancel */
 
     if (results)

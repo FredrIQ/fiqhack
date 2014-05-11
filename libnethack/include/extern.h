@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-09 */
+/* Last modified by Alex Smith, 2014-05-11 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -795,7 +795,8 @@ extern void log_record_menu(boolean, const void *);
 extern boolean log_replay_menu(boolean, void *);
 extern void log_record_command(const char *cmd, const struct nh_cmd_arg *arg);
 extern boolean log_replay_command(struct nh_cmd_and_arg *cmd);
-extern void log_replay_no_more_options(void);
+extern noreturn void log_replay_no_more_options(void);
+extern boolean log_want_replay(char firstchar);
 
 extern void log_time_line(void);
 

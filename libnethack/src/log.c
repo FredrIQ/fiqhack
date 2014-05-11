@@ -911,10 +911,11 @@ log_time_line(void)
     if (program_state.in_zero_time_command)
         return;
 
-    if (!log_replay_input(1, "+%" SCNxLEAST64, &timediff)) {
-        log_replay_no_more_options();
+    if (log_want_replay('+')) {
+        if (!log_replay_input(1, "+%" SCNxLEAST64, &timediff))
+            log_replay_no_more_options();
+    } else
         timediff = time_for_time_line() - flags.turntime;
-    }
 
     flags.turntime += timediff;
     log_record_input("+%" PRIxLEAST64, timediff);
@@ -1135,6 +1136,17 @@ start_replaying_logfile(char firstchar)
     }
 
     return logline;
+}
+
+boolean
+log_want_replay(char firstchar)
+{
+    char *logline = start_replaying_logfile(firstchar);
+    if (logline) {
+        free(logline);
+        return TRUE;
+    }
+    return FALSE;
 }
 
 /* Called when non-command input was /successfully/ read from the log.
@@ -1456,15 +1468,10 @@ log_replay_command(struct nh_cmd_and_arg *cmd)
 /* After trying a bunch of log_replay_* functions, this one is called to
    record that there were no options left; it desyncs if we're in a situation
    where we were expecting to be able to play something. */
-void
+noreturn void
 log_replay_no_more_options(void)
 {
-    char *logline = start_replaying_logfile(0);
-    if (logline) {
-        char c = *logline;
-        free(logline);
-        log_desync(c, '?');
-    }
+    log_desync('?', '?');
 }
 
 /***** Reading logs from disk *****/
