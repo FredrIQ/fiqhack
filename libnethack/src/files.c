@@ -11,6 +11,8 @@
 
 #include <errno.h>
 
+/* #define DEBUG */
+
 #if defined(WIN32)
 # include <sys/stat.h>
 #else
@@ -375,6 +377,19 @@ sigrtmin1_some_locker(int fd, boolean unlock_before_sending)
        file for no reason, but that's fine. We do require that processes block
        SIGRTMIN+1 before calling this function, though, in order to avoid an
        infinite regress of spurious signals. */
+
+#ifdef DEBUG
+    /* This fprintf call is all sorts of unsafe, but it's only used when DEBUG
+       is defined (which it isn't, unless you edited the source code). Make sure
+       you're using a faketerm interface to stop stderr getting mixed in with
+       the gameplay. The unsafeness seems to manifest as occasional garbage on
+       stderr. */
+    fprintf(stderr, "%6ld: %s SIGRTMIN+1 chain, to %ld\n",
+            (long)getpid(),
+            unlock_before_sending ? "continuing" : "starting",
+            (long)sflock.l_pid);
+#endif
+
     sigqueue(sflock.l_pid, SIGRTMIN+1, (union sigval){.sival_int = 0});
                                                           /* sigqueue is safe */
 
@@ -398,6 +413,10 @@ handle_sigrtmin2(int signum)
        they could arrive either way round.) */
     if (unmatched_sigrtmin1s)
         unmatched_sigrtmin1s--;
+#ifdef DEBUG
+    fprintf(stderr, "%6ld: received unexpected SIGRTMIN+2\n",
+            (long)getpid());
+#endif
 }
 
 /* The actual work of relinquishing the logfile lock.
@@ -426,6 +445,11 @@ handle_sigrtmin1(int signum)
 
     unmatched_sigrtmin1s++;
 
+#ifdef DEBUG
+    fprintf(stderr, "%6ld: received SIGRTMIN+1, unmatched %d\n",
+        (long)getpid(), (int)unmatched_sigrtmin1s);
+#endif
+        
     /* Tell any other processes that have the lock (other than the one that
        wants it) to give up the lock. (sigrtmin1_some_locker is also
        async-signal-safe for this reason.) Give up the lock ourselves in th
@@ -440,16 +464,26 @@ handle_sigrtmin1(int signum)
     sigaddset(&sigset, SIGRTMIN+2);                 /* sigaddset is safe */
 
     while (unmatched_sigrtmin1s &&
-           sigtimedwait(&sigset, NULL, &timeout) == SIGRTMIN+2)
+           sigtimedwait(&sigset, NULL, &timeout) == SIGRTMIN+2) {
         unmatched_sigrtmin1s--;
+#ifdef DEBUG
+        fprintf(stderr, "%6ld: received expected SIGRTMIN+2, unmatched %d\n",
+                (long)getpid(), (int)unmatched_sigrtmin1s);
+#endif
+    }
 
     unmatched_sigrtmin1s = 0; /* in case we got here by timeout */
 
     /* If we told another process to give up the lock, tell it it can take
        the lock again. */
-    if (pid != -1)
+    if (pid != -1) {
+#ifdef DEBUG
+        fprintf(stderr, "%6ld: continuing SIGRTMIN+2 chain, to %ld\n",
+                (long)getpid(), (long)pid);
+#endif
         sigqueue(pid, SIGRTMIN+2, (union sigval){.sival_int = 0});
                                                     /* sigqueue is safe */
+    }
 
     /* Block until the other process has finished writing, then relock the
        logfile. We only partially undid the monitor lock earlier (we removed the
@@ -536,6 +570,10 @@ change_fd_lock(int fd, boolean on_logfile, enum locktype type, int timeout)
            lock so that we can take the lock, which just causes confusion
            (because each process is blocking on the other's SIGRTMIN+2). */
         if (type == LT_WRITE) {
+#ifdef DEBUG
+            fprintf(stderr, "%6ld: unlocking prior to write lock\n",
+                    (long)getpid());
+#endif
             sflock.l_type = F_UNLCK;
             sflock.l_whence = SEEK_SET;
             sflock.l_start = 0;
@@ -602,6 +640,11 @@ change_fd_lock(int fd, boolean on_logfile, enum locktype type, int timeout)
     do {
         /* When writing, tell monitoring processes to release their locks. */
         if (on_logfile && type == LT_WRITE) {
+#ifdef DEBUG
+            fprintf(stderr,
+                    "%6ld: %d attempts remaining to establish write lock\n",
+                    (long)getpid(), timeout);
+#endif
             int pid2 = sigrtmin1_some_locker(fd, FALSE);
             if (pid2 != -1)
                 pid = pid2;
@@ -614,6 +657,15 @@ change_fd_lock(int fd, boolean on_logfile, enum locktype type, int timeout)
             ret = fcntl(fd, F_SETLKW, &sflock) >= 0;   /* fcntl is safe */
         } while (!ret && errno == EINTR && !alarmed);
     } while (alarmed && timeout--);
+#ifdef DEBUG
+    if (alarmed)
+        fprintf(stderr, "%6ld: alarm() timeout!\n",
+        (long)getpid());
+    else if (ret)
+        fprintf(stderr, "%6ld: established %slock on fd %d\n",
+        (long)getpid(), type == LT_NONE ? "un" : type == LT_MONITOR ? "monitor"
+        : type == LT_READ ? "read" : "write", fd);
+#endif
 
     /* If a process relinquished its lock, tell it it can grab the lock again.
        (This will actually make it block until we release our write lock, but
@@ -623,9 +675,14 @@ change_fd_lock(int fd, boolean on_logfile, enum locktype type, int timeout)
        process, so that's acceptable; SIGRTMIN+1ing more than one process only
        happens in case of race condition, or if a process crashes before it can
        relay the SIGRTMIN+1. */
-    if (pid != -1)
+    if (pid != -1) {
+#ifdef DEBUG
+        fprintf(stderr, "%6ld: starting SIGRTMIN+2 chain, to %ld\n",
+                (long)getpid(), (long)pid);
+#endif
         sigqueue(pid, SIGRTMIN+2, (union sigval){.sival_int = 0});
                                                       /* sigqueue is safe */
+    }
 
     alarm(0);                                         /* alarm is safe */
     sigaction(SIGALRM, &oldsaction, NULL);            /* sigaction is safe */
