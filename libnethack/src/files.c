@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-11 */
+/* Last modified by Alex Smith, 2014-05-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -17,6 +17,7 @@
 # include <sys/stat.h>
 #else
 # include <signal.h>
+# include <sys/select.h>
 #endif
 
 #ifndef O_BINARY
@@ -388,6 +389,7 @@ sigrtmin1_some_locker(int fd, boolean unlock_before_sending)
             (long)getpid(),
             unlock_before_sending ? "continuing" : "starting",
             (long)sflock.l_pid);
+    fflush(stderr);
 #endif
 
     sigqueue(sflock.l_pid, SIGRTMIN+1, (union sigval){.sival_int = 0});
@@ -414,8 +416,22 @@ handle_sigrtmin2(int signum)
     if (unmatched_sigrtmin1s)
         unmatched_sigrtmin1s--;
 #ifdef DEBUG
-    fprintf(stderr, "%6ld: received unexpected SIGRTMIN+2\n",
-            (long)getpid());
+    fprintf(stderr, "%6ld: received SIGRTMIN+2, unmatched %d\n",
+            (long)getpid(), (int)unmatched_sigrtmin1s);
+    fflush(stderr);
+#endif
+}
+
+/* Called when we get a second request to relinquish the lock while the
+   lock is already relinquished. */
+static void
+handle_sigrtmin1_recursive(int signum)
+{
+    unmatched_sigrtmin1s++;
+#ifdef DEBUG
+    fprintf(stderr, "%6ld: received recursive SIGRTMIN+1, unmatched %d\n",
+            (long)getpid(), (int)unmatched_sigrtmin1s);
+    fflush(stderr);
 #endif
 }
 
@@ -431,15 +447,15 @@ handle_sigrtmin2(int signum)
    yourself. (If a system call doesn't have such a comment, someone forgot to
    check it for safety.)
 
-   The handler is installed in such a way that SIGRTMIN+2 is blocked inside this
-   function. Thus, we use sigtimedwait and call the signal handler manually
-   (sigtimedwait does not call the handler). */
+   SIGRTMIN+1 and SIGRTMIN+2 are blocked by the kernel upon entrance to this
+   function, and unblocked on entry, due to the way it's installed. */
 static void
 handle_sigrtmin1(int signum)
 {
     int pid;
     sigset_t sigset;
     struct timespec timeout = {.tv_sec = 3, .tv_nsec = 0};
+    struct sigaction saction, oldsaction;
 
     (void) signum;
 
@@ -448,8 +464,22 @@ handle_sigrtmin1(int signum)
 #ifdef DEBUG
     fprintf(stderr, "%6ld: received SIGRTMIN+1, unmatched %d\n",
         (long)getpid(), (int)unmatched_sigrtmin1s);
+    fflush(stderr);
 #endif
-        
+
+    /* If we receive SIGRTMIN+1 recursively, use a simpler handler, because the
+       file will be unlocked already; we don't look for signals in this handler
+       until the file is already unlocked. (We could postpone the SIGRTMIN+1
+       until we return, instead; this works, but has performance issues, in that
+       it gives quadratic performance in the signal overhead.) */
+    saction.sa_handler = handle_sigrtmin1_recursive;
+    sigemptyset(&saction.sa_mask);
+    sigaddset(&saction.sa_mask, SIGRTMIN+1);
+    sigaddset(&saction.sa_mask, SIGRTMIN+2);
+    saction.sa_flags = 0;
+
+    sigaction(SIGRTMIN+1, &saction, &oldsaction);   /* sigaction is safe */
+
     /* Tell any other processes that have the lock (other than the one that
        wants it) to give up the lock. (sigrtmin1_some_locker is also
        async-signal-safe for this reason.) Give up the lock ourselves in th
@@ -457,18 +487,40 @@ handle_sigrtmin1(int signum)
     pid = sigrtmin1_some_locker(program_state.logfile, TRUE);
 
     /* Wait until all SIGRTMIN+1s are unmatched, or 3 seconds elapse with no
-       signal (in which case we assume that either we missed it, perhaps due to
-       two SIGRTMIN+2s coming at almost the same instant, or there's a
-       stuck/crashed process somewhere). */
-    sigemptyset(&sigset);                           /* sigemptyset is safe */
-    sigaddset(&sigset, SIGRTMIN+2);                 /* sigaddset is safe */
+       signal (in which case we assume that either we missed it, perhaps because
+       there's a stuck/crashed process somewhere). We do this by unblocking
+       SIGRTMIN+1 and SIGRTMIN+2 temporarily; this lets us receive recursive
+       SIGRTMIN+1 signals and SIGRTMIN+2 signals.
 
+       Actually doing the temporary unblock is hard; sigtimedwait lets us
+       simulate one, but is not thread-safe (and the UI may be threaded);
+       pselect is safe, but needs an absolute rather than relative signal mask,
+       and we can't get the current mask to compare from sigprocmask (not
+       thread-safe) or pthread_sigmask (not async-signal-safe). Using an empty
+       mask doesn't work either; the UI might want to block SIGPIPE, for
+       instance.
+
+       The current approach is to hope that pthread_sigmask not being marked as
+       async-signal-safe is a mistake in the documentation. (The next-best
+       option is to hope that sigprocmask is thread-safe when used in a
+       read-only way; it should be on practical implementations, at least, but
+       the documentation doesn't make exceptions for specific usage
+       patterns.) */
+
+    pthread_sigmask(SIG_BLOCK, NULL, &sigset);      /* safety ??? */
+
+    sigdelset(&sigset, SIGRTMIN+1);                 /* sigaddset is safe */
+    sigdelset(&sigset, SIGRTMIN+2);                 /* sigaddset is safe */
+
+    errno = 0;
     while (unmatched_sigrtmin1s &&
-           sigtimedwait(&sigset, NULL, &timeout) == SIGRTMIN+2) {
-        unmatched_sigrtmin1s--;
+           pselect(0, 0, 0, 0, &timeout, &sigset) >= 0 &&
+           errno == EINTR) {                        /* pselect is safe */
+        errno = 0;
 #ifdef DEBUG
         fprintf(stderr, "%6ld: received expected SIGRTMIN+2, unmatched %d\n",
                 (long)getpid(), (int)unmatched_sigrtmin1s);
+        fflush(stderr);
 #endif
     }
 
@@ -480,10 +532,14 @@ handle_sigrtmin1(int signum)
 #ifdef DEBUG
         fprintf(stderr, "%6ld: continuing SIGRTMIN+2 chain, to %ld\n",
                 (long)getpid(), (long)pid);
+        fflush(stderr);
 #endif
         sigqueue(pid, SIGRTMIN+2, (union sigval){.sival_int = 0});
                                                     /* sigqueue is safe */
     }
+
+    /* Restore the signal hander before we do anything that might exit. */
+    sigaction(SIGRTMIN+1, &oldsaction, NULL);       /* sigaction is safe */
 
     /* Block until the other process has finished writing, then relock the
        logfile. We only partially undid the monitor lock earlier (we removed the
@@ -507,7 +563,9 @@ handle_sigrtmin1(int signum)
     }
 
     /* While running a zero-time command, instead of following the other
-       process "live", we freeze the gamestate until the command ends. */
+       process "live", we freeze the gamestate until the command ends.
+
+       win_server_cancel is defined as async-signal by the API documentation. */
     if (program_state.game_running && !program_state.in_zero_time_command)
         (windowprocs.win_server_cancel)();
 }
@@ -573,6 +631,7 @@ change_fd_lock(int fd, boolean on_logfile, enum locktype type, int timeout)
 #ifdef DEBUG
             fprintf(stderr, "%6ld: unlocking prior to write lock\n",
                     (long)getpid());
+            fflush(stderr);
 #endif
             sflock.l_type = F_UNLCK;
             sflock.l_whence = SEEK_SET;
@@ -644,6 +703,7 @@ change_fd_lock(int fd, boolean on_logfile, enum locktype type, int timeout)
             fprintf(stderr,
                     "%6ld: %d attempts remaining to establish write lock\n",
                     (long)getpid(), timeout);
+            fflush(stderr);
 #endif
             int pid2 = sigrtmin1_some_locker(fd, FALSE);
             if (pid2 != -1)
@@ -661,11 +721,12 @@ change_fd_lock(int fd, boolean on_logfile, enum locktype type, int timeout)
 #ifdef DEBUG
     if (alarmed)
         fprintf(stderr, "%6ld: alarm() timeout!\n",
-        (long)getpid());
+                (long)getpid());
     else if (ret)
         fprintf(stderr, "%6ld: established %slock on fd %d\n",
         (long)getpid(), type == LT_NONE ? "un" : type == LT_MONITOR ? "monitor"
         : type == LT_READ ? "read" : "write", fd);
+    fflush(stderr);
 #endif
 
     /* If a process relinquished its lock, tell it it can grab the lock again.
@@ -680,6 +741,7 @@ change_fd_lock(int fd, boolean on_logfile, enum locktype type, int timeout)
 #ifdef DEBUG
         fprintf(stderr, "%6ld: starting SIGRTMIN+2 chain, to %ld\n",
                 (long)getpid(), (long)pid);
+        fflush(stderr);
 #endif
         sigqueue(pid, SIGRTMIN+2, (union sigval){.sival_int = 0});
                                                       /* sigqueue is safe */
