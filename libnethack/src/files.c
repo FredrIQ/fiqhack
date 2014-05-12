@@ -18,6 +18,7 @@
 #else
 # include <signal.h>
 # include <sys/select.h>
+# include <ucontext.h>
 #endif
 
 #ifndef O_BINARY
@@ -246,6 +247,12 @@ delete_bonesfile(char *bonesid)
  *   (and do a server cancel). This sort of lock is only supported on
  *   program_state.logfile.
  *
+ *   Note that there is a sort of "dead time" while converting from a monitor
+ *   lock to write lock, during which the process will not be notified of
+ *   changes to the file. This is not a problem for the current uses of locking,
+ *   because after establishing a write lock they check for changes to the file,
+ *   but it's something to be aware of for future uses of this code.
+ *
  * - Read lock. The file cannot change, but we don't mind other processes
  *   reading it at the same time.
  *
@@ -269,11 +276,27 @@ delete_bonesfile(char *bonesid)
  * - Write lock: we hold a write lock on the file using fcntl; if we can't
  *   establish it, we SIGRTMIN+1 processes holding it until we can
  *
+ * The key invariant here is *if a file is write-locked by any process, all
+ * processes have been informed of the write*. This is the case regardless of
+ * any signals sent anywhere; if a process has a write lock, then there are no
+ * processes with a read lock (by definition), and all processes with monitor
+ * locks have reliquished their locks in order to allow the write (and thus are
+ * aware of the write). The only purpose of the signals is to allow a write lock
+ * to be established in the first place (SIGRTMIN+1), and to inform other
+ * processes that the write lock has been established so that they don't re-lock
+ * the file before the write can happen (SIGRTMIN+2). Neither signal has any
+ * effect on write notification; they are both just to make the writes actually
+ * capabe of handling.
+ *
  * The behaviour on Windows is currently much more primitive (any Windows
- * experts out there to help?): we lock the file at LT_READ or higher, and
- * leave it unlocked at LT_MONITOR or lower. This means that watching games
- * locally doesn't work (watching games played on a server still works, though,
- * because the server itself is running UNIX).
+ * experts out there to help?): we lock the file at LT_READ or higher, and leave
+ * it unlocked at LT_MONITOR or lower. This means that watching games locally
+ * doesn't work properly (watching games played on a server still works, though,
+ * because the server itself is running UNIX, and the mechanism via which server
+ * cancels are relayed to the client has nothing to do with the locking
+ * mechanism). Watching local games is still possible on Windows, but the screen
+ * will not update until a key is pressed.  (In this sense, watching a game is
+ * quite like resizing a window; both only react on keypress.)
  */
 
 
@@ -308,7 +331,14 @@ delete_bonesfile(char *bonesid)
  * This code uses the second method; receiving a SIGRTMIN+1 will block for up to
  * three seconds, hopefully much less (SIGRTMIN+2 is used to end the blocking
  * early).  In order to prevent the logfile being written to while we're reading
- * it, SIGRTMIN+1 is masked while performing a read operation.
+ * it (thus implementing a read lock), SIGRTMIN+1 is masked while performing a
+ * read operation; a process can ask us to unlock the file, but until we're done
+ * reading, we're not going to (and we're not even going to look at the request,
+ * we'll get to it once the reading's over).
+ *
+ * TODO: Should unmatched_sigrtmin1s be namespaced? program_state is the obvious
+ * namespace for it. If namespacing this global (and others like it), remember
+ * to keep the "volatile".
  */
 static volatile sig_atomic_t unmatched_sigrtmin1s = 0;
 
@@ -398,11 +428,18 @@ sigrtmin1_some_locker(int fd, boolean unlock_before_sending)
     return sflock.l_pid;
 }
 
-/* Unrelinquish the logfile lock. This just sets a flag. */
+/* Unrelinquish the logfile lock. This just sets a flag.
+
+   Fun note: Quite a few API functions have an extra void * argument reserved
+   for future expansion, that's meant to be set to NULL until a use for it is
+   thought up. The callback to sigaction() is the first time I've actually seen
+   it be given a purpose. (Not that most people care about the context.) */
 static void
-handle_sigrtmin2(int signum)
+handle_sigrtmin2(int signum, siginfo_t *siginfo, void *context)
 {
     (void) signum;
+    (void) siginfo;
+    (void) context;
     /* If someone's sending us spurious SIGRTMIN+2 signals, ignore them. (This
        could also happen if a SIGRTMIN+2 gets delayed for over 3 seconds; very
        unlikely, but possible, e.g. the computer goes into suspend mode with a
@@ -425,8 +462,12 @@ handle_sigrtmin2(int signum)
 /* Called when we get a second request to relinquish the lock while the
    lock is already relinquished. */
 static void
-handle_sigrtmin1_recursive(int signum)
+handle_sigrtmin1_recursive(int signum, siginfo_t *siginfo, void *context)
 {
+    (void) signum;
+    (void) siginfo; /* for now */
+    (void) context;
+
     unmatched_sigrtmin1s++;
 #ifdef DEBUG
     fprintf(stderr, "%6ld: received recursive SIGRTMIN+1, unmatched %d\n",
@@ -450,14 +491,15 @@ handle_sigrtmin1_recursive(int signum)
    SIGRTMIN+1 and SIGRTMIN+2 are blocked by the kernel upon entrance to this
    function, and unblocked on entry, due to the way it's installed. */
 static void
-handle_sigrtmin1(int signum)
+handle_sigrtmin1(int signum, siginfo_t *siginfo, void *context)
 {
     int pid;
-    sigset_t sigset;
     struct timespec timeout = {.tv_sec = 3, .tv_nsec = 0};
     struct sigaction saction, oldsaction;
+    int save_errno = errno;
 
     (void) signum;
+    (void) siginfo; /* for now */
 
     unmatched_sigrtmin1s++;
 
@@ -472,11 +514,11 @@ handle_sigrtmin1(int signum)
        until the file is already unlocked. (We could postpone the SIGRTMIN+1
        until we return, instead; this works, but has performance issues, in that
        it gives quadratic performance in the signal overhead.) */
-    saction.sa_handler = handle_sigrtmin1_recursive;
+    saction.sa_sigaction = handle_sigrtmin1_recursive;
     sigemptyset(&saction.sa_mask);
     sigaddset(&saction.sa_mask, SIGRTMIN+1);
     sigaddset(&saction.sa_mask, SIGRTMIN+2);
-    saction.sa_flags = 0;
+    saction.sa_flags = SA_SIGINFO;
 
     sigaction(SIGRTMIN+1, &saction, &oldsaction);   /* sigaction is safe */
 
@@ -500,22 +542,30 @@ handle_sigrtmin1(int signum)
        mask doesn't work either; the UI might want to block SIGPIPE, for
        instance.
 
-       The current approach is to hope that pthread_sigmask not being marked as
-       async-signal-safe is a mistake in the documentation. (The next-best
-       option is to hope that sigprocmask is thread-safe when used in a
-       read-only way; it should be on practical implementations, at least, but
-       the documentation doesn't make exceptions for specific usage
-       patterns.) */
+       The solution is to use the third argument to the signal handler; it holds
+       what is effectively a siglongjmp() buffer, but with some fields split out
+       in a portable way. One of those fields is the signal mask that was in
+       place before the signal happened, which is just what we need; we don't
+       even need to do operations on it to specify the signal we need. Thus, the
+       solution to there being no appropriate API calls is that there's a way to
+       get the information with no API calls.
 
-    pthread_sigmask(SIG_BLOCK, NULL, &sigset);      /* safety ??? */
+       Interestingly, setcontext(), the POSIX API call that is intended to be
+       used with the third argument, was removed from POSIX in 2008. However,
+       the third argument to a sigaction() callback is still there, even though
+       this is close to the only use that can be made of it (especially because
+       SUSv2 documents that setcontext() doesn't actually work for exiting
+       signal handlers).
 
-    sigdelset(&sigset, SIGRTMIN+1);                 /* sigaddset is safe */
-    sigdelset(&sigset, SIGRTMIN+2);                 /* sigaddset is safe */
+       Huh, I guess that void * was useful after all. Now I wonder if it's a
+       void * for future expansion, or just a void * because most people don't
+       need ucontext.h, given that it defines a mechanism that doesn't actually
+       work. */
 
     errno = 0;
     while (unmatched_sigrtmin1s &&
-           pselect(0, 0, 0, 0, &timeout, &sigset) >= 0 &&
-           errno == EINTR) {                        /* pselect is safe */
+           pselect(0, 0, 0, 0, &timeout, &(((ucontext_t *)context)->uc_sigmask))
+           >= 0 && errno == EINTR) {                        /* pselect is safe */
         errno = 0;
 #ifdef DEBUG
         fprintf(stderr, "%6ld: received expected SIGRTMIN+2, unmatched %d\n",
@@ -568,6 +618,8 @@ handle_sigrtmin1(int signum)
        win_server_cancel is defined as async-signal by the API documentation. */
     if (program_state.game_running && !program_state.in_zero_time_command)
         (windowprocs.win_server_cancel)();
+
+    errno = save_errno;
 }
 
 static volatile sig_atomic_t alarmed = 0;
@@ -645,14 +697,14 @@ change_fd_lock(int fd, boolean on_logfile, enum locktype type, int timeout)
             signal(SIGRTMIN+1, SIG_IGN);              /* signal is safe */
             signal(SIGRTMIN+2, SIG_IGN);              /* signal is safe */
         } else {
-            saction.sa_flags = 0;
+            saction.sa_flags = SA_SIGINFO;
             sigemptyset(&saction.sa_mask);            /* sigemptyset is safe */
             sigaddset(&saction.sa_mask, SIGRTMIN+1);  /* sigaddset is safe */
             sigaddset(&saction.sa_mask, SIGRTMIN+2);  /* sigaddset is safe */
 
-            saction.sa_handler = handle_sigrtmin1;
+            saction.sa_sigaction = handle_sigrtmin1;
             sigaction(SIGRTMIN+1, &saction, NULL);    /* sigaction is safe */
-            saction.sa_handler = handle_sigrtmin2;
+            saction.sa_sigaction = handle_sigrtmin2;
             sigaction(SIGRTMIN+2, &saction, NULL);    /* sigaction is safe */
         }
 
