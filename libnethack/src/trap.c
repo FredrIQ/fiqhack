@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-02 */
+/* Last modified by Sean Hunt, 2014-05-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1622,7 +1622,8 @@ mkroll_launch(struct trap *ttmp, struct level *lev, xchar x, xchar y,
         ttmp->launch2.y = bcc.y;
     } else
         ttmp->launch_otyp = otyp;
-    newsym(ttmp->launch.x, ttmp->launch.y);
+    if (lev == level)
+        newsym(ttmp->launch.x, ttmp->launch.y);
     return 1;
 }
 
@@ -1730,7 +1731,8 @@ mintrap(struct monst *mtmp)
                     pline("%s triggers a trap but nothing happens.",
                           Monnam(mtmp));
                 deltrap(lev, trap);
-                newsym(mtmp->mx, mtmp->my);
+                if (lev == level)
+                    newsym(mtmp->mx, mtmp->my);
                 break;
             }
             trap->once = 1;
@@ -1749,7 +1751,8 @@ mintrap(struct monst *mtmp)
                     pline("%s triggers a trap but nothing happens.",
                           Monnam(mtmp));
                 deltrap(lev, trap);
-                newsym(mtmp->mx, mtmp->my);
+                if (lev == level)
+                    newsym(mtmp->mx, mtmp->my);
                 break;
             }
             trap->once = 1;
@@ -1769,7 +1772,8 @@ mintrap(struct monst *mtmp)
                     pline("A trap door above %s opens, but nothing falls out!",
                           mon_nam(mtmp));
                 deltrap(lev, trap);
-                newsym(mtmp->mx, mtmp->my);
+                if (lev == level)
+                    newsym(mtmp->mx, mtmp->my);
                 break;
             }
             trap->once = 1;
@@ -2024,7 +2028,8 @@ mintrap(struct monst *mtmp)
                                &mons[PM_FIRE_ELEMENTAL]) ? "burns" :
                               "dissolves", a_your[trap->madeby_u]);
                     deltrap(lev, trap);
-                    newsym(mtmp->mx, mtmp->my);
+                    if (lev == level)
+                        newsym(mtmp->mx, mtmp->my);
                     break;
                 }
                 if (in_sight) {
@@ -2075,7 +2080,8 @@ mintrap(struct monst *mtmp)
                     pline("%s tears through %s spider web!", Monnam(mtmp),
                           a_your[trap->madeby_u]);
                 deltrap(lev, trap);
-                newsym(mtmp->mx, mtmp->my);
+                if (lev == level)
+                    newsym(mtmp->mx, mtmp->my);
             }
             break;
 
@@ -2117,12 +2123,14 @@ mintrap(struct monst *mtmp)
                     if (rn2(3))
                         break;
                     if (in_sight) {
-                        newsym(mtmp->mx, mtmp->my);
+                        if (lev == level)
+                            newsym(mtmp->mx, mtmp->my);
                         pline("The air currents set %s off!",
                               already_seen ? "a land mine" : "it");
                     }
                 } else if (in_sight) {
-                    newsym(mtmp->mx, mtmp->my);
+                    if (lev == level)
+                        newsym(mtmp->mx, mtmp->my);
                     pline("KAABLAMM!!!  %s triggers %s land mine!",
                           Monnam(mtmp), a_your[trap->madeby_u]);
                 }
@@ -2163,7 +2171,8 @@ mintrap(struct monst *mtmp)
             if (!is_flyer(mptr)) {
                 int style = ROLL | (in_sight ? 0 : LAUNCH_UNSEEN);
 
-                newsym(mtmp->mx, mtmp->my);
+                if (lev == level)
+                    newsym(mtmp->mx, mtmp->my);
                 if (in_sight)
                     pline("Click! %s triggers %s.", Monnam(mtmp),
                           trap->tseen ? "a rolling boulder trap" : "something");
@@ -2176,7 +2185,8 @@ mintrap(struct monst *mtmp)
                         trapkilled = TRUE;
                 } else {
                     deltrap(lev, trap);
-                    newsym(mtmp->mx, mtmp->my);
+                    if (lev == level)
+                        newsym(mtmp->mx, mtmp->my);
                 }
             }
             break;
@@ -3090,7 +3100,8 @@ cnv_trap_obj(struct level *lev, int otyp, int cnt, struct trap *ttmp)
     if (ttmp->madeby_u)
         sellobj(otmp, ttmp->tx, ttmp->ty);
     stackobj(otmp);
-    newsym(ttmp->tx, ttmp->ty);
+    if (lev == level)
+        newsym(ttmp->tx, ttmp->ty);
     deltrap(lev, ttmp);
 }
 
