@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-12 */
+/* Last modified by Alex Smith, 2014-05-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -247,12 +247,6 @@ delete_bonesfile(char *bonesid)
  *   (and do a server cancel). This sort of lock is only supported on
  *   program_state.logfile.
  *
- *   Note that there is a sort of "dead time" while converting from a monitor
- *   lock to write lock, during which the process will not be notified of
- *   changes to the file. This is not a problem for the current uses of locking,
- *   because after establishing a write lock they check for changes to the file,
- *   but it's something to be aware of for future uses of this code.
- *
  * - Read lock. The file cannot change, but we don't mind other processes
  *   reading it at the same time.
  *
@@ -274,7 +268,9 @@ delete_bonesfile(char *bonesid)
  *   writing, as we won't respond to their SIGRTMIN+1s until we're done)
  *
  * - Write lock: we hold a write lock on the file using fcntl; if we can't
- *   establish it, we SIGRTMIN+1 processes holding it until we can
+ *   establish it, we SIGRTMIN+1 processes holding it until we can; SIGRTMIN+1
+ *   is blocked, but only after the write lock has been established (so that if
+ *   two processes want to write at once, they don't deadlock on each other)
  *
  * The key invariant here is *if a file is write-locked by any process, all
  * processes have been informed of the write*. This is the case regardless of
@@ -282,11 +278,23 @@ delete_bonesfile(char *bonesid)
  * processes with a read lock (by definition), and all processes with monitor
  * locks have reliquished their locks in order to allow the write (and thus are
  * aware of the write). The only purpose of the signals is to allow a write lock
- * to be established in the first place (SIGRTMIN+1), and to inform other
- * processes that the write lock has been established so that they don't re-lock
- * the file before the write can happen (SIGRTMIN+2). Neither signal has any
- * effect on write notification; they are both just to make the writes actually
- * capabe of handling.
+ * to be established in the first place (SIGRTMIN+1), to inform other processes
+ * that the write lock has been established so that they don't re-lock the file
+ * before the write can happen (SIGRTMIN+2), and to inform other processes that
+ * the fiel is now unlocked (SIGRTMIN+4). None of these signals have any effect
+ * on write notification; they are both just to make the writes actually capabe
+ * of handling.
+ *
+ * The code, and documentation, is written in terms of SIGRTMIN+1 for the
+ * "unlock" signal, but there is also a second unlock signal, SIGRTMIN+0, which
+ * works identically in most ways. The difference is that processes use
+ * SIGRTMIN+1 when communicating with processes with higher PIDs, and SIGRTMIN+0
+ * when communicating with processes with lower PIDs. This introduces asymmetry
+ * that is used to resolve otherwise symmetrical situations, like two processes
+ * trying to write simultaneously. There is likewise a SIGRTMIN+3 which
+ * corresponds to SIGRTMIN+2, for communicating with processes with higher PIDs.
+ * (This is so that 0 and 2, and 1 and 3, can always be masked simultaneously to
+ * get the signals in the right order).
  *
  * The behaviour on Windows is currently much more primitive (any Windows
  * experts out there to help?): we lock the file at LT_READ or higher, and leave
@@ -336,99 +344,39 @@ delete_bonesfile(char *bonesid)
  * reading, we're not going to (and we're not even going to look at the request,
  * we'll get to it once the reading's over).
  *
- * TODO: Should unmatched_sigrtmin1s be namespaced? program_state is the obvious
- * namespace for it. If namespacing this global (and others like it), remember
- * to keep the "volatile".
+ * TODO: Should these be namespaced? program_state is the obvious namespace for
+ * them. If namespacing this global (and others like it), remember to keep the
+ * "volatile".
  */
-static volatile sig_atomic_t unmatched_sigrtmin1s = 0;
+static volatile sig_atomic_t unmatched_sigrtmin1s_incoming = 0;
+static volatile sig_atomic_t unmatched_sigrtmin1s_outgoing = 0;
+static volatile sig_atomic_t alarmed = 0;
 
-/* WARNING: This function can be called async-signal on UNIX. Thus, all system
-   calls it makes must be async-signal-safe, and it can't touch globals.
-
-   This function should only be called if SIGRTMIN+1 is blocked (either
-   explicitly, or because it's being called from a SIGRTMIN+1 handler). */
-static int
-sigrtmin1_some_locker(int fd, boolean unlock_before_sending)
+/* Tells watchers they can unrelinquish the lock. This should not be called
+   from a signal handler (but can, and is, be called from terminate). */
+void
+flush_logfile_watchers(void)
 {
-    struct flock sflock;
-    int ok;
-    sflock.l_type = F_WRLCK;
-    sflock.l_whence = SEEK_SET;
-    sflock.l_start = 0;
-    sflock.l_len = 0;
-    sflock.l_pid = -2; /* not necessary, but valgrind doesn't know that
-                          fcntl initializes this, so we initialize it ourselves
-                          to let valgrind know what's happening */
-
-    ok = fcntl(fd, F_GETLK, &sflock) >= 0;                   /* fcntl is safe */
-
-    if (unlock_before_sending) {
-        /* Suppose process A sends to process B, then process B looks for a
-           process C to relay to. Process B can't unlock the file before
-           determining process C; if it does, then process A may lock the file,
-           do what it wants to do with it, then drop back to monitoring the file
-           all before process B locates process C, and then process B may decide
-           that C=A, which causes a deadlock. Process B can't signal process C
-           before unlocking the file; otherwise, process C may signal process B,
-           causing an infinite loop. Thus, we have to unlock the file in the
-           middle of sigrtmin1_some_locker.
-
-           There's another race condition here, too. Suppose process A sends to
-           process B. Process B finds no process to send to, so it just unlocks
-           the file. If we do this with on_logfile = TRUE, then SIGRTMIN+2
-           becomes ignored inside a signal handler where it's meant to be waited
-           on, and if this happens before the signal actually arrives, the
-           signal can disappear altogther. The solution is to use on_logfile =
-           FALSE, even though we're unlocking the logfile, so as to leave
-           SIGRTMIN+2 masked and non-ignored. */
-        change_fd_lock(fd, FALSE, LT_NONE, 0);
-    }
-
-    if (!ok)
-        return -1;    /* can't really do much else here */
-
-    if (sflock.l_type == F_UNLCK)
-        return -1;    /* everything's OK, no lockers to signal */
-
-    /* Try to signal the process that holds the lock. If it has a read lock, it
-       wants to know about the write we're aware of. If it has a write lock, it
-       nonetheless needs to be told (it'll have SIGRTMIN+1 blocked but it'll
-       unblock once the write is finshed); otherwise, if two processes are
-       trying to write at once, the process that writes first will end up
-       blocking the process that writes second in a deadlock if it downgrades
-       directly to a monitor lock. This is both to inform the first writing
-       process of the second write, and so that the first writing process will
-       unlock the file to allow the second write to happen.
-
-       This does cause some needless signalling if there's only one writing
-       process, and the timing works out such that the monitoring process tries
-       to relay the "hey, someone's trying to write the file" signal to the
-       process doing the actual writing, but it's just needless signalling,
-       rather than anything bad; all the processes will unlock and relock the
-       file for no reason, but that's fine. We do require that processes block
-       SIGRTMIN+1 before calling this function, though, in order to avoid an
-       infinite regress of spurious signals. */
-
+    while (program_state.logfile_watcher_count--) {
+        pid_t pid = ((pid_t *)program_state.logfile_watchers)
+            [program_state.logfile_watcher_count];
 #ifdef DEBUG
-    /* This fprintf call is all sorts of unsafe, but it's only used when DEBUG
-       is defined (which it isn't, unless you edited the source code). Make sure
-       you're using a faketerm interface to stop stderr getting mixed in with
-       the gameplay. The unsafeness seems to manifest as occasional garbage on
-       stderr. */
-    fprintf(stderr, "%6ld: %s SIGRTMIN+1 chain, to %ld\n",
-            (long)getpid(),
-            unlock_before_sending ? "continuing" : "starting",
-            (long)sflock.l_pid);
-    fflush(stderr);
+        fprintf(stderr, "%6ld: sending SIGRTMIN+2 to %ld\n",
+                (long)getpid(), (long)pid);
+        fflush(stderr);
 #endif
 
-    sigqueue(sflock.l_pid, SIGRTMIN+1, (union sigval){.sival_int = 0});
-                                                          /* sigqueue is safe */
+        sigqueue(pid, pid < getpid() ? SIGRTMIN+2 : SIGRTMIN+3,
+                 (union sigval){.sival_int = 0});
+    }
 
-    return sflock.l_pid;
+    free(program_state.logfile_watchers);
+    program_state.logfile_watchers = NULL;
+    program_state.logfile_watcher_count = 0;
 }
 
-/* Unrelinquish the logfile lock. This just sets a flag.
+/* Unrelinquish the logfile lock. This just sets a flag that's read by
+   handle_sigrtmin1.
 
    Fun note: Quite a few API functions have an extra void * argument reserved
    for future expansion, that's meant to be set to NULL until a use for it is
@@ -450,28 +398,58 @@ handle_sigrtmin2(int signum, siginfo_t *siginfo, void *context)
        arrive first, something that is not true of the more normal SIGUSR*
        signals. (If they are sent in the other order, higher then lower, then
        they could arrive either way round.) */
-    if (unmatched_sigrtmin1s)
-        unmatched_sigrtmin1s--;
+    if (unmatched_sigrtmin1s_incoming)
+        unmatched_sigrtmin1s_incoming--;
 #ifdef DEBUG
-    fprintf(stderr, "%6ld: received SIGRTMIN+2, unmatched %d\n",
-            (long)getpid(), (int)unmatched_sigrtmin1s);
+    fprintf(stderr, "%6ld: received SIGRTMIN+2 from %ld,"
+            " unmatched incoming %d\n", (long)getpid(), (long)siginfo->si_pid,
+            (int)unmatched_sigrtmin1s_incoming);
     fflush(stderr);
 #endif
 }
 
-/* Called when we get a second request to relinquish the lock while the
-   lock is already relinquished. */
+/* Very similar to the previous case, but for a different sort of
+   acknowledgement; "I received your signal", rather than "My signal is no
+   longer relevant". */
+static void
+handle_sigrtmin4(int signum, siginfo_t *siginfo, void *context)
+{
+    (void) signum;
+    (void) siginfo;
+    (void) context;
+
+    if (unmatched_sigrtmin1s_outgoing)
+        unmatched_sigrtmin1s_outgoing--;
+#ifdef DEBUG
+    fprintf(stderr, "%6ld: received SIGRTMIN+4 from %ld,"
+            " unmatched outgoing %d\n", (long)getpid(), (long)siginfo->si_pid,
+            (int)unmatched_sigrtmin1s_outgoing);
+    fflush(stderr);
+#endif
+}
+
+
+/* Called when we get a second request to relinquish the lock while the lock is
+   already relinquished. This is baically handle_sigrtmin1 without the part that
+   actually does the lock processing. */
 static void
 handle_sigrtmin1_recursive(int signum, siginfo_t *siginfo, void *context)
 {
     (void) signum;
-    (void) siginfo; /* for now */
     (void) context;
 
-    unmatched_sigrtmin1s++;
+    unmatched_sigrtmin1s_incoming++;
 #ifdef DEBUG
-    fprintf(stderr, "%6ld: received recursive SIGRTMIN+1, unmatched %d\n",
-            (long)getpid(), (int)unmatched_sigrtmin1s);
+    fprintf(stderr, "%6ld: received SIGRTMIN+1 from %ld,"
+            " unmatched incoming %d\n", (long)getpid(), (long)siginfo->si_pid,
+            (int)unmatched_sigrtmin1s_incoming);
+    fflush(stderr);
+#endif
+
+    sigqueue(siginfo->si_pid, SIGRTMIN+4, (union sigval){.sival_int = 0});
+#ifdef DEBUG
+    fprintf(stderr, "%6ld: sending SIGRTMIN+4 to process %ld\n",
+            (long)getpid(), (long)siginfo->si_pid);
     fflush(stderr);
 #endif
 }
@@ -488,24 +466,28 @@ handle_sigrtmin1_recursive(int signum, siginfo_t *siginfo, void *context)
    yourself. (If a system call doesn't have such a comment, someone forgot to
    check it for safety.)
 
-   SIGRTMIN+1 and SIGRTMIN+2 are blocked by the kernel upon entrance to this
-   function, and unblocked on entry, due to the way it's installed. */
+   SIGRTMIN+1..3 are blocked by the kernel upon entrance to this function, and
+   unblocked on exit (if they were unblocked before), due to the way it's
+   installed. */
 static void
 handle_sigrtmin1(int signum, siginfo_t *siginfo, void *context)
 {
-    int pid;
     struct timespec timeout = {.tv_sec = 3, .tv_nsec = 0};
-    struct sigaction saction, oldsaction;
+    struct sigaction saction, oldsaction0, oldsaction1;
     int save_errno = errno;
+    sig_atomic_t save_alarmed = alarmed;
 
     (void) signum;
-    (void) siginfo; /* for now */
 
-    unmatched_sigrtmin1s++;
+    if (siginfo->si_code != SI_QUEUE)
+        return; /* not from a NetHack 4 process */
+
+    unmatched_sigrtmin1s_incoming++;
 
 #ifdef DEBUG
-    fprintf(stderr, "%6ld: received SIGRTMIN+1, unmatched %d\n",
-        (long)getpid(), (int)unmatched_sigrtmin1s);
+    fprintf(stderr, "%6ld: received SIGRTMIN+1 from %ld, "
+            "unmatched incoming %d\n", (long)getpid(), (long)siginfo->si_pid,
+            (int)unmatched_sigrtmin1s_incoming);
     fflush(stderr);
 #endif
 
@@ -516,17 +498,31 @@ handle_sigrtmin1(int signum, siginfo_t *siginfo, void *context)
        it gives quadratic performance in the signal overhead.) */
     saction.sa_sigaction = handle_sigrtmin1_recursive;
     sigemptyset(&saction.sa_mask);
+    sigaddset(&saction.sa_mask, SIGRTMIN+0);
     sigaddset(&saction.sa_mask, SIGRTMIN+1);
     sigaddset(&saction.sa_mask, SIGRTMIN+2);
+    sigaddset(&saction.sa_mask, SIGRTMIN+3);
+    sigaddset(&saction.sa_mask, SIGRTMIN+4);
     saction.sa_flags = SA_SIGINFO;
 
-    sigaction(SIGRTMIN+1, &saction, &oldsaction);   /* sigaction is safe */
+    sigaction(SIGRTMIN+0, &saction, &oldsaction0);  /* sigaction is safe */
+    sigaction(SIGRTMIN+1, &saction, &oldsaction1);  /* sigaction is safe */
 
-    /* Tell any other processes that have the lock (other than the one that
-       wants it) to give up the lock. (sigrtmin1_some_locker is also
-       async-signal-safe for this reason.) Give up the lock ourselves in th
-       middle of this (see the comments in sigrtmin1_some_locker). */
-    pid = sigrtmin1_some_locker(program_state.logfile, TRUE);
+    /* Give up the lock. This has on_logfile == FALSE because we don't want to
+       do all the signal handling bookkeeping, just the actual file lock. */
+    change_fd_lock(program_state.logfile, FALSE, LT_NONE, 0);
+
+    /* Cause the process that sent us the signal to EINTR out of its lock
+       attempt, if there are other processes that also have the lock (maybe even
+       if there aren't, but that's OK; it'll just try again). This lets it
+       signal those processes. (An older version of the code tried to signal
+       those processes itself, but that's fraught with complexity.) */
+    sigqueue(siginfo->si_pid, SIGRTMIN+4, (union sigval){.sival_int = 0});
+#ifdef DEBUG
+    fprintf(stderr, "%6ld: sending SIGRTMIN+4 to process %ld\n",
+            (long)getpid(), (long)siginfo->si_pid);
+    fflush(stderr);
+#endif
 
     /* Wait until all SIGRTMIN+1s are unmatched, or 3 seconds elapse with no
        signal (in which case we assume that either we missed it, perhaps because
@@ -563,39 +559,23 @@ handle_sigrtmin1(int signum, siginfo_t *siginfo, void *context)
        work. */
 
     errno = 0;
-    while (unmatched_sigrtmin1s &&
+    while (unmatched_sigrtmin1s_incoming &&
            pselect(0, 0, 0, 0, &timeout, &(((ucontext_t *)context)->uc_sigmask))
-           >= 0 && errno == EINTR) {                        /* pselect is safe */
+           < 0 && errno == EINTR) {                 /* pselect is safe */
         errno = 0;
-#ifdef DEBUG
-        fprintf(stderr, "%6ld: received expected SIGRTMIN+2, unmatched %d\n",
-                (long)getpid(), (int)unmatched_sigrtmin1s);
-        fflush(stderr);
-#endif
     }
 
-    unmatched_sigrtmin1s = 0; /* in case we got here by timeout */
-
-    /* If we told another process to give up the lock, tell it it can take
-       the lock again. */
-    if (pid != -1) {
-#ifdef DEBUG
-        fprintf(stderr, "%6ld: continuing SIGRTMIN+2 chain, to %ld\n",
-                (long)getpid(), (long)pid);
-        fflush(stderr);
-#endif
-        sigqueue(pid, SIGRTMIN+2, (union sigval){.sival_int = 0});
-                                                    /* sigqueue is safe */
-    }
+    unmatched_sigrtmin1s_incoming = 0; /* in case we got here by timeout */
 
     /* Restore the signal hander before we do anything that might exit. */
-    sigaction(SIGRTMIN+1, &oldsaction, NULL);       /* sigaction is safe */
+    sigaction(SIGRTMIN+0, &oldsaction0, NULL);      /* sigaction is safe */
+    sigaction(SIGRTMIN+1, &oldsaction1, NULL);      /* sigaction is safe */
 
     /* Block until the other process has finished writing, then relock the
        logfile. We only partially undid the monitor lock earlier (we removed the
-       lock on the file itself, but not the rest of the monitoring state; see
-       comments in sigrtmin1_some_locker); thus, to re-establish the monitor
-       lock, we place a read lock on the underlying file. */
+       lock on the file itself, but not the rest of the monitoring state); thus,
+       to re-establish the monitor lock, we place a read lock on the underlying
+       file. */
     if (!change_fd_lock(program_state.logfile, FALSE, LT_READ, 3)) {
         /* We can't safely call panic() here (it calls into printf). We also
            can't safely call longjmp() here. And we can't call raw_print here,
@@ -613,30 +593,30 @@ handle_sigrtmin1(int signum, siginfo_t *siginfo, void *context)
     }
 
     /* While running a zero-time command, instead of following the other
-       process "live", we freeze the gamestate until the command ends.
+       process "live", we freeze the gamestate until the command ends. If not
+       in a zero-time command, we follow other processes that are playing the
+       same game.
 
        win_server_cancel is defined as async-signal by the API documentation. */
     if (program_state.game_running && !program_state.in_zero_time_command)
         (windowprocs.win_server_cancel)();
 
     errno = save_errno;
+    alarmed = save_alarmed;
 }
 
-static volatile sig_atomic_t alarmed = 0;
 static void
-handle_sigalrm(int signum)
+handle_sigalrm(int signum, siginfo_t *siginfo, void *context)
 {
-    /* We use alarm() to implement the timeout on locking. The handler does
-       nothing, but because it exists and isn't SIG_IGN, it'll interrupt our
-       lock attempt with EINTR. Then change_fd_lock will notice that alarmed was
-       set. */
+    (void)signum;
+    (void)siginfo;
+    (void)context;
     alarmed = 1;
-    (void) signum;
 }
 
-/* WARNING: This function can be called async-signal on UNIX. Thus, all system
-   calls it makes must be async-signal-safe (except if on_logfile, we can be a
-   little laxer then), and it can't touch globals.
+
+/* This function has two modes of operation. If on_logfile is FALSE, then this
+   is async-signal-safe. Otherwise, this is not async-signal-safe.
 
    All system calls have an "is safe" comment added when they are verified to be
    safe. Make sure you check "man 7 signal" before adding such a comment
@@ -645,11 +625,10 @@ handle_sigalrm(int signum)
 boolean
 change_fd_lock(int fd, boolean on_logfile, enum locktype type, int timeout)
 {
-    struct flock sflock;
+    struct flock sflock, sflock_copy;
     struct sigaction saction, oldsaction;
-    sigset_t sigset;
+    sigset_t sigset, oldsigset;
     int ret;
-    int pid = -1;
 
     if (fd == -1)
         return FALSE;
@@ -658,84 +637,31 @@ change_fd_lock(int fd, boolean on_logfile, enum locktype type, int timeout)
         panic("Attempt to monitor lock something other than the logfile");
 
     if (on_logfile) {
-        /* On the logfile, upgrading from monitor to write is quite difficult,
-           because of a potential race condition (if it happens from two
-           processes at once, they both SIGRTMIN+1 the other, then they both
-           mask SIGRTMIN+1 before the other SIGRTMIN+1 arrives), they'll each
-           wait indefinitely for the other to unlock the file. However, we only
-           do the upgrade in three circumstances: recovering the lockfile,
-           starting to update the lockfile, and the new game sequence. When
-           recovering, we don't care about monitoring anyway. When starting to
-           update, we do care, but the logfile handling code checks for changes
-           manually immediately after doing the lock. In the new game sequence,
-           only one process should be writing.
-
-           Thus, in each case, we unlock the file entirely before establishing
-           the write lock. This prevents a deadlock (one of the write locks is
-           guaranteed to succeed before the other can be established), and the
-           loss of monitor information is not fatal.
-
-           This is important for another reason: if we hold a read lock when
-           sending SIGRTMIN+1, the other process will tell us to relinquish our
-           lock so that we can take the lock, which just causes confusion
-           (because each process is blocking on the other's SIGRTMIN+2). */
-        if (type == LT_WRITE) {
-#ifdef DEBUG
-            fprintf(stderr, "%6ld: unlocking prior to write lock\n",
-                    (long)getpid());
-            fflush(stderr);
-#endif
-            sflock.l_type = F_UNLCK;
-            sflock.l_whence = SEEK_SET;
-            sflock.l_start = 0;
-            sflock.l_len = 0;
-            fcntl(fd, F_SETLK, &sflock);
-        }
-
-        /* Set our SIGRTMIN+1 and SIGRTMIN+2 handlers based on the lock type. */
+        /* Set our SIGRTMIN+0..4 handlers based on the lock type. */
         if (type == LT_NONE) {
+            signal(SIGRTMIN+0, SIG_IGN);              /* signal is safe */
             signal(SIGRTMIN+1, SIG_IGN);              /* signal is safe */
             signal(SIGRTMIN+2, SIG_IGN);              /* signal is safe */
+            signal(SIGRTMIN+3, SIG_IGN);              /* signal is safe */
+            signal(SIGRTMIN+4, SIG_IGN);              /* signal is safe */
         } else {
             saction.sa_flags = SA_SIGINFO;
             sigemptyset(&saction.sa_mask);            /* sigemptyset is safe */
+            sigaddset(&saction.sa_mask, SIGRTMIN+0);  /* sigaddset is safe */
             sigaddset(&saction.sa_mask, SIGRTMIN+1);  /* sigaddset is safe */
             sigaddset(&saction.sa_mask, SIGRTMIN+2);  /* sigaddset is safe */
+            sigaddset(&saction.sa_mask, SIGRTMIN+3);  /* sigaddset is safe */
+            sigaddset(&saction.sa_mask, SIGRTMIN+4);  /* sigaddset is safe */
 
             saction.sa_sigaction = handle_sigrtmin1;
+            sigaction(SIGRTMIN+0, &saction, NULL);    /* sigaction is safe */
             sigaction(SIGRTMIN+1, &saction, NULL);    /* sigaction is safe */
             saction.sa_sigaction = handle_sigrtmin2;
             sigaction(SIGRTMIN+2, &saction, NULL);    /* sigaction is safe */
+            sigaction(SIGRTMIN+3, &saction, NULL);    /* sigaction is safe */
+            saction.sa_sigaction = handle_sigrtmin4;
+            sigaction(SIGRTMIN+4, &saction, NULL);    /* sigaction is safe */
         }
-
-        /* Mask SIGRTMIN+1 at LT_READ or higher. We also have to mask SIGRTMIN+2
-           at the same time, to prevent the signals arriving in the wrong
-           order. */
-        sigemptyset(&sigset);                         /* sigemptyset is safe */
-        sigaddset(&sigset, SIGRTMIN+1);               /* sigaddset is safe */
-        sigaddset(&sigset, SIGRTMIN+2);               /* sigaddset is safe */
-
-        /* pthread_sigmask is *not* async-signal-safe (which is ridiculous,
-           given that sigprocmask is). However, we only call this if we're doing
-           monitor handling (i.e. on_logfile is true), in which case this
-           isn't a signal handler, so we're OK. */
-        if (type == LT_READ || type == LT_WRITE)
-            pthread_sigmask(SIG_BLOCK, &sigset, NULL);
-        else
-            pthread_sigmask(SIG_UNBLOCK, &sigset, NULL);
-    }
-
-    saction.sa_handler = handle_sigalrm;
-    saction.sa_flags = SA_RESETHAND;
-    sigemptyset(&saction.sa_mask);                    /* sigemptyset is safe */
-    sigaction(SIGALRM, &saction, &oldsaction);        /* sigaction is safe */
-
-    alarmed = 0;
-    if (on_logfile && type == LT_WRITE)
-        alarm(1);
-    else if (timeout) {
-        alarm(timeout);                               /* alarm is safe */
-        timeout = 0;
     }
 
     sflock.l_type =
@@ -748,57 +674,219 @@ change_fd_lock(int fd, boolean on_logfile, enum locktype type, int timeout)
     sflock.l_start = 0;
     sflock.l_len = 0;
 
-    do {
-        /* When writing, tell monitoring processes to release their locks. */
-        if (on_logfile && type == LT_WRITE) {
+    /* Most of what we're doing is signal-based, so convert the timeout into
+       a signal. */
+    saction.sa_flags = SA_SIGINFO;
+    sigemptyset(&saction.sa_mask);            /* sigemptyset is safe */
+    saction.sa_sigaction = handle_sigalrm;
+    sigaction(SIGALRM, &saction, &oldsaction);
+    if (timeout == 0)
+        timeout = 1;
+
+    if (on_logfile) {
+        /* Semantics we want: wait until either we can set a lock, or we receive
+           a signal. Apparently easy, fcntl does that (if the signal isn't set
+           to SA_RESTART). The problem is that the signal can arrive between the
+           sigrtmin1_some_locker call and the fcntl call, in which case, the
+           wait happens too long; and there's no pfcntl() call to help us out.
+       
+           One thing we can do, though, is attempt to set the lock in a
+           non-blocking manner. If it works, fine. If it doesn't, we can wait
+           until we receive a signal. Thus, we only have to consider reasons why
+           the lock might become establishable without a signal. For a read
+           lock, this involves process A finishing writing when it was process B
+           that told us to relinquish the lock (for an unrelated write). For a
+           write lock, this involves a process relinquishing on another
+           process's request, because it was trying to do an unrelated
+           write. (When there isn't a third unrelated process involved, we get
+           SIGRTMIN+2 and SIGRTMIN+4 respectively in these cases.)
+       
+           Thus, we use the following algorithm: if we know a reason why the
+           file would be locked, we block on a signal, because we're going to
+           get one; if we don't know a reason why the file would be locked, we
+           alternate between attempting to set the lock, and checking to see who
+           holds a conflicting lock and telling them to let go of it.
+
+           All this time, to avoid race conditions, we keep the relevant signals
+           masked. The functions here do not have to be async-signal-safe (a
+           good thing too, because some of them aren't). */
+
+        sigemptyset(&sigset);
+        sigaddset(&sigset, SIGRTMIN+0);
+        sigaddset(&sigset, SIGRTMIN+1);
+        sigaddset(&sigset, SIGRTMIN+2);
+        sigaddset(&sigset, SIGRTMIN+3);
+        sigaddset(&sigset, SIGRTMIN+4);
+        sigaddset(&sigset, SIGALRM);
+        pthread_sigmask(SIG_BLOCK, &sigset, &oldsigset);
+
+        /* We want to see SIGRTMIN+1,3,4 and SIGALRM, even if they were masked
+           before. We do /not/ see SIGRTMIN+0,2. That way, processes with higher
+           PIDs cannot take locks from us, and we can always take locks from
+           processes with lower PIDs, introducing asymmetry that prevents
+           deadlock. */
+        sigaddset(&oldsigset, SIGRTMIN+0);
+        sigaddset(&oldsigset, SIGRTMIN+2);
+
+        sigdelset(&oldsigset, SIGRTMIN+1);
+        sigdelset(&oldsigset, SIGRTMIN+3);
+        sigdelset(&oldsigset, SIGRTMIN+4);
+        sigdelset(&oldsigset, SIGALRM);
+
+        alarmed = 0;
+        alarm(timeout);
+        
+        while (1) {
+            /* Do we know a reason why the lock won't hold? If so, wait.
+
+               This also does things like handle requests to unlock the file
+               that came in while we held a write lock, as we downgrade to a
+               monitor lock. */
+            while ((unmatched_sigrtmin1s_incoming ||
+                    unmatched_sigrtmin1s_outgoing) && !alarmed)
+                sigsuspend(&oldsigset);
+
+            if (alarmed) {
+                /* Assume the signals got lost. We're probably going to go into
+                   panic mode anyway, and we don't want them blocking the
+                   panic. */
+                unmatched_sigrtmin1s_incoming = 0;
+                unmatched_sigrtmin1s_outgoing = 0;
+                ret = 0;
+                break;
+            }
+
+            /* Can we place the lock? */
+            errno = 0;
+            ret = fcntl(fd, F_SETLK, &sflock) >= 0;
+            if (ret)
+                break; /* Yes, we can! */
+
+            /* Not even sure this is possible for a nonblocking lock set, and it
+               would have to be a signal we don't otherwise handle ourselves
+               (perhaps the client is handling SIGWINCH?), but... */
+            if (errno == EINTR)
+                continue;
+
+            /* Has something gone unexpectedly wrong? If the failure to place
+               the lock is due to a conflicting lock, that's EAGAIN or EACCES
+               (depending on what mood the kernel's in that day, or
+               something). If it's for some other reason (e.g. too many locks),
+               we should give up. */
+            if (errno != EAGAIN && errno != EACCES)
+                break;
+
+            /* fcntl thought there was a conflicting lock. Try to get details on
+               it. (It might be unlocked behind our backs, in which case we'll
+               be told there's no lock, but that's fine; just try again.) */
+
+            sflock_copy = sflock;
+            sflock_copy.l_pid = -2; /* not necessary, but valgrind doesn't know
+                                       that fcntl initializes this, so we
+                                       initialize it ourselves to let valgrind
+                                       know what's happening */
+
+            if (fcntl(fd, F_GETLK, &sflock_copy) < 0)
+                break;         /* this shouldn't be happening */
+
+            if (sflock_copy.l_type == F_UNLCK)
+                continue;      /* apparently it got unlocked by itself */
+
+            /* Signal the process that holds the lock, and ask it to unlock it.
+               This serves three purposes: getting the lock unlocked; telling
+               that process to check the file again to see if it's changed; and
+               getting it to give us a response signal (SIGRTMIN+4) when it's
+               done (thus interrupting our sigsuspend()). */
+            unmatched_sigrtmin1s_outgoing++;
 #ifdef DEBUG
-            fprintf(stderr,
-                    "%6ld: %d attempts remaining to establish write lock\n",
-                    (long)getpid(), timeout);
+            fprintf(stderr, "%6ld: sending SIGRTMIN+1 to %ld, "
+                    "unmatched outgoing %d\n",
+                    (long)getpid(), (long)sflock_copy.l_pid,
+                    (int)unmatched_sigrtmin1s_outgoing);
             fflush(stderr);
 #endif
-            int pid2 = sigrtmin1_some_locker(fd, FALSE);
-            if (pid2 != -1)
-                pid = pid2;
-            alarmed = 0;
-            sigaction(SIGALRM, &saction, NULL);        /* sigaction is safe */
-            alarm(1);
-        }
+            sigqueue(sflock_copy.l_pid, sflock_copy.l_pid < getpid() ?
+                     SIGRTMIN+0 : SIGRTMIN+1, (union sigval){.sival_int = 0});
 
+            /* logfile_watchers is a list of processes that we told to unlock
+               the file; we need to track this so we can tell them that it's OK
+               to lock the file again. */
+            program_state.logfile_watchers = realloc(
+            program_state.logfile_watchers,
+                (program_state.logfile_watcher_count+1) * sizeof (pid_t));
+            ((pid_t *)program_state.logfile_watchers)
+                [program_state.logfile_watcher_count++] = sflock_copy.l_pid;
+        }
+            
+        /* Note: We leave our signal mask in place for a bit. If we're setting a
+           read or write lock, we want to keep the signals masked for the
+           duration of the lock, and unmasking them in between means that we
+           might get a SIGRTMIN+1, harmless for a read lock, but dangerous for a
+           write lock because it would drop the lock down to a read lock and
+           we'd have to go and re-establish it again. */
+    } else {
+        /* We want the same semantics, except without the signal handling.  This
+           is much easier. We reset the alarm each time around the loop to avoid
+           a race condition due to getting some unexpected signal just before
+           the alarm runs out. */
         do {
-            errno = 0;
+            alarmed = 0;
+            alarm(timeout);                            /* alarm is safe */
             ret = fcntl(fd, F_SETLKW, &sflock) >= 0;   /* fcntl is safe */
         } while (!ret && errno == EINTR && !alarmed);
-    } while (alarmed && timeout--);
+    }
+    
 #ifdef DEBUG
     if (alarmed)
         fprintf(stderr, "%6ld: alarm() timeout!\n",
                 (long)getpid());
     else if (ret)
         fprintf(stderr, "%6ld: established %slock on fd %d\n",
-        (long)getpid(), type == LT_NONE ? "un" : type == LT_MONITOR ? "monitor"
-        : type == LT_READ ? "read" : "write", fd);
+                (long)getpid(), type == LT_NONE ? "un" :
+                type == LT_MONITOR ? "monitor "
+                : type == LT_READ ? "read " : "write ", fd);
+    else
+        fprintf(stderr, "%6ld: fcntl failed to %slock fd %d: %s\n",
+                (long)getpid(), type == LT_NONE ? "un" :
+                type == LT_MONITOR ? "monitor "
+                : type == LT_READ ? "read " : "write ", fd,
+                strerror(errno));
+                
     fflush(stderr);
 #endif
 
-    /* If a process relinquished its lock, tell it it can grab the lock again.
-       (This will actually make it block until we release our write lock, but
-       that's OK). This doesn't work reliably if we ended up having to
-       SIGRTMIN+1 more than one process, but that only happens in exceptional
-       conditions, and the only symptom is a 3-second freeze in some watching
-       process, so that's acceptable; SIGRTMIN+1ing more than one process only
-       happens in case of race condition, or if a process crashes before it can
-       relay the SIGRTMIN+1. */
-    if (pid != -1) {
-#ifdef DEBUG
-        fprintf(stderr, "%6ld: starting SIGRTMIN+2 chain, to %ld\n",
-                (long)getpid(), (long)pid);
-        fflush(stderr);
-#endif
-        sigqueue(pid, SIGRTMIN+2, (union sigval){.sival_int = 0});
-                                                      /* sigqueue is safe */
-    }
+    if (on_logfile) {
+        /* We successfully got our lock. Tell the watchers that they can start
+           monitoring again. We need to do this before unblocking signals;
+           otherwise, the process whose unlock request we respond to might not
+           be able to act on it because it's waiting for an ok-to-relock
+           message from us, leading to a deadlock. */
+        if (on_logfile)
+             flush_logfile_watchers();
 
+        /* We mask SIGRTMIN+1 at LT_READ or higher, and unmask it at LT_MONITOR
+           or lower (ditto SIGRTMIN+0). We also have to mask SIGRTMIN+2 at the
+           same time, to prevent the signals arriving in the wrong
+           order. There's no need to mask SIGRTMIN+4, given that it shouldn't be
+           arriving anyway, and if it does, we want to discard it.
+
+           We actually have all the relevant signals masked already (to prevent
+           us losing a write lock due to receiving a SIGRTMIN+1). Thus, we want
+           to unmask SIGRTMIN+4 and SIGALRM unconditionally, and also SIGRTMIN+0
+           to SIGRTMIN+3 if our lock is monitor or lower. */
+        sigemptyset(&sigset);
+        sigaddset(&sigset, SIGRTMIN+4);
+        sigaddset(&sigset, SIGALRM);
+        if (type != LT_READ && type != LT_WRITE) {
+            sigaddset(&sigset, SIGRTMIN+0);
+            sigaddset(&sigset, SIGRTMIN+1);
+            sigaddset(&sigset, SIGRTMIN+2);
+            sigaddset(&sigset, SIGRTMIN+3);
+        }
+
+        pthread_sigmask(SIG_UNBLOCK, &sigset, NULL);
+    }
+    
     alarm(0);                                         /* alarm is safe */
     sigaction(SIGALRM, &oldsaction, NULL);            /* sigaction is safe */
 

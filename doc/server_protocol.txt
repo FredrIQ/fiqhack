@@ -674,20 +674,37 @@ In this case, the server will send a `server_cancel` request.  The client
 should treat any response-requiring server request it is currently processing,
 or the next such request if it is not currently processing such a request, as
 being cancelled by the server, and should thus give the appropriate
-"cancelled" response to that request.
+"cancelled by server" response to that request.
+
+In the local API (rather than the network API), in which `libnethack` links
+directly against an interface, the `server_cancel` request can be sent at
+absolutely any time at all; this includes such inconvenient times as "in the
+middle of allocating memory", or "in the middle of another request"; this is
+"async-signal" timing.  Doing this over the network would be impossible to
+parse (the closest equivalent would be TCP urgent data, which can interrupt an
+existing data stream in such a way that both can be distinguishd, but is
+limited to one byte and thus hard to fit JSON in).  Instead, the network API
+will delay making a `server_cancel` request until it has finished sending any
+current request, if possible.  Clients nonetheless need to make arrangements
+to handle this request in the middle of accepting input from the user (which
+is its entire purpose); for instance, if blocking on the keyboard because
+their interface wants a keypress in order to handle whatever input request is
+being made at the time, they will need to block on a network socket at the
+same time in order to be able to handle a possible cancel.
 
 Be aware of possible race conditions: if the client finishes processing a
 request just as the server tries to cancel it, then the server will end up
 accidentally cancelling its next request instead.  This is why "client
 cancelled" and "server cancelled" responses look different: so if the server
-spuriously cancels a request, it can just send the request again.
+spuriously cancels a request, it can just send the request again, rather than
+interpreting the client as having cancelled the request intentionally.
 
-The response to the `server_cancel` call itself should be sent before the
-response to the call that is cancelled.
+No response to the `server_cancel` call should be sent; the server has no use
+for it, and is not equipped for arbitrarily inconveniently timed responses.
 
 Request arguments: none
 
-Response arguments: none
+Response arguments: no response
 
 
 request_command
