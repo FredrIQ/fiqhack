@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-11 */
+/* Last modified by Alex Smith, 2014-05-13 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -551,10 +551,11 @@ nh_wgetch(WINDOW * win)
                get back here outside a game (if KEY_HANGUP is returned from any
                wgetch call, it will be returned from all future wgetch calls).
 
-               If we're not in a game, EXIT_FORCE_SAVE will return normally,
-               and from there, we exit the program. */
-            nh_lib_exit();
-            exit(0);
+               If we're not in a game, EXIT_FORCE_SAVE will return normally, and
+               from there, we spam ESC until the program is closed. (You can't
+               ESC out of the main menu, so we use a special flag for that.) */
+            ui_flags.done_hup = TRUE;
+            return KEY_ESCAPE;
         }
 
         if (key == 0x3 && ui_flags.playmode == MODE_WIZARD) {

@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-05-09
+Last modified by Alex Smith, 2014-05-13
 
 This document documents the version of the network protocol used in
 NetHack 4.3, and was written by Daniel Thaler, GreyKnight, Alex Smith.
@@ -196,7 +196,7 @@ Response arguments:
   * `boolean return`: true if the game exited (whether due to a save, to a
     quit, or to the process being panicked), or if no game was running; false
     if the user cancelled the exit; true is rarely going to be observable
-    except in error conditions
+    except in error conditions or if no game is running.
 
 
 get_commands
