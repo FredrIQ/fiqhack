@@ -574,15 +574,14 @@ handle_sigrtmin1(int signum, siginfo_t *siginfo, void *context)
     sigdelset(&sigset, SIGRTMIN+4);
 
     errno = 0;
-    while (unmatched_sigrtmin1s_incoming &&
-           pselect(0, 0, 0, 0, &timeout, &sigset)
-           < 0 && errno == EINTR) {                 /* pselect is safe */
+    while (unmatched_sigrtmin1s_incoming &&         /* pselect is safe */
+           pselect(0, 0, 0, 0, &timeout, &sigset) < 0 && errno == EINTR) {
         errno = 0;
     }
 
     unmatched_sigrtmin1s_incoming = 0; /* in case we got here by timeout */
 
-    /* Restore the signal hander before we do anything that might exit. */
+    /* Restore the signal handlers before we do anything that might exit. */
     sigaction(SIGRTMIN+0, &oldsaction0, NULL);      /* sigaction is safe */
     sigaction(SIGRTMIN+1, &oldsaction1, NULL);      /* sigaction is safe */
 
@@ -643,7 +642,7 @@ change_fd_lock(int fd, boolean on_logfile, enum locktype type, int timeout)
     struct flock sflock, sflock_copy;
     struct sigaction saction, oldsaction;
     sigset_t sigset, oldsigset;
-    int ret;
+    int ret, oldtimeout;
 
     if (fd == -1)
         return FALSE;
@@ -749,7 +748,7 @@ change_fd_lock(int fd, boolean on_logfile, enum locktype type, int timeout)
         sigdelset(&oldsigset, SIGALRM);
 
         alarmed = 0;
-        alarm(timeout);
+        oldtimeout = alarm(timeout);
         
         while (1) {
             /* Do we know a reason why the lock won't hold? If so, wait.
@@ -846,7 +845,7 @@ change_fd_lock(int fd, boolean on_logfile, enum locktype type, int timeout)
            the alarm runs out. */
         do {
             alarmed = 0;
-            alarm(timeout);                            /* alarm is safe */
+            oldtimeout = alarm(timeout);               /* alarm is safe */
             ret = fcntl(fd, F_SETLKW, &sflock) >= 0;   /* fcntl is safe */
         } while (!ret && errno == EINTR && !alarmed);
     }
@@ -902,7 +901,7 @@ change_fd_lock(int fd, boolean on_logfile, enum locktype type, int timeout)
         pthread_sigmask(SIG_UNBLOCK, &sigset, NULL);
     }
     
-    alarm(0);                                         /* alarm is safe */
+    alarm(oldtimeout);                                /* alarm is safe */
     sigaction(SIGALRM, &oldsaction, NULL);            /* sigaction is safe */
 
     return ret;
