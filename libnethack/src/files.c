@@ -476,6 +476,7 @@ handle_sigrtmin1(int signum, siginfo_t *siginfo, void *context)
     struct sigaction saction, oldsaction0, oldsaction1;
     int save_errno = errno;
     sig_atomic_t save_alarmed = alarmed;
+    sigset_t sigset;
 
     (void) signum;
 
@@ -546,6 +547,15 @@ handle_sigrtmin1(int signum, siginfo_t *siginfo, void *context)
        solution to there being no appropriate API calls is that there's a way to
        get the information with no API calls.
 
+       We do, however, need to delete the signals we want to receive from the
+       signal mask; this is SIGRTMIN+1,3,4. (We take 0 and 2 from the signal
+       mask.) The problem is that the mask in ucontext can have signals masked
+       even if they were temporarily unmasked by pselect, sigsuspend, or the
+       like. Somehow, strace manages to report this argument incorrectly, even
+       if its value is copied to another memory location. (A small test program
+       shows the argument containing no signals, yet behaving differently if
+       signals are removed from it.)
+
        Interestingly, setcontext(), the POSIX API call that is intended to be
        used with the third argument, was removed from POSIX in 2008. However,
        the third argument to a sigaction() callback is still there, even though
@@ -558,9 +568,14 @@ handle_sigrtmin1(int signum, siginfo_t *siginfo, void *context)
        need ucontext.h, given that it defines a mechanism that doesn't actually
        work. */
 
+    sigset = ((ucontext_t *)context)->uc_sigmask;
+    sigdelset(&sigset, SIGRTMIN+1);
+    sigdelset(&sigset, SIGRTMIN+3);
+    sigdelset(&sigset, SIGRTMIN+4);
+
     errno = 0;
     while (unmatched_sigrtmin1s_incoming &&
-           pselect(0, 0, 0, 0, &timeout, &(((ucontext_t *)context)->uc_sigmask))
+           pselect(0, 0, 0, 0, &timeout, &sigset)
            < 0 && errno == EINTR) {                 /* pselect is safe */
         errno = 0;
     }
