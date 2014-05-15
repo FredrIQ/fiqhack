@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-09 */
+/* Last modified by Alex Smith, 2014-05-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -522,6 +522,7 @@ you_moved(void)
 {
     int moveamt = 0, wtcap = 0, change = 0;
     boolean monscanmove = FALSE;
+    enum youprop p;
 
     /* actual time passed */
     youmonst.movement -= NORMAL_SPEED;
@@ -764,8 +765,27 @@ you_moved(void)
     /* once-per-hero-took-time things go here */
     /******************************************/
 
+    /* Lava */
     if (u.utrap && u.utraptype == TT_LAVA)
         handle_lava_trap(TRUE);
+
+    /* Record which properties the character has ever used.
+
+       We have three properties fields: permanently gained intrinsics; worn
+       equipment; and temporary properties (os_timeout, os_circumstance,
+       os_polyform). Steeds and carried artifacts count with equipment in this
+       categorization; birth options count with permanently gained
+       intrinsics. */
+    for (p = 1; p <= LAST_PROP; p++) {
+        unsigned reasons = u_have_property(p, ANY_PROPERTY, TRUE);
+        if (reasons & (W_MASKABLE | W_ARTIFACT))
+            u.ever_extrinsic[p / 8] |= 1 << (p % 8);
+        if (reasons & (INTRINSIC | W_MASK(os_birthopt)))
+            u.ever_intrinsic[p / 8] |= 1 << (p % 8);
+        if (reasons & (W_MASK(os_timeout) | W_MASK(os_circumstance) |
+                       W_MASK(os_polyform)))
+            u.ever_temporary[p / 8] |= 1 << (p % 8);
+    }
 }
 
 

@@ -167,6 +167,7 @@ static void
 write_xlentry(FILE * rfile, const struct toptenentry *tt, unsigned long carried)
 {
     char buf[DTHSZ + 1];
+    int i;
     const char *uname;
 
     /* regular logfile data */
@@ -197,6 +198,19 @@ write_xlentry(FILE * rfile, const struct toptenentry *tt, unsigned long carried)
     fprintf(rfile, SEP "death=%s", buf);
 
     fprintf(rfile, SEP "conduct=%ld", encode_conduct());
+
+    fprintf(rfile, SEP "extrinsic=0x");
+    i = SIZE(u.ever_extrinsic);
+    while(i--)
+        fprintf(rfile, "%02x", u.ever_extrinsic[i]);
+    fprintf(rfile, SEP "intrinsic=0x");
+    i = SIZE(u.ever_intrinsic);
+    while(i--)
+        fprintf(rfile, "%02x", u.ever_intrinsic[i]);
+    fprintf(rfile, SEP "temporary=0x");
+    i = SIZE(u.ever_temporary);
+    while(i--)
+        fprintf(rfile, "%02x", u.ever_temporary[i]);
 
     fprintf(rfile, SEP "turns=%u", moves);
 

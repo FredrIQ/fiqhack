@@ -82,10 +82,12 @@ u_have_property(enum youprop property, unsigned reasons,
     /* External circumstances */
     if (property == BLINDED && u_helpless(hm_unconscious))
         rv |= W_MASK(os_circumstance);
+
+    /* Riding */
     if (property == FLYING && u.usteed && is_flyer(u.usteed->data))
-        rv |= W_MASK(os_circumstance);
+        rv |= W_MASK(os_saddle);
     if (property == SWIMMING && u.usteed && is_swimmer(u.usteed->data))
-        rv |= W_MASK(os_circumstance);
+        rv |= W_MASK(os_saddle);
 
     /* Overrides */
     if (!even_if_blocked) {

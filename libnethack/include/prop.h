@@ -10,6 +10,9 @@
 # include <limits.h>
 
 /*** What the properties are ***/
+/* Please do not change any of these numbers (although you can feel free to add
+   new numbers at the end); this is needed to keep the xlogfile usable between
+   versions. */
 enum youprop {
     FIRE_RES                 = 1,
     COLD_RES                 = 2,
@@ -115,7 +118,7 @@ enum objslot {
     os_last_equip = os_swapwep,
 
 /* Other object slot codes that appear in a wear mask */
-    os_saddle,    /* for riding */
+    os_saddle,    /* for riding; also used for extrinsics from riding */
 
     os_last_maskable = os_saddle,
 
@@ -130,7 +133,7 @@ enum objslot {
     os_timeout,        /* from potion, etc. */
     os_polyform,       /* does not appear in intrinsic or extrinsic field */
     os_birthopt,       /* from a birth option / difficulty level */
-    os_circumstance,   /* unconciousness, riding, etc. */
+    os_circumstance,   /* currently only blindness from unconciousness */
 
 /* these numbers are for numerical compatibility with 3.4.3, in order to keep
    caps the same as before; do not change them without also changing the code
