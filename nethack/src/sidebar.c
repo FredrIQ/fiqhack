@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-08 */
+/* Last modified by Alex Smith, 2014-05-15 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -9,7 +9,7 @@
 static WINDOW *invwin, *objwin;
 static struct nh_objlist flooritems, inventory;
 
-static nh_bool
+static void
 curses_list_items_core(struct nh_objlist *objlist, nh_bool invent, nh_bool draw)
 {
     struct nh_objlist *list;
@@ -34,21 +34,19 @@ curses_list_items_core(struct nh_objlist *objlist, nh_bool invent, nh_bool draw)
 
     if (draw)
         draw_sidebar();
-
-    return ui_flags.draw_sidebar;
 }
 
 
-nh_bool
+void
 curses_list_items(struct nh_objlist *objlist, nh_bool invent)
 {
-    return curses_list_items_core(objlist, invent, TRUE);
+    curses_list_items_core(objlist, invent, TRUE);
 }
 
-nh_bool
+void
 curses_list_items_nonblocking(struct nh_objlist *objlist, nh_bool invent)
 {
-    return curses_list_items_core(objlist, invent, FALSE);
+    curses_list_items_core(objlist, invent, FALSE);
 }
 
 

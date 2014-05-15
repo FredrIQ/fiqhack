@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-02 */
+/* Last modified by Alex Smith, 2014-05-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1753,10 +1753,10 @@ dfeature_at(int x, int y)
    function will only list up to 4 items if Blind, unless the caller sets
    all_objects to TRUE. In that case the caller should also perform cockatrice
    checks. */
-boolean
+void
 update_location(boolean all_objects)
 {
-    boolean ret, minv = FALSE;
+    boolean minv = FALSE;
     struct obj *otmp = level->objects[u.ux][u.uy];
     struct trap *trap;
     const char *dfeature = NULL;
@@ -1765,7 +1765,7 @@ update_location(boolean all_objects)
 
     if (Blind && !can_reach_floor()) {
         win_list_items(NULL, FALSE);
-        return FALSE;
+        return;
     }
 
     init_objmenulist(&objlist);
@@ -1809,9 +1809,7 @@ update_location(boolean all_objects)
         add_objitem(&objlist, MI_TEXT, 0, buf, NULL, FALSE);
     }
 
-    ret = win_list_items(&objlist, FALSE);
-
-    return ret;
+    win_list_items(&objlist, FALSE);
 }
 
 
@@ -1825,7 +1823,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
     struct trap *trap;
     const char *verb = feeling ? "feel" : "see";
     const char *dfeature = NULL;
-    boolean skip_objects = (obj_cnt >= 5), felt_cockatrice = FALSE;
+    boolean felt_cockatrice = FALSE;
     struct nh_objlist objlist;
     const char *fbuf;
     const char *title =
@@ -1837,13 +1835,20 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
         return 0;
     }
 
-    /* show the "things that are here" window iff - the player didn't get the
-       info via update_location -OR- - it was explicitly requested (obj_cnt ==
-       0) */
-    boolean skip_win = update_location(!skip_objects) && obj_cnt;
+    /* Show the "things that are here" window if it was explicitly requested
+       (obj_cnt == 0). Otherwise, print a summary. */
+    boolean looked_explicitly = !obj_cnt;
+
+    update_location(looked_explicitly);
 
     if (Engulfed && u.ustuck) {
         struct monst *mtmp = u.ustuck;
+
+        /* If you ever need to implement code for autopickup inside a monster
+           rather than this impossible(), make sure you don't pop up a message
+           box, like the current code does. */
+        if (!looked_explicitly)
+            impossible("Autopickup inside a monster?");
 
         fbuf = msgprintf("Contents of %s %s", s_suffix(mon_nam(mtmp)),
                          mbodypart(mtmp, STOMACH));
@@ -1869,7 +1874,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
         }
         return ! !feeling;
     }
-    if (!skip_objects && (trap = t_at(level, u.ux, u.uy)) && trap->tseen)
+    if (looked_explicitly && (trap = t_at(level, u.ux, u.uy)) && trap->tseen)
         pline("There is %s here.", an(trapexplain[trap->ttyp - 1]));
 
     otmp = level->objects[u.ux][u.uy];
@@ -1904,17 +1909,19 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
         if (dfeature)
             pline("%s", fbuf);
         read_engr_at(u.ux, u.uy);
-        if (!skip_objects && (feeling || !dfeature))
+        if (looked_explicitly && (feeling || !dfeature))
             pline("You %s no objects here.", verb);
         return ! !feeling;
     }
     /* we know there is something here */
 
-    if (skip_objects) {
+    if (otmp->nexthere && !looked_explicitly) {
+        /* multiple objects here, and this is an autopickup command */
         if (dfeature)
             pline("%s", fbuf);
         read_engr_at(u.ux, u.uy);
         pline("There are %s%s objects here.",
+              (obj_cnt <= 4) ? "a few" :
               (obj_cnt <= 10) ? "several" : "many", picked_some ? " more" : "");
     } else if (!otmp->nexthere) {
         /* only one object */
@@ -1932,7 +1939,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
             pline("You %s here %s.", verb, doname_price(otmp));
         /* This is the same death message as beow, contrary to the normal rules
            for death messages, because petrifying yourself on a cockatrice works
-           the same way whether there's on or many items on the square. */
+           the same way whether there's one or many items on the square. */
         if (otmp->otyp == CORPSE)
             feel_cockatrice(otmp, feeling, "feeling around for");
     } else {
@@ -1956,10 +1963,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
             add_objitem(&objlist, MI_NORMAL, 0, doname(otmp), otmp, FALSE);
         }
 
-        if (!skip_win || felt_cockatrice)
-            display_objects(&objlist, title, PICK_NONE, PLHINT_CONTAINER, NULL);
-        else
-            dealloc_objmenulist(&objlist);
+        display_objects(&objlist, title, PICK_NONE, PLHINT_CONTAINER, NULL);
 
         if (felt_cockatrice)
             feel_cockatrice(otmp, feeling, "feeling around for");
@@ -1969,7 +1973,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
 }
 
 /* Explicitly look at what is here, including all objects.  This is called by a
-   CMD_NOTIME command, so it should never take any time. */
+   CMD_NOTIME command, so it should never make any changes to the gamestate. */
 int
 dolook(const struct nh_cmd_arg *arg)
 {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-11 */
+/* Last modified by Alex Smith, 2014-05-15 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -390,14 +390,15 @@ display_objects(struct nh_objlist *objlist, const char *title, int how,
     return docd.nresults;
 }
 
-boolean
+void
 win_list_items(struct nh_objlist *objlist, boolean is_invent)
 {
     struct nh_objlist zero_objlist;
 
     if (!windowprocs.win_list_items) {
-        dealloc_objmenulist(objlist);
-        return FALSE;
+        if (objlist)
+            dealloc_objmenulist(objlist);
+        return;
     }
 
     if (!objlist) {
@@ -405,7 +406,7 @@ win_list_items(struct nh_objlist *objlist, boolean is_invent)
         objlist = &zero_objlist;
     }
 
-    return (*windowprocs.win_list_items) (objlist, is_invent);
+    (*windowprocs.win_list_items) (objlist, is_invent);
 }
 
 /*windows.c*/

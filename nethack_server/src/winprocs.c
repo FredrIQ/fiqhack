@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-09 */
+/* Last modified by Alex Smith, 2014-05-15 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -32,7 +32,7 @@ static void srv_display_objects(struct nh_objlist *objlist, const char *title,
                                 int how, int placement_hint, void *callbackarg,
                                 void (*)(const struct nh_objresult *,
                                          int, void *));
-static nh_bool srv_list_items(struct nh_objlist *objlist, nh_bool invent);
+static void srv_list_items(struct nh_objlist *objlist, nh_bool invent);
 static struct nh_query_key_result srv_query_key(const char *query,
                                                 nh_bool allow_count);
 static struct nh_getpos_result srv_getpos(int xorig, int yorig,
@@ -567,7 +567,7 @@ srv_display_objects(struct nh_objlist *objlist, const char *title,
 }
 
 
-static nh_bool
+static void
 srv_list_items(struct nh_objlist *objlist, nh_bool invent)
 {
     int i;
@@ -615,14 +615,6 @@ srv_list_items(struct nh_objlist *objlist, nh_bool invent)
             json_decref(jfloor_items);
         jfloor_items = jobj;
     }
-
-    /* If list_items returns TRUE, the dialog "Things that are here" is not
-       shown. The return value doesn't matter at all if the list doesn't
-       concern items on the floor (invent == TRUE) or if the list is empty. For 
-       items on the floor it is technically not always correct to return TRUE
-       (it should actually depend on whether the client has a sidebar or not),
-       but sending a message to the client just for this seems rather silly */
-    return TRUE;
 }
 
 

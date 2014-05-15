@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-09 */
+/* Last modified by Alex Smith, 2014-05-15 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -436,9 +436,9 @@ extern enum nh_play_status playgame(int fd_or_gameno);
 
 /* sidebar.c */
 extern void draw_sidebar(void);
-extern nh_bool curses_list_items(struct nh_objlist *objlist, nh_bool invent);
-extern nh_bool curses_list_items_nonblocking(struct nh_objlist *objlist,
-                                             nh_bool invent);
+extern void curses_list_items(struct nh_objlist *objlist, nh_bool invent);
+extern void curses_list_items_nonblocking(struct nh_objlist *objlist,
+                                          nh_bool invent);
 extern void cleanup_sidebar(nh_bool dealloc);
 
 /* status.c */

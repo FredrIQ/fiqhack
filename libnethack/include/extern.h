@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-13 */
+/* Last modified by Alex Smith, 2014-05-15 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -699,7 +699,7 @@ extern int display_binventory(int, int, boolean);
 extern struct obj *display_cinventory(struct obj *);
 extern struct obj *display_minventory(struct monst *, int, const char *);
 extern int dotypeinv(const struct nh_cmd_arg *arg);
-extern boolean update_location(boolean all_objects);
+extern void update_location(boolean all_objects);
 extern int look_here(int, boolean, boolean, boolean);
 extern int dolook(const struct nh_cmd_arg *);
 extern int dofeel(const struct nh_cmd_arg *);
@@ -1876,7 +1876,7 @@ extern int display_menu(struct nh_menulist *, const char *, int, int,
                         const int **);
 extern int display_objects(struct nh_objlist *, const char *, int, int,
                            const struct nh_objresult **);
-extern boolean win_list_items(struct nh_objlist *, boolean invent);
+extern void win_list_items(struct nh_objlist *, boolean invent);
 
 /* ### wizard.c ### */
 
