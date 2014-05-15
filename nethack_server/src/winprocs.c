@@ -577,12 +577,12 @@ srv_list_items(struct nh_objlist *objlist, nh_bool invent)
         !memcmp(objlist->items, prev_invent,
                 sizeof (struct nh_objitem) * objlist->icount)) {
         dealloc_objmenulist(objlist);
-        return TRUE;
+        return;
     }
 
     if (!invent && objlist->icount == 0 && prev_floor_icount == 0) {
         dealloc_objmenulist(objlist);
-        return TRUE;
+        return;
     }
 
     if (invent) {
