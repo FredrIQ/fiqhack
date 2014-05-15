@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-26 */
+/* Last modified by Alex Smith, 2014-05-15 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -467,8 +467,9 @@ god_zaps_you(aligntyp resp_god)
 
         /* disintegrate shield and body armor before disintegrating the
            impudent mortal, like black dragon breath -3. */
-#define slot_affected(slot) EQUIP(slot) && !(EReflecting & W_MASK(slot)) \
-            && !(EDisint_resistance & W_MASK(slot))
+#define slot_affected(slot) EQUIP(slot) &&                      \
+            !(worn_extrinsic(REFLECTING) & W_MASK(slot))        \
+            && !(worn_extrinsic(DISINT_RES) & W_MASK(slot))
         if (slot_affected(os_arms))
             destroy_arm(uarms);
         if (slot_affected(os_armc))

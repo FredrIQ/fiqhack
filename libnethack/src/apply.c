@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-28 */
+/* Last modified by Alex Smith, 2014-05-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1332,7 +1332,7 @@ get_jump_coords(const struct nh_cmd_arg *arg, coord *cc, int magic)
     cc->y = u.uy;
     if (getargpos(arg, cc, FALSE, "the desired position") == NHCR_CLIENT_CANCEL)
         return 0;       /* user pressed ESC */
-    if (!magic && !(HJumping & ~INTRINSIC) && !EJumping &&
+    if (!magic && !u_have_property(JUMPING, ~INTRINSIC, FALSE) &&
         distu(cc->x, cc->y) != 5) {
         /* The Knight jumping restriction still applies when riding a horse.
            After all, what shape is the knight piece in chess? */

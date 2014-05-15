@@ -1,82 +1,87 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-05-15 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef PROP_H
 # define PROP_H
 
+# include "compilers.h"
+# include <limits.h>
+
 /*** What the properties are ***/
-# define FIRE_RES                 1
-# define COLD_RES                 2
-# define SLEEP_RES                3
-# define DISINT_RES               4
-# define SHOCK_RES                5
-# define POISON_RES               6
-# define ACID_RES                 7
-# define STONE_RES                8
+enum youprop {
+    FIRE_RES                 = 1,
+    COLD_RES                 = 2,
+    SLEEP_RES                = 3,
+    DISINT_RES               = 4,
+    SHOCK_RES                = 5,
+    POISON_RES               = 6,
+    ACID_RES                 = 7,
+    STONE_RES                = 8,
 /* note: for the first eight properties, MR_xxx == (1 << (xxx_RES - 1)) */
-# define ADORNED                  9
-# define REGENERATION             10
-# define SEARCHING                11
-# define SEE_INVIS                12
-# define INVIS                    13
-# define TELEPORT                 14
-# define TELEPORT_CONTROL         15
-# define POLYMORPH                16
-# define POLYMORPH_CONTROL        17
-# define LEVITATION               18
-# define STEALTH                  19
-# define AGGRAVATE_MONSTER        20
-# define CONFLICT                 21
-# define PROTECTION               22
-# define PROT_FROM_SHAPE_CHANGERS 23
-# define WARNING                  24
-# define TELEPAT                  25
-# define FAST                     26
-# define STUNNED                  27
-# define CONFUSION                28
-# define SICK                     29
-# define BLINDED                  30
-# define SLEEPING                 31
-# define LWOUNDED_LEGS            32
-# define RWOUNDED_LEGS            33
-# define STONED                   34
-# define STRANGLED                35
-# define HALLUC                   36
-# define HALLUC_RES               37
-# define FUMBLING                 38
-# define JUMPING                  39
-# define WWALKING                 40
-# define HUNGER                   41
-# define GLIB                     42
-# define REFLECTING               43
-# define LIFESAVED                44
-# define ANTIMAGIC                45
-# define DISPLACED                46
-# define CLAIRVOYANT              47
-# define VOMITING                 48
-# define ENERGY_REGENERATION      49
-# define MAGICAL_BREATHING        50
-# define HALF_SPDAM               51
-# define HALF_PHDAM               52
-# define SICK_RES                 53
-# define DRAIN_RES                54
-# define WARN_UNDEAD              55
-# define INVULNERABLE             56
-# define FREE_ACTION              57
-# define SWIMMING                 58
-# define SLIMED                   59
-# define FIXED_ABIL               60
-# define FLYING                   61
-# define UNCHANGING               62
-# define PASSES_WALLS             63
-# define SLOW_DIGESTION           64
-# define INFRAVISION              65
-# define WARN_OF_MON              66
-# define XRAY_VISION              67
-# define DETECT_MONSTERS          68
-# define LAST_PROP                (DETECT_MONSTERS)
+    ADORNED                  = 9,
+    REGENERATION             = 10,
+    SEARCHING                = 11,
+    SEE_INVIS                = 12,
+    INVIS                    = 13,
+    TELEPORT                 = 14,
+    TELEPORT_CONTROL         = 15,
+    POLYMORPH                = 16,
+    POLYMORPH_CONTROL        = 17,
+    LEVITATION               = 18,
+    STEALTH                  = 19,
+    AGGRAVATE_MONSTER        = 20,
+    CONFLICT                 = 21,
+    PROTECTION               = 22,
+    PROT_FROM_SHAPE_CHANGERS = 23,
+    WARNING                  = 24,
+    TELEPAT                  = 25,
+    FAST                     = 26,
+    STUNNED                  = 27,
+    CONFUSION                = 28,
+    SICK                     = 29,
+    BLINDED                  = 30,
+    SLEEPING                 = 31,
+    LWOUNDED_LEGS            = 32,
+    RWOUNDED_LEGS            = 33,
+    STONED                   = 34,
+    STRANGLED                = 35,
+    HALLUC                   = 36,
+    HALLUC_RES               = 37,
+    FUMBLING                 = 38,
+    JUMPING                  = 39,
+    WWALKING                 = 40,
+    HUNGER                   = 41,
+    GLIB                     = 42,
+    REFLECTING               = 43,
+    LIFESAVED                = 44,
+    ANTIMAGIC                = 45,
+    DISPLACED                = 46,
+    CLAIRVOYANT              = 47,
+    VOMITING                 = 48,
+    ENERGY_REGENERATION      = 49,
+    MAGICAL_BREATHING        = 50,
+    HALF_SPDAM               = 51,
+    HALF_PHDAM               = 52,
+    SICK_RES                 = 53,
+    DRAIN_RES                = 54,
+    WARN_UNDEAD              = 55,
+    /* 56 unused for numbering, was a broken duplicate of u.uinvulnerable */
+    FREE_ACTION              = 57,
+    SWIMMING                 = 58,
+    SLIMED                   = 59,
+    FIXED_ABIL               = 60,
+    FLYING                   = 61,
+    UNCHANGING               = 62,
+    PASSES_WALLS             = 63,
+    SLOW_DIGESTION           = 64,
+    INFRAVISION              = 65,
+    WARN_OF_MON              = 66,
+    XRAY_VISION              = 67,
+    DETECT_MONSTERS          = 68,
+    LAST_PROP                = DETECT_MONSTERS,
+};
 
 /* This enum holds all the equipment that is tracked indirectly in struct you;
    that is, u.uequip is an array of pointers into other chains. These objects
@@ -120,8 +125,28 @@ enum objslot {
 
     os_last_slot = os_invoked,
 
+/* "slot" codes that aren't extrinsics at all, but give reasons why you
+   might have a property */
+    os_timeout,        /* from potion, etc. */
+    os_polyform,       /* does not appear in intrinsic or extrinsic field */
+    os_birthopt,       /* from a birth option / difficulty level */
+    os_circumstance,   /* unconciousness, riding, etc. */
+
+/* these numbers are for numerical compatibility with 3.4.3, in order to keep
+   caps the same as before; do not change them without also changing the code
+   for intrinsics that time out */
+    os_role = 24,      /* from role + level combination */
+    os_race = 25,      /* from race + level combination */
+    os_outside = 26,   /* conferred or granted (corpse, throne, etc.) */
+
+    os_special = 28,   /* magic number used for controlled levitation */
+
     os_invalid = -1,
 };
+
+static_assert(os_circumstance < os_role, "Too many equipment slots!");
+static_assert(os_special < sizeof (unsigned) * CHAR_BIT,
+              "NetHack requires 32-bit integers.");
 
 enum equipmsg {
     em_silent,    /* no messages; used for theft, etc. */
@@ -230,17 +255,24 @@ enum tracked_location {
 # define uball    (u.utracked[tos_ball])
 # define uchain   (u.utracked[tos_chain])
 
-/* Flags for intrinsics */
+/* Flags for intrinsics
+
+   TODO: Give these better names. The current names are for 3.4.3
+   compatibility. */
 
 /* Timed properties */
 # define TIMEOUT      0x00ffffffU      /* Up to 16 million turns */
 /* Permanent properties */
-# define FROMEXPER    0x01000000U      /* Gain/lose with experience, for role */
-# define FROMRACE     0x02000000U      /* Gain/lose with experience, for race */
-# define FROMOUTSIDE  0x04000000U      /* By corpses, prayer, thrones, etc. */
+# define FROMEXPER    ((unsigned)W_MASK(os_role))
+# define FROMRACE     ((unsigned)W_MASK(os_race))
+# define FROMOUTSIDE  ((unsigned)W_MASK(os_outside))
 # define INTRINSIC    (FROMOUTSIDE|FROMRACE|FROMEXPER)
 /* Control flags */
-# define I_SPECIAL    0x10000000U      /* Property is controllable */
+# define I_SPECIAL    ((unsigned)W_MASK(os_special))
+# define ANY_PROPERTY ((unsigned)-1)
+
+/* Just to make sure there are no arithmetic mistakes... */
+static_assert(TIMEOUT == FROMEXPER-1, "Bad intrinsic timeout");
 
 #endif /* PROP_H */
 

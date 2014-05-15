@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Alex Smith, 2014-05-15 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -2053,30 +2053,34 @@ boolean
 ureflects(const char *fmt, const char *str)
 {
     /* Check from outermost to innermost objects */
-    if (EReflecting & W_MASK(os_arms)) {
+    unsigned reflect_reason = u_have_property(REFLECTING, ANY_PROPERTY, FALSE);
+    if (reflect_reason & W_MASK(os_arms)) {
         if (fmt && str) {
             pline(fmt, str, "shield");
             makeknown(SHIELD_OF_REFLECTION);
         }
         return TRUE;
-    } else if (EReflecting & W_MASK(os_wep)) {
+    } else if (reflect_reason & W_MASK(os_wep)) {
         /* Due to wielded artifact weapon */
         if (fmt && str)
             pline(fmt, str, "weapon");
         return TRUE;
-    } else if (EReflecting & W_MASK(os_amul)) {
+    } else if (reflect_reason & W_MASK(os_amul)) {
         if (fmt && str) {
             pline(fmt, str, "medallion");
             makeknown(AMULET_OF_REFLECTION);
         }
         return TRUE;
-    } else if (EReflecting & W_MASK(os_arm)) {
+    } else if (reflect_reason & W_MASK(os_arm)) {
         if (fmt && str)
             pline(fmt, str, "armor");
         return TRUE;
-    } else if (youmonst.data == &mons[PM_SILVER_DRAGON]) {
+    } else if (reflect_reason & W_MASK(os_polyform)) {
         if (fmt && str)
             pline(fmt, str, "scales");
+        return TRUE;
+    } else {
+        impossible("Reflecting for unknown reason");
         return TRUE;
     }
     return FALSE;

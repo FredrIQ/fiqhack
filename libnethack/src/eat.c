@@ -1299,7 +1299,7 @@ eataccessory(struct obj *otmp)
             case RIN_SEE_INVISIBLE:
                 set_mimic_blocking();
                 see_monsters();
-                if (Invis && !oldprop && !ESee_invisible &&
+                if (Invis && !oldprop && !worn_extrinsic(SEE_INVIS) &&
                     !perceives(youmonst.data) && !Blind) {
                     newsym(u.ux, u.uy);
                     pline("Suddenly you can see yourself.");
@@ -1307,8 +1307,8 @@ eataccessory(struct obj *otmp)
                 }
                 break;
             case RIN_INVISIBILITY:
-                if (!oldprop && !EInvis && !BInvis && !See_invisible &&
-                    !Blind) {
+                if (!oldprop && !worn_extrinsic(INVIS) &&
+                    !worn_blocked(INVIS) && !See_invisible && !Blind) {
                     newsym(u.ux, u.uy);
                     pline("Your body takes on a %s transparency...",
                           Hallucination ? "normal" : "strange");
@@ -1954,10 +1954,10 @@ gethungry(void)
         u.uhunger--;    /* ordinary food consumption */
 
     if (moves % 2) {    /* odd turns */
-        /* Regeneration uses up food, unless due to an artifact */
-        if (HRegeneration ||
-            ((ERegeneration & (~W_ARTIFACT)) &&
-             (ERegeneration != W_MASK(os_wep) || !uwep->oartifact)))
+        /* Regeneration uses up food, unless due to an artifact.  Note: assumes
+           that only artifacts can confer regneration via wield. */
+        if (u_have_property(REGENERATION,
+                            ~(W_ARTIFACT | W_MASK(os_wep)), FALSE))
             u.uhunger--;
         if (near_capacity() > SLT_ENCUMBER)
             u.uhunger--;
@@ -1965,7 +1965,7 @@ gethungry(void)
         if (Hunger)
             u.uhunger--;
         /* Conflict uses up food too */
-        if (HConflict || (EConflict & (~W_ARTIFACT)))
+        if (u_have_property(CONFLICT, ~(W_ARTIFACT | W_MASK(os_wep)), FALSE))
             u.uhunger--;
         /* +0 charged rings don't do anything, so don't affect hunger */
         /* Slow digestion still uses ring hunger (it suppresses normal hunger,

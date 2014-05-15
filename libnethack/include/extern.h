@@ -181,9 +181,6 @@ extern void reset_occupations(boolean);
 extern int get_command_idx(const char *cmd);
 extern boolean last_command_was(const char *cmd);
 extern enum nh_command_status do_command(int, struct nh_cmd_arg *);
-extern void enlightenment(int);
-extern void show_conduct(int);
-extern unsigned long encode_conduct(void);
 extern boolean dir_to_delta(enum nh_direction dir, schar * dx, schar * dy,
                             schar * dz);
 extern int xytod(schar, schar);
@@ -1938,6 +1935,14 @@ extern int extra_pref(struct monst *, struct obj *);
 /* ### write.c ### */
 
 extern int dowrite(struct obj *, const struct nh_cmd_arg *);
+
+/* ### youprop.c ### */
+
+extern unsigned u_have_property(enum youprop property,
+                                unsigned reasons, boolean even_if_blocked);
+extern void enlightenment(int);
+extern void unspoilered_intrinsics(void);
+extern void show_conduct(int);
 
 /* ### zap.c ### */
 
