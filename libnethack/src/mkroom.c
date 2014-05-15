@@ -98,7 +98,6 @@ mkshop(struct level *lev)
 
     /* first determine shoptype */
     styp = -1;
-gottype:
     for (sroom = &lev->rooms[0];; sroom++) {
         if (sroom->hx < 0)
             return;

@@ -551,7 +551,6 @@ makemaz(struct level *lev, const char *s)
 
     } else
         strcpy(protofile, "");
-    }
 
     if (*protofile) {
         strcat(protofile, LEV_EXT);

@@ -997,8 +997,6 @@ monnam_is_pname(int idx)
 const char *
 roguename(void)
 {       /* Name of a Rogue player */
-    char *i, *opts;
-
     return rn2(3) ? (rn2(2) ? "Michael Toy" : "Kenneth Arnold")
         : "Glenn Wichman";
 }
