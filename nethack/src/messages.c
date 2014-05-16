@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-05-09 */
+/* Last modified by Derrick Sund, 2014-05-16 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -470,6 +470,18 @@ update_showlines(char **intermediate, int *length, nh_bool force_more)
     return need_more;
 }
 
+/* Marks all showlines as seen.  Called at the start of each turn to ensure that
+   no extraneous --More-- stuff gets printed if the player opens a Count: window
+   or something similar. */
+void
+mark_showlines_seen(void)
+{
+    int i;
+    for (i = 0; i < num_showlines; i++) {
+        showlines[0].unseen = FALSE;
+    }
+}
+
 /* Guarantee the player sees the current message buffer by forcing a more prompt
    if this is legal. */
 static void
@@ -497,7 +509,10 @@ force_seen(void)
 void
 fresh_message_line(nh_bool canblock)
 {
-    force_seen();
+    /* If the top line is already seen, just bump the messages without
+       calling force_seen. */
+    if (showlines[num_showlines - 1].unseen)
+        force_seen();
     if (showlines[0].message)
         move_lines_upward(1);
 }

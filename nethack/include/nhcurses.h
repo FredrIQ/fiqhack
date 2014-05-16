@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-15 */
+/* Last modified by Derrick Sund, 2014-05-16 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -373,6 +373,7 @@ extern void redo_showlines(void);
 extern void curses_print_message(int turn, const char *msg);
 extern void curses_print_message_nonblocking(int turn, const char *inmsg);
 extern void draw_msgwin(void);
+extern void mark_showlines_seen(void);
 extern void fresh_message_line(nh_bool blocking);
 extern void pause_messages(void);
 extern void doprev_message(void);
