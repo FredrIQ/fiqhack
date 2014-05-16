@@ -1120,6 +1120,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
     int pm;
     aligntyp altaralign = a_align(u.ux, u.uy);
     boolean sanctum = level->locations[u.ux][u.uy].altarmask & AM_SANCTUM;
+    int cnt; /* for loop initial declarations are only allowed in C99 mode */
     struct obj *otmp;
 
     if (!on_altar() || Engulfed) {
@@ -1275,6 +1276,9 @@ dosacrifice(const struct nh_cmd_arg *arg)
                 /* If sacrificing unicorn of your alignment to altar not of */
                 /* your alignment, your god gets angry and it's a conversion */
             if (unicalign == u.ualign.type) {
+                for (cnt = 0; cnt <= u.ualign.record; cnt++) {
+                    break_conduct(conduct_lostalign);
+                }
                 u.ualign.record = -1;
                 value = 1;
             } else

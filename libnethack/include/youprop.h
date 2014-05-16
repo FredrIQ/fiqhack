@@ -247,6 +247,7 @@ enum player_conduct {
     conduct_genocide,                    /* committed genocide */
     conduct_elbereth,                    /* wrote an elbereth */
     conduct_puddingsplit,                /* split a pudding */
+    conduct_lostalign,                   /* lost alignment record points */
     num_conducts,
 };
 

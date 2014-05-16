@@ -797,11 +797,16 @@ get_player_ac(void)
 void
 adjalign(int n)
 {
+    int cnt; /* for loop initial declarations are only allowed in C99 mode */
     int newalign = u.ualign.record + n;
 
     if (n < 0) {
-        if (newalign < u.ualign.record)
+        if (newalign < u.ualign.record) {
+            for (cnt = newalign; cnt < u.ualign.record; cnt++) {
+                break_conduct(conduct_lostalign);
+            }
             u.ualign.record = newalign;
+        }
     } else if (newalign > u.ualign.record) {
         u.ualign.record = newalign;
         if (u.ualign.record > ALIGNLIM)
