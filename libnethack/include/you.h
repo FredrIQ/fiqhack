@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-15 */
+/* Last modified by Sean Hunt, 2014-05-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -128,9 +128,9 @@ struct you {
     int uconduct_time[num_conducts];  /* when each conduct was first broken */
 
     /* Track which properties the character has /ever/ had, for the xlog */
-    uint8_t ever_extrinsic[(LAST_PROP + 7) / 8];
-    uint8_t ever_intrinsic[(LAST_PROP + 7) / 8];
-    uint8_t ever_temporary[(LAST_PROP + 7) / 8];
+    uchar ever_extrinsic[(LAST_PROP + 7) / 8];
+    uchar ever_intrinsic[(LAST_PROP + 7) / 8];
+    uchar ever_temporary[(LAST_PROP + 7) / 8];
 
     struct attribs acurr,       /* your current attributes (eg. str) */
             aexe,       /* for gain/loss via "exercise" */
