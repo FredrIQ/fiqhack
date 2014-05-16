@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-15 */
+/* Last modified by Sean Hunt, 2014-05-15 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -2135,7 +2135,6 @@ mon_consume_unstone(struct monst *mon, struct obj *obj, boolean by_you,
         obj->quan = save_quan;
     } else
         You_hear("%s.", (obj->otyp == POT_ACID) ? "drinking" : "chewing");
-    m_useup(mon, obj);
     if (((obj->otyp == POT_ACID) || acidic(&mons[obj->corpsenm])) &&
         !resists_acid(mon)) {
         mon->mhp -= rnd(15);
@@ -2143,6 +2142,7 @@ mon_consume_unstone(struct monst *mon, struct obj *obj, boolean by_you,
     }
     if (mon->mhp <= 0) {
         pline("%s dies!", Monnam(mon));
+        m_useup(mon, obj);
         if (by_you)
             xkilled(mon, 0);
         else
@@ -2170,6 +2170,7 @@ mon_consume_unstone(struct monst *mon, struct obj *obj, boolean by_you,
         mon->mconf = 0;
     }
     mon->mlstmv = moves;        /* it takes a turn */
+    m_useup(mon, obj);
 }
 
 /*muse.c*/
