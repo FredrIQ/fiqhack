@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-06 */
+/* Last modified by Sean Hunt, 2014-05-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -135,6 +135,13 @@ static struct nh_autopickup_rules def_autopickup =
     { def_ap_ruleset, SIZE(def_ap_ruleset) };
 
 
+/* This is statically allocated, which means a pointer to it must never
+ * escape this file (since nh_option_desc is supposed to be dynamically
+ * allocated.
+ *
+ * The only valid use of this, therefore, is to copy it to a new
+ * dynamically-allocated copy and go from there.
+ */
 static const struct nh_option_desc const_options[] = {
     {"autodig", "dig if moving and wielding digging tool", FALSE, OPTTYPE_BOOL,
      {.b = FALSE}},

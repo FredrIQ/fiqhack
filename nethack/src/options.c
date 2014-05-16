@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-01 */
+/* Last modified by Sean Hunt, 2014-05-16 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -148,6 +148,22 @@ struct nhlib_boolopt_map boolopt_map[] = {
     {NULL, NULL}
 };
 
+/* When editing game options, there are two scenarios:
+ *  - A game in progress, in which case changes apply only to that game.
+ *  - No game in progress, in which case changes apply to new games and are
+ *    saved.
+ *
+ * This pointer is to the client's local copy of the game options, which are
+ * edited when no game is in progress, and used to set the startup options for a
+ * new game. They have no effect on already-started games.
+ *
+ * This pointer should not be used directly in the options menu code. Instead,
+ * curses_get_nh_opts will retrieve a copy of the game options to use at that
+ * point in time. The returned option list should then be passed to
+ * curses_free_nh_opts, which will free the option list if it was obtained anew
+ * from the game, or do nothing if it was just this pointer. In this way, we
+ * abstract away the notion of the current option list.
+ */
 static struct nh_option_desc *nh_options = NULL;
 
 
