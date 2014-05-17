@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Alex Smith, 2014-05-17 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -270,7 +270,7 @@ void
 tty_hook_watch_fd(int fd, int watch)
 {
     if (fd >= FD_SETSIZE)
-        abort(); /* avoid UB using defined, noticeable behaviour */
+        abort(); /* replace UB with defined, noticeable behaviour */
 
     if (watch) {
         FD_SET(fd, &watchfds);
@@ -443,6 +443,9 @@ platform_specific_getkeystring(int timeout_ms, int ignore_signals)
             t.tv_sec = 0;
             t.tv_usec = 200000;
         }
+
+        if (max < watchfd_max)
+            max = watchfd_max;
 
         errno = 0;
         int s = select(max + 1, &readfds, 0, 0,
