@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2014-05-11
+# Last modified by Alex Smith, 2014-05-17
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -67,6 +67,7 @@
         _warn_about_global_variables => {
             object => "bpath:libnethack/libnethack$dllext",
             command => ['optionset:os_osx_linux',
+                        'optionset:maintainer_mode',
                         'cmd:sh',
                         'path:libnethack/util/checkglobals.sh',
                         'optpath::path:libnethack/util/checkglobals.sh',
