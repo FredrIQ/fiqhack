@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Alex Smith, 2014-05-17 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -228,6 +228,9 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
     int pick_list[1];
     int role, race, gend, align;
     const struct nh_roles_info *ri = nh_get_roles();
+
+    if (!ri)
+        return FALSE; /* the server crashed */
 
     /* Copy ri, so that it persists through future API calls; otherwise it has
        a tendency to be deallocated early. */

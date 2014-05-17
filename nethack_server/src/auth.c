@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2014-05-17 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -138,7 +138,8 @@ auth_send_result(int sockfd, enum authresult result, int is_reg, int connid)
     len = strlen(jstr);
     written = 0;
     do {
-        ret = write(sockfd, jstr, len - written);
+        /* Remember to include a NUL; the client expects that. */
+        ret = write(sockfd, jstr, len - written + 1);
         if (ret > 0)
             written += ret;
         /* don't care if it fails - if it does, the main event loop will be

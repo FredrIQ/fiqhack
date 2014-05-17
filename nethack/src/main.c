@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-13 */
+/* Last modified by Alex Smith, 2014-05-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -349,6 +349,7 @@ main(int argc, char *argv[])
 {
     char **gamepaths;
     int i;
+    nh_bool init_ok;
 
     umask(0777 & ~FCMASK);
 
@@ -365,7 +366,7 @@ main(int argc, char *argv[])
 
     setup_signals();
     init_curses_ui(gamepaths[DATAPREFIX]);
-    read_nh_config();
+    init_ok = read_nh_config();
 
     for (i = 0; i < PREFIX_COUNT; i++)
         free(gamepaths[i]);
@@ -375,7 +376,10 @@ main(int argc, char *argv[])
     process_args(argc, argv);   /* other command line options */
     init_displaychars();
 
-    mainmenu();
+    if (init_ok)
+        mainmenu();
+    else
+        curses_msgwin("Could not initialize game options!");
 
     exit_curses_ui();
     nh_lib_exit();

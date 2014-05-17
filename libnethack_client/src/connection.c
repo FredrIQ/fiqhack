@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-05-17 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -11,14 +11,21 @@
 struct nhnet_server_version nhnet_server_ver;
 
 static int sockfd = -1;
+/* We use a limited-size buffer for the unread messages to avoid/reduce the risk
+   of DOS attacks, and to detect mistakes where the server is continuously
+   sending characters that don't form valid messages. startptr is the start of
+   the unread data; endptr the end of the received data. Whenever endptr
+   catches startptr, they both reset to the start of the buffer. */
+static char unread_messages[1024 * 1024 * 16];
+static char *unread_message_startptr = unread_messages;
+static char *unread_message_endptr = unread_messages;
 static int connection_id;
 static int net_active;
 int conn_err, error_retry_ok;
 
-/* Prevent automatic retries during connection setup or teardown.
- * When the connection is being set up, it is better to report a failure
- * immediately; when the connection is being closed it doesn't matter if it
- * already is */
+/* Prevent automatic retries during connection setup or teardown. When the
+   connection is being set up, it is better to report a failure immediately;
+   when the connection is being closed it doesn't matter if it already is */
 static int in_connect_disconnect;
 
 /* saved connection details */
@@ -109,8 +116,7 @@ send_json_msg(json_t * jmsg)
 static json_t *
 receive_json_msg(void)
 {
-    char *rbuf, *bp;
-    int datalen, ret, rbufsize;
+    int datalen, ret;
     json_t *recv_msg;
     json_error_t err;
     fd_set rfds;
@@ -119,67 +125,64 @@ receive_json_msg(void)
     FD_ZERO(&rfds);
     FD_SET(sockfd, &rfds);
 
-    rbufsize = 1024 * 1024;     /* initial size: 1MB */
-    rbuf = malloc(rbufsize);
-    memset(rbuf, 0, rbufsize);
     recv_msg = NULL;
     datalen = 0;
     while (!recv_msg) {
-        /* select before reading so that we get a timeout. Otherwise the
-           program might hang indefinitely in read if the connection has failed 
-         */
-        tv.tv_sec = 10; /* 10s * 3 retries results in a long wait on failed
-                           connections... */
-        tv.tv_usec = 0;
-        ret = select(sockfd + 1, &rfds, NULL, NULL, &tv);
-        if (ret <= 0) {
-            /* we aren't expecting any signals, so it seems ok to abort even if
-               ret == -1 && errno == EINTR */
-            free(rbuf);
-            return NULL;
-        }
+        /* Do we have unread messages to return? We have a complete unread
+           message if there's a NUL byte anywhere in the unread region. */
+        char *eom = memchr(unread_message_startptr, '\0',
+                           unread_message_endptr - unread_message_startptr);
+        if (eom) {
+            recv_msg = json_loads(unread_message_startptr,
+                                  JSON_REJECT_DUPLICATES, &err);
+            unread_message_startptr = eom+1;
 
-        /* leave the last byte in the buffer free for the '\0' */
-        ret = recv(sockfd, &rbuf[datalen], rbufsize - datalen - 1, 0);
-        if (ret == -1 && errno == EINTR)
-            continue;
-        else if (ret <= 0) {
-            free(rbuf);
-            return NULL;
-        }
-        datalen += ret;
-
-        rbuf[datalen] = '\0';   /* terminate the string */
-        bp = &rbuf[datalen - 1];
-        while (isspace(*bp))
-            bp--;
-
-        recv_msg = NULL;
-        if (*bp == '}') {       /* possibly the end of the json object */
-            recv_msg = json_loads(rbuf, JSON_REJECT_DUPLICATES, &err);
             if (!recv_msg && err.position < datalen) {
-                print_error("Broken response received from server.");
-                free(rbuf);
+                unread_message_startptr = unread_message_endptr =
+                    unread_messages;
+                print_error("Broken response received from server");
                 return json_object();
             }
-        }
 
-        /* allow the receive buffer to grow to 16MB. Growing larger than 1MB is
-           extremely unlikely (I can't imagine how it would happen); 16MB or
-           more is clearly an error. */
-        if (!recv_msg && datalen >= rbufsize - 1) {
-            if (datalen < 16 * 1024 * 1024) {
-                rbufsize *= 2;
-                rbuf = realloc(rbuf, rbufsize);
-            } else {
-                print_error("Too much incoming data. Server error?");
-                free(rbuf);
+            if (unread_message_endptr == unread_message_startptr)
+                unread_message_startptr = unread_message_endptr =
+                    unread_messages;
+        } else {
+            /* select before reading so that we get a timeout. Otherwise the
+               program might hang indefinitely in read if the connection has
+               failed. */
+            tv.tv_sec = 10; /* 10s * 3 retries results in a long wait on failed
+                               connections... */
+            tv.tv_usec = 0;
+            do {
+                ret = select(sockfd + 1, &rfds, NULL, NULL, &tv);
+            } while (ret == -1 && errno == EINTR);
+            
+            if (ret <= 0) {
+                unread_message_startptr = unread_message_endptr =
+                    unread_messages;
+                return NULL;
+            }
+
+            ret = recv(sockfd, unread_message_endptr,
+                       unread_messages + sizeof unread_messages -
+                       unread_message_endptr, 0);
+            if (ret == -1 && errno == EINTR)
+                continue;
+            else if (ret <= 0)
+                return NULL;
+            if (unread_message_endptr >
+                unread_messages + sizeof unread_messages - 2) {
+                unread_message_startptr = unread_message_endptr =
+                    unread_messages;
+                print_error("The server is sending messages too quickly.");
                 return json_object();
             }
+            unread_message_endptr += ret;
+            /* loop back and see if we have a complete message yet */
         }
     }
 
-    free(rbuf);
     return recv_msg;
 }
 
@@ -220,6 +223,8 @@ send_receive_msg(const char *const msgtype, json_t *volatile jmsg)
         }
         json_decref(send_msg);
 
+    receive_without_sending:
+        ;
         /* receive the response */
         json_t *recv_msg = receive_json_msg();
         if (!recv_msg) {
@@ -254,6 +259,15 @@ send_receive_msg(const char *const msgtype, json_t *volatile jmsg)
            recv_msg exists. Since we still want the value afterwards, it must
            be copied. */
         strncpy(key, json_object_iter_key(iter), BUFSZ - 1);
+
+        if (!strcmp(key, "server_cancel")) {
+            /* This message is special in that it can be called out of
+               sequence, and has no response. */
+            json_decref(recv_msg); /* free it */
+            windowprocs.win_server_cancel();
+            goto receive_without_sending;
+        }
+
         send_receive_recent_response = json_object_iter_value(iter);
 
         if (json_object_iter_next(recv_msg, iter))
@@ -327,6 +341,66 @@ error:
     if (ex_jmp_buf_valid)
         longjmp(ex_jmp_buf, 1);
     return NULL;
+}
+
+
+int
+nhnet_get_socket_fd(void)
+{
+    return sockfd;
+}
+
+
+/* Should only be called when the return value of nhnet_get_socket_fd refers to
+   a readable file descriptor (otherwise it may well hang); and should be called
+   in that situation. The client library will check for server cancels, and call
+   win_server_cancel if it finds one; it will error out if it finds any other
+   sort of message (because the server shouldn't be sending asynchronously
+   otherwise).
+
+   If the connection has dropped, this function will attempt to restart the
+   connection; this may involve longjmping back to play_game in the process.
+
+   This function is not async-signal-safe. (Most functions aren't, but it's less
+   obvious with this one because its main purpose is to call win_server_cancel,
+   which is signal-safe, and it's not unreasonable to want to call it directly
+   from a SIGIO handler. You should handle the signal in the normal way instead,
+   via bouncing it off your event loop.) */
+void 
+nhnet_check_socket_fd(void) {
+    json_t *j = receive_json_msg();
+    void *iter;
+
+    if (j == NULL) {
+        /* connection failure */
+        if (restart_connection()) /* might longjmp or return normally */
+            return;
+
+        /* we couldn't restart it */
+        close(sockfd);
+        sockfd = -1;
+        conn_err = TRUE;
+        playgame_jmp_buf_valid = 0;
+        if (ex_jmp_buf_valid)
+            longjmp(ex_jmp_buf, 1);
+        /* otherwise we can't do anything about the error */
+        return;
+    }
+
+    iter = json_object_iter(j);
+    if (!iter || strcmp(json_object_iter_key(iter), "server_cancel") != 0) {
+        /* Misbehaving server, it shouldn't be sending out of sequence */
+        print_error("Server sent a JSON object out of sequence");
+        if (ex_jmp_buf_valid) {
+            playgame_jmp_buf_valid = 0;
+            longjmp(ex_jmp_buf, 1);
+        }
+        /* otherwise we can't do anything about the error */
+        return;
+    }
+
+    json_decref(j);
+    windowprocs.win_server_cancel();
 }
 
 

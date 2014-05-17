@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-01 */
+/* Last modified by Alex Smith, 2014-05-17 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1188,7 +1188,7 @@ get_config_name(fnchar * buf, nh_bool ui)
 }
 
 
-void
+nh_bool
 read_nh_config(void)
 {
     fnchar filename[BUFSZ];
@@ -1198,8 +1198,7 @@ read_nh_config(void)
        in operation. */
     struct nh_option_desc *opts = nh_get_options();
     if (!opts)
-        /* TODO: panic? */
-        return;
+        return FALSE;
 
     nhlib_free_optlist(nh_options);
     nh_options = nhlib_clone_optlist(opts);
@@ -1208,6 +1207,8 @@ read_nh_config(void)
         get_config_name(filename, FALSE);
         read_config_file(filename);
     }
+
+    return TRUE;
 }
 
 void

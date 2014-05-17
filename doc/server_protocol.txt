@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-05-13
+Last modified by Alex Smith, 2014-05-17
 
 This document documents the version of the network protocol used in
 NetHack 4.3, and was written by Daniel Thaler, GreyKnight, Alex Smith.
@@ -15,7 +15,12 @@ Basics
 ======
 
 The protocol is based on JSON.  Each command and each response is a single,
-valid JSON object in UTF8 encoding.
+valid JSON object in UTF8 encoding. The server will insert a NUL character
+between each command it sends, to allow clients to easily determine where one
+ends and the next starts (NUL cannot appear in a JSON encoding). The client
+does not currently insert such NULs. (TODO: It probably should, and the server
+should probably respect them, in case the client needs to send `exit_game`
+immediately after another command, without waiting for a response in between.)
 
 The server protocol is an enhancement of the protocol used by a window port to
 connect to a local game; the two are very similar, and so this documentation

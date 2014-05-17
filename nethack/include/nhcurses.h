@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-15 */
+/* Last modified by Alex Smith, 2014-05-17 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -125,6 +125,7 @@ struct interface_flags {
                            lines */
     nh_bool color;      /* the terminal has color capability */
     nh_bool unicode;    /* ncurses detected a unicode locale */
+    nh_bool connected_to_server;
     int levelmode;
     int playmode;
     int viewheight;
@@ -389,7 +390,7 @@ extern nh_bool curses_set_option(const char *name, union nh_optvalue value);
 extern void display_options(nh_bool change_birth_opt);
 extern void print_options(void);
 extern void init_options(void);
-extern void read_nh_config(void);
+extern nh_bool read_nh_config(void);
 extern void read_ui_config(void);
 extern void write_nh_config(void);
 extern void write_ui_config(void);

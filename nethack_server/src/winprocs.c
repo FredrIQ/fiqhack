@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-15 */
+/* Last modified by Alex Smith, 2014-05-17 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -477,9 +477,8 @@ srv_display_menu(struct nh_menulist *ml, const char *title, int how,
     for (i = 0; i < ml->icount; i++)
         json_array_append_new(jarr, json_menuitem(ml->items + i));
     jobj =
-        json_pack("{so,si,si,ss,si}", "items", jarr, "icount", ml->icount,
-                  "how", how, "title", title ? title : "",
-                  "plhint", placement_hint);
+        json_pack("{so,si,ss,si}", "items", jarr, "how", how,
+                  "title", title ? title : "", "plhint", placement_hint);
 
     dealloc_menulist(ml);
 
@@ -533,9 +532,8 @@ srv_display_objects(struct nh_objlist *objlist, const char *title,
     for (i = 0; i < objlist->icount; i++)
         json_array_append_new(jarr, json_objitem(objlist->items + i));
     jobj =
-        json_pack("{so,si,si,ss,si}", "items", jarr, "icount",
-                  objlist->icount, "how", how, "title", title ? title : "",
-                  "plhint", placement_hint);
+        json_pack("{so,si,ss,si}", "items", jarr, "how", how,
+                  "title", title ? title : "", "plhint", placement_hint);
 
     dealloc_objmenulist(objlist);
 
@@ -704,6 +702,12 @@ srv_getline(const char *query, void *callbackarg,
 
     callback(str, callbackarg);
     json_decref(jobj);
+}
+
+static void
+srv_server_cancel(void)
+{
+    client_server_cancel_msg();
 }
 
 /*---------------------------------------------------------------------------*/

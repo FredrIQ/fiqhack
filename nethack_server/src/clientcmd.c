@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-05-17 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -104,7 +104,8 @@ read_json_option(json_t * jobj, struct nh_option_desc *opt)
     memset(opt, 0, sizeof (struct nh_option_desc));
     if (!json_unpack
         (jobj, "{ss,ss,si,so,so!}", "name", &name, "helptxt", &helptxt, "type",
-         &opt->type, "value", &joptval, "desc", &joptdesc) == -1) {
+         &opt->type, "value", &joptval, "desc", &joptdesc,
+         "birth", &opt->birth_option) == -1) {
         memset(opt, 0, sizeof (struct nh_option_desc));
         return;
     }
@@ -191,17 +192,17 @@ ccmd_create_game(json_t * params)
     opts[i].name = 0;
 
     struct nh_option_desc *modeopt = nhlib_find_option(opts, "mode");
+    struct nh_option_desc *nameopt = nhlib_find_option(opts, "name");
     if (modeopt && modeopt->value.e == MODE_WIZARD) {
         if (user_info.can_debug)
             debug = 1;
         else
             modeopt->value.e = MODE_EXPLORE;
-    }
-
-    struct nh_option_desc *nameopt = nhlib_find_option(opts, "name");
-    if (!nameopt && !debug)
+    } else if (!nameopt)
         exit_client("No character name provided");
-    char *name = nameopt->value.s;
+
+    const char *name = nameopt ? nameopt->value.s :
+        debug ? "wizard" : "explorer";
 
     t = (long)time(NULL);
     snprintf(path, 1024, "%s/save/%s/", settings.workdir, user_info.username);
@@ -211,8 +212,11 @@ ccmd_create_game(json_t * params)
     mkdir(path, 0755);  /* should already exist unless something went wrong
                            while upgrading */
     fd = open(filename, O_EXCL | O_CREAT | O_RDWR, 0600);
-    if (fd == -1)
+    if (fd == -1) {
+        log_msg("%s tried to create a new game (%d) as %s, but the file could "
+                "not be opened", user_info.username, gameid, name);
         exit_client("Could not create the logfile");
+    }
 
     ret = nh_create_game(fd, opts);
     close(fd);
@@ -246,6 +250,10 @@ ccmd_create_game(json_t * params)
         j_msg = json_pack("{si}", "return", gameid);
     } else {
         unlink(filename);
+        log_msg("%s tried to create a new game (%d) as %s, but the creation %s",
+                user_info.username, gameid, name, ret == NHCREATE_FAIL ?
+                "failed" : ret == NHCREATE_INVALID ? "had incorrect options" :
+                "did not happen for an unknown reason");
         j_msg = json_pack("{si}", "return", ret);
     }
 
@@ -495,7 +503,7 @@ ccmd_get_roles(json_t * params)
 
     ri = nh_get_roles();
     jmsg =
-        json_pack("{si,si,si,si,si,si,si,si}", "num_roles", ri->num_roles,
+        json_pack("{si,si,si,si}", "num_roles", ri->num_roles,
                   "num_races", ri->num_races, "num_genders", ri->num_genders,
                   "num_aligns", ri->num_aligns);
 
@@ -687,6 +695,7 @@ json_option(const struct nh_option_desc *option)
 {
     int i;
     json_t *jopt, *joptval, *joptdesc, *jobj;
+    json_error_t jerr;
     struct nh_autopickup_rule *r;
 
     switch (option->type) {
@@ -708,9 +717,11 @@ json_option(const struct nh_option_desc *option)
 
     case OPTTYPE_STRING:
         joptval = json_string(option->value.s);
+        if (!joptval)
+            joptval = json_string("");
         joptdesc = json_integer(option->s.maxlen);
         break;
-
+        
     case OPTTYPE_AUTOPICKUP_RULES:
         joptdesc = json_list(option->a.classes, option->a.numclasses);
         joptval = json_array();
@@ -730,9 +741,16 @@ json_option(const struct nh_option_desc *option)
     }
 
     jopt =
-        json_pack("{ss,ss,si,so,so}", "name", option->name, "helptxt",
-                  option->helptxt, "type", option->type, "value", joptval,
-                  "desc", joptdesc);
+        json_pack_ex(&jerr, 0, "{ss,ss,si,so,so,sb}", "name", option->name,
+                     "helptxt", option->helptxt, "type", option->type,
+                     "value", joptval, "desc", joptdesc,
+                     "birth", option->birth_option);
+
+    if (!jopt)
+        log_msg("Could not encode option %s: %s", option->name,
+                *jerr.text ? jerr.text : !joptval ? "missing joptval" :
+                !joptdesc ? "missing joptdesc" : "unknown error");
+
     return jopt;
 }
 
@@ -833,8 +851,9 @@ ccmd_get_options(json_t * params)
 
     jarr = json_array();
     options = nh_get_options();
-    for (i = 0; options[i].name; i++)
+    for (i = 0; options[i].name; i++) {
         json_array_append_new(jarr, json_option(&options[i]));
+    }
     jmsg = json_pack("{so}", "options", jarr);
     client_msg("get_options", jmsg);
     nhlib_free_optlist(options);

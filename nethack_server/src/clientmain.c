@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-05-17 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -36,8 +36,9 @@ static int infd, outfd;
 int gamefd;
 long gameid;    /* id in the database */
 struct user_info user_info;
-int can_send_msg;
-
+static int can_send_msg;
+static volatile sig_atomic_t currently_sending_message;
+static volatile sig_atomic_t send_server_cancel;
 
 static char **
 init_game_paths(void)
@@ -89,13 +90,70 @@ init_game_paths(void)
     return pathlist_copy;
 }
 
+/* The low-level function responsible for doing the actual sending. This is
+   async-signal-safe if the second argument is TRUE. */
+static void
+send_string_to_client(const char *jsonstr, int signalsafe)
+{
+    int len = strlen(jsonstr);
+    int pos = 0;
+    int ret;
+    do {
+        /* For NetHack 4.3, We separate the messages we send with NUL characters
+           (which are not legal in JSON), so that the client can more easily
+           find the boundary between messages. (NitroHack relied on separating
+           messages using the boundary between packets, which doesn't work in
+           practice.) The NUL is added using the terminating NUL of jsonstr. */
+        ret = write(outfd, jsonstr + pos, len + 1 - pos);
+        if (ret == -1 && (errno == EINTR || errno == EAGAIN))
+            continue;
+        else if (ret == -1 || ret == 0) {   /* bad news */
+            if (signalsafe)
+                return; /* handle the error later */
+
+            /* since we just found we can't write output to the pipe,
+               prevent any more tries */
+            close(infd);
+            close(outfd);
+            infd = outfd = -1;
+            exit_client(NULL);      /* Goodbye. */
+        }
+        pos += ret;
+    } while (pos < len);
+}
+
+/* Server cancels work differently from other messages; they can be sent out of
+   sequence, can be sent from signal handlers, and don't have a response.
+
+   This function runs async-signal! It can't touch globals, unless they're
+   volatile; it can't allocate memory on the heap (which is why the JSON is
+   hard-coded); and it can't call any function in the libc, except those
+   specifially marked as safe (such as "write"). */
+void
+client_server_cancel_msg(void)
+{
+    if (currently_sending_message) {
+        /* send it later, we don't want one message inside another */
+        send_server_cancel = 1;
+        return;
+    }
+
+    int save_errno = errno;
+
+    currently_sending_message = 1;
+    send_string_to_client("{\"server_cancel\":{}}", TRUE);
+    currently_sending_message = 0;
+
+    errno = save_errno;
+}
 
 void
 client_msg(const char *key, json_t * value)
 {
-    int len, ret, pos;
     char *jsonstr;
     json_t *jval, *display_data;
+
+    currently_sending_message = 1;
 
     jval = json_object();
 
@@ -111,28 +169,20 @@ client_msg(const char *key, json_t * value)
     jsonstr = json_dumps(jval, JSON_COMPACT);
     json_decref(jval);
 
-    if (can_send_msg) {
-        len = strlen(jsonstr);
-        pos = 0;
-        do {
-            ret = write(outfd, &jsonstr[pos], len - pos);
-            if (ret == -1 && (errno == EINTR || errno == EAGAIN))
-                continue;
-            else if (ret == -1 || ret == 0) {   /* bad news */
-                /* since we just found we can't write output to the pipe,
-                   prevent any more tries */
-                close(infd);
-                close(outfd);
-                infd = outfd = -1;
-                exit_client(NULL);      /* Goodbye. */
-            }
-            pos += ret;
-        } while (pos < len);
-    }
+    if (can_send_msg)
+        send_string_to_client(jsonstr, FALSE);
+
     /* this message is sent; don't send another */
     can_send_msg = FALSE;
 
     free(jsonstr);
+
+    currently_sending_message = 0;
+
+    if (send_server_cancel) {
+        client_server_cancel_msg();
+        send_server_cancel = 0;
+    }
 }
 
 noreturn void
@@ -234,7 +284,7 @@ read_input(void)
             exit_client("Max allowed input length exceeded");
         /* too much data received */
     }
-    /* message received; mow it's our turn to send */
+    /* message received; now it's our turn to send */
     can_send_msg = TRUE;
     return jval;
 }

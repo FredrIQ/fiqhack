@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Alex Smith, 2014-05-17 */
 /* Copyright (c) Daniel Thaler, 2012 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -528,6 +528,7 @@ static int
 connect_server(struct server_info *server)
 {
     int ret;
+    nh_bool ok;
 
     while (1) {
         ret =
@@ -583,7 +584,13 @@ connect_server(struct server_info *server)
 
     /* Successful connection; reload options in case server has different
        perception of valid options than client does. */
-    read_nh_config();
+    ok = read_nh_config();
+    if (!ok) {
+        nhnet_disconnect();
+        curses_msgwin("The connection to the server was lost.");
+        return FALSE;
+    }
+
     return TRUE;
 }
 
@@ -693,6 +700,7 @@ netgame(void)
 {
     struct server_info *servlist, *server;
     struct server_info localserver = { 0, 0, 0, 0 };
+    int fd;
 
     nhnet_lib_init(&curses_windowprocs);
 
@@ -709,6 +717,16 @@ netgame(void)
     if (!server || !connect_server(server))
         goto finally;
 
+    fd = nhnet_get_socket_fd();
+    if (fd == -1) {
+        curses_msgwin("The connection to the server was lost.");
+        nhnet_disconnect();
+        goto finally;
+    }
+
+    ui_flags.connected_to_server = 1;
+    uncursed_watch_fd(fd);
+
     free_displaychars();        /* remove old display info */
     init_displaychars();        /* load new display info from the server */
 
@@ -717,6 +735,9 @@ netgame(void)
     netgame_mainmenu(server);
     if (!ui_flags.connection_only)
         write_server_list(servlist);
+
+    uncursed_unwatch_fd(fd);
+    ui_flags.connected_to_server = 0;
     nhnet_disconnect();
 
     free_keymap();

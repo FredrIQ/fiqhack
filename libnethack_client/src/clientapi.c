@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-13 */
+/* Last modified by Alex Smith, 2014-05-17 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -101,6 +101,8 @@ nhnet_list_games(int done, int show_all, int *count)
     struct nhnet_game *gb;
     struct nhnet_game *gamebuf = NULL;
     const char *plname, *plrole, *plrace, *plgend, *plalign, *game_state;
+
+    *count = 0; /* if we error out, we want this to be initialized */
 
     if (!api_entry())
         return NULL;
@@ -241,9 +243,9 @@ json_option(const struct nh_option_desc *option)
     }
 
     jopt =
-        json_pack("{ss,ss,si,so,so}", "name", option->name, "helptxt",
+        json_pack("{ss,ss,si,so,so,sb}", "name", option->name, "helptxt",
                   option->helptxt, "type", option->type, "value", joptval,
-                  "desc", joptdesc);
+                  "desc", joptdesc, "birth", option->birth_option);
     return jopt;
 }
 
@@ -477,8 +479,9 @@ read_json_option(json_t * jobj, struct nh_option_desc *opt)
 
     memset(opt, 0, sizeof (struct nh_option_desc));
     if (!json_unpack
-        (jobj, "{ss,ss,si,so,so!}", "name", &name, "helptxt", &helptxt, "type",
-         &opt->type, "value", &joptval, "desc", &joptdesc) == -1) {
+        (jobj, "{ss,ss,si,so,so,sb!}", "name", &name, "helptxt", &helptxt,
+         "type", &opt->type, "value", &joptval, "desc", &joptdesc,
+         "birth", &opt->birth_option) == -1) {
         memset(opt, 0, sizeof (struct nh_option_desc));
         print_error("Broken option specification.");
         return;
@@ -758,7 +761,7 @@ nhnet_get_roles(void)
     jmsg = send_receive_msg("get_roles", json_object());
     ri = xmalloc(&xm_blocklist, sizeof (struct nh_roles_info));
     if (json_unpack
-        (jmsg, "{si,si,si,si,si,si,si,si,so,so,so,so,so,so}", "num_roles",
+        (jmsg, "{si,si,si,si,so,so,so,so,so,so}", "num_roles",
          &ri->num_roles, "num_races", &ri->num_races, "num_genders",
          &ri->num_genders, "num_aligns", &ri->num_aligns, "rolenames_m",
          &jroles_m, "rolenames_f", &jroles_f, "racenames", &jraces, "gendnames",

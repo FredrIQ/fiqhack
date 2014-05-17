@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Alex Smith, 2014-05-17 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -282,14 +282,15 @@ cmd_print_message_nonblocking(json_t *params, int display_only)
     return NULL;
 }
 
+struct nh_dbuf_entry dbuf[ROWNO][COLNO];
 static json_t *
 cmd_update_screen(json_t *params, int display_only)
 {
-    struct nh_dbuf_entry dbuf[ROWNO][COLNO];
     int ux, uy;
     int x, y, effect, bg, trap, obj, obj_mn, mon, monflags, branding, invis,
         visible;
     json_t *jdbuf, *col, *elem;
+    int ok = 1;
 
     if (json_unpack(params, "{si,si,so!}", "ux", &ux, "uy", &uy, "dbuf", &jdbuf)
         == -1) {
@@ -319,13 +320,16 @@ cmd_update_screen(json_t *params, int display_only)
             if (json_integer_value(col) == 0) {
                 for (y = 0; y < ROWNO; y++)
                     memset(&dbuf[y][x], 0, sizeof (struct nh_dbuf_entry));
-            } else if (json_integer_value(col) != 1)
+            } else if (json_integer_value(col) != 1) {
                 print_error("Strange column value in cmd_update_screen");
+                ok = 0;
+            }
             continue;
         }
 
         if (!json_is_array(col) || json_array_size(col) != ROWNO) {
             print_error("Wrong column data type in cmd_update_screen");
+            ok = 0;
             continue;
         }
 
@@ -335,8 +339,10 @@ cmd_update_screen(json_t *params, int display_only)
             if (json_is_integer(elem)) {
                 if (json_integer_value(elem) == 0)
                     memset(&dbuf[y][x], 0, sizeof (struct nh_dbuf_entry));
-                else if (json_integer_value(elem) != 1)
+                else if (json_integer_value(elem) != 1) {
                     print_error("Strange element value in cmd_update_screen");
+                    ok = 0;
+                }
                 continue;
             }
 
@@ -510,7 +516,7 @@ cmd_display_menu(json_t *params, int display_only)
     int i;
 
     if (json_unpack
-        (params, "{so,si,si,ss,si!}", "items", &jarr, "how", &how,
+        (params, "{so,si,ss,si!}", "items", &jarr, "how", &how,
          "title", &title, "plhint", &placement_hint) == -1) {
         print_error("Incorrect parameter type in cmd_display_menu");
         return NULL;
@@ -585,7 +591,7 @@ cmd_display_objects(json_t *params, int display_only)
     json_t *jarr, *jobj = NULL;
 
     if (json_unpack
-        (params, "{so,si,si,ss,si!}", "items", &jarr, "how", &how,
+        (params, "{so,si,ss,si!}", "items", &jarr, "how", &how,
          "title", &title, "plhint", &placement_hint) == -1) {
         print_error("Incorrect parameter type in cmd_display_menu");
         return NULL;
