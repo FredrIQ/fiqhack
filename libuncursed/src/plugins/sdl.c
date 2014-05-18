@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-11 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -121,6 +121,9 @@ load_png_file_to_texture(const char *filename, int *w, int *h)
     /* The pointers are volatile. What they point to isn't. */
     unsigned char *volatile pixeldata = NULL;
     unsigned char **volatile rowpointers = NULL;
+
+    if (!filename)
+        goto cleanup_nothing;
 
     FILE *in = fopen(filename, "rb");
 
@@ -545,6 +548,35 @@ sdl_hook_set_tiles_tile_file(const char *filename, int rows, int columns)
     tileset_filename = strdup(filename);
     tileset_rows = rows;
     tileset_cols = columns;
+}
+
+void
+sdl_hook_get_tile_dimensions(int down, int across, int *height, int *width)
+{
+    int w, h;
+    SDL_Texture *tilefile;
+    /* TODO: This is a little wasteful, in that there's no actual need to get
+       the GPU involved. However, it saves the need to have a separate function
+       for reading PNG headers. */
+    tilefile = load_png_file_to_texture(tileset_filename, &w, &h);
+    if (!tilefile) {
+        *height = down;
+        *width = across;
+        return;
+    }
+    SDL_DestroyTexture(tilefile); /* we just needed its size */
+    /* now w/h are the dimensions of the tileset, in pixels */
+    w /= tileset_cols;
+    h /= tileset_rows;
+    /* now w/h are the dimensions of a single tile, in pixels */
+    w *= across;
+    h *= down;
+    /* now w/h are the dimensions of the tiles region, in pixels */
+    w = (w + fontwidth - 1) / fontwidth;
+    h = (h + fontheight - 1) / fontheight;
+    /* now w/h are the dimensions of the tiles region, in characters */
+    *height = h;
+    *width = w;
 }
 
 void *

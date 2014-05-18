@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c++;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-11-13 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -27,6 +27,7 @@ static struct uncursed_hooks sdl_uncursed_hooks = {
     sdl_hook_flush,
     sdl_hook_set_faketerm_font_file,
     sdl_hook_set_tiles_tile_file,
+    sdl_hook_get_tile_dimensions,
     sdl_hook_allocate_tiles_region,
     sdl_hook_deallocate_tiles_region,
     sdl_hook_draw_tile_at,

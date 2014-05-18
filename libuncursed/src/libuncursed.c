@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-09 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -313,6 +313,18 @@ uncursed_hook_set_tiles_tile_file(const char *filename, int down, int across)
         }
 }
 
+static void
+uncursed_hook_get_tile_dimensions(int down, int across, int *height, int *width)
+{
+    struct uncursed_hooks *h;
+
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used && h->get_tile_dimensions) {
+            h->get_tile_dimensions(down, across, height, width);
+            break;
+        }
+}
+
 static void *
 uncursed_hook_allocate_tiles_region(int tiles_h, int tiles_w, int char_h,
                                     int char_w, int char_t, int char_l)
@@ -448,6 +460,12 @@ void
 set_tiles_tile_file(const char *filename, int down, int across)
 {
     uncursed_hook_set_tiles_tile_file(filename, down, across);
+}
+
+void
+get_tile_dimensions(int down, int across, int *height, int *width)
+{
+    uncursed_hook_get_tile_dimensions(down, across, height, width);
 }
 
 UNCURSED_ANDWINDOWDEF(int,

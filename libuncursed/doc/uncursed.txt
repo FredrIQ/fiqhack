@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-02-21
+Last modified by Alex Smith, 2014-05-18
 
 This documentation for the uncursed rendering library is provided under the
 same terms as libuncursed itself: it may be distributed under either of the
@@ -1244,10 +1244,11 @@ subwindow to be the same as that of the subwindow itself.
 uncursed supports mostly transparent support for graphical tiles interfaces,
 allowing tiles to be easily added to a text-based program.  (This is intended
 designed for use by games and especially roguelikes, which motivated the
-creation of uncursed.)  All these functions are no-ops in a terminal-based
-interface.
+creation of uncursed.)  All these functions (except `get_tile_dimensions`) are
+effectively no-ops in a terminal-based interface; they can create, delete,
+etc. tiles regions, but those regions will never be drawn to the screen.
 
-    int set_tiles_tile_file(char *filename, int down, int across)
+    void set_tiles_tile_file(char *filename, int down, int across)
 
 This function sets the image file that will be used for the graphical tiles,
 the number of rows of tiles in the image, and the number of tiles in each row.
@@ -1256,10 +1257,10 @@ using NULL for the filename to turn it off.)  Changing the tileset will have
 an effect only on the tileset used by future calls to `set_tiles_region`; it
 wil not affect currently exiting tiles regions.
 
-    int [w]set_tiles_region([WINDOW *win],
+    void [w]set_tiles_region([WINDOW *win],
                  int tiles_h, int tiles_w, int tiles_t, int tiles_l,
                  int char_h, int char_w, int char_t, int char_l)
-    int [w]delete_tiles_region([WINDOW *win])
+    void [w]delete_tiles_region([WINDOW *win])
 
 Each window can have a "tiles region", that tells uncursed where to draw the
 tiles.  After the window argument, the first four argument gives the height,
@@ -1284,6 +1285,30 @@ the tiles go; it is ignored for all other purposes.)
 `delete_tiles_region` removes the tiles region of a window.  (It is also
 removed if the window is deleted, resized, or changes suggested screen
 location.)
+
+    void get_tile_dimensions(int down, int across, int *height, int *width)
+
+There is no particular reason in libuncursed why the tiles have to be the same
+size as the underlying characters (this distinguishes it from terminals such
+as Ebonhack which replace characters with tiles directly). Tiles-aware
+programs may thus want to produce a tiles region that is large enough to hold
+all the tiles (and thus is presumably larger than the character region).  This
+function is given the dimensions of a character region in `down` and `across`
+(i.e. this is the number of *tiles* you want to appear in the tiles region,
+which is equal to the number of *characters* in the corresponding character
+region); it will assign to `*height` and `*width` to specify the minimum size
+of a tiles region that could fit the given tiles without scrolling (i.e. this
+is the number of *characters* that will be invisable due to being behind the
+tiles region).  The function looks at nothing other than the tile file to
+determine this; it has no side effects, and in particular, there is no
+requirement that any tiles regions actually exist.
+
+If uncursed is using a non-graphical interface plugin, it will set `*height`
+and `*width` to `down` and `across` respectively; this is because there is no
+visible tiles region in such a case, with the character region serving the
+purpose that the tiles region normally serves, and thus this gives the most
+accurate possible indication of how much room the "tiles" (actually just
+characters) take up on screen.
 
     int [mv][w]set_tiles_tile([WINDOW *win], [int y, int x], int tile)
 
