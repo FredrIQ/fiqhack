@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-16 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -754,7 +754,7 @@ show_conduct(int final)
         enl_msg(&menu, You_, "have never violated", "never violated",
                 " your personal moral code");
     else {
-        sprintf(buf, " your moral code, losing %u point%s of alignment, "
+        buf = msgprintf(" your moral code, losing %u point%s of alignment, "
                 "starting on turn %d",
                 u.uconduct[conduct_lostalign],
                 plur(u.uconduct[conduct_lostalign]),
