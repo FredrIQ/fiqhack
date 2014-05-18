@@ -3036,9 +3036,7 @@ zap_hit_mon(struct monst *mon, int type, int nd, struct obj **ootmp)
         } else {
             struct obj *otmp2;
 
-            if (resists_disint(mon)) {
-                sho_shieldeff = TRUE;
-            } else if (mon->misc_worn_check & W_MASK(os_arms)) {
+            if (mon->misc_worn_check & W_MASK(os_arms)) {
                 /* destroy shield; victim survives */
                 *ootmp = which_armor(mon, os_arms);
             } else if (mon->misc_worn_check & W_MASK(os_arm)) {
@@ -3047,13 +3045,15 @@ zap_hit_mon(struct monst *mon, int type, int nd, struct obj **ootmp)
                 if ((otmp2 = which_armor(mon, os_armc)) != 0)
                     m_useup(mon, otmp2);
             } else {
-                /* no body armor, victim dies; destroy cloak and shirt now in
-                   case target gets life-saved */
-                tmp = MAGIC_COOKIE;
                 if ((otmp2 = which_armor(mon, os_armc)) != 0)
                     m_useup(mon, otmp2);
                 if ((otmp2 = which_armor(mon, os_armu)) != 0)
                     m_useup(mon, otmp2);
+
+                if (resists_disint(mon))
+                    sho_shieldeff = TRUE;
+                else
+                    tmp = MAGIC_COOKIE;
             }
             type = -1;  /* no saving throw wanted */
             break;      /* not ordinary damage */
@@ -3171,10 +3171,7 @@ zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy)
         break;
     case ZT_DEATH:
         if (abs(type) == ZT_BREATH(ZT_DEATH)) {
-            if (Disint_resistance) {
-                pline("You are not disintegrated.");
-                break;
-            } else if (uarms) {
+            if (uarms) {
                 /* destroy shield; other possessions are safe */
                 destroy_arm(uarms);
                 break;
@@ -3185,12 +3182,17 @@ zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy)
                 destroy_arm(uarm);
                 break;
             }
-            /* no shield or suit, you're dead; wipe out cloak and/or shirt in
-               case of life-saving or bones */
+
             if (uarmc)
                 destroy_arm(uarmc);
             if (uarmu)
                 destroy_arm(uarmu);
+
+            if (Disint_resistance) {
+                shieldeff(sx, sy);
+                pline("You are not disintegrated.");
+                break;
+            }
         } else if (nonliving(youmonst.data) || is_demon(youmonst.data)) {
             shieldeff(sx, sy);
             pline("You seem unaffected.");
