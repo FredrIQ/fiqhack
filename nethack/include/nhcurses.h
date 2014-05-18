@@ -374,6 +374,7 @@ extern void redo_showlines(void);
 extern void curses_print_message(int turn, const char *msg);
 extern void curses_print_message_nonblocking(int turn, const char *inmsg);
 extern void draw_msgwin(void);
+extern void mark_showlines_seen(void);
 extern void fresh_message_line(nh_bool blocking);
 extern void pause_messages(void);
 extern void doprev_message(void);
