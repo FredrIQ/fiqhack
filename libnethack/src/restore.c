@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-15 */
+/* Last modified by Sean Hunt, 2014-05-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -612,8 +612,6 @@ restore_you(struct memfile *mf, struct you *y)
     y->twoweap = mread8(mf);
     y->bashmsg = mread8(mf);
 
-    mread(mf, y->uconduct, sizeof (y->uconduct));
-    mread(mf, y->uconduct_time, sizeof (y->uconduct_time));
     mread(mf, y->ever_extrinsic, sizeof (y->ever_extrinsic));
     mread(mf, y->ever_intrinsic, sizeof (y->ever_intrinsic));
     mread(mf, y->ever_temporary, sizeof (y->ever_temporary));
@@ -636,6 +634,10 @@ restore_you(struct memfile *mf, struct you *y)
     mread(mf, y->skill_record, sizeof (y->skill_record));
     mread(mf, y->uplname, sizeof (y->uplname));
 
+    for (i = 0; i <= num_conducts; i++) {
+        y->uconduct[i] = mread32(mf);
+        y->uconduct_time[i] = mread32(mf);
+    }
     for (i = 0; i <= LAST_PROP; i++) {
         y->uintrinsic[i] = mread32(mf);
     }

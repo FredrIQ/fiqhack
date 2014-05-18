@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-15 */
+/* Last modified by Sean Hunt, 2014-05-16 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -389,6 +389,9 @@ union nh_optvalue {
     struct nh_autopickup_rules *ar;
 };
 
+/* This structure and all its contents should always be dynamically allocated
+ * so that they can safely be freed with nhlib_free_optlist.
+ */
 struct nh_option_desc {
     const char *name;
     const char *helptxt;
