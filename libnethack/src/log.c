@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-13 */
+/* Last modified by Sean Hunt, 2014-05-18 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1298,22 +1298,20 @@ log_replay_menu(boolean isobjmenu, void *el)
 
     int *itemcount;
     const struct nh_objresult **objresultlist = 0;
-    struct nh_objresult *orl;
+    struct nh_objresult *orl = NULL;
     const int **menuresultlist = 0;
-    int *mrl;
+    int *mrl = NULL;
 
     if (isobjmenu) {
         struct display_objects_callback_data *elcast = el;
         itemcount = &(elcast->nresults);
         objresultlist = &(elcast->results);
         *objresultlist = NULL;
-        orl = NULL;
     } else {
         struct display_menu_callback_data *elcast = el;
         itemcount = &(elcast->nresults);
         menuresultlist = &(elcast->results);
         *menuresultlist = NULL;
-        mrl = NULL;
     }
 
     *itemcount = 0;

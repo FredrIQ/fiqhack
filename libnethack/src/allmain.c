@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-18 */
+/* Last modified by Sean Hunt, 2014-05-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1056,12 +1056,11 @@ cancel_mimicking(const char* msg)
 {
     /* Make sure we're actually mimicking. */
     if (youmonst.m_ap_type) {
-        const int i = 1 << hr_mimicking;
-        turnstate.helpless_timers[i] = 0;
-        *turnstate.helpless_causes[i] = '\0';
-        if (!msg && *turnstate.helpless_endmsgs[i])
-            pline("%s", turnstate.helpless_endmsgs[i]);
-        *turnstate.helpless_endmsgs[i] = '\0';
+        turnstate.helpless_timers[hr_mimicking] = 0;
+        *turnstate.helpless_causes[hr_mimicking] = '\0';
+        if (!msg && *turnstate.helpless_endmsgs[hr_mimicking])
+            pline("%s", turnstate.helpless_endmsgs[hr_mimicking]);
+        *turnstate.helpless_endmsgs[hr_mimicking] = '\0';
         youmonst.m_ap_type = M_AP_NOTHING;
         youmonst.mappearance = 0;
         newsym(u.ux, u.uy);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-12 */
+/* Last modified by Sean Hunt, 2014-05-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -45,7 +45,6 @@ boolean
 burnarmor(struct monst *victim)
 {
     struct obj *item;
-    int mat_idx;
 
     if (!victim)
         return 0;
@@ -54,11 +53,9 @@ burnarmor(struct monst *victim)
         switch (rn2(5)) {
         case 0:
             item = which_armor(victim, os_armh);
-            if (item)
-                mat_idx = objects[item->otyp].oc_material;
             if (!burn_dmg(item, item ?
-                          msgcat_many(materialnm[mat_idx], " ",
-                                      helmet_name(item), NULL) : "helmet"))
+                     msgcat_many(materialnm[objects[item->otyp].oc_material],
+                                 " ", helmet_name(item), NULL) : "helmet"))
                 continue;
             break;
         case 1:
