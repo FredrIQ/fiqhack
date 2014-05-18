@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-02 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -760,7 +760,7 @@ unexplored(int x, int y)
 
     if (ttmp && ttmp->tseen)
         return FALSE;
-    if (level->locations[x][y].mem_obj == what_obj(BOULDER) + 1)
+    if (level->locations[x][y].mem_obj == BOULDER + 1)
         return FALSE;
     if (level->locations[x][y].mem_obj && inside_shop(level, x, y))
         return FALSE;

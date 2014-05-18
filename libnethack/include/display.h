@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-28 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -15,8 +15,8 @@
 # endif
 
 
-# define dbuf_monid(mon) (what_mon(mon->mnum) + 1)
-# define dbuf_objid(obj) (what_obj(obj->otyp) + 1)
+# define dbuf_monid(mon, xx, yy, rng) (what_mon(mon->mnum, xx, yy, rng) + 1)
+# define dbuf_objid(obj, xx, yy, rng) (what_obj(obj->otyp, xx, yy, rng) + 1)
 # define dbuf_effect(type, id) ((type << 16) | (id + 1))
 # define dbuf_explosion(etype, id) \
     ((E_EXPLOSION << 16) | (etype * NUMEXPCHARS + id + 1))
@@ -155,21 +155,39 @@
  *
  * Respectively return a random monster, object, or trap number.
  */
-# define random_monster() (display_rng(NUMMONS))
-# define random_object()  (display_rng(NUM_OBJECTS-1) + 1)
-# define random_trap()   (display_rng(TRAPNUM-1) + 1)
+# define random_monster(rng) (rng(NUMMONS))
+# define random_object(rng)  (rng(NUM_OBJECTS-1) + 1)
+# define random_trap(rng)    (rng(TRAPNUM-1) + 1)
 
 /*
  * what_obj()
  * what_mon()
  * what_trap()
  *
- * If hallucinating, choose a random object/monster, otherwise, use the one
- * given.
+ * If hallucinating, choose an object/monster/trap based on character memory if
+ * possible, or the given RNG otherwise; otherwise, just return the value
+ * truthfully. Suitable RNGs include display_rng and rn2; newsym_rng will choose
+ * a suitable RNG depending on whether the program is in a zero-time command or
+ * not.
+ *
+ * The given coordinates can be set out of range to force a random result when
+ * hallucinating. This should only be done if the random result has no effect
+ * but on messages.
+ *
+ * These functions generally only work on the current level, unless the
+ * coordinates are out of bounds, in which case they work on the current level
+ * and also during level creation.
  */
-# define what_obj(obj)  (Hallucination ? random_object()  : obj)
-# define what_mon(mon)  (Hallucination ? random_monster() : mon)
-# define what_trap(trp) (Hallucination ? random_trap()    : trp)
+# define what_obj(obj, xx, yy, rng)  \
+    (Hallucination ? isok(xx, yy) && level->locations[xx][yy].mem_obj ? \
+     level->locations[xx][yy].mem_obj : random_object(rng) : obj)
+# define what_mon(mon, xx, yy, rng)  (Hallucination ? random_monster(rng) : mon)
+# define what_trap(trp, xx, yy, rng) \
+    (Hallucination ? isok(xx, yy) && level->locations[xx][yy].mem_trap ? \
+     level->locations[xx][yy].mem_trap : random_trap(rng) : trp)
+
+# define newsym_rng(xx) \
+    (program_state.in_zero_time_command ? display_rng(xx) : rn2(xx))
 
 /*
  * covers_objects()

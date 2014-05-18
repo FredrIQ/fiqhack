@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -270,7 +270,7 @@ move_bc(int before, int control, xchar ballx, xchar bally, xchar chainx,
                             u.bglyph;
                     } else if (u.bc_order == BCPOS_BALL) {
                         if (u.bc_felt & BC_CHAIN) {    /* know chain is there */
-                            map_object(uchain, 0);
+                            map_object(uchain, 0, TRUE);
                         } else {
                             level->locations[uball->ox][uball->oy].mem_obj =
                                 u.bglyph;
@@ -292,7 +292,7 @@ move_bc(int before, int control, xchar ballx, xchar bally, xchar chainx,
                             u.cglyph;
                     } else if (u.bc_order == BCPOS_CHAIN) {
                         if (u.bc_felt & BC_BALL) {
-                            map_object(uball, 0);
+                            map_object(uball, 0, TRUE);
                         } else {
                             level->locations[uchain->ox][uchain->oy].mem_obj =
                                 u.cglyph;

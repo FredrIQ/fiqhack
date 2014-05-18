@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-30 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -110,7 +110,7 @@
 #include "hack.h"
 #include "region.h"
 
-static void display_monster(xchar, xchar, struct monst *, int, xchar);
+static void display_monster(xchar, xchar, struct monst *, int, boolean, xchar);
 static int swallow_to_effect(int, int);
 static void display_warning(struct monst *);
 
@@ -230,10 +230,10 @@ map_background(xchar x, xchar y, int show)
  * hero can physically see the location.
  */
 void
-map_trap(struct trap *trap, int show)
+map_trap(struct trap *trap, int show, boolean reroll_hallu)
 {
     int x = trap->tx, y = trap->ty;
-    int trapid = what_trap(trap->ttyp);
+    int trapid = what_trap(trap->ttyp, (reroll_hallu ? -1 : x), y, newsym_rng);
     struct rm *loc = &level->locations[x][y];
     struct rm tmp_location;
 
@@ -255,10 +255,10 @@ map_trap(struct trap *trap, int show)
  * see the location of the object.  Update the screen if directed.
  */
 void
-map_object(struct obj *obj, int show)
+map_object(struct obj *obj, int show, boolean reroll_hallu)
 {
     int x = obj->ox, y = obj->oy;
-    int objtyp = what_obj(obj->otyp);
+    int objtyp = what_obj(obj->otyp, (reroll_hallu ? -1 : x), y, newsym_rng);
     int monnum = 0;
     struct rm *loc = &level->locations[x][y];
     struct rm tmp_location;
@@ -335,30 +335,30 @@ unmap_object(int x, int y)
  * Trapped doors and chests are not covered either
  */
 void
-map_location(int x, int y, int show)
+map_location(int x, int y, int show, boolean reroll_hallucinated_appearances)
 {
     struct obj *obj;
     struct trap *trap;
 
     if (level->flags.hero_memory) {
         if ((obj = vobj_at(x, y)) && !covers_objects(level, x, y))
-            map_object(obj, FALSE);
+            map_object(obj, FALSE, reroll_hallucinated_appearances);
         else
             level->locations[x][y].mem_obj_mn = level->locations[x][y].mem_obj =
                 0;
         if ((trap = t_at(level, x, y)) && trap->tseen &&
             !covers_traps(level, x, y))
-            map_trap(trap, FALSE);
+            map_trap(trap, FALSE, reroll_hallucinated_appearances);
         else
             level->locations[x][y].mem_trap = 0;
         map_background(x, y, FALSE);
         if (show)
             dbuf_set_loc(x, y);
     } else if ((obj = vobj_at(x, y)) && !covers_objects(level, x, y))
-        map_object(obj, show);
+        map_object(obj, show, reroll_hallucinated_appearances);
     else if ((trap = t_at(level, x, y)) && trap->tseen &&
              !covers_traps(level, x, y))
-        map_trap(trap, show);
+        map_trap(trap, show, reroll_hallucinated_appearances);
     else
         map_background(x, y, show);
 }
@@ -394,8 +394,9 @@ display_monster(xchar x, xchar y,       /* display position */
                 struct monst *mon,      /* monster to display */
                 int sightflags, /* 1 if the monster is physically seen */
                 /* 2 if detected using Detect_monsters */
-                xchar worm_tail)
-{       /* mon is actually a worm tail */
+                boolean reroll_hallu,   /* do we redraw if hallucinating? */
+                xchar worm_tail)        /* mon is actually a worm tail */
+{
     boolean mon_mimic = (mon->m_ap_type != M_AP_NOTHING);
     int sensed = mon_mimic && (Protection_from_shape_changers || sensemon(mon));
 
@@ -437,7 +438,7 @@ display_monster(xchar x, xchar y,       /* display position */
                 obj.oy = y;
                 obj.otyp = mon->mappearance;
                 obj.corpsenm = PM_TENGU;        /* if mimicing a corpse */
-                map_object(&obj, !sensed);
+                map_object(&obj, !sensed, reroll_hallu);
                 break;
             }
 
@@ -448,7 +449,8 @@ display_monster(xchar x, xchar y,       /* display position */
                      level->locations[x][y].mem_trap,
                      level->locations[x][y].mem_obj,
                      level->locations[x][y].mem_obj_mn, 0,
-                     what_mon((int)mon->mappearance) + 1,
+                     what_mon((int)mon->mappearance,
+                              (reroll_hallu ? -1 : x), y, newsym_rng) + 1,
                      mon->mtame ? MON_TAME : mon->mpeaceful ? MON_PEACEFUL : 0,
                      0, dbuf_branding(x, y));
             break;
@@ -484,7 +486,8 @@ display_monster(xchar x, xchar y,       /* display position */
         dbuf_set(x, y, level->locations[x][y].mem_bg,
                  level->locations[x][y].mem_trap,
                  level->locations[x][y].mem_obj,
-                 level->locations[x][y].mem_obj_mn, 0, what_mon(monnum) + 1,
+                 level->locations[x][y].mem_obj_mn, 0,
+                 what_mon(monnum, x, y, newsym_rng) + 1,
                  mflag, 0, dbuf_branding(x, y));
     }
 }
@@ -511,11 +514,11 @@ display_warning(struct monst *mon)
         /* 3.4.1: this really ought to be rn2(WARNCOUNT), but value "0" isn't
            handled correctly by the what_is routine so avoid it */
         if (Hallucination)
-            wl = rn1(WARNCOUNT - 1, 1);
+            wl = newsym_rng(WARNCOUNT - 1) + 1;
         monnum = 1 + NUMMONS + wl;
         mflag = MON_WARNING;
     } else if (MATCH_WARN_OF_MON(mon)) {
-        monnum = dbuf_monid(mon);
+        monnum = dbuf_monid(mon, x, y, newsym_rng);
         mflag = 0;
     } else {
         impossible("display_warning did not match warning type?");
@@ -584,13 +587,13 @@ feel_location(xchar x, xchar y)
             (IS_DOOR(loc->typ) && (loc->doormask & (D_LOCKED | D_CLOSED)))) {
             map_background(x, y, 1);
         } else if ((boulder = sobj_at(BOULDER, level, x, y)) != 0) {
-            map_object(boulder, 1);
+            map_object(boulder, 1, TRUE);
         } else {
             /* We feel it */
             map_background(x, y, 1);
         }
     } else {
-        map_location(x, y, 1);
+        map_location(x, y, 1, 1);
 
         if (Punished) {
             /* 
@@ -619,7 +622,7 @@ feel_location(xchar x, xchar y)
         display_monster(x, y, mon,
                         (tp_sensemon(mon) ||
                          MATCH_WARN_OF_MON(mon)) ? PHYSICALLY_SEEN : DETECTED,
-                        is_worm_tail(mon));
+                        TRUE, is_worm_tail(mon));
 }
 
 /*
@@ -627,8 +630,8 @@ feel_location(xchar x, xchar y)
  *
  * Possibly put a new glyph at the given location.
  */
-void
-newsym(int x, int y)
+static void
+newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
 {
     struct monst *mon;
     struct rm *loc = &(level->locations[x][y]);
@@ -689,11 +692,12 @@ newsym(int x, int y)
 
         if (x == u.ux && y == u.uy) {
             if (senseself()) {
-                map_location(x, y, 0);  /* map *under* self */
+                /* map *under* self */
+                map_location(x, y, 0, reroll_hallucinated_appearances);
                 display_self();
             } else
                 /* we can see what is there */
-                map_location(x, y, 1);
+                map_location(x, y, 1, reroll_hallucinated_appearances);
         } else {
             mon = m_at(level, x, y);
             worm_tail = is_worm_tail(mon);
@@ -711,16 +715,17 @@ newsym(int x, int y)
                         trap->tseen = TRUE;
                     }
                 }
-                map_location(x, y, 0);  /* map under the monster */
+                /* map under the monster */
+                map_location(x, y, 0, reroll_hallucinated_appearances);
                 /* also gets rid of any invisibility glyph */
                 display_monster(x, y, mon, see_it ? PHYSICALLY_SEEN : DETECTED,
-                                worm_tail);
+                                reroll_hallucinated_appearances, worm_tail);
             } else if (mon && mon_warning(mon) && !is_worm_tail(mon))
                 display_warning(mon);
             else if (level->locations[x][y].mem_invis)
                 map_invisible(x, y);
             else
-                map_location(x, y, 1);  /* map the location */
+                map_location(x, y, 1, reroll_hallucinated_appearances);
         }
 
         if (reg != NULL && ACCESSIBLE(loc->typ))
@@ -742,7 +747,8 @@ newsym(int x, int y)
                    && !is_worm_tail(mon)) {
             /* Monsters are printed every time. */
             /* This also gets rid of any invisibility glyph */
-            display_monster(x, y, mon, see_it ? 0 : DETECTED, 0);
+            display_monster(x, y, mon, see_it ? 0 : DETECTED,
+                            reroll_hallucinated_appearances, 0);
         } else if ((mon = m_at(level, x, y)) && mon_warning(mon) &&
                    !is_worm_tail(mon)) {
             display_warning(mon);
@@ -753,6 +759,12 @@ newsym(int x, int y)
 }
 
 #undef is_worm_tail
+
+void
+newsym(int x, int y)
+{
+    newsym_core(x, y, FALSE);
+}
 
 /*
  * shieldeff()
@@ -848,8 +860,8 @@ tmpsym_init(int style, int sym)
 struct tmp_sym *
 tmpsym_initobj(struct obj *obj)
 {
-    return tmpsym_initimpl(DISP_OBJECT, dbuf_objid(obj),
-                           what_mon(obj->corpsenm) + 1);
+    return tmpsym_initimpl(DISP_OBJECT, dbuf_objid(obj, -1, -1, newsym_rng),
+                           what_mon(obj->corpsenm, -1, -1, newsym_rng) + 1);
 }
 
 
@@ -1109,7 +1121,7 @@ under_ground(int mode)
  *        sit.c]
  */
 void
-see_monsters(void)
+see_monsters(boolean reroll_hallucinated_appearances)
 {
     struct monst *mon;
 
@@ -1119,7 +1131,7 @@ see_monsters(void)
     for (mon = level->monlist; mon; mon = mon->nmon) {
         if (DEADMONSTER(mon))
             continue;
-        newsym(mon->mx, mon->my);
+        newsym_core(mon->mx, mon->my, reroll_hallucinated_appearances);
         if (mon->wormno)
             see_wsegs(mon);
     }
@@ -1158,26 +1170,26 @@ set_mimic_blocking(void)
  *      + hallucinating.
  */
 void
-see_objects(void)
+see_objects(boolean reroll_hallucinated_appearances)
 {
     struct obj *obj;
 
     for (obj = level->objlist; obj; obj = obj->nobj)
         if (vobj_at(obj->ox, obj->oy) == obj)
-            newsym(obj->ox, obj->oy);
+            newsym_core(obj->ox, obj->oy, reroll_hallucinated_appearances);
 }
 
 /*
  * Update hallucinated traps.
  */
 void
-see_traps(void)
+see_traps(boolean reroll_hallucinated_appearances)
 {
     struct trap *trap;
 
     for (trap = level->lev_traps; trap; trap = trap->ntrap)
         if (level->locations[trap->tx][trap->ty].mem_trap)
-            newsym(trap->tx, trap->ty);
+            newsym_core(trap->tx, trap->ty, reroll_hallucinated_appearances);
 }
 
 /*
@@ -1196,7 +1208,7 @@ display_self(void)
                  level->locations[x][y].mem_trap,
                  level->locations[x][y].mem_obj,
                  level->locations[x][y].mem_obj_mn, 0,
-                 what_mon(u.usteed->mnum) + 1, MON_RIDDEN, 0,
+                 what_mon(u.usteed->mnum, x, y, newsym_rng) + 1, MON_RIDDEN, 0,
                  dbuf_branding(x, y));
     } else if (youmonst.m_ap_type == M_AP_NOTHING) {
         int monnum = (Upolyd || !flags.showrace) ? u.umonnum :
@@ -1260,7 +1272,7 @@ doredraw(void)
     vision_recalc(0);
 
     /* overlay with monsters */
-    see_monsters();
+    see_monsters(FALSE);
 
     return 0;
 }
@@ -1740,7 +1752,8 @@ swallow_to_effect(int mnum, int loc)
         impossible("swallow_to_effect: bad swallow location");
         loc = S_sw_br;
     }
-    return ((E_SWALLOW << 16) | (what_mon(mnum) << 3) | loc) + 1;
+    return ((E_SWALLOW << 16) |
+            (what_mon(mnum, -1, -1, newsym_rng) << 3) | loc) + 1;
 }
 
 

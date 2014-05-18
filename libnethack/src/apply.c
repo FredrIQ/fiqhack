@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-15 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2066,7 +2066,7 @@ use_trap(struct obj *otmp, const struct nh_cmd_arg *arg)
         u.uy == u.utracked_location[tl_trap].y) {
         if (turnstate.continue_message)
             pline("You resume setting %s %s.", shk_your(otmp),
-                  trapexplain[what_trap(ttyp) - 1]);
+                  trapexplain[what_trap(ttyp, u.ux, u.uy, rn2) - 1]);
         one_occupation_turn(set_trap, occutext, occ_trap);
         return 1;
     }
@@ -2094,7 +2094,7 @@ use_trap(struct obj *otmp, const struct nh_cmd_arg *arg)
         pline("You aren't very skilled at reaching from %s.",
               mon_nam(u.usteed));
         buf = msgprintf("Continue your attempt to set %s?",
-                        the(trapexplain[what_trap(ttyp) - 1]));
+                        the(trapexplain[what_trap(ttyp, -1, -1, rn2) - 1]));
         if (yn(buf) == 'y') {
             if (chance) {
                 switch (ttyp) {
@@ -2104,7 +2104,7 @@ use_trap(struct obj *otmp, const struct nh_cmd_arg *arg)
                 case BEAR_TRAP: /* drop it without arming it */
                     u.utracked[tos_trap] = 0;
                     pline("You drop %s!",
-                          the(trapexplain[what_trap(ttyp) - 1]));
+                          the(trapexplain[what_trap(ttyp, -1, -1, rn2) - 1]));
                     dropx(otmp);
                     return 1;
                 }
@@ -2116,7 +2116,7 @@ use_trap(struct obj *otmp, const struct nh_cmd_arg *arg)
     }
 
     pline("You begin setting %s %s.", shk_your(otmp),
-          trapexplain[what_trap(ttyp) - 1]);
+          trapexplain[what_trap(ttyp, -1, -1, rn2) - 1]);
     one_occupation_turn(set_trap, occutext, occ_trap);
     return 1;
 }
@@ -2149,7 +2149,7 @@ set_trap(void)
             add_damage(u.ux, u.uy, 0L); /* schedule removal */
         }
         pline("You finish arming %s.",
-              the(trapexplain[what_trap(ttyp) - 1]));
+              the(trapexplain[what_trap(ttyp, u.ux, u.uy, rn2) - 1]));
         if ((otmp->cursed || Fumbling) && rnl(10) > 5)
             dotrap(ttmp, 0);
     } else {

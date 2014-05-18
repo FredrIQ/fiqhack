@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-15 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -223,7 +223,7 @@ make_blinded(long xtime, boolean talk)
     if (u_could_see ^ can_see_now) {    /* one or the other but not both */
         turnstate.vision_full_recalc = TRUE; /* blindness just got toggled */
         if (Blind_telepat || Infravision)
-            see_monsters();
+            see_monsters(FALSE);
     }
 }
 
@@ -262,9 +262,9 @@ make_hallucinated(long xtime,   /* nonzero if this is an attempt to turn on
             swallowed(0);       /* redraw swallow display */
         } else {
             /* The see_* routines should be called *before* the pline. */
-            see_monsters();
-            see_objects();
-            see_traps();
+            see_monsters(TRUE);
+            see_objects(TRUE);
+            see_traps(TRUE);
         }
 
         /* for perm_inv and anything similar (eg. Qt windowport's equipped
@@ -517,8 +517,8 @@ peffects(struct obj *otmp)
             pline("You pass out.");
             helpless(rnd(15), hr_fainted, "drunk",
                      "You awake with a headache.");
-            see_monsters();
-            see_objects();
+            see_monsters(FALSE);
+            see_objects(FALSE);
             turnstate.vision_full_recalc = TRUE;
         }
         break;
@@ -592,8 +592,8 @@ peffects(struct obj *otmp)
             else
                 incr_itimeout(&HSee_invisible, rn1(100, 750));
             set_mimic_blocking();       /* do special mimic handling */
-            see_monsters();     /* see invisible monsters */
-            newsym(u.ux, u.uy); /* see yourself! */
+            see_monsters(FALSE);        /* see invisible monsters */
+            newsym(u.ux, u.uy);         /* see yourself! */
             if (msg && !Blind) {        /* Blind possible if polymorphed */
                 pline("You can see through yourself, but you are visible!");
                 unkn--;
@@ -649,7 +649,7 @@ peffects(struct obj *otmp)
                         unkn = 0;
                 }
             }
-            see_monsters();
+            see_monsters(FALSE);
             if (unkn)
                 pline("You feel lonely.");
             break;

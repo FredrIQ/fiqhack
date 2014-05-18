@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-25 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -87,7 +87,7 @@ polyman(const char *fmt, const char *arg)
         (is_pool(level, u.ux, u.uy) || is_lava(level, u.ux, u.uy)))
         spoteffects(TRUE);
 
-    see_monsters();
+    see_monsters(FALSE);
 
     if (!uarmg) {
         const char *kbuf = msgprintf("returning to %s form while wielding",
@@ -205,7 +205,7 @@ newman(void)
         pline("Your body transforms, but there is still slime on you.");
         Slimed = 10L;
     }
-    see_monsters();
+    see_monsters(FALSE);
     encumber_msg();
 }
 
@@ -563,7 +563,7 @@ polymon(int mntmp)
         u.utrap = 0;
     }
     turnstate.vision_full_recalc = TRUE;
-    see_monsters();
+    see_monsters(FALSE);
     exercise(A_CON, FALSE);
     exercise(A_WIS, TRUE);
     encumber_msg();

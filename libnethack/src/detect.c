@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-28 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -221,13 +221,13 @@ outgoldmap:
                 temp->ox = obj->ox;
                 temp->oy = obj->oy;
             }
-            map_object(temp, 1);
+            map_object(temp, 1, TRUE);
         } else if ((temp = o_in(obj, COIN_CLASS))) {
             if (temp != obj) {
                 temp->ox = obj->ox;
                 temp->oy = obj->oy;
             }
-            map_object(temp, 1);
+            map_object(temp, 1, TRUE);
         }
     }
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
@@ -239,18 +239,18 @@ outgoldmap:
             gold.otyp = GOLD_PIECE;
             gold.ox = mtmp->mx;
             gold.oy = mtmp->my;
-            map_object(&gold, 1);
+            map_object(&gold, 1, TRUE);
         } else
             for (obj = mtmp->minvent; obj; obj = obj->nobj)
                 if (sobj->blessed && (temp = o_material(obj, GOLD))) {
                     temp->ox = mtmp->mx;
                     temp->oy = mtmp->my;
-                    map_object(temp, 1);
+                    map_object(temp, 1, TRUE);
                     break;
                 } else if ((temp = o_in(obj, COIN_CLASS))) {
                     temp->ox = mtmp->mx;
                     temp->oy = mtmp->my;
-                    map_object(temp, 1);
+                    map_object(temp, 1, TRUE);
                     break;
                 }
     }
@@ -347,7 +347,7 @@ food_detect(struct obj *sobj, boolean * scr_known)
                     temp->ox = obj->ox;
                     temp->oy = obj->oy;
                 }
-                map_object(temp, 1);
+                map_object(temp, 1, TRUE);
             }
         for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
             /* no DEADMONSTER(mtmp) check needed since dmons never have
@@ -356,7 +356,7 @@ food_detect(struct obj *sobj, boolean * scr_known)
                 if ((temp = o_in(obj, oclass)) != 0) {
                     temp->ox = mtmp->mx;
                     temp->oy = mtmp->my;
-                    map_object(temp, 1);
+                    map_object(temp, 1, TRUE);
                     break;      /* skip rest of this monster's inventory */
                 }
         newsym(u.ux, u.uy);
@@ -480,9 +480,9 @@ object_detect(struct obj *detector,     /* object doing the detecting */
                     otmp->ox = obj->ox;
                     otmp->oy = obj->oy;
                 }
-                map_object(otmp, 1);
+                map_object(otmp, 1, TRUE);
             } else
-                map_object(obj, 1);
+                map_object(obj, 1, TRUE);
         }
     /* 
      * If we are mapping all objects, map only the top object of a pile or
@@ -501,9 +501,9 @@ object_detect(struct obj *detector,     /* object doing the detecting */
                             otmp->ox = obj->ox;
                             otmp->oy = obj->oy;
                         }
-                        map_object(otmp, 1);
+                        map_object(otmp, 1, TRUE);
                     } else
-                        map_object(obj, 1);
+                        map_object(obj, 1, TRUE);
                     break;
                 }
 
@@ -517,7 +517,7 @@ object_detect(struct obj *detector,     /* object doing the detecting */
                     otmp = obj;
                 otmp->ox = mtmp->mx;    /* at monster location */
                 otmp->oy = mtmp->my;
-                map_object(otmp, 1);
+                map_object(otmp, 1, TRUE);
                 break;
             }
         /* Allow a mimic to override the detected objects it is carrying. */
@@ -529,14 +529,14 @@ object_detect(struct obj *detector,     /* object doing the detecting */
             temp.ox = mtmp->mx;
             temp.oy = mtmp->my;
             temp.corpsenm = PM_TENGU;   /* if mimicing a corpse */
-            map_object(&temp, 1);
+            map_object(&temp, 1, TRUE);
         } else if (findgold(mtmp->minvent) && (!class || class == COIN_CLASS)) {
             struct obj gold;
 
             gold.otyp = GOLD_PIECE;
             gold.ox = mtmp->mx;
             gold.oy = mtmp->my;
-            map_object(&gold, 1);
+            map_object(&gold, 1, TRUE);
         }
     }
 
@@ -598,7 +598,8 @@ monster_detect(struct obj *otmp,        /* detecting object (if any) */
                 (mtmp->data == &mons[PM_LONG_WORM] && mclass == S_WORM_TAIL))
                 if (mtmp->mx < COLNO) {
                     dbuf_set(mtmp->mx, mtmp->my, S_unexplored, 0, 0, 0, 0,
-                             dbuf_monid(mtmp), 0, 0, 0);
+                             dbuf_monid(mtmp, mtmp->mx,
+                                        mtmp->my, rn2), 0, 0, 0);
                     /* don't be stingy - display entire worm */
                     if (mtmp->data == &mons[PM_LONG_WORM])
                         detect_wsegs(mtmp, 0);
@@ -636,11 +637,11 @@ sense_trap(struct trap *trap, xchar x, xchar y, int src_cursed)
             obj.ox = x;
             obj.oy = y;
         }
-        obj.otyp = (src_cursed) ? GOLD_PIECE : random_object();
-        obj.corpsenm = random_monster();        /* if otyp == CORPSE */
-        map_object(&obj, 1);
+        obj.otyp = (src_cursed) ? GOLD_PIECE : random_object(rn2);
+        obj.corpsenm = random_monster(rn2);        /* if otyp == CORPSE */
+        map_object(&obj, 1, TRUE);
     } else if (trap) {
-        map_trap(trap, 1);
+        map_trap(trap, 1, TRUE);
         trap->tseen = 1;
     } else {
         struct trap temp_trap;  /* fake trap */
@@ -648,7 +649,7 @@ sense_trap(struct trap *trap, xchar x, xchar y, int src_cursed)
         temp_trap.tx = x;
         temp_trap.ty = y;
         temp_trap.ttyp = BEAR_TRAP;     /* some kind of trap */
-        map_trap(&temp_trap, 1);
+        map_trap(&temp_trap, 1, TRUE);
     }
 
 }
@@ -1143,7 +1144,7 @@ openit(void)
 void
 find_trap(struct trap *trap)
 {
-    int tt = what_trap(trap->ttyp);
+    int tt = what_trap(trap->ttyp, trap->tx, trap->ty, rn2);
     boolean cleared = FALSE;
 
     trap->tseen = 1;
@@ -1157,7 +1158,7 @@ find_trap(struct trap *trap)
         level->locations[trap->tx][trap->ty].mem_invis) {
         /* There's too much clutter to see your find otherwise */
         cls();
-        map_trap(trap, 1);
+        map_trap(trap, 1, TRUE);
         display_self();
         cleared = TRUE;
     }
@@ -1320,13 +1321,15 @@ sokoban_detect(struct level *lev)
 
             for (obj = lev->objects[x][y]; obj; obj = obj->nexthere)
                 if (obj->otyp == BOULDER)
-                    lev->locations[x][y].mem_obj = what_obj(BOULDER) + 1;
+                    lev->locations[x][y].mem_obj =
+                        what_obj(BOULDER, -1, -1, rn2) + 1;
         }
 
     /* Map the traps */
     for (ttmp = lev->lev_traps; ttmp; ttmp = ttmp->ntrap) {
         ttmp->tseen = 1;
-        lev->locations[ttmp->tx][ttmp->ty].mem_trap = what_trap(ttmp->ttyp);
+        lev->locations[ttmp->tx][ttmp->ty].mem_trap =
+            what_trap(ttmp->ttyp, -1, -1, rn2);
     }
 }
 

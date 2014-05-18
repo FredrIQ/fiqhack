@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-15 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -590,7 +590,7 @@ givit(int type, const struct permonst *ptr)
             HTelepat |= FROMOUTSIDE;
             /* If blind, make sure monsters show up. */
             if (Blind)
-                see_monsters();
+                see_monsters(FALSE);
         }
         break;
 
@@ -1054,8 +1054,8 @@ rottenfood(struct obj *obj)
                 (u.usteed) ? "saddle" : surface(u.ux, u.uy);
         pline("The world spins and %s %s.", what, where);
         helpless(rnd(10), hr_fainted, "unconscious from rotten food", NULL);
-        see_monsters();
-        see_objects();
+        see_monsters(FALSE);
+        see_objects(FALSE);
         turnstate.vision_full_recalc = TRUE;
         return 1;
     }
@@ -1298,7 +1298,7 @@ eataccessory(struct obj *otmp)
             switch (typ) {
             case RIN_SEE_INVISIBLE:
                 set_mimic_blocking();
-                see_monsters();
+                see_monsters(FALSE);
                 if (Invis && !oldprop && !worn_extrinsic(SEE_INVIS) &&
                     !perceives(youmonst.data) && !Blind) {
                     newsym(u.ux, u.uy);

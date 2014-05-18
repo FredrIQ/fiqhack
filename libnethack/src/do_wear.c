@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-15 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -404,7 +404,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
 
         /* Amulets */
     case AMULET_OF_ESP:
-        see_monsters();
+        see_monsters(FALSE);
         break;
     case AMULET_OF_LIFE_SAVING:
     case AMULET_VERSUS_POISON:
@@ -475,15 +475,15 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
     case MEAT_RING:
         break;
     case RIN_WARNING:
-        see_monsters();
+        see_monsters(FALSE);
         break;
     case RIN_SEE_INVISIBLE:
         /* can now see invisible monsters */
         if (!redundant) {
             set_mimic_blocking();   /* do special mimic handling */
-            see_monsters();
+            see_monsters(FALSE);
 #ifdef INVISIBLE_OBJECTS
-            see_objects();
+            see_objects(FALSE);
 #endif
         }
 
@@ -575,7 +575,7 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
             pline("You can see!");
         }
         if (Blind_telepat || Infravision)
-            see_monsters();
+            see_monsters(FALSE);
         turnstate.vision_full_recalc = TRUE; /* recalc vision limits */
         break;
 

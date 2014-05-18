@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-10 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -275,7 +275,7 @@ nh_timeout(void)
                 break;
             case SEE_INVIS:
                 set_mimic_blocking();   /* do special mimic handling */
-                see_monsters(); /* make invis mons appear */
+                see_monsters(FALSE);    /* make invis mons appear */
                 newsym(u.ux, u.uy);     /* make self appear */
                 action_interrupted();
                 break;
@@ -331,7 +331,7 @@ nh_timeout(void)
                     HFumbling += rnd(20);
                 break;
             case DETECT_MONSTERS:
-                see_monsters();
+                see_monsters(FALSE);
                 break;
             }
         }

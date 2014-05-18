@@ -90,7 +90,7 @@ setworn(struct obj *obj, long mask)
     if (!program_state.restoring_binary_save) {
         /* this might have changed the XRAY property */
         turnstate.vision_full_recalc = TRUE;
-        see_monsters();         /* or the WARN_OF_MON property */
+        see_monsters(FALSE);    /* for the WARN_OF_MON property */
         update_inventory();     /* and it definitely changed equip slots */
     }
 }
@@ -108,7 +108,7 @@ setnotworn(struct obj *obj)
     obj->owornmask = 0L;
 
     turnstate.vision_full_recalc = TRUE;
-    see_monsters();
+    see_monsters(FALSE);
     update_inventory();
 }
 

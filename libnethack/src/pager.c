@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -764,7 +764,8 @@ doidtrap(const struct nh_cmd_arg *arg)
                 if (dz < 0 ? (tt == TRAPDOOR || tt == HOLE) : tt == ROCKTRAP)
                     break;
             }
-            tt = what_trap(tt);
+            /* This command is CMD_NOTIME, pick the RNG accordingly */
+            tt = what_trap(tt, x, y, display_rng);
             pline("That is %s%s%s.", an(trapexplain[tt - 1]),
                   !trap->madeby_u ? "" : (tt == WEB) ? " woven" :
                   /* trap doors & spiked pits can't be made by player, and

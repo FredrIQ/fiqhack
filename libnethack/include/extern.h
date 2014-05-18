@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-15 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -261,11 +261,11 @@ extern struct obj *vobj_at(xchar, xchar);
 extern void clear_memory_glyph(schar x, schar y, int to);
 extern void magic_map_background(xchar, xchar, int);
 extern void map_background(xchar, xchar, int);
-extern void map_trap(struct trap *, int);
-extern void map_object(struct obj *, int);
+extern void map_trap(struct trap *, int, boolean);
+extern void map_object(struct obj *, int, boolean);
 extern void map_invisible(xchar, xchar);
 extern void unmap_object(int, int);
-extern void map_location(int, int, int);
+extern void map_location(int, int, int, boolean);
 extern void feel_location(xchar, xchar);
 extern void newsym(int, int);
 extern void shieldeff(xchar, xchar);
@@ -278,10 +278,10 @@ extern void tmpsym_freeall(void);
 extern void under_ground(int);
 extern void under_water(int);
 extern void swallowed(int);
-extern void see_monsters(void);
+extern void see_monsters(boolean);
 extern void set_mimic_blocking(void);
-extern void see_objects(void);
-extern void see_traps(void);
+extern void see_objects(boolean);
+extern void see_traps(boolean);
 extern void display_self(void);
 extern int doredraw(void);
 extern int doredrawcmd(const struct nh_cmd_arg *);

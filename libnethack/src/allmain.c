@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-17 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -814,15 +814,15 @@ special_vision_handling(void)
 {
     /* redo monsters if hallu or wearing a helm of telepathy */
     if (Hallucination) {        /* update screen randomly */
-        see_monsters();
-        see_objects();
-        see_traps();
+        see_monsters(TRUE);
+        see_objects(TRUE);
+        see_traps(TRUE);
         if (Engulfed)
             swallowed(0);
     } else if (Unblind_telepat) {
-        see_monsters();
+        see_monsters(FALSE);
     } else if (Warning || Warn_of_mon)
-        see_monsters();
+        see_monsters(FALSE);
 
     if (turnstate.vision_full_recalc)
         vision_recalc(0);       /* vision! */
@@ -836,7 +836,10 @@ pre_move_tasks(boolean didmove)
     calc_attr_bonus();
     
     /* hallucination, etc. */
-    special_vision_handling();
+    if (didmove)
+        special_vision_handling();
+    else if (turnstate.vision_full_recalc)
+        vision_recalc(0);
 
     bot();
 
@@ -909,8 +912,8 @@ helpless(int turns, enum helpless_reason reason, const char *cause,
 
     if (reason == hr_asleep || reason == hr_fainted) {
         turnstate.vision_full_recalc = 1;
-        see_monsters();
-        see_objects();
+        see_monsters(FALSE);
+        see_objects(FALSE);
     }
 
     strcpy(turnstate.helpless_causes[reason], cause);
@@ -988,8 +991,8 @@ cancel_helplessness(enum helpless_mask mask, const char *msg)
 
     if (previously_unconscious && !u_helpless(hm_unconscious)) {
         turnstate.vision_full_recalc = 1;
-        see_monsters();
-        see_objects();
+        see_monsters(FALSE);
+        see_objects(FALSE);
     }
 
     /* Were we mimicking something? */

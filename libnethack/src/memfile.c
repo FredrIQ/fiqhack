@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-06 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -483,7 +483,8 @@ mequal(struct memfile *mf1, struct memfile *mf2, boolean noisy)
                            "was %02x is %02x\n",
                            off, (int)tag->tagtype, tag->tagdata,
                            off - tag->pos, (off - tag->pos == 1) ? "" : "s",
-                           p1[off], p2[off]);
+                           (int)(unsigned char)p1[off],
+                           (int)(unsigned char)p2[off]);
 
                 if (tag->tagtype == MTAG_LOCATIONS) {
 

@@ -1913,7 +1913,7 @@ cleanup:
         change_luck(-2);
         pline("You murderer!");
         if (Blind && !Blind_telepat)
-            see_monsters();     /* Can't sense monsters any more. */
+            see_monsters(FALSE);     /* Can't sense monsters any more. */
     }
     if ((mtmp->mpeaceful && !rn2(2)) || mtmp->mtame)
         change_luck(-1);
