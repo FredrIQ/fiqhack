@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -339,11 +339,12 @@ find_mac(struct monst *mon)
     }
 
     if (mon->mtame) {
-        /* intelligent pet balance fix: tame monsters take a lot more attacks
-           than in vanilla, so make them better at defending when wounded (in
-           vanilla, they don't get attacked when wounded, letting them dodge
-           comes to much the same thing but makes more sense) */
-        base -= (21 * (mon->mhpmax - mon->mhp)) / mon->mhpmax;
+        /* Hopefully, this codepath never runs; badly injured tame monsters
+           aren't meant to be attacked. This is a fallback to keep the pets
+           alive in the case that some hostile monster isn't calling
+           mm_aggression correctly. */
+        if (mon->mhp * 3 <= mon->mhpmax)
+            base -= 20;
     }
 
     return base;

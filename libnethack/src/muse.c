@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-15 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -216,8 +216,7 @@ mquaffmsg(struct monst *mtmp, struct obj *otmp)
 
 
 /* Select a defensive item/action for a monster.  Returns TRUE iff one is
- * found.
- */
+   found. */
 boolean
 find_defensive(struct monst *mtmp, struct musable *m)
 {
@@ -322,8 +321,8 @@ find_defensive(struct monst *mtmp, struct musable *m)
             m->has_defense = MUSE_DOWNSTAIRS;
         if (x == lev->upstair.sx && y == lev->upstair.sy &&
             ledger_no(&u.uz) != 1)
-            /* Unfair to let the monsters leave the dungeon with the Amulet */
-            /* (or go to the endlevel since you also need it, to get there) */
+            /* Unfair to let the monsters leave the dungeon with the Amulet
+               (or go to the endlevel since you also need it, to get there) */
             m->has_defense = MUSE_UPSTAIRS;
     } else if (lev->locations[x][y].typ == LADDER && !stuck && !immobile) {
         if (x == lev->upladder.sx && y == lev->upladder.sy)

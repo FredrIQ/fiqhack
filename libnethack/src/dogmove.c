@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -716,7 +716,7 @@ dog_move(struct monst *mtmp, int after)
     if (appr == -2)
         return 0;
 
-    allowflags = ALLOW_M | ALLOW_TRAPS | ALLOW_SSM | ALLOW_SANCT;
+    allowflags = ALLOW_TRAPS | ALLOW_SSM | ALLOW_SANCT;
     if (passes_walls(mtmp->data))
         allowflags |= (ALLOW_ROCK | ALLOW_WALL);
     if (passes_bars(mtmp->data))
@@ -724,7 +724,7 @@ dog_move(struct monst *mtmp, int after)
     if (throws_rocks(mtmp->data))
         allowflags |= ALLOW_ROCK;
     if (Conflict && !resist(mtmp, RING_CLASS, 0, 0)) {
-        allowflags |= ALLOW_U;
+        allowflags |= ALLOW_U | ALLOW_M;
         if (!has_edog) {
             coord mm;
 
@@ -839,18 +839,7 @@ dog_move(struct monst *mtmp, int after)
             int mstatus;
             struct monst *mtmp2 = m_at(level, nx, ny);
 
-            if ((int)mtmp2->m_lev >= (int)mtmp->m_lev + 2 ||
-                (mtmp2->data == &mons[PM_FLOATING_EYE] && rn2(10) &&
-                 mtmp->mcansee && haseyes(mtmp->data) && mtmp2->mcansee &&
-                 (perceives(mtmp->data) || !mtmp2->minvis)) ||
-                (mtmp2->data == &mons[PM_GELATINOUS_CUBE] && rn2(10)) ||
-                (max_passive_dmg(mtmp2, mtmp) >= mtmp->mhp) ||
-                ((mtmp->mhp * 4 < mtmp->mhpmax ||
-                  mtmp2->data->msound == MS_GUARDIAN ||
-                  mtmp2->data->msound == MS_LEADER) && mtmp2->mpeaceful &&
-                 !Conflict) || (touch_petrifies(mtmp2->data) &&
-                                !resists_ston(mtmp)))
-                continue;
+            /* anti-stupidity checks moved to mm_aggression in mon.c */
 
             if (after)
                 return 0;       /* hit only once each move */
@@ -874,12 +863,12 @@ dog_move(struct monst *mtmp, int after)
             return 0;
         }
 
-        {       /* Dog avoids harmful traps, but perhaps it has to pass one in
-                   order to follow player.  (Non-harmful traps do not have
-                   ALLOW_TRAPS in info[].) The dog only avoids the trap if
-                   you've seen it, unlike enemies who avoid traps if they've
-                   seen some trap of that type sometime in the past.  (Neither
-                   behavior is really realistic.) */
+        {
+            /* Dog avoids harmful traps, but perhaps it has to pass one in order
+               to follow player.  (Non-harmful traps do not have ALLOW_TRAPS in
+               info[].) The dog only avoids the trap if you've seen it, unlike
+               enemies who avoid traps if they've seen some trap of that type
+               sometime in the past.  (Neither behavior is really realistic.) */
             struct trap *trap;
 
             if ((info[i] & ALLOW_TRAPS) && (trap = t_at(level, nx, ny))) {

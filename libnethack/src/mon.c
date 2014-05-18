@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-28 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1174,12 +1174,31 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
     return cnt;
 }
 
+/* Pets do not take on difficult opponents. Especially not when wounded. This is
+   also symmetrised, for balance reasons; difficult monsters do not take on pets
+   that wouldn't attack them. (This is mostly unrealistic, but necessary to
+   prevent the pet being torn apart by a more powerful opponent.)
+
+   This function returns the highest difficulty the pet is willing to attack.
+
+   See also find_mac in worn.c, which gives pets a large AC boost in situations
+   where they shouldn't be attacked, just in case there are codepaths that
+   don't go through mm_aggression. */
+static int
+pet_attacks_up_to_difficulty(struct monst *mtmp)
+{
+    if (mtmp->mhp * 3 <= mtmp->mhpmax)
+        return 0; /* pets below 1/3 health do not attack */
+    /* Fully healthy pets will attack up to their own level + 3; this goes
+       down linearly as they get wounded. */
+    return ((mtmp->m_lev + 3) * mtmp->mhp) / mtmp->mhpmax;
+}
+
 
 /* Monster against monster special attacks; for the specified monster
-   combinations, this allows one monster to attack another adjacent one
-   in the absence of Conflict.  There is no provision for targetting
-   other monsters; just hand to hand fighting when they happen to be
-   next to each other. */
+   combinations, this allows one monster to attack another adjacent one in the
+   absence of Conflict.  There is no provision for targetting other monsters;
+   just hand to hand fighting when they happen to be next to each other. */
 long
 mm_aggression(struct monst *magr,     /* monster that is currently deciding
                                          where to move */
@@ -1187,6 +1206,47 @@ mm_aggression(struct monst *magr,     /* monster that is currently deciding
 {
     const struct permonst *ma = magr->data;
     const struct permonst *md = mdef->data;
+
+    /* anti-stupidity checks moved here from dog_move, so that hostile monsters
+       benefit from the improved AI when attacking pets too: */
+
+    if (!Conflict) {
+        /* monsters have a 9/10 chance of rejecting an attack on a monster that
+           would paralyze them; in a change from 3.4.3, they don't check whether
+           a floating eye they're attacking is blind (because it's not obvious
+           that they know whether the floating eye is blind), nor whether it can
+           see invisible (can /you/ determine whether a floating eye can see
+           invisible by looking at it?) */
+        if (md == &mons[PM_FLOATING_EYE] && rn2(10) &&
+            magr->mcansee && haseyes(ma))
+            return 0;
+        if (md == &mons[PM_GELATINOUS_CUBE] && rn2(10))
+            return 0;
+ 
+        /* monsters won't make an attack that would kill them with the passive
+           damage they'd take in response */
+        if (max_passive_dmg(mdef, magr) >= magr->mhp)
+            return 0;
+
+        /* monsters won't make an attack that would petrify them */
+        if (touch_petrifies(md) && !resists_ston(magr))
+            return 0;
+
+        /* tame monsters won't attack peaceful guardians or leaders, unless
+           conflicted */
+        if (magr->mtame && mdef->mpeaceful && !Conflict &&
+            (md->msound == MS_GUARDIAN || md->msound == MS_LEADER))
+            return 0;
+
+        /* monsters won't attack enemies that are out of their league */
+        if (magr->mtame && mdef->m_lev > pet_attacks_up_to_difficulty(magr))
+            return 0;
+        /* and for balance, hostiles won't attack pets that wouldn't attack
+           back */
+        if (mdef->mtame && magr->m_lev > pet_attacks_up_to_difficulty(mdef))
+            return 0;
+    }
+    /* end anti-stupidity checks */
 
     /* supposedly purple worms are attracted to shrieking because they like to
        eat shriekers, so attack the latter when feasible */
@@ -1221,6 +1281,15 @@ mm_aggression(struct monst *magr,     /* monster that is currently deciding
         return ALLOW_M | ALLOW_TM;
     /* ... and vice versa */
     if (md->mlet == S_ANGEL && is_demon(ma))
+        return ALLOW_M | ALLOW_TM;
+
+    /* dogs vs. cats, unless both are tame */
+    if (ma->mlet == S_DOG && md->mlet == S_FELINE &&
+        !(magr->mtame && mdef->mtame))
+        return ALLOW_M | ALLOW_TM;
+    /* ... and vice versa, for dog/cat symmetry reasons */
+    if (md->mlet == S_DOG && ma->mlet == S_FELINE &&
+        !(magr->mtame && mdef->mtame))
         return ALLOW_M | ALLOW_TM;
 
     /* woodchucks vs. The Oracle */

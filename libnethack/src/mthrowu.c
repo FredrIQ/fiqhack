@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-02 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -647,8 +647,7 @@ mfind_target(struct monst *mtmp)
     struct monst *mat, *mret;
 
     if (!mtmp->mpeaceful && lined_up(mtmp))
-        return &youmonst;       /* kludge - attack the player first if possible 
-                                 */
+        return &youmonst;     /* kludge - attack the player first if possible */
 
     for (dir = rn2(8); dir != origdir; dir = ((dir + 1) % 8)) {
         if (origdir < 0)
@@ -679,13 +678,10 @@ mfind_target(struct monst *mtmp)
 
             if ((mat = m_at(level, x, y))) {
                 /* i > 0 ensures this is not a close range attack */
-                if (mtmp->mtame && !mat->mtame && i > 0)
-                    mret = mat;
-                else if ((mm_aggression(mtmp, mat) & ALLOW_M)
-                         || (Conflict && !resist(mtmp, RING_CLASS, 0, 0) &&
-                             couldsee(mtmp->mx, mtmp->my) &&
-                             distu(mtmp->mx,
-                                   mtmp->my) <= BOLT_LIM * BOLT_LIM)) {
+                if ((mm_aggression(mtmp, mat) & ALLOW_M) ||
+                    (Conflict && !resist(mtmp, RING_CLASS, 0, 0) &&
+                     couldsee(mtmp->mx, mtmp->my) &&
+                     distu(mtmp->mx, mtmp->my) <= BOLT_LIM * BOLT_LIM)) {
                     if (mtmp->mtame && !Conflict &&
                         ((int)mat->m_lev >= (int)mtmp->m_lev + 2 || mat->mtame
                          ||
