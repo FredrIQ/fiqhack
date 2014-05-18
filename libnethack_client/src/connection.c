@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-17 */
+/* Last modified by Alex Smith, 2014-05-18 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -66,6 +66,9 @@ test_restore_connection(void)
     fd_set rfds;
     struct timeval tv = { 0, 0 };
     char testbuf[1];
+
+    if (sockfd < 0)
+        return restart_connection();
 
     FD_ZERO(&rfds);
     FD_SET(sockfd, &rfds);
