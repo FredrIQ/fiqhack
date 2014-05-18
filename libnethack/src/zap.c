@@ -3035,6 +3035,7 @@ zap_hit_mon(struct monst *mon, int type, int nd, struct obj **ootmp)
             type = -1;  /* so they don't get saving throws */
         } else {
             struct obj *otmp2;
+            int dummy;
 
             if (mon->misc_worn_check & W_MASK(os_arms)) {
                 /* destroy shield; victim survives */
@@ -3042,12 +3043,15 @@ zap_hit_mon(struct monst *mon, int type, int nd, struct obj **ootmp)
             } else if (mon->misc_worn_check & W_MASK(os_arm)) {
                 /* destroy body armor, also cloak if present */
                 *ootmp = which_armor(mon, os_arm);
-                if ((otmp2 = which_armor(mon, os_armc)) != 0)
+                if ((otmp2 = which_armor(mon, os_armc)) &&
+                    !item_provides_extrinsic(otmp2, DISINT_RES, &dummy))
                     m_useup(mon, otmp2);
             } else {
-                if ((otmp2 = which_armor(mon, os_armc)) != 0)
+                if ((otmp2 = which_armor(mon, os_armc)) &&
+                    !item_provides_extrinsic(otmp2, DISINT_RES, &dummy))
                     m_useup(mon, otmp2);
-                if ((otmp2 = which_armor(mon, os_armu)) != 0)
+                if ((otmp2 = which_armor(mon, os_armu)) &&
+                    !item_provides_extrinsic(otmp2, DISINT_RES, &dummy))
                     m_useup(mon, otmp2);
 
                 if (resists_disint(mon))
@@ -3171,21 +3175,26 @@ zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy)
         break;
     case ZT_DEATH:
         if (abs(type) == ZT_BREATH(ZT_DEATH)) {
+            int dummy;
+
             if (uarms) {
                 /* destroy shield; other possessions are safe */
-                destroy_arm(uarms);
+                if (!item_provides_extrinsic(uarms, DISINT_RES, &dummy))
+                    destroy_arm(uarms);
                 break;
             } else if (uarm && uarm != uskin()) {
                 /* destroy suit; if present, cloak goes too */
-                if (uarmc)
+                if (uarmc &&
+                    !item_provides_extrinsic(uarmc, DISINT_RES, &dummy))
                     destroy_arm(uarmc);
-                destroy_arm(uarm);
+                if (!item_provides_extrinsic(uarm, DISINT_RES, &dummy))
+                    destroy_arm(uarm);
                 break;
             }
 
-            if (uarmc)
+            if (uarmc && !item_provides_extrinsic(uarmc, DISINT_RES, &dummy))
                 destroy_arm(uarmc);
-            if (uarmu)
+            if (uarmu && !item_provides_extrinsic(uarmu, DISINT_RES, &dummy))
                 destroy_arm(uarmu);
 
             if (Disint_resistance) {
@@ -3491,12 +3500,15 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy)
                             /* normal non-fatal hit */
                             hit(fltxt, mon, exclam(tmp));
                         } else {
+                            int dummy;
                             /* some armor was destroyed; no damage done */
                             if (canseemon(mon))
                                 pline("%s %s is disintegrated!",
                                       s_suffix(Monnam(mon)),
                                       distant_name(otmp, xname));
-                            m_useup(mon, otmp);
+                            if (!item_provides_extrinsic(otmp, DISINT_RES,
+                                                         &dummy))
+                                m_useup(mon, otmp);
                         }
                         if (mon_could_move && !mon->mcanmove)   /* ZT_SLEEP */
                             slept_monst(mon);
