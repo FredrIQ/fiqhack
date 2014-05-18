@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-16 */
+/* Last modified by Sean Hunt, 2014-05-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -160,13 +160,13 @@ static const struct nh_option_desc const_options[] = {
     {"disclose", "whether to disclose information at end of game", FALSE,
      OPTTYPE_ENUM, {.e = DISCLOSE_PROMPT_DEFAULT_YES}},
     {"fruit", "the name of a fruit you enjoy eating", FALSE, OPTTYPE_STRING,
-     {"slime mold"}},
+     {.s = NULL}},
     {"menustyle", "user interface for object selection", FALSE, OPTTYPE_ENUM,
      {.e = MENU_FULL}},
     {"movecommand", "what the movement keys do", FALSE, OPTTYPE_ENUM,
      {.e = uim_standard}},
     {"packorder", "the inventory order of the items in your pack", FALSE,
-     OPTTYPE_STRING, {.s = "$\")[%?+!=/(*`0_"}},
+     OPTTYPE_STRING, {.s = NULL}},
     {"pickup_burden", "maximum burden picked up before prompt", FALSE,
      OPTTYPE_ENUM, {.e = MOD_ENCUMBER}},
     {"pickup_thrown", "autopickup items you threw or fired", FALSE,
@@ -334,11 +334,9 @@ new_opt_struct(void)
 
     /* initialize option definitions */
     nhlib_find_option(options, "disclose")->e = disclose_spec;
-    nhlib_find_option(options, "fruit")->s.maxlen = PL_FSIZ;
     nhlib_find_option(options, "menustyle")->e = menustyle_spec;
     nhlib_find_option(options, "movecommand")->e = movecommand_spec;
     nhlib_find_option(options, "pickup_burden")->e = pickup_burden_spec;
-    nhlib_find_option(options, "packorder")->s.maxlen = MAXOCLASSES;
     nhlib_find_option(options, "autopickup_rules")->a = autopickup_spec;
 
     nhlib_find_option(options, "name")->s.maxlen = PL_NSIZ;
@@ -352,6 +350,18 @@ new_opt_struct(void)
     nhlib_find_option(options, "catname")->s.maxlen = PL_PSIZ;
     nhlib_find_option(options, "dogname")->s.maxlen = PL_PSIZ;
     nhlib_find_option(options, "horsename")->s.maxlen = PL_PSIZ;
+
+    struct nh_option_desc *fruit = nhlib_find_option(options, "fruit");
+    const char *def_fruit = "slime mold";
+    fruit->s.maxlen = PL_FSIZ;
+    fruit->value.s = malloc(strlen(def_fruit));
+    strcpy(fruit->value.s, def_fruit);
+
+    struct nh_option_desc *packorder = nhlib_find_option(options, "packorder");
+    const char *def_packorder = "$\")[%?+!=/(*`0_";
+    packorder->s.maxlen = MAXOCLASSES;
+    packorder->value.s = malloc(strlen(def_packorder));
+    strcpy(packorder->value.s, def_packorder);
 
     return options;
 }
@@ -524,7 +534,6 @@ nh_get_options(void)
         else if (!strcmp("disclose", option->name)) {
             option->value.e = flags.end_disclose;
         } else if (!strcmp("fruit", option->name)) {
-
             if (option->value.s)
                 free(option->value.s);
             option->value.s = malloc(PL_FSIZ);

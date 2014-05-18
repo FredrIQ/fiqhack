@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-18 */
+/* Last modified by Sean Hunt, 2014-05-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1665,7 +1665,7 @@ canunwearobj(struct obj *otmp, boolean noisy, boolean spoil, boolean cblock)
 
     /* special ring checks */
     if (otmp->owornmask & W_RING) {
-        const char *buf;
+        const char *buf = NULL;
 
         if (nolimbs(youmonst.data)) {
             if (noisy)
@@ -1725,7 +1725,7 @@ canunwearobj(struct obj *otmp, boolean noisy, boolean spoil, boolean cblock)
     /* special suit and shirt checks */
     if (otmp->owornmask & (W_MASK(os_arm) | W_MASK(os_armu))) {
         why = 0;        /* the item which prevents disrobing */
-        const char *buf;
+        const char *buf = NULL;
         if (CBLOCK(uarmc)) {
             buf = msgcat("remove your ", cloak_simple_name(uarmc));
             why = uarmc;
