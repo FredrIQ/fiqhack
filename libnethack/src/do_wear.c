@@ -147,9 +147,11 @@ on_msg(struct obj *otmp)
         if (otmp->otyp == TOWEL)
             how = msgprintf(" around your %s", body_part(HEAD));
 
-        pline("You are now %s %s%s.",
+        pline("You are now %s %s%s.%s",
               otmp->owornmask & W_MASK(os_arms) ? "holding" : "wearing",
-              obj_is_pname(otmp) ? the(xname(otmp)) : an(xname(otmp)), how);
+              obj_is_pname(otmp) ? the(xname(otmp)) : an(xname(otmp)), how,
+              Hallucination && otmp->otyp == BLACK_DRAGON_SCALE_MAIL
+                  ? " Kinky." : "");
     }
 }
 
