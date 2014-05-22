@@ -332,7 +332,8 @@ update_showlines(char **intermediate, int *length, nh_bool force_more)
      * STEP 3: Shift the showlines messages, freeing the ones that fall off the
      *         end, and put the wrapped lines in the freed slots.
      * STEP 4: Eliminate the first part of intermediate as needed by traversing
-     *         it
+     *         the buffer.  Check each of the newly-displayed showlines' length,
+     *         and for each one jump that many characters ahead.
      * STEP 5: If we need another pass, strip tokens off the end of showlines[0]
      *         and shove them into the beginning of intermediate until we have
      *         room for a more prompt.
