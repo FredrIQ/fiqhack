@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-05-16 */
+/* Last modified by Derrick Sund, 2014-05-22 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -331,8 +331,8 @@ update_showlines(char **intermediate, int *length, nh_bool force_more)
      *         buf, make a note that we're going to need another pass/more.
      * STEP 3: Shift the showlines messages, freeing the ones that fall off the
      *         end, and put the wrapped lines in the freed slots.
-     * STEP 4: Wipe out intermediate, and reconstruct it by concatenating the
-     *         lines (if any exist) we couldn't fit in Step 3.
+     * STEP 4: Eliminate the first part of intermediate as needed by traversing
+     *         it
      * STEP 5: If we need another pass, strip tokens off the end of showlines[0]
      *         and shove them into the beginning of intermediate until we have
      *         room for a more prompt.
@@ -430,22 +430,17 @@ update_showlines(char **intermediate, int *length, nh_bool force_more)
     }
 
     /* Step 4 begins here. */
-    messagelen = strlen(*intermediate);
-    strcpy(*intermediate, "");
-    for (i = merging ? num_to_bump + 1 : num_to_bump; i < num_buflines; i++) {
-        realloc_strcat(intermediate, length, wrapped_buf[i]);
-        /* TODO: Base this on the whitespace in buf rather than trying to divine
-           it from punctuation. */
-        if (i == num_buflines - 1)
-            break; /* Don't add unnecessary whitespace. */
-        if ((*intermediate)[strlen(*intermediate) - 1] == '.')
-            realloc_strcat(intermediate, length, "  ");
-        else
-            realloc_strcat(intermediate, length, " ");
-        
+    /* marker will walk across buf until it reaches text that wasn't printed */
+    char* marker = buf;
+    for (i = 0; i < (merging ? num_to_bump + 1 : num_to_bump); i++) {
+        marker += strlen(wrapped_buf[i]);
+        while(*marker == ' ')
+            marker++; /* Traverse forward past whitespace */
     }
-    //XXX: The above intermediate thing might mangle whitespace somehow.
-    //It'll do for prototyping.
+    /* At this point, *marker might be NULL if we printed everything in buf.
+       Doesn't matter, though. */
+    strcpy(*intermediate, "");
+    realloc_strcat(intermediate, length, marker);
 
     /* Step 5 begins here. */
     while (showlines[0].message && need_more &&
