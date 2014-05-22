@@ -333,10 +333,11 @@ update_showlines(char **intermediate, int *length, nh_bool force_more)
      *         end, and put the wrapped lines in the freed slots.
      * STEP 4: Eliminate the first part of intermediate as needed by traversing
      *         the buffer.  Check each of the newly-displayed showlines' length,
-     *         and for each one jump that many characters ahead.
+     *         and for each one have a char pointer called "marker" jump that
+     *         many characters ahead.
      * STEP 5: If we need another pass, strip tokens off the end of showlines[0]
-     *         and shove them into the beginning of intermediate until we have
-     *         room for a more prompt.
+     *         and simultaneously rewind marker one token at a time until we
+     *         have room for a more prompt.
      */
     
     /* Step 1 begins here. */
@@ -438,10 +439,6 @@ update_showlines(char **intermediate, int *length, nh_bool force_more)
         while(*marker == ' ')
             marker++; /* Traverse forward past whitespace */
     }
-    /* At this point, *marker might be NULL if we printed everything in buf.
-       Doesn't matter, though. */
-    strcpy(*intermediate, "");
-    realloc_strcat(intermediate, length, marker);
 
     /* Step 5 begins here. */
     while (showlines[0].message && need_more &&
@@ -449,18 +446,31 @@ update_showlines(char **intermediate, int *length, nh_bool force_more)
         /* Find the last space in the current showlines[0]. */
         char *last;
         last = strrchr(showlines[0].message, ' ');
-        /* If the showlines[0] string doesn't *have* any whitespace, just
-           kind of split it up anyway. */
-        if (!last)
+        if (last) {
+            /* rewind marker so the token will wind up in the buffer again.
+               n.b.: to_rewind will always be at least two if there's two
+               spaces to go back (end of a sentence), because of the ending
+               punctuation mark. */
+            int to_rewind = strlen(last);
+            marker -= to_rewind;
+            while (marker > buf && *(marker - 1) != ' ')
+                marker--; /* might've been more than one space */
+            /* NULL out the space in showlines[0] */
+            *last = '\0';
+        }
+        else {
+            /* If the showlines[0] string doesn't *have* any whitespace, just
+               kind of split it up anyway.  This will hopefully never happen 
+               anyway. */
             last = showlines[0].message + getmaxx(msgwin) - strlen(more_text);
-        char *temp = malloc(strlen(*intermediate) + strlen(last) + 1);
-        strcpy(temp, last + 1);
-        strcat(temp, " ");
-        strcat(temp, *intermediate);
-        free(*intermediate);
-        *intermediate = temp;
-        *last = '\0';
+            marker -= strlen(last) + 1;
+            *last = '\0';
+        }
     }
+    /* At this point, *marker might be NULL if we printed everything in buf.
+       Doesn't matter, though. */
+    strcpy(*intermediate, "");
+    realloc_strcat(intermediate, length, marker);
 
     free_wrap(wrapped_buf);
     return need_more;
