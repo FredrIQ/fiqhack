@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-17 */
+/* Last modified by Alex Smith, 2014-05-23 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -121,10 +121,6 @@ struct nh_option_desc curses_options[] = {
      {.b = TRUE}},
     {"use_inverse", "use inverse video for some things", FALSE, OPTTYPE_BOOL,
      {.b = TRUE}},
-#if defined(PDCURSES) && defined(WIN32)
-    {"win_width", "window width", FALSE, OPTTYPE_INT, {.i = 130}},
-    {"win_height", "window height", FALSE, OPTTYPE_INT, {.i = 40}},
-#endif
     {NULL, NULL, FALSE, OPTTYPE_BOOL, {NULL}}
 };
 
@@ -271,17 +267,6 @@ curses_set_option(const char *name, union nh_optvalue value)
         settings.msghistory = option->value.i;
         alloc_hist_array();
     }
-#if defined(PDCURSES) && defined(WIN32)
-    else if (!strcmp(option->name, "win_width")) {
-        settings.win_width = option->value.i;
-        resize_term(settings.win_height, settings.win_width);
-        handle_resize();
-    } else if (!strcmp(option->name, "win_height")) {
-        settings.win_height = option->value.i;
-        resize_term(settings.win_height, settings.win_width);
-        handle_resize();
-    }
-#endif
     else
         return FALSE;
 
@@ -317,16 +302,6 @@ init_options(void)
     find_option("optstyle")->e = optstyle_spec;
     find_option("scores_top")->i.max = 10000;
     find_option("scores_around")->i.max = 100;
-#if defined(PDCURSES) && defined(WIN32)
-    find_option("win_width")->i.min = COLNO;    /* can never be narrower than
-                                                   COLNO */
-    find_option("win_width")->i.max = 100 + COLNO;      /* 100 chars wide
-                                                           sidebar already
-                                                           looks pretty silly */
-    find_option("win_height")->i.min = ROWNO + 3;
-    find_option("win_height")->i.max = 70;      /* ROWNO + max msgheight +
-                                                   extra for status and frame */
-#endif
     /* set up option defaults; this is necessary for options that are not
        specified in the config file */
     for (i = 0; curses_options[i].name; i++)

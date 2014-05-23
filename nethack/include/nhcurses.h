@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-17 */
+/* Last modified by Alex Smith, 2014-05-23 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -144,8 +144,6 @@ struct settings {
     int msgheight;      /* requested height of the message win */
     int msghistory;     /* # of historic messages to keep for prevmsg display */
     int optstyle;       /* option display style */
-    int win_height;     /* window height, PDCurses on WIN32 only */
-    int win_width;      /* window height, PDCurses on WIN32 only */
     /* use bolded black instead of dark blue for CLR_BLACK */
     nh_bool darkgray;
     nh_bool extmenu;    /* extended commands use menu interface */
