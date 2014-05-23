@@ -68,6 +68,13 @@ static struct nh_listitem optstyle_list[] = {
 static struct nh_enum_option optstyle_spec =
     { optstyle_list, listlen(optstyle_list) };
 
+static struct nh_listitem autoable_boolean_list[] = {
+    {AB_FALSE, "false"},
+    {AB_TRUE,  "true"},
+    {AB_AUTO,  "auto"},
+};
+static struct nh_enum_option autoable_boolean_spec =
+    { autoable_boolean_list, listlen(autoable_boolean_list) };
 
 static const char *const bucnames[] =
     { "unknown", "blessed", "uncursed", "cursed", "all" };
@@ -113,7 +120,8 @@ struct nh_option_desc curses_options[] = {
     {"showexp", "show experience points", FALSE, OPTTYPE_BOOL, {.b = TRUE}},
     {"showscore", "show your score in the status line", FALSE, OPTTYPE_BOOL,
      {.b = TRUE}},
-    {"sidebar", "draw the inventory sidebar", FALSE, OPTTYPE_BOOL, {.b = TRUE}},
+    {"sidebar", "draw the inventory sidebar", FALSE, OPTTYPE_ENUM,
+     {.e = AB_AUTO}},
     {"standout", "use standout for --More--", FALSE, OPTTYPE_BOOL,
      {.b = FALSE}},
     {"status3", "3 line status display", FALSE, OPTTYPE_BOOL, {.b = TRUE}},
@@ -136,7 +144,6 @@ struct nhlib_boolopt_map boolopt_map[] = {
     {"scores_own", &settings.end_own},
     {"showexp", &settings.showexp},
     {"showscore", &settings.showscore},
-    {"sidebar", &settings.sidebar},
     {"standout", &settings.standout},
     {"status3", &settings.status3},
     {"time", &settings.time},
@@ -231,8 +238,7 @@ curses_set_option(const char *name, union nh_optvalue value)
         *var = value.b;
 
         if (!strcmp(option->name, "frame") ||
-            !strcmp(option->name, "status3") ||
-            !strcmp(option->name, "sidebar")) {
+            !strcmp(option->name, "status3")) {
             rebuild_ui();
         } else if (!strcmp(option->name, "darkgray")) {
             set_darkgray();
@@ -254,6 +260,9 @@ curses_set_option(const char *name, union nh_optvalue value)
             draw_map(player.x, player.y);
             redraw_game_windows();
         }
+    } else if (!strcmp(option->name, "sidebar")) {
+        settings.sidebar = option->value.e;
+        rebuild_ui();
     } else if (!strcmp(option->name, "scores_top")) {
         settings.end_top = option->value.i;
     } else if (!strcmp(option->name, "scores_around")) {
@@ -302,6 +311,7 @@ init_options(void)
     find_option("optstyle")->e = optstyle_spec;
     find_option("scores_top")->i.max = 10000;
     find_option("scores_around")->i.max = 100;
+    find_option("sidebar")->e = autoable_boolean_spec;
     /* set up option defaults; this is necessary for options that are not
        specified in the config file */
     for (i = 0; curses_options[i].name; i++)

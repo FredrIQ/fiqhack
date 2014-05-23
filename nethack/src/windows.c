@@ -250,7 +250,8 @@ layout_game_windows(void)
         LINES >= ROWNO + 4 + settings.msgheight + statusheight)
         ui_flags.draw_frame = TRUE;
 
-    if (settings.sidebar && COLS >= COLNO + 20)
+    if ((settings.sidebar == AB_AUTO && COLS >= COLNO + 20) ||
+        (settings.sidebar == AB_TRUE && COLS >= COLNO + 5))
         ui_flags.draw_sidebar = TRUE;
 
     /* create subwindows */

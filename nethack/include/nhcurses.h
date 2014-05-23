@@ -115,6 +115,16 @@ enum game_dirs {
     DUMP_DIR
 };
 
+/* A boolean that can be "pinned" at a particular value, or that can be left to
+   have its value chosen automatically. 
+
+   I'm /so/ tempted to just use FALSE, TRUE, and ENOENT instead... */
+enum autoable_boolean {
+    AB_FALSE,
+    AB_TRUE,
+    AB_AUTO,
+};
+
 
 struct interface_flags {
     nh_bool done_hup;
@@ -144,6 +154,9 @@ struct settings {
     int msgheight;      /* requested height of the message win */
     int msghistory;     /* # of historic messages to keep for prevmsg display */
     int optstyle;       /* option display style */
+
+    enum autoable_boolean sidebar;   /* whether to draw the inventory sidebar */
+
     /* use bolded black instead of dark blue for CLR_BLACK */
     nh_bool darkgray;
     nh_bool extmenu;    /* extended commands use menu interface */
@@ -158,7 +171,6 @@ struct settings {
     /* show multiple symbols for each location by blinking */
     nh_bool blink;
     nh_bool floorcolor; /* draw stepped-on information for the floor */
-    nh_bool sidebar;    /* draw the inventory sidebar */
     nh_bool frame;      /* draw a frame around the window sections */
     nh_bool status3;    /* draw 3 line status */
 };
@@ -223,8 +235,6 @@ enum nh_text_mode {
     TILESET_SLASHEM_32,
     TILESET_SLASHEM_3D,
 };
-
-
 
 struct gamewin {
     void (*draw) (struct gamewin * gw);
