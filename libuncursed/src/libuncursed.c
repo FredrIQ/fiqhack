@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-05-23 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -321,8 +321,11 @@ uncursed_hook_get_tile_dimensions(int down, int across, int *height, int *width)
     for (h = uncursed_hook_list; h; h = h->next_hook)
         if (h->used && h->get_tile_dimensions) {
             h->get_tile_dimensions(down, across, height, width);
-            break;
+            return;
         }
+
+    *height = down;
+    *width = across;
 }
 
 static void *
@@ -850,6 +853,9 @@ add_wch, (const cchar_t *ch), (ch))
 static int
 add_wch_core(WINDOW * win, const cchar_t *ch)
 {
+    if (win->x > win->maxx || win->y > win->maxy || win->x < 0 || win->y < 0)
+        return ERR;
+
     if (ch->chars[0] == 8) {    /* backspace */
 
         if (win->x > 0)
@@ -2097,7 +2103,7 @@ newwin(int h, int w, int t, int l)
     WINDOW *win = malloc(sizeof (WINDOW));
     int i;
 
-    if (!win)
+    if (!win || h < 0 || w < 0)
         return 0;
     if (h == 0)
         h = LINES;
@@ -2224,9 +2230,9 @@ delwin(WINDOW *win)
 int
 mvwin(WINDOW *win, int y, int x)
 {
-    if (win->maxy + y >= LINES || y < 0)
+    if (win->maxy + y > LINES || y < 0)
         return ERR;
-    if (win->maxx + x >= COLS || x < 0)
+    if (win->maxx + x > COLS || x < 0)
         return ERR;
 
     win->scry = y;
@@ -2330,6 +2336,12 @@ wnoutrefresh(WINDOW *win)
         uncursed_hook_init(&LINES, &COLS, title);
         uncursed_rhook_setsize(LINES, COLS);
     }
+
+    /* Don't redraw a window that's offscreen. */
+    if (win->scry + win->maxy > nout_win->maxy ||
+        win->scrx + win->maxx > nout_win->maxx ||
+        win->scry < 0 || win->scrx < 0)
+        return ERR;
 
     if (win->clear_on_refresh)
         nout_win->clear_on_refresh = 1;
@@ -2879,6 +2891,9 @@ scrl, (int n), (n))
 int
 wresize(WINDOW *win, int newh, int neww)
 {
+    if (newh < 1 || neww < 1)
+        return ERR;
+
     /* If a window is resized such that a child is outside the bounds of a
        parent, we permit this, but drawing to the window will cause memory
        corruption until the application rectifies this.  At the moment, we

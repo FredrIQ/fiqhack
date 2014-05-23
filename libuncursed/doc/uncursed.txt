@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-05-18
+Last modified by Alex Smith, 2014-05-23
 
 This documentation for the uncursed rendering library is provided under the
 same terms as libuncursed itself: it may be distributed under either of the
@@ -1263,7 +1263,7 @@ wil not affect currently exiting tiles regions.
     void [w]delete_tiles_region([WINDOW *win])
 
 Each window can have a "tiles region", that tells uncursed where to draw the
-tiles.  After the window argument, the first four argument gives the height,
+tiles.  After the window argument, the first four arguments give the height,
 width, top and left of the area of the window that will be covered by the
 tiles; the last four arguments give the area of the window that contains the
 ASCII/Unicode representation that is used for non-tiles interfaces.  (In other
@@ -1273,8 +1273,8 @@ drawn in the first.)  For most useful uses of this, the first rectangle would
 entirely contain the second, and in many cases, the two will be identical.
 
 If the tiles are larger than the characters in their ASCII/Unicode
-representations (which is likely), and the tiles rectangle is not enough
-bigger than the character rectangle to compensate, then only part of the
+representations (which is likely), and the tiles rectangle is not bigger than
+the character rectangle by enough to compensate, then only part of the
 character region can be shown in the tiles region.  The part that is shown
 will depend on the window's cursor location, scrolling to attempt to keep the
 part of the tiles region that corresponds to the part of the character region

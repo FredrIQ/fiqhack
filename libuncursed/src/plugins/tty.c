@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-17 */
+/* Last modified by Alex Smith, 2014-05-23 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -190,9 +190,16 @@ measure_terminal_size(int *h, int *w)
        it like this: */
     struct winsize ws;
 
-    ioctl(fileno(ofile), TIOCGWINSZ, &ws);
-    *h = ws.ws_row;
-    *w = ws.ws_col;
+    if (ioctl(fileno(ofile), TIOCGWINSZ, &ws) >= 0) {
+        *h = ws.ws_row;
+        *w = ws.ws_col;
+    } else {
+        /* Something might be wrong with the terminal (e.g. hangup). We
+           nonetheless need to initialize the size; the program will continue to
+           attempt to do rendering even after the hangup. */
+        *h = 80;
+        *w = 24;
+    }
 }
 
 /* UNIX-specific functions */
