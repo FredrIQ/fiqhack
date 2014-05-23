@@ -655,16 +655,17 @@ curses_pause(enum nh_pause_reason reason)
 
 /* expand tabs into proper number of spaces */
 static char *
-tabexpand(char *sbuf)
+tabexpand(char *sbuf, size_t sbuflen)
 {
-    char buf[BUFSZ];
+    /* This array is guaranteed to be large enough to hold the expanded
+       string. */
+    char buf[strlen(sbuf) * 8 + 1];
     char *bp, *s = sbuf;
     int idx;
 
     if (!*s)
         return sbuf;
 
-    /* warning: no bounds checking performed */
     for (bp = buf, idx = 0; *s; s++)
         if (*s == '\t') {
             do
@@ -675,7 +676,9 @@ tabexpand(char *sbuf)
             idx++;
         }
     *bp = 0;
-    return strcpy(sbuf, buf);
+    strncpy(sbuf, buf, sbuflen-1);
+    sbuf[sbuflen-1] = '\0';
+    return sbuf;
 }
 
 
@@ -696,7 +699,7 @@ curses_display_buffer(const char *inbuf, nh_bool trymove)
     do {
         strncpy(linebuf, line, BUFSZ * ROWNO);
         if (strchr(linebuf, '\t') != 0)
-            tabexpand(linebuf);
+            tabexpand(linebuf, sizeof linebuf);
 
         wrap_text(COLNO - 4, linebuf, &lcount, &lines);
         for (i = 0; i < lcount; ++i)

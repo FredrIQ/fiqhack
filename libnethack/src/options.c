@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-05-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -354,13 +354,13 @@ new_opt_struct(void)
     struct nh_option_desc *fruit = nhlib_find_option(options, "fruit");
     const char *def_fruit = "slime mold";
     fruit->s.maxlen = PL_FSIZ;
-    fruit->value.s = malloc(strlen(def_fruit));
+    fruit->value.s = malloc(strlen(def_fruit)+1);
     strcpy(fruit->value.s, def_fruit);
 
     struct nh_option_desc *packorder = nhlib_find_option(options, "packorder");
     const char *def_packorder = "$\")[%?+!=/(*`0_";
     packorder->s.maxlen = MAXOCLASSES;
-    packorder->value.s = malloc(strlen(def_packorder));
+    packorder->value.s = malloc(strlen(def_packorder)+1);
     strcpy(packorder->value.s, def_packorder);
 
     return options;
