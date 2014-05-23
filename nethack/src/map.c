@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-09 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -97,7 +97,7 @@ mark_mapwin_for_full_refresh(void)
 void
 draw_map(int cx, int cy)
 {
-    int x, y, symcount, attr, cursx, cursy;
+    int x, y, symcount, attr, cursx, cursy, mapwinw, mapwinh;
     unsigned int frame;
     struct curses_symdef syms[4];
 
@@ -105,6 +105,7 @@ draw_map(int cx, int cy)
         return;
 
     getyx(mapwin, cursy, cursx);
+    getmaxyx(mapwin, mapwinh, mapwinw);
 
     frame = 0;
     if (settings.blink) {
@@ -112,8 +113,8 @@ draw_map(int cx, int cy)
         fully_refresh_display_buffer = 1;
     }
 
-    for (y = 0; y < ROWNO; y++) {
-        for (x = 0; x < COLNO; x++) {
+    for (y = 0; y < mapwinh && y < ROWNO; y++) {
+        for (x = 0; x < mapwinw && x < COLNO; x++) {
             int bg_color = 0;
             struct nh_dbuf_entry *dbyx = &(display_buffer[y][x]);
 

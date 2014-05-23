@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-28 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -739,8 +739,7 @@ switch_graphics(enum nh_text_mode mode)
 
     default: /* tiles */
     case UNICODE_GRAPHICS:
-        if (ui_flags.unicode)
-            cur_drawing = unicode_drawing;
+        cur_drawing = unicode_drawing;
         break;
     }
 }
@@ -754,27 +753,18 @@ print_sym(WINDOW * win, struct curses_symdef *sym, int extra_attrs, int bgcolor)
 
     /* nethack color index -> curses color */
     attr = A_NORMAL | extra_attrs;
-    if (ui_flags.color) {
-        attr |= curses_color_attr(sym->color & 0x1F, bgcolor);
-        if (sym->color & 0x20)
-            attr |= A_UNDERLINE;
-        if (sym->color & 0x40 && settings.use_inverse && !bgcolor) {
-            attr |= A_REVERSE;
-            attr &= ~A_BOLD;
-        }
+    attr |= curses_color_attr(sym->color & 0x1F, bgcolor);
+    if (sym->color & 0x20)
+        attr |= A_UNDERLINE;
+    if (sym->color & 0x40 && settings.use_inverse && !bgcolor) {
+        attr |= A_REVERSE;
+        attr &= ~A_BOLD;
     }
 
-    /* print it; preferably as unicode */
-    if (sym->unichar[0] && ui_flags.unicode) {
-        int color = PAIR_NUMBER(attr);
+    int color = PAIR_NUMBER(attr);
 
-        setcchar(&uni_out, sym->unichar, attr, color, NULL);
-        wadd_wch(win, &uni_out);
-    } else {
-        wattron(win, attr);
-        waddch(win, sym->ch);
-        wattroff(win, attr);
-    }
+    setcchar(&uni_out, sym->unichar, attr, color, NULL);
+    wadd_wch(win, &uni_out);
 }
 
 void

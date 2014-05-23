@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-23 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -129,20 +129,33 @@ enum autoable_boolean {
 struct interface_flags {
     nh_bool done_hup;
     nh_bool ingame;
-    nh_bool draw_frame;
-    nh_bool draw_sidebar;
-    nh_bool status3;    /* draw the 3 line status instead of the classic 2
-                           lines */
-    nh_bool color;      /* the terminal has color capability */
-    nh_bool unicode;    /* ncurses detected a unicode locale */
     nh_bool connected_to_server;
+
+    /* Window layout dimensions.
+
+       These dimensions are the amount of space actually allocated on screen, in
+       characters; settings, COLNO, etc. hold the amount of space we'd actually
+       like to have.  For instance, if we want to fit the map into 90
+       characters, and are using an ASCII interface where the map only takes up
+       80 characters of space, mapwidth is nontheless 90, and map_pad_l and
+       map_pad_r are both 5. */
+    nh_bool draw_horizontal_frame_lines;
+    nh_bool draw_vertical_frame_lines;
+    nh_bool draw_outer_frame_lines;
+    int statusheight; /* usually 3 or 2; can be smaller in emergencies */
+    int mapheight;    /* height of the content area of the map */
+    int msgheight;    /* amount of height the message area occupies */
+    int extraheight;  /* amount of height the extra window occupies */
+    int mapwidth;     /* width of the content area of the map */
+    int sidebarwidth; /* width of the sidebar */
+    int map_padding;  /* padding on each side of the map */
+
     int levelmode;
     int playmode;
-    int viewheight;
-    int msgheight;      /* actual height */
-    int connection_only;       /* connect to localhost, don't play normally */
-    int no_stop;        /* do not allow the process to stop itself (as in
-                           SIGSTOP) */
+
+    int connection_only;  /* connect to localhost, don't play normally */
+    int no_stop;          /* do not allow the process to suspend */
+
     char username[BUFSZ];      /* username being used in connection-only mode */
 };
 
@@ -162,9 +175,7 @@ struct settings {
     nh_bool extmenu;    /* extended commands use menu interface */
     nh_bool hilite_pet; /* hilight pets */
     nh_bool showexp;    /* show experience points */
-    nh_bool showscore;  /* show score */
     nh_bool standout;   /* use standout for --More-- */
-    nh_bool time;       /* display elapsed 'time' */
     nh_bool use_inverse;        /* use inverse video for some things */
     nh_bool invweight;  /* show item weight in the inventory */
     nh_bool bgbranding; /* show hidden traps/stairs with background */
@@ -288,7 +299,7 @@ extern struct interface_flags ui_flags;
 extern nh_bool interrupt_multi, game_is_running;
 extern const char quit_chars[];
 extern struct nh_window_procs curses_windowprocs;
-extern WINDOW *basewin, *mapwin, *msgwin, *statuswin, *sidebar;
+extern WINDOW *basewin, *mapwin, *msgwin, *statuswin, *sidebar, *extrawin;
 extern struct curses_drawing_info *default_drawing, *cur_drawing;
 extern int curses_level_display_mode;
 extern struct nh_player_info player;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-09 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -28,11 +28,11 @@ newdialog(int height, int width, WINDOW *win)
         fresh_message_line(FALSE);
         draw_msgwin();
         if (getmaxx(msgwin) < getmaxx(stdscr))
-            width = getmaxx(msgwin) + (ui_flags.draw_frame ? 2 : 0);
+            width = getmaxx(msgwin) + (ui_flags.draw_outer_frame_lines ? 2 : 0);
         else
             width = getmaxx(stdscr);
         startx = 0;
-        starty = getmaxy(msgwin) - (ui_flags.draw_frame ? 0 : 1);
+        starty = getmaxy(msgwin) - (ui_flags.draw_outer_frame_lines ? 0 : 1);
     } else {
         /* out of game, keep dialogs centred */
         starty = (LINES - height) / 2;
@@ -58,8 +58,8 @@ layout_curses_msgwin(struct win_msgwin *wmw, int *linecount, char ***lines,
                      nh_bool recalc)
 {
     int width = strlen(wmw->msg) + 4;
-    if (width > COLNO - 1)
-        width = COLNO - 1;
+    if (width > ui_flags.mapwidth - 1)
+        width = ui_flags.mapwidth - 1;
     if (width > getmaxx(stdscr) - 2)
         width = getmaxx(stdscr) - 2;
 
@@ -118,6 +118,10 @@ curses_msgwin_generic(const char *msg, int (*validator)(int, void *),
         fprintf(stderr, "%s\n", msg);
         return validator('\x1b', arg);
     }
+
+    /* Don't try to render this on a very small terminal. */
+    if (COLS < COLNO || LINES < ROWNO)
+        return validator('\x1b', arg);
 
     int prevcurs = curs_set(cursor_visible);
 

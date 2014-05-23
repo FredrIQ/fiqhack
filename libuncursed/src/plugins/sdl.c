@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -42,7 +42,7 @@
 static int fontwidth = 8;
 static int fontheight = 14;
 static int winwidth = 132;    /* width of the window, in units of fontwidth */
-static int winheight = 36;    /* height of the window, in units of fontheight */
+static int winheight = 39;    /* height of the window, in units of fontheight */
 
 static int resize_queued = 0;
 static int suppress_resize = 0;
@@ -1064,13 +1064,13 @@ update_region(struct sdl_tile_region *r)
 
             /* Graphics rendering is the main "legitimate" use of floats,
                because nobody cares if it isn't 100% accurate. */
-            float xprop = 1;
-            float yprop = 1;
+            float xprop = 1.0f;
+            float yprop = 1.0f;
 
             if (cursor_x - r->loc_l < r->loc_w - 1)
-                xprop = (float)nctx / (r->loc_w - 1);
+                xprop = (float)nctx / (float)(r->tilecount_w - 1);
             if (cursor_y - r->loc_t < r->loc_h - 1)
-                yprop = (float)ncty / (r->loc_h - 1);
+                yprop = (float)ncty / (float)(r->tilecount_h - 1);
 
             /* If it fits entirely within the location, centre it. */
             int locsize_w = r->loc_w * fontwidth;

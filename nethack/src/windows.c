@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-23 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -9,7 +9,7 @@
 #include <time.h>
 #include "tile.h"
 
-WINDOW *basewin, *mapwin, *msgwin, *statuswin, *sidebar;
+WINDOW *basewin, *mapwin, *msgwin, *statuswin, *sidebar, *extrawin;
 struct gamewin *firstgw, *lastgw;
 int orig_cursor;
 const char quit_chars[] = " \r\n\033";
@@ -71,8 +71,9 @@ init_curses_ui(const char *dataprefix)
     uncursed_set_title("NetHack 4");
 
     if (!initscr()) {
-        fprintf(stderr, "Could not initialise the UI, exiting...\n");
-        endwin();
+        fprintf(stderr, "Could not initialise the UI.\n");
+        fprintf(stderr, "Press <Return> to exit.\n");
+        getchar();
         exit(1);
     }
 
@@ -80,25 +81,28 @@ init_curses_ui(const char *dataprefix)
     set_tile_file(NULL);
     set_font_file("font14.png");
 
-    if (LINES < ROWNO + 3 || COLS < COLNO + 1) {
-        fprintf(stderr,
-                "Sorry, your terminal is too small for NetHack 4. Current: "
-                "(%x, %x)\n", COLS, LINES);
-        endwin();
-        exit(1);
-    }
-
     noecho();
     raw();
     nonl();
-    meta(basewin, TRUE);
-    leaveok(basewin, TRUE);
+    meta(stdscr, TRUE);
+    leaveok(stdscr, TRUE);
     orig_cursor = curs_set(1);
-    keypad(basewin, TRUE);
+    keypad(stdscr, TRUE);
+
+    while (LINES < ROWNO + 3 || COLS < COLNO + 1) {
+        werase(stdscr);
+        mvprintw(0, 0, "Your terminal is too small for NetHack 4.\n");
+        printw("Current size: (%d, %d)\n", COLS, LINES);
+        printw("Minimum size: (%d, %d)\n", COLNO + 1, ROWNO + 3);
+        printw("Size your terminal larger, or press 'q' to quit.\n");
+        if (getch() == 'q') {
+            endwin();
+            exit(1);
+        }
+    }
 
     init_nhcolors();
     ui_flags.playmode = MODE_NORMAL;
-    ui_flags.unicode = 1;       /* uncursed will back-translate if needed */
     basewin = stdscr;
 }
 
@@ -154,7 +158,7 @@ set_frame_cchar(cchar_t *cchar, enum framechars which, nh_bool mainframe)
 }
 
 /* All these functions draw in MAINFRAME_PAIR on basewin or sidebar,
-   FRAME_PAIR otherwise */
+   FRAME_PAIR otherwise. */
 void
 nh_mvwvline(WINDOW *win, int y, int x, int len)
 {
@@ -192,161 +196,347 @@ nh_mvwaddch(WINDOW *win, int y, int x, enum framechars which)
 static void
 draw_frame(void)
 {
-    if (!ui_flags.draw_frame)
-        return;
+    int framewidth = !!ui_flags.draw_outer_frame_lines;
+    int y = framewidth;
+    int x = framewidth;
 
-    /* vertical lines */
-    nh_mvwvline(basewin, 1, 0, ui_flags.viewheight);
-    nh_mvwvline(basewin, 1, COLNO + 1, ui_flags.viewheight);
+    if (framewidth) {
+        nh_mvwvline(basewin, 0, 0, LINES);
+        nh_mvwvline(basewin, 0, COLS-1, LINES);
+        nh_mvwhline(basewin, 0, 0, COLS);
+        nh_mvwhline(basewin, LINES-1, 0, COLS);
+        nh_mvwaddch(basewin, 0, 0, FC_ULCORNER);
+        nh_mvwaddch(basewin, 0, COLS-1, FC_URCORNER);
+        nh_mvwaddch(basewin, LINES-1, 0, FC_LLCORNER);
+        nh_mvwaddch(basewin, LINES-1, COLS-1, FC_LRCORNER);
+    }
 
-    /* horizontal top line above the message win */
-    nh_mvwhline(basewin, 0, 1, COLNO);
-    nh_mvwaddch(basewin, 0, 0, FC_ULCORNER);
-    nh_mvwaddch(basewin, 0, COLNO + 1, FC_URCORNER);
+    /* We draw vertical lines if a) the layout engine told us to; and b) there's
+       actually somewhere to draw them (the only place where windows could be
+       vertically separated is between the message/map/status/extra windows and
+       the sidebar). */
+    if (ui_flags.draw_vertical_frame_lines && ui_flags.sidebarwidth) {
+        /* The lines themselves */
+        nh_mvwvline(basewin, y, x + ui_flags.mapwidth, LINES - framewidth * 2);
+        /* Connection to the outer border, if there is one */
+        if (framewidth) {
+            nh_mvwaddch(basewin, 0, ui_flags.mapwidth + x, FC_TTEE);
+            nh_mvwaddch(basewin, LINES-1, ui_flags.mapwidth + x, FC_BTEE);
+        }
+    }
 
-    /* horizontal line between message and map windows */
-    nh_mvwhline(basewin, 1 + ui_flags.msgheight, 1, COLNO);
-    nh_mvwaddch(basewin, 1 + ui_flags.msgheight, 0, FC_LTEE);
-    nh_mvwaddch(basewin, 1 + ui_flags.msgheight, COLNO + 1, FC_RTEE);
+    if (ui_flags.draw_horizontal_frame_lines) {
+        /* If we have vertical lines but not an outer frame, or vice versa,
+           connecting just one end of the lines looks ugly, so we leave the
+           disconnected. Exception: if both ends touch the frame, we don't
+           care about vertical lines. */
+        nh_bool connectends = framewidth &&
+            (ui_flags.draw_vertical_frame_lines || !ui_flags.sidebarwidth);
 
-    /* horizontal line between map and status */
-    nh_mvwhline(basewin, 2 + ui_flags.msgheight + ROWNO, 1, COLNO);
-    nh_mvwaddch(basewin, 2 + ui_flags.msgheight + ROWNO, 0, FC_LTEE);
-    nh_mvwaddch(basewin, 2 + ui_flags.msgheight + ROWNO, COLNO + 1, FC_RTEE);
+        y += ui_flags.msgheight;
+        nh_mvwhline(basewin, y, x, ui_flags.mapwidth);
+        if (connectends) {
+            nh_mvwaddch(basewin, y, 0, FC_LTEE);
+            nh_mvwaddch(basewin, y, ui_flags.mapwidth + 1, FC_RTEE);
+        }
 
-    /* horizontal bottom line */
-    nh_mvwhline(basewin, ui_flags.viewheight + 1, 1, COLNO);
-    nh_mvwaddch(basewin, ui_flags.viewheight + 1, 0, FC_LLCORNER);
-    nh_mvwaddch(basewin, ui_flags.viewheight + 1, COLNO + 1, FC_LRCORNER);
+        y += 1 + ui_flags.mapheight;
+        nh_mvwhline(basewin, y, x, ui_flags.mapwidth);
+        if (connectends) {
+            nh_mvwaddch(basewin, y, 0, FC_LTEE);
+            nh_mvwaddch(basewin, y, ui_flags.mapwidth + 1, FC_RTEE);
+        }
 
-    if (!ui_flags.draw_sidebar)
-        return;
-
-    nh_mvwhline(basewin, 0, COLNO + 2, COLS - COLNO - 3);
-    nh_mvwaddch(basewin, 0, COLNO + 1, FC_TTEE);
-    nh_mvwaddch(basewin, 0, COLS - 1, FC_URCORNER);
-
-    nh_mvwhline(basewin, ui_flags.viewheight + 1, COLNO + 2, COLS - COLNO - 3);
-    nh_mvwaddch(basewin, ui_flags.viewheight + 1, COLNO + 1, FC_BTEE);
-    nh_mvwaddch(basewin, ui_flags.viewheight + 1, COLS - 1, FC_LRCORNER);
-
-    nh_mvwvline(basewin, 1, COLS - 1, ui_flags.viewheight);
+        if (ui_flags.extraheight) {
+            y += 1 + ui_flags.statusheight;
+            nh_mvwhline(basewin, y, x, ui_flags.mapwidth);
+            if (connectends) {
+                nh_mvwaddch(basewin, y, 0, FC_LTEE);
+                nh_mvwaddch(basewin, y, ui_flags.mapwidth + 1, FC_RTEE);
+            }
+        }
+    }
 }
 
+static inline void
+allocate_layout_space(int *from, int *to, int amount, int tomax)
+{
+    if (tomax > -1 && *to + amount > tomax)
+        amount = tomax - *to;
+    if (*from < amount)
+        amount = *from;
+    *from -= amount;
+    *to += amount;
+}
 
 static void
 layout_game_windows(void)
 {
-    int statusheight;
+    /*
+     * We lay out the windows in either one or two columns. The left column
+     * contains messages, the map, and a status area; if we have a lot of
+     * vertical space, a customizable fourth window (extrawin) is added, but it
+     * doesn't appear on any but the largest windows. The right column might not
+     * exist due to lack of horizontal space; if it does, it's used for the
+     * inventory and the "things that are here" display, and is called the
+     * "sidebar" in the source code.  This display always uses all the vertical
+     * space that's available to it (the extrawin was originally designed to
+     * balance out the columns).
+     *
+     * Priorities for height (from most to least important):
+     * - ROWNO lines of map, 1 line of messages, 2 lines of status (mandatory)
+     *   - Note: if we don't have ROWNO+3 lines, rendering will be broken; the
+     *     status area is hidden by create_game_windows in this situation to
+     *     avoid crashes, and beyond that, lines are taken from the map; if
+     *     we get down to just 1 line, we have a 1-line map and 1-line message
+     *     area that overlap
+     * - Extra height on the map (as might be required by a tiles interface)
+     * - 4 more lines of messages
+     * - The third line of the status area (if settings.status3)
+     * - More lines of messages, up to settings.msgheight
+     * - Horizontal frame lines between windows
+     * - Outermost frame lines (if there's also horizontal space for them)
+     * - Extra filler window.
+     *
+     * Priorities for width (from most to least important):
+     * - 80 columns of map
+     * - Vertical frame lines between windows (otherwise the sidebar runs into
+     *   the status area and possibly the map)
+     * - (if sidebar == AB_TRUE) up to 40 columns of inventory sidebar
+     * - Extra width on the map (as might be required by a tiles interface
+     * - Outermost frame lines (if there's also vertical space for them)
+     * - (if sidebar != AB_FALSE and there are at least 20 spare columns)
+     *   fill the remaining width with sidebar
+     * - (otherwise) center the map onscreen
+     */
+    int desired_map_y, desired_map_x;
+    int y_remaining = LINES;
+    int x_remaining = COLS;
 
-    ui_flags.draw_frame = ui_flags.draw_sidebar = FALSE;
-    statusheight = settings.status3 ? 3 : 2;
+    ui_flags.draw_horizontal_frame_lines = FALSE;
+    ui_flags.draw_vertical_frame_lines = FALSE;
+    ui_flags.draw_outer_frame_lines = FALSE;
+    ui_flags.statusheight = 0;
+    ui_flags.mapheight = 0;
+    ui_flags.msgheight = 0;
+    ui_flags.extraheight = 0;
+    ui_flags.mapwidth = 0;
+    ui_flags.sidebarwidth = 0;
+    ui_flags.map_padding = 0;
 
-    /* 3 variable elements contribute to height: - message area (most
-       important) - better status - horizontal frame lines (least important) */
+    /* Work out how large libuncursed would like to draw the map. (The answer
+       will normally be "80 by 21", but could be different if using a tiles
+       interface with tiles that are not the same dimension as characters. */
+    get_tile_dimensions(ROWNO, COLNO, &desired_map_y, &desired_map_x);
 
-    /* space for the frame? *//* horiz lines */
-    if (settings.frame && COLS >= COLNO + 2 &&
-        LINES >= ROWNO + 4 + settings.msgheight + statusheight)
-        ui_flags.draw_frame = TRUE;
+    /* If using particularly small tiles, we need to make the tiles region
+       larger so that it covers the character region. (This codepath is
+       unreachable with any of the default tilesets, when using the default
+       font, but is included for futureproofing.) */
+    if (desired_map_x < COLNO)
+        desired_map_x = COLNO;
+    if (desired_map_y < ROWNO)
+        desired_map_y = ROWNO;
 
-    if ((settings.sidebar == AB_AUTO && COLS >= COLNO + 20) ||
-        (settings.sidebar == AB_TRUE && COLS >= COLNO + 5))
-        ui_flags.draw_sidebar = TRUE;
+    /* Vertical layout. */
+    allocate_layout_space(&y_remaining, &ui_flags.msgheight,
+                          1, settings.msgheight);     /* minimal message area */
+    allocate_layout_space(&y_remaining, &ui_flags.mapheight,
+                          ROWNO, desired_map_y);    /* character region of map */
+    allocate_layout_space(&y_remaining, &ui_flags.statusheight,
+                          2, settings.status3 ? 3 : 2);        /* status area */
+    /* The tiles region of the map is important, but unlike the character
+       region, it's not mandatory, because it can scroll if necessary. (When not
+       using tiles, the tiles and character regions are the same, so this is a
+       no-op. */
+    allocate_layout_space(&y_remaining, &ui_flags.mapheight,
+                          y_remaining, desired_map_y);  /* tiles region of map */
+    allocate_layout_space(&y_remaining, &ui_flags.msgheight,
+                          2, settings.msgheight);          /* 4 more messages */
+    allocate_layout_space(&y_remaining, &ui_flags.statusheight,
+                          1, settings.status3 ? 3 : 2); /* status area line 3 */
+    allocate_layout_space(&y_remaining, &ui_flags.msgheight,
+                          y_remaining, settings.msgheight); /* other messages */
 
-    /* create subwindows */
-    if (ui_flags.draw_frame) {
-        ui_flags.msgheight = settings.msgheight;
-        ui_flags.status3 = settings.status3;
-        ui_flags.viewheight = ui_flags.msgheight + ROWNO + statusheight + 2;
+    /* We need at least two horizontal separator lines: between map and
+       messages, and between map and status. (We have a third if we have space
+       for extrawin, but that's checked later. */
+    if (y_remaining >= 2) {
+        y_remaining -= 2;
+        ui_flags.draw_horizontal_frame_lines = TRUE;
+    }
+
+    /* The rest of the vertical layout depends on the horizontal layout, so we
+       stop laying out now and come back later. */
+
+    /* Horizontal layout. */
+    allocate_layout_space(&x_remaining, &ui_flags.mapwidth,
+                          COLNO, desired_map_x);   /* character region of map */
+    if (x_remaining) {
+        /* We want a vertical frame line if there's anything to the right of the
+           map. We handle this by allocating space for it, then deallocating the
+           space again if it turns out there's nothing to separate. */
+        x_remaining--;
+        ui_flags.draw_vertical_frame_lines = TRUE;
+    }
+    if (settings.sidebar == AB_TRUE)
+        allocate_layout_space(&x_remaining, &ui_flags.sidebarwidth,
+                              40, -1);             /* sidebar */
+    allocate_layout_space(&x_remaining, &ui_flags.mapwidth,
+                          x_remaining, desired_map_x); /* tiles region of map */
+
+    /* Do we have space for an outer frame? We need two spare rows; and two
+       spare columns if we already allocated a sidebar (one spare column
+       otherwise, because we can repurpose the one reserved for a vertical frame
+       line). */
+    if (y_remaining >= 2 && x_remaining >= (ui_flags.sidebarwidth ? 2 : 1) &&
+        settings.frame) {
+        y_remaining -= 2;
+        x_remaining -= 2;
+        ui_flags.draw_outer_frame_lines = TRUE;
+    }
+
+    if (settings.sidebar != AB_FALSE &&
+        x_remaining > (settings.sidebar ? 19 : 0))
+        allocate_layout_space(&x_remaining, &ui_flags.sidebarwidth,
+                              x_remaining, -1);
+
+    /* Refund the separator between map and inventory, if necessary. */
+    if (!ui_flags.sidebarwidth && ui_flags.draw_vertical_frame_lines) {
+        x_remaining++;
+        ui_flags.draw_vertical_frame_lines = FALSE;
+    }
+
+    /* Any remaining horizontal space is given to the message and status areas,
+       and placed as padding around the map. This means that the tiles region
+       will either be the desired size, or 1 character wider (which will cause a
+       half-character black space around the map in tiles mode, which is what we
+       want; in character mode, the map cannot be centered because the window
+       width is odd, so it'll end up half a character off-center). */
+    if (x_remaining) {
+        ui_flags.mapwidth += x_remaining;
+        ui_flags.map_padding = x_remaining / 2;
+    }
+
+    /* Any remaining vertical space is used for the extra window, if we could
+       make it at least 2 lines high. Otherwise, it's given to the message area,
+       because it has to go /somewhere/, even if this makes the message area
+       taller than the user wanted. */
+    if (y_remaining >= (ui_flags.draw_horizontal_frame_lines ? 3 : 2)) {
+        if (ui_flags.draw_horizontal_frame_lines)
+            y_remaining--;
+        ui_flags.extraheight = y_remaining;
     } else {
-        int spare_lines = LINES - ROWNO - 2;
+        ui_flags.msgheight += y_remaining;
+    }
 
-        spare_lines = spare_lines >= 1 ? spare_lines : 1;
-        ui_flags.msgheight = min(settings.msgheight, spare_lines);
-        if (ui_flags.msgheight < spare_lines)
-            ui_flags.status3 = settings.status3;
-        else {
-            ui_flags.status3 = FALSE;
-            statusheight = 2;
-        }
-
-        ui_flags.viewheight = ui_flags.msgheight + ROWNO + statusheight;
+    /* If we have a brokenly small terminal... */
+    if (LINES <= 1) {
+        ui_flags.mapheight = 1;
+        ui_flags.msgheight = 1;
     }
 }
 
 
-static void
+static nh_bool
 setup_tiles(void)
 {
     switch (settings.graphics) {
     case TILESET_DAWNHACK_16:
         set_tile_file("dawnhack-16.png");
-        break;
+        return TRUE;
     case TILESET_DAWNHACK_32:
         set_tile_file("dawnhack-32.png");
-        break;
+        return TRUE;
     case TILESET_SLASHEM_16:
         set_tile_file("slashem-16.png");
-        break;
+        return TRUE;
     case TILESET_SLASHEM_32:
         set_tile_file("slashem-32.png");
-        break;
+        return TRUE;
     case TILESET_SLASHEM_3D:
         set_tile_file("slashem-3d.png");
-        break;
+        return TRUE;
     default: /* text */
         set_tile_file(NULL);
         wdelete_tiles_region(mapwin);
-        return;
+        return FALSE;
     }
-    /* only reached if some tileset is selected */
-    wset_tiles_region(mapwin, ROWNO, COLNO, 0, 0, ROWNO, COLNO, 0, 0);
 }
 
-void
-create_game_windows(void)
+static void
+newwin_wrapper(WINDOW **win, int h, int w, int y, int x)
 {
-    int statusheight;
+    *win = newwin(h, w, y, x);
+}
 
+static void
+resize_wrapper(WINDOW **win, int h, int w, int y, int x)
+{
+    /* We must run the resize before the move; otherwise, if the window becomes
+       smaller but also moves downwards or rightwards, the move may fail and the
+       resize would leave it out of bounds. */
+    wresize(*win, h, w);
+    mvwin(*win, y, x);
+
+    /* Sanity checks to debug mistakes in window resizing. */
+    assert(x+w <= COLS);
+    assert(y+h <= LINES);
+    assert(getbegx(*win) == x);
+    assert(getbegy(*win) == y);
+    assert(getmaxx(*win) == w);
+    assert(getmaxy(*win) == h);
+}
+
+static void
+create_or_resize_game_windows(void (*wrapper)(WINDOW **, int, int, int, int))
+{
+    int using_tileset = setup_tiles();
     layout_game_windows();
-    statusheight = ui_flags.status3 ? 3 : 2;
+
+    int outerframewidth = !!ui_flags.draw_outer_frame_lines;
+    int y = outerframewidth;
+    int x = outerframewidth;
 
     werase(basewin);
-    if (ui_flags.draw_frame) {
-        msgwin = newwin(ui_flags.msgheight, COLNO, 1, 1);
-        mapwin = newwin(ROWNO, COLNO, ui_flags.msgheight + 2, 1);
 
-        statuswin =
-            derwin(basewin, statusheight, COLNO, ui_flags.msgheight + ROWNO + 3,
-                   1);
+    wrapper(&msgwin, ui_flags.msgheight, ui_flags.mapwidth, y, x);
+    y += ui_flags.msgheight + !!ui_flags.draw_horizontal_frame_lines;
+    if (LINES == 1)
+        y = 0; /* don't crash on very very small terminals */
+    wrapper(&mapwin, ui_flags.mapheight,
+            ui_flags.mapwidth - 2 * ui_flags.map_padding,
+            y, x + ui_flags.map_padding);
+    y += ui_flags.mapheight + !!ui_flags.draw_horizontal_frame_lines;
+    if (ui_flags.statusheight)
+        statuswin = derwin(basewin, ui_flags.statusheight,
+                           ui_flags.mapwidth, y, x);
+    else
+        statuswin = NULL;
+    y += ui_flags.statusheight + !!ui_flags.draw_horizontal_frame_lines;
+    if (ui_flags.extraheight)
+        extrawin = derwin(basewin, ui_flags.extraheight,
+                          ui_flags.mapwidth, y, x);
+    else
+        extrawin = NULL;
 
-        if (ui_flags.draw_sidebar)
-            sidebar =
-                derwin(basewin, ui_flags.viewheight, COLS - COLNO - 3, 1,
-                       COLNO + 2);
+    if (ui_flags.sidebarwidth) {
+        x += ui_flags.mapwidth + !!ui_flags.draw_vertical_frame_lines;
+        sidebar = derwin(basewin, LINES - 2 * outerframewidth,
+                         COLS - 2 * outerframewidth - x,
+                         outerframewidth, x);
+    } else
+        sidebar = NULL;
 
-        draw_frame();
-    } else {
-        msgwin = newwin(ui_flags.msgheight, COLNO, 0, 0);
-        mapwin = newwin(ROWNO, COLNO, ui_flags.msgheight, 0);
+    draw_frame();
 
-        /* In a particularly small window, we can get crashes due to statuswin
-           not fitting inside basewin. */
-        if (getmaxy(basewin) < ui_flags.msgheight + ROWNO + statusheight ||
-            getmaxx(basewin) < COLNO)
-            statuswin = NULL;
-        else
-            statuswin =
-                derwin(basewin, statusheight, COLNO,
-                       ui_flags.msgheight + ROWNO, 0);
+    if (using_tileset)
+        wset_tiles_region(mapwin, ui_flags.mapheight,
+                          ui_flags.mapwidth - 2 * ui_flags.map_padding, 0, 0,
+                          ROWNO, COLNO, 0, 0);
+    else
+        wdelete_tiles_region(mapwin);
 
-        if (ui_flags.draw_sidebar)
-            sidebar =
-                derwin(basewin, ui_flags.viewheight, COLS - COLNO, 0, COLNO);
-    }
-
-    setup_tiles();
     mark_mapwin_for_full_refresh();
 
     keypad(mapwin, TRUE);
@@ -358,7 +548,16 @@ create_game_windows(void)
         leaveok(statuswin, TRUE);
     if (sidebar)
         leaveok(sidebar, TRUE);
+    if (extrawin) {
+        leaveok(extrawin, TRUE);
+        werase(extrawin);
+    }
+}
 
+void
+create_game_windows(void)
+{
+    create_or_resize_game_windows(newwin_wrapper);
     ui_flags.ingame = TRUE;
     setup_showlines();
     redraw_game_windows();
@@ -368,10 +567,6 @@ create_game_windows(void)
 static void
 resize_game_windows(void)
 {
-    int statusheight;
-
-    layout_game_windows();
-
     if (!ui_flags.ingame)
         return;
 
@@ -382,50 +577,15 @@ resize_game_windows(void)
         statuswin = NULL;
     }
     if (sidebar) {
+        cleanup_sidebar(FALSE);
         delwin(sidebar);
         sidebar = NULL;
     }
 
-    if (mapwin) wdelete_tiles_region(mapwin);
+    if (mapwin)
+        wdelete_tiles_region(mapwin);
 
-    statusheight = ui_flags.status3 ? 3 : 2;
-    if (ui_flags.draw_frame) {
-        mvwin(msgwin, 1, 1);
-        wresize(msgwin, ui_flags.msgheight, COLNO);
-        mvwin(mapwin, ui_flags.msgheight + 2, 1);
-        wresize(mapwin, ROWNO, COLNO);
-        statuswin =
-            derwin(basewin, statusheight, COLNO, ui_flags.msgheight + ROWNO + 3,
-                   1);
-
-        if (ui_flags.draw_sidebar)
-            sidebar =
-                derwin(basewin, ui_flags.viewheight, COLS - COLNO - 3, 1,
-                       COLNO + 2);
-        draw_frame();
-    } else {
-        mvwin(msgwin, 0, 0);
-        wresize(msgwin, ui_flags.msgheight, COLNO);
-        mvwin(mapwin, ui_flags.msgheight, 0);
-        wresize(mapwin, ROWNO, COLNO);
-
-        /* In a particularly small window, we can get crashes due to statuswin
-           not fitting inside basewin. */
-        if (getmaxy(basewin) < ui_flags.msgheight + ROWNO + statusheight ||
-            getmaxx(basewin) < COLNO)
-            statuswin = NULL;
-        else
-            statuswin =
-                derwin(basewin, statusheight, COLNO,
-                       ui_flags.msgheight + ROWNO, 0);
-
-        if (ui_flags.draw_sidebar)
-            sidebar =
-                derwin(basewin, ui_flags.viewheight, COLS - COLNO, 0, COLNO);
-    }
-
-    if (mapwin) setup_tiles();
-    mark_mapwin_for_full_refresh();
+    create_or_resize_game_windows(resize_wrapper);
 
     if (statuswin)
         leaveok(statuswin, TRUE);
@@ -446,12 +606,14 @@ destroy_game_windows(void)
         delwin(mapwin);
         if (statuswin)
             delwin(statuswin);
-        if (sidebar || ui_flags.draw_sidebar) {
+        if (extrawin)
+            delwin(extrawin);
+        if (sidebar || ui_flags.sidebarwidth) {
             cleanup_sidebar(FALSE);
             if (sidebar)
                 delwin(sidebar);
         }
-        msgwin = mapwin = statuswin = sidebar = NULL;
+        msgwin = mapwin = statuswin = extrawin = sidebar = NULL;
     }
 
     ui_flags.ingame = FALSE;
@@ -477,6 +639,9 @@ redraw_game_windows(void)
 
         if (sidebar)
             wnoutrefresh(sidebar);
+
+        if (extrawin)
+            wnoutrefresh(extrawin);
 
         draw_frame();
     }

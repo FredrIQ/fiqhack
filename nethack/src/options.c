@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-23 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -69,8 +69,8 @@ static struct nh_enum_option optstyle_spec =
     { optstyle_list, listlen(optstyle_list) };
 
 static struct nh_listitem autoable_boolean_list[] = {
-    {AB_FALSE, "false"},
-    {AB_TRUE,  "true"},
+    {AB_FALSE, "never"},
+    {AB_TRUE,  "always"},
     {AB_AUTO,  "auto"},
 };
 static struct nh_enum_option autoable_boolean_spec =
@@ -117,16 +117,11 @@ struct nh_option_desc curses_options[] = {
     {"scores_top", "how many top scores to show", FALSE, OPTTYPE_INT, {.i = 3}},
     {"scores_around", "the number of scores shown around your score", FALSE,
      OPTTYPE_INT, {.i = 2}},
-    {"showexp", "show experience points", FALSE, OPTTYPE_BOOL, {.b = TRUE}},
-    {"showscore", "show your score in the status line", FALSE, OPTTYPE_BOOL,
-     {.b = TRUE}},
-    {"sidebar", "draw the inventory sidebar", FALSE, OPTTYPE_ENUM,
+    {"sidebar", "when to draw the inventory sidebar", FALSE, OPTTYPE_ENUM,
      {.e = AB_AUTO}},
     {"standout", "use standout for --More--", FALSE, OPTTYPE_BOOL,
      {.b = FALSE}},
     {"status3", "3 line status display", FALSE, OPTTYPE_BOOL, {.b = TRUE}},
-    {"time", "display elapsed game time, in moves", FALSE, OPTTYPE_BOOL,
-     {.b = TRUE}},
     {"use_inverse", "use inverse video for some things", FALSE, OPTTYPE_BOOL,
      {.b = TRUE}},
     {NULL, NULL, FALSE, OPTTYPE_BOOL, {NULL}}
@@ -142,11 +137,8 @@ struct nhlib_boolopt_map boolopt_map[] = {
     {"hilite_pet", &settings.hilite_pet},
     {"invweight", &settings.invweight},
     {"scores_own", &settings.end_own},
-    {"showexp", &settings.showexp},
-    {"showscore", &settings.showscore},
     {"standout", &settings.standout},
     {"status3", &settings.status3},
-    {"time", &settings.time},
     {"use_inverse", &settings.use_inverse},
     {NULL, NULL}
 };
@@ -244,10 +236,6 @@ curses_set_option(const char *name, union nh_optvalue value)
             set_darkgray();
             draw_map(player.x, player.y);
         }
-    } else if (!strcmp(option->name, "showexp") ||
-               !strcmp(option->name, "showscore") ||
-               !strcmp(option->name, "time")) {
-        curses_update_status(NULL);
     } else if (!strcmp(option->name, "comment")) {
         /* do nothing */
     } else if (!strcmp(option->name, "menu_headings")) {

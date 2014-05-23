@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-23 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -500,8 +500,8 @@ set_tiles_region,     (int tiles_h, int tiles_w, int tiles_t, int tiles_l,
 
     int j, i;
 
-    for (j = char_t; j < char_t + char_h; j++)
-        for (i = char_l; i < char_l + char_w; i++)
+    for (j = tiles_t; j < tiles_t + tiles_h; j++)
+        for (i = tiles_l; i < tiles_l + tiles_w; i++)
             win->regionarray[j * (win->maxx + 1) + i] = region;
 
     return OK;

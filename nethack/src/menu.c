@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-09 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -313,6 +313,12 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     char selected[ml->icount ? ml->icount : 1];
     int results[ml->icount ? ml->icount : 1];
 
+    if (isendwin() || COLS < COLNO || LINES < ROWNO) {
+        dealloc_menulist(ml);
+        callback(results, -1, callbackarg);
+        return;
+    }
+
     /* Make a stack-allocated copy of the menulist, in case we end up longjmping
        out of here before we get a chance to deallocate it. */
     struct nh_menuitem item_copy[ml->icount ? ml->icount : 1];
@@ -528,13 +534,13 @@ curses_display_menu(struct nh_menulist *ml, const char *title,
 
     if (placement_hint == PLHINT_INVENTORY ||
         placement_hint == PLHINT_CONTAINER) {
-        if (ui_flags.draw_sidebar)
+        if (ui_flags.sidebarwidth)
             x1 = COLS - getmaxx(sidebar);
         else
             x1 = COLS - 64;
     } else if (placement_hint == PLHINT_ONELINER && game_is_running) {
         x1 = 0;
-        if (ui_flags.draw_sidebar)
+        if (ui_flags.sidebarwidth)
             x2 = getmaxx(sidebar);
         y1 = 0;
         y2 = getmaxy(msgwin);
@@ -805,6 +811,12 @@ curses_display_objects(
     int selected[objlist->icount ? objlist->icount : 1];
     struct nh_objresult results[objlist->icount ? objlist->icount : 1];
 
+    if (isendwin() || COLS < COLNO || LINES < ROWNO) {
+        dealloc_objmenulist(objlist);
+        callback(results, -1, callbackarg);
+        return;
+    }
+
     /* Make a stack-allocated copy of the objlist, in case we end up longjmping
        out of here before we get a chance to deallocate it. */
     struct nh_objitem item_copy[objlist->icount ? objlist->icount : 1];
@@ -840,7 +852,7 @@ curses_display_objects(
 
     if (placement_hint == PLHINT_INVENTORY ||
         placement_hint == PLHINT_CONTAINER) {
-        if (ui_flags.draw_sidebar)
+        if (ui_flags.sidebarwidth)
             mdat->width = max(mdat->width, 2 + getmaxx(sidebar));
         starty = 0;
         startx = COLS - mdat->width;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-08 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -11,7 +11,7 @@ struct nh_player_info player;
 static void
 draw_bar(int barlen, int val_cur, int val_max, nh_bool ishp)
 {
-    char str[COLNO];
+    char str[ui_flags.mapwidth];
     int fill_len = 0, bl, colorattr, color;
 
     bl = barlen - 2;
@@ -72,6 +72,9 @@ Pw:[     5 / 5     ] $4294967295 S:480000 T:4294967295         Burdened Starving
 
 Leaving the "gnomish" out for now because that information is awkward to get at
 (it's given in a format the client doesn't understand).
+
+TODO: If we have more than 80 columns, use them for ability scores on a two-line
+status display.
 
 The statuses on the status lines have associated colors, and can also affect the
 main frame color. The rules are as follows:
@@ -137,11 +140,16 @@ static const struct {
 static void
 draw_status(struct nh_player_info *pi, nh_bool threeline)
 {
-    char buf[COLNO];
+    char buf[ui_flags.mapwidth];
     int i, j, k;
 
     if (!statuswin)
         return;
+
+    if (ui_flags.statusheight < 2) {
+        werase(statuswin);
+        return;
+    }
 
     /* penultimate line */
     wmove(statuswin, (threeline ? 1 : 0), 0);
@@ -240,7 +248,7 @@ curses_update_status(struct nh_player_info *pi)
     if (!game_is_running)
         return; /* called before the game is running */
 
-    draw_status(&player, ui_flags.status3);
+    draw_status(&player, ui_flags.statusheight >= 3);
 
     /* prevent the cursor from flickering in the status line */
     wmove(mapwin, player.y, player.x);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-15 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -66,8 +66,9 @@ void
 draw_sidebar(void)
 {
     int flheight = 0, invheight = 0, invwh, flwh;
+    int viewheight = LINES - (ui_flags.draw_outer_frame_lines ? 2 : 0);
 
-    if (!ui_flags.draw_sidebar)
+    if (!ui_flags.sidebarwidth)
         return;
 
     int sbwidth = getmaxx(sidebar);
@@ -86,22 +87,22 @@ draw_sidebar(void)
        remains, the inventory list is expanded to push the floor item list to
        the bottom of the screen. */
     if (flooritems.icount && inventory.icount) {
-        invheight = min(inventory.icount + 1, ui_flags.viewheight / 2);
-        flheight = min(flooritems.icount + 1, (ui_flags.viewheight - 1) / 2);
+        invheight = min(inventory.icount + 1, viewheight / 2);
+        flheight = min(flooritems.icount + 1, (viewheight - 1) / 2);
         /* if there is need and available space, expand the floor item list up
            */
         if (flooritems.icount + 1 > flheight &&
-            invheight < (ui_flags.viewheight + 1) / 2)
+            invheight < (viewheight + 1) / 2)
             flheight =
-                min(flooritems.icount + 1, ui_flags.viewheight - invheight - 1);
+                min(flooritems.icount + 1, viewheight - invheight - 1);
         /* assign all unused space to the inventory list whether it is needed
            or not */
-        invheight = ui_flags.viewheight - flheight - 1;
+        invheight = viewheight - flheight - 1;
         nh_mvwhline(sidebar, invheight, 0, sbwidth);
     } else if (flooritems.icount)
-        flheight = ui_flags.viewheight;
+        flheight = viewheight;
     else
-        invheight = ui_flags.viewheight;
+        invheight = viewheight;
 
     if (invheight) {
         wattron(sidebar, A_UNDERLINE);
@@ -127,7 +128,7 @@ draw_sidebar(void)
         flwh = flheight - 1;
         if (flwh < flooritems.icount) {
             flwh--;
-            mvwprintw(sidebar, ui_flags.viewheight - 1, 0, "(%d more omitted)",
+            mvwprintw(sidebar, viewheight - 1, 0, "(%d more omitted)",
                       count_omitted_items(&flooritems, flwh));
         }
 
