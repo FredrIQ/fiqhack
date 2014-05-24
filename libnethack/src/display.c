@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -40,6 +40,9 @@
  * of-sight rules.  **Most of the code should use this routine.**  This
  * routine updates the map and displays monsters.
  *
+ * Be very careful not to call this for a location that's actually on another
+ * level, such as during the level creation code. In such situations, the
+ * level isn't being displayed, so can't be updated.
  *
  * map_background
  * map_object

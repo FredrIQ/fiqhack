@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-21 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2986,7 +2986,8 @@ repair_damage(struct level *lev, struct monst *shkp, struct damage *tmp_dam,
             lev->locations[x][y].typ = tmp_dam->typ;
             block_point(x, y);
         }
-        newsym(x, y);
+        if (lev == level)
+            newsym(x, y);
         return floordamage ? 2 : 3;
     }
     if (IS_ROOM(tmp_dam->typ)) {
@@ -3045,7 +3046,8 @@ repair_damage(struct level *lev, struct monst *shkp, struct damage *tmp_dam,
     block_point(x, y);
     if (IS_DOOR(tmp_dam->typ)) {
         lev->locations[x][y].doormask = D_CLOSED;       /* arbitrary */
-        newsym(x, y);
+        if (lev == level)
+            newsym(x, y);
     } else {
         /* don't set doormask - it is (hopefully) the same as it was */
         /* if not, perhaps save it with the damage array...  */
@@ -3053,13 +3055,14 @@ repair_damage(struct level *lev, struct monst *shkp, struct damage *tmp_dam,
         if (IS_WALL(tmp_dam->typ) && cansee(x, y)) {
             /* Player sees actual repair process, so they KNOW it's a wall */
             lev->locations[x][y].seenv = SVALL;
-            newsym(x, y);
+            if (lev == level)
+                newsym(x, y);
         }
         /* Mark this wall as "repaired".  There currently is no code */
         /* to do anything about repaired walls, so don't do it.  */
     }
     for (i = 0; i < 9; i++)
-        if (litter[i] & NEED_UPDATE)
+        if (litter[i] & NEED_UPDATE && lev == level)
             newsym(x + horiz(i), y + vert(i));
     return 2;
 #undef NEED_UPDATE

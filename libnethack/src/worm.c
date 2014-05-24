@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -143,7 +143,7 @@ toss_wsegs(struct level *lev, struct wseg *curr, boolean display_update)
             lev->monsters[curr->wx][curr->wy] = NULL;
 
             /* update screen before deallocation */
-            if (display_update)
+            if (display_update && lev == level)
                 newsym(curr->wx, curr->wy);
         }
 
@@ -627,7 +627,8 @@ place_worm_tail_randomly(struct monst *worm, xchar x, xchar y)
             curr = curr->nseg;
             lev->wtails[wnum]->nseg = new_tail;
             new_tail = lev->wtails[wnum];
-            newsym(nx, ny);
+            if (lev == level)
+                newsym(nx, ny);
         } else {        /* Oops.  Truncate because there was */
             toss_wsegs(lev, curr, FALSE);      /* no place for the rest of it */
             curr = NULL;

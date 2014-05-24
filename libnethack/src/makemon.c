@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-28 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -747,6 +747,11 @@ clone_mon(struct monst *mon, xchar x, xchar y)
     coord mm;
     struct monst *m2;
 
+    if (mon->dlevel != level) {
+        impossible("Cloning monster on another level?");
+        return NULL;
+    }
+
     /* may be too weak or have been extinguished for population control */
     if (mon->mhp <= 1 || (mvitals[monsndx(mon->data)].mvflags & G_EXTINCT))
         return NULL;
@@ -1108,7 +1113,7 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
              || (mndx == PM_GIANT_EEL)) && !Uhave_amulet && rn2(5))
             mtmp->msleeping = TRUE;
     } else {
-        if (byyou) {
+        if (byyou && lev == level) {
             newsym(mtmp->mx, mtmp->my);
             set_apparxy(mtmp);
         }
@@ -1155,7 +1160,7 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
             mtmp->mstrategy |= STRAT_CLOSE;
     }
 
-    if (!in_mklev)
+    if (!in_mklev && lev == level)
         newsym(mtmp->mx, mtmp->my);     /* make sure the mon shows up */
 
     return mtmp;
@@ -1526,8 +1531,9 @@ grow_up(struct monst *mtmp,     /* `mtmp' might "grow up" into a bigger version
             mondied(mtmp);
             return NULL;
         }
-        set_mon_data(mtmp, ptr, 1);     /* preserve intrinsics */
-        newsym(mtmp->mx, mtmp->my);     /* color may change */
+        set_mon_data(mtmp, ptr, 1);      /* preserve intrinsics */
+        if (mtmp->dlevel == level)
+            newsym(mtmp->mx, mtmp->my);     /* color may change */
         lev_limit = (int)mtmp->m_lev;   /* never undo increment */
     }
     /* sanity checks */

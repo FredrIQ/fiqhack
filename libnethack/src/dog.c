@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-28 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -620,7 +620,8 @@ migrate_to_level(struct monst *mtmp, xchar tolev,       /* destination level */
     relmon(mtmp);
     mtmp->nmon = migrating_mons;
     migrating_mons = mtmp;
-    newsym(mtmp->mx, mtmp->my);
+    if (mtmp->dlevel == level)
+        newsym(mtmp->mx, mtmp->my);
 
     new_lev.dnum = ledger_to_dnum((xchar) tolev);
     new_lev.dlevel = ledger_to_dlev((xchar) tolev);
@@ -837,7 +838,8 @@ tamedog(struct monst *mtmp, struct obj *obj)
         /* `obj' is now obsolete */
     }
 
-    newsym(mtmp2->mx, mtmp2->my);
+    if (mtmp->dlevel == level)
+        newsym(mtmp2->mx, mtmp2->my);
     if (attacktype(mtmp2->data, AT_WEAP)) {
         mtmp2->weapon_check = NEED_HTH_WEAPON;
         mon_wield_item(mtmp2);
@@ -941,7 +943,7 @@ abuse_dog(struct monst *mtmp)
         else
             growl(mtmp);        /* give them a moment's worry */
 
-        if (!mtmp->mtame)
+        if (!mtmp->mtame && mtmp->dlevel == level)
             newsym(mtmp->mx, mtmp->my);
     }
 }

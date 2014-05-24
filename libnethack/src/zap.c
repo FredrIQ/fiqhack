@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3624,12 +3624,14 @@ melt_ice(struct level *lev, xchar x, xchar y)
     }
     obj_ice_effects(lev, x, y, FALSE);
     unearth_objs(lev, x, y);
+
     if (Underwater)
         vision_recalc(1);
-    newsym(x, y);
+    if (lev == level)
+        newsym(x, y);
     if (visible)
         pline_once("The ice crackles and melts.");
-    if ((otmp = sobj_at(BOULDER, level, x, y)) != 0) {
+    if ((otmp = sobj_at(BOULDER, lev, x, y)) != 0) {
         if (visible)
             pline("%s settles...", An(xname(otmp)));
         do {
@@ -3637,11 +3639,12 @@ melt_ice(struct level *lev, xchar x, xchar y)
             if (!boulder_hits_pool(otmp, x, y, FALSE))
                 impossible("melt_ice: no pool?");
             /* try again if there's another boulder and pool didn't fill */
-        } while (is_pool(level, x, y) &&
-                 (otmp = sobj_at(BOULDER, level, x, y)) != 0);
-        newsym(x, y);
+        } while (is_pool(lev, x, y) &&
+                 (otmp = sobj_at(BOULDER, lev, x, y)) != 0);
+        if (lev == level)
+            newsym(x, y);
     }
-    if (x == u.ux && y == u.uy)
+    if (lev == level && x == u.ux && y == u.uy)
         spoteffects(TRUE);      /* possibly drown, notice objects */
 }
 
@@ -3857,12 +3860,15 @@ fracture_rock(struct obj *obj)
     obj->oxlth = 0;     /* no extra data */
     obj->oattached = OATTACHED_NOTHING;
     if (obj->where == OBJ_FLOOR) {
+        struct level *olev = obj->olev;
         obj_extract_self(obj);  /* move rocks back on top */
-        place_object(obj, level, obj->ox, obj->oy);
-        if (!does_block(obj->olev, obj->ox, obj->oy))
-            unblock_point(obj->ox, obj->oy);
-        if (cansee(obj->ox, obj->oy))
-            newsym(obj->ox, obj->oy);
+        place_object(obj, olev, obj->ox, obj->oy);
+        if (olev == level) {
+            if (!does_block(olev, obj->ox, obj->oy))
+                unblock_point(obj->ox, obj->oy);
+            if (cansee(obj->ox, obj->oy))
+                newsym(obj->ox, obj->oy);
+        }
     }
 }
 

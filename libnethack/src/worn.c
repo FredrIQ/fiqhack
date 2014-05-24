@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -129,7 +129,8 @@ mon_set_minvis(struct monst *mon)
     mon->perminvis = 1;
     if (!mon->invis_blkd) {
         mon->minvis = 1;
-        newsym(mon->mx, mon->my);       /* make it disappear */
+        if (mon->dlevel == level)
+            newsym(mon->mx, mon->my);       /* make it disappear */
         if (mon->wormno)
             see_wsegs(mon);     /* and any tail too */
     }
@@ -321,7 +322,7 @@ maybe_blocks:
         dismount_steed(DISMOUNT_FELL);
 
     /* if couldn't see it but now can, or vice versa, update display */
-    if (!silently && (unseen ^ !canseemon(mon)))
+    if (!silently && (unseen ^ !canseemon(mon)) && mon->dlevel == level)
         newsym(mon->mx, mon->my);
 }
 

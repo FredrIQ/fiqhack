@@ -333,7 +333,8 @@ make_corpse(struct monst *mtmp)
 #endif
 
     stackobj(obj);
-    newsym(x, y);
+    if (mtmp->dlevel == level)
+        newsym(x, y);
     return obj;
 }
 
@@ -691,7 +692,8 @@ meatmetal(struct monst *mtmp)
                 /* Left behind a pile? */
                 if (rnd(25) < 3)
                     mksobj_at(ROCK, level, mtmp->mx, mtmp->my, TRUE, FALSE);
-                newsym(mtmp->mx, mtmp->my);
+                if (mtmp->dlevel == level)
+                    newsym(mtmp->mx, mtmp->my);
                 return 1;
             }
         }
@@ -794,7 +796,7 @@ meatobj(struct monst *mtmp)
             mpickobj(mtmp, otmp);       /* slurp */
         }
         /* Engulf & devour is instant, so don't set meating */
-        if (mtmp->minvis)
+        if (mtmp->minvis && mtmp->dlevel == level)
             newsym(mtmp->mx, mtmp->my);
     }
     if (ecount > 0) {
@@ -2199,7 +2201,8 @@ wakeup(struct monst *mtmp, boolean force_detected)
         seemimic(mtmp);
     else if (force_detected && !flags.mon_moving && mtmp->mundetected) {
         mtmp->mundetected = 0;
-        newsym(mtmp->mx, mtmp->my);
+        if (mtmp->dlevel == level)
+            newsym(mtmp->mx, mtmp->my);
     }
 }
 
@@ -2250,7 +2253,8 @@ seemimic(struct monst *mtmp)
         !does_block(mtmp->dlevel, mtmp->mx, mtmp->my))
         unblock_point(mtmp->mx, mtmp->my);
 
-    newsym(mtmp->mx, mtmp->my);
+    if (mtmp->dlevel == level)
+        newsym(mtmp->mx, mtmp->my);
 }
 
 /* force all chameleons to become normal */
@@ -2291,8 +2295,9 @@ restartcham(void)
         mtmp->cham = pm_to_cham(mtmp->mnum);
         if (mtmp->data->mlet == S_MIMIC && mtmp->msleeping &&
             cansee(mtmp->mx, mtmp->my)) {
-            set_mimic_sym(mtmp, level);
-            newsym(mtmp->mx, mtmp->my);
+            set_mimic_sym(mtmp, mtmp->dlevel);
+            if (mtmp->dlevel == level)
+                newsym(mtmp->mx, mtmp->my);
         }
     }
 }
@@ -2572,7 +2577,8 @@ newcham(struct monst *mtmp, const struct permonst *mdat,
             place_worm_tail_randomly(mtmp, mtmp->mx, mtmp->my);
     }
 
-    newsym(mtmp->mx, mtmp->my);
+    if (mtmp->dlevel == level)
+        newsym(mtmp->mx, mtmp->my);
 
     if (msg) {
         uchar save_mnamelth = mtmp->mnamelth;

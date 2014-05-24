@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -875,11 +875,11 @@ rloc_pos_ok(int x, int y,       /* coordinates of candidate location */
 /*
  * rloc_to()
  *
- * Pulls a monster from its current position and places a monster at
- * a new x and y.  If oldx is 0, then the monster was not in the levels.monsters
- * array.  However, if oldx is 0, oldy may still have a value because mtmp is a
- * migrating_mon.  Worm tails are always placed randomly around the head of
- * the worm.
+ * Pulls a monster from its current position and places a monster at a new x and
+ * y.  If oldx is COLNO, then the monster was not in the levels.monsters array.
+ * However, if oldx is COLNO, oldy may still have a value because mtmp is a
+ * migrating_mon.  Worm tails are always placed randomly around the head of the
+ * worm.  This only works for monsters on the current level.
  */
 void
 rloc_to(struct monst *mtmp, int x, int y)
