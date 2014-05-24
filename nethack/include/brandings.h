@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-10-02 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) 2013 Alex Smith                                  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -70,6 +70,9 @@ extern const char *const nhcurses_branding_names[(int)nhcurses_branding_count];
    tiles. These also have names, which need to be accessible to the tiles
    port. */
 extern const char *const nhcurses_ldm_names[LDM_COUNT];
+/* This is the number of level display modes that have tile substitutions. Keep
+   this in sync with nhcurses_ldm_names in brandings.c. */
+# define NHCURSES_LDM_SUB_COUNT 4
 
 /* Effect symbols don't have names in libnethack (because they can't be
    farlooked), but tilesequence needs names for them. Likewise, engulfing

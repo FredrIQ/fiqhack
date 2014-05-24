@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-01-12
+Last modified by Alex Smith, 2014-05-24
 
 The tiles code in this directory was originally taken from Slash'EM, and has
 been modified by Alex Smith for use in NetHack 4.  (This documentation file
@@ -102,7 +102,7 @@ and then each tile has an entry like:
 Tile sets which require more than 62 colors can use two character color keys,
 giving up to 4096 colors.  All keys in any one file must be the same size.
 The number after "tile" is arbitrary and ignored; it exists only for
-compatibility with ohther variants and older versions of NetHack.  (When
+compatibility with other variants and older versions of NetHack.  (When
 writing .txt tile files, the tile handling code will use consecutive numbers
 starting at 0, for ease of reference.)  The comment (and the slash preceding
 it) is optional, and also ignored (although the spaces around the slash are
@@ -226,6 +226,12 @@ Some tilesets have backgrounds that are not completely opaque.  As such, when
 rendering views in tiles, two backgrounds have to be drawn; the underlying
 floor, and the background itself (on top of the floor).  The standard lower
 background for this purpose is "floor of a room".
+
+In some dungeon branches, tiles are substituted to make them look visually
+different; the substitutions currently only happen with wall tiles.  These
+tiles have names of the form "sub <branch> <tile>".  The information about
+tile substitution is sent separately from the map, over a different API call;
+this is internally represented with LDM_* constants.
 
 Tile utilities API
 ------------------

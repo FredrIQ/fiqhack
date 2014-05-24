@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-01-12 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) 2013 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -37,6 +37,35 @@ const struct symdef_array symdef_arrays[] = {
     {TILESEQ_EXPLODE_OFF, explsyms, expltypes, NUMEXPCHARS, EXPL_MAX},
     {TILESEQ_ZAP_OFF,     zapsyms,  zaptypes,  NUMZAPCHARS, NUM_ZAP},
 };
+
+static const char *name_from_tileno_internal(int tileno);
+
+/* Is this tile substitutable? If so, return an appropriately substituted tile.
+
+   This currently relies on the facts that all the substitutable tiles match the
+   name pattern "walls N", where N is an integer. name_from_tileno_internal
+   makes the same assumption for going the other way; if you change this,
+   change that too. */
+static int
+maybe_substitute(int tileno, int level_display_mode)
+{
+    if (tileno == -1)
+        return -1;
+
+    const char *tilename = name_from_tileno_internal(tileno);
+    if (*nhcurses_ldm_names[level_display_mode] == '-')
+        return tileno;
+    if (strncmp(tilename, "walls ", strlen("walls ")) != 0)
+        return tileno;
+
+    tileno = TILESEQ_SUBST_OFF + atoi(tilename + strlen("walls "));
+    int i;
+    for (i = 0; i < level_display_mode; i++) {
+        if (*nhcurses_ldm_names[i] != '-')
+            tileno += TILESEQ_SUBSTITUTABLE_TILES;
+    }
+    return tileno;
+}
 
 /* Find a tile number in an nh_symdef array. */
 static int
@@ -87,7 +116,8 @@ tileno_from_obj_mon_name(const char *name, int offset)
    This cannot find a branding, nor lit corridor / dark room, because those
    don't have API names. */
 int
-tileno_from_api_name(const char *name, const char *type, int offset)
+tileno_from_api_name(const char *name, const char *type,
+                     int offset, int level_display_mode)
 {
     int i, tn = TILESEQ_INVALID_OFF;
     /* Straightforward case: hardcoded names. */
@@ -95,7 +125,8 @@ tileno_from_api_name(const char *name, const char *type, int offset)
         if (offset == TILESEQ_INVALID_OFF ||
             offset == symdef_arrays[i].offset)
             tn = tileno_name_from_symdef_array(name, type, symdef_arrays+i);
-        if (tn != TILESEQ_INVALID_OFF) return tn;
+        if (tn != TILESEQ_INVALID_OFF)
+            return maybe_substitute(tn, level_display_mode);
     }
     /* There's only one invisibile monster tile. */
     if (offset == TILESEQ_INVALID_OFF || offset == TILESEQ_INVIS_OFF) {
@@ -110,6 +141,24 @@ int
 tileno_from_name(const char *name, int offset)
 {
     int i, j;
+
+    /* Special case: substitution tiles. We split off the level display mode,
+       then call ourself recursively, then substitute. */
+    if ((offset == TILESEQ_INVALID_OFF || offset == TILESEQ_CMAP_OFF ||
+         offset == TILESEQ_SUBST_OFF) &&
+        !strncmp(name, "sub ", strlen("sub "))) {
+        name += strlen("sub ");
+        for (i = 0; i < LDM_COUNT; i++) {
+            if (strncmp(name, nhcurses_ldm_names[i],
+                        strlen(nhcurses_ldm_names[i])) == 0) {
+                name += strlen(nhcurses_ldm_names[i]) + 1;
+                return maybe_substitute(
+                    tileno_from_name(name, TILESEQ_CMAP_OFF), i);
+            }
+        }
+        return TILESEQ_INVALID_OFF; /* "sub " must be a substitution tile */
+    }
+
     /* There's only one invisibile monster tile. */
     if (offset == TILESEQ_INVALID_OFF || offset == TILESEQ_INVIS_OFF) {
         if (strcmp(name, invismonexplain) == 0) return TILESEQ_INVIS_OFF;
@@ -263,6 +312,18 @@ name_from_tileno_internal(int tileno)
     i = tileno - TILESEQ_MON_OFF;
     if (i >= 0 && i < TILESEQ_MON_SIZE)
         return make_mon_name(i);
+    i = tileno - TILESEQ_SUBST_OFF;
+    if (i >= 0 && i < TILESEQ_SUBST_SIZE) {
+        int j;
+        i += TILESEQ_SUBSTITUTABLE_TILES;
+        for (j = 0; j < LDM_COUNT &&
+                 i >= TILESEQ_SUBSTITUTABLE_TILES; j++) {
+            if (*nhcurses_ldm_names[j] != '-')
+                i -= TILESEQ_SUBSTITUTABLE_TILES;
+        }
+        snprintf(rv, 79, "sub %s walls %d", nhcurses_ldm_names[j - 1], i);
+        return rv;
+    }
     return NULL;
 }
 
@@ -274,11 +335,13 @@ const char *
 name_from_tileno(int tileno) {
     const char *rv = name_from_tileno_internal(tileno);
     if (!rv) return rv;
+    char rvcopy[strlen(rv) + 1];
+    strcpy(rvcopy, rv);
     int tileno2 = tileno_from_name(rv, TILESEQ_INVALID_OFF);
     if (tileno != tileno2) {
         fprintf(stderr, "Tile roundtrip failure: %d -> \"%s\" -> %d\n",
-                tileno, rv, tileno2);
+                tileno, rvcopy, tileno2);
         abort();
     }
-    return rv;
+    return name_from_tileno_internal(tileno);
 }

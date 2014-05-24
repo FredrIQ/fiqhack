@@ -772,7 +772,8 @@ print_tile(WINDOW *win, struct curses_symdef *api_name,
            struct curses_symdef *api_type, int offset)
 {
     int tileno = tileno_from_api_name(
-        api_name->symname, api_type ? api_type->symname : NULL, offset);
+        api_name->symname, api_type ? api_type->symname : NULL, offset,
+        curses_level_display_mode);
     /* TODO: better rendition for missing tiles than just using the unexplored
        area tile */
     if (tileno == TILESEQ_INVALID_OFF) tileno = 0;

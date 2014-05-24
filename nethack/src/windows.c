@@ -53,13 +53,13 @@ void
 set_tile_file(const char *tilefilename)
 {
     if (!tilefilename) {
-        set_tiles_tile_file(NULL, TILES_PER_ROW, TILES_PER_COL);
+        set_tiles_tile_file(NULL, TILES_PER_COL, TILES_PER_ROW);
         return;
     }
     char namebuf[strlen(tileprefix) + strlen(tilefilename) + 1];
     strcpy(namebuf, tileprefix);
     strcat(namebuf, tilefilename);
-    set_tiles_tile_file(namebuf, TILES_PER_ROW, TILES_PER_COL);
+    set_tiles_tile_file(namebuf, TILES_PER_COL, TILES_PER_ROW);
 }
 
 void

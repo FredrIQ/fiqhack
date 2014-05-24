@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) NetHack Development Team 1992.                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -82,7 +82,13 @@ const struct nh_symdef warnsyms[WARNCOUNT] = {
 /* Note: these descriptions are used to name tiles, so should not be changed
    without a good reason. If two descriptions are the same, they must be
    consecutive in the list; and the list itself must be in the same order as
-   the S_ symbols in rm.h. */
+   the S_ symbols in rm.h.
+
+   Another note: currently, tiles are subject to branch-specific substitution if
+   and only if they are named "wall". If this rule changes, change at least
+   tilesequence.c. If the /number/ of tiles substituted this way changes (say
+   new shapes of wall are added), change TILESEQ_SUBSTITUTABLE_TILES in
+   tilesequence.h. */
 const char *const defexplain[] = {
      /* 0 */ "unexplored area",     /* unexplored */
              "solid rock",          /* stone */
