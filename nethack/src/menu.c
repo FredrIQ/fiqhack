@@ -6,8 +6,6 @@
 #include "nhcurses.h"
 
 
-static nh_bool do_item_actions(const struct nh_objitem *item);
-
 static int
 calc_colwidths(char *menustr, int *colwidth)
 {
@@ -661,8 +659,17 @@ draw_objlist(WINDOW * win, struct nh_objlist *objlist, int *selected, int how)
                 pos += snprintf(buf + pos, BUFSZ - pos, "%c # ", olii->accel);
                 break;
             }
-        } else if (olii->accel)
+        } else if (olii->accel) {
+            /* We use user-defined key codes in the range KEY_MAX + letter for
+               itemactions. We check that the letter is valid to avoid issues
+               due to inventory overflow slots. */
+            if (!selected && ((olii->accel >= 'A' && olii->accel <= 'Z') ||
+                              (olii->accel >= 'a' && olii->accel <= 'z') ||
+                              olii->accel == '$'))
+                wset_mouse_event(win, uncursed_mbutton_left,
+                                 olii->accel + KEY_MAX, KEY_CODE_YES);
             pos += snprintf(buf + pos, BUFSZ - pos, "%c - ", olii->accel);
+        }
 
         if (olii->worn)
             txtattr |= A_BOLD;
@@ -1090,7 +1097,7 @@ curses_display_objects(
 }
 
 
-static nh_bool
+nh_bool
 do_item_actions(const struct nh_objitem *item)
 {
     int ccount = 0, i, selected[1];

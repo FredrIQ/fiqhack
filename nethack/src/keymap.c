@@ -293,6 +293,20 @@ get_command(void *callbackarg,
             current_cmd_key = key;
         }
 
+        if (key > KEY_MAX && key < KEY_MAX + 128) {
+            /* This range of user-defined keys is used for mouse callbacks from
+               the inventory sidebar. */
+            item_actions_from_sidebar(key - KEY_MAX);
+            if (have_next_command) {
+                have_next_command = FALSE;
+                callback(&(struct nh_cmd_and_arg){next_command_name,
+                            next_command_arg},
+                         callbackarg);
+                return;
+            }
+            continue;
+        }
+
         if (cmd != NULL) {
             /* handle internal commands. The command handler may alter *cmd, and
                arg (although not all this functionality is currently used) */

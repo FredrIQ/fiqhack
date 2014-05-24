@@ -140,6 +140,17 @@ draw_sidebar(void)
     wnoutrefresh(sidebar);
 }
 
+void
+item_actions_from_sidebar(char accel)
+{
+    int i;
+    for (i = 0; i < inventory.icount; i++) {
+        if (inventory.items[i].accel == accel) {
+            do_item_actions(inventory.items + i);
+            break;
+        }
+    }
+}
 
 void
 cleanup_sidebar(nh_bool dealloc)

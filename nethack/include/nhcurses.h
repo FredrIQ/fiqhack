@@ -387,6 +387,7 @@ extern void curses_display_objects(
                                         int, void *));
 extern void draw_objlist(WINDOW * win, struct nh_objlist *objlist,
                          int *selected, int how);
+extern nh_bool do_item_actions(const struct nh_objitem *);
 
 /* messages.c */
 extern void alloc_hist_array(void);
@@ -463,6 +464,7 @@ extern void curses_list_items(struct nh_objlist *objlist, nh_bool invent);
 extern void curses_list_items_nonblocking(struct nh_objlist *objlist,
                                           nh_bool invent);
 extern void cleanup_sidebar(nh_bool dealloc);
+extern void item_actions_from_sidebar(char accel);
 
 /* status.c */
 extern void curses_update_status(struct nh_player_info *pi);
