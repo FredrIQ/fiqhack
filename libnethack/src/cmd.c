@@ -1240,9 +1240,10 @@ nh_get_object_commands(int *count, char invlet)
     else if (obj->oclass == WAND_CLASS)
         SET_OBJ_CMD('V', "invoke", "Break %s", 0);
 
-    /* wield: hold in hands, works on everything but with different advice
-       text; not mentioned for things that are already wielded */
-    if (obj->owornmask) {
+    /* wield: hold in hands, works on everything but with different advice text;
+       not mentioned for things that are already equipped, except for quivered
+       items */
+    if (obj->owornmask & ~W_MASK(os_quiver)) {
     } else if (obj->oclass == WEAPON_CLASS || obj->otyp == PICK_AXE ||
                obj->otyp == UNICORN_HORN)
         SET_OBJ_CMD('w', "wield", "Wield %s as your weapon", 0);
@@ -1264,6 +1265,12 @@ nh_get_object_commands(int *count, char invlet)
         else if (obj->otyp == LENSES)
             SET_OBJ_CMD('W', "put on", "Put %s on", 0);
     }
+
+    /* swap weapons: mentioned for wielded or offhand weapons */
+    if (obj->owornmask == W_MASK(os_wep))
+        SET_OBJ_CMD('x', "swapweapon", "Move %s to your offhand", 0);
+    else if (obj->owornmask == W_MASK(os_swapwep))
+        SET_OBJ_CMD('x', "swapweapon", "Move %s to your main hand", 0);
 
     /* zap wand */
     if (obj->oclass == WAND_CLASS)
