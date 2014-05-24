@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -216,7 +216,7 @@ keypress_at_more(void)
         return;
 
     while (continue_looping) {
-        switch (get_map_key(FALSE)) {
+        switch (get_map_key(FALSE, FALSE, krc_more)) {
         case KEY_SIGNAL:
             /* This happens when a watcher is stuck at a --More-- when the
                watchee gives a command. Just move on, so we don't end up behind

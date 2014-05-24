@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -48,7 +48,8 @@ get_milliseconds(void)
 
 
 int
-get_map_key(int place_cursor)
+get_map_key(nh_bool place_cursor, nh_bool report_clicks,
+            enum keyreq_context context)
 {
     int key = ERR;
 
@@ -61,12 +62,21 @@ get_map_key(int place_cursor)
     }
 
     while (1) {
-        key = nh_wgetch(mapwin);
+        key = nh_wgetch(mapwin, context);
+
+        if (key == KEY_UNHOVER || key >= KEY_MAX + 256) {
+            /* A mouse action on the map. */
+
+            if (key == KEY_UNHOVER || !report_clicks ||
+                key >= KEY_MAX + 256 + (ROWNO * COLNO * 2))
+                continue;
+        }
+
         draw_map(player.x, player.y);
         doupdate();
+
         if (key != ERR)
             break;
-
     };
     wtimeout(mapwin, -1);
 
@@ -130,6 +140,18 @@ draw_map(int cx, int cy)
                or vice versa) */
             wmove(mapwin, y, x);
 
+            /* make the map mouse-active for left clicks, middle/right clicks
+               (which are interchangeable, because some terminals don't allow
+               right clicks), and hovers */
+            wset_mouse_event(mapwin, uncursed_mbutton_left, KEY_MAX + 256 + 
+                             (ROWNO * COLNO * 0) + x + y * COLNO, KEY_CODE_YES);
+            wset_mouse_event(mapwin, uncursed_mbutton_middle, KEY_MAX + 256 + 
+                             (ROWNO * COLNO * 1) + x + y * COLNO, KEY_CODE_YES);
+            wset_mouse_event(mapwin, uncursed_mbutton_right, KEY_MAX + 256 + 
+                             (ROWNO * COLNO * 1) + x + y * COLNO, KEY_CODE_YES);
+            wset_mouse_event(mapwin, uncursed_mbutton_hover, KEY_MAX + 256 + 
+                             (ROWNO * COLNO * 2) + x + y * COLNO, KEY_CODE_YES);
+            
             /* draw the tile first, because doing that doesn't move the cursor;
                backgrounds are special because they can be composed from
                multiple tiles (e.g. dark room + fountain), or have no
@@ -212,6 +234,11 @@ draw_map(int cx, int cy)
         }
     }
 
+    wset_mouse_event(mapwin, uncursed_mbutton_left, 0, ERR);
+    wset_mouse_event(mapwin, uncursed_mbutton_middle, 0, ERR);
+    wset_mouse_event(mapwin, uncursed_mbutton_right, 0, ERR);
+    wset_mouse_event(mapwin, uncursed_mbutton_hover, 0, ERR);
+
     fully_refresh_display_buffer = 0;
     wmove(mapwin, cursy, cursx);
     wnoutrefresh(mapwin);
@@ -235,25 +262,6 @@ compare_coord_dist(const void *p1, const void *p2)
     return dist1 - dist2;
 }
 
-static void
-place_desc_message(WINDOW * win, int *x, int *y, char *b)
-{
-    if (*b) {
-        b[78] = 0;
-        if (strlen(b) >= 40 && *x >= 40) {
-            (*y)++;
-            *x = 0;
-        }
-        if (*y <= 1 && statuswin)
-            mvwaddstr(statuswin, *y, *x, b);
-        (*x) += (strlen(b) >= 38 ? 80 : 40);
-        if (*x > 40) {
-            (*y)++;
-            *x = 0;
-        }
-    }
-}
-
 struct nh_getpos_result
 curses_getpos(int xorig, int yorig, nh_bool force, const char *goal)
 {
@@ -275,7 +283,6 @@ curses_getpos(int xorig, int yorig, nh_bool force, const char *goal)
     enum nh_direction dir;
 
     int moncount = 0, monidx = 0;
-    int firstmove = 1;
     nh_bool first_monidx_change = TRUE;
 
     int i, j;
@@ -300,45 +307,17 @@ curses_getpos(int xorig, int yorig, nh_bool force, const char *goal)
           compare_coord_dist);
     monidx = 0;
 
-    if (statuswin) {
-        werase(statuswin);
-        mvwaddstr(statuswin, 0, 0,
-                  "Move the cursor with the direction keys. Press "
-                  "the letter of a dungeon symbol");
-        mvwaddstr(statuswin, 1, 0,
-                  "to select it or use m/M to move to a nearby "
-                  "monster. Finish with one of .,;:");
-        wrefresh(statuswin);
-    }
+    ui_flags.maphoverx = -1;
+    ui_flags.maphovery = -1;
 
     cx = xorig >= 0 && xorig < COLNO ? xorig : player.x;
     cy = yorig >= 0 && yorig < ROWNO ? yorig : player.y;
     wmove(mapwin, cy, cx);
 
     while (1) {
-        if (!firstmove) {
-            struct nh_desc_buf descbuf;
-            int mx = 0, my = 0;
-
-            nh_describe_pos(cx, cy, &descbuf, NULL);
-
-            if (statuswin) {
-                werase(statuswin);
-                place_desc_message(statuswin, &mx, &my, descbuf.effectdesc);
-                place_desc_message(statuswin, &mx, &my, descbuf.invisdesc);
-                place_desc_message(statuswin, &mx, &my, descbuf.mondesc);
-                place_desc_message(statuswin, &mx, &my, descbuf.objdesc);
-                place_desc_message(statuswin, &mx, &my, descbuf.trapdesc);
-                place_desc_message(statuswin, &mx, &my, descbuf.bgdesc);
-                wrefresh(statuswin);
-            }
-
-            wmove(mapwin, cy, cx);
-        }
-        firstmove = 0;
         dx = dy = 0;
         curs_set(1);
-        key = get_map_key(FALSE);
+        key = get_map_key(FALSE, TRUE, krc_getpos);
         if (key == KEY_ESCAPE || key == '\x1b') {
             cx = cy = -10;
             result = NHCR_CLIENT_CANCEL;
@@ -445,7 +424,20 @@ curses_getpos(int xorig, int yorig, nh_bool force, const char *goal)
     nxtc:
         wmove(mapwin, cy, cx);
         wrefresh(mapwin);
-    }
+
+        /* If we get here, then the user must have pressed a key that didn't
+           close the getpos prompt; and it must have been an actual key (or
+           onscreen keyboard key), not a map mouse event (which would either
+           have been handled by get_map_key or else closed the prompt). Thus, we
+           hijack the map hover locations for the cursor location, rather than
+           the mouse location, as the user's clearly trying to do things with
+           keyboard controls. */
+        ui_flags.maphoverx = cx;
+        ui_flags.maphovery = cy;
+    } /* while (1) */
+
+    ui_flags.maphoverx = -1;
+    ui_flags.maphovery = -1;
 
     curses_update_status(NULL); /* clear the help message */
     return (struct nh_getpos_result){.x = cx, .y = cy, .howclosed = result};

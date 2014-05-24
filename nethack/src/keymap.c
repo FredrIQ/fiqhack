@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -111,7 +111,7 @@ struct nh_cmd_desc builtin_commands[] = {
 };
 
 
-struct nh_cmd_desc *keymap[KEY_MAX], *unknown_keymap[KEY_MAX];
+struct nh_cmd_desc *keymap[KEY_MAX + 1], *unknown_keymap[KEY_MAX + 1];
 static struct nh_cmd_desc *commandlist, *unknown_commands;
 static int cmdcount, unknown_count, unknown_size;
 static struct nh_cmd_arg next_command_arg;
@@ -268,7 +268,7 @@ get_command(void *callbackarg,
         cmd = NULL;
         ncaa.arg.argtype = 0;
 
-        key = get_map_key(TRUE);
+        key = get_map_key(TRUE, TRUE, krc_get_command);
         while ((key >= '0' && key <= '9') ||
                (multi > 0 && key == KEY_BACKSPACE)) {
             if (key == KEY_BACKSPACE)
@@ -288,10 +288,11 @@ get_command(void *callbackarg,
         new_action();   /* use a new message line for this action */
         if (key == KEY_SIGNAL) {
             cmd = find_command("servercancel");
-        } else {
+        } else if (key <= KEY_MAX) {
             cmd = keymap[key];
             current_cmd_key = key;
-        }
+        } else
+            cmd = NULL;
 
         if (key > KEY_MAX && key < KEY_MAX + 128) {
             /* This range of user-defined keys is used for mouse callbacks from
@@ -339,13 +340,13 @@ get_command(void *callbackarg,
                handle_internal_cmd) */
             if (cmd->flags & CMD_ARG_DIR && cmd->flags & CMD_MOVE &&
                 !(ncaa.arg.argtype & CMD_ARG_DIR)) {
-                key2 = get_map_key(TRUE);
+                key2 = get_map_key(TRUE, FALSE, krc_get_movecmd_direction);
 
                 if (key2 == '\x1b' || key2 == KEY_ESCAPE) /* cancel silently */
                     continue;
                 if (key2 == KEY_SIGNAL) {
                     cmd = find_command("servercancel");
-                } else {
+                } else if (key <= KEY_MAX) {
 
                     cmd2 = keymap[key2];
                     if (cmd2 && (cmd2->flags & CMD_UI) &&
@@ -355,7 +356,8 @@ get_command(void *callbackarg,
                             (cmd2->flags & ~(CMD_UI | DIRCMD));
                     } else
                         cmd = NULL;
-                }
+                } else
+                    cmd = NULL;   /* paranoia */
             }
         }
 
@@ -386,7 +388,7 @@ key_to_dir(int key)
 {
     struct nh_cmd_desc *cmd;
 
-    if (key <= 0)
+    if (key <= 0 || key > KEY_MAX)
         return DIR_NONE;
 
     cmd = keymap[key];
@@ -496,7 +498,7 @@ show_whatdoes(void)
     char buf[BUFSZ];
     int key = curses_msgwin("What command?");
 
-    if (!keymap[key])
+    if (key > KEY_MAX || !keymap[key])
         snprintf(buf, BUFSZ, "'%s' is not bound to any command.",
                  friendly_keyname(key));
     else
@@ -683,7 +685,7 @@ read_keymap(void)
                    */
                 ptrdiff =
                     (char *)unknown_commands - (char *)unknown_commands_prev;
-                for (i = 0; i < KEY_MAX; i++) {
+                for (i = 0; i <= KEY_MAX; i++) {
                     if (!unknown_keymap[i])
                         continue;
 
@@ -707,8 +709,8 @@ read_keymap(void)
                 if (key == 0 || endptr == line)
                     goto badmap;
 
-                if (key < 0 || key >= KEY_MAX)  /* manual edit or version
-                                                   difference */
+                if (key < 0 || key > KEY_MAX)  /* manual edit or version
+                                                  difference */
                     goto nextline;      /* nothing we can do with this, except
                                            perhaps complain */
 
@@ -766,7 +768,7 @@ write_keymap(void)
     if (fd == -1)
         return;
 
-    for (key = 1; key < KEY_MAX; key++) {
+    for (key = 1; key <= KEY_MAX; key++) {
         name =
             keymap[key] ? keymap[key]->name : (unknown_keymap[key] ?
                                                unknown_keymap[key]->name : "-");
@@ -900,7 +902,7 @@ add_keylist_command(struct nh_menulist *menu, struct nh_cmd_desc *cmd, int id)
         return;
 
     keys[0] = '\0';
-    for (i = 0; i < KEY_MAX; i++) {
+    for (i = 0; i <= KEY_MAX; i++) {
         if (keymap[i] == cmd) {
             kl = strlen(keys);
             if (kl) {
@@ -929,7 +931,7 @@ command_settings_menu(struct nh_cmd_desc *cmd)
     do {
         init_menulist(&menu);
 
-        for (i = 0; i < KEY_MAX; i++) {
+        for (i = 0; i <= KEY_MAX; i++) {
             if (keymap[i] == cmd) {
                 sprintf(buf, "delete key %s", friendly_keyname(i));
                 add_menu_item(&menu, i, buf, 0, FALSE);
@@ -964,7 +966,7 @@ command_settings_menu(struct nh_cmd_desc *cmd)
         else if (selection[0] == -1) {  /* add a key */
             sprintf(buf, "Press the key you want to use for \"%s\"", cmd->name);
             i = curses_msgwin(buf);
-            if (i == KEY_ESCAPE)
+            if (i == KEY_ESCAPE || i > KEY_MAX)
                 continue;
             if (keymap[i]) {
                 sprintf(buf, "That key is already in use by \"%s\"! Replace?",

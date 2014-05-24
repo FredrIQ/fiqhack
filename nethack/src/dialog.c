@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -107,7 +107,8 @@ resize_curses_msgwin(struct gamewin *gw)
 
 static int
 curses_msgwin_generic(const char *msg, int (*validator)(int, void *),
-                      void *arg, nh_bool cursor_visible)
+                      void *arg, nh_bool cursor_visible,
+                      enum keyreq_context context)
 {
     int rv;
 
@@ -139,7 +140,7 @@ curses_msgwin_generic(const char *msg, int (*validator)(int, void *),
 
     rv = -1;
     while (rv == -1)
-        rv = validator(nh_wgetch(gw->win), arg);
+        rv = validator(nh_wgetch(gw->win, context), arg);
 
     delete_gamewin(gw);
 
@@ -175,7 +176,8 @@ curses_getdir(const char *query, nh_bool restricted)
     char qbuf[QBUFSZ];
 
     snprintf(qbuf, QBUFSZ, "%s", query ? query : "In what direction?");
-    rv = curses_msgwin_generic(qbuf, curses_getdir_validator, NULL, 0);
+    rv = curses_msgwin_generic(qbuf, curses_getdir_validator, NULL, 0,
+                               krc_getdir);
 
     return rv - 5;
 }
@@ -224,7 +226,7 @@ curses_yn_function(const char *query, const char *resp, char def)
 
     strcpy(respbuf, resp);
     key = curses_msgwin_generic(prompt, curses_yn_function_validator,
-                                respbuf, 1);
+                                respbuf, 1, krc_yn);
     if (key == -2)
         key = def;
 
@@ -273,7 +275,8 @@ curses_query_key(const char *query, nh_bool allow_count)
     nqkr.count = -1;
 
     nqkr.key = curses_msgwin_generic(query, curses_query_key_validator,
-                                     allow_count ? &(nqkr.count) : NULL, 1);
+                                     allow_count ? &(nqkr.count) : NULL, 1,
+                                     krc_query_key);
     return nqkr;
 }
 
@@ -294,5 +297,6 @@ curses_msgwin_validator(int key, void *unused)
 int
 curses_msgwin(const char *msg)
 {
-    return curses_msgwin_generic(msg, curses_msgwin_validator, NULL, 0);
+    return curses_msgwin_generic(msg, curses_msgwin_validator, NULL, 0,
+                                 krc_msgwin);
 }

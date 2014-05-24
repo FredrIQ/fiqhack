@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -188,6 +188,10 @@ nh_window_border(WINDOW *win, int dismissable)
 
     /* Don't allow clicks "behind" the window. */
     uncursed_clear_mouse_regions();
+
+    /* If we're popping up a modal window (that blocks mouse actions), we're not
+       hovering over anything behind it. */
+    ui_flags.maphoverx = ui_flags.maphovery = -1;
 
     if (settings.mouse && dismissable && getmaxx(win) > 4) {
         cchar_t x;
@@ -573,6 +577,7 @@ create_game_windows(void)
 {
     create_or_resize_game_windows(newwin_wrapper);
     ui_flags.ingame = TRUE;
+    ui_flags.maphoverx = ui_flags.maphovery = -1;
     setup_showlines();
     redraw_game_windows();
 }
@@ -706,15 +711,18 @@ handle_resize(void)
 
 
 int
-nh_wgetch(WINDOW * win)
+nh_wgetch(WINDOW * win, enum keyreq_context context)
 {
     int key = 0;
 
-    doupdate(); /* required by pdcurses, noop for ncurses */
+    draw_extrawin(context);
+    doupdate();
     do {
         key = wgetch(win);
+
         if (key == KEY_HANGUP) {
             nh_exit_game(EXIT_FORCE_SAVE);
+
             /* If we're in a game, EXIT_FORCE_SAVE will longjmp out to the
                normal game saved/over sequence, and eventually the control will
                get back here outside a game (if KEY_HANGUP is returned from any
@@ -724,7 +732,38 @@ nh_wgetch(WINDOW * win)
                from there, we spam ESC until the program is closed. (You can't
                ESC out of the main menu, so we use a special flag for that.) */
             ui_flags.done_hup = TRUE;
+
+            clear_extrawin(); /* kind-of redundant for multiple reasons */
             return KEY_ESCAPE;
+        }
+
+        if (key == KEY_UNHOVER || key >= KEY_MAX + 256) {
+            /* A mouse action on the map.
+
+               nh_wgetch is only called in two circumstances: from modal dialog
+               boxes, and from get_map_key. In modal dialog boxes, we've
+               disabled mouse actions from all other windows, including the map;
+               thus the only one of these keys we could potentially get is
+               KEY_UNHOVER, and maphoverx will be -1 already, so we just ignore
+               it.
+
+               When on the map, we record the hover position, then return the
+               key so that get_map_key can process it. Clicking cancels a hover;
+               this is to work around a bug in Konsole (which will report a
+               hover if the mouse is dragged, and will not report an unhover if
+               the mouse is subsequently moved away with no buttons held). */
+
+            if (key == KEY_UNHOVER && ui_flags.maphoverx == -1)
+                continue;
+
+            if (key < KEY_MAX + 256 + (ROWNO * COLNO * 2)) {
+                ui_flags.maphoverx = -1;
+                ui_flags.maphovery = -1;
+            } else {
+                int xy = key - KEY_MAX - 256 - (ROWNO * COLNO * 2);
+                ui_flags.maphoverx = xy % COLNO;
+                ui_flags.maphovery = xy / COLNO;
+            }
         }
 
         if (key == 0x3 && ui_flags.playmode == MODE_WIZARD) {
@@ -747,6 +786,7 @@ nh_wgetch(WINDOW * win)
 
     } while (!key);
 
+    clear_extrawin();
     return key;
 }
 
@@ -827,7 +867,7 @@ curses_pause(enum nh_pause_reason reason)
         pause_messages();
     else if (mapwin != NULL) {
         /* P_MAP: pause to show the result of detection or similar */
-        if (get_map_key(FALSE) == KEY_SIGNAL)
+        if (get_map_key(FALSE, FALSE, krc_pause_map) == KEY_SIGNAL)
             uncursed_signal_getch();
     }
 }

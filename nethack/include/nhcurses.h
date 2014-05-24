@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -125,6 +125,24 @@ enum autoable_boolean {
     AB_AUTO,
 };
 
+/* Any extra space on the terminal is used to give advice about controls. This
+   enum tracks the context in which a key is being requested, so as to be able
+   to give good advice. */
+enum keyreq_context {
+    krc_getdir,
+    krc_getlin,
+    krc_yn,
+    krc_query_key,
+    krc_msgwin, /* TODO curses_msgwin */
+    krc_get_command,
+    krc_get_movecmd_direction,
+    krc_getpos,
+    krc_menu,
+    krc_objmenu,
+    krc_more,
+    krc_pause_map,
+};
+
 
 struct interface_flags {
     nh_bool done_hup;
@@ -155,6 +173,11 @@ struct interface_flags {
 
     int connection_only;  /* connect to localhost, don't play normally */
     int no_stop;          /* do not allow the process to suspend */
+
+    /* These values are -1, -1 while the cursor is not over the map, or an x, y
+       pair while it is. */
+    int maphoverx;
+    int maphovery;
 
     char username[BUFSZ];      /* username being used in connection-only mode */
 };
@@ -308,7 +331,8 @@ extern struct nh_player_info player;
 extern int cmdline_role, cmdline_race, cmdline_gend, cmdline_align;
 extern char cmdline_name[];
 extern nh_bool random_player;
-extern struct nh_cmd_desc *keymap[KEY_MAX];
+extern struct gamewin *firstgw, *lastgw;
+extern struct nh_cmd_desc *keymap[KEY_MAX + 1];
 extern const char *nhlogo_small[11], *nhlogo_large[14];
 extern char *override_hackdir, *override_userdir;
 extern int repeats_remaining;
@@ -327,6 +351,10 @@ extern char curses_yn_function(const char *query, const char *resp, char def);
 extern struct nh_query_key_result curses_query_key(const char *query,
                                                    nh_bool count_allowed);
 extern int curses_msgwin(const char *msg);
+
+/* extrawin.c */
+extern void draw_extrawin(enum keyreq_context context);
+extern void clear_extrawin(void);
 
 /* gameover.c */
 extern void curses_outrip(
@@ -362,7 +390,8 @@ extern enum nh_direction key_to_dir(int key);
 extern void curses_impossible(const char *msg);
 
 /* map.c */
-extern int get_map_key(int place_cursor);
+extern int get_map_key(nh_bool place_cursor, nh_bool report_clicks,
+                       enum keyreq_context context);
 extern void curses_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO],
                                  int ux, int uy);
 extern struct nh_getpos_result curses_getpos(int x, int y, nh_bool force,
@@ -486,7 +515,7 @@ extern void destroy_game_windows(void);
 extern void redraw_game_windows(void);
 extern void handle_resize(void);
 extern void rebuild_ui(void);
-extern int nh_wgetch(WINDOW * win);
+extern int nh_wgetch(WINDOW * win, enum keyreq_context context);
 extern struct gamewin *alloc_gamewin(int extra);
 extern void delete_gamewin(struct gamewin *win);
 extern void delete_all_gamewins(void);
