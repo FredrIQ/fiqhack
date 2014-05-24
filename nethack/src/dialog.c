@@ -49,7 +49,7 @@ newdialog(int height, int width, WINDOW *win)
     werase(win);
     keypad(win, TRUE);
     meta(win, TRUE);
-    nh_box(win);
+    nh_window_border(win, TRUE);
     return win;
 }
 

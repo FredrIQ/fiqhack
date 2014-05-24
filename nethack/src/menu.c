@@ -111,7 +111,7 @@ draw_menu(struct gamewin *gw)
     int i, j, col, scrlheight, scrlpos, scrltop, attr;
     char *tab;
 
-    nh_box(gw->win);
+    nh_window_border(gw->win, mdat->dismissable);
     if (mdat->title) {
         wattron(gw->win, A_UNDERLINE);
         mvwaddnstr(gw->win, 1, 2, mdat->title, mdat->width - 4);
@@ -119,7 +119,6 @@ draw_menu(struct gamewin *gw)
     }
 
     werase(gw->win2);
-    uncursed_clear_mouse_regions();
     /* draw menu items */
     item = &mdat->items[mdat->offset];
     for (i = 0; i < mdat->innerheight; i++, item++) {
@@ -310,7 +309,8 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
                          void *callbackarg,
                          void (*callback)(const int *, int, void *),
                          int x1, int y1, int x2, int y2, nh_bool bottom,
-                         nh_bool(*changefn) (struct win_menu *, int))
+                         nh_bool(*changefn) (struct win_menu *, int),
+                         nh_bool dismissable)
 {
     struct gamewin *gw;
     struct win_menu *mdat;
@@ -348,6 +348,7 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     mdat->y1 = y1;
     mdat->x2 = x2;
     mdat->y2 = y2;
+    mdat->dismissable = dismissable;
 
     dealloc_menulist(ml);
 
@@ -369,7 +370,7 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
 
     gw->win = newwin(mdat->height, mdat->width, starty, startx);
     keypad(gw->win, TRUE);
-    nh_box(gw->win);
+    nh_window_border(gw->win, mdat->dismissable);
     gw->win2 =
         derwin(gw->win, mdat->innerheight, mdat->innerwidth,
                mdat->frameheight - 1, 2);
@@ -553,7 +554,7 @@ curses_display_menu(struct nh_menulist *ml, const char *title,
     }
 
     curses_display_menu_core(ml, title, how, callbackarg, callback,
-                             x1, y1, x2, y2, FALSE, NULL);
+                             x1, y1, x2, y2, FALSE, NULL, TRUE);
 }
 
 /******************************************************************************
@@ -624,8 +625,6 @@ draw_objlist(WINDOW * win, struct nh_objlist *objlist, int *selected, int how)
 
     width = getmaxx(win);
     werase(win);
-    if (selected)
-        uncursed_clear_mouse_regions();
 
     /* draw menu items */
     maxitem = min(getmaxy(win), objlist->icount);
@@ -697,7 +696,7 @@ draw_objmenu(struct gamewin *gw)
     struct win_objmenu *mdat = (struct win_objmenu *)gw->extra;
     int i, scrlheight, scrlpos, scrltop, attr;
 
-    nh_box(gw->win);
+    nh_window_border(gw->win, TRUE);
     if (mdat->title) {
         wattron(gw->win, A_UNDERLINE);
         mvwaddnstr(gw->win, 1, 2, mdat->title, mdat->width - 4);
@@ -875,7 +874,7 @@ curses_display_objects(
 
     gw->win = newwin(mdat->height, mdat->width, starty, startx);
     keypad(gw->win, TRUE);
-    nh_box(gw->win);
+    nh_window_border(gw->win, TRUE);
     gw->win2 =
         derwin(gw->win, mdat->innerheight, mdat->innerwidth,
                mdat->frameheight - 1, 2);
@@ -1043,6 +1042,7 @@ curses_display_objects(
 
                 /* inventory special case: show item actions menu */
                 if (inventory_special) {
+                    mdat->selected[idx] = 0;
                     if (do_item_actions(&mdat->items[idx]))
                         done = TRUE;
                 } else if (mdat->how == PICK_ONE)

@@ -51,7 +51,7 @@ draw_getline_inner(struct gamewin *gw, int echo)
     int output_count;
     char **output;
 
-    nh_box(gw->win);
+    nh_window_border(gw->win, TRUE);
 
     width = getmaxx(gw->win);
     height = getmaxy(gw->win);

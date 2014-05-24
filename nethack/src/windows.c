@@ -173,8 +173,9 @@ nh_mvwhline(WINDOW *win, int y, int x, int len)
     set_frame_cchar(&c, FC_HLINE, win == basewin || win == sidebar);
     mvwhline_set(win, y, x, &c, len);
 }
+
 void
-nh_box(WINDOW *win)
+nh_window_border(WINDOW *win, int dismissable)
 {
     cchar_t c[6];
     set_frame_cchar(c+0, FC_VLINE, win == basewin || win == sidebar);
@@ -184,6 +185,20 @@ nh_box(WINDOW *win)
     set_frame_cchar(c+4, FC_LLCORNER, win == basewin || win == sidebar);
     set_frame_cchar(c+5, FC_LRCORNER, win == basewin || win == sidebar);
     wborder_set(win, c+0, c+0, c+1, c+1, c+2, c+3, c+4, c+5);
+
+    /* Don't allow clicks "behind" the window. */
+    uncursed_clear_mouse_regions();
+
+    if (settings.mouse && dismissable && getmaxx(win) > 4) {
+        cchar_t x;
+        const wchar_t *w = L"x";
+        wset_mouse_event(win, uncursed_mbutton_left,
+                         KEY_ESCAPE, KEY_CODE_YES);
+        setcchar(&x, w, (attr_t)0, PAIR_NUMBER(
+                     curses_color_attr(CLR_ORANGE, CLR_BLACK)), NULL);
+        mvwadd_wch(win, 0, getmaxx(win)-2, &x);
+        wset_mouse_event(win, uncursed_mbutton_left, 0, ERR);
+    }
 }
 static void
 nh_mvwaddch(WINDOW *win, int y, int x, enum framechars which)

@@ -267,6 +267,7 @@ struct win_menu {
     int height, frameheight, innerheight;
     int width, innerwidth, colpos[MAXCOLS], maxcol;
     int x1, y1, x2, y2;
+    nh_bool dismissable;
 };
 
 struct win_objmenu {
@@ -379,7 +380,7 @@ extern void curses_display_menu_core(
     struct nh_menulist *ml, const char *title, int how,
     void *callbackarg, void (*callback)(const int *, int, void *),
     int x1, int y1, int x2, int y2, nh_bool bottom,
-    nh_bool(*changefn)(struct win_menu *, int));
+    nh_bool(*changefn)(struct win_menu *, int), nh_bool);
 extern void curses_display_objects(
     struct nh_objlist *objlist, const char *title, int how, int placement_hint,
     void *callbackarg, void (*callback)(const struct nh_objresult *,
@@ -477,7 +478,7 @@ extern void set_font_file(const char *);
 extern void set_tile_file(const char *);
 extern void nh_mvwvline(WINDOW *, int, int, int);
 extern void nh_mvwhline(WINDOW *, int, int, int);
-extern void nh_box(WINDOW *);
+extern void nh_window_border(WINDOW *, int);
 extern void create_game_windows(void);
 extern void destroy_game_windows(void);
 extern void redraw_game_windows(void);

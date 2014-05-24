@@ -623,7 +623,7 @@ display_options(nh_bool change_birth_opt)
 
         curses_display_menu_core(
             &menu, "Set what options?", PICK_ONE, selected,
-            curses_menu_callback, 0, 0, -1, -1, FALSE, query_new_value);
+            curses_menu_callback, 0, 0, -1, -1, FALSE, query_new_value, TRUE);
 
         curses_free_nh_opts(options);
     } while (*selected != CURSES_MENU_CANCELLED);

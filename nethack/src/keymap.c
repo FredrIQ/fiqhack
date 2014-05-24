@@ -1033,7 +1033,7 @@ show_keymap_menu(nh_bool readonly)
         curses_display_menu_core(
             &menu, "Keymap", readonly ? PICK_NONE : PICK_ONE,
             selected, curses_menu_callback, 0,
-            0, COLS, LINES, FALSE, set_command_keys);
+            0, COLS, LINES, FALSE, set_command_keys, TRUE);
 
     } while (*selected != CURSES_MENU_CANCELLED);
 
