@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -60,6 +60,7 @@ struct uncursed_hooks {
 /*** Receiving input: called on input hooks only ***/
     void (*delay) (int);            /* milliseconds */
     void (*rawsignals) (int);       /* 0 or 1 */
+    void (*activatemouse) (int);    /* 0 or 1 */
 #define KEY_BIAS (0x10ff00) /* add this to a key to show it isn't a codepoint */
     int (*getkeyorcodepoint) (int); /* timeout in ms */
     void (*signal_getch) (void);
@@ -103,6 +104,18 @@ extern unsigned short HOOK_EI(uncursed_rhook_ucs2_at) (int y, int x);
 extern int HOOK_EI(uncursed_rhook_color_at) (int y, int x);
 extern uncursed_hook_void_p HOOK_EI(uncursed_rhook_region_at) (int y, int x);
 extern int HOOK_EI(uncursed_rhook_needsupdate) (int y, int x);
+
+/* Gets the key that a mouse action at the given location should be translated
+   into; mbutton is an uncursed_mousebutton value; the return value has the same
+   interpretation as getkeyorcodepoint (i.e. KEY_BIAS is added for key codes
+   that do not correspond to Unicode characters). -1 is also possible; this will
+   be returned if there's no mouse binding for the given location, or if the
+   location is out of range. An interface should either ignore the event if -1
+   is sent, or else send KEY_UNHOVER (+ KEY_BIAS, as always) if it receives a
+   hover event with no binding (i.e. -1) and it's sent a hover event more
+   recently than the last KEY_UNHOVER. */
+extern int HOOK_EI(uncursed_rhook_mousekey_from_pos)
+    (int y, int x, int mbutton);
 
 extern void HOOK_EI(uncursed_rhook_updated) (int y, int x);
 extern void HOOK_EI(uncursed_rhook_setsize) (int rows, int cols);

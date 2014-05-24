@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -45,6 +45,8 @@ main(int argc, char **argv)
     start_color();
     init_pair(1, 10, 4);
 
+    uncursed_enable_mouse(1);
+
     /* Testing input */
     clear();
     mvprintw(0, 0, "Press a key ('q' to exit)");
@@ -68,8 +70,23 @@ main(int argc, char **argv)
                 break;
         } else {
             cchar_t ct = { A_UNDERLINE | COLOR_PAIR(1), {k, 0} };
+
+            set_mouse_event(uncursed_mbutton_hover, '+', OK);
             mvprintw(0, 0, "%d '", k);
+            set_mouse_event(uncursed_mbutton_hover, 0, ERR);
+
+            set_mouse_event(uncursed_mbutton_left, L'é', OK);
+            set_mouse_event(uncursed_mbutton_middle, L'ê', OK);
+            set_mouse_event(uncursed_mbutton_right, L'è', OK);
+            set_mouse_event(uncursed_mbutton_wheelup, KEY_F17, KEY_CODE_YES);
+            set_mouse_event(uncursed_mbutton_wheeldown, KEY_MAX+1, KEY_CODE_YES);
             add_wch(&ct);
+            set_mouse_event(uncursed_mbutton_left, 0, ERR);
+            set_mouse_event(uncursed_mbutton_middle, 0, ERR);
+            set_mouse_event(uncursed_mbutton_right, 0, ERR);
+            set_mouse_event(uncursed_mbutton_wheelup, 0, ERR);
+            set_mouse_event(uncursed_mbutton_wheeldown, 0, ERR);
+
             addch('\'');
         }
 

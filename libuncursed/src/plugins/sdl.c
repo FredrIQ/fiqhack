@@ -48,6 +48,11 @@ static int resize_queued = 0;
 static int suppress_resize = 0;
 static int ignore_resize_count = 0;
 
+static int mouse_active = 0;
+static int mouse_hovering = 0;
+static int mouse_hover_x = 0;
+static int mouse_hover_y = 0;
+
 static int cursor_x = 0;
 static int cursor_y = 0;
 static int cursor_visible = 1;
@@ -275,6 +280,31 @@ sdl_hook_positioncursor(int y, int x)
     cursor_timestamp++;
     sdl_hook_update(cursor_y, cursor_x);
     sdl_hook_update(old_y, old_x);
+}
+
+/* Convert locations from pixels to character units. This mostly exists so that
+   if the user clicks the mouse, we can figure out what they clicked on. */
+static void
+winloc_to_charloc(int x_pixels, int y_pixels, int *x_chars, int *y_chars)
+{
+    struct sdl_tile_region *region;
+
+    *x_chars = x_pixels / fontwidth;
+    *y_chars = y_pixels / fontheight;
+
+    region = uncursed_rhook_region_at(*y_chars, *x_chars);
+    if (!region) /* clicked on a character */
+        return;
+
+    /* The user clicked on a tile. Change x_pixels and y_pixels to be relative
+       to the top left corner of the tiles region. */
+    x_pixels -= region->pixelshift_x - region->loc_l * fontwidth;
+    y_pixels -= region->pixelshift_y - region->loc_t * fontheight;
+
+    /* Now work out which tile they clicked on, and convert to a character
+       region location. */
+    *x_chars = x_pixels / region->tilesize_w + region->loc_l;
+    *y_chars = y_pixels / region->tilesize_h + region->loc_t;
 }
 
 /* Called whenever the window or font size changes. */
@@ -704,6 +734,12 @@ sdl_hook_rawsignals(int raw)
 }
 
 void
+sdl_hook_activatemouse(int active)
+{
+    mouse_active = active;
+}
+
+void
 sdl_hook_delay(int ms)
 {
     /* We want to discard keys for the given length of time. (If the window is
@@ -732,7 +768,7 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
     long tick_target = SDL_GetTicks() + timeout_ms;
     long key_tick_target = -1;
     long last_textediting_tick = -1 - TEXTEDITING_FILTER_TIME;
-    int kc = KEY_INVALID + KEY_BIAS, i, j, k;
+    int kc = KEY_INVALID + KEY_BIAS, i, j, k, x, y;
 
     if (hangup_mode)
         return KEY_HANGUP + KEY_BIAS;
@@ -839,6 +875,66 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
                 return kc;
 
             return k;
+
+        case SDL_MOUSEMOTION:
+            winloc_to_charloc(e.motion.x, e.motion.y, &x, &y);
+            k = uncursed_rhook_mousekey_from_pos(y, x, uncursed_mbutton_hover);
+
+            if (k == -1 && mouse_hovering) {
+
+                mouse_hovering = 0;
+                if (mouse_active)
+                    return KEY_UNHOVER + KEY_BIAS;
+
+            } else if (k != -1 && mouse_active &&
+                       (!mouse_hovering ||
+                        mouse_hover_x != x || mouse_hover_y != y)) {
+
+                /* Don't repeatedly send hover events if the cursor keeps
+                   moving but does not move to a different character. */
+                mouse_hovering = 1;
+                mouse_hover_x = x;
+                mouse_hover_y = y;
+                return k;
+
+            }
+            break;
+
+        case SDL_MOUSEBUTTONDOWN:
+            if (!mouse_active)
+                break;
+
+            if (e.button.button == SDL_BUTTON_LEFT)
+                i = uncursed_mbutton_left;
+            else if (e.button.button == SDL_BUTTON_MIDDLE)
+                i = uncursed_mbutton_middle;
+            else if (e.button.button == SDL_BUTTON_RIGHT)
+                i = uncursed_mbutton_right;
+            else break;
+
+            winloc_to_charloc(e.button.x, e.button.y, &x, &y);
+
+            k = uncursed_rhook_mousekey_from_pos(y, x, i);
+            if (k != -1)
+                return k;
+
+            break;
+
+        case SDL_MOUSEWHEEL:
+            if (!mouse_active)
+                break;
+
+            SDL_GetMouseState(&x, &y);
+            winloc_to_charloc(x, y, &x, &y);
+
+            /* TODO: Factor in how fast the wheel is being moved? */
+            k = uncursed_rhook_mousekey_from_pos(
+                y, x, e.wheel.y < 0 ? uncursed_mbutton_wheeldown :
+                uncursed_mbutton_wheelup);
+            if (k != -1)
+                return k;
+
+            break;
 
         case SDL_KEYDOWN:
 

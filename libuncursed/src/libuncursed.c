@@ -386,6 +386,16 @@ uncursed_hook_rawsignals(int raw)
             h->rawsignals(raw);
 }
 
+static void
+uncursed_hook_activatemouse(int active)
+{
+    struct uncursed_hooks *h;
+
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used && h->hook_type == uncursed_hook_type_input)
+            h->activatemouse(active);
+}
+
 static int
 uncursed_hook_getkeyorcodepoint(int ms)
 {
@@ -838,6 +848,38 @@ chgat,                  (int len, attr_t attr, uncursed_color pairnum,
     return OK;
 }
 
+/* uncursed-specific mouse binding code: works much the same way as the
+   attribute code */
+UNCURSED_ANDWINDOWDEF(void,
+set_mouse_event,      (enum uncursed_mousebutton button, wint_t char_or_keycode,
+                       int which), (button, char_or_keycode, which))
+{
+    int k = -1;
+    if (which == OK)
+        k = char_or_keycode;
+    else if (which == KEY_CODE_YES)
+        k = char_or_keycode + KEY_BIAS;
+    win->current_bindings[button] = k;
+}
+
+void
+uncursed_clear_mouse_regions(void)
+{
+    int y, x;
+    enum uncursed_mousebutton b;
+
+    for (y = 0; y <= nout_win->maxy; y++)
+        for (x = 0; x <= nout_win->maxx; x++)
+            for (b = 0; b < uncursed_mbutton_count; b++)
+                nout_win->chararray[y * nout_win->stride + x].bindings[b] = -1;
+}
+
+void
+uncursed_enable_mouse(int active)
+{
+    uncursed_hook_activatemouse(active);
+}
+
 /* manual page 3ncurses add_wch */
 int TABSIZE = 8;        /* externally visible */
 UNCURSED_ANDMVWINDOWDEF(int,
@@ -902,9 +944,13 @@ add_wch_core(WINDOW * win, const cchar_t *ch)
            previous character.) */
 
         int idx = win->y * win->stride + win->x;
+
         memcpy(win->chararray + idx, ch, sizeof *ch);
         win->chararray[idx].attr =
             add_window_attrs(win->chararray[idx].attr, win->current_attr);
+        memcpy(&(win->chararray[idx].bindings), &(win->current_bindings),
+               sizeof win->current_bindings);
+
         win->x++;
         if (win->x > win->maxx) {
             win->x = 0;
@@ -1120,6 +1166,8 @@ addchnstr, (const chtype *charray, int n), (charray, n))
                                    win->current_attr);
         p->chars[0] = cp437[charray[i] & A_CHARTEXT];
         p->chars[1] = 0;
+        memcpy(&(p->bindings), &(win->current_bindings),
+               sizeof win->current_bindings);
         p++;
     }
     return OK;
@@ -1632,10 +1680,17 @@ clrtobot)
 
     for (j = win->y + 1; j <= win->maxy; j++) {
         for (i = 0; i <= win->maxx; i++) {
-            win->chararray[i + j * win->stride].attr = win->current_attr;
-            win->chararray[i + j * win->stride].chars[0] = 32;
-            win->chararray[i + j * win->stride].chars[1] = 0;
-            win->chararray[i + j * win->stride].color_on_screen = cosfa;
+            cchar_t *ccp = win->chararray + i + j * win->stride;
+            ccp->attr = win->current_attr;
+            ccp->chars[0] = 32;
+            ccp->chars[1] = 0;
+            ccp->color_on_screen = cosfa;
+
+            /* Note that it's possible to erase a window in "mouse binding
+               color" to set bindings. This might be useful to have default
+               bindings for the wheel, for instance. */
+            memcpy(&(ccp->bindings), &(win->current_bindings),
+                   sizeof win->current_bindings);
         }
     }
 
@@ -1654,6 +1709,8 @@ clrtoeol)
         win->chararray[curpos].chars[0] = 32;
         win->chararray[curpos].chars[1] = 0;
         win->chararray[curpos].color_on_screen = cosfa;
+        memcpy(&(win->chararray[curpos].bindings), &(win->current_bindings),
+               sizeof win->current_bindings);
         curpos++;
     }
 
@@ -1804,6 +1861,11 @@ keyname(int c)
 
     static char keybuf[80];
 
+    if (c > KEY_MAX) {
+        sprintf(keybuf, "KEY_MAX + %d", c - KEY_MAX);
+        return keybuf;
+    } 
+
     strcpy(keybuf, "KEY_");
     if (c & KEY_CTRL)
         strcat(keybuf, "CTRL_");
@@ -1831,9 +1893,9 @@ keyname(int c)
         KEYCHECK(NUMDIVIDE); KEYCHECK(NUMPLUS);
         KEYCHECK(NUMMINUS); KEYCHECK(NUMTIMES);
         KEYCHECK(BACKSPACE); KEYCHECK(ESCAPE); KEYCHECK(ENTER);
-        KEYCHECK(MOUSE); KEYCHECK(RESIZE); KEYCHECK(PRINT);
+        KEYCHECK(RESIZE); KEYCHECK(PRINT);
         KEYCHECK(INVALID); KEYCHECK(HANGUP);
-        KEYCHECK(OTHERFD); KEYCHECK(SIGNAL);
+        KEYCHECK(OTHERFD); KEYCHECK(SIGNAL); KEYCHECK(UNHOVER);
 #undef KEYCHECK
 
     default:
@@ -1873,6 +1935,11 @@ friendly_keyname(int c)
        user. Assumes ASCII (although a lot more would break otherwise...) */
 
     static char keybuf[80];
+
+    if (c > KEY_MAX) {
+        sprintf(keybuf, "User%d", c - KEY_MAX);
+        return keybuf;
+    }
 
     *keybuf = 0;
 
@@ -1931,9 +1998,9 @@ friendly_keyname(int c)
         KEYNAME(NUMPLUS, NumPlus); KEYNAME(NUMMINUS, NumMinus);
         KEYNAME(NUMTIMES, NumTimes); KEYNAME(NUMDIVIDE, NumDivide);
         KEYNAME(BACKSPACE, BkSp); KEYNAME(ESCAPE, Escape);
-        KEYNAME(MOUSE, Mouse); KEYNAME(RESIZE, Resize);
+        KEYNAME(RESIZE, Resize);
         KEYNAME(PRINT, PrtSc); KEYNAME(INVALID, Invalid);
-        KEYNAME(HANGUP, Hangup);
+        KEYNAME(HANGUP, Hangup); KEYNAME(UNHOVER, Unhover);
         KEYNAME(OTHERFD, OtherFD); KEYNAME(SIGNAL, Signal);
 #undef KEYAME
 
@@ -1970,9 +2037,15 @@ delch)
     memmove(win->chararray + win->x + win->y * win->stride,
             win->chararray + win->x + win->y * win->stride + 1,
             (win->maxx - win->x) * sizeof *(win->chararray));
-    win->chararray[win->maxx + win->y * win->stride].attr = win->current_attr;
-    win->chararray[win->maxx + win->y * win->stride].chars[0] = 32;
-    win->chararray[win->maxx + win->y * win->stride].chars[1] = 0;
+
+    cchar_t *lastchar = win->chararray + win->maxx + win->y * win->stride;
+
+    lastchar->attr = win->current_attr;
+    lastchar->chars[0] = 32;
+    lastchar->chars[1] = 0;
+    memcpy(&(lastchar->bindings), &(win->current_bindings),
+           sizeof win->current_bindings);
+
     return OK;
 }
 
@@ -2011,9 +2084,12 @@ insdelln, (int n), (n))
                    win->maxx * sizeof *(win->chararray));
         else
             for (i = 0; i <= win->maxx; i++) {
-                win->chararray[i + j * win->stride].attr = win->current_attr;
-                win->chararray[i + j * win->stride].chars[0] = 32;
-                win->chararray[i + j * win->stride].chars[1] = 0;
+                cchar_t *newchar = win->chararray + i + j * win->stride;
+                newchar->attr = win->current_attr;
+                newchar->chars[0] = 32;
+                newchar->chars[1] = 0;
+                memcpy(&(newchar->bindings), &(win->current_bindings),
+                       sizeof win->current_bindings);
             }
     }
     return OK;
@@ -2127,6 +2203,9 @@ newwin(int h, int w, int t, int l)
         win->regionarray[i] = NULL;
 
     win->current_attr = 0;
+    for (i = 0; i < uncursed_mbutton_count; i++)
+        win->current_bindings[i] = -1;
+
     win->y = win->x = 0;
     win->maxx = w - 1;
     win->maxy = h - 1;
@@ -2171,7 +2250,11 @@ subwin(WINDOW *parent, int h, int w, int t, int l)
     win->sibling = win->parent->child;
     win->parent->child = win;
     win->chararray = parent->chararray;
+
     win->current_attr = 0;
+    for (i = 0; i < uncursed_mbutton_count; i++)
+        win->current_bindings[i] = -1;
+
     win->y = win->x = 0;
     win->maxx = w - 1;
     win->maxy = h - 1;
@@ -2455,6 +2538,15 @@ uncursed_rhook_color_at(int y, int x)
         return 0;
 
     return nout_win->chararray[x + y * nout_win->stride].color_on_screen;
+}
+
+int
+uncursed_rhook_mousekey_from_pos(int y, int x, int b)
+{
+    if (y < 0 || x < 0 || y > nout_win->maxy || x > nout_win->maxx)
+        return 0;
+
+    return nout_win->chararray[x + y * nout_win->stride].bindings[b];
 }
 
 char

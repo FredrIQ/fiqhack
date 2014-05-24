@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -75,15 +75,31 @@ typedef int uncursed_bool;
 typedef unsigned long attr_t;
 typedef unsigned long chtype;   /* attr_t | char */
 
+enum uncursed_mousebutton {
+    uncursed_mbutton_left,
+    uncursed_mbutton_middle,
+    uncursed_mbutton_right,
+    uncursed_mbutton_wheelup,
+    uncursed_mbutton_wheeldown,
+    uncursed_mbutton_hover,
+
+    uncursed_mbutton_count
+};
+
+typedef int uncursed_mouse_bindings[uncursed_mbutton_count];
+
 #define CCHARW_MAX 5
 typedef struct {
     attr_t attr;
     wchar_t chars[CCHARW_MAX];
     unsigned short color_on_screen; /* used only for disp_win, nout_win */
+    uncursed_mouse_bindings bindings;
 } cchar_t;
+
 
 typedef struct WINDOW {
     attr_t current_attr;
+    uncursed_mouse_bindings current_bindings;
     int y, x;
     int maxy, maxx;     /* maximum legal coordinate, e.g. maxy = 1 means height 
                            2 */
@@ -439,7 +455,7 @@ extern uncursed_char_p EI(friendly_keyname) (int);
 
 /* Keys that can't be generated via a terminal, but might be available via
    other input methods. */
-#define KEY_MOUSE     (KEY_NONDEC | 1)
+#define KEY_UNHOVER   (KEY_NONDEC | 1)
 #define KEY_RESIZE    (KEY_NONDEC | 2)
 /* KEY_SHIFT, KEY_CTRL, KEY_ALT are already defined, and we don't want to
    trigger on them because they're used as modifier keys. */
@@ -510,6 +526,16 @@ extern void EI(uncursed_signal_getch) (void);
 extern void EI(uncursed_watch_fd) (int);
 extern void EI(uncursed_unwatch_fd) (int);
 
+/* uncursed mouse handling works differently from ncurses; the ncurses API is
+   badly designed in that it can only wait on mouse actions in one window at a
+   time; this API is less general than it could be (e.g. it doesn't handle
+   drags, shift-clicks, etc.), but that helps to limit programs to a subset of
+   mouse actions that will actually be supported by terminals in practice */
+extern void EI(uncursed_enable_mouse) (int);
+extern void EI(uncursed_clear_mouse_regions) (void);
+UNCURSED_ANDWINDOW(void, set_mouse_event, enum uncursed_mousebutton,
+                   wint_t, int);
+
 /* manual page 3ncurses getyx, legacy; these are all macros */
 #define getyx(win, yy, xx) \
     do {(yy) = (win)->y; (xx) = (win)->x;} while(0)
@@ -568,5 +594,5 @@ extern int EI(wresize) (WINDOW *, int, int);
 /* manual pages 3ncurses bkgd, bkgrnd, define_key, extensions, get_wstr, getstr,
    in{,_w}{ch,str}, legacy_coding, pad, scanw, scr_dump, slk, termattrs,
    termcap, terminfo: left unimplemented */
-/* manual pages 3ncurses ins*, mouse, resizeterm not implemented for now:
-   TODO */
+/* manual page 3ncurses mouse implemented differently (and incompatibly) */
+/* manual pages 3ncurses ins*, resizeterm not implemented for now: TODO */

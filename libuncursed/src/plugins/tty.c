@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-23 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -109,6 +109,10 @@
 #define OFILE_BUFFER_SIZE (1 << 18)
 
 static int is_inited = 0;
+static int mouse_active = 0;
+static int mouse_hovering = 0;
+
+static void set_mouse_state(int);
 
 /* Portable helper functions */
 /* Returns the first codepoint in the given UTF-8 string, or -1 if it's
@@ -522,9 +526,13 @@ platform_specific_getkeystring(int timeout_ms, int ignore_signals)
              * - It's the second character, the first was ESC, and it
              *   isn't [ or O;
              * - It's the third or subsequent character, the first was
-             *   ESC, and it isn't [, ;, or a digit;
+             *   ESC, and it isn't [, ;, <, or a digit;
              * - We're running out of room in the buffer (malicious
              *   input).
+             *
+             * - Exception: if we see CSI M, we want to read three more
+             *   characters. This happens on terminals that can't send
+             *   mouse information in decimal, such as urxvt.
              */
 
             if (read(ifileno, r++, 1) <= 0) {
@@ -544,8 +552,13 @@ platform_specific_getkeystring(int timeout_ms, int ignore_signals)
                 /* Escape */
                 if (r - keystring == 2 && r[-1] != '[' && r[-1] != 'O')
                     break;
-                if (r - keystring > 2 && r[-1] != '[' && r[-1] != ';' &&
+                if (r - keystring > 2 && (keystring[1] != '[' ||
+                                          keystring[2] != 'M') &&
+                    r[-1] != '[' && r[-1] != ';' && r[-1] != '<' &&
                     (r[-1] < '0' || r[-1] > '9'))
+                    break;
+                if (r - keystring > 5 && keystring[1] == '[' &&
+                    keystring[2] == 'M')
                     break;
 
             } else {
@@ -768,8 +781,6 @@ tty_hook_init(int *h, int *w, const char *title)
        (e.g. xterm), this lets us distinguish Enter from Return. */
     ofile_outputs("\x1b=");                              /* app keypad mode */
 
-    /* TODO: turn on mouse tracking? */
-
     /*
      * Work out the Unicodiness of the terminal. We do this by sending 4 bytes
      * = 2 Unicode codepoints, and seeing how far the cursor moves.
@@ -820,8 +831,8 @@ tty_hook_init(int *h, int *w, const char *title)
        DECgraphics, defining both G0 and G1 as DECgraphics; then switch back to
        G0 for normal text, defining just G0 as normal text. */
 
-
     setup_palette();
+    set_mouse_state(mouse_active);
 
     /* Clear the terminal. */
     ofile_outputs(CSI "2J");                             /* clear terminal */
@@ -844,6 +855,7 @@ tty_hook_exit(void)
     ofile_outputs(CSI "?25h");                           /* show cursor */
     ofile_outputs(CSI "0m");                             /* SGR reset */
     reset_palette();
+    set_mouse_state(0);
     ofile_outputs(CSI "2J");                             /* clear terminal */
 
     /* Switch back to the main screen. */
@@ -878,6 +890,29 @@ void
 tty_hook_rawsignals(int raw)
 {
     platform_specific_rawsignals(raw);
+}
+
+/* Record the mouse state so that it persists through future redraws, and call
+   set_mouse_state indirectly (because it clobbers the terminal contents on some
+   terminals). */
+void
+tty_hook_activatemouse(int active)
+{
+    mouse_active = active;
+    if (!active)
+        mouse_hovering = 0;
+
+    if (is_inited)
+        tty_hook_fullredraw();
+}
+
+static void
+set_mouse_state(int active)
+{
+    char setreset = active ? 'h' : 'l';
+    ofile_output(CSI "?1003%c"   /* Track mouse movement */
+                 CSI "?1006%c",  /* Report mouse location in decimal */
+                 setreset, setreset);
 }
 
 static int
@@ -944,12 +979,21 @@ getkeyorcodepoint_inner(int timeout_ms, int ignore_signals)
         return c;
 
     } else {
-        /* The string consists of ESC, [ or O, then 0 to 2 semicolon-separated
-           decimal numbers, then one character that's neither a digit nor a
-           semicolon. getkeystring doesn't guarantee it's not malformed, so
-           care is needed. */
-        int args[2] = { 0, 0 };
+        /* The string consists of ESC, [ or O, maybe a <, then 0 to 3
+           semicolon-separated decimal numbers, then one character that's
+           neither a digit nor a semicolon. getkeystring doesn't guarantee it's
+           not malformed, so care is needed.
+
+           Exception: some terminals will understand "send mouse information"
+           but not "send mouse information in decimal", so we get binary. We can
+           diagnose this by seeing the code CSI M. If this happens, we just
+           parse the binary, but it has some deficiencies compared to decimal
+           (it can't handle terminals larger than 223 by 223, which is moderatly
+           unlikely but not outside the realms of possibility). */
+        const int argp_max = 3;
+        int args[3] = { 0, 0, 0 }; /* can't VLA this */
         int argp = 0;
+        int mouse_event = 0;
 
         char *r = ks + 2;
 
@@ -958,15 +1002,81 @@ getkeyorcodepoint_inner(int timeout_ms, int ignore_signals)
             return KEY_BIAS + (KEY_NONDEC | r[1]);
         }
 
-        /* Parse the semicolon-separated decimal numbers. */
-        while (*r && ((*r >= '0' && *r <= '9') || *r == ';')) {
-            if (*r == ';')
-                argp++;
-            else if (argp < 2) {
-                args[argp] *= 10;
-                args[argp] += *r - '0';
-            }
+        if (*r == '<') {
             r++;
+            mouse_event = 1;
+        }
+
+        if (*r == 'M' && r[1] && r[2] && r[3]) {
+
+            /* We got binary mouse data. */
+            mouse_event = 1;
+            args[0] = (unsigned char)r[1] - 32;
+            args[1] = (unsigned char)r[2] - 32;
+            args[2] = (unsigned char)r[3] - 32;
+
+        } else {
+
+            /* Parse the semicolon-separated decimal numbers. */
+            while (*r && ((*r >= '0' && *r <= '9') || *r == ';')) {
+                if (*r == ';')
+                    argp++;
+                else if (argp < argp_max) {
+                    args[argp] *= 10;
+                    args[argp] += *r - '0';
+                }
+                r++;
+            }
+        }
+
+        if (mouse_event) {
+            /* Our three arguments are button code, x position, y position. If
+               the button code has the 32s bit set, this is mouse motion
+               (i.e. hover), and the other bits appear to be uninitalized
+               data. If the final letter is a lowercase 'm', this is a mouse
+               release, which we currently ignore; and if it's not a capital or
+               lowercase 'M', this isn't a mouse code after all. Otherwise, the
+               button pressed is given by the 1s, 2s, and 64s bits, and the 4s,
+               8s, and 16s bits give the state of Shift, Meta, and Control as of
+               the press. */
+
+            if (!mouse_active || /* can happen due to race conditions */
+                *r != 'M')       /* not a mouse button press */
+                return getkeyorcodepoint_inner(timeout_ms, ignore_signals);
+
+            enum uncursed_mousebutton mb;
+            if (args[0] & 32)
+                mb = uncursed_mbutton_hover;
+            else if ((args[0] & 67) == 0)
+                mb = uncursed_mbutton_left;
+            else if ((args[0] & 67) == 1)
+                mb = uncursed_mbutton_middle;
+            else if ((args[0] & 67) == 2)
+                mb = uncursed_mbutton_right;
+            else if ((args[0] & 67) == 64)
+                mb = uncursed_mbutton_wheelup;
+            else if ((args[0] & 67) == 65)
+                mb = uncursed_mbutton_wheeldown;
+            else /* unknown mouse button */
+                return getkeyorcodepoint_inner(timeout_ms, ignore_signals);
+
+            /* Some terminals reserve right-clicks for their own use; many
+               reserve shift-clicks. Interpret control-left-click as right-click
+               for this reason. */
+            if (mb == uncursed_mbutton_left && (args[0] & 16))
+                mb = uncursed_mbutton_right;
+
+            int rv = uncursed_rhook_mousekey_from_pos(args[2]-1, args[1]-1, mb);
+            if (rv == -1 && mouse_hovering && mb == uncursed_mbutton_hover) {
+                mouse_hovering = 0;
+                return KEY_UNHOVER + KEY_BIAS;
+            } else if (rv == -1)
+                return getkeyorcodepoint_inner(timeout_ms, ignore_signals);
+            else {
+                if (mb == uncursed_mbutton_hover)
+                    mouse_hovering = 1;
+                return rv;
+            }
         }
 
         /* Numbers are out of range. (This can happen on malicious input, or if
@@ -1002,8 +1112,8 @@ tty_hook_getkeyorcodepoint(int timeout_ms)
     return getkeyorcodepoint_inner(timeout_ms, 0);
 }
 
-void
-tty_hook_update(int y, int x)
+static void
+update_cell(int y, int x, int force)
 {
     int j, i;
 
@@ -1016,7 +1126,7 @@ tty_hook_update(int y, int x)
 
         for (j = 0; j < last_h; j++)
             for (i = 0; i < last_w; i++)
-                tty_hook_update(j, i);
+                update_cell(j, i, 1);
         return;
     }
 
@@ -1024,7 +1134,7 @@ tty_hook_update(int y, int x)
         /* In addition to resending color, resend the other font information
            too. */
         set_charset(y, x);
-    } else if (!uncursed_rhook_needsupdate(y, x))
+    } else if (!uncursed_rhook_needsupdate(y, x) && !force)
         return;
 
     if (last_y != y || last_x == -1) {
@@ -1119,10 +1229,17 @@ tty_hook_update(int y, int x)
 }
 
 void
+tty_hook_update(int y, int x)
+{
+    update_cell(y, x, 0);
+}
+
+void
 tty_hook_fullredraw(void)
 {
     terminal_contents_unknown = 1;
     setup_palette();
+    set_mouse_state(mouse_active);
     ofile_outputs(CSI "2J");
     tty_hook_update(0, 0);
 }
