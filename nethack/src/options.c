@@ -456,7 +456,7 @@ getlin_option_callback(const char *str, void *option_void)
     struct nh_option_desc **option_p = option_void;
     struct nh_option_desc *option = *option_p;
 
-    if (!*str || (*str == '\033' && option->type != OPTTYPE_STRING)) {
+    if ((!*str && option->type != OPTTYPE_STRING) || *str == '\033') {
         /* The user cancelled. */
         *option_p = NULL;
         return;
