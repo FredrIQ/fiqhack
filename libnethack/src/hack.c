@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1482,32 +1482,35 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
             }
             /* TODO: Possibly make the player hurtle after striking. */
         }
+        struct rm *levloc = &(level->locations[x][y]);
         if (!hitsomething &&
-            ((level->locations[x][y].typ == STAIRS) ||
-             ((level->locations[x][y].typ == LADDER) &&
-               (level->locations[x][y].ladder != LA_DOWN)) ||
-             IS_STWALL(level->locations[x][y].typ) ||
-             (level->locations[x][y].typ == DOOR &&
-              !!(level->locations[x][y].doormask & (D_CLOSED|D_LOCKED)))))
+            ((levloc->typ == STAIRS) ||
+             ((levloc->typ == LADDER) && (levloc->ladder != LA_DOWN)) ||
+             IS_STWALL(levloc->typ) || IS_TREE(levloc->typ) ||
+             (levloc->typ == DOOR &&
+              !!(levloc->doormask & (D_CLOSED|D_LOCKED)))))
         {
             hitsomething = TRUE;
-            if (uwep && (is_pick(uwep) || is_axe(uwep)) &&
-                use_pick_axe(uwep, &arg));
-                /* use_pick_axe succeeded, don't do anything else */
+            if (uwep && ((is_pick(uwep) && !IS_TREE(levloc->typ)) ||
+                         (is_axe(uwep) && IS_TREE(levloc->typ))) &&
+                use_pick_axe(uwep, &arg))
+                return 1;
             else {
                 ouch = (uwep) ? !rn2(3) : TRUE;
                 pline("%s %s the %s.",
                       uwep && objects[uwep->otyp].oc_material == IRON ?
                       "Sparks fly as you" : "You",
                       uwep ? "whack" : Role_if(PM_MONK) ? "strike" : "bash",
-                      level->locations[x][y].typ == STAIRS ? "stairs" :
-                      level->locations[x][y].typ == LADDER ? "ladder" :
-                      level->locations[x][y].typ == DOOR ? "door" : "wall");
+                      IS_TREE(levloc->typ) ? "tree" :
+                      levloc->typ == STAIRS ? "stairs" :
+                      levloc->typ == LADDER ? "ladder" :
+                      levloc->typ == DOOR ? "door" : "wall");
                 killer = msgprintf(
                     "hitting %s",
-                    level->locations[x][y].typ == STAIRS ? "the stairs" :
-                    level->locations[x][y].typ == LADDER ? "a ladder" :
-                    level->locations[x][y].typ == DOOR ? "a door" : "a wall");
+                    IS_TREE(levloc->typ) ? "tree" :
+                    levloc->typ == STAIRS ? "the stairs" :
+                    levloc->typ == LADDER ? "a ladder" :
+                    levloc->typ == DOOR ? "a door" : "a wall");
             }
         }
         if (ouch) {
