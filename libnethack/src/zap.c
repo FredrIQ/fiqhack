@@ -1399,7 +1399,8 @@ poly_obj(struct obj *obj, int id)
 
            TODO: The way canwearobj currently works, this code will cause
            polymorphed items to fall off if they're worn beneath cursed
-           items. This is probably not what we want. */
+           items. This is probably not what we want. We do at least set cblock
+           to TRUE, so that they won't fall off beneath uncursed items. */
         long v = old_mask & W_EQUIP;
         if (v & (v-1)) {
             impossible("More than one worn mask set in poly_obj?!?");

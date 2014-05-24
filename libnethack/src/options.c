@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-23 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -165,6 +165,8 @@ static const struct nh_option_desc const_options[] = {
      {.e = MENU_FULL}},
     {"movecommand", "what the movement keys do", FALSE, OPTTYPE_ENUM,
      {.e = uim_standard}},
+    {"multistage_equip", "equipping items can imply unequipping others", FALSE,
+     OPTTYPE_BOOL, {.b = TRUE}},
     {"packorder", "the inventory order of the items in your pack", FALSE,
      OPTTYPE_STRING, {.s = NULL}},
     {"pickup_burden", "maximum burden picked up before prompt", FALSE,
@@ -230,6 +232,7 @@ static const struct nhlib_boolopt_map boolopt_map[] = {
     {"autopickup", &flags.pickup},
     {"autoquiver", &flags.autoquiver},
     {"corridorbranch", &flags.corridorbranch},
+    {"multistage_equip", &flags.cblock},
     {"legacy", &flags.legacy},
     {"pickup_thrown", &flags.pickup_thrown},
     {"prayconfirm", &flags.prayconfirm},

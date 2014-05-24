@@ -754,8 +754,8 @@ object_selection_checks(struct obj *otmp, const char *word)
     int otyp = otmp->otyp;
 
     /* cblock controls whether we allow equip commands that require removing
-       other items temporarily. TODO: make this a game option. */
-    boolean cblock = TRUE;
+       other items temporarily. */
+    boolean cblock = flags.cblock;
 
     /* Check to see if equipping/unequipping is known to be unreasonable, either
        because the object is inappropriate or the slot is blocked by a cursed

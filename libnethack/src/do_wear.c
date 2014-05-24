@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1183,8 +1183,11 @@ dounequip(const struct nh_cmd_arg *arg)
     /* We could make 'T'/'R' capable of unwielding the worn weapon, quiver, etc.
        simply by changing os_last_worn to os_last_equip. Should we? */
     for (j = 0; j <= os_last_worn; j++)
-        if (otmp->owornmask & W_MASK(j))
+        if (otmp->owornmask & W_MASK(j)) {
+            if (!canunwearobj(otmp, TRUE, FALSE, flags.cblock))
+                return 0; /* user knows it's impossible */
             return equip_in_slot(NULL, j);
+        }
 
     /* We get here if an equip was interrupted while we were putting items back
        on; we also get here if someone tries to unequip an item that isn't
@@ -1227,7 +1230,7 @@ dowear(const struct nh_cmd_arg *arg)
     /* Work out which slot it should go in. If it doesn't go into any slot, then
        we can't reasonably use equip_in_slot, so we allow canwearobj to print
        the message, then return 0. */
-    if (!canwearobj(otmp, &mask, TRUE, FALSE, TRUE))
+    if (!canwearobj(otmp, &mask, TRUE, FALSE, flags.cblock))
         return 0;
 
     /* If we can place a ring on either hand, try without cblock in order to see
@@ -1742,10 +1745,17 @@ canunwearobj(struct obj *otmp, boolean noisy, boolean spoil, boolean cblock)
                          is_sword(uwep) ? "sword" :
                          (uwep->otyp == BATTLE_AXE) ? "axe" : "weapon");
             why = uwep;
+            cblock = FALSE; /* always give the "cannot release" version of the
+                               message */
         }
         if (why) {
-            if (noisy)
-                pline("You cannot %s to take off %s.", buf, the(xname(otmp)));
+            if (noisy) {
+                if (!cblock)
+                    pline("You cannot take off %s with %s in the way.",
+                          the(xname(otmp)), an(xname(why)));
+                else
+                    pline("You cannot %s to take off %s.", buf, the(xname(otmp)));
+            }
             return FALSE;
         }
         if (otmp == uskin()) {
@@ -2009,7 +2019,7 @@ doequip(const struct nh_cmd_arg *arg)
 
             /* check that unequipping is not known to be impossible */
             otmp = EQUIP(j);
-            if (otmp && !canunwearobj(otmp, TRUE, FALSE, TRUE))
+            if (otmp && !canunwearobj(otmp, TRUE, FALSE, flags.cblock))
                 continue;
 
             /* prompt the user */
@@ -2020,7 +2030,7 @@ doequip(const struct nh_cmd_arg *arg)
 
             /* check that equipping is not known to be impossible */
             if (otmp && (otmp == &zeroobj ||
-                         canwearobjon(otmp, j, TRUE, FALSE, TRUE))) {
+                         canwearobjon(otmp, j, TRUE, FALSE, flags.cblock))) {
                 /* schedule the equip */
                 u.utracked[tos_first_equip + j] = otmp;
                 if (otmp == &zeroobj)

@@ -130,6 +130,7 @@ save_flags(struct memfile *mf)
     mwrite8(mf, flags.autoquiver);
     mwrite8(mf, flags.beginner);
     mwrite8(mf, flags.bones_enabled);
+    mwrite8(mf, flags.cblock);
     mwrite8(mf, flags.corridorbranch);
     mwrite8(mf, flags.debug);
     mwrite8(mf, flags.explore);
