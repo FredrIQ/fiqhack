@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-16 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -612,6 +612,10 @@ restore_you(struct memfile *mf, struct you *y)
     y->twoweap = mread8(mf);
     y->bashmsg = mread8(mf);
 
+    /* Ignore the padding added in save.c */
+    for (i = 0; i < 512; i++)
+        (void) mread8(mf);
+
     mread(mf, y->ever_extrinsic, sizeof (y->ever_extrinsic));
     mread(mf, y->ever_intrinsic, sizeof (y->ever_intrinsic));
     mread(mf, y->ever_temporary, sizeof (y->ever_temporary));
@@ -733,6 +737,8 @@ restore_flags(struct memfile *mf, struct flag *f)
 {
     struct nh_autopickup_rules *ar = f->ap_rules;
     int lsbl;
+    int i;
+
     if (ar)
         free(ar->rules);
     memset(f, 0, sizeof (struct flag));
@@ -792,6 +798,10 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->last_arg.invlet = mread8(mf);
     f->last_arg.spelllet = mread8(mf);
     f->last_arg.limit = mread32(mf);
+
+    /* Ignore the padding added in save.c */
+    for (i = 0; i < 128; i++)
+        (void) mread8(mf);
 
     mread(mf, f->inv_order, sizeof (f->inv_order));
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-16 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -108,6 +108,8 @@ savegame(struct memfile *mf)
 static void
 save_flags(struct memfile *mf)
 {
+    int i;
+
     /* this is a fixed distane after version, but we tag it anyway to make
        debugging easier */
     mtag(mf, 0, MTAG_FLAGS);
@@ -167,6 +169,12 @@ save_flags(struct memfile *mf)
     mwrite8(mf, flags.last_arg.invlet);
     mwrite8(mf, flags.last_arg.spelllet);
     mwrite32(mf, flags.last_arg.limit);
+
+    /* Padding to allow options to be added without breaking save compatibility;
+       add new options just before the padding, then remove the same amount of
+       padding */
+    for (i = 0; i < 128; i++)
+        mwrite8(mf, 0);
 
     mwrite(mf, flags.inv_order, sizeof (flags.inv_order));
 
@@ -442,6 +450,12 @@ save_you(struct memfile *mf, struct you *y)
     mwrite8(mf, y->uspmtime);
     mwrite8(mf, y->twoweap);
     mwrite8(mf, y->bashmsg);
+
+    /* Padding to allow character information to be added without breaking save
+       compatibility; add new options just before the padding, then remove the
+       same amount of padding */
+    for (i = 0; i < 512; i++)
+        mwrite8(mf, 0);
 
     mwrite(mf, y->ever_extrinsic, (sizeof y->ever_extrinsic));
     mwrite(mf, y->ever_intrinsic, (sizeof y->ever_intrinsic));
