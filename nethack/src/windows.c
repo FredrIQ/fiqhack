@@ -459,7 +459,6 @@ setup_tiles(void)
         return TRUE;
     default: /* text */
         set_tile_file(NULL);
-        wdelete_tiles_region(mapwin);
         return FALSE;
     }
 }

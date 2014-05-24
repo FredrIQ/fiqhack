@@ -58,8 +58,8 @@ layout_curses_msgwin(struct win_msgwin *wmw, int *linecount, char ***lines,
                      nh_bool recalc)
 {
     int width = strlen(wmw->msg) + 4;
-    if (width > ui_flags.mapwidth - 1)
-        width = ui_flags.mapwidth - 1;
+    if (width > COLNO - 1)
+        width = COLNO - 1;
     if (width > getmaxx(stdscr) - 2)
         width = getmaxx(stdscr) - 2;
 

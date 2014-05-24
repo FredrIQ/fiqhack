@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-05-16 */
+/* Last modified by Alex Smith, 2014-05-24 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -881,6 +881,9 @@ add_keylist_command(struct nh_menulist *menu, struct nh_cmd_desc *cmd, int id)
     char buf[BUFSZ];
     char keys[BUFSZ];
     int i, kl;
+
+    if (cmd->flags & CMD_INTERNAL)
+        return;
 
     keys[0] = '\0';
     for (i = 0; i < KEY_MAX; i++) {

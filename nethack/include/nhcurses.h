@@ -137,8 +137,8 @@ struct interface_flags {
        characters; settings, COLNO, etc. hold the amount of space we'd actually
        like to have.  For instance, if we want to fit the map into 90
        characters, and are using an ASCII interface where the map only takes up
-       80 characters of space, mapwidth is nontheless 90, and map_pad_l and
-       map_pad_r are both 5. */
+       80 characters of space, mapwidth is nontheless 90, and map_padding is
+       5. */
     nh_bool draw_horizontal_frame_lines;
     nh_bool draw_vertical_frame_lines;
     nh_bool draw_outer_frame_lines;
