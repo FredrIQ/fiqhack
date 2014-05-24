@@ -184,6 +184,7 @@ struct settings {
     nh_bool floorcolor; /* draw stepped-on information for the floor */
     nh_bool frame;      /* draw a frame around the window sections */
     nh_bool status3;    /* draw 3 line status */
+    nh_bool mouse;      /* accept mouse input */
 };
 
 

@@ -119,6 +119,7 @@ draw_menu(struct gamewin *gw)
     }
 
     werase(gw->win2);
+    uncursed_clear_mouse_regions();
     /* draw menu items */
     item = &mdat->items[mdat->offset];
     for (i = 0; i < mdat->innerheight; i++, item++) {
@@ -137,9 +138,12 @@ draw_menu(struct gamewin *gw)
             wattron(gw->win2, settings.menu_headings);
 
         wmove(gw->win2, i, 0);
-        if (mdat->how != PICK_NONE && item->role == MI_NORMAL && item->accel)
+
+        if (mdat->how != PICK_NONE && item->role == MI_NORMAL && item->accel) {
+            wset_mouse_event(gw->win2, uncursed_mbutton_left, item->accel, OK);
             wprintw(gw->win2, "%c %c ", item->accel,
                     mdat->selected[mdat->offset + i] ? '+' : '-');
+        }
 
         if (col) {
             for (j = 0; j <= col; j++) {
@@ -153,6 +157,8 @@ draw_menu(struct gamewin *gw)
 
         if (item->role == MI_HEADING)
             wattroff(gw->win2, settings.menu_headings);
+
+        wset_mouse_event(gw->win2, uncursed_mbutton_left, 0, ERR);
     }
 
     if (mdat->icount <= mdat->innerheight)
@@ -618,6 +624,8 @@ draw_objlist(WINDOW * win, struct nh_objlist *objlist, int *selected, int how)
 
     width = getmaxx(win);
     werase(win);
+    if (selected)
+        uncursed_clear_mouse_regions();
 
     /* draw menu items */
     maxitem = min(getmaxy(win), objlist->icount);
@@ -641,7 +649,8 @@ draw_objlist(WINDOW * win, struct nh_objlist *objlist, int *selected, int how)
             continue;
         }
 
-        if (how != PICK_NONE && selected && olii->accel)
+        if (how != PICK_NONE && selected && olii->accel) {
+            wset_mouse_event(win, uncursed_mbutton_left, olii->accel, OK);
             switch (selected[i]) {
             case -1:
                 pos += snprintf(buf + pos, BUFSZ - pos, "%c + ", olii->accel);
@@ -652,6 +661,7 @@ draw_objlist(WINDOW * win, struct nh_objlist *objlist, int *selected, int how)
             default:
                 pos += snprintf(buf + pos, BUFSZ - pos, "%c # ", olii->accel);
                 break;
+            }
         } else if (olii->accel)
             pos += snprintf(buf + pos, BUFSZ - pos, "%c - ", olii->accel);
 
@@ -674,6 +684,8 @@ draw_objlist(WINDOW * win, struct nh_objlist *objlist, int *selected, int how)
         }
         waddnstr(win, buf, width - 1);
         wattroff(win, txtattr);
+
+        wset_mouse_event(win, uncursed_mbutton_left, 0, ERR);
     }
     wnoutrefresh(win);
 }
@@ -837,13 +849,13 @@ curses_display_objects(
     mdat->items = item_copy;
     mdat->icount = objlist->icount;
     mdat->title = title;
-    mdat->how = how;
+    mdat->how = inventory_special ? PICK_ONE : how;
     mdat->selcount = -1;
     mdat->selected = selected;
 
     dealloc_objmenulist(objlist);
 
-    if (how != PICK_NONE)
+    if (how != PICK_NONE && !inventory_special)
         assign_objmenu_accelerators(mdat);
     layout_objmenu(gw);
 
@@ -1029,13 +1041,12 @@ curses_display_objects(
                     mdat->selected[idx] = mdat->selcount;
                 mdat->selcount = -1;
 
-                if (mdat->how == PICK_ONE)
-                    done = TRUE;
-
                 /* inventory special case: show item actions menu */
-                else if (inventory_special)
+                if (inventory_special) {
                     if (do_item_actions(&mdat->items[idx]))
                         done = TRUE;
+                } else if (mdat->how == PICK_ONE)
+                    done = TRUE;
 
             } else if (mdat->how == PICK_ANY) { /* maybe it's a group accel? */
                 int grouphits = 0;

@@ -107,6 +107,8 @@ struct nh_option_desc curses_options[] = {
      (enum nh_opttype)OPTTYPE_KEYMAP, {0}},
     {"menu_headings", "display style for menu headings", FALSE, OPTTYPE_ENUM,
      {.e = A_REVERSE}},
+    {"mouse", "accept mouse input (where supported)", FALSE, OPTTYPE_BOOL,
+     {.b = TRUE}},
     {"msgheight", "message window height", FALSE, OPTTYPE_INT, {.i = 8}},
     {"msghistory", "number of messages saved for prevmsg", FALSE, OPTTYPE_INT,
      {.i = 256}},
@@ -136,6 +138,7 @@ struct nhlib_boolopt_map boolopt_map[] = {
     {"frame", &settings.frame},
     {"hilite_pet", &settings.hilite_pet},
     {"invweight", &settings.invweight},
+    {"mouse", &settings.mouse},
     {"scores_own", &settings.end_own},
     {"standout", &settings.standout},
     {"status3", &settings.status3},
@@ -235,6 +238,8 @@ curses_set_option(const char *name, union nh_optvalue value)
         } else if (!strcmp(option->name, "darkgray")) {
             set_darkgray();
             draw_map(player.x, player.y);
+        } else if (!strcmp(option->name, "mouse")) {
+            uncursed_enable_mouse(option->value.b);
         }
     } else if (!strcmp(option->name, "comment")) {
         /* do nothing */
