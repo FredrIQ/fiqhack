@@ -100,6 +100,7 @@ draw_extrawin(enum keyreq_context context)
 
     int y_remaining = ui_flags.extraheight;
     int y = 0;
+
     WINDOW *win = extrawin;
     if (!y_remaining && context == krc_getpos) {
         y_remaining = ui_flags.statusheight;
@@ -108,6 +109,9 @@ draw_extrawin(enum keyreq_context context)
 
     if (!y_remaining)
         return;
+
+    int y_insert_line = 0; /* insert one line here if there's room */
+    int y_fill_line = 0;   /* if there's still room, insert it here */
 
     /* Modal windows are allowed to steal any space they feel like. Nearly
        always, this will avoid the extrawin, but it can overlap in some cases
@@ -188,9 +192,11 @@ draw_extrawin(enum keyreq_context context)
 
     }
 
+    y_fill_line = y;
+
     /* Next most important: keymaps for unusual contexts.
 
-       These have to be kept under 80 characters long, and are written as two
+       These have to be kept under 78 characters long, and are written as two
        lines of 40 for easier counting. If using hintline(), as many lines from
        the start as will fit will be displayed. */
 
@@ -209,7 +215,7 @@ draw_extrawin(enum keyreq_context context)
     case krc_getlin:
         /* ----- "1234567890123456789012345678901234567890" */
         hintline("Enter text at the prompt, then press Ret"
-                 "urn. Edit using Left/Right/BkSp/Delete." );
+                 "urn. Edit with Left/Right/BkSp/Delete.");
         break;
 
     case krc_yn:
@@ -219,7 +225,7 @@ draw_extrawin(enum keyreq_context context)
     case krc_ynq:
         /* ----- "1234567890123456789012345678901234567890" */
         hintline("Press 'y' for Yes or 'n' for No. Press '"
-                 "q' to cancel."                           );
+                 "q' to cancel."                         );
         break;
     case krc_yn_generic:
         /* ----- "1234567890123456789012345678901234567890" */
@@ -229,13 +235,13 @@ draw_extrawin(enum keyreq_context context)
     case krc_count:
         /* ----- "1234567890123456789012345678901234567890" */
         hintline("Type a count to specify how many turns t"
-                 "o perform a command for."                );
+                 "o perform a command for."              );
         hintline("For some commands, like \"throw\", this in"
-                 "stead limits how many items to use."     );
+                 "stead limits how many items to use."   );
         /* Diagnose a common misconfiguration, and specify a workaround for
            it. */
         hintline("If you were trying to move using the num"
-                 "eric keypad, turn off NumLock."          );
+                 "eric keypad, turn off NumLock."        );
         break;
 
     case krc_getpos:
@@ -244,14 +250,14 @@ draw_extrawin(enum keyreq_context context)
         hintline("Move the cursor with the direction keys."
                  " When finished, confirm with . , : or ;" );
         hintline("Press the letter of a dungeon symbol to "
-                 "select it or m/M to move to a monster."  );
+                 "select it or m/M to move to a monster.");
         break;
 
     case krc_menu:
     case krc_objmenu:
         /* ----- "1234567890123456789012345678901234567890" */
         hintline("Scroll the menu with '<' and '>'. Press "
-                 "Return when finished or ESC to cancel."  );
+                 "Return when finished or ESC to cancel.");
         hintline("^:scroll to top   |:scroll to end   .:s"
                  "elect all   -:select none");
         break;
@@ -259,13 +265,13 @@ draw_extrawin(enum keyreq_context context)
     case krc_more:
         /* ----- "1234567890123456789012345678901234567890" */
         hintline("Press Space to see the remaining message"
-                 "s, or ESC to skip messages this turn."   );
+                 "s, or ESC to skip messages this turn." );
         break;
 
     case krc_pause_map:
         /* ----- "1234567890123456789012345678901234567890" */
         hintline("When you finish looking at the map, pres"
-                 "s any key or click on it to continue."   );
+                 "s any key or click on it to continue." );
         break;
 
     case krc_query_key_inventory:
@@ -275,16 +281,16 @@ draw_extrawin(enum keyreq_context context)
            their specific rules. */
         /* ----- "1234567890123456789012345678901234567890" */
         hintline("Please specify an item. You can type its"
-                 " inventory letter, if you know it."      );
+                 " inventory letter, if you know it."    );
         if (context == krc_query_key_inventory_or_floor)
             /* ----- "1234567890123456789012345678901234567890" */
             hintline("To use an item on the floor, press ','." );
         else if (context == krc_query_key_inventory_nullable)
             hintline("You can also choose 'no item' by pressin"
-                     "g '-'."                                  );
+                     "g '-'."                                 );
         /* ----- "1234567890123456789012345678901234567890" */
         hintline("Press '?' for a list of sensible options"
-                 ", or '*' to include even weird choices." );
+                 ", or '*' to select something else."    );
         break;
 
     case krc_query_key_symbol:
@@ -295,7 +301,7 @@ draw_extrawin(enum keyreq_context context)
     case krc_query_key_letter_reassignment:
         /* ----- "1234567890123456789012345678901234567890" */
         hintline("Please type the letter (\"a\"-\"z\" or \"A\"-\""
-                 "Z\") that you would like to use."         );
+                 "Z\") that you would like to use."       );
         break;
 
     case krc_get_command:
@@ -394,8 +400,12 @@ draw_extrawin(enum keyreq_context context)
         y += 3;
     }
 
+    y_insert_line = y;
+
     if (context == krc_get_command) {
         int x = 0, i, j;
+
+        y_remaining--; /* count a potential incomplete line */
 
 #define hintbinding(k,s) do {                    \
             int l = strlen(friendly_keyname(k)); \
@@ -520,6 +530,22 @@ draw_extrawin(enum keyreq_context context)
         hintcmd("moveonly", "move without fighting");
         hintcmd("fight", "force an attack");
         hintcmd("elbereth", "write Elbereth");
+
+        if (x)
+            y++;
+        else
+            y_remaining++;
+    }
+
+    if (y_remaining && y_insert_line && y_insert_line != y) {
+        wmove(win, y_insert_line, 0);
+        winsertln(win);
+        y_remaining--;
+    }
+
+    if (y_remaining) {
+        wmove(win, y_fill_line, 0);
+        winsdelln(win, y_remaining);
     }
 
     wnoutrefresh(win);

@@ -613,6 +613,10 @@ resize_game_windows(void)
         delwin(sidebar);
         sidebar = NULL;
     }
+    if (extrawin) {
+        delwin(extrawin);
+        extrawin = NULL;
+    }
 
     if (mapwin)
         wdelete_tiles_region(mapwin);
@@ -623,6 +627,8 @@ resize_game_windows(void)
         leaveok(statuswin, TRUE);
     if (sidebar)
         leaveok(sidebar, TRUE);
+    if (extrawin)
+        leaveok(extrawin, TRUE);
 
     redo_showlines();
     redraw_game_windows();
@@ -789,6 +795,7 @@ nh_wgetch(WINDOW * win, enum keyreq_context context)
         if (key == KEY_RESIZE) {
             key = 0;
             handle_resize();
+            draw_extrawin(context);
         }
 
         if (key == KEY_OTHERFD) {

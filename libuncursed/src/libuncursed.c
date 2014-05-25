@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -2078,9 +2078,9 @@ insdelln, (int n), (n))
          j >= win->y && j <= win->maxy;
          j += (inserting ? -1 : 1)) {
 
-        if (j + n >= win->y && j + n <= win->maxy)
+        if (j - n >= win->y && j - n <= win->maxy)
             memcpy(win->chararray + j * win->stride,
-                   win->chararray + (j + n) * win->stride,
+                   win->chararray + (j - n) * win->stride,
                    win->maxx * sizeof *(win->chararray));
         else
             for (i = 0; i <= win->maxx; i++) {
