@@ -160,6 +160,10 @@
 # define CMD_DEBUG      (1 << 14)       /* a wizmode command */
 # define CMD_INTERNAL   (1 << 15)       /* sent automatically by the client;
                                            not meaningful if sent manually */
+# define CMD_MAINMENU   (1 << 16)       /* command is related to the character
+                                           or dungeon, and not available through
+                                           itemactions */
+
 /* note that CMD_INTERNAL commands should be ones that cannot be used to cheat
    if they're nonetheless sent manually anyway */
 

@@ -16,6 +16,7 @@ enum internal_commands {
     UICMD_OPTIONS = DIR_SELF + 1,
     UICMD_EXTCMD,
     UICMD_HELP,
+    UICMD_MAINMENU,
     UICMD_STOP,
     UICMD_PREVMSG,
     UICMD_WHATDOES,
@@ -95,6 +96,7 @@ struct nh_cmd_desc builtin_commands[] = {
     {"extcommand", "perform an extended command", '#', 0,
      CMD_UI | UICMD_EXTCMD},
     {"help", "show the help menu", '?', 0, CMD_UI | UICMD_HELP},
+    {"mainmenu", "show the main menu", '!', 0, CMD_UI | UICMD_MAINMENU},
     {"options", "show option settings, possibly change them", 'O', 0,
      CMD_UI | UICMD_OPTIONS},
     {"prevmsg", "list previously displayed messages", Ctrl('p'), 0,
@@ -125,6 +127,7 @@ static char next_command_name[32];
 
 static void show_whatdoes(void);
 static struct nh_cmd_desc *show_help(void);
+static struct nh_cmd_desc *show_mainmenu(void);
 static void init_keymap(void);
 static void write_keymap(void);
 static struct nh_cmd_desc *doextcmd(nh_bool);
@@ -212,6 +215,11 @@ handle_internal_cmd(struct nh_cmd_desc **cmd,
     case UICMD_HELP:
         arg->argtype = 0;
         *cmd = show_help();
+        break;
+
+    case UICMD_MAINMENU:
+        arg->argtype = 0;
+        *cmd = show_mainmenu();
         break;
 
     case UICMD_STOP:
@@ -557,6 +565,32 @@ show_help(void)
             return &commandlist[selected[0] - 100];
         break;
     }
+
+    return NULL;
+}
+
+
+static struct nh_cmd_desc *
+show_mainmenu(void)
+{
+    struct nh_menulist menu;
+    int i, selected[1];
+
+    init_menulist(&menu);
+
+    for (i = 0; i < cmdcount; i++)
+        if (commandlist[i].flags & CMD_MAINMENU)
+            add_menu_item(&menu, 100 + i, commandlist[i].desc, 0,
+                          FALSE);
+
+    curses_display_menu(&menu, "Main menu", PICK_ONE,
+                        PLHINT_RIGHT, selected, curses_menu_callback);
+
+    if (*selected == CURSES_MENU_CANCELLED)
+        return NULL;
+
+    if (selected[0] >= 100 && selected[0] < cmdcount + 100)
+        return &commandlist[selected[0] - 100];
 
     return NULL;
 }
