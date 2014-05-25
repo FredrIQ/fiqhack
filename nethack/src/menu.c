@@ -198,6 +198,10 @@ resize_menu(struct gamewin *gw)
     gw->win2 =
         derwin(gw->win, mdat->innerheight, mdat->innerwidth,
                mdat->frameheight - 1, 2);
+    wset_mouse_event(gw->win2, uncursed_mbutton_wheelup,
+                     KEY_UP, KEY_CODE_YES);
+    wset_mouse_event(gw->win2, uncursed_mbutton_wheeldown,
+                     KEY_DOWN, KEY_CODE_YES);
 
     starty = (LINES - mdat->height) / 2;
     startx = (COLS - mdat->width) / 2;
@@ -374,6 +378,10 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     gw->win2 =
         derwin(gw->win, mdat->innerheight, mdat->innerwidth,
                mdat->frameheight - 1, 2);
+    wset_mouse_event(gw->win2, uncursed_mbutton_wheelup,
+                     KEY_UP, KEY_CODE_YES);
+    wset_mouse_event(gw->win2, uncursed_mbutton_wheeldown,
+                     KEY_DOWN, KEY_CODE_YES);
     leaveok(gw->win, TRUE);
     leaveok(gw->win2, TRUE);
     done = FALSE;
@@ -754,6 +762,10 @@ resize_objmenu(struct gamewin *gw)
     gw->win2 =
         derwin(gw->win, mdat->innerheight, mdat->innerwidth,
                mdat->frameheight - 1, 2);
+    wset_mouse_event(gw->win2, uncursed_mbutton_wheelup,
+                     KEY_UP, KEY_CODE_YES);
+    wset_mouse_event(gw->win2, uncursed_mbutton_wheeldown,
+                     KEY_DOWN, KEY_CODE_YES);
 
     starty = (LINES - mdat->height) / 2;
     startx = (COLS - mdat->width) / 2;
@@ -887,6 +899,11 @@ curses_display_objects(
     gw->win2 =
         derwin(gw->win, mdat->innerheight, mdat->innerwidth,
                mdat->frameheight - 1, 2);
+    wset_mouse_event(gw->win2, uncursed_mbutton_wheelup,
+                     KEY_UP, KEY_CODE_YES);
+    wset_mouse_event(gw->win2, uncursed_mbutton_wheeldown,
+                     KEY_DOWN, KEY_CODE_YES);
+
     leaveok(gw->win, TRUE);
     leaveok(gw->win2, TRUE);
 
