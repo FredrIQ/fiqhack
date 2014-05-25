@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -298,8 +298,8 @@ winloc_to_charloc(int x_pixels, int y_pixels, int *x_chars, int *y_chars)
 
     /* The user clicked on a tile. Change x_pixels and y_pixels to be relative
        to the top left corner of the tiles region. */
-    x_pixels -= region->pixelshift_x - region->loc_l * fontwidth;
-    y_pixels -= region->pixelshift_y - region->loc_t * fontheight;
+    x_pixels += region->pixelshift_x - region->loc_l * fontwidth;
+    y_pixels += region->pixelshift_y - region->loc_t * fontheight;
 
     /* Now work out which tile they clicked on, and convert to a character
        region location. */
