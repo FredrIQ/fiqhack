@@ -734,16 +734,16 @@ nh_wgetch(WINDOW * win, enum keyreq_context context)
         key = wgetch(win);
 
         if (key == KEY_HANGUP) {
-            nh_exit_game(EXIT_FORCE_SAVE);
+            nh_exit_game(EXIT_SAVE);
 
-            /* If we're in a game, EXIT_FORCE_SAVE will longjmp out to the
-               normal game saved/over sequence, and eventually the control will
-               get back here outside a game (if KEY_HANGUP is returned from any
-               wgetch call, it will be returned from all future wgetch calls).
+            /* If we're in a game, EXIT_SAVE will longjmp out to the normal game
+               saved/over sequence, and eventually the control will get back
+               here outside a game (if KEY_HANGUP is returned from any wgetch
+               call, it will be returned from all future wgetch calls).
 
-               If we're not in a game, EXIT_FORCE_SAVE will return normally, and
-               from there, we spam ESC until the program is closed. (You can't
-               ESC out of the main menu, so we use a special flag for that.) */
+               If we're not in a game, EXIT_SAVE will return normally, and from
+               there, we spam ESC until the program is closed. (You can't ESC
+               out of the main menu, so we use a special flag for that.) */
             ui_flags.done_hup = TRUE;
 
             clear_extrawin(); /* kind-of redundant for multiple reasons */

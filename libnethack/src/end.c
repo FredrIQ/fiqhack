@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-09 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -188,31 +188,6 @@ clear_delayed_killers(void) {
     set_delayed_killer(TURNED_SLIME, NULL);
     set_delayed_killer(GENOCIDED, NULL);
 }
-
-
-/* Called for a "quit and request confirmation" via any codepath: currently
-   this can be called by #quit, S!, or EXIT_REQUEST_QUIT */
-int
-done2(void)
-{
-    if (yn("Really abandon this game and delete its save file?") == 'n') {
-        flush_screen();
-        action_interrupted();
-        return 0;
-    }
-
-    /* check_survival does this as a side effect. */
-    done_noreturn(QUIT, NULL);
-}
-
-
-int
-doquit(const struct nh_cmd_arg *arg)
-{
-    (void) arg;
-    return done2();
-}
-
 
 void
 done_in_by(struct monst *mtmp, const char *override_msg)

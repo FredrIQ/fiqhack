@@ -545,7 +545,7 @@ connect_server(struct server_info *server)
         } else if (ret == AUTH_SUCCESS_RECONNECT) {
             /* TODO: This case should never happen, and probably /does/ never
                happen, in which case this is dead code. */
-            nhnet_exit_game(EXIT_FORCE_SAVE);
+            nhnet_exit_game(EXIT_SAVE);
             if (!nhnet_connected())     /* disconnect due to an error while
                                            reconnecting */
                 return FALSE;

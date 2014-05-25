@@ -174,8 +174,8 @@ exit_game
 ---------
 
 Causes the game to stop running, either via saving/suspending it, or via
-quitting it.  `EXIT_FORCE_SAVE` is equivalent to just dropping the connection
-in terms of its user-visible effect, but is kinder on server resources than
+quitting it.  `EXIT_SAVE` is equivalent to just dropping the connection in
+terms of its user-visible effect, but is kinder on server resources than
 dropping the connection would be.  This command can be sent if there is no
 running game, but does nothing but return true in that situation.  It
 corresponds to the `nh_exit_game` API call in libnethack.
@@ -189,13 +189,12 @@ there is no game running.
 
 Command arguments:
   * `enum nh_exit_types exit_type`: what sort of exit to perform
-      * `EXIT_REQUEST_SAVE` = 0: ask the user whether to save, save if yes
-      * `EXIT_FORCE_SAVE` = 1: just save and exit the game without prompting
-      * `EXIT_REQUEST_QUIT` = 2: ask the user whether to quit, quit if yes
-      * `EXIT_FORCE_QUIT` = 3: just quit without saving or prompting
-      * `EXIT_PANIC` = 4: panic the process that handles the connection, with
-        an error message and record in the panic log (equivalent to
-        `EXIT_FORCE_SAVE` in terms of user-visible effect on the game itself)
+      * `EXIT_SAVE` = 0: detach from the game and drop the connection; the
+        save file remains intact
+      * `EXIT_QUIT` = 1: delete the game's save file and enter the game over
+        sequence
+      * `EXIT_PANIC` = 2: like `EXIT_SAVE`, but record that there was a
+        problem in the panic log
 
 Response arguments:
   * `boolean return`: true if the game exited (whether due to a save, to a

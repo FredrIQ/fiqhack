@@ -101,31 +101,6 @@ const char *nhlogo_large[14] = {
     "###    ?####   `\"#####'    ?###|  ###     ###    `##' ###    \"####?  ###  `###b            *#*     ",
 };
 
-#ifdef UNIX
-
-static void
-sigint_handler(int signum)
-{
-    if (!game_is_running)
-        return;
-
-    nh_exit_game(EXIT_REQUEST_SAVE);
-}
-
-static void
-setup_signals(void)
-{
-    signal(SIGQUIT, SIG_IGN);
-    signal(SIGINT, sigint_handler);
-}
-
-#else
-static void
-setup_signals(void)
-{
-}
-#endif
-
 #ifndef STRINGIFY_OPTION
 # define STRINGIFY_OPTION(x) STRINGIFY_OPTION_1(x)
 # define STRINGIFY_OPTION_1(x) #x
@@ -364,7 +339,6 @@ main(int argc, char *argv[])
 
     nh_lib_init(&curses_windowprocs, gamepaths);
 
-    setup_signals();
     init_curses_ui(gamepaths[DATAPREFIX]);
     init_ok = read_nh_config();
 

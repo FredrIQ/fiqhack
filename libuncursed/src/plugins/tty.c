@@ -368,6 +368,7 @@ platform_specific_init(void)
     sigaction(SIGWINCH, &sa, 0);
 
     sa.sa_handler = handle_sighup;
+    sigaction(SIGINT, &sa, 0);
     sigaction(SIGHUP, &sa, 0);
     sigaction(SIGTERM, &sa, 0);
     sigaction(SIGPIPE, &sa, 0);

@@ -268,10 +268,8 @@ enum nh_effect_types {
 };
 
 enum nh_exit_types {
-    EXIT_REQUEST_SAVE,
-    EXIT_FORCE_SAVE,
-    EXIT_REQUEST_QUIT,
-    EXIT_FORCE_QUIT,
+    EXIT_SAVE,
+    EXIT_QUIT,
     EXIT_PANIC,
 };
 

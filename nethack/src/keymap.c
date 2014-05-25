@@ -17,6 +17,7 @@ enum internal_commands {
     UICMD_EXTCMD,
     UICMD_HELP,
     UICMD_MAINMENU,
+    UICMD_DETACH,
     UICMD_STOP,
     UICMD_PREVMSG,
     UICMD_WHATDOES,
@@ -97,10 +98,11 @@ struct nh_cmd_desc builtin_commands[] = {
      CMD_UI | UICMD_EXTCMD},
     {"help", "show the help menu", '?', 0, CMD_UI | UICMD_HELP},
     {"mainmenu", "show the main menu", '!', 0, CMD_UI | UICMD_MAINMENU},
-    {"options", "show option settings, possibly change them", 'O', 0,
+    {"options", "show or change option settings", 'O', 0,
      CMD_UI | UICMD_OPTIONS},
     {"prevmsg", "list previously displayed messages", Ctrl('p'), 0,
      CMD_UI | UICMD_PREVMSG},
+    {"save", "save or quit the game", 'S', 0, CMD_UI | UICMD_DETACH},
     {"stop", "suspend to shell", Ctrl('z'), 0, CMD_UI | UICMD_STOP},
     {"togglepickup", "toggle the autopickup option", '@', 0,
      CMD_UI | UICMD_TOGGLEPICKUP},
@@ -128,6 +130,7 @@ static char next_command_name[32];
 static void show_whatdoes(void);
 static struct nh_cmd_desc *show_help(void);
 static struct nh_cmd_desc *show_mainmenu(void);
+static void save_menu(void);
 static void init_keymap(void);
 static void write_keymap(void);
 static struct nh_cmd_desc *doextcmd(nh_bool);
@@ -220,6 +223,11 @@ handle_internal_cmd(struct nh_cmd_desc **cmd,
     case UICMD_MAINMENU:
         arg->argtype = 0;
         *cmd = show_mainmenu();
+        break;
+
+    case UICMD_DETACH:
+        save_menu();
+        *cmd = NULL;
         break;
 
     case UICMD_STOP:
@@ -534,10 +542,9 @@ show_help(void)
 
     init_menulist(&menu);
 
-    add_menu_item(&menu, 1, "List of game commands.", 0, FALSE);
-    add_menu_item(&menu, 2, "Information what a given key does.",
-                  0, FALSE);
-    add_menu_item(&menu, 3, "List of options.", 0, FALSE);
+    add_menu_item(&menu, 1, "list of game commands", 0, FALSE);
+    add_menu_item(&menu, 2, "explain what a key does", 0, FALSE);
+    add_menu_item(&menu, 3, "list of options", 0, FALSE);
 
     for (i = 0; i < cmdcount; i++)
         if (commandlist[i].flags & CMD_HELP)
@@ -545,7 +552,7 @@ show_help(void)
                           FALSE);
 
     curses_display_menu(&menu, "Help topics:", PICK_ONE,
-                        PLHINT_RIGHT, selected, curses_menu_callback);
+                        PLHINT_ANYWHERE, selected, curses_menu_callback);
 
     if (*selected == CURSES_MENU_CANCELLED)
         return NULL;
@@ -586,8 +593,11 @@ show_mainmenu(void)
             add_menu_item(&menu, 100 + i, commandlist[i].desc, 0,
                           FALSE);
 
+    add_menu_item(&menu, 1, "set options for this game", 0, FALSE);
+    add_menu_item(&menu, 2, "save or quit the game", 0, FALSE);
+
     curses_display_menu(&menu, "Main menu", PICK_ONE,
-                        PLHINT_RIGHT, selected, curses_menu_callback);
+                        PLHINT_ANYWHERE, selected, curses_menu_callback);
 
     if (*selected == CURSES_MENU_CANCELLED)
         return NULL;
@@ -595,7 +605,69 @@ show_mainmenu(void)
     if (selected[0] >= 100 && selected[0] < cmdcount + 100)
         return &commandlist[selected[0] - 100];
 
+    if (selected[0] == 1) {
+        display_options(FALSE);
+        draw_map(player.x, player.y);
+    } else if (selected[0] == 2) {
+        save_menu();
+    }
+
     return NULL;
+}
+
+static void
+save_menu(void)
+{
+    struct nh_menulist menu;
+    int selected[1];
+
+    init_menulist(&menu);
+
+    add_menu_item(&menu, 1, "Close the game.", 'y', FALSE);
+    add_menu_txt(&menu, "Your save file will remain stored on disk, and",
+                 MI_NORMAL);
+    add_menu_txt(&menu, "you can resume the game later.", MI_NORMAL);
+    add_menu_txt(&menu, "", MI_NORMAL);
+
+    add_menu_item(&menu, 2, "Quit the game.", '!', FALSE);
+    add_menu_txt(&menu, "You will see your statistics, as if you had died;",
+                 MI_NORMAL);
+    add_menu_txt(&menu, "the save file will be deleted (although a replay",
+                 MI_NORMAL);
+    add_menu_txt(&menu, "will be kept). You will not be able to resume the",
+                 MI_NORMAL);
+    add_menu_txt(&menu, "game, not even from an earlier save file.", MI_NORMAL);
+    add_menu_txt(&menu, "", MI_NORMAL);
+
+    add_menu_item(&menu, 3, "Keep playing.", 'n', FALSE);
+
+    curses_display_menu(&menu, "Do you want to stop playing?", PICK_ONE,
+                        PLHINT_URGENT, selected, curses_menu_callback);
+
+    switch (*selected) {
+    case CURSES_MENU_CANCELLED:
+    case 3:
+        return;
+    case 1:
+        /* We've already got the confirmation just now, so... */
+        nh_exit_game(EXIT_SAVE);
+        return;
+    case 2:
+        /* Ask for a second confirmation, this is really dangerous! */
+        init_menulist(&menu);
+        add_menu_item(&menu, 1, "Yes, delete the save file", 'y', FALSE);
+        add_menu_item(&menu, 2, "No, I want to keep playing", 'n', FALSE);
+        curses_display_menu(&menu, "Really delete the save file?", PICK_ONE,
+                            PLHINT_URGENT, selected, curses_menu_callback);
+
+        if (*selected == 1)
+            nh_exit_game(EXIT_QUIT);
+
+        return;
+    }
+
+    /* should be unreachable */
+    return;
 }
 
 static void
@@ -610,9 +682,7 @@ dostop(void)
         return;
     }
 
-    endwin();
-    kill(getpid(), SIGSTOP);
-    refresh();
+    kill(getpid(), SIGTSTP);
 #endif
 }
 

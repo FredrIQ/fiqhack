@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -98,28 +98,22 @@ nh_exit_game(int exit_type)
     if (program_state.game_running) {
 
         switch (exit_type) {
-        case EXIT_REQUEST_SAVE:
-            dosave(&(struct nh_cmd_arg){.argtype = 0});
-            break;
-
-        case EXIT_FORCE_SAVE:
+        case EXIT_SAVE:
             terminate(GAME_DETACHED);
             break;
 
-        case EXIT_REQUEST_QUIT:
-            done2();
-            break;
-
-        case EXIT_FORCE_QUIT:
+        case EXIT_QUIT:
             done(QUIT, NULL);
             break;      /* not reached; quitting can't be lifesaved */
 
         case EXIT_PANIC:
             /* We can't/shouldn't abort the turn just because the client claimed
                to malfunction; that's exploitable. We can safely log the
-               failure, though. Perhaps we should add some method of specifying
-               a panic message. */
+               failure, though; and we can safely detach, because clients can do
+               that anyway. Perhaps we should add some method of specifying a
+               panic message. */
             paniclog("ui_problem", "Unspecified UI problem.");
+            terminate(GAME_DETACHED);
             break;
         }
 

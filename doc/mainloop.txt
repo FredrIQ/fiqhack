@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2013-12-22
+Last modified by Alex Smith, 2014-05-25
 
 Copyright (C) 2013 Alex Smith.
 
@@ -298,7 +298,7 @@ pattern, but they all fall into three catgories:
     actually work, and it's probably best to disallow the situation altogether
     rather than try to make it work, because otherwise clients would have to
     be able to handle exception-safety for an infinite number of nested
-    menus.)
+    menus. `EXIT_REQUEST_SAVE` no longer exists in 4.3.)
 
   * The trigger is some action via an external process (e.g. you're watching a
     game and the person playing it makes a move).  This is case 4. in the list

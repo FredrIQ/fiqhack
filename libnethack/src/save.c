@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -29,39 +29,6 @@ static void save_flags(struct memfile *mf);
 static void save_autopickup_rules(struct memfile *mf,
                                   struct nh_autopickup_rules *ar);
 static void freefruitchn(void);
-
-
-int
-dosave(const struct nh_cmd_arg *arg)
-{
-    int n;
-    const int *selected;
-    struct nh_menulist menu;
-
-    (void) arg;
-
-    init_menulist(&menu);
-    add_menuitem(&menu, 1, "Quicksave and exit the game", 'y', FALSE);
-    add_menuitem(&menu, 2, "Abandon this game and delete its save file", '!',
-                 FALSE);
-    add_menuitem(&menu, 3, "Continue playing", 'n', FALSE);
-    n = display_menu(&menu, "Do you want to stop playing?",
-                     PICK_ONE, PLHINT_URGENT, &selected);
-
-    if (n > 0)
-        n = selected[0];
-    else
-        n = 3;
-
-    if (n == 3) {
-        action_interrupted();
-    } else if (n == 1) {
-        terminate(GAME_DETACHED);
-    } else if (n == 2) {
-        return done2();
-    }
-    return 0;
-}
 
 
 void

@@ -522,8 +522,6 @@ extern void clear_delayed_killers(void);
 extern void nonfatal_dump_core(void);
 extern noreturn void terminate(enum nh_play_status);
 extern noreturn void panic(const char *, ...) PRINTFLIKE(1,2);
-extern int done2(void);
-extern int doquit(const struct nh_cmd_arg *);
 extern void done_in_by(struct monst *, const char *);
 extern void done(int, const char *killer);
 extern int num_vanquished(void);
@@ -1488,7 +1486,6 @@ extern int doconsult(struct monst *);
 
 /* ### save.c ### */
 
-extern int dosave(const struct nh_cmd_arg *);
 extern void savegame(struct memfile *mf);
 extern void save_coords(struct memfile *mf, const coord *c, int n);
 extern void savelev(struct memfile *mf, xchar levnum);

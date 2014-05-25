@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-17 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -215,7 +215,7 @@ exit_client(const char *err)
     termination_flag = 3;       /* make sure the command loop exits if
                                    nh_exit_game jumps there */
     if (!sigsegv_flag)
-        nh_exit_game(EXIT_FORCE_SAVE);  /* might not return here */
+        nh_exit_game(EXIT_SAVE);  /* might not return here */
     nh_lib_exit();
     close_database();
     if (user_info.username)
