@@ -132,7 +132,8 @@ enum keyreq_context {
     krc_getdir,
     krc_getlin,
     krc_yn,
-    krc_query_key,
+    krc_ynq,
+    krc_yn_generic,
     krc_count,
     krc_get_command,
     krc_get_movecmd_direction,
@@ -143,6 +144,13 @@ enum keyreq_context {
     krc_pause_map,
     krc_notification,
     krc_keybinding,
+
+    /* Keep these in the same order as in nethack_types.h */
+    krc_query_key_inventory,
+    krc_query_key_inventory_nullable,
+    krc_query_key_inventory_or_floor,
+    krc_query_key_symbol,
+    krc_query_key_letter_reassignment,
 };
 
 
@@ -292,7 +300,7 @@ struct win_menu {
     int height, frameheight, innerheight;
     int width, innerwidth, colpos[MAXCOLS], maxcol;
     int x1, y1, x2, y2;
-    nh_bool dismissable;
+    int dismissable;
 };
 
 struct win_objmenu {
@@ -315,6 +323,7 @@ struct win_msgwin {
     const char *msg;
     int layout_width;
     int layout_height;
+    enum keyreq_context context;
 };
 
 typedef nh_bool(*getlin_hook_proc) (struct win_getline *, void *);
@@ -347,11 +356,11 @@ extern int curses_color_attr(int nh_color, int bg_color);
 extern void set_darkgray(void);
 
 /* dialog.c */
-extern WINDOW *newdialog(int height, int width, WINDOW *old);
+extern WINDOW *newdialog(int height, int width, int dismissable, WINDOW *old);
 extern enum nh_direction curses_getdir(const char *query, nh_bool restricted);
 extern char curses_yn_function(const char *query, const char *resp, char def);
-extern struct nh_query_key_result curses_query_key(const char *query,
-                                                   nh_bool count_allowed);
+extern struct nh_query_key_result curses_query_key(
+    const char *query, enum nh_query_key_flags flags, nh_bool count_allowed);
 extern int curses_msgwin(const char *msg, enum keyreq_context context);
 
 /* extrawin.c */

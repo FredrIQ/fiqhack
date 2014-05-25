@@ -51,7 +51,7 @@ draw_getline_inner(struct gamewin *gw, int echo)
     int output_count;
     char **output;
 
-    nh_window_border(gw->win, TRUE);
+    nh_window_border(gw->win, 2);
 
     width = getmaxx(gw->win);
     height = getmaxy(gw->win);
@@ -95,7 +95,7 @@ resize_getline(struct gamewin *gw)
     int height, width;
 
     getmaxyx(gw->win, height, width);
-    newdialog(height, width, gw->win);
+    newdialog(height, width, 2, gw->win);
 }
 
 static void
@@ -144,7 +144,7 @@ hooked_curses_getlin(const char *query, void *callbackarg,
     width = COLNO;
 
     gw = alloc_gamewin(sizeof (struct win_getline));
-    gw->win = newdialog(height, width, 0);
+    gw->win = newdialog(height, width, 2, 0);
     gw->draw = echo ? draw_getline : draw_getline_noecho;
     gw->resize = resize_getline;
     gldat = (struct win_getline *)gw->extra;

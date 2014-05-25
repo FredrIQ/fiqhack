@@ -5,6 +5,27 @@
 
 #include "nhcurses.h"
 
+/* Prints a string to a window. Any keys specified in single-quotes, e.g.
+   "Press 'y' for Yes", will be underlined and mouse-activated. The same goes
+   for any characters other than spaces that come immediately before a colon. */
+static void
+nh_waddstr(WINDOW *win, const char *str)
+{
+    const char *c = str;
+    while (*c) {
+        if ((c > str && c[-1] == '\'' && c[1] == '\'') ||
+            (*c != ' ' && c[1] == ':')) {
+            wattron(win, A_UNDERLINE);
+            wset_mouse_event(win, uncursed_mbutton_left, *c, OK);
+            waddch(win, *c);
+            wset_mouse_event(win, uncursed_mbutton_left, 0, ERR);
+            wattroff(win, A_UNDERLINE);
+        } else {
+            waddch(win, *c);
+        }
+        c++;
+    }
+}
 
 /* Returns TRUE if two ranges of integers have any elements in common. The
    algorithm is to find which range starts first, and then ensure it finishes
@@ -13,9 +34,9 @@ static nh_bool
 range_overlap(int min1, int len1, int min2, int len2)
 {
     if (min1 < min2)
-        return min1 + len1 <= min2;
+        return min1 + len1 > min2;
     else
-        return min2 + len2 <= min1;
+        return min2 + len2 > min1;
 }
 
 void
@@ -59,7 +80,7 @@ draw_extrawin(enum keyreq_context context)
         getmaxyx(win, h2, w2);
         getbegyx(win, t2, l2);
 
-        if (range_overlap(t, h, t2, h2) || range_overlap(l, w, l2, w2))
+        if (range_overlap(t, h, t2, h2) && range_overlap(l, w, l2, w2))
             return;
     }
 
@@ -128,14 +149,119 @@ draw_extrawin(enum keyreq_context context)
        lines of 40 for easier counting. If using hintline(), as many lines from
        the start as will fit will be displayed. */
 
-#define hintline(s) do { spend_one_line(); waddstr(win, s); } while(0)
+#define hintline(s) do { spend_one_line(); nh_waddstr(win, s); } while(0)
 
-    if (context == krc_getpos) {
-        /* ------ 1234567890123456789012345678901234567890 */
+    nh_bool draw_direction_rose = FALSE;
+
+    switch (context) {
+    case krc_getdir:
+    case krc_get_movecmd_direction:
+        draw_direction_rose = TRUE;
+        /* ----- "1234567890123456789012345678901234567890" */
+        hintline("Press a direction key or ESC to cancel." );
+        break;
+
+    case krc_getlin:
+        /* ----- "1234567890123456789012345678901234567890" */
+        hintline("Enter text at the prompt, then press Ret"
+                 "urn. Edit using Left/Right/BkSp/Delete." );
+        break;
+
+    case krc_yn:
+        /* ----- "1234567890123456789012345678901234567890" */
+        hintline("Press 'y' for Yes or 'n' for No."        );
+        break;
+    case krc_ynq:
+        /* ----- "1234567890123456789012345678901234567890" */
+        hintline("Press 'y' for Yes or 'n' for No. Press '"
+                 "q' to cancel."                           );
+        break;
+    case krc_yn_generic:
+        /* ----- "1234567890123456789012345678901234567890" */
+        hintline("Please press one of the keys listed."    );
+        break;
+
+    case krc_count:
+        /* ----- "1234567890123456789012345678901234567890" */
+        hintline("Type a count to specify how many turns t"
+                 "o perform a command for."                );
+        hintline("For some commands, like \"throw\", this in"
+                 "stead limits how many items to use."     );
+        /* Diagnose a common misconfiguration, and specify a workaround for
+           it. */
+        hintline("If you were trying to move using the num"
+                 "eric keypad, turn off NumLock."          );
+        break;
+
+    case krc_getpos:
+        draw_direction_rose = TRUE;
+        /* ----- "1234567890123456789012345678901234567890" */
         hintline("Move the cursor with the direction keys."
                  " When finished, confirm with . , : or ;" );
         hintline("Press the letter of a dungeon symbol to "
                  "select it or m/M to move to a monster."  );
+        break;
+
+    case krc_menu:
+    case krc_objmenu:
+        /* ----- "1234567890123456789012345678901234567890" */
+        hintline("Scroll the menu with '<' and '>'. Press "
+                 "Return when finished or ESC to cancel."  );
+        hintline("^:scroll to top   |:scroll to end   .:s"
+                 "elect all   -:select none");
+        break;
+
+    case krc_more:
+        /* ----- "1234567890123456789012345678901234567890" */
+        hintline("Press Space to see the remaining message"
+                 "s, or ESC to skip messages this turn."   );
+        break;
+
+    case krc_pause_map:
+        /* ----- "1234567890123456789012345678901234567890" */
+        hintline("When you finish looking at the map, pres"
+                 "s any key or click on it to continue."   );
+        break;
+
+    case krc_query_key_inventory:
+    case krc_query_key_inventory_or_floor:
+    case krc_query_key_inventory_nullable:
+        /* This is only used for inventory queries, so can explain
+           their specific rules. */
+        /* ----- "1234567890123456789012345678901234567890" */
+        hintline("Please specify an item. You can type its"
+                 " inventory letter, if you know it."      );
+        if (context == krc_query_key_inventory_or_floor)
+            /* ----- "1234567890123456789012345678901234567890" */
+            hintline("To use an item on the floor, press ','." );
+        else if (context == krc_query_key_inventory_nullable)
+            hintline("You can also choose 'no item' by pressin"
+                     "g '-'."                                  );
+        /* ----- "1234567890123456789012345678901234567890" */
+        hintline("Press '?' for a list of sensible options"
+                 ", or '*' to include even weird choices." );
+        break;
+
+    case krc_query_key_symbol:
+        /* ----- "1234567890123456789012345678901234567890" */
+        hintline("Please type an object or monster symbol.");
+        break;
+
+    case krc_query_key_letter_reassignment:
+        /* ----- "1234567890123456789012345678901234567890" */
+        hintline("Please type the letter (\"a\"-\"z\" or \"A\"-\""
+                 "Z\") that you would like to use."         );
+        break;
+
+    case krc_get_command:
+        /* more complex than just simple hint lines will allow */
+        break;
+
+    /* These are either fully explained, or there's no way to react to them
+       anyway. */
+    case krc_notification:
+    case krc_keybinding:
+        break;
     }
 
     wnoutrefresh(win);

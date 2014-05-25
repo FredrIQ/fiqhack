@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-16 */
+/* Last modified by Alex Smith, 2014-05-25 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -339,6 +339,15 @@ enum nh_client_response {
     NHCR_MOREINFO,
     NHCR_MOREINFO_CONTINUE,
     NHCR_SERVER_CANCEL,
+};
+
+/* Note: if you change these, also change nhcurses.h */
+enum nh_query_key_flags {
+    NQKF_INVENTORY_ITEM,
+    NQKF_INVENTORY_ITEM_NULLABLE,
+    NQKF_INVENTORY_OR_FLOOR,
+    NQKF_SYMBOL,
+    NQKF_LETTER_REASSIGNMENT,
 };
 
 /* the name "boolean" is too common to use here */
@@ -710,8 +719,9 @@ struct nh_window_procs {
     void (*win_update_screen) (struct nh_dbuf_entry dbuf[ROWNO][COLNO],
                                int ux, int uy);
     void (*win_raw_print) (const char *str);
-    struct nh_query_key_result (*win_query_key) (const char *query,
-                                                 nh_bool count_allowed);
+    struct nh_query_key_result (*win_query_key) (
+        const char *query, enum nh_query_key_flags flags,
+        nh_bool count_allowed);
     struct nh_getpos_result (*win_getpos) (int origx, int origy,
                                            nh_bool force, const char *goal);
     enum nh_direction (*win_getdir) (const char *, nh_bool);

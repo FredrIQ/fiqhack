@@ -346,7 +346,9 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     mdat->y1 = y1;
     mdat->x2 = x2;
     mdat->y2 = y2;
-    mdat->dismissable = dismissable;
+    mdat->dismissable = !!dismissable;
+    if (mdat->how != PICK_ONE && mdat->dismissable)
+        mdat->dismissable = 2;
 
     dealloc_menulist(ml);
 
@@ -703,7 +705,7 @@ draw_objmenu(struct gamewin *gw)
     struct win_objmenu *mdat = (struct win_objmenu *)gw->extra;
     int i, scrlheight, scrlpos, scrltop, attr;
 
-    nh_window_border(gw->win, TRUE);
+    nh_window_border(gw->win, mdat->how == PICK_ONE ? 1 : 2);
     if (mdat->title) {
         wattron(gw->win, A_UNDERLINE);
         mvwaddnstr(gw->win, 1, 2, mdat->title, mdat->width - 4);
@@ -881,7 +883,7 @@ curses_display_objects(
 
     gw->win = newwin(mdat->height, mdat->width, starty, startx);
     keypad(gw->win, TRUE);
-    nh_window_border(gw->win, TRUE);
+    nh_window_border(gw->win, mdat->how == PICK_ONE ? 1 : 2);
     gw->win2 =
         derwin(gw->win, mdat->innerheight, mdat->innerwidth,
                mdat->frameheight - 1, 2);

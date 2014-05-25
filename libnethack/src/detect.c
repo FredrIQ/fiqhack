@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -872,7 +872,7 @@ use_crystal_ball(struct obj *obj)
     /* read a single character */
     if (flags.verbose)
         pline("You may look for an object or monster symbol.");
-    ch = query_key("What do you look for?", NULL);
+    ch = query_key("What do you look for?", NQKF_SYMBOL, NULL);
     if (strchr(quitchars, ch)) {
         if (flags.verbose)
             pline("Never mind.");

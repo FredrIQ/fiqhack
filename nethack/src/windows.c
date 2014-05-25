@@ -193,14 +193,27 @@ nh_window_border(WINDOW *win, int dismissable)
        hovering over anything behind it. */
     ui_flags.maphoverx = ui_flags.maphovery = -1;
 
-    if (settings.mouse && dismissable && getmaxx(win) > 4) {
+    if (settings.mouse && dismissable && getmaxx(win) > 6) {
         cchar_t x;
         const wchar_t *w = L"x";
+        const wchar_t *ok = L"[OK]";
+
         wset_mouse_event(win, uncursed_mbutton_left,
                          KEY_ESCAPE, KEY_CODE_YES);
         setcchar(&x, w, (attr_t)0, PAIR_NUMBER(
                      curses_color_attr(CLR_ORANGE, CLR_BLACK)), NULL);
         mvwadd_wch(win, 0, getmaxx(win)-2, &x);
+
+        if (dismissable == 2) {
+            /* As well as the close box, we want an OK button that sends
+               Return (13). */
+            wset_mouse_event(win, uncursed_mbutton_left, 13, OK);
+            mvwaddwstr(win, getmaxy(win)-1, getmaxx(win)-5, ok);
+            mvwchgat(win, getmaxy(win)-1, getmaxx(win)-5, 4,
+                     (attr_t)0, PAIR_NUMBER(curses_color_attr(
+                                                CLR_GREEN, CLR_BLACK)), NULL);
+        }
+
         wset_mouse_event(win, uncursed_mbutton_left, 0, ERR);
     }
 }
@@ -866,8 +879,10 @@ curses_pause(enum nh_pause_reason reason)
     if (reason == P_MESSAGE && msgwin != NULL)
         pause_messages();
     else if (mapwin != NULL) {
-        /* P_MAP: pause to show the result of detection or similar */
-        if (get_map_key(FALSE, FALSE, krc_pause_map) == KEY_SIGNAL)
+        /* P_MAP: pause to show the result of detection or similar. The second
+           arg to get_map_key is TRUE to allow this to be dismissed by clicking
+           the map. */
+        if (get_map_key(FALSE, TRUE, krc_pause_map) == KEY_SIGNAL)
             uncursed_signal_getch();
     }
 }

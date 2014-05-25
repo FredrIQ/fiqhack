@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -653,7 +653,7 @@ static json_t *
 cmd_query_key(json_t *params, int display_only)
 {
     const char *query;
-    int allow_count;
+    int allow_count, flags;
     struct nh_query_key_result ret;
 
     if (display_only) {
@@ -663,13 +663,13 @@ cmd_query_key(json_t *params, int display_only)
     }
 
     if (json_unpack
-        (params, "{ss,sb!}", "query", &query, "allow_count",
-         &allow_count) == -1) {
+        (params, "{ss,si,sb!}", "query", &query, "flags", &flags,
+         "allow_count", &allow_count) == -1) {
         print_error("Incorrect parameter type in cmd_query_key");
         return NULL;
     }
 
-    ret = windowprocs.win_query_key(query, allow_count);
+    ret = windowprocs.win_query_key(query, flags, allow_count);
 
     return json_pack("{si,si}", "return", ret.key, "count", ret.count);
 }

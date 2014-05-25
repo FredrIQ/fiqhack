@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1867,7 +1867,8 @@ extern enum nh_client_response getpos(coord *cc, boolean, const char *,
                                       boolean isarg);
 extern char yn_function(const char *query, const char *resp, char def);
 extern int getdir(const char *, schar *dx, schar *dy, schar *dz, boolean isarg);
-extern char query_key(const char *query, int *count);
+extern char query_key(const char *query, enum nh_query_key_flags flags,
+                      int *count);
 extern const char *getlin(const char *query, boolean isarg);
 extern int display_menu(struct nh_menulist *, const char *, int, int,
                         const int **);

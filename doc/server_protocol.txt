@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-05-17
+Last modified by Alex Smith, 2014-05-25
 
 This document documents the version of the network protocol used in
 NetHack 4.3, and was written by Daniel Thaler, GreyKnight, Alex Smith.
@@ -941,13 +941,21 @@ Response arguments:
 query_key
 ---------
 
-Inputs one keypress from the user, potentially with a repeat count beforehand.
-(TODO: This seems to be assuming ASCII and non-special-key, or at least, it's
-sending curses/uncursed keycodes directly to the server.)  As always, can be
-cancelled by the user or the server.
+Inputs one ASCII code from the user, potentially with a repeat count
+beforehand.  This is used for inventory queries, and in a few other cases.  As
+always, can be cancelled by the user or the server.
 
 Request arguments:
   * `boolean allow_count`: whether to allow a repeat count
+  * `enum nh_query_key_flags flags`: information about the reason for the
+    query:
+    * `NQKF_INVENTORY_ITEM` = 0: an item from inventory
+    * `NQKF_INVENTORY_ITEM_NULLABLE` = 1: an item from inventory or "-" to
+      mean bare hands, no item, etc.
+    * `NQKF_INVENTORY_OR_FLOOR` = 2: an item from inventory or "," to mean an
+      item on the floor
+    * `NQKF_SYMBOL` = 3: an object or monster symbol
+    * `NQKF_LETTER_REASSIGNMENT` = 4: a new inventory or spell letter
   * `string query`: what prompt to display to the user
 
 Response arguments:

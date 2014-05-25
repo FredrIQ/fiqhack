@@ -11,7 +11,7 @@
 /* Create a new dialog, or reposition an existing one, in an appropriate
    position for showing prompts. Also draw a border aound it. */
 WINDOW *
-newdialog(int height, int width, WINDOW *win)
+newdialog(int height, int width, int dismissable, WINDOW *win)
 {
     int starty, startx;
 
@@ -49,7 +49,7 @@ newdialog(int height, int width, WINDOW *win)
     werase(win);
     keypad(win, TRUE);
     meta(win, TRUE);
-    nh_window_border(win, TRUE);
+    nh_window_border(win, dismissable);
     return win;
 }
 
@@ -102,7 +102,8 @@ resize_curses_msgwin(struct gamewin *gw)
     layout_curses_msgwin(wmw, &linecount, &lines, 1);
     free_wrap(lines);
 
-    gw->win = newdialog(wmw->layout_height, wmw->layout_width, gw->win);
+    gw->win = newdialog(wmw->layout_height, wmw->layout_width,
+                        wmw->context == krc_notification ? 2 : 1, gw->win);
 }
 
 static int
@@ -129,6 +130,7 @@ curses_msgwin_generic(const char *msg, int (*validator)(int, void *),
     struct gamewin *gw = alloc_gamewin(sizeof (struct win_msgwin));
     struct win_msgwin *wmw = (struct win_msgwin *)gw->extra;
     wmw->msg = msg;
+    wmw->context = context;
     gw->draw = draw_curses_msgwin;
     gw->resize = resize_curses_msgwin;
 
@@ -226,7 +228,10 @@ curses_yn_function(const char *query, const char *resp, char def)
 
     strcpy(respbuf, resp);
     key = curses_msgwin_generic(prompt, curses_yn_function_validator,
-                                respbuf, 1, krc_yn);
+                                respbuf, 1,
+                                strcmp(respbuf, "yn") == 0 ? krc_yn :
+                                strcmp(respbuf, "ynq") == 0 ? krc_ynq :
+                                krc_yn_generic);
     if (key == -2)
         key = def;
 
@@ -268,7 +273,8 @@ curses_query_key_validator(int key, void *count)
 }
 
 struct nh_query_key_result
-curses_query_key(const char *query, nh_bool allow_count)
+curses_query_key(const char *query, enum nh_query_key_flags flags,
+                 nh_bool allow_count)
 {
     struct nh_query_key_result nqkr;
 
@@ -276,7 +282,7 @@ curses_query_key(const char *query, nh_bool allow_count)
 
     nqkr.key = curses_msgwin_generic(query, curses_query_key_validator,
                                      allow_count ? &(nqkr.count) : NULL, 1,
-                                     krc_query_key);
+                                     flags + krc_query_key_inventory);
     return nqkr;
 }
 

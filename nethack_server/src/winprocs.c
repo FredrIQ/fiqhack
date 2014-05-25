@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-17 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -33,8 +33,8 @@ static void srv_display_objects(struct nh_objlist *objlist, const char *title,
                                 void (*)(const struct nh_objresult *,
                                          int, void *));
 static void srv_list_items(struct nh_objlist *objlist, nh_bool invent);
-static struct nh_query_key_result srv_query_key(const char *query,
-                                                nh_bool allow_count);
+static struct nh_query_key_result srv_query_key(
+    const char *query, enum nh_query_key_flags flags, nh_bool allow_count);
 static struct nh_getpos_result srv_getpos(int xorig, int yorig,
                                           nh_bool force, const char *goal);
 static enum nh_direction srv_getdir(const char *query, nh_bool restricted);
@@ -617,12 +617,13 @@ srv_list_items(struct nh_objlist *objlist, nh_bool invent)
 
 
 static struct nh_query_key_result
-srv_query_key(const char *query, nh_bool allow_count)
+srv_query_key(const char *query, enum nh_query_key_flags flags,
+              nh_bool allow_count)
 {
     int ret, c;
     json_t *jobj;
 
-    jobj = json_pack("{ss,sb}", "query", query,
+    jobj = json_pack("{ss,si,sb}", "query", query, "flags", (int)flags,
                      "allow_count", (int)allow_count);
 
     jobj = client_request("query_key", jobj);

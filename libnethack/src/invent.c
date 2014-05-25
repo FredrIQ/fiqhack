@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -968,7 +968,9 @@ getobj(const char *let, const char *word, boolean isarg)
             qbuf = msgprintf("What do you want to %s? [%s or ?*]",
                              word, buf_compact);
         }
-        ilet = query_key(qbuf, allowcnt ? &cnt : NULL);
+        ilet = query_key(qbuf, nonechar == ',' ? NQKF_INVENTORY_OR_FLOOR :
+                         allownone ? NQKF_INVENTORY_ITEM_NULLABLE :
+                         NQKF_INVENTORY_ITEM, allowcnt ? &cnt : NULL);
         if (allowcnt == 1 && cnt != -1) {
             allowcnt = 2;       /* signal presence of cnt */
             if (cnt == 0)
@@ -2376,7 +2378,7 @@ doorganize(const struct nh_cmd_arg *arg)
     /* get new letter to use as inventory letter */
     for (;;) {
         qbuf = msgprintf("Adjust letter to what [%s]?", buf);
-        let = query_key(qbuf, NULL);
+        let = query_key(qbuf, NQKF_LETTER_REASSIGNMENT, NULL);
         if (strchr(quitchars, let)) {
             pline("Never mind.");
             goto cleansplit;
