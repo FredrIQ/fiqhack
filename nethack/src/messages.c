@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-26 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -331,11 +331,13 @@ update_showlines(char **intermediate, int *length, nh_bool force_more)
      *         buf, make a note that we're going to need another pass/more.
      * STEP 3: Shift the showlines messages, freeing the ones that fall off the
      *         end, and put the wrapped lines in the freed slots.
-     * STEP 4: Wipe out intermediate, and reconstruct it by concatenating the
-     *         lines (if any exist) we couldn't fit in Step 3.
+     * STEP 4: Eliminate the first part of intermediate as needed by traversing
+     *         the buffer.  Check each of the newly-displayed showlines' length,
+     *         and for each one have a char pointer called "marker" jump that
+     *         many characters ahead.
      * STEP 5: If we need another pass, strip tokens off the end of showlines[0]
-     *         and shove them into the beginning of intermediate until we have
-     *         room for a more prompt.
+     *         and simultaneously rewind marker one token at a time until we
+     *         have room for a more prompt.
      */
     
     /* Step 1 begins here. */
@@ -430,22 +432,13 @@ update_showlines(char **intermediate, int *length, nh_bool force_more)
     }
 
     /* Step 4 begins here. */
-    messagelen = strlen(*intermediate);
-    strcpy(*intermediate, "");
-    for (i = merging ? num_to_bump + 1 : num_to_bump; i < num_buflines; i++) {
-        realloc_strcat(intermediate, length, wrapped_buf[i]);
-        /* TODO: Base this on the whitespace in buf rather than trying to divine
-           it from punctuation. */
-        if (i == num_buflines - 1)
-            break; /* Don't add unnecessary whitespace. */
-        if ((*intermediate)[strlen(*intermediate) - 1] == '.')
-            realloc_strcat(intermediate, length, "  ");
-        else
-            realloc_strcat(intermediate, length, " ");
-        
+    /* marker will walk across buf until it reaches text that wasn't printed */
+    char* marker = buf;
+    for (i = 0; i < (merging ? num_to_bump + 1 : num_to_bump); i++) {
+        marker += strlen(wrapped_buf[i]);
+        while(*marker == ' ')
+            marker++; /* Traverse forward past whitespace */
     }
-    //XXX: The above intermediate thing might mangle whitespace somehow.
-    //It'll do for prototyping.
 
     /* Step 5 begins here. */
     while (showlines[0].message && need_more &&
@@ -453,18 +446,31 @@ update_showlines(char **intermediate, int *length, nh_bool force_more)
         /* Find the last space in the current showlines[0]. */
         char *last;
         last = strrchr(showlines[0].message, ' ');
-        /* If the showlines[0] string doesn't *have* any whitespace, just
-           kind of split it up anyway. */
-        if (!last)
+        if (last) {
+            /* rewind marker so the token will wind up in the buffer again.
+               n.b.: to_rewind will always be at least two if there's two
+               spaces to go back (end of a sentence), because of the ending
+               punctuation mark. */
+            int to_rewind = strlen(last);
+            marker -= to_rewind;
+            while (marker > buf && *(marker - 1) != ' ')
+                marker--; /* might've been more than one space */
+            /* NULL out the space in showlines[0] */
+            *last = '\0';
+        }
+        else {
+            /* If the showlines[0] string doesn't *have* any whitespace, just
+               kind of split it up anyway.  This will hopefully never happen 
+               anyway. */
             last = showlines[0].message + getmaxx(msgwin) - strlen(more_text);
-        char *temp = malloc(strlen(*intermediate) + strlen(last) + 1);
-        strcpy(temp, last + 1);
-        strcat(temp, " ");
-        strcat(temp, *intermediate);
-        free(*intermediate);
-        *intermediate = temp;
-        *last = '\0';
+            marker -= strlen(last) + 1;
+            *last = '\0';
+        }
     }
+    /* At this point, *marker might be NULL if we printed everything in buf.
+       Doesn't matter, though. */
+    strcpy(*intermediate, "");
+    realloc_strcat(intermediate, length, marker);
 
     free_wrap(wrapped_buf);
     return need_more;
