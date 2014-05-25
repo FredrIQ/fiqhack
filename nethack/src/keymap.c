@@ -308,6 +308,13 @@ get_command(void *callbackarg,
             continue;
         }
 
+        if (key >= KEY_MAX + 256) {
+            /* This range of user-defined keys is used for clicks on the map. */
+
+            /* For now, these don't do anything. */
+            continue;
+        }
+
         if (cmd != NULL) {
             /* handle internal commands. The command handler may alter *cmd, and
                arg (although not all this functionality is currently used) */

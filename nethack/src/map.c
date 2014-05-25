@@ -329,6 +329,27 @@ curses_getpos(int xorig, int yorig, nh_bool force, const char *goal)
             break;
         }
 
+        if (key >= KEY_MAX + 256) {
+            nh_bool rightclick = FALSE;
+            /* The user clicked on the map. For a left click, we'll accept the
+               new location (NHCR_ACCEPTED). For a right click, we'll move the
+               cursor there, but not accept it. */
+            key -= KEY_MAX + 256;
+            if (key > ROWNO * COLNO) {
+                key -= ROWNO * COLNO;
+                rightclick = TRUE;
+            }
+
+            cx = key % COLNO;
+            cy = key / COLNO;
+
+            if (rightclick)
+                goto nxtc;
+
+            result = NHCR_ACCEPTED;
+            break;
+        }
+
         if ((cp = strchr(pick_chars, (char)key)) != 0) {
             /* '.' => 0, ',' => 1, ';' => 2, ':' => 3 */
             result = pick_vals[cp - pick_chars];
@@ -431,7 +452,11 @@ curses_getpos(int xorig, int yorig, nh_bool force, const char *goal)
            have been handled by get_map_key or else closed the prompt). Thus, we
            hijack the map hover locations for the cursor location, rather than
            the mouse location, as the user's clearly trying to do things with
-           keyboard controls. */
+           keyboard controls.
+
+           Exception: Right-clicks on the map move the cursor to the click
+           location, so although that codepath reaches here, this code is still
+           correct, if for a different reason. */
         ui_flags.maphoverx = cx;
         ui_flags.maphovery = cy;
     } /* while (1) */
