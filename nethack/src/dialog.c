@@ -162,7 +162,7 @@ curses_getdir_validator(int key, void *unused)
         return DIR_NONE + 5;
     else if (key == KEY_SIGNAL)
         return DIR_SERVERCANCEL + 5;
-    else if (key == '.' || key == 's' || key == '5')
+    else if (key == '5' || key == KEY_B2)
         return DIR_SELF + 5;
     dir = key_to_dir(key);
     if (dir != DIR_NONE)

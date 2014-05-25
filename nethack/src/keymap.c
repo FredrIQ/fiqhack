@@ -408,6 +408,9 @@ key_to_dir(int key)
 
     cmd = keymap[key];
 
+    if (cmd && (!strcmp(cmd->name, "wait") || !strcmp(cmd->name, "search")))
+        return DIR_SELF;
+
     if (!cmd || !(cmd->flags & DIRCMD))
         return DIR_NONE;
 
