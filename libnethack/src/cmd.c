@@ -939,6 +939,7 @@ doattributes(const struct nh_cmd_arg *arg)
         add_menuitem(&menu, 'v', "Vanquished creatures", 'v', FALSE);
     if (num_genocides() > 0 || num_extinctions() > 0)
         add_menuitem(&menu, 'g', "Genocided/extinct creatures", 'g', FALSE);
+    add_menuitem(&menu, 'h', "Your character's history", 'h', FALSE);
     add_menuitem(&menu, 'c', "Conducts followed", 'c', FALSE);
     add_menuitem(&menu, 's', "Score breakdown", 's', FALSE);
     if (wizard || discover)
@@ -960,6 +961,9 @@ doattributes(const struct nh_cmd_arg *arg)
             break;
         case 'g':
             list_genocided('y', FALSE);
+            break;
+        case 'h':
+            n = dohistory(&(struct nh_cmd_arg){.argtype = 0});
             break;
         case 'c':
             n = doconduct(&(struct nh_cmd_arg){.argtype = 0});
