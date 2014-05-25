@@ -410,6 +410,10 @@ extern struct nh_getpos_result curses_getpos(int x, int y, nh_bool force,
 extern void draw_map(int cx, int cy);
 extern void mark_mapwin_for_full_refresh(void);
 
+extern nh_bool branding_is_at(short branding, int x, int y);
+extern nh_bool monflag_is_at(short monflag, int x, int y);
+extern nh_bool apikey_is_at(const char *apikey, int x, int y);
+
 /* menu.c */
 extern void draw_menu(struct gamewin *gw);
 extern void curses_menu_callback(const int *results, int nresults, void *arg);

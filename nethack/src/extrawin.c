@@ -4,6 +4,7 @@
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "nhcurses.h"
+#include <limits.h>
 
 /* Prints a string to a window. Any keys specified in single-quotes, e.g.
    "Press 'y' for Yes", will be underlined and mouse-activated. The same goes
@@ -41,6 +42,16 @@ nh_waddkey(WINDOW *win, int key)
     wset_mouse_event(win, uncursed_mbutton_left, 0, ERR);
     wattroff(win, A_UNDERLINE);
     return strlen(s);
+}
+
+static nh_bool
+player_has_status(const char *status)
+{
+    int i;
+    for (i = 0; i < player.nr_items; i++)
+        if (!strcmp(player.statusitems[i], status))
+            return TRUE;
+    return FALSE;
 }
 
 static int
@@ -381,6 +392,134 @@ draw_extrawin(enum keyreq_context context)
 
         y_remaining -= 3;
         y += 3;
+    }
+
+    if (context == krc_get_command) {
+        int x = 0, i, j;
+
+#define hintbinding(k,s) do {                    \
+            int l = strlen(friendly_keyname(k)); \
+            l += strlen(s) + 1;                  \
+            if (x + l > ui_flags.mapwidth) {     \
+                spend_one_line();                \
+                x = 0;                           \
+            }                                    \
+            wmove(win, y, x);                    \
+            nh_waddkey(win, k);                  \
+            wprintw(win, ":%s", s);              \
+            x += l + 2;                          \
+        } while(0)
+
+#define hintcmd(s,d) do {                                         \
+            int key;                                              \
+            for (key = 0; key <= KEY_MAX; key++)                  \
+                if (keymap[key] && !strcmp(keymap[key]->name, s)) \
+                    break;                                        \
+            if (key <= KEY_MAX)                                   \
+                hintbinding(key, d);                              \
+        } while (0)
+
+        /* Some bindings we always want to show. */
+        hintcmd("help", "help");
+        hintcmd("mainmenu", "menu");
+        if (!ui_flags.sidebarwidth)
+            hintcmd("inventory", "inventory");
+        hintcmd("search", "search/wait");
+
+        /* TODO: only if we have spells and at least 5 Pw */
+        hintcmd("cast", "cast spell");
+
+        /* Context-sensitive bindings. */
+
+        /* Status effects. */
+        if (player_has_status("Blind"))
+            hintcmd("grope", "feel the ground");
+
+        /* TODO: "creamed" isn't distinguished from other causes of blindness,
+           so we can't mention "wipe". */
+
+        /* Things we're standing on. */
+        i = player.x;
+        j = player.y;
+
+        if (apikey_is_at("chest", i, j) || apikey_is_at("large box", i, j)) {
+            hintcmd("apply", "open a container");
+            hintcmd("force", "force a container open");
+        }
+        if (apikey_is_at("fountain", i, j)) {
+            hintcmd("dip", "dip");
+            hintcmd("drink", "drink");
+        } else if (apikey_is_at("sink", i, j)) {
+            hintcmd("drink", "drink");
+        }
+        if (apikey_is_at("altar", i, j)) {
+            hintcmd("offer", "make a sacrifice");
+        }
+
+        if (apikey_is_at("throne", i, j)) {
+            hintcmd("sit", "sit");
+        }
+
+        /* Eating's normally done via itemactions, but corpses are more
+           reasonable to eat from the floor. */
+        if (apikey_is_at("corpse", i, j)) {
+            hintcmd("eat", "eat");
+        }
+
+        if (branding_is_at(NH_BRANDING_TRAPPED, i, j)) {
+            hintcmd("sit", "trigger trap");
+        }
+
+        /* Things we're next to. */
+#define nearbyxy                                                \
+        for (i = player.x - 1; i <= player.x + 1; i++)          \
+            for (j = player.y - 1; j <= player.y + 1; j++)      \
+                if (i >= 0 && i < COLNO && j >= 0 && j < ROWNO)
+
+#define hintcmdbreak(s,d) do { hintcmd(s,d); i = j = INT_MAX - 1; } while(0)
+
+        nearbyxy if (monflag_is_at(MON_TAME, i, j) ||
+                     monflag_is_at(MON_PEACEFUL, i, j)) {
+            hintcmdbreak("chat", "chat");
+        }
+
+        /* TODO: Riding; we really need a MON_SADDLED branding */
+
+        nearbyxy if (branding_is_at(NH_BRANDING_TRAPPED, i, j)) {
+            hintcmdbreak("idtrap", "examine trap");
+            hintcmdbreak("untrap", "disarm trap");
+        }
+
+        nearbyxy if ((apikey_is_at("vcdoor", i, j) ||
+                      apikey_is_at("hcdoor", i, j)) &&
+                     branding_is_at(NH_BRANDING_LOCKED, i, j)) {
+            hintcmdbreak("kick", "kick open a door");
+            hintcmdbreak("open", "unlock a door");
+        }
+
+        nearbyxy if (apikey_is_at("vodoor", i, j) ||
+                     apikey_is_at("hodoor", i, j)) {
+            hintcmdbreak("open", "close a door");
+        }
+
+        nearbyxy if (apikey_is_at("chest", i, j) ||
+                     apikey_is_at("large box", i, j)) {
+            hintcmdbreak("kick", "kick open a container");
+        }
+
+        nearbyxy if (apikey_is_at("shopkeeper", i, j)) {
+            hintcmdbreak("pay", "pay for items");
+        }
+
+        /* Low-priority bindings. */
+        if (!player_has_status("Blind"))
+            hintcmd("lookhere", "describe this square");
+        hintcmd("autoexplore", "autoexplore");
+        hintcmd("pray", "pray for help");
+        hintcmd("prevmsg", "review messages");
+        hintcmd("moveonly", "move without fighting");
+        hintcmd("fight", "force an attack");
+        hintcmd("elbereth", "write Elbereth");
     }
 
     wnoutrefresh(win);

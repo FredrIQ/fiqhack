@@ -104,6 +104,36 @@ mark_mapwin_for_full_refresh(void)
     fully_refresh_display_buffer = 1;
 }
 
+nh_bool
+branding_is_at(short branding, int x, int y)
+{
+    return !!(display_buffer[y][x].branding & branding);
+}
+
+nh_bool
+monflag_is_at(short monflag, int x, int y)
+{
+    return !!(display_buffer[y][x].monflags & monflag);
+}
+
+nh_bool
+apikey_is_at(const char *apikey, int x, int y)
+{
+    struct nh_dbuf_entry *dbyx = &(display_buffer[y][x]);
+    if (!strcmp(apikey, cur_drawing->bgelements[dbyx->bg].symname))
+        return TRUE;
+    if (dbyx->trap && !strcmp(
+            apikey, cur_drawing->traps[dbyx->trap - 1].symname))
+        return TRUE;
+    if (dbyx->obj && !strcmp(
+            apikey, cur_drawing->objects[dbyx->obj - 1].symname))
+        return TRUE;
+    if (dbyx->mon && !strcmp(
+            apikey, cur_drawing->monsters[dbyx->mon - 1].symname))
+        return TRUE;
+    return FALSE;
+}
+
 void
 draw_map(int cx, int cy)
 {
