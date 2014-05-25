@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -867,13 +867,32 @@ tty_hook_exit(void)
     /* Force a flush, so that our frame of reset commands is actually sent. */
     tty_hook_flush();
 
+    /* Drain any remaining input. */
+    while (1) {
+        fd_set readfds;
+        struct timeval draintime = {.tv_sec = 0, .tv_usec = 200000};
+        char b;
+        int ifileno = fileno(ifile);
+        FD_ZERO(&readfds);
+        FD_SET(ifileno, &readfds);
+        errno = 0;
+        int i = select(ifileno+1, &readfds, NULL, NULL, &draintime);
+        if (i < 0 && errno == EINTR)
+            continue;
+        if (i != 1)
+            break;
+        i = read(ifileno, &b, 1);
+        if (i < 0)
+            break;
+    }
+
     platform_specific_exit();
 
     /* We can't know what the old buffering discipline was, but given that
        uncursed is designed to be attached to a terminal, we can have a very
        good guess. Line-buffering also won't hurt if it does happen to be
        something unusual; flushing a FILE* too often causes no issues but a
-       slight performanc degradation. */
+       slight performance degradation. */
     setvbuf(ofile, NULL, _IOLBF, BUFSIZ);
 
     is_inited = 0;
