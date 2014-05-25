@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1203,9 +1203,9 @@ nh_get_object_commands(int *count, char invlet)
         !obj->owornmask)
         SET_OBJ_CMD('Q', "quiver", "Quiver %s for easy throwing", 0);
 
-    /* read item note: Fortune Cookies and T-shirt are intentionally omitted
-       here, as getobj() also goes to some lengths to omit them from the list
-       of items available for reading */
+    /* read item. Note: Fortune Cookies and T-shirt are intentionally omitted
+       here, as getobj() also goes to some lengths to omit them from the list of
+       items available for reading */
     if (obj->oclass == SCROLL_CLASS)
         SET_OBJ_CMD('r', "read", "Cast the spell on %s", 1);
     else if (obj->oclass == SPBOOK_CLASS)
@@ -1229,7 +1229,7 @@ nh_get_object_commands(int *count, char invlet)
 
     /* unequip armor */
     if (obj->owornmask & W_WORN)
-        SET_OBJ_CMD('T', "remove", "Take %s off", 0);
+        SET_OBJ_CMD('T', "takeoff", "Take %s off", 0);
 
     /* invoke */
     if ((obj->otyp == FAKE_AMULET_OF_YENDOR && !obj->known) ||
@@ -1257,13 +1257,13 @@ nh_get_object_commands(int *count, char invlet)
         if (obj->oclass == ARMOR_CLASS)
             SET_OBJ_CMD('W', "wear", "Wear %s", 0);
         else if (obj->oclass == RING_CLASS || obj->otyp == MEAT_RING)
-            SET_OBJ_CMD('W', "put on", "Put %s on", 0);
+            SET_OBJ_CMD('W', "wear", "Put %s on", 0);
         else if (obj->oclass == AMULET_CLASS)
-            SET_OBJ_CMD('W', "put on", "Put %s on", 0);
+            SET_OBJ_CMD('W', "wear", "Put %s on", 0);
         else if (obj->otyp == TOWEL || obj->otyp == BLINDFOLD)
-            SET_OBJ_CMD('W', "put on", "Use %s to blindfold yourself", 0);
+            SET_OBJ_CMD('W', "wear", "Use %s to blindfold yourself", 0);
         else if (obj->otyp == LENSES)
-            SET_OBJ_CMD('W', "put on", "Put %s on", 0);
+            SET_OBJ_CMD('W', "wear", "Put %s on", 0);
     }
 
     /* swap weapons: mentioned for wielded or offhand weapons */
@@ -1288,13 +1288,13 @@ nh_get_object_commands(int *count, char invlet)
 
     /* name object */
     if (obj->oclass != COIN_CLASS)
-        SET_OBJ_CMD('N', "name item", "Name %s", 0);
+        SET_OBJ_CMD('N', "nameitem", "Name %s", 0);
 
     /* name type */
     if (obj->oclass != COIN_CLASS && obj->oclass != WEAPON_CLASS &&
         obj->oclass != ROCK_CLASS && obj->oclass != CHAIN_CLASS &&
         obj->oclass != BALL_CLASS && obj->oclass != VENOM_CLASS)
-        set_obj_cmd('C', obj_cmd, obj, i++, "name type",
+        set_obj_cmd('C', obj_cmd, obj, i++, "nametype",
                     "Name all objects of this type", false);
 
     *count = i;
