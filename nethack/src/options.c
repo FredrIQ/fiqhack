@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -558,7 +558,7 @@ query_new_value(struct win_menu *mdat, int idx)
         char query[strlen(optioncopy.name) + 1 + 
                    sizeof "new value for  rejected"];
         sprintf(query, "new value for %s rejected", optioncopy.name);
-        curses_msgwin(query);
+        curses_msgwin(query, krc_notification);
     } else if (optioncopy_p) {
         if (listid != UI_OPTS) {
             curses_free_nh_opts(optlist);
@@ -782,7 +782,7 @@ rule_position_callback(const char *str, void *pos_void)
     if (l >= 1 && l <= *pos)
         *pos = (int)l;
     else {
-        curses_msgwin("Invalid rule position.");
+        curses_msgwin("Invalid rule position.", krc_notification);
         *pos = -1;
     }
 }
@@ -795,7 +795,7 @@ rule_pattern_callback(const char *str, void *pat_void)
     if (*str == '\033')
         return;
     if (strlen(str) >= AUTOPICKUP_PATTERNSZ) {
-        curses_msgwin("That pattern is too long.");
+        curses_msgwin("That pattern is too long.", krc_notification);
         return;
     }
 
@@ -1067,8 +1067,8 @@ read_config_line(char *line)
     }
 
     if (!option) {
-        curses_msgwin("Unknown option in config file:");
-        curses_msgwin(name);
+        curses_msgwin("Unknown option in config file:", krc_notification);
+        curses_msgwin(name, krc_notification);
         return;
     }
 
@@ -1111,7 +1111,8 @@ read_config_file(const fnchar * filename)
     if (fread(buf, 1, fsize, fp) < fsize) {
         /* This can only happen if the file shrinks while it's open; let's just
            not read the file at all, because it's probably corrupted */
-        curses_msgwin("warning: corrupted configuration file");
+        curses_msgwin("warning: corrupted configuration file",
+                      krc_notification);
         fclose(fp);        
         return;
     }

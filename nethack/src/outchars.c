@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -325,7 +325,7 @@ read_unisym_config(void)
         errno = 0;
         rrv = read(fd, data + dptr, size - dptr);
         if (rrv < 0 && errno != EINTR) {
-            curses_msgwin("Could not read unicode.conf!");
+            curses_msgwin("Could not read unicode.conf!", krc_notification);
             return;
         }
         dptr += rrv;
@@ -353,7 +353,7 @@ write_symlist(int fd, const struct curses_symdef *list, int len)
                 list[i].symname, list[i].color, (int)list[i].unichar[0]);
         
         if (write(fd, buf, strlen(buf)) < 0) {
-            curses_msgwin("Could not write unicode.conf.");
+            curses_msgwin("Could not write unicode.conf.", krc_notification);
             return 0;
         }
     }
@@ -381,7 +381,7 @@ write_unisym_config(void)
         return;
 
     if (write(fd, uniconf_header, strlen(uniconf_header)) < 0) {
-        curses_msgwin("Could not write unicode.conf.");
+        curses_msgwin("Could not write unicode.conf.", krc_notification);
         return;
     }
     /* write_symlist returns 0 on error; thus && has the right semantics to run

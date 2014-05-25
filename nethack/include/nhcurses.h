@@ -133,7 +133,7 @@ enum keyreq_context {
     krc_getlin,
     krc_yn,
     krc_query_key,
-    krc_msgwin, /* TODO curses_msgwin */
+    krc_count,
     krc_get_command,
     krc_get_movecmd_direction,
     krc_getpos,
@@ -141,6 +141,8 @@ enum keyreq_context {
     krc_objmenu,
     krc_more,
     krc_pause_map,
+    krc_notification,
+    krc_keybinding,
 };
 
 
@@ -350,7 +352,7 @@ extern enum nh_direction curses_getdir(const char *query, nh_bool restricted);
 extern char curses_yn_function(const char *query, const char *resp, char def);
 extern struct nh_query_key_result curses_query_key(const char *query,
                                                    nh_bool count_allowed);
-extern int curses_msgwin(const char *msg);
+extern int curses_msgwin(const char *msg, enum keyreq_context context);
 
 /* extrawin.c */
 extern void draw_extrawin(enum keyreq_context context);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) Daniel Thaler, 2012 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -110,11 +110,12 @@ passwords_match_callback(const char *buf1, void *other_password_void)
     char *buf2 = *other_password_p;
     
     if (buf2[0] == '\033' || buf2[0] == '\0') {
-        curses_msgwin("The password set request was cancelled.");
+        curses_msgwin("The password set request was cancelled.",
+                      krc_notification);
         *other_password_p = NULL;
     } else if (strcmp(buf1, buf2)) {
         curses_msgwin("The passwords didn't match. No new password was "
-                      "set.");
+                      "set.", krc_notification);
         *other_password_p = NULL;
     }
 }
@@ -143,7 +144,7 @@ change_password_callback(const char *buf, void *server_void)
 
     if (strcmp(server->password, buf)) {
         if (*buf && *buf != '\033')
-            curses_msgwin("Incorrect password.");
+            curses_msgwin("Incorrect password.", krc_notification);
         return;
     }
 
@@ -222,7 +223,7 @@ read_server_list(void)
     char data[size + 1];
     if (fread(data, 1, size, fp) < size) {
         fclose(fp);
-        curses_msgwin("warning: servers.conf is corrupted");
+        curses_msgwin("warning: servers.conf is corrupted", krc_notification);
         return servlist;
     }
     data[size] = '\0';
@@ -373,13 +374,15 @@ get_username_password(struct server_info *server)
 
         switch (ret) {
         case AUTH_FAILED_BAD_PASSWORD:
-            curses_msgwin("The account exists but this is the wrong password.");
+            curses_msgwin("The account exists but this is the wrong password.",
+                          krc_notification);
             break;
 
         case NO_CONNECTION:
         case AUTH_SUCCESS_RECONNECT:
             curses_msgwin(
-                "Error: The server seems to think you are connected already.");
+                "Error: The server seems to think you are connected already.",
+                krc_notification);
             break;
 
         case AUTH_FAILED_UNKNOWN_USER:
@@ -417,7 +420,7 @@ add_server_menu(struct server_info **servlist)
             hostok = TRUE;
             nhnet_disconnect();
         } else {
-            curses_msgwin("Connection test failed");
+            curses_msgwin("Connection test failed", krc_notification);
             free(server.hostname);
         }
     } while (!hostok);
@@ -549,10 +552,11 @@ connect_server(struct server_info *server)
             strcpy(ui_flags.username, server->username);
             break;
         } else if (ret == NO_CONNECTION) {
-            curses_msgwin("Connection attempt failed");
+            curses_msgwin("Connection attempt failed", krc_notification);
             return FALSE;
         } else if (ret == AUTH_FAILED_BAD_PASSWORD) {
-            curses_msgwin("Authentication failed: Wrong password.");
+            curses_msgwin("Authentication failed: Wrong password.",
+                          krc_notification);
             char *newpw;
             curses_getline_pw("Password:", &newpw, getlin_strdup_callback);
             if (!newpw)
@@ -565,7 +569,7 @@ connect_server(struct server_info *server)
                      strlen(server->username) + 1];
             sprintf(buf, "The account \"%s\" will be created for you.",
                     server->username);
-            curses_msgwin(buf);
+            curses_msgwin(buf, krc_notification);
             char *newemail;
             curses_getline("(Optional) You may give an email address for "
                            "password resets:", &newemail,
@@ -575,7 +579,8 @@ connect_server(struct server_info *server)
                                 newemail, 1);
             free(newemail);
             if (ret != AUTH_SUCCESS_NEW) {
-                curses_msgwin("Sorry, the registration failed.");
+                curses_msgwin("Sorry, the registration failed.",
+                              krc_notification);
                 return FALSE;
             } else
                 break;
@@ -587,7 +592,8 @@ connect_server(struct server_info *server)
     ok = read_nh_config();
     if (!ok) {
         nhnet_disconnect();
-        curses_msgwin("The connection to the server was lost.");
+        curses_msgwin("The connection to the server was lost.",
+                      krc_notification);
         return FALSE;
     }
 
@@ -720,7 +726,8 @@ netgame(void)
 
     fd = nhnet_get_socket_fd();
     if (fd == -1) {
-        curses_msgwin("The connection to the server was lost.");
+        curses_msgwin("The connection to the server was lost.",
+                      krc_notification);
         nhnet_disconnect();
         goto finally;
     }

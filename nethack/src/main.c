@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -379,7 +379,7 @@ main(int argc, char *argv[])
     if (init_ok)
         mainmenu();
     else
-        curses_msgwin("Could not initialize game options!");
+        curses_msgwin("Could not initialize game options!", krc_notification);
 
     exit_curses_ui();
     nh_lib_exit();
@@ -548,9 +548,10 @@ append_slash(char *name)
 void
 curses_impossible(const char *msg)
 {
-    curses_msgwin("Impossible state detected in the client.");
-    curses_msgwin(msg);
-    curses_msgwin("You may wish to save and restart the client.");
+    curses_msgwin("Impossible state detected in the client.", krc_notification);
+    curses_msgwin(msg, krc_notification);
+    curses_msgwin("You may wish to save and restart the client.",
+                  krc_notification);
 }
 
 /* main.c */

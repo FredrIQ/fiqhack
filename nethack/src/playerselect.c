@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-17 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -165,16 +165,17 @@ validate_character_presets(const struct nh_roles_info *ri, int *role, int *race,
     if (!is_valid_character(ri, *role, *race, *gend, *align)) {
         /* always keep the role */
         if (is_valid_character(ri, *role, *race, *gend, ROLE_NONE)) {
-            curses_msgwin("Incompatible alignment!");
+            curses_msgwin("Incompatible alignment!", krc_notification);
             *align = ROLE_NONE;
         } else if (is_valid_character(ri, *role, *race, ROLE_NONE, *align)) {
-            curses_msgwin("Incompatible gender!");
+            curses_msgwin("Incompatible gender!", krc_notification);
             *gend = ROLE_NONE;
         } else if (is_valid_character(ri, *role, ROLE_NONE, *gend, *align)) {
-            curses_msgwin("Incompatible race!");
+            curses_msgwin("Incompatible race!", krc_notification);
             *race = ROLE_NONE;
         } else {
-            curses_msgwin("Incompatible character presets!");
+            curses_msgwin("Incompatible character presets!",
+                          krc_notification);
             *race = ROLE_NONE;
             *gend = ROLE_NONE;
             *align = ROLE_NONE;

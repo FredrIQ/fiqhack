@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -287,7 +287,7 @@ plname_handler(const char *str, void *plname_void)
     }
 
     if (*str)
-        curses_msgwin("That name is too long.");
+        curses_msgwin("That name is too long.", krc_notification);
 
     *plname = strdup("");
     return;
@@ -607,7 +607,7 @@ loadgame(void)
 
     files = list_gamefiles(savedir, &size);
     if (!size) {
-        curses_msgwin("No saved games found.");
+        curses_msgwin("No saved games found.", krc_notification);
         return FALSE;
     }
 

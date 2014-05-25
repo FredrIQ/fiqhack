@@ -279,7 +279,7 @@ get_command(void *callbackarg,
                     multi /= 10;
             }
             sprintf(line, "Count: %d", multi);
-            key = curses_msgwin(line);
+            key = curses_msgwin(line, krc_count);
         };
 
         if (key == '\x1b' || key == KEY_ESCAPE)
@@ -442,7 +442,7 @@ doextcmd_callback(const char *cmdname, void *retval_void)
         char msg[strlen(cmdname) + 1 +
                  sizeof ": unknown extended command."];
         sprintf(msg, "%s: unknown extended command.", cmdname);
-        curses_msgwin(msg);
+        curses_msgwin(msg, krc_notification);
         *retval = NULL; /* break out of the loop */
     }
 }
@@ -496,7 +496,7 @@ static void
 show_whatdoes(void)
 {
     char buf[BUFSZ];
-    int key = curses_msgwin("What command?");
+    int key = curses_msgwin("What command?", krc_keybinding);
 
     if (key > KEY_MAX || !keymap[key])
         snprintf(buf, BUFSZ, "'%s' is not bound to any command.",
@@ -504,7 +504,7 @@ show_whatdoes(void)
     else
         snprintf(buf, BUFSZ, "'%s': %s - %s", friendly_keyname(key),
                  keymap[key]->name, keymap[key]->desc);
-    curses_msgwin(buf);
+    curses_msgwin(buf, krc_notification);
 }
 
 
@@ -560,7 +560,8 @@ dostop(void)
 #ifndef WIN32
     if (ui_flags.no_stop) {
 #endif
-        curses_msgwin("Process suspension is disabled on this instance.");
+        curses_msgwin("Process suspension is disabled on this instance.",
+                      krc_notification);
 #ifndef WIN32
         return;
     }
@@ -580,14 +581,16 @@ dotogglepickup(void)
         nhlib_find_option(nh_get_options(), "autopickup");
 
     if (!option) {
-        curses_msgwin("Error: No autopickup option found.");
+        curses_msgwin("Error: No autopickup option found.",
+                      krc_notification);
         return;
     }
 
     val.b = !option->value.b;
     curses_set_option("autopickup", val);
 
-    curses_msgwin(val.b ? "Autopickup now ON" : "Autopickup now OFF");
+    curses_msgwin(val.b ? "Autopickup now ON" : "Autopickup now OFF",
+                  krc_notification);
 }
 
 
@@ -660,7 +663,7 @@ read_keymap(void)
             /* old version of the keymap, with dangerously wrong keybindings */
             curses_msgwin
                 ("keymap.conf has changed format. Your keybindings have "
-                 "reverted to defaults.");
+                 "reverted to defaults.", krc_notification);
             init_keymap();
             write_keymap();
             return FALSE;
@@ -727,7 +730,8 @@ read_keymap(void)
     return TRUE;
 
 badmap:
-    curses_msgwin("Bad/damaged keymap.conf. Reverting to defaults.");
+    curses_msgwin("Bad/damaged keymap.conf. Reverting to defaults.",
+                  krc_notification);
     init_keymap();
     return FALSE;
 }
@@ -965,7 +969,7 @@ command_settings_menu(struct nh_cmd_desc *cmd)
             keymap[selection[0]] = NULL;
         else if (selection[0] == -1) {  /* add a key */
             sprintf(buf, "Press the key you want to use for \"%s\"", cmd->name);
-            i = curses_msgwin(buf);
+            i = curses_msgwin(buf, krc_keybinding);
             if (i == KEY_ESCAPE || i > KEY_MAX)
                 continue;
             if (keymap[i]) {

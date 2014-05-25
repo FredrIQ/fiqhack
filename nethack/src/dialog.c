@@ -295,8 +295,8 @@ curses_msgwin_validator(int key, void *unused)
 }
 
 int
-curses_msgwin(const char *msg)
+curses_msgwin(const char *msg, enum keyreq_context context)
 {
     return curses_msgwin_generic(msg, curses_msgwin_validator, NULL, 0,
-                                 krc_msgwin);
+                                 context);
 }

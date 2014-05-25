@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-17 */
+/* Last modified by Alex Smith, 2014-05-25 */
 /* Copyright (c) Daniel Thaler, 2012 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -15,11 +15,12 @@ net_loadgame(void)
 
     gamelist = nhnet_list_games(FALSE, FALSE, &size);
     if (!gamelist) {
-        curses_msgwin("Failed to retrieve the list of saved games.");
+        curses_msgwin("Failed to retrieve the list of saved games.",
+                      krc_notification);
         return;
     }
     if (!size) {
-        curses_msgwin("No saved games found.");
+        curses_msgwin("No saved games found.", krc_notification);
         return;
     }
 

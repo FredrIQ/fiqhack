@@ -942,7 +942,7 @@ curses_raw_print(const char *str)
     fprintf(stderr, strchr(str, '\n') ? "%s" : "%s\n", str);
     refresh();
 
-    curses_msgwin(str);
+    curses_msgwin(str, krc_notification);
 }
 
 

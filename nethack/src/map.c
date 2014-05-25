@@ -411,11 +411,11 @@ curses_getpos(int xorig, int yorig, nh_bool force, const char *goal)
 
                 sprintf(printbuf, "Can't find dungeon feature '%c'.",
                         (char)key);
-                curses_msgwin(printbuf);
+                curses_msgwin(printbuf, krc_notification);
             } else {
                 sprintf(printbuf, "Unknown targeting key%s.",
                         !force ? " (ESC to abort)" : "");
-                curses_msgwin(printbuf);
+                curses_msgwin(printbuf, krc_notification);
             }
         }
         /* fall through; an invalid command at the direction screen shouldn't
