@@ -1,5 +1,5 @@
 About this document:
-Last modified by Derrick Sund, 2014-03-04
+Last modified by Alex Smith, 2014-05-29
 
 Copyright (C) 2013 Alex Smith.
 
@@ -103,7 +103,11 @@ listed below.
           * Extra vertical space will be used to display more messages at once
             (cutting down on the need to space through messages at the
             infamous `--More--` prompt, and to present more information in the
-            status area.
+            status area.  If you have even more vertical space than that, the
+            spare space will be used for mouselook (showing information about
+            the map square the mouse is pointing over), and for reminders
+            about the controls.  (New players are recommended to use very
+            vertically large terminals.)
         
           * If you have spare horizontal space, it is used to maintain a
             permanent display of the inventory and to show information about
@@ -183,7 +187,7 @@ listed below.
       * It's now harder to do things that are normally bad ideas by mistake –
         but it's still possible to do them intentionally.  For instance,
         moving towards a shopkeeper is interpreted as "pay" (`p`) rather than
-        "fight" (`F`); you'd need to give the `F` inentionally if you wanted
+        "fight" (`F`); you'd need to give the `F` intentionally if you wanted
         to attack.  Likewise, moving into lava (when not levitating, confused,
         or the like) needs an `m` prefix, or the game will give a warning and
         your character will wisely just stand there.
@@ -263,22 +267,27 @@ listed below.
 Build Instructions
 ==================
 
-UNIX/Linux
-----------
+UNIX/Linux/Mac OS X
+-------------------
 
 You will need to install NetHack 4's dependencies: zlib (which is probably
 installed already, but you may need to get its development headers from your
 package manager), and (if you want a working server binary) postgresql and
-pgcrypto.  You also need development headers for those libraries.  If you don't
-care about the server working, you can do without postgresql; you'll get
-compile errors as it tries to compile the server, but the programs that do
-install (including the game itself, which can run locally without needing to
-connect to a server) will work fine.
+pgcrypto.  You also need development headers for those libraries.
 
-If you want to build the tiles port, you will also need to install version 2
-of the Simple DirectMedia Layer; it may be available in your package manager,
-or else you could download the source code from http://www.libsdl.org and
-compile it yourself.
+NetHack 4 also requires a working libjansson library (available from
+http://www.digip.org/jansson), and its development headers.  However, both of
+those ship with NetHack 4; to use those copies, you can give `--with=jansson`
+as an option to `aimake`.  (Leaving that option absent, or giving
+`--without=jansson`, means you will have to install libjansson by yourself.)
+
+If you want to build the tiles or faketerm ports (the default), you will also
+need to install version 2 of the Simple DirectMedia Layer; it may be available
+in your package manager, or else you could download the source code from
+http://www.libsdl.org and compile it yourself.  Otherwise, you can specify
+`--without=gui` as an option to `aimake` to build just the console port (which
+is built either way), and disable the tiles ports.  Note that the tiles ports
+do not currently work on Mac OS X.
 
 Assuming you just want to run NetHack 4 from your home directory, from the top
 source directory, run:
@@ -287,16 +296,26 @@ source directory, run:
     cd build
     ../aimake -i ~/nethack4 .. # or wherever you want
 
-Currently, system-wide installing (one installation for all users with shared
-high scores and bones, how NetHack is traditionally installed) is slightly
-nontrivial due to problems with permissions, and thus is not recommended.  If
-you want to try it, I recommend reading aimake's documentation:
+If you want to install for all users, you will need to tell `aimake` which
+location to install it into, and how to elevate its permissions:
 
-    aimake --documentation
+    # as a regular user, not root
+    mkdir build
+    cd build
+    ../aimake -i /usr/local -S su ..    # or perhaps -S sudo
+
+Note that this requires a group `games` to exist on your system, and contain
+no normal users, in order to ensure security of the bones files and high score
+tables.  This is the case on most Linux distributions, but not on all
+(e.g. Gentoo), and may not be the case on UNIX.
+
+To run the console port, use `nethack4`.  For the tiles/faketerm ports, use
+`nethack4-sdl`.
 
 If you want to run your own server (which is only necessary/useful if you want
 people to be able to connect to your NetHack 4 server from other computers,
-rather than running locally), you'll also need to set up the postgresql
+rather than running locally), you'll need to give `--with=server` as a
+command-line option to `aimake`, and also need to set up the postgresql
 database:
 
     su postgres             # or any other way to elevate your permissions
@@ -339,6 +358,7 @@ The easiest way to stop the `nethack4-server` binary is to run
 `nethack4-server -k`, which will automatically work out which process is the
 server from its pidfile, and tell it to stop.
 
+
 Windows
 -------
 
@@ -374,15 +394,17 @@ you just created.
 Once you've done this, open a command prompt, change to the build directory,
 and type:
 
-    perl ../nethack4/aimake -i ../install --directory-layout=single_directory
+    perl ../nethack4/aimake -i ../install --with=jansson --directory-layout=single_directory
 
 aimake should compile and install the entirety of NetHack 4 for you into the
-install directory.  In order to run it, change directory to the install
-directory, and type `nethack4`.
+install directory.  In order to run the console port, change directory to the
+install directory, and type `nethack4`.  For the tiles/faketerm port, use
+`nethack4-sdl.exe`.
 
 Note that despite the best efforts of the rendering library, the game is quite
-slow to render on recent versions of Windows; this is because the Windows
-console itself is prety slow.  (For a comparison, you can try running a
-command that produces a lot of text, such as `perl ../nethack4/aimake
+slow to render on the console recent versions of Windows; this is because the
+Windows console itself is prety slow.  (For a comparison, you can try running
+a command that produces a lot of text, such as `perl ../nethack4/aimake
 --documentation`, and observing how long it takes to scroll the screen when
-you press the spacebar.)
+you press the spacebar.)  The faketerm port somehow manages to be faster, even
+though it too is fairly slow.

@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2014-05-23
+# Last modified by Alex Smith, 2014-05-29
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -6,6 +6,25 @@
     options => {
         packagename => 'nethack4',
         WIZARD => 'wizard', # change to change who can use wizard mode
+    },
+    features => {
+        server => {
+            description => "Build a server executable (Linux only)",
+            object => qr=^path:nethack_server/=,
+            default => 0,
+        },
+        jansson => {
+            description => "Use the provided rather than system libjansson",
+            object => qr=^path:libjansson/=,
+            default => 0,
+        },
+        gui => {
+            description => "Build tiles and faketerm ports (requires SDL2)",
+            object => qr=^path:(?:tilesets/(?:dat/ | src/.*tile(?:text)?\.c
+                                                   | util/.*tileset)
+                                | libuncursed/src/plugins/sdl)=x,
+            default => 1,
+        },
     },
     rules => {
         _iflags => {
@@ -60,6 +79,7 @@
                        'searchlib:png:symbol:png_create_write_struct',
                        'searchlib:pq:symbol:PQsetdbLogin',
                        'searchlib:pthread:symbol:pthread_create',
+                       'searchlib:jansson:symbol:json_loads',
                        'searchlib:SDL2:symbol:SDL_Init',
                        'searchlib:ws2_32:symbol:connect'],
             outdepends => [],
@@ -134,7 +154,15 @@
                         # lev_main to replace it with the filename.
                         'optpath:-o :bpath:libnethack/dat/ ',
                         'optpath::'],
-            output => qr/^Wrote '(.*)'.$/,
+            actions => [
+                {
+                    output => qr/^Wrote '(.*)'.$/,
+                },
+                {
+                    output => 'optionset:nhdata_levfiles',
+                    outdepends => qr/^Wrote '(.*)'.$/,
+                },
+            ],
         },
         _levfile_command_line_argument => {
             object => qr/^bpath:.*\.lev$/,
@@ -146,7 +174,8 @@
         },
         _git_hash => {
             object => 'optionset:specific_version',
-            command => ["cmd:git", "optstring:rev-parse HEAD"],
+            command => ["cmd:git", "optstring:rev-parse HEAD",
+                        "sys:always_rebuild"],
             on_failure => 'conditional',
             in_subdir => 'path:',
             depends => 'optstring: ',
@@ -225,15 +254,10 @@
                         "optpath::"],
             output => 'bpath:libnethack/dat/dungeon',
         },
-        _nhdata_levfiles => {
-            object => "bpath:libnethack/util/dlb_main.c/dlb_main$exeext",
-            command => ["intcmd:listtree", "sys:rebuild_late",
-                        "optpath::bpath:libnethack/dat"],
-            depends => qr/^(.+\.lev)$/s,
-        },
         _nhdata => {
             command => ["bpath:libnethack/util/dlb_main.c/dlb_main$exeext",
                         "optpath:cf :bpath:libnethack/dat/nhdat",
+                        "optionset:nhdata_levfiles",
                         "bpath:libnethack/dat/data",
                         "bpath:libnethack/dat/dungeon",
                         "bpath:libnethack/dat/oracles",
@@ -330,6 +354,26 @@
                         "optpath::bpath:readme-saves"],
             output => "bpath:readme-saves",
         },
+        _main_executable_link => {
+            # We're trying to install a symlink from nethack4-sdl to nethack4.
+            # Thus we first need a link from nethack4 to main, so that this
+            # works correctly regardless of the platform's symlink behaviour.
+            command => ["intcmd:symlink",
+                        "optpath:-o:bpath:nethack/src/main.c/nethack4$exeext",
+                        "optpath::bpath:nethack/src/main.c/main$exeext",
+                        "bpath:nethack/src/main.c/main$exeext"],
+            output_from_optpath => '-o',
+            verb => 'symlinked',
+        },
+        _sdl_link => {
+            command => ["intcmd:symlink",
+                        "optpath:-o:bpath:nethack/src/main.c/nethack4-sdl$exeext",
+                        "optpath::bpath:nethack/src/main.c/nethack4$exeext",
+                        "bpath:nethack/src/main.c/nethack4$exeext",
+                        "bpath:tilesets/dat/fonts/font14.png"],
+            output_from_optpath => '-o',
+            verb => 'symlinked',
+        },
         install_executables => undef, # we don't want to install most of them
         # but we don't override install_libraries
         _install_main => {
@@ -337,6 +381,10 @@
             install_dir => "gamesbindir",
             install_name => "nethack4$exeext",
             install_elevation => "games",
+        },
+        _install_sdl_link => {
+            object => "bpath:nethack/src/main.c/nethack4-sdl$exeext",
+            install_dir => "gamesbindir",
         },
         _install_server => {
             object => "bpath:nethack_server/src/srvmain.c/srvmain$exeext",

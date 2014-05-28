@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2013-12-29
+Last modified by Alex Smith, 2014-05-29
 
 Copyright (C) 2013 Alex Smith.
 
@@ -87,6 +87,11 @@ Basically, we like NetHack too much to want to let it die.  Using only a minor
 modification to the name (adding the "4") lets us signify that we're trying to
 keep it alive, rather than abandoning it in favour of an alternative.
 
+(Incidentally, the DevTeam are aware of the variant, and have not objected to
+the name.  They spell it "NetHack4", with no space; sometimes, we do too.
+This helps to be unambiguous if you want to distinguish NetHack 4 from
+DevTeam-released versions of NetHack.)
+
 As an additional historical note, the name "NetHack" was chosen because it was
 a version of Hack which was coordinated over the Internet (especially Usenet).
 Nowdays, the DevTeam have mostly abandoned online communication with the
@@ -135,12 +140,19 @@ development versions) is available from
 is also now a [bug tracker][4], where you can read or report bugs, or submit
 patches.
 
+Sometimes, interim development projects take place on other branches, because
+the "nicehack" branch is expected to be at least somewhat playable.  In
+particular, we often use a "savebreak" branch for development that is expected
+to break the save system (either because the save system itself does not work,
+or because the save format changes so often that a saved game might not be
+loadable on the next day).
+
 You can also send emails to ais523.  The email address is not written here
 directly in the hope of confusing spambots, but it's the most obvious one that
 can be formed from the username "ais523" and the domain name "nethack4.org".
 
 If you want to discuss the game or its development, we also have an IRC
-channel, #acehack on irc.freenode.net; many of the developers idle there, and
+channel, #nethack4 on irc.freenode.net; many of the developers idle there, and
 many discussions are made there too.
 
 Finally, you can comment on Usenet, at rec.games.roguelikes.nethack.  Make
@@ -223,10 +235,11 @@ not sure if anyone has tried).  As such, it is probably best to install a
 separate terminal emulator / telnet / ssh package.  The most commonly used is
 [PuTTY][6].  Note that PuTTY's defaults are somewhat dubious (e.g. the cursor
 looks a little out of place), so it may need some amount of configuration in
-order to provide the best play experience.  Note that it has something called
-"NetHack mode"; this is a workaround for keybinding issues in considerably
-older versions of NetHack, and may well be more harmful than useful, so try to
-get things working with it turned off first, and use it only as a last resort.
+order to provide the best play experience.  Note also that it has something
+called "NetHack mode"; this is a workaround for keybinding issues in
+considerably older (pre-3.4.3) versions of NetHack, and is more harmful than
+useful with NetHack 4, so try to get things working with it turned off first,
+and use it only as a last resort.
 
 
 How can I compile the game for local play?
@@ -244,10 +257,12 @@ derivative).  You'll need some dependencies in addition to NetHack 4 itself: a
 working C toolchain and zlib.  (You'll also need postgresql if you're planning
 to run your own server, but you probably aren't; for local play, the game
 works just fine without a server to connect to.)  Previous versions of NetHack
-4 depended on the [libjansson library][7], but the source to this library is
-now shipped with NetHack 4 in order to avoid library dependency problems;
-previous versions also depended on libncursesw, but that dependency no longer
-exists (NetHack 4 now uses its own rendering library, named libuncursed).
+4 depended on the [libjansson library][7].  You can still use your own copy of
+libjansson, but the source to this library is now shipped with NetHack 4 in
+order to reduce library dependency issues, and you can tell the build system
+to use that copy instead.  Previous versions of NetHack 4 also depended on
+libncursesw, but that dependency no longer exists (NetHack 4 now uses its own
+rendering library, named libuncursed).
 
 To build a binary capable of tiles play, you will also need version 2 of the
 [Simple DirectMedia Layer][8] library (and its development headers and (on
@@ -296,11 +311,9 @@ need to make this request known to libuncursed via any of the following
 methods:
 
   * Use the `--interface sdl` command line option when starting NetHack 4; or
-  * Rename the executable to end `-sdl` (i.e. `nethack4-sdl.exe`); this is
-    probably the easiest method on Windows; or
-  * Create a symbolic link `nethack4-sdl` that links to the NetHack 4
-    executable, and use it to launch the game rather than running the game
-    directly.
+  * Use an executable whose name ends `-sdl` (the build system will create an
+    executable or symlink `nethack4-sdl` for this purpose if building in tiles
+    mode).
 
 The `sdl` interface is a "fake terminal" port that simulates a terminal
 itself, rather than using an actual terminal; this allows you to avoid any
@@ -321,12 +334,32 @@ share the same option files.)  The `libuncursed_sdl` interface plugin is
 currently recommended for tiles play (being the only current graphical
 interface plugin for libuncursed).
 
-The tiles port is currently very new and experimental; probably the major
-drawbacks with it at the moment are that only one tileset is available (two
-others exist in the source distribution but neither works correctly), and that
-it's currently impossible to resize the area of the screen that is used to
-draw tiles.  Both these problems are likely to be fixed in time, but perhaps
-not immediately.
+There are currently two tilesets available: the "Slash'EM" tileset is based on
+the tiles that shipped with previous versions (Slash'EM has a greater
+selection of tiles available than NetHack, which is why its tiles are used);
+and the "DawnHack" tileset is a new tileset by Andrew Rios.
+
+Noe that as libuncursed plugins do not currently work correctly on Mac OS X,
+the tiles version does not work there either.
+
+
+Why is the build system building things I didn't expect it to?
+--------------------------------------------------------------
+
+There are two main causes of this.  If your problem is that it's building
+shared libraries repeatedly, this is because a shared library is used for two
+different purposes on some OSes: being loaded at runtime, and being read at
+compile time to determine how to link against it.  There are a bunch of
+circular dependencies between libraries in NetHack 4, so the build system
+sometimes creates one or more provisional copies of a library in order to get
+all the dependencies correctly figured out.
+
+Alternatively, if your problem is that it seems to be building the tiles code
+and you're not running a tiles install, this is because the display engine
+needs to at least be aware of tile *numbers* to work, and those are calculated
+by the tiles code.  Thus, at least enough of the tiles code needs building for
+the numbers to be calculated.  The tiles images themselves are not being
+built.
 
 
 Gameplay
@@ -381,7 +414,8 @@ information that should be theoretically available anyway, but maybe you do.
 Apart from that, some of the largest changes were added as compensation to
 balance gameplay elements that were balanced via means of perverse interface
 in 3.4.3; for instance, amnesia now drains skill points, and floating eyes can
-protect themselves from melee attacks.
+protect themselves from melee attacks.  There are also noticeable improvements
+to the monster AI, especially where pets are involved.
 
 
 Doesn't making the interface less hostile take away the challenge?
@@ -413,6 +447,66 @@ are a lot of possible actions.  Note that if you want to do something with an
 item, you can press `i` to view your inventory, then the item's inventory
 letter, in order to see a list of possible actions with that item.
 
+If you expand your terminal very, very high vertically (at least 37 rows, but
+more will give more space for information), the spare space will be used to
+show reminders of game commands.  New players may want to do this while they
+are learning the game.  (This also works on the tiles port, but you will need
+to expand the window still higher, as the tiles take up more space than a
+character-based view: 40 rows on the smallest tile size, or 64 rows with 32x32
+tiles.)
+
+
+How do I save or quit the game?
+-------------------------------
+
+The answer to this question is a little unusual, for two reasons.  NetHack is
+a "roguelike" game, and one common feature of roguelikes is that they have
+permadeath; when you die, that's it for that character, and there is no way to
+reload a save and carry on.  Likewise, you cannot go back to an earlier save
+even while your character is alive; any actions you do have permanent effects.
+
+In most roguelikes, including earlier versions of NetHack, and both NitroHack
+and AceHack (NetHack 4's predecessors), this is implemented via a
+"save-and-exit" command that saves the game, and a game load command that also
+deletes the save file.  Thus, saving would exit the game, and quitting the
+game would lose you your character (because the save file was deleted when it
+was loaded).
+
+In NetHack 4, we take a different approach: the save file always exists on
+disk, and is saved continuously with almost every key you press.  Thus, the
+equivalent of saving is to just close the game (which is why the `S` command,
+which traditionally saves and exits NetHack, has its confirm option described
+as "close the game").  You can use the `S` command to do this, or you can just
+outright close the game window and it'll have the same effect.  (This should
+greatly reduce the risk of losing a game to a network disconnection.)  You can
+even save in the middle of a turn this way (although note that this is a
+relatively new feature that has not been fully tested, so paranoid players
+might want to restrict themselves to the `S` command).
+
+If you actually did want to delete your save file and effectively kill your
+character in the process, there's a new `!` option to the `S` command to do
+that.  I'm not sure why you would (perhaps because it doesn't carry as large a
+score penalty as dying?), but the option's there.
+
+
+Where are the save files / recordings / dump files?
+---------------------------------------------------
+
+On Linux and UNIX, by default, `~/.config/NetHack4/save`,
+`~/.config/NetHack4/log`, `~/.config/NetHack4/dumps` respectively.  (If
+misconfigured, it's possible that the game will put dump files in your home
+directory.)  The dump files record details of games that have ended, whether
+in victory or defeat.
+
+Windows works the same way, except that instead of `~/.config`, it uses
+whatever directory `CSIDL_APPDATA` refers to.  This is normally something like
+`C:\Users\username\AppData\Roaming`, although it depends on how Windows is
+configured.
+
+There's often a `save` folder in the NetHack 4 install directory (depending on
+how it was installed), but this is used for save information common to all
+users: bones files, xlogfiles, that sort of thing.
+
 
 How do I eat an item from the ground?
 -------------------------------------
@@ -443,12 +537,30 @@ This adds a new dimension to the movement command Holy War whose implications
 have not yet been discovered in practice.
 
 
+What are the "x" and "[OK]" decorations on windows?
+---------------------------------------------------
+
+Hints that you can meaningfully press `Escape` or `Return`, respectively, to
+accept or cancel the dialog box.  They're also used for NetHack 4's
+rudimentary mouse support – the game is not fully playable with the mouse yet
+(in particular, we're thinking about how the mouse should best interact with
+the game map) – but you can use them to close windows with the mouse.  Several
+other things are clickable too (e.g. menus and items in the inventory
+sidebar).  Mouse support is something that is likely to evolve through future
+versions.
+
+If you dislike the decorations, you can turn them off by disabling mouse
+support in the options (option `mouse`).
+
+
 How do I configure the game options?
 ------------------------------------
 
 NitroHack changed the options file to not be human-editable (we're not 100%
 sure why); rather, if you change the option settings using the `o` entry of
-the main menu, changes will persist into future games.
+the main menu, changes will persist into future games.  (Changes to game
+options using the `O` command last for only the current game, although will
+survive past a save and reload.)
 
 There's also a new sort of option called a "birth option", which changes
 settings for newly started games; for instance, you can play with Elbereth not
@@ -513,8 +625,9 @@ remote server (which is necessary to play tiles on a server); the code for
 making connections is in the client by default, and at the moment, the only
 obstacle to doing this is that there are no servers that accept connections
 from remote clients (nethack4.org firewalls them out, because the server has
-not been security audited yet).  The server/client code is used internally on
-nethack4.org; connecting to it via telnet or ssh spawns a client, which
+not been security audited yet, and we have reason to believe that there are
+several security bugs in the API).  The server/client code is used internally
+on nethack4.org; connecting to it via telnet or ssh spawns a client, which
 connects to the separate server daemon internally.
 
 There are eight separate directories in the distribution, which handle the
