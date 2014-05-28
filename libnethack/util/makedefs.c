@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-06 */
+/* Last modified by Alex Smith, 2014-05-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) M. Stephenson, 1990, 1991.                       */
 /* Copyright (c) Dean Luick, 1990.                                */
@@ -900,6 +900,18 @@ do_readonly(const char *outfile)
     fprintf(ofp, "const struct nh_enum_option timezone_spec =\n");
     fprintf(ofp, "    { timezone_list, "
             "sizeof timezone_list / sizeof *timezone_list };\n\n");
+
+    /* polyinit */
+    fprintf(ofp, "\nconst struct nh_listitem polyinit_list[] = {\n");
+    fprintf(ofp, "    {-1, \"(off)\"},\n");
+    for (i = 0; mons[i].mlet; i++) {
+        if (!(mons[i].mflags2 & M2_NOPOLY))
+            fprintf(ofp, "    {%d, \"%s\"},\n", i, mons[i].mname);
+    }
+    fprintf(ofp, "};\n");
+    fprintf(ofp, "const struct nh_enum_option polyinit_spec =\n");
+    fprintf(ofp, "    { polyinit_list, "
+            "sizeof polyinit_list / sizeof *polyinit_list };\n\n");
 
     /* x_maze_max, y_maze_max */
     fprintf(ofp, "const int x_maze_max = %d;\n", (COLNO - 1) & ~1);

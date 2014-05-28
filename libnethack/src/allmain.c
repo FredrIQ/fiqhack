@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -304,6 +304,24 @@ nh_create_game(int fd, struct nh_option_desc *opts)
     log_newgame(birthday, seed);
 
     newgame(birthday);
+
+    /* Handle the polyinit option. */
+    if (flags.polyinit_mnum != -1) {
+        int light_range;
+
+        polymon(flags.polyinit_mnum, FALSE);
+
+        /* polymon() doesn't handle light sources. Do that here. */
+
+        light_range = emits_light(youmonst.data);
+
+        if (light_range == 1)
+            ++light_range; /* matches polyself() handling */
+
+        if (light_range)
+            new_light_source(level, u.ux, u.uy, light_range, LS_MONSTER,
+                             &youmonst);
+    }
 
     /* We need a full backup save after creating the new game, because we
        don't have anything to diff against. */

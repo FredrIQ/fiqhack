@@ -316,6 +316,8 @@ polyself(boolean forcecontrol)
     }
 
 made_change:
+    /* If you change this algorithm, change the matching algorithm in
+       nh_create_game(). */
     new_light = Upolyd ? emits_light(youmonst.data) : 0;
     if (old_light != new_light) {
         if (old_light)
