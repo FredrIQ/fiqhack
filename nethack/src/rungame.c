@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-29 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -154,13 +154,13 @@ curses_request_command(
      *   entered by the user is "repeat", in which case we act as though we
      *   weren't interrupted.
      */
-    if (!interrupted && !completed && !repeats_remaining) {
-        callback(&(struct nh_cmd_and_arg){"repeat", arg}, callbackarg);
-        return;
-    }
-    if (!interrupted && repeats_remaining && --repeats_remaining) {
-        callback(&(struct nh_cmd_and_arg){"repeat", arg}, callbackarg);
-        return;
+    if ((!interrupted && !completed && !repeats_remaining) ||
+        (!interrupted && repeats_remaining && --repeats_remaining)) {
+        if (settings.animation == ANIM_INSTANT ||
+            get_map_key(TRUE, TRUE, krc_interrupt_long_action) == ERR) {
+            callback(&(struct nh_cmd_and_arg){"repeat", arg}, callbackarg);
+            return;
+        }
     }
 
     /* This clears/sets repeats_remaining except when returning "repeat",

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-29 */
 /* Copyright (c) 2014 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -242,6 +242,12 @@ draw_extrawin(enum keyreq_context context)
            it. */
         hintline("If you were trying to move using the num"
                  "eric keypad, turn off NumLock."        );
+        break;
+
+    case krc_interrupt_long_action:
+        /* ----- "1234567890123456789012345678901234567890" */
+        hintline("To interrupt the command, press any key "
+                 "or click on the map."                  );
         break;
 
     case krc_getpos:

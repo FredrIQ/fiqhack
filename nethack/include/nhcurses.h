@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-29 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -127,7 +127,8 @@ enum autoable_boolean {
 
 /* Any extra space on the terminal is used to give advice about controls. This
    enum tracks the context in which a key is being requested, so as to be able
-   to give good advice. */
+   to give good advice. This is also used to implement the occasional special
+   case. */
 enum keyreq_context {
     krc_getdir,
     krc_getlin,
@@ -136,6 +137,7 @@ enum keyreq_context {
     krc_yn_generic,
     krc_count,
     krc_get_command,
+    krc_interrupt_long_action,
     krc_get_movecmd_direction,
     krc_getpos,
     krc_menu,
@@ -192,16 +194,39 @@ struct interface_flags {
     char username[BUFSZ];      /* username being used in connection-only mode */
 };
 
+/*
+ * Graphics sets for display symbols
+ */
+enum nh_text_mode {
+    ASCII_GRAPHICS,     /* ASCII only */
+    UNICODE_GRAPHICS,   /* Unicode; default symbols should be CP437 */
+    /* Tilesets, defaulting to Unicode if tiles are not available */
+    TILESET_DAWNHACK_16, /* DawnHack by DragonDePlatino */
+    TILESET_DAWNHACK_32, /* The same, upscaled */
+    /* Slash'EM has its own tilesets (many of which are unfinished) */
+    TILESET_SLASHEM_16,
+    TILESET_SLASHEM_32,
+    TILESET_SLASHEM_3D,
+};
+
+enum nh_animation {
+    ANIM_INSTANT,         /* no animation */
+    ANIM_INTERRUPTIBLE,   /* animate only interruptible events */
+    ANIM_ALL,             /* animate all events */
+    ANIM_SLOW,            /* animate all events, slowly */
+};
+
 struct settings {
     nh_bool end_own;    /* list all own scores */
     int end_top, end_around;    /* describe desired score list */
-    int graphics;
     int menu_headings;  /* ATR for menu headings */
     int msgheight;      /* requested height of the message win */
     int msghistory;     /* # of historic messages to keep for prevmsg display */
     int optstyle;       /* option display style */
 
     enum autoable_boolean sidebar;   /* whether to draw the inventory sidebar */
+    enum nh_text_mode graphics;      /* how to draw the map */
+    enum nh_animation animation;     /* when to delay */
 
     /* use bolded black instead of dark blue for CLR_BLACK */
     nh_bool darkgray;
@@ -264,21 +289,6 @@ struct curses_drawing_info {
     int num_effects;
 
     int bg_feature_offset;
-};
-
-/*
- * Graphics sets for display symbols
- */
-enum nh_text_mode {
-    ASCII_GRAPHICS,     /* ASCII only */
-    UNICODE_GRAPHICS,   /* Unicode; default symbols should be CP437 */
-    /* Tilesets, defaulting to Unicode if tiles are not available */
-    TILESET_DAWNHACK_16, /* DawnHack by DragonDePlatino */
-    TILESET_DAWNHACK_32, /* The same, upscaled */
-    /* Slash'EM has its own tilesets (many of which are unfinished) */
-    TILESET_SLASHEM_16,
-    TILESET_SLASHEM_32,
-    TILESET_SLASHEM_3D,
 };
 
 struct gamewin {
