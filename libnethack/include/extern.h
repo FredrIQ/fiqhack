@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-28 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1314,7 +1314,8 @@ extern void self_invis_message(void);
 extern void set_uasmon(void);
 extern void change_sex(void);
 extern void polyself(boolean);
-extern int polymon(int);
+extern int polymon(int, boolean);
+extern boolean touched_monster(int);
 extern void rehumanize(int how, const char *killer);
 extern int dobreathe(const struct nh_cmd_arg *);
 extern int dospit(const struct nh_cmd_arg *);

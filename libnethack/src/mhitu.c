@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-02 */
+/* Last modified by Alex Smith, 2014-05-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1203,7 +1203,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                 do_stone:
                     if (!Stoned && !Stone_resistance &&
                         !(poly_when_stoned(youmonst.data) &&
-                          polymon(PM_STONE_GOLEM))) {
+                          polymon(PM_STONE_GOLEM, TRUE))) {
                         Stoned = 5;
                         set_delayed_killer(STONING,
                                            killer_msg_mon(STONING, mtmp));

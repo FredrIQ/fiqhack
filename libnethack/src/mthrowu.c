@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-05-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -433,11 +433,8 @@ m_throw(struct monst *mon, int x, int y, int dx, int dy, int range,
                 }
             }
             if (hitu && singleobj->otyp == EGG) {
-                if (!Stone_resistance &&
-                    !(poly_when_stoned(youmonst.data) &&
-                      polymon(PM_STONE_GOLEM))) {
+                if (touched_monster(singleobj->corpsenm))
                     Stoned = 5;
-                }
             }
             action_interrupted();
             if (hitu || !range) {

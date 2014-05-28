@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-05-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -369,9 +369,11 @@ static void
 cprefx(int pm)
 {
     maybe_cannibal(pm, TRUE);
+    /* Note: can't use touched_monster here, Medusa acts differently on touching
+       and eating */
     if (touch_petrifies(&mons[pm]) || pm == PM_MEDUSA) {
-        if (!Stone_resistance &&
-            !(poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))) {
+        if (!Stone_resistance && !(poly_when_stoned(youmonst.data) &&
+                                   polymon(PM_STONE_GOLEM, TRUE))) {
             pline("You turn to stone.");
             done(STONING,
                  killer_msg(STONING,
@@ -1515,13 +1517,10 @@ fpostfx(struct obj *otmp)
             heal_legs();
         break;
     case EGG:
-        if (touch_petrifies(&mons[otmp->corpsenm])) {
-            if (!Stone_resistance &&
-                !(poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))) {
-                if (!Stoned)
-                    Stoned = 5;
-                set_delayed_killer(STONING, killer_msg_obj(STONING, otmp));
-            }
+        if (touched_monster(otmp->corpsenm)) {
+            if (!Stoned)
+                Stoned = 5;
+            set_delayed_killer(STONING, killer_msg_obj(STONING, otmp));
         }
         break;
     case EUCALYPTUS_LEAF:

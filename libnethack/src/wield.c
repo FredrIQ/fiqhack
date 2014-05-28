@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-22 */
+/* Last modified by Alex Smith, 2014-05-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -218,9 +218,8 @@ ready_weapon(struct obj *wep)
     if (!wep) {
         pline("You are empty %s.", body_part(HANDED));
         setuwep(NULL);
-    } else if (!uarmg && !Stone_resistance && wep->otyp == CORPSE &&
-               touch_petrifies(&mons[wep->corpsenm]) &&
-               !(poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))) {
+    } else if (!uarmg && wep->otyp == CORPSE &&
+               touched_monster(wep->corpsenm)) {
         /* Prevent wielding cockatrice when not wearing gloves --KAA */
         pline("You wield the %s corpse in your bare %s.",
               mons[wep->corpsenm].mname, makeplural(body_part(HAND)));

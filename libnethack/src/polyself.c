@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-05-28 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -14,8 +14,8 @@
 #include "hack.h"
 
 static void polyman(const char *, const char *);
-static void break_armor(void);
-static void drop_weapon(int);
+static void break_armor(boolean);
+static void drop_weapon(int, boolean);
 static void uunstick(void);
 static int armor_to_dragon(int);
 static void newman(void);
@@ -282,7 +282,7 @@ polyself(boolean forcecontrol)
         if (mntmp == PM_HUMAN)
             newman();   /* werecritter */
         else
-            polymon(mntmp);
+            polymon(mntmp, TRUE);
         goto made_change;       /* maybe not, but this is right anyway */
     }
 
@@ -300,7 +300,7 @@ polyself(boolean forcecontrol)
     if (!polyok(&mons[mntmp]) || (!forcecontrol && !rn2(5)) ||
         your_race(&mons[mntmp]))
         newman();
-    else if (!polymon(mntmp))
+    else if (!polymon(mntmp, TRUE))
         return;
 
     if (!uarmg) {
@@ -334,7 +334,7 @@ made_change:
 /* (try to) make a mntmp monster out of the player */
 /* returns 1 if polymorph successful */
 int
-polymon(int mntmp)
+polymon(int mntmp, boolean noisy)
 {
     boolean sticky = sticks(youmonst.data) && u.ustuck &&
         !Engulfed, was_blind = ! !Blind, dochange = FALSE;
@@ -342,13 +342,14 @@ polymon(int mntmp)
     int mlvl;
 
     if (mvitals[mntmp].mvflags & G_GENOD) {     /* allow G_EXTINCT */
-        pline("You feel rather %s-ish.", mons[mntmp].mname);
+        if (noisy)
+            pline("You feel rather %s-ish.", mons[mntmp].mname);
         exercise(A_WIS, TRUE);
         return 0;
     }
 
-    /* KMH, conduct */
-    break_conduct(conduct_polyself);
+    if (noisy)
+        break_conduct(conduct_polyself);     /* KMH, conduct */
 
     if (!Upolyd) {
         /* Human to monster; save human stats */
@@ -376,12 +377,13 @@ polymon(int mntmp)
     }
     if (dochange) {
         u.ufemale = !u.ufemale;
-        pline("You %s %s%s!",
-              (u.umonnum != mntmp) ? "turn into a" : "feel like a new",
-              (is_male(&mons[mntmp]) ||
-               is_female(&mons[mntmp])) ? "" : u.ufemale ? "female " :
-              "male ", mons[mntmp].mname);
-    } else {
+        if (noisy)
+            pline("You %s %s%s!",
+                  (u.umonnum != mntmp) ? "turn into a" : "feel like a new",
+                  (is_male(&mons[mntmp]) ||
+                   is_female(&mons[mntmp])) ? "" : u.ufemale ? "female " :
+                  "male ", mons[mntmp].mname);
+    } else if (noisy) {
         if (u.umonnum != mntmp)
             pline("You turn into %s!", an(mons[mntmp].mname));
         else
@@ -389,7 +391,8 @@ polymon(int mntmp)
     }
     if (Stoned && poly_when_stoned(&mons[mntmp])) {
         /* poly_when_stoned already checked stone golem genocide */
-        pline("You turn to stone!");
+        if (noisy)
+            pline("You turn to stone!");
         mntmp = PM_STONE_GOLEM;
         Stoned = 0;
         set_delayed_killer(STONING, NULL);
@@ -407,15 +410,18 @@ polymon(int mntmp)
     if (Stone_resistance && Stoned) {   /* parnes@eniac.seas.upenn.edu */
         Stoned = 0;
         set_delayed_killer(STONING, NULL);
-        pline("You no longer seem to be petrifying.");
+        if (noisy)
+            pline("You no longer seem to be petrifying.");
     }
     if (Sick_resistance && Sick) {
         make_sick(0L, NULL, FALSE, SICK_ALL);
-        pline("You no longer feel sick.");
+        if (noisy)
+            pline("You no longer feel sick.");
     }
     if (Slimed) {
         if (flaming(youmonst.data)) {
-            pline("The slime burns away!");
+            if (noisy)
+                pline("The slime burns away!");
             Slimed = 0L;
         } else if (mntmp == PM_GREEN_SLIME || unsolid(youmonst.data)) {
             /* do it silently */
@@ -431,10 +437,10 @@ polymon(int mntmp)
         turnstate.vision_full_recalc = TRUE;
     }
 
-    /* 
-       mlvl = adj_lev(&mons[mntmp]); We can't do the above, since there's no
-       such thing as an "experience level of you as a monster" for a
-       polymorphed character. */
+    /* mlvl = adj_lev(&mons[mntmp]);
+
+       We can't do the above, since there's no such thing as an "experience
+       level of you as a monster" for a polymorphed character. */
     mlvl = (int)mons[mntmp].mlevel;
     if (youmonst.data->mlet == S_DRAGON && mntmp >= PM_GRAY_DRAGON) {
         u.mhmax = In_endgame(&u.uz) ? (8 * mlvl) : (4 * mlvl + dice(mlvl, 4));
@@ -457,8 +463,8 @@ polymon(int mntmp)
 
     /* At this point, if we're wearing dragon scales, umonnum and thus uskin()
        will be set correctly, so break_armor will behave correctly. */
-    break_armor();
-    drop_weapon(1);
+    break_armor(noisy);
+    drop_weapon(1, noisy);
     if (hides_under(youmonst.data))
         u.uundetected = OBJ_AT(u.ux, u.uy);
     else if (youmonst.data->mlet == S_EEL)
@@ -485,8 +491,9 @@ polymon(int mntmp)
         uunstick();
     if (u.usteed) {
         if (touch_petrifies(u.usteed->data) && !Stone_resistance && rnl(3)) {
-            pline("No longer petrifying-resistant, you touch %s.",
-                  mon_nam(u.usteed));
+            if (noisy)
+                pline("No longer petrifying-resistant, you touch %s.",
+                      mon_nam(u.usteed));
             instapetrify(killer_msg(STONING,
                 msgcat("riding ", an(u.usteed->data->mname))));
         }
@@ -494,7 +501,7 @@ polymon(int mntmp)
             dismount_steed(DISMOUNT_POLY);
     }
 
-    if (flags.verbose) {
+    if (flags.verbose && noisy) {
         static const char use_thec[] = "Use the command #%s to %s.";
         static const char monsterc[] = "monster";
 
@@ -537,15 +544,18 @@ polymon(int mntmp)
         spoteffects(TRUE);
     if (Passes_walls && u.utrap && u.utraptype == TT_INFLOOR) {
         u.utrap = 0;
-        pline("The rock seems to no longer trap you.");
+        if (noisy)
+            pline("The rock seems to no longer trap you.");
     } else if (likes_lava(youmonst.data) && u.utrap && u.utraptype == TT_LAVA) {
         u.utrap = 0;
-        pline("The lava now feels soothing.");
+        if (noisy)
+            pline("The lava now feels soothing.");
     }
     if (amorphous(youmonst.data) || is_whirly(youmonst.data) ||
         unsolid(youmonst.data)) {
         if (Punished) {
-            pline("You slip out of the iron chain.");
+            if (noisy)
+                pline("You slip out of the iron chain.");
             unpunish();
         }
     }
@@ -553,71 +563,98 @@ polymon(int mntmp)
         (amorphous(youmonst.data) || is_whirly(youmonst.data) ||
          unsolid(youmonst.data) || (youmonst.data->msize <= MZ_SMALL &&
                                     u.utraptype == TT_BEARTRAP))) {
-        pline("You are no longer stuck in the %s.",
-              u.utraptype == TT_WEB ? "web" : "bear trap");
+        if (noisy)
+            pline("You are no longer stuck in the %s.",
+                  u.utraptype == TT_WEB ? "web" : "bear trap");
         /* probably should burn webs too if PM_FIRE_ELEMENTAL */
         u.utrap = 0;
     }
     if (webmaker(youmonst.data) && u.utrap && u.utraptype == TT_WEB) {
-        pline("You orient yourself on the web.");
+        if (noisy)
+            pline("You orient yourself on the web.");
         u.utrap = 0;
     }
     turnstate.vision_full_recalc = TRUE;
     see_monsters(FALSE);
     exercise(A_CON, FALSE);
     exercise(A_WIS, TRUE);
-    encumber_msg();
+    if (noisy)
+        encumber_msg();
     return 1;
 }
 
+/* Called when the player makes physical contact with bare skin with a monster
+   numbered mnum, or its corpse. Normally returns FALSE. Returns TRUE if the
+   player touched a *trice and wasn't saved via stone resistance or golem
+   transformation, in which case the caller should print appropriate messages
+   and then either call instapetrify(), or set Stoned and the delayed killer as
+   appropriate.
+
+   Also called when the player eats or is hit by an mnum egg. */
+boolean
+touched_monster(int mnum)
+{
+    return touch_petrifies(mons + mnum) && !Stone_resistance &&
+        !(poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM, TRUE));
+}
+
 static void
-break_armor(void)
+break_armor(boolean noisy)
 {
     struct obj *otmp;
 
     if (breakarm(youmonst.data)) {
         if ((otmp = uarm) != 0 && otmp != uskin()) {
-            pline("You break out of your armor!");
+            if (noisy)
+                pline("You break out of your armor!");
             exercise(A_STR, FALSE);
             setequip(os_arm, NULL, em_silent);
             useup(otmp);
         }
         if ((otmp = uarmc) != 0) {
             if (otmp->oartifact) {
-                pline("Your %s falls off!", cloak_simple_name(otmp));
+                if (noisy)
+                    pline("Your %s falls off!", cloak_simple_name(otmp));
                 setequip(os_armc, NULL, em_silent);
                 dropx(otmp);
             } else {
-                pline("Your %s tears apart!", cloak_simple_name(otmp));
+                if (noisy)
+                    pline("Your %s tears apart!", cloak_simple_name(otmp));
                 setequip(os_armc, NULL, em_silent);
                 useup(otmp);
             }
         }
         if (uarmu) {
-            pline("Your shirt rips to shreds!");
+            if (noisy)
+                pline("Your shirt rips to shreds!");
             useup(uarmu);
         }
     } else if (sliparm(youmonst.data)) {
         /* uskin check is paranoia */
         if (((otmp = uarm) != 0) && (otmp != uskin()) &&
             (racial_exception(&youmonst, otmp) < 1)) {
-            pline("Your armor falls around you!");
+            if (noisy)
+                pline("Your armor falls around you!");
             setequip(os_arm, NULL, em_silent);
             dropx(otmp);
         }
         if ((otmp = uarmc) != 0) {
-            if (is_whirly(youmonst.data))
-                pline("Your %s falls, unsupported!", cloak_simple_name(otmp));
-            else
-                pline("You shrink out of your %s!", cloak_simple_name(otmp));
+            if (noisy) {
+                if (is_whirly(youmonst.data))
+                    pline("Your %s falls, unsupported!", cloak_simple_name(otmp));
+                else
+                    pline("You shrink out of your %s!", cloak_simple_name(otmp));
+            }
             setequip(os_armc, NULL, em_silent);
             dropx(otmp);
         }
         if ((otmp = uarmu) != 0) {
-            if (is_whirly(youmonst.data))
-                pline("You seep right through your shirt!");
-            else
-                pline("You become much too small for your shirt!");
+            if (noisy) {
+                if (is_whirly(youmonst.data))
+                    pline("You seep right through your shirt!");
+                else
+                    pline("You become much too small for your shirt!");
+            }
             setequip(os_armu, NULL, em_silent);
             dropx(otmp);
         }
@@ -629,12 +666,14 @@ break_armor(void)
 
                 /* Future possiblities: This could damage/destroy helmet */
                 hornbuf = msgcat("horn", plur(num_horns(youmonst.data)));
-                pline("Your %s %s through %s %s.", hornbuf,
-                      vtense(hornbuf, "pierce"), shk_your(otmp),
-                      xname(otmp));
+                if (noisy)
+                    pline("Your %s %s through %s %s.", hornbuf,
+                          vtense(hornbuf, "pierce"), shk_your(otmp),
+                          xname(otmp));
             } else {
-                pline("Your %s falls to the %s!", helmet_name(otmp),
-                      surface(u.ux, u.uy));
+                if (noisy)
+                    pline("Your %s falls to the %s!", helmet_name(otmp),
+                          surface(u.ux, u.uy));
                 setequip(os_armh, NULL, em_silent);
                 dropx(otmp);
             }
@@ -643,19 +682,22 @@ break_armor(void)
     if (nohands(youmonst.data) || verysmall(youmonst.data)) {
         if ((otmp = uarmg) != 0) {
             /* Drop weapon along with gloves */
-            pline("You drop your gloves%s!", uwep ? " and weapon" : "");
-            drop_weapon(0);
+            if (noisy)
+                pline("You drop your gloves%s!", uwep ? " and weapon" : "");
+            drop_weapon(0, noisy);
             setequip(os_armg, NULL, em_silent);
             dropx(otmp);
         }
         if ((otmp = uarms) != 0) {
-            pline("You can no longer hold your shield!");
+            if (noisy)
+                pline("You can no longer hold your shield!");
             setequip(os_arms, NULL, em_silent);
             dropx(otmp);
         }
         if ((otmp = uarmh) != 0) {
-            pline("Your %s falls to the %s!", helmet_name(otmp),
-                  surface(u.ux, u.uy));
+            if (noisy)
+                pline("Your %s falls to the %s!", helmet_name(otmp),
+                      surface(u.ux, u.uy));
             setequip(os_armh, NULL, em_silent);
             dropx(otmp);
         }
@@ -663,11 +705,13 @@ break_armor(void)
     if (nohands(youmonst.data) || verysmall(youmonst.data) ||
         slithy(youmonst.data) || youmonst.data->mlet == S_CENTAUR) {
         if ((otmp = uarmf) != 0) {
-            if (is_whirly(youmonst.data))
-                pline("Your boots fall away!");
-            else
-                pline("Your boots %s off your feet!",
-                      verysmall(youmonst.data) ? "slide" : "are pushed");
+            if (noisy) {
+                if (is_whirly(youmonst.data))
+                    pline("Your boots fall away!");
+                else
+                    pline("Your boots %s off your feet!",
+                          verysmall(youmonst.data) ? "slide" : "are pushed");
+            }
             setequip(os_armf, NULL, em_silent);
             dropx(otmp);
         }
@@ -675,7 +719,7 @@ break_armor(void)
 }
 
 static void
-drop_weapon(int alone)
+drop_weapon(int alone, boolean noisy)
 {
     struct obj *otmp;
     struct obj *otmp2;
@@ -687,7 +731,7 @@ drop_weapon(int alone)
         if (!alone || cantwield(youmonst.data)) {
             struct obj *wep = uwep;
 
-            if (alone)
+            if (alone && noisy)
                 pline("You find you must drop your weapon%s!",
                       u.twoweap ? "s" : "");
             otmp2 = u.twoweap ? uswapwep : 0;
