@@ -62,6 +62,22 @@ set_tile_file(const char *tilefilename)
     set_tiles_tile_file(namebuf, TILES_PER_COL, TILES_PER_ROW);
 }
 
+/* A delayed-action curs_set; we don't show the cursor until just before we
+   request a key. This prevents it flickering, and prevents the tiles view
+   jumping around as we hide a message window. */
+int
+nh_curs_set(int visible)
+{
+    int old_want_cursor = ui_flags.want_cursor;
+
+    ui_flags.want_cursor = visible;
+
+    if (!visible && old_want_cursor)
+        curs_set(0);
+
+    return old_want_cursor;
+}
+
 void
 init_curses_ui(const char *dataprefix)
 {
@@ -86,7 +102,8 @@ init_curses_ui(const char *dataprefix)
     nonl();
     meta(stdscr, TRUE);
     leaveok(stdscr, TRUE);
-    orig_cursor = curs_set(1);
+    orig_cursor = curs_set(1);          /* not nh_curs_set */
+    ui_flags.want_cursor = 1;
     keypad(stdscr, TRUE);
 
     while (LINES < ROWNO + 3 || COLS < COLNO + 1) {
@@ -111,7 +128,7 @@ void
 exit_curses_ui(void)
 {
     cleanup_sidebar(TRUE);
-    curs_set(orig_cursor);
+    curs_set(orig_cursor); /* not nh_curs_set */
     endwin();
     basewin = NULL;
 }
@@ -735,8 +752,8 @@ nh_wgetch(WINDOW * win, enum keyreq_context context)
     int key = 0;
 
     draw_extrawin(context);
-    doupdate();
     do {
+        curs_set(ui_flags.want_cursor);
         key = wgetch(win);
 
         if (key == KEY_HANGUP) {

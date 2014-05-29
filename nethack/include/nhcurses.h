@@ -186,10 +186,12 @@ struct interface_flags {
     int connection_only;  /* connect to localhost, don't play normally */
     int no_stop;          /* do not allow the process to suspend */
 
-    /* These values are -1, -1 while the cursor is not over the map, or an x, y
-       pair while it is. */
+    /* These values are -1, -1 while the mouse cursor is not over the map, or an
+       x, y pair while it is. */
     int maphoverx;
     int maphovery;
+
+    nh_bool want_cursor;       /* delayed-action cursor setting */
 
     char username[BUFSZ];      /* username being used in connection-only mode */
 };
@@ -532,6 +534,7 @@ extern void init_curses_ui(const char *dataprefix);
 extern void exit_curses_ui(void);
 extern void set_font_file(const char *);
 extern void set_tile_file(const char *);
+extern int nh_curs_set(int);
 extern void nh_mvwvline(WINDOW *, int, int, int);
 extern void nh_mvwhline(WINDOW *, int, int, int);
 extern void nh_window_border(WINDOW *, int);

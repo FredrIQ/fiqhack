@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-29 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -1143,7 +1143,7 @@ static Uint8 palette[][3] = {
 static int
 update_region(struct sdl_tile_region *r)
 {
-    if (r->pixelshift_timestamp != cursor_timestamp) {
+    if (r->pixelshift_timestamp != cursor_timestamp && cursor_visible) {
         /* Recalculate the pixel shift. We want the relative position of the
            cursor within the region to be the same as the relative position of
            the region within its location. */

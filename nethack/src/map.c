@@ -61,7 +61,7 @@ get_map_key(nh_bool place_cursor, nh_bool report_clicks,
 
     if (player.x && place_cursor) {     /* x == 0 is not a valid coordinate */
         wmove(mapwin, player.y, player.x);
-        curs_set(1);
+        nh_curs_set(1);
     }
 
     while (1) {
@@ -95,9 +95,9 @@ curses_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy)
 
     if (ux >= 0) {
         wmove(mapwin, uy, ux);
-        curs_set(1);
+        nh_curs_set(1);
     } else
-        curs_set(0);
+        nh_curs_set(0);
     wnoutrefresh(mapwin);
 }
 
@@ -349,7 +349,7 @@ curses_getpos(int xorig, int yorig, nh_bool force, const char *goal)
 
     while (1) {
         dx = dy = 0;
-        curs_set(1);
+        nh_curs_set(1);
         key = get_map_key(FALSE, TRUE, krc_getpos);
         if (key == KEY_ESCAPE || key == '\x1b') {
             cx = cy = -10;
