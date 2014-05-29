@@ -330,6 +330,19 @@ comma-separated sequence of keys (e.g. 'xuse_by_object,config_option:libdir').
 On large projects, this is considerably faster than dumping the entire
 statefile if you are only interested in a small portion of it.
 
+=item B<--config-only>
+
+Causes aimake to do nothing but record persistent options in the statefile. This
+lets you incorporate aimake into build systems that expect a "configure, make,
+sudo make install" workflow, e.g.:
+
+    ../aimake --config-only -i prefix
+    ../aimake
+    sudo ../aimake --install-only -i
+
+Note that the use of B<--install-only> allows aimake to be run
+successfully as root; normally it refuses to be run with root permissions.
+
 =item B<--ignore-builtin-config>
 
 Ignore all the built-in rules and options, reading configuration only from the
@@ -3255,7 +3268,7 @@ $| = 1;
 select STDOUT;
 
 my ($opt_verbose, $opt_install, $opt_prefix, $opt_dump, @opt_warnings,
-    $opt_ignore_builtin_config, $opt_version, $opt_dlayout,
+    $opt_ignore_builtin_config, $opt_version, $opt_dlayout, $opt_config_only,
     $opt_install_only, $opt_elevate_permissions, $opt_specific_exit_status,
     $opt_nocr, @opt_rebuild, $opt_documentation, $opt_license,
     @opt_with, @opt_without, @opt_with_default);  # options
@@ -6093,6 +6106,7 @@ $opt_install = undef;
 $opt_prefix = undef;
 $opt_dump = undef;
 $opt_install_only = 0;
+$opt_config_only = 0;
 $opt_elevate_permissions = undef;
 $opt_ignore_builtin_config = 0;
 $opt_specific_exit_status = 0;
@@ -6113,6 +6127,7 @@ GetOptions('verbose|v:+' => \$opt_verbose,
            'with-default=s' => \@opt_with_default,
            'elevate-permissions|S=s' => \$opt_elevate_permissions,
            'install-only' => \$opt_install_only,
+           'config-only' => \$opt_config_only,
            'destdir=s' => \$opt_prefix,
            'dump-status:s' => \$opt_dump,
            'show-warnings|W=s' => \@opt_warnings,
@@ -6630,6 +6645,9 @@ for my $feature (sort keys %{$config->{features}}) {
                            $config->{features}{$feature}{default});
     $active_features .= " $feature";
 }
+
+$opt_config_only and write_statefile, exit 0;
+
 if ($active_features eq "") {
     progress_report 0, "Starting build (no features selected)";
 } else {
