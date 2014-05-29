@@ -6,6 +6,7 @@
 # define NETHACK_CLIENT_H_IN_LIBNETHACK_CLIENT
 # include "nethack.h"
 # include "nethack_client.h"
+# include "netconnect.h"
 
 # include <stdio.h>
 # include <stdlib.h>
@@ -13,32 +14,7 @@
 # include <errno.h>
 # include <ctype.h>
 # include <setjmp.h>
-# include <sys/types.h>
 
-/* We don't have nethack_types to help us out with OS detection when
-   calculating dependencies, so redo the calculation here. */
-# if defined(UNIX) || (!defined(WIN32) && !defined(AIMAKE_BUILDOS_MSWin32))
-#  include <unistd.h>
-#  include <sys/socket.h>
-#  include <netinet/in.h>
-#  include <netinet/ip.h>
-#  include <netdb.h>
-#  include <sys/un.h>
-#  include <sys/select.h>
-#  include <sys/time.h>
-# else
-#  include <Winsock2.h>
-#  include <Ws2def.h>
-#  include <Ws2tcpip.h>
-
-#  define snprintf(buf, len, fmt, ...) \
-    _snprintf_s(buf, len, len-1, fmt, __VA_ARGS__)
-#  define close closesocket
-
-/* TODO: Find the header file this is defined in, and include it. */
-extern int _snprintf_s(char *, size_t, size_t, const char *, ...);
-
-# endif
 # include <jansson.h>
 
 # define DEFAULT_PORT 53421     /* matches the definition in nhserver.h */
