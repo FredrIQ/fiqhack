@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-28 */
+/* Last modified by Alex Smith, 2014-05-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -45,6 +45,7 @@ struct objclass {
 
     unsigned oc_material:5;
 # define LIQUID         1       /* currently only for venom */
+/* Start of burnable items (some code cares about this order) */
 # define WAX            2
 # define VEGGY          3       /* foodstuffs */
 # define FLESH          4       /* ditto */
@@ -52,6 +53,7 @@ struct objclass {
 # define CLOTH          6
 # define LEATHER        7
 # define WOOD           8
+/* End of burnable items */
 # define BONE           9
 # define DRAGON_HIDE    10      /* not leather! */
 # define IRON           11      /* Fe - includes steel */
