@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -11,19 +11,23 @@
 #include <ctype.h>
 #include <signal.h>
 
-# ifdef AIMAKE_OPTION_gamesdatadir
-#  ifndef NETHACKDIR
-#   define NETHACKDIR STRINGIFY_OPTION(AIMAKE_OPTION_gamesdatadir)
-#   ifndef STRINGIFY_OPTION
-#    define STRINGIFY_OPTION(x) STRINGIFY_OPTION_1(x)
-#    define STRINGIFY_OPTION_1(x) #x
-#   endif
+#ifdef UNIX
+# include <unistd.h>
+#endif
+
+#ifdef AIMAKE_OPTION_gamesdatadir
+# ifndef NETHACKDIR
+#  define NETHACKDIR STRINGIFY_OPTION(AIMAKE_OPTION_gamesdatadir)
+#  ifndef STRINGIFY_OPTION
+#   define STRINGIFY_OPTION(x) STRINGIFY_OPTION_1(x)
+#   define STRINGIFY_OPTION_1(x) #x
 #  endif
 # endif
+#endif
 
-# ifndef NETHACKDIR
-#  define NETHACKDIR "/usr/share/NetHack4/"
-# endif
+#ifndef NETHACKDIR
+# define NETHACKDIR "/usr/share/NetHack4/"
+#endif
 
 static void process_args(int, char **);
 void append_slash(char *name);
@@ -331,7 +335,7 @@ main(int argc, char *argv[])
     /* this can change argc and *argv, so must come first */
     initialize_uncursed(&argc, argv);
 
-    process_args(argc, argv);   /* grab -U, -H, -k early */
+    process_args(argc, argv);   /* grab -U, -H, -k, --help early */
 
     init_options();
 
@@ -405,6 +409,31 @@ process_args(int argc, char *argv[])
         argv++;
         argc--;
         switch (argv[0][1]) {
+        case '-':
+            if (!strcmp(argv[0], "--help")) {
+                puts("Usage: nethack4 [--interface PLUGIN] [OPTIONS]");
+                puts("");
+                puts("-k          connection-only mode");
+                puts("-D          start games in wizard mode");
+                puts("-X          start games in explore mode");
+                puts("-u name     specify player name");
+                puts("-p role     specify role");
+                puts("-r race     specify race");
+                puts("-@          specify a random character");
+                puts("-H dir      override the playfield location");
+                puts("-U dir      override the user directory");
+                puts("-Z          disable suspending the process");
+                puts("");
+                puts("PLUGIN can be any libuncursed plugin that is installed");
+                puts("on your system; examples may include 'tty' and 'sdl'.");
+                exit(0);
+            } else if (!strcmp(argv[0], "--version")) {
+                printf("NetHack 4 version %d.%d.%d\n",
+                       VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
+                exit(0);
+            }
+            break;
+
         case 'k':
             ui_flags.connection_only = 1;
             break;
@@ -462,6 +491,10 @@ process_args(int argc, char *argv[])
             break;
 
         case 'H':
+#ifdef UNIX
+            if (setregid(getgid(), getgid()) < 0)
+                exit(14);
+#endif
             if (argv[0][2]) {
                 override_hackdir = argv[0] + 2;
             } else if (argc > 1) {
@@ -472,6 +505,10 @@ process_args(int argc, char *argv[])
             break;
 
         case 'U':
+#ifdef UNIX
+            if (setregid(getgid(), getgid()) < 0)
+                exit(14);
+#endif
             if (argv[0][2]) {
                 override_userdir = argv[0] + 2;
             } else if (argc > 1) {
