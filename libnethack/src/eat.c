@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-28 */
+/* Last modified by Alex Smith, 2014-05-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1595,13 +1595,26 @@ edibility_prompts(struct obj *otmp)
     if (cadaver && mnum != PM_ACID_BLOB && rotted > (u.uedibility ? 5L : 3L) &&
         !Sick_resistance) {
         /* Tainted meat */
-        buf = msgprintf("%s like %s could be tainted! %s",
-                        foodsmell, it_or_they, eat_it_anyway);
+        if (u.uedibility)
+            buf = msgprintf("%s like %s could be tainted! %s",
+                            foodsmell, it_or_they, eat_it_anyway);
+        else
+            buf = msgprintf("%s too old for you to be certain %s %s "
+                            "safe. %s", foodsmell, it_or_they,
+                            (otmp->quan == 1L ? "is" : "are"), eat_it_anyway);
         if (yn_function(buf, ynchars, 'n') == 'n')
             return 1;
-        else
-            return 2;
+        /* otherwise fall through */
     }
+
+    if (u.uhs == SATIATED) {
+        buf = msgprintf("You are not really in the mood to eat. %s",
+                        eat_it_anyway);
+        if (yn_function(buf, ynchars, 'n') == 'n')
+            return 1;
+        /* otherwise fall through */
+    }
+
     if (stoneorslime) {
         buf = msgprintf("%s like %s could be something very dangerous! %s",
                         foodsmell, it_or_they, eat_it_anyway);
@@ -1656,23 +1669,10 @@ edibility_prompts(struct obj *otmp)
             return 2;
     }
 
-    /* 
-     * Potentially fatal for other reasons.
-     */
-    if (u.uhs == SATIATED) {
-        buf = msgprintf("You are not really in the mood to eat. %s",
-                        eat_it_anyway);
-        if (yn_function(buf, ynchars, 'n') == 'n')
-            return 1;
-        else
-            return 2;
-    }
-
 
     /* 
      * Breaks conduct, but otherwise safe.
      */
-
     if (!u.uconduct[conduct_vegetarian] && moves > 1800 &&
         ((material == LEATHER || material == BONE || material == DRAGON_HIDE) ||
          (cadaver && !vegetarian(&mons[mnum])))) {
