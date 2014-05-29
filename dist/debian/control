@@ -7,7 +7,7 @@ Standards-Version: 3.6.2
 
 Package: nethack4
 Architecture: any
-Depends: libz1, libjansson, libsdl2
+Depends: libz1, libjansson, libsdl2, ${shlibs:Depends}
 Description: modernized version of the classic roguelike
  NetHack 4 is a modernized version of the classic game NetHack. It adds a
  completely new user interface, numerous bugfixes, and much more. It also

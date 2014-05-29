@@ -2,20 +2,23 @@
 %:
 	env DH_VERBOSE=1 dh $@
 
-DESTDIR=../debian/tmp
+DESTDIR=../debian/nethack4
 PREFIX=/usr
 
 override_dh_auto_configure:
 	mkdir -p build
 	mkdir -p debian/tmp
-	(cd build; ../aimake --config-only -i $(PREFIX) --destdir=../debian/tmp -- ..)
+	(cd build; umask 022; ../aimake --config-only -i $(PREFIX) --destdir=$(DESTDIR) -- ..)
 
 override_dh_auto_build:
-	(cd build; ../aimake -i $(PREFIX) --destdir=../debian/tmp -- ..)
+	(cd build; umask 022; ../aimake -i $(PREFIX) --destdir=$(DESTDIR) -- ..)
 
 override_dh_auto_install:
-	(cd build; ../aimake --install-only -i $(PREFIX) --destdir=../debian/tmp -- ..)
+	(cd build; umask 022; ../aimake --install-only -i $(PREFIX) --destdir=$(DESTDIR) -- ..)
 
 override_dh_auto_clean:
 	rm -f build
 	rm -f debian/tmp
+
+override_dh_fixperms:
+	dh_fixperms -X /var/games -X /usr/games/nethack4

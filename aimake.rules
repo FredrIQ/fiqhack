@@ -427,6 +427,12 @@
             install_permission => "games",
             install_readable => 1,
         },
+        _install_gamesstatedir => {
+            object => "sys:touch_only",
+            install_dir => "gamesstatedir",
+            install_permission => "games",
+            install_readable => 1,
+        },
         _install_xlogfile => {
             object => "sys:ensure_exists",
             install_dir => "gamesstatedir",

@@ -7612,9 +7612,10 @@ atomically {
         my $verb = 'missing';
         my $system_header_warning = 0;
         if (!$is_tied) {
-            @missing_deps = sort grep +((!object_exists $_) && $_ ne 'sys:clean'),
+            defined $state->{xuse_by_pair}{$ipair} and
+                @missing_deps = sort grep +((!object_exists $_) &&
+                                            $_ ne 'sys:clean'),
                 map unintern $_, @{$state->{xuse_by_pair}{$ipair}};
-
             $_ = (friendly_objname($objname) ne
                   friendly_objname(unintern
                                    $state->{xuse_by_object}{intern $_}{$ipair}) ?
