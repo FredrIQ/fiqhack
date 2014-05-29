@@ -1,0 +1,11 @@
+#!/bin/bash
+
+test -f build-debian-package || echo Please run this script from its own directory.
+test -f build-debian-package || exit 1
+
+BUILDDIR=`mktemp -d /tmp/nh4build.XXXXXXXX`
+cp -r .. $BUILDDIR/nethack4-4.3.0
+cd $BUILDDIR/nethack4-4.3.0
+mv dist/debian debian
+mv copyright debian/copyright
+dpkg-buildpackage -us -uc

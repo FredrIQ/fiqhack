@@ -3906,7 +3906,8 @@ sub verify_writable {
     my $installing = shift;
     my $aipath_c = cleanup_aipath $aipath;
     my $fon = friendly_objname $aipath_c;
-    $aipath_c =~ /^path:/ and croak "Attempt to overwrite source file '$fon'";
+    $aipath_c =~ /^path:/ and !$installing and
+        croak "Attempt to overwrite source file '$fon'";
     $aipath_c =~ /^(spath|standardlib):/ and !$installing and croak
         "Attempt to overwrite system file '$fon'";
     1; # return true so we can use this with &&

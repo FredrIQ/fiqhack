@@ -1,3 +1,7 @@
+nethack4 (4.3.0-1) unstable; urgency=low
+  * Updated packages for 4.3
+ -- Alex Smith <ais523@nethack4.org>  Thu, 29 May 2014 08:06:00 +0100
+
 nitrohack (4.0.2-1) unstable; urgency=low
   * Updated packages for 4.0.2
 
