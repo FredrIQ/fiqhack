@@ -109,8 +109,8 @@ error_reading_save(const char *reason)
  *
  * This function must not call panic(), because it is called /from/ panic().
  */
-noreturn void
-log_recover(long offset)
+void
+log_recover_core(long offset, boolean canreturn)
 {
     int n;
     const int *selected;
@@ -162,12 +162,25 @@ log_recover(long offset)
     add_menutext(&menu, buf);
     add_menutext(&menu, "");
 
+    if (canreturn) {
+        add_menutext(&menu,
+                     "It also seems like it might be possible to repair");
+        add_menutext(&menu,
+                     "the gamestate. This will lose no progress, but might");
+        add_menutext(&menu, "leave the game more unstable than usual.");
+        add_menutext(&menu, "");
+    }
+
+    add_menuitem(&menu, 3, "Attempt to repair the gamestate", 'P', FALSE);
     add_menuitem(&menu, 1, "Automatically recover the save file", 'R', FALSE);
     add_menuitem(&menu, 2, "Leave the save file to be recovered manually", 'Q',
                  FALSE);
 
     n = display_menu(&menu, "The save file is corrupted...",
                      PICK_ONE, PLHINT_URGENT, &selected);
+
+    if (n && selected[0] == 3)
+        return;
 
     if (n && selected[0] == 1) {
         /* Automatic recovery. */
@@ -220,6 +233,13 @@ log_recover(long offset)
         /* Manual recovery. */
         terminate(ERR_RECOVER_REFUSED);
     }
+}
+
+noreturn void
+log_recover_noreturn(long offset)
+{
+    while (1)
+        log_recover_core(offset, FALSE);
 }
 
 /* The save file was in a correct format, but referred to something that
@@ -279,7 +299,7 @@ log_desync(char found, char expected)
     }
 
     /* No. TODO: special-case for program_state.viewing */
-    log_recover(get_log_start_of_turn_offset());
+    log_recover_noreturn(get_log_start_of_turn_offset());
 }
 
 /***** Base 64 handling *****/
@@ -589,7 +609,7 @@ lgetline_malloc(int fd)
            the middle of a write). Get rid of the partial line. */
 
         free(inbuf);
-        log_recover(get_log_last_newline());
+        log_recover_noreturn(get_log_last_newline());
 
     } else if (!nlloc && fpos == 0) {
         /* At EOF, which is at the start of the line. */
@@ -683,7 +703,7 @@ get_log_start_of_turn_offset(void)
     save_diff_line = lgetline_malloc(program_state.logfile);
 
     if (!save_diff_line)
-        log_recover(get_log_last_newline());
+        log_recover_noreturn(get_log_last_newline());
 
     free(save_diff_line);
 
@@ -1641,7 +1661,7 @@ load_gamestate_from_binary_save(boolean maybe_old_version)
         lseek(program_state.logfile, program_state.binary_save_location,
               SEEK_SET);
         free(lgetline_malloc(program_state.logfile));
-        log_recover(get_log_offset());
+        log_recover_noreturn(get_log_offset());
     }
 
     /* Replace the old save file with the new save file. */

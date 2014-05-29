@@ -34,6 +34,7 @@ static int wiz_where(const struct nh_cmd_arg *);
 static int wiz_detect(const struct nh_cmd_arg *);
 static int wiz_desync(const struct nh_cmd_arg *);
 static int wiz_panic(const struct nh_cmd_arg *);
+static int wiz_impossible(const struct nh_cmd_arg *);
 static int wiz_polyself(const struct nh_cmd_arg *);
 static int wiz_teleport(const struct nh_cmd_arg *);
 static int wiz_hpset(const struct nh_cmd_arg *);
@@ -243,6 +244,8 @@ const struct cmd_desc cmdlist[] = {
      wiz_hpset, CMD_DEBUG | CMD_EXT | CMD_ARG_LIMIT},
     {"identify", "(DEBUG) identify all items in the inventory", C('i'), 0, TRUE,
      wiz_identify, CMD_DEBUG | CMD_EXT},
+    {"impossible", "(DEBUG) test nonfatal error handling", 0, 0, TRUE,
+     wiz_impossible, CMD_DEBUG | CMD_EXT},
     {"levelchange", "(DEBUG) change experience level", 0, 0, TRUE,
      wiz_level_change, CMD_DEBUG | CMD_EXT},
     {"levelcide", "(DEBUG) kill all other monsters on the level", 0, 0, TRUE,
@@ -253,7 +256,7 @@ const struct cmd_desc cmdlist[] = {
      wiz_level_tele, CMD_DEBUG},
     {"monpolycontrol", "(DEBUG) control monster polymorphs", 0, 0, TRUE,
      wiz_mon_polycontrol, CMD_DEBUG | CMD_EXT},
-    {"panic", "(DEBUG) test panic routine", 0, 0, TRUE,
+    {"panic", "(DEBUG) test fatal error handling", 0, 0, TRUE,
      wiz_panic, CMD_DEBUG | CMD_EXT},
     {"polyself", "(DEBUG) polymorph self", 0, 0, TRUE, wiz_polyself,
      CMD_DEBUG | CMD_EXT},
@@ -596,16 +599,26 @@ wiz_level_change(const struct nh_cmd_arg *arg)
     return 0;
 }
 
-/* #panic command - test program's panic handling */
+/* #panic command - test program's fatal error handling */
 static int
 wiz_panic(const struct nh_cmd_arg *arg)
 {
     (void) arg;
 
-    if (yn("Do you want to call panic()?") == 'y')
-        panic("crash test.");
+    panic("Testing fatal error handling.");
+    /* no return; panic() never returns */
+}
+
+/* #impossible command - test program's nonfatal error handling */
+static int
+wiz_impossible(const struct nh_cmd_arg *arg)
+{
+    (void) arg;
+
+    impossible("Testing impossible().");
     return 0;
 }
+
 
 /* #polyself command - change hero's form */
 static int
