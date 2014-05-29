@@ -9,7 +9,6 @@
 
 # ifdef NETHACK_CLIENT_H_IN_LIBNETHACK_CLIENT
 #  define EXPORT(x) AIMAKE_EXPORT(x)
-AIMAKE_ABI_VERSION(4.3.0)
 # else
 #  define EXPORT(x) AIMAKE_IMPORT(x)
 # endif

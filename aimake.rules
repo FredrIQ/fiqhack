@@ -183,7 +183,7 @@
         },
 
         _build_man_page => {
-            object => 'path:doc/nethack.6.pod',
+            object => 'path:doc/nethack4.6.pod',
             command => ["cmd:pod2man", "optstring:-s 6",
                         "optstring:-n NETHACK4",
                         "optpath:-c :bpath:Games Manual", # hack :-(
@@ -365,6 +365,7 @@
                         "optpath::bpath:readme-saves"],
             output => "bpath:readme-saves",
         },
+
         _main_executable_link => {
             # We're trying to install a symlink from nethack4-sdl to nethack4.
             # Thus we first need a link from nethack4 to main, so that this
@@ -385,8 +386,30 @@
             output_from_optpath => '-o',
             verb => 'symlinked',
         },
+        _man_sdl_symlink => {
+            command => ["intcmd:symlink",
+                        "optpath:-o:bpath:doc/nethack4-sdl.6",
+                        "optpath::bpath:doc/nethack4.6",
+                        "bpath:tilesets/dat/fonts/font14.png"],
+            output_from_optpath => '-o',
+            verb => 'symlinked',
+        },
+
         install_executables => undef, # we don't want to install most of them
-        # but we don't override install_libraries
+        install_libraries => undef,
+        _install_nethack_libraries => {
+            object => qr=^bpath:.*libnethack[^/]*\Q$dllext\E$=s,
+            install_dir => 'specificlibdir',
+        },
+        _install_uncursed_plugins => {
+            object => qr=^bpath:libuncursed/src/plugins/.*\Q$dllext\E$=s,
+            install_dir => 'specificlibdir',
+        },
+        _install_libuncursed => {
+            # note: no final anchor, we also want to install the symlinks
+            object => qr=^bpath:libuncursed/src/libuncursed\Q$dllext\E=s,
+            install_dir => 'libdir',
+        },
         _install_main => {
             object => "bpath:nethack/src/main.c/main$exeext",
             install_dir => "gamesbindir",
@@ -419,6 +442,11 @@
             object => "bpath:doc/nethack4.6",
             install_dir => "mandir",
             install_name => "man6/nethack4.6",
+        },
+        _install_sdl_manpage => {
+            object => "bpath:doc/nethack4-sdl.6",
+            install_dir => "mandir",
+            install_name => "man6/nethack4-sdl.6",
         },
         _install_highscores => {
             object => "sys:ensure_exists",

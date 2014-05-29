@@ -1,4 +1,5 @@
 #!/bin/bash
+# Last modified by Alex Smith, 2014-05-29
 
 test -f build-debian-package || echo Please run this script from its own directory.
 test -f build-debian-package || exit 1

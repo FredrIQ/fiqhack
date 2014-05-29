@@ -4,7 +4,7 @@
 
 =head1 NAME
 
-NetHack 4 - dungeon exploration game
+nethack4 - dungeon exploration game
 
 =head1 SYNOPSIS
 
