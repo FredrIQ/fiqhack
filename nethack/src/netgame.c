@@ -338,10 +338,14 @@ get_username_password(struct server_info *server)
     server->password = NULL;
 
     do {
-        if (server->username)
+        if (server->username) {
             free(server->username);
-        if (server->password)
+            server->username = NULL;
+        }
+        if (server->password) {
             free(server->password);
+            server->password = NULL;
+        }
 
         curses_getline("Username (new or existing account):",
                        &(server->username), getlin_strdup_callback);
@@ -380,6 +384,10 @@ get_username_password(struct server_info *server)
             break;
 
         case NO_CONNECTION:
+            curses_msgwin(
+                "Error: could not establish a connection.", krc_notification);
+            break;
+
         case AUTH_SUCCESS_RECONNECT:
             curses_msgwin(
                 "Error: The server seems to think you are connected already.",
@@ -408,7 +416,7 @@ add_server_menu(struct server_info **servlist)
                        getlin_strdup_callback);
         if (!server.hostname)
             return NULL;
-        curses_getline("Port number (0 or empty = use default):",
+        curses_getline("Port number (0 = use default):",
                        &(server.port), getlin_positive_int_callback);
         if (server.port < 0) {
             free(server.hostname);
