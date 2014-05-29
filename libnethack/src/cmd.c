@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -32,6 +32,7 @@ static int wiz_genesis(const struct nh_cmd_arg *);
 static int wiz_levelcide(const struct nh_cmd_arg *);
 static int wiz_where(const struct nh_cmd_arg *);
 static int wiz_detect(const struct nh_cmd_arg *);
+static int wiz_desync(const struct nh_cmd_arg *);
 static int wiz_panic(const struct nh_cmd_arg *);
 static int wiz_polyself(const struct nh_cmd_arg *);
 static int wiz_teleport(const struct nh_cmd_arg *);
@@ -232,6 +233,8 @@ const struct cmd_desc cmdlist[] = {
     {"servercancel", "(internal) reread the replay, someone moved", 0, 0, TRUE,
      doservercancel, CMD_INTERNAL | CMD_NOTIME},
 
+    {"desync", "(DEBUG) corrupt the save file", 0, 0, TRUE, wiz_desync,
+     CMD_DEBUG | CMD_EXT},
     {"detect", "(DEBUG) detect monsters", 0, 0, TRUE, wiz_detect,
      CMD_DEBUG | CMD_EXT},
     {"genesis", "(DEBUG) create a monster", 0, 0, TRUE, wiz_genesis,
@@ -468,7 +471,17 @@ wiz_detect(const struct nh_cmd_arg *arg)
     return 0;
 }
 
-/* ^Y command - teleport without fail */
+static int
+wiz_desync(const struct nh_cmd_arg *arg)
+{
+    (void) arg;
+
+    flags.desync = TRUE;
+
+    return 0;
+}
+
+/* ^F command - teleport without fail */
 static int
 wiz_teleport(const struct nh_cmd_arg *arg)
 {
