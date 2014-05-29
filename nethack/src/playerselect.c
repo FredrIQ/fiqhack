@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-29 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -9,6 +9,12 @@
 
 
 #define LISTSZ 32
+
+/* Like nh_listitem, except mutable. */
+struct plselect_listitem {
+    int id;
+    char *caption;
+};
 
 static int
 is_valid_character(const struct nh_roles_info *ri, int rolenum, int racenum,
@@ -46,7 +52,7 @@ is_valid_character(const struct nh_roles_info *ri, int rolenum, int racenum,
 
 static int
 get_valid_roles(const struct nh_roles_info *ri, int racenum, int gendnum,
-                int alignnum, struct nh_listitem *list, int listlen)
+                int alignnum, struct plselect_listitem *list, int listlen)
 {
     int i;
     int count = 0;
@@ -81,7 +87,7 @@ get_valid_roles(const struct nh_roles_info *ri, int racenum, int gendnum,
 
 static int
 get_valid_races(const struct nh_roles_info *ri, int rolenum, int gendnum,
-                int alignnum, struct nh_listitem *list, int listlen)
+                int alignnum, struct plselect_listitem *list, int listlen)
 {
     int i;
     int count = 0;
@@ -102,7 +108,7 @@ get_valid_races(const struct nh_roles_info *ri, int rolenum, int gendnum,
 
 static int
 get_valid_genders(const struct nh_roles_info *ri, int rolenum, int racenum,
-                  int alignnum, struct nh_listitem *list, int listlen)
+                  int alignnum, struct plselect_listitem *list, int listlen)
 {
     int i;
     int count = 0;
@@ -123,7 +129,7 @@ get_valid_genders(const struct nh_roles_info *ri, int rolenum, int racenum,
 
 static int
 get_valid_aligns(const struct nh_roles_info *ri, int rolenum, int racenum,
-                 int gendnum, struct nh_listitem *list, int listlen)
+                 int gendnum, struct plselect_listitem *list, int listlen)
 {
     int i;
     int count = 0;
@@ -146,7 +152,7 @@ static void
 validate_character_presets(const struct nh_roles_info *ri, int *role, int *race,
                            int *gend, int *align)
 {
-    struct nh_listitem list[1];
+    struct plselect_listitem list[1];
     char listbuffer[256];
 
     list[0].caption = listbuffer;
@@ -223,8 +229,8 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
     int i, k, listlen, id;
     char pick4u = 'n', thisch, lastch = 0;
     char pbuf[QBUFSZ], plbuf[QBUFSZ];
-    struct nh_listitem list[LISTSZ];    /* need enough space for lists of roles 
-                                           or races */
+    struct plselect_listitem list[LISTSZ];    /* need enough space for lists of roles
+                                                 or races */
     char listbuffers[LISTSZ][256];
     int pick_list[1];
     int role, race, gend, align;
