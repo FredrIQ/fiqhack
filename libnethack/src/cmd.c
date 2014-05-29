@@ -25,6 +25,7 @@ static int dowelcome(const struct nh_cmd_arg *);
 static int dointerrupt(const struct nh_cmd_arg *);
 static int doattributes(const struct nh_cmd_arg *);
 static int doconduct(const struct nh_cmd_arg *);
+static int doquit(const struct nh_cmd_arg *);
 static int wiz_wish(const struct nh_cmd_arg *);
 static int wiz_identify(const struct nh_cmd_arg *);
 static int wiz_map(const struct nh_cmd_arg *);
@@ -157,6 +158,8 @@ const struct cmd_desc cmdlist[] = {
     {"pickup", "take items from the floor", ',', 0, FALSE, dopickup,
      CMD_ARG_LIMIT},
     {"pray", "pray to the gods for help", M('p'), 0, TRUE, dopray, CMD_EXT},
+    {"quit", "don't use this, use 'save' instead", M('q'), 0, TRUE, doquit,
+     CMD_EXT | CMD_NOTIME},
     {"quiver", "ready an item for firing", 'Q', 0, FALSE, dowieldquiver,
      CMD_ARG_OBJ},
     {"read", "read a scroll or spellbook", 'r', 0, FALSE, doread, CMD_ARG_OBJ},
@@ -1762,6 +1765,15 @@ confdir(schar * dx, schar * dy)
 }
 
 static int
+doquit(const struct nh_cmd_arg *arg)
+{
+    (void) arg;
+    pline("To quit the game, use the 'save' command (typically on 'S').");
+
+    return 0;
+}
+
+static int
 doautoexplore(const struct nh_cmd_arg *arg)
 {
     (void) arg;
@@ -1770,7 +1782,6 @@ doautoexplore(const struct nh_cmd_arg *arg)
     return domove(&(struct nh_cmd_arg){.argtype = CMD_ARG_DIR, .dir = DIR_SELF},
                   exploration_interaction_status());
 }
-
 
 static int
 dotravel(const struct nh_cmd_arg *arg)
