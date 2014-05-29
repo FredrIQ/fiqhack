@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-28 */
+/* Last modified by Alex Smith, 2014-05-29 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -770,12 +770,11 @@ extern int doclose(const struct nh_cmd_arg *);
 
 /* ### log.c ### */
 
-extern void log_newgame(microseconds start_time,
-                        unsigned int seed);
+extern void log_newgame(microseconds start_time, unsigned int seed);
 extern void log_neutral_turnstate(void);
 extern void log_backup_save(void);
 
-extern void log_sync(void);
+extern void log_sync(long, enum target_location_units, boolean);
 
 extern void log_revert_command(void);
 extern noreturn void log_recover(long);

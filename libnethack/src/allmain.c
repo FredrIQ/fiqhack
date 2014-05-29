@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-28 */
+/* Last modified by Alex Smith, 2014-05-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -414,8 +414,7 @@ nh_play_game(int fd)
        loading a binary save. (In addition, using log_sync() is /much/ faster
        than attempting to replay the entire game.) */
     log_init(fd);
-    program_state.target_location_units = TLU_EOF;
-    log_sync();
+    log_sync(0, TLU_EOF, FALSE);
 
     program_state.game_running = TRUE;
     post_init_tasks();

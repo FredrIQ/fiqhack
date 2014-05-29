@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-05-29 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -22,6 +22,7 @@ static void log_reset(void);
 static void log_binary(const char *buf, int buflen);
 static long get_log_offset(void);
 static long get_log_last_newline(void);
+static char *lgetline_malloc(int);
 
 static void load_gamestate_from_binary_save(boolean maybe_old_version);
 static void log_replay_save_line(void);
@@ -35,6 +36,36 @@ static enum nh_log_status status_from_string(const char * str);
 /* We assume ASCII. (The whole log thing is done in binary.) */
 static_assert('A' == 65 && 'a' == 97,
               "The execution character set must be ASCII or extended ASCII");
+
+/***** Header formatting *****/
+#define SECOND_LOGLINE_LEN      78
+#define SECOND_LOGLINE_LEN_STR "78"
+static_assert(SECOND_LOGLINE_LEN < COLNO, "SECOND_LOGLINE_LEN too long");
+
+#define STATUS_LEN 4
+#define STATUS_LEN_STR "4"
+const char *
+status_string(enum nh_log_status state) {
+    switch (state) {
+    case LS_SAVED:
+        return "save";
+    case LS_DONE:
+        return "done";
+    default:
+        return 0;
+    }
+}
+
+
+enum nh_log_status
+status_from_string(const char * str) {
+    if (!strcmp(str, "save"))
+        return LS_SAVED;
+    else if (!strcmp(str, "done"))
+        return LS_DONE;
+    else
+        return LS_INVALID;
+}
 
 /***** Error handling *****/
 
@@ -53,7 +84,7 @@ error_reading_save(const char *reason)
 
 /*
  * The save file is too long, and the end needs to be removed. This happens in
- * three cases:
+ * four cases:
  *
  * - The save file was mostly in a correct format, but contains incomplete lines
  *   or some similar issue that prevents us reading the end of it;
@@ -61,12 +92,15 @@ error_reading_save(const char *reason)
  * - The save file contains a partial turn from a version of the game engine
  *   that the process responsible for updating it doesn't know how to replay;
  *
+ * - The save file contains a broken or buggy binary save;
+ *
  * - A wizard-mode user has explicitly said "this save file needs its end
  *   removing".
  *
  * The argument is an offset just past a newline (get_log_last_newline(),
  * get_log_start_of_turn_offset(), program_state.end_of_gamestate_location
- * respectively for the three cases above).
+ * program_state.end_of_gamestate_location respectively for the four cases
+ * above).
  *
  * In every case, the user will be prompted to confirm the recovery, and given a
  * chance to decline it. If the recovery is declined, the game will be
@@ -156,7 +190,8 @@ log_recover(long offset)
         /* Increase the recovery count. */
 
         program_state.expected_recovery_count++;
-        buf = msgprintf("NHGAME %08x %d.%03d.%03d\x0a",
+        buf = msgprintf("NHGAME %" STATUS_LEN_STR "." STATUS_LEN_STR
+                        "s %08x %d.%03d.%03d\x0a", status_string(LS_SAVED),
                         program_state.expected_recovery_count,
                         VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
 
@@ -188,10 +223,15 @@ log_recover(long offset)
 }
 
 /* The save file was in a correct format, but referred to something that
-   couldn't possibly happen in the gamestate. */
+   couldn't possibly happen in the gamestate. This should only be called if
+   there have been no logfile operations (except change_fd_lock) since an
+   lgetline_malloc() of the offending line; start_replaying_logfile() leaves the
+   logfile in the right state. */
 static noreturn void
 log_desync(char found, char expected)
 {
+    char *logline;
+
     /* If desyncs shouldn't be happening, warn the user.
 
        Right now, they shouldn't be happening. */
@@ -219,7 +259,27 @@ log_desync(char found, char expected)
      * output of some more qualified engine.
      */
 
-    panic("log_desync unimplemented");
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_READ, 2))
+        panic("Could not upgrade to read lock on logfile");
+
+    /* Can we find some future save point to restore to? */
+    while ((logline = lgetline_malloc(program_state.logfile))) {
+
+        if (*logline == '~' || *logline == '*') {
+
+            /* Yes. */
+            if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
+                panic("Could not downgrade to monitor lock on logfile");    
+            free(logline);
+            /* TODO: get this to restart at the log offset, somehow */
+            terminate(RESTART_PLAY);
+        }
+
+        free(logline);
+    }
+
+    /* No. TODO: special-case for program_state.viewing */
+    log_recover(get_log_start_of_turn_offset());
 }
 
 /***** Base 64 handling *****/
@@ -713,36 +773,6 @@ stop_updating_logfile(int lines_added)
 }
 
 /***** Creating specific log entries *****/
-
-#define SECOND_LOGLINE_LEN      78
-#define SECOND_LOGLINE_LEN_STR "78"
-static_assert(SECOND_LOGLINE_LEN < COLNO, "SECOND_LOGLINE_LEN too long");
-
-
-#define STATUS_LEN 4
-#define STATUS_LEN_STR "4"
-const char *
-status_string(enum nh_log_status state) {
-    switch (state) {
-    case LS_SAVED:
-        return "save";
-    case LS_DONE:
-        return "done";
-    default:
-        return 0;
-    }
-}
-
-
-enum nh_log_status
-status_from_string(const char * str) {
-    if (!strcmp(str, "save"))
-        return LS_SAVED;
-    else if (!strcmp(str, "done"))
-        return LS_DONE;
-    else
-        return LS_INVALID;
-}
 
 void
 log_newgame(microseconds start_time, unsigned int seed)
@@ -1469,6 +1499,7 @@ log_replay_command(struct nh_cmd_and_arg *cmd)
 noreturn void
 log_replay_no_more_options(void)
 {
+    free(start_replaying_logfile(0));
     log_desync('?', '?');
 }
 
@@ -1603,7 +1634,14 @@ load_gamestate_from_binary_save(boolean maybe_old_version)
             program_state.ok_to_diff = FALSE;
             return;
         }
-        error_reading_save("");
+
+        /* To recover from this, we need to go back to the binary save before
+           the one we were trying to load. log_sync rounds down. */
+        log_sync(program_state.binary_save_location - 1, TLU_BYTES, TRUE);
+        lseek(program_state.logfile, program_state.binary_save_location,
+              SEEK_SET);
+        free(lgetline_malloc(program_state.logfile));
+        log_recover(get_log_offset());
     }
 
     /* Replace the old save file with the new save file. */
@@ -1813,12 +1851,12 @@ cleanup:
    Leaves the binary save pointer in its original location, but the log file
    pointer in an unpredictable location. */
 static long
-relative_to_target(long bsl)
+relative_to_target(long bsl, long targetpos, enum target_location_units tlu)
 {
-    long targetpos = program_state.target_location;
     long temp_pos = program_state.binary_save.pos;
     int turncount;
-    switch (program_state.target_location_units) {
+
+    switch (tlu) {
 
     case TLU_EOF:
         targetpos = lseek(program_state.logfile, 0, SEEK_END);
@@ -1869,24 +1907,28 @@ relative_to_target(long bsl)
  *
  * This should only be called from the nh_play_game main loop, or similar
  * locations that can handle arbitrary gamestate changes (including the
- * deallocation and reallocation of all game pointers). This also implies that
- * when this function is called, the gamestate location is equal to the binary
- * save location, or else the binary save location is zero (i.e. the game
- * restore sequence). (If you want to use this function in a situation where
- * that is not true, use terminate(RESTART_PLAY), which causes the main loop to
- * restart, and modify nh_play_game to set the target location you want rather
- * than its default of TLU_EOF.) It also requires us to hold a read lock on the
- * log (i.e. log_init() needs to have been called, and it can't be called from
- * the section of nh_input_aborted() that temporarily relinquishes the lock, not
+ * deallocation and reallocation of all game pointers). Exception: if
+ * "inconsistent" is et, this function will not tamper with gamestate, but will
+ * instead leave the log tracking in an inconsistent state (this is done when
+ * computing locations for log_recover()).  This also implies that when this
+ * function is called, the gamestate location is equal to the binary save
+ * location, or else the binary save location is zero (i.e. the game restore
+ * sequence). (If you want to use this function in a situation where that is not
+ * true, use terminate(RESTART_PLAY), which causes the main loop to restart, and
+ * modify nh_play_game to set the target location you want rather than its
+ * default of TLU_EOF.) It also requires us to hold a read lock on the log
+ * (i.e. log_init() needs to have been called, and it can't be called from the
+ * section of nh_input_aborted() that temporarily relinquishes the lock, not
  * that you'd want to do that anyway).
  *
  * The invariants on the gamestate are suspended during this function, and fixed
- * at the end. In particular, while the function is running, neither
- * program_state.gamestate_location, or any elements of the actual gamestate,
- * have any meaning at all.
+ * at the end (unless inconsistent is set). In particular, while the function is
+ * running, neither program_state.gamestate_location, or any elements of the
+ * actual gamestate, have any meaning at all.
  */
 void
-log_sync(void)
+log_sync(long target_location, enum target_location_units tlu,
+         boolean inconsistent)
 {
     struct nh_game_info si;
     struct memfile bsave;
@@ -1942,21 +1984,23 @@ log_sync(void)
         load_save_backup_from_offset(program_state.save_backup_location);
 
     } else if (program_state.gamestate_location !=
-               program_state.binary_save_location)
+               program_state.binary_save_location && !inconsistent)
         panic("log_sync called mid-turn");
 
     /* If we're ahead of the target, move back to the last save backup (because
        we can't run save diffs backwards, our only choice is to move forwards
        from the save backup location). */
     if (program_state.binary_save_location != program_state.save_backup_location
-        && relative_to_target(program_state.binary_save_location) > 0) {
+        && relative_to_target(program_state.binary_save_location,
+                              target_location, tlu) > 0) {
 
         load_save_backup_from_offset(program_state.save_backup_location);
     }
 
     /* While we're still ahead of the target, try progressively earlier
        backups. */
-    while (relative_to_target(program_state.binary_save_location) > 0 &&
+    while (relative_to_target(program_state.binary_save_location,
+                              target_location, tlu) > 0 &&
            program_state.save_backup_location >
            program_state.last_save_backup_location_location) {
 
@@ -1972,7 +2016,8 @@ log_sync(void)
        loop. That isn't implemented yet in order to start off by getting the
        simplest possible version of the code working. */
     sloc = program_state.binary_save_location;
-    while (relative_to_target(program_state.binary_save_location) < 0) {
+    while (relative_to_target(program_state.binary_save_location,
+                              target_location, tlu) < 0) {
         lseek(program_state.logfile, sloc, SEEK_SET);
         /* Skip the save diff or backup itself. */
         free(lgetline_malloc(program_state.logfile));
@@ -1991,7 +2036,8 @@ log_sync(void)
             /* We're at EOF. The binary save and its location are already
                correct, so we just need to get the gamestate and its location
                correct. */
-            load_gamestate_from_binary_save(TRUE);
+            if (!inconsistent)
+                load_gamestate_from_binary_save(TRUE);
             if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
                 panic("Could not downgrade to monitor lock on logfile");
             return;
@@ -2011,7 +2057,7 @@ log_sync(void)
             apply_save_diff(logline, &bsave);
         }
 
-        if (relative_to_target(loglineloc) > 0) {
+        if (relative_to_target(loglineloc, target_location, tlu) > 0) {
 
             /* We overshot. */
             program_state.binary_save_location = sloc;
@@ -2023,7 +2069,8 @@ log_sync(void)
             mfree(&program_state.binary_save);
             program_state.binary_save = bsave;
 
-            load_gamestate_from_binary_save(TRUE);
+            if (!inconsistent)
+                load_gamestate_from_binary_save(TRUE);
             if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
                 panic("Could not downgrade to monitor lock on logfile");
             return;
@@ -2041,11 +2088,12 @@ log_sync(void)
         free(logline);
     }
 
+    /* Fix the invariant on the gamestate. */
+    if (!inconsistent)
+        load_gamestate_from_binary_save(TRUE);
+
     if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
         panic("Could not downgrade to monitor lock on logfile");
-
-    /* Fix the invariant on the gamestate. */
-    load_gamestate_from_binary_save(TRUE);
 }
 
 
@@ -2053,9 +2101,9 @@ log_sync(void)
    diff, but found there was already something there.
 
    If the existing line isn't a backup or diff, we do nothing; we assume that
-   somebody manually deleted it (most likely as part of a manual recovery of the
-   save).  Otherwise, we replay it, allowing it to overwrite the current
-   gamestate.
+   somebody manually deleted the backup or diff we were expecting (most likely
+   as part of a manual recovery of the save).  Otherwise, we replay it, allowing
+   it to overwrite the current gamestate.
 */
 void
 log_replay_save_line(void)
@@ -2114,8 +2162,6 @@ log_reset(void)
     program_state.save_backup_location = 0;
     program_state.binary_save_location = 0;
     program_state.gamestate_location = 0;
-    program_state.target_location = 0;
-    program_state.target_location_units = TLU_EOF;
     program_state.last_save_backup_location_location = 0;
 }
 
