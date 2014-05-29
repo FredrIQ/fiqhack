@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-05-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -317,7 +317,8 @@ const struct permonst mons[] = {
         A(ATTK(AT_BOOM, AD_PHYS, 4, 6), NO_ATTK, NO_ATTK,
           NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(10, 10, 0, MS_SILENT, MZ_SMALL), 0, 0,
-        M1_FLY | M1_BREATHLESS | M1_NOLIMBS | M1_NOHEAD | M1_MINDLESS,
+        M1_FLY | M1_BREATHLESS | M1_NOLIMBS | M1_NOHEAD | M1_MINDLESS |
+        M1_NOTAKE,
         M2_HOSTILE | M2_NEUTER, 0, CLR_GRAY),
     MON("floating eye", S_EYE,
         LVL(2, 1, 9, 10, 0), (G_GENO | 5),
@@ -339,14 +340,16 @@ const struct permonst mons[] = {
         A(ATTK(AT_EXPL, AD_FIRE, 4, 6), NO_ATTK, NO_ATTK,
           NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(10, 10, 0, MS_SILENT, MZ_SMALL), MR_FIRE, MR_FIRE,
-        M1_FLY | M1_BREATHLESS | M1_NOLIMBS | M1_NOHEAD | M1_MINDLESS,
+        M1_FLY | M1_BREATHLESS | M1_NOLIMBS | M1_NOHEAD | M1_MINDLESS |
+        M1_NOTAKE,
         M2_HOSTILE | M2_NEUTER, M3_INFRAVISIBLE, CLR_RED),
     MON("shocking sphere", S_EYE,
         LVL(6, 13, 4, 0, 0), (G_NOCORPSE | G_GENO | 2),
         A(ATTK(AT_EXPL, AD_ELEC, 4, 6), NO_ATTK, NO_ATTK,
           NO_ATTK, NO_ATTK, NO_ATTK),
         SIZ(10, 10, 0, MS_SILENT, MZ_SMALL), MR_ELEC, MR_ELEC,
-        M1_FLY | M1_BREATHLESS | M1_NOLIMBS | M1_NOHEAD | M1_MINDLESS,
+        M1_FLY | M1_BREATHLESS | M1_NOLIMBS | M1_NOHEAD | M1_MINDLESS |
+        M1_NOTAKE,
         M2_HOSTILE | M2_NEUTER, M3_INFRAVISIBLE, HI_ZAP),
 /*
  * felines
