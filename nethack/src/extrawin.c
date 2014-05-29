@@ -192,6 +192,8 @@ draw_extrawin(enum keyreq_context context)
 
     }
 
+    ui_flags.extrawin_populated = TRUE;
+
     y_fill_line = y;
 
     /* Next most important: keymaps for unusual contexts.
@@ -561,7 +563,9 @@ draw_extrawin(enum keyreq_context context)
 void
 clear_extrawin(void)
 {
-    if (extrawin && ui_flags.ingame)
+    if (extrawin && ui_flags.extrawin_populated && ui_flags.ingame) {
         werase(extrawin);
-    wnoutrefresh(extrawin);
+        wnoutrefresh(extrawin);
+        ui_flags.extrawin_populated = FALSE;
+    }
 }

@@ -180,6 +180,8 @@ struct interface_flags {
     int sidebarwidth; /* width of the sidebar */
     int map_padding;  /* padding on each side of the map */
 
+    nh_bool extrawin_populated;
+
     int levelmode;
     int playmode;
 
