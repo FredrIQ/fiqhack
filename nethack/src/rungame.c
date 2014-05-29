@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-29 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -200,7 +200,7 @@ game_ended(int status, fnchar *filename, nh_bool net)
         return;
     case ERR_IN_PROGRESS:
         curses_raw_print("Error: Could not attach to the game file.");
-        curses_raw_print("(Maybe someone else is playing it?");
+        curses_raw_print("(Maybe someone else is playing it?)");
         return;
     case ERR_RESTORE_FAILED:
         curses_raw_print("Error: This game requires manual recovery.");
