@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-29 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <signal.h>
+#include <errno.h>
 
 enum internal_commands {
     /* implicitly include enum nh_direction */
@@ -750,10 +751,18 @@ read_keymap(void)
         return FALSE;
 
     size = lseek(fd, 0, SEEK_END);
-    lseek(fd, 0, SEEK_SET);
 
     char data[size + 1];
-    read(fd, data, size);
+
+    while (1) {
+        lseek(fd, 0, SEEK_SET);
+        errno = 0;
+        int rcount = read(fd, data, size);
+        if (rcount == size)
+            break;
+        else if (rcount != -1 || errno != EINTR)
+            return FALSE;
+    }
     data[size] = '\0';
     close(fd);
 
@@ -850,6 +859,24 @@ badmap:
     return FALSE;
 }
 
+/* Like write(), but EINTR-safe, and closes the fd on error. */
+static nh_bool
+write_keymap_write(int fd, const void *buffer, int len)
+{
+    errno = 0;
+    int written = 0;
+    while (written < len) {
+        int rv = write(fd, ((char *)buffer) + written, len - written);
+        if (rv < 0 && errno == EINTR)
+            continue;
+        if (rv <= 0) {
+            close(fd);
+            return FALSE;
+        }
+        written += rv;
+    }
+    return TRUE;
+}
 
 /* store the keymap in keymap.conf */
 static void
@@ -892,26 +919,31 @@ write_keymap(void)
                                                unknown_keymap[key]->name : "-");
         sprintf(buf, "%x %s\n", key, name);
         if (strcmp(name, "-"))
-            write(fd, buf, strlen(buf));
+            if (!write_keymap_write(fd, buf, strlen(buf)))
+                return;
     }
 
     for (i = 0; i < cmdcount; i++) {
         if (commandlist[i].flags & CMD_EXT) {
             sprintf(buf, "EXT %s\n", commandlist[i].name);
-            write(fd, buf, strlen(buf));
+            if (!write_keymap_write(fd, buf, strlen(buf)))
+                return;
         } else {
             sprintf(buf, "NOEXT %s\n", commandlist[i].name);
-            write(fd, buf, strlen(buf));
+            if (!write_keymap_write(fd, buf, strlen(buf)))
+                return;
         }
     }
 
     for (i = 0; i < unknown_count; i++) {
         if (unknown_commands[i].flags & CMD_EXT) {
             sprintf(buf, "EXT %s\n", unknown_commands[i].name);
-            write(fd, buf, strlen(buf));
+            if (!write_keymap_write(fd, buf, strlen(buf)))
+                return;
         } else {
             sprintf(buf, "NOEXT %s\n", unknown_commands[i].name);
-            write(fd, buf, strlen(buf));
+            if (!write_keymap_write(fd, buf, strlen(buf)))
+                return;
         }
     }
 
