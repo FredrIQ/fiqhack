@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Alex Smith, 2014-05-29
+Last-Modified: Last modified by Alex Smith, 2014-05-30
 
 Files: libnethack_client/*
 License: NHGPL or GPL-2+
@@ -640,12 +640,12 @@ License: GPL-2+
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 2 of the License, or (at
  your option) any later version.
-.
+ .
  This program is distributed in the hope that it will be useful, but
  WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  General Public License for more details.
-.
+ .
  A copy of version 2 of the GNU General Public License can be viewed
  online at <http://www.gnu.org/licenses/>.  It is also viewable as
  "GPL-2" in the "copyright" file that ships with NetHack 4, and is
@@ -657,12 +657,12 @@ License: GPL-3+
  it under the terms of the GNU General Public License as published by
  the Free Software Foundation, either version 3 of the License, or (at
  your option) any later version.
-.
+ .
  This program is distributed in the hope that it will be useful, but
  WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  General Public License for more details.
-.
+ .
  A copy of version 3 of the GNU General Public License can be viewed
  online at <http://www.gnu.org/licenses/>.  It is also viewable as
  "GPL-3" in the "copyright" file that ships with NetHack 4, and is

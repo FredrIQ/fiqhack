@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# Last modified by Alex Smith, 2014-05-29
+# Last modified by Alex Smith, 2014-05-30
 %:
 	env DH_VERBOSE=1 dh $@
 
@@ -28,4 +28,4 @@ override_dh_installdocs:
 	dh_installdocs
 	mv debian/nethack4/usr/share/doc/nethack4/changelog.txt debian/nethack4/usr/share/doc/nethack4/changelog
 	: # Remove the GPL from "copyright", it's already there on Debian
-	sed -i -e '/^License: GPL-2$/,$$ d' debian/nethack4/usr/share/doc/nethack4/copyright
+	sed -i -e '/^License: GPL-2$$/,$$ d' debian/nethack4/usr/share/doc/nethack4/copyright

@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2014-05-29
+# Last modified by Alex Smith, 2014-05-30
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -465,6 +465,13 @@
             object => "sys:ensure_exists",
             install_dir => "gamesstatedir",
             install_name => "xlogfile",
+            install_permission => "games",
+            install_readable => 1,
+        },
+        _install_logfile => {
+            object => "sys:ensure_exists",
+            install_dir => "gamesstatedir",
+            install_name => "logfile",
             install_permission => "games",
             install_readable => 1,
         },
