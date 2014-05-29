@@ -512,8 +512,14 @@ nh_play_game(int fd)
 
         program_state.in_zero_time_command = FALSE;
 
-        if (cmdlist[cmdidx].flags & CMD_NOTIME)
-            log_revert_command(); /* make sure it didn't change the gamestate */
+        /* Record or revert the gamestate change, depending on what happened.
+           A revert should be a no-op; it'll impossible() if it isn't.  The
+           flags.incomplete check is needed in case we interrupt an incomplete
+           command with a server cancel; the incomplete command hasn't written a
+           save file, so comparing against that save file will show a
+           difference. */
+        if (cmdlist[cmdidx].flags & CMD_NOTIME && !flags.incomplete)
+            log_revert_command(cmd.cmd);
         else if ((!flags.incomplete || flags.interrupted) &&
                  !u_helpless(hm_all))
             neutral_turnstate_tasks();

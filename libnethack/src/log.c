@@ -956,7 +956,7 @@ log_time_line(void)
    have the effect of undoing the command (as informational-only commands are
    not saved anywhere). */
 void
-log_revert_command(void)
+log_revert_command(const char *cmd)
 {
     struct memfile mf;
 
@@ -965,7 +965,7 @@ log_revert_command(void)
 
     if (!mequal(&program_state.binary_save, &mf, TRUE)) {
         mfree(&mf);
-        impossible("Informational command changed the gamestate");
+        impossible("Informational command (%s) changed the gamestate", cmd);
         terminate(RESTART_PLAY);
     }
 

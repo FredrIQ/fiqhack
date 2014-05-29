@@ -776,7 +776,7 @@ extern void log_backup_save(void);
 
 extern void log_sync(long, enum target_location_units, boolean);
 
-extern void log_revert_command(void);
+extern void log_revert_command(const char *);
 extern noreturn void log_recover(long);
 extern long get_log_start_of_turn_offset(void);
 
