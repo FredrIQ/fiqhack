@@ -2,12 +2,12 @@ Source: nethack4
 Section: games
 Priority: optional
 Maintainer: Alex Smith <ais523@nethack4.org>
-Build-Depends: debhelper (>= 9.0.0), libz-dev, libjansson-dev, bison, flex, libsdl2-dev
+Build-Depends: debhelper (>= 9.0.0), libz-dev, libjansson-dev, bison, flex, libsdl2-dev, libpng-dev
 Standards-Version: 3.6.2
 
 Package: nethack4
 Architecture: any
-Depends: libz1, libjansson, libsdl2, ${shlibs:Depends}
+Depends: ${shlibs:Depends}
 Description: modernized version of the classic roguelike
  NetHack 4 is a modernized version of the classic game NetHack. It adds a
  completely new user interface, numerous bugfixes, and much more. It also

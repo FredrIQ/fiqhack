@@ -7176,6 +7176,8 @@ MAINLOOP: while (1) {
         }
 
         # If necessary, elevate or restrict permissions.
+        $objname eq 'sys:touch_only' and $output_location =
+            aipath_parent $output_location;
         my $a = $rule->{actions}[0];
         $a->{install_permission} and
             (restrict_to_permission $a->{install_permission},

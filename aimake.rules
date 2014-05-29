@@ -187,8 +187,8 @@
             command => ["cmd:pod2man", "optstring:-s 6",
                         "optstring:-n NETHACK4",
                         "optpath:-c :bpath:Games Manual", # hack :-(
-                        "optpath::", "optpath::bpath:doc/nethack.6"],
-            output => "bpath:doc/nethack.6",
+                        "optpath::", "optpath::bpath:doc/nethack4.6"],
+            output => "bpath:doc/nethack4.6",
             in_subdir => "bpath:", # for the hack above to work
         },
 
@@ -416,9 +416,9 @@
             install_dir => "gamesdatadir",
         },
         _install_manpage => {
-            object => "bpath:doc/nethack.6",
+            object => "bpath:doc/nethack4.6",
             install_dir => "mandir",
-            install_name => "man6/nethack.6",
+            install_name => "man6/nethack4.6",
         },
         _install_highscores => {
             object => "sys:ensure_exists",
