@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-29 */
 /* Copyright (c) Daniel Thaler, 2012 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -354,6 +354,7 @@ get_username_password(struct server_info *server)
                 &(server->password), getlin_strdup_callback);
             if (!server->password) {
                 free(server->username);
+                server->username = NULL;
                 return 0;
             }
 
