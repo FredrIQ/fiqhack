@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-29 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -198,10 +198,11 @@ receive_json_msg(void)
    A play_game response will longjmp() to the matching play_game request, so
    beware! */
 json_t *
-send_receive_msg(const char *const msgtype, json_t *volatile jmsg)
+send_receive_msg(const char *const volatile msgtype, json_t *volatile jmsg)
 {
     const char *volatile sendkey;
     char key[BUFSZ];
+    char oldkey[BUFSZ];
     void *iter;
     int retry_count = 3;
 
@@ -312,7 +313,7 @@ send_receive_msg(const char *const msgtype, json_t *volatile jmsg)
             /* The next line is unneccessary, but makes the control flow easier
                to follow in a debugger. */
             send_receive_recent_response = 0;
-            json_t *newmsg = handle_netcmd(key, srvmsg);
+            json_t *newmsg = handle_netcmd(key, msgtype, srvmsg);
             if (!newmsg) {     /* server error */
                 if (error_retry_ok && retry_count-- > 0 && restart_connection())
                     continue;  /* jmsg is still alive, use it again */
@@ -321,7 +322,8 @@ send_receive_msg(const char *const msgtype, json_t *volatile jmsg)
 
             json_decref(jmsg);
             jmsg = newmsg;
-            sendkey = key;
+            strcpy(oldkey, key);
+            sendkey = oldkey;
 
             /* send the callback data to the server and get a new response */
             continue;
