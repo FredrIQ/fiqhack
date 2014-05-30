@@ -660,6 +660,9 @@ playgame(int fd_or_gameno, enum nh_followmode followmode)
     enum nh_play_status ret;
     int reconnect_tries_upon_network_error = 3;
 
+    ui_flags.current_followmode =
+        ui_flags.available_followmode = followmode;
+
     game_is_running = TRUE;
     welcomed = 0;
     do {

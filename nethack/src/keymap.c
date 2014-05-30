@@ -185,6 +185,8 @@ handle_internal_cmd(struct nh_cmd_desc **cmd,
 {
     int id = (*cmd)->flags & ~(CMD_UI | DIRCMD | DIRCMD_SHIFT | DIRCMD_CTRL);
 
+    ui_flags.in_zero_time_command = TRUE;
+
     switch (id) {
     case DIR_NW:
     case DIR_N:
@@ -255,6 +257,7 @@ handle_internal_cmd(struct nh_cmd_desc **cmd,
         *cmd = NULL;
         break;
     }
+    ui_flags.in_zero_time_command = FALSE;
 }
 
 
@@ -270,6 +273,8 @@ get_command(void *callbackarg,
 
     int save_repeats = repeats_remaining;
     repeats_remaining = 0;
+
+    ui_flags.in_zero_time_command = FALSE;
 
     /* inventory item actions may set the next command */
     if (have_next_command) {
@@ -390,6 +395,8 @@ get_command(void *callbackarg,
             curses_print_message(player.moves, line);
         }
     } while (!cmd);
+
+    ui_flags.in_zero_time_command = cmd->flags & CMD_NOTIME;
 
     wmove(mapwin, player.y, player.x);
 

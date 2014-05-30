@@ -94,6 +94,7 @@ typedef wchar_t fnchar;
 
 /* attributes for dialog frames */
 # define FRAME_PAIR     6             /* magenta frames for better visibility */
+# define NOEDIT_FRAME_PAIR 9          /* dark gray if the dialog doesn't work */
 # define MAINFRAME_PAIR 113           /* 16 * 7 + 1 */
 
 # define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
@@ -160,6 +161,9 @@ struct interface_flags {
     nh_bool done_hup;
     nh_bool ingame;
     nh_bool connected_to_server;
+    enum nh_followmode current_followmode;
+    enum nh_followmode available_followmode;
+    enum nh_followmode in_zero_time_command;
 
     /* Window layout dimensions.
 

@@ -183,7 +183,9 @@ set_frame_cchar(cchar_t *cchar, enum framechars which, nh_bool mainframe)
         short pairnum;
         getcchar(unicode_border(which), w, &attr, &pairnum, NULL);
         attr = 0;
-        pairnum = mainframe ? MAINFRAME_PAIR : FRAME_PAIR;
+        pairnum = mainframe ? MAINFRAME_PAIR :
+            ui_flags.ingame && ui_flags.current_followmode != FM_PLAY &&
+            !ui_flags.in_zero_time_command ? NOEDIT_FRAME_PAIR : FRAME_PAIR;
         setcchar(cchar, w, attr, pairnum, NULL);
     }
 }
