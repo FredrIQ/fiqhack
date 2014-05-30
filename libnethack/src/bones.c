@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-05 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -189,9 +189,13 @@ can_make_bones(d_level * lev)
                 return FALSE;
     }
 
+    turnstate.generating_bones = TRUE;
+    int rn2chance = rn2(1 + (depth(lev) >> 2));
+    turnstate.generating_bones = FALSE;
+
     if (depth(lev) <= 0 ||      /* bulletproofing for endgame */
-        (!rn2(1 + (depth(lev) >> 2))    /* fewer ghosts on low levels */
-         &&!wizard))
+        (!rn2chance             /* fewer ghosts on low levels */
+         && !wizard))
         return FALSE;
     /* don't let multiple restarts generate multiple copies of objects in bones 
        files */
@@ -215,6 +219,8 @@ savebones(struct obj *corpse)
     struct obj *statue = 0;
     uchar cnamelth = 0, snamelth = 0;
     const char *whynot;
+
+    turnstate.generating_bones = TRUE; /* and we never set it back to FALSE */
 
     mnew(&mf, NULL);
 

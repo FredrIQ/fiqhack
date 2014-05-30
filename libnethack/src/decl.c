@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-29 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -165,6 +165,7 @@ static const struct turnstate default_turnstate = {
     .continue_message = TRUE,
     .vision_full_recalc = FALSE,
     .delay_flushing = FALSE,
+    .generating_bones = FALSE,
     .migrating_pets = NULL,
     .migrating_objs = NULL,
     .helpless_timers = {},
@@ -237,6 +238,8 @@ neutral_turnstate_tasks(void)
         impossible("vision not recalculated when needed during a turn");
     if (turnstate.delay_flushing)
         impossible("flushing delayed over a turn");
+    if (turnstate.generating_bones)
+        impossible("made bones, yet the game continues");
 
     if (turnstate.migrating_pets) {
         int count = 0;
