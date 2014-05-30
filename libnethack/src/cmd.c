@@ -77,7 +77,7 @@ const struct cmd_desc cmdlist[] = {
     {"apply", "use a tool or container or dip into a potion", 'a', 0, FALSE,
      doapply, CMD_ARG_OBJ | CMD_ARG_POS | CMD_ARG_DIR | CMD_ARG_STR },
     {"attributes", "show status of your character", C('x'), 0, TRUE,
-     doattributes, CMD_MAINMENU},
+     doattributes, CMD_MAINMENU | CMD_NOTIME},
     {"autoexplore", "automatically explore until something happens", 'v', 0,
      FALSE, doautoexplore, 0},
     {"cast", "cast a spell from memory", 'Z', 0, TRUE, docast,

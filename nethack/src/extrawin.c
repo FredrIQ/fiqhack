@@ -566,6 +566,7 @@ draw_extrawin(enum keyreq_context context)
                too. */
             hintcmd("discoveries", "discovered items");
             hintcmd("overview", "dungeon overview");
+            hintcmd("attributes", "view character");
             if (!player_has_status("Blind"))
                 hintcmd("lookhere", "describe this square");
             /* Note: "history" has no default binding, so probably won't
