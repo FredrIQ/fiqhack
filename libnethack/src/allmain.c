@@ -85,6 +85,8 @@ nh_lib_exit(void)
 boolean
 nh_exit_game(int exit_type)
 {
+    volatile int etype = exit_type;
+
     /* This routine always throws an exception, and normally doesn't return (it
        lets nh_play_game do the returning). It will, however, have to return
        itself if the game isn't running. In such a case, all options give a
@@ -97,7 +99,10 @@ nh_exit_game(int exit_type)
 
     if (program_state.game_running) {
 
-        switch (exit_type) {
+        if (program_state.followmode != FM_PLAY)
+            etype = EXIT_SAVE; /* no quitting other players' games */
+
+        switch (etype) {
         case EXIT_SAVE:
             terminate(GAME_DETACHED);
             break;
