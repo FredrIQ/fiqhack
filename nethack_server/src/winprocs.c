@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -482,12 +482,6 @@ srv_display_menu(struct nh_menulist *ml, const char *title, int how,
 
     dealloc_menulist(ml);
 
-    if (how == PICK_NONE) {
-        add_display_data("display_menu", jobj);
-        callback(NULL, 0, callbackarg);
-        return;
-    }
-
     jobj = client_request("display_menu", jobj);
     if (json_unpack(jobj, "{si,so!}", "howclosed", &ret, "results", &jarr) == -1
         || !json_is_array(jarr))
@@ -536,12 +530,6 @@ srv_display_objects(struct nh_objlist *objlist, const char *title,
                   "title", title ? title : "", "plhint", placement_hint);
 
     dealloc_objmenulist(objlist);
-
-    if (how == PICK_NONE) {
-        add_display_data("display_objects", jobj);
-        callback(NULL, 0, callbackarg);
-        return;
-    }
 
     jobj = client_request("display_objects", jobj);
     if (json_unpack(jobj, "{si,so!}", "howclosed", &ret, "pick_list", &jarr)

@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-05-25
+Last modified by Alex Smith, 2014-05-30
 
 This document documents the version of the network protocol used in
 NetHack 4.3, and was written by Daniel Thaler, GreyKnight, Alex Smith.
@@ -500,9 +500,9 @@ Command arguments:
   * `boolean completed`: list only completed games if true, only current games
     if false
   * `int limit`: the maximum number of games to list
-  * `boolean show_all`: if true, list games even if the user who authenticated
-    this connection has only read access to them; if false, only list games to
-    which the user has write access
+  * `boolean show_all`: if true, list games for which user who authenticated
+    this connection has read but not write access; if false, only list games
+    to which the user has write access
 
 Response arguments:
   * `struct nhnet_game[] games`: the information about the games selected by
@@ -579,6 +579,10 @@ forgetting messages, etc.).  This can happen in a few different situations:
 Command arguments:
   * `int gameid`: A value returned from `list_games` or `create_game`
     representing a game to attach to
+  * `enum followmode followmode`: How to load the game:
+      * `FM_PLAY` = 0: play the game
+      * `FM_WATCH` = 1: watch a game (like playing, but read-only)
+      * `FM_REPLAY` = 2: replay the game from the start (also read-only)
 
 Response arguments:
   * `enum nh_play_status return`: what happen in the attempt to restore the game:

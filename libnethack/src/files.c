@@ -609,10 +609,11 @@ handle_sigrtmin1(int signum, siginfo_t *siginfo, void *context)
     /* While running a zero-time command, instead of following the other
        process "live", we freeze the gamestate until the command ends. If not
        in a zero-time command, we follow other processes that are playing the
-       same game.
+       same game. Exception: in replay mode, we're always frozen.
 
        win_server_cancel is defined as async-signal by the API documentation. */
-    if (program_state.game_running && !program_state.in_zero_time_command)
+    if (program_state.game_running && program_state.followmode != FM_REPLAY &&
+        !program_state.in_zero_time_command)
         (windowprocs.win_server_cancel)();
 
     errno = save_errno;

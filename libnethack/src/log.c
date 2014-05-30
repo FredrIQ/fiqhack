@@ -13,6 +13,7 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <errno.h>
+#include <time.h>
 
 /* #define DEBUG */
 
@@ -119,6 +120,23 @@ log_recover_core(long offset, boolean canreturn)
     struct nh_menulist menu;
     boolean ok = TRUE;
 
+    if (program_state.followmode != FM_PLAY) {
+        program_state.in_zero_time_command = TRUE; /* so menus work */
+        
+        init_menulist(&menu);
+        add_menutext(&menu, "The game engine has lost track of this game.");
+        add_menuitem(&menu, 1, "Attempt to reload the game.", 'r', FALSE);
+        add_menuitem(&menu, 2, "Exit to the menu.", 'q', FALSE);
+
+        n = display_menu(&menu, "Viewing interrupted...",
+                         PICK_ONE, PLHINT_URGENT, &selected);
+        
+        if (n && selected[0] == 1)
+            terminate(RESTART_PLAY);
+        else
+            terminate(GAME_DETACHED);
+    }
+
     if (!change_fd_lock(program_state.logfile, TRUE, LT_READ, 2)) {
         raw_printf("Could not upgrade to read lock to recover logfile\n");
         terminate(ERR_IN_PROGRESS);
@@ -187,9 +205,7 @@ log_recover_core(long offset, boolean canreturn)
 
         /* Get a lock on the file. This is a little like start_updating_logfile,
            but without so many checks (because we /expect/ the file to be
-           inconsistent in some way); we don't care that the file hasn't
-           lengthened, and we don't care whether we're viewing or not (any
-           process is allowed to recover a corrupted file). */
+           inconsistent in some way). */
 
         if (!change_fd_lock(program_state.logfile, TRUE, LT_WRITE, 2)) {
             raw_printf("Could not upgrade to write lock to recover logfile\n");
@@ -298,7 +314,7 @@ log_desync(char found, char expected)
         free(logline);
     }
 
-    /* No. TODO: special-case for program_state.viewing */
+    /* No. */
     log_recover_noreturn(get_log_start_of_turn_offset());
 }
 
@@ -739,15 +755,14 @@ get_log_start_of_turn_offset(void)
  * such a condition reaches log.c, we fall back to the generic mechanism.)
  *
  * Before calling this function, ensure that the current connection can play the
- * current game and the game has been synced to a target location of EOF
- * (i.e. !viewing).
+ * current game and the game has been synced to a target location of EOF.
  */
 static boolean
 start_updating_logfile(boolean ok_not_at_end)
 {
     long o;
 
-    if (program_state.viewing)
+    if (program_state.followmode != FM_PLAY)
         panic("Logfile update while watching a game");
 
     if (!change_fd_lock(program_state.logfile, TRUE, LT_WRITE, 2))
@@ -899,6 +914,11 @@ log_neutral_turnstate(void)
     if (program_state.logfile == -1)
         panic("log_neutral_turnstate called with no logfile");
 
+    if (program_state.followmode != FM_PLAY) {
+        log_replay_save_line();
+        return;
+    }
+
     /* A heuristic to work out whether to use a save diff or save backup
        line. */
     if (program_state.binary_save.pos <
@@ -954,18 +974,34 @@ void
 log_time_line(void)
 {
     uint_least64_t timediff;
+    int tries = 30;
 
     /* If we're in a zero-time command, this function would change turntime
        without logging it, which isn't what we'd want. Don't change it and don't
-       log it either; we'll change it on the next real command instead. */
+       log it either; we'll change it on the next real command instead.
+
+       If we're watching, then we have to block until the time line is
+       available. We wait 3 seconds, then give up. */
     if (program_state.in_zero_time_command)
         return;
 
-    if (log_want_replay('+')) {
-        if (!log_replay_input(1, "+%" SCNxLEAST64, &timediff))
-            log_replay_no_more_options();
-    } else
-        timediff = time_for_time_line() - flags.turntime;
+    do {
+        if (log_want_replay('+')) {
+            if (!log_replay_input(1, "+%" SCNxLEAST64, &timediff))
+                log_replay_no_more_options();
+        } else if (program_state.followmode == FM_WATCH) {
+            if (tries-- == 0)
+                panic("No time line in save file");
+#ifndef WIN32
+            /* Don't bother sleeping on Windows; this situation should be
+               impossible anyway because watching doesn't work there */
+            nanosleep(&(struct timespec){.tv_nsec = 100000000}, NULL);
+#endif
+            continue;
+        } else {
+            timediff = time_for_time_line() - flags.turntime;
+        }
+    } while(0);
 
     flags.turntime += timediff;
     log_record_input("+%" PRIxLEAST64, timediff);
@@ -992,18 +1028,30 @@ log_revert_command(const char *cmd)
     mfree(&mf);
 }
 
+static boolean
+zero_time_checks(void)
+{
+    if (program_state.in_zero_time_command)
+        return TRUE;
+
+    if (program_state.input_was_just_replayed) {
+        program_state.input_was_just_replayed = FALSE;
+        return TRUE;
+    }
+
+    if (program_state.followmode != FM_PLAY)
+        return TRUE;
+
+    return FALSE;
+}
+
 /* Bones files must also be logged, since they are an input into the game
    state */
 void
 log_record_bones(struct memfile *mf)
 {
-    if (program_state.in_zero_time_command || program_state.viewing)
+    if (zero_time_checks())
         return;
-
-    if (program_state.input_was_just_replayed) {
-        program_state.input_was_just_replayed = FALSE;
-        return;
-    }
 
     start_updating_logfile(FALSE);
 
@@ -1019,13 +1067,8 @@ log_record_input(const char *fmt, ...)
 {
     va_list vargs;
 
-    if (program_state.in_zero_time_command)
+    if (zero_time_checks())
         return;
-
-    if (program_state.input_was_just_replayed) {
-        program_state.input_was_just_replayed = FALSE;
-        return;
-    }
 
     start_updating_logfile(FALSE);
 
@@ -1040,13 +1083,8 @@ log_record_input(const char *fmt, ...)
 void
 log_record_line(const char *l)
 {
-    if (program_state.in_zero_time_command || program_state.viewing)
+    if (zero_time_checks())
         return;
-
-    if (program_state.input_was_just_replayed) {
-        program_state.input_was_just_replayed = FALSE;
-        return;
-    }
 
     start_updating_logfile(FALSE);
 
@@ -1074,13 +1112,8 @@ log_record_menu(boolean isobjmenu, const void *el)
         cur_menuresult = elcast->results;
     }
 
-    if (program_state.in_zero_time_command)
+    if (zero_time_checks())
         return;
-
-    if (program_state.input_was_just_replayed) {
-        program_state.input_was_just_replayed = FALSE;
-        return;
-    }
 
     start_updating_logfile(FALSE);
 
@@ -1114,13 +1147,8 @@ log_record_menu(boolean isobjmenu, const void *el)
 void
 log_record_command(const char *cmd, const struct nh_cmd_arg *arg)
 {
-    if (program_state.in_zero_time_command)
+    if (zero_time_checks())
         return;
-
-    if (program_state.input_was_just_replayed) {
-        program_state.input_was_just_replayed = FALSE;
-        return;
-    }
 
     start_updating_logfile(FALSE);
 
@@ -1191,11 +1219,36 @@ start_replaying_logfile(char firstchar)
 boolean
 log_want_replay(char firstchar)
 {
+    if (program_state.in_zero_time_command)
+        return FALSE;         /* can happen while replaying */
+
     char *logline = start_replaying_logfile(firstchar);
     if (logline) {
         free(logline);
         return TRUE;
     }
+
+    if (program_state.followmode == FM_REPLAY) {
+        /* We need something that will be /blocked/ on to avoid going into an
+           infinite loop. It also need to be displayed despite being in replay
+           mode, so we force ourselves into zero-time mode for the few brief
+           moments until the client is detached. */
+
+        struct nh_menulist menu;
+
+        program_state.in_zero_time_command = TRUE;
+
+        init_menulist(&menu);
+        add_menutext(&menu, "This is the end of the replay.");
+
+        display_menu(&menu, "No more game to replay",
+                     PICK_NONE, PLHINT_ANYWHERE, NULL);
+
+        /* The client may well terminate some other way. But if it doesn't,
+           go back to the start of the last turn. */
+        terminate(RESTART_PLAY);
+    }
+
     return FALSE;
 }
 
@@ -1930,16 +1983,13 @@ relative_to_target(long bsl, long targetpos, enum target_location_units tlu)
  * deallocation and reallocation of all game pointers). Exception: if
  * "inconsistent" is et, this function will not tamper with gamestate, but will
  * instead leave the log tracking in an inconsistent state (this is done when
- * computing locations for log_recover()).  This also implies that when this
- * function is called, the gamestate location is equal to the binary save
- * location, or else the binary save location is zero (i.e. the game restore
- * sequence). (If you want to use this function in a situation where that is not
- * true, use terminate(RESTART_PLAY), which causes the main loop to restart, and
- * modify nh_play_game to set the target location you want rather than its
- * default of TLU_EOF.) It also requires us to hold a read lock on the log
- * (i.e. log_init() needs to have been called, and it can't be called from the
- * section of nh_input_aborted() that temporarily relinquishes the lock, not
- * that you'd want to do that anyway).
+ * computing locations for log_recover()). (If you want to use this function in
+ * a situation where that is not true, use terminate(RESTART_PLAY), which causes
+ * the main loop to restart, and modify nh_play_game to set the target location
+ * you want rather than its default of TLU_EOF.) It also requires us to hold a
+ * read lock on the log (i.e. log_init() needs to have been called, and it can't
+ * be called from the section of nh_input_aborted() that temporarily
+ * relinquishes the lock, not that you'd want to do that anyway).
  *
  * The invariants on the gamestate are suspended during this function, and fixed
  * at the end (unless inconsistent is set). In particular, while the function is
@@ -1965,9 +2015,10 @@ log_sync(long target_location, enum target_location_units tlu,
     if (program_state.binary_save_location == 0) {
         /* Check it's a valid save file; simultaneously, move the file
            pointer to the start of line 4 (the first save backup). */
-        if (read_log_header(program_state.logfile, &si,
-                            &program_state.expected_recovery_count,
-                            FALSE) != LS_SAVED)
+        int ls = read_log_header(program_state.logfile, &si,
+                                 &program_state.expected_recovery_count,
+                                 FALSE);
+        if (ls != LS_SAVED && ls != LS_DONE)
             error_reading_save(
                 "logfile has a bad header (is it from an old version?)\n");
 
@@ -2003,9 +2054,7 @@ log_sync(long target_location, enum target_location_units tlu,
            handles the binary save). This does not set the gamestate. */
         load_save_backup_from_offset(program_state.save_backup_location);
 
-    } else if (program_state.gamestate_location !=
-               program_state.binary_save_location && !inconsistent)
-        panic("log_sync called mid-turn");
+    }
 
     /* If we're ahead of the target, move back to the last save backup (because
        we can't run save diffs backwards, our only choice is to move forwards
@@ -2142,7 +2191,7 @@ log_replay_save_line(void)
     if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
         panic("Could not downgrade to monitor lock on logfile");
 
-    if (*logline == '~') {
+    if (logline && *logline == '~') {
 
         bsave = program_state.binary_save;
         program_state.binary_save_allocated = FALSE;
@@ -2152,7 +2201,7 @@ log_replay_save_line(void)
             program_state.end_of_gamestate_location;
         load_gamestate_from_binary_save(TRUE);
 
-    } else if (*logline == '*') {
+    } else if (logline && *logline == '*') {
 
         load_save_backup_from_string(logline);
         program_state.binary_save_location =

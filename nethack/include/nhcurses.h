@@ -524,7 +524,7 @@ extern void rungame(nh_bool net);
 extern nh_bool loadgame(void);
 extern void game_ended(int status, fnchar *filename, nh_bool net);
 extern fnchar **list_gamefiles(fnchar *dir, int *count);
-extern enum nh_play_status playgame(int fd_or_gameno);
+extern enum nh_play_status playgame(int fd_or_gameno, enum nh_followmode);
 
 /* sidebar.c */
 extern void draw_sidebar(void);

@@ -334,7 +334,7 @@ nh_create_game(int fd, struct nh_option_desc *opts_orig)
 }
 
 enum nh_play_status
-nh_play_game(int fd)
+nh_play_game(int fd, enum nh_followmode followmode)
 {
     volatile int ret;
 
@@ -345,8 +345,8 @@ nh_play_game(int fd)
     case LS_INVALID:
         return ERR_BAD_FILE;
     case LS_DONE:
-        /* TODO: Load in replay mode. */
-        return GAME_ALREADY_OVER;
+        followmode = FM_REPLAY; /* force into replay mode */
+        break;
     case LS_CRASHED:
         return ERR_RESTORE_FAILED;
     case LS_IN_PROGRESS:
@@ -354,6 +354,8 @@ nh_play_game(int fd)
     case LS_SAVED:
         break;  /* default, everything is A-OK */
     }
+
+    program_state.followmode = followmode;
 
     /* setjmp cannot portably do anything with its return value but a series of
        comparisons; even assigning it to a variable directly doesn't
@@ -415,7 +417,11 @@ nh_play_game(int fd)
        loading a binary save. (In addition, using log_sync() is /much/ faster
        than attempting to replay the entire game.) */
     log_init(fd);
-    log_sync(0, TLU_EOF, FALSE);
+
+    if (program_state.followmode == FM_REPLAY)
+        log_sync(1, TLU_TURNS, FALSE);
+    else
+        log_sync(0, TLU_EOF, FALSE);
 
     program_state.game_running = TRUE;
     post_init_tasks();
@@ -434,6 +440,7 @@ nh_play_game(int fd)
     while (1) {
         struct nh_cmd_and_arg cmd;
         int cmdidx;
+        nh_bool command_from_user = FALSE;
 
         if (u_helpless(hm_all)) {
             cmd.cmd = "wait";
@@ -441,10 +448,15 @@ nh_play_game(int fd)
             cmd.arg.argtype = 0;
         } else {
 
-            if (!log_replay_command(&cmd))
+            if (((program_state.followmode == FM_REPLAY &&
+                  (!flags.incomplete || flags.interrupted)) ||
+                 !log_replay_command(&cmd))) {
                 (*windowprocs.win_request_command)
-                    (wizard, !flags.incomplete, flags.interrupted,
+                    (wizard, program_state.followmode == FM_PLAY ? 
+                     !flags.incomplete : 1, flags.interrupted,
                      &cmd, msg_request_command_callback);
+                command_from_user = TRUE;
+            }
 
             cmdidx = get_command_idx(cmd.cmd);
         }
@@ -454,10 +466,53 @@ nh_play_game(int fd)
             continue;
         }
 
-        if (program_state.viewing && !(cmdlist[cmdidx].flags & CMD_NOTIME)) {
-            pline("Command '%s' unavailable while watching/replaying a game.",
-                  cmd.cmd);
-            continue;
+        if (program_state.followmode != FM_PLAY && command_from_user &&
+            !(cmdlist[cmdidx].flags & CMD_NOTIME)) {
+
+            /* TODO: Add a "seek to specific turn" command */
+
+            /* If we got a direction as part of the command, and we're
+               replaying, move forwards or backwards respectively. */
+            if (program_state.followmode == FM_REPLAY &&
+                cmd.arg.argtype & CMD_ARG_DIR) {
+                switch (cmd.arg.dir) {
+                case DIR_E:
+                case DIR_S:
+                    /* Move forwards one command (and thus to the next neutral
+                       turnstate, because we don't ask for a command outside
+                       neutral turnstate on a replay). */
+                    log_replay_command(&cmd);
+                    cmdidx = get_command_idx(cmd.cmd);
+                    if (cmdidx < 0)
+                        panic("Invalid command '%s' replayed from save file",
+                              cmd.cmd);
+                    break;
+                case DIR_W:
+                case DIR_N:
+                    /* Move backwards one command. */
+                    log_sync(program_state.binary_save_location-1,
+                             TLU_BYTES, FALSE);
+                    post_init_tasks();
+                    vision_reset();
+                    doredraw();
+                    notify_levelchange(NULL);
+                    bot();
+                    flush_screen();
+                    continue;
+                default:
+                    pline("That direction has no meaning while replaying.");
+                    continue;
+                }
+            } else {
+                /* Internal commands weren't sent by the player, so don't
+                   complain about them, just ignore them. Ditto for repeat. */
+                if (!(cmdlist[cmdidx].flags & CMD_INTERNAL) &&
+                    cmdlist[cmdidx].func)
+                    pline("Command '%s' is unavailable while %s.", cmd.cmd,
+                          program_state.followmode == FM_WATCH ?
+                          "watching" : "replaying");
+                continue;
+            }
         }
 
         /* Make sure the client hasn't given extra arguments on top of the ones
@@ -468,13 +523,16 @@ nh_play_game(int fd)
 
         if (cmdlist[cmdidx].flags & CMD_NOTIME &&
             !(cmdlist[cmdidx].flags & CMD_INTERNAL) &&
+            program_state.followmode == FM_PLAY &&
             (flags.incomplete || !flags.interrupted || flags.occupation)) {
 
             /* CMD_NOTIME actions don't set last_cmd/last_arg, so we need to
                ensure we interrupt them in order to avoid screwing up command
                repeat. We accomplish this via logging an "interrupt" command.
 
-               Exception: server cancels, which are a literal no-op. */
+               Exception: server cancels, which are a literal no-op; and
+               commands made when playing the game, because the command repeat
+               will still repeat the original command. */
 
             flags.incomplete = FALSE;
             flags.interrupted = FALSE; /* set to true by "interrupt" */
@@ -509,7 +567,20 @@ nh_play_game(int fd)
             log_time_line();
         }
 
+        /* Proper incomplete/interrupted handling depends on knowing who sent
+           the command (known here, but not elsewhere). So we save and restore
+           flags.incomplete/flags.interrupted here in viewing processes that
+           sent the command themselves. */
+
+        boolean save_incomplete = flags.incomplete;
+        boolean save_interrupted = flags.interrupted;
+
         command_input(cmdidx, &(cmd.arg));
+
+        if (command_from_user && program_state.followmode != FM_PLAY) {
+            flags.incomplete = save_incomplete;
+            flags.interrupted = save_interrupted;
+        }
 
         program_state.in_zero_time_command = FALSE;
 
@@ -519,9 +590,10 @@ nh_play_game(int fd)
            command with a server cancel; the incomplete command hasn't written a
            save file, so comparing against that save file will show a
            difference. */
-        if (cmdlist[cmdidx].flags & CMD_NOTIME && !flags.incomplete)
-            log_revert_command(cmd.cmd);
-        else if ((!flags.incomplete || flags.interrupted) &&
+        if (cmdlist[cmdidx].flags & CMD_NOTIME) {
+            if (!flags.incomplete)
+                log_revert_command(cmd.cmd);
+        } else if ((!flags.incomplete || flags.interrupted) &&
                  !u_helpless(hm_all))
             neutral_turnstate_tasks();
         /* Note: neutral_turnstate_tasks() frees cmd (because it frees all

@@ -149,20 +149,20 @@ nhnet_list_games(int done, int show_all, int *count)
 
 
 int
-nhnet_play_game(int gid)
+nhnet_play_game(int gid, enum nh_followmode followmode)
 {
     int ret;
     json_t *jmsg;
 
     if (!nhnet_active())
-        return nh_play_game(gid);
+        return nh_play_game(gid, followmode);
 
     if (!api_entry())
         return ERR_NETWORK_ERROR;
 
     xmalloc_cleanup(&xm_blocklist);
 
-    jmsg = json_pack("{si}", "gameid", gid);
+    jmsg = json_pack("{si,si}", "gameid", gid, "followmode", followmode);
     current_game = gid;
     jmsg = send_receive_msg("play_game", jmsg);
     current_game = 0;

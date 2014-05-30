@@ -320,9 +320,13 @@ init_data(boolean including_program_state)
     /* If including_program_state is not set, we don't init anything that
        isn't saved in the save file. */
     if (including_program_state) {
+        enum nh_followmode fm = program_state.followmode; /* never init this */
+
         memset(&program_state, 0, sizeof (program_state));
         memset(toplines, 0, sizeof (toplines));
         memset(toplines_count, 0, sizeof (toplines_count));
+
+        program_state.followmode = fm;
 
         viz_array = NULL;
     }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-28 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -398,11 +398,9 @@ set_option(const char *name, union nh_optvalue value)
     struct nh_option_desc *option = NULL, *options = new_opt_struct();
     boolean ret = FALSE;
 
-    /* if this option change affects game options and happens during a 
-       replay (program_state.viewing) and the change isn't triggered by the
-       replay (!program_state.restoring) */
-    if (program_state.viewing)
-        goto free;   /* Nope, sorry. That would mess up the replay */
+    /* can't change options for other players */
+    if (program_state.followmode != FM_PLAY)
+        goto free;
 
     if (options)
         option = nhlib_find_option(options, name);

@@ -281,21 +281,28 @@ static const char *const play_status_names[] = {
 static void
 ccmd_play_game(json_t * params)
 {
-    int gid, fd, status;
-    char filename[1024], basename[1024];
+    int gid, fd, status, followmode;
+    char filename[1024];
 
-    if (json_unpack(params, "{si*}", "gameid", &gid) == -1)
+    if (json_unpack(params, "{si,si*}", "gameid", &gid,
+                    "followmode", &followmode) == -1 ||
+        (followmode != FM_PLAY && followmode != FM_REPLAY &&
+         followmode != FM_WATCH))
         exit_client("Bad set of parameters for play_game");
 
-    if (!db_get_game_filename(user_info.uid, gid, basename, 1024)) {
+    /* TODO: For followmode == FM_PLAY, there's no check that that's actually
+       a legal thing to do! We don't want players playing each other's games. */
+
+    if (!db_get_game_filename(gid, filename, 1024)) {
+        log_msg("User '%s' tried to load game %d not in the database",
+                user_info.username, gid);
         client_msg("play_game", json_pack("{si}", "return", ERR_BAD_FILE));
         return;
     }
 
-    snprintf(filename, 1024, "%s/save/%s/%s", settings.workdir,
-             user_info.username, basename);
     fd = open(filename, O_RDWR);
     if (fd == -1) {
+        log_msg("User '%s' tried to load unreadable file '%s'");
         client_msg("play_game", json_pack("{si}", "return", ERR_BAD_FILE));
         return;
     }
@@ -303,15 +310,18 @@ ccmd_play_game(json_t * params)
     /* reset cached display data from a previous game */
     reset_cached_diplaydata();
 
-    log_msg("User '%s' started to play game %d, file %s",
-            user_info.username, gid, filename);
+    const char *verb = followmode == FM_PLAY ? "play" :
+        followmode == FM_REPLAY ? "replay" : "watch";
+
+    log_msg("User '%s' started to %s game %d, file %s",
+            user_info.username, verb, gid, filename);
     gameid = gid;
     gamefd = fd;
-    status = nh_play_game(fd);
+    status = nh_play_game(fd, followmode);
     gameid = -1;
     gamefd = -1;
-    log_msg("User '%s' stopped playing game %d, file %s: %s",
-            user_info.username, gid, filename, play_status_names[status]);
+    log_msg("User '%s' stopped %sing game %d, file %s: %s",
+            user_info.username, verb, gid, filename, play_status_names[status]);
 
     if (status == ERR_RESTORE_FAILED) {
         log_msg("Failed to restore saved game %d, file %s", gid, filename);
@@ -331,24 +341,24 @@ ccmd_play_game(json_t * params)
                    player_info.level_desc);
 
     /* move the finished game to its final resting place */
-    if (status == GAME_OVER) {
-        char basename[1024], filename[1024], final_name[1024];
+    if (status == GAME_OVER && followmode == FM_PLAY) {
+        char filename[1024], final_name[1024];
         int len;
         char buf[BUFSZ];
 
         /* get the topten entry for the current game */
         struct nh_topten_entry *tte = nh_get_topten(&len, buf, NULL, 0, 0, 0);
 
-        if (!db_get_game_filename(user_info.uid, gid, basename, 1024))
+        if (!db_get_game_filename(gid, filename, 1024))
             return;
 
-        snprintf(filename, 1024, "%s/save/%s/%s", settings.workdir,
-                 user_info.username, basename);
-        snprintf(final_name, 1024, "%s/completed/%s", settings.workdir,
-                 basename);
-        rename(filename, final_name);
         db_add_topten_entry(gid, tte->points, tte->hp, tte->maxhp, tte->deaths,
                             tte->end_how, tte->death, tte->entrytxt);
+
+        if (!db_get_game_filename(gid, final_name, 1024))
+            return;
+
+        rename(filename, final_name);
     }
 }
 
@@ -378,7 +388,6 @@ ccmd_exit_game(json_t * params)
 static void
 ccmd_list_games(json_t * params)
 {
-    char filename[1024];
     int completed, limit, show_all, count, i, fd;
     struct gamefile_info *files;
     enum nh_log_status status;
@@ -391,20 +400,18 @@ ccmd_list_games(json_t * params)
     if (json_unpack(params, "{si*}", "show_all", &show_all) == -1)
         show_all = 0;
 
+    if (limit > 100)
+        limit = 100; /* try to prevent DOS to some extent */
+
     /* step 1: get a list of files from the db. */
     files =
-        db_list_games(completed, show_all ? 0 : user_info.uid, limit, &count);
+        db_list_games(completed, show_all ? -user_info.uid : user_info.uid,
+                      limit, &count);
 
     jarr = json_array();
     /* step 2: get extra info for each file. */
     for (i = 0; i < count; i++) {
-        if (completed)
-            snprintf(filename, 1024, "%s/completed/%s", settings.workdir,
-                     files[i].filename);
-        else
-            snprintf(filename, 1024, "%s/save/%s/%s", settings.workdir,
-                     user_info.username, files[i].filename);
-        fd = open(filename, O_RDWR);
+        fd = open(files[i].filename, O_RDWR);
         if (fd == -1) {
             log_msg("Game file %s could not be opened in ccmd_list_games.",
                     files[i].filename);
@@ -419,7 +426,6 @@ ccmd_list_games(json_t * params)
             gi.plalign, "game_state", gi.game_state);
         json_array_append_new(jarr, jobj);
 
-        free((void *)files[i].username);
         free((void *)files[i].filename);
 
         close(fd);

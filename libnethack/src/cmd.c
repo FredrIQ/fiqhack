@@ -1090,9 +1090,9 @@ nh_get_object_commands(int *count, char invlet)
 
     xmalloc_cleanup(&api_blocklist);
 
-    /* returning a list of commands when .viewing is true doesn't hurt
-       anything, but since they won't work there is no point. */
-    if (program_state.viewing)
+    /* returning a list of commands when viewing doesn't hurt anything, but
+       since they won't work there is no point. */
+    if (program_state.followmode != FM_PLAY)
         return NULL;
 
     for (obj = invent; obj; obj = obj->nobj)

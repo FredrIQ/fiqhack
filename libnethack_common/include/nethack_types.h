@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-30 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -221,6 +221,47 @@ enum nh_game_modes {
     MODE_NORMAL,
     MODE_EXPLORE,
     MODE_WIZARD
+};
+
+enum nh_followmode {
+    FM_PLAY,
+    /*
+     * Playing the game.
+     *
+     * - request_command: all commands are valid and interpreted as normal;
+     *   if commands already exist, they are replayed immediately
+     * - windowprocs: input is accepted, although input from the save file is
+     *   favoured if it exists
+     * - server cancels: recheck the save file, if there's nothing there, then
+     *   re-ask the user
+     */
+
+    FM_WATCH,
+    /*
+     * Watching a game.
+     *
+     * - request_command: zero-time commands are accepted; all others produce
+     *   error messages; if commands already exist (or arrive), they are
+     *   replayed immediately
+     * - windowprocs: input is not accepted; all input is interpreted as a
+     *   server cancel
+     * - server cancels: recheck the save file, if there's nothing there, go
+     *   back to what you were doing
+     */
+
+    FM_REPLAY,
+    /*
+     * Replaying a game.
+     *
+     * - request_command: zero-time commands are accepted; movement commands
+     *   seek in the save file; other commands produce an error message;
+     *   pre-existing and arriving commands are left there unread until the
+     *   player seeks past them
+     * - windowprocs: input is read from the save file if available; otherwise
+     *   a "this is the end of the replay" box is displayed, and the turn
+     *   restarts if it is dismissed (rather than detached)
+     * - server cancels: are ignored
+     */
 };
 
 enum nh_pause_reason {

@@ -200,7 +200,8 @@ game_ended(int status, fnchar *filename, nh_bool net)
         return;
     case ERR_IN_PROGRESS:
         curses_raw_print("Error: Could not attach to the game file.");
-        curses_raw_print("(Maybe someone else is playing it?)");
+        curses_raw_print(
+            "(Maybe someone else is playing it, or a server restarted?)");
         return;
     case ERR_RESTORE_FAILED:
         curses_raw_print("Error: This game requires manual recovery.");
@@ -422,10 +423,10 @@ rungame(nh_bool net)
     if (net) {
         fd = nhnet_create_game(new_opts);
         if (fd >= 0)
-            ret = playgame(fd);
+            ret = playgame(fd, FM_PLAY);
     } else {
         if (nh_create_game(fd, new_opts) == NHCREATE_OK)
-            ret = playgame(fd);
+            ret = playgame(fd, FM_PLAY);
     }
 
     close(fd);
@@ -641,7 +642,7 @@ loadgame(void)
     fd = sys_open(filename, O_RDWR, FILE_OPEN_MASK);
     create_game_windows();
 
-    ret = playgame(fd);
+    ret = playgame(fd, FM_PLAY);
 
     close(fd);
 
@@ -654,7 +655,7 @@ loadgame(void)
 
 
 enum nh_play_status
-playgame(int fd_or_gameno)
+playgame(int fd_or_gameno, enum nh_followmode followmode)
 {
     enum nh_play_status ret;
     int reconnect_tries_upon_network_error = 3;
@@ -662,7 +663,7 @@ playgame(int fd_or_gameno)
     game_is_running = TRUE;
     welcomed = 0;
     do {
-        ret = nh_play_game(fd_or_gameno);
+        ret = nh_play_game(fd_or_gameno, followmode);
 
         /* Clean up any game windows that might be lying around.  This can
            happen if the server cancels a menu or prompt. */

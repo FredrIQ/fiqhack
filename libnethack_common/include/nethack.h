@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-29 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 /* this header defines the interface between libnethack and window ports
@@ -31,7 +31,7 @@
 extern void EXPORT(nh_lib_init) (const struct nh_window_procs *, char **paths);
 extern void EXPORT(nh_lib_exit) (void);
 extern nh_bool EXPORT(nh_exit_game) (int exit_type);
-extern enum nh_play_status EXPORT (nh_play_game) (int fd);
+extern enum nh_play_status EXPORT (nh_play_game) (int fd, enum nh_followmode);
 
 extern enum nh_create_response EXPORT(nh_create_game) (
     int fd, struct nh_option_desc *opts);

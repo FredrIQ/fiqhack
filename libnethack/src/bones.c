@@ -396,11 +396,19 @@ getbones(d_level * levnum)
 
     make_bones_id(bonesid, levnum);
 
-    if (log_replay_input(0, "B!")) {
-    record_fail:
-        log_record_input("B!");
-        return 0;
-    } else if (!log_replay_bones(&mf)) {
+    if (log_want_replay('B')) {
+        if (log_replay_input(0, "B!")) {
+        record_fail:
+            log_record_input("B!");
+            return 0;
+        } else if (!log_replay_bones(&mf)) {
+            log_replay_no_more_options();
+        }
+    } else if (program_state.followmode == FM_WATCH) {
+        /* Bleh, we beat the main process to the bones file, and we can't
+           lock things up in a menu on the client like usual. */
+        terminate(RESTART_PLAY); /* one of the better of many bad options */
+    } else {
         int fd = open_bonesfile(bonesid);
 
         if (fd == -1)

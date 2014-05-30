@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-29 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -352,7 +352,6 @@ enum target_location_units {
 
 extern struct sinfo {
     int game_running;   /* ok to call nh_do_move */
-    int viewing;        /* replaying or watching a game */
     int gameover;       /* self explanatory? */
     int stopprint;      /* inhibit further end of game disclosure */
     int panicking;      /* `panic' is in progress */
@@ -363,6 +362,8 @@ extern struct sinfo {
 # ifdef PANICLOG
     int in_paniclog;
 # endif
+
+    enum nh_followmode followmode;         /* play/watch/replay */
 
     boolean suppress_screen_updates;
     boolean restoring_binary_save;
