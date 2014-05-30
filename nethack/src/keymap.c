@@ -597,12 +597,15 @@ show_mainmenu(void)
     init_menulist(&menu);
 
     for (i = 0; i < cmdcount; i++)
-        if (commandlist[i].flags & CMD_MAINMENU)
+        if (commandlist[i].flags & CMD_MAINMENU &&
+            (ui_flags.current_followmode == FM_PLAY ||
+             commandlist[i].flags & CMD_NOTIME))
             add_menu_item(&menu, 100 + i, commandlist[i].desc, 0,
                           FALSE);
 
-    add_menu_item(&menu, 1, "set options for this game", 0, FALSE);
-    add_menu_item(&menu, 2, "save or quit the game", 0, FALSE);
+    add_menu_item(&menu, 1, "set interface options", 0, FALSE);
+    add_menu_item(&menu, 2, ui_flags.current_followmode == FM_PLAY ?
+                  "save or quit the game" : "stop viewing", 0, FALSE);
 
     curses_display_menu(&menu, "Main menu", PICK_ONE,
                         PLHINT_ANYWHERE, selected, curses_menu_callback);
@@ -629,6 +632,10 @@ save_menu(void)
 {
     struct nh_menulist menu;
     int selected[1];
+
+    /* No need for a confirmation if we're just watching. */
+    if (ui_flags.current_followmode != FM_PLAY)
+        nh_exit_game(EXIT_SAVE);
 
     init_menulist(&menu);
 
