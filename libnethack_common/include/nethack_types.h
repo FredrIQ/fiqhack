@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-05-31 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -312,6 +312,7 @@ enum nh_exit_types {
     EXIT_SAVE,
     EXIT_QUIT,
     EXIT_PANIC,
+    EXIT_RESTART,
 };
 
 enum nh_play_status {
@@ -321,6 +322,10 @@ enum nh_play_status {
     GAME_ALREADY_OVER,  /* the game loaded, some other process ended it */
     RESTART_PLAY,       /* the server needed to longjmp out of nh_play_game; try
                            giving the same call again */
+    CLIENT_RESTART,     /* ditto, except it was the client that needed to */
+    REPLAY_FINISHED,    /* the game loaded in replay mode, the player tried to
+                           step off the end of the replay; the game itself is
+                           still ongoing, though */
 
     /* The game didn't load */
     ERR_BAD_ARGS,       /* game ID does not exist, or fd is out of range */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-05-31 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -132,6 +132,7 @@ static void show_whatdoes(void);
 static struct nh_cmd_desc *show_help(void);
 static struct nh_cmd_desc *show_mainmenu(void);
 static void save_menu(void);
+static void instant_replay(void);
 static void init_keymap(void);
 static void write_keymap(void);
 static struct nh_cmd_desc *doextcmd(nh_bool);
@@ -603,8 +604,11 @@ show_mainmenu(void)
             add_menu_item(&menu, 100 + i, commandlist[i].desc, 0,
                           FALSE);
 
-    add_menu_item(&menu, 1, "set interface options", 0, FALSE);
-    add_menu_item(&menu, 2, ui_flags.current_followmode == FM_PLAY ?
+    add_menu_item(&menu, 1, ui_flags.current_followmode == FM_PLAY ?
+                  "set options" : "set interface options", 0, FALSE);
+    if (ui_flags.current_followmode != FM_REPLAY)
+        add_menu_item(&menu, 2, "view a replay of this game", 0, FALSE);
+    add_menu_item(&menu, 3, ui_flags.current_followmode == FM_PLAY ?
                   "save or quit the game" : "stop viewing", 0, FALSE);
 
     curses_display_menu(&menu, "Main menu", PICK_ONE,
@@ -621,10 +625,27 @@ show_mainmenu(void)
         draw_map(player.x, player.y);
         return find_command("interrupt");
     } else if (selected[0] == 2) {
+        instant_replay();
+    } else if (selected[0] == 3) {
         save_menu();
     }
 
     return NULL;
+}
+
+static void
+instant_replay(void)
+{
+    ui_flags.current_followmode = FM_REPLAY;
+    if (ui_flags.available_followmode == FM_WATCH)
+        ui_flags.gameload_message =
+            "You are now in replay mode.  To return to watching the game "
+            "live, use the 'save' command.";
+    else
+        ui_flags.gameload_message =
+            "You are now in replay mode.  To return to playing the game "
+            "live, use the 'save' command.";
+    nh_exit_game(EXIT_RESTART);
 }
 
 static void

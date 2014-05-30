@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-05-31 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -271,7 +271,9 @@ static const char *const play_status_names[] = {
     [GAME_DETACHED] = "game detached",
     [GAME_OVER] = "game ended",
     [GAME_ALREADY_OVER] = "watched/replayed game ended",
+    [REPLAY_FINISHED] = "reached end of replay",
     [RESTART_PLAY] = "connection was disrupted and needs reconnecting",
+    [CLIENT_RESTART] = "client is reloading the game",
     [ERR_BAD_ARGS] = "game ID did not exist",
     [ERR_BAD_FILE] = "file on disk was unreadable",
     [ERR_IN_PROGRESS] = "locking issues",

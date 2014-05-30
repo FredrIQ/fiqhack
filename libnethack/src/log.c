@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-05-31 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -278,21 +278,25 @@ log_desync(char found, char expected)
     /*
      * The behaviour we want for this function:
      *
-     * - If there is a save diff or backup beyond this point, move the
-     *   gamestate position forwards to the next such save diff or backup;
+     * - If there is a save diff or backup beyond this point, move the gamestate
+     *   position forwards to the next such save diff or backup;
      *
      * - If we have write control over the save file (probably mutually
      *   exclusive with the previous case, but should defer to it if we
-     *   implement a feature where it isn't), truncate the log to the
-     *   start of the turn (i.e. just use log_recover);
+     *   implement a feature where it isn't), truncate the log to the start of
+     *   the turn (i.e. just use log_recover);
      *
-     * - Otherwise, ignore the rest of the current turn.
+     * - Otherwise, ignore the rest of the current turn.  (This is currently
+     *   implemented by popping up a message box telling the user of the desync
+     *   - we already raw-printed it - and adding a "retry" option that the user
+     *   can choose after a turn has passed.  TODO: In situations where desyncs
+     *   are benign, we may need some other course of action.)
      *
-     * The idea is that if the save file doesn't reflect the engine we're
-     * using, then either updating it is our job, in which case we need to
-     * switch over to our engine even if that involves replaying the turn;
-     * or updating it isn't our job, in which case we simply reproduce the
-     * output of some more qualified engine.
+     * The idea is that if the save file doesn't reflect the engine we're using,
+     * then either updating it is our job, in which case we need to switch over
+     * to our engine even if that involves replaying the turn; or updating it
+     * isn't our job, in which case we simply reproduce the output of some more
+     * qualified engine.
      */
 
     if (!change_fd_lock(program_state.logfile, TRUE, LT_READ, 2))
@@ -1229,24 +1233,9 @@ log_want_replay(char firstchar)
     }
 
     if (program_state.followmode == FM_REPLAY) {
-        /* We need something that will be /blocked/ on to avoid going into an
-           infinite loop. It also need to be displayed despite being in replay
-           mode, so we force ourselves into zero-time mode for the few brief
-           moments until the client is detached. */
-
-        struct nh_menulist menu;
-
-        program_state.in_zero_time_command = TRUE;
-
-        init_menulist(&menu);
-        add_menutext(&menu, "This is the end of the replay.");
-
-        display_menu(&menu, "No more game to replay",
-                     PICK_NONE, PLHINT_ANYWHERE, NULL);
-
-        /* The client may well terminate some other way. But if it doesn't,
-           go back to the start of the last turn. */
-        terminate(RESTART_PLAY);
+        /* We can't continue through the normal codepath. Let the client
+           decide what to do (in particular, how to reattach). */
+        terminate(REPLAY_FINISHED);
     }
 
     return FALSE;

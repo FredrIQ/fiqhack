@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-05-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -105,6 +105,12 @@ nh_exit_game(int exit_type)
         switch (etype) {
         case EXIT_SAVE:
             terminate(GAME_DETACHED);
+            break;
+
+        case EXIT_RESTART:
+            /* This is no more abusable than EXIT_SAVE (hopefully neither is
+               abusable at all). */
+            terminate(CLIENT_RESTART);
             break;
 
         case EXIT_QUIT:
@@ -378,6 +384,9 @@ nh_play_game(int fd, enum nh_followmode followmode)
     IF_API_EXCEPTION(GAME_ALREADY_OVER):
         ret = GAME_ALREADY_OVER;
         goto normal_exit;
+    IF_API_EXCEPTION(REPLAY_FINISHED):
+        ret = REPLAY_FINISHED;
+        goto normal_exit;
 
         /* This happens if the game needs to escape from a deeply nested
            context. The longjmp() is not enough by itself in case the network
@@ -385,6 +394,9 @@ nh_play_game(int fd, enum nh_followmode followmode)
            the longjmp() to propagate across the network). */
     IF_API_EXCEPTION(RESTART_PLAY):
         ret = RESTART_PLAY;
+        goto normal_exit;
+    IF_API_EXCEPTION(CLIENT_RESTART):
+        ret = CLIENT_RESTART;
         goto normal_exit;
 
         /* Errors while loading. These still use the normal_exit codepath. */

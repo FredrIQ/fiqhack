@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-05-31 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -74,9 +74,9 @@ getpos(coord *cc, boolean force, const char *goal, boolean isarg)
 
         x = cc->x;
         y = cc->y;
-        
+
         flush_screen();
-        
+
         if (ask) {
             do {
                 ngr = (*windowprocs.win_getpos) (x, y, force, goal);
@@ -432,4 +432,3 @@ win_list_items(struct nh_objlist *objlist, boolean is_invent)
 }
 
 /*windows.c*/
-

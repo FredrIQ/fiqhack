@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-05-31 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -222,8 +222,9 @@ game_ended(int status, fnchar *filename, nh_bool net)
         curses_raw_print("Error: Could not re-establish connection to server.");
         return;
 
-        /* Impossible statuses: internal-only values like ERR_CREATE_FAILED,
-           and also RESTART_PLAY (which should not be reachable). */
+        /* Impossible statuses: internal-only values like ERR_CREATE_FAILED, and
+           also RESTART_PLAY, CLIENT_RESTART and REPLAY_FINISHED (which are
+           meaningful to the client, but should not reach this function). */
     default:
         curses_impossible("Game ended in an impossible way?");
         return;
@@ -662,15 +663,51 @@ playgame(int fd_or_gameno, enum nh_followmode followmode)
 
     ui_flags.current_followmode =
         ui_flags.available_followmode = followmode;
+    ui_flags.gameload_message = NULL;
 
     game_is_running = TRUE;
     welcomed = 0;
     do {
-        ret = nh_play_game(fd_or_gameno, followmode);
+        ret = nh_play_game(fd_or_gameno, ui_flags.current_followmode);
 
         /* Clean up any game windows that might be lying around.  This can
-           happen if the server cancels a menu or prompt. */
+           happen if the server or client cancels a menu or prompt. */
         delete_all_gamewins();
+
+        if (ret == CLIENT_RESTART) {
+            /* We send this to ourself to change followmode.  In this case,
+               current_followmode and available_followmode will both already
+               be correct (and we already have a gameload_message). */
+            ret = RESTART_PLAY;
+        } else if (ret == REPLAY_FINISHED) {
+            /* We're going to have to restart, and maybe change followmode. */
+            if (ui_flags.current_followmode != FM_REPLAY) {
+                curses_raw_print("Error: We reached the end of a replay, "
+                                 "but weren't replaying?");
+                ret = GAME_DETACHED;
+            } else if (ui_flags.available_followmode != FM_REPLAY) {
+                ui_flags.current_followmode = ui_flags.available_followmode;
+                if (ui_flags.current_followmode == FM_PLAY)
+                    ui_flags.gameload_message =
+                        "The replay has caught up to the current situation of "
+                        "the game.  You are now playing live.";
+                else
+                    ui_flags.gameload_message =
+                        "The replay has caught up to the current situation of "
+                        "the game.  You are now watching live.";
+                ret = RESTART_PLAY;
+            } else {
+                ui_flags.gameload_message =
+                    "That was the end of the replay.  The replay has been "
+                    "restarted.";
+                ret = RESTART_PLAY;
+            }
+        } else if (ret == GAME_DETACHED && ui_flags.current_followmode !=
+                   ui_flags.available_followmode) {
+            /* Exiting a replay that was nested inside a play or watch. */
+            ui_flags.current_followmode = ui_flags.available_followmode;
+            ret = RESTART_PLAY;
+        }
 
         /* We reconnect if the server asked us to restart the connection; and we
            make a limited number of reconnection attempts if the network went

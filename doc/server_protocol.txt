@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-05-30
+Last modified by Alex Smith, 2014-05-31
 
 This document documents the version of the network protocol used in
 NetHack 4.3, and was written by Daniel Thaler, GreyKnight, Alex Smith.
@@ -195,6 +195,9 @@ Command arguments:
         sequence
       * `EXIT_PANIC` = 2: like `EXIT_SAVE`, but record that there was a
         problem in the panic log
+      * `EXIT_RESTART` = 3: like `EXIT_SAVE`, but the client will be told to
+        immediately reload the game (`CLIENT_RESTART`); clients use this to
+        change between play, watch and replay modes
 
 Response arguments:
   * `boolean return`: true if the game exited (whether due to a save, to a
@@ -599,21 +602,27 @@ Response arguments:
       * `RESTART_PLAY` = 3: something happened that forced the server to jump
         back to `play_game`; the client should in most cases immediately call
         `play_game` with the same argument
-      * `ERR_BAD_ARGS` = 4: the game did not start because the given game ID
+      * `CLIENT_RESTART` = 4: ditto, but on the request of the client, which
+        can react to it how it likes
+      * `REPLAY_FINISHED` = 5: the game is still going, but cannot continue in
+        replay mode because the end was reached; a client can reconnect in
+        play or watch mode if it likes
+      * `ERR_BAD_ARGS` = 6: the game did not start because the given game ID
         does not exist
-      * `ERR_BAD_FILE` = 5: the game did not start because the given game ID
+      * `ERR_BAD_FILE` = 7: the game did not start because the given game ID
         corresponds to a file on disk that cannot be read
-      * `ERR_IN_PROGRESS` = 6: it is impossible to attach to the game due to
+      * `ERR_IN_PROGRESS` = 8: it is impossible to attach to the game due to
         locking issues; on POSIXy OSes, this should only happen if the file is
         being recovered manually, but on some OSes this may happen if anyone
         else is currently playing the game
-      * `ERR_RESTORE_FAILED` = 7: the game is completely corrupted and needs
+      * `ERR_RESTORE_FAILED` = 9: the game is completely corrupted and needs
         manual recovery
-      * `ERR_RECOVER_REFUSED` = 8: the game is partially corrupted, and the
+      * `ERR_RECOVER_REFUSED` = 10: the game is partially corrupted, and the
         user chose not to rewind it when prompted about whether to rewind it
-      * (`ERR_NETWORK_ERROR` = 9`: never sent over the network, but the
+      * (`ERR_NETWORK_ERROR` = 11: never sent over the network, but the
         client library simulates this return value if it has to detach the
-        game due to network issues and cannot subsequently re-attach it)
+        game due to network issues and cannot subsequently re-attach it, thus
+        clients using the client library may see it)
 
 
 set_email

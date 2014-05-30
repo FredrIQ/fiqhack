@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-05-31 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -768,9 +768,42 @@ nh_wgetch(WINDOW * win, enum keyreq_context context)
     int key = 0;
 
     draw_extrawin(context);
+
+    /* If we have a message we want to display as soon as we're in-game, do it
+       here (so that we can show it above message boxes in watch mode). This
+       involves a recursive call, so we have to be careful to prevent an
+       infinite regress. */
+    if (ui_flags.ingame && ui_flags.gameload_message &&
+        !ui_flags.in_zero_time_command) {
+        const char *msg = ui_flags.gameload_message;
+        
+        ui_flags.in_zero_time_command = 1;
+        ui_flags.gameload_message = NULL;
+
+        curses_msgwin(msg, krc_notification);
+        
+        ui_flags.in_zero_time_command = 0;
+    }
+
     do {
         curs_set(ui_flags.want_cursor);
-        key = wgetch(win);
+
+        if (!ui_flags.ingame)
+            ui_flags.queued_server_cancels = 0;
+
+        if (ui_flags.queued_server_cancels &&
+                 !ui_flags.in_zero_time_command)
+            key = KEY_SIGNAL;
+        else
+            key = wgetch(win);
+
+        if (ui_flags.ingame && ui_flags.in_zero_time_command &&
+            key == KEY_SIGNAL) {
+            /* Don't let the server knock us out of something local to the
+               client (or effectively local). */
+            ui_flags.queued_server_cancels = 1;
+            continue;
+        }
 
         if (key == KEY_HANGUP) {
             nh_exit_game(EXIT_SAVE);
