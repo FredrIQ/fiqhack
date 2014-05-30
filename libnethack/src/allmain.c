@@ -20,7 +20,7 @@ extern const struct cmd_desc cmdlist[];
 static const char *const copyright_banner[] =
     { COPYRIGHT_BANNER_A, COPYRIGHT_BANNER_B, COPYRIGHT_BANNER_C, NULL };
 
-static void pre_move_tasks(boolean);
+static void pre_move_tasks(boolean, boolean);
 
 static void newgame(microseconds birthday);
 
@@ -184,6 +184,10 @@ realtime_messages(boolean moon, boolean fri13)
         case NEW_MOON:
             pline("Be careful!  New moon tonight.");
             break;
+        default:
+            /* special moonphase time period ended */
+            pline("The moon seems less notable tonight...");
+            break;
         }
     }
 
@@ -200,7 +204,7 @@ realtime_messages(boolean moon, boolean fri13)
    command, but fixing that makes the time behaviour so much more complex that
    it probably isn't worth it.) */
 static void
-realtime_tasks(boolean always_print)
+realtime_tasks(boolean always_print, boolean never_print)
 {
     int prev_moonphase = flags.moonphase;
     int prev_friday13 = flags.friday13;
@@ -212,7 +216,8 @@ realtime_tasks(boolean always_print)
         change_luck(1);
     } else if (flags.moonphase != FULL_MOON && prev_moonphase == FULL_MOON) {
         change_luck(-1);
-    } else if (flags.moonphase == NEW_MOON && prev_moonphase != NEW_MOON) {
+    } else if ((flags.moonphase == NEW_MOON && prev_moonphase != NEW_MOON) ||
+               (flags.moonphase != NEW_MOON && prev_moonphase == NEW_MOON)) {
         /* Do nothing, but show message. */
     } else {
         msg_moonphase = FALSE;
@@ -227,8 +232,11 @@ realtime_tasks(boolean always_print)
         msg_friday13 = FALSE;
     }
 
-    realtime_messages(msg_moonphase || always_print,
-                      msg_friday13 || always_print);
+    if (!never_print)
+        realtime_messages(msg_moonphase || (always_print &&
+                                            (flags.moonphase == NEW_MOON ||
+                                             flags.moonphase == FULL_MOON)),
+                          msg_friday13 || always_print);
 }
 
 
@@ -245,7 +253,7 @@ post_init_tasks(void)
        reloading should have no effect. */
 
     /* Prepare for the first move. */
-    pre_move_tasks(0);
+    pre_move_tasks(FALSE, TRUE);
 }
 
 
@@ -938,7 +946,7 @@ special_vision_handling(void)
 
 
 static void
-pre_move_tasks(boolean didmove)
+pre_move_tasks(boolean didmove, boolean loading_game)
 {
     /* recalc attribute bonuses from items */
     calc_attr_bonus();
@@ -983,7 +991,7 @@ pre_move_tasks(boolean didmove)
     /* Handle realtime change now. If we just loaded a save, always print the
        messages. Otherwise, print them only on change. */
     if (!program_state.in_zero_time_command)
-        realtime_tasks(last_command_was("welcome"));
+        realtime_tasks(last_command_was("welcome"), loading_game);
 
     update_inventory();
     update_location(FALSE);
@@ -1301,7 +1309,7 @@ command_input(int cmdidx, struct nh_cmd_arg *arg)
     /* actual time passed */
 
     /* prepare for the next move */
-    pre_move_tasks(didmove);
+    pre_move_tasks(didmove, FALSE);
 
     flush_screen(); 
 }
