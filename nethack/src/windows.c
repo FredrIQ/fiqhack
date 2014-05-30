@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-29 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -146,13 +146,27 @@ static const char ascii_borders[] = {
     [FC_LLCORNER] = '-', [FC_LRCORNER] = '-',
     [FC_LTEE] = '|', [FC_RTEE] = '|', [FC_TTEE] = '-', [FC_BTEE] = '-',
 };
-static const cchar_t *const *const unicode_borders[] = {
-    [FC_HLINE] = &WACS_HLINE , [FC_VLINE] = &WACS_VLINE,
-    [FC_ULCORNER] = &WACS_ULCORNER, [FC_URCORNER] = &WACS_URCORNER,
-    [FC_LLCORNER] = &WACS_LLCORNER, [FC_LRCORNER] = &WACS_LRCORNER,
-    [FC_LTEE] = &WACS_LTEE, [FC_RTEE] = &WACS_RTEE,
-    [FC_TTEE] = &WACS_TTEE, [FC_BTEE] = &WACS_BTEE,
-};
+
+/* We can't use an array for this; on Windows, you can't initialize a variable
+   with the address of a variable from a DLL. */
+static const cchar_t *
+unicode_border(enum framechars which)
+{
+    switch(which)
+    {
+    case FC_HLINE: return WACS_HLINE;
+    case FC_VLINE: return WACS_VLINE;
+    case FC_ULCORNER: return WACS_ULCORNER;
+    case FC_URCORNER: return WACS_URCORNER;
+    case FC_LLCORNER: return WACS_LLCORNER;
+    case FC_LRCORNER: return WACS_LRCORNER;
+    case FC_LTEE: return WACS_LTEE;
+    case FC_RTEE: return WACS_RTEE;
+    case FC_TTEE: return WACS_TTEE;
+    case FC_BTEE: return WACS_BTEE;
+    }
+    return WACS_CKBOARD; /* should be unreachable */
+}
 
 static void
 set_frame_cchar(cchar_t *cchar, enum framechars which, nh_bool mainframe)
@@ -162,12 +176,12 @@ set_frame_cchar(cchar_t *cchar, enum framechars which, nh_bool mainframe)
         setcchar(cchar, w, (attr_t)0, mainframe ? MAINFRAME_PAIR : FRAME_PAIR,
                  NULL);
     } else {
-        int wchar_count = getcchar(*unicode_borders[which],
+        int wchar_count = getcchar(unicode_border(which),
                                    NULL, NULL, NULL, NULL);
         wchar_t w[wchar_count + 1];
         attr_t attr;
         short pairnum;
-        getcchar(*unicode_borders[which], w, &attr, &pairnum, NULL);
+        getcchar(unicode_border(which), w, &attr, &pairnum, NULL);
         attr = 0;
         pairnum = mainframe ? MAINFRAME_PAIR : FRAME_PAIR;
         setcchar(cchar, w, attr, pairnum, NULL);

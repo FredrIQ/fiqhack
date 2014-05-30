@@ -75,9 +75,15 @@ main(int argc, char **argv)
             mvprintw(0, 0, "%d '", k);
             set_mouse_event(uncursed_mbutton_hover, 0, ERR);
 
+#ifdef AIMAKE_BUILDOS_linux
             set_mouse_event(uncursed_mbutton_left, L'é', OK);
             set_mouse_event(uncursed_mbutton_middle, L'ê', OK);
             set_mouse_event(uncursed_mbutton_right, L'è', OK);
+#else
+            set_mouse_event(uncursed_mbutton_left, 'l', OK);
+            set_mouse_event(uncursed_mbutton_middle, 'm', OK);
+            set_mouse_event(uncursed_mbutton_right, 'r', OK);
+#endif
             set_mouse_event(uncursed_mbutton_wheelup, KEY_F17, KEY_CODE_YES);
             set_mouse_event(uncursed_mbutton_wheeldown, KEY_MAX+1, KEY_CODE_YES);
             add_wch(&ct);
