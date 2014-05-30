@@ -250,6 +250,11 @@ wincon_hook_getkeyorcodepoint(int timeout_ms)
         }
     }
 
+    /* TODO: Timeouts aren't implemented yet. This way of doing things at least
+       has a chance of working. */
+    if (timeout_ms < 500 && timeout_ms >= 0)
+        return KEY_SILENCE + KEY_BIAS;
+
 recheck:
     count = 0;
     while (!count) {

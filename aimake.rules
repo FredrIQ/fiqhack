@@ -183,7 +183,7 @@
         _build_man_page => {
             object => 'path:doc/nethack4.6.pod',
             command => ["cmd:pod2man", "optstring:-s 6",
-                        "optstring:-n NETHACK4",
+                        "optstring:-n NETHACK4", 'optionset:os_osx_linux',
                         "optpath:-c :bpath:Games Manual", # hack :-(
                         "optpath::", "optpath::bpath:doc/nethack4.6"],
             output => "bpath:doc/nethack4.6",
@@ -404,8 +404,11 @@
             install_dir => 'specificlibdir',
         },
         _install_libuncursed => {
-            # note: no final anchor, we also want to install the symlinks
-            object => qr=^bpath:libuncursed/src/libuncursed\Q$dllext\E=s,
+            object => qr=^bpath:libuncursed/src/libuncursed\Q$dllext\E[.\d]*$=s,
+            install_dir => 'libdir',
+        },
+        _install_libjansson => {
+            object => qr=^bpath:libjansson/libjansson\Q$dllext\E[.\d]*$=s,
             install_dir => 'libdir',
         },
         _install_main => {

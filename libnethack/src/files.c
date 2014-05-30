@@ -923,6 +923,8 @@ change_fd_lock(int fd, boolean on_logfile, enum locktype type, int timeout)
 
     hFile = (HANDLE) _get_osfhandle(fd);
 
+    UnlockFile(hFile, 0, 0, 64, 0); /* prevent issues with recursive locks */
+
     if (type == LT_NONE || type == LT_MONITOR) {
         UnlockFile(hFile, 0, 0, 64, 0);
         return TRUE;

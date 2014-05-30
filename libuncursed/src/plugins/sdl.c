@@ -368,6 +368,9 @@ update_window_sizes(int font_size_changed)
 static void
 exit_handler(void)
 {
+#ifdef ORDERLY_SHUTDOWN
+    /* The frees of "font" and "render" each cause crashes on Windows. Because
+       the process is about to exit anyway, just let them leak for now. */
     if (font) {
         SDL_DestroyTexture(font);
         font = NULL;
@@ -385,6 +388,7 @@ exit_handler(void)
         SDL_Quit();
     }
     win = NULL;
+#endif
 }
 
 void
@@ -740,28 +744,6 @@ sdl_hook_activatemouse(int active)
     mouse_active = active;
 }
 
-void
-sdl_hook_delay(int ms)
-{
-    /* We want to discard keys for the given length of time. (If the window is
-       resized during the delay, we keep quiet about the resize until the next
-       key request, because otherwise the application wouldn't learn about it
-       and might try to draw out of bounds. On a hangup, we end the delay
-       early.)
-
-       TODO: handle SDL_GetTicks overflow */
-    long tick_target = SDL_GetTicks() + ms;
-
-    suppress_resize = 1;
-    while (SDL_GetTicks() < tick_target) {
-        int k = sdl_hook_getkeyorcodepoint(tick_target - SDL_GetTicks());
-
-        if (k == KEY_HANGUP)
-            break;
-    }
-    suppress_resize = 0;
-}
-
 #define TEXTEDITING_FILTER_TIME 2       /* milliseconds */
 int
 sdl_hook_getkeyorcodepoint(int timeout_ms)
@@ -1067,6 +1049,31 @@ signal_event_loop(int key)
     SDL_PushEvent(&(union SDL_Event){.user = ue});
 }
 
+
+void
+sdl_hook_delay(int ms)
+{
+    /* We want to discard keys for the given length of time. (If the window is
+       resized during the delay, we keep quiet about the resize until the next
+       key request, because otherwise the application wouldn't learn about it
+       and might try to draw out of bounds. On a hangup, we end the delay
+       early.)
+
+       TODO: handle SDL_GetTicks overflow */
+    long tick_target = SDL_GetTicks() + ms;
+
+    while (SDL_GetTicks() < tick_target) {
+        int k = sdl_hook_getkeyorcodepoint(tick_target - SDL_GetTicks());
+
+        if (k == KEY_HANGUP)
+            break;
+        if (k == KEY_SIGNAL || k == KEY_OTHERFD) {
+            signal_event_loop(k);
+            break;
+        }
+    }
+}
+
 static volatile sig_atomic_t getch_signal_count = 0;
 
 static Uint32
@@ -1088,8 +1095,9 @@ timer_callback(Uint32 interval, void *unused) {
     if (SDL_PeepEvents(&event_buffer, 1, SDL_PEEKEVENT,
                        SDL_USEREVENT, SDL_USEREVENT) == 0) {
         memcpy(&monitored_fds_copy, &monitored_fds, sizeof monitored_fds);
-        if (select(monitored_fds_count_or_max, &monitored_fds_copy, 0, 0,
-                   &zerotime))
+        if (monitored_fds_count_or_max &&
+            select(monitored_fds_count_or_max, &monitored_fds_copy, 0, 0,
+                   &zerotime) > 0)
             signal_event_loop(KEY_OTHERFD);
     }
 

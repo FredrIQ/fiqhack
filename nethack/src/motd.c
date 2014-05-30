@@ -3,8 +3,8 @@
 /* Copyright (c) 2014 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
-#include "nhcurses.h"
 #include "netconnect.h"
+#include "nhcurses.h"
 
 /* This mostly just resolves to the same IP as nethack4.org. However, a
    subdomain is used so that it can be overriden in the hosts file (e.g. for
