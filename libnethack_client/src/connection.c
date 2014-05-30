@@ -204,7 +204,7 @@ send_receive_msg(const char *const volatile msgtype, json_t *volatile jmsg)
     char key[BUFSZ];
     char oldkey[BUFSZ];
     void *iter;
-    int retry_count = 3;
+    volatile int retry_count = 3;
 
     if (conn_err && ex_jmp_buf_valid)
         longjmp(ex_jmp_buf, 1);
