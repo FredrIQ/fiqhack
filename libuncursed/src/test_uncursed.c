@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -16,7 +16,6 @@
 
 #ifndef AIMAKE_BUILDOS_MSWin32
 # include <signal.h>
-#endif
 
 static void
 handle_sigusr1(int unused)
@@ -24,6 +23,7 @@ handle_sigusr1(int unused)
     (void)unused;
     uncursed_signal_getch();
 }
+#endif
 
 int
 main(int argc, char **argv)

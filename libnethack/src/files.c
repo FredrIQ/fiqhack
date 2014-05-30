@@ -1,7 +1,17 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-13 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
+
+#if defined(WIN32)
+# define WIN32_LEAN_AND_MEAN
+# include <Windows.h> /* must be before compilers.h */
+
+# if !defined(S_IRUSR)
+#  define S_IRUSR _S_IREAD
+#  define S_IWUSR _S_IWRITE
+# endif
+#endif
 
 #include "hack.h"
 #include "dlb.h"
@@ -28,16 +38,6 @@
 #define FQN_NUMBUF 4
 static char fqn_filename_buffer[FQN_NUMBUF][FQN_MAX_FILENAME];
 char bones[] = "bonesnn.xxx";
-
-#if defined(WIN32)
-# define WIN32_LEAN_AND_MEAN
-# include <Windows.h>
-
-# if !defined(S_IRUSR)
-#  define S_IRUSR _S_IREAD
-#  define S_IWUSR _S_IWRITE
-# endif
-#endif
 
 static const char *fqname(const char *, int, int);
 

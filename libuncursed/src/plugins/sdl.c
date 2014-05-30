@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-29 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -31,8 +31,9 @@
 # include <Ws2def.h>
 #else
 # include <sys/select.h>
-# include <signal.h>
 #endif
+
+#include <signal.h>
 
 #define debugprintf(...) do {                   \
         if(debug)                               \
@@ -1113,7 +1114,7 @@ sdl_hook_watch_fd(int fd, int watch)
 #ifdef AIMAKE_BUILDOS_MSWin32
     if (watch && !FD_ISSET(fd, &monitored_fds))
         monitored_fds_count_or_max++;
-    if (!watch && FD_ISSET(fd, &monitored_fds)
+    if (!watch && FD_ISSET(fd, &monitored_fds))
         monitored_fds_count_or_max--;
 #else
     if (fd >= FD_SETSIZE)

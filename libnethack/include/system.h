@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-06 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -50,9 +50,12 @@ extern unsigned sleep(unsigned);
 
 extern char *getenv(const char *);
 extern char *getlogin(void);
+
+#  ifndef AIMAKE_BUILDOS_MSWin32
 extern pid_t getpid(void);
 extern uid_t getuid(void);
 extern gid_t getgid(void);
+#  endif
 
 
 /* time functions */
