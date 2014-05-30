@@ -623,7 +623,7 @@ netgame_mainmenu(struct server_info *server)
     static struct nh_menuitem netmenu_items[] = {
         {NEWGAME, MI_NORMAL, "new game", 'n', 0, 0},
         {LOAD, MI_NORMAL, "load game", 'l', 0, 0},
-        {REPLAY, MI_NORMAL, "view replay", 'v', 0, 0},
+        {REPLAY, MI_NORMAL, "view a game", 'v', 0, 0},
         {OPTIONS, MI_NORMAL, "set options", 'o', 0, 0},
         {TOPTEN, MI_NORMAL, "show score list", 's', 0},
         {ACCOUNT, MI_NORMAL, "account settings", 'a', 0},

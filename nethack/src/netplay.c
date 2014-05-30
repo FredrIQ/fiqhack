@@ -81,26 +81,32 @@ net_replay(void)
 
         add_menu_txt(&menu, "", MI_NORMAL);
         if (want_done)
-            add_menu_item(&menu, -1, "View current games instead", '!', FALSE);
+            add_menu_item(&menu, -1, show_all ? "Watch current games" :
+                          "Replay your unfinished games", '!', FALSE);
         else
             add_menu_item(&menu, -1,
-                          "View completed games instead", '!', FALSE);
+                          "Replay a completed game", '!', FALSE);
 
         if (show_all)
-            add_menu_item(&menu, -2, "View only your games", '#', FALSE);
+            add_menu_item(&menu, -2, want_done ? "View your completed games" :
+                          "View your saved games", '#', FALSE);
         else
             add_menu_item(&menu, -2, "View games from other players",
                           '#', FALSE);
 
-        curses_display_menu(&menu, want_done ?
-                            "Pick a completed game to view" :
-                            "Pick a current game to view", PICK_ONE,
+        curses_display_menu(&menu, want_done ? show_all ?
+                            "Completed games by other players" :
+                            "Your completed games" : show_all ?
+                            "Pick a current game to watch" :
+                            "Replay your saved games", PICK_ONE,
                             PLHINT_ANYWHERE, pick, curses_menu_callback);
         if (pick[0] == CURSES_MENU_CANCELLED)
             return;
 
         if (pick[0] == -1) {
             want_done = !want_done;
+            if (want_done)
+                show_all = FALSE; /* will normally be intended */
             continue;
         } else if (pick[0] == -2) {
             show_all = !show_all;
@@ -113,9 +119,10 @@ net_replay(void)
 
     create_game_windows();
 
-    /* If the game is over, we want to replay. If it's our game, we want to
-       replay (not much point in watching yourself). Otherwise, we start in
-       watch mode; the player can change to replay mode from the watch menu. */
+    /* If the game is over, we want to replay (nothing to watch). If it's our
+       game, we want to replay (not much point in watching yourself). Otherwise,
+       we start in watch mode; the player can change to replay mode from the
+       watch menu. */
     int ret = playgame(gameid, show_all && !want_done ? FM_WATCH : FM_REPLAY);
 
     if (ret == GAME_OVER)
