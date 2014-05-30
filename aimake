@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2014-05-29
+# Last modified by Alex Smith, 2014-05-30
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
@@ -3862,9 +3862,9 @@ sub aipath2ospath {
 sub quoted_ospath {
     my $aipath = shift;
     my $ospath = aipath2ospath $aipath;
-    $ospath =~ s{([^ -~]|\\)}{ord $1 < 128 ?
-        sprintf "\\x%2x", ord $1 :
-        sprintf "\\u%4x", ord $1}eg;
+    $ospath =~ s{([^ -~]|\\)}{$1 eq '\\' ? "\\\\" :
+                              ord $1 < 128 ? sprintf "\\x%2x", ord $1 :
+                              sprintf "\\u%4x", ord $1}eg;
     return "\"$ospath\"";
 }
 
@@ -4112,8 +4112,8 @@ sub run_command {
             scalar @opts == 1 and $opts[0] =~ /^optpath: ?:(.*)$/s
                 or return ("Invalid arguments", '', '');
             my $fn = aipath2ospath($1);
-            # TODO: User-customizable encoding?
-            open my $fh, "<$utf8_layers", $fn or
+            # This has to round-trip with text_layers. So use text_layers.
+            open my $fh, "<$text_layers", $fn or
                 return ("Could not open '$fn' for reading: $!", '', '');
             local $/ = undef;
             my $stdout = <$fh>;
@@ -4147,7 +4147,7 @@ sub run_command {
                   s{^optpath: ?-c([^:]*):(.*)$}{$1.do{
                       my $fn = $2;
                       $fn = resolve_extend $fn;
-                      open my $fh, "<$utf8_layers", aipath2ospath $fn or
+                      open my $fh, "<$text_layers", aipath2ospath $fn or
                           return ("Could not open '$fn' for reading: $!", '', '');
                       local $/ = undef;
                       my $file_contents = <$fh>;
@@ -4189,7 +4189,7 @@ sub run_command {
                     $strings[$i] =~ s{^optpath: ?-c([^:]*):(.*)$}{$1.do{
                         my $fn2 = $2;
                         $fn2 = resolve_extend $fn2;
-                        open my $fh2, "<$utf8_layers", aipath2ospath $fn2 or
+                        open my $fh2, "<$text_layers", aipath2ospath $fn2 or
                             return ("Could not open '$2' for reading: $!", '', '');
                         local $/ = undef;
                         my $file_contents = <$fh2>;
@@ -4547,6 +4547,8 @@ sub restrict_to_permission
 
     $> == 0 or return 1; # if we're not elevated, don't bother changing perms
 
+    $^O eq 'MSWin32' and return 1; # can't do this on Windows yet
+
     $! = 0;
     if ($permname eq 'ANYONE') {
         chown 0, 0, $ospath or return 0;
@@ -4590,6 +4592,8 @@ sub elevate_to_permission
     my $ospath = aipath2ospath $aipath;
 
     $> == 0 or return 1;
+    $^O eq 'MSWin32' and return 1;
+
     -x $ospath && !-d $ospath or (progress_report -1,
         "Warning: " . (friendly_objname $aipath) . " is not an executable " .
         "and so cannot be granted permissions"), return 1;
@@ -8399,6 +8403,20 @@ __DATA__
             low_message_priority => 1,
         },
 
+        # Does the compiler understand --std=c11?
+        # This is a special case for now; we'll make it more generic later.
+        c11_default_option => {
+            object => 'bpath:aimake/aimake_1.c',
+            command => ['tool:c_toolchain', 'optstring:-c', 'optpath::', '',
+                        'optstring:--std=c11',
+                        "optpath:-o :bpath:aimake/aimake_1_c11check$objext"],
+            output => 'optionset:c11_option',
+            outdepends => 'optstring:--std=c11',
+            on_failure => 'conditional',
+            verb => 'test built',
+            low_message_priority => 1,
+        },
+
         # An aimake-specific header file that's forced onto every C file.
         generate_aimake_header => {
             command => [
@@ -8659,6 +8677,7 @@ __DATA__
         precompile_headers => {
             object => qr/^bpath:(?!aimake).*\.h$/s,
             command => ['tool:c_precompile', 'optpath::',
+                        'optionset:os_linux',
                         'optpath:-o :extend:.h.gch:'],
             verb => 'precompiled',
             # Precompiling headers never uses precompiled headers itself,
@@ -8683,7 +8702,10 @@ __DATA__
         },
         add_precompiled_header_dependencies => {
             object => qr/^bpath:(?!aimake).*\.h$/s,
+            command => ['intcmd:assert_equal',
+                        'optstring:linux', "optstring:$^O"],
             depends => 'dependencies:precompiled_header:',
+            on_failure => 'conditional',
         },
 
         # OS detection

@@ -42,13 +42,11 @@
         _cflags => {
             object => 'optionset:CFLAGS',
             depends => [
+                'optionset:c11_option',
                 'optstring:-fdiagnostics-show-option',
-                'optstring:-std=c11',
                 'optstring:-Wall',
                 'optstring:-Wextra',
                 'optstring:-Wno-missing-field-initializers',
-                # This is both for security, and to help catch bugs
-                'optstring:-fstack-protector',
                 # These warnings are probably worth fixing eventually,
                 # but have too many false positives to be able to show
                 # them right now
