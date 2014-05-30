@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -293,6 +293,20 @@ tty_hook_watch_fd(int fd, int watch)
     }
 }
 
+/* If an fd becomes invalid, we should unwatch it; otherwise, select
+   errors out on it, leading us to think we had a hangup. */
+static void
+unwatch_bad_fds(void)
+{
+    int i;
+    for (i = 0; i < watchfd_max; i++) {
+        if (!FD_ISSET(i, &watchfds))
+            continue;
+        if (fcntl(i, F_GETFD, 0) == -1) /* test for FD validity */
+            tty_hook_watch_fd(i, 0);
+    }
+}
+
 static void
 platform_specific_init(void)
 {
@@ -427,6 +441,8 @@ platform_specific_getkeystring(int timeout_ms, int ignore_signals)
     while (1) {
         if (sighup_mode)
             return KEYSTRING_HANGUP;
+
+        unwatch_bad_fds();
 
         fd_set readfds;
         memcpy(&readfds, &watchfds, sizeof (fd_set));
