@@ -744,6 +744,24 @@ sdl_hook_activatemouse(int active)
     mouse_active = active;
 }
 
+static volatile sig_atomic_t in_getkeyorcodepoint = 0;
+static volatile sig_atomic_t getch_signal_count = 0;
+
+static void
+drain_userevents(void)
+{
+    SDL_Event event_buffer;
+
+    in_getkeyorcodepoint = 0;
+
+    while (SDL_PeepEvents(&event_buffer, 1, SDL_GETEVENT,
+                          SDL_USEREVENT, SDL_USEREVENT) != 0) {
+        if (event_buffer.user.code == KEY_SIGNAL)
+            getch_signal_count++;
+        /* drain KEY_OTHERFD events */
+    }
+}
+
 #define TEXTEDITING_FILTER_TIME 2       /* milliseconds */
 int
 sdl_hook_getkeyorcodepoint(int timeout_ms)
@@ -756,6 +774,8 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
     if (hangup_mode)
         return KEY_HANGUP + KEY_BIAS;
 
+    in_getkeyorcodepoint = 1;
+
     do {
         SDL_Event e;
 
@@ -763,6 +783,7 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
             update_window_sizes(0);
             resize_queued = 0;
             uncursed_rhook_setsize(winheight, winwidth);
+            drain_userevents();
             return KEY_RESIZE + KEY_BIAS;
         }
 
@@ -774,6 +795,7 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
             /* WaitEventTimeout returns 0 on timeout expiry; both functions
                return 0 on error. */
 
+            drain_userevents();
             if (key_tick_target != -1)
                 return kc;
             return KEY_SILENCE + KEY_BIAS;
@@ -783,6 +805,7 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
         case SDL_USEREVENT:
 
             /* We got a key from a different thread. */
+            drain_userevents();
             return e.user.code + KEY_BIAS;
 
         case SDL_WINDOWEVENT:
@@ -807,6 +830,7 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
 
             if (e.window.event == SDL_WINDOWEVENT_CLOSE) {
                 hangup_mode = 1;
+                drain_userevents();
                 return KEY_HANGUP + KEY_BIAS;
             }
 
@@ -823,6 +847,8 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
             /* The user pressed a key that's interpreted as a printable.
                Convert it from UTF-8 to UTF-32. */
             k = 0;
+
+            drain_userevents();
 
 #define ett ((unsigned char)*e.text.text)
             if (ett < 0x80) {
@@ -847,8 +873,9 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
                 k += (((unsigned char)e.text.text[i]) & 0x3F) * j;
                 j <<= 6;
             }
-            if (k > 0x10ffff)
+            if (k > 0x10ffff) {
                 return KEY_INVALID + KEY_BIAS;
+            }
 
             /* Hack for X11 (i.e. most practical uses of this on Linux as of
                2013): If the user presses Alt + an ASCII printable, prefer to
@@ -866,8 +893,10 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
             if (k == -1 && mouse_hovering) {
 
                 mouse_hovering = 0;
-                if (mouse_active)
+                if (mouse_active) {
+                    drain_userevents();
                     return KEY_UNHOVER + KEY_BIAS;
+                }
 
             } else if (k != -1 && mouse_active &&
                        (!mouse_hovering ||
@@ -878,6 +907,7 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
                 mouse_hovering = 1;
                 mouse_hover_x = x;
                 mouse_hover_y = y;
+                drain_userevents();
                 return k;
 
             }
@@ -898,8 +928,10 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
             winloc_to_charloc(e.button.x, e.button.y, &x, &y);
 
             k = uncursed_rhook_mousekey_from_pos(y, x, i);
-            if (k != -1)
+            if (k != -1) {
+                drain_userevents();
                 return k;
+            }
 
             break;
 
@@ -914,8 +946,10 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
             k = uncursed_rhook_mousekey_from_pos(
                 y, x, e.wheel.y < 0 ? uncursed_mbutton_wheeldown :
                 uncursed_mbutton_wheelup);
-            if (k != -1)
+            if (k != -1) {
+                drain_userevents();
                 return k;
+            }
 
             break;
 
@@ -1029,11 +1063,13 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
 
         case SDL_QUIT:
             hangup_mode = 1;
+            drain_userevents();
             return KEY_HANGUP + KEY_BIAS;
         }
 
     } while (timeout_ms == -1 || SDL_GetTicks() < tick_target);
 
+    drain_userevents();
     return KEY_SILENCE + KEY_BIAS;
 }
 
@@ -1074,8 +1110,6 @@ sdl_hook_delay(int ms)
     }
 }
 
-static volatile sig_atomic_t getch_signal_count = 0;
-
 static Uint32
 timer_callback(Uint32 interval, void *unused) {
     fd_set monitored_fds_copy;
@@ -1090,10 +1124,13 @@ timer_callback(Uint32 interval, void *unused) {
     }
 
     /* Add KEY_OTHERFD to the queue only if we don't have a user event pending
-       already; we want to avoid spamming the queue with OTHERFD faster than
-       the user program can handle it */
+       already; we want to avoid spamming the queue with OTHERFD faster than the
+       user program can handle it; also only add it if we're inside
+       getkeyorcodepoint right now, in case the FD becomes unwritable in
+       between */
     if (SDL_PeepEvents(&event_buffer, 1, SDL_PEEKEVENT,
-                       SDL_USEREVENT, SDL_USEREVENT) == 0) {
+                       SDL_USEREVENT, SDL_USEREVENT) == 0 &&
+        in_getkeyorcodepoint) {
         memcpy(&monitored_fds_copy, &monitored_fds, sizeof monitored_fds);
         if (monitored_fds_count_or_max &&
             select(monitored_fds_count_or_max, &monitored_fds_copy, 0, 0,
