@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-05-29
+Last modified by Alex Smith, 2014-05-30
 
 Copyright (C) 2013 Alex Smith.
 
@@ -1491,6 +1491,12 @@ artifacts. (Grunt, 1f9636f, ef35a26)
 
 Self-genocide while polymorphed no longer creates a corrupted tombstone. (4,
 C342-16, c3bdbc4)
+
+The game executable can now connect to the Internet to receive NetHack-related
+announcements and (when there are no announcements available) gameplay tips.
+This feature will not be activated without the user's permission (it asks on
+the first load); even after the first load, you can control it via the
+`networkmotd` option. (4, b0786a7, 367915e)
 
 
 Internals Improvements
