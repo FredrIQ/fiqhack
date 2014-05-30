@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-29 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1191,7 +1191,7 @@ get_config_name(fnchar * buf, nh_bool ui)
 #endif
            ui ? FN("curses.conf") : FN("NetHack4.conf"), BUFSZ);
     if (ui_flags.connection_only)
-        fnncat(buf, FN(".rc"), BUFSZ);
+        fnncat(buf, ui ? FN(".curses.rc") : FN(".NetHack4.rc"), BUFSZ);
 
     return 1;
 }
@@ -1212,10 +1212,8 @@ read_nh_config(void)
     nhlib_free_optlist(nh_options);
     nh_options = nhlib_clone_optlist(opts);
 
-    if (!ui_flags.connection_only) {
-        get_config_name(filename, FALSE);
-        read_config_file(filename);
-    }
+    get_config_name(filename, FALSE);
+    read_config_file(filename);
 
     return TRUE;
 }
@@ -1281,8 +1279,7 @@ write_nh_config(void)
     FILE *fp;
     fnchar filename[BUFSZ];
 
-    if (!ui_flags.connection_only &&
-        get_config_name(filename, FALSE) &&
+    if (get_config_name(filename, FALSE) &&
         (fp = open_config_file(filename))) {
         write_config_options(fp, nh_options);
         fclose(fp);
