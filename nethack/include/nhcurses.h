@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-29 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -220,6 +220,12 @@ enum nh_animation {
     ANIM_SLOW,            /* animate all events, slowly */
 };
 
+enum nh_motd_setting {
+    MOTD_TRUE,
+    MOTD_FALSE,
+    MOTD_ASK,
+};
+
 struct settings {
     nh_bool end_own;    /* list all own scores */
     int end_top, end_around;    /* describe desired score list */
@@ -231,6 +237,7 @@ struct settings {
     enum autoable_boolean sidebar;   /* whether to draw the inventory sidebar */
     enum nh_text_mode graphics;      /* how to draw the map */
     enum nh_animation animation;     /* when to delay */
+    enum nh_motd_setting show_motd;
 
     /* use bolded black instead of dark blue for CLR_BLACK */
     nh_bool darkgray;
@@ -463,6 +470,9 @@ extern void new_action(void);
 extern void wrap_text(int width, const char *input, int *output_count,
                       char ***output);
 extern void free_wrap(char **wrap_output);
+
+/* motd.c */
+extern int network_motd(void);
 
 /* options.c */
 extern struct nh_option_desc *curses_get_nh_opts(void);

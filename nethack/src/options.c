@@ -78,6 +78,14 @@ static struct nh_listitem optstyle_list[] = {
 static struct nh_enum_option optstyle_spec =
     { optstyle_list, listlen(optstyle_list) };
 
+static struct nh_listitem networkmotd_list[] = {
+    {MOTD_TRUE, "on"},
+    {MOTD_FALSE, "off"},
+    {MOTD_ASK, "ask"},
+};
+static struct nh_enum_option networkmotd_spec =
+    { networkmotd_list, listlen(networkmotd_list) };
+
 static struct nh_listitem autoable_boolean_list[] = {
     {AB_FALSE, "never"},
     {AB_TRUE,  "always"},
@@ -101,11 +109,9 @@ struct nh_option_desc curses_options[] = {
     {"darkgray", "try to show 'black' as dark gray instead of dark blue", FALSE,
      OPTTYPE_BOOL, {.b = TRUE}},
     {"extmenu", "use a menu for selecting extended commands (#)", FALSE,
-     OPTTYPE_BOOL,
-     {.b = FALSE}},
+     OPTTYPE_BOOL, {.b = FALSE}},
     {"floorcolor", "change the color of the floor to show where you walked",
-     FALSE,
-     OPTTYPE_BOOL, {.b = TRUE}},
+     FALSE, OPTTYPE_BOOL, {.b = TRUE}},
     {"frame", "draw a frame around the window sections", FALSE, OPTTYPE_BOOL,
      {.b = TRUE}},
     {"graphics", "characters or tiles to use for the map", FALSE, OPTTYPE_ENUM,
@@ -123,6 +129,8 @@ struct nh_option_desc curses_options[] = {
     {"msgheight", "message window height", FALSE, OPTTYPE_INT, {.i = 8}},
     {"msghistory", "number of messages saved for prevmsg", FALSE, OPTTYPE_INT,
      {.i = 256}},
+    {"networkmotd", "get tips and announcements from the Internet", FALSE,
+     OPTTYPE_ENUM, {.e = MOTD_ASK}},
     {"optstyle", "option menu display style", FALSE, OPTTYPE_ENUM,
      {.e = OPTSTYLE_FULL}},
     {"scores_own", "show all your own scores in the list", FALSE, OPTTYPE_BOOL,
@@ -273,6 +281,8 @@ curses_set_option(const char *name, union nh_optvalue value)
         settings.end_top = option->value.i;
     } else if (!strcmp(option->name, "scores_around")) {
         settings.end_around = option->value.i;
+    } else if (!strcmp(option->name, "networkmotd")) {
+        settings.show_motd = option->value.e;
     } else if (!strcmp(option->name, "optstyle")) {
         settings.optstyle = option->value.e;
     } else if (!strcmp(option->name, "msgheight")) {
@@ -315,6 +325,7 @@ init_options(void)
     find_option("msghistory")->i.max = 20000;
     find_option("animation")->e = animation_spec;
     find_option("graphics")->e = graphics_spec;
+    find_option("networkmotd")->e = networkmotd_spec;
     find_option("optstyle")->e = optstyle_spec;
     find_option("scores_top")->i.max = 10000;
     find_option("scores_around")->i.max = 100;
