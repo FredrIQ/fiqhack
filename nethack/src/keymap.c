@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-29 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -209,7 +209,7 @@ handle_internal_cmd(struct nh_cmd_desc **cmd,
     case UICMD_OPTIONS:
         display_options(FALSE);
         draw_map(player.x, player.y);
-        *cmd = NULL;
+        *cmd = find_command("interrupt");
         break;
 
     case UICMD_EXTCMD:
@@ -248,7 +248,7 @@ handle_internal_cmd(struct nh_cmd_desc **cmd,
 
     case UICMD_TOGGLEPICKUP:
         dotogglepickup();
-        *cmd = NULL;
+        *cmd = find_command("interrupt");
         break;
 
     case UICMD_NOTHING:
@@ -609,6 +609,7 @@ show_mainmenu(void)
     if (selected[0] == 1) {
         display_options(FALSE);
         draw_map(player.x, player.y);
+        return find_command("interrupt");
     } else if (selected[0] == 2) {
         save_menu();
     }
