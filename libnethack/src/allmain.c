@@ -1224,7 +1224,7 @@ newgame(microseconds birthday)
 
     u_on_upstairs();    /* place the player on the upstairs before initializing
                            inventory, or else the x-ray vision check when
-                           wearing armour will cause 0,0 to be seen */
+                           wearing armor will cause 0,0 to be seen */
     u_init_inv_skills();        /* level must be valid to create items */
     vision_reset();     /* set up internals for level (after mklev) */
     check_special_room(FALSE);
