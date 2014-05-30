@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-29 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -616,7 +616,8 @@ extern boolean travelling(void);
 extern boolean test_move(
     int, int, int, int, int, int, enum u_interaction_mode,
     boolean, boolean, boolean, boolean, boolean, boolean);
-extern int domove(const struct nh_cmd_arg *, enum u_interaction_mode);
+extern int domove(const struct nh_cmd_arg *, enum u_interaction_mode,
+                  enum occupation);
 extern void invocation_message(void);
 extern void spoteffects(boolean);
 extern char *in_rooms(struct level *lev, xchar, xchar, int);
