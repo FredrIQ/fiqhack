@@ -482,6 +482,7 @@ nh_play_game(int fd, enum nh_followmode followmode)
                        turnstate, because we don't ask for a command outside
                        neutral turnstate on a replay). */
                     log_replay_command(&cmd);
+                    command_from_user = FALSE;
                     cmdidx = get_command_idx(cmd.cmd);
                     if (cmdidx < 0)
                         panic("Invalid command '%s' replayed from save file",
@@ -520,6 +521,14 @@ nh_play_game(int fd, enum nh_followmode followmode)
            any additional arguments. We do this before logging so that the
            extra arguments aren't recorded in the save file. */
         cmd.arg.argtype &= cmdlist[cmdidx].flags;
+
+        /* Proper incomplete/interrupted handling depends on knowing who sent
+           the command (known here, but not elsewhere). So we save and restore
+           flags.incomplete/flags.interrupted here in viewing processes that
+           sent the command themselves. */
+
+        boolean save_incomplete = flags.incomplete;
+        boolean save_interrupted = flags.interrupted;
 
         if (cmdlist[cmdidx].flags & CMD_NOTIME &&
             !(cmdlist[cmdidx].flags & CMD_INTERNAL) &&
@@ -566,14 +575,6 @@ nh_play_game(int fd, enum nh_followmode followmode)
             log_record_command(cmd.cmd, &(cmd.arg));
             log_time_line();
         }
-
-        /* Proper incomplete/interrupted handling depends on knowing who sent
-           the command (known here, but not elsewhere). So we save and restore
-           flags.incomplete/flags.interrupted here in viewing processes that
-           sent the command themselves. */
-
-        boolean save_incomplete = flags.incomplete;
-        boolean save_interrupted = flags.interrupted;
 
         command_input(cmdidx, &(cmd.arg));
 
