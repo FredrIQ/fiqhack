@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-05-25
+Last modified by Alex Smith, 2014-05-31
 
 Copyright (C) 2013 Alex Smith.
 
@@ -240,7 +240,9 @@ explaining how it works, we give a list of situations known to use it:
     It also happens when a user starts a client for a game, forgets about it
     (or becomes unable to access it due to ssh timeout, etc.), and starts a
     second client for the same game; answering a prompt in the second game
-    closes it in the first game.
+    closes it in the first game.  (TODO: This situation no longer uses the
+    exceptional pattern in most case because server cancels suffice instead.
+    Document this.)
 
 The exceptional pattern is implemented in the server and the client library
 via a `longjmp` that causes the `nh[net]_play_game` to return a specific
@@ -411,7 +413,9 @@ state.
 The more complex cases are commands that take more than one action.  These are
 divided into two categories:
 
-  * Interruptible actions.  These can be cancelled at any time by the client.
+  * (TODO: This is slightly out of date.)
+  
+    Interruptible actions.  These can be cancelled at any time by the client.
     The way this works is that the client sends the command, libnethack
     simulates the command for one action, then requests a command again; the
     client can continue the action by sending the `repeat` command, or it can
@@ -469,7 +473,9 @@ divided into two categories:
         the character is in danger and the player should be asked to confirm
         continuing/repeating the action manually with control-A).
 
-  * Uninterruptible actions.  These are currently implemented in the
+  * (TODO: This documentation is very out of date.)
+  
+    Uninterruptible actions.  These are currently implemented in the
     traditional way: `multi` is set to a negative number, increasing by one
     per turn, and the server ignores all commands sent until it gets back to
     zero.  However, it does continue requesting commands (with completed and
