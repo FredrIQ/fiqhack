@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2014-05-30
+# Last modified by Alex Smith, 2014-05-31
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
@@ -206,13 +206,10 @@ the // around the regexp.)
 
 This option is currently unimplemented.
 
-=item B<-B> I<regexp>, B<--rebuild=>I<regexp>
+=item B<-B> I<object>, B<--rebuild=>I<object>
 
-Consider all files matching the regexp to have changed, even if they actually
-haven't.  (Don't include the // around the regexp.)  This option can be given
-multiple times.
-
-This option is currently unimplemented.
+Attempt to rebuild the given I<object>, even if aimake has no reason to think
+that anything would be different this time.
 
 =item B<--directory-layout>=I<layout>
 
@@ -6652,6 +6649,14 @@ for my $feature (sort keys %{$config->{features}}) {
 }
 
 $opt_config_only and write_statefile, exit 0;
+
+atomically {
+    for my $obj (@opt_rebuild) {
+        mark_pair_changed unintern $_,
+        '-B command line option' for
+            keys %{$state->{outdep_by_object}{intern $obj}};
+    }
+};
 
 if ($active_features eq "") {
     progress_report 0, "Starting build (no features selected)";
