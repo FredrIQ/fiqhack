@@ -208,9 +208,13 @@ ccmd_create_game(json_t * params)
     const char *name = nameopt ? nameopt->value.s :
         debug ? "wizard" : "explorer";
 
+    if (strspn(name, "abcdefghijklmnopqrstuvwxyz0123456789_") != strlen(name))
+        exit_client("Character name contains unwanted characters");
+
     t = (long)time(NULL);
     snprintf(path, 1024, "%s/save/%s/", settings.workdir, user_info.username);
     snprintf(basename, 1024, "%ld_%s.nhgame", t, name);
+    basename[1000] = '\0';
     snprintf(filename, 1024, "%s%s", path, basename);
 
     mkdir(path, 0755);  /* should already exist unless something went wrong
