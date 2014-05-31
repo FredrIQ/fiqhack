@@ -457,6 +457,7 @@ nh_play_game(int fd, enum nh_followmode followmode)
     program_state.game_running = TRUE;
     post_init_tasks();
 
+just_reloaded_save:
     /* While loading a save file, we don't do rendering, and we don't run
        the vision system. Do all that stuff now. */
     vision_reset();
@@ -470,6 +471,7 @@ nh_play_game(int fd, enum nh_followmode followmode)
     if (replay_forced) {
         pline("This game ended while you were loading it.");
         pline("Loading in replay mode intead.");
+        replay_forced = FALSE;
     }
 
     /* The main loop. */
@@ -529,13 +531,23 @@ nh_play_game(int fd, enum nh_followmode followmode)
                     /* Move backwards one command. */
                     log_sync(program_state.binary_save_location-1,
                              TLU_BYTES, FALSE);
-                    post_init_tasks();
-                    vision_reset();
-                    doredraw();
-                    notify_levelchange(NULL);
-                    bot();
-                    flush_screen();
-                    continue;
+                    goto just_reloaded_save;
+                case DIR_NW:
+                    /* Move to turn 1. */
+                    log_sync(1, TLU_TURNS, FALSE);
+                    goto just_reloaded_save;
+                case DIR_SW:
+                    /* Move to the end of the replay. */
+                    log_sync(0, TLU_EOF, FALSE);
+                    goto just_reloaded_save;
+                case DIR_NE:
+                    /* Move backwards 50 turns. */
+                    log_sync(moves - 50, TLU_TURNS, FALSE);
+                    goto just_reloaded_save;
+                case DIR_SE:
+                    /* Move forwards 50 turns. */
+                    log_sync(moves + 50, TLU_TURNS, FALSE);
+                    goto just_reloaded_save;
                 default:
                     pline("That direction has no meaning while replaying.");
                     continue;
