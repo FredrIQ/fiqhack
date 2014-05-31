@@ -112,7 +112,8 @@ init_curses_ui(const char *dataprefix)
         printw("Current size: (%d, %d)\n", COLS, LINES);
         printw("Minimum size: (%d, %d)\n", COLNO + 1, ROWNO + 3);
         printw("Size your terminal larger, or press 'q' to quit.\n");
-        if (getch() == 'q') {
+        int k = getch();
+        if (k == 'q' || k == KEY_HANGUP) {
             endwin();
             exit(1);
         }
