@@ -168,6 +168,7 @@ log_recover_core(long offset, boolean canreturn)
     /* Treat everything that happens here as outside the main flow of the game;
        otherwise, we get desyncs in the recovered file, because it isn't in need
        of recovery after being recovered. */
+    boolean save_ztc = program_state.in_zero_time_command;
     program_state.in_zero_time_command = TRUE;
 
     init_menulist(&menu);
@@ -201,8 +202,10 @@ log_recover_core(long offset, boolean canreturn)
     n = display_menu(&menu, "The save file is corrupted...",
                      PICK_ONE, PLHINT_URGENT, &selected);
 
-    if (n && selected[0] == 3)
+    if (n && selected[0] == 3) {
+        program_state.in_zero_time_command = save_ztc;
         return;
+    }
 
     if (n && selected[0] == 1) {
         /* Automatic recovery. */
