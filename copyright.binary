@@ -1,0 +1,350 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Last-Modified: Last modified by Alex Smith, 2014-05-31
+Comment:
+ This file contains the copyright status of the files in the Windows binary
+ distribution (i.e. the copyright NetHack 4 has after being built). For other
+ operating systems, the copyright works the same way but some of the filenames
+ may be different.
+
+Files: changelog.txt faq.txt philosophy.txt README COPYING
+License: NHGPL
+Copyright: Copyright (c) 2013 Alex Smith
+
+Files: dawnhack-*
+License: CC-BY-3.0
+ This work is licensed under the Creative Commons Attribution 3.0
+ Unported License. To view a copy of this license, visit
+ http://creativecommons.org/licenses/by/3.0/ or send a letter to
+ Creative Commons, 444 Castro Street, Suite 900, Mountain View,
+ California, 94041, USA.
+Copyright:
+ Copyright (C) Andrew Rios, 2014
+Comment:
+ It is unclear whether CC-BY-3.0 is compatible with the NHGPL (although it is
+ not against the spirit of either license to include CC-BY-3.0 data in an
+ NHGPL file, there may be incompatibilities in the letter).  However, there is
+ no need for license compatibility in this case, because these files only
+ specify artwork, which is entirely independent of the rest of the program
+ (and is replaceable without changes to any program code or binaries, an
+ operation that was often performed in practice in previous versions).
+
+Files: font-* slashem-*
+License: NHGPL
+Copyright: These tiles were copied from an NHGPL Slash'EM release that was
+ Copyright (C) J. Ali Harlow 2000-2006, which gives the following
+ explanation of the provenance and copyright status of the tiles:
+ .
+ Window ports can optionally make use of the tiles (pictures for NetHack
+ symbols) found in this directory.  They are distributed in a text format
+ with routines to help in converting them to a system's preferred format
+ and using them there.  The original tiles were provided by Warwick Allison.
+ .
+ The 32x32 tileset stored in mon32mi.txt, obj32mi.txt and oth32mi.txt and the
+ Psuedo-3D tileset stored in mon3dmi.txt, obj3dmi.txt and oth3dmi.txt were
+ created by a number of different people under the direction of Mitsuhiro
+ Itakura (ita@gold.koma.jaeri.go.jp) who also holds the copyright on these
+ tiles.  The artists were:
+ .
+         Mitsuhiro Itakura
+         Haruko Numata
+         Edger
+         ZMYDaino
+         Wan'ichi
+         Tatsuya
+ .
+ The 32x32 tileset stored in mon32alg.txt, obj32alg.txt and oth32alg.txt
+ and the additional tiles stored in xxx32al2.txt (not used by all ports)
+ were imported from AllegroHack, written by Kelly Youngblood (jry@pinn.net).
+ The artists were:
+ .
+         Kelly Youngblood
+         Paul Pliska
+         John Harris
+ .
+ The 32x32 tileset stored in mon32aw.txt was contributed by Andrew Walker.
+ .
+ Slash'EM specific high resolution tiles are stored in mon32se.txt, obj32se.txt
+ and oth32se.txt. These override those found in other tilesets.
+ Tiles which are not present in any other set are created from the 16x16 tiles.
+ .
+ A very few individual tiles in these tile images come from NetHack 3.4.3 or
+ were made specifically for NetHack 4 by Alex Smith.
+
+Files: libjansson.dll
+License: Expat
+Copyright: Copyright (c) 2009-2011 Petri Lehtinen <petri@digip.org>
+
+Files: libpng*.dll
+Copyright:
+ This copy of the libpng notices is provided for your convenience.  In case of
+ any discrepancy between this copy and the notices in the file png.h that is
+ included in the libpng distribution, the latter shall prevail.
+ .
+ COPYRIGHT NOTICE, DISCLAIMER, and LICENSE:
+ .
+ If you modify libpng you may insert additional notices immediately following
+ this sentence.
+ .
+ This code is released under the libpng license.
+ .
+ libpng versions 1.2.6, August 15, 2004, through 1.5.10, March 29, 2012, are
+ Copyright (c) 2004, 2006-2011 Glenn Randers-Pehrson, and are
+ distributed according to the same disclaimer and license as libpng-1.2.5
+ with the following individual added to the list of Contributing Authors
+ .
+    Cosmin Truta
+ .
+ libpng versions 1.0.7, July 1, 2000, through 1.2.5 - October 3, 2002, are
+ Copyright (c) 2000-2002 Glenn Randers-Pehrson, and are
+ distributed according to the same disclaimer and license as libpng-1.0.6
+ with the following individuals added to the list of Contributing Authors
+ .
+    Simon-Pierre Cadieux
+    Eric S. Raymond
+    Gilles Vollant
+ .
+ and with the following additions to the disclaimer:
+ .
+    There is no warranty against interference with your enjoyment of the
+    library or against infringement.  There is no warranty that our
+    efforts or the library will fulfill any of your particular purposes
+    or needs.  This library is provided with all faults, and the entire
+    risk of satisfactory quality, performance, accuracy, and effort is with
+    the user.
+ .
+ libpng versions 0.97, January 1998, through 1.0.6, March 20, 2000, are
+ Copyright (c) 1998, 1999 Glenn Randers-Pehrson, and are
+ distributed according to the same disclaimer and license as libpng-0.96,
+ with the following individuals added to the list of Contributing Authors:
+ .
+    Tom Lane
+    Glenn Randers-Pehrson
+    Willem van Schaik
+ .
+ libpng versions 0.89, June 1996, through 0.96, May 1997, are
+ Copyright (c) 1996, 1997 Andreas Dilger
+ Distributed according to the same disclaimer and license as libpng-0.88,
+ with the following individuals added to the list of Contributing Authors:
+ .
+    John Bowler
+    Kevin Bracey
+    Sam Bushell
+    Magnus Holmgren
+    Greg Roelofs
+    Tom Tanner
+ .
+ libpng versions 0.5, May 1995, through 0.88, January 1996, are
+ Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.
+ .
+ For the purposes of this copyright and license, "Contributing Authors"
+ is defined as the following set of individuals:
+ .
+    Andreas Dilger
+    Dave Martindale
+    Guy Eric Schalnat
+    Paul Schmidt
+    Tim Wegner
+License: zlib/libpng
+ The PNG Reference Library is supplied "AS IS".  The Contributing Authors
+ and Group 42, Inc. disclaim all warranties, expressed or implied,
+ including, without limitation, the warranties of merchantability and of
+ fitness for any purpose.  The Contributing Authors and Group 42, Inc.
+ assume no liability for direct, indirect, incidental, special, exemplary,
+ or consequential damages, which may result from the use of the PNG
+ Reference Library, even if advised of the possibility of such damage.
+ .
+ Permission is hereby granted to use, copy, modify, and distribute this
+ source code, or portions hereof, for any purpose, without fee, subject
+ to the following restrictions:
+ .
+ 1. The origin of this source code must not be misrepresented.
+ .
+ 2. Altered versions must be plainly marked as such and must not
+    be misrepresented as being the original source.
+ .
+ 3. This Copyright notice may not be removed or altered from any
+    source or altered source distribution.
+ .
+ The Contributing Authors and Group 42, Inc. specifically permit, without
+ fee, and encourage the use of this source code as a component to
+ supporting the PNG file format in commercial products.  If you use this
+ source code in a product, acknowledgment is not required but would be
+ appreciated.
+
+Files: libnethack*.dll nhdat nethack*.exe
+License: NHGPL
+Copyright:
+ Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985
+ Copyright (c) 2010-2014 Alex Smith
+ Copyright (c) 2011-2012 Daniel Thaler
+ and many other contributors (see the "copyright" and "history" files for full
+ lists).
+
+Files: license
+License: verbatim
+ Everyone is permitted to copy and distribute verbatim copies of this
+ license, but changing it is not allowed.
+Copyright:
+ Copyright 1989 M. Stephenson
+ Copyright 1988 Richard M. Stallman
+Comment:
+ The license under which the text of the NHGPL itself is distributed.
+ It is not used for any code.
+
+Files: logfile record xlogfile
+License: public-domain
+ These are 0-byte files, and so are not copyrightable.
+
+Files: README-SDL.txt SDL2.dll
+Copyright: 1997-2012 Sam Lantinga <slouken@libsdl.org>
+License: zlib/libpng
+ This software is provided 'as-is', without any express or implied
+ warranty.  In no event will the authors be held liable for any damages
+ arising from the use of this software.
+ .
+ Permission is granted to anyone to use this software for any purpose,
+ including commercial applications, and to alter it and redistribute it
+ freely, subject to the following restrictions:
+ .
+ 1. The origin of this software must not be misrepresented; you must not
+    claim that you wrote the original software. If you use this software
+    in a product, an acknowledgment in the product documentation would be
+    appreciated but is not required.
+ 2. Altered source versions must be plainly marked as such, and must not be
+    misrepresented as being the original software.
+ 3. This notice may not be removed or altered from any source distribution.
+
+Files: zlib*.dll
+Copyright: (C) 1995-2012 Jean-loup Gailly and Mark Adler
+License: zlib/libpng
+ This software is provided 'as-is', without any express or implied
+ warranty.  In no event will the authors be held liable for any damages
+ arising from the use of this software.
+ .
+ Permission is granted to anyone to use this software for any purpose,
+ including commercial applications, and to alter it and redistribute it
+ freely, subject to the following restrictions:
+ .
+ 1. The origin of this software must not be misrepresented; you must not
+    claim that you wrote the original software. If you use this software
+    in a product, an acknowledgment in the product documentation would be
+    appreciated but is not required.
+ 2. Altered source versions must be plainly marked as such, and must not be
+    misrepresented as being the original software.
+ 3. This notice may not be removed or altered from any source distribution.
+
+License: NHGPL
+                     NETHACK GENERAL PUBLIC LICENSE
+                     (Copyright 1989 M. Stephenson)
+ .
+                (Based on the BISON general public license,
+                    copyright 1988 Richard M. Stallman)
+ .
+  Everyone is permitted to copy and distribute verbatim copies of this
+  license, but changing it is not allowed.  You can also use this wording to
+  make the terms for other programs.
+ .
+   The license agreements of most software companies keep you at the mercy of
+ those companies.  By contrast, our general public license is intended to give
+ everyone the right to share NetHack.  To make sure that you get the rights we
+ want you to have, we need to make restrictions that forbid anyone to deny you
+ these rights or to ask you to surrender the rights.  Hence this license
+ agreement.
+ .
+   Specifically, we want to make sure that you have the right to give away
+ copies of NetHack, that you receive source code or else can get it if you
+ want it, that you can change NetHack or use pieces of it in new free
+ programs, and that you know you can do these things.
+ .
+   To make sure that everyone has such rights, we have to forbid you to
+ deprive anyone else of these rights.  For example, if you distribute copies
+ of NetHack, you must give the recipients all the rights that you have.  You
+ must make sure that they, too, receive or can get the source code.  And you
+ must tell them their rights.
+ .
+   Also, for our own protection, we must make certain that everyone finds out
+ that there is no warranty for NetHack.  If NetHack is modified by someone
+ else and passed on, we want its recipients to know that what they have is
+ not what we distributed.
+ .
+   Therefore we (Mike Stephenson and other holders of NetHack copyrights) make
+ the following terms which say what you must do to be allowed to distribute or
+ change NetHack.
+ .
+ .
+                         COPYING POLICIES
+ .
+   1. You may copy and distribute verbatim copies of NetHack source code as
+ you receive it, in any medium, provided that you keep intact the notices on
+ all files that refer to copyrights, to this License Agreement, and to the
+ absence of any warranty; and give any other recipients of the NetHack
+ program a copy of this License Agreement along with the program.
+ .
+   2. You may modify your copy or copies of NetHack or any portion of it, and
+ copy and distribute such modifications under the terms of Paragraph 1 above
+ (including distributing this License Agreement), provided that you also do the
+ following:
+ .
+     a) cause the modified files to carry prominent notices stating that you
+     changed the files and the date of any change; and
+ .
+     b) cause the whole of any work that you distribute or publish, that in
+     whole or in part contains or is a derivative of NetHack or any part
+     thereof, to be licensed at no charge to all third parties on terms
+     identical to those contained in this License Agreement (except that you
+     may choose to grant more extensive warranty protection to some or all
+     third parties, at your option)
+ .
+     c) You may charge a distribution fee for the physical act of
+     transferring a copy, and you may at your option offer warranty protection
+     in exchange for a fee.
+ .
+   3. You may copy and distribute NetHack (or a portion or derivative of it,
+ under Paragraph 2) in object code or executable form under the terms of
+ Paragraphs 1 and 2 above provided that you also do one of the following:
+ .
+     a) accompany it with the complete machine-readable source code, which
+     must be distributed under the terms of Paragraphs 1 and 2 above; or,
+ .
+     b) accompany it with full information as to how to obtain the complete
+     machine-readable source code from an appropriate archive site.  (This
+     alternative is allowed only for noncommercial distribution.)
+ .
+ For these purposes, complete source code means either the full source
+ distribution as originally released over Usenet or updated copies of the
+ files in this distribution used to create the object code or executable.
+ .
+   4. You may not copy, sublicense, distribute or transfer NetHack except as
+ expressly provided under this License Agreement.  Any attempt otherwise to
+ copy, sublicense, distribute or transfer NetHack is void and your rights to
+ use the program under this License agreement shall be automatically
+ terminated.  However, parties who have received computer software programs
+ from you with this License Agreement will not have their licenses terminated
+ so long as such parties remain in full compliance.
+ .
+ .
+ Stated plainly:  You are permitted to modify NetHack, or otherwise use parts
+ of NetHack, provided that you comply with the conditions specified above;
+ in particular, your modified NetHack or program containing parts of NetHack
+ must remain freely available as provided in this License Agreement.  In
+ other words, go ahead and share NetHack, but don't try to stop anyone else
+ from sharing it farther.
+
+License: Expat
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ .
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.

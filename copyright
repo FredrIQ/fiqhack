@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Alex Smith, 2014-05-30
+Last-Modified: Last modified by Alex Smith, 2014-05-31
 
 Files: libnethack_client/*
 License: NHGPL or GPL-2+
@@ -53,7 +53,7 @@ Files: libnethack/include/display.h
 License: NHGPL
 Copyright: Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy
 
-Files: libnethack/include/dlb.h
+Files: libnethack/include/dlb.h libnethack/include/iomodes.h
 License: NHGPL
 Copyright: Copyright (c) Kenneth Lorber, Bethesda, Maryland, 1993
 
@@ -229,6 +229,10 @@ Files: libnethack/src/memfile.c
 License: NHGPL
 Copyright: Copyright (c) Daniel Thaler, 2011
 
+Files: libnethack/src/messages.c
+License: NHGPL
+Copyright: Copyright (c) 2014 Alex Smith
+
 Files: libnethack/src/mkmap.c
 License: NHGPL
 Copyright: Copyright (c) J. C. Collet, M. Stephenson and D. Cohrs, 1992
@@ -309,6 +313,13 @@ Files: libnethack/src/xmalloc.c
 License: NHGPL
 Copyright: Copyright (c) Daniel Thaler, 2011
 
+Files: libnethack/src/youprop.c
+License: NHGPL
+Copyright:
+ Copyright (c) 1989 Mike Threepoint
+ Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ Copyright (c) 2014 Alex Smith
+
 Files: libnethack/util/dgn_*
 License: NHGPL
 Copyright:
@@ -330,13 +341,24 @@ Copyright:
  Copyright (c) M. Stephenson, 1990, 1991
  Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985
 
-Files: libnethack/util/saveinfo.c
+Files: libnethack/util/checkglobals.sh
 License: NHGPL
-Copyright: Copyright (c) Daniel Thaler, 2011
+Copyright: Copyright (c) 2013 Alex Smith
+
+Files: libnethack/util/savemap.pl
+License: NHGPL
+Copyright: Copyright (c) 2014 Derrick Sund
 
 Files: libuncursed/*
 License: NHGPL or GPL-2+
-Copyright: Copyright (c) 2013 Alex Smith
+Copyright: Copyright (c) 2013-2014 Alex Smith
+
+Files: libnethack_common/*
+License: NHGPL
+Copyright:
+ Copyright (c) 2013-2014 Alex Smith
+ Copyright (c) Daniel Thaler, 2011-2012
+ Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
 
 Files: nethack/*
 License: NHGPL
@@ -353,6 +375,10 @@ Copyright: Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985
 Files: nethack/*/brandings.*
 License: NHGPL
 Copyright: Copyright (c) 2013 Alex Smith
+
+Files: nethack/src/extrawin.c nethack/src/motd.c
+License: NHGPL
+Copyright: Copyright (c) 2014 Alex Smith
 
 Files: nethack_server/*
 License: NHGPL or GPL-2+
@@ -499,6 +525,40 @@ Copyright:
  Copyright (c) 2013 Alex Smith
 
 Files: tilesets/src/tilesequence.c
+License: NHGPL
+Copyright: Copyright (c) 2013 Alex Smith
+
+Files: scripts/*
+License: NHGPL
+Copyright: Copyright (c) 2013-2014 Alex Smith
+
+Files: dist/debian/*
+License: NHGPL
+Copyright: Copyright (c) 2014 Alex Smith
+
+Files: doc/changelog.txt doc/faq.txt doc/mainloop.txt doc/philosophy.txt doc/saves.txt
+License: NHGPL
+Copyright: Copyright (c) 2013 Alex Smith
+
+Files: doc/nethack4.6.pod
+License: NHGPL
+Copyright: Copyright (c) 2014 Alex Smith
+
+Files: doc/dungeon.txt
+License: NHGPL
+Copyright: Copyright (c) 2013 Sean Hunt
+
+Files: doc/tilesets.txt
+License: NHGPL
+Copyright: Copyright (c) 2013 Alex Smith
+Comment: Based on the equivalent documentation from Slash'EM (which is
+ also NHGPL, and does not list an author).
+
+Files: .indent.pro
+License: NHGPL
+Copyright: Copyright (c) 2013 Alex Smith
+
+Files: README
 License: NHGPL
 Copyright: Copyright (c) 2013 Alex Smith
 

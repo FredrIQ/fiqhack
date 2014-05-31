@@ -26,8 +26,11 @@ during a static build (and used as a shared library during a dynamic
 build), and is distributed under the Expat license. (See the
 "copyright" file for details.)
 
-For full, machine-readable detail on the licenses of all the files
-that make up NetHack 4, see the "copyright" file.
+For full, machine-readable detail on the licenses of all the source
+files that make up NetHack 4, see the "copyright" file.  The licenses
+to the files included in a binary distribution (either compiled from
+the source, or copied from elsewhere) are listed in the
+"copyright.binary" file.
 
 Please note:
 
