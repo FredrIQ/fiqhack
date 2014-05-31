@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-05-30
+Last modified by Alex Smith, 2014-05-31
 
 Copyright (C) 2013 Alex Smith.
 
@@ -226,8 +226,11 @@ Monsters are now capable of using their special attacks even if tame; and more
 special attacks now work for polymorphed players than before. (Grunt and Ace,
 53a8e41, 05587f7, 3df54b4, 239ed8e, 93811e3, eb5c83c, 7c67ab1, 867118c)
 
-Monsters now have a difficulty independent of the player's level. (Nitro,
-98a3b47)
+Monsters who naturally live on a level (rather than spawning later) now have a
+difficulty mostly independent of the player's level (with some exceptions in
+the late-game to keep the game balance close to 3.4.3; in the early game
+(pre-D:12), the game wil calculate monster difficulty as though the player's
+level were 1). (Nitro and 4, 98a3b47, 0ea054c)
 
 Tame monster will no longer attack nor be attacked when under 1/3 health; when
 injured but on more health, they will be more cautious about what they fight.
@@ -1116,6 +1119,11 @@ inventory); because of this, randomized-appearance items no longer prompt for
 names when destroyed (rather, there is a shortcut in the `C` menu to name the
 most recently destroyed randomized-appearance item). (Ace, 9562e5c)
 
+`^C`: Now a synonym for `!` (open menu), but one which works even at prompts
+(thus allowing you to save via opening the menu at a prompt, and then choosing
+to save from the menu).  Note that only a limited range of functionality is
+available from the menu while at a prompt. (4, 5b6b996)
+
 `D`: Now allows selection of all unidentified items. (Nitro, a854a21)
 
 `e`: Eating from the ground now works like Slash'EM, using `e,` (and a menu if
@@ -1134,7 +1142,8 @@ Dyna, 1115668, c489412)
 `g`,`G`,`5`: The difference between these commands (whether they stop at
 intersections) is now controlled via the `corridorbranch` option, not which
 command you use, and the three are now identical (freeing up any of them to be
-rebound, should you need more keys for whatever reason).
+rebound, should you need more keys for whatever reason). (4, b3a276f..9ca21c3
+and others)
 
 `^G`: The old `^G` (debug mode create monster) was moved to `#genesis`; `^G`
 now feels the ground for items. (4, f394be6, 1c76f8f)
@@ -1681,6 +1690,12 @@ implementing features like watching and replaying, and is also useful if you
 lose a connection because you don't have to wait for the old connection to
 time out.) (4, f4ea0a0 and others)
 
+It is now possible to view replays of games, and (for server play) watch live
+games.  This can be done from the main menu, or the menu inside a game (for an
+"instant replay" feature, which even works inside prompts if the menu is
+accessed via a keybinding that isn't needed by the prompt.) (Nitro and 4,
+039fc4c, de9ba8b..977fe43, 6e8fb4c..5c91a2b and others)
+
 
 Error Handling
 --------------
@@ -1716,7 +1731,7 @@ or similar situations). (4, C342-13, 9923807, 22053c2 and others)
 
 It is now possible to save in the middle of a turn; the game tracks the
 choices made during the partially completed turn, and replays them upon
-reloading the save. (4, 5c5bf51)
+reloading the save. (4, 5c5bf51, 5b6b996)
 
 
 Packaging, Build System, and Libraries
