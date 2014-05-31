@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-05-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) Robert Patrick Rankin, 1991                      */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -33,6 +33,8 @@
         const char *    ordin           (int)
         int             sgn             (int)
         int             rounddiv        (long, int)
+        int             isqrt           (int)
+        int             ilog2           (long long)
         int             distmin         (int, int, int, int)
         int             dist2           (int, int, int, int)
         boolean         online2         (int, int)
@@ -193,6 +195,59 @@ rounddiv(long x, int y)
     return divsgn * r;
 }
 
+/* Integer square root function without using floating point. */
+long long
+isqrt(long long val)
+{
+    long long rv = 1;
+    long long converge_distance = LLONG_MAX;
+
+    if (val == 0)
+        return 0;
+    if (val < 0)
+        return INT_MIN; /* this will do for a sentinel, the caller may not want
+                           a long long */
+
+    while (1) {
+        long long rv2 = val / rv;
+        long long d = rv - rv2;
+        rv = (rv + rv2) / 2;
+        if (d < 0) d = -d;
+        if (d >= converge_distance)
+            return rv;
+        converge_distance = d;
+    }
+}
+
+/* Integer base-2 logarithm without using floating point. The output is scaled
+   by 1024 and rounded down. Returns -1024 for ilog2(0) (-1024 is actually the
+   logarithm of 0.5). */
+long long
+ilog2(long long val)
+{
+    if (val <= 0)
+        return -1024;
+
+    /* invariant: ilog2(val@entry) == rv + ilog2(val) * rvscale / 1024 */
+
+    long long rv = 0;
+    long long rvscale = 1024;
+    while (val != 1) {
+        /* The number given here is sqrt(2**63) rounded down. */
+        if (val >= 3037000499LL || rvscale == 1 || !(val%2)) {
+            /* Doing this doesn't lose precision if val is even or rvscale is 1,
+               and is needed to avoid integer overflow if val > sqrt(2**63). */
+            val /= 2;       /* invariant -= 1024 * rvscale / 1024 */
+            rv += rvscale;  /* invariant += rvscale */
+        } else {
+            val *= val;     /* doubles ilog2(val) */
+            rvscale /= 2;   /* restores the invariant */
+        }
+    }
+
+    /* now val is 1, so ilog2(val) is 0 */
+    return rv;
+}
 
 /* distance between two points, in moves */
 int

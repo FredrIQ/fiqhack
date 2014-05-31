@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Alex Smith, 2014-05-31 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -28,7 +28,6 @@ static int throwspell(schar *dx, schar *dy, const struct nh_cmd_arg *arg);
 static void cast_protection(void);
 static void spell_backfire(int);
 static const char *spelltypemnemonic(int);
-static int isqrt(int);
 
 /* The roles[] table lists the role-specific values for tuning
  * percent_success().
@@ -1198,21 +1197,6 @@ dump_spells(void)
     dospellmenu("Spells known in the end:", SPELLMENU_VIEW, NULL);
 }
 
-
-/* Integer square root function without using floating point. */
-static int
-isqrt(int val)
-{
-    int rt = 0;
-    int odd = 1;
-
-    while (val >= odd) {
-        val = val - odd;
-        odd = odd + 2;
-        rt = rt + 1;
-    }
-    return rt;
-}
 
 static int
 percent_success(int spell)
