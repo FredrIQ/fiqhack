@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-05-31 */
 #ifndef NHSERVER_H
 # define NHSERVER_H
 
@@ -40,7 +40,7 @@
 # include "nethack.h"
 # include "nethack_client.h"    /* for enum authresult */
 
-# define DEFAULT_PORT 53421     /* different from NitroHack */
+# define DEFAULT_PORT 53430     /* different from NitroHack */
 
 /* If using aimake, take directory options from there */
 # ifndef STRINGIFY_OPTION
