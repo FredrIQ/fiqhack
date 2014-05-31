@@ -182,9 +182,9 @@ query_key(const char *query, enum nh_query_key_flags flags, int *count)
             qkr = (*windowprocs.win_query_key) (query, flags, !!count);
             if (force_servercancel())
                 qkr.key = SERVERCANCEL_CHAR;
-        } else if (!log_replay_input(1, "K%d", &(qkr.key)) &&
-            (!count || !log_replay_input(2, "K%d,%d",
-                                         &(qkr.key), &(qkr.count))))
+        } else if (!(!count && log_replay_input(1, "K%d", &(qkr.key))) &&
+                   !(count && log_replay_input(2, "K%d,%d",
+                                               &(qkr.key), &(qkr.count))))
             log_replay_no_more_options();
     }
 
