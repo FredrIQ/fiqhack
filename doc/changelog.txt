@@ -328,6 +328,12 @@ recovery routines: `#impossible` causes a nonfatal error (unlike `#panic`
 which causes a fatal error), and `#desync` corrupts the binary save. (4,
 7a3978f)
 
+A new debug command `#rewind` allows rewinding of save files to earlier
+states, perhaps as part of a manual recovery process, or for testing; it
+rewinds to the current turn, and is intended for use while replaying a game.
+(It can also undo a game over, although it will not move the save file back
+into the saves directory; you'll have to do that by hand.) (4, c1d9296)
+
 The `#vision` command now additionally shows which areas are considered by the
 game to be lit. (4, 35cdb4f)
 
