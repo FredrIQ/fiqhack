@@ -668,6 +668,7 @@ playgame(int fd_or_gameno, enum nh_followmode followmode)
     game_is_running = TRUE;
     welcomed = 0;
     do {
+        ui_flags.in_zero_time_command = FALSE;
         ret = nh_play_game(fd_or_gameno, ui_flags.current_followmode);
 
         /* Clean up any game windows that might be lying around.  This can

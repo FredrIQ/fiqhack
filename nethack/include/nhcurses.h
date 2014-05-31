@@ -163,7 +163,7 @@ struct interface_flags {
     nh_bool connected_to_server;
     enum nh_followmode current_followmode;
     enum nh_followmode available_followmode;
-    enum nh_followmode in_zero_time_command;
+    nh_bool in_zero_time_command;
     const char *gameload_message;                 /* string literal or NULL */
     int queued_server_cancels;
 
@@ -391,6 +391,7 @@ extern struct nh_query_key_result curses_query_key(
 extern int curses_msgwin(const char *msg, enum keyreq_context context);
 
 /* extrawin.c */
+extern int classify_key(int);
 extern void draw_extrawin(enum keyreq_context context);
 extern void clear_extrawin(void);
 
@@ -422,6 +423,7 @@ extern void set_next_command(const char *cmd, struct nh_cmd_arg *arg);
 extern void load_keymap(void);
 extern void free_keymap(void);
 extern void show_keymap_menu(nh_bool readonly);
+extern void handle_nested_key(int key);
 extern enum nh_direction key_to_dir(int key);
 
 /* main.c */

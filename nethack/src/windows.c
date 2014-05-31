@@ -762,6 +762,83 @@ handle_resize(void)
 }
 
 
+/* When the player presses a key, we want to try to interpret it a zero-time
+   command, "menu", or "save", in any context for which it has no other
+   meaning. (Thus, you can use the Ctrl-C binding for "menu" to save at a wish
+   prompt, for instance.) This means we need to know which keys are meaningful
+   in which contexts. */
+static nh_bool
+key_is_meaningful_in_context(int key, enum keyreq_context context)
+{
+    if (key == KEY_SIGNAL)
+        return TRUE;
+
+    switch (context) {
+        /* Cases in which all input is meaningful... */
+    case krc_get_command:
+    case krc_interrupt_long_action:
+    case krc_keybinding:
+        /* ...or which get command arguments, in which case we can't interrupt,
+           really */
+    case krc_get_movecmd_direction:
+    case krc_count:
+        /* ...or where any button dismisses a prompt */
+    case krc_more:            /* do we want this? */
+    case krc_pause_map:
+    case krc_notification:
+        return TRUE;
+
+        /* Cases in which all direction commands are meaningful, in addition
+           to the usual meaningful keys. (To handle things like shift-left,
+           control-h, etc.). */
+    case krc_getpos:
+    case krc_getdir:
+
+        if (ui_flags.current_followmode == FM_WATCH &&
+            !ui_flags.in_zero_time_command)
+            return FALSE;
+
+        if (key_to_dir(key) != DIR_NONE)
+            return TRUE;
+        /* otherwise fall through */
+
+        /* Cases in which the meaningful inputs are all ASCII and/or
+           keypad/function keys, and no input is meaningful when watching. */
+    case krc_yn:
+    case krc_ynq:
+    case krc_yn_generic:
+    case krc_getlin:
+    case krc_menu:
+    case krc_objmenu:
+    case krc_query_key_inventory:
+    case krc_query_key_inventory_nullable:
+    case krc_query_key_inventory_or_floor:
+    case krc_query_key_symbol:
+    case krc_query_key_letter_reassignment:
+
+        if (ui_flags.current_followmode == FM_WATCH &&
+            !ui_flags.in_zero_time_command)
+            return FALSE;
+
+        return classify_key(key) == 1  || /* numpad */
+            (key >= ' ' && key <= '~') || /* printable ASCII */
+            /* editing keys that map to control-combinations */
+            key == 8 || key == 10 || key == 13 || key == 27 ||
+            /* codes meaningful to some prompt or other */
+            key == KEY_BACKSPACE || key == KEY_DC || key == KEY_DOWN ||
+            key == KEY_END || key == KEY_ENTER || key == KEY_ESCAPE ||
+            key == KEY_HOME || key == KEY_LEFT || key == KEY_NPAGE ||
+            key == KEY_PPAGE || key == KEY_RIGHT || key == KEY_UP ||
+            /* not real keys */
+            key == KEY_OTHERFD || key == KEY_SIGNAL || key == KEY_RESIZE ||
+            key == KEY_UNHOVER || key > KEY_MAX;
+    }
+
+    /* should be unreachable */
+    return TRUE;
+}
+
+
 int
 nh_wgetch(WINDOW * win, enum keyreq_context context)
 {
@@ -777,12 +854,12 @@ nh_wgetch(WINDOW * win, enum keyreq_context context)
         !ui_flags.in_zero_time_command) {
         const char *msg = ui_flags.gameload_message;
         
-        ui_flags.in_zero_time_command = 1;
+        ui_flags.in_zero_time_command = TRUE;
         ui_flags.gameload_message = NULL;
 
         curses_msgwin(msg, krc_notification);
         
-        ui_flags.in_zero_time_command = 0;
+        ui_flags.in_zero_time_command = FALSE;
     }
 
     do {
@@ -791,10 +868,10 @@ nh_wgetch(WINDOW * win, enum keyreq_context context)
         if (!ui_flags.ingame)
             ui_flags.queued_server_cancels = 0;
 
-        if (ui_flags.queued_server_cancels &&
-                 !ui_flags.in_zero_time_command)
+        if (ui_flags.queued_server_cancels && !ui_flags.in_zero_time_command) {
+            ui_flags.queued_server_cancels--;
             key = KEY_SIGNAL;
-        else
+        } else
             key = wgetch(win);
 
         if (ui_flags.ingame && ui_flags.in_zero_time_command &&
@@ -851,13 +928,6 @@ nh_wgetch(WINDOW * win, enum keyreq_context context)
             }
         }
 
-        if (key == 0x3 && ui_flags.playmode == MODE_WIZARD) {
-            /* we're running in raw mode, so ctrl+c doesn't work. for wizard we 
-               emulate this to allow breaking into gdb. */
-            raise(SIGINT);
-            key = 0;
-        }
-
         if (key == KEY_RESIZE) {
             key = 0;
             handle_resize();
@@ -868,6 +938,15 @@ nh_wgetch(WINDOW * win, enum keyreq_context context)
             key = 0;
             if (ui_flags.connected_to_server)
                 nhnet_check_socket_fd();
+        }
+
+        if (key && !key_is_meaningful_in_context(key, context)) {
+            /* Perhaps the player's trying to open the main menu, save the
+               game, or the like? */
+            clear_extrawin();
+            handle_nested_key(key); /* might longjmp out */
+            key = 0;
+            draw_extrawin(context);
         }
 
     } while (!key);

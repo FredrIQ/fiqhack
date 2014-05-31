@@ -98,7 +98,7 @@ struct nh_cmd_desc builtin_commands[] = {
     {"extcommand", "perform an extended command", '#', 0,
      CMD_UI | UICMD_EXTCMD},
     {"help", "show the help menu", '?', 0, CMD_UI | UICMD_HELP},
-    {"mainmenu", "show the main menu", '!', 0, CMD_UI | UICMD_MAINMENU},
+    {"mainmenu", "show the main menu", '!', Ctrl('c'), CMD_UI | UICMD_MAINMENU},
     {"options", "show or change option settings", 'O', 0,
      CMD_UI | UICMD_OPTIONS},
     {"prevmsg", "list previously displayed messages", Ctrl('p'), 0,
@@ -130,7 +130,7 @@ static char next_command_name[32];
 
 static void show_whatdoes(void);
 static struct nh_cmd_desc *show_help(void);
-static struct nh_cmd_desc *show_mainmenu(void);
+static struct nh_cmd_desc *show_mainmenu(nh_bool inside_another_command);
 static void save_menu(void);
 static void instant_replay(void);
 static void init_keymap(void);
@@ -226,7 +226,7 @@ handle_internal_cmd(struct nh_cmd_desc **cmd,
 
     case UICMD_MAINMENU:
         arg->argtype = 0;
-        *cmd = show_mainmenu();
+        *cmd = show_mainmenu(FALSE);
         break;
 
     case UICMD_DETACH:
@@ -397,12 +397,34 @@ get_command(void *callbackarg,
         }
     } while (!cmd);
 
-    ui_flags.in_zero_time_command = cmd->flags & CMD_NOTIME;
+    ui_flags.in_zero_time_command = !!(cmd->flags & CMD_NOTIME);
 
     wmove(mapwin, player.y, player.x);
 
     ncaa.cmd = cmd->name;
     callback(&ncaa, callbackarg);
+}
+
+
+void
+handle_nested_key(int key)
+{
+    if (key < 0 || key > KEY_MAX)
+        return;
+
+    int save_zero_time = ui_flags.in_zero_time_command;
+    ui_flags.in_zero_time_command = TRUE;
+
+    if (keymap[key] == find_command("save"))
+        save_menu();
+    if (keymap[key] == find_command("mainmenu"))
+        show_mainmenu(TRUE);
+
+    /* Perhaps we should support various other commands that are either entirely
+       client-side, or else zero-time and can be supported via dropping into
+       replay mode temporarily. That could easily be confusing, though. */
+
+    ui_flags.in_zero_time_command = save_zero_time;
 }
 
 
@@ -590,22 +612,24 @@ show_help(void)
 
 
 static struct nh_cmd_desc *
-show_mainmenu(void)
+show_mainmenu(nh_bool inside_another_command)
 {
     struct nh_menulist menu;
     int i, selected[1];
 
     init_menulist(&menu);
 
-    for (i = 0; i < cmdcount; i++)
-        if (commandlist[i].flags & CMD_MAINMENU &&
-            (ui_flags.current_followmode == FM_PLAY ||
-             commandlist[i].flags & CMD_NOTIME))
-            add_menu_item(&menu, 100 + i, commandlist[i].desc, 0,
-                          FALSE);
+    if (!inside_another_command)
+        for (i = 0; i < cmdcount; i++)
+            if (commandlist[i].flags & CMD_MAINMENU &&
+                (ui_flags.current_followmode == FM_PLAY ||
+                 commandlist[i].flags & CMD_NOTIME))
+                add_menu_item(&menu, 100 + i, commandlist[i].desc, 0,
+                              FALSE);
 
-    add_menu_item(&menu, 1, ui_flags.current_followmode == FM_PLAY ?
-                  "set options" : "set interface options", 0, FALSE);
+    if (!inside_another_command)
+        add_menu_item(&menu, 1, ui_flags.current_followmode == FM_PLAY ?
+                      "set options" : "set interface options", 0, FALSE);
     if (ui_flags.current_followmode != FM_REPLAY)
         add_menu_item(&menu, 2, "view a replay of this game", 0, FALSE);
     add_menu_item(&menu, 3, ui_flags.current_followmode == FM_PLAY ?
@@ -1036,7 +1060,7 @@ init_keymap(void)
     }
 
     for (i = 0; i < count; i++) {
-        if (builtin_commands[i].altkey && !keymap[commandlist[i].altkey])
+        if (builtin_commands[i].altkey && !keymap[builtin_commands[i].altkey])
             keymap[builtin_commands[i].altkey] = &builtin_commands[i];
     }
 

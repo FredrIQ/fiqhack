@@ -99,7 +99,7 @@ nh_exit_game(int exit_type)
 
     if (program_state.game_running) {
 
-        if (program_state.followmode != FM_PLAY)
+        if (program_state.followmode != FM_PLAY && etype != EXIT_RESTART)
             etype = EXIT_SAVE; /* no quitting other players' games */
 
         switch (etype) {
