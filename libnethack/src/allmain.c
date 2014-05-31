@@ -104,6 +104,9 @@ nh_exit_game(int exit_type)
 
         switch (etype) {
         case EXIT_SAVE:
+            if (program_state.followmode == FM_PLAY)
+                log_game_state();
+
             terminate(GAME_DETACHED);
             break;
 

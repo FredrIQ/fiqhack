@@ -859,6 +859,16 @@ log_newgame(microseconds start_time, unsigned int seed)
         panic("Could not downgrade to monitor lock on logfile");
 }
 
+/* Needs start_updating_logfile() / stop_updating_logfile() guards. */
+static void
+set_second_logline(const char *second_logline)
+{
+    lseek(program_state.logfile,
+          strlen("NHGAME  00000001 4.000.000\x0a") + STATUS_LEN, SEEK_SET);
+    lprintf("%" SECOND_LOGLINE_LEN_STR "." SECOND_LOGLINE_LEN_STR "s",
+            second_logline);
+}
+
 void
 log_game_over(const char *death)
 {
@@ -867,9 +877,34 @@ log_game_over(const char *death)
           strlen("NHGAME "), SEEK_SET);
     lprintf("%" STATUS_LEN_STR "." STATUS_LEN_STR "s", status_string(LS_DONE));
 
-    lseek(program_state.logfile,
-          strlen("NHGAME  00000001 4.000.000\x0a") + STATUS_LEN, SEEK_SET);
-    lprintf("%" SECOND_LOGLINE_LEN_STR "." SECOND_LOGLINE_LEN_STR "s", death);
+    stop_updating_logfile(0);
+}
+
+static void
+log_game_state_inner(void)
+{
+    /* We can't use msg* functions for levname_buf, because botl.c is usually
+       constructing strings for use by the client, and message aren't
+       API-safe. We can use them for everything else, though. */
+    char levname_buf[BUFSZ];
+    describe_level(levname_buf);
+
+    /* Passing a char* to msgprintf is safe, just like passing an int to
+       msgprintf is safe. (It's msgcat and friends that dislike plain
+       strings.) */
+    const char *buf = msgprintf(
+        "%s:%d, %d turns, on %s", Upolyd ? "HD" : "Exp",
+        Upolyd ? mons[u.umonnum].mlevel : u.ulevel, moves, levname_buf);
+    /* TODO: mention notable conducts here */
+
+    set_second_logline(buf);
+}
+
+void
+log_game_state(void)
+{
+    start_updating_logfile(FALSE);
+    log_game_state_inner();
     stop_updating_logfile(0);
 }
 
@@ -898,6 +933,9 @@ log_backup_save(void)
     program_state.binary_save_location = o;
     log_binary(program_state.binary_save.buf, program_state.binary_save.pos);
     lprintf("\x0a");
+
+    /* Once per backup save is about the right rate to refresh this. */
+    log_game_state_inner();
 
     /* Record the location of this save backup in the appropriate place. */
     lseek(program_state.logfile, is_newgame ? o + 1 :
