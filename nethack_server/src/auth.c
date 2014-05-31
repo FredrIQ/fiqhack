@@ -37,7 +37,8 @@ is_valid_username(const char *name)
         strchr(name, '>') || strchr(name, '.'))
         return FALSE;
 
-    if (strspn(name, "abcdefghijklmnopqrstuvwxyz0123456789_") != strlen(name))
+    if (strspn(name, "abcdefghijklmnopqrstuvwxyz"
+               "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_") != strlen(name))
         return FALSE;
 
     for (i = 0; i < mblen; i++)

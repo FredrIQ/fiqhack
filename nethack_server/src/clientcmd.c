@@ -208,7 +208,8 @@ ccmd_create_game(json_t * params)
     const char *name = nameopt ? nameopt->value.s :
         debug ? "wizard" : "explorer";
 
-    if (strspn(name, "abcdefghijklmnopqrstuvwxyz0123456789_") != strlen(name))
+    if (strspn(name, "abcdefghijklmnopqrstuvwxyz"
+               "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_") != strlen(name))
         exit_client("Character name contains unwanted characters");
 
     t = (long)time(NULL);
