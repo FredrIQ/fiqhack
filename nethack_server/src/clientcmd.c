@@ -43,7 +43,7 @@ const struct client_command clientcmd[] = {
     {"get_obj_commands", ccmd_get_obj_commands, 1},
     {"describe_pos", ccmd_describe_pos, 1},
 
-    {"set_option", ccmd_set_option, 0},
+    {"set_option", ccmd_set_option, 1},
     {"get_options", ccmd_get_options, 1},
 
     {"get_pl_prompt", ccmd_get_pl_prompt, 0},
