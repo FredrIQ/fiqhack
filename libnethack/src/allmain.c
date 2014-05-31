@@ -360,6 +360,7 @@ nh_play_game(int fd, enum nh_followmode followmode)
 {
     volatile int ret;
     volatile int replay_forced = FALSE;
+    volatile int file_done = FALSE;
 
     if (fd < 0)
         return ERR_BAD_ARGS;
@@ -371,6 +372,7 @@ nh_play_game(int fd, enum nh_followmode followmode)
         if (followmode != FM_REPLAY)
             replay_forced = TRUE;
         followmode = FM_REPLAY; /* force into replay mode */
+        file_done = TRUE;
         break;
     case LS_CRASHED:
         return ERR_RESTORE_FAILED;
@@ -449,7 +451,7 @@ nh_play_game(int fd, enum nh_followmode followmode)
        than attempting to replay the entire game.) */
     log_init(fd);
 
-    if (program_state.followmode == FM_REPLAY)
+    if (file_done)
         log_sync(1, TLU_TURNS, FALSE);
     else
         log_sync(0, TLU_EOF, FALSE);

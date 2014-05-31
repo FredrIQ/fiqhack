@@ -698,9 +698,7 @@ playgame(int fd_or_gameno, enum nh_followmode followmode)
                         "the game.  You are now watching live.";
                 ret = RESTART_PLAY;
             } else {
-                ui_flags.gameload_message =
-                    "That was the end of the replay.  The replay has been "
-                    "restarted.";
+                ui_flags.gameload_message = "That was the end of the replay.";
                 ret = RESTART_PLAY;
             }
         } else if (ret == GAME_DETACHED && ui_flags.current_followmode !=
