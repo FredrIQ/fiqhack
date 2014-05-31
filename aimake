@@ -208,8 +208,11 @@ This option is currently unimplemented.
 
 =item B<-B> I<object>, B<--rebuild=>I<object>
 
-Attempt to rebuild the given I<object>, even if aimake has no reason to think
-that anything would be different this time.
+Attempt to regenerate the given I<object> and rebuild everything that directly
+depends on it, even if aimake has no reason to think that anything would be
+different this time.  (This will typically also cause things that indirectly
+depend on the given I<object> to be rebuilt.)  This option can be given
+multiple times.
 
 =item B<--directory-layout>=I<layout>
 
@@ -6652,9 +6655,10 @@ $opt_config_only and write_statefile, exit 0;
 
 atomically {
     for my $obj (@opt_rebuild) {
-        mark_pair_changed unintern $_,
-        '-B command line option' for
-            keys %{$state->{outdep_by_object}{intern $obj}};
+        for my $iprovicer (keys %{$state->{outdep_by_object}{intern $obj}}) {
+            record_pair_outputs unintern $iprovicer, {};
+            mark_pair_changed unintern $iprovicer, '-B command line option';
+        }
     }
 };
 
