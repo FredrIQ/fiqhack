@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-05-29
+Last modified by Alex Smith, 2014-05-31
 
 Copyright (C) 2013 Alex Smith.
 
@@ -369,9 +369,10 @@ http://strawberryperl.com, which comes with a working C toolchain.  You will
 also need to install Flex and Bison, scanner and parser generators; the
 versions at GnuWin32 (http://gnuwin32.sourceforge.net/) work (although they
 don't have a very Windows-like idea of directory structure, and thus can't be
-installed to paths with spaces in).  Strawberry Perl's and GnuWin32's
-executables will all need to be on your PATH (search for "PATH" in Control
-Panel, on recent versions of Windows).
+installed to paths with spaces in, and produce compiler warnings; if you know
+a better option, let us know).  Strawberry Perl's and GnuWin32's executables
+will all need to be on your PATH (search for "PATH" in Control Panel, on
+recent versions of Windows).
 
 You will also need to create two more folders, `build` and `install`; I
 recommend that both are parallel to the `nethack4` folder that contains the
@@ -400,6 +401,11 @@ aimake should compile and install the entirety of NetHack 4 for you into the
 install directory.  In order to run the console port, change directory to the
 install directory, and type `nethack4`.  For the tiles/faketerm port, use
 `nethack4-sdl.exe`.
+
+It is possible that `ld.exe` will crash in the process of the build.  This
+only seems to happen after it has already produced the output that aimake
+needed, so you can just dismiss the error box and let the build work as
+normal.
 
 Note that despite the best efforts of the rendering library, the game is quite
 slow to render on the console recent versions of Windows; this is because the

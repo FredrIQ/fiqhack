@@ -1,4 +1,4 @@
-nethack4 (4.3.0) unstable; urgency=low
+nethack4 (4.3.0~beta1) unstable; urgency=low
   * Updated packages for 4.3
  -- Alex Smith <ais523@nethack4.org>  Thu, 29 May 2014 08:06:00 +0100
 

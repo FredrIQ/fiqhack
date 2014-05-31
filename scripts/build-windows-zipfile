@@ -1,0 +1,24 @@
+#!/bin/bash
+# Last modified by Alex Smith, 2014-05-31
+
+set -e
+
+test -f build-windows-zipfile || echo Please run this script from its own directory.
+test -f build-windows-zipfile || exit 1
+
+[ "x$1" = "x" ] && echo "Please give the name of aimake's install directory on Windows" && exit 1
+
+echo Reminders: have you copied over zlib, libpng, SDL2?
+
+BUILDDIR=`mktemp -d /tmp/nh4build-win.XXXXXXXX`
+SUBDIR=nethack4-4.3.0-beta1
+mkdir "$BUILDDIR/$SUBDIR"
+# I almost wrote "*.*" here out of habit
+cp "$1"/* "$BUILDDIR/$SUBDIR"
+cp ../copyright "$BUILDDIR/$SUBDIR/copyright.txt"
+cp ../copyright.binary "$BUILDDIR/$SUBDIR/copyright.binary.txt"
+cp ../COPYING "$BUILDDIR/$SUBDIR/COPYING.txt"
+cp ../README "$BUILDDIR/$SUBDIR/README.txt"
+cp ../doc/{changelog,faq,philosophy}.txt "$BUILDDIR/$SUBDIR"
+(cd "$BUILDDIR"; zip -9 "$SUBDIR.zip" "$SUBDIR"/*)
+echo Output files written to "$BUILDDIR".

@@ -1,13 +1,16 @@
 #!/bin/bash
-# Last modified by Alex Smith, 2014-05-29
+# Last modified by Alex Smith, 2014-05-31
+
+set -e
 
 test -f build-debian-package || echo Please run this script from its own directory.
 test -f build-debian-package || exit 1
 
 BUILDDIR=`mktemp -d /tmp/nh4build.XXXXXXXX`
-mkdir "$BUILDDIR/nethack4-4.3.0"
-cp -r ../* "$BUILDDIR/nethack4-4.3.0"
-cd "$BUILDDIR/nethack4-4.3.0"
+SUBDIR='nethack4-4.3.0~beta1'
+mkdir "$BUILDDIR/$SUBDIR"
+cp -r ../* "$BUILDDIR/$SUBDIR"
+cd "$BUILDDIR/$SUBDIR"
 mv dist/debian debian
 mv copyright debian/copyright
 dpkg-buildpackage -us -uc
