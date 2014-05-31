@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-05-29
+Last modified by Alex Smith, 2014-05-31
 
 Copyright (C) 2013 Alex Smith.
 
@@ -285,8 +285,21 @@ Are precompiled binaries available?
 -----------------------------------
 
 Currently, precompiled binaries are available from the NetHack 4 website, but
-only for Windows, and they are not regularly updated.  If you can, we
-recommend you compile your own binaries from source.
+only for Windows and Debian-based Linux distributions, and they are not
+regularly updated.  If you can, we recommend you compile your own binaries
+from source.
+
+
+What does the "connect to server" option in the main menu do?
+-------------------------------------------------------------
+
+NetHack 4 inherits a server API from NitroHack that should theoretically allow
+a local executable (even tiles) to play on a remote system.  This mode works
+fine in testing, but there are no publically servers right now to connect to,
+so it's not that useful in practice.
+
+We don't host such a server on nethack4.org because there are known security
+problems in the implementation (which do not affect local play).
 
 
 Does NetHack 4 depend on curses/ncurses?
@@ -481,7 +494,8 @@ outright close the game window and it'll have the same effect.  (This should
 greatly reduce the risk of losing a game to a network disconnection.)  You can
 even save in the middle of a turn this way (although note that this is a
 relatively new feature that has not been fully tested, so paranoid players
-might want to restrict themselves to the `S` command).
+might want to restrict themselves to the `S` command); opening the menu with
+`Ctrl-C` is another way to save in the middle of a turn.
 
 If you actually did want to delete your save file and effectively kill your
 character in the process, there's a new `!` option to the `S` command to do
@@ -541,7 +555,7 @@ What are the "x" and "[OK]" decorations on windows?
 ---------------------------------------------------
 
 Hints that you can meaningfully press `Escape` or `Return`, respectively, to
-accept or cancel the dialog box.  They're also used for NetHack 4's
+cancel or accept the dialog box.  They're also used for NetHack 4's
 rudimentary mouse support – the game is not fully playable with the mouse yet
 (in particular, we're thinking about how the mouse should best interact with
 the game map) – but you can use them to close windows with the mouse.  Several
