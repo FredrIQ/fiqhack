@@ -25,6 +25,9 @@ static long get_log_offset(void);
 static long get_log_last_newline(void);
 static char *lgetline_malloc(int);
 
+static enum nh_log_status read_log_header(
+    int fd, struct nh_game_info *si, int *recovery_count, boolean do_locking);
+
 static void load_gamestate_from_binary_save(boolean maybe_old_version);
 static void log_replay_save_line(void);
 
@@ -189,7 +192,8 @@ log_recover_core(long offset, boolean canreturn)
         add_menutext(&menu, "");
     }
 
-    add_menuitem(&menu, 3, "Attempt to repair the gamestate", 'P', FALSE);
+    if (canreturn)
+        add_menuitem(&menu, 3, "Attempt to repair the gamestate", 'P', FALSE);
     add_menuitem(&menu, 1, "Automatically recover the save file", 'R', FALSE);
     add_menuitem(&menu, 2, "Leave the save file to be recovered manually", 'Q',
                  FALSE);
@@ -212,9 +216,12 @@ log_recover_core(long offset, boolean canreturn)
             terminate(ERR_IN_PROGRESS);
         }
 
-        /* TODO: check recovery count; if we don't do this, multiple processes
-           may end up truncating the file for each other (and not noticing
-           because they both left the recovery count the same) */
+        struct nh_game_info si;
+        int recovery_count;
+        read_log_header(program_state.logfile, &si, &recovery_count, FALSE);
+
+        if (recovery_count != program_state.expected_recovery_count)
+            terminate(RESTART_PLAY);
 
         /* Increase the recovery count. */
 
@@ -772,7 +779,16 @@ start_updating_logfile(boolean ok_not_at_end)
     if (!change_fd_lock(program_state.logfile, TRUE, LT_WRITE, 2))
         panic("Could not upgrade to write lock on logfile");
 
-    /* TODO: check recovery count */
+    struct nh_game_info si;
+    int recovery_count;
+    int lstatus = read_log_header(program_state.logfile, &si,
+                                  &recovery_count, FALSE);
+
+    if (recovery_count != program_state.expected_recovery_count)
+        terminate(RESTART_PLAY);
+
+    if (lstatus == LS_DONE)
+        terminate(GAME_ALREADY_OVER);
 
     lseek(program_state.logfile,
           program_state.end_of_gamestate_location, SEEK_SET);
@@ -786,6 +802,7 @@ start_updating_logfile(boolean ok_not_at_end)
 
         if (ok_not_at_end)
             return FALSE;
+
         terminate(RESTART_PLAY);
     }
 
@@ -876,6 +893,8 @@ log_game_over(const char *death)
     lseek(program_state.logfile,
           strlen("NHGAME "), SEEK_SET);
     lprintf("%" STATUS_LEN_STR "." STATUS_LEN_STR "s", status_string(LS_DONE));
+
+    set_second_logline(death);
 
     stop_updating_logfile(0);
 }
@@ -1007,8 +1026,6 @@ log_neutral_turnstate(void)
         /* Check the gamestate, for the same reason as in log_backup_save(). */
         load_gamestate_from_binary_save(FALSE);
     }
-
-    /* TODO: Periodically update the second line of the logfile. */
 }
 
 /* Update turntime in a manner that's safe within the log. */
@@ -1246,6 +1263,12 @@ start_replaying_logfile(char firstchar)
 
     if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
         panic("Could not downgrade to monitor lock on logfile");
+
+    if (logline && *logline == 'Q') {
+        /* Special case: we wanted input, but discovered the game had ended.
+           This can happen as the result of a quit. */
+        terminate(GAME_ALREADY_OVER);
+    }
 
     if (logline && firstchar && firstchar != *logline) {
         /* Desync: the log contains one sort of input, but the engine is
@@ -2235,6 +2258,10 @@ log_replay_save_line(void)
             program_state.save_backup_location =
             program_state.end_of_gamestate_location;
         load_gamestate_from_binary_save(TRUE);
+
+    } else if (logline && *logline == 'Q') {
+
+        terminate(GAME_ALREADY_OVER);
 
     }
 

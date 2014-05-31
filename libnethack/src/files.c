@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-05-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -281,7 +281,7 @@ delete_bonesfile(char *bonesid)
  * to be established in the first place (SIGRTMIN+1), to inform other processes
  * that the write lock has been established so that they don't re-lock the file
  * before the write can happen (SIGRTMIN+2), and to inform other processes that
- * the fiel is now unlocked (SIGRTMIN+4). None of these signals have any effect
+ * the file is now unlocked (SIGRTMIN+4). None of these signals have any effect
  * on write notification; they are both just to make the writes actually capabe
  * of handling.
  *

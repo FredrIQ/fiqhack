@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-05-13
+Last modified by Alex Smith, 2014-05-31
 
 Copyright (C) 2013 Alex Smith.
 
@@ -91,22 +91,23 @@ hopefully not introducing new ones.
 A NetHack 4.3 log is a binary file, but which contains only ASCII codepoints
 (and thus can be read easily in a text editor), using the byte 0x0A for
 newline.  Each file starts with a header, consisting of several fields
-separated by spaces: `NHGAME`, an 8-digit hexadecimal number (the recovery
-count), and the version number (e.g. `4.003.000`; this is always exactly 9
-characters long).  For example:
+separated by spaces: `NHGAME`, a 4-character code specifying whether the game
+is current ("save") or finished ("done"), an 8-digit hexadecimal number (the
+recovery count), and the version number (e.g. `4.003.000`; this is always
+exactly 9 characters long).  For example:
 
-    NHGAME 00000001 4.003.000
+    NHGAME save 00000001 4.003.000
 
 The header is a fixed length, meaning that the fields in it that need updating
 can be updated merely by seeking to them, then writing.
 
 The second line of the file is also a header, and gives information about the
 current state of the game: an approximate turn count, the character's location
-if the game is in progress, and the death reason if the game is not in
-progress. This is always exactly 78 columns wide, plus a newline, and is
-right-justified via padding it to the left with spaces. (The fixed width makes
-it possible to overwrite it without having to move all the rest of the data in
-the file.)
+and various miscellaneous status information if the game is in progress, and
+the death reason if the game is not in progress. This is always exactly 78
+columns wide, plus a newline, and is right-justified via padding it to the
+left with spaces. (The fixed width makes it possible to overwrite it without
+having to move all the rest of the data in the file.)
 
 The third line of the file is also a header, and lists summary information for
 use in identifying the game: start time, initial RNG seed, game play mode (an
@@ -193,11 +194,6 @@ lines, separated by newlines:
     time at which future lines occurred.  These appear immediately after user
     input, which is when the engine samples the current time.
 
-  * A 'message' line starts with a hyphen, and is followed by a message that
-    was output by the game, in plaintext; the line ends at a newline.  (The
-    engine should not output messages with embedded newlines.  If for some
-    reason it does anyway, the save code will replace these with spaces.)
-
   * A 'user input' line starts with a capital letter, and specifies the input
     that the user provided to a prompt.  The various sorts of user input lines
     are as follows, specified in terms of an example for each (all numbers are
@@ -226,13 +222,22 @@ lines, separated by newlines:
     the base 64 encoding of the string consisting of nothing but a single
     codepoint 27 (0x1b).
 
-The 4.2 system also logged bones files, options, and RNG state.  Options are
-now stored in the binary save (and thus stored in save diffs); the RNG state
-was stored in the binary save all along; and bones files no longer need to be
-saved at all, because the game never prompts for a partial command after
-loading them (and thus the first time they become relevant is the save backup
-that appears immediately after they are loaded, which contains all the
-relevant information).
+  * There are also some pseudo-user-input lines, for inputs into the gamestate
+    that don't come from the user:
+  
+    * `B!` no bones file was found, when an attempt was made to load one
+    * `B`  (when followed by base 64 data) a bones file was loaded
+    * `Q`  game over, the character died/quit/escaped/etc.
+
+    Bones needs to be logged so that it can be reproduced throughout a
+    fraction of a turn; game over is logged to prevent two processes trying to
+    handle a game over at once, and so that watching processes know that a
+    game was quit (quitting isn't technically a command, so it otherwise
+    wouldn't appear in the save file at all).
+
+The 4.2 system also logged options and RNG state.  Options are now stored in
+the binary save (and thus stored in save diffs); and the RNG state was stored
+in the binary save all along.
 
 
 Save file locking and I/O discipline
@@ -391,19 +396,26 @@ NetHack save files need to follow the following rules:
         does any actual writing.
 
     On systems where it is impossible to determine which process is holding a
-    lock, this entire procedure is unavailable, and instead the process should
-    just block for 2 seconds on grabbing the lock, and complain if it cannot
-    grab it within that time.
+    lock, this entire procedure is unavailable.  Currently, the situation is
+    handled by polling upon every keypress, instead.
 
   * Whenever a process holding a read lock receives SIGRTMIN+1, it should
-    relinquish its read lock as soon as possible; then send SIGRTMIN+3 back to
+    relinquish its read lock as soon as possible; then send SIGRTMIN+4 back to
     the original process. Then it should wait for a SIGRTMIN+2 signal, or for
     1 second, before re-establishing the lock.
     
-  * Whenever a process receives SIGRTMIN+3 (which only happens while it is
+  * Whenever a process receives SIGRTMIN+4 (which only happens while it is
     trying to place a write lock), it should look for further processes
     holding a lock on the file, and send SIGRTMIN+1 to them (if any). This is
     similar to the initial system for establishing a lock.
+
+  * SIGRTMIN+0 and SIGRTMIN+3 are also used, as synonyms for SIGRTMIN+1 and
+    SIGRTMIN+2.  Which signals are used depends on the relative values of the
+    PIDs of the sender and recipient; the purpose of this mechanism is to
+    provide asymmetry in order to resolve what would otherwise be deadlocks.
+    
+    See the comments in libnethack/src/files.c for a hugely detailed
+    explanation of how all this works.
 
 These rules collectively ensure that processes will never operate on an
 inconsistent view of the file, and can (on operating systems with appropriate
@@ -434,7 +446,8 @@ playing, this is the end of the file; for replaying, it could well be much
 earlier in the file).  A process should always know whether it's before or
 after its target location, but apart from that it can represent the target
 location in any units it likes (bytes relative to some anchor, actions,
-turns...).
+turns...).  The target locations are currently stored implicitly, calculating
+them from the gamestate location and knowledge of the game mode.
 
 A process accepts user input only while its gamestate location is at its
 target location.  If its target location is the end of the file, it also
@@ -502,6 +515,7 @@ in the binary save code):
 For more information, see the documentation in `doc/mainloop.txt`, which
 focuses on the same issues from the point of view of the API rather than the
 save system.
+
 
 Recovery
 --------

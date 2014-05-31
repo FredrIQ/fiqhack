@@ -36,6 +36,7 @@ static int wiz_detect(const struct nh_cmd_arg *);
 static int wiz_desync(const struct nh_cmd_arg *);
 static int wiz_panic(const struct nh_cmd_arg *);
 static int wiz_impossible(const struct nh_cmd_arg *);
+static int wiz_rewind(const struct nh_cmd_arg *);
 static int wiz_polyself(const struct nh_cmd_arg *);
 static int wiz_teleport(const struct nh_cmd_arg *);
 static int wiz_hpset(const struct nh_cmd_arg *);
@@ -265,6 +266,8 @@ const struct cmd_desc cmdlist[] = {
      CMD_DEBUG | CMD_EXT},
     {"printdungeon", "(DEBUG) print dungeon structure", 0, 0, TRUE, wiz_where,
      CMD_DEBUG | CMD_NOTIME | CMD_EXT},
+    {"rewind", "(DEBUG) permanently undo gamestate changes", 0, 0, TRUE,
+     wiz_rewind, CMD_DEBUG | CMD_NOTIME | CMD_EXT},
     {"seenv", "(DEBUG) show seen vectors", 0, 0, TRUE, wiz_show_seenv,
      CMD_DEBUG | CMD_EXT | CMD_NOTIME},
     {"showmap", "(DEBUG) reveal the entire map", 0, 0, TRUE, wiz_map,
@@ -622,6 +625,18 @@ wiz_impossible(const struct nh_cmd_arg *arg)
     return 0;
 }
 
+/* #rewind command - undo changes to a save */
+static int
+wiz_rewind(const struct nh_cmd_arg *arg)
+{
+    (void) arg;
+
+    /* Grab write access to this game, even if we don't have the perms,
+       even if we're not at the end. */
+    program_state.followmode = FM_PLAY;
+
+    log_recover_noreturn(program_state.end_of_gamestate_location);
+}
 
 /* #polyself command - change hero's form */
 static int

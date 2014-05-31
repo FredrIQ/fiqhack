@@ -359,6 +359,7 @@ enum nh_play_status
 nh_play_game(int fd, enum nh_followmode followmode)
 {
     volatile int ret;
+    volatile int replay_forced = FALSE;
 
     if (fd < 0)
         return ERR_BAD_ARGS;
@@ -367,6 +368,8 @@ nh_play_game(int fd, enum nh_followmode followmode)
     case LS_INVALID:
         return ERR_BAD_FILE;
     case LS_DONE:
+        if (followmode != FM_REPLAY)
+            replay_forced = TRUE;
         followmode = FM_REPLAY; /* force into replay mode */
         break;
     case LS_CRASHED:
@@ -463,6 +466,11 @@ nh_play_game(int fd, enum nh_followmode followmode)
     flush_screen();
 
     update_inventory();
+
+    if (replay_forced) {
+        pline("This game ended while you were loading it.");
+        pline("Loading in replay mode intead.");
+    }
 
     /* The main loop. */
     while (1) {
