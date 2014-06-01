@@ -1,7 +1,17 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-13 */
+/* Last modified by Alex Smith, 2014-05-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
+
+#if defined(WIN32)
+# define WIN32_LEAN_AND_MEAN
+# include <Windows.h> /* must be before compilers.h */
+
+# if !defined(S_IRUSR)
+#  define S_IRUSR _S_IREAD
+#  define S_IWUSR _S_IWRITE
+# endif
+#endif
 
 #include "hack.h"
 #include "dlb.h"
@@ -28,16 +38,6 @@
 #define FQN_NUMBUF 4
 static char fqn_filename_buffer[FQN_NUMBUF][FQN_MAX_FILENAME];
 char bones[] = "bonesnn.xxx";
-
-#if defined(WIN32)
-# define WIN32_LEAN_AND_MEAN
-# include <Windows.h>
-
-# if !defined(S_IRUSR)
-#  define S_IRUSR _S_IREAD
-#  define S_IWUSR _S_IWRITE
-# endif
-#endif
 
 static const char *fqname(const char *, int, int);
 
@@ -281,7 +281,7 @@ delete_bonesfile(char *bonesid)
  * to be established in the first place (SIGRTMIN+1), to inform other processes
  * that the write lock has been established so that they don't re-lock the file
  * before the write can happen (SIGRTMIN+2), and to inform other processes that
- * the fiel is now unlocked (SIGRTMIN+4). None of these signals have any effect
+ * the file is now unlocked (SIGRTMIN+4). None of these signals have any effect
  * on write notification; they are both just to make the writes actually capabe
  * of handling.
  *
@@ -609,10 +609,11 @@ handle_sigrtmin1(int signum, siginfo_t *siginfo, void *context)
     /* While running a zero-time command, instead of following the other
        process "live", we freeze the gamestate until the command ends. If not
        in a zero-time command, we follow other processes that are playing the
-       same game.
+       same game. Exception: in replay mode, we're always frozen.
 
        win_server_cancel is defined as async-signal by the API documentation. */
-    if (program_state.game_running && !program_state.in_zero_time_command)
+    if (program_state.game_running && program_state.followmode != FM_REPLAY &&
+        !program_state.in_zero_time_command)
         (windowprocs.win_server_cancel)();
 
     errno = save_errno;
@@ -922,6 +923,8 @@ change_fd_lock(int fd, boolean on_logfile, enum locktype type, int timeout)
         return FALSE;
 
     hFile = (HANDLE) _get_osfhandle(fd);
+
+    UnlockFile(hFile, 0, 0, 64, 0); /* prevent issues with recursive locks */
 
     if (type == LT_NONE || type == LT_MONITOR) {
         UnlockFile(hFile, 0, 0, 64, 0);

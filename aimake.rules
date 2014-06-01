@@ -1,11 +1,29 @@
-# Last modified by Alex Smith, 2014-05-23
+# Last modified by Alex Smith, 2014-05-30
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
 {
     options => {
         packagename => 'nethack4',
-        WIZARD => 'wizard', # change to change who can use wizard mode
+    },
+    features => {
+        server => {
+            description => "Build a server executable (Linux only)",
+            object => qr=^path:nethack_server/=,
+            default => 0,
+        },
+        jansson => {
+            description => "Use the provided rather than system libjansson",
+            object => qr=^path:libjansson/=,
+            default => 0,
+        },
+        gui => {
+            description => "Build tiles and faketerm ports (requires SDL2)",
+            object => qr=^path:(?:tilesets/(?:dat/ | src/.*tile(?:text)?\.c
+                                                   | util/.*tileset)
+                                | libuncursed/src/plugins/sdl)=x,
+            default => 1,
+        },
     },
     rules => {
         _iflags => {
@@ -24,13 +42,11 @@
         _cflags => {
             object => 'optionset:CFLAGS',
             depends => [
+                'optionset:c11_option',
                 'optstring:-fdiagnostics-show-option',
-                'optstring:-std=c11',
                 'optstring:-Wall',
                 'optstring:-Wextra',
                 'optstring:-Wno-missing-field-initializers',
-                # This is both for security, and to help catch bugs
-                'optstring:-fstack-protector',
                 # These warnings are probably worth fixing eventually,
                 # but have too many false positives to be able to show
                 # them right now
@@ -60,6 +76,7 @@
                        'searchlib:png:symbol:png_create_write_struct',
                        'searchlib:pq:symbol:PQsetdbLogin',
                        'searchlib:pthread:symbol:pthread_create',
+                       'searchlib:jansson:symbol:json_loads',
                        'searchlib:SDL2:symbol:SDL_Init',
                        'searchlib:ws2_32:symbol:connect'],
             outdepends => [],
@@ -134,24 +151,45 @@
                         # lev_main to replace it with the filename.
                         'optpath:-o :bpath:libnethack/dat/ ',
                         'optpath::'],
-            output => qr/^Wrote '(.*)'.$/,
+            actions => [
+                {
+                    output => qr/^Wrote '(.*)'.$/,
+                },
+                {
+                    output => 'optionset:nhdata_levfiles',
+                    outdepends => qr/^Wrote '(.*)'.$/,
+                },
+            ],
         },
         _levfile_command_line_argument => {
             object => qr/^bpath:.*\.lev$/,
             depends => 'optpath::',
         },
+
         _specific_version => {
             output => 'optionset:specific_version',
             outdepends => [],
         },
         _git_hash => {
             object => 'optionset:specific_version',
-            command => ["cmd:git", "optstring:rev-parse HEAD"],
+            command => ["cmd:git", "optstring:rev-parse HEAD",
+                        "sys:always_rebuild"],
             on_failure => 'conditional',
             in_subdir => 'path:',
             depends => 'optstring: ',
             dependsarg => qr/^([0-9a-f]{8})/,
         },
+
+        _build_man_page => {
+            object => 'path:doc/nethack4.6.pod',
+            command => ["cmd:pod2man", "optstring:-s 6",
+                        "optstring:-n NETHACK4", 'optionset:os_osx_linux',
+                        "optpath:-c :bpath:Games Manual", # hack :-(
+                        "optpath::", "optpath::bpath:doc/nethack4.6"],
+            output => "bpath:doc/nethack4.6",
+            in_subdir => "bpath:", # for the hack above to work
+        },
+
         _makedefs_date => {
             command => ["bpath:libnethack/util/makedefs.c/makedefs$exeext",
                         "optpath:-v :bpath:libnethack/include/date.h",
@@ -225,15 +263,10 @@
                         "optpath::"],
             output => 'bpath:libnethack/dat/dungeon',
         },
-        _nhdata_levfiles => {
-            object => "bpath:libnethack/util/dlb_main.c/dlb_main$exeext",
-            command => ["intcmd:listtree", "sys:rebuild_late",
-                        "optpath::bpath:libnethack/dat"],
-            depends => qr/^(.+\.lev)$/s,
-        },
         _nhdata => {
             command => ["bpath:libnethack/util/dlb_main.c/dlb_main$exeext",
                         "optpath:cf :bpath:libnethack/dat/nhdat",
+                        "optionset:nhdata_levfiles",
                         "bpath:libnethack/dat/data",
                         "bpath:libnethack/dat/dungeon",
                         "bpath:libnethack/dat/oracles",
@@ -330,13 +363,63 @@
                         "optpath::bpath:readme-saves"],
             output => "bpath:readme-saves",
         },
+
+        _main_executable_link => {
+            # We're trying to install a symlink from nethack4-sdl to nethack4.
+            # Thus we first need a link from nethack4 to main, so that this
+            # works correctly regardless of the platform's symlink behaviour.
+            command => ["intcmd:symlink",
+                        "optpath:-o:bpath:nethack/src/main.c/nethack4$exeext",
+                        "optpath::bpath:nethack/src/main.c/main$exeext",
+                        "bpath:nethack/src/main.c/main$exeext"],
+            output_from_optpath => '-o',
+            verb => 'symlinked',
+        },
+        _sdl_link => {
+            command => ["intcmd:symlink",
+                        "optpath:-o:bpath:nethack/src/main.c/nethack4-sdl$exeext",
+                        "optpath::bpath:nethack/src/main.c/nethack4$exeext",
+                        "bpath:nethack/src/main.c/nethack4$exeext",
+                        "bpath:tilesets/dat/fonts/font14.png"],
+            output_from_optpath => '-o',
+            verb => 'symlinked',
+        },
+        _man_sdl_symlink => {
+            command => ["intcmd:symlink",
+                        "optpath:-o:bpath:doc/nethack4-sdl.6",
+                        "optpath::bpath:doc/nethack4.6",
+                        "bpath:tilesets/dat/fonts/font14.png"],
+            output_from_optpath => '-o',
+            verb => 'symlinked',
+        },
+
         install_executables => undef, # we don't want to install most of them
-        # but we don't override install_libraries
+        install_libraries => undef,
+        _install_nethack_libraries => {
+            object => qr=^bpath:.*libnethack[^/]*\Q$dllext\E$=s,
+            install_dir => 'specificlibdir',
+        },
+        _install_uncursed_plugins => {
+            object => qr=^bpath:libuncursed/src/plugins/.*\Q$dllext\E$=s,
+            install_dir => 'specificlibdir',
+        },
+        _install_libuncursed => {
+            object => qr=^bpath:libuncursed/src/libuncursed\Q$dllext\E[.\d]*$=s,
+            install_dir => 'libdir',
+        },
+        _install_libjansson => {
+            object => qr=^bpath:libjansson/libjansson\Q$dllext\E[.\d]*$=s,
+            install_dir => 'libdir',
+        },
         _install_main => {
             object => "bpath:nethack/src/main.c/main$exeext",
             install_dir => "gamesbindir",
             install_name => "nethack4$exeext",
             install_elevation => "games",
+        },
+        _install_sdl_link => {
+            object => "bpath:nethack/src/main.c/nethack4-sdl$exeext",
+            install_dir => "gamesbindir",
         },
         _install_server => {
             object => "bpath:nethack_server/src/srvmain.c/srvmain$exeext",
@@ -356,6 +439,16 @@
             object => "path:libnethack/dat/license",
             install_dir => "gamesdatadir",
         },
+        _install_manpage => {
+            object => "bpath:doc/nethack4.6",
+            install_dir => "mandir",
+            install_name => "man6/nethack4.6",
+        },
+        _install_sdl_manpage => {
+            object => "bpath:doc/nethack4-sdl.6",
+            install_dir => "mandir",
+            install_name => "man6/nethack4-sdl.6",
+        },
         _install_highscores => {
             object => "sys:ensure_exists",
             install_dir => "gamesstatedir",
@@ -363,10 +456,23 @@
             install_permission => "games",
             install_readable => 1,
         },
+        _install_gamesstatedir => {
+            object => "sys:touch_only",
+            install_dir => "gamesstatedir",
+            install_permission => "games",
+            install_readable => 1,
+        },
         _install_xlogfile => {
             object => "sys:ensure_exists",
             install_dir => "gamesstatedir",
             install_name => "xlogfile",
+            install_permission => "games",
+            install_readable => 1,
+        },
+        _install_logfile => {
+            object => "sys:ensure_exists",
+            install_dir => "gamesstatedir",
+            install_name => "logfile",
             install_permission => "games",
             install_readable => 1,
         },

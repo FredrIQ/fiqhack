@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-31 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <signal.h>
+#include <errno.h>
 
 enum internal_commands {
     /* implicitly include enum nh_direction */
@@ -97,7 +98,7 @@ struct nh_cmd_desc builtin_commands[] = {
     {"extcommand", "perform an extended command", '#', 0,
      CMD_UI | UICMD_EXTCMD},
     {"help", "show the help menu", '?', 0, CMD_UI | UICMD_HELP},
-    {"mainmenu", "show the main menu", '!', 0, CMD_UI | UICMD_MAINMENU},
+    {"mainmenu", "show the main menu", '!', Ctrl('c'), CMD_UI | UICMD_MAINMENU},
     {"options", "show or change option settings", 'O', 0,
      CMD_UI | UICMD_OPTIONS},
     {"prevmsg", "list previously displayed messages", Ctrl('p'), 0,
@@ -129,8 +130,9 @@ static char next_command_name[32];
 
 static void show_whatdoes(void);
 static struct nh_cmd_desc *show_help(void);
-static struct nh_cmd_desc *show_mainmenu(void);
+static struct nh_cmd_desc *show_mainmenu(nh_bool inside_another_command);
 static void save_menu(void);
+static void instant_replay(void);
 static void init_keymap(void);
 static void write_keymap(void);
 static struct nh_cmd_desc *doextcmd(nh_bool);
@@ -184,6 +186,8 @@ handle_internal_cmd(struct nh_cmd_desc **cmd,
 {
     int id = (*cmd)->flags & ~(CMD_UI | DIRCMD | DIRCMD_SHIFT | DIRCMD_CTRL);
 
+    ui_flags.in_zero_time_command = TRUE;
+
     switch (id) {
     case DIR_NW:
     case DIR_N:
@@ -208,7 +212,7 @@ handle_internal_cmd(struct nh_cmd_desc **cmd,
     case UICMD_OPTIONS:
         display_options(FALSE);
         draw_map(player.x, player.y);
-        *cmd = NULL;
+        *cmd = find_command("interrupt");
         break;
 
     case UICMD_EXTCMD:
@@ -222,7 +226,7 @@ handle_internal_cmd(struct nh_cmd_desc **cmd,
 
     case UICMD_MAINMENU:
         arg->argtype = 0;
-        *cmd = show_mainmenu();
+        *cmd = show_mainmenu(FALSE);
         break;
 
     case UICMD_DETACH:
@@ -247,13 +251,14 @@ handle_internal_cmd(struct nh_cmd_desc **cmd,
 
     case UICMD_TOGGLEPICKUP:
         dotogglepickup();
-        *cmd = NULL;
+        *cmd = find_command("interrupt");
         break;
 
     case UICMD_NOTHING:
         *cmd = NULL;
         break;
     }
+    ui_flags.in_zero_time_command = FALSE;
 }
 
 
@@ -269,6 +274,8 @@ get_command(void *callbackarg,
 
     int save_repeats = repeats_remaining;
     repeats_remaining = 0;
+
+    ui_flags.in_zero_time_command = FALSE;
 
     /* inventory item actions may set the next command */
     if (have_next_command) {
@@ -390,10 +397,34 @@ get_command(void *callbackarg,
         }
     } while (!cmd);
 
+    ui_flags.in_zero_time_command = !!(cmd->flags & CMD_NOTIME);
+
     wmove(mapwin, player.y, player.x);
 
     ncaa.cmd = cmd->name;
     callback(&ncaa, callbackarg);
+}
+
+
+void
+handle_nested_key(int key)
+{
+    if (key < 0 || key > KEY_MAX)
+        return;
+
+    int save_zero_time = ui_flags.in_zero_time_command;
+    ui_flags.in_zero_time_command = TRUE;
+
+    if (keymap[key] == find_command("save"))
+        save_menu();
+    if (keymap[key] == find_command("mainmenu"))
+        show_mainmenu(TRUE);
+
+    /* Perhaps we should support various other commands that are either entirely
+       client-side, or else zero-time and can be supported via dropping into
+       replay mode temporarily. That could easily be confusing, though. */
+
+    ui_flags.in_zero_time_command = save_zero_time;
 }
 
 
@@ -581,20 +612,28 @@ show_help(void)
 
 
 static struct nh_cmd_desc *
-show_mainmenu(void)
+show_mainmenu(nh_bool inside_another_command)
 {
     struct nh_menulist menu;
     int i, selected[1];
 
     init_menulist(&menu);
 
-    for (i = 0; i < cmdcount; i++)
-        if (commandlist[i].flags & CMD_MAINMENU)
-            add_menu_item(&menu, 100 + i, commandlist[i].desc, 0,
-                          FALSE);
+    if (!inside_another_command)
+        for (i = 0; i < cmdcount; i++)
+            if (commandlist[i].flags & CMD_MAINMENU &&
+                (ui_flags.current_followmode == FM_PLAY ||
+                 commandlist[i].flags & CMD_NOTIME))
+                add_menu_item(&menu, 100 + i, commandlist[i].desc, 0,
+                              FALSE);
 
-    add_menu_item(&menu, 1, "set options for this game", 0, FALSE);
-    add_menu_item(&menu, 2, "save or quit the game", 0, FALSE);
+    if (!inside_another_command)
+        add_menu_item(&menu, 1, ui_flags.current_followmode == FM_PLAY ?
+                      "set options" : "set interface options", 0, FALSE);
+    if (ui_flags.current_followmode != FM_REPLAY)
+        add_menu_item(&menu, 2, "view a replay of this game", 0, FALSE);
+    add_menu_item(&menu, 3, ui_flags.current_followmode == FM_PLAY ?
+                  "save or quit the game" : "stop viewing", 0, FALSE);
 
     curses_display_menu(&menu, "Main menu", PICK_ONE,
                         PLHINT_ANYWHERE, selected, curses_menu_callback);
@@ -608,7 +647,10 @@ show_mainmenu(void)
     if (selected[0] == 1) {
         display_options(FALSE);
         draw_map(player.x, player.y);
+        return find_command("interrupt");
     } else if (selected[0] == 2) {
+        instant_replay();
+    } else if (selected[0] == 3) {
         save_menu();
     }
 
@@ -616,10 +658,29 @@ show_mainmenu(void)
 }
 
 static void
+instant_replay(void)
+{
+    ui_flags.current_followmode = FM_REPLAY;
+    if (ui_flags.available_followmode == FM_WATCH)
+        ui_flags.gameload_message =
+            "You are now in replay mode.  To return to watching the game "
+            "live, use the 'save' command.";
+    else
+        ui_flags.gameload_message =
+            "You are now in replay mode.  To return to playing the game "
+            "live, use the 'save' command.";
+    nh_exit_game(EXIT_RESTART);
+}
+
+static void
 save_menu(void)
 {
     struct nh_menulist menu;
     int selected[1];
+
+    /* No need for a confirmation if we're just watching. */
+    if (ui_flags.current_followmode != FM_PLAY)
+        nh_exit_game(EXIT_SAVE);
 
     init_menulist(&menu);
 
@@ -750,10 +811,18 @@ read_keymap(void)
         return FALSE;
 
     size = lseek(fd, 0, SEEK_END);
-    lseek(fd, 0, SEEK_SET);
 
     char data[size + 1];
-    read(fd, data, size);
+
+    while (1) {
+        lseek(fd, 0, SEEK_SET);
+        errno = 0;
+        int rcount = read(fd, data, size);
+        if (rcount == size)
+            break;
+        else if (rcount != -1 || errno != EINTR)
+            return FALSE;
+    }
     data[size] = '\0';
     close(fd);
 
@@ -850,6 +919,24 @@ badmap:
     return FALSE;
 }
 
+/* Like write(), but EINTR-safe, and closes the fd on error. */
+static nh_bool
+write_keymap_write(int fd, const void *buffer, int len)
+{
+    errno = 0;
+    int written = 0;
+    while (written < len) {
+        int rv = write(fd, ((char *)buffer) + written, len - written);
+        if (rv < 0 && errno == EINTR)
+            continue;
+        if (rv <= 0) {
+            close(fd);
+            return FALSE;
+        }
+        written += rv;
+    }
+    return TRUE;
+}
 
 /* store the keymap in keymap.conf */
 static void
@@ -892,26 +979,31 @@ write_keymap(void)
                                                unknown_keymap[key]->name : "-");
         sprintf(buf, "%x %s\n", key, name);
         if (strcmp(name, "-"))
-            write(fd, buf, strlen(buf));
+            if (!write_keymap_write(fd, buf, strlen(buf)))
+                return;
     }
 
     for (i = 0; i < cmdcount; i++) {
         if (commandlist[i].flags & CMD_EXT) {
             sprintf(buf, "EXT %s\n", commandlist[i].name);
-            write(fd, buf, strlen(buf));
+            if (!write_keymap_write(fd, buf, strlen(buf)))
+                return;
         } else {
             sprintf(buf, "NOEXT %s\n", commandlist[i].name);
-            write(fd, buf, strlen(buf));
+            if (!write_keymap_write(fd, buf, strlen(buf)))
+                return;
         }
     }
 
     for (i = 0; i < unknown_count; i++) {
         if (unknown_commands[i].flags & CMD_EXT) {
             sprintf(buf, "EXT %s\n", unknown_commands[i].name);
-            write(fd, buf, strlen(buf));
+            if (!write_keymap_write(fd, buf, strlen(buf)))
+                return;
         } else {
             sprintf(buf, "NOEXT %s\n", unknown_commands[i].name);
-            write(fd, buf, strlen(buf));
+            if (!write_keymap_write(fd, buf, strlen(buf)))
+                return;
         }
     }
 
@@ -968,7 +1060,7 @@ init_keymap(void)
     }
 
     for (i = 0; i < count; i++) {
-        if (builtin_commands[i].altkey && !keymap[commandlist[i].altkey])
+        if (builtin_commands[i].altkey && !keymap[builtin_commands[i].altkey])
             keymap[builtin_commands[i].altkey] = &builtin_commands[i];
     }
 

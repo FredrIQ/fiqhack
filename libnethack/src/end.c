@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -239,8 +239,7 @@ panic(const char *str, ...)
     paniclog("panic", buf);
     DEBUG_LOG_BACKTRACE("panic() called: %s\n", buf);
 
-    /* TODO: attempt to rewind the turn */
-    terminate(GAME_DETACHED);             /* equivalent to saving the game */
+    log_recover_noreturn(get_log_start_of_turn_offset());
 }
 
 static boolean
@@ -514,11 +513,12 @@ calc_score(int how, boolean show, long umoney)
     long category_raw;
     double category_ratio;
     long category_points;
-    double elog2;
+
+    const long long max_squared = 30000LL * 30000LL;
+
     struct nh_menulist menu;
     const char *buf;
 
-    elog2 = log(2) / 1000.0;
     /* Initialise the explanation window, if show is true. */
     if (show)
         init_menulist(&menu);
@@ -531,7 +531,7 @@ calc_score(int how, boolean show, long umoney)
     category_raw -= u.umoney0;
     if (category_raw < 0)
         category_raw = 0;
-    category_points = log(category_raw + 1) / elog2 + 0.5;
+    category_points = ilog2(category_raw + 1);
     if (category_points > 30000)
         category_points = 30000;
     total += category_points;
@@ -545,7 +545,7 @@ calc_score(int how, boolean show, long umoney)
 
     /* Experience. Although this maxes at 30, the ratio isn't displayed. */
     category_raw = u.ulevel;
-    category_points = sqrt((u.ulevel - 1.0) / 29.0) * 30000.0 + 0.5;
+    category_points = isqrt(((u.ulevel - 1) * max_squared) / 29);
     total += category_points;
 
     if (show) {
@@ -559,9 +559,8 @@ calc_score(int how, boolean show, long umoney)
        deepest level reached, and is based on the square root of the ratio. */
     category_raw = deepest_lev_reached(FALSE);
     category_ratio = category_raw * 100.0 / depth(&sanctum_level);
-    category_points =
-        sqrt((category_raw - 1) / (double)(depth(&sanctum_level) -
-                                           1)) * 30000.0 + 0.5;
+    category_points = isqrt(((category_raw - 1) * max_squared) /
+                            (depth(&sanctum_level) - 1));
     total += category_points;
 
     if (show) {
@@ -580,7 +579,7 @@ calc_score(int how, boolean show, long umoney)
         count_discovered_objects(&curd, &maxd);
         category_raw = curd;
         category_ratio = curd * 100.0 / maxd;
-        category_points = sqrt(category_ratio) * 3000.0 + 0.5;
+        category_points = isqrt((curd * max_squared) / maxd);
     }
     total += category_points;
 
@@ -610,7 +609,9 @@ calc_score(int how, boolean show, long umoney)
                     category_raw +=
                         val->list[i].count *
                         (long)objects[val->list[i].typ].oc_cost;
-        category_points = log(category_raw + 1) / elog2 + 0.5;
+        category_points = ilog2(category_raw + 1);
+        if (category_points > 30000)
+            category_points = 30000;
         total += category_points;
 
         if (show) {
@@ -626,7 +627,7 @@ calc_score(int how, boolean show, long umoney)
 
     /* Artifacts. */
     category_raw = artifact_score(invent, TRUE, 0);
-    category_points = log(category_raw + 1) / elog2 + 0.5;
+    category_points = ilog2(category_raw + 1);
     total += category_points;
 
     if (show) {
@@ -650,7 +651,7 @@ calc_score(int how, boolean show, long umoney)
         }
     }
     category_ratio = category_raw * 100.0 / (NUMMONS - LOW_PM);
-    category_points = sqrt(category_ratio) * 3000.0 + 0.5;
+    category_points = isqrt((category_raw * max_squared) / (NUMMONS - LOW_PM));
     total += category_points;
 
     if (show) {
@@ -663,7 +664,7 @@ calc_score(int how, boolean show, long umoney)
 
     /* Time penalty. */
     category_raw = moves;
-    category_points = log(max(moves, 2000) / 2000.0) / elog2;
+    category_points = ilog2(max(moves, 2000)) - ilog2(2000);
     total -= category_points;
 
     if (show) {
@@ -898,13 +899,16 @@ done_noreturn(int how, const char *killer)
 
     /* If watching or replaying, we're going to get a GAME_OVER on the main
        process, = we should produce GAME_ALREADY_OVER on watching processes. */
-    if (program_state.viewing)
+    if (program_state.followmode != FM_PLAY) {
+        win_pause_output(P_MESSAGE);
         terminate(GAME_ALREADY_OVER);
+    }
 
     /* 
      *      The game is now over...
      */
     program_state.gameover = 1;
+    log_record_input("Q");
 
     /* might have been killed while using a disposable item, so make sure it's
        gone prior to inventory disclosure and creation of bones data */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1079,8 +1079,11 @@ couldsee_func(int x, int y)
     return couldsee(x, y);
 }
 
+/* Note: thismove is occ_none for the single-space movement commands, even if
+   they were command-repeated; its purpose is to distinguish between commands */
 int
-domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
+domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
+       enum occupation thismove)
 {
     struct monst *mtmp;
     struct rm *tmpr;
@@ -1095,13 +1098,13 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
     schar dz = 0;
 
     /* If we're running, mark the current space to avoid infinite loops. */
-    if (last_command_was("run"))
+    if (thismove == occ_move)
         turnstate.move.stepped_on[u.ux][u.uy] = TRUE;
 
     /* If we already have values for dx and dy, it means we're running.
-     * We don't want to overwrite them in that case, or else turning corners
-     * breaks. */
-    if (!turnstate.move.dx && !turnstate.move.dy &&
+       We don't want to overwrite them in that case, or else turning corners
+       breaks. Exception: we could have aborted a run into a walk. */
+    if (((!turnstate.move.dx && !turnstate.move.dy) || thismove != occ_move) &&
         !getargdir(arg, NULL, &turnstate.move.dx, &turnstate.move.dy, &dz))
         return 0;
 
@@ -1119,11 +1122,11 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
     if (Stunned || Confusion) {
         const char *stop_which = NULL;
 
-        if (flags.occupation == occ_autoexplore)
+        if (thismove == occ_autoexplore)
             stop_which = "explore";
-        else if (flags.occupation == occ_travel)
+        else if (thismove == occ_travel)
             stop_which = "travel";
-        else if (flags.occupation == occ_move)
+        else if (thismove == occ_move)
             stop_which = "run";
 
         if (stop_which) {
@@ -1134,7 +1137,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
     }
 
     if (travelling()) {
-        if (flags.occupation == occ_autoexplore) {
+        if (thismove == occ_autoexplore) {
             if (Blind) {
                 pline("You can't see where you're going!");
                 action_completed();
@@ -1676,7 +1679,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
                    !!Hallucination, !!Passes_walls, !!Ground_based)) {
         /* We can't move there... but maybe we can dig. */
         if (flags.autodig && ITEM_INTERACTIVE(uim) &&
-            flags.occupation != occ_move && uwep && is_pick(uwep)) {
+            thismove != occ_move && uwep && is_pick(uwep)) {
             /* MRKR: Automatic digging when wielding the appropriate tool */
             struct nh_cmd_arg arg;
             arg_from_delta(turnstate.move.dx, turnstate.move.dy, dz, &arg);
@@ -1809,11 +1812,11 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
     }
 
     reset_occupations(TRUE);
-    if (flags.occupation == occ_move) {
+    if (thismove == occ_move) {
         if (IS_DOOR(tmpr->typ) || IS_ROCK(tmpr->typ) ||
             IS_FURNITURE(tmpr->typ))
             action_completed();
-    } else if (flags.occupation == occ_autoexplore) {
+    } else if (thismove == occ_autoexplore) {
         int wallcount, mem_bg;
 
         /* autoexplore stoppers: being orthogonally adjacent to a boulder,
@@ -2863,7 +2866,7 @@ exploration_interaction_status(void)
 int
 dofight(const struct nh_cmd_arg *arg)
 {
-    return domove(arg, uim_forcefight);
+    return domove(arg, uim_forcefight, occ_none);
 }
 
 
@@ -2903,14 +2906,15 @@ domovecmd(const struct nh_cmd_arg *arg)
     limited_turns(arg, occ_move);
     return domove(arg, turnstate.continue_message &&
                   !(arg->argtype & CMD_ARG_LIMIT) ?
-                  flags.interaction_mode : exploration_interaction_status());
+                  flags.interaction_mode : exploration_interaction_status(),
+                  occ_none);
 }
 
 int
 domovecmd_nopickup(const struct nh_cmd_arg *arg)
 {
     limited_turns(arg, occ_move);
-    return domove(arg, uim_nointeraction);
+    return domove(arg, uim_nointeraction, occ_none);
 }
 
 
@@ -2918,7 +2922,7 @@ static int
 do_rush(const struct nh_cmd_arg *arg, enum u_interaction_mode uim)
 {
     action_incomplete("running", occ_move);
-    return domove(arg, uim);
+    return domove(arg, uim, occ_move);
 }
 
 int

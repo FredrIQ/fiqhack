@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /*      Copyright 1991, M. Stephenson             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -46,7 +46,7 @@ construct_qtlist(long hdr_offset)
     Fread(&n_msgs, sizeof (int), 1, msg_file);
     msg_list = malloc((unsigned)(n_msgs + 1) * sizeof (struct qtmsg));
 
-    /* 
+    /*
      * Load up the list.
      */
     Fread(msg_list, n_msgs * sizeof (struct qtmsg), 1, msg_file);
@@ -66,7 +66,7 @@ load_qtlist(void)
     if (!msg_file)
         panic("CANNOT OPEN QUEST TEXT FILE %s.", QTEXT_FILE);
 
-    /* 
+    /*
      * Read in the number of classes, then the ID's & offsets for
      * each header.
      */
@@ -74,7 +74,7 @@ load_qtlist(void)
     Fread(&qt_classes[0][0], sizeof (char) * LEN_HDR, n_classes, msg_file);
     Fread(qt_offsets, sizeof (long), n_classes, msg_file);
 
-    /* 
+    /*
      * Now construct the message lists for quick reference later
      * on when we are actually paging the messages out.
      */
@@ -305,14 +305,21 @@ deliver_by_window(struct qtmsg *qt_msg)
     const char *msg = "";
     int size;
 
+    /* Don't show this in replay mode, because it would require a keystroke to
+       dismiss. (The other uses of display_buffer are #verhistory and #license,
+       both of which are zero-time; thus, this is the only way to produce an
+       /uninteractible/ buffer, which is something we want to avoid.) */
+    if (program_state.followmode == FM_REPLAY)
+        return;
+
     for (size = 0; size < qt_msg->size; size += (long)strlen(in_line)) {
         dlb_fgets(in_line, 80, msg_file);
         const char *out_line = convert_line(in_line);
 
         /* We want to strip lone newlines, but leave sequences intact, or
-         * special formatting.
-         *
-         * TODO: This is a huge kluge. Be better at this. */
+           special formatting.
+
+           TODO: This is a huge kluge. Be better at this. */
         if (!*out_line) {
             if (!new_para)
                 msg = msgcat(msg, "\n \n");
@@ -385,4 +392,3 @@ qt_montype(const d_level * dlev)
 }
 
 /*questpgr.c*/
-

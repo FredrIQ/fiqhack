@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -97,9 +97,12 @@ static const struct nh_listitem pettype_list[] = {
 static const struct nh_enum_option pettype_spec =
     { pettype_list, listlen(pettype_list) };
 
-/* timezone_list, timezone_spec are generated in readonly.c */
+/* timezones, polyinit are generated in readonly.c */
 extern const struct nh_listitem timezone_list[];
 extern const struct nh_enum_option timezone_spec;
+
+extern const struct nh_listitem polyinit_list[];
+extern const struct nh_enum_option polyinit_spec;
 
 static const struct nh_listitem ap_object_class_list[] = {
     {OCLASS_ANY, "any"},
@@ -207,6 +210,8 @@ static const struct nh_option_desc const_options[] = {
      {.b = FALSE}},
     {"permahallu", "spend the whole game hallucinating", TRUE, OPTTYPE_BOOL,
      {.b = FALSE}},
+    {"polyinit", "play in monster form (non-scoring)", TRUE, OPTTYPE_ENUM,
+     {.e = -1}},
     {"legacy", "print introductory message", TRUE, OPTTYPE_BOOL, {.b = TRUE}},
     {"align", "your starting alignment", TRUE, OPTTYPE_ENUM, {.e = ROLE_NONE}},
     {"gender", "your starting gender", TRUE, OPTTYPE_ENUM, {.e = ROLE_NONE}},
@@ -345,6 +350,7 @@ new_opt_struct(void)
     nhlib_find_option(options, "name")->s.maxlen = PL_NSIZ;
     nhlib_find_option(options, "mode")->e = mode_spec;
     nhlib_find_option(options, "timezone")->e = timezone_spec;
+    nhlib_find_option(options, "polyinit")->e = polyinit_spec;
     nhlib_find_option(options, "align")->e = align_spec;
     nhlib_find_option(options, "gender")->e = gender_spec;
     nhlib_find_option(options, "role")->e = role_spec;
@@ -392,11 +398,9 @@ set_option(const char *name, union nh_optvalue value)
     struct nh_option_desc *option = NULL, *options = new_opt_struct();
     boolean ret = FALSE;
 
-    /* if this option change affects game options and happens during a 
-       replay (program_state.viewing) and the change isn't triggered by the
-       replay (!program_state.restoring) */
-    if (program_state.viewing)
-        goto free;   /* Nope, sorry. That would mess up the replay */
+    /* can't change options for other players */
+    if (program_state.followmode != FM_PLAY)
+        goto free;
 
     if (options)
         option = nhlib_find_option(options, name);
@@ -474,6 +478,8 @@ set_option(const char *name, union nh_optvalue value)
         preferred_pet = (char)option->value.e;
     } else if (!strcmp("timezone", option->name)) {
         flags.timezone = option->value.e;
+    } else if (!strcmp("polyinit", option->name)) {
+        flags.polyinit_mnum = option->value.e;
     }
 
     else
@@ -576,6 +582,8 @@ nh_get_options(void)
                 flags.explore ? MODE_EXPLORE : MODE_NORMAL;
         } else if (!strcmp("timezone", option->name)) {
             option->value.e = flags.timezone;
+        } else if (!strcmp("polyinit", option->name)) {
+            option->value.e = flags.polyinit_mnum;
         } else if (!strcmp("align", option->name)) {
             option->value.e = u.initalign;
         } else if (!strcmp("gender", option->name)) {

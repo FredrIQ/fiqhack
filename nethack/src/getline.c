@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -135,7 +135,7 @@ hooked_curses_getlin(const char *query, void *callbackarg,
         return;
     }
 
-    prev_curs = curs_set(1);
+    prev_curs = nh_curs_set(1);
 
     /* wrap text just for determining dimensions */
     wrap_text(COLNO - 4, query, &output_count, &output);
@@ -245,7 +245,7 @@ hooked_curses_getlin(const char *query, void *callbackarg,
         }
     }
 
-    curs_set(prev_curs);
+    nh_curs_set(prev_curs);
 
     char *bufcopy = gldat->buf;
     gw->dyndata = NULL; /* don't free gldat->buf */ 

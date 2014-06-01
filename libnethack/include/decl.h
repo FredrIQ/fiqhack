@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-13 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -352,7 +352,6 @@ enum target_location_units {
 
 extern struct sinfo {
     int game_running;   /* ok to call nh_do_move */
-    int viewing;        /* replaying or watching a game */
     int gameover;       /* self explanatory? */
     int stopprint;      /* inhibit further end of game disclosure */
     int panicking;      /* `panic' is in progress */
@@ -363,6 +362,8 @@ extern struct sinfo {
 # ifdef PANICLOG
     int in_paniclog;
 # endif
+
+    enum nh_followmode followmode;         /* play/watch/replay */
 
     boolean suppress_screen_updates;
     boolean restoring_binary_save;
@@ -384,9 +385,6 @@ extern struct sinfo {
      *   u, level, etc.), except possibly while log_sync() is running.
      * * end_of_gamestate_location is the start of the line immediately after
      *   the one that gamestate_location point to.
-     * Note that there are no invariants on target_location. You can call
-     * log_sync() to set the binary_save_location as close as possible to
-     * target_location, but nothing forces you to do this.
      */
     volatile int logfile;                             /* file descriptor */
     void *logfile_watchers;                /* on UNIX, an array of pid_t */
@@ -399,8 +397,6 @@ extern struct sinfo {
     long binary_save_location;               /* bytes from start of file */
     long gamestate_location;                 /* bytes from start of file */
     long end_of_gamestate_location;          /* bytes from start of file */
-    long target_location;           /* in units of target_location_units */
-    enum target_location_units target_location_units;
     boolean input_was_just_replayed;
     boolean ok_to_diff;
 } program_state;

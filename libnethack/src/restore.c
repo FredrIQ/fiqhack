@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-05-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -747,6 +747,8 @@ restore_flags(struct memfile *mf, struct flag *f)
 
     f->djinni_count = mread32(mf);
     f->ghost_count = mread32(mf);
+    f->timezone = mread32(mf);
+    f->polyinit_mnum = mread32(mf);
     f->ident = mread32(mf);
     f->last_cmd = mread32(mf);
     f->moonphase = mread32(mf);
@@ -762,6 +764,7 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->cblock = mread8(mf);
     f->corridorbranch = mread8(mf);
     f->debug = mread8(mf);
+    f->desync = mread8(mf);
     f->explore = mread8(mf);
     f->elbereth_enabled = mread8(mf);
     f->end_disclose = mread8(mf);
@@ -894,6 +897,8 @@ dorecover(struct memfile *mf)
     load_qtlist();      /* re-load the quest text info */
 
     program_state.restoring_binary_save = FALSE;
+
+    flags.desync = FALSE;   /* desync the save if this was set to TRUE */
 
     /* Note: dorecover() no longer calls run_timers() or doredraw(), because
        those can have side effects that are saved in the save file (e.g. running

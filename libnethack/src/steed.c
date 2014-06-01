@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-28 */
+/* Last modified by Alex Smith, 2014-05-28 */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -75,11 +75,10 @@ use_saddle(struct obj *otmp, const struct nh_cmd_arg *arg)
         return 0;
     }
     ptr = mtmp->data;
-    if (touch_petrifies(ptr) && !uarmg && !Stone_resistance) {
+    if (!uarmg && touched_monster(ptr - mons)) {
         pline("You touch %s.", mon_nam(mtmp));
-        if (!(poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM)))
-            instapetrify(killer_msg(STONING,
-                msgcat("attempting to saddle ", an(mtmp->data->mname))));
+        instapetrify(killer_msg(STONING, msgcat("attempting to saddle ",
+                                                an(mtmp->data->mname))));
     }
     if (ptr == &mons[PM_INCUBUS] || ptr == &mons[PM_SUCCUBUS]) {
         pline("Shame on you!");

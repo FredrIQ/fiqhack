@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-26 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -7,6 +7,7 @@
  */
 
 #include "nhclient.h"
+#include "netconnect.h"
 
 struct nhnet_server_version nhnet_server_ver;
 
@@ -197,12 +198,13 @@ receive_json_msg(void)
    A play_game response will longjmp() to the matching play_game request, so
    beware! */
 json_t *
-send_receive_msg(const char *const msgtype, json_t *volatile jmsg)
+send_receive_msg(const char *const volatile msgtype, json_t *volatile jmsg)
 {
     const char *volatile sendkey;
     char key[BUFSZ];
+    char oldkey[BUFSZ];
     void *iter;
-    int retry_count = 3;
+    volatile int retry_count = 3;
 
     if (conn_err && ex_jmp_buf_valid)
         longjmp(ex_jmp_buf, 1);
@@ -311,7 +313,7 @@ send_receive_msg(const char *const msgtype, json_t *volatile jmsg)
             /* The next line is unneccessary, but makes the control flow easier
                to follow in a debugger. */
             send_receive_recent_response = 0;
-            json_t *newmsg = handle_netcmd(key, srvmsg);
+            json_t *newmsg = handle_netcmd(key, msgtype, srvmsg);
             if (!newmsg) {     /* server error */
                 if (error_retry_ok && retry_count-- > 0 && restart_connection())
                     continue;  /* jmsg is still alive, use it again */
@@ -320,7 +322,8 @@ send_receive_msg(const char *const msgtype, json_t *volatile jmsg)
 
             json_decref(jmsg);
             jmsg = newmsg;
-            sendkey = key;
+            strcpy(oldkey, key);
+            sendkey = oldkey;
 
             /* send the callback data to the server and get a new response */
             continue;
@@ -405,82 +408,6 @@ nhnet_check_socket_fd(void)
 
     json_decref(j);
     windowprocs.win_server_cancel();
-}
-
-
-/* convert a string (address or hosname) into an address */
-static int
-parse_ip_addr(const char *host, int port, int want_v4,
-              struct sockaddr_storage *out)
-{
-    int res;
-    char portstr[16];
-    struct addrinfo *gai_res = NULL;
-
-#ifndef WIN32
-    struct addrinfo *next;
-#endif
-    struct addrinfo gai_hints;
-
-    memset(&gai_hints, 0, sizeof (gai_hints));
-#if defined(WIN32) || defined(AIMAKE_BUILDOS_darwin)
-    gai_hints.ai_flags = 0;
-#else
-    gai_hints.ai_flags = AI_NUMERICSERV;
-#endif
-    gai_hints.ai_family = want_v4 ? AF_INET : AF_INET6;
-    gai_hints.ai_socktype = SOCK_STREAM;
-
-    sprintf(portstr, "%d", port);
-
-    res = getaddrinfo(host, portstr, &gai_hints, &gai_res);
-    if (res != 0)
-        return FALSE;
-    if (want_v4)
-        memcpy(out, gai_res->ai_addr, sizeof (struct sockaddr_in));
-    else
-        memcpy(out, gai_res->ai_addr, sizeof (struct sockaddr_in6));
-
-#ifndef WIN32   /* it seems the result structures should not be free'd on
-                   Windows */
-    do {
-        next = gai_res->ai_next;
-        free(gai_res);
-        gai_res = next;
-    } while (gai_res);
-#endif
-
-    return TRUE;
-}
-
-
-static int
-connect_server(const char *host, int port, int want_v4, char *errmsg,
-               int msglen)
-{
-    struct sockaddr_storage sa;
-    int fd = -1;
-
-    errmsg[0] = '\0';
-    if (parse_ip_addr(host, port, want_v4, &sa)) {
-        fd = socket(sa.ss_family, SOCK_STREAM, 0);
-        if (fd == -1) {
-            snprintf(errmsg, msglen, "failed to create a socket: %s\n",
-                     strerror(errno));
-            return -1;
-        }
-
-        if (connect(fd, (struct sockaddr *)&sa,
-                    want_v4 ? sizeof (struct sockaddr_in) :
-                    sizeof (struct sockaddr_in6)) == -1) {
-            snprintf(errmsg, msglen, "could not connect: %s\n",
-                     strerror(errno));
-            close(fd);
-            return -1;
-        }
-    }
-
-    return fd;
 }
 
 

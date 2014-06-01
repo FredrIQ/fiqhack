@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2014-04-06
+# Last modified by Alex Smith, 2014-05-31
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
@@ -22,6 +22,9 @@ use strict;
 # viewed via running this file with the --license option.
 # Alternatively, it can be viewed in this file's source, or online at
 # <http://www.gnu.org/licenses/>.
+
+# Note: to skip the documentation in an editor and start at the start
+# of the main program, search for 'use 5'
 
 ####### Documentation
 
@@ -53,6 +56,15 @@ Produce more verbose output (can be given multiple times).
 =item B<-i> F<directory>
 
 Install the program into the specified directory, as well as building it.
+
+=item B<-S> F<program>
+
+When installing, use the specified program (normally F<su> or F<sudo>) to
+gain root permissions.
+
+=item B<--with=>I<feature>
+
+Turn on the specified feature of the program you are building.
 
 =back
 
@@ -194,13 +206,13 @@ the // around the regexp.)
 
 This option is currently unimplemented.
 
-=item B<-B> I<regexp>, B<--rebuild=>I<regexp>
+=item B<-B> I<object>, B<--rebuild=>I<object>
 
-Consider all files matching the regexp to have changed, even if they actually
-haven't.  (Don't include the // around the regexp.)  This option can be given
+Attempt to regenerate the given I<object> and rebuild everything that directly
+depends on it, even if aimake has no reason to think that anything would be
+different this time.  (This will typically also cause things that indirectly
+depend on the given I<object> to be rebuilt.)  This option can be given
 multiple times.
-
-This option is currently unimplemented.
 
 =item B<--directory-layout>=I<layout>
 
@@ -267,6 +279,25 @@ into a chroot from outside the chroot.  This option may only be given if the
 install directory is outside the source directory and outside the build
 directory (otherwise, it's not quite clear what it would mean).
 
+=item B<--with=>I<feature>
+
+=item B<--without=>I<feature>
+
+=item B<--with-default=>I<feature>
+
+Some programs installed by aimake may have multiple configurations
+(e.g. they may be able to build both a command-line program and a GUI
+program); this option lets you select which features you want
+(B<--with>) and/or don't want (B<--without>).  These options are
+"sticky"; they are saved in F<aimake.objects>, and so persist into
+future runs of aimake in the same directory.  If you want to reset
+such an option to its default value, use B<--with-default>.
+
+The list of features that are supported by this option varies
+depending on which program you are installing.  You can use
+B<--with=?> for a list (you might need to escape the C<?> to hide it
+from your shell).
+
 =item B<--documentation>
 
 Show the full documentation for aimake.
@@ -284,7 +315,8 @@ only useful if stdout is not a terminal).
 
 Don't run any rules but install rules, even if they're marked using
 C<sys:always_rebuild>.  This is used by aimake internally when it elevates
-permissions.
+permissions.  Note that if the build is not fully up to date, this may lead to
+only a partial install.
 
 =item B<--dump-status>
 
@@ -298,6 +330,19 @@ comma-separated sequence of keys (e.g. 'xuse_by_object,config_option:libdir').
 On large projects, this is considerably faster than dumping the entire
 statefile if you are only interested in a small portion of it.
 
+=item B<--config-only>
+
+Causes aimake to do nothing but record persistent options in the statefile. This
+lets you incorporate aimake into build systems that expect a "configure, make,
+sudo make install" workflow, e.g.:
+
+    ../aimake --config-only -i prefix
+    ../aimake
+    sudo ../aimake --install-only -i
+
+Note that the use of B<--install-only> allows aimake to be run
+successfully as root; normally it refuses to be run with root permissions.
+
 =item B<--ignore-builtin-config>
 
 Ignore all the built-in rules and options, reading configuration only from the
@@ -309,6 +354,15 @@ different from compiling C and have a complex configuration file handy for
 that alternative use.  (The built-in directory layouts are not ignored, but
 they will not be used for anything if directory_layout is set to something
 other than a built-in directory layout.)
+
+=item B<--specific-exit-status>
+
+Normally, if something goes wrong compiling your code, aimake exits with exit
+code 1.  aimake checks for certain specific common mistakes (such as forgetting
+to anchor a regular expression in a dependency rule, or using the wrong
+inclusion syntax); with this option, each of those mistakes will produce a
+specific exit status (not 0 or 1).  The main purpose of this is for use in
+aimake's testsuite, to test that those errors are being detected correctly.
 
 =item B<--version>
 
@@ -585,6 +639,13 @@ changes.)  Here's a sample configuration:
         options => {
             packagename => 'example',
         },
+        features => {
+            gui => {
+                description => 'Build a graphical user interface',
+                object => qr/^path:gui\/.*/,
+                default => 1,
+            },
+        },
         rules => {
             _libraries => {
                 output => ['searchlib:some_unusual_library:symbol:foo'],
@@ -599,17 +660,17 @@ changes.)  Here's a sample configuration:
 The format of the configuration file is explained in much more detail later in
 this document, but this example should serve as an overview of some of the
 most common tasks: setting an option (in this case, C<packagename>, which is
-probably the most important option to set); telling aimake to search for a
-particular library so that it can be linked into the project (specifying the
-name of the library, and a symbol in that library); and changing the flags
-that will be passed to the C compiler.  (All the libraries used by a project
-can be listed as C<searchlib:> objects in a rule output, even if some are only
-used in some configurations or on some operating systems; aimake will not
-complain if it fails to find a library, or if it finds it but does not find a
-reason to use it.)  There are some libraries searched for by default (rule
-C<default_libraries> in the default configuration; additionally, any libraries
-used by default on the build system (such as F<libc.so> on Linux) will be
-automatically incuded.
+probably the most important option to set); defining a feature; telling aimake
+to search for a particular library so that it can be linked into the project
+(specifying the name of the library, and a symbol in that library); and
+changing the flags that will be passed to the C compiler.  (All the libraries
+used by a project can be listed as C<searchlib:> objects in a rule output,
+even if some are only used in some configurations or on some operating
+systems; aimake will not complain if it fails to find a library, or if it
+finds it but does not find a reason to use it.)  There are some libraries
+searched for by default (rule C<default_libraries> in the default
+configuration; additionally, any libraries used by default on the build system
+(such as F<libc.so> on Linux) will be automatically incuded.
 
 =head1 INTERNALS
 
@@ -1435,7 +1496,7 @@ the end of the command line, but otherwise works like the C<optpath:> without
 the leading space.  (Specifically, the order of arguments is C<optstring:>s
 with no leading space, C<optpath:>s with something between the colons and no
 leading space, C<optpath:>s with nothing between the colons, C<optpath:>s with
-a leading space, and C<optstring:>s with a leading space.  Apart from this
+a leading space, and C<optstring:>s with a leading space.)  Apart from this
 sorting, aimake will try, as far as is meaningful, to leave options in the
 order in which they were specified.
 
@@ -1517,14 +1578,21 @@ they're running on a 32- or 64-bit platform.  (In order to catch mistakes due
 to omitting $exeext, it will never be set to the null string, but rather to an
 arbitrary string on platforms that do not normally use a special extension for
 executables.  This extension will be removed when installing the executable.)
-These are followed by a single dictionary with two keys, C<options> and
-C<rules>.  Here's a simple example F<aimake.rules>:
+These are followed by a single dictionary with up to three keys, C<options>,
+C<features> and C<rules>.  Here's a simple example F<aimake.rules>:
 
     $version = "1.2.3";        # variable definition
 
     {
         options => {
             packagename => 'configexample',  # override an option
+        },
+        features => {
+            large_data_files => {            # define a feature
+                description => 'Generate large data files',
+                object => qr/^path:datagen\.c$/,
+                default => 0,
+            },
         },
         rules => {
             install_executable => undef,     # undefine a rule
@@ -1560,6 +1628,32 @@ A list of filenames that cause directories containing them to never be
 considered part of the source tree.  (By default, this is a list of files
 generated to hold internal state by autoconf, CMake, and aimake, which
 indicate that the directory is being used as a build directory.)
+
+=back
+
+Features are dictionaries with three keys:
+
+=over 4
+
+=item description
+
+A description to show in the B<--with=?> help output.
+
+=item object
+
+A regular expression matching objects that are considered to be part of the
+feature.  If the feature is turned off, aimake will refuse to consider any
+source files that match the expression as existing.  Other objects that match
+the expression will be disregarded when output, but will still be considered
+to exist if they already exist (due to a previous aimake run where the feature
+was turned on) and do not need rebuilding.  (We are considering changing this
+rule in future versions of aimake.  For the time being, it's best to use this
+only to match C<path:> objects.)
+
+=item default
+
+Set this to 0 for the feature to be off by default, or 1 for the feature to be
+on by default.
 
 =back
 
@@ -2210,7 +2304,7 @@ I<Available for: install actions>
 
 If set to a nonzero integer (the default is 0), causes C<install_permission>
 to control only write and execute permissions; anyone will be able to read the
-file.  This makes C<install_permission> redundant except on execuables or on
+file.  This makes C<install_permission> redundant except on executables or on
 writable files.
 
 =item install_elevation
@@ -2429,7 +2523,7 @@ newline, unlike most POD directives.)
 
 =head1 COPYRIGHT
 
-Copyright (C) 2013 Alex Smith.
+Copyright (C) 2013, 2014 Alex Smith.
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -3158,8 +3252,10 @@ use PerlIO::encoding;
 use Encode qw/encode :fallbacks/;
 use Data::Dumper;
 use Digest::MD5 qw/md5_hex/;
+use Scalar::Util qw/refaddr/;
 use Safe;
 use Storable qw/store_fd fd_retrieve dclone/; # why the naming inconsistency?
+use warnings FATAL => qw/recursion/; # crashes with backtraces > infinite loops
 
 ####### Global variables and constants
 
@@ -3172,15 +3268,17 @@ $| = 1;
 select STDOUT;
 
 my ($opt_verbose, $opt_install, $opt_prefix, $opt_dump, @opt_warnings,
-    $opt_ignore_builtin_config, $opt_version, $opt_dlayout,
-    $opt_install_only, $opt_elevate_permissions,
-    $opt_nocr, @opt_rebuild, $opt_documentation, $opt_license);  # options
+    $opt_ignore_builtin_config, $opt_version, $opt_dlayout, $opt_config_only,
+    $opt_install_only, $opt_elevate_permissions, $opt_specific_exit_status,
+    $opt_nocr, @opt_rebuild, $opt_documentation, $opt_license,
+    @opt_with, @opt_without, @opt_with_default);  # options
 my ($codeset, $text_layers, $binary_layers,
     $utf8_layers, $ascii_layers); # encodings
 my ($path, $bpath, $ipath, $singledir, $cwd); # important paths
 my $installing;                   # mode of operation
 my %config_hashes = ();           # configuration
 my ($state, $state_fh, $config);  # state and configuration handling
+my $errorexit = 1;                # for --specific-exit-status
 
 ####### Subroutines
 
@@ -3191,6 +3289,26 @@ my ($state, $state_fh, $config);  # state and configuration handling
 # The // operator was introduced in Perl 5.10, so here's a function that
 # does the same thing.
 sub defined_or { defined $_[0] and return $_[0]; return $_[1]; }
+
+### OS independence for symlinking
+sub ai_symlink ($$) {
+    my $rv;
+    my $rv_valid = 0;
+    eval {
+        $rv = symlink $_[0], $_[1];
+        $rv_valid = 1;
+    };
+    $rv_valid and return $rv;
+    # "symlink" doesn't exist; copy the file instead
+    open my $fhfrom, "<$binary_layers", $_[0]
+        or return 0;
+    open my $fhto, ">$binary_layers", $_[1]
+        or return 0;
+    print $fhto $_ for <$fhfrom>;
+    close $fhfrom; close $fhto;
+    -x $_[0] and return chmod 0755, $_[1];
+    return 1;
+}
 
 ##### Progress reporting
 sub run_command;
@@ -3242,6 +3360,69 @@ sub run_command;
 }
 
 ##### Generic utilities
+
+### String pooling
+#
+# We map strings to integers because there are many repeated uses of strings in
+# the state file, and this uses up an enormous amount of memory (enough that the
+# compile causes swapping in some cases). The mapping is stored in the
+# statefile; thus these functions need to be guarded with atomically{} /
+# atomic_read{} respectively.
+
+my %unintern;
+sub intern ($) {
+    my $i = $state->{_intern}{$_[0]};
+    $i and return $i;
+    $i = $state->{_intern_number} = defined_or($state->{_intern_number}, 0) + 1;
+    $state->{_intern}{$_[0]} = $i;
+    $unintern{$i} = $_[0];
+    return $i;
+}
+sub unintern ($) {
+    return $unintern{$_[0]};
+}
+
+# We don't want the statefile to grow indefinitely due to unused strings. So
+# find unused strings, and remove them from _intern. This is done by copying
+# all the strings that are actually used to a new array.
+#
+# This is a conservative garbage collection, so it can leave numbers floating
+# around if they're used both as strings and as non-strings. This is mostly
+# safe; aimake doesn't typically use numbers, except for 1 to mean "true", and
+# timestamps (which are all in the billions).
+sub collect_used_numbers;
+sub collect_used_numbers {
+    my $sv = shift;
+    my $old = shift;
+    my $new = shift;
+    my $seen = shift;
+
+    return unless defined $sv;
+
+    if (ref $sv) {
+        $seen->{refaddr $sv} and return;
+        $seen->{refaddr $sv} = 1;
+    }
+
+    if (!ref $sv && exists $old->{$sv}) {
+        $new->{$old->{$sv}} = $sv;
+    } elsif (ref $sv eq 'HASH') {
+        while (my ($k, $v) = each %$sv) {
+            $k eq '_intern' and next;
+            collect_used_numbers $k, $old, $new, $seen;
+            collect_used_numbers $v, $old, $new, $seen;
+        }
+    } elsif (ref $sv eq 'ARRAY') {
+        collect_used_numbers $_, $old, $new, $seen for @$sv;
+    }
+}
+sub garbage_collect_statefile {
+    my $newintern = {};
+
+    collect_used_numbers $state, \%unintern, $newintern, {};
+
+    $state->{_intern} = $newintern;
+}
 
 ### Scalar manipulation
 
@@ -3681,9 +3862,9 @@ sub aipath2ospath {
 sub quoted_ospath {
     my $aipath = shift;
     my $ospath = aipath2ospath $aipath;
-    $ospath =~ s{([^ -~]|\\)}{ord $1 < 128 ?
-        sprintf "\\x%2x", ord $1 :
-        sprintf "\\u%4x", ord $1}eg;
+    $ospath =~ s{([^ -~]|\\)}{$1 eq '\\' ? "\\\\" :
+                              ord $1 < 128 ? sprintf "\\x%2x", ord $1 :
+                              sprintf "\\u%4x", ord $1}eg;
     return "\"$ospath\"";
 }
 
@@ -3725,7 +3906,8 @@ sub verify_writable {
     my $installing = shift;
     my $aipath_c = cleanup_aipath $aipath;
     my $fon = friendly_objname $aipath_c;
-    $aipath_c =~ /^path:/ and croak "Attempt to overwrite source file '$fon'";
+    $aipath_c =~ /^path:/ and !$installing and
+        croak "Attempt to overwrite source file '$fon'";
     $aipath_c =~ /^(spath|standardlib):/ and !$installing and croak
         "Attempt to overwrite system file '$fon'";
     1; # return true so we can use this with &&
@@ -3805,14 +3987,15 @@ sub file_hash {
     -e $ospath or return;
     my $mtime = (stat(_))[9];
     my $ltime = time;
-    my $oldmtime = defined_or($state->{_mtime}{$aipath}, -1);
-    my $oldltime = defined_or($state->{_ltime}{$aipath}, -1);
-    my $oldmhash = defined_or($state->{_mhash}{$aipath}, 'x');
-    my $hashok = $state->{_hashok}{$aipath};
+    my $iaipath = intern $aipath;
+    my $oldmtime = defined_or($state->{_mtime}{$iaipath}, -1);
+    my $oldltime = defined_or($state->{_ltime}{$iaipath}, -1);
+    my $oldmhash = defined_or($state->{_mhash}{$iaipath}, 'x');
+    my $hashok = $state->{_hashok}{$iaipath};
 
     return $oldmhash if $mtime == $oldmtime && $hashok;
 
-    $state->{_mtime}{$aipath} = $mtime;
+    $state->{_mtime}{$iaipath} = $mtime;
     my $digestor = Digest::MD5->new;
     open my $fh, "<$binary_layers", $ospath
         or croak "'$ospath' exists but is not readable";
@@ -3820,10 +4003,10 @@ sub file_hash {
     close $fh;
     my $mhash = $digestor->hexdigest;
 
-    $state->{_mhash}{$aipath} = $mhash;
-    $state->{_ltime}{$aipath} = $ltime
+    $state->{_mhash}{$iaipath} = $mhash;
+    $state->{_ltime}{$iaipath} = $ltime
         if $oldmtime != $mtime || $oldmhash ne $mhash;
-    $state->{_hashok}{$aipath} =
+    $state->{_hashok}{$iaipath} =
         ($ltime > $oldltime + 3 &&
          $mtime == $oldmtime && $mhash eq $oldmhash);
 
@@ -3929,8 +4112,8 @@ sub run_command {
             scalar @opts == 1 and $opts[0] =~ /^optpath: ?:(.*)$/s
                 or return ("Invalid arguments", '', '');
             my $fn = aipath2ospath($1);
-            # TODO: User-customizable encoding?
-            open my $fh, "<$utf8_layers", $fn or
+            # This has to round-trip with text_layers. So use text_layers.
+            open my $fh, "<$text_layers", $fn or
                 return ("Could not open '$fn' for reading: $!", '', '');
             local $/ = undef;
             my $stdout = <$fh>;
@@ -3964,7 +4147,7 @@ sub run_command {
                   s{^optpath: ?-c([^:]*):(.*)$}{$1.do{
                       my $fn = $2;
                       $fn = resolve_extend $fn;
-                      open my $fh, "<$utf8_layers", aipath2ospath $fn or
+                      open my $fh, "<$text_layers", aipath2ospath $fn or
                           return ("Could not open '$fn' for reading: $!", '', '');
                       local $/ = undef;
                       my $file_contents = <$fh>;
@@ -4006,7 +4189,7 @@ sub run_command {
                     $strings[$i] =~ s{^optpath: ?-c([^:]*):(.*)$}{$1.do{
                         my $fn2 = $2;
                         $fn2 = resolve_extend $fn2;
-                        open my $fh2, "<$utf8_layers", aipath2ospath $fn2 or
+                        open my $fh2, "<$text_layers", aipath2ospath $fn2 or
                             return ("Could not open '$2' for reading: $!", '', '');
                         local $/ = undef;
                         my $file_contents = <$fh2>;
@@ -4142,8 +4325,10 @@ sub run_command {
                         if (time > $starttime + 1 && $lastdir
                             ne $File::Find::dir) {
                             $lastdir = $File::Find::dir;
-                            progress_report($opt_verbose + 0.5,
-                                            "Looking in $lastdir");
+                            if ($opt_verbose >= 0) {
+                                progress_report($opt_verbose + 0.5,
+                                                "Looking in $lastdir");
+                            }
                         }
                     },
                     # We need to skip things like VCS directories. We don't
@@ -4198,9 +4383,17 @@ sub run_command {
                 # -e returns false on broken symlinks
                 -e $ossource || -l $ossource and unlink $ossource;
                 $! = 0;
-                symlink $ostarget, $ossource or return
+                # chdir to $ossourcedir so that the target is valid both as a
+                # cwd-relative and a source-relative filename
+                my $oldcwd_ospath = cwd;
+                chdir $ossourcedir or
+                    return ("Could not change directory", '',
+                            "Changing directory: $!");
+                ai_symlink $ostarget, $ossource or
+                   (chdir $oldcwd_ospath), return
                     ("Could not create link", '',
                      "Linking '$ossource' to '$ostarget': $!");
+                chdir $oldcwd_ospath;
             }
             return (undef, '', '');
         }
@@ -4352,7 +4545,9 @@ sub restrict_to_permission
 
     my $ospath = aipath2ospath $aipath;
 
-    $< == 0 or return 1; # if we're not elevated, don't bother changing perms
+    $> == 0 or return 1; # if we're not elevated, don't bother changing perms
+
+    $^O eq 'MSWin32' and return 1; # can't do this on Windows yet
 
     $! = 0;
     if ($permname eq 'ANYONE') {
@@ -4396,7 +4591,9 @@ sub elevate_to_permission
 
     my $ospath = aipath2ospath $aipath;
 
-    $< == 0 or return 1;
+    $> == 0 or return 1;
+    $^O eq 'MSWin32' and return 1;
+
     -x $ospath && !-d $ospath or (progress_report -1,
         "Warning: " . (friendly_objname $aipath) . " is not an executable " .
         "and so cannot be granted permissions"), return 1;
@@ -4441,6 +4638,10 @@ sub elevate_to_permission
         $write_on_crash = \$state_backup;
         $_[0]->();
         $write_on_crash = \$state;
+
+        # This was saved in some early versions of 3.2; delete it if it
+        # exists, it can be reconstructed from _intern.
+        delete $state->{_unintern};
     }
 
     # Writes out the last consistent statefile (on error or exit).
@@ -4492,6 +4693,9 @@ use sigtrap qw/die normal-signals/; # convert SIGINT etc. into die()
 # It doesn't make sense to atomically{} here, because the statefile doesn't
 # exist in memory before the call its used.
 #
+# This also initializes the unintern cache; because the unintern hash is the
+# exact reverse of the intern hash, we only need to save one in the save file.
+#
 # This also locks the statefile, to prevent two copies of aimake running
 # simultaneously on the same build directory (which wouldn't work and which
 # would likely be a mistake anyway).
@@ -4521,6 +4725,8 @@ sub read_statefile {
         $state = fd_retrieve($state_fh);
         defined $state or die "Error reading statefile: $!";
     }
+
+    $state->{_intern} and %unintern = reverse %{$state->{_intern}};
 
     seek $state_fh, 0, SEEK_SET; # rewind the file
 }
@@ -4559,9 +4765,9 @@ sub objects_for_rule {
     my $objpattern = $config->{rules}{$rulename}{object};
     my $objvalue = 'sys:no_object';
     (ref $objpattern) !~ /\bRegexp$/ and $objvalue = $objpattern;
-    for my $object (keys %{$state->{outdep_by_object}}, $objvalue) {
-        rule_applies_to_object $rulename, $object or next;
-        push @rv, $object;
+    for my $iobject (keys %{$state->{outdep_by_object}}, intern $objvalue) {
+        rule_applies_to_object $rulename, unintern $iobject or next;
+        push @rv, unintern $iobject;
     }
     return @rv;
 }
@@ -4673,8 +4879,8 @@ sub prioritize_object {
 # program. If the sureness calculation on pair $pair was based on facts about
 # $pairobj2 (where $pairobj2 is a pair or an object), we set
 # $pair_is_sure_because{$pair1}{$pairobj2} and
-# $pair_is_sure_rindex{$pairobj2}{$pair1}. The facts about $pairobj2 that
-# could be relevant are:
+# $pair_is_sure_rindex{$pairobj2}{$pair1}; $pairobj2 is interned, $pair1 isn't.
+# The facts about $pairobj2 that could be relevant are:
 #
 # - For pairs:
 #   - Whether it has an xuse, and what its xuse is;
@@ -4689,27 +4895,29 @@ my %pair_is_sure_rindex;
 my %sure_pair_cache;
 my %unsure_pair_cache;
 sub invalidate_pair_or_object_sureness {
-    my $pairobj2 = shift;
-    for my $pair1 (keys %{$pair_is_sure_rindex{$pairobj2}}) {
+    my $ipairobj2 = intern shift;
+    for my $pair1 (keys %{$pair_is_sure_rindex{$ipairobj2}}) {
         delete $pair_is_sure_rindex{$_}{$pair1}
             for keys %{$pair_is_sure_because{$pair1}};
         delete $pair_is_sure_because{$pair1};
         delete $sure_pair_cache{$pair1};
         delete $unsure_pair_cache{$pair1};
     }
-    delete $pair_is_sure_rindex{$pairobj2};
+    delete $pair_is_sure_rindex{$ipairobj2};
 }
 
 sub mark_object_unsure {
     my $pair = shift;
     my $obj = shift;
     my $reason = shift;
+    my $ipair = intern $pair;
+    my $iobj = intern $obj;
     progress_report 4, "Want to mark $obj as unsure via $pair ($reason)...";
-    $state->{unsure_by_pair}{$pair}{$obj} and return;
+    $state->{unsure_by_pair}{$ipair}{$iobj} and return;
     progress_report 4, "Marking $obj as unsure via $pair.";
-    $state->{unsure_by_pair}{$pair}{$obj} = 1;
-    $state->{unsure_count_by_object}{$obj} ||= 0;
-    $state->{unsure_count_by_object}{$obj}++;
+    $state->{unsure_by_pair}{$ipair}{$iobj} = 1;
+    $state->{unsure_count_by_object}{$iobj} ||= 0;
+    $state->{unsure_count_by_object}{$iobj}++;
     invalidate_pair_or_object_sureness $obj;
 }
 sub object_exists;
@@ -4719,19 +4927,21 @@ sub mark_object_sure {
     my $obj = shift;
     my $reason = shift;
     my ($objtype, undef) = parse_objname $obj;
+    my $ipair = intern $pair;
+    my $iobj = intern $obj;
     progress_report 4, "Want to mark $obj as sure via $pair ($reason)...";
-    unless ($state->{unsure_by_pair}{$pair}{$obj}) {
-        delete $state->{unsure_by_pair}{$pair} # undo autovivification
-            unless keys %{$state->{unsure_by_pair}{$pair}};
+    unless ($state->{unsure_by_pair}{$ipair}{$iobj}) {
+        delete $state->{unsure_by_pair}{$ipair} # undo autovivification
+            unless keys %{$state->{unsure_by_pair}{$ipair}};
         return;
     }
     progress_report 4, "Marking $obj as sure via $pair.";
-    delete $state->{unsure_by_pair}{$pair}{$obj};
-    delete $state->{unsure_by_pair}{$pair}
-        unless keys %{$state->{unsure_by_pair}{$pair}};
-    $state->{unsure_count_by_object}{$obj}--;
-    delete $state->{unsure_count_by_object}{$obj}
-        unless $state->{unsure_count_by_object}{$obj};
+    delete $state->{unsure_by_pair}{$ipair}{$iobj};
+    delete $state->{unsure_by_pair}{$ipair}
+        unless keys %{$state->{unsure_by_pair}{$ipair}};
+    $state->{unsure_count_by_object}{$iobj}--;
+    delete $state->{unsure_count_by_object}{$iobj}
+        unless $state->{unsure_count_by_object}{$iobj};
 
     # If the object is one we maintain on the filesystem, and it's marked as
     # sure and nonexistent (e.g. if it was previously output, but the pair
@@ -4766,9 +4976,10 @@ sub mark_pair_changed {
     my $pair = shift;
     my $reason = shift;
     my ($rulename, $objname) = parse_pairname $pair;
+    my $ipair = intern $pair;
     progress_report 4, "Want to mark $pair as changed ($reason)...";
-    return if $state->{changed_pairs}{$pair};
-    return if $state->{blocked_by_pair}{$pair};
+    return if $state->{changed_pairs}{$ipair};
+    return if $state->{blocked_by_pair}{$ipair};
     progress_report 4, "Marking $pair as changed.";
 
     # Special case: If a pair currently has no outputs and at least one
@@ -4779,11 +4990,12 @@ sub mark_pair_changed {
     # which violates our invariants. This optimization is also unsafe if the
     # pair has a rule that doesn't apply to the object, or if the object does
     # not exist.
-    if (!$state->{outdep_by_pair}{$pair} && object_exists($objname) &&
-        defined $state->{xuse_by_pair}{$pair} &&
+    if (!$state->{outdep_by_pair}{$ipair} && object_exists($objname) &&
+        defined $state->{xuse_by_pair}{$ipair} &&
         rule_applies_to_object $rulename, $objname) {
-        $state->{unsure_count_by_object}{$_} or object_exists($_)
-            or return for @{$state->{xuse_by_pair}{$pair}};
+        # $_ is an intern in this loop
+        $state->{unsure_count_by_object}{$_} or object_exists(unintern $_)
+            or return for @{$state->{xuse_by_pair}{$ipair}};
     }
 
     # Another special case: if the pair currently has no outputs and a missing
@@ -4793,50 +5005,53 @@ sub mark_pair_changed {
     # already know the xuse, this is pointless, as we'll already have left
     # if it matters. Again, we require the object itself to exist and the rule
     # to match the object.
-    elsif (!$state->{outdep_by_pair}{$pair} && object_exists($objname) &&
+    elsif (!$state->{outdep_by_pair}{$ipair} && object_exists($objname) &&
            rule_applies_to_object $rulename, $objname) {
         my $cmd = $config->{rules}{$rulename}{command};
         if ($cmd) {
             my @cmd = @$cmd;
             complete_and_extend \$_, $objname for @cmd;
             for my $blocker (@cmd) {
-                if (!$state->{unsure_count_by_object}{$blocker} &&
+                if (!$state->{unsure_count_by_object}{intern $blocker} &&
                     !object_exists($blocker)) {
-                    $state->{blocked_by_object}{$blocker}{$pair} = 1;
-                    $state->{blocked_by_pair}{$pair} = $blocker;
+                    $state->{blocked_by_object}{intern $blocker}{$ipair} = 1;
+                    $state->{blocked_by_pair}{$ipair} = intern $blocker;
                     return;
                 }
             }
         }
     }
 
-    $state->{changed_pairs}{$pair} = 'has not been checked yet';
-    for my $obj (keys %{$state->{outdep_by_pair}{$pair}}) {
-        mark_object_unsure $pair, $obj, "pair changed";
+    $state->{changed_pairs}{$ipair} = 'has not been checked yet';
+    for my $iobj (keys %{$state->{outdep_by_pair}{$ipair}}) {
+        mark_object_unsure $pair, unintern $iobj, "pair changed";
     }
-    delete $state->{outdep_by_pair}{$pair}
-        unless keys %{$state->{outdep_by_pair}{$pair}};
+    delete $state->{outdep_by_pair}{$ipair}
+        unless keys %{$state->{outdep_by_pair}{$ipair}};
 }
 sub mark_pair_unchanged {
     my $pair = shift;
     my $reason = shift;
     progress_report 4, "Marking $pair as unchanged ($reason).";
-    delete $state->{changed_pairs}{$pair};
-    if (exists $state->{blocked_by_pair}{$pair}) {
-        my $blocker = $state->{blocked_by_pair}{$pair};
-        delete $state->{blocked_by_object}{$blocker}{$pair};
-        delete $state->{blocked_by_object}{$blocker}
-            unless keys %{$state->{blocked_by_object}{$blocker}};
-        delete $state->{blocked_by_pair}{$pair};
+    my $ipair = intern $pair;
+    delete $state->{changed_pairs}{$ipair};
+    if (exists $state->{blocked_by_pair}{$ipair}) {
+        my $iblocker = $state->{blocked_by_pair}{$ipair};
+        delete $state->{blocked_by_object}{$iblocker}{$ipair};
+        delete $state->{blocked_by_object}{$iblocker}
+            unless keys %{$state->{blocked_by_object}{$iblocker}};
+        delete $state->{blocked_by_pair}{$ipair};
     }
 }
 sub inappropriate_prevpair;
 sub set_proviced_outdeps {
     my $pair = shift;
     my $obj = shift;
-    my $outdeps = shift; # undef if the rule no longer provices the object
+    my $outdeps = shift; # interned, undef if no longer proviced by the rule
     my ($objtype, $objvalue) = parse_objname $obj;
     my $outdepends_changed = 1;
+    my $ipair = intern $pair;
+    my $iobj = intern $obj;
 
     progress_report 4, "Want to set hash of $obj via $pair...";
 
@@ -4847,9 +5062,9 @@ sub set_proviced_outdeps {
 
     # There's no need to change anything but the sureness flag if the hash
     # didn't change.
-    my $old_outdeps = $state->{outdep_by_pair}{$pair}{$obj};
-    delete $state->{outdep_by_pair}{$pair}
-        unless keys %{$state->{outdep_by_pair}{$pair}};
+    my $old_outdeps = $state->{outdep_by_pair}{$ipair}{$iobj};
+    delete $state->{outdep_by_pair}{$ipair}
+        unless keys %{$state->{outdep_by_pair}{$ipair}};
     if (!defined $outdeps && !defined $old_outdeps) {
         mark_object_sure $pair, $obj, "outdeps stayed undef";
         return;
@@ -4859,7 +5074,7 @@ sub set_proviced_outdeps {
         return;
     }
 
-    if (deepequals($outdeps, $old_outdeps, qr/^hash_on_disk:/)) {
+    if (deepequals($outdeps, $old_outdeps)) {
         $outdepends_changed = 0;
     }
 
@@ -4869,22 +5084,23 @@ sub set_proviced_outdeps {
 
     # Set outdep_by_pair, outdep_by_object.
     if (defined $outdeps) {
-        $state->{outdep_by_pair}{$pair}{$obj} = $outdeps;
-        $state->{outdep_by_object}{$obj}{$pair} = $outdeps;
+        $state->{outdep_by_pair}{$ipair}{$iobj} = $outdeps;
+        $state->{outdep_by_object}{$iobj}{$ipair} = $outdeps;
     } else {
-        delete $state->{outdep_by_pair}{$pair}{$obj};
-        delete $state->{outdep_by_pair}{$pair}
-            unless keys %{$state->{outdep_by_pair}{$pair}};
-        delete $state->{outdep_by_object}{$obj}{$pair};
-        delete $state->{outdep_by_object}{$obj}
-            unless keys %{$state->{outdep_by_object}{$obj}};
+        delete $state->{outdep_by_pair}{$ipair}{$iobj};
+        delete $state->{outdep_by_pair}{$ipair}
+            unless keys %{$state->{outdep_by_pair}{$ipair}};
+        delete $state->{outdep_by_object}{$iobj}{$ipair};
+        delete $state->{outdep_by_object}{$iobj}
+            unless keys %{$state->{outdep_by_object}{$iobj}};
     }
 
     mark_object_sure $pair, $obj, "hash changed";
 
     # If the object blocks any pairs, unblock them and mark them as changed
     # again.
-    for my $cpair (keys %{$state->{blocked_by_object}{$obj}}) {
+    for my $icpair (keys %{$state->{blocked_by_object}{$iobj}}) {
+        my $cpair = unintern $icpair;
         mark_pair_unchanged $cpair, "unblocked by changed hash";
         mark_pair_xuse_unknown $cpair, "unblocked by non-special object"
             if !$objtype_is_special{$objtype};
@@ -4902,7 +5118,8 @@ sub set_proviced_outdeps {
     #
     # Iterating over xuse_by_object may miss out some pairs, but only changed
     # pairs with unknown xuses (on which operating would be pointless anyway).
-    for my $cpair (keys %{$state->{xuse_by_object}{$obj}}) {
+    for my $icpair (keys %{$state->{xuse_by_object}{$iobj}}) {
+        my $cpair = unintern $icpair;
         # We need to mark the xuse unknown before marking the pair as changed,
         # in case the old xuse had a dependency on a nonexistent object (which
         # could cause mark_pair_changed to be a no-op) but the new xuse only
@@ -4948,16 +5165,18 @@ sub set_proviced_outdeps {
             mark_pair_unchanged $cpair, "unblocking a changed rule";
             mark_pair_changed $cpair, "rechecking a rule after it changed";
             if (defined $r && $r->{number_of_depend_actions}) {
-                for my $dpair (keys %{$state->{xuse_by_object}{$o}}) {
+                for my $idpair (keys %{$state->{xuse_by_object}{intern $o}}) {
+                    my $dpair = unintern $idpair;
                     # If dependencies:$objvalue:$o is already an xuse of
                     # $dpair, we don't need to do anything. Otherwise, we need
                     # to recalculate the xuse, because that object needs to be
                     # added (and possibly others).
                     my $dep = "dependencies:$objvalue:$o";
-                    unless (exists $state->{xuse_by_object}{$dep}{$dpair}) {
+                    my $idep = intern $dep;
+                    unless (exists $state->{xuse_by_object}{$idep}{$idpair}) {
                         # Unautovifify $dep's xuse_by_object.
-                        delete $state->{xuse_by_object}{$dep}
-                            unless keys %{$state->{xuse_by_object}{$dep}};
+                        delete $state->{xuse_by_object}{$idep}
+                            unless keys %{$state->{xuse_by_object}{$idep}};
                         mark_pair_xuse_unknown $dpair,
                             "object gained a new dependency via rule change";
                         mark_pair_changed $dpair,
@@ -4966,7 +5185,8 @@ sub set_proviced_outdeps {
                 }
             }
         }
-        for my $blocked (keys %{$state->{blocked_by_pair}}) {
+        for my $iblocked (keys %{$state->{blocked_by_pair}}) {
+            my $blocked = unintern $iblocked;
             my ($blockedrule, undef) = parse_pairname $blocked;
             if ($blockedrule eq $objvalue) {
                 mark_pair_xuse_unknown $blocked, "blocked rule changed";
@@ -4979,44 +5199,45 @@ sub set_proviced_outdeps {
     }
 
     # Remove any autovivified xuses, if the object isn't used at all.
-    delete $state->{xuse_by_object}{$obj}
-        unless keys %{$state->{xuse_by_object}{$obj}};
-    delete $state->{blocked_by_object}{$obj}
-        unless keys %{$state->{blocked_by_object}{$obj}};
+    delete $state->{xuse_by_object}{$iobj}
+        unless keys %{$state->{xuse_by_object}{$iobj}};
+    delete $state->{blocked_by_object}{$iobj}
+        unless keys %{$state->{blocked_by_object}{$iobj}};
 }
 # Marks a pair as sure, and sets all its outputs. Called after a pair is run
 # successfully. Also set the pair's warning messages (if any).
 sub record_pair_outputs {
     my $pair = shift;
-    my %obj_to_outdeps = %{+shift};
+    my %obj_to_outdeps = %{+shift}; # both keys and values interned
     my $warnings = shift;
-
+    my $ipair = intern $pair;
+    
     progress_report 4, "Setting hashes for successful run of $pair.";
 
-    for my $oldobj (keys %{$state->{outdep_by_pair}{$pair}}) {
+    for my $ioldobj (keys %{$state->{outdep_by_pair}{$ipair}}) {
         # Force the keys to exist for any object that was there before.
-        $obj_to_outdeps{$oldobj} = undef
-            unless exists $obj_to_outdeps{$oldobj};
+        $obj_to_outdeps{$ioldobj} = undef
+            unless exists $obj_to_outdeps{$ioldobj};
     }
-    if (defined $state->{unsure_by_pair}{$pair}) {
-        for my $oldobj (keys %{$state->{unsure_by_pair}{$pair}}) {
+    if (defined $state->{unsure_by_pair}{$ipair}) {
+        for my $ioldobj (keys %{$state->{unsure_by_pair}{$ipair}}) {
             # Force the keys to exist for any objects unsure via the pair,
             # even if it isn't being output (this can happen when there was
             # previously a dependency loop).
-            $obj_to_outdeps{$oldobj} = undef
-                unless exists $obj_to_outdeps{$oldobj};
+            $obj_to_outdeps{$ioldobj} = undef
+                unless exists $obj_to_outdeps{$ioldobj};
         }
     }
-    set_proviced_outdeps $pair, $_, $obj_to_outdeps{$_}
+    set_proviced_outdeps $pair, unintern $_, $obj_to_outdeps{$_}
         for keys %obj_to_outdeps;
     mark_pair_unchanged $pair, "recording pair outputs";
     if (defined $warnings && $warnings ne '') {
-        $state->{errwarn_by_pair}{$pair} = "W:$warnings";
+        $state->{errwarn_by_pair}{$ipair} = "W:$warnings";
     } else {
-        delete $state->{errwarn_by_pair}{$pair};
+        delete $state->{errwarn_by_pair}{$ipair};
     }
-    delete $state->{outdep_by_pair}{$pair}
-        unless keys %{$state->{outdep_by_pair}{$pair}};
+    delete $state->{outdep_by_pair}{$ipair}
+        unless keys %{$state->{outdep_by_pair}{$ipair}};
 }
 # Called when a pair errors out. Marks all its old outputs as unsure, but the
 # rule itself as unchanged (thus forcing all those outputs' indirect
@@ -5026,17 +5247,18 @@ sub record_pair_error {
     my $errmsg = shift;
 
     progress_report 4, "Setting hashes for unsuccessful run of $pair...";
+    my $ipair = intern $pair;
 
     mark_pair_unchanged $pair, "recording pair error";
-    for my $obj (keys %{$state->{outdep_by_pair}{$pair}}) {
-        mark_object_unsure $pair, $obj, "unsure due to error";
+    for my $iobj (keys %{$state->{outdep_by_pair}{$ipair}}) {
+        mark_object_unsure $pair, unintern $iobj, "unsure due to error";
     }
-    delete $state->{outdep_by_pair}{$pair}
-        unless keys %{$state->{outdep_by_pair}{$pair}};
+    delete $state->{outdep_by_pair}{$ipair}
+        unless keys %{$state->{outdep_by_pair}{$ipair}};
 
     !defined $errmsg || $errmsg eq '' and
         croak "record_pair_error needs an error message";
-    $state->{errwarn_by_pair}{$pair} = "E:$errmsg";
+    $state->{errwarn_by_pair}{$ipair} = "E:$errmsg";
 }
 
 ### Resolving object contents
@@ -5068,6 +5290,8 @@ sub appropriate_pairs_for_object {
     scalar @providers == 0 and return ();
     scalar @providers == 1 and return ($providers[0]);
 
+    my $iprovided = intern $provided;
+
     $provided =~ multiple_providers_ok_regex and return ('sys:fuse');
 
     my ($prvtype, undef) = parse_objname $provided;
@@ -5077,6 +5301,7 @@ sub appropriate_pairs_for_object {
     progress_report 4, "Finding appropriate pair for $provided (user $user)...";
 
     my $best = undef;
+    my $ibest = undef;
     my $bestscore = -1;
     my @tie = ();
     # We error out if we have two equally good providers.
@@ -5123,14 +5348,15 @@ sub appropriate_pairs_for_object {
         # isn't sys:no_object; it's also benign if both rules have an empty
         # outdepends (this is to make the placeholder symbols for reverse
         # imports work correctly). Otherwise, it's a problem.
+        my $iprovider = intern $provider;
         if ($score == $bestscore &&
             ((parse_pairname $best)[1] ne $obj || $obj eq 'sys:no_object') &&
-            (not_empty_array($state->{outdep_by_object}{$provided}{$provider}) ||
-             not_empty_array($state->{outdep_by_object}{$provided}{$best}))) {
+            (not_empty_array($state->{outdep_by_object}{$iprovided}{$iprovider}) ||
+             not_empty_array($state->{outdep_by_object}{$iprovided}{$ibest}))) {
             push @tie, $provider;
         } elsif ($score > $bestscore) {
             @tie = ();
-            ($best, $bestscore) = ($provider, $score);
+            ($ibest, $best, $bestscore) = ($iprovider, $provider, $score);
         }
         progress_report 4, "Score for $provider is $score";
     }
@@ -5147,12 +5373,14 @@ sub appropriate_pairs_for_object {
 # whether the file has changed on disk.
 sub find_hash_on_disk {
     my $obj = shift;
-    return unless $state->{outdep_by_object}{$obj};
+    my $iobj = intern $obj;
+    return unless $state->{outdep_by_object}{$iobj};
     die "Produced object $obj produced by more than one rule"
-        unless 1 == keys %{$state->{outdep_by_object}{$obj}} ||
+        unless 1 == keys %{$state->{outdep_by_object}{$iobj}} ||
         $obj =~ multiple_providers_ok_regex;
-    my @outdeps = @{(values %{$state->{outdep_by_object}{$obj}})[0]};
-    /^hash_on_disk:([^:]+):\Q$obj\E$/ and return $1 for @outdeps;
+    my @ioutdeps = @{(values %{$state->{outdep_by_object}{$iobj}})[0]};
+    (unintern $_) =~ /^hash_on_disk:([^:]+):\Q$obj\E$/ and
+        return $1 for @ioutdeps;
     die "Produced object $obj has no hash_on_disk: dependency";
 }
 
@@ -5178,8 +5406,8 @@ sub inappropriate_prevpair {
             return 1 if $avoid_objects eq $obj2;
         }
     }
-    return unless $state->{outdep_by_object}{$obj2};
-    $state->{outdep_by_object}{$obj2}{$pair} and
+    return unless $state->{outdep_by_object}{intern $obj2};
+    $state->{outdep_by_object}{intern $obj2}{intern $pair} and
         progress_report 5, "($pair,$pair2) inappropriate: output"
         and return 1;
     return;
@@ -5214,6 +5442,9 @@ sub recalculate_pair_xuse {
     my ($rule, $obj) = parse_pairname($pair);
     progress_report 4, "Calculating xuse of $pair";
 
+    my $iobj = intern $obj;
+    my $ipair = intern $pair;
+
     # If we aren't reporting ties, we reset the xuse, invalidating sureness
     # caches too. If we are, we can't reset the xuse, or the pair ends up
     # dropping off the face of the aimake.objects file altogether;
@@ -5227,6 +5458,7 @@ sub recalculate_pair_xuse {
     if (!$r) {
         # The rule's meant to specify the dependencies, but the rule isn't
         # there, so we specify the rule itself and sys:clean as the xuse.
+        progress_report 4, "Rule $rule is missing";
         $xuse{'sys:clean'} or push @xuse, 'sys:clean';
         $xuse{'sys:clean'} = "config_rule:$rule";
     } else {
@@ -5243,10 +5475,10 @@ sub recalculate_pair_xuse {
         # avoids.
         my ($objtype, undef, undef) = parse_objname $obj;
         if ($r->{avoid_rules} && !$objtype_provided{$obj} &&
-            $state->{outdep_by_object}->{$obj}) {
-            my ($producer, undef) = keys %{
-                $state->{outdep_by_object}->{$obj}};
-            my ($prodrule, undef) = parse_pairname $producer;
+            $state->{outdep_by_object}->{$iobj}) {
+            my ($iproducer, undef) = keys %{
+                $state->{outdep_by_object}->{$iobj}};
+            my ($prodrule, undef) = parse_pairname unintern $iproducer;
             if ($prodrule =~ $r->{avoid_rules}) {
                 $xuse{'sys:clean'} or push @xuse, 'sys:clean';
                 $xuse{'sys:clean'} = "config_rule:$rule";
@@ -5270,6 +5502,7 @@ sub recalculate_pair_xuse {
             complete_and_extend \$o, $obj;
             next if $xuse{$o};
             my ($otype, undef) = parse_objname $o;
+            my $io = intern $o;
 
             # Add the outdepends to the list, if any. (Or postpone it for
             # later if we have multiple reasonable possibilities and we're
@@ -5277,9 +5510,10 @@ sub recalculate_pair_xuse {
             # provided or produced, but not if it's special (because it won't
             # have any outdep_by_object hash to check the outdepends from).
             if (!$objtype_is_special{$otype}) {
-                my @ancestors = sort keys %{$state->{outdep_by_object}{$o}};
-                delete $state->{outdep_by_object}{$o} unless
-                    keys %{$state->{outdep_by_object}{$o}};
+                my @ancestors = sort map unintern $_,
+                    keys %{$state->{outdep_by_object}{$io}};
+                delete $state->{outdep_by_object}{$io} unless
+                    keys %{$state->{outdep_by_object}{$io}};
                 @ancestors = grep !inappropriate_prevpair($pair, $_),
                     @ancestors;
                 if ($pass == 2 && $o !~ multiple_providers_ok_regex) {
@@ -5297,12 +5531,13 @@ sub recalculate_pair_xuse {
                 if (@ancestors > 1 && $o =~ multiple_providers_ok_regex) {
                     # Fuse the output from the various providers.
                     $report_ties or
-                        $state->{xuse_prevpair}{$pair}{$o} =
-                        'nonexistent sys:fuse';
+                        $state->{xuse_prevpair}{$ipair}{$io} =
+                        intern 'nonexistent sys:fuse';
                     my %udeps = ();
                     for my $ancestor (@ancestors) {
-                        for my $udep (@{$state->{outdep_by_pair}
-                                        {$ancestor}{$o}}) {
+                        for my $iudep (@{$state->{outdep_by_pair}
+                                        {intern $ancestor}{$io}}) {
+                            my $udep = unintern $iudep;
                             push @command, $udep unless $udeps{$udep};
                             $udeps{$udep} = 1;
                         }
@@ -5313,18 +5548,19 @@ sub recalculate_pair_xuse {
                     next;
                 } elsif (@ancestors == 1) {
                     $pass == 1 and $pass1_xuse_pairs{$ancestors[0]} = 1;
+                    my $iancestor = intern $ancestors[0];
                     $report_ties or
-                        $state->{xuse_prevpair}{$pair}{$o} = $ancestors[0];
-                    my @udeps = @{$state->{outdep_by_pair}{$ancestors[0]}{$o}};
-                    push @command, @udeps;
-                    $xuse_reason{$_} = $o for @udeps;
+                        $state->{xuse_prevpair}{$ipair}{$io} = $iancestor;
+                    my @iudeps = @{$state->{outdep_by_pair}{$iancestor}{$io}};
+                    push @command, map unintern $_, @iudeps;
+                    $xuse_reason{unintern $_} = $o for @iudeps;
                 } elsif (@ancestors > 1 && $pass == 2 && $report_ties) {
                     return (1, $o, $obj, \@ancestors);
                 } elsif (!$report_ties) {
                     # Nothing provides the object, or there's an unresolvable
                     # tie; add sys:clean to the list in both cases.
-                    $state->{xuse_prevpair}{$pair}{$o} =
-                        'nonexistent sys:clean';
+                    $state->{xuse_prevpair}{$ipair}{$io} =
+                        intern 'nonexistent sys:clean';
                     $xuse{'sys:clean'} or push @xuse, 'sys:clean';
                     $xuse{'sys:clean'} = $o; # nothing provides it
                 }
@@ -5335,8 +5571,17 @@ sub recalculate_pair_xuse {
             my @drules = rules_that_apply_to($o);
             @drules = grep $config->{rules}{$_}{number_of_depend_actions},
                 sort @drules;
-            push @command, map "dependencies:$_:$o", @drules;
-            $xuse_reason{"dependencies:$_:$o"} = "config_rule:$_" for @drules;
+            # To avoid an infinite regress, don't add the dependencies from a
+            # dependency rule that matches its own output.
+            for my $drule (@drules) {
+                my $depdep = "dependencies:$drule:$o";
+                my $robj = $config->{rules}{$drule}{object};
+                $drule = undef, next if
+                    (ref $robj) =~ /\bRegexp$/ && $depdep =~ $robj;
+                push @command, $depdep;
+            }
+            defined $_ and
+                $xuse_reason{"dependencies:$_:$o"} = "config_rule:$_" for @drules;
 
             $xuse{$o} = defined_or($xuse_reason{$o}, $obj);
             push @xuse, $o;
@@ -5349,9 +5594,11 @@ sub recalculate_pair_xuse {
             $xuse{$obj} = "config_rule:$rule";
             push @xuse, $obj;
         }
-        $state->{xuse_by_pair}{$pair} = \@xuse;
+        @xuse = map intern $_, @xuse;
+        $state->{xuse_by_pair}{$ipair} = \@xuse;
         for my $xuse (keys %xuse) {
-            $state->{xuse_by_object}{$xuse}{$pair} = $xuse{$xuse};
+            $state->{xuse_by_object}{intern $xuse}{$ipair} =
+                intern $xuse{$xuse};
         }
     }
     return 0;
@@ -5372,30 +5619,32 @@ sub recalculate_pair_xuse {
 # doesn't provice anything.)
 sub reset_pair_xuse {
     my $pair = shift;
+    my $ipair = intern $pair;
 
     # This also invalidates sureness caches.
     mark_pair_xuse_unknown $pair, "xuse reset";
     progress_report 4, "Resetting xuse of $pair.";
 
-    delete $state->{xuse_by_pair}{$pair};
-    delete $state->{xuse_prevpair}{$pair};
+    delete $state->{xuse_by_pair}{$ipair};
+    delete $state->{xuse_prevpair}{$ipair};
 }
 
 sub mark_pair_xuse_unknown {
     my $pair = shift;
     my $reason = shift;
+    my $ipair = intern $pair;
 
     progress_report 4, "Marking xuse of $pair as unknown ($reason).";
 
-    if (defined $state->{xuse_by_pair}{$pair}) {
-        for my $obj (@{$state->{xuse_by_pair}{$pair}}) {
-            delete $state->{xuse_by_object}{$obj}{$pair};
-            delete $state->{xuse_by_object}{$obj}
-                unless keys %{$state->{xuse_by_object}{$obj}};
+    if (defined $state->{xuse_by_pair}{$ipair}) {
+        for my $iobj (@{$state->{xuse_by_pair}{$ipair}}) {
+            delete $state->{xuse_by_object}{$iobj}{$ipair};
+            delete $state->{xuse_by_object}{$iobj}
+                unless keys %{$state->{xuse_by_object}{$iobj}};
         }
     }
-    $state->{xuse_by_pair}{$pair} = undef;
-    delete $state->{xuse_prevpair}{$pair};
+    $state->{xuse_by_pair}{$ipair} = undef;
+    delete $state->{xuse_prevpair}{$ipair};
 
     invalidate_pair_or_object_sureness $pair;
     %unsure_pair_cache = ();
@@ -5403,16 +5652,17 @@ sub mark_pair_xuse_unknown {
 
 sub ensure_pair_has_xuse {
     my $pair = shift;
-    if (!defined $state->{xuse_by_pair}{$pair}) {
+    if (!defined $state->{xuse_by_pair}{intern $pair}) {
         recalculate_pair_xuse $pair, 0;
     }
 }
 
 sub check_xuse_ties {
     my $pair = shift;
-    if (!defined $state->{xuse_by_pair}{$pair}) {
+    my $ipair = intern $pair;
+    if (!defined $state->{xuse_by_pair}{$ipair}) {
         return recalculate_pair_xuse $pair, 1;
-    } elsif (grep $_ eq 'sys:clean', @{$state->{xuse_by_pair}{$pair}}) {
+    } elsif (grep $_ eq intern 'sys:clean', @{$state->{xuse_by_pair}{$ipair}}) {
         # We need to recalculate the xuse to get at which objects were tied.
         return recalculate_pair_xuse $pair, 1;
     } else {
@@ -5437,7 +5687,7 @@ memoize('pair_is_definitely_deletable');
 # name), the pair is sure if any of its ancestors are sure.
 #
 # Must be called in array context. The first return is whether the pair is
-# sure; the second return is the reason that it's sure or unsure.
+# sure; the second return is the interned reason that it's sure or unsure.
 my %pair_is_sure_seen = ();
 sub pair_is_sure;
 sub pair_is_sure {
@@ -5451,7 +5701,7 @@ sub pair_is_sure {
 
     my $recursion_ok = shift;
     if ($pair_is_sure_seen{$pair}) {
-        $recursion_ok and return (0, ["recursion"]);
+        $recursion_ok and return (0, [intern "recursion"]);
         croak "Pair $pair seems to have been built in terms of itself";
     }
 
@@ -5467,22 +5717,24 @@ sub pair_is_sure {
     $pair eq 'parse_configuration sys:no_object' and return (1, []);
 
     # Recursive case.
+    my $ipair = intern $pair;
     ensure_pair_has_xuse $pair;
     $pair_is_sure_seen{$pair} = 1; # avoid an infinite regress
-    my @xuses = @{$state->{xuse_by_pair}{$pair}};
-    # %sureness_list is a hash from elements that affect $pair's sureness, to
+    my @ixuses = @{$state->{xuse_by_pair}{$ipair}};
+    # %isureness_list is a hash from elements that affect $pair's sureness, to
     # undef. Approximately half the time spent in pair_is_sure was spent
     # manipulating it in an older version of the program, so it was replaced
     # with a "hash to undef", one of the faster ways to represent a set in
     # pure Perl (because mass inserts can be done via slicing and so do not
     # require a loop).
-    my %sureness_list = ($pair => undef);
-    @sureness_list{@xuses} = ();
-    for my $xuse (@xuses) {
-        my @providers = ();
-        my $phash = $state->{outdep_by_object}{$xuse};
+    my %isureness_list = ($ipair => undef); # interned keys, undef values
+    @isureness_list{@ixuses} = ();
+    for my $ixuse (@ixuses) {
+        my @iproviders = ();
+        my $phash = $state->{outdep_by_object}{$ixuse};
         next unless $phash; # if the object doesn't exist, it's sure
-        @providers = keys %$phash;
+        my $xuse = unintern $ixuse;
+        @iproviders = keys %$phash;
 
         # There are two basic ways an object type can work:
         # - Multiple providers not OK: we use xuse_prevpair to determine which
@@ -5494,115 +5746,117 @@ sub pair_is_sure {
         # because in that case, that must be the one we're using, thus there's
         # no need to work out what we'd do if there were more than one. (And
         # if there are no providers, we don't even reach this bit.)
-        if (@providers == 1 || $xuse !~ multiple_providers_ok_regex) {
+        if (@iproviders == 1 || $xuse !~ multiple_providers_ok_regex) {
             # Make sure that the object's prevpair is sure, and that the
             # object is sure via its prevpair.
-            my $prevpair = @providers == 1 ? $providers[0] :
-                $state->{xuse_prevpair}{$pair}{$xuse};
-            if (!defined $prevpair) {
+            my $iprevpair = @iproviders == 1 ? $iproviders[0] :
+                $state->{xuse_prevpair}{$ipair}{$ixuse};
+            my $prevpair = unintern $iprevpair;
+            if (!defined $iprevpair) {
                 croak "No xuse_prevpair from $pair for an object $xuse " .
                     "with multiple prevpairs " .
-                    (join ', ',
-                     keys %{$state->{outdep_by_object}{$xuse}});
+                    (join ', ', map unintern $_,
+                     keys %{$state->{outdep_by_object}{$ixuse}});
             }
             next if $prevpair eq 'nonexistent sys:clean';
-            if ($state->{unsure_by_pair}{$prevpair} &&
-                $state->{unsure_by_pair}{$prevpair}{$xuse}) {
-                exists $state->{changed_pairs}{$pair} and
-                    $state->{changed_pairs}{$pair} = "xuse $xuse is unsure";
-                my $unsure_list = [$xuse, $prevpair];
-                $unsure_pair_cache{$pair} = [@$unsure_list];
+            if ($state->{unsure_by_pair}{$iprevpair} &&
+                $state->{unsure_by_pair}{$iprevpair}{$ixuse}) {
+                exists $state->{changed_pairs}{$ipair} and
+                    $state->{changed_pairs}{$ipair} = "xuse $xuse is unsure";
+                my $iunsure_list = [$ixuse, $iprevpair];
+                $unsure_pair_cache{$pair} = [@$iunsure_list];
                 delete $pair_is_sure_seen{$pair};
                 progress_report 4,
                     "pair_is_sure: $pair is unsure due to " .
                         "unsure $xuse via $prevpair";
-                return (0, $unsure_list);
+                return (0, $iunsure_list);
             }
             # If the chosen prevpair is unsure, we're unsure.
-            my ($sure, $unsure_list) =
+            my ($sure, $iunsure_list) =
                 pair_is_sure $prevpair, $recursion_ok;
             if (!$sure) {
-                exists $state->{changed_pairs}{$pair} and
-                    $state->{changed_pairs}{$pair} =
+                exists $state->{changed_pairs}{$ipair} and
+                    $state->{changed_pairs}{$ipair} =
                     "xuse ${xuse}'s pair $prevpair is unsure";
-                unshift @$unsure_list, $xuse, $prevpair;
+                unshift @$iunsure_list, $ixuse, $iprevpair;
                 $recursion_ok or
-                    $unsure_pair_cache{$pair} = [@$unsure_list];
+                    $unsure_pair_cache{$pair} = [@$iunsure_list];
                 delete $pair_is_sure_seen{$pair};
                 progress_report 4,
                     "pair_is_sure: $pair is unsure due to ".
                         "unsure $prevpair needed for $xuse";
-                return (0, $unsure_list);
+                return (0, $iunsure_list);
             } else {
-                @sureness_list{@$unsure_list} = ();
+                @isureness_list{@$iunsure_list} = ();
             }
         } else {
-            @providers = sort @providers;
+            @iproviders = sort @iproviders;
             # For each provider, we require that that provider's outdepends
             # are identical to a sure provider's outdepends (the same
             # provider, or a different provider, it doesn't matter).
             my %outdepends_seen = ();
             my %outdepends_because = ();
             my %outdepends_unsurelist = ();
-            for my $provider (@providers) {
-                my $outdepends = $state->{outdep_by_object}{$xuse}{$provider};
+            for my $iprovider (@iproviders) {
+                my $provider = unintern $iprovider;
+                my $outdepends = $state->{outdep_by_object}{$ixuse}{$iprovider};
                 $outdepends = serialize_sv($outdepends);
                 next if $outdepends_seen{$outdepends};
 
-                my ($sure, $unsure_list);
-                if ($state->{unsure_by_pair}{$provider} &&
-                    $state->{unsure_by_pair}{$provider}{$xuse}) {
+                my ($sure, $iunsure_list);
+                if ($state->{unsure_by_pair}{$iprovider} &&
+                    $state->{unsure_by_pair}{$iprovider}{$ixuse}) {
                     $sure = 0;
-                    $unsure_list = [$xuse, $provider];
+                    $iunsure_list = [$ixuse, $iprovider];
                 } else {
                     if ($recursion_ok) {
-                        ($sure, $unsure_list) = (pair_is_sure $provider, 1);
+                        ($sure, $iunsure_list) = (pair_is_sure $provider, 1);
                     } else {
                         my %prerecursive_pair_is_sure_seen =
                             %pair_is_sure_seen;
                         %pair_is_sure_seen = ();
-                        ($sure, $unsure_list) = (pair_is_sure $provider, 1);
+                        ($sure, $iunsure_list) = (pair_is_sure $provider, 1);
                         %pair_is_sure_seen = %prerecursive_pair_is_sure_seen;
                     }
-                    $sureness_list{$provider} = undef;
+                    $isureness_list{$iprovider} = undef;
                     if ($sure) {
-                        @sureness_list{@$unsure_list} = ();
+                        @isureness_list{@$iunsure_list} = ();
                     }
                 }
                 $outdepends_seen{$outdepends} = $sure;
                 $outdepends_because{$outdepends} = $provider;
-                $outdepends_unsurelist{$outdepends} = $unsure_list;
+                $outdepends_unsurelist{$outdepends} = $iunsure_list;
             }
             $outdepends_seen{$_} and delete $outdepends_seen{$_} for
                 keys %outdepends_seen;
             if (keys %outdepends_seen) {
                 my ($outdepends, undef) = keys %outdepends_seen;
                 my $problem = $outdepends_because{$outdepends};
-                my $unsure_list = $outdepends_unsurelist{$outdepends};
-                unshift @$unsure_list, $xuse, $problem;
-                exists $state->{changed_pairs}{$pair} and
-                    $state->{changed_pairs}{$pair} =
+                my $iunsure_list = $outdepends_unsurelist{$outdepends};
+                unshift @$iunsure_list, $ixuse, intern $problem;
+                exists $state->{changed_pairs}{$ipair} and
+                    $state->{changed_pairs}{$ipair} =
                     "outdepends of unsure pair $problem is not provided by a sure pair";
                 $recursion_ok or
-                    $unsure_pair_cache{$pair} = [@$unsure_list];
+                    $unsure_pair_cache{$pair} = [@$iunsure_list];
                 delete $pair_is_sure_seen{$pair};
                 progress_report 4, "pair_is_sure: $pair is unsure " .
                     "because unsure pair ${problem}'s outdepends are not " .
                     "generated surely for $xuse";
-                return (0, $unsure_list);
+                return (0, $iunsure_list);
             }
         }
     }
 
     progress_report 5, "pair_is_sure: $pair is sure";
-    my $sure_list = [keys %sureness_list];
-    $sure_pair_cache{$pair} = $sure_list;
-    for my $sure_because (@$sure_list) {
-        $pair_is_sure_because{$pair}{$sure_because} = 1;
-        $pair_is_sure_rindex{$sure_because}{$pair} = 1;
+    my $isure_list = [keys %isureness_list];
+    $sure_pair_cache{$pair} = $isure_list;
+    for my $isure_because (@$isure_list) {
+        $pair_is_sure_because{$pair}{$isure_because} = 1;
+        $pair_is_sure_rindex{$isure_because}{$pair} = 1;
     }
     delete $pair_is_sure_seen{$pair};
-    return (1, $sure_list);
+    return (1, $isure_list);
 }
 
 ### Object existence and contents
@@ -5624,7 +5878,7 @@ sub pair_is_sure {
 sub object_exists {
     my $obj = shift;
     my ($objtype, undef) = parse_objname $obj;
-    return $state->{outdep_by_object}{$obj}
+    return $state->{outdep_by_object}{intern $obj}
         unless $objtype_is_special{$objtype};
     return 0 if $obj eq 'sys:clean';
     return 1;
@@ -5850,15 +6104,17 @@ eval {
 # We use the stock option parser, Getopt::Std, to parse the command
 # line arguments.
 
-$::VERSION = '3.1';
+$::VERSION = '3.3';
 Getopt::Long::Configure('bundling', 'permute', 'auto_help');
 $opt_verbose = 0;
 $opt_install = undef;
 $opt_prefix = undef;
 $opt_dump = undef;
 $opt_install_only = 0;
+$opt_config_only = 0;
 $opt_elevate_permissions = undef;
 $opt_ignore_builtin_config = 0;
+$opt_specific_exit_status = 0;
 @opt_warnings = (); # TODO: unimplemented
 $opt_nocr = 0;
 @opt_rebuild = ();  # TODO: unimplemented
@@ -5866,27 +6122,35 @@ $opt_documentation = 0;
 $opt_dlayout = undef;
 $opt_license = 0;
 $opt_version = 0;
+@opt_with = ();
+@opt_without = ();
+@opt_with_default = ();
 GetOptions('verbose|v:+' => \$opt_verbose,
            'install|i:s' => \$opt_install,
+           'with=s' => \@opt_with,
+           'without=s' => \@opt_without,
+           'with-default=s' => \@opt_with_default,
            'elevate-permissions|S=s' => \$opt_elevate_permissions,
            'install-only' => \$opt_install_only,
+           'config-only' => \$opt_config_only,
            'destdir=s' => \$opt_prefix,
            'dump-status:s' => \$opt_dump,
-           'show-warnings|W' => \@opt_warnings,
+           'show-warnings|W=s' => \@opt_warnings,
            'no-carriage-return' => \$opt_nocr,
            'documentation' => \$opt_documentation,
            'directory-layout=s' => \$opt_dlayout,
            'ignore-builtin-config' => \$opt_ignore_builtin_config,
+           'specific-exit-status' => \$opt_specific_exit_status,
            'license' => \$opt_license,
            'version' => \$opt_version,
-           'rebuild|B' => \@opt_rebuild) or pod2usage(2);
+           'rebuild|B=s' => \@opt_rebuild) or pod2usage(2);
 $opt_documentation and pod2usage('-exitval' => 0, '-verbose' => 2);
 $opt_license and pod2usage('-exitval' => 0, '-verbose' => 99,
                            '-sections' => ['COPYRIGHT']);
 if ($opt_version) {
     print <<EOF;
 aimake version $::VERSION, running under Perl version $^V.
-Copyright (C) 2013 Alex Smith.
+Copyright (C) 2013, 2014 Alex Smith.
 
 This program is licensed under version 3 of the GNU General Public License;
 you are welcome to redistribute it under certain conditions, but it comes with
@@ -5901,7 +6165,7 @@ $opt_verbose = defined_or($opt_verbose, 0);
 
 # Don't create an aimake.objects in the source directory, it leads to
 # problems. We need to do this check before establishing the lock, because the
-# lock requires aimake.objects to exits.
+# lock requires aimake.objects to exist.
 if (-f 'aimake') {
     die ("You cannot run aimake with the build directory as the source " .
          "directory.\nCreate a build directory elsewhere, then " .
@@ -5912,9 +6176,9 @@ read_statefile;
 atomic_read {
     $path = $state->{_srcdir};
     # A nonexistent statefile was created by us, so it's format $::VERSION.
-    # An existent statefile came from version 3.0; versions pre-3 used a
-    # different filename, versions post-3.0 stored the version in the
-    # statefile.
+    # An existent statefile came from version 3.0 if no version is
+    # preent; versions pre-3 used a different filename, versions post-3.0
+    # stored the version in the statefile.
     my $version = defined_or($state->{_version},
                              keys %$state ? "3.0" : $::VERSION);
     $version eq $::VERSION or
@@ -6082,7 +6346,7 @@ for my $localconfigfile (aipath2ospath(configfilename),
     undef $@;
     ref $localconfig eq 'HASH'
         or die "Invalid type in project-specific config file";
-    for my $t (qw/rules options directories/) {
+    for my $t (qw/rules options features directories/) {
         if (exists $localconfig->{$t}) {
             $config->{$t}{$_} = $localconfig->{$t}{$_}
             for keys %{$localconfig->{$t}};
@@ -6102,16 +6366,67 @@ $ipath = undef;
 $opt_install and $ipath = ospath2aipath($opt_install);
 
 # Complain if someone tries to build as root.
-if ($> == 0 && !$opt_install_only) {
-    die "Please do not run aimake as root; to install as root, use '-S su'/'-S sudo'";
+# Exception: everyone has a UID of 0 on Windows, so this check
+# will have false positives.
+#
+# Check effective UID for this, so that root can run a setuid-something-else
+# install program, and so that we complain if someone installs aimake suid root
+# (note: do not install aimake suid root, there are numerous reasons it won't
+# work correctly).
+if ($^O ne 'MSWin32' && $> == 0 && !$opt_install_only) {
+    die ("Please do not run aimake as root.\n" .
+         "To install as root, use '-S su' or '-S sudo' as appropriate.");
 }
 
 # If a directory does not already exist, it must be specified as an absolute
-# path.
+# path. Basically, because otherwise we can't do relative path resolution
+# correctly.
 if (defined $opt_install && !-e $opt_install) {
     File::Spec->file_name_is_absolute($opt_install) or die
         "Install path '$opt_install' is not an absolute path and does not exist";
 }
+
+# Work out which features we want.
+sub onoff {
+    return +(shift) ? "on" : "off";
+}
+sub feature_error {
+    my $feature = shift;
+    $feature eq '?' or
+        print "Unknown feature 'feature'\n";
+    if (!keys %{$config->{features}}) {
+        print "This project supports no features.\n";
+    } else {
+        print "Valid features:\n";
+        for my $f (sort keys %{$config->{features}}) {
+            print "  $f: $config->{features}{$f}{description} ";
+            if (exists $state->{_feature}{$f}) {
+                print "(currently " . onoff($state->{_feature}{$f}) .
+                    ", default " . onoff($config->{features}{$f}{default}) .
+                    ")\n";
+            } else {
+                print "(at default of " .
+                    onoff($config->{features}{$f}{default}) . ")\n";
+            }
+        }
+    }
+    exit ($feature eq '?' ? 0 : 1);
+}
+
+atomically {
+    for my $feature (@opt_with) {
+        exists $config->{features}{$feature} or feature_error $feature;
+        $state->{_feature}{$feature} = 1;
+    }
+    for my $feature (@opt_without) {
+        exists $config->{features}{$feature} or feature_error $feature;
+        $state->{_feature}{$feature} = 0;
+    }
+    for my $feature (@opt_with_default) {
+        exists $config->{features}{$feature} or feature_error $feature;
+        delete $state->{_feature}{$feature};
+    }
+};
 
 $singledir = 0;
 atomically {
@@ -6302,9 +6617,9 @@ atomically {
     $config_hashes{'sys:always_rebuild'} = $runcount;
     $config_hashes{'sys:rebuild_late'} = $runcount;
     $config_hashes{'sys:installing'} = $installcount;
-    my %config_hash_on_disk = ();
-    $config_hash_on_disk{$_} =
-        ["hash_on_disk:$config_hashes{$_}:$_"] for keys %config_hashes;
+    my %config_hash_on_disk = (); # intern => intern
+    $config_hash_on_disk{intern $_} =
+        [intern "hash_on_disk:$config_hashes{$_}:$_"] for keys %config_hashes;
     record_pair_outputs 'parse_configuration sys:no_object',
         \%config_hash_on_disk;
     mark_object_unsure 'parse_configuration sys:no_object',
@@ -6329,12 +6644,37 @@ atomically {
 # last two operations always count as successfully running the pair; the first
 # operation can fail (or produce warnings).
 
+my $active_features = "";
+for my $feature (sort keys %{$config->{features}}) {
+    next unless defined_or($state->{_feature}{$feature},
+                           $config->{features}{$feature}{default});
+    $active_features .= " $feature";
+}
+
+$opt_config_only and write_statefile, exit 0;
+
+atomically {
+    for my $obj (@opt_rebuild) {
+        for my $iprovicer (keys %{$state->{outdep_by_object}{intern $obj}}) {
+            record_pair_outputs unintern $iprovicer, {};
+            mark_pair_changed unintern $iprovicer, '-B command line option';
+        }
+    }
+};
+
+if ($active_features eq "") {
+    progress_report 0, "Starting build (no features selected)";
+} else {
+    progress_report 0, "Starting build, with features:$active_features";
+}
+
 my %pairs_currently_running = (); # used for parallel builds
 my $rebuild_late_locked = 1;
 my $installing_locked = 1;
 
 MAINLOOP: while (1) {
     my $curpair = undef;
+    my $icurpair = undef;
     my $find_another;
     my $no_rules_since_timestamp = time;
     my $lastbuild;
@@ -6344,13 +6684,13 @@ MAINLOOP: while (1) {
         $find_another = 0;
         $curpair = undef;
         for my $runnable (keys %likely_runnable) {
-            $state->{changed_pairs}{$runnable} or
+            $state->{changed_pairs}{intern $runnable} or
                 delete $likely_runnable{$runnable};
         }
         my @changedpairs = keys %likely_runnable;
         @changedpairs or @changedpairs =
             grep +(!$not_runnable_yet{$_} && !$unlikely_runnable{$_}),
-            keys %{$state->{changed_pairs}};
+            map unintern $_, keys %{$state->{changed_pairs}};
         @changedpairs =
             sort grep !$pairs_currently_running{$_}, @changedpairs;
         if (!@changedpairs && keys %unlikely_runnable) {
@@ -6385,6 +6725,7 @@ MAINLOOP: while (1) {
             # exit the main loop.
         } else {
             $curpair = $changedpairs[0];
+            $icurpair = intern $curpair;
             my ($rulename, $objname) = parse_pairname $curpair;
             progress_report +(time > $no_rules_since_timestamp + 2 ?
                               $opt_verbose + 0.5 : 4),
@@ -6405,7 +6746,7 @@ MAINLOOP: while (1) {
                 delete $likely_runnable{$curpair};
                 $find_another = 1;
             } else {
-                if (!$state->{outdep_by_pair}->{$curpair} &&
+                if (!$state->{outdep_by_pair}->{$icurpair} &&
                     !$sure_pair_cache{$curpair} &&
                     !$unsure_pair_cache{$curpair}) {
                     # If a pair currently has no outputs, and it has at least
@@ -6415,17 +6756,20 @@ MAINLOOP: while (1) {
                     ensure_pair_has_xuse $curpair;
                     if (object_exists($objname) &&
                         rule_applies_to_object $rulename, $objname) {
-                        for my $o(@{$state->{xuse_by_pair}{$curpair}}) {
-                            unless ($state->{unsure_count_by_object}{$o} ||
+                        my @failure = ();
+                        for my $io (@{$state->{xuse_by_pair}{$icurpair}}) {
+                            my $o = unintern $io;
+                            unless ($state->{unsure_count_by_object}{$io} ||
                                     object_exists($o)) {
                                 prioritize_object $o;
                                 $find_another = 1;
+                                push @failure, $o;
                             }
                         }
 
                         if ($find_another) {
                             progress_report 3, "Pair '$curpair' can't be " .
-                                "run because it is missing objects.";
+                                "run because it is missing objects: @failure.";
 
                             # record_pair_outputs marks it as unchanged
                             record_pair_outputs $curpair, {};
@@ -6438,7 +6782,7 @@ MAINLOOP: while (1) {
 
                     }
                 }
-                my ($sure, $unsure_list) = pair_is_sure $curpair;
+                my ($sure, $iunsure_list) = pair_is_sure $curpair;
                 $find_another = !$sure;
                 if ($sure) {
                     %unlikely_runnable =
@@ -6452,9 +6796,9 @@ MAINLOOP: while (1) {
                     # which pair is responsible for the unsureness. So we can
                     # just try that one next, if it happens to be a changed
                     # pair.
-                    my $likely_pair = $unsure_list->[-1];
-                    $state->{changed_pairs}{$likely_pair} and
-                        prioritize_pair $likely_pair;
+                    my $ilikely_pair = $iunsure_list->[-1];
+                    $state->{changed_pairs}{$ilikely_pair} and
+                        prioritize_pair unintern $ilikely_pair;
                 }
             }
         }
@@ -6500,14 +6844,15 @@ MAINLOOP: while (1) {
                 # have the wrong hash on disk.
                 my ($currule, $curobject) = parse_pairname $curpair;
                 ensure_pair_has_xuse $curpair;
-                for my $obj (@{$state->{xuse_by_pair}{$curpair}}) {
+                for my $iobj (@{$state->{xuse_by_pair}{$icurpair}}) {
+                    my $obj = unintern $iobj;
                     progress_report 5, "Checking xuse $obj";
                     if (!object_exists $obj) {
                         # We're definitely sure that this rule cannot be built
                         # from right now (and cannot be built from at all this
                         # compile unless we find a new file that provides its
                         # output). Clean it.
-                        if (exists $state->{outdep_by_pair}{$curpair}) {
+                        if (exists $state->{outdep_by_pair}{$icurpair}) {
                             # If the pair was already outputting nothing, the
                             # clean is a no-op. This situation happens when a
                             # rule is created for the first time.
@@ -6549,8 +6894,9 @@ MAINLOOP: while (1) {
                             # We need to mark all pairs producing the object in
                             # question as changed (and thus the object itself as
                             # unsure).
-                            mark_pair_changed $_, 'hash change on disk' for
-                                keys %{$state->{outdep_by_object}{$obj}};
+                            mark_pair_changed unintern $_,
+                                'hash change on disk' for
+                                keys %{$state->{outdep_by_object}{$iobj}};
                             # And we can't continue, due to having an unsure
                             # ancestor.
                             $runnable = 0;
@@ -6562,7 +6908,7 @@ MAINLOOP: while (1) {
             if ($runnable) {
                 # We can run the rule!
                 ensure_pair_has_xuse $curpair;
-                @xuse = @{$state->{xuse_by_pair}{$curpair}};
+                @xuse = map unintern $_, @{$state->{xuse_by_pair}{$icurpair}};
             } else {
                 # Find another rule.
                 $find_another = 1;
@@ -6668,7 +7014,7 @@ MAINLOOP: while (1) {
         $whatmsg = "Finding dependencies of $shortobject (rule $rulename)";
         $verb = 'found';
         $level = 1;
-    } elsif ($rule->{number_of_provide_actions}) {
+    } elsif (!$rule->{number_of_produce_actions}) {
         if ($objname eq 'sys:no_object') {
             $whatmsg = "Finding objects (rule $rulename)";
             $verb = 'found';
@@ -6807,8 +7153,9 @@ MAINLOOP: while (1) {
                 # the same target.
                 my $ltarget = readlink $ospathfrom or die
                     "Could not read symlink '$ospathfrom': $!";
+                $ltarget =~ s/\Q$exeext\E$/$Config{_exe}/es;
                 -e $ospathto || -l $ospathto and unlink $ospathto;
-                symlink $ltarget, $ospathto or die
+                ai_symlink $ltarget, $ospathto or die
                     "Could not symlink '$ospathto' to '$ltarget': $!";
             } else {
                 open my $fhfrom, "<$binary_layers", $ospathfrom
@@ -6842,6 +7189,8 @@ MAINLOOP: while (1) {
         }
 
         # If necessary, elevate or restrict permissions.
+        $objname eq 'sys:touch_only' and $output_location =
+            aipath_parent $output_location;
         my $a = $rule->{actions}[0];
         $a->{install_permission} and
             (restrict_to_permission $a->{install_permission},
@@ -6929,7 +7278,7 @@ MAINLOOP: while (1) {
     $rule->{linemax} and splice @$parsed_output, $rule->{linemax};
 
     my $acount = 0;
-    my %outhashes = ();
+    my %outhashes = (); # interned keys and values
     for my $a (@actions_desugared) {
         ++$acount;
         progress_report 4, "Running action $acount...";
@@ -7065,32 +7414,79 @@ MAINLOOP: while (1) {
         # Some rules may produce lots of duplicate output dependencies.
         # This has the same meaning as non-duplicate dependencies, so we can
         # just remove the copies. Make sure to keep them in the same order.
+        #
+        # We also intern the @outdepends array in this loop (it's previously
+        # an array of object names).
         my @outdepends_duplicates = @outdepends;
         @outdepends = ();
         my %outdepends_seen = ();
         for my $outdependency (@outdepends_duplicates) {
             if (!$outdepends_seen{$outdependency}) {
                 $outdepends_seen{$outdependency} = 1;
-                push @outdepends, $outdependency;
+                push @outdepends, intern $outdependency;
             }
         }
 
         # Record the outputs.
-        $outhashes{$_} = \@outdepends for @output;
+        $outhashes{intern $_} = \@outdepends for @output;
+    }
+
+    # If we would produce an object that matches this rule's "object =>"
+    # regex, error out due to the likely infinite regress. Exception: if
+    # the rule avoids itself.
+    if ((ref $rule->{object}) =~ /\bRegexp$/) {
+        for my $ioutobj (keys %outhashes) {
+            my $outobj = unintern $ioutobj;
+            if ($outobj =~ $rule->{object} &&
+                (!$rule->{avoid_rules} || $rulename !~ $rule->{avoid_rules})) {
+                $failreason = <<EOF;
+rule can take its own output as input
+The rule's 'object', $rule->{object},
+matches its own output object, '$outobj'.
+This usually causes an infinite regress, so is not allowed.
+Did you forget to anchor a regular expression?
+e.g. object => qr/path:.../ is usually wrong, you probably meant qr/^path:.../
+Alternatively, consider adding the rule to its own avoid_rules, so that it
+will refuse to take its own output as input.
+EOF
+                # ' # this line fixes syntax highlighting in Emacs
+                $errorexit = 3;
+                $shortfailreason = 'rule can take its own output as input';
+                $hide_stderr = 0;
+                %outhashes = ();
+            }
+        }
+    }
+
+    # For each output object that matches a feature that's turned off, delete
+    # it.
+    for my $feature (keys %{$config->{features}}) {
+        next if defined_or($state->{_feature}{$feature},
+                           $config->{features}{$feature}{default});
+        for my $ioutobj (keys %outhashes) {
+            (unintern $ioutobj) =~ $config->{features}{$feature}{object} and
+                delete $outhashes{$ioutobj};
+        }
     }
 
     # Work out which objects we want to tell the user about. To match the
     # progress message printed earlier, we list dependencies: objects as
-    # their outdepends if there's a depend action involved.
+    # their outdepends if there's a depend action involved. For an install
+    # action, we list the known output location.
     my %shortened;
-    for my $outobj (keys %outhashes) {
+    for my $ioutobj (keys %outhashes) {
+        my $outobj = unintern $ioutobj;
         if ($outobj =~ /^dependencies:/ &&
             $rule->{number_of_depend_actions}) {
-            $shortened{friendly_objname($_)} = 1 for @{$outhashes{$outobj}};
+            $shortened{friendly_objname(unintern $_)} = 1
+                for @{$outhashes{$ioutobj}};
         } else {
             $shortened{friendly_objname($outobj)} = 1;
         }
     }
+
+    $rule->{number_of_install_actions}
+        and $shortened{friendly_objname($known_output_locations[0])} = 1;
 
     my $msg;
     if (!$failreason || $hide_stderr) {
@@ -7135,14 +7531,15 @@ MAINLOOP: while (1) {
             # bpath, spath, standardlib. (And extend, but that's been replaced
             # by now.)  This is done here because file_hash needs atomically()
             # protection.
-            for my $o (keys %outhashes) {
-                my ($otype, undef) = parse_objname $o;
+            for my $io (keys %outhashes) {
+                my ($otype, undef) = parse_objname unintern $io;
+                my $o = unintern $io;
                 if ($objtype_provided{$otype}) {
                     # do nothing, the hash is already correct
                 } elsif ($otype =~ /^(?:[bs]?path|standardlib)/) {
-                    $outhashes{$o} = deepclone($outhashes{$o});
-                    unshift @{$outhashes{$o}},
-                        "hash_on_disk:" . (file_hash $o) . ":$o";
+                    $outhashes{$io} = deepclone($outhashes{$io});
+                    unshift @{$outhashes{$io}}, intern
+                        ("hash_on_disk:" . defined_or((file_hash $o), "") . ":$o");
                 } else {
                     croak "Rule $rulename output the wrong " .
                         "type of object: $o";
@@ -7183,12 +7580,12 @@ my $anyproblems = 0;
 
 atomic_read {
     my $ewprinted = 0;
-    for my $pair (sort keys %{$state->{errwarn_by_pair}}) {
+    for my $ipair (sort keys %{$state->{errwarn_by_pair}}) {
         if (!$ewprinted) {
             progress_report -1,
                 "\nThe following warnings/errors were reported:\n";
         }
-        my $msg = $state->{errwarn_by_pair}{$pair};
+        my $msg = $state->{errwarn_by_pair}{$ipair};
         $msg =~ /^E:/ and $anyproblems++;
         $msg =~ s/^[EW]://s;
         progress_report -1, "$msg\n";
@@ -7203,12 +7600,15 @@ atomic_read {
 # more things true about such pairs, e.g. they don't appear in outdep_by_pair,
 # but we don't need to worry about that when presenting our output.)
 
+my $any_system_header_warning = 0;
+
 atomically {
     my $ewprinted = 0;
     my %bad_rule_deps;
     # Note that pairs with unknown xuse still have an xuse_by_pair key, just
     # an undef value.
-  DEPCHECK: for my $pair (sort keys %{$state->{xuse_by_pair}}) {
+  DEPCHECK: for my $ipair (sort keys %{$state->{xuse_by_pair}}) {
+        my $pair = unintern $ipair;
         my ($rulename, $objname) = parse_pairname $pair;
         $rulename eq 'parse_configuration' and next; # special case
         $config->{rules}{$rulename} or next;
@@ -7217,30 +7617,37 @@ atomically {
         $command = [@$command];
         complete_and_extend \$_, $objname for @$command;
         object_exists $_ or next DEPCHECK for @$command;
-        $state->{blocked_by_pair}{$pair} and
+        $state->{blocked_by_pair}{$ipair} and
             croak "Pair '$pair' is blocked by '" .
-            $state->{blocked_by_pair}{$pair} . "', existence '" .
-            ((object_exists $state->{blocked_by_pair}{$pair}) ?
+            (unintern $state->{blocked_by_pair}{$ipair}) . "', existence '" .
+            ((object_exists unintern $state->{blocked_by_pair}{$ipair}) ?
              'yes' : 'no') . "', command [@$command]";
         my ($is_tied, $wanted, $user, $objects_in_tie) = check_xuse_ties $pair;
         my @missing_deps;
         my $verb = 'missing';
+        my $system_header_warning = 0;
         if (!$is_tied) {
-            @missing_deps = sort grep +((!object_exists $_) && $_ ne 'sys:clean'),
-                @{$state->{xuse_by_pair}{$pair}};
-
+            defined $state->{xuse_by_pair}{$ipair} and
+                @missing_deps = sort grep +((!object_exists $_) &&
+                                            $_ ne 'sys:clean'),
+                map unintern $_, @{$state->{xuse_by_pair}{$ipair}};
             $_ = (friendly_objname($objname) ne
-                  friendly_objname($state->{xuse_by_object}{$_}{$pair}) ?
+                  friendly_objname(unintern
+                                   $state->{xuse_by_object}{intern $_}{$ipair}) ?
                   friendly_objname($_) . '(' .
-                  friendly_objname($state->{xuse_by_object}{$_}{$pair}) . ')' :
-                  friendly_objname($_))
+                  friendly_objname(unintern
+                                   $state->{xuse_by_object}{intern $_}{$ipair})
+                  . ')' : friendly_objname($_))
                 for @missing_deps;
         } else {
             @missing_deps = @$objects_in_tie;
             $verb = "multiple possibilities for " .
                 friendly_objname($wanted) . ':';
             $_ = extract_interesting_pair_component $_ for @missing_deps;
-            /:/ and $_ = friendly_objname($_) for @missing_deps;
+            for my $dep (@missing_deps) {
+                $dep =~ m(^spath:.*\b[^\/]*\.h$) and $system_header_warning = 1;
+            }
+            m/:/ and $_ = friendly_objname($_) for @missing_deps;
         }
         (scalar @missing_deps) or next;
 
@@ -7257,6 +7664,17 @@ atomically {
             $#missing_deps = 3;
         }
         my $missing_deps = join ', ', @missing_deps;
+
+        $system_header_warning and !$any_system_header_warning and
+            $errorexit = 2, $missing_deps .= <<'EOF';
+
+Were you trying to include a system header file? If you want to use the system's
+normal include order rather than potentially looking for the file in your own
+project (perhaps causing ambiguity when it isn't found), say so: write, e.g.,
+'#include <stdio.h>' rather than '#include "stdio.h"'.
+EOF
+        # ' # fix syntax highlighting for Emacs
+        $any_system_header_warning ||= $system_header_warning;
 
         if ($objname eq 'sys:no_object') {
             $bad_rule_deps{"$rulename: $verb $missing_deps"} = {};
@@ -7304,26 +7722,28 @@ atomically {
 atomically {
     my $ewprinted = 0;
     my %loop_objects = ();
-    for my $pair (keys %{$state->{unsure_by_pair}}) {
-        $state->{changed_pairs}{$pair} or next;
-        for my $obj (keys %{$state->{unsure_by_pair}{$pair}}) {
-            $loop_objects{$obj} = 1;
+    for my $ipair (keys %{$state->{unsure_by_pair}}) {
+        $state->{changed_pairs}{$ipair} or next;
+        for my $iobj (keys %{$state->{unsure_by_pair}{$ipair}}) {
+            $loop_objects{unintern $iobj} = 1;
         }
     }
-    for my $pair (keys %{$state->{unsure_by_pair}}) {
-        $state->{changed_pairs}{$pair} or next;
-        for my $obj (keys %{$state->{unsure_by_pair}{$pair}}) {
+    for my $ipair (keys %{$state->{unsure_by_pair}}) {
+        $state->{changed_pairs}{$ipair} or next;
+        my $pair = unintern $ipair;
+        for my $iobj (keys %{$state->{unsure_by_pair}{$ipair}}) {
+            my $obj = unintern $iobj;
             my $fobj1 = friendly_objname $obj;
-            my ($sure, $unsure_list) = pair_is_sure $pair, 0;
+            my ($sure, $iunsure_list) = pair_is_sure $pair, 0;
             $sure and croak "Pair $pair is changed yet sure at program end";
 
-            $unsure_list->[0] eq 'tie' and next;
-            $unsure_list->[0] eq 'recursion' and next;
+            $iunsure_list->[0] == intern 'tie' and next;
+            $iunsure_list->[0] == intern 'recursion' and next;
 
             # If a rule errored out, we can get a changed, unsure rule that
             # isn't involve in a dependency loop. Discover if it's in a loop
             # via actually looking for the object that's in the loop.
-            my $last_obj = $unsure_list->[-2];
+            my $last_obj = unintern $iunsure_list->[-2];
             $loop_objects{$last_obj} or next;
 
             $anyproblems++;
@@ -7336,13 +7756,13 @@ atomically {
 
             # The list alternates between xuses and pairs, with an xuse at
             # the start and a pair at the end.
-            unshift @$unsure_list, $obj, $pair;
-            pop @$unsure_list;
+            unshift @$iunsure_list, intern $obj, intern $pair;
+            pop @$iunsure_list;
             my $ir = "";
             my $mr = "is output by";
-            while (@$unsure_list > 1) {
-                my $x = shift @$unsure_list;
-                my $p = shift @$unsure_list;
+            while (@$iunsure_list > 1) {
+                my $x = unintern shift @$iunsure_list;
+                my $p = unintern shift @$iunsure_list;
                 my ($rule, $pobj) = parse_pairname $p;
                 my $fx = friendly_objname $x;
                 my $fo = friendly_objname $pobj;
@@ -7363,10 +7783,14 @@ atomically {
     }
 };
 
+atomically {
+    garbage_collect_statefile;
+};
+
 write_statefile;
 progress_report 3, "Main program is ending.";
 
-$anyproblems and exit 1;
+$anyproblems and exit ($opt_specific_exit_status ? $errorexit : 1);
 
 ####### Configuration files
 #
@@ -7383,7 +7807,8 @@ __DATA__
 # eventually, operating systems). Projects can use their own specific
 # aimake.rules file to override the config in this file.
 #
-# See `perldoc -F aimake` for the format.
+# See `perldoc -F aimake` (or equivalently `aimake --documentation`) for the
+# format of this file.
 
 {
     options => {
@@ -7405,6 +7830,10 @@ __DATA__
         directory_layout => 'autodetect',
         directory_layout_fallback => 'single_user',
     },
+
+    features => {
+    },
+
     # Directories. One of these directory sets is used for the install,
     # based on the command line options or the install directory; they
     # become normal options early in the compile process.
@@ -7708,6 +8137,7 @@ __DATA__
         default_libraries => {
             # some likely guesses, not including the system libc
             output => ['searchlib:m:symbol:sin',
+                       'searchlib:pthread:symbol:pthread_create',
                        'searchlib:dl:symbol:dlopen'],
             outdepends => [],
             verb => 'determined',
@@ -7982,6 +8412,20 @@ __DATA__
             low_message_priority => 1,
         },
 
+        # Does the compiler understand --std=c11?
+        # This is a special case for now; we'll make it more generic later.
+        c11_default_option => {
+            object => 'bpath:aimake/aimake_1.c',
+            command => ['tool:c_toolchain', 'optstring:-c', 'optpath::', '',
+                        'optstring:--std=c11',
+                        "optpath:-o :bpath:aimake/aimake_1_c11check$objext"],
+            output => 'optionset:c11_option',
+            outdepends => 'optstring:--std=c11',
+            on_failure => 'conditional',
+            verb => 'test built',
+            low_message_priority => 1,
+        },
+
         # An aimake-specific header file that's forced onto every C file.
         generate_aimake_header => {
             command => [
@@ -8242,6 +8686,7 @@ __DATA__
         precompile_headers => {
             object => qr/^bpath:(?!aimake).*\.h$/s,
             command => ['tool:c_precompile', 'optpath::',
+                        'optionset:os_linux',
                         'optpath:-o :extend:.h.gch:'],
             verb => 'precompiled',
             # Precompiling headers never uses precompiled headers itself,
@@ -8266,7 +8711,10 @@ __DATA__
         },
         add_precompiled_header_dependencies => {
             object => qr/^bpath:(?!aimake).*\.h$/s,
+            command => ['intcmd:assert_equal',
+                        'optstring:linux', "optstring:$^O"],
             depends => 'dependencies:precompiled_header:',
+            on_failure => 'conditional',
         },
 
         # OS detection

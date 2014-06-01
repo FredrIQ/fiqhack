@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-05-28 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -41,6 +41,8 @@ u_have_property(enum youprop property, unsigned reasons,
     if (property == BLINDED && flags.permablind)
         rv |= W_MASK(os_birthopt);
     if (property == HALLUC && flags.permahallu)
+        rv |= W_MASK(os_birthopt);
+    if (property == UNCHANGING && flags.polyinit_mnum != -1)
         rv |= W_MASK(os_birthopt);
 
     /* Polyform */
@@ -418,7 +420,9 @@ enlightenment(int final)
         if (u.umonnum == u.ulycn)
             buf = "in beast form";
         else
-            buf = msgprintf("polymorphed into %s", an(youmonst.data->mname));
+            buf = msgprintf("%spolymorphed into %s",
+                            flags.polyinit_mnum == -1 ? "" : "permanently ",
+                            an(youmonst.data->mname));
         if (wizard)
             buf = msgprintf("%s (%d)", buf, u.mtimedone);
         you_are(&menu, buf);

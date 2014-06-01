@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -53,12 +53,22 @@ static struct nh_listitem graphics_list[] = {
     {TILESET_DAWNHACK_16, "Tiles (DawnHack, 16px)"},
     {TILESET_DAWNHACK_32, "Tiles (DawnHack, 32px)"},
     {TILESET_SLASHEM_16, "Tiles (Slash'EM, 16px)"},
-/*    Tilesets with missing images or rendering issues:
-      {TILESET_32, "Tiles (32x32)"},
-      {TILESET_3D, "Tiles (3D effect)"}, */
+/*    Tilesets with missing images or rendering issues (or both):
+      {TILESET_SLASHEM_32, "Tiles (32x32)"},
+      {TILESET_SLASHEM_3D, "Tiles (3D effect)"}, */
 };
 static struct nh_enum_option graphics_spec =
     { graphics_list, listlen(graphics_list) };
+
+static struct nh_listitem animation_list[] = {
+    {ANIM_INSTANT, "instant"},
+    {ANIM_INTERRUPTIBLE, "interruptible"},
+    {ANIM_ALL, "everything"},
+    {ANIM_SLOW, "slow"},    
+};
+
+static struct nh_enum_option animation_spec =
+    { animation_list, listlen(animation_list) };
 
 static struct nh_listitem optstyle_list[] = {
     {OPTSTYLE_DESC, "description only"},
@@ -67,6 +77,14 @@ static struct nh_listitem optstyle_list[] = {
 };
 static struct nh_enum_option optstyle_spec =
     { optstyle_list, listlen(optstyle_list) };
+
+static struct nh_listitem networkmotd_list[] = {
+    {MOTD_TRUE, "on"},
+    {MOTD_FALSE, "off"},
+    {MOTD_ASK, "ask"},
+};
+static struct nh_enum_option networkmotd_spec =
+    { networkmotd_list, listlen(networkmotd_list) };
 
 static struct nh_listitem autoable_boolean_list[] = {
     {AB_FALSE, "never"},
@@ -80,9 +98,10 @@ static const char *const bucnames[] =
     { "unknown", "blessed", "uncursed", "cursed", "all" };
 
 struct nh_option_desc curses_options[] = {
+    {"animation", "what to animate, and how fast", FALSE, OPTTYPE_ENUM,
+     {.e = ANIM_ALL}},
     {"bgbranding", "use background colors to show hidden stairs and traps",
-     FALSE,
-     OPTTYPE_BOOL, {.b = TRUE}},
+     FALSE, OPTTYPE_BOOL, {.b = TRUE}},
     {"blink",
      "show multiple symbols for each location by switching between them", FALSE,
      OPTTYPE_BOOL, {.b = FALSE}},
@@ -90,11 +109,9 @@ struct nh_option_desc curses_options[] = {
     {"darkgray", "try to show 'black' as dark gray instead of dark blue", FALSE,
      OPTTYPE_BOOL, {.b = TRUE}},
     {"extmenu", "use a menu for selecting extended commands (#)", FALSE,
-     OPTTYPE_BOOL,
-     {.b = FALSE}},
+     OPTTYPE_BOOL, {.b = FALSE}},
     {"floorcolor", "change the color of the floor to show where you walked",
-     FALSE,
-     OPTTYPE_BOOL, {.b = TRUE}},
+     FALSE, OPTTYPE_BOOL, {.b = TRUE}},
     {"frame", "draw a frame around the window sections", FALSE, OPTTYPE_BOOL,
      {.b = TRUE}},
     {"graphics", "characters or tiles to use for the map", FALSE, OPTTYPE_ENUM,
@@ -112,6 +129,8 @@ struct nh_option_desc curses_options[] = {
     {"msgheight", "message window height", FALSE, OPTTYPE_INT, {.i = 8}},
     {"msghistory", "number of messages saved for prevmsg", FALSE, OPTTYPE_INT,
      {.i = 256}},
+    {"networkmotd", "get tips and announcements from the Internet", FALSE,
+     OPTTYPE_ENUM, {.e = MOTD_ASK}},
     {"optstyle", "option menu display style", FALSE, OPTTYPE_ENUM,
      {.e = OPTSTYLE_FULL}},
     {"scores_own", "show all your own scores in the list", FALSE, OPTTYPE_BOOL,
@@ -245,6 +264,8 @@ curses_set_option(const char *name, union nh_optvalue value)
         /* do nothing */
     } else if (!strcmp(option->name, "menu_headings")) {
         settings.menu_headings = option->value.e;
+    } else if (!strcmp(option->name, "animation")) {
+        settings.animation = option->value.e;
     } else if (!strcmp(option->name, "graphics")) {
         settings.graphics = option->value.e;
         switch_graphics(option->value.e);
@@ -260,6 +281,8 @@ curses_set_option(const char *name, union nh_optvalue value)
         settings.end_top = option->value.i;
     } else if (!strcmp(option->name, "scores_around")) {
         settings.end_around = option->value.i;
+    } else if (!strcmp(option->name, "networkmotd")) {
+        settings.show_motd = option->value.e;
     } else if (!strcmp(option->name, "optstyle")) {
         settings.optstyle = option->value.e;
     } else if (!strcmp(option->name, "msgheight")) {
@@ -300,7 +323,9 @@ init_options(void)
     find_option("msgheight")->i.max = 40;
     find_option("msghistory")->i.min = 20;      /* arbitrary min/max values */
     find_option("msghistory")->i.max = 20000;
+    find_option("animation")->e = animation_spec;
     find_option("graphics")->e = graphics_spec;
+    find_option("networkmotd")->e = networkmotd_spec;
     find_option("optstyle")->e = optstyle_spec;
     find_option("scores_top")->i.max = 10000;
     find_option("scores_around")->i.max = 100;
@@ -1177,7 +1202,7 @@ get_config_name(fnchar * buf, nh_bool ui)
 #endif
            ui ? FN("curses.conf") : FN("NetHack4.conf"), BUFSZ);
     if (ui_flags.connection_only)
-        fnncat(buf, FN(".rc"), BUFSZ);
+        fnncat(buf, ui ? FN(".curses.rc") : FN(".NetHack4.rc"), BUFSZ);
 
     return 1;
 }
@@ -1198,10 +1223,8 @@ read_nh_config(void)
     nhlib_free_optlist(nh_options);
     nh_options = nhlib_clone_optlist(opts);
 
-    if (!ui_flags.connection_only) {
-        get_config_name(filename, FALSE);
-        read_config_file(filename);
-    }
+    get_config_name(filename, FALSE);
+    read_config_file(filename);
 
     return TRUE;
 }
@@ -1267,8 +1290,7 @@ write_nh_config(void)
     FILE *fp;
     fnchar filename[BUFSZ];
 
-    if (!ui_flags.connection_only &&
-        get_config_name(filename, FALSE) &&
+    if (get_config_name(filename, FALSE) &&
         (fp = open_config_file(filename))) {
         write_config_options(fp, nh_options);
         fclose(fp);

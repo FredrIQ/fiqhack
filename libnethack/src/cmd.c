@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -25,6 +25,7 @@ static int dowelcome(const struct nh_cmd_arg *);
 static int dointerrupt(const struct nh_cmd_arg *);
 static int doattributes(const struct nh_cmd_arg *);
 static int doconduct(const struct nh_cmd_arg *);
+static int doquit(const struct nh_cmd_arg *);
 static int wiz_wish(const struct nh_cmd_arg *);
 static int wiz_identify(const struct nh_cmd_arg *);
 static int wiz_map(const struct nh_cmd_arg *);
@@ -32,7 +33,10 @@ static int wiz_genesis(const struct nh_cmd_arg *);
 static int wiz_levelcide(const struct nh_cmd_arg *);
 static int wiz_where(const struct nh_cmd_arg *);
 static int wiz_detect(const struct nh_cmd_arg *);
+static int wiz_desync(const struct nh_cmd_arg *);
 static int wiz_panic(const struct nh_cmd_arg *);
+static int wiz_impossible(const struct nh_cmd_arg *);
+static int wiz_rewind(const struct nh_cmd_arg *);
 static int wiz_polyself(const struct nh_cmd_arg *);
 static int wiz_teleport(const struct nh_cmd_arg *);
 static int wiz_hpset(const struct nh_cmd_arg *);
@@ -74,7 +78,7 @@ const struct cmd_desc cmdlist[] = {
     {"apply", "use a tool or container or dip into a potion", 'a', 0, FALSE,
      doapply, CMD_ARG_OBJ | CMD_ARG_POS | CMD_ARG_DIR | CMD_ARG_STR },
     {"attributes", "show status of your character", C('x'), 0, TRUE,
-     doattributes, CMD_MAINMENU},
+     doattributes, CMD_MAINMENU | CMD_NOTIME},
     {"autoexplore", "automatically explore until something happens", 'v', 0,
      FALSE, doautoexplore, 0},
     {"cast", "cast a spell from memory", 'Z', 0, TRUE, docast,
@@ -155,6 +159,8 @@ const struct cmd_desc cmdlist[] = {
     {"pickup", "take items from the floor", ',', 0, FALSE, dopickup,
      CMD_ARG_LIMIT},
     {"pray", "pray to the gods for help", M('p'), 0, TRUE, dopray, CMD_EXT},
+    {"quit", "don't use this, use 'save' instead", M('q'), 0, TRUE, doquit,
+     CMD_EXT | CMD_NOTIME},
     {"quiver", "ready an item for firing", 'Q', 0, FALSE, dowieldquiver,
      CMD_ARG_OBJ},
     {"read", "read a scroll or spellbook", 'r', 0, FALSE, doread, CMD_ARG_OBJ},
@@ -232,6 +238,8 @@ const struct cmd_desc cmdlist[] = {
     {"servercancel", "(internal) reread the replay, someone moved", 0, 0, TRUE,
      doservercancel, CMD_INTERNAL | CMD_NOTIME},
 
+    {"desync", "(DEBUG) corrupt the save file", 0, 0, TRUE, wiz_desync,
+     CMD_DEBUG | CMD_EXT},
     {"detect", "(DEBUG) detect monsters", 0, 0, TRUE, wiz_detect,
      CMD_DEBUG | CMD_EXT},
     {"genesis", "(DEBUG) create a monster", 0, 0, TRUE, wiz_genesis,
@@ -240,6 +248,8 @@ const struct cmd_desc cmdlist[] = {
      wiz_hpset, CMD_DEBUG | CMD_EXT | CMD_ARG_LIMIT},
     {"identify", "(DEBUG) identify all items in the inventory", C('i'), 0, TRUE,
      wiz_identify, CMD_DEBUG | CMD_EXT},
+    {"impossible", "(DEBUG) test nonfatal error handling", 0, 0, TRUE,
+     wiz_impossible, CMD_DEBUG | CMD_EXT},
     {"levelchange", "(DEBUG) change experience level", 0, 0, TRUE,
      wiz_level_change, CMD_DEBUG | CMD_EXT},
     {"levelcide", "(DEBUG) kill all other monsters on the level", 0, 0, TRUE,
@@ -250,12 +260,14 @@ const struct cmd_desc cmdlist[] = {
      wiz_level_tele, CMD_DEBUG},
     {"monpolycontrol", "(DEBUG) control monster polymorphs", 0, 0, TRUE,
      wiz_mon_polycontrol, CMD_DEBUG | CMD_EXT},
-    {"panic", "(DEBUG) test panic routine", 0, 0, TRUE,
+    {"panic", "(DEBUG) test fatal error handling", 0, 0, TRUE,
      wiz_panic, CMD_DEBUG | CMD_EXT},
     {"polyself", "(DEBUG) polymorph self", 0, 0, TRUE, wiz_polyself,
      CMD_DEBUG | CMD_EXT},
     {"printdungeon", "(DEBUG) print dungeon structure", 0, 0, TRUE, wiz_where,
      CMD_DEBUG | CMD_NOTIME | CMD_EXT},
+    {"rewind", "(DEBUG) permanently undo gamestate changes", 0, 0, TRUE,
+     wiz_rewind, CMD_DEBUG | CMD_NOTIME | CMD_EXT},
     {"seenv", "(DEBUG) show seen vectors", 0, 0, TRUE, wiz_show_seenv,
      CMD_DEBUG | CMD_EXT | CMD_NOTIME},
     {"showmap", "(DEBUG) reveal the entire map", 0, 0, TRUE, wiz_map,
@@ -468,7 +480,17 @@ wiz_detect(const struct nh_cmd_arg *arg)
     return 0;
 }
 
-/* ^Y command - teleport without fail */
+static int
+wiz_desync(const struct nh_cmd_arg *arg)
+{
+    (void) arg;
+
+    flags.desync = TRUE;
+
+    return 0;
+}
+
+/* ^F command - teleport without fail */
 static int
 wiz_teleport(const struct nh_cmd_arg *arg)
 {
@@ -583,15 +605,37 @@ wiz_level_change(const struct nh_cmd_arg *arg)
     return 0;
 }
 
-/* #panic command - test program's panic handling */
+/* #panic command - test program's fatal error handling */
 static int
 wiz_panic(const struct nh_cmd_arg *arg)
 {
     (void) arg;
 
-    if (yn("Do you want to call panic()?") == 'y')
-        panic("crash test.");
+    panic("Testing fatal error handling.");
+    /* no return; panic() never returns */
+}
+
+/* #impossible command - test program's nonfatal error handling */
+static int
+wiz_impossible(const struct nh_cmd_arg *arg)
+{
+    (void) arg;
+
+    impossible("Testing impossible().");
     return 0;
+}
+
+/* #rewind command - undo changes to a save */
+static int
+wiz_rewind(const struct nh_cmd_arg *arg)
+{
+    (void) arg;
+
+    /* Grab write access to this game, even if we don't have the perms,
+       even if we're not at the end. */
+    program_state.followmode = FM_PLAY;
+
+    log_recover_noreturn(program_state.end_of_gamestate_location);
 }
 
 /* #polyself command - change hero's form */
@@ -1061,9 +1105,9 @@ nh_get_object_commands(int *count, char invlet)
 
     xmalloc_cleanup(&api_blocklist);
 
-    /* returning a list of commands when .viewing is true doesn't hurt
-       anything, but since they won't work there is no point. */
-    if (program_state.viewing)
+    /* returning a list of commands when viewing doesn't hurt anything, but
+       since they won't work there is no point. */
+    if (program_state.followmode != FM_PLAY)
         return NULL;
 
     for (obj = invent; obj; obj = obj->nobj)
@@ -1609,7 +1653,8 @@ do_command(int command, struct nh_cmd_arg *arg)
         command = flags.last_cmd;
         arg = &flags.last_arg;
         turnstate.continue_message = FALSE;
-    } else if (!(cmdlist[command].flags & (CMD_INTERNAL | CMD_NOTIME))) {
+    } else if (!(cmdlist[command].flags & (CMD_INTERNAL | CMD_NOTIME)) ||
+               strcmp(cmdlist[command].name, "welcome") == 0) {
         flags.last_cmd = command;
         flags.last_arg = *arg;
 
@@ -1736,15 +1781,23 @@ confdir(schar * dx, schar * dy)
 }
 
 static int
+doquit(const struct nh_cmd_arg *arg)
+{
+    (void) arg;
+    pline("To quit the game, use the 'save' command (typically on 'S').");
+
+    return 0;
+}
+
+static int
 doautoexplore(const struct nh_cmd_arg *arg)
 {
     (void) arg;
 
     action_incomplete("exploring", occ_autoexplore);
     return domove(&(struct nh_cmd_arg){.argtype = CMD_ARG_DIR, .dir = DIR_SELF},
-                  exploration_interaction_status());
+                  exploration_interaction_status(), occ_autoexplore);
 }
-
 
 static int
 dotravel(const struct nh_cmd_arg *arg)
@@ -1772,7 +1825,7 @@ dotravel(const struct nh_cmd_arg *arg)
 
     action_incomplete("travelling", occ_travel);
     return domove(&(struct nh_cmd_arg){.argtype = CMD_ARG_DIR, .dir = DIR_SELF},
-                  uim_nointeraction);
+                  uim_nointeraction, occ_travel);
 }
 
 /*cmd.c*/

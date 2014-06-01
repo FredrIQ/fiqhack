@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-05-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2363,10 +2363,8 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
                     /* right into your inventory */
                     pline("You snatch %s %s!", s_suffix(mon_nam(mtmp)),
                           onambuf);
-                    if (otmp->otyp == CORPSE &&
-                        touch_petrifies(&mons[otmp->corpsenm]) && !uarmg &&
-                        !Stone_resistance && !(poly_when_stoned(youmonst.data)
-                                               && polymon(PM_STONE_GOLEM))) {
+                    if (otmp->otyp == CORPSE && !uarmg &&
+                        touched_monster(otmp->corpsenm)) {
                         pline("Snatching %s corpse is a fatal mistake.",
                               an(mons[otmp->corpsenm].mname));
                         instapetrify(killer_msg(STONING,

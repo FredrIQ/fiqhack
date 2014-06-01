@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-26 */
+/* Last modified by Alex Smith, 2014-05-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -730,9 +730,7 @@ toss_up(struct obj *obj, boolean hitsroof)
         obj = NULL;     /* it's now gone */
         switch (otyp) {
         case EGG:
-            if (touch_petrifies(&mons[ocorpsenm]) && !uarmh && !Stone_resistance
-                && !(poly_when_stoned(youmonst.data) &&
-                     polymon(PM_STONE_GOLEM)))
+            if (!uarmh && touched_monster(ocorpsenm))
                 goto petrify;
         case CREAM_PIE:
         case BLINDING_VENOM:
@@ -788,18 +786,14 @@ toss_up(struct obj *obj, boolean hitsroof)
                        !(obj->otyp == CORPSE &&
                          touch_petrifies(&mons[obj->corpsenm])))
                 pline("Your %s does not protect you.", xname(uarmh));
-        } else if (obj->otyp == CORPSE &&
-                   touch_petrifies(&mons[obj->corpsenm])) {
-            if (!Stone_resistance &&
-                !(poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))) {
-            petrify:
-                /* "what goes up..." */
-                pline("You turn to stone.");
-                if (obj)
-                    dropy(obj); /* bypass most of hitfloor() */
-                done(STONING, killer_msg(STONING, "elementary physics"));
-                return obj ? TRUE : FALSE;
-            }
+        } else if (obj->otyp == CORPSE && touched_monster(obj->corpsenm)) {
+        petrify:
+            /* "what goes up..." */
+            pline("You turn to stone.");
+            if (obj)
+                dropy(obj); /* bypass most of hitfloor() */
+            done(STONING, killer_msg(STONING, "elementary physics"));
+            return obj ? TRUE : FALSE;
         }
         hitfloor(obj);
         losehp(dmg, killer_msg(DIED, "a falling object"));

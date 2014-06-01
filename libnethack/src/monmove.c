@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-05-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1045,7 +1045,8 @@ not_special:
     }
 postmov:
     if (mmoved == 1 || mmoved == 3) {
-        boolean canseeit = cansee(mtmp->mx, mtmp->my);
+        boolean canseeit = isok(mtmp->mx, mtmp->my) &&
+            cansee(mtmp->mx, mtmp->my);
 
         if (mmoved == 1) {
             newsym(omx, omy);   /* update the old position */
@@ -1057,7 +1058,8 @@ postmov:
             ptr = mtmp->data;
 
             /* open a door, or crash through it, if you can */
-            if (IS_DOOR(level->locations[mtmp->mx][mtmp->my].typ)
+            if (isok(mtmp->mx, mtmp->my)
+                && IS_DOOR(level->locations[mtmp->mx][mtmp->my].typ)
                 && !passes_walls(ptr)   /* doesn't need to open doors */
                 && !can_tunnel   /* taken care of below */
                 ) {
@@ -1126,13 +1128,14 @@ postmov:
                         else
                             here->doormask = D_BROKEN;
                         /* newsym(mtmp->mx, mtmp->my); *//* done below */
-                        unblock_point(mtmp->mx, mtmp->my);      /* vision */
+                        unblock_point(mtmp->mx, mtmp->my);  /* vision */
                     }
                     /* if it's a shop door, schedule repair */
                     if (*in_rooms(level, mtmp->mx, mtmp->my, SHOPBASE))
                         add_damage(mtmp->mx, mtmp->my, 0L);
                 }
-            } else if (level->locations[mtmp->mx][mtmp->my].typ == IRONBARS) {
+            } else if (isok(mtmp->mx, mtmp->my) &&
+                       level->locations[mtmp->mx][mtmp->my].typ == IRONBARS) {
                 if (flags.verbose && canseemon(mtmp))
                     pline_once("%s %s %s the iron bars.", Monnam(mtmp),
                                /* pluralization fakes verb conjugation */
@@ -1153,10 +1156,11 @@ postmov:
                 u.ux = mtmp->mx;
                 u.uy = mtmp->my;
                 swallowed(0);
-            } else
+            } else if (isok(mtmp->mx, mtmp->my))
                 newsym(mtmp->mx, mtmp->my);
         }
-        if (OBJ_AT(mtmp->mx, mtmp->my) && mtmp->mcanmove) {
+        if (isok(mtmp->mx, mtmp->my) &&
+            OBJ_AT(mtmp->mx, mtmp->my) && mtmp->mcanmove) {
             /* recompute the likes tests, in case we polymorphed or if the
                "likegold" case got taken above */
             if (setlikes) {
@@ -1212,7 +1216,8 @@ postmov:
             }
         }
 
-        if (hides_under(ptr) || ptr->mlet == S_EEL) {
+        if (isok(mtmp->mx, mtmp->my) &&
+            (hides_under(ptr) || ptr->mlet == S_EEL)) {
             /* Always set--or reset--mundetected if it's already hidden (just
                in case the object it was hiding under went away); usually set
                mundetected unless monster can't move.  */

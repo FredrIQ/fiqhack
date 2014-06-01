@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-31 */
 /* Copyright (c) Daniel Thaler, 2012 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -338,10 +338,14 @@ get_username_password(struct server_info *server)
     server->password = NULL;
 
     do {
-        if (server->username)
+        if (server->username) {
             free(server->username);
-        if (server->password)
+            server->username = NULL;
+        }
+        if (server->password) {
             free(server->password);
+            server->password = NULL;
+        }
 
         curses_getline("Username (new or existing account):",
                        &(server->username), getlin_strdup_callback);
@@ -354,6 +358,7 @@ get_username_password(struct server_info *server)
                 &(server->password), getlin_strdup_callback);
             if (!server->password) {
                 free(server->username);
+                server->username = NULL;
                 return 0;
             }
 
@@ -379,6 +384,10 @@ get_username_password(struct server_info *server)
             break;
 
         case NO_CONNECTION:
+            curses_msgwin(
+                "Error: could not establish a connection.", krc_notification);
+            break;
+
         case AUTH_SUCCESS_RECONNECT:
             curses_msgwin(
                 "Error: The server seems to think you are connected already.",
@@ -407,7 +416,7 @@ add_server_menu(struct server_info **servlist)
                        getlin_strdup_callback);
         if (!server.hostname)
             return NULL;
-        curses_getline("Port number (0 or empty = use default):",
+        curses_getline("Port number (0 = use default):",
                        &(server.port), getlin_positive_int_callback);
         if (server.port < 0) {
             free(server.hostname);
@@ -582,8 +591,10 @@ connect_server(struct server_info *server)
                 curses_msgwin("Sorry, the registration failed.",
                               krc_notification);
                 return FALSE;
-            } else
+            } else {
+                strcpy(ui_flags.username, server->username);
                 break;
+            }
         }
     }
 
@@ -614,7 +625,7 @@ netgame_mainmenu(struct server_info *server)
     static struct nh_menuitem netmenu_items[] = {
         {NEWGAME, MI_NORMAL, "new game", 'n', 0, 0},
         {LOAD, MI_NORMAL, "load game", 'l', 0, 0},
-        {REPLAY, MI_NORMAL, "view replay", 'v', 0, 0},
+        {REPLAY, MI_NORMAL, "view a game", 'v', 0, 0},
         {OPTIONS, MI_NORMAL, "set options", 'o', 0, 0},
         {TOPTEN, MI_NORMAL, "show score list", 's', 0},
         {ACCOUNT, MI_NORMAL, "account settings", 'a', 0},
@@ -628,8 +639,10 @@ netgame_mainmenu(struct server_info *server)
 
     /* In connection-only mode, we can't read the config file until we're
        already logged into the server. So do it now. */
-    if (ui_flags.connection_only)
+    if (ui_flags.connection_only) {
         read_ui_config();
+        read_nh_config();
+    }
 
     while (1) {
         if (COLS >= 100) {

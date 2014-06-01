@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-17 */
+/* Last modified by Alex Smith, 2014-05-31 */
 #ifndef NHSERVER_H
 # define NHSERVER_H
 
@@ -40,7 +40,7 @@
 # include "nethack.h"
 # include "nethack_client.h"    /* for enum authresult */
 
-# define DEFAULT_PORT 53421     /* different from NitroHack */
+# define DEFAULT_PORT 53430     /* different from NitroHack */
 
 /* If using aimake, take directory options from there */
 # ifndef STRINGIFY_OPTION
@@ -119,8 +119,7 @@ struct client_command {
 
 struct gamefile_info {
     int gid;
-    const char *filename;
-    const char *username;
+    char *filename;
 };
 
 
@@ -173,7 +172,7 @@ extern long db_add_new_game(int uid, const char *filename, const char *role,
                             const char *levdesc);
 extern void db_update_game(int gameid, int moves, int depth,
                            const char *levdesc);
-extern int db_get_game_filename(int uid, int gid, char *namebuf, int buflen);
+extern int db_get_game_filename(int gid, char *filenamebuf, int buflen);
 extern void db_delete_game(int uid, int gid);
 extern struct gamefile_info *db_list_games(int completed, int uid, int limit,
                                            int *count);

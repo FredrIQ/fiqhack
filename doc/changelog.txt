@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-05-08
+Last modified by Alex Smith, 2014-05-31
 
 Copyright (C) 2013 Alex Smith.
 
@@ -158,8 +158,10 @@ visible light. (Grunt, C341-7, 3df1f97)
 
 Multi-turn commands can now be interrupted voluntarily by the player, if they
 would be interrupted by the appearance of a monster, via specifying a maximum
-number of turns to perform the command in the same way as a repeat
-count. (Engine code from Nitro, 17a9532; interface code from 4, 41fcf8c)
+number of turns to perform the command in the same way as a repeat count, or
+(if the `animation` option is set to animate interruptible commands) by
+pressing a key or clicking on the map. (Engine code from Nitro, 17a9532;
+interface code from 4, 41fcf8c, c1d4e5b)
 
 Non-time-consuming commands no longer cause the character to sink further into
 lava. (Nitro, f4754b2, 86b2d0c)
@@ -224,12 +226,17 @@ Monsters are now capable of using their special attacks even if tame; and more
 special attacks now work for polymorphed players than before. (Grunt and Ace,
 53a8e41, 05587f7, 3df54b4, 239ed8e, 93811e3, eb5c83c, 7c67ab1, 867118c)
 
-Monsters now have a difficulty independent of the player's level. (Nitro,
-98a3b47)
+Monsters who naturally live on a level (rather than spawning later) now have a
+difficulty mostly independent of the player's level (with some exceptions in
+the late-game to keep the game balance close to 3.4.3; in the early game
+(pre-D:12), the game wil calculate monster difficulty as though the player's
+level were 1). (Nitro and 4, 98a3b47, 0ea054c)
 
-Tame monsters are now better at dodging, but worse at hitting, at low health
-(because previously, they wouldn't get into combat at all in such a situation,
-but the monster AI changes make that impossible). (Ace, 0f8a951)
+Tame monster will no longer attack nor be attacked when under 1/3 health; when
+injured but on more health, they will be more cautious about what they fight.
+They also no longer attack peaceful monsters, unless you anger the peaceful
+monster first.  As a safeguard against being caught in crossfire, tame
+monsters at below 1/3 health are now almost impossible to hit. (4, 037731d)
 
 Hostile monsters will now attack each other if they dislike each other
 naturally (e.g. elves versus orcs); this change was considered acceptable for
@@ -316,8 +323,23 @@ player's hunger level are now visible. (Un, 145e145, 6ec5736)
 While in wizard mode, confused level teleport on the Planes no longer has a
 chance of crashing the game. (Grunt, C343-5, 3df1f97)
 
+Two new commands are added to accompany `#panic` for testing the game's error
+recovery routines: `#impossible` causes a nonfatal error (unlike `#panic`
+which causes a fatal error), and `#desync` corrupts the binary save. (4,
+7a3978f)
+
+A new debug command `#rewind` allows rewinding of save files to earlier
+states, perhaps as part of a manual recovery process, or for testing; it
+rewinds to the current turn, and is intended for use while replaying a game.
+(It can also undo a game over, although it will not move the save file back
+into the saves directory; you'll have to do that by hand.) (4, c1d9296)
+
 The `#vision` command now additionally shows which areas are considered by the
 game to be lit. (4, 35cdb4f)
+
+The environment variables that could be used to skew the RNG for special room
+generation no longer exist (they caused problems with save file
+reproducibility). (4, 83dae9b)
 
 
 New Game Modes
@@ -328,6 +350,11 @@ Some new challenge game modes have been added, controlled by birth options:
 character unable to see all game; and `permahallu`, in which your character
 spends the entire game hallucinating. (4 and Bilious, fd61601, ffe5ae5,
 8fd78aa)
+
+A new game mode `polyinit` lets you play the whole game polymorphed into a
+monster; you select your polyform as a birth option, and you start polymorphed
+into that form and with intrinsic unchanging.  Games in this game mode are not
+eligible for the high score table. (4, bdb83fb)
 
 
 Minor Gameplay Changes
@@ -356,6 +383,10 @@ in order to avoid spoilers from this. (4, 5a6e10f)
 
 Items in shops now have price tags attached, without needing to have to chat
 to the shopkeeper or pick them up to get a price quote. (Un, 9d7ef39)
+
+Hallucination now rerolls appearances somewhat less often (once per
+time-consuming action for most hallucinated objects, rather than once per
+screen refresh). (4, 4c8b7da)
 
 
 Commands
@@ -415,7 +446,9 @@ the same way). (4, 6860cd2)
 `^D`: Causing a monster to reel via kicking it with kicking boots now
 identifies the boots as kicking boots. (4, 243d312..e7c4029)
 
-`e`: Now warns upon dangerous attempts to eat food. (Ace, 649a6b7)
+`e`: Now warns upon dangerous attempts to eat food; warnings for tainted
+corpses no longer cost an existing edibility intrinsic. (Ace and 4, 649a6b7,
+5e5f135)
 
 `e`: No longer works on artifacts that can't be touched. (Grunt, C343-244,
 7ed1784)
@@ -639,6 +672,9 @@ they are sent by particular gods or not. (Grunt, C343-122, 6f19361)
 preventing the player from indirectly destroying the corpse). (Grunt,
 SC343-16, 7536ccc) 
 
+`D`: Disintegration attacks from black dragons now affect monster inventory
+the same way as player inventory. (4, b060883, cf276aa)
+
 `e`,`y`: Exploding monsters are no longer visible while the effects of the
 explosion are calculated (so that, for instance, you will not hallucinate a
 random monster in the location where a black light exploded). (Grunt, C343-64,
@@ -646,6 +682,9 @@ a143c93)
 
 `e`,`y`: Exploding monsters are now correctly masked by hallucination. (Grunt,
 C343-128, f5964d4)
+
+`e`: Spheres are now consistently incapable of picking up items. (4, C343-138,
+d2f3edd)
 
 `E`: Air elementals are no longer solid. (4, C343-295, 1dae971)
 
@@ -1008,6 +1047,12 @@ was much more common than using it for an actual shell, and the `^Z` suspend
 command (which was removed by NitroHack but re-added in NetHack 4) is probably
 more useful. (Nitro and 4, c2316d2, 10645f3)
 
+`!`: The `!` command now shows a menu that contains commands that are
+generally applicable regardless of the character's situation (such as changing
+options, viewing character statistics, and saving the game); the commands each
+have their own individual bindings too, but the combined menu may be easier
+for some players to remember. (4, e73128a)
+
 `_`: Travel now understands that the player might want to route through traps; it
 will still try to avoid traps, but if avoiding a trap is impossible or would
 require going a long way out of the way, it will route to just before the trap
@@ -1080,6 +1125,11 @@ inventory); because of this, randomized-appearance items no longer prompt for
 names when destroyed (rather, there is a shortcut in the `C` menu to name the
 most recently destroyed randomized-appearance item). (Ace, 9562e5c)
 
+`^C`: Now a synonym for `!` (open menu), but one which works even at prompts
+(thus allowing you to save via opening the menu at a prompt, and then choosing
+to save from the menu).  Note that only a limited range of functionality is
+available from the menu while at a prompt. (4, 5b6b996)
+
 `D`: Now allows selection of all unidentified items. (Nitro, a854a21)
 
 `e`: Eating from the ground now works like Slash'EM, using `e,` (and a menu if
@@ -1098,7 +1148,8 @@ Dyna, 1115668, c489412)
 `g`,`G`,`5`: The difference between these commands (whether they stop at
 intersections) is now controlled via the `corridorbranch` option, not which
 command you use, and the three are now identical (freeing up any of them to be
-rebound, should you need more keys for whatever reason).
+rebound, should you need more keys for whatever reason). (4, b3a276f..9ca21c3
+and others)
 
 `^G`: The old `^G` (debug mode create monster) was moved to `#genesis`; `^G`
 now feels the ground for items. (4, f394be6, 1c76f8f)
@@ -1219,12 +1270,13 @@ Many commands have gained additional bindings, and in a few cases lost some:
   * `#monster`: now also available via `M` (farmove is on `g` and Num 5)
   * `#offer`: now can also be spelled `#sacrifice`
   * `#pray`: now also available via `^W` outside wizard mode
+  * `#quit`: no longer implemented, use `S!` instead
   * `#ride`: now also available on `M-r`
   * `#rub`: merged into `V`
   * `#twoweapon`: now also available via `X`
   * `version`, `verhistory`: moved onto the help menu `?`
 
-(4, 66d44c8, 79619b6, 2de7cf1)
+(4, 66d44c8, 79619b6, 2de7cf1, eb717fd, 2ee0dcb)
 
 The code now always uses a menu upon pressing `?` at an object prompt, rather
 than using the message area when there's exctly one possibility. (Nitro,
@@ -1271,6 +1323,11 @@ To help prevent typos, inventory letter assignment now tends to steer food items
 away from the letters eyYnN; potions away from qyYnN; scrolls from r; wands from
 z; and armor, gems, rocks, balls, and chains toward these problem letters. (4,
 894d615)
+
+Walking over items now never produces a pop-up box describing them; rather,
+they appear in the inventory sidebar (if using a wide terminal), and a message
+appears ("There are a few items here", etc.) to alert the user that there are
+items there (perhaps propmting the user to view them using `:`). (Ace, 44f4c51)
 
 
 Options
@@ -1349,6 +1406,12 @@ sidebar will be used to show the player's inventory and information on the
 current map square.  (This replaces the "perm_invent" option, that used not to
 work in tty play anyway.) (Nitro, 39db83c, 171ff59)
 
+On very very large terminals (large enough that the map, status area and
+message area have all expanded to full size), any remaining space is used to
+show hints about the game controls, and information about the map square under
+the mouse cursor (if the `mouse` option is on). (4, 918eec3, 7cb7397..b604352,
+cf03b19..4a08a7e, c4c2b2e..d20d64d, 646f9f1)
+
 The game now understands "dark gray"/"black" as an additional color to the 14
 already available (although only 7 of them were typically used); now, all 16
 available colors are used by the game for rendering. (Bilious, Nitro and 4,
@@ -1357,6 +1420,12 @@ ef6581f, 9291a95)
 The terminal / game window can now be resized during the game; so long as the
 new size is at least 80 by 24, this will not break rendering. (Nitro and 4,
 a00086e, 72963ea, 625ba90, 77a94cc, 6b7506b)
+
+A new `animation` option (replacing `runmode`) allows control of the speed at
+which all interruptible multi-turn actions play, not just running.  For
+instance, when turned on, multi-turn search actions animate (with the turn
+counter increasing and monsters moving around being visible on the map).  This
+is so that they can be interrupted. (4, c1d4e5b)
 
 Many monsters (and the occasional dungeon feature) have been assigned new
 colors in order to make them more distinct; some monsters have also been
@@ -1437,6 +1506,12 @@ artifacts. (Grunt, 1f9636f, ef35a26)
 
 Self-genocide while polymorphed no longer creates a corrupted tombstone. (4,
 C342-16, c3bdbc4)
+
+The game executable can now connect to the Internet to receive NetHack-related
+announcements and (when there are no announcements available) gameplay tips.
+This feature will not be activated without the user's permission (it asks on
+the first load); even after the first load, you can control it via the
+`networkmotd` option. (4, b0786a7, 367915e)
 
 
 Internals Improvements
@@ -1562,6 +1637,15 @@ leaks will be discovered, and that temporary objects can be correctly
 deallocated if the game ends while they are allocated (say, due to
 hangup). (4, 301962c)
 
+The game is now capable of recovering saves automatically if something goes
+wrong; and it does a save and restore almost every turn to ensure that the
+save file can still be loaded correctly.  After a save-related error, the user
+will have the option of automatic recovery, manual recovery (leaving the save
+file in place to be manually edited), or in some cases automatic repair
+(automatic recovery works by reloading from a backup save, automatic repair
+via treating impossible values as plausible legal values). (4, 41a0806,
+7a3978f)
+
 
 Client/Server Structure and API
 -------------------------------
@@ -1606,6 +1690,18 @@ the game engine) that allows the game engine to be on a different physical
 computer than the interface, and handles things like user accounts, shared
 bones files and so on. (Nitro and 4, f95e83d..e81e925, 7018a13 and others)
 
+It's now possible to have a game open in more than one process at once; moves
+made in either will be reflected in the other.  (This is useful for
+implementing features like watching and replaying, and is also useful if you
+lose a connection because you don't have to wait for the old connection to
+time out.) (4, f4ea0a0 and others)
+
+It is now possible to view replays of games, and (for server play) watch live
+games.  This can be done from the main menu, or the menu inside a game (for an
+"instant replay" feature, which even works inside prompts if the menu is
+accessed via a keybinding that isn't needed by the prompt.) (Nitro and 4,
+039fc4c, de9ba8b..977fe43, 6e8fb4c..5c91a2b and others)
+
 
 Error Handling
 --------------
@@ -1641,7 +1737,7 @@ or similar situations). (4, C342-13, 9923807, 22053c2 and others)
 
 It is now possible to save in the middle of a turn; the game tracks the
 choices made during the partially completed turn, and replays them upon
-reloading the save. (4, 5c5bf51)
+reloading the save. (4, 5c5bf51, 5b6b996)
 
 
 Packaging, Build System, and Libraries

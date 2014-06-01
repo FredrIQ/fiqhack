@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-05-29 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -1134,7 +1134,8 @@ see_monsters(boolean reroll_hallucinated_appearances)
     for (mon = level->monlist; mon; mon = mon->nmon) {
         if (DEADMONSTER(mon))
             continue;
-        newsym_core(mon->mx, mon->my, reroll_hallucinated_appearances);
+        if (isok(mon->mx, mon->my))
+            newsym_core(mon->mx, mon->my, reroll_hallucinated_appearances);
         if (mon->wormno)
             see_wsegs(mon);
     }

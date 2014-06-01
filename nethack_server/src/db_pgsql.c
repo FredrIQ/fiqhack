@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-02-11 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -91,18 +91,17 @@ static const char SQL_update_game[] =
     "SET ts = 'now', moves = $2::integer, depth = $3::integer, level_desc = "
     "$4::text WHERE gid = $1::integer;";
 
-static const char SQL_get_game_filename[] =
-    "SELECT filename " "FROM games "
-    "WHERE (owner = $1::integer OR $1::integer = 0) AND gid = $2::integer;";
-
 static const char SQL_set_game_done[] =
     "UPDATE games " "SET done = TRUE " "WHERE gid = $1::integer;";
 
 static const char SQL_list_games[] =
     "SELECT g.gid, g.filename, u.name "
     "FROM games AS g JOIN users AS u ON g.owner = u.uid "
-    "WHERE (u.uid = $1::integer OR $1::integer = 0) AND g.done = $2::boolean "
-    "ORDER BY g.ts DESC " "LIMIT $3::integer;";
+    "WHERE (u.uid = $1::integer OR $1::integer = 0 OR"
+    "       ($1::integer < 0 AND u.uid <> -($1::integer))) "
+    "      AND (g.done = $2::boolean) "
+    "      AND (g.gid = $3::integer OR $3::integer = 0) "
+    "ORDER BY g.ts DESC LIMIT $4::integer;";
 
 static const char SQL_add_topten_entry[] =
     "INSERT INTO topten (gid, points, hp, maxhp, deaths, end_how, death, "
@@ -453,33 +452,6 @@ db_update_game(int game, int moves, int depth, const char *levdesc)
     PQclear(res);
 }
 
-
-int
-db_get_game_filename(int uid, int gid, char *namebuf, int buflen)
-{
-    PGresult *res;
-    char uidstr[16], gidstr[16];
-    const char *const params[] = { uidstr, gidstr };
-    const int paramFormats[] = { 0, 0 };
-
-    sprintf(uidstr, "%d", uid);
-    sprintf(gidstr, "%d", gid);
-
-    res =
-        PQexecParams(conn, SQL_get_game_filename, 2, NULL, params, NULL,
-                     paramFormats, 0);
-    if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
-        log_msg("get_game_filename error: %s", PQerrorMessage(conn));
-        PQclear(res);
-        return FALSE;
-    }
-
-    strncpy(namebuf, PQgetvalue(res, 0, 0), buflen);
-    PQclear(res);
-    return TRUE;
-}
-
-
 void
 db_delete_game(int uid, int gid)
 {
@@ -501,25 +473,28 @@ db_delete_game(int uid, int gid)
 }
 
 
-struct gamefile_info *
-db_list_games(int completed, int uid, int limit, int *count)
+static struct gamefile_info *
+db_game_name_core(int completed, int uid, int gid, int limit, int *count)
 {
     PGresult *res;
     int i, gidcol, fncol, ucol;
     struct gamefile_info *files;
-    char uidstr[16], complstr[16], limitstr[16];
-    const char *const params[] = { uidstr, complstr, limitstr };
-    const int paramFormats[] = { 0, 0, 0 };
+    char uidstr[16], gidstr[16], complstr[16], limitstr[16];
+    const char *const params[] = { uidstr, complstr, gidstr, limitstr };
+    const int paramFormats[] = { 0, 0, 0, 0 };
+    const char *const fmtstr = completed ? "%s/completed/%s/%s" :
+        "%s/save/%s/%s";
 
     if (limit <= 0 || limit > 100)
         limit = 100;
 
     sprintf(uidstr, "%d", uid);
-    sprintf(complstr, "%d", ! !completed);
+    sprintf(gidstr, "%d", gid);
+    sprintf(complstr, "%d", !!completed);
     sprintf(limitstr, "%d", limit);
 
     res =
-        PQexecParams(conn, SQL_list_games, 3, NULL, params, NULL, paramFormats,
+        PQexecParams(conn, SQL_list_games, 4, NULL, params, NULL, paramFormats,
                      0);
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
         log_msg("list_games error: %s", PQerrorMessage(conn));
@@ -536,12 +511,43 @@ db_list_games(int completed, int uid, int limit, int *count)
     files = malloc(sizeof (struct gamefile_info) * (*count));
     for (i = 0; i < *count; i++) {
         files[i].gid = atoi(PQgetvalue(res, i, gidcol));
-        files[i].filename = strdup(PQgetvalue(res, i, fncol));
-        files[i].username = strdup(PQgetvalue(res, i, ucol));
+        files[i].filename = malloc(strlen(fmtstr) +
+                                   strlen(settings.workdir) +
+                                   strlen(PQgetvalue(res, i, fncol)) +
+                                   strlen(PQgetvalue(res, i, ucol)) + 1);
+        sprintf(files[i].filename, fmtstr, settings.workdir,
+                PQgetvalue(res, i, ucol), PQgetvalue(res, i, fncol));
     }
 
     PQclear(res);
     return files;
+}
+
+int
+db_get_game_filename(int gid, char *filenamebuf, int buflen)
+{
+    struct gamefile_info *gfi;
+    int completed, count;
+    
+    for (completed = 0; completed <= 1; completed++) {
+        gfi = db_game_name_core(completed, 0, gid, 1, &count);
+
+        if (count) {
+            strncpy(filenamebuf, gfi[0].filename, buflen);
+            filenamebuf[buflen-1] = '\0';
+            free(gfi[0].filename);
+            free(gfi);
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+struct gamefile_info *
+db_list_games(int completed, int uid, int limit, int *count)
+{
+    return db_game_name_core(completed, uid, 0, limit, count);
 }
 
 void

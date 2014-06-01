@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-31 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -62,6 +62,22 @@ set_tile_file(const char *tilefilename)
     set_tiles_tile_file(namebuf, TILES_PER_COL, TILES_PER_ROW);
 }
 
+/* A delayed-action curs_set; we don't show the cursor until just before we
+   request a key. This prevents it flickering, and prevents the tiles view
+   jumping around as we hide a message window. */
+int
+nh_curs_set(int visible)
+{
+    int old_want_cursor = ui_flags.want_cursor;
+
+    ui_flags.want_cursor = visible;
+
+    if (!visible && old_want_cursor)
+        curs_set(0);
+
+    return old_want_cursor;
+}
+
 void
 init_curses_ui(const char *dataprefix)
 {
@@ -86,7 +102,8 @@ init_curses_ui(const char *dataprefix)
     nonl();
     meta(stdscr, TRUE);
     leaveok(stdscr, TRUE);
-    orig_cursor = curs_set(1);
+    orig_cursor = curs_set(1);          /* not nh_curs_set */
+    ui_flags.want_cursor = 1;
     keypad(stdscr, TRUE);
 
     while (LINES < ROWNO + 3 || COLS < COLNO + 1) {
@@ -95,7 +112,8 @@ init_curses_ui(const char *dataprefix)
         printw("Current size: (%d, %d)\n", COLS, LINES);
         printw("Minimum size: (%d, %d)\n", COLNO + 1, ROWNO + 3);
         printw("Size your terminal larger, or press 'q' to quit.\n");
-        if (getch() == 'q') {
+        int k = getch();
+        if (k == 'q' || k == KEY_HANGUP) {
             endwin();
             exit(1);
         }
@@ -111,7 +129,7 @@ void
 exit_curses_ui(void)
 {
     cleanup_sidebar(TRUE);
-    curs_set(orig_cursor);
+    curs_set(orig_cursor); /* not nh_curs_set */
     endwin();
     basewin = NULL;
 }
@@ -129,13 +147,27 @@ static const char ascii_borders[] = {
     [FC_LLCORNER] = '-', [FC_LRCORNER] = '-',
     [FC_LTEE] = '|', [FC_RTEE] = '|', [FC_TTEE] = '-', [FC_BTEE] = '-',
 };
-static const cchar_t *const *const unicode_borders[] = {
-    [FC_HLINE] = &WACS_HLINE , [FC_VLINE] = &WACS_VLINE,
-    [FC_ULCORNER] = &WACS_ULCORNER, [FC_URCORNER] = &WACS_URCORNER,
-    [FC_LLCORNER] = &WACS_LLCORNER, [FC_LRCORNER] = &WACS_LRCORNER,
-    [FC_LTEE] = &WACS_LTEE, [FC_RTEE] = &WACS_RTEE,
-    [FC_TTEE] = &WACS_TTEE, [FC_BTEE] = &WACS_BTEE,
-};
+
+/* We can't use an array for this; on Windows, you can't initialize a variable
+   with the address of a variable from a DLL. */
+static const cchar_t *
+unicode_border(enum framechars which)
+{
+    switch(which)
+    {
+    case FC_HLINE: return WACS_HLINE;
+    case FC_VLINE: return WACS_VLINE;
+    case FC_ULCORNER: return WACS_ULCORNER;
+    case FC_URCORNER: return WACS_URCORNER;
+    case FC_LLCORNER: return WACS_LLCORNER;
+    case FC_LRCORNER: return WACS_LRCORNER;
+    case FC_LTEE: return WACS_LTEE;
+    case FC_RTEE: return WACS_RTEE;
+    case FC_TTEE: return WACS_TTEE;
+    case FC_BTEE: return WACS_BTEE;
+    }
+    return WACS_CKBOARD; /* should be unreachable */
+}
 
 static void
 set_frame_cchar(cchar_t *cchar, enum framechars which, nh_bool mainframe)
@@ -145,14 +177,16 @@ set_frame_cchar(cchar_t *cchar, enum framechars which, nh_bool mainframe)
         setcchar(cchar, w, (attr_t)0, mainframe ? MAINFRAME_PAIR : FRAME_PAIR,
                  NULL);
     } else {
-        int wchar_count = getcchar(*unicode_borders[which],
+        int wchar_count = getcchar(unicode_border(which),
                                    NULL, NULL, NULL, NULL);
         wchar_t w[wchar_count + 1];
         attr_t attr;
         short pairnum;
-        getcchar(*unicode_borders[which], w, &attr, &pairnum, NULL);
+        getcchar(unicode_border(which), w, &attr, &pairnum, NULL);
         attr = 0;
-        pairnum = mainframe ? MAINFRAME_PAIR : FRAME_PAIR;
+        pairnum = mainframe ? MAINFRAME_PAIR :
+            ui_flags.ingame && ui_flags.current_followmode != FM_PLAY &&
+            !ui_flags.in_zero_time_command ? NOEDIT_FRAME_PAIR : FRAME_PAIR;
         setcchar(cchar, w, attr, pairnum, NULL);
     }
 }
@@ -729,15 +763,125 @@ handle_resize(void)
 }
 
 
+/* When the player presses a key, we want to try to interpret it a zero-time
+   command, "menu", or "save", in any context for which it has no other
+   meaning. (Thus, you can use the Ctrl-C binding for "menu" to save at a wish
+   prompt, for instance.) This means we need to know which keys are meaningful
+   in which contexts. */
+static nh_bool
+key_is_meaningful_in_context(int key, enum keyreq_context context)
+{
+    if (key == KEY_SIGNAL)
+        return TRUE;
+
+    switch (context) {
+        /* Cases in which all input is meaningful... */
+    case krc_get_command:
+    case krc_interrupt_long_action:
+    case krc_keybinding:
+        /* ...or which get command arguments, in which case we can't interrupt,
+           really */
+    case krc_get_movecmd_direction:
+    case krc_count:
+        /* ...or where any button dismisses a prompt */
+    case krc_more:            /* do we want this? */
+    case krc_pause_map:
+    case krc_notification:
+        return TRUE;
+
+        /* Cases in which all direction commands are meaningful, in addition
+           to the usual meaningful keys. (To handle things like shift-left,
+           control-h, etc.). */
+    case krc_getpos:
+    case krc_getdir:
+
+        if (ui_flags.current_followmode == FM_WATCH &&
+            !ui_flags.in_zero_time_command)
+            return FALSE;
+
+        if (key_to_dir(key) != DIR_NONE)
+            return TRUE;
+        /* otherwise fall through */
+
+        /* Cases in which the meaningful inputs are all ASCII and/or
+           keypad/function keys, and no input is meaningful when watching. */
+    case krc_yn:
+    case krc_ynq:
+    case krc_yn_generic:
+    case krc_getlin:
+    case krc_menu:
+    case krc_objmenu:
+    case krc_query_key_inventory:
+    case krc_query_key_inventory_nullable:
+    case krc_query_key_inventory_or_floor:
+    case krc_query_key_symbol:
+    case krc_query_key_letter_reassignment:
+
+        if (ui_flags.current_followmode == FM_WATCH &&
+            !ui_flags.in_zero_time_command)
+            return FALSE;
+
+        return classify_key(key) == 1  || /* numpad */
+            (key >= ' ' && key <= '~') || /* printable ASCII */
+            /* editing keys that map to control-combinations */
+            key == 8 || key == 10 || key == 13 || key == 27 ||
+            /* codes meaningful to some prompt or other */
+            key == KEY_BACKSPACE || key == KEY_DC || key == KEY_DOWN ||
+            key == KEY_END || key == KEY_ENTER || key == KEY_ESCAPE ||
+            key == KEY_HOME || key == KEY_LEFT || key == KEY_NPAGE ||
+            key == KEY_PPAGE || key == KEY_RIGHT || key == KEY_UP ||
+            /* not real keys */
+            key == KEY_OTHERFD || key == KEY_SIGNAL || key == KEY_RESIZE ||
+            key == KEY_UNHOVER || key > KEY_MAX;
+    }
+
+    /* should be unreachable */
+    return TRUE;
+}
+
+
 int
 nh_wgetch(WINDOW * win, enum keyreq_context context)
 {
     int key = 0;
 
     draw_extrawin(context);
-    doupdate();
+
+    /* If we have a message we want to display as soon as we're in-game, do it
+       here (so that we can show it above message boxes in watch mode). This
+       involves a recursive call, so we have to be careful to prevent an
+       infinite regress. */
+    if (ui_flags.ingame && ui_flags.gameload_message &&
+        !ui_flags.in_zero_time_command) {
+        const char *msg = ui_flags.gameload_message;
+        
+        ui_flags.in_zero_time_command = TRUE;
+        ui_flags.gameload_message = NULL;
+
+        curses_msgwin(msg, krc_notification);
+        
+        ui_flags.in_zero_time_command = FALSE;
+    }
+
     do {
-        key = wgetch(win);
+        curs_set(ui_flags.want_cursor);
+
+        if (!ui_flags.ingame)
+            ui_flags.queued_server_cancels = 0;
+
+        if (ui_flags.queued_server_cancels && !ui_flags.in_zero_time_command) {
+            ui_flags.queued_server_cancels--;
+            key = KEY_SIGNAL;
+        } else
+            key = wgetch(win);
+
+        if (ui_flags.ingame && ui_flags.in_zero_time_command &&
+            key == KEY_SIGNAL) {
+            /* Don't let the server knock us out of something local to the
+               client (or effectively local). */
+            ui_flags.queued_server_cancels = 1;
+            continue;
+        }
 
         if (key == KEY_HANGUP) {
             nh_exit_game(EXIT_SAVE);
@@ -785,13 +929,6 @@ nh_wgetch(WINDOW * win, enum keyreq_context context)
             }
         }
 
-        if (key == 0x3 && ui_flags.playmode == MODE_WIZARD) {
-            /* we're running in raw mode, so ctrl+c doesn't work. for wizard we 
-               emulate this to allow breaking into gdb. */
-            raise(SIGINT);
-            key = 0;
-        }
-
         if (key == KEY_RESIZE) {
             key = 0;
             handle_resize();
@@ -802,6 +939,15 @@ nh_wgetch(WINDOW * win, enum keyreq_context context)
             key = 0;
             if (ui_flags.connected_to_server)
                 nhnet_check_socket_fd();
+        }
+
+        if (key && !key_is_meaningful_in_context(key, context)) {
+            /* Perhaps the player's trying to open the main menu, save the
+               game, or the like? */
+            clear_extrawin();
+            handle_nested_key(key); /* might longjmp out */
+            key = 0;
+            draw_extrawin(context);
         }
 
     } while (!key);
@@ -972,6 +1118,9 @@ curses_raw_print(const char *str)
 void
 curses_delay_output(void)
 {
+    if (settings.animation == ANIM_INSTANT ||
+        settings.animation == ANIM_INTERRUPTIBLE)
+        return;
     doupdate();
 #if defined(WIN32)
     Sleep(45);

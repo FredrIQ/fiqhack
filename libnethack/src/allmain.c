@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-05-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -20,7 +20,7 @@ extern const struct cmd_desc cmdlist[];
 static const char *const copyright_banner[] =
     { COPYRIGHT_BANNER_A, COPYRIGHT_BANNER_B, COPYRIGHT_BANNER_C, NULL };
 
-static void pre_move_tasks(boolean);
+static void pre_move_tasks(boolean, boolean);
 
 static void newgame(microseconds birthday);
 
@@ -85,6 +85,8 @@ nh_lib_exit(void)
 boolean
 nh_exit_game(int exit_type)
 {
+    volatile int etype = exit_type;
+
     /* This routine always throws an exception, and normally doesn't return (it
        lets nh_play_game do the returning). It will, however, have to return
        itself if the game isn't running. In such a case, all options give a
@@ -97,9 +99,21 @@ nh_exit_game(int exit_type)
 
     if (program_state.game_running) {
 
-        switch (exit_type) {
+        if (program_state.followmode != FM_PLAY && etype != EXIT_RESTART)
+            etype = EXIT_SAVE; /* no quitting other players' games */
+
+        switch (etype) {
         case EXIT_SAVE:
+            if (program_state.followmode == FM_PLAY)
+                log_game_state();
+
             terminate(GAME_DETACHED);
+            break;
+
+        case EXIT_RESTART:
+            /* This is no more abusable than EXIT_SAVE (hopefully neither is
+               abusable at all). */
+            terminate(CLIENT_RESTART);
             break;
 
         case EXIT_QUIT:
@@ -173,6 +187,10 @@ realtime_messages(boolean moon, boolean fri13)
         case NEW_MOON:
             pline("Be careful!  New moon tonight.");
             break;
+        default:
+            /* special moonphase time period ended */
+            pline("The moon seems less notable tonight...");
+            break;
         }
     }
 
@@ -189,7 +207,7 @@ realtime_messages(boolean moon, boolean fri13)
    command, but fixing that makes the time behaviour so much more complex that
    it probably isn't worth it.) */
 static void
-realtime_tasks(boolean always_print)
+realtime_tasks(boolean always_print, boolean never_print)
 {
     int prev_moonphase = flags.moonphase;
     int prev_friday13 = flags.friday13;
@@ -201,7 +219,8 @@ realtime_tasks(boolean always_print)
         change_luck(1);
     } else if (flags.moonphase != FULL_MOON && prev_moonphase == FULL_MOON) {
         change_luck(-1);
-    } else if (flags.moonphase == NEW_MOON && prev_moonphase != NEW_MOON) {
+    } else if ((flags.moonphase == NEW_MOON && prev_moonphase != NEW_MOON) ||
+               (flags.moonphase != NEW_MOON && prev_moonphase == NEW_MOON)) {
         /* Do nothing, but show message. */
     } else {
         msg_moonphase = FALSE;
@@ -216,8 +235,11 @@ realtime_tasks(boolean always_print)
         msg_friday13 = FALSE;
     }
 
-    realtime_messages(msg_moonphase || always_print,
-                      msg_friday13 || always_print);
+    if (!never_print)
+        realtime_messages(msg_moonphase || (always_print &&
+                                            (flags.moonphase == NEW_MOON ||
+                                             flags.moonphase == FULL_MOON)),
+                          msg_friday13 || always_print);
 }
 
 
@@ -234,17 +256,18 @@ post_init_tasks(void)
        reloading should have no effect. */
 
     /* Prepare for the first move. */
-    pre_move_tasks(0);
+    pre_move_tasks(FALSE, TRUE);
 }
 
 
 enum nh_create_response
-nh_create_game(int fd, struct nh_option_desc *opts)
+nh_create_game(int fd, struct nh_option_desc *opts_orig)
 {
     unsigned int seed = 0;
     microseconds birthday;
     int i;
     volatile int log_inited;
+    struct nh_option_desc *volatile opts = opts_orig;
 
     API_ENTRY_CHECKPOINT() {
         IF_API_EXCEPTION(GAME_CREATED):
@@ -305,6 +328,24 @@ nh_create_game(int fd, struct nh_option_desc *opts)
 
     newgame(birthday);
 
+    /* Handle the polyinit option. */
+    if (flags.polyinit_mnum != -1) {
+        int light_range;
+
+        polymon(flags.polyinit_mnum, FALSE);
+
+        /* polymon() doesn't handle light sources. Do that here. */
+
+        light_range = emits_light(youmonst.data);
+
+        if (light_range == 1)
+            ++light_range; /* matches polyself() handling */
+
+        if (light_range)
+            new_light_source(level, u.ux, u.uy, light_range, LS_MONSTER,
+                             &youmonst);
+    }
+
     /* We need a full backup save after creating the new game, because we
        don't have anything to diff against. */
     log_backup_save();
@@ -315,9 +356,11 @@ nh_create_game(int fd, struct nh_option_desc *opts)
 }
 
 enum nh_play_status
-nh_play_game(int fd)
+nh_play_game(int fd, enum nh_followmode followmode)
 {
     volatile int ret;
+    volatile int replay_forced = FALSE;
+    volatile int file_done = FALSE;
 
     if (fd < 0)
         return ERR_BAD_ARGS;
@@ -326,8 +369,11 @@ nh_play_game(int fd)
     case LS_INVALID:
         return ERR_BAD_FILE;
     case LS_DONE:
-        /* TODO: Load in replay mode. */
-        return GAME_ALREADY_OVER;
+        if (followmode != FM_REPLAY)
+            replay_forced = TRUE;
+        followmode = FM_REPLAY; /* force into replay mode */
+        file_done = TRUE;
+        break;
     case LS_CRASHED:
         return ERR_RESTORE_FAILED;
     case LS_IN_PROGRESS:
@@ -335,6 +381,8 @@ nh_play_game(int fd)
     case LS_SAVED:
         break;  /* default, everything is A-OK */
     }
+
+    program_state.followmode = followmode;
 
     /* setjmp cannot portably do anything with its return value but a series of
        comparisons; even assigning it to a variable directly doesn't
@@ -352,6 +400,9 @@ nh_play_game(int fd)
     IF_API_EXCEPTION(GAME_ALREADY_OVER):
         ret = GAME_ALREADY_OVER;
         goto normal_exit;
+    IF_API_EXCEPTION(REPLAY_FINISHED):
+        ret = REPLAY_FINISHED;
+        goto normal_exit;
 
         /* This happens if the game needs to escape from a deeply nested
            context. The longjmp() is not enough by itself in case the network
@@ -359,6 +410,9 @@ nh_play_game(int fd)
            the longjmp() to propagate across the network). */
     IF_API_EXCEPTION(RESTART_PLAY):
         ret = RESTART_PLAY;
+        goto normal_exit;
+    IF_API_EXCEPTION(CLIENT_RESTART):
+        ret = CLIENT_RESTART;
         goto normal_exit;
 
         /* Errors while loading. These still use the normal_exit codepath. */
@@ -396,12 +450,16 @@ nh_play_game(int fd)
        loading a binary save. (In addition, using log_sync() is /much/ faster
        than attempting to replay the entire game.) */
     log_init(fd);
-    program_state.target_location_units = TLU_EOF;
-    log_sync();
+
+    if (file_done)
+        log_sync(1, TLU_TURNS, FALSE);
+    else
+        log_sync(0, TLU_EOF, FALSE);
 
     program_state.game_running = TRUE;
     post_init_tasks();
 
+just_reloaded_save:
     /* While loading a save file, we don't do rendering, and we don't run
        the vision system. Do all that stuff now. */
     vision_reset();
@@ -412,10 +470,17 @@ nh_play_game(int fd)
 
     update_inventory();
 
+    if (replay_forced) {
+        pline("This game ended while you were loading it.");
+        pline("Loading in replay mode intead.");
+        replay_forced = FALSE;
+    }
+
     /* The main loop. */
     while (1) {
         struct nh_cmd_and_arg cmd;
         int cmdidx;
+        nh_bool command_from_user = FALSE;
 
         if (u_helpless(hm_all)) {
             cmd.cmd = "wait";
@@ -423,10 +488,15 @@ nh_play_game(int fd)
             cmd.arg.argtype = 0;
         } else {
 
-            if (!log_replay_command(&cmd))
+            if (((program_state.followmode == FM_REPLAY &&
+                  (!flags.incomplete || flags.interrupted)) ||
+                 !log_replay_command(&cmd))) {
                 (*windowprocs.win_request_command)
-                    (wizard, !flags.incomplete, flags.interrupted,
+                    (wizard, program_state.followmode == FM_PLAY ? 
+                     !flags.incomplete : 1, flags.interrupted,
                      &cmd, msg_request_command_callback);
+                command_from_user = TRUE;
+            }
 
             cmdidx = get_command_idx(cmd.cmd);
         }
@@ -436,10 +506,64 @@ nh_play_game(int fd)
             continue;
         }
 
-        if (program_state.viewing && !(cmdlist[cmdidx].flags & CMD_NOTIME)) {
-            pline("Command '%s' unavailable while watching/replaying a game.",
-                  cmd.cmd);
-            continue;
+        if (program_state.followmode != FM_PLAY && command_from_user &&
+            !(cmdlist[cmdidx].flags & CMD_NOTIME)) {
+
+            /* TODO: Add a "seek to specific turn" command */
+
+            /* If we got a direction as part of the command, and we're
+               replaying, move forwards or backwards respectively. */
+            if (program_state.followmode == FM_REPLAY &&
+                cmd.arg.argtype & CMD_ARG_DIR) {
+                switch (cmd.arg.dir) {
+                case DIR_E:
+                case DIR_S:
+                    /* Move forwards one command (and thus to the next neutral
+                       turnstate, because we don't ask for a command outside
+                       neutral turnstate on a replay). */
+                    log_replay_command(&cmd);
+                    command_from_user = FALSE;
+                    cmdidx = get_command_idx(cmd.cmd);
+                    if (cmdidx < 0)
+                        panic("Invalid command '%s' replayed from save file",
+                              cmd.cmd);
+                    break;
+                case DIR_W:
+                case DIR_N:
+                    /* Move backwards one command. */
+                    log_sync(program_state.binary_save_location-1,
+                             TLU_BYTES, FALSE);
+                    goto just_reloaded_save;
+                case DIR_NW:
+                    /* Move to turn 1. */
+                    log_sync(1, TLU_TURNS, FALSE);
+                    goto just_reloaded_save;
+                case DIR_SW:
+                    /* Move to the end of the replay. */
+                    log_sync(0, TLU_EOF, FALSE);
+                    goto just_reloaded_save;
+                case DIR_NE:
+                    /* Move backwards 50 turns. */
+                    log_sync(moves - 50, TLU_TURNS, FALSE);
+                    goto just_reloaded_save;
+                case DIR_SE:
+                    /* Move forwards 50 turns. */
+                    log_sync(moves + 50, TLU_TURNS, FALSE);
+                    goto just_reloaded_save;
+                default:
+                    pline("That direction has no meaning while replaying.");
+                    continue;
+                }
+            } else {
+                /* Internal commands weren't sent by the player, so don't
+                   complain about them, just ignore them. Ditto for repeat. */
+                if (!(cmdlist[cmdidx].flags & CMD_INTERNAL) &&
+                    cmdlist[cmdidx].func)
+                    pline("Command '%s' is unavailable while %s.", cmd.cmd,
+                          program_state.followmode == FM_WATCH ?
+                          "watching" : "replaying");
+                continue;
+            }
         }
 
         /* Make sure the client hasn't given extra arguments on top of the ones
@@ -448,15 +572,26 @@ nh_play_game(int fd)
            extra arguments aren't recorded in the save file. */
         cmd.arg.argtype &= cmdlist[cmdidx].flags;
 
+        /* Proper incomplete/interrupted handling depends on knowing who sent
+           the command (known here, but not elsewhere). So we save and restore
+           flags.incomplete/flags.interrupted here in viewing processes that
+           sent the command themselves. */
+
+        boolean save_incomplete = flags.incomplete;
+        boolean save_interrupted = flags.interrupted;
+
         if (cmdlist[cmdidx].flags & CMD_NOTIME &&
             !(cmdlist[cmdidx].flags & CMD_INTERNAL) &&
+            program_state.followmode == FM_PLAY &&
             (flags.incomplete || !flags.interrupted || flags.occupation)) {
 
             /* CMD_NOTIME actions don't set last_cmd/last_arg, so we need to
                ensure we interrupt them in order to avoid screwing up command
                repeat. We accomplish this via logging an "interrupt" command.
 
-               Exception: server cancels, which are a literal no-op. */
+               Exception: server cancels, which are a literal no-op; and
+               commands made when playing the game, because the command repeat
+               will still repeat the original command. */
 
             flags.incomplete = FALSE;
             flags.interrupted = FALSE; /* set to true by "interrupt" */
@@ -493,11 +628,23 @@ nh_play_game(int fd)
 
         command_input(cmdidx, &(cmd.arg));
 
+        if (command_from_user && program_state.followmode != FM_PLAY) {
+            flags.incomplete = save_incomplete;
+            flags.interrupted = save_interrupted;
+        }
+
         program_state.in_zero_time_command = FALSE;
 
-        if (cmdlist[cmdidx].flags & CMD_NOTIME)
-            log_revert_command(); /* make sure it didn't change the gamestate */
-        else if ((!flags.incomplete || flags.interrupted) &&
+        /* Record or revert the gamestate change, depending on what happened.
+           A revert should be a no-op; it'll impossible() if it isn't.  The
+           flags.incomplete check is needed in case we interrupt an incomplete
+           command with a server cancel; the incomplete command hasn't written a
+           save file, so comparing against that save file will show a
+           difference. */
+        if (cmdlist[cmdidx].flags & CMD_NOTIME) {
+            if (!flags.incomplete)
+                log_revert_command(cmd.cmd);
+        } else if ((!flags.incomplete || flags.interrupted) &&
                  !u_helpless(hm_all))
             neutral_turnstate_tasks();
         /* Note: neutral_turnstate_tasks() frees cmd (because it frees all
@@ -824,7 +971,7 @@ special_vision_handling(void)
 
 
 static void
-pre_move_tasks(boolean didmove)
+pre_move_tasks(boolean didmove, boolean loading_game)
 {
     /* recalc attribute bonuses from items */
     calc_attr_bonus();
@@ -869,7 +1016,7 @@ pre_move_tasks(boolean didmove)
     /* Handle realtime change now. If we just loaded a save, always print the
        messages. Otherwise, print them only on change. */
     if (!program_state.in_zero_time_command)
-        realtime_tasks(last_command_was("welcome"));
+        realtime_tasks(last_command_was("welcome"), loading_game);
 
     update_inventory();
     update_location(FALSE);
@@ -1187,7 +1334,7 @@ command_input(int cmdidx, struct nh_cmd_arg *arg)
     /* actual time passed */
 
     /* prepare for the next move */
-    pre_move_tasks(didmove);
+    pre_move_tasks(didmove, FALSE);
 
     flush_screen(); 
 }

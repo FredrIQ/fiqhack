@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-17 */
+/* Last modified by Alex Smith, 2014-05-31 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -13,11 +13,14 @@
 /* check various rules that apply to names:
  * - it must be a valid multibyte (UTF8) string
  * - no more than 50 multibyte characters long
- * - '/' and '\\' are not allowed because the user name will be used as part of
- *   the filename for saved games.
+ * - '/', '.' and '\\' are not allowed because the user name will be used as
+ *   part of the filename for saved games.
  * - it can't contain '<' or '>': names may be shown in web pages and this puts
  *   trivial mischief out of reach even if the name is not escaped properly.
  * - control characters are forbidden
+ * - ASCII letters, numbers, underscores only for now, so that people don't
+ *   try to confuse shellscripts (this rather makes the other checks moot,
+ *   but...)
  */
 static int
 is_valid_username(const char *name)
@@ -31,7 +34,11 @@ is_valid_username(const char *name)
         return FALSE;
 
     if (strchr(name, '/') || strchr(name, '\\') || strchr(name, '<') ||
-        strchr(name, '>'))
+        strchr(name, '>') || strchr(name, '.'))
+        return FALSE;
+
+    if (strspn(name, "abcdefghijklmnopqrstuvwxyz"
+               "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_") != strlen(name))
         return FALSE;
 
     for (i = 0; i < mblen; i++)
@@ -104,6 +111,9 @@ auth_user(char *authbuf, const char *peername, int *is_reg, int *reconnect_id)
             char savedir[1024];
 
             snprintf(savedir, 1024, "%s/save/%s", settings.workdir, namestr);
+            mkdir(savedir, 0700);
+            snprintf(savedir, 1024, "%s/completed/%s",
+                     settings.workdir, namestr);
             mkdir(savedir, 0700);
             log_msg("%s has registered as \"%s\" (userid: %d)", peername,
                     namestr, userid);

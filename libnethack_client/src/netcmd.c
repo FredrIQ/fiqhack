@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -68,7 +68,7 @@ struct netcmd netcmd_list[] = {
 /*---------------------------------------------------------------------------*/
 
 json_t *
-handle_netcmd(const char *key, json_t * jmsg)
+handle_netcmd(const char *key, const char *expected, json_t * jmsg)
 {
     int i;
     json_t *ret_msg = NULL;
@@ -81,8 +81,14 @@ handle_netcmd(const char *key, json_t * jmsg)
     }
     json_decref(jmsg);
 
+    char ucbuf[strlen(key) + strlen(expected) + sizeof
+               "Unknown command '' received from server (expecting '')"];
+    sprintf(ucbuf,
+            "Unknown command '%s' received from server (expecting '%s')",
+            key, expected);
+
     if (!netcmd_list[i].name)
-        print_error("Unknown command received from server");
+        print_error(ucbuf);
 
     return ret_msg;
 }

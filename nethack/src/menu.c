@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -335,7 +335,7 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
 
     memset(selected, 0, sizeof selected);
 
-    prevcurs = curs_set(0);
+    prevcurs = nh_curs_set(0);
 
     gw = alloc_gamewin(sizeof (struct win_menu));
     gw->draw = draw_menu;
@@ -514,7 +514,7 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
 
     delete_gamewin(gw);
     redraw_game_windows();
-    curs_set(prevcurs);
+    nh_curs_set(prevcurs);
 
     callback(results, rv, callbackarg);
 }
@@ -546,6 +546,10 @@ curses_display_menu(struct nh_menulist *ml, const char *title,
                     void (*callback)(const int *, int, void *))
 {
     int x1 = 0, y1 = 0, x2 = -1, y2 = -1;
+
+    /* Even while watching/replaying, these menus take input. */
+    if (placement_hint == PLHINT_URGENT)
+        ui_flags.in_zero_time_command = TRUE;
 
     if (placement_hint == PLHINT_INVENTORY ||
         placement_hint == PLHINT_CONTAINER) {
@@ -860,7 +864,7 @@ curses_display_objects(
     if (inventory_special)
         placement_hint = PLHINT_INVENTORY;
 
-    prevcurs = curs_set(0);
+    prevcurs = nh_curs_set(0);
 
     gw = alloc_gamewin(sizeof (struct win_objmenu));
     gw->draw = draw_objmenu;
@@ -1110,7 +1114,7 @@ curses_display_objects(
 
     delete_gamewin(gw);
     redraw_game_windows();
-    curs_set(prevcurs);
+    nh_curs_set(prevcurs);
 
     callback(results, rv, callbackarg);
 }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-31 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -174,6 +174,7 @@ extern void bot(void);
 extern int title_to_mon(const char *, int *, int *);
 extern void max_rank_sz(void);
 extern const char *rank_of(int, short, boolean);
+extern int describe_level(char *);
 
 /* ### cmd.c ### */
 
@@ -616,7 +617,8 @@ extern boolean travelling(void);
 extern boolean test_move(
     int, int, int, int, int, int, enum u_interaction_mode,
     boolean, boolean, boolean, boolean, boolean, boolean);
-extern int domove(const struct nh_cmd_arg *, enum u_interaction_mode);
+extern int domove(const struct nh_cmd_arg *, enum u_interaction_mode,
+                  enum occupation);
 extern void invocation_message(void);
 extern void spoteffects(boolean);
 extern char *in_rooms(struct level *lev, xchar, xchar, int);
@@ -770,15 +772,15 @@ extern int doclose(const struct nh_cmd_arg *);
 
 /* ### log.c ### */
 
-extern void log_newgame(microseconds start_time,
-                        unsigned int seed);
+extern void log_newgame(microseconds start_time, unsigned int seed);
 extern void log_neutral_turnstate(void);
 extern void log_backup_save(void);
 
-extern void log_sync(void);
+extern void log_sync(long, enum target_location_units, boolean);
 
-extern void log_revert_command(void);
-extern noreturn void log_recover(long);
+extern void log_revert_command(const char *);
+extern void log_recover_core(long, boolean);
+extern noreturn void log_recover_noreturn(long);
 extern long get_log_start_of_turn_offset(void);
 
 extern void log_record_bones(struct memfile *mf);
@@ -799,6 +801,7 @@ extern void log_time_line(void);
 extern void log_init(int fd);
 extern void log_uninit(void);
 extern void log_game_over(const char *death);
+extern void log_game_state(void);
 
 /* ### makemon.c ### */
 
@@ -1314,7 +1317,8 @@ extern void self_invis_message(void);
 extern void set_uasmon(void);
 extern void change_sex(void);
 extern void polyself(boolean);
-extern int polymon(int);
+extern int polymon(int, boolean);
+extern boolean touched_monster(int);
 extern void rehumanize(int how, const char *killer);
 extern int dobreathe(const struct nh_cmd_arg *);
 extern int dospit(const struct nh_cmd_arg *);

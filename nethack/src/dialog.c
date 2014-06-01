@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-29 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -125,7 +125,7 @@ curses_msgwin_generic(const char *msg, int (*validator)(int, void *),
     if (COLS < COLNO || LINES < ROWNO)
         return validator('\x1b', arg);
 
-    int prevcurs = curs_set(cursor_visible);
+    int prevcurs = nh_curs_set(cursor_visible);
 
     struct gamewin *gw = alloc_gamewin(sizeof (struct win_msgwin));
     struct win_msgwin *wmw = (struct win_msgwin *)gw->extra;
@@ -146,7 +146,7 @@ curses_msgwin_generic(const char *msg, int (*validator)(int, void *),
 
     delete_gamewin(gw);
 
-    curs_set(prevcurs);
+    nh_curs_set(prevcurs);
     redraw_game_windows();
 
     return rv;

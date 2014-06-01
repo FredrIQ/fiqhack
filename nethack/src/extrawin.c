@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-31 */
 /* Copyright (c) 2014 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -54,7 +54,7 @@ player_has_status(const char *status)
     return FALSE;
 }
 
-static int
+int
 classify_key(int key)
 {
     if (key < 256)
@@ -192,19 +192,31 @@ draw_extrawin(enum keyreq_context context)
 
     }
 
+    ui_flags.extrawin_populated = TRUE;
+
     y_fill_line = y;
 
     /* Next most important: keymaps for unusual contexts.
 
        These have to be kept under 78 characters long, and are written as two
-       lines of 40 for easier counting. If using hintline(), as many lines from
-       the start as will fit will be displayed. */
+       lines of 40 and 38 respectively for easier counting. If using hintline(),
+       as many lines from the start as will fit will be displayed. */
 
 #define hintline(s) do { spend_one_line(); nh_waddstr(win, s); } while(0)
 
     nh_bool draw_direction_rose = FALSE;
 
-    switch (context) {
+    if (ui_flags.current_followmode == FM_REPLAY &&
+        !ui_flags.in_zero_time_command) {
+        /* ----- "1234567890123456789012345678901234567890" */
+        hintline("Use the movement keys to move through th"
+                 "e history of the game."                );
+    } else if (ui_flags.current_followmode == FM_WATCH &&
+               !ui_flags.in_zero_time_command) {
+        /* ----- "1234567890123456789012345678901234567890" */
+        hintline("You are viewing this game, and cannot us"
+                 "e input that changes the game state."  );
+    } else switch (context) {
     case krc_getdir:
     case krc_get_movecmd_direction:
         draw_direction_rose = TRUE;
@@ -242,6 +254,12 @@ draw_extrawin(enum keyreq_context context)
            it. */
         hintline("If you were trying to move using the num"
                  "eric keypad, turn off NumLock."        );
+        break;
+
+    case krc_interrupt_long_action:
+        /* ----- "1234567890123456789012345678901234567890" */
+        hintline("To interrupt the command, press any key "
+                 "or click on the map."                  );
         break;
 
     case krc_getpos:
@@ -434,102 +452,127 @@ draw_extrawin(enum keyreq_context context)
         hintcmd("mainmenu", "menu");
         if (!ui_flags.sidebarwidth)
             hintcmd("inventory", "inventory");
-        hintcmd("search", "search/wait");
 
-        /* TODO: only if we have spells and at least 5 Pw */
-        hintcmd("cast", "cast spell");
+        if (ui_flags.current_followmode == FM_PLAY) {
 
-        /* Context-sensitive bindings. */
+            hintcmd("search", "search/wait");
 
-        /* Status effects. */
-        if (player_has_status("Blind"))
-            hintcmd("grope", "feel the ground");
+            /* TODO: only if we have spells and at least 5 Pw */
+            hintcmd("cast", "cast spell");
 
-        /* TODO: "creamed" isn't distinguished from other causes of blindness,
-           so we can't mention "wipe". */
+            /* Context-sensitive bindings. */
 
-        /* Things we're standing on. */
-        i = player.x;
-        j = player.y;
+            /* Status effects. */
+            if (player_has_status("Blind"))
+                hintcmd("grope", "feel the ground");
 
-        if (apikey_is_at("chest", i, j) || apikey_is_at("large box", i, j)) {
-            hintcmd("apply", "open a container");
-            hintcmd("force", "force a container open");
-        }
-        if (apikey_is_at("fountain", i, j)) {
-            hintcmd("dip", "dip");
-            hintcmd("drink", "drink");
-        } else if (apikey_is_at("sink", i, j)) {
-            hintcmd("drink", "drink");
-        }
-        if (apikey_is_at("altar", i, j)) {
-            hintcmd("offer", "make a sacrifice");
-        }
+            /* TODO: "creamed" isn't distinguished from other causes of
+               blindness, so we can't mention "wipe". */
 
-        if (apikey_is_at("throne", i, j)) {
-            hintcmd("sit", "sit");
-        }
+            /* Things we're standing on. */
+            i = player.x;
+            j = player.y;
 
-        /* Eating's normally done via itemactions, but corpses are more
-           reasonable to eat from the floor. */
-        if (apikey_is_at("corpse", i, j)) {
-            hintcmd("eat", "eat");
-        }
+            if (apikey_is_at("chest", i, j) ||
+                apikey_is_at("large box", i, j)) {
+                hintcmd("apply", "open a container");
+                hintcmd("force", "force a container open");
+            }
+            if (apikey_is_at("fountain", i, j)) {
+                hintcmd("dip", "dip");
+                hintcmd("drink", "drink");
+            } else if (apikey_is_at("sink", i, j)) {
+                hintcmd("drink", "drink");
+            }
+            if (apikey_is_at("altar", i, j)) {
+                hintcmd("offer", "make a sacrifice");
+            }
 
-        if (branding_is_at(NH_BRANDING_TRAPPED, i, j)) {
-            hintcmd("sit", "trigger trap");
-        }
+            if (apikey_is_at("throne", i, j)) {
+                hintcmd("sit", "sit");
+            }
 
-        /* Things we're next to. */
-#define nearbyxy                                                \
-        for (i = player.x - 1; i <= player.x + 1; i++)          \
-            for (j = player.y - 1; j <= player.y + 1; j++)      \
-                if (i >= 0 && i < COLNO && j >= 0 && j < ROWNO)
+            /* Eating's normally done via itemactions, but corpses are more
+               reasonable to eat from the floor. */
+            if (apikey_is_at("corpse", i, j)) {
+                hintcmd("eat", "eat");
+            }
+
+            if (branding_is_at(NH_BRANDING_TRAPPED, i, j)) {
+                hintcmd("sit", "trigger trap");
+            }
+
+            /* Things we're next to. */
+#define nearbyxy                                                        \
+            for (i = player.x - 1; i <= player.x + 1; i++)              \
+                for (j = player.y - 1; j <= player.y + 1; j++)          \
+                    if (i >= 0 && i < COLNO && j >= 0 && j < ROWNO)
 
 #define hintcmdbreak(s,d) do { hintcmd(s,d); i = j = INT_MAX - 1; } while(0)
 
-        nearbyxy if (monflag_is_at(MON_TAME, i, j) ||
-                     monflag_is_at(MON_PEACEFUL, i, j)) {
-            hintcmdbreak("chat", "chat");
+            nearbyxy if (monflag_is_at(MON_TAME, i, j) ||
+                         monflag_is_at(MON_PEACEFUL, i, j)) {
+                hintcmdbreak("chat", "chat");
+            }
+
+            /* TODO: Riding; we really need a MON_SADDLED branding */
+
+            nearbyxy if (branding_is_at(NH_BRANDING_TRAPPED, i, j)) {
+                hintcmdbreak("idtrap", "examine trap");
+                hintcmdbreak("untrap", "disarm trap");
+            }
+
+            nearbyxy if ((apikey_is_at("vcdoor", i, j) ||
+                          apikey_is_at("hcdoor", i, j)) &&
+                         branding_is_at(NH_BRANDING_LOCKED, i, j)) {
+                hintcmdbreak("kick", "kick open a door");
+                hintcmdbreak("open", "unlock a door");
+            }
+
+            nearbyxy if (apikey_is_at("vodoor", i, j) ||
+                         apikey_is_at("hodoor", i, j)) {
+                hintcmdbreak("open", "close a door");
+            }
+
+            nearbyxy if (apikey_is_at("chest", i, j) ||
+                         apikey_is_at("large box", i, j)) {
+                hintcmdbreak("kick", "kick open a container");
+            }
+
+            nearbyxy if (apikey_is_at("shopkeeper", i, j)) {
+                hintcmdbreak("pay", "pay for items");
+            }
+
+            /* Low-priority bindings. */
+            if (!player_has_status("Blind"))
+                hintcmd("lookhere", "describe this square");
+            hintcmd("autoexplore", "autoexplore");
+            hintcmd("pray", "pray for help");
+            hintcmd("prevmsg", "review messages");
+            hintcmd("moveonly", "move without fighting");
+            hintcmd("fight", "force an attack");
+            hintcmd("elbereth", "write Elbereth");
+
+        } else {
+            /* Watching or replaying. */
+
+            hintcmd("save", "exit");
+
+            nearbyxy if (branding_is_at(NH_BRANDING_TRAPPED, i, j)) {
+                hintcmdbreak("idtrap", "examine trap");
+            }
+
+            /* We have plenty of space here, so show some main menu bindings
+               too. */
+            hintcmd("discoveries", "discovered items");
+            hintcmd("overview", "dungeon overview");
+            hintcmd("attributes", "view character");
+            if (!player_has_status("Blind"))
+                hintcmd("lookhere", "describe this square");
+            /* Note: "history" has no default binding, so probably won't
+               be shown. */
+            hintcmd("history", "character history");
         }
-
-        /* TODO: Riding; we really need a MON_SADDLED branding */
-
-        nearbyxy if (branding_is_at(NH_BRANDING_TRAPPED, i, j)) {
-            hintcmdbreak("idtrap", "examine trap");
-            hintcmdbreak("untrap", "disarm trap");
-        }
-
-        nearbyxy if ((apikey_is_at("vcdoor", i, j) ||
-                      apikey_is_at("hcdoor", i, j)) &&
-                     branding_is_at(NH_BRANDING_LOCKED, i, j)) {
-            hintcmdbreak("kick", "kick open a door");
-            hintcmdbreak("open", "unlock a door");
-        }
-
-        nearbyxy if (apikey_is_at("vodoor", i, j) ||
-                     apikey_is_at("hodoor", i, j)) {
-            hintcmdbreak("open", "close a door");
-        }
-
-        nearbyxy if (apikey_is_at("chest", i, j) ||
-                     apikey_is_at("large box", i, j)) {
-            hintcmdbreak("kick", "kick open a container");
-        }
-
-        nearbyxy if (apikey_is_at("shopkeeper", i, j)) {
-            hintcmdbreak("pay", "pay for items");
-        }
-
-        /* Low-priority bindings. */
-        if (!player_has_status("Blind"))
-            hintcmd("lookhere", "describe this square");
-        hintcmd("autoexplore", "autoexplore");
-        hintcmd("pray", "pray for help");
-        hintcmd("prevmsg", "review messages");
-        hintcmd("moveonly", "move without fighting");
-        hintcmd("fight", "force an attack");
-        hintcmd("elbereth", "write Elbereth");
 
         if (x)
             y++;
@@ -555,7 +598,9 @@ draw_extrawin(enum keyreq_context context)
 void
 clear_extrawin(void)
 {
-    if (extrawin && ui_flags.ingame)
+    if (extrawin && ui_flags.extrawin_populated && ui_flags.ingame) {
         werase(extrawin);
-    wnoutrefresh(extrawin);
+        wnoutrefresh(extrawin);
+        ui_flags.extrawin_populated = FALSE;
+    }
 }

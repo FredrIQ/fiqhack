@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-05-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2205,7 +2205,7 @@ instapetrify(const char *str)
 {
     if (Stone_resistance)
         return;
-    if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
+    if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM, TRUE))
         return;
     pline("You turn to stone...");
     done(STONING, str);
@@ -3394,18 +3394,13 @@ help_monster_out(struct monst *mtmp, struct trap *ttmp)
 
 
     /* is it a cockatrice?... */
-    if (touch_petrifies(mtmp->data) && !uarmg && !Stone_resistance) {
+    if (!uarmg && touched_monster(mtmp->data - mons)) {
         pline("You grab the trapped %s using your bare %s.", mtmp->data->mname,
               makeplural(body_part(HAND)));
-
-        if (poly_when_stoned(youmonst.data) && polymon(PM_STONE_GOLEM))
-            win_pause_output(P_MESSAGE);
-        else {
-            instapetrify(killer_msg(STONING,
-                msgprintf("trying to help %s out of a pit",
-                          an(mtmp->data->mname))));
-            return 1;
-        }
+        instapetrify(killer_msg(STONING,
+                                msgprintf("trying to help %s out of a pit",
+                                          an(mtmp->data->mname))));
+        return 1;
     }
     /* need to do cockatrice check first if sleeping or paralyzed */
     if (uprob) {

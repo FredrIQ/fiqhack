@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-31 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -94,6 +94,7 @@ typedef wchar_t fnchar;
 
 /* attributes for dialog frames */
 # define FRAME_PAIR     6             /* magenta frames for better visibility */
+# define NOEDIT_FRAME_PAIR 9          /* dark gray if the dialog doesn't work */
 # define MAINFRAME_PAIR 113           /* 16 * 7 + 1 */
 
 # define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
@@ -127,7 +128,8 @@ enum autoable_boolean {
 
 /* Any extra space on the terminal is used to give advice about controls. This
    enum tracks the context in which a key is being requested, so as to be able
-   to give good advice. */
+   to give good advice. This is also used to implement the occasional special
+   case. */
 enum keyreq_context {
     krc_getdir,
     krc_getlin,
@@ -136,6 +138,7 @@ enum keyreq_context {
     krc_yn_generic,
     krc_count,
     krc_get_command,
+    krc_interrupt_long_action,
     krc_get_movecmd_direction,
     krc_getpos,
     krc_menu,
@@ -158,6 +161,11 @@ struct interface_flags {
     nh_bool done_hup;
     nh_bool ingame;
     nh_bool connected_to_server;
+    enum nh_followmode current_followmode;
+    enum nh_followmode available_followmode;
+    nh_bool in_zero_time_command;
+    const char *gameload_message;                 /* string literal or NULL */
+    int queued_server_cancels;
 
     /* Window layout dimensions.
 
@@ -178,30 +186,64 @@ struct interface_flags {
     int sidebarwidth; /* width of the sidebar */
     int map_padding;  /* padding on each side of the map */
 
+    nh_bool extrawin_populated;
+
     int levelmode;
     int playmode;
 
     int connection_only;  /* connect to localhost, don't play normally */
     int no_stop;          /* do not allow the process to suspend */
 
-    /* These values are -1, -1 while the cursor is not over the map, or an x, y
-       pair while it is. */
+    /* These values are -1, -1 while the mouse cursor is not over the map, or an
+       x, y pair while it is. */
     int maphoverx;
     int maphovery;
 
+    nh_bool want_cursor;       /* delayed-action cursor setting */
+
     char username[BUFSZ];      /* username being used in connection-only mode */
+};
+
+/*
+ * Graphics sets for display symbols
+ */
+enum nh_text_mode {
+    ASCII_GRAPHICS,     /* ASCII only */
+    UNICODE_GRAPHICS,   /* Unicode; default symbols should be CP437 */
+    /* Tilesets, defaulting to Unicode if tiles are not available */
+    TILESET_DAWNHACK_16, /* DawnHack by DragonDePlatino */
+    TILESET_DAWNHACK_32, /* The same, upscaled */
+    /* Slash'EM has its own tilesets (many of which are unfinished) */
+    TILESET_SLASHEM_16,
+    TILESET_SLASHEM_32,
+    TILESET_SLASHEM_3D,
+};
+
+enum nh_animation {
+    ANIM_INSTANT,         /* no animation */
+    ANIM_INTERRUPTIBLE,   /* animate only interruptible events */
+    ANIM_ALL,             /* animate all events */
+    ANIM_SLOW,            /* animate all events, slowly */
+};
+
+enum nh_motd_setting {
+    MOTD_TRUE,
+    MOTD_FALSE,
+    MOTD_ASK,
 };
 
 struct settings {
     nh_bool end_own;    /* list all own scores */
     int end_top, end_around;    /* describe desired score list */
-    int graphics;
     int menu_headings;  /* ATR for menu headings */
     int msgheight;      /* requested height of the message win */
     int msghistory;     /* # of historic messages to keep for prevmsg display */
     int optstyle;       /* option display style */
 
     enum autoable_boolean sidebar;   /* whether to draw the inventory sidebar */
+    enum nh_text_mode graphics;      /* how to draw the map */
+    enum nh_animation animation;     /* when to delay */
+    enum nh_motd_setting show_motd;
 
     /* use bolded black instead of dark blue for CLR_BLACK */
     nh_bool darkgray;
@@ -264,21 +306,6 @@ struct curses_drawing_info {
     int num_effects;
 
     int bg_feature_offset;
-};
-
-/*
- * Graphics sets for display symbols
- */
-enum nh_text_mode {
-    ASCII_GRAPHICS,     /* ASCII only */
-    UNICODE_GRAPHICS,   /* Unicode; default symbols should be CP437 */
-    /* Tilesets, defaulting to Unicode if tiles are not available */
-    TILESET_DAWNHACK_16, /* DawnHack by DragonDePlatino */
-    TILESET_DAWNHACK_32, /* The same, upscaled */
-    /* Slash'EM has its own tilesets (many of which are unfinished) */
-    TILESET_SLASHEM_16,
-    TILESET_SLASHEM_32,
-    TILESET_SLASHEM_3D,
 };
 
 struct gamewin {
@@ -364,6 +391,7 @@ extern struct nh_query_key_result curses_query_key(
 extern int curses_msgwin(const char *msg, enum keyreq_context context);
 
 /* extrawin.c */
+extern int classify_key(int);
 extern void draw_extrawin(enum keyreq_context context);
 extern void clear_extrawin(void);
 
@@ -395,6 +423,7 @@ extern void set_next_command(const char *cmd, struct nh_cmd_arg *arg);
 extern void load_keymap(void);
 extern void free_keymap(void);
 extern void show_keymap_menu(nh_bool readonly);
+extern void handle_nested_key(int key);
 extern enum nh_direction key_to_dir(int key);
 
 /* main.c */
@@ -450,6 +479,9 @@ extern void wrap_text(int width, const char *input, int *output_count,
                       char ***output);
 extern void free_wrap(char **wrap_output);
 
+/* motd.c */
+extern int network_motd(void);
+
 /* options.c */
 extern struct nh_option_desc *curses_get_nh_opts(void);
 extern void curses_free_nh_opts(struct nh_option_desc *opts);
@@ -500,7 +532,7 @@ extern void rungame(nh_bool net);
 extern nh_bool loadgame(void);
 extern void game_ended(int status, fnchar *filename, nh_bool net);
 extern fnchar **list_gamefiles(fnchar *dir, int *count);
-extern enum nh_play_status playgame(int fd_or_gameno);
+extern enum nh_play_status playgame(int fd_or_gameno, enum nh_followmode);
 
 /* sidebar.c */
 extern void draw_sidebar(void);
@@ -522,6 +554,7 @@ extern void init_curses_ui(const char *dataprefix);
 extern void exit_curses_ui(void);
 extern void set_font_file(const char *);
 extern void set_tile_file(const char *);
+extern int nh_curs_set(int);
 extern void nh_mvwvline(WINDOW *, int, int, int);
 extern void nh_mvwhline(WINDOW *, int, int, int);
 extern void nh_window_border(WINDOW *, int);

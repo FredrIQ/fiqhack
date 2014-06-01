@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Alex Smith, 2014-01-14
+Last-Modified: Last modified by Alex Smith, 2014-05-31
 
 Files: libnethack_client/*
 License: NHGPL or GPL-2+
@@ -53,7 +53,7 @@ Files: libnethack/include/display.h
 License: NHGPL
 Copyright: Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy
 
-Files: libnethack/include/dlb.h
+Files: libnethack/include/dlb.h libnethack/include/iomodes.h
 License: NHGPL
 Copyright: Copyright (c) Kenneth Lorber, Bethesda, Maryland, 1993
 
@@ -143,7 +143,7 @@ Copyright: Copyright (c) Dean Luick, with acknowledgements to Dave Cohrs, 1990
 
 Files: libnethack/include/winprocs.c
 License: NHGPL
-Copyrigh: Copyright (c) David Cohrs, 1992
+Copyright: Copyright (c) David Cohrs, 1992
 
 Files: libnethack/include/youprop.h
 License: NHGPL
@@ -198,6 +198,7 @@ License: NHGPL
 Copyright: Copyright Scott R. Turner, srt@ucla, 10/27/86
 
 Files: libnethack/src/hacklib.c
+License: NHGPL
 Copyright:
  Copyright (c) Robert Patrick Rankin, 1991
  Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985
@@ -215,6 +216,7 @@ License: NHGPL
 Copyright: Copyright (c) Dean Luick, 1994
 
 Files: libnethack/src/localtime.c
+License: NHGPL
 Copyright:
  Copyright (c) Robert Patrick Rankin, 1991
  Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985
@@ -226,6 +228,10 @@ Copyright: Copyright (c) Daniel Thaler, 2011
 Files: libnethack/src/memfile.c
 License: NHGPL
 Copyright: Copyright (c) Daniel Thaler, 2011
+
+Files: libnethack/src/messages.c
+License: NHGPL
+Copyright: Copyright (c) 2014 Alex Smith
 
 Files: libnethack/src/mkmap.c
 License: NHGPL
@@ -307,6 +313,13 @@ Files: libnethack/src/xmalloc.c
 License: NHGPL
 Copyright: Copyright (c) Daniel Thaler, 2011
 
+Files: libnethack/src/youprop.c
+License: NHGPL
+Copyright:
+ Copyright (c) 1989 Mike Threepoint
+ Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ Copyright (c) 2014 Alex Smith
+
 Files: libnethack/util/dgn_*
 License: NHGPL
 Copyright:
@@ -328,13 +341,24 @@ Copyright:
  Copyright (c) M. Stephenson, 1990, 1991
  Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985
 
-Files: libnethack/util/saveinfo.c
+Files: libnethack/util/checkglobals.sh
 License: NHGPL
-Copyright: Copyright (c) Daniel Thaler, 2011
+Copyright: Copyright (c) 2013 Alex Smith
+
+Files: libnethack/util/savemap.pl
+License: NHGPL
+Copyright: Copyright (c) 2014 Derrick Sund
 
 Files: libuncursed/*
 License: NHGPL or GPL-2+
-Copyright: Copyright (c) 2013 Alex Smith
+Copyright: Copyright (c) 2013-2014 Alex Smith
+
+Files: libnethack_common/*
+License: NHGPL
+Copyright:
+ Copyright (c) 2013-2014 Alex Smith
+ Copyright (c) Daniel Thaler, 2011-2012
+ Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
 
 Files: nethack/*
 License: NHGPL
@@ -351,6 +375,10 @@ Copyright: Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985
 Files: nethack/*/brandings.*
 License: NHGPL
 Copyright: Copyright (c) 2013 Alex Smith
+
+Files: nethack/src/extrawin.c nethack/src/motd.c
+License: NHGPL
+Copyright: Copyright (c) 2014 Alex Smith
 
 Files: nethack_server/*
 License: NHGPL or GPL-2+
@@ -500,6 +528,40 @@ Files: tilesets/src/tilesequence.c
 License: NHGPL
 Copyright: Copyright (c) 2013 Alex Smith
 
+Files: scripts/*
+License: NHGPL
+Copyright: Copyright (c) 2013-2014 Alex Smith
+
+Files: dist/debian/*
+License: NHGPL
+Copyright: Copyright (c) 2014 Alex Smith
+
+Files: doc/changelog.txt doc/faq.txt doc/mainloop.txt doc/philosophy.txt doc/saves.txt
+License: NHGPL
+Copyright: Copyright (c) 2013 Alex Smith
+
+Files: doc/nethack4.6.pod
+License: NHGPL
+Copyright: Copyright (c) 2014 Alex Smith
+
+Files: doc/dungeon.txt
+License: NHGPL
+Copyright: Copyright (c) 2013 Sean Hunt
+
+Files: doc/tilesets.txt
+License: NHGPL
+Copyright: Copyright (c) 2013 Alex Smith
+Comment: Based on the equivalent documentation from Slash'EM (which is
+ also NHGPL, and does not list an author).
+
+Files: .indent.pro
+License: NHGPL
+Copyright: Copyright (c) 2013 Alex Smith
+
+Files: README
+License: NHGPL
+Copyright: Copyright (c) 2013 Alex Smith
+
 Files: aimake.rules
 License: NHGPL
 Copyright: Copyright (c) Alex Smith, 2013
@@ -632,6 +694,40 @@ License: NHGPL
  must remain freely available as provided in this License Agreement.  In
  other words, go ahead and share NetHack, but don't try to stop anyone else
  from sharing it farther.
+
+License: GPL-2+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 2 of the License, or (at
+ your option) any later version.
+ .
+ This program is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ General Public License for more details.
+ .
+ A copy of version 2 of the GNU General Public License can be viewed
+ online at <http://www.gnu.org/licenses/>.  It is also viewable as
+ "GPL-2" in the "copyright" file that ships with NetHack 4, and is
+ provided with many operating systems (e.g. on Debian,
+ </usr/share/common-licenses/GPL-3>).
+
+License: GPL-3+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or (at
+ your option) any later version.
+ .
+ This program is distributed in the hope that it will be useful, but
+ WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ General Public License for more details.
+ .
+ A copy of version 3 of the GNU General Public License can be viewed
+ online at <http://www.gnu.org/licenses/>.  It is also viewable as
+ "GPL-3" in the "copyright" file that ships with NetHack 4, and is
+ provided with many operating systems (e.g. on Debian,
+ </usr/share/common-licenses/GPL-3>).
 
 License: GPL-2
                      GNU GENERAL PUBLIC LICENSE

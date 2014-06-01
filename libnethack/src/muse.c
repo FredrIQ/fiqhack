@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-05-31 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -2078,7 +2078,7 @@ ureflects(const char *fmt, const char *str)
         if (fmt && str)
             pline(fmt, str, "scales");
         return TRUE;
-    } else {
+    } else if (reflect_reason) {
         impossible("Reflecting for unknown reason");
         return TRUE;
     }

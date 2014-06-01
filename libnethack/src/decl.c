@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-22 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -8,6 +8,8 @@
 
 /* Memory management, outside the game. */
 struct xmalloc_block *api_blocklist = NULL;
+
+struct nh_window_procs windowprocs;
 
 /*
  * The following structure will be initialized at startup time with
@@ -163,6 +165,7 @@ static const struct turnstate default_turnstate = {
     .continue_message = TRUE,
     .vision_full_recalc = FALSE,
     .delay_flushing = FALSE,
+    .generating_bones = FALSE,
     .migrating_pets = NULL,
     .migrating_objs = NULL,
     .helpless_timers = {},
@@ -235,6 +238,8 @@ neutral_turnstate_tasks(void)
         impossible("vision not recalculated when needed during a turn");
     if (turnstate.delay_flushing)
         impossible("flushing delayed over a turn");
+    if (turnstate.generating_bones)
+        impossible("made bones, yet the game continues");
 
     if (turnstate.migrating_pets) {
         int count = 0;
@@ -315,9 +320,13 @@ init_data(boolean including_program_state)
     /* If including_program_state is not set, we don't init anything that
        isn't saved in the save file. */
     if (including_program_state) {
+        enum nh_followmode fm = program_state.followmode; /* never init this */
+
         memset(&program_state, 0, sizeof (program_state));
         memset(toplines, 0, sizeof (toplines));
         memset(toplines_count, 0, sizeof (toplines_count));
+
+        program_state.followmode = fm;
 
         viz_array = NULL;
     }

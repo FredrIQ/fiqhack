@@ -1,18 +1,20 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-05-30 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
+
+#ifdef WIN32
+# define boolean save_boolean /* rpcndr.h defines "boolean" */
+# include <windows.h> /* must be before compilers.h */
+# undef boolean
+#else
+# include <sys/time.h>
+#endif
 
 #include "tilesequence.h"
 #include "nhcurses.h"
 #include "brandings.h"
 #include <ctype.h>
-
-#ifdef WIN32
-# include <windows.h>
-#else
-# include <sys/time.h>
-#endif
 
 #define sgn(x) ((x) >= 0 ? 1 : -1)
 
@@ -56,9 +58,12 @@ get_map_key(nh_bool place_cursor, nh_bool report_clicks,
     if (settings.blink)
         wtimeout(mapwin, 666);  /* wait 2/3 of a second before switching */
 
+    if (context == krc_interrupt_long_action)
+        wtimeout(mapwin, settings.animation == ANIM_SLOW ? 300 : 50);
+
     if (player.x && place_cursor) {     /* x == 0 is not a valid coordinate */
         wmove(mapwin, player.y, player.x);
-        curs_set(1);
+        nh_curs_set(1);
     }
 
     while (1) {
@@ -75,7 +80,7 @@ get_map_key(nh_bool place_cursor, nh_bool report_clicks,
         draw_map(player.x, player.y);
         doupdate();
 
-        if (key != ERR)
+        if (key != ERR || context == krc_interrupt_long_action)
             break;
     };
     wtimeout(mapwin, -1);
@@ -92,9 +97,9 @@ curses_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux, int uy)
 
     if (ux >= 0) {
         wmove(mapwin, uy, ux);
-        curs_set(1);
+        nh_curs_set(1);
     } else
-        curs_set(0);
+        nh_curs_set(0);
     wnoutrefresh(mapwin);
 }
 
@@ -346,7 +351,7 @@ curses_getpos(int xorig, int yorig, nh_bool force, const char *goal)
 
     while (1) {
         dx = dy = 0;
-        curs_set(1);
+        nh_curs_set(1);
         key = get_map_key(FALSE, TRUE, krc_getpos);
         if (key == KEY_ESCAPE || key == '\x1b') {
             cx = cy = -10;
