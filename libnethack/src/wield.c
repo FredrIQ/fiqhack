@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-28 */
+/* Last modified by Alex Smith, 2014-06-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -142,14 +142,16 @@ canwieldobj(struct obj *wep, boolean noisy, boolean spoil, boolean cblock)
     if (!wep || wep == &zeroobj)
         return 2; /* - is a reasonable wield choice */
     if (cantwield(youmonst.data)) {
-        pline("You are physically incapable of holding %s.", yname(wep));
+        if (noisy)
+            pline("You are physically incapable of holding %s.", yname(wep));
         return 0;
     }
     if (uarms && (cblock || (uarms->cursed && uarms->bknown)) &&
         bimanual(wep)) {
-        pline("You cannot wield a two-handed %s while wearing a shield.",
-              is_sword(wep) ? "sword" : wep->otyp ==
-              BATTLE_AXE ? "axe" : "weapon");
+        if (noisy)
+            pline("You cannot wield a two-handed %s while wearing a shield.",
+                  is_sword(wep) ? "sword" : wep->otyp ==
+                  BATTLE_AXE ? "axe" : "weapon");
         return 0;
     }
     /* If we can't ready something, we can't wield it either, unless it's our
