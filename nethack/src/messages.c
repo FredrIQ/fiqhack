@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-05-31 */
+/* Last modified by Derrick Sund, 2014-06-01 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -240,6 +240,7 @@ keypress_at_more(void)
         case ' ':
         case 10:
         case 13:
+        case 845:
             continue_looping = 0;
             break;
         }
