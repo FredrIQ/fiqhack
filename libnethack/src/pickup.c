@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-06-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1327,6 +1327,7 @@ lootcont:
 
             if (contribution < goldob->quan)
                 goldob = splitobj(goldob, contribution);
+            unwield_silently(goldob);
             freeinv(goldob);
 
             if (IS_THRONE(level->locations[u.ux][u.uy].typ)) {

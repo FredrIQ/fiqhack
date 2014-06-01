@@ -264,6 +264,7 @@ touchfood(void)
     }
 
     if (carried(*uttf)) {
+        unwield_silently(*uttf);
         freeinv(*uttf);
         (*uttf)->oxlth++;  /* hack to prevent merge */
         if (!can_hold(*uttf)) {
@@ -1759,6 +1760,7 @@ doeat(const struct nh_cmd_arg *arg)
         pline("You spit %s out onto the %s.", the(xname(otmp)),
               surface(u.ux, u.uy));
         if (carried(otmp)) {
+            unwield_silently(otmp);
             freeinv(otmp);
             dropy(otmp);
         }

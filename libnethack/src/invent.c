@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-06-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -531,11 +531,15 @@ freeinv_stats(struct obj *obj)
 void
 freeinv(struct obj *obj)
 {
+    if (obj == uwep) {
+        impossible("dropping item before unwielding it");
+        uwepgone();
+    }
+    if (obj == uswapwep) {
+        impossible("dropping item before unreadying it");
+        uwepgone();
+    }
     extract_nobj(obj, &invent, &turnstate.floating_objects, OBJ_FREE);
-    if (uwep == obj)
-        setuwep(NULL);
-    if (uswapwep == obj)
-        setuswapwep(NULL);
     freeinv_stats(obj);
     update_inventory();
 }
