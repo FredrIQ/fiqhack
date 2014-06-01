@@ -460,10 +460,11 @@ update_showlines(char **intermediate, int *length, nh_bool force_more)
         }
         else {
             /* If the showlines[0] string doesn't *have* any whitespace, just
-               kind of split it up anyway.  This will hopefully never happen 
-               anyway. */
+               kind of split it up anyway.  This case will usually come up on
+               squares with dozens of Elbereths on them and probably nowhere
+               else. */
             last = showlines[0].message + getmaxx(msgwin) - strlen(more_text);
-            marker -= strlen(last) + 1;
+            marker -= strlen(last);
             *last = '\0';
         }
     }
