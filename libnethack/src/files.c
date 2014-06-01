@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-31 */
+/* Last modified by Alex Smith, 2014-06-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -28,7 +28,9 @@
 #else
 # include <signal.h>
 # include <sys/select.h>
-# include <ucontext.h>
+# ifdef AIMAKE_BUILDOS_linux
+#  include <ucontext.h>
+# endif
 #endif
 
 #ifndef O_BINARY
@@ -256,7 +258,8 @@ delete_bonesfile(char *bonesid)
  * To avoid deadlocks, upgrading directly from a read lock to a write lock is
  * forbidden; you must drop down to a monitor lock in between.
  *
- * The implementation varies by OS. On UNIX:
+ * The implementation varies by OS. On Linux (and other POSIX with real-time
+ * signals):
  *
  * - No lock: we hold no locks on the file
  *
@@ -308,7 +311,7 @@ delete_bonesfile(char *bonesid)
  */
 
 
-#ifdef UNIX
+#ifdef AIMAKE_BUILDOS_linux
 /*
  * We want to be notified about changes to the logfile; and we want to ensure
  * that the logfile is always locked when we read from it.
@@ -905,6 +908,60 @@ change_fd_lock(int fd, boolean on_logfile, enum locktype type, int timeout)
     alarm(oldtimeout);                                /* alarm is safe */
     sigaction(SIGALRM, &oldsaction, NULL);            /* sigaction is safe */
 
+    return ret;
+}
+
+#elif defined (UNIX)
+/* lock any open file using fcntl; this is used for Unices like Darwin that
+   don't support real-time signals and so don't support multiprocess play */
+
+static void
+handle_sigalrm(int signum)
+{
+    /* We use alarm() to implement the timeout on locking. The handler does
+       nothing, but because it exists and isn't SIG_DFL, it'll interrupt our
+       lock attempt with EINTR. */
+    (void) signum;
+}
+
+boolean
+change_fd_lock(int fd, boolean on_logfile, enum locktype type, int timeout)
+{
+    struct flock sflock;
+    struct sigaction saction, oldsaction;
+    int ret;
+
+    if (fd == -1)
+        return FALSE;
+
+    if (type == LT_MONITOR && !on_logfile)
+        panic("Attempt to monitor lock something other than the logfile");
+
+    saction.sa_handler = handle_sigalrm;
+    saction.sa_flags = SA_RESETHAND;
+    sigemptyset(&saction.sa_mask);
+    sigaction(SIGALRM, &saction, &oldsaction);
+    if (timeout)
+        alarm(timeout);
+
+    sflock.l_type =
+        type == LT_WRITE ? F_WRLCK :
+        type == LT_READ ? F_RDLCK :
+        type == LT_NONE || type == LT_MONITOR ? F_UNLCK :
+        (impossible("invalid lock type in change_fd_lock"), F_UNLCK);
+    sflock.l_whence = SEEK_SET;
+    sflock.l_start = 0;
+    sflock.l_len = 0;
+
+    /* TODO: Check to see if any processes have read locks, tell them to unlock
+       the file, tell them to relock the file once the lock's been
+       established. */
+
+    ret = fcntl(fd, F_SETLKW, &sflock) >= 0;
+
+    alarm(0);
+    sigaction(SIGALRM, &oldsaction, NULL);
+    
     return ret;
 }
 
