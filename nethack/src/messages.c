@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-26 */
+/* Last modified by Derrick Sund, 2014-05-31 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -451,10 +451,10 @@ update_showlines(char **intermediate, int *length, nh_bool force_more)
                n.b.: to_rewind will always be at least two if there's two
                spaces to go back (end of a sentence), because of the ending
                punctuation mark. */
-            int to_rewind = strlen(last);
-            marker -= to_rewind;
             while (marker > buf && *(marker - 1) != ' ')
                 marker--; /* might've been more than one space */
+            int to_rewind = strlen(last);
+            marker -= to_rewind;
             /* NULL out the space in showlines[0] */
             *last = '\0';
         }
