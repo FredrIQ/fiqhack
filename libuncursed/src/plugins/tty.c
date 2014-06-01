@@ -1003,6 +1003,10 @@ getkeyorcodepoint_inner(int timeout_ms, int ignore_signals)
         return KEY_ESCAPE + KEY_BIAS;
 
     } else if ((ks[1] != '[' && ks[1] != 'O') || !ks[2]) {
+        /* It could be ESC twice. */
+        if (ks[1] == '\x1b')
+            return KEY_ESCAPE + KEY_BIAS;
+
         /* An Alt-modified key. The curses API doesn't understand alt plus
            arbitrary unicode, so for now we just send the key without alt if
            it's outside the ASCII range. */
