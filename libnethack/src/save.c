@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-29 */
+/* Last modified by Derrick Sund, 2014-06-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -227,8 +227,8 @@ save_spellbook(struct memfile *mf)
 static void
 savegamestate(struct memfile *mf)
 {
-    mtag(mf, 0, MTAG_GAMESTATE);
     mfmagic_set(mf, STATE_MAGIC);
+    mtag(mf, 0, MTAG_GAMESTATE);
 
     /* must come before migrating_objs and migrating_mons are freed */
     save_timers(mf, level, RANGE_GLOBAL);
@@ -563,8 +563,8 @@ savelev(struct memfile *mf, xchar levnum)
         dmonsfree(lev);
     }
 
-    mtag(mf, levnum, MTAG_LEVEL);
     mfmagic_set(mf, LEVEL_MAGIC);
+    mtag(mf, levnum, MTAG_LEVEL);
 
     mwrite8(mf, lev->z.dnum);
     mwrite8(mf, lev->z.dlevel);
