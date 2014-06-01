@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-15 */
+/* Last modified by Derrick Sund, 2014-06-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -682,8 +682,8 @@ save_rooms(struct memfile *mf, struct level *lev)
 {
     short i;
 
-    mtag(mf, ledger_no(&lev->z), MTAG_ROOMS);
     mfmagic_set(mf, ROOMS_MAGIC);       /* "RDAT" */
+    mtag(mf, ledger_no(&lev->z), MTAG_ROOMS);
     /* First, write the number of rooms */
     mwrite32(mf, lev->nroom);
     for (i = 0; i < lev->nroom; i++)
