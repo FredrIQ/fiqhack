@@ -2,7 +2,7 @@
 # savemap: Reads save.c and maps byte offsets to variable names, dumping
 # the results to savemap.txt for debugging purposes.
 # Copyright © 2014 Derrick Sund.
-# Last modified by Derrick Sund, 2014-02-18
+# Last modified by Derrick Sund, 2014-06-01
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
