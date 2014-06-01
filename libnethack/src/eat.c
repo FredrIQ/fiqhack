@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-29 */
+/* Last modified by Alex Smith, 2014-06-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -304,11 +304,6 @@ eat_one_turn(void)
 
     if (!u.utracked[tos_food]->oeaten)
         impossible("Food is not partly eaten while eating it");
-
-    if (u.uhunger >= 2000) {
-        choke(u.utracked[tos_food]);
-        return 0;
-    }
 
     nutrition_calculations(u.utracked[tos_food], NULL, NULL, &nmod);
     if (nmod > u.utracked[tos_food]->oeaten)
@@ -1871,7 +1866,11 @@ doeat(const struct nh_cmd_arg *arg)
                 return 0;
         }
 
-
+        if (u.uhunger >= 2000) {
+            choke(u.utracked[tos_food]);
+            return 0;
+        }
+        
         u.utracked[tos_food] = otmp;
 
         if (otmp->otyp == CORPSE) {
@@ -2005,31 +2004,26 @@ morehungry(int num)
 static void
 lesshungry(int num, struct obj *otmp)
 {
-    /* Check the hunger level /before/ the bite to measure for choking. This
-       simulates the restriction in 3.4.3 that non-food cannot choke a
-       non-satiated player. */
     u.uhunger += num;
-    if (u.uhunger - num >= 2000) {
-        choke(otmp);
-    } else {
-        /* Have lesshungry() report when you're nearly full so all eating warns
-           when you're about to choke. Exception: fruit juice. This now uses
-           a new interface (stop automatically, continue with control-A). */
-        if (u.uhunger >= 1500 && u.uhunger - num < 1500) {
-            pline("You're having a hard time getting all of it down.");
-            /* Hack: the interruption can mean that you drop just back under
-               1500 for next turn and get warned again. Using a range would mean
-               that sometimes the warning doesn't appear, so instead we add on
-               10 points of nutrition so that we don't slip back below 1500
-               immediately. TODO: Some better way to do this. */
-            u.uhunger += 10;
 
-            action_completed();
-
-            /* TODO: "You stop eating." message if the player hasn't finished
-               eating already. */
-        }
+    /* Have lesshungry() report when you're nearly full so all eating warns
+       when you're about to choke. Exception: fruit juice. This now uses
+       a new interface (stop automatically, continue with control-A). */
+    if (u.uhunger >= 1500 && u.uhunger - num < 1500) {
+        pline("You're having a hard time getting all of it down.");
+        /* Hack: the interruption can mean that you drop just back under
+           1500 for next turn and get warned again. Using a range would mean
+           that sometimes the warning doesn't appear, so instead we add on
+           10 points of nutrition so that we don't slip back below 1500
+           immediately. TODO: Some better way to do this. */
+        u.uhunger += 10;
+        
+        action_completed();
+        
+        /* TODO: "You stop eating." message if the player hasn't finished
+           eating already. */
     }
+
     newuhs(FALSE);
 }
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-06-01 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -899,7 +899,7 @@ tty_hook_exit(void)
         if (i != 1)
             break;
         i = read(ifileno, &b, 1);
-        if (i < 0)
+        if (i <= 0)
             break;
     }
 
@@ -1003,6 +1003,10 @@ getkeyorcodepoint_inner(int timeout_ms, int ignore_signals)
         return KEY_ESCAPE + KEY_BIAS;
 
     } else if ((ks[1] != '[' && ks[1] != 'O') || !ks[2]) {
+        /* It could be ESC twice. */
+        if (ks[1] == '\x1b')
+            return KEY_ESCAPE + KEY_BIAS;
+
         /* An Alt-modified key. The curses API doesn't understand alt plus
            arbitrary unicode, so for now we just send the key without alt if
            it's outside the ASCII range. */
