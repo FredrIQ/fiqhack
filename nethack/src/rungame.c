@@ -88,6 +88,8 @@ get_gamedir(enum game_dirs dirtype, char *buf)
     case DUMP_DIR:
         subdir = "dumps/";
         break;
+    default:
+        return FALSE;
     }
 
     if (override_userdir && getgid() == getegid()) {
