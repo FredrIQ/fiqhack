@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Sean Hunt, 2014-06-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -18,7 +18,8 @@ msummon(struct monst *mon, const d_level * dlev)
 
     if (mon) {
         ptr = mon->data;
-        if (dlev != &mon->dlevel->z)
+        if (dlev->dnum != mon->dlevel->z.dnum ||
+            dlev->dlevel != mon->dlevel->z.dlevel)
             impossible("dlev mismatch for monster in msummon");
         atyp = (ptr->maligntyp == A_NONE) ? A_NONE : sgn(ptr->maligntyp);
         if (mon->ispriest || roamer_type(mon->data))
@@ -26,7 +27,7 @@ msummon(struct monst *mon, const d_level * dlev)
     } else {
         ptr = &mons[PM_WIZARD_OF_YENDOR];
         atyp = (ptr->maligntyp == A_NONE) ? A_NONE : sgn(ptr->maligntyp);
-        if (dlev != &u.uz)
+        if (dlev->dnum != u.uz.dnum || dlev->dlevel != u.uz.dlevel)
             impossible("dlev mismatch for player in msummon");
     }
 
