@@ -1081,7 +1081,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
             /* Stay inside the Wizard's tower when feasible. */
             /* Note: up vs down doesn't really matter in this case. */
             place_lregion(level, level->dndest.nlx, level->dndest.nly,
-                          level->dndest.nhx, level->dndest.nhy, 0, 0, 0, 0,
+                          level->dndest.nhx, level->dndest.nhy, COLNO, ROWNO, COLNO, ROWNO,
                           LR_DOWNTELE, NULL);
         else if (up)
             place_lregion(level, level->updest.lx, level->updest.ly,

@@ -47,10 +47,10 @@ typedef struct stairway {       /* basic stairway identifier */
 # define LR_DOWNTELE 6
 
 typedef struct dest_area {      /* non-stairway level change indentifier */
-    xchar lx, ly;       /* "lower" left corner (near [0,0]) */
-    xchar hx, hy;       /* "upper" right corner (near [COLNO,ROWNO]) */
-    xchar nlx, nly;     /* outline of invalid area */
-    xchar nhx, nhy;     /* opposite corner of invalid area */
+    schar lx, ly;       /* "lower" left corner (near [0,0]) */
+    schar hx, hy;       /* "upper" right corner (near [COLNO,ROWNO]) */
+    schar nlx, nly;     /* outline of invalid area */
+    schar nhx, nhy;     /* opposite corner of invalid area */
 } dest_area;
 
 typedef struct dungeon {        /* basic dungeon identifier */

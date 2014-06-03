@@ -243,13 +243,13 @@ place_lregion(struct level *lev, xchar lx, xchar ly, xchar hx, xchar hy,
     boolean oneshot;
     xchar x, y;
 
-    if (!lx) {  /* default to whole level */
+    if (lx == COLNO) {  /* default to whole level */
         /* 
          * if there are rooms and this a branch, let place_branch choose
          * the branch location (to avoid putting branches in corridors).
          */
         if (rtype == LR_BRANCH && lev->nroom) {
-            place_branch(lev, Is_branchlev(&lev->z), 0, 0);
+            place_branch(lev, Is_branchlev(&lev->z), COLNO, ROWNO);
             return;
         }
 
@@ -411,7 +411,7 @@ fixup_special(struct level *lev)
 
     /* place dungeon branch if not placed above */
     if (!added_branch && Is_branchlev(&lev->z)) {
-        place_lregion(lev, 0, 0, 0, 0, 0, 0, 0, 0, LR_BRANCH, NULL);
+        place_lregion(lev, COLNO, ROWNO, COLNO, ROWNO, COLNO, ROWNO, COLNO, ROWNO, LR_BRANCH, NULL);
     }
 
     /* KMH -- Sokoban levels */

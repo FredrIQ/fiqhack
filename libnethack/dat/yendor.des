@@ -163,7 +163,7 @@ STAIR:levregion(00,00,78,20),(0,0,28,12),up
 STAIR:levregion(00,00,78,20),(0,0,28,12),down
 BRANCH:levregion(00,00,78,20),(0,0,28,12)
 TELEPORT_REGION:levregion(00,00,78,20),(0,0,27,12)
-PORTAL:(25,11,25,11),(0,0,0,0),"fakewiz1"
+PORTAL:(25,11,25,11),levregion(),"fakewiz1"
 MAZEWALK:(28,09),east
 REGION:(07,03,15,11),unlit,"morgue",unfilled
 REGION:(17,06,18,11),unlit,"beehive"
@@ -233,7 +233,7 @@ STAIR:levregion(00,00,78,20),(0,0,8,7),up
 STAIR:levregion(00,00,78,20),(0,0,8,7),down
 BRANCH:levregion(00,00,78,20),(0,0,8,7)
 TELEPORT_REGION:levregion(00,00,78,20),(2,2,6,6)
-PORTAL:(4,4,4,4),(0,0,0,0),"wizard3"
+PORTAL:(4,4,4,4),levregion(),"wizard3"
 MAZEWALK:(08,05),east
 REGION:(04,03,06,06),unlit,"ordinary",unfilled,true
 MONSTER:'L',random,(04,04)

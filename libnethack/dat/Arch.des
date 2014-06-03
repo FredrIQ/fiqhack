@@ -53,7 +53,7 @@ REGION: (32,14,48,14),unlit,"ordinary"
 # Stairs
 STAIR:(55,07),down
 # Portal arrival point
-BRANCH:(63,06,63,06),(0,0,0,0)
+BRANCH:(63,06,63,06),levregion()
 # Doors
 DOOR:closed,(22,07)
 DOOR:closed,(38,07)
