@@ -1641,19 +1641,23 @@ breakobj(struct obj *obj,
 boolean
 breaktest(struct obj *obj)
 {
+    /* Venom can never resist destruction. */
+    if (obj->otyp == ACID_VENOM || obj->otyp == BLINDING_VENOM)
+        return 1;
+
     if (obj_resists(obj, 1, 99))
         return 0;
-    if (objects[obj->otyp].oc_material == GLASS && !obj->oartifact &&
-        obj->oclass != GEM_CLASS)
+
+    /* All glass items break (includes all potions) */
+    if ((objects[obj->otyp].oc_material == GLASS && !obj->oartifact &&
+         obj->oclass != GEM_CLASS))
         return 1;
-    switch (obj->oclass == POTION_CLASS ? POT_WATER : obj->otyp) {
+
+    switch (obj->otyp) {
     case EXPENSIVE_CAMERA:
-    case POT_WATER:    /* really, all potions */
     case EGG:
     case CREAM_PIE:
     case MELON:
-    case ACID_VENOM:
-    case BLINDING_VENOM:
         return 1;
     default:
         return 0;
