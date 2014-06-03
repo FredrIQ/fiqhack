@@ -45,6 +45,12 @@
             depends => 'optstring:-D_XOPEN_SOURCE=700',
             on_failure => 'conditional'
         },
+        _darwin_c_source => {
+            object => 'optionset:CFLAGS',
+            command => ['intcmd:assert_equal','optstring:darwin', "optstring:$^O"],
+            depends => 'optstring:-D_DARWIN_C_SOURCE',
+            on_failure => 'conditional'
+        },
         _cflags => {
             object => 'optionset:CFLAGS',
             depends => [
