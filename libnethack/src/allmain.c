@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-06-03 */
+/* Last modified by Alex Smith, 2014-06-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -51,7 +51,7 @@ nh_lib_init(const struct nh_window_procs *procs, char **paths)
 
     u.uhp = 1;  /* prevent RIP on early quits */
 
-#ifdef UNIX
+#ifdef AIMAKE_BUILDOS_linux
     /* SIGRTMIN+{1,2} are used by the lock monitoring code. This means that we
        could end up with spurious signals due to race conditions after a game
        exits or when reading save files in the main menu of the client. In such
