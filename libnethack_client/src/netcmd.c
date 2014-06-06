@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-06-06 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -144,7 +144,7 @@ cmd_raw_print(json_t *params, int display_only)
         return NULL;
     }
 
-    windowprocs.win_raw_print(json_string_value(params));
+    client_windowprocs.win_raw_print(json_string_value(params));
     return NULL;
 }
 
@@ -157,7 +157,7 @@ cmd_pause(json_t *params, int display_only)
         return NULL;
     }
 
-    windowprocs.win_pause(json_integer_value(params));
+    client_windowprocs.win_pause(json_integer_value(params));
     return NULL;
 }
 
@@ -174,7 +174,7 @@ cmd_display_buffer(json_t *params, int display_only)
         return NULL;
     }
 
-    windowprocs.win_display_buffer(buf, trymove);
+    client_windowprocs.win_display_buffer(buf, trymove);
     return NULL;
 }
 
@@ -253,7 +253,7 @@ cmd_update_status(json_t *params, int display_only)
                     json_string_value(json_array_get(p, i)), ITEMLEN - 1);
     }
 
-    windowprocs.win_update_status(&player);
+    client_windowprocs.win_update_status(&player);
     return NULL;
 }
 
@@ -269,7 +269,7 @@ cmd_print_message(json_t *params, int display_only)
         return NULL;
     }
 
-    windowprocs.win_print_message(turn, msg);
+    client_windowprocs.win_print_message(turn, msg);
     return NULL;
 }
 
@@ -284,7 +284,7 @@ cmd_print_message_nonblocking(json_t *params, int display_only)
         return NULL;
     }
 
-    windowprocs.win_print_message_nonblocking(turn, msg);
+    client_windowprocs.win_print_message_nonblocking(turn, msg);
     return NULL;
 }
 
@@ -307,7 +307,7 @@ cmd_update_screen(json_t *params, int display_only)
     if (json_is_integer(jdbuf)) {
         if (json_integer_value(jdbuf) == 0) {
             memset(dbuf, 0, sizeof (struct nh_dbuf_entry) * ROWNO * COLNO);
-            windowprocs.win_update_screen(dbuf, ux, uy);
+            client_windowprocs.win_update_screen(dbuf, ux, uy);
         } else
             print_error("Incorrect parameter in cmd_update_screen");
         return NULL;
@@ -370,7 +370,7 @@ cmd_update_screen(json_t *params, int display_only)
     }
 
     if (ok)
-        windowprocs.win_update_screen(dbuf, ux, uy);
+        client_windowprocs.win_update_screen(dbuf, ux, uy);
     return NULL;
 }
 
@@ -378,7 +378,7 @@ cmd_update_screen(json_t *params, int display_only)
 static json_t *
 cmd_delay_output(json_t *params, int display_only)
 {
-    windowprocs.win_delay();
+    client_windowprocs.win_delay();
     return NULL;
 }
 
@@ -391,7 +391,7 @@ cmd_level_changed(json_t *params, int display_only)
         return NULL;
     }
 
-    windowprocs.win_level_changed(json_integer_value(params));
+    client_windowprocs.win_level_changed(json_integer_value(params));
     return NULL;
 }
 
@@ -442,8 +442,8 @@ cmd_outrip(json_t *params, int display_only)
     for (i = 0; i < menu.icount; i++)
         json_read_menuitem(json_array_get(jarr, i), menu.items + i);
 
-    windowprocs.win_outrip(&menu, tombstone, name, gold,
-                           killbuf, end_how, year);
+    client_windowprocs.win_outrip(&menu, tombstone, name, gold,
+                                  killbuf, end_how, year);
 
     return NULL;
 }
@@ -489,8 +489,8 @@ cmd_request_command(json_t *params, int display_only)
         return NULL;
     }
 
-    windowprocs.win_request_command(debug, completed, interrupted,
-                                    &jobj, cmd_request_command_inner);
+    client_windowprocs.win_request_command(debug, completed, interrupted,
+                                           &jobj, cmd_request_command_inner);
     return jobj;
 }
 
@@ -542,9 +542,9 @@ cmd_display_menu(json_t *params, int display_only)
     for (i = 0; i < menu.icount; i++)
         json_read_menuitem(json_array_get(jarr, i), menu.items + i);
 
-    windowprocs.win_display_menu(&menu, title, how, placement_hint,
-                                 display_only ? NULL : &jobj,
-                                 cmd_display_menu_inner);
+    client_windowprocs.win_display_menu(&menu, title, how, placement_hint,
+                                        display_only ? NULL : &jobj,
+                                        cmd_display_menu_inner);
     return jobj;
 }
 
@@ -618,9 +618,9 @@ cmd_display_objects(json_t *params, int display_only)
     for (i = 0; i < objlist.icount; i++)
         json_read_objitem(json_array_get(jarr, i), objlist.items + i);
 
-    windowprocs.win_display_objects(&objlist, title, how, placement_hint,
-                                    display_only ? NULL : &jobj,
-                                    cmd_display_objects_inner);
+    client_windowprocs.win_display_objects(&objlist, title, how, placement_hint,
+                                           display_only ? NULL : &jobj,
+                                           cmd_display_objects_inner);
     return jobj;
 }
 
@@ -649,7 +649,7 @@ cmd_list_items(json_t *params, int display_only)
 
     for (i = 0; i < objlist.icount; i++)
         json_read_objitem(json_array_get(jarr, i), objlist.items + i);
-    windowprocs.win_list_items(&objlist, invent);
+    client_windowprocs.win_list_items(&objlist, invent);
 
     return NULL;
 }
@@ -675,7 +675,7 @@ cmd_query_key(json_t *params, int display_only)
         return NULL;
     }
 
-    ret = windowprocs.win_query_key(query, flags, allow_count);
+    ret = client_windowprocs.win_query_key(query, flags, allow_count);
 
     return json_pack("{si,si}", "return", ret.key, "count", ret.count);
 }
@@ -700,7 +700,7 @@ cmd_getpos(json_t *params, int display_only)
         return NULL;
     }
 
-    ret = windowprocs.win_getpos(x, y, force, goal);
+    ret = client_windowprocs.win_getpos(x, y, force, goal);
     return json_pack("{si,si,si}", "return", ret.howclosed,
                      "x", ret.x, "y", ret.y);
 }
@@ -723,7 +723,7 @@ cmd_getdir(json_t *params, int display_only)
         return NULL;
     }
 
-    ret = windowprocs.win_getdir(query, restr);
+    ret = client_windowprocs.win_getdir(query, restr);
     return json_pack("{si}", "return", ret);
 }
 
@@ -747,7 +747,7 @@ cmd_yn_function(json_t *params, int display_only)
         return NULL;
     }
 
-    ret = windowprocs.win_yn_function(query, set, def);
+    ret = client_windowprocs.win_yn_function(query, set, def);
     return json_pack("{si}", "return", ret);
 }
 
@@ -775,7 +775,7 @@ cmd_getline(json_t *params, int display_only)
         return NULL;
     }
 
-    windowprocs.win_getlin(query, &jobj, cmd_getline_inner);
+    client_windowprocs.win_getlin(query, &jobj, cmd_getline_inner);
     return jobj;
 }
 
