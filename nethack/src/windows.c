@@ -666,7 +666,6 @@ resize_game_windows(void)
 
     redo_showlines();
     redraw_game_windows();
-    doupdate();
 }
 
 
@@ -740,7 +739,7 @@ rebuild_ui(void)
 
         redraw_game_windows();
     } else if (basewin) {
-        wrefresh(basewin);
+        wnoutrefresh(basewin);
     }
 }
 
@@ -759,7 +758,6 @@ handle_resize(void)
     }
 
     rebuild_ui();
-    doupdate();
 }
 
 
@@ -872,8 +870,10 @@ nh_wgetch(WINDOW * win, enum keyreq_context context)
         if (ui_flags.queued_server_cancels && !ui_flags.in_zero_time_command) {
             ui_flags.queued_server_cancels--;
             key = KEY_SIGNAL;
-        } else
+        } else {
+            wrefresh(win);
             key = wgetch(win);
+        }
 
         if (ui_flags.ingame && ui_flags.in_zero_time_command &&
             key == KEY_SIGNAL) {

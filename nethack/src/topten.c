@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-06-06 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -85,8 +85,8 @@ show_topten(char *you, int top, int around, nh_bool own)
     }
 
     /* show the score list on a blank screen */
-    clear();
-    refresh();
+    erase();
+    wnoutrefresh(stdscr);
 
     init_menulist(&menu);
 
