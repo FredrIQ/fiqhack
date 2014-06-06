@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-05-23 */
+/* Last modified by Alex Smith, 2014-06-06 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1804,7 +1804,7 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
        allowed; options.c automatically sticks 'candied' in front of such
        names. */
 
-    char oclass;
+    char oclass, invlet;
     char *un, *dn, *actualn;
     const char *name = 0;
 
@@ -1820,6 +1820,7 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
 #define SPINACH 2
     contents = UNDEFINED;
     oclass = 0;
+    invlet = 0;
     actualn = dn = un = 0;
 
     if (!bp)
@@ -1830,6 +1831,13 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
        requires "wand of nothing" if that's what was really wanted] */
     if (!strcmpi(bp, "nothing") || !strcmpi(bp, "nil") || !strcmpi(bp, "none"))
         return no_wish;
+    /* strip off an inventory letter, if one is specified */
+    if ((('a' <= *bp && *bp <= 'z') || ('A' <= *bp && *bp <= 'Z') || *bp == '$')
+        && bp[1] == ' ' && bp[2] == '-' && bp[3] == ' ') {
+        if (*bp != '$')
+            invlet = *bp;
+        bp += 4;
+    }
     /* save the [nearly] unmodified choice string */
     fruitbuf = msg_from_string(bp);
 
@@ -2482,6 +2490,9 @@ typfnd:
             typ = otmp->otyp;
     }
 
+    if (invlet)
+        otmp->invlet = invlet;
+
     if (islit &&
         (typ == OIL_LAMP || typ == MAGIC_LAMP || typ == BRASS_LANTERN ||
          Is_candle(otmp) || typ == POT_OIL)) {
@@ -2571,9 +2582,9 @@ typfnd:
             break;
         case CORPSE:
             /* Undead like zombies and vampires all have G_NOCORPSE as their
-             * corpses are special-cased.  Note that undead_to_corpse
-             * returns its own input if it doesn't correspond to a valid
-             * undead. */
+               corpses are special-cased.  Note that undead_to_corpse
+               returns its own input if it doesn't correspond to a valid
+               undead. */
             if (undead_to_corpse(mntmp) != mntmp) {
                 mntmp = undead_to_corpse(mntmp);
                 otmp->age -= 100;
