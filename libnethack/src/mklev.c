@@ -1012,11 +1012,14 @@ place_branch(struct level *lev, branch * br,    /* branch to place */
      * already made one.  This routine can be called twice when
      * a special level is loaded that specifies an SSTAIR location
      * as a favored spot for a branch.
+     *
+     * As a special case, we also don't actually put anything into
+     * the castle level.
      */
-    if (!br || made_branch)
+    if (!br || made_branch || Is_stronghold(&lev->z))
         return;
 
-    if (!x) {   /* find random coordinates for branch */
+    if (x == COLNO) {   /* find random coordinates for branch */
         br_room = find_branch_room(lev, &m);
         x = m.x;
         y = m.y;

@@ -46,7 +46,7 @@ REGION:(35,16,44,18),lit,"ordinary",unfilled,true
 # Stairs
 STAIR:(02,03),down
 # Portal arrival point
-BRANCH:(71,09,71,09),(0,0,0,0)
+BRANCH:(71,09,71,09),levregion()
 # Doors
 DOOR:locked,(19,06)
 # The temple altar (this will force a priest(ess) to be created)

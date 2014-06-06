@@ -169,7 +169,7 @@ ENDMAP
 # the preceding level; the exit portal is placed inside the down region.
 TELEPORT_REGION:levregion(00,00,23,20),levregion(24,00,78,20),up
 TELEPORT_REGION:levregion(55,00,78,20),levregion(00,00,54,20),down
-PORTAL:levregion(56,01,78,19),(0,0,0,0),"fire"
+PORTAL:levregion(56,01,78,19),levregion(),"fire"
 REGION:(00,00,75,19),lit,"ordinary"
 MONSTER:'E',"air elemental",random,hostile
 MONSTER:'E',"air elemental",random,hostile
@@ -412,8 +412,8 @@ WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 ENDMAP
-TELEPORT_REGION:(0,0,25,19),(0,0,0,0)
-PORTAL:(51,0,75,19),(0,0,0,0),"astral"
+TELEPORT_REGION:(0,0,25,19),levregion()
+PORTAL:(51,0,75,19),levregion(),"astral"
 # A fisherman's dream...
 MONSTER:';',"giant eel",random
 MONSTER:';',"giant eel",random

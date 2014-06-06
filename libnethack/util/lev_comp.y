@@ -1282,6 +1282,12 @@ lev_region	: region
 			current_region.y2 = $9;
 			$$ = 1;
 		  }
+        | LEV '(' ')'
+          {
+            current_region.x1 = current_region.x2 = COLNO;
+            current_region.y1 = current_region.y2 = ROWNO;
+            $$ = 1;
+          }
 		;
 
 fountain_detail : FOUNTAIN_ID ':' coordinate
