@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Alex Smith, 2014-05-31
+Last-Modified: Last modified by Alex Smith, 2014-06-07
 
 Files: libnethack_client/*
 License: NHGPL or GPL-2+
@@ -710,7 +710,7 @@ License: GPL-2+
  online at <http://www.gnu.org/licenses/>.  It is also viewable as
  "GPL-2" in the "copyright" file that ships with NetHack 4, and is
  provided with many operating systems (e.g. on Debian,
- </usr/share/common-licenses/GPL-3>).
+ </usr/share/common-licenses/GPL-2>).
 
 License: GPL-3+
  This program is free software: you can redistribute it and/or modify
