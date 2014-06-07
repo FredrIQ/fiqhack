@@ -37,7 +37,7 @@ ENDMAP
 REGION:(00,00,75,19),lit,"ordinary"
 REGION:(18,03,26,07),lit,"throne",unfilled
 # Portal arrival zone
-BRANCH:(62,12,70,17),(0,0,0,0)
+BRANCH:(62,12,70,17),levregion()
 # Stairs
 STAIR:(29,04),down
 # Doors

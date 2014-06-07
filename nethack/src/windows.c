@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-31 */
+/* Last modified by Alex Smith, 2014-06-06 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -666,7 +666,6 @@ resize_game_windows(void)
 
     redo_showlines();
     redraw_game_windows();
-    doupdate();
 }
 
 
@@ -740,7 +739,7 @@ rebuild_ui(void)
 
         redraw_game_windows();
     } else if (basewin) {
-        wrefresh(basewin);
+        wnoutrefresh(basewin);
     }
 }
 
@@ -759,7 +758,6 @@ handle_resize(void)
     }
 
     rebuild_ui();
-    doupdate();
 }
 
 
@@ -872,8 +870,10 @@ nh_wgetch(WINDOW * win, enum keyreq_context context)
         if (ui_flags.queued_server_cancels && !ui_flags.in_zero_time_command) {
             ui_flags.queued_server_cancels--;
             key = KEY_SIGNAL;
-        } else
+        } else {
+            wrefresh(win);
             key = wgetch(win);
+        }
 
         if (ui_flags.ingame && ui_flags.in_zero_time_command &&
             key == KEY_SIGNAL) {
@@ -894,7 +894,21 @@ nh_wgetch(WINDOW * win, enum keyreq_context context)
                If we're not in a game, EXIT_SAVE will return normally, and from
                there, we spam ESC until the program is closed. (You can't ESC
                out of the main menu, so we use a special flag for that.) */
-            ui_flags.done_hup = TRUE;
+            ui_flags.done_hup++;
+
+            /* Sanity checks (at least the first of which has failed in
+               practice): ensure that we're outside a game from the client's
+               point of view, and ensure that we aren't stuck in some sort
+               of menu that doesn't respond correctly to ESC. If either of
+               those checks fails, just deinitialize the terminal and exit
+               immediately. */
+            if (ui_flags.ingame || ui_flags.done_hup > 100) {
+                exit_curses_ui();
+                nh_lib_exit();
+                /* don't free_displaychars() in case we're in an inconsistent
+                   state there; it writes to disk */
+                exit(EXIT_FAILURE);
+            }
 
             clear_extrawin(); /* kind-of redundant for multiple reasons */
             return KEY_ESCAPE;

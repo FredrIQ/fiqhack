@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-31 */
+/* Last modified by Alex Smith, 2014-06-06 */
 #ifndef NHCLIENT_H
 # define NHCLIENT_H
 
@@ -19,7 +19,7 @@
 
 # define DEFAULT_PORT 53430     /* matches the definition in nhserver.h */
 
-extern struct nh_window_procs windowprocs;
+extern struct nh_window_procs client_windowprocs;
 extern int current_game;
 extern jmp_buf ex_jmp_buf;
 extern int ex_jmp_buf_valid;

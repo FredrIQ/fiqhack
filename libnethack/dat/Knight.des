@@ -37,7 +37,7 @@ REGION:(04,04,45,11),unlit,"ordinary"
 REGION:(06,06,22,09),lit,"throne" , unfilled
 REGION:(27,06,43,09),lit,"ordinary"
 # Portal arrival point
-BRANCH:(20,14,20,14),(0,0,0,0)
+BRANCH:(20,14,20,14),levregion()
 # Stairs
 STAIR:(40,7),down
 # Doors

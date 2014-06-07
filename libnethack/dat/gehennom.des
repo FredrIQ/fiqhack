@@ -39,8 +39,8 @@ REGION:(37,09,43,14),unlit,"morgue",filled,true
 # Stairs
 STAIR:(01,01),down
 # Branch location
-BRANCH:(66,17,66,17),(0,0,0,0)
-TELEPORT_REGION:(58,09,72,18),(0,0,0,0),down
+BRANCH:(66,17,66,17),levregion()
+TELEPORT_REGION:(58,09,72,18),levregion(),down
 
 # Secret Doors
 DOOR:locked,(04,01)

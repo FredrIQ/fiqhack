@@ -179,7 +179,7 @@ full:
 static boolean
 tele_jump_ok(int x1, int y1, int x2, int y2)
 {
-    if (level->dndest.nlx > 0) {
+    if (level->dndest.nlx != COLNO) {
         /* if inside a restricted region, can't teleport outside */
         if (within_bounded_area
             (x1, y1, level->dndest.nlx, level->dndest.nly, level->dndest.nhx,
@@ -195,7 +195,7 @@ tele_jump_ok(int x1, int y1, int x2, int y2)
                                 level->dndest.nhx, level->dndest.nhy))
             return FALSE;
     }
-    if (level->updest.nlx > 0) {        /* ditto */
+    if (level->updest.nlx != COLNO) {        /* ditto */
         if (within_bounded_area
             (x1, y1, level->updest.nlx, level->updest.nly, level->updest.nhx,
              level->updest.nhy) &&
@@ -847,7 +847,7 @@ rloc_pos_ok(int x, int y,       /* coordinates of candidate location */
             return ((yy & 2) != 0) ^    /* inside xor not within */
                 !within_bounded_area(x, y, level->dndest.nlx, level->dndest.nly,
                                      level->dndest.nhx, level->dndest.nhy);
-        if (level->updest.lx && (yy & 1) != 0)  /* moving up */
+        if (level->updest.lx && (yy & 1) != COLNO)  /* moving up */
             return (within_bounded_area
                     (x, y, level->updest.lx, level->updest.ly,
                      level->updest.hx, level->updest.hy) &&
@@ -855,7 +855,7 @@ rloc_pos_ok(int x, int y,       /* coordinates of candidate location */
                      !within_bounded_area(
                        x, y, level->updest.nlx, level->updest.nly,
                        level->updest.nhx, level->updest.nhy)));
-        if (level->dndest.lx && (yy & 1) == 0)  /* moving down */
+        if (level->dndest.lx && (yy & 1) == COLNO)  /* moving down */
             return (within_bounded_area
                     (x, y, level->dndest.lx, level->dndest.ly,
                      level->dndest.hx, level->dndest.hy) &&

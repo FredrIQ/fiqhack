@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-28 */
+/* Last modified by Alex Smith, 2014-06-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -48,8 +48,10 @@ throw_obj(struct obj *obj, const struct nh_cmd_arg *arg,
     /* ask "in what direction?" if necessary */
     if (!getargdir(arg, NULL, &dx, &dy, &dz)) {
         /* obj might need to be merged back into the singular gold object */
-        freeinv(obj);
-        addinv(obj);
+        if (obj->owornmask == 0) {
+            freeinv(obj);
+            addinv(obj);
+        }
         if (cancel_unquivers) {
             pline("You now have no ammunition readied.");
             setuqwep(NULL);
@@ -1639,19 +1641,23 @@ breakobj(struct obj *obj,
 boolean
 breaktest(struct obj *obj)
 {
+    /* Venom can never resist destruction. */
+    if (obj->otyp == ACID_VENOM || obj->otyp == BLINDING_VENOM)
+        return 1;
+
     if (obj_resists(obj, 1, 99))
         return 0;
-    if (objects[obj->otyp].oc_material == GLASS && !obj->oartifact &&
-        obj->oclass != GEM_CLASS)
+
+    /* All glass items break (includes all potions) */
+    if ((objects[obj->otyp].oc_material == GLASS && !obj->oartifact &&
+         obj->oclass != GEM_CLASS))
         return 1;
-    switch (obj->oclass == POTION_CLASS ? POT_WATER : obj->otyp) {
+
+    switch (obj->otyp) {
     case EXPENSIVE_CAMERA:
-    case POT_WATER:    /* really, all potions */
     case EGG:
     case CREAM_PIE:
     case MELON:
-    case ACID_VENOM:
-    case BLINDING_VENOM:
         return 1;
     default:
         return 0;
@@ -1706,6 +1712,7 @@ throw_gold(struct obj *obj, schar dx, schar dy, schar dz)
         pline("You cannot throw gold at yourself.");
         return 0;
     }
+    unwield_silently(obj);
     freeinv(obj);
 
     if (Engulfed) {

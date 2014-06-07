@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-06-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -448,14 +448,8 @@ drop(struct obj *obj)
             weldmsg(obj);
             return 0;
         }
-        setuwep(NULL);
     }
-    if (obj == uquiver) {
-        setuqwep(NULL);
-    }
-    if (obj == uswapwep) {
-        setuswapwep(NULL);
-    }
+    unwield_silently(obj);
 
     if (Engulfed) {
         /* barrier between you and the floor */
@@ -1070,12 +1064,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
                 if (Punished) {
                     drag_down();
                     if (carried(uball)) {
-                        if (uwep == uball)
-                            setuwep(NULL);
-                        if (uswapwep == uball)
-                            setuswapwep(NULL);
-                        if (uquiver == uball)
-                            setuqwep(NULL);
+                        unwield_silently(uball);
                         freeinv(uball);
                     }
                 }
@@ -1092,7 +1081,7 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
             /* Stay inside the Wizard's tower when feasible. */
             /* Note: up vs down doesn't really matter in this case. */
             place_lregion(level, level->dndest.nlx, level->dndest.nly,
-                          level->dndest.nhx, level->dndest.nhy, 0, 0, 0, 0,
+                          level->dndest.nhx, level->dndest.nhy, COLNO, ROWNO, COLNO, ROWNO,
                           LR_DOWNTELE, NULL);
         else if (up)
             place_lregion(level, level->updest.lx, level->updest.ly,

@@ -51,7 +51,7 @@ MAP
  |..|---------
  ----         
 ENDMAP
-BRANCH:(06,04,06,04),(0,0,0,0)
+BRANCH:(06,04,06,04),levregion()
 STAIR:(06,06),up
 REGION:(00,00,13,12),lit,"ordinary"
 NON_DIGGABLE:(00,00,13,12)
@@ -112,7 +112,7 @@ MAP
 |..|---|......|
 ----   --------
 ENDMAP
-BRANCH:(03,01,03,01),(0,0,0,0)
+BRANCH:(03,01,03,01),levregion()
 STAIR:(01,01),up
 REGION:(00,00,14,10),lit,"ordinary"
 NON_DIGGABLE:(00,00,14,10)

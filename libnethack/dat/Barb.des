@@ -47,7 +47,7 @@ REGION:(22,14,24,15),lit,"ordinary"
 # Stairs
 STAIR:(09,09),down
 # Portal arrival point
-BRANCH:(62,02,62,02),(0,0,0,0)
+BRANCH:(62,02,62,02),levregion()
 # Doors
 DOOR:locked,(12,05)
 DOOR:locked,(12,09)

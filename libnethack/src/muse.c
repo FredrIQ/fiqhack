@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-31 */
+/* Last modified by Alex Smith, 2014-06-01 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1822,8 +1822,8 @@ use_misc(struct monst *mtmp, struct musable *m)
                    hero's feet instead */
                 where_to = 2;
             }
-            freeinv(obj);
             uwepgone();
+            freeinv(obj);
             switch (where_to) {
             case 1:    /* onto floor beneath mon */
                 pline("%s yanks %s from your %s!", Monnam(mtmp), the_weapon,

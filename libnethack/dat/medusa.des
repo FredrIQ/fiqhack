@@ -38,8 +38,8 @@ REGION:(31,07,45,07),unlit,"ordinary"
 REGION:(35,09,41,10),unlit,"ordinary",unfilled
 REGION:(31,12,45,12),unlit,"ordinary"
 # Teleport: down to up stairs island, up to Medusa's island
-TELEPORT_REGION:(01,01,05,17),(0,0,0,0),down
-TELEPORT_REGION:(26,04,50,15),(0,0,0,0),up
+TELEPORT_REGION:(01,01,05,17),levregion(),down
+TELEPORT_REGION:(26,04,50,15),levregion(),up
 # Stairs
 STAIR:(05,14),up
 STAIR:(36,10),down
@@ -138,8 +138,8 @@ REGION:(61,03,72,16),unlit,"ordinary",unfilled,true
 REGION:(71,08,72,11),unlit,"ordinary"
 REGION:(67,08,69,11),lit,"ordinary"
 # Teleport: down to up stairs island, up to Medusa's island
-TELEPORT_REGION:(02,03,05,16),(0,0,0,0),down
-TELEPORT_REGION:(61,03,72,16),(0,0,0,0),up
+TELEPORT_REGION:(02,03,05,16),levregion(),down
+TELEPORT_REGION:(61,03,72,16),levregion(),up
 # Stairs
 STAIR:(04,09),up
 STAIR:(68,10),down

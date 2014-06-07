@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-28 */
+/* Last modified by Alex Smith, 2014-06-01 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1182,8 +1182,10 @@ light_cocktail(struct obj *obj)
          * age of the potions.  Not exactly the best solution,
          * but its easy.
          */
-        freeinv(obj);
-        addinv(obj);
+        if (obj->owornmask == 0) {
+            freeinv(obj);
+            addinv(obj);
+        }
         return 1;
     } else if (Underwater) {
         pline("There is not enough oxygen to sustain a fire.");
@@ -2704,8 +2706,8 @@ do_break_wand(struct obj *obj)
     }
 
     turnstate.tracked[ttos_wand] = obj; /* destroy_item might reset this */
-    freeinv(obj);       /* hide it from destroy_item instead... */
-    setnotworn(obj);    /* so we need to do this ourselves */
+    setnotworn(obj);    /* so it can be freed (it's hidden from destroy) */
+    freeinv(obj);       /* hide it from destroy_item */
 
     if (obj->spe <= 0) {
         pline(nothing_else_happens);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-06-06 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -78,7 +78,6 @@ get_map_key(nh_bool place_cursor, nh_bool report_clicks,
         }
 
         draw_map(player.x, player.y);
-        doupdate();
 
         if (key != ERR || context == krc_interrupt_long_action)
             break;
@@ -479,7 +478,7 @@ curses_getpos(int xorig, int yorig, nh_bool force, const char *goal)
 
     nxtc:
         wmove(mapwin, cy, cx);
-        wrefresh(mapwin);
+        wnoutrefresh(mapwin);
 
         /* If we get here, then the user must have pressed a key that didn't
            close the getpos prompt; and it must have been an actual key (or

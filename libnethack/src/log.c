@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-31 */
+/* Last modified by Alex Smith, 2014-06-06 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -164,6 +164,12 @@ log_recover_core(long offset, boolean canreturn)
         terminate(ERR_IN_PROGRESS); /* cannot panic */
     }
 
+    if (offset * 9 < lseek(program_state.logfile, 0, SEEK_END)) {
+        log_reset();
+        /* the location to recover to has probably been calculated incorrectly;
+           force a manual recover rather than losing data */
+        terminate(ERR_RESTORE_FAILED);
+    }
 
     /* Treat everything that happens here as outside the main flow of the game;
        otherwise, we get desyncs in the recovered file, because it isn't in need
@@ -2312,7 +2318,7 @@ log_uninit(void)
     if (program_state.logfile > -1)
         change_fd_lock(program_state.logfile, TRUE, LT_NONE, 0);
 
-#ifdef UNIX
+#ifdef AIMAKE_BUILDOS_linux
     flush_logfile_watchers();
 #endif
 

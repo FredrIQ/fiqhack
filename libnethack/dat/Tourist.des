@@ -47,7 +47,7 @@ REGION:(62,02,67,04),lit,"ordinary"
 # Stairs
 STAIR:(66,03),down
 # Portal arrival point
-BRANCH:(68,14,68,14),(0,0,0,0)
+BRANCH:(68,14,68,14),levregion()
 # Non diggable walls
 NON_DIGGABLE:(00,00,75,19)
 # Doors
