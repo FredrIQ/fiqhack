@@ -336,7 +336,7 @@ display_menu(struct nh_menulist *menu, const char *title, int how,
         log_record_menu(FALSE, &dmcd);
         log_time_line();
         pline_nomore("<%s: %c>", title ? title : "Untitled menu",
-                     dmcd.results[0] < 26 ? 'a' + dmcd.results[0] :
+                     dmcd.results[0] < 26 ? 'a' + dmcd.results[0] - 1:
                                             'A' + dmcd.results[0] - 27);
     } else {
         const char *buf = "(none selected)";
