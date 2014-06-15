@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Derrick Sund, 2014-06-08 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -480,11 +480,15 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
         default:
             if (mdat->how == PICK_LETTER) {
                 if (key >= 'a' && key <= 'z') {
+                    /* Since you can choose a letter outside of the menu range,
+                       this needs to bypass the normal results-setting code. */
                     results[0] = key - 'a' + 1;
-                    break;
+                    rv = 1;
+                    goto cleanup_and_return;
                 } else if (key >= 'A' && key <= 'Z') {
                     results[0] = key - 'A' + 27;
-                    break;
+                    rv = 1;
+                    goto cleanup_and_return;
                 }
             }
             idx = find_accel(key, mdat);
@@ -512,6 +516,7 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
         }
     }
 
+cleanup_and_return:
     delete_gamewin(gw);
     redraw_game_windows();
     nh_curs_set(prevcurs);

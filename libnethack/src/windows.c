@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-31 */
+/* Last modified by Derrick Sund, 2014-06-08 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -332,6 +332,12 @@ display_menu(struct nh_menulist *menu, const char *title, int how,
         log_record_input("M!");
         log_time_line();
         pline_nomore("<%s: cancelled>", title ? title : "Untitled menu");
+    } else if (how == PICK_LETTER) {
+        log_record_menu(FALSE, &dmcd);
+        log_time_line();
+        pline_nomore("<%s: %c>", title ? title : "Untitled menu",
+                     dmcd.results[0] < 26 ? 'a' + dmcd.results[0] - 1:
+                                            'A' + dmcd.results[0] - 27);
     } else {
         const char *buf = "(none selected)";
 

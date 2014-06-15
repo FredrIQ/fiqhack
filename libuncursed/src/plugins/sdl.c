@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Derrick Sund, 2014-06-06 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -48,6 +48,7 @@ static int winheight = 39;    /* height of the window, in units of fontheight */
 static int resize_queued = 0;
 static int suppress_resize = 0;
 static int ignore_resize_count = 0;
+static int redraw_queued = 0;
 
 static int mouse_active = 0;
 static int mouse_hovering = 0;
@@ -308,9 +309,11 @@ winloc_to_charloc(int x_pixels, int y_pixels, int *x_chars, int *y_chars)
     *y_chars = y_pixels / region->tilesize_h + region->loc_t;
 }
 
-/* Called whenever the window or font size changes. */
+/* Called whenever the window or font size changes.  hard_update should be true
+   whenever the update requires a total overhaul of the screen, as with a font
+   size change. */
 static void
-update_window_sizes(int font_size_changed)
+update_window_sizes(int hard_update)
 {
     /* We set the window's minimum size to 80x24 times the font size; increase
        the window to the minimum size if necessary; and decrease the window to
@@ -334,7 +337,7 @@ update_window_sizes(int font_size_changed)
         ignore_resize_count++;
     }
 
-    if (font_size_changed)
+    if (hard_update)
         SDL_SetWindowMinimumSize(win, MINCHARWIDTH * fontwidth,
                                  MINCHARHEIGHT * fontheight);
 
@@ -347,7 +350,7 @@ update_window_sizes(int font_size_changed)
     SDL_SetRenderTarget(render, screen);
     rendertarget = screen;
 
-    if (w != winwidth || h != winheight || font_size_changed) {
+    if (w != winwidth || h != winheight || hard_update) {
         SDL_RenderSetLogicalSize(render, w * fontwidth, h * fontheight);
 
         /* Don't do a full redraw if the window size actually changed; that may
@@ -355,10 +358,12 @@ update_window_sizes(int font_size_changed)
            KEY_RESIZE sent the program using this plugin won't do it itself. */
         if (w != winwidth || h != winheight)
             resize_queued = 1;
-        else {
+        else if (hard_update) {
             sdl_hook_fullredraw();
             sdl_hook_flush();
         }
+        else
+            redraw_queued = 1;
     }
 
     winwidth = w;
@@ -801,6 +806,11 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
             return KEY_SILENCE + KEY_BIAS;
         }
 
+        if (redraw_queued && e.type != SDL_WINDOWEVENT) {
+            sdl_hook_fullredraw();
+            redraw_queued = 0;
+        }
+
         switch (e.type) {
         case SDL_USEREVENT:
 
@@ -822,11 +832,13 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
             }
 
             if (e.window.event == SDL_WINDOWEVENT_RESIZED ||
-                e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+                e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED ||
+                e.window.event == SDL_WINDOWEVENT_MAXIMIZED ||
+                e.window.event == SDL_WINDOWEVENT_RESTORED)
                 update_window_sizes(0);
 
             if (e.window.event == SDL_WINDOWEVENT_EXPOSED)
-                sdl_hook_fullredraw();
+                redraw_queued = 1;
 
             if (e.window.event == SDL_WINDOWEVENT_CLOSE) {
                 hangup_mode = 1;

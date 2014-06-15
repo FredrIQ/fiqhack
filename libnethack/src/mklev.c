@@ -1026,7 +1026,7 @@ place_branch(struct level *lev, branch * br,    /* branch to place */
     if (!br || made_branch || Is_stronghold(&lev->z))
         return;
 
-    if (x == COLNO) {   /* find random coordinates for branch */
+    if (x != COLNO) {   /* find random coordinates for branch */
         br_room = find_branch_room(lev, &m);
         x = m.x;
         y = m.y;

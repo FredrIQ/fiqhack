@@ -1,14 +1,21 @@
 #!/usr/bin/perl
-# Last modified by Derrick Sund, 2014-02-18
+# savemap: Reads save.c and maps byte offsets to variable names, dumping
+# the results to savemap.txt for debugging purposes.
+# Copyright © 2014 Derrick Sund.
+# Last modified by Derrick Sund, 2014-06-01
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
 
-# savemap: Reads save.c and maps byte offsets to variable names, dumping
-# the results to savemap.txt for debugging purposes.
-# Copyright © 2014 Derrick Sund.
-open SAVESOURCE, "<", "../src/save.c" or die "Couldn't read save.c!";
-open MAPFILE, ">", "savemap.txt" or die "Couldn't write to savemap.txt!";
+if ($#ARGV < 1) {
+    print "Usage: savemap.pl input output\n";
+    print "input: the C file to scan, such as ../src/save.c\n";
+    print "output: the file to write the savemap to\n\n";
+    exit;
+}
+
+open SAVESOURCE, "<", $ARGV[0] or die "Couldn't read input file!";
+open MAPFILE, ">", $ARGV[1] or die "Couldn't write to output file!";
 
 #The current tag.  Empty string if we don't have one.
 my $tag = "";

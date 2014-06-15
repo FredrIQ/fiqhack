@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-31 */
+/* Last modified by Derrick Sund, 2014-06-08 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1158,7 +1158,7 @@ dospellmenu(const char *prompt,
             100 - percent_success(i),
             (spellknow(i) * 100 + (KEEN - 1)) / KEEN);
         set_menuitem(&items[count++], i + 1, MI_NORMAL, buf,
-                     i <= 26 ? i + 'a' : i + 'A' - 26, FALSE);
+                     i < 26 ? i + 'a' : i + 'A' - 26, FALSE);
     }
 
     how = PICK_ONE;
