@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Sean Hunt, 2014-06-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -528,6 +528,13 @@ alloc_level(d_level * levnum)
     lev->rooms[0].hx = -1;
     lev->subrooms[0].hx = -1;
     lev->flags.hero_memory = 1;
+
+    lev->updest.lx = lev->updest.hx = lev->updest.nlx = lev->updest.nhx =
+        lev->dndest.lx = lev->dndest.hx = lev->dndest.nlx = lev->dndest.nhx =
+        COLNO;
+    lev->updest.ly = lev->updest.hy = lev->updest.nly = lev->updest.nhy =
+        lev->dndest.ly = lev->dndest.hy = lev->dndest.nly = lev->dndest.nhy =
+        ROWNO;
 
     /* these are not part of the level structure, but are obly used while
        making new levels */
