@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-06 */
+/* Last modified by Alex Smith, 2014-06-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -292,7 +292,7 @@ ext_cmd_getlin_hook(struct win_getline *base, void *hook_arg)
 
     com_index = -1;
     for (oindex = 0; oindex < hpa->listlen; oindex++) {
-        if (!strncmp(base->buf, hpa->namelist[oindex], strlen(base->buf))) {
+        if (!strncasecmp(base->buf, hpa->namelist[oindex], strlen(base->buf))) {
             if (com_index == -1)        /* no matches yet */
                 com_index = oindex;
             else        /* more than 1 match */
