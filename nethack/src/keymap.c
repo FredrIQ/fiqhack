@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-06 */
+/* Last modified by Alex Smith, 2014-06-20 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -23,6 +23,7 @@ enum internal_commands {
     UICMD_PREVMSG,
     UICMD_WHATDOES,
     UICMD_TOGGLEPICKUP,
+    UICMD_REPEATCOUNT,
     UICMD_NOTHING,
     UICMD_SERVERCANCEL,
 };
@@ -108,7 +109,10 @@ struct nh_cmd_desc builtin_commands[] = {
     {"togglepickup", "toggle the autopickup option", '@', 0,
      CMD_UI | UICMD_TOGGLEPICKUP},
     {"whatdoes", "describe what a key does", '&', 0, CMD_UI | UICMD_WHATDOES},
-    {"(nothing)", "bind keys to this command to suppress \"Bad command\".", 0,
+
+    {"repeatcount", "enter a number of turns to perform a command", 0,
+     0, CMD_UI | UICMD_REPEATCOUNT},
+    {"(nothing)", "bind keys to this command to suppress \"Bad command\"", 0,
      0, CMD_UI | UICMD_NOTHING},
 
     {"servercancel", "(internal use only) the server already has a command",
@@ -292,18 +296,21 @@ get_command(void *callbackarg,
         ncaa.arg.argtype = 0;
 
         key = get_map_key(TRUE, TRUE, krc_get_command);
-        while ((key >= '0' && key <= '9') ||
-               (multi > 0 && key == KEY_BACKSPACE)) {
-            if (key == KEY_BACKSPACE)
-                multi /= 10;
-            else {
-                multi = 10 * multi + key - '0';
-                if (multi > 0xffff)
+
+        if (key <= KEY_MAX && keymap[key] == find_command("repeatcount")) {
+            do {
+                if (key == KEY_BACKSPACE)
                     multi /= 10;
-            }
-            sprintf(line, "Count: %d", multi);
-            key = curses_msgwin(line, krc_count);
-        };
+                else if (key >= '0' && key <= '9') {
+                    multi = 10 * multi + key - '0';
+                    if (multi > 0xffff)
+                        multi /= 10;
+                }
+                sprintf(line, "Count: %d", multi);
+                key = curses_msgwin(line, krc_count);
+            } while ((key >= '0' && key <= '9') ||
+                     (multi > 0 && key == KEY_BACKSPACE));
+        }
 
         if (key == '\x1b' || key == KEY_ESCAPE)
             continue;
@@ -1044,6 +1051,10 @@ init_keymap(void)
     keymap['\r'] = find_command("(nothing)");
     keymap[' '] = find_command("(nothing)");
 
+    /* main keyboard numbers are command repeat by default */
+    for (i = '1'; i <= '9'; i++)
+        keymap[i] = find_command("repeatcount");
+
     /* every command automatically gets its default key */
     for (i = 0; i < cmdcount; i++)
         if (commandlist[i].defkey)
@@ -1124,7 +1135,7 @@ add_keylist_command(struct nh_menulist *menu, struct nh_cmd_desc *cmd, int id)
         }
     }
 
-    sprintf(buf, "%s%.15s\t%.50s\t%.16s", cmd->flags & CMD_EXT ? "#" : "",
+    sprintf(buf, "%s%.15s\t%.50s\t%.17s", cmd->flags & CMD_EXT ? "#" : "",
             cmd->name, cmd->desc, keys);
     add_menu_item(menu, id, buf, 0, FALSE);
 }
