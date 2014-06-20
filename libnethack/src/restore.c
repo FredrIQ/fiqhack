@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-29 */
+/* Last modified by Alex Smith, 2014-06-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1044,8 +1044,13 @@ restore_traps(struct memfile *mf)
 static void
 restore_stairway(struct memfile *mf, stairway *s)
 {
+    /* SAVE COMPAT SHIM (4.3-beta1 -> 4.3-beta2)
+
+       If s.sx and s.sy are COLNO and ROWNO respectively, save as 0, 0. */
     s->sx = mread8(mf);
     s->sy = mread8(mf);
+    if (!s->sx && !s->sy)
+        s->sx = COLNO, s->sy = ROWNO;
     restore_dlevel(mf, &s->tolev);
     s->up = mread8(mf);
 }
@@ -1196,8 +1201,10 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
         /* Now get rid of all the temp fruits... */
         freefruitchn(oldfruit), oldfruit = 0;
 
+        /* TODO: Is this dead code? I /hope/ it's dead code. */
         if (levnum > ledger_no(&medusa_level) &&
-            levnum < ledger_no(&stronghold_level) && lev->dnstair.sx == 0) {
+            levnum < ledger_no(&stronghold_level) &&
+            !isok(lev->dnstair.sx, lev->dnstair.sy)) {
             coord cc;
 
             mazexy(lev, &cc);

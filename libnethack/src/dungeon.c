@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-06-01 */
+/* Last modified by Alex Smith, 2014-06-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1196,6 +1196,8 @@ prev_level(boolean at_stairs)
 void
 u_on_newpos(int x, int y)
 {
+    if (!isok(u.ux, u.uy))
+        panic("placing player outside the map boundaries");
     u.ux = x;
     u.uy = y;
     /* ridden steed always shares hero's location */
@@ -1215,7 +1217,7 @@ void
 u_on_sstairs(void)
 {
 
-    if (level->sstairs.sx) {
+    if (isok(level->sstairs.sx, level->sstairs.sy)) {
         u_on_newpos(level->sstairs.sx, level->sstairs.sy);
     } else {
         /* code stolen from goto_level */
@@ -1238,7 +1240,7 @@ u_on_sstairs(void)
 void
 u_on_upstairs(void)
 {
-    if (level->upstair.sx) {
+    if (isok(level->upstair.sx, level->upstair.sy)) {
         u_on_newpos(level->upstair.sx, level->upstair.sy);
     } else
         u_on_sstairs();
@@ -1248,7 +1250,7 @@ u_on_upstairs(void)
 void
 u_on_dnstairs(void)
 {
-    if (level->dnstair.sx) {
+    if (isok(level->dnstair.sx, level->dnstair.sy)) {
         u_on_newpos(level->dnstair.sx, level->dnstair.sy);
     } else
         u_on_sstairs();
@@ -1304,7 +1306,8 @@ Can_rise_up(int x, int y, const d_level * lev)
         return FALSE;
     return (boolean) (lev->dlevel > 1 ||
                       (dungeons[lev->dnum].entry_lev == 1 && ledger_no(lev) != 1
-                       && level->sstairs.sx && level->sstairs.up));
+                       && isok(level->sstairs.sx, level->sstairs.sy) &&
+                       level->sstairs.up));
 }
 
 /*

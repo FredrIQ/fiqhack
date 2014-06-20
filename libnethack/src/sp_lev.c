@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2014-06-20 */
 /*      Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1367,7 +1367,7 @@ fix_stair_rooms(struct level *lev)
     int i;
     struct mkroom *croom;
 
-    if (lev->dnstair.sx &&
+    if (isok(lev->dnstair.sx, lev->dnstair.sy) &&
         !((lev->dnstairs_room->lx <= lev->dnstair.sx &&
            lev->dnstair.sx <= lev->dnstairs_room->hx) &&
           (lev->dnstairs_room->ly <= lev->dnstair.sy &&
@@ -1384,7 +1384,7 @@ fix_stair_rooms(struct level *lev)
         if (i == lev->nroom)
             panic("Couldn't find dnstair room in fix_stair_rooms!");
     }
-    if (lev->upstair.sx &&
+    if (isok(lev->upstair.sx, lev->upstair.sy) &&
         !((lev->upstairs_room->lx <= lev->upstair.sx &&
            lev->upstair.sx <= lev->upstairs_room->hx) &&
           (lev->upstairs_room->ly <= lev->upstair.sy &&

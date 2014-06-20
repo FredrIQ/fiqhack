@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-02 */
+/* Last modified by Alex Smith, 2014-06-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -175,7 +175,8 @@ dig_check(struct monst * madeby, boolean verbose, int x, int y)
                         is_axe(uwep)) ? "chop" : "dig in";
 
     if (On_stairs(x, y)) {
-        if (x == level->dnladder.sx || x == level->upladder.sx) {
+        if ((x == level->dnladder.sx && y == level->upladder.sy) ||
+            (x == level->upladder.sx && y == level->upladder.sy)) {
             if (verbose)
                 pline("The ladder resists your effort.");
         } else if (verbose)
@@ -1179,8 +1180,10 @@ zap_dig(schar dx, schar dy, schar dz)
             if (dz < 0 || On_stairs(u.ux, u.uy)) {
                 if (On_stairs(u.ux, u.uy))
                     pline("The beam bounces off the %s and hits the %s.",
-                          (u.ux == level->dnladder.sx ||
-                           u.ux == level->upladder.sx) ? "ladder" : "stairs",
+                          ((u.ux == level->dnladder.sx &&
+                            u.uy == level->dnladder.sy) ||
+                           (u.ux == level->upladder.sx &&
+                            u.uy == level->upladder.sy)) ? "ladder" : "stairs",
                           ceiling(u.ux, u.uy));
                 pline("You loosen a rock from the %s.", ceiling(u.ux, u.uy));
                 pline("It falls on your %s!", body_part(HEAD));

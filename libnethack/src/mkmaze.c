@@ -624,7 +624,7 @@ makemaz(struct level *lev, const char *s)
     }
 
     /* place branch stair or portal */
-    place_branch(lev, Is_branchlev(&lev->z), 0, 0);
+    place_branch(lev, Is_branchlev(&lev->z), COLNO, ROWNO);
 
     for (x = rn1(8, 11); x; x--) {
         mazexy(lev, &mm);

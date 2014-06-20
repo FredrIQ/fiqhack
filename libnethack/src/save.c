@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-06-01 */
+/* Last modified by Alex Smith, 2014-06-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -515,8 +515,16 @@ save_utracked(struct memfile *mf, struct you *y)
 static void
 save_stairway(struct memfile *mf, stairway s)
 {
-    mwrite8(mf, s.sx);
-    mwrite8(mf, s.sy);
+    /* SAVE COMPAT SHIM (4.3-beta1 -> 4.3-beta2)
+
+       If s.sx and s.sy are COLNO and ROWNO respectively, save as 0, 0. */
+    if (s.sx == COLNO && s.sy == ROWNO) {
+        mwrite8(mf, 0);
+        mwrite8(mf, 0);
+    } else {
+        mwrite8(mf, s.sx);
+        mwrite8(mf, s.sy);
+    }
     save_dlevel(mf, s.tolev);
     mwrite8(mf, s.up);
 }

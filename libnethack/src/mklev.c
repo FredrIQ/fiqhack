@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-06-15 */
+/* Last modified by Alex Smith, 2014-06-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -531,10 +531,12 @@ alloc_level(d_level * levnum)
 
     lev->updest.lx = lev->updest.hx = lev->updest.nlx = lev->updest.nhx =
         lev->dndest.lx = lev->dndest.hx = lev->dndest.nlx = lev->dndest.nhx =
-        COLNO;
+        lev->upstair.sx = lev->dnstair.sx = lev->sstairs.sx =
+        lev->upladder.sx = lev->dnladder.sx = COLNO;
     lev->updest.ly = lev->updest.hy = lev->updest.nly = lev->updest.nhy =
         lev->dndest.ly = lev->dndest.hy = lev->dndest.nly = lev->dndest.nhy =
-        ROWNO;
+        lev->upstair.sy = lev->dnstair.sy = lev->sstairs.sy =
+        lev->upladder.sy = lev->dnladder.sy = ROWNO;
 
     /* these are not part of the level structure, but are obly used while
        making new levels */
@@ -691,7 +693,7 @@ makelevel(struct level *lev)
 
 skip0:
     /* Place multi-dungeon branch. */
-    place_branch(lev, branchp, 0, 0);
+    place_branch(lev, branchp, COLNO, ROWNO);
 
     /* for each room: put things inside */
     for (croom = lev->rooms; croom->hx > 0; croom++) {
@@ -1026,7 +1028,7 @@ place_branch(struct level *lev, branch * br,    /* branch to place */
     if (!br || made_branch || Is_stronghold(&lev->z))
         return;
 
-    if (x != COLNO) {   /* find random coordinates for branch */
+    if (x == COLNO) {   /* find random coordinates for branch */
         br_room = find_branch_room(lev, &m);
         x = m.x;
         y = m.y;
@@ -1043,6 +1045,11 @@ place_branch(struct level *lev, branch * br,    /* branch to place */
         make_stairs = br->type != BR_NO_END2;
         dest = &br->end1;
     }
+
+    if (!isok(x, y))
+        panic("placing dungeon branch outside the map bounds");
+    if (!x && !y)
+        impossible("suspicious attempt to place dungeon branch at (0, 0)");
 
     if (br->type == BR_PORTAL) {
         mkportal(lev, x, y, dest->dnum, dest->dlevel);
@@ -1253,8 +1260,14 @@ mktrap(struct level *lev, int num, int mazeflag, struct mkroom *croom,
 void
 mkstairs(struct level *lev, xchar x, xchar y, char up, struct mkroom *croom)
 {
-    if (!x) {
-        impossible("mkstairs:  bogus stair attempt at <%d,%d>", x, y);
+    if (!isok(x, y)) {
+        impossible("mkstairs: bogus stair attempt at <%d,%d>", x, y);
+        return;
+    }
+    if (!x && !y) {
+        /* In 4.3-beta{1,2}, this doesn't save correctly, and there's no known
+           way to get stairs here anyway... */
+        impossible("mkstairs: suspicious stair attempt at <%d,%d>", x, y);
         return;
     }
 

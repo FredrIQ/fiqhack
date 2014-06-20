@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-06-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -940,8 +940,8 @@ rloc(struct monst *mtmp,        /* mx==COLNO implies migrating monster arrival *
     if (mtmp->iswiz && mtmp->mx != COLNO) {      /* Wizard, not just arriving */
         if (!In_W_tower(u.ux, u.uy, &u.uz))
             x = level->upstair.sx, y = level->upstair.sy;
-        else if (!level->dnladder.sx)   /* bottom level of tower */
-            x = level->upladder.sx, y = level->upladder.sy;
+        else if (!isok(level->dnladder.sx, level->dnladder.sy))
+            x = level->upladder.sx, y = level->upladder.sy;/* bottom of tower */
         else
             x = level->dnladder.sx, y = level->dnladder.sy;
         /* if the wiz teleports away to heal, try the up staircase, to block

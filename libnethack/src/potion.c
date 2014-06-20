@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-06-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -828,12 +828,11 @@ peffects(struct obj *otmp)
             /* reverse kludge */
             HLevitation = 0;
             if (otmp->cursed && !Is_waterlevel(&u.uz)) {
-                if ((u.ux != level->upstair.sx || u.uy != level->upstair.sy)
-                    && (u.ux != level->sstairs.sx || u.uy != level->sstairs.sy
-                        || !level->sstairs.up)
-                    && (!level->upladder.sx || u.ux != level->upladder.sx ||
-                        u.uy != level->upladder.sy)
-                    ) {
+                if ((u.ux != level->upstair.sx || u.uy != level->upstair.sy) &&
+                    (u.ux != level->sstairs.sx ||
+                     u.uy != level->sstairs.sy || !level->sstairs.up) &&
+                    (u.ux != level->upladder.sx ||
+                     u.uy != level->upladder.sy)) {
                     pline("You hit your %s on the %s.", body_part(HEAD),
                           ceiling(u.ux, u.uy));
                     losehp(uarmh ? 1 : rnd(10),

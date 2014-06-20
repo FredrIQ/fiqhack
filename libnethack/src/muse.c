@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-01 */
+/* Last modified by Alex Smith, 2014-06-20 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -330,8 +330,7 @@ find_defensive(struct monst *mtmp, struct musable *m)
         if (x == lev->dnladder.sx && y == lev->dnladder.sy &&
             !is_floater(mtmp->data))
             m->has_defense = MUSE_DN_LADDER;
-    } else if (lev->sstairs.sx && lev->sstairs.sx == x &&
-               lev->sstairs.sy == y) {
+    } else if (lev->sstairs.sx == x && lev->sstairs.sy == y) {
         m->has_defense = MUSE_SSTAIRS;
     } else if (!stuck && !immobile) {
         /* Note: trap doors take precedence over teleport traps. */
@@ -631,7 +630,7 @@ use_defensive(struct monst *mtmp, struct musable *m)
             if (IS_FURNITURE(level->locations[mtmp->mx][mtmp->my].typ) ||
                 IS_DRAWBRIDGE(level->locations[mtmp->mx][mtmp->my].typ) ||
                 (is_drawbridge_wall(mtmp->mx, mtmp->my) >= 0) ||
-                (level->sstairs.sx && level->sstairs.sx == mtmp->mx &&
+                (level->sstairs.sx == mtmp->mx &&
                  level->sstairs.sy == mtmp->my)) {
                 pline("The digging ray is ineffective.");
                 return 2;

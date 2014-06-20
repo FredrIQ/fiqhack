@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-06-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -305,10 +305,11 @@ tactics(struct monst *mtmp)
         /* unless, of course, there are no stairs (e.g. endlevel) */
         mtmp->mavenge = 1;      /* covetous monsters attack while fleeing */
         if (In_W_tower(mtmp->mx, mtmp->my, &u.uz) ||
-            (mtmp->iswiz && !level->upstair.sx && !mon_has_amulet(mtmp))) {
+            (mtmp->iswiz && isok(level->upstair.sx, level->upstair.sy) &&
+             !mon_has_amulet(mtmp))) {
             if (!rn2(3 + mtmp->mhp / 10))
                 rloc(mtmp, FALSE);
-        } else if (level->upstair.sx &&
+        } else if (isok(level->upstair.sx, level->upstair.sy) &&
                    (mtmp->mx != level->upstair.sx ||
                     mtmp->my != level->upstair.sy)) {
             mnearto(mtmp, level->upstair.sx, level->upstair.sy, TRUE);
