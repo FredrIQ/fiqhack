@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-06-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -146,11 +146,22 @@ drop_upon_death(struct monst *mtmp, struct obj *cont)
             goodfruit(otmp->spe);
 
     while ((otmp = invent) != 0) {
+        /* The desync detector dislikes floating wielded objects, even for a few
+           lines of code. Also, we need to do mark it as unworn anyway to avoid
+           worn items lying around on the ground for other players to find.
+
+           This thus must be before curse() (can cause weapons to drop during
+           twoweaponing, IIRC) and obj_extract_self() (drives the desync
+           detector crazy).
+
+           Because this unwear is due to death rather than due to more usual
+           reasons, we do the unwear by hand, omitting the parts of the unwear
+           that would affect the character (we're just focusing on what
+           happens to the item, the character is dead). */
+        otmp->owornmask = 0;
+
         obj_extract_self(otmp);
         obj_no_longer_held(otmp);
-
-        /* ensure otmp isn't dropped by curse() */
-        otmp->owornmask = 0;
 
         /* lamps don't go out when dropped */
         if ((cont || artifact_light(otmp)) && obj_is_burning(otmp))
