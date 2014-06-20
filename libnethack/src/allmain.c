@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-03 */
+/* Last modified by Alex Smith, 2014-06-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -287,6 +287,8 @@ nh_create_game(int fd, struct nh_option_desc *opts_orig)
     }
 
     program_state.suppress_screen_updates = TRUE;
+    program_state.followmode = FM_PLAY;
+
     birthday = utc_time();
 
     /* Initialize the random number generator. This can use any algorithm we
@@ -299,6 +301,7 @@ nh_create_game(int fd, struct nh_option_desc *opts_orig)
     mt_srand(seed);
 
     startup_common(TRUE);
+
     /* Set defaults in case list of options from client was incomplete. */
     struct nh_option_desc *defaults = default_options();
     for (i = 0; defaults[i].name; i++)
