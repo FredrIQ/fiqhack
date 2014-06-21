@@ -77,7 +77,7 @@ replay(void)
             status = nh_get_savegame_status(fd, &gi);
             close(fd);
 
-            describe_game(buf, status, &gi, -1);
+            describe_game(buf, status, &gi);
             add_menu_item(&menu, i + 1, buf, 0, FALSE);
         }
 

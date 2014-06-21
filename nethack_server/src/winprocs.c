@@ -201,10 +201,6 @@ srv_update_status(struct nh_player_info *pi)
     struct nh_player_info *oi = &player_info;
     int i, all;
 
-    /* Refresh the timestamp. */
-    if (gameid && gameid != -1)
-        db_update_game(gameid, pi->moves, pi->z, pi->level_desc);
-
     if (!memcmp(&player_info, pi, sizeof (struct nh_player_info)))
         return;
 

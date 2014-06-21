@@ -125,12 +125,11 @@ nhnet_list_games(int done, int show_all, int *count)
             memset(gb, 0, sizeof (struct nhnet_game));
             jobj = json_array_get(jarr, i);
             if (json_unpack
-                (jobj, "{si,si,si,ss,ss,ss,ss,ss,ss,si*}",
-                 "gameid", &gb->gameid, "status", &gb->status,
-                 "playmode", &gb->i.playmode, "plname", &plname,
-                 "plrole", &plrole, "plrace", &plrace, "plgend", &plgend,
-                 "plalign", &plalign, "game_state", &game_state,
-                 "idle", &gb->idle) == -1) {
+                (jobj, "{si,si,si,ss,ss,ss,ss,ss,ss*}", "gameid", &gb->gameid,
+                 "status", &gb->status, "playmode", &gb->i.playmode, "plname",
+                 &plname, "plrole", &plrole, "plrace", &plrace, "plgend",
+                 &plgend, "plalign", &plalign, "game_state", &game_state) ==
+                -1) {
                 print_error("Invalid game info object.");
                 continue;
             }

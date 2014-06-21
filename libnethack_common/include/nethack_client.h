@@ -26,7 +26,6 @@ struct nhnet_game {
     int gameid;
     enum nh_log_status status;
     struct nh_game_info i;
-    int idle;
 };
 
 

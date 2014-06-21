@@ -527,7 +527,7 @@ extern void curses_request_command(nh_bool debug, nh_bool completed,
                                    void (*)(const struct nh_cmd_and_arg *cmd,
                                             void *callbackarg));
 extern void describe_game(char *buf, enum nh_log_status status,
-                          struct nh_game_info *gi, int idle);
+                          struct nh_game_info *gi);
 extern void rungame(nh_bool net);
 extern nh_bool loadgame(void);
 extern void game_ended(int status, fnchar *filename, nh_bool net);

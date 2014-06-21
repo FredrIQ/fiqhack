@@ -35,6 +35,7 @@ static json_t *cmd_yn_function(json_t *params, int display_only);
 static json_t *cmd_getline(json_t *params, int display_only);
 static json_t *cmd_server_error(json_t *params, int display_only);
 
+
 /*---------------------------------------------------------------------------*/
 
 

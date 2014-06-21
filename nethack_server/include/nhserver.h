@@ -126,7 +126,6 @@ struct client_command {
 struct gamefile_info {
     int gid;
     char *filename;
-    int idle;
 };
 
 

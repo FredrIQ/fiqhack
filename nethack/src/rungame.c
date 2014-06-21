@@ -445,11 +445,10 @@ cleanup:
 
 
 void
-describe_game(char *buf, enum nh_log_status status,
-              struct nh_game_info *gi, int idle)
+describe_game(char *buf, enum nh_log_status status, struct nh_game_info *gi)
 {
     const char *mode_desc[] = { "", "\t[explore]", "\t[wizard]",
-                                "\t[polyinit]", "\t[unknown game mode]" };
+                                "\t[unknown game mode]" };
     int pm = gi->playmode;
     const char *game_state = gi->game_state;
 
@@ -460,16 +459,10 @@ describe_game(char *buf, enum nh_log_status status,
     if (status == LS_IN_PROGRESS)
         game_state = "(status unavailable)";
 
-    if (0) /* (idle > -1) */
-        snprintf(buf, BUFSZ,
-                 "%s\t%3.3s-%3.3s-%3.3s-%3.3s\t%s [idle %d:%02d]%s", gi->name,
-                 gi->plrole, gi->plrace, gi->plgend, gi->plalign,
-                 game_state, idle / 60, idle % 60, mode_desc[pm]);
-    else
-        snprintf(buf, BUFSZ,
-                 "%s\t%3.3s-%3.3s-%3.3s-%3.3s\t%s%s", gi->name,
-                 gi->plrole, gi->plrace, gi->plgend, gi->plalign,
-                 game_state, mode_desc[pm]);
+    snprintf(buf, BUFSZ,
+             "%s\t%3.3s-%3.3s-%3.3s-%3.3s\t%s%s", gi->name,
+             gi->plrole, gi->plrace, gi->plgend, gi->plalign,
+             game_state, mode_desc[pm]);
 }
 
 #if defined(WIN32)
@@ -629,7 +622,7 @@ loadgame(void)
         status = nh_get_savegame_status(fd, &gi);
         close(fd);
 
-        describe_game(buf, status, &gi, -1);
+        describe_game(buf, status, &gi);
         add_menu_item(&menu, (status == LS_IN_PROGRESS) ? 0 : menu.icount + 1,
                       buf, 0, FALSE);
     }
