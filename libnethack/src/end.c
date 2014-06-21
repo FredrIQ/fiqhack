@@ -250,6 +250,11 @@ should_query_disclose_options(char *defquery)
         return TRUE;
     }
 
+    if (program_state.followmode == FM_RECOVERQUIT) {
+        *defquery = 'n';
+        return FALSE;
+    }
+
     switch (flags.end_disclose) {
     default:   /* fall through */
     case DISCLOSE_PROMPT_DEFAULT_YES:
