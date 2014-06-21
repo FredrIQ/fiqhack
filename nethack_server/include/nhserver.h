@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-31 */
+/* Last modified by Alex Smith, 2014-06-21 */
 #ifndef NHSERVER_H
 # define NHSERVER_H
 
@@ -84,6 +84,12 @@
 #  define DEFAULT_CLIENT_TIMEOUT (15 * 60)      /* 15 minutes */
 # endif
 
+
+enum getgame_result {
+    GGR_NOT_FOUND,
+    GGR_COMPLETED,
+    GGR_INCOMPLETE,
+};
 
 struct settings {
     char *logfile;
@@ -172,7 +178,8 @@ extern long db_add_new_game(int uid, const char *filename, const char *role,
                             const char *levdesc);
 extern void db_update_game(int gameid, int moves, int depth,
                            const char *levdesc);
-extern int db_get_game_filename(int gid, char *filenamebuf, int buflen);
+extern enum getgame_result db_get_game_filename(
+    int gid, char *filenamebuf, int buflen);
 extern void db_delete_game(int uid, int gid);
 extern struct gamefile_info *db_list_games(int completed, int uid, int limit,
                                            int *count);

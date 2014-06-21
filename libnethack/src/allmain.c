@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-20 */
+/* Last modified by Alex Smith, 2014-06-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -372,10 +372,11 @@ nh_play_game(int fd, enum nh_followmode followmode)
     case LS_INVALID:
         return ERR_BAD_FILE;
     case LS_DONE:
-        if (followmode != FM_REPLAY)
+        if (followmode != FM_REPLAY && followmode != FM_RECOVERQUIT) {
             replay_forced = TRUE;
-        followmode = FM_REPLAY; /* force into replay mode */
-        file_done = TRUE;
+            followmode = FM_REPLAY; /* force into replay mode */
+            file_done = TRUE;
+        }
         break;
     case LS_CRASHED:
         return ERR_RESTORE_FAILED;
@@ -454,6 +455,11 @@ nh_play_game(int fd, enum nh_followmode followmode)
        than attempting to replay the entire game.) */
     log_init(fd);
 
+    /* If we're in recoverquit mode and the 'Q' to show game over is still in
+       the file, undo that. */
+    if (program_state.followmode == FM_RECOVERQUIT)
+        log_maybe_undo_quit(); /* returns via RESTART_PLAY if there is a 'Q' */
+
     if (file_done)
         log_sync(1, TLU_TURNS, FALSE);
     else
@@ -494,6 +500,14 @@ just_reloaded_save:
             if (((program_state.followmode == FM_REPLAY &&
                   (!flags.incomplete || flags.interrupted)) ||
                  !log_replay_command(&cmd))) {
+                if (program_state.followmode == FM_RECOVERQUIT) {
+                    /* We shouldn't be here. */
+                    paniclog("recoverquit",
+                             "FM_RECOVERQUIT needed a command");
+                    raw_print("Could not recover this game; the game over "
+                              "sequence did not replay correctly.");
+                    terminate(GAME_ALREADY_OVER);
+                }
                 (*windowprocs.win_request_command)
                     (wizard, program_state.followmode == FM_PLAY ? 
                      !flags.incomplete : 1, flags.interrupted,

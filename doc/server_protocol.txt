@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-05-31
+Last modified by Alex Smith, 2014-06-21
 
 This document documents the version of the network protocol used in
 NetHack 4.3, and was written by Daniel Thaler, GreyKnight, Alex Smith.
@@ -586,6 +586,9 @@ Command arguments:
       * `FM_PLAY` = 0: play the game
       * `FM_WATCH` = 1: watch a game (like playing, but read-only)
       * `FM_REPLAY` = 2: replay the game from the start (also read-only)
+      * (`FM_RECOVERQUIT` = 3: go through the game over sequence of a completed
+        game again (leaving bones, xlogfile entries, etc.); this is disallowed
+        in network play for security reasons, but exists in the local API)
 
 Response arguments:
   * `enum nh_play_status return`: what happen in the attempt to restore the game:

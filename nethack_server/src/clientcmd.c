@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-31 */
+/* Last modified by Alex Smith, 2014-06-21 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -282,7 +282,7 @@ static const char *const play_status_names[] = {
     [ERR_BAD_ARGS] = "game ID did not exist",
     [ERR_BAD_FILE] = "file on disk was unreadable",
     [ERR_IN_PROGRESS] = "locking issues",
-    [ERR_RESTORE_FAILED] = "manual recovery failed",
+    [ERR_RESTORE_FAILED] = "manual recovery required",
     [ERR_RECOVER_REFUSED] = "automatic recovery refused",
 };
 static void
@@ -290,6 +290,9 @@ ccmd_play_game(json_t * params)
 {
     int gid, fd, status, followmode;
     char filename[1024];
+    enum getgame_result ggr;
+    struct nh_game_info unused;
+    enum nh_log_status logstatus;
 
     if (json_unpack(params, "{si,si*}", "gameid", &gid,
                     "followmode", &followmode) == -1 ||
@@ -300,7 +303,8 @@ ccmd_play_game(json_t * params)
     /* TODO: For followmode == FM_PLAY, there's no check that that's actually
        a legal thing to do! We don't want players playing each other's games. */
 
-    if (!db_get_game_filename(gid, filename, 1024)) {
+    ggr = db_get_game_filename(gid, filename, 1024); 
+    if (ggr == GGR_NOT_FOUND) {
         log_msg("User '%s' tried to load game %d not in the database",
                 user_info.username, gid);
         client_msg("play_game", json_pack("{si}", "return", ERR_BAD_FILE));
@@ -314,11 +318,19 @@ ccmd_play_game(json_t * params)
         return;
     }
 
+    /* Special case: if the game is incomplete according to db_get_game_filename
+       but complete according to the game engine, go into recoverquit mode. */
+    logstatus = nh_get_savegame_status(fd, &unused);
+    if (logstatus == LS_DONE && ggr == GGR_INCOMPLETE)
+        followmode = FM_RECOVERQUIT;
+
     /* reset cached display data from a previous game */
     reset_cached_diplaydata();
 
     const char *verb = followmode == FM_PLAY ? "play" :
-        followmode == FM_REPLAY ? "replay" : "watch";
+        followmode == FM_REPLAY ? "replay" :
+        followmode == FM_WATCH ? "watch" :
+        followmode == FM_RECOVERQUIT ? "recoverquit" : "?";
 
     log_msg("User '%s' started to %s game %d, file %s",
             user_info.username, verb, gid, filename);
@@ -348,7 +360,7 @@ ccmd_play_game(json_t * params)
                    player_info.level_desc);
 
     /* move the finished game to its final resting place */
-    if (status == GAME_OVER && followmode == FM_PLAY) {
+    if (status == GAME_OVER) {
         char filename[1024], final_name[1024];
         int len;
         char buf[BUFSZ];

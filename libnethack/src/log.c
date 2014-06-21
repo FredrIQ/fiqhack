@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-06 */
+/* Last modified by Alex Smith, 2014-06-21 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -22,7 +22,7 @@
 static void log_reset(void);
 static void log_binary(const char *buf, int buflen);
 static long get_log_offset(void);
-static long get_log_last_newline(void);
+static long get_log_last_newline(int);
 static char *lgetline_malloc(int);
 
 static enum nh_log_status read_log_header(
@@ -88,7 +88,7 @@ error_reading_save(const char *reason)
 
 /*
  * The save file is too long, and the end needs to be removed. This happens in
- * four cases:
+ * five cases:
  *
  * - The save file was mostly in a correct format, but contains incomplete lines
  *   or some similar issue that prevents us reading the end of it;
@@ -98,6 +98,9 @@ error_reading_save(const char *reason)
  *
  * - The save file contains a broken or buggy binary save;
  *
+ * - We need to undo the end-game sequence so that we can replay it to
+ *   regenerate dumpfiles and xlog entries;
+ *
  * - A wizard-mode user has explicitly said "this save file needs its end
  *   removing".
  *
@@ -106,26 +109,37 @@ error_reading_save(const char *reason)
  * program_state.end_of_gamestate_location respectively for the four cases
  * above).
  *
- * In every case, the user will be prompted to confirm the recovery, and given a
- * chance to decline it. If the recovery is declined, the game will be
+ * In almost every case, the user will be prompted to confirm the recovery, and
+ * given a chance to decline it. If the recovery is declined, the game will be
  * terminated (ERR_RECOVER_REFUSED). If the recovery is accepted, it will be
- * performed, and then the engine will reload the game via RESTART_PLAY.
+ * performed, and then the engine will reload the game via RESTART_PLAY. If
+ * "canreturn" is true, a third option will be given, "repair", which makes the
+ * function return normally (and the caller is responsible for doing the actual
+ * repair).
+ *
+ * The exception is when FM_RECOVERQUIT is in force ("ask" false), which means
+ * that an inconsistency has been detected between whether the server thinks the
+ * game is over and whether the client thinks the game is over. In such a case,
+ * we unconditionally recover to just before the death, then replay the death,
+ * in order to regenerate things like dumpfiles and xlog entries. In this case,
+ * this function returns normally, rather than via RESTART_PLAY.
  *
  * This function must not call panic(), because it is called /from/ panic().
  */
 void
-log_recover_core(long offset, boolean canreturn)
+log_recover_core(long offset, boolean canreturn, boolean ask)
 {
     int n;
     const int *selected;
+    const int selected_noask[] = {1};
     char newline_check[2];
     const char *buf;
     struct nh_menulist menu;
     boolean ok = TRUE;
 
-    if (program_state.followmode != FM_PLAY) {
+    if (program_state.followmode != FM_PLAY && ask) {
         program_state.in_zero_time_command = TRUE; /* so menus work */
-        
+
         init_menulist(&menu);
         add_menutext(&menu, "The game engine has lost track of this game.");
         add_menuitem(&menu, 1, "Attempt to reload the game.", 'r', FALSE);
@@ -133,7 +147,7 @@ log_recover_core(long offset, boolean canreturn)
 
         n = display_menu(&menu, "Viewing interrupted...",
                          PICK_ONE, PLHINT_URGENT, &selected);
-        
+
         if (n && selected[0] == 1)
             terminate(RESTART_PLAY);
         else
@@ -177,36 +191,43 @@ log_recover_core(long offset, boolean canreturn)
     boolean save_ztc = program_state.in_zero_time_command;
     program_state.in_zero_time_command = TRUE;
 
-    init_menulist(&menu);
+    if (!ask) {
+        /* just recover without asking */
+        n = 1;
+        selected = selected_noask;
+    } else {
+        init_menulist(&menu);
 
-    add_menutext(&menu,
-                 "The gamestate or save file is internally inconsistent.");
-    add_menutext(&menu,
-                 "However, the game can be recovered from a backup save.");
-    buf = msgprintf("This will lose approximately %.4g%% of your progress.",
-                    100.0 * 
-                    (1.0 - ((float)offset /
-                            (float)lseek(program_state.logfile, 0, SEEK_END))));
-    add_menutext(&menu, buf);
-    add_menutext(&menu, "");
-
-    if (canreturn) {
         add_menutext(&menu,
-                     "It also seems like it might be possible to repair");
+                     "The gamestate or save file is internally inconsistent.");
         add_menutext(&menu,
-                     "the gamestate. This will lose no progress, but might");
-        add_menutext(&menu, "leave the game more unstable than usual.");
+                     "However, the game can be recovered from a backup save.");
+        buf = msgprintf("This will lose approximately %.4g%% of your progress.",
+                        100.0 * (1.0 - ((float)offset /
+                                        (float)lseek(program_state.logfile,
+                                                     0, SEEK_END))));
+        add_menutext(&menu, buf);
         add_menutext(&menu, "");
+
+        if (canreturn) {
+            add_menutext(&menu,
+                         "It also seems like it might be possible to repair");
+            add_menutext(&menu,
+                         "the gamestate. This will lose no progress, "
+                         "but might");
+            add_menutext(&menu, "leave the game more unstable than usual.");
+            add_menutext(&menu, "");
+        }
+
+        if (canreturn)
+            add_menuitem(&menu, 3, "Attempt to repair the gamestate", 'P', FALSE);
+        add_menuitem(&menu, 1, "Automatically recover the save file", 'R', FALSE);
+        add_menuitem(&menu, 2, "Leave the save file to be recovered manually", 'Q',
+                     FALSE);
+
+        n = display_menu(&menu, "The save file is corrupted...",
+                         PICK_ONE, PLHINT_URGENT, &selected);
     }
-
-    if (canreturn)
-        add_menuitem(&menu, 3, "Attempt to repair the gamestate", 'P', FALSE);
-    add_menuitem(&menu, 1, "Automatically recover the save file", 'R', FALSE);
-    add_menuitem(&menu, 2, "Leave the save file to be recovered manually", 'Q',
-                 FALSE);
-
-    n = display_menu(&menu, "The save file is corrupted...",
-                     PICK_ONE, PLHINT_URGENT, &selected);
 
     if (n && selected[0] == 3) {
         program_state.in_zero_time_command = save_ztc;
@@ -259,7 +280,10 @@ log_recover_core(long offset, boolean canreturn)
             terminate(ERR_IN_PROGRESS);
         }
 
-        terminate(RESTART_PLAY);
+        if (ask)
+            terminate(RESTART_PLAY);
+        else
+            program_state.in_zero_time_command = save_ztc;
 
     } else {
         /* Manual recovery. */
@@ -271,7 +295,46 @@ noreturn void
 log_recover_noreturn(long offset)
 {
     while (1)
-        log_recover_core(offset, FALSE);
+        log_recover_core(offset, FALSE, TRUE);
+}
+
+/* The save file is just fine from the game engine point of view; but the client
+   has other ideas, and wants the server to redo the game over sequence. This is
+   called if the client detects (using filesystem state set by its GAME_OVER
+   handler) that there was a crash during the game over sequence that caused it
+   to not be logged correctly.
+
+   This function should be called after log_init but before log_sync, and only
+   if the followmode is FM_RECOVERQUIT. If the save file appears to be that of a
+   completed game, it'll be rewound to immediately before the game ended. If it
+   doesn't, this function has no effect. */
+void
+log_maybe_undo_quit(void)
+{
+    long lastline;
+    char *logline;
+    struct nh_game_info unused;
+
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_READ, 2))
+        panic("Could not upgrade to read lock on logfile");
+
+    /* This runs before log_sync, so we need to update the recovery count
+       information manually. */
+    read_log_header(program_state.logfile, &unused,
+                    &program_state.expected_recovery_count, FALSE);
+
+    lastline = get_log_last_newline(2);
+    lseek(program_state.logfile, lastline, SEEK_SET);
+    logline = lgetline_malloc(program_state.logfile);
+    if (!logline) /* perhaps someone else didn't lock correctly? */
+        error_reading_save("penultimate newline was past EOF");
+
+    if (strcmp(logline, "Q") == 0)
+        log_recover_core(lastline, FALSE, FALSE);
+    free(logline);
+
+    if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
+        panic("Could not downgrade to monitor lock on logfile");
 }
 
 /* The save file was in a correct format, but referred to something that
@@ -325,7 +388,7 @@ log_desync(char found, char expected)
 
             /* Yes. */
             if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
-                panic("Could not downgrade to monitor lock on logfile");    
+                panic("Could not downgrade to monitor lock on logfile");
             free(logline);
             /* TODO: get this to restart at the log offset, somehow */
             terminate(RESTART_PLAY);
@@ -645,7 +708,7 @@ lgetline_malloc(int fd)
            the middle of a write). Get rid of the partial line. */
 
         free(inbuf);
-        log_recover_noreturn(get_log_last_newline());
+        log_recover_noreturn(get_log_last_newline(1));
 
     } else if (!nlloc && fpos == 0) {
         /* At EOF, which is at the start of the line. */
@@ -673,9 +736,12 @@ get_log_offset(void)
 
 /* Returns the offset just past the end of the last valid line in the log.  This
    is used to determine how much of the save file is meaningful after a process
-   crashes during a write. */
+   crashes during a write.
+
+   If nth is 1, we get the last newline. nth as 2 gets the penultimate newline,
+   and so on. */
 static long
-get_log_last_newline(void)
+get_log_last_newline(int nth)
 {
     long o = get_log_offset();
     long rv;
@@ -691,8 +757,8 @@ get_log_last_newline(void)
        and scanning them backwards, but the code is much simpler, and given that
        this only runs in very exceptional circumstances and most lines are short
        it's unlikely to be a performance bottleneck.) */
-
-    while (full_read(program_state.logfile, inchar, 1) && *inchar != '\n')
+    while (full_read(program_state.logfile, inchar, 1) &&
+           (*inchar != '\n' || --nth))
         if (!lseek(program_state.logfile, -2, SEEK_CUR))
             break;
 
@@ -707,7 +773,7 @@ get_log_last_newline(void)
         return rv;
     }
 
-    /* We didn't find any newlines in the file. This is pretty massively bad.
+    /* We didn't find enough newlines in the file. This is pretty massively bad.
        However, it can only happen if we crashed right at the start of the new
        game process, in which case, may as well just start a new game. */
     error_reading_save("save file header is incomplete");
@@ -739,7 +805,7 @@ get_log_start_of_turn_offset(void)
     save_diff_line = lgetline_malloc(program_state.logfile);
 
     if (!save_diff_line)
-        log_recover_noreturn(get_log_last_newline());
+        log_recover_noreturn(get_log_last_newline(1));
 
     free(save_diff_line);
 
@@ -782,7 +848,8 @@ start_updating_logfile(boolean ok_not_at_end)
 {
     long o;
 
-    if (program_state.followmode != FM_PLAY)
+    if (program_state.followmode != FM_PLAY &&
+        program_state.followmode != FM_RECOVERQUIT)
         panic("Logfile update while watching a game");
 
     if (!change_fd_lock(program_state.logfile, TRUE, LT_WRITE, 2))
@@ -1107,7 +1174,8 @@ zero_time_checks(void)
         return TRUE;
     }
 
-    if (program_state.followmode != FM_PLAY)
+    if (program_state.followmode != FM_PLAY &&
+        program_state.followmode != FM_RECOVERQUIT)
         return TRUE;
 
     return FALSE;
@@ -1306,6 +1374,17 @@ log_want_replay(char firstchar)
         /* We can't continue through the normal codepath. Let the client
            decide what to do (in particular, how to reattach). */
         terminate(REPLAY_FINISHED);
+    }
+
+    if (program_state.followmode == FM_RECOVERQUIT) {
+        /* We shouldn't be prompting the user, in most cases. The exception is
+           the ynq/yn prompts in the DYWYPI sequence. */
+        if (firstchar == 'Y') /* yn_function */
+            return FALSE;
+
+        /* Cannot sensibly be panic or impossible; this is the next best
+           option */
+        error_reading_save("allegedly finished game is missing prompts");
     }
 
     return FALSE;
@@ -2333,4 +2412,3 @@ log_uninit(void)
         program_state.binary_save_allocated = 0;
     }
 }
-

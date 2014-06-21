@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-06-03 */
+/* Last modified by Alex Smith, 2014-06-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -899,7 +899,8 @@ done_noreturn(int how, const char *killer)
 
     /* If watching or replaying, we're going to get a GAME_OVER on the main
        process, = we should produce GAME_ALREADY_OVER on watching processes. */
-    if (program_state.followmode != FM_PLAY) {
+    if (program_state.followmode != FM_PLAY &&
+        program_state.followmode != FM_RECOVERQUIT) {
         win_pause_output(P_MESSAGE);
         terminate(GAME_ALREADY_OVER);
     }

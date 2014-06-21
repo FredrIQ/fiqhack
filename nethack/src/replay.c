@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-06-21 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -112,11 +112,12 @@ replay(void)
     create_game_windows();
 
     /* Watching isn't so useful locally (you could only watch yourself, due to
-       the permissions on the save file). So load in replay mode. */
-    enum nh_play_status ret = playgame(fd, FM_REPLAY);
+       the permissions on the save file). So load in replay mode.
 
-    if (ret == GAME_OVER)
-        ret = GAME_ALREADY_OVER;
+       Note that a GAME_OVER response is possible and meaningful; it means that
+       the server discovered that the game over sequence was incomplete, and
+       automatically entered recoverquit mode. */
+    enum nh_play_status ret = playgame(fd, FM_REPLAY);
 
     close(fd);
 

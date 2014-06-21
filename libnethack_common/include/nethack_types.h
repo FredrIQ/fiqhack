@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-31 */
+/* Last modified by Alex Smith, 2014-06-21 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -261,6 +261,17 @@ enum nh_followmode {
      *   a "this is the end of the replay" box is displayed, and the turn
      *   restarts if it is dismissed (rather than detached)
      * - server cancels: are ignored
+     */
+
+    FM_RECOVERQUIT,
+    /*
+     * Redoing the endgame sequence.
+     *
+     * - request_command: pre-existing commands are replayed; if there is no
+     *   pre-existing command, raise an error
+     * - windowprocs: input is read from the save file if available; otherwise
+     *   yn_function() returns 'n' (to skip disclose), other functions error out
+     * - server cancels: cannot occur (because we never prompt the client)
      */
 };
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-06-08 */
+/* Last modified by Alex Smith, 2014-06-21 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -271,9 +271,13 @@ yn_function(const char *query, const char *resp, char def)
 
     while (key == SERVERCANCEL_CHAR) {
         if (!log_want_replay('Y')) {
-            key = (*windowprocs.win_yn_function) (qbuf, resp, def);
-            if (force_servercancel())
-                key = SERVERCANCEL_CHAR;
+            if (program_state.followmode == FM_RECOVERQUIT)
+                key = 'n';    /* skip the DYWYPI */
+            else {
+                key = (*windowprocs.win_yn_function) (qbuf, resp, def);
+                if (force_servercancel())
+                    key = SERVERCANCEL_CHAR;
+            }
         } else if (!log_replay_input(1, "Y%c", &key))
             log_replay_no_more_options();
     }

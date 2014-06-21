@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-06-21 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -523,7 +523,8 @@ db_game_name_core(int completed, int uid, int gid, int limit, int *count)
     return files;
 }
 
-int
+
+enum getgame_result
 db_get_game_filename(int gid, char *filenamebuf, int buflen)
 {
     struct gamefile_info *gfi;
@@ -537,11 +538,11 @@ db_get_game_filename(int gid, char *filenamebuf, int buflen)
             filenamebuf[buflen-1] = '\0';
             free(gfi[0].filename);
             free(gfi);
-            return 1;
+            return completed ? GGR_COMPLETED : GGR_INCOMPLETE;
         }
     }
 
-    return 0;
+    return GGR_NOT_FOUND;
 }
 
 struct gamefile_info *

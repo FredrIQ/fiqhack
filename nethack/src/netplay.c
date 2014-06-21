@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-06-21 */
 /* Copyright (c) Daniel Thaler, 2012 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -124,9 +124,6 @@ net_replay(void)
        we start in watch mode; the player can change to replay mode from the
        watch menu. */
     int ret = playgame(gameid, show_all && !want_done ? FM_WATCH : FM_REPLAY);
-
-    if (ret == GAME_OVER)
-        ret = GAME_ALREADY_OVER;
 
     destroy_game_windows();
     cleanup_messages();
