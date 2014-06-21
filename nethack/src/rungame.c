@@ -460,7 +460,7 @@ describe_game(char *buf, enum nh_log_status status,
     if (status == LS_IN_PROGRESS)
         game_state = "(status unavailable)";
 
-    if (idle > -1)
+    if (0) /* (idle > -1) */
         snprintf(buf, BUFSZ,
                  "%s\t%3.3s-%3.3s-%3.3s-%3.3s\t%s [idle %d:%02d]%s", gi->name,
                  gi->plrole, gi->plrace, gi->plgend, gi->plalign,
