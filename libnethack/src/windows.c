@@ -272,7 +272,7 @@ yn_function(const char *query, const char *resp, char def)
     while (key == SERVERCANCEL_CHAR) {
         if (!log_want_replay('Y')) {
             if (program_state.followmode == FM_RECOVERQUIT)
-                key = 'n';    /* skip the DYWYPI */
+                key = 'q';    /* skip the DYWYPI */
             else {
                 key = (*windowprocs.win_yn_function) (qbuf, resp, def);
                 if (force_servercancel())
