@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-25 */
+/* Last modified by Alex Smith, 2014-06-21 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -116,7 +116,7 @@ send_string_to_client(const char *jsonstr, int signalsafe)
             close(infd);
             close(outfd);
             infd = outfd = -1;
-            exit_client(NULL);      /* Goodbye. */
+            exit_client(NULL, 0);      /* Goodbye. */
         }
         pos += ret;
     } while (pos < len);
@@ -186,7 +186,7 @@ client_msg(const char *key, json_t * value)
 }
 
 noreturn void
-exit_client(const char *err)
+exit_client(const char *err, int coredumpsignal)
 {
     const char *msg = err ? err : "";
     json_t *exit_obj;
@@ -223,6 +223,12 @@ exit_client(const char *err)
     free_config();
     reset_cached_diplaydata();
     end_logging();
+
+    if (coredumpsignal) {
+        signal(coredumpsignal, SIG_DFL);
+        raise(coredumpsignal);
+    }
+
     exit(err != NULL);
 }
 
@@ -243,14 +249,14 @@ read_input(void)
     while (!done && !termination_flag) {
         ret = poll(pfd, 1, settings.client_timeout * 1000);
         if (ret == 0)
-            exit_client("Inactivity timeout");
+            exit_client("Inactivity timeout", 0);
 
         ret = read(infd, &commbuf[datalen], COMMBUF_SIZE - datalen - 1);
         if (ret == -1)
             continue;   /* sone signals will set termination_flag, others won't 
                          */
         else if (ret == 0)
-            exit_client("Input pipe lost");
+            exit_client("Input pipe lost", 0);
         datalen += ret;
 
         if (commbuf[datalen - ret] == '\033') {
@@ -277,11 +283,11 @@ read_input(void)
             if (jval)
                 done = TRUE;
             else if (err.position < datalen)
-                exit_client("Bad JSON data received");
+                exit_client("Bad JSON data received", 0);
         }
 
         if (!jval && datalen >= COMMBUF_SIZE - 1)
-            exit_client("Max allowed input length exceeded");
+            exit_client("Max allowed input length exceeded", 0);
         /* too much data received */
     }
     /* message received; now it's our turn to send */
@@ -309,7 +315,7 @@ client_main_loop(void)
 
         iter = json_object_iter(obj);
         if (!iter)
-            exit_client("Empty command object received.");
+            exit_client("Empty command object received.", 0);
 
         /* find a command function to call */
         key = json_object_iter_key(iter);
@@ -321,11 +327,12 @@ client_main_loop(void)
             }
 
         if (!clientcmd[i].name)
-            exit_client("Unknown command");
+            exit_client("Unknown command", 0);
 
         iter = json_object_iter_next(obj, iter);
         if (iter)
-            exit_client("More than one command received. This is unsupported.");
+            exit_client(
+                "More than one command received. This is unsupported.", 0);
 
         json_decref(obj);
     }
@@ -353,7 +360,7 @@ client_main(int userid, int _infd, int _outfd)
     init_database();
     if (!db_get_user_info(userid, &user_info)) {
         log_msg("get_user_info error for uid %d!", userid);
-        exit_client("database error");
+        exit_client("database error", SIGABRT);
     }
 
     gamepaths = init_game_paths();
@@ -364,5 +371,5 @@ client_main(int userid, int _infd, int _outfd)
 
     client_main_loop();
 
-    exit_client(NULL);
+    exit_client(NULL, 0);
 }

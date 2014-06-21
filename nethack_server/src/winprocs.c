@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-06-21 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -89,7 +89,7 @@ client_request(const char *funcname, json_t * request_msg)
     /* client response */
     jret = read_input();
     if (!jret)
-        exit_client("Incorrect or damaged response");
+        exit_client("Incorrect or damaged response", 0);
 
     jobj = json_object_get(jret, funcname);
     while (!jobj || !json_is_object(jobj)) {
@@ -107,11 +107,11 @@ client_request(const char *funcname, json_t * request_msg)
             if (clientcmd[i].can_run_async)
                 clientcmd[i].func(json_object_iter_value(iter));
             else {
-                exit_client("Command sent out of sequence");
+                exit_client("Command sent out of sequence", 0);
                 break;
             }
         } else {
-            exit_client("Incorrect or damaged response");
+            exit_client("Incorrect or damaged response", 0);
             break;
         }
         json_decref(jret);
@@ -435,7 +435,7 @@ srv_request_command(nh_bool debug, nh_bool completed, nh_bool interrupted,
     jobj = client_request("request_command", jobj);
 
     if (json_unpack(jobj, "{ss,so!}", "command", &cmd, "arg", &jarg))
-        exit_client("Bad set of parameters for request_command");
+        exit_client("Bad set of parameters for request_command", 0);
 
     ncaa.arg.argtype = 0;
 
@@ -485,7 +485,7 @@ srv_display_menu(struct nh_menulist *ml, const char *title, int how,
     jobj = client_request("display_menu", jobj);
     if (json_unpack(jobj, "{si,so!}", "howclosed", &ret, "results", &jarr) == -1
         || !json_is_array(jarr))
-        exit_client("Bad parameter for display_menu");
+        exit_client("Bad parameter for display_menu", 0);
 
     int results[json_array_size(jarr) < 1 ? 1 :
                 json_array_size(jarr)];
@@ -534,7 +534,7 @@ srv_display_objects(struct nh_objlist *objlist, const char *title,
     jobj = client_request("display_objects", jobj);
     if (json_unpack(jobj, "{si,so!}", "howclosed", &ret, "pick_list", &jarr)
         == -1 || !json_is_array(jarr))
-        exit_client("Bad parameter for display_objects");
+        exit_client("Bad parameter for display_objects", 0);
 
     struct nh_objresult pick_list[json_array_size(jarr) > 0 ?
                                   json_array_size(jarr) : 1];
@@ -543,7 +543,7 @@ srv_display_objects(struct nh_objlist *objlist, const char *title,
         if (json_unpack
             (jobj2, "{si,si!}", "id", &pick_list[i].id, "count",
              &pick_list[i].count) == -1)
-            exit_client("Bad pick_list in display_objects");
+            exit_client("Bad pick_list in display_objects", 0);
     }
 
     callback(pick_list, ret == NHCR_CLIENT_CANCEL ? -1 :
@@ -616,7 +616,7 @@ srv_query_key(const char *query, enum nh_query_key_flags flags,
 
     jobj = client_request("query_key", jobj);
     if (json_unpack(jobj, "{si,si!}", "return", &ret, "count", &c) == -1)
-        exit_client("Bad parameters for query_key");
+        exit_client("Bad parameters for query_key", 0);
     json_decref(jobj);
 
     return (struct nh_query_key_result){.key = ret, .count = c};
@@ -635,7 +635,7 @@ srv_getpos(int origx, int origy, nh_bool force, const char *goal)
 
     if (json_unpack(jobj, "{si,si,si!}",
                     "return", &ret, "x", &x, "y", &y) == -1)
-        exit_client("Bad parameters for getpos");
+        exit_client("Bad parameters for getpos", 0);
 
     json_decref(jobj);
     return (struct nh_getpos_result){.howclosed = ret, .x = x, .y = y};
@@ -652,7 +652,7 @@ srv_getdir(const char *query, nh_bool restricted)
     jobj = client_request("getdir", jobj);
 
     if (json_unpack(jobj, "{si!}", "return", &ret) == -1)
-        exit_client("Bad parameters for getdir");
+        exit_client("Bad parameters for getdir", 0);
 
     json_decref(jobj);
     return ret;
@@ -669,7 +669,7 @@ srv_yn_function(const char *query, const char *set, char def)
     jobj = client_request("yn", jobj);
 
     if (json_unpack(jobj, "{si!}", "return", &ret) == -1)
-        exit_client("Bad parameters for yn");
+        exit_client("Bad parameters for yn", 0);
 
     json_decref(jobj);
     return ret;
@@ -687,7 +687,7 @@ srv_getline(const char *query, void *callbackarg,
     jobj = client_request("getline", jobj);
 
     if (json_unpack(jobj, "{ss!}", "line", &str) == -1)
-        exit_client("Bad parameters for getline");
+        exit_client("Bad parameters for getline", 0);
 
     callback(str, callbackarg);
     json_decref(jobj);

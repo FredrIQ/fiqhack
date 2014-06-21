@@ -181,7 +181,7 @@ ccmd_create_game(json_t * params)
 
     if (json_unpack (params, "{so!}", "options", &jarr) == -1 ||
         !json_is_array(jarr))
-        exit_client("Bad set of parameters for create_game");
+        exit_client("Bad set of parameters for create_game", 0);
 
     /* reset cached display data from a previous game */
     reset_cached_diplaydata();
@@ -203,14 +203,14 @@ ccmd_create_game(json_t * params)
         else
             modeopt->value.e = MODE_EXPLORE;
     } else if (!nameopt && (!modeopt || modeopt->value.e != MODE_EXPLORE))
-        exit_client("No character name provided");
+        exit_client("No character name provided", 0);
 
     const char *name = nameopt ? nameopt->value.s :
         debug ? "wizard" : "explorer";
 
     if (strspn(name, "abcdefghijklmnopqrstuvwxyz"
                "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_") != strlen(name))
-        exit_client("Character name contains unwanted characters");
+        exit_client("Character name contains unwanted characters", 0);
 
     t = (long)time(NULL);
     snprintf(path, 1024, "%s/save/%s/", settings.workdir, user_info.username);
@@ -224,7 +224,7 @@ ccmd_create_game(json_t * params)
     if (fd == -1) {
         log_msg("%s tried to create a new game (%d) as %s, but the file could "
                 "not be opened", user_info.username, gameid, name);
-        exit_client("Could not create the logfile");
+        exit_client("Could not create the logfile", SIGABRT);
     }
 
     ret = nh_create_game(fd, opts);
@@ -298,7 +298,7 @@ ccmd_play_game(json_t * params)
                     "followmode", &followmode) == -1 ||
         (followmode != FM_PLAY && followmode != FM_REPLAY &&
          followmode != FM_WATCH))
-        exit_client("Bad set of parameters for play_game");
+        exit_client("Bad set of parameters for play_game", 0);
 
     /* TODO: For followmode == FM_PLAY, there's no check that that's actually
        a legal thing to do! We don't want players playing each other's games. */
@@ -388,7 +388,7 @@ ccmd_exit_game(json_t * params)
     int etype, status;
 
     if (json_unpack(params, "{si*}", "exit_type", &etype) == -1)
-        exit_client("Bad set of parameters for exit_game");
+        exit_client("Bad set of parameters for exit_game", 0);
 
     status = nh_exit_game(etype);
     if (status) {
@@ -415,7 +415,7 @@ ccmd_list_games(json_t * params)
 
     if (json_unpack
         (params, "{si,si*}", "completed", &completed, "limit", &limit) == -1)
-        exit_client("Bad parameters for list_games");
+        exit_client("Bad parameters for list_games", 0);
     if (json_unpack(params, "{si*}", "show_all", &show_all) == -1)
         show_all = 0;
 
@@ -444,7 +444,6 @@ ccmd_list_games(json_t * params)
             gi.plrole, "plrace", gi.plrace, "plgend", gi.plgend, "plalign",
             gi.plalign, "game_state", gi.game_state);
         json_array_append_new(jarr, jobj);
-
         free((void *)files[i].filename);
 
         close(fd);
@@ -480,7 +479,7 @@ ccmd_get_drawing_info(json_t * params)
 
     iter = json_object_iter(params);
     if (iter)
-        exit_client("non-empty parameter list for get_drawing_info");
+        exit_client("non-empty parameter list for get_drawing_info", 0);
 
     di = nh_get_drawing_info();
     jobj =
@@ -528,7 +527,7 @@ ccmd_get_roles(json_t * params)
 
     iter = json_object_iter(params);
     if (iter)
-        exit_client("non-empty parameter list for get_roles");
+        exit_client("non-empty parameter list for get_roles", 0);
 
     ri = nh_get_roles();
     jmsg =
@@ -603,7 +602,7 @@ ccmd_get_topten(json_t * params)
     if (json_unpack
         (params, "{ss,si,si,si*}", "player", &player, "top", &top, "around",
          &around, "own", &own) == -1)
-        exit_client("Bad parameters for get_topten");
+        exit_client("Bad parameters for get_topten", 0);
 
     if (player && !player[0])
         player = NULL;
@@ -643,7 +642,7 @@ ccmd_get_commands(json_t * params)
 
     iter = json_object_iter(params);
     if (iter)
-        exit_client("non-empty parameter list for get_commands");
+        exit_client("non-empty parameter list for get_commands", 0);
 
     cmdlist = nh_get_commands(&cmdcount);
 
@@ -667,7 +666,7 @@ ccmd_get_obj_commands(json_t * params)
     struct nh_cmd_desc *cmdlist;
 
     if (json_unpack(params, "{si*}", "invlet", &invlet) == -1)
-        exit_client("Bad parameters for get_obj_commands");
+        exit_client("Bad parameters for get_obj_commands", 0);
     cmdlist = nh_get_object_commands(&cmdcount, invlet);
 
     jarr = json_array();
@@ -691,7 +690,7 @@ ccmd_describe_pos(json_t * params)
 
     if (json_unpack(params, "{si,si,si*}", "x", &x, "y", &y, "is_in", &is_in) ==
         -1)
-        exit_client("Bad parameters for describe_pos");
+        exit_client("Bad parameters for describe_pos", 0);
 
     nh_describe_pos(x, y, &db, is_in ? &is_in : NULL);
     jmsg =
@@ -798,7 +797,7 @@ ccmd_set_option(json_t * params)
 
     if (json_unpack
         (params, "{ss,so*}", "name", &optname, "value", &joval) == -1)
-        exit_client("Bad parameters for set_option");
+        exit_client("Bad parameters for set_option", 0);
 
     /* find the option_desc for the options that should be set; the option type
        is required in order to decode the option value. */
@@ -814,18 +813,18 @@ ccmd_set_option(json_t * params)
     /* decode the option value depending on the option type */
     if (option->type == OPTTYPE_STRING) {
         if (!json_is_string(joval))
-            exit_client("could not decode option string");
+            exit_client("could not decode option string", 0);
         value.s = (char *)json_string_value(joval);
 
     } else if (option->type == OPTTYPE_INT || option->type == OPTTYPE_ENUM ||
                option->type == OPTTYPE_BOOL) {
         if (!json_is_integer(joval))
-            exit_client("could not decode option value");
+            exit_client("could not decode option value", 0);
         value.i = json_integer_value(joval);
 
     } else if (option->type == OPTTYPE_AUTOPICKUP_RULES) {
         if (!json_is_array(joval))
-            exit_client("could not decode option");
+            exit_client("could not decode option", 0);
 
         ar.num_rules = json_array_size(joval);
         ar.rules = malloc(sizeof (struct nh_autopickup_rule) * ar.num_rules);
@@ -837,7 +836,7 @@ ccmd_set_option(json_t * params)
                     (json_array_get(joval, i), "{ss,si,si,si}", "pattern",
                      &pattern, "oclass", &r->oclass, "buc", &r->buc, "action",
                      &r->action) == -1)
-                    exit_client("Error unpacking autopickup rule");
+                    exit_client("Error unpacking autopickup rule", 0);
                 memset(r->pattern, 0, sizeof (r->pattern));
                 strncpy(r->pattern, pattern, sizeof (r->pattern) - 1);
                 r->pattern[sizeof (r->pattern) - 1] = 0;
@@ -876,7 +875,7 @@ ccmd_get_options(json_t * params)
 
     void *iter = json_object_iter(params);
     if (iter)
-        exit_client("non-empty parameter list for get_options");
+        exit_client("non-empty parameter list for get_options", 0);
 
     jarr = json_array();
     options = nh_get_options();
@@ -898,7 +897,7 @@ ccmd_get_pl_prompt(json_t * params)
     if (json_unpack
         (params, "{si,si,si,si*}", "role", &rolenum, "race", &racenum, "gend",
          &gendnum, "align", &alignnum) == -1)
-        exit_client("Bad parameters for get_pl_prompt");
+        exit_client("Bad parameters for get_pl_prompt", 0);
 
     bp = nh_build_plselection_prompt(buf, 1024, rolenum, racenum, gendnum,
                                      alignnum);
@@ -916,7 +915,7 @@ ccmd_get_root_pl_prompt(json_t * params)
     if (json_unpack
         (params, "{si,si,si,si*}", "role", &rolenum, "race", &racenum, "gend",
          &gendnum, "align", &alignnum) == -1)
-        exit_client("Bad parameters for get_root_pl_prompt");
+        exit_client("Bad parameters for get_root_pl_prompt", 0);
 
     bp = nh_root_plselection_prompt(buf, 1024, rolenum, racenum, gendnum,
                                     alignnum);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-21 */
+/* Last modified by Alex Smith, 2014-06-21 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -63,9 +63,12 @@ signal_segv(int ignored)
     sigsegv_flag++;
     log_msg("BUG: caught SIGSEGV! Exit.");
     if (user_info.uid)
-        exit_client
-            ("Fatal: Programming error on the server. Sorry about that.");
-    exit(1);
+        exit_client("Fatal: Programming error on the server. Sorry about that.",
+                    SIGSEGV);
+
+    /* Die via recursive SIGSEGV, so as to leave a useful core dump. */
+    signal(SIGSEGV, SIG_DFL);
+    raise(SIGSEGV);
 }
 
 

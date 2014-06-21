@@ -150,7 +150,7 @@ extern void auth_send_result(int sockfd, enum authresult, int is_reg,
 
 /* clientmain.c */
 extern noreturn void client_main(int userid, int infd, int outfd);
-extern noreturn void exit_client(const char *err);
+extern noreturn void exit_client(const char *err, int coredumpsignal);
 extern void client_server_cancel_msg(void);
 extern void client_msg(const char *key, json_t * value);
 extern json_t *read_input(void);
