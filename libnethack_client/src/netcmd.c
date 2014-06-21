@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-06 */
+/* Last modified by Alex Smith, 2014-06-21 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -34,7 +34,6 @@ static json_t *cmd_getdir(json_t *params, int display_only);
 static json_t *cmd_yn_function(json_t *params, int display_only);
 static json_t *cmd_getline(json_t *params, int display_only);
 static json_t *cmd_server_error(json_t *params, int display_only);
-
 
 /*---------------------------------------------------------------------------*/
 

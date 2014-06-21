@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-31 */
+/* Last modified by Alex Smith, 2014-06-21 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -445,10 +445,11 @@ cleanup:
 
 
 void
-describe_game(char *buf, enum nh_log_status status, struct nh_game_info *gi)
+describe_game(char *buf, enum nh_log_status status,
+              struct nh_game_info *gi, int idle)
 {
     const char *mode_desc[] = { "", "\t[explore]", "\t[wizard]",
-                                "\t[unknown game mode]" };
+                                "\t[polyinit]", "\t[unknown game mode]" };
     int pm = gi->playmode;
     const char *game_state = gi->game_state;
 
@@ -459,10 +460,16 @@ describe_game(char *buf, enum nh_log_status status, struct nh_game_info *gi)
     if (status == LS_IN_PROGRESS)
         game_state = "(status unavailable)";
 
-    snprintf(buf, BUFSZ,
-             "%s\t%3.3s-%3.3s-%3.3s-%3.3s\t%s%s", gi->name,
-             gi->plrole, gi->plrace, gi->plgend, gi->plalign,
-             game_state, mode_desc[pm]);
+    if (idle > -1)
+        snprintf(buf, BUFSZ,
+                 "%s\t%3.3s-%3.3s-%3.3s-%3.3s\t%s [idle %d:%02d]%s", gi->name,
+                 gi->plrole, gi->plrace, gi->plgend, gi->plalign,
+                 game_state, idle / 60, idle % 60, mode_desc[pm]);
+    else
+        snprintf(buf, BUFSZ,
+                 "%s\t%3.3s-%3.3s-%3.3s-%3.3s\t%s%s", gi->name,
+                 gi->plrole, gi->plrace, gi->plgend, gi->plalign,
+                 game_state, mode_desc[pm]);
 }
 
 #if defined(WIN32)
@@ -622,7 +629,7 @@ loadgame(void)
         status = nh_get_savegame_status(fd, &gi);
         close(fd);
 
-        describe_game(buf, status, &gi);
+        describe_game(buf, status, &gi, -1);
         add_menu_item(&menu, (status == LS_IN_PROGRESS) ? 0 : menu.icount + 1,
                       buf, 0, FALSE);
     }

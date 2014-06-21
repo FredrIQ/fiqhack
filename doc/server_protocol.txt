@@ -497,8 +497,6 @@ list_games
 
 Lists current and/or completed games on the server.
 
-TODO: what format are plgend, etc., in? Abbreviation? Full name?
-
 Command arguments:
   * `boolean completed`: list only completed games if true, only current games
     if false
@@ -522,9 +520,11 @@ Response arguments:
         the game (death reason for a completed game, location of the character
         in the dungeon for an incomplete game)
       * `string plalign`: the alignment of this game's character
-      * `string plgend`: the gender of this game's character
-      * `string plrace`: the race of this game's character
-      * `string plrole`: the role of this game's character
+        (e.g. "neutral")
+      * `string plgend`: the gender of this game's character (e.g. "female")
+      * `string plrace`: the race of this game's character (e.g. "orc")
+      * `string plrole`: the role of this game's character (e.g. "Priestess")
+      * `int idle`: the number of seconds this game has been idle
       * `enum nh_log_status status`: the status of this game's save file:
           * `LS_SAVED` = 0: an ordinary save file, nobody playing/replaying
           * `LS_DONE` = 1: game over: quit, died, ascended, etc.

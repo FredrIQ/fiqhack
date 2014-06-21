@@ -356,9 +356,6 @@ ccmd_play_game(json_t * params)
 
     client_msg("play_game", json_pack("{si}", "return", status));
 
-    db_update_game(gid, player_info.moves, player_info.z,
-                   player_info.level_desc);
-
     /* move the finished game to its final resting place */
     if (status == GAME_OVER) {
         char filename[1024], final_name[1024];
@@ -392,8 +389,6 @@ ccmd_exit_game(json_t * params)
 
     status = nh_exit_game(etype);
     if (status) {
-        db_update_game(gameid, player_info.moves, player_info.z,
-                       player_info.level_desc);
         log_msg("%s has closed game %d", user_info.username, gameid);
         gameid = -1;
         close(gamefd);
@@ -439,10 +434,11 @@ ccmd_list_games(json_t * params)
 
         status = nh_get_savegame_status(fd, &gi);
         jobj = json_pack(
-            "{si,si,si,ss,ss,ss,ss,ss,ss}", "gameid", files[i].gid, "status",
-            status, "playmode", gi.playmode, "plname", gi.name, "plrole",
-            gi.plrole, "plrace", gi.plrace, "plgend", gi.plgend, "plalign",
-            gi.plalign, "game_state", gi.game_state);
+            "{si,si,si,ss,ss,ss,ss,ss,ss,si}", "gameid", files[i].gid,
+            "status", status, "playmode", gi.playmode, "plname", gi.name,
+            "plrole", gi.plrole, "plrace", gi.plrace, "plgend", gi.plgend,
+            "plalign", gi.plalign, "game_state", gi.game_state,
+            "idle", files[i].idle);
         json_array_append_new(jarr, jobj);
         free((void *)files[i].filename);
 

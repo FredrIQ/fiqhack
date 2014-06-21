@@ -29,7 +29,8 @@ net_loadgame(void)
     for (i = 0; i < size; i++) {
         if (gamelist[i].status == LS_DONE || gamelist[i].status == LS_INVALID)
             continue;
-        describe_game(buf, gamelist[i].status, &gamelist[i].i);
+        describe_game(buf, gamelist[i].status, &gamelist[i].i,
+                      gamelist[i].idle);
         id = (gamelist[i].status == LS_IN_PROGRESS) ? 0 : gamelist[i].gameid;
         add_menu_item(&menu, id, buf, 0, FALSE);
     }
@@ -74,7 +75,8 @@ net_replay(void)
 
         /* add all the files to the menu */
         for (i = 0; i < gamecount; i++) {
-            describe_game(buf, gamelist[i].status, &gamelist[i].i);
+            describe_game(buf, gamelist[i].status, &gamelist[i].i,
+                          gamelist[i].idle);
             add_menu_item(&menu, gamelist[i].gameid, buf, 0,
                           FALSE);
         }

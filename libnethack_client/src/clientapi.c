@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-06 */
+/* Last modified by Alex Smith, 2014-06-21 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -125,11 +125,12 @@ nhnet_list_games(int done, int show_all, int *count)
             memset(gb, 0, sizeof (struct nhnet_game));
             jobj = json_array_get(jarr, i);
             if (json_unpack
-                (jobj, "{si,si,si,ss,ss,ss,ss,ss,ss*}", "gameid", &gb->gameid,
-                 "status", &gb->status, "playmode", &gb->i.playmode, "plname",
-                 &plname, "plrole", &plrole, "plrace", &plrace, "plgend",
-                 &plgend, "plalign", &plalign, "game_state", &game_state) ==
-                -1) {
+                (jobj, "{si,si,si,ss,ss,ss,ss,ss,ss,si*}",
+                 "gameid", &gb->gameid, "status", &gb->status,
+                 "playmode", &gb->i.playmode, "plname", &plname,
+                 "plrole", &plrole, "plrace", &plrace, "plgend", &plgend,
+                 "plalign", &plalign, "game_state", &game_state,
+                 "idle", &gb->idle) == -1) {
                 print_error("Invalid game info object.");
                 continue;
             }

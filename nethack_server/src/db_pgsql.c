@@ -95,7 +95,8 @@ static const char SQL_set_game_done[] =
     "UPDATE games " "SET done = TRUE " "WHERE gid = $1::integer;";
 
 static const char SQL_list_games[] =
-    "SELECT g.gid, g.filename, u.name "
+    "SELECT g.gid, g.filename, u.name, "
+    "('now' - g.ts) :: reltime :: integer as idle "
     "FROM games AS g JOIN users AS u ON g.owner = u.uid "
     "WHERE (u.uid = $1::integer OR $1::integer = 0 OR"
     "       ($1::integer < 0 AND u.uid <> -($1::integer))) "
@@ -477,7 +478,7 @@ static struct gamefile_info *
 db_game_name_core(int completed, int uid, int gid, int limit, int *count)
 {
     PGresult *res;
-    int i, gidcol, fncol, ucol;
+    int i, gidcol, fncol, ucol, idlecol;
     struct gamefile_info *files;
     char uidstr[16], gidstr[16], complstr[16], limitstr[16];
     const char *const params[] = { uidstr, complstr, gidstr, limitstr };
@@ -507,6 +508,7 @@ db_game_name_core(int completed, int uid, int gid, int limit, int *count)
     gidcol = PQfnumber(res, "gid");
     fncol = PQfnumber(res, "filename");
     ucol = PQfnumber(res, "name");
+    idlecol = PQfnumber(res, "idle");
 
     files = malloc(sizeof (struct gamefile_info) * (*count));
     for (i = 0; i < *count; i++) {
@@ -515,6 +517,7 @@ db_game_name_core(int completed, int uid, int gid, int limit, int *count)
                                    strlen(settings.workdir) +
                                    strlen(PQgetvalue(res, i, fncol)) +
                                    strlen(PQgetvalue(res, i, ucol)) + 1);
+        files[i].idle = atoi(PQgetvalue(res, i, idlecol));
         sprintf(files[i].filename, fmtstr, settings.workdir,
                 PQgetvalue(res, i, ucol), PQgetvalue(res, i, fncol));
     }
