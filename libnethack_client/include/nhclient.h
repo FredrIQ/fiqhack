@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-06 */
+/* Last modified by Alex Smith, 2014-06-21 */
 #ifndef NHCLIENT_H
 # define NHCLIENT_H
 
@@ -39,6 +39,6 @@ extern void handle_display_list(json_t * display_list);
 
 # define api_entry() \
     (!conn_err && (ex_jmp_buf_valid++ ? 1 : setjmp(ex_jmp_buf) ? 0 : 1))
-# define api_exit()  do {--ex_jmp_buf_valid; } while(0)
+# define api_exit()  do {if (ex_jmp_buf_valid) --ex_jmp_buf_valid; } while(0)
 
 #endif
