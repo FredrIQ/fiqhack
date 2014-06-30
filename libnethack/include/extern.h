@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-21 */
+/* Last modified by Alex Smith, 2014-06-30 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -525,6 +525,7 @@ extern noreturn void terminate(enum nh_play_status);
 extern noreturn void panic(const char *, ...) PRINTFLIKE(1,2);
 extern void done_in_by(struct monst *, const char *);
 extern void done(int, const char *killer);
+extern noreturn void done_noreturn(int how, const char *killer);
 extern int num_vanquished(void);
 extern int num_genocides(void);
 extern int num_extinctions(void);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-21 */
+/* Last modified by Alex Smith, 2014-06-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -102,6 +102,7 @@ nh_exit_game(int exit_type)
         if (program_state.followmode != FM_PLAY && etype != EXIT_RESTART)
             etype = EXIT_SAVE; /* no quitting other players' games */
 
+        /* Note: All these "break"s are unreachable. */
         switch (etype) {
         case EXIT_SAVE:
             if (program_state.followmode == FM_PLAY)
@@ -117,8 +118,8 @@ nh_exit_game(int exit_type)
             break;
 
         case EXIT_QUIT:
-            done(QUIT, NULL);
-            break;      /* not reached; quitting can't be lifesaved */
+            done_noreturn(QUIT, NULL);
+            break;
 
         case EXIT_PANIC:
             /* We can't/shouldn't abort the turn just because the client claimed

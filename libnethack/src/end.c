@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-21 */
+/* Last modified by Alex Smith, 2014-06-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -49,7 +49,6 @@ static void savelife(int);
 static boolean check_survival(int how);
 static boolean should_query_disclose_options(char *defquery);
 static void container_contents(struct obj *, boolean, boolean);
-static noreturn void done_noreturn(int how, const char *killer);
 
 #define done_stopprint program_state.stopprint
 
@@ -894,7 +893,7 @@ done(int how, const char *killer)
     done_noreturn(how, killer);
 }
 
-static noreturn void
+noreturn void
 done_noreturn(int how, const char *killer)
 {
     boolean taken;
@@ -1077,7 +1076,7 @@ container_contents(struct obj *list, boolean identified, boolean all_containers)
    roughly "unwind the stack until you find nh_play_game, or if it isn't there,
    some other API call; then return playstatus from it if it's nh_play_game, or
    a suitable error code if it isn't there". */
-void
+noreturn void
 terminate(enum nh_play_status playstatus)
 {
     /* don't bother to try to release memory if we're in panic mode, to avoid

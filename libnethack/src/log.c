@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-21 */
+/* Last modified by Alex Smith, 2014-06-30 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1120,7 +1120,10 @@ log_time_line(void)
     if (program_state.in_zero_time_command)
         return;
 
-    do {
+    /* The code here previously had do .. while(0) as a continue/break
+       wrapper, but continue doesn't work in that case; instead, we use
+       an infinite loop with a break statement at the end. */
+    for (;;) {
         if (log_want_replay('+')) {
             if (!log_replay_input(1, "+%" SCNxLEAST64, &timediff))
                 log_replay_no_more_options();
@@ -1136,7 +1139,8 @@ log_time_line(void)
         } else {
             timediff = time_for_time_line() - flags.turntime;
         }
-    } while(0);
+        break;
+    }
 
     flags.turntime += timediff;
     log_record_input("+%" PRIxLEAST64, timediff);
