@@ -30,15 +30,8 @@ signal_usr2(int ignored)
     sprintf(filename, "%s/message", settings.workdir);
     ret = stat(filename, &statbuf);
     if (ret == -1) {
-        if (!user_info.uid)     /* only show the error once from the main
-                                   process */
-            log_msg("Failed to read the message file %s: %s", filename,
-                    strerror(errno));
-        return;
-    }
-
-    if (!user_info.uid) {
-        log_msg("Message sent.");
+        log_msg("Failed to read the message file %s: %s", filename,
+                strerror(errno));
         return;
     }
 
@@ -53,6 +46,7 @@ signal_usr2(int ignored)
         log_msg("Large message file found. Only the first 8kb will be sent.");
     databuf[ret] = '\0';
 
+    log_msg("Message sent.");
     srv_display_buffer(databuf, FALSE);
 }
 

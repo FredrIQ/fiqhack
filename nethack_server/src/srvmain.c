@@ -40,13 +40,13 @@ main(int argc, char *argv[])
 
     if (request_kill) {
         fprintf(stderr, "There is no longer a centralized server daemon.\n");
-        fprintf(stderr, "Kill the server processes manually.\n");
+        fprintf(stderr, "Send SIGTERM the server processes manually.\n");
         return 0;
     }
 
     if (show_message) {
-        fprintf(stderr, "TODO: Unimplemented.\n");
-        /* signal_message(); */
+        fprintf(stderr, "There is no longer a centralized server daemon.\n");
+        fprintf(stderr, "Send SIGUSR2 to the server processes manually.\n");
         return 0;
     }
 
@@ -71,10 +71,6 @@ print_usage(const char *progname)
     printf("                     Default: \"" DEFAULT_CONFIG_FILE "\"\n");
     printf("  -l <file name>   Alternate log file name. Default: \""
            DEFAULT_LOG_FILE "\"\n");
-    printf("  -m               Send a message to all connected clients.\n");
-    printf("                     All clients will display the content of the\n");
-    printf("                     file\n");
-    printf("                     <workdir>/message.\n");
     printf("  -t <seconds>     Client timeout in seconds. Default: %d.\n",
            DEFAULT_CLIENT_TIMEOUT);
     printf("  -w <directory>   Working directory which will store user\n");
@@ -102,7 +98,7 @@ read_parameters(int argc, char *argv[], char **conffile, int *request_kill,
     int opt;
 
     while ((opt =
-            getopt(argc, argv, "a:c:D:H:l:mo:t:u:w:")) != -1) {
+            getopt(argc, argv, "a:c:D:H:kl:mo:t:u:w:")) != -1) {
         switch (opt) {
         case 'a':
             settings.dbpass = strdup(optarg);
@@ -129,7 +125,7 @@ read_parameters(int argc, char *argv[], char **conffile, int *request_kill,
             settings.logfile = strdup(optarg);
             break;
 
-        case 'm':
+        case 'm':      /* ditto, but with SIGUSR2 not SIGTERM */
             *show_message = TRUE;
             break;
 
