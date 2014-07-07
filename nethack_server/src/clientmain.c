@@ -91,15 +91,17 @@ init_game_paths(void)
 }
 
 /* The low-level function responsible for doing the actual sending. This is
-   async-signal-safe if the second argument is TRUE. */
+   async-signal-safe if the second argument is TRUE (this happens in signal
+   handlers; also during exits for any reason, to prevent the exit code running
+   recursively). */
 static void
-send_string_to_client(const char *jsonstr, int signalsafe)
+send_string_to_client(const char *jsonstr, int defer_errors)
 {
     int len = strlen(jsonstr);
     int pos = 0;
     int ret;
     do {
-        /* For NetHack 4.3, We separate the messages we send with NUL characters
+        /* For NetHack 4.3, we separate the messages we send with NUL characters
            (which are not legal in JSON), so that the client can more easily
            find the boundary between messages. (NitroHack relied on separating
            messages using the boundary between packets, which doesn't work in
@@ -108,7 +110,7 @@ send_string_to_client(const char *jsonstr, int signalsafe)
         if (ret == -1 && (errno == EINTR || errno == EAGAIN))
             continue;
         else if (ret == -1 || ret == 0) {   /* bad news */
-            if (signalsafe)
+            if (defer_errors)
                 return; /* handle the error later */
 
             /* since we just found we can't write output to the pipe,
@@ -147,8 +149,8 @@ client_server_cancel_msg(void)
     errno = save_errno;
 }
 
-void
-client_msg(const char *key, json_t * value)
+static void
+client_msg_core(const char *key, json_t *value, nh_bool from_exit)
 {
     char *jsonstr;
     json_t *jval, *display_data;
@@ -170,7 +172,7 @@ client_msg(const char *key, json_t * value)
     json_decref(jval);
 
     if (can_send_msg)
-        send_string_to_client(jsonstr, FALSE);
+        send_string_to_client(jsonstr, from_exit);
 
     /* this message is sent; don't send another */
     can_send_msg = FALSE;
@@ -183,6 +185,12 @@ client_msg(const char *key, json_t * value)
         client_server_cancel_msg();
         send_server_cancel = 0;
     }
+}
+
+void
+client_msg(const char *key, json_t *value)
+{
+    client_msg_core(key, value, FALSE);
 }
 
 noreturn void
@@ -201,7 +209,7 @@ exit_client(const char *err, int coredumpsignal)
                             err ? json_true() : json_false());
         json_object_set_new(exit_obj, "message", json_string(msg));
         if (can_send_msg)
-            client_msg("server_error", exit_obj);
+            client_msg_core("server_error", exit_obj, TRUE);
         else
             json_decref(exit_obj);
 

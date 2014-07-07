@@ -9,12 +9,44 @@
 #include "nhserver.h"
 
 #include <ctype.h>
+#include <sys/select.h>
 
 #define AUTH_MAXLEN 4096
 #define AUTHBUFSIZE (AUTH_MAXLEN + 2)
 
 static int outfd = 1; /* stdout */
 static int infd = 0;  /* stdin */
+
+/* Used for reading from the socket before the connection is fully authed.  This
+   uses a smaller timeout, and requires the auth to be a single packet (TODO:
+   Does this make sense?) */
+static int
+timeouted_read(int fd, void *buf, int buflen)
+{
+    struct timeval timeout = {.tv_sec = 15, .tv_usec = 0};
+    fd_set readfds;
+    int ready_fds;
+
+    FD_ZERO(&readfds);
+    FD_SET(fd, &readfds);
+
+    do {
+        ready_fds = select(fd + 1, &readfds, NULL, NULL, &timeout);
+    } while (ready_fds < 0 && errno == EINTR);
+
+    if (ready_fds == 1) {
+        return read(fd, buf, buflen);
+    } else if (ready_fds == 0) {
+        /* Timeout. This is a silent disconnection; we want the other end of
+           the connection to stay dormant until it tries to send something. */
+        log_msg("Timeout during authentication. Disconnecting.");
+        exit_server(EXIT_SUCCESS, 0);
+    } else {
+        /* Error. */
+        log_msg("Failed to read from socket, error %s", strerror(errno));
+        exit_server(EXIT_FAILURE, 0);
+    }
+}
 
 static noreturn void
 newclient(int userid)
@@ -32,7 +64,7 @@ auth_connection(void)
     int pos, is_reg, authlen, userid;
     char authbuf[AUTHBUFSIZE];
 
-    authlen = read(infd, authbuf, AUTHBUFSIZE - 1);
+    authlen = timeouted_read(infd, authbuf, AUTHBUFSIZE - 1);
     if (authlen <= 0) {
         return -1;
     }
