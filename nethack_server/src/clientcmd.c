@@ -414,9 +414,9 @@ ccmd_list_games(json_t * params)
     json_t *jarr, *jobj;
 
     if (json_unpack
-        (params, "{si,si*}", "completed", &completed, "limit", &limit) == -1)
+        (params, "{sb,si*}", "completed", &completed, "limit", &limit) == -1)
         exit_client("Bad parameters for list_games", 0);
-    if (json_unpack(params, "{si*}", "show_all", &show_all) == -1)
+    if (json_unpack(params, "{sb*}", "show_all", &show_all) == -1)
         show_all = 0;
 
     if (limit > 100)

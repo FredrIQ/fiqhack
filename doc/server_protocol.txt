@@ -646,7 +646,7 @@ Command arguments:
   * `string password`: the new password (sent in plaintext, unless the
     connection is encrypted some other way)
 
-Response arrguments:
+Response arguments:
   * `boolean return`: true if the password change succeeded
 
 

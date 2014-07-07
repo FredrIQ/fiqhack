@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-21 */
+/* Last modified by Alex Smith, 2014-07-07 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -110,7 +110,7 @@ nhnet_list_games(int done, int show_all, int *count)
     xmalloc_cleanup(&xm_blocklist);
 
     jmsg =
-        json_pack("{si,si,si}", "limit", 0, "completed", done, "show_all",
+        json_pack("{si,sb,sb}", "limit", 0, "completed", done, "show_all",
                   show_all);
     jmsg = send_receive_msg("list_games", jmsg);
     if (json_unpack(jmsg, "{so!}", "games", &jarr) == -1 ||
