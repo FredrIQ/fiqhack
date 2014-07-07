@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-05-31
+Last modified by Alex Smith, 2014-07-07
 
 Copyright (C) 2013 Alex Smith.
 
@@ -254,15 +254,15 @@ In order to compile NetHack 4 locally, you can get a copy of the source from
 the repository, and follow the instructions in the README file (if you're on
 Mac OS X, follow the instructions for UNIX/Linux, because OS X is a UNIX
 derivative).  You'll need some dependencies in addition to NetHack 4 itself: a
-working C toolchain and zlib.  (You'll also need postgresql if you're planning
-to run your own server, but you probably aren't; for local play, the game
-works just fine without a server to connect to.)  Previous versions of NetHack
-4 depended on the [libjansson library][7].  You can still use your own copy of
-libjansson, but the source to this library is now shipped with NetHack 4 in
-order to reduce library dependency issues, and you can tell the build system
-to use that copy instead.  Previous versions of NetHack 4 also depended on
-libncursesw, but that dependency no longer exists (NetHack 4 now uses its own
-rendering library, named libuncursed).
+working C toolchain and zlib.  (You'll also need postgresql, pgcrypto and
+inetd if you're planning to run your own server, but you probably aren't; for
+local play, the game works just fine without a server to connect to.)
+Previous versions of NetHack 4 depended on the [libjansson library][7].  You
+can still use your own copy of libjansson, but the source to this library is
+now shipped with NetHack 4 in order to reduce library dependency issues, and
+you can tell the build system to use that copy instead.  Previous versions of
+NetHack 4 also depended on libncursesw, but that dependency no longer exists
+(NetHack 4 now uses its own rendering library, named libuncursed).
 
 To build a binary capable of tiles play, you will also need version 2 of the
 [Simple DirectMedia Layer][8] library (and its development headers and (on

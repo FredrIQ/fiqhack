@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-21 */
+/* Last modified by Alex Smith, 2014-07-07 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -184,7 +184,7 @@ ccmd_create_game(json_t * params)
         exit_client("Bad set of parameters for create_game", 0);
 
     /* reset cached display data from a previous game */
-    reset_cached_diplaydata();
+    reset_cached_displaydata();
 
     struct nh_option_desc *opts;
     count = json_array_size(jarr);
@@ -325,7 +325,7 @@ ccmd_play_game(json_t * params)
         followmode = FM_RECOVERQUIT;
 
     /* reset cached display data from a previous game */
-    reset_cached_diplaydata();
+    reset_cached_displaydata();
 
     const char *verb = followmode == FM_PLAY ? "play" :
         followmode == FM_REPLAY ? "replay" :
@@ -414,9 +414,9 @@ ccmd_list_games(json_t * params)
     json_t *jarr, *jobj;
 
     if (json_unpack
-        (params, "{si,si*}", "completed", &completed, "limit", &limit) == -1)
+        (params, "{sb,si*}", "completed", &completed, "limit", &limit) == -1)
         exit_client("Bad parameters for list_games", 0);
-    if (json_unpack(params, "{si*}", "show_all", &show_all) == -1)
+    if (json_unpack(params, "{sb*}", "show_all", &show_all) == -1)
         show_all = 0;
 
     if (limit > 100)

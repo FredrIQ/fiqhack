@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-03-01 */
+/* Last modified by Alex Smith, 2014-07-07 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -39,12 +39,14 @@ main(int argc, char *argv[])
     setup_defaults();
 
     if (request_kill) {
-        kill_server();
+        fprintf(stderr, "There is no longer a centralized server daemon.\n");
+        fprintf(stderr, "Send SIGTERM the server processes manually.\n");
         return 0;
     }
 
     if (show_message) {
-        signal_message();
+        fprintf(stderr, "There is no longer a centralized server daemon.\n");
+        fprintf(stderr, "Send SIGUSR2 to the server processes manually.\n");
         return 0;
     }
 
@@ -56,62 +58,19 @@ main(int argc, char *argv[])
         !begin_logging())
         return 1;
 
-    if (!settings.nodaemon) {
-        if (daemon(0, 0) == -1) {
-            settings.nodaemon = TRUE;
-            log_msg("could not detach from terminal: %s", strerror(errno));
-            return 1;
-        }
-        if (!create_pidfile())
-            return 1;
-    }
+    log_msg("new process spawned");
 
-    /* give this process and its children their own process group id for kill() 
-     */
-    setpgid(0, 0);
-    report_startup();
-
-    runserver();
-
-    /* shutdown */
-    remove_pidfile();
-    end_logging();
-    close_database();
-    remove_unix_socket();
-    free_config();
-
-    return 0;
+    runserver(); /* does not return */
 }
-
 
 static void
 print_usage(const char *progname)
 {
     printf("Usage: %s [OPTIONS]\n", progname);
-    printf("  -4 <ipv4 addr>   The ipv4 host address which should be used.\n");
-    printf("                     Default: bind to all v4 host addresses.\n");
-    printf("  -6 <ipv6 addr>   The ipv6 host address which should be used.\n");
-    printf("                     Default: bind to all v6 host addresses.\n");
-    printf("  -s <file name>   File name for a unix socket.\n");
     printf("  -c <file name>   Config file to use insted of the default.\n");
     printf("                     Default: \"" DEFAULT_CONFIG_FILE "\"\n");
-    printf("  -d <\"v4\"|\"v6\">   -d v4: disable ipv4; -d v6 disable ipv6.\n");
-    printf("  -k               Kill a previously started server daemon.\n");
-    printf("                     The -p parameter and the config file will\n");
-    printf("                     be used to find the pid file of the server\n");
-    printf("                     to kill.\n");
     printf("  -l <file name>   Alternate log file name. Default: \""
            DEFAULT_LOG_FILE "\"\n");
-    printf("  -m               Send a message to all connected clients.\n");
-    printf("                     All clients will display the content of the\n");
-    printf("                     file\n");
-    printf("                     <workdir>/message.\n");
-    printf("  -n               Don't detach from the terminal.\n");
-    printf("                     If this parameter is set, no pidfile is\n");
-    printf("                     created.\n");
-    printf("  -P <number>      Port number. Default: %d\n", DEFAULT_PORT);
-    printf("  -p <file name>   Name of the file used to store the pid of a\n");
-    printf("                     running server daemon.\n");
     printf("  -t <seconds>     Client timeout in seconds. Default: %d.\n",
            DEFAULT_CLIENT_TIMEOUT);
     printf("  -w <directory>   Working directory which will store user\n");
@@ -139,28 +98,8 @@ read_parameters(int argc, char *argv[], char **conffile, int *request_kill,
     int opt;
 
     while ((opt =
-            getopt(argc, argv, "4:6:a:c:D:d:H:hkl:mno:P:p:s:t:u:w:")) != -1) {
+            getopt(argc, argv, "a:c:D:H:kl:mo:t:u:w:")) != -1) {
         switch (opt) {
-        case '4':      /* bind address */
-            if (!parse_ip_addr
-                (optarg, (struct sockaddr *)&settings.bind_addr_4, TRUE)) {
-                fprintf(stderr,
-                        "Error: \"%s\" was not recognized as an ipv4 address.",
-                        optarg);
-                return FALSE;
-            }
-            break;
-
-        case '6':      /* bind address */
-            if (!parse_ip_addr
-                (optarg, (struct sockaddr *)&settings.bind_addr_6, FALSE)) {
-                fprintf(stderr,
-                        "Error: \"%s\" was not recognized as an ipv6 address.",
-                        optarg);
-                return FALSE;
-            }
-            break;
-
         case 'a':
             settings.dbpass = strdup(optarg);
             break;
@@ -173,24 +112,12 @@ read_parameters(int argc, char *argv[], char **conffile, int *request_kill,
             settings.dbname = strdup(optarg);
             break;
 
-        case 'd':      /* disable ipv4 / ipv6 */
-            if (!strcmp(optarg, "v4"))
-                settings.disable_ipv4 = TRUE;
-            else if (!strcmp(optarg, "v6"))
-                settings.disable_ipv6 = TRUE;
-            else {
-                fprintf(stderr,
-                        "Error: \"v4"
-                        " or \"v6\" expected after parameter -d.");
-                return FALSE;
-            }
-            break;
-
         case 'H':
             settings.dbhost = strdup(optarg);
             break;
 
-        case 'k':      /* kill server */
+        case 'k':      /* formerly 'kill server'; now an undocumented option
+                          that tells people to kill the processes manually */
             *request_kill = TRUE;
             break;
 
@@ -198,41 +125,12 @@ read_parameters(int argc, char *argv[], char **conffile, int *request_kill,
             settings.logfile = strdup(optarg);
             break;
 
-        case 'm':
+        case 'm':      /* ditto, but with SIGUSR2 not SIGTERM */
             *show_message = TRUE;
-            break;
-
-        case 'n':      /* don't daemonize */
-            settings.nodaemon = TRUE;
             break;
 
         case 'o':
             settings.dbport = strdup(optarg);
-            break;
-
-        case 'P':      /* port number */
-            settings.port = atoi(optarg);
-            if (settings.port < 1 || settings.port > 65535) {
-                fprintf(stderr, "Error: Port %d is outside the range of valid "
-                        "port numbers [1-65535].\n", settings.port);
-                return FALSE;
-            }
-            break;
-
-        case 'p':      /* pid file */
-            settings.pidfile = strdup(optarg);
-            break;
-
-        case 's':
-            if (strlen(optarg) > SUN_PATH_MAX - 1) {
-                fprintf(stderr,
-                        "Error: The unix socket filename is too long.\n");
-                return FALSE;
-            }
-
-            settings.bind_addr_unix.sun_family = AF_UNIX;
-            strncpy(settings.bind_addr_unix.sun_path, optarg, SUN_PATH_MAX - 1);
-            settings.bind_addr_unix.sun_path[SUN_PATH_MAX - 1] = '\0';
             break;
 
         case 't':

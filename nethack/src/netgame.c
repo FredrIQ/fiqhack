@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-06 */
+/* Last modified by Alex Smith, 2014-07-07 */
 /* Copyright (c) Daniel Thaler, 2012 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -388,12 +388,6 @@ get_username_password(struct server_info *server)
                 "Error: could not establish a connection.", krc_notification);
             break;
 
-        case AUTH_SUCCESS_RECONNECT:
-            curses_msgwin(
-                "Error: The server seems to think you are connected already.",
-                krc_notification);
-            break;
-
         case AUTH_FAILED_UNKNOWN_USER:
         case AUTH_SUCCESS_NEW:
             accountok = TRUE;
@@ -549,15 +543,6 @@ connect_server(struct server_info *server)
         if (ret == AUTH_SUCCESS_NEW) {
             /* only copy into ui_flags.username once the connection has been
                accepted */
-            strcpy(ui_flags.username, server->username);
-            break;
-        } else if (ret == AUTH_SUCCESS_RECONNECT) {
-            /* TODO: This case should never happen, and probably /does/ never
-               happen, in which case this is dead code. */
-            nhnet_exit_game(EXIT_SAVE);
-            if (!nhnet_connected())     /* disconnect due to an error while
-                                           reconnecting */
-                return FALSE;
             strcpy(ui_flags.username, server->username);
             break;
         } else if (ret == NO_CONNECTION) {

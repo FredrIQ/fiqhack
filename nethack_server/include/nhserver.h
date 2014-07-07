@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-21 */
+/* Last modified by Alex Smith, 2014-07-07 */
 #ifndef NHSERVER_H
 # define NHSERVER_H
 
@@ -39,8 +39,6 @@
 # include "compilers.h"
 # include "nethack.h"
 # include "nethack_client.h"    /* for enum authresult */
-
-# define DEFAULT_PORT 53430     /* different from NitroHack */
 
 /* If using aimake, take directory options from there */
 # ifndef STRINGIFY_OPTION
@@ -95,18 +93,9 @@ struct settings {
     char *logfile;
     char *workdir;
     char *pidfile;
-    struct sockaddr_in bind_addr_4;
-    struct sockaddr_in6 bind_addr_6;
-    struct sockaddr_un bind_addr_unix;
-    int port;
     int client_timeout;
-    char nodaemon;
-    char disable_ipv4;
-    char disable_ipv6;
     char *dbhost, *dbname, *dbport, *dbuser, *dbpass;
 };
-
-# define SUN_PATH_MAX (sizeof(settings.bind_addr_unix.sun_path))
 
 
 struct user_info {
@@ -143,10 +132,8 @@ extern struct nh_player_info player_info;
 /*---------------------------------------------------------------------------*/
 
 /* auth.c */
-extern int auth_user(char *authbuf, const char *peername, int *is_reg,
-                     int *reconnect_id);
-extern void auth_send_result(int sockfd, enum authresult, int is_reg,
-                             int connid);
+extern int auth_user(char *authbuf, int *reconnect_id);
+extern void auth_send_result(int sockfd, enum authresult, int is_reg);
 
 /* clientmain.c */
 extern noreturn void client_main(int userid, int infd, int outfd);
@@ -187,30 +174,23 @@ extern void db_add_topten_entry(int gid, int points, int hp, int maxhp,
                                 int deaths, int end_how, const char *death,
                                 const char *entrytxt);
 
-/* kill.c */
-extern int create_pidfile(void);
-extern void remove_pidfile(void);
-extern void kill_server(void);
-extern void signal_message(void);
-
 /* log.c */
 extern void log_msg(const char *fmt, ...);
 extern int begin_logging(void);
 extern void end_logging(void);
-extern void report_startup(void);
 extern const char *addr2str(const void *sockaddr);
 
 /* miscsetup.c */
 extern void setup_signals(void);
 extern int init_workdir(void);
-extern int remove_unix_socket(void);
 
 /* server.c */
-extern int runserver(void);
+extern noreturn void runserver(void);
+extern noreturn void exit_server(int exitstatus, int coredumpsignal);
 
 /* winprocs.c */
 extern json_t *get_display_data(void);
-extern void reset_cached_diplaydata(void);
+extern void reset_cached_displaydata(void);
 extern void srv_display_buffer(const char *buf, nh_bool trymove);
 extern char srv_yn_function(const char *query, const char *rset,
                             char defchoice);

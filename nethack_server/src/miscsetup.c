@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-21 */
+/* Last modified by Alex Smith, 2014-07-07 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -30,15 +30,8 @@ signal_usr2(int ignored)
     sprintf(filename, "%s/message", settings.workdir);
     ret = stat(filename, &statbuf);
     if (ret == -1) {
-        if (!user_info.uid)     /* only show the error once from the main
-                                   process */
-            log_msg("Failed to read the message file %s: %s", filename,
-                    strerror(errno));
-        return;
-    }
-
-    if (!user_info.uid) {
-        log_msg("Message sent.");
+        log_msg("Failed to read the message file %s: %s", filename,
+                strerror(errno));
         return;
     }
 
@@ -53,6 +46,7 @@ signal_usr2(int ignored)
         log_msg("Large message file found. Only the first 8kb will be sent.");
     databuf[ret] = '\0';
 
+    log_msg("Message sent.");
     srv_display_buffer(databuf, FALSE);
 }
 
@@ -143,30 +137,6 @@ init_workdir(void)
         return FALSE;
 
     return TRUE;
-}
-
-
-int
-remove_unix_socket(void)
-{
-    struct stat statbuf;
-    int ret;
-
-    if (!settings.bind_addr_unix.sun_family)
-        return TRUE;
-
-    ret = stat(settings.bind_addr_unix.sun_path, &statbuf);
-    if (ret == -1)
-        /* file doesn't exist */
-        return TRUE;
-
-    if (!S_ISSOCK(statbuf.st_mode)) {
-        log_msg("Error: %s already exists and is not a socket",
-                settings.bind_addr_unix.sun_path);
-        return FALSE;
-    }
-
-    return unlink(settings.bind_addr_unix.sun_path) == 0;
 }
 
 /* miscsetup.c */

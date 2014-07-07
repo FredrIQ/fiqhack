@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-06-21
+Last modified by Alex Smith, 2014-07-07
 
 This document documents the version of the network protocol used in
 NetHack 4.3, and was written by Daniel Thaler, GreyKnight, Alex Smith.
@@ -89,30 +89,24 @@ other commands may be sent until the original `auth` or `register` command
 receives a response.
 
 This command is specific to client/server communication, and is not used for
-local play.  It specifies which user is making the connection, and whether to
-start a new connection or attempt to re-establish an existing connection.
+local play.  It specifies which user is making the connection.
 
 Upon creating a new connection, there will be no game loaded: `play_game` will
 need to be used before commands that require a game to be loaded will work
 (and those commands can only be given to follow up server requests that follow
-up the `play_game` call).  Re-establishing an existing connection will leave
-it in whatever state it was in before the connection went down.
+up the `play_game` call).
 
 Command arguments:
   * `string username`: the username of the user who is making the connection
   * `string password`: the password of the user who is making the connection
-  * `connid reconnect (optional)`: the connection ID of a connection to
-    re-establish
 
 Response arguments:
-  * `connid connection`: an ID that can be used to re-establish this connection
-    if it breaks
   * `enum authresult return`: whether the connection succeeded:
-      * `NO_CONNECTION` = 0: the given connection ID does not exist
+      * [`NO_CONNECTION` = 0: not sent by the server, simulated by the client
+        library if the connection fails]
       * `AUTH_FAILED_UNKNOWN_USER` = 1: the given user does not exist
       * `AUTH_FAILED_BAD_PASSWORD` = 2: the given password is wrong
       * `AUTH_SUCCESS_NEW` = 3: a new connection was created
-      * `AUTH_SUCCESS_RECONNECT` = 4: `reconnect` was re-established
   * `int[3] version`: the version number of the server
       * [0] The major version number (if it's not 4, this document is probably
         inaccurate)
@@ -652,7 +646,7 @@ Command arguments:
   * `string password`: the new password (sent in plaintext, unless the
     connection is encrypted some other way)
 
-Response arrguments:
+Response arguments:
   * `boolean return`: true if the password change succeeded
 
 

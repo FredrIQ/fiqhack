@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-07-07 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -96,85 +96,9 @@ parse_config_line(char *line)
      * set the actual option
      */
 
-    if (!strcmp(line, "pidfile")) {
-        if (!settings.pidfile)
-            settings.pidfile = strdup(val);
-    }
-
-    else if (!strcmp(line, "logfile")) {
+    if (!strcmp(line, "logfile")) {
         if (!settings.logfile)
             settings.logfile = strdup(val);
-    }
-
-    else if (!strcmp(line, "port")) {
-        if (!settings.port)
-            settings.port = atoi(val);
-        if (settings.port < 1 || settings.port > 65535) {
-            fprintf(stderr, "Error: Port %d is outside the range of valid port "
-                    "numbers [1-65535].\n", settings.port);
-            return FALSE;
-        }
-    }
-
-    else if (!strcmp(line, "ipv6addr")) {
-        struct sockaddr_in6 tmp;
-
-        if (!parse_ip_addr(val, (struct sockaddr *)&tmp, FALSE)) {
-            fprintf(stderr, "Error: %s is not a valid ipv6 address.\n", val);
-            return FALSE;
-        }
-
-        if (settings.bind_addr_6.sin6_family == AF_INET6)
-            settings.bind_addr_6 = tmp;
-    }
-
-    else if (!strcmp(line, "ipv4addr")) {
-        struct sockaddr_in tmp;
-
-        if (!parse_ip_addr(val, (struct sockaddr *)&tmp, TRUE)) {
-            fprintf(stderr, "Error: %s is not a valid ipv4 address.\n", val);
-            return FALSE;
-        }
-
-        if (settings.bind_addr_4.sin_family == AF_INET)
-            settings.bind_addr_4 = tmp;
-    }
-
-    else if (!strcmp(line, "disable_family")) {
-        if (!settings.disable_ipv4 && !strcmp(val, "v4"))
-            settings.disable_ipv4 = TRUE;
-        else if (!settings.disable_ipv6 && !strcmp(val, "v6"))
-            settings.disable_ipv6 = TRUE;
-        else if (strcmp(val, "v4") && strcmp(val, "v6")) {
-            fprintf(stderr, "Error: the value for disable_family is either v4 "
-                    "or v6, not %s.\n", val);
-        }
-    }
-
-    else if (!strcmp(line, "unixsocket")) {
-        if (strlen(val) > SUN_PATH_MAX - 1) {
-            fprintf(stderr, "Error: The unix socket filename is too long.\n");
-            return FALSE;
-        }
-
-        if (settings.bind_addr_unix.sun_family == 0) {
-            settings.bind_addr_unix.sun_family = AF_UNIX;
-            strncpy(settings.bind_addr_unix.sun_path, val, SUN_PATH_MAX - 1);
-            settings.bind_addr_unix.sun_path[SUN_PATH_MAX - 1] = '\0';
-        }
-    }
-
-    else if (!strcmp(line, "nodaemon")) {
-        if (*val == '1' || !strcmp(val, "true"))
-            settings.nodaemon = TRUE;
-        else if (*val != '0' && strcmp(val, "false")) {
-            fprintf(stderr,
-                    "Error: nodaemon may only be set to \"0\", \"1\", "
-                    "\"true\" or \"false\".\n");
-            return FALSE;
-        }
-        /* this option does not need to be set to false explicitly: that is the 
-           default value */
     }
 
     else if (!strcmp(line, "workdir")) {
@@ -301,15 +225,6 @@ setup_defaults(void)
 
     if (!settings.workdir)
         settings.workdir = strdup(DEFAULT_WORK_DIR);
-
-    if (!settings.port)
-        settings.port = DEFAULT_PORT;
-
-    if (!settings.bind_addr_4.sin_family)
-        settings.bind_addr_4.sin_family = AF_INET;
-
-    if (!settings.bind_addr_6.sin6_family)
-        settings.bind_addr_6.sin6_family = AF_INET6;
 
     if (!settings.client_timeout)
         settings.client_timeout = DEFAULT_CLIENT_TIMEOUT;
