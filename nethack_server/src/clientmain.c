@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-21 */
+/* Last modified by Alex Smith, 2014-07-07 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -205,8 +205,6 @@ exit_client(const char *err, int coredumpsignal)
         else
             json_decref(exit_obj);
 
-        usleep(100);    /* try to make sure the server process handles write()
-                           before close(). */
         close(infd);
         close(outfd);
         infd = outfd = -1;
@@ -217,19 +215,14 @@ exit_client(const char *err, int coredumpsignal)
     if (!sigsegv_flag)
         nh_exit_game(EXIT_SAVE);  /* might not return here */
     nh_lib_exit();
-    close_database();
+
     if (user_info.username)
         free(user_info.username);
     free_config();
-    reset_cached_diplaydata();
-    end_logging();
+    reset_cached_displaydata();
 
-    if (coredumpsignal) {
-        signal(coredumpsignal, SIG_DFL);
-        raise(coredumpsignal);
-    }
-
-    exit(err != NULL);
+    exit_server(err == NULL ? EXIT_SUCCESS : EXIT_FAILURE,
+                coredumpsignal);
 }
 
 
@@ -357,7 +350,6 @@ client_main(int userid, int _infd, int _outfd)
     outfd = _outfd;
     gamefd = -1;
 
-    init_database();
     if (!db_get_user_info(userid, &user_info)) {
         log_msg("get_user_info error for uid %d!", userid);
         exit_client("database error", SIGABRT);

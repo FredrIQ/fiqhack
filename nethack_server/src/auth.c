@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-31 */
+/* Last modified by Alex Smith, 2014-07-07 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -50,10 +50,10 @@ is_valid_username(const char *name)
 
 
 int
-auth_user(char *authbuf, const char *peername, int *is_reg, int *reconnect_id)
+auth_user(char *authbuf, int *is_reg)
 {
     json_error_t err;
-    json_t *obj, *cmd, *name, *pass, *email, *reconn;
+    json_t *obj, *cmd, *name, *pass, *email;
     const char *namestr, *passstr, *emailstr;
     int userid = 0;
 
@@ -75,7 +75,6 @@ auth_user(char *authbuf, const char *peername, int *is_reg, int *reconnect_id)
     name = json_object_get(cmd, "username");
     pass = json_object_get(cmd, "password");
     email = json_object_get(cmd, "email");      /* is null for auth */
-    reconn = json_object_get(cmd, "reconnect");
 
     if (!name || !pass)
         goto err;
@@ -87,18 +86,15 @@ auth_user(char *authbuf, const char *peername, int *is_reg, int *reconnect_id)
         !is_valid_username(namestr))
         goto err;
 
-    *reconnect_id = 0;
     if (!*is_reg) {
-        if (reconn && json_is_integer(reconn))
-            *reconnect_id = json_integer_value(reconn);
 
         /* authenticate against a user database */
         userid = db_auth_user(namestr, passstr);
         if (userid > 0)
-            log_msg("%s has logged in as \"%s\" (userid %d)", peername, namestr,
+            log_msg("User has logged in as \"%s\" (userid %d)", namestr,
                     userid);
         else if (userid < 0)
-            log_msg("%s has failed to log in as \"%s\" (userid %d)", peername,
+            log_msg("Someone has failed to log in as \"%s\" (userid %d)",
                     namestr, -userid);
     } else {
         /* register a new user */
@@ -115,7 +111,7 @@ auth_user(char *authbuf, const char *peername, int *is_reg, int *reconnect_id)
             snprintf(savedir, 1024, "%s/completed/%s",
                      settings.workdir, namestr);
             mkdir(savedir, 0700);
-            log_msg("%s has registered as \"%s\" (userid: %d)", peername,
+            log_msg("User has registered as \"%s\" (userid: %d)",
                     namestr, userid);
         }
     }
@@ -130,7 +126,7 @@ err:
 
 
 void
-auth_send_result(int sockfd, enum authresult result, int is_reg, int connid)
+auth_send_result(int sockfd, enum authresult result, int is_reg)
 {
     int ret, written, len;
     json_t *jval;
@@ -142,8 +138,8 @@ auth_send_result(int sockfd, enum authresult result, int is_reg, int connid)
         key = "register";
 
     jval =
-        json_pack("{s:{si,si,s:[i,i,i]}}", key, "return", result, "connection",
-                  connid, "version", VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
+        json_pack("{s:{si,s:[i,i,i]}}", key, "return", result,
+                  "version", VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL);
     jstr = json_dumps(jval, JSON_COMPACT);
     len = strlen(jstr);
     written = 0;
@@ -152,8 +148,7 @@ auth_send_result(int sockfd, enum authresult result, int is_reg, int connid)
         ret = write(sockfd, jstr, len - written + 1);
         if (ret > 0)
             written += ret;
-        /* don't care if it fails - if it does, the main event loop will be
-           notified by epoll and perform cleanup later. */
+        /* don't care if it fails - if it does, we'll notice later */
     } while (ret > 0 && written < len);
 
     free(jstr);

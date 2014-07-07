@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-21 */
+/* Last modified by Alex Smith, 2014-07-07 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef NETHACK_CLIENT_H
@@ -17,8 +17,7 @@ enum authresult {
     NO_CONNECTION,
     AUTH_FAILED_UNKNOWN_USER,
     AUTH_FAILED_BAD_PASSWORD,
-    AUTH_SUCCESS_NEW,
-    AUTH_SUCCESS_RECONNECT
+    AUTH_SUCCESS_NEW
 };
 
 

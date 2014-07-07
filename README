@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-05-31
+Last modified by Alex Smith, 2014-07-07
 
 Copyright (C) 2013 Alex Smith.
 
@@ -272,8 +272,8 @@ UNIX/Linux/Mac OS X
 
 You will need to install NetHack 4's dependencies: zlib (which is probably
 installed already, but you may need to get its development headers from your
-package manager), and (if you want a working server binary) postgresql and
-pgcrypto.  You also need development headers for those libraries.
+package manager), and (if you want a working server binary) inetd, postgresql
+and pgcrypto.  You also need development headers for the libraries listed.
 
 NetHack 4 also requires a working libjansson library (available from
 http://www.digip.org/jansson), and its development headers.  However, both of
@@ -315,52 +315,6 @@ tables.  This is the case on most Linux distributions, but not on all
 
 To run the console port, use `nethack4`.  For the tiles/faketerm ports, use
 `nethack4-sdl`.
-
-If you want to run your own server (which is only necessary/useful if you want
-people to be able to connect to your NetHack 4 server from other computers,
-rather than running locally), you'll need to give `--with=server` as a
-command-line option to `aimake`, and also need to set up the postgresql
-database:
-
-    su postgres             # or any other way to elevate your permissions
-    createuser -DPRS nh4server
-    # You'll be prompted for a password at this point.
-    createdb -O nh4server nethack4
-    echo 'CREATE EXTENSION pgcrypto' | psql -d nethack4
-    exit                    # go back to your normal permissions
-
-Next you need to edit the configuration file (a blank configuration file will
-have been installed in the appropriate place for you to edit).  If you
-installed into `~/nethack4`, it should be named
-`~/nethack4/config/nethack4.conf`; other forms of install may have other
-locations.  (You can run nethack4-server with no arguments to discover where
-the configuration file should be; if it can't find its configuration file,
-it'll complain and tell you where it's looking for it.)
-
-The configuration file looks something like this:
-
-    dbhost=127.0.0.1
-    dbport=5432
-    dbuser=nh4server
-    dbpass=**password**
-    dbname=nethack4
-
-Note that the port number has been known to vary based on the way that your
-copy of postgresql is packaged; you may want to verify it by looking at
-postgresql's configuration, `/etc/postgresql/.../postgresql.conf`.  Also be
-aware that the configuration file necessarily has to store the password in
-plaintext (a hashed password is no good for actually logging into the
-database); you may want to change the permissions on the configuration file to
-help protect it.  (I recommend using a long random password, because it's only
-used by computers; there's no need for humans to memorize it.)
-
-Now you can just run the `nethack4-server` binary to start the server; it will
-daemonize itself.  To test your server setup, you can use the `nethack4`
-client; there's a menu option to connect to a server with it.
-
-The easiest way to stop the `nethack4-server` binary is to run
-`nethack4-server -k`, which will automatically work out which process is the
-server from its pidfile, and tell it to stop.
 
 
 Windows
@@ -418,3 +372,62 @@ a command that produces a lot of text, such as `perl ../nethack4/aimake
 --documentation`, and observing how long it takes to scroll the screen when
 you press the spacebar.)  The faketerm port somehow manages to be faster, even
 though it too is fairly slow.
+
+Server setup
+------------
+
+If you want to run your own server (which is only necessary/useful if you want
+people to be able to connect to your NetHack 4 server from other computers,
+rather than running locally), you'll need to give `--with=server` as a
+command-line option to `aimake`, and also need to set up the postgresql
+database:
+
+    su postgres             # or any other way to elevate your permissions
+    createuser -DPRS nh4server
+    # You'll be prompted for a password at this point.
+    createdb -O nh4server nethack4
+    echo 'CREATE EXTENSION pgcrypto' | psql -d nethack4
+    exit                    # go back to your normal permissions
+
+Next you need to edit the configuration file (a blank configuration file will
+have been installed in the appropriate place for you to edit).  If you
+installed into `~/nethack4`, it should be named
+`~/nethack4/config/nethack4.conf`; other forms of install may have other
+locations.  (You can run nethack4-server with no arguments to discover where
+the configuration file should be; if it can't find its configuration file,
+it'll complain and tell you where it's looking for it.)
+
+The configuration file looks something like this:
+
+    dbhost=127.0.0.1
+    dbport=5432
+    dbuser=nh4server
+    dbpass=**password**
+    dbname=nethack4
+
+Note that the port number has been known to vary based on the way that your
+copy of postgresql is packaged; you may want to verify it by looking at
+postgresql's configuration, `/etc/postgresql/.../postgresql.conf`.  Also be
+aware that the configuration file necessarily has to store the password in
+plaintext (a hashed password is no good for actually logging into the
+database); you may want to change the permissions on the configuration file to
+help protect it.  (I recommend using a long random password, because it's only
+used by computers; there's no need for humans to memorize it.)
+
+Finally, you need to tell inetd about the new server setup.  As root, you need
+to add two extra lines to `/etc/inetd.conf`, looking something like this:
+
+    53430 stream tcp  nowait username /path/to/nethack4-server nethack4-server
+    53430 stream tcp6 nowait username /path/to/nethack4-server nethack4-server
+
+(Here, "username" is the username of the user that the server binaries should
+run as.)  Then, again as root, just send a `SIGHUP` to inetd (`killall -HUP
+inetd`), to tell it to load the new configuration file.  inetd will be
+responsible for starting the server processes when a new connection is made;
+no server processes will be running while no games are being played.  To test
+your server setup, you can use the `nethack4` client; there's a menu option to
+connect to a server with it.
+
+This only really works properly on Linux, at present; on Mac OS X, it may be
+possible to get a partially working server, but functionality is missing due
+to that operating system's lack of support for realtime signals.

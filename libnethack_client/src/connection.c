@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-06 */
+/* Last modified by Alex Smith, 2014-07-07 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -20,7 +20,6 @@ static int sockfd = -1;
 static char unread_messages[1024 * 1024 * 16];
 static char *unread_message_startptr = unread_messages;
 static char *unread_message_endptr = unread_messages;
-static int connection_id;
 static int net_active;
 int conn_err, error_retry_ok;
 
@@ -413,33 +412,11 @@ nhnet_check_socket_fd(void)
 
 static int
 do_connect(const char *host, int port, const char *user, const char *pass,
-           const char *email, int reg_user, int connid)
+           const char *email, int reg_user)
 {
     int fd = -1, authresult;
     char ipv6_error[120], ipv4_error[120], errmsg[256];
     json_t *jmsg, *jarr;
-
-#ifdef UNIX
-    int copylen;
-
-    /* try to connect to a local unix socket */
-    struct sockaddr_un sun;
-
-    sun.sun_family = AF_UNIX;
-
-    copylen = strlen(host) + 1;
-    if (copylen > sizeof (sun.sun_path) - 1)
-        copylen = sizeof (sun.sun_path) - 1;
-    memcpy(sun.sun_path, host, copylen);
-    sun.sun_path[sizeof (sun.sun_path) - 1] = '\0';
-    fd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (fd >= 0) {
-        if (connect(fd, (struct sockaddr *)&sun, sizeof (sun)) == -1) {
-            close(fd);
-            fd = -1;
-        }
-    }
-#endif
 
     /* try ipv6 */
     if (fd == -1)
@@ -479,15 +456,12 @@ do_connect(const char *host, int port, const char *user, const char *pass,
             json_object_set_new(jmsg, "email", json_string(email));
         jmsg = send_receive_msg("register", jmsg);
     } else {
-        if (connid)
-            json_object_set_new(jmsg, "reconnect", json_integer(connid));
         jmsg = send_receive_msg("auth", jmsg);
     }
     in_connect_disconnect = FALSE;
 
     if (!jmsg ||
-        json_unpack(jmsg, "{si,si*}", "return", &authresult, "connection",
-                    &connection_id) == -1) {
+        json_unpack(jmsg, "{si*}", "return", &authresult) == -1) {
         if (jmsg)
             json_decref(jmsg);
         close(fd);
@@ -513,8 +487,7 @@ do_connect(const char *host, int port, const char *user, const char *pass,
         strncpy(saved_password, pass, sizeof (saved_password));
     saved_port = port;
 
-    if (authresult == AUTH_SUCCESS_NEW ||
-        authresult == AUTH_SUCCESS_RECONNECT) {
+    if (authresult == AUTH_SUCCESS_NEW) {
         conn_err = FALSE;
         net_active = TRUE;
     } else {
@@ -533,7 +506,7 @@ nhnet_connect(const char *host, int port, const char *user, const char *pass,
     if (port == 0)
         port = DEFAULT_PORT;
 
-    return do_connect(host, port, user, pass, email, reg_user, 0);
+    return do_connect(host, port, user, pass, email, reg_user);
 }
 
 
@@ -551,7 +524,6 @@ nhnet_disconnect(void)
         close(sockfd);
     }
     sockfd = -1;
-    connection_id = 0;
     conn_err = FALSE;
     net_active = FALSE;
     memset(&nhnet_server_ver, 0, sizeof (nhnet_server_ver));
@@ -590,8 +562,8 @@ restart_connection(void)
 
     ret =
         do_connect(saved_hostname, saved_port, saved_username, saved_password,
-                   NULL, 0, connection_id);
-    if (ret != AUTH_SUCCESS_NEW && ret != AUTH_SUCCESS_RECONNECT)
+                   NULL, 0);
+    if (ret != AUTH_SUCCESS_NEW)
         return FALSE;
 
     /* If we were in a game when the connection went down, we want to reload the
