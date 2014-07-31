@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-20 */
+/* Last modified by Alex Smith, 2014-07-31 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -805,13 +805,13 @@ read_keymap(void)
             i++;
         }
         usernamew[i] = 0;
-        fnncat(filename, usernamew, BUFSZ - 1);
+        fnncat(filename, usernamew, BUFSZ - fnlen(filename) - 1);
 #else
-        fnncat(filename, ui_flags.username, BUFSZ - 1);
+        fnncat(filename, ui_flags.username, BUFSZ - fnlen(filename) - 1);
 #endif
-        fnncat(filename, FN(".keymap"), BUFSZ - 1);
+        fnncat(filename, FN(".keymap"), BUFSZ - fnlen(filename) - 1);
     } else
-        fnncat(filename, FN("keymap.conf"), BUFSZ - 1);
+        fnncat(filename, FN("keymap.conf"), BUFSZ - fnlen(filename) - 1);
 
     fd = sys_open(filename, O_RDONLY, 0);
     if (fd == -1)
@@ -968,13 +968,13 @@ write_keymap(void)
             i++;
         }
         usernamew[i] = 0;
-        fnncat(filename, usernamew, BUFSZ - 1);
+        fnncat(filename, usernamew, BUFSZ - fnlen(filename) - 1);
 #else
-        fnncat(filename, ui_flags.username, BUFSZ - 1);
+        fnncat(filename, ui_flags.username, BUFSZ - fnlen(filename) - 1);
 #endif
-        fnncat(filename, FN(".keymap"), BUFSZ - 1);
+        fnncat(filename, FN(".keymap"), BUFSZ - fnlen(filename) - 1);
     } else
-        fnncat(filename, FN("keymap.conf"), BUFSZ - 1);
+        fnncat(filename, FN("keymap.conf"), BUFSZ - fnlen(filename) - 1);
 
     fd = sys_open(filename, O_TRUNC | O_CREAT | O_RDWR, 0660);
     if (fd == -1)

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-21 */
+/* Last modified by Alex Smith, 2014-07-31 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -89,7 +89,7 @@ replay(void)
         filename[0] = '\0';
         if (pick[0] != -1 && pick[0] != CURSES_MENU_CANCELLED)
             fnncat(filename, files[pick[0] - 1],
-                   sizeof (filename) / sizeof (fnchar) - 1);
+                   sizeof (filename) / sizeof (fnchar) - fnlen(filename) - 1);
 
         for (i = 0; i < filecount; i++)
             free(files[i]);

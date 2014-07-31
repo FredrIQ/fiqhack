@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-21 */
+/* Last modified by Alex Smith, 2014-07-31 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -52,6 +52,7 @@
  * The following abstactions are introduced to handle this:
  *  fnchar: a filename character
  *  fnncat: strncat for fnchars
+ *  fnlen:  strlen for fnchars
  *  sys_open: system-dependent open
  */
 # if !defined(WIN32)    /* UNIX + APPLE */
@@ -59,6 +60,7 @@ typedef char fnchar;
 
 #  define sys_open  open
 #  define fnncat(str1, str2, len) strncat(str1, str2, len)
+#  define fnlen(str) strlen(str)
 #  define FN(x) (x)
 #  define FN_FMT "%s"
 # else
@@ -67,6 +69,7 @@ typedef wchar_t fnchar;
 
 #  define umask(x)
 #  define fnncat(str1, str2, len) wcsncat(str1, str2, len)
+#  define fnlen(str) wcslen(str)
 #  define fopen(name, mode)  _wfopen(name, L ## mode)
 #  define sys_open(name, flags, perm)  _wopen(name, flags | _O_BINARY, perm)
 #  define unlink _wunlink

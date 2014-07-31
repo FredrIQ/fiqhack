@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-29 */
+/* Last modified by Alex Smith, 2014-07-31 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -2238,7 +2238,6 @@ subwin(WINDOW *parent, int h, int w, int t, int l)
 
     win->regionarray = malloc(w * h * sizeof *(win->regionarray));
     if (!win->regionarray) {
-        free(win->chararray);
         free(win);
         return 0;
     }
@@ -2939,8 +2938,10 @@ vw_printw(WINDOW *win, const char *fmt, va_list vl)
         else
             ccount = ccount * 2 + 1;
 
-        if (ccount > LINES * COLS)
+        if (ccount > LINES * COLS) {
+            free(bf);
             return ERR; /* sanity */
+        }
 
         bf = realloc(bf, ccount + 1);
         if (!bf)

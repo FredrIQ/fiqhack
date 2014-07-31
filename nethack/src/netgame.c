@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-07-07 */
+/* Last modified by Alex Smith, 2014-07-31 */
 /* Copyright (c) Daniel Thaler, 2012 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -210,7 +210,7 @@ read_server_list(void)
     filename[0] = '\0';
     if (!get_gamedir(CONFIG_DIR, filename))
         return servlist;
-    fnncat(filename, FN("servers.conf"), BUFSZ);
+    fnncat(filename, FN("servers.conf"), BUFSZ - fnlen(filename) - 1);
 
     fp = fopen(filename, "rb");
     if (!fp)
@@ -264,7 +264,7 @@ write_server_list(struct server_info *servlist)
     filename[0] = '\0';
     if (!get_gamedir(CONFIG_DIR, filename))
         return;
-    fnncat(filename, FN("servers.conf"), BUFSZ);
+    fnncat(filename, FN("servers.conf"), BUFSZ - fnlen(filename) - 1);
 
     fp = fopen(filename, "w+b");
     if (!fp)

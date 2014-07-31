@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-21 */
+/* Last modified by Alex Smith, 2014-07-31 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -210,7 +210,7 @@ query_key(const char *query, enum nh_query_key_flags flags, int *count)
 const char *
 getlin(const char *query, boolean isarg)
 {
-    const char servercancel_res[] = {SERVERCANCEL_CHAR, 0};
+    static const char servercancel_res[] = {SERVERCANCEL_CHAR, 0};
     const char *res = servercancel_res;
 
     while (*res == SERVERCANCEL_CHAR) {

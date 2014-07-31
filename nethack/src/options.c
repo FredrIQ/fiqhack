@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-07-31 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -835,7 +835,7 @@ edit_ap_rule(struct nh_autopick_option *desc, struct nh_autopickup_rules *ar,
     struct nh_autopickup_rule *r = &ar->rules[ruleno];
     struct nh_autopickup_rule tmprule;
     struct nh_menulist menu;
-    int i, selected[1], newpos;
+    int i, selected[1], newpos, allocsize;
     char query[BUFSZ], buf[BUFSZ];
     const char *classname;
 
@@ -920,9 +920,12 @@ edit_ap_rule(struct nh_autopick_option *desc, struct nh_autopickup_rules *ar,
             for (i = ruleno; i < ar->num_rules - 1; i++)
                 ar->rules[i] = ar->rules[i + 1];
             ar->num_rules--;
+            allocsize = ar->num_rules;
+            if (allocsize < 1)
+                allocsize = 1;
             ar->rules =
                 realloc(ar->rules,
-                        ar->num_rules * sizeof (struct nh_autopickup_rule));
+                        allocsize * sizeof (struct nh_autopickup_rule));
             return; 
         }
 
@@ -1200,9 +1203,10 @@ get_config_name(fnchar * buf, nh_bool ui)
 #else
            ui_flags.username:
 #endif
-           ui ? FN("curses.conf") : FN("NetHack4.conf"), BUFSZ);
+           ui ? FN("curses.conf") : FN("NetHack4.conf"), BUFSZ - fnlen(buf) - 1);
     if (ui_flags.connection_only)
-        fnncat(buf, ui ? FN(".curses.rc") : FN(".NetHack4.rc"), BUFSZ);
+        fnncat(buf, ui ? FN(".curses.rc") : FN(".NetHack4.rc"),
+               BUFSZ - fnlen(buf) - 1);
 
     return 1;
 }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-20 */
+/* Last modified by Alex Smith, 2014-07-31 */
 /*      Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2018,7 +2018,11 @@ load_rooms(struct level *lev, dlb * fd)
     return TRUE;
 
 err_out:
+    /* TODO: Why is this using fprintf(stderr) rather than impossible()?
+       I haven't changed the code because this is /so/ weird I assume that
+       there's a good reason for it -- AIS */
     fprintf(stderr, "read error in load_rooms\n");
+    free(tmproom);
     return FALSE;
 }
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-06-06 */
+/* Last modified by Alex Smith, 2014-07-31 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -642,8 +642,8 @@ sdl_hook_allocate_tiles_region(int height, int width, int loc_h, int loc_w,
         load_png_file_to_texture(tileset_filename, &region->tilesize_w,
                                  &region->tilesize_h);
     if (!region->tileset) {
-        free(region);
         free(region->tiles);
+        free(region);
         return NULL;
     }
 

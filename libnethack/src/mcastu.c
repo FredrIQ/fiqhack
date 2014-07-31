@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Alex Smith, 2014-07-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -444,8 +444,8 @@ cast_wizard_spell(struct monst *mtmp, int dmg, int spellnum)
             /* note: player healing does 6d4; this used to do 1d8 */
             if ((mtmp->mhp += dice(3, 6)) > mtmp->mhpmax)
                 mtmp->mhp = mtmp->mhpmax;
-            dmg = 0;
         }
+        dmg = 0;
         break;
     case MGC_PSI_BOLT:
         /* prior to 3.4.0 Antimagic was setting the damage to 1--this made the
@@ -1649,8 +1649,8 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
             /* note: player healing does 6d4; this used to do 1d8 */
             if ((u.mh += dice(3, 6)) > u.mhmax)
                 u.mh = u.mhmax;
-            dmg = 0;
         }
+        dmg = 0;
         break;
     case CLC_OPEN_WOUNDS:
         if (!mtmp || mtmp->mhp < 1) {

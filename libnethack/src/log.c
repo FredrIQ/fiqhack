@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-30 */
+/* Last modified by Alex Smith, 2014-07-31 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -248,7 +248,13 @@ log_recover_core(long offset, boolean canreturn, boolean ask)
 
         struct nh_game_info si;
         int recovery_count;
-        read_log_header(program_state.logfile, &si, &recovery_count, FALSE);
+        if (read_log_header(program_state.logfile, &si, &recovery_count, FALSE)
+            == LS_INVALID) {
+            /* If this happens, we don't have a recovery count to compare
+               against. */
+            raw_printf("The save file is too badly corrupted to recover!\n");
+            terminate(ERR_RESTORE_FAILED);
+        }
 
         if (recovery_count != program_state.expected_recovery_count)
             terminate(RESTART_PLAY);

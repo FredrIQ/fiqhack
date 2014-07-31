@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-01 */
+/* Last modified by Alex Smith, 2014-07-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -13,7 +13,7 @@ static const char *food_xname(struct obj *, boolean);
 static void choke(struct obj *);
 static void nutrition_calculations(struct obj *, unsigned *,
                                    unsigned *, unsigned *);
-static boolean touchfood(void);
+static void touchfood(void);
 static void done_eating(boolean);
 static void cprefx(int);
 static int intrinsic_possible(int, const struct permonst *);
@@ -234,11 +234,11 @@ nutrition_calculations(struct obj *obj, unsigned *total,
 
    In extreme circumstances, merely marking food as partly eaten will destroy it
    (e.g. cockatrice corpse eaten from inventory, while stoning-resistant, while
-   engulfed by a purple worm, with full inventory). In such cases, this function
-   returns TRUE (this is mostly for the convenience of the caller, because
-   u.utracked has weak pointer semantics, so it could just do a null check
-   instead). */
-static boolean
+   engulfed by a purple worm, with full inventory). The caller must take care to
+   NULL-check u.utracked[tos_food] after calling this function, and take
+   appropriate action. (Previously this function did the NULL check itself, but
+   this confused static analysers.) */
+static void
 touchfood(void)
 {
     /* abbreviate "u.utracked[tos_food]" to make the function easier to
@@ -280,7 +280,6 @@ touchfood(void)
         else /* explain what happened */
             pline("You must have fumbled and dropped your food.");
     }
-    return !*uttf;
 }
 
 /* Handles one action of eating food. The food must have been placed in
@@ -1142,7 +1141,8 @@ eatcorpse(void)
     if (!tp && mnum != PM_LIZARD && mnum != PM_LICHEN &&
         (otmp->orotten || !rn2(7))) {
         if (rottenfood(otmp)) {
-            if (!touchfood())
+            touchfood();
+            if (!u.utracked[tos_food])
                 return 2;
 
             otmp = u.utracked[tos_food];
@@ -1932,6 +1932,8 @@ doeat(const struct nh_cmd_arg *arg)
        that it can be gradually eaten over time. Technically speaking, we don't
        always need to do this, but it's idempotent so we may as well. */
     touchfood();
+    if (!u.utracked[tos_food])
+        dont_start = 1;
 
     if (dont_start)
         action_completed();

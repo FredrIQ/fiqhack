@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-29 */
+/* Last modified by Alex Smith, 2014-07-31 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -267,6 +267,11 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
         total_len += strlennull(ri->gendnames[i]);
     for (i = 0; i < ri->num_aligns; i++)
         total_len += strlennull(ri->alignnames[i]);
+
+    if (total_len == 0) {
+        /* malicious role definition from the server */
+        return FALSE;
+    }
 
     char names[total_len];
     int n = 0;

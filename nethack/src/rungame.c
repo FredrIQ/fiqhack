@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-21 */
+/* Last modified by Alex Smith, 2014-07-31 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -258,7 +258,7 @@ game_ended(int status, fnchar *filename, nh_bool net)
     get_gamedir(LOG_DIR, logname);
     strncpy(fncopy, filename, sizeof (fncopy));
     fname = basename(fncopy);
-    strncat(logname, fname, sizeof (logname) - 1);
+    strncat(logname, fname, sizeof (logname) - strlen (logname) - 1);
 
     /* don't care about errors: rename is nice to have, not essential */
     rename(filename, logname);
@@ -633,7 +633,7 @@ loadgame(void)
     filename[0] = '\0';
     if (pick[0] != CURSES_MENU_CANCELLED)
         fnncat(filename, files[pick[0] - 1],
-               sizeof (filename) / sizeof (fnchar) - 1);
+               sizeof (filename) / sizeof (fnchar) - fnlen(filename) - 1);
 
     for (i = 0; i < size; i++)
         free(files[i]);
