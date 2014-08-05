@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-07-31 */
+/* Last modified by Alex Smith, 2014-08-05 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -714,7 +714,27 @@ lgetline_malloc(int fd)
            the middle of a write). Get rid of the partial line. */
 
         free(inbuf);
-        log_recover_noreturn(get_log_last_newline(1));
+
+        /* Note: this assumes that fd is never 0 or -1. -1 is definitely a safe
+           assumption, we wouldn't reach here if the fd were invalid. TODO: 0
+           is possibly an unsafe assumption, if we're ever run from a client
+           that has no open FDs of its own and which has closed all the
+           standard handles. */
+        if (fd == program_state.logfile) {
+            log_recover_noreturn(get_log_last_newline(1));
+        } else {
+            /* Maybe there's no game loaded, in which case we shouldn't try to
+               recover it. This only happens from read_log_header.
+               Communicating with the user is a bad idea in this case, so we
+               just pretend the partial line doesn't exist.
+
+               (This is a pretty corner-case error condition; it can only happen
+               due to corruption in the first three lines of a file. The NULL
+               return here treats this the same way as if one of the first three
+               lines were missing, which is pretty much equivalent.) */
+            free(inbuf);
+            return NULL;
+        }
 
     } else if (!nlloc && fpos == 0) {
         /* At EOF, which is at the start of the line. */
