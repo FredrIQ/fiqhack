@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-06 */
+/* Last modified by Alex Smith, 2014-08-05 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -162,11 +162,12 @@ curses_getdir_validator(int key, void *unused)
         return DIR_NONE + 5;
     else if (key == KEY_SIGNAL)
         return DIR_SERVERCANCEL + 5;
-    else if (key == '5' || key == KEY_B2)
-        return DIR_SELF + 5;
+
     dir = key_to_dir(key);
     if (dir != DIR_NONE)
         return dir + 5;
+    else if (key == '5' || key == KEY_B2)
+        return DIR_SELF + 5;
 
     return -1;
 }
