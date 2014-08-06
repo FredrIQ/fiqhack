@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-07-31 */
+/* Last modified by Alex Smith, 2014-08-06 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -134,7 +134,8 @@ static char next_command_name[32];
 
 static void show_whatdoes(void);
 static struct nh_cmd_desc *show_help(void);
-static struct nh_cmd_desc *show_mainmenu(nh_bool inside_another_command);
+static struct nh_cmd_desc *show_mainmenu(
+    nh_bool inside_another_command, nh_bool include_debug_commands);
 static void save_menu(void);
 static void instant_replay(void);
 static void init_keymap(void);
@@ -230,7 +231,7 @@ handle_internal_cmd(struct nh_cmd_desc **cmd,
 
     case UICMD_MAINMENU:
         arg->argtype = 0;
-        *cmd = show_mainmenu(FALSE);
+        *cmd = show_mainmenu(FALSE, include_debug);
         break;
 
     case UICMD_DETACH:
@@ -425,7 +426,7 @@ handle_nested_key(int key)
     if (keymap[key] == find_command("save"))
         save_menu();
     if (keymap[key] == find_command("mainmenu"))
-        show_mainmenu(TRUE);
+        show_mainmenu(TRUE, FALSE);
 
     /* Perhaps we should support various other commands that are either entirely
        client-side, or else zero-time and can be supported via dropping into
@@ -619,7 +620,7 @@ show_help(void)
 
 
 static struct nh_cmd_desc *
-show_mainmenu(nh_bool inside_another_command)
+show_mainmenu(nh_bool inside_another_command, nh_bool include_debug_commands)
 {
     struct nh_menulist menu;
     int i, selected[1];
@@ -641,6 +642,8 @@ show_mainmenu(nh_bool inside_another_command)
         add_menu_item(&menu, 2, "view a replay of this game", 0, FALSE);
     add_menu_item(&menu, 3, ui_flags.current_followmode == FM_PLAY ?
                   "save or quit the game" : "stop viewing", 0, FALSE);
+    if (include_debug_commands)
+        add_menu_item(&menu, 4, "(debug) crash the client", 0, FALSE);
 
     curses_display_menu(&menu, "Main menu", PICK_ONE,
                         PLHINT_ANYWHERE, selected, curses_menu_callback);
@@ -659,6 +662,8 @@ show_mainmenu(nh_bool inside_another_command)
         instant_replay();
     } else if (selected[0] == 3) {
         save_menu();
+    } else if (selected[0] == 4) {
+        raise(SIGSEGV);
     }
 
     return NULL;
