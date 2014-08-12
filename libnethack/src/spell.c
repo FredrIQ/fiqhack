@@ -113,21 +113,7 @@ cursed_book(struct obj *bp)
     case 5:
         pline("The book was coated with contact poison!");
         if (uarmg) {
-            if (uarmg->oerodeproof || !is_corrodeable(uarmg)) {
-                pline("Your gloves seem unaffected.");
-            } else if (uarmg->oeroded2 < MAX_ERODE) {
-                if (uarmg->greased) {
-                    grease_protect(uarmg, "gloves", &youmonst);
-                } else {
-                    pline("Your gloves corrode%s!",
-                          uarmg->oeroded2 + 1 ==
-                          MAX_ERODE ? " completely" : uarmg->oeroded2 ?
-                          " further" : "");
-                    uarmg->oeroded2++;
-                }
-            } else
-                pline("Your gloves %s completely corroded.",
-                      Blind ? "feel" : "look");
+            erode_obj(uarmg, "gloves", ERODE_CORRODE, TRUE, TRUE);
             break;
         }
         /* temp disable in_use; death should not destroy the book */

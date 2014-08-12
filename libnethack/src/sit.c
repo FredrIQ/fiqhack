@@ -110,9 +110,9 @@ dosit(const struct nh_cmd_arg *arg)
     in_water:
         pline("You sit in the water.");
         if (!rn2(10) && uarm)
-            rust_dmg(uarm, "armor", 1, TRUE, &youmonst);
+            water_damage(uarm, "armor", TRUE);
         if (!rn2(10) && uarmf && uarmf->otyp != WATER_WALKING_BOOTS)
-            rust_dmg(uarm, "armor", 1, TRUE, &youmonst);
+            water_damage(uarm, "armor", TRUE);
     } else if (IS_SINK(typ)) {
 
         pline(sit_message, defexplain[S_sink]);

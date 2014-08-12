@@ -1468,106 +1468,6 @@ mixtype(struct obj *o1, struct obj *o2)
 }
 
 
-boolean
-get_wet(struct obj * obj)
-/* returns TRUE if something happened (potion should be used up) */
-{
-    if (snuff_lit(obj))
-        return TRUE;
-
-    if (obj->greased) {
-        grease_protect(obj, NULL, &youmonst);
-        return FALSE;
-    }
-    const char *Your_buf = Shk_Your(obj);
-    /* (Rusting shop goods ought to be charged for.) */
-    switch (obj->oclass) {
-    case POTION_CLASS:
-        if (obj->otyp == POT_WATER)
-            return FALSE;
-        /* KMH -- Water into acid causes an explosion */
-        if (obj->otyp == POT_ACID) {
-            pline("It boils vigorously!");
-            pline("You are caught in the explosion!");
-            wake_nearby();
-            losehp(rnd(10), killer_msg(DIED, "elementary chemistry"));
-            makeknown(obj->otyp);
-            update_inventory();
-            return TRUE;
-        }
-        pline("%s %s%s.", Your_buf, aobjnam(obj, "dilute"),
-              obj->odiluted ? " further" : "");
-        if (obj->unpaid && costly_spot(u.ux, u.uy)) {
-            pline("You dilute it, you pay for it.");
-            bill_dummy_object(obj);
-        }
-        if (obj->odiluted) {
-            obj->odiluted = 0;
-            obj->blessed = obj->cursed = FALSE;
-            obj->otyp = POT_WATER;
-        } else
-            obj->odiluted++;
-        update_inventory();
-        return TRUE;
-    case SCROLL_CLASS:
-        if (obj->otyp != SCR_BLANK_PAPER) {
-            if (!Blind) {
-                boolean oq1 = obj->quan == 1L;
-
-                pline("The scroll%s %s.", oq1 ? "" : "s", otense(obj, "fade"));
-            }
-            if (obj->unpaid && costly_spot(u.ux, u.uy)) {
-                pline("You erase it, you pay for it.");
-                bill_dummy_object(obj);
-            }
-            obj->otyp = SCR_BLANK_PAPER;
-            obj->spe = 0;
-            update_inventory();
-            return TRUE;
-        } else
-            break;
-    case SPBOOK_CLASS:
-        if (obj->otyp != SPE_BLANK_PAPER) {
-
-            if (obj->otyp == SPE_BOOK_OF_THE_DEAD) {
-                pline("%s suddenly heats up; steam rises and it remains dry.",
-                      The(xname(obj)));
-            } else {
-                if (!Blind) {
-                    boolean oq1 = obj->quan == 1L;
-
-                    pline("The spellbook%s %s.", oq1 ? "" : "s",
-                          otense(obj, "fade"));
-                }
-                if (obj->unpaid && costly_spot(u.ux, u.uy)) {
-                    pline("You erase it, you pay for it.");
-                    bill_dummy_object(obj);
-                }
-                obj->otyp = SPE_BLANK_PAPER;
-                update_inventory();
-            }
-            return TRUE;
-        }
-        break;
-    case WEAPON_CLASS:
-        /* Just "fall through" to generic rustprone check for now. */
-        /* fall through */
-    default:
-        if (!obj->oerodeproof && is_rustprone(obj) && (obj->oeroded < MAX_ERODE)
-            && !rn2(2)) {
-            pline("%s %s some%s.", Your_buf, aobjnam(obj, "rust"),
-                  obj->oeroded ? " more" : "what");
-            obj->oeroded++;
-            update_inventory();
-            return TRUE;
-        } else
-            break;
-    }
-    pline("%s %s wet.", Your_buf, aobjnam(obj, "get"));
-    return FALSE;
-}
-
-
 int
 dodip(const struct nh_cmd_arg *arg)
 {
@@ -1615,7 +1515,7 @@ dodip(const struct nh_cmd_arg *arg)
                            P_SKILL(P_RIDING) < P_BASIC) {
                     rider_cant_reach(); /* not skilled enough to reach */
                 } else {
-                    get_wet(obj);
+                    water_damage(obj, NULL, TRUE);
                     if (obj->otyp == POT_ACID)
                         useup(obj);
                 }
@@ -1683,7 +1583,7 @@ dodip(const struct nh_cmd_arg *arg)
                 obj->bknown = 1;
                 goto poof;
             }
-        } else if (get_wet(obj))
+        } else if (water_damage(obj, NULL, TRUE) >= 2)
             goto poof;
     } else if (potion->otyp == POT_POLYMORPH) {
         /* some objects can't be polymorphed */

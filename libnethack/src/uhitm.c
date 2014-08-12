@@ -28,68 +28,6 @@ static int dieroll;
 
 #define PROJECTILE(obj) ((obj) && is_ammo(obj))
 
-/* modified from hurtarmor() in mhitu.c */
-/* This is not static because it is also used for monsters rusting monsters */
-void
-hurtmarmor(struct monst *mdef, int attk)
-{
-    int hurt;
-    struct obj *target;
-
-    switch (attk) {
-        /* 0 is burning, which we should never be called with */
-    case AD_RUST:
-        hurt = 1;
-        break;
-    case AD_CORR:
-        hurt = 3;
-        break;
-    default:
-        hurt = 2;
-        break;
-    }
-    /* What the following code does: it keeps looping until it finds a target
-       for the rust monster. Head, feet, etc... not covered by metal, or
-       covered by rusty metal, are not targets.  However, your body always is,
-       no matter what covers it. */
-    while (1) {
-        switch (rn2(5)) {
-        case 0:
-            target = which_armor(mdef, os_armh);
-            if (!target || !rust_dmg(target, xname(target), hurt, FALSE, mdef))
-                continue;
-            break;
-        case 1:
-            target = which_armor(mdef, os_armc);
-            if (target) {
-                rust_dmg(target, xname(target), hurt, TRUE, mdef);
-                break;
-            }
-            if ((target = which_armor(mdef, os_arm)) != NULL) {
-                rust_dmg(target, xname(target), hurt, TRUE, mdef);
-            } else if ((target = which_armor(mdef, os_armu)) != NULL) {
-                rust_dmg(target, xname(target), hurt, TRUE, mdef);
-            }
-            break;
-        case 2:
-            target = which_armor(mdef, os_arms);
-            if (!target || !rust_dmg(target, xname(target), hurt, FALSE, mdef))
-                continue;
-            break;
-        case 3:
-            target = which_armor(mdef, os_armg);
-            if (!target || !rust_dmg(target, xname(target), hurt, FALSE, mdef))
-                continue;
-            break;
-        case 4:
-            target = which_armor(mdef, os_armf);
-            if (!target || !rust_dmg(target, xname(target), hurt, FALSE, mdef))
-                continue;
-            break;
-        }
-        break;  /* Out of while loop */
-    }
-}
 
 boolean
 confirm_attack(struct monst *mtmp, enum u_interaction_mode uim)
@@ -1523,11 +1461,11 @@ damageum(struct monst *mdef, const struct attack *mattk)
             pline("%s falls to pieces!", Monnam(mdef));
             xkilled(mdef, 0);
         }
-        hurtmarmor(mdef, AD_RUST);
+        hurtarmor(mdef, ERODE_RUST);
         tmp = 0;
         break;
     case AD_CORR:
-        hurtmarmor(mdef, AD_CORR);
+        hurtarmor(mdef, ERODE_CORRODE);
         tmp = 0;
         break;
     case AD_DCAY:
@@ -1535,7 +1473,7 @@ damageum(struct monst *mdef, const struct attack *mattk)
             pline("%s falls to pieces!", Monnam(mdef));
             xkilled(mdef, 0);
         }
-        hurtmarmor(mdef, AD_DCAY);
+        hurtarmor(mdef, ERODE_ROT);
         tmp = 0;
         break;
     case AD_DRST:
@@ -2191,12 +2129,12 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
             if (!Acid_resistance)
                 mdamageu(mon, tmp);
             if (!rn2(30))
-                erode_armor(&youmonst, TRUE);
+                hurtarmor(&youmonst, ERODE_CORRODE);
         }
         if (mhit) {
             if (aatyp == AT_KICK) {
                 if (uarmf && !rn2(6))
-                    rust_dmg(uarmf, xname(uarmf), 3, TRUE, &youmonst);
+                    erode_obj(uarmf, xname(uarmf), ERODE_CORRODE, TRUE, TRUE);
             } else if (aatyp == AT_WEAP || aatyp == AT_CLAW || aatyp == AT_MAGC
                        || aatyp == AT_TUCH)
                 passive_obj(mon, NULL, &(ptr->mattk[i]));
@@ -2238,7 +2176,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
         if (mhit && !mon->mcan) {
             if (aatyp == AT_KICK) {
                 if (uarmf)
-                    rust_dmg(uarmf, xname(uarmf), 1, TRUE, &youmonst);
+                    erode_obj(uarmf, xname(uarmf), ERODE_RUST, TRUE, TRUE);
             } else if (aatyp == AT_WEAP || aatyp == AT_CLAW || aatyp == AT_MAGC
                        || aatyp == AT_TUCH)
                 passive_obj(mon, NULL, &(ptr->mattk[i]));
@@ -2248,7 +2186,7 @@ passive(struct monst *mon, boolean mhit, int malive, uchar aatyp)
         if (mhit && !mon->mcan) {
             if (aatyp == AT_KICK) {
                 if (uarmf)
-                    rust_dmg(uarmf, xname(uarmf), 3, TRUE, &youmonst);
+                    erode_obj(uarmf, xname(uarmf), ERODE_CORRODE, TRUE, TRUE);
             } else if (aatyp == AT_WEAP || aatyp == AT_CLAW || aatyp == AT_MAGC
                        || aatyp == AT_TUCH)
                 passive_obj(mon, NULL, &(ptr->mattk[i]));
@@ -2408,17 +2346,17 @@ passive_obj(struct monst *mon,
 
     case AD_ACID:
         if (!rn2(6)) {
-            erode_obj(obj, TRUE, FALSE);
+            erode_obj(obj, NULL, ERODE_CORRODE, TRUE, TRUE);
         }
         break;
     case AD_RUST:
         if (!mon->mcan) {
-            erode_obj(obj, FALSE, FALSE);
+            erode_obj(obj, NULL, ERODE_RUST, TRUE, TRUE);
         }
         break;
     case AD_CORR:
         if (!mon->mcan) {
-            erode_obj(obj, TRUE, FALSE);
+            erode_obj(obj, NULL, ERODE_CORRODE, TRUE, TRUE);
         }
         break;
     case AD_ENCH:
