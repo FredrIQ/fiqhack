@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-06 */
+/* Last modified by Sean Hunt, 2014-08-13 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -132,8 +132,11 @@ apikey_is_at(const char *apikey, int x, int y)
     if (dbyx->obj && !strcmp(
             apikey, cur_drawing->objects[dbyx->obj - 1].symname))
         return TRUE;
-    if (dbyx->mon && !strcmp(
+    if (dbyx->mon && !(dbyx->monflags & MON_WARNING) && !strcmp(
             apikey, cur_drawing->monsters[dbyx->mon - 1].symname))
+        return TRUE;
+    if (dbyx->mon && (dbyx->monflags & MON_WARNING) && !strcmp(apikey,
+            cur_drawing->monsters[dbyx->mon-1-cur_drawing->num_monsters].symname))
         return TRUE;
     return FALSE;
 }
