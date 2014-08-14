@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-08-05 */
+/* Last modified by Alex Smith, 2014-08-14 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -214,7 +214,11 @@ char
 curses_yn_function(const char *query, const char *resp, char def)
 {
     int key;
-    char prompt[strlen(query) + strlen(resp) + 8];
+    /*
+     * "query [resp] (y) \0"
+     *       12    3456789
+     */
+    char prompt[strlen(query) + strlen(resp) + 9];
     char *rb;
     char respbuf[strlen(resp) + 1];
 
