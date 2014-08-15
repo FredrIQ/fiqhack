@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-07-31 */
+/* Last modified by Sean Hunt, 2014-08-14 */
 /*      Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1810,7 +1810,7 @@ load_rooms(struct level *lev, dlb * fd)
     char n;
     short size;
     corridor tmpcor;
-    room **tmproom;
+    room **tmproom = NULL;
     int i, j;
 
     load_common_data(lev, fd, SP_LEV_ROOMS);
@@ -2022,7 +2022,8 @@ err_out:
        I haven't changed the code because this is /so/ weird I assume that
        there's a good reason for it -- AIS */
     fprintf(stderr, "read error in load_rooms\n");
-    free(tmproom);
+    if (tmproom)
+        free(tmproom);
     return FALSE;
 }
 
