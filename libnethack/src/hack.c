@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-08-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -650,16 +650,18 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
             return FALSE;
         }
     }
-    /* Pick travel path that does not require crossing a trap. Avoid water and
-       lava using the usual running rules. (but not u.ux/u.uy because
-       findtravelpath walks toward u.ux/u.uy) */
+    /* Reduce our willingness to path through traps, water, and lava.  The
+       character's current square is always safe to stand on, so don't worry
+       about that. Check the character's memory, not the current square
+       contents, because it might have changed since the character last saw
+       it. */
     if (travelling() && (x != u.ux || y != u.uy)) {
         struct trap *t = t_at(level, x, y);
 
         if ((t && t->tseen) ||
             (grounded &&
-             (is_pool(level, x, y) || is_lava(level, x, y)) &&
-             level->locations[x][y].seenv)) {
+             (level->locations[x][y].mem_bg == S_pool ||
+              level->locations[x][y].mem_bg == S_lava))) {
             if (mode == DO_MOVE) {
                 if (is_pool(level, x, y))
                     autoexplore_msg("a body of water", mode);
@@ -673,11 +675,11 @@ test_move(int ux, int uy, int dx, int dy, int dz, int mode,
     }
 
     if (mode == TEST_TRAP)
-        return FALSE;   /* not a move through a trap */
+        return FALSE;   /* not a move through a trap/water/lava */
 
     ust = &level->locations[ux][uy];
 
-    /* Now see if other things block our way . . */
+    /* Now see if other things block our way. */
     if (dx && dy && !passwall &&
         (IS_DOOR(ust->typ) && ((ust->doormask & ~D_BROKEN)
                                || Is_rogue_level(&u.uz)
@@ -1266,15 +1268,13 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
             action_completed();
             return 0;
         }
+
+        /* Traps can only be entered via the single-step movement commands.
+           However, they can be entered even without the 'm' safety prefix. */
         if (((trap = t_at(level, x, y)) && trap->tseen &&
-             trap->ttyp != VIBRATING_SQUARE) ||
-            (Blind && !Levitation && !Flying && !is_clinger(youmonst.data) &&
-             (is_pool(level, x, y) || is_lava(level, x, y)) &&
-             level->locations[x][y].seenv)) {
-            if (!ITEM_INTERACTIVE(uim) || travelling() ||
-                !turnstate.continue_message) {
-                if (trap && trap->tseen && trap->ttyp != VIBRATING_SQUARE)
-                    autoexplore_msg("a trap", DO_MOVE);
+             trap->ttyp != VIBRATING_SQUARE)) {
+            if (thismove != occ_none || !turnstate.continue_message) {
+                autoexplore_msg("a trap", DO_MOVE);
                 action_completed();
                 return 0;
             } else
@@ -1693,14 +1693,19 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
        last_command_was, not uim, because the relevant factor is not the
        semantics of the command, but the interface used to enter it.) */
     if (!last_command_was("moveonly")) {
-        if (!Levitation && !Flying && !is_clinger(youmonst.data) && !Stunned &&
-            !Confusion &&
-            (is_lava(level, x, y) || !HSwimming) &&
-            (is_pool(level, x, y) || is_lava(level, x, y)) &&
-            level->locations[x][y].seenv && !is_pool(level, u.ux, u.uy) &&
-            !is_lava(level, u.ux, u.uy)) {
-            pline(is_pool(level, x, y) ? "You never learned to swim!" :
-                  "That lava looks rather dangerous...");
+        boolean lava = level->locations[x][y].mem_bg == S_lava;
+        boolean pool = level->locations[x][y].mem_bg == S_pool;
+
+        if (!Levitation && !Flying && !is_clinger(youmonst.data) &&
+            !Stunned && !Confusion && (lava || (pool && !HSwimming)) &&
+            !is_pool(level, u.ux, u.uy) && !is_lava(level, u.ux, u.uy)) {
+
+            if (cansee(x, y))
+                pline(is_pool(level, x, y) ? "You never learned to swim!" :
+                      "That lava looks rather dangerous...");
+            else
+                pline("As far as you can remember, it's "
+                      "not safe to stand there.");
             pline("(Use the 'moveonly' command to move there anyway.)");
             action_completed();
             return 0;
