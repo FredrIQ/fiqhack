@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2014-05-31
+# Last modified by Alex Smith, 2014-08-16
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
@@ -268,6 +268,14 @@ it was installed to, even if it instructs aimake to tell it the install path.
 
 =back
 
+=item B<--override-directory> I<key>=F<location>
+
+Change the directory for a specific value of the C<install_dir> option of an
+install action.  For instance, C<--override-directory bindir=/bin> would
+install binaries into F</bin> even if the default was, say, F</usr/bin> (which
+is the default with C<-i /usr>).  See the documentation for C<install_dir> for
+a full list of directories you can override.
+
 =item B<--destdir=>F<directory>
 
 When installing, treat the given directory as the root directory, rather than
@@ -285,18 +293,17 @@ directory (otherwise, it's not quite clear what it would mean).
 
 =item B<--with-default=>I<feature>
 
-Some programs installed by aimake may have multiple configurations
-(e.g. they may be able to build both a command-line program and a GUI
-program); this option lets you select which features you want
-(B<--with>) and/or don't want (B<--without>).  These options are
-"sticky"; they are saved in F<aimake.objects>, and so persist into
-future runs of aimake in the same directory.  If you want to reset
-such an option to its default value, use B<--with-default>.
+Some programs installed by aimake may have multiple configurations (e.g. they
+may be able to build both a command-line program and a GUI program); this
+option lets you select which features you want (B<--with>) and/or don't want
+(B<--without>).  These options are "sticky"; they are saved in
+F<aimake.objects>, and so persist into future runs of aimake in the same
+directory.  If you want to reset such an option to its default value, use
+B<--with-default>.
 
-The list of features that are supported by this option varies
-depending on which program you are installing.  You can use
-B<--with=?> for a list (you might need to escape the C<?> to hide it
-from your shell).
+The list of features that are supported by this option varies depending on
+which program you are installing.  You can use B<--with=?> for a list (you
+might need to escape the C<?> to hide it from your shell).
 
 =item B<--documentation>
 
@@ -310,6 +317,17 @@ Show the license/copyright information for aimake.
 
 Don't use carriage returns to provide progress information.  (This is mostly
 only useful if stdout is not a terminal).
+
+=item B<--nonempty-directory>
+
+aimake normally refuses to build into a directory that has not previously been
+used for an aimake build and that contains files, to prevent catastrophic
+errors like overwriting your source directory with your build directory.
+Sometimes, you want to do something like redirecting the output from aimake,
+or using debug or profiling tools that produce output before aimake starts
+running; in these cases, you can specify C<--nonempty-directory> to suppress
+the sanity check.  Before using this option, make absolutely sure you are
+running from the correct directory.
 
 =item B<--install-only>
 
@@ -342,6 +360,12 @@ sudo make install" workflow, e.g.:
 
 Note that the use of B<--install-only> allows aimake to be run
 successfully as root; normally it refuses to be run with root permissions.
+
+=item B<--local-config>=F<file>
+
+In addition to the local configuration (unless C<--ignore-builtin-config> is
+used), C<aimake.rules>, and C<aimake.local>, also read configuration from the
+given file.  This option can be given any number of times.
 
 =item B<--ignore-builtin-config>
 
@@ -633,7 +657,8 @@ configuration options or rules overrides.  This should be a file named
 F<aimake.rules> in the source directory.  (A second file, named aimake.local,
 can also be used; the idea is that aimake.rules can be kept under version
 control and provided by the project authors, with aimake.local used for local
-changes.)  Here's a sample configuration:
+changes.  You can also use C<--local-config> to add further configuration
+files.)  Here's a sample configuration:
 
     {
         options => {
@@ -3270,8 +3295,9 @@ select STDOUT;
 my ($opt_verbose, $opt_install, $opt_prefix, $opt_dump, @opt_warnings,
     $opt_ignore_builtin_config, $opt_version, $opt_dlayout, $opt_config_only,
     $opt_install_only, $opt_elevate_permissions, $opt_specific_exit_status,
-    $opt_nocr, @opt_rebuild, $opt_documentation, $opt_license,
-    @opt_with, @opt_without, @opt_with_default);  # options
+    @opt_with, @opt_without, @opt_with_default, $opt_nonempty_directory,
+    %opt_directory_overrides, $opt_nocr, @opt_rebuild, $opt_documentation,
+    $opt_license, @opt_local_config); # options
 my ($codeset, $text_layers, $binary_layers,
     $utf8_layers, $ascii_layers); # encodings
 my ($path, $bpath, $ipath, $singledir, $cwd); # important paths
@@ -4622,6 +4648,9 @@ sub elevate_to_permission
     my $state_backup = {};
     my $write_on_crash = undef;
     my $last_clone_time = 0;
+
+    sub write_statefile;
+
     sub atomically (&) {
         # The basic algorithm on a single-process system is to back up the
         # state in $state_backup, record the backup as the currently correct
@@ -4634,6 +4663,7 @@ sub elevate_to_permission
         if (time > $last_clone_time + 10) {
             $state_backup = dclone $state;
             $last_clone_time = time;
+            write_statefile;
         }
         $write_on_crash = \$state_backup;
         $_[0]->();
@@ -6101,7 +6131,7 @@ eval {
 
 ##### Command-line options
 #
-# We use the stock option parser, Getopt::Std, to parse the command
+# We use the stock option parser Getopt::Long to parse the command
 # line arguments.
 
 $::VERSION = '3.3';
@@ -6114,14 +6144,17 @@ $opt_install_only = 0;
 $opt_config_only = 0;
 $opt_elevate_permissions = undef;
 $opt_ignore_builtin_config = 0;
+@opt_local_config = ();
 $opt_specific_exit_status = 0;
 @opt_warnings = (); # TODO: unimplemented
 $opt_nocr = 0;
-@opt_rebuild = ();  # TODO: unimplemented
+@opt_rebuild = ();
 $opt_documentation = 0;
 $opt_dlayout = undef;
 $opt_license = 0;
 $opt_version = 0;
+$opt_nonempty_directory = 0;
+%opt_directory_overrides = ();
 @opt_with = ();
 @opt_without = ();
 @opt_with_default = ();
@@ -6137,9 +6170,12 @@ GetOptions('verbose|v:+' => \$opt_verbose,
            'dump-status:s' => \$opt_dump,
            'show-warnings|W=s' => \@opt_warnings,
            'no-carriage-return' => \$opt_nocr,
+           'nonempty-directory' => \$opt_nonempty_directory,
            'documentation' => \$opt_documentation,
            'directory-layout=s' => \$opt_dlayout,
+           'override-directory=s' => \%opt_directory_overrides,
            'ignore-builtin-config' => \$opt_ignore_builtin_config,
+           'local-config=s' => \@opt_local_config,
            'specific-exit-status' => \$opt_specific_exit_status,
            'license' => \$opt_license,
            'version' => \$opt_version,
@@ -6244,7 +6280,7 @@ if (!defined $path) {
         ospath2aipath($_) ne 'bpath:nytprof.out',
         @offending_files;
     closedir $dh;
-    if (@offending_files) {
+    if (@offending_files && !$opt_nonempty_directory) {
         # We created a mostly empty statefile as a lockfile.
         # In our build directory, that wouldn't matter, but we've been run
         # from the wrong directory, so clean up after ourselves.
@@ -6324,9 +6360,11 @@ if ($opt_ignore_builtin_config) {
     delete $config->{rules};
 }
 
-# Parse the local config file, from path:aimake.rules
+# Parse the local config files (path:aimake.rules, path:aimake.local, and
+# any files specified on the command line)
 for my $localconfigfile (aipath2ospath(configfilename),
-                         aipath2ospath(localconfigfilename)) {
+                         aipath2ospath(localconfigfilename),
+                         @opt_local_config) {
     if (-f $localconfigfile) {
         local $/;
         open my $fh, '<', $localconfigfile
@@ -6342,7 +6380,7 @@ for my $localconfigfile (aipath2ospath(configfilename),
     $@ or ($! and $@ = $!);
     $@ or $@ = "bad configuration file format";
     defined $localconfig or
-        die "Could not load project-specific config file: $@";
+        die "Could not load config file $localconfigfile: $@";
     undef $@;
     ref $localconfig eq 'HASH'
         or die "Invalid type in project-specific config file";
@@ -6381,7 +6419,7 @@ if ($^O ne 'MSWin32' && $> == 0 && !$opt_install_only) {
 # If a directory does not already exist, it must be specified as an absolute
 # path. Basically, because otherwise we can't do relative path resolution
 # correctly.
-if (defined $opt_install && !-e $opt_install) {
+if (defined $opt_install && $opt_install ne '' && !-e $opt_install) {
     File::Spec->file_name_is_absolute($opt_install) or die
         "Install path '$opt_install' is not an absolute path and does not exist";
 }
@@ -6451,11 +6489,15 @@ atomically {
     # single_directory is special-cased.
     $dlayout eq 'single_directory' and $singledir = 1;
 
-    # Fill in any directory options that weren't overriden.
+    # Fill in any directory options that weren't overriden by config options
+    # or the command line.
     for my $dir (keys %{$config->{directories}{$dlayout}}) {
         next unless $dir =~ /dir$/;
         $config->{options}{$dir} ||=
             $config->{directories}{$dlayout}{$dir};
+        defined $opt_directory_overrides{$dir}
+            and $config->{options}{$dir} =
+                ospath2aipath $opt_directory_overrides{$dir};
     }
 
     $config->{options}{installdir} = $ipath;
@@ -8025,6 +8067,44 @@ __DATA__
             specificlockdir => '$staterootdir/lock',
         },
 
+        # Traditional behaviour of --prefix under most other build systems.
+        # Packaging systems normally assume that something like this is
+        # available.
+        prefix => {
+            autodetect => qr=(?!)=,
+            preferred_installdir => 'spath:/',
+
+            configdir => '$installdir/etc',
+            staterootdir => '$installdir/var',
+            bindir => '$installdir/bin',
+            rootbindir => '$installdir/sbin',
+            gamesbindir => '$installdir/bin',
+            libdir => '$installdir/lib',
+            specificlibdir => '$installdir/lib/$packagename',
+            includedir => '$installdir/include',
+            specificincdir => '$installdir/include/$packagename',
+            datarootdir => '$installdir/share',
+
+            # Relative to datarootdir.
+            datadir => '$datarootdir/$packagename',
+            gamesdatadir => '$datarootdir/games/$packagename',
+            mandir => '$datarootdir/man',
+            infodir => '$datarootdir/info',
+            docdir => '$datarootdir/doc/$packagename',
+
+            # Relative to staterootdir.
+            # For the first two, it's unclear which directory we should
+            # be using. This currently assumes the same layout as /var;
+            # automake uses $staterootdir raw but that seems very liable
+            # to break things. This feature is rarely used anyway, which
+            # makes it hard to work out what correct behaviour is.
+            statedir => '$staterootdir/lib/$packagename',        # ???
+            gamesstatedir => '$staterootdir/games/$packagename', # ???
+            logdir => '$staterootdir/log',
+            lockdir => '$staterootdir/run/lock',
+            specificlockdir => '$staterootdir/run/lock/$packagename',
+        },
+
         # An install that just dumps everything in the same directory; useful
         # for home directory installs if there aren't many files being
         # installed. We never autodetect this, and it works better if the
@@ -8164,6 +8244,16 @@ __DATA__
                         'optpath::spath:/usr/local/lib'],
             on_failure => 'conditional',
             depends => ['optpath:-L:spath:/usr/local/lib'],
+        },
+
+        fhs_include_directory => {
+            # Like the above, but for /usr/local/include. Apparently this is
+            # sometimes required on Mac OS X.
+            object => 'optionset:IFLAGS',
+            command => ['intcmd:filetest', 'optstring:-d',
+                        'optpath::spath:/usr/local/include'],
+            on_failure => 'conditional',
+            depends => ['optpath:-I:spath:/usr/local/include'],
         },
 
         # Finding header files is difficult. The problem is that cpp knows the
