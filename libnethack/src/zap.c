@@ -3104,9 +3104,9 @@ zap_hit_mon(struct monst *mon, int type, int nd, struct obj **ootmp)
         }
         tmp = dice(nd, 6);
         if (!rn2(6))
-            erode_obj(MON_WEP(mon), TRUE, TRUE);
+            acid_damage(MON_WEP(mon));
         if (!rn2(6))
-            erode_armor(mon, TRUE);
+            hurtarmor(mon, ERODE_CORRODE);
         break;
     }
     if (sho_shieldeff)
@@ -3243,11 +3243,11 @@ zap_hit_u(int type, int nd, const char *fltxt, xchar sx, xchar sy)
         }
         /* using two weapons at once makes both of them more vulnerable */
         if (!rn2(u.twoweap ? 3 : 6))
-            erode_obj(uwep, TRUE, TRUE);
+            acid_damage(uwep);
         if (u.twoweap && !rn2(3))
-            erode_obj(uswapwep, TRUE, TRUE);
+            acid_damage(uswapwep);
         if (!rn2(6))
-            erode_armor(&youmonst, TRUE);
+            hurtarmor(&youmonst, ERODE_CORRODE);
         break;
     }
 

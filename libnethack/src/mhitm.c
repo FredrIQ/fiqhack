@@ -848,9 +848,9 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             pline("It burns %s!", mon_nam(mdef));
         }
         if (!rn2(30))
-            erode_armor(mdef, TRUE);
+            hurtarmor(mdef, ERODE_CORRODE);
         if (!rn2(6))
-            erode_obj(MON_WEP(mdef), TRUE, TRUE);
+            acid_damage(MON_WEP(mdef));
         break;
     case AD_RUST:
         if (magr->mcan)
@@ -865,14 +865,14 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                 pline("May %s rust in peace.", mon_nam(mdef));
             return (MM_DEF_DIED | (grow_up(magr, mdef) ? 0 : MM_AGR_DIED));
         }
-        hurtmarmor(mdef, AD_RUST);
+        hurtarmor(mdef, ERODE_RUST);
         mdef->mstrategy &= ~STRAT_WAITFORU;
         tmp = 0;
         break;
     case AD_CORR:
         if (magr->mcan)
             break;
-        hurtmarmor(mdef, AD_CORR);
+        hurtarmor(mdef, ERODE_CORRODE);
         mdef->mstrategy &= ~STRAT_WAITFORU;
         tmp = 0;
         break;
@@ -889,7 +889,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                 pline("May %s rot in peace.", mon_nam(mdef));
             return (MM_DEF_DIED | (grow_up(magr, mdef) ? 0 : MM_AGR_DIED));
         }
-        hurtmarmor(mdef, AD_DCAY);
+        hurtarmor(mdef, ERODE_ROT);
         mdef->mstrategy &= ~STRAT_WAITFORU;
         tmp = 0;
         break;
@@ -1350,6 +1350,8 @@ mrustm(struct monst *magr, struct monst *mdef, struct obj *obj)
         is_acid = FALSE;
     else
         return;
+
+    impossible("mrustm did something?");
 
     if (!mdef->mcan && (is_acid ? is_corrodeable(obj) : is_rustprone(obj)) &&
         (is_acid ? obj->oeroded2 : obj->oeroded) < MAX_ERODE) {

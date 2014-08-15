@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Sean Hunt, 2014-05-01 */
 /* Copyright Scott R. Turner, srt@ucla, 10/27/86                  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -127,7 +127,7 @@ gush(int x, int y, void *poolcnt)
     level->locations[x][y].typ = POOL;
     /* No kelp! */
     del_engr_at(level, x, y);
-    water_damage(level->objects[x][y], FALSE, TRUE);
+    water_damage_chain(level->objects[x][y], TRUE);
 
     if ((mtmp = m_at(level, x, y)) != 0)
         minliquid(mtmp);
@@ -395,7 +395,7 @@ dipfountain(struct obj *obj)
         if (in_town(u.ux, u.uy))
             angry_guards(FALSE);
         return;
-    } else if (get_wet(obj) && !rn2(2))
+    } else if (water_damage(obj, NULL, TRUE) >= 2 && !rn2(2))
         return;
 
     /* Acid and water don't mix */

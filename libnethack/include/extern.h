@@ -379,7 +379,6 @@ extern boolean canwearobj(struct obj *, long *, boolean, boolean, boolean);
 extern boolean canunwearobj(struct obj *, boolean, boolean, boolean);
 extern void glibr(void);
 extern struct obj *some_armor(struct monst *);
-extern void erode_armor(struct monst *, boolean);
 extern struct obj *stuck_ring(struct obj *, int);
 extern struct obj *unchanger(void);
 extern int destroy_arm(struct obj *);
@@ -915,6 +914,7 @@ extern void expels(struct monst *, const struct permonst *, boolean);
 extern const struct attack *getmattk(const struct permonst *, int, int *,
                                      struct attack *);
 extern int mattacku(struct monst *);
+extern void hurtarmor(struct monst *, enum erode_type);
 extern int magic_negation(struct monst *);
 extern int gazemu(struct monst *, const struct attack *);
 extern void mdamageu(struct monst *, int);
@@ -1353,7 +1353,6 @@ extern void healup(int, int, boolean, boolean);
 extern void strange_feeling(struct obj *, const char *);
 extern void potionhit(struct monst *, struct obj *, boolean);
 extern void potionbreathe(struct obj *);
-extern boolean get_wet(struct obj *);
 extern int dodip(const struct nh_cmd_arg *);
 extern void djinni_from_bottle(struct obj *);
 extern struct monst *split_mon(struct monst *, struct monst *);
@@ -1717,9 +1716,9 @@ extern void restore_track(struct memfile *mf);
 /* ### trap.c ### */
 
 extern boolean burnarmor(struct monst *);
-extern boolean rust_dmg(struct obj *, const char *, int, boolean,
-                        struct monst *);
-extern void grease_protect(struct obj *, const char *, struct monst *);
+extern boolean erode_obj(struct obj *, const char *, enum erode_type, boolean,
+                         boolean);
+extern boolean grease_protect(struct obj *, const char *, struct monst *);
 extern struct trap *maketrap(struct level *lev, int x, int y, int typ);
 extern void fall_through(boolean);
 extern struct monst *animate_statue(struct obj *, xchar, xchar, int, int *);
@@ -1735,7 +1734,9 @@ extern void float_up(void);
 extern void fill_pit(struct level *lev, int x, int y);
 extern int float_down(long);
 extern int fire_damage(struct obj *, boolean, boolean, xchar, xchar);
-extern boolean water_damage(struct obj *, boolean, boolean);
+extern void acid_damage(struct obj *);
+extern int water_damage(struct obj *, const char *, boolean);
+extern void water_damage_chain(struct obj *, boolean);
 extern boolean drown(void);
 extern void drain_en(int);
 extern int dountrap(const struct nh_cmd_arg *);
@@ -1757,7 +1758,6 @@ extern void u_init_inv_skills(void);
 
 /* ### uhitm.c ### */
 
-extern void hurtmarmor(struct monst *, int);
 extern boolean confirm_attack(struct monst *, enum u_interaction_mode);
 extern enum attack_check_status attack_checks(
     struct monst *, struct obj *, schar, schar, enum u_interaction_mode);
@@ -1856,7 +1856,6 @@ extern void uwepgone(void);
 extern void uswapwepgone(void);
 extern void uqwepgone(void);
 extern void untwoweapon(void);
-extern void erode_obj(struct obj *, boolean, boolean);
 extern int chwepon(struct obj *, int);
 extern int welded(struct obj *);
 extern void weldmsg(struct obj *);
