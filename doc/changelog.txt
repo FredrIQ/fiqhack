@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-05-31
+Last modified by Alex Smith, 2014-08-15
 
 Copyright (C) 2013 Alex Smith.
 
@@ -655,6 +655,11 @@ the game (in 3.4.3, they would be picked up even with autopickup off!). (4,
 
 Randomly generated splint mail on D:1 no longer generates rustproof for
 samurai. (4, 820b493)
+
+Rust, corrosion, etc. now work more consistently between different sources of
+erosion damage.  (Some specific changes of this are that grease is now more
+reliable and the character is able to notice that an item is rustproof when it
+resists damage in more situations.) (4, 4e5d57b..454f173)
 
 
 Monsters and Polyforms
