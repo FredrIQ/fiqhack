@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-01 */
+/* Last modified by Alex Smith, 2014-08-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -105,7 +105,7 @@ assigninvlet(struct obj *otmp)
         }
     /* First, if the item's been in inventory before, assign its old letter
        if possible. */
-    if ((i = otmp->invlet) &&
+    if (((i = otmp->invlet)) &&
         (('a' <= i && i <= 'z') || ('A' <= i && i <= 'Z')))
         return;
     /* If the item should take up the dangerous letters, see if one of them
@@ -122,8 +122,15 @@ assigninvlet(struct obj *otmp)
             }
         }
     }
+
+    /* A bug in 4.3-beta1 means that u.lastinvnr can end up in the stratosphere
+       sometimes. That bug is now fixed, but we nonetheless need to be able to
+       load old saves correctly, so set it to the value it should have had. */
+    if (u.lastinvnr >= 52)
+        u.lastinvnr = 0;
+
     for (to_use = i = u.lastinvnr + 1; i != u.lastinvnr; i++) {
-        if (i == 52) {
+        if (i >= 52) {
             i = -1;
             continue;
         }
@@ -134,6 +141,10 @@ assigninvlet(struct obj *otmp)
                 break;
         }
     }
+
+    if (to_use >= 52)
+        to_use = 0;
+
     otmp->invlet =
         (inuse[to_use] ? NOINVSYM : (to_use < 26) ? ('a' + to_use)
                                                   : ('A' + to_use - 26));
@@ -141,7 +152,8 @@ assigninvlet(struct obj *otmp)
 }
 
 
-/* note: assumes ASCII; toggling a bit puts lowercase in front of uppercase */
+/* in ASCII, toggling a bit puts lowercase in front of uppercase */
+static_assert(('a' ^ 040) == 'A', "ASCII case handling is required");
 #define inv_rank(o) ((o)->invlet ^ 040)
 
 /* sort the inventory; used by addinv() and doorganize() */
