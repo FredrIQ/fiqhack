@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-08-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -403,6 +403,13 @@ void
 mon_catchup_elapsed_time(struct monst *mtmp, long nmv)
 {
     int imv = 0;        /* avoid zillions of casts and lint warnings */
+
+    /* Without this, if a monster is deleted during level creation
+       (e.g. statue trap) and the player comes to the level later, it'll
+       have healed itself out of the "deleted" state, thoroughly confusing
+       dmonsfree(). */
+    if (DEADMONSTER(mtmp))
+        return;
 
     if (nmv >= LARGEST_INT)     /* paranoia */
         imv = LARGEST_INT - 1;
