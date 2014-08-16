@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-20 */
+/* Last modified by Alex Smith, 2014-08-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -245,7 +245,7 @@ make_hallucinated(long xtime,   /* nonzero if this is an attempt to turn on
     if (!Halluc_resistance && (! !HHallucination != ! !xtime))
         changed = TRUE;
     set_itimeout(&HHallucination, xtime);
-    
+
     /* clearing temporary hallucination without toggling vision */
     if (!changed && !HHallucination && old && talk) {
         if (!haseyes(youmonst.data)) {
@@ -1537,6 +1537,7 @@ dodip(const struct nh_cmd_arg *arg)
     potion->in_use = TRUE;      /* assume it will be used up */
     if (potion->otyp == POT_WATER) {
         boolean useeit = !Blind;
+        boolean usedup = FALSE;
 
         if (useeit)
             Your_buf = Shk_Your(obj);
@@ -1547,12 +1548,7 @@ dodip(const struct nh_cmd_arg *arg)
                           hcolor("amber"));
                 uncurse(obj);
                 obj->bknown = 1;
-            poof:
-                if (!(objects[potion->otyp].oc_name_known) &&
-                    !(objects[potion->otyp].oc_uname))
-                    docall(potion);
-                useup(potion);
-                return 1;
+                usedup = TRUE;
             } else if (!obj->blessed) {
                 if (useeit) {
                     tmp = hcolor("light blue");
@@ -1562,7 +1558,7 @@ dodip(const struct nh_cmd_arg *arg)
                 }
                 bless(obj);
                 obj->bknown = 1;
-                goto poof;
+                usedup = TRUE;
             }
         } else if (potion->cursed) {
             if (obj->blessed) {
@@ -1571,7 +1567,7 @@ dodip(const struct nh_cmd_arg *arg)
                           hcolor((const char *)"brown"));
                 unbless(obj);
                 obj->bknown = 1;
-                goto poof;
+                usedup = TRUE;
             } else if (!obj->cursed) {
                 if (useeit) {
                     tmp = hcolor("black");
@@ -1581,10 +1577,17 @@ dodip(const struct nh_cmd_arg *arg)
                 }
                 curse(obj);
                 obj->bknown = 1;
-                goto poof;
+                usedup = TRUE;
             }
         } else if (water_damage(obj, NULL, TRUE) >= 2)
-            goto poof;
+            usedup = TRUE;
+
+        if (usedup) {
+            makeknown(POT_WATER);
+            useup(potion);
+            return 1;
+        }
+
     } else if (potion->otyp == POT_POLYMORPH) {
         /* some objects can't be polymorphed */
         if (poly_proof(obj) || obj_resists(obj, 5, 95)) {
@@ -1605,8 +1608,14 @@ dodip(const struct nh_cmd_arg *arg)
                     prinv(NULL, obj, 0L);
                 return 1;
             } else {
-                pline("Nothing seems to happen.");
-                goto poof;
+                /* different message from 3.4.3; having this almost identical
+                   to the regular message is silly, given that the message is
+                   unique and the fact that the potion is used up is a
+                   giveaway that something is up */
+                pline("The object you dipped changed slightly.");
+                makeknown(POT_POLYMORPH);
+                useup(potion);
+                return 1;
             }
         }
         potion->in_use = FALSE; /* didn't go poof */
@@ -1682,7 +1691,9 @@ dodip(const struct nh_cmd_arg *arg)
                 pline("You notice a little haziness around %s.",
                       the(xname(obj)));
         }
-        goto poof;
+        makeknown(POT_INVISIBILITY);
+        useup(potion);
+        return 1;
     } else if (potion->otyp == POT_SEE_INVISIBLE && obj->oinvis) {
         obj->oinvis = FALSE;
         if (!Blind) {
@@ -1691,7 +1702,9 @@ dodip(const struct nh_cmd_arg *arg)
             else
                 pline("The haziness around %s disappears.", the(xname(obj)));
         }
-        goto poof;
+        makeknown(POT_SEE_INVISIBLE);
+        useup(potion);
+        return 1;
     }
 #endif
 
@@ -1705,14 +1718,22 @@ dodip(const struct nh_cmd_arg *arg)
                 buf = The(xname(potion));
             pline("%s forms a coating on %s.", buf, the(xname(obj)));
             obj->opoisoned = TRUE;
-            goto poof;
+            makeknown(POT_SICKNESS);
+            useup(potion);
+            return 1;
         } else if (obj->opoisoned &&
                    (potion->otyp == POT_HEALING ||
                     potion->otyp == POT_EXTRA_HEALING ||
                     potion->otyp == POT_FULL_HEALING)) {
             pline("A coating wears off %s.", the(xname(obj)));
             obj->opoisoned = 0;
-            goto poof;
+            /* trigger the "recently broken" prompt because there are
+               multiple possibilities */
+            if (!(objects[potion->otyp].oc_name_known) &&
+                !(objects[potion->otyp].oc_uname))
+                docall(potion);
+            useup(potion);
+            return 1;
         }
     }
 
@@ -1965,4 +1986,3 @@ split_mon(struct monst *mon,    /* monster being split */
 }
 
 /*potion.c*/
-
