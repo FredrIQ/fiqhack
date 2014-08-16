@@ -83,6 +83,10 @@ const struct equip_order {
     {os_ringl,   ed_equip  },
     {os_armg,    ed_equip  },
 
+    /* Shields have to be unequipped before weapon changing, and equipped after,
+       because a two-handed weapon conflicts with a shield. */
+    {os_arms,    ed_unequip},
+
     /* Swap the weapon slots around next. swapwep/wep can be swapped in 0
        actions; swapwep and wep can each be changed in 1, without necessarily
        unequipping in between. The quiver takes 0 no matter what it's combined
@@ -94,8 +98,6 @@ const struct equip_order {
     {os_quiver,  ed_unequip},
     {os_quiver,  ed_equip  },
 
-    /* The shield follows the same reasoning as the weapon. */
-    {os_arms,    ed_unequip},
     {os_arms,    ed_equip  },
 
     /* Body slots. */
@@ -1092,8 +1094,27 @@ equip_in_slot(struct obj *otmp, enum objslot slot)
 {
     int t;
     enum objslot j;
+    struct obj *weapon = NULL;
     if (!otmp)
         otmp = &zeroobj;
+
+    /* Equipping a two-handed weapon while holding a shield and cblock is
+       actually interpreted as unequipping the shield, with equipping the
+       weapon being a multistage consequence. This greatly reduces the
+       number of special cases required. */
+    if (flags.cblock && slot == os_wep && otmp != &zeroobj &&
+        bimanual(otmp) && uarms) {
+        weapon = otmp;
+        otmp = &zeroobj;
+        slot = os_arms;
+    }
+
+    /* Meanwhile, for equipping a shield while holding a two-handed weapon
+       and cblock, we keep the shield as the focus, but nonetheless add a
+       desire to unequip the weapon. */
+    if (flags.cblock && slot == os_arms && otmp != &zeroobj &&
+        uwep && bimanual(uwep))
+        weapon = &zeroobj;
 
     /* We're resuming if we request an equip that's already the case (the
        "putting items back on" stage, or an equip that's already desired (the
@@ -1115,10 +1136,13 @@ equip_in_slot(struct obj *otmp, enum objslot slot)
         struct obj *target = j == slot ? otmp : NULL;
         /* If we're continuing a compound equip, don't cancel desires for slots
            that cover the slot we want to change. (They may be temporarily
-           unequipped items.) We do cancel desires for other slots, though, so
-           that it's possible to abort a compound equip via equipping a higher
-           slot. */
-        if (resuming && (slot_covers(j, slot) || j == slot))
+           unequipped items.) Also, don't cancel a desire for a weapon when
+           unequipping a shield (this special case is needed because shields and
+           two-handed weapons conflict, but neither covers the other). We do
+           cancel desires for other slots, though, so that it's possible to
+           abort a compound equip via equipping a higher slot. */
+        if (resuming && (slot_covers(j, slot) || j == slot ||
+                         (j == os_wep && slot == os_arms && otmp == &zeroobj)))
             continue;
         /* If we're placing a different object in a slot from what was there
            before, cancel our progress in equipping that slot. */
@@ -1126,6 +1150,9 @@ equip_in_slot(struct obj *otmp, enum objslot slot)
             u.uoccupation_progress[tos_first_equip + j] = 0;
         *desired = target;
     }
+
+    if (weapon)
+        u.utracked[tos_first_equip + os_wep] = weapon;
 
     /* Equips in time-consuming slots should print messages to let the player
        know what's happening. Potentially time-consuming slots are any armor

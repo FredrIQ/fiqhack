@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-30 */
+/* Last modified by Alex Smith, 2014-08-16 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1848,7 +1848,7 @@ extern void setuswapwep(struct obj *);
 extern int dowield(const struct nh_cmd_arg *);
 extern int doswapweapon(const struct nh_cmd_arg *);
 extern int dowieldquiver(const struct nh_cmd_arg *);
-extern boolean wield_tool(struct obj *, const char *);
+extern int wield_tool(struct obj *, const char *, enum occupation occupation);
 extern int can_twoweapon(void);
 extern void drop_uswapwep(void);
 extern int dotwoweapon(const struct nh_cmd_arg *);

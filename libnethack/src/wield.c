@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-01 */
+/* Last modified by Alex Smith, 2014-08-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -146,12 +146,21 @@ canwieldobj(struct obj *wep, boolean noisy, boolean spoil, boolean cblock)
             pline("You are physically incapable of holding %s.", yname(wep));
         return 0;
     }
-    if (uarms && (cblock || (uarms->cursed && uarms->bknown)) &&
+    if (uarms && (!cblock || (uarms->cursed && (uarms->bknown || spoil))) &&
         bimanual(wep)) {
-        if (noisy)
-            pline("You cannot wield a two-handed %s while wearing a shield.",
-                  is_sword(wep) ? "sword" : wep->otyp ==
-                  BATTLE_AXE ? "axe" : "weapon");
+        if (noisy) {
+            if (!uarms->bknown && cblock) {
+                if (!spoil)
+                    impossible("Character magically knows their "
+                               "shield is cursed?");
+                uarms->bknown = 1;
+                pline("You can't remove your shield to wield the weapon.");
+            } else {
+                pline("You cannot wield a two-handed %s while wearing "
+                      "a shield.", is_sword(wep) ? "sword" : wep->otyp ==
+                      BATTLE_AXE ? "axe" : "weapon");
+            }
+        }
         return 0;
     }
     /* If we can't ready something, we can't wield it either, unless it's our
@@ -299,24 +308,6 @@ dowield(const struct nh_cmd_arg *arg)
     if (!wep)
         return 0;
 
-    int j;
-    for (j = 0; j <= os_last_equip; j++) {
-        if (j == os_wep)
-            u.utracked[tos_first_equip + j] = wep;
-        if (j == os_swapwep && flags.pushweapon && uwep)
-            u.utracked[tos_first_equip + j] = uwep;
-        else
-            u.utracked[tos_first_equip + j] = NULL;
-        /* We can just set uoccupation_progress to 0 unconditionally because
-           wielding does not take multiple turns. */
-        u.uoccupation_progress[tos_first_equip + j] = 0;
-    }
-
-    /* Do the wield. */
-    int t = equip_heartbeat();
-    if (t == 2)
-        action_incomplete("wielding a weapon", occ_equip);
-
     return equip_in_slot(wep, os_wep);
 }
 
@@ -353,74 +344,47 @@ dowieldquiver(const struct nh_cmd_arg *arg)
     return equip_in_slot(newquiver, os_quiver);
 }
 
-/* used for #rub and for applying pick-axe, whip, grappling hook, or polearm */
-/* (moved from apply.c) */
-boolean
-wield_tool(struct obj * obj, const char *verb)
-{       /* "rub",&c */
-    const char *what;
-    boolean more_than_1;
+/* Used to wield an item and then do something else; this is used for tools that
+   need to be wielded. Returns a bitmask: the 1s bit is FALSE if the action must
+   be aborted; the 2s bit is TRUE if the action took time; the 4s bit is TRUE if
+   the item is still being wielded.
+
+   If both the 2s and 1s bit of the result are set, this function sets the
+   occupation itself, to save the caller the trouble. (The caller can still
+   override it if, say, it wants to treat 7 and 3 differently message-wise.) */
+int
+wield_tool(struct obj *obj, const char *occ_txt, enum occupation occupation)
+{
+    int rv;
 
     if (obj == uwep)
-        return TRUE;    /* nothing to do if already wielding it */
+        return 1;
 
-    if (!verb)
-        verb = "wield";
-    what = xname(obj);
-    more_than_1 = (obj->quan > 1L || strstri(what, "pair of ") != 0 ||
-                   strstri(what, "s of ") != 0);
+    rv = equip_in_slot(obj, os_wep);
 
-    if (obj->owornmask & W_WORN) {
-        pline("You can't %s %s %s while wearing %s.", verb,
-              shk_your(obj), what, more_than_1 ? "them" : "it");
-        return FALSE;
-    }
-    if (welded(uwep)) {
-        if (flags.verbose) {
-            const char *hand = body_part(HAND);
+    if (obj == uwep && rv == 0) /* it took no time */
+        return 1;
 
-            if (bimanual(uwep))
-                hand = makeplural(hand);
-            if (strstri(what, "pair of ") != 0)
-                more_than_1 = FALSE;
-            pline
-                ("Since your weapon is welded to your %s, you cannot %s %s %s.",
-                 hand, verb, more_than_1 ? "those" : "that", xname(obj));
-        } else {
-            pline("You can't do that.");
-        }
-        return FALSE;
+    if (rv == 0) /* impossible, and known impossible */
+        return 0;
+
+    if (flags.occupation == occ_equip) {
+        action_incomplete(occ_txt, occupation);
+        return 7;
     }
-    if (cantwield(youmonst.data)) {
-        pline("You can't hold %s strongly enough.",
-              more_than_1 ? "them" : "it");
-        return FALSE;
+
+    if (obj == uwep) {
+        action_incomplete(occ_txt, occupation);
+        return 3;
     }
-    /* check shield */
-    if (uarms && bimanual(obj)) {
-        pline("You cannot %s a two-handed %s while wearing a shield.", verb,
-              (obj->oclass == WEAPON_CLASS) ? "weapon" : "tool");
-        return FALSE;
-    }
-    if (uquiver == obj)
-        setuqwep(NULL);
-    if (uswapwep == obj) {
-        doswapweapon(&(struct nh_cmd_arg){.argtype = 0});
-        /* doswapweapon might fail */
-        if (uswapwep == obj)
-            return FALSE;
-    } else {
-        pline("You now wield %s.", doname(obj));
-        setuwep(obj);
-    }
-    if (uwep != obj)
-        return FALSE;   /* rewielded old object after dying */
-    /* applying weapon or tool that gets wielded ends two-weapon combat */
-    if (u.twoweap && !can_twoweapon())
-        untwoweapon();
-    if (obj->oclass != WEAPON_CLASS)
-        u.bashmsg = FALSE;
-    return TRUE;
+
+    /* Something went wrong equipping it if the desire to equip it disappeared
+       but the tool isn't wielded. */
+    if (u.utracked[tos_first_equip + os_wep] == NULL)
+        return 2;
+
+    impossible("desire to equip a tool, but no occupation");
+    return 0;
 }
 
 int

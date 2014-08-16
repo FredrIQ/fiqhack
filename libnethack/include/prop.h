@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-15 */
+/* Last modified by Alex Smith, 2014-08-16 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -213,6 +213,7 @@ enum occupation {
     occ_wipe,        /* wiping your face */
     occ_wait,        /* waiting */
     occ_search,      /* searching */
+    occ_prepare,     /* e.g. removing a shield to be able to use a mattock */
 };
 
 /* Occupations generally track objects, but some track locations, or both. */

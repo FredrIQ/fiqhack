@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-01 */
+/* Last modified by Alex Smith, 2014-08-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1236,9 +1236,20 @@ dorub(const struct nh_cmd_arg *arg)
         }
     }
 
-    if (obj->otyp == MAGIC_LAMP) {
-        if (!wield_tool(obj, "rub"))
+    /* TODO: Why are these the only three items that need wielding to rub */
+    if (obj->otyp == MAGIC_LAMP || obj->otyp == OIL_LAMP ||
+        obj->otyp == BRASS_LANTERN) {
+        int wtstatus = wield_tool(
+            obj, obj->otyp == BRASS_LANTERN ?
+            "preparing to rub your lantern" : "preparing to rub your lamp",
+            occ_prepare);
+        if (wtstatus & 2)
+            return 1;
+        if (!(wtstatus & 1))
             return 0;
+    }
+
+    if (obj->otyp == MAGIC_LAMP) {
         if (uwep->spe > 0 && !rn2(3)) {
             check_unpaid_usage(uwep, TRUE);     /* unusual item use */
             makeknown(MAGIC_LAMP);
@@ -1254,15 +1265,9 @@ dorub(const struct nh_cmd_arg *arg)
         else
             pline("Nothing happens.");
     } else if (obj->otyp == BRASS_LANTERN) {
-        if (!wield_tool(obj, "rub"))
-            return 0;
         /* message from Adventure */
         pline("Rubbing the electric lamp is not particularly rewarding.");
         pline("Anyway, nothing exciting happens.");
-    } else if (obj->otyp == OIL_LAMP) {
-        if (!wield_tool(obj, "rub"))
-            return 0;
-        pline("Nothing happens.");
     } else
         pline("Nothing happens.");
     return 1;
@@ -2169,21 +2174,20 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
 {
     struct monst *mtmp;
     struct obj *otmp;
-    int rx, ry, proficient, res = 0;
+    int rx, ry, proficient;
     const char *msg_slipsfree = "The bullwhip slips free.";
     const char *msg_snap = "Snap!";
     schar dx, dy, dz;
     const char *buf;
 
-    if (obj != uwep) {
-        if (!wield_tool(obj, "lash"))
-            return 0;
-        else
-            res = 1;
-    }
+    int wtstatus = wield_tool(obj, "preparing to lash your whip", occ_prepare);
+    if (wtstatus & 2)
+        return 1;
+    if (!(wtstatus & 1))
+        return 0;
 
     if (!getargdir(arg, NULL, &dx, &dy, &dz))
-        return res;
+        return 0;
 
     if (Stunned || (Confusion && !rn2(5)))
         confdir(&dx, &dy);
@@ -2428,7 +2432,7 @@ static const char
 static int
 use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
 {
-    int res = 0, typ, max_range = 4, min_range = 4;
+    int wtstatus, typ, max_range = 4, min_range = 4;
     coord cc;
     struct monst *mtmp;
 
@@ -2438,20 +2442,20 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
         pline(not_enough_room);
         return 0;
     }
-    if (obj != uwep) {
-        if (!wield_tool(obj, "swing"))
-            return 0;
-        else
-            res = 1;
-    }
-    /* assert(obj == uwep); */
+
+    wtstatus = wield_tool(obj, "preparing to swing your polearm", occ_prepare);
+
+    if (wtstatus & 2)
+        return 1;
+    if (!(wtstatus & 1))
+        return 0;
 
     /* Prompt for a location */
     pline(where_to_hit);
     cc.x = u.ux;
     cc.y = u.uy;
     if (getargpos(arg, &cc, TRUE, "the spot to hit") == NHCR_CLIENT_CANCEL)
-        return res;     /* user pressed ESC */
+        return 0;     /* user pressed ESC */
 
     /* Calculate range */
     typ = uwep_skill_type();
@@ -2463,17 +2467,17 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
         max_range = 8;
     if (distu(cc.x, cc.y) > max_range) {
         pline("Too far!");
-        return res;
+        return 0;
     } else if (distu(cc.x, cc.y) < min_range) {
         pline("Too close!");
-        return res;
+        return 0;
     } else if (!cansee(cc.x, cc.y) &&
                ((mtmp = m_at(level, cc.x, cc.y)) == NULL || !canseemon(mtmp))) {
         pline(cant_see_spot);
-        return res;
+        return 0;
     } else if (!couldsee(cc.x, cc.y)) { /* Eyes of the Overworld */
         pline(cant_reach);
-        return res;
+        return 0;
     }
 
     /* Attack the monster there */
@@ -2485,7 +2489,7 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
             attack_checks(mtmp, obj, cc.x, cc.y, apply_interaction_mode());
 
         if (attack_status != ac_continue)
-            return res || attack_status != ac_cancel;
+            return attack_status != ac_cancel;
 
         bhitpos = cc;
         check_caitiff(mtmp);
@@ -2548,7 +2552,7 @@ use_cream_pie(struct obj **objp)
 static int
 use_grapple(struct obj *obj, const struct nh_cmd_arg *arg)
 {
-    int res = 0, typ, max_range = 4, tohit;
+    int wtstatus, typ, max_range = 4, tohit;
     coord cc;
     struct monst *mtmp;
     struct obj *otmp;
@@ -2558,20 +2562,20 @@ use_grapple(struct obj *obj, const struct nh_cmd_arg *arg)
         pline(not_enough_room);
         return 0;
     }
-    if (obj != uwep) {
-        if (!wield_tool(obj, "cast"))
-            return 0;
-        else
-            res = 1;
-    }
-    /* assert(obj == uwep); */
+
+    wtstatus = wield_tool(obj, "preparing to grapple", occ_prepare);
+
+    if (wtstatus & 2)
+        return 1;
+    if (!(wtstatus & 1))
+        return 0;
 
     /* Prompt for a location */
     pline(where_to_hit);
     cc.x = u.ux;
     cc.y = u.uy;
     if (getargpos(arg, &cc, TRUE, "the spot to hit") == NHCR_CLIENT_CANCEL)
-        return res;     /* user pressed ESC */
+        return 0;     /* user pressed ESC */
 
     /* Calculate range */
     typ = uwep_skill_type();
@@ -2583,13 +2587,13 @@ use_grapple(struct obj *obj, const struct nh_cmd_arg *arg)
         max_range = 8;
     if (distu(cc.x, cc.y) > max_range) {
         pline("Too far!");
-        return res;
+        return 0;
     } else if (!cansee(cc.x, cc.y)) {
         pline(cant_see_spot);
-        return res;
+        return 0;
     } else if (!couldsee(cc.x, cc.y)) { /* Eyes of the Overworld */
         pline(cant_reach);
-        return res;
+        return 0;
     }
 
     /* What do you want to hit? */

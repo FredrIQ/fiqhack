@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-20 */
+/* Last modified by Alex Smith, 2014-08-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -826,42 +826,39 @@ use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
 {
     boolean ispick;
     const char *qbuf;
-    int res = 0;
     const char *verb;
+    int wtstatus;
     schar dx, dy, dz;
     int rx, ry;
     struct rm *loc;
     int dig_target;
     const char *verbing;
 
-    /* Check tool */
-    if (obj != uwep) {
-        if (!wield_tool(obj, "swing"))
-            return 0;
-        else
-            res = 1;
-    }
     ispick = is_pick(obj);
     verb = ispick ? "dig" : "chop";
     verbing = ispick ? "digging" : "chopping";
 
+    wtstatus = wield_tool(obj, "preparing to dig", occ_dig);
+    if (wtstatus & 2)
+        return 1;
+    else if (!(wtstatus & 1))
+        return 0;
+
     if (u.utrap && u.utraptype == TT_WEB) {
         pline("%s you can't %s while entangled in a web.",
-              /* res==0 => no prior message; res==1 => just got "You now wield
-                 a pick-axe." message */
-              !res ? "Unfortunately," : "But", verb);
-        return res;
+              turnstate.continue_message ? "Unfortunately," : "But", verb);
+        return 0;
     }
 
     qbuf = msgprintf("In what direction do you want to %s?", verb);
     if (!getargdir(arg, qbuf, &dx, &dy, &dz))
-        return res;
+        return 0;
 
     if (Engulfed) {
         enum attack_check_status attack_status =
             attack(u.ustuck, dx, dy, apply_interaction_mode());
         if (attack_status != ac_continue)
-            return res || attack_status != ac_cancel;
+            return attack_status != ac_cancel;
     }
 
     if (Underwater) {
@@ -896,7 +893,7 @@ use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
             enum attack_check_status attack_status =
                 attack(m_at(level, rx, ry), dx, dy, apply_interaction_mode());
             if (attack_status != ac_continue)
-                return res || attack_status != ac_cancel;
+                return attack_status != ac_cancel;
         }
         dig_target = dig_typ(obj, rx, ry);
         if (dig_target == DIGTYP_UNDIGGABLE) {
