@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-08-16 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -235,7 +235,9 @@ draw_status(struct nh_player_info *pi, nh_bool threeline)
     if (threeline) {
         wmove(statuswin, 0, getmaxx(statuswin) - (pi->st == 18 ? 20 : 17));
         wprintw(statuswin, "Dx:%-2d Co:%-2d St:%-2d", pi->dx, pi->co, pi->st);
-        if (pi->st == 18)
+        if (pi->st == 18 && pi->st_extra == 100)
+            wprintw(statuswin, "/**");
+        else if (pi->st == 18)
             wprintw(statuswin, "/%02d", pi->st_extra);
         wmove(statuswin, 1, getmaxx(statuswin) - (pi->st == 18 ? 20 : 17));
         wprintw(statuswin, "In:%-2d Wi:%-2d Ch:%-2d", pi->in, pi->wi, pi->ch);
