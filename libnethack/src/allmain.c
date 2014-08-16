@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-07-31 */
+/* Last modified by Alex Smith, 2014-08-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -533,9 +533,11 @@ just_reloaded_save:
                replaying, move forwards or backwards respectively. */
             if (program_state.followmode == FM_REPLAY &&
                 cmd.arg.argtype & CMD_ARG_DIR) {
+                int moveswas = moves;
                 switch (cmd.arg.dir) {
                 case DIR_E:
                 case DIR_S:
+                forward_one_turn:
                     /* Move forwards one command (and thus to the next neutral
                        turnstate, because we don't ask for a command outside
                        neutral turnstate on a replay). */
@@ -567,6 +569,12 @@ just_reloaded_save:
                 case DIR_SE:
                     /* Move forwards 50 turns. */
                     log_sync(moves + 50, TLU_TURNS, FALSE);
+                    if (moves == moveswas) {
+                        /* If we moved forwards no more than a turn (because
+                           the following turn had a >50-move action), go to
+                           the move after that. */
+                        goto forward_one_turn;
+                    }
                     goto just_reloaded_save;
                 default:
                     pline("That direction has no meaning while replaying.");
