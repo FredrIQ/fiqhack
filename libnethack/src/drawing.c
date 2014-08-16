@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-08-16 */
 /* Copyright (c) NetHack Development Team 1992.                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -136,9 +136,9 @@ const char *const defexplain[] = {
              "raised drawbridge",   /* hcdbridge */
 };
 
-
+/* Note: this starts at 1 not 0, there's a shift of 1 used for uses of it. */
 const char *const trapexplain[] = {
-    "arrow trap",
+/* 1*/ "arrow trap",
     "dart trap",
     "falling rock trap",
     "squeaky board",
@@ -147,7 +147,7 @@ const char *const trapexplain[] = {
     "rolling boulder trap",
     "sleeping gas trap",
     "rust trap",
-/*50*/ "fire trap",
+/*10*/ "fire trap",
     "pit",
     "spiked pit",
     "hole",
@@ -157,7 +157,7 @@ const char *const trapexplain[] = {
     "level teleporter",
     "magic portal",
     "web",
-/*60*/ "statue trap",
+/*20*/ "statue trap",
     "magic trap",
     "anti-magic field",
     "polymorph trap"
