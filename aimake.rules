@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2014-06-01
+# Last modified by Alex Smith, 2014-08-16
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -547,5 +547,10 @@
             install_dir => "gamesstatedir",
             install_name => "README",            
         },
+#        _install_desktop_file => {
+#            object => "path:dist/common/nethack4.desktop",
+#            install_dir => "datarootdir",
+#            install_name => "applications/nethack4.desktop",
+#        },
     },
 }

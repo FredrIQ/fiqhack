@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Alex Smith, 2014-06-07
+Last-Modified: Last modified by Alex Smith, 2014-08-16
 
 Files: libnethack_client/*
 License: NHGPL or GPL-2+
@@ -532,7 +532,7 @@ Files: scripts/*
 License: NHGPL
 Copyright: Copyright (c) 2013-2014 Alex Smith
 
-Files: dist/debian/*
+Files: dist/debian/* dist/common/*
 License: NHGPL
 Copyright: Copyright (c) 2014 Alex Smith
 
