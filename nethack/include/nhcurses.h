@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-07-31 */
+/* Last modified by Alex Smith, 2014-08-16 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -561,6 +561,7 @@ extern int nh_curs_set(int);
 extern void nh_mvwvline(WINDOW *, int, int, int);
 extern void nh_mvwhline(WINDOW *, int, int, int);
 extern void nh_window_border(WINDOW *, int);
+extern WINDOW *newwin_onscreen(int, int, int, int);
 extern void create_game_windows(void);
 extern void destroy_game_windows(void);
 extern void redraw_game_windows(void);

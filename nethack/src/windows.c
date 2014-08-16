@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-21 */
+/* Last modified by Alex Smith, 2014-08-16 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -532,7 +532,7 @@ setup_tiles(void)
 static void
 newwin_wrapper(WINDOW **win, int h, int w, int y, int x)
 {
-    *win = newwin(h, w, y, x);
+    *win = newwin_onscreen(h, w, y, x);
 }
 
 static void
@@ -617,6 +617,22 @@ create_or_resize_game_windows(void (*wrapper)(WINDOW **, int, int, int, int))
         leaveok(extrawin, TRUE);
         werase(extrawin);
     }
+}
+
+/* A wrapper around newwin() that moves the window if necessary to ensure
+   that it fits on the screen. */
+WINDOW *
+newwin_onscreen(int ysize, int xsize, int ymin, int xmin)
+{
+    if (ymin < 0)
+        ymin = 0;
+    if (xmin < 0)
+        xmin = 0;
+    if (ysize + ymin >= LINES)
+        ymin = LINES - ysize - 1;
+    if (xsize + xmin >= COLS)
+        xmin = COLS - xsize - 1;
+    return newwin(ysize, xsize, ymin, xmin);
 }
 
 void

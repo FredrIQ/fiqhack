@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-06-08 */
+/* Last modified by Alex Smith, 2014-08-16 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -372,7 +372,7 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     starty = (y2 - y1 - mdat->height) / 2 + y1;
     startx = (x2 - x1 - mdat->width) / 2 + x1;
 
-    gw->win = newwin(mdat->height, mdat->width, starty, startx);
+    gw->win = newwin_onscreen(mdat->height, mdat->width, starty, startx);
     keypad(gw->win, TRUE);
     nh_window_border(gw->win, mdat->dismissable);
     gw->win2 =
@@ -902,7 +902,7 @@ curses_display_objects(
         startx = 0;
     }
 
-    gw->win = newwin(mdat->height, mdat->width, starty, startx);
+    gw->win = newwin_onscreen(mdat->height, mdat->width, starty, startx);
     keypad(gw->win, TRUE);
     nh_window_border(gw->win, mdat->how == PICK_ONE ? 1 : 2);
     gw->win2 =
