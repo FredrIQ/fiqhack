@@ -1013,6 +1013,10 @@ use_candle(struct obj **optr)
 boolean
 snuff_candle(struct obj * otmp)
 {       /* call in drop, throw, and put in box, etc. */
+    if (!obj) {
+        impossible("snuffing null object");
+        return FALSE;
+    }
     boolean candle = Is_candle(otmp);
 
     if ((candle || otmp->otyp == CANDELABRUM_OF_INVOCATION) && otmp->lamplit) {
@@ -1036,6 +1040,11 @@ snuff_candle(struct obj * otmp)
 boolean
 snuff_lit(struct obj * obj)
 {
+    if (!obj) {
+        impossible("snuffing null object");
+        return FALSE;
+    }
+
     xchar x, y;
 
     if (obj->lamplit) {
