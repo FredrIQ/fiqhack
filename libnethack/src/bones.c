@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-20 */
+/* Last modified by Sean Hunt, 2014-08-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -218,7 +218,7 @@ can_make_bones(d_level * lev)
 
 /* save bones and possessions of a deceased adventurer */
 void
-savebones(struct obj *corpse)
+savebones(struct obj *corpse, boolean take_items)
 {
     int fd, x, y;
     struct trap *ttmp;
@@ -231,7 +231,14 @@ savebones(struct obj *corpse)
     uchar cnamelth = 0, snamelth = 0;
     const char *whynot;
 
+    /* Bones creation does require some calls to the RNG. Ensure that they are
+    * reproduced correclty so as to get the same bones. */
+
+    program_state.in_zero_time_command = FALSE;
     turnstate.generating_bones = TRUE; /* and we never set it back to FALSE */
+
+    if (take_items)
+        finish_paybill();
 
     mnew(&mf, NULL);
 
