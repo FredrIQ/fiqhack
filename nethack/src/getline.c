@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-08-17 */
+/* Last modified by Sean Hunt, 2014-08-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -384,10 +384,10 @@ extcmd_via_menu(const char **namelist, const char **desclist, int listlen)
             add_menu_item(&menu, prevaccelerator, buf, prevaccelerator, FALSE);
         }
 
-        const int pick_list[1];
+        int pick_list[1];
         sprintf(prompt, "Extended Command: %s", cbuf);
         curses_display_menu(&menu, prompt, PICK_ONE, PLHINT_ANYWHERE,
-                            &pick_list, curses_menu_callback);
+                            pick_list, curses_menu_callback);
 
         if (*pick_list != CURSES_MENU_CANCELLED) {
             if (matchlevel > (QBUFSZ - 2)) {
