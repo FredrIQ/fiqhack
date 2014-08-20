@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-21 */
+/* Last modified by Sean Hunt, 2014-08-20 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -205,7 +205,7 @@ enum nh_pick_type {
 /* Always use full pathnames for file names,
  * rather than assuming that they're all in the current directory.  This
  * provides all the subclasses that seem reasonable.
- * An array listing a path for each prefix must be passed to nh_init().
+ * An array listing a path for each prefix must be passed to nh_lib_init().
  */
 enum nh_path_prefix {
     BONESPREFIX = 0,
