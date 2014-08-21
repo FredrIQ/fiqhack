@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-29 */
+/* Last modified by Sean Hunt, 2014-08-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1332,27 +1332,81 @@ can_ooze(struct monst *mtmp)
     for (obj = chain; obj; obj = obj->nobj) {
         int typ = obj->otyp;
 
-        if (typ == COIN_CLASS && obj->quan > 100L)
+        switch (obj->oclass) {
+        case CHAIN_CLASS:
+        case VENOM_CLASS:
+            impossible("illegal object in monster's inventory");
+            break;
+
+        case WEAPON_CLASS:
+            if (typ >= ARROW && typ <= BOOMERANG)
+                break;
+
+            if (typ >= DAGGER && typ <= CRYSKNIFE)
+                break;
+
+            if (typ == SLING)
+                break;
+
             return FALSE;
 
-        if (obj->oclass != GEM_CLASS && !(typ >= ARROW && typ <= BOOMERANG) &&
-            !(typ >= DAGGER && typ <= CRYSKNIFE) && typ != SLING &&
-            !is_cloak(obj) && typ != FEDORA && !is_gloves(obj) &&
-            typ != LEATHER_JACKET && typ != CREDIT_CARD && !is_shirt(obj) &&
-            !(typ == CORPSE && verysmall(&mons[obj->corpsenm])) &&
-            typ != FORTUNE_COOKIE && typ != CANDY_BAR && typ != PANCAKE &&
-            typ != LEMBAS_WAFER && typ != LUMP_OF_ROYAL_JELLY &&
-            obj->oclass != AMULET_CLASS && obj->oclass != RING_CLASS &&
-            obj->oclass != VENOM_CLASS && typ != SACK && typ != BAG_OF_HOLDING
-            && typ != BAG_OF_TRICKS && !Is_candle(obj) && typ != OILSKIN_SACK &&
-            typ != LEASH && typ != STETHOSCOPE && typ != BLINDFOLD &&
-            typ != TOWEL && typ != TIN_WHISTLE && typ != MAGIC_WHISTLE &&
-            typ != MAGIC_MARKER && typ != TIN_OPENER && typ != SKELETON_KEY &&
-            typ != LOCK_PICK)
-            return FALSE;
-        if (Is_container(obj) && obj->cobj)
+        case ARMOR_CLASS:
+            if (is_cloak(obj) || is_gloves(obj) || is_shirt(obj) ||
+                typ == LEATHER_JACKET)
+                break;
+
             return FALSE;
 
+        case RING_CLASS:
+        case AMULET_CLASS:
+        case SCROLL_CLASS:
+        case WAND_CLASS:
+        case COIN_CLASS:
+        case GEM_CLASS:
+            break;
+
+        case TOOL_CLASS:
+            if (typ == SACK || typ == BAG_OF_HOLDING || typ == BAG_OF_TRICKS ||
+                typ == OILSKIN_SACK) {
+                /* stuff in bag: we'll assume the result is too thick, except for a
+                * bag of holding which ignores its contents. */
+                if (obj->cobj && typ != BAG_OF_HOLDING)
+                    return FALSE;
+                break;
+            }
+
+            if (typ == LEASH || typ == TOWEL || typ == BLINDFOLD)
+                break;
+
+            if (typ == STETHOSCOPE || typ == TIN_WHISTLE || typ == MAGIC_WHISTLE ||
+                typ == MAGIC_MARKER || typ == TIN_OPENER || typ == SKELETON_KEY ||
+                typ == LOCK_PICK || typ == CREDIT_CARD)
+                break;
+
+            return FALSE;
+
+        case FOOD_CLASS:
+            if (typ == CORPSE && verysmall(&mons[obj->corpsenm]))
+                break;
+
+            if (typ == FORTUNE_COOKIE || typ == CANDY_BAR || typ == PANCAKE ||
+                typ == LEMBAS_WAFER || typ == LUMP_OF_ROYAL_JELLY)
+                break;
+
+            return FALSE;
+
+
+        case POTION_CLASS:
+        case SPBOOK_CLASS:
+        case ROCK_CLASS:
+        case BALL_CLASS:
+            return FALSE;
+
+        case RANDOM_CLASS:
+        case ILLOBJ_CLASS:
+        default:
+            panic("illegal object class in can_ooze");
+        }
     }
     return TRUE;
 }
