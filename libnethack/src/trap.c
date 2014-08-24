@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-08-16 */
+/* Last modified by Sean Hunt, 2014-08-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2776,6 +2776,9 @@ fire_damage(struct obj *chain, boolean force, boolean here, xchar x, xchar y)
 
 void
 acid_damage(struct obj *obj) {
+    if (!obj)
+        return;
+
     /* Scrolls (but not spellbooks) fade. There is no particular reason for this
      * other than to preserve vanilla behaviour. See ticket #454.
      */
@@ -2797,7 +2800,7 @@ acid_damage(struct obj *obj) {
             obj->spe = 0;
         }
     } else
-        erode_obj(obj, NULL, ERODE_CORRODE, TRUE, TRUE);
+        erode_obj(obj, NULL, ERODE_CORRODE, FALSE, TRUE);
 }
 
 
@@ -2810,9 +2813,8 @@ acid_damage(struct obj *obj) {
 int
 water_damage(struct obj * obj, const char *ostr, boolean force)
 {
-    if (!obj) {
+    if (!obj)
         return 0;
-    }
 
     if (snuff_lit(obj))
         return 2;
