@@ -289,7 +289,7 @@ maketrap(struct level *lev, int x, int y, int typ)
             statue =
                 mkcorpstat(STATUE, NULL, &mons[rndmonnum(&lev->z)], lev, x, y,
                            FALSE);
-            mtmp = makemon(&mons[statue->corpsenm], lev, 0, 0, NO_MM_FLAGS);
+            mtmp = makemon(&mons[statue->corpsenm], lev, COLNO, ROWNO, NO_MM_FLAGS);
             if (!mtmp)
                 break;  /* should never happen */
             while (mtmp->minvent) {

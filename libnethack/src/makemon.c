@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-06-01 */
+/* Last modified by Sean Hunt, 2014-08-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -904,7 +904,7 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
     unsigned gpflags = (mmflags & MM_IGNOREWATER) ? MM_IGNOREWATER : 0;
 
     /* if caller wants random location, do it here */
-    if (x == 0 && y == 0) {
+    if (x == COLNO && y == ROWNO) {
         int tryct = 0;  /* careful with bigrooms */
         struct monst fakemon;
 
@@ -922,6 +922,11 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
             y = bypos.y;
         } else
             return NULL;
+    }
+
+    if (!isok(x, y)) {
+        impossible("invalid location in makemon()");
+        return NULL;
     }
 
     /* Does monster already exist at the position? */
