@@ -1341,6 +1341,9 @@ get_jump_coords(const struct nh_cmd_arg *arg, coord *cc, int magic)
     } else if (u.usteed && u.utrap) {
         pline("%s is stuck in a trap.", Monnam(u.usteed));
         return 0;
+    } else if (u.usteed && !u.usteed->mcanmove) {
+        pline("%s won't move sideways, much less upwards.", Monnam(u.usteed));
+        return 0;
     }
 
     pline("Where do you want to jump?");
