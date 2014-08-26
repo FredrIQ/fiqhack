@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-08-25 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -31,7 +31,7 @@
 # define MS_ARREST      21      /* "Stop in the name of the law!" (Kops) */
 # define MS_SOLDIER     22      /* army and watchmen expressions */
 # define MS_GUARD       23      /* "Please drop that gold and follow me." */
-# define MS_DJINNI      24      /* "Thank you for freeing me!" */
+# define MS_WISHGIVER   24      /* "Thank you for freeing me!" */
 # define MS_NURSE       25      /* "Take off your shirt, please." */
 # define MS_SEDUCE      26      /* "Hello, sailor." (Nymphs) */
 # define MS_VAMPIRE     27      /* vampiric seduction, Vlad's exclamations */

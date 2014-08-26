@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-08-25 */
 /* Copyright 1991, M. Stephenson */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -419,20 +419,12 @@ quest_chat(struct monst *mtmp)
 void
 quest_talk(struct monst *mtmp)
 {
-    if (mtmp->m_id == Qstat(leader_m_id)) {
+    if (mtmp->m_id == Qstat(leader_m_id))
         leader_speaks(mtmp);
-        return;
-    }
-    switch (mtmp->data->msound) {
-    case MS_NEMESIS:
+    else if (mtmp->data->msound == MS_NEMESIS)
         nemesis_speaks();
-        break;
-    case MS_DJINNI:
+    else if (mtmp->data == &mons[PM_PRISONER])
         prisoner_speaks(mtmp);
-        break;
-    default:
-        break;
-    }
 }
 
 void
