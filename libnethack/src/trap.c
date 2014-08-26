@@ -812,10 +812,10 @@ dotrap(struct trap *trap, unsigned trflags)
         seetrap(trap);
         if (Sleep_resistance || breathless(youmonst.data)) {
             pline("You are enveloped in a cloud of gas!");
-            break;
+        } else {
+            pline("A cloud of gas puts you to sleep!");
+            helpless(rnd(25), hr_asleep, "sleeping", NULL);
         }
-        pline("A cloud of gas puts you to sleep!");
-        helpless(rnd(25), hr_asleep, "sleeping", NULL);
         steedintrap(trap, NULL);
         break;
 
