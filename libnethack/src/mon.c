@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-29 */
+/* Last modified by Sean Hunt, 2014-08-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1552,7 +1552,7 @@ mondead(struct monst *mtmp)
                     NO_MM_FLAGS);
             break;
         case 2:        /* randomly */
-            makemon(mtmp->data, level, 0, 0, NO_MM_FLAGS);
+            makemon(mtmp->data, level, COLNO, ROWNO, NO_MM_FLAGS);
             break;
         default:
             break;
@@ -2128,9 +2128,9 @@ m_respond(struct monst *mtmp)
         }
         if (!rn2(10)) {
             if (!rn2(13))
-                makemon(&mons[PM_PURPLE_WORM], level, 0, 0, NO_MM_FLAGS);
+                makemon(&mons[PM_PURPLE_WORM], level, ROWNO, COLNO, NO_MM_FLAGS);
             else
-                makemon(NULL, level, 0, 0, NO_MM_FLAGS);
+                makemon(NULL, level, ROWNO, COLNO, NO_MM_FLAGS);
 
         }
         aggravate();

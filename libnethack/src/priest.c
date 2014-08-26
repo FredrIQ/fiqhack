@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Sean Hunt, 2014-08-25 */
 /* Copyright (c) Izchak Miller, Steve Linhart, 1989.              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -179,16 +179,40 @@ void
 priestini(struct level *lev, struct mkroom *sroom, int sx, int sy,
           boolean sanctum)
 {       /* is it the seat of the high priest? */
-    struct monst *priest;
+    struct monst *priest = NULL;
     struct obj *otmp;
     int cnt;
 
-    if (MON_AT(lev, sx + 1, sy))
-        rloc(m_at(lev, sx + 1, sy), FALSE);     /* insurance */
+    coord *priest_pos, pos_array[] = {
+        { sx + 1, sy },
+        { sx - 1, sy },
+        { sx, sy + 1 },
+        { sx, sy - 1 },
+        { sx, sy },
+        { COLNO, ROWNO },
+    };
 
-    priest =
-        makemon(&mons[sanctum ? PM_HIGH_PRIEST : PM_ALIGNED_PRIEST], lev,
-                sx + 1, sy, NO_MM_FLAGS);
+    /* Search for a good position for the priest. The -1 in the array bound is
+     * to ensure that we stop on the { COLNO, ROWNO } entry which is not ok. Do
+     * not pass a monster to goodpos(), because we will move any monster later.
+     */
+    for (priest_pos = pos_array;
+         !goodpos(lev, priest_pos->x, priest_pos->y, NULL, 0) &&
+         (priest_pos < pos_array + ARRAY_SIZE(pos_array) - 1);
+         ++priest_pos)
+         {}
+    
+    if (!isok(priest_pos->x, priest_pos->y)) {
+        impossible("Unable to find location for priest in shrine");
+    } else {
+        if (MON_AT(lev, priest_pos->x, priest_pos->y))
+            rloc(m_at(lev, priest_pos->x, priest_pos->y), FALSE);
+
+        priest =
+            makemon(&mons[sanctum ? PM_HIGH_PRIEST : PM_ALIGNED_PRIEST], lev,
+                    priest_pos->x, priest_pos->y, NO_MM_FLAGS);
+    }
+
     if (priest) {
         EPRI(priest)->shroom = (sroom - lev->rooms) + ROOMOFFSET;
         EPRI(priest)->shralign = Amask2align(lev->locations[sx][sy].altarmask);
