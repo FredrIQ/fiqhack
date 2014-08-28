@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-08-25 */
+/* Last modified by Sean Hunt, 2014-08-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1124,10 +1124,13 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                     && ((bigmonst(mdat) && !can_ooze(mon)) ||
                         (curr_mon_load(mon) > 600)))
                     continue;
-                /* The monster avoids a particular type of trap if it's
-                   familiar with the trap type.  Pets get ALLOW_TRAPS and
-                   checking is done in dogmove.c.  In either case, "harmless"
-                   traps are neither avoided nor marked in info[]. */
+                /* The monster avoids a particular type of trap if it's familiar
+                 * with the trap type.  Pets get ALLOW_TRAPS and checking is
+                 * done in dogmove.c.  In either case, "harmless" traps are
+                 * neither avoided nor marked in info[]. Quest leaders avoid
+                 * traps even if they aren't familiar with them, because they're
+                 * being careful or something.
+                 */
                 {
                     struct trap *ttmp = t_at(level, nx, ny);
 
@@ -1157,7 +1160,8 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                                 (!amorphous(mdat) && !webmaker(mdat)))
                             ) {
                             if (!(flag & ALLOW_TRAPS)) {
-                                if (mon->mtrapseen & (1L << (ttmp->ttyp - 1)))
+                                if ((mon->mtrapseen & (1L << (ttmp->ttyp - 1))) ||
+                                    mon->data == &pm_leader)
                                     continue;
                             }
                             info[cnt] |= ALLOW_TRAPS;
