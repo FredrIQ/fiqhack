@@ -67,6 +67,8 @@ static int tileset_cols;
 
 static int hangup_mode = 0;
 
+static SDL_TimerID timerid;
+
 static fd_set monitored_fds;
 static int monitored_fds_count_or_max;
 
@@ -393,6 +395,8 @@ update_window_sizes(int hard_update)
 static void
 exit_handler(void)
 {
+    SDL_RemoveTimer(timerid);
+
 #ifdef ORDERLY_SHUTDOWN
     /* The frees of "font" and "render" each cause crashes on Windows. Because
        the process is about to exit anyway, just let them leak for now. */
@@ -464,7 +468,7 @@ sdl_hook_init(int *h, int *w, const char *title)
            contributing to the polling mess. */
         FD_ZERO(&monitored_fds);
         monitored_fds_count_or_max = 0;
-        SDL_AddTimer(10, timer_callback, NULL);
+        timerid = SDL_AddTimer(10, timer_callback, NULL);
 
         winwidth = winheight = 0;
 
