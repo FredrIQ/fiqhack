@@ -4358,27 +4358,28 @@ sub run_command {
             $exefile or return ("No input file specified", '', '');
             $outfile or return ("No output file specified", '', '');
 
-	    # First, uncondtionally copy the file, to stop Win32::Exe
-	    # tampering with the original.
-	    open my $fhfrom, "<$binary_layers", $exefile
-		or return ("Could not open '$exefile': $!", '', '');
-	    open my $fhto, ">$binary_layers", $outfile
-		or return ("Could not open '$outfile': $!", '', '');
-	    print $fhto $_ for <$fhfrom>;
-	    close $fhfrom; close $fhto;
+            # First, uncondtionally copy the file, to stop Win32::Exe
+            # tampering with the original.
+            open my $fhfrom, "<$binary_layers", $exefile
+                or return ("Could not open '$exefile': $!", '', '');
+            open my $fhto, ">$binary_layers", $outfile
+                or return ("Could not open '$outfile': $!", '', '');
+            print $fhto $_ for <$fhfrom>;
+            close $fhfrom; close $fhto;
+            chmod 0755, $outfile; # mark it executable
 
-	    # If not on Windows, stop here.
-	    $os_parsed eq 'MSWin32' or return (undef, '', '');
+            # If not on Windows, stop here.
+            $os_parsed eq 'MSWin32' or return (undef, '', '');
 
             $win32_exe_available or return
                 ("Cannot manipulate executables: Win32::Exe missing", '', '');
 
-	    # Now do the operations.
-	    my $exe = Win32::Exe->new($outfile)
-		or return("Could not load '$outfile': $!", "", "");
+            # Now do the operations.
+            my $exe = Win32::Exe->new($outfile)
+                or return("Could not load '$outfile': $!", "", "");
 
-	    $exe = $exe->create_resource_section
-		if $exe->can_create_resource_section;
+            $exe = $exe->create_resource_section
+                if $exe->can_create_resource_section;
             $operations->($exe);
 
             $exe->write
