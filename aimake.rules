@@ -201,7 +201,7 @@ $copyright = "(c) Stichting Mathematisch Centrum, Amsterdam, 1985; Alex Smith 20
         _build_man_page => {
             object => 'path:doc/nethack4.6.pod',
             command => ["cmd:pod2man", "optstring:-s 6",
-                        "optstring:-n NETHACK4", 'optionset:os_osx_linux',
+                        "optstring:-n NETHACK4",
                         "optpath:-c :bpath:Games Manual", # hack :-(
                         "optpath::", "optpath::bpath:doc/nethack4.6"],
             output => "bpath:doc/nethack4.6",
@@ -429,6 +429,7 @@ $copyright = "(c) Stichting Mathematisch Centrum, Amsterdam, 1985; Alex Smith 20
             command => ["intcmd:symlink",
                         "optpath:-o:bpath:doc/nethack4-sdl.6",
                         "optpath::bpath:doc/nethack4.6",
+                        "bpath:doc/nethack4.6",
                         "bpath:tilesets/dat/fonts/font14.png"],
             output_from_optpath => '-o',
             verb => 'symlinked',
