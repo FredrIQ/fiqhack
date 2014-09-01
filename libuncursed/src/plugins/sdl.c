@@ -49,6 +49,7 @@ static int winwidth = 132;    /* width of the window, in units of fontwidth */
 static int winheight = 39;    /* height of the window, in units of fontheight */
 
 static int resize_queued = 0;
+static int resized_recently = 0;
 
 static int mouse_active = 0;
 static int mouse_hovering = 0;
@@ -337,7 +338,12 @@ update_window_sizes(int hard_update)
     screen = SDL_CreateTexture(render, SDL_PIXELFORMAT_RGBA8888,
                                SDL_TEXTUREACCESS_TARGET, worig, horig);
 
+#if 0
+    /* Now commented out because this is effectively equivalent to the
+       default, but gives slightly more bizarre render behaviour */
     SDL_RenderSetLogicalSize(render, worig, horig);
+#endif
+
     SDL_SetRenderTarget(render, screen);
     rendertarget = screen;
 
@@ -796,23 +802,6 @@ drain_userevents(void)
     }
 }
 
-static int
-resize_event_pending(void)
-{
-    SDL_Event event_buffer;
-
-    if (SDL_PeepEvents(&event_buffer, 1, SDL_PEEKEVENT,
-                          SDL_WINDOWEVENT, SDL_WINDOWEVENT) > 0) {
-        return
-            event_buffer.window.event == SDL_WINDOWEVENT_RESIZED ||
-            event_buffer.window.event == SDL_WINDOWEVENT_SIZE_CHANGED ||
-            event_buffer.window.event == SDL_WINDOWEVENT_MAXIMIZED ||
-            event_buffer.window.event == SDL_WINDOWEVENT_RESTORED;
-    }
-
-    return 0;
-}
-
 #define TEXTEDITING_FILTER_TIME 2       /* milliseconds */
 int
 sdl_hook_getkeyorcodepoint(int timeout_ms)
@@ -829,6 +818,7 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
 
     do {
         SDL_Event e;
+        long ticks_left = tick_target - SDL_GetTicks();
 
         if (resize_queued) {
             update_window_sizes(0);
@@ -838,18 +828,29 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
             return KEY_RESIZE + KEY_BIAS;
         }
 
+        if (resized_recently && (timeout_ms == -1 || ticks_left > 150))
+            ticks_left = 150;
+        else if (timeout_ms == -1)
+            ticks_left = -1;
+
         if ((key_tick_target != -1 ?
              SDL_WaitEventTimeout(&e, key_tick_target - SDL_GetTicks()) :
-             timeout_ms == -1 ? SDL_WaitEvent(&e) :
-             SDL_WaitEventTimeout(&e, tick_target - SDL_GetTicks())) == 0) {
+             ticks_left == -1 ? SDL_WaitEvent(&e) :
+             SDL_WaitEventTimeout(&e, ticks_left)) == 0) {
 
             /* WaitEventTimeout returns 0 on timeout expiry; both functions
                return 0 on error. */
 
-            drain_userevents();
-            if (key_tick_target != -1)
-                return kc;
-            return KEY_SILENCE + KEY_BIAS;
+            if (resized_recently) {
+                resized_recently = 0;
+                update_window_sizes(0);
+                continue;
+            } else {
+                drain_userevents();
+                if (key_tick_target != -1)
+                    return kc;
+                return KEY_SILENCE + KEY_BIAS;
+            }
         }
 
         switch (e.type) {
@@ -863,19 +864,21 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
 
             /* The events we're interested in here are closing the window, and
                resizing the window. We also need to redraw, if the window
-               manager requests that. */
+               manager requests that.
+
+               We have a problem implementing this, in that on some window
+               managers, there are no resize signals sent during the resize, and
+               then a huge number are sent all at once, but added to the SDL
+               queue one at a time (so we can't just look ahead in the
+               queue). So we set a small timeout, and handle the resize once the
+               timeout is up. The timeout is implemented by this function, using
+               the resized_recently global. */
 
             if (e.window.event == SDL_WINDOWEVENT_RESIZED ||
                 e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED ||
                 e.window.event == SDL_WINDOWEVENT_MAXIMIZED ||
-                e.window.event == SDL_WINDOWEVENT_RESTORED) {
-
-                /* Ignore the resize event if there are other resize events in
-                   the queue. This is to reduce repeated screen redraws during
-                   resizing. */
-                if (!resize_event_pending())
-                    update_window_sizes(0);
-            }
+                e.window.event == SDL_WINDOWEVENT_RESTORED)
+                resized_recently = 1;
 
             if (e.window.event == SDL_WINDOWEVENT_EXPOSED)
                 sdl_hook_fullredraw();
