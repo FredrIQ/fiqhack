@@ -16,6 +16,9 @@
 
 #define SDL_MAIN_HANDLED        /* don't use SDL's main, use the calling
                                    process's */
+
+#undef __MINGW32__              /* work around a bug in SDL_platform.h */
+
 #include <SDL2/SDL.h>
 
 #include <stdint.h>
