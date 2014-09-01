@@ -1354,6 +1354,54 @@ An internal command that takes config options as its arguments
 "name=value" form.  Any values that are aimake objects that represent files
 will be converted to pathnames as the operating system understands them.
 
+=item C<intcmd:exeparams>
+
+This internal command is provided to change the settings of Windows executable
+files (which embed information about the file into the file itself).  On most
+platforms, it just copies its input to its output.  On Windows, its input must
+be an executable file, and the specified changes are made as the file is
+copied.  Thus, you can run this command unconditionally on any platform, and
+get the desired effect.
+
+This command will not function correctly on Windows unless the Perl module
+C<Win32::Exe> is installed.  (It often will be, however.)
+
+This command takes an C<optpath:> that represents the executable to create an
+altered version of, and other arguments:
+
+=over 4
+
+=item C<-o>
+
+An C<optpath> specifying where to output the resulting executable.  This must
+be specified.
+
+=item C<--icon>
+
+An C<optpath> specifying a file to copy the icon from (C<.ico>, C<.dll> or
+C<.exe>)
+
+=item C<--info>
+
+An C<optstring> of the form C<--info key=value>.  This updates the
+executable's "Details" shown in its properties.  For example, you could write
+C<--info FileVersion=1.0.0> to specify a version number.
+
+=item C<--gui>
+
+=item C<--console>
+
+Specifies whether the program needs to have a console window opened for it
+when it loads (C<--console>), or whether it draws its own (C<--gui>).  These
+are C<optstring>s.
+
+=item C<--manifest>
+
+An C<optpath> which specifies a file from which to read the executable's
+manifest settings.
+
+=back
+
 =item C<intcmd:filetest>
 
 An internal command that takes an C<optstring:> and an C<optpath:>, and either
@@ -3283,6 +3331,14 @@ use Scalar::Util qw/refaddr/;
 use Safe;
 use Storable qw/store_fd fd_retrieve dclone/; # why the naming inconsistency?
 use warnings FATAL => qw/recursion/; # crashes with backtraces > infinite loops
+my $win32_exe_available;
+BEGIN {
+    eval {
+        require Win32::Exe;
+        Win32::Exe->import;
+        $win32_exe_available = 1;
+    }
+}
 
 ####### Global variables and constants
 
@@ -4249,6 +4305,87 @@ sub run_command {
             scalar @opts == 1 and return(undef, '', '');
             scalar @opts == 2 or return ("Wrong number of arguments", '', '');
             return ("'opts[0]' does not equal '$opts[1]'", '', '');
+        } elsif ($cmd eq 'intcmd:exeparams') {
+            my $exefile = undef;
+            my $outfile = undef;
+            my $operations = sub { return $_[0] };
+            for my $o (@opts) {
+                my ($objtype, $objvalue, $objinner) = parse_objname $o;
+                my $oldopts = $operations;
+                if ($objtype eq 'optpath') {
+                    if ($objvalue eq '') {
+                        $exefile = aipath2ospath $objinner;
+                    } elsif ($objvalue eq '-o') {
+                        $outfile = aipath2ospath $objinner;
+                    } elsif ($objvalue eq '--icon') {
+                        $operations = sub {
+                            $_[0]->set_single_group_icon($objinner);
+                            goto &$oldopts;
+                        };
+                    } elsif ($objvalue eq '--manifest') {
+                        $operations = sub {
+                            $_[0]->set_manifest(aipath2ospath $objinner);
+                            goto &$oldopts;
+                        };
+                    } else {
+                        return ("Unrecognised option '$objvalue'", '', '');
+                    }
+                } elsif ($objtype eq 'optstring') {
+                    if ($objvalue =~ /^--info\s+(\w*)=(.*)/) {
+                        my ($k, $v) = ($1, $2);
+                        $operations = sub {
+                            my $vi = $_[0]->get_version_info;
+                            $vi->{$k} = $v;
+                            $_[0]->set_version_info($vi);
+                            goto &$oldopts;
+                        };
+                    } elsif ($objvalue eq '--gui') {
+                        $operations = sub {
+                            $_[0]->set_subsystem_windows;
+                            goto &$oldopts;
+                        };
+                    } elsif ($objvalue eq '--console') {
+                        $operations = sub {
+                            $_[0]->set_subsystem_console;
+                            goto &$oldopts;
+                        };
+                    } else {
+                        return ("Unrecognised option '$objvalue'", '', '');
+                    }
+                }
+            }
+
+            $exefile or return ("No input file specified", '', '');
+            $outfile or return ("No output file specified", '', '');
+
+	    # First, uncondtionally copy the file, to stop Win32::Exe
+	    # tampering with the original.
+	    open my $fhfrom, "<$binary_layers", $exefile
+		or return ("Could not open '$exefile': $!", '', '');
+	    open my $fhto, ">$binary_layers", $outfile
+		or return ("Could not open '$outfile': $!", '', '');
+	    print $fhto $_ for <$fhfrom>;
+	    close $fhfrom; close $fhto;
+
+	    # If not on Windows, stop here.
+	    $os_parsed eq 'MSWin32' or return (undef, '', '');
+
+            $win32_exe_available or return
+                ("Cannot manipulate executables: Win32::Exe missing", '', '');
+
+	    # Now do the operations.
+	    my $exe = Win32::Exe->new($outfile)
+		or return("Could not load '$outfile': $!", "", "");
+
+	    $exe = $exe->create_resource_section
+		if $exe->can_create_resource_section;
+            $operations->($exe);
+
+            $exe->write
+                or return ("Could not write '$outfile': $!", '', '');
+
+            return (undef, '', '');
+
         } elsif ($cmd eq 'intcmd:optionvalues') {
             my $stderr = '';
             my @stdout = ();
