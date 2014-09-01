@@ -551,14 +551,16 @@ header files.  One reason to do this would be if you have code specific to one
 operating system; you can use C<AIMAKE_BUILDOS_> macros to conditionalize your
 code to one operating system, for instance C<AIMAKE_BUILDOS_linux>,
 C<AIMAKE_BUILDOS_MSWin32>, or C<AIMAKE_BUILDOS_darwin> (typically indicating
-Mac OS X).  (The possibilities for the build OS are taken from Perl's C<$^O>
-operating system identification variable.)  Another is to make your code
-depend on aimake configuration options; you can write
-C<AIMAKE_OPTION_packagename> to discover the package name, for instance.  (You
-can use any configuration option or install directory this way; aimake will
-recompile the file in question whenever the the relevant option or directory
-is changed.)  Note that the option value will be used as-is; if you want it as
-a C string, stringify it as follows:
+Mac OS X).  (The possibilities for the build OS are generally taken from
+Perl's C<$^O> operating system identification variable, but C<msys> is folded
+into C<MSWin32> in order to correctly indicate the operating system on which
+the resulting programs will run.)  Another is to make your code depend on
+aimake configuration options; you can write C<AIMAKE_OPTION_packagename> to
+discover the package name, for instance.  (You can use any configuration
+option or install directory this way; aimake will recompile the file in
+question whenever the the relevant option or directory is changed.)  Note that
+the option value will be used as-is; if you want it as a C string, stringify
+it as follows:
 
     #define STRINGIFY_EXPAND(x) STRINGIFY(x)
     #define STRINGIFY(x) #x
@@ -3305,6 +3307,8 @@ my $installing;                   # mode of operation
 my %config_hashes = ();           # configuration
 my ($state, $state_fh, $config);  # state and configuration handling
 my $errorexit = 1;                # for --specific-exit-status
+our $os_parsed = $^O;
+$os_parsed eq 'msys' and $os_parsed = "MSWin32";
 
 ####### Subroutines
 
@@ -4573,7 +4577,7 @@ sub restrict_to_permission
 
     $> == 0 or return 1; # if we're not elevated, don't bother changing perms
 
-    $^O eq 'MSWin32' and return 1; # can't do this on Windows yet
+    $os_parsed eq 'MSWin32' and return 1; # can't do this on Windows yet
 
     $! = 0;
     if ($permname eq 'ANYONE') {
@@ -4618,7 +4622,7 @@ sub elevate_to_permission
     my $ospath = aipath2ospath $aipath;
 
     $> == 0 or return 1;
-    $^O eq 'MSWin32' and return 1;
+    $os_parsed eq 'MSWin32' and return 1;
 
     -x $ospath && !-d $ospath or (progress_report -1,
         "Warning: " . (friendly_objname $aipath) . " is not an executable " .
@@ -5241,7 +5245,7 @@ sub record_pair_outputs {
     my %obj_to_outdeps = %{+shift}; # both keys and values interned
     my $warnings = shift;
     my $ipair = intern $pair;
-    
+
     progress_report 4, "Setting hashes for successful run of $pair.";
 
     for my $ioldobj (keys %{$state->{outdep_by_pair}{$ipair}}) {
@@ -6325,15 +6329,16 @@ $exeext eq '' and $exeext = '.bin';
 our $longrandomstring = 'AIMAKE_e15d5ce8_c8f0_40c9_9a3f_3b568bcd59d5_';
 our $dllext =       {MSWin32 => '.dll',
                      linux   => '.so',
-                     darwin  => '.dylib'}->{$^O};
+                     darwin  => '.dylib'}->{$os_parsed};
 our $impext =       {MSWin32 => '.dll.a', # MinGW uses this
                      linux   => '.so',
-                     darwin  => '.dylib'}->{$^O};
+                     darwin  => '.dylib'}->{$os_parsed};
 our $symbolprefix = {MSWin32 => '',
                      linux   => '',
-                     darwin  => '_'}->{$^O};
+                     darwin  => '_'}->{$os_parsed};
 $configsafe->share('$libext', '$objext', '$exeext', '$dllext', '$impext',
-                   '$symbolprefix', '$pointerbits', '$longrandomstring');
+                   '$symbolprefix', '$pointerbits', '$longrandomstring',
+                   '$os_parsed');
 
 # Parse the global config file, from our <DATA>
 $! = 0;
@@ -6411,7 +6416,7 @@ $opt_install and $ipath = ospath2aipath($opt_install);
 # install program, and so that we complain if someone installs aimake suid root
 # (note: do not install aimake suid root, there are numerous reasons it won't
 # work correctly).
-if ($^O ne 'MSWin32' && $> == 0 && !$opt_install_only) {
+if ($os_parsed ne 'MSWin32' && $> == 0 && !$opt_install_only) {
     die ("Please do not run aimake as root.\n" .
          "To install as root, use '-S su' or '-S sudo' as appropriate.");
 }
@@ -6989,7 +6994,7 @@ MAINLOOP: while (1) {
         # - The path to Perl itself. (Algorithm from the Perl manual.)
         my $rprog = $Config{perlpath};
         $rprog .= $Config{_exe} unless
-            $rprog =~ m/$Config{_exe}$/i || $^O eq 'VMS';
+            $rprog =~ m/$Config{_exe}$/i || $os_parsed eq 'VMS';
         push @eprog, '--';
         push @eprog, $rprog;
         # - The path to aimake.
@@ -8209,7 +8214,7 @@ __DATA__
         linux_clflags_depends_on_fpic => {
             object => qr/^optionset:(?:[CL]|CXX)FLAGS$/,
             command => ['intcmd:assert_equal', 'optstring:linux',
-                        "optstring:$^O"],
+                        "optstring:$os_parsed"],
             depends => 'optionset:linux_fpic_option',
             on_failure => 'conditional',
         },
@@ -8523,7 +8528,7 @@ __DATA__
                 'optstring:' .
                 '#ifndef_AIMAKE\\_HEADER\\_INCLUDED ' .
                 '#_define_AIMAKE\\_HEADER\\_INCLUDED ' .
-                "#_define_AIMAKE\\_BUILDOS\\_$^O_1",
+                "#_define_AIMAKE\\_BUILDOS\\_${os_parsed}_1",
                 'optionset:aimake_header_lines',
                 'optstring: #endif'],
             output => 'bpath:aimake/aimake_1.h',
@@ -8802,7 +8807,7 @@ __DATA__
         add_precompiled_header_dependencies => {
             object => qr/^bpath:(?!aimake).*\.h$/s,
             command => ['intcmd:assert_equal',
-                        'optstring:linux', "optstring:$^O"],
+                        'optstring:linux', "optstring:$os_parsed"],
             depends => 'dependencies:precompiled_header:',
             on_failure => 'conditional',
         },
@@ -8813,21 +8818,21 @@ __DATA__
 
         os_detect_linux => {
             command => ['intcmd:assert_equal',
-                        'optstring:linux', "optstring:$^O"],
+                        'optstring:linux', "optstring:$os_parsed"],
             hide_errors => 1,
             output => ['optionset:os_linux', 'optionset:os_osx_linux'],
             outdepends => [],
         },
         os_detect_windows => {
             command => ['intcmd:assert_equal',
-                        'optstring:MSWin32', "optstring:$^O"],
+                        'optstring:MSWin32', "optstring:$os_parsed"],
             hide_errors => 1,
             output => 'optionset:os_windows',
             outdepends => [],
         },
         os_detect_osx => {
             command => ['intcmd:assert_equal',
-                        'optstring:darwin', "optstring:$^O"],
+                        'optstring:darwin', "optstring:$os_parsed"],
             hide_errors => 1,
             output => ['optionset:os_osx', 'optionset:os_osx_linux'],
             outdepends => [],
@@ -9222,7 +9227,7 @@ __DATA__
         },
         linux_bpath_library_option => {
             command => ['intcmd:assert_equal',
-                        'optstring:linux', "optstring:$^O"],
+                        'optstring:linux', "optstring:$os_parsed"],
             hide_errors => 1,
             output => 'optionset:rpath',
             outdepends => 'optionset:linux_rpath',
@@ -9231,7 +9236,7 @@ __DATA__
         windows_rpath => {
             # TODO: Figure out how runtime paths work on Windows.
             command => ['intcmd:assert_equal',
-                        'optstring:MSWin32', "optstring:$^O"],
+                        'optstring:MSWin32', "optstring:$os_parsed"],
             hide_errors => 1,
             output => 'optionset:rpath',
             outdepends => [],
