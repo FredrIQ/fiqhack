@@ -463,7 +463,7 @@ layout_game_windows(void)
     }
 
     if (settings.sidebar != AB_FALSE &&
-        x_remaining > (settings.sidebar ? 19 : 0))
+        x_remaining > (settings.sidebar == AB_AUTO ? 19 : 0))
         allocate_layout_space(&x_remaining, &ui_flags.sidebarwidth,
                               x_remaining, -1);
 
