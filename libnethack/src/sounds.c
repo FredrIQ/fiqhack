@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-08-25 */
 /*      Copyright (c) 1989 Janet Walz, Mike Threepoint */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -611,7 +611,7 @@ domonnoise(struct monst *mtmp)
     case MS_MUMBLE:
         pline_msg = "mumbles incomprehensibly.";
         break;
-    case MS_DJINNI:
+    case MS_WISHGIVER:
         if (mtmp->mtame) {
             verbl_msg = "Sorry, I'm all out of wishes.";
         } else if (mtmp->mpeaceful) {
@@ -692,6 +692,9 @@ domonnoise(struct monst *mtmp)
                 break;
             case PM_TOURIST:
                 verbl_msg = "Aloha.";
+                break;
+            case PM_PRISONER:
+                verbl_msg = "Thank you for freeing me!";
                 break;
             default:
                 pline_msg = "discusses dungeon exploration.";

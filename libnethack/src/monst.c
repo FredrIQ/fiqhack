@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-29 */
+/* Last modified by Sean Hunt, 2014-08-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2405,7 +2405,7 @@ const struct permonst mons[] = {
         LVL(12, 12, 10, 0, 0), G_NOGEN, /* for special levels */
         A(ATTK(AT_WEAP, AD_PHYS, 1, 6),
           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
-        SIZ(WT_HUMAN, 400, 0, MS_DJINNI, MZ_HUMAN), 0, 0,
+        SIZ(WT_HUMAN, 400, 0, MS_HUMANOID, MZ_HUMAN), 0, 0,
         M1_HUMANOID | M1_OMNIVORE,
         M2_NOPOLY | M2_HUMAN | M2_PEACEFUL | M2_STRONG | M2_COLLECT,
         M3_INFRAVISIBLE | M3_CLOSE, HI_DOMESTIC1 | HI_ULINE),
@@ -2545,7 +2545,7 @@ const struct permonst mons[] = {
         LVL(8, 12, -4, 30, -7), (G_NOCORPSE | G_NOGEN),
         A(ATTK(AT_WEAP, AD_PHYS, 1, 3), ATTK(AT_CLAW, AD_PHYS, 1, 3),
           ATTK(AT_BITE, AD_PHYS, 1, 3), NO_ATTK, NO_ATTK, NO_ATTK),
-        SIZ(WT_HUMAN, 400, 0, MS_DJINNI, MZ_HUMAN), MR_FIRE | MR_POISON, 0,
+        SIZ(WT_HUMAN, 400, 0, MS_WISHGIVER, MZ_HUMAN), MR_FIRE | MR_POISON, 0,
         M1_HUMANOID | M1_POIS | M1_SWIM,
         M2_NOPOLY | M2_DEMON | M2_STALK | M2_HOSTILE | M2_NASTY | M2_COLLECT,
         M3_INFRAVISIBLE | M3_INFRAVISION, CLR_BLUE),
@@ -2780,7 +2780,7 @@ const struct permonst mons[] = {
         LVL(7, 12, 4, 30, 0), (G_NOGEN | G_NOCORPSE),
         A(ATTK(AT_WEAP, AD_PHYS, 2, 8),
           NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK, NO_ATTK),
-        SIZ(1500, 400, 0, MS_DJINNI, MZ_HUMAN), MR_POISON | MR_STONE, 0,
+        SIZ(1500, 400, 0, MS_WISHGIVER, MZ_HUMAN), MR_POISON | MR_STONE, 0,
         M1_HUMANOID | M1_FLY | M1_POIS,
         M2_NOPOLY | M2_STALK | M2_COLLECT, M3_INFRAVISIBLE, CLR_YELLOW),
     MON("sandestin", S_DEMON,

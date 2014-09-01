@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-08-25 */
+/* Last modified by Sean Hunt, 2014-08-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -50,7 +50,7 @@ burnarmor(struct monst *victim)
         return 0;
 #define burn_dmg(obj,descr) erode_obj(obj, descr, ERODE_BURN, TRUE, FALSE)
     while (1) {
-        switch (rn2(5)) {
+        switch (rn2(6)) {
         case 0:
             item = which_armor(victim, os_armh);
             if (!burn_dmg(item, item ?
@@ -74,9 +74,14 @@ burnarmor(struct monst *victim)
                 burn_dmg(item, "shirt");
             return TRUE;
         case 2:
-            item = which_armor(victim, os_arms);
-            if (!burn_dmg(item, "wooden shield"))
-                continue;
+            if ((item = which_armor(victim, os_arms))) {
+                if (!burn_dmg(item, "wooden shield"))
+                    continue;
+            } else if (victim == &youmonst && u.twoweap &&
+                       (item = which_armor(victim, os_swapwep))) {
+                if (!burn_dmg(item, xname(item)))
+                    continue;
+            }
             break;
         case 3:
             item = which_armor(victim, os_armg);
@@ -86,6 +91,11 @@ burnarmor(struct monst *victim)
         case 4:
             item = which_armor(victim, os_armf);
             if (!burn_dmg(item, "boots"))
+                continue;
+            break;
+        case 5:
+            item = which_armor(victim, os_wep);
+            if (item && !burn_dmg(item, xname(item)))
                 continue;
             break;
         }
@@ -812,10 +822,10 @@ dotrap(struct trap *trap, unsigned trflags)
         seetrap(trap);
         if (Sleep_resistance || breathless(youmonst.data)) {
             pline("You are enveloped in a cloud of gas!");
-            break;
+        } else {
+            pline("A cloud of gas puts you to sleep!");
+            helpless(rnd(25), hr_asleep, "sleeping", NULL);
         }
-        pline("A cloud of gas puts you to sleep!");
-        helpless(rnd(25), hr_asleep, "sleeping", NULL);
         steedintrap(trap, NULL);
         break;
 
