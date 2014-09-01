@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-08-17 */
+/* Last modified by Alex Smith, 2014-09-01 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -408,7 +408,7 @@ layout_game_windows(void)
     allocate_layout_space(&y_remaining, &ui_flags.msgheight,
                           1, settings.msgheight);     /* minimal message area */
     allocate_layout_space(&y_remaining, &ui_flags.mapheight,
-                          ROWNO, desired_map_y);    /* character region of map */
+                          ROWNO, desired_map_y);   /* character region of map */
     allocate_layout_space(&y_remaining, &ui_flags.statusheight,
                           2, settings.status3 ? 3 : 2);        /* status area */
     /* The tiles region of the map is important, but unlike the character
@@ -416,7 +416,7 @@ layout_game_windows(void)
        using tiles, the tiles and character regions are the same, so this is a
        no-op. */
     allocate_layout_space(&y_remaining, &ui_flags.mapheight,
-                          y_remaining, desired_map_y);  /* tiles region of map */
+                          y_remaining, desired_map_y); /* tiles region of map */
     allocate_layout_space(&y_remaining, &ui_flags.msgheight,
                           2, settings.msgheight);          /* 4 more messages */
     allocate_layout_space(&y_remaining, &ui_flags.statusheight,
