@@ -3,7 +3,7 @@
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
-#if defined(WIN32)
+#if defined(AIMAKE_BUILDOS_MSWin32)
 # define WIN32_LEAN_AND_MEAN
 # include <Windows.h> /* must be before compilers.h */
 

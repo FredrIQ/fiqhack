@@ -343,7 +343,7 @@ the development headers and import libraries from http://www.libsdl.org; also
 download the library itself.  Then copy the entire `include/SDL2` subdirectory
 from the appropriate processor-dependent directory of the SDL distribution, to
 the `c/include` folder that was created when you installed Strawberry Perl (so
-that it beomes `c/include/SDL`); and all the files `lib/*.a` from the
+that it beomes `c/include/SDL2`); and all the files `lib/*.a` from the
 appropriate processor-dependent directory of the SDL distribution to the
 `c/lib` folder that was created when you installed Strawberry Perl (so that
 they become `c/lib/libSDL2.a`, etc.).  Finally, copy the file `SDL2.dll` that
@@ -353,7 +353,7 @@ you just created.
 Once you've done this, open a command prompt, change to the build directory,
 and type:
 
-    perl ../nethack4/aimake -i ../install --with=jansson --directory-layout=single_directory
+    perl ..\nethack4\aimake -i ..\install --with=jansson --directory-layout=single_directory
 
 aimake should compile and install the entirety of NetHack 4 for you into the
 install directory.  In order to run the console port, change directory to the

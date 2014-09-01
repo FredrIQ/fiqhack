@@ -14,7 +14,7 @@
 # include <stdio.h>
 # include <limits.h>
 
-# if !defined(WIN32)    /* UNIX + APPLE */
+# if !defined(AIMAKE_BUILDOS_MSWin32)    /* UNIX + APPLE */
 #  include <unistd.h>
 #  include <strings.h>
 #  define FILE_OPEN_MASK 0660

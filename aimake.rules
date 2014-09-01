@@ -2,6 +2,12 @@
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
+
+$version = "4.3.0";
+# There's a maximum combined length on the executable info structure.
+# So this is written concisely, so as to be able to fit everything in.
+$copyright = "(c) Stichting Mathematisch Centrum, Amsterdam, 1985; Alex Smith 2010-2014; Daniel Thaler 2011-2012; and many others";
+
 {
     options => {
         packagename => 'nethack4',
@@ -195,7 +201,7 @@
         _build_man_page => {
             object => 'path:doc/nethack4.6.pod',
             command => ["cmd:pod2man", "optstring:-s 6",
-                        "optstring:-n NETHACK4", 'optionset:os_osx_linux',
+                        "optstring:-n NETHACK4",
                         "optpath:-c :bpath:Games Manual", # hack :-(
                         "optpath::", "optpath::bpath:doc/nethack4.6"],
             output => "bpath:doc/nethack4.6",
@@ -376,30 +382,54 @@
             output => "bpath:readme-saves",
         },
 
-        _main_executable_link => {
-            # We're trying to install a symlink from nethack4-sdl to nethack4.
-            # Thus we first need a link from nethack4 to main, so that this
-            # works correctly regardless of the platform's symlink behaviour.
-            command => ["intcmd:symlink",
+        # On POSIX platforms, we want a symlink from nethack4 to nethack4-sdl.
+        # On Windows, the two executables have different exeparams.
+        # Thus, the setup is as follows:
+        # nethack/src/main.c/main      # generated executable
+        # nethack/src/main.c/nethack4  # console executable
+        # nethack/src/sdl/nethack4     # SDL executable
+        # nethack/src/sdl/nethack4-sdl # link to nethack4
+        _tty_params => {
+            object => "bpath:nethack/src/main.c/main$exeext",
+            command => ["intcmd:exeparams", "optpath::",
                         "optpath:-o:bpath:nethack/src/main.c/nethack4$exeext",
-                        "optpath::bpath:nethack/src/main.c/main$exeext",
-                        "bpath:nethack/src/main.c/main$exeext"],
+			"optstring:--info InternalName=nethack4-tty",
+			"optstring:--info LegalCopyright=$copyright",
+			"optstring:--info FileVersion=$version",
+			"optstring:--info ProductVersion=$version",
+			"optstring:--info ProductName=NetHack 4",
+			"optstring:--info FileDescription=NetHack 4 (console)",
+                        "optstring:--console"],
             output_from_optpath => '-o',
-            verb => 'symlinked',
+        },
+        _sdl_params => {
+            object => "bpath:nethack/src/main.c/main$exeext",
+            command => ["intcmd:exeparams", "optpath::", "optstring:--gui",
+                        "optpath:-o:bpath:nethack/src/sdl/nethack4$exeext",
+			"optstring:--info InternalName=nethack4-sdl",
+			"optstring:--info OriginalFilename=nethack4-sdl.exe",
+			"optstring:--info LegalCopyright=$copyright",
+			"optstring:--info FileVersion=$version",
+			"optstring:--info ProductVersion=$version",
+			"optstring:--info ProductName=NetHack 4",
+			"optstring:--info FileDescription=NetHack 4 (GUI)",
+                        "bpath:tilesets/dat/fonts/font14.png"],
+            output_from_optpath => '-o',
         },
         _sdl_link => {
-            command => ["intcmd:symlink",
-                        "optpath:-o:bpath:nethack/src/main.c/nethack4-sdl$exeext",
-                        "optpath::bpath:nethack/src/main.c/nethack4$exeext",
-                        "bpath:nethack/src/main.c/nethack4$exeext",
+            object => "bpath:nethack/src/sdl/nethack4$exeext",
+            command => ["intcmd:symlink", "optpath::",
+                        "optpath:-o:bpath:nethack/src/sdl/nethack4-sdl$exeext",
                         "bpath:tilesets/dat/fonts/font14.png"],
             output_from_optpath => '-o',
             verb => 'symlinked',
         },
+
         _man_sdl_symlink => {
             command => ["intcmd:symlink",
                         "optpath:-o:bpath:doc/nethack4-sdl.6",
                         "optpath::bpath:doc/nethack4.6",
+                        "bpath:doc/nethack4.6",
                         "bpath:tilesets/dat/fonts/font14.png"],
             output_from_optpath => '-o',
             verb => 'symlinked',
@@ -423,15 +453,15 @@
             object => qr=^bpath:libjansson/libjansson\Q$dllext\E[.\d]*$=s,
             install_dir => 'libdir',
         },
-        _install_main => {
-            object => "bpath:nethack/src/main.c/main$exeext",
+        _install_tty => {
+            object => "bpath:nethack/src/main.c/nethack4$exeext",
             install_dir => "gamesbindir",
-            install_name => "nethack4$exeext",
             install_elevation => "games",
         },
-        _install_sdl_link => {
-            object => "bpath:nethack/src/main.c/nethack4-sdl$exeext",
+        _install_sdl => {
+            object => "bpath:nethack/src/sdl/nethack4-sdl$exeext",
             install_dir => "gamesbindir",
+            install_elevation => "games",
         },
         _install_server => {
             object => "bpath:nethack_server/src/srvmain.c/srvmain$exeext",
@@ -540,12 +570,12 @@
             command => ["intcmd:nop",
                         "bpath:nethack_server/src/srvmain.c/srvmain$exeext"],
             install_dir => "gamesstatedir",
-            install_name => "dumps/README",            
+            install_name => "dumps/README",
         },
         _install_saves_note => {
             object => "bpath:readme-saves",
             install_dir => "gamesstatedir",
-            install_name => "README",            
+            install_name => "README",
         },
 #        _install_desktop_file => {
 #            object => "path:dist/common/nethack4.desktop",

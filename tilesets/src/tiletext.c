@@ -580,7 +580,7 @@ fopen_text_file(const char *filename, const char *type)
 
     if (!strcmp(type, RDTMODE))
         write_mode = FALSE;
-    else if (!strcmp(type, WRTMODE)) {
+    else if (!strcmp(type, WRTMODE) || !strcmp(type, "w+")) {
         /* Seems like Mingw32's fscanf is confused by the CR/LF issue */
         /* Force text output in this case only */
 #ifdef AIMAKE_BUILDOS_MSWin32
