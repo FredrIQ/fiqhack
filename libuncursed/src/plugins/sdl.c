@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-07-31 */
+/* Last modified by Alex Smith, 2014-09-01 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -46,9 +46,6 @@ static int winwidth = 132;    /* width of the window, in units of fontwidth */
 static int winheight = 39;    /* height of the window, in units of fontheight */
 
 static int resize_queued = 0;
-static int suppress_resize = 0;
-static int ignore_resize_count = 0;
-static int redraw_queued = 0;
 
 static int mouse_active = 0;
 static int mouse_hovering = 0;
@@ -315,9 +312,8 @@ winloc_to_charloc(int x_pixels, int y_pixels, int *x_chars, int *y_chars)
 static void
 update_window_sizes(int hard_update)
 {
-    /* We set the window's minimum size to 80x24 times the font size; increase
-       the window to the minimum size if necessary; and decrease the window to
-       an integer multiple of the font size if possible. */
+    /* We set the window's minimum size to 80x24 times the font size. We don't
+       otherwise try to control the size; it causes too many problems. */
     int w, h, worig, horig;
 
     SDL_GetWindowSize(win, &w, &h);
@@ -327,47 +323,71 @@ update_window_sizes(int hard_update)
     w /= fontwidth;
     h /= fontheight;
 
-    if (w < MINCHARWIDTH)
-        w = MINCHARWIDTH;
-    if (h < MINCHARHEIGHT)
-        h = MINCHARHEIGHT;
-
-    if (w * fontwidth != worig || h * fontheight != horig) {
-        SDL_SetWindowSize(win, w * fontwidth, h * fontheight);
-        ignore_resize_count++;
-    }
-
-    if (hard_update)
+    if (hard_update && font)
         SDL_SetWindowMinimumSize(win, MINCHARWIDTH * fontwidth,
                                  MINCHARHEIGHT * fontheight);
 
     if (screen)
         SDL_DestroyTexture(screen);
     screen = SDL_CreateTexture(render, SDL_PIXELFORMAT_RGBA8888,
-                               SDL_TEXTUREACCESS_TARGET,
-                               w * fontwidth, h * fontheight);
+                               SDL_TEXTUREACCESS_TARGET, worig, horig);
 
+    SDL_RenderSetLogicalSize(render, worig, horig);
     SDL_SetRenderTarget(render, screen);
     rendertarget = screen;
 
-    if (w != winwidth || h != winheight || hard_update) {
-        SDL_RenderSetLogicalSize(render, w * fontwidth, h * fontheight);
+    /* Render a message to tell the user what's going on. There are two reasons
+       to do this: a) especially when using tiles regions, the redraw can be
+       very slow; b) this paints the whole screen black, meaning that any
+       fractional characters at the right and bottom of the screen will be black
+       rather than storing the previous screen contents. */
+    SDL_SetRenderDrawColor(render, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(render,
+                       &(SDL_Rect) {.x = 0, .y = 0, .w = worig, .h = horig});
+    static const char *const resizing = "Resizing, please wait...";
+    const char *r = resizing;
 
-        /* Don't do a full redraw if the window size actually changed; that may
-           involve reading OoB. Otherwise, do do a full redraw, because with no
-           KEY_RESIZE sent the program using this plugin won't do it itself. */
-        if (w != winwidth || h != winheight)
-            resize_queued = 1;
-        else if (hard_update) {
-            sdl_hook_fullredraw();
-            sdl_hook_flush();
+    if (font) {
+        while (*r) {
+            SDL_SetTextureColorMod(font, 255, 255, 255);
+            SDL_RenderCopy(render, font,
+                           &(SDL_Rect) {      /* source */
+                               .x = (*r % 16) * fontwidth,
+                               .y = (*r / 16) * fontheight,
+                               .w = fontwidth,
+                               .h = fontheight},
+                           &(SDL_Rect) {      /* destination */
+                               .x = (r - resizing) * fontwidth + 5,
+                               .y = 5,
+                               .w = fontwidth,
+                               .h = fontheight});
+            r++;
         }
-        else
-            redraw_queued = 1;
+    }
+
+    if (w != winwidth || h != winheight) {
+        /* Don't do a full redraw if the window size actually changed from the
+           view of the uncursed core; that might involve reading OoB. This
+           relies on the application redrawing in response to KEY_RESIZE, but
+           any sane application will. */
+        resize_queued = 1;
+    } else if (!resize_queued) {
+        /* With no resize queued, we need to draw now. */
+        sdl_hook_fullredraw();
+        sdl_hook_flush();
     }
 
     winwidth = w;
     winheight = h;
+
+    SDL_SetRenderTarget(render, NULL);
+    rendertarget = NULL;
+    SDL_RenderCopy(render, screen,
+                   &(SDL_Rect) { .x = 0, .y = 0, .w = worig, .h = horig },
+                   &(SDL_Rect) { .x = 0, .y = 0, .w = worig, .h = horig });
+    SDL_RenderPresent(render);
+    SDL_SetRenderTarget(render, screen);
+    rendertarget = screen;
 }
 
 static void
@@ -447,11 +467,6 @@ sdl_hook_init(int *h, int *w, const char *title)
         SDL_AddTimer(10, timer_callback, NULL);
 
         winwidth = winheight = 0;
-        update_window_sizes(1);
-        resize_queued = 0;
-
-        *w = winwidth;
-        *h = winheight;
 
         int i, bestrender = -1, bestrenderscore = 8;
 
@@ -521,6 +536,13 @@ sdl_hook_init(int *h, int *w, const char *title)
            presses, say, ' then e, we want to be able to interpret it as
            "'e" or "é" depending on their input method. */
         SDL_StartTextInput();
+
+        /* We can't do this until after we have a working renderer. */
+        update_window_sizes(1);
+        resize_queued = 0;
+
+        *w = winwidth;
+        *h = winheight;
     }
 }
 
@@ -767,6 +789,23 @@ drain_userevents(void)
     }
 }
 
+static int
+resize_event_pending(void)
+{
+    SDL_Event event_buffer;
+
+    if (SDL_PeepEvents(&event_buffer, 1, SDL_PEEKEVENT,
+                          SDL_WINDOWEVENT, SDL_WINDOWEVENT) > 0) {
+        return
+            event_buffer.window.event == SDL_WINDOWEVENT_RESIZED ||
+            event_buffer.window.event == SDL_WINDOWEVENT_SIZE_CHANGED ||
+            event_buffer.window.event == SDL_WINDOWEVENT_MAXIMIZED ||
+            event_buffer.window.event == SDL_WINDOWEVENT_RESTORED;
+    }
+
+    return 0;
+}
+
 #define TEXTEDITING_FILTER_TIME 2       /* milliseconds */
 int
 sdl_hook_getkeyorcodepoint(int timeout_ms)
@@ -784,7 +823,7 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
     do {
         SDL_Event e;
 
-        if (!suppress_resize && resize_queued) {
+        if (resize_queued) {
             update_window_sizes(0);
             resize_queued = 0;
             uncursed_rhook_setsize(winheight, winwidth);
@@ -806,11 +845,6 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
             return KEY_SILENCE + KEY_BIAS;
         }
 
-        if (redraw_queued && e.type != SDL_WINDOWEVENT) {
-            sdl_hook_fullredraw();
-            redraw_queued = 0;
-        }
-
         switch (e.type) {
         case SDL_USEREVENT:
 
@@ -823,22 +857,21 @@ sdl_hook_getkeyorcodepoint(int timeout_ms)
             /* The events we're interested in here are closing the window, and
                resizing the window. We also need to redraw, if the window
                manager requests that. */
-            if (e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED &&
-                ignore_resize_count) {
-                /* We don't want to trigger a resize in response to our own
-                   resize requests. */
-                ignore_resize_count--;
-                break;
-            }
 
             if (e.window.event == SDL_WINDOWEVENT_RESIZED ||
                 e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED ||
                 e.window.event == SDL_WINDOWEVENT_MAXIMIZED ||
-                e.window.event == SDL_WINDOWEVENT_RESTORED)
-                update_window_sizes(0);
+                e.window.event == SDL_WINDOWEVENT_RESTORED) {
+
+                /* Ignore the resize event if there are other resize events in
+                   the queue. This is to reduce repeated screen redraws during
+                   resizing. */
+                if (!resize_event_pending())
+                    update_window_sizes(0);
+            }
 
             if (e.window.event == SDL_WINDOWEVENT_EXPOSED)
-                redraw_queued = 1;
+                sdl_hook_fullredraw();
 
             if (e.window.event == SDL_WINDOWEVENT_CLOSE) {
                 hangup_mode = 1;

@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-05-24
+Last modified by Alex Smith, 2014-09-01
 
 This documentation for the uncursed rendering library is provided under the
 same terms as libuncursed itself: it may be distributed under either of the
@@ -1300,7 +1300,7 @@ function is given the dimensions of a character region in `down` and `across`
 which is equal to the number of *characters* in the corresponding character
 region); it will assign to `*height` and `*width` to specify the minimum size
 of a tiles region that could fit the given tiles without scrolling (i.e. this
-is the number of *characters* that will be invisable due to being behind the
+is the number of *characters* that will be invisible due to being behind the
 tiles region).  The function looks at nothing other than the tile file to
 determine this; it has no side effects, and in particular, there is no
 requirement that any tiles regions actually exist.
