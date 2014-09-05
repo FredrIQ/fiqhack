@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-09-01 */
+/* Last modified by Alex Smith, 2014-09-05 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -235,6 +235,11 @@ enum nh_motd_setting {
     MOTD_ASK,
 };
 
+enum nh_menupaging {
+    MP_LINES,
+    MP_PAGES,
+};
+
 struct settings {
     nh_bool end_own;    /* list all own scores */
     int end_top, end_around;    /* describe desired score list */
@@ -247,6 +252,7 @@ struct settings {
     enum nh_text_mode graphics;      /* how to draw the map */
     enum nh_animation animation;     /* when to delay */
     enum nh_motd_setting show_motd;
+    enum nh_menupaging menupaging;
 
     /* use bolded black instead of dark blue for CLR_BLACK */
     nh_bool darkgray;

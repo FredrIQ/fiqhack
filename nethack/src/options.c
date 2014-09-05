@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-07-31 */
+/* Last modified by Alex Smith, 2014-09-05 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -66,9 +66,15 @@ static struct nh_listitem animation_list[] = {
     {ANIM_ALL, "everything"},
     {ANIM_SLOW, "slow"},    
 };
-
 static struct nh_enum_option animation_spec =
     { animation_list, listlen(animation_list) };
+
+static struct nh_listitem menupaging_list[] = {
+    {MP_LINES, "by lines"},
+    {MP_PAGES, "by pages"},
+};
+static struct nh_enum_option menupaging_spec =
+    { menupaging_list, listlen(menupaging_list) };
 
 static struct nh_listitem optstyle_list[] = {
     {OPTSTYLE_DESC, "description only"},
@@ -126,6 +132,8 @@ struct nh_option_desc curses_options[] = {
      {.e = A_REVERSE}},
     {"mouse", "accept mouse input (where supported)", FALSE, OPTTYPE_BOOL,
      {.b = TRUE}},
+    {"menupaging", "scrolling behaviour of menus", FALSE, OPTTYPE_ENUM,
+     {.e = MP_LINES}},
     {"msgheight", "message window height", FALSE, OPTTYPE_INT, {.i = 8}},
     {"msghistory", "number of messages saved for prevmsg", FALSE, OPTTYPE_INT,
      {.i = 256}},
@@ -283,6 +291,8 @@ curses_set_option(const char *name, union nh_optvalue value)
         settings.end_around = option->value.i;
     } else if (!strcmp(option->name, "networkmotd")) {
         settings.show_motd = option->value.e;
+    } else if (!strcmp(option->name, "menupaging")) {
+        settings.menupaging = option->value.e;
     } else if (!strcmp(option->name, "optstyle")) {
         settings.optstyle = option->value.e;
     } else if (!strcmp(option->name, "msgheight")) {
@@ -327,6 +337,7 @@ init_options(void)
     find_option("graphics")->e = graphics_spec;
     find_option("networkmotd")->e = networkmotd_spec;
     find_option("optstyle")->e = optstyle_spec;
+    find_option("menupaging")->e = menupaging_spec;
     find_option("scores_top")->i.max = 10000;
     find_option("scores_around")->i.max = 100;
     find_option("sidebar")->e = autoable_boolean_spec;
@@ -514,6 +525,7 @@ query_new_value(struct win_menu *mdat, int idx)
     int listid = mdat->items[idx].id >> 10;
     int id = mdat->items[idx].id & 0x1ff;
     int prev_optstyle = settings.optstyle;
+    enum nh_menupaging prev_menupaging = settings.menupaging;
     nh_bool ret = FALSE;
 
     switch (listid) {
@@ -600,8 +612,9 @@ query_new_value(struct win_menu *mdat, int idx)
         free(optioncopy.value.s);
 
     /* If we're changing the option menu appearance, or if we changed game
-     * options, we need to reload and redraw the menu. */
+       options, we need to reload and redraw the menu. */
     if (settings.optstyle != prev_optstyle ||
+        settings.menupaging != prev_menupaging ||
         (game_is_running && listid != UI_OPTS))
         ret = TRUE;
 

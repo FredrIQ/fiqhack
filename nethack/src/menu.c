@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-08-16 */
+/* Last modified by Alex Smith, 2014-09-05 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -54,9 +54,10 @@ layout_menu(struct gamewin *gw)
 
     /* calc height */
     mdat->frameheight = 2;
-    if (mdat->title && mdat->title[0]) {
+    if (mdat->title && mdat->title[0])
         mdat->frameheight += 2; /* window title + space */
-    }
+    if (settings.menupaging == MP_PAGES)
+        mdat->frameheight++;    /* (1 of 2) or (end) */
 
     mdat->height = mdat->frameheight + min(mdat->icount, 52);
     if (mdat->height > scrheight)
@@ -98,6 +99,47 @@ layout_menu(struct gamewin *gw)
     }
 }
 
+static void
+draw_menu_scrollbar(WINDOW *win, nh_bool title, int icount, int offset,
+                    int height, int innerheight, int innerwidth)
+{
+    switch (settings.menupaging) {
+
+    case MP_LINES:
+        if (icount > innerheight) {
+
+            int scrltop, scrlheight, scrlpos, attr, i;
+            scrltop = title ? 3 : 1;
+            scrlheight = innerheight * innerheight / icount;
+            scrlpos = offset * (innerheight - scrlheight) /
+                (icount - innerheight);
+            for (i = 0; i < innerheight; i++) {
+                char ch = ' ';
+                attr = A_NORMAL;
+                if (i >= scrlpos && i < scrlpos + scrlheight) {
+                    if (settings.graphics == ASCII_GRAPHICS)
+                        ch = '#';
+                    else
+                        attr = A_REVERSE;
+                }
+                wattron(win, attr);
+                mvwaddch(win, i + scrltop, innerwidth + 2, ch);
+                wattroff(win, attr);
+            }
+
+        }
+        break;
+
+    case MP_PAGES:
+        if (icount <= innerheight)
+            mvwprintw(win, height-2, 2, "(end)");
+        else
+            mvwprintw(win, height-2, 2, "(%lg of %d)",
+                      (double)offset / (double)innerheight + 1.,
+                      (icount - 1) / innerheight + 1);
+        break;
+    }
+}
 
 void
 draw_menu(struct gamewin *gw)
@@ -106,9 +148,10 @@ draw_menu(struct gamewin *gw)
     struct nh_menuitem *item;
     char caption[BUFSZ];
     char *colstrs[MAXCOLS];
-    int i, j, col, scrlheight, scrlpos, scrltop, attr;
+    int i, j, col;
     char *tab;
 
+    werase(gw->win);
     nh_window_border(gw->win, mdat->dismissable);
     if (mdat->title) {
         wattron(gw->win, A_UNDERLINE);
@@ -116,10 +159,12 @@ draw_menu(struct gamewin *gw)
         wattroff(gw->win, A_UNDERLINE);
     }
 
-    werase(gw->win2);
-    /* draw menu items */
+    /* Draw the menu items. It's possible to scroll beyond the bottom of the
+       menu (e.g. by using PgDn when the menu isn't a whole number of pages),
+       so ensure we don't render any nonexistent menu items. */
     item = &mdat->items[mdat->offset];
-    for (i = 0; i < mdat->innerheight; i++, item++) {
+    for (i = 0; i < mdat->innerheight &&
+             (i + mdat->offset) < mdat->icount; i++, item++) {
         strncpy(caption, item->caption, BUFSZ - 1);
         caption[BUFSZ - 1] = '\0';
 
@@ -158,28 +203,21 @@ draw_menu(struct gamewin *gw)
         wset_mouse_event(gw->win2, uncursed_mbutton_left, 0, ERR);
     }
 
-    if (mdat->icount <= mdat->innerheight)
-        return;
-    /* draw scroll bar */
-    scrltop = mdat->title ? 3 : 1;
-    scrlheight = mdat->innerheight * mdat->innerheight / mdat->icount;
-    scrlpos = mdat->offset * (mdat->innerheight - scrlheight) /
-        (mdat->icount - mdat->innerheight);
-    for (i = 0; i < mdat->innerheight; i++) {
-        char ch = ' ';
-        attr = A_NORMAL;
-        if (i >= scrlpos && i < scrlpos + scrlheight) {
-            if (settings.graphics == ASCII_GRAPHICS)
-                ch = '#';
-            else
-                attr = A_REVERSE;
-        }
-        wattron(gw->win, attr);
-        mvwaddch(gw->win, i + scrltop, mdat->innerwidth + 2, ch);
-        wattroff(gw->win, attr);
-    }
+    draw_menu_scrollbar(gw->win, !!mdat->title, mdat->icount, mdat->offset,
+                        mdat->height, mdat->innerheight, mdat->innerwidth);
 }
 
+static void
+setup_menu_win2(WINDOW *win, WINDOW **win2,
+                int innerheight, int innerwidth, int frameheight)
+{
+    *win2 = derwin(win, innerheight, innerwidth, frameheight -
+                   (settings.menupaging == MP_PAGES ? 2 : 1), 2);
+    wset_mouse_event(*win2, uncursed_mbutton_wheelup,
+                     KEY_UP, KEY_CODE_YES);
+    wset_mouse_event(*win2, uncursed_mbutton_wheeldown,
+                     KEY_DOWN, KEY_CODE_YES);
+}
 
 static void
 resize_menu(struct gamewin *gw)
@@ -188,25 +226,28 @@ resize_menu(struct gamewin *gw)
     int startx, starty;
 
     layout_menu(gw);
-    /* if the window got longer and the last line was already visible,
-       draw_menu would go past the end of mdat->items without this */
-    if (mdat->offset > mdat->icount - mdat->innerheight)
-        mdat->offset = mdat->icount - mdat->innerheight;
 
     delwin(gw->win2);
     wresize(gw->win, mdat->height, mdat->width);
-    gw->win2 =
-        derwin(gw->win, mdat->innerheight, mdat->innerwidth,
-               mdat->frameheight - 1, 2);
-    wset_mouse_event(gw->win2, uncursed_mbutton_wheelup,
-                     KEY_UP, KEY_CODE_YES);
-    wset_mouse_event(gw->win2, uncursed_mbutton_wheeldown,
-                     KEY_DOWN, KEY_CODE_YES);
+    setup_menu_win2(gw->win, &(gw->win2),
+                    mdat->innerheight, mdat->innerwidth, mdat->frameheight);
 
     starty = (LINES - mdat->height) / 2;
     startx = (COLS - mdat->width) / 2;
 
     mvwin(gw->win, starty, startx);
+
+    switch (settings.menupaging) {
+    case MP_LINES:
+        if (mdat->offset > mdat->icount - mdat->innerheight)
+            mdat->offset = mdat->icount - mdat->innerheight;
+        if (mdat->offset < 0)
+            mdat->offset = 0;
+        break;
+    case MP_PAGES:
+        mdat->offset -= mdat->offset % mdat->innerheight;
+        break;
+    }
 
     draw_menu(gw);
 }
@@ -375,13 +416,8 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     gw->win = newwin_onscreen(mdat->height, mdat->width, starty, startx);
     keypad(gw->win, TRUE);
     nh_window_border(gw->win, mdat->dismissable);
-    gw->win2 =
-        derwin(gw->win, mdat->innerheight, mdat->innerwidth,
-               mdat->frameheight - 1, 2);
-    wset_mouse_event(gw->win2, uncursed_mbutton_wheelup,
-                     KEY_UP, KEY_CODE_YES);
-    wset_mouse_event(gw->win2, uncursed_mbutton_wheeldown,
-                     KEY_DOWN, KEY_CODE_YES);
+    setup_menu_win2(gw->win, &(gw->win2),
+                    mdat->innerheight, mdat->innerwidth, mdat->frameheight);
     leaveok(gw->win, TRUE);
     leaveok(gw->win2, TRUE);
     done = FALSE;
@@ -397,13 +433,14 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
         switch (key) {
             /* one line up */
         case KEY_UP:
-            if (mdat->offset > 0)
+            if (mdat->offset > 0 && settings.menupaging == MP_LINES)
                 mdat->offset--;
             break;
 
             /* one line down */
         case KEY_DOWN:
-            if (mdat->offset < mdat->icount - mdat->innerheight)
+            if (mdat->offset < mdat->icount - mdat->innerheight &&
+                settings.menupaging == MP_LINES)
                 mdat->offset++;
             break;
 
@@ -421,10 +458,11 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
         case ' ':
             prev_offset = mdat->offset;
             mdat->offset += mdat->innerheight;
-            if (mdat->offset > mdat->icount - mdat->innerheight)
-                mdat->offset = mdat->icount - mdat->innerheight;
-            if (key == ' ' && mdat->offset == prev_offset)
-                done = TRUE;
+            if (mdat->offset >= mdat->icount) {
+                mdat->offset = prev_offset;
+                if (key == ' ')
+                    done = TRUE;
+            }
             break;
 
             /* go to the top */
@@ -433,10 +471,23 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
             mdat->offset = 0;
             break;
 
-            /* go to the end */
+            /* Go to the end. This acts differently in line-at-a-time and
+               page-at-a-time scrolling; in page-at-a-time, we want to go to the
+               last page, in line-at-a-time, we want the last line at the bottom
+               of the window. */
         case KEY_END:
         case '|':
-            mdat->offset = max(mdat->icount - mdat->innerheight, 0);
+            switch (settings.menupaging) {
+            case MP_LINES:
+                mdat->offset = max(mdat->icount - mdat->innerheight, 0);
+                break;
+            case MP_PAGES:
+                mdat->offset = (mdat->icount - 1);
+                mdat->offset -= mdat->offset % mdat->innerheight;
+                if (mdat->offset < 0) /* 0-item menu */
+                    mdat->offset = 0;
+                break;
+            }
             break;
 
             /* cancel */
@@ -592,9 +643,10 @@ layout_objmenu(struct gamewin *gw)
 
     /* calc height */
     mdat->frameheight = 2;
-    if (mdat->title && mdat->title[0]) {
+    if (mdat->title)
         mdat->frameheight += 2; /* window title + space */
-    }
+    if (settings.menupaging == MP_PAGES)
+        mdat->frameheight++;    /* (end) or (1 of 2) */
 
     mdat->height = mdat->frameheight + min(mdat->icount, 52);
     if (mdat->height > scrheight)
@@ -720,7 +772,6 @@ static void
 draw_objmenu(struct gamewin *gw)
 {
     struct win_objmenu *mdat = (struct win_objmenu *)gw->extra;
-    int i, scrlheight, scrlpos, scrltop, attr;
 
     nh_window_border(gw->win, mdat->how == PICK_ONE ? 1 : 2);
     if (mdat->title) {
@@ -739,22 +790,8 @@ draw_objmenu(struct gamewin *gw)
         wprintw(gw->win, "Count: %d", mdat->selcount);
     }
 
-    if (mdat->icount <= mdat->innerheight)
-        return;
-
-    /* draw scroll bar */
-    scrltop = mdat->title ? 3 : 1;
-    scrlheight = mdat->innerheight * mdat->innerheight / mdat->icount;
-    scrlpos = mdat->offset * (mdat->innerheight - scrlheight) /
-        (mdat->icount - mdat->innerheight);
-    for (i = 0; i < mdat->innerheight; i++) {
-        attr = A_NORMAL;
-        if (i >= scrlpos && i < scrlpos + scrlheight)
-            attr = A_REVERSE;
-        wattron(gw->win, attr);
-        mvwaddch(gw->win, i + scrltop, mdat->innerwidth + 2, ' ');
-        wattroff(gw->win, attr);
-    }
+    draw_menu_scrollbar(gw->win, !!mdat->title, mdat->icount, mdat->offset,
+                        mdat->height, mdat->innerheight, mdat->innerwidth);
 }
 
 
@@ -768,16 +805,24 @@ resize_objmenu(struct gamewin *gw)
 
     delwin(gw->win2);
     wresize(gw->win, mdat->height, mdat->width);
-    gw->win2 =
-        derwin(gw->win, mdat->innerheight, mdat->innerwidth,
-               mdat->frameheight - 1, 2);
-    wset_mouse_event(gw->win2, uncursed_mbutton_wheelup,
-                     KEY_UP, KEY_CODE_YES);
-    wset_mouse_event(gw->win2, uncursed_mbutton_wheeldown,
-                     KEY_DOWN, KEY_CODE_YES);
+
+    setup_menu_win2(gw->win, &(gw->win2),
+                    mdat->innerheight, mdat->innerwidth, mdat->frameheight);
 
     starty = (LINES - mdat->height) / 2;
     startx = (COLS - mdat->width) / 2;
+
+    switch (settings.menupaging) {
+    case MP_LINES:
+        if (mdat->offset > mdat->icount - mdat->innerheight)
+            mdat->offset = mdat->icount - mdat->innerheight;
+        if (mdat->offset < 0)
+            mdat->offset = 0;
+        break;
+    case MP_PAGES:
+        mdat->offset -= mdat->offset % mdat->innerheight;
+        break;
+    }
 
     mvwin(gw->win, starty, startx);
 
@@ -905,13 +950,9 @@ curses_display_objects(
     gw->win = newwin_onscreen(mdat->height, mdat->width, starty, startx);
     keypad(gw->win, TRUE);
     nh_window_border(gw->win, mdat->how == PICK_ONE ? 1 : 2);
-    gw->win2 =
-        derwin(gw->win, mdat->innerheight, mdat->innerwidth,
-               mdat->frameheight - 1, 2);
-    wset_mouse_event(gw->win2, uncursed_mbutton_wheelup,
-                     KEY_UP, KEY_CODE_YES);
-    wset_mouse_event(gw->win2, uncursed_mbutton_wheeldown,
-                     KEY_DOWN, KEY_CODE_YES);
+
+    setup_menu_win2(gw->win, &(gw->win2),
+                    mdat->innerheight, mdat->innerwidth, mdat->frameheight);
 
     leaveok(gw->win, TRUE);
     leaveok(gw->win2, TRUE);
@@ -926,13 +967,14 @@ curses_display_objects(
         switch (key) {
             /* one line up */
         case KEY_UP:
-            if (mdat->offset > 0)
+            if (mdat->offset > 0 && settings.menupaging == MP_LINES)
                 mdat->offset--;
             break;
 
             /* one line down */
         case KEY_DOWN:
-            if (mdat->offset < mdat->icount - mdat->innerheight)
+            if (mdat->offset < mdat->icount - mdat->innerheight &&
+                settings.menupaging == MP_LINES)
                 mdat->offset++;
             break;
 
@@ -950,10 +992,11 @@ curses_display_objects(
         case ' ':
             prev_offset = mdat->offset;
             mdat->offset += mdat->innerheight;
-            if (mdat->offset > mdat->icount - mdat->innerheight)
-                mdat->offset = mdat->icount - mdat->innerheight;
-            if (key == ' ' && prev_offset == mdat->offset)
-                done = TRUE;
+            if (mdat->offset >= mdat->icount) {
+                mdat->offset = prev_offset;
+                if (key == ' ')
+                    done = TRUE;
+            }
             break;
 
             /* go to the top */
@@ -965,7 +1008,17 @@ curses_display_objects(
             /* go to the end */
         case KEY_END:
         case '|':
-            mdat->offset = max(mdat->icount - mdat->innerheight, 0);
+            switch (settings.menupaging) {
+            case MP_LINES:
+                mdat->offset = max(mdat->icount - mdat->innerheight, 0);
+                break;
+            case MP_PAGES:
+                mdat->offset = (mdat->icount - 1);
+                mdat->offset -= mdat->offset % mdat->innerheight;
+                if (mdat->offset < 0) /* 0-item menu */
+                    mdat->offset = 0;
+                break;
+            }
             break;
 
             /* cancel */
