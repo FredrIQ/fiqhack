@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-09-05 */
+/* Last modified by Alex Smith, 2014-09-06 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -132,6 +132,8 @@ struct nh_option_desc curses_options[] = {
      {.e = A_REVERSE}},
     {"mouse", "accept mouse input (where supported)", FALSE, OPTTYPE_BOOL,
      {.b = TRUE}},
+    {"menuborder", "draw a border around menus", FALSE, OPTTYPE_BOOL,
+     {.e = FALSE}},
     {"menupaging", "scrolling behaviour of menus", FALSE, OPTTYPE_ENUM,
      {.e = MP_LINES}},
     {"msgheight", "message window height", FALSE, OPTTYPE_INT, {.i = 8}},
@@ -166,6 +168,7 @@ struct nhlib_boolopt_map boolopt_map[] = {
     {"hilite_pet", &settings.hilite_pet},
     {"invweight", &settings.invweight},
     {"mouse", &settings.mouse},
+    {"menuborder", &settings.menuborder},
     {"scores_own", &settings.end_own},
     {"standout", &settings.standout},
     {"status3", &settings.status3},
@@ -526,6 +529,7 @@ query_new_value(struct win_menu *mdat, int idx)
     int id = mdat->items[idx].id & 0x1ff;
     int prev_optstyle = settings.optstyle;
     enum nh_menupaging prev_menupaging = settings.menupaging;
+    nh_bool prev_menuborder = settings.menuborder;
     nh_bool ret = FALSE;
 
     switch (listid) {
@@ -615,6 +619,7 @@ query_new_value(struct win_menu *mdat, int idx)
        options, we need to reload and redraw the menu. */
     if (settings.optstyle != prev_optstyle ||
         settings.menupaging != prev_menupaging ||
+        settings.menuborder != prev_menuborder ||
         (game_is_running && listid != UI_OPTS))
         ret = TRUE;
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-09-05 */
+/* Last modified by Alex Smith, 2014-09-06 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -269,6 +269,7 @@ struct settings {
     nh_bool frame;      /* draw a frame around the window sections */
     nh_bool status3;    /* draw 3 line status */
     nh_bool mouse;      /* accept mouse input */
+    nh_bool menuborder; /* draw a border around menus */
 };
 
 

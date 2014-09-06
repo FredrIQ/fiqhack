@@ -1,10 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-09-05 */
+/* Last modified by Alex Smith, 2014-09-06 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "nhcurses.h"
 
+#define BORDERWIDTH  (settings.menuborder ? 4 : 2)
+#define BORDERHEIGHT (settings.menuborder ? 2 : 0)
 
 static int
 calc_colwidths(char *menustr, int *colwidth)
@@ -53,13 +55,13 @@ layout_menu(struct gamewin *gw)
     scrwidth = x2 - x1;
 
     /* calc height */
-    mdat->frameheight = 2;
+    mdat->frameheight = BORDERHEIGHT;
     if (mdat->title && mdat->title[0])
-        mdat->frameheight += 2; /* window title + space */
+        mdat->frameheight++;
     if (settings.menupaging == MP_PAGES)
         mdat->frameheight++;    /* (1 of 2) or (end) */
 
-    mdat->height = mdat->frameheight + min(mdat->icount, 52);
+    mdat->height = mdat->frameheight + mdat->icount;
     if (mdat->height > scrheight)
         mdat->height = scrheight;
     mdat->innerheight = mdat->height - mdat->frameheight;
@@ -87,21 +89,20 @@ layout_menu(struct gamewin *gw)
 
     mdat->innerwidth =
         max(calc_menuwidth(colwidth, mdat->colpos, mdat->maxcol), singlewidth);
-    if (mdat->innerwidth > scrwidth - 4)        /* make sure there is space for 
-                                                   window borders */
-        mdat->innerwidth = scrwidth - 4;
-    mdat->width = mdat->innerwidth + 4; /* border + space */
+    if (mdat->innerwidth > scrwidth - BORDERWIDTH)
+        mdat->innerwidth = scrwidth - BORDERWIDTH;
+    mdat->width = mdat->innerwidth + BORDERWIDTH; /* border + space */
     mdat->colpos[mdat->maxcol + 1] = mdat->innerwidth + 1;
 
-    if (mdat->title && mdat->width < strlen(mdat->title) + 4) {
+    if (mdat->title && mdat->width < strlen(mdat->title) + BORDERWIDTH) {
         mdat->innerwidth = strlen(mdat->title);
-        mdat->width = mdat->innerwidth + 4;
+        mdat->width = mdat->innerwidth + BORDERWIDTH;
     }
 }
 
 static void
 draw_menu_scrollbar(WINDOW *win, nh_bool title, int icount, int offset,
-                    int height, int innerheight, int innerwidth)
+                    int height, int innerheight, int width)
 {
     switch (settings.menupaging) {
 
@@ -109,7 +110,7 @@ draw_menu_scrollbar(WINDOW *win, nh_bool title, int icount, int offset,
         if (icount > innerheight) {
 
             int scrltop, scrlheight, scrlpos, attr, i;
-            scrltop = title ? 3 : 1;
+            scrltop = !!title + !!settings.menuborder;
             scrlheight = innerheight * innerheight / icount;
             scrlpos = offset * (innerheight - scrlheight) /
                 (icount - innerheight);
@@ -123,7 +124,8 @@ draw_menu_scrollbar(WINDOW *win, nh_bool title, int icount, int offset,
                         attr = A_REVERSE;
                 }
                 wattron(win, attr);
-                mvwaddch(win, i + scrltop, innerwidth + 2, ch);
+                mvwaddch(win, i + scrltop,
+                         width - !!settings.menuborder - 1, ch);
                 wattroff(win, attr);
             }
 
@@ -132,11 +134,14 @@ draw_menu_scrollbar(WINDOW *win, nh_bool title, int icount, int offset,
 
     case MP_PAGES:
         if (icount <= innerheight)
-            mvwprintw(win, height-2, 2, "(end)");
+            mvwprintw(win, height - !!settings.menuborder - 1, 2, "(end)");
         else
-            mvwprintw(win, height-2, 2, "(%lg of %d)",
+            mvwprintw(win, height - !!settings.menuborder - 1, 2, "(%lg of %d)",
                       (double)offset / (double)innerheight + 1.,
                       (icount - 1) / innerheight + 1);
+        /* note: the floating-point arithmetic here should always produce an
+           integer; we do it with floating-point so that something obviously
+           wrong is displayed in cases where something went wrong */
         break;
     }
 }
@@ -152,10 +157,12 @@ draw_menu(struct gamewin *gw)
     char *tab;
 
     werase(gw->win);
-    nh_window_border(gw->win, mdat->dismissable);
+    if (settings.menuborder)
+        nh_window_border(gw->win, mdat->dismissable);
     if (mdat->title) {
         wattron(gw->win, A_UNDERLINE);
-        mvwaddnstr(gw->win, 1, 2, mdat->title, mdat->width - 4);
+        mvwaddnstr(gw->win, !!settings.menuborder, !!settings.menuborder + 1,
+                   mdat->title, mdat->width - 4);
         wattroff(gw->win, A_UNDERLINE);
     }
 
@@ -204,15 +211,16 @@ draw_menu(struct gamewin *gw)
     }
 
     draw_menu_scrollbar(gw->win, !!mdat->title, mdat->icount, mdat->offset,
-                        mdat->height, mdat->innerheight, mdat->innerwidth);
+                        mdat->height, mdat->innerheight, mdat->width);
 }
 
 static void
-setup_menu_win2(WINDOW *win, WINDOW **win2,
-                int innerheight, int innerwidth, int frameheight)
+setup_menu_win2(WINDOW *win, WINDOW **win2, int innerheight, int innerwidth)
 {
-    *win2 = derwin(win, innerheight, innerwidth, frameheight -
-                   (settings.menupaging == MP_PAGES ? 2 : 1), 2);
+    *win2 = derwin(win, innerheight, innerwidth,
+                   getmaxy(win) - innerheight - !!(settings.menuborder) -
+                   !!(settings.menupaging == MP_PAGES),
+                   1 + !!settings.menuborder);
     wset_mouse_event(*win2, uncursed_mbutton_wheelup,
                      KEY_UP, KEY_CODE_YES);
     wset_mouse_event(*win2, uncursed_mbutton_wheeldown,
@@ -229,8 +237,7 @@ resize_menu(struct gamewin *gw)
 
     delwin(gw->win2);
     wresize(gw->win, mdat->height, mdat->width);
-    setup_menu_win2(gw->win, &(gw->win2),
-                    mdat->innerheight, mdat->innerwidth, mdat->frameheight);
+    setup_menu_win2(gw->win, &(gw->win2), mdat->innerheight, mdat->innerwidth);
 
     starty = (LINES - mdat->height) / 2;
     startx = (COLS - mdat->width) / 2;
@@ -415,9 +422,9 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
 
     gw->win = newwin_onscreen(mdat->height, mdat->width, starty, startx);
     keypad(gw->win, TRUE);
-    nh_window_border(gw->win, mdat->dismissable);
-    setup_menu_win2(gw->win, &(gw->win2),
-                    mdat->innerheight, mdat->innerwidth, mdat->frameheight);
+    if (settings.menuborder)
+        nh_window_border(gw->win, mdat->dismissable);
+    setup_menu_win2(gw->win, &(gw->win2), mdat->innerheight, mdat->innerwidth);
     leaveok(gw->win, TRUE);
     leaveok(gw->win2, TRUE);
     done = FALSE;
@@ -642,13 +649,13 @@ layout_objmenu(struct gamewin *gw)
     int scrwidth = COLS;
 
     /* calc height */
-    mdat->frameheight = 2;
+    mdat->frameheight = BORDERHEIGHT;
     if (mdat->title)
-        mdat->frameheight += 2; /* window title + space */
+        mdat->frameheight++;
     if (settings.menupaging == MP_PAGES)
         mdat->frameheight++;    /* (end) or (1 of 2) */
 
-    mdat->height = mdat->frameheight + min(mdat->icount, 52);
+    mdat->height = mdat->frameheight + mdat->icount;
     if (mdat->height > scrheight)
         mdat->height = scrheight;
     mdat->innerheight = mdat->height - mdat->frameheight;
@@ -674,14 +681,13 @@ layout_objmenu(struct gamewin *gw)
     }
 
     mdat->innerwidth = maxwidth;
-    if (mdat->innerwidth > scrwidth - 4)        /* make sure there is space for 
-                                                   window borders */
-        mdat->innerwidth = scrwidth - 4;
-    mdat->width = mdat->innerwidth + 4; /* border + space */
+    if (mdat->innerwidth > scrwidth - BORDERWIDTH)
+        mdat->innerwidth = scrwidth - BORDERWIDTH;
+    mdat->width = mdat->innerwidth + BORDERWIDTH; /* border + space */
 
     if (mdat->title && mdat->width < strlen(mdat->title) + 4) {
         mdat->innerwidth = strlen(mdat->title);
-        mdat->width = mdat->innerwidth + 4;
+        mdat->width = mdat->innerwidth + BORDERWIDTH;
     }
 }
 
@@ -773,10 +779,12 @@ draw_objmenu(struct gamewin *gw)
 {
     struct win_objmenu *mdat = (struct win_objmenu *)gw->extra;
 
-    nh_window_border(gw->win, mdat->how == PICK_ONE ? 1 : 2);
+    if (settings.menuborder)
+        nh_window_border(gw->win, mdat->how == PICK_ONE ? 1 : 2);
     if (mdat->title) {
         wattron(gw->win, A_UNDERLINE);
-        mvwaddnstr(gw->win, 1, 2, mdat->title, mdat->width - 4);
+        mvwaddnstr(gw->win, !!settings.menuborder,
+                   !!settings.menuborder + 1, mdat->title, mdat->width - 4);
         wattroff(gw->win, A_UNDERLINE);
     }
 
@@ -785,13 +793,13 @@ draw_objmenu(struct gamewin *gw)
                                       .items  = mdat->items  + mdat->offset},
                  mdat->selected + mdat->offset, mdat->how);
 
-    if (mdat->selcount > 0) {
+    if (mdat->selcount > 0 && settings.menuborder) {
         wmove(gw->win, getmaxy(gw->win) - 1, 1);
         wprintw(gw->win, "Count: %d", mdat->selcount);
     }
 
     draw_menu_scrollbar(gw->win, !!mdat->title, mdat->icount, mdat->offset,
-                        mdat->height, mdat->innerheight, mdat->innerwidth);
+                        mdat->height, mdat->innerheight, mdat->width);
 }
 
 
@@ -806,8 +814,7 @@ resize_objmenu(struct gamewin *gw)
     delwin(gw->win2);
     wresize(gw->win, mdat->height, mdat->width);
 
-    setup_menu_win2(gw->win, &(gw->win2),
-                    mdat->innerheight, mdat->innerwidth, mdat->frameheight);
+    setup_menu_win2(gw->win, &(gw->win2), mdat->innerheight, mdat->innerwidth);
 
     starty = (LINES - mdat->height) / 2;
     startx = (COLS - mdat->width) / 2;
@@ -949,10 +956,10 @@ curses_display_objects(
 
     gw->win = newwin_onscreen(mdat->height, mdat->width, starty, startx);
     keypad(gw->win, TRUE);
-    nh_window_border(gw->win, mdat->how == PICK_ONE ? 1 : 2);
+    if (settings.menuborder)
+        nh_window_border(gw->win, mdat->how == PICK_ONE ? 1 : 2);
 
-    setup_menu_win2(gw->win, &(gw->win2),
-                    mdat->innerheight, mdat->innerwidth, mdat->frameheight);
+    setup_menu_win2(gw->win, &(gw->win2), mdat->innerheight, mdat->innerwidth);
 
     leaveok(gw->win, TRUE);
     leaveok(gw->win2, TRUE);
