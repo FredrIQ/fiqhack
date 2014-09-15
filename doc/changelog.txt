@@ -698,7 +698,7 @@ C343-159, 1caa11b)
 
 `g`: Gremlins now reset the entire state of protection when stealing
 protection, rather than leaving the amount of divine protection different from
-the amount of Defence granted by diving protection. (Un, C343-189, 2a3043c)
+the amount of Defence granted by divine protection. (Un, C343-189, 2a3043c)
 
 `H`: Players in giant polyform can no longer pick up boulders into inventory
 overflow slots. (Grunt, C343-225, 5338c20)
@@ -1284,7 +1284,7 @@ Many commands have gained additional bindings, and in a few cases lost some:
 (4, 66d44c8, 79619b6, 2de7cf1, eb717fd, 2ee0dcb)
 
 The code now always uses a menu upon pressing `?` at an object prompt, rather
-than using the message area when there's exctly one possibility. (Nitro,
+than using the message area when there's exactly one possibility. (Nitro,
 50e5cba)
 
 It is possible to use the `m`/`M` keys to cycle between monsters when asked
