@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-07-31 */
+/* Last modified by Alex Smith, 2014-09-15 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -74,8 +74,6 @@ static struct curses_symdef unicode_graphics_ovr[] = {
     {"fountain", -1, {0x2320, 0}, 0},   /* ⌠ top half of integral */
     {"room", -1, {0x00B7, 0}, 0},       /* · centered dot */
     {"corr", -1, {0x2591, 0}, 0},       /* ░ light shading */
-    {"upladder", -1, {0x2264, 0}, 0},   /* ≤ less-than-or-equals */
-    {"dnladder", -1, {0x2265, 0}, 0},   /* ≥ greater-than-or-equals */
     {"altar", -1, {0x03A9, 0}, 0},      /* Ω GREEK CAPITAL LETTER OMEGA */
     {"ice", -1, {0x00B7, 0}, 0},        /* · centered dot */
     {"vodbridge", -1, {0x00B7, 0}, 0},  /* · centered dot */
@@ -104,8 +102,6 @@ static struct curses_symdef unicode_graphics_ovr[] = {
     {"lava", -1, {0x2248, 0}, 0},       /* ≈ double tilde */
     {"water", -1, {0x2248, 0}, 0},      /* ≈ double tilde */
     {"tree", -1, {0x00b1, 0}, 0},       /* ± plus-or-minus sign */
-    {"upsstair", -1, {0x2264, 0}, 0},   /* ≤ less-than-or-equals */
-    {"dnsstair", -1, {0x2265, 0}, 0},   /* ≥ greater-than-or-equals */
 
     /* objects */
     {"boulder", -1, {0x0030, 0}, 0},    /* 0 zero */
