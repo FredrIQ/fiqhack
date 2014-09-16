@@ -50,7 +50,7 @@ enum u_interaction_mode {
                            mode anyway, caring only about monsters). */
     uim_traditional,    /* Attack if hostile. Prompt about whether to attack
                            peacefuls. Interact with monsters only by attacking,
-                           but with items as normal. This is user-speified only,
+                           but with items as normal. This is user-specified only,
                            and intended for all those crazy foodless players who
                            liked to turn safe_pet off in previous versions. */
     uim_standard,       /* Attack hostiles, chat to always-peacefuls, interact

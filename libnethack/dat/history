@@ -246,7 +246,7 @@ in this, the list of Dungeoneers:
     Helge Hafting             Mike Gallop
     Irina Rempt-Drijfhout     Mike Passaretti
 
-NetHack 4's source also contains contributions from:
+The NetHack 4 distribution also contains contributions from:
 
     Alex Smith                J. Ali Harlow             Patric Müller
     Andrew Apted              Jafet                     quuxplusone
@@ -259,6 +259,7 @@ NetHack 4's source also contains contributions from:
     Derek Ray                 Mathew Hodson             Sgeo
     Derrick Sund              Michael Deutschmann       Stanislav Traykov
     Edoardo Spadolini         Misty De Meo              Stephen Demos
-    GreyKnight                Nathan Eady               Trevor Cook
-    Grunt                     Nephi                     Tung Nguyen
-    Hojita Discordia          Pasi Kallinnen            Zsbán Ambrus
+    Eric S. Raymond           Nathan Eady               Trevor Cook
+    GreyKnight                Nephi                     Tung Nguyen
+    Grunt                     Pasi Kallinnen            Zsbán Ambrus
+    Hojita Discordia

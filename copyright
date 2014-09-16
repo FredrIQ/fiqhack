@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Alex Smith, 2014-08-16
+Last-Modified: Last modified by Alex Smith, 2014-09-16
 
 Files: libnethack_client/*
 License: NHGPL or GPL-2+
@@ -553,6 +553,15 @@ License: NHGPL
 Copyright: Copyright (c) 2013 Alex Smith
 Comment: Based on the equivalent documentation from Slash'EM (which is
  also NHGPL, and does not list an author).
+
+Files: doc/guidebook.asc
+License: NHGPL
+Copyright:
+ This file has no explicit copyright notice, but based on the history
+ of the files, this appears to be a good approximation of the
+ situation:
+ Copyright (c) 1987-2014 Eric S. Raymond
+ Copyright (c) 1989 Mike Threepoint [and possibly other years]
 
 Files: .indent.pro
 License: NHGPL
