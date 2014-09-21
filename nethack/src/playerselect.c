@@ -354,7 +354,7 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
             add_menu_item(&menu, id, "Random", '*', 0);
             add_menu_item(&menu, -1, "Quit", 'q', 0);
 
-            sprintf(pbuf, "Pick a role for your %s", plbuf);
+            snprintf(pbuf, ARRAY_SIZE(pbuf), "Pick a role for your %s", plbuf);
             curses_display_menu(&menu, pbuf, PICK_ONE, PLHINT_ANYWHERE,
                                 pick_list, curses_menu_callback);
 
@@ -391,7 +391,7 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
                 add_menu_item(&menu, id, "Random", '*', 0);
                 add_menu_item(&menu, -1, "Quit", 'q', 0);
 
-                sprintf(pbuf, "Pick the race of your %s", plbuf);
+                snprintf(pbuf, ARRAY_SIZE(pbuf), "Pick the race of your %s", plbuf);
                 curses_display_menu(&menu, pbuf, PICK_ONE, PLHINT_ANYWHERE,
                                     pick_list, curses_menu_callback);
 
@@ -429,7 +429,7 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
                 add_menu_item(&menu, id, "Random", '*', 0);
                 add_menu_item(&menu, -1, "Quit", 'q', 0);
 
-                sprintf(pbuf, "Pick the gender of your %s", plbuf);
+                snprintf(pbuf, ARRAY_SIZE(pbuf), "Pick the gender of your %s", plbuf);
                 curses_display_menu(&menu, pbuf, PICK_ONE, PLHINT_ANYWHERE,
                                     pick_list, curses_menu_callback);
 
@@ -467,7 +467,7 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
                 add_menu_item(&menu, id, "Random", '*', 0);
                 add_menu_item(&menu, -1, "Quit", 'q', 0);
 
-                sprintf(pbuf, "Pick the alignment of your %s", plbuf);
+                snprintf(pbuf, ARRAY_SIZE(pbuf), "Pick the alignment of your %s", plbuf);
                 curses_display_menu(&menu, pbuf, PICK_ONE, PLHINT_ANYWHERE,
                                     pick_list, curses_menu_callback);
 

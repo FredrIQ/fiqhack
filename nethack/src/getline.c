@@ -359,7 +359,7 @@ extcmd_via_menu(const char **namelist, const char **desclist, int listlen)
                 if (acount) {
                     /* flush the extended commands for that letter already in
                        buf */
-                    sprintf(buf, "%-*s", biggest + 15, prompt);
+                    snprintf(buf, ARRAY_SIZE(buf), "%-*s", biggest + 15, prompt);
                     add_menu_item(&menu, prevaccelerator, buf,
                                   prevaccelerator, FALSE);
                     acount = 0;
@@ -367,10 +367,10 @@ extcmd_via_menu(const char **namelist, const char **desclist, int listlen)
             }
             prevaccelerator = accelerator;
             if (!acount || nchoices < (ROWNO - 3)) {
-                sprintf(prompt, "%s [%s]", namelist[choices[i]],
+                snprintf(prompt, ARRAY_SIZE(prompt), "%s [%s]", namelist[choices[i]],
                         desclist[choices[i]]);
             } else if (acount == 1) {
-                sprintf(prompt, "%s or %s", namelist[choices[i - 1]],
+                snprintf(prompt, ARRAY_SIZE(prompt), "%s or %s", namelist[choices[i - 1]],
                         namelist[choices[i]]);
             } else {
                 strcat(prompt, " or ");
@@ -380,12 +380,12 @@ extcmd_via_menu(const char **namelist, const char **desclist, int listlen)
         }
         if (acount) {
             /* flush buf */
-            sprintf(buf, "%-*s", biggest + 15, prompt);
+            snprintf(buf, ARRAY_SIZE(buf), "%-*s", biggest + 15, prompt);
             add_menu_item(&menu, prevaccelerator, buf, prevaccelerator, FALSE);
         }
 
         int pick_list[1];
-        sprintf(prompt, "Extended Command: %s", cbuf);
+        snprintf(prompt, ARRAY_SIZE(prompt), "Extended Command: %s", cbuf);
         curses_display_menu(&menu, prompt, PICK_ONE, PLHINT_ANYWHERE,
                             pick_list, curses_menu_callback);
 

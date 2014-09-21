@@ -193,7 +193,7 @@ tileno_from_name(const char *name, int offset)
             else
                 consecutive = 0;
 
-            sprintf(buf, "%ss %d", defexplain[i], consecutive);
+            snprintf(buf, sizeof(buf), "%ss %d", defexplain[i], consecutive);
 
             if (!strcmp(buf, name))
                 return TILESEQ_CMAP_OFF + i;

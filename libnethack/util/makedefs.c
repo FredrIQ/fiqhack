@@ -420,7 +420,7 @@ do_data(const char *infile, const char *outfile)
     long txt_offset;
     int entry_cnt, line_cnt;
 
-    sprintf(tempfile, "%s.%s", outfile, "tmp");
+    snprintf(tempfile, SIZE(tempfile), "%s.%s", outfile, "tmp");
 
     if (!(ifp = fopen(infile, RDTMODE))) {      /* data.base */
         perror(infile);
@@ -471,7 +471,7 @@ do_data(const char *infile, const char *outfile)
     fclose(ifp);        /* all done with original input file */
 
     /* reprocess the scratch file; 1st format an error msg, just in case */
-    sprintf(in_line, "rewind of \"%s\"", tempfile);
+    snprintf(in_line, SIZE(in_line), "rewind of \"%s\"", tempfile);
     if (rewind(tfp) != 0)
         goto dead_data;
     /* copy all lines of text from the scratch file into the output file */
@@ -483,10 +483,10 @@ do_data(const char *infile, const char *outfile)
     remove(tempfile);   /* remove it */
 
     /* update the first record of the output file; prepare error msg 1st */
-    sprintf(in_line, "rewind of \"%s\"", outfile);
+    snprintf(in_line, SIZE(in_line), "rewind of \"%s\"", outfile);
     ok = (rewind(ofp) == 0);
     if (ok) {
-        sprintf(in_line, "header rewrite of \"%s\"", outfile);
+        snprintf(in_line, SIZE(in_line), "header rewrite of \"%s\"", outfile);
         ok = (fprintf(ofp, "%s%08lx\n", Dont_Edit_Data, txt_offset) >= 0);
     }
     if (!ok) {
@@ -549,7 +549,7 @@ do_oracles(const char *infile, const char *outfile)
     int oracle_cnt;
     int i;
 
-    sprintf(tempfile, "%s.%s", outfile, "tmp");
+    snprintf(tempfile, SIZE(tempfile), "%s.%s", outfile, "tmp");
 
     if (!(ifp = fopen(infile, RDTMODE))) {
         perror(infile);
@@ -613,7 +613,7 @@ do_oracles(const char *infile, const char *outfile)
     fclose(ifp);        /* all done with original input file */
 
     /* reprocess the scratch file; 1st format an error msg, just in case */
-    sprintf(in_line, "rewind of \"%s\"", tempfile);
+    snprintf(in_line, SIZE(in_line), "rewind of \"%s\"", tempfile);
     if (rewind(tfp) != 0)
         goto dead_data;
     /* copy all lines of text from the scratch file into the output file */
@@ -625,14 +625,14 @@ do_oracles(const char *infile, const char *outfile)
     remove(tempfile);   /* remove it */
 
     /* update the first record of the output file; prepare error msg 1st */
-    sprintf(in_line, "rewind of \"%s\"", outfile);
+    snprintf(in_line, SIZE(in_line), "rewind of \"%s\"", outfile);
     ok = (rewind(ofp) == 0);
     if (ok) {
-        sprintf(in_line, "header rewrite of \"%s\"", outfile);
+        snprintf(in_line, SIZE(in_line), "header rewrite of \"%s\"", outfile);
         ok = (fprintf(ofp, "%s%5d\n", Dont_Edit_Data, oracle_cnt) >= 0);
     }
     if (ok) {
-        sprintf(in_line, "data rewrite of \"%s\"", outfile);
+        snprintf(in_line, SIZE(in_line), "data rewrite of \"%s\"", outfile);
         for (i = 0; i <= oracle_cnt; i++) {
             if (!(ok = (fpos = ftell(ofp)) >= 0))
                 break;
@@ -1336,7 +1336,7 @@ do_objs(const char *outfile)
         fflush(stderr);
         sumerr = TRUE;
         /* Put in something that won't completely break things */
-        sprintf(last_gem, "%d", i - 1);
+        snprintf(last_gem, SIZE(last_gem), "%d", i - 1);
     }
     fprintf(ofp, "#define\tLAST_GEM\t%s\n", last_gem);
     fprintf(ofp, "#define\tNUM_OBJECTS\t%d\n", i);

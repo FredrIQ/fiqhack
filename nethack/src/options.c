@@ -860,23 +860,23 @@ edit_ap_rule(struct nh_autopick_option *desc, struct nh_autopickup_rules *ar,
     do {
         init_menulist(&menu);
 
-        sprintf(buf, "rule position:\t[%d]", ruleno + 1);
+        snprintf(buf, ARRAY_SIZE(buf), "rule position:\t[%d]", ruleno + 1);
         add_menu_item(&menu, 1, buf, 0, 0);
 
-        sprintf(buf, "name pattern:\t[%s]", r->pattern);
+        snprintf(buf, ARRAY_SIZE(buf), "name pattern:\t[%s]", r->pattern);
         add_menu_item(&menu, 2, buf, 0, 0);
 
         classname = NULL;
         for (i = 0; i < desc->numclasses && !classname; i++)
             if (desc->classes[i].id == r->oclass)
                 classname = desc->classes[i].caption;
-        sprintf(buf, "object type:\t[%s]", classname);
+        snprintf(buf, ARRAY_SIZE(buf), "object type:\t[%s]", classname);
         add_menu_item(&menu, 3, buf, 0, 0);
 
-        sprintf(buf, "beatitude:\t[%s]", bucnames[r->buc]);
+        snprintf(buf, ARRAY_SIZE(buf), "beatitude:\t[%s]", bucnames[r->buc]);
         add_menu_item(&menu, 4, buf, 0, 0);
 
-        sprintf(buf, "action:\t[%s]", r->action == AP_GRAB ? "GRAB" : "LEAVE");
+        snprintf(buf, ARRAY_SIZE(buf), "action:\t[%s]", r->action == AP_GRAB ? "GRAB" : "LEAVE");
         add_menu_item(&menu, 5, buf, 0, 0);
         add_menu_txt(&menu, "", MI_TEXT);
         add_menu_item(&menu, 6, "delete this rule", 'x', 0);
@@ -889,7 +889,7 @@ edit_ap_rule(struct nh_autopick_option *desc, struct nh_autopickup_rules *ar,
         switch (selected[0]) {
             /* move this rule */
         case 1:
-            sprintf(query, "New rule position: (1 - %d), currently: %d",
+            snprintf(query, ARRAY_SIZE(query), "New rule position: (1 - %d), currently: %d",
                     ar->num_rules, ruleno + 1);
             newpos = ar->num_rules;
             curses_getline(query, &newpos, rule_position_callback);
@@ -911,7 +911,7 @@ edit_ap_rule(struct nh_autopick_option *desc, struct nh_autopickup_rules *ar,
 
             /* edit the pattern */
         case 2:
-            sprintf(query, "New name pattern (empty matches everything):");
+            snprintf(query, ARRAY_SIZE(query), "New name pattern (empty matches everything):");
             curses_getline(query, r->pattern, rule_pattern_callback);
             break;
 
@@ -982,7 +982,7 @@ show_autopickup_menu(struct nh_option_desc *opt)
         for (i = 0; i < value.ar->num_rules; i++) {
             r = &value.ar->rules[i];
             parts = 0;
-            sprintf(buf, "%2d.\tIF ", i + 1);
+            snprintf(buf, ARRAY_SIZE(buf), "%2d.\tIF ", i + 1);
 
             if (strlen(r->pattern)) {
                 parts++;
@@ -1008,7 +1008,7 @@ show_autopickup_menu(struct nh_option_desc *opt)
             }
 
             if (!parts)
-                sprintf(buf, "%2d.\teverything", i + 1);
+                snprintf(buf, ARRAY_SIZE(buf), "%2d.\teverything", i + 1);
 
             if (r->action == AP_GRAB)
                 sprintf(buf + strlen(buf), ":\t< GRAB");

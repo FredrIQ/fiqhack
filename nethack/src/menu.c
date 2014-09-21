@@ -671,7 +671,7 @@ layout_objmenu(struct gamewin *gw)
 
         /* if the weight is known, leave space to show it */
         if (settings.invweight && mdat->items[i].weight != -1) {
-            sprintf(weightstr, " {%d}", mdat->items[i].weight);
+            snprintf(weightstr, ARRAY_SIZE(weightstr), " {%d}", mdat->items[i].weight);
             itemwidth += strlen(weightstr);
         }
         if ((mdat->items[i].role == MI_NORMAL && mdat->items[i].accel) ||

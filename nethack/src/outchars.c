@@ -345,7 +345,7 @@ write_symlist(int fd, const struct curses_symdef *list, int len)
     int i;
 
     for (i = 0; i < len; i++) {
-        sprintf(buf, "%c\"%s\"\t%d\t%04x\n", list[i].custom ? '!' : '#',
+        snprintf(buf, ARRAY_SIZE(buf), "%c\"%s\"\t%d\t%04x\n", list[i].custom ? '!' : '#',
                 list[i].symname, list[i].color, (int)list[i].unichar[0]);
         
         if (write(fd, buf, strlen(buf)) < 0) {

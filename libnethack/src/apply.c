@@ -2614,12 +2614,12 @@ use_grapple(struct obj *obj, const struct nh_cmd_arg *arg)
         struct nh_menuitem items[3];
         const int *selected;
 
-        sprintf(items[0].caption, "an object on the %s", surface(cc.x, cc.y));
+        snprintf(items[0].caption, SIZE(items[0].caption), "an object on the %s", surface(cc.x, cc.y));
         set_menuitem(&items[0], 1, MI_NORMAL, "", 0, FALSE);
 
         set_menuitem(&items[1], 2, MI_NORMAL, "a monster", 0, FALSE);
 
-        sprintf(items[2].caption, "the %s", surface(cc.x, cc.y));
+        snprintf(items[2].caption, SIZE(items[2].caption), "the %s", surface(cc.x, cc.y));
         set_menuitem(&items[2], 3, MI_NORMAL, "a monster", 0, FALSE);
 
         if (display_menu

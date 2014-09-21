@@ -168,7 +168,7 @@ mon_vision_summary(const struct monst *mtmp, char *outbuf)
             if (Hallucination)
                 strcat(outbuf, "paranoid delusion");
             else {
-                sprintf(wbuf, "warned of %s", makeplural(mtmp->data->mname));
+                snprintf(wbuf, SIZE(wbuf), "warned of %s", makeplural(mtmp->data->mname));
                 strcat(outbuf, wbuf);
             }
             if (ways_seen-- > 1)
@@ -302,13 +302,13 @@ describe_mon(int x, int y, int monnum, char *buf)
         /* if not polymorphed, show both the role and the race */
         race[0] = 0;
         if (!Upolyd)
-            sprintf(race, "%s ", urace.adj);
+            snprintf(race, SIZE(race), "%s ", urace.adj);
 
         sprintf(buf, "%s%s%s called %s", Invis ? "invisible " : "", race,
                 mons[u.umonnum].mname, u.uplname);
 
         if (u.usteed) {
-            sprintf(steedbuf, ", mounted on %s", y_monnam(u.usteed));
+            snprintf(steedbuf, SIZE(steedbuf), ", mounted on %s", y_monnam(u.usteed));
             /* assert((sizeof buf >= strlen(buf)+strlen(steedbuf)+1); */
             strcat(buf, steedbuf);
         }
@@ -375,7 +375,7 @@ describe_mon(int x, int y, int monnum, char *buf)
 
         mon_vision_summary(mtmp, visionbuf);
         if (visionbuf[0]) {
-            sprintf(temp_buf, " [seen: %s]", visionbuf);
+            snprintf(temp_buf, SIZE(temp_buf), " [seen: %s]", visionbuf);
             strncat(buf, temp_buf, BUFSZ - strlen(buf) - 1);
         }
     }
@@ -434,7 +434,7 @@ nh_describe_pos(int x, int y, struct nh_desc_buf *bufs, int *is_in)
 
     if (Engulfed && (x != u.ux || y != u.uy)) {
         /* all locations when swallowed other than the hero are the monster */
-        sprintf(bufs->effectdesc, "interior of %s",
+        snprintf(bufs->effectdesc, SIZE(bufs->effectdesc), "interior of %s",
                 Blind ? "a monster" : a_monnam(u.ustuck));
     }
 
