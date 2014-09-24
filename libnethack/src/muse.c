@@ -339,7 +339,7 @@ find_defensive(struct monst *mtmp, struct musable *m)
         for (xx = x - 1; xx <= x + 1; xx++)
             for (yy = y - 1; yy <= y + 1; yy++)
                 if (isok(xx, yy))
-                    if (xx != u.ux && yy != u.uy)
+                    if (xx != u.ux || yy != u.uy)
                         if (mtmp->data != &mons[PM_GRID_BUG] || xx == x ||
                             yy == y)
                             if ((xx == x && yy == y) || !lev->monsters[xx][yy])
