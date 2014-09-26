@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2014-09-01
+# Last modified by Alex Smith, 2014-09-26
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
@@ -5051,7 +5051,15 @@ sub prioritize_object {
 # program. If the sureness calculation on pair $pair was based on facts about
 # $pairobj2 (where $pairobj2 is a pair or an object), we set
 # $pair_is_sure_because{$pair1}{$pairobj2} and
-# $pair_is_sure_rindex{$pairobj2}{$pair1}; $pairobj2 is interned, $pair1 isn't.
+# $pair_is_sure_rindex{$pairobj2}{$pair1}; $pairobj2 is interned, $pair1
+# isn't.
+#
+# Exception: $pair_is_sure_because, $pair_is_sure_rindex are left unset if
+# they're implied by transitive closure (i.e. if pair 1 is sure because of
+# pair 2, and pair 2 is sure because of pairobj 3, then it won't be recorded
+# that pair 1 is sure because of pairobj 3). This is to avoid needing
+# quadratic memory, which was definitely a problem for some people.
+#
 # The facts about $pairobj2 that could be relevant are:
 #
 # - For pairs:
@@ -5062,10 +5070,11 @@ sub prioritize_object {
 # - For objects:
 #   - How many, and which, pairs provice it;
 #   - Which pairs the object is sure via.
-my %pair_is_sure_because;
-my %pair_is_sure_rindex;
-my %sure_pair_cache;
-my %unsure_pair_cache;
+my %pair_is_sure_because; # hash to undef
+my %pair_is_sure_rindex;  # hash to undef
+my %sure_pair_cache;      # hash to undef
+my %unsure_pair_cache;    # hash to unsureness list
+sub invalidate_pair_or_object_sureness;
 sub invalidate_pair_or_object_sureness {
     my $ipairobj2 = intern shift;
     for my $pair1 (keys %{$pair_is_sure_rindex{$ipairobj2}}) {
@@ -5074,6 +5083,7 @@ sub invalidate_pair_or_object_sureness {
         delete $pair_is_sure_because{$pair1};
         delete $sure_pair_cache{$pair1};
         delete $unsure_pair_cache{$pair1};
+        invalidate_pair_or_object_sureness $pair1;
     }
     delete $pair_is_sure_rindex{$ipairobj2};
 }
@@ -5860,7 +5870,7 @@ memoize('pair_is_definitely_deletable');
 #
 # Must be called in array context. The first return is whether the pair is
 # sure; the second return is the interned reason that it's sure or unsure.
-my %pair_is_sure_seen = ();
+my %pair_is_sure_seen = (); # hash to undef
 sub pair_is_sure;
 sub pair_is_sure {
     my $pair = shift;
@@ -5868,11 +5878,13 @@ sub pair_is_sure {
     # Caches. Check these even before completing argument passing, because
     # this function is called a /lot/ and bailing out early is helpful.
     # (Thanks, profiler!)
-    $sure_pair_cache{$pair} and return (1, [@{$sure_pair_cache{$pair}}]);
-    $unsure_pair_cache{$pair} and return (0, [@{$unsure_pair_cache{$pair}}]);
+    exists $sure_pair_cache{$pair} and
+        return (1, undef);
+    exists $unsure_pair_cache{$pair} and
+        return (0, [@{$unsure_pair_cache{$pair}}]);
 
     my $recursion_ok = shift;
-    if ($pair_is_sure_seen{$pair}) {
+    if (exists $pair_is_sure_seen{$pair}) {
         $recursion_ok and return (0, [intern "recursion"]);
         croak "Pair $pair seems to have been built in terms of itself";
     }
@@ -5881,8 +5893,8 @@ sub pair_is_sure {
     # the rule doesn't exist, or the rule doesn't apply to the object; both of
     # those cases cannot be resolved during the run.
     if (pair_is_definitely_deletable $pair) {
-        $sure_pair_cache{$pair} = [];
-        return (1, []);
+        $sure_pair_cache{$pair} = undef;
+        return (1, undef);
     }
 
     # Base case.
@@ -5891,14 +5903,11 @@ sub pair_is_sure {
     # Recursive case.
     my $ipair = intern $pair;
     ensure_pair_has_xuse $pair;
-    $pair_is_sure_seen{$pair} = 1; # avoid an infinite regress
+    $pair_is_sure_seen{$pair} = undef; # avoid an infinite regress
     my @ixuses = @{$state->{xuse_by_pair}{$ipair}};
-    # %isureness_list is a hash from elements that affect $pair's sureness, to
-    # undef. Approximately half the time spent in pair_is_sure was spent
-    # manipulating it in an older version of the program, so it was replaced
-    # with a "hash to undef", one of the faster ways to represent a set in
-    # pure Perl (because mass inserts can be done via slicing and so do not
-    # require a loop).
+    # %isureness_list is a hash from elements that directly affect $pair's
+    # sureness, to undef. (Indirect dependencies are determined via
+    # $pair_is_sure_because.)
     my %isureness_list = ($ipair => undef); # interned keys, undef values
     @isureness_list{@ixuses} = ();
     for my $ixuse (@ixuses) {
@@ -5959,7 +5968,7 @@ sub pair_is_sure {
                         "unsure $prevpair needed for $xuse";
                 return (0, $iunsure_list);
             } else {
-                @isureness_list{@$iunsure_list} = ();
+                $isureness_list{$prevpair} = undef;
             }
         } else {
             @iproviders = sort @iproviders;
@@ -5991,9 +6000,6 @@ sub pair_is_sure {
                         %pair_is_sure_seen = %prerecursive_pair_is_sure_seen;
                     }
                     $isureness_list{$iprovider} = undef;
-                    if ($sure) {
-                        @isureness_list{@$iunsure_list} = ();
-                    }
                 }
                 $outdepends_seen{$outdepends} = $sure;
                 $outdepends_because{$outdepends} = $provider;
@@ -6021,14 +6027,13 @@ sub pair_is_sure {
     }
 
     progress_report 5, "pair_is_sure: $pair is sure";
-    my $isure_list = [keys %isureness_list];
-    $sure_pair_cache{$pair} = $isure_list;
-    for my $isure_because (@$isure_list) {
-        $pair_is_sure_because{$pair}{$isure_because} = 1;
-        $pair_is_sure_rindex{$isure_because}{$pair} = 1;
+    $sure_pair_cache{$pair} = undef;
+    for my $isure_because (keys %isureness_list) {
+        $pair_is_sure_because{$pair}{$isure_because} = undef;
+        $pair_is_sure_rindex{$isure_because}{$pair} = undef;
     }
     delete $pair_is_sure_seen{$pair};
-    return (1, $isure_list);
+    return (1, undef);
 }
 
 ### Object existence and contents
@@ -6932,8 +6937,8 @@ MAINLOOP: while (1) {
                 $find_another = 1;
             } else {
                 if (!$state->{outdep_by_pair}->{$icurpair} &&
-                    !$sure_pair_cache{$curpair} &&
-                    !$unsure_pair_cache{$curpair}) {
+                    !exists $sure_pair_cache{$curpair} &&
+                    !exists $unsure_pair_cache{$curpair}) {
                     # If a pair currently has no outputs, and it has at least
                     # one nonexistent, sure xuse, we can mark it as unchanged
                     # safely. This optimization requires us to know the xuse,
