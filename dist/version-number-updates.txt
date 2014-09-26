@@ -1,0 +1,47 @@
+About this document:
+Last modified by Alex Smith, 2014-09-26
+
+Copyright (C) 2013 Alex Smith.
+
+This document is licensed under the NetHack General Public License.  See
+libnethack/dat/license for details.
+
+
+This is a chart of all the places in the source distribution that need
+to be updated due to a new version of NetHack coming out (i.e. a "if
+you produced a new version, what's the minimum that has to change?"):
+
+  * aimake.rules ($version constant near the start of the file)
+  * libnethack/include/patchlevel.h (VERSION_COMPATIBILITY constant,
+    if and only if the new release breaks save compatibility)
+  * libnethack/dat/history (first line)
+  * dist/debian/changelog (summary changelog entry for Debian)
+  * doc/changelog.txt (detailed description of the changes)
+  * libnethack_common/include/nethack.h (this is the central place
+    from which most code should be pulling the version number)
+  * README (describe the new version)
+  * scripts/build-debian-package, scripts/build-windows-zipfile
+    (filename of the newly created package)
+
+Additionally, almost every release will change the copyright status
+(typically just dates, but perhaps more extensively):
+
+  * copyright, copyright.binary
+  * aimake.rules ($copyright statement)
+  * libnethack/include/patchlevel.h (this is the central place from
+    which most code should be pulling the copyright statement)
+
+Places to announce a new release (including betas):
+
+  * http://reddit.com/r/nethack
+  * IRC channels on Freenode: #nethack (just say it's been released),
+    #nethack4 (change the topic if necessary)
+  * rec.games.roguelikes.nethack on Usenet
+  * the networkmotd daemon on http://motd.nethack4.org (needs an admin
+    to change this)
+
+Note that the NHGPL also requires all modified files to specify who
+modified them and when, which is a pretty obnoxious requirement.
+Nowadays, we get git to do this automatically: see
+scripts/vcs-hooks/git-hooks-post-commit.
+
