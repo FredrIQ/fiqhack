@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-09-15 */
+/* Last modified by Alex Smith, 2014-10-02 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -564,31 +564,23 @@ print_high_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe)
                         nhcurses_genbranding_first);
 }
 
-/* What is the bottom-most, opaque background of a map square? This takes
-   background and brandings into account. */
+/* What is the bottom-most, opaque background of a map square? */
 static enum {
-    fb_litroom,
-    fb_darkroom,
-    fb_litcorr,
-    fb_darkcorr,
+    fb_room,
+    fb_corr,
 }
 furthest_background(const struct nh_dbuf_entry *dbe)
 {
     boolean room = dbe->bg != corr_id;
-    boolean seen = dbe->branding & NH_BRANDING_SEEN;
-    boolean lit = (dbe->branding & NH_BRANDING_LIT) ||
-        (dbe->branding & NH_BRANDING_TEMP_LIT);
 
-    if (lit || (room && seen))
-        return room ? fb_litroom : fb_litcorr;
-    else
-        return room ? fb_darkroom : fb_darkcorr;
+    return room ? fb_room : fb_corr;
 }
 
 int
 mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms, int *bg_color)
 {
     int id, count = 0;
+    unsigned long long substitution = dbe_substitution(dbe);
 
     if (dbe->effect) {
         id = NH_EFFECT_ID(dbe->effect);
@@ -672,20 +664,16 @@ mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms, int *bg_color)
         /* Implement lighting display. We override the background of dark room
            and light corridor tiles. */
         int stepped_color = CLR_BROWN;
-        switch (furthest_background(dbe)) {
-        case fb_litroom:
-            break;
-        case fb_darkroom:
+
+        if (furthest_background(dbe) == fb_room &&
+            substitution & NHCURSES_SUB_UNLIT) {
             if (dbe->bg == room_id)
                 syms[count-1] = cur_drawing->bgelements[darkroom_id];
             stepped_color = CLR_BLUE;
-            break;
-        case fb_litcorr:
+        } else if (furthest_background(dbe) == fb_corr &&
+                   substitution & NHCURSES_SUB_LIT) {
             if (dbe->bg == corr_id)
                 syms[count-1] = cur_drawing->bgelements[litcorr_id];
-            break;
-        case fb_darkcorr:
-            break;
         }
 
         /* Override darkroom for stepped-on squares, so the player can see
@@ -724,6 +712,28 @@ curses_notify_level_changed(int dmode)
     curses_level_display_mode = dmode;
 }
 
+
+unsigned long long
+dbe_substitution(struct nh_dbuf_entry *dbe)
+{
+    unsigned long long s = NHCURSES_SUB_LDM(curses_level_display_mode);
+
+    /* TODO: Do we want this behaviour (that approximates 3.4.3 behaviour) for
+       the "lit" substitution? Do we want it to be customizable?
+
+       Another option is to have multiple substitutions, but that's starting to
+       get silly. */
+    short lit_branding = dbe->bg == corr_id ?
+        (NH_BRANDING_LIT | NH_BRANDING_TEMP_LIT) :
+        (NH_BRANDING_LIT | NH_BRANDING_TEMP_LIT | NH_BRANDING_SEEN);
+
+    s |= (dbe->branding & lit_branding) ? NHCURSES_SUB_LIT : NHCURSES_SUB_UNLIT;
+
+    /* TODO: Determine which Quest this tile belongs to (if any), and
+       race/gender of a player-monster on the tile */
+
+    return s;
+}
 
 void
 switch_graphics(enum nh_text_mode mode)
@@ -765,22 +775,22 @@ print_sym(WINDOW * win, struct curses_symdef *sym, int extra_attrs, int bgcolor)
 
 void
 print_tile(WINDOW *win, struct curses_symdef *api_name, 
-           struct curses_symdef *api_type, int offset)
+           struct curses_symdef *api_type, int offset,
+           unsigned long long substitutions)
 {
     int tileno = tileno_from_api_name(
-        api_name->symname, api_type ? api_type->symname : NULL, offset,
-        curses_level_display_mode);
+        api_name->symname, api_type ? api_type->symname : NULL, offset);
     /* TODO: better rendition for missing tiles than just using the unexplored
        area tile */
     if (tileno == TILESEQ_INVALID_OFF) tileno = 0;
+
+    /* TODO: translate tileno, substitution into x/y offsets */
     wset_tiles_tile(win, tileno);
 }
 
 const char *const furthest_backgrounds[] = {
-    [fb_litroom] = "the floor of a room",
-    [fb_darkroom] = "dark part of a room",
-    [fb_litcorr] = "lit corridor",
-    [fb_darkcorr] = "corridor",
+    [fb_room] = "the floor of a room",
+    [fb_corr] = "corridor",
 };
 
 static int furthest_background_tileno[sizeof furthest_backgrounds /
@@ -790,6 +800,7 @@ static nh_bool furthest_background_tileno_needs_initializing = 1;
 void
 print_background_tile(WINDOW *win, struct nh_dbuf_entry *dbe)
 {
+    unsigned long long substitutions = dbe_substitution(dbe);
     if (furthest_background_tileno_needs_initializing) {
         int i;
         for (i = 0; i < sizeof furthest_backgrounds /
@@ -803,7 +814,7 @@ print_background_tile(WINDOW *win, struct nh_dbuf_entry *dbe)
     wset_tiles_tile(win, furthest_background_tileno[furthest_background(dbe)]);
     if (dbe->bg != room_id && dbe->bg != corr_id)
         print_tile(win, cur_drawing->bgelements + dbe->bg,
-                   NULL, TILESEQ_CMAP_OFF);
+                   NULL, TILESEQ_CMAP_OFF, substitutions);
 }
 
 /* outchars.c */

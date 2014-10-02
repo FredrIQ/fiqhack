@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-10-02 */
 /*   Copyright (c) NetHack Development Team 1995                    */
 /*   NetHack may be freely redistributed.  See license for details. */
 
@@ -74,7 +74,6 @@ struct tile_offset_group {
 };
 struct tile_offset_group tile_offset_groups[] = {
     {TILESEQ_CMAP_OFF,    TILESEQ_CMAP_OFF    + TILESEQ_CMAP_SIZE,     1, 0},
-    {TILESEQ_SUBST_OFF,   TILESEQ_SUBST_OFF   + TILESEQ_SUBST_SIZE,    1, 0},
     {TILESEQ_GENBRAND_OFF,TILESEQ_GENBRAND_OFF+ TILESEQ_GENBRAND_SIZE, 1, 0},
     {TILESEQ_TRAP_OFF,    TILESEQ_TRAP_OFF    + TILESEQ_TRAP_SIZE,     1, 0},
     {TILESEQ_OBJ_OFF,     TILESEQ_OBJ_OFF     + TILESEQ_OBJ_SIZE,      0, 0},

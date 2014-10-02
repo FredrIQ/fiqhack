@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-08-28 */
+/* Last modified by Alex Smith, 2014-10-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -839,15 +839,23 @@ notify_levelchange(const d_level * dlev)
 
     if (In_hell(z))
         mode = LDM_HELL;
+    else if (Is_qstart(z))
+        mode = LDM_QUESTHOME;
+    else if (Is_qlocate(z))
+        mode = LDM_QUESTLOCATE;
+    else if (Is_nemesis(z))
+        mode = LDM_QUESTGOAL;
+    else if (In_quest(z) && z->dlevel > qlocate_level.dlevel)
+        mode = LDM_QUESTFILL2;
     else if (In_quest(z))
-        mode = LDM_QUEST;
+        mode = LDM_QUESTFILL1;
     else if (In_mines(z))
         mode = LDM_MINES;
     else if (In_sokoban(z))
         mode = LDM_SOKOBAN;
     else if (Is_rogue_level(z))
         mode = LDM_ROGUE;
-    else if (Is_knox(&u.uz))
+    else if (Is_knox(z))
         mode = LDM_KNOX;
     else
         mode = LDM_DEFAULT;

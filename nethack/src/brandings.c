@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-10-02 */
 /* Copyright (c) 2013 Alex Smith                                  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -29,31 +29,68 @@ const char *const nhcurses_branding_names[(int)nhcurses_branding_count] = {
     [nhcurses_monbranding_ridden] = "monster is ridden",
 };
 
-/* The names which level display modes are given in the tilesets. Some of these
-   are arbitrary (the ones starting with hyphens), but most of them are taken
-   from substitutions in existing tilesets for NetHack 3 or Slash'EM. Changing
-   these names, or the order they're in, will break tilemap compatibility;
-   please don't do that. Adding new names is OK, though.
+/* The names of substitutions, as seen in a .txt tile file. The names in the
+   .txt file are compiled to bitflags in the .tiledesc file, and this is the
+   map between them. */
+const char *const nhcurses_sub_names[] = {
 
-   Names starting with a hyphen do not have substitution tiles. You can remove
-   the hyphen if you add new substitution tiles for the level display mode to
-   every tileset.
-
-   The tiles parsing code relies on none of these being a prefix of another. */
-const char *const nhcurses_ldm_names[LDM_COUNT] = {
-    [LDM_DEFAULT] = "-default",
+    /* Names of level display modes. */
+    [LDM_DEFAULT] = "default",
     [LDM_HELL] = "gehennom",
-    [LDM_QUEST] = "-quest",
+    [LDM_QUESTHOME] = "questhome",
     [LDM_MINES] = "mine", /* /not/ "mines"; existing tilesets use "mine" */
     [LDM_SOKOBAN] = "sokoban",
-    [LDM_ROGUE] = "-rogue",
+    [LDM_ROGUE] = "rogue",
     [LDM_KNOX] = "knox",
+    [LDM_QUESTFILL1] = "questfill1",
+    [LDM_QUESTLOCATE] = "questlocate",
+    [LDM_QUESTFILL2] = "questfill2",
+    [LDM_QUESTGOAL] = "questgoal",
+
+    /* These two are special cases. */
+    [LDM_COUNT +  0] = "lit",
+    [LDM_COUNT +  1] = "unlit",
+
+    /* These represent /quests/, and so affect terrain. This gives some
+       awkwardness with gender-specific player-monster names, so we truncate to
+       the first three characters (which works in English,
+       *cav*eman / *cav*ewoman, *pri*est / *pri*estess). */
+    [LDM_COUNT +  2] = "arc",
+    [LDM_COUNT +  3] = "bar",
+    [LDM_COUNT +  4] = "cav",
+    [LDM_COUNT +  5] = "hea",
+    [LDM_COUNT +  6] = "kni",
+    [LDM_COUNT +  7] = "mon",
+    [LDM_COUNT +  8] = "pri",
+    [LDM_COUNT +  9] = "ran",
+    [LDM_COUNT + 10] = "rog",
+    [LDM_COUNT + 11] = "sam",
+    [LDM_COUNT + 12] = "tou",
+    [LDM_COUNT + 13] = "val",
+    [LDM_COUNT + 14] = "wiz",
+
+    /* Whereas these represent personal attributes, and so affect monsters.
+       Currently this is only implemented for the player, but, e.g. "sub male
+       mountain nymph" is certainly meaningful and may be implemented in the
+       future.
+
+       There is no particular need for these to be in the same order as in
+       libnethack; the libnethack internals should be invisible to the tiles
+       system. */
+    [LDM_COUNT + 15] = "female",
+    [LDM_COUNT + 16] = "male",
+
+    [LDM_COUNT + 17] = "human",
+    [LDM_COUNT + 18] = "gnome",
+    [LDM_COUNT + 19] = "elf",
+    [LDM_COUNT + 20] = "orc",
+    [LDM_COUNT + 21] = "dwarf",
+
+    [LDM_COUNT + 22] = NULL /* fencepost */
 };
-/* Change the 4 to match the number of substitution modes (i.e. level display
-   modes with no leading hyphen) in the above list; and change brandings.h to
-   match. */
-static_assert(NHCURSES_LDM_SUB_COUNT == 4,
-              "mismatch in number of substitution modes");
+
+static_assert((sizeof nhcurses_sub_names) / (sizeof *nhcurses_sub_names) < 64,
+              "overflow in substitution tiles bitfield");
 
 /* Some things can't be farlooked, or give the name of something else when
    farlooked, and so aren't named in drawing.c. Give them names here. */
