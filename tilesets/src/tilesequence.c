@@ -40,31 +40,66 @@ const struct symdef_array symdef_arrays[] = {
 
 static const char *name_from_tileno_internal(int tileno);
 
-/* Is this tile substitutable? If so, return an appropriately substituted tile.
-
-   This currently relies on the facts that all the substitutable tiles match the
-   name pattern "walls N", where N is an integer. name_from_tileno_internal
-   makes the same assumption for going the other way; if you change this,
-   change that too. */
-static int
-maybe_substitute(int tileno, int level_display_mode)
+unsigned long long
+substitution_from_name(const char **name)
 {
-    if (tileno == -1)
-        return -1;
-
-    const char *tilename = name_from_tileno_internal(tileno);
-    if (*nhcurses_ldm_names[level_display_mode] == '-')
-        return tileno;
-    if (strncmp(tilename, "walls ", strlen("walls ")) != 0)
-        return tileno;
-
-    tileno = TILESEQ_SUBST_OFF + atoi(tilename + strlen("walls "));
+    unsigned long long substitutions = 0;
     int i;
-    for (i = 0; i < level_display_mode; i++) {
-        if (*nhcurses_ldm_names[i] != '-')
-            tileno += TILESEQ_SUBSTITUTABLE_TILES;
+    /* Remove any substitution prefixes. */
+    while (!strncmp(*name, "sub ", strlen("sub "))) {
+        int found = 0;
+        *name += strlen("sub ");
+        for (i = 0; i < LDM_COUNT; i++) {
+            int len = strlen(nhcurses_sub_names[i]);
+            if (strncmp(*name, nhcurses_sub_names[i], len) == 0 &&
+                *name[len] == ' ') {
+                *name += strlen(nhcurses_sub_names[i]) + 1;
+                substitutions |= 1ULL << i;
+                found = 1;
+                break;
+            }
+        }
+        if (!found) {
+            /* invalid substitution; just leave the "sub " prefix there so we
+               get an invalid name error later */
+            break;
+        }
     }
-    return tileno;
+    return substitutions;
+}
+
+const char *
+name_from_substitution(unsigned long long substitution)
+{
+    static char *buffer = NULL;
+    static int buflen = 0;
+    int bufptr = 0;
+    int i;
+
+    if (!substitution)
+        return "";
+
+    if (buflen)
+        *buffer = '\0';
+
+    for (i = 0; i < LDM_COUNT; i++) {
+        if (substitution & (1ULL << i)) {
+            int newlen = bufptr + (sizeof "sub  ") +
+                strlen(nhcurses_sub_names[i]);
+            if (newlen > buflen) {
+                buffer = realloc(buffer, newlen);
+                if (!buflen)
+                    *buffer = '\0';
+                buflen = newlen;
+            }
+            strcat(buffer, "sub ");
+            strcat(buffer, nhcurses_sub_names[i]);
+            strcat(buffer, " ");
+            bufptr = newlen - 1;
+        }
+    }
+
+    return buffer;
 }
 
 /* Find a tile number in an nh_symdef array. */

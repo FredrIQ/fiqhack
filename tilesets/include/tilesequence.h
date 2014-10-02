@@ -58,8 +58,10 @@
 # define TILESEQ_COUNT           (TILESEQ_EFFECT_OFF + TILESEQ_EFFECT_SIZE)
 # define TILESEQ_INVALID_OFF     (-1)
 
+extern unsigned long long substitution_from_name(const char **);
 extern int tileno_from_name(const char *, int);
 extern int tileno_from_api_name(const char *, const char *, int);
 extern const char *name_from_tileno(int);
+extern const char *name_from_substitution(unsigned long long);
 
 #endif
