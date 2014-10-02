@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-10-02
+Last modified by Alex Smith, 2014-10-03
 
 The tiles code in this directory was originally taken from Slash'EM, and has
 been modified by Alex Smith for use in NetHack 4.  (This documentation file
@@ -87,9 +87,9 @@ converting between them is the main purpose of the tile utilities.
 
 A tile image can be expressed in two different ways.  One is to specify the
 image inline as text, in the same way as the NetHack 3 series and Slash'EM.
-Another is to specify the image by reference, giving the top and left
-coordinates of the tile in some external image (a total of 32 bits, because
-each coordinate is allowed to range up to 65535).  (Nothing about this format
+Another is to specify the image by reference, giving the position of the tile
+within some external image (this is a 32-bit number, with 0 being the top-left
+tile, 1 being the tile to its right, and so on).  (Nothing about this format
 conceptually limits the format the external image can be in; however, any tile
 utilities that need to be able to manipulate that image require it to be in
 PNG format.)  A cchar can also be specified in two different ways: as a
@@ -102,7 +102,7 @@ Tile names can also be expressed in two different ways; as text (e.g. "walls
 representation of the text (32 bits for the base tile, such as 'wizard', and
 64 bits for substitutions; substitutions take up more space because they form
 a bitfield rather than an enum).  The textual and binary representations of
-tile names are also indistinguishable.
+tile names are also interchangeable.
 
 A "compiled tileset", which is used by the program at runtime for actual tiles
 rendering, consists of a list of tile name / rendering pairs (totalling 128
@@ -130,10 +130,9 @@ For names:
 
 For images:
   * NetHack 3 series / Slash'EM text format
-  * Reference to an external image as x/y coordinates
+  * Reference to an external image as a number
   * Reference to an external image based on file position (i.e. the first
-    image is taken from the top-left of the file, the second to its right, and
-    so on)
+    image is tile number 0, the second tile number 1, and so on)
   * Numerical cchar, in hexadecimal with `0x` prefix
   * cchar in text format
 
@@ -157,7 +156,10 @@ tileset that references it, the combination can be glued together into one
 file.  This is a PNG file with up to two extra private chunks that contain the
 tileset: `nhTB` for a binary tileset and `nhTS` for a source-form tileset; any
 references to an image in the tilesets reference the file that it's embedded
-in.  (If both are present, they should both have the same meaning.)
+in.  (If both are present, they should both have the same meaning; this means
+that `nhTB` can be used by the rendering code, and `nhTS` to automatically
+compensate for changes to the name to number mapping.)  These chunks must
+appear before the image data.
 
 
 Tile Names
@@ -324,11 +326,8 @@ backwards compatibility; however, there's no point in using it otherwise,
 because old tiles utilities would not be able to read such tilesets anyway.
 
 The format is then continued with the tile image or cchar.  This is typically
-just written with a colon, space, and a hexadecimal number or its text
-representation.  (For cchars, this has already been discussed; for image
-references, it's of the form `x 32 y 48` or as a 32-bit number with the x
-position in the less significant 16 bits and the y position in the more
-significant 16 bits.)  There are two other possibilities.  When relying on
+just written with a colon, space, and a hexadecimal number or (for a cchar)
+its text representation.  There are two other possibilities.  When relying on
 file position, the tile image can just be omitted entirely, although this is
 only legal if every tile image in the tileset relies on file position (thus
 creating a map file).  Finally, if the images are embedded in text format into
@@ -340,6 +339,19 @@ the RGB, with alpha being 0 if the RGB is (71, 108, 108) and 255 otherwise;
 and if they provide 1 channel each, then four keys will be needed per pixel,
 to give the red, green, blue and alpha separately.)  The braces are each on
 lines of their own, and no colon is used.
+
+Binary tilesets also have a header, consisting of the string "NH4TILESET" and
+two NUL characters, then 80 characters representing the name of the tileset
+(padded to the right with NULs), then the width and height of each tile (as
+little-endian 16-bit integers).  In text-based tilesets, these header fields
+can be expressed as follows:
+
+    # name My Example Tileset
+    # width 32
+    # height 48
+
+The headers can be omitted in text-based tilesets, in which case they must be
+supplied to `tilecompile` using command-line arguments.
 
 
 Tile Rendering

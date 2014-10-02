@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-02 */
+/* Last modified by Alex Smith, 2014-10-03 */
 /* Copyright (c) 2013 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -49,10 +49,10 @@ substitution_from_name(const char **name)
     while (!strncmp(*name, "sub ", strlen("sub "))) {
         int found = 0;
         *name += strlen("sub ");
-        for (i = 0; i < LDM_COUNT; i++) {
+        for (i = 0; nhcurses_sub_names[i]; i++) {
             int len = strlen(nhcurses_sub_names[i]);
             if (strncmp(*name, nhcurses_sub_names[i], len) == 0 &&
-                *name[len] == ' ') {
+                (*name)[len] == ' ') {
                 *name += strlen(nhcurses_sub_names[i]) + 1;
                 substitutions |= 1ULL << i;
                 found = 1;
