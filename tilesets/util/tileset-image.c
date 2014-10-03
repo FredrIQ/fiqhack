@@ -356,7 +356,7 @@ write_png_file(const char *filename, bool add_nhTb_nhTs)
         png_byte alpha_palette[palettesize];
         int nonopaque_count = 0;
 
-        assert(palettesize < MAX_PNG_PALETTE_SIZE);
+        assert(palettesize <= MAX_PNG_PALETTE_SIZE);
 
         for (p = 0; p < palettesize; p++) {
             png_palette[p].red = palette[p].r;

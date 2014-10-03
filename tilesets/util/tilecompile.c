@@ -201,7 +201,7 @@ main(int argc, char *argv[])
     int rv = EXIT_FAILURE;
     int formatnumber = -1;
     bool usage = 0, ignore_options = 0, keep_unused = 0,
-        fuzz = 0, largepalette = 0;
+        fuzz = 0, largepalette = 0, all_base_tiles = 0;
     pixel transparent_color = {.r = 0, .g = 0, .b = 0, .a = 0};
 
     /* Parse command-line options. */
@@ -269,6 +269,9 @@ main(int argc, char *argv[])
             argv++;
         } else if (!strcmp(*argv, "-l") && !ignore_options) {
             largepalette = 1;
+            argv++;
+        } else if (!strcmp(*argv, "-W") && !ignore_options) {
+            all_base_tiles = 1;
             argv++;
         } else if (!strcmp(*argv, "--help") && !ignore_options) {
             rv = EXIT_SUCCESS;
@@ -346,21 +349,37 @@ main(int argc, char *argv[])
        deleted only if it's otherwise unreferenced, and -k is not given.)
 
        We implement this via placing a sentinel in the references we're
-       deleting, then sorting them to the end and reducing the count. */
+       deleting, then sorting them to the end and reducing the count.
+
+       We also implement -W at the same time, as we're looping over tile
+       references anyway. */
     {
         int i, j;
-        for (i = 0; i < seen_tile_count; i++)
+        bool base_tile_seen[TILESEQ_COUNT] = {0};
+        for (i = 0; i < seen_tile_count; i++) {
+            if (tiles_seen[i].substitution == 0 &&
+                tiles_seen[i].tilenumber >= 0 &&
+                tiles_seen[i].tilenumber < TILESEQ_COUNT)
+                base_tile_seen[tiles_seen[i].tilenumber] = 1;
             for (j = i + 1; j < seen_tile_count; j++)
                 if (tiles_seen[i].tilenumber == tiles_seen[j].tilenumber &&
                     tiles_seen[i].substitution == tiles_seen[j].substitution) {
                     tiles_seen[i].tilenumber = TILESEQ_INVALID_OFF;
                     break;
                 }
+        }
+
         qsort(tiles_seen, seen_tile_count, sizeof (tile),
               compare_deleted_tiles_to_end);
         while (seen_tile_count && tiles_seen[seen_tile_count - 1]
                .tilenumber == TILESEQ_INVALID_OFF)
             seen_tile_count--;
+
+        if (all_base_tiles)
+            for (i = 0; i < TILESEQ_COUNT; i++)
+                if (!base_tile_seen[i])
+                    fprintf(stderr, "Warning: missing base tile '%s'\n",
+                            name_from_tileno(i));
     }
 
 
@@ -447,6 +466,7 @@ main(int argc, char *argv[])
                 pixel p = images_seen[i][j];
                 int pi;
                 bool foundr = 0, foundg = 0, foundb = 0, founda = 0;
+                int bestpi = 0, bestpidiff = INT_MAX;
                 for (pi = 0; pi < palettesize; pi++) {
                     if (palettechannels == 4) {
                         if (palette[pi].r == p.r &&
@@ -462,13 +482,27 @@ main(int argc, char *argv[])
                         if (foundr && foundg && foundb && founda)
                             break;
                     }
-                    /* TODO: fuzz */
+                    if (fuzz && palettechannels == 4) {
+                        int diff =
+                            (int)p.r - (int)palette[pi].r +
+                            (int)p.g - (int)palette[pi].g +
+                            (int)p.b - (int)palette[pi].b +
+                            (int)p.a - (int)palette[pi].a;
+                        if (diff < bestpidiff) {
+                            bestpi = pi;
+                            bestpidiff = diff;
+                        }
+                    }
                 }
+
+                if (pi == palettesize && fuzz)
+                    pi = bestpi;
+
                 if (pi == palettesize) {
                     /* It wasn't found. */
                     if (palette_locked) {
                         fprintf(stderr, "Error: pixel (%d, %d, %d, %d) "
-                                "not in palette", p.r, p.g, p.b, p.a);
+                                "not in palette\n", p.r, p.g, p.b, p.a);
                         return EXIT_FAILURE;
                     }
 
