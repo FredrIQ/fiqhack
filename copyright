@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Alex Smith, 2014-09-16
+Last-Modified: Last modified by Alex Smith, 2014-10-03
 
 Files: libnethack_client/*
 License: NHGPL or GPL-2+
@@ -491,32 +491,16 @@ Files: tilesets/src/bigtile.c tilesets/src/magtile.c
 License: NHGPL
 Copyright: Copyright (c) NetHack Development Team 1995
 
-Files: tilesets/include/tile_h.in tilesets/src/tiletext.c tilesets/util/tilemap.c
+Files: tilesets/util/*.c
 License: NHGPL
-Copyright:
- There is no explicit copyright notice on these files. These versions were
- taken from a Slash'EM release with the following copyright:
- .
- Copyright 1997-2006 Warren 'WACko' Cheung <wac@intergate.bc.ca>
- Copyright 1997-2006 J. Ali Harlow <j_ali@users.sourceforge.net>
- Copyright 1985-2003 Stichting Mathematisch Centrum, M. Stephenson (Nethack)
- .
- The files originated in vanilla NetHack (where they also have no explicit
- copyright notice), but the Slash'EM versions were modified somewhat.
+Copyright: Copyright (C) 2014 Alex Smith
 
-Files: tilesets/util/export_tileset.c
+Files: tilesets/util/tileset-image.c
 License: NHGPL
 Copyright:
  Copyright (C) Andrew Apted <ajapted@users.sourceforge.net> 2002
                Slash'EM Development Team 2003
-
-Files: tilesets/util/convert_tileset.c
-License: NHGPL
-Copyright: Copyright (C) J. Ali Harlow 2000
-
-Files: tilesets/util/import_tileset.c
-License: NHGPL
-Copyright: Copyright (C) 2014 Alex Smith
+ Copyright (C) 2014 Alex Smith
 
 Files: tilesets/include/tilesequence.h
 License: NHGPL
@@ -551,8 +535,9 @@ Copyright: Copyright (c) 2013 Sean Hunt
 Files: doc/tilesets.txt
 License: NHGPL
 Copyright: Copyright (c) 2013 Alex Smith
-Comment: Based on the equivalent documentation from Slash'EM (which is
- also NHGPL, and does not list an author).
+Comment: Loosely based on the equivalent documentation from Slash'EM
+ (which is also NHGPL, and does not list an author). The vast majority
+ was written by Alex Smith, however.
 
 Files: doc/guidebook.asc
 License: NHGPL
