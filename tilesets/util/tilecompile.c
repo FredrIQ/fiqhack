@@ -179,6 +179,7 @@ main(int argc, char *argv[])
     int formatnumber = -1;
     bool usage = 0, ignore_options = 0, keep_unused = 0,
         fuzz = 0, largepalette = 0;
+    pixel transparent_color = {.r = 0, .g = 0, .b = 0, .a = 0};
 
     /* Parse command-line options. */
     if (*argv)
@@ -216,6 +217,21 @@ main(int argc, char *argv[])
                 return EXIT_FAILURE;
             }
             argv += 3;
+        } else if (!strcmp(*argv, "-b") && argv[1] && argv[2] &&
+                   argv[3] && !ignore_options) {
+            long r = strtol(argv[1], NULL, 10);
+            long g = strtol(argv[2], NULL, 10);
+            long b = strtol(argv[3], NULL, 10);
+            if (r < 0 || g < 0 || b < 0 ||
+                r > 255 || g > 255 || b > 255) {
+                fprintf(stderr, "Error: Invalid background color\n");
+                return EXIT_FAILURE;
+            }
+            transparent_color.r = r;
+            transparent_color.g = g;
+            transparent_color.b = b;
+            transparent_color.a = 255;
+            argv += 4;
         } else if (!strcmp(*argv, "-p") && !ignore_options) {
             palette_locking = 1;
             argv++;
@@ -285,6 +301,7 @@ main(int argc, char *argv[])
             "      Other recognised options:\n"
             "      -p file           Lock the palette to the given file\n"
             "      -f                Adjust colors to match a locked palette\n"
+            "      -b r g b          Edit the given color to transparent\n"
             "      -l                Allow large palettes\n"
             "      -k                Keep unused tile images\n"
             "      -u                Copy unrecognised tile names\n"
@@ -331,10 +348,30 @@ main(int argc, char *argv[])
         }
 
         for (i = 0; i < seen_image_count; i++) {
+            int j;
+
             if (!keep_unused && !image_used[i]) {
                 free(images_seen[i]);
                 images_seen[i] = NULL;
                 continue;
+            }
+
+            /* Some tilesets are converted to images without alpha, and some
+               image formats cannot express a color key. Thus, we allow a
+               color key to be given on the command line. This is where we
+               replace it. */
+            if (transparent_color.a) {
+                for (j = 0; j < tileset_width * tileset_height; j++) {
+                    pixel *p = &(images_seen[i][j]);
+                    if (p->r == transparent_color.r &&
+                        p->g == transparent_color.g &&
+                        p->b == transparent_color.b) {
+                        p->r = TRANSPARENT_R;
+                        p->g = TRANSPARENT_G;
+                        p->b = TRANSPARENT_B;
+                        p->a = 0;
+                    }
+                }
             }
 
             /* Search the image for pixels or channels not in the palette.
@@ -355,7 +392,6 @@ main(int argc, char *argv[])
             if (palettechannels == 1 && formatnumber != FN_TEXT)
                 continue;
 
-            int j;
             for (j = 0; j < tileset_width * tileset_height; j++) {
                 pixel p = images_seen[i][j];
                 int pi;
