@@ -208,7 +208,7 @@ load_text_tileset(png_byte *data, png_size_t size)
                 while (*dp) {
                     if (*dp >= '0' && *dp <= '9') {
                         v *= 10;
-                        v += *dp;
+                        v += *dp - '0';
                         if (v > INT_MAX)
                             EPRINTN("Error: width/height too large\n");
                     } else if (*dp != ' ') {
@@ -218,7 +218,7 @@ load_text_tileset(png_byte *data, png_size_t size)
                     dp++;
                 }
                 if (*td != -1 && *td != v)
-                    EPRINT("Error: inconsistent width/height"
+                    EPRINT("Error: inconsistent width/height "
                            "(%ld, %ld)\n", *td, v);
                 *td = v;
                 continue;

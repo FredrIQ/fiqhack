@@ -205,7 +205,7 @@ main(int argc, char *argv[])
                     formatnumber = i;
             }
             if (formatnumber == -1) {
-                fprintf(stderr, "Error: unknown format '%s'", argv[1]);
+                fprintf(stderr, "Error: unknown format '%s'\n", argv[1]);
                 return EXIT_FAILURE;
             }
             argv += 2;

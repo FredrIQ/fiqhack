@@ -44,7 +44,15 @@ static int
 compare_tiles_for_tile_number(const void *t1, const void *t2)
 {
     const tile *t1c = t1, *t2c = t2;
-    return (int)t1c->tilenumber - (int)t2c->tilenumber;
+    if (t1c->tilenumber != t2c->tilenumber)
+        return (int)t1c->tilenumber - (int)t2c->tilenumber;
+    /* The subtraction trick doesn't work for substitution, because it's
+       wider than an int. Do it with conditionals instead. */
+    if (t1c->substitution < t2c->substitution)
+        return -1;
+    if (t1c->substitution > t2c->substitution)
+        return 1;
+    return 0;
 }
 
 static const char *
