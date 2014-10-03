@@ -79,8 +79,8 @@ compare_pixels_red(const void *p1, const void *p2)
 
 /* Load an entire file into memory. Some bytes may already have been read, in
    which case they're provided as "header", "headerlen". Then calls the given
-   callback and returns its result. */
-static bool
+   callback and returns its result. The file is closed by this function. */
+bool
 slurp_file(FILE *in, png_byte *header, png_size_t headerlen,
            bool (*callback)(png_byte *, png_size_t))
 {
@@ -555,6 +555,12 @@ main(int argc, char *argv[])
             rv &= write_text_tileset(fnbuf, II_HEX);
         }
         break;
+    case FN_NH4CT:
+        if (seen_image_count) {
+            rv &= write_png_file(outfile, 1);
+            break;
+        }
+        /* otherwise fall through */
     case FN_BINARY:
         if (!seen_image_count)
             rv &= write_binary_tileset(outfile);
@@ -564,9 +570,6 @@ main(int argc, char *argv[])
             strcpy(extpos, ".bin");
             rv &= write_binary_tileset(fnbuf);
         }
-        break;
-    case FN_NH4CT:
-        rv &= !write_png_file(outfile, 1);
         break;
     }
 

@@ -71,13 +71,18 @@ tile_name_wrapper(int tileno)
 /* Writes a text-format tileset from tiles_seen. Tile names will be encoded as
    text using tilesequence.c; images will be encoded using the given iiformat.
 
+   The given filename or file will be used to write. If writing to a file that
+   was already open, it will be left open.
+
    Returns 1 on success, 0 on error. */
-bool
-write_text_tileset(const char *filename, enum iiformat iif)
+static bool
+write_text_tileset_inner(const char *filename, FILE *out, enum iiformat iif)
 {
-    FILE *out = fopen(filename, "w");
     int keywidth = 0;
     bool embedding_images = iif == II_SPELTOUT && tileset_width != 0;
+
+    if (!out)
+        out = fopen(filename, "w");
 
     if (!out) {
         perror(filename);
@@ -263,35 +268,39 @@ write_text_tileset(const char *filename, enum iiformat iif)
         }
     }
 
-    if (fclose(out)) {
+    if (filename && fclose(out)) {
         perror("Error: Completing writing a text file");
         return 0; /* failure to close file */
     }
 
-    if (embedding_images) {
-        if (input_filepos != output_filepos)
-            printf("Info: wrote '%s', %d images (%d omitted)\n",
-                   filename, output_filepos, input_filepos - output_filepos);
-        else if (unused_count)
-            printf("Info: wrote '%s', %d images (%d unused)\n",
-                   filename, output_filepos, unused_count);
-        else
-            printf("Info: wrote '%s', %d images\n", filename, output_filepos);
-    } else if (iif == II_FILEPOS) {
-        printf("Info: wrote '%s', %d tile names\n", filename, output_filepos);
-    } else {
-        printf("Info: wrote '%s', %d tile references\n", filename, curtile);
+    if (filename) {
+        if (embedding_images) {
+            if (input_filepos != output_filepos)
+                printf("Info: wrote '%s', %d images (%d omitted)\n",
+                       filename, output_filepos, input_filepos - output_filepos);
+            else if (unused_count)
+                printf("Info: wrote '%s', %d images (%d unused)\n",
+                       filename, output_filepos, unused_count);
+            else
+                printf("Info: wrote '%s', %d images\n", filename, output_filepos);
+        } else if (iif == II_FILEPOS) {
+            printf("Info: wrote '%s', %d tile names\n", filename, output_filepos);
+        } else {
+            printf("Info: wrote '%s', %d tile references\n", filename, curtile);
+        }
     }
 
     return 1;
 }
 
-bool
-write_binary_tileset(const char *filename)
+static bool
+write_binary_tileset_inner(const char *filename, FILE *out)
 {
-    FILE *out = fopen(filename, "wb");
     int curtile;
     int i;
+
+    if (!out)
+        out = fopen(filename, "wb");
 
     if (!out) {
         perror(filename);
@@ -361,12 +370,56 @@ write_binary_tileset(const char *filename)
         putc((output_index >> 24) % 256, out);
     }
 
-    if (fclose(out)) {
+    if (filename && fclose(out)) {
         perror("Error: Completing writing a binary file");
         return 0; /* failure to close file */
     }
 
-    printf("Info: wrote '%s', %d tile references\n", filename, curtile);
+    if (filename)
+        printf("Info: wrote '%s', %d tile references\n", filename, curtile);
 
     return 1;
+}
+
+/* Wrappers for the main functions in this file. */
+
+bool
+write_text_tileset(const char *filename, enum iiformat iif)
+{
+    return write_text_tileset_inner(filename, NULL, iif);
+}
+
+bool
+write_binary_tileset(const char *filename)
+{
+    return write_binary_tileset_inner(filename, NULL);
+}
+
+bool
+callback_with_text_tileset(enum iiformat iif,
+                           bool (*callback)(png_byte *, png_size_t))
+{
+    FILE *t = tmpfile();
+    if (!t) {
+        perror("Error opening temporary file");
+        return 0;
+    }
+    if (!write_text_tileset_inner(NULL, t, iif))
+        return 0;
+    rewind(t);
+    return slurp_file(t, NULL, 0, callback);
+}
+
+bool
+callback_with_binary_tileset(bool (*callback)(png_byte *, png_size_t))
+{
+    FILE *t = tmpfile();
+    if (!t) {
+        perror("Error opening temporary file");
+        return 0;
+    }
+    if (!write_binary_tileset_inner(NULL, t))
+        return 0;
+    rewind(t);
+    return slurp_file(t, NULL, 0, callback);
 }

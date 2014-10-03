@@ -154,10 +154,10 @@ to earlier versions.
 Finally, because it is very common to use an external image together with a
 tileset that references it, the combination can be glued together into one
 file.  This is a PNG file with up to two extra private chunks that contain the
-tileset: `nhTB` for a binary tileset and `nhTS` for a source-form tileset; any
+tileset: `nhTb` for a binary tileset and `nhTs` for a source-form tileset; any
 references to an image in the tilesets reference the file that it's embedded
 in.  (If both are present, they should both have the same meaning; this means
-that `nhTB` can be used by the rendering code, and `nhTS` to automatically
+that `nhTb` can be used by the rendering code, and `nhTs` to automatically
 compensate for changes to the name to number mapping.)  These chunks must
 appear before the image data.
 

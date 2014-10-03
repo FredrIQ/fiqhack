@@ -18,9 +18,9 @@
    This is based on code I (Alex Smith) wrote, which is in turn based on a
    public domain example that ships with libpng.
 
-   If the PNG file has a nhTB or nhTS chunk, it'll be passed to
+   If the PNG file has a nhTb or nhTs chunk, it'll be passed to
    load_binary_tileset or load_text_tileset respectively.  (If it has both, only
-   the nhTS chunk will be read.)  This will be before reading in the images; the
+   the nhTs chunk will be read.)  This will be before reading in the images; the
    tileset loaders know that they may have to read not-yet-allocated images, but
    that's OK.
 
@@ -33,7 +33,7 @@ load_png_file(FILE *in)
     volatile png_infop info_ptr;
     png_infop info_ptr_nv;
     png_unknown_chunkp unknown_ptr;
-    
+
     png_uint_32 width, height;
     int bit_depth, color_type, interlace_type, has_alpha, i, j, x, y, t;
 
@@ -68,11 +68,7 @@ load_png_file(FILE *in)
     png_set_sig_bytes(png_ptr, PNG_HEADER_SIZE);
 
     /* assumes ASCII */
-    png_set_keep_unknown_chunks(png_ptr, PNG_HANDLE_CHUNK_NEVER, NULL, 0);
-    png_set_keep_unknown_chunks(png_ptr, PNG_HANDLE_CHUNK_ALWAYS,
-                                (png_byte[]) {
-                                    'n', 'h', 'T', 'B', 0,
-                                    'n', 'h', 'T', 'S', 0}, 2);
+    png_set_keep_unknown_chunks(png_ptr, PNG_HANDLE_CHUNK_ALWAYS, NULL, 0);
 
     png_read_info(png_ptr, info_ptr);
     png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type,
@@ -131,18 +127,18 @@ load_png_file(FILE *in)
 
     png_read_end(png_ptr, NULL);
 
-    /* Look for nhTB and/or nhTS chunks. Check for nhTS first. */
+    /* Look for nhTb and/or nhTs chunks. Check for nhTs first. */
     t = png_get_unknown_chunks(png_ptr, info_ptr, &unknown_ptr);
     for (j = 0; j <= 1; j++) {
         for (i = 0; i < t; i++) {
             if (unknown_ptr[i].name[0] == 'n' &&
                 unknown_ptr[i].name[1] == 'h' &&
                 unknown_ptr[i].name[2] == 'T' &&
-                unknown_ptr[i].name[3] == (j ? 'B' : 'S')) {
+                unknown_ptr[i].name[3] == (j ? 'b' : 's')) {
                 
                 x = (j ? load_binary_tileset : load_text_tileset)
                     (unknown_ptr[i].data, unknown_ptr[i].size);
-                t = 0; /* don't load any more nhTB/nhTS chunks */
+                t = 0; /* don't load any more nhTb/nhTs chunks */
                 if (!x)
                     goto cleanup_info_and_rowpointers;
                 break;
@@ -151,7 +147,7 @@ load_png_file(FILE *in)
     }
 
     /* Reset the start of the reference image, in case there were text images in
-       an nhTS chunk. (Not that that makes any sense, but it's better to handle
+       an nhTs chunk. (Not that that makes any sense, but it's better to handle
        that case gracefully than get confused about which image is which.) */
     start_of_reference_image = seen_image_count;
     
@@ -246,19 +242,34 @@ cleanup_fopen:
     return rv;
 }
 
+static png_byte *allocated_chunk;
+static png_size_t allocated_chunk_len;
+static bool
+allocation_callback(png_byte *chunk, png_size_t len)
+{
+    allocated_chunk = malloc(len);
+    if (!allocated_chunk) {
+        fprintf(stderr, "Error: Could not allocate memory\n");
+        return 0;
+    }
+    memcpy(allocated_chunk, chunk, len);
+    allocated_chunk_len = len;
+    return 1;
+}
+
 /* Writes a PNG file suitable as a reference image. All images from images_seen
    will be incorporated into one image (except deleted ones, which will not be
    included in the count). If palettechannels == 4, the global palette will be
    used. Otherwise, the image is in RGBA format.
 
-   If add_nhTB_nhTS is set, then additional chunks will be added to embed
+   If add_nhTb_nhTs is set, then additional chunks will be added to embed
    text (II_HEX) and binary format tilesets.
 
    This code is loosely based on the Slash'EM tile utilities.
 
    Returns 1 on success, 0 on error. */
 bool
-write_png_file(const char *filename, bool add_nhTB_nhTS)
+write_png_file(const char *filename, bool add_nhTb_nhTs)
 {
     volatile png_structp png_ptr = NULL;
     png_structp png_ptr_nv;
@@ -266,6 +277,8 @@ write_png_file(const char *filename, bool add_nhTB_nhTS)
     png_infop info_ptr_nv;
     png_bytep *volatile row_pointers = NULL;
     png_byte *volatile image_contents = NULL;
+    volatile png_unknown_chunk uchunk[2];
+    png_unknown_chunk uchunknv[2];
 
     FILE *volatile fp;
 
@@ -273,6 +286,9 @@ write_png_file(const char *filename, bool add_nhTB_nhTS)
 
     int tilecount, tilesacross, tilesdown;
     int i, j, x, y, ii, p; /* yes, we're iterating over six things at once */
+
+    uchunk[0].data = NULL;
+    uchunk[1].data = NULL;
 
     fp = fopen(filename, "wb");
     if (!fp) {
@@ -347,15 +363,43 @@ write_png_file(const char *filename, bool add_nhTB_nhTS)
             png_palette[p].green = palette[p].g;
             png_palette[p].blue = palette[p].b;
             alpha_palette[p] = palette[p].a;
-            if (palette[p].a)
+            if (palette[p].a != 255)
                 nonopaque_count = p+1;
         }
         png_set_PLTE(png_ptr, info_ptr, png_palette, palettesize);
         png_set_tRNS(png_ptr, info_ptr, alpha_palette, nonopaque_count, NULL);
     }
 
-    if (add_nhTB_nhTS)
-        assert(!"TODO: embedding chunks into written PNG files");
+    if (add_nhTb_nhTs) {
+        if (!callback_with_binary_tileset(allocation_callback))
+            goto cleanup_memory;
+        uchunk[0].name[0] = 'n';
+        uchunk[0].name[1] = 'h';
+        uchunk[0].name[2] = 'T';
+        uchunk[0].name[3] = 'b';
+        uchunk[0].name[4] = 0;
+        uchunk[0].data = allocated_chunk;
+        uchunk[0].size = allocated_chunk_len;
+        uchunk[0].location = PNG_HAVE_IHDR;
+
+        if (!callback_with_text_tileset(II_FILEPOS, allocation_callback))
+            goto cleanup_memory;
+        uchunk[1].name[0] = 'n';
+        uchunk[1].name[1] = 'h';
+        uchunk[1].name[2] = 'T';
+        uchunk[1].name[3] = 's';
+        uchunk[1].name[4] = 0;
+        uchunk[1].data = allocated_chunk;
+        uchunk[1].size = allocated_chunk_len;
+        uchunk[1].location = PNG_HAVE_IHDR;
+
+        uchunknv[0] = uchunk[0];
+        uchunknv[1] = uchunk[1];
+
+        png_set_unknown_chunks(png_ptr, info_ptr, uchunknv, 2);
+        png_set_unknown_chunk_location(png_ptr, info_ptr, 0, PNG_HAVE_IHDR);
+        png_set_unknown_chunk_location(png_ptr, info_ptr, 1, PNG_HAVE_IHDR);
+    }
 
     png_write_info(png_ptr, info_ptr);
 
@@ -408,6 +452,10 @@ write_png_file(const char *filename, bool add_nhTB_nhTS)
 cleanup_memory:
     free(row_pointers);
     free(image_contents);
+    free(uchunk[0].data);
+    free(uchunk[1].data);
+    uchunk[0].data = NULL;
+    uchunk[1].data = NULL;
     png_ptr_nv = png_ptr;
     info_ptr_nv = info_ptr;
     if (png_ptr_nv) {

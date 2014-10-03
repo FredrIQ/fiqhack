@@ -98,5 +98,12 @@ extern bool write_png_file(const char *, bool);
 /* tileset-write.c */
 extern bool write_text_tileset(const char *, enum iiformat);
 extern bool write_binary_tileset(const char *);
+extern bool callback_with_text_tileset(enum iiformat,
+                                       bool (*)(png_byte *, png_size_t));
+extern bool callback_with_binary_tileset(bool (*)(png_byte *, png_size_t));
+
+/* tilecompile.c */
+extern bool slurp_file(FILE *, png_byte *, png_size_t,
+                       bool (*)(png_byte *, png_size_t));
 
 #endif
