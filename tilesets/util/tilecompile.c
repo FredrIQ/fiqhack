@@ -192,6 +192,7 @@ static const char *const fn_strings[] = {
     [FN_MAP] = "map",
     [FN_HEX] = "hex",
     [FN_BINARY] = "binary",
+    [FN_IMAGE] = "image"
 };
 
 int
@@ -318,11 +319,12 @@ main(int argc, char *argv[])
             "              -t map       Image, tilemap for it [.png, .map]\n"
             "              -t hex       Image, references to it [.png, .txt]\n"
             "              -t binary    Like 'hex' but in binary [.png, .txt]\n"
+            "              -t image     Image only; discard metadata [.png]\n"
             "          For text-based tilesets:\n"
             "              -t text      Editable text format [.txt]\n"
             "              -t hex       Compiled text format [.txt]\n"
             "              -t nh4ct     NetHack 4 compiled tileset [.nh4ct]\n"
-            "              -t binary    Equivalent to 'nh4ct' [.bin]\n"
+            "              -t binary    Equivalent to 'nh4ct' [.bin]\n\n"
             "      The following options must be given if they aren't present\n"
             "      in the input files:\n"
             "      -z width height   The size of one tile\n"
@@ -607,8 +609,15 @@ main(int argc, char *argv[])
     case FN_TEXT:
         rv &= write_text_tileset(outfile, II_SPELTOUT);
         break;
+    case FN_IMAGE:
+        if (!seen_image_count) {
+            fprintf(stderr, "Error: Cannot write image with no image\n");
+            return EXIT_FAILURE;
+        }
+        rv &= write_png_file(outfile, 0);
+        break;
     case FN_MAP:
-        if (tileset_width <= 0 || tileset_height <= 0) {
+        if (!seen_image_count) {
             fprintf(stderr, "Error: Cannot write map + image with no image\n");
             return EXIT_FAILURE;
         }

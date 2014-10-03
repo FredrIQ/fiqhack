@@ -1,10 +1,5 @@
 32 32
-n-343.txt
-s-extras.txt
-s-monsters.txt
-s-objects.txt
-s-other.txt
-n-4-16.txt
+Slash'EM
 s-mon32mi.txt
 s-mon32se.txt
 s-mon32alg.txt

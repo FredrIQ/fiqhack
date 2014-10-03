@@ -35,7 +35,8 @@ enum formatname {
     FN_NH4CT,
     FN_MAP,
     FN_HEX,
-    FN_BINARY
+    FN_BINARY,
+    FN_IMAGE,
 };
 
 enum iiformat {

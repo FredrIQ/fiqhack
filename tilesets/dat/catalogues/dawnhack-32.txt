@@ -1,5 +1,4 @@
 32 32
-dawnhack-343.txt
-dawnhack-4.txt
+DawnHack
 dawnhack-343-32.txt
 dawnhack-4-32.txt
