@@ -42,6 +42,9 @@ palette_key_to_int(png_byte key)
 bool
 load_binary_tileset(png_byte *data, png_size_t size)
 {
+    png_bytep dp;
+    long tw, th;
+
     if (size < TILESET_NAME_SIZE + 2 + 2 + sizeof BINARY_TILESET_HEADER) {
         fprintf(stderr, "Binary tileset too short");
         return 0;
@@ -51,7 +54,69 @@ load_binary_tileset(png_byte *data, png_size_t size)
         fprintf(stderr, "Bad binary tileset header");
         return 0;
     }
-    assert(!"TODO");
+
+    /* Load the fields from the header. */
+    memcpy(tileset_name, data + sizeof BINARY_TILESET_HEADER,
+           TILESET_NAME_SIZE);
+    tileset_name[TILESET_NAME_SIZE] = '\0';
+
+    dp = data + (sizeof BINARY_TILESET_HEADER) + TILESET_NAME_SIZE;
+    tw = dp[0] + (dp[1] << 8);
+    th = dp[2] + (dp[3] << 8);
+
+    if (tileset_width != -1 && tileset_width != tw) {
+        fprintf(stderr, "Error: inconsistent width (%ld, %ld)\n",
+                tileset_width, tw);
+        return 0;
+    }
+    if (tileset_height != -1 && tileset_height != th) {
+        fprintf(stderr, "Error: inconsistent width (%ld, %ld)\n",
+                tileset_height, th);
+        return 0;
+    }
+
+    tileset_width = tw;
+    tileset_height = th;
+
+    for (dp += 4; dp - data < size; dp += 16) {
+        if (seen_tile_count >= allocated_tile_count) {
+            allocated_tile_count += 8;
+            allocated_tile_count *= 2;
+            tiles_seen = realloc(tiles_seen, allocated_tile_count *
+                                 sizeof *tiles_seen);
+            if (!tiles_seen) {
+                fprintf(stderr, "Error: not enough memory for tiles\n");
+                return 0;
+            }
+        }
+
+        uint32_t tileno =
+            (((uint32_t)dp[0]) << 0) +
+            (((uint32_t)dp[1]) << 8) +
+            (((uint32_t)dp[2]) << 16) +
+            (((uint32_t)dp[3]) << 24);
+        uint64_t substitution =
+            (((uint64_t)dp[4]) << 0) +
+            (((uint64_t)dp[5]) << 8) +
+            (((uint64_t)dp[6]) << 16) +
+            (((uint64_t)dp[7]) << 24) +
+            (((uint64_t)dp[8]) << 32) +
+            (((uint64_t)dp[9]) << 40) +
+            (((uint64_t)dp[10]) << 48) +
+            (((uint64_t)dp[11]) << 56);
+        uint32_t image_index =
+            (((uint32_t)dp[12]) << 0) +
+            (((uint32_t)dp[13]) << 8) +
+            (((uint32_t)dp[14]) << 16) +
+            (((uint32_t)dp[15]) << 24);
+
+        tiles_seen[seen_tile_count++] =
+            (tile){.tilenumber = tileno,
+                   .substitution = substitution,
+                   .image_index = image_index + start_of_reference_image};
+    }
+
+    return 1;
 }
 
 /* Text loading. This has the same API as binary loading. */
