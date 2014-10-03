@@ -108,14 +108,15 @@ A "compiled tileset", which is used by the program at runtime for actual tiles
 rendering, consists of a list of tile name / rendering pairs (totalling 128
 bits each), with the tile names being expressed as numbers, and the images
 also being expressed as numbers.  A cchar-based tileset will use cchar
-numbers; an image-based tileset will use coordinates referencing an image.
-(No tileset can contain both cchars and images, incidentally; the main reason
-is that it's unclear how the result could be rendered.)  An image-based
-compiled tileset thus needs to be shipped along with an image; a cchar-based
-compiled tileset is usable standalone.  They also have a header, giving
-metadata about the tileset (name, tilesize, image/cchar).  Compiled tilesets
-are always stored sorted in numerical order; this makes it more efficient to
-find the relevant tile from them.
+numbers; an image-based tileset will reference a sub-image of an image.  (No
+tileset can contain both cchars and images, incidentally; the main reason is
+that it's unclear how the result could be rendered.)  An image-based compiled
+tileset thus needs to be shipped along with an image; a cchar-based compiled
+tileset is usable standalone.  They also have a header, giving metadata about
+the tileset (name, tilesize, image/cchar).  Compiled tilesets are always
+stored sorted in numerical order; this makes it more efficient to find the
+relevant tile from them.  A cchar-based tileset is identified via having the
+tile width and height set to 0.
 
 The source formats for tiles is less fixed.  All that is required is that it
 contains names (in some accepted format), and images or cchars (in some
@@ -300,7 +301,9 @@ Tileset Format
 It's now possible to define the format of a tileset file.
 
 A tileset file possibly contains a palette, and then contains zero or more
-tile definitions.
+tile definitions.  It also permits comments, which are lines starting with
+`!`, that can appear anywhere except inside an image definition; these are
+ignored.
 
 A palette consists of lines of the form:
 
