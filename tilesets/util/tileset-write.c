@@ -47,6 +47,18 @@ compare_tiles_for_tile_number(const void *t1, const void *t2)
     return (int)t1c->tilenumber - (int)t2c->tilenumber;
 }
 
+static const char *
+tile_name_wrapper(int tileno)
+{
+    if (tileno < TILESEQ_COUNT)
+        return name_from_tileno(tileno);
+    else if (tileno > TILESEQ_COUNT &&
+             tileno < TILESEQ_COUNT + 1 + unknown_name_count)
+        return unknown_tile_names[tileno - TILESEQ_COUNT - 1];
+    else
+        return "invalid tile number";
+}
+
 
 /* Writes a text-format tileset from tiles_seen. Tile names will be encoded as
    text using tilesequence.c; images will be encoded using the given iiformat.
@@ -159,18 +171,14 @@ write_text_tileset(const char *filename, enum iiformat iif)
                     fprintf(out, "; ");
                 fprintf(out, "%s%s", name_from_substitution(
                             tiles_seen[curtile].substitution),
-                        name_from_tileno(tiles_seen[curtile].tilenumber));
+                        tile_name_wrapper(tiles_seen[curtile].tilenumber));
                 anyseen = 1;
                 curtile++;
             }
             if (!anyseen) {
                 /* Make sure the tile has at least one name. (Use an unknown
                    name so that the tile can get deleted again in subsequent
-                   uses.)
-
-                   TODO: Record unknown names that appear in the input (if any),
-                   and use those. This is useful when converting Slash'EM
-                   tileset-map pairs, for instance. */
+                   uses.) */
                 fprintf(out, "unuseds %d", unused_count++);
             }
             if (embedding_images)
@@ -218,7 +226,7 @@ write_text_tileset(const char *filename, enum iiformat iif)
             /* Write the tile name. */
             fprintf(out, "%s%s: ", name_from_substitution(
                         tiles_seen[curtile].substitution),
-                    name_from_tileno(tiles_seen[curtile].tilenumber));
+                    tile_name_wrapper(tiles_seen[curtile].tilenumber));
             
             /* Determine the output filepos for this tile. If we had images,
                then we need to skip the deleted ones. Otherwise, it's the same

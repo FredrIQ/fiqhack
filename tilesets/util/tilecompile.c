@@ -16,6 +16,15 @@ char tileset_name[TILESET_NAME_SIZE + 1];
 long tileset_width = -1;
 long tileset_height = -1;
 
+/* Sometimes we're handling tiles not intended for NetHack 4, but rather, tiles
+   created for Slash'EM or the like. Preserving these tiles can be useful,
+   depending on the operation. We have two modes for preserving them: -k to not
+   delete unrefenced tiles, and -u to keep references with unknown names.  To
+   implement -u, we need to store the names somewhere. */
+bool copy_unknown_tile_names;
+char **unknown_tile_names;
+int unknown_name_count, allocated_name_count;
+
 /* We create a palette based on the input we get.  If the palette is locked,
    then any colors outside the palette are forced onto the palette.
    Otherwise, any colors outside the palette are added to the palette, and if
@@ -237,6 +246,9 @@ main(int argc, char *argv[])
             argv++;
         } else if (!strcmp(*argv, "-k") && !ignore_options) {
             keep_unused = 1;
+            argv++;
+        } else if (!strcmp(*argv, "-u") && !ignore_options) {
+            copy_unknown_tile_names = 1;
             argv++;
         } else if (!strcmp(*argv, "-f") && !ignore_options) {
             fuzz = 1;

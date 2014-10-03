@@ -282,12 +282,33 @@ load_text_tileset(png_byte *data, png_size_t size)
                 *tp = '\0';
             }
 
-            /* If it still isn't a valid name, then for now, we warn and ignore
-               the tile. TODO: We might want other behaviour here. */
+            /* If it still isn't a valid name, then warn and ignore the
+               reference, unless we've specifically been told to store the
+               reference anyway, in which case invent a tile number for it. */
             if (tileno == TILESEQ_INVALID_OFF) {
-                fprintf(stderr, "Warning: unknown tile '%s'\n", tilename);
-                filepos++;
-                continue;
+                if (copy_unknown_tile_names) {
+                    if (unknown_name_count == allocated_name_count) {
+                        allocated_name_count += 8;
+                        allocated_name_count *= 2;
+                        unknown_tile_names =
+                            realloc(unknown_tile_names,
+                                    allocated_name_count *
+                                    sizeof *unknown_tile_names);
+                        if (!unknown_tile_names)
+                            EPRINTN("Error: Could not allocate memory\n");
+                    }
+                    unknown_tile_names[unknown_name_count] =
+                        malloc(strlen(tilename) + 1);
+                    if (!unknown_tile_names[unknown_name_count])
+                        EPRINTN("Error: Could not allocate memory\n");
+                    strcpy(unknown_tile_names[unknown_name_count], tilename);
+                    tileno = TILESEQ_COUNT + 1 + unknown_name_count;
+                    unknown_name_count++;
+                } else {
+                    fprintf(stderr, "Warning: unknown tile '%s'\n", tilename);
+                    filepos++;
+                    continue;
+                }
             }
 
             /* Now we have to parse the tile data. dp is looking either at

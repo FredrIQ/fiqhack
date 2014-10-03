@@ -81,6 +81,10 @@ extern int start_of_reference_image, seen_image_count;
 extern tile *tiles_seen;
 extern int seen_tile_count, allocated_tile_count;
 
+extern bool copy_unknown_tile_names;
+extern char **unknown_tile_names;
+extern int unknown_name_count, allocated_name_count;
+
 /* Extern functions */
 
 /* tileset-read.c */
