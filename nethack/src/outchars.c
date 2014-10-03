@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-02 */
+/* Last modified by Alex Smith, 2014-10-03 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -23,6 +23,9 @@ struct curses_drawing_info *default_drawing, *cur_drawing;
 int curses_level_display_mode;
 static struct curses_drawing_info *unicode_drawing, *rogue_drawing;
 
+char *tiletable;
+int tiletable_len;
+nh_bool tiletable_is_cchar = 1;
 
 /* Additionaly glyphs not present in the NetHack core but that we want
  * to include to allow for customizability. */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-02 */
+/* Last modified by Alex Smith, 2014-10-03 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -384,6 +384,9 @@ extern struct nh_cmd_desc *keymap[KEY_MAX + 1];
 extern const char *nhlogo_small[11], *nhlogo_large[14];
 extern char *override_hackdir, *override_userdir;
 extern int repeats_remaining;
+extern char *tiletable;
+extern int tiletable_len;
+extern nh_bool tiletable_is_cchar;
 
 /*----------------------------------------------------------------------------*/
 
