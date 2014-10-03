@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-09-06 */
+/* Last modified by Alex Smith, 2014-10-03 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -47,6 +47,7 @@ static struct nh_listitem menu_headings_list[] = {
 static struct nh_enum_option menu_headings_spec =
     { menu_headings_list, listlen(menu_headings_list) };
 
+/* TODO: Generate this list at runtime. */
 static struct nh_listitem graphics_list[] = {
     {ASCII_GRAPHICS, "Text (ASCII only)"},
     {UNICODE_GRAPHICS, "Text (Unicode)"},

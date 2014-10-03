@@ -112,6 +112,8 @@ static struct curses_symdef unicode_graphics_ovr[] = {
 
 #define listlen(list) (sizeof(list)/sizeof(list[0]))
 
+static void print_tile_number(WINDOW *, int, unsigned long long);
+
 static void
 add_sym_list(struct curses_symdef **list, int len,
              const struct curses_symdef *adtnl, int num)
@@ -542,8 +544,8 @@ print_low_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe)
             branding = nhcurses_genbranding_stepped;
     }
     if (branding != nhcurses_no_branding) {
-        wset_tiles_tile(win, TILESEQ_GENBRAND_OFF +
-                        branding - nhcurses_genbranding_first);
+        print_tile_number(win, TILESEQ_GENBRAND_OFF +
+                          branding - nhcurses_genbranding_first, 0);
     }
 }
 
@@ -557,14 +559,14 @@ print_high_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe)
         branding = nhcurses_monbranding_peaceful;
 
     if (branding != nhcurses_no_branding) {
-        wset_tiles_tile(win, TILESEQ_MONBRAND_OFF +
-                        branding - nhcurses_monbranding_first);
+        print_tile_number(win, TILESEQ_MONBRAND_OFF +
+                          branding - nhcurses_monbranding_first, 0);
     }
 
     if (dbe->trap || (dbe->branding & NH_BRANDING_TRAPPED))
-        wset_tiles_tile(win, TILESEQ_GENBRAND_OFF +
-                        nhcurses_genbranding_trapped -
-                        nhcurses_genbranding_first);
+        print_tile_number(win, TILESEQ_GENBRAND_OFF +
+                          nhcurses_genbranding_trapped -
+                          nhcurses_genbranding_first, 0);
 }
 
 /* What is the bottom-most, opaque background of a map square? */
@@ -776,6 +778,82 @@ print_sym(WINDOW * win, struct curses_symdef *sym, int extra_attrs, int bgcolor)
     wadd_wch(win, &uni_out);
 }
 
+static inline unsigned long
+get_tt_number(int tt_offset)
+{
+    unsigned long l = 0;
+    l += (unsigned long)(unsigned char)tiletable[tt_offset + 0] << 0;
+    l += (unsigned long)(unsigned char)tiletable[tt_offset + 1] << 8;
+    l += (unsigned long)(unsigned char)tiletable[tt_offset + 2] << 16;
+    l += (unsigned long)(unsigned char)tiletable[tt_offset + 3] << 24;
+    return l;
+}
+
+static void
+print_tile_number(WINDOW *win, int tileno, unsigned long long substitutions)
+{
+    /* Find the tile in question in the tile table. The rules:
+       - The tile numbers must be equal;
+       - The substitutions of the tile in the table must be a subset of
+         the substitutions of the tile we want to draw;
+       - If multiple tiles fit these constraints, draw the one with the
+         numerically largest substitution number.
+
+       The tile table itself is formatted as follows:
+       4 bytes: tile number
+       8 bytes: substiutitions
+       4 bytes: image index (i.e. wset_tiles_tile argument)
+
+       All these numbers are little-endian, regardless of the endianness of the
+       system we're running on.
+
+       The tile table is sorted by number then substitutions, so we can use a
+       binary search. */
+
+    int ttelements = tiletable_len / 16;
+    int low = 0, high = ttelements;
+    /* Invariant: tiles not in low .. high inclusive are definitely not the
+       tile we're looking for */
+    while (low < high) {
+        int pivot = (low + high) / 2;
+        int table_tileno = get_tt_number(pivot * 16);
+
+        if (table_tileno < tileno)
+            low = pivot + 1;
+        else if (table_tileno > tileno)
+            high = pivot - 1;
+        else {
+            /* We're somewhere in the section for this tile. Find its bounds. */
+            low = high = pivot;
+            while (low >= 0 && get_tt_number(low * 16) == tileno)
+                low--;
+            low++;
+            while (high < ttelements && get_tt_number(high * 16) == tileno)
+                high++;
+            high--;
+
+            for (pivot = high; pivot >= low; pivot--) {
+                unsigned long long table_substitutions =
+                    ((unsigned long long)get_tt_number(pivot * 16 + 4)) +
+                    ((unsigned long long)get_tt_number(pivot * 16 + 8) << 32);
+
+                if ((table_substitutions & substitutions) ==
+                    table_substitutions) {
+                    low = pivot;
+                    break;
+                }
+            }
+            break;
+        }
+    }
+
+    /* can happen if the tileset is missing high-numbered tiles */
+    if (low >= ttelements)
+        low = ttelements - 1;
+
+    wset_tiles_tile(win, get_tt_number(low * 16 + 12));
+}
+
 void
 print_tile(WINDOW *win, struct curses_symdef *api_name, 
            struct curses_symdef *api_type, int offset,
@@ -787,8 +865,7 @@ print_tile(WINDOW *win, struct curses_symdef *api_name,
        area tile */
     if (tileno == TILESEQ_INVALID_OFF) tileno = 0;
 
-    /* TODO: translate tileno, substitution into x/y offsets */
-    wset_tiles_tile(win, tileno);
+    print_tile_number(win, tileno, substitutions);
 }
 
 const char *const furthest_backgrounds[] = {
@@ -814,7 +891,8 @@ print_background_tile(WINDOW *win, struct nh_dbuf_entry *dbe)
         furthest_background_tileno_needs_initializing = 0;
     }
 
-    wset_tiles_tile(win, furthest_background_tileno[furthest_background(dbe)]);
+    print_tile_number(win, furthest_background_tileno[furthest_background(dbe)],
+                      substitutions);
     if (dbe->bg != room_id && dbe->bg != corr_id)
         print_tile(win, cur_drawing->bgelements + dbe->bg,
                    NULL, TILESEQ_CMAP_OFF, substitutions);

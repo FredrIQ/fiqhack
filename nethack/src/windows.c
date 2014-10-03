@@ -624,19 +624,19 @@ setup_tiles(void)
 {
     switch (settings.graphics) {
     case TILESET_DAWNHACK_16:
-        set_tile_file("dawnhack-16.png");
+        set_tile_file("dawnhack-16.nh4ct");
         return TRUE;
     case TILESET_DAWNHACK_32:
-        set_tile_file("dawnhack-32.png");
+        set_tile_file("dawnhack-32.nh4ct");
         return TRUE;
     case TILESET_SLASHEM_16:
-        set_tile_file("slashem-16.png");
+        set_tile_file("slashem-16.nh4ct");
         return TRUE;
     case TILESET_SLASHEM_32:
-        set_tile_file("slashem-32.png");
+        set_tile_file("slashem-32.nh4ct");
         return TRUE;
     case TILESET_SLASHEM_3D:
-        set_tile_file("slashem-3d.png");
+        set_tile_file("slashem-3d.nh4ct");
         return TRUE;
     default: /* text */
         return FALSE;
