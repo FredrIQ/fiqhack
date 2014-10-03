@@ -250,6 +250,8 @@ write_text_tileset(const char *filename, enum iiformat iif)
                 assert(tileset_width == 0 && iif == II_SPELTOUT);
                 assert(!"TODO: Text representation of cchars");
             }
+
+            curtile++;
         }
     }
 
@@ -257,6 +259,22 @@ write_text_tileset(const char *filename, enum iiformat iif)
         perror("Error: Completing writing a text file");
         return 0; /* failure to close file */
     }
+
+    if (embedding_images) {
+        if (input_filepos != output_filepos)
+            printf("Info: wrote '%s', %d images (%d omitted)\n",
+                   filename, output_filepos, input_filepos - output_filepos);
+        else if (unused_count)
+            printf("Info: wrote '%s', %d images (%d unused)\n",
+                   filename, output_filepos, unused_count);
+        else
+            printf("Info: wrote '%s', %d images\n", filename, output_filepos);
+    } else if (iif == II_FILEPOS) {
+        printf("Info: wrote '%s', %d tile names\n", filename, output_filepos);
+    } else {
+        printf("Info: wrote '%s', %d tile references\n", filename, curtile);
+    }
+
     return 1;
 }
 

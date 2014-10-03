@@ -1,9 +1,15 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
 /* Last modified by Alex Smith, 2014-10-03 */
-/* Copyright (C) 2014 Alex Smith. */
-/* NetHack may be freely redistributed. See license for details. */
+/*
+ * Copyright (C) Andrew Apted <ajapted@users.sourceforge.net> 2002
+ *		 Slash'EM Development Team 2003
+ * Copyright (C) 2014 Alex Smith.
+ *
+ * NetHack may be freely redistributed.  See license for details.
+ */
 
 #include "tilecompile.h"
+#include "hacklib.h"
 
 /* Loads a PNG file into images_seen as a new reference image.  The given
    FILE* pointer must be open in binary mode, and have had PNG_HEADER_SIZE
@@ -248,9 +254,173 @@ cleanup_fopen:
    If add_nhTB_nhTS is set, then additional chunks will be added to embed
    text (II_HEX) and binary format tilesets.
 
+   This code is loosely based on the Slash'EM tile utilities.
+
    Returns 1 on success, 0 on error. */
 bool
 write_png_file(const char *filename, bool add_nhTB_nhTS)
 {
-    assert(!"TODO: writing PNG files");
+    volatile png_structp png_ptr = NULL;
+    png_structp png_ptr_nv;
+    volatile png_infop info_ptr = NULL;
+    png_infop info_ptr_nv;
+    png_bytep *volatile row_pointers = NULL;
+    png_byte *volatile image_contents = NULL;
+
+    FILE *volatile fp;
+
+    bool rv = 0;
+
+    int tilecount, tilesacross, tilesdown;
+    int i, j, x, y, ii, p; /* yes, we're iterating over six things at once */
+
+    fp = fopen(filename, "wb");
+    if (!fp) {
+        perror(filename);
+        goto cleanup_nothing;
+    }
+
+    png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (!png_ptr) {
+        fprintf(stderr, "Error allocating png_ptr for output file\n");
+        goto cleanup_file;
+    }
+
+    info_ptr = png_create_info_struct(png_ptr);
+    if (!info_ptr) {
+        fprintf(stderr, "Error allocating info_ptr for output file\n");
+        goto cleanup_memory;
+    }
+
+    if (setjmp(png_jmpbuf(png_ptr)) != 0) {
+        fprintf(stderr, "Error: Unknown problem writing PNG.\n");
+        goto cleanup_memory;
+    }
+
+    /* Work out the number of tiles we need. */
+    tilecount = 0;
+    for (ii = 0; ii < seen_image_count; ii++)
+        if (images_seen[ii])
+            tilecount++;
+
+    tilesacross = isqrt(tilecount);
+    tilesdown = (tilecount - 1) / tilesacross + 1;
+
+    /* We need one byte per palette entry; there are 4 channels, so we need (4 /
+       palettechannels) palette entries per pixel. We use calloc so that we get
+       a ready-zeroed (most likely transparent or black) background where there
+       aren't tiles. */
+    image_contents = calloc(tilesacross * tilesdown *
+                            tileset_width * tileset_height *
+                            4 / palettechannels, sizeof (png_byte));
+    row_pointers = malloc(tilesdown * tileset_height * sizeof (png_bytep));
+
+     if (!image_contents || !row_pointers) {
+        fprintf(stderr, "Error allocating memor for output image\n");
+        goto cleanup_memory;
+    }
+
+    for (y = 0; y < tilesdown * tileset_height; y++)
+        row_pointers[y] = image_contents +
+            y * tilesacross * tileset_width * 4 / palettechannels;
+
+    /* Basic info about the image. */
+    png_init_io(png_ptr, fp);
+    png_set_compression_level(png_ptr, Z_BEST_COMPRESSION);
+    png_set_IHDR(png_ptr, info_ptr, tilesacross * tileset_width,
+                 tilesdown * tileset_height, 8,
+                 palettechannels == 4 ? PNG_COLOR_TYPE_PALETTE :
+                 PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
+                 PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+
+    /* If we're using a palette, we need to tell libpng what it is. It uses a
+       somewhat different format to us (separate RGB from alpha). */
+    if (palettechannels == 4) {
+        png_color png_palette[palettesize];
+        png_byte alpha_palette[palettesize];
+        int nonopaque_count = 0;
+
+        assert(palettesize < MAX_PNG_PALETTE_SIZE);
+
+        for (p = 0; p < palettesize; p++) {
+            png_palette[p].red = palette[p].r;
+            png_palette[p].green = palette[p].g;
+            png_palette[p].blue = palette[p].b;
+            alpha_palette[p] = palette[p].a;
+            if (palette[p].a)
+                nonopaque_count = p+1;
+        }
+        png_set_PLTE(png_ptr, info_ptr, png_palette, palettesize);
+        png_set_tRNS(png_ptr, info_ptr, alpha_palette, nonopaque_count, NULL);
+    }
+
+    if (add_nhTB_nhTS)
+        assert(!"TODO: embedding chunks into written PNG files");
+
+    png_write_info(png_ptr, info_ptr);
+
+    /* Copy the images into image_contents. */
+    i = 0;
+    j = 0;
+    for (ii = 0; ii < seen_image_count; ii++)
+        if (images_seen[ii]) {
+            for (y = 0; y < tileset_height; y++)
+                for (x = 0; x < tileset_width; x++) {
+                    png_byte *icstart = image_contents +
+                        ((j * tileset_height + y) *
+                         (tileset_width * tilesacross) +
+                         (i * tileset_width + x)) * 4 / palettechannels;
+                    pixel *pix = images_seen[ii] + y * tileset_width + x;
+                    if (palettechannels == 1) {
+                        icstart[0] = pix->r;
+                        icstart[1] = pix->g;
+                        icstart[2] = pix->b;
+                        icstart[3] = pix->a;
+                    } else {
+                        for (p = 0; p < palettesize; p++) {
+                            if (palette[p].r == pix->r &&
+                                palette[p].g == pix->g &&
+                                palette[p].b == pix->b &&
+                                palette[p].a == pix->a) {
+                                *icstart = p;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+            i++;
+            if (i == tilesacross) {
+                i = 0;
+                j++;
+            }
+        }
+
+    /* Write the file. */
+    png_write_image(png_ptr, row_pointers);
+    png_write_end(png_ptr, info_ptr);
+
+    rv = 1;
+
+    printf("Info: wrote '%s', %d tiles (%d x %d)\n",
+           filename, tilecount, tilesacross, tilesdown);
+
+cleanup_memory:
+    free(row_pointers);
+    free(image_contents);
+    png_ptr_nv = png_ptr;
+    info_ptr_nv = info_ptr;
+    if (png_ptr_nv) {
+        if (info_ptr_nv)
+            png_destroy_write_struct(&png_ptr_nv, &info_ptr_nv);
+        else
+            png_destroy_write_struct(&png_ptr_nv, NULL);
+    }
+cleanup_file:
+    if (fclose(fp)) {
+        perror("Error writing output file");
+        rv = 0;
+    }
+cleanup_nothing:
+    return rv;
 }

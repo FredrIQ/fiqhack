@@ -401,6 +401,7 @@ main(int argc, char *argv[])
                Further exception: if we have a channel-based palette already
                and the format isn't FN_TEXT, ignore this; we're not going to
                use the resulting channel-based palette anyway. */
+        test_channel_based_palette:
             if (palettechannels == 1 && formatnumber != FN_TEXT)
                 continue;
 
@@ -437,10 +438,16 @@ main(int argc, char *argv[])
                        channel-based? We do if a) the palette overflowed,
                        b) we're going to use it (formatnumber == FN_TEXT). */
                     if (palettesize ==
-                        (largepalette ? MAX_PNG_PALETTE_SIZE :
-                         MAX_PALETTE_SIZE) && formatnumber == FN_TEXT) {
+                        (largepalette ? MAX_PALETTE_SIZE :
+                         MAX_PNG_PALETTE_SIZE)) {
                         assert(palettechannels == 4);
                         palettechannels = 1;
+
+                        if (formatnumber != FN_TEXT) {
+                            /* goto to break out of multiple loops */
+                            goto test_channel_based_palette;
+                        }
+
                         pixel palettecopy[MAX_PALETTE_SIZE];
                         memcpy(palettecopy, palette, sizeof palettecopy);
                         int pcsize = palettesize;
@@ -480,12 +487,12 @@ main(int argc, char *argv[])
                     else {
                         if (!foundr)
                             palette[palettesize++].r = p.r;
-                        if (!foundg)
-                            palette[palettesize++].g = p.g;
-                        if (!foundb)
-                            palette[palettesize++].b = p.b;
-                        if (!founda)
-                            palette[palettesize++].a = p.a;
+                        if (!foundg && p.r != p.g)
+                            palette[palettesize++].r = p.g;
+                        if (!foundb && p.b != p.r && p.b != p.g)
+                            palette[palettesize++].r = p.b;
+                        if (!founda && p.a != p.r && p.a != p.g && p.a != p.b)
+                            palette[palettesize++].r = p.a;
                     }
                 }
             }
