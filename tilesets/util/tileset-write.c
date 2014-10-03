@@ -235,7 +235,7 @@ write_text_tileset(const char *filename, enum iiformat iif)
             fprintf(out, "%s%s: ", name_from_substitution(
                         tiles_seen[curtile].substitution),
                     tile_name_wrapper(tiles_seen[curtile].tilenumber));
-            
+
             /* Determine the output filepos for this tile. If we had images,
                then we need to skip the deleted ones. Otherwise, it's the same
                as the input filepos; just copy image_index directly so that we
@@ -289,5 +289,84 @@ write_text_tileset(const char *filename, enum iiformat iif)
 bool
 write_binary_tileset(const char *filename)
 {
-    assert(!"TODO: Writing binary tileset");
+    FILE *out = fopen(filename, "wb");
+    int curtile;
+    int i;
+
+    if (!out) {
+        perror(filename);
+        return 0;
+    }
+
+    if (tileset_width < 0 || tileset_height < 0) {
+        fprintf(stderr, "Error: Cannot convert a tileset to binary "
+                "without knowing the tile dimensions\n");
+        return 0;
+    }
+    if (!*tileset_name) {
+        fprintf(stderr, "Error: Binary tilesets need a name (-n)\n");
+        return 0;
+    }
+
+    /* We need the tiles to be in order, in order that the tiles interface can
+       easily find a tile in the binary file. */
+    qsort(tiles_seen, seen_tile_count, sizeof (tile),
+          compare_tiles_for_tile_number);
+
+    /* Write the header. */
+    fwrite(BINARY_TILESET_HEADER, 1, sizeof BINARY_TILESET_HEADER, out);
+    for (i = strlen(tileset_name); i < TILESET_NAME_SIZE; i++) {
+        tileset_name[i] = '\0';
+    }
+    fwrite(tileset_name, 1, TILESET_NAME_SIZE, out);
+    putc(tileset_width % 256, out);
+    putc(tileset_width / 256, out);
+    putc(tileset_height % 256, out);
+    putc(tileset_height / 256, out);
+
+    /* Write 16 bytes for each file. */
+    for (curtile = 0; curtile < seen_tile_count; curtile++) {
+
+        int output_index = 0;
+
+        if (seen_image_count) {
+            /* The main complication here is that some images may have been
+               deleted, so we can't use image_index directly; and because the
+               sort orders for tiles_seen and images_seen are different, this
+               is hard to optimize. Just do it naively, it's fast enough. */
+            for (i = 0; i < tiles_seen[curtile].image_index; i++) {
+                if (images_seen[i])
+                    output_index++;
+            }
+        } else
+            output_index = tiles_seen[curtile].image_index;
+
+        putc((tiles_seen[curtile].tilenumber >>  0) % 256, out);
+        putc((tiles_seen[curtile].tilenumber >>  8) % 256, out);
+        putc((tiles_seen[curtile].tilenumber >> 16) % 256, out);
+        putc((tiles_seen[curtile].tilenumber >> 24) % 256, out);
+
+        putc((tiles_seen[curtile].substitution >>  0) % 256, out);
+        putc((tiles_seen[curtile].substitution >>  8) % 256, out);
+        putc((tiles_seen[curtile].substitution >> 16) % 256, out);
+        putc((tiles_seen[curtile].substitution >> 24) % 256, out);
+        putc((tiles_seen[curtile].substitution >> 32) % 256, out);
+        putc((tiles_seen[curtile].substitution >> 40) % 256, out);
+        putc((tiles_seen[curtile].substitution >> 48) % 256, out);
+        putc((tiles_seen[curtile].substitution >> 56) % 256, out);
+
+        putc((output_index >>  0) % 256, out);
+        putc((output_index >>  8) % 256, out);
+        putc((output_index >> 16) % 256, out);
+        putc((output_index >> 24) % 256, out);
+    }
+
+    if (fclose(out)) {
+        perror("Error: Completing writing a binary file");
+        return 0; /* failure to close file */
+    }
+
+    printf("Info: wrote '%s', %d tile references\n", filename, curtile);
+
+    return 1;
 }
