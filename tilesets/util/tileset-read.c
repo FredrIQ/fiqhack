@@ -5,13 +5,13 @@
 
 #include "tilecompile.h"
 #include "tilesequence.h"
-    
+
 #define EPRINT(s, ...)                                       \
     do {                                                     \
         fprintf(stderr, "line %d: " s, lineno, __VA_ARGS__); \
         return 0;                                            \
     } while (0)
-      
+
 #define EPRINTN(s)                                           \
     do {                                                     \
         fprintf(stderr, "line %d: " s, lineno);              \
@@ -29,7 +29,7 @@ palette_key_to_int(png_byte key)
         return 63;
     else if (key >= 'A' && key <= 'Z')
         return key - 'A' + 1;
-    else if (key >= 'a' && key <= 'A')
+    else if (key >= 'a' && key <= 'z')
         return key - 'a' + 27;
     else if (key >= '0' && key <= '9')
         return key - '0' + 53;
@@ -143,7 +143,7 @@ load_text_tileset(png_byte *data, png_size_t size)
     int lineno = 1;
 
     int pk1, pk2, pk, pw;
-      
+
     /* Run through the entirety of data. We convert newline to NUL to make
        parsing easier, and also check for illegal characters (anything outside
        the ASCII range; no tile keys contain Unicode). */
@@ -205,19 +205,23 @@ load_text_tileset(png_byte *data, png_size_t size)
             /* Now parse the numbers given. */
             uint8_t *keylocs[] =
                 { &(filepalette[pk].r), &(filepalette[pk].g),
-                  &(filepalette[pk].b), &(filepalette[pk].b) };
+                  &(filepalette[pk].b), &(filepalette[pk].a) };
             int curchannel = 0;
             unsigned long curchannelval = 0;
             png_bytep dp = data + i + pw + 4;
-            while (*dp != ')') {
+            for (;;) {
                 if (*dp >= '0' && *dp <= '9') {
                     curchannelval *= 10; curchannelval += *dp - '0';
-                } else if (*dp == ',') {
+                } else if (*dp == ',' || *dp == ')') {
                     if (curchannel >= 4)
                         EPRINTN("Error: images are limited to 4 channels\n");
-                    if (curchannelval > 255) 
+                    if (curchannelval > 255)
                         EPRINTN("Error: channel value above 255\n");
                     *(keylocs[curchannel]) = (uint8_t) curchannelval;
+                    curchannelval = 0;
+                    curchannel++;
+                    if (*dp == ')')
+                        break;
                 } else if (*dp == ' ') {
                     /* do nothing */
                 } else if (!*dp) {
@@ -240,7 +244,7 @@ load_text_tileset(png_byte *data, png_size_t size)
                         "1, 3, or 4 channels wide\n");
             if (filepalettechannels && filepalettechannels != curchannel)
                 EPRINTN("Error: image is both paletted and RGBA\n");
-            if (filepalettevalid[pk]) 
+            if (filepalettevalid[pk])
                 EPRINT("Error: duplicate palette key '%.*s'\n", pw, data + i);
             filepalettevalid[pk] = true;
             filepalettechannels = curchannel;
@@ -299,8 +303,9 @@ load_text_tileset(png_byte *data, png_size_t size)
            # tile name\0
            # tile name: */
         {
-            /* len + 1, plus "s 4294967295" */
-            char tilename[len + 12];
+            /* len + 1, plus "s 4294967295"; we cannot use a VLA here, it
+               causes a stack leak in gcc (!) */
+            char *tilename = malloc(len + 12);
             png_bytep dp = data + i;
             char *tp = tilename;
             if (len > 6 && memcmp(data + i, "# tile ", 6) == 0) {
@@ -372,9 +377,29 @@ load_text_tileset(png_byte *data, png_size_t size)
                 } else {
                     fprintf(stderr, "Warning: unknown tile '%s'\n", tilename);
                     filepos++;
+
+                    /* Check for a tile image. If we find one, we must discard
+                       it. */
+                    if (*dp == ')')
+                        dp++;
+
+                    if (!*dp && dp - data < size - 1 && dp[1] == '{') {
+                        while (*dp != '}') {
+                            if (!*dp)
+                                lineno++;
+                            dp++;
+                            if (dp >= data + size)
+                                EPRINTN("Error: unmatched '{'\n");
+                        }
+                        i = dp - data;
+                    }
+
+                    free(tilename);
                     continue;
                 }
             }
+
+            free(tilename);
 
             /* Now we have to parse the tile data. dp is looking either at
                the data, or a closing paren just before it. */
@@ -425,7 +450,106 @@ load_text_tileset(png_byte *data, png_size_t size)
                     if (using_filepos)
                         EPRINTN("Error: cannot mix map and tileset syntax\n");
                     avoiding_filepos = 1;
-                    assert(!"TODO: text image parsing");
+
+                    /* Allocate some memory to store the new image in. If this
+                       is the very first image, we might not know how large it
+                       is, but it can't possibly have any more pixels than size,
+                       and overallocating isn't an issue if we only do it once.
+                       If it isn't, we know how much memory to allocate. */
+                    int pixelcount;
+                    if (tileset_width == -1)
+                        pixelcount = size;
+                    else if (tileset_width == 0 || tileset_height == 0)
+                        EPRINTN("Error: Text-based tilesets cannot have image "
+                                "data \n");
+                    else
+                        pixelcount = tileset_width * tileset_height;
+
+                    if (!filekeywidth)
+                        EPRINTN("Error: Textual images need a palette\n");
+
+                    pixel *image = malloc(pixelcount * sizeof (pixel));
+                    int x = 0, y = -1, w = tileset_width, c = 0;
+                    lineno++;
+                    for (dp += 2; *dp != '}'; dp++) {
+                            if (dp >= data + size)
+                                EPRINTN("Error: unmatched '{'\n");
+                        if (*dp == ' ')
+                            continue;
+                        if (*dp == 0) {
+                            y++;
+                            lineno++;
+                            if (w == -1 && y)
+                                w = x;
+                            else if (w != x && y)
+                                EPRINTN("Error: Image width is not consistent\n");
+                            if (!w)
+                                EPRINTN("Error: Image has zero width\n");
+                            x = 0;
+                            continue;
+                        }
+                        if (y < 0)
+                            EPRINTN("Error: Junk after opening brace\n");
+                        if (tileset_height != -1 && y >= tileset_height)
+                            EPRINTN("Error: Image height is not consistent\n");
+                        if (x > w && w != -1)
+                            EPRINTN("Error: Image width is not consistent\n");
+
+                        int pk = palette_key_to_int(*dp);
+                        if (pk < 0)
+                            EPRINT("Error: Invalid '%c' in image\n", *dp);
+                        if (filekeywidth == 2) {
+                            pk *= 64;
+                            int pk2 = palette_key_to_int(*++dp);
+                            if (pk2 < 0)
+                                EPRINT("Error: Invalid '%c' in image\n", *dp);
+                            pk += pk2;
+                        }
+
+                        if (!filepalettevalid[pk])
+                            EPRINTN("Error: Undefined palette key\n");
+
+                        if (filepalettechannels == 4)
+                            image[y * w + x] = filepalette[pk];
+                        else if (c == 0)
+                            image[y * w + x].r = filepalette[pk].r;
+                        else if (c == 1)
+                            image[y * w + x].g = filepalette[pk].r;
+                        else if (c == 2)
+                            image[y * w + x].b = filepalette[pk].r;
+                        else if (c == 3)
+                            image[y * w + x].a = filepalette[pk].r;
+
+                        c += filepalettechannels;
+                        if (c == 4) {
+                            c = 0;
+                            x++;
+                        }
+                    }
+
+                    if (y == 0)
+                        EPRINTN("Error: Image has zero width\n");
+
+                    if (tileset_height == -1)
+                        tileset_height = y;
+                    else if (y != tileset_height)
+                        EPRINTN("Error: Image height is not consistent\n");
+
+                    if (tileset_width == -1)
+                        tileset_width = w;
+                    else if (w != tileset_width)
+                        EPRINTN("Error: Image width is not consistent\n");
+
+                    images_seen = realloc(images_seen, (seen_image_count + 1)
+                                          * sizeof *images_seen);
+                    if (!images_seen)
+                        EPRINTN("Error allocating memory for tile images\n");
+
+                    ii = seen_image_count;
+                    images_seen[seen_image_count++] = image;
+
+                    i = dp - data;
+
                 } else {
                     if (avoiding_filepos)
                         EPRINTN("Error: cannot mix map and tileset syntax\n");
