@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2013-09-24
+! Last modified by Alex Smith, 2014-10-03
 ! NetHack may be freely redistributed.  See license for details.
 A = (0, 0, 0)
 B = (0, 182, 255)
@@ -416,7 +416,7 @@ $ = (71, 108, 108)
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 21 (lit corridor)
+# tile 21 (sub lit corridor)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM

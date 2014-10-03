@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2014-10-02 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* Copyright (c) 2013 Alex Smith. */
@@ -28,16 +28,8 @@
 # include "display.h"
 # include "brandings.h"
 
-/* The number of substituted tiles isn't actually stored anywhere, so store it
-   here. There are currently 11 substituted tiles, one for each shape of wall
-   (there are 11 ways to choose at least 2 out of 4 directions to connect in,
-   and less connected walls do not have unique tiles). */
-# define TILESEQ_SUBSTITUTABLE_TILES 11
-
 /* In stacking order: */
-/* We add 2 to the number of backgrounds because there are two more background
-   /tiles/ than background /cmaps/: lit corridor and unlit room. */
-# define TILESEQ_CMAP_SIZE       (S_cmap_COUNT + 2)          /* backgrounds */
+# define TILESEQ_CMAP_SIZE       S_cmap_COUNT                /* backgrounds */
 # define TILESEQ_GENBRAND_SIZE   NHCURSES_GENBRANDING_COUNT  /* gen brandings */
 # define TILESEQ_TRAP_SIZE       (TRAPNUM-1)                 /* traps */
 # define TILESEQ_OBJ_SIZE        NUM_OBJECTS                 /* objects */
@@ -49,8 +41,6 @@
 # define TILESEQ_ZAP_SIZE        (NUMZAPCHARS * NUM_ZAP)     /* beams */
 # define TILESEQ_SWALLOW_SIZE    NUMSWALLOWCHARS             /* engulfed */
 # define TILESEQ_EFFECT_SIZE     E_COUNT                     /* effects */
-# define TILESEQ_SUBST_SIZE      TILESEQ_SUBSTITUTABLE_TILES * \
-                                 NHCURSES_LDM_SUB_COUNT      /* substitutions */
 
 # define TILESEQ_CMAP_OFF        0
 # define TILESEQ_GENBRAND_OFF    (TILESEQ_CMAP_OFF + TILESEQ_CMAP_SIZE)
@@ -64,13 +54,14 @@
 # define TILESEQ_ZAP_OFF         (TILESEQ_EXPLODE_OFF + TILESEQ_EXPLODE_SIZE)
 # define TILESEQ_SWALLOW_OFF     (TILESEQ_ZAP_OFF + TILESEQ_ZAP_SIZE)
 # define TILESEQ_EFFECT_OFF      (TILESEQ_SWALLOW_OFF + TILESEQ_SWALLOW_SIZE)
-# define TILESEQ_SUBST_OFF       (TILESEQ_EFFECT_OFF + TILESEQ_EFFECT_SIZE)
 
-# define TILESEQ_COUNT           (TILESEQ_SUBST_OFF + TILESEQ_SUBST_SIZE)
+# define TILESEQ_COUNT           (TILESEQ_EFFECT_OFF + TILESEQ_EFFECT_SIZE)
 # define TILESEQ_INVALID_OFF     (-1)
 
+extern unsigned long long substitution_from_name(const char **);
 extern int tileno_from_name(const char *, int);
-extern int tileno_from_api_name(const char *, const char *, int, int);
+extern int tileno_from_api_name(const char *, const char *, int);
 extern const char *name_from_tileno(int);
+extern const char *name_from_substitution(unsigned long long);
 
 #endif

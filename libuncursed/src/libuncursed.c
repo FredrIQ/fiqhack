@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-09-06 */
+/* Last modified by Alex Smith, 2014-10-03 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -302,13 +302,13 @@ uncursed_hook_set_faketerm_font_file(const char *filename)
    If no graphical interfaces are in use, we allocate and free dummy tiles
    regions ourself. */
 static void
-uncursed_hook_set_tiles_tile_file(const char *filename, int down, int across)
+uncursed_hook_set_tiles_tile_file(const char *filename, int height, int width)
 {
     struct uncursed_hooks *h;
 
     for (h = uncursed_hook_list; h; h = h->next_hook)
         if (h->used && h->set_tiles_tile_file) {
-            h->set_tiles_tile_file(filename, down, across);
+            h->set_tiles_tile_file(filename, height, width);
             break;
         }
 }
@@ -470,9 +470,9 @@ set_faketerm_font_file(const char *filename)
 
 static char invalid_region;     /* &invalid_region is used as a sentinel */
 void
-set_tiles_tile_file(const char *filename, int down, int across)
+set_tiles_tile_file(const char *filename, int height, int width)
 {
-    uncursed_hook_set_tiles_tile_file(filename, down, across);
+    uncursed_hook_set_tiles_tile_file(filename, height, width);
 }
 
 void

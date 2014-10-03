@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Alex Smith, 2014-05-31
+Last-Modified: Last modified by Alex Smith, 2014-10-03
 Comment:
  This file contains the copyright status of the files in the Windows binary
  distribution (i.e. the copyright NetHack 4 has after being built). For other
@@ -179,6 +179,13 @@ Copyright:
  Copyright (c) 2011-2012 Daniel Thaler
  and many other contributors (see the "copyright" and "history" files for full
  lists).
+
+Files: tilecompile.exe
+License: NHGPL
+Copyright:
+ Copyright (C) Andrew Apted <ajapted@users.sourceforge.net> 2002
+               Slash'EM Development Team 2003
+ Copyright (C) 2014 Alex Smith
 
 Files: license
 License: verbatim

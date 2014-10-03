@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-08-20 */
+/* Last modified by Alex Smith, 2014-10-02 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -96,15 +96,19 @@
  * tiles for mines/hell in tiles versions). When you change this list, update
  * nethack/brandings.c.
  */
-# define LDM_DEFAULT    0
-# define LDM_HELL       1
-# define LDM_QUEST      2
-# define LDM_MINES      3
-# define LDM_SOKOBAN    4
-# define LDM_ROGUE      5
-# define LDM_KNOX       6
+# define LDM_DEFAULT     0
+# define LDM_HELL        1
+# define LDM_QUESTHOME   2
+# define LDM_MINES       3
+# define LDM_SOKOBAN     4
+# define LDM_ROGUE       5
+# define LDM_KNOX        6
+# define LDM_QUESTFILL1  7
+# define LDM_QUESTLOCATE 8
+# define LDM_QUESTFILL2  9
+# define LDM_QUESTGOAL   10
 
-# define LDM_COUNT      7       /* number of level display modes */
+# define LDM_COUNT       11      /* number of level display modes */
 
 /* Command parameters.
  *

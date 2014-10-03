@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-09-01
+Last modified by Alex Smith, 2014-10-03
 
 This documentation for the uncursed rendering library is provided under the
 same terms as libuncursed itself: it may be distributed under either of the
@@ -1250,14 +1250,14 @@ creation of uncursed.)  All these functions (except `get_tile_dimensions`) are
 effectively no-ops in a terminal-based interface; they can create, delete,
 etc. tiles regions, but those regions will never be drawn to the screen.
 
-    void set_tiles_tile_file(char *filename, int down, int across)
+    void set_tiles_tile_file(char *filename, int height, int width)
 
 This function sets the image file that will be used for the graphical tiles,
-the number of rows of tiles in the image, and the number of tiles in each row.
-(Tiles support is off by default; it is turned on or off using this function,
-using NULL for the filename to turn it off.)  Changing the tileset will have
-an effect only on the tileset used by future calls to `set_tiles_region`; it
-wil not affect currently exiting tiles regions.
+and the dimensions of each tile within the image.  (Tiles support is off by
+default; it is turned on or off using this function, using NULL for the
+filename to turn it off.)  Changing the tileset will have an effect only on
+the tileset used by future calls to `set_tiles_region`; it wil not affect
+currently exiting tiles regions.
 
     void [w]set_tiles_region([WINDOW *win],
                  int tiles_h, int tiles_w, int tiles_t, int tiles_l,

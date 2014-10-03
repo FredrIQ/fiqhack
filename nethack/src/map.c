@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-08-13 */
+/* Last modified by Alex Smith, 2014-10-02 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -170,6 +170,8 @@ draw_map(int cx, int cy)
                        sizeof *dbyx) == 0)
                 continue; /* no need to redraw an unchanged tile */
 
+            unsigned long long substitution = dbe_substitution(dbyx);
+
             onscreen_display_buffer[y][x] = *dbyx;
 
             /* set the position for each character to prevent incorrect
@@ -200,25 +202,27 @@ draw_map(int cx, int cy)
             /* traps */
             if (dbyx->trap)
                 print_tile(mapwin, cur_drawing->traps + dbyx->trap-1,
-                           NULL, TILESEQ_TRAP_OFF);
+                           NULL, TILESEQ_TRAP_OFF, substitution);
             /* objects */
             if (dbyx->obj)
                 print_tile(mapwin, cur_drawing->objects + dbyx->obj-1,
-                           NULL, TILESEQ_OBJ_OFF);
+                           NULL, TILESEQ_OBJ_OFF, substitution);
             /* invisible monster symbol; just use the tile number directly, no
                need to go via an API name because there is only one */
             if (dbyx->invis)
-                wset_tiles_tile(mapwin, TILESEQ_INVIS_OFF + 0);
+                print_tile(mapwin, &(struct curses_symdef){
+                        .symname = invismonexplain},
+                           NULL, TILESEQ_INVIS_OFF, substitution);
             /* monsters */
             if (dbyx->mon && dbyx->mon <= cur_drawing->num_monsters)
                 print_tile(mapwin, cur_drawing->monsters + dbyx->mon-1,
-                           NULL, TILESEQ_MON_OFF);
+                           NULL, TILESEQ_MON_OFF, substitution);
             /* warnings */
             if (dbyx->mon > cur_drawing->num_monsters &&
                 (dbyx->monflags & MON_WARNING))
                 print_tile(mapwin, cur_drawing->warnings +
                                dbyx->mon-1-cur_drawing->num_monsters,
-                           NULL, TILESEQ_WARN_OFF);
+                           NULL, TILESEQ_WARN_OFF, substitution);
             /* high-priority brandings */
             print_high_priority_brandings(mapwin, dbyx);
             /* effects */
@@ -229,23 +233,23 @@ draw_map(int cx, int cy)
                     print_tile(mapwin,
                                cur_drawing->explsyms + (id % NUMEXPCHARS),
                                cur_drawing->expltypes + (id / NUMEXPCHARS),
-                               TILESEQ_EXPLODE_OFF);
+                               TILESEQ_EXPLODE_OFF, substitution);
                     break;
                 case E_SWALLOW:
                     print_tile(mapwin,
                                cur_drawing->swallowsyms + (id & 0x7),
-                               NULL, TILESEQ_SWALLOW_OFF);
+                               NULL, TILESEQ_SWALLOW_OFF, substitution);
                     break;
                 case E_ZAP:
                     print_tile(mapwin,
                                cur_drawing->zapsyms + (id & 0x3),
                                cur_drawing->zaptypes + (id >> 2),
-                               TILESEQ_ZAP_OFF);
+                               TILESEQ_ZAP_OFF, substitution);
                     break;
                 case E_MISC:
                     print_tile(mapwin,
                                cur_drawing->effects + id,
-                               NULL, TILESEQ_EFFECT_OFF);
+                               NULL, TILESEQ_EFFECT_OFF, substitution);
                     break;
                 }
             }

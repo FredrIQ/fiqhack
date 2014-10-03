@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-09-01 */
+/* Last modified by Alex Smith, 2014-10-03 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,7 +7,6 @@
 #include <signal.h>
 #include <locale.h>
 #include <time.h>
-#include "tile.h"
 
 WINDOW *basewin, *mapwin, *msgwin, *statuswin, *sidebar, *extrawin;
 struct gamewin *firstgw, *lastgw;
@@ -49,17 +48,134 @@ set_font_file(const char *fontfilename)
     strcat(namebuf, fontfilename);
     set_faketerm_font_file(namebuf);
 }
+
+/* Finds the start of the tile table in a tile file. (Specifically, it finds the
+   tile table name, which is the first thing that the client might be interested
+   in.) Returns 0 and prints an error if it can't find it, or the length of the
+   tile table (including the name and size) if it can. */
+static size_t
+seek_tile_file(FILE *in) {
+
+    size_t filelen;
+    char header[12];
+
+    fseek(in, 0, SEEK_END);
+    filelen = ftell(in);
+    rewind(in);
+
+    if (fread(header, 1, 8, in) < 8) {
+        curses_raw_print("Warning: tileset file is corrupted.\n");
+        return 0;
+    }
+
+    /* There are two reasonable headers to see here. One is a PNG header, in
+       which case we have an image-based tileset, embedded in an image. The
+       other is a binary tileset header, in which case we have a cchar-based
+       tileset, by itself. */
+    if (memcmp(header, "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A", 8) == 0) {
+        /* That's a PNG header. Follow PNG headers until we find the
+           nhTb chunk. */
+        if (fread(header, 1, 8, in) < 8) {
+            curses_raw_print("Warning: tileset file is corrupted.\n");
+            return 0;
+        }
+        while (header[4] != 'n' || header[5] != 'h' ||
+               header[6] != 'T' || header[7] != 'b') {
+            /* PNG is big-endian. */
+            size_t len = header[0];
+            len *= 256; len += header[1];
+            len *= 256; len += header[2];
+            len *= 256; len += header[3];
+            /* Skip past the data and CRC. */
+            fseek(in, len + 4, SEEK_CUR);
+            if (fread(header, 1, 8, in) < 8) {
+                curses_raw_print("Warning: 'tileset file' is just an image, "
+                                 "not a tileset.\n");
+                return 0;
+            }
+        }
+        /* We found the PNG chunk we're looking for. Treat it as the whole
+           file. */
+        filelen = header[0];
+        filelen *= 256; filelen += header[1];
+        filelen *= 256; filelen += header[2];
+        filelen *= 256; filelen += header[3];
+        if (fread(header, 1, 8, in) < 8) {
+            curses_raw_print("Warning: tileset file is corrupted.\n");
+            return 0;
+        }
+    }
+
+    /* A binary tileset header is twelve bytes. Read the other four. */
+    if (fread(header + 8, 1, 4, in) < 4) {
+        curses_raw_print("Warning: tileset file is corrupted.\n");
+        return 0;
+    }
+
+    if (memcmp(header, "NH4TILESET\0\0", 12) != 0) {
+        curses_raw_print("Warning: tileset file is in the wrong format.\n");
+        return 0;
+    }
+
+    filelen -= 12;
+
+    if (filelen < 84) {
+        curses_raw_print("Warning: tileset file is too short.\n");
+        return 0;
+    }
+
+    return filelen;
+}
+
+/* This function parses the given tile file to determine its dimensions,
+   image/cchar nature, and to record the tile table in it. If the tile file is
+   image-based, it also sends it to libuncursed to start rendering the
+   images. */
 void
 set_tile_file(const char *tilefilename)
 {
-    if (!tilefilename) {
-        set_tiles_tile_file(NULL, TILES_PER_COL, TILES_PER_ROW);
-        return;
-    }
     char namebuf[strlen(tileprefix) + strlen(tilefilename) + 1];
     strcpy(namebuf, tileprefix);
     strcat(namebuf, tilefilename);
-    set_tiles_tile_file(namebuf, TILES_PER_COL, TILES_PER_ROW);
+
+    free(tiletable);
+    tiletable = NULL;
+    tiletable_len = 0;
+
+    FILE *in = fopen(namebuf, "rb");
+    if (!in) {
+        curses_raw_print("Warning: could not open tileset file.\n");
+        return;
+    }
+    tiletable_len = seek_tile_file(in) - 84;
+    if (tiletable_len == -84)
+        return; /* error message has already been printed */
+
+    fseek(in, 80, SEEK_CUR); /* skip the name */
+
+    /* Unlike PNG, tile tables are little-endian. */
+    int w = getc(in);
+    w += getc(in) << 8;
+    int h = getc(in);
+    h += getc(in) << 8;
+
+    if (w == 0 || h == 0) {
+        set_tiles_tile_file(NULL, 0, 0);
+        tiletable_is_cchar = 1;
+    } else {
+        set_tiles_tile_file(namebuf, h, w);
+        tiletable_is_cchar = 0;
+    }
+
+    /* Load up the entire table. */
+    tiletable = malloc(tiletable_len);
+    if (fread(tiletable, 1, tiletable_len, in) < tiletable_len) {
+        curses_raw_print("Warning: tileset shrunk while in use.\n");
+        free(tiletable);
+        tiletable = NULL;
+        tiletable_len = 0;
+        return;
+    }
 }
 
 /* A delayed-action curs_set; we don't show the cursor until just before we
@@ -94,7 +210,6 @@ init_curses_ui(const char *dataprefix)
     }
 
     tileprefix = strdup(dataprefix);
-    set_tile_file(NULL);
     set_font_file("font14.png");
 
     noecho();
@@ -509,22 +624,21 @@ setup_tiles(void)
 {
     switch (settings.graphics) {
     case TILESET_DAWNHACK_16:
-        set_tile_file("dawnhack-16.png");
+        set_tile_file("dawnhack-16.nh4ct");
         return TRUE;
     case TILESET_DAWNHACK_32:
-        set_tile_file("dawnhack-32.png");
+        set_tile_file("dawnhack-32.nh4ct");
         return TRUE;
     case TILESET_SLASHEM_16:
-        set_tile_file("slashem-16.png");
+        set_tile_file("slashem-16.nh4ct");
         return TRUE;
     case TILESET_SLASHEM_32:
-        set_tile_file("slashem-32.png");
+        set_tile_file("slashem-32.nh4ct");
         return TRUE;
     case TILESET_SLASHEM_3D:
-        set_tile_file("slashem-3d.png");
+        set_tile_file("slashem-3d.nh4ct");
         return TRUE;
     default: /* text */
-        set_tile_file(NULL);
         return FALSE;
     }
 }

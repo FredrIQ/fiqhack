@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-09-15 */
+/* Last modified by Alex Smith, 2014-10-03 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -23,6 +23,9 @@ struct curses_drawing_info *default_drawing, *cur_drawing;
 int curses_level_display_mode;
 static struct curses_drawing_info *unicode_drawing, *rogue_drawing;
 
+char *tiletable;
+int tiletable_len;
+nh_bool tiletable_is_cchar = 1;
 
 /* Additionaly glyphs not present in the NetHack core but that we want
  * to include to allow for customizability. */
@@ -108,6 +111,8 @@ static struct curses_symdef unicode_graphics_ovr[] = {
 };
 
 #define listlen(list) (sizeof(list)/sizeof(list[0]))
+
+static void print_tile_number(WINDOW *, int, unsigned long long);
 
 static void
 add_sym_list(struct curses_symdef **list, int len,
@@ -539,8 +544,8 @@ print_low_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe)
             branding = nhcurses_genbranding_stepped;
     }
     if (branding != nhcurses_no_branding) {
-        wset_tiles_tile(win, TILESEQ_GENBRAND_OFF +
-                        branding - nhcurses_genbranding_first);
+        print_tile_number(win, TILESEQ_GENBRAND_OFF +
+                          branding - nhcurses_genbranding_first, 0);
     }
 }
 
@@ -554,41 +559,33 @@ print_high_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe)
         branding = nhcurses_monbranding_peaceful;
 
     if (branding != nhcurses_no_branding) {
-        wset_tiles_tile(win, TILESEQ_MONBRAND_OFF +
-                        branding - nhcurses_monbranding_first);
+        print_tile_number(win, TILESEQ_MONBRAND_OFF +
+                          branding - nhcurses_monbranding_first, 0);
     }
 
     if (dbe->trap || (dbe->branding & NH_BRANDING_TRAPPED))
-        wset_tiles_tile(win, TILESEQ_GENBRAND_OFF +
-                        nhcurses_genbranding_trapped -
-                        nhcurses_genbranding_first);
+        print_tile_number(win, TILESEQ_GENBRAND_OFF +
+                          nhcurses_genbranding_trapped -
+                          nhcurses_genbranding_first, 0);
 }
 
-/* What is the bottom-most, opaque background of a map square? This takes
-   background and brandings into account. */
+/* What is the bottom-most, opaque background of a map square? */
 static enum {
-    fb_litroom,
-    fb_darkroom,
-    fb_litcorr,
-    fb_darkcorr,
+    fb_room,
+    fb_corr,
 }
 furthest_background(const struct nh_dbuf_entry *dbe)
 {
     boolean room = dbe->bg != corr_id;
-    boolean seen = dbe->branding & NH_BRANDING_SEEN;
-    boolean lit = (dbe->branding & NH_BRANDING_LIT) ||
-        (dbe->branding & NH_BRANDING_TEMP_LIT);
 
-    if (lit || (room && seen))
-        return room ? fb_litroom : fb_litcorr;
-    else
-        return room ? fb_darkroom : fb_darkcorr;
+    return room ? fb_room : fb_corr;
 }
 
 int
 mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms, int *bg_color)
 {
     int id, count = 0;
+    unsigned long long substitution = dbe_substitution(dbe);
 
     if (dbe->effect) {
         id = NH_EFFECT_ID(dbe->effect);
@@ -672,20 +669,16 @@ mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms, int *bg_color)
         /* Implement lighting display. We override the background of dark room
            and light corridor tiles. */
         int stepped_color = CLR_BROWN;
-        switch (furthest_background(dbe)) {
-        case fb_litroom:
-            break;
-        case fb_darkroom:
+
+        if (furthest_background(dbe) == fb_room &&
+            substitution & NHCURSES_SUB_UNLIT) {
             if (dbe->bg == room_id)
                 syms[count-1] = cur_drawing->bgelements[darkroom_id];
             stepped_color = CLR_BLUE;
-            break;
-        case fb_litcorr:
+        } else if (furthest_background(dbe) == fb_corr &&
+                   substitution & NHCURSES_SUB_LIT) {
             if (dbe->bg == corr_id)
                 syms[count-1] = cur_drawing->bgelements[litcorr_id];
-            break;
-        case fb_darkcorr:
-            break;
         }
 
         /* Override darkroom for stepped-on squares, so the player can see
@@ -725,6 +718,28 @@ curses_notify_level_changed(int dmode)
 }
 
 
+unsigned long long
+dbe_substitution(struct nh_dbuf_entry *dbe)
+{
+    unsigned long long s = NHCURSES_SUB_LDM(curses_level_display_mode);
+
+    /* TODO: Do we want this behaviour (that approximates 3.4.3 behaviour) for
+       the "lit" substitution? Do we want it to be customizable?
+
+       Another option is to have multiple substitutions, but that's starting to
+       get silly. */
+    short lit_branding = dbe->bg == corr_id ?
+        (NH_BRANDING_LIT | NH_BRANDING_TEMP_LIT) :
+        (NH_BRANDING_LIT | NH_BRANDING_TEMP_LIT | NH_BRANDING_SEEN);
+
+    s |= (dbe->branding & lit_branding) ? NHCURSES_SUB_LIT : NHCURSES_SUB_UNLIT;
+
+    /* TODO: Determine which Quest this tile belongs to (if any), and
+       race/gender of a player-monster on the tile */
+
+    return s;
+}
+
 void
 switch_graphics(enum nh_text_mode mode)
 {
@@ -763,24 +778,99 @@ print_sym(WINDOW * win, struct curses_symdef *sym, int extra_attrs, int bgcolor)
     wadd_wch(win, &uni_out);
 }
 
+static inline unsigned long
+get_tt_number(int tt_offset)
+{
+    unsigned long l = 0;
+    l += (unsigned long)(unsigned char)tiletable[tt_offset + 0] << 0;
+    l += (unsigned long)(unsigned char)tiletable[tt_offset + 1] << 8;
+    l += (unsigned long)(unsigned char)tiletable[tt_offset + 2] << 16;
+    l += (unsigned long)(unsigned char)tiletable[tt_offset + 3] << 24;
+    return l;
+}
+
+static void
+print_tile_number(WINDOW *win, int tileno, unsigned long long substitutions)
+{
+    /* Find the tile in question in the tile table. The rules:
+       - The tile numbers must be equal;
+       - The substitutions of the tile in the table must be a subset of
+         the substitutions of the tile we want to draw;
+       - If multiple tiles fit these constraints, draw the one with the
+         numerically largest substitution number.
+
+       The tile table itself is formatted as follows:
+       4 bytes: tile number
+       8 bytes: substiutitions
+       4 bytes: image index (i.e. wset_tiles_tile argument)
+
+       All these numbers are little-endian, regardless of the endianness of the
+       system we're running on.
+
+       The tile table is sorted by number then substitutions, so we can use a
+       binary search. */
+
+    int ttelements = tiletable_len / 16;
+    int low = 0, high = ttelements;
+    /* Invariant: tiles not in low .. high inclusive are definitely not the
+       tile we're looking for */
+    while (low < high) {
+        int pivot = (low + high) / 2;
+        int table_tileno = get_tt_number(pivot * 16);
+
+        if (table_tileno < tileno)
+            low = pivot + 1;
+        else if (table_tileno > tileno)
+            high = pivot - 1;
+        else {
+            /* We're somewhere in the section for this tile. Find its bounds. */
+            low = high = pivot;
+            while (low >= 0 && get_tt_number(low * 16) == tileno)
+                low--;
+            low++;
+            while (high < ttelements && get_tt_number(high * 16) == tileno)
+                high++;
+            high--;
+
+            for (pivot = high; pivot >= low; pivot--) {
+                unsigned long long table_substitutions =
+                    ((unsigned long long)get_tt_number(pivot * 16 + 4)) +
+                    ((unsigned long long)get_tt_number(pivot * 16 + 8) << 32);
+
+                if ((table_substitutions & substitutions) ==
+                    table_substitutions) {
+                    low = pivot;
+                    break;
+                }
+            }
+            break;
+        }
+    }
+
+    /* can happen if the tileset is missing high-numbered tiles */
+    if (low >= ttelements)
+        low = ttelements - 1;
+
+    wset_tiles_tile(win, get_tt_number(low * 16 + 12));
+}
+
 void
 print_tile(WINDOW *win, struct curses_symdef *api_name, 
-           struct curses_symdef *api_type, int offset)
+           struct curses_symdef *api_type, int offset,
+           unsigned long long substitutions)
 {
     int tileno = tileno_from_api_name(
-        api_name->symname, api_type ? api_type->symname : NULL, offset,
-        curses_level_display_mode);
+        api_name->symname, api_type ? api_type->symname : NULL, offset);
     /* TODO: better rendition for missing tiles than just using the unexplored
        area tile */
     if (tileno == TILESEQ_INVALID_OFF) tileno = 0;
-    wset_tiles_tile(win, tileno);
+
+    print_tile_number(win, tileno, substitutions);
 }
 
 const char *const furthest_backgrounds[] = {
-    [fb_litroom] = "the floor of a room",
-    [fb_darkroom] = "dark part of a room",
-    [fb_litcorr] = "lit corridor",
-    [fb_darkcorr] = "corridor",
+    [fb_room] = "the floor of a room",
+    [fb_corr] = "corridor",
 };
 
 static int furthest_background_tileno[sizeof furthest_backgrounds /
@@ -790,6 +880,7 @@ static nh_bool furthest_background_tileno_needs_initializing = 1;
 void
 print_background_tile(WINDOW *win, struct nh_dbuf_entry *dbe)
 {
+    unsigned long long substitutions = dbe_substitution(dbe);
     if (furthest_background_tileno_needs_initializing) {
         int i;
         for (i = 0; i < sizeof furthest_backgrounds /
@@ -800,10 +891,11 @@ print_background_tile(WINDOW *win, struct nh_dbuf_entry *dbe)
         furthest_background_tileno_needs_initializing = 0;
     }
 
-    wset_tiles_tile(win, furthest_background_tileno[furthest_background(dbe)]);
+    print_tile_number(win, furthest_background_tileno[furthest_background(dbe)],
+                      substitutions);
     if (dbe->bg != room_id && dbe->bg != corr_id)
         print_tile(win, cur_drawing->bgelements + dbe->bg,
-                   NULL, TILESEQ_CMAP_OFF);
+                   NULL, TILESEQ_CMAP_OFF, substitutions);
 }
 
 /* outchars.c */

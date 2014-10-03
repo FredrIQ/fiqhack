@@ -1,10 +1,10 @@
 About this document:
-Last modified by Alex Smith, 2014-05-24
+Last modified by Alex Smith, 2014-10-03
 
 The tiles code in this directory was originally taken from Slash'EM, and has
 been modified by Alex Smith for use in NetHack 4.  (This documentation file
-itself is loosely based on the tiles documentation from Slash'EM.)  The tiles
-themselves are distributed in a text format with routines to help in
+itself was originally based on the tiles documentation from Slash'EM.)  The
+tiles themselves are distributed in a text format with routines to help in
 converting them to a system's preferred format and using them there.  For
 information on the authorship of the tiles, see the "copyright" file in the
 root of the NetHack 4 distribution.
@@ -13,183 +13,348 @@ This document is licensed under the NetHack General Public License.  See
 libnethack/dat/license for details.
 
 
-The Tiles System in NetHack 4
-=============================
+The Tiles System in NetHack 4.3
+===============================
 
-NetHack 4 uses two formats for tile files; a text format (described below),
-and an image format.  (There are also "map files" that record the order of
-tiles within an image, necessary to be able to convert the image files back to
-text format; and "catalogue files" that record which tile files make up which
-tilesets, and are used by the build system.)  The "source code" for tiles is
-stored in a number of separate files in text format; during the build, these
-are converted into combined text files (still in the text format, but which
-act like object code) that contain all the tiles in the tileset in the order
-in which the windowport wants them, and then to images for use by the
-windowports.
+History
+-------
 
-As such, it will necessarily lose information to edit the generated output
-images; if you want to edit the tilesets, use the tile manipulation utilities
-provided.
+Originally, tiles were introduced in the NetHack 3 series.  This system stored
+the files in a text format; each tile was specified using an image, a name and
+a number.  There were three files (one for objects, one for monsters, and one
+for other tiles); a particular tiles image was identified by its position in
+one of these files (the name was checked to ensure it was the expected name,
+and the number was ignored).  The image format was very simple; each file had
+a palette of up to 62 colors, which were mapped to letters and digits, then
+those letters and digits were just formed into a rectangular image directly.
 
+Slash'EM brought some improvements to this system.  The image format was
+generalized to allow up to 4096 colors (via two-character keys), although
+Slash'EM refused to use more than 256 colors at once due to limitations of
+typical screens from that era.  It also supported transparency via a color key
+(71, 108, 108).  Another major change was that it supported the merging
+together of multiple files to produce one tileset; the merge was by name,
+which was a little confusing/error-prone because multiple tiles could have the
+same name.  The workaround for this was to match both the identified and
+unshuffled unidentified appearance of a tile, which makes no sense
+conceptually (tiles don't logically have an identified appearance; even if you
+know what an orange potion does, it should still look like an orange potion).
+Even then, there was an occasional fallback to file position, as in the case
+of the many tiles called "wall".
 
-Tile Manipulation Utilities
----------------------------
+Early attempts at a tiles system in NetHack 4 were based on the Slash'EM
+system, but generalized still further.  One innovation was to give every
+single tile a unique name, meaning that tile merging was a lot less
+error-prone, and meaning that tiles could be arbitrarily re-ordered in the
+source files without issue.  (This involved some changes to the game engine;
+probably the only user-visible one was that tools representing disarmed traps
+gained unidentified appearances, to distinguish them from the traps they
+became.)  These source files (that identified tiles by name) were merged into
+intermediate files that identified tiles by file permission, and then into
+images the same way as in Slash'EM.  Each tile name was also associated with a
+number; these numbers were in numerical sequence, so that they could be used
+as file positions directly.
 
-    import_tileset    Creates a .txt tileset from a PNG image and a map
-    convert_tileset   Reorders and/or combines .txt tilesets based on a map
-    export_tileset    Creates PNG images from .txt tilesets
-    map_from_tileset  Creates a map file based on a .txt tileset
+This system eventually turned out to be unsatisfactory, however.  There were
+two main issues.  One is that even 4096 colors is too small a color depth for
+some tilesets, in 2014.  (In fact, deeper color depths were common even in the
+NetHack 3 series, via the unofficially supported but common method of just
+generating an output tile image directly in an image editor.  This is the
+tiles equivalent of writing a program in machine code, and unsurprisingly, it
+leads to nonportable tilesets; the resulting tilesets could typically only be
+used with the precompiled Windows version of NetHack, needing manual
+adjustment whenever even minor changes were made to the game.)  The other was
+that the set of tiles that exist wanted to vary from tileset to tileset; in
+particular, aesthetic variations such as "substitution tiles" (tiles that look
+different in different branches) might or might not exist in any given
+tileset.
 
-To import a tileset image designed for an old version or another variant, use
-`import_tileset` with the appropriate map for that version/variant.  (Maps
-appropriate for Slash'EM 0.0.7E7F3 and NetHack 3.4.3 ship with the NetHack 4
-source, and a map appropriate for the current version will be generated when
-you build NetHack 4.)  If you have a .txt tileset for another version or
-variant, you may be able to use it directly, but most likely some of the tiles
-will have to be renamed (because older versions have a lot of naming clashes
-in their tiles, and there is only so much that the tile handling tools can do
-to resolve them).  Probably the biggest change in tile names is on tiles for
-objects; randomized-appearance objects will need their tiles renamed to
-contain the object class, e.g. "orange potion", "orange spellbook", "orange
-gem"; there are five tiles named "orange" in Slash'EM's objects.txt, for
-instance (counting both gems with the "orange" appearance and the fruit), and
-automatically disambiguating would be very difficult (or even impossible)
-because of the risk that other variants add other orange objects (orange
-rings? orange wands?).  Once you've imported your tileset, you can either make
-it into a tileset image suitable for NetHack 4 by hand using `convert_tileset`
-and `export_tileset`, or else you can create a catalogue file for it and use
-the build system to create the tileset image.
-
-To edit .txt tile files, you can edit them directly in the .txt file, but if
-you want to use an image editor, extract a map from them using
-`map_from_tileset`, then export the tileset with `export_tileset`, edit the
-resulting .png file, and import it again using the map you extracted from it.
-This will keep the tiles in the same order, with the same names.
-
-To add new tiles to the game (because the game was changed in a way that
-causes it to display new tiles), you can either edit an existing .txt file, or
-add a new one.  (The .txt files are organized by provenance, i.e. which
-variant they were imported from, and/or who wrote them.  Adding a new file is
-thus reasonable if you haven't created tiles for NetHack 4 before.)  The new
-tiles will also need to be added to the catalogue files (unless you edited a
-file that was in the catalogue files already).  Three sizes are needed for
-each tile (one fore each of the the three standard tilesets; however, the big
-and 3D-effect tiles can be automatically generated from the 16x16 tiles, so
-it's possible to create just the 16x16 tile, and add the .txt file it's in to
-all three tilesets (with appropriate scaling options).
+One other issue is that the code for rendering ASCII/Unicode and for rendering
+tiles had diverged dangerously, meaning two different sets of code needed to
+be supported.  The method of rendering substitutions (such as dark rooms and
+lit corridors), in particular, was fragile and buggy.  Thus, it seemed
+sensible to allow the tile selection code to also be used to calculate what to
+draw in ASCII, with the only difference between the two being rendering.
 
 
-The .txt Tile Format
+Tile Formats
+------------
+
+At its heart, a NetHack 4.3 tileset consists of a set of images or cchars (the
+ASCII/Unicode equivalent of a tiles image), each of which is associated with a
+name.  However, there are several different formats for expressing these, and
+converting between them is the main purpose of the tile utilities.
+
+A tile image can be expressed in two different ways.  One is to specify the
+image inline as text, in the same way as the NetHack 3 series and Slash'EM.
+Another is to specify the image by reference, giving the position of the tile
+within some external image (this is a 32-bit number, with 0 being the top-left
+tile, 1 being the tile to its right, and so on).  (Nothing about this format
+conceptually limits the format the external image can be in; however, any tile
+utilities that need to be able to manipulate that image require it to be in
+PNG format.)  A cchar can also be specified in two different ways: as a
+textual description such as "underlined brightmagenta 'h'", or as a 32-bit
+number which forms a packed representation of the cchar.  The textual and
+binary representations of cchars are interchangeable.
+
+Tile names can also be expressed in two different ways; as text (e.g. "walls
+0" or "sub male sub gnome wizard"), or as a 96-bit number that forms a packed
+representation of the text (32 bits for the base tile, such as 'wizard', and
+64 bits for substitutions; substitutions take up more space because they form
+a bitfield rather than an enum).  The textual and binary representations of
+tile names are also interchangeable.
+
+A "compiled tileset", which is used by the program at runtime for actual tiles
+rendering, consists of a list of tile name / rendering pairs (totalling 128
+bits each), with the tile names being expressed as numbers, and the images
+also being expressed as numbers.  A cchar-based tileset will use cchar
+numbers; an image-based tileset will reference a sub-image of an image.  (No
+tileset can contain both cchars and images, incidentally; the main reason is
+that it's unclear how the result could be rendered.)  An image-based compiled
+tileset thus needs to be shipped along with an image; a cchar-based compiled
+tileset is usable standalone.  They also have a header, giving metadata about
+the tileset (name, tilesize, image/cchar).  Compiled tilesets are always
+stored sorted in numerical order; this makes it more efficient to find the
+relevant tile from them.  A cchar-based tileset is identified via having the
+tile width and height set to 0.
+
+The source formats for tiles is less fixed.  All that is required is that it
+contains names (in some accepted format), and images or cchars (in some
+accepted format, including references); source formats are text-based, and
+thus if using numerical formats, spell the number out as digits rather than
+representing it as binary directly.  The following possibilities are
+available:
+
+For names:
+  * Numbers, in hexadecimal with `0x` prefix
+  * Textual names
+
+For images:
+  * NetHack 3 series / Slash'EM text format
+  * Reference to an external image as a number
+  * Reference to an external image based on file position (i.e. the first
+    image is tile number 0, the second tile number 1, and so on)
+  * Numerical cchar, in hexadecimal with `0x` prefix
+  * cchar in text format
+
+The source format for an image-based tileset can also optionally contain a
+palette (the binary format has a palette if and only if the associated image
+has a palette).  This can contain 1, 3, or 4 channels (separate channels,
+red/green/blue, or red/green/blue/alpha), and is necessary if any tile images
+are in text format and optional otherwise.
+
+Also noteworthy is the phrase "map file".  This is half a source-format
+tileset, one which specifies the names, and uses file position to determine
+images.  This forms a full tileset when combined with a NetHack 3 series or
+Slash'EM tileset (although it will probably need to be merged with a few extra
+tile images to provide tiles that weren't present in the source).  Map files
+can also be used in reverse, to specify the order that tiles should appear in
+in a produced tileset image; this allows NetHack 4 tilesets to be "backported"
+to earlier versions.
+
+Finally, because it is very common to use an external image together with a
+tileset that references it, the combination can be glued together into one
+file.  This is a PNG file with up to two extra private chunks that contain the
+tileset: `nhTb` for a binary tileset and `nhTs` for a source-form tileset; any
+references to an image in the tilesets reference the file that it's embedded
+in.  (If both are present, they should both have the same meaning; this means
+that `nhTb` can be used by the rendering code, and `nhTs` to automatically
+compensate for changes to the name to number mapping.)  These chunks must
+appear before the image data.
+
+
+Tile Names
+----------
+
+As mentioned above, tile names can be represented either as text or
+numerically.  The textual names are "stable"; in fact, many of them are chosen
+for compatibility with the NetHack 3 series or with Slash'EM.  The numerical
+names are subject to change without warning, which means that every tileset
+should be distributed with the textual names available somehow (which is one
+of the big reasons why an image can have both an embedded binary tileset and
+an embedded source-form tileset, as the binary form is needed for actual
+display).  One thing that is consistent about numerical names, however, is
+that the top 32 bits are used for the base tile, and the bottom 64 bits for
+substitutions (numerical tile names are 96 bits long).  When multiple
+substitutions are available (e.g. `sub orc` and `sub female` for a female orc
+wizard), the substitution with a higher numerical value will be the one that's
+favoured.
+
+For textual names, substitutions are specified with `sub` and another word as
+a prefix (again for consistency with the NetHack 3 series, which has tiles
+like `sub sokoban walls 7`).  Any number of substitutions can be given on one
+tile, in any order.  `sub female sub orc wizard` will attempt to render a
+female orc wizard, then an orc wizard (because `sub orc` has a higher
+precedence than `sub female`), then a female wizard, then just a wizard; the
+tile that's actually drawn will be the first of those four that exists in the
+tileset.
+
+Textual names are mostly based on the unidentified appearance of an item,
+sometimes with an object class appended (e.g. `orange potion`), or just the
+common name of a monster or terrain feature.  Sometimes, more than one item
+has the same unidentified appearance, or else multiple terrain features have
+the same common name; in both these cases, disambiguation is achieved via
+appending `s` and a number (such as `orange gems 1` or `walls 5`).  This
+happens even in cases which would otherwise be ungrammatical, such as the
+dubious `Amulet of Yendors 0`, for consistency when importing from old
+versions (which allowed duplicate tile names).
+
+There is various sugar allowed on textual names, that is desugared by the tile
+manipulation routines.  Some of this is for the purpose of reducing the effort
+for importing old tiles.  Some of it's to make tilesets easier to write by
+hand.  Here's the list:
+
+  * If the same name appears multiple times in a tileset (which would
+    otherwise be illegal), each copy (including the first) has `s` and a
+    unique number appended, starting from 0 and going up from there.
+
+  * A tile name can include comments; comments are introduced via a space,
+    slash, space sequence and last until the end of the name.  (This is for
+    compatibility with older tilesets that specify nonrandomized identified
+    appearance as a "comment".)
+
+  * As an exception to the above, a prefix of `cmap / ` (that's `cmap`
+    followed by space, slash, space) is ignored, with the rest of the name
+    being treated as the name.  (Again, for backwards compatibility.)
+
+  * If a name contains a semicolon, space sequence, the name is split at that
+    point and the entire tile definition is used twice; once with the name
+    before the sequence, and once with the name after the sequence.  (This
+    recurses, allowing a tile definition to be used any number of times.)  The
+    idea is to allow the same tile to be used in multiple contexts.
+
+When writing a 96-bit numerical tile name into the binary tiles format, the
+least significant byte is stored first; this reduces byte-swapping operations
+on common hardware.  The name is written before the tile itself in order to
+form a 128-bit name/image or name/cchar pair.
+
+
+cchar Representation
 --------------------
 
-The tile distribution format for tile images starts with any number of header
-comment lines (each of which starts with an exclamation mark, to indicate it
-as a header comment line), followed by a palette, which looks like this:
+A cchar contains the following fields:
 
-    A = (0, 0, 0)
-    ...
-    P = (254, 254, 254)
+  * A Unicode character.  This is represented as a character in single quotes,
+    such as `'a'` or perhaps `'''`; no escaping is used here.  Some tilesets
+    will want to restrict themselves to the ASCII range; all should restrict
+    themselves to code page 437 without a good reason, because anything beyond
+    that can be hard to render reliably.  There's also the possibility of
+    `invisible`, which takes the character from the layer beneath; this allows
+    a cchar to, say, override the background color while leaving existing
+    colors and characters on that tile alone.
 
-and then each tile has an entry like:
+    In binary encoding, the bottom 21 bits are used to represent this, with
+    `invisible` being represented as zero.
 
-    # tile 0 (name / comment)
-    {
-      AAAAGHPAAAAACDAA
-      AAAFGDEMLOCNAAAA
-    ...
-    }
+  * A foreground color.  There are 16 possibilities that represent colors
+    directly:
 
-Tile sets which require more than 62 colors can use two character color keys,
-giving up to 4096 colors.  All keys in any one file must be the same size.
-The number after "tile" is arbitrary and ignored; it exists only for
-compatibility with other variants and older versions of NetHack.  (When
-writing .txt tile files, the tile handling code will use consecutive numbers
-starting at 0, for ease of reference.)  The comment (and the slash preceding
-it) is optional, and also ignored (although the spaces around the slash are
-required); in older versions of the code, it was used to specify the
-unrandomized appearance of items, but it is obviously a bad idea for two items
-with the same randomized appearance to be able to look different.  (As a
-backwards compatibility special case, if the name is "cmap", the comment is
-used as the name instead.)  The name is what is used to identify the tile.
-Tiles with unrecognised names are permitted, but ignored (thus, tile images
-that are currently not used for anything can be stored with images that are).
+      * `black` = 0
+      * `red` = 1
+      * `green` = 2
+      * `brown` = 3
+      * `blue` = 4
+      * `magenta` = 5
+      * `cyan` = 6
+      * `gray` = 7
+      * `darkgray` = 8
+      * `orange` = 9
+      * `bright_green` = 10
+      * `yellow` = 11
+      * `bright_blue` = 12
+      * `bright_magenta` = 13
+      * `bright_cyan` = 14
+      * `white` = 15
 
-In order to allow for compatibility with older versions of NetHack, when
-running `convert_tileset`, a .txt file that contains multiple tiles with the
-same name will have those tiles disambiguated by adding an "s" and a number
-starting at 0.  (For instance, if two tiles are called "open door" in a tiles
-file, they're interpreted as though they were called "open doors 0" and "open
-doors 1".)  The tile-handling code is aware of this convention, and this is
-the reason that some tiles have vaguely nondescriptive official names ("walls
-4") or ungrammatical names ("Amulet of Yendors 0").  The idea is to reduce, as
-much as possible, the amount of editing required to use .txt tile files from
-other variants or older versions.
+    The remaining numerical codes are used for functions that change color
+    based on the color "beneath":
 
-Transparency is handled using (71, 108, 108) to represent the see-through
-parts of tiles, defined in `tilesets/tile_h.in` as `DEFAULT_BACKGROUND`.  This
-color was originally chosen so that window interfaces that do not handle
-transparency would still look OK.  (This is less of a problem in NetHack 4,
-where the vast majority of window interfaces are based on libuncursed, but
-could potentially still be relevant in the case of custom interfaces.)
+      * `samefg` = 16: same color as beneath
+      * `disturb` = 17: shift colors one step along this sequence:
+        darkgray -> blue -> cyan -> green -> brown -> red -> magenta;
+        other colors shift to brown
+      * (other numbers reserved for future expansion)
 
-The color (72, 108, 108) should be used instead of (71, 108, 108) when an
-opaque color is required, for example in the standard 32x32 floor tiles.
-Tools that handle tilesets should know the difference and not merge these two
-colors together, or indeed, should not remap any other color to (71, 108,
-108).
+    These take up the next-lowest 5 bits in binary encoding.
 
-The 16x16 tilesets in older versions of NetHack (and other variants, such as
-Slash'EM) did not respect this transparency rule, and used (71, 108, 108) as a
-solid color, with the windowports special-casing this size of tile.  NetHack 4
-avoids this problem via editing the 16x16 tiles to use (72, 108, 108) instead;
-you may need to perform the same edit when importing 16x16 tiles from other
-variants.
+  * A background color.  Values `black` to `gray`, or 0 to 7, are valid here,
+    but written with a `bg` prefix (as in `bgblack`, `bgred`, etc.).
+    `samebg`, with a value of 8, copies the background from the layer beneath.
+
+    This accounts for the next 4 bits in binary encoding.
+
+  * Underlining: `underlined`, `regular`, `same_underline` with values of 0,
+    1, 2 respectively.  This accounts for the top two bits, in binary
+    encoding.
+
+Any of these fields can be omitted, in which case the field is filled in with
+the appropriate "copy the layer below" behaviour.  More than one field can be
+omitted, but at least one field must be given (to avoid the null string being
+a valid cchar).  However, you can set all the fields to copy the layer below
+via giving one such field its default value explicitly (e.g. `invisible`); the
+binary representation of such a cchar would be 0xA2000000.
 
 
-Other Files Used With Tilesets
-------------------------------
+Tileset Format
+--------------
 
-The text-based tile files are converted into image-based tile files for use by
-the tiles code, via placing all the tiles in the same image in a standard
-order.  Unlike in older versions of NetHack (in which the drawing code dealt
-with tiles directly, and thus knew the sequence they were in), a tile image is
-only meaningful in combination with a "map" file that specifies which parts of
-the image refer to which files.  A map file for NetHack 4 is generated during
-the build, and compiled into the code; map files for other variants and
-versions, such as NetHack 3.4.3 and Slash'EM, are provided so that tilesets
-from those variants and versions can be imported.  If you want to make your
-own NetHack 4 tileset, probably the simplest method is to distribute your
-tileset as an image, together with the corresponding map file.  That way, the
-`import_tileset` utility can be used to convert your tileset back to text
-format (thus, no information is lost), but users with the same version of
-NetHack 4 as you will not need to be able to use the tileset handling tools to
-be able to play with your tileset.
+It's now possible to define the format of a tileset file.
 
-A tilemap file is just a sequence of tile names, one per line.  (This format
-is intentionally incompatible with that used by previous versions, because the
-tile names in the maps of previous versions are different from the tile names
-in the tile files, making them not particularly useful.)  Unlike with the
-text-based format, no name repetition is allowed (except with import_tileset,
-which just copies tile names from the map into the output file literally); all
-the names must be unique.  The old format had lines starting with "tile" and a
-number, and double-quoted the names; this format should be detected and
-rejected by tilemap manipulation code.
+A tileset file possibly contains a palette, and then contains zero or more
+tile definitions.  It also permits comments, which are lines starting with
+`!`, that can appear anywhere except inside an image definition; these are
+ignored.
 
-There are also "catalogue files", stored in `tilesets/dat/catalogues`, which
-specify which .txt files make up which tilesets.  These catalogue files are
-used by the build system to actually produce the tilesets required, and are
-parsed by the rules in `aimake.rules`.
+A palette consists of lines of the form:
 
-A catalogue file consists of a sequence of lines; the first specifies the size
-of the tileset (as width then height separated by a space), and the rest
-specify the individual tiles that make up the tileset (as paths inside
-`tilesets/dat/tiles`).
+    key = (channel, channel, channel)
 
-The `palette.txt` file contains a standard palette of 256 colors (in the same
-format as a tileset palette, but without any actual tiles).  Currently all the
-tiles, after final merging, only use colors in this palette, even though the
-total number of unique colors mentioned in .txt files exceeds 350 (most are
-unused, and some are merely off-by-one versions of an existing color).
+where each key can provide 1, 3, or 4 channels.  Keys themselves can contain
+letters, digits, underscores and dollar signs, and be up to two characters
+long.  For single-letter keys, avoiding underscores and dollars gives the best
+possible backwards compatibility; for two-letter keys, using `__` as the first
+key is recommended by the Slash'EM tiles developers to get old versions of the
+tiles utilities to bail out cleanly.  Providing a palette with no tiles is
+useful when doing tiles merging, in order to adjust all the tiles onto a
+specific palette (especially when the `-p` option, to lock the palette to that
+in a particular file, is given).
+
+A tile definition starts with the tile name.  For backwards compatibility,
+this can be given in the form `# tile 0 (name)`, where the 0 can be any
+number, and `tile` is written literally (with `name` replaced by the name).
+However, it's also possible just to write the tile name by itself (in text
+format, or numerical format in hexadecimal).  The `# tile` version is
+recommended if the tile file is entirely made out of text-format images, for
+backwards compatibility; however, there's no point in using it otherwise,
+because old tiles utilities would not be able to read such tilesets anyway.
+
+The format is then continued with the tile image or cchar.  This is typically
+just written with a colon, space, and a hexadecimal number or (for a cchar)
+its text representation.  There are two other possibilities.  When relying on
+file position, the tile image can just be omitted entirely, although this is
+only legal if every tile image in the tileset relies on file position (thus
+creating a map file).  Finally, if the images are embedded in text format into
+the tile file, this is accomplished by enclosing the text-format image in
+braces (`{`, `}`); each row of the image is one line of text, specifying all
+the pixels of the image one after another.  (If keys provide 4 channels each,
+they give the RGBA of the pixel; if they provide 3 channels each, they give
+the RGB, with alpha being 0 if the RGB is (71, 108, 108) and 255 otherwise;
+and if they provide 1 channel each, then four keys will be needed per pixel,
+to give the red, green, blue and alpha separately.)  The braces are each on
+lines of their own, and no colon is used.
+
+Binary tilesets also have a header, consisting of the string "NH4TILESET" and
+two NUL characters, then 80 characters representing the name of the tileset
+(padded to the right with NULs), then the width and height of each tile (as
+little-endian 16-bit integers).  In text-based tilesets, these header fields
+can be expressed as follows:
+
+    # name My Example Tileset
+    # width 32
+    # height 48
+
+The headers can be omitted in text-based tilesets, in which case they must be
+supplied to `tilecompile` using command-line arguments.
 
 
 Tile Rendering
@@ -224,119 +389,116 @@ rather than monsters).
 
 Some tilesets have backgrounds that are not completely opaque.  As such, when
 rendering views in tiles, two backgrounds have to be drawn; the underlying
-floor, and the background itself (on top of the floor).  The standard lower
-background for this purpose is "floor of a room".
+floor, and the background itself (on top of the floor).  The lowermost
+backgrounds used for this purpose are "floor of a room" and "corridor"; thus,
+these tiles must be completely opaque, to ensure that the map itself does not
+end up partly transparent (which might not be rendered correctly).  (Likewise,
+cchars for these backgrounds must be fully defined, and not refer to the layer
+below.)
 
-In some dungeon branches, tiles are substituted to make them look visually
-different; the substitutions currently only happen with wall tiles.  These
-tiles have names of the form "sub <branch> <tile>".  The information about
-tile substitution is sent separately from the map, over a different API call;
-this is internally represented with LDM_* constants.
+
+Tile substitution
+-----------------
+
+NetHack 4 shows more information on its tiles than other variants, and also
+has various cosmetic adjustments to make areas more visually distinct.  This
+means a large number of potential tiles, many of which do not exist in any
+given tileset.
+
+This is handled using the concept of a "substitution tile", which is the name
+of an existing tile with one or more prefixes.  `sub gehennom walls 0` is an
+example of a substitution tile name that exists in NetHack 3.4.3 and Slash'EM;
+NetHack 4 adds many more possibilities (e.g. `sub sokoban floor of a room`, or
+even `sub male sub gnome wizard`).  The client specifies any appropriate
+substitution prefixes when asking for a tile number; the tiles system will
+then find an appropriate tile for the current tileset, which will contain as
+many of the given prefixes as possible, but may have to remove some (so for
+instance, if `sub male sub gnome wizard` is not present, perhaps `sub gnome
+wizard` will work instead, or just `wizard`).
+
+Much of the information about tile substitution is sent separately from the
+map, over a different API call; the LDM_* constants give general substitution
+rules for the level, and other substitutions (e.g. player character race and
+gender) are part of the player's status.  Things like whether a tile is lit or
+not are also used for substitutions; both `sub lit` and `sub unlit` exist, so
+that a tileset can choose whether it wants the lit or unlit room/corridor tile
+as a fallback.
+
+Unlike regular tiles, which are listed in `nethack4.map`, and all of which are
+present and appear in order in every generated tile image, which substitution
+tiles exist depends on the tileset.  The substitution tiles appear at the end
+of each tile image; and the tile image is accompanied by a `.tiledesc` file
+that lists which substitution tiles exist and which order they appear in.
+
+Existing substitution keys:
+
+  * `sub default`, `sub gehennom`, `sub questhome`, `sub mine`, `sub sokoban`,
+    `sub rogue`, `sub knox`, `sub questfill1`, `sub questlocate`,
+    `sub questfill2`, `sub questgoal`: Specifies the current level display
+    mode.  Some of these names are chosen for compatibility with 3.4.3 and
+    Slash'EM; the order is for compatibility with NitroHack.  These loosely
+    correspond to branches, but many branches are currently lumped together as
+    `default`.  This is relatively easy to change (do a search on the `LDM_`
+    prefix).
+
+  * `sub arc`, `sub bar`, ..., `sub wiz`: For locations within the Quest,
+    specifies which quest is the quest in question.
+ 
+  * `sub female`, `sub male`, `sub human`, `sub gnome`, `sub elf`, `sub orc`,
+    `sub dwarf`: Used for monster tiles, and specifies gender and (for
+    player-monsters, including the player) race.
+
+  * `sub lit`, `sub unlit`: Although these can exist on any tile, they are
+    typically only used for `corridor` and `the floor of a room` to implement
+    light level display via changing the image used for the furthest
+    background.
+
 
 Tile utilities API
 ------------------
 
-`tile.h` contains shared declarations (and is generated from `tile_h.in` by
-the tilemap utility, `tilemap.c`, which is basically a `makedefs` for tiles).
-The tilemap utility also generates the default tilemap (`nethack4.map`).
+`tilesequence.c` provides the following five functions:
 
-`tiletext.c` defines the external variables from `tile.h` and supplies
-the external routines for reading and writing the defined text format.
 
-`tilesequence.{c,h}` calculates which tiles appear in `nethack4.map` and in
-which order; `tilesequence.c` uses information from `libnethack` (`drawing.c`)
-and about tile names used only by the window ports (`brandings.c`), and
-converts between the three formats used for tile names ("API names" used by
-the JSON interface, tile names, and tile numbers in the NetHack 4 tilemap for
-the current version).  It is not needed by the tile manipulation utilities
-(except for `tilemap.c`), because all the information they care about is in
-`nethack4.map` already.  However, it is greatly useful to tiles windowports,
-because it allows them to determine where on the tiles image the tiles they
-need to render are, given the information sent via the API.
+    unsigned long long substitution_from_name(const char **name)
 
-NetHack and Slash'EM used to use an array of tiles conversion utilities that
-converted between the .txt format and various image formats.  (However, these
-are mostly pointless nowadays, unless you want to create a windowport that for
-some reason cannot use a .png image for the tiles, in which case you will need
-a new export utility.)  If you want to implement one of these, use tiletext.c
-and provide code for reading and/or writing another format.  The important
-global variables implement a colormap shared between tiletext.c and the other
-half of the utilities.  If you want examples, various conversion utilities
-(strangely, none of which round-trip; each format can either only be read, or
-only be written) exist in the `win/share` folder in Slash'EM's codebase;
-NetHack 4 only provides conversion utilities for reading and writing PNG.
+Given the name of a tile, returns the substitutions applied to that name, and
+adjusts the `*name` pointer to point at the start of the non-substitution
+portion of that name.
 
-The text I/O routines are:
-
-     boolean fopen_text_file(const char *filename, const char *type);
-         select file for subsequent tile I/O
-         "type" a la fopen
-         returns FALSE if file not opened, otherwise reads/writes header
-         (including colormap) and sets up to decode/encode tiles
-     int fclose_text_file();
-         close file
-     boolean peek_text_tile_info(ttype, number, name);
-         returns FALSE if no next tile in current file
-         otherwise fills in the type, number and name of the next tile
-     boolean read_text_tile_info(pixel[TILE_Y][TILE_X], ttype, number, name);
-         returns FALSE if no next tile in current file
-         otherwise TRUE and insert the tile in the provided array.
-         The tile type, number and name are also filled in.
-         The application program is responsible for checking these
-     boolean read_text_tile(pixel[TILE_Y][TILE_X]);
-         returns FALSE if no next tile in current file
-         otherwise TRUE and insert the tile in the provided array.
-     boolean write_text_tile_info(pixel[TILE_Y][TILE_X], ttype, number, name);
-         writes tile with supplied type, number and name
-     boolean write_text_tile(pixel[TILE_Y][TILE_X]);
-         writes tile
-     boolean set_tile_map(const char *filename);
-         sets the map that will be used to supply names for tiles (on output)
-         or to check that the tiles have the correct names (on input); setting
-         this to NULL will disable checking
-         returns FALSE on error, TRUE on success
-
-There are two additional shared routines provided for writers:
-
-    void init_colormap();
-        initialize the output colormap from the input one
-        must be called before opening output file as colormap is part of header
-    void merge_colormap();
-        merge the current input colormap into the output one
-
-Due to the amount of state being kept, only one text file can be open at a
-time.  If you are combining multiple files into one other-format file with a
-single common colormap, you may need to open each source file and merge their
-colormaps into a common colormap before processing any tiles.
-
-Although there are expected to be only 256 colors in the distribution tiles,
-conversion programs should be prepared to accept up to `MAXCOLORMAPSIZE`
-colors and map them to a smaller number if their port requires it.  The
-preferred set of 256 colors can be found in `palette.txt`.
-
-`tilesequence.c` provides the following three functions:
 
     int tileno_from_name(const char *name, int offset)
-      Given the name of a tile, returns its index within an image file using
-      the NetHack 4 tilemap.
+
+Given the name of a tile (with substitutions stripped), returns the
+corresponding number.
+
 
     int tileno_from_api_name(const char *name, const char *type, int offset)
-      Given the name of an nh_symdef (which might not be the same as the name
-      of the corresponding tile; it tends to be a lot shorter), returns its
-      index within an image file using the NetHack 4 tilemap. Zaps and
-      explosions have a type as well as a name; both are needed to find the
-      correct tile.
+
+Given the name of an nh_symdef (which might not be the same as the name of the
+corresponding tile; it tends to be a lot shorter), returns the tile name it
+corresponds to, as a number. Zaps and explosions have a type as well as a
+name; both are needed to find the correct tile.
+
 
     const char *name_from_tileno(int tileno)
-      Given the index of a tile within an image file (using the NetHack 4
-      tilemap), returns the name of that tile. (The return value needs no
-      deallocation; it might be a string literal, or might point to a static
-      buffer that is overwritten with each call, or might point to a buffer
-      that is specific to the input you give. Basically, don't assume it to
-      stay valid beyond the next call.)
 
-The "offset" parameter is a value that represents a logically connected range
-of tiles (`TILESET_*_OFF`), to make the lookup more efficient, and can be
-`TILESEQ_INVALID_OFF` if it is not known in which range the tile resides. The
-return value on error is NULL for a pointer, or `TILESEQ_INVALID_OFF` for an
-integer.
+Given a tile name as a number, returns that name as a string. (The return
+value needs no deallocation; it might be a string literal, or might point to a
+static buffer that is overwritten with each call, or might point to a buffer
+that is specific to the input you give. Basically, don't assume it to stay
+valid beyond the next call.)
+
+
+    const char *name_from_substitution(unsigned long long substitution)
+
+Given a substitution number, returns the name prefix that corresponds to that
+substitution.  (Just like with `name_from_tileno`, this needs no
+deallocation.)
+
+
+The "offset" parameter to some of these functions is a value that represents a
+logically connected range of tiles (`TILESET_*_OFF`), to make the lookup more
+efficient, and can be `TILESEQ_INVALID_OFF` if it is not known in which range
+the tile resides. The return value on error is NULL for a pointer, or
+`TILESEQ_INVALID_OFF` for an integer.

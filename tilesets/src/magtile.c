@@ -1,7 +1,11 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-09-25 */
+/* Last modified by Alex Smith, 2014-10-03 */
 /*   Copyright (c) NetHack Development Team 1995                    */
 /*   NetHack may be freely redistributed.  See license for details. */
+
+#error !AIMAKE_FAIL_SILENTLY!
+This is currently unused, and needs updating to the new tile system.
+
 
 /* Routines for magnifying tiles by a factor of 2, based on the Scale2X
    algorithm from AdvanceMAME <http://advancemame.sourceforge.net/scale2x.html>.

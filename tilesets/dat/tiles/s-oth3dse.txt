@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2013-09-24
+! Last modified by Alex Smith, 2014-10-03
 ! NetHack may be freely redistributed.  See license for details.
 __ = (71, 108, 108)
 _A = (0, 0, 0)
@@ -390,7 +390,7 @@ C$ = (255, 255, 255)
   ___V_M_R_R_R_R_R_R_R_R_M_M_M_R_R_R_R_R_R_R_R_R_O_M_M_M_M_R_R_R_M_M______________________________
   ___R_M_M_M_M_M_M_M_M_M_M_M_M_M_M_M_M_M_M_M_M_M_M_M_M_M_M_M_M_M_M_M______________________________
 }
-# tile 21 (lit corridor)
+# tile 21 (sub lit corridor)
 {
   ________________________________________________________________________________________________
   ________________________________________________________________________________________________

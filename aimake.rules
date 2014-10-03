@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2014-09-01
+# Last modified by Alex Smith, 2014-10-03
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -7,6 +7,7 @@ $version = "4.3.0";
 # There's a maximum combined length on the executable info structure.
 # So this is written concisely, so as to be able to fit everything in.
 $copyright = "(c) Stichting Mathematisch Centrum, Amsterdam, 1985; Alex Smith 2010-2014; Daniel Thaler 2011-2012; and many others";
+$tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Development Team 2003";
 
 {
     options => {
@@ -25,8 +26,7 @@ $copyright = "(c) Stichting Mathematisch Centrum, Amsterdam, 1985; Alex Smith 20
         },
         gui => {
             description => "Build tiles and faketerm ports (requires SDL2)",
-            object => qr=^path:(?:tilesets/(?:dat/ | src/.*tile(?:text)?\.c
-                                                   | util/.*tileset)
+            object => qr=^path:(?:tilesets/dat
                                 | libuncursed/src/plugins/sdl)=x,
             default => 1,
         },
@@ -298,20 +298,11 @@ $copyright = "(c) Stichting Mathematisch Centrum, Amsterdam, 1985; Alex Smith 20
             in_subdir => "bpath:libnethack/dat",
             output => "bpath:libnethack/dat/nhdat",
         },
-        _tileset_tilemap => {
-            command => ["bpath:tilesets/util/tilemap.c/tilemap$exeext",
-                        "path:tilesets/include/tile_h.in",
-                        "optpath::path:tilesets/include/tile_h.in",
-                        "optpath::bpath:tilesets/include/tile.h",
-                        "optpath::bpath:tilesets/dat/maps/nethack4.map"],
-            output => ["bpath:tilesets/include/tile.h",
-                       "bpath:tilesets/dat/maps/nethack4.map"],
-        },
         _merged_tileset_output_location => {
             object => qr=^path:tilesets/dat/catalogues/.*\.txt$=s,
             command => ["intcmd:echo", "optpath::"],
-            depends => "optpath:-o :bpath:tilesets/dat/merged/",
-            dependsarg => qr=^path:tilesets/dat/catalogues/(.*\.txt)$=s,
+            depends => "optpath:-o :extend:.nh4ct:bpath:tilesets/dat/merged/",
+            dependsarg => qr=^path:tilesets/dat/catalogues/(.*)\.txt$=s,
             require_match => 1,
         },
         _catalogue_file_size => {
@@ -322,10 +313,19 @@ $copyright = "(c) Stichting Mathematisch Centrum, Amsterdam, 1985; Alex Smith 20
             dependsarg => qr=^(\d+ \d+)$=s,
             require_match => 1,
         },
-        _catalogue_file_dependencies => {
+        _catalogue_file_name => {
             object => qr=^path:tilesets/dat/catalogues/.*\.txt$=s,
             command => ["intcmd:cat", "optpath::"],
             lineskip => 1,
+            linemax => 1,
+            depends => "optstring:-n ",
+            dependsarg => qr=^(.*)$=s,
+            require_match => 1,
+        },
+        _catalogue_file_dependencies => {
+            object => qr=^path:tilesets/dat/catalogues/.*\.txt$=s,
+            command => ["intcmd:cat", "optpath::"],
+            lineskip => 2,
             depends => ["optpath::path:tilesets/dat/tiles/",
                         "path:tilesets/dat/tiles/"],
             dependsarg => qr=^(.+)$=s,
@@ -334,34 +334,28 @@ $copyright = "(c) Stichting Mathematisch Centrum, Amsterdam, 1985; Alex Smith 20
         _slashem_catalogue_file_palette => {
             object => qr=^path:tilesets/dat/catalogues/slashem-.*\.txt$=s,
             depends => ["optpath:-p :path:tilesets/dat/palettes/slashem.txt",
+                        "optstring:-f",
                         "path:tilesets/dat/palettes/slashem.txt"],
         },
         _dawnhack_catalogue_file_palette => {
             object => qr=^path:tilesets/dat/catalogues/dawnhack-.*\.txt$=s,
+            # no -f for this; DawnHack shouldn't have out-of-range colors
             depends => ["optpath:-p :path:tilesets/dat/palettes/dawnhack.txt",
                         "path:tilesets/dat/palettes/dawnhack.txt"],
         },
         _merge_tilesets => {
             object => qr=^path:tilesets/dat/catalogues/.*\.txt$=s,
-            command => ["bpath:tilesets/util/convert_tileset.c/convert_tileset$exeext",
-                        "optpath:-m :bpath:tilesets/dat/maps/nethack4.map",
-                        "bpath:tilesets/dat/maps/nethack4.map"],
+            command => ["bpath:tilesets/util/tilecompile.c/tilecompile$exeext",
+                        "optstring:-W", "optstring:-t nh4ct"],
             output_from_optpath => '-o ',
             verb => 'merged',
         },
-        _build_tileset_images => {
-            object => qr=^bpath:tilesets/dat/merged/.*\.txt$=s,
-            command => ["bpath:tilesets/util/export_tileset.c/export_tileset$exeext",
-                        "optpath:-o :extend:.png:",
-                        "optstring:-t",
-                        "optpath::"],
-            output_from_optpath => '-o ',
-        },
         _build_fonts => {
             object => qr=^path:tilesets/dat/fonts/font14\.txt=s,
-            command => ["bpath:tilesets/util/export_tileset.c/export_tileset$exeext",
+            command => ["bpath:tilesets/util/tilecompile.c/tilecompile$exeext",
                         "optpath:-o :extend:.png:",
-                        "optstring:-f",
+                        "optstring:-z 8 14", "optstring:-b 0 0 0",
+                        "optstring:-t image", "optstring:-u",
                         "optpath::"],
             output_from_optpath => '-o ',
         },
@@ -425,6 +419,20 @@ $copyright = "(c) Stichting Mathematisch Centrum, Amsterdam, 1985; Alex Smith 20
             verb => 'symlinked',
         },
 
+        _tilecompile_params => {
+            object => "bpath:tilesets/util/tilecompile.c/tilecompile$exeext",
+            command => ["intcmd:exeparams", "optpath::",
+                        "optpath:-o:bpath:tilesets/util/tilecompile$exeext",
+                        "optstring:--info InternalName=tilecompile",
+                        "optstring:--info LegalCopyright=$tilecompile_copyright",
+                        "optstring:--info FileVersion=1.0",
+                        "optstring:--info ProductVersion=$version",
+                        "optstring:--info ProductName=NetHack 4",
+                        "optstring:--info FileDescription=NetHack 4 Tileset Compiler",
+                        "optstring:--console"],
+            output_from_optpath => '-o',
+        },
+
         _man_sdl_symlink => {
             command => ["intcmd:symlink",
                         "optpath:-o:bpath:doc/nethack4-sdl.6",
@@ -463,6 +471,10 @@ $copyright = "(c) Stichting Mathematisch Centrum, Amsterdam, 1985; Alex Smith 20
             install_dir => "gamesbindir",
             install_elevation => "games",
         },
+        _install_tilecompile => {
+            object => "bpath:tilesets/util/tilecompile$exeext",
+            install_dir => "gamesbindir",
+        },
         _install_server => {
             object => "bpath:nethack_server/src/srvmain.c/srvmain$exeext",
             install_dir => "gamesbindir",
@@ -474,7 +486,7 @@ $copyright = "(c) Stichting Mathematisch Centrum, Amsterdam, 1985; Alex Smith 20
             install_dir => "gamesdatadir",
         },
         _install_images => {
-            object => qr{^bpath:tilesets/dat/(?:fonts|merged)/.*\.png$},
+            object => qr{^bpath:tilesets/dat/(?:fonts|merged)/.*\.(?:nh4ct|png)$},
             install_dir => "gamesdatadir",
         },
         _install_license => {
