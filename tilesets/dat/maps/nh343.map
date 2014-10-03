@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2014-01-12
+! Last modified by Alex Smith, 2014-10-03
 ! NetHack may be freely redistributed. See license for details.
 !
 ! This is the sequence in which tiles normally appear in NetHack 3.4.3
@@ -836,7 +836,7 @@ heavy iron ball
 iron chain
 splash of venom
 splash of venom
-dark part of a room
+sub unlit the floor of a room
 wall
 wall
 wall
@@ -857,7 +857,7 @@ iron bars
 tree
 the floor of a room
 corridor
-lit corridor
+sub lit corridor
 staircase up
 staircase down
 ladder up

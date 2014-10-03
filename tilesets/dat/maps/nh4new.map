@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2014-01-12
+! Last modified by Alex Smith, 2014-10-03
 ! NetHack may be freely redistributed. See license for details.
 !
 ! This tilemap lists the tiles in NetHack 4 that do not exist in
@@ -6,9 +6,9 @@
 !
 unexplored area
 corridor
-lit corridor
+sub lit corridor
 the floor of a room
-dark part of a room
+sub unlit the floor of a room
 long staircase up
 long staircase down
 remembered as stepped on

@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2014-01-14
+! Last modified by Alex Smith, 2014-10-03
 !
 ! Copyright (C) Andrew Rios, 2014
 ! This work is licensed under the Creative Commons Attribution 3.0
@@ -29045,7 +29045,7 @@ Q = (109, 170, 44)
   AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
   AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 }
-# tile 829 (dark part of a room)
+# tile 829 (sub unlit the floor of a room)
 {
   BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
   BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
@@ -29780,7 +29780,7 @@ Q = (109, 170, 44)
   BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
   CBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
 }
-# tile 850 (lit corridor)
+# tile 850 (sub lit corridor)
 {
   BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
   BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB

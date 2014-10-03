@@ -82,7 +82,7 @@ name_from_substitution(unsigned long long substitution)
     if (buflen)
         *buffer = '\0';
 
-    for (i = 0; i < LDM_COUNT; i++) {
+    for (i = 0; nhcurses_sub_names[i]; i++) {
         if (substitution & (1ULL << i)) {
             int newlen = bufptr + (sizeof "sub  ") +
                 strlen(nhcurses_sub_names[i]);

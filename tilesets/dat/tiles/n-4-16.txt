@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2013-09-24
+! Last modified by Alex Smith, 2014-10-03
 ! Copyright (C) 2013 Alex Smith, in addition to the copyright on the
 ! tiles from Slash'EM (originally by Warwick Allison) on which this
 ! file is based.
@@ -71,7 +71,7 @@ $ = (71, 108, 108)
   SSSSSSSSSSSSSSSS
   SSSSSSSSSSSSSSSS
 }
-# tile 14 (lit corridor)
+# tile 14 (sub lit corridor)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
@@ -109,7 +109,7 @@ $ = (71, 108, 108)
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 16 (dark part of a room)
+# tile 16 (sub unlit the floor of a room)
 {
   SSSSSSSSSSSSSSSS
   SSSSSSSSSSSSSSSS

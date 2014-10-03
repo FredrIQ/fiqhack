@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2014-01-14
+! Last modified by Alex Smith, 2014-10-03
 !
 ! Copyright (C) Andrew Rios, 2014
 ! This work is licensed under the Creative Commons Attribution 3.0
@@ -98,7 +98,7 @@ P = (211, 125, 44)
   AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
   AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 }
-# tile 2 (lit corridor)
+# tile 2 (sub lit corridor)
 {
   AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
   AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
@@ -168,7 +168,7 @@ P = (211, 125, 44)
   BFFCCCCCCCCCCCCCCCCCCCCCCCCCCFFB
   BBFCCCCCCCCCCCCCCCCCCCCCCCCCCFBB
 }
-# tile 4 (dark part of a room)
+# tile 4 (sub unlit the floor of a room)
 {
   AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
   AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA

@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2014-05-24
+! Last modified by Alex Smith, 2014-10-03
 ! NetHack may be freely redistributed. See license for details.
 !
 ! This is the sequence in which tiles normally appear in Slash'EM 7E7F3
@@ -1190,7 +1190,7 @@ heavy iron ball
 iron chain
 splash of venom
 splash of venom
-dark part of a room
+sub unlit the floor of a room
 wall
 wall
 wall
@@ -1211,7 +1211,7 @@ iron bars
 tree
 the floor of a room
 corridor
-lit corridor
+sub lit corridor
 staircase up
 staircase down
 ladder up
