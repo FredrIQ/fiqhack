@@ -203,10 +203,17 @@ tileno_from_name(const char *name, int offset)
 
             sprintf(buf, "%ss %d", defexplain[i], consecutive);
 
-            if (!strcmp(buf, name))
-                return TILESEQ_CMAP_OFF + i;
-            if (!strcmp(defexplain[i], name))
-                return TILESEQ_CMAP_OFF + i;
+            /* Should we be using the disambiguated or original name?
+               Disambiguate if there's the same name either immediately before
+               (already calculated in 'consecutive') or immediately after. */
+            if ((i < TILESEQ_CMAP_SIZE - 1 &&
+                 !strcmp(defexplain[i], defexplain[i+1])) || consecutive) {
+                if (!strcmp(buf, name))
+                    return TILESEQ_CMAP_OFF + i;
+            } else {
+                if (!strcmp(defexplain[i], name))
+                    return TILESEQ_CMAP_OFF + i;
+            }
         }
     }
     /* Warnings use the pattern "warning 0" .. "warning 5" */
