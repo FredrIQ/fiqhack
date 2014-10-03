@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-09-01 */
+/* Last modified by Alex Smith, 2014-10-03 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -66,8 +66,8 @@ static int cursor_visible = 1;
 static unsigned short cursor_timestamp = 0;
 
 static char *tileset_filename = NULL;
-static int tileset_rows;
-static int tileset_cols;
+static int tileset_width;
+static int tileset_height;
 
 static int hangup_mode = 0;
 
@@ -611,7 +611,7 @@ sdl_hook_set_faketerm_font_file(const char *filename)
 }
 
 void
-sdl_hook_set_tiles_tile_file(const char *filename, int rows, int columns)
+sdl_hook_set_tiles_tile_file(const char *filename, int height, int width)
 {
     if (tileset_filename)
         free(tileset_filename);
@@ -621,28 +621,21 @@ sdl_hook_set_tiles_tile_file(const char *filename, int rows, int columns)
     /* An allocation failure here can't be handled, and happens to do exactly
        what we want anyway. */
     tileset_filename = strdup(filename);
-    tileset_rows = rows;
-    tileset_cols = columns;
+    tileset_height = height;
+    tileset_width = width;
 }
 
 void
 sdl_hook_get_tile_dimensions(int down, int across, int *height, int *width)
 {
     int w, h;
-    SDL_Texture *tilefile;
-    /* TODO: This is a little wasteful, in that there's no actual need to get
-       the GPU involved. However, it saves the need to have a separate function
-       for reading PNG headers. */
-    tilefile = load_png_file_to_texture(tileset_filename, &w, &h);
-    if (!tilefile) {
+    if (!tileset_filename) {
         *height = down;
         *width = across;
         return;
     }
-    SDL_DestroyTexture(tilefile); /* we just needed its size */
-    /* now w/h are the dimensions of the tileset, in pixels */
-    w /= tileset_cols;
-    h /= tileset_rows;
+    w = tileset_width;
+    h = tileset_height;
     /* now w/h are the dimensions of a single tile, in pixels */
     w *= across;
     h *= down;
@@ -682,10 +675,12 @@ sdl_hook_allocate_tiles_region(int height, int width, int loc_h, int loc_w,
         return NULL;
     }
 
-    region->tilesize_w /= tileset_cols;
-    region->tilesize_h /= tileset_rows;
-    region->texsize_w = region->tilesize_w * width;
-    region->texsize_h = region->tilesize_h * height;
+    region->tileset_cols = region->tilesize_w / tileset_width;
+    region->tileset_rows = region->tilesize_h / tileset_height;
+    region->tilesize_w = tileset_width;
+    region->tilesize_h = tileset_height;
+    region->texsize_w = tileset_width * width;
+    region->texsize_h = tileset_height * height;
 
     SDL_SetRenderTarget(render, screen);
     rendertarget = screen;
@@ -718,8 +713,6 @@ sdl_hook_allocate_tiles_region(int height, int width, int loc_h, int loc_w,
     region->loc_h = loc_h;
     region->loc_l = loc_l;
     region->loc_t = loc_t;
-    region->tileset_cols = tileset_cols;
-    region->tileset_rows = tileset_rows;
     region->pixelshift_x = region->pixelshift_y = 0;
     region->cursortile_x = region->cursortile_y = -1;
     region->tilecount_w = width;
