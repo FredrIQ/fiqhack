@@ -10,6 +10,7 @@
    any of the accepted formats. */
 
 #include "tilecompile.h"
+#include "tilesequence.h"
 
 /* Global information about the tileset. */
 char tileset_name[TILESET_NAME_SIZE + 1];
@@ -77,6 +78,14 @@ compare_pixels_red(const void *p1, const void *p2)
     return (int)p1c->r - (int)p2c->r;
 }
 
+static int
+compare_deleted_tiles_to_end(const void *t1, const void *t2)
+{
+    const tile *t1c = t1, *t2c = t2;
+    return (t1c->tilenumber == TILESEQ_INVALID_OFF) -
+        (t2c->tilenumber == TILESEQ_INVALID_OFF);
+}
+
 /* Load an entire file into memory. Some bytes may already have been read, in
    which case they're provided as "header", "headerlen". Then calls the given
    callback and returns its result. The file is closed by this function. */
@@ -112,6 +121,11 @@ slurp_file(FILE *in, png_byte *header, png_size_t headerlen,
     }
 
     fclose(in);
+
+    if (!curpos) {
+        fprintf(stderr, "Error: empty input file\n");
+        return 0;
+    }
 
     rv = callback(storage, curpos);
     free(storage);
@@ -326,12 +340,36 @@ main(int argc, char *argv[])
     if (formatnumber != FN_TEXT)
         largepalette = 0;
 
+    /* Sometimes, we might have more than one definition of the same tile name
+       (e.g. when tiles in one input file are being overriden by another). In
+       such a case, we delete the earlier references. (The image itself will be
+       deleted only if it's otherwise unreferenced, and -k is not given.)
+
+       We implement this via placing a sentinel in the references we're
+       deleting, then sorting them to the end and reducing the count. */
+    {
+        int i, j;
+        for (i = 0; i < seen_tile_count; i++)
+            for (j = i + 1; j < seen_tile_count; j++)
+                if (tiles_seen[i].tilenumber == tiles_seen[j].tilenumber &&
+                    tiles_seen[i].substitution == tiles_seen[j].substitution) {
+                    tiles_seen[i].tilenumber = TILESEQ_INVALID_OFF;
+                    break;
+                }
+        qsort(tiles_seen, seen_tile_count, sizeof (tile),
+              compare_deleted_tiles_to_end);
+        while (seen_tile_count && tiles_seen[seen_tile_count - 1]
+               .tilenumber == TILESEQ_INVALID_OFF)
+            seen_tile_count--;
+    }
+
+
     /* We might or might not be doing image processing. If an image was provided
        via any means, seen_image_count will be nonzero. In such a case, we need
        to delete unused images (unless -k), then calculate the palette (or
        enforce the palette if we have a locked palette). */
-
     if (seen_image_count) {
+
         if (tileset_width == 0 || tileset_height == 0) {
             /* can happen if a .nh4ct image has embedded cchars */
             fprintf(stderr,

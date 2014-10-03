@@ -144,6 +144,9 @@ load_text_tileset(png_byte *data, png_size_t size)
 
     int pk1, pk2, pk, pw;
 
+    assert(data);
+    assert(size);
+
     /* Run through the entirety of data. We convert newline to NUL to make
        parsing easier, and also check for illegal characters (anything outside
        the ASCII range; no tile keys contain Unicode). */
@@ -328,7 +331,7 @@ load_text_tileset(png_byte *data, png_size_t size)
             /* Do a sanity check on the tile name we found, in case it's
                someone trying to use syntax from elsewhere in the file and
                getting it wrong. */
-            if (strspn(tilename, "-, 0123456789"
+            if (strspn(tilename, "-,' 0123456789"
                        "abcdefghijklmnopqrstuvwxyz"
                        "ABCDEFGHIJKLMNOPQRSTUVWXYZ") != strlen(tilename))
                 EPRINT("Error: Syntax error or bad tile name '%s'\n",
@@ -375,7 +378,7 @@ load_text_tileset(png_byte *data, png_size_t size)
                     tileno = TILESEQ_COUNT + 1 + unknown_name_count;
                     unknown_name_count++;
                 } else {
-                    fprintf(stderr, "Warning: unknown tile '%s'\n", tilename);
+                    printf("Note: deleting unknown reference '%s'\n", tilename);
                     filepos++;
 
                     /* Check for a tile image. If we find one, we must discard
