@@ -176,10 +176,10 @@ What license is the code under?
 Just like previous versions of NetHack, NetHack 4 is licensed under the
 NetHack General Public License (which is similar to old versions of the GNU
 General Public License).  Some of the newer files are dual-licensed and also
-allow other licensing options in addition to the NHGPL.  (The build system,
+allow other licensing options in addition to the NGPL.  (The build system,
 aimake version 3, is licensed under version 3 of the GNU GPL, rather than
-under the NHGPL; however, its license does not extend onto the license of the
-code it compiles, leaving the resulting executables as purely NHGPL.)
+under the NGPL; however, its license does not extend onto the license of the
+code it compiles, leaving the resulting executables as purely NGPL.)
 
 Several of the libraries on which NetHack 4 depends have other licenses; for
 instance, libjansson (which ships with the NetHack 4 source, nowadays) is

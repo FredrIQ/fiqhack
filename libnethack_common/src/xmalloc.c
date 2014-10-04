@@ -134,7 +134,7 @@ xmvasprintf(struct xmalloc_block **blocklist, const char *fmt, va_list args)
        otherwise, we just work it out by experimentation.
 
        This code is a (clearer and also more efficient) version of the
-       allocation loop from vw_printw from the (NHGPL) libuncursed, which I
+       allocation loop from vw_printw from the (NGPL) libuncursed, which I
        originally wrote. */
 
     va_list args2;

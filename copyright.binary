@@ -7,7 +7,7 @@ Comment:
  may be different.
 
 Files: changelog.txt faq.txt philosophy.txt README COPYING
-License: NHGPL
+License: NGPL
 Copyright: Copyright (c) 2013 Alex Smith
 
 Files: dawnhack-*
@@ -20,17 +20,17 @@ License: CC-BY-3.0
 Copyright:
  Copyright (C) Andrew Rios, 2014
 Comment:
- It is unclear whether CC-BY-3.0 is compatible with the NHGPL (although it is
+ It is unclear whether CC-BY-3.0 is compatible with the NGPL (although it is
  not against the spirit of either license to include CC-BY-3.0 data in an
- NHGPL file, there may be incompatibilities in the letter).  However, there is
+ NGPL file, there may be incompatibilities in the letter).  However, there is
  no need for license compatibility in this case, because these files only
  specify artwork, which is entirely independent of the rest of the program
  (and is replaceable without changes to any program code or binaries, an
  operation that was often performed in practice in previous versions).
 
 Files: font-* slashem-*
-License: NHGPL
-Copyright: These tiles were copied from an NHGPL Slash'EM release that was
+License: NGPL
+Copyright: These tiles were copied from an NGPL Slash'EM release that was
  Copyright (C) J. Ali Harlow 2000-2006, which gives the following
  explanation of the provenance and copyright status of the tiles:
  .
@@ -172,7 +172,7 @@ License: zlib/libpng
  appreciated.
 
 Files: libnethack*.dll nhdat nethack*.exe
-License: NHGPL
+License: NGPL
 Copyright:
  Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985
  Copyright (c) 2010-2014 Alex Smith
@@ -181,7 +181,7 @@ Copyright:
  lists).
 
 Files: tilecompile.exe
-License: NHGPL
+License: NGPL
 Copyright:
  Copyright (C) Andrew Apted <ajapted@users.sourceforge.net> 2002
                Slash'EM Development Team 2003
@@ -195,7 +195,7 @@ Copyright:
  Copyright 1989 M. Stephenson
  Copyright 1988 Richard M. Stallman
 Comment:
- The license under which the text of the NHGPL itself is distributed.
+ The license under which the text of the NGPL itself is distributed.
  It is not used for any code.
 
 Files: logfile record xlogfile
@@ -240,7 +240,7 @@ License: zlib/libpng
     misrepresented as being the original software.
  3. This notice may not be removed or altered from any source distribution.
 
-License: NHGPL
+License: NGPL
                      NETHACK GENERAL PUBLIC LICENSE
                      (Copyright 1989 M. Stephenson)
  .
