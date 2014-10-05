@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-03 */
+/* Last modified by Alex Smith, 2014-10-05 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -812,6 +812,10 @@ print_tile_number(WINDOW *win, int tileno, unsigned long long substitutions)
 
     int ttelements = tiletable_len / 16;
     int low = 0, high = ttelements;
+
+    if (ttelements == 0)
+        return; /* no tile table */
+
     /* Invariant: tiles not in low .. high inclusive are definitely not the
        tile we're looking for */
     while (low < high) {
