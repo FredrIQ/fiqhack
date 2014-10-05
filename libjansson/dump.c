@@ -120,7 +120,7 @@ static int dump_string(const char *str, int ascii, json_dump_callback_t dump, vo
                 /* codepoint is in BMP */
                 if(codepoint < 0x10000)
                 {
-                    sprintf(seq, "\\u%04x", codepoint);
+                    snprintf(seq, sizeof(seq), "\\u%04x", codepoint);
                     length = 6;
                 }
 
@@ -133,7 +133,7 @@ static int dump_string(const char *str, int ascii, json_dump_callback_t dump, vo
                     first = 0xD800 | ((codepoint & 0xffc00) >> 10);
                     last = 0xDC00 | (codepoint & 0x003ff);
 
-                    sprintf(seq, "\\u%04x\\u%04x", first, last);
+                    snprintf(seq, sizeof(seq), "\\u%04x\\u%04x", first, last);
                     length = 12;
                 }
 

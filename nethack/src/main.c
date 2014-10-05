@@ -235,7 +235,7 @@ mainmenu(void)
     char verstr[32];
     nh_bool first = TRUE;
 
-    sprintf(verstr, "Version %d.%d.%d", VERSION_MAJOR, VERSION_MINOR,
+    snprintf(verstr, ARRAY_SIZE(verstr), "Version %d.%d.%d", VERSION_MAJOR, VERSION_MINOR,
             PATCHLEVEL);
 
 #if defined(NETCLIENT)

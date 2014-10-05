@@ -471,11 +471,11 @@ curses_getpos(int xorig, int yorig, nh_bool force, const char *goal)
                     }   /* row */
                 }   /* pass */
 
-                sprintf(printbuf, "Can't find dungeon feature '%c'.",
+                snprintf(printbuf, ARRAY_SIZE(printbuf), "Can't find dungeon feature '%c'.",
                         (char)key);
                 curses_msgwin(printbuf, krc_notification);
             } else {
-                sprintf(printbuf, "Unknown targeting key%s.",
+                snprintf(printbuf, ARRAY_SIZE(printbuf), "Unknown targeting key%s.",
                         !force ? " (ESC to abort)" : "");
                 curses_msgwin(printbuf, krc_notification);
             }

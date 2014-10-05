@@ -77,12 +77,12 @@ curses_outrip(struct nh_menulist *ml, nh_bool tombstone, const char *plname,
         }
 
         /* Put name on stone */
-        sprintf(buf, "%s", plname);
+        snprintf(buf, ARRAY_SIZE(buf), "%s", plname);
         buf[STONE_LINE_LEN] = 0;
         center(rip[NAME_LINE], buf);
 
         /* Put $ on stone */
-        sprintf(buf, "%d Au", gold);
+        snprintf(buf, ARRAY_SIZE(buf), "%d Au", gold);
         buf[STONE_LINE_LEN] = 0;        /* It could be a *lot* of gold :-) */
         center(rip[GOLD_LINE], buf);
 
@@ -111,7 +111,7 @@ curses_outrip(struct nh_menulist *ml, nh_bool tombstone, const char *plname,
         }
 
         /* Put year on stone */
-        sprintf(buf, "%4d", year);
+        snprintf(buf, ARRAY_SIZE(buf), "%4d", year);
         center(rip[YEAR_LINE], buf);
 
         for (i = 0; rip[i]; i++) {

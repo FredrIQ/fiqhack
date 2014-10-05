@@ -455,13 +455,13 @@ list_servers(struct server_info *servlist, struct nh_menulist *menu)
     for (i = 0; servlist[i].hostname; i++) {
         if (servlist[i].port) {
             if (!strchr(servlist[i].hostname, ':'))
-                sprintf(buf, "%s on %s:%d", servlist[i].username,
+                snprintf(buf, ARRAY_SIZE(buf), "%s on %s:%d", servlist[i].username,
                         servlist[i].hostname, servlist[i].port);
             else
-                sprintf(buf, "%s on [%s]:%d", servlist[i].username,
+                snprintf(buf, ARRAY_SIZE(buf), "%s on [%s]:%d", servlist[i].username,
                         servlist[i].hostname, servlist[i].port);
         } else
-            sprintf(buf, "%s on %s", servlist[i].username,
+            snprintf(buf, ARRAY_SIZE(buf), "%s on %s", servlist[i].username,
                     servlist[i].hostname);
 
         add_menu_item(menu, i + 1, buf, 0, 0);
@@ -617,9 +617,9 @@ netgame_mainmenu(struct server_info *server)
         {DISCONNECT, MI_NORMAL, "disconnect", 'q', 'x', 0}
     };
 
-    sprintf(verstr, "Client version: %d.%d.%d", VERSION_MAJOR, VERSION_MINOR,
+    snprintf(verstr, ARRAY_SIZE(verstr), "Client version: %d.%d.%d", VERSION_MAJOR, VERSION_MINOR,
             PATCHLEVEL);
-    sprintf(server_verstr, "Server version: %d.%d.%d", nhnet_server_ver.major,
+    snprintf(server_verstr, ARRAY_SIZE(server_verstr), "Server version: %d.%d.%d", nhnet_server_ver.major,
             nhnet_server_ver.minor, nhnet_server_ver.patchlevel);
 
     /* In connection-only mode, we can't read the config file until we're

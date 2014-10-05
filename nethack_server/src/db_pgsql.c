@@ -300,7 +300,7 @@ db_get_user_info(int uid, struct user_info *info)
     const int paramFormats[] = { 0 };   /* text format */
     int col;
 
-    sprintf(uidstr, "%d", uid);
+    snprintf(uidstr, sizeof(uidstr), "%d", uid);
 
     res =
         PQexecParams(conn, SQL_get_user_info, 1, NULL, params, NULL,
@@ -332,7 +332,7 @@ db_update_user_ts(int uid)
     const char *const params[] = { uidstr };
     const int paramFormats[] = { 0 };   /* text format */
 
-    sprintf(uidstr, "%d", uid);
+    snprintf(uidstr, sizeof(uidstr), "%d", uid);
     res =
         PQexecParams(conn, SQL_update_user_ts, 1, NULL, params, NULL,
                      paramFormats, 0);
@@ -351,7 +351,7 @@ db_set_user_email(int uid, const char *email)
     const int paramFormats[] = { 0, 0 };
     const char *numrows;
 
-    sprintf(uidstr, "%d", uid);
+    snprintf(uidstr, sizeof(uidstr), "%d", uid);
 
     res =
         PQexecParams(conn, SQL_set_user_email, 2, NULL, params, NULL,
@@ -375,7 +375,7 @@ db_set_user_password(int uid, const char *password)
     const int paramFormats[] = { 0, 0 };
     const char *numrows;
 
-    sprintf(uidstr, "%d", uid);
+    snprintf(uidstr, sizeof(uidstr), "%d", uid);
 
     res =
         PQexecParams(conn, SQL_set_user_password, 2, NULL, params, NULL,
@@ -405,8 +405,8 @@ db_add_new_game(int uid, const char *filename, const char *role,
     const char *gameid_str;
     int gid;
 
-    sprintf(uidstr, "%d", uid);
-    sprintf(modestr, "%d", mode);
+    snprintf(uidstr, sizeof(uidstr), "%d", uid);
+    snprintf(modestr, sizeof(modestr), "%d", mode);
 
     res =
         PQexecParams(conn, SQL_add_game, 9, NULL, params, NULL, paramFormats,
@@ -440,9 +440,9 @@ db_update_game(int game, int moves, int depth, const char *levdesc)
     const char *const params[] = { gidstr, movesstr, depthstr, levdesc };
     const int paramFormats[] = { 0, 0, 0, 0 };
 
-    sprintf(gidstr, "%d", game);
-    sprintf(movesstr, "%d", moves);
-    sprintf(depthstr, "%d", depth);
+    snprintf(gidstr, sizeof(gidstr), "%d", game);
+    snprintf(movesstr, sizeof(movesstr), "%d", moves);
+    snprintf(depthstr, sizeof(depthstr), "%d", depth);
 
     res =
         PQexecParams(conn, SQL_update_game, 4, NULL, params, NULL, paramFormats,
@@ -460,8 +460,8 @@ db_delete_game(int uid, int gid)
     const char *const params[] = { uidstr, gidstr };
     const int paramFormats[] = { 0, 0 };
 
-    sprintf(uidstr, "%d", uid);
-    sprintf(gidstr, "%d", gid);
+    snprintf(uidstr, sizeof(uidstr), "%d", uid);
+    snprintf(gidstr, sizeof(gidstr), "%d", gid);
 
     res =
         PQexecParams(conn, SQL_delete_game, 2, NULL, params, NULL, paramFormats,
@@ -488,10 +488,10 @@ db_game_name_core(int completed, int uid, int gid, int limit, int *count)
     if (limit <= 0 || limit > 100)
         limit = 100;
 
-    sprintf(uidstr, "%d", uid);
-    sprintf(gidstr, "%d", gid);
-    sprintf(complstr, "%d", !!completed);
-    sprintf(limitstr, "%d", limit);
+    snprintf(uidstr, sizeof(uidstr), "%d", uid);
+    snprintf(gidstr, sizeof(gidstr), "%d", gid);
+    snprintf(complstr, sizeof(complstr), "%d", !!completed);
+    snprintf(limitstr, sizeof(limitstr), "%d", limit);
 
     res =
         PQexecParams(conn, SQL_list_games, 4, NULL, params, NULL, paramFormats,
@@ -563,12 +563,12 @@ db_add_topten_entry(int gid, int points, int hp, int maxhp, int deaths,
     };
     const int paramFormats[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-    sprintf(gidstr, "%d", gid);
-    sprintf(pointstr, "%d", points);
-    sprintf(hpstr, "%d", hp);
-    sprintf(maxhpstr, "%d", maxhp);
-    sprintf(dcountstr, "%d", deaths);
-    sprintf(endstr, "%d", end_how);
+    snprintf(gidstr, sizeof(gidstr), "%d", gid);
+    snprintf(pointstr, sizeof(pointstr), "%d", points);
+    snprintf(hpstr, sizeof(hpstr), "%d", hp);
+    snprintf(maxhpstr, sizeof(maxhpstr), "%d", maxhp);
+    snprintf(dcountstr, sizeof(dcountstr), "%d", deaths);
+    snprintf(endstr, sizeof(endstr), "%d", end_how);
 
     res =
         PQexecParams(conn, SQL_add_topten_entry, 8, NULL, params, NULL,

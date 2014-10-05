@@ -1896,7 +1896,7 @@ use_container(struct obj *obj, int held)
             }
             menuprompt[0] = '\0';
             if (!cnt)
-                sprintf(menuprompt, "%s ", emptymsg);
+                snprintf(menuprompt, SIZE(menuprompt), "%s ", emptymsg);
             strcat(menuprompt, "Do what?");
             t = in_or_out_menu(menuprompt, current_container, outokay, inokay);
             if (t <= 0)

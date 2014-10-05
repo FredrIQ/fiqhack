@@ -27,7 +27,7 @@ signal_usr2(int ignored)
     struct stat statbuf;
     int ret, fd;
 
-    sprintf(filename, "%s/message", settings.workdir);
+    snprintf(filename, sizeof(filename), "%s/message", settings.workdir);
     ret = stat(filename, &statbuf);
     if (ret == -1) {
         log_msg("Failed to read the message file %s: %s", filename,
@@ -128,11 +128,11 @@ init_workdir(void)
     if (!create_dir(settings.workdir))
         return FALSE;
 
-    sprintf(dirbuf, "%s/completed/", settings.workdir);
+    snprintf(dirbuf, sizeof(dirbuf), "%s/completed/", settings.workdir);
     if (!create_dir(dirbuf))
         return FALSE;
 
-    sprintf(dirbuf, "%s/save/", settings.workdir);
+    snprintf(dirbuf, sizeof(dirbuf), "%s/save/", settings.workdir);
     if (!create_dir(dirbuf))
         return FALSE;
 

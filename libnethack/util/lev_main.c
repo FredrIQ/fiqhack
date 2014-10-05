@@ -355,7 +355,7 @@ get_object_id(char *s, char c)
                 /* Sanity check: ensure we're using a current copy of
                    readonly.c */
                 char msg[256];
-                sprintf(msg, "Object class %d has base %d with class %d",
+                snprintf(msg, SIZE(msg), "Object class %d has base %d with class %d",
                         class, i, objects[i].oc_class);
                 yyerror(msg);
             }
@@ -486,7 +486,7 @@ scan_map(char *map)
         }
         for (i = 0; i < len; i++)
             if ((tmpmap[max_hig][i] = what_map_char(map[i])) == INVALID_TYPE) {
-                sprintf(msg,
+                snprintf(msg, SIZE(msg),
                         "Invalid character @ (%d, %d) - replacing with stone",
                         max_hig, i);
                 yywarning(msg);
@@ -506,7 +506,7 @@ scan_map(char *map)
     /* Store the map into the mazepart structure */
 
     if (max_len > MAP_X_LIM || max_hig > MAP_Y_LIM) {
-        sprintf(msg, "Map too large! (max %d x %d)", MAP_X_LIM, MAP_Y_LIM);
+        snprintf(msg, SIZE(msg), "Map too large! (max %d x %d)", MAP_X_LIM, MAP_Y_LIM);
         yyerror(msg);
     }
 
@@ -568,7 +568,7 @@ check_subrooms(void)
                     break;
                 }
             if (!found) {
-                sprintf(msg, "Subroom error : parent room '%s' not found!",
+                snprintf(msg, SIZE(msg), "Subroom error : parent room '%s' not found!",
                         tmproom[i]->parent);
                 yyerror(msg);
                 ok = FALSE;
@@ -594,7 +594,7 @@ check_subrooms(void)
                     n_subrooms++;
                     if (n_subrooms > MAX_SUBROOMS) {
 
-                        sprintf(msg, "Subroom error: too many subrooms "
+                        snprintf(msg, SIZE(msg), "Subroom error: too many subrooms "
                                 "attached to parent room '%s'!",
                                 tmproom[i]->parent);
                         yyerror(msg);
@@ -619,7 +619,7 @@ check_coord(int x, int y, const char *str)
 
     if (x >= 0 && y >= 0 && x <= (int)max_x_map && y <= (int)max_y_map &&
         (IS_ROCK(tmpmap[y][x]) || IS_DOOR(tmpmap[y][x]))) {
-        sprintf(ebuf, "%s placed in wall at (%02d,%02d)?!", str, x, y);
+        snprintf(ebuf, SIZE(ebuf), "%s placed in wall at (%02d,%02d)?!", str, x, y);
         yywarning(ebuf);
     }
 }

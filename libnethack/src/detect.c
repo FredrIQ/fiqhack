@@ -701,7 +701,7 @@ trap_detect(struct obj *sobj)
     if (!found) {
         char buf[42];
 
-        sprintf(buf, "Your %s stop itching.", makeplural(body_part(TOE)));
+        snprintf(buf, SIZE(buf), "Your %s stop itching.", makeplural(body_part(TOE)));
         strange_feeling(sobj, buf);
         return 1;
     }

@@ -1862,7 +1862,7 @@ keyname(int c)
     static char keybuf[80];
 
     if (c > KEY_MAX) {
-        sprintf(keybuf, "KEY_MAX + %d", c - KEY_MAX);
+        snprintf(keybuf, sizeof(keybuf), "KEY_MAX + %d", c - KEY_MAX);
         return keybuf;
     } 
 
@@ -1937,7 +1937,7 @@ friendly_keyname(int c)
     static char keybuf[80];
 
     if (c > KEY_MAX) {
-        sprintf(keybuf, "User%d", c - KEY_MAX);
+        snprintf(keybuf, sizeof(keybuf), "User%d", c - KEY_MAX);
         return keybuf;
     }
 

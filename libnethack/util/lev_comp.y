@@ -1062,7 +1062,7 @@ drawbridge_detail: DRAWBRIDGE_ID ':' coordinate ',' DIRECTION ',' door_state
 			if (current_coord.x >= 0 && current_coord.y >= 0 &&
 			    !IS_WALL(tmpmap[y][x])) {
 			    char ebuf[60];
-			    sprintf(ebuf,
+			    snprintf(ebuf, SIZE(ebuf),
 				    "Wall needed for drawbridge (%02d, %02d)",
 				    current_coord.x, current_coord.y);
 			    yyerror(ebuf);
@@ -1395,7 +1395,7 @@ region_detail	: REGION_ID ':' region ',' light_state ',' room_type prefilled
 				    if(IS_ROCK(tmpmap[y][x]) ||
 				       IS_DOOR(tmpmap[y][x])) nrock++;
 			    if(nrock) {
-				sprintf(ebuf,
+				snprintf(ebuf, SIZE(ebuf),
 					"Rock in room (%02d,%02d,%02d,%02d)?!",
 					current_region.x1, current_region.y1,
 					current_region.x2, current_region.y2);
@@ -1406,7 +1406,7 @@ region_detail	: REGION_ID ':' region ',' light_state ',' room_type prefilled
 		!IS_ROCK(tmpmap[current_region.y2+1][current_region.x1-1]) ||
 		!IS_ROCK(tmpmap[current_region.y1-1][current_region.x2+1]) ||
 		!IS_ROCK(tmpmap[current_region.y2+1][current_region.x2+1])) {
-				sprintf(ebuf,
+				snprintf(ebuf, SIZE(ebuf),
 				"NonRock edge in room (%02d,%02d,%02d,%02d)?!",
 					current_region.x1, current_region.y1,
 					current_region.x2, current_region.y2);
@@ -1415,7 +1415,7 @@ region_detail	: REGION_ID ':' region ',' light_state ',' room_type prefilled
 			} else if(tmpreg[nreg]->rirreg &&
 		!IS_ROOM(tmpmap[current_region.y1][current_region.x1])) {
 			    char ebuf[60];
-			    sprintf(ebuf,
+			    snprintf(ebuf, SIZE(ebuf),
 				    "Rock in irregular room (%02d,%02d)?!",
 				    current_region.x1, current_region.y1);
 			    yyerror(ebuf);

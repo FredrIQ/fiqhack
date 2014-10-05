@@ -150,7 +150,7 @@ nhlib_optvalue_to_string(const struct nh_option_desc *option)
         break;
 
     case OPTTYPE_INT:
-        sprintf(valbuf, "%d", option->value.i);
+        snprintf(valbuf, sizeof(valbuf), "%d", option->value.i);
         valstr = valbuf;
         break;
 

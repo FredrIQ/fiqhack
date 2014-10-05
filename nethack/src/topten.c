@@ -22,8 +22,8 @@ topten_add_score(struct nh_topten_entry *entry, struct nh_menulist *menu,
         hpbuf[0] = '-';
         hpbuf[1] = '\0';
     } else
-        sprintf(hpbuf, "%d", entry->hp);
-    sprintf(maxhpbuf, "[%d]", entry->maxhp);
+        snprintf(hpbuf, ARRAY_SIZE(hpbuf), "%d", entry->hp);
+    snprintf(maxhpbuf, ARRAY_SIZE(maxhpbuf), "[%d]", entry->maxhp);
 
     /* calc maximum text field width for the current terminal. maxwidth already 
        accounts for window borders and spacing. */
@@ -40,16 +40,16 @@ topten_add_score(struct nh_topten_entry *entry, struct nh_menulist *menu,
             txt2 -= 5;
         *txt2++ = '\0';
 
-        sprintf(fmt, "%%4d %%10d  %%-%ds", maxwidth - initialfw);
-        sprintf(line, fmt, entry->rank, entry->points, txt);
+        snprintf(fmt, ARRAY_SIZE(fmt), "%%4d %%10d  %%-%ds", maxwidth - initialfw);
+        snprintf(line, ARRAY_SIZE(line), fmt, entry->rank, entry->points, txt);
         add_menu_txt(menu, line, role);
 
-        sprintf(fmt, "%%%ds%%-%ds %%3s %%5s ", initialfw, txtfw);
-        sprintf(line, fmt, "", txt2, hpbuf, maxhpbuf);
+        snprintf(fmt, ARRAY_SIZE(fmt), "%%%ds%%-%ds %%3s %%5s ", initialfw, txtfw);
+        snprintf(line, ARRAY_SIZE(line), fmt, "", txt2, hpbuf, maxhpbuf);
         add_menu_txt(menu, line, role);
     } else {
-        sprintf(fmt, "%%4d %%10d  %%-%ds %%3s %%5s ", txtfw);
-        sprintf(line, fmt, entry->rank, entry->points, entry->entrytxt, hpbuf,
+        snprintf(fmt, ARRAY_SIZE(fmt), "%%4d %%10d  %%-%ds %%3s %%5s ", txtfw);
+        snprintf(line, ARRAY_SIZE(line), fmt, entry->rank, entry->points, entry->entrytxt, hpbuf,
                 maxhpbuf);
         add_menu_txt(menu, line, role);
     }

@@ -175,8 +175,8 @@ create_bonesfile(const char *bonesid, const char **errbuf)
 
     if (errbuf)
         *errbuf = "";
-    sprintf(bones, "bon%s", bonesid);
-    sprintf(tempname, "%d%s.bn", (int)getuid(), u.uplname);
+    snprintf(bones, SIZE(bones), "bon%s", bonesid);
+    snprintf(tempname, SIZE(tempname), "%d%s.bn", (int)getuid(), u.uplname);
     file = fqname(tempname, BONESPREFIX, 0);
 
 #if defined(WIN32)
@@ -202,9 +202,9 @@ commit_bonesfile(char *bonesid)
     char tempbuf[PL_NSIZ + 32];
     int ret;
 
-    sprintf(bones, "bon%s", bonesid);
+    snprintf(bones, SIZE(bones), "bon%s", bonesid);
     fq_bones = fqname(bones, BONESPREFIX, 0);
-    sprintf(tempbuf, "%d%s.bn", (int)getuid(), u.uplname);
+    snprintf(tempbuf, SIZE(tempbuf), "%d%s.bn", (int)getuid(), u.uplname);
     tempname = fqname(tempbuf, BONESPREFIX, 1);
 
     ret = rename(tempname, fq_bones);
@@ -219,7 +219,7 @@ open_bonesfile(char *bonesid)
     const char *fq_bones;
     int fd;
 
-    sprintf(bones, "bon%s", bonesid);
+    snprintf(bones, SIZE(bones), "bon%s", bonesid);
     fq_bones = fqname(bones, BONESPREFIX, 0);
     fd = open(fq_bones, O_RDONLY | O_BINARY, 0);
     return fd;
@@ -229,7 +229,7 @@ open_bonesfile(char *bonesid)
 int
 delete_bonesfile(char *bonesid)
 {
-    sprintf(bones, "bon%s", bonesid);
+    snprintf(bones, SIZE(bones), "bon%s", bonesid);
     return !(unlink(fqname(bones, BONESPREFIX, 0)) < 0);
 }
 

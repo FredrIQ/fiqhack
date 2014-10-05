@@ -201,7 +201,7 @@ tileno_from_name(const char *name, int offset)
             else
                 consecutive = 0;
 
-            sprintf(buf, "%ss %d", defexplain[i], consecutive);
+            snprintf(buf, sizeof(buf), "%ss %d", defexplain[i], consecutive);
 
             /* Should we be using the disambiguated or original name?
                Disambiguate if there's the same name either immediately before

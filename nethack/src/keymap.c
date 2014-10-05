@@ -307,7 +307,7 @@ get_command(void *callbackarg,
                     if (multi > 0xffff)
                         multi /= 10;
                 }
-                sprintf(line, "Count: %d", multi);
+                snprintf(line, ARRAY_SIZE(line), "Count: %d", multi);
                 key = curses_msgwin(line, krc_count);
             } while ((key >= '0' && key <= '9') ||
                      (multi > 0 && key == KEY_BACKSPACE));
@@ -400,7 +400,7 @@ get_command(void *callbackarg,
         }
 
         if (!cmd) {
-            sprintf(line, "Bad command: '%s'.", friendly_keyname(key));
+            snprintf(line, ARRAY_SIZE(line), "Bad command: '%s'.", friendly_keyname(key));
             curses_print_message(player.moves, line);
         }
     } while (!cmd);
@@ -476,7 +476,7 @@ doextlist(const char **namelist, const char **desclist, int listlen)
     init_menulist(&menu);
 
     for (i = 0; i < listlen; i++) {
-        sprintf(buf, " %s\t- %s.", namelist[i], desclist[i]);
+        snprintf(buf, ARRAY_SIZE(buf), " %s\t- %s.", namelist[i], desclist[i]);
         add_menu_txt(&menu, buf, MI_TEXT);
     }
 
@@ -989,7 +989,7 @@ write_keymap(void)
         name =
             keymap[key] ? keymap[key]->name : (unknown_keymap[key] ?
                                                unknown_keymap[key]->name : "-");
-        sprintf(buf, "%x %s\n", key, name);
+        snprintf(buf, ARRAY_SIZE(buf), "%x %s\n", key, name);
         if (strcmp(name, "-"))
             if (!write_keymap_write(fd, buf, strlen(buf)))
                 return;
@@ -997,11 +997,11 @@ write_keymap(void)
 
     for (i = 0; i < cmdcount; i++) {
         if (commandlist[i].flags & CMD_EXT) {
-            sprintf(buf, "EXT %s\n", commandlist[i].name);
+            snprintf(buf, ARRAY_SIZE(buf), "EXT %s\n", commandlist[i].name);
             if (!write_keymap_write(fd, buf, strlen(buf)))
                 return;
         } else {
-            sprintf(buf, "NOEXT %s\n", commandlist[i].name);
+            snprintf(buf, ARRAY_SIZE(buf), "NOEXT %s\n", commandlist[i].name);
             if (!write_keymap_write(fd, buf, strlen(buf)))
                 return;
         }
@@ -1009,11 +1009,11 @@ write_keymap(void)
 
     for (i = 0; i < unknown_count; i++) {
         if (unknown_commands[i].flags & CMD_EXT) {
-            sprintf(buf, "EXT %s\n", unknown_commands[i].name);
+            snprintf(buf, ARRAY_SIZE(buf), "EXT %s\n", unknown_commands[i].name);
             if (!write_keymap_write(fd, buf, strlen(buf)))
                 return;
         } else {
-            sprintf(buf, "NOEXT %s\n", unknown_commands[i].name);
+            snprintf(buf, ARRAY_SIZE(buf), "NOEXT %s\n", unknown_commands[i].name);
             if (!write_keymap_write(fd, buf, strlen(buf)))
                 return;
         }
@@ -1140,7 +1140,7 @@ add_keylist_command(struct nh_menulist *menu, struct nh_cmd_desc *cmd, int id)
         }
     }
 
-    sprintf(buf, "%s%.15s\t%.50s\t%.17s", cmd->flags & CMD_EXT ? "#" : "",
+    snprintf(buf, ARRAY_SIZE(buf), "%s%.15s\t%.50s\t%.17s", cmd->flags & CMD_EXT ? "#" : "",
             cmd->name, cmd->desc, keys);
     add_menu_item(menu, id, buf, 0, FALSE);
 }
@@ -1159,7 +1159,7 @@ command_settings_menu(struct nh_cmd_desc *cmd)
 
         for (i = 0; i <= KEY_MAX; i++) {
             if (keymap[i] == cmd) {
-                sprintf(buf, "delete key %s", friendly_keyname(i));
+                snprintf(buf, ARRAY_SIZE(buf), "delete key %s", friendly_keyname(i));
                 add_menu_item(&menu, i, buf, 0, FALSE);
             }
         }
@@ -1177,7 +1177,7 @@ command_settings_menu(struct nh_cmd_desc *cmd)
                               "Use as an extended command", 0, FALSE);
         }
 
-        sprintf(buf, "Key bindings for %s", cmd->name);
+        snprintf(buf, ARRAY_SIZE(buf), "Key bindings for %s", cmd->name);
         curses_display_menu(&menu, buf, PICK_ONE, PLHINT_ANYWHERE,
                             selection, curses_menu_callback);
 
@@ -1190,12 +1190,12 @@ command_settings_menu(struct nh_cmd_desc *cmd)
         if (selection[0] > 0)   /* delete a key */
             keymap[selection[0]] = NULL;
         else if (selection[0] == -1) {  /* add a key */
-            sprintf(buf, "Press the key you want to use for \"%s\"", cmd->name);
+            snprintf(buf, ARRAY_SIZE(buf), "Press the key you want to use for \"%s\"", cmd->name);
             i = curses_msgwin(buf, krc_keybinding);
             if (i == KEY_ESCAPE || i > KEY_MAX)
                 continue;
             if (keymap[i]) {
-                sprintf(buf, "That key is already in use by \"%s\"! Replace?",
+                snprintf(buf, ARRAY_SIZE(buf), "That key is already in use by \"%s\"! Replace?",
                         keymap[i]->name);
                 if ('y' != curses_yn_function(buf, "yn", 'n'))
                     continue;

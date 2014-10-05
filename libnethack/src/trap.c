@@ -3827,7 +3827,7 @@ chest_trap(struct obj * obj, int bodypart, boolean disarm)
                            *in_rooms(level, ox, oy, SHOPBASE) == *u.ushops);
 
                 pline("%s!", Tobjnam(obj, "explode"));
-                sprintf(buf, "exploding %s", xname(obj));
+                snprintf(buf, SIZE(buf), "exploding %s", xname(obj));
 
                 if (costly)
                     loss +=

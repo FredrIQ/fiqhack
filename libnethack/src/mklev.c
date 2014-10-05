@@ -577,10 +577,10 @@ makelevel(struct level *lev)
             char fillname[9];
             s_level *loc_levnum;
 
-            sprintf(fillname, "%s-loca", urole.filecode);
+            snprintf(fillname, SIZE(fillname), "%s-loca", urole.filecode);
             loc_levnum = find_level(fillname);
 
-            sprintf(fillname, "%s-fil", urole.filecode);
+            snprintf(fillname, SIZE(fillname), "%s-fil", urole.filecode);
             strcat(fillname,
                    (lev->z.dlevel < loc_levnum->dlevel.dlevel) ? "a" : "b");
             makemaz(lev, fillname);

@@ -710,7 +710,7 @@ wiz_show_vision(const struct nh_cmd_arg *arg)
     (void) arg;
 
     init_menulist(&menu);
-    sprintf(row, "Flags: 0x%x could see, 0x%x in sight, 0x%x temp lit, 0x8 tile lit",
+    snprintf(row, SIZE(row), "Flags: 0x%x could see, 0x%x in sight, 0x%x temp lit, 0x8 tile lit",
             COULD_SEE, IN_SIGHT, TEMP_LIT);
     add_menutext(&menu, row);
     add_menutext(&menu, "");

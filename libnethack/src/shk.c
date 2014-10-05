@@ -3433,7 +3433,7 @@ pay_for_damage(const char *dmgstr, boolean cant_mollify)
 
     if (Invis)
         pline("Your invisibility does not fool %s!", shkname(shkp));
-    sprintf(qbuf, "\"Cad!  You did %ld %s worth of damage!\"  Pay? ",
+    snprintf(qbuf, SIZE(qbuf), "\"Cad!  You did %ld %s worth of damage!\"  Pay? ",
             cost_of_damage, currency(cost_of_damage));
     if (yn(qbuf) != 'n') {
         cost_of_damage = check_credit(cost_of_damage, shkp);
@@ -3515,7 +3515,7 @@ price_quote(struct obj *first_obj)
         if (!cost) {
             strcpy(price, "no charge");
         } else {
-            sprintf(price, "%ld %s%s", cost, currency(cost),
+            snprintf(price, SIZE(price), "%ld %s%s", cost, currency(cost),
                     otmp->quan > 1L ? " each" : "");
         }
         buf = msgcat_many(doname(otmp), ", ", price, NULL);

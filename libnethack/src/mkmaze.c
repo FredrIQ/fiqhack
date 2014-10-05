@@ -532,19 +532,19 @@ makemaz(struct level *lev, const char *s)
 
     if (*s) {
         if (sp && sp->rndlevs)
-            sprintf(protofile, "%s-%d", s, rnd((int)sp->rndlevs));
+            snprintf(protofile, SIZE(protofile), "%s-%d", s, rnd((int)sp->rndlevs));
         else
             strcpy(protofile, s);
     } else if (*(dungeons[lev->z.dnum].proto)) {
         if (dunlevs_in_dungeon(&lev->z) > 1) {
             if (sp && sp->rndlevs)
-                sprintf(protofile, "%s%d-%d", dungeons[lev->z.dnum].proto,
+                snprintf(protofile, SIZE(protofile), "%s%d-%d", dungeons[lev->z.dnum].proto,
                         dunlev(&lev->z), rnd((int)sp->rndlevs));
             else
-                sprintf(protofile, "%s%d", dungeons[lev->z.dnum].proto,
+                snprintf(protofile, SIZE(protofile), "%s%d", dungeons[lev->z.dnum].proto,
                         dunlev(&lev->z));
         } else if (sp && sp->rndlevs) {
-            sprintf(protofile, "%s-%d", dungeons[lev->z.dnum].proto,
+            snprintf(protofile, SIZE(protofile), "%s-%d", dungeons[lev->z.dnum].proto,
                     rnd((int)sp->rndlevs));
         } else
             strcpy(protofile, dungeons[lev->z.dnum].proto);

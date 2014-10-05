@@ -945,7 +945,7 @@ init_dungeons(void)
             if (!strncmp(lev_map->lev_name, "x-", 2)) {
                 /* This is where the name substitution on the levels of the
                    quest dungeon occur. */
-                sprintf(x->proto, "%s%s", urole.filecode,
+                snprintf(x->proto, SIZE(x->proto), "%s%s", urole.filecode,
                         &lev_map->lev_name[1]);
             } else if (lev_map->lev_spec == &knox_level) {
                 branch *br;

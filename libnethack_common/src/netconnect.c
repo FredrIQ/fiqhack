@@ -30,7 +30,7 @@ parse_ip_addr(const char *host, int port, int want_v4,
     gai_hints.ai_family = want_v4 ? AF_INET : AF_INET6;
     gai_hints.ai_socktype = SOCK_STREAM;
 
-    sprintf(portstr, "%d", port);
+    snprintf(portstr, sizeof(portstr), "%d", port);
 
     res = getaddrinfo(host, portstr, &gai_hints, &gai_res);
     if (res != 0 || !gai_res)
