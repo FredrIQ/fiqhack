@@ -26,7 +26,7 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
         },
         gui => {
             description => "Build tiles and faketerm ports (requires SDL2)",
-            object => qr=^path:(?:tilesets/dat
+            object => qr=^path:(?:tilesets/dat(?!/text)
                                 | libuncursed/src/plugins/sdl)=x,
             default => 1,
         },
@@ -343,6 +343,11 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
             # no -f for this; DawnHack shouldn't have out-of-range colors
             depends => ["optpath:-p :path:tilesets/dat/palettes/dawnhack.txt",
                         "path:tilesets/dat/palettes/dawnhack.txt"],
+        },
+        _generate_base_text_tileset => {
+            command => ["bpath:tilesets/util/basecchar.c/basecchar$exeext",
+                        "optpath:-o :bpath:tilesets/dat/text/base.txt"],
+            output_from_optpath => '-o ',
         },
         _merge_tilesets => {
             object => qr=^path:tilesets/dat/catalogues/.*\.txt$=s,

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-02 */
+/* Last modified by Alex Smith, 2014-10-05 */
 /* Copyright (c) NetHack Development Team 1992.                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -400,6 +400,21 @@ make_mon_name(int mnum)
     return mons[mnum].mname;
 }
 
+void
+populate_mon_symdef(int mnum, struct nh_symdef *rv)
+{
+    rv->ch = def_monsyms[(int)mons[mnum].mlet];
+    rv->symname = make_mon_name(mnum);
+    rv->color = mons[mnum].mcolor;
+}
+
+void
+populate_obj_symdef(int otyp, struct nh_symdef *rv)
+{
+    rv->ch = def_oc_syms[(int)const_objects[otyp].oc_class];
+    rv->symname = make_object_name(otyp);
+    rv->color = const_objects[otyp].oc_color;
+}
 
 struct nh_drawing_info *
 nh_get_drawing_info(void)
@@ -420,11 +435,8 @@ nh_get_drawing_info(void)
 
     di->num_objects = NUM_OBJECTS;
     tmp = xmalloc(&xm_drawing, sizeof (struct nh_symdef) * di->num_objects);
-    for (i = 0; i < di->num_objects; i++) {
-        tmp[i].ch = def_oc_syms[(int)const_objects[i].oc_class];
-        tmp[i].symname = make_object_name(i);
-        tmp[i].color = const_objects[i].oc_color;
-    }
+    for (i = 0; i < di->num_objects; i++)
+        populate_obj_symdef(i, tmp + i);
     di->objects = tmp;
 
     tmp = xmalloc(&xm_drawing, sizeof (struct nh_symdef));
@@ -435,11 +447,8 @@ nh_get_drawing_info(void)
 
     di->num_monsters = NUMMONS;
     tmp = xmalloc(&xm_drawing, sizeof (struct nh_symdef) * di->num_monsters);
-    for (i = 0; i < di->num_monsters; i++) {
-        tmp[i].ch = def_monsyms[(int)mons[i].mlet];
-        tmp[i].symname = make_mon_name(i);
-        tmp[i].color = mons[i].mcolor;
-    }
+    for (i = 0; i < di->num_monsters; i++)
+        populate_mon_symdef(i, tmp + i);
     di->monsters = tmp;
 
     di->num_warnings = SIZE(warnsyms);
