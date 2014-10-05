@@ -10,6 +10,7 @@
 #include "netconnect.h"
 
 #include <ctype.h>
+#include <stddef.h>
 
 static char *
 trim(char *str)
@@ -29,11 +30,23 @@ trim(char *str)
     return str;
 }
 
+#define SETTINGS_MAP_ENTRY(x) {#x, offsetof(struct settings, x)}
+struct { const char *const name; size_t offset; } settings_map[] = {
+    SETTINGS_MAP_ENTRY(logfile),
+    SETTINGS_MAP_ENTRY(workdir),
+    SETTINGS_MAP_ENTRY(dbhost),
+    SETTINGS_MAP_ENTRY(pidfile),
+    SETTINGS_MAP_ENTRY(dbport),
+    SETTINGS_MAP_ENTRY(dbuser),
+    SETTINGS_MAP_ENTRY(dbpass),
+    SETTINGS_MAP_ENTRY(dbname)
+};
 
 static int
 parse_config_line(char *line)
 {
     char *val;
+    int i;
 
     /* remove the spaces around the string */
     line = trim(line);
@@ -60,21 +73,20 @@ parse_config_line(char *line)
     line = trim(line);
     val = trim(val);
 
-    /* 
-     * set the actual option
-     */
+    /* set the actual option */
 
-    if (!strcmp(line, "logfile")) {
-        if (!settings.logfile)
-            settings.logfile = strdup(val);
+    for (i = 0; i < sizeof settings_map / sizeof *settings_map; i++) {
+        if (!strcmp(line, settings_map[i].name)) {
+            char **optptr = (char **)(settings_map[i].offset +
+                                      (char *)&settings);
+            if (!*optptr)
+                *optptr = strdup(val);
+
+            return TRUE;
+        }
     }
 
-    else if (!strcmp(line, "workdir")) {
-        if (!settings.workdir)
-            settings.workdir = strdup(val);
-    }
-
-    else if (!strcmp(line, "client_timeout")) {
+    if (!strcmp(line, "client_timeout")) {
         if (!settings.client_timeout)
             settings.client_timeout = atoi(val);
 
@@ -86,32 +98,6 @@ parse_config_line(char *line)
             return FALSE;
         }
     }
-
-    else if (!strcmp(line, "dbhost")) {
-        if (!settings.dbhost)
-            settings.dbhost = strdup(val);
-    }
-
-    else if (!strcmp(line, "dbport")) {
-        if (!settings.dbport)
-            settings.dbport = strdup(val);
-    }
-
-    else if (!strcmp(line, "dbuser")) {
-        if (!settings.dbuser)
-            settings.dbuser = strdup(val);
-    }
-
-    else if (!strcmp(line, "dbpass")) {
-        if (!settings.dbpass)
-            settings.dbpass = strdup(val);
-    }
-
-    else if (!strcmp(line, "dbname")) {
-        if (!settings.dbname)
-            settings.dbname = strdup(val);
-    }
-
     else
         /* it's a warning, no need to return FALSE */
         fprintf(stderr, "Warning: unrecognized option \"%s\".\n", line);
@@ -202,22 +188,11 @@ setup_defaults(void)
 void
 free_config(void)
 {
-    if (settings.logfile)
-        free(settings.logfile);
-    if (settings.pidfile)
-        free(settings.pidfile);
-    if (settings.workdir)
-        free(settings.workdir);
-    if (settings.dbhost)
-        free(settings.dbhost);
-    if (settings.dbport)
-        free(settings.dbport);
-    if (settings.dbname)
-        free(settings.dbname);
-    if (settings.dbuser)
-        free(settings.dbuser);
-    if (settings.dbpass)
-        free(settings.dbpass);
+    int i;
+
+    for (i = 0; i < sizeof settings_map / sizeof *settings_map; i++)
+        free(*(char **)(settings_map[i].offset + (char *)&settings));
+
     memset(&settings, 0, sizeof (settings));
 }
 
