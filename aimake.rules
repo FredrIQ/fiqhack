@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2014-10-03
+# Last modified by Alex Smith, 2014-10-05
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -22,7 +22,7 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
         jansson => {
             description => "Use the provided rather than system libjansson",
             object => qr=^path:libjansson/=,
-            default => 0,
+            default => 1,
         },
         gui => {
             description => "Build tiles and faketerm ports (requires SDL2)",

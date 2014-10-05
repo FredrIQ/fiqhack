@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-07-07
+Last modified by Alex Smith, 2014-10-05
 
 Copyright (C) 2013 Alex Smith.
 
@@ -277,9 +277,11 @@ and pgcrypto.  You also need development headers for the libraries listed.
 
 NetHack 4 also requires a working libjansson library (available from
 http://www.digip.org/jansson), and its development headers.  However, both of
-those ship with NetHack 4; to use those copies, you can give `--with=jansson`
-as an option to `aimake`.  (Leaving that option absent, or giving
-`--without=jansson`, means you will have to install libjansson by yourself.)
+those ship with NetHack 4, and will be used by default or if you explicitly
+specify `--with=jansson` as an option to `aimake`.  (If you have installed
+libjansson yourself, you can give `--without=jansson` to use your own copy.
+This will build a little faster and avoid installing redundant copies of the
+jansson library.)
 
 You will also need the `bison` and `flex` programs (in addition to the usual
 compilers), because some of NetHack's tools (e.g. the level-handling
@@ -353,7 +355,7 @@ you just created.
 Once you've done this, open a command prompt, change to the build directory,
 and type:
 
-    perl ..\nethack4\aimake -i ..\install --with=jansson --directory-layout=single_directory
+    perl ..\nethack4\aimake -i ..\install --directory-layout=single_directory
 
 aimake should compile and install the entirety of NetHack 4 for you into the
 install directory.  In order to run the console port, change directory to the
