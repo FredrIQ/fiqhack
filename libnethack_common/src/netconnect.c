@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-29 */
+/* Last modified by Alex Smith, 2014-10-05 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* Copyright (c) 2014 Alex Smith. */
 /* This network connection library may be freely redistributed under the terms of
@@ -14,7 +14,7 @@
 /* convert a string (address or hosname) into an address */
 int
 parse_ip_addr(const char *host, int port, int want_v4,
-              struct sockaddr_storage *out)
+              struct sockaddr_storage *out, int *errcode)
 {
     int res;
     char portstr[16];
@@ -33,6 +33,9 @@ parse_ip_addr(const char *host, int port, int want_v4,
     snprintf(portstr, sizeof(portstr), "%d", port);
 
     res = getaddrinfo(host, portstr, &gai_hints, &gai_res);
+    if (errcode)
+        *errcode = res;
+
     if (res != 0 || !gai_res)
         return FALSE;
     if (want_v4)
@@ -51,9 +54,10 @@ connect_server(const char *host, int port, int want_v4, char *errmsg,
 {
     struct sockaddr_storage sa;
     int fd = -1;
+    int errcode;
 
     errmsg[0] = '\0';
-    if (parse_ip_addr(host, port, want_v4, &sa)) {
+    if (parse_ip_addr(host, port, want_v4, &sa, &errcode)) {
         fd = socket(sa.ss_family, SOCK_STREAM, 0);
         if (fd == -1) {
             snprintf(errmsg, msglen, "failed to create a socket: %s\n",
@@ -69,6 +73,9 @@ connect_server(const char *host, int port, int want_v4, char *errmsg,
             close(fd);
             return -1;
         }
+    } else {
+        snprintf(errmsg, msglen, "could not parse hostname: %s\n",
+                 gai_strerror(errcode));
     }
 
     return fd;
