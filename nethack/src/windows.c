@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-03 */
+/* Last modified by Alex Smith, 2014-10-05 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -670,7 +670,6 @@ resize_wrapper(WINDOW **win, int h, int w, int y, int x)
 static void
 create_or_resize_game_windows(void (*wrapper)(WINDOW **, int, int, int, int))
 {
-    int using_tileset = setup_tiles();
     layout_game_windows();
 
     int outerframewidth = !!ui_flags.draw_outer_frame_lines;
@@ -709,7 +708,7 @@ create_or_resize_game_windows(void (*wrapper)(WINDOW **, int, int, int, int))
 
     draw_frame();
 
-    if (using_tileset)
+    if (setup_tiles())
         wset_tiles_region(mapwin, ui_flags.mapheight,
                           ui_flags.mapwidth - 2 * ui_flags.map_padding, 0, 0,
                           ROWNO, COLNO, 0, 0);
