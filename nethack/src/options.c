@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-03 */
+/* Last modified by Alex Smith, 2014-10-05 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -134,7 +134,7 @@ struct nh_option_desc curses_options[] = {
     {"mouse", "accept mouse input (where supported)", FALSE, OPTTYPE_BOOL,
      {.b = TRUE}},
     {"menuborder", "draw a border around menus", FALSE, OPTTYPE_BOOL,
-     {.e = FALSE}},
+     {.e = TRUE}},
     {"menupaging", "scrolling behaviour of menus", FALSE, OPTTYPE_ENUM,
      {.e = MP_LINES}},
     {"msgheight", "message window height", FALSE, OPTTYPE_INT, {.i = 8}},
