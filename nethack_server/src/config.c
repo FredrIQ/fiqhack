@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-07-07 */
+/* Last modified by Alex Smith, 2014-10-05 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -7,41 +7,9 @@
  */
 
 #include "nhserver.h"
+#include "netconnect.h"
 
 #include <ctype.h>
-
-
-/* convert a string into either an ipv4 or an ipv6 address */
-int
-parse_ip_addr(const char *str, struct sockaddr *out, int want_v4)
-{
-    const struct addrinfo gai_hints = {
-        .ai_flags = AI_PASSIVE | AI_NUMERICHOST,
-        .ai_family = want_v4 ? AF_INET : AF_INET6,
-        .ai_socktype = SOCK_STREAM,
-        .ai_protocol = 0,
-        .ai_addr = NULL,
-        .ai_canonname = NULL,
-        .ai_next = NULL
-    };
-    struct addrinfo *gai_res = NULL;
-
-    if (getaddrinfo(str, NULL, &gai_hints, &gai_res) != 0)
-        return FALSE;
-
-    struct addrinfo *next;
-
-    memcpy(out, gai_res->ai_addr, want_v4 ? sizeof (struct sockaddr_in) :
-                                            sizeof (struct sockaddr_in6));
-    do {
-        next = gai_res->ai_next;
-        free(gai_res);
-        gai_res = next;
-    } while (gai_res);
-
-    return TRUE;
-}
-
 
 static char *
 trim(char *str)

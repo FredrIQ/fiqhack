@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-07-07 */
+/* Last modified by Alex Smith, 2014-10-05 */
 #ifndef NHSERVER_H
 # define NHSERVER_H
 
@@ -146,7 +146,6 @@ extern json_t *read_input(void);
 extern int read_config(const char *confname);
 extern void setup_defaults(void);
 extern void free_config(void);
-extern int parse_ip_addr(const char *str, struct sockaddr *out, int want_v4);
 
 /* db.c */
 extern int init_database(void);
