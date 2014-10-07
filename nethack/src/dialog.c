@@ -25,7 +25,7 @@ newdialog(int height, int width, int dismissable, WINDOW *win)
     if (game_is_running) {
         /* instead of covering up messages, draw the dialog as if it were a
            message */
-        fresh_message_line(FALSE);
+        fresh_message_line(TRUE);
         draw_msgwin();
         if (getmaxx(msgwin) < getmaxx(stdscr))
             width = getmaxx(msgwin) + (ui_flags.draw_outer_frame_lines ? 2 : 0);
