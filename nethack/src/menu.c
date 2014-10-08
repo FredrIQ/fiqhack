@@ -1,12 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-05 */
+/* Last modified by Alex Smith, 2014-10-08 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "nhcurses.h"
 
-#define BORDERWIDTH  (settings.menuborder ? 4 : 2)
-#define BORDERHEIGHT (settings.menuborder ? 2 : 0)
+#define BORDERWIDTH  (settings.whichframes != FRAME_NONE ? 4 : 2)
+#define BORDERHEIGHT (settings.whichframes != FRAME_NONE ? 2 : 0)
 
 static int
 calc_colwidths(char *menustr, int *colwidth)
@@ -110,7 +110,7 @@ draw_menu_scrollbar(WINDOW *win, nh_bool title, int icount, int offset,
         if (icount > innerheight) {
 
             int scrltop, scrlheight, scrlpos, attr, i;
-            scrltop = !!title + !!settings.menuborder;
+            scrltop = !!title + (settings.whichframes != FRAME_NONE);
             scrlheight = innerheight * innerheight / icount;
             scrlpos = offset * (innerheight - scrlheight) /
                 (icount - innerheight);
@@ -125,7 +125,7 @@ draw_menu_scrollbar(WINDOW *win, nh_bool title, int icount, int offset,
                 }
                 wattron(win, attr);
                 mvwaddch(win, i + scrltop,
-                         width - !!settings.menuborder - 1, ch);
+                         width - (settings.whichframes != FRAME_NONE) - 1, ch);
                 wattroff(win, attr);
             }
 
@@ -134,10 +134,12 @@ draw_menu_scrollbar(WINDOW *win, nh_bool title, int icount, int offset,
 
     case MP_PAGES:
         if (icount <= innerheight)
-            mvwprintw(win, height - !!settings.menuborder - 1, 2, "(end)");
+            mvwprintw(win, height -
+                      (settings.whichframes != FRAME_NONE) - 1, 2, "(end)");
         else
-            mvwprintw(win, height - !!settings.menuborder - 1, 2, "(%lg of %d)",
-                      (double)offset / (double)innerheight + 1.,
+            mvwprintw(win, height -
+                      (settings.whichframes != FRAME_NONE) - 1, 2,
+                      "(%lg of %d)", (double)offset / (double)innerheight + 1.,
                       (icount - 1) / innerheight + 1);
         /* note: the floating-point arithmetic here should always produce an
            integer; we do it with floating-point so that something obviously
@@ -157,11 +159,12 @@ draw_menu(struct gamewin *gw)
     char *tab;
 
     werase(gw->win);
-    if (settings.menuborder)
+    if (settings.whichframes != FRAME_NONE)
         nh_window_border(gw->win, mdat->dismissable);
     if (mdat->title) {
         wattron(gw->win, A_UNDERLINE);
-        mvwaddnstr(gw->win, !!settings.menuborder, !!settings.menuborder + 1,
+        mvwaddnstr(gw->win, (settings.whichframes != FRAME_NONE),
+                   (settings.whichframes != FRAME_NONE) + 1,
                    mdat->title, mdat->width - 4);
         wattroff(gw->win, A_UNDERLINE);
     }
@@ -218,9 +221,10 @@ static void
 setup_menu_win2(WINDOW *win, WINDOW **win2, int innerheight, int innerwidth)
 {
     *win2 = derwin(win, innerheight, innerwidth,
-                   getmaxy(win) - innerheight - !!(settings.menuborder) -
-                   !!(settings.menupaging == MP_PAGES),
-                   1 + !!settings.menuborder);
+                   getmaxy(win) - innerheight -
+                   (settings.whichframes != FRAME_NONE) -
+                   (settings.menupaging == MP_PAGES),
+                   1 + (settings.whichframes != FRAME_NONE));
     wset_mouse_event(*win2, uncursed_mbutton_wheelup,
                      KEY_UP, KEY_CODE_YES);
     wset_mouse_event(*win2, uncursed_mbutton_wheeldown,
@@ -422,7 +426,7 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
 
     gw->win = newwin_onscreen(mdat->height, mdat->width, starty, startx);
     keypad(gw->win, TRUE);
-    if (settings.menuborder)
+    if (settings.whichframes != FRAME_NONE)
         nh_window_border(gw->win, mdat->dismissable);
     setup_menu_win2(gw->win, &(gw->win2), mdat->innerheight, mdat->innerwidth);
     leaveok(gw->win, TRUE);
@@ -782,12 +786,13 @@ draw_objmenu(struct gamewin *gw)
 {
     struct win_objmenu *mdat = (struct win_objmenu *)gw->extra;
 
-    if (settings.menuborder)
+    if (settings.whichframes != FRAME_NONE)
         nh_window_border(gw->win, mdat->how == PICK_ONE ? 1 : 2);
     if (mdat->title) {
         wattron(gw->win, A_UNDERLINE);
-        mvwaddnstr(gw->win, !!settings.menuborder,
-                   !!settings.menuborder + 1, mdat->title, mdat->width - 4);
+        mvwaddnstr(gw->win, (settings.whichframes != FRAME_NONE),
+                   (settings.whichframes != FRAME_NONE) + 1,
+                   mdat->title, mdat->width - 4);
         wattroff(gw->win, A_UNDERLINE);
     }
 
@@ -796,7 +801,7 @@ draw_objmenu(struct gamewin *gw)
                                       .items  = mdat->items  + mdat->offset},
                  mdat->selected + mdat->offset, mdat->how);
 
-    if (mdat->selcount > 0 && settings.menuborder) {
+    if (mdat->selcount > 0 && settings.whichframes != FRAME_NONE) {
         wmove(gw->win, getmaxy(gw->win) - 1, 1);
         wprintw(gw->win, "Count: %d", mdat->selcount);
     }
@@ -962,7 +967,7 @@ curses_display_objects(
 
     gw->win = newwin_onscreen(mdat->height, mdat->width, starty, startx);
     keypad(gw->win, TRUE);
-    if (settings.menuborder)
+    if (settings.whichframes != FRAME_NONE)
         nh_window_border(gw->win, mdat->how == PICK_ONE ? 1 : 2);
 
     setup_menu_win2(gw->win, &(gw->win2), mdat->innerheight, mdat->innerwidth);

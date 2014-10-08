@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-05 */
+/* Last modified by Alex Smith, 2014-10-08 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -101,6 +101,14 @@ static struct nh_listitem autoable_boolean_list[] = {
 static struct nh_enum_option autoable_boolean_spec =
     { autoable_boolean_list, listlen(autoable_boolean_list) };
 
+static struct nh_listitem frame_list[] = {
+    {FRAME_ALL,   "screen and menus"},
+    {FRAME_MENUS, "menus only"},
+    {FRAME_NONE,  "nowhere"},
+};
+static struct nh_enum_option frame_spec =
+    { frame_list, listlen(frame_list) };
+
 static const char *const bucnames[] =
     { "unknown", "blessed", "uncursed", "cursed", "all" };
 
@@ -112,6 +120,8 @@ struct nh_option_desc curses_options[] = {
     {"blink",
      "show multiple symbols for each location by switching between them", FALSE,
      OPTTYPE_BOOL, {.b = FALSE}},
+    {"border", "what to draw borders around", FALSE, OPTTYPE_ENUM,
+     {.e = FRAME_ALL}},
     {"comment", "has no effect", FALSE, OPTTYPE_STRING, {.s = NULL}},
     {"darkgray", "try to show 'black' as dark gray instead of dark blue", FALSE,
      OPTTYPE_BOOL, {.b = TRUE}},
@@ -119,8 +129,6 @@ struct nh_option_desc curses_options[] = {
      OPTTYPE_BOOL, {.b = FALSE}},
     {"floorcolor", "change the color of the floor to show where you walked",
      FALSE, OPTTYPE_BOOL, {.b = TRUE}},
-    {"frame", "draw a frame around the window sections", FALSE, OPTTYPE_BOOL,
-     {.b = TRUE}},
     {"graphics", "characters or tiles to use for the map", FALSE, OPTTYPE_ENUM,
      {.e = UNICODE_GRAPHICS}},
     {"hilite_pet", "use background colors to show monster attitude", FALSE,
@@ -133,8 +141,6 @@ struct nh_option_desc curses_options[] = {
      {.e = A_REVERSE}},
     {"mouse", "accept mouse input (where supported)", FALSE, OPTTYPE_BOOL,
      {.b = TRUE}},
-    {"menuborder", "draw a border around menus", FALSE, OPTTYPE_BOOL,
-     {.e = TRUE}},
     {"menupaging", "scrolling behaviour of menus", FALSE, OPTTYPE_ENUM,
      {.e = MP_LINES}},
     {"msgheight", "message window height", FALSE, OPTTYPE_INT, {.i = 8}},
@@ -165,11 +171,9 @@ struct nhlib_boolopt_map boolopt_map[] = {
     {"darkgray", &settings.darkgray},
     {"extmenu", &settings.extmenu},
     {"floorcolor", &settings.floorcolor},
-    {"frame", &settings.frame},
     {"hilite_pet", &settings.hilite_pet},
     {"invweight", &settings.invweight},
     {"mouse", &settings.mouse},
-    {"menuborder", &settings.menuborder},
     {"scores_own", &settings.end_own},
     {"standout", &settings.standout},
     {"status3", &settings.status3},
@@ -263,8 +267,7 @@ curses_set_option(const char *name, union nh_optvalue value)
 
         *var = value.b;
 
-        if (!strcmp(option->name, "frame") ||
-            !strcmp(option->name, "status3")) {
+        if (!strcmp(option->name, "status3")) {
             rebuild_ui();
         } else if (!strcmp(option->name, "darkgray")) {
             set_darkgray();
@@ -274,6 +277,9 @@ curses_set_option(const char *name, union nh_optvalue value)
         }
     } else if (!strcmp(option->name, "comment")) {
         /* do nothing */
+    } else if (!strcmp(option->name, "border")) {
+        settings.whichframes = option->value.e;
+        rebuild_ui();
     } else if (!strcmp(option->name, "menu_headings")) {
         settings.menu_headings = option->value.e;
     } else if (!strcmp(option->name, "animation")) {
@@ -331,6 +337,7 @@ init_options(void)
 {
     int i;
 
+    find_option("border")->e = frame_spec;
     find_option("comment")->s.maxlen = BUFSZ;
     find_option("menu_headings")->e = menu_headings_spec;
     find_option("msgheight")->i.min = 1;
@@ -530,7 +537,7 @@ query_new_value(struct win_menu *mdat, int idx)
     int id = mdat->items[idx].id & 0x1ff;
     int prev_optstyle = settings.optstyle;
     enum nh_menupaging prev_menupaging = settings.menupaging;
-    nh_bool prev_menuborder = settings.menuborder;
+    nh_bool prev_menuborder = settings.whichframes != FRAME_NONE;
     nh_bool ret = FALSE;
 
     switch (listid) {
@@ -620,7 +627,7 @@ query_new_value(struct win_menu *mdat, int idx)
        options, we need to reload and redraw the menu. */
     if (settings.optstyle != prev_optstyle ||
         settings.menupaging != prev_menupaging ||
-        settings.menuborder != prev_menuborder ||
+        (settings.whichframes != FRAME_NONE) != prev_menuborder ||
         (game_is_running && listid != UI_OPTS))
         ret = TRUE;
 

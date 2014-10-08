@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-05 */
+/* Last modified by Alex Smith, 2014-10-08 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -571,7 +571,7 @@ layout_game_windows(void)
        otherwise, because we can repurpose the one reserved for a vertical frame
        line). */
     if (y_remaining >= 2 && x_remaining >= (ui_flags.sidebarwidth ? 2 : 1) &&
-        settings.frame) {
+        settings.whichframes == FRAME_ALL) {
         y_remaining -= 2;
         x_remaining -= 2;
         ui_flags.draw_outer_frame_lines = TRUE;

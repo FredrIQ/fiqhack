@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-03 */
+/* Last modified by Alex Smith, 2014-10-08 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -240,6 +240,12 @@ enum nh_menupaging {
     MP_PAGES,
 };
 
+enum nh_frame {
+    FRAME_ALL,
+    FRAME_MENUS,
+    FRAME_NONE,
+};
+
 struct settings {
     nh_bool end_own;    /* list all own scores */
     int end_top, end_around;    /* describe desired score list */
@@ -253,6 +259,7 @@ struct settings {
     enum nh_animation animation;     /* when to delay */
     enum nh_motd_setting show_motd;
     enum nh_menupaging menupaging;
+    enum nh_frame whichframes;
 
     /* use bolded black instead of dark blue for CLR_BLACK */
     nh_bool darkgray;
@@ -266,10 +273,8 @@ struct settings {
     /* show multiple symbols for each location by blinking */
     nh_bool blink;
     nh_bool floorcolor; /* draw stepped-on information for the floor */
-    nh_bool frame;      /* draw a frame around the window sections */
     nh_bool status3;    /* draw 3 line status */
     nh_bool mouse;      /* accept mouse input */
-    nh_bool menuborder; /* draw a border around menus */
 };
 
 
