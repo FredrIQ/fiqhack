@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Sean Hunt, 2014-10-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -13,6 +13,7 @@
 # include "prop.h"
 # include "youprop.h"
 # include "xmalloc.h"
+# include "dungeon.h"
 
 /* Argument to functions that handle attack-like actions, that specifies the
    extent to which the player is trying to interact with monsters; and to
@@ -172,6 +173,13 @@ struct turnstate {
            space, it stops.  This should prevent any infinite run loops. */
         boolean stepped_on[COLNO][ROWNO];
     } move;
+
+    /* Level changes scheduled for the end of turn after all monsters move. */
+    struct deferred_goto_info {
+        d_level dlevel;
+        uchar flags;
+        char pre_msg[BUFSZ], post_msg[BUFSZ];
+    } goto_info;
 };
 
 extern struct turnstate turnstate;

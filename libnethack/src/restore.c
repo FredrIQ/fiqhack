@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-20 */
+/* Last modified by Sean Hunt, 2014-10-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -594,9 +594,11 @@ restore_you(struct memfile *mf, struct you *y)
     y->uy0 = mread8(mf);
     y->uz.dnum = mread8(mf);
     y->uz.dlevel = mread8(mf);
-    y->utolev.dnum = mread8(mf);
-    y->utolev.dlevel = mread8(mf);
-    y->utotype = mread8(mf);
+    /* Padding to replace utolev/utotype, which was removed. */
+    /* SAVEBREAK: delete the next few lines. */
+    (void) mread8(mf);
+    (void) mread8(mf);
+    (void) mread8(mf);
     y->umoved = mread8(mf);
     y->ualign.type = mread8(mf);
     y->ualignbase[0] = mread8(mf);
