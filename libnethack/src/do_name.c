@@ -131,13 +131,13 @@ do_oname(const struct nh_cmd_arg *arg)
     if ((aname = artifact_name(buf, &objtyp)) != 0 && objtyp == obj->otyp)
         buf = aname;
 
+    char slipbuf[strlen(buf) + 1];
     if (obj->oartifact) {
         pline("The artifact seems to resist the attempt.");
         return 0;
     } else if (restrict_name(obj, buf) || exist_artifact(obj->otyp, buf)) {
         int n = rn2((int)strlen(buf));
         char c1, c2;
-        char slipbuf[strlen(buf) + 1];
         strcpy(slipbuf, buf);
 
         c1 = lowc(buf[n]);
@@ -149,6 +149,7 @@ do_oname(const struct nh_cmd_arg *arg)
         pline("While engraving your %s slips.", body_part(HAND));
         win_pause_output(P_MESSAGE);
         pline("You engrave: \"%s\".", slipbuf);
+        buf = slipbuf;
     }
     oname(obj, buf);
     return 0;
