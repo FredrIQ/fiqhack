@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-09-01 */
+/* Last modified by Alex Smith, 2014-10-08 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -209,7 +209,11 @@ measure_terminal_size(int *h, int *w)
 /* UNIX-specific functions */
 static int selfpipe[2] = { -1, -1 };
 
-static struct termios ti, ti_orig, to, to_orig;
+/* We need some care with the ioctl manipulation, because stdin and stdout might
+   or might not be the same underlying file. We assume that stdin and stdout
+   won't be connected to two /different/ terminals, so we use just the one
+   ioctl structure. */
+static struct termios ti, ti_orig;
 static int sighup_mode = 0;     /* return KEY_HANGUP as every input if set */
 
 static int raw_isig = 0;
@@ -221,7 +225,8 @@ platform_specific_rawsignals(int raw)
     else
         ti.c_lflag |= ISIG;
 
-    tcsetattr(fileno(ifile), TCSANOW, &ti);
+    if (tcsetattr(fileno(ifile), TCSADRAIN, &ti) == -1)
+        tcsetattr(fileno(ofile), TCSADRAIN, &ti);
 
     raw_isig = raw;
 }
@@ -328,12 +333,15 @@ platform_specific_init(void)
         FD_ZERO(&watchfds);
     watchfds_inited = 1;
 
-    /* Set up the terminal control flags. */
-    tcgetattr(fileno(ifile), &ti_orig);
-    tcgetattr(fileno(ofile), &to_orig);
+    /* Set up the terminal control flags. Use whichever of ifile and ofile
+       happens to be a terminal. */
+    if (tcgetattr(fileno(ifile), &ti_orig) == -1)
+        tcgetattr(fileno(ofile), &ti_orig);
 
     /*
-     * Terminal control flags to turn off for the input file:
+     * Terminal control flags to turn off:
+     *
+     * Input-related:
      * ISTRIP    bit 8 stripping (incompatible with Unicode)
      * INPCK     parity checking (ditto)
      * PARENB    more parity checking (ditto)
@@ -349,15 +357,14 @@ platform_specific_init(void)
      * to be able to read Unicode (although on Unicode systems it seems
      * to be impossible to turn it off anyway).
      *
-     * Terminal control flags to turn off for the output file:
+     * Output-related:
      * OPOST     general output postprocessing (portability nightmare)
      * OCRNL     map CR to NL (we need to stay on the same line with CR)
      * ONLRET    delete CR (we want to be able to use CR)
      * OFILL     delay using padding (only works on physical terminals)
-     * We modify the flags for to only after modifying the flags for ti,
-     * so that one set of changes doesn't overwrite the other.
      */
-    tcgetattr(fileno(ifile), &ti);
+    if (tcgetattr(fileno(ifile), &ti) == -1)
+        tcgetattr(fileno(ofile), &ti);
     ti.c_iflag &= ~(ISTRIP | INPCK | IGNCR | INLCR | ICRNL | IXON | IXOFF);
     ti.c_cflag &= ~PARENB;
     ti.c_cflag |= CS8;
@@ -366,11 +373,9 @@ platform_specific_init(void)
     ti.c_cc[VTIME] = 0;
     if (!raw_isig)
         ti.c_lflag |= ISIG;
-    tcsetattr(fileno(ifile), TCSANOW, &ti);
-
-    tcgetattr(fileno(ofile), &to);
-    to.c_oflag &= ~(OPOST | OCRNL | ONLRET | OFILL);
-    tcsetattr(fileno(ofile), TCSADRAIN, &to);
+    ti.c_oflag &= ~(OPOST | OCRNL | ONLRET | OFILL);
+    if (tcsetattr(fileno(ifile), TCSADRAIN, &ti) == -1)
+        tcsetattr(fileno(ofile), TCSADRAIN, &ti);
 
     /* Set up signal handlers. (Luckily, sigaction is just as portable as
        tcsetattr, so we don't have to deal with the inconsistency of signal.) */
@@ -398,8 +403,8 @@ static void
 platform_specific_exit(void)
 {
     /* Put the terminal back to the way the user had it. */
-    tcsetattr(fileno(ifile), TCSANOW, &ti_orig);
-    tcsetattr(fileno(ofile), TCSADRAIN, &to_orig);
+    if (tcsetattr(fileno(ifile), TCSADRAIN, &ti_orig) == -1)
+        tcsetattr(fileno(ofile), TCSADRAIN, &ti_orig);
 }
 
 static char keystrings[5];     /* used to create unique pointers as sentinels */
@@ -720,14 +725,14 @@ setup_palette(void)
     for (i = 0; i < 16; i++) {
 
         /* Setup for xterm, gnome-terminal */
-        fprintf(ofile, "\r" OSC "4;%d;rgb:%02x/%02x/%02x" ST, i, palette[i][0],
-                palette[i][1], palette[i][2]);
+        ofile_output("\r" OSC "4;%d;rgb:%02x/%02x/%02x" ST, i, palette[i][0],
+                     palette[i][1], palette[i][2]);
 
         /* Setup for Linux console; I think PuTTY parses this too. The Linux
            console doesn't need the ST on the end, but without it, other
            terminals may end up waiting forever for the ST. */
-        fprintf(ofile, "\r" OSC "P%01x%02x%02x%02x" ST, i, palette[i][0],
-                palette[i][1], palette[i][2]);
+        ofile_output("\r" OSC "P%01x%02x%02x%02x" ST, i, palette[i][0],
+                     palette[i][1], palette[i][2]);
 
     }
 }
@@ -766,6 +771,27 @@ tty_hook_positioncursor(int y, int x)
 }
 
 static int getkeyorcodepoint_inner(int, int);
+
+/* We send XON immediately before clearing the terminal, in order to work around
+   situations where we can't disable XON/XOFF handling. */
+static void
+clear_terminal(void)
+{
+    int i;
+    /* There's a bug observed on some terminals (e.g. dvtm) where they're
+       waiting for something at this point. (I'm not entirely sure what; my top
+       theory was BEL to terminate an xterm-like string, but that doesn't seem
+       to be the case, based on experimentation, and we can't send BEL anyway
+       because it causes beeping.) We instead send eight kibibytes of NUL
+       characters, which takes those terminals out of wait mode because their
+       internal buffers run out of space. */
+    for (i = 0; i < 8192; i++)
+        ofile_output("%c", 0);
+
+    ofile_outputs("\x11");                               /* XON */
+    tty_hook_flush();
+    ofile_outputs(CSI "2J");                             /* clear terminal */
+}
 
 void
 tty_hook_init(int *h, int *w, const char *title)
@@ -855,9 +881,7 @@ tty_hook_init(int *h, int *w, const char *title)
 
     setup_palette();
     set_mouse_state(mouse_active);
-
-    /* Clear the terminal. */
-    ofile_outputs(CSI "2J");                             /* clear terminal */
+    clear_terminal();
 
     terminal_contents_unknown = 1;
 
@@ -878,7 +902,7 @@ tty_hook_exit(void)
     ofile_outputs(CSI "0m");                             /* SGR reset */
     reset_palette();
     set_mouse_state(0);
-    ofile_outputs(CSI "2J");                             /* clear terminal */
+    clear_terminal();
 
     /* Switch back to the main screen. */
     ofile_outputs(CSI "?1049l");                         /* main screen */
@@ -1285,7 +1309,7 @@ tty_hook_fullredraw(void)
     terminal_contents_unknown = 1;
     setup_palette();
     set_mouse_state(mouse_active);
-    ofile_outputs(CSI "2J");
+    clear_terminal();
     tty_hook_update(0, 0);
 }
 
