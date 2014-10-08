@@ -1121,8 +1121,10 @@ read_config_line(char *line)
     }
 
     if (!option) {
+#if 0
         curses_msgwin("Unknown option in config file:", krc_notification);
         curses_msgwin(name, krc_notification);
+#endif
         return;
     }
 
