@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-10-09 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) Alex Smith 2014. */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -19,18 +19,8 @@
 # endif
 
 /* noreturn is defined in stdnoreturn.h, but that's not available on pre-C11
-   systems.
-
-   TODO: Get aimake to feature-check this. */
-# if __STDC_VERSION__ + 0L >= 201112L
-#  define noreturn _Noreturn
-# else
-#  ifdef __GNUC__
-#   define noreturn __attribute__((noreturn))
-#  else
-#   define noreturn
-#  endif
-# endif
+   systems.  So instead, we ask aimake. */
+# define noreturn AIMAKE_NORETURN
 
 # undef PURE /* collision with mingw headers */
 

@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2014-10-05
+# Last modified by Alex Smith, 2014-10-09
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -61,6 +61,7 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
             object => 'optionset:CFLAGS',
             depends => [
                 'optionset:c11_option',
+                'optionset:define_noreturn',
                 'optstring:-fdiagnostics-show-option',
                 'optstring:-Wall',
                 'optstring:-Wextra',
