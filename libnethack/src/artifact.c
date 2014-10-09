@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Sean Hunt, 2014-10-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -419,8 +419,8 @@ item_provides_extrinsic(struct obj *otmp, int extrinsic, int *warntype)
     /* Anything from here on is based on artifact properties */
     mask |= W_MASK(os_carried);
 
-    dtyp = equipped ? oart->defn.adtyp : oart->cary.adtyp;
-
+    dtyp = oart->cary.adtyp;
+ 
     if ((dtyp == AD_FIRE && extrinsic == FIRE_RES) ||
         (dtyp == AD_COLD && extrinsic == COLD_RES) ||
         (dtyp == AD_ELEC && extrinsic == SHOCK_RES) ||
@@ -429,8 +429,23 @@ item_provides_extrinsic(struct obj *otmp, int extrinsic, int *warntype)
         (dtyp == AD_DRST && extrinsic == POISON_RES))
         return mask;
 
+    if (equipped) {
+        dtyp = oart->defn.adtyp;
+
+        if ((dtyp == AD_FIRE && extrinsic == FIRE_RES) ||
+            (dtyp == AD_COLD && extrinsic == COLD_RES) ||
+            (dtyp == AD_ELEC && extrinsic == SHOCK_RES) ||
+            (dtyp == AD_MAGM && extrinsic == ANTIMAGIC) ||
+            (dtyp == AD_DISN && extrinsic == DISINT_RES) ||
+            (dtyp == AD_DRST && extrinsic == POISON_RES))
+            return mask;
+    }
+
     /* extrinsics from the spfx field; there could be more than one */
-    spfx = equipped ? oart->spfx : oart->cspfx;
+    spfx = oart->cspfx;
+ 
+    if (equipped)
+        spfx |= oart->spfx;
 
     /* TODO: this function used to print a message for hallucination
        resistance, but it's definitely the wrong place. Discover where the

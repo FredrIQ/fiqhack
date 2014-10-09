@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-20 */
+/* Last modified by Sean Hunt, 2014-10-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -754,7 +754,7 @@ level_tele_impl(boolean wizard_tele)
     schedule_goto(&newlevel, FALSE, FALSE, 0, NULL, NULL);
     /* in case player just read a scroll and is about to be asked to call it
        something, we can't defer until the end of the turn */
-    if (u.utotype && !flags.mon_moving)
+    if (!flags.mon_moving)
         deferred_goto();
 }
 

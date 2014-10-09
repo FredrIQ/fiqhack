@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Sean Hunt, 2014-10-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -173,6 +173,8 @@ static const struct turnstate default_turnstate = {
     .helpless_endmsgs = {},
     .pray = { .align = A_NONE, .type = pty_invalid, .trouble = ptr_invalid },
     .move = { .dx = 0, .dy = 0, .stepped_on = {} },
+    .goto_info = { .dlevel = { .dnum = -1, .dlevel = -1 }, .flags = 0,
+                   .pre_msg = {}, .post_msg = {}, },
 };
 
 struct turnstate turnstate;
@@ -298,6 +300,16 @@ neutral_turnstate_tasks(void)
             if (turnstate.move.stepped_on[i][j])
                 impossible("turnstate stepped-on persisted between turns");
 
+    if (turnstate.goto_info.flags)
+        impossible("turnstate deferred goto persisted between turns");
+    if (*turnstate.goto_info.pre_msg)
+        impossible("turnstate deferred goto pre-msg persisted between turns");
+    if (*turnstate.goto_info.post_msg)
+        impossible("turnstate deferred goto post-msg persisted between turns");
+    if (turnstate.goto_info.dlevel.dlevel != -1 ||
+        turnstate.goto_info.dlevel.dnum != -1)
+        impossible("turnstate deferred goto dlevel persisted between turns");
+
     memcpy(&turnstate, &default_turnstate, sizeof turnstate);
 
     struct obj zero;
@@ -306,6 +318,7 @@ neutral_turnstate_tasks(void)
         impossible("zeroobj no longer zero at turn boundary");
         memset(&zeroobj, 0, sizeof zeroobj);
     }
+
 
     log_neutral_turnstate();
 }

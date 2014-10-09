@@ -614,9 +614,6 @@ curses_display_menu(struct nh_menulist *ml, const char *title,
 {
     int x1 = 0, y1 = 0, x2 = -1, y2 = -1;
 
-    if (msgwin)
-        pause_messages();
-
     /* Even while watching/replaying, these menus take input. */
     if (placement_hint == PLHINT_URGENT)
         ui_flags.in_zero_time_command = TRUE;
@@ -911,9 +908,6 @@ curses_display_objects(
         how == PICK_NONE;
     int selected[objlist->icount ? objlist->icount : 1];
     struct nh_objresult results[objlist->icount ? objlist->icount : 1];
-
-    if (msgwin)
-        pause_messages();
 
     if (isendwin() || COLS < COLNO || LINES < ROWNO) {
         dealloc_objmenulist(objlist);

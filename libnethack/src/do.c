@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-02 */
+/* Last modified by Sean Hunt, 2014-10-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -966,8 +966,6 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
 
     assign_level(&orig_d, &u.uz);
     assign_level(&u.uz, newlevel);
-    assign_level(&u.utolev, newlevel);
-    u.utotype = 0;
 
     /* If the entry level is the top level, then the dungeon goes down.
        Otherwise it goes up. */
@@ -1331,9 +1329,6 @@ final_level(void)
     }
 }
 
-static char *dfr_pre_msg = 0,   /* pline() before level change */
-    *dfr_post_msg = 0;  /* pline() after level change */
-
 /* change levels at the end of this turn, after monsters finish moving */
 void
 schedule_goto(d_level * tolev, boolean at_stairs, boolean falling,
@@ -1350,29 +1345,36 @@ schedule_goto(d_level * tolev, boolean at_stairs, boolean falling,
         typmask |= 4;
     if (portal_flag < 0)
         typmask |= 0200;        /* flag for portal removal */
-    u.utotype = typmask;
+    turnstate.goto_info.flags = typmask;
     /* destination level */
-    assign_level(&u.utolev, tolev);
+    assign_level(&turnstate.goto_info.dlevel, tolev);
 
     if (pre_msg)
-        dfr_pre_msg = strcpy(malloc(strlen(pre_msg) + 1), pre_msg);
+        strncpy(turnstate.goto_info.pre_msg, pre_msg, BUFSZ);
     if (post_msg)
-        dfr_post_msg = strcpy(malloc(strlen(post_msg) + 1), post_msg);
+        strncpy(turnstate.goto_info.post_msg, post_msg, BUFSZ);
 }
 
 /* handle something like portal ejection */
-void
+boolean
 deferred_goto(void)
 {
-    if (!on_level(&u.uz, &u.utolev)) {
-        d_level dest;
-        int typmask = u.utotype;        /* save it; goto_level zeroes u.utotype 
-                                         */
+    if (!turnstate.goto_info.flags)
+        return FALSE;
 
-        assign_level(&dest, &u.utolev);
-        if (dfr_pre_msg)
-            pline("%s", dfr_pre_msg);
+    boolean retval = FALSE;
+    d_level dest;
+    assign_level(&dest, &turnstate.goto_info.dlevel);
+
+    if (!on_level(&u.uz, &dest)) {
+        int typmask = turnstate.goto_info.flags;
+
+        if (*turnstate.goto_info.pre_msg)
+            pline("%s", turnstate.goto_info.pre_msg);
+
         goto_level(&dest, ! !(typmask & 1), ! !(typmask & 2), ! !(typmask & 4));
+        retval = TRUE;
+
         if (typmask & 0200) {   /* remove portal */
             struct trap *t = t_at(level, u.ux, u.uy);
 
@@ -1381,14 +1383,17 @@ deferred_goto(void)
                 newsym(u.ux, u.uy);
             }
         }
-        if (dfr_post_msg)
-            pline("%s", dfr_post_msg);
+
+        if (*turnstate.goto_info.post_msg)
+            pline("%s", turnstate.goto_info.post_msg);
     }
-    u.utotype = 0;      /* our caller keys off of this */
-    if (dfr_pre_msg)
-        free(dfr_pre_msg), dfr_pre_msg = 0;
-    if (dfr_post_msg)
-        free(dfr_post_msg), dfr_post_msg = 0;
+
+    turnstate.goto_info.dlevel.dnum = turnstate.goto_info.dlevel.dlevel = -1;
+    turnstate.goto_info.flags = 0;
+    turnstate.goto_info.pre_msg[0] = '\0';
+    turnstate.goto_info.post_msg[0] = '\0';
+
+    return retval;
 }
 
 

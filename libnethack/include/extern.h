@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-08-20 */
+/* Last modified by Sean Hunt, 2014-10-08 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -322,7 +322,7 @@ extern void notify_levelchange(const d_level *);
 extern void goto_level(d_level *, boolean, boolean, boolean);
 extern void schedule_goto(d_level *, boolean, boolean, int, const char *,
                           const char *);
-extern void deferred_goto(void);
+extern boolean deferred_goto(void);
 extern boolean revive_corpse(struct obj *);
 extern void revive_mon(void *, long);
 extern int donull(const struct nh_cmd_arg *);
