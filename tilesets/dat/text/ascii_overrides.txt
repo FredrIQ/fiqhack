@@ -18,8 +18,8 @@ boulder: gray '0'
 
 ! Stairs and portals have red backgrounds (that show through).
 ! TODO: Express these with a generator, to insulate against changes in core.
-staircase up: bgred gray '<'
-staircase down: bgred gray '>'
+staircase up: bgred white '<'
+staircase down: bgred white '>'
 ladder up: bgred yellow '<'
 ladder down: bgred yellow '>'
 long staircase up: bgred yellow underlined '<'
