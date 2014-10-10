@@ -1,10 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-03 */
+/* Last modified by Alex Smith, 2014-10-10 */
 /* Copyright (C) 2014 Alex Smith. */
 /* NetHack may be freely redistributed. See license for details. */
 
 #include "tilecompile.h"
 #include "tilesequence.h"
+#include "utf8conv.h"
+#include <string.h>
 
 #define EPRINT(s, ...)                                       \
     do {                                                     \
@@ -148,15 +150,19 @@ load_text_tileset(png_byte *data, png_size_t size)
     assert(size);
 
     /* Run through the entirety of data. We convert newline to NUL to make
-       parsing easier, and also check for illegal characters (anything outside
-       the ASCII range; no tile keys contain Unicode). */
+       parsing easier, and also check for illegal characters. Tile keys never
+       contain Unicode, but cchar definitions can, so we disallow characters
+       outside the ASCII range except for immediately after an apostrophe. */
     for (i = 0; i < size; i++) {
         if (data[i] == '\n') {
             data[i] = 0;
             lineno++;
-        } else if (data[i] == '\t')
+        } else if (data[i] == '\t') {
             data[i] = ' ';
-        else if (data[i] < ' ' || data[i] > '~')
+        } else if (data[i] == '\'') {
+            while (i < size && data[i+1] > '~')
+                i++;
+        } else if (data[i] < ' ' || data[i] > '~')
             EPRINT("Error: Invalid byte '\\x%02X' in text file\n",
                    (int)data[i]);
     }
@@ -446,7 +452,114 @@ load_text_tileset(png_byte *data, png_size_t size)
                        which is ambiguous). */
                     ii += start_of_reference_image;
                 } else {
-                    assert(!"TODO: cchar string");
+                    if (tileset_width == -1)
+                        tileset_width = tileset_height = 0;
+                    else if (tileset_width || tileset_height)
+                        EPRINTN("Error: Image-based tilesets cannot have text "
+                                "data\n");
+
+                    /* Make a temporary copy of the data, so that we can
+                       tokenize it. */
+                    char *cchardef = malloc(len+1);
+                    char *cp;
+                    for (cp = cchardef, dp += 2; *dp; cp++, dp++)
+                        *cp = *dp;
+                    *cp = *dp;
+
+                    bool first = 1;
+                    unsigned long cchar =
+                        (CCHAR_FGCOLOR_TRANSPARENT << 21) +
+                        (CCHAR_BGCOLOR_TRANSPARENT << 26) +
+                        (1UL << 31);
+
+                    while ((cp = strtok(first ? cchardef : NULL, " "))) {
+                        first = 0;
+
+                        if (*cp == '\'') {
+
+                            if (cp[1] == '\0') {
+                                /* Mistokenization: ' ' tokenizes as two
+                                   apostrophes, not one space surrounded by
+                                   apostrophes. Just special-case this. */
+                                cchar &= ~0x1fffffLU;
+                                cchar |= ' ';
+
+                                continue;
+                            }
+
+                            /* Unicode character. Convert it to UTF-32 then
+                               back to UTF-8 and verify we have a match, to
+                               disallow non-canonical encodings, etc.. */
+                            char ob[7];
+                            unsigned long uc = utf8towc(cp + 1);
+                            wctoutf8(uc, ob);
+                            int i;
+                            for (i = 0; i < strlen(ob); i++) {
+                                if (cp[i+1] != ob[i] || uc > 0x10ffff) {
+                                    free(cchardef);
+                                    EPRINTN("Error: bad Unicode character\n");
+                                }
+                            }
+                            if (cp[i+1] != '\'') {
+                                free(cchardef);
+                                EPRINTN("Error: multiple characters given for "
+                                        "one text cell\n");
+                            }
+
+                            cchar &= ~0x1fffffLU;
+                            cchar |= uc;
+
+                        } else if (!strcmp(cp, "invisible")) {
+                            cchar &= ~0x1fffffLU;
+                        } else if (!strcmp(cp, "regular")) {
+                            cchar &= ~(3UL << 30);
+                        } else if (!strcmp(cp, "underlined")) {
+                            cchar &= ~(3UL << 30);
+                            cchar |= 1UL << 30;
+                        } else if (!strcmp(cp, "same_underline")) {
+                            cchar &= ~(3UL << 30);
+                            cchar |= 2UL << 30;
+                        } else if (!strcmp(cp, "samebg")) {
+                            cchar &= ~(15UL << 26);
+                            cchar |= CCHAR_BGCOLOR_TRANSPARENT << 26;
+                        } else {
+
+                            /* It should be a color code. */
+                            bool bg = false;
+                            bool found = false;
+                            if (cp[0] == 'b' && cp[1] == 'g') {
+                                cp += 2;
+                                bg = true;
+                            }
+
+                            int i;
+                            for (i = 0; i < (bg ? CCHAR_BGCOLOR_TRANSPARENT :
+                                             CCHAR_COLOR_COUNT); i++) {
+                                if (!strcmp(cchar_color_names[i], cp)) {
+                                    found = true;
+                                    if (bg) {
+                                        cchar &= ~(15UL << 26);
+                                        cchar |= i << 26;
+                                    } else {
+                                        cchar &= ~(31UL << 21);
+                                        cchar |= i << 21;
+                                    }
+                                }
+                            }
+
+                            if (!found) {
+                                /* Note: this leaks cchardef; probably not a big
+                                   deal as we're about to exit anyway */
+                                if (bg)
+                                    cp -= 2;
+                                EPRINT("Error: Unknown text description '%s'\n",
+                                       cp);
+                            }
+                        }
+                    }
+
+                    free(cchardef);
+                    ii = cchar;
                 }
             } else if (!*dp) {
                 if (dp - data < size - 1 && dp[1] == '{') {

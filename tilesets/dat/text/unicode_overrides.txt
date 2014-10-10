@@ -1,0 +1,54 @@
+! Last modified by Alex Smith, 2014-10-10
+! NetHack may be freely redistributed. See license for details.
+!
+! This text tileset lists tiles that look different in Unicode and in
+! ASCII. Note that this file is encoded in UTF-8. You will need a
+! UTF-8-aware editor to edit it.
+!
+! Please restrict these to Unicode characters that exist on Windows
+! Glyph List 4. (Windows is the worst out of the major operating
+! systems at rendering fonts.) They should also have an exact or close
+! approximation on code page 437.
+
+! Unicodey terrain.
+walls 0: gray '│'
+walls 1: gray '─'
+walls 2: gray '┌'
+walls 3: gray '┐'
+walls 4: gray '└'
+walls 5: gray '┘'
+walls 6: gray '┼'
+walls 7: gray '┴'
+walls 8: gray '┬'
+walls 9: gray '┤'
+walls 10: gray '├'
+doorway: gray '·'
+open doors 0: brown '■'
+open doors 1: brown '■'
+iron bars: cyan '≡'
+fountain: blue '⌠'
+the floor of a room: bgblack gray regular '·'
+sub unlit the floor of a room: bgblack darkgray regular '·'
+corridor: bgblack gray regular '░'
+sub lit corridor: bgblack white regular '▒'
+altar: gray 'Ω'
+ice: cyan '·'
+lowered drawbridges 0: brown '·'
+lowered drawbridges 2: brown '·'
+water: blue '≈'
+underwater: blue '≈'
+lava: red '≈'
+tree: green '±'
+
+! TODO: Unicodey zaps and explosions (needs generators)
+
+! Swallows.
+swallow top center: orange '─'
+swallow bottom center: orange '─'
+swallow middle left: orange '│'
+swallow middle right: orange '│'
+
+! Traps.
+web: gray '╬'
+
+! Potential ideas for the future: IBMgraphics-style rogue level

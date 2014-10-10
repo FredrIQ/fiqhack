@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-02 */
+/* Last modified by Alex Smith, 2014-10-10 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -124,19 +124,20 @@ nh_bool
 apikey_is_at(const char *apikey, int x, int y)
 {
     struct nh_dbuf_entry *dbyx = &(display_buffer[y][x]);
-    if (!strcmp(apikey, cur_drawing->bgelements[dbyx->bg].symname))
+    if (!strcmp(apikey, default_drawing->bgelements[dbyx->bg].symname))
         return TRUE;
     if (dbyx->trap && !strcmp(
-            apikey, cur_drawing->traps[dbyx->trap - 1].symname))
+            apikey, default_drawing->traps[dbyx->trap - 1].symname))
         return TRUE;
     if (dbyx->obj && !strcmp(
-            apikey, cur_drawing->objects[dbyx->obj - 1].symname))
+            apikey, default_drawing->objects[dbyx->obj - 1].symname))
         return TRUE;
     if (dbyx->mon && !(dbyx->monflags & MON_WARNING) && !strcmp(
-            apikey, cur_drawing->monsters[dbyx->mon - 1].symname))
+            apikey, default_drawing->monsters[dbyx->mon - 1].symname))
         return TRUE;
     if (dbyx->mon && (dbyx->monflags & MON_WARNING) && !strcmp(apikey,
-            cur_drawing->monsters[dbyx->mon-1-cur_drawing->num_monsters].symname))
+            default_drawing->monsters[dbyx->mon - 1 -
+                                      default_drawing->num_monsters].symname))
         return TRUE;
     return FALSE;
 }
@@ -144,9 +145,8 @@ apikey_is_at(const char *apikey, int x, int y)
 void
 draw_map(int cx, int cy)
 {
-    int x, y, symcount, attr, cursx, cursy, mapwinw, mapwinh;
+    int x, y, cursx, cursy, mapwinw, mapwinh;
     unsigned int frame;
-    struct curses_symdef syms[4];
 
     if (!mapwin)
         return;
@@ -162,7 +162,6 @@ draw_map(int cx, int cy)
 
     for (y = 0; y < mapwinh && y < ROWNO; y++) {
         for (x = 0; x < mapwinw && x < COLNO; x++) {
-            int bg_color = 0;
             struct nh_dbuf_entry *dbyx = &(display_buffer[y][x]);
 
             if (!fully_refresh_display_buffer &&
@@ -193,19 +192,18 @@ draw_map(int cx, int cy)
             
             /* draw the tile first, because doing that doesn't move the cursor;
                backgrounds are special because they can be composed from
-               multiple tiles (e.g. dark room + fountain), or have no
-               correpondence to the API key (e.g. lit corridor) */
+               multiple tiles (e.g. furthest background + fountain) */
             print_background_tile(mapwin, dbyx);
 
             /* low-priority general brandings */
             print_low_priority_brandings(mapwin, dbyx);
             /* traps */
             if (dbyx->trap)
-                print_tile(mapwin, cur_drawing->traps + dbyx->trap-1,
+                print_tile(mapwin, default_drawing->traps + dbyx->trap-1,
                            NULL, TILESEQ_TRAP_OFF, substitution);
             /* objects */
             if (dbyx->obj)
-                print_tile(mapwin, cur_drawing->objects + dbyx->obj-1,
+                print_tile(mapwin, default_drawing->objects + dbyx->obj-1,
                            NULL, TILESEQ_OBJ_OFF, substitution);
             /* invisible monster symbol; just use the tile number directly, no
                need to go via an API name because there is only one */
@@ -214,14 +212,14 @@ draw_map(int cx, int cy)
                         .symname = invismonexplain},
                            NULL, TILESEQ_INVIS_OFF, substitution);
             /* monsters */
-            if (dbyx->mon && dbyx->mon <= cur_drawing->num_monsters)
-                print_tile(mapwin, cur_drawing->monsters + dbyx->mon-1,
+            if (dbyx->mon && dbyx->mon <= default_drawing->num_monsters)
+                print_tile(mapwin, default_drawing->monsters + dbyx->mon-1,
                            NULL, TILESEQ_MON_OFF, substitution);
             /* warnings */
-            if (dbyx->mon > cur_drawing->num_monsters &&
+            if (dbyx->mon > default_drawing->num_monsters &&
                 (dbyx->monflags & MON_WARNING))
-                print_tile(mapwin, cur_drawing->warnings +
-                               dbyx->mon-1-cur_drawing->num_monsters,
+                print_tile(mapwin, default_drawing->warnings +
+                               dbyx->mon-1-default_drawing->num_monsters,
                            NULL, TILESEQ_WARN_OFF, substitution);
             /* high-priority brandings */
             print_high_priority_brandings(mapwin, dbyx);
@@ -231,47 +229,30 @@ draw_map(int cx, int cy)
                 switch (NH_EFFECT_TYPE(dbyx->effect)) {
                 case E_EXPLOSION:
                     print_tile(mapwin,
-                               cur_drawing->explsyms + (id % NUMEXPCHARS),
-                               cur_drawing->expltypes + (id / NUMEXPCHARS),
+                               default_drawing->explsyms + (id % NUMEXPCHARS),
+                               default_drawing->expltypes + (id / NUMEXPCHARS),
                                TILESEQ_EXPLODE_OFF, substitution);
                     break;
                 case E_SWALLOW:
                     print_tile(mapwin,
-                               cur_drawing->swallowsyms + (id & 0x7),
+                               default_drawing->swallowsyms + (id & 0x7),
                                NULL, TILESEQ_SWALLOW_OFF, substitution);
                     break;
                 case E_ZAP:
                     print_tile(mapwin,
-                               cur_drawing->zapsyms + (id & 0x3),
-                               cur_drawing->zaptypes + (id >> 2),
+                               default_drawing->zapsyms + (id & 0x3),
+                               default_drawing->zaptypes + (id >> 2),
                                TILESEQ_ZAP_OFF, substitution);
                     break;
                 case E_MISC:
                     print_tile(mapwin,
-                               cur_drawing->effects + id,
+                               default_drawing->effects + id,
                                NULL, TILESEQ_EFFECT_OFF, substitution);
                     break;
                 }
             }
 
-            symcount = mapglyph(dbyx, syms, &bg_color);
-            attr = A_NORMAL;
-            if (!(COLOR_PAIRS >= 113 || (COLORS < 16 && COLOR_PAIRS >= 57))) {
-                /* we don't have background colors available */
-                bg_color = 0;
-                if (((dbyx->monflags & MON_TAME) && settings.hilite_pet) ||
-                    ((dbyx->monflags & MON_DETECTED) && settings.use_inverse))
-                    attr |= A_REVERSE;
-            } else if (bg_color == 0) {
-                /* we do have background colors available */
-                if ((dbyx->monflags & MON_DETECTED) && settings.use_inverse)
-                    bg_color = CLR_MAGENTA;
-                if ((dbyx->monflags & MON_PEACEFUL) && settings.hilite_pet)
-                    bg_color = CLR_BROWN;
-                if ((dbyx->monflags & MON_TAME) && settings.hilite_pet)
-                    bg_color = CLR_BLUE;
-            }
-            print_sym(mapwin, &syms[frame % symcount], attr, bg_color);
+            print_cchar(mapwin);
         }
     }
 
