@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-03 */
+/* Last modified by Alex Smith, 2014-10-10 */
 /* Copyright (C) 2014 Alex Smith. */
 /* NetHack may be freely redistributed. See license for details. */
 
@@ -486,19 +486,21 @@ main(int argc, char *argv[])
                     }
                     if (fuzz && palettechannels == 4) {
                         int diff =
-                            (int)p.r - (int)palette[pi].r +
-                            (int)p.g - (int)palette[pi].g +
-                            (int)p.b - (int)palette[pi].b +
-                            (int)p.a - (int)palette[pi].a;
-                        if (diff < bestpidiff) {
+                            abs((int)p.r - (int)palette[pi].r) +
+                            abs((int)p.g - (int)palette[pi].g) +
+                            abs((int)p.b - (int)palette[pi].b) +
+                            abs((int)p.a - (int)palette[pi].a) * 3;
+                        if (diff <= bestpidiff) {
                             bestpi = pi;
                             bestpidiff = diff;
                         }
                     }
                 }
 
-                if (pi == palettesize && fuzz)
+                if (pi == palettesize && fuzz) {
                     pi = bestpi;
+                    images_seen[i][j] = palette[pi];
+                }
 
                 if (pi == palettesize) {
                     /* It wasn't found. */
