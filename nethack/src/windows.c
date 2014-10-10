@@ -7,6 +7,7 @@
 #include <signal.h>
 #include <locale.h>
 #include <time.h>
+#include <errno.h>
 
 WINDOW *basewin, *mapwin, *msgwin, *statuswin, *sidebar, *extrawin;
 struct gamewin *firstgw, *lastgw;
@@ -144,9 +145,11 @@ set_tile_file(const char *tilefilename)
 
     FILE *in = fopen(namebuf, "rb");
     if (!in) {
-        char errmsgbuf[sizeof namebuf + sizeof "Warning: could not open tileset file .\n" + 1];
-        sprintf(errmsgbuf, "Warning: could not open tileset file %s.\n", namebuf);
+        int e = errno;
+        char errmsgbuf[sizeof namebuf + sizeof "Warning: could not open tileset file \n" + 1];
+        sprintf(errmsgbuf, "Warning: could not open tileset file %s\n", namebuf);
         curses_raw_print(errmsgbuf);
+        curses_raw_print(strerror(e));
         return;
     }
     tiletable_len = seek_tile_file(in) - 84;
