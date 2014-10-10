@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-10 */
+/* Last modified by Alex Smith, 2014-10-11 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -144,7 +144,9 @@ set_tile_file(const char *tilefilename)
 
     FILE *in = fopen(namebuf, "rb");
     if (!in) {
-        curses_raw_print("Warning: could not open tileset file.\n");
+        char errmsgbuf[sizeof namebuf + sizeof "Warning: could not open tileset file .\n" + 1];
+        sprintf(errmsgbuf, "Warning: could not open tileset file %s.\n", namebuf);
+        curses_raw_print(errmsgbuf);
         return;
     }
     tiletable_len = seek_tile_file(in) - 84;
