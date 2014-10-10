@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-05 */
+/* Last modified by Alex Smith, 2014-10-10 */
 /* Copyright (c) 2013 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -337,15 +337,28 @@ cchar_from_tileno(int tileno)
        color & 15: bits 21 and up (we use nethack_types' color codes)
        HI_ULINE: penultimate bit (30)
 
+       We set "copy underlining" (bit 30 clear and 31 set) if outputting
+       anything other than a monster or cmap, because only monsters and cmaps
+       have underlining rules of their own. (This allows underlining to be used
+       for a branding, if a tileset happens to want that.) This is overriden by
+       ascii_overrides.txt in the case of furthest backgrounds (which can't copy
+       anything).
+
        Background color is copied, so we set bits 26 to 29 to have a value of
-       8. Bits 7-20 (Unicode), 25 (copy foreground) and 31 (copy underlining)
-       are clear. */
+       8. Bits 7-20 (Unicode) and 25 (copy foreground) are clear. */
 
     unsigned long rv = 8UL << 26;
     rv |= (unsigned char)symdef->ch;
     rv |= (((int)symdef->color) & 15) << 21;
-    if (symdef->color & HI_ULINE)
+
+    if ((tileno < TILESEQ_MON_OFF ||
+         tileno >= TILESEQ_MON_OFF + TILESEQ_MON_SIZE) &&
+        (tileno < TILESEQ_CMAP_OFF ||
+         tileno >= TILESEQ_CMAP_OFF + TILESEQ_CMAP_SIZE))
+        rv |= 2UL << 30;
+    else if (symdef->color & HI_ULINE)
         rv |= 1UL << 30;
+
     return rv;
 }
 

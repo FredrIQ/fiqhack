@@ -43,12 +43,12 @@ tree: green '±'
 ! TODO: Unicodey zaps and explosions (needs generators)
 
 ! Swallows.
-swallow top center: orange regular '─'
-swallow bottom center: orange regular '─'
-swallow middle left: orange regular '│'
-swallow middle right: orange regular '│'
+swallow top center: orange '─'
+swallow bottom center: orange '─'
+swallow middle left: orange '│'
+swallow middle right: orange '│'
 
 ! Traps.
-web: gray regular '╬'
+web: gray '╬'
 
 ! Potential ideas for the future: IBMgraphics-style rogue level
