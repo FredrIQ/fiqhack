@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-10-03
+Last modified by Alex Smith, 2014-10-10
 
 The tiles code in this directory was originally taken from Slash'EM, and has
 been modified by Alex Smith for use in NetHack 4.  (This documentation file
@@ -234,14 +234,14 @@ cchar Representation
 
 A cchar contains the following fields:
 
-  * A Unicode character.  This is represented as a character in single quotes,
-    such as `'a'` or perhaps `'''`; no escaping is used here.  Some tilesets
-    will want to restrict themselves to the ASCII range; all should restrict
-    themselves to code page 437 without a good reason, because anything beyond
-    that can be hard to render reliably.  There's also the possibility of
-    `invisible`, which takes the character from the layer beneath; this allows
-    a cchar to, say, override the background color while leaving existing
-    colors and characters on that tile alone.
+  * A Unicode character.  This is represented as a UTF-8 character in single
+    quotes, such as `'a'` or perhaps `'''`; no escaping is used here.  Some
+    tilesets will want to restrict themselves to the ASCII range; all should
+    restrict themselves to code page 437 without a good reason, because
+    anything beyond that can be hard to render reliably.  There's also the
+    possibility of `invisible`, which takes the character from the layer
+    beneath; this allows a cchar to, say, override the background color while
+    leaving existing colors and characters on that tile alone.
 
     In binary encoding, the bottom 21 bits are used to represent this, with
     `invisible` being represented as zero.
@@ -283,7 +283,7 @@ A cchar contains the following fields:
 
     This accounts for the next 4 bits in binary encoding.
 
-  * Underlining: `underlined`, `regular`, `same_underline` with values of 0,
+  * Underlining: `regular`, `underlined`, `same_underline` with values of 0,
     1, 2 respectively.  This accounts for the top two bits, in binary
     encoding.
 

@@ -12,6 +12,27 @@
 #include "tilecompile.h"
 #include "tilesequence.h"
 
+const char *const cchar_color_names[CCHAR_COLOR_COUNT] = {
+    [0] = "black",
+    [1] = "red",
+    [2] = "green",
+    [3] = "brown",
+    [4] = "blue",
+    [5] = "magenta",
+    [6] = "cyan",
+    [7] = "gray",
+    [8] = "darkgray",
+    [9] = "orange",
+    [10] = "bright_green",
+    [11] = "yellow",
+    [12] = "bright_blue",
+    [13] = "bright_magenta",
+    [14] = "bright_cyan",
+    [15] = "white",
+    [16] = "samefg",
+    [17] = "disturb",
+};
+
 /* Global information about the tileset. */
 char tileset_name[TILESET_NAME_SIZE + 1];
 long tileset_width = -1;
@@ -235,8 +256,8 @@ main(int argc, char *argv[])
                    !ignore_options) {
             tileset_width = strtol(argv[1], NULL, 10);
             tileset_height = strtol(argv[2], NULL, 10);
-            if (!in_range(tileset_width) ||
-                !in_range(tileset_height)) {
+            if ((tileset_width || tileset_height) &&
+                (!in_range(tileset_width) || !in_range(tileset_height))) {
                 fprintf(stderr, "Error: Invalid tileset size\n");
                 return EXIT_FAILURE;
             }

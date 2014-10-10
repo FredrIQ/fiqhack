@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-05 */
+/* Last modified by Alex Smith, 2014-10-10 */
 /* Copyright (c) 2014 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -35,6 +35,10 @@ int main(int argc, char **argv)
         unsigned long cchar = cchar_from_tileno(i);
         if (cchar == ULONG_MAX)
             continue;
+
+        /* Translate black to dark gray. */
+        if (!(cchar & (0x1fUL << 21)))
+            cchar |= 8UL << 21;
 
         fprintf(out, "%s: 0x%08lX\n", name_from_tileno(i), cchar);
     }

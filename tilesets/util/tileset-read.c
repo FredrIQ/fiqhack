@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-03 */
+/* Last modified by Alex Smith, 2014-10-10 */
 /* Copyright (C) 2014 Alex Smith. */
 /* NetHack may be freely redistributed. See license for details. */
 
@@ -148,15 +148,19 @@ load_text_tileset(png_byte *data, png_size_t size)
     assert(size);
 
     /* Run through the entirety of data. We convert newline to NUL to make
-       parsing easier, and also check for illegal characters (anything outside
-       the ASCII range; no tile keys contain Unicode). */
+       parsing easier, and also check for illegal characters. Tile keys never
+       contain Unicode, but cchar definitions can, so we disallow characters
+       outside the ASCII range except for immediately after an apostrophe. */
     for (i = 0; i < size; i++) {
         if (data[i] == '\n') {
             data[i] = 0;
             lineno++;
-        } else if (data[i] == '\t')
+        } else if (data[i] == '\t') {
             data[i] = ' ';
-        else if (data[i] < ' ' || data[i] > '~')
+        } else if (data[i] == '\'') {
+            while (i < size && data[i+1] > '~')
+                i++;
+        } else if (data[i] < ' ' || data[i] > '~')
             EPRINT("Error: Invalid byte '\\x%02X' in text file\n",
                    (int)data[i]);
     }
