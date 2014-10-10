@@ -1,10 +1,11 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-03 */
+/* Last modified by Alex Smith, 2014-10-10 */
 /* Copyright (C) 2014 Alex Smith. */
 /* NetHack may be freely redistributed. See license for details. */
 
 #include "tilecompile.h"
 #include "tilesequence.h"
+#include "utf8conv.h"
 
 /* Utility functions */
 
@@ -80,6 +81,11 @@ write_text_tileset_inner(const char *filename, FILE *out, enum iiformat iif)
 {
     int keywidth = 0;
     bool embedding_images = iif == II_SPELTOUT && tileset_width != 0;
+
+    if (embedding_images && tileset_width == -1) {
+        fprintf(stderr, "Error: Cannot write out images of unknown size\n");
+        return 0;
+    }
 
     if (!out)
         out = fopen(filename, "w");
@@ -261,7 +267,63 @@ write_text_tileset_inner(const char *filename, FILE *out, enum iiformat iif)
                 fprintf(out, "0x%08X\n", output_filepos);
             } else {
                 assert(tileset_width == 0 && iif == II_SPELTOUT);
-                assert(!"TODO: Text representation of cchars");
+                bool first = 1;
+
+                /* foreground color */
+                int fgcolor = (output_filepos >> 21) & 31;
+                if (fgcolor >= CCHAR_COLOR_COUNT) {
+                    fprintf(stderr, "Error: Illegal foreground color %d\n",
+                            fgcolor);
+                    fclose(out);
+                    return 0;
+                }
+                if (fgcolor != CCHAR_FGCOLOR_TRANSPARENT) {
+                    fprintf(out, "%s%s", first ? "" : " ",
+                            cchar_color_names[fgcolor]);
+                    first = 0;
+                }
+
+                /* background color */
+                int bgcolor = (output_filepos >> 26) & 15;
+                if (bgcolor > CCHAR_BGCOLOR_TRANSPARENT) {
+                    fprintf(stderr, "Error: Illegal background color %d\n",
+                            bgcolor);
+                    fclose(out);
+                    return 0;
+                }
+                if (bgcolor != CCHAR_BGCOLOR_TRANSPARENT) {
+                    fprintf(out, "%sbg%s", first ? "" : " ",
+                            cchar_color_names[bgcolor]);
+                    first = 0;
+                }
+
+                if (!(output_filepos & (1UL << 31))) {
+                    /* non-default underlining */
+                    if (!first)
+                        fprintf(out, " ");
+                    if (output_filepos & (1UL << 30))
+                        fprintf(out, "underlined");
+                    else
+                        fprintf(out, "regular");
+                    first = 0;
+                }
+
+                if (output_filepos & 0x1fffff) {
+
+                    /* Unicode character */
+                    char ob[7];
+                    if ((output_filepos & 0x1fffff) > 0x10ffff) {
+                        fprintf(stderr, "Error: Non-unicode character %d\n",
+                                output_filepos & 0x1fffff);
+                        fclose(out);
+                        return 0;
+                    }
+                    wctoutf8(output_filepos & 0x1fffff, ob);
+                    fprintf(out, "%s'%s'", first ? "" : " ", ob);
+
+                } else if (first)
+                    fprintf(out, "invisible");
+                fprintf(out, "\n");
             }
 
             curtile++;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-03 */
+/* Last modified by Alex Smith, 2014-10-10 */
 /* Copyright (c) 2013 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -18,6 +18,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 
 /* One of the various symbol definition arrays in drawing.c. */
 struct symdef_array {
@@ -168,7 +169,6 @@ tileno_from_api_name(const char *name, const char *type, int offset)
     return tileno_from_obj_mon_name(name, offset);
 }
 
-
 /* Find a tile number from the name used for it by a .txt tile file. */
 int
 tileno_from_name(const char *name, int offset)
@@ -265,6 +265,101 @@ tileno_from_name(const char *name, int offset)
     }
     /* Objects and monsters use their API names. */
     return tileno_from_obj_mon_name(name, offset);
+}
+
+/* Look up the symdef rendering for a given tile, from drawing.c.
+
+   This may be a pointer to a static buffer in some cases. */
+static const struct nh_symdef *
+symdef_from_tileno(int tileno)
+{
+    int i;
+    static struct nh_symdef temp_symdef;
+
+    /* cmap, trap, warn, effect, swallow, explode, zap */
+    for (i = 0; i < (sizeof symdef_arrays / sizeof *symdef_arrays); i++) {
+        int sym_offset = tileno - symdef_arrays[i].offset;
+        int symslen = symdef_arrays[i].symslen;
+        if (!symdef_arrays[i].types) {
+            if (sym_offset >= 0 && sym_offset < symslen)
+                return symdef_arrays[i].syms + sym_offset;
+        } else {
+            int typeslen = symdef_arrays[i].typeslen;
+            if (sym_offset >= 0 && sym_offset < symslen * typeslen) {
+                int type_offset = sym_offset / symslen;
+                sym_offset %= symslen;
+                temp_symdef.ch = symdef_arrays[i].syms[sym_offset].ch;
+                temp_symdef.color = symdef_arrays[i].types[type_offset].color;
+                temp_symdef.symname = NULL;
+                return &temp_symdef;
+            }
+        }
+    }
+
+    /* monster */
+    i = tileno - TILESEQ_MON_OFF;
+    if (i >= 0 && i < TILESEQ_MON_SIZE) {
+        populate_mon_symdef(i, &temp_symdef);
+        return &temp_symdef;
+    }
+
+    /* object */
+    i = tileno - TILESEQ_OBJ_OFF;
+    if (i >= 0 && i < TILESEQ_OBJ_SIZE) {
+        populate_obj_symdef(i, &temp_symdef);
+        return &temp_symdef;
+    }
+
+    /* This leaves three possibilities, invis, genbrand and monbrand. The
+       details of genbrand and monbrand are considered to not be libnethack's
+       problem, so it doesn't suggest renderings (or even know they exist). The
+       invisible monster symbol is known by core, but it's not present in any of
+       the symdef arrays (it's historically been special-cased), and as it's
+       only the one symbol, that's left to the client too.
+
+       In all these cases, we return NULL, meaning that the tile won't be added
+       to a generated cchar tileset. Those tiles will need to be given
+       renderings manually. */
+    return NULL;
+}
+
+unsigned long
+cchar_from_tileno(int tileno)
+{
+    const struct nh_symdef *symdef = symdef_from_tileno(tileno);
+    if (!symdef)
+        return ULONG_MAX;
+
+    /* Pack into a cchar as follows:
+
+       .ch: bottom 7 bits (ASCII matches Unicode there)
+
+       color & 15: bits 21 and up (we use nethack_types' color codes)
+       HI_ULINE: penultimate bit (30)
+
+       We set "copy underlining" (bit 30 clear and 31 set) if outputting
+       anything other than a monster or cmap, because only monsters and cmaps
+       have underlining rules of their own. (This allows underlining to be used
+       for a branding, if a tileset happens to want that.) This is overriden by
+       ascii_overrides.txt in the case of furthest backgrounds (which can't copy
+       anything).
+
+       Background color is copied, so we set bits 26 to 29 to have a value of
+       8. Bits 7-20 (Unicode) and 25 (copy foreground) are clear. */
+
+    unsigned long rv = 8UL << 26;
+    rv |= (unsigned char)symdef->ch;
+    rv |= (((int)symdef->color) & 15) << 21;
+
+    if ((tileno < TILESEQ_MON_OFF ||
+         tileno >= TILESEQ_MON_OFF + TILESEQ_MON_SIZE) &&
+        (tileno < TILESEQ_CMAP_OFF ||
+         tileno >= TILESEQ_CMAP_OFF + TILESEQ_CMAP_SIZE))
+        rv |= 2UL << 30;
+    else if (symdef->color & HI_ULINE)
+        rv |= 1UL << 30;
+
+    return rv;
 }
 
 /* Returns a pointer to a static buffer. */

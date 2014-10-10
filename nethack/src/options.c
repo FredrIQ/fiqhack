@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-08 */
+/* Last modified by Alex Smith, 2014-10-10 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -286,7 +286,6 @@ curses_set_option(const char *name, union nh_optvalue value)
         settings.animation = option->value.e;
     } else if (!strcmp(option->name, "graphics")) {
         settings.graphics = option->value.e;
-        switch_graphics(option->value.e);
         if (ui_flags.ingame) {
             rebuild_ui(); /* sets up tiles/ASCII mode */
             draw_map(player.x, player.y);

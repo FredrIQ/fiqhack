@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-03 */
+/* Last modified by Alex Smith, 2014-10-10 */
 /* Copyright (C) 2014 Alex Smith. */
 /* NetHack may be freely redistributed. See license for details. */
 
@@ -11,6 +11,27 @@
 
 #include "tilecompile.h"
 #include "tilesequence.h"
+
+const char *const cchar_color_names[CCHAR_COLOR_COUNT] = {
+    [0] = "black",
+    [1] = "red",
+    [2] = "green",
+    [3] = "brown",
+    [4] = "blue",
+    [5] = "magenta",
+    [6] = "cyan",
+    [7] = "gray",
+    [8] = "darkgray",
+    [9] = "orange",
+    [10] = "bright_green",
+    [11] = "yellow",
+    [12] = "bright_blue",
+    [13] = "bright_magenta",
+    [14] = "bright_cyan",
+    [15] = "white",
+    [16] = "samefg",
+    [17] = "disturb",
+};
 
 /* Global information about the tileset. */
 char tileset_name[TILESET_NAME_SIZE + 1];
@@ -235,8 +256,8 @@ main(int argc, char *argv[])
                    !ignore_options) {
             tileset_width = strtol(argv[1], NULL, 10);
             tileset_height = strtol(argv[2], NULL, 10);
-            if (!in_range(tileset_width) ||
-                !in_range(tileset_height)) {
+            if ((tileset_width || tileset_height) &&
+                (!in_range(tileset_width) || !in_range(tileset_height))) {
                 fprintf(stderr, "Error: Invalid tileset size\n");
                 return EXIT_FAILURE;
             }
@@ -486,19 +507,21 @@ main(int argc, char *argv[])
                     }
                     if (fuzz && palettechannels == 4) {
                         int diff =
-                            (int)p.r - (int)palette[pi].r +
-                            (int)p.g - (int)palette[pi].g +
-                            (int)p.b - (int)palette[pi].b +
-                            (int)p.a - (int)palette[pi].a;
-                        if (diff < bestpidiff) {
+                            abs((int)p.r - (int)palette[pi].r) +
+                            abs((int)p.g - (int)palette[pi].g) +
+                            abs((int)p.b - (int)palette[pi].b) +
+                            abs((int)p.a - (int)palette[pi].a) * 3;
+                        if (diff <= bestpidiff) {
                             bestpi = pi;
                             bestpidiff = diff;
                         }
                     }
                 }
 
-                if (pi == palettesize && fuzz)
+                if (pi == palettesize && fuzz) {
                     pi = bestpi;
+                    images_seen[i][j] = palette[pi];
+                }
 
                 if (pi == palettesize) {
                     /* It wasn't found. */

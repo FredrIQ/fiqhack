@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2014-09-26
+# Last modified by Alex Smith, 2014-10-09
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
@@ -2501,6 +2501,13 @@ C<output> is hardcoded (otherwise it would be unclear what to output if the
 command failed).  If the command fails to run, use an empty
 C<depends>/C<outdepends> rather than the specified C<depends> or
 C<outdepends>.  The intended use of this is to add dependencies conditionally.
+
+=item alternative
+
+This is similar to C<conditional>, but provides more control; if the command
+fails to run, use the C<depends>/C<outdepends> given in the rule's
+C<alternative> field, rather than the specified C<depends> or C<outdepends>.
+This is intended for use in writing F<autoconf>-like tests.
 
 =item parse
 
@@ -6186,9 +6193,10 @@ my %actionkeys = (
     'inner' => [''],
     'outputarg' => [''],
     'dependsarg' => [''],
-    'on_failure' => {values => [qw/auto fail inapplicable
+    'on_failure' => {values => [qw/auto fail inapplicable alternative
                                    empty conditional parse/],
                      default => 'auto'},
+    'alternative' => [],
     'preference' => 0,
     'output_as_searchfile' => 0,
     'output_as_standardlib' => 0,
@@ -6213,6 +6221,7 @@ my %actiontypes = (
     'outputarg' => [qw/provide produce/],
     'dependsarg' => [qw/provide produce depend/],
     'on_failure' => [qw/provide produce depend/],
+    'alternative' => [qw/provide produce depend/],
     'preference' => [qw/provide/],
     'output_as_searchfile' => [qw/provide/],
     'output_as_standardlib' => [qw/produce/],
@@ -6506,6 +6515,7 @@ ref $config eq 'HASH' or die "Invalid type in global config file";
 if ($opt_ignore_builtin_config) {
     delete $config->{options};
     delete $config->{rules};
+    delete $config->{tests};
 }
 
 # Parse the local config files (path:aimake.rules, path:aimake.local, and
@@ -6532,7 +6542,7 @@ for my $localconfigfile (aipath2ospath(configfilename),
     undef $@;
     ref $localconfig eq 'HASH'
         or die "Invalid type in project-specific config file";
-    for my $t (qw/rules options features directories/) {
+    for my $t (qw/rules options tests features directories/) {
         if (exists $localconfig->{$t}) {
             $config->{$t}{$_} = $localconfig->{$t}{$_}
             for keys %{$localconfig->{$t}};
@@ -6667,6 +6677,43 @@ for my $option (keys %{$config->{options}}) {
         1 while $config->{options}{$option} =~
             s/\$([a-z]+)/$config->{options}{$1} or die
                         "No config directory '$1'"/ge;
+    }
+}
+
+##### Desugar the tests into rules.
+#
+# Basic pattern: for each possibility, create a rule that tests that
+# possibility, and provides the appropriate optionset based on that
+# possibility if it passes, or based on the optionset for the next possibility
+# if it fails.
+#
+# TODO: sanity/schema check the input tests.
+
+for my $test (keys %{$config->{tests}}) {
+    my $td = $config->{tests}{$test};
+    my $tf = $td->{source};
+    $tf =~ s/([\\_])/\\$1/g;
+    $tf =~ y/ \n/_ /;
+    my $tffn = "bpath:aimake/test_$test" . $td->{source_extension};
+    $config->{rules}{"test_generate_file_$test"} = {
+        command => ['intcmd:writefile', "optpath::$tffn", "optstring:$tf"],
+        output => $tffn,
+        verb => 'generated',
+        low_message_priority => 1,
+    };
+    for my $i (0 .. $#{$td->{possibilities}}) {
+        $config->{rules}{"test_run_${i}_$test"} = {
+            object => $tffn,
+            command => [@{$td->{command}}, @{$td->{possibilities}[$i]}],
+            output => $i ? "optionset:test_${i}_$test" : "optionset:$test",
+            outdepends => $td->{possibilities}[$i],
+            ($i < $#{$td->{possibilities}} ?
+             (on_failure => 'alternative',
+              alternative => "optionset:test_" . ($i+1) . "_$test") :
+             (on_failure => 'fail', hide_errors => 0)),
+            verb => 'test ran',
+            low_message_priority => 1,
+        };
     }
 }
 
@@ -7495,6 +7542,8 @@ MAINLOOP: while (1) {
         $on_failure eq 'inapplicable' and
             $a->{$a->{actiontype} eq 'depend' ? 'outdepends' : 'output'} = [];
         $on_failure eq 'conditional' and $a->{outdepends} = [];
+        $on_failure eq 'alternative' and $a->{outdepends} =
+            deepclone($a->{alternative});
 
         # Replace all regular expressions in the desugared action with
         # matches from $parsed_output.
@@ -8292,6 +8341,68 @@ __DATA__
         # language and configuration), making it hard to implement this from a
         # portable program.
     },
+    tests => {
+        'c11_option' => {
+            source_extension => '.c',
+            source => <<'EOF',
+/* We want to make a best effort to compile C11 on old compilers, so write
+   some source which is valid C11 and also valid C89-with-extensions as our
+   test (so that we can fall back to C89-with-extensions if no better
+   compatibility mode is available).
+
+   For now, we just check anonymous unions. */
+struct test1 {
+  union { int test2; int *test3; };
+};
+int main(void) { return 0; }
+EOF
+            command => ['tool:c_compiler', 'optpath::',
+                        "optpath:-o :bpath:aimake/junk$objext"],
+            possibilities => [['optstring:--std=c11'], ['optstring:-std=c11'], []],
+        },
+        'c99_option' => {
+            source_extension => '.c',
+            source => <<'EOF',
+/* We want to make a best effort to compile C99 on old compilers, so write
+   some source which is valid C99 and also valid C89-with-extensions as our
+   test (so that we can fall back to C89-with-extensions if no better
+   compatibility mode is available).
+
+   We check designated initializers and single-line comments. */
+struct c { int a; int b; };
+struct c d = {.a = 1, .b = 2};
+// test
+int main(void) { return 0; }
+EOF
+            command => ['tool:c_compiler', 'optpath::',
+                        "optpath:-o :bpath:aimake/junk$objext"],
+            possibilities => [['optstring:--std=c99'], ['optstring:-std=c99'], []],
+        },
+        'define_noreturn' => {
+            source_extension => '.c',
+            source => <<'EOF',
+/* Define AIMAKE_NORETURN to an appropriate string for the compiler.
+
+   We could use a second test, which is intended-fail, to ensure that we're
+   actually getting noreturn semantics, but there isn't much point; leaving
+   out noreturn gives warnings, which is better than failing outright.
+
+   Because we always try all possibilities (including the fallback), we
+   want a program that won't warn if the noreturn's missing. */
+extern void exit(int);
+AIMAKE_NORETURN int foo(void) { exit(0); }
+void bar(void) { foo(); }
+int main(int argc, char **argv) { if (argc) bar(); return 0; }
+EOF
+            command => ['tool:c_compiler', 'optpath::',
+                        "optpath:-o :bpath:aimake/junk$objext"],
+            possibilities => [
+                ['optstring:-DAIMAKE_NORETURN=_Noreturn'],
+                ['optstring:-DAIMAKE_NORETURN=__declspec(noreturn)'],
+                ['optstring:-DAIMAKE_NORETURN=__attribute__((noreturn))'],
+                ['optstring:-DAIMAKE_NORETURN=']],
+        },
+    },
     rules => {
         # Option sets.
         # TODO: Take these from options? Or from the environment?
@@ -8647,20 +8758,6 @@ __DATA__
             on_failure => 'empty',
             also_match_stderr => 1,
             information_only => 1,
-            low_message_priority => 1,
-        },
-
-        # Does the compiler understand --std=c11?
-        # This is a special case for now; we'll make it more generic later.
-        c11_default_option => {
-            object => 'bpath:aimake/aimake_1.c',
-            command => ['tool:c_toolchain', 'optstring:-c', 'optpath::', '',
-                        'optstring:--std=c11',
-                        "optpath:-o :bpath:aimake/aimake_1_c11check$objext"],
-            output => 'optionset:c11_option',
-            outdepends => 'optstring:--std=c11',
-            on_failure => 'conditional',
-            verb => 'test built',
             low_message_priority => 1,
         },
 
