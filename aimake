@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2014-10-09
+# Last modified by Alex Smith, 2014-10-11
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
@@ -8356,7 +8356,7 @@ struct test1 {
 };
 int main(void) { return 0; }
 EOF
-            command => ['tool:c_compiler', 'optpath::',
+            command => ['tool:c_toolchain', 'optstring:-c', 'optpath::',
                         "optpath:-o :bpath:aimake/junk$objext"],
             possibilities => [['optstring:--std=c11'], ['optstring:-std=c11'], []],
         },
@@ -8374,7 +8374,7 @@ struct c d = {.a = 1, .b = 2};
 // test
 int main(void) { return 0; }
 EOF
-            command => ['tool:c_compiler', 'optpath::',
+            command => ['tool:c_toolchain', 'optstring:-c', 'optpath::',
                         "optpath:-o :bpath:aimake/junk$objext"],
             possibilities => [['optstring:--std=c99'], ['optstring:-std=c99'], []],
         },
@@ -8394,7 +8394,7 @@ AIMAKE_NORETURN int foo(void) { exit(0); }
 void bar(void) { foo(); }
 int main(int argc, char **argv) { if (argc) bar(); return 0; }
 EOF
-            command => ['tool:c_compiler', 'optpath::',
+            command => ['tool:c_toolchain', 'optstring:-c', 'optpath::',
                         "optpath:-o :bpath:aimake/junk$objext"],
             possibilities => [
                 ['optstring:-DAIMAKE_NORETURN=_Noreturn'],
