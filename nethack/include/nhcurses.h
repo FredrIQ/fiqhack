@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-08 */
+/* Last modified by Alex Smith, 2014-10-10 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -378,7 +378,7 @@ extern nh_bool interrupt_multi, game_is_running;
 extern const char quit_chars[];
 extern struct nh_window_procs curses_windowprocs;
 extern WINDOW *basewin, *mapwin, *msgwin, *statuswin, *sidebar, *extrawin;
-extern struct curses_drawing_info *default_drawing, *cur_drawing;
+extern struct curses_drawing_info *default_drawing;
 extern int curses_level_display_mode;
 extern struct nh_player_info player;
 extern int cmdline_role, cmdline_race, cmdline_gend, cmdline_align;
@@ -516,10 +516,6 @@ extern void write_ui_config(void);
 /* outchars.c */
 extern void init_displaychars(void);
 extern void free_displaychars(void);
-extern int mapglyph(struct nh_dbuf_entry *dbe, struct curses_symdef *syms,
-                    int *bg_color);
-extern void set_rogue_level(nh_bool enable);
-extern void switch_graphics(enum nh_text_mode mode);
 extern unsigned long long dbe_substitution(struct nh_dbuf_entry *dbe);
 extern void print_tile(WINDOW *win, struct curses_symdef *api_name,
                        struct curses_symdef *api_type, int offset,
@@ -529,8 +525,7 @@ extern void print_low_priority_brandings(WINDOW *win,
                                          struct nh_dbuf_entry *dbe);
 extern void print_high_priority_brandings(WINDOW *win,
                                           struct nh_dbuf_entry *dbe);
-extern void print_sym(WINDOW *win, struct curses_symdef *sym, int extra_attrs,
-                      int bg_color);
+extern void print_cchar(WINDOW *win);
 extern void curses_notify_level_changed(int dmode);
 
 /* playerselect.c */
