@@ -26,7 +26,7 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
         },
         gui => {
             description => "Build tiles and faketerm ports (requires SDL2)",
-            object => qr=^path:(?:tilesets/dat(?!/text)
+            object => qr=^path:(?:tilesets/dat(?!/text|/catalogues/text)
                                 | libuncursed/src/plugins/sdl)=x,
             default => 1,
         },
@@ -324,13 +324,22 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
             require_match => 1,
         },
         _catalogue_file_dependencies => {
-            object => qr=^path:tilesets/dat/catalogues/.*\.txt$=s,
+            object => qr=^path:tilesets/dat/catalogues/(?!text).*\.txt$=s,
             command => ["intcmd:cat", "optpath::"],
             lineskip => 2,
             depends => ["optpath::path:tilesets/dat/tiles/",
                         "path:tilesets/dat/tiles/"],
             dependsarg => qr=^(.+)$=s,
             require_match => 1,
+        },
+        _text_catalogue_file_dependencies => {
+            object => qr=^path:tilesets/dat/catalogues/text.*\.txt$=s,
+            command => ["intcmd:cat", "optpath::"],
+            lineskip => 2,
+            depends => ["optpath::path:tilesets/dat/text/",
+                        "path:tilesets/dat/text/"],
+            dependsarg => qr=^(.+)$=s,
+            require_match => 1,            
         },
         _slashem_catalogue_file_palette => {
             object => 'path:tilesets/dat/catalogues/slashem-32.txt',
@@ -348,6 +357,13 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
             command => ["bpath:tilesets/util/basecchar.c/basecchar$exeext",
                         "optpath:-o :bpath:tilesets/dat/text/base.txt"],
             output_from_optpath => '-o ',
+        },
+        _include_base_text_tileset => {
+            # Hack: merge an extra option into the optpath in order to ensure
+            # that the base tileset comes first.
+            object => qr=^path:tilesets/dat/catalogues/text.*\.txt$=s,
+            depends => ["bpath:tilesets/dat/text/base.txt",
+                        "optpath:-W :bpath:tilesets/dat/text/base.txt"],
         },
         _merge_tilesets => {
             object => qr=^path:tilesets/dat/catalogues/.*\.txt$=s,
