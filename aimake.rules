@@ -260,7 +260,7 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
         _makedefs_oracles => {
             object => "path:libnethack/dat/oracles.txt",
             command => ["bpath:libnethack/util/makedefs.c/makedefs$exeext",
-                        "optpath:-d :",
+                        "optpath:-h :",
                         "optpath::bpath:libnethack/dat/oracles"],
             output => 'bpath:libnethack/dat/oracles',
         },
