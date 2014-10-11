@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-08 */
+/* Last modified by Alex Smith, 2014-10-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -405,10 +405,10 @@ save_you(struct memfile *mf, struct you *y)
     mwrite8(mf, y->uz.dnum);
     mwrite8(mf, y->uz.dlevel);
     /* Padding to replace utolev/utotype, which were removed. */
-    /* SAVEBREAK: remove the next three lines. */
-    mwrite8(mf, 0);
-    mwrite8(mf, 0);
-    mwrite8(mf, 0);
+    /* SAVEBREAK (4.3-beta1 -> 4.3-beta2): remove the next three lines. */
+    mwrite8(mf, y->save_compat_bytes[0]);
+    mwrite8(mf, y->save_compat_bytes[1]);
+    mwrite8(mf, y->save_compat_bytes[2]);
     mwrite8(mf, y->umoved);
     mwrite8(mf, y->ualign.type);
     mwrite8(mf, y->ualignbase[0]);
@@ -517,7 +517,7 @@ save_utracked(struct memfile *mf, struct you *y)
 static void
 save_stairway(struct memfile *mf, stairway s)
 {
-    /* SAVE COMPAT SHIM (4.3-beta1 -> 4.3-beta2)
+    /* SAVEBREAK (4.3-beta1 -> 4.3-beta2)
 
        If s.sx and s.sy are COLNO and ROWNO respectively, save as 0, 0. */
     if (s.sx == COLNO && s.sy == ROWNO) {

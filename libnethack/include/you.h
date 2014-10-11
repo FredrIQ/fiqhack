@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-08 */
+/* Last modified by Alex Smith, 2014-10-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -201,6 +201,10 @@ struct you {
     } delayed_killers;
 
     int lastinvnr;
+
+    /* SAVEBREAK: for avoiding desyncs with old saves */
+    unsigned char save_compat_bytes[3];
+
 };      /* end of `struct you' */
 
 # define Upolyd (u.umonnum != u.umonster)
