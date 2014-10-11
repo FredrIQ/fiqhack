@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-01 */
+/* Last modified by Sean Hunt, 2014-10-11 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -316,7 +316,8 @@ move_lines_upward(int num_to_bump)
 /* Update the showlines array with new string text from intermediate.
    Returns TRUE if we're going to need a --More-- and another pass. */
 static nh_bool
-update_showlines(char **intermediate, int *length, nh_bool force_more)
+update_showlines(char **intermediate, int *length, nh_bool force_more,
+                 nh_bool important)
 {
     /*
      * Each individual step in this can be ugly, but the overall logic isn't
@@ -344,6 +345,13 @@ update_showlines(char **intermediate, int *length, nh_bool force_more)
     /* Step 1 begins here. */
     int messagelen = 0;
     nh_bool merging = FALSE;
+    /* Unimportant messages are not marked as unseen, unless the previous
+     * message was also unseen. This is so that the unseen messages always form
+     * a contiguous block at the end of the message array.
+     *
+     * TODO: Replace msghist_entry.unseen with a num_unseen variable.
+     */
+    nh_bool mark_unseen = important || showlines[0].unseen;
     nh_bool need_more = force_more && showlines[0].unseen;
     if (showlines[0].message)
         messagelen = strlen(showlines[0].message);
@@ -416,7 +424,7 @@ update_showlines(char **intermediate, int *length, nh_bool force_more)
             showlines[i].message =
                 malloc(strlen(wrapped_buf[num_to_bump - 1 - i]) + 1);
             strcpy(showlines[i].message, wrapped_buf[num_to_bump - 1 - i]);
-            showlines[i].unseen = TRUE;
+            showlines[i].unseen = mark_unseen;
             showlines[i].nomerge = FALSE;
         }
     }
@@ -426,7 +434,7 @@ update_showlines(char **intermediate, int *length, nh_bool force_more)
             showlines[i].message =
                 malloc(strlen(wrapped_buf[num_to_bump - i]) + 1);
             strcpy(showlines[i].message, wrapped_buf[num_to_bump - i]);
-            showlines[i].unseen = TRUE;
+            showlines[i].unseen = mark_unseen;
             showlines[i].nomerge = FALSE;
             showlines[i].old = FALSE;
         }
@@ -504,7 +512,7 @@ force_seen(void)
     nh_bool keep_going = TRUE;
     showlines[0].nomerge = FALSE;
     while (keep_going) {
-        keep_going = update_showlines(&dummy, &dummy_length, TRUE);
+        keep_going = update_showlines(&dummy, &dummy_length, TRUE, FALSE);
         show_msgwin(keep_going);
         if (keep_going)
             keypress_at_more();
@@ -565,7 +573,8 @@ curses_print_message_core(int turn, const char *msg, nh_bool important)
     int intermediate_size = strlen(msg) + 1;
     strcpy(intermediate, msg);
     while (keep_going) {
-        keep_going = update_showlines(&intermediate, &intermediate_size, FALSE);
+        keep_going = update_showlines(&intermediate, &intermediate_size, FALSE,
+                                      important);
         show_msgwin(keep_going);
         if (keep_going)
             keypress_at_more();
