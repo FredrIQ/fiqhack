@@ -576,6 +576,7 @@ extern void nh_window_border(WINDOW *, int);
 extern WINDOW *newwin_onscreen(int, int, int, int);
 extern void create_game_windows(void);
 extern void destroy_game_windows(void);
+extern void redraw_popup_windows(void);
 extern void redraw_game_windows(void);
 extern void handle_resize(void);
 extern void rebuild_ui(void);

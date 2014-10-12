@@ -833,10 +833,20 @@ destroy_game_windows(void)
 
 
 void
-redraw_game_windows(void)
+redraw_popup_windows(void)
 {
     struct gamewin *gw;
+    for (gw = firstgw; gw; gw = gw->next) {
+        if (!gw->win) /* partially constructed */
+            continue;
+        gw->draw(gw);
+        wnoutrefresh(gw->win);
+    }
+}
 
+void
+redraw_game_windows(void)
+{
     wnoutrefresh(basewin);
 
     if (ui_flags.ingame) {
@@ -858,10 +868,7 @@ redraw_game_windows(void)
         draw_frame();
     }
 
-    for (gw = firstgw; gw; gw = gw->next) {
-        gw->draw(gw);
-        wnoutrefresh(gw->win);
-    }
+    redraw_popup_windows();
 }
 
 
@@ -995,12 +1002,12 @@ nh_wgetch(WINDOW * win, enum keyreq_context context)
     if (ui_flags.ingame && ui_flags.gameload_message &&
         !ui_flags.in_zero_time_command) {
         const char *msg = ui_flags.gameload_message;
-        
+
         ui_flags.in_zero_time_command = TRUE;
         ui_flags.gameload_message = NULL;
 
         curses_msgwin(msg, krc_notification);
-        
+
         ui_flags.in_zero_time_command = FALSE;
     }
 
@@ -1128,6 +1135,9 @@ alloc_gamewin(int extra)
 {
     struct gamewin *gw = malloc(sizeof (struct gamewin) + extra);
 
+    /* We need to set gw->win in particular to NULL. Otherwise, we might
+       try to redraw the window while we're constructing it (say, because
+       constructing it requires flushing messages). */
     memset(gw, 0, sizeof (struct gamewin) + extra);
 
     if (firstgw == NULL && lastgw == NULL)

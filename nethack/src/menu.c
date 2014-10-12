@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-11 */
+/* Last modified by Alex Smith, 2014-10-12 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -616,6 +616,7 @@ curses_display_menu(struct nh_menulist *ml, const char *title,
 
     if (msgwin)
         pause_messages();
+    redraw_popup_windows();
 
     /* Even while watching/replaying, these menus take input. */
     if (placement_hint == PLHINT_URGENT)
