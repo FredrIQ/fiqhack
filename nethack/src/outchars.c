@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-10 */
+/* Last modified by Alex Smith, 2014-10-12 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -219,6 +219,16 @@ dbe_substitution(struct nh_dbuf_entry *dbe)
         (NH_BRANDING_LIT | NH_BRANDING_TEMP_LIT | NH_BRANDING_SEEN);
 
     s |= (dbe->branding & lit_branding) ? NHCURSES_SUB_LIT : NHCURSES_SUB_UNLIT;
+
+    /* Corpses and statues have their own substitution (that's turned off on
+       layers above "object" by map.c to avoid substituting a monster that's
+       standing on a corpse or statue). */
+    if (dbe->obj) {
+        if (!strcmp("corpse", default_drawing->objects[dbe->obj-1].symname))
+            s |= NHCURSES_SUB_CORPSE;
+        if (!strcmp("statue", default_drawing->objects[dbe->obj-1].symname))
+            s |= NHCURSES_SUB_STATUE;
+    }
 
     /* TODO: Determine which Quest this tile belongs to (if any), and
        race/gender of a player-monster on the tile */

@@ -422,8 +422,17 @@ load_text_tileset(png_byte *data, png_size_t size)
                            unambiguous tile name), or else we have wildcards,
                            which don't permit ambiguous matches. All strings
                            pattern-match against themeselves, so we can just
-                           do a pattern match here. */
-                        tileok = pmatch(tp2, name_from_tileno(tiletry));
+                           do a pattern match here.
+
+                           Ignore nonsensical substitution tiles, so that it's
+                           possible to write, e.g., "sub corpse *" and only
+                           change monster corpses, without also changing, say,
+                           "floor of a room with a corpse on" (i.e. "sub corpse
+                           the floor of a room", which literally matches the
+                           pattern, but probably wasn't intended). */
+                        if ((sensible_substitutions(tiletry) &
+                             substitution) == substitution)
+                            tileok = pmatch(tp2, name_from_tileno(tiletry));
                     }
 
                     /* If this is the last iteration of the loop and we still

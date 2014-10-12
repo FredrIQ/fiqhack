@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-10 */
+/* Last modified by Alex Smith, 2014-10-12 */
 /* Copyright (c) 2013 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -40,6 +40,22 @@ const struct symdef_array symdef_arrays[] = {
 };
 
 static const char *name_from_tileno_internal(int tileno);
+
+/* Returns a bitmask of substitutions that can reasonably apply to the given
+   tile number. This is only used on wildcard matches, and limits what the
+   wildcard can match, in order to keep the size of the generated tilesets down,
+   and in order to avoid "sub corpse *" overriding the furthest backgrounds. */
+unsigned long long
+sensible_substitutions(int tileno)
+{
+     /* The current rule is: corpse/statue and race/role/gender apply only to
+        monsters; everything else applies to all tiles. */
+    if (tileno >= TILESEQ_MON_OFF &&
+        tileno < TILESEQ_MON_OFF + TILESEQ_MON_SIZE)
+        return (1ULL << (LDM_RACE_0 + 5)) - 1;
+    else
+        return NHCURSES_SUB_CORPSE - 1;
+}
 
 unsigned long long
 substitution_from_name(const char **name)

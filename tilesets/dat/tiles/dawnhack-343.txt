@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2014-10-03
+! Last modified by Alex Smith, 2014-10-12
 !
 ! Copyright (C) Andrew Rios, 2014
 ! This work is licensed under the Creative Commons Attribution 3.0
@@ -12114,7 +12114,7 @@ Q = (134, 150, 162)
   AAAAAAAAAAAAAAAA
   AAAAAAAAAAAAAAAA
 }
-# tile 636 (corpse)
+# tile 636 (sub corpse *)
 {
   AAAAAAAAAAAAAAAA
   AAAAAAAAAAAAAAAA
@@ -15686,7 +15686,7 @@ Q = (134, 150, 162)
   AAAFBFGGFFLCFAAA
   AAAAACCCCCCAAAAA
 }
-# tile 824 (statue)
+# tile 824 (sub statue *)
 {
   AAAAABBBAAAAAAAA
   AAAABOOGCAAAAAAA

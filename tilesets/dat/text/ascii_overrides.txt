@@ -16,6 +16,12 @@ sub lit corridor: bgblack white regular '#'
 ! Everyone hates the default boulder tile.
 boulder: gray '0'
 
+! Corpse and statue substitutions.
+! TODO: When we have generators, make corpses match the color of the
+! monster that produces them.
+sub corpse *: blue '%'
+sub statue *: gray '`'
+
 ! Stairs and portals have red backgrounds (that show through).
 ! TODO: Express these with a generator, to insulate against changes in core.
 staircase up: bgred white '<'
@@ -34,7 +40,7 @@ sub rogue *staircase *: gray '%'
 sub rogue gold piece: gray '*'
 ! As in NitroHack, override the most common food
 ! TODO: Override the others too?
-sub rogue corpse; sub rogue food ration: gray ':'
+sub rogue sub corpse *; sub rogue food ration: gray ':'
 
 ! The invisible monster symbol isn't defined in core.
 invisible monster: bright_blue 'I'

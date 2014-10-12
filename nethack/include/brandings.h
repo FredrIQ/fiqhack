@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-02 */
+/* Last modified by Alex Smith, 2014-10-12 */
 /* Copyright (c) 2013 Alex Smith                                  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -78,7 +78,10 @@ extern const char *const nhcurses_branding_names[(int)nhcurses_branding_count];
    Substitution tiles are not present in situations where they'd match the base
    tile. For instance, many existing tilesets have a human-looking tile for
    their non-race-specific character tiles. Thus, they would not have a separate
-   human tile for the same character. */
+   human tile for the same character.
+
+   When changing these, change the list in brandings.c, and
+   sensible_substitutions in tilesequence.c. */
 
 /* All LDMs define substitutions. */
 #define NHCURSES_SUB_LDM(ldm) (1ULL << (ldm))
@@ -86,6 +89,14 @@ extern const char *const nhcurses_branding_names[(int)nhcurses_branding_count];
 /* Lit and unlit statuses are substitution tiles. */
 #define NHCURSES_SUB_LIT      (1ULL << (LDM_COUNT + 0))
 #define NHCURSES_SUB_UNLIT    (1ULL << (LDM_COUNT + 1))
+
+/* Corpses and statues are substitutions of the matching monster. */
+#define NHCURSES_SUB_CORPSE   (1ULL << (LDM_COUNT + 2))
+#define NHCURSES_SUB_STATUE   (1ULL << (LDM_COUNT + 3))
+
+#define LDM_ROLE_0            (LDM_COUNT + 4)
+#define LDM_GENDER_0          (LDM_ROLE_0 + 13)
+#define LDM_RACE_0            (LDM_GENDER_0 + 2)
 
 /* A NULL-terminated list of substitution names. */
 extern const char *const nhcurses_sub_names[];

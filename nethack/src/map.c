@@ -171,9 +171,17 @@ draw_map(int cx, int cy)
                 print_tile(mapwin, default_drawing->traps + dbyx->trap-1,
                            NULL, TILESEQ_TRAP_OFF, substitution);
             /* objects */
-            if (dbyx->obj)
-                print_tile(mapwin, default_drawing->objects + dbyx->obj-1,
-                           NULL, TILESEQ_OBJ_OFF, substitution);
+            if (dbyx->obj) {
+                /* Special cases: corpses and statues are substituted
+                   monsters, not objects. */
+                if (substitution & (NHCURSES_SUB_CORPSE | NHCURSES_SUB_STATUE))
+                    print_tile(mapwin, default_drawing->monsters +
+                               dbyx->obj_mn-1, NULL,
+                               TILESEQ_MON_OFF, substitution);
+                else
+                    print_tile(mapwin, default_drawing->objects + dbyx->obj-1,
+                               NULL, TILESEQ_OBJ_OFF, substitution);
+            }
             /* invisible monster symbol; just use the tile number directly, no
                need to go via an API name because there is only one */
             if (dbyx->invis)
@@ -183,7 +191,8 @@ draw_map(int cx, int cy)
             /* monsters */
             if (dbyx->mon && dbyx->mon <= default_drawing->num_monsters)
                 print_tile(mapwin, default_drawing->monsters + dbyx->mon-1,
-                           NULL, TILESEQ_MON_OFF, substitution);
+                           NULL, TILESEQ_MON_OFF, substitution &
+                           ~(NHCURSES_SUB_CORPSE | NHCURSES_SUB_STATUE));
             /* warnings */
             if (dbyx->mon > default_drawing->num_monsters &&
                 (dbyx->monflags & MON_WARNING))

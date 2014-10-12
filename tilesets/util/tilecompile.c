@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-10 */
+/* Last modified by Alex Smith, 2014-10-12 */
 /* Copyright (C) 2014 Alex Smith. */
 /* NetHack may be freely redistributed. See license for details. */
 
@@ -398,9 +398,14 @@ main(int argc, char *argv[])
                .tilenumber == TILESEQ_INVALID_OFF)
             seen_tile_count--;
 
+        /* Note: We don't warn about the 'base' tiles "corpse" and "statue"
+           because the interface should never request them; they only exist
+           to make the numbering simpler. */
         if (all_base_tiles)
             for (i = 0; i < TILESEQ_COUNT; i++)
-                if (!base_tile_seen[i])
+                if (!base_tile_seen[i] &&
+                    strcmp(name_from_tileno(i), "corpse") != 0 &&
+                    strcmp(name_from_tileno(i), "statue") != 0)
                     fprintf(stderr, "Warning: missing base tile '%s'\n",
                             name_from_tileno(i));
     }

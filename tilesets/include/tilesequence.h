@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-05 */
+/* Last modified by Alex Smith, 2014-10-12 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* Copyright (c) 2013 Alex Smith. */
@@ -64,6 +64,7 @@ extern int tileno_from_name(const char *, int);
 extern int tileno_from_api_name(const char *, const char *, int);
 extern const char *name_from_tileno(int);
 extern const char *name_from_substitution(unsigned long long);
+extern unsigned long long sensible_substitutions(int tileno);
 
 /* Not technically involved with tile sequencing, but this is the most sensible
    place to put it, as this file is already doing the "combine drawing.c with

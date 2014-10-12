@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2014-10-03
+! Last modified by Alex Smith, 2014-10-12
 ! NetHack may be freely redistributed. See license for details.
 !
 ! This is the sequence in which tiles normally appear in Slash'EM 7E7F3
@@ -952,7 +952,7 @@ phial
 candelabrum
 silver bell
 tripe ration
-corpse
+sub corpse *
 egg
 meatball
 meat stick
@@ -1185,7 +1185,7 @@ gray gem
 gray gem
 rock gem
 boulder
-statue
+sub statue *
 heavy iron ball
 iron chain
 splash of venom

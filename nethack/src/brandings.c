@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-02 */
+/* Last modified by Alex Smith, 2014-10-12 */
 /* Copyright (c) 2013 Alex Smith                                  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -30,8 +30,11 @@ const char *const nhcurses_branding_names[(int)nhcurses_branding_count] = {
 };
 
 /* The names of substitutions, as seen in a .txt tile file. The names in the
-   .txt file are compiled to bitflags in the .tiledesc file, and this is the
-   map between them. */
+   .txt file are compiled to bitflags in the .nh4ct file, and this is the map
+   between them.
+
+   When changing these, change the definitions in brandings.h, and
+   sensible_substitutions in tilesequence.c. */
 const char *const nhcurses_sub_names[] = {
 
     /* Names of level display modes. */
@@ -48,26 +51,32 @@ const char *const nhcurses_sub_names[] = {
     [LDM_QUESTGOAL] = "questgoal",
 
     /* These two are special cases. */
-    [LDM_COUNT +  0] = "lit",
-    [LDM_COUNT +  1] = "unlit",
+    [LDM_COUNT + 0] = "lit",
+    [LDM_COUNT + 1] = "unlit",
+
+    /* Statues and corpses are substitutions on the matching monsters, in
+       order to be able to use generators. (Many tilesets will simply want
+       rules for 'sub corpse *' and 'sub statue *'.) */
+    [LDM_COUNT + 2] = "corpse",
+    [LDM_COUNT + 3] = "statue",
 
     /* These represent /quests/, and so affect terrain. This gives some
        awkwardness with gender-specific player-monster names, so we truncate to
        the first three characters (which works in English,
        *cav*eman / *cav*ewoman, *pri*est / *pri*estess). */
-    [LDM_COUNT +  2] = "arc",
-    [LDM_COUNT +  3] = "bar",
-    [LDM_COUNT +  4] = "cav",
-    [LDM_COUNT +  5] = "hea",
-    [LDM_COUNT +  6] = "kni",
-    [LDM_COUNT +  7] = "mon",
-    [LDM_COUNT +  8] = "pri",
-    [LDM_COUNT +  9] = "ran",
-    [LDM_COUNT + 10] = "rog",
-    [LDM_COUNT + 11] = "sam",
-    [LDM_COUNT + 12] = "tou",
-    [LDM_COUNT + 13] = "val",
-    [LDM_COUNT + 14] = "wiz",
+    [LDM_ROLE_0 +  0] = "arc",
+    [LDM_ROLE_0 +  1] = "bar",
+    [LDM_ROLE_0 +  2] = "cav",
+    [LDM_ROLE_0 +  3] = "hea",
+    [LDM_ROLE_0 +  4] = "kni",
+    [LDM_ROLE_0 +  5] = "mon",
+    [LDM_ROLE_0 +  6] = "pri",
+    [LDM_ROLE_0 +  7] = "ran",
+    [LDM_ROLE_0 +  8] = "rog",
+    [LDM_ROLE_0 +  9] = "sam",
+    [LDM_ROLE_0 + 10] = "tou",
+    [LDM_ROLE_0 + 11] = "val",
+    [LDM_ROLE_0 + 12] = "wiz",
 
     /* Whereas these represent personal attributes, and so affect monsters.
        Currently this is only implemented for the player, but, e.g. "sub male
@@ -77,16 +86,16 @@ const char *const nhcurses_sub_names[] = {
        There is no particular need for these to be in the same order as in
        libnethack; the libnethack internals should be invisible to the tiles
        system. */
-    [LDM_COUNT + 15] = "female",
-    [LDM_COUNT + 16] = "male",
+    [LDM_GENDER_0 + 0] = "female",
+    [LDM_GENDER_0 + 1] = "male",
 
-    [LDM_COUNT + 17] = "human",
-    [LDM_COUNT + 18] = "gnome",
-    [LDM_COUNT + 19] = "elf",
-    [LDM_COUNT + 20] = "orc",
-    [LDM_COUNT + 21] = "dwarf",
+    [LDM_RACE_0 + 0] = "human",
+    [LDM_RACE_0 + 1] = "gnome",
+    [LDM_RACE_0 + 2] = "elf",
+    [LDM_RACE_0 + 3] = "orc",
+    [LDM_RACE_0 + 4] = "dwarf",
 
-    [LDM_COUNT + 22] = NULL /* fencepost */
+    [LDM_RACE_0 + 5] = NULL /* fencepost */
 };
 
 static_assert((sizeof nhcurses_sub_names) / (sizeof *nhcurses_sub_names) < 64,
