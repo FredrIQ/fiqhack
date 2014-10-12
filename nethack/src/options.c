@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-10 */
+/* Last modified by Alex Smith, 2014-10-12 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -117,9 +117,6 @@ struct nh_option_desc curses_options[] = {
      {.e = ANIM_ALL}},
     {"bgbranding", "use background colors to show hidden stairs and traps",
      FALSE, OPTTYPE_BOOL, {.b = TRUE}},
-    {"blink",
-     "show multiple symbols for each location by switching between them", FALSE,
-     OPTTYPE_BOOL, {.b = FALSE}},
     {"border", "what to draw borders around", FALSE, OPTTYPE_ENUM,
      {.e = FRAME_ALL}},
     {"comment", "has no effect", FALSE, OPTTYPE_STRING, {.s = NULL}},
@@ -167,7 +164,6 @@ struct nh_option_desc curses_options[] = {
 
 struct nhlib_boolopt_map boolopt_map[] = {
     {"bgbranding", &settings.bgbranding},
-    {"blink", &settings.blink},
     {"darkgray", &settings.darkgray},
     {"extmenu", &settings.extmenu},
     {"floorcolor", &settings.floorcolor},

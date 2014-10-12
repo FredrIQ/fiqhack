@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-10 */
+/* Last modified by Alex Smith, 2014-10-12 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -270,8 +270,6 @@ struct settings {
     nh_bool use_inverse;        /* use inverse video for some things */
     nh_bool invweight;  /* show item weight in the inventory */
     nh_bool bgbranding; /* show hidden traps/stairs with background */
-    /* show multiple symbols for each location by blinking */
-    nh_bool blink;
     nh_bool floorcolor; /* draw stepped-on information for the floor */
     nh_bool status3;    /* draw 3 line status */
     nh_bool mouse;      /* accept mouse input */

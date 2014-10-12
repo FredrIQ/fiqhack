@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-10 */
+/* Last modified by Alex Smith, 2014-10-12 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -28,35 +28,11 @@ static nh_bool fully_refresh_display_buffer = 1;
 static const int mxdir[DIR_SELF + 1] = { -1, -1, 0, 1, 1, 1, 0, -1, 0, 0 };
 static const int mydir[DIR_SELF + 1] = { 0, -1, -1, -1, 0, 1, 1, 1, 0, 0 };
 
-/* GetTickCount() returns milliseconds since the system was started, with a
- * resolution of around 15ms. gettimeofday() returns a value since the start of
- * the epoch.
- * The difference doesn't matter here, since the value is only used to control
- * blinking.
- */
-#ifdef WIN32
-# define get_milliseconds GetTickCount
-#else
-static int
-get_milliseconds(void)
-{
-    struct timeval tv;
-
-    gettimeofday(&tv, NULL);
-    return tv.tv_sec * 1000 + tv.tv_usec / 1000;
-}
-#endif
-
-
-
 int
 get_map_key(nh_bool place_cursor, nh_bool report_clicks,
             enum keyreq_context context)
 {
     int key = ERR;
-
-    if (settings.blink)
-        wtimeout(mapwin, 666);  /* wait 2/3 of a second before switching */
 
     if (context == krc_interrupt_long_action)
         wtimeout(mapwin, settings.animation == ANIM_SLOW ? 300 : 50);
@@ -146,19 +122,12 @@ void
 draw_map(int cx, int cy)
 {
     int x, y, cursx, cursy, mapwinw, mapwinh;
-    unsigned int frame;
 
     if (!mapwin)
         return;
 
     getyx(mapwin, cursy, cursx);
     getmaxyx(mapwin, mapwinh, mapwinw);
-
-    frame = 0;
-    if (settings.blink) {
-        frame = get_milliseconds() / 666;
-        fully_refresh_display_buffer = 1;
-    }
 
     for (y = 0; y < mapwinh && y < ROWNO; y++) {
         for (x = 0; x < mapwinw && x < COLNO; x++) {
@@ -452,12 +421,13 @@ curses_getpos(int xorig, int yorig, nh_bool force, const char *goal)
                     }   /* row */
                 }   /* pass */
 
-                snprintf(printbuf, ARRAY_SIZE(printbuf), "Can't find dungeon feature '%c'.",
-                        (char)key);
+                snprintf(printbuf, ARRAY_SIZE(printbuf),
+                         "Can't find dungeon feature '%c'.", (char)key);
                 curses_msgwin(printbuf, krc_notification);
             } else {
-                snprintf(printbuf, ARRAY_SIZE(printbuf), "Unknown targeting key%s.",
-                        !force ? " (ESC to abort)" : "");
+                snprintf(printbuf, ARRAY_SIZE(printbuf),
+                         "Unknown targeting key%s.",
+                         !force ? " (ESC to abort)" : "");
                 curses_msgwin(printbuf, krc_notification);
             }
         }
