@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-10-10
+Last modified by Alex Smith, 2014-10-12
 
 The tiles code in this directory was originally taken from Slash'EM, and has
 been modified by Alex Smith for use in NetHack 4.  (This documentation file
@@ -217,11 +217,27 @@ hand.  Here's the list:
     followed by space, slash, space) is ignored, with the rest of the name
     being treated as the name.  (Again, for backwards compatibility.)
 
-  * If a name contains a semicolon, space sequence, the name is split at that
-    point and the entire tile definition is used twice; once with the name
-    before the sequence, and once with the name after the sequence.  (This
-    recurses, allowing a tile definition to be used any number of times.)  The
-    idea is to allow the same tile to be used in multiple contexts.
+  * If a name contains a semicolon (followed by any amount of horizontal
+    whitespace), the name is split at that point and the entire tile
+    definition is used twice; once with the name before the sequence, and once
+    with the name after the sequence.  (This recurses, allowing a tile
+    definition to be used any number of times.)  This allows the same tile
+    image to be used for multiple purposes.
+
+  * If a name contains a `?` or `*`, it's treated as a pattern. The tile
+    compiler will loop over all legal tile names to check which ones match the
+    pattern, and the entire tile definition will be used once for each tile
+    name that matches.  For instance, writing `open doors *` does the same
+    thing as writing `open doors 0; open doors 1` (there are two open door
+    tiles).  As usual, a `?` matches one character, and a `*` matches zero or
+    more characters.
+
+    As an exception, patterns like this cannot match tiles with implausible
+    substitutions; this means that `sub corpse corridor` (i.e. a corridor with
+    a corpse on the same tile), despite being a valid tile name that the tile
+    compiler will recognise, will not be matched by `sub corpse *`.  This
+    means that definitions like `sub corpse *` and `sub statue *` can safely
+    be used to override all statue and corpse objects at once.
 
 When writing a 96-bit numerical tile name into the binary tiles format, the
 least significant byte is stored first; this reduces byte-swapping operations
@@ -245,6 +261,15 @@ A cchar contains the following fields:
 
     In binary encoding, the bottom 21 bits are used to represent this, with
     `invisible` being represented as zero.
+
+    The tile compiler also accepts the text input `basechar`.  This will be
+    replaced, when compiling, with Unicode character of the most recently seen
+    *unsubstituted* tile that matches the tile being compiled.  For instance,
+    if you wanted statues to be gray versions of the corresponding monster,
+    you could write a rule like `sub statue *: gray basechar` (so long as the
+    monsters had already been defined at that point, either in that tileset or
+    in a tileset that came earlier on the command line).  This is numerically
+    represented using the (invalid) Unicode character 0xd800.
 
   * A foreground color.  There are 16 possibilities that represent colors
     directly:
@@ -273,19 +298,21 @@ A cchar contains the following fields:
       * `disturb` = 17: shift colors one step along this sequence:
         darkgray -> blue -> cyan -> green -> brown -> red -> magenta;
         other colors shift to brown
+      * `basefg` = 18: by analogy with `basechar`
       * (other numbers reserved for future expansion)
 
     These take up the next-lowest 5 bits in binary encoding.
 
   * A background color.  Values `black` to `gray`, or 0 to 7, are valid here,
     but written with a `bg` prefix (as in `bgblack`, `bgred`, etc.).
-    `samebg`, with a value of 8, copies the background from the layer beneath.
+    `samebg`, with a value of 8, copies the background from the layer beneath;
+    `basebg`, with a value of 9, works like `basechar`.
 
     This accounts for the next 4 bits in binary encoding.
 
-  * Underlining: `regular`, `underlined`, `same_underline` with values of 0,
-    1, 2 respectively.  This accounts for the top two bits, in binary
-    encoding.
+  * Underlining: `regular`, `underlined`, `same_underline`, `base_underline`
+    with values of 0, 1, 2, 3 respectively.  This accounts for the top two bits,
+    in binary encoding.
 
 Any of these fields can be omitted, in which case the field is filled in with
 the appropriate "copy the layer below" behaviour.  More than one field can be
@@ -452,6 +479,13 @@ Existing substitution keys:
     typically only used for `corridor` and `the floor of a room` to implement
     light level display via changing the image used for the furthest
     background.
+
+  * `sub corpse`, `sub statue`: These substitutions are applied to monster
+    tiles in order to create a corpse-of-that-monster or
+    statue-of-that-monster object tile.  Their behaviour on non-monster tiles
+    is subject to change and should be avoided; a wildcard like `sub statue *`
+    will match monster tiles only, in order to make following this rule
+    easier.
 
 
 Tile utilities API

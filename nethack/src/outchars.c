@@ -149,7 +149,8 @@ print_low_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe)
     }
     if (branding != nhcurses_no_branding) {
         print_tile_number(win, TILESEQ_GENBRAND_OFF +
-                          branding - nhcurses_genbranding_first, 0);
+                          branding - nhcurses_genbranding_first,
+                          dbe_substitution(dbe));
     }
 }
 
@@ -157,6 +158,8 @@ void
 print_high_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe)
 {
     enum nhcurses_brandings branding = nhcurses_no_branding;
+    unsigned long long substitution = dbe_substitution(dbe);
+
     if ((dbe->monflags & MON_TAME) && settings.hilite_pet)
         branding = nhcurses_monbranding_tame;
     if ((dbe->monflags & MON_PEACEFUL) && settings.hilite_pet)
@@ -165,8 +168,8 @@ print_high_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe)
         branding = nhcurses_monbranding_detected;
 
     if (branding != nhcurses_no_branding) {
-        print_tile_number(win, TILESEQ_MONBRAND_OFF +
-                          branding - nhcurses_monbranding_first, 0);
+        print_tile_number(win, TILESEQ_MONBRAND_OFF + branding -
+                          nhcurses_monbranding_first, substitution);
     }
 
     /* Traps get trap brandings, apart from magic portals and the vibrating
@@ -179,7 +182,7 @@ print_high_priority_brandings(WINDOW *win, struct nh_dbuf_entry *dbe)
         (dbe->branding & NH_BRANDING_TRAPPED))
         print_tile_number(win, TILESEQ_GENBRAND_OFF +
                           nhcurses_genbranding_trapped -
-                          nhcurses_genbranding_first, 0);
+                          nhcurses_genbranding_first, substitution);
 }
 
 /* What is the bottom-most, opaque background of a map square? */

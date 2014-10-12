@@ -17,30 +17,12 @@ sub lit corridor: bgblack white regular '#'
 boulder: gray '0'
 
 ! Corpse and statue substitutions.
-! TODO: When we have generators, make corpses match the color of the
-! monster that produces them.
-sub corpse *: blue '%'
+sub corpse *: basefg '%'
 sub statue *: gray '`'
 
 ! Stairs and portals have red backgrounds (that show through).
-! TODO: Express these with a generator, to insulate against changes in core.
-staircase up: bgred white '<'
-staircase down: bgred white '>'
-ladder up: bgred yellow '<'
-ladder down: bgred yellow '>'
-long staircase up: bgred yellow underlined '<'
-long staircase down: bgred yellow underlined '>'
-magic portal: bgred bright_magenta '^'
-vibrating square: bgred yellow '^'
-
-! Rogue level graphical overrides.
-sub rogue open doors ?: gray '+'
-sub rogue doorway: gray '+'
-sub rogue *staircase *: gray '%'
-sub rogue gold piece: gray '*'
-! As in NitroHack, override the most common food
-! TODO: Override the others too?
-sub rogue sub corpse *; sub rogue food ration: gray ':'
+staircase *; ladder *; long staircase *: bgred basefg base_underline basechar
+magic portal; vibrating square: bgred basefg base_underline basechar
 
 ! The invisible monster symbol isn't defined in core.
 invisible monster: bright_blue 'I'

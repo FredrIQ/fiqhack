@@ -31,6 +31,7 @@ const char *const cchar_color_names[CCHAR_COLOR_COUNT] = {
     [15] = "white",
     [16] = "samefg",
     [17] = "disturb",
+    [18] = "basefg",
 };
 
 /* Global information about the tileset. */

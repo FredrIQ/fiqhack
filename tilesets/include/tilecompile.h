@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-10 */
+/* Last modified by Alex Smith, 2014-10-12 */
 /* Copyright (C) 2014 Alex Smith. */
 /* NetHack may be freely redistributed. See license for details. */
 
@@ -67,9 +67,13 @@ enum iiformat {
 # define TRANSPARENT_G 108
 # define TRANSPARENT_B 108
 
-# define CCHAR_COLOR_COUNT 18
+# define CCHAR_COLOR_COUNT 19
 # define CCHAR_FGCOLOR_TRANSPARENT 16
+# define CCHAR_FGCOLOR_DISTURB     17
+# define CCHAR_FGCOLOR_BASE        18
 # define CCHAR_BGCOLOR_TRANSPARENT 8
+# define CCHAR_BGCOLOR_BASE        9
+# define CCHAR_CHAR_BASE           0xd800
 
 /* Constant arrays */
 extern const char *const cchar_color_names[CCHAR_COLOR_COUNT];

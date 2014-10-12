@@ -593,6 +593,9 @@ load_text_tileset(png_byte *data, png_size_t size)
 
                         } else if (!strcmp(cp, "invisible")) {
                             cchar &= ~0x1fffffLU;
+                        } else if (!strcmp(cp, "basechar")) {
+                            cchar &= ~0x1fffffLU;
+                            cchar |= CCHAR_CHAR_BASE;
                         } else if (!strcmp(cp, "regular")) {
                             cchar &= ~(3UL << 30);
                         } else if (!strcmp(cp, "underlined")) {
@@ -601,9 +604,15 @@ load_text_tileset(png_byte *data, png_size_t size)
                         } else if (!strcmp(cp, "same_underline")) {
                             cchar &= ~(3UL << 30);
                             cchar |= 2UL << 30;
+                        } else if (!strcmp(cp, "base_underline")) {
+                            cchar &= ~(3UL << 30);
+                            cchar |= 3UL << 30;
                         } else if (!strcmp(cp, "samebg")) {
                             cchar &= ~(15UL << 26);
                             cchar |= CCHAR_BGCOLOR_TRANSPARENT << 26;
+                        } else if (!strcmp(cp, "basebg")) {
+                            cchar &= ~(15UL << 26);
+                            cchar |= CCHAR_BGCOLOR_BASE << 26;
                         } else {
 
                             /* It should be a color code. */
@@ -770,7 +779,51 @@ load_text_tileset(png_byte *data, png_size_t size)
 
             int i;
             for (i = 0; i < intilecount; i++) {
-                intiles[i].image_index = ii;
+
+                if (!tileset_width) {
+
+                    int ii2 = ii;
+
+                    /* We have to resolve any basechar, basefg, basebg, or
+                       base_underline directives in ii. */
+                    int j;
+                    for (j = seen_tile_count - 1; j >= 0; j--)
+                        if (tiles_seen[j].substitution == 0 &&
+                            tiles_seen[j].tilenumber ==
+                            intiles[i].tilenumber)
+                            break;
+
+#define ENSURE_J if (j < 0) EPRINTN("Error: 'base...' used with no base tile")
+
+                    if ((ii & 0x1ffffLU) == CCHAR_CHAR_BASE) {
+                        ENSURE_J;
+                        ii2 &= ~0x1ffffLU;
+                        ii2 |= tiles_seen[j].image_index & 0x1ffffLU;
+                    }
+
+                    if (((ii >> 21) & 31) == CCHAR_FGCOLOR_BASE) {
+                        ENSURE_J;
+                        ii2 &= ~(31LU << 21);
+                        ii2 |= tiles_seen[j].image_index & (31LU << 21);
+                    }
+
+                    if (((ii >> 26) & 16) == CCHAR_BGCOLOR_BASE) {
+                        ENSURE_J;
+                        ii2 &= ~(15LU << 26);
+                        ii2 |= tiles_seen[j].image_index & (15LU << 26);
+                    }
+
+                    if (((ii >> 30) & 3) == 3) {
+                        ENSURE_J;
+                        ii2 &= ~(3LU << 30);
+                        ii2 |= tiles_seen[j].image_index & (3LU << 30);
+                    }
+
+                    intiles[i].image_index = ii2;
+
+                } else
+                    intiles[i].image_index = ii;
+
                 tiles_seen[seen_tile_count++] = intiles[i];
             }
             free(intiles);

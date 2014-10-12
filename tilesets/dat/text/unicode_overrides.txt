@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2014-10-10
+! Last modified by Alex Smith, 2014-10-12
 ! NetHack may be freely redistributed. See license for details.
 !
 ! This text tileset lists tiles that look different in Unicode and in
@@ -9,6 +9,9 @@
 ! Glyph List 4. (Windows is the worst out of the major operating
 ! systems at rendering fonts.) They should also have an exact or close
 ! approximation on code page 437.
+!
+! Note: When overriding something to Unicode here, you probably want
+! to override it back to ASCII in rogue_overrides.txt.
 
 ! Unicodey terrain.
 walls 0: gray '│'
@@ -34,13 +37,18 @@ sub lit corridor: bgblack white regular '▒'
 altar: gray 'Ω'
 ice: cyan '·'
 lowered drawbridges 0: brown '·'
-lowered drawbridges 2: brown '·'
+lowered drawbridges 1: brown '·'
 water: blue '≈'
 underwater: blue '≈'
 lava: red '≈'
 tree: green '±'
 
-! TODO: Unicodey zaps and explosions (needs generators)
+! Replace the characters in zaps and swallows with Unicode, while
+! maintaining color.
+zap ? 0: basefg '│'
+zap ? 1: basefg '─'
+explosion * 1; explosion * 7: basefg '─'
+explosion * 3; explosion * 5: basefg '│'
 
 ! Swallows.
 swallow top center: orange '─'
@@ -50,5 +58,3 @@ swallow middle right: orange '│'
 
 ! Traps.
 web: gray '╬'
-
-! Potential ideas for the future: IBMgraphics-style rogue level
