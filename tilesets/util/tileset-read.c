@@ -759,7 +759,7 @@ load_text_tileset(png_byte *data, png_size_t size)
             }
 
             /* We now have our tile. */
-            if (seen_tile_count >= allocated_tile_count) {
+            if (seen_tile_count + intilecount > allocated_tile_count) {
                 allocated_tile_count += 8;
                 allocated_tile_count *= 2;
                 tiles_seen = realloc(tiles_seen, allocated_tile_count *
