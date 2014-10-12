@@ -28,10 +28,9 @@ magic portal: bgred bright_magenta '^'
 vibrating square: bgred yellow '^'
 
 ! Rogue level graphical overrides.
-sub rogue open doors 0; sub rogue open doors 1: gray '+'
+sub rogue open doors ?: gray '+'
 sub rogue doorway: gray '+'
-sub rogue staircase up; sub rogue staircase down: gray '%'
-sub rogue long staircase up; sub rogue long staircase down: gray '%'
+sub rogue *staircase *: gray '%'
 sub rogue gold piece: gray '*'
 ! As in NitroHack, override the most common food
 ! TODO: Override the others too?

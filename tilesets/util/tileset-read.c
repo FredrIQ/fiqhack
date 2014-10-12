@@ -6,6 +6,7 @@
 #include "tilecompile.h"
 #include "tilesequence.h"
 #include "utf8conv.h"
+#include "hacklib.h"
 #include <string.h>
 
 #define EPRINT(s, ...)                                       \
@@ -318,6 +319,10 @@ load_text_tileset(png_byte *data, png_size_t size)
             char *tilename = malloc(len + 1);
             png_bytep dp = data + i;
             char *tp = tilename;
+
+            if (!tilename)
+                EPRINTN("Error: Could not allocate memory.\n");
+
             if (len > 6 && memcmp(data + i, "# tile ", 6) == 0) {
                 while (*dp && *dp != '(')
                     dp++;
@@ -335,10 +340,8 @@ load_text_tileset(png_byte *data, png_size_t size)
             else if (strstr(tilename, " / "))
                 *(strstr(tilename, " / ")) = '\0';
 
-            /* A semicolon separator takes up one byte, and tile names must be
-               at least one byte long, so we can't have more than (len + 1) / 2
-               + 1 tokens. */
-            tile *intiles = malloc((len + 3) / 2 * sizeof *intiles);
+            tile *intiles = NULL;
+            int intile_alloccount = 0;
             int intilecount = 0;
             int firsttile = 1;
             char *tiletoken;
@@ -350,7 +353,7 @@ load_text_tileset(png_byte *data, png_size_t size)
                 /* Do a sanity check on the tile name we found, in case it's
                    someone trying to use syntax from elsewhere in the file and
                    getting it wrong. */
-                if (strspn(tiletoken, "-,' 0123456789"
+                if (strspn(tiletoken, "-,'?* 0123456789"
                            "abcdefghijklmnopqrstuvwxyz"
                            "ABCDEFGHIJKLMNOPQRSTUVWXYZ") != strlen(tiletoken))
                     EPRINT("Error: Syntax error or bad tile name '%s'\n",
@@ -364,64 +367,118 @@ load_text_tileset(png_byte *data, png_size_t size)
                 if (!*tp2)
                     continue;
 
-                intiles[intilecount].substitution = substitution_from_name(&tp2);
-                intiles[intilecount].tilenumber =
+                unsigned long long substitution = substitution_from_name(&tp2);
+                int exact_match_tilenumber =
                     tileno_from_name(tp2, TILESEQ_INVALID_OFF);
 
-                /* If it isn't a valid name, it may be that we have to
-                   disambiguate. Try with an "s 0" suffix. If that works, change
-                   the 0 to the actual unsuffixed seen count and try again. */
-                if (intiles[intilecount].tilenumber == TILESEQ_INVALID_OFF) {
-                    /* strlen("s 4294967295") == 12, plus 1 for the NUL */
-                    char *tiletoken2 = malloc(strlen(tp2) + 13);
-                    strcpy(tiletoken2, tp2);
-                    tp = tiletoken2 + strlen(tiletoken2);
-                    strcpy(tp, "s 0");
-                    intiles[intilecount].tilenumber =
-                        tileno_from_name(tiletoken2, TILESEQ_INVALID_OFF);
-                    if (intiles[intilecount].tilenumber !=
-                        TILESEQ_INVALID_OFF) {
-                        sprintf(tp, "s %d", unsuffixed_seen_count[
-                                    intiles[intilecount].tilenumber]++);
-                        intiles[intilecount].tilenumber =
-                            tileno_from_name(tiletoken2, TILESEQ_INVALID_OFF);
-                    }
-                    free(tiletoken2);
-                }
+                /* If it isn't a valid name, there are two possibilities:
 
-                /* If it still isn't a valid name, then warn and ignore the
-                   reference, unless we've specifically been told to store the
-                   reference anyway, in which case invent a tile number for
-                   it. */
-                if (intiles[intilecount].tilenumber == TILESEQ_INVALID_OFF) {
-                    if (copy_unknown_tile_names) {
-                        if (unknown_name_count == allocated_name_count) {
-                            allocated_name_count += 8;
-                            allocated_name_count *= 2;
-                            unknown_tile_names =
-                                realloc(unknown_tile_names,
-                                        allocated_name_count *
-                                        sizeof *unknown_tile_names);
-                            if (!unknown_tile_names)
+                   a) It's a 3.4.3/Slash'EM style ambiguous tile name. If this
+                      is the case, we can append "s 0" to get a valid tile name;
+                      if that works, we can use its number to get at the
+                      unsuffixed seen count and get at the tile number that way.
+
+                   b) It contains wildcard matches. If this is the case, we need
+                      to loop over all tile names to see which ones match. We
+                      can discover that we're in this case by looking for a
+                      '?' or '*'.
+
+                   To avoid code duplication, we enter the loop unconditionally,
+                   but if we aren't in case b), we only run one iteration. */
+                bool caseb = (strchr(tp2, '?') || strchr(tp2, '*'));
+                int tiletry = caseb ? 0 : exact_match_tilenumber;
+                int loopmax = caseb ? TILESEQ_COUNT : tiletry + 1;
+                bool tilefound = 0;
+
+                for (; tiletry < loopmax; tiletry++) {
+
+                    bool tileok = 0;
+
+                    /* If we're in case a), then the only tile we "test" will
+                       be TILESEQ_INVALID_OFF. It's OK to change tiletry in
+                       this case; it'll never become smaller than loopmax - 1,
+                       because TILESEQ_INVALID_OFF is negative. */
+                    if (tiletry == TILESEQ_INVALID_OFF) {
+                        /* strlen("s 4294967295") == 12, plus 1 for the NUL */
+                        char *tiletoken2 = malloc(strlen(tp2) + 13);
+                        strcpy(tiletoken2, tp2);
+                        tp = tiletoken2 + strlen(tiletoken2);
+                        strcpy(tp, "s 0");
+                        tiletry =
+                            tileno_from_name(tiletoken2, TILESEQ_INVALID_OFF);
+                        if (tiletry != TILESEQ_INVALID_OFF) {
+                            sprintf(tp, "s %d",
+                                    unsuffixed_seen_count[tiletry]++);
+                            tiletry = tileno_from_name(tiletoken2,
+                                                       TILESEQ_INVALID_OFF);
+                        }
+                        free(tiletoken2);
+
+                        if (tiletry != TILESEQ_INVALID_OFF)
+                            tileok = 1;
+                    } else {
+                        /* If we get here, the tilename can't be ambiguous;
+                           either there was an exact match already (against an
+                           unambiguous tile name), or else we have wildcards,
+                           which don't permit ambiguous matches. All strings
+                           pattern-match against themeselves, so we can just
+                           do a pattern match here. */
+                        tileok = pmatch(tp2, name_from_tileno(tiletry));
+                    }
+
+                    /* If this is the last iteration of the loop and we still
+                       haven't found a valid match, we need to invent a new
+                       number for the reference if -u. Otherwise, the default
+                       behaviour (discarding the tile reference) is correct, but
+                       we should produce a warning. */
+                    if (tiletry >= loopmax - 1 && !tileok && !tilefound) {
+                        if (copy_unknown_tile_names) {
+                            if (unknown_name_count == allocated_name_count) {
+                                allocated_name_count += 8;
+                                allocated_name_count *= 2;
+                                unknown_tile_names =
+                                    realloc(unknown_tile_names,
+                                            allocated_name_count *
+                                            sizeof *unknown_tile_names);
+                                if (!unknown_tile_names)
+                                    EPRINTN(
+                                        "Error: Could not allocate memory\n");
+                            }
+                            unknown_tile_names[unknown_name_count] =
+                                malloc(strlen(tp2) + 1);
+                            if (!unknown_tile_names[unknown_name_count])
+                                EPRINTN("Error: Could not allocate memory\n");
+                            strcpy(unknown_tile_names[unknown_name_count], tp2);
+                            tiletry = TILESEQ_COUNT + 1 + unknown_name_count;
+                            unknown_name_count++;
+                            tileok = 1;
+                        } else {
+                            /* note: tiletoken not tp2 because we want to
+                               include any substitution in the error message */
+                            printf("Note: deleting unknown reference '%s'\n",
+                                   tiletoken);
+                        }
+                    }
+
+                    /* If this is the tile we're looking for, add it to the
+                       array. */
+                    if (tileok) {
+                        tilefound = 1;
+
+                        if (intilecount >= intile_alloccount) {
+                            intile_alloccount += 4;
+                            intile_alloccount *= 2;
+                            intiles = realloc(intiles, intile_alloccount *
+                                              sizeof *intiles);
+                            if (!intiles)
                                 EPRINTN("Error: Could not allocate memory\n");
                         }
-                        unknown_tile_names[unknown_name_count] =
-                            malloc(strlen(tp2) + 1);
-                        if (!unknown_tile_names[unknown_name_count])
-                            EPRINTN("Error: Could not allocate memory\n");
-                        strcpy(unknown_tile_names[unknown_name_count], tp2);
-                        intiles[intilecount].tilenumber =
-                            TILESEQ_COUNT + 1 + unknown_name_count;
-                        unknown_name_count++;
-                    } else {
-                        /* note: tiletoken not tp2 because we want to include
-                           any substitution in the error message */
-                        printf("Note: deleting unknown reference '%s'\n",
-                               tiletoken);
-                        continue;
+
+                        intiles[intilecount].tilenumber = tiletry;
+                        intiles[intilecount].substitution = substitution;
+                        intilecount++;
                     }
                 }
-                intilecount++;
             }
 
             free(tilename);
