@@ -192,10 +192,10 @@ static enum {
 }
 furthest_background(const struct nh_dbuf_entry *dbe)
 {
-    boolean room =
+    boolean corr =
         !strcmp("corr", default_drawing->bgelements[dbe->bg].symname);
 
-    return room ? fb_room : fb_corr;
+    return corr ? fb_corr : fb_room;
 }
 
 void
