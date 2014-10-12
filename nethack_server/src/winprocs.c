@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-07-07 */
+/* Last modified by Alex Smith, 2014-10-12 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -215,6 +215,12 @@ srv_update_status(struct nh_player_info *pi)
     }
     if (all || strcmp(pi->rank, oi->rank))
         json_object_set_new(jobj, "rank", json_string(pi->rank));
+    if (all || strcmp(pi->racename, oi->racename))
+        json_object_set_new(jobj, "racename", json_string(pi->racename));
+    if (all || strcmp(pi->rolename, oi->rolename))
+        json_object_set_new(jobj, "rolename", json_string(pi->rolename));
+    if (all || strcmp(pi->gendername, oi->gendername))
+        json_object_set_new(jobj, "gendername", json_string(pi->gendername));
     if (all || strcmp(pi->level_desc, oi->level_desc))
         json_object_set_new(jobj, "level_desc", json_string(pi->level_desc));
     if (all || pi->x != oi->x)

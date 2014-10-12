@@ -48,13 +48,14 @@ static const char *name_from_tileno_internal(int tileno);
 unsigned long long
 sensible_substitutions(int tileno)
 {
-     /* The current rule is: corpse/statue and race/role/gender apply only to
+     /* The current rule is: corpse/statue and race/gender apply only to
         monsters; everything else applies to all tiles. */
     if (tileno >= TILESEQ_MON_OFF &&
         tileno < TILESEQ_MON_OFF + TILESEQ_MON_SIZE)
         return (1ULL << (LDM_RACE_0 + 5)) - 1;
     else
-        return NHCURSES_SUB_CORPSE - 1;
+        return (1ULL << LDM_GENDER_0) - 1 -
+            NHCURSES_SUB_CORPSE - NHCURSES_SUB_STATUE;
 }
 
 unsigned long long

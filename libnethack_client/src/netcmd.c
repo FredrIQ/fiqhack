@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-21 */
+/* Last modified by Alex Smith, 2014-10-12 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -190,6 +190,12 @@ cmd_update_status(json_t *params, int display_only)
         strncpy(player.plname, json_string_value(p), PL_NSIZ - 1);
     if ((p = json_object_get(params, "rank")))
         strncpy(player.rank, json_string_value(p), PL_NSIZ - 1);
+    if ((p = json_object_get(params, "racename")))
+        strncpy(player.racename, json_string_value(p), PL_NSIZ - 1);
+    if ((p = json_object_get(params, "rolename")))
+        strncpy(player.rolename, json_string_value(p), PL_NSIZ - 1);
+    if ((p = json_object_get(params, "gendername")))
+        strncpy(player.gendername, json_string_value(p), PL_NSIZ - 1);
     if ((p = json_object_get(params, "level_desc")))
         strncpy(player.level_desc, json_string_value(p), COLNO - 1);
     if ((p = json_object_get(params, "x")))

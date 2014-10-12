@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-08 */
+/* Last modified by Alex Smith, 2014-10-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -857,8 +857,11 @@ notify_levelchange(const d_level * dlev)
         mode = LDM_ROGUE;
     else if (Is_knox(z))
         mode = LDM_KNOX;
+    else if (Is_astralevel(z))
+        mode = LDM_ASTRAL;
     else
         mode = LDM_DEFAULT;
+    /* TODO: Vlad's tower */
 
     level_changed(mode);
 }

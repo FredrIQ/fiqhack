@@ -297,7 +297,8 @@ A cchar contains the following fields:
       * `samefg` = 16: same color as beneath
       * `disturb` = 17: shift colors one step along this sequence:
         darkgray -> blue -> cyan -> green -> brown -> red -> magenta;
-        other colors shift to brown
+        white -> yellow -> orange -> bright_magenta; other colors shift to
+        brown
       * `basefg` = 18: by analogy with `basechar`
       * (other numbers reserved for future expansion)
 

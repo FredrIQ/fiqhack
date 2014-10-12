@@ -233,8 +233,27 @@ dbe_substitution(struct nh_dbuf_entry *dbe)
             s |= NHCURSES_SUB_STATUE;
     }
 
-    /* TODO: Determine which Quest this tile belongs to (if any), and
-       race/gender of a player-monster on the tile */
+    char tempsub[PL_NSIZ + 5]; /* "sub  " and a \0 */
+
+    /* Substitutions for the Quest this tile is on. */
+    if (curses_level_display_mode == LDM_QUESTHOME ||
+        curses_level_display_mode == LDM_QUESTFILL1 ||
+        curses_level_display_mode == LDM_QUESTLOCATE ||
+        curses_level_display_mode == LDM_QUESTFILL2 ||
+        curses_level_display_mode == LDM_QUESTGOAL) {
+        snprintf(tempsub, sizeof tempsub, "sub %.3s ",
+                 player.rolename);
+        tempsub[4] |= 32; /* convert to lowercase */
+        s |= substitution_from_name(&(const char *){tempsub});
+    }
+
+    /* Race/gender of the player. TODO: For now we do this on every tile; we
+       should only be doing it on the player's so as to not affect
+       player-monsters on other tiles. */
+    snprintf(tempsub, sizeof tempsub, "sub %s ", player.gendername);
+    s |= substitution_from_name(&(const char *){tempsub});
+    snprintf(tempsub, sizeof tempsub, "sub %s ", player.racename);
+    s |= substitution_from_name(&(const char *){tempsub});
 
     return s;
 }
@@ -283,6 +302,9 @@ combine_cchar(unsigned long cchar_old, unsigned long cchar_new)
         case CLR_GREEN: fgcolor = CLR_BROWN; break;
         case CLR_BROWN: fgcolor = CLR_RED; break;
         case CLR_RED: fgcolor = CLR_MAGENTA; break;
+        case CLR_ORANGE: fgcolor = CLR_BRIGHT_MAGENTA; break;
+        case CLR_YELLOW: fgcolor = CLR_ORANGE; break;
+        case CLR_WHITE: fgcolor = CLR_YELLOW; break;
         default: fgcolor = CLR_BROWN; break;
         }
         cchar_old &= ~(31UL << 21);

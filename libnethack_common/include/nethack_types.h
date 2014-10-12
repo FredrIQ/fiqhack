@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-05 */
+/* Last modified by Alex Smith, 2014-10-12 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -106,8 +106,10 @@
 # define LDM_QUESTLOCATE 8
 # define LDM_QUESTFILL2  9
 # define LDM_QUESTGOAL   10
+# define LDM_VLAD        11
+# define LDM_ASTRAL      12
 
-# define LDM_COUNT       11      /* number of level display modes */
+# define LDM_COUNT       13      /* number of level display modes */
 
 /* Command parameters.
  *
@@ -530,6 +532,9 @@ struct nh_player_info {
     char plname[PL_NSIZ];
     int x, y, z;
     char rank[PL_NSIZ];
+    char rolename[PL_NSIZ];
+    char gendername[PL_NSIZ];
+    char racename[PL_NSIZ];
     char level_desc[COLNO];
     char statusitems[STATUSITEMS_MAX][ITEMLEN];
     int score, xp, gold, moves;

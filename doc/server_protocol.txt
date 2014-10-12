@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-07-07
+Last modified by Alex Smith, 2014-10-12
 
 This document documents the version of the network protocol used in
 NetHack 4.3, and was written by Daniel Thaler, GreyKnight, Alex Smith.
@@ -1218,6 +1218,12 @@ Arguments: an object:
     turn)
   * `int plname`: the character's name
   * `string rank`: the character's professional title
+  * `string racename`: the character's unpolymorphed race (`human`, `dwarf`,
+    etc.)
+  * `string gender`: the character's unpolymorphed gender (`male`, `female`,
+    `neuter`); this is affected by permanent gender changes, but not by
+    polymorphing into a male/female-only monster
+  * `string rolename`: the character's current role (`Archaeologist`, etc.)
   * `int score`: the character's current score
   * `int st`: the integer part of the character's Strength stat
   * `int st_extra`: the fractional part of the character's Strength stat

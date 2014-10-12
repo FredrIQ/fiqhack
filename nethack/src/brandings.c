@@ -49,6 +49,8 @@ const char *const nhcurses_sub_names[] = {
     [LDM_QUESTLOCATE] = "questlocate",
     [LDM_QUESTFILL2] = "questfill2",
     [LDM_QUESTGOAL] = "questgoal",
+    [LDM_VLAD] = "vlad",
+    [LDM_ASTRAL] = "astral",
 
     /* These two are special cases. */
     [LDM_COUNT + 0] = "lit",

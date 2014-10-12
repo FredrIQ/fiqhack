@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-07-31 */
+/* Last modified by Alex Smith, 2014-10-12 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -112,16 +112,15 @@ apply_colormap(struct ColorMap *map)
 
     /* Set up all color pairs. If using bold, then set up color pairs for
        foreground colors 0-7; if not, then set up color pairs for foreground
-       colors 0-15. If there are sufficient color pairs, then set them up for 6
-       possible non-default background colors (don't use white, there are
-       terminals that hate it).  So there are 112 pairs required for 16 colors,
-       or 56 required for 8 colors. */
-    for (bg = 0; bg <= 6; bg++) {
+       colors 0-15. If there are sufficient color pairs, then set them up for 7
+       possible non-default background colors.  So there are 128 pairs required
+       for 16 colors, or 56 required for 8 colors. */
+    for (bg = 0; bg <= 7; bg++) {
 
         /* Do not set up background colors if there are not enough color pairs. 
          */
         if (bg == 1 &&
-            ((COLOR_PAIRS < 57) || (COLORS >= 16 && COLOR_PAIRS < 113)))
+            ((COLOR_PAIRS < 57) || (COLORS >= 16 && COLOR_PAIRS < 129)))
             break;
 
         /* For no background, use black; otherwise use the color from the color
@@ -141,7 +140,7 @@ apply_colormap(struct ColorMap *map)
         }
     }
 
-    /* If we have at least 114 colour pairs, then we use pair 113 for the main
+    /* If we have at least 130 colour pairs, then we use pair 129 for the main
        background frame; this allows us to change its color to warn about
        critical situations via palette changes (which saves having to do a
        bunch of complex redrawing). The default color of the frame is color 7
