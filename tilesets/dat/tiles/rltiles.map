@@ -1071,10 +1071,6 @@ sub sokoban walls 10
 
 ! New for NetHack 4
 
-! Traps
-
-vibrating square
-
 ! Generic walls
 
 sub vlad walls 0
@@ -1099,6 +1095,10 @@ sub astral walls 7
 sub astral walls 8
 sub astral walls 9
 sub astral walls 10
+
+! Traps
+
+vibrating square
 
 ! Specific walls
 
