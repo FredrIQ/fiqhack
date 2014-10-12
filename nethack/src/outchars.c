@@ -209,7 +209,8 @@ curses_notify_level_changed(int dmode)
 unsigned long long
 dbe_substitution(struct nh_dbuf_entry *dbe)
 {
-    unsigned long long s = NHCURSES_SUB_LDM(curses_level_display_mode);
+    int ldm = settings.dungeoncolor ? curses_level_display_mode : LDM_DEFAULT;
+    unsigned long long s = NHCURSES_SUB_LDM(ldm);
 
     /* TODO: Do we want this behaviour (that approximates 3.4.3 behaviour) for
        the "lit" substitution? Do we want it to be customizable?
@@ -236,11 +237,11 @@ dbe_substitution(struct nh_dbuf_entry *dbe)
     char tempsub[PL_NSIZ + 5]; /* "sub  " and a \0 */
 
     /* Substitutions for the Quest this tile is on. */
-    if (curses_level_display_mode == LDM_QUESTHOME ||
-        curses_level_display_mode == LDM_QUESTFILL1 ||
-        curses_level_display_mode == LDM_QUESTLOCATE ||
-        curses_level_display_mode == LDM_QUESTFILL2 ||
-        curses_level_display_mode == LDM_QUESTGOAL) {
+    if (ldm == LDM_QUESTHOME ||
+        ldm == LDM_QUESTFILL1 ||
+        ldm == LDM_QUESTLOCATE ||
+        ldm == LDM_QUESTFILL2 ||
+        ldm == LDM_QUESTGOAL) {
         snprintf(tempsub, sizeof tempsub, "sub %.3s ",
                  player.rolename);
         tempsub[4] |= 32; /* convert to lowercase */
@@ -449,8 +450,15 @@ print_background_tile(WINDOW *win, struct nh_dbuf_entry *dbe)
 
     print_tile_number(win, furthest_background_tileno[furthest_background(dbe)],
                       substitutions);
-    print_tile(win, default_drawing->bgelements + dbe->bg,
-               NULL, TILESEQ_CMAP_OFF, substitutions);
+
+    if (!settings.visible_rock &&
+        !strcmp("stone", default_drawing->bgelements[dbe->bg].symname))
+        print_tile_number(win, tileno_from_name("unexplored area",
+                                                TILESEQ_CMAP_OFF),
+                          substitutions);
+    else
+        print_tile(win, default_drawing->bgelements + dbe->bg,
+                   NULL, TILESEQ_CMAP_OFF, substitutions);
 }
 
 /* outchars.c */
