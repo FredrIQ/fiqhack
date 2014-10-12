@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-10 */
+/* Last modified by Alex Smith, 2014-10-12 */
 /* Copyright (C) 2014 Alex Smith. */
 /* NetHack may be freely redistributed. See license for details. */
 
@@ -310,11 +310,12 @@ load_text_tileset(png_byte *data, png_size_t size)
            # tile 0 (tile name)\0
            # tile 0 (tile name):
            # tile name\0
-           # tile name: */
+           # tile name:
+
+           We can have multiple tilenames, in which case they're separated
+           by semicolon-space tokens. */
         {
-            /* len + 1, plus "s 4294967295"; we cannot use a VLA here, it
-               causes a stack leak in gcc (!) */
-            char *tilename = malloc(len + 12);
+            char *tilename = malloc(len + 1);
             png_bytep dp = data + i;
             char *tp = tilename;
             if (len > 6 && memcmp(data + i, "# tile ", 6) == 0) {
@@ -334,78 +335,93 @@ load_text_tileset(png_byte *data, png_size_t size)
             else if (strstr(tilename, " / "))
                 *(strstr(tilename, " / ")) = '\0';
 
-            /* Do a sanity check on the tile name we found, in case it's
-               someone trying to use syntax from elsewhere in the file and
-               getting it wrong. */
-            if (strspn(tilename, "-,' 0123456789"
-                       "abcdefghijklmnopqrstuvwxyz"
-                       "ABCDEFGHIJKLMNOPQRSTUVWXYZ") != strlen(tilename))
-                EPRINT("Error: Syntax error or bad tile name '%s'\n",
-                        tilename);
+            /* A semicolon separator takes up one byte, and tile names must be
+               at least one byte long, so we can't have more than (len + 1) / 2
+               + 1 tokens. */
+            tile *intiles = malloc((len + 3) / 2 * sizeof *intiles);
+            int intilecount = 0;
+            int firsttile = 1;
+            char *tiletoken;
 
-            const char *tp2 = tilename;
-            tp = tilename + strlen(tilename);
-            unsigned long long substitution = substitution_from_name(&tp2);
-            int tileno = tileno_from_name(tp2, TILESEQ_INVALID_OFF);
+            while ((tiletoken = strtok(firsttile ? tilename : NULL, ";"))) {
 
-            /* If it isn't a valid name, it may be that we have to
-               disambiguate. Try with an "s 0" suffix. If that works, change
-               the 0 to the actual unsuffixed seen count and try again. */
-            if (tileno == TILESEQ_INVALID_OFF) {
-                strcat(tilename, "s 0");
-                tileno = tileno_from_name(tp2, TILESEQ_INVALID_OFF);
-                if (tileno != TILESEQ_INVALID_OFF) {
-                    sprintf(tp, "s %d", unsuffixed_seen_count[tileno]++);
-                    tileno = tileno_from_name(tp2, TILESEQ_INVALID_OFF);
-                }
-                *tp = '\0';
-            }
+                firsttile = 0;
 
-            /* If it still isn't a valid name, then warn and ignore the
-               reference, unless we've specifically been told to store the
-               reference anyway, in which case invent a tile number for it. */
-            if (tileno == TILESEQ_INVALID_OFF) {
-                if (copy_unknown_tile_names) {
-                    if (unknown_name_count == allocated_name_count) {
-                        allocated_name_count += 8;
-                        allocated_name_count *= 2;
-                        unknown_tile_names =
-                            realloc(unknown_tile_names,
-                                    allocated_name_count *
-                                    sizeof *unknown_tile_names);
-                        if (!unknown_tile_names)
-                            EPRINTN("Error: Could not allocate memory\n");
-                    }
-                    unknown_tile_names[unknown_name_count] =
-                        malloc(strlen(tilename) + 1);
-                    if (!unknown_tile_names[unknown_name_count])
-                        EPRINTN("Error: Could not allocate memory\n");
-                    strcpy(unknown_tile_names[unknown_name_count], tilename);
-                    tileno = TILESEQ_COUNT + 1 + unknown_name_count;
-                    unknown_name_count++;
-                } else {
-                    printf("Note: deleting unknown reference '%s'\n", tilename);
-                    filepos++;
+                /* Do a sanity check on the tile name we found, in case it's
+                   someone trying to use syntax from elsewhere in the file and
+                   getting it wrong. */
+                if (strspn(tiletoken, "-,' 0123456789"
+                           "abcdefghijklmnopqrstuvwxyz"
+                           "ABCDEFGHIJKLMNOPQRSTUVWXYZ") != strlen(tiletoken))
+                    EPRINT("Error: Syntax error or bad tile name '%s'\n",
+                           tiletoken);
 
-                    /* Check for a tile image. If we find one, we must discard
-                       it. */
-                    if (*dp == ')')
-                        dp++;
+                const char *tp2 = tiletoken;
 
-                    if (!*dp && dp - data < size - 1 && dp[1] == '{') {
-                        while (*dp != '}') {
-                            if (!*dp)
-                                lineno++;
-                            dp++;
-                            if (dp >= data + size)
-                                EPRINTN("Error: unmatched '{'\n");
-                        }
-                        i = dp - data;
-                    }
-
-                    free(tilename);
+                /* Remove leading spaces; discard tiles with empty names */
+                while (*tp2 == ' ')
+                    tp2++;
+                if (!*tp2)
                     continue;
+
+                intiles[intilecount].substitution = substitution_from_name(&tp2);
+                intiles[intilecount].tilenumber =
+                    tileno_from_name(tp2, TILESEQ_INVALID_OFF);
+
+                /* If it isn't a valid name, it may be that we have to
+                   disambiguate. Try with an "s 0" suffix. If that works, change
+                   the 0 to the actual unsuffixed seen count and try again. */
+                if (intiles[intilecount].tilenumber == TILESEQ_INVALID_OFF) {
+                    /* strlen("s 4294967295") == 12, plus 1 for the NUL */
+                    char *tiletoken2 = malloc(strlen(tp2) + 13);
+                    strcpy(tiletoken2, tp2);
+                    tp = tiletoken2 + strlen(tiletoken2);
+                    strcpy(tp, "s 0");
+                    intiles[intilecount].tilenumber =
+                        tileno_from_name(tiletoken2, TILESEQ_INVALID_OFF);
+                    if (intiles[intilecount].tilenumber !=
+                        TILESEQ_INVALID_OFF) {
+                        sprintf(tp, "s %d", unsuffixed_seen_count[
+                                    intiles[intilecount].tilenumber]++);
+                        intiles[intilecount].tilenumber =
+                            tileno_from_name(tiletoken2, TILESEQ_INVALID_OFF);
+                    }
+                    free(tiletoken2);
                 }
+
+                /* If it still isn't a valid name, then warn and ignore the
+                   reference, unless we've specifically been told to store the
+                   reference anyway, in which case invent a tile number for
+                   it. */
+                if (intiles[intilecount].tilenumber == TILESEQ_INVALID_OFF) {
+                    if (copy_unknown_tile_names) {
+                        if (unknown_name_count == allocated_name_count) {
+                            allocated_name_count += 8;
+                            allocated_name_count *= 2;
+                            unknown_tile_names =
+                                realloc(unknown_tile_names,
+                                        allocated_name_count *
+                                        sizeof *unknown_tile_names);
+                            if (!unknown_tile_names)
+                                EPRINTN("Error: Could not allocate memory\n");
+                        }
+                        unknown_tile_names[unknown_name_count] =
+                            malloc(strlen(tp2) + 1);
+                        if (!unknown_tile_names[unknown_name_count])
+                            EPRINTN("Error: Could not allocate memory\n");
+                        strcpy(unknown_tile_names[unknown_name_count], tp2);
+                        intiles[intilecount].tilenumber =
+                            TILESEQ_COUNT + 1 + unknown_name_count;
+                        unknown_name_count++;
+                    } else {
+                        /* note: tiletoken not tp2 because we want to include
+                           any substitution in the error message */
+                        printf("Note: deleting unknown reference '%s'\n",
+                               tiletoken);
+                        continue;
+                    }
+                }
+                intilecount++;
             }
 
             free(tilename);
@@ -685,10 +701,13 @@ load_text_tileset(png_byte *data, png_size_t size)
                 if (!tiles_seen)
                     EPRINTN("Error: not enough memory for tiles\n");
             }
-            tiles_seen[seen_tile_count++] =
-                (tile){.tilenumber = tileno,
-                       .substitution = substitution,
-                       .image_index = ii};
+
+            int i;
+            for (i = 0; i < intilecount; i++) {
+                intiles[i].image_index = ii;
+                tiles_seen[seen_tile_count++] = intiles[i];
+            }
+            free(intiles);
         }
     }
 
