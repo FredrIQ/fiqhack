@@ -217,6 +217,7 @@ enum nh_text_mode {
     /* Tilesets, defaulting to Unicode if tiles are not available */
     TILESET_DAWNHACK_16, /* DawnHack by DragonDePlatino */
     TILESET_DAWNHACK_32, /* The same, upscaled */
+    TILESET_RLTILES_32,  /* RLTiles by many contributors, provided by Raz */
     /* Slash'EM has its own tilesets (many of which are unfinished) */
     TILESET_SLASHEM_16,
     TILESET_SLASHEM_32,

@@ -634,6 +634,9 @@ setup_tiles(void)
     case TILESET_DAWNHACK_32:
         set_tile_file("dawnhack-32.nh4ct");
         return TRUE;
+    case TILESET_RLTILES_32:
+        set_tile_file("rltiles-32.nh4ct");
+        return TRUE;
     case TILESET_SLASHEM_16:
         set_tile_file("slashem-16.nh4ct");
         return TRUE;
