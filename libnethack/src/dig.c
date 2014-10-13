@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-08-16 */
+/* Last modified by Alex Smith, 2014-10-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -260,8 +260,10 @@ dig(void)
         switch (rn2(3)) {
         case 0:
             if (!welded(uwep)) {
-                pline("You fumble and drop your %s.", xname(uwep));
-                dropx(uwep);
+                struct obj *otmp = uwep;
+                pline("You fumble and drop your %s.", xname(otmp));
+                unwield_silently(otmp);
+                dropx(otmp);
             } else {
                 if (u.usteed)
                     pline("Your %s %s and %s %s!", xname(uwep),

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-12 */
+/* Last modified by Alex Smith, 2014-10-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -275,6 +275,7 @@ dosinkring(struct obj *obj)  /* obj is a ring being dropped over a sink */
         pline("The ring is regurgitated!");
     giveback:
         obj->in_use = FALSE;
+        /* this is safe, the ring was unwielded by the caller */
         dropx(obj);
         makeknown(obj->otyp);
         return;
@@ -393,6 +394,7 @@ dosinkring(struct obj *obj)  /* obj is a ring being dropped over a sink */
     if (!rn2(20)) {
         pline("The sink backs up, leaving %s.", doname(obj));
         obj->in_use = FALSE;
+        /* the caller has checked this is safe */
         dropx(obj);
     } else
         useup(obj);
