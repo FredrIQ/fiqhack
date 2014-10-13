@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-08-16 */
+/* Last modified by Alex Smith, 2014-10-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -840,6 +840,18 @@ equip_heartbeat(void)
         else
             cant_equip = !canwearobjon(desired, islot, TRUE, FALSE, FALSE);
 
+        /* For slots where equip and unequip are combined (i.e. unequip looks at
+           desired), we also have to check the other half of the equip
+           sequence. */
+        if (islot == os_wep || islot == os_swapwep || islot == os_quiver) {
+            if (!cant_equip && desired && desired != &zeroobj &&
+                equip_order[i].direction == ed_unequip)
+                cant_equip = !canwearobjon(desired, islot, TRUE, FALSE, FALSE);
+            else if (!cant_equip && current && current != &zeroobj &&
+                     equip_order[i].direction == ed_equip)
+                cant_equip = !canunwearobj(current, TRUE, FALSE, FALSE);
+        }
+
         if (cant_equip) {
             /* Abort the attempt to equip. */
             u.utracked[tos_first_equip + islot] = NULL;
@@ -1307,9 +1319,9 @@ already_wearing(const char *cc)
    paranoia, but best to make sure we don't cause side effects in zero
    time.) */
 static inline boolean
-known_welded(boolean noisy)
+known_welded(boolean spoil)
 {
-    return (noisy || (uwep && uwep->bknown)) && welded(uwep);
+    return (spoil || (uwep && uwep->bknown)) && welded(uwep);
 }
 
 /* Checks how many slots of a given type a given monster has (works correctly
@@ -1792,7 +1804,7 @@ canunwearobj(struct obj *otmp, boolean noisy, boolean spoil, boolean cblock)
     }
     /* basic curse checks: anything welds in equip slots, only specific items
        weld in the hands, nothing welds in weapon or quiver */
-    if (otmp->owornmask & W_EQUIP) {
+    if (otmp->owornmask & W_WORN) {
         if (spoil && otmp->cursed)
             otmp->bknown = TRUE;
         if (otmp->cursed && otmp->bknown) {
