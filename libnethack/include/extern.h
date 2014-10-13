@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-08 */
+/* Last modified by Alex Smith, 2014-10-13 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -438,7 +438,7 @@ extern boolean hurtle_step(void *, int, int);
 
 /* ### dump.c ### */
 
-extern void begin_dump(int);
+extern const char *begin_dump(int);
 extern void end_dump(int, long, const char *);
 extern void dump_catch_menus(boolean);
 
@@ -1700,7 +1700,8 @@ extern int wiz_timeout_queue(const struct nh_cmd_arg *);
 
 /* ### topten.c ### */
 
-extern void update_topten(int how, const char *killer, unsigned long carried);
+extern void update_topten(int how, const char *killer,
+                          unsigned long carried, const char *dumpname);
 extern struct obj *tt_oname(struct obj *);
 extern unsigned long encode_carried(void);
 extern const char *describe_death(int how, int maxlen);

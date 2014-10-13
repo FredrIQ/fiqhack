@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-28 */
+/* Last modified by Alex Smith, 2014-10-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -164,7 +164,8 @@ encode_conduct(void)
 }
 
 static void
-write_xlentry(FILE * rfile, const struct toptenentry *tt, unsigned long carried)
+write_xlentry(FILE * rfile, const struct toptenentry *tt,
+              unsigned long carried, const char *dumpname)
 {
     char buf[DTHSZ + 1];
     int i;
@@ -196,6 +197,10 @@ write_xlentry(FILE * rfile, const struct toptenentry *tt, unsigned long carried)
 
     munge_xlstring(buf, tt->death, DTHSZ + 1);
     fprintf(rfile, SEP "death=%s", buf);
+
+    char buf2[strlen(dumpname) + 2];
+    munge_xlstring(buf2, dumpname, sizeof buf2);
+    fprintf(rfile, SEP "dumplog=%s", buf2);
 
     fprintf(rfile, SEP "conduct=%ld", encode_conduct());
 
@@ -299,7 +304,8 @@ update_log(const struct toptenentry *newtt)
 }
 
 static void
-update_xlog(const struct toptenentry *newtt, unsigned long carried)
+update_xlog(const struct toptenentry *newtt,
+            unsigned long carried, const char *dumpname)
 {
     /* used for statistical purposes and tournament scoring */
     int fd =
@@ -307,7 +313,7 @@ update_xlog(const struct toptenentry *newtt, unsigned long carried)
     if (change_fd_lock(fd, FALSE, LT_WRITE, 10)) {
         FILE *xlfile = fdopen(fd, "a");
 
-        write_xlentry(xlfile, newtt, carried);
+        write_xlentry(xlfile, newtt, carried, dumpname);
         change_fd_lock(fd, FALSE, LT_NONE, 0);
         fclose(xlfile); /* also closes fd */
     }
@@ -455,7 +461,8 @@ toptenlist_insert(struct toptenentry *ttlist, struct toptenentry *newtt)
  * Add the result of the current game to the score list
  */
 void
-update_topten(int how, const char *killer, unsigned long carried)
+update_topten(int how, const char *killer, unsigned long carried,
+              const char *dumpname)
 {
     struct toptenentry *toptenlist, newtt;
     boolean need_rewrite;
@@ -470,7 +477,7 @@ update_topten(int how, const char *killer, unsigned long carried)
 
     fill_topten_entry(&newtt, how, killer);
     update_log(&newtt);
-    update_xlog(&newtt, carried);
+    update_xlog(&newtt, carried, dumpname);
 
     /* nothing more to do for non-scoring games */
     if (wizard || discover || flags.polyinit_mnum != -1)

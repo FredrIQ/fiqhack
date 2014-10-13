@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-09-26 */
+/* Last modified by Alex Smith, 2014-10-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -985,7 +985,7 @@ done_noreturn(int how, const char *killer)
     umoney = money_cnt(invent) + hidden_gold();
     u.urexp = calc_score(how, FALSE, umoney);
 
-    begin_dump(how);
+    const char *dumpname = begin_dump(how);
     dump_disclose(how);
 
     if (bones_ok && !discover) {
@@ -1001,7 +1001,7 @@ done_noreturn(int how, const char *killer)
 
     /* generate a topten entry for this game. update_topten does not display
        anything. */
-    update_topten(how, noted_killer, carried);
+    update_topten(how, noted_killer, carried, dumpname ? dumpname : "");
 
     terminate(GAME_OVER);
 }

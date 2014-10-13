@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Alex Smith, 2014-10-13 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -24,7 +24,7 @@ static void dump_outrip(struct nh_menulist *ml, boolean ts, const char *name,
 # define TIMESTAMP_FORMAT "%Y-%m-%d %H_%M_%S"
 #endif
 
-void
+const char *
 begin_dump(int how)
 {
     const char *timestamp, *dumpname, *status, *rolename;
@@ -69,7 +69,7 @@ begin_dump(int how)
                          aligns[1 - u.ualign.type].filecode, status);
     dumpfp = fopen_datafile(dumpname, "w+", DUMPPREFIX);
     if (!dumpfp)
-        return;
+        return NULL;
 
     rolename = (u.ufemale && urole.name.f) ? urole.name.f : urole.name.m;
     fprintf(dumpfp, "%s, %s %s %s %s\n", u.uplname,
@@ -78,6 +78,8 @@ begin_dump(int how)
 
     dump_screen(dumpfp);
     dump_status();
+
+    return dumpname;
 }
 
 
