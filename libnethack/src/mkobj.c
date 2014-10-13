@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-06-01 */
+/* Last modified by Sean Hunt, 2014-10-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1029,7 +1029,7 @@ mkcorpstat(int objtype, /* CORPSE or STATUE */
 
     if (objtype != CORPSE && objtype != STATUE)
         impossible("making corpstat type %d", objtype);
-    if (x == 0 && y == 0) {     /* special case - random placement */
+    if (x == COLNO && y == ROWNO) {     /* special case - random placement */
         otmp = mksobj(lev, objtype, init, FALSE);
         if (otmp)
             rloco(otmp);

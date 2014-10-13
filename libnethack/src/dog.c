@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-08-16 */
+/* Last modified by Sean Hunt, 2014-10-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -249,8 +249,8 @@ mon_arrive(struct monst *mtmp, boolean with_you)
     xyflags = mtmp->mtrack[0].y;
     xlocale = mtmp->mtrack[1].x;
     ylocale = mtmp->mtrack[1].y;
-    mtmp->mtrack[0].x = mtmp->mtrack[0].y = 0;
-    mtmp->mtrack[1].x = mtmp->mtrack[1].y = 0;
+    mtmp->mtrack[0].x = mtmp->mtrack[1].x = COLNO;
+    mtmp->mtrack[1].y = mtmp->mtrack[1].y = ROWNO;
 
     for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
         set_obj_level(mtmp->dlevel, otmp);
@@ -336,11 +336,12 @@ mon_arrive(struct monst *mtmp, boolean with_you)
         }
      /*FALLTHRU*/ default:
     case MIGR_RANDOM:
-        xlocale = ylocale = 0;
+        xlocale = COLNO;
+        ylocale = ROWNO;
         break;
     }
 
-    if (xlocale && wander) {
+    if ((xlocale != COLNO) && wander) {
         /* monster moved a bit; pick a nearby location */
         /* mnearto() deals w/stone, et al */
         char *r = in_rooms(level, xlocale, ylocale, 0);
@@ -351,8 +352,10 @@ mon_arrive(struct monst *mtmp, boolean with_you)
             /* somexy() handles irregular level->rooms */
             if (somexy(level, &level->rooms[*r - ROOMOFFSET], &c))
                 xlocale = c.x, ylocale = c.y;
-            else
-                xlocale = ylocale = 0;
+            else {
+                xlocale = COLNO;
+                ylocale = ROWNO;
+            }
         } else {        /* not in a room */
             int i, j;
 
@@ -384,7 +387,7 @@ mon_arrive(struct monst *mtmp, boolean with_you)
                 if (obj->owornmask & W_MASK(os_wep))
                     setmnotwielded(mtmp, obj);
                 obj->owornmask = 0L;
-                if (xlocale && ylocale)
+                if (xlocale != COLNO && ylocale != ROWNO)
                     place_object(obj, level, xlocale, ylocale);
                 else {
                     rloco(obj);
