@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-08 */
+/* Last modified by Sean Hunt, 2014-10-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -168,13 +168,9 @@ static const struct turnstate default_turnstate = {
     .generating_bones = FALSE,
     .migrating_pets = NULL,
     .migrating_objs = NULL,
-    .helpless_timers = {},
-    .helpless_causes = {},
-    .helpless_endmsgs = {},
     .pray = { .align = A_NONE, .type = pty_invalid, .trouble = ptr_invalid },
-    .move = { .dx = 0, .dy = 0, .stepped_on = {} },
-    .goto_info = { .dlevel = { .dnum = -1, .dlevel = -1 }, .flags = 0,
-                   .pre_msg = {}, .post_msg = {}, },
+    .move = { .dx = 0, .dy = 0 },
+    .goto_info = { .dlevel = { .dnum = -1, .dlevel = -1 }, .flags = 0 }
 };
 
 struct turnstate turnstate;

@@ -1225,15 +1225,16 @@ get_config_name(fnchar * buf, nh_bool ui)
         i++;
     }
     usernamew[i] = 0;
+#else
+    /* This is to avoid putting a directive inside the arguments to fnncat,
+     * which is a macro. */
+    char *usernamew = ui_flags.username;
 #endif
 
-    fnncat(buf, ui_flags.connection_only ?
-#ifdef WIN32
-           usernamew :
-#else
-           ui_flags.username:
-#endif
-           ui ? FN("curses.conf") : FN("NetHack4.conf"), BUFSZ - fnlen(buf) - 1);
+    fnncat(buf, ui_flags.connection_only ? usernamew :
+                ui ? FN("curses.conf") :
+                FN("NetHack4.conf"),
+           BUFSZ - fnlen(buf) - 1);
     if (ui_flags.connection_only)
         fnncat(buf, ui ? FN(".curses.rc") : FN(".NetHack4.rc"),
                BUFSZ - fnlen(buf) - 1);

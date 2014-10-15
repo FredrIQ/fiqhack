@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-07-07 */
+/* Last modified by Sean Hunt, 2014-10-15 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -685,8 +685,10 @@ nhnet_describe_pos(int x, int y, struct nh_desc_buf *bufs, int *is_in)
     json_t *jmsg;
     int in;
 
-    if (!nhnet_active())
-        return nh_describe_pos(x, y, bufs, is_in);
+    if (!nhnet_active()) {
+        nh_describe_pos(x, y, bufs, is_in);
+        return;
+    }
 
     if (!api_entry())
         return;

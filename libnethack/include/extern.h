@@ -6,7 +6,7 @@
 #ifndef EXTERN_H
 # define EXTERN_H
 
-/* some typedefs we need access to */
+/* some typedefs and enums we need access to */
 # include "global.h"
 # include "align.h"
 # include "dungeon.h"
@@ -15,6 +15,7 @@
 # include "decl.h"
 # include "youprop.h"
 # include "obj.h"
+# include "monattk.h"
 
 /* hacklib.h now contains extern definitions for hacklib */
 # include "hacklib.h"

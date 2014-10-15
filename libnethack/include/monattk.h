@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-10-15 */
 /* NetHack may be freely redistributed.  See license for details. */
 /* Copyright 1988, M. Stephenson */
 
@@ -96,6 +96,19 @@
 # define MM_HIT         0x1     /* aggressor hit defender */
 # define MM_DEF_DIED    0x2     /* defender died */
 # define MM_AGR_DIED    0x4     /* aggressor died */
+
+/* Return value from functions that handle attack-like actions (anything that
+   can hit and damage an adjacent monster). Note that "ac_continue" varies a
+   little in meaning; for a function that's checking if an attack is possible it
+   means "sure, go ahead with the attack"; for a function that conditionally
+   performs an attack it means "you swung your weapon past this square, and
+   there weren't any monsters that got in the way". */
+enum attack_check_status {
+    ac_continue,        /* nothing prevents this action from happening */
+    ac_cancel,          /* the attack-like action was cancelled */
+    ac_somethingelse,   /* something else happened, which consumes time */
+    ac_monsterhit,      /* the attack-like action hit a monster */
+};
 
 #endif /* MONATTK_H */
 
