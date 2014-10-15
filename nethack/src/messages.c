@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-11 */
+/* Last modified by Sean Hunt, 2014-10-15 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -13,6 +13,7 @@ struct msghist_entry {
     nh_bool old;            /* true if the user has acted since seeing it */
     nh_bool unseen;         /* true if the user must see it but has not, yet */
     nh_bool nomerge;        /* don't merge this message with the next one */
+    nh_bool temp;           /* true if the message is temporary (to be erased) */
 };
 
 static struct msghist_entry *histlines; /* circular buffer */
@@ -104,9 +105,11 @@ setup_showlines(void)
     int i;
     for (i = 0; i < num_showlines; i++) {
         showlines[i].turn = -1;
+        showlines[i].message = NULL;
         showlines[i].old = FALSE;
         showlines[i].unseen = FALSE;
         showlines[i].nomerge = FALSE;
+        showlines[i].temp = FALSE;
     }
 }
 
@@ -125,13 +128,16 @@ redo_showlines(void)
         new_showlines[i].old = showlines[i].old;
         new_showlines[i].unseen = showlines[i].unseen;
         new_showlines[i].nomerge = showlines[i].nomerge;
+        new_showlines[i].temp = showlines[i].temp;
     }
     /* At most one of the following loops will execute at all. */
     for (; i < new_num_showlines; i++) {
         new_showlines[i].turn = -1;
+        new_showlines[i].message = NULL;
         new_showlines[i].old = TRUE;
         new_showlines[i].unseen = FALSE;
         new_showlines[i].nomerge = FALSE;
+        new_showlines[i].temp = FALSE;
     }
     for (; i < num_showlines; i++) {
         free(showlines[i].message);
@@ -291,25 +297,50 @@ new_action(void)
     stopmore = 0;
 }
 
+/* Accepts negative numbers */
 static void
 move_lines_upward(int num_to_bump)
 {
     int i;
-    for (i = num_showlines - 1; i >= num_showlines - num_to_bump; i--)
-        free(showlines[i].message);
-    for (i = num_showlines - 1; i >= num_to_bump; i--) {
-        showlines[i].message = showlines[i - num_to_bump].message;
-        showlines[i].turn = showlines[i - num_to_bump].turn;
-        showlines[i].old = showlines[i - num_to_bump].old;
-        showlines[i].unseen = showlines[i - num_to_bump].unseen;
-        showlines[i].nomerge = showlines[i - num_to_bump].nomerge;
-    }
-    for (; i >= 0; i--) {
-        showlines[i].message = NULL;
-        showlines[i].turn = -1;
-        showlines[i].old = FALSE;
-        showlines[i].unseen = FALSE;
-        showlines[i].nomerge = FALSE;
+    if (num_to_bump > 0) {
+        for (i = num_showlines - 1; i >= num_showlines - num_to_bump; i--)
+            free(showlines[i].message);
+        for (i = num_showlines - 1; i >= num_to_bump; i--) {
+            showlines[i].message = showlines[i - num_to_bump].message;
+            showlines[i].turn = showlines[i - num_to_bump].turn;
+            showlines[i].old = showlines[i - num_to_bump].old;
+            showlines[i].unseen = showlines[i - num_to_bump].unseen;
+            showlines[i].nomerge = showlines[i - num_to_bump].nomerge;
+            showlines[i].temp = showlines[i - num_to_bump].temp;
+        }
+        for (; i >= 0; i--) {
+            showlines[i].message = NULL;
+            showlines[i].turn = -1;
+            showlines[i].old = FALSE;
+            showlines[i].unseen = FALSE;
+            showlines[i].nomerge = FALSE;
+            showlines[i].temp = FALSE;
+        }
+    } else if (num_to_bump < 0) {
+        num_to_bump = -num_to_bump;
+        for (i = 0; i < num_to_bump; ++i)
+            free(showlines[i].message);
+        for (i = 0; i < num_showlines - num_to_bump; ++i) {
+            showlines[i].message = showlines[i + num_to_bump].message;
+            showlines[i].turn = showlines[i + num_to_bump].message;
+            showlines[i].old = showlines[i + num_to_bump].old;
+            showlines[i].nomerge = showlines[i + num_to_bump].nomerge;
+            showlines[i].unseen = showlines[i + num_to_bump].unseen;
+            showlines[i].temp = showlines[i + num_to_bump].temp;
+        }
+        for (; i < num_showlines; ++i) { 
+            showlines[i].message = NULL;
+            showlines[i].turn = -1;
+            showlines[i].old = FALSE;
+            showlines[i].unseen = FALSE;
+            showlines[i].nomerge = FALSE;
+            showlines[i].temp = FALSE;
+        }
     }
 }
 
@@ -317,7 +348,7 @@ move_lines_upward(int num_to_bump)
    Returns TRUE if we're going to need a --More-- and another pass. */
 static nh_bool
 update_showlines(char **intermediate, int *length, nh_bool force_more,
-                 nh_bool important)
+                 nh_bool important, nh_bool temporary)
 {
     /*
      * Each individual step in this can be ugly, but the overall logic isn't
@@ -358,7 +389,9 @@ update_showlines(char **intermediate, int *length, nh_bool force_more,
 
     char buf[strlen(*intermediate) + messagelen + 3];
 
-    if (!showlines[0].nomerge && showlines[0].message) {
+    if (!showlines[0].nomerge && showlines[0].message &&
+        /* Compare negations because 2 != 1 but !2 == !1 */
+        (!showlines[0].temp == !temporary)) {
         strcpy(buf, showlines[0].message);
         strcat(buf, "  ");
         strcat(buf, *intermediate);
@@ -426,6 +459,7 @@ update_showlines(char **intermediate, int *length, nh_bool force_more,
             strcpy(showlines[i].message, wrapped_buf[num_to_bump - 1 - i]);
             showlines[i].unseen = mark_unseen;
             showlines[i].nomerge = FALSE;
+            showlines[i].temp = temporary;
         }
     }
     else {
@@ -437,6 +471,7 @@ update_showlines(char **intermediate, int *length, nh_bool force_more,
             showlines[i].unseen = mark_unseen;
             showlines[i].nomerge = FALSE;
             showlines[i].old = FALSE;
+            showlines[i].temp = temporary;
         }
     }
 
@@ -512,7 +547,7 @@ force_seen(void)
     nh_bool keep_going = TRUE;
     showlines[0].nomerge = FALSE;
     while (keep_going) {
-        keep_going = update_showlines(&dummy, &dummy_length, TRUE, FALSE);
+        keep_going = update_showlines(&dummy, &dummy_length, TRUE, FALSE, FALSE);
         show_msgwin(keep_going);
         if (keep_going)
             keypress_at_more();
@@ -539,26 +574,29 @@ curses_print_message_core(int turn, const char *msg, nh_bool important)
     /* First, add the message to the message history.  Do this before deciding
        whether to print it; "unimportant" messages always show up in ^P. */
     struct msghist_entry *h;
+    nh_bool temporary = turn < 0;
 
     if (!histlines)
         alloc_hist_array();
 
-    h = histlines + histlines_pointer;
+    if (!temporary) {
+        h = histlines + histlines_pointer;
 
-    free(h->message); /* in case there was something there */
-    h->turn = turn;
-    h->message = malloc(strlen(msg)+1);
-    strcpy(h->message, msg);
-    h->nomerge = 0;
+        free(h->message); /* in case there was something there */
+        h->turn = turn;
+        h->message = malloc(strlen(msg)+1);
+        strcpy(h->message, msg);
+        h->nomerge = 0;
 
-    if (first_new == -1)
-        first_new = histlines_pointer;
+        if (first_new == -1)
+            first_new = histlines_pointer;
 
-    histlines_pointer++;
-    histlines_pointer %= histlines_alloclen;
+        histlines_pointer++;
+        histlines_pointer %= histlines_alloclen;
 
-    free(histlines[histlines_pointer].message);
-    histlines[histlines_pointer].message = 0;
+        free(histlines[histlines_pointer].message);
+        histlines[histlines_pointer].message = 0;
+    }
 
     /* If we're in a small terminal, suppress certain messages, like the one
        asking in which direction to kick. */
@@ -574,7 +612,7 @@ curses_print_message_core(int turn, const char *msg, nh_bool important)
     strcpy(intermediate, msg);
     while (keep_going) {
         keep_going = update_showlines(&intermediate, &intermediate_size, FALSE,
-                                      important);
+                                      important, temporary);
         show_msgwin(keep_going);
         if (keep_going)
             keypress_at_more();
@@ -596,6 +634,27 @@ void
 curses_print_message_nonblocking(int turn, const char *inmsg)
 {
     curses_print_message_core(turn, inmsg, FALSE);
+}
+
+/* Prints a message to the message history with the expectation it will be
+ * erased later.
+ */
+void
+curses_temp_message(const char *msg)
+{
+    curses_print_message_core(-1, msg, TRUE);
+}
+
+/* Clear the temporary messages from the buffer. Assumes that they are
+ * contiguous at the end. */
+void
+curses_clear_temp_messages(void)
+{
+    int i = 0;
+    while (i < num_showlines && showlines[i].temp)
+        ++i;
+
+    move_lines_upward(-i);
 }
 
 /* Ensure that the user has seen all messages printed so far, before

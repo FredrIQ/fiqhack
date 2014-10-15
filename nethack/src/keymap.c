@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-08-06 */
+/* Last modified by Sean Hunt, 2014-10-15 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1197,7 +1197,7 @@ command_settings_menu(struct nh_cmd_desc *cmd)
             if (keymap[i]) {
                 snprintf(buf, ARRAY_SIZE(buf), "That key is already in use by \"%s\"! Replace?",
                         keymap[i]->name);
-                if ('y' != curses_yn_function(buf, "yn", 'n'))
+                if ('y' != curses_yn_function_internal(buf, "yn", 'n'))
                     continue;
             }
             keymap[i] = cmd;
