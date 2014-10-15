@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-12 */
+/* Last modified by Sean Hunt, 2014-10-15 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -156,6 +156,37 @@ curses_msgwin_generic(const char *msg, int (*validator)(int, void *),
 }
 
 static int
+curses_inline_query(const char *msg, int (*validator)(int, void*),
+                    void *arg, nh_bool cursor_visible,
+                    enum keyreq_context context) {
+    if (!game_is_running) {
+        curses_impossible("Trying to create inline query outside game.");
+        return curses_msgwin_generic(msg, validator, arg, cursor_visible,
+                                     context);
+    } else if (!msgwin) {
+        curses_impossible("Trying to create inline query without msgwin.");
+        return curses_msgwin_generic(msg, validator, arg, cursor_visible,
+                                     context);
+    }
+
+    /* We use a temporary message as the game will send a summary of the
+     * decision along later. */
+    curses_temp_message(msg);
+    draw_msgwin();
+
+    /* We do not respect cursor_visible here, since we want the cursor focused
+     * on the prompt. */
+    int rv = -1;
+    while (rv == -1)
+        rv = validator(nh_wgetch(msgwin, context), arg);
+
+    curses_clear_temp_messages();
+    draw_msgwin();
+
+    return rv;
+}
+
+static int
 curses_getdir_validator(int key, void *unused)
 {
     int dir;
@@ -182,8 +213,12 @@ curses_getdir(const char *query, nh_bool restricted)
     char qbuf[QBUFSZ];
 
     snprintf(qbuf, QBUFSZ, "%s", query ? query : "In what direction?");
-    rv = curses_msgwin_generic(qbuf, curses_getdir_validator, NULL, 0,
-                               krc_getdir);
+    if (settings.prompt_inline)
+        rv = curses_inline_query(qbuf, curses_getdir_validator, NULL, 0,
+                                 krc_getdir);
+    else
+        rv = curses_msgwin_generic(qbuf, curses_getdir_validator, NULL, 0,
+                                   krc_getdir);
 
     return rv - 5;
 }
@@ -213,8 +248,9 @@ curses_yn_function_validator(int key, void *resp)
     return key;
 }
 
-char
-curses_yn_function(const char *query, const char *resp, char def)
+static char
+curses_yn_function_core(const char *query, const char *resp, char def,
+                        nh_bool internal)
 {
     int key;
     /*
@@ -235,15 +271,34 @@ curses_yn_function(const char *query, const char *resp, char def)
         sprintf(prompt + strlen(prompt), "(%c) ", def);
 
     strcpy(respbuf, resp);
-    key = curses_msgwin_generic(prompt, curses_yn_function_validator,
-                                respbuf, 1,
-                                strcmp(respbuf, "yn") == 0 ? krc_yn :
-                                strcmp(respbuf, "ynq") == 0 ? krc_ynq :
-                                krc_yn_generic);
+    if (!internal && settings.prompt_inline)
+        key = curses_inline_query(prompt, curses_yn_function_validator,
+                                  respbuf, 1,
+                                  strcmp(respbuf, "yn") == 0 ? krc_yn :
+                                  strcmp(respbuf, "ynq") == 0 ? krc_ynq :
+                                  krc_yn_generic);
+    else
+        key = curses_msgwin_generic(prompt, curses_yn_function_validator,
+                                    respbuf, 1,
+                                    strcmp(respbuf, "yn") == 0 ? krc_yn :
+                                    strcmp(respbuf, "ynq") == 0 ? krc_ynq :
+                                    krc_yn_generic);
     if (key == -2)
         key = def;
 
     return key;
+}
+
+char
+curses_yn_function_game(const char *query, const char *resp, char def)
+{
+    return curses_yn_function_core(query, resp, def, FALSE);
+}
+
+char
+curses_yn_function_internal(const char *query, const char *resp, char def)
+{
+    return curses_yn_function_core(query, resp, def, TRUE);
 }
 
 
@@ -280,18 +335,37 @@ curses_query_key_validator(int key, void *count)
     return -1; /* prompt for another key */
 }
 
-struct nh_query_key_result
-curses_query_key(const char *query, enum nh_query_key_flags flags,
-                 nh_bool allow_count)
+static struct nh_query_key_result
+curses_query_key_core(const char *query, enum nh_query_key_flags flags,
+                      nh_bool allow_count, nh_bool internal)
 {
     struct nh_query_key_result nqkr;
 
     nqkr.count = -1;
 
-    nqkr.key = curses_msgwin_generic(query, curses_query_key_validator,
-                                     allow_count ? &(nqkr.count) : NULL, 1,
-                                     flags + krc_query_key_inventory);
+    if (!internal && settings.prompt_inline)
+        nqkr.key = curses_inline_query(query, curses_query_key_validator,
+                                       allow_count ? &(nqkr.count) : NULL, 1,
+                                       flags + krc_query_key_inventory);
+    else
+        nqkr.key = curses_msgwin_generic(query, curses_query_key_validator,
+                                         allow_count ? &(nqkr.count) : NULL, 1,
+                                         flags + krc_query_key_inventory);
     return nqkr;
+}
+
+struct nh_query_key_result
+curses_query_key_game(const char *query, enum nh_query_key_flags flags,
+                      nh_bool allow_count)
+{
+    return curses_query_key_core(query, flags, allow_count, FALSE);
+}
+
+struct nh_query_key_result
+curses_query_key_internal(const char *query, enum nh_query_key_flags flags,
+                          nh_bool allow_count)
+{
+    return curses_query_key_core(query, flags, allow_count, TRUE);
 }
 
 

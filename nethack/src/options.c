@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-12 */
+/* Last modified by Sean Hunt, 2014-10-15 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -153,6 +153,8 @@ struct nh_option_desc curses_options[] = {
      OPTTYPE_ENUM, {.e = MOTD_ASK}},
     {"optstyle", "option menu display style", FALSE, OPTTYPE_ENUM,
      {.e = OPTSTYLE_FULL}},
+    {"prompt_inline", "place prompts in the message window", FALSE, OPTTYPE_BOOL,
+     {.b = FALSE}},
     {"scores_own", "show all your own scores in the list", FALSE, OPTTYPE_BOOL,
      {.b = FALSE}},
     {"scores_top", "how many top scores to show", FALSE, OPTTYPE_INT, {.i = 3}},
@@ -175,6 +177,7 @@ struct nhlib_boolopt_map boolopt_map[] = {
     {"extmenu", &settings.extmenu},
     {"invweight", &settings.invweight},
     {"mouse", &settings.mouse},
+    {"prompt_inline", &settings.prompt_inline},
     {"scores_own", &settings.end_own},
     {"status3", &settings.status3},
     {NULL, NULL}
