@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-07-07
+Last modified by Alex Smith, 2014-10-16
 
 Copyright (C) 2013 Alex Smith.
 
@@ -350,9 +350,10 @@ interface plugin for libuncursed).
 There are currently two tilesets available: the "Slash'EM" tileset is based on
 the tiles that shipped with previous versions (Slash'EM has a greater
 selection of tiles available than NetHack, which is why its tiles are used);
-and the "DawnHack" tileset is a new tileset by Andrew Rios.
+and the "DawnLike" tileset is a new tileset by Andrew Rios (based on a 16
+color palette by DawnBringer).
 
-Noe that as libuncursed plugins do not currently work correctly on Mac OS X,
+Note that as libuncursed plugins do not currently work correctly on Mac OS X,
 the tiles version does not work there either.
 
 
