@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-03 */
+/* Last modified by Alex Smith, 2014-10-16 */
 /*
  * Copyright (C) Andrew Apted <ajapted@users.sourceforge.net> 2002
  *		 Slash'EM Development Team 2003
@@ -175,9 +175,20 @@ load_png_file(FILE *in)
     tilecount = width / tileset_width * height / tileset_height;
 
     /* Allocate the pixel array we return into. */
-    images_seen = realloc(images_seen, (tilecount + start_of_reference_image) *
-                          sizeof *images_seen);
-    if (!images_seen) {
+    pixel ***images = &images_seen;
+    int first = start_of_reference_image;
+    int *count = &seen_image_count;
+
+    if (image_locking) {
+        image_locking = 0;
+        image_locked = 1;
+        images = &locked_images_seen;
+        first = 0;
+        count = &locked_image_count;
+    }
+
+    *images = realloc(*images, (tilecount + first) * sizeof **images);
+    if (!*images) {
         fprintf(stderr, "Error allocating memory for tile images\n");
         goto cleanup_info_and_rowpointers;
     }
@@ -185,14 +196,14 @@ load_png_file(FILE *in)
     /* Copy the PNG data into the tiles. */
     for (t = 0; t < tilecount; t++) {
 
-        pixel **p = images_seen + t + start_of_reference_image;
+        pixel **p = *images + t + first;
         *p = malloc(tileset_width * tileset_height * sizeof (pixel));
         if (!*p) {
             fprintf(stderr, "Error allocating memory for tile image\n");
             goto cleanup_info_and_rowpointers;
         }
 
-        seen_image_count++;
+        (*count)++;
 
         i = (t % (width / tileset_width)) * tileset_width;
         j = (t / (width / tileset_width)) * tileset_height;

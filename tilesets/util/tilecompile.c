@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-12 */
+/* Last modified by Alex Smith, 2014-10-16 */
 /* Copyright (C) 2014 Alex Smith. */
 /* NetHack may be freely redistributed. See license for details. */
 
@@ -60,6 +60,15 @@ int unknown_name_count, allocated_name_count;
 int palettesize, palettechannels;
 pixel palette[MAX_PALETTE_SIZE];
 bool palette_locking, palette_locked;
+
+/* We allow locking an image as the image to reference into. The basic reason to
+   do this is to be able to combine an existing .png with a new .txt, either
+   because the existing .png has weird chunks we don't want to lose, or because
+   we have an old and new version of an image and want to translate a map file
+   for the old image into a map file for the new image. */
+pixel **locked_images_seen;
+int locked_image_count;
+bool image_locking, image_locked;
 
 /* All the tile images used at any point are stored in one big array.  When we
    load a reference image, we split it into tiles and store them all here.
@@ -293,6 +302,9 @@ main(int argc, char *argv[])
         } else if (!strcmp(*argv, "-l") && !ignore_options) {
             largepalette = 1;
             argv++;
+        } else if (!strcmp(*argv, "-i") && !ignore_options) {
+            image_locking = 1;
+            argv++;
         } else if (!strcmp(*argv, "-W") && !ignore_options) {
             all_base_tiles = 1;
             argv++;
@@ -353,6 +365,7 @@ main(int argc, char *argv[])
             "      -n name           The name of the tileset\n\n"
             "      Other recognised options:\n"
             "      -p file           Lock the palette to the given file\n"
+            "      -i file           Lock the image to the given file\n"
             "      -f                Adjust colors to match a locked palette\n"
             "      -b r g b          Edit the given color to transparent\n"
             "      -l                Allow large palettes\n"
@@ -366,6 +379,71 @@ main(int argc, char *argv[])
        off large_palette if we're not generating FN_TEXT. */
     if (formatnumber != FN_TEXT)
         largepalette = 0;
+
+    /* If we're forced to use a particular reference image, then we need to
+       translate all the tile references from being against one reference
+       image to being against another reference image. */
+    if (image_locked) {
+
+        /* If the image is locked, we don't want to go deleting tiles from
+           it. */
+        keep_unused = 1;
+
+        int i;
+        for (i = 0; i < seen_tile_count; i++) {
+
+            /* Check that the tile reference actually makes sense, so that we
+               don't go reading unallocated memory. */
+            int ii = tiles_seen[i].image_index;
+            if (ii >= seen_image_count) {
+                /* e.g. a 5-tile image but references to tile 6 */
+                fprintf(stderr, "Error: image index out of range\n");
+                return 0;
+            }
+
+            /* Look for the tile reference in the locked image. */
+            int j;
+            for (j = 0; j < locked_image_count; j++) {
+                if (!memcmp(images_seen[ii], locked_images_seen[j],
+                            tileset_height * tileset_width * sizeof (pixel)))
+                    break;
+            }
+
+            /* If it isn't there, delete the reference (by setting the tile
+               number to TILESEQ_INVALID_OFF; this will cause the reference
+               to be deleted later.) */
+            if (j == locked_image_count) {
+                fprintf(stderr, "Warning: reference to tile '%s%s' deleted "
+                        "because it is not in the locked image\n",
+                        name_from_substitution(tiles_seen[i].substitution),
+                        tiles_seen[i].tilenumber < TILESEQ_COUNT ?
+                        name_from_tileno(tiles_seen[i].tilenumber) :
+                        tiles_seen[i].tilenumber > TILESEQ_COUNT &&
+                        tiles_seen[i].tilenumber < TILESEQ_COUNT + 1 +
+                        unknown_name_count ?
+                        unknown_tile_names[tiles_seen[i].tilenumber -
+                                           TILESEQ_COUNT - 1] :
+                        "invalid tile number");
+                tiles_seen[i].tilenumber = TILESEQ_INVALID_OFF;
+                continue;
+            }
+
+            /* Change the image index in the reference. */
+            tiles_seen[i].image_index = j;
+        }
+
+        /* Now replace the list of reference images. */
+        for (i = 0; i < seen_image_count; i++)
+            free(images_seen[i]);
+        free(images_seen);
+
+        images_seen = locked_images_seen;
+        seen_image_count = locked_image_count;
+        start_of_reference_image = 0;
+
+        locked_images_seen = NULL;
+        locked_image_count = 0;
+    }
 
     /* Sometimes, we might have more than one definition of the same tile name
        (e.g. when tiles in one input file are being overriden by another). In
@@ -410,7 +488,6 @@ main(int argc, char *argv[])
                     fprintf(stderr, "Warning: missing base tile '%s'\n",
                             name_from_tileno(i));
     }
-
 
     /* We might or might not be doing image processing. If an image was provided
        via any means, seen_image_count will be nonzero. In such a case, we need
@@ -643,7 +720,8 @@ main(int argc, char *argv[])
             fprintf(stderr, "Error: Cannot write image with no image\n");
             return EXIT_FAILURE;
         }
-        rv &= write_png_file(outfile, 0);
+        if (!image_locked)
+            rv &= write_png_file(outfile, 0);
         break;
     case FN_MAP:
         if (!seen_image_count) {
@@ -651,7 +729,8 @@ main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
         strcpy(extpos, ".png");
-        rv &= write_png_file(fnbuf, 0);
+        if (!image_locked)
+            rv &= write_png_file(fnbuf, 0);
         strcpy(extpos, ".map");
         rv &= write_text_tileset(fnbuf, II_FILEPOS);
         break;
@@ -660,14 +739,16 @@ main(int argc, char *argv[])
             rv &= write_text_tileset(outfile, II_HEX);
         else {
             strcpy(extpos, ".png");
-            rv &= write_png_file(fnbuf, 0);
+            if (!image_locked)
+                rv &= write_png_file(fnbuf, 0);
             strcpy(extpos, ".txt");
             rv &= write_text_tileset(fnbuf, II_HEX);
         }
         break;
     case FN_NH4CT:
         if (seen_image_count) {
-            rv &= write_png_file(outfile, 1);
+            if (!image_locked)
+                rv &= write_png_file(outfile, 1);
             break;
         }
         /* otherwise fall through */
@@ -676,7 +757,8 @@ main(int argc, char *argv[])
             rv &= write_binary_tileset(outfile);
         else {
             strcpy(extpos, ".png");
-            rv &= write_png_file(fnbuf, 0);
+            if (!image_locked)
+                rv &= write_png_file(fnbuf, 0);
             strcpy(extpos, ".bin");
             rv &= write_binary_tileset(fnbuf);
         }

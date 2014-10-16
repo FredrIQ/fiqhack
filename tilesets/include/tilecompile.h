@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-12 */
+/* Last modified by Alex Smith, 2014-10-16 */
 /* Copyright (C) 2014 Alex Smith. */
 /* NetHack may be freely redistributed. See license for details. */
 
@@ -86,6 +86,10 @@ extern long tileset_height;
 extern int palettesize, palettechannels;
 extern pixel palette[MAX_PALETTE_SIZE];
 extern bool palette_locking, palette_locked;
+
+extern pixel **locked_images_seen;
+extern int locked_image_count;
+extern bool image_locking, image_locked;
 
 extern pixel **images_seen;
 extern int start_of_reference_image, seen_image_count;
