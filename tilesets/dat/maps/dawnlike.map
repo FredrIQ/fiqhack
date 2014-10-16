@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2014-10-16
+! Last modified by Alex Smith, 2014-10-17
 !
 ! Copyright (C) 2014 Alex Smith
 ! This work is licensed under the Creative Commons Attribution 3.0
@@ -32,29 +32,86 @@
 ! walls 9: $x + 25
 ! walls 10: $x + 23
 !
-! These calculations are done automatically from a line starting "walls 2".
+! These calculations are done automatically from a line containing "walls *".
 
 !!! Backgrounds
 
-! Walls
+!! Varying per-dungeon
 
-walls 2: [Wall.png] 0x78
-sub knox walls 2: [Wall.png] 0x7F
-sub mine walls 2: [Wall.png] 0x86
-sub sokoban walls 2: [Wall.png] 0xB4
-sub gehennom walls 2: [Wall.png] 0x176
+! Generic walls
 
-! Furthest backgrounds
+walls *: [Wall.png] 0x78
+sub knox walls *: [Wall.png] 0x7F
+sub mine walls *; sub bar sub questfill2 walls *; sub bar sub questgoal walls *; sub cav sub questfill1 walls *; sub cav sub questlocate walls *; sub cav sub questfill2 walls *: [Wall.png] 0x86
+sub sokoban walls *: [Wall.png] 0xB4
+sub gehennom walls *; sub pri sub questfill2 walls *; sub pri sub questgoal walls *: [Wall.png] 0x176
+sub vlad walls *: [Wall.png] 0xFE
+sub astral walls *: [Wall.png] 0x21C
+
+! Specific walls
+
+! "College of Archeology"
+sub arc sub questhome walls *: [Wall.png] 0x7F
+! "Toltec"
+sub arc sub questlocate walls *; sub arc sub questfill2 walls *; sub arc sub questgoal walls *: [Wall.png] 0x38B
+! "Barbarian Camp"
+sub bar sub questhome walls *; sub bar sub questlocate walls *: [Wall.png] 0xBB
+! "Caves of the Ancestors"
+sub cav sub questhome walls *: [Wall.png] 0x1ee
+! "Greek"
+sub hea sub questhome walls *; sub hea sub questlocate walls *: [Wall.png] 0x258
+! "Camelot"
+sub kni sub questhome walls *: [Wall.png] 0x1ab
+! "Chinese"
+sub mon sub questhome walls *; sub mon sub questfill1 walls *: [Wall.png] 0x29b
+! "Church"
+sub pri sub questhome walls *: [Wall.png] 0x1e7
+! "Evil Castle"
+sub pri sub questlocate walls *; sub wiz sub questlocate walls *; sub wiz sub questfill2 walls *; sub wiz sub questgoal walls *: [Wall.png] 0x1e0
+! "Wizard Castle"
+sub wiz sub questhome walls *: [Wall.png] 0x2d0
+! "Tudor"
+sub rog sub questhome walls *; sub rog sub questlocate walls *; sub tou sub questhome walls *; sub tou sub questlocate walls *; sub tou sub questgoal walls *: [Wall.png] 0x4E
+! "Japanese"
+sub sam sub questhome walls *; sub sam sub questlocate walls *; sub sam sub questfill2 walls *; sub sam sub questgoal walls *: [Wall.png] 0x294
+! "Grey Cave"
+sub kni sub questgoal walls *; sub ran sub questlocate walls *; sub ran sub questfill2 walls *; sub tou sub questfill1 walls *; sub tou sub questfill2 walls *; sub wiz sub questfill1 walls *: [Wall.png] 0x1ab
+! "Red Cave"
+sub cav sub questgoal walls *; sub mon sub questlocate walls *; sub mon sub questfill2 walls *; sub mon sub questgoal walls *; sub val sub questlocate walls *; sub val sub questfill2 walls *: [Wall.png] 0x1b2
+! "Blue Cave"
+sub ran sub questgoal walls *; sub val sub questfill1 walls *: [Wall.png] 0x16f
+! "Brown Dungeon"
+sub arc sub questfill1 walls *: [Wall.png] 0x4a
+! "Blue Dungeon"
+sub rog sub questgoal walls *: [Wall.png] 0xb4
+! "White Dungeon"
+sub rog sub questfill1 walls *; sub rog sub questfill2 walls *; sub val sub questhome walls *: [Wall.png] 0x3c
+! "Surtur's Fortress"
+sub val sub questgoal walls *: [Wall.png] 0xc2
+
+! Solid rock
+
+solid rock: [Wall.png] 0x1ae
+sub mine solid rock; sub bar sub questlocate solid rock; sub bar sub questfill2 solid rock; sub bar sub questgoal solid rock; sub cav sub questfill1 solid rock; sub cav sub questlocate solid rock; sub cav sub questfill2 solid rock: [Wall.png] 0x12f
+sub gehennom solid rock; sub val sub questgoal solid rock; sub mon sub questlocate solid rock; sub mon sub questfill2 solid rock; sub mon sub questgoal solid rock; sub pri sub questfill2 solid rock; sub pri sub questgoal solid rock; sub val sub questlocate solid rock; sub val sub questfill2 solid rock; sub val sub questgoal solid rock: [Wall.png] 0x179
+sub ran sub questgoal solid rock; sub rog sub questgoal solid rock; sub val sub questfill1 solid rock: [Wall.png] 0x136
+
+!! Same per-dungeon
+
+! Floors
+
+! We can't really vary floors per-dungeon due to the palette restrictions, and
+! the fact that DawnLike tileable floors don't really fit our engine and show
+! the wrong sorts of things (apart from grass).
 
 corridor: [Tile.png] 0x13
 sub lit corridor: [Tile.png] 0x14
 the floor of a room: [Tile.png] 0x15
 sub unlit the floor of a room: [Tile.png] 0x12
 
-! Other backgrounds
+! Floor
 
 unexplored area: [Tile.png] 0x10
-solid rock: [Wall.png] 0x136
 water; underwater: [Tile.png] 0x1
 sub swamp water: [Tile.png] 0x2
 air: [Tile.png] 0x7

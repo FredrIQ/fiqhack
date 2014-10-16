@@ -20,13 +20,15 @@ while (my $l = <$mapfh>) {
     my $f = $1;
     $l =~ s/\[(.*)\] //;
 
-    if ($l =~ /(.*)walls 2: (0x.*)/) {
+    if ($l =~ /^(.*walls \*): (0x.*)/) {
         my $p = $1;
         my $n = oct $2;
         my @o = (20, 1, 0, 2, 40, 42, 24, 44, 4, 25, 23);
         $l = "";
         for my $i (0..10) {
-            $l .= sprintf "%swalls %d: 0x%X\n", $p, $i, $n+$o[$i];
+            my $p2 = $p;
+            $p2 =~ s/walls \*/walls $i/g;
+            $l .= sprintf "%s: 0x%X\n", $p2, $n+$o[$i];
         }
     }
 
