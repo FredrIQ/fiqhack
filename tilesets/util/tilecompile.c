@@ -318,6 +318,7 @@ main(int argc, char *argv[])
             break;
         } else if (**argv != '-' || ignore_options) {
             /* It's not an option. Treat it as a filename. */
+            printf("Reading '%s'...\n", *argv);
             if (!load_file(*argv)) {
                 return EXIT_FAILURE;
             }
