@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Alex Smith, 2014-10-12
+Last-Modified: Last modified by Alex Smith, 2014-10-16
 Comment:
  This file contains the copyright status of the files in the Windows binary
  distribution (i.e. the copyright NetHack 4 has after being built). For other
@@ -10,7 +10,7 @@ Files: changelog.txt faq.txt philosophy.txt README COPYING
 License: NGPL
 Copyright: Copyright (c) 2013 Alex Smith
 
-Files: dawnhack-*
+Files: dawnlike-*
 License: CC-BY-3.0
  This work is licensed under the Creative Commons Attribution 3.0
  Unported License. To view a copy of this license, visit
@@ -19,6 +19,18 @@ License: CC-BY-3.0
  California, 94041, USA.
 Copyright:
  Copyright (C) Andrew Rios, 2014
+ .
+ Dawnlike is registered under a CC-BY-SA 3.0 license, meaning that you
+ are free to redistribute or edit any part of this tileset as long as
+ you do not take the credit for it. I cannot stop you from using this
+ tileset commercially, so feel free to sell any games using Dawnlike.
+ .
+ If you use this tileset you must accredit DawnBringer. That mad
+ color-bending genius came up with the palette this entire pack lives
+ on. Without his palette, I would probably never would have even
+ finished DawnHack. As for crediting me, I have a unique
+ request. Inside "Reptiles.png" you will find a Platino sprite. If you
+ use Dawnlike, you MUST use this sprite and hide him very well!
 Comment:
  It is unclear whether CC-BY-3.0 is compatible with the NGPL (although it is
  not against the spirit of either license to include CC-BY-3.0 data in an

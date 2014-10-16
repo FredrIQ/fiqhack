@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Alex Smith, 2014-10-03
+Last-Modified: Last modified by Alex Smith, 2014-10-16
 
 Files: libnethack_client/*
 License: NGPL or GPL-2+
@@ -440,7 +440,7 @@ Copyright:
  Copyright (C) 2013 Alex Smith, in addition to the copyright on the tiles from
  Slash'EM on which these files are based (see tilesets/dat/tiles/s-*.txt).
 
-Files: tilesets/dat/tiles/dawnhack-*.txt tilesets/dat/palettes/dawnhack.txt
+Files: tilesets/dat/tiles/dawnlike-*.txt tilesets/dat/palettes/dawnhack.txt
 License: CC-BY-3.0
  This work is licensed under the Creative Commons Attribution 3.0
  Unported License. To view a copy of this license, visit
@@ -449,6 +449,18 @@ License: CC-BY-3.0
  California, 94041, USA.
 Copyright:
  Copyright (C) Andrew Rios, 2014
+ .
+ Dawnlike is registered under a CC-BY-SA 3.0 license, meaning that you
+ are free to redistribute or edit any part of this tileset as long as
+ you do not take the credit for it. I cannot stop you from using this
+ tileset commercially, so feel free to sell any games using Dawnlike.
+ .
+ If you use this tileset you must accredit DawnBringer. That mad
+ color-bending genius came up with the palette this entire pack lives
+ on. Without his palette, I would probably never would have even
+ finished DawnHack. As for crediting me, I have a unique
+ request. Inside "Reptiles.png" you will find a Platino sprite. If you
+ use Dawnlike, you MUST use this sprite and hide him very well!
 Comment:
  It is unclear whether CC-BY-3.0 is compatible with the NGPL (although it is
  not against the spirit of either license to include CC-BY-3.0 data in an

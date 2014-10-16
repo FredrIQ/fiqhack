@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2014-10-10
+# Last modified by Alex Smith, 2014-10-16
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -347,8 +347,8 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
                         "optstring:-f",
                         "path:tilesets/dat/palettes/slashem.txt"],
         },
-        _dawnhack_catalogue_file_palette => {
-            object => qr=^path:tilesets/dat/catalogues/dawnhack-.*\.txt$=s,
+        _dawnlike_catalogue_file_palette => {
+            object => qr=^path:tilesets/dat/catalogues/dawnlike-.*\.txt$=s,
             # no -f for this; DawnHack shouldn't have out-of-range colors
             depends => ["optpath:-p :path:tilesets/dat/palettes/dawnhack.txt",
                         "path:tilesets/dat/palettes/dawnhack.txt"],
