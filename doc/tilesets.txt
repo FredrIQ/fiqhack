@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-10-12
+Last modified by Alex Smith, 2014-10-16
 
 The tiles code in this directory was originally taken from Slash'EM, and has
 been modified by Alex Smith for use in NetHack 4.  (This documentation file
@@ -461,13 +461,13 @@ that lists which substitution tiles exist and which order they appear in.
 Existing substitution keys:
 
   * `sub default`, `sub gehennom`, `sub questhome`, `sub mine`, `sub sokoban`,
-    `sub rogue`, `sub knox`, `sub questfill1`, `sub questlocate`,
-    `sub questfill2`, `sub questgoal`: Specifies the current level display
-    mode.  Some of these names are chosen for compatibility with 3.4.3 and
-    Slash'EM; the order is for compatibility with NitroHack.  These loosely
-    correspond to branches, but many branches are currently lumped together as
-    `default`.  This is relatively easy to change (do a search on the `LDM_`
-    prefix).
+    `sub rogue`, `sub knox`, `sub questfill1`, `sub questlocate`, `sub
+    questfill2`, `sub questgoal`, `sub vlad`, `sub astral`: Specifies the
+    current level display mode.  Some of these names are chosen for
+    compatibility with 3.4.3 and Slash'EM; the order is for compatibility with
+    NitroHack.  These loosely correspond to branches, but many branches are
+    currently lumped together as `default`.  This is relatively easy to change
+    (do a search on the `LDM_` prefix).
 
   * `sub arc`, `sub bar`, ..., `sub wiz`: For locations within the Quest,
     specifies which quest is the quest in question.

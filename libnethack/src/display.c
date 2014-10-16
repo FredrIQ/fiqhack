@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-29 */
+/* Last modified by Alex Smith, 2014-10-16 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -1296,7 +1296,7 @@ static struct nh_dbuf_entry dbuf[ROWNO][COLNO];
    rather than the type; for equal-appearance objects (like gray stones), we
    normally show the plainest type until the object is identified, when we show
    something appropriate to the type.  (This is most visible with horns in the
-   DawnHack tileset; they look like a plain horn until identified, when they can
+   DawnLike tileset; they look like a plain horn until identified, when they can
    show clear evidence of being a frost horn, fire horn, etc.).  The exception
    is objects that exist in pairs in which one is a genuine object, and one is a
    fake imitation; the fake imitations look genuine until identified, under the

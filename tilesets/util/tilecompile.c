@@ -89,7 +89,6 @@ int start_of_reference_image, seen_image_count;
 tile *tiles_seen;
 int seen_tile_count, allocated_tile_count;
 
-
 /* Utility functions */
 
 static int

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-15 */
+/* Last modified by Alex Smith, 2014-10-16 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -628,11 +628,11 @@ static nh_bool
 setup_tiles(void)
 {
     switch (settings.graphics) {
-    case TILESET_DAWNHACK_16:
-        set_tile_file("dawnhack-16.nh4ct");
+    case TILESET_DAWNLIKE_16:
+        set_tile_file("dawnlike-16.nh4ct");
         return TRUE;
-    case TILESET_DAWNHACK_32:
-        set_tile_file("dawnhack-32.nh4ct");
+    case TILESET_DAWNLIKE_32:
+        set_tile_file("dawnlike-32.nh4ct");
         return TRUE;
     case TILESET_SLASHEM_16:
         set_tile_file("slashem-16.nh4ct");
