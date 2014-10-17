@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-10-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -601,9 +601,9 @@ doopen(const struct nh_cmd_arg *arg)
     }
 
     if (door->doormask == D_ISOPEN) {
-        struct nh_cmd_arg arg;
-        arg_from_delta(dx, dy, dz, &arg);
-        return doclose(&arg);
+        struct nh_cmd_arg newarg;
+        arg_from_delta(dx, dy, dz, &newarg);
+        return doclose(&newarg);
     }
 
     if (!(door->doormask & D_CLOSED)) {
@@ -625,16 +625,16 @@ doopen(const struct nh_cmd_arg *arg)
                 /* With the "open" command given explicitly (rather than
                    implicitly via doorbumping), unlock the door. */
                 struct obj *bestpick = get_current_unlock_tool();
-                struct nh_cmd_arg arg;
+                struct nh_cmd_arg newarg;
 
-                arg_from_delta(dx, dy, dz, &arg);
+                arg_from_delta(dx, dy, dz, &newarg);
                 if (!bestpick)
                     pline("You have nothing to unlock that with.");
                 else if (!bestpick->lastused)
                     pline("Use an unlocking tool manually so I know "
                           "which one you want to use.");
                 else
-                    return pick_lock(bestpick, &arg);
+                    return pick_lock(bestpick, &newarg);
             }
             door->mem_door_l = 1;
             map_background(cc.x, cc.y, TRUE);

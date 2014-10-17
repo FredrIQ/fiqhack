@@ -1,5 +1,5 @@
 %{
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-10-16 */
 /*	Copyright (c) 1989 by Jean-Christophe Collet */
 /*	Copyright (c) 1990 by M. Stephenson	     */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -17,6 +17,13 @@
 #define YY_NO_INPUT
 #endif
 
+#ifdef __clang__
+/* We can't control the generated code, so we have to disable the warning
+ * instead. Otherwise, it will complain about yy_fatal_error and various
+ * shadowed variables. */
+# pragma clang diagnostic ignored "-Wmissing-noreturn"
+# pragma clang diagnostic ignored "-Wshadow"
+#endif
 
 void init_yyin(FILE *);
 void init_yyout(FILE *);

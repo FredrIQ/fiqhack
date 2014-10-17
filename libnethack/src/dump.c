@@ -238,14 +238,14 @@ dump_display_menu(struct nh_menulist *menu, const char *title,
 
 
 static void
-dump_display_objects(struct nh_objlist *objects, const char *title,
+dump_display_objects(struct nh_objlist *objs, const char *title,
                      int how, int placement_hint, void *callbackarg,
                      void (*callback)(const struct nh_objresult *, int, void *))
 {
     int i;
 
     if (!dumpfp) {
-        dealloc_objmenulist(objects);
+        dealloc_objmenulist(objs);
         callback(NULL, 0, callbackarg);
         return;
     }
@@ -254,16 +254,16 @@ dump_display_objects(struct nh_objlist *objects, const char *title,
         title = "Your Inventory:";
 
     fprintf(dumpfp, "%s\n", title);
-    for (i = 0; i < objects->icount; i++) {
+    for (i = 0; i < objs->icount; i++) {
         fprintf(dumpfp, "  ");
-        if (objects->items[i].accel)
-            fprintf(dumpfp, "%c - ", objects->items[i].accel);
-        fprintf(dumpfp, "%s\n", objects->items[i].caption);
+        if (objs->items[i].accel)
+            fprintf(dumpfp, "%c - ", objs->items[i].accel);
+        fprintf(dumpfp, "%s\n", objs->items[i].caption);
     }
 
     fprintf(dumpfp, "\n");
 
-    dealloc_objmenulist(objects);
+    dealloc_objmenulist(objs);
     callback(NULL, 0, callbackarg);
 }
 

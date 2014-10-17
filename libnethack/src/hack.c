@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-08-15 */
+/* Last modified by Sean Hunt, 2014-10-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1450,6 +1450,9 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         }
     }
 
+    struct nh_cmd_arg newarg;
+    arg_from_delta(turnstate.move.dx, turnstate.move.dy, dz, &newarg);
+
     /* Either there isn't (any more) a monster there, or there is a safepet
        there. Does the character try to attack the square? They will if there's
        a remembered-monster 'I' and they aren't using a pacifist style of
@@ -1457,9 +1460,6 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
     if (uim == uim_forcefight ||
         (level->locations[x][y].mem_invis && UIM_AGGRESSIVE(uim))) {
         boolean expl = (Upolyd && attacktype(youmonst.data, AT_EXPL));
-        struct nh_cmd_arg arg;
-        arg_from_delta(turnstate.move.dx, turnstate.move.dy, dz, &arg);
-
         boolean hitsomething = FALSE, ouch = FALSE;
         struct obj *boulder = (sobj_at(BOULDER, level, x, y));
         if (!boulder)
@@ -1467,7 +1467,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         if (boulder) {
             hitsomething = TRUE;
             if (uwep && (is_pick(uwep) || is_axe(uwep)) &&
-                use_pick_axe(uwep, &arg));
+                use_pick_axe(uwep, &newarg));
                 /* use_pick_axe succeeded, don't do anything else */
             else if (uwep) {
                 ouch = !rn2(3);
@@ -1496,7 +1496,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
             hitsomething = TRUE;
             if (uwep && ((is_pick(uwep) && !IS_TREE(levloc->typ)) ||
                          (is_axe(uwep) && IS_TREE(levloc->typ))) &&
-                use_pick_axe(uwep, &arg))
+                use_pick_axe(uwep, &newarg))
                 return 1;
             else {
                 ouch = (uwep) ? !rn2(3) : TRUE;
@@ -1665,9 +1665,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
     if (IS_DOOR(tmpr->typ) && tmpr->doormask != D_BROKEN &&
         tmpr->doormask != D_NODOOR && tmpr->doormask != D_ISOPEN &&
         ITEM_INTERACTIVE(uim)) {
-        struct nh_cmd_arg arg;
-        arg_from_delta(turnstate.move.dx, turnstate.move.dy, dz, &arg);
-        if (!doopen(&arg)) {
+        if (!doopen(&newarg)) {
             action_completed();
             return 0;
         }
@@ -1681,9 +1679,7 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         if (flags.autodig && ITEM_INTERACTIVE(uim) &&
             thismove != occ_move && uwep && is_pick(uwep)) {
             /* MRKR: Automatic digging when wielding the appropriate tool */
-            struct nh_cmd_arg arg;
-            arg_from_delta(turnstate.move.dx, turnstate.move.dy, dz, &arg);
-            return use_pick_axe(uwep, &arg);
+            return use_pick_axe(uwep, &newarg);
         }
         action_completed();
         return 0;
