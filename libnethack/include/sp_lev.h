@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) 1989 by Jean-Christophe Collet                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -251,9 +251,11 @@ typedef struct {
     corridor **corrs;
 } splev;
 
+extern boolean was_waterlevel;
+
 /* mkmap.c */
 void mkmap(struct level *lev, lev_init * init_lev);
-
+extern int min_rx, max_rx, min_ry, max_ry;
 
 #endif /* SP_LEV_H */
 

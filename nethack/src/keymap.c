@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-15 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -41,7 +41,7 @@ static_assert(UICMD_SERVERCANCEL < CMD_INTERNAL, "CMD_INTERNAL too small");
 #define DIRCMD_SHIFT    (1U << 30)
 #define DIRCMD_CTRL     (1U << 31)
 
-struct nh_cmd_desc builtin_commands[] = {
+static struct nh_cmd_desc builtin_commands[] = {
     {"east", "move, fight or interact to the east", 'l', 0,
      CMD_UI | DIRCMD | DIR_E},
     {"north", "move, fight or interact to the north", 'k', 0,
@@ -120,7 +120,8 @@ struct nh_cmd_desc builtin_commands[] = {
 };
 
 
-struct nh_cmd_desc *keymap[KEY_MAX + 1], *unknown_keymap[KEY_MAX + 1];
+struct nh_cmd_desc *keymap[KEY_MAX + 1];
+static struct nh_cmd_desc *unknown_keymap[KEY_MAX + 1];
 static struct nh_cmd_desc *commandlist, *unknown_commands;
 static int cmdcount, unknown_count, unknown_size;
 static struct nh_cmd_arg next_command_arg;

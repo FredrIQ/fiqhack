@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-08-17 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -323,6 +323,27 @@ struct obj {
 /* Flags for get_obj_location(). */
 # define CONTAINED_TOO  0x1
 # define BURIED_TOO     0x2
+
+
+enum destroy_msg_type {
+    destroy_msg_potion_cold,
+    destroy_msg_potion_fire,
+    destroy_msg_scroll_fire,
+    destroy_msg_spellbook_fire,
+    destroy_msg_ring_elec,
+    destroy_msg_wand_elec,
+    num_destroy_msgs
+};
+
+struct destroy_message {
+    const char *plural, *singular, *killer;
+};
+
+extern struct destroy_message destroy_messages[num_destroy_msgs];
+
+/* used to track the thrown object to remove it from the bill if it kills a
+ * shopkeeper */
+extern struct obj *thrownobj;
 
 #endif /* OBJ_H */
 

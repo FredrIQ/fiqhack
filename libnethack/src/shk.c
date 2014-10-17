@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-08-20 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -19,9 +19,6 @@ static void call_kops(struct monst *, boolean);
 static void kops_gone(boolean);
 
 #define IS_SHOP(lev, x) ((lev)->rooms[x].rtype >= SHOPBASE)
-
-extern const struct shclass shtypes[];  /* defined in shknam.c */
-extern struct obj *thrownobj;   /* defined in dothrow.c */
 
 static long int followmsg;      /* last time of follow message */
 
@@ -3581,7 +3578,7 @@ shk_embellish(struct obj *itm, long cost)
 }
 
 /* First 4 supplied by Ronen and Tamar, remainder by development team */
-const char *const Izchak_speaks[] = {
+static const char *const Izchak_speaks[] = {
     "%s says: 'These shopping malls give me a headache.'",
     "%s says: 'Slow down.  Think clearly.'",
     "%s says: 'You need to take things one at a time.'",

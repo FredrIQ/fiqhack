@@ -1,9 +1,10 @@
 %{
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /*	Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 #include "hack.h"
 #include "sp_lev.h"
+#include "lev_compiler.h"
 
 /*
  * This file contains the Level Compiler code
@@ -22,28 +23,6 @@
 	(type *) memset(malloc(sizeof(type)), 0, sizeof(type))
 #define NewTab(type, size)	malloc(sizeof(type *) * size)
 #define Free(ptr)		free(ptr)
-
-extern void yyerror(const char *);
-extern void yywarning(const char *);
-extern int yylex(void);
-int yyparse(void);
-
-extern int get_floor_type(char);
-extern int get_room_type(char *);
-extern int get_trap_type(char *);
-extern int get_monster_id(char *,char);
-extern int get_object_id(char *,char);
-extern boolean check_monster_char(char);
-extern boolean check_object_char(char);
-extern char what_map_char(char);
-extern void scan_map(char *);
-extern void wallify_map(void);
-extern boolean check_subrooms(void);
-extern void check_coord(int,int,const char *);
-extern void store_part(void);
-extern void store_room(void);
-extern boolean write_level_file(char *,splev *,specialmaze *);
-extern void free_rooms(splev *);
 
 static struct reg {
 	int x1, y1;
@@ -87,7 +66,7 @@ pool *tmppool[MAX_OF_TYPE];
 
 mazepart *tmppart[10];
 room *tmproom[MAXNROFROOMS*2];
-corridor *tmpcor[MAX_OF_TYPE];
+static corridor *tmpcor[MAX_OF_TYPE];
 
 static specialmaze maze;
 static splev special_lev;
@@ -109,9 +88,9 @@ unsigned int max_x_map, max_y_map;
 
 static xchar in_room;
 
-extern int fatal_error;
-extern int want_warnings;
-extern const char *fname;
+#ifdef __clang__
+# pragma clang diagnostic ignored "-Wmissing-variable-declarations"
+#endif
 
 %}
 

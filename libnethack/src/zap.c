@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-20 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -14,11 +14,6 @@
 
 static boolean obj_zapped;
 static int poly_zapped;
-
-extern boolean notonhead;       /* for long worms */
-
-/* kludge to use mondied instead of killed */
-extern boolean m_using;
 
 static void costly_cancel(struct obj *);
 static void polyuse(struct obj *, int, int);
@@ -54,7 +49,7 @@ static int spell_hit_bonus(int);
 
 static const char blinded_by_the_flash[] = "You are blinded by the flash!";
 
-const char *const flash_types[] = {     /* also used in buzzmu(mcastu.c) */
+const char *const flash_types[] = {   /* also used in buzzmu(mcastu.c) */
     "magic missile",    /* Wands must be 0-9 */
     "bolt of fire",
     "bolt of cold",
@@ -3900,13 +3895,13 @@ break_statue(struct obj *obj)
     return TRUE;
 }
 
-const char *const destroy_strings[] = { /* also used in trap.c */
-    "freezes and shatters", "freeze and shatter", "shattered potion",
-    "boils and explodes", "boil and explode", "boiling potion",
-    "catches fire and burns", "catch fire and burn", "burning scroll",
-    "catches fire and burns", "catch fire and burn", "burning book",
-    "turns to dust and vanishes", "turn to dust and vanish", "",
-    "breaks apart and explodes", "break apart and explode", "exploding wand"
+struct destroy_message destroy_messages[num_destroy_msgs] = {
+    {"freezes and shatters", "freeze and shatter", "shattered potion"},
+    {"boils and explodes", "boil and explode", "boiling potion"},
+    {"catches fire and burns", "catch fire and burn", "burning scroll"},
+    {"catches fire and burns", "catch fire and burn", "burning book"},
+    {"turns to dust and vanishes", "turn to dust and vanish", ""},
+    {"breaks apart and explodes", "break apart and explode", "exploding wand"},
 };
 
 void
@@ -3915,7 +3910,7 @@ destroy_item(int osym, int dmgtyp)
     struct obj *obj, *obj2;
     int dmg, xresist, skip;
     long i, cnt, quan;
-    int dindx;
+    enum destroy_msg_type dindx;
     const char *mult;
 
     for (obj = invent; obj; obj = obj2) {
@@ -3934,7 +3929,7 @@ destroy_item(int osym, int dmgtyp)
         case AD_COLD:
             if (osym == POTION_CLASS && obj->otyp != POT_OIL) {
                 quan = obj->quan;
-                dindx = 0;
+                dindx = destroy_msg_potion_cold;
                 dmg = rnd(4);
             } else
                 skip++;
@@ -3953,15 +3948,15 @@ destroy_item(int osym, int dmgtyp)
             quan = obj->quan;
             switch (osym) {
             case POTION_CLASS:
-                dindx = 1;
+                dindx = destroy_msg_potion_fire;
                 dmg = rnd(6);
                 break;
             case SCROLL_CLASS:
-                dindx = 2;
+                dindx = destroy_msg_scroll_fire;
                 dmg = 1;
                 break;
             case SPBOOK_CLASS:
-                dindx = 3;
+                dindx = destroy_msg_spellbook_fire;
                 dmg = 1;
                 break;
             default:
@@ -3978,7 +3973,7 @@ destroy_item(int osym, int dmgtyp)
                     skip++;
                     break;
                 }
-                dindx = 4;
+                dindx = destroy_msg_ring_elec;
                 dmg = 0;
                 break;
             case WAND_CLASS:
@@ -3986,7 +3981,7 @@ destroy_item(int osym, int dmgtyp)
                     skip++;
                     break;
                 }
-                dindx = 5;
+                dindx = destroy_msg_wand_elec;
                 dmg = rnd(10);
                 break;
             default:
@@ -4012,8 +4007,8 @@ destroy_item(int osym, int dmgtyp)
             else
                 mult = (cnt == 1L) ? "One of your" : "Some of your";
             pline("%s %s %s!", mult, xname(obj),
-                  (cnt > 1L) ? destroy_strings[dindx * 3 + 1]
-                  : destroy_strings[dindx * 3]);
+                  (cnt > 1L) ? destroy_messages[dindx].singular
+                  : destroy_messages[dindx].plural);
             if (osym == POTION_CLASS && dmgtyp != AD_COLD) {
                 if (!breathless(youmonst.data) || haseyes(youmonst.data))
                     potionbreathe(obj);
@@ -4031,7 +4026,7 @@ destroy_item(int osym, int dmgtyp)
                 if (xresist)
                     pline("You aren't hurt!");
                 else {
-                    const char *how = destroy_strings[dindx * 3 + 2];
+                    const char *how = destroy_messages[dindx].killer;
                     boolean one = (cnt == 1L);
 
                     losehp(dmg,
@@ -4052,7 +4047,7 @@ destroy_mitem(struct monst *mtmp, int osym, int dmgtyp)
     struct obj *obj, *obj2;
     int skip, tmp = 0;
     long i, cnt, quan;
-    int dindx;
+    enum destroy_msg_type dindx;
     boolean vis;
 
     if (mtmp == &youmonst) {    /* this simplifies artifact_hit() */
@@ -4073,7 +4068,7 @@ destroy_mitem(struct monst *mtmp, int osym, int dmgtyp)
         case AD_COLD:
             if (osym == POTION_CLASS && obj->otyp != POT_OIL) {
                 quan = obj->quan;
-                dindx = 0;
+                dindx = destroy_msg_potion_cold;
                 tmp++;
             } else
                 skip++;
@@ -4090,15 +4085,15 @@ destroy_mitem(struct monst *mtmp, int osym, int dmgtyp)
             quan = obj->quan;
             switch (osym) {
             case POTION_CLASS:
-                dindx = 1;
+                dindx = destroy_msg_potion_fire;
                 tmp++;
                 break;
             case SCROLL_CLASS:
-                dindx = 2;
+                dindx = destroy_msg_scroll_fire;
                 tmp++;
                 break;
             case SPBOOK_CLASS:
-                dindx = 3;
+                dindx = destroy_msg_spellbook_fire;
                 tmp++;
                 break;
             default:
@@ -4114,14 +4109,14 @@ destroy_mitem(struct monst *mtmp, int osym, int dmgtyp)
                     skip++;
                     break;
                 }
-                dindx = 4;
+                dindx = destroy_msg_ring_elec;
                 break;
             case WAND_CLASS:
                 if (obj->otyp == WAN_LIGHTNING) {
                     skip++;
                     break;
                 }
-                dindx = 5;
+                dindx = destroy_msg_wand_elec;
                 tmp++;
                 break;
             default:
@@ -4142,8 +4137,8 @@ destroy_mitem(struct monst *mtmp, int osym, int dmgtyp)
                 continue;
             if (vis)
                 pline("%s %s %s!", s_suffix(Monnam(mtmp)), xname(obj),
-                      (cnt > 1L) ? destroy_strings[dindx * 3 + 1]
-                      : destroy_strings[dindx * 3]);
+                      (cnt > 1L) ? destroy_messages[dindx].singular
+                      : destroy_messages[dindx].plural);
             for (i = 0; i < cnt; i++)
                 m_useup(mtmp, obj);
         }

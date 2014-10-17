@@ -1,5 +1,5 @@
 %{
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /*	Copyright (c) 1989 by Jean-Christophe Collet */
 /*	Copyright (c) 1990 by M. Stephenson				  */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -11,21 +11,18 @@
 #include "config.h"
 #include "dgn_file.h"
 #include "verinfo.h"
-
-void yyerror(const char *);
-void yywarning(const char *);
-int yylex(void);
-int yyparse(void);
-int getchain(char *);
-int check_dungeon(void);
-int check_branch(void);
-int check_level(void);
-void init_dungeon(void);
-void init_branch(void);
-void init_level(void);
-void output_dgn(void);
+#include "dgn_compiler.h"
 
 #define ERR		(-1)
+
+static int getchain(char *);
+static int check_dungeon(void);
+static int check_branch(void);
+static int check_level(void);
+static void init_dungeon(void);
+static void init_branch(void);
+static void init_level(void);
+static void output_dgn(void);
 
 static struct couple couple;
 static struct tmpdungeon tmpdungeon[MAXDUNGEON];
@@ -34,9 +31,9 @@ static struct tmpbranch tmpbranch[BRANCH_LIMIT];
 
 static int in_dungeon = 0, n_dgns = -1, n_levs = -1, n_brs = -1;
 
-extern int fatal_error;
-extern const char *fname;
-extern FILE *yyin, *yyout;	/* from dgn_lex.c */
+#ifdef __clang__
+# pragma clang diagnostic ignored "-Wmissing-variable-declarations"
+#endif
 
 %}
 
@@ -81,6 +78,7 @@ dungeonline	: A_DUNGEON ':' STRING bones_tag rcouple optional_int
 			tmpdungeon[n_dgns].lev.rand = couple.rand;
 			tmpdungeon[n_dgns].chance = $6;
 			free($3);
+            check_dungeon();
 		  }
 		;
 
@@ -502,8 +500,9 @@ int check_dungeon(void)
 	    }
 	  }
 
-	if(tmpdungeon[n_dgns].lev.base <= 0 ||
-	   tmpdungeon[n_dgns].lev.rand < 0) {
+    /* The entry level check is a kludge to avoid erroring on the endgame. */
+    if ((tmpdungeon[n_dgns].lev.base <= 0 || tmpdungeon[n_dgns].lev.rand < 0) &&
+        tmpdungeon[n_dgns].entry_lev != -2) {
 		yyerror("Invalid dungeon depth specified.");
 		return 0;
 	}

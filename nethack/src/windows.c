@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-16 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -11,7 +11,7 @@
 
 WINDOW *basewin, *mapwin, *msgwin, *statuswin, *sidebar, *extrawin;
 struct gamewin *firstgw, *lastgw;
-int orig_cursor;
+static int orig_cursor;
 const char quit_chars[] = " \r\n\033";
 
 struct nh_window_procs curses_windowprocs = {

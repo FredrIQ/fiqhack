@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -14,7 +14,7 @@
 # define WARNCOUNT 6    /* number of different warning levels */
 
 /* Read-only data */
-extern const int x_maze_max, y_maze_max;
+static const int x_maze_max = (COLNO - 1) & ~1, y_maze_max = (ROWNO - 1) & ~1;
 
 extern const int bases[MAXOCLASSES];
 
@@ -400,6 +400,15 @@ extern struct sinfo {
     boolean input_was_just_replayed;
     boolean ok_to_diff;
 } program_state;
+
+extern const struct cmd_desc cmdlist[];
+
+/* timezones, polyinit are generated in readonly.c */
+extern const struct nh_listitem timezone_list[];
+extern const struct nh_enum_option timezone_spec;
+
+extern const struct nh_listitem polyinit_list[];
+extern const struct nh_enum_option polyinit_spec;
 
 #endif /* DECL_H */
 

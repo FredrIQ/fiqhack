@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-13 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -15,8 +15,6 @@ static void container_weight(struct obj *);
 static struct obj *save_mtraits(struct obj *, struct monst *);
 static void extract_nexthere(struct obj *, struct obj **);
 
-extern struct obj *thrownobj;   /* defined in dothrow.c */
-
 /* #define DEBUG_EFFECTS *//* show some messages for debugging */
 
 struct icp {
@@ -25,7 +23,7 @@ struct icp {
 };
 
 
-const struct icp mkobjprobs[] = {
+static const struct icp mkobjprobs[] = {
     {10, WEAPON_CLASS},
     {10, ARMOR_CLASS},
     {20, FOOD_CLASS},
@@ -39,7 +37,7 @@ const struct icp mkobjprobs[] = {
     {1, AMULET_CLASS}
 };
 
-const struct icp boxiprobs[] = {
+static const struct icp boxiprobs[] = {
     {18, GEM_CLASS},
     {15, FOOD_CLASS},
     {18, POTION_CLASS},
@@ -51,7 +49,7 @@ const struct icp boxiprobs[] = {
     {1, AMULET_CLASS}
 };
 
-const struct icp rogueprobs[] = {
+static const struct icp rogueprobs[] = {
     {12, WEAPON_CLASS},
     {12, ARMOR_CLASS},
     {22, FOOD_CLASS},
@@ -61,7 +59,7 @@ const struct icp rogueprobs[] = {
     {5, RING_CLASS}
 };
 
-const struct icp hellprobs[] = {
+static const struct icp hellprobs[] = {
     {20, WEAPON_CLASS},
     {20, ARMOR_CLASS},
     {16, FOOD_CLASS},

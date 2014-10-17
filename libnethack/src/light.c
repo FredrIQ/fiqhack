@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-28 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Dean Luick, 1994                                       */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -47,11 +47,6 @@
 static void write_ls(struct memfile *mf, light_source *);
 static int maybe_write_ls(struct memfile *mf, struct level *lev, int range,
                           boolean write_it);
-
-/* imported from vision.c, for small circles */
-extern const char circle_data[];
-extern const char circle_start[];
-
 
 /* Create a new light source.  */
 void

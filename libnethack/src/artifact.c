@@ -1,19 +1,19 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-08 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #define ARTIFACT_C
 #include "artilist.h"
+#include "lev.h"
+
 /*
  * Note:  both artilist[] and artiexist[] have a dummy element #0,
  *        so loops over them should normally start at #1.  The primary
  *        exception is the save & restore code, which doesn't care about
  *        the contents, just the total size.
  */
-
-extern boolean notonhead;       /* for long worms */
 
 #define get_artifact(o) \
                 (((o)&&(o)->oartifact) ? &artilist[(int) (o)->oartifact] : 0)
@@ -1326,7 +1326,6 @@ arti_invoke(struct obj *obj)
         case CREATE_PORTAL:{
                 int i, num_ok_dungeons, last_ok_dungeon = 0;
                 d_level newlev;
-                extern int n_dgns;      /* from dungeon.c */
                 struct nh_menulist menu;
 
                 init_menulist(&menu);

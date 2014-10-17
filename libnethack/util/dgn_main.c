@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* Copyright (c) 1990 by M. Stephenson          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -11,21 +11,14 @@
 
 #include "config.h"
 #include "dlb.h"
+#include "dgn_compiler.h"
 
 #define MAX_ERRORS 25
 
-extern int yyparse(void);
-extern int line_number;
 const char *fname = "(stdin)";
-static const char *outprefix = "";
 int fatal_error = 0;
 
-int main(int, char **);
-void yyerror(const char *);
-void yywarning(const char *);
-int yywrap(void);
-void init_yyin(FILE *);
-void init_yyout(FILE *);
+static const char *outprefix = "";
 
 int
 main(int argc, char **argv)
@@ -126,7 +119,6 @@ yyerror(const char *s)
 /*
  * Just display a warning (that is : a non fatal error)
  */
-
 void
 yywarning(const char *s)
 {

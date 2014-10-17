@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-08-16 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -51,29 +51,7 @@ const char *const monexplain[MAXMCLASSES] = {
     "long worm tail", "mimic"
 };
 
-const char invisexplain[] = "remembered, unseen, creature";
-
-/* Object descriptions.  Used in do_look(). */
-const char *const objexplain[] = {      /* these match def_oc_syms */
-/* 0*/ 0,
-    "strange object",
-    "weapon",
-    "suit or piece of armor",
-    "ring",
-/* 5*/ "amulet",
-    "useful item (pick-axe, key, lamp...)",
-    "piece of food",
-    "potion",
-    "scroll",
-/*10*/ "spellbook",
-    "wand",
-    "pile of coins",
-    "gem or rock",
-    "boulder or statue",
-/*15*/ "iron ball",
-    "iron chain",
-    "splash of venom"
-};
+static const char invisexplain[] = "remembered, unseen, creature";
 
 /* Concatenates new_str to *buf, returning the result back in *buf, with some
    grammatical fixes. (The previous documentation said "if new_str doesn't
@@ -610,7 +588,7 @@ checkfile(const char *inp, struct permonst *pm, boolean user_typed_name,
 
 
 /* also used by getpos hack in do_name.c */
-const char what_is_an_unknown_object[] = "an unknown object";
+static const char what_is_an_unknown_object[] = "an unknown object";
 
 /* quick: use cursor && don't search for "more info" */
 static int

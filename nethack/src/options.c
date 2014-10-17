@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-16 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -113,7 +113,7 @@ static struct nh_enum_option frame_spec =
 static const char *const bucnames[] =
     { "unknown", "blessed", "uncursed", "cursed", "all" };
 
-struct nh_option_desc curses_options[] = {
+static struct nh_option_desc curses_options[] = {
     {"animation", "what to animate, and how fast", FALSE, OPTTYPE_ENUM,
      {.e = ANIM_ALL}},
     {"border", "what to draw borders around", FALSE, OPTTYPE_ENUM,
@@ -167,7 +167,7 @@ struct nh_option_desc curses_options[] = {
     {NULL, NULL, FALSE, OPTTYPE_BOOL, {NULL}}
 };
 
-struct nhlib_boolopt_map boolopt_map[] = {
+static struct nhlib_boolopt_map boolopt_map[] = {
     {"draw_branch", &settings.dungeoncolor},
     {"draw_detected", &settings.use_inverse},
     {"draw_rock", &settings.visible_rock},
