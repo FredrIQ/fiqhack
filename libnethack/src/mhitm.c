@@ -16,7 +16,6 @@ static const char brief_feeling[] =
     "You have a %s feeling for a moment, then it passes.";
 
 static const char *mon_nam_too(struct monst *, struct monst *);
-static void mrustm(struct monst *, struct monst *, struct obj *);
 static int hitmm(struct monst *, struct monst *, const struct attack *);
 static int gazemm(struct monst *, struct monst *, const struct attack *);
 static int gulpmm(struct monst *, struct monst *, const struct attack *);
@@ -1334,43 +1333,25 @@ slept_monst(struct monst *mon)
 }
 
 
-static void
+void
 mrustm(struct monst *magr, struct monst *mdef, struct obj *obj)
 {
-    boolean is_acid;
+    enum erode_type type;
 
     if (!magr || !mdef || !obj)
         return; /* just in case */
 
     if (dmgtype(mdef->data, AD_CORR))
-        is_acid = TRUE;
+        type = ERODE_CORRODE;
     else if (dmgtype(mdef->data, AD_RUST))
-        is_acid = FALSE;
+        type = ERODE_RUST;
     else
         return;
 
-    impossible("mrustm did something?");
+    if (mdef->mcan)
+        return;
 
-    if (!mdef->mcan && (is_acid ? is_corrodeable(obj) : is_rustprone(obj)) &&
-        (is_acid ? obj->oeroded2 : obj->oeroded) < MAX_ERODE) {
-        if (obj->greased || obj->oerodeproof || (obj->blessed && rn2(3))) {
-            if (cansee(mdef->mx, mdef->my) && flags.verbose)
-                pline("%s weapon is not affected.", s_suffix(Monnam(magr)));
-            if (obj->greased && !rn2(2))
-                obj->greased = 0;
-        } else {
-            if (cansee(mdef->mx, mdef->my)) {
-                pline("%s %s%s!", s_suffix(Monnam(magr)),
-                      aobjnam(obj, (is_acid ? "corrode" : "rust")),
-                      (is_acid ? obj->oeroded2 : obj->oeroded)
-                      ? " further" : "");
-            }
-            if (is_acid)
-                obj->oeroded2++;
-            else
-                obj->oeroded++;
-        }
-    }
+    erode_obj(obj, NULL, type, TRUE, TRUE);
 }
 
 static void

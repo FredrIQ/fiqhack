@@ -163,7 +163,7 @@ erode_obj(struct obj * otmp, const char *ostr, enum erode_type type,
             if (victim == &youmonst)
                 pline("Your %s %s not affected.", ostr, vtense(ostr, "are"));
             else if (vismon)
-                pline("%s's %s %s not affected.", Monnam(victim), ostr,
+                pline("%s %s %s not affected.", s_suffix(Monnam(victim)), ostr,
                       vtense(ostr, "are"));
         }
         return FALSE;
@@ -173,8 +173,8 @@ erode_obj(struct obj * otmp, const char *ostr, enum erode_type type,
                 pline("Somehow, your %s %s not affected.", ostr,
                       vtense(ostr, "are"));
             else if (vismon)
-                pline("Somehow, %s's %s %s not affected.", mon_nam(victim),
-                      ostr, vtense(ostr, "are"));
+                pline("Somehow, %s %s %s not affected.",
+                      s_suffix(mon_nam(victim)), ostr, vtense(ostr, "are"));
             else if (visobj)
                 pline("Somehow, the %s %s not affected.", ostr,
                       vtense(ostr, "are"));
@@ -192,7 +192,7 @@ erode_obj(struct obj * otmp, const char *ostr, enum erode_type type,
         if (victim == &youmonst)
             pline("Your %s %s%s!", ostr, vtense(ostr, action[type]), adverb);
         else if (vismon)
-            pline("%s's %s %s%s!", Monnam(victim), ostr,
+            pline("%s %s %s%s!", s_suffix(Monnam(victim)), ostr,
                   vtense(ostr, action[type]), adverb);
         else if (visobj)
             pline("The %s %s%s!", ostr, vtense(ostr, action[type]), adverb);
@@ -212,7 +212,7 @@ erode_obj(struct obj * otmp, const char *ostr, enum erode_type type,
                 pline("Your %s %s completely %s.", ostr,
                       vtense(ostr, Blind ? "feel" : "look"), msg[type]);
             else if (vismon)
-                pline("%s's %s %s completely %s.", Monnam(victim), ostr,
+                pline("%s %s %s completely %s.", s_suffix(Monnam(victim)), ostr,
                       vtense(ostr, "look"), msg[type]);
             else if (visobj)
                 pline("The %s %s completely %s.", ostr, vtense(ostr, "look"),

@@ -906,6 +906,7 @@ extern int noattacks(const struct permonst *);
 extern int sleep_monst(struct monst *, int, int);
 extern void slept_monst(struct monst *);
 extern long attk_protection(int);
+void mrustm (struct monst *magr, struct monst *mdef, struct obj *obj);
 
 /* ### mhitu.c ### */
 

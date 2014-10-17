@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-28 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -9,7 +9,6 @@
 
 static struct obj *otmp;
 
-static void urustm(struct monst *, struct obj *);
 static boolean u_slip_free(struct monst *, const struct attack *);
 static int passiveum(const struct permonst *, struct monst *,
                      const struct attack *);
@@ -951,7 +950,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                     if (cloneu())
                         pline("You divide as %s hits you!", mon_nam(mtmp));
                 }
-                urustm(mtmp, otmp);
+                mrustm(mtmp, &youmonst, otmp);
             } else if (mattk->aatyp != AT_TUCH || dmg != 0 || mtmp != u.ustuck)
                 hitmsg(mtmp, mattk);
         }
@@ -2074,48 +2073,6 @@ mdamageu(struct monst *mtmp, int n)
         u.uhp -= n;
         if (u.uhp < 1)
             done_in_by(mtmp, NULL);
-    }
-}
-
-
-static void
-urustm(struct monst *mon, struct obj *obj)
-{
-    boolean vis;
-    boolean is_acid;
-
-    if (!mon || !obj)
-        return; /* just in case */
-    if (dmgtype(youmonst.data, AD_CORR))
-        is_acid = TRUE;
-    else if (dmgtype(youmonst.data, AD_RUST))
-        is_acid = FALSE;
-    else
-        return;
-
-    impossible("urustm did something?"); 
-
-    vis = cansee(mon->mx, mon->my);
-
-    if ((is_acid ? is_corrodeable(obj) : is_rustprone(obj)) &&
-        (is_acid ? obj->oeroded2 : obj->oeroded) < MAX_ERODE) {
-        if (obj->greased || obj->oerodeproof || (obj->blessed && rn2(3))) {
-            if (vis)
-                pline("Somehow, %s weapon is not affected.",
-                      s_suffix(mon_nam(mon)));
-            if (obj->greased && !rn2(2))
-                obj->greased = 0;
-        } else {
-            if (vis)
-                pline("%s %s%s!", s_suffix(Monnam(mon)),
-                      aobjnam(obj, (is_acid ? "corrode" : "rust")),
-                      (is_acid ? obj->oeroded2 : obj->oeroded)
-                      ? " further" : "");
-            if (is_acid)
-                obj->oeroded2++;
-            else
-                obj->oeroded++;
-        }
     }
 }
 
