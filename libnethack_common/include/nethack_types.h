@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-12 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -415,8 +415,7 @@ enum nh_query_key_flags {
 };
 
 /* the name "boolean" is too common to use here */
-typedef signed char nh_bool;    /* 0 or 1 */
-
+typedef _Bool nh_bool;
 
 struct nh_listitem {
     int id;

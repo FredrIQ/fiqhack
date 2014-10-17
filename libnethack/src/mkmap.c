@@ -17,7 +17,7 @@ static void pass_two(struct level *lev, schar, schar);
 static void pass_three(struct level *lev, schar, schar);
 static void wallify_map(struct level *lev);
 static void join_map(struct level *lev, schar, schar);
-static void finish_map(struct level *lev, schar, schar, xchar, xchar);
+static void finish_map(struct level *lev, schar, schar, boolean, boolean);
 static void remove_room(struct level *lev, unsigned roomno);
 
 static char *new_locations;
