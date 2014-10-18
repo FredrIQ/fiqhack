@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2014-10-18 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -906,7 +906,7 @@ extern int noattacks(const struct permonst *);
 extern int sleep_monst(struct monst *, int, int);
 extern void slept_monst(struct monst *);
 extern long attk_protection(int);
-void mrustm (struct monst *magr, struct monst *mdef, struct obj *obj);
+extern void mrustm (struct monst *magr, struct monst *mdef, struct obj *obj);
 
 /* ### mhitu.c ### */
 
@@ -958,8 +958,8 @@ extern void mkinvokearea(void);
 
 /* ### mkmap.c ### */
 
-void flood_fill_rm(struct level *lev, int, int, int, boolean, boolean);
-void remove_rooms(struct level *lev, int lx, int ly, int hx, int hy);
+extern void flood_fill_rm(struct level *lev, int, int, int, boolean, boolean);
+extern void remove_rooms(struct level *lev, int lx, int ly, int hx, int hy);
 
 /* ### mkmaze.c ### */
 
@@ -1669,7 +1669,7 @@ extern boolean rloc(struct monst *, boolean);
 extern boolean tele_restrict(struct monst *);
 extern void mtele_trap(struct monst *, struct trap *, int);
 extern int mlevel_tele_trap(struct monst *, struct trap *, boolean, int);
-void rloco_pos(struct level *lev, struct obj *obj, int *nx, int *ny);
+extern void rloco_pos(struct level *lev, struct obj *obj, int *nx, int *ny);
 extern void rloco(struct obj *);
 extern int random_teleport_level(void);
 extern boolean u_teleport_mon(struct monst *, boolean);

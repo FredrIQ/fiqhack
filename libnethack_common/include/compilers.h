@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-16 */
+/* Last modified by Alex Smith, 2014-10-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) Alex Smith 2014. */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -89,8 +89,12 @@
 #   define STRFTIMELIKE(f,a) __attribute__((format (strftime, f, a)))
 #  endif
 #  define SENTINEL __attribute__((sentinel))
-#  if defined(__clang__) && __has_attribute(flag_enum)
-#   define FLAG_ENUM __attribute__((flag_enum))
+#  if defined(__clang__)
+#   if __has_attribute(flag_enum)
+#    define FLAG_ENUM __attribute__((flag_enum))
+#   else
+#    define FLAG_ENUM
+#   endif
 #  else
 #   define FLAG_ENUM
 #  endif
