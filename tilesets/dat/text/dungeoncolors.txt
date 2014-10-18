@@ -1,11 +1,13 @@
-! Last modified by Alex Smith, 2014-10-12
+! Last modified by Alex Smith, 2014-10-18
 ! NetHack may be freely redistributed. See license for details.
+!
+! Copyright (C) 2014 Alex Smith
 !
 ! This text tileset is used to make branches look a little different
 ! from each other.
 !
-! The color schemes here are those suggested by Raz (the RLtiles
-! artist); the coding is by Alex Smith.
+! This file was written by Alex Smith, and encodes a dungeon coloring
+! scheme suggested by Raz (the RLtiles artist).
 
 ! Generic walls
 

@@ -1,11 +1,12 @@
-! Last modified by Alex Smith, 2014-10-17
+! Last modified by Alex Smith, 2014-10-18
 !
 ! Copyright (C) 2014 Alex Smith
-! This work is licensed under the Creative Commons Attribution 3.0
-! Unported License. To view a copy of this license, visit
-! http://creativecommons.org/licenses/by/3.0/ or send a letter to
-! Creative Commons, 444 Castro Street, Suite 900, Mountain View,
-! California, 94041, USA.
+!
+! This work is licenced under the Creative Commons Attribution-Share
+! Alike 3.0 Unported License. To view a copy of this licence, visit
+! http://creativecommons.org/licenses/by-sa/3.0/ or send a letter to
+! Creative Commons, 171 Second Street, Suite 300, San Francisco,
+! California 94105, USA.
 !
 ! This map file lists the location of each of the NetHack 4 tiles
 ! within the DawnLike tilesets. It can be used to manually import a

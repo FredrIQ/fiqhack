@@ -1,3 +1,15 @@
+! Last modified by Alex Smith, 2014-10-18
+!
+! Copyright (C) Andrew Rios, 2014
+!
+! This work is licenced under the Creative Commons Attribution-Share
+! Alike 3.0 Unported License. To view a copy of this licence, visit
+! http://creativecommons.org/licenses/by-sa/3.0/ or send a letter to
+! Creative Commons, 171 Second Street, Suite 300, San Francisco,
+! California 94105, USA.
+!
+! This file contains the tiles from DawnLike.
+!
 A = (71, 108, 108)
 B = (20, 12, 28)
 C = (69, 36, 52)

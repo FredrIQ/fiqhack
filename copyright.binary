@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Alex Smith, 2014-10-16
+Last-Modified: Last modified by Alex Smith, 2014-10-18
 Comment:
  This file contains the copyright status of the files in the Windows binary
  distribution (i.e. the copyright NetHack 4 has after being built). For other
@@ -11,14 +11,17 @@ License: NGPL
 Copyright: Copyright (c) 2013 Alex Smith
 
 Files: dawnlike-*
-License: CC-BY-3.0
- This work is licensed under the Creative Commons Attribution 3.0
- Unported License. To view a copy of this license, visit
- http://creativecommons.org/licenses/by/3.0/ or send a letter to
- Creative Commons, 444 Castro Street, Suite 900, Mountain View,
- California, 94041, USA.
+License: CC-BY-3.0 and CC-BY-SA-3.0
 Copyright:
  Copyright (C) Andrew Rios, 2014
+ Copyright (C) Alex Smith, 2014
+ .
+ These tilesets were made by Alex Smith by combining tiles from
+ DawnHack (under CC-BY-3.0) and DawnLike (under CC-BY-SA-3.0), both
+ from the same artist, Andrew Rios. (The organization of the tiles,
+ i.e. the choice of which image from DawnHack and/or DawnLike to use
+ for each tile, was done by Alex Smith.) DawnLike's copyright
+ information is as follows:
  .
  Dawnlike is registered under a CC-BY-SA 3.0 license, meaning that you
  are free to redistribute or edit any part of this tileset as long as
@@ -32,13 +35,10 @@ Copyright:
  request. Inside "Reptiles.png" you will find a Platino sprite. If you
  use Dawnlike, you MUST use this sprite and hide him very well!
 Comment:
- It is unclear whether CC-BY-3.0 is compatible with the NGPL (although it is
- not against the spirit of either license to include CC-BY-3.0 data in an
- NGPL file, there may be incompatibilities in the letter).  However, there is
- no need for license compatibility in this case, because these files only
- specify artwork, which is entirely independent of the rest of the program
- (and is replaceable without changes to any program code or binaries, an
- operation that was often performed in practice in previous versions).
+ Because these tiles only specify artwork and are entirely independent
+ of NetHack itself (acting as data files communicating over a well
+ defined API), there's no need for the license to be "combinable" with
+ that of NetHack 4 as a whole.
 
 Files: font-* slashem-*
 License: NGPL
@@ -191,6 +191,108 @@ Copyright:
  Copyright (c) 2011-2012 Daniel Thaler
  and many other contributors (see the "copyright" and "history" files for full
  lists).
+
+Files: rltiles-*
+License: rltiles-attribution and NGPL
+Comment:
+ rltiles-attribution and NGPL are compatible; rltiles-attribution's
+ requirements are a) that you preserve the copyright notice, and b) that
+ you mention who (if anyone) modified the tiles, both subsets of NGPL
+ requirements (and thus the resulting terms are identical to those of
+ the NGPL).
+Copyright:
+ This file contains tile images, together with a description of which
+ image should be used for what purpose within the game (the tile
+ organization). The tile organization was designed by Raz, and coded
+ by Alex Smith. The graphical tile images have the following
+ copyright/history:
+ .
+ Part of (or All) the graphic tiles used in this program is the public
+ domain roguelike tileset "RLTiles".
+ Some of the tiles have been modified by Raz.
+ .
+ You can find the original tileset at:
+ http://rltiles.sf.net
+ .
+ The list of contributors to the original RLTiles was:
+ .
+ Denzi
+ =========
+ dwarf lord, watchman, watch captain, page, raven,
+ *About half of the Dungeon Crawl tiles*
+ *Allmost all the player tiles*
+ .
+ Alex Korol
+ =========
+ dc/abomination*.bmp, 64x64 stairs tile, 64x64 swamp dragon
+ .
+ Edger
+ =========
+ Cerberus
+ .
+ Wan-ichi
+ =========
+ werejackal, werewolf, leocrotta, wumpus,
+ titanothere, baluchitherium, wererat
+ .
+ So-Miya
+ =========
+ chickatrice, pyrolisk, vampire, vampire mage
+ storm giant, silver dragon scale mail, shimmering dragon scale mail
+ silver dragon scales, shimmering dragon scales, baby shimmering dragon
+ shimmering dragon, baby silver dragon, silver dragon
+ master mind flayer, leather cloak, magcal explosions
+ .
+ Haruko Numata
+ =========
+ rope golem, leather golem, flesh golem, clay golem
+ stone golem, horned devil,
+ Lord Carnarvon, Pelias, Shaman Karnov, Hippocrates,
+ King Arthur, Arch Priest, Master of Thieves, Norn, Wizard of Balance,
+ low boots, iron shoes, high boots, combat boots, jungle boots,
+ hiking boots, mud boots
+ .
+ Tatsuya
+ =========
+ knight(3D), samurai(3D), barbarian(3D)
+ hill giant(3D), dragons(3D)
+ .
+ from AllegroHack (Kelly Youngblood, Paul Pliska, John Harris)
+ =========
+ gas spore, flaming sphere, shocking sphere
+ .
+ Dainokata
+ =========
+ warg, manes, shrieker,
+ water moccasin, elf zombie,human zombie,
+ straw golem, iron golem, wererat, shopkeeper,
+ guard, iguana, caveman, healer, rogue,
+ tourist, dart, aklys, elven bow,
+ orcish bow, elven cloak,
+ orcish cloak, opera cloak, sack,
+ lock pick, lamp, blindfold, towel,
+ leash, stethoscope, tinning kit, figurine,
+ cram ration, food ration, statue, alter, sink
+ .
+ Zmy
+ =========
+ dog, large dog, bugbear, rothe, ape, owlbear,
+ skeleton, Woodland-elf, Green-elf, Grey-elf,
+ Croesus, marilith, vrock, hezrou, nalfeshnee, Orcus,
+ Demogorgon, cavewoman, Elwing, dwarvish mattock,
+ pickaxe, Kop Lieutenant, Kop Sergeant, elf-lord
+ Oracle, Archon, Snake, pyton, cobra, Earendil
+
+Files: text*.nh4ct
+License: NGPL
+Copyright:
+ Copyright (C) 2014 Alex Smith
+ .
+ These files were written by Alex Smith, and are generated from the
+ (NGPL) suggested renderings in libnethack, plus various override
+ tiles due to Alex Smith and/or Daniel Thaler. The dungeon coloring
+ scheme was suggested by Raz (the RLtiles artist), and coded by Alex
+ Smith.
 
 Files: tilecompile.exe
 License: NGPL
@@ -369,3 +471,27 @@ License: Expat
  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  THE SOFTWARE.
+
+License: CC-BY-3.0
+ This work is licensed under the Creative Commons Attribution 3.0
+ Unported License. To view a copy of this license, visit
+ http://creativecommons.org/licenses/by/3.0/ or send a letter to
+ Creative Commons, 444 Castro Street, Suite 900, Mountain View,
+ California, 94041, USA.
+
+License: CC-BY-SA-3.0
+ This work is licenced under the Creative Commons Attribution-Share
+ Alike 3.0 Unported License. To view a copy of this licence, visit
+ http://creativecommons.org/licenses/by-sa/3.0/ or send a letter to
+ Creative Commons, 171 Second Street, Suite 300, San Francisco,
+ California 94105, USA.
+
+License: rltiles-attribution
+ You can use these tilesets in your program freely. Please include the
+ following text in your distribution package, either as a separate
+ file or incorpolated into your license notice document. The fourth
+ line is optional: Delete it if you have not modified the tiles. If
+ you have modified some of the tiles, replace "YOURNAME" by your name.
+Comment:
+ The "following text" is reproduced, with the appropriate
+ modifications, in the "Copyright" section of each use of the license.

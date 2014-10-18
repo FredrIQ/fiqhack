@@ -1,5 +1,7 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Alex Smith, 2014-10-16
+Last-Modified: Last modified by Alex Smith, 2014-10-18
+Upstream-Name: nethack4
+Upstream-Contact: ais523@nethack4.org
 
 Files: libnethack_client/*
 License: NGPL or GPL-2+
@@ -440,13 +442,19 @@ Copyright:
  Copyright (C) 2013 Alex Smith, in addition to the copyright on the tiles from
  Slash'EM on which these files are based (see tilesets/dat/tiles/s-*.txt).
 
-Files: tilesets/dat/tiles/dawnlike-*.txt tilesets/dat/palettes/dawnhack.txt
+Files: tilesets/dat/tiles/dawnlike-*.txt
 License: CC-BY-3.0
- This work is licensed under the Creative Commons Attribution 3.0
- Unported License. To view a copy of this license, visit
- http://creativecommons.org/licenses/by/3.0/ or send a letter to
- Creative Commons, 444 Castro Street, Suite 900, Mountain View,
- California, 94041, USA.
+ Copyright (C) Andrew Rios, 2014
+Comment:
+ These tiles originally came from the (CC-BY) DawnHack,
+ <http://dragondeplatino.deviantart.com/art/DawnHack-NetHack-3-4-3-UnNetHack-5-1-0-416312313>.
+Comment:
+ Because this file only specifies artwork and is entirely independent
+ of NetHack itself, there's no need for the license to be "combinable"
+ with that of NetHack 4 as a whole.
+
+Files: tilesets/dat/tiles/dawnlike-16.txt
+License: CC-BY-SA-3.0
 Copyright:
  Copyright (C) Andrew Rios, 2014
  .
@@ -462,19 +470,103 @@ Copyright:
  request. Inside "Reptiles.png" you will find a Platino sprite. If you
  use Dawnlike, you MUST use this sprite and hide him very well!
 Comment:
- It is unclear whether CC-BY-3.0 is compatible with the NGPL (although it is
- not against the spirit of either license to include CC-BY-3.0 data in an
- NGPL file, there may be incompatibilities in the letter).  However, there is
- no need for license compatibility in this case, because these files only
- specify artwork, which is entirely independent of the rest of the program
- (and is replaceable without changes to any program code or binaries, an
- operation that was often performed in practice in previous versions).
+ Because this file only specifies artwork and is entirely independent
+ of NetHack itself, there's no need for the license to be "combinable"
+ with that of NetHack 4 as a whole.
+
+Files: tilesets/dat/tiles/rltiles-32.png
+License: rltiles-attribution
+ You can use these tilesets in your program freely. Please include the
+ following text in your distribution package, either as a separate
+ file or incorpolated into your license notice document. The fourth
+ line is optional: Delete it if you have not modified the tiles. If
+ you have modified some of the tiles, replace "YOURNAME" by your name.
+Comment:
+ "Fourth line" in the license appears to be referring to the "Some of
+ the tiles" line, which previously ended "YOURNAME" rather than "Raz".
+ The "following text" is under the "Copyright" section here.
+Copyright:
+ Part of (or All) the graphic tiles used in this program is the public
+ domain roguelike tileset "RLTiles".
+ Some of the tiles have been modified by Raz.
+ .
+ You can find the original tileset at:
+ http://rltiles.sf.net
+ .
+ The list of contributors to the original RLTiles was:
+ .
+ Denzi
+ =========
+ dwarf lord, watchman, watch captain, page, raven,
+ *About half of the Dungeon Crawl tiles*
+ *Allmost all the player tiles*
+ .
+ Alex Korol
+ =========
+ dc/abomination*.bmp, 64x64 stairs tile, 64x64 swamp dragon
+ .
+ Edger
+ =========
+ Cerberus
+ .
+ Wan-ichi
+ =========
+ werejackal, werewolf, leocrotta, wumpus,
+ titanothere, baluchitherium, wererat
+ .
+ So-Miya
+ =========
+ chickatrice, pyrolisk, vampire, vampire mage
+ storm giant, silver dragon scale mail, shimmering dragon scale mail
+ silver dragon scales, shimmering dragon scales, baby shimmering dragon
+ shimmering dragon, baby silver dragon, silver dragon
+ master mind flayer, leather cloak, magcal explosions
+ .
+ Haruko Numata
+ =========
+ rope golem, leather golem, flesh golem, clay golem
+ stone golem, horned devil,
+ Lord Carnarvon, Pelias, Shaman Karnov, Hippocrates,
+ King Arthur, Arch Priest, Master of Thieves, Norn, Wizard of Balance,
+ low boots, iron shoes, high boots, combat boots, jungle boots,
+ hiking boots, mud boots
+ .
+ Tatsuya
+ =========
+ knight(3D), samurai(3D), barbarian(3D)
+ hill giant(3D), dragons(3D)
+ .
+ from AllegroHack (Kelly Youngblood, Paul Pliska, John Harris)
+ =========
+ gas spore, flaming sphere, shocking sphere
+ .
+ Dainokata
+ =========
+ warg, manes, shrieker,
+ water moccasin, elf zombie,human zombie,
+ straw golem, iron golem, wererat, shopkeeper,
+ guard, iguana, caveman, healer, rogue,
+ tourist, dart, aklys, elven bow,
+ orcish bow, elven cloak,
+ orcish cloak, opera cloak, sack,
+ lock pick, lamp, blindfold, towel,
+ leash, stethoscope, tinning kit, figurine,
+ cram ration, food ration, statue, alter, sink
+ .
+ Zmy
+ =========
+ dog, large dog, bugbear, rothe, ape, owlbear,
+ skeleton, Woodland-elf, Green-elf, Grey-elf,
+ Croesus, marilith, vrock, hezrou, nalfeshnee, Orcus,
+ Demogorgon, cavewoman, Elwing, dwarvish mattock,
+ pickaxe, Kop Lieutenant, Kop Sergeant, elf-lord
+ Oracle, Archon, Snake, pyton, cobra, Earendil
 
 Files: tilesets/dat/catalogues/*.txt
 License: NGPL
 Copyright: Copyright (C) 2013, 2014 Alex Smith
 
-Files: tileset/dat/maps/*.txt
+Files: tileset/dat/maps/*.map
 License: NGPL
 Copyright:
  It's unclear whether these files are copyrightable at all, being a list of
@@ -488,6 +580,18 @@ Copyright:
  Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  Copyright (c) Mike Threepoint, 1989.
  Copyright (c) NetHack Development Team 1992.
+
+Files: tilesets/dat/tiles/rltiles.map tilesets/dat/text/dungeoncolors.txt
+License: NGPL
+Copyright:
+ Copyright (C) 2014 Alex Smith
+ .
+ This file was written by Alex Smith, and encodes a dungeon coloring
+ scheme suggested by Raz (the RLtiles artist).
+
+Files: tilesets/dat/maps/dawnlike.map
+License: CC-BY-SA-3.0
+Copyright: Copyright (C) 2014 Alex Smith
 
 Files: tilesets/dat/fonts/*.txt
 License: NGPL
@@ -1770,3 +1874,17 @@ License: Expat
  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  THE SOFTWARE.
+
+License: CC-BY-3.0
+ This work is licensed under the Creative Commons Attribution 3.0
+ Unported License. To view a copy of this license, visit
+ http://creativecommons.org/licenses/by/3.0/ or send a letter to
+ Creative Commons, 444 Castro Street, Suite 900, Mountain View,
+ California, 94041, USA.
+
+License: CC-BY-SA-3.0
+ This work is licenced under the Creative Commons Attribution-Share
+ Alike 3.0 Unported License. To view a copy of this licence, visit
+ http://creativecommons.org/licenses/by-sa/3.0/ or send a letter to
+ Creative Commons, 171 Second Street, Suite 300, San Francisco,
+ California 94105, USA.

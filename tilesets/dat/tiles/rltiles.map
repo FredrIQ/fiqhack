@@ -1,8 +1,13 @@
-! Last modified by Alex Smith, 2014-10-12
+! Last modified by Alex Smith, 2014-10-18
 !
-! This file lists the order of tiles in rltiles-32.png.
-!
+! Copyright (C) 2014 Alex Smith
 ! NetHack may be freely redistributed.  See license for details.
+!
+! This file was written by Alex Smith, and encodes a dungeon coloring
+! scheme suggested by Raz (the RLtiles artist).
+!
+! It also lists the tile sequence from NetHack 3.4.3, because that is
+! the sequence of tiles in the RLtiles images.
 
 ! Tile sequence from NetHack 3.4.3
 giant ant
