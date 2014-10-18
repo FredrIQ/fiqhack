@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2014-10-18 */
 /* Copyright (c) J. C. Collet, M. Stephenson and D. Cohrs, 1992   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -17,7 +17,7 @@ static void pass_two(struct level *lev, schar, schar);
 static void pass_three(struct level *lev, schar, schar);
 static void wallify_map(struct level *lev);
 static void join_map(struct level *lev, schar, schar);
-static void finish_map(struct level *lev, schar, schar, boolean, boolean);
+static void finish_map(struct level *lev, schar, schar, xchar, xchar);
 static void remove_room(struct level *lev, unsigned roomno);
 
 static char *new_locations;
