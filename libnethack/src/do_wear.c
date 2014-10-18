@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-13 */
+/* Last modified by Alex Smith, 2014-10-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -55,8 +55,12 @@ static const char c_that_[] = "that";
    slot covering it is equipped or unequipped. We also group together actions
    that take less time when combined (e.g. unequipping then equipping a weapon
    takes 1 action when given as one command, 2 actions when given as two
-   commands). */
-enum equip_direction { ed_equip, ed_unequip };
+   commands).
+
+   For wield/ready/quiver slots, we don't have separate "equip" and "unequip"
+   actions; we just change the item in-place. This can unequip it from slots
+   it's already in in the process. */
+enum equip_direction { ed_equip, ed_unequip, ed_swap };
 const struct equip_order {
     enum objslot slot;
     enum equip_direction direction;
@@ -91,12 +95,9 @@ const struct equip_order {
        actions; swapwep and wep can each be changed in 1, without necessarily
        unequipping in between. The quiver takes 0 no matter what it's combined
        with. */
-    {os_swapwep, ed_unequip}, /* must come immediately before uwep */
-    {os_swapwep, ed_equip  },
-    {os_wep,     ed_unequip},
-    {os_wep,     ed_equip  },
-    {os_quiver,  ed_unequip},
-    {os_quiver,  ed_equip  },
+    {os_swapwep, ed_swap   }, /* must come immediately before uwep */
+    {os_wep,     ed_swap   },
+    {os_quiver,  ed_swap   },
 
     {os_arms,    ed_equip  },
 
@@ -719,6 +720,16 @@ want_to_change_slot(enum objslot os)
         return FALSE; /* no change yet */
     return TRUE;
 }
+static inline boolean
+free_to_change_slot(struct obj *obj, boolean noisy,
+                    boolean spoil, boolean cblock)
+{
+    if (obj == &zeroobj || !obj)
+        return TRUE;
+    if (!(obj->owornmask & W_EQUIP))
+        return TRUE;
+    return canunwearobj(obj, noisy, spoil, cblock);
+}
 int
 equip_heartbeat(void)
 {
@@ -753,6 +764,13 @@ equip_heartbeat(void)
                   islot == os_wep ? "wielding" :
                   islot == os_swapwep ? "readying" :
                   islot == os_quiver ? "quivering" : "wearing", yname(current));
+            u.utracked[tos_first_equip + islot] = desired = NULL;
+        }
+
+        /* Likewise, we have a special case for trying to unequip an object
+           over an empty slot. */
+        if (!current && desired == &zeroobj) {
+            pline("You have no %s equipped.", c_slotnames[islot]);
             u.utracked[tos_first_equip + islot] = desired = NULL;
         }
 
@@ -798,19 +816,10 @@ equip_heartbeat(void)
              current == u.utracked[tos_first_equip + os_wep]))
             fast_weapon_swap = TRUE;
 
-        /* Likewise, we have a special case for trying to unequip an object
-           over an empty slot. */
-        if (!current && desired == &zeroobj) {
-            pline("You have no %s equipped.", c_slotnames[islot]);
-            u.utracked[tos_first_equip + islot] = desired = NULL;
-        }
-
         if (!want_to_change_slot(islot) && !temp_unequip) continue;
 
-        /* If the slot is empty and this is an unequip entry, do nothing,
-           unless this is also a fast weapon swap.*/
-        if (equip_order[i].direction == ed_unequip && !current &&
-            !fast_weapon_swap)
+        /* If the slot is empty and this is an unequip entry, do nothing. */
+        if (equip_order[i].direction == ed_unequip && !current)
             continue;
         /* If we want to empty the slot and this is an equip entry, do
            nothing. This case is probably unreachable, because the unequip
@@ -824,7 +833,7 @@ equip_heartbeat(void)
 
         /* Before spending any time, check to see if the character knows
            the action to be impossible. */
-        if (fast_weapon_swap)
+        if (fast_weapon_swap) {
             /* Note: we don't check to see if we can ready the currently wielded
                weapon; we can't, because it's currently wielded. If the unwield
                works, the ready will also work, though. We need three checks;
@@ -833,23 +842,15 @@ equip_heartbeat(void)
             cant_equip =
                 (uwep && !canunwearobj(uwep, TRUE, FALSE, FALSE)) ||
                 !canwieldobj(uswapwep, TRUE, FALSE, FALSE) ||
-                (desired != uwep &&
-                 !canreadyobj(desired, TRUE, FALSE, FALSE));
-        else if (equip_order[i].direction == ed_unequip)
+                (desired != uwep && !canreadyobj(desired, TRUE, FALSE, FALSE));
+        } else if (equip_order[i].direction == ed_unequip) {
             cant_equip = !canunwearobj(current, TRUE, FALSE, FALSE);
-        else
+        } else if (equip_order[i].direction == ed_swap) {
+            cant_equip = !free_to_change_slot(current, TRUE, FALSE, FALSE) ||
+                (islot == os_wep ? !canwieldobj(desired, TRUE, FALSE, FALSE) :
+                 !canreadyobj(desired, TRUE, FALSE, FALSE));
+        } else {
             cant_equip = !canwearobjon(desired, islot, TRUE, FALSE, FALSE);
-
-        /* For slots where equip and unequip are combined (i.e. unequip looks at
-           desired), we also have to check the other half of the equip
-           sequence. */
-        if (islot == os_wep || islot == os_swapwep || islot == os_quiver) {
-            if (!cant_equip && desired && desired != &zeroobj &&
-                equip_order[i].direction == ed_unequip)
-                cant_equip = !canwearobjon(desired, islot, TRUE, FALSE, FALSE);
-            else if (!cant_equip && current && current != &zeroobj &&
-                     equip_order[i].direction == ed_equip)
-                cant_equip = !canunwearobj(current, TRUE, FALSE, FALSE);
         }
 
         if (cant_equip) {
@@ -910,8 +911,7 @@ equip_heartbeat(void)
             break;
         case os_wep:
         case os_swapwep:
-            action_cost = fast_weapon_swap ||
-                equip_order[i].direction == ed_unequip ? 0 : 1;
+            action_cost = fast_weapon_swap ? 0 : 1;
             break;
         case os_ringl:
         case os_ringr:
@@ -946,16 +946,23 @@ equip_heartbeat(void)
                These are similar to the earlier checks, except now we have spoil
                == TRUE, because the character's actually spending time
                attempting to equip the item. */
-            if (fast_weapon_swap)
+            if (fast_weapon_swap) {
                 cant_equip =
                     (uwep && !canunwearobj(uwep, TRUE, TRUE, FALSE)) ||
                     !canwieldobj(uswapwep, TRUE, TRUE, FALSE) ||
                     (desired != uwep &&
                      !canreadyobj(desired, TRUE, TRUE, FALSE));
-            else if (equip_order[i].direction == ed_unequip)
+            } else if (equip_order[i].direction == ed_unequip) {
                 cant_equip = !canunwearobj(current, TRUE, TRUE, FALSE);
-            else
+            } else if (equip_order[i].direction == ed_swap) {
+                cant_equip =
+                    !free_to_change_slot(current, TRUE, FALSE, FALSE) ||
+                    (islot == os_wep ?
+                     !canwieldobj(desired, TRUE, TRUE, FALSE) :
+                     !canreadyobj(desired, TRUE, TRUE, FALSE));
+            } else {
                 cant_equip = !canwearobjon(desired, islot, TRUE, TRUE, FALSE);
+            }
 
             if (cant_equip && action_cost)
                 action_cost = 1;
