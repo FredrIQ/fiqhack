@@ -11,7 +11,7 @@
 
 WINDOW *basewin, *mapwin, *msgwin, *statuswin, *sidebar, *extrawin;
 struct gamewin *firstgw, *lastgw;
-int orig_cursor;
+static int orig_cursor;
 const char quit_chars[] = " \r\n\033";
 
 struct nh_window_procs curses_windowprocs = {

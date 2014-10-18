@@ -1,17 +1,19 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-12 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "nhcurses.h"
 
-short colorlist[] = { COLOR_BLACK, COLOR_RED, COLOR_GREEN, COLOR_YELLOW,
+static short colorlist[] = {
+    COLOR_BLACK, COLOR_RED, COLOR_GREEN, COLOR_YELLOW,
     COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN, COLOR_WHITE,
     COLOR_BLACK + 8, COLOR_RED + 8, COLOR_GREEN + 8, COLOR_YELLOW + 8,
     COLOR_BLUE + 8, COLOR_MAGENTA + 8, COLOR_CYAN + 8, COLOR_WHITE + 8
 };
 
-const char *colorNames[] = { "black", "red", "green", "yellow", "blue",
+static const char *colorNames[] = {
+    "black", "red", "green", "yellow", "blue",
     "magenta", "cyan", "white", "darkgray",
     "hired", "higreen", "hiyellow", "hiblue",
     "himagenta", "hicyan", "hiwhite"

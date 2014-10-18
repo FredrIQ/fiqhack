@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-10-16 */
 /* Copyright (c) Kenneth Lorber, Bethesda, Maryland, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -69,7 +69,7 @@ static const char *list_file = LIBLISTFILE;
  *  C dir       chdir to dir (used ONCE, not like tar's -C)
  */
 
-static void
+static noreturn void
 usage(void)
 {
     printf("Usage: %s [ctxCIfv] arguments... [files...]\n", progname);
@@ -78,7 +78,7 @@ usage(void)
     xexit(EXIT_FAILURE);
 }
 
-static void
+static noreturn void
 verbose_help(void)
 {
     static const char *long_help[] = {

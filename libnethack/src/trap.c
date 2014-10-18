@@ -1,11 +1,9 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-08-28 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-
-extern const char *const destroy_strings[];     /* from zap.c */
 
 static void dofiretrap(struct obj *);
 static void domagictrap(void);
@@ -165,7 +163,7 @@ erode_obj(struct obj * otmp, const char *ostr, enum erode_type type,
             if (victim == &youmonst)
                 pline("Your %s %s not affected.", ostr, vtense(ostr, "are"));
             else if (vismon)
-                pline("%s's %s %s not affected.", Monnam(victim), ostr,
+                pline("%s %s %s not affected.", s_suffix(Monnam(victim)), ostr,
                       vtense(ostr, "are"));
         }
         return FALSE;
@@ -175,8 +173,8 @@ erode_obj(struct obj * otmp, const char *ostr, enum erode_type type,
                 pline("Somehow, your %s %s not affected.", ostr,
                       vtense(ostr, "are"));
             else if (vismon)
-                pline("Somehow, %s's %s %s not affected.", mon_nam(victim),
-                      ostr, vtense(ostr, "are"));
+                pline("Somehow, %s %s %s not affected.",
+                      s_suffix(mon_nam(victim)), ostr, vtense(ostr, "are"));
             else if (visobj)
                 pline("Somehow, the %s %s not affected.", ostr,
                       vtense(ostr, "are"));
@@ -194,7 +192,7 @@ erode_obj(struct obj * otmp, const char *ostr, enum erode_type type,
         if (victim == &youmonst)
             pline("Your %s %s%s!", ostr, vtense(ostr, action[type]), adverb);
         else if (vismon)
-            pline("%s's %s %s%s!", Monnam(victim), ostr,
+            pline("%s %s %s%s!", s_suffix(Monnam(victim)), ostr,
                   vtense(ostr, action[type]), adverb);
         else if (visobj)
             pline("The %s %s%s!", ostr, vtense(ostr, action[type]), adverb);
@@ -214,7 +212,7 @@ erode_obj(struct obj * otmp, const char *ostr, enum erode_type type,
                 pline("Your %s %s completely %s.", ostr,
                       vtense(ostr, Blind ? "feel" : "look"), msg[type]);
             else if (vismon)
-                pline("%s's %s %s completely %s.", Monnam(victim), ostr,
+                pline("%s %s %s completely %s.", s_suffix(Monnam(victim)), ostr,
                       vtense(ostr, "look"), msg[type]);
             else if (visobj)
                 pline("The %s %s completely %s.", ostr, vtense(ostr, "look"),
@@ -2701,7 +2699,6 @@ fire_damage(struct obj *chain, boolean force, boolean here, xchar x, xchar y)
     struct obj *obj, *otmp, *nobj, *ncobj;
     int retval = 0;
     int in_sight = !Blind && couldsee(x, y);    /* Don't care if it's lit */
-    int dindx;
 
     for (obj = chain; obj; obj = nobj) {
         nobj = here ? obj->nexthere : obj->nobj;
@@ -2757,21 +2754,19 @@ fire_damage(struct obj *chain, boolean force, boolean here, xchar x, xchar y)
                     pline("Smoke rises from %s.", the(xname(obj)));
                 continue;
             }
-            dindx = (obj->oclass == SCROLL_CLASS) ? 2 : 3;
+            enum destroy_msg_type dindx = (obj->oclass == SCROLL_CLASS) ?
+                destroy_msg_scroll_fire : destroy_msg_spellbook_fire;
             if (in_sight)
-                pline("%s %s.", Yname2(obj),
-                      (obj->quan >
-                       1) ? destroy_strings[dindx * 3 +
-                                            1] : destroy_strings[dindx * 3]);
+                pline("%s %s.", Yname2(obj), (obj->quan > 1) ?
+                          destroy_messages[dindx].singular :
+                          destroy_messages[dindx].plural);
             delobj(obj);
             retval++;
         } else if (obj->oclass == POTION_CLASS) {
-            dindx = 1;
             if (in_sight)
-                pline("%s %s.", Yname2(obj),
-                      (obj->quan >
-                       1) ? destroy_strings[dindx * 3 +
-                                            1] : destroy_strings[dindx * 3]);
+                pline("%s %s.", Yname2(obj), (obj->quan > 1) ?
+                          destroy_messages[destroy_msg_potion_fire].plural :
+                          destroy_messages[destroy_msg_potion_fire].singular);
             delobj(obj);
             retval++;
         } else

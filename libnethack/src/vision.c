@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Dean Luick, with acknowledgements to Dave Cohrs, 1990. */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -73,7 +73,7 @@ const char circle_start[] = {
 
 /*------ global variables ------*/
 
-char *viz_rmin, *viz_rmax;      /* current vision cs bounds */
+static char *viz_rmin, *viz_rmax;      /* current vision cs bounds */
 
 
 /*------ local variables ------*/
@@ -494,9 +494,8 @@ vision_recalc(int control)
     int col;    /* inner loop counter */
     struct rm *loc;     /* pointer to current pos */
     struct rm *flev;    /* pointer to position in "front" of current pos */
-    extern unsigned char seenv_matrix[3][3];    /* from display.c */
     static unsigned char colbump[COLNO + 1];    /* cols to bump sv */
-    unsigned char *sv;  /* ptr to seen angle bits */
+    const unsigned char *sv;  /* ptr to seen angle bits */
     int oldseenv;       /* previous seenv value */
 
     turnstate.vision_full_recalc = FALSE;     /* reset flag */

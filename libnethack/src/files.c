@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-09-01 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -39,7 +39,6 @@
 
 #define FQN_NUMBUF 4
 static char fqn_filename_buffer[FQN_NUMBUF][FQN_MAX_FILENAME];
-char bones[] = "bonesnn.xxx";
 
 static const char *fqname(const char *, int, int);
 
@@ -166,6 +165,17 @@ open_datafile(const char *filename, int oflags, int prefix)
 
 /* ----------  BEGIN BONES FILE HANDLING ----------- */
 
+/* caller is responsible for deallocating */
+char *
+bones_filename(const char *bonesid)
+{
+    static const char base[] = "bonesnn.xxx";
+    char *fn = malloc(SIZE(base));
+    strncpy(fn, base, SIZE(base));
+    snprintf(fn, SIZE(base), "bon%s", bonesid);
+    return fn;
+}
+
 int
 create_bonesfile(const char *bonesid, const char **errbuf)
 {
@@ -175,7 +185,6 @@ create_bonesfile(const char *bonesid, const char **errbuf)
 
     if (errbuf)
         *errbuf = "";
-    snprintf(bones, SIZE(bones), "bon%s", bonesid);
     snprintf(tempname, SIZE(tempname), "%d%s.bn", (int)getuid(), u.uplname);
     file = fqname(tempname, BONESPREFIX, 0);
 
@@ -202,14 +211,16 @@ commit_bonesfile(char *bonesid)
     char tempbuf[PL_NSIZ + 32];
     int ret;
 
-    snprintf(bones, SIZE(bones), "bon%s", bonesid);
-    fq_bones = fqname(bones, BONESPREFIX, 0);
+    char *bonesfn = bones_filename(bonesid);
+    fq_bones = fqname(bonesfn, BONESPREFIX, 0);
     snprintf(tempbuf, SIZE(tempbuf), "%d%s.bn", (int)getuid(), u.uplname);
     tempname = fqname(tempbuf, BONESPREFIX, 1);
 
     ret = rename(tempname, fq_bones);
     if (wizard && ret != 0)
         pline("couldn't rename %s to %s.", tempname, fq_bones);
+
+    free(bonesfn);
 }
 
 
@@ -219,9 +230,12 @@ open_bonesfile(char *bonesid)
     const char *fq_bones;
     int fd;
 
-    snprintf(bones, SIZE(bones), "bon%s", bonesid);
-    fq_bones = fqname(bones, BONESPREFIX, 0);
+    char *bonesfn = bones_filename(bonesid);
+    fq_bones = fqname(bonesfn, BONESPREFIX, 0);
+
     fd = open(fq_bones, O_RDONLY | O_BINARY, 0);
+
+    free(bonesfn);
     return fd;
 }
 
@@ -229,8 +243,11 @@ open_bonesfile(char *bonesid)
 int
 delete_bonesfile(char *bonesid)
 {
-    snprintf(bones, SIZE(bones), "bon%s", bonesid);
-    return !(unlink(fqname(bones, BONESPREFIX, 0)) < 0);
+    char *bonesfn = bones_filename(bonesid);
+    nh_bool ret = unlink(fqname(bonesfn, BONESPREFIX, 0)) >= 0;
+
+    free(bonesfn);
+    return ret;
 }
 
 /* ----------  END BONES FILE HANDLING ----------- */

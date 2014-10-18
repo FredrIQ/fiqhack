@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-12 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -425,7 +425,7 @@ print_tile(WINDOW *win, struct curses_symdef *api_name,
     print_tile_number(win, tileno, substitutions);
 }
 
-const char *const furthest_backgrounds[] = {
+static const char *const furthest_backgrounds[] = {
     [fb_room] = "the floor of a room",
     [fb_corr] = "corridor",
 };

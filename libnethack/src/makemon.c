@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-08-25 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -27,14 +27,12 @@ static void m_initthrow(struct monst *, int, int);
 static void m_initweap(struct level *lev, struct monst *);
 static void m_initinv(struct monst *);
 
-extern const int monstr[];
+struct monst zeromonst; /* only address matters, value is irrelevant */
 
 #define m_initsgrp(mtmp, lev, x, y) m_initgrp(mtmp, lev, x, y, 3)
 #define m_initlgrp(mtmp, lev, x, y) m_initgrp(mtmp, lev, x, y, 10)
 #define toostrong(monindx, lev)     (monstr[monindx] > lev)
 #define tooweak(monindx, lev)       (monstr[monindx] < lev)
-
-struct monst zeromonst; /* only address matters, value is irrelevant */
 
 struct monst *
 newmonst(int extyp, int namelen)

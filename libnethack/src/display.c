@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-16 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -2022,9 +2022,10 @@ set_wall_state(struct level *lev)
 
 /* ------------------------------------------------------------------------- */
 /* This matrix is used here and in vision.c. */
-unsigned const char seenv_matrix[3][3] = { {SV2, SV1, SV0},
-{SV3, SVALL, SV7},
-{SV4, SV5, SV6}
+const unsigned char seenv_matrix[3][3] = {
+    {SV2, SV1, SV0},
+    {SV3, SVALL, SV7},
+    {SV4, SV5, SV6}
 };
 
 #define sign(z) ((z) < 0 ? -1 : ((z) > 0 ? 1 : 0))

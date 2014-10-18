@@ -1,5 +1,5 @@
 %{
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /*	Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -8,6 +8,7 @@
 #include "hack.h"
 #include "lev_comp.h"
 #include "sp_lev.h"
+#include "lev_compiler.h"
 
 #ifdef FLEX_SCANNER
 #define YY_MALLOC_DECL \
@@ -15,9 +16,6 @@
 	      void * realloc(void *,size_t);
 #define YY_NO_INPUT
 #endif
-
-void init_yyin(FILE *);
-void init_yyout(FILE *);
 
 /*
  * This doesn't always get put in lev_comp.h
@@ -28,6 +26,15 @@ extern YYSTYPE yylval;
 int line_number = 1, colon_line_number = 1;
 static char map[4096];
 static int map_cnt = 0;
+
+#ifdef __clang__
+/* We can't control the generated code, so we have to disable the warning
+ * instead. Otherwise, it will complain about yy_fatal_error and various
+ * shadowed variables. */
+# pragma clang diagnostic ignored "-Wmissing-noreturn"
+# pragma clang diagnostic ignored "-Wshadow"
+# pragma clang diagnostic ignored "-Wmissing-variable-declarations"
+#endif
 
 %}
 %option nounput

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-16 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -114,7 +114,7 @@ static struct nh_enum_option frame_spec =
 static const char *const bucnames[] =
     { "unknown", "blessed", "uncursed", "cursed", "all" };
 
-struct nh_option_desc curses_options[] = {
+static struct nh_option_desc curses_options[] = {
     {"animation", "what to animate, and how fast", FALSE, OPTTYPE_ENUM,
      {.e = ANIM_ALL}},
     {"border", "what to draw borders around", FALSE, OPTTYPE_ENUM,
@@ -168,7 +168,7 @@ struct nh_option_desc curses_options[] = {
     {NULL, NULL, FALSE, OPTTYPE_BOOL, {NULL}}
 };
 
-struct nhlib_boolopt_map boolopt_map[] = {
+static struct nhlib_boolopt_map boolopt_map[] = {
     {"draw_branch", &settings.dungeoncolor},
     {"draw_detected", &settings.use_inverse},
     {"draw_rock", &settings.visible_rock},
@@ -1226,15 +1226,16 @@ get_config_name(fnchar * buf, nh_bool ui)
         i++;
     }
     usernamew[i] = 0;
+#else
+    /* This is to avoid putting a directive inside the arguments to fnncat,
+     * which is a macro. */
+    char *usernamew = ui_flags.username;
 #endif
 
-    fnncat(buf, ui_flags.connection_only ?
-#ifdef WIN32
-           usernamew :
-#else
-           ui_flags.username:
-#endif
-           ui ? FN("curses.conf") : FN("NetHack4.conf"), BUFSZ - fnlen(buf) - 1);
+    fnncat(buf, ui_flags.connection_only ? usernamew :
+                ui ? FN("curses.conf") :
+                FN("NetHack4.conf"),
+           BUFSZ - fnlen(buf) - 1);
     if (ui_flags.connection_only)
         fnncat(buf, ui ? FN(".curses.rc") : FN(".NetHack4.rc"),
                BUFSZ - fnlen(buf) - 1);

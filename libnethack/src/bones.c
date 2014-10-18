@@ -1,12 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-08-20 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "lev.h"
-
-extern char bones[];    /* from files.c */
 
 static boolean no_bones_level(d_level *);
 static void goodfruit(int);
@@ -441,7 +439,8 @@ getbones(d_level * levnum)
 
     log_record_bones(&mf);
 
-    if ((ok = uptodate(&mf, bones)) == 0) {
+    char *bonesfn = bones_filename(bonesid);
+    if ((ok = uptodate(&mf, bonesfn)) == 0) {
         if (!wizard)
             pline("Discarding unuseable bones; no need to panic...");
     } else {
@@ -449,6 +448,7 @@ getbones(d_level * levnum)
         if (wizard) {
             if (yn("Get bones?") == 'n') {
                 mfree(&mf);
+                free(bonesfn);
                 return 0;
             }
         }
@@ -488,6 +488,7 @@ getbones(d_level * levnum)
         }
     }
     mfree(&mf);
+    free(bonesid);
 
     if (wizard) {
         if (yn("Unlink bones?") == 'n') {

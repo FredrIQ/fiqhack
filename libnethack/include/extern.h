@@ -1,12 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-13 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #ifndef EXTERN_H
 # define EXTERN_H
 
-/* some typedefs we need access to */
+/* some typedefs and enums we need access to */
 # include "global.h"
 # include "align.h"
 # include "dungeon.h"
@@ -15,6 +15,7 @@
 # include "decl.h"
 # include "youprop.h"
 # include "obj.h"
+# include "monattk.h"
 
 /* hacklib.h now contains extern definitions for hacklib */
 # include "hacklib.h"
@@ -585,6 +586,7 @@ extern void display_file(const char *, boolean);
 extern FILE *fopen_datafile(const char *filename, const char *mode, int prefix);
 extern int open_datafile(const char *filename, int flags, int prefix);
 extern char *loadfile(int fd, int *datasize);
+extern char *bones_filename(const char *bonesid);
 extern int create_bonesfile(const char *bonesid, const char **errbuf);
 extern void commit_bonesfile(char *bonesid);
 extern int open_bonesfile(char *bonesid);
@@ -904,6 +906,7 @@ extern int noattacks(const struct permonst *);
 extern int sleep_monst(struct monst *, int, int);
 extern void slept_monst(struct monst *);
 extern long attk_protection(int);
+void mrustm (struct monst *magr, struct monst *mdef, struct obj *obj);
 
 /* ### mhitu.c ### */
 
@@ -971,6 +974,7 @@ extern void place_lregion(struct level *lev, xchar, xchar, xchar, xchar, xchar,
                           xchar, xchar, xchar, xchar, d_level *);
 extern void movebubbles(void);
 extern void water_friction(schar *, schar *);
+extern void setup_waterlevel(struct level *lev);
 extern void free_waterlevel(void);
 extern void save_waterlevel(struct memfile *mf);
 extern void restore_waterlevel(struct memfile *mf, struct level *lev);
@@ -1598,6 +1602,7 @@ extern boolean dig_corridor(struct level *lev, coord *, coord *, boolean, schar,
                             schar);
 extern void fill_room(struct level *lev, struct mkroom *, boolean);
 extern boolean load_special(struct level *lev, const char *);
+extern void fixup_special(struct level *lev);
 
 /* ### spell.c ### */
 

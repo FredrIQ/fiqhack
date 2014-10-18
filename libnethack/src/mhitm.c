@@ -1,13 +1,11 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-18 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "artifact.h"
 #include "edog.h"
-
-extern boolean notonhead;
 
 
 static boolean vis, far_noise;
@@ -18,7 +16,6 @@ static const char brief_feeling[] =
     "You have a %s feeling for a moment, then it passes.";
 
 static const char *mon_nam_too(struct monst *, struct monst *);
-static void mrustm(struct monst *, struct monst *, struct obj *);
 static int hitmm(struct monst *, struct monst *, const struct attack *);
 static int gazemm(struct monst *, struct monst *, const struct attack *);
 static int gulpmm(struct monst *, struct monst *, const struct attack *);
@@ -1023,7 +1020,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             }
         }
         break;
-    case AD_SGLD:
+    case AD_SGLD: {
         tmp = 0;
         if (magr->mcan)
             break;
@@ -1049,7 +1046,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                 pline("%s suddenly disappears!", magr_Monnam);
         }
         break;
-    case AD_DRLI:
+    } case AD_DRLI:
         if (!cancelled && !rn2(3) && !resists_drli(mdef)) {
             tmp = dice(2, 6);
             if (vis)
@@ -1336,43 +1333,25 @@ slept_monst(struct monst *mon)
 }
 
 
-static void
+void
 mrustm(struct monst *magr, struct monst *mdef, struct obj *obj)
 {
-    boolean is_acid;
+    enum erode_type type;
 
     if (!magr || !mdef || !obj)
         return; /* just in case */
 
     if (dmgtype(mdef->data, AD_CORR))
-        is_acid = TRUE;
+        type = ERODE_CORRODE;
     else if (dmgtype(mdef->data, AD_RUST))
-        is_acid = FALSE;
+        type = ERODE_RUST;
     else
         return;
 
-    impossible("mrustm did something?");
+    if (mdef->mcan)
+        return;
 
-    if (!mdef->mcan && (is_acid ? is_corrodeable(obj) : is_rustprone(obj)) &&
-        (is_acid ? obj->oeroded2 : obj->oeroded) < MAX_ERODE) {
-        if (obj->greased || obj->oerodeproof || (obj->blessed && rn2(3))) {
-            if (cansee(mdef->mx, mdef->my) && flags.verbose)
-                pline("%s weapon is not affected.", s_suffix(Monnam(magr)));
-            if (obj->greased && !rn2(2))
-                obj->greased = 0;
-        } else {
-            if (cansee(mdef->mx, mdef->my)) {
-                pline("%s %s%s!", s_suffix(Monnam(magr)),
-                      aobjnam(obj, (is_acid ? "corrode" : "rust")),
-                      (is_acid ? obj->oeroded2 : obj->oeroded)
-                      ? " further" : "");
-            }
-            if (is_acid)
-                obj->oeroded2++;
-            else
-                obj->oeroded++;
-        }
-    }
+    erode_obj(obj, NULL, type, TRUE, TRUE);
 }
 
 static void

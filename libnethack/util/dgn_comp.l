@@ -1,5 +1,5 @@
 %{
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /*	Copyright (c) 1989 by Jean-Christophe Collet */
 /*	Copyright (c) 1990 by M. Stephenson	     */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -9,6 +9,7 @@
 #include "config.h"
 #include "dgn_comp.h"
 #include "dgn_file.h"
+#include "dgn_compiler.h"
 
 #ifdef FLEX_SCANNER
 #define YY_MALLOC_DECL \
@@ -17,10 +18,6 @@
 #define YY_NO_INPUT
 #endif
 
-
-void init_yyin(FILE *);
-void init_yyout(FILE *);
-
 /* this doesn't always get put in dgn_comp.h
  * (esp. when using older versions of bison)
  */
@@ -28,6 +25,15 @@ void init_yyout(FILE *);
 extern YYSTYPE yylval;
 
 int line_number = 1;
+
+#ifdef __clang__
+/* We can't control the generated code, so we have to disable the warning
+ * instead. Otherwise, it will complain about yy_fatal_error and various
+ * shadowed variables. */
+# pragma clang diagnostic ignored "-Wmissing-noreturn"
+# pragma clang diagnostic ignored "-Wshadow"
+# pragma clang diagnostic ignored "-Wmissing-variable-declarations"
+#endif
 
 %}
 %option nounput

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-13 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -63,13 +63,13 @@ static const char *const ends[] = {     /* "when you..." */
     "quit", "escaped", "ascended"
 };
 
-const char *const killer_verb[] = {
+static const char *const killer_verb[] = {
     "killed", "choked", "poisoned", "died", "drowned", "died", "burned",
     "dissolved", "crushed to death", "petrified", "turned to slime",
     "exploded", "wiped out", "committed trickery", "quit", "escaped", "ascended"
 };
 
-const char *const killer_preposition[] = {
+static const char *const killer_preposition[] = {
     "by", "on", "by", "of", "in", "of", "by", "in", "by", "by", "by", "by",
     "by", "", "", "", ""
 };

@@ -61,7 +61,7 @@ static const char c_that_[] = "that";
    actions; we just change the item in-place. This can unequip it from slots
    it's already in in the process. */
 enum equip_direction { ed_equip, ed_unequip, ed_swap };
-const struct equip_order {
+static const struct equip_order {
     enum objslot slot;
     enum equip_direction direction;
 } equip_order [] = {

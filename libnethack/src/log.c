@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-08-05 */
+/* Last modified by Sean Hunt, 2014-10-16 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -204,8 +204,8 @@ log_recover_core(long offset, boolean canreturn, boolean ask)
                      "However, the game can be recovered from a backup save.");
         buf = msgprintf("This will lose approximately %.4g%% of your progress.",
                         100.0 * (1.0 - ((float)offset /
-                                        (float)lseek(program_state.logfile,
-                                                     0, SEEK_END))));
+                                        lseek(program_state.logfile, 0,
+                                              SEEK_END))));
         add_menutext(&menu, buf);
         add_menutext(&menu, "");
 

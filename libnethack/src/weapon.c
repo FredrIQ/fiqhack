@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -28,8 +28,6 @@
 #define PN_MATTER_SPELL      (-14)
 
 static void give_may_advance_msg(int);
-
-extern struct monst zeromonst;  /* address is all that matters, value doesn't */
 
 static const short skill_names_indices[P_NUM_SKILLS] = {
     0, DAGGER, KNIFE, AXE,

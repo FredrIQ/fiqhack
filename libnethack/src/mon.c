@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-15 */
+/* Last modified by Sean Hunt, 2014-10-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2347,8 +2347,8 @@ restrap(struct monst *mtmp)
     return FALSE;
 }
 
-short *animal_list = 0; /* list of PM values for animal monsters */
-int animal_list_count;
+static short *animal_list = 0; /* list of PM values for animal monsters */
+static int animal_list_count;
 
 void
 mon_animal_list(boolean construct)

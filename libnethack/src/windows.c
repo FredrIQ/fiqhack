@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-07-31 */
+/* Last modified by Sean Hunt, 2014-10-16 */
 /* Copyright (c) D. Cohrs, 1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -173,13 +173,13 @@ getdir(const char *s, schar * dx, schar * dy, schar * dz, boolean isarg)
 
 
 char
-query_key(const char *query, enum nh_query_key_flags flags, int *count)
+query_key(const char *query, enum nh_query_key_flags qkflags, int *count)
 {
     struct nh_query_key_result qkr = {.key = SERVERCANCEL_CHAR, .count = -1};
 
     while (qkr.key == SERVERCANCEL_CHAR) {
         if (!log_want_replay('K')) {
-            qkr = (*windowprocs.win_query_key) (query, flags, !!count);
+            qkr = (*windowprocs.win_query_key) (query, qkflags, !!count);
             if (force_servercancel())
                 qkr.key = SERVERCANCEL_CHAR;
         } else if (!(!count && log_replay_input(1, "K%d", &(qkr.key))) &&
