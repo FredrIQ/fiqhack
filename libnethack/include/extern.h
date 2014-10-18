@@ -329,8 +329,7 @@ extern void revive_mon(void *, long);
 extern int donull(const struct nh_cmd_arg *);
 extern int dowipe(const struct nh_cmd_arg *);
 extern void set_wounded_legs(long, int);
-extern void heal_legs(void);
-extern void heal_one_leg(int);
+extern void heal_legs(int);
 
 /* ### do_name.c ### */
 

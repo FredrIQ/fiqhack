@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-13 */
+/* Last modified by Alex Smith, 2014-10-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1583,40 +1583,40 @@ set_wounded_legs(long side, int timex)
     encumber_msg();
 }
 
-void
-heal_legs(void)
-{
-    if (Wounded_legs) {
-        if (ATEMP(A_DEX) < 0)
-            ATEMP(A_DEX)++;
+/* Note: call only if the legs are/were actually wounded. This function can
+   be called after the LWounded_legs/RWounded_legs functions time out to
+   zero, so it can't check the variables themselves; the caller has to do
+   that, if it didn't just decrement them.
 
-        if (!u.usteed) {
-            /* KMH, intrinsics patch */
-            if (LWounded_legs && RWounded_legs) {
-                pline("Your %s feel somewhat better.",
-                      makeplural(body_part(LEG)));
-            } else {
-                pline("Your %s feels somewhat better.", body_part(LEG));
-            }
-        }
-        LWounded_legs = RWounded_legs = 0;
-    }
-    encumber_msg();
-}
-
+   Argument is LEFT_SIDE, RIGHT_SIDE, or LEFT_SIDE|RIGHT_SIDE. */
 void
-heal_one_leg(int side)
+heal_legs(int side)
 {
-    if (!LWounded_legs || !RWounded_legs) {
-        heal_legs();
+    if ((!(side & LEFT_SIDE) && LWounded_legs) ||
+        (!(side & RIGHT_SIDE) && RWounded_legs)) {
+        /* Heal one leg. */
+        if (!u.usteed)
+            pline("One of your %s feels somewhat better.",
+                  makeplural(body_part(LEG)));
+        if (side == LEFT_SIDE) LWounded_legs = 0;
+        if (side == RIGHT_SIDE) RWounded_legs = 0;
         return;
     }
-    if (side == LEFT_SIDE) LWounded_legs = 0;
-    if (side == RIGHT_SIDE) RWounded_legs = 0;
-    if (!u.usteed)
-        pline("One of your %s feels somewhat better.",
-              makeplural(body_part(LEG)));
+
+    /* Heal both legs. */
+
+    if (ATEMP(A_DEX) < 0)
+        ATEMP(A_DEX)++;
+
+    if (!u.usteed) {
+        /* KMH, intrinsics patch */
+        if (side == (LEFT_SIDE | RIGHT_SIDE)) {
+            pline("Your %s feel somewhat better.",
+                  makeplural(body_part(LEG)));
+        } else {
+            pline("Your %s feels somewhat better.", body_part(LEG));
+        }
+    }
+    LWounded_legs = RWounded_legs = 0;
+    encumber_msg();
 }
-
-/*do.c*/
-

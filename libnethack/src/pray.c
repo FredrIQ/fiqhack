@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-18 */
+/* Last modified by Alex Smith, 2014-10-18 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -388,7 +388,7 @@ fix_worst_trouble(int trouble)
             break;
         }
     case ptr_wounded_legs:
-        heal_legs();
+        heal_legs(Wounded_leg_side);
         break;
     case ptr_stunned:
         make_stunned(0L, TRUE);

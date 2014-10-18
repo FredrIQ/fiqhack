@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-16 */
+/* Last modified by Alex Smith, 2014-10-18 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1512,8 +1512,8 @@ fpostfx(struct obj *otmp)
                      killer_msg(POISONING, "a rotten lump of royal jelly"));
             }
         }
-        if (!otmp->cursed)
-            heal_legs();
+        if (!otmp->cursed && (LWounded_legs || RWounded_legs))
+            heal_legs(Wounded_leg_side);
         break;
     case EGG:
         if (touched_monster(otmp->corpsenm)) {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-16 */
+/* Last modified by Alex Smith, 2014-10-18 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -60,6 +60,8 @@
 # define LWounded_legs          u.uintrinsic[LWOUNDED_LEGS]
 # define RWounded_legs          u.uintrinsic[RWOUNDED_LEGS]
 # define Wounded_legs           (LWounded_legs || RWounded_legs)
+# define Wounded_leg_side       ((LWounded_legs ? LEFT_SIDE : 0) | \
+                                 (RWounded_legs ? RIGHT_SIDE : 0))
 
 # define HTelepat               u.uintrinsic[TELEPAT]
 # define Blind_telepat          u_any_property(TELEPAT)
