@@ -58,6 +58,7 @@ static struct nh_listitem graphics_list[] = {
 /*    Tilesets with missing images or rendering issues (or both):
       {TILESET_SLASHEM_32, "Tiles (32x32)"},
       {TILESET_SLASHEM_3D, "Tiles (3D effect)"}, */
+    {TILESET_RLTILES_32, "Tiles (RLTiles, 32px)"},
 };
 static struct nh_enum_option graphics_spec =
     { graphics_list, listlen(graphics_list) };
