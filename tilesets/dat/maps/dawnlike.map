@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2014-10-18
+! Last modified by Alex Smith, 2014-10-20
 !
 ! Copyright (C) 2014 Alex Smith
 !
@@ -501,7 +501,7 @@ unicorn horn: [ShortWep.png] 0x0A
 !! Food
 
 tripe ration: [Flesh.png] 0x8
-sub corpse *: [Flesh.png] 0x0
+corpse; sub corpse *: [Flesh.png] 0x0
 ! MISSING: egg
 meatball: [Flesh.png] 0x1
 meat stick: [Flesh.png] 0x2
@@ -715,7 +715,7 @@ rock gem: [Rock.png] 0x9
 strange object: [Elemental0.png] 0x40
 
 boulder: [Rock.png] 0xA
-sub statue *: [Rock.png] 0xB
+statue; sub statue *: [Rock.png] 0xB
 
 heavy iron ball: [Tool.png] 0x10
 iron chain: [Tool.png] 0x11

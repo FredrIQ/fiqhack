@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2014-10-18
+! Last modified by Alex Smith, 2014-10-20
 !
 ! Copyright (C) 2014 Alex Smith
 ! NetHack may be freely redistributed.  See license for details.
@@ -646,7 +646,7 @@ unicorn horn
 candelabrum
 silver bell
 tripe ration
-sub corpse *
+corpse; sub corpse *
 egg
 meatball
 meat stick
@@ -834,7 +834,7 @@ gray gem
 gray gem
 rock gem
 boulder
-sub statue *
+statue; sub statue *
 heavy iron ball
 iron chain
 splash of venom

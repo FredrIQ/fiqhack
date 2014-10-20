@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2014-10-12
+! Last modified by Alex Smith, 2014-10-20
 ! NetHack may be freely redistributed. See license for details.
 !
 ! This text tileset lists the special rules for the Rogue level.
@@ -13,8 +13,8 @@ sub rogue corridor: gray bgblack regular '#'
 sub rogue sub lit corridor: gray bgblack regular '#'
 
 ! ...and statues and corpses.
-sub rogue sub corpse *: ':'
-sub rogue sub statue *: '`'
+sub rogue corpse; sub rogue sub corpse *: ':'
+sub rogue statue; sub rogue sub statue *: '`'
 
 ! Rogue used different backgrounds to ASCII NetHack in some cases, and
 ! to Unicode NetHack in many more cases.

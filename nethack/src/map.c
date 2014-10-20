@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-12 */
+/* Last modified by Alex Smith, 2014-10-20 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -172,9 +172,15 @@ draw_map(int cx, int cy)
                            NULL, TILESEQ_TRAP_OFF, substitution);
             /* objects */
             if (dbyx->obj) {
-                /* Special cases: corpses and statues are substituted
-                   monsters, not objects. */
-                if (substitution & (NHCURSES_SUB_CORPSE | NHCURSES_SUB_STATUE))
+                /* Special cases: corpses and statues are substituted monsters,
+                   not objects. Check to ensure that they have a valid monster
+                   number before rendering it, because otherwise we can get
+                   crashes. (The server should be checking this for validity, as
+                   should the client API, but they aren't, and a redundant check
+                   here will nonetheless never hurt.) */
+                if (substitution & (NHCURSES_SUB_CORPSE | NHCURSES_SUB_STATUE)
+                    && dbyx->obj_mn > 0
+                    && dbyx->obj_mn <= default_drawing->num_monsters)
                     print_tile(mapwin, default_drawing->monsters +
                                dbyx->obj_mn-1, NULL,
                                TILESEQ_MON_OFF, substitution);
