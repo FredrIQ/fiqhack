@@ -1,5 +1,5 @@
 #!/bin/bash
-# Last modified by Alex Smith, 2014-05-31
+# Last modified by Alex Smith, 2014-10-21
 
 set -e
 
@@ -15,7 +15,8 @@ BUILDDIR=`mktemp -d /tmp/nh4build-win.XXXXXXXX`
 SUBDIR=nethack4-4.3.0-beta1
 mkdir "$BUILDDIR/$SUBDIR"
 # I almost wrote "*.*" here out of habit
-cp "$1"/* "$BUILDDIR/$SUBDIR"
+cp -r "$1"/* "$BUILDDIR/$SUBDIR"
+rm -r "$BUILDDIR/$SUBDIR/man6"
 truncate -s 0 "$BUILDDIR/$SUBDIR/"{record,logfile,xlogfile}
 rm "$BUILDDIR/$SUBDIR/README"
 cp ../copyright "$BUILDDIR/$SUBDIR/copyright.txt"
