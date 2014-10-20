@@ -121,6 +121,7 @@ compare_deleted_tiles_to_end(const void *t1, const void *t2)
    callback and returns its result. The file is closed by this function. */
 bool
 slurp_file(FILE *in, png_byte *header, png_size_t headerlen,
+           const char *unlink_after,
            bool (*callback)(png_byte *, png_size_t))
 {
     png_byte *storage = NULL;
@@ -151,6 +152,9 @@ slurp_file(FILE *in, png_byte *header, png_size_t headerlen,
     }
 
     fclose(in);
+
+    if (unlink_after)
+        remove(unlink_after);
 
     if (!curpos) {
         fprintf(stderr, "Error: empty input file\n");
@@ -195,7 +199,7 @@ load_file(char *filename)
                        sizeof BINARY_TILESET_HEADER) == 0) {
                 /* It's a binary file. */
                 return slurp_file(in, header, sizeof BINARY_TILESET_HEADER,
-                                  load_binary_tileset);
+                                  NULL, load_binary_tileset);
             }
         }
     }
@@ -203,7 +207,7 @@ load_file(char *filename)
        the text file parser complain). */
     fclose(in);
     in = fopen(filename, "r");
-    return slurp_file(in, 0, 0, load_text_tileset);
+    return slurp_file(in, NULL, 0, NULL, load_text_tileset);
 }
 
 /* Checks to see if the given parsed value is believable as an integer.

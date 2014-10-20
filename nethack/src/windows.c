@@ -143,7 +143,9 @@ set_tile_file(const char *tilefilename)
     tiletable = NULL;
     tiletable_len = 0;
 
-    FILE *in = fopen(namebuf, "rb");
+    /* On Windows, fopen has somehow been redefined to take a wchar_t * here.
+       Make sure we call the function, not the macro. */
+    FILE *in = (fopen)(namebuf, "rb");
     if (!in) {
         int e = errno;
         char errmsgbuf[sizeof namebuf + sizeof "Warning: could not open tileset file \n" + 1];

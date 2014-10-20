@@ -119,7 +119,7 @@ extern bool callback_with_text_tileset(enum iiformat,
 extern bool callback_with_binary_tileset(bool (*)(png_byte *, png_size_t));
 
 /* tilecompile.c */
-extern bool slurp_file(FILE *, png_byte *, png_size_t,
+extern bool slurp_file(FILE *, png_byte *, png_size_t, const char *,
                        bool (*)(png_byte *, png_size_t));
 
 #endif

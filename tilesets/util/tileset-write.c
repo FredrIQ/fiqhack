@@ -461,27 +461,53 @@ bool
 callback_with_text_tileset(enum iiformat iif,
                            bool (*callback)(png_byte *, png_size_t))
 {
+    /* The best way to create a temporary file is tmpfile(), which is simple and
+       secure. However, it doesn't work properly on mingw (I /think/ it's trying
+       to create files in the root directory; mingw tmpnam() does that).  Thus,
+       we fall back to a hardcoded filename in the current directory when that
+       happens; it's insecure if the current directory happens to be
+       world-writable, but it should at least work. */
     FILE *t = tmpfile();
+    const char *tn = NULL;
+
+    if (!t)
+        t = (fopen)(((tn = "tileset-temp.bin")), "w+b");
+
     if (!t) {
-        perror("Error opening temporary file");
+        fprintf(stderr, "Error opening temporary file '%s': %s",
+                *tn ? tn : "(anonymous)", strerror(errno));
         return 0;
     }
-    if (!write_text_tileset_inner(NULL, t, iif))
+    if (!write_text_tileset_inner(NULL, t, iif)) {
+        fclose(t);
+        if (*tn)
+            remove(tn);
         return 0;
+    }
     rewind(t);
-    return slurp_file(t, NULL, 0, callback);
+    return slurp_file(t, NULL, 0, *tn ? tn : NULL, callback);
 }
 
 bool
 callback_with_binary_tileset(bool (*callback)(png_byte *, png_size_t))
 {
     FILE *t = tmpfile();
+    const char *tn = NULL;
+
+    if (!t)
+        t = (fopen)(((tn = "tileset-temp.bin")), "w+b");
+
     if (!t) {
-        perror("Error opening temporary file");
+        fprintf(stderr, "Error opening temporary file '%s': %s",
+                *tn ? tn : "(anonymous)", strerror(errno));
         return 0;
     }
-    if (!write_binary_tileset_inner(NULL, t))
+    if (!write_binary_tileset_inner(NULL, t)) {
+        fclose(t);
+        if (*tn)
+            remove(tn);
         return 0;
+    }
     rewind(t);
-    return slurp_file(t, NULL, 0, callback);
+    return slurp_file(t, NULL, 0, *tn ? tn : NULL, callback);
 }
