@@ -201,13 +201,12 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
         },
 
         _build_man_page => {
-            object => 'path:doc/nethack4.6.pod',
+            object => qr=^path:doc/.*\.pod$=,
             command => ["cmd:pod2man", "optstring:-s 6",
-                        "optstring:-n NETHACK4",
-                        "optpath:-c :bpath:Games Manual", # hack :-(
-                        "optpath::", "optpath::bpath:doc/nethack4.6"],
-            output => "bpath:doc/nethack4.6",
-            in_subdir => "bpath:", # for the hack above to work
+                        "optpath:-c :bpath:Games Manual", # hack
+                        "optpath::", "optpath::extend:.6:"],
+            output => "extend:.6:",
+            in_subdir => "bpath:", # for the hacks above to work
         },
 
         _makedefs_date => {
@@ -517,6 +516,11 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
             object => "bpath:doc/nethack4-sdl.6",
             install_dir => "mandir",
             install_name => "man6/nethack4-sdl.6",
+        },
+        _install_tilecompile_manpage => {
+            object => "bpath:doc/tilecompile.6",
+            install_dir => "mandir",
+            install_name => "man6/tilecompile.6",
         },
         _install_highscores => {
             object => "sys:ensure_exists",

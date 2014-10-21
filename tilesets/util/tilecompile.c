@@ -356,7 +356,7 @@ main(int argc, char *argv[])
             "              -t nh4ct     NetHack 4 compiled tileset [.nh4ct]\n"
             "              -t map       Image, tilemap for it [.png, .map]\n"
             "              -t hex       Image, references to it [.png, .txt]\n"
-            "              -t binary    Like 'hex' but in binary [.png, .txt]\n"
+            "              -t binary    Like 'hex' but in binary [.png, .bin]\n"
             "              -t image     Image only; discard metadata [.png]\n"
             "          For text-based tilesets:\n"
             "              -t text      Editable text format [.txt]\n"

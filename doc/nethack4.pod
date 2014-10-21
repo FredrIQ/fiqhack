@@ -99,7 +99,8 @@ L<dgamelaunch(8)>.
 
 =head1 SEE ALSO
 
-L<hack(6)>, L<rogue(6)>, L<nethack(6)>, L<http://nethack4.org>
+L<hack(6)>, L<rogue(6)>, L<nethack(6)>, L<dgamelaunch(8)>,
+L<http://nethack4.org>
 
 =head1 BUGS
 
