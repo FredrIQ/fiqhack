@@ -4811,19 +4811,11 @@ sub set_exeparams {
     # We have an entirely different set of actions for each OS.
 
     if ($os_parsed eq 'MSWin32') {
-        my $icofile; # keep this alive until after we write the executable
+        my $icofile = undef;
 
         if (!$win32_exe_available) {
             return "no Win32::Exe";
         }
-
-        my $exe = Win32::Exe->new($osfile)
-            or return "Win32::Exe reported an error";
-
-        progress_report 1, "Setting executable parameters...";
-
-        $exe = $exe->create_resource_section
-            if $exe->can_create_resource_section;
 
         # Icon
         if (@png_images) {
@@ -4849,40 +4841,60 @@ sub set_exeparams {
 
             for my $i (@imageindexes) {
                 push @headers, (pack "CCxxx2x2VV",
-                                $png_width[$_] % 256, $png_height[$_] % 256,
-                                (length $png_images[$_]), $dataoffset);
-                push @images, $png_images[$_];
-                $dataoffset += length $png_images[$_];
+                                $png_width[$i] % 256, $png_height[$i] % 256,
+                                (length $png_images[$i]), $dataoffset);
+                push @images, $png_images[$i];
+                $dataoffset += length $png_images[$i];
             }
 
             print $icofile join '', (pack 'x2vv', 1, scalar @images),
                 @headers, @images;
-            close $icofile;              # get round Windows' automatic locking
+            close $icofile; # get round Windows' automatic locking
+	}
 
-            $exe->set_single_group_icon($icofile);
-        }
+	# Win32::Exe has limits on how quickly it can expand the file;
+	# if you want to expand it a long way, you need to call it
+	# multiple times. Thus, we repeat until the file stops getting
+	# larger.
 
-        # Version info
-        my $vi = $exe->get_version_info;
-        $vi->{LegalCopyright} = $params->{copyright} if $params->{copyright};
-        $vi->{FileVersion} = defined_or($params->{version},
-                                        $config->{options}{packageversion},
-                                        '0.1');
-        $vi->{ProductVersion} = defined_or($config->{options}{packageversion},
-                                           '0.1');
-        my $pn = defined_or($config->{options}{packagename_text},
-                            $config->{options}{packagename});
-        $vi->{ProductName} = $pn if defined $pn;
-        $vi->{FileDescription} = defined_or($params->{name}, $basename);
-        $exe->set_version_info($vi);
+	my $oldsize = 0;
+	while ((my $newsize = (stat $osfile)[7]) != $oldsize) {
+	    $oldsize = $newsize;
 
-        # Subsystem
-        if (defined $params->{terminal}) {
-            $params->{terminal} and $exe->set_subsystem_console;
-            $params->{terminal} or  $exe->set_subsystem_windows;
-        }
+	    my $exe = Win32::Exe->new($osfile)
+		or return "Win32::Exe reported an error";
 
-        $exe->write or return "write failure";
+	    progress_report 1, "Setting executable parameters...";
+
+	    $exe = $exe->create_resource_section
+		if $exe->can_create_resource_section;
+
+	    # Icon
+	    $exe->set_single_group_icon($icofile) if @png_images;
+
+	    # Version info
+	    my $vi = $exe->get_version_info;
+	    $vi->{LegalCopyright} = $params->{copyright}
+	        if $params->{copyright};
+	    $vi->{FileVersion} = defined_or($params->{version},
+					    $config->{options}{packageversion},
+					    '0.1');
+	    $vi->{ProductVersion} =
+		defined_or($config->{options}{packageversion}, '0.1');
+	    my $pn = defined_or($config->{options}{packagename_text},
+				$config->{options}{packagename});
+	    $vi->{ProductName} = $pn if defined $pn;
+	    $vi->{FileDescription} = defined_or($params->{name}, $basename);
+	    $exe->set_version_info($vi);
+
+	    # Subsystem
+	    if (defined $params->{terminal}) {
+		$params->{terminal} and $exe->set_subsystem_console;
+		$params->{terminal} or  $exe->set_subsystem_windows;
+	    }
+
+	    $exe->write or return "write failure";
+	}
 
     } elsif ($os_parsed eq 'linux') {
 

@@ -340,7 +340,7 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
             depends => ["optpath::path:tilesets/dat/text/",
                         "path:tilesets/dat/text/"],
             dependsarg => qr=^(.+)$=s,
-            require_match => 1,            
+            require_match => 1,
         },
         _slashem_catalogue_file_palette => {
             object => 'path:tilesets/dat/catalogues/slashem-32.txt',
@@ -479,6 +479,7 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
             exeparams => {
                 copyright => $tilecompile_copyright,
                 name => "NetHack 4 Tile Compiler",
+                version => "1.2",
                 terminal => 1,
                 interactive => 0,
             },
