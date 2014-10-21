@@ -1,9 +1,8 @@
-# Last modified by Alex Smith, 2014-10-16
+# Last modified by Alex Smith, 2014-10-21
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
 
-$version = "4.3.0";
 # There's a maximum combined length on the executable info structure.
 # So this is written concisely, so as to be able to fit everything in.
 $copyright = "(c) Stichting Mathematisch Centrum, Amsterdam, 1985; Alex Smith 2010-2014; Daniel Thaler 2011-2012; and many others";
@@ -12,6 +11,8 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
 {
     options => {
         packagename => 'nethack4',
+        packagename_text => 'NetHack 4',
+        packageversion => '4.3.0',
     },
     features => {
         server => {
@@ -398,61 +399,25 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
             output => "bpath:readme-saves",
         },
 
-        # On POSIX platforms, we want a symlink from nethack4 to nethack4-sdl.
-        # On Windows, the two executables have different exeparams.
-        # Thus, the setup is as follows:
-        # nethack/src/main.c/main      # generated executable
-        # nethack/src/main.c/nethack4  # console executable
-        # nethack/src/sdl/nethack4     # SDL executable
-        # nethack/src/sdl/nethack4-sdl # link to nethack4
-        _tty_params => {
+        # We need a symlink from "nethack4-sdl" to "nethack4". Thus we
+        # add a second symlink from "nethack4" to "main" so that if
+        # symlinks are implemented by copying, nothing breaks.
+
+        _sdl_link_preparation => {
             object => "bpath:nethack/src/main.c/main$exeext",
-            command => ["intcmd:exeparams", "optpath::",
-                        "optpath:-o:bpath:nethack/src/main.c/nethack4$exeext",
-			"optstring:--info InternalName=nethack4-tty",
-			"optstring:--info LegalCopyright=$copyright",
-			"optstring:--info FileVersion=$version",
-			"optstring:--info ProductVersion=$version",
-			"optstring:--info ProductName=NetHack 4",
-			"optstring:--info FileDescription=NetHack 4 (console)",
-                        "optstring:--console"],
-            output_from_optpath => '-o',
-        },
-        _sdl_params => {
-            object => "bpath:nethack/src/main.c/main$exeext",
-            command => ["intcmd:exeparams", "optpath::", "optstring:--gui",
-                        "optpath:-o:bpath:nethack/src/sdl/nethack4$exeext",
-			"optstring:--info InternalName=nethack4-sdl",
-			"optstring:--info OriginalFilename=nethack4-sdl.exe",
-			"optstring:--info LegalCopyright=$copyright",
-			"optstring:--info FileVersion=$version",
-			"optstring:--info ProductVersion=$version",
-			"optstring:--info ProductName=NetHack 4",
-			"optstring:--info FileDescription=NetHack 4 (GUI)",
-                        "bpath:tilesets/dat/fonts/font14.png"],
-            output_from_optpath => '-o',
-        },
-        _sdl_link => {
-            object => "bpath:nethack/src/sdl/nethack4$exeext",
             command => ["intcmd:symlink", "optpath::",
-                        "optpath:-o:bpath:nethack/src/sdl/nethack4-sdl$exeext",
+                        "optpath:-o:bpath:nethack/src/main.c/nethack4$exeext",
                         "bpath:tilesets/dat/fonts/font14.png"],
             output_from_optpath => '-o',
             verb => 'symlinked',
         },
-
-        _tilecompile_params => {
-            object => "bpath:tilesets/util/tilecompile.c/tilecompile$exeext",
-            command => ["intcmd:exeparams", "optpath::",
-                        "optpath:-o:bpath:tilesets/util/tilecompile$exeext",
-                        "optstring:--info InternalName=tilecompile",
-                        "optstring:--info LegalCopyright=$tilecompile_copyright",
-                        "optstring:--info FileVersion=1.0",
-                        "optstring:--info ProductVersion=$version",
-                        "optstring:--info ProductName=NetHack 4",
-                        "optstring:--info FileDescription=NetHack 4 Tileset Compiler",
-                        "optstring:--console"],
+        _sdl_link => {
+            object => "bpath:nethack/src/main.c/nethack4$exeext",
+            command => ["intcmd:symlink", "optpath::",
+                        "optpath:-o:bpath:nethack/src/main.c/nethack4-sdl$exeext",
+                        "bpath:tilesets/dat/fonts/font14.png"],
             output_from_optpath => '-o',
+            verb => 'symlinked',
         },
 
         _man_sdl_symlink => {
@@ -484,24 +449,51 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
             install_dir => 'libdir',
         },
         _install_tty => {
-            object => "bpath:nethack/src/main.c/nethack4$exeext",
+            object => "bpath:nethack/src/main.c/main$exeext",
             install_dir => "gamesbindir",
             install_elevation => "games",
+            install_name => "nethack4$exeext",
+            exeparams => {
+                icon => qr/^path:dist\/common\/icon.*\.png$/,
+                copyright => $copyright,
+                name => "NetHack 4 (console)",
+                description => "Dungeon exploration game (text interface)",
+                terminal => 1,
+            },
         },
         _install_sdl => {
-            object => "bpath:nethack/src/sdl/nethack4-sdl$exeext",
+            object => "bpath:nethack/src/main.c/nethack4-sdl$exeext",
             install_dir => "gamesbindir",
             install_elevation => "games",
+            exeparams => {
+                icon => qr/^path:dist\/common\/icon.*\.png$/,
+                copyright => $copyright,
+                name => "NetHack 4 (GUI)",
+                description => "Dungeon exploration game (graphical interface)",
+                terminal => 0,
+            },
         },
         _install_tilecompile => {
-            object => "bpath:tilesets/util/tilecompile$exeext",
+            object => "bpath:tilesets/util/tilecompile.c/tilecompile$exeext",
             install_dir => "gamesbindir",
+            exeparams => {
+                copyright => $tilecompile_copyright,
+                name => "NetHack 4 Tile Compiler",
+                terminal => 1,
+                interactive => 0,
+            },
         },
         _install_server => {
             object => "bpath:nethack_server/src/srvmain.c/srvmain$exeext",
             install_dir => "gamesbindir",
             install_name => "nethack4-server$exeext",
             install_permission => "games",
+            exeparams => {
+                copyright => $copyright,
+                name => "NetHack 4 Server",
+                description => "NetHack 4 server daemon",
+                interactive => 0,
+            },
         },
         _install_nhdat => {
             object => "bpath:libnethack/dat/nhdat",

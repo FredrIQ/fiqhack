@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2014-10-11
+# Last modified by Alex Smith, 2014-10-21
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
@@ -1354,54 +1354,6 @@ An internal command that takes config options as its arguments
 "name=value" form.  Any values that are aimake objects that represent files
 will be converted to pathnames as the operating system understands them.
 
-=item C<intcmd:exeparams>
-
-This internal command is provided to change the settings of Windows executable
-files (which embed information about the file into the file itself).  On most
-platforms, it just copies its input to its output.  On Windows, its input must
-be an executable file, and the specified changes are made as the file is
-copied.  Thus, you can run this command unconditionally on any platform, and
-get the desired effect.
-
-This command will not function correctly on Windows unless the Perl module
-C<Win32::Exe> is installed.  (It often will be, however.)
-
-This command takes an C<optpath:> that represents the executable to create an
-altered version of, and other arguments:
-
-=over 4
-
-=item C<-o>
-
-An C<optpath> specifying where to output the resulting executable.  This must
-be specified.
-
-=item C<--icon>
-
-An C<optpath> specifying a file to copy the icon from (C<.ico>, C<.dll> or
-C<.exe>)
-
-=item C<--info>
-
-An C<optstring> of the form C<--info key=value>.  This updates the
-executable's "Details" shown in its properties.  For example, you could write
-C<--info FileVersion=1.0.0> to specify a version number.
-
-=item C<--gui>
-
-=item C<--console>
-
-Specifies whether the program needs to have a console window opened for it
-when it loads (C<--console>), or whether it draws its own (C<--gui>).  These
-are C<optstring>s.
-
-=item C<--manifest>
-
-An C<optpath> which specifies a file from which to read the executable's
-manifest settings.
-
-=back
-
 =item C<intcmd:filetest>
 
 An internal command that takes an C<optstring:> and an C<optpath:>, and either
@@ -1688,8 +1640,25 @@ C<AIMAKE_OPTION_> macros):
 
 =item packagename
 
-A directory name that will be used to name any directories that are specific
-to the package when installing.
+A name that identifies the package.  If the build layout requires files or
+directories to be given names specific to the package (to avoid clashes with
+other packages), this name will be used as the filename.  As such, avoid
+characters that are nonportable in filenames; safe characters include letters,
+digits, hyphens, and underscores.
+
+=item packagename_text
+
+A name that identifies the package.  Unlike C<packagename>, this can contain
+spaces and punctuation.  It will be used when defining metadata of installed
+files.
+
+=item packageversion
+
+The package's version number.  This is a string that contains a sequence of
+numbers, separated by dots (e.g. C<"1.0.0">).  It is currently used when
+defining metadata of installed files; in the future, it may also be used to
+avoid clashes between different versions of the same package, on some
+operating systems.
 
 =item ignore_directories
 
@@ -2334,6 +2303,119 @@ The basename to install a file under; this defaults to the basename of the
 C<object>.  This can include forward slashes to install into a subdirectory
 (regardless of what the path separator happens to be on the system in
 question).
+
+=item exeparams
+
+I<Available for: install actions>
+
+When installing an executable, also generate appropriate OS-specific metadata
+for that executable (setting its human-readable name, icon, etc.).  The format
+of these parameters as given to aimake is OS-independent, and will be
+converted into an appropriate form for the OS you are targetting; depending on
+the OS, this might involve installing extra files, making changes to the files
+after install, or both.
+
+This option can only meaningfully be set for executables and C<intcmd:symlink>
+aliases to executables (in which case, a copy will be used rather than an
+alias if this is necessary to respect the operating system's metadata format).
+
+This option will have no effect on Windows unless the Perl module
+C<Win32::Exe> is installed.  (However, this module is often shipped with Perl
+interpreters on Windows.)
+
+Note that some operating systems place maximum lengths on individual values
+here, or on the total length of all values, and aimake may not be able to
+detect if the maximum lengths are exceeded.  You should, therefore, try to
+keep the metadata values as short as possible.
+
+The value is a dictionary, with the following keys, all of which are optional,
+and which will be ignored if they do not apply to the operating system in
+question:
+
+=over 4
+
+=item icon
+
+An aimake object that represents a file on the filesystem (such as
+C<path:icon.png>), or a regular expression that matches one or more such
+objects.  All such objects must be PNG-format images.  These images specify
+the icon that will be associated with the executable; the operating system
+will pick an appropriate image from the images given based on the size it
+needs to render the image at (and perhaps rescale it, if no image fits the
+given size exactly).  By default, no icon will be explicitly specified (most
+likely, the OS will substitute a generic icon).
+
+In order for icons to be usable by all OSes, they must be square, and have one
+of the following sizes (in pixels): 16, 24, 32, 48, 64, 72, 96, 128, 256.
+Additional sizes (including non-square sizes) can be specified, but may be
+ignored.
+
+=item copyright
+
+A string that specifies the copyright status of the executable (for example,
+C<"Copyright (C) 2014 Alex Smith">).  By default, no copyright status will be
+embedded into the executable's metadata.  Not all operating systems have any
+use for this, so it may be ignored.
+
+=item version
+
+A string that specifies the version number of the executable.  This should be
+comprised of dot-separated numbers (e.g. C<"1.0.0">); some operating systems
+may disallow more complex version components, or add trailing C<.0>
+components.  By default, the value will be taken from the C<packageversion>
+option, but it can be given explicitly to override this (e.g., if different
+executables have different versions).
+
+=item name
+
+A human-readable name for the executable.  This will be used to name the
+executable in menus and similar structures, especially when it isn't running
+(and thus there is no window title that could be used instead).  The default
+is to use the filename with any extension removed.
+
+=item description
+
+A human-readable description for the executable.  On some operating systems,
+this will be used as a tooltip for the executable on menus.  (Others will just
+use its C<name>, especially if they have an icon-based rather than text-based
+menu system.)
+
+=item terminal
+
+0 for false or 1 for true.  If true, then aimake will attempt to tell the
+operating system that this application always needs a terminal window to
+connect its standard input and output to (and thus, if the application is run
+from outside a terminal, the OS will have to create a new terminal to run it
+in).  If false, then no terminal will be created for the application (meaning
+that it might not have a standard input and output to use, and thus will need
+to use some other method of communicating with the user, such as opening a
+window).
+
+This option has no effect if the application already has control of a terminal
+(e.g. the application is run using a command prompt that is already open in a
+terminal), and might not be respected on all OSes in all circumstances.
+
+The default is to respect whatever setting the compiler used, or in the case
+where it didn't specify, 1.  (It is quite common for the compiler not to
+specify, so you should probably set this to the right value explicitly.)
+
+=item interactive
+
+0 for false or 1 for true (default).  If true, then aimake will
+attempt to tell the operating system that it's meaningful to run this
+application directly, without extra parameters, and the application
+will then attempt to interact with the user.  If you set this to
+false, this indicates that the application needs command-line
+arguments to function correctly, has no visible effect when run, or
+both; this will cause aimake to try to leave it out of the OS's menu
+system for running applications.
+
+There is currently no situation in which a non-C<interactive> program
+would benefit from a C<description>; aimake ignores the C<description>
+in this case.  You may wish to specify the combination anyway in case
+it ever becomes relevant in the future.
+
+=back
 
 =item install_permission
 
@@ -3581,7 +3663,7 @@ sub serialize_sv {
         $x .= serialize_sv($_). serialize_sv($sv->{$_}) for @keys;
         return $x;
     }
-    die "serialize_sv called on unsupported reference type " . ref $sv;
+    die "serialize_sv called on unsupported SV " . Dumper($sv);
 }
 sub sv_hash {
     return md5_hex(serialize_sv(shift));
@@ -4030,7 +4112,7 @@ sub ensure_directory {
     my $fon = friendly_objname $aipath;
     my $ospath = aipath2ospath $aipath;
 
-    return if -d $ospath; # avoid a useless message
+    return 1 if -d $ospath; # avoid a useless message
     die "Found a non-directory at '$fon'" if -e $ospath;
     $dont_die or progress_report 1, "Creating directory '$fon'...";
     $@ = undef;
@@ -4312,88 +4394,6 @@ sub run_command {
             scalar @opts == 1 and return(undef, '', '');
             scalar @opts == 2 or return ("Wrong number of arguments", '', '');
             return ("'opts[0]' does not equal '$opts[1]'", '', '');
-        } elsif ($cmd eq 'intcmd:exeparams') {
-            my $exefile = undef;
-            my $outfile = undef;
-            my $operations = sub { return $_[0] };
-            for my $o (@opts) {
-                my ($objtype, $objvalue, $objinner) = parse_objname $o;
-                my $oldopts = $operations;
-                if ($objtype eq 'optpath') {
-                    if ($objvalue eq '') {
-                        $exefile = aipath2ospath $objinner;
-                    } elsif ($objvalue eq '-o') {
-                        $outfile = aipath2ospath $objinner;
-                    } elsif ($objvalue eq '--icon') {
-                        $operations = sub {
-                            $_[0]->set_single_group_icon($objinner);
-                            goto &$oldopts;
-                        };
-                    } elsif ($objvalue eq '--manifest') {
-                        $operations = sub {
-                            $_[0]->set_manifest(aipath2ospath $objinner);
-                            goto &$oldopts;
-                        };
-                    } else {
-                        return ("Unrecognised option '$objvalue'", '', '');
-                    }
-                } elsif ($objtype eq 'optstring') {
-                    if ($objvalue =~ /^--info\s+(\w*)=(.*)/) {
-                        my ($k, $v) = ($1, $2);
-                        $operations = sub {
-                            my $vi = $_[0]->get_version_info;
-                            $vi->{$k} = $v;
-                            $_[0]->set_version_info($vi);
-                            goto &$oldopts;
-                        };
-                    } elsif ($objvalue eq '--gui') {
-                        $operations = sub {
-                            $_[0]->set_subsystem_windows;
-                            goto &$oldopts;
-                        };
-                    } elsif ($objvalue eq '--console') {
-                        $operations = sub {
-                            $_[0]->set_subsystem_console;
-                            goto &$oldopts;
-                        };
-                    } else {
-                        return ("Unrecognised option '$objvalue'", '', '');
-                    }
-                }
-            }
-
-            $exefile or return ("No input file specified", '', '');
-            $outfile or return ("No output file specified", '', '');
-
-            # First, uncondtionally copy the file, to stop Win32::Exe
-            # tampering with the original.
-            open my $fhfrom, "<$binary_layers", $exefile
-                or return ("Could not open '$exefile': $!", '', '');
-            open my $fhto, ">$binary_layers", $outfile
-                or return ("Could not open '$outfile': $!", '', '');
-            print $fhto $_ for <$fhfrom>;
-            close $fhfrom; close $fhto;
-            chmod 0755, $outfile; # mark it executable
-
-            # If not on Windows, stop here.
-            $os_parsed eq 'MSWin32' or return (undef, '', '');
-
-            $win32_exe_available or return
-                ("Cannot manipulate executables: Win32::Exe missing", '', '');
-
-            # Now do the operations.
-            my $exe = Win32::Exe->new($outfile)
-                or return("Could not load '$outfile': $!", "", "");
-
-            $exe = $exe->create_resource_section
-                if $exe->can_create_resource_section;
-            $operations->($exe);
-
-            $exe->write
-                or return ("Could not write '$outfile': $!", '', '');
-
-            return (undef, '', '');
-
         } elsif ($cmd eq 'intcmd:optionvalues') {
             my $stderr = '';
             my @stdout = ();
@@ -4708,6 +4708,213 @@ sub run_command {
 
     return ($failreason, $stdout, $stderr);
 }
+
+### OS metadata
+
+sub atomic_read(&);
+
+# Set the metadata of the given executable based on the given parameters.
+# Returns undef on success, an error message on failure.
+# Must not be called from inside atomically{} (it calls atomic_read{}
+# itself).
+sub set_exeparams {
+    my $params = shift;
+    my $osfile = shift;
+
+    -x $osfile or return;    # sanity check
+
+    my (undef, undef, $basename) = File::Spec->splitpath($osfile);
+    $basename =~ s/\..*?$//g;
+
+    # Finding the icon files is OS-independent. (What we do with them once
+    # we've found them is OS-dependent.)
+    my (@png_images, @png_width, @png_height);
+
+    if (defined $params->{icon}) {
+        my @png_aipaths = ();
+
+        atomic_read {
+            for my $iobject (keys %{$state->{outdep_by_object}}) {
+                my $object = unintern $iobject;
+                if ((ref $params->{icon}) =~ /\bRegexp$/) {
+                    $object =~ $params->{icon} and
+                        push @png_aipaths, $object;
+                } else {
+                    $object eq $params->{icon} and
+                        push @png_aipaths, $object;
+                }
+            }
+        };
+
+        if (!@png_aipaths) {
+            return "no objects match '" . $params->{icon} . "'";
+        }
+
+        for my $png_aipath (@png_aipaths) {
+            # Because the object exists, we expect the path to be readable.
+            # If not, die rather than treating it as an error, this is
+            # pretty bad.
+            open my $fh, "<$binary_layers", aipath2ospath($png_aipath)
+                or die "Couldn't open '$png_aipath': $1";
+            my $image;
+            { local $/; $image = <$fh>; }
+            close $fh;
+
+            my ($header, $width, $height) = unpack "a16NN", $image;
+            my $errmsg;
+            $header eq "\x89PNG\x0d\x0a\x1a\x0a\0\0\0\x0dIHDR"
+                or return "incorrect PNG header on '$png_aipath'";
+
+            push @png_images, $image;
+            push @png_width, $width;
+            push @png_height, $height;
+        }
+    }
+
+    # We have an entirely different set of actions for each OS.
+
+    if ($os_parsed eq 'MSWin32') {
+        my $icofile; # keep this alive until after we write the executable
+
+        if (!$win32_exe_available) {
+            return "no Win32::Exe";
+        }
+
+        my $exe = Win32::Exe->new($osfile)
+            or return "Win32::Exe reported an error";
+
+        progress_report 1, "Setting executable parameters...";
+
+        $exe = $exe->create_resource_section
+            if $exe->can_create_resource_section;
+
+        # Icon
+        if (@png_images) {
+            $icofile = File::Temp->new( SUFFIX => '.ico', TMPDIR => 1 );
+            binmode $icofile, $binary_layers;
+
+            # PNG-to-ICO conversion is relatively simple (for Vista onwards, at
+            # least), because the ICO format uses PNG images directly as the
+            # storage for the actual image. Thus all we need to do is wrap them
+            # in appropriate ICO headers.
+
+            my @imageindexes = grep
+                $png_width[$_] >= 1 && $png_width[$_] <= 256 &&
+                $png_height[$_] >= 1 && $png_height[$_] <= 256, 0 .. $#png_images;
+
+            @imageindexes or return "no icon image is appropriately sized";
+
+            my @headers;
+            my @images;
+
+            my $headerlength = 6 + 16 * scalar @imageindexes;
+            my $dataoffset = $headerlength;
+
+            for my $i (@imageindexes) {
+                push @headers, (pack "CCxxx2x2VV",
+                                $png_width[$_] % 256, $png_height[$_] % 256,
+                                (length $png_images[$_]), $dataoffset);
+                push @images, $png_images[$_];
+                $dataoffset += length $png_images[$_];
+            }
+
+            print $icofile join '', (pack 'x2vv', 1, scalar @images),
+                @headers, @images;
+            close $icofile;              # get round Windows' automatic locking
+
+            $exe->set_single_group_icon($icofile);
+        }
+
+        # Version info
+        my $vi = $exe->get_version_info;
+        $vi->{LegalCopyright} = $params->{copyright} if $params->{copyright};
+        $vi->{FileVersion} = defined_or($params->{version},
+                                        $config->{options}{packageversion},
+                                        '0.1');
+        $vi->{ProductVersion} = defined_or($config->{options}{packageversion},
+                                           '0.1');
+        my $pn = defined_or($config->{options}{packagename_text},
+                            $config->{options}{packagename});
+        $vi->{ProductName} = $pn if defined $pn;
+        $vi->{FileDescription} = defined_or($params->{name}, $basename);
+        $exe->set_version_info($vi);
+
+        # Subsystem
+        if (defined $params->{terminal}) {
+            $params->{terminal} and $exe->set_subsystem_console;
+            $params->{terminal} or  $exe->set_subsystem_windows;
+        }
+
+        $exe->write or return "write failure";
+
+    } elsif ($os_parsed eq 'linux') {
+
+        # If it isn't interactive, we have nothing to do.
+        $params->{interactive} or return;
+
+        # We don't mess around with the executable itself.  However, we need to
+        # create a .desktop file for it.
+
+        my $desktopfile = $config->{options}{datadir} .
+            "/applications/$basename.desktop";
+        ensure_directory $desktopfile, 1, 1, 1
+            or return "could not create directory: $!";
+        my $fdf = friendly_objname $desktopfile;
+        open my $fh, ">$utf8_layers", aipath2ospath($desktopfile) or
+            return "could not write '$fdf': $!";
+
+        progress_report 0, "Writing '$fdf'.";
+
+        print $fh "[Desktop Entry]\n";
+        print $fh "Encoding=UTF-8\n";
+        print $fh "Type=Application\n";
+        print $fh "Exec=$osfile\n";
+        print $fh "Name=", defined_or($params->{name}, $basename), "\n";
+        defined $params->{description} and
+            print $fh "Comment=", $params->{description}, "\n";
+        print $fh "Version=", defined_or($params->{version},
+                                         $config->{options}{packageversion},
+                                         '0.1'), "\n";
+        print $fh "Terminal=",
+            (defined_or($params->{terminal}, 1) ? "true" : "false"), "\n";
+
+        if (@png_images) {
+            my %oksizes = (16 => 1, 24 => 1, 32 => 1, 48 => 1, 64 => 1,
+                           72 => 1, 96 => 1, 128 => 1, 256 => 1);
+
+            my @imageindexes = grep
+                $png_width[$_] == $png_height[$_] && $oksizes{$png_width[$_]},
+                0 .. $#png_images;
+
+            @imageindexes or return "no icon image is appropriately sized";
+
+            # For each image, copy it into the eventual location. We place the
+            # image into the 'hicolor' icon theme, because that theme is used
+            # as the fallback for all themes that don't override the icon (and
+            # thus, is the appropriate theme to install the default icon into).
+            my $written = 0;
+            for my $i (@imageindexes) {
+                my $iconfile = $config->{options}{datadir} . "/icons/hicolor/" .
+                    "$png_width[$i]x$png_height[$i]/apps/$basename.png";
+                my $fif = friendly_objname($iconfile);
+
+                ensure_directory $iconfile, 1, 1, 1
+                    or return "could not create directory: $!";
+
+                open my $fh2, ">$binary_layers", aipath2ospath($iconfile)
+                    or return "couldn't write '$fif': $!";
+                progress_report 0, "Writing '$fif'.";
+                print $fh2 $png_images[$i];
+                close $fh2;
+            }
+        }
+
+        close $fh;
+    }
+
+    return;
+}
+
 
 ### Permissions
 
@@ -6083,8 +6290,10 @@ sub object_exists {
 # 0           Allowed values are ints, default 0
 # \ 0         Allowed values are ints and undef, default undef
 # {...}       Allowed values and default are given explicitly
+# \ {...}     Allowed values are dictionaries, recursively verified
 #
 # Here's the function that verifies that.
+sub verify_hash_field;
 sub verify_hash_field {
     my $hash = shift;
     my $field = shift;
@@ -6099,6 +6308,18 @@ sub verify_hash_field {
     my $is_int = !$refhf && $hf =~ /^\-?\d+$/;
     my $refspec = defined $spec ? ref $spec : 'undef';
     my $ref0 = $refspec eq 'SCALAR' && defined $$spec && $$spec eq '0';
+
+    # Recursive verification is a special case.
+    if ($refspec eq 'REF' && ref $$spec eq 'HASH') {
+        $is_undef and $hf = {};
+        ref $hf eq 'HASH' or die
+            "Field '$field' of $errloc must be a dictionary";
+        for my $k (keys %$$spec) {
+            verify_hash_field $hf, $k, $$spec->{$k}, "field '$field' of $errloc";
+        }
+        $hash->{$field} = $hf;
+        return;
+    }
 
     # Replace undef with a default value (which may also be undef).
     if ($is_undef) {
@@ -6180,6 +6401,15 @@ my %actionkeys = (
     'information_only' => 0,
     'outdepends' => [],
     'depends' => [],
+    'exeparams' => \ {
+        'icon' => \ undef,
+        'copyright' => undef,
+        'version' => undef,
+        'name' => undef,
+        'description' => undef,
+        'terminal' => \ 0,
+        'interactive' => 1,
+    },
     'install_dir' => {values => [qw/bindir libdir specificlibdir includedir
                                     specificincdir configdir datadir mandir
                                     infodir statedir rootbindir gamesbindir
@@ -6212,6 +6442,7 @@ my %actiontypes = (
     'information_only' => [qw/produce/],
     'outdepends' => [qw/provide produce/],
     'depends' => [qw/depend/],
+    'exeparams' => [qw/install/],
     'install_dir' => [qw/install/],
     'install_name' => [qw/install/],
     'install_permission' => [qw/install/],
@@ -7375,6 +7606,8 @@ MAINLOOP: while (1) {
         my ($objtype, undef) = parse_objname $objname;
         my $fon = friendly_objname $output_location;
 
+        my $executable_installed_to = undef;
+
         if ($objtype ne 'sys') {
             my $ospathfrom = aipath2ospath $objname;
             my $ospathto = aipath2ospath $output_location;
@@ -7394,6 +7627,18 @@ MAINLOOP: while (1) {
                 -e $ospathto || -l $ospathto and unlink $ospathto;
                 ai_symlink $ltarget, $ospathto or die
                     "Could not symlink '$ospathto' to '$ltarget': $!";
+
+                # If we're installing an executable, the target should also be
+                # executable. The target of the new symlink might not be in
+                # place yet, so we check the target of the old symlink (which
+                # requires some awkward path calculation).
+
+                my ($vol, $dirs, undef) = File::Spec->splitpath($ospathfrom);
+                my $ospathfromdir = File::Spec->catpath($vol, $dirs, '');
+                my $absltarget = File::Spec->abs2rel($ltarget, $ospathfromdir);
+
+                -x $absltarget and $executable_installed_to = $ospathto;
+
             } else {
                 open my $fhfrom, "<$binary_layers", $ospathfrom
                     or die "Could not open '$ospathfrom' for read: $!";
@@ -7401,10 +7646,13 @@ MAINLOOP: while (1) {
                     or die "Could not open '$ospathto' for write: $!";
                 print $fhto $_ for <$fhfrom>;
                 close $fhfrom; close $fhto;
+
                 # If we're installing an executable, the target should also be
                 # executable.
-                -x $ospathfrom and chmod 0755, $ospathto;
+                -x $ospathfrom and chmod 0755, $ospathto and
+                    $executable_installed_to = $ospathto;
             }
+
         } elsif ($objname eq 'sys:touch_only') {
             # nothing to do; we already created the directory
         } elsif ($objname eq 'sys:create_subdir') {
@@ -7425,10 +7673,18 @@ MAINLOOP: while (1) {
             die "System object '$objname' cannot be installed";
         }
 
+        my $a = $rule->{actions}[0];
+
+        # If we installed an executable, set its parameters.
+        if (defined $executable_installed_to && $objname =~ /\Q$exeext\E$/) {
+            my $exefail = set_exeparams $a->{exeparams}, $executable_installed_to;
+            $exefail and
+                progress_report -1, "Could not set metadata of $fon: $exefail";
+        }
+
         # If necessary, elevate or restrict permissions.
         $objname eq 'sys:touch_only' and $output_location =
             aipath_parent $output_location;
-        my $a = $rule->{actions}[0];
         $a->{install_permission} and
             (restrict_to_permission $a->{install_permission},
              $output_location, $a->{install_readable},
