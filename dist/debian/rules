@@ -9,13 +9,13 @@ PREFIX=/usr
 override_dh_auto_configure:
 	mkdir -p build
 	mkdir -p $(DESTDIR)
-	(cd build; umask 022; ../aimake --without=jansson --config-only -i $(PREFIX) --destdir=../$(DESTDIR) -- ..)
+	(cd build; umask 022; ../aimake --without=jansson --config-only -i $(PREFIX) ..)
 
 override_dh_auto_build:
-	(cd build; umask 022; ../aimake -i $(PREFIX) --destdir=../$(DESTDIR) -- ..)
+	(cd build; umask 022; ../aimake)
 
 override_dh_auto_install:
-	(cd build; umask 022; ../aimake --install-only -i $(PREFIX) --destdir=../$(DESTDIR) -- ..)
+	(cd build; umask 022; ../aimake --install-only -i --destdir=../$(DESTDIR))
 
 override_dh_auto_clean:
 	rm -f $(DESTDIR)
