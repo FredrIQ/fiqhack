@@ -9751,6 +9751,10 @@ EOF
             # We set the rpath to the installed location for the shared
             # objects. We can't know if it'll be libdir or specificlibdir,
             # so we do both.
+            #
+            # Exception: we ignore /lib and /usr/lib, because ld.so(8)
+            # checks those unconditionally, and according to lintian,
+            # it can screw things up sometimes.
             output => 'optionset:linux_rpath',
             command => ['intcmd:optionvalues',
                         'config_option:libdir',
@@ -9758,7 +9762,7 @@ EOF
                         'optpath::config_option:libdir',
                         'optpath::config_option:specificlibdir'],
             outdepends => 'optpath:-Wl,-rpath=:',
-            inner => qr/^(?:specific)?libdir=(.*)$/,
+            inner => qr{^(?:specific)?libdir=((?!/lib$)(?!/usr/lib$).*)$},
         },
         linux_bpath_library_option => {
             command => ['intcmd:assert_equal',

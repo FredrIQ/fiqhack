@@ -42,7 +42,7 @@ the same as another tileset, but with some exceptions; in such a case,
 it is typically created by merging together the original tileset (or
 its source files) and a small tileset that just contains the
 exceptions.  Tilesets that come earlier on the command line will be
-overriden by tilesets that come later; if a tileset consists of
+overridden by tilesets that come later; if a tileset consists of
 multiple files (e.g. an image file and a map file), the image file
 must come first, because all map/hex files refer to the most recently
 seen image file.
