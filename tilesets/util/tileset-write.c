@@ -1,11 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-10 */
+/* Last modified by Alex Smith, 2014-10-21 */
 /* Copyright (C) 2014 Alex Smith. */
 /* NetHack may be freely redistributed. See license for details. */
 
 #include "tilecompile.h"
 #include "tilesequence.h"
 #include "utf8conv.h"
+#include <errno.h>
 
 /* Utility functions */
 
@@ -475,17 +476,17 @@ callback_with_text_tileset(enum iiformat iif,
 
     if (!t) {
         fprintf(stderr, "Error opening temporary file '%s': %s",
-                *tn ? tn : "(anonymous)", strerror(errno));
+                tn ? tn : "(anonymous)", strerror(errno));
         return 0;
     }
     if (!write_text_tileset_inner(NULL, t, iif)) {
         fclose(t);
-        if (*tn)
+        if (tn)
             remove(tn);
         return 0;
     }
     rewind(t);
-    return slurp_file(t, NULL, 0, *tn ? tn : NULL, callback);
+    return slurp_file(t, NULL, 0, tn, callback);
 }
 
 bool
@@ -499,15 +500,15 @@ callback_with_binary_tileset(bool (*callback)(png_byte *, png_size_t))
 
     if (!t) {
         fprintf(stderr, "Error opening temporary file '%s': %s",
-                *tn ? tn : "(anonymous)", strerror(errno));
+                tn ? tn : "(anonymous)", strerror(errno));
         return 0;
     }
     if (!write_binary_tileset_inner(NULL, t)) {
         fclose(t);
-        if (*tn)
+        if (tn)
             remove(tn);
         return 0;
     }
     rewind(t);
-    return slurp_file(t, NULL, 0, *tn ? tn : NULL, callback);
+    return slurp_file(t, NULL, 0, tn, callback);
 }
