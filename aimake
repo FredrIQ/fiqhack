@@ -4066,6 +4066,28 @@ sub cleanup_aipath {
     return ospath2aipath(aipath2ospath($_[0]));
 }
 
+sub destdir_transform {
+    my $aipath = shift;
+    if ($opt_prefix) {
+        my $aiprefix = ospath2aipath $opt_prefix;
+        my @components1 = parse_aipath $aiprefix;
+        my @components2 = parse_aipath $aipath;
+        $components2[0] eq 'spath' or die
+            "Bad --destdir option: --install is inside source " .
+            "or build directory";
+        # Meanwhile, $components1[0] not being on the spath is
+        # meaningful, albeit probably not useful.
+
+        # Remove the "spath" and drive from the output_target; we're
+        # changing the root directory, which means that the drive just
+        # vanishes altogether.
+        shift @components2; shift @components2;
+
+        $aipath = deparse_aipath @components1, @components2;
+    }
+    return $aipath;
+}
+
 
 ### I/O
 
@@ -4857,9 +4879,10 @@ sub set_exeparams {
 
         my $desktopfile = $config->{options}{datadir} .
             "/applications/$basename.desktop";
+        $desktopfile = destdir_transform $desktopfile;
+        my $fdf = friendly_objname $desktopfile;
         ensure_directory $desktopfile, 1, 1, 1
             or return "could not create directory: $!";
-        my $fdf = friendly_objname $desktopfile;
         open my $fh, ">$utf8_layers", aipath2ospath($desktopfile) or
             return "could not write '$fdf': $!";
 
@@ -4896,6 +4919,7 @@ sub set_exeparams {
             for my $i (@imageindexes) {
                 my $iconfile = $config->{options}{datadir} . "/icons/hicolor/" .
                     "$png_width[$i]x$png_height[$i]/apps/$basename.png";
+                $iconfile = destdir_transform $iconfile;
                 my $fif = friendly_objname($iconfile);
 
                 ensure_directory $iconfile, 1, 1, 1
@@ -7540,23 +7564,7 @@ MAINLOOP: while (1) {
             $install_name =~ s/\Q$exeext\E$/$Config{_exe}/es;
             my $ofile = $config->{options}{$a->{install_dir}} . "/" .
                 $install_name;
-            if ($opt_prefix) {
-                my $aiprefix = ospath2aipath $opt_prefix;
-                my @components1 = parse_aipath $aiprefix;
-                my @components2 = parse_aipath $ofile;
-                $components2[0] eq 'spath' or die
-                    "Bad --destdir option: --install is inside source " .
-                    "or build directory";
-                # Meanwhile, $components1[0] not being on the spath is
-                # meaningful, albeit probably not useful.
-
-                # Remove the "spath" and drive from the output_target; we're
-                # changing the root directory, which means that the drive just
-                # vanishes altogether.
-                shift @components2; shift @components2;
-
-                $ofile = deparse_aipath @components1, @components2;
-            }
+            $ofile = destdir_transform $ofile;
             $a->{output} = [$ofile];
             $a->{outputarg} = [''];
             $a->{inner} = [''];
