@@ -4210,6 +4210,22 @@ sub file_hash {
     return $mhash;
 }
 
+sub final_symlink_target;
+sub final_symlink_target {
+    my $ospath = shift;
+    my $depth = shift || 0;
+
+    -l $ospath or return $ospath;
+
+    $depth >= 8 and die "Symlink loop";
+
+    my ($vol, $dirs, undef) = File::Spec->splitpath($ospath);
+    my $ospathdir = File::Spec->catpath($vol, $dirs, '');
+    my $target = File::Spec->rel2abs(readlink $ospath, $ospathdir);
+    return final_symlink_target $target, $depth + 1;
+}
+
+
 ##### Interfacing with OS facilities
 
 ### Commands
@@ -4742,10 +4758,9 @@ sub atomic_read(&);
 sub set_exeparams {
     my $params = shift;
     my $osfile = shift;
+    my $osfile_predestdir = shift;
 
-    -x $osfile or return;    # sanity check
-
-    my (undef, undef, $basename) = File::Spec->splitpath($osfile);
+    my (undef, undef, $basename) = File::Spec->splitpath($osfile_predestdir);
     $basename =~ s/\..*?$//g;
 
     # Finding the icon files is OS-independent. (What we do with them once
@@ -4877,7 +4892,7 @@ sub set_exeparams {
         # We don't mess around with the executable itself.  However, we need to
         # create a .desktop file for it.
 
-        my $desktopfile = $config->{options}{datadir} .
+        my $desktopfile = $config->{options}{datarootdir} .
             "/applications/$basename.desktop";
         $desktopfile = destdir_transform $desktopfile;
         my $fdf = friendly_objname $desktopfile;
@@ -4889,9 +4904,8 @@ sub set_exeparams {
         progress_report 0, "Writing '$fdf'.";
 
         print $fh "[Desktop Entry]\n";
-        print $fh "Encoding=UTF-8\n";
         print $fh "Type=Application\n";
-        print $fh "Exec=$osfile\n";
+        print $fh "Exec=$osfile_predestdir\n";
         print $fh "Name=", defined_or($params->{name}, $basename), "\n";
         defined $params->{description} and
             print $fh "Comment=", $params->{description}, "\n";
@@ -4917,7 +4931,7 @@ sub set_exeparams {
             # thus, is the appropriate theme to install the default icon into).
             my $written = 0;
             for my $i (@imageindexes) {
-                my $iconfile = $config->{options}{datadir} . "/icons/hicolor/" .
+                my $iconfile = $config->{options}{datarootdir} . "/icons/hicolor/" .
                     "$png_width[$i]x$png_height[$i]/apps/$basename.png";
                 $iconfile = destdir_transform $iconfile;
                 my $fif = friendly_objname($iconfile);
@@ -4931,6 +4945,8 @@ sub set_exeparams {
                 print $fh2 $png_images[$i];
                 close $fh2;
             }
+
+            print $fh "Icon=$basename\n";
         }
 
         close $fh;
@@ -5000,6 +5016,10 @@ sub elevate_to_permission
     $> == 0 or return 1;
     $os_parsed eq 'MSWin32' and return 1;
 
+    # Silently skip elevating symlinks, on the assumption that their target
+    # will be elevated (now or later).
+    -l $ospath and return 1;
+
     -x $ospath && !-d $ospath or (progress_report -1,
         "Warning: " . (friendly_objname $aipath) . " is not an executable " .
         "and so cannot be granted permissions"), return 1;
@@ -5007,6 +5027,7 @@ sub elevate_to_permission
     $! = 0;
     if ($permname eq 'ANYONE') {
         # nothing to do
+        return 1;
     } elsif ($permname eq 'ADMINISTRATOR') {
         return chmod 04755, $ospath;
     } else {
@@ -7564,6 +7585,7 @@ MAINLOOP: while (1) {
             $install_name =~ s/\Q$exeext\E$/$Config{_exe}/es;
             my $ofile = $config->{options}{$a->{install_dir}} . "/" .
                 $install_name;
+            $a->{orig_output} = $ofile;
             $ofile = destdir_transform $ofile;
             $a->{output} = [$ofile];
             $a->{outputarg} = [''];
@@ -7638,15 +7660,10 @@ MAINLOOP: while (1) {
 
                 # If we're installing an executable, the target should also be
                 # executable. The target of the new symlink might not be in
-                # place yet, so we check the target of the old symlink (which
-                # requires some awkward path calculation).
+                # place yet, so we check the target of the old symlink.
 
-                my ($vol, $dirs, undef) = File::Spec->splitpath($ospathfrom);
-                my $ospathfromdir = File::Spec->catpath($vol, $dirs, '');
-                my $absltarget = File::Spec->abs2rel($ltarget, $ospathfromdir);
-
-                -x $absltarget and $executable_installed_to = $ospathto;
-
+                -x (final_symlink_target $ospathfrom) and
+                    $executable_installed_to = $ospathto;
             } else {
                 open my $fhfrom, "<$binary_layers", $ospathfrom
                     or die "Could not open '$ospathfrom' for read: $!";
@@ -7685,7 +7702,9 @@ MAINLOOP: while (1) {
 
         # If we installed an executable, set its parameters.
         if (defined $executable_installed_to && $objname =~ /\Q$exeext\E$/) {
-            my $exefail = set_exeparams $a->{exeparams}, $executable_installed_to;
+            my $exefail = set_exeparams $a->{exeparams},
+                $executable_installed_to,
+                aipath2ospath($actions_desugared[0]{orig_output});
             $exefail and
                 progress_report -1, "Could not set metadata of $fon: $exefail";
         }

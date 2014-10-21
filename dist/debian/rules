@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# Last modified by Alex Smith, 2014-05-30
+# Last modified by Alex Smith, 2014-10-21
 %:
 	env DH_VERBOSE=1 dh $@
 
@@ -9,7 +9,7 @@ PREFIX=/usr
 override_dh_auto_configure:
 	mkdir -p build
 	mkdir -p $(DESTDIR)
-	(cd build; umask 022; ../aimake --config-only -i $(PREFIX) --destdir=../$(DESTDIR) -- ..)
+	(cd build; umask 022; ../aimake --without=jansson --config-only -i $(PREFIX) --destdir=../$(DESTDIR) -- ..)
 
 override_dh_auto_build:
 	(cd build; umask 022; ../aimake -i $(PREFIX) --destdir=../$(DESTDIR) -- ..)

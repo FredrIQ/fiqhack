@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-30 */
+/* Last modified by Alex Smith, 2014-10-21 */
 /* Copyright (c) 2014 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,7 +7,7 @@
 #include "nhcurses.h"
 
 /* This mostly just resolves to the same IP as nethack4.org. However, a
-   subdomain is used so that it can be overriden in the hosts file (e.g. for
+   subdomain is used so that it can be overridden in the hosts file (e.g. for
    local testing of the MotD system, or so that nethack4.org server play
    doesn't advertise itself). */
 #define MOTD_SERVER "motd.nethack4.org"

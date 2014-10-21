@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-12 */
+/* Last modified by Alex Smith, 2014-10-21 */
 /* Copyright (c) 2013 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -357,7 +357,7 @@ cchar_from_tileno(int tileno)
        We set "copy underlining" (bit 30 clear and 31 set) if outputting
        anything other than a monster or cmap, because only monsters and cmaps
        have underlining rules of their own. (This allows underlining to be used
-       for a branding, if a tileset happens to want that.) This is overriden by
+       for a branding, if a tileset happens to want that.) This is overridden by
        ascii_overrides.txt in the case of furthest backgrounds (which can't copy
        anything).
 

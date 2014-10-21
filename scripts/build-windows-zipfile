@@ -12,7 +12,7 @@ echo 'Reminders: have you copied over zlib, libpng, SDL2?'
 echo 'Reminders: ensure there are no bones files lying around.'
 
 BUILDDIR=`mktemp -d /tmp/nh4build-win.XXXXXXXX`
-SUBDIR=nethack4-4.3.0-beta1
+SUBDIR=nethack4-4.3.0-beta2
 mkdir "$BUILDDIR/$SUBDIR"
 # I almost wrote "*.*" here out of habit
 cp -r "$1"/* "$BUILDDIR/$SUBDIR"

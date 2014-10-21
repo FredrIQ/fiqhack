@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-20 */
+/* Last modified by Alex Smith, 2014-10-21 */
 /* Copyright (C) 2014 Alex Smith. */
 /* NetHack may be freely redistributed. See license for details. */
 
@@ -349,7 +349,7 @@ main(int argc, char *argv[])
             "      The following options must be given:\n"
             "      -o outfile        The file to output into\n"
             "                        [if outputting multiple files, the\n"
-            "                         extension of each will be overriden]\n"
+            "                         extension of each will be overridden]\n"
             "      -t format         The format to output in:\n"
             "          For image-based tilesets:\n"
             "              -t text      Slash'EM-style text format [.txt]\n"
@@ -450,7 +450,7 @@ main(int argc, char *argv[])
     }
 
     /* Sometimes, we might have more than one definition of the same tile name
-       (e.g. when tiles in one input file are being overriden by another). In
+       (e.g. when tiles in one input file are being overridden by another). In
        such a case, we delete the earlier references. (The image itself will be
        deleted only if it's otherwise unreferenced, and -k is not given.)
 
