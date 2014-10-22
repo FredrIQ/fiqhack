@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2014-10-21
+# Last modified by Alex Smith, 2014-10-22
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
@@ -1350,9 +1350,36 @@ This command is unlikely to be useful except in testing aimake.
 =item C<intcmd:optionvalues>
 
 An internal command that takes config options as its arguments
-(e.g. C<optpath::config_option:packagename>), and outputs their values in
-"name=value" form.  Any values that are aimake objects that represent files
-will be converted to pathnames as the operating system understands them.
+(e.g. C<optpath::config_option:packagename>), and outputs their values. An
+C<optstring:> can be used to specify what format to output them in:
+
+=over 4
+
+=item C<optstring:--equals>
+
+Values will be output in the form C<name=value> form.  Any values that are
+aimake objects that represent files will be converted to pathnames as the
+operating system understands them.  No quoting will be used.  This is the
+default, if no optstring is given.
+
+=item C<optstring:--struct>
+
+Values will be output in the form C<{"name", "value", -1},>.  The names and
+values will be quoted according to the rules of C strings.  Any values that
+are aimake objects that represent files will be converted to pathnames as the
+operating system understands them; however, on Windows, if the file is in a
+known folder directory, the value will be the path relative to that directory,
+and the -1 will be replaced by the name of a constant representing the name of
+that directory (such as C<CSIDL_PERSONAL>).  This format was designed for the
+implementation of C<aimake_get_option>, but can be used directly if necessary.
+
+=item C<optstring:--optstring-escape>
+
+This option can be given alongside one of the others, and causes the output to
+be escaped suitably for C<intcmd:writefile> (i.e. replacing underscore with
+backslash-underscore, space with underscore, newline with space).
+
+=back
 
 =item C<intcmd:filetest>
 
@@ -3420,13 +3447,19 @@ use Scalar::Util qw/refaddr/;
 use Safe;
 use Storable qw/store_fd fd_retrieve dclone/; # why the naming inconsistency?
 use warnings FATAL => qw/recursion/; # crashes with backtraces > infinite loops
+my $win32_available;
 my $win32_exe_available;
 BEGIN {
+    eval {
+        require Win32;
+        Win32->import;
+        $win32_available = 1;
+    };
     eval {
         require Win32::Exe;
         Win32::Exe->import;
         $win32_exe_available = 1;
-    }
+    };
 }
 
 ####### Global variables and constants
@@ -3667,6 +3700,14 @@ sub serialize_sv {
 }
 sub sv_hash {
     return md5_hex(serialize_sv(shift));
+}
+
+sub quoted_c_string {
+    my $string = shift;
+    $string =~ s{([^ -~]|\\)}{$1 eq '\\' ? "\\\\" :
+                              ord $1 < 128 ? sprintf "\\x%02x", ord $1 :
+                              sprintf "\\u%04x", ord $1}eg;
+    return "\"$string\"";
 }
 
 ##### Object name handling
@@ -3910,8 +3951,6 @@ sub friendly_objname {
 # spaths, contrary to normal practice; this is to avoid a circular definition.
 # $path is set when parsing options.
 sub ospath2aipath;
-$bpath = ospath2aipath cwd, undef, 1;
-$cwd = 'bpath:';
 
 # Given an aimake path, splits it into components, unescaping them.
 # The first component will be path/bpath/spath.
@@ -3938,6 +3977,28 @@ sub deparse_aipath {
     return $objtype . ":" . join '/', @aipath;
 }
 
+# On Windows, there are various "known folders" which effectively act like
+# extra roots for the filesystem, and aimake treats them as such.
+my %spath_substitutions = ();
+if ($win32_available) {
+    for my $win32_constant (@Win32::EXPORT_OK) {
+        if ($win32_constant =~ /^CSIDL_/) {
+            my $csidl_location;
+            {
+                no strict 'refs';
+                $csidl_location =
+                    Win32::GetFolderPath(&{"Win32::$win32_constant"});
+            }
+            $csidl_location or next;
+            $spath_substitutions{ospath2aipath $csidl_location, undef, 2} =
+                "spath:$win32_constant";
+        }
+    }
+}
+
+$bpath = ospath2aipath cwd, undef, 2;
+$cwd = 'bpath:';
+
 # Given a native OS path, returns the matching aimake path, as an object name.
 #
 # The OS path should typically be an absolute path. If no second argument is
@@ -3945,12 +4006,13 @@ sub deparse_aipath {
 # (typically $bpath). If some second argument is given, then relative paths
 # are interpreted as files in some unknown location, and returned as file:
 # objects; the second argument is just interpreted as a boolean. The third
-# argument forces the resulting path to be an spath, which is only used before
-# $bpath is set (in order to be able to set $bpath).
+# argument prevents path/bpath substitution if set to at least 1, and also
+# spath substitution if set to 2; this is used to prevent circular
+# dependencies.
 sub ospath2aipath {
     my $ospath = shift;
     my $required_by = shift;
-    my $force_spath = shift;
+    my $force_spath = shift || 0;
 
     # If we're trying to convert a nonexistent path, we won't be able to
     # realpath it successfully. So we need an eval to trap errors.
@@ -3978,7 +4040,21 @@ sub ospath2aipath {
             $aipath eq $bpath and $aipath = 'bpath:';
             $aipath =~ /^\Q$bpath\E\/(.*)$/ and $aipath = "bpath:$1";
             $path and $aipath eq $path and $aipath = 'path:';
-            $path and $aipath =~ /^\Q$path\E\/(.*)$/  and $aipath = "path:$1";
+            $path and $aipath =~ /^\Q$path\E\/(.*)$/ and $aipath = "path:$1";
+        }
+        if ($force_spath < 2) {
+            # Check our list of substitutions and see if any apply. We want to
+            # check the longest ones first; some may well be subdirectories of
+            # others.
+            for my $spath_substitution (sort { length $b <=> length $a }
+                                        keys %spath_substitutions) {
+                if ($aipath eq $spath_substitution ||
+                    $aipath =~ /^\Q$spath_substitution\E\//) {
+                    $aipath =~ s/^\Q$spath_substitution\E/
+                        $spath_substitutions{$spath_substitution}/e;
+                    last;
+                }
+            }
         }
         return $aipath;
     } else {
@@ -4026,6 +4102,14 @@ sub aipath2ospath {
         $aipath eq 'bpath:' and $aipath = $bpath;
         $path and $aipath =~ s=^path:=$path/=;
         $aipath =~ s=^bpath:=$bpath/=;
+
+        # Replace any spath substitutions with the actual path.
+        while (my ($expanded, $short) = each %spath_substitutions) {
+            if ($aipath eq $short || $aipath =~ /^\Q$short\E\//) {
+                $aipath =~ s/^\Q$short\E/$expanded/;
+            }
+        }
+
         my (undef, $vol, @dirs) = parse_aipath $aipath; # ignore the spath:
         my $file = pop @dirs;
         unshift @dirs, File::Spec->rootdir;
@@ -4036,11 +4120,9 @@ sub aipath2ospath {
 # Like aipath2ospath, but quoted as a C string.
 sub quoted_ospath {
     my $aipath = shift;
-    my $ospath = aipath2ospath $aipath;
-    $ospath =~ s{([^ -~]|\\)}{$1 eq '\\' ? "\\\\" :
-                              ord $1 < 128 ? sprintf "\\x%2x", ord $1 :
-                              sprintf "\\u%4x", ord $1}eg;
-    return "\"$ospath\"";
+    my $shorten = shift;
+    my $ospath = aipath2ospath $aipath, $shorten;
+    return quoted_c_string $ospath;
 }
 
 # Given an aimake path, returns the containing directory.
@@ -4078,10 +4160,20 @@ sub destdir_transform {
         # Meanwhile, $components1[0] not being on the spath is
         # meaningful, albeit probably not useful.
 
-        # Remove the "spath" and drive from the output_target; we're
-        # changing the root directory, which means that the drive just
-        # vanishes altogether.
-        shift @components2; shift @components2;
+        # Remove the "spath" from the output_target. Also remove the
+        # drive, if it's blank.  (This means that we create directories
+        # with names like CSIDL_PROGRAMS on Windows when using --destdir.
+        # However, that's better than losing information, and may well be
+        # what the installer wants.)
+        shift @components2;
+        if (length $components2[0]) {
+            # A root name like "C:" is not a legal directory name on
+            # Windows, so we need to mangle it (in this case, by removing
+            # the colon).
+            $os_parsed eq 'MSWin32' and $components2[0] =~ s/\:$//;
+        } else {
+            shift @components2;
+        }
 
         $aipath = deparse_aipath @components1, @components2;
     }
@@ -4106,7 +4198,7 @@ sub verify_writable {
     $aipath_c =~ /^path:/ and !$installing and
         croak "Attempt to overwrite source file '$fon'";
     $aipath_c =~ /^(spath|standardlib):/ and !$installing and croak
-        "Attempt to overwrite system file '$fon'";
+        "Attempt to overwrite system file '$fon' = '$aipath_c'";
     1; # return true so we can use this with &&
 }
 
@@ -4436,17 +4528,48 @@ sub run_command {
             my $stderr = '';
             my @stdout = ();
             my $failreason = undef;
+            my $format = 'equals';
+            my $escape = undef;
             for my $o (@opts) {
+                $o eq 'optstring:--equals' and $format = 'equals';
+                $o eq 'optstring:--struct' and $format = 'struct';
+                $o eq 'optstring:--optstring-escape' and $escape = 'optstring';
+            }
+            for my $o (@opts) {
+                $o =~ /^optstring:--/ and next;
                 if ($o !~ /^optstring:(.*)$/s &&
-                    $o !~ /^optpath: ?:config_option:(.*)$/) {
+                    $o !~ /^optpath: ?:config_option:(.*)$/s) {
                     $failreason = "Invalid arguments";
                     $stderr .= "'$o' is the wrong sort of object";
                 } elsif (defined $config->{options}{$1}) {
                     my $k = $1;
                     my $o = $config->{options}{$k};
-                    $o =~ /^[bs]?path:/ and $o =
-                        ($singledir ? File::Spec->curdir : aipath2ospath($o));
-                    push @stdout, "$k=$o";
+                    next if ref $o; # silently ignore, say, default_libraries
+                    if ($format eq 'equals') {
+                        $o =~ /^[bs]?path:/ and $o =
+                            ($singledir ? File::Spec->curdir : aipath2ospath($o));
+                        push @stdout, "$k=$o";
+                    } elsif ($format eq 'struct') {
+                        if ($o =~ /^[bs]?path:/ and $singledir) {
+                            push @stdout, ("{\"$k\", " .
+                                           quoted_ospath('bpath:', 'bpath:') .
+                                           ", -1},");
+                        } elsif (!$singledir && $os_parsed eq 'MSWin32' &&
+                            $o =~ m=^spath:(CSIDL_[^/]*)=) {
+                            my $csidl = $1;
+                            push @stdout, ("{\"$k\", " .
+                                           quoted_ospath($o, "spath:$csidl") .
+                                           ", $csidl},");
+                        } elsif ($o =~ /^[bs]?path:/) {
+                            push @stdout, ("{\"$k\", " .
+                                           quoted_ospath($o) .
+                                           ", -1},");
+                        } else {
+                            push @stdout, ("{\"$k\", " .
+                                           quoted_c_string($o) .
+                                           ", -1},");
+                        }
+                    }
                 } else {
                     $failreason = "Missing config options";
                     $stderr .= "'$1' is not a config option";
@@ -4455,7 +4578,14 @@ sub run_command {
             # TODO: Because we're outputting OS paths, we need to use in-band
             # newlines to signal that fact. Of course, this fails for dirnames
             # with newlines in.
-            return ($failreason, (join "\n", @stdout), $stderr);
+            my $stdout = (join "\n", @stdout);
+            if ($escape && $escape eq 'optstring') {
+                $stdout =~ s/\\/\\\\/g;
+                $stdout =~ s/_/\\_/g;
+                $stdout =~ s/ /_/g;
+                $stdout =~ s/\n/ /g;
+            }
+            return ($failreason, $stdout, $stderr);
         } elsif ($cmd eq 'intcmd:xuse_statistics') {
             my @stdout = ();
             for my $required (grep /^optstring:-r/, @opts) {
@@ -4850,51 +4980,51 @@ sub set_exeparams {
             print $icofile join '', (pack 'x2vv', 1, scalar @images),
                 @headers, @images;
             close $icofile; # get round Windows' automatic locking
-	}
+        }
 
-	# Win32::Exe has limits on how quickly it can expand the file;
-	# if you want to expand it a long way, you need to call it
-	# multiple times. Thus, we repeat until the file stops getting
-	# larger.
+        # Win32::Exe has limits on how quickly it can expand the file;
+        # if you want to expand it a long way, you need to call it
+        # multiple times. Thus, we repeat until the file stops getting
+        # larger.
 
-	my $oldsize = 0;
-	while ((my $newsize = (stat $osfile)[7]) != $oldsize) {
-	    $oldsize = $newsize;
+        my $oldsize = 0;
+        while ((my $newsize = (stat $osfile)[7]) != $oldsize) {
+            $oldsize = $newsize;
 
-	    my $exe = Win32::Exe->new($osfile)
-		or return "Win32::Exe reported an error";
+            my $exe = Win32::Exe->new($osfile)
+                or return "Win32::Exe reported an error";
 
-	    progress_report 1, "Setting executable parameters...";
+            progress_report 1, "Setting executable parameters...";
 
-	    $exe = $exe->create_resource_section
-		if $exe->can_create_resource_section;
+            $exe = $exe->create_resource_section
+                if $exe->can_create_resource_section;
 
-	    # Icon
-	    $exe->set_single_group_icon($icofile) if @png_images;
+            # Icon
+            $exe->set_single_group_icon($icofile) if @png_images;
 
-	    # Version info
-	    my $vi = $exe->get_version_info;
-	    $vi->{LegalCopyright} = $params->{copyright}
-	        if $params->{copyright};
-	    $vi->{FileVersion} = defined_or($params->{version},
-					    $config->{options}{packageversion},
-					    '0.1');
-	    $vi->{ProductVersion} =
-		defined_or($config->{options}{packageversion}, '0.1');
-	    my $pn = defined_or($config->{options}{packagename_text},
-				$config->{options}{packagename});
-	    $vi->{ProductName} = $pn if defined $pn;
-	    $vi->{FileDescription} = defined_or($params->{name}, $basename);
-	    $exe->set_version_info($vi);
+            # Version info
+            my $vi = $exe->get_version_info;
+            $vi->{LegalCopyright} = $params->{copyright}
+                if $params->{copyright};
+            $vi->{FileVersion} = defined_or($params->{version},
+                                            $config->{options}{packageversion},
+                                            '0.1');
+            $vi->{ProductVersion} =
+                defined_or($config->{options}{packageversion}, '0.1');
+            my $pn = defined_or($config->{options}{packagename_text},
+                                $config->{options}{packagename});
+            $vi->{ProductName} = $pn if defined $pn;
+            $vi->{FileDescription} = defined_or($params->{name}, $basename);
+            $exe->set_version_info($vi);
 
-	    # Subsystem
-	    if (defined $params->{terminal}) {
-		$params->{terminal} and $exe->set_subsystem_console;
-		$params->{terminal} or  $exe->set_subsystem_windows;
-	    }
+            # Subsystem
+            if (defined $params->{terminal}) {
+                $params->{terminal} and $exe->set_subsystem_console;
+                $params->{terminal} or  $exe->set_subsystem_windows;
+            }
 
-	    $exe->write or return "write failure";
-	}
+            $exe->write or return "write failure";
+        }
 
     } elsif ($os_parsed eq 'linux') {
 
@@ -6642,6 +6772,7 @@ EOF
     exit 0;
 }
 $opt_verbose = defined_or($opt_verbose, 0);
+$opt_prefix and $opt_prefix = File::Spec->rel2abs($opt_prefix);
 
 # Don't create an aimake.objects in the source directory, it leads to
 # problems. We need to do this check before establishing the lock, because the
@@ -8515,19 +8646,14 @@ __DATA__
             specificlockdir => 'spath:/var/run/lock/$packagename',
         },
 
-        # Installing for just one user. Unlike the FHS installs, this one
-        # works on Windows too, so there's an autodetect for the most common
-        # instance of that (Windows Vista+ with a noncustomized English
-        # document path). (The /Users/ autodetect is for Mac OS X.) As such,
-        # care must be taken to avoid any FHS-specific paths. We still use a
-        # vaguely FHS-like layout to keep things neat, but with more generic
-        # names, and all the directories are arbitrary. (One big difference is
-        # the use of $installdir, not $installdir/bin, for binaries; this
-        # makes them easier to find.)
+        # Installing for just one user. (The /Users/ autodetect is for Mac OS
+        # X.) As such, care must be taken to avoid any FHS-specific paths. We
+        # still use a vaguely FHS-like layout to keep things neat, but with
+        # more generic names, and all the directories are arbitrary. (One big
+        # difference is the use of $installdir, not $installdir/bin, for
+        # binaries; this makes them easier to find.)
         single_user => {
-            # The [^/]+ is not a typo: / is not legal in filenames on Windows,
-            # so we don't have to worry about an escaped /.
-            autodetect => qr=^spath:(?:/home/|/Users/|(?i:c/users/[^/]+/documents))/=,
+            autodetect => qr=^spath:(?:/home/|/Users/)=,
             preferred_installdir => 'bpath:aimake_install',
 
             # Everything is relative to -i on the command line.
@@ -8550,6 +8676,93 @@ __DATA__
             mandir => '$datarootdir/man',
             infodir => '$datarootdir/info',
             docdir => '$datarootdir/doc',
+
+            # Relative to staterootdir.
+            statedir => '$staterootdir/data-rw',
+            gamesstatedir => '$staterootdir/save',
+            logdir => '$staterootdir/log',
+            lockdir => '$staterootdir/lock',
+            specificlockdir => '$staterootdir/lock',
+        },
+
+        # Basically the above, except with libdir=bindir, so that it
+        # works on Windows.
+        single_user_windows => {
+            autodetect => qr=^spath:CSIDL_PERSONAL/=,
+            preferred_installdir => 'bpath:aimake_install',
+
+            # Everything is relative to -i on the command line.
+            configdir => '$installdir/config',
+            staterootdir => '$installdir',
+            bindir => '$installdir',
+            rootbindir => '$installdir',
+            gamesbindir => '$installdir',
+            libdir => '$installdir',
+            specificlibdir => '$installdir',
+            includedir => '$installdir/include',
+            specificincdir => '$installdir/include',
+            datarootdir => '$installdir',
+
+            # Relative to datarootdir.
+            datadir => '$datarootdir/data',
+            gamesdatadir => '$datarootdir/data',
+            mandir => '$datarootdir/man',
+            infodir => '$datarootdir/info',
+            docdir => '$datarootdir/doc',
+
+            # Relative to staterootdir.
+            statedir => '$staterootdir/data-rw',
+            gamesstatedir => '$staterootdir/save',
+            logdir => '$staterootdir/log',
+            lockdir => '$staterootdir/lock',
+            specificlockdir => '$staterootdir/lock',
+        },
+
+        # Standard layout for files that are installed under Windows.
+        windows => {
+            autodetect => qr=^spath:CSIDL_PROGRAM_FILES(?:/|$)=,
+            preferred_installdir => 'spath:CSIDL_PROGRAM_FILES',
+
+            # We use a subdirectory of the given directory, which should be
+            # Program Files itself or a vendor subdir.
+            exerootdir => '$installdir/$packagename',
+
+            # This is somewhat different from Linux, because files are sorted
+            # by vendor (i.e. $installdir) rather than by purpose. A side
+            # effect is that we have a lot of freedom to arrange files within
+            # the $exerootdir; "fhs_package" is probably the closest Linux
+            # equivalent. However, we need libdir == specificlibdir == bindir
+            # for DLLs to be found correctly, at least until I figure out how
+            # an RPATH works on Windows.
+            #
+            # Windows has less of a culture than Linux of installing things
+            # like development headers, so includedir is pretty
+            # arbitrary. datarootdir matching libdir is correct; Windows
+            # doesn't expect any multiarch stuff to be going on. We could use
+            # a location in CSIDL_PROGRAM_FILES_COMMON, but only if we got
+            # the entire world to cooperate, which seems unlikely.
+            #
+            # Technically speaking, libdir should be CSIDL_SYSTEM in order
+            # to get behaviour as close as possible to Linux's, but I have
+            # a strong suspicion that that's a bad idea.
+            configdir => '$exerootdir/config',
+            bindir => '$exerootdir',
+            rootbindir => '$exerootdir',
+            gamesbindir => '$exerootdir',
+            libdir => '$exerootdir',
+            specificlibdir => '$exerootdir',
+            includedir => '$exerootdir/include',
+            specificincdir => '$exerootdir/include/$packagename',
+            datarootdir => '$exerootdir/data',
+            staterootdir => 'spath:CSIDL_COMMON_APPDATA/$packagename',
+
+            # Relative to datarootdir.
+            datadir => '$datarootdir',
+            gamesdatadir => '$datarootdir',
+            docdir => '$datarootdir/doc',
+            # Dubious on Windows, but...
+            mandir => '$datarootdir/man',
+            infodir => '$datarootdir/info',
 
             # Relative to staterootdir.
             statedir => '$staterootdir/data-rw',
@@ -8629,12 +8842,6 @@ __DATA__
             lockdir => '$staterootdir',
             specificlockdir => '$staterootdir',
         },
-
-        # TODO: An FHS-like layout for Windows rather than FHS standards.
-        # Part of the problem is that on Windows, you're meant to use syscalls
-        # to get at the paths rather than just hardcoding them (they vary by
-        # language and configuration), making it hard to implement this from a
-        # portable program.
     },
     tests => {
         'c11_option' => {
@@ -9057,6 +9264,10 @@ EOF
         },
 
         # An aimake-specific header file that's forced onto every C file.
+        # COPYRIGHT NOTICE: I (Alex Smith) dedicate the files generated
+        # by the generate_aimake_header and generate_aimake_get_option rules
+        # into the public domain (to allow them to be used with non-GPL
+        # programs).
         generate_aimake_header => {
             command => [
                 'intcmd:writefile', 'optpath::bpath:aimake/aimake_1.h',
@@ -9072,7 +9283,42 @@ EOF
         },
         default_aimake_header_lines => {
             output => 'optionset:aimake_header_lines',
-            outdepends => [],
+            outdepends => [
+                'optstring:extern_const_char_*aimake\\_get\\_option' .
+                '(const_char_*);'],
+        },
+
+        # The implementation of aimake_get_option. This is dropped into
+        # the user namespace (i.e. not in aimake/), so that it gets
+        # compiled and linked along with everything else.
+        all_aimake_options => {
+            object => qr/^config_option:/,
+            command => ['intcmd:optionvalues', 'optpath::',
+                        'optstring:--struct', 'optstring:--optstring-escape'],
+            output => 'optionset:all_aimake_options',
+            outdepends => 'optstring:__',
+            dependsarg => qr/^(.*)$/s,
+        },
+        generate_aimake_get_option => {
+            command => [
+                'intcmd:writefile', 'optpath::bpath:_aimake_get_option.c',
+                'optstring:#ifdef_AIMAKE\\_BUILDOS\\_MSWin32 '.
+                '#_include_<shlobj.h> #endif #include_<string.h> '.
+                'static_struct_o_{ __const_char_*name; __const_char_*value; '.
+                '__int_csidl; __char_working[MAX\\_PATH]; }_options[]_=_{',
+                'optionset:all_aimake_options',
+                'optstring: __{0,_0,_-1} }; '.
+                'const_char_* aimake\\_get\\_option(const_char_*name) { '.
+                '__struct_o_*x_=_options; __while(x->name)_{ '.
+                '____if_(!strcmp(x->name,_name))_{ '.
+                '#ifdef_AIMAKE\\_BUILDOS\\_MSWin32 ______if_(x->csidl_!=_-1)_{ '.
+                '________SHGetFolderPathA(0,_x->csidl,_0,_0,_x->working); '.
+                '________strncat(x->working, "\\\\\\\", MAX\\_PATH - 1); '.
+                '________strncat(x->working, x->value, MAX\\_PATH - 1); '.
+                '________return_x->working; ______} #endif '.
+                '______return_x->value; ____} ____x++; __} __return_0; }'],
+            output_from_optpath => '',
+            verb => 'generated',
         },
 
         # Compiling C and C++.
@@ -9258,19 +9504,6 @@ EOF
         # We can't just put config options in aimake_1.h, like we do for the
         # other aimake defines, because we need dependencies on them from the
         # config options.
-        ch_embedded_aimake_option => {
-            object => qr/^bpath:(?!aimake).*\.[ch](?:xx)?$/s,
-            command => ['intcmd:cat', 'optpath::'],
-            depends => 'dependencies:embedded_aimake_option:config_option:',
-            dependsarg => qr'AIMAKE_OPTION_([a-zA-Z0-9_]+)',
-        },
-        embedded_aimake_option_define => {
-            object => qr/^config_option:/,
-            command => ['intcmd:optionvalues', 'optpath::'],
-            output => 'dependencies:embedded_aimake_option:',
-            outdepends => 'optstring:-DAIMAKE_OPTION_',
-            dependsarg => qr/^(.*)$/,
-        },
         header_files_are_files => {
             object => qr/^[bs]path:(?!aimake).*\.h(?:xx)?/,
             command => ['intcmd:echo', 'optpath::'],

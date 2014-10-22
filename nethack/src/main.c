@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-06 */
+/* Last modified by Alex Smith, 2014-10-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -15,19 +15,7 @@
 # include <unistd.h>
 #endif
 
-#ifdef AIMAKE_OPTION_gamesdatadir
-# ifndef NETHACKDIR
-#  define NETHACKDIR STRINGIFY_OPTION(AIMAKE_OPTION_gamesdatadir)
-#  ifndef STRINGIFY_OPTION
-#   define STRINGIFY_OPTION(x) STRINGIFY_OPTION_1(x)
-#   define STRINGIFY_OPTION_1(x) #x
-#  endif
-# endif
-#endif
-
-#ifndef NETHACKDIR
-# define NETHACKDIR "/usr/share/NetHack4/"
-#endif
+#define DEFAULT_NETHACKDIR "/usr/share/NetHack4/"
 
 static void process_args(int, char **);
 void append_slash(char *name);
@@ -131,8 +119,11 @@ init_game_paths(const char *argv0)
     } else
         dir = NULL;
 
-    if (!dir)
-        dir = NETHACKDIR;
+    if (!dir || !*dir)
+        dir = aimake_get_option("gamesdatadir");
+
+    if (!dir || !*dir)
+        dir = DEFAULT_NETHACKDIR;
 
     for (i = 0; i < PREFIX_COUNT; i++)
         pathlist[i] = dir;
@@ -145,7 +136,9 @@ init_game_paths(const char *argv0)
     }
 #elif defined(WIN32)
     dir = getenv("NETHACKDIR");
-    if (!dir) {
+    if (!dir || !*dir)
+        dir = aimake_get_option("gamesdatadir");
+    if (!dir || !*dir) {
         strncpy(dirbuf, argv0, 1023);
         pos = strrchr(dirbuf, '\\');
         if (!pos)
@@ -179,14 +172,18 @@ init_game_paths(const char *argv0)
 #endif
 
     /* If the build system gave us more specific directories, use them. */
-#ifdef AIMAKE_OPTION_gamesstatedir
-    pathlist[BONESPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_gamesstatedir);
-    pathlist[SCOREPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_gamesstatedir);
-    pathlist[TROUBLEPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_gamesstatedir);
-#endif
-#ifdef AIMAKE_OPTION_specificlockdir
-    pathlist[LOCKPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_specificlockdir);
-#endif
+    const char *temp_path;
+
+    temp_path = aimake_get_option("gamesstatedir");
+    if (temp_path) {
+        pathlist[BONESPREFIX] = temp_path;
+        pathlist[SCOREPREFIX] = temp_path;
+        pathlist[TROUBLEPREFIX] = temp_path;
+    }
+
+    temp_path = aimake_get_option("specificlockdir");
+    if (temp_path)
+        pathlist[LOCKPREFIX] = temp_path;
     /* and leave NETHACKDIR to provide the data */
 
     /* if given an override directory, use it (unless we're running setgid) */
@@ -408,7 +405,7 @@ process_args(int argc, char *argv[])
     int i;
     const struct nh_roles_info *ri = nh_get_roles();
 
-    /* 
+    /*
      * Process options.
      */
     while (argc > 1 && argv[1][0] == '-') {
