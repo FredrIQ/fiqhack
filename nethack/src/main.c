@@ -93,11 +93,6 @@ const char *nhlogo_large[14] = {
     "###    ?####   `\"#####'    ?###|  ###     ###    `##' ###    \"####?  ###  `###b            *#*     ",
 };
 
-#ifndef STRINGIFY_OPTION
-# define STRINGIFY_OPTION(x) STRINGIFY_OPTION_1(x)
-# define STRINGIFY_OPTION_1(x) #x
-#endif
-
 
 static char **
 init_game_paths(const char *argv0)

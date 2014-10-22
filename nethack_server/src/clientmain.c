@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-07-07 */
+/* Last modified by Alex Smith, 2014-10-22 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -14,23 +14,9 @@
 #include "nhserver.h"
 #include <ctype.h>
 
+#define DEFAULT_NETHACKDIR "/usr/share/NetHack4/"
+
 #define COMMBUF_SIZE (1024 * 1024)
-
-/* copied from nhcurses.h */
-#ifdef AIMAKE_OPTION_gamesdatadir
-# ifndef NETHACKDIR
-#  define NETHACKDIR STRINGIFY_OPTION(AIMAKE_OPTION_gamesdatadir)
-# endif
-#endif
-#ifndef STRINGIFY_OPTION
-# define STRINGIFY_OPTION(x) STRINGIFY_OPTION_1(x)
-# define STRINGIFY_OPTION_1(x) #x
-#endif
-
-
-#ifndef NETHACKDIR
-# define NETHACKDIR "/usr/share/NetHack4/"
-#endif
 
 static int infd, outfd;
 int gamefd;
@@ -54,22 +40,29 @@ init_game_paths(void)
             dir = getenv("HACKDIR");
     }
 
-    if (!dir)
-        dir = NETHACKDIR;
+    if (!dir || !*dir)
+        dir = aimake_get_option("gamesdatadir");
+
+    if (!dir || !*dir)
+        dir = DEFAULT_NETHACKDIR;
 
     for (i = 0; i < PREFIX_COUNT; i++)
         pathlist[i] = dir;
 
-#ifdef AIMAKE_OPTION_statedir
-    pathlist[BONESPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_gamesstatedir);
-    pathlist[SCOREPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_gamesstatedir);
-    pathlist[TROUBLEPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_gamesstatedir);
-    pathlist[DUMPPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_gamesstatedir);
-#endif
-#ifdef AIMAKE_OPTION_specificlockdir
-    pathlist[LOCKPREFIX] = STRINGIFY_OPTION(AIMAKE_OPTION_specificlockdir);
-#endif
-    /* and leave HACKDIR to provide the data */
+    /* If the build system gave us more specific directories, use them. */
+    const char *temp_path;
+
+    temp_path = aimake_get_option("gamesstatedir");
+    if (temp_path) {
+        pathlist[BONESPREFIX] = temp_path;
+        pathlist[SCOREPREFIX] = temp_path;
+        pathlist[TROUBLEPREFIX] = temp_path;
+    }
+
+    temp_path = aimake_get_option("specificlockdir");
+    if (temp_path)
+        pathlist[LOCKPREFIX] = temp_path;
+    /* and leave NETHACKDIR to provide the data */
 
     /* alloc memory for the paths and append slashes as required */
     for (i = 0; i < PREFIX_COUNT; i++) {

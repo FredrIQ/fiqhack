@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-05 */
+/* Last modified by Alex Smith, 2014-10-22 */
 #ifndef NHSERVER_H
 # define NHSERVER_H
 
@@ -40,43 +40,6 @@
 # include "nethack.h"
 # include "nethack_client.h"    /* for enum authresult */
 
-/* If using aimake, take directory options from there */
-# ifndef STRINGIFY_OPTION
-#  define STRINGIFY_OPTION(x) STRINGIFY_OPTION_1(x)
-#  define STRINGIFY_OPTION_1(x) #x
-# endif
-
-# ifdef AIMAKE_OPTION_configdir
-#  define DEFAULT_CONFIG_FILE STRINGIFY_OPTION(AIMAKE_OPTION_configdir) \
-    "/nethack4.conf"
-# endif
-# ifdef AIMAKE_OPTION_logdir
-#  define DEFAULT_LOG_FILE STRINGIFY_OPTION(AIMAKE_OPTION_logdir) \
-    "/nethack4.log"
-# endif
-# ifdef AIMAKE_OPTION_lockdir
-#  define DEFAULT_PID_FILE STRINGIFY_OPTION(AIMAKE_OPTION_lockdir) \
-    "/nethack4.pid"
-# endif
-# ifdef AIMAKE_OPTION_gamesstatedir
-#  define DEFAULT_WORK_DIR STRINGIFY_OPTION(AIMAKE_OPTION_gamesstatedir)
-# endif
-
-# if !defined(DEFAULT_CONFIG_FILE)
-#  define DEFAULT_CONFIG_FILE ""
-# endif
-
-# if !defined(DEFAULT_LOG_FILE)
-#  define DEFAULT_LOG_FILE "/var/log/nhserver.log"
-# endif
-
-# if !defined(DEFAULT_PID_FILE)
-#  define DEFAULT_PID_FILE "/var/run/nhserver.pid"
-# endif
-
-# if !defined(DEFAULT_WORK_DIR)
-#  define DEFAULT_WORK_DIR "/var/lib/NetHack4/"
-# endif
 
 # if !defined(DEFAULT_CLIENT_TIMEOUT)
 #  define DEFAULT_CLIENT_TIMEOUT (15 * 60)      /* 15 minutes */

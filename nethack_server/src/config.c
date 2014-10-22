@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-05 */
+/* Last modified by Alex Smith, 2014-10-22 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -113,8 +113,13 @@ read_config(const char *confname)
     const char *filename = confname;
     char *data, *line, *newline;
 
+    const char *configdir = aimake_get_option("configdir");
+    char default_filename[strlen(configdir) + strlen("/nethack4.conf") + 1];
+    strcpy(default_filename, configdir);
+    strcat(default_filename, "/nethack4.conf");
+
     if (!filename)
-        filename = DEFAULT_CONFIG_FILE;
+        filename = default_filename;
 
     fd = open(filename, O_RDONLY);
     if (fd == -1) {
@@ -168,17 +173,31 @@ read_config(const char *confname)
 }
 
 
+static char *
+construct_server_filename(const char *option, const char *name)
+{
+    const char *dir = aimake_get_option(option);
+    char *rv = malloc(strlen(dir) + strlen(name) + 1);
+    strcpy(rv, dir);
+    strcat(rv, name);
+    return rv;
+}
+
+
 void
 setup_defaults(void)
 {
     if (!settings.logfile)
-        settings.logfile = strdup(DEFAULT_LOG_FILE);
+        settings.logfile =
+            construct_server_filename("logdir", "/nethack4.log");
 
     if (!settings.pidfile)
-        settings.pidfile = strdup(DEFAULT_PID_FILE);
+        settings.pidfile =
+            construct_server_filename("lockdir", "/nethack4.pid");
 
     if (!settings.workdir)
-        settings.workdir = strdup(DEFAULT_WORK_DIR);
+        settings.workdir =
+            construct_server_filename("gamesstatedir", "");
 
     if (!settings.client_timeout)
         settings.client_timeout = DEFAULT_CLIENT_TIMEOUT;

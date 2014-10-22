@@ -253,10 +253,24 @@ install and uninstall packages by hand.
 =item single_user
 
 Place all the installed files in appropriate subdirectories of the given
-directory.  This works on any operating system, and is the default when the
-install directory given is unrecognised, or recognised as a user's home or
-documents directory.  (Note that this sort of install makes the program
-available only to one user, rather than system-wide.)
+directory.  This works on any operating system but Windows, and is the default
+when the install directory given is unrecognised, or recognised as a user's
+home or documents directory.  (Note that this sort of install makes the
+program available only to one user, rather than system-wide.)
+
+=item single_user_windows
+
+This is basically the same as single_user, except that it will place libraries
+into the same directories as executables, which is required for Windows to be
+able to find them.
+
+=item windows
+
+Place all the installed files under CSIDL_PROGRAM_FILES (typically
+F<C:\Program Files\packagename>, for read-only files) or CSIDL_COMMON_APPDATA
+(for read-write files) as appropriate, as is standard for system-wide installs
+on Windows.  This option does not work on other operating sysems, which lack
+the appropriate system calls for locating these known folders.
 
 =item single_directory
 
@@ -275,6 +289,10 @@ install action.  For instance, C<--override-directory bindir=/bin> would
 install binaries into F</bin> even if the default was, say, F</usr/bin> (which
 is the default with C<-i /usr>).  See the documentation for C<install_dir> for
 a full list of directories you can override.
+
+On Windows, if the overriden directory is inside a known folder such as
+Program Files, then it will be interpreted relative to that known folder
+(i.e. if the known folder moves, the overriden directory will move to match).
 
 =item B<--destdir=>F<directory>
 
@@ -499,9 +517,9 @@ installed in, so that they can locate them at runtime).  This is quite
 difficult to set up in many build systems (and B<make> has no native concept
 of an install path, meaning that some external tool is needed to set a prefix
 or the like).  In aimake, doing this (for C, at least) is as simple as writing
-strings like "AIMAKE_OPTION_datadir" in the source files you're compiling; if
-any of those strings are detected, it'll #define it to the appropriate value
-for you.  Similar mechanisms exist to detect the platform you're running on.
+a function call C<aimake_get_option("installdir")>.  Likewise, aimake will
+define a preprocessor symbol like C<AIMAKE_BUILDOS_linux>, so that you always
+know which platform you're running on.
 
 =item *
 
@@ -555,16 +573,10 @@ Mac OS X).  (The possibilities for the build OS are generally taken from
 Perl's C<$^O> operating system identification variable, but C<msys> is folded
 into C<MSWin32> in order to correctly indicate the operating system on which
 the resulting programs will run.)  Another is to make your code depend on
-aimake configuration options; you can write C<AIMAKE_OPTION_packagename> to
-discover the package name, for instance.  (You can use any configuration
-option or install directory this way; aimake will recompile the file in
-question whenever the the relevant option or directory is changed.)  Note that
-the option value will be used as-is; if you want it as a C string, stringify
-it as follows:
-
-    #define STRINGIFY_EXPAND(x) STRINGIFY(x)
-    #define STRINGIFY(x) #x
-    #define PACKAGENAME_AS_STRING STRINGIFY_EXPAND(AIMAKE_OPTION_packagename)
+aimake configuration options; aimake will provide a function
+C<aimake_get_option> that lets you get the value of an option at runtime
+(allowing for OS conventions, such as roaming profiles on Windows, which may
+change filesystem location while remaining the same directory).
 
 Although aimake will identify which executables it should produce as output
 (via looking for functions called C<main>), it will not produce shared
@@ -665,6 +677,7 @@ files.)  Here's a sample configuration:
     {
         options => {
             packagename => 'example',
+            packageversion => '1.0.0',
         },
         features => {
             gui => {
@@ -686,18 +699,18 @@ files.)  Here's a sample configuration:
 
 The format of the configuration file is explained in much more detail later in
 this document, but this example should serve as an overview of some of the
-most common tasks: setting an option (in this case, C<packagename>, which is
-probably the most important option to set); defining a feature; telling aimake
-to search for a particular library so that it can be linked into the project
-(specifying the name of the library, and a symbol in that library); and
-changing the flags that will be passed to the C compiler.  (All the libraries
-used by a project can be listed as C<searchlib:> objects in a rule output,
-even if some are only used in some configurations or on some operating
-systems; aimake will not complain if it fails to find a library, or if it
-finds it but does not find a reason to use it.)  There are some libraries
-searched for by default (rule C<default_libraries> in the default
-configuration; additionally, any libraries used by default on the build system
-(such as F<libc.so> on Linux) will be automatically incuded.
+most common tasks: setting an option (in this case, C<packagename> and
+C<packageversion>, which are probably the most important options to set);
+defining a feature; telling aimake to search for a particular library so that
+it can be linked into the project (specifying the name of the library, and a
+symbol in that library); and changing the flags that will be passed to the C
+compiler.  (All the libraries used by a project can be listed as C<searchlib:>
+objects in a rule output, even if some are only used in some configurations or
+on some operating systems; aimake will not complain if it fails to find a
+library, or if it finds it but does not find a reason to use it.)  There are
+some libraries searched for by default (rule C<default_libraries> in the
+default configuration; additionally, any libraries used by default on the
+build system (such as F<libc.so> on Linux) will be automatically incuded.
 
 =head1 INTERNALS
 
@@ -1136,9 +1149,9 @@ multiple symbols are bundled into one library.
 
 An option in the config file.  This is mostly used in dependencies, to specify
 things like "this object file needs to be rebuilt if the CFLAGS change" (a
-build dependency), or "this source file has the install path substituted into
-it at compile time" (a use dependency).  The object is named using the option
-name after C<config_option:>, e.g.  C<config_option:CFLAGS>.  These
+build dependency), or "_aimake_get_option.c has the install path substituted
+into it at compile time" (a use dependency).  The object is named using the
+option name after C<config_option:>, e.g.  C<config_option:CFLAGS>.  These
 dependencies are added automatically when options are substituted into
 commands.
 
@@ -2428,19 +2441,18 @@ specify, so you should probably set this to the right value explicitly.)
 
 =item interactive
 
-0 for false or 1 for true (default).  If true, then aimake will
-attempt to tell the operating system that it's meaningful to run this
-application directly, without extra parameters, and the application
-will then attempt to interact with the user.  If you set this to
-false, this indicates that the application needs command-line
-arguments to function correctly, has no visible effect when run, or
-both; this will cause aimake to try to leave it out of the OS's menu
-system for running applications.
+0 for false or 1 for true (default).  If true, then aimake will attempt to
+tell the operating system that it's meaningful to run this application
+directly, without extra parameters, and the application will then attempt to
+interact with the user.  If you set this to false, this indicates that the
+application needs command-line arguments to function correctly, has no visible
+effect when run, or both; this will cause aimake to try to leave it out of the
+OS's menu system for running applications.
 
-There is currently no situation in which a non-C<interactive> program
-would benefit from a C<description>; aimake ignores the C<description>
-in this case.  You may wish to specify the combination anyway in case
-it ever becomes relevant in the future.
+There is currently no situation in which a non-C<interactive> program would
+benefit from a C<description>; aimake ignores the C<description> in this case.
+You may wish to specify the combination anyway in case it ever becomes
+relevant in the future.
 
 =back
 
@@ -2462,13 +2474,13 @@ instance, "games" is common under UNIX-like operating systems, meaning that
 the file should only be readable/writable by games, not by players directly;
 this can be used to protect the integrity of high score tables, for instance.
 
-If a user is installing for their own use (via `-i` into a directory they own,
-rather than a public one), aimake will not do any special permissions handling
-(i.e. C<install_permission> and C<install_elevation> will be ignored); that
-user will be able to do what they like with the installed files, other users
-will not be able to write those files (and may or may not be able to read or
-execute them depending on how that user has configured the permissions on the
-install directory).
+If a user is installing for their own use (via C<-i> into a directory they
+own, rather than a public one), aimake will not do any special permissions
+handling (i.e. C<install_permission> and C<install_elevation> will be
+ignored); that user will be able to do what they like with the installed
+files, other users will not be able to write those files (and may or may not
+be able to read or execute them depending on how that user has configured the
+permissions on the install directory).
 
 This option is currently unimplemented (and thus ignored) on Windows, even
 though it makes sense in that context.  Permissions are implemented as groups
@@ -9305,7 +9317,8 @@ EOF
                 'optstring:#ifdef_AIMAKE\\_BUILDOS\\_MSWin32 '.
                 '#_include_<shlobj.h> #endif #include_<string.h> '.
                 'static_struct_o_{ __const_char_*name; __const_char_*value; '.
-                '__int_csidl; __char_working[MAX\\_PATH]; }_options[]_=_{',
+                '__int_csidl; #ifdef_AIMAKE\\_BUILDOS\\_MSWin32 '.
+                '__char_working[MAX\\_PATH]; #endif }_options[]_=_{',
                 'optionset:all_aimake_options',
                 'optstring: __{0,_0,_-1} }; '.
                 'const_char_* aimake\\_get\\_option(const_char_*name) { '.
@@ -9313,8 +9326,8 @@ EOF
                 '____if_(!strcmp(x->name,_name))_{ '.
                 '#ifdef_AIMAKE\\_BUILDOS\\_MSWin32 ______if_(x->csidl_!=_-1)_{ '.
                 '________SHGetFolderPathA(0,_x->csidl,_0,_0,_x->working); '.
-                '________strncat(x->working, "\\\\\\\", MAX\\_PATH - 1); '.
-                '________strncat(x->working, x->value, MAX\\_PATH - 1); '.
+                '________strncat(x->working,_"\\\\\\\",_MAX\\_PATH_-_1); '.
+                '________strncat(x->working,_x->value,_MAX\\_PATH_-_1); '.
                 '________return_x->working; ______} #endif '.
                 '______return_x->value; ____} ____x++; __} __return_0; }'],
             output_from_optpath => '',

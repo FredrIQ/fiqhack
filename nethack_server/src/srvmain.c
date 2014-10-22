@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-07-07 */
+/* Last modified by Alex Smith, 2014-10-22 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -68,9 +68,7 @@ print_usage(const char *progname)
 {
     printf("Usage: %s [OPTIONS]\n", progname);
     printf("  -c <file name>   Config file to use insted of the default.\n");
-    printf("                     Default: \"" DEFAULT_CONFIG_FILE "\"\n");
-    printf("  -l <file name>   Alternate log file name. Default: \""
-           DEFAULT_LOG_FILE "\"\n");
+    printf("  -l <file name>   Alternate log file name.\n");
     printf("  -t <seconds>     Client timeout in seconds. Default: %d.\n",
            DEFAULT_CLIENT_TIMEOUT);
     printf("  -w <directory>   Working directory which will store user\n");
