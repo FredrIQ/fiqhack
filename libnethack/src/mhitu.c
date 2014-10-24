@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Sean Hunt, 2014-10-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1211,10 +1211,13 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                     !Amphibious) {
                     pline("%s drowns you...", Monnam(mtmp));
                     done(DROWNING,
-                         msgprintf("%s by %s", Is_waterlevel(&u.uz)
-                                      ? "the Plane of Water"
-                                      : a_waterbody(mtmp->mx, mtmp->my),
-                                   an(mtmp->data->mname)));
+                         killer_msg(DROWNING,
+                                    msgprintf("%s by %s",
+                                              Is_waterlevel(&u.uz)
+                                                  ? "the Plane of Water"
+                                                  : a_waterbody(mtmp->mx,
+                                                                mtmp->my),
+                                              an(mtmp->data->mname))));
                 } else if (mattk->aatyp == AT_HUGS)
                     pline("You are being crushed.");
             } else {
