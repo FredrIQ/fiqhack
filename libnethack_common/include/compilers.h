@@ -99,3 +99,15 @@
 #   define FLAG_ENUM
 #  endif
 # endif
+
+/* MemorySanitizer stuff */
+#ifdef __clang__
+# if __has_feature(memory_sanitizer)
+#  include <sanitizer/msan_interface.h>
+#  define MARK_INITIALIZED(mem, size) __msan_unpoison(mem, size)
+# else
+#  define MARK_INITIALIZED(mem, size)
+# endif
+#else
+# define MARK_INITIALIZED(mem, size)
+#endif
