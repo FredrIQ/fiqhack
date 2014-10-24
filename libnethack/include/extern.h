@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-18 */
+/* Last modified by Sean Hunt, 2014-10-24 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -536,7 +536,8 @@ extern long calc_score(int, boolean, long);
 /* ### engrave.c ### */
 
 extern const char *random_engraving(void);
-extern const char *wipeout_text(const char *, int, unsigned);
+extern void wipeout_text(char *, int, unsigned);
+extern const char *eroded_text(const char *, int, unsigned);
 extern boolean can_reach_floor(void);
 extern const char *surface(int, int);
 extern const char *ceiling(int, int);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-10 */
+/* Last modified by Sean Hunt, 2014-10-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -40,7 +40,7 @@ random_engraving(void)
     if (!rn2(4) || !(rumor = getrumor(0, TRUE, NULL)) || !*rumor)
         rumor = random_mesg[rn2(SIZE(random_mesg))];
 
-    return wipeout_text(rumor, (int)(strlen(rumor) / 4), 0);
+    return eroded_text(rumor, (int)(strlen(rumor) / 4), 0);
 }
 
 /* Partial rubouts for engraving characters. -3. */
@@ -94,14 +94,11 @@ static const struct {
     '8', "3o"}
 };
 
-const char *
-wipeout_text(const char *engr, int cnt, unsigned seed)
+void
+wipeout_text(char *engr, int cnt, unsigned seed)
 {       /* for semi-controlled randomization */
-    char mutable_engr[strlen(engr) + 1];
     char *s;
     int i, j, nxt, use_rubout, lth = (int)strlen(engr);
-
-    strcpy(mutable_engr, engr);
 
     if (lth && cnt > 0) {
         while (cnt--) {
@@ -119,7 +116,7 @@ wipeout_text(const char *engr, int cnt, unsigned seed)
                 seed %= 255; /* previously BUFSZ-1 */
                 use_rubout = seed & 3;
             }
-            s = &mutable_engr[nxt];
+            s = &engr[nxt];
             if (*s == ' ')
                 continue;
 
@@ -155,10 +152,19 @@ wipeout_text(const char *engr, int cnt, unsigned seed)
     }
 
     /* trim trailing spaces */
-    while (lth && mutable_engr[lth - 1] == ' ')
-        mutable_engr[--lth] = 0;
+    while (lth && engr[lth - 1] == ' ')
+        engr[--lth] = 0;
+}
 
-    return msg_from_string(mutable_engr);
+const char *
+eroded_text(const char *engr, int cnt, unsigned seed) {
+    int len = strlen(engr);
+
+    char buf[len + 1];
+    strcpy(buf, engr);
+    wipeout_text(buf, cnt, seed);
+
+    return msg_from_string(buf);
 }
 
 boolean
