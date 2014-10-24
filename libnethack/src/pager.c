@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Sean Hunt, 2014-10-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -207,10 +207,12 @@ describe_object(int x, int y, int votyp, char *buf, int known_embed)
     otmp = vobj_at(x, y);
 
     if (!otmp || otmp->otyp != votyp) {
+        /* We have a mimic. */
         if (votyp == STRANGE_OBJECT) {
             strcpy(buf, "strange object");
         } else {
             otmp = mktemp_sobj(level, votyp);
+            otmp->corpsenm = PM_TENGU;
             /* (basic object only, no random features) */
             if (otmp->oclass == COIN_CLASS)
                 otmp->quan = 1L;        /* to force pluralization off */
