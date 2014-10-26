@@ -435,6 +435,19 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
             object => qr=^bpath:.*libnethack[^/]*\Q$dllext\E$=s,
             install_dir => 'specificlibdir',
         },
+        _install_prebuilt_libraries => {
+            object => qr=^path:prebuilt/(?!sdl).*\Q$dllext\E=si,
+            install_dir => 'libdir',
+        },
+        _install_prebuilt_sdl_library => {
+            object => qr=^path:prebuilt/sdl.*\Q$dllext\E=si,
+            install_dir => 'libdir',
+            install_feature => 'gui',
+        },
+        _install_prebuilt_documentation => {
+            object => qr=^path:prebuilt/.*\.txt=s,
+            install_dir => 'docdir',
+        },
         _install_uncursed_plugins => {
             object => qr=^bpath:libuncursed/src/plugins/.*\Q$dllext\E$=s,
             install_dir => 'specificlibdir',
