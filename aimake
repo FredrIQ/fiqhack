@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2014-10-22
+# Last modified by Alex Smith, 2014-10-26
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
@@ -308,7 +308,7 @@ directory (otherwise, it's not quite clear what it would mean).
 =item B<--natural-permissions>
 
 Do not attempt to change or set the permissions of any file.  By default,
-eaimake will try to change permissions if installing with administrator
+aimake will try to change permissions if installing with administrator
 rights.
 
 =item B<--filelist=>I<format>
@@ -335,7 +335,8 @@ similar to that used by F<ls -l> on a UNIX system.
 Generates the files as a list of directories, files, and components in the
 format accepted by the Windows installer compiler WiX.  The list will be
 placed in the directory given as an argument to B<--destdir>, with the
-filename F<filelist.wxi>.
+filename F<filelist.wxi>.  aimake will also output a WiX feature for each
+aimake featuer used.
 
 =back
 
@@ -399,6 +400,10 @@ It is possible to specify a subset of the statefile to dump as a
 comma-separated sequence of keys (e.g. 'xuse_by_object,config_option:libdir').
 On large projects, this is considerably faster than dumping the entire
 statefile if you are only interested in a small portion of it.
+
+This option is currently not particularly useful, because the statefile is
+stored in a compressed format in memory in order to save memory, and this
+option does not currently decompress it.  This may change in the future.
 
 =item B<--config-only>
 
@@ -574,6 +579,16 @@ build because none of the files that depend on each other can be generated in
 the first place, making it impossible to determine what files they'd
 generate.)
 
+=item *
+
+Installing a program inherently requires doing system-specific things.  Most
+build systems work at the level of commands to run; this normally works for
+the build, but at install time, you need a separate set of commands for every
+operating system on which you wish to run.  aimake's install system is capable
+of abstracting away these differences, to a large extent; for instance,
+associating an icon with an executable is done in a radically different manner
+on windows and on Linux, but aimake can paper over the differences.
+
 =back
 
 Many other build tools are available that try to fix one or more of these
@@ -586,6 +601,8 @@ aimake is designed to be as easy as possible to use with new projects, and as
 such it often works with unmodified source and no project-specific
 configuration file.  However, there are some steps you can take to get the
 best possible result.
+
+=head2 SOURCE FILES
 
 First, make sure that the directory layout of your source tree reflects the
 dependencies between files; this helps to resolve ambiguities.  It mostly
@@ -611,6 +628,8 @@ aimake configuration options; aimake will provide a function
 C<aimake_get_option> that lets you get the value of an option at runtime
 (allowing for OS conventions, such as roaming profiles on Windows, which may
 change filesystem location while remaining the same directory).
+
+=head2 SHARED LIBRARIES
 
 Although aimake will identify which executables it should produce as output
 (via looking for functions called C<main>), it will not produce shared
@@ -699,6 +718,97 @@ use the file; as such, you should ensure that the error happens based only on
 the individual file being compiled, and does not depend on anything that might
 be included from a header file.)
 
+=head2 DOCUMENTATION
+
+Different platforms have different conventions for documentation; on Linux,
+for instance, you would want your programs to be added to the manual called by
+F<man>, and on Windows, it's more common to have separate HTML files.
+aimake's documentation system is inspired by Linux's, but uses a friendlier
+source format (Plain Old Documentation) rather than forcing you to write plain
+*roff, and will convert the manual pages to an appropriate format on systems
+which do not have manual page readers installed by default.  You can just save
+the F<.pod> file anywhere in your source tree, and aimake will handle it
+appropriately (in terms of install location, etc.).
+
+See L<perlpod> for information about the Plain Old Documentation format.  For
+use in aimake, you need to add two extra lines to your POD file (failing to
+add these is an error):
+
+=over 4
+
+=item =for aimake manualsection I<section>
+
+Specifies the purpose of this manual page.  The sections are as follows:
+
+=over 4
+
+=item 1
+
+Commands and executables designed to be run by normal users.  You would use
+this in almost every aimake project, to document the executables you install
+(although some projects might use sections 6 or 8 instead).
+
+=item 2
+
+System calls (to an operating system kernel).  You will probably never need to
+use this, because aimake is an inappropriate tool for adding new system calls
+to an operating system.  But it's included for completeness.
+
+=item 3
+
+Library functions.  If you install any libraries, you can use this section to
+document your libraries' APIs.  Note that it is traditional to append some
+letters to the end of the 3 for languages other than C; for example, perl
+modules tend to be in section C<3pm>, and TCL functions in C<3tcl>.  Usual
+practice is to have one manual page for each group of closely related
+functions; in languages with packages or namespaces, documenting one package
+or namespace per page would make sense, but you will need to come up with your
+own division for less disciplined languages like C.
+
+=item 4
+
+Device drivers and device-like kernel interfaces.  On Linux, the manual page
+is traditionally named after the file used to communicate with the driver;
+however, not all operating systems work like this.  If you use this section,
+you're probably doing something highly system-specific anyway, so you can pick
+appropriate conventions depending on your operating system.
+
+=item 5
+
+File formats.  If your program has a custom format for its configuration or
+its source or output files, this is where you document it.
+
+=item 6
+
+Games, and similar frivolous programs.  This works the same way as section 1.
+
+=item 7
+
+Miscellaneous information.  In practice, this is mostly used to document
+standards, or to give overviews of wide subject areas.
+
+=item 8
+
+System administration programs.  This also works the same way as section 1.
+In general, a manual page goes in section 8 if it describes a program that
+would be mostly or only useful to administrators.
+
+=back
+
+=item =for aimake manualname I<name>
+
+Specifies the name of the manual page.  In sections 1, 6, and 8, this is the
+name of the program that the manual page is associated with.  In other
+sections, choose a suitable name that describes the situation.  Except when
+other considerations exist (e.g. when documenting a function containing
+uppercase letters in a case-sensitive language), favour short names (one or
+two words at most), lowercase letters, and (if you have to use multiple words)
+separating words with underscores.
+
+=back
+
+=head2 CUSTOMIZING AIMAKE
+
 In addition to changing the source and headers that make up your project, it
 is also possible to add a project-specific configuration file, that contains
 configuration options or rules overrides.  This should be a file named
@@ -743,8 +853,8 @@ objects in a rule output, even if some are only used in some configurations or
 on some operating systems; aimake will not complain if it fails to find a
 library, or if it finds it but does not find a reason to use it.)  There are
 some libraries searched for by default (rule C<default_libraries> in the
-default configuration; additionally, any libraries used by default on the
-build system (such as F<libc.so> on Linux) will be automatically incuded.
+default configuration); additionally, any libraries used by default on the
+build system (such as F<libc.so> on Linux) will be automatically included.
 
 =head1 INTERNALS
 
@@ -758,8 +868,9 @@ some of its source files).  Almost the entire build process is written in
 terms of rules; for instance, there is a rule to determine which files need
 compiling.  (The main activities that occur without being driven by rules is
 to change the "hash" of C<sys:always_rebuild>, to parse the configuration file
-into a set of objects, and to verify that the build directory has not been
-tampered with (or recover if it has); that's about it.)
+into a set of objects, to verify that the build directory has not been
+tampered with (or recover if it has), and to handle side-effects of the
+install process; that's about it.)
 
 Each rule has three parts.  First are the conditions under which the rule
 runs; in order for a rule to run, all its dependencies must be in place, and
@@ -898,6 +1009,7 @@ C<'none'>.  However, this process is complex, and most importantly, requires
 all the rules that can provide an object to be modified every time a rule that
 wants to specify dependencies of that object is added.
 
+using the actual root directory.  (For instance, giving B<-i> F</usr>
 As such, aimake provides sugar for this very common situation; using
 C<depends> allows the rule to specify use dependencies of its object, using
 the mechanism explained above.  This works identically to C<outdepends>,
@@ -918,7 +1030,9 @@ run in a separate aimake process (for permissions-related reasons).  Thus, a
 rule that installs a file cannot do anything else.  Install rules have a
 C<install_dir> field that specifies the directory in which their C<object>
 should be installed; their C<command> should not have side effects (although
-aimake cannot check this), and is typically omitted.
+aimake cannot check this), and is typically omitted (although occasionally, a
+program will do a conditional install via giving one or more objects that need
+to have been built, along with C<intcmd:nop>).
 
 =back
 
@@ -1022,10 +1136,11 @@ a generated header file that is included almost everywhere) having an error.
 There's one other source of errors: dependency problems.  aimake's core
 doesn't notice a problem if something can't be built due to a missing
 dependency (it simply assumes it built correctly with no output), but the user
-probably considers this situation a bug.  As such, an internal list is kept of
-pairs that aren't producing any output; and that list is scanned for pairs
-that didn't produce output due to missing expanded use dependencies that
-weren't in the command, to let the user know what went wrong.
+probably considers this situation a bug in their program that they would want
+aimake to tell them about.  As such, an internal list is kept of pairs that
+aren't producing any output; and that list is scanned for pairs that didn't
+produce output due to missing expanded use dependencies that weren't in the
+command, to let the user know what went wrong.
 
 =head2 AIMAKE OBJECTS
 
@@ -1724,8 +1839,7 @@ C<features> and C<rules>.  Here's a simple example F<aimake.rules>:
 The options dictionary is very simple: keys of the dictionary are options, and
 the corresponding values their values.  The following options are recognised
 (unrecognised options are also legal, but will be ignored except for
-C<config_option:> dependencies, which e.g. are used to define the
-C<AIMAKE_OPTION_> macros):
+C<config_option:> dependencies):
 
 =over 4
 
@@ -2508,8 +2622,8 @@ specify, so you should probably set this to the right value explicitly.)
 
 0 for false or 1 for true (default).  If true, then aimake will attempt to
 tell the operating system that it's meaningful to run this application
-directly, without extra parameters, and the application will then attempt to
-interact with the user.  If you set this to false, this indicates that the
+directly, without extra parameters, and that the application will then attempt
+to interact with the user.  If you set this to false, this indicates that the
 application needs command-line arguments to function correctly, has no visible
 effect when run, or both; this will cause aimake to try to leave it out of the
 OS's menu system for running applications.
@@ -4191,7 +4305,7 @@ sub aipath2ospath {
         $aipath =~ s=^bpath:=$bpath/=;
 
         $aipath =~ s=^standardlib:=spath:=;
-        
+
         # Replace any spath substitutions with the actual path.
         while (my ($expanded, $short) = each %spath_substitutions) {
             if ($aipath eq $short || $aipath =~ /^\Q$short\E\//) {
@@ -4351,7 +4465,7 @@ sub calculate_installation_path {
     # Except on Windows, where it'd be more confusing than useful.
     if ($install_dir eq 'mandir' && $os_parsed ne 'MSWin32') {
         $install_name =~ qr=\.([1-9][a-z]*)(?:\.[^./])?$=s
-            and $install_dir .= "/man$1";
+            and $instpath .= "/man$1";
     }
 
     my $aipath = "$instpath/$install_name";
@@ -4378,6 +4492,7 @@ sub calculate_installation_path {
 
     ensure_directory $outpath, 1, 1;
 
+    $opt_filelist ||= '';
     if ($opt_filelist eq 'basic') {
         $filelist_body = defined_or($filelist_body, '');
         $filelist_body .= (aipath2ospath $aipath) . "\n";
@@ -4544,6 +4659,7 @@ my %wixfolders = (
     # TODO: Get hold of the full list of correspondences
 );
 sub write_filelist {
+    $opt_filelist ||= '';
     if ($opt_filelist eq 'basic' || $opt_filelist eq 'listing') {
         $filelist_body = defined_or($filelist_body, '');
         my $aifilelist = destdir_transform "spath:filelist.txt";
@@ -4635,7 +4751,7 @@ sub write_filelist {
         write_feature "", 0, $fh;
 
         print $fh "</Include>\n";
-        close $fh or return $!;        
+        close $fh or return $!;
     }
     return;
 }
@@ -4852,7 +4968,7 @@ sub run_command {
                 $ext = ".html";
             } else {
                 require Pod::Man;
-                $formatter = Pod::Simple::Man->(
+                $formatter = Pod::Man->new(
                     errors => 'die',
                     center => (defined_or($config->{options}{packagename_text},
                                           $config->{options}{packagename}) .
@@ -5626,7 +5742,7 @@ sub calculate_permissions {
             progress_report -1,
                 "Cannot set nonexistent permission '$permission'";
         } else {
-            $group and 
+            $group and
                 progress_report -1,
                     "Cannot set distinct, nonempty permission and elevation";
             $group = $gid;
@@ -5644,7 +5760,7 @@ sub set_permissions
     my $aipath = shift;
     my $readable = shift;
     my $in_statedir = shift;
-    
+
     my $ospath = aipath2ospath $aipath;
 
     $> == 0 or return 1; # if we're not elevated, don't bother changing perms
@@ -8275,22 +8391,22 @@ MAINLOOP: while (1) {
                  $a->{install_readable});
 
             @known_output_locations = ($output_location);
-            
+
             my ($objtype, undef) = parse_objname $objname;
             my $fon = friendly_objname $output_location;
-            
+
             my $executable_installed_to = undef;
-            
+
             if ($objtype ne 'sys') {
                 my $ospathfrom = aipath2ospath $objname;
                 my $ospathto = aipath2ospath $output_location;
-                
+
                 # Delete the target file/link before installing over it, so
                 # that we can replace executables on UNIXy systems, and so
                 # that we don't end up following symlinks and making a mess.
                 -e $ospathto and (unlink $ospathto or die
                                   "Could not unlink '$ospathto': $!");
-                
+
                 if (-l $ospathfrom) {
                     # To install a symlink, we need to create a new symlink
                     # with the same target.
@@ -8305,7 +8421,7 @@ MAINLOOP: while (1) {
                     # also be executable. The target of the new symlink might
                     # not be in place yet, so we check the target of the old
                     # symlink.
-                    
+
                     -x (final_symlink_target $ospathfrom) and
                         $executable_installed_to = $ospathto;
                 } else {
@@ -8315,13 +8431,13 @@ MAINLOOP: while (1) {
                         or die "Could not open '$ospathto' for write: $!";
                     print $fhto $_ for <$fhfrom>;
                     close $fhfrom; close $fhto;
-                    
+
                     # If we're installing an executable, the target should
                     # also be executable.
                     -x $ospathfrom and chmod 0755, $ospathto and
                         $executable_installed_to = $ospathto;
                 }
-                
+
             } elsif ($objname eq 'sys:touch_only') {
                 # nothing to do; we already created the directory
             } elsif ($objname eq 'sys:create_subdir') {
