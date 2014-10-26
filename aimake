@@ -60,7 +60,7 @@ Install the program into the specified directory, as well as building it.
 =item B<-S> F<program>
 
 When installing, use the specified program (normally F<su> or F<sudo>) to
-gain root permissions.
+gain administrator permissions.
 
 =item B<--with=>I<feature>
 
@@ -286,6 +286,40 @@ F</usr>.)  This is intended for use in packaging programs, and when installing
 into a chroot from outside the chroot.  This option may only be given if the
 install directory is outside the source directory and outside the build
 directory (otherwise, it's not quite clear what it would mean).
+
+=item B<--natural-permissions>
+
+Do not attempt to change or set the permissions of any file.  By default,
+eaimake will try to change permissions if installing with administrator
+rights.
+
+=item B<--filelist=>I<format>
+
+This option can only be used when B<--destdir> is set.  It generates a list of
+files being installed in the specified format, designed for use as input to an
+installer program:
+
+=over 4
+
+=item basic
+
+Generates a list of filenames and directory names of the installed files and
+directories.  This is as seen by the installed program (i.e. the B<--destdir>
+will be omitted).  The filename will be F<filelist.txt>.
+
+=item listing
+
+Like C<basic>, but precedes each filename with its permissions, in a form
+similar to that used by F<ls -l> on a UNIX system.
+
+=item wix
+
+Generates the files as a list of directories, files, and components in the
+format accepted by the Windows installer compiler WiX.  The list will be
+placed in the directory given as an argument to B<--destdir>, with the
+filename F<filelist.wxi>.
+
+=back
 
 =item B<--with=>I<feature>
 
@@ -1203,7 +1237,8 @@ treat it as internal use only.
 
 An object that conceptually represents a file that is deleted immediately
 after being installed.  It can be installed in a directory to force the
-directory to be created at install time.
+directory to be created at install time.  Changing its permissions changes the
+permissions of the directory.
 
 =item C<sys:create_subdir>
 
@@ -1380,6 +1415,22 @@ be escaped suitably for C<intcmd:writefile> (i.e. replacing underscore with
 backslash-underscore, space with underscore, newline with space).
 
 =back
+
+=item C<intcmd:podformat>
+
+An internal command that formats documentation.  Its only argument is an
+C<optpath:>, which represents a file in Plain Old Documentation format (see
+L<perlpod> for details).  This file will be translated into an appropriate
+format for your operating system: a F<man> page on UNIX-like systems, and HTML
+on Windows.  The output filename will depend on details of the input, so it
+will be output on standard output, so that you know where the output was
+placed.
+
+The input should contain two lines to indicate to aimake where to put the
+file: "=for aimake manualsection I<section>" to specify which manual section
+it goes into, and "=for aimake manualname I<name>" to specify what the manual
+is talking about.  (As usual for POD, they should have a blank line before and
+afterwards.)
 
 =item C<intcmd:filetest>
 
@@ -1702,13 +1753,14 @@ indicate that the directory is being used as a build directory.)
 
 =back
 
-Features are dictionaries with three keys:
+Features are dictionaries with the following keys:
 
 =over 4
 
 =item description
 
-A description to show in the B<--with=?> help output.
+A description to show in the B<--with=?> help output, and similar places where
+a user-readable description of what the feature does is needed.
 
 =item object
 
@@ -1725,6 +1777,11 @@ only to match C<path:> objects.)
 
 Set this to 0 for the feature to be off by default, or 1 for the feature to be
 on by default.
+
+=item depends
+
+The name of another feature.  This feature will not be built or installed if a
+feature it depends on is not built or installed.
 
 =back
 
@@ -2257,11 +2314,19 @@ used by the program.
 
 =item mandir
 
-A directory used for documentation in UNIX manual format.
+A directory used for documentation in UNIX manual format.  These directories
+are often divided into sections, in which case aimake will automatically
+place installed files into the correct section.
 
 =item infodir
 
 A directory used for documentation in GNU Info format.
+
+=item shortcutdir
+
+A directory that contains descriptions of executables and is typically used to
+show a menu to run them (e.g. the Start menu on Windows, or
+F</usr/share/applications> on Linux).
 
 =item statedir
 
@@ -2470,13 +2535,14 @@ will not be able to write those files (and may or may not be able to read or
 execute them depending on how that user has configured the permissions on the
 install directory).
 
-This option is currently unimplemented (and thus ignored) on Windows, even
-though it makes sense in that context.  Permissions are implemented as groups
-on UNIX-like operating systems (apart from "ADMINISTRATOR", which is
-implemented using the user with a UID of 0, and "ANYONE", which does not need
-a user/group to correspond to), and thus only exist where a group with the
-same name exists.  You may need to create the group separately before running
-aimake.
+Permissions are implemented as groups on UNIX-like operating systems (apart
+from "ADMINISTRATOR", which is implemented using the user with a UID of 0, and
+"ANYONE", which does not need a user/group to correspond to), and thus only
+exist where a group with the same name exists.  You may need to create the
+group separately before running aimake.  On Windows, permissions cannot be
+granted by aimake's install process; however, they will be reported in file
+lists, for the use of other installers (although any values other than
+"ADMINISTRATOR" will be considered as synonyms for "ANYONE").
 
 If the permission in question does not exist, aimake will print a warning and
 substitute the default setting (anyone can read/execute, but only
@@ -2497,20 +2563,26 @@ I<Available for: install actions>
 
 A value that causes aimake to attempt to grant permissions to the executables
 it installs.  (Granting permissions to a non-executable is meaningless, and
-thus ignored.)  The values are the same as for C<install_permission>; an
-executable with a given C<install_elevation> can read, write, and execute
-files with a matching C<install_permission>.  Thus, if you want to protect a
-file so that it can only be read/written by means of the executables you
-install, give the executables an C<install_elevation> matching the
-C<install_permission> of the file.  (Operating-system-specific techniques may
-be needed to cause the permission to exist in the first place.)
-
-For technical reasons, C<install_permission> and C<install_elevation> cannot
-both be given for the same file.
+thus ignored.)  The values (and system-specific caveats) are the same as for
+C<install_permission>; an executable with a given C<install_elevation> can
+read, write, and execute files with a matching C<install_permission>.  Thus,
+if you want to protect a file so that it can only be read/written by means of
+the executables you install, give the executables an C<install_elevation>
+matching the C<install_permission> of the file.  (Operating-system-specific
+techniques may be needed to cause the permission to exist in the first place.)
 
 Although C<aimake> supports an C<install_elevation> value of "ADMINISTRATOR",
 we strongly recommend that you do not do this, because it nearly always leads
 to security problems unless the elevated executables are very well written.
+
+=item install_feature
+
+I<Available for: install actions>
+
+Features (see C<--with>/C<--without>) have a compile-time effect, preventing
+files being built.  However, they can also have an effect on what is
+installed.  If the C<install_feature> field of an install rule is set, that
+rule will not run unless the matching feature is requested.
 
 =item inner
 
@@ -3477,7 +3549,7 @@ my ($opt_verbose, $opt_install, $opt_prefix, $opt_dump, @opt_warnings,
     $opt_install_only, $opt_elevate_permissions, $opt_specific_exit_status,
     @opt_with, @opt_without, @opt_with_default, $opt_nonempty_directory,
     %opt_directory_overrides, $opt_nocr, @opt_rebuild, $opt_documentation,
-    $opt_license, @opt_local_config); # options
+    $opt_license, $opt_filelist, $opt_noperms, @opt_local_config); # options
 my ($codeset, $text_layers, $binary_layers,
     $utf8_layers, $ascii_layers); # encodings
 my ($path, $bpath, $ipath, $singledir, $cwd); # important paths
@@ -3487,6 +3559,9 @@ my ($state, $state_fh, $config);  # state and configuration handling
 my $errorexit = 1;                # for --specific-exit-status
 our $os_parsed = $^O;
 $os_parsed eq 'msys' and $os_parsed = "MSWin32";
+
+# a UUID generated for the purpose of avoiding clashes with other things
+our $longrandomstring = 'AIMAKE_e15d5ce8_c8f0_40c9_9a3f_3b568bcd59d5_';
 
 ####### Subroutines
 
@@ -4103,6 +4178,8 @@ sub aipath2ospath {
         $path and $aipath =~ s=^path:=$path/=;
         $aipath =~ s=^bpath:=$bpath/=;
 
+        $aipath =~ s=^standardlib:=spath:=;
+        
         # Replace any spath substitutions with the actual path.
         while (my ($expanded, $short) = each %spath_substitutions) {
             if ($aipath eq $short || $aipath =~ /^\Q$short\E\//) {
@@ -4148,6 +4225,10 @@ sub cleanup_aipath {
     return ospath2aipath(aipath2ospath($_[0]));
 }
 
+# Given an aimake path as seen from the point of view of the program being
+# built, returns an aimake path as seen from the point of view of the
+# filesystem being installed onto. (The two are normally identical, but the
+# user can specifically override this with options like --destdir.)
 sub destdir_transform {
     my $aipath = shift;
     if ($opt_prefix) {
@@ -4179,7 +4260,6 @@ sub destdir_transform {
     }
     return $aipath;
 }
-
 
 ### I/O
 
@@ -4236,6 +4316,316 @@ sub ensure_directory {
     }
     progress_report 1, "Created directory '$fon'.";
     return 1;
+}
+
+# Given a directory option name and a filename, carries out all side effects
+# that would be necessary when installing that file into that directory (e.g.
+# creating the directory and adding the file to the file list), then returns
+# the directory that the file must actually be installed into. In array
+# context, also returns the directory the installed program thinks it was
+# installed into.
+my %filelist_directories;
+my $filelist_body;
+my %filelist_features;
+my %filelist_feature_parents;
+sub calculate_permissions;
+sub calculate_installation_path {
+    my $install_dir = shift;
+    my $install_name = shift;
+    my $instpath = $config->{options}{$install_dir};
+    my $executable = $install_dir =~ /bindir$|libdir$/;
+
+    # For installations of manual pages in mandir, we add a section.
+    # Except on Windows, where it'd be more confusing than useful.
+    if ($install_dir eq 'mandir' && $os_parsed ne 'MSWin32') {
+        $install_name =~ qr=\.([1-9][a-z]*)(?:\.[^./])?$=s
+            and $install_dir .= "/man$1";
+    }
+
+    my $aipath = "$instpath/$install_name";
+    my $outpath = destdir_transform $aipath;
+
+    $instpath or die
+        "Unrecognised installation directory '$install_dir'";
+
+    if ($install_name eq 'sys:touch_only') {
+        ensure_directory $instpath, 0, 1;
+        $aipath = $instpath;
+        $outpath = destdir_transform $instpath;
+        $executable = 2;
+    }
+
+    my $feature = shift;
+
+    my $permission = shift;
+    my $elevation = shift;
+    my $readable = shift;
+    my ($octal, undef, undef) = calculate_permissions
+        $permission, $elevation, $readable, $executable,
+        scalar ($install_dir =~ /(?:state|lock|log)dir$/);
+
+    ensure_directory $outpath, 1, 1;
+
+    if ($opt_filelist eq 'basic') {
+        $filelist_body = defined_or($filelist_body, '');
+        $filelist_body .= (aipath2ospath $aipath) . "\n";
+    } elsif ($opt_filelist eq 'listing') {
+        $filelist_body = defined_or($filelist_body, '');
+        $filelist_body .= ($octal & 0400) ? 'r' : '-';
+        $filelist_body .= ($octal & 0200) ? 'w' : '-';
+        $filelist_body .= ($octal & 04000) ? 's' : ($octal & 0100) ? 'x' : '-';
+        $filelist_body .= ($octal & 0040) ? 'r' : '-';
+        $filelist_body .= ($octal & 0020) ? 'w' : '-';
+        $filelist_body .= ($octal & 02000) ? 's' : ($octal & 0010) ? 'x' : '-';
+        $filelist_body .= ($octal & 0004) ? 'r' : '-';
+        $filelist_body .= ($octal & 0002) ? 'w' : '-';
+        $filelist_body .= ($octal & 0001) ? 'x' : '-';
+        $filelist_body .= ' ' . (aipath2ospath $aipath) . "\n";
+    } elsif ($opt_filelist eq 'wix') {
+        # We use one component per file. Generate an ID for the component.
+        my $id = "x" . md5_hex($aipath);
+        my $ospath = aipath2ospath $outpath;
+        # TODO: This fails when installing into subdirectories.
+        my $dirref = "x" . md5_hex($instpath);
+        my $bitness = "";
+
+        # Binaries and libraries need their bitwidths marked.
+        if (($executable || 0) == 1) {
+            $bitness = ' Win64="' .
+                ($Config{ptrsize} == 8 ? "yes" : "no") . '"';
+        }
+
+        my $adminread  = ($octal & 0400) ? 'yes' : 'no';
+        my $adminwrite = ($octal & 0200) ? 'yes' : 'no';
+        my $adminexec  = ($octal & 0100) ? 'yes' : 'no';
+        my $otherread  = ($octal & 0004) ? 'yes' : 'no';
+        my $otherwrite = ($octal & 0002) ? 'yes' : 'no';
+        my $otherexec  = ($octal & 0001) ? 'yes' : 'no';
+
+        # WiX can't create a GUID for a folder. Yet, we need a stable value,
+        # because otherwise things will go wrong on upgrade. Our solution is
+        # to use the MD5 of the path as a GUID; WiX apparently used to do
+        # something similar.  We use our own GUIDs no matter what, so that
+        # we have consistency if WiX ever changes its ideas on GUIDs (which
+        # has happened once in the past).
+        my $pname = $config->{options}{packagename};
+        my $guid = uc md5_hex "aimake $longrandomstring $pname $aipath";
+        # GUID pattern is 8-4-4-4-12
+        substr $guid, 20, 0, "-";
+        substr $guid, 16, 0, "-";
+        substr $guid, 12, 0, "-";
+        substr $guid, 8, 0, "-";
+
+        if ($opt_noperms) {
+            if (($executable || 0) == 2) {
+                $filelist_body .= qq[
+    <DirectoryRef Id="\$(var.$dirref)">
+        <Component Id="$id" Guid="{$guid}">
+            <CreateFolder />
+            <RemoveFolder Id="\$(var.$dirref)" On="uninstall" />
+        </Component>
+    </DirectoryRef>
+];
+            } else {
+                $filelist_body .= qq[
+    <DirectoryRef Id="\$(var.$dirref)">
+        <Component Id="$id" Guid="{$guid}"$bitness>
+            <File Id="$id" Source="$ospath" KeyPath="yes" />
+        </Component>
+    </DirectoryRef>
+];
+            }
+        } elsif (($executable || 0) == 2) {
+            $filelist_body .= qq[
+    <DirectoryRef Id="\$(var.$dirref)">
+        <Component Id="$id" Guid="{$guid}">
+            <CreateFolder>
+                 <Permission User="Administrators" Read="$adminread"
+                             CreateFile="$adminwrite" Delete="$adminwrite"
+                             CreateChild="$adminwrite" DeleteChild="$adminwrite"
+                             Traverse="$adminexec" />
+                 <Permission User="Everyone" Read="$otherread"
+                             CreateFile="$otherwrite" Delete="$otherwrite"
+                             CreateChild="$otherwrite" DeleteChild="$otherwrite"
+                             Traverse="$otherexec" />
+            </CreateFolder>
+            <RemoveFolder Id="\$(var.$dirref)" On="uninstall" />
+        </Component>
+    </DirectoryRef>
+];
+        } else {
+            $filelist_body .= qq[
+    <DirectoryRef Id="\$(var.$dirref)">
+        <Component Id="$id" Guid="{$guid}"$bitness>
+            <File Id="$id" Source="$ospath" KeyPath="yes">
+                 <Permission User="Administrators" Read="$adminread"
+                             Write="$adminwrite" Execute="$adminexec" />
+                 <Permission User="Everyone" Read="$otherread"
+                             Write="$otherwrite" Execute="$otherexec" />
+            </File>
+        </Component>
+    </DirectoryRef>
+];
+        }
+
+        # Create an entry for the feature.
+        my ($feature_id, $fdesc, $fparent);
+        if ($feature) {
+            $feature_id = "x" . md5_hex($feature);
+            $config->{features}{$feature} or die
+                "Unknown feature name '$feature'";
+            $fdesc = $config->{features}{$feature}{description};
+            $fparent = defined_or($config->{features}{$feature}{depends},
+                                  '');
+            $filelist_feature_parents{$feature} = $fparent;
+            $filelist_features{$feature} = defined_or(
+                $filelist_features{$feature},
+                qq[
+    <Feature Title="$fdesc" Id="$feature_id" Level="1" AllowAdvertise="no">
+]);
+        } else {
+            $feature_id = "main";
+            $fdesc = defined_or($config->{options}{packagename_text},
+                                $config->{options}{packagename});
+            $feature = '';
+            $filelist_features{$feature} = defined_or(
+                $filelist_features{$feature},
+                qq[
+    <Feature Title="$fdesc" Id="$feature_id" Level="1" Absent="disallow"
+             AllowAdvertise="no">
+]);
+        }
+        $filelist_features{$feature} .=
+            qq[        <ComponentRef Id="$id" />\n];
+
+        # Record the fact that this directory needs to be added to the
+        # directories list.
+        $filelist_directories{$instpath} =
+            defined_or($filelist_directories{$instpath}, {});
+        $filelist_directories{$instpath}{$install_dir} = 1
+            unless $install_dir eq 'mandir';
+        # All its parents need to be present, too, going back to the
+        # root.
+        my @pi = parse_aipath $instpath;
+        $pi[0] eq 'spath' or die "Installing to build or source dir";
+        while (@pi > 2) {
+            pop @pi;
+            my $ipp = deparse_aipath @pi;
+            $filelist_directories{$ipp} =
+                defined_or($filelist_directories{$ipp}, {});
+        }
+    }
+
+    return ($outpath, $aipath) if wantarray;
+    return $outpath;
+}
+
+# Actually writes the file list, when we're done.
+# Returns undef on success, error message on failure.
+my $wix3264 = $Config{ptrsize} == 8 ? '64' : '';
+my %wixfolders = (
+    'spath:CSIDL_PROGRAM_FILES' => "ProgramFiles${wix3264}Folder",
+    'spath:CSIDL_COMMON_APPDATA' => 'CommonAppDataFolder',
+    'spath:CSIDL_SYSTEM' => "System${wix3264}Folder",
+    'spath:CSIDL_COMMON_STARTMENU' => 'ProgramMenuFolder',
+    'spath:CSIDL_WINDOWS' => 'WindowsFolder',
+    # TODO: Get hold of the full list of correspondences
+);
+sub write_filelist {
+    if ($opt_filelist eq 'basic' || $opt_filelist eq 'listing') {
+        $filelist_body = defined_or($filelist_body, '');
+        my $aifilelist = destdir_transform "spath:filelist.txt";
+        open my $fh, '>', aipath2ospath $aifilelist or return $!;
+        print $fh $filelist_body;
+        close $fh or return $!;
+    } elsif ($opt_filelist eq 'wix') {
+        $filelist_body = defined_or($filelist_body, '');
+        my $aifilelist = destdir_transform "spath:filelist.wxi";
+        open my $fh, '>', aipath2ospath $aifilelist or return $!;
+        print $fh "<Include>\n";
+
+        # Create a variable for each directory we use. We use a
+        # (lowercase) md5 name if the directory isn't one of the
+        # install directories we actually use, and an uppercase
+        # human-readable if it is. To select a sensible name, we use
+        # the uppercase of the name from the configfile
+        # (e.g. CONFIGDIR) if there's only one (ignoring "specific" or
+        # "games" prefixes if that's the only thing causing a tie),
+        # and otherwise, concatenate the non-"DIR" portion
+        # (e.g. BINLIBDIR for a directory holding both binaries and
+        # libraries). Exception: the roots have their own, camelcase,
+        # names.
+        for my $dir (sort keys %filelist_directories) {
+            my @vals = keys %{$filelist_directories{$dir}};
+            my $dirref = "x" . md5_hex $dir;
+            my $wixfolder = $wixfolders{$dir};
+            if ($wixfolder) {
+                print $fh qq[    <?define $dirref = "$wixfolder" ?>\n];
+            } elsif (!@vals) {
+                print $fh qq[    <?define $dirref = "$dirref" ?>\n];
+            } else {
+                my @vals2 = grep !/^(?:games|specific)/, @vals;
+                @vals2 or @vals2 = @vals;
+                map s/dir$//, @vals2;
+                my $dirref2 = uc ((join '', sort @vals2) . 'dir');
+                print $fh qq[    <?define $dirref = "$dirref2" ?>\n];
+            }
+        }
+
+        # Calculate the directory tree. Our algorithm works like this:
+        # - First, we sort the list of directories we're mentioning.
+        # - We run through the list in order:
+        #   - If we have a prefix of the previous directory, then
+        #     create a new <Directory> tag;
+        #   - If we don't, then repeatedly close </Directory> tags
+        #     until we find one that is.
+        print $fh qq[    <Directory Id="TARGETDIR" Name="SourceDir">\n];
+        my @parents = ('', '');
+        for my $dir (sort keys %filelist_directories) {
+            while ((substr $dir, 0, length $parents[$#parents]) ne
+                   $parents[$#parents]) {
+                pop @parents;
+                print $fh '    ' x @parents, "</Directory>\n";
+            }
+            my $dirref = "x" . md5_hex $dir;
+            my $basename = (parse_aipath $dir)[-1];
+            if (@parents == 2) {
+                # $dir is actually a CSIDL_ known folder
+                print $fh '    ' x @parents,
+                    qq[<Directory Id="\$(var.$dirref)">\n];
+            } else {
+                # $dir is a subdirectory of another $dir
+                print $fh '    ' x @parents,
+                    qq[<Directory Id="\$(var.$dirref)" Name="$basename">\n];
+            }
+            push @parents, $dir;
+        }
+        while (@parents > 1) {
+            pop @parents;
+            print $fh '    ' x @parents, "</Directory>\n";
+        }
+
+        print $fh $filelist_body;
+
+        sub write_feature {
+            my $fname = shift;
+            my $indent = shift;
+            my $fh = shift;
+            my $xml = $filelist_features{$fname};
+            $xml =~ s/^/" " x $indent/egm;
+            print $fh $xml;
+            for my $innerfeature (sort keys %filelist_feature_parents) {
+                $filelist_feature_parents{$innerfeature} eq $fname
+                    and write_feature($innerfeature, $indent + 4, $fh);
+            }
+            print $fh " " x $indent, "    </Feature>\n";
+        }
+        write_feature "", 0, $fh;
+
+        print $fh "</Include>\n";
+        close $fh or return $!;        
+    }
+    return;
 }
 
 # Takes the hash of a file on disk. This modifies state, so should be
@@ -4424,6 +4814,62 @@ sub run_command {
             my $stdout = <$fh>;
             close $fh;
             return (undef, $stdout, '');
+        } elsif ($cmd eq 'intcmd:podformat') {
+            scalar @opts == 1 and $opts[0] =~ /^optpath: ?:(.*)$/s
+                or return ("Invalid arguments", '', '');
+            my $aipath = $1;
+            my $fn = aipath2ospath($aipath);
+            open my $fh, "<$text_layers", $fn or
+                return ("Could not open '$fn' for reading: $!", '', '');
+            local $/ = undef;
+            my $pod = <$fh>;
+            close $fh;
+
+            $pod =~ /^=for aimake manualsection ([1-9][a-z]*)$/m or
+                return ("no/malformed manualsection directive found", '', '');
+            my $manualsection = $1;
+            $pod =~ /^=for aimake manualname ([-a-zA-Z0-9._]+)$/m or
+                return ("no/malformed manualname directive found", '', '');
+            my $manualname = $1;
+
+            my $formatter;
+            my $ext;
+            if ($os_parsed eq 'MSWin32') {
+                require Pod::Simple::HTML;
+                $formatter = Pod::Simple::HTML->new(errors => 'die');
+                $ext = ".html";
+            } else {
+                require Pod::Man;
+                $formatter = Pod::Simple::Man->(
+                    errors => 'die',
+                    center => (defined_or($config->{options}{packagename_text},
+                                          $config->{options}{packagename}) .
+                               ' Manual'),
+                    name => $manualname,
+                    release => $config->{options}{packageversion},
+                    section => $manualsection);
+                $ext = "";
+            }
+            my $formatted;
+            $formatter->output_string(\$formatted);
+            eval {
+                $formatter->parse_string_document($pod);
+                1;
+            } or return ('formatting failed', '', $@);
+
+            my @aipath = parse_aipath $aipath;
+            $aipath[-1] = "$manualname.$manualsection$ext";
+            $aipath[0] = 'bpath';
+            $aipath = deparse_aipath @aipath;
+            $fn = aipath2ospath $aipath;
+            ensure_directory $aipath, 1;
+            open my $fh2, ">$text_layers", $fn or
+                return ("Could not open '$fn' for writing: $!", '', '');
+            print $fh2 $formatted;
+            close $fh2 or
+                return ("Could not write '$fn': $!", '', '');
+            return (undef, [$aipath], '');
+
         } elsif ($cmd eq 'intcmd:filetest') {
             @opts = sort @opts;
             scalar @opts == 2 and $opts[1] =~ /^optstring:-[fdlxzsTB]/
@@ -5034,9 +5480,8 @@ sub set_exeparams {
         # We don't mess around with the executable itself.  However, we need to
         # create a .desktop file for it.
 
-        my $desktopfile = $config->{options}{datarootdir} .
-            "/applications/$basename.desktop";
-        $desktopfile = destdir_transform $desktopfile;
+        my $desktopfile = calculate_installation_path
+            'shortcutdir', "$basename.desktop";
         my $fdf = friendly_objname $desktopfile;
         ensure_directory $desktopfile, 1, 1, 1
             or return "could not create directory: $!";
@@ -5073,9 +5518,9 @@ sub set_exeparams {
             # thus, is the appropriate theme to install the default icon into).
             my $written = 0;
             for my $i (@imageindexes) {
-                my $iconfile = $config->{options}{datarootdir} . "/icons/hicolor/" .
+                my $iconfile = calculate_installation_path 'datarootdir',
+                    "/icons/hicolor/" .
                     "$png_width[$i]x$png_height[$i]/apps/$basename.png";
-                $iconfile = destdir_transform $iconfile;
                 my $fif = friendly_objname($iconfile);
 
                 ensure_directory $iconfile, 1, 1, 1
@@ -5100,84 +5545,109 @@ sub set_exeparams {
 
 ### Permissions
 
-sub restrict_to_permission
+sub calculate_permissions {
+    my $permission = shift;
+    my $elevation = shift;
+    my $readable = shift;
+    my $executable = shift;      # 1 for executable, 2 for directory
+    my $in_statedir = shift;
+
+    my $user = 0;
+    my $group = 0;
+    my $octal = $executable ? 0755 : 0644;
+
+    $permission and $permission ne 'ADMINISTRATOR' and
+        $os_parsed eq 'MSWin32' and $permission = 'ANYONE';
+    $elevation and $elevation ne 'ADMINISTRATOR' and
+        $os_parsed eq 'MSWin32' and $elevation = 'ANYONE';
+
+    if ($permission && $permission eq 'ANYONE') {
+        if (($executable || 0) >= 2 && $in_statedir) {
+            $octal = 0777;
+        } elsif ($executable) {
+            $octal = 0755;
+        } elsif ($in_statedir) {
+            $octal = 0666;
+        } else {
+            $octal = 0644;
+        }
+    } elsif ($permission && $permission eq 'ADMINISTRATOR') {
+        if (($executable || 0) >= 2) {
+            $octal = $readable ? 0755 : 0700;
+        } elsif ($executable) {
+            $octal = $readable ? 0744 : 0700;
+        } else {
+            $octal = $readable ? 0644 : 0600;
+        }
+    } elsif ($permission) {
+        my $gid = getgrnam $permission;
+        if (!$gid) {
+            progress_report -1,
+                "Cannot set nonexistent permission '$permission'";
+        } else {
+            $group = $gid;
+            if (($executable || 0) >= 2) {
+                $octal = $readable ? 0775 : 0770;
+            } elsif ($executable) {
+                $octal = $readable ? 0774 : 0770;
+            } elsif ($in_statedir) {
+                $octal = $readable ? 0664 : 0660;
+            } else {
+                $octal = $readable ? 0640 : 0644;
+            }
+        }
+    }
+
+    if ($elevation && ($executable || 0) != 1) {
+        (progress_report -1, "Warning: " .
+         "only executables can be granted permissions");
+        $elevation = undef;
+    }
+
+    if ($elevation && $elevation eq 'ANYONE') {
+        # nothing to do
+    } elsif ($elevation && $elevation eq 'ADMINISTRATOR') {
+        $octal |= 04000;
+    } elsif ($elevation) {
+        my $gid = getgrnam $elevation;
+        if (!$gid) {
+            progress_report -1,
+                "Cannot set nonexistent permission '$permission'";
+        } else {
+            $group and 
+                progress_report -1,
+                    "Cannot set distinct, nonempty permission and elevation";
+            $group = $gid;
+            $octal |= 02000;
+        }
+    }
+
+    return ($octal, $user, $group);
+}
+
+sub set_permissions
 {
-    my $permname = shift;
+    my $permission = shift;
+    my $elevation = shift;
     my $aipath = shift;
     my $readable = shift;
     my $in_statedir = shift;
-
+    
     my $ospath = aipath2ospath $aipath;
 
     $> == 0 or return 1; # if we're not elevated, don't bother changing perms
+    $os_parsed eq 'MSWin32' and return 1;      # can't do this on Windows yet
+    -l $ospath and return 1;                   # symlinks inherit permissions
 
-    $os_parsed eq 'MSWin32' and return 1; # can't do this on Windows yet
-
-    $! = 0;
-    if ($permname eq 'ANYONE') {
-        chown 0, 0, $ospath or return 0;
-        if (-x $ospath || -d $ospath) {
-            return chmod 0777, $ospath;
-        } elsif ($in_statedir) {
-            return chmod 0666, $ospath;
-        } else {
-            return chmod 0644, $ospath;
-        }
-    } elsif ($permname eq 'ADMINISTRATOR') {
-        chown 0, 0, $ospath or return 0;
-        if (-d $ospath) {
-            return chmod +($readable ? 0755 : 0700), $ospath;
-        } elsif (-x $ospath) {
-            return chmod +($readable ? 0744 : 0700), $ospath;
-        } else {
-            return chmod +($readable ? 0644 : 0600), $ospath;
-        }
-    } else {
-        my $gid = getgrnam $permname;
-        $gid or return 0;
-        chown 0, $gid, $ospath or return 0;
-        if (-d $ospath) {
-            return chmod +($readable ? 0775 : 0770), $ospath;
-        } elsif (-x $ospath) {
-            return chmod +($readable ? 0774 : 0770), $ospath;
-        } elsif ($in_statedir) {
-            return chmod +($readable ? 0664 : 0660), $ospath;
-        } else {
-            return chmod +($readable ? 0640 : 0644), $ospath;
-        }
-    }
-}
-
-sub elevate_to_permission
-{
-    my $permname = shift;
-    my $aipath = shift;
-
-    my $ospath = aipath2ospath $aipath;
-
-    $> == 0 or return 1;
-    $os_parsed eq 'MSWin32' and return 1;
-
-    # Silently skip elevating symlinks, on the assumption that their target
-    # will be elevated (now or later).
-    -l $ospath and return 1;
-
-    -x $ospath && !-d $ospath or (progress_report -1,
-        "Warning: " . (friendly_objname $aipath) . " is not an executable " .
-        "and so cannot be granted permissions"), return 1;
+    my $executable = -d $ospath ? 2 : -x $ospath ? 1 : 0;
 
     $! = 0;
-    if ($permname eq 'ANYONE') {
-        # nothing to do
-        return 1;
-    } elsif ($permname eq 'ADMINISTRATOR') {
-        return chmod 04755, $ospath;
-    } else {
-        my $gid = getgrnam $permname;
-        $gid or return 0;
-        chown 0, $gid, $ospath or return 0;
-        return chmod 02755, $ospath;
-    }
+    my ($octal, $user, $group) = calculate_permissions
+        $permission, $elevation, $readable, $executable, $in_statedir;
+
+    chown $user, $group, $ospath or return 0;
+    return chmod $octal, $ospath;
+
 }
 
 ##### Statefile handling
@@ -6601,12 +7071,13 @@ my %actionkeys = (
                                     specificincdir configdir datadir mandir
                                     infodir statedir rootbindir gamesbindir
                                     gamesdatadir gamesstatedir logdir lockdir
-                                    specificlockdir/],
+                                    specificlockdir docdir shortcutdir/],
                       default => undef},
     'install_name' => undef,
     'install_permission' => undef,
     'install_readable' => 0,
     'install_elevation' => undef,
+    'install_feature' => undef,
     'inner' => [''],
     'outputarg' => [''],
     'dependsarg' => [''],
@@ -6635,6 +7106,7 @@ my %actiontypes = (
     'install_permission' => [qw/install/],
     'install_readable' => [qw/install/],
     'install_elevation' => [qw/install/],
+    'install_feature' => [qw/install/],
     'inner' => [qw/provide produce depend/],
     'outputarg' => [qw/provide produce/],
     'dependsarg' => [qw/provide produce depend/],
@@ -6725,6 +7197,8 @@ $opt_nocr = 0;
 @opt_rebuild = ();
 $opt_documentation = 0;
 $opt_dlayout = undef;
+$opt_filelist = undef;
+$opt_noperms = 0;
 $opt_license = 0;
 $opt_version = 0;
 $opt_nonempty_directory = 0;
@@ -6741,6 +7215,8 @@ GetOptions('verbose|v:+' => \$opt_verbose,
            'install-only' => \$opt_install_only,
            'config-only' => \$opt_config_only,
            'destdir=s' => \$opt_prefix,
+           'filelist=s' => \$opt_filelist,
+           'natural-permissions' => \$opt_noperms,
            'dump-status:s' => \$opt_dump,
            'show-warnings|W=s' => \@opt_warnings,
            'no-carriage-return' => \$opt_nocr,
@@ -6832,7 +7308,7 @@ if (defined $opt_dump) {
 # source directory, and find it that way.
 my $argpath = $ARGV[0];
 defined $argpath or $argpath = $RealBin;
-$argpath = ospath2aipath $argpath, undef, 1; # $path is not set yet
+$argpath = ospath2aipath $argpath, undef, 2; # $path is not set yet
 
 defined $path and scalar @ARGV == 1 and $path ne $argpath and
     die "This build directory is already being used to build '".
@@ -6896,8 +7372,6 @@ our $exeext = $Config{_exe};
 our $pointerbits = $Config{ptrsize} * 8;
 # Make sure that exeext is non-null, to reduce porting mistakes
 $exeext eq '' and $exeext = '.bin';
-# a UUID generated for the purpose of avoiding clashes with other things
-our $longrandomstring = 'AIMAKE_e15d5ce8_c8f0_40c9_9a3f_3b568bcd59d5_';
 our $dllext =       {MSWin32 => '.dll',
                      linux   => '.so',
                      darwin  => '.dylib'}->{$os_parsed};
@@ -7301,10 +7775,20 @@ atomically {
 # operation can fail (or produce warnings).
 
 my $active_features = "";
+my %active_features = ();
+sub feature_set;
+sub feature_set {
+    my $feature = shift;
+    defined_or($state->{_feature}{$feature},
+               $config->{features}{$feature}{default}) or return 0;
+    my $parent = $config->{features}{$feature}{depends};
+    defined $parent and return feature_set $parent;
+    return 1;
+}
 for my $feature (sort keys %{$config->{features}}) {
-    next unless defined_or($state->{_feature}{$feature},
-                           $config->{features}{$feature}{default});
+    next unless feature_set $feature;
     $active_features .= " $feature";
+    $active_features{$feature} = 1;
 }
 
 $opt_config_only and write_statefile, exit 0;
@@ -7726,11 +8210,7 @@ MAINLOOP: while (1) {
             my $install_name = defined_or($a->{install_name},
                                           $components[-1]);
             $install_name =~ s/\Q$exeext\E$/$Config{_exe}/es;
-            my $ofile = $config->{options}{$a->{install_dir}} . "/" .
-                $install_name;
-            $a->{orig_output} = $ofile;
-            $ofile = destdir_transform $ofile;
-            $a->{output} = [$ofile];
+            $a->{output_basename} = $install_name;
             $a->{outputarg} = [''];
             $a->{inner} = [''];
             # Leave the dependencies missing, so that the code will complain
@@ -7759,8 +8239,7 @@ MAINLOOP: while (1) {
                     my $will_output_in = $ostem . $oarg;
                     complete_and_extend \$will_output_in, $oinner;
 
-                    ensure_directory $will_output_in, 1,
-                        ($a->{actiontype} eq 'install');
+                    ensure_directory $will_output_in, 1;
 
                     push @known_output_locations, $will_output_in;
                 }
@@ -7769,103 +8248,109 @@ MAINLOOP: while (1) {
     }
 
     # If we're installing, install now.
+    my $inapplicable = 0;
     if ($rule->{number_of_install_actions}) {
-        if (@known_output_locations != 1) {
-            die "Install pair '$rulename $objname' does not install " .
-                "to a hardcoded location";
-        }
-        my $output_location = $known_output_locations[0];
+        my $a = $actions_desugared[0];
 
-        my ($objtype, undef) = parse_objname $objname;
-        my $fon = friendly_objname $output_location;
+        if ($a->{install_feature} &&
+            !$active_features{$a->{install_feature}}) {
+            $inapplicable = 1;
+        } else {
+            my ($output_location, $orig_output) =
+                (calculate_installation_path $a->{install_dir},
+                 $a->{output_basename}, $a->{install_feature},
+                 $a->{install_permission}, $a->{install_elevation},
+                 $a->{install_readable});
 
-        my $executable_installed_to = undef;
+            @known_output_locations = ($output_location);
+            
+            my ($objtype, undef) = parse_objname $objname;
+            my $fon = friendly_objname $output_location;
+            
+            my $executable_installed_to = undef;
+            
+            if ($objtype ne 'sys') {
+                my $ospathfrom = aipath2ospath $objname;
+                my $ospathto = aipath2ospath $output_location;
+                
+                # Delete the target file/link before installing over it, so
+                # that we can replace executables on UNIXy systems, and so
+                # that we don't end up following symlinks and making a mess.
+                -e $ospathto and (unlink $ospathto or die
+                                  "Could not unlink '$ospathto': $!");
+                
+                if (-l $ospathfrom) {
+                    # To install a symlink, we need to create a new symlink
+                    # with the same target.
+                    my $ltarget = readlink $ospathfrom or die
+                        "Could not read symlink '$ospathfrom': $!";
+                    $ltarget =~ s/\Q$exeext\E$/$Config{_exe}/es;
+                    -e $ospathto || -l $ospathto and unlink $ospathto;
+                    ai_symlink $ltarget, $ospathto or die
+                        "Could not symlink '$ospathto' to '$ltarget': $!";
 
-        if ($objtype ne 'sys') {
-            my $ospathfrom = aipath2ospath $objname;
-            my $ospathto = aipath2ospath $output_location;
-
-            # Delete the target file/link before installing over it, so that
-            # we can replace executables on UNIXy systems, and so that we
-            # don't end up following symlinks and making a mess.
-            -e $ospathto and (unlink $ospathto or die
-                              "Could not unlink '$ospathto': $!");
-
-            if (-l $ospathfrom) {
-                # To install a symlink, we need to create a new symlink with
-                # the same target.
-                my $ltarget = readlink $ospathfrom or die
-                    "Could not read symlink '$ospathfrom': $!";
-                $ltarget =~ s/\Q$exeext\E$/$Config{_exe}/es;
-                -e $ospathto || -l $ospathto and unlink $ospathto;
-                ai_symlink $ltarget, $ospathto or die
-                    "Could not symlink '$ospathto' to '$ltarget': $!";
-
-                # If we're installing an executable, the target should also be
-                # executable. The target of the new symlink might not be in
-                # place yet, so we check the target of the old symlink.
-
-                -x (final_symlink_target $ospathfrom) and
-                    $executable_installed_to = $ospathto;
-            } else {
-                open my $fhfrom, "<$binary_layers", $ospathfrom
-                    or die "Could not open '$ospathfrom' for read: $!";
-                open my $fhto, ">$binary_layers", $ospathto
-                    or die "Could not open '$ospathto' for write: $!";
-                print $fhto $_ for <$fhfrom>;
-                close $fhfrom; close $fhto;
-
-                # If we're installing an executable, the target should also be
-                # executable.
-                -x $ospathfrom and chmod 0755, $ospathto and
-                    $executable_installed_to = $ospathto;
-            }
-
-        } elsif ($objname eq 'sys:touch_only') {
-            # nothing to do; we already created the directory
-        } elsif ($objname eq 'sys:create_subdir') {
-            ensure_directory $output_location, 0, 1;
-        } elsif ($objname eq 'sys:empty_file') {
-            my $ospathto = aipath2ospath $output_location;
-            open my $fhto, ">$binary_layers", $ospathto
-                or die "Could not open '$ospathto' for write: $!";
-            close $fhto;
-        } elsif ($objname eq 'sys:ensure_exists') {
-            my $ospathto = aipath2ospath $output_location;
-            if (!-e $ospathto) {
+                    # If we're installing an executable, the target should
+                    # also be executable. The target of the new symlink might
+                    # not be in place yet, so we check the target of the old
+                    # symlink.
+                    
+                    -x (final_symlink_target $ospathfrom) and
+                        $executable_installed_to = $ospathto;
+                } else {
+                    open my $fhfrom, "<$binary_layers", $ospathfrom
+                        or die "Could not open '$ospathfrom' for read: $!";
+                    open my $fhto, ">$binary_layers", $ospathto
+                        or die "Could not open '$ospathto' for write: $!";
+                    print $fhto $_ for <$fhfrom>;
+                    close $fhfrom; close $fhto;
+                    
+                    # If we're installing an executable, the target should
+                    # also be executable.
+                    -x $ospathfrom and chmod 0755, $ospathto and
+                        $executable_installed_to = $ospathto;
+                }
+                
+            } elsif ($objname eq 'sys:touch_only') {
+                # nothing to do; we already created the directory
+            } elsif ($objname eq 'sys:create_subdir') {
+                ensure_directory $output_location, 0, 1;
+            } elsif ($objname eq 'sys:empty_file') {
+                my $ospathto = aipath2ospath $output_location;
                 open my $fhto, ">$binary_layers", $ospathto
                     or die "Could not open '$ospathto' for write: $!";
                 close $fhto;
+            } elsif ($objname eq 'sys:ensure_exists') {
+                my $ospathto = aipath2ospath $output_location;
+                if (!-e $ospathto) {
+                    open my $fhto, ">$binary_layers", $ospathto
+                        or die "Could not open '$ospathto' for write: $!";
+                    close $fhto;
+                }
+            } else {
+                die "System object '$objname' cannot be installed";
             }
-        } else {
-            die "System object '$objname' cannot be installed";
-        }
 
-        my $a = $rule->{actions}[0];
-
-        # If we installed an executable, set its parameters.
-        if (defined $executable_installed_to && $objname =~ /\Q$exeext\E$/) {
-            my $exefail = set_exeparams $a->{exeparams},
+            # If we installed an executable, set its parameters.
+            if (defined $executable_installed_to &&
+                $objname =~ /\Q$exeext\E$/) {
+                my $exefail = set_exeparams $a->{exeparams},
                 $executable_installed_to,
-                aipath2ospath($actions_desugared[0]{orig_output});
-            $exefail and
-                progress_report -1, "Could not set metadata of $fon: $exefail";
+                aipath2ospath($orig_output);
+                $exefail and
+                    progress_report -1, "Could not set metadata of $fon: " .
+                    $exefail;
+            }
+
+            # If necessary, elevate or restrict permissions.
+            $a->{install_permission} || $a->{install_elevation} and
+                (set_permissions $a->{install_permission},
+                 $a->{install_elevation},
+                 $output_location, $a->{install_readable},
+                 scalar ($a->{install_dir} =~ /(?:state|lock|log)dir$/)
+                 or progress_report -1,
+                 "Could not alter permissions of $fon: $!");
+
         }
-
-        # If necessary, elevate or restrict permissions.
-        $objname eq 'sys:touch_only' and $output_location =
-            aipath_parent $output_location;
-        $a->{install_permission} and
-            (restrict_to_permission $a->{install_permission},
-             $output_location, $a->{install_readable},
-             scalar ($a->{install_dir} =~ /(?:state|lock|log)dir$/)
-             or progress_report -1,
-             "Could not alter permissions of $fon: $!");
-        $a->{install_elevation} and
-            (elevate_to_permission $a->{install_elevation},
-             $output_location or progress_report -1,
-             "Could not grant permissions to $fon: $!");
-
         # The rule does no further outputting.
         $actions_desugared[0]{output} = [];
     }
@@ -7880,12 +8365,12 @@ MAINLOOP: while (1) {
 
     # Run the command.
     my ($failreason, $stdout, $stderr) = run_command(@rcargs);
+    $inapplicable and $failreason = 'not installing this feature';
 
     $rule->{also_match_stderr} and ($stdout, $stderr) = ($stdout.$stderr, '');
 
     my $hide_stderr = defined $failreason ?
         $rule->{hide_errors} : $rule->{ignore_warnings};
-    my $inapplicable = 0;
     my $shortfailreason;
     if (defined $failreason) {
         $shortfailreason = $failreason;
@@ -7949,6 +8434,7 @@ MAINLOOP: while (1) {
         # Work out the effects of failure, if any.
         my $out = $parsed_output;
         my $on_failure = $a->{on_failure};
+        $on_failure or $on_failure = 'auto';
         defined $failreason or $on_failure = 'success';
         # Resolve any 'auto' on_failure specification.
         $inapplicable and $on_failure eq 'auto' and
@@ -8126,8 +8612,7 @@ EOF
     # For each output object that matches a feature that's turned off, delete
     # it.
     for my $feature (keys %{$config->{features}}) {
-        next if defined_or($state->{_feature}{$feature},
-                           $config->{features}{$feature}{default});
+        next if $active_features{$feature};
         for my $ioutobj (keys %outhashes) {
             (unintern $ioutobj) =~ $config->{features}{$feature}{object} and
                 delete $outhashes{$ioutobj};
@@ -8150,7 +8635,7 @@ EOF
         }
     }
 
-    $rule->{number_of_install_actions}
+    $rule->{number_of_install_actions} and !$inapplicable
         and $shortened{friendly_objname($known_output_locations[0])} = 1;
 
     my $msg;
@@ -8233,6 +8718,12 @@ EOF
 # As one exception, the actual file writing is postponed until the end of the
 # program, or a death/error. As such, we need to finish off with
 # write_statefile.
+
+
+### File lists
+my $flerr;
+$installing and $flerr = write_filelist;
+$flerr and progress_report -1, "Could not write file list: $flerr\n";
 
 my $anyproblems = 0;
 
@@ -8532,6 +9023,7 @@ __DATA__
             # Relative to datarootdir.
             datadir => '$datarootdir/$packagename',
             gamesdatadir => '$datarootdir/games/$packagename',
+            shortcutdir => '$datarootdir/applications',
             mandir => '$datarootdir/man',
             infodir => '$datarootdir/info',
             docdir => '$datarootdir/doc/$packagename',
@@ -8577,6 +9069,7 @@ __DATA__
             # Relative to datarootdir.
             datadir => '$datarootdir/$packagename',
             gamesdatadir => '$datarootdir/games/$packagename',
+            shortcutdir => '$datarootdir/applications',
             mandir => '$datarootdir/man',
             infodir => '$datarootdir/info',
             docdir => '$datarootdir/doc/$packagename',
@@ -8628,6 +9121,7 @@ __DATA__
             # Relative to datarootdir.
             datadir => '$datarootdir',
             gamesdatadir => '$datarootdir',
+            shortcutdir => '$datarootdir/applications',
             mandir => '$datarootdir/man',
             infodir => '$datarootdir/info',
             docdir => '$datarootdir/doc',
@@ -8673,6 +9167,7 @@ __DATA__
             # Relative to datarootdir.
             datadir => '$datarootdir/data',
             gamesdatadir => '$datarootdir/data',
+            shortcutdir => '$datarootdir/applications',
             mandir => '$datarootdir/man',
             infodir => '$datarootdir/info',
             docdir => '$datarootdir/doc',
@@ -8707,6 +9202,7 @@ __DATA__
             datadir => '$datarootdir/data',
             gamesdatadir => '$datarootdir/data',
             mandir => '$datarootdir/man',
+            shortcutdir => '$datarootdir/shortcuts',
             infodir => '$datarootdir/info',
             docdir => '$datarootdir/doc',
 
@@ -8756,12 +9252,15 @@ __DATA__
             datarootdir => '$exerootdir/data',
             staterootdir => 'spath:CSIDL_COMMON_APPDATA/$packagename',
 
+            docdir => '$exerootdir/doc',
+            mandir => '$exerootdir/manuals',
+
+            shortcutdir => 'spath:CSIDL_COMMON_STARTMENU/$packagename_text',
+
             # Relative to datarootdir.
             datadir => '$datarootdir',
             gamesdatadir => '$datarootdir',
-            docdir => '$datarootdir/doc',
             # Dubious on Windows, but...
-            mandir => '$datarootdir/man',
             infodir => '$datarootdir/info',
 
             # Relative to staterootdir.
@@ -8793,6 +9292,7 @@ __DATA__
             # Relative to datarootdir.
             datadir => '$datarootdir/$packagename',
             gamesdatadir => '$datarootdir/games/$packagename',
+            shortcutdir => '$datarootdir/applications',
             mandir => '$datarootdir/man',
             infodir => '$datarootdir/info',
             docdir => '$datarootdir/doc/$packagename',
@@ -8833,6 +9333,7 @@ __DATA__
             datarootdir => '$installdir',
             datadir => '$datarootdir',
             gamesdatadir => '$datarootdir',
+            shortcutdir => '$datarootdir',
             mandir => '$datarootdir',
             infodir => '$datarootdir',
             docdir => '$datarootdir',
@@ -10063,11 +10564,22 @@ EOF
             verb => 'found',
         },
         compile_yacc => {
-            object => qr/^bpath:(?!aimake).*\.y$/,
+            object => qr/^bpath:(?!aimake).*\.y$/s,
             command => ['tool:yacc', 'optpath::', 'optpath:-o :extend:.c:',
                         'optpath:--defines=:extend:.h:'],
             output => ['extend:.c:', 'extend:.h:'],
             verb => 'generated',
+        },
+
+        # Manuals. In order to get portable documentation in aimake, you write
+        # the documentation as a POD file formatted like a UNIX manual (so
+        # that we can output this in the manual on UNIX). On UNIXy systems, we
+        # convert to a man page ourself. Otherwise, we convert to HTML.
+        format_manual => {
+            object => qr/^b?path:(?!aimake).*\.pod$/,
+            command => ['intcmd:podformat', 'optpath::'],
+            output => qr/(.*)/s,
+            verb => 'formatted',
         },
 
         # Installing. Some projects may wish to modify or undef out these rules.
@@ -10079,5 +10591,10 @@ EOF
             object => qr/^bpath:(?!aimake).*\Q$exeext\E$/s,
             install_dir => "bindir",
         },
+        install_manuals => {
+            object => qr/^bpath:(?!aimake).*\.[1-9][a-z]*(?:\.html)?/s,
+            install_dir => "mandir",
+        },
     },
+
 }
