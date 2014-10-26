@@ -226,15 +226,6 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
             dependsarg => qr/^([0-9a-f]{8})/,
         },
 
-        _build_man_page => {
-            object => qr=^path:doc/.*\.pod$=,
-            command => ["cmd:pod2man", "optstring:-s 6",
-                        "optpath:-c :bpath:Games Manual", # hack
-                        "optpath::", "optpath::extend:.6:"],
-            output => "extend:.6:",
-            in_subdir => "bpath:", # for the hacks above to work
-        },
-
         _makedefs_date => {
             command => ["bpath:libnethack/util/makedefs.c/makedefs$exeext",
                         "optpath:-v :bpath:libnethack/include/date.h",
