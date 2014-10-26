@@ -16,7 +16,7 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
     },
     features => {
         server => {
-            description => "Build a server executable (Linux only)",
+            description => "Server executable (Linux only)",
             object => qr=^path:nethack_server/=,
             default => 0,
         },
@@ -26,10 +26,36 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
             default => 1,
         },
         gui => {
-            description => "Build tiles and faketerm ports (requires SDL2)",
+            description => "Tiles and fake terminal ports",
             object => qr=^path:(?:tilesets/dat(?!/text|/catalogues/text)
                                 | libuncursed/src/plugins/sdl)=x,
             default => 1,
+        },
+        tilecompile => {
+            # We have to build the tileset compiler anyway, because we need
+            # it during the build process. But we can choose not to install
+            # it.
+            description => "Tileset compiler",
+            object => qr=(?!)=,
+            default => 1,
+        },
+        slashem_tiles => {
+            description => "Slash'EM tileset",
+            object => qr=^path:tilesets/dat/catalogues/slashem-=,
+            default => 1,
+            depends => 'gui',
+        },
+        dawnlike_tiles => {
+            description => "DawnLike tileset",
+            object => qr=^path:tilesets/dat/catalogues/dawnlike-=,
+            default => 1,
+            depends => 'gui',
+        },
+        rltiles_tiles => {
+            description => "RLTiles tileset",
+            object => qr=^path:tilesets/dat/catalogues/rltiles-=,
+            default => 1,
+            depends => 'gui',
         },
     },
     rules => {
@@ -42,19 +68,19 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
         },
         _xopen_linux => {
             object => 'optionset:CFLAGS',
-            command => ['intcmd:assert_equal','optstring:linux', "optstring:$^O"],
+            command => ['intcmd:assert_equal', 'optstring:linux', "optstring:$^O"],
             depends => 'optstring:-D_XOPEN_SOURCE=700',
             on_failure => 'conditional'
         },
         _xopen_osx => {
             object => 'optionset:CFLAGS',
-            command => ['intcmd:assert_equal','optstring:darwin', "optstring:$^O"],
+            command => ['intcmd:assert_equal', 'optstring:darwin', "optstring:$^O"],
             depends => 'optstring:-D_XOPEN_SOURCE=700',
             on_failure => 'conditional'
         },
         _darwin_c_source => {
             object => 'optionset:CFLAGS',
-            command => ['intcmd:assert_equal','optstring:darwin', "optstring:$^O"],
+            command => ['intcmd:assert_equal', 'optstring:darwin', "optstring:$^O"],
             depends => 'optstring:-D_DARWIN_C_SOURCE',
             on_failure => 'conditional'
         },
@@ -451,6 +477,7 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
         _install_uncursed_plugins => {
             object => qr=^bpath:libuncursed/src/plugins/.*\Q$dllext\E$=s,
             install_dir => 'specificlibdir',
+            install_feature => "gui",
         },
         _install_libuncursed => {
             object => qr=^bpath:libuncursed/src/libuncursed\Q$dllext\E[.\d]*$=s,
@@ -459,6 +486,9 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
         _install_libjansson => {
             object => qr=^bpath:libjansson/libjansson\Q$dllext\E[.\d]*$=s,
             install_dir => 'libdir',
+            # we don't write install_feature => "jansson"; this way, the user
+            # will never be prompted about whether to install a built copy of
+            # jansson, because most users won't care.
         },
         _install_tty => {
             object => "bpath:nethack/src/main.c/main$exeext",
@@ -484,6 +514,7 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
                 description => "Dungeon exploration game (graphical interface)",
                 terminal => 0,
             },
+            install_feature => "gui",
         },
         _install_tilecompile => {
             object => "bpath:tilesets/util/tilecompile.c/tilecompile$exeext",
@@ -495,6 +526,7 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
                 terminal => 1,
                 interactive => 0,
             },
+            install_feature => "tilecompile",
         },
         _install_server => {
             object => "bpath:nethack_server/src/srvmain.c/srvmain$exeext",
@@ -507,33 +539,72 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
                 description => "NetHack 4 server daemon",
                 interactive => 0,
             },
+            install_feature => "server",
         },
         _install_nhdat => {
             object => "bpath:libnethack/dat/nhdat",
             install_dir => "gamesdatadir",
         },
-        _install_images => {
-            object => qr{^bpath:tilesets/dat/(?:fonts|merged)/.*\.(?:nh4ct|png)$},
+        _install_text_tilesets => {
+            object => qr{^bpath:tilesets/dat/merged/text.*\.nh4ct$},
             install_dir => "gamesdatadir",
+        },
+        _install_fonts => {
+            object => qr{^bpath:tilesets/dat/fonts/.*\.png$},
+            install_dir => "gamesdatadir",
+            install_feature => "gui",
+        },
+        _install_dawnlike => {
+            object => qr{^bpath:tilesets/dat/merged/dawnlike-.*\.nh4ct$},
+            install_dir => "gamesdatadir",
+            install_feature => "dawnlike_tiles",
+        },
+        _install_slashem => {
+            object => qr{^bpath:tilesets/dat/merged/slashem-.*\.nh4ct$},
+            install_dir => "gamesdatadir",
+            install_feature => "slashem_tiles",
+        },
+        _install_rltiles => {
+            object => qr{^bpath:tilesets/dat/merged/rltiles-.*\.nh4ct$},
+            install_dir => "gamesdatadir",
+            install_feature => "rltiles_tiles",
         },
         _install_license => {
             object => "path:libnethack/dat/license",
             install_dir => "gamesdatadir",
         },
+        
+        install_manuals => undef, # these are feature-gated
+
         _install_manpage => {
-            object => "bpath:doc/nethack4.6",
+            object => qr=^bpath:doc/nethack4\.6.*=,
             install_dir => "mandir",
-            install_name => "man6/nethack4.6",
         },
         _install_sdl_manpage => {
-            object => "bpath:doc/nethack4-sdl.6",
+            object => qr=^bpath:doc/nethack4-sdl\.6.*=,
             install_dir => "mandir",
-            install_name => "man6/nethack4-sdl.6",
+            install_feature => "gui",
         },
         _install_tilecompile_manpage => {
-            object => "bpath:doc/tilecompile.6",
+            object => qr=bpath:doc/tilecompile\.6.*=,
             install_dir => "mandir",
-            install_name => "man6/tilecompile.6",
+            install_feature => "tilecompile",
+        },
+        _install_docs => {
+            object => qr=path:doc/(?:changelog|faq|philosophy)\.txt=,
+            install_dir => "docdir",
+        },
+        _install_copyright => {
+            object => "path:copyright",
+            command => ["intcmd:nop", "optionset:os_windows"],
+            install_dir => "docdir",
+            install_name => "copyright-details.txt",
+        },
+        _install_binary_copyright => {
+            object => "path:binary-copyright.rtf",
+            command => ["intcmd:nop", "optionset:os_windows"],
+            install_dir => "docdir",
+            install_name => "license.rtf",
         },
         _install_highscores => {
             object => "sys:ensure_exists",
@@ -562,69 +633,64 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
             install_permission => "games",
             install_readable => 1,
         },
+        _install_paniclog => {
+            object => "sys:ensure_exists",
+            install_dir => "gamesstatedir",
+            install_name => "paniclog",
+            install_permission => "games",
+            install_readable => 1,
+        },
         _install_server_config => {
             object => "sys:ensure_exists",
-            command => ["intcmd:nop",
-                        "bpath:nethack_server/src/srvmain.c/srvmain$exeext"],
             install_dir => "configdir",
             install_name => "nethack4.conf",
+            install_feature => "server",
         },
         _install_server_logfile => {
             object => "sys:ensure_exists",
-            command => ["intcmd:nop",
-                        "bpath:nethack_server/src/srvmain.c/srvmain$exeext"],
             install_dir => "logdir",
             install_name => "nethack4.log",
             install_permission => "games",
+            install_feature => "server",
         },
         _install_server_lockfile => {
             object => "sys:touch_only",
-            command => ["intcmd:nop",
-                        "bpath:nethack_server/src/srvmain.c/srvmain$exeext"],
             install_dir => "lockdir",
+            install_feature => "server",
         },
         _install_server_dumps => {
             object => "sys:create_subdir",
-            command => ["intcmd:nop",
-                        "bpath:nethack_server/src/srvmain.c/srvmain$exeext"],
             install_dir => "gamesstatedir",
             install_name => "dumps",
             install_permission => "games",
             install_readable => 1,
+            install_feature => "server",
         },
         _install_server_completed => {
             object => "sys:create_subdir",
-            command => ["intcmd:nop",
-                        "bpath:nethack_server/src/srvmain.c/srvmain$exeext"],
             install_dir => "gamesstatedir",
             install_name => "completed",
             install_permission => "games",
             install_readable => 1,
+            install_feature => "server",
         },
         _install_server_save => {
             object => "sys:create_subdir",
-            command => ["intcmd:nop",
-                        "bpath:nethack_server/src/srvmain.c/srvmain$exeext"],
             install_dir => "gamesstatedir",
             install_name => "save",
             install_permission => "games",
+            install_feature => "server",
         },
         _install_dumps_note => {
             object => "bpath:readme-dumps",
-            command => ["intcmd:nop",
-                        "bpath:nethack_server/src/srvmain.c/srvmain$exeext"],
             install_dir => "gamesstatedir",
             install_name => "dumps/README",
+            install_feature => "server",
         },
         _install_saves_note => {
             object => "bpath:readme-saves",
             install_dir => "gamesstatedir",
             install_name => "README",
         },
-#        _install_desktop_file => {
-#            object => "path:dist/common/nethack4.desktop",
-#            install_dir => "datarootdir",
-#            install_name => "applications/nethack4.desktop",
-#        },
     },
 }
