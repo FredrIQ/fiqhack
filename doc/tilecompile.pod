@@ -2,6 +2,10 @@
 
 =encoding utf8
 
+=for aimake manualsection 6
+
+=for aimake manualname tilecompile
+
 =head1 NAME
 
 tilecompile - tile compiler for NetHack 4

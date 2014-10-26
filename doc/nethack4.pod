@@ -2,6 +2,10 @@
 
 =encoding utf8
 
+=for aimake manualsection 6
+
+=for aimake manualname nethack4
+
 =head1 NAME
 
 nethack4 - dungeon exploration game
