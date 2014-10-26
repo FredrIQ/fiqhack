@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Sean Hunt, 2014-10-23 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1249,15 +1249,12 @@ read_nh_config(void)
 {
     fnchar filename[BUFSZ];
 
-    /* First, we need to make a local copy of the game's options to change when
-       no game is in progress, as the game will reject any changes while it is
-       in operation. */
     struct nh_option_desc *opts = nh_get_options();
     if (!opts)
         return FALSE;
 
     nhlib_free_optlist(nh_options);
-    nh_options = nhlib_clone_optlist(opts);
+    nh_options = opts;
 
     get_config_name(filename, FALSE);
     read_config_file(filename);

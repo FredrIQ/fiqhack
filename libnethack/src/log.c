@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-16 */
+/* Last modified by Sean Hunt, 2014-10-24 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -440,6 +440,7 @@ base64_encode_binary(const unsigned char *in, char *out, int len)
     if (compress2(o, &olen, in, len, Z_BEST_COMPRESSION) != Z_OK) {
         panic("Could not compress input data!");
     }
+    MARK_INITIALIZED(o, olen);
 
     pos = sprintf(out, "$%d$", len);
 
@@ -553,6 +554,8 @@ base64_decode(const char *in, char *out, int outlen)
                        Z_DATA_ERROR ? "Corrupted file" : "(unknown error)");
             error_reading_save("");
         }
+
+        MARK_INITIALIZED(out, blen);
     }
 }
 

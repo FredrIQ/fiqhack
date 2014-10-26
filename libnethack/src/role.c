@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-14 */
+/* Last modified by Sean Hunt, 2014-10-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1023,7 +1023,11 @@ nh_build_plselection_prompt(char *buf, int buflen, int rolenum, int racenum,
     nh_root_plselection_prompt(
         tmpbuf + strlen(tmpbuf), buflen - strlen(tmpbuf),
         rolenum, racenum, gendnum, alignnum);
-    sprintf(buf, "%s", s_suffix(tmpbuf));
+    /* A manual 's is used here because s_suffix will allocate onto the
+     * turnstate chain, which leads to a leak. Furthermore, all races are
+     * singular, so this is more grammatically correct.
+     */
+    sprintf(buf, "%s's", tmpbuf);
 
     /* buf should now be: < your lawful female gnomish cavewoman's> || <your
        lawful female gnome's> || <your lawful female character's> Now append
