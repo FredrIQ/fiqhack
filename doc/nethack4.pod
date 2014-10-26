@@ -1,4 +1,6 @@
-=pod
+=for comment
+Last modified by Alex Smith, 2014-10-26
+NetHack can be freely redistributed.  See license for details.
 
 =encoding utf8
 

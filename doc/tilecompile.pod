@@ -1,4 +1,6 @@
-=pod
+=for comment
+Last modified by Alex Smith, 2014-10-26
+NetHack can be freely redistributed.  See license for details.
 
 =encoding utf8
 
@@ -261,9 +263,11 @@ is to name them C<unuseds 0>, C<unuseds 1>, etc..
 
 =back
 
+For details about these formats, see L<nh4ct(5)>.
+
 =head1 SEE ALSO
 
-L<nethack4(6)>, L<http://nethack4.org>.
+L<nh4ct(5)>, L<nethack4(6)>, L<http://nethack4.org>.
 
 =head1 BUGS
 

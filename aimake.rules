@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2014-10-21
+# Last modified by Alex Smith, 2014-10-26
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -577,7 +577,7 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
             install_feature => "gui",
         },
         _install_tilecompile_manpage => {
-            object => qr=bpath:doc/tilecompile\.6.*=,
+            object => qr=bpath:doc/(?:nh4ct\.5|tilecompile\.6).*=,
             install_dir => "mandir",
             install_feature => "tilecompile",
         },
