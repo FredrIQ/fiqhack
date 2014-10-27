@@ -4522,12 +4522,27 @@ sub calculate_installation_path {
                 ($Config{ptrsize} == 8 ? "yes" : "no") . '"';
         }
 
-        my $adminread  = ($octal & 0400) ? 'yes' : 'no';
-        my $adminwrite = ($octal & 0200) ? 'yes' : 'no';
-        my $adminexec  = ($octal & 0100) ? 'yes' : 'no';
-        my $otherread  = ($octal & 0004) ? 'yes' : 'no';
-        my $otherwrite = ($octal & 0002) ? 'yes' : 'no';
-        my $otherexec  = ($octal & 0001) ? 'yes' : 'no';
+        # We don't want to deny any permissions; just to not grant the
+        # permissions we don't care about. So we use a special value KEYDEL in
+        # order to mark attributes we don't want to set.
+        #
+        # On Windows, being Administrator is insufficient to override an
+        # "admins can't..." permission (unlike on Linux), so we force the
+        # admins to have full permission, and only control the ACL for
+        # Everyone. Otherwise, system administration can become quote
+        # difficult.
+        #
+        # Also, for some crazy reason, execute permission is needed to read a
+        # file in some cases. So when the file isn't an executable, we set the
+        # execute bit based on the read bit.
+
+        ($octal & 0700) >= 0600 or
+            die "Refusing to deny read or write permission to Administrators";
+        my $otherread  = ($octal & 0004) ? 'yes' : 'KEYDEL';
+        my $otherwrite = ($octal & 0002) ? 'yes' : 'KEYDEL';
+        my $otherexec  = ($octal & 0001) ? 'yes' : 'KEYDEL';
+
+        $otherexec = $otherread unless $executable;
 
         # WiX can't create a GUID for a folder. Yet, we need a stable value,
         # because otherwise things will go wrong on upgrade. Our solution is
@@ -4543,9 +4558,11 @@ sub calculate_installation_path {
         substr $guid, 12, 0, "-";
         substr $guid, 8, 0, "-";
 
+        my $filelist_entry;
+
         if ($opt_noperms) {
             if (($executable || 0) == 2) {
-                $filelist_body .= qq[
+                $filelist_entry = qq[
     <DirectoryRef Id="\$(var.$dirref)">
         <Component Id="$id" Guid="{$guid}">
             <CreateFolder />
@@ -4554,7 +4571,7 @@ sub calculate_installation_path {
     </DirectoryRef>
 ];
             } else {
-                $filelist_body .= qq[
+                $filelist_entry = qq[
     <DirectoryRef Id="\$(var.$dirref)">
         <Component Id="$id" Guid="{$guid}"$bitness>
             <File Id="$id" Source="$ospath" KeyPath="yes" />
@@ -4563,37 +4580,41 @@ sub calculate_installation_path {
 ];
             }
         } elsif (($executable || 0) == 2) {
-            $filelist_body .= qq[
+            $filelist_entry = qq[
     <DirectoryRef Id="\$(var.$dirref)">
         <Component Id="$id" Guid="{$guid}">
             <CreateFolder>
-                 <Permission User="Administrators" Read="$adminread"
-                             CreateFile="$adminwrite" Delete="$adminwrite"
-                             CreateChild="$adminwrite" DeleteChild="$adminwrite"
-                             Traverse="$adminexec" />
                  <Permission User="Everyone" Read="$otherread"
-                             CreateFile="$otherwrite" Delete="$otherwrite"
-                             CreateChild="$otherwrite" DeleteChild="$otherwrite"
-                             Traverse="$otherexec" />
+                             GenericWrite="$otherwrite"
+                             DeleteChild="$otherwrite"
+                             ReadAttributes="$otherread"
+                             ReadExtendedAttributes="$otherread"
+                             Traverse="$otherexec" ReadPermission="yes" />
+                 <Permission User="Administrators" GenericAll="yes" />
             </CreateFolder>
             <RemoveFolder Id="\$(var.$dirref)" On="uninstall" />
         </Component>
     </DirectoryRef>
 ];
         } else {
-            $filelist_body .= qq[
+            $filelist_entry = qq[
     <DirectoryRef Id="\$(var.$dirref)">
         <Component Id="$id" Guid="{$guid}"$bitness>
             <File Id="$id" Source="$ospath" KeyPath="yes">
-                 <Permission User="Administrators" Read="$adminread"
-                             Write="$adminwrite" Execute="$adminexec" />
-                 <Permission User="Everyone" Read="$otherread"
-                             Write="$otherwrite" Execute="$otherexec" />
+                 <Permission User="Everyone" GenericWrite="$otherwrite"
+                             Read="$otherread" ReadPermission="yes"
+                             ReadAttributes="$otherread"
+                             ReadExtendedAttributes="$otherread"
+                             GenericExecute="$otherexec" />
+                 <Permission User="Administrators" GenericAll="yes" />
             </File>
         </Component>
     </DirectoryRef>
 ];
         }
+
+        $filelist_entry =~ s/ \w+="KEYDEL"//g;
+        $filelist_body .= $filelist_entry;
 
         # Create an entry for the feature.
         my ($feature_id, $fdesc, $fparent);
