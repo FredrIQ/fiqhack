@@ -4995,7 +4995,8 @@ sub run_command {
                                           $config->{options}{packagename}) .
                                ' Manual'),
                     name => $manualname,
-                    release => $config->{options}{packageversion},
+                    release => defined_or($config->{options}{packageversion},
+                                          0.1),
                     section => $manualsection);
                 $ext = "";
             }
@@ -5601,9 +5602,10 @@ sub set_exeparams {
             my $vi = $exe->get_version_info;
             $vi->{LegalCopyright} = $params->{copyright}
                 if $params->{copyright};
-            $vi->{FileVersion} = defined_or($params->{version},
-                                            $config->{options}{packageversion},
-                                            '0.1');
+            $vi->{FileVersion} =
+                defined_or($params->{version},
+                           defined_or($config->{options}{packageversion},
+                                      '0.1'));
             $vi->{ProductVersion} =
                 defined_or($config->{options}{packageversion}, '0.1');
             my $pn = defined_or($config->{options}{packagename_text},
@@ -5645,9 +5647,11 @@ sub set_exeparams {
         print $fh "Name=", defined_or($params->{name}, $basename), "\n";
         defined $params->{description} and
             print $fh "Comment=", $params->{description}, "\n";
-        print $fh "Version=", defined_or($params->{version},
-                                         $config->{options}{packageversion},
-                                         '0.1'), "\n";
+        print $fh "Version=",
+        defined_or($params->{version},
+                   defined_or(
+                       $config->{options}{packageversion},
+                       '0.1')), "\n";
         print $fh "Terminal=",
             (defined_or($params->{terminal}, 1) ? "true" : "false"), "\n";
 
@@ -9629,7 +9633,8 @@ EOF
             # some likely guesses, not including the system libc
             output => ['searchlib:m:symbol:sin',
                        'searchlib:pthread:symbol:pthread_create',
-                       'searchlib:dl:symbol:dlopen'],
+                       'searchlib:dl:symbol:dlopen',
+                       'searchlib:Ole32:symbol:CoInitialize'],
             outdepends => [],
             verb => 'determined',
             low_message_priority => 1,
@@ -10505,8 +10510,9 @@ EOF
             depends => 'symbol:',
             # To make things work on Windows, omit symbols that start with a
             # double underscore, apart from DLL import hooks (__imp_.*).
+            # To make C++ work, omit anything ending "__class_type_infoE".
             # To make things work on 64-bit Linux, omit _GLOBAL_OFFSET_TABLE_.
-            dependsarg => qr'^[[:xdigit:]]*\s+U ((?>_?(?!GLOBAL_OFFSET_TABLE)(?:_imp_+)?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*))',
+            dependsarg => qr'^[[:xdigit:]]*\s+U ((?>_?(?!GLOBAL_OFFSET_TABLE)(?:_imp_+)?[a-zA-Z0-9\$][a-zA-Z0-9_\$]*+(?<!__class_type_infoE)))',
         },
         o_file_provisions => {
             object => qr/^bpath:(?!aimake).*\Q$objext\E\z/,
