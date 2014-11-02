@@ -168,6 +168,9 @@ encode_birthoptions(void)
         c |= 0x0010UL;
     if (flags.permahallu)
         c |= 0x0020UL;
+    /* leaving bits open here for permaconf and one other impairment */
+    if (flags.polyinit_mnum != -1)
+        c |= 0x0100UL;
 
     return c;
 }
