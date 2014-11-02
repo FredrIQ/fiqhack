@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2014-10-26
+# Last modified by Alex Smith, 2014-10-30
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
@@ -4475,9 +4475,9 @@ sub calculate_installation_path {
         "Unrecognised installation directory '$install_dir'";
 
     if ($install_name eq 'sys:touch_only') {
-        ensure_directory $instpath, 0, 1;
-        $aipath = $instpath;
         $outpath = destdir_transform $instpath;
+        ensure_directory $outpath, 0, 1;
+        $aipath = $instpath;
         $executable = 2;
     }
 

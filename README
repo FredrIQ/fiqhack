@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-10-05
+Last modified by Alex Smith, 2014-11-02
 
 Copyright (C) 2013 Alex Smith.
 
@@ -13,7 +13,7 @@ NetHack 4
 NetHack 4 is a version of the computer game NetHack, that aims to bring a
 better-quality codebase and a less hostile interface to NetHack's highly rated
 "roguelike" gameplay.  Unlike many NetHack variants, it is intentionally
-conservative in making gameplay changes; in particular, it avoids to aim the
+conservative in making gameplay changes; in particular, it aims to avoid the
 common problem whereby development is driven via fixing perceived balance
 issues with the game (often losing the ability to improvise solutions to
 complex problems in the process), or via focusing too much on the difference
@@ -27,15 +27,15 @@ and Daniel Thaler's NitroHack.  Since then it has incorporated changes from
 numerous other forks (especially the fertile sources of bugfixes that are
 GruntHack and UnNetHack), and has had many improvements of its own.
 
-NetHack 4 has come a long way in the 3 years since 2009, when AceHack began.
-Out of all the lines of C, lex, and yacc source code currently in NetHack 4,
-less than half (approximately 46%) originally come from NetHack 3.4.3 or
-earlier – even if you don't count whitespace changes.  The rest are typically
-modifications or even rewrites of the old code with bugs fixed and style
-improved.  Many people have suggested rewriting NetHack from scratch to get
-rid of the bugs and improve the coding style, but doing so would be close to
-an impossible project.  Our continuous changes of NetHack from the inside will
-eventually accomplish a similar goal, but in a more realistic manner.
+NetHack 4 has come a long way since 2009, when AceHack began.  Out of all the
+lines of C, lex, and yacc source code currently in NetHack 4, less than half
+originally come from NetHack 3.4.3 or earlier – even if you don't count
+whitespace changes.  The rest are typically modifications or even rewrites of
+the old code with bugs fixed and style improved.  Many people have suggested
+rewriting NetHack from scratch to get rid of the bugs and improve the coding
+style, but doing so would be close to an impossible project.  Our continuous
+changes of NetHack from the inside will eventually accomplish a similar goal,
+but in a more realistic manner.
 
 This README file describes NetHack 4.3, which focuses mostly on improvements
 to the game's internals, rather than gameplay changes.  We are planning to
@@ -55,7 +55,7 @@ Bugs in NetHack 4 can be reported at http://trac.nethack4.org, our bug
 tracker.  The homepage for NetHack 4 itself is http://nethack4.org, and
 contains many other resources about the game and its community.
 
-You can discuss NetHack 4 on IRC. irc:irc.freenode.net/nethack4 is the
+You can discuss NetHack 4 on IRC.  irc:irc.freenode.net/nethack4 is the
 specific channel for NetHack 4, and typically discusses development.  For
 gameplay advice, the best place is the general NetHack discussion channel at
 irc:irc.freenode.net/nethack (which also covers NetHack 3 and Slash'EM).  If
@@ -352,8 +352,8 @@ they become `c/lib/libSDL2.a`, etc.).  Finally, copy the file `SDL2.dll` that
 you obtained when you downloaded the library itself to the `prebuilt` folder
 inside the `nethack4` folder that contained the distribution.
 
-Once you've done this, open a command prompt, change to the build directory,
-and type:
+Once you've done this, open Strawberry Perl's command prompt, change to the
+build directory, and type:
 
     perl ..\nethack4\aimake -i ..\install --directory-layout=single_directory
 
@@ -368,12 +368,12 @@ needed, so you can just dismiss the error box and let the build work as
 normal.
 
 Note that despite the best efforts of the rendering library, the game is quite
-slow to render on the console recent versions of Windows; this is because the
-Windows console itself is prety slow.  (For a comparison, you can try running
-a command that produces a lot of text, such as `perl ../nethack4/aimake
---documentation`, and observing how long it takes to scroll the screen when
-you press the spacebar.)  The faketerm port somehow manages to be faster, even
-though it too is fairly slow.
+slow to render on the console when using recent versions of Windows; this is
+because the Windows console itself is prety slow.  (For a comparison, you can
+try running a command that produces a lot of text, such as `perl
+../nethack4/aimake --documentation`, and observing how long it takes to scroll
+the screen when you press the spacebar.)  The faketerm port somehow manages to
+be faster, even though it too is fairly slow.
 
 Server setup
 ------------
