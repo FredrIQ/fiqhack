@@ -12,21 +12,35 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
     options => {
         packagename => 'nethack4',
         packagename_text => 'NetHack 4',
-        packageversion => '4.3.0',
+        packageversion => '4.3.beta2',
+        companyname => 'NetHack 4 DevTeam',
     },
     features => {
         server => {
             description => "Server executable (Linux only)",
+            long_description => "Installs an executable that, if added to ".
+                                "your inetd configuration, allows players on ".
+                                "remote systems to play on your computer.",
             object => qr=^path:nethack_server/=,
             default => 0,
         },
         jansson => {
             description => "Use the provided rather than system libjansson",
+            long_description => "NetHack 4 can build either using a copy of ".
+                                "libjansson that already exists on your ".
+                                "system, or a copy that ships with the ".
+                                "NetHack 4 source. Set this to false if you ".
+                                "already have libjansson development headers ".
+                                "installed, or true otherwise.",
             object => qr=^path:libjansson/=,
             default => 1,
         },
         gui => {
             description => "Tiles and fake terminal ports",
+            long_description => "Installs a GUI executable, that lets you ".
+                                "play with graphical tiles, and play the ".
+                                "text-based version without requiring the ".
+                                "use of a separate terminal emulator.",
             object => qr=^path:(?:tilesets/dat(?!/text|/catalogues/text)
                                 | libuncursed/src/plugins/sdl)=x,
             default => 1,
@@ -36,23 +50,33 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
             # it during the build process. But we can choose not to install
             # it.
             description => "Tileset compiler",
+            long_description => "Installs a command-line tool for changing ".
+                                "the tilesets that ship with NetHack 4 (both ".
+                                "graphical tiles, and sets of character/color ".
+                                "pairs used for rendering in a terminal).",
             object => qr=(?!)=,
-            default => 1,
+            default => 0,
         },
         slashem_tiles => {
             description => "Slash'EM tileset",
+            long_description => "Installs the tileset that traditionally ".
+                                "shipped with older versions of NetHack, ".
+                                "with enhancements from Slash'EM.",
             object => qr=^path:tilesets/dat/catalogues/slashem-=,
             default => 1,
             depends => 'gui',
         },
         dawnlike_tiles => {
             description => "DawnLike tileset",
+            long_description => "Installs the DawnLike tileset by Andrew Rios.",
             object => qr=^path:tilesets/dat/catalogues/dawnlike-=,
             default => 1,
             depends => 'gui',
         },
         rltiles_tiles => {
             description => "RLTiles tileset",
+            long_description => "Installs a modern version of the 'RLTiles'/".
+                                "'Ikatura' tileset, enhanced by Raz.",
             object => qr=^path:tilesets/dat/catalogues/rltiles-=,
             default => 1,
             depends => 'gui',
@@ -513,7 +537,6 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
             exeparams => {
                 copyright => $tilecompile_copyright,
                 name => "NetHack 4 Tile Compiler",
-                version => "1.2",
                 terminal => 1,
                 interactive => 0,
             },
@@ -564,7 +587,7 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
             object => "path:libnethack/dat/license",
             install_dir => "gamesdatadir",
         },
-        
+
         install_manuals => undef, # these are feature-gated
 
         _install_manpage => {
@@ -590,12 +613,6 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
             command => ["intcmd:nop", "optionset:os_windows"],
             install_dir => "docdir",
             install_name => "copyright-details.txt",
-        },
-        _install_binary_copyright => {
-            object => "path:binary-copyright.rtf",
-            command => ["intcmd:nop", "optionset:os_windows"],
-            install_dir => "docdir",
-            install_name => "license.rtf",
         },
         _install_highscores => {
             object => "sys:ensure_exists",
