@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2014-11-03
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
