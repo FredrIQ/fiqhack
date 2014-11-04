@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Sean Hunt, 2014-11-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1921,17 +1921,17 @@ restore_mon(struct memfile *mf)
 {
     struct monst *mon;
     short namelen, xtyp;
-    int idx, i, billid;
+    int idx, i;
     unsigned int mflags;
     struct eshk *shk;
 
-    mfmagic_check(mf, MON_MAGIC);       /* 4 */
+    mfmagic_check(mf, MON_MAGIC);
 
-    namelen = mread16(mf);      /* 6 */
-    xtyp = mread16(mf); /* 8 */
+    namelen = mread16(mf);
+    xtyp = mread16(mf);
     mon = newmonst(xtyp, namelen);
 
-    idx = mread32(mf);  /* 12 */
+    idx = mread32(mf);
     switch (idx) {
     case -1000:
         mon->data = &pm_leader;
@@ -1959,39 +1959,43 @@ restore_mon(struct memfile *mf)
         break;
     }
 
-    mon->m_id = mread32(mf);    /* 16 */
-    mon->mhp = mread32(mf);     /* 20 */
-    mon->mhpmax = mread32(mf);  /* 24 */
-    mon->mspec_used = mread32(mf);      /* 28 */
-    mon->mtrapseen = mread32(mf);       /* 32 */
-    mon->mlstmv = mread32(mf);  /* 36 */
-    mon->mstrategy = mread32(mf);       /* 40 */
-    mon->meating = mread32(mf); /* 44 */
-    restore_coords(mf, mon->mtrack, MTSZ); /* 52 */
-    mon->mnum = mread16(mf);    /* 54 */
-    mon->mx = mread8(mf);       /* 55 */
-    mon->my = mread8(mf);       /* 56 */
-    mon->mux = mread8(mf);      /* 57 */
-    mon->muy = mread8(mf);      /* 58 */
-    mon->m_lev = mread8(mf);    /* 59 */
-    mon->malign = mread8(mf);   /* 60 */
-    mon->movement = mread16(mf);        /* 62 */
-    mon->mintrinsics = mread16(mf);     /* 64 */
-    mon->mtame = mread8(mf);    /* 65 */
-    mon->m_ap_type = mread8(mf);        /* 66 */
-    mon->mfrozen = mread8(mf);  /* 67 */
-    mon->mblinded = mread8(mf); /* 68 */
-    mon->mappearance = mread32(mf);     /* 72 */
-    mflags = mread32(mf);       /* 76 */
+    mon->m_id = mread32(mf);
+    mon->mhp = mread32(mf);
+    mon->mhpmax = mread32(mf);
+    /* 20 */
+    mon->mspec_used = mread32(mf);
+    mon->mtrapseen = mread32(mf);
+    mon->mlstmv = mread32(mf);
+    mon->mstrategy = mread32(mf);
+    mon->meating = mread32(mf);
+    /* 40 */
+    restore_coords(mf, mon->mtrack, MTSZ);
+    mon->mnum = mread16(mf);
+    mon->mx = mread8(mf);
+    mon->my = mread8(mf);
+    mon->mux = mread8(mf);
+    mon->muy = mread8(mf);
+    mon->m_lev = mread8(mf);
+    mon->malign = mread8(mf);
+    mon->movement = mread16(mf);
+    mon->mintrinsics = mread16(mf);
+    /* 60 */
+    mon->mtame = mread8(mf);
+    mon->m_ap_type = mread8(mf);
+    mon->mfrozen = mread8(mf);
+    mon->mblinded = mread8(mf);
+    mon->mappearance = mread32(mf);
+    mflags = mread32(mf);
 
-    mon->mfleetim = mread8(mf); /* 77 */
-    mon->weapon_check = mread8(mf);     /* 78 */
-    mon->misc_worn_check = mread32(mf); /* 82 */
-    mon->wormno = mread8(mf);   /* 83 */
+    mon->mfleetim = mread8(mf);
+    mon->weapon_check = mread8(mf);
+    mon->misc_worn_check = mread32(mf);
+    mon->wormno = mread8(mf);
 
     /* just mark the pointers for later restoration */
-    mon->minvent = mread8(mf) ? (void *)1 : NULL;       /* 84 */
-    mon->mw = mread8(mf) ? (void *)1 : NULL;    /* 85 */
+    mon->minvent = mread8(mf) ? (void *)1 : NULL;
+    /* 80 */
+    mon->mw = mread8(mf) ? (void *)1 : NULL;
 
     if (mon->mnamelth)
         mread(mf, NAME_MUTABLE(mon), mon->mnamelth);
@@ -2026,10 +2030,7 @@ restore_mon(struct memfile *mf)
 
     case MX_ESHK:
         shk = ESHK(mon);
-        billid = mread32(mf);
-        shk->bill_p =
-            (billid == -1000) ? (struct bill_x *)-1000 :
-            (billid == -2000) ? NULL : &shk-> bill[billid];
+        shk->bill_inactive = mread32(mf);
         shk->shk.x = mread8(mf);
         shk->shk.y = mread8(mf);
         shk->shd.x = mread8(mf);
@@ -2166,11 +2167,13 @@ save_mon(struct memfile *mf, const struct monst *mon)
     mwrite32(mf, mon->m_id);
     mwrite32(mf, mon->mhp);
     mwrite32(mf, mon->mhpmax);
+    /* 20 */
     mwrite32(mf, mon->mspec_used);
     mwrite32(mf, mon->mtrapseen);
     mwrite32(mf, mon->mlstmv);
     mwrite32(mf, mon->mstrategy);
     mwrite32(mf, mon->meating);
+    /* 40 */
     save_coords(mf, mon->mtrack, MTSZ);
     mwrite16(mf, mon->mnum);
     mwrite8(mf, mon->mx);
@@ -2181,6 +2184,7 @@ save_mon(struct memfile *mf, const struct monst *mon)
     mwrite8(mf, mon->malign);
     mwrite16(mf, mon->movement);
     mwrite16(mf, mon->mintrinsics);
+    /* 60 */
     mwrite8(mf, mon->mtame);
     mwrite8(mf, mon->m_ap_type);
     mwrite8(mf, mon->mfrozen);
@@ -2212,6 +2216,7 @@ save_mon(struct memfile *mf, const struct monst *mon)
 
     /* just mark that the pointers had values */
     mwrite8(mf, mon->minvent ? 1 : 0);
+    /* 80 */
     mwrite8(mf, mon->mw ? 1 : 0);
 
     if (mon->mnamelth)
@@ -2247,10 +2252,7 @@ save_mon(struct memfile *mf, const struct monst *mon)
 
     case MX_ESHK:
         shk = CONST_ESHK(mon);
-        mwrite32(mf,
-                 (shk->bill_p ==
-                  (struct bill_x *)-1000) ? -1000 : !shk->bill_p ? -2000
-                 : (shk->bill_p - shk->bill));
+        mwrite32(mf, shk->bill_inactive);
         mwrite8(mf, shk->shk.x);
         mwrite8(mf, shk->shk.y);
         mwrite8(mf, shk->shd.x);
