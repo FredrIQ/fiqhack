@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-07-07 */
+/* Last modified by Alex Smith, 2014-11-06 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -99,8 +99,10 @@ auth_user(char *authbuf, int *is_reg)
     } else {
         /* register a new user */
         emailstr = email ? json_string_value(email) : "";
-        if (strlen(emailstr) > 100)
+        if (strlen(emailstr) > 100) {
+            log_msg("Rejecting registration attempt: email is too long");
             goto err;
+        }
 
         userid = db_register_user(namestr, passstr, emailstr);
         if (userid) {
@@ -113,6 +115,8 @@ auth_user(char *authbuf, int *is_reg)
             mkdir(savedir, 0700);
             log_msg("User has registered as \"%s\" (userid: %d)",
                     namestr, userid);
+        } else {
+            log_msg("User has failed to register as \"%s\"", namestr);
         }
     }
 
