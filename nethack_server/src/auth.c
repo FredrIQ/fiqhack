@@ -58,8 +58,10 @@ auth_user(char *authbuf, int *is_reg)
     int userid = 0;
 
     obj = json_loads(authbuf, 0, &err);
-    if (!obj)
+    if (!obj) {
+        log_msg("auth packet does not look like valid JSON");
         return 0;
+    }
 
     /* try 1: is it an auth command? */
     *is_reg = 0;
@@ -69,22 +71,28 @@ auth_user(char *authbuf, int *is_reg)
         *is_reg = 1;
         cmd = json_object_get(obj, "register");
     }
-    if (!cmd)   /* not a recognized command */
+    if (!cmd) {  /* not a recognized command */
+        log_msg("auth packet is not 'auth' or 'register'");
         goto err;
+    }
 
     name = json_object_get(cmd, "username");
     pass = json_object_get(cmd, "password");
     email = json_object_get(cmd, "email");      /* is null for auth */
 
-    if (!name || !pass)
+    if (!name || !pass) {
+        log_msg("auth packet is missing name or password");
         goto err;
+    }
 
     namestr = json_string_value(name);
     passstr = json_string_value(pass);
 
     if (!namestr || !passstr || strlen(namestr) < 3 || strlen(passstr) < 3 ||
-        !is_valid_username(namestr))
+        !is_valid_username(namestr)) {
+        log_msg("name or password is invalid");
         goto err;
+    }
 
     if (!*is_reg) {
 
