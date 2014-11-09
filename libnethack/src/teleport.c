@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Sean Hunt, 2014-11-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -718,11 +718,7 @@ level_tele_impl(boolean wizard_tele)
     /* calls done(ESCAPED) if newlevel==0 */
     if (escape_by_flying) {
         pline("You %s.", escape_by_flying);
-        newlevel.dnum = 0;      /* specify main dungeon */
-        newlevel.dlevel = 0;    /* escape the dungeon */
-        /* [dlevel used to be set to 1, but it doesn't make sense to teleport
-           out of the dungeon and float or fly down to the surface but then
-           actually arrive back inside the dungeon] */
+        done(ESCAPED, "teleported to safety");
     } else if (u.uz.dnum == medusa_level.dnum &&
                newlev >=
                dungeons[u.uz.dnum].depth_start + dunlevs_in_dungeon(&u.uz)) {

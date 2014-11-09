@@ -150,6 +150,31 @@ encode_carried(void)
     return c;
 }
 
+unsigned long 
+encode_birthoptions(void)
+{
+    /* This function encodes birth options (excluding ones that have their own xlog fields)
+       Compare to the list in options.c */
+    unsigned long c = 0UL;
+    if (flags.elbereth_enabled)
+        c |= 0x0001UL;
+    if (flags.rogue_enabled)
+        c |= 0x0002UL;
+    if (flags.seduce_enabled)
+        c |= 0x0004UL;
+    if (flags.bones_enabled)
+        c |= 0x0008UL;
+    if (flags.permablind)
+        c |= 0x0010UL;
+    if (flags.permahallu)
+        c |= 0x0020UL;
+    /* leaving bits open here for permaconf and one other impairment */
+    if (flags.polyinit_mnum != -1)
+        c |= 0x0100UL;
+
+    return c;
+}
+
 static unsigned long
 encode_conduct(void)
 {
@@ -203,6 +228,8 @@ write_xlentry(FILE * rfile, const struct toptenentry *tt,
     fprintf(rfile, SEP "dumplog=%s", buf2);
 
     fprintf(rfile, SEP "conduct=%ld", encode_conduct());
+
+    fprintf(rfile, SEP "birthoption=%ld", encode_birthoptions());
 
     fprintf(rfile, SEP "extrinsic=0x");
     i = SIZE(u.ever_extrinsic);
