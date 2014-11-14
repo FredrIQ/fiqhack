@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2014-11-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -113,7 +113,7 @@ loadfile(int fd, int *datasize)
 }
 
 
-const char *
+static const char *
 fqname(const char *filename, int whichprefix, int buffnum)
 {
     if (!filename || whichprefix < 0 || whichprefix >= PREFIX_COUNT)
@@ -144,6 +144,12 @@ fopen_datafile(const char *filename, const char *mode, int prefix)
 
     filename = fqname(filename, prefix, prefix == TROUBLEPREFIX ? 3 : 0);
     fp = fopen(filename, mode);
+
+    /* prefix check is to prevent infinite recursion if we can't open the
+       panic log */
+    if (!fp && prefix != TROUBLEPREFIX)
+        paniclog("nofile", filename);
+
     return fp;
 }
 
