@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-22 */
+/* Last modified by Alex Smith, 2014-11-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -98,7 +98,7 @@ static char **
 init_game_paths(const char *argv0)
 {
 #ifdef WIN32
-    char dirbuf[1024], docpath[MAX_PATH], *pos;
+    char dirbuf[1024], *pos;
 #endif
     const char *pathlist[PREFIX_COUNT];
     char **pathlist_copy = malloc(sizeof (char *) * PREFIX_COUNT);
@@ -149,11 +149,17 @@ init_game_paths(const char *argv0)
 
     for (i = 0; i < PREFIX_COUNT; i++)
         pathlist[i] = dir;
-    /* get the actual, localized path to the Documents folder */
-    if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_PERSONAL, NULL, 0, docpath)))
-        pathlist[DUMPPREFIX] = docpath;
-    else
-        pathlist[DUMPPREFIX] = ".\\";
+
+
+    pathlist[DUMPPREFIX] = tmp = malloc(MAXPATH);
+    if (!get_gamedir(DUMP_DIR, tmp)) {
+        /* get the actual, localized path to the Documents folder */
+        if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_PERSONAL, NULL, 0, docpath)))
+            pathlist[DUMPPREFIX] = docpath;
+        else
+            pathlist[DUMPPREFIX] = ".\\";
+    }
+
 #else
     /* WIN32 / UNIX is set by the header files, /but/ those aren't included
        during dependency calculation. We want to error out if neither is set,

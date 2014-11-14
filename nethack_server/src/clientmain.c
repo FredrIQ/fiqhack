@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-22 */
+/* Last modified by Alex Smith, 2014-11-14 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -57,6 +57,7 @@ init_game_paths(void)
         pathlist[BONESPREFIX] = temp_path;
         pathlist[SCOREPREFIX] = temp_path;
         pathlist[TROUBLEPREFIX] = temp_path;
+        pathlist[DUMPPREFIX] = temp_path;
     }
 
     temp_path = aimake_get_option("specificlockdir");
