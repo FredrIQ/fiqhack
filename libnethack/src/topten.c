@@ -175,6 +175,8 @@ encode_birthoptions(void)
     return c;
 }
 
+static_assert(num_conducts <= 32,
+              "Too many conducts for encode_conduct to encode");
 static unsigned long
 encode_conduct(void)
 {
