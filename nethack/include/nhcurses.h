@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-18 */
+/* Last modified by Alex Smith, 2014-11-14 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -117,7 +117,8 @@ enum game_dirs {
     CONFIG_DIR,
     SAVE_DIR,
     LOG_DIR,
-    DUMP_DIR
+    DUMP_DIR,
+    TILESET_DIR
 };
 
 /* A boolean that can be "pinned" at a particular value, or that can be left to
@@ -545,7 +546,8 @@ extern nh_bool player_selection(int *out_role, int *out_race, int *out_gend,
 extern void replay(void);
 
 /* rungame.c */
-extern nh_bool get_gamedir(enum game_dirs dirtype, fnchar * buf);
+extern nh_bool get_gamedir(enum game_dirs dirtype, fnchar *buf);
+extern nh_bool get_gamedirA(enum game_dirs dirtype, char *buf);
 extern void curses_request_command(nh_bool debug, nh_bool completed,
                                    nh_bool interrupted, void *callbackarg,
                                    void (*)(const struct nh_cmd_and_arg *cmd,

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-18 */
+/* Last modified by Alex Smith, 2014-11-14 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -135,21 +135,50 @@ seek_tile_file(FILE *in) {
 void
 set_tile_file(const char *tilefilename)
 {
-    char namebuf[strlen(tileprefix) + strlen(tilefilename) + 1];
-    strcpy(namebuf, tileprefix);
-    strcat(namebuf, tilefilename);
+    char namebuf1[strlen(tileprefix) + strlen(tilefilename) + 1];
+    strcpy(namebuf1, tileprefix);
+    strcat(namebuf1, tilefilename);
+
+    char user_tilespath[
+#ifdef AIMAKE_BUILDOS_MSWin32
+        MAX_PATH
+#else
+        BUFSZ
+#endif
+        ];
+
+    *user_tilespath = '\0';
+
+    if (!ui_flags.connection_only)
+        get_gamedirA(TILESET_DIR, user_tilespath);
+
+    char namebuf2[strlen(user_tilespath) + strlen(tilefilename) + 1];
+    strcpy(namebuf2, user_tilespath);
+    strcat(namebuf2, tilefilename);
 
     free(tiletable);
     tiletable = NULL;
     tiletable_len = 0;
 
     /* On Windows, fopen has somehow been redefined to take a wchar_t * here.
-       Make sure we call the function, not the macro. */
-    FILE *in = (fopen)(namebuf, "rb");
+       Make sure we call the function, not the macro. We look in two places: the
+       tilesets we installed, and the user tiles path. The user tiles path
+       takes precedence if there's a tileset in both locations. */
+    FILE *in = *user_tilespath ? (fopen)(namebuf2, "rb") : NULL;
+    char *whichnamebuf = namebuf2;
+
+    if (!in) {
+        in = (fopen)(namebuf1, "rb");
+        whichnamebuf = namebuf1;
+    }
+
     if (!in) {
         int e = errno;
-        char errmsgbuf[sizeof namebuf + sizeof "Warning: could not open tileset file \n" + 1];
-        sprintf(errmsgbuf, "Warning: could not open tileset file %s\n", namebuf);
+        char errmsgbuf[sizeof namebuf1 + sizeof namebuf2 +
+                       sizeof "Warning: could not open tileset file '' or ''\n"
+                       + 1];
+        sprintf(errmsgbuf, "Warning: could not open tileset file '%s' or '%s'\n",
+                namebuf2, namebuf1);
         curses_raw_print(errmsgbuf);
         curses_raw_print(strerror(e));
         return;
@@ -170,7 +199,7 @@ set_tile_file(const char *tilefilename)
         set_tiles_tile_file(NULL, 0, 0);
         tiletable_is_cchar = 1;
     } else {
-        set_tiles_tile_file(namebuf, h, w);
+        set_tiles_tile_file(whichnamebuf, h, w);
         tiletable_is_cchar = 0;
     }
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-07-31 */
+/* Last modified by Alex Smith, 2014-11-14 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -19,7 +19,7 @@
 #if defined(WIN32)
 
 nh_bool
-get_gamedir(enum game_dirs dirtype, wchar_t * buf)
+get_gamedir(enum game_dirs dirtype, wchar_t *buf)
 {
     wchar_t *subdir;
     wchar_t appPath[MAX_PATH], nhPath[MAX_PATH];
@@ -53,6 +53,9 @@ get_gamedir(enum game_dirs dirtype, wchar_t * buf)
     case DUMP_DIR:
         subdir = L"\\dumps\\";
         break;
+    case TILESET_DIR:
+        subdir = L"\\tilesets\\";
+        break;
     default:
         return FALSE;
     }
@@ -63,6 +66,55 @@ get_gamedir(enum game_dirs dirtype, wchar_t * buf)
 
     snwprintf(buf, BUFSZ, L"%s%s", nhPath, subdir);
     _wmkdir(buf);
+
+    return TRUE;
+}
+
+/* Non-unicode version of the above. The code duplication is annoying, but
+   deduplicating it would be even messier; there are too many subtle
+   differences. */
+nh_bool
+get_gamedirA(enum game_dirs dirtype, char *buf)
+{
+    char *subdir;
+    char appPath[MAX_PATH], nhPath[MAX_PATH];
+
+    if (override_userdir) {
+        strncpy(nhPath, override_userdir, MAX_PATH);
+    } else {
+        /* Get the location of "AppData\Roaming" (Vista, 7) or "Application
+           Data" (XP). The returned Path does not include a trailing backslash. 
+         */
+        if (!SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_APPDATA, NULL, 0, appPath)))
+            return FALSE;
+    }
+
+    switch (dirtype) {
+    case CONFIG_DIR:
+        subdir = "\\";
+        break;
+    case SAVE_DIR:
+        subdir = "\\save\\";
+        break;
+    case LOG_DIR:
+        subdir = "\\log\\";
+        break;
+    case DUMP_DIR:
+        subdir = "\\dumps\\";
+        break;
+    case TILESET_DIR:
+        subdir = "\\tilesets\\";
+        break;
+    default:
+        return FALSE;
+    }
+
+    if (!override_userdir)
+        snprintf(nhPath, MAX_PATH, "%s\\NetHack4", appPath);
+    mkdir(nhPath);
+
+    snprintf(buf, BUFSZ, "%s%s", nhPath, subdir);
+    mkdir(buf);
 
     return TRUE;
 }
@@ -87,6 +139,9 @@ get_gamedir(enum game_dirs dirtype, char *buf)
         break;
     case DUMP_DIR:
         subdir = "dumps/";
+        break;
+    case TILESET_DIR:
+        subdir = "tilesets/";
         break;
     default:
         return FALSE;
@@ -127,6 +182,12 @@ get_gamedir(enum game_dirs dirtype, char *buf)
     umask(mask);
 
     return TRUE;
+}
+
+nh_bool
+get_gamedirA(enum game_dirs dirtype, char *buf)
+{
+    return get_gamedir(dirtype, buf);
 }
 
 #endif
