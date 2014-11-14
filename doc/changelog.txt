@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-08-15
+Last modified by Alex Smith, 2014-11-14
 
 Copyright (C) 2013 Alex Smith.
 
@@ -71,6 +71,14 @@ Changes are divided into categories:
     the code cleaner and thus reducing bugs, so it probably wouldn't run on
     weaker processors anyway.  There is positive news, though, in that the
     game is now much easier to build.
+
+  * Bugfixes against beta versions.
+
+    These are things that we didn't mean to change, and have since been
+    changed back.  They're thus unlikely to be of interest to a NetHack 3
+    series player, but may interest players who played a beta of NetHack 4.
+    (Changes in beta versions that are larger than simple bugfixes will be
+    mentioned in the main changelog instead.)
 
 Documentation improvements are not listed here.  Although there are many of
 those too, it should be easy to find them via looking in the various `doc/`
@@ -323,10 +331,12 @@ player's hunger level are now visible. (Un, 145e145, 6ec5736)
 While in wizard mode, confused level teleport on the Planes no longer has a
 chance of crashing the game. (Grunt, C343-5, 3df1f97)
 
-Two new commands are added to accompany `#panic` for testing the game's error
-recovery routines: `#impossible` causes a nonfatal error (unlike `#panic`
-which causes a fatal error), and `#desync` corrupts the binary save. (4,
-7a3978f)
+Three new commands are added to accompany `#panic` for testing the game's
+error recovery routines: `#impossible` causes a nonfatal error (unlike
+`#panic` which causes a fatal error), `#desync` corrupts the binary save, and
+a new entry on the `!` menu causes the client to segfault (in order to observe
+how that affects the rest of the system, such as the server). (4, 7a3978f,
+900018f)
 
 A new debug command `#rewind` allows rewinding of save files to earlier
 states, perhaps as part of a manual recovery process, or for testing; it
@@ -416,6 +426,8 @@ turn, rather than being able to use one stethoscope total (unless you saved
 and restored in between, in which case in 3.4.3 you could use the same
 stethoscope as often as you liked). (Nitro and 4, f342510, 18db100)
 
+`a`: Towels can now be used even if wielded. (4, C343-274, 6e19ca0)
+
 `A`: Now allows equipping items into arbitrary slots (e.g. changing your
 secondary weapon slot while wielding cursed weapon), in addition to
 de-equipping. The timing rules have also changed, because they were entirely
@@ -473,6 +485,9 @@ or `W`.) (4, c0d5ee2)
 `q`, `#pray`: These commands no longer interact with dungeon features while
 engulfed. (Grunt, C343-63, 8c03941)
 
+`q`: Now formally IDs the type of potion if the quaff produces a unique
+message. (4, 43b7de0)
+
 `r`: Now formally identifies enchant armour scrolls when they are used to
 create DSM. (Dyna, c9ffd37)
 
@@ -507,6 +522,9 @@ nearest point where burden level changes. (Ace, 237951d)
 
 `#force`: Now charged for if used on an unpaid item. (Grunt, C343-241,
 7704a8f)
+
+`#kick`: Now correctly handles kicking beyond the edge of the map. (4,
+C343-245, b85d9a3)
 
 `#offer`: If the character should be given a sacrifice gift but no coaligned
 artifacts are available, they will now be given an unaligned artifact as a
@@ -574,6 +592,15 @@ making a wish from them. (Grunt, C343-95, 3d7a853)
 The wish parser now accepts undead monster corpses (e.g. "elf zombie corpse"),
 producing a corpse that could have been be produced as the result of killing
 that species of undead. (4, 83e49d2)
+
+It's now possible to wish for an item with a specific inventory letter
+(e.g. by wishing for "k - a blessed skeleton key").  This is mainly intended
+for the eventual creation of a testsuite, but perhaps it will be of use to
+people attempting certain bizarre conducts.  (Note that this affects gameplay
+in the obscure situation where you wish for a tripe ration with a full
+inventory or when fumbling; it'll count as having been in inventory
+momentarily to gain the letter, so a pet will consider it to have been dropped
+by the player.) (4, 245d8ce)
 
 The Book of the Dead is now immune to lava even if the character holding it
 does not have fire resistance. (Grunt, a9267e4, 1b6f60e)
@@ -659,7 +686,11 @@ samurai. (4, 820b493)
 Rust, corrosion, etc. now work more consistently between different sources of
 erosion damage.  (Some specific changes of this are that grease is now more
 reliable and the character is able to notice that an item is rustproof when it
-resists damage in more situations.) (4, 4e5d57b..454f173)
+resists damage in more situations.) (4, 4e5d57b..454f173, 6dc5d8a, b380af2)
+
+It's now possible to fit a bag of holding under the gap in a door even if it
+has items inside (assuming that the character holding it also fits through the
+gap). (4, 50c5dbe)
 
 
 Monsters and Polyforms
@@ -763,6 +794,8 @@ unarmed. (Un, 6865f90)
 `@`: The Oracle of Delphi no longer welcomes characters that she's hostile to.
 (4, C343-181, 5113058)
 
+`@`: Prisoners no longer use messages intended for djinn. (4, 896f668)
+
 `&`: When a djinni is pulled out of a lamp or bottle, if it is annoyed at the
 character for disturbing it, it now always generates hostile (rather than
 sometimes generating peaceful if the character is neutral). (Grunt, c9456af)
@@ -810,11 +843,15 @@ Monsters that can ooze under doors can also ooze through diagonal gaps.
 
 Monsters no longer get stuck in corridors while fleeing. (Dyna, f71440b)
 
-Monsters will no longer attack hiding players with ranged
-attacks. (Grunt, C343-377, 81f437f)
+Monsters will no longer attack hiding players with ranged attacks.
+(Grunt, C343-377, 81f437f)
 
 The monster clerical "lightning" spell now works consistently with other forms
 of lightning with respect to blinding the player. (Grunt, C342-46, 7438364)
+
+Quest leaders will now avoid traps (thus preventing the game becoming
+unwinnable due to the Norn stepping on a fire trap and drowning). (4,
+efeff64)
 
 
 Dungeon
@@ -857,6 +894,13 @@ transformations) is now specified as an offset from UTC (the "timezone" birth
 option), rather than using the local time of the server; this both allows
 remote players to get moon phases more in line with their local time, and
 removes exploits from malicious daylight saving definitions. (4, 236c80b)
+
+The game now correctly tracks whether the player is aware of water and lava
+that they can't currently see (thus, for instance, it's no longer possible to
+dig down on a fountain while blind, and then have travel automatically avoid
+the resulting pools even though you don't know where they are). (4, c627ba3)
+
+Fire traps now sometimes hit weapons instead of armor. (4, d84cd4f)
 
 
 Character
@@ -910,6 +954,14 @@ previous versions of NetHack). (4, 971d4e9, c55c327)
 
 The blindness from stinking clouds now works consistently regardless of the
 speed of the character. (4, 2415414)
+
+A character can now have a different name from the player even in server play.
+The set of characters allowed in character names has been limited to prevent
+path traversal / shell injection vulnerabilities that might otherwise arise as
+a side-effect of this change. (Nitro and 4, 2ec5137-91348a9 and others)
+
+Sleeping gas traps can now affect monsters even if they're ridden by a
+sleep-resistant player. (4, C343-260, 20805c6)
 
 
 Messages
@@ -1188,6 +1240,13 @@ the inventory letter for the stack. (Bilious and Nitro, 7092675)
 levitating, or confused/stunned/otherwise unaware of the danger), in order to
 cut down on typo-related item destruction and death. (Ace, eadc0ef)
 
+`n`/`0`-`9`: It's now possible to rebind the prefix for giving a numeric count
+to a command.  If you bind the main keyboard digits to be a repeat count (as
+is the default), you get behaviour like "vi-keys" from the NetHack 3 series,
+whereby you can enter a repeat count directly.  Any other key just enters
+repeat count mode without specifying a count, like `n` from "numpad" mode from
+the NetHack 3 series. (a199737)
+
 `o`: Now closes doors in addition to opening them, and unlocks locked doors
 (using whichever unlocking tool you used most recently). (Ace, 03643af,
 6ee1f33)
@@ -1209,7 +1268,9 @@ to something else if you wanted to. (4, 24c4359)
 
 `P`,`R`,`T`,`W`: Can now equip and unequip items in slots blocked by other
 items; the outside slots will be temporarily removed to allow for the
-multistage equip. (4, e5262d7)
+multistage equip (and left removed if they cannot be re-equipped afterwards,
+e.g. when wearing a shield with a two-handed weapon previously wielded). (4,
+e5262d7, ec32a78)
 
 `q`: Quaffing from sinks and fountains is now on `q,` rather than 3.4.3's `qy`
 (which broke muscle memory when attempting to quaff from inventory slot `y`).
@@ -1238,6 +1299,9 @@ dffe879, 6bf8e3d)
 `V`: Now also allows you to rub items, if they're suitable for rubbing rather
 than invoking, and is the new way to break wands. (4, 120cdac)
 
+`w`,`a`: When the `multistage_equip` optionis set, these commands will
+automatically remove a shield to make way for a two-handed item. (4, ec32a78)
+
 `X`: The `X` command for entering explore mode no longer exists; `X` is now
 bound to `#twoweapon`. (Nitro and Ace, a2c8999, 74dea97)
 
@@ -1251,6 +1315,8 @@ using out-of-game notes. (Ace, e894514..a7a0ce7, cd9df40)
 
 `Z`: Directional and positional spells can now be cancelled at the prompt that
 requests a direction or position. (4, e75e808..00cb03c)
+
+`#`: Extended commands are now case-insensitive. (4, c6d4f71)
 
 `#history`: The game now stores a list of major events that happened during
 the game (levelling up, wishes, etc.), viewable in-game with the `#history`
@@ -1471,6 +1537,10 @@ information; for instance, the inventory menu is drawn over the inventory
 sidebar (if there is one), so that it does not hide the map or messages.  (4,
 69841a7, 4e77ee8)
 
+Walls and floors now have a huge range of different colour schemes (depending
+on the selected tileset or the ASCII equivalent), depending on which branch
+you're in, and sometimes, where in the branch you are. (4, b58c431)
+
 
 Outside the Game
 ----------------
@@ -1499,7 +1569,7 @@ and 4, 0128f35, e6b2994, caac7d0, c278fd2)
 The game now generates an extended logfile that stores more detail about what
 happened in the games played on that installation (or server), for statistical
 and tournament scoring purposes. (Bilious, Ace and 4, 33350a2,
-e25fe11..b405854)
+e25fe11..b405854 and others)
 
 Pressing `q` during the "Do you want your possessions identified?" sequence
 now skips to the final screen with the tombstone, rather than skipping past
@@ -1630,7 +1700,7 @@ unusual dungeon features in unusual lighting conditions. (4, 3c06767, 3b11dc1)
 
 x coordinates and y coordinates now use the same storage internally; in
 particular, x = 0 no longer means "off the map", because y = 0 is on the
-map. (4, e61bcb3, f12c528 and others)
+map. (4, e61bcb3, f12c528, 8f01d76 and others)
 
 Objects intended to exist only briefly are now allocated separately and checks
 occur that they do not survive for more than a turn. Additionally, venom now
@@ -1650,6 +1720,10 @@ file in place to be manually edited), or in some cases automatic repair
 (automatic recovery works by reloading from a backup save, automatic repair
 via treating impossible values as plausible legal values). (4, 41a0806,
 7a3978f)
+
+A new random number generator is in use, with improved error handling,
+increased seed space, better seeding, better security against attempts to
+deduce the RNG sequence, and reduced save file size. (Ace and 4, 7d99f45, )
 
 
 Client/Server Structure and API
@@ -1784,6 +1858,15 @@ and transparent tiles, in addition to referring to tiles by name rather than
 number (reducing tiles-related mistakes when adding new features to the
 game). (Slash'EM and 4, 267b5a1..9e69e72)
 
+The tiles system has been generalized to allow some tiles to exist in some
+tilesets, and not in other tilesets (meaning that tilesets can have more
+specific tiles than before, e.g. "dwarf valkyrie"). (4, 4c457cd..c173171 and
+others)
+
+"Tilesets" that specify a character and colour are now also used for non-tiles
+rendering, increasing the flexibility and customizability of the map display.
+(4, 3783ed3..a695061 and others)
+
 The code is now written to specific levels of library support (in general,
 X/Open `_XOPEN_SOURCE=700` and C11, although exceptions are made in some
 places, such as the server code), rather than the mix that had built up over
@@ -1805,3 +1888,172 @@ system (because things can be rearranged internally without breaking
 anything), and is also much easier for players building from source, because
 it requires substantially less manual intervention than the old system did.
 (4, 2912d38 and others)
+
+
+Bugfixes against Beta Versions
+==============================
+
+Since 4.3-beta1
+---------------
+
+Being hit by a reflectable attack (with no reflection sources) no longer gives
+an error message. (46eae5d)
+
+Recovering from a desync no longer causes further desyncs with every use of
+the RNG. (ee16602)
+
+Hangup in a terminal smaller than 80 by 24 no longer causes an infinite loop.
+(055ee42)
+
+There have been some fixes to ensure that messages display correctly in corner
+cases. (3803ac7..17dcb97, 50cc5d9)
+
+The Enter key on the numeric keypad once again works to step through a
+`--More--` prompt. (cd0cee1..7e301ca)
+
+EOF on standard input no longer causes an infinite loop at program exit.
+(6af63e8)
+
+The game no longer prints error messages for every item in inventory you can't
+wield merely as a result of opening the `w` menu; you now actually have to
+wield the item to be told that you can't. (9c8c1e5)
+
+Pressing alt, control, and an opening square bracket is now interpreted
+identically to `ESC` (the terminal codes for this, and for `ESC` pressed
+twice, differ only in timing, and it's much more likely that we're seeing an
+`ESC ESC` that got its timing corrupted due to network lag than that someone
+actually pressed that bizarre key combo). (659fc26)
+
+The rules for choking on items have changed from one set of inconsistent
+behaviour, to a different set of inconsistent behaviour that never kills a
+character if they wouldn't have died in NetHack 3.4.3. (4879834)
+
+The game no longer crashes when an object with a timer (such as a lit oil
+lamp) moves between levels without being carried (e.g. falling through a
+hole). (d66b190)
+
+Many checks have been added against the player wielding items outside their
+inventory. (eefbe63)
+
+The alignment padding in the save file format is no longer considered
+interesting for the purpose of binary diffs (meaning that the compression used
+on save files compresses a little better). (9a5a308)
+
+Many incorrect assumptions that prevented the game running on Mac OS X were
+fixed. (6859f7e, d63ae4a, 79312f0, 4a8488b, 258e155, 0a980ce)
+
+Summoned nasties no longer crash the game when two references to the same
+level are stored in different places in memory. (a7cf369)
+
+Various typo fixes to messages. (7ca0627, 39478da, f58ce5f, d70bf91)
+
+Identification of items by the "Do you want your possessions identified?"
+screen no longer exercises Wisdom (which triggered the desync detector,
+because the players' stats aren't meant to be changing at that point).
+(60d28cc)
+
+Worn items no longer remain worn after the player's death (which was
+triggering the desync detector, whose reaction was to undo the death to get
+the game back into a sane state!) (990c00d)
+
+Amulets of change no longer cause a desync. (92d477a)
+
+Automatic recovery of save files has been disabled in situations where it
+would rewind the vast majority of the game (e.g. to before the first turn).
+(0936020)
+
+Venom now always breaks upon being thrown (so that it can no longer be picked
+up and thrown back some proportion of the time). (d01be1d)
+
+The client no longer enters an infinite loop on hangup if it disagrees with
+the server as to whether there's a game running. (099033d)
+
+The performance of screen updates has been improved by reducing the amount of
+redundant redrawing. (4ae58d5)
+
+Level regions, staircases, and the like are again defined in a consistent way,
+meaning that falling onto a level like the Castle will place the character
+over the left hand side (as intended), rather than sometimes at the right or
+top or bottom.  Note: the game attempts to detect and fix save files that were
+corrupted by this sort of problem, and because it would be a false positive,
+stairs will not function in the top-left corner of the map (but they never
+generate there anyway). (8f01d76, d76ac60, e02902b)
+
+Wielding a cockatrice corpse no longer disregards the presence of gloves.
+(64baef1)
+
+The parser for the spell-adjustment menu on `+` has been fixed to correctly
+distinguish valid from invalid input. (afbeafc)
+
+In server play, it's now possible to start a new game after watching somebody
+else's game. (805b28e)
+
+If a game crashes during the game over sequence, loading the replay will now
+detect this and automatically attempt to reconstruct the game over sequence
+(creating an xlogfile entry and dumplog that might otherwise have been
+missing). (226daa1, 3301166..aeae4b0 and others)
+
+Much of the server daemon code was replaced by offloading the work to `inetd`
+instead.  This solved the server reliability problems that nethack4.org was
+having, and also makes debugging a server locally much more convenient.
+(472d025..78aa8b8)
+
+If a user rebinds 5 (on the main or numeric keypad) to a movement direction
+(overriding its default meaning), that's now respected at direction prompts.
+(e389814)
+
+Yes/no and similar prompts no longer corrupt one byte of memory. (8771d1b)
+
+Inventory letters no longer become corrupted in the corner case where a player
+has a full inventory with the last item picked inhabiting slot `Z`, drops that
+item, then picks up a different item that's never previously been in their
+inventory.  (If your game is affected by this bug, you can fix the issue by
+dropping your entire inventory, then picking the items up again.) (441e50d)
+
+A Strength score of 18/100 no longer displays as `18/10`, like a Strength
+score of 18/10 would. (50251de)
+
+Monsters that have been deleted from the map (currently recorded, as in the
+NetHack 4 series, by setting their HP to a negative number) no longer have the
+ability to spontaneously undelete themselves via regenerating HP over time.
+(fad1d3a)
+
+Removing gauntlets of fumbling now again causes you to stop fumbling
+immediately, rather than with a d20 turn delay. (ee4ac33)
+
+Seeking forwards 50 turns in a replay now seeks to the next available seekable
+point in the replay if there are no seekable points within 50 turns. (7683f53)
+
+Menus are no longer sometimes drawn offscreen (this case most commonly
+happened with itemactions menus in cases where the object name was wider than
+the inventory sidebar). (9377bc1, 643b6e0)
+
+The client no longer crashes upon trying to open the extended command
+menu. (c19e6cb)
+
+Many pluralisation problems have been fixed, especially with respect to items
+that come in pairs (such as gloves). (3716cb1)
+
+Resizing the client is now more reliable, both in a terminal and when using an
+SDL fake terminal or tiles view. (8c39d1a)
+
+New interface options have been added to make menus and prompts in NetHack 4
+render more like they did in the NetHack 3 series. (117a1cb, ebf177e, 94a38cf,
+80d35f4)
+
+Workarounds to bugs in various terminals were added. (141c307)
+
+`#name` no longer uses the Sting/Orcrist codepath for other artifacts (meaning
+that you could create arbitrary artifacts if you owned the corresponding base
+item). (6c2cf58)
+
+It's no longer possible to use wizard-mode teleport outside wizard mode.
+(f2f91a0)
+
+Purple worms summoned by shriekers no longer appear outside the map. (44e5bea)
+
+Wounded legs no longer permanently reduce Dexterity. (1e946d8)
+
+Engravings are now again capable of eroding. (ea7ae17)
+
+Grayswandir now again blocks hallucination. (700b320)
