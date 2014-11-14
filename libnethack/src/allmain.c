@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-22 */
+/* Last modified by Alex Smith, 2014-11-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -147,8 +147,6 @@ nh_exit_game(int exit_type)
 void
 startup_common(boolean including_program_state)
 {
-    /* (re)init all global data */
-    init_data(including_program_state);
     reset_encumber_msg();
 
     /* create mutable copies of object and artifact liss */
@@ -262,7 +260,6 @@ post_init_tasks(void)
 enum nh_create_response
 nh_create_game(int fd, struct nh_option_desc *opts_orig)
 {
-    unsigned int seed = 0;
     microseconds birthday;
     int i;
     volatile int log_inited = 0;
@@ -290,14 +287,18 @@ nh_create_game(int fd, struct nh_option_desc *opts_orig)
 
     birthday = utc_time();
 
+    /* Initalize all global data. (This also wipes the RNG seed, so needs to
+       be called before seed_rng_from_entropy.) */
+    init_data(TRUE);
+
     /* Initialize the random number generator. This can use any algorithm we
-       like, and is not constrained by timing rules; but the birthday is a
-       sensible input to use. The low-order decimal digits may potentially be
-       all zeros, so we XOR them with the high-order decimal digits to get a
-       seed that's unpredictable if we have low-order digits available and
-       different between games even if we don't. */
-    seed = (unsigned)(birthday / 1000000LL) ^ (unsigned)(birthday % 1000000LL);
-    mt_srand(seed);
+       like, and is not constrained by timing rules, so we use the entropy
+       collectors in newrng.c.
+
+       TODO: Allow this to be specified as a birth option, and enter a
+       non-scoring mode if it is. The main problem with this is in coming up
+       with a good interface for it. */
+    seed_rng_from_entropy();
 
     startup_common(TRUE);
 
@@ -326,7 +327,7 @@ nh_create_game(int fd, struct nh_option_desc *opts_orig)
        newgame() is called. */
     log_init(fd);
     log_inited = 1;
-    log_newgame(birthday, seed);
+    log_newgame(birthday);
 
     newgame(birthday);
 
@@ -446,6 +447,7 @@ nh_play_game(int fd, enum nh_followmode followmode)
         goto normal_exit;
     }
     
+    init_data(TRUE);
     startup_common(TRUE);
 
     /* Load the save file. log_sync() needs to be called at least once because

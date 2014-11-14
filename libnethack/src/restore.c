@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-11 */
+/* Last modified by Alex Smith, 2014-11-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -469,7 +469,9 @@ restgamestate(struct memfile *mf)
 
     restnames(mf);
     restore_waterlevel(mf, lev);
-    restore_mt_state(mf);
+
+    mread(mf, flags.rngstate, sizeof flags.rngstate);
+
     restore_track(mf);
     restore_rndmonst_state(mf);
     restore_history(mf);

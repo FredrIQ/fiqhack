@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-24 */
+/* Last modified by Alex Smith, 2014-11-14 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -936,7 +936,7 @@ stop_updating_logfile(int lines_added)
 /***** Creating specific log entries *****/
 
 void
-log_newgame(microseconds start_time, unsigned int seed)
+log_newgame(microseconds start_time)
 {
     char encbuf[ENCBUFSZ];
     const char *role;
@@ -965,7 +965,7 @@ log_newgame(microseconds start_time, unsigned int seed)
 
     base64_encode(u.uplname, encbuf);
     lprintf("%0" PRIxLEAST64 " %x %d %s %.3s %.3s %.3s %.3s\x0a",
-            start_time_l64, seed, wizard ? MODE_WIZARD : discover ? MODE_EXPLORE
+            start_time_l64, 0, wizard ? MODE_WIZARD : discover ? MODE_EXPLORE
             : MODE_NORMAL, encbuf, role, races[u.initrace].noun,
             genders[u.initgend].adj, aligns[u.initalign].adj);
 
@@ -1864,6 +1864,7 @@ load_gamestate_from_binary_save(boolean maybe_old_version)
     program_state.end_of_gamestate_location = get_log_offset();
 
     freedynamicdata();
+    init_data(FALSE);
     startup_common(FALSE);
     dorecover(&program_state.binary_save);
 

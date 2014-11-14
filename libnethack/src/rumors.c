@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-07-31 */
+/* Last modified by Alex Smith, 2014-11-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -101,12 +101,12 @@ getrumor(int truth,     /* 1=true, -1=false, 0=either */
             case 2:    /* (might let a bogus input arg sneak thru) */
             case 1:
                 beginning = true_rumor_start;
-                tidbit = mt_random() % true_rumor_size;
+                tidbit = rn2(true_rumor_size);
                 break;
             case 0:    /* once here, 0 => false rather than "either" */
             case -1:
                 beginning = false_rumor_start;
-                tidbit = mt_random() % false_rumor_size;
+                tidbit = rn2(false_rumor_size);
                 break;
             default:
                 impossible("strange truth value for rumor");

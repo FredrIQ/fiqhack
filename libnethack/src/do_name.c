@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-15 */
+/* Last modified by Alex Smith, 2014-11-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -972,7 +972,8 @@ rndmonidx(void)
     int idx;
 
     do {
-        idx = display_rng(SPECIAL_PM + SIZE(bogusmons) - LOW_PM) + LOW_PM;
+        idx = rn2_on_display_rng(SPECIAL_PM + SIZE(bogusmons) - LOW_PM)
+            + LOW_PM;
     } while (idx < SPECIAL_PM &&
              (type_is_pname(&mons[idx]) || (mons[idx].geno & G_NOGEN)));
 
@@ -1017,8 +1018,8 @@ static const char *const hcolors[] = {
 const char *
 hcolor(const char *colorpref)
 {
-    return (Hallucination ||
-            !colorpref) ? hcolors[display_rng(SIZE(hcolors))] : colorpref;
+    return (Hallucination || !colorpref) ?
+        hcolors[rn2_on_display_rng(SIZE(hcolors))] : colorpref;
 }
 
 /* return a random real color unless hallucinating */
@@ -1052,7 +1053,7 @@ coyotename(const struct monst *mtmp)
     return msgprintf("%s - %s",
                      x_monnam(mtmp, ARTICLE_NONE, NULL, 0, TRUE),
                      mtmp->mcan ? coynames[SIZE(coynames) - 1] :
-                     coynames[display_rng(SIZE(coynames) - 1)]);
+                     coynames[rn2_on_display_rng(SIZE(coynames) - 1)]);
 }
 
 /*do_name.c*/

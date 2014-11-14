@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-05-31
+Last modified by Alex Smith, 2014-11-14
 
 Copyright (C) 2013 Alex Smith.
 
@@ -110,13 +110,14 @@ left with spaces. (The fixed width makes it possible to overwrite it without
 having to move all the rest of the data in the file.)
 
 The third line of the file is also a header, and lists summary information for
-use in identifying the game: start time, initial RNG seed, game play mode (an
-`enum nh_game_modes` stored as a hexadecimal integer), player name (encoded in
-base 64), and class, race, gender, and alignment, as ASCII strings.  The start
-time, and all other times in the save format, are encoded in hexadecimal and
-count UTC UNIX time in microseconds (that is, microseconds since the epoch,
-except that time around leap seconds is distorted such that each day appears
-to be 86400000000 microseconds long).
+use in identifying the game: start time, a zero (previously initial RNG seed,
+but that's now more than 32 bits), game play mode (an `enum nh_game_modes`
+stored as a hexadecimal integer), player name (encoded in base 64), and class,
+race, gender, and alignment, as ASCII strings.  The start time, and all other
+times in the save format, are encoded in hexadecimal and count UTC UNIX time
+in microseconds (that is, microseconds since the epoch, except that time
+around leap seconds is distorted such that each day appears to be 86400000000
+microseconds long).
 
 The NitroHack/NetHack 4.2 save systems contained other header information, but
 this is not the case with the 4.3 system, which moves straight on to a list of

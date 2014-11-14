@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2014-11-14 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -166,9 +166,9 @@
  *
  * If hallucinating, choose an object/monster/trap based on character memory if
  * possible, or the given RNG otherwise; otherwise, just return the value
- * truthfully. Suitable RNGs include display_rng and rn2; newsym_rng will choose
- * a suitable RNG depending on whether the program is in a zero-time command or
- * not.
+ * truthfully. Suitable RNGs include rn2_on_display_rng and rn2; newsym_rng will
+ * choose a suitable RNG depending on whether the program is in a zero-time
+ * command or not.
  *
  * The given coordinates can be set out of range to force a random result when
  * hallucinating. This should only be done if the random result has no effect
@@ -187,7 +187,7 @@
      level->locations[xx][yy].mem_trap : random_trap(rng) : trp)
 
 # define newsym_rng(xx) \
-    (program_state.in_zero_time_command ? display_rng(xx) : rn2(xx))
+    (program_state.in_zero_time_command ? rn2_on_display_rng(xx) : rn2(xx))
 
 /*
  * covers_objects()

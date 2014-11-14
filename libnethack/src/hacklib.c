@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-31 */
+/* Last modified by Alex Smith, 2014-11-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) Robert Patrick Rankin, 1991                      */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -44,7 +44,6 @@
         boolean         fuzzymatch      (const char *,const char *,const char *,
                                          boolean)
         void            setrandom       (void)
-        unsigned int    get_seedval     (void)
 =*/
 
 boolean
@@ -418,21 +417,6 @@ fuzzymatch(const char *s1, const char *s2, const char *ignore_chars,
 
     /* match occurs only when the end of both strings has been reached */
     return (boolean) (!c1 && !c2);
-}
-
-/* used to make the rng seed unguessable; this is only useful for server games
- * as otherwise you can simply read the seed from the logfile */
-unsigned int
-get_seedval(void)
-{
-#if defined(UNIX)
-    struct timeval tv;
-
-    gettimeofday(&tv, NULL);
-    return tv.tv_usec;
-#else
-    return 0;
-#endif
 }
 
 /*hacklib.c*/

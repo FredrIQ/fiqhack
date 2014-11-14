@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-24 */
+/* Last modified by Alex Smith, 2014-11-14 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -774,7 +774,7 @@ extern int doclose(const struct nh_cmd_arg *);
 
 /* ### log.c ### */
 
-extern void log_newgame(microseconds start_time, unsigned int seed);
+extern void log_newgame(microseconds);
 extern void log_neutral_turnstate(void);
 extern void log_backup_save(void);
 
@@ -1178,15 +1178,6 @@ extern void m_useup(struct monst *, struct obj *);
 extern void m_throw(struct monst *, int, int, int, int, int, struct obj *,
                     boolean);
 extern boolean hits_bars(struct obj **, int, int, int, int);
-
-/* ### mtrand.c ### */
-
-extern void mt_srand(unsigned int seed);
-extern unsigned int mt_random(void);
-extern unsigned int mt_nextstate(void);
-extern void save_mt_state(struct memfile *mf);
-extern void restore_mt_state(struct memfile *mf);
-extern int display_rng(int);
 
 /* ### muse.c ### */
 

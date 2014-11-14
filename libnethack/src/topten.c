@@ -195,6 +195,7 @@ write_xlentry(FILE * rfile, const struct toptenentry *tt,
               unsigned long carried, const char *dumpname)
 {
     char buf[DTHSZ + 1];
+    char rngseedbuf[RNG_SEED_SIZE_BASE64];
     int i;
     const char *uname;
 
@@ -207,6 +208,10 @@ write_xlentry(FILE * rfile, const struct toptenentry *tt,
             tt->deathdnum, tt->deathlev, tt->maxlvl, tt->hp, tt->maxhp,
             tt->deaths, (unsigned long)tt->deathdate,
             (unsigned long)tt->birthdate, tt->uid);
+
+    get_initial_rng_seed(rngseedbuf);
+
+    fprintf(rfile, SEP "rngseed=%.*s", RNG_SEED_SIZE_BASE64, rngseedbuf);
 
     fprintf(rfile, SEP "role=%s" SEP "race=%s" SEP "gender=%s" SEP "align=%s",
             tt->plrole, tt->plrace, tt->plgend, tt->plalign);
