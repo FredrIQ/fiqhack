@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-11-02
+Last modified by Alex Smith, 2014-11-14
 
 Copyright (C) 2013 Alex Smith.
 
@@ -374,6 +374,7 @@ try running a command that produces a lot of text, such as `perl
 ../nethack4/aimake --documentation`, and observing how long it takes to scroll
 the screen when you press the spacebar.)  The faketerm port somehow manages to
 be faster, even though it too is fairly slow.
+
 
 Server setup
 ------------
