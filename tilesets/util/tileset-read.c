@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-12 */
+/* Last modified by Alex Smith, 2014-11-14 */
 /* Copyright (C) 2014 Alex Smith. */
 /* NetHack may be freely redistributed. See license for details. */
 
@@ -194,6 +194,8 @@ load_text_tileset(png_byte *data, png_size_t size)
         /* Is it a palette line? These are one or two characters followed by
            " = (". */
         pw = 0;
+        pk = 0; /* at low optimization levels, gcc can't see that this is only
+                   valid when pw is, so initialize it explicitly */
         pk1 = palette_key_to_int(data[i + 0]);
         pk2 = palette_key_to_int(data[i + 1]);
 
