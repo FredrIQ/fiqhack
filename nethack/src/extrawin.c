@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-31 */
+/* Last modified by Sean Hunt, 2014-11-16 */
 /* Copyright (c) 2014 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -123,6 +123,9 @@ draw_extrawin(enum keyreq_context context)
        leave it alone. */
     struct gamewin *gw;
     for (gw = firstgw; gw; gw = gw->next) {
+        if (!gw->win)
+            continue;
+
         int t, l, h, w, t2, l2, h2, w2;
         getmaxyx(gw->win, h, w);
         getbegyx(gw->win, t, l);
