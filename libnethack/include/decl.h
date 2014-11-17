@@ -333,15 +333,22 @@ struct memfile {
     int difflen;
     int diffpos;
     int relativepos;    /* pos corresponds to relativepos in diffbuf */
+
     /* Run-length-encoding of diffs. Either curcmd is MDIFF_INVALID and
        curcount is irrelevant, or curcmd is a command and curcount is a count
        matching that command. Note that we allow a negative "runlength" for
        seek, so we can encode both forwards and backwards seeks. */
     uint8_t curcmd;
     int16_t curcount;
+
     /* Tags to help in diffing. This is a hashtable for efficiency, using
-       chaining in the case of collisions */
+       chaining in the case of collisions. */
     struct memfile_tag *tags[MEMFILE_HASHTABLE_SIZE];
+
+    /* Where we are "semantically", for debug purposes. (It's possible this
+       could someday be used to construct better error messages, too, but so
+       far it isn't.) */
+    struct memfile_tag *last_tag;
 };
 
 extern int logfile;

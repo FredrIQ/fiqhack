@@ -80,6 +80,14 @@ le64_to_host(unsigned long long x)
 }
 #endif
 
+/* For debugging save file memory usage. There is no way for this value to be
+   anything other than NULL during normal usage. However, it can be set to an
+   actual file via use of a debugger (the "volatile" ensures this will work
+   correctly, it pretty much literally means "this variable can change behind
+   your back"), in which case information about what's consuming space in a
+   save diff will be logged to the file in question. */
+static FILE *volatile debuglog = NULL;
+
 /* Creating and freeing memory files */
 void
 mnew(struct memfile *mf, struct memfile *relativeto)
@@ -92,6 +100,7 @@ mnew(struct memfile *mf, struct memfile *relativeto)
     mf->curcmd = MDIFF_INVALID; /* no command yet */
     for (i = 0; i < MEMFILE_HASHTABLE_SIZE; i++)
         mf->tags[i] = 0;
+    mf->last_tag = 0;
 }
 
 /* Allocates to as a deep copy of from. */
@@ -306,6 +315,25 @@ mdiffflush(struct memfile *mf)
         if (mf->curcount > mf->pos || mf->curcount < 0)
             panic("mdiffflush: trying to edit with too much data");
         mdiffwrite(mf, mf->buf + mf->pos - mf->curcount, mf->curcount);
+
+        if (debuglog) {
+            fprintf(debuglog,
+                    "%p: edit %d bytes, starting at %d:%08lx%+d\n",
+                    (void *)mf, mf->curcount,
+                    mf->last_tag ? mf->last_tag->tagtype : -1,
+                    mf->last_tag ? mf->last_tag->tagdata : 0,
+                    mf->pos - mf->curcount -
+                    (mf->last_tag ? mf->last_tag->pos : 0));
+        }
+    } else if (mf->curcmd != MDIFF_INVALID && debuglog) {
+        fprintf(debuglog, "%p: %s %d bytes for %d:%08lx%+d\n", (void *)mf,
+                mf->curcmd == MDIFF_SEEK ? "seek" :
+                mf->curcmd == MDIFF_COPY ? "copy" : "unknown command",
+                mf->curcount,
+                mf->last_tag ? mf->last_tag->tagtype : -1,
+                mf->last_tag ? mf->last_tag->tagdata : 0,
+                mf->pos - mf->curcount -
+                (mf->last_tag ? mf->last_tag->pos : 0));
     }
     mf->curcmd = MDIFF_INVALID;
 }
@@ -327,6 +355,8 @@ mtag(struct memfile *mf, long tagdata, enum memfile_tagtype tagtype)
     tag->tagtype = tagtype;
     tag->pos = mf->pos;
     mf->tags[bucket] = tag;
+    mf->last_tag = tag;
+
     if (mf->relativeto) {
         for (tag = mf->relativeto->tags[bucket]; tag; tag = tag->next) {
             if (tag->tagtype == tagtype && tag->tagdata == tagdata)
@@ -438,8 +468,8 @@ mfmagic_check(struct memfile *mf, int32_t magic)
 void
 mfmagic_set(struct memfile *mf, int32_t magic)
 {
-    /* don't start new sections of the save in the middle of a word - this will 
-       hopefully cut down on unaligned memory acesses */
+    /* don't start new sections of the save in the middle of a word - this will
+       hopefully cut down on unaligned memory accesses */
     mfalign(mf, 4);
     mwrite32(mf, magic);
 }
@@ -518,4 +548,3 @@ mequal(struct memfile *mf1, struct memfile *mf2, boolean noisy)
 
 
 /* memfile.c */
-
