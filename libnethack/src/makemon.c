@@ -1977,13 +1977,11 @@ restore_mon(struct memfile *mf)
     mon->m_id = mread32(mf);
     mon->mhp = mread32(mf);
     mon->mhpmax = mread32(mf);
-    /* 20 */
     mon->mspec_used = mread32(mf);
     mon->mtrapseen = mread32(mf);
     mon->mlstmv = mread32(mf);
     mon->mstrategy = mread32(mf);
     mon->meating = mread32(mf);
-    /* 40 */
     mon->xyloc = mread8(mf);
     mon->xyflags = mread8(mf);
     mon->xlocale = mread8(mf);
@@ -1999,7 +1997,6 @@ restore_mon(struct memfile *mf)
     mon->malign = mread8(mf);
     mon->moveoffset = mread16(mf);
     mon->mintrinsics = mread16(mf);
-    /* 60 */
     mon->mtame = mread8(mf);
     mon->m_ap_type = mread8(mf);
     mon->mfrozen = mread8(mf);
@@ -2014,7 +2011,6 @@ restore_mon(struct memfile *mf)
 
     /* just mark the pointers for later restoration */
     mon->minvent = mread8(mf) ? (void *)1 : NULL;
-    /* 80 */
     mon->mw = mread8(mf) ? (void *)1 : NULL;
 
     if (mon->mnamelth)
@@ -2156,15 +2152,12 @@ save_mon(struct memfile *mf, const struct monst *mon)
         return;
     }
 
-    mfmagic_set(mf, MON_MAGIC);
-    mtag(mf, mon->m_id, MTAG_MON);
-
-    mwrite16(mf, mon->mnamelth);
-    mwrite16(mf, mon->mxtyp);
-
     /* mon->data is null for monst structs that are attached to objects.
        mon->data is non-null but not in the mons array for customized monsters
-       monsndx() does not handle these cases. */
+       monsndx() does not handle these cases.
+
+       We calculate the monster index before starting to save so that
+       savemap.pl can parse the save file correctly. */
     idx = mon->data - mons;
     idx = (LOW_PM <= idx && idx < NUMMONS) ? idx : 0;
     if (&mons[idx] != mon->data) {
@@ -2183,17 +2176,21 @@ save_mon(struct memfile *mf, const struct monst *mon)
         else
             impossible("Bad monster type detected.");
     }
+
+    mfmagic_set(mf, MON_MAGIC);
+    mtag(mf, mon->m_id, MTAG_MON);
+
+    mwrite16(mf, mon->mnamelth);
+    mwrite16(mf, mon->mxtyp);
     mwrite32(mf, idx);
     mwrite32(mf, mon->m_id);
     mwrite32(mf, mon->mhp);
     mwrite32(mf, mon->mhpmax);
-    /* 20 */
     mwrite32(mf, mon->mspec_used);
     mwrite32(mf, mon->mtrapseen);
     mwrite32(mf, mon->mlstmv);
     mwrite32(mf, mon->mstrategy);
     mwrite32(mf, mon->meating);
-    /* 40 */
     mwrite8(mf, mon->xyloc);
     mwrite8(mf, mon->xyflags);
     mwrite8(mf, mon->xlocale);
@@ -2208,7 +2205,6 @@ save_mon(struct memfile *mf, const struct monst *mon)
     mwrite8(mf, mon->malign);
     mwrite16(mf, mon->moveoffset);
     mwrite16(mf, mon->mintrinsics);
-    /* 60 */
     mwrite8(mf, mon->mtame);
     mwrite8(mf, mon->m_ap_type);
     mwrite8(mf, mon->mfrozen);
@@ -2230,7 +2226,7 @@ save_mon(struct memfile *mf, const struct monst *mon)
         /* 1 free bit */
         (mon->isshk << 4) |
         (mon->isminion << 3) | (mon->isgd << 2) |
-        (mon->ispriest << 1) | (mon->iswiz << 0);
+        (mon->ispriest << 1) | (mon->iswiz << 0); /* savemap: ignore */
     mwrite32(mf, mflags);
 
     mwrite8(mf, save_encode_8(mon->mfleetim, -moves));
@@ -2240,7 +2236,6 @@ save_mon(struct memfile *mf, const struct monst *mon)
 
     /* just mark that the pointers had values */
     mwrite8(mf, mon->minvent ? 1 : 0);
-    /* 80 */
     mwrite8(mf, mon->mw ? 1 : 0);
 
     if (mon->mnamelth)

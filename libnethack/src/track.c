@@ -61,10 +61,10 @@ save_track(struct memfile *mf)
     int i;
 
     mtag(mf, 0, MTAG_TRACK);
-    for (i = 0; i < UTSZ; i++) {
+    for (i = 0; i < UTSZ; i++) {  /* savemap: ignore */
         mwrite8(mf, utrack[i].x);
         mwrite8(mf, utrack[i].y);
-    }
+    } /* savemap: 784 bits (more) */
     mwrite32(mf, utcnt);
     mwrite32(mf, utpnt);
 }

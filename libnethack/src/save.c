@@ -496,32 +496,32 @@ save_you(struct memfile *mf, struct you *y)
     mwrite8(mf, y->moveamt);
 
     /* Padding to allow character information to be added without breaking save
-       compatibility; add new options just before the padding, then remove the
+       compatibility: add new options just before the padding, then remove the
        same amount of padding */
-    for (i = 0; i < 511; i++)
-        mwrite8(mf, 0);
+    for (i = 0; i < 511; i++)    /* savemap: ignore */
+        mwrite8(mf, 0);          /* savemap: 4088 */
 
-    mwrite(mf, y->ever_extrinsic, (sizeof y->ever_extrinsic));
-    mwrite(mf, y->ever_intrinsic, (sizeof y->ever_intrinsic));
-    mwrite(mf, y->ever_temporary, (sizeof y->ever_temporary));
-    mwrite(mf, y->uwhybusy, (sizeof y->uwhybusy));
-    mwrite(mf, y->urooms, sizeof (y->urooms));
-    mwrite(mf, y->urooms0, sizeof (y->urooms0));
-    mwrite(mf, y->uentered, sizeof (y->uentered));
-    mwrite(mf, y->ushops, sizeof (y->ushops));
-    mwrite(mf, y->ushops0, sizeof (y->ushops0));
-    mwrite(mf, y->ushops_entered, sizeof (y->ushops_entered));
-    mwrite(mf, y->ushops_left, sizeof (y->ushops_left));
-    mwrite(mf, y->macurr.a, sizeof (y->macurr.a));
-    mwrite(mf, y->mamax.a, sizeof (y->mamax.a));
-    mwrite(mf, y->acurr.a, sizeof (y->acurr.a));
-    mwrite(mf, y->aexe.a, sizeof (y->aexe.a));
-    mwrite(mf, y->abon.a, sizeof (y->abon.a));
-    mwrite(mf, y->amax.a, sizeof (y->amax.a));
-    mwrite(mf, y->atemp.a, sizeof (y->atemp.a));
-    mwrite(mf, y->atime.a, sizeof (y->atime.a));
-    mwrite(mf, y->skill_record, sizeof (y->skill_record));
-    mwrite(mf, y->uplname, sizeof (y->uplname));
+    mwrite(mf, y->ever_extrinsic, (sizeof y->ever_extrinsic)); /* savemap: 72 */
+    mwrite(mf, y->ever_intrinsic, (sizeof y->ever_intrinsic)); /* savemap: 72 */
+    mwrite(mf, y->ever_temporary, (sizeof y->ever_temporary)); /* savemap: 72 */
+    mwrite(mf, y->uwhybusy, (sizeof y->uwhybusy));           /* savemap: 2048 */
+    mwrite(mf, y->urooms, sizeof (y->urooms));                 /* savemap: 40 */
+    mwrite(mf, y->urooms0, sizeof (y->urooms0));               /* savemap: 40 */
+    mwrite(mf, y->uentered, sizeof (y->uentered));             /* savemap: 40 */
+    mwrite(mf, y->ushops, sizeof (y->ushops));                 /* savemap: 40 */
+    mwrite(mf, y->ushops0, sizeof (y->ushops0));               /* savemap: 40 */
+    mwrite(mf, y->ushops_entered, sizeof (y->ushops_entered)); /* savemap: 40 */
+    mwrite(mf, y->ushops_left, sizeof (y->ushops_left));       /* savemap: 40 */
+    mwrite(mf, y->macurr.a, sizeof (y->macurr.a));             /* savemap: 48 */
+    mwrite(mf, y->mamax.a, sizeof (y->mamax.a));               /* savemap: 48 */
+    mwrite(mf, y->acurr.a, sizeof (y->acurr.a));               /* savemap: 48 */
+    mwrite(mf, y->aexe.a, sizeof (y->aexe.a));                 /* savemap: 48 */
+    mwrite(mf, y->abon.a, sizeof (y->abon.a));                 /* savemap: 48 */
+    mwrite(mf, y->amax.a, sizeof (y->amax.a));                 /* savemap: 48 */
+    mwrite(mf, y->atemp.a, sizeof (y->atemp.a));               /* savemap: 48 */
+    mwrite(mf, y->atime.a, sizeof (y->atime.a));               /* savemap: 48 */
+    mwrite(mf, y->skill_record, sizeof (y->skill_record));    /* savemap: 480 */
+    mwrite(mf, y->uplname, sizeof (y->uplname));              /* savemap: 256 */
 
     for (i = 0; i <= num_conducts; i++) {
         mwrite32(mf, y->uconduct[i]);
@@ -652,9 +652,9 @@ savelev(struct memfile *mf, xchar levnum)
     mwrite(mf, lev->levname, sizeof (lev->levname));
 
     mtag(mf, levnum, MTAG_LOCATIONS);
-    for (x = 0; x < COLNO; x++)
-        for (y = 0; y < ROWNO; y++)
-            save_location(mf, &lev->locations[x][y]);
+    for (x = 0; x < COLNO; x++)                       /* savemap: ignore */
+        for (y = 0; y < ROWNO; y++)                   /* savemap: ignore */
+            save_location(mf, &lev->locations[x][y]); /* savemap: 106176 */
 
     mwrite32(mf, lev->lastmoves);
 
