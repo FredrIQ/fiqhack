@@ -278,6 +278,9 @@ save_spellbook(struct memfile *mf)
 {
     int i;
 
+    mtag(mf, 0, MTAG_SPELLBOOK); /* not needed for savefile compression, but
+                                    helps when debugging */
+
     for (i = 0; i < MAXSPELL + 1; i++) {
         mwrite32(mf, save_encode_32(spl_book[i].sp_know, -moves));
         mwrite16(mf, spl_book[i].sp_id);
