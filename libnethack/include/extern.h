@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-14 */
+/* Last modified by Alex Smith, 2014-11-20 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1067,6 +1067,8 @@ extern boolean can_carry(struct monst *, struct obj *);
 extern int mfndpos(struct monst *, coord *, long *, long);
 extern boolean monnear(struct monst *, int, int);
 extern void dmonsfree(struct level *lev);
+extern boolean can_act_this_turn(struct monst *);
+extern void adjust_move_offset(struct monst *, int, int);
 extern int mcalcmove(struct monst *);
 extern void mcalcdistress(void);
 extern void replmon(struct monst *, struct monst *);

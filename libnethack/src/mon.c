@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2014-11-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -444,11 +444,79 @@ minliquid(struct monst *mtmp)
     return 0;
 }
 
+/* Called whenever a monster changes speed, and ensures that the number of
+   partial movement points the monster had changes appropriately. Also called
+   for the player at turn boundary (we cache the player's speed within a
+   turn). */
+void
+adjust_move_offset(struct monst *mon, int oldspeed, int newspeed)
+{
+    /* SAVEBREAK (4.3-beta1 -> 4.3-beta2)
+
+       If the offset wasn't initialized, leave it alone, so that we know it's
+       still uninitialized. */
+    if (mon->moveoffset >= NORMAL_SPEED)
+        return;
+
+    /* Increasing the speed value by 1 effectively increases the offset by 1 for
+       each turn on the turn counter, based on the formula used. We thus need to
+       decrease the offset by the speed increase times the turn counter. All
+       this is modulo 12. */
+    int speedinc = newspeed - oldspeed;
+    if (speedinc < 0)
+        speedinc = NORMAL_SPEED - (-speedinc % NORMAL_SPEED);
+    else
+        speedinc %= NORMAL_SPEED;
+
+    int offsetdec = ((long long)moves * (long long)speedinc) % NORMAL_SPEED;
+
+    mon->moveoffset = (mon->moveoffset + NORMAL_SPEED - offsetdec) %
+        NORMAL_SPEED;
+}
+
+boolean
+can_act_this_turn(struct monst *mon)
+{
+    /* SAVEBREAK (4.3-beta1 -> 4.3-beta2)
+
+       The movement structures might not have been set correctly for this turn,
+       if we're loading an old save. Detect that this has happened using
+       youmonst.moveoffset >= 12, and give the player 1 action and monsters no
+       actions this turn. */
+    if (youmonst.moveoffset >= NORMAL_SPEED)
+        return mon == &youmonst && flags.actions == 0;
+
+    /* Work out how many actions the player has this turn. Each monster has a
+       range of 12 possible values for movement points that turn. The low end
+       of the range is given by mcalcmove... */
+    int movement = mcalcmove(mon);
+
+    /* ...and the position modulo 12 is given by (speed * turn counter) +
+       move offset. */
+    int modulo = (((long long)moves * (long long)movement) +
+                  mon->moveoffset) % NORMAL_SPEED;
+
+    /* C sucks at modular arithmetic :-( */
+    movement += (modulo + NORMAL_SPEED - (movement % NORMAL_SPEED)) %
+        NORMAL_SPEED;
+
+    /* It costs 12 movement points to perform an action. */
+    int actions_this_turn = movement / NORMAL_SPEED;
+
+    /* We can move if we've done fewer actions this turn than we have
+       available. */
+    return flags.actions < actions_this_turn;
+}
 
 int
 mcalcmove(struct monst *mon)
 {
     int mmove = mon->data->mmove;
+
+    if (mon == &youmonst) {
+        /* The player has different, and somewhat randomized, movment rules. */
+        return u.moveamt;
+    }
 
     /* Note: MSLOW's `+ 1' prevents slowed speed 1 getting reduced to 0;
        MFAST's `+ 2' prevents hasted speed 1 from becoming a no-op; both
@@ -465,8 +533,9 @@ mcalcmove(struct monst *mon)
            using flags.occupation. It's just that this is no longer an effect
            that's worth acheiving.) */
         if (u.ugallop) {
-            /* average movement is 1.50 times normal */
-            mmove = ((rn2(2) ? 4 : 5) * mmove) / 3;
+            /* movement is 1.50 times normal; randomization has been removed
+               because mcalcmove now needs to be deterministic */
+            mmove = (3 * mmove) / 2;
         }
     }
 
@@ -545,12 +614,10 @@ movemon(void)
         /* Find a monster that we have not treated yet.  */
         if (DEADMONSTER(mtmp))
             continue;
-        if (mtmp->movement < NORMAL_SPEED)
+        if (!can_act_this_turn(mtmp))
             continue;
 
-        mtmp->movement -= NORMAL_SPEED;
-        if (mtmp->movement >= NORMAL_SPEED)
-            somebody_can_move = TRUE;
+        somebody_can_move = TRUE;
 
         if (turnstate.vision_full_recalc)
             vision_recalc(0);   /* vision! */

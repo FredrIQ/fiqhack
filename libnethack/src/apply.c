@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-11-03 */
+/* Last modified by Alex Smith, 2014-11-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -207,7 +207,7 @@ static const char hollow_str[] = "a hollow sound.  This must be a secret %s!";
    the turn; this makes curse status have a tangible effect.
 
    The last stethoscope use turn is stored in obj->lastused; the last
-   stethoscope use movement energy is stored in obj->spe. */
+   stethoscope use flags.actions is stored in obj->spe. */
 static int
 use_stethoscope(struct obj *obj, const struct nh_cmd_arg *arg)
 {
@@ -229,9 +229,9 @@ use_stethoscope(struct obj *obj, const struct nh_cmd_arg *arg)
     if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
 
-    res = (moves == obj->lastused) && (youmonst.movement == obj->spe);
+    res = (moves == obj->lastused) && (flags.actions == obj->spe);
     obj->lastused = moves;
-    obj->spe = youmonst.movement;
+    obj->spe = flags.actions;
 
     if (u.usteed && dz > 0) {
         if (interference) {

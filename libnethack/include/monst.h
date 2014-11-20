@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2014-11-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -81,8 +81,7 @@ struct monst {
     xchar mux, muy;     /* where the monster thinks you are */
     aligntyp malign;    /* alignment of this monster, relative to the player
                            (positive = good to kill) */
-    short movement;     /* movement points (derived from permonst definition
-                           and added effects */
+    short moveoffset;   /* how this monster's actions map onto turns */
     unsigned short mintrinsics; /* low 8 correspond to mresists */
     schar mtame;        /* level of tameness, implies peaceful */
     uchar m_ap_type;    /* what mappearance is describing: */

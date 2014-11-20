@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-11-04 */
+/* Last modified by Alex Smith, 2014-11-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1031,6 +1031,21 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
     mtmp->mcansee = mtmp->mcanmove = TRUE;
     mtmp->mpeaceful = (mmflags & MM_ANGRY) ? FALSE : peace_minded(ptr);
 
+    /* Calculate the monster's movement offset. The number of movement points a
+       monster has at the start of a turn ranges over a range of 12 possible
+       values (from its speed, to its speed plus 11); the value chosen on any
+       given turn is congruent to (the movement offset plus (its speed times the
+       turn counter)) modulo 12. For monsters created at level creation, we use
+       a random offset so that the monsters don't all act in lock-step with each
+       other. For monsters created later, we pick the minimum end of the range,
+       to preserve the "summoning sickness" behaviour of 3.4.3 for monsters of
+       speed 23 and below. */
+    if (in_mklev)
+        mtmp->moveoffset = rn2(12);
+    else
+        mtmp->moveoffset =
+            ((long long)mtmp->data->mmove * ((long long)moves - 1)) % 12;
+
     switch (ptr->mlet) {
     case S_MIMIC:
         set_mimic_sym(mtmp, lev);
@@ -1977,7 +1992,7 @@ restore_mon(struct memfile *mf)
     mon->muy = mread8(mf);
     mon->m_lev = mread8(mf);
     mon->malign = mread8(mf);
-    mon->movement = mread16(mf);
+    mon->moveoffset = mread16(mf);
     mon->mintrinsics = mread16(mf);
     /* 60 */
     mon->mtame = mread8(mf);
@@ -2182,7 +2197,7 @@ save_mon(struct memfile *mf, const struct monst *mon)
     mwrite8(mf, mon->muy);
     mwrite8(mf, mon->m_lev);
     mwrite8(mf, mon->malign);
-    mwrite16(mf, mon->movement);
+    mwrite16(mf, mon->moveoffset);
     mwrite16(mf, mon->mintrinsics);
     /* 60 */
     mwrite8(mf, mon->mtame);

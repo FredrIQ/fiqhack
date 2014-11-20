@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2014-11-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -146,10 +146,11 @@ fightm(struct monst *mtmp)
                     return 0;
 
                 /* Allow attacked monsters a chance to hit back. Primarily to
-                   allow monsters that resist conflict to respond. */
-                if ((result & MM_HIT) && !(result & MM_DEF_DIED) && rn2(4) &&
-                    mon->movement >= NORMAL_SPEED) {
-                    mon->movement -= NORMAL_SPEED;
+                   allow monsters that resist conflict to respond.
+
+                   Note: in 4.3, this no longer costs movement points, because
+                   it throws off the turn alternation. */
+                if ((result & MM_HIT) && !(result & MM_DEF_DIED)) {
                     notonhead = 0;
                     mattackm(mon, mtmp);        /* return attack */
                 }

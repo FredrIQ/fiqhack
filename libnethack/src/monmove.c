@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2014-11-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -994,10 +994,14 @@ not_special:
             mtmp->muy = u.uy;
             return 0;
         }
-        /* The monster may attack another based on 1 of 2 conditions: 1 - It
-           may be confused. 2 - It may mistake the monster for your (displaced) 
-           image. Pets get taken care of above and shouldn't reach this code.
-           Conflict gets handled even farther away (movemon()). */
+        /* The monster may attack another based on 1 of 2 conditions:
+
+           1 - It may be confused.
+
+           2 - It may mistake the monster for your (displaced) image.
+
+           Pets get taken care of above and shouldn't reach this code. Conflict
+           gets handled even farther away (movemon()). */
         if ((info[chi] & ALLOW_M) || (nix == mtmp->mux && niy == mtmp->muy)) {
             struct monst *mtmp2;
             int mstatus;
@@ -1011,9 +1015,7 @@ not_special:
             if (mstatus & MM_AGR_DIED)  /* aggressor died */
                 return 2;
 
-            if ((mstatus & MM_HIT) && !(mstatus & MM_DEF_DIED) && rn2(4) &&
-                mtmp2->movement >= NORMAL_SPEED) {
-                mtmp2->movement -= NORMAL_SPEED;
+            if ((mstatus & MM_HIT) && !(mstatus & MM_DEF_DIED) && rn2(4)) {
                 notonhead = 0;
                 mstatus = mattackm(mtmp2, mtmp);        /* return attack */
                 if (mstatus & MM_DEF_DIED)
