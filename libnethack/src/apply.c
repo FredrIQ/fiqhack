@@ -1451,6 +1451,8 @@ jump(const struct nh_cmd_arg *arg, int magic)
 boolean
 tinnable(const struct obj * corpse)
 {
+    if (!(corpse->otyp == CORPSE)) /* Originally the caller was expected */
+        return 0;                  /* to check this, but that caused bugs. */
     if (corpse->oeaten)
         return 0;
     if (!mons[corpse->corpsenm].cnutrit)
