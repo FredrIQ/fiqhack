@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-20 */
+/* Last modified by Alex Smith, 2014-11-21 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1494,6 +1494,12 @@ extern void savelev(struct memfile *mf, xchar levnum);
 extern void freelev(xchar levnum);
 extern void savefruitchn(struct memfile *mf);
 extern void freedynamicdata(void);
+extern int8_t save_encode_8(int8_t, int);
+extern int16_t save_encode_16(int16_t, int);
+extern int32_t save_encode_32(int32_t, int);
+extern int8_t save_decode_8(int8_t, int);
+extern int16_t save_decode_16(int16_t, int);
+extern int32_t save_decode_32(int32_t, int);
 
 /* ### shk.c ### */
 

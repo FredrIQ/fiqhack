@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-20 */
+/* Last modified by Alex Smith, 2014-11-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -31,6 +31,60 @@ static void save_autopickup_rules(struct memfile *mf,
 static void freefruitchn(void);
 
 
+/*
+ * Save encodings.
+ *
+ * The basic way that this works is that a value 0 always remains at 0, and the
+ * other 2**n-1 values all rotate rel positions. Here are some examples for
+ * save_encode_8:
+ *
+ * val rel out   val rel out   val rel out
+ *  0   0   0     0   1   0     0  -1   0
+ *  1   0   1     1   1  255    1  -1   2
+ *  2   0   2     2   1   1     2  -1   3
+ * 255  0  255   255  1  254   255 -1   1
+ *
+ * The idea is that if val and rel both increase or decrease by the same amount,
+ * the resulting value will stay the same; but no matter what the value of rel,
+ * the transformation of val is reversible.
+ *
+ * This means that save files become more diff-compressible, but don't lose any
+ * information even if val does something weird.
+ */
+
+#define GEN_SAVE_ENCODE(bw, rmax)                            \
+    int##bw##_t                                              \
+    save_encode_##bw(int##bw##_t val, int rel) {             \
+        if (!val || !flags.save_encoding) return val;        \
+        uint##bw##_t rotamount = ((uint32_t) rel) % rmax;    \
+        uint##bw##_t out = val - 1;                          \
+        if (out >= rotamount) out -= rotamount;              \
+        else out += rmax - rotamount;                        \
+        return out + 1;                                      \
+    }
+
+GEN_SAVE_ENCODE(8, 0xFF)
+GEN_SAVE_ENCODE(16, 0xFFFF)
+GEN_SAVE_ENCODE(32, 0xFFFFFFFF)
+
+#define GEN_SAVE_DECODE(bw, rmax)                            \
+    int##bw##_t                                              \
+    save_decode_##bw(int##bw##_t val, int rel) {             \
+        if (!val || !flags.save_encoding) return val;        \
+        uint##bw##_t rotamount = ((uint32_t) rel) % rmax;    \
+        rotamount = rmax - rotamount;                        \
+        uint##bw##_t out = val - 1;                          \
+        if (out >= rotamount) out -= rotamount;              \
+        else out += rmax - rotamount;                        \
+        return out + 1;                                      \
+    }
+
+GEN_SAVE_DECODE(8, 0xFF)
+GEN_SAVE_DECODE(16, 0xFFFF)
+GEN_SAVE_DECODE(32, 0xFFFFFFFF)
+
+/* The save code itself. */
+
 void
 savegame(struct memfile *mf)
 {
@@ -40,11 +94,13 @@ savegame(struct memfile *mf)
     /* no tag useful here as store_version adds one */
     store_version(mf);
 
-    /* Place flags, player info & moves at the beginning of the save. This
-       makes it possible to read them in nh_get_savegame_status without parsing
-       all the dungeon and level data */
+    /* Place flags, player info & moves at the beginning of the save. This makes
+       it possible to read them in nh_get_savegame_status without parsing all
+       the dungeon and level data. Additionally, the restore code needs to know
+       "moves" very early on, to be able to give an appropriate argument to
+       save_decode. */
     mwrite32(mf, moves);
-    save_flags(mf);
+    save_flags(mf); /* note: cannot use save encoding until after save_flags */
     save_you(mf, &u);
     save_mon(mf, &youmonst);
 
@@ -72,12 +128,14 @@ savegame(struct memfile *mf)
 }
 
 
+/* WARNING: Do not use save encoding functions in this function; although they
+   will work on save, the restore code couldn't handle them */
 static void
 save_flags(struct memfile *mf)
 {
     int i;
 
-    /* this is a fixed distane after version, but we tag it anyway to make
+    /* this is a fixed distance after version, but we tag it anyway to make
        debugging easier */
     mtag(mf, 0, MTAG_FLAGS);
 
@@ -141,12 +199,14 @@ save_flags(struct memfile *mf)
     mwrite8(mf, flags.last_arg.spelllet);
     mwrite32(mf, flags.last_arg.limit);
 
+    /* these are out of sequence for backwards compatibility */
     mwrite8(mf, flags.actions);
+    mwrite8(mf, flags.save_encoding);
 
     /* Padding to allow options to be added without breaking save compatibility;
        add new options just before the padding, then remove the same amount of
        padding */
-    for (i = 0; i < 127; i++)
+    for (i = 0; i < 126; i++)
         mwrite8(mf, 0);
 
     mwrite(mf, flags.inv_order, sizeof (flags.inv_order));
@@ -219,7 +279,7 @@ save_spellbook(struct memfile *mf)
     int i;
 
     for (i = 0; i < MAXSPELL + 1; i++) {
-        mwrite32(mf, spl_book[i].sp_know);
+        mwrite32(mf, save_encode_32(spl_book[i].sp_know, -moves));
         mwrite16(mf, spl_book[i].sp_id);
         mwrite8(mf, spl_book[i].sp_lev);
     }
@@ -364,12 +424,12 @@ save_you(struct memfile *mf, struct you *y)
     mwrite32(mf, y->mhmax);
     mwrite32(mf, y->mtimedone);
     mwrite32(mf, y->ulycn);
-    mwrite32(mf, y->utrap);
+    mwrite32(mf, save_encode_32(y->utrap, -moves));
     mwrite32(mf, y->utraptype);
-    mwrite32(mf, y->uhunger);
+    mwrite32(mf, save_encode_32(y->uhunger, -moves));
     mwrite32(mf, y->uhs);
     mwrite32(mf, y->oldcap);
-    mwrite32(mf, y->umconf);
+    mwrite32(mf, save_encode_32(y->umconf, -moves));
     mwrite32(mf, y->nv_range);
     mwrite32(mf, y->bglyph);
     mwrite32(mf, y->cglyph);
@@ -383,10 +443,12 @@ save_you(struct memfile *mf, struct you *y)
     mwrite32(mf, y->ugangr);
     mwrite32(mf, y->ugifts);
     mwrite32(mf, y->ublessed);
-    mwrite32(mf, y->ublesscnt);
+    mwrite32(mf, save_encode_32(y->ublesscnt, -moves));
     mwrite32(mf, y->ucleansed);
     mwrite32(mf, y->uinvault);
     mwrite32(mf, y->ugallop);
+    /* urideturns is tricky: we'd want a positive save_encode_32 while riding,
+       but not while not riding. Not riding is the default, so we'll use that. */
     mwrite32(mf, y->urideturns);
     mwrite32(mf, y->umortality);
     mwrite32(mf, y->ugrave_arise);
@@ -424,7 +486,7 @@ save_you(struct memfile *mf, struct you *y)
     mwrite8(mf, y->udaminc);
     mwrite8(mf, y->uac);
     mwrite8(mf, y->uspellprot);
-    mwrite8(mf, y->usptime);
+    mwrite8(mf, save_encode_8(y->usptime, -moves));
     mwrite8(mf, y->uspmtime);
     mwrite8(mf, y->twoweap);
     mwrite8(mf, y->bashmsg);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-20 */
+/* Last modified by Alex Smith, 2014-11-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1009,6 +1009,10 @@ you_moved(void)
                        W_MASK(os_polyform)))
             u.ever_temporary[p / 8] |= 1 << (p % 8);
     }
+
+    /* We can only port to a new version of the save code when the player takes
+       time (otherwise, the desync detector rightly gets confused). */
+    flags.save_encoding = saveenc_moverel;
 }
 
 

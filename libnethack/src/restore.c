@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-20 */
+/* Last modified by Alex Smith, 2014-11-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -431,7 +431,7 @@ restore_spellbook(struct memfile *mf)
     int i;
 
     for (i = 0; i < MAXSPELL + 1; i++) {
-        spl_book[i].sp_know = mread32(mf);
+        spl_book[i].sp_know = save_decode_32(mread32(mf), -moves);
         spl_book[i].sp_id = mread16(mf);
         spl_book[i].sp_lev = mread8(mf);
     }
@@ -550,12 +550,12 @@ restore_you(struct memfile *mf, struct you *y)
     y->mhmax = mread32(mf);
     y->mtimedone = mread32(mf);
     y->ulycn = mread32(mf);
-    y->utrap = mread32(mf);
+    y->utrap = save_decode_32(mread32(mf), -moves);
     y->utraptype = mread32(mf);
-    y->uhunger = mread32(mf);
+    y->uhunger = save_decode_32(mread32(mf), -moves);
     y->uhs = mread32(mf);
     y->oldcap = mread32(mf);
-    y->umconf = mread32(mf);
+    y->umconf = save_decode_32(mread32(mf), -moves);
     y->nv_range = mread32(mf);
     y->bglyph = mread32(mf);
     y->cglyph = mread32(mf);
@@ -569,7 +569,7 @@ restore_you(struct memfile *mf, struct you *y)
     y->ugangr = mread32(mf);
     y->ugifts = mread32(mf);
     y->ublessed = mread32(mf);
-    y->ublesscnt = mread32(mf);
+    y->ublesscnt = save_encode_32(mread32(mf), -moves);
     y->ucleansed = mread32(mf);
     y->uinvault = mread32(mf);
     y->ugallop = mread32(mf);
@@ -611,7 +611,7 @@ restore_you(struct memfile *mf, struct you *y)
     y->udaminc = mread8(mf);
     y->uac = mread8(mf);
     y->uspellprot = mread8(mf);
-    y->usptime = mread8(mf);
+    y->usptime = save_decode_8(mread8(mf), -moves);
     y->uspmtime = mread8(mf);
     y->twoweap = mread8(mf);
     y->bashmsg = mread8(mf);
@@ -737,6 +737,8 @@ restore_autopickup_rules(struct memfile *mf, struct nh_autopickup_rules *ar)
 }
 
 
+/* WARNING: This function is responsible for determining what save encoding
+   is used in a file. Thus, it cannot use any save encoding functions itself. */
 void
 restore_flags(struct memfile *mf, struct flag *f)
 {
@@ -809,9 +811,10 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->last_arg.limit = mread32(mf);
 
     f->actions = mread8(mf);
+    f->save_encoding = mread8(mf);
 
     /* Ignore the padding added in save.c */
-    for (i = 0; i < 127; i++)
+    for (i = 0; i < 126; i++)
         (void) mread8(mf);
 
     mread(mf, f->inv_order, sizeof (f->inv_order));

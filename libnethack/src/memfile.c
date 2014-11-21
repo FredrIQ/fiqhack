@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-29 */
+/* Last modified by Alex Smith, 2014-11-21 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -451,7 +451,6 @@ mequal(struct memfile *mf1, struct memfile *mf2, boolean noisy)
 {
     char *p1, *p2;
     long len, off;
-    struct memfile_tag *tag, *titer;
     int bin;
 
     /* Compare the save files. If they're different lengths, we compare only the
@@ -471,14 +470,22 @@ mequal(struct memfile *mf1, struct memfile *mf2, boolean noisy)
         raw_printf("Unexpected change to save file contents:\n");
 
         /* Determine where the desyncs are. */
-        tag = NULL;
         for (off = 0; off < len; off++) {
-            for (bin = 0; bin < MEMFILE_HASHTABLE_SIZE; bin++)
-                for (titer = mf2->tags[bin]; titer; titer = titer->next)
-                    if (titer->pos == off)
-                        tag = titer;
+            if (p1[off] != p2[off]) {
+                struct memfile_tag *tag = NULL, *titer;
+                for (bin = 0; bin < MEMFILE_HASHTABLE_SIZE; bin++)
+                    for (titer = mf2->tags[bin]; titer; titer = titer->next)
+                        if (titer->pos <= off)
+                            if (!tag || tag->pos < titer->pos)
+                                tag = titer;
 
-            if (tag && p1[off] != p2[off]) {
+                if (!tag) {
+                    raw_printf("desync at %ld was %02x is %02x\n", off,
+                               (int)(unsigned char)p1[off],
+                               (int)(unsigned char)p2[off]);
+                    return FALSE;
+                }
+
                 raw_printf("desync at %ld (tag %d:%08lx + %ld byte%s), "
                            "was %02x is %02x\n",
                            off, (int)tag->tagtype, tag->tagdata,
