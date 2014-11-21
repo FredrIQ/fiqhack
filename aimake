@@ -1567,8 +1567,7 @@ The input should contain two lines to indicate to aimake where to put the
 file: "=for aimake manualsection I<section>" to specify which manual section
 it goes into, and "=for aimake manualname I<name>" to specify what the manual
 is talking about.  (As usual for POD, they should have a blank line before and
-afterwards.)  Alternatively, "=for aimake documentation" will cause the file
-to be installed as documentation (into C<docdir>), and "=for aimake eula" will
+afterwards.)  Alternatively, "=for aimake eula" will
 cause the file to be marked as a license agreement (you can only have one such
 file), and with some install toolchains, shown to the user for acceptance
 before installation will happen.
@@ -3705,12 +3704,11 @@ distribution terms you use for programs that you compile with aimake.
 # to be able to run it). As such, only modules that ship with Perl are legal
 # here. Additionally, in order to keep as much portability as possible, we aim
 # for compatibility with old Perl versions. The oldest supported version is
-# 5.8, a mostly arbitrarily choice based on anecdotal data (it's the oldest
-# version I've seen anyone been unable to upgrade from for years). There's a
-# list of which modules shipped with which versions in Module::CoreList.
-# (Additionally, avoid modules that were removed or deprecated in later
-# versions.)
-use 5.008;
+# 5.10, based on which modules we need and on the hope that 5.8 died out in
+# the past few years. There's a list of which modules shipped with which
+# versions in Module::CoreList.  (Additionally, avoid modules that were
+# removed or deprecated in later versions.)
+use 5.010;
 
 use Getopt::Std qw/getopts/;
 use File::Path qw/make_path/;
@@ -3731,7 +3729,7 @@ use PerlIO;
 use PerlIO::encoding;
 use Encode qw/encode :fallbacks/;
 use Data::Dumper;
-use Digest::MD5 qw/md5_hex/;
+use Digest::SHA qw/sha256_hex/;
 use Scalar::Util qw/refaddr/;
 use Safe;
 use Storable qw/store_fd fd_retrieve dclone/; # why the naming inconsistency?
@@ -3991,7 +3989,20 @@ sub serialize_sv {
     die "serialize_sv called on unsupported SV " . Dumper($sv);
 }
 sub sv_hash {
-    return md5_hex(serialize_sv(shift));
+    return sha256_hex(serialize_sv(shift));
+}
+
+# Here's an attempt to make globally unique values that are consistent from
+# one run of aimake to another.  This is bascially half a SHA-256, with
+# hyphens inserted in appropriate places.
+sub guid_from_string {
+    my $guid = uc sha256_hex ("aimake $longrandomstring " . shift);
+    substr $guid, 32, 32, "";
+    substr $guid, 20, 0, "-";
+    substr $guid, 16, 0, "-";
+    substr $guid, 12, 0, "-";
+    substr $guid, 8, 0, "-";
+    return $guid;
 }
 
 # Escaping appropriately for C.
@@ -4652,9 +4663,9 @@ sub calculate_installation_path {
         $filelist_body .= ' ' . (aipath2ospath $aipath) . "\n";
     } elsif ($opt_filelist eq 'wix') {
         # We use one component per file. Generate an ID for the component.
-        my $id = "x" . md5_hex($aipath);
+        my $id = "x" . sha256_hex($aipath);
         my $ospath = $shortcut_target ? undef : aipath2ospath $outpath;
-        my $dirref = "x" . md5_hex($instdir);
+        my $dirref = "x" . sha256_hex($instdir);
         my $bitness = "";
 
         # Binaries and libraries need their bitwidths marked.
@@ -4692,12 +4703,7 @@ sub calculate_installation_path {
         # we have consistency if WiX ever changes its ideas on GUIDs (which
         # has happened once in the past).
         my $pname = $config->{options}{packagename};
-        my $guid = uc md5_hex "aimake $longrandomstring $pname $aipath";
-        # GUID pattern is 8-4-4-4-12
-        substr $guid, 20, 0, "-";
-        substr $guid, 16, 0, "-";
-        substr $guid, 12, 0, "-";
-        substr $guid, 8, 0, "-";
+        my $guid = guid_from_string "$pname $aipath";
 
         my $filelist_entry;
         my $in_component;
@@ -4730,9 +4736,9 @@ sub calculate_installation_path {
             # recommended registry workaround for shortcuts (ICE43). That's a
             # lot of false-positive errors... Currently, we use this approach,
             # and just request that those errors be suppressed while linking.
-            my $targetid = "x" . md5_hex $shortcut_target;
+            my $targetid = "x" . sha256_hex $shortcut_target;
             my $bindir = $config->{options}{bindir};
-            my $bindirref = "x" . md5_hex $bindir;
+            my $bindirref = "x" . sha256_hex $bindir;
             my $targetsigil = $filelist_directories{$shortcut_target}
                 ? '$' : '#';
 
@@ -4819,7 +4825,7 @@ sub calculate_installation_path {
         # Create an entry for the feature.
         my ($feature_id, $fdesc, $flongdesc, $fparent, $fdefault);
         if ($feature) {
-            $feature_id = "x" . md5_hex($feature);
+            $feature_id = "x" . sha256_hex($feature);
             $config->{features}{$feature} or die
                 "Unknown feature name '$feature'";
             $fdesc = $config->{features}{$feature}{description};
@@ -4878,7 +4884,7 @@ sub calculate_installation_path {
         while (@pi > 2) {
             pop @pi;
             my $ipp = deparse_aipath @pi;
-            my $id = "x" . md5_hex $ipp;
+            my $id = "x" . sha256_hex $ipp;
             $filelist_feature_seen{$feature}{$id} or @pi <= 2 or
                 $filelist_features{$feature} .=
                 qq[        <ComponentRef Id="$id" />\n];
@@ -4943,11 +4949,7 @@ sub write_filelist {
         $pnametext =~ s/&/&amp;/g; $pnametext =~ s/"/&quot;/g;
         my $cname = $config->{options}{companyname};
         my $pversion = pvtransform $config->{options}{packageversion};
-        my $guid = uc md5_hex "aimake $longrandomstring $pname";
-        substr $guid, 20, 0, "-";
-        substr $guid, 16, 0, "-";
-        substr $guid, 12, 0, "-";
-        substr $guid, 8, 0, "-";
+        my $guid = guid_from_string $pname;
         my $ui = 'WixUI_FeatureTree';
         keys %filelist_features == 1 and $ui = 'WixUI_Minimal';
         # TODO: Should Language always be 1033?
@@ -4967,14 +4969,14 @@ sub write_filelist {
 ];
 
         # Create a variable for each directory we use. We use a (lowercase)
-        # md5 name if the directory isn't one of the install directories we
-        # actually use. We would want to user uppercase names for the
+        # SHA-256 name if the directory isn't one of the install directories
+        # we actually use. We would want to user uppercase names for the
         # customizable install directories, so that they can be changed, but
         # Windows Installer thinks that this is a problem if one user happens
         # to change it to a folder in their own profile while installing
         # per-machine. Although that case would indeed break, it seems like a
         # pretty clear case of user error to me, not a problem with the file
-        # list, so this is currently unchanged (and produces a spurious
+        # list, so we currently go with what we want (producing a spurious
         # warning ICE90).
         #
         # To select a sensible name, we use the uppercase of the name from the
@@ -4988,7 +4990,7 @@ sub write_filelist {
         # have one.
         for my $dir (sort keys %filelist_directories) {
             my @vals = keys %{$filelist_directories{$dir}};
-            my $dirref = "x" . md5_hex $dir;
+            my $dirref = "x" . sha256_hex $dir;
             my $wixfolder = $wixfolders{$dir};
 
             $filelist_folder_removers{$dirref} or $wixfolder or
@@ -5022,7 +5024,7 @@ sub write_filelist {
                 pop @parents;
                 print $fh '    ' x @parents, "</Directory>\n";
             }
-            my $dirref = "x" . md5_hex $dir;
+            my $dirref = "x" . sha256_hex $dir;
             my $basename = (parse_aipath $dir)[-1];
             if (@parents == 3) {
                 # $dir is actually a CSIDL_ known folder
@@ -5110,7 +5112,7 @@ sub file_hash {
     return $oldmhash if $mtime == $oldmtime && $hashok;
 
     $state->{_mtime}{$iaipath} = $mtime;
-    my $digestor = Digest::MD5->new;
+    my $digestor = Digest::SHA->new(256);
     open my $fh, "<$binary_layers", $ospath
         or croak "'$ospath' exists but is not readable";
     $digestor->addfile($fh);
@@ -5505,7 +5507,7 @@ sub run_command {
                 @flxuse = grep /$rx/, @flxuse;
             }
 
-            push @stdout, 'hash=' . md5_hex(join ':', @flxuse);
+            push @stdout, 'hash=' . sha256_hex(join ':', @flxuse);
             @flxuse = sort grep /^namehint:/, @xuse;
             my $stem = 'anonymous';
             my @version_max = ();
@@ -5968,7 +5970,7 @@ sub set_exeparams {
         defined $params->{description} and
             print $fh "Comment=", $params->{description}, "\n";
         print $fh "Version=", pvtransform
-            defined_or($params->{version}, $config->{options}{packageversion}),
+            (defined_or($params->{version}, $config->{options}{packageversion})),
             "\n";
         print $fh "Terminal=",
             (defined_or($params->{terminal}, 1) ? "true" : "false"), "\n";
@@ -6029,7 +6031,7 @@ sub link_to_directory {
         my $link_from = calculate_installation_path 'docdir',
             $linkname, $feature;
         unlink $link_from;
-        symlink aipath2ospath($aidir_predestdir), $link_from;
+        symlink aipath2ospath($aidir_predestdir), aipath2ospath($link_from);
     }
 }
 
@@ -7676,7 +7678,7 @@ eval {
 # We use the stock option parser Getopt::Long to parse the command
 # line arguments.
 
-$::VERSION = '3.3';
+$::VERSION = '3.4';
 Getopt::Long::Configure('bundling', 'permute', 'auto_help');
 $opt_verbose = 0;
 $opt_install = undef;
@@ -7996,7 +7998,7 @@ sub onoff {
 sub feature_error {
     my $feature = shift;
     $feature eq '?' or
-        print "Unknown feature 'feature'\n";
+        print "Unknown feature '$feature'\n";
     if (!keys %{$config->{features}}) {
         print "This project supports no features.\n";
     } else {
