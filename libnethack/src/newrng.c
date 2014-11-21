@@ -14,6 +14,12 @@
    I know, originated there. For NetHack 4, the code was reformatted and
    simplified via removing unused codepaths. */
 
+#ifdef AIMAKE_BUILDOS_MSWin32
+# define WIN32_LEAN_AND_MEAN /* else windows.h tries to define "boolean" */
+# include <windows.h> /* wincrypt.h is broken and doesn't include this itself */
+# include <wincrypt.h>
+#endif
+
 #include "rnd.h"
 #include "flag.h"
 #include "you.h"
@@ -204,32 +210,56 @@ sha256_done(struct sha256_state *ss)
 static void
 collect_entropy1(unsigned char data[static RNG_SEED_SIZE_BYTES])
 {
+#ifdef AIMAKE_BUILDOS_MSWin32
+
+    HCRYPTPROV crypto_provider;
+    /* Typical Windows: you need to initialize a crypto provider in order to use
+       the cryptographic RNG, and in order to do this, you need to tell it what
+       signing and hashing algorithms you want it to use for signing and hashing
+       operations, even though we aren't doing any.  So there's a need to make
+       an arbitrary choice of crypto provider.  We use PROV_RSA_FULL because
+       it's defined as "general-purpose".
+
+       Just for fun, this also has different error codes from most Windows API
+       functions (TRUE/FALSE, not S_OK/...). TRUE means success. */
+    if (!CryptAcquireContext(&crypto_provider, NULL, NULL, PROV_RSA_FULL,
+                             CRYPT_VERIFYCONTEXT | CRYPT_SILENT)) {
+        paniclog("entropy", "CryptAquireContext failed");
+        return;
+    }
+
+    CryptGenRandom(crypto_provider, RNG_SEED_SIZE_BYTES, data);
+
+    CryptReleaseContext(crypto_provider, 0);
+
+#else
+
     unsigned char holding_area[RNG_SEED_SIZE_BYTES];
     boolean holding_area_valid = 0;
-
-#ifdef AIMAKE_BUILDOS_MSWin32
-# error TODO: Look up the docs for CryptGenRandom and use it here
-#else
 
     FILE* f = fopen("/dev/urandom", "rb");
     if (!f)
         f = fopen("/dev/random", "rb");
-    if (!f)
+    if (!f) {
+        paniclog("entropy", "could not open /dev/urandom or /dev/random");
         return; /* can't do much about this */
+    }
 
     if (fread(holding_area, RNG_SEED_SIZE_BYTES, 1, f) == 1)
         holding_area_valid = 1;
 
     fclose(f);
 
-#endif
-
-    if (!holding_area_valid)
+    if (!holding_area_valid) {
+        paniclog("entropy", "could not read /dev/urandom or /dev/random");
         return;
+    }
 
     int i;
     for (i = 0; i < RNG_SEED_SIZE_BYTES; i++)
         data[i] ^= holding_area[i];
+
+#endif
 }
 
 /* Entropy collector 2: High-resolution timer. (We need a second entropy
