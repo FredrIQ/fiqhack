@@ -197,6 +197,51 @@ location that isn't writable by normal users.  (You should not run aimake
 directly as root; doing that means that the files in the build directory are
 written as root, which normally causes problems.)
 
+=item B<--gen-installer=>I<format>
+
+The "traditional" method of installing a program for an entire system
+is to use the B<-i> and B<-S> options to get aimake to do the installation
+itself.  However, this has a few drawbacks: it doesn't integrate with your
+computer's package management framework, there's no easy/obvious way to
+uninstall, and you can't easily transfer the binaries to another system.
+
+An alternative method is to generate an installer package, which can then be
+installed on your computer, or (if the architectures and operating systems are
+sufficiently similar) on someone else's computer.  That's performed using the
+B<--gen-installer> option.  This option will set most other options
+accordingly for the platform, and so the other options typically won't be
+needed.  One that might be is B<--with>/B<--without>; if you disable a
+feature, it won't be built and the installer won't install it, but if you
+enable a feature, some installes will still be able to give the option to not
+install the feature (even though it has been built).
+
+Generating an installer needs more dependencies than merely building.  Here
+are the various installer formats, and the dependencies they need:
+
+=over 4
+
+=item msi
+
+Generates a Windows Installer package, for use on Microsoft Windows.  (This
+should theoretically work on Windows 2000 SP3 and up, but full functionality
+will not be available in versions before Vista, and this has only been tested
+on Windows 8.1.)  This requires you to install L<http://wixtoolset.org/|WiX>,
+an installer generator toolkit for Windows (and to place its binaries on your
+PATH).
+
+This option is implemented via setting B<-i>, B<--directory-layout>,
+B<--destdir>, and B<--filelist>, then feeding the resulting file list to WiX
+(together with appropriate command-line options).
+
+The architecture of the generated package will match that of the system you're
+building on: 64-bit if you build on a 64-bit system, 32-bit if you build on a
+32-bit system.  (Perhaps some day, there'll be an option to cross-compile.)
+
+It is highly unlikely that this option will work unless you're running on a
+Windows system yourself.
+
+=back
+
 =item B<-W> I<regexp>, B<--show-warnings>=I<regexp>
 
 Instead of compiling, output all error and warning messages that were obtained
@@ -3715,6 +3760,7 @@ use File::Path qw/make_path/;
 use File::Spec ();
 use File::Temp qw/tempfile/;
 use File::Find qw/finddepth/;
+use File::Copy ();
 use Cwd qw/cwd realpath/;
 use Fcntl qw/:DEFAULT :flock :seek/;
 use FindBin qw'$RealBin $RealScript';
@@ -3764,6 +3810,7 @@ my ($opt_verbose, $opt_install, $opt_prefix, $opt_dump, @opt_warnings,
     $opt_install_only, $opt_elevate_permissions, $opt_specific_exit_status,
     @opt_with, @opt_without, @opt_with_default, $opt_nonempty_directory,
     %opt_directory_overrides, $opt_nocr, @opt_rebuild, $opt_documentation,
+    $opt_gen_installer,
     $opt_license, $opt_filelist, $opt_noperms, @opt_local_config); # options
 my ($codeset, $text_layers, $binary_layers,
     $utf8_layers, $ascii_layers); # encodings
@@ -4825,7 +4872,7 @@ sub calculate_installation_path {
         # Create an entry for the feature.
         my ($feature_id, $fdesc, $flongdesc, $fparent, $fdefault);
         if ($feature) {
-            $feature_id = "x" . sha256_hex($feature);
+            $feature_id = "x" . substr sha256_hex($feature), 0, 36;
             $config->{features}{$feature} or die
                 "Unknown feature name '$feature'";
             $fdesc = $config->{features}{$feature}{description};
@@ -7696,6 +7743,7 @@ $opt_nocr = 0;
 $opt_documentation = 0;
 $opt_dlayout = undef;
 $opt_filelist = undef;
+$opt_gen_installer = undef;
 $opt_noperms = 0;
 $opt_license = 0;
 $opt_version = 0;
@@ -7714,6 +7762,7 @@ GetOptions('verbose|v:+' => \$opt_verbose,
            'config-only' => \$opt_config_only,
            'destdir=s' => \$opt_prefix,
            'filelist=s' => \$opt_filelist,
+           'gen-installer=s' => \$opt_gen_installer,
            'natural-permissions' => \$opt_noperms,
            'dump-status:s' => \$opt_dump,
            'show-warnings|W=s' => \@opt_warnings,
@@ -7746,6 +7795,21 @@ EOF
     exit 0;
 }
 $opt_verbose = defined_or($opt_verbose, 0);
+
+# If generating an installer, set up the other options appropriately.
+if (defined $opt_gen_installer) {
+    $opt_elevate_permissions and die
+        "Generating an installer does not need elevated permissions";
+    if ($opt_gen_installer eq 'msi') {
+        $opt_filelist = 'wix';
+        $opt_dlayout = 'windows';
+        $opt_prefix = File::Spec->catfile(File::Spec->curdir,
+                                          'aimake_wix_input');
+    } else {
+        die "Unknown --gen-installer argument '$opt_gen_installer'";
+    }
+}
+
 $opt_prefix and $opt_prefix = File::Spec->rel2abs($opt_prefix);
 
 # Don't create an aimake.objects in the source directory, it leads to
@@ -7762,7 +7826,7 @@ atomic_read {
     $path = $state->{_srcdir};
     # A nonexistent statefile was created by us, so it's format $::VERSION.
     # An existent statefile came from version 3.0 if no version is
-    # preent; versions pre-3 used a different filename, versions post-3.0
+    # present; versions pre-3 used a different filename, versions post-3.0
     # stored the version in the statefile.
     my $version = defined_or($state->{_version},
                              keys %$state ? "3.0" : $::VERSION);
@@ -7966,7 +8030,7 @@ defined($config->{options}{companyname}) or
     $config->{options}{packagename_text} . " developers";
 
 # Work out where and whether we're installing.
-$installing = defined $opt_install;
+$installing = defined $opt_gen_installer || defined $opt_install;
 $ipath = undef;
 $opt_install and $ipath = ospath2aipath($opt_install);
 
@@ -8059,6 +8123,12 @@ atomically {
     defined $config->{directories}{$dlayout} or
         die "Nonexistent directory layout '$dlayout'";
     $config->{options}{directory_layout} = $dlayout;
+
+    # When generating an installer, override the ipath. Exception: if we were
+    # given an install path explicitly on the command line.
+    $opt_gen_installer and !$opt_install and $ipath = undef;
+    # We use the preferred installdir if overriding the ipath, or if we can't
+    # find one any other way.
     $ipath ||= $config->{directories}{$dlayout}{preferred_installdir};
 
     # single_directory is special-cased.
@@ -8076,7 +8146,7 @@ atomically {
     }
 
     $config->{options}{installdir} = $ipath;
-    $state->{_installdir} = $ipath;
+    $opt_gen_installer or $state->{_installdir} = $ipath;
 };
 
 # -i does not mean "install" if an unwritable directory is given, and
@@ -8335,6 +8405,8 @@ if ($active_features eq "") {
 my %pairs_currently_running = (); # used for parallel builds
 my $rebuild_late_locked = 1;
 my $installing_locked = 1;
+
+my %installed_location = ();
 
 MAINLOOP: while (1) {
     my $curpair = undef;
@@ -9171,6 +9243,9 @@ EOF
     $rule->{number_of_install_actions} and !$inapplicable
         and $shortened{friendly_objname($known_output_locations[0])} = 1;
 
+    # Record where we installed things.
+    $rule->{number_of_install_actions} and $installed_location{$objname} =
+        $known_output_locations[0];
     my $msg;
     if (!$failreason || $hide_stderr) {
         if (keys %shortened == 0) {
@@ -9257,6 +9332,83 @@ EOF
 my $flerr;
 $installing and $flerr = write_filelist;
 $flerr and progress_report -1, "Could not write file list: $flerr\n";
+
+### Installer generation
+#
+# This needs to come after the install (thus it's in cleanup), and after the
+# file list is written.
+
+if ($opt_gen_installer eq 'msi') {{
+
+    # Installer compile
+
+    progress_report 0, "Compiling installer...";
+
+    my $arch = $pointerbits == 64 ? 'x64' : 'x86';
+    my $pname = $config->{options}{packagename};
+    my $aifilelist = destdir_transform "spath:$pname.wxs";
+    my $aidir = destdir_transform "spath:";
+
+    my ($failreason, $stdout, $stderr) = run_command
+        \ "cwd:$aidir", \ "relpaths", "cmd:candle", "optstring:-arch $arch",
+        "optstring:-nologo", "optpath::$aifilelist";
+
+    # WiX mixes up its error output and informational output, all on stdout.
+    # So we merge stderr and stdout, then remove the informational output
+    # we expect.
+    $stdout and $stderr .= $stdout;
+    $stderr =~ s/^$pname\.wxs\n*//m;
+
+    $failreason and progress_report -1,
+        "Could not generate installer: install compile failed: $failreason";
+    !$failreason and $stderr and progress_report -1,
+        "Compiling the installer generated warnings:";
+    $stderr and progress_report -1, $stderr;
+    $failreason and last;
+
+    # Installer link
+
+    # There are a /ton/ of false positives in the error/warning checks, most
+    # of which are all due to the same bug, and the fact that aimake's
+    # workarounds from the bug are different from the official ones because
+    # the official ones make no sense.
+
+    progress_report 0, "Linking installer...";
+
+    my @false_positive_ice = qw/38 43 57 64 90/;
+    @false_positive_ice = map "optstring:-sice:ICE$_", @false_positive_ice;
+    my $license = $installed_location{'bpath:aimake/license.rtf'};
+
+    if (!$license) {
+        progress_report -1, "Could not generate installer: no EULA";
+        last;
+    }
+
+    $aifilelist =~ s/\.wxs$/.wixobj/;
+    ($failreason, $stdout, $stderr) = run_command
+        \ "cwd:$aidir", \ "relpaths", "cmd:light", "optstring:-nologo",
+        "optstring:-ext WixUIExtension", @false_positive_ice,
+        "optpath:-dWixUILicenseRtf=:$license", "optpath::$aifilelist";
+    $stdout and $stderr .= $stdout;
+
+    $failreason and progress_report -1,
+        "Could not generate installer: install link failed: $failreason";
+    !$failreason and $stderr and progress_report -1,
+        "Linking the installer generated warnings:";
+    $stderr and progress_report -1, $stderr;
+    $failreason and last;
+
+    # Move the generated install file into the root of the build dir.
+    $aifilelist =~ s/\.wixobj$/.msi/;
+    if (File::Copy::move +(aipath2ospath $aifilelist),
+        +(aipath2ospath "bpath:$pname.msi")) {
+        progress_report 0, "Generated an installer at: " .
+            aipath2ospath "bpath:$pname.msi", "bpath:";
+    } else {
+        progress_report -1, "Could not write installer file '" .
+            (aipath2ospath "bpath:$pname.msi", "bpath:") . "': $!"
+    }
+}}
 
 my $anyproblems = 0;
 
