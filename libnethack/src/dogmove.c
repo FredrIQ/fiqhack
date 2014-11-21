@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2014-11-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -652,7 +652,7 @@ dog_move(struct monst *mtmp, int after)
 {       /* this is extra fast monster movement */
     int omx, omy;       /* original mtmp position */
     int appr, whappr, udist;
-    int i, j, k;
+    int i, j;
     struct edog *edog = EDOG(mtmp);
     struct obj *obj = NULL;
     xchar otyp;
@@ -903,13 +903,6 @@ dog_move(struct monst *mtmp, int after)
             rn2(13 * uncursedcnt))
             continue;
 
-        /* lessen the chance of backtracking to previous position(s) */
-        k = has_edog ? uncursedcnt : cnt;
-        for (j = 0; j < MTSZ && j < k - 1; j++)
-            if (nx == mtmp->mtrack[j].x && ny == mtmp->mtrack[j].y)
-                if (rn2(MTSZ * (k - j)))
-                    goto nxti;
-
         j = ((ndist = GDIST(nx, ny)) - nidist) * appr;
         if ((j == 0 && !rn2(++chcnt)) || j < 0 ||
             (j > 0 && !whappr && ((omx == nix && omy == niy && !rn2(3))
@@ -922,7 +915,6 @@ dog_move(struct monst *mtmp, int after)
                 chcnt = 0;
             chi = i;
         }
-    nxti:;
     }
 newdogpos:
     if (nix != omx || niy != omy) {
@@ -960,10 +952,6 @@ newdogpos:
         place_monster(mtmp, nix, niy);
         if (cursemsg[chi] && (cansee(omx, omy) || cansee(nix, niy)))
             pline("%s moves only reluctantly.", Monnam(mtmp));
-        for (j = MTSZ - 1; j > 0; j--)
-            mtmp->mtrack[j] = mtmp->mtrack[j - 1];
-        mtmp->mtrack[0].x = omx;
-        mtmp->mtrack[0].y = omy;
         /* We have to know if the pet's gonna do a combined eat and move before 
            moving it, but it can't eat until after being moved.  Thus the
            do_eat flag. */

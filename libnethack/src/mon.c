@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-20 */
+/* Last modified by Alex Smith, 2014-11-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -896,19 +896,22 @@ mpickgold(struct monst *mtmp)
 
 
 boolean
-mpickstuff(struct monst *mtmp, const char *str)
+mpickstuff(struct monst *mtmp)
 {
     struct obj *otmp, *otmp2;
 
-/* prevent shopkeepers from leaving the door of their shop */
+    /* prevent shopkeepers from leaving the door of their shop */
     if (mtmp->isshk && inhishop(mtmp))
+        return FALSE;
+
+    /* non-tame monsters normally don't go shopping */
+    if (*in_rooms(mtmp->dlevel, mtmp->mx, mtmp->my, SHOPBASE) && rn2(25))
         return FALSE;
 
     for (otmp = level->objects[mtmp->mx][mtmp->my]; otmp; otmp = otmp2) {
         otmp2 = otmp->nexthere;
-/* Nymphs take everything.  Most monsters don't pick up corpses. */
-        if (!str ? searches_for_item(mtmp, otmp) :
-            ! !(strchr(str, otmp->oclass))) {
+        /* Nymphs take everything.  Most monsters don't pick up corpses. */
+        if (monster_would_take_item(mtmp, otmp)) {
             if (otmp->otyp == CORPSE && mtmp->data->mlet != S_NYMPH &&
                 /* let a handful of corpse types thru to can_carry() */
                 !touch_petrifies(&mons[otmp->corpsenm]) &&

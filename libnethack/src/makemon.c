@@ -1984,7 +1984,12 @@ restore_mon(struct memfile *mf)
     mon->mstrategy = mread32(mf);
     mon->meating = mread32(mf);
     /* 40 */
-    restore_coords(mf, mon->mtrack, MTSZ);
+    mon->xyloc = mread8(mf);
+    mon->xyflags = mread8(mf);
+    mon->xlocale = mread8(mf);
+    mon->ylocale = mread8(mf);
+    /* SAVEBREAK (4.3-beta1 -> 4.3-beta2): remove this */
+    mon->save_compat_dword = mread32(mf);
     mon->mnum = mread16(mf);
     mon->mx = mread8(mf);
     mon->my = mread8(mf);
@@ -2189,7 +2194,11 @@ save_mon(struct memfile *mf, const struct monst *mon)
     mwrite32(mf, mon->mstrategy);
     mwrite32(mf, mon->meating);
     /* 40 */
-    save_coords(mf, mon->mtrack, MTSZ);
+    mwrite8(mf, mon->xyloc);
+    mwrite8(mf, mon->xyflags);
+    mwrite8(mf, mon->xlocale);
+    mwrite8(mf, mon->ylocale);
+    mwrite32(mf, mon->save_compat_dword);
     mwrite16(mf, mon->mnum);
     mwrite8(mf, mon->mx);
     mwrite8(mf, mon->my);

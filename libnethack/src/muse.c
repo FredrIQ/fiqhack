@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-20 */
+/* Last modified by Alex Smith, 2014-11-21 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1067,8 +1067,9 @@ find_offensive(struct monst * mtmp, struct musable * m)
             ((helmet && is_metallic(helmet)) || mtmp->mconf ||
              amorphous(mtmp->data) || passes_walls(mtmp->data) ||
              noncorporeal(mtmp->data) || unsolid(mtmp->data) || !rn2(10))
-            && dist2(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy) <= 2 &&
-            mtmp->mcansee && haseyes(mtmp->data)
+            && dist2(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy) <= 2
+            && (mtmp->mx != mtmp->mux || mtmp->my != mtmp->muy)
+            && mtmp->mcansee && haseyes(mtmp->data)
             && !Is_rogue_level(&u.uz)
             && (!In_endgame(&u.uz) || Is_earthlevel(&u.uz))) {
             m->offensive = obj;
@@ -1537,7 +1538,8 @@ find_misc(struct monst * mtmp, struct musable * m)
     /* We arbitrarily limit to times when a player is nearby for the same
        reason as Junior Pac-Man doesn't have energizers eaten until you can see 
        them... */
-    if (dist2(x, y, mtmp->mux, mtmp->muy) > 36)
+    if (dist2(x, y, mtmp->mux, mtmp->muy) > 36 ||
+        (x == mtmp->mux && y == mtmp->muy))
         return FALSE;
 
     if (!stuck && !immobile && !mtmp->cham && monstr[monsndx(mdat)] < 6) {
@@ -1935,7 +1937,7 @@ rnd_misc_item(struct monst *mtmp)
 }
 
 boolean
-searches_for_item(struct monst * mon, struct obj * obj)
+searches_for_item(struct monst *mon, struct obj *obj)
 {
     int typ = obj->otyp;
 

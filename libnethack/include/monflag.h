@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-08-25 */
+/* Last modified by Alex Smith, 2014-11-21 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -147,7 +147,6 @@
 # define M3_COVETOUS    0x001f  /* wants something */
 # define M3_WAITMASK    0x00c0  /* waiting... */
 
-/* Infravision is currently implemented for players only */
 # define M3_INFRAVISION 0x0100  /* has infravision */
 # define M3_INFRAVISIBLE 0x0200 /* visible by infravision */
 
