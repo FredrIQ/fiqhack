@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-20 */
+/* Last modified by Alex Smith, 2014-11-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2002,7 +2002,7 @@ restore_mon(struct memfile *mf)
     mon->mappearance = mread32(mf);
     mflags = mread32(mf);
 
-    mon->mfleetim = mread8(mf);
+    mon->mfleetim = save_decode_8(mread8(mf), -moves);
     mon->weapon_check = mread8(mf);
     mon->misc_worn_check = mread32(mf);
     mon->wormno = mread8(mf);
@@ -2224,7 +2224,7 @@ save_mon(struct memfile *mf, const struct monst *mon)
         (mon->ispriest << 1) | (mon->iswiz << 0);
     mwrite32(mf, mflags);
 
-    mwrite8(mf, mon->mfleetim);
+    mwrite8(mf, save_encode_8(mon->mfleetim, -moves));
     mwrite8(mf, mon->weapon_check);
     mwrite32(mf, mon->misc_worn_check);
     mwrite8(mf, mon->wormno);
