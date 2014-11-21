@@ -569,7 +569,7 @@ restore_you(struct memfile *mf, struct you *y)
     y->ugangr = mread32(mf);
     y->ugifts = mread32(mf);
     y->ublessed = mread32(mf);
-    y->ublesscnt = save_encode_32(mread32(mf), -moves);
+    y->ublesscnt = save_decode_32(mread32(mf), -moves);
     y->ucleansed = mread32(mf);
     y->uinvault = mread32(mf);
     y->ugallop = mread32(mf);
