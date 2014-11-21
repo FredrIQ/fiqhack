@@ -151,11 +151,11 @@ init_game_paths(const char *argv0)
         pathlist[i] = dir;
 
 
-    pathlist[DUMPPREFIX] = tmp = malloc(MAXPATH);
-    if (!get_gamedir(DUMP_DIR, tmp)) {
+    pathlist[DUMPPREFIX] = tmp = malloc(MAX_PATH);
+    if (!get_gamedirA(DUMP_DIR, tmp)) {
         /* get the actual, localized path to the Documents folder */
-        if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_PERSONAL, NULL, 0, docpath)))
-            pathlist[DUMPPREFIX] = docpath;
+        if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_PERSONAL, NULL, 0, tmp)))
+            pathlist[DUMPPREFIX] = tmp;
         else
             pathlist[DUMPPREFIX] = ".\\";
     }
