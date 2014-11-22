@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-21 */
+/* Last modified by Alex Smith, 2014-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -186,7 +186,6 @@ static const char nofetch[] = { BALL_CLASS, CHAIN_CLASS, ROCK_CLASS, 0 };
 static xchar gtyp, gx, gy;      /* type and position of dog's current goal */
 
 static boolean cursed_object_at(int, int);
-static void wantdoor(int, int, void *);
 
 static boolean
 cursed_object_at(int x, int y)
@@ -204,7 +203,7 @@ dog_nutrition_value(struct monst *mtmp, struct obj *obj, boolean set_meating)
 {
     int nutrit;
 
-    /* 
+    /*
      * It is arbitrary that the pet takes the same length of time to eat
      * as a human, but gets more nutritional value.
      */
@@ -607,41 +606,18 @@ dog_goal(struct monst *mtmp, struct edog *edog, int after, int udist,
     if (mtmp->mconf)
         appr = 0;
 
-#define FARAWAY (COLNO + 2)     /* position outside screen */
+    /* If aiming for the master, locate them using strategy if possible.
+       Otherwise, the dog is lost, and will random-walk. (This shouldn't
+       happen because set_apparxy gives pets perfect knowledge of where
+       their master is.) */
     if (gx == u.ux && gy == u.uy && !in_masters_sight) {
-        coord *cp;
-
-        cp = gettrack(omx, omy);
-        if (cp) {
-            gx = cp->x;
-            gy = cp->y;
-            if (edog)
-                edog->ogoal.x = 0;
+        if (mtmp->mstrategy & STRAT_TARGMASK) {
+            gx = STRAT_GOALX(mtmp->mstrategy);
+            gy = STRAT_GOALY(mtmp->mstrategy);
         } else {
-            /* assume master hasn't moved far, and reuse previous goal */
-            if (edog && edog->ogoal.x &&
-                ((edog->ogoal.x != omx) || (edog->ogoal.y != omy))) {
-                gx = edog->ogoal.x;
-                gy = edog->ogoal.y;
-                edog->ogoal.x = 0;
-            } else {
-                int fardist = FARAWAY * FARAWAY;
-
-                gx = gy = FARAWAY;      /* random */
-                do_clear_area(omx, omy, 9, wantdoor, &fardist);
-
-                /* here gx == FARAWAY e.g. when dog is in a vault */
-                if (gx == FARAWAY || (gx == omx && gy == omy)) {
-                    gx = u.ux;
-                    gy = u.uy;
-                } else if (edog) {
-                    edog->ogoal.x = gx;
-                    edog->ogoal.y = gy;
-                }
-            }
+            gx = mtmp->mx;
+            gy = mtmp->my;
         }
-    } else if (edog) {
-        edog->ogoal.x = 0;
     }
     return appr;
 }
@@ -664,10 +640,9 @@ dog_move(struct monst *mtmp, int after)
     coord poss[9];
     long info[9], allowflags;
     struct musable m;
+    struct distmap_state ds;
 
-#define GDIST(x,y) (dist2(x,y,gx,gy))
-
-    /* 
+    /*
      * Tame Angels have isminion set and an ispriest structure instead of
      * an edog structure.  Fortunately, guardian Angels need not worry
      * about mundane things like eating and fetching objects, and can
@@ -815,6 +790,10 @@ dog_move(struct monst *mtmp, int after)
         uncursedcnt++;
     }
 
+    distmap_init(&ds, gx, gy, mtmp);
+
+#define GDIST(x,y) (distmap(&ds,(x),(y)))
+
     chcnt = 0;
     chi = -1;
     nidist = GDIST(nix, niy);
@@ -952,7 +931,7 @@ newdogpos:
         place_monster(mtmp, nix, niy);
         if (cursemsg[chi] && (cansee(omx, omy) || cansee(nix, niy)))
             pline("%s moves only reluctantly.", Monnam(mtmp));
-        /* We have to know if the pet's gonna do a combined eat and move before 
+        /* We have to know if the pet's gonna do a combined eat and move before
            moving it, but it can't eat until after being moved.  Thus the
            do_eat flag. */
         if (do_eat) {
@@ -1046,19 +1025,4 @@ can_reach_location(struct monst *mon, xchar mx, xchar my, xchar fx, xchar fy)
     return FALSE;
 }
 
-
- /*ARGSUSED*/   /* do_clear_area client */
-    static void
-wantdoor(int x, int y, void *distance)
-{
-    int ndist;
-
-    if (*(int *)distance > (ndist = distu(x, y))) {
-        gx = x;
-        gy = y;
-        *(int *)distance = ndist;
-    }
-}
-
 /*dogmove.c*/
-

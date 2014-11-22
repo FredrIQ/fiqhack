@@ -255,7 +255,7 @@ target_on(int mask, struct monst *mtmp)
 void
 strategy(struct monst *mtmp, boolean knows_ux_uy)
 {
-    boolean chases_player = !mtmp->mpeaceful || mtmp->isshk;
+    boolean chases_player = !mtmp->mpeaceful || mtmp->isshk || mtmp->mtame;
 
     set_apparxy(mtmp);
 
@@ -281,6 +281,13 @@ strategy(struct monst *mtmp, boolean knows_ux_uy)
     if (mtmp->mhp * (mtmp->data == &mons[PM_WIZARD_OF_YENDOR] ? 4 : 2) <
         mtmp->mhpmax || mtmp->mflee) {
 
+        /* An escaping pet instead moves towards the player, if it can.
+           (dog_move will reverse this direction if fleeing in a panic.) */
+        if (mtmp->mtame && (mtmp->mux != mtmp->mx || mtmp->muy != mtmp->my)) {
+            mtmp->mstrategy = STRAT(STRAT_PLAYER, mtmp->mux, mtmp->muy, 0);
+            return;
+        }
+
         /* If the monster thinks it can see the player, it escapes from the
            location it believes the player to be standing at. Because we just
            called set_apparxy, the monster thinks it knows where the player is
@@ -304,7 +311,6 @@ strategy(struct monst *mtmp, boolean knows_ux_uy)
            cases. */
         mtmp->mstrategy = STRAT(STRAT_ESCAPE, mtmp->mx, mtmp->my, 0);
         return;
-
     }
 
     /* Covetous monster checks. */
@@ -361,7 +367,9 @@ strategy(struct monst *mtmp, boolean knows_ux_uy)
         return;
 
     /* If the monster is hostile, aware of your current location (or thinks it
-       is), and not escaping, it's going to hunt you down. */
+       is), and not escaping, it's going to hunt you down. Likewise, tame
+       monsters will try to follow. Shopkeeper strategy is determined as if the
+       shopkeeper is angry; it won't be used in other situations. */
     if ((mtmp->mux != mtmp->mx || mtmp->muy != mtmp->my) && chases_player) {
         mtmp->mstrategy = STRAT(STRAT_PLAYER, mtmp->mux, mtmp->muy, 0);
         return;
