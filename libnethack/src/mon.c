@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-21 */
+/* Last modified by Alex Smith, 2014-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1044,10 +1044,12 @@ mfndpos(struct monst *mon, coord * poss,        /* coord poss[9] */
     boolean wantpool, poolok, lavaok, nodiag;
     boolean rockok = FALSE, treeok = FALSE, thrudoor;
     int maxx, maxy;
+    int swarmcount = 0;
+    struct level *const mlevel = mon->dlevel;
 
     x = mon->mx;
     y = mon->my;
-    nowtyp = level->locations[x][y].typ;
+    nowtyp = mlevel->locations[x][y].typ;
 
     nodiag = (mdat == &mons[PM_GRID_BUG]);
     wantpool = mdat->mlet == S_EEL;
@@ -1090,30 +1092,30 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
         for (ny = max(0, y - 1); ny <= maxy; ny++) {
             if (nx == x && ny == y)
                 continue;
-            if (IS_ROCK(ntyp = level->locations[nx][ny].typ) &&
-                !((flag & ALLOW_WALL) && may_passwall(level, nx, ny)) &&
-                !((IS_TREE(ntyp) ? treeok : rockok) && may_dig(level, nx, ny)))
+            if (IS_ROCK(ntyp = mlevel->locations[nx][ny].typ) &&
+                !((flag & ALLOW_WALL) && may_passwall(mlevel, nx, ny)) &&
+                !((IS_TREE(ntyp) ? treeok : rockok) && may_dig(mlevel, nx, ny)))
                 continue;
             /* KMH -- Added iron bars */
             if (ntyp == IRONBARS && !(flag & ALLOW_BARS))
                 continue;
             if (IS_DOOR(ntyp) && !amorphous(mdat) &&
-                ((level->locations[nx][ny].doormask & D_CLOSED &&
+                ((mlevel->locations[nx][ny].doormask & D_CLOSED &&
                   !(flag & OPENDOOR)) ||
-                 (level->locations[nx][ny].doormask & D_LOCKED &&
+                 (mlevel->locations[nx][ny].doormask & D_LOCKED &&
                   !(flag & UNLOCKDOOR))) && !thrudoor)
                 continue;
             if (nx != x && ny != y &&
                 (nodiag ||
                  ((IS_DOOR(nowtyp) &&
-                   ((level->locations[x][y].doormask & ~D_BROKEN) ||
+                   ((mlevel->locations[x][y].doormask & ~D_BROKEN) ||
                     Is_rogue_level(&u.uz))) ||
                   (IS_DOOR(ntyp) &&
-                   ((level->locations[nx][ny].doormask & ~D_BROKEN) ||
+                   ((mlevel->locations[nx][ny].doormask & ~D_BROKEN) ||
                     Is_rogue_level(&u.uz))))))
                 continue;
-            if ((is_pool(level, nx, ny) == wantpool || poolok) &&
-                (lavaok || !is_lava(level, nx, ny))) {
+            if ((is_pool(mlevel, nx, ny) == wantpool || poolok) &&
+                (lavaok || !is_lava(mlevel, nx, ny))) {
                 int dispx, dispy;
                 boolean monseeu = (mon->mcansee && (!Invis || perceives(mdat)));
                 boolean checkobj = OBJ_AT(nx, ny);
@@ -1149,9 +1151,11 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                         continue;
                     info[cnt] |= ALLOW_U;
                 } else {
-                    if (MON_AT(level, nx, ny)) {
-                        struct monst *mtmp2 = m_at(level, nx, ny);
+                    if (MON_AT(mlevel, nx, ny)) {
+                        struct monst *mtmp2 = m_at(mlevel, nx, ny);
                         long mmflag = flag | mm_aggression(mon, mtmp2);
+
+                        swarmcount++;
 
                         if (!(mmflag & ALLOW_M))
                             continue;
@@ -1164,20 +1168,20 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                     }
                     /* Note: ALLOW_SANCT only prevents movement, not */
                     /* attack, into a temple. */
-                    if (*in_rooms(level, nx, ny, TEMPLE) &&
-                        !*in_rooms(level, x, y, TEMPLE) &&
+                    if (*in_rooms(mlevel, nx, ny, TEMPLE) &&
+                        !*in_rooms(mlevel, x, y, TEMPLE) &&
                         in_your_sanctuary(NULL, nx, ny)) {
                         if (!(flag & ALLOW_SANCT))
                             continue;
                         info[cnt] |= ALLOW_SANCT;
                     }
                 }
-                if (checkobj && sobj_at(CLOVE_OF_GARLIC, level, nx, ny)) {
+                if (checkobj && sobj_at(CLOVE_OF_GARLIC, mlevel, nx, ny)) {
                     if (flag & NOGARLIC)
                         continue;
                     info[cnt] |= NOGARLIC;
                 }
-                if (checkobj && sobj_at(BOULDER, level, nx, ny)) {
+                if (checkobj && sobj_at(BOULDER, mlevel, nx, ny)) {
                     if (!(flag & ALLOW_ROCK))
                         continue;
                     info[cnt] |= ALLOW_ROCK;
@@ -1200,7 +1204,7 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                  * being careful or something.
                  */
                 {
-                    struct trap *ttmp = t_at(level, nx, ny);
+                    struct trap *ttmp = t_at(mlevel, nx, ny);
 
                     if (ttmp) {
                         if (ttmp->ttyp >= TRAPNUM || ttmp->ttyp == 0) {
@@ -1241,10 +1245,42 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                 cnt++;
             }
         }
-    if (!cnt && wantpool && !is_pool(level, x, y)) {
+    if (!cnt && wantpool && !is_pool(mlevel, x, y)) {
         wantpool = FALSE;
         goto nexttry;
     }
+
+    /* Special case for optimizing the behaviour of large groups of monsters:
+       those on the inside (6 or more neighbours) do not move horizontally
+       (although they can still attack). This behaviour mostly looks the same as
+       if all the monsters could move, but makes the save file much smaller, and
+       also makes pudding farming a little more difficult because you can't rely
+       on a single square to drop the items (the puddings will tend to spread
+       back a little from the square you're farming from; although there will
+       always or nearly always be a few adjacent, they won't be in the same
+       places). This also means that in large mobs, enemies with ranged weapons
+       will get more of a chance to use them. */
+    if (swarmcount >= 6) {
+        long infocopy[9];
+        coord posscopy[9];
+        int oldcnt;
+
+        memcpy(infocopy, info, sizeof infocopy);
+        memcpy(posscopy, poss, sizeof posscopy);
+        oldcnt = cnt;
+        cnt = 0;
+
+        int i;
+        for (i = 0; i < oldcnt; i++) {
+            if ((poss[i].x == u.ux && poss[i].y == u.uy) ||
+                MON_AT(mlevel, poss[i].x, poss[i].y)) {
+                info[cnt] = infocopy[i];
+                poss[cnt] = posscopy[i];
+                cnt++;
+            }
+        }
+    }
+
     return cnt;
 }
 

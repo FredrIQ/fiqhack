@@ -858,11 +858,15 @@ not_special:
         }
     }
 
-    /* If the monster didn't get any nearer to where it was aiming then when
-       it started, clear its strategy. */
+    /* If the monster didn't get any nearer to where it was aiming then when it
+       started, clear its strategy. Exception: if it /couldn't/ move, then no
+       strategy is any better than any other. */
     int actual_appr = dist2(omx, omy, gx, gy) - dist2(nix, niy, gx, gy);
-    if ((actual_appr > 0 && appr < 0) || (actual_appr < 0 && appr > 0))
+    if (((actual_appr >= 0 && appr < 0) || (actual_appr <= 0 && appr > 0)) &&
+        mmoved && rn2(2)) {
         mtmp->mstrategy = STRAT_NONE;
+        strategy(mtmp, FALSE);
+    }
 
     if (mmoved) {
         if (mmoved == 1 && (u.ux != nix || u.uy != niy) && itsstuck(mtmp))

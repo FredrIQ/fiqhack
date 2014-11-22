@@ -343,6 +343,23 @@ strategy(struct monst *mtmp, boolean knows_ux_uy)
         return;
     }
 
+    /* Monsters in the middle of a swarm don't run a full AI for efficiency
+       reasons: they attack, but that's about it. (They don't really have room
+       to move.) So don't bother messing about with their strategy either. */
+    int adjacent_nonmonsters = 0;
+    int dx, dy;
+    for (dx = -1; dx <= 1; dx++)
+        for (dy = -1; dy <= 1; dy++) {
+            if (adjacent_nonmonsters > 2)
+                break;
+            if (!isok(mtmp->mx + dx, mtmp->my + dy))
+                continue;
+            if (!MON_AT(mtmp->dlevel, mtmp->mx + dx, mtmp->my + dy))
+                adjacent_nonmonsters++;
+        }
+    if (adjacent_nonmonsters <= 2)
+        return;
+
     /* If the monster is hostile, aware of your current location (or thinks it
        is), and not escaping, it's going to hunt you down. */
     if ((mtmp->mux != mtmp->mx || mtmp->muy != mtmp->my) && chases_player) {
@@ -352,16 +369,16 @@ strategy(struct monst *mtmp, boolean knows_ux_uy)
 
     /* If the monster is one that's naturally social (determined using the
        G_SGROUP and G_LGROUP flags), if it sees another monster of the same mlet
-       nearby, it has a 50% chance of changing strategy to match. This makes it
-       likely (but not guaranteed) that monsters that generate as a group will
-       stay as a group. Exception: a monster won't choose a goal square near its
-       current square via this method. Note that we're using mlet matches, not
-       species matches, so (e.g.) different species of elf may decide to band
-       together if they meet each other in a corridor. Likewise, a healthy
-       monster that can't see the player may decide to escape along with a
-       wounded one. This is likely to lead to emergent behaviour; it may or may
-       not need changing, depending on what that emergent behaviour is. */
-    int dx, dy;
+       nearby, the monster with fewer max HP changes strategy to match the
+       monster with more. This makes it likely (but not guaranteed) that
+       monsters that generate as a group will stay as a group. Exception: a
+       monster won't choose a goal square near its current square via this
+       method. Note that we're using mlet matches, not species matches, so
+       (e.g.) different species of elf may decide to band together if they meet
+       each other in a corridor. Likewise, a healthy monster that can't see the
+       player may decide to escape along with a wounded one. This is likely to
+       lead to emergent behaviour; it may or may not need changing, depending on
+       what that emergent behaviour is. */
     for (dx = -1; dx <= 1; dx++)
         for (dy = -1; dy <= 1; dy++) {
             if (!isok(mtmp->mx + dx, mtmp->my + dy))
@@ -372,7 +389,9 @@ strategy(struct monst *mtmp, boolean knows_ux_uy)
                 mtmp2->data->mlet == mtmp->data->mlet &&
                 mtmp->mpeaceful == mtmp2->mpeaceful &&
                 mtmp->data->geno & (G_SGROUP | G_LGROUP) &&
-                mtmp2->data->geno & (G_SGROUP | G_LGROUP) && !rn2(2)) {
+                mtmp2->data->geno & (G_SGROUP | G_LGROUP) &&
+                (mtmp->mhpmax < mtmp2->mhpmax ||
+                 (mtmp->m_id < mtmp2->m_id && mtmp->mhpmax == mtmp2->mhpmax))) {
                 mtmp->mstrategy = mtmp2->mstrategy;
                 return;
             }
