@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-21 */
+/* Last modified by Alex Smith, 2014-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -22,8 +22,8 @@ initedog(struct monst *mtmp)
     EDOG(mtmp)->apport = 10;
     EDOG(mtmp)->whistletime = 0;
     EDOG(mtmp)->hungrytime = 1000 + moves;
-    EDOG(mtmp)->ogoal.x = -1;   /* force error if used before set */
-    EDOG(mtmp)->ogoal.y = -1;
+    EDOG(mtmp)->save_compat_bytes[0] = -1;
+    EDOG(mtmp)->save_compat_bytes[1] = -1;
     EDOG(mtmp)->abuse = 0;
     EDOG(mtmp)->revivals = 0;
     EDOG(mtmp)->mhpmax_penalty = 0;
@@ -915,7 +915,6 @@ wary_dog(struct monst *mtmp, boolean was_dead)
         edog->revivals++;
         edog->killed_by_u = 0;
         edog->abuse = 0;
-        edog->ogoal.x = edog->ogoal.y = -1;
         if (was_dead || edog->hungrytime < moves + 500L)
             edog->hungrytime = moves + 500L;
         if (was_dead) {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-21 */
+/* Last modified by Alex Smith, 2014-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2043,8 +2043,8 @@ restore_mon(struct memfile *mf)
         EDOG(mon)->abuse = mread32(mf);
         EDOG(mon)->revivals = mread32(mf);
         EDOG(mon)->mhpmax_penalty = mread32(mf);
-        EDOG(mon)->ogoal.x = mread8(mf);
-        EDOG(mon)->ogoal.y = mread8(mf);
+        EDOG(mon)->save_compat_bytes[0] = mread8(mf);
+        EDOG(mon)->save_compat_bytes[1] = mread8(mf);
         EDOG(mon)->killed_by_u = mread8(mf);
         break;
 
@@ -2269,8 +2269,8 @@ save_mon(struct memfile *mf, const struct monst *mon)
         mwrite32(mf, CONST_EDOG(mon)->abuse);
         mwrite32(mf, CONST_EDOG(mon)->revivals);
         mwrite32(mf, CONST_EDOG(mon)->mhpmax_penalty);
-        mwrite8(mf, CONST_EDOG(mon)->ogoal.x);
-        mwrite8(mf, CONST_EDOG(mon)->ogoal.y);
+        mwrite8(mf, CONST_EDOG(mon)->save_compat_bytes[0]);
+        mwrite8(mf, CONST_EDOG(mon)->save_compat_bytes[1]);
         mwrite8(mf, CONST_EDOG(mon)->killed_by_u);
         break;
 
