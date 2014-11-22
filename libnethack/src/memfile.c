@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-21 */
+/* Last modified by Alex Smith, 2014-11-22 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -88,16 +88,24 @@ le64_to_host(unsigned long long x)
    save diff will be logged to the file in question. */
 static FILE *volatile debuglog = NULL;
 
+static void mdiffwrite(struct memfile *, const void *, unsigned int);
+
 /* Creating and freeing memory files */
 void
 mnew(struct memfile *mf, struct memfile *relativeto)
 {
     int i;
 
+    static const char diffheader[2] = {MDIFF_HEADER_0, MDIFF_HEADER_1};
+
     mf->buf = mf->diffbuf = NULL;
     mf->len = mf->pos = mf->difflen = mf->diffpos = mf->relativepos = 0;
     mf->relativeto = relativeto;
-    mf->curcmd = MDIFF_INVALID; /* no command yet */
+
+    mf->pending_edits = mf->pending_copies = mf->pending_seeks = 0;
+
+    mdiffwrite(mf, diffheader, 2);
+
     for (i = 0; i < MEMFILE_HASHTABLE_SIZE; i++)
         mf->tags[i] = 0;
     mf->last_tag = 0;
@@ -205,22 +213,23 @@ mwrite(struct memfile *mf, const void *buf, unsigned int num)
         while (num--) {
             if (mf->relativepos < mf->relativeto->pos &&
                 mf->buf[mf->pos] == mf->relativeto->buf[mf->relativepos]) {
-                if (mf->curcmd != MDIFF_COPY || mf->curcount == 0x3fff) {
+
+                if (mf->pending_seeks || mf->pending_edits ||
+                    mf->pending_copies >= 0x01FFFFFF)
                     mdiffflush(mf);
-                    mf->curcount = 0;
-                }
-                mf->curcmd = MDIFF_COPY;
-                mf->curcount++;
+
+                mf->pending_copies++;
+
             } else {
+
                 /* Note that mdiffflush is responsible for writing the actual
                    data that was edited, once we have a complete run of it. So
                    there's no need to record the data anywhere but in buf. */
-                if (mf->curcmd != MDIFF_EDIT || mf->curcount == 0x3fff) {
+                if (mf->pending_seeks || mf->pending_edits >= 0x1FFFFFFF ||
+                    (mf->pending_edits >= 0xF && mf->pending_copies))
                     mdiffflush(mf);
-                    mf->curcount = 0;
-                }
-                mf->curcmd = MDIFF_EDIT;
-                mf->curcount++;
+
+                mf->pending_edits++;
             }
             mf->pos++;
             mf->relativepos++;
@@ -290,52 +299,85 @@ mdiffwrite(struct memfile *mf, const void *buf, unsigned int num)
 
     if (do_realloc)
         mf->diffbuf = realloc(mf->diffbuf, mf->difflen);
+
     memcpy(&mf->diffbuf[mf->diffpos], buf, num);
     mf->diffpos += num;
-}
-
-static void
-mdiffwrite14(struct memfile *mf, uint8_t command, int16_t value)
-{
-    uint16_t le_value = value;
-
-    le_value &= 0x3fff; /* in case it's negative */
-    le_value |= command << 14;
-    le_value = host_to_le16(le_value);
-    mdiffwrite(mf, &le_value, 2);
 }
 
 void
 mdiffflush(struct memfile *mf)
 {
-    if (mf->curcmd != MDIFF_INVALID)
-        mdiffwrite14(mf, mf->curcmd, mf->curcount);
-    if (mf->curcmd == MDIFF_EDIT) {
-        /* We need to record the actual data to edit with, too. */
-        if (mf->curcount > mf->pos || mf->curcount < 0)
-            panic("mdiffflush: trying to edit with too much data");
-        mdiffwrite(mf, mf->buf + mf->pos - mf->curcount, mf->curcount);
+    uint16_t shortcmd;
+    uint32_t longcmd;
+    boolean using_longcmd = FALSE;
+    uint8_t buf[4];
 
-        if (debuglog) {
-            fprintf(debuglog,
-                    "%p: edit %d bytes, starting at %d:%08lx%+d\n",
-                    (void *)mf, mf->curcount,
-                    mf->last_tag ? mf->last_tag->tagtype : -1,
-                    mf->last_tag ? mf->last_tag->tagdata : 0,
-                    mf->pos - mf->curcount -
-                    (mf->last_tag ? mf->last_tag->pos : 0));
+    if (mf->pending_seeks) {
+        if (mf->pending_seeks >= -0x1000 && mf->pending_seeks <= 0x0FFF) {
+            shortcmd = mf->pending_seeks;
+            shortcmd &= 0x1FFF;
+            shortcmd |= MDIFF_SEEK;
+        } else {
+            longcmd = mf->pending_seeks;
+            longcmd &= 0x1FFFFFFF;
+            longcmd |= MDIFF_LARGE_SEEK << 16;
+            using_longcmd = TRUE;
         }
-    } else if (mf->curcmd != MDIFF_INVALID && debuglog) {
-        fprintf(debuglog, "%p: %s %d bytes for %d:%08lx%+d\n", (void *)mf,
-                mf->curcmd == MDIFF_SEEK ? "seek" :
-                mf->curcmd == MDIFF_COPY ? "copy" : "unknown command",
-                mf->curcount,
+    } else if (mf->pending_copies <= 0x1FFF &&
+               mf->pending_edits >= 1 && mf->pending_edits <= 4 &&
+               (mf->pending_copies != 0 || mf->pending_edits != 1)) {
+        shortcmd = mf->pending_copies;
+        shortcmd |= (mf->pending_edits - 1) << 13;
+    } else if (mf->pending_copies == 0 && mf->pending_edits &&
+               mf->pending_edits <= 0x1FFFFFFF) {
+        longcmd = mf->pending_edits;
+        longcmd |= MDIFF_LARGE_EDIT << 16;
+        using_longcmd = TRUE;
+    } else if (mf->pending_copies <= 0x01FFFFFF && mf->pending_edits <= 0xF &&
+               mf->pending_copies) {
+        longcmd = mf->pending_copies;
+        longcmd |= mf->pending_edits << 25;
+        longcmd |= MDIFF_LARGE_COPYEDIT << 16;
+        using_longcmd = TRUE;
+    } else if (mf->pending_copies || mf->pending_edits) {
+        panic("mdiffflush: too many copies (%ld) and/or edits (%ld)",
+              mf->pending_copies, mf->pending_edits);
+    } else
+        return; /* nothing to do */
+
+    if (using_longcmd) {
+        buf[0] = (longcmd >> 24) & 255;
+        buf[1] = (longcmd >> 16) & 255;
+        buf[2] = (longcmd >>  8) & 255;
+        buf[3] = (longcmd >>  0) & 255;
+        mdiffwrite(mf, buf, 4);
+    } else {
+        buf[0] = (shortcmd >> 8) & 255;
+        buf[1] = (shortcmd >> 0) & 255;
+        mdiffwrite(mf, buf, 2);
+    }
+
+    if (mf->pending_edits) {
+        if (mf->pending_edits > mf->pos || mf->pending_edits < 0)
+            panic("mdiffflush: trying to edit with too much data");
+        mdiffwrite(mf, mf->buf + mf->pos - mf->pending_edits,
+                   mf->pending_edits);
+    }
+
+    if (debuglog) {
+        fprintf(debuglog,
+                "%p: seek %ld copy %ld edit %ld bytes, last copy %d:%08lx%+d\n",
+                (void *)mf,
+                mf->pending_seeks, mf->pending_copies, mf->pending_edits,
                 mf->last_tag ? mf->last_tag->tagtype : -1,
                 mf->last_tag ? mf->last_tag->tagdata : 0,
-                mf->pos - mf->curcount -
+                mf->pos - (int)mf->pending_edits -
                 (mf->last_tag ? mf->last_tag->pos : 0));
     }
-    mf->curcmd = MDIFF_INVALID;
+
+    mf->pending_seeks = 0;
+    mf->pending_edits = 0;
+    mf->pending_copies = 0;
 }
 
 /* Tagging memfiles. This remembers the correspondence between the tag
@@ -365,22 +407,10 @@ mtag(struct memfile *mf, long tagdata, enum memfile_tagtype tagtype)
         if (tag && mf->relativepos != tag->pos) {
             int offset = mf->relativepos - tag->pos;
 
-            if (mf->curcmd != MDIFF_SEEK) {
+            if (mf->pending_edits || mf->pending_copies)
                 mdiffflush(mf);
-                mf->curcount = 0;
-            }
-            while (offset + mf->curcount >= 1 << 13 ||
-                   offset + mf->curcount <= -(1 << 13)) {
-                if (offset + mf->curcount < 0) {
-                    mdiffwrite14(mf, MDIFF_SEEK, -0x1fff);
-                    offset += 0x1fff;
-                } else {
-                    mdiffwrite14(mf, MDIFF_SEEK, 0x1fff);
-                    offset -= 0x1fff;
-                }
-            }
-            mf->curcount += offset;
-            mf->curcmd = (mf->curcount ? MDIFF_SEEK : MDIFF_INVALID);
+
+            mf->pending_seeks += offset;
             mf->relativepos = tag->pos;
         }
     }
