@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-20 */
+/* Last modified by Alex Smith, 2014-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -329,7 +329,13 @@ use_whistle(struct obj *obj)
     }
     pline(whistle_str, obj->cursed ? "shrill" : "high");
     makeknown(obj->otyp);
-    wake_nearby();
+    wake_nearby(TRUE);
+
+    struct monst *mtmp;
+    for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
+        if (!DEADMONSTER(mtmp) && mtmp->mtame && !mtmp->isminion)
+            EDOG(mtmp)->whistletime = moves;
+
     return 1;
 }
 
@@ -345,7 +351,7 @@ use_magic_whistle(struct obj *obj)
 
     if (obj->cursed && !rn2(2)) {
         pline("You produce a high-pitched humming noise.");
-        wake_nearby();
+        wake_nearby(FALSE);
     } else {
         int pet_cnt = 0;
 
@@ -881,7 +887,7 @@ use_bell(struct obj **optr)
         obj->known = 1;
     }
     if (wakem)
-        wake_nearby();
+        wake_nearby(TRUE);
 }
 
 static int

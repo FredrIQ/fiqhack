@@ -1094,7 +1094,7 @@ extern void poisoned(const char *, int, const char *, int);
 extern void m_respond(struct monst *);
 extern void setmangry(struct monst *);
 extern void wakeup(struct monst *, boolean);
-extern void wake_nearby(void);
+extern void wake_nearby(boolean);
 extern void wake_nearto(int, int, int);
 extern void seemimic(struct monst *);
 extern void resistcham(void);

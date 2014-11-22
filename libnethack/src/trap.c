@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2014-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -783,7 +783,7 @@ dotrap(struct trap *trap, unsigned trflags)
         } else {
             seetrap(trap);
             pline("A board beneath you squeaks loudly.");
-            wake_nearby();
+            wake_nearby(FALSE);
         }
         break;
 
@@ -3847,7 +3847,7 @@ chest_trap(struct obj * obj, int bodypart, boolean disarm)
                                          (boolean) shkp->mpeaceful, TRUE);
                     delobj(otmp);
                 }
-                wake_nearby();
+                wake_nearby(FALSE);
                 losehp(dice(6, 6), killer_msg(DIED, an(buf)));
                 exercise(A_STR, FALSE);
                 if (costly && loss) {
@@ -4007,7 +4007,7 @@ b_trapped(const char *item, int bodypart)
     int dmg = rnd(5 + (lvl < 5 ? lvl : 2 + lvl / 2));
 
     pline("KABOOM!!  %s was booby-trapped!", The(item));
-    wake_nearby();
+    wake_nearby(FALSE);
     losehp(dmg, killer_msg(DIED, "an explosion"));
     exercise(A_STR, FALSE);
     if (bodypart)
