@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-16 */
+/* Last modified by Alex Smith, 2014-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -827,6 +827,66 @@ autotravel_weighting(int x, int y, unsigned distance)
     return distance * 10;
 }
 
+/* Sort-of like findtravelpath, but simplified. This is for monster travel.
+   Assumption: monsters know the layout of the dungeon, but not the locations of
+   items. Monsters will avoid the square they believe the player to be on. The
+   return value is the distance between the two points given. */
+void
+distmap_init(struct distmap_state *ds, int x1, int y1, struct monst *mtmp)
+{
+    memset(ds->onmap, 0, sizeof ds->onmap);
+
+    ds->curdist = 0;
+    ds->tslen = 1;
+
+    ds->travelstepx[0][0] = x1;
+    ds->travelstepy[0][0] = y1;
+
+    ds->mon = mtmp;
+}
+
+int
+distmap(struct distmap_state *ds, int x2, int y2)
+{
+    do {
+        if (ds->onmap[x2][y2])
+            return ds->onmap[x2][y2] - 1;
+
+        int oldtslen = ds->tslen;
+        ds->tslen = 0;
+
+        int i;
+        for (i = 0; i < oldtslen; i++) {
+            int x = ds->travelstepx[ds->curdist % 2][i];
+            int y = ds->travelstepy[ds->curdist % 2][i];
+            if (ds->onmap[x][y])
+                continue;
+
+            ds->onmap[x][y] = ds->curdist + 1;
+
+            int dx, dy;
+            for (dy = -1; dy <= 1; dy++)
+                for (dx = -1; dx <= 1; dx++) {
+                    if (!isok(x + dx, y + dy))
+                        continue;
+                    if (!goodpos(ds->mon->dlevel, x + dx, y + dy,
+                                 ds->mon, MM_IGNOREMONST | MM_IGNOREDOORS))
+                        continue;
+
+                    ds->travelstepx[(ds->curdist + 1) % 2][ds->tslen] = x + dx;
+                    ds->travelstepy[(ds->curdist + 1) % 2][ds->tslen] = y + dy;
+                    ds->tslen++;
+                }
+        }
+
+        if (ds->tslen)
+            ds->curdist++;
+    } while (ds->tslen);
+
+    return COLNO * ROWNO; /* sentinel */
+}
+
+
 /*
  * Find a path from the destination (u.tx,u.ty) back to (u.ux,u.uy).
  * A shortest path is returned.  If guess is non-NULL, instead travel
@@ -835,7 +895,7 @@ autotravel_weighting(int x, int y, unsigned distance)
  * Returns TRUE if a path was found.
  */
 static boolean
-findtravelpath(boolean(*guess) (int, int), schar * dx, schar * dy,
+findtravelpath(boolean(*guess) (int, int), schar *dx, schar *dy,
                enum u_interaction_mode uim)
 {
     /* Property caches; recalculating these took up a really noticeable amount

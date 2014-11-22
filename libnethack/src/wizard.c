@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-21 */
+/* Last modified by Alex Smith, 2014-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -399,6 +399,9 @@ strategy(struct monst *mtmp, boolean knows_ux_uy)
         (mtmp->mstrategy & STRAT_TARGMASK &&
          mtmp->mx == STRAT_GOALX(mtmp->mstrategy) &&
          mtmp->my == STRAT_GOALY(mtmp->mstrategy))) {
+
+        struct distmap_state ds;
+        distmap_init(&ds, mtmp->mx, mtmp->my, mtmp);
         
         /* Check to see if there are any items around that the monster might
            want. (This code was moved from monmove.c, and slightly edited;
@@ -424,8 +427,7 @@ strategy(struct monst *mtmp, boolean knows_ux_uy)
                        item */
                     if (otmp->otyp == ROCK)
                         continue;
-                    if (distmin(otmp->ox, otmp->oy, mtmp->mx, mtmp->my) <=
-                        minr) {
+                    if (distmap(&ds, otmp->ox, otmp->oy) <= minr) {
                         /* don't get stuck circling around an object that's
                            underneath an immobile or hidden monster; paralysis
                            victims excluded */
@@ -440,8 +442,7 @@ strategy(struct monst *mtmp, boolean knows_ux_uy)
                             (throws_rocks(mtmp->data) ||
                              !sobj_at(BOULDER, level, otmp->ox, otmp->oy)) &&
                             !(onscary(otmp->ox, otmp->oy, mtmp))) {
-                            minr = distmin(mtmp->mx, mtmp->my,
-                                           otmp->ox, otmp->oy) - 1;
+                            minr = distmap(&ds, otmp->ox, otmp->oy) - 1;
                             gx = otmp->ox;
                             gy = otmp->oy;
                         }
@@ -455,19 +456,24 @@ strategy(struct monst *mtmp, boolean knows_ux_uy)
             }
         }
 
-        /* Try up to ten locations on the level, and pick the first that's
-           reasonable for the monster to stand on. */
+        /* Try up to ten locations on the level, and pick the most distant
+           reachable one. If we haven't found one by then, try another 20. */
         int trycount = 0;
+        int dist = 0;
+        long strat = STRAT_NONE;
         do {
             int x = rn2(COLNO);
             int y = rn2(ROWNO);
             if (goodpos(mtmp->dlevel, x, y, mtmp, 0)) {
-                mtmp->mstrategy = STRAT(STRAT_GROUND, x, y, 0);
-                return;
+                int distm = distmap(&ds, x, y);
+                if (distm > dist && distm < COLNO * ROWNO) {
+                    distm = dist;
+                    strat = STRAT(STRAT_GROUND, x, y, 0);
+                }
             }
-        } while (++trycount < 10);
+        } while (++trycount < (dist ? 10 : 30));
 
-        mtmp->mstrategy = STRAT_NONE;
+        mtmp->mstrategy = strat;
         return;
     }
 

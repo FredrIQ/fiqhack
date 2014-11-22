@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-15 */
+/* Last modified by Alex Smith, 2014-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -121,7 +121,18 @@ extern coord bhitpos;   /* place where throw or zap hits or stops */
 
 # define NO_SPELL         0
 
-/* flags to control makemon() */
+/* internal state of distmap; caller allocates so that it can be reused by
+   multiple distmap calls */
+struct distmap_state {
+    int onmap[COLNO][ROWNO];
+    xchar travelstepx[2][COLNO * ROWNO];
+    xchar travelstepy[2][COLNO * ROWNO];
+    int curdist;
+    int tslen;
+    struct monst *mon;
+};
+
+/* flags to control makemon() and/or goodpos() */
 # define NO_MM_FLAGS      0x00  /* use this rather than plain 0 */
 # define NO_MINVENT       0x01  /* suppress minvent when creating mon */
 # define MM_NOWAIT        0x02  /* don't set STRAT_WAITMASK flags */
@@ -133,6 +144,10 @@ extern coord bhitpos;   /* place where throw or zap hits or stops */
 # define MM_IGNOREWATER   0x80  /* ignore water when positioning */
 # define MM_ADJACENTOK    0x100 /* it is acceptable to use adjacent
                                    coordinates */
+# define MM_IGNOREMONST   0x200 /* this location can contain a monster already;
+                                   don't use in makemon() for obvious reasons */
+# define MM_IGNOREDOORS   0x400 /* assume all doors are open and boulders don't
+                                   block squares; goodpos() only for now */
 
 /* special mhpmax value when loading bones monster to flag as extinct or
    genocided */

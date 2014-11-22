@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-21 */
+/* Last modified by Alex Smith, 2014-11-22 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -24,6 +24,7 @@
 struct attack;
 struct damage;
 struct def_skill;
+struct distmap_state;
 struct d_level;
 struct engr;
 struct flag;
@@ -619,6 +620,8 @@ extern boolean travelling(void);
 extern boolean test_move(
     int, int, int, int, int, int, enum u_interaction_mode,
     boolean, boolean, boolean, boolean, boolean, boolean);
+extern void distmap_init(struct distmap_state *, int, int, struct monst *mtmp);
+extern int distmap(struct distmap_state *, int, int);
 extern int domove(const struct nh_cmd_arg *, enum u_interaction_mode,
                   enum occupation);
 extern void invocation_message(void);

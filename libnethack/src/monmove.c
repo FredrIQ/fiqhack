@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-21 */
+/* Last modified by Alex Smith, 2014-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -823,10 +823,14 @@ not_special:
         int ndist, nidist;
         coord poss[9];
 
+        struct distmap_state ds;
+
+        distmap_init(&ds, gx, gy, mtmp);
+
         cnt = mfndpos(mtmp, poss, info, flag);
         chcnt = 0;
         chi = -1;
-        nidist = appr == 1 ? COLNO * COLNO : 0;
+        nidist = distmap(&ds, omx, omy);
 
         if (is_unicorn(ptr) && level->flags.noteleport) {
             /* on noteleport levels, perhaps we cannot avoid hero */
@@ -841,7 +845,7 @@ not_special:
             nx = poss[i].x;
             ny = poss[i].y;
 
-            nearer = ((ndist = dist2(nx, ny, gx, gy)) < nidist);
+            nearer = ((ndist = distmap(&ds, nx, ny)) < nidist);
 
             if ((appr == 1 && nearer) || (appr == -1 && !nearer) ||
                 (!appr && !rn2(++chcnt)) || !mmoved) {
