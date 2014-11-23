@@ -1,8 +1,12 @@
 #!/usr/bin/perl
-# Last modified by Alex Smith, 2014-11-17
+# Last modified by Alex Smith, 2014-11-23
 # savemap: Reads save.c and similar files and maps byte offsets to
 # variable names, dumping the results (typically to savemap.txt) for
 # debugging purposes.
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the MIT license. See copyright for details.
+#
 # Copyright © 2014 Derrick Sund.
 use utf8;     # this source file is UTF-8
 use warnings;
