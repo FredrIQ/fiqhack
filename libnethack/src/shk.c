@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Sean Hunt, 2014-11-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -181,7 +181,7 @@ shkgone(struct monst *mtmp)
         /* Make sure bill is set only when the dead shk is the resident shk. */
         if ((p = strchr(u.ushops, eshk->shoproom)) != 0) {
             setpaid(mtmp);
-            eshk->bill_p = NULL;
+            eshk->bill_inactive = TRUE;
             /* remove eshk->shoproom from u.ushops */
             do {
                 *p = *(p + 1);
@@ -203,7 +203,7 @@ replshk(struct monst *mtmp, struct monst *mtmp2)
 {
     level->rooms[ESHK(mtmp2)->shoproom - ROOMOFFSET].resident = mtmp2;
     if (inhishop(mtmp) && *u.ushops == ESHK(mtmp)->shoproom) {
-        ESHK(mtmp2)->bill_p = &(ESHK(mtmp2)->bill[0]);
+        ESHK(mtmp2)->bill_inactive = FALSE;
     }
 }
 
@@ -213,8 +213,6 @@ restshk(struct monst *shkp, boolean ghostly)
 {
     struct eshk *eshkp = ESHK(shkp);
 
-    if (eshkp->bill_p != (struct bill_x *)-1000)
-        eshkp->bill_p = &eshkp->bill[0];
     /* shoplevel can change as dungeons move around */
     /* savebones guarantees that non-homed shk's will be gone */
     if (ghostly) {
@@ -269,8 +267,13 @@ setpaid(struct monst *shkp)
 static long
 addupbill(struct monst *shkp)
 {
+    if (ESHK(shkp)->bill_inactive) {
+        impossible("adding up inactive bill");
+        return 0;
+    }
+
     int ct = ESHK(shkp)->billct;
-    struct bill_x *bp = ESHK(shkp)->bill_p;
+    struct bill_x *bp = ESHK(shkp)->bill;
     long total = 0L;
 
     while (ct--) {
@@ -474,7 +477,7 @@ u_entered_shop(char *enterstring)
 
     if (!inhishop(shkp)) {
         /* dump core when referenced */
-        eshkp->bill_p = (struct bill_x *)-1000;
+        eshkp->bill_inactive = TRUE;
         if (!strchr(empty_shops, *enterstring))
             pline(no_shk);
         strcpy(empty_shops, u.ushops);
@@ -482,7 +485,7 @@ u_entered_shop(char *enterstring)
         return;
     }
 
-    eshkp->bill_p = &(eshkp->bill[0]);
+    eshkp->bill_inactive = FALSE;
 
     if ((!eshkp->visitct || *eshkp->customer) &&
         strncmpi(eshkp->customer, u.uplname, PL_NSIZ)) {
@@ -608,7 +611,12 @@ shop_debt(struct eshk *eshkp)
     int ct;
     long debt = eshkp->debit;
 
-    for (bp = eshkp->bill_p, ct = eshkp->billct; ct > 0; bp++, ct--)
+    if (eshkp->bill_inactive) {
+        impossible("finding debt on inactive bill");
+        return 0;
+    }
+
+    for (bp = eshkp->bill, ct = eshkp->billct; ct > 0; bp++, ct--)
         debt += bp->price * bp->bquan;
     return debt;
 }
@@ -692,19 +700,24 @@ static struct bill_x *
 onbill(const struct obj *obj, struct monst *shkp, boolean silent)
 {
     if (shkp) {
-        struct bill_x *bp = ESHK(shkp)->bill_p;
+        if (ESHK(shkp)->bill_inactive) {
+            impossible("onbill: adding to inactive bill");
+            return NULL;
+        }
+
+        struct bill_x *bp = ESHK(shkp)->bill;
         int ct = ESHK(shkp)->billct;
 
         while (--ct >= 0)
             if (bp->bo_id == obj->o_id) {
                 if (!obj->unpaid)
-                    pline("onbill: paid obj on bill?");
+                    impossible("onbill: paid obj on bill?");
                 return bp;
             } else
                 bp++;
     }
     if (obj->unpaid && !silent)
-        pline("onbill: unpaid obj not on bill?");
+        impossible("onbill: unpaid obj not on bill?");
     return NULL;
 }
 
@@ -788,7 +801,7 @@ obfree(struct obj *obj, struct obj *merge)
             /* this was a merger */
             bpm->bquan += bp->bquan;
             ESHK(shkp)->billct--;
-            *bp = ESHK(shkp)->bill_p[ESHK(shkp)->billct];
+            *bp = ESHK(shkp)->bill[ESHK(shkp)->billct];
 
         }
     }
@@ -868,9 +881,14 @@ angry_shk_exists(void)
 static void
 pacify_shk(struct monst *shkp)
 {
+    if (ESHK(shkp)->bill_inactive) {
+        impossible("pacifying shkp with inactive bill");
+        return;
+    }
+
     NOTANGRY(shkp) = TRUE;      /* make peaceful */
     if (ESHK(shkp)->surcharge) {
-        struct bill_x *bp = ESHK(shkp)->bill_p;
+        struct bill_x *bp = ESHK(shkp)->bill;
         int ct = ESHK(shkp)->billct;
 
         ESHK(shkp)->surcharge = FALSE;
@@ -887,9 +905,14 @@ pacify_shk(struct monst *shkp)
 static void
 rile_shk(struct monst *shkp)
 {
+    if (ESHK(shkp)->bill_inactive) {
+        impossible("riling shkp with inactive bill");
+        return;
+    }
+
     NOTANGRY(shkp) = FALSE;     /* make angry */
     if (!ESHK(shkp)->surcharge) {
-        struct bill_x *bp = ESHK(shkp)->bill_p;
+        struct bill_x *bp = ESHK(shkp)->bill;
         int ct = ESHK(shkp)->billct;
 
         ESHK(shkp)->surcharge = TRUE;
@@ -1012,8 +1035,13 @@ static const char not_enough_money[] =
 static long
 cheapest_item(struct monst *shkp)
 {
+    if (ESHK(shkp)->bill_inactive) {
+        impossible("finding cheapest item on inactive bill");
+        return 0;
+    }
+
     int ct = ESHK(shkp)->billct;
-    struct bill_x *bp = ESHK(shkp)->bill_p;
+    struct bill_x *bp = ESHK(shkp)->bill;
     long gmin = (bp->price * bp->bquan);
 
     while (ct--) {
@@ -1136,6 +1164,11 @@ dopay(const struct nh_cmd_arg *arg)
 proceed:
     eshkp = ESHK(shkp);
     ltmp = eshkp->robbed;
+
+    if (eshkp->bill_inactive) {
+        impossible("paying shopkeeper with inactive bill");
+        return 0;
+    }
 
     /* wake sleeping shk when someone who owes money offers payment */
     if (ltmp || eshkp->billct || eshkp->debit)
@@ -1308,7 +1341,7 @@ proceed:
             tmp = 0;
             while (tmp < eshkp->billct) {
                 struct obj *otmp;
-                struct bill_x *bp = &(eshkp->bill_p[tmp]);
+                struct bill_x *bp = eshkp->bill + tmp;
 
                 /* find the object on one of the lists */
                 if ((otmp = bp_to_obj(bp)) != 0) {
@@ -1351,7 +1384,7 @@ proceed:
                     }
                     if (itemize)
                         bot();
-                    *bp = eshkp->bill_p[--eshkp->billct];
+                    *bp = eshkp->bill[--eshkp->billct];
                 } else {
                     /* Paying for one item, but this otmp isn't it. */
                     tmp++;
@@ -2008,7 +2041,7 @@ add_one_tobill(struct obj *obj, boolean dummy)
     }
 
     bct = ESHK(shkp)->billct;
-    bp = &(ESHK(shkp)->bill_p[bct]);
+    bp = ESHK(shkp)->bill + bct;
     bp->bo_id = obj->o_id;
     bp->bquan = obj->quan;
     if (dummy) {        /* a dummy object must be inserted into */
@@ -2230,7 +2263,7 @@ splitbill(struct obj *obj, struct obj *otmp)
         otmp->unpaid = 0;
     else {
         tmp = bp->price;
-        bp = &(ESHK(shkp)->bill_p[ESHK(shkp)->billct]);
+        bp = ESHK(shkp)->bill + ESHK(shkp)->billct;
         bp->bo_id = otmp->o_id;
         bp->bquan = otmp->quan;
         bp->useup = 0;
@@ -2261,7 +2294,7 @@ sub_one_frombill(struct obj *obj, struct monst *shkp)
             return;
         }
         ESHK(shkp)->billct--;
-        *bp = ESHK(shkp)->bill_p[ESHK(shkp)->billct];
+        *bp = ESHK(shkp)->bill[ESHK(shkp)->billct];
 
         return;
     } else if (obj->unpaid) {
@@ -2677,12 +2710,17 @@ doinvbill(int mode)
     }
     eshkp = ESHK(shkp);
 
+    if (eshkp->bill_inactive) {
+        impossible("doinvbill: inactive bill");
+        return 0;
+    }
+
     if (mode == 0) {
         /* count expended items, so that the `I' command can decide whether to
            include 'x' in its prompt string */
         int cnt = !eshkp->debit ? 0 : 1;
 
-        for (bp = eshkp->bill_p, end_bp = &eshkp->bill_p[eshkp->billct];
+        for (bp = eshkp->bill, end_bp = eshkp->bill + eshkp->billct;
              bp < end_bp; bp++)
             if (bp->useup ||
                 ((obj = bp_to_obj(bp)) != 0 && obj->quan < bp->bquan))
@@ -2695,7 +2733,7 @@ doinvbill(int mode)
     add_menutext(&menu, "");
 
     totused = 0L;
-    for (bp = eshkp->bill_p, end_bp = &eshkp->bill_p[eshkp->billct];
+    for (bp = eshkp->bill, end_bp = eshkp->bill + eshkp->billct;
          bp < end_bp; bp++) {
         obj = bp_to_obj(bp);
         if (!obj) {
@@ -3188,9 +3226,9 @@ after_shk_move(struct monst *shkp)
 {
     struct eshk *eshkp = ESHK(shkp);
 
-    if (eshkp->bill_p == (struct bill_x *)-1000 && inhishop(shkp)) {
-        /* reset bill_p, need to re-calc player's occupancy too */
-        eshkp->bill_p = &eshkp->bill[0];
+    if (eshkp->bill_inactive && inhishop(shkp)) {
+        /* reactivate bill, need to re-calc player's occupancy too */
+        eshkp->bill_inactive = FALSE;
         check_special_room(FALSE);
     }
 }

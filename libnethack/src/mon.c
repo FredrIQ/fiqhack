@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2014-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -310,7 +310,7 @@ make_corpse(struct monst *mtmp)
     }
     /* All special cases should precede the G_NOCORPSE check */
 
-    /* if polymorph or undead turning has killed this monster, prevent the same 
+    /* if polymorph or undead turning has killed this monster, prevent the same
        attack beam from hitting its corpse */
     if (flags.bypasses)
         bypass_obj(obj);
@@ -318,7 +318,7 @@ make_corpse(struct monst *mtmp)
     if (mtmp->mnamelth)
         obj = oname(obj, NAME(mtmp));
 
-    /* Avoid "It was hidden under a green mold corpse!" during Blind combat. An 
+    /* Avoid "It was hidden under a green mold corpse!" during Blind combat. An
        unseen monster referred to as "it" could be killed and leave a corpse.
        If a hider then hid underneath it, you could be told the corpse type of
        a monster that you never knew was there without this.  The code in
@@ -382,7 +382,7 @@ minliquid(struct monst *mtmp)
     }
 
     if (inlava) {
-        /* 
+        /*
          * Lava effects much as water effects. Lava likers are able to
          * protect their stuff. Fire resistant monsters can only protect
          * themselves  --ALI
@@ -444,11 +444,79 @@ minliquid(struct monst *mtmp)
     return 0;
 }
 
+/* Called whenever a monster changes speed, and ensures that the number of
+   partial movement points the monster had changes appropriately. Also called
+   for the player at turn boundary (we cache the player's speed within a
+   turn). */
+void
+adjust_move_offset(struct monst *mon, int oldspeed, int newspeed)
+{
+    /* SAVEBREAK (4.3-beta1 -> 4.3-beta2)
+
+       If the offset wasn't initialized, leave it alone, so that we know it's
+       still uninitialized. */
+    if (mon->moveoffset >= NORMAL_SPEED)
+        return;
+
+    /* Increasing the speed value by 1 effectively increases the offset by 1 for
+       each turn on the turn counter, based on the formula used. We thus need to
+       decrease the offset by the speed increase times the turn counter. All
+       this is modulo 12. */
+    int speedinc = newspeed - oldspeed;
+    if (speedinc < 0)
+        speedinc = NORMAL_SPEED - (-speedinc % NORMAL_SPEED);
+    else
+        speedinc %= NORMAL_SPEED;
+
+    int offsetdec = ((long long)moves * (long long)speedinc) % NORMAL_SPEED;
+
+    mon->moveoffset = (mon->moveoffset + NORMAL_SPEED - offsetdec) %
+        NORMAL_SPEED;
+}
+
+boolean
+can_act_this_turn(struct monst *mon)
+{
+    /* SAVEBREAK (4.3-beta1 -> 4.3-beta2)
+
+       The movement structures might not have been set correctly for this turn,
+       if we're loading an old save. Detect that this has happened using
+       youmonst.moveoffset >= 12, and give the player 1 action and monsters no
+       actions this turn. */
+    if (youmonst.moveoffset >= NORMAL_SPEED)
+        return mon == &youmonst && flags.actions == 0;
+
+    /* Work out how many actions the player has this turn. Each monster has a
+       range of 12 possible values for movement points that turn. The low end
+       of the range is given by mcalcmove... */
+    int movement = mcalcmove(mon);
+
+    /* ...and the position modulo 12 is given by (speed * turn counter) +
+       move offset. */
+    int modulo = (((long long)moves * (long long)movement) +
+                  mon->moveoffset) % NORMAL_SPEED;
+
+    /* C sucks at modular arithmetic :-( */
+    movement += (modulo + NORMAL_SPEED - (movement % NORMAL_SPEED)) %
+        NORMAL_SPEED;
+
+    /* It costs 12 movement points to perform an action. */
+    int actions_this_turn = movement / NORMAL_SPEED;
+
+    /* We can move if we've done fewer actions this turn than we have
+       available. */
+    return flags.actions < actions_this_turn;
+}
 
 int
 mcalcmove(struct monst *mon)
 {
     int mmove = mon->data->mmove;
+
+    if (mon == &youmonst) {
+        /* The player has different, and somewhat randomized, movment rules. */
+        return u.moveamt;
+    }
 
     /* Note: MSLOW's `+ 1' prevents slowed speed 1 getting reduced to 0;
        MFAST's `+ 2' prevents hasted speed 1 from becoming a no-op; both
@@ -465,8 +533,9 @@ mcalcmove(struct monst *mon)
            using flags.occupation. It's just that this is no longer an effect
            that's worth acheiving.) */
         if (u.ugallop) {
-            /* average movement is 1.50 times normal */
-            mmove = ((rn2(2) ? 4 : 5) * mmove) / 3;
+            /* movement is 1.50 times normal; randomization has been removed
+               because mcalcmove now needs to be deterministic */
+            mmove = (3 * mmove) / 2;
         }
     }
 
@@ -485,7 +554,7 @@ mcalcdistress(void)
         if (DEADMONSTER(mtmp))
             continue;
 
-        /* must check non-moving monsters once/turn in case they managed to end 
+        /* must check non-moving monsters once/turn in case they managed to end
            up in liquid */
         if (mtmp->data->mmove == 0) {
             if (turnstate.vision_full_recalc)
@@ -522,19 +591,19 @@ movemon(void)
     struct monst *mtmp;
     boolean somebody_can_move = FALSE;
 
-    /* 
+    /*
        Some of you may remember the former assertion here that because of
        deaths and other actions, a simple one-pass algorithm wasn't possible
        for movemon.  Deaths are no longer removed to the separate list fdmon;
-       they are simply left in the chain with hit points <= 0, to be cleaned up 
+       they are simply left in the chain with hit points <= 0, to be cleaned up
        at the end of the pass.
 
-       The only other actions which cause monsters to be removed from the chain 
+       The only other actions which cause monsters to be removed from the chain
        are level migrations and losedogs().  I believe losedogs() is a cleanup
        routine not associated with monster movements, and monsters can only
-       affect level migrations on themselves, not others (hence the fetching of 
+       affect level migrations on themselves, not others (hence the fetching of
        nmon before moving the monster).  Currently, monsters can jump into
-       traps, read cursed scrolls of teleportation, and drink cursed potions of 
+       traps, read cursed scrolls of teleportation, and drink cursed potions of
        raise level to change levels.  These are all reflexive at this point.
        Should one monster be able to level teleport another, this scheme would
        have problems. */
@@ -545,12 +614,10 @@ movemon(void)
         /* Find a monster that we have not treated yet.  */
         if (DEADMONSTER(mtmp))
             continue;
-        if (mtmp->movement < NORMAL_SPEED)
+        if (!can_act_this_turn(mtmp))
             continue;
 
-        mtmp->movement -= NORMAL_SPEED;
-        if (mtmp->movement >= NORMAL_SPEED)
-            somebody_can_move = TRUE;
+        somebody_can_move = TRUE;
 
         if (turnstate.vision_full_recalc)
             vision_recalc(0);   /* vision! */
@@ -573,7 +640,7 @@ movemon(void)
         if (Conflict && !mtmp->iswiz && mtmp->mcansee) {
             /* Note: Conflict does not take effect in the first round.
                Therefore, A monster when stepping into the area will get to
-               swing at you.  The call to fightm() must be _last_.  The monster 
+               swing at you.  The call to fightm() must be _last_.  The monster
                might have died if it returns 1. */
             if (couldsee(mtmp->mx, mtmp->my) &&
                 (distu(mtmp->mx, mtmp->my) <= BOLT_LIM * BOLT_LIM) &&
@@ -829,19 +896,22 @@ mpickgold(struct monst *mtmp)
 
 
 boolean
-mpickstuff(struct monst *mtmp, const char *str)
+mpickstuff(struct monst *mtmp)
 {
     struct obj *otmp, *otmp2;
 
-/* prevent shopkeepers from leaving the door of their shop */
+    /* prevent shopkeepers from leaving the door of their shop */
     if (mtmp->isshk && inhishop(mtmp))
+        return FALSE;
+
+    /* non-tame monsters normally don't go shopping */
+    if (*in_rooms(mtmp->dlevel, mtmp->mx, mtmp->my, SHOPBASE) && rn2(25))
         return FALSE;
 
     for (otmp = level->objects[mtmp->mx][mtmp->my]; otmp; otmp = otmp2) {
         otmp2 = otmp->nexthere;
-/* Nymphs take everything.  Most monsters don't pick up corpses. */
-        if (!str ? searches_for_item(mtmp, otmp) :
-            ! !(strchr(str, otmp->oclass))) {
+        /* Nymphs take everything.  Most monsters don't pick up corpses. */
+        if (monster_would_take_item(mtmp, otmp)) {
             if (otmp->otyp == CORPSE && mtmp->data->mlet != S_NYMPH &&
                 /* let a handful of corpse types thru to can_carry() */
                 !touch_petrifies(&mons[otmp->corpsenm]) &&
@@ -897,7 +967,7 @@ max_mon_load(struct monst *mtmp)
     /* Base monster carrying capacity is equal to human maximum carrying
        capacity, or half human maximum if not strong. (for a polymorphed
        player, the value used would be the non-polymorphed carrying capacity
-       instead of max/half max). This is then modified by the ratio between the 
+       instead of max/half max). This is then modified by the ratio between the
        monster weights and human weights.  Corpseless monsters are given a
        capacity proportional to their size instead of weight. */
     if (!mtmp->data->cwt)
@@ -974,10 +1044,12 @@ mfndpos(struct monst *mon, coord * poss,        /* coord poss[9] */
     boolean wantpool, poolok, lavaok, nodiag;
     boolean rockok = FALSE, treeok = FALSE, thrudoor;
     int maxx, maxy;
+    int swarmcount = 0;
+    struct level *const mlevel = mon->dlevel;
 
     x = mon->mx;
     y = mon->my;
-    nowtyp = level->locations[x][y].typ;
+    nowtyp = mlevel->locations[x][y].typ;
 
     nodiag = (mdat == &mons[PM_GRID_BUG]);
     wantpool = mdat->mlet == S_EEL;
@@ -1006,7 +1078,7 @@ mfndpos(struct monst *mon, coord * poss,        /* coord poss[9] */
         thrudoor |= rockok || treeok;
     }
 
-nexttry:       /* eels prefer the water, but if there is no water nearby, they 
+nexttry:       /* eels prefer the water, but if there is no water nearby, they
                    will crawl over land */
     if (mon->mconf) {
         flag |= ALLOW_ALL;
@@ -1020,30 +1092,30 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
         for (ny = max(0, y - 1); ny <= maxy; ny++) {
             if (nx == x && ny == y)
                 continue;
-            if (IS_ROCK(ntyp = level->locations[nx][ny].typ) &&
-                !((flag & ALLOW_WALL) && may_passwall(level, nx, ny)) &&
-                !((IS_TREE(ntyp) ? treeok : rockok) && may_dig(level, nx, ny)))
+            if (IS_ROCK(ntyp = mlevel->locations[nx][ny].typ) &&
+                !((flag & ALLOW_WALL) && may_passwall(mlevel, nx, ny)) &&
+                !((IS_TREE(ntyp) ? treeok : rockok) && may_dig(mlevel, nx, ny)))
                 continue;
             /* KMH -- Added iron bars */
             if (ntyp == IRONBARS && !(flag & ALLOW_BARS))
                 continue;
             if (IS_DOOR(ntyp) && !amorphous(mdat) &&
-                ((level->locations[nx][ny].doormask & D_CLOSED &&
+                ((mlevel->locations[nx][ny].doormask & D_CLOSED &&
                   !(flag & OPENDOOR)) ||
-                 (level->locations[nx][ny].doormask & D_LOCKED &&
+                 (mlevel->locations[nx][ny].doormask & D_LOCKED &&
                   !(flag & UNLOCKDOOR))) && !thrudoor)
                 continue;
             if (nx != x && ny != y &&
                 (nodiag ||
                  ((IS_DOOR(nowtyp) &&
-                   ((level->locations[x][y].doormask & ~D_BROKEN) ||
+                   ((mlevel->locations[x][y].doormask & ~D_BROKEN) ||
                     Is_rogue_level(&u.uz))) ||
                   (IS_DOOR(ntyp) &&
-                   ((level->locations[nx][ny].doormask & ~D_BROKEN) ||
+                   ((mlevel->locations[nx][ny].doormask & ~D_BROKEN) ||
                     Is_rogue_level(&u.uz))))))
                 continue;
-            if ((is_pool(level, nx, ny) == wantpool || poolok) &&
-                (lavaok || !is_lava(level, nx, ny))) {
+            if ((is_pool(mlevel, nx, ny) == wantpool || poolok) &&
+                (lavaok || !is_lava(mlevel, nx, ny))) {
                 int dispx, dispy;
                 boolean monseeu = (mon->mcansee && (!Invis || perceives(mdat)));
                 boolean checkobj = OBJ_AT(nx, ny);
@@ -1079,9 +1151,11 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                         continue;
                     info[cnt] |= ALLOW_U;
                 } else {
-                    if (MON_AT(level, nx, ny)) {
-                        struct monst *mtmp2 = m_at(level, nx, ny);
+                    if (MON_AT(mlevel, nx, ny)) {
+                        struct monst *mtmp2 = m_at(mlevel, nx, ny);
                         long mmflag = flag | mm_aggression(mon, mtmp2);
+
+                        swarmcount++;
 
                         if (!(mmflag & ALLOW_M))
                             continue;
@@ -1094,20 +1168,20 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                     }
                     /* Note: ALLOW_SANCT only prevents movement, not */
                     /* attack, into a temple. */
-                    if (*in_rooms(level, nx, ny, TEMPLE) &&
-                        !*in_rooms(level, x, y, TEMPLE) &&
+                    if (*in_rooms(mlevel, nx, ny, TEMPLE) &&
+                        !*in_rooms(mlevel, x, y, TEMPLE) &&
                         in_your_sanctuary(NULL, nx, ny)) {
                         if (!(flag & ALLOW_SANCT))
                             continue;
                         info[cnt] |= ALLOW_SANCT;
                     }
                 }
-                if (checkobj && sobj_at(CLOVE_OF_GARLIC, level, nx, ny)) {
+                if (checkobj && sobj_at(CLOVE_OF_GARLIC, mlevel, nx, ny)) {
                     if (flag & NOGARLIC)
                         continue;
                     info[cnt] |= NOGARLIC;
                 }
-                if (checkobj && sobj_at(BOULDER, level, nx, ny)) {
+                if (checkobj && sobj_at(BOULDER, mlevel, nx, ny)) {
                     if (!(flag & ALLOW_ROCK))
                         continue;
                     info[cnt] |= ALLOW_ROCK;
@@ -1130,7 +1204,7 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                  * being careful or something.
                  */
                 {
-                    struct trap *ttmp = t_at(level, nx, ny);
+                    struct trap *ttmp = t_at(mlevel, nx, ny);
 
                     if (ttmp) {
                         if (ttmp->ttyp >= TRAPNUM || ttmp->ttyp == 0) {
@@ -1171,10 +1245,42 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                 cnt++;
             }
         }
-    if (!cnt && wantpool && !is_pool(level, x, y)) {
+    if (!cnt && wantpool && !is_pool(mlevel, x, y)) {
         wantpool = FALSE;
         goto nexttry;
     }
+
+    /* Special case for optimizing the behaviour of large groups of monsters:
+       those on the inside (6 or more neighbours) do not move horizontally
+       (although they can still attack). This behaviour mostly looks the same as
+       if all the monsters could move, but makes the save file much smaller, and
+       also makes pudding farming a little more difficult because you can't rely
+       on a single square to drop the items (the puddings will tend to spread
+       back a little from the square you're farming from; although there will
+       always or nearly always be a few adjacent, they won't be in the same
+       places). This also means that in large mobs, enemies with ranged weapons
+       will get more of a chance to use them. */
+    if (swarmcount >= 6) {
+        long infocopy[9];
+        coord posscopy[9];
+        int oldcnt;
+
+        memcpy(infocopy, info, sizeof infocopy);
+        memcpy(posscopy, poss, sizeof posscopy);
+        oldcnt = cnt;
+        cnt = 0;
+
+        int i;
+        for (i = 0; i < oldcnt; i++) {
+            if ((poss[i].x == u.ux && poss[i].y == u.uy) ||
+                MON_AT(mlevel, poss[i].x, poss[i].y)) {
+                info[cnt] = infocopy[i];
+                poss[cnt] = posscopy[i];
+                cnt++;
+            }
+        }
+    }
+
     return cnt;
 }
 
@@ -1226,7 +1332,7 @@ mm_aggression(struct monst *magr,     /* monster that is currently deciding
             return 0;
         if (md == &mons[PM_GELATINOUS_CUBE] && rn2(10))
             return 0;
- 
+
         /* monsters won't make an attack that would kill them with the passive
            damage they'd take in response */
         if (max_passive_dmg(mdef, magr) >= magr->mhp)
@@ -1530,7 +1636,7 @@ mondead(struct monst *mtmp)
         set_mon_data(mtmp, &mons[PM_HUMAN_WERERAT], -1);
 
     /* if MAXMONNO monsters of a given type have died, and it can be done,
-       extinguish that monster. mvitals[].died does double duty as total number 
+       extinguish that monster. mvitals[].died does double duty as total number
        of dead monsters and as experience factor for the player killing more
        monsters. this means that a dragon dying by other means reduces the
        experience the player gets for killing a dragon directly; this is
@@ -1739,7 +1845,7 @@ monstone(struct monst *mdef)
         unmap_object(x, y);
     if (cansee(x, y))
         newsym(x, y);
-    /* We don't currently trap the hero in the statue in this case but we could 
+    /* We don't currently trap the hero in the statue in this case but we could
      */
     if (Engulfed && u.ustuck == mdef)
         wasinside = TRUE;
@@ -1836,7 +1942,7 @@ xkilled(struct monst *mtmp, int dest)
     if (mtmp->mtrapped && (t = t_at(level, x, y)) != 0 &&
         (t->ttyp == PIT || t->ttyp == SPIKED_PIT) &&
         sobj_at(BOULDER, level, x, y))
-        dest |= 2;      /* 
+        dest |= 2;      /*
                          * Prevent corpses/treasure being created "on top"
                          * of the boulder that is about to fall in. This is
                          * out of order, but cannot be helped unless this
@@ -1854,7 +1960,7 @@ xkilled(struct monst *mtmp, int dest)
         mondead(mtmp);
 
     if (mtmp->mhp > 0) {        /* monster lifesaved */
-        /* Cannot put the non-visible lifesaving message in lifesaved_monster() 
+        /* Cannot put the non-visible lifesaving message in lifesaved_monster()
            since the message appears only when you kill it (as opposed to
            visible lifesaving which always appears). */
         stoned = FALSE;
@@ -2210,32 +2316,36 @@ wakeup(struct monst *mtmp, boolean force_detected)
     }
 }
 
-/* Wake up nearby monsters. */
+/* Wake up monsters near the player. If 'intentional' is set, more experienced
+   players produce a louder volume. Otherwise, more experienced players produce
+   a quieter volume, and Stealth and being a rogue both muffle it. Aggravate
+   monster overrides all this, causing even the slightest noise to be heard by
+   the entire level. */
 void
-wake_nearby(void)
+wake_nearby(boolean intentional)
 {
-    struct monst *mtmp;
-
-    for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
-        if (!DEADMONSTER(mtmp) && distu(mtmp->mx, mtmp->my) < u.ulevel * 20) {
-            mtmp->msleeping = 0;
-            if (mtmp->mtame && !mtmp->isminion)
-                EDOG(mtmp)->whistletime = moves;
-        }
-    }
+    wake_nearto(u.ux, u.uy, Aggravate_monster ? COLNO * COLNO + ROWNO * ROWNO :
+                intentional ? u.ulevel * 20 :
+                600 / (u.ulevel * (Role_if(PM_ROGUE) ? 2 : 1) *
+                       (Stealth ? 2 : 1)));
 }
 
-/* Wake up monsters near some particular location. */
+/* Produce noise at a particular location. Monsters in the given dist2 radius
+   will hear the noise, wake up if asleep, and go to investigate. */
 void
 wake_nearto(int x, int y, int distance)
 {
     struct monst *mtmp;
 
-    for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
-        if (!DEADMONSTER(mtmp) && mtmp->msleeping &&
-            (distance == 0 || dist2(mtmp->mx, mtmp->my, x, y) < distance))
+    for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
+        if (!DEADMONSTER(mtmp) &&
+            (distance == 0 || dist2(mtmp->mx, mtmp->my, x, y) < distance)) {
             mtmp->msleeping = 0;
-    }
+            /* monsters are curious as to what caused the noise, and don't
+               necessarily consider it to have been the player */
+            if (!(mtmp->mstrategy & STRAT_WAITMASK))
+                mtmp->mstrategy = STRAT(STRAT_GROUND, x, y, 0);
+        }
 }
 
 /* NOTE: we must check for mimicry before calling this routine */
@@ -2248,7 +2358,7 @@ seemimic(struct monst *mtmp)
     mtmp->m_ap_type = M_AP_NOTHING;
     mtmp->mappearance = 0;
 
-    /* 
+    /*
      *  Discovered mimics don't block light.
      */
     if (((old_ap_type == M_AP_FURNITURE &&
@@ -2465,7 +2575,7 @@ newcham(struct monst *mtmp, const struct permonst *mdat,
             mdat = &mons[mndx];
             if ((mvitals[mndx].mvflags & G_GENOD) != 0 || is_placeholder(mdat))
                 continue;
-            /* polyok rules out all M2_PNAME and M2_WERE's; select_newcham_form 
+            /* polyok rules out all M2_PNAME and M2_WERE's; select_newcham_form
                might deliberately pick a player character type, so we can't
                arbitrarily rule out all human forms any more */
             if (is_mplayer(mdat) || (!is_human(mdat) && polyok(mdat)))
@@ -2540,7 +2650,7 @@ newcham(struct monst *mtmp, const struct permonst *mdat,
     set_mon_data(mtmp, mdat, 0);
 
     if (emits_light(olddata) != emits_light(mtmp->data)) {
-        /* used to give light, now doesn't, or vice versa, or light's range has 
+        /* used to give light, now doesn't, or vice versa, or light's range has
            changed */
         if (emits_light(olddata))
             del_light_source(mtmp->dlevel, LS_MONSTER, mtmp);
@@ -2638,14 +2748,14 @@ newcham(struct monst *mtmp, const struct permonst *mdat,
 int
 can_be_hatched(int mnum)
 {
-    /* ranger quest nemesis has the oviparous bit set, making it be possible to 
+    /* ranger quest nemesis has the oviparous bit set, making it be possible to
        wish for eggs of that unique monster; turn such into ordinary eggs
        rather than forbidding them outright */
     if (mnum == PM_SCORPIUS)
         mnum = PM_SCORPION;
 
     mnum = little_to_big(mnum);
-    /* 
+    /*
      * Queen bees lay killer bee eggs (usually), but killer bees don't
      * grow into queen bees.  Ditto for [winged-]gargoyles.
      */
@@ -2674,7 +2784,7 @@ int egg_type_from_parent(int mnum,      /* parent monster; caller must handle
 boolean
 dead_species(int m_idx, boolean egg)
 {
-    /* 
+    /*
      * For monsters with both baby and adult forms, genociding either
      * form kills all eggs of that monster.  Monsters with more than
      * two forms (small->large->giant mimics) are more or less ignored;
@@ -2696,7 +2806,7 @@ kill_eggs(struct obj *obj_list)
     for (otmp = obj_list; otmp; otmp = otmp->nobj)
         if (otmp->otyp == EGG) {
             if (dead_species(otmp->corpsenm, TRUE)) {
-                /* 
+                /*
                  * It seems we could also just catch this when
                  * it attempted to hatch, so we wouldn't have to
                  * search all of the objlists.. or stop all
@@ -2720,7 +2830,7 @@ kill_genocided_monsters(void)
     kill_cham[CHAM_ORDINARY] = FALSE;   /* (this is mndx==0) */
     for (mndx = 1; mndx <= CHAM_MAX_INDX; mndx++)
         kill_cham[mndx] = (mvitals[cham_to_pm[mndx]].mvflags & G_GENOD) != 0;
-    /* 
+    /*
      * Called during genocide, and again upon level change.  The latter
      * catches up with any migrating monsters as they finally arrive at
      * their intended destinations, so possessions get deposited there.
@@ -2865,4 +2975,3 @@ mimic_hit_msg(struct monst *mtmp, short otyp)
 }
 
 /*mon.c*/
-

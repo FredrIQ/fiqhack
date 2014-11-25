@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-14 */
+/* Last modified by Alex Smith, 2014-11-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -159,7 +159,7 @@ startup_common(boolean including_program_state)
 
     dlb_init(); /* must be before newgame() */
 
-    /* 
+    /*
      *  Initialize the vision system.  This must be before mklev() on a
      *  new game or before a level restore on a saved game.
      */
@@ -446,7 +446,7 @@ nh_play_game(int fd, enum nh_followmode followmode)
         ret = GAME_DETACHED;
         goto normal_exit;
     }
-    
+
     init_data(TRUE);
     startup_common(TRUE);
 
@@ -510,7 +510,7 @@ just_reloaded_save:
                     terminate(GAME_ALREADY_OVER);
                 }
                 (*windowprocs.win_request_command)
-                    (wizard, program_state.followmode == FM_PLAY ? 
+                    (wizard, program_state.followmode == FM_PLAY ?
                      !flags.incomplete : 1, flags.interrupted,
                      &cmd, msg_request_command_callback);
                 command_from_user = TRUE;
@@ -685,16 +685,21 @@ normal_exit:
     return ret;
 }
 
-
 static void
 you_moved(void)
 {
-    int moveamt = 0, wtcap = 0, change = 0;
+    int wtcap = 0, change = 0;
     boolean monscanmove = FALSE;
     enum youprop p;
 
-    /* actual time passed */
-    youmonst.movement -= NORMAL_SPEED;
+    /* Note: we track which heroes/monsters can move using flags.actions and
+       can_act_this_turn. When a hero or monster acts, we conceptually increase
+       the value of flags.actions for that hero or monster. However, there's
+       only one flags.actions value. Therefore, we need to track each
+       hero/monster's offset of action count from the global flags.actions.
+
+       At this point in the program, the hero has taken 1 more action than the
+       global, and monsters have taken 0 more actions than the global. */
 
     do {        /* hero can't move this turn loop */
         wtcap = encumber_msg();
@@ -702,44 +707,72 @@ you_moved(void)
 
         flags.mon_moving = TRUE;
         do {
+            /* Players have taken 1 more action than the global, monsters have
+               taken 0 more actions than the global. */
+
             monscanmove = movemon();
-            if (youmonst.movement > NORMAL_SPEED)
-                break;  /* it's now your turn */
+
+            /* Now both players and monsters have taken 1 more action than the
+               global... */
+
+            flags.actions++;
+
+            /* ...and now the global is correct. */
+
+            if (can_act_this_turn(&youmonst))
+                break;          /* it's now your turn */
+
+            /* If we reach this point, then either monscanmove (in which case,
+               the player will effectively spend an action doing nothing when we
+               go back to the start of the loop, which is OK because they're out
+               of actions for this turn and running them into the negatives
+               won't have a visible effect); or !monscanmove, in which case the
+               turn is over and we don't have to worry about flags.actions being
+               incorrect because were about to overwrite it anyway. */
+
         } while (monscanmove);
         flags.mon_moving = FALSE;
 
-        if (!monscanmove && youmonst.movement < NORMAL_SPEED) {
+        if (!monscanmove && !can_act_this_turn(&youmonst)) {
             /* both you and the monsters are out of steam this round */
-            /* set up for a new turn */
-            struct monst *mtmp;
+
+            /**************************************/
+            /* turn boundary handling starts here */
+            /**************************************/
 
             mcalcdistress();    /* adjust monsters' trap, blind, etc */
 
-            /* reallocate movement rations to monsters */
-            for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
-                mtmp->movement += mcalcmove(mtmp);
+            /* No actions have happened yet this turn. (Combined with the change
+               in 'moves', this effectively gives monsters and player a new
+               movement point ration by changing the inputs to
+               can_act_this_turn.) */
+            flags.actions = 0;
 
             if (flags.mon_generation &&
                 !rn2(u.uevent.udemigod ? 25 :
                      (depth(&u.uz) > depth(&stronghold_level)) ? 50 : 70))
                 makemon(NULL, level, COLNO, ROWNO, NO_MM_FLAGS);
 
-            /* calculate how much time passed. */
+            int oldmoveamt = u.moveamt;
+
+            /* Calculate how much movement you get this turn. (We cache this in
+               struct you because unlike for monsters, there's a random factor
+               in player movement.) */
             if (u.usteed && u.umoved) {
                 /* your speed doesn't augment steed's speed */
-                moveamt = mcalcmove(u.usteed);
+                u.moveamt = mcalcmove(u.usteed);
             } else {
-                moveamt = youmonst.data->mmove;
+                u.moveamt = youmonst.data->mmove;
 
                 if (Very_fast) {        /* speed boots or potion */
                     /* average movement is 1.67 times normal */
-                    moveamt += NORMAL_SPEED / 2;
+                    u.moveamt += NORMAL_SPEED / 2;
                     if (rn2(3) == 0)
-                        moveamt += NORMAL_SPEED / 2;
+                        u.moveamt += NORMAL_SPEED / 2;
                 } else if (Fast) {
                     /* average movement is 1.33 times normal */
                     if (rn2(3) != 0)
-                        moveamt += NORMAL_SPEED / 2;
+                        u.moveamt += NORMAL_SPEED / 2;
                 }
             }
 
@@ -747,32 +780,46 @@ you_moved(void)
             case UNENCUMBERED:
                 break;
             case SLT_ENCUMBER:
-                moveamt -= (moveamt / 4);
+                u.moveamt -= (u.moveamt / 4);
                 break;
             case MOD_ENCUMBER:
-                moveamt -= (moveamt / 2);
+                u.moveamt -= (u.moveamt / 2);
                 break;
             case HVY_ENCUMBER:
-                moveamt -= ((moveamt * 3) / 4);
+                u.moveamt -= ((u.moveamt * 3) / 4);
                 break;
             case EXT_ENCUMBER:
-                moveamt -= ((moveamt * 7) / 8);
+                u.moveamt -= ((u.moveamt * 7) / 8);
                 break;
             default:
                 break;
             }
 
-            youmonst.movement += moveamt;
-            if (youmonst.movement < 0)
-                youmonst.movement = 0;
+            /* Adjust the move offset for the change in speed. */
+            adjust_move_offset(&youmonst, oldmoveamt, u.moveamt);
+
+            /* SAVEBREAK (4.3-beta1 -> 4.3-beta2)
+
+               If we're loading a 4.3-beta1 save, then youmonst.moveamt may have
+               been set incorrectly. The game detects this by seeing whether
+               youmonst.moveoffset >= 12 (which it never can be, under normal
+               circumstances, but which it will be in a 4.3-beta1 save because
+               you need 12 movement points for the code to reach the point where
+               it runs neutral_turnstate_tasks). We're about to set
+               youmonst.moveamt correctly, so we need to set youmonst.moveoffset
+               correctly too to let can_act_this_turn know to use it. */
+            if (youmonst.moveoffset >= 12) {
+                youmonst.moveoffset = 0;
+            }
+
             settrack();
 
             moves++;
             level->lastmoves = moves;
 
-            /********************************/
-            /* once-per-turn things go here */
-            /********************************/
+            /***************************************************/
+            /* most turn boundary effects should be below here */
+            /***************************************************/
 
             if (flags.bypasses)
                 clear_bypasses();
@@ -928,7 +975,14 @@ you_moved(void)
             /* when immobile, count is in turns */
             decrement_helplessness();
         }
-    } while (youmonst.movement < NORMAL_SPEED); /* hero can't move loop */
+
+        /* flags.actions is currently correct for hero and monsters. If the hero
+           gets no actions at all this turn, we go back to the start of the
+           loop; flags.actions will then be too high for the hero (i.e. the hero
+           will have negative actions), but because the hero can't act at all
+           this turn, that's OK and will have the desired effect. */
+
+    } while (!can_act_this_turn(&youmonst)); /* hero can't move loop */
 
     /******************************************/
     /* once-per-hero-took-time things go here */
@@ -955,6 +1009,10 @@ you_moved(void)
                        W_MASK(os_polyform)))
             u.ever_temporary[p / 8] |= 1 << (p % 8);
     }
+
+    /* We can only port to a new version of the save code when the player takes
+       time (otherwise, the desync detector rightly gets confused). */
+    flags.save_encoding = saveenc_moverel;
 }
 
 
@@ -1001,7 +1059,7 @@ pre_move_tasks(boolean didmove, boolean loading_game)
 {
     /* recalc attribute bonuses from items */
     calc_attr_bonus();
-    
+
     /* we need to do this before vision handling; clairvoyance can set
        vision_full_recalc */
     if (didmove && Clairvoyant && !In_endgame(&u.uz) && !(moves % 15) &&
@@ -1039,7 +1097,7 @@ pre_move_tasks(boolean didmove, boolean loading_game)
     /* Running is the only thing that needs or wants persistence in
        travel direction. */
     if (flags.interrupted || !last_command_was("run"))
-        clear_travel_direction();    
+        clear_travel_direction();
 
     /* Handle realtime change now. If we just loaded a save, always print the
        messages. Otherwise, print them only on change. */
@@ -1050,7 +1108,7 @@ pre_move_tasks(boolean didmove, boolean loading_game)
     update_location(FALSE);
 
     if (didmove) {
-        /* Mark the current square as stepped on unless blind, since that would 
+        /* Mark the current square as stepped on unless blind, since that would
            imply that we had properly explored it. */
         struct rm *loc = &level->locations[u.ux][u.uy];
 
@@ -1313,7 +1371,7 @@ break_conduct(enum player_conduct conduct)
     u.uconduct[conduct]++;
     if(!u.uconduct_time[conduct])
         u.uconduct_time[conduct] = moves;
-    
+
     /* Monks avoid breaking vegetarian conduct. */
     if(conduct == conduct_vegetarian && Role_if(PM_MONK)) {
         pline("You feel guilty.");
@@ -1363,7 +1421,7 @@ command_input(int cmdidx, struct nh_cmd_arg *arg)
     /* prepare for the next move */
     pre_move_tasks(didmove, FALSE);
 
-    flush_screen(); 
+    flush_screen();
 }
 
 
@@ -1384,8 +1442,8 @@ newgame(microseconds birthday)
     role_init();        /* must be before init_dungeons(), u_init(), and
                            init_artifacts() */
 
-    init_dungeons();    /* must be before u_init() to avoid rndmonst() creating 
-                           odd monsters for any tins and eggs in hero's initial 
+    init_dungeons();    /* must be before u_init() to avoid rndmonst() creating
+                           odd monsters for any tins and eggs in hero's initial
                            inventory */
     init_artifacts();
     u_init(birthday);   /* struct you must have some basic data for mklev to
@@ -1419,9 +1477,8 @@ newgame(microseconds birthday)
     /* prepare for the first move */
     set_wear();
 
-    youmonst.movement = NORMAL_SPEED;   /* give the hero some movement points */
+    u.moveamt = NORMAL_SPEED;   /* hero is normal speed on turn 1 */
     post_init_tasks();
 }
 
 /*allmain.c*/
-

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-18 */
+/* Last modified by Alex Smith, 2014-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1626,7 +1626,7 @@ dodip(const struct nh_cmd_arg *arg)
         /* KMH, balance patch -- acid is particularly unstable */
         if (obj->cursed || obj->otyp == POT_ACID || !rn2(10)) {
             pline("BOOM!  They explode!");
-            wake_nearby();
+            wake_nearby(FALSE);
             exercise(A_STR, FALSE);
             if (!breathless(youmonst.data) || haseyes(youmonst.data))
                 potionbreathe(obj);

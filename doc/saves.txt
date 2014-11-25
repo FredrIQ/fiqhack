@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-11-14
+Last modified by Alex Smith, 2014-11-22
 
 Copyright (C) 2013 Alex Smith.
 
@@ -638,3 +638,81 @@ into the following categories:
   * Global and static variables we haven't got around to removing yet.  There
     are so many of them :-(
 
+
+Save diff format
+----------------
+
+Binary saves can be saved as-is (in a save backup line); however, more
+commonly, they're saved as a diff from the previous backup save. This section
+describes the diff format.
+
+In 4.3-beta1, a diff consisted of a number of 16-bit commands, each of which
+could be followed by bytes of data.  The commands were little-endian numbers,
+with the top two bits specifying the command, and the other 14 specifying a
+count.  A diff is conceptually a program that writes an output save based on
+an input save; the output save is append-only, the input save is random access
+(and has a file position pointer, which starts at the start of the save).  The
+file position pointer can go beyond the end of the input save, in which case
+it can't be read from, but otherwise its position is legal and remembered.
+
+Here are the commands that were in use:
+
+  * `xxxxxxxx 10xxxxxx`: An "edit" command. The bottom 14 bits specify (as an
+    unsigned integer) the number of bytes of data the command has.  Those
+    bytes are appended verbatim to the output save, and the file position in
+    the input save is moved forwards the same distance.
+
+  * `yyyyyyyy 11yyyyyy`: A "copy" command. The bottom 14 bits specify the number
+    of bytes to read from the input save (starting at the file position
+    pointer) and append to the output save.  Then the input file pointer is
+    moved forwards that number of bytes (placing it just beyond the last byte
+    copied).
+
+  * `zzzzzzzz 00zzzzzz`: A "seek" command. The file position pointer is moved
+    forwards by the given number of bytes (as a 14-bit signed integer).
+    Moving forwards a negative number of bytes moves backwards minus that many
+    bytes.  This command has no data.
+
+
+This diff format worked quite well in practice, but there was scope for
+improvement.  The vast majority of most diffs consisted of medium-sized copies
+alternating with small edits, with the occasional very large copy.  Large
+edits and seeks were both possible, but both rare.
+
+4.3-beta2 introduces a new diff format that requires less space to express
+these common structures.  The same commands are used, but expressed
+differently.  (The endianness is also different; commands are big-endian so
+that they can be variable-length.):
+
+  * `0xxyyyyy yyyyyyyy`: A "copy then edit" command. The bottom 13 bits
+    specify the number of bytes to copy (which can be 0, in the case of small
+    edits which follow a seek or at the start of the file, but only if at
+    least 2 bytes are edited). Adding 1 to the higher 2 bits specifies the
+    number of bytes to edit (i.e. `0010000 00000001` copies 1 byte, then edits
+    2).
+
+  * `100xxxxy yyyyyyyy yyyyyyyy yyyyyyyy`: A "large copy then edit" command.
+    Works just like before, only there's more bits to specify the size of the
+    copy, more bits to specify the size of the edit, and we don't add 1 to the
+    size of the edit (meaning that we can encode a pure copy; this is never
+    necessary, as you could replace the last byte by an edit, but it can be
+    simpler to generate).
+
+  * `101xxxxx xxxxxxxx xxxxxxxx xxxxxxxx`: A "large edit" command.  (The first
+    few bytes of the edit can be placed in a preceding copy-then-edit command,
+    which requires at least one byte of edit to be presented.)  This works
+    just like the edit command from 4.3-beta1, except that it has more bits.
+
+  * `111zzzzz zzzzzzzz`: A "seek" command.
+
+  * `110zzzzz zzzzzzzz zzzzzzzz zzzzzzzz`: A "large seek" command.  Like a
+    normal seek, but larger.
+
+Unlike the preceding format (which has no header), this format has a two-byte
+header: `00000001 01000000`.  (This prevents any confusion with the previous
+format, meaning that both formats can be mixed in a file, e.g. when porting
+old saves from 4.3-beta1.)
+
+The sequence `00000000 00000000` (copy 0, edit 1) is specifically disallowed,
+so that it can be used as an EOF marker.  The runtime engine substitutes
+`10100000 00000000 00000000 00000001` instead.

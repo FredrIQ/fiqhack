@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-15 */
+/* Last modified by Alex Smith, 2014-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -22,8 +22,8 @@ initedog(struct monst *mtmp)
     EDOG(mtmp)->apport = 10;
     EDOG(mtmp)->whistletime = 0;
     EDOG(mtmp)->hungrytime = 1000 + moves;
-    EDOG(mtmp)->ogoal.x = -1;   /* force error if used before set */
-    EDOG(mtmp)->ogoal.y = -1;
+    EDOG(mtmp)->save_compat_bytes[0] = -1;
+    EDOG(mtmp)->save_compat_bytes[1] = -1;
     EDOG(mtmp)->abuse = 0;
     EDOG(mtmp)->revivals = 0;
     EDOG(mtmp)->mhpmax_penalty = 0;
@@ -243,14 +243,10 @@ mon_arrive(struct monst *mtmp, boolean with_you)
        the current level has been fully set up; see dochug() */
     mtmp->mstrategy |= STRAT_ARRIVE;
 
-    /* make sure mnexto(rloc_to(set_apparxy())) doesn't use stale data */
-    mtmp->mux = u.ux, mtmp->muy = u.uy;
-    xyloc = mtmp->mtrack[0].x;
-    xyflags = mtmp->mtrack[0].y;
-    xlocale = mtmp->mtrack[1].x;
-    ylocale = mtmp->mtrack[1].y;
-    mtmp->mtrack[0].x = mtmp->mtrack[1].x = COLNO;
-    mtmp->mtrack[0].y = mtmp->mtrack[1].y = ROWNO;
+    xyloc = mtmp->xyloc;
+    xyflags = mtmp->xyflags;
+    xlocale = mtmp->xlocale;
+    ylocale = mtmp->ylocale;
 
     for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj)
         set_obj_level(mtmp->dlevel, otmp);
@@ -399,6 +395,9 @@ mon_arrive(struct monst *mtmp, boolean with_you)
             mongone(mtmp);
         }
     }
+
+    mtmp->mux = mtmp->mx;
+    mtmp->muy = mtmp->my;
 }
 
 /* heal monster for time spent elsewhere */
@@ -635,17 +634,17 @@ migrate_to_level(struct monst *mtmp, xchar tolev,       /* destination level */
 
     new_lev.dnum = ledger_to_dnum((xchar) tolev);
     new_lev.dlevel = ledger_to_dlev((xchar) tolev);
-    /* overload mtmp->[mx,my], mtmp->[mux,muy], and mtmp->mtrack[] as */
-    /* destination codes (setup flag bits before altering mx or my) */
+
+    /* set migration data */
     xyflags = (depth(&new_lev) < depth(&u.uz)); /* 1 => up */
     if (In_W_tower(mtmp->mx, mtmp->my, &u.uz))
         xyflags |= 2;
     mtmp->wormno = num_segs;
     mtmp->mlstmv = moves;
-    mtmp->mtrack[1].x = cc ? cc->x : mtmp->mx;
-    mtmp->mtrack[1].y = cc ? cc->y : mtmp->my;
-    mtmp->mtrack[0].x = xyloc;
-    mtmp->mtrack[0].y = xyflags;
+    mtmp->xlocale = cc ? cc->x : mtmp->mx;
+    mtmp->ylocale = cc ? cc->y : mtmp->my;
+    mtmp->xyloc = xyloc;
+    mtmp->xyflags = xyflags;
     mtmp->mux = new_lev.dnum;
     mtmp->muy = new_lev.dlevel;
     mtmp->mx = COLNO;
@@ -916,7 +915,6 @@ wary_dog(struct monst *mtmp, boolean was_dead)
         edog->revivals++;
         edog->killed_by_u = 0;
         edog->abuse = 0;
-        edog->ogoal.x = edog->ogoal.y = -1;
         if (was_dead || edog->hungrytime < moves + 500L)
             edog->hungrytime = moves + 500L;
         if (was_dead) {

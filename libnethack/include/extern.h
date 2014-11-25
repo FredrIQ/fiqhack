@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-14 */
+/* Last modified by Alex Smith, 2014-11-22 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -24,6 +24,7 @@
 struct attack;
 struct damage;
 struct def_skill;
+struct distmap_state;
 struct d_level;
 struct engr;
 struct flag;
@@ -619,6 +620,8 @@ extern boolean travelling(void);
 extern boolean test_move(
     int, int, int, int, int, int, enum u_interaction_mode,
     boolean, boolean, boolean, boolean, boolean, boolean);
+extern void distmap_init(struct distmap_state *, int, int, struct monst *mtmp);
+extern int distmap(struct distmap_state *, int, int);
 extern int domove(const struct nh_cmd_arg *, enum u_interaction_mode,
                   enum occupation);
 extern void invocation_message(void);
@@ -1060,13 +1063,15 @@ extern int movemon(void);
 extern int meatmetal(struct monst *);
 extern int meatobj(struct monst *);
 extern void mpickgold(struct monst *);
-extern boolean mpickstuff(struct monst *, const char *);
+extern boolean mpickstuff(struct monst *);
 extern int curr_mon_load(struct monst *);
 extern int max_mon_load(struct monst *);
 extern boolean can_carry(struct monst *, struct obj *);
 extern int mfndpos(struct monst *, coord *, long *, long);
 extern boolean monnear(struct monst *, int, int);
 extern void dmonsfree(struct level *lev);
+extern boolean can_act_this_turn(struct monst *);
+extern void adjust_move_offset(struct monst *, int, int);
 extern int mcalcmove(struct monst *);
 extern void mcalcdistress(void);
 extern void replmon(struct monst *, struct monst *);
@@ -1089,7 +1094,7 @@ extern void poisoned(const char *, int, const char *, int);
 extern void m_respond(struct monst *);
 extern void setmangry(struct monst *);
 extern void wakeup(struct monst *, boolean);
-extern void wake_nearby(void);
+extern void wake_nearby(boolean);
 extern void wake_nearto(int, int, int);
 extern void seemimic(struct monst *);
 extern void resistcham(void);
@@ -1147,6 +1152,7 @@ extern void mon_regen(struct monst *, boolean);
 extern int dochugw(struct monst *);
 extern boolean onscary(int, int, struct monst *);
 extern void monflee(struct monst *, int, boolean, boolean);
+extern boolean monster_would_take_item(struct monst *, struct obj *);
 extern int dochug(struct monst *);
 extern int m_move(struct monst *, int);
 extern boolean closed_door(struct level *lev, int x, int y);
@@ -1492,6 +1498,12 @@ extern void savelev(struct memfile *mf, xchar levnum);
 extern void freelev(xchar levnum);
 extern void savefruitchn(struct memfile *mf);
 extern void freedynamicdata(void);
+extern int8_t save_encode_8(int8_t, int);
+extern int16_t save_encode_16(int16_t, int);
+extern int32_t save_encode_32(int32_t, int);
+extern int8_t save_decode_8(int8_t, int);
+extern int16_t save_decode_16(int16_t, int);
+extern int32_t save_decode_32(int32_t, int);
 
 /* ### shk.c ### */
 
@@ -1881,6 +1893,7 @@ extern void amulet(void);
 extern int mon_has_amulet(struct monst *);
 extern int mon_has_special(struct monst *);
 extern int tactics(struct monst *);
+extern void strategy(struct monst *, boolean);
 extern void aggravate(void);
 extern void clonewiz(void);
 extern int pick_nasty(void);

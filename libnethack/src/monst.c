@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-08-25 */
+/* Last modified by Alex Smith, 2014-11-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -58,7 +58,7 @@
  * Rule #3:  monster frequency is included in the geno mask;
  *           the frequency can be from 0 to 7.  0's will also
  *           be skipped during generation.
- 
+ *
  * Rule #4:  monster subclasses (e.g. giants) should be kept
  *           together, unless it violates Rule 2.  NOGEN monsters
  *           won't violate Rule 2.
@@ -71,8 +71,8 @@
  * * Use colors given in names wherever possible. If the class has `real'
  *   members with strong color associations, use those.
  *
- * * Favor `cool' colors for cold-resistent monsters, `warm' ones for
- *   fire-resistent ones.
+ * * Favor `cool' colors for cold-resistant monsters, `warm' ones for
+ *   fire-resistant ones.
  *
  * * Try to reserve purple (magenta) for powerful `ruler' monsters (queen
  *   bee, kobold lord, &c.).
@@ -3278,7 +3278,7 @@ const struct permonst mons[] = {
         M2_NOPOLY | M2_HUMAN | M2_PNAME | M2_HOSTILE | M2_STRONG | M2_STALK |
         M2_NASTY | M2_MALE | M2_COLLECT | M2_MAGIC,
         M3_WANTSARTI | M3_WAITFORU | M3_INFRAVISIBLE, HI_QUEST),
-    /* 
+    /*
      * Note: the Master of Thieves was defined above.
      */
     MON("Lord Surtur", S_GIANT,
@@ -3436,4 +3436,3 @@ const struct permonst mons[] = {
 };
 
 /*monst.c*/
-

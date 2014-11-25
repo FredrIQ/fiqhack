@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Alex Smith, 2014-10-21
+Last-Modified: Last modified by Alex Smith, 2014-11-23
 Upstream-Name: nethack4
 Upstream-Contact: ais523@nethack4.org
 
@@ -704,6 +704,10 @@ Copyright: Copyright (C) 1989, 1991 Free Software Foundation, Inc.
 Comment:
  The license under which the text of the GPL-2 itself is distributed.
  It is not used for any code.
+
+Files: libnethack/util/savemap.pl
+License: Expat
+Copyright: Copyright (c) 2014 Derrick Sund.
 
 Files: libjansson/*
 License: Expat

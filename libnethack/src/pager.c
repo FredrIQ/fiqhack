@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-14 */
+/* Last modified by Alex Smith, 2014-11-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -351,6 +351,12 @@ describe_mon(int x, int y, int monnum, char *buf)
             if (tt == BEAR_TRAP || tt == PIT || tt == SPIKED_PIT || tt == WEB)
                 sprintf(buf + strlen(buf),
                         ", trapped in %s", an(trapexplain[tt - 1]));
+        }
+
+        if (wizard) {
+            snprintf(temp_buf, SIZE(temp_buf), ", strategy %08lx",
+                     (unsigned long)mtmp->mstrategy);
+            strncat(buf, temp_buf, BUFSZ - strlen(buf) - 1);
         }
 
         mon_vision_summary(mtmp, visionbuf);

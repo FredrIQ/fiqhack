@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-28 */
+/* Last modified by Alex Smith, 2014-11-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -523,6 +523,7 @@ thrwmu(struct monst *mtmp)
         int dam, hitv;
 
         if (dist2(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy) > POLE_LIM ||
+            (mtmp->mx == mtmp->mux && mtmp->my == mtmp->muy) ||
             !couldsee(mtmp->mx, mtmp->my))
             return;     /* Out of range, or intervening wall */
 
@@ -1016,6 +1017,9 @@ lined_up(struct monst * mtmp)
     if (u.uundetected || ((youmonst.data->mlet == S_MIMIC) &&
         (youmonst.m_ap_type != M_AP_NOTHING)))
         return FALSE;
+
+    if (mtmp->mux == mtmp->mx && mtmp->muy == mtmp->my)
+        return FALSE; /* monster doesn't know where you are */
 
     return linedup(mtmp->mux, mtmp->muy, mtmp->mx, mtmp->my);
 }

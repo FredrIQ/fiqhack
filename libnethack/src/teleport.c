@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-11-02 */
+/* Last modified by Alex Smith, 2014-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -32,11 +32,12 @@ goodpos(struct level *lev, int x, int y, struct monst *mtmp, unsigned gpflags)
        relocating engravings or objects, which could be co-located and thus get 
        restricted a bit too much. oh well. */
     if (mtmp != &youmonst && x == u.ux && y == u.uy &&
-        (!u.usteed || mtmp != u.usteed))
+        (!u.usteed || mtmp != u.usteed) && !(gpflags & MM_IGNOREMONST))
         return FALSE;
 
     if (mtmp) {
-        struct monst *mtmp2 = m_at(lev, x, y);
+        struct monst *mtmp2 = (gpflags & MM_IGNOREMONST) ?
+            NULL : m_at(lev, x, y);
 
         /* Be careful with long worms.  A monster may be placed back in its own 
            location.  Normally, if m_at() returns the same monster that we're
@@ -73,9 +74,11 @@ goodpos(struct level *lev, int x, int y, struct monst *mtmp, unsigned gpflags)
             return FALSE;
     }
 
-    if (closed_door(lev, x, y) && (!mdat || !amorphous(mdat)))
+    if (!(gpflags & MM_IGNOREDOORS) && closed_door(lev, x, y) &&
+        (!mdat || !amorphous(mdat)))
         return FALSE;
-    if (sobj_at(BOULDER, lev, x, y) && (!mdat || !throws_rocks(mdat)))
+    if (!(gpflags & MM_IGNOREDOORS) && sobj_at(BOULDER, lev, x, y) &&
+        (!mdat || !throws_rocks(mdat)))
         return FALSE;
     return TRUE;
 }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2014-11-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -492,8 +492,8 @@ montraits(struct obj *obj, coord * cc)
         mtmp2->dlevel = level;
         mtmp2->mx = mtmp->mx;
         mtmp2->my = mtmp->my;
-        mtmp2->mux = mtmp->mux;
-        mtmp2->muy = mtmp->muy;
+        mtmp2->mux = mtmp->mx;
+        mtmp2->muy = mtmp->my;
         mtmp2->mw = mtmp->mw;
         mtmp2->wormno = mtmp->wormno;
         mtmp2->misc_worn_check = mtmp->misc_worn_check;

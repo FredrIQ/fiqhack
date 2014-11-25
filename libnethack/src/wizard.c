@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-22 */
+/* Last modified by Alex Smith, 2014-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -19,8 +19,6 @@ static boolean mon_has_arti(struct monst *, short);
 static struct monst *other_mon_has_arti(struct monst *, short);
 static struct obj *on_ground(short);
 static boolean you_have(int);
-static long target_on(int, struct monst *);
-static long strategy(struct monst *);
 
 static const int nasties[] = {
     PM_COCKATRICE, PM_ETTIN, PM_STALKER, PM_MINOTAUR, PM_RED_DRAGON,
@@ -119,8 +117,6 @@ mon_has_special(struct monst *mtmp)
  * The strategy section decides *what* the monster is going
  * to attempt, the tactics section implements the decision.
  */
-#define STRAT(w, x, y, typ) (w | ((long)(x)<<16) | ((long)(y)<<8) | (long)typ)
-
 #define M_Wants(mask)   (mtmp->data->mflags3 & (mask))
 
 static short
@@ -210,7 +206,7 @@ you_have(int mask)
     return 0;
 }
 
-static long
+static boolean
 target_on(int mask, struct monst *mtmp)
 {
     short otyp;
@@ -218,89 +214,311 @@ target_on(int mask, struct monst *mtmp)
     struct monst *mtmp2;
 
     if (!M_Wants(mask))
-        return STRAT_NONE;
+        return FALSE;
 
     otyp = which_arti(mask);
     if (!mon_has_arti(mtmp, otyp)) {
         if (you_have(mask))
-            return STRAT(STRAT_PLAYER, u.ux, u.uy, mask);
+            mtmp->mstrategy = STRAT(STRAT_PLAYER, u.ux, u.uy, mask);
         else if ((otmp = on_ground(otyp)))
-            return STRAT(STRAT_GROUND, otmp->ox, otmp->oy, mask);
+            mtmp->mstrategy = STRAT(STRAT_GROUND, otmp->ox, otmp->oy, mask);
         else if ((mtmp2 = other_mon_has_arti(mtmp, otyp)))
-            return STRAT(STRAT_MONSTR, mtmp2->mx, mtmp2->my, mask);
+            mtmp->mstrategy = STRAT(STRAT_MONSTR, mtmp2->mx, mtmp2->my, mask);
+        else
+            return FALSE;
+        return TRUE;
     }
-    return STRAT_NONE;
+    return FALSE;
 }
 
-static long
-strategy(struct monst *mtmp)
+/* Work out what this monster wants to be doing, and set its mstrategy field
+   appropriately. knows_ux_uy is set if the monster should be magically aware
+   of your position (typically due to someone casting "aggravate").
+
+   Covetous monsters are automatically aware of the location of any items that
+   they specifically want. They aren't necessarily automatically able to reach
+   that location, though.
+
+   For NetHack 4.3, this routine now applies to /all/ monsters. Monsters which
+   are unaware of you (i.e. mux, muy are more than one square from your actual
+   location) will typically keep doing whatever they were doing beforehand,
+   unless it becomes clearly impossible, or they covetous-sense an artifact or
+   invocation item.
+
+   This function is about what the monster wants to be doing in general terms,
+   not necessarily what it wants to do right now (i.e. long-term strategy). Its
+   main purpose is so that monsters that are unaware of the player keep doing
+   what they were doing beforehand, rather than milling around randomly. (For
+   instance, if a monster starts chasing the player, and the player runs away
+   out of LOS, the monster will aim for the last square it saw the player
+   on.) */
+void
+strategy(struct monst *mtmp, boolean knows_ux_uy)
 {
-    long strat, dstrat;
+    boolean chases_player = !mtmp->mpeaceful || mtmp->isshk || mtmp->mtame;
 
-    if (!is_covetous(mtmp->data) ||
-        /* perhaps a shopkeeper has been polymorphed into a master lich; we
-           don't want it teleporting to the stairs to heal because that will
-           leave its shop untended */
-        (mtmp->isshk && inhishop(mtmp)))
-        return STRAT_NONE;
+    set_apparxy(mtmp);
 
-    switch ((mtmp->mhp * 3) / mtmp->mhpmax) {   /* 0-3 */
+    /* Is the monster waiting for something? */
+    if (mtmp->mstrategy & STRAT_WAITMASK)
+        return;
 
-    default:
-    case 0:    /* panic time - mtmp is almost snuffed */
-        return STRAT_HEAL;
+    /* Below half health, or when fleeing, we ignore what we were previously
+       doing, and change to escape mode instead. Unless we were escaping, in
+       which case, continue doing that. Note that in this case, the strategy
+       goal coordinates are the square that the monster is trying to get away
+       from, not the square it's running towards.
 
-    case 1:    /* the wiz is less cautious */
-        if (mtmp->data != &mons[PM_WIZARD_OF_YENDOR])
-            return STRAT_HEAL;
-        /* else fall through */
+       STRAT_ESCAPE (escaping) is not the same as mflee (fleeing). Escaping is
+       basically a case of "heal up, or get out of here"; it's a rational
+       approach to being on low HP. Fleeing is running away in a blind panic,
+       e.g. as a result of being hit by a scare monster spell, although it can
+       also happen by nonmagical means (some monsters just like panicking).
 
-    case 2:
-        dstrat = STRAT_HEAL;
-        break;
+       Note that a monster's reaction to STRAT_ESCAPE is not necessarily to run
+       away from the target square; it might also heal up, use escape items,
+       etc.. */
+    if (mtmp->mhp * (mtmp->data == &mons[PM_WIZARD_OF_YENDOR] ? 4 : 2) <
+        mtmp->mhpmax || mtmp->mflee) {
 
-    case 3:
-        dstrat = STRAT_NONE;
-        break;
+        /* An escaping pet instead moves towards the player, if it can.
+           (dog_move will reverse this direction if fleeing in a panic.) */
+        if (mtmp->mtame && (mtmp->mux != mtmp->mx || mtmp->muy != mtmp->my)) {
+            mtmp->mstrategy = STRAT(STRAT_PLAYER, mtmp->mux, mtmp->muy, 0);
+            return;
+        }
+
+        /* If the monster thinks it can see the player, it escapes from the
+           location it believes the player to be standing at. Because we just
+           called set_apparxy, the monster thinks it knows where the player is
+           iff mux/muy differ from mx/my. Exception: a peaceful monster has no
+           reason to be afraid of the player in particular (if the player had
+           taken an aggressive action, they'd no longer be flagged as
+           peaceful). */
+        if ((mtmp->mux != mtmp->mx || mtmp->muy != mtmp->my) &&
+            !mtmp->mpeaceful)
+            mtmp->mstrategy = STRAT(STRAT_ESCAPE, mtmp->mux, mtmp->muy, 0);
+
+        /* Does the monster already have a valid square to escape from? */
+        if (mtmp->mstrategy & STRAT_ESCAPE)
+            return;
+
+        /* The monster has just started to escape; however, it doesn't know what
+           it's escaping from. This is because the player sniped it from out of
+           its vision range with a ranged attack, because it was attacked by
+           another monster, because it stepped on a trap, and possibly other
+           reasons. Escaping from its current location makes sense in all those
+           cases. */
+        mtmp->mstrategy = STRAT(STRAT_ESCAPE, mtmp->mx, mtmp->my, 0);
+        return;
     }
 
+    /* Covetous monster checks. */
+
     if (flags.made_amulet)
-        if ((strat = target_on(M3_WANTSAMUL, mtmp)) != STRAT_NONE)
-            return strat;
+        if (target_on(M3_WANTSAMUL, mtmp))
+            return;
 
     if (u.uevent.invoked) {     /* priorities change once gate opened */
 
-        if ((strat = target_on(M3_WANTSARTI, mtmp)) != STRAT_NONE)
-            return strat;
-        if ((strat = target_on(M3_WANTSBOOK, mtmp)) != STRAT_NONE)
-            return strat;
-        if ((strat = target_on(M3_WANTSBELL, mtmp)) != STRAT_NONE)
-            return strat;
-        if ((strat = target_on(M3_WANTSCAND, mtmp)) != STRAT_NONE)
-            return strat;
+        if (target_on(M3_WANTSARTI, mtmp))
+            return;
+        if (target_on(M3_WANTSBOOK, mtmp))
+            return;
+        if (target_on(M3_WANTSBELL, mtmp))
+            return;
+        if (target_on(M3_WANTSCAND, mtmp))
+            return;
+
     } else {
 
-        if ((strat = target_on(M3_WANTSBOOK, mtmp)) != STRAT_NONE)
-            return strat;
-        if ((strat = target_on(M3_WANTSBELL, mtmp)) != STRAT_NONE)
-            return strat;
-        if ((strat = target_on(M3_WANTSCAND, mtmp)) != STRAT_NONE)
-            return strat;
-        if ((strat = target_on(M3_WANTSARTI, mtmp)) != STRAT_NONE)
-            return strat;
+        if (target_on(M3_WANTSBOOK, mtmp))
+            return;
+        if (target_on(M3_WANTSBELL, mtmp))
+            return;
+        if (target_on(M3_WANTSCAND, mtmp))
+            return;
+        if (target_on(M3_WANTSARTI, mtmp))
+            return;
+
     }
-    return dstrat;
+
+    /* Aggravated monsters are all attracted to the player's real location. */
+    if (knows_ux_uy && chases_player) {
+        mtmp->mstrategy = STRAT(STRAT_PLAYER, u.ux, u.uy, 0);
+        return;
+    }
+
+    /* Monsters in the middle of a swarm don't run a full AI for efficiency
+       reasons: they attack, but that's about it. (They don't really have room
+       to move.) So don't bother messing about with their strategy either. */
+    int adjacent_nonmonsters = 0;
+    int dx, dy;
+    for (dx = -1; dx <= 1; dx++)
+        for (dy = -1; dy <= 1; dy++) {
+            if (adjacent_nonmonsters > 2)
+                break;
+            if (!isok(mtmp->mx + dx, mtmp->my + dy))
+                continue;
+            if (!MON_AT(mtmp->dlevel, mtmp->mx + dx, mtmp->my + dy))
+                adjacent_nonmonsters++;
+        }
+    if (adjacent_nonmonsters <= 2)
+        return;
+
+    /* If the monster is hostile, aware of your current location (or thinks it
+       is), and not escaping, it's going to hunt you down. Likewise, tame
+       monsters will try to follow. Shopkeeper strategy is determined as if the
+       shopkeeper is angry; it won't be used in other situations. */
+    if ((mtmp->mux != mtmp->mx || mtmp->muy != mtmp->my) && chases_player) {
+        mtmp->mstrategy = STRAT(STRAT_PLAYER, mtmp->mux, mtmp->muy, 0);
+        return;
+    }
+
+    /* If the monster is one that's naturally social (determined using the
+       G_SGROUP and G_LGROUP flags), if it sees another monster of the same mlet
+       nearby, the monster with fewer max HP changes strategy to match the
+       monster with more. This makes it likely (but not guaranteed) that
+       monsters that generate as a group will stay as a group. Exception: a
+       monster won't choose a goal square near its current square via this
+       method. Note that we're using mlet matches, not species matches, so
+       (e.g.) different species of elf may decide to band together if they meet
+       each other in a corridor. Likewise, a healthy monster that can't see the
+       player may decide to escape along with a wounded one. This is likely to
+       lead to emergent behaviour; it may or may not need changing, depending on
+       what that emergent behaviour is. */
+    for (dx = -1; dx <= 1; dx++)
+        for (dy = -1; dy <= 1; dy++) {
+            if (!isok(mtmp->mx + dx, mtmp->my + dy))
+                continue;
+            struct monst *mtmp2 = m_at(mtmp->dlevel,
+                                       mtmp->mx + dx, mtmp->my + dy);
+            if (mtmp2 && mtmp2 != mtmp && mtmp2->mstrategy != mtmp->mstrategy &&
+                mtmp2->data->mlet == mtmp->data->mlet &&
+                mtmp->mpeaceful == mtmp2->mpeaceful &&
+                mtmp->data->geno & (G_SGROUP | G_LGROUP) &&
+                mtmp2->data->geno & (G_SGROUP | G_LGROUP) &&
+                (mtmp->mhpmax < mtmp2->mhpmax ||
+                 (mtmp->m_id < mtmp2->m_id && mtmp->mhpmax == mtmp2->mhpmax))) {
+                mtmp->mstrategy = mtmp2->mstrategy;
+                return;
+            }
+        }
+
+    /* If the monster finds your tracks and wants to follow you, it follows the
+       tracks. */
+    if (can_track(mtmp->data) && chases_player) {
+        coord *cp;
+        
+        cp = gettrack(mtmp->mx, mtmp->my);
+        if (cp) {
+            mtmp->mstrategy = STRAT(STRAT_PLAYER, cp->x, cp->y, 0);
+            return;
+        }
+    }
+
+    /* If the monster was previously escaping, or if it couldn't find a
+       strategy, or if it had a target square and has now reached it (with
+       nothing obvious happening), or with a very small random chance otherwise
+       (to prevent monsters getting stuck), we pick a new strategy. */
+    if (mtmp->mstrategy & STRAT_ESCAPE || !rn2(200) ||
+        mtmp->mstrategy == STRAT_NONE ||
+        (mtmp->mstrategy & STRAT_TARGMASK &&
+         mtmp->mx == STRAT_GOALX(mtmp->mstrategy) &&
+         mtmp->my == STRAT_GOALY(mtmp->mstrategy))) {
+
+        struct distmap_state ds;
+        distmap_init(&ds, mtmp->mx, mtmp->my, mtmp);
+        
+        /* Check to see if there are any items around that the monster might
+           want. (This code was moved from monmove.c, and slightly edited;
+           previously, monsters would interrupt chasing the player to look for
+           an item through rock.) */
+#define SQSRCHRADIUS    5
+        {
+            int minr = SQSRCHRADIUS;        /* not too far away */
+            struct obj *otmp;
+            struct monst *mtoo;
+            int gx = -1, gy;
+
+            /* guards shouldn't get too distracted */
+            if (!mtmp->mpeaceful && is_mercenary(mtmp->data))
+                minr = 1;
+
+            if (!*in_rooms(mtmp->dlevel, mtmp->mx, mtmp->my, SHOPBASE) ||
+                (!rn2(25) && !mtmp->isshk)) {
+                for (otmp = mtmp->dlevel->objlist; otmp; otmp = otmp->nobj) {
+                    /* monsters may pick rocks up, but won't go out of their way
+                       to grab them; this might hamper sling wielders, but it
+                       cuts down on move overhead by filtering out most common
+                       item */
+                    if (otmp->otyp == ROCK)
+                        continue;
+                    if (distmap(&ds, otmp->ox, otmp->oy) <= minr) {
+                        /* don't get stuck circling around an object that's
+                           underneath an immobile or hidden monster; paralysis
+                           victims excluded */
+                        if ((mtoo = m_at(mtmp->dlevel, otmp->ox, otmp->oy)) != 0
+                            && (mtoo->msleeping || mtoo->mundetected ||
+                                (mtoo->mappearance && !mtoo->iswiz) ||
+                                !mtoo->data->mmove))
+                            continue;
+
+                        if (monster_would_take_item(mtmp, otmp) &&
+                            can_carry(mtmp, otmp) &&
+                            (throws_rocks(mtmp->data) ||
+                             !sobj_at(BOULDER, level, otmp->ox, otmp->oy)) &&
+                            !(onscary(otmp->ox, otmp->oy, mtmp))) {
+                            minr = distmap(&ds, otmp->ox, otmp->oy) - 1;
+                            gx = otmp->ox;
+                            gy = otmp->oy;
+                        }
+                    }
+                }
+            }
+
+            if (gx != -1) {
+                mtmp->mstrategy = STRAT(STRAT_GROUND, gx, gy, 0);
+                return;
+            }
+        }
+
+        /* Try up to ten locations on the level, and pick the most distant
+           reachable one. If we haven't found one by then, try another 20. */
+        int trycount = 0;
+        int dist = 0;
+        long strat = STRAT_NONE;
+        do {
+            int x = rn2(COLNO);
+            int y = rn2(ROWNO);
+            if (goodpos(mtmp->dlevel, x, y, mtmp, 0)) {
+                int distm = distmap(&ds, x, y);
+                if (distm > dist && distm < COLNO * ROWNO) {
+                    distm = dist;
+                    strat = STRAT(STRAT_GROUND, x, y, 0);
+                }
+            }
+        } while (++trycount < (dist ? 10 : 30));
+
+        mtmp->mstrategy = strat;
+        return;
+    }
+
+    /* And otherwise, we just stick with the previous strategy, whatever it
+       happened to be. */
 }
 
+/* How a covetous monster interprets the strategy fields.
+
+   TODO: This is mostly obnoxious teleportation. We should be able to do
+   something better than this. */
 int
 tactics(struct monst *mtmp)
 {
-    long strat = strategy(mtmp);
-
-    mtmp->mstrategy = (mtmp->mstrategy & STRAT_WAITMASK) | strat;
+    long strat = mtmp->mstrategy;
 
     switch (strat) {
-    case STRAT_HEAL:   /* hide and recover */
+    case STRAT_ESCAPE:   /* hide and recover */
         /* if wounded, hole up on or near the stairs (to block them) */
         /* unless, of course, there are no stairs (e.g. endlevel) */
         mtmp->mavenge = 1;      /* covetous monsters attack while fleeing */
@@ -385,6 +603,7 @@ aggravate(void)
                 mtmp->mfrozen = 0;
                 mtmp->mcanmove = 1;
             }
+            strategy(mtmp, TRUE);
         }
 }
 

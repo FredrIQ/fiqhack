@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-24 */
+/* Last modified by Alex Smith, 2014-11-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -287,7 +287,7 @@ mattacku(struct monst *mtmp)
     boolean ranged = (distu(mtmp->mx, mtmp->my) > 3);
 
     /* Is it near you? Affects your actions */
-    boolean range2 = !monnear(mtmp, mtmp->mux, mtmp->muy);
+    boolean range2 = !monnear(mtmp, u.ux, u.uy);
 
     /* Does it think it's near you? Affects its actions */
     boolean foundyou = (mtmp->mux == u.ux && mtmp->muy == u.uy);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2014-11-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -43,21 +43,25 @@
 
 /* strategy flags for mstrategy */
 # define STRAT_ARRIVE   0x40000000L     /* just arrived on current level */
-# define STRAT_WAITFORU 0x20000000L
-# define STRAT_CLOSE    0x10000000L
-# define STRAT_WAITMASK 0x30000000L
-# define STRAT_HEAL     0x08000000L
-# define STRAT_GROUND   0x04000000L
-# define STRAT_MONSTR   0x02000000L
-# define STRAT_PLAYER   0x01000000L
-# define STRAT_NONE     0x00000000L
+# define STRAT_WAITFORU 0x20000000L     /* do nothing until player disturbs */
+# define STRAT_CLOSE    0x10000000L     /* do nothing until player adjacent */
+# define STRAT_WAITMASK 0x30000000L     /* do nothing until something */
+# define STRAT_ESCAPE   0x08000000L     /* heal, or avoid STRAT_GOAL[XY] */
+
+/* strategies where you move to STRAT_GOAL[XY] for the following reasons: */
+# define STRAT_GROUND   0x04000000L     /* take an item, or just random moves */
+# define STRAT_MONSTR   0x02000000L     /* chase down / attack a monster */
+# define STRAT_PLAYER   0x01000000L     /* chase down / attack the player */
+# define STRAT_TARGMASK 0x07000000L     /* any of the three above cases */
+
+# define STRAT_NONE     0x00000000L     /* tied to a location or random walk */
 # define STRAT_STRATMASK 0x0f000000L
 # define STRAT_XMASK    0x00ff0000L
 # define STRAT_YMASK    0x0000ff00L
 # define STRAT_GOAL     0x000000ffL
 # define STRAT_GOALX(s) ((xchar)((s & STRAT_XMASK) >> 16))
 # define STRAT_GOALY(s) ((xchar)((s & STRAT_YMASK) >> 8))
-
+#define STRAT(w, x, y, typ) (w | ((long)(x)<<16) | ((long)(y)<<8) | (long)typ)
 
 struct monst {
     struct monst *nmon;
@@ -72,8 +76,11 @@ struct monst {
     unsigned int mlstmv;        /* for catching up with lost time */
 
     int mstrategy;      /* for monsters with mflag3: current strategy */
-# define MTSZ   4
-    coord mtrack[MTSZ]; /* monster track */
+
+    /* migration */
+    uchar xyloc, xyflags, xlocale, ylocale;
+    /* SAVEBREAK (4.3-beta1 -> 4.3-beta2): remove this */
+    unsigned int save_compat_dword;
 
     short mnum; /* permanent monster index number */
     uchar m_lev;        /* adjusted difficulty level of monster */
@@ -81,8 +88,7 @@ struct monst {
     xchar mux, muy;     /* where the monster thinks you are */
     aligntyp malign;    /* alignment of this monster, relative to the player
                            (positive = good to kill) */
-    short movement;     /* movement points (derived from permonst definition
-                           and added effects */
+    short moveoffset;   /* how this monster's actions map onto turns */
     unsigned short mintrinsics; /* low 8 correspond to mresists */
     schar mtame;        /* level of tameness, implies peaceful */
     uchar m_ap_type;    /* what mappearance is describing: */
@@ -102,13 +108,14 @@ struct monst {
     unsigned invis_blkd:1;      /* invisibility blocked */
     unsigned perminvis:1;       /* intrinsic minvis value */
     unsigned cham:3;    /* shape-changer */
-/* note: lychanthropes are handled elsewhere */
+/* note: lycanthropes are handled elsewhere */
 # define CHAM_ORDINARY          0       /* not a shapechanger */
 # define CHAM_CHAMELEON         1       /* animal */
 # define CHAM_DOPPELGANGER      2       /* demi-human */
 # define CHAM_SANDESTIN         3       /* demon */
 # define CHAM_MAX_INDX          CHAM_SANDESTIN
     unsigned mundetected:1;     /* not seen in present hiding place */
+
     /* implies one of M1_CONCEAL or M1_HIDE, but not mimic (that is, snake,
        spider, trapper, piercer, eel) */
     unsigned mcan:1;    /* has been cancelled */
@@ -117,6 +124,7 @@ struct monst {
     unsigned permspeed:2;       /* intrinsic mspeed value */
     unsigned mrevived:1;        /* has been revived from the dead */
     unsigned mavenge:1; /* did something to deserve retaliation */
+
     unsigned mflee:1;   /* fleeing */
     unsigned mcansee:1; /* cansee 1, temp.blinded 0, blind 0 */
     unsigned mcanmove:1;        /* paralysis, similar to mblinded */
@@ -125,14 +133,16 @@ struct monst {
     unsigned mconf:1;   /* confused */
     unsigned mpeaceful:1;       /* does not attack unprovoked */
     unsigned mtrapped:1;        /* trapped in a pit, web or bear trap */
+
     unsigned mleashed:1;        /* monster is on a leash */
     unsigned msuspicious:1;     /* monster is suspicious of the player */
-
+    /* 1 spare bit */
     unsigned isshk:1;   /* is shopkeeper */
     unsigned isminion:1;        /* is a minion */
     unsigned isgd:1;    /* is guard */
     unsigned ispriest:1;        /* is a priest */
     unsigned iswiz:1;   /* is the Wizard of Yendor */
+
     uchar mfleetim;     /* timeout for mflee */
     uchar wormno;       /* at most 31 worms on any level */
 # define MAX_NUM_WORMS  32      /* wormno could hold larger worm ids, but 32 is 

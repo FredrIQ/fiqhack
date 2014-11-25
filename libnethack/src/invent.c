@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Sean Hunt, 2014-11-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2410,41 +2410,38 @@ doorganize(const struct nh_cmd_arg *arg)
     }
 
     /* change the inventory and print the resulting item */
-
-    /* don't use freeinv/addinv to avoid double-touching artifacts, dousing
-       lamps, losing luck, cursing loadstone, etc. */
-    extract_nobj(obj, &invent, &turnstate.floating_objects, OBJ_FREE);
+    boolean prtmp = FALSE;
 
     if (let == obj->invlet) {
         otmp = obj;
     } else {
-        for (otmp = invent; otmp && otmp->invlet != let;)
-            otmp = otmp->nobj;
+        for (otmp = invent; otmp && (otmp == obj || otmp->invlet != let);
+             otmp = otmp->nobj) {}
     }
 
     if (!otmp)
         adj_type = "Moving:";
     else if (otmp == obj) {
         adj_type = "Merging:";
-        for (otmp = invent; otmp;) {
-            if (merged(&otmp, &obj)) {
+        for (otmp = invent; otmp; otmp = otmp->nobj) {
+            if (obj != otmp && mergable(otmp, obj)) {
+                extract_nobj(obj, &invent, &turnstate.floating_objects,
+                             OBJ_FREE);
+                merged(&otmp, &obj);
                 obj = otmp;
-                otmp = otmp->nobj;
-                extract_nobj(obj, &invent,
-                             &turnstate.floating_objects, OBJ_FREE);
-            } else {
-                otmp = otmp->nobj;
             }
         }
-    } else if (merged(&otmp, &obj)) {
+    } else if (mergable(otmp, obj)) {
         adj_type = "Merging:";
-        obj = otmp;
         extract_nobj(obj, &invent, &turnstate.floating_objects, OBJ_FREE);
+        merged(&otmp, &obj);
+        obj = otmp;
     } else {
         struct obj *otmp2;
 
-        for (otmp2 = invent; otmp2 && otmp2->invlet != obj->invlet;)
-            otmp2 = otmp2->nobj;
+        for (otmp2 = invent;
+             otmp2 && (otmp2 == obj || otmp2->invlet != obj->invlet);
+             otmp2 = otmp2->nobj) {}
 
         if (otmp2) {
             char oldlet = obj->invlet;
@@ -2461,14 +2458,20 @@ doorganize(const struct nh_cmd_arg *arg)
         } else
             adj_type = "Swapping:";
         otmp->invlet = obj->invlet;
+        prtmp = TRUE;
     }
 
     /* inline addinv (assuming !merged) */
+    /* don't use freeinv/addinv to avoid double-touching artifacts, dousing
+       lamps, losing luck, cursing loadstone, etc. */
+    extract_nobj(obj, &invent, &turnstate.floating_objects, OBJ_FREE);
     obj->invlet = let;
     extract_nobj(obj, &turnstate.floating_objects, &invent, OBJ_INVENT);
     reorder_invent();
 
     prinv(adj_type, obj, 0L);
+    if (prtmp)
+        prinv(NULL, otmp, 0L);
     update_inventory();
     return 0;
 

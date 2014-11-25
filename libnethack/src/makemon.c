@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2014-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1031,6 +1031,21 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
     mtmp->mcansee = mtmp->mcanmove = TRUE;
     mtmp->mpeaceful = (mmflags & MM_ANGRY) ? FALSE : peace_minded(ptr);
 
+    /* Calculate the monster's movement offset. The number of movement points a
+       monster has at the start of a turn ranges over a range of 12 possible
+       values (from its speed, to its speed plus 11); the value chosen on any
+       given turn is congruent to (the movement offset plus (its speed times the
+       turn counter)) modulo 12. For monsters created at level creation, we use
+       a random offset so that the monsters don't all act in lock-step with each
+       other. For monsters created later, we pick the minimum end of the range,
+       to preserve the "summoning sickness" behaviour of 3.4.3 for monsters of
+       speed 23 and below. */
+    if (in_mklev)
+        mtmp->moveoffset = rn2(12);
+    else
+        mtmp->moveoffset =
+            ((long long)mtmp->data->mmove * ((long long)moves - 1)) % 12;
+
     switch (ptr->mlet) {
     case S_MIMIC:
         set_mimic_sym(mtmp, lev);
@@ -1921,17 +1936,17 @@ restore_mon(struct memfile *mf)
 {
     struct monst *mon;
     short namelen, xtyp;
-    int idx, i, billid;
+    int idx, i;
     unsigned int mflags;
     struct eshk *shk;
 
-    mfmagic_check(mf, MON_MAGIC);       /* 4 */
+    mfmagic_check(mf, MON_MAGIC);
 
-    namelen = mread16(mf);      /* 6 */
-    xtyp = mread16(mf); /* 8 */
+    namelen = mread16(mf);
+    xtyp = mread16(mf);
     mon = newmonst(xtyp, namelen);
 
-    idx = mread32(mf);  /* 12 */
+    idx = mread32(mf);
     switch (idx) {
     case -1000:
         mon->data = &pm_leader;
@@ -1959,39 +1974,44 @@ restore_mon(struct memfile *mf)
         break;
     }
 
-    mon->m_id = mread32(mf);    /* 16 */
-    mon->mhp = mread32(mf);     /* 20 */
-    mon->mhpmax = mread32(mf);  /* 24 */
-    mon->mspec_used = mread32(mf);      /* 28 */
-    mon->mtrapseen = mread32(mf);       /* 32 */
-    mon->mlstmv = mread32(mf);  /* 36 */
-    mon->mstrategy = mread32(mf);       /* 40 */
-    mon->meating = mread32(mf); /* 44 */
-    restore_coords(mf, mon->mtrack, MTSZ); /* 52 */
-    mon->mnum = mread16(mf);    /* 54 */
-    mon->mx = mread8(mf);       /* 55 */
-    mon->my = mread8(mf);       /* 56 */
-    mon->mux = mread8(mf);      /* 57 */
-    mon->muy = mread8(mf);      /* 58 */
-    mon->m_lev = mread8(mf);    /* 59 */
-    mon->malign = mread8(mf);   /* 60 */
-    mon->movement = mread16(mf);        /* 62 */
-    mon->mintrinsics = mread16(mf);     /* 64 */
-    mon->mtame = mread8(mf);    /* 65 */
-    mon->m_ap_type = mread8(mf);        /* 66 */
-    mon->mfrozen = mread8(mf);  /* 67 */
-    mon->mblinded = mread8(mf); /* 68 */
-    mon->mappearance = mread32(mf);     /* 72 */
-    mflags = mread32(mf);       /* 76 */
+    mon->m_id = mread32(mf);
+    mon->mhp = mread32(mf);
+    mon->mhpmax = mread32(mf);
+    mon->mspec_used = mread32(mf);
+    mon->mtrapseen = mread32(mf);
+    mon->mlstmv = mread32(mf);
+    mon->mstrategy = mread32(mf);
+    mon->meating = mread32(mf);
+    mon->xyloc = mread8(mf);
+    mon->xyflags = mread8(mf);
+    mon->xlocale = mread8(mf);
+    mon->ylocale = mread8(mf);
+    /* SAVEBREAK (4.3-beta1 -> 4.3-beta2): remove this */
+    mon->save_compat_dword = mread32(mf);
+    mon->mnum = mread16(mf);
+    mon->mx = mread8(mf);
+    mon->my = mread8(mf);
+    mon->mux = mread8(mf);
+    mon->muy = mread8(mf);
+    mon->m_lev = mread8(mf);
+    mon->malign = mread8(mf);
+    mon->moveoffset = mread16(mf);
+    mon->mintrinsics = mread16(mf);
+    mon->mtame = mread8(mf);
+    mon->m_ap_type = mread8(mf);
+    mon->mfrozen = mread8(mf);
+    mon->mblinded = mread8(mf);
+    mon->mappearance = mread32(mf);
+    mflags = mread32(mf);
 
-    mon->mfleetim = mread8(mf); /* 77 */
-    mon->weapon_check = mread8(mf);     /* 78 */
-    mon->misc_worn_check = mread32(mf); /* 82 */
-    mon->wormno = mread8(mf);   /* 83 */
+    mon->mfleetim = save_decode_8(mread8(mf), -moves);
+    mon->weapon_check = mread8(mf);
+    mon->misc_worn_check = mread32(mf);
+    mon->wormno = mread8(mf);
 
     /* just mark the pointers for later restoration */
-    mon->minvent = mread8(mf) ? (void *)1 : NULL;       /* 84 */
-    mon->mw = mread8(mf) ? (void *)1 : NULL;    /* 85 */
+    mon->minvent = mread8(mf) ? (void *)1 : NULL;
+    mon->mw = mread8(mf) ? (void *)1 : NULL;
 
     if (mon->mnamelth)
         mread(mf, NAME_MUTABLE(mon), mon->mnamelth);
@@ -2019,17 +2039,14 @@ restore_mon(struct memfile *mf)
         EDOG(mon)->abuse = mread32(mf);
         EDOG(mon)->revivals = mread32(mf);
         EDOG(mon)->mhpmax_penalty = mread32(mf);
-        EDOG(mon)->ogoal.x = mread8(mf);
-        EDOG(mon)->ogoal.y = mread8(mf);
+        EDOG(mon)->save_compat_bytes[0] = mread8(mf);
+        EDOG(mon)->save_compat_bytes[1] = mread8(mf);
         EDOG(mon)->killed_by_u = mread8(mf);
         break;
 
     case MX_ESHK:
         shk = ESHK(mon);
-        billid = mread32(mf);
-        shk->bill_p =
-            (billid == -1000) ? (struct bill_x *)-1000 :
-            (billid == -2000) ? NULL : &shk-> bill[billid];
+        shk->bill_inactive = mread32(mf);
         shk->shk.x = mread8(mf);
         shk->shk.y = mread8(mf);
         shk->shd.x = mread8(mf);
@@ -2135,15 +2152,12 @@ save_mon(struct memfile *mf, const struct monst *mon)
         return;
     }
 
-    mfmagic_set(mf, MON_MAGIC);
-    mtag(mf, mon->m_id, MTAG_MON);
-
-    mwrite16(mf, mon->mnamelth);
-    mwrite16(mf, mon->mxtyp);
-
     /* mon->data is null for monst structs that are attached to objects.
        mon->data is non-null but not in the mons array for customized monsters
-       monsndx() does not handle these cases. */
+       monsndx() does not handle these cases.
+
+       We calculate the monster index before starting to save so that
+       savemap.pl can parse the save file correctly. */
     idx = mon->data - mons;
     idx = (LOW_PM <= idx && idx < NUMMONS) ? idx : 0;
     if (&mons[idx] != mon->data) {
@@ -2162,6 +2176,12 @@ save_mon(struct memfile *mf, const struct monst *mon)
         else
             impossible("Bad monster type detected.");
     }
+
+    mfmagic_set(mf, MON_MAGIC);
+    mtag(mf, mon->m_id, MTAG_MON);
+
+    mwrite16(mf, mon->mnamelth);
+    mwrite16(mf, mon->mxtyp);
     mwrite32(mf, idx);
     mwrite32(mf, mon->m_id);
     mwrite32(mf, mon->mhp);
@@ -2171,7 +2191,11 @@ save_mon(struct memfile *mf, const struct monst *mon)
     mwrite32(mf, mon->mlstmv);
     mwrite32(mf, mon->mstrategy);
     mwrite32(mf, mon->meating);
-    save_coords(mf, mon->mtrack, MTSZ);
+    mwrite8(mf, mon->xyloc);
+    mwrite8(mf, mon->xyflags);
+    mwrite8(mf, mon->xlocale);
+    mwrite8(mf, mon->ylocale);
+    mwrite32(mf, mon->save_compat_dword);
     mwrite16(mf, mon->mnum);
     mwrite8(mf, mon->mx);
     mwrite8(mf, mon->my);
@@ -2179,7 +2203,7 @@ save_mon(struct memfile *mf, const struct monst *mon)
     mwrite8(mf, mon->muy);
     mwrite8(mf, mon->m_lev);
     mwrite8(mf, mon->malign);
-    mwrite16(mf, mon->movement);
+    mwrite16(mf, mon->moveoffset);
     mwrite16(mf, mon->mintrinsics);
     mwrite8(mf, mon->mtame);
     mwrite8(mf, mon->m_ap_type);
@@ -2202,10 +2226,10 @@ save_mon(struct memfile *mf, const struct monst *mon)
         /* 1 free bit */
         (mon->isshk << 4) |
         (mon->isminion << 3) | (mon->isgd << 2) |
-        (mon->ispriest << 1) | (mon->iswiz << 0);
+        (mon->ispriest << 1) | (mon->iswiz << 0); /* savemap: ignore */
     mwrite32(mf, mflags);
 
-    mwrite8(mf, mon->mfleetim);
+    mwrite8(mf, save_encode_8(mon->mfleetim, -moves));
     mwrite8(mf, mon->weapon_check);
     mwrite32(mf, mon->misc_worn_check);
     mwrite8(mf, mon->wormno);
@@ -2240,17 +2264,14 @@ save_mon(struct memfile *mf, const struct monst *mon)
         mwrite32(mf, CONST_EDOG(mon)->abuse);
         mwrite32(mf, CONST_EDOG(mon)->revivals);
         mwrite32(mf, CONST_EDOG(mon)->mhpmax_penalty);
-        mwrite8(mf, CONST_EDOG(mon)->ogoal.x);
-        mwrite8(mf, CONST_EDOG(mon)->ogoal.y);
+        mwrite8(mf, CONST_EDOG(mon)->save_compat_bytes[0]);
+        mwrite8(mf, CONST_EDOG(mon)->save_compat_bytes[1]);
         mwrite8(mf, CONST_EDOG(mon)->killed_by_u);
         break;
 
     case MX_ESHK:
         shk = CONST_ESHK(mon);
-        mwrite32(mf,
-                 (shk->bill_p ==
-                  (struct bill_x *)-1000) ? -1000 : !shk->bill_p ? -2000
-                 : (shk->bill_p - shk->bill));
+        mwrite32(mf, shk->bill_inactive);
         mwrite8(mf, shk->shk.x);
         mwrite8(mf, shk->shk.y);
         mwrite8(mf, shk->shd.x);

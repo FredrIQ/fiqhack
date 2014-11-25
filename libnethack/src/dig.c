@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-13 */
+/* Last modified by Alex Smith, 2014-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -677,7 +677,7 @@ dighole(boolean pit_only)
     } else if (is_pool(level, u.ux, u.uy) || is_lava(level, u.ux, u.uy)) {
         pline("The %s sloshes furiously for a moment, then subsides.",
               is_lava(level, u.ux, u.uy) ? "lava" : "water");
-        wake_nearby();  /* splashing */
+        wake_nearby(FALSE);  /* splashing */
 
     } else if (loc->typ == DRAWBRIDGE_DOWN ||
                (is_drawbridge_wall(u.ux, u.uy) >= 0)) {
@@ -914,7 +914,7 @@ use_pick_axe(struct obj *obj, const struct nh_cmd_arg *arg)
                          "You pull free.");
             } else if (loc->typ == IRONBARS) {
                 pline("Clang!");
-                wake_nearby();
+                wake_nearby(TRUE);
             } else if (IS_TREE(loc->typ))
                 pline("You need an axe to cut down a tree.");
             else if (IS_ROCK(loc->typ))

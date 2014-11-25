@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2014-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -260,14 +260,23 @@ extern int curline;
 
 # define MEMFILE_HASHTABLE_SIZE 1009
 
-/* Seeks tend to have small integer arguments, whereas copies very often have
-   all-bits-1 as an argument. Thus, using the value of 3 for MDIFF_COPY means
-   that a "no-change" diff will be all-bits-1 up until the end, making it a
-   little more compressible. */
-# define MDIFF_SEEK 0
-# define MDIFF_EDIT 2
-# define MDIFF_COPY 3
-# define MDIFF_INVALID 255
+/* SAVEBREAK (4.3-beta1 -> 4.3-beta2): these constants are only needed to parse
+   the old diff format. */
+# define MDIFFOLD_SEEK 0
+# define MDIFFOLD_EDIT 2
+# define MDIFFOLD_COPY 3
+# define MDIFFOLD_INVALID 255
+
+/* Commands in a save diff. */
+# define MDIFF_CMDMASK 0xE000
+# define MDIFF_LARGE_COPYEDIT 0x8000
+# define MDIFF_LARGE_EDIT     0xA000
+# define MDIFF_LARGE_SEEK     0xC000
+# define MDIFF_SEEK           0xE000
+/* and the other four possibilities are all normal-sized copyedits */
+
+# define MDIFF_HEADER_0       0x01
+# define MDIFF_HEADER_1       0x40
 
 enum memfile_tagtype {
     MTAG_START,             /* 0 */
@@ -312,6 +321,7 @@ enum memfile_tagtype {
     MTAG_AUTOPICKUP_RULE,
     MTAG_AUTOPICKUP_RULES,  /* 40 */
     MTAG_DUNGEON_TOPOLOGY,
+    MTAG_SPELLBOOK,
 };
 struct memfile_tag {
     struct memfile_tag *next;
@@ -324,6 +334,7 @@ struct memfile {
     char *buf;
     int len;
     int pos;
+
     /* Difference memfiles are relative to another memfile; and they contain
        both the actual data in buf, and the diffed data in diffbuf */
     struct memfile *relativeto;
@@ -331,15 +342,25 @@ struct memfile {
     int difflen;
     int diffpos;
     int relativepos;    /* pos corresponds to relativepos in diffbuf */
-    /* Run-length-encoding of diffs. Either curcmd is MDIFF_INVALID and
-       curcount is irrelevant, or curcmd is a command and curcount is a count
-       matching that command. Note that we allow a negative "runlength" for
-       seek, so we can encode both forwards and backwards seeks. */
-    uint8_t curcmd;
-    int16_t curcount;
+
+    /* Working space for diff encoding. We can have both pending copies and
+       pending edits (in which case the copies come first). Pending seeks are
+       mutually exclusive with anything else. We also flush once we have more
+       than 15 edits and at least one copy, or more than 33554431 copies, or
+       more than 535870911 edits. (I seriously doubt those latter cases will
+       ever come up.) */
+    long pending_copies;
+    long pending_edits;
+    long pending_seeks;
+
     /* Tags to help in diffing. This is a hashtable for efficiency, using
-       chaining in the case of collisions */
+       chaining in the case of collisions. */
     struct memfile_tag *tags[MEMFILE_HASHTABLE_SIZE];
+
+    /* Where we are "semantically", for debug purposes. (It's possible this
+       could someday be used to construct better error messages, too, but so
+       far it isn't.) */
+    struct memfile_tag *last_tag;
 };
 
 extern int logfile;

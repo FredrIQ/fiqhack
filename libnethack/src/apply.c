@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-13 */
+/* Last modified by Alex Smith, 2014-11-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -207,7 +207,7 @@ static const char hollow_str[] = "a hollow sound.  This must be a secret %s!";
    the turn; this makes curse status have a tangible effect.
 
    The last stethoscope use turn is stored in obj->lastused; the last
-   stethoscope use movement energy is stored in obj->spe. */
+   stethoscope use flags.actions is stored in obj->spe. */
 static int
 use_stethoscope(struct obj *obj, const struct nh_cmd_arg *arg)
 {
@@ -229,9 +229,9 @@ use_stethoscope(struct obj *obj, const struct nh_cmd_arg *arg)
     if (!getargdir(arg, NULL, &dx, &dy, &dz))
         return 0;
 
-    res = (moves == obj->lastused) && (youmonst.movement == obj->spe);
+    res = (moves == obj->lastused) && (flags.actions == obj->spe);
     obj->lastused = moves;
-    obj->spe = youmonst.movement;
+    obj->spe = flags.actions;
 
     if (u.usteed && dz > 0) {
         if (interference) {
@@ -329,7 +329,13 @@ use_whistle(struct obj *obj)
     }
     pline(whistle_str, obj->cursed ? "shrill" : "high");
     makeknown(obj->otyp);
-    wake_nearby();
+    wake_nearby(TRUE);
+
+    struct monst *mtmp;
+    for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
+        if (!DEADMONSTER(mtmp) && mtmp->mtame && !mtmp->isminion)
+            EDOG(mtmp)->whistletime = moves;
+
     return 1;
 }
 
@@ -345,7 +351,7 @@ use_magic_whistle(struct obj *obj)
 
     if (obj->cursed && !rn2(2)) {
         pline("You produce a high-pitched humming noise.");
-        wake_nearby();
+        wake_nearby(FALSE);
     } else {
         int pet_cnt = 0;
 
@@ -881,7 +887,7 @@ use_bell(struct obj **optr)
         obj->known = 1;
     }
     if (wakem)
-        wake_nearby();
+        wake_nearby(TRUE);
 }
 
 static int
@@ -2620,19 +2626,19 @@ use_grapple(struct obj *obj, const struct nh_cmd_arg *arg)
         struct nh_menuitem items[3];
         const int *selected;
 
-        snprintf(items[0].caption, SIZE(items[0].caption), "an object on the %s", surface(cc.x, cc.y));
         set_menuitem(&items[0], 1, MI_NORMAL, "", 0, FALSE);
+        snprintf(items[0].caption, SIZE(items[0].caption), "an object on the %s", surface(cc.x, cc.y));
 
         set_menuitem(&items[1], 2, MI_NORMAL, "a monster", 0, FALSE);
 
+        set_menuitem(&items[2], 3, MI_NORMAL, "", 0, FALSE);
         snprintf(items[2].caption, SIZE(items[2].caption), "the %s", surface(cc.x, cc.y));
-        set_menuitem(&items[2], 3, MI_NORMAL, "a monster", 0, FALSE);
 
         if (display_menu
             (&(struct nh_menulist){.items = items, .icount = 3},
              "Aim for what?", PICK_ONE, PLHINT_ANYWHERE, &selected) &&
             rn2(P_SKILL(typ) > P_SKILLED ? 20 : 2))
-            tohit = selected[0] - 1;
+            tohit = selected[0];
     }
 
     /* What did you hit? */

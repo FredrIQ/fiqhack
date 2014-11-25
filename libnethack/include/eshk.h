@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Sean Hunt, 2014-11-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -22,7 +22,9 @@ struct bill_x {
 
 struct eshk {
     struct bill_x bill[BILLSZ];
-    struct bill_x *bill_p;
+    /* SAVEBREAK (4.3-beta1 -> 4.3-beta2): make this one byte; no longer needs
+     * to hold dummy data. Also flip the meaning. */
+    int bill_inactive;
     coord shk;  /* usual position shopkeeper */
     coord shd;  /* position shop door */
     int robbed; /* amount stolen by most recent customer */

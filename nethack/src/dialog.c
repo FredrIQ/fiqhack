@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-15 */
+/* Last modified by Sean Hunt, 2014-11-16 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -104,9 +104,8 @@ resize_curses_msgwin(struct gamewin *gw)
     layout_curses_msgwin(wmw, &linecount, &lines, 1);
     free_wrap(lines);
 
-    gw->win = NULL;
     gw->win = newdialog(wmw->layout_height, wmw->layout_width,
-                        wmw->context == krc_notification ? 2 : 1, gw->win);
+                        wmw->context == krc_notification ? 2 : 1, NULL);
 }
 
 static int
