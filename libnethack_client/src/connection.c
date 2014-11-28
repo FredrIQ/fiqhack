@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-07-07 */
+/* Last modified by Alex Smith, 2014-11-28 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -153,8 +153,12 @@ receive_json_msg(void)
         } else {
             /* select before reading so that we get a timeout. Otherwise the
                program might hang indefinitely in read if the connection has
-               failed. */
-            tv.tv_sec = 10; /* 10s * 3 retries results in a long wait on failed
+               failed.
+
+               Previously we had a 10s delay. This seems to have been "not long
+               enough" in some extreme cases"; the delay has been increased in
+               the hope that this stops bug #565. */
+            tv.tv_sec = 90; /* 90s * 3 retries results in a long wait on failed
                                connections... */
             tv.tv_usec = 0;
             do {
