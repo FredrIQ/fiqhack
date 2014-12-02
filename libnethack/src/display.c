@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Sean Hunt, 2014-12-02 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -126,7 +126,6 @@ static void set_seenv(struct rm *, int, int, int, int);
 static void t_warn(struct rm *);
 static int wall_angle(struct rm *);
 static void dbuf_set_object(int x, int y, int oid, int omn);
-static void dbuf_set_loc(int x, int y);
 
 #ifdef INVISIBLE_OBJECTS
 /*
@@ -186,7 +185,7 @@ magic_map_background(xchar x, xchar y, int show)
     }
 
     if (show)
-        dbuf_set(x, y, cmap, 0, 0, 0, 0, 0, 0, 0, dbuf_branding(x, y));
+        dbuf_set(x, y, cmap, 0, 0, 0, 0, 0, 0, 0, dbuf_branding(level, x, y));
 }
 
 /* FIXME: some of these use xchars for x and y, and some use ints.  Make
@@ -222,7 +221,7 @@ map_background(xchar x, xchar y, int show)
     }
 
     if (show)
-        dbuf_set(x, y, cmap, 0, 0, 0, 0, 0, 0, 0, dbuf_branding(x, y));
+        dbuf_set(x, y, cmap, 0, 0, 0, 0, 0, 0, 0, dbuf_branding(level, x, y));
 
 }
 
@@ -248,7 +247,7 @@ map_trap(struct trap *trap, int show, boolean reroll_hallu)
     loc->mem_trap = trapid;
     if (show)
         dbuf_set(x, y, loc->mem_bg, loc->mem_trap, 0, 0, 0, 0, 0, 0,
-                 dbuf_branding(x, y));
+                 dbuf_branding(level, x, y));
 }
 
 /*
@@ -283,7 +282,7 @@ map_object(struct obj *obj, int show, boolean reroll_hallu)
 
     if (show)
         dbuf_set(x, y, loc->mem_bg, loc->mem_trap, loc->mem_obj,
-                 loc->mem_obj_mn, 0, 0, 0, 0, dbuf_branding(x, y));
+                 loc->mem_obj_mn, 0, 0, 0, 0, dbuf_branding(level, x, y));
 }
 
 /*
@@ -305,7 +304,7 @@ map_invisible(xchar x, xchar y)
                  level->locations[x][y].mem_trap,
                  level->locations[x][y].mem_obj,
                  level->locations[x][y].mem_obj_mn, 1, 0, 0, 0,
-                 dbuf_branding(x, y));
+                 dbuf_branding(level, x, y));
     }
 }
 
@@ -356,7 +355,7 @@ map_location(int x, int y, int show, boolean reroll_hallucinated_appearances)
             level->locations[x][y].mem_trap = 0;
         map_background(x, y, FALSE);
         if (show)
-            dbuf_set_loc(x, y);
+            dbuf_set_memory(level, x, y);
     } else if ((obj = vobj_at(x, y)) && !covers_objects(level, x, y))
         map_object(obj, show, reroll_hallucinated_appearances);
     else if ((trap = t_at(level, x, y)) && trap->tseen &&
@@ -429,7 +428,7 @@ display_monster(xchar x, xchar y,       /* display position */
                 level->locations[x][y].mem_door_l = 0;
                 level->locations[x][y].mem_door_t = 0;
                 if (!sensed)
-                    dbuf_set_loc(x, y);
+                    dbuf_set_memory(level, x, y);
                 break;
             }
 
@@ -455,7 +454,7 @@ display_monster(xchar x, xchar y,       /* display position */
                      what_mon((int)mon->mappearance,
                               (reroll_hallu ? -1 : x), y, newsym_rng) + 1,
                      mon->mtame ? MON_TAME : mon->mpeaceful ? MON_PEACEFUL : 0,
-                     0, dbuf_branding(x, y));
+                     0, dbuf_branding(level, x, y));
             break;
         }
 
@@ -491,7 +490,7 @@ display_monster(xchar x, xchar y,       /* display position */
                  level->locations[x][y].mem_obj,
                  level->locations[x][y].mem_obj_mn, 0,
                  what_mon(monnum, x, y, newsym_rng) + 1,
-                 mflag, 0, dbuf_branding(x, y));
+                 mflag, 0, dbuf_branding(level, x, y));
     }
 }
 
@@ -531,7 +530,7 @@ display_warning(struct monst *mon)
     dbuf_set(x, y, level->locations[x][y].mem_bg,
              level->locations[x][y].mem_trap, level->locations[x][y].mem_obj,
              level->locations[x][y].mem_obj_mn, 0, monnum, mflag, 0,
-             dbuf_branding(x, y));
+             dbuf_branding(level, x, y));
 }
 
 /*
@@ -756,7 +755,7 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
                    !is_worm_tail(mon)) {
             display_warning(mon);
         } else {
-            dbuf_set_loc(x, y);
+            dbuf_set_memory(level, x, y);
         }
     }
 }
@@ -1213,7 +1212,7 @@ display_self(void)
                  level->locations[x][y].mem_obj,
                  level->locations[x][y].mem_obj_mn, 0,
                  what_mon(u.usteed->mnum, x, y, newsym_rng) + 1, MON_RIDDEN, 0,
-                 dbuf_branding(x, y));
+                 dbuf_branding(level, x, y));
     } else if (youmonst.m_ap_type == M_AP_NOTHING) {
         int monnum = (Upolyd || !flags.showrace) ? u.umonnum :
             (u.ufemale && urace.femalenum != NON_PM) ?
@@ -1222,20 +1221,20 @@ display_self(void)
                  level->locations[x][y].mem_trap,
                  level->locations[x][y].mem_obj,
                  level->locations[x][y].mem_obj_mn, 0, monnum + 1, 0, 0,
-                 dbuf_branding(x, y));
+                 dbuf_branding(level, x, y));
     } else if (youmonst.m_ap_type == M_AP_FURNITURE) {
         dbuf_set(x, y, youmonst.mappearance, 0, 0, 0, 0, 0, 0, 0,
-                 dbuf_branding(x, y));
+                 dbuf_branding(level, x, y));
     } else if (youmonst.m_ap_type == M_AP_OBJECT) {
         dbuf_set(x, y, level->locations[x][y].mem_bg,
                  level->locations[x][y].mem_trap, youmonst.mappearance + 1, 0,
-                 0, 0, 0, 0, dbuf_branding(x, y));
+                 0, 0, 0, 0, dbuf_branding(level, x, y));
     } else      /* M_AP_MONSTER */
         dbuf_set(x, y, level->locations[x][y].mem_bg,
                  level->locations[x][y].mem_trap,
                  level->locations[x][y].mem_obj,
                  level->locations[x][y].mem_obj_mn, 0, youmonst.mappearance + 1,
-                 0, 0, dbuf_branding(x, y));
+                 0, 0, dbuf_branding(level, x, y));
 }
 
 int
@@ -1269,7 +1268,7 @@ doredraw(void)
     /* display memory */
     for (x = 0; x < COLNO; x++) {
         for (y = 0; y < ROWNO; y++)
-            dbuf_set_loc(x, y);
+            dbuf_set_memory(level, x, y);
     }
 
     /* see what is to be seen */
@@ -1465,14 +1464,12 @@ dbuf_set_object(int x, int y, int oid, int omn)
 /*
  * copy player memory for a location into the display buffer
  */
-static void
-dbuf_set_loc(int x, int y)
+void
+dbuf_set_memory(struct level *lev, int x, int y)
 {
-    dbuf_set(x, y, level->locations[x][y].mem_bg,
-             level->locations[x][y].mem_trap, level->locations[x][y].mem_obj,
-             level->locations[x][y].mem_obj_mn,
-             level->locations[x][y].mem_invis, 0, 0, 0,
-             dbuf_branding(x, y));
+    struct rm *loc = &lev->locations[x][y];
+    dbuf_set(x, y, loc->mem_bg, loc->mem_trap, loc->mem_obj, loc->mem_obj_mn,
+             loc->mem_invis, 0, 0, 0, dbuf_branding(lev, x, y));
 }
 
 
@@ -1480,10 +1477,10 @@ dbuf_set_loc(int x, int y)
  * Calculate the branding information for a location.
  */
 short
-dbuf_branding(int x, int y)
+dbuf_branding(struct level *lev, int x, int y)
 {
     short b = 0;
-    struct rm *loc = &level->locations[x][y];
+    struct rm *loc = &lev->locations[x][y];
 
     if (loc->mem_stepped)
         b |= NH_BRANDING_STEPPED;
