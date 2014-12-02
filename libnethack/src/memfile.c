@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-22 */
+/* Last modified by Sean Hunt, 2014-12-02 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -307,8 +307,8 @@ mdiffwrite(struct memfile *mf, const void *buf, unsigned int num)
 void
 mdiffflush(struct memfile *mf)
 {
-    uint16_t shortcmd;
-    uint32_t longcmd;
+    uint16_t shortcmd = 0;
+    uint32_t longcmd = 0;
     boolean using_longcmd = FALSE;
     uint8_t buf[4];
 
