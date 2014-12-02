@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-21 */
+/* Last modified by Sean Hunt, 2014-12-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1687,6 +1687,8 @@ gulpmu(struct monst *mtmp, const struct attack *mattk)
         win_pause_output(P_MESSAGE);
         vision_recalc(2);       /* hero can't see anything */
         Engulfed = 1;
+        if (Punished)
+            placebc();
         /* u.uswldtim always set > 1 */
         tim_tmp = 25 - (int)mtmp->m_lev;
         if (tim_tmp > 0)
