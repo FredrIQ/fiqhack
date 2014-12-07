@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-18 */
+/* Last modified by Sean Hunt, 2014-12-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -396,27 +396,26 @@ getbones(d_level * levnum)
     char c, bonesid[10], oldbonesid[10];
     struct memfile mf;
     boolean from_file = FALSE;
+    char *bonesfn = NULL;
 
     mnew(&mf, NULL);
 
     if (discover || !flags.bones_enabled)       /* save bones files for real
                                                    games */
-        return 0;
+        goto fail;
 
     /* wizard check added by GAN 02/05/87 */
     if (rn2(3)  /* only once in three times do we find bones */
         &&!wizard)
-        return 0;
+        goto fail;
     if (no_bones_level(levnum))
-        return 0;
+        goto fail;
 
     make_bones_id(bonesid, levnum);
 
     if (log_want_replay('B')) {
         if (log_replay_input(0, "B!")) {
-        record_fail:
-            log_record_input("B!");
-            return 0;
+            goto record_fail;
         } else if (!log_replay_bones(&mf)) {
             log_replay_no_more_options();
         }
@@ -439,19 +438,14 @@ getbones(d_level * levnum)
 
     log_record_bones(&mf);
 
-    char *bonesfn = bones_filename(bonesid);
+    bonesfn = bones_filename(bonesid);
     if ((ok = uptodate(&mf, bonesfn)) == 0) {
         if (!wizard)
             pline("Discarding unuseable bones; no need to panic...");
     } else {
 
-        if (wizard) {
-            if (yn("Get bones?") == 'n') {
-                mfree(&mf);
-                free(bonesfn);
-                return 0;
-            }
-        }
+        if (wizard && yn("Get bones?") == 'n')
+            goto fail;
 
         c = mread8(&mf);       /* length incl. '\0' */
         mread(&mf, oldbonesid, (unsigned)c);    /* DD.nnn */
@@ -505,6 +499,14 @@ getbones(d_level * levnum)
         return 0;
     }
     return ok;
+
+record_fail:
+    log_record_input("B!");
+fail:
+    if (bonesfn)
+        free(bonesfn);
+    mfree(&mf);
+    return 0;
 }
 
 /*bones.c*/
