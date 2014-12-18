@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-12 */
+/* Last modified by Nathan Eady, 2014-12-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -301,8 +301,14 @@ make_player_info(struct nh_player_info *pi)
         strncpy(pi->statusitems[pi->nr_items++], "Lev", ITEMLEN);
     else if (Flying)
         strncpy(pi->statusitems[pi->nr_items++], "Fly", ITEMLEN);
-    if (!uwep || !is_wep(uwep))  /* 15 */
+    if (uwep && is_pick(uwep))
+        strncpy(pi->statusitems[pi->nr_items++], "Dig", ITEMLEN);
+    else if (uwep && is_launcher(uwep))
+        strncpy(pi->statusitems[pi->nr_items++], "Ranged", ITEMLEN);
+    else if (!uwep || !is_wep(uwep))  /* 15 */
         strncpy(pi->statusitems[pi->nr_items++], "Unarmed", ITEMLEN);
+    else
+        strncpy(pi->statusitems[pi->nr_items++], "Melee", ITEMLEN);
     if (u.utrap)        /* 16 */
         strncpy(pi->statusitems[pi->nr_items++], trap_stat[u.utraptype],
                 ITEMLEN);
