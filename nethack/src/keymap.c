@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Sean Hunt, 2014-12-24 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -765,12 +765,13 @@ void
 dotogglepickup(void)
 {
     union nh_optvalue val;
-    struct nh_option_desc *option =
-        nhlib_find_option(nh_get_options(), "autopickup");
+    struct nh_option_desc *options = nh_get_options(),
+        *option = nhlib_find_option(options, "autopickup");
 
     if (!option) {
         curses_msgwin("Error: No autopickup option found.",
                       krc_notification);
+        nhlib_free_optlist(options);
         return;
     }
 
@@ -779,6 +780,7 @@ dotogglepickup(void)
 
     curses_msgwin(val.b ? "Autopickup now ON" : "Autopickup now OFF",
                   krc_notification);
+    nhlib_free_optlist(options);
 }
 
 
