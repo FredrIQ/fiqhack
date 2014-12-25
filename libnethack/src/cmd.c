@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-31 */
+/* Last modified by Sean Hunt, 2014-12-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -218,7 +218,7 @@ const struct cmd_desc cmdlist[] = {
     {"wipe", "wipe off your face", M('w'), 0, FALSE, dowipe,
      CMD_EXT},
     {"whatis", "describe what a symbol means", '/', 0, TRUE, dowhatis,
-     CMD_HELP | CMD_NOTIME | CMD_ARG_POS | CMD_ARG_STR},
+     CMD_HELP | CMD_NOTIME | CMD_ARG_POS | CMD_ARG_STR | CMD_ARG_OBJ},
     {"zap", "zap a wand to use its magic", 'z', 0, FALSE, dozap,
      CMD_ARG_OBJ | CMD_ARG_DIR},
 
@@ -1129,6 +1129,11 @@ nh_get_object_commands(int *count, char invlet)
     memset(obj_cmd, 0, sizeof (struct nh_cmd_desc) * cmdcount);
 
     i = 0;      /* incremented by the SET_OBJ_CMD macro */
+
+    /* get information about item; this applies to all items if known */
+    if (objects[obj->otyp].oc_name_known)
+        SET_OBJ_CMD('i', "whatis", "Get information about %s", 0);
+
     /* apply item; this can mean almost anything depending on the item */
     if (obj->otyp == CREAM_PIE)
         SET_OBJ_CMD('a', "apply", "Hit yourself with %s", 0);

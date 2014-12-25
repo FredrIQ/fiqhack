@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-11-16 */
+/* Last modified by Sean Hunt, 2014-12-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -168,7 +168,7 @@ reorder_invent(void)
     boolean need_more_sorting;
 
     do {
-        /* 
+        /*
          * We expect at most one item to be out of order, so this
          * isn't nearly as inefficient as it may first appear.
          */
@@ -241,9 +241,9 @@ merged(struct obj **potmp, struct obj **pobj)
 
     if (mergable(otmp, obj)) {
         /* Approximate age: we do it this way because if we were to do it
-           "accurately" (merge only when ages are identical) we'd wind up never 
+           "accurately" (merge only when ages are identical) we'd wind up never
            merging any corpses. otmp->age = otmp->age*(1-proportion) +
-           obj->age*proportion; Don't do the age manipulation if lit.  We would 
+           obj->age*proportion; Don't do the age manipulation if lit.  We would
            need to stop the burn on both items, then merge the age, then
            restart the burn. */
         if (!obj->lamplit)
@@ -598,7 +598,7 @@ delobj(struct obj *obj)
 
     if (obj->otyp == AMULET_OF_YENDOR || obj->otyp == CANDELABRUM_OF_INVOCATION
         || obj->otyp == BELL_OF_OPENING || obj->otyp == SPE_BOOK_OF_THE_DEAD) {
-        /* player might be doing something stupid, but we can't guarantee that. 
+        /* player might be doing something stupid, but we can't guarantee that.
            assume special artifacts are indestructible via drawbridges, and
            exploding chests, and golem creation, and ... */
         return;
@@ -786,7 +786,7 @@ object_selection_checks(struct obj *otmp, const char *word)
        CURRENTLY_NOT_USABLE if the request is impossible right now;
        NONSENSIBLE_USE if the request is possible right now but not sensible
        (e.g. wielding food rations).
-    
+
        ALREADY_IN_USE no longer exists; we don't want to ruin muscle memory via
        printing "You don't have anything else to wear" under any circumstances,
        and we allow the caller to print a more sensible message as to why
@@ -843,7 +843,7 @@ object_selection_checks(struct obj *otmp, const char *word)
     /* Other verbs: currently impossible uses. */
     if ((!strcmp(word, "eat") && !is_edible(otmp, TRUE)))
         return CURRENTLY_NOT_USABLE;
-    
+
     /* Other verbs: non-recommended uses. */
     if ((!strcmp(word, "write with") &&
          (otmp->oclass == TOOL_CLASS && otyp != MAGIC_MARKER &&
@@ -1016,7 +1016,7 @@ getobj(const char *let, const char *word, boolean isarg)
                 return NULL;
             /* Historic note: early Nethack had a bug which was first reported
                for Larn, where trying to drop 2^32-n gold pieces was allowed,
-               and did interesting things to your money supply.  The LRS is the 
+               and did interesting things to your money supply.  The LRS is the
                tax bureau from Larn. */
             if (cnt < 0) {
                 pline("The LRS would be very interested to know you have that "
@@ -1152,7 +1152,7 @@ silly_thing(const char *word, struct obj *otmp)
 boolean
 wearing_armor(void)
 {
-    return ((boolean) ((uarm && !uskin()) || 
+    return ((boolean) ((uarm && !uskin()) ||
                        uarmc || uarmf || uarmg || uarmh || uarms || uarmu));
 }
 
@@ -1295,7 +1295,7 @@ xprname(struct obj *obj, const char *txt, /* text to print instead of obj */
         obj->quan = quan;
     }
 
-    /* 
+    /*
      * If let is:
      *  *  Then obj == null and we are printing a total amount.
      *  >  Then the object is contained and doesn't have an inventory letter.
@@ -1408,13 +1408,13 @@ display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
     int n = 0;
     struct nh_objlist objlist;
 
-    /* 
-       Exit early if no inventory -- but keep going if we are doing a permanent 
+    /*
+       Exit early if no inventory -- but keep going if we are doing a permanent
        inventory update.  We need to keep going so the permanent inventory
        window updates itself to remove the last item(s) dropped.  One down
        side: the addition of the exception for permanent inventory window
        updates _can_ pop the window up when it's not displayed -- even if it's
-       empty -- because we don't know at this level if its up or not.  This may 
+       empty -- because we don't know at this level if its up or not.  This may
        not be an issue if empty checks are done before hand and the call to
        here is short circuited away. */
     if (!invent && !(!lets && !want_reply)) {
@@ -1454,7 +1454,6 @@ display_pickinv(const char *lets, boolean want_reply, long *out_cnt)
             *out_cnt = selected[0].count;
     } else
         ret = !n ? '\0' : '\033';       /* cancelled */
-
 
     return ret;
 }
@@ -1507,7 +1506,7 @@ count_unpaid(struct obj *list)
 }
 
 /*
- * Returns the number of items with b/u/c/unknown within the given list.  
+ * Returns the number of items with b/u/c/unknown within the given list.
  * This does NOT include contained objects.
  */
 int
@@ -1612,7 +1611,7 @@ dounpaid(void)
         if (flags.sortpack)
             add_menutext(&menu, let_to_name(CONTAINED_SYM, TRUE));
 
-        /* 
+        /*
          * Search through the container objects in the inventory for
          * unpaid items.  The top level inventory items have already
          * been listed.
@@ -1958,7 +1957,7 @@ look_here(int obj_cnt,  /* obj_cnt > 0 implies that autopickup is in progess */
         /* Don't show weight if the player shouldn't know what the weight is. */
         if (show_weight && (objects[otmp->otyp].oc_name_known || otmp->invlet))
             pline("You %s here %s {%d}.", verb, doname_price(otmp), otmp->owt);
-        else 
+        else
             pline("You %s here %s.", verb, doname_price(otmp));
         /* This is the same death message as beow, contrary to the normal rules
            for death messages, because petrifying yourself on a cockatrice works
