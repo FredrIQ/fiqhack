@@ -310,6 +310,9 @@ eat_one_turn(void)
     u.utracked[tos_food]->oeaten -= nmod;
 
     if (!u.utracked[tos_food]->oeaten) {
+        /* Call action_completed() directly to avoid the the action getting
+         * interrupted if a corpse effect renders the player helpless. */
+        action_completed();
         done_eating(TRUE);
         return 0;
     } else {
@@ -667,7 +670,7 @@ cpostfx(int pm)
         if (youmonst.data->mlet != S_MIMIC && !Unchanging) {
             const char *buf;
 
-            pline("You can't resist the temptation to mimic %s.",
+            pline("You can't resist the temptation to mimic %s...",
                   Hallucination ? "an orange" : "a pile of gold");
             /* A pile of gold can't ride. */
             if (u.usteed)
@@ -907,6 +910,9 @@ eat_tin_one_turn(void)
 
         u.utracked[tos_tin]->dknown = u.utracked[tos_tin]->known = TRUE;
         cprefx(u.utracked[tos_tin]->corpsenm);
+        /* We call action_completed() here directly, so that the action is not
+         * interruped if the player becomes helpless due to cpostfx. */
+        action_completed();
         cpostfx(u.utracked[tos_tin]->corpsenm);
 
         /* charge for one at pre-eating cost */
