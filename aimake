@@ -5351,7 +5351,6 @@ sub run_command {
             }
 
             my $formatted;
-            $formatter->strip_verbatim_indent(' ');
             $formatter->no_errata_section(1);
             $formatter->output_string(\$formatted);
             eval {
@@ -9338,7 +9337,7 @@ $flerr and progress_report -1, "Could not write file list: $flerr\n";
 # This needs to come after the install (thus it's in cleanup), and after the
 # file list is written.
 
-if ($opt_gen_installer eq 'msi') {{
+if ($opt_gen_installer && $opt_gen_installer eq 'msi') {{
 
     # Installer compile
 
@@ -10000,7 +9999,7 @@ __DATA__
             includedir => '$installdir/include',
             specificincdir => '$installdir/include/$packagename',
             datarootdir => '$installdir/share',
-            sourcedir => '$exerootdir/source',
+            sourcedir => '$installdir/src',
 
             # Relative to datarootdir.
             datadir => '$datarootdir/$packagename',
