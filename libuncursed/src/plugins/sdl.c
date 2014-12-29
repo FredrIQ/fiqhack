@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-03 */
+/* Last modified by Sean Hunt, 2014-12-29 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -1427,10 +1427,14 @@ update_cell(int y, int x, struct sdl_tile_region *current_region)
         if (tf + h > region->texsize_h)
             h -= (tf + h - region->texsize_h);
 
-        if (w > 0 && h > 0)
+        if (w > 0 && h > 0) {
             SDL_RenderCopy(render, region->texture,
                            &(SDL_Rect) {.x = lf, .y = tf, .w = w, .h = h},
                            &(SDL_Rect) {.x = lt, .y = tt, .w = w, .h = h});
+            SDL_RenderCopy(render, region->cursor,
+                           &(SDL_Rect) {.x = lf, .y = tf, .w = w, .h = h},
+                           &(SDL_Rect) {.x = lt, .y = tt, .w = w, .h = h});
+        }
     } else if (!font) {
         /* Just draw blocks of color. */
         SDL_SetRenderDrawColor(render, fgcolor[0], fgcolor[1], fgcolor[2],
