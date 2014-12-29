@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-11-04 */
+/* Last modified by Sean Hunt, 2014-12-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -214,7 +214,7 @@ restshk(struct monst *shkp, boolean ghostly)
     struct eshk *eshkp = ESHK(shkp);
 
     /* shoplevel can change as dungeons move around */
-    /* savebones guarantees that non-homed shk's will be gone */
+    /* paybill() guarantees that non-homed shk's will be gone */
     if (ghostly) {
         assign_level(&eshkp->shoplevel, &u.uz);
         if (ANGRY(shkp) && strncmpi(eshkp->customer, u.uplname, PL_NSIZ))
