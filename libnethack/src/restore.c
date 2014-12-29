@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-21 */
+/* Last modified by Sean Hunt, 2014-12-29 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1116,8 +1116,25 @@ getlev(struct memfile *mf, xchar levnum, boolean ghostly)
               levnum);
     lev = levels[levnum] = alloc_level(NULL);
 
-    lev->z.dnum = mread8(mf);
-    lev->z.dlevel = mread8(mf);
+    if (ghostly) {
+        /* A bones level may move from its original location. We need to make
+         * sure it's set to the correct new location. */
+        lev->z.dnum = ledger_to_dnum(levnum);
+        if (mread8(mf) != lev->z.dnum)
+            panic("Restoring level into wrong dungeon!");
+        lev->z.dlevel = ledger_to_dlev(levnum);
+        (void) mread8(mf); /* ignore the dlevel in the bones file */
+
+        if (!on_level(&u.uz, &lev->z))
+            panic("Restoring the wrong level.");
+    } else {
+        /* SAVEBREAK: Eliminate this branch, which is only necessary to maintain
+         * compatibility with bones files loaded incorrectly and avoid desyncing
+         * them. */
+        lev->z.dnum = mread8(mf);
+        lev->z.dlevel = mread8(mf);
+    }
+
     mread(mf, lev->levname, sizeof (lev->levname));
     for (x = 0; x < COLNO; x++)
         for (y = 0; y < ROWNO; y++)
