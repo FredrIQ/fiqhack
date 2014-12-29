@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-08 */
+/* Last modified by Sean Hunt, 2014-12-29 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -706,14 +706,15 @@ set_charset(int y, int x)
     last_y = last_x = -1;
 }
 
-static int palette[][3] = {
-    {0x00, 0x00, 0x00}, {0xaf, 0x00, 0x00}, {0x00, 0x87, 0x00},
-    {0xaf, 0x5f, 0x00}, {0x00, 0x00, 0xaf}, {0x87, 0x00, 0x87},
-    {0x00, 0xaf, 0x87}, {0xaf, 0xaf, 0xaf}, {0x5f, 0x5f, 0x5f},
-    {0xff, 0x5f, 0x00}, {0x00, 0xff, 0x00}, {0xff, 0xff, 0x00},
-    {0x87, 0x5f, 0xff}, {0xff, 0x5f, 0xaf}, {0x00, 0xd7, 0xff},
-    {0xff, 0xff, 0xff}
-};
+static uncursed_palette16 palette ;
+static int use_palette = 0 ;
+
+static void
+reset_palette(void)
+{
+    fprintf(ofile, "\r" OSC "104" ST "\r" OSC "R" ST);
+}
+
 
 /* Spouts a bunch of garbage to the screen. Use this only immediately before
    clearing the screen. */
@@ -721,26 +722,38 @@ static void
 setup_palette(void)
 {
     int i;
+    if ( use_palette==1 )
+    {
+        for (i = 0; i < 16; i++) {
 
-    for (i = 0; i < 16; i++) {
+            /* Setup for xterm, gnome-terminal */
+            ofile_output("\r" OSC "4;%d;rgb:%02x/%02x/%02x" ST, i,
+                         palette.color[i][0],
+                         palette.color[i][1], palette.color[i][2]);
 
-        /* Setup for xterm, gnome-terminal */
-        ofile_output("\r" OSC "4;%d;rgb:%02x/%02x/%02x" ST, i, palette[i][0],
-                     palette[i][1], palette[i][2]);
+            /* Setup for Linux console; I think PuTTY parses this too. The Linux
+               console doesn't need the ST on the end, but without it, other
+               terminals may end up waiting forever for the ST. */
+            ofile_output("\r" OSC "P%01x%02x%02x%02x" ST, i, palette.color[i][0],
+                         palette.color[i][1], palette.color[i][2]);
 
-        /* Setup for Linux console; I think PuTTY parses this too. The Linux
-           console doesn't need the ST on the end, but without it, other
-           terminals may end up waiting forever for the ST. */
-        ofile_output("\r" OSC "P%01x%02x%02x%02x" ST, i, palette[i][0],
-                     palette[i][1], palette[i][2]);
-
+        }
+    } else {
+        reset_palette() ;
     }
 }
 
-static void
-reset_palette(void)
+void
+tty_hook_resetpalette16(void)
 {
-    fprintf(ofile, "\r" OSC "104" ST "\r" OSC "R" ST);
+    use_palette = 0 ;
+}
+
+void
+tty_hook_setpalette16( const uncursed_palette16 *p )
+{
+    palette = *p ;
+    use_palette = 1 ;
 }
 
 void

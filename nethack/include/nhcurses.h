@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-14 */
+/* Last modified by Sean Hunt, 2014-12-29 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -164,6 +164,7 @@ enum keyreq_context {
 
 struct interface_flags {
     int done_hup;
+    nh_bool initialized ;  /* false before init_curses_ui() */
     nh_bool ingame;
     nh_bool connected_to_server;
     enum nh_followmode current_followmode;
@@ -225,6 +226,14 @@ enum nh_text_mode {
     TILESET_SLASHEM_3D,
 };
 
+enum nh_palette {
+    PALETTE_NONE,      /*  Keep default terminal palette */
+    PALETTE_DEFAULT,   /*  The default palette */
+    PALETTE_ALT1,      /*  Alternative palette 1*/
+    PALETTE_ALT2,      /*  Alternative palette 2*/
+    PALETTE_ALT3,      /*  Alternative palette 3*/
+};
+
 enum nh_animation {
     ANIM_INSTANT,         /* no animation */
     ANIM_INTERRUPTIBLE,   /* animate only interruptible events */
@@ -263,6 +272,7 @@ struct settings {
     enum nh_motd_setting show_motd;
     enum nh_menupaging menupaging;
     enum nh_frame whichframes;
+    enum nh_palette palette;         /* palette to use for text (not for graphical tiles)*/
 
     /* use bolded black instead of dark blue for CLR_BLACK */
     nh_bool darkgray;
@@ -600,6 +610,7 @@ extern void curses_display_buffer(const char *buf, nh_bool trymove);
 extern void curses_raw_print(const char *str);
 extern void curses_delay_output(void);
 extern void curses_server_cancel(void);
+extern void setup_palette(void);
 
 # if defined(NETCLIENT)
 /* netgame.c */

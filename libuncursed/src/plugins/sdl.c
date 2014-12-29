@@ -435,6 +435,8 @@ sdl_hook_init(int *h, int *w, const char *title)
     if (!win) {
         debug = !!getenv("UNCURSED_SDL_DEBUG");
 
+        sdl_hook_resetpalette16() ;
+
 #ifndef AIMAKE_BUILDOS_MSWin32
         /* It's possible that the program using libuncursed will want to install
            signal handlers. However, SDL doesn't pay attention to this, and
@@ -1221,15 +1223,38 @@ sdl_hook_watch_fd(int fd, int watch)
         FD_CLR(fd, &monitored_fds);
 }
 
-/* copied from tty.c; perhaps this should go in a header somewhere */
-static Uint8 palette[][3] = {
-    {0x00, 0x00, 0x00}, {0xaf, 0x00, 0x00}, {0x00, 0x87, 0x00},
-    {0xaf, 0x5f, 0x00}, {0x00, 0x00, 0xaf}, {0x87, 0x00, 0x87},
-    {0x00, 0xaf, 0x87}, {0xaf, 0xaf, 0xaf}, {0x5f, 0x5f, 0x5f},
-    {0xff, 0x5f, 0x00}, {0x00, 0xff, 0x00}, {0xff, 0xff, 0x00},
-    {0x87, 0x5f, 0xff}, {0xff, 0x5f, 0xaf}, {0x00, 0xd7, 0xff},
-    {0xff, 0xff, 0xff}
-};
+
+typedef Uint8 Color[3];
+
+/* The builtin palette used at startup and after reset */
+static Color builtin_palette[16] = UNCURSED_DEFAULT_COLORS ;
+
+/* Storage area for the custom palette */
+static Color custom_palette[16];
+
+/* pointer to the current palette */
+static Color * palette = builtin_palette;
+
+void
+sdl_hook_setpalette16( const uncursed_palette16 *p )
+{
+    int i ;
+    for (i=0;i<16;i++)
+    {
+        custom_palette[i][0] = (Uint8) p->color[i][0] ;
+        custom_palette[i][1] = (Uint8) p->color[i][1] ;
+        custom_palette[i][2] = (Uint8) p->color[i][2] ;
+    }
+    palette = custom_palette ;
+}
+
+void
+sdl_hook_resetpalette16(void)
+{
+    palette = builtin_palette;
+}
+
+
 
 /* Redraws an entire region. This is necessary if the cursor has moved, or if
    any tile in the region has changed. Returns 1 if the region had to be
@@ -1319,6 +1344,11 @@ update_region(struct sdl_tile_region *r)
         int w = r->loc_w * fontwidth;
         int h = r->loc_h * fontheight;
 
+        SDL_SetRenderDrawColor(render,
+                               palette[0][0], palette[0][1], palette[0][2],
+                               SDL_ALPHA_OPAQUE);
+        SDL_RenderFillRect(render,
+                           &(SDL_Rect) { .x = lt , .y = tt , .w = w , .h = h }) ;
         if (lf < 0) {
             w -= -lf;
             lt += -lf;
@@ -1336,6 +1366,8 @@ update_region(struct sdl_tile_region *r)
             h -= (tf + h - r->texsize_h);
 
         if (w > 0 && h > 0) {
+
+
             SDL_RenderCopy(render, r->texture,
                            &(SDL_Rect) {.x = lf, .y = tf, .w = w, .h = h},
                            &(SDL_Rect) {.x = lt, .y = tt, .w = w, .h = h});
@@ -1500,7 +1532,9 @@ sdl_hook_fullredraw(void)
         SDL_SetRenderTarget(render, screen);
     rendertarget = screen;
 
-    SDL_SetRenderDrawColor(render, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(render,
+                           palette[0][0],palette[0][1],palette[0][2],
+                           SDL_ALPHA_OPAQUE);
     SDL_RenderFillRect(render,
                        &(SDL_Rect) {
                            .x = 0,
