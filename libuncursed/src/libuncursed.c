@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-03 */
+/* Last modified by Sean Hunt, 2014-12-29 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -3031,4 +3031,25 @@ wresize(WINDOW *win, int newh, int neww)
 
     free(old_chararray);
     return OK;
+}
+
+
+void uncursed_reset_palette16 (void)
+{
+    struct uncursed_hooks *h;
+
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used)
+            if ( h->resetpalette16!=NULL )
+                h->resetpalette16();
+}
+
+void uncursed_set_palette16 (const uncursed_palette16 *p)
+{
+    struct uncursed_hooks *h;
+
+    for (h = uncursed_hook_list; h; h = h->next_hook)
+        if (h->used)
+            if ( h->setpalette16!=NULL )
+                h->setpalette16(p);
 }

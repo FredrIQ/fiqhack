@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-15 */
+/* Last modified by Sean Hunt, 2014-12-27 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -113,7 +113,7 @@ setup_showlines(void)
     }
 }
 
-/* Reallocate showlines (preserving existing messages where possible) if the 
+/* Reallocate showlines (preserving existing messages where possible) if the
    window gets resized. */
 void
 redo_showlines(void)
@@ -206,7 +206,7 @@ mark_all_seen(nh_bool mark_old)
     for (i = 0; i < num_showlines; i++) {
         showlines[i].unseen = FALSE;
         showlines[i].nomerge = TRUE;
-        if(mark_old)
+        if (mark_old)
             showlines[i].old = TRUE;
     }
 }
@@ -333,7 +333,7 @@ move_lines_upward(int num_to_bump)
             showlines[i].unseen = showlines[i + num_to_bump].unseen;
             showlines[i].temp = showlines[i + num_to_bump].temp;
         }
-        for (; i < num_showlines; ++i) { 
+        for (; i < num_showlines; ++i) {
             showlines[i].message = NULL;
             showlines[i].turn = -1;
             showlines[i].old = FALSE;
@@ -372,7 +372,7 @@ update_showlines(char **intermediate, int *length, nh_bool force_more,
      *         and simultaneously rewind marker one token at a time until we
      *         have room for a more prompt.
      */
-    
+
     /* Step 1 begins here. */
     int messagelen = 0;
     nh_bool merging = FALSE;

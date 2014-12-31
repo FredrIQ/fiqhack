@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Sean Hunt, 2014-12-29 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -22,6 +22,8 @@ enum uncursed_hook_type {
     uncursed_hook_type_recording,   /* like broadcast, but only on request */
 };
 
+struct uncursed_palette16 ;
+
 struct uncursed_hooks;
 struct uncursed_hooks {
 /***** Calls from uncursed.c into an implementation library *****/
@@ -37,6 +39,9 @@ struct uncursed_hooks {
 
     void (*setcursorsize) (int);            /* 0 to 2 */
     void (*positioncursor) (int, int);      /* y, x */
+
+    void (*resetpalette16) (void);
+    void (*setpalette16) ( const struct uncursed_palette16 *p );
 
     /* The way updates work is that uncursed.c calls update on some changed
        character, then the implementation library requests state using the

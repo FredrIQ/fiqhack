@@ -1,12 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-22 */
+/* Last modified by Sean Hunt, 2014-12-24 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 
 static boolean tele_jump_ok(int, int, int, int);
-static boolean teleok(int, int, boolean);
+static boolean teleok(int, int, boolean, boolean wizard_tele);
 static void vault_tele(void);
 static boolean rloc_pos_ok(int, int, struct monst *);
 static void mvault_tele(struct monst *);
@@ -214,13 +214,13 @@ tele_jump_ok(int x1, int y1, int x2, int y2)
 }
 
 static boolean
-teleok(int x, int y, boolean trapok)
+teleok(int x, int y, boolean trapok, boolean wizard_tele)
 {
     if (!trapok && t_at(level, x, y))
         return FALSE;
     if (!goodpos(level, x, y, &youmonst, 0))
         return FALSE;
-    if (!tele_jump_ok(u.ux, u.uy, x, y))
+    if (!wizard_tele && !tele_jump_ok(u.ux, u.uy, x, y))
         return FALSE;
     if (!in_out_region(level, x, y))
         return FALSE;
@@ -334,7 +334,7 @@ safe_teleds(boolean allow_drag)
     do {
         nux = rn2(COLNO);
         nuy = rn2(ROWNO);
-    } while (!teleok(nux, nuy, (boolean) (tcnt > 200)) && ++tcnt <= 400);
+    } while (!teleok(nux, nuy, (boolean) (tcnt > 200), FALSE) && ++tcnt <= 400);
 
     if (tcnt <= 400) {
         teleds(nux, nuy, allow_drag);
@@ -349,7 +349,7 @@ vault_tele(void)
     struct mkroom *croom = search_special(level, VAULT);
     coord c;
 
-    if (croom && somexy(level, croom, &c) && teleok(c.x, c.y, FALSE)) {
+    if (croom && somexy(level, croom, &c) && teleok(c.x, c.y, FALSE, FALSE)) {
         teleds(c.x, c.y, FALSE);
         return;
     }
@@ -431,7 +431,7 @@ tele_impl(boolean wizard_tele, boolean run_next_to_u)
 
             /* possible extensions: introduce a small error if magic power is
                low; allow transfer to solid rock */
-            if (teleok(cc.x, cc.y, FALSE)) {
+            if (teleok(cc.x, cc.y, FALSE, wizard_tele)) {
                 teleds(cc.x, cc.y, FALSE);
                 return 1;
             }

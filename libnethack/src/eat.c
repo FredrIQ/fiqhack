@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-18 */
+/* Last modified by Sean Hunt, 2014-12-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -91,29 +91,25 @@ static const struct {
     const char *txt;
     int nut;
 } tintxts[] = {
-    {
-    "deep fried", 60}, {
-    "pickled", 40}, {
-    "soup made from", 20}, {
-    "pureed", 500},
+  { "deep fried", 60},
+  { "pickled", 40},
+  { "soup made from", 20},
+  { "pureed", 500},
 #define ROTTEN_TIN 4
-    {
-    "rotten", -50},
+  { "rotten", -50},
 #define HOMEMADE_TIN 5
-    {
-    "homemade", 50}, {
-    "stir fried", 80}, {
-    "candied", 100}, {
-    "boiled", 50}, {
-    "dried", 55}, {
-    "szechuan", 70},
+  { "homemade", 50},
+  { "stir fried", 80},
+  { "candied", 100},
+  { "boiled", 50},
+  { "dried", 55},
+  { "szechuan", 70},
 #define FRENCH_FRIED_TIN 11
-    {
-    "french fried", 40}, {
-    "sauteed", 95}, {
-    "broiled", 80}, {
-    "smoked", 50}, {
-    "", 0}
+  { "french fried", 40},
+  { "sauteed", 95},
+  { "broiled", 80},
+  { "smoked", 50},
+  { "", 0}
 };
 
 #define TTSZ    SIZE(tintxts)
@@ -204,7 +200,7 @@ nutrition_calculations(struct obj *obj, unsigned *total,
     if (corpse) {
         /* Work out the total amount of nutrition. */
         *total = mons[obj->corpsenm].cnutrit;
-        
+
         /* The length of time it takes to eat an entire corpse, which
            depends on the weight of the monster. */
         *timetaken = 3 + (mons[obj->corpsenm].cwt >> 6);
@@ -314,6 +310,9 @@ eat_one_turn(void)
     u.utracked[tos_food]->oeaten -= nmod;
 
     if (!u.utracked[tos_food]->oeaten) {
+        /* Call action_completed() directly to avoid the the action getting
+         * interrupted if a corpse effect renders the player helpless. */
+        action_completed();
         done_eating(TRUE);
         return 0;
     } else {
@@ -671,7 +670,7 @@ cpostfx(int pm)
         if (youmonst.data->mlet != S_MIMIC && !Unchanging) {
             const char *buf;
 
-            pline("You can't resist the temptation to mimic %s.",
+            pline("You can't resist the temptation to mimic %s...",
                   Hallucination ? "an orange" : "a pile of gold");
             /* A pile of gold can't ride. */
             if (u.usteed)
@@ -911,6 +910,9 @@ eat_tin_one_turn(void)
 
         u.utracked[tos_tin]->dknown = u.utracked[tos_tin]->known = TRUE;
         cprefx(u.utracked[tos_tin]->corpsenm);
+        /* We call action_completed() here directly, so that the action is not
+         * interruped if the player becomes helpless due to cpostfx. */
+        action_completed();
         cpostfx(u.utracked[tos_tin]->corpsenm);
 
         /* charge for one at pre-eating cost */
@@ -967,7 +969,7 @@ use_me:
 
    Returns TRUE if the caller should continue trying to open the tin,
    FALSE if something went wrong trying to start to open it. */
-static boolean 
+static boolean
 start_tin(struct obj *otmp)
 {
     int tmp;
@@ -1547,7 +1549,7 @@ fpostfx(struct obj *otmp)
 static int
 edibility_prompts(struct obj *otmp)
 {
-    /* blessed food detection granted you a one-use ability to detect food that 
+    /* blessed food detection granted you a one-use ability to detect food that
        is unfit for consumption or dangerous and avoid it. */
 
     const char *buf, *foodsmell, *it_or_they, *eat_it_anyway;
@@ -1585,7 +1587,7 @@ edibility_prompts(struct obj *otmp)
         }
     }
 
-    /* 
+    /*
      * These problems with food should be checked in
      * order from most detrimental to least detrimental.
      */
@@ -1669,7 +1671,7 @@ edibility_prompts(struct obj *otmp)
     }
 
 
-    /* 
+    /*
      * Breaks conduct, but otherwise safe.
      */
     if (!u.uconduct[conduct_vegetarian] && moves > 1800 &&
@@ -1861,7 +1863,7 @@ doeat(const struct nh_cmd_arg *arg)
 
         {
             int res = edibility_prompts(otmp);
-            
+
             if (res && u.uedibility) {
                 pline("Your %s stops tingling and your "
                       "sense of smell returns to normal.", body_part(NOSE));
@@ -1875,12 +1877,12 @@ doeat(const struct nh_cmd_arg *arg)
             choke(u.utracked[tos_food]);
             return 0;
         }
-        
+
         u.utracked[tos_food] = otmp;
 
         if (otmp->otyp == CORPSE) {
             int tmp = eatcorpse();
-            
+
             if (tmp == 2) {
                 /* used up */
                 u.utracked[tos_food] = NULL;
@@ -1898,7 +1900,7 @@ doeat(const struct nh_cmd_arg *arg)
                     break_conduct(conduct_vegetarian);
                 }
                 break;
-                
+
             default:
                 if (otmp->otyp == PANCAKE ||
                     otmp->otyp == FORTUNE_COOKIE || /* eggs */
@@ -2024,9 +2026,9 @@ lesshungry(int num, struct obj *otmp)
            10 points of nutrition so that we don't slip back below 1500
            immediately. TODO: Some better way to do this. */
         u.uhunger += 10;
-        
+
         action_completed();
-        
+
         /* TODO: "You stop eating." message if the player hasn't finished
            eating already. */
     }
@@ -2086,7 +2088,7 @@ newuhs(boolean incr)
                 pline((!incr) ? "Your munchies are not as bad now." :
                       "You are getting the munchies.");
             } else
-                pline((!incr) ? "You don't feel so weak now." : 
+                pline((!incr) ? "You don't feel so weak now." :
                       (u.uhunger < 145) ? "You feel hungry." :
                       "You are beginning to feel hungry.");
             if (incr && flags.occupation != occ_food)
@@ -2148,14 +2150,14 @@ floorfood(const char *verb, const struct nh_cmd_arg *arg)
     boolean can_floorfood = FALSE;
     boolean checking_can_floorfood = TRUE;
     boolean (*floorfood_check)(const struct obj *);
-    
+
     if (!verb || !*verb)
         impossible("floorfood: no verb given");
-    
+
     floorfood_check = (sacrificing ? can_sacrifice :
                        tinning ? tinnable :
                        feeding ? is_edible_now : other_floorfood);
-    
+
     /* if we can't touch floor objects then use invent food only */
     if (!can_reach_floor() || (feeding && u.usteed) ||  /* can't eat off floor
                                                            while riding */
