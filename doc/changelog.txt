@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-11-14
+Last modified by Alex Smith, 2014-12-28
 
 Copyright (C) 2013 Alex Smith.
 
@@ -2014,7 +2014,7 @@ A Strength score of 18/100 no longer displays as `18/10`, like a Strength
 score of 18/10 would. (50251de)
 
 Monsters that have been deleted from the map (currently recorded, as in the
-NetHack 4 series, by setting their HP to a negative number) no longer have the
+NetHack 3 series, by setting their HP to a negative number) no longer have the
 ability to spontaneously undelete themselves via regenerating HP over time.
 (fad1d3a)
 
