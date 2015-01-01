@@ -115,6 +115,7 @@ static const struct {
       { "Dig", CLR_BROWN, -1 },
       { "Ranged", CLR_GREEN, -1 },
       { "Unarmed", CLR_MAGENTA, -1 },
+      { "NonWeap", CLR_ORANGE, -1 },
       { "Stone", CLR_YELLOW, -1 },
       { "Lev", CLR_BROWN, -1 },
       { "Fly", CLR_GREEN, -1 },

@@ -307,10 +307,15 @@ make_player_info(struct nh_player_info *pi)
         strncpy(pi->statusitems[pi->nr_items++], "Ranged", ITEMLEN);
     else if (uwep && (uwep->otyp == CORPSE) && (touch_petrifies(&mons[uwep->corpsenm])))
         strncpy(pi->statusitems[pi->nr_items++], "Stone", ITEMLEN);
-    else if (!uwep || !is_wep(uwep))
+    else if (!uwep)
         strncpy(pi->statusitems[pi->nr_items++], "Unarmed", ITEMLEN);
-    else
-        strncpy(pi->statusitems[pi->nr_items++], "Melee", ITEMLEN); /* 15 (last case) */
+    else if (!is_wep(uwep))
+        strncpy(pi->statusitems[pi->nr_items++], "NonWeap", ITEMLEN);
+    else {
+        /* strncpy(pi->statusitems[pi->nr_items++], "Melee", ITEMLEN); */
+        /* Don't show the default Melee status light, as that's the most common case. */
+        /* 15 (last case) */
+    }
     if (u.utrap)        /* 16 */
         strncpy(pi->statusitems[pi->nr_items++], trap_stat[u.utraptype],
                 ITEMLEN);
