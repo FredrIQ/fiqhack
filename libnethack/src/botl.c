@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-12 */
+/* Last modified by Nathan Eady, 2014-12-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -301,8 +301,21 @@ make_player_info(struct nh_player_info *pi)
         strncpy(pi->statusitems[pi->nr_items++], "Lev", ITEMLEN);
     else if (Flying)
         strncpy(pi->statusitems[pi->nr_items++], "Fly", ITEMLEN);
-    if (!uwep || !is_wep(uwep))  /* 15 */
+    if (uwep && is_pick(uwep)) /* 15 (first case) */
+        strncpy(pi->statusitems[pi->nr_items++], "Dig", ITEMLEN);
+    else if (uwep && is_launcher(uwep))
+        strncpy(pi->statusitems[pi->nr_items++], "Ranged", ITEMLEN);
+    else if (uwep && (uwep->otyp == CORPSE) && (touch_petrifies(&mons[uwep->corpsenm])))
+        strncpy(pi->statusitems[pi->nr_items++], "Stone", ITEMLEN);
+    else if (!uwep)
         strncpy(pi->statusitems[pi->nr_items++], "Unarmed", ITEMLEN);
+    else if (!is_wep(uwep))
+        strncpy(pi->statusitems[pi->nr_items++], "NonWeap", ITEMLEN);
+    else {
+        /* strncpy(pi->statusitems[pi->nr_items++], "Melee", ITEMLEN); */
+        /* Don't show the default Melee status light, as that's the most common case. */
+        /* 15 (last case) */
+    }
     if (u.utrap)        /* 16 */
         strncpy(pi->statusitems[pi->nr_items++], trap_stat[u.utraptype],
                 ITEMLEN);
