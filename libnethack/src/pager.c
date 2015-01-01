@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-21 */
+/* Last modified by Sean Hunt, 2014-12-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -611,7 +611,9 @@ do_look(boolean quick, const struct nh_cmd_arg *arg)
     struct nh_desc_buf descbuf;
     struct obj *otmp;
 
-    if (quick || (arg->argtype & CMD_ARG_POS)) {
+    if (arg->argtype & CMD_ARG_OBJ) {
+        from_screen = FALSE;
+    } else if (quick || (arg->argtype & CMD_ARG_POS)) {
         from_screen = TRUE;     /* yes, we want to use the cursor */
     } else {
         i = ynq("Specify unknown object by cursor?");
@@ -624,15 +626,20 @@ do_look(boolean quick, const struct nh_cmd_arg *arg)
         cc.x = u.ux;
         cc.y = u.uy;
     } else {
-        out_str = getarglin(arg, "Specify what? (type the word)");
-        if (out_str[0] == '\0' || out_str[0] == '\033')
-            return 0;
+        if (arg->argtype & CMD_ARG_OBJ) {
+            static const char allowall[] = { ALL_CLASSES, 0 };
+            out_str = simple_typename(getargobj(arg, allowall, "explain")->otyp);
+        } else {
+            out_str = getarglin(arg, "Specify what? (type the word)");
+            if (out_str[0] == '\0' || out_str[0] == '\033')
+                return 0;
+        }
 
         /* the ability to specify symbols is gone: it is simply impossible to
            know how the window port is displaying things (tiles?) and even if
            charaters are used it may not be possible to type them (utf8) */
 
-        checkfile(out_str, NULL, TRUE, TRUE);
+        checkfile(out_str, NULL, !(arg->argtype & CMD_ARG_OBJ), TRUE);
         return 0;
     }
     /* Save the verbose flag, we change it later. */

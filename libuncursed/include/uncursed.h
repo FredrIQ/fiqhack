@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Sean Hunt, 2014-12-29 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -136,6 +136,20 @@ UNCURSED_ANDWINDOW(int, set_tiles_region,
                    int, int, int, int, int, int, int, int);
 UNCURSED_ANDWINDOWV(int, delete_tiles_region);
 UNCURSED_ANDMVWINDOW(int, set_tiles_tile, int);
+
+typedef struct uncursed_palette16 {
+    unsigned char color[16][3];
+} uncursed_palette16 ;
+
+extern void uncursed_reset_palette16 (void);
+extern void uncursed_set_palette16 (const uncursed_palette16 *p);
+
+#define UNCURSED_DEFAULT_COLORS {                                      \
+{0x00,0x00,0x00}, {0xaf,0x00,0x00}, {0x00,0x87,0x00}, {0xaf,0x5f,0x00},\
+{0x00,0x00,0xaf}, {0x87,0x00,0x87}, {0x00,0xaf,0x87}, {0xaf,0xaf,0xaf},\
+{0x5f,0x5f,0x5f}, {0xff,0x5f,0x00}, {0x00,0xff,0x00}, {0xff,0xff,0x00},\
+{0x87,0x5f,0xff}, {0xff,0x5f,0xaf}, {0x00,0xd7,0xff}, {0xff,0xff,0xff} \
+}
 
 /* manual page 3ncurses color */
 extern int EI(COLORS);

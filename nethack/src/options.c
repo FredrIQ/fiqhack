@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-23 */
+/* Last modified by Sean Hunt, 2014-12-29 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -62,6 +62,16 @@ static struct nh_listitem graphics_list[] = {
 };
 static struct nh_enum_option graphics_spec =
     { graphics_list, listlen(graphics_list) };
+
+static struct nh_listitem palette_list[] = {
+    {PALETTE_NONE,      "none (may require new terminal)"},
+    {PALETTE_DEFAULT,   "default"},
+    {PALETTE_ALT1,      "alternative 1"},
+    {PALETTE_ALT2,      "alternative 2"},
+    {PALETTE_ALT3,      "alternative 3"}
+} ;
+static struct nh_enum_option palette_spec =
+    { palette_list, listlen(palette_list) };
 
 static struct nh_listitem animation_list[] = {
     {ANIM_INSTANT, "instant"},
@@ -155,6 +165,8 @@ static struct nh_option_desc curses_options[] = {
      OPTTYPE_ENUM, {.e = MOTD_ASK}},
     {"optstyle", "option menu display style", FALSE, OPTTYPE_ENUM,
      {.e = OPTSTYLE_FULL}},
+    {"palette", "color palette used for text (not for graphic tiles)", FALSE, OPTTYPE_ENUM,
+     {.e = PALETTE_DEFAULT}},
     {"prompt_inline", "place prompts in the message window", FALSE, OPTTYPE_BOOL,
      {.b = FALSE}},
     {"scores_own", "show all your own scores in the list", FALSE, OPTTYPE_BOOL,
@@ -286,6 +298,22 @@ curses_set_option(const char *name, union nh_optvalue value)
         rebuild_ui();
     } else if (!strcmp(option->name, "menu_headings")) {
         settings.menu_headings = option->value.e;
+    } else if (!strcmp(option->name, "palette")) {
+        settings.palette = option->value.e;
+        setup_palette() ;
+        if (ui_flags.initialized) {
+            /* Remark:  clear() would crash if called before libuncursed
+             *          is initialized.
+             *          Also the test above prevents the palette to
+             *          be installed when initializing the default setting
+             *          thus allowing PALETTE_NONE to be used even on
+             *          terminals that do support a proper reset of their
+             *          palette.
+             */
+            clear() ;
+            refresh() ;
+            rebuild_ui();
+        }
     } else if (!strcmp(option->name, "animation")) {
         settings.animation = option->value.e;
     } else if (!strcmp(option->name, "graphics")) {
@@ -352,6 +380,7 @@ init_options(void)
     find_option("networkmotd")->e = networkmotd_spec;
     find_option("optstyle")->e = optstyle_spec;
     find_option("menupaging")->e = menupaging_spec;
+    find_option("palette")->e = palette_spec;
     find_option("scores_top")->i.max = 10000;
     find_option("scores_around")->i.max = 100;
     find_option("sidebar")->e = autoable_boolean_spec;
