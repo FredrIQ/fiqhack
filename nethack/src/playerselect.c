@@ -5,7 +5,6 @@
 
 #include "nhcurses.h"
 #include <ctype.h>
-#include <time.h>
 
 
 #define LISTSZ 32
@@ -309,8 +308,6 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
         listbuffers[i][0] = '\0';
         list[i].caption = listbuffers[i];
     }
-
-    srand(time(NULL));
 
     /* Should we randomly pick for the player? */
     if (!randomall &&

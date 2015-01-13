@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <ctype.h>
 #include <signal.h>
+#include <time.h>
 
 #ifdef UNIX
 # include <unistd.h>
@@ -330,6 +331,8 @@ mainmenu(void)
 int
 main(int argc, char *argv[])
 {
+    srand(time(NULL));
+
     char **gamepaths;
     int i;
     nh_bool init_ok;
