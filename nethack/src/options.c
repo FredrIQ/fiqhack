@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-12-29 */
+/* Last modified by Alex Smith, 2015-02-02 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -300,15 +300,17 @@ curses_set_option(const char *name, union nh_optvalue value)
         settings.menu_headings = option->value.e;
     } else if (!strcmp(option->name, "palette")) {
         settings.palette = option->value.e;
-        setup_palette() ;
+        setup_palette();
+
         if (ui_flags.initialized) {
-            /* Remark:  clear() would crash if called before libuncursed
-             *          is initialized.
-             *          Also the test above prevents the palette to
-             *          be installed when initializing the default setting
-             *          thus allowing PALETTE_NONE to be used even on
-             *          terminals that do support a proper reset of their
-             *          palette.
+            /*
+             * - We don't want to install a palette as a result of the default
+             *   setting of "palette", because some terminals cannot handle a
+             *   palette reset, and thus we need to ensure that we've loaded
+             *   the user's palette setting before palette initialization.
+             *
+             * - Besides, clear() will crash with an uninitialized libuncursed.
+             *   So we have to delay this anyway.
              */
             clear() ;
             refresh() ;
