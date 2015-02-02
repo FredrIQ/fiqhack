@@ -1,5 +1,7 @@
 About this document:
-Last modified by Alex Smith, 2014-10-03
+Last modified by Alex Smith, 2015-02-02
+
+Copyright © 2013, 2014, 2015 Alex Smith.
 
 This documentation for the uncursed rendering library is provided under the
 same terms as libuncursed itself: it may be distributed under either of the
