@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-12-29 */
+/* Last modified by Alex Smith, 2015-02-02 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -139,7 +139,7 @@ UNCURSED_ANDMVWINDOW(int, set_tiles_tile, int);
 
 typedef struct uncursed_palette16 {
     unsigned char color[16][3];
-} uncursed_palette16 ;
+} uncursed_palette16;
 
 extern void uncursed_reset_palette16 (void);
 extern void uncursed_set_palette16 (const uncursed_palette16 *p);

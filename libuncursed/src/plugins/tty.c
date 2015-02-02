@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-12-29 */
+/* Last modified by Alex Smith, 2015-02-02 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -706,8 +706,8 @@ set_charset(int y, int x)
     last_y = last_x = -1;
 }
 
-static uncursed_palette16 palette ;
-static int use_palette = 0 ;
+static uncursed_palette16 palette;
+static int use_palette = 0;
 
 static void
 reset_palette(void)
@@ -739,21 +739,21 @@ setup_palette(void)
 
         }
     } else {
-        reset_palette() ;
+        reset_palette();
     }
 }
 
 void
 tty_hook_resetpalette16(void)
 {
-    use_palette = 0 ;
+    use_palette = 0;
 }
 
 void
 tty_hook_setpalette16( const uncursed_palette16 *p )
 {
-    palette = *p ;
-    use_palette = 1 ;
+    palette = *p;
+    use_palette = 1;
 }
 
 void

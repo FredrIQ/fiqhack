@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-15 */
+/* Last modified by Alex Smith, 2015-02-02 */
 /* Copyright (c) Daniel Thaler, 2012 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -433,7 +433,8 @@ add_server_menu(struct server_info **servlist)
         return NULL;
     }
 
-    for (i = 0; (*servlist)[i].hostname; i++) ;
+    for (i = 0; (*servlist)[i].hostname; i++)
+        ;
     *servlist = realloc(*servlist, sizeof (struct server_info) * (i + 2));
     memmove(&(*servlist)[1], &(*servlist)[0],
             sizeof (struct server_info) * (i + 1));

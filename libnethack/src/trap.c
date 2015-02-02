@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-22 */
+/* Last modified by Alex Smith, 2015-02-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -386,7 +386,8 @@ fall_through(boolean td)
     } else
         pline("The %s opens up under you!", surface(u.ux, u.uy));
 
-    if (In_sokoban(&u.uz) && can_fall_thru(level)) ;
+    if (In_sokoban(&u.uz) && can_fall_thru(level))
+        ;
     /* KMH -- You can't escape the Sokoban level traps */
     else if (Levitation || u.ustuck || !can_fall_thru(level)
              || Flying || is_clinger(youmonst.data)
@@ -3966,7 +3967,8 @@ deltrap(struct level *lev, struct trap *trap)
     if (trap == lev->lev_traps)
         lev->lev_traps = lev->lev_traps->ntrap;
     else {
-        for (ttmp = lev->lev_traps; ttmp->ntrap != trap; ttmp = ttmp->ntrap) ;
+        for (ttmp = lev->lev_traps; ttmp->ntrap != trap; ttmp = ttmp->ntrap)
+            ;
         ttmp->ntrap = trap->ntrap;
     }
     dealloc_trap(trap);

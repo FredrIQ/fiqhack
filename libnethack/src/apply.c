@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-22 */
+/* Last modified by Alex Smith, 2015-02-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -253,7 +253,8 @@ use_stethoscope(struct obj *obj, const struct nh_cmd_arg *arg)
         else if (dz < 0 || !can_reach_floor())
             pline("You can't reach the %s.",
                   (dz > 0) ? surface(u.ux, u.uy) : ceiling(u.ux, u.uy));
-        else if (its_dead(u.ux, u.uy, &res)) ;  /* message already given */
+        else if (its_dead(u.ux, u.uy, &res))
+            ;  /* message already given */
         else if (Is_stronghold(&u.uz))
             You_hear("the crackling of hellfire.");
         else
@@ -766,7 +767,8 @@ use_mirror(struct obj *obj, const struct nh_cmd_arg *arg)
             pline("%s is frightened by its reflection.", Monnam(mtmp));
         monflee(mtmp, dice(2, 4), FALSE, FALSE);
     } else if (!Blind) {
-        if (mtmp->minvis && !See_invisible) ;
+        if (mtmp->minvis && !See_invisible)
+            ;
         else if ((mtmp->minvis && !perceives(mtmp->data))
                  || !haseyes(mtmp->data))
             pline("%s doesn't seem to notice its reflection.", Monnam(mtmp));

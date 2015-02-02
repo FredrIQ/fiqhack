@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2015-02-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -112,7 +112,8 @@ mkobj(struct level *lev, char oclass, boolean artif)
             In_hell(&lev->z) ? (const struct icp *)hellprobs :
             (const struct icp *) mkobjprobs;
 
-        for (tprob = rnd(100); (tprob -= iprobs->iprob) > 0; iprobs++) ;
+        for (tprob = rnd(100); (tprob -= iprobs->iprob) > 0; iprobs++)
+            ;
         oclass = iprobs->iclass;
     }
 
@@ -149,14 +150,14 @@ mkobj_of_class(struct level *lev, char oclass, boolean artif)
             --num;
         }
 
-        for ( ; j < gems; ++j)
+        for (; j < gems; ++j)
             /* Here we redistribute the probability removed. The +1 at the end
              * is to ensure that we don't round to a sum less than 1000: going
              * over is ok, but going under might cause a panic. */
             probs[j] = ((objects[j + bases[GEM_CLASS]].oc_prob * num + removed)
                          / num) + 1;
 
-        for ( ; j < total; ++j)
+        for (; j < total; ++j)
             probs[j] = objects[j + bases[GEM_CLASS]].oc_prob;
 
         j = 0;
@@ -225,7 +226,8 @@ mkbox_cnts(struct obj *box)
             int tprob;
             const struct icp *iprobs = boxiprobs;
 
-            for (tprob = rnd(100); (tprob -= iprobs->iprob) > 0; iprobs++) ;
+            for (tprob = rnd(100); (tprob -= iprobs->iprob) > 0; iprobs++)
+                ;
             if (!(otmp = mkobj(box->olev, iprobs->iclass, TRUE)))
                 continue;
 

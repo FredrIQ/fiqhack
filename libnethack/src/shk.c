@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-12-29 */
+/* Last modified by Alex Smith, 2015-02-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3074,7 +3074,8 @@ repair_damage(struct level *lev, struct monst *shkp, struct damage *tmp_dam,
                 obj_extract_self(otmp);
                 obfree(otmp, NULL);
             } else {
-                while (!(litter[i = rn2(9)] & INSHOP)) ;
+                while (!(litter[i = rn2(9)] & INSHOP))
+                    ;
                 remove_object(otmp);
                 place_object(otmp, lev, x + horiz(i), y + vert(i));
                 litter[i] |= NEED_UPDATE;
@@ -3255,7 +3256,7 @@ shopdig(int fall)
     /* 0 == can't speak, 1 == makes animal noises, 2 == speaks */
     lang = 0;
     if (shkp->msleeping || !shkp->mcanmove || is_silent(shkp->data))
-      ;  /* lang stays 0 */
+        ;  /* lang stays 0 */
     else if (shkp->data->msound <= MS_ANIMAL)
         lang = 1;
     else if (shkp->data->msound >= MS_HUMANOID)

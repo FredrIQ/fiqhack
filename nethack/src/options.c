@@ -69,7 +69,7 @@ static struct nh_listitem palette_list[] = {
     {PALETTE_ALT1,      "alternative 1"},
     {PALETTE_ALT2,      "alternative 2"},
     {PALETTE_ALT3,      "alternative 3"}
-} ;
+};
 static struct nh_enum_option palette_spec =
     { palette_list, listlen(palette_list) };
 
@@ -312,8 +312,8 @@ curses_set_option(const char *name, union nh_optvalue value)
              * - Besides, clear() will crash with an uninitialized libuncursed.
              *   So we have to delay this anyway.
              */
-            clear() ;
-            refresh() ;
+            clear();
+            refresh();
             rebuild_ui();
         }
     } else if (!strcmp(option->name, "animation")) {

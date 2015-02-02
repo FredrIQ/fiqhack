@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-12-29 */
+/* Last modified by Alex Smith, 2015-02-02 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -435,7 +435,7 @@ sdl_hook_init(int *h, int *w, const char *title)
     if (!win) {
         debug = !!getenv("UNCURSED_SDL_DEBUG");
 
-        sdl_hook_resetpalette16() ;
+        sdl_hook_resetpalette16();
 
 #ifndef AIMAKE_BUILDOS_MSWin32
         /* It's possible that the program using libuncursed will want to install
@@ -1227,7 +1227,7 @@ sdl_hook_watch_fd(int fd, int watch)
 typedef Uint8 Color[3];
 
 /* The builtin palette used at startup and after reset */
-static Color builtin_palette[16] = UNCURSED_DEFAULT_COLORS ;
+static Color builtin_palette[16] = UNCURSED_DEFAULT_COLORS;
 
 /* Storage area for the custom palette */
 static Color custom_palette[16];
@@ -1238,14 +1238,14 @@ static Color * palette = builtin_palette;
 void
 sdl_hook_setpalette16( const uncursed_palette16 *p )
 {
-    int i ;
+    int i;
     for (i=0;i<16;i++)
     {
-        custom_palette[i][0] = (Uint8) p->color[i][0] ;
-        custom_palette[i][1] = (Uint8) p->color[i][1] ;
-        custom_palette[i][2] = (Uint8) p->color[i][2] ;
+        custom_palette[i][0] = (Uint8) p->color[i][0];
+        custom_palette[i][1] = (Uint8) p->color[i][1];
+        custom_palette[i][2] = (Uint8) p->color[i][2];
     }
-    palette = custom_palette ;
+    palette = custom_palette;
 }
 
 void
@@ -1348,7 +1348,7 @@ update_region(struct sdl_tile_region *r)
                                palette[0][0], palette[0][1], palette[0][2],
                                SDL_ALPHA_OPAQUE);
         SDL_RenderFillRect(render,
-                           &(SDL_Rect) { .x = lt , .y = tt , .w = w , .h = h }) ;
+                           &(SDL_Rect) {.x = lt, .y = tt, .w = w, .h = h});
         if (lf < 0) {
             w -= -lf;
             lt += -lf;
