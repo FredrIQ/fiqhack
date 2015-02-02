@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-11-16 */
+/* Last modified by Alex Smith, 2015-02-02 */
 /* Copyright (c) 2014 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -95,7 +95,7 @@ draw_extrawin(enum keyreq_context context)
        (because this is how farlooking is done with keyboard controls), so we
        steal the space used by statuswin if we don't have an extrawin to draw
        onto. The y height is read from the appropriate field of ui_flags; both
-       the windows are width ui_flags.mapwith, so we don't need to record
+       the windows are width ui_flags.mapwidth, so we don't need to record
        that. */
 
     int y_remaining = ui_flags.extraheight;
