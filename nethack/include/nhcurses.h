@@ -546,6 +546,7 @@ extern void print_low_priority_brandings(WINDOW *win,
 extern void print_high_priority_brandings(WINDOW *win,
                                           struct nh_dbuf_entry *dbe);
 extern void print_cchar(WINDOW *win);
+extern void init_cchar(char c);
 extern void curses_notify_level_changed(int dmode);
 
 /* playerselect.c */
