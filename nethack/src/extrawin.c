@@ -269,9 +269,11 @@ draw_extrawin(enum keyreq_context context)
         draw_direction_rose = TRUE;
         /* ----- "1234567890123456789012345678901234567890" */
         hintline("Move the cursor with the direction keys."
-                 " When finished, confirm with . , : or ;" );
+                 " When done, confirm with . , : or ;"   );
         hintline("Press the letter of a dungeon symbol to "
                  "select it or m/M to move to a monster.");
+        hintline("Alternatively, you can click on the map "
+                 "to select a location.");
         break;
 
     case krc_menu:
@@ -280,7 +282,7 @@ draw_extrawin(enum keyreq_context context)
         hintline("Scroll the menu with '<' and '>'. Press "
                  "Return when finished or ESC to cancel.");
         hintline("^:scroll to top   |:scroll to end   .:s"
-                 "elect all   -:select none");
+                 "elect all   -:select none"             );
         break;
 
     case krc_more:
