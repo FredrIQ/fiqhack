@@ -206,13 +206,12 @@ sdl
 
 The `sdl` interface plugin uses version 2 of the Simple DirectMedia Layer
 library (SDL) to render a simulated terminal in a portable way across a very
-wide range of systems, and is the default on systems that have SDL2 installed
-but can't use the `tty` interface plugin for rendering.  It aims to simulate,
-as far as possible, the experience of the `tty` interface plugin running in a
-terminal emulator (although it does not bother with a conversion to VT100
-control codes and back, because this would be invisible to a user anyway).
-Thus, it gives a grid-based view with foreground and background colors and a
-cursor, just like a real terminal emulator does.
+wide range of systems.  It aims to simulate, as far as possible, the
+experience of the `tty` interface plugin running in a terminal emulator
+(although it does not bother with a conversion to VT100 control codes and
+back, because this would be invisible to a user anyway).  Thus, it gives a
+grid-based view with foreground and background colors and a cursor, just like
+a real terminal emulator does.
 
 In order to be able to draw characters, this interface needs a font file; the
 program that loads libuncursed is responsible for telling libuncursed where it
@@ -402,7 +401,7 @@ specific), and `A_BLINK`, `A_DIM`, `A_PROTECT`, `A_ALTCHARSET` are recognised
 but do not do anything at all.
 
 There are also `A_CHARTEXT` (a mask that can be bitwise-ANDed to a `chtype` to
-get a `char`, or its complement bitwise-anded to a `chtype` to get an
+get a `char`, or its complement bitwise-ANDed to a `chtype` to get an
 `attr_t`); `COLOR_PAIR(x)`, a macro which constructs an `attr_t` from a color
 pair number; and `PAIR_NUMBER(x)`, a macro that does the opposite, extracting
 a color pair number from an `attr_t`.
@@ -511,14 +510,14 @@ way to produce a code from 128 up in a non-Unicode terminal is to use the Meta
 key (or sometimes the Alt key), which literally means "add 128 to the
 character code", and thus a code of, say, 193 should typically be interpreted
 as a capital 'A' (code 65) with 128 added to it, and rendered by applications
-as `Meta-A`.  (It could also mean an 'Á', Unicode and Latin-1 codepoint 193,
-but this is less likely; perhaps the most reasonable behaviour for an
-application is to use the Unicode/Latin-1 behaviour if they were expecting
-text to be input, and to treat it as a Meta-modified character otherwise.)
-uncursed will attempt to, as far as possible, distinguish between Meta and
-Alt, to help avoid this problem (Alt-A will, if possible, send the key code
-`KEY_ALT | 'A'`, rather than the printable character code 193), but on some
-terminals it is impossible to distinguish.
+as `Meta-A`.  (It could also mean `Á`, Unicode and Latin-1 codepoint 193, but
+this is less likely; perhaps the most reasonable behaviour for an application
+is to use the Unicode/Latin-1 behaviour if they were expecting text to be
+input, and to treat it as a Meta-modified character otherwise.)  uncursed will
+attempt to, as far as possible, distinguish between Meta and Alt, to help
+avoid this problem (Alt-A will, if possible, send the key code `KEY_ALT |
+'A'`, rather than the printable character code 193), but on some terminals it
+is impossible to distinguish.
 
 One other point to note is the keys sent by the numeric keypad.  uncursed will
 attempt to distinguish between numeric keypad keys and main keyboard keys, via
@@ -684,7 +683,7 @@ called before any other uncursed functions apart from `initialize_uncursed`,
 `uncursed_set_title`, and `isendwin` (variables like `stdscr` and `LINES` are
 not meaningful before running this function, although for compatibility with
 some other curses implementations `stdscr` will be `NULL` before `initscr` is
-called, and most of the rendering and input functions will cause segfaults or
+called; and most of the rendering and input functions will cause segfaults or
 otherwise malfunction).  Under most error conditions, it will exit the program
 (and if uncursed has not been initialized, it will *crash* the program with an
 abort signal, because this is a fault of the program itself rather than
@@ -740,7 +739,7 @@ either, and thus such plugins *require* the use of this function (which should
 be called after `initscr` but before the first `refresh`) in order to specify
 which font to use.  A font file should be a PNG image that contains the 256
 characters of code page 437, 16 to a row and 16 rows high, in codepoint
-order.  (All characters should be the same size, meainig that the dimensions
+order.  (All characters should be the same size, meaning that the dimensions
 of the image will both be divisble by 16.)  The image should use a transparent
 background, and draw the characters themselves in white.
 
@@ -842,7 +841,7 @@ simple.)
 Causes the current or next call to `get_wch`, `getch`, or `timeout_get_wch` to
 return as if `KEY_SIGNAL` were pressed.  Unlike every other uncursed function
 (which must be called on the same thread as `initialize_uncursed` and
-`initscr`, this function can safely be called from a signal handler, or a
+`initscr`), this function can safely be called from a signal handler, or a
 thread other than the thread that the other uncursed functions are running on
 (and in fact, this is the only way to call it during a call to `get_wch`).  If
 this function is called multiple times between calls to `get_wch`, its effects
@@ -874,8 +873,8 @@ that it is possible to read from the given file descriptor without
 blocking.  (Note that a file at EOF can usually be read without blocking; the
 read is not particularly interesting, but it doesn't block.)
 
-When using the `wincon` interface plugin, watching a network socket will, as a
-side effect, cause it to go into nonblocking mode: this is a deficiency of the
+When using libuncursed on Windows, watching a network socket will, as a side
+effect, cause it to go into nonblocking mode: this is a deficiency of the
 Windows API.  (It may be simplest to manually set the socket to nonblocking
 mode on every operating system, to avoid having to deal with this special
 case.  Note, however, that it is irrelevant whether the socket is blocking or
@@ -890,7 +889,7 @@ or perhaps the POSIX API function `select()`.
 The given file descriptor, `fd`, may be limited in range, due to the system
 calls used to monitor a descriptor for input.  (For instance, it may need to
 be less than `FD_SETSIZE` on a POSIXy system.)  It must also be in a state in
-which it would be reasonably possible to accept input from it (i.e. open and
+which it would reasonably be possible to accept input from it (i.e. open and
 connected, for a network socket), and should not be closed until after it is
 unwatched.
 
@@ -1004,7 +1003,7 @@ set a nonzero color pair number on both the character and the window).
 `attrset`/`wattrset` will set the default attributes for `stdscr` or for
 another window to the given value; `attron` and `attroff` include or exclude
 the given attributes from the window's set of default attributes, leaving any
-default attributes that weren't mentoined the same.  None of those functions
+default attributes that weren't mentioned the same.  None of those functions
 should be used to set a color pair attribute (it will frequently work in
 uncursed, but not if you try to set two color pairs simultaneously for the
 same window, nor in other curses implementations); use `color_set` to set a
@@ -1042,9 +1041,9 @@ location.  (The top-left corner of the window is (0,0).)
 `add_wch` and `addch` output a single attributed character at the cursor
 location; the other four families functions output a string of attributed or
 non-attributed characters at the cursor location.  (All these functions can
-use a `mv` prefix to move the cursor first, a `w` prefix to output to a window
-other than `stdscr`; the string functions use an `n` infix to bound the length
-of the string, much like `strnlen` does.)
+use a `mv` prefix to move the cursor first, and/or a `w` prefix to output to a
+window other than `stdscr`; the string functions use an `n` infix to bound the
+length of the string, much like `strnlen` does.)
 
 In general, the functions that use attributed characters will ignore the
 current default attribute of the window, whereas the functions that just use
@@ -1204,7 +1203,7 @@ and child's memories overlap.  The child's memory will have its top-left
 corner at the given coordinates relative to the parent's memory.  For
 subwindows created via `derwin`, the default location is the `top` and `left`
 given when creating the window; for subwindows created via `subwin`, the
-default location is the top-let corner of the parent's memory.
+default location is the top-left corner of the parent's memory.
 
 It is possible for a subwindow's memory to be outside the bounds of its
 parent's, as a result of `mvderwin` or `wresize` calls (or `stdscr` being
@@ -1247,10 +1246,10 @@ subwindow to be the same as that of the subwindow itself.
 
 uncursed supports mostly transparent support for graphical tiles interfaces,
 allowing tiles to be easily added to a text-based program.  (This is intended
-designed for use by games and especially roguelikes, which motivated the
-creation of uncursed.)  All these functions (except `get_tile_dimensions`) are
-effectively no-ops in a terminal-based interface; they can create, delete,
-etc. tiles regions, but those regions will never be drawn to the screen.
+for use by games and especially roguelikes, which motivated the creation of
+uncursed.)  All these functions (except `get_tile_dimensions`) are effectively
+no-ops in a terminal-based interface; they can create, delete, etc. tiles
+regions, but those regions will never be drawn to the screen.
 
     void set_tiles_tile_file(char *filename, int height, int width)
 
@@ -1294,7 +1293,7 @@ location.)
 
 There is no particular reason in libuncursed why the tiles have to be the same
 size as the underlying characters (this distinguishes it from terminals such
-as Ebonhack which replace characters with tiles directly). Tiles-aware
+as Ebonhack which replace characters with tiles directly).  Tiles-aware
 programs may thus want to produce a tiles region that is large enough to hold
 all the tiles (and thus is presumably larger than the character region).  This
 function is given the dimensions of a character region in `down` and `across`
@@ -1324,9 +1323,11 @@ this multiple times in a row without moving the cursor; the first tile drawn
 nearer the top.
 
 There is no way to *clear* a tile from a character, except by deleting the
-tiles region altogether.  When a tiles region is introduced, every character
-in the matching character region should be given an associated tile, otherwise
-what is drawn in the corresponding part of the tiles region will be undefined.
+tiles region altogether (although you can overwrite a tile with another tile,
+if that other tile is opaque).  When a tiles region is introduced, every
+character in the matching character region should be given an associated tile,
+otherwise what is drawn in the corresponding part of the tiles region will be
+undefined.
 
 Windows with a tiles region may not be copied to or from using `copywin` or
 related functions.
@@ -1374,7 +1375,7 @@ when changing mouse state.
 This function changes whether future text drawn in the given window is
 mouse-active, and in which way.  You can think of mouse activity like an
 attribute; "mouse-active text" is not really any different from, say, "blue
-text" or "bold text".  `button` is the mouse action you want the text to
+text" or "underlined text".  `button` is the mouse action you want the text to
 respond to; `char_or_keycode` is a Unicode character or `KEY_*` constant; and
 `which` is `OK` if `char_or_keycode` is a Unicode character, `KEY_CODE_YES` if
 `char_or_keycode` is a `KEY_*` constant, or `ERR` to disable mouse activity
@@ -1405,6 +1406,12 @@ click will be indistiguishable from the keypress.  (This is useful if, say,
 you have a status bar saying something like "Control-X: exit"; you could make
 the entire text click-active, sending a Control-X.  It's also the easiest way
 to make menus click-active.)
+
+When using tiles combined with the mouse, a tile in a tiles region will be
+mouse-active if the corresponding character in the corresponding character
+region is mouse-active.  This preserves the standard API convention in which
+the tiles region is entirely driven by a character region (typically behind
+it).
 
     void uncursed_clear_mouse_regions(void)
 
@@ -1449,11 +1456,14 @@ terminal applications out of raw mode).
     int beep(void)
     int flash(void)
 
-These functions trigger an audible and visible bell, respetively.
+These functions trigger an audible and visible bell, respectively.
 
     int delay_output(int milliseconds)
 
-This function causes a delay of the given number of milliseconds.
+This function causes a delay of the given number of milliseconds.  (ncurses
+uses pipelining for this: the delay can happen on the terminal in parallel
+with your programming doing processing.  libuncursed might implement this
+optimization in future, but at present, it doesn't.)
 
     int use_default_colors(void)
     int assume_default_colors(int foreground, int background)
@@ -1568,9 +1578,11 @@ interface is allowed to update more than the requested region if it wishes
 (and can use `uncursed_rhook_needsupdate` to determine whether updating a
 character would be useful, if for some reason it wants to do updates out of
 order), and can request the information of any part of the screen in order to
-perform its update.  The interface should call `uncursed_rhook_updated` when
-it updates any character of the screen (whether it was requested to be updated
-or not), to let libuncursed learn what will need to be updated in the future.
+perform its update (e.g. in case if for some reason, updating one character
+would disturb neighbouring characters).  The interface should call
+`uncursed_rhook_updated` when it updates any character of the screen (whether
+it was requested to be updated or not), so that libuncursed does not send
+spurious requests to update it until the next time it actually changes.
 
 ### Input
 
@@ -1647,7 +1659,7 @@ function such as `usleep`.)
 
     void (*rawsignals)(int capture_all_keys)
 
-The argument to this function is an int-like-boolean, which specifies whether
+The argument to this function is a boolean-like int, which specifies whether
 the interface plugin should attempt to input *all* keys, including
 combinations with special meanings such as Control-C (`capture_all_keys` is
 1); or only the keys which are normally intended as input to applications
