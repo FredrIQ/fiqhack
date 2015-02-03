@@ -552,7 +552,8 @@ toofar:
        and that the monster hasn't used its turn already (tmp == 3). */
 
     if (!mtmp->mpeaceful || (Conflict && !resist(mtmp, RING_CLASS, 0, 0))) {
-        if (inrange && !noattacks(mdat) && u.uhp > 0 && !scared && tmp != 3)
+        if (inrange && !noattacks(mdat) && u.uhp > 0 && !scared && tmp != 3 &&
+            aware_of_u(mtmp))
             if (mattackq(mtmp, mtmp->mux, mtmp->muy))
                 return 1;       /* monster died (e.g. exploded) */
 
@@ -675,10 +676,11 @@ m_move(struct monst *mtmp, int after)
     if (hides_under(ptr) && OBJ_AT(mtmp->mx, mtmp->my) && rn2(10))
         return 0;       /* do not leave hiding place */
 
-    set_apparxy(mtmp); /* where does mtmp think you are? */
-    /* Not necessary if m_move called from this file (dochug() has already
-       called it via strategy()), but we call it anyway so that calls of m_move
-       from elsewhere (ex. leprechauns dodging) work */
+    /* Note: we don't call set_apparxy() from here any more. When being called
+       in the usual way, it was doubling the chances of the monster tracking the
+       player. This means it might not be called if a leprechaun dodges on its
+       first turn out, but we now ensure that muxy always has a sensible value,
+       so nothing breaks. */
 
     if (!Is_rogue_level(&u.uz))
         can_tunnel = tunnels(ptr);
@@ -1265,7 +1267,36 @@ set_apparxy(struct monst *mtmp)
             disp = 0;
         else if (!rn2(actually_adjacent ? 3 : 11))
             disp = 0;
-        else {
+        else if (mtmp->mstrategy & STRAT_PLAYER) {
+
+            /* If the monster has known the player's location recently, and the
+               player suddenly disappears, one reasonable guess that a monster
+               might make is that the player turned invisible. We can implement
+               this by looking at mstrategy; if there isn't a monster visible on
+               the square, and mstrategy says that the monster is tracking the
+               player's location, and that location is adjacent to the monster,
+               we mark it as the believed location of the player.
+
+               This is not as smart as it could be, but leads to more realistic
+               behaviour (e.g. continuing to attack a square from which an
+               invisible player has been attacking the monster). */
+
+            int x1 = STRAT_GOALX(mtmp->mstrategy);
+            int y1 = STRAT_GOALY(mtmp->mstrategy);
+            if (distmin(x1, y1, mtmp->mx, mtmp->my) == 1 &&
+                !MON_AT(level, x1, y1)) {
+                /* TODO: or doesn't perceive the monster there */
+                mtmp->mux = x1;
+                mtmp->muy = y1;
+            } else {
+                mtmp->mux = COLNO;
+                mtmp->muy = ROWNO;
+            }
+
+            return;
+
+        } else {
+
             /* monster has no idea where you are */
             mtmp->mux = COLNO;
             mtmp->muy = ROWNO;

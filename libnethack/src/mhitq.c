@@ -108,7 +108,8 @@ wildmiss(struct monst *mtmp, const struct attack *mattk)
    The function handles the "empty space" case itself, and farms the other two
    possibilities out to mattacku and mattackm.
 
-   The monster must be on the current level. */
+   The monster must be on the current level. Additionally, this function
+   currently assumes that the monster believes it's attacking the player. */
 int
 mattackq(struct monst *mtmp, int x, int y)
 {
@@ -219,6 +220,17 @@ mattackq(struct monst *mtmp, int x, int y)
             break;
         }
     }
+
+    /* If the monster thought the square was the player's location, it now knows
+       it's wrong. This must come last, so as to not clobber the reason it's
+       attacking thin air. */
+    if (mtmp->mux == x && mtmp->muy == y) {
+        mtmp->mux = COLNO;
+        mtmp->muy = ROWNO;
+    }
+    if (mtmp->mstrategy & STRAT_PLAYER &&
+        STRAT_GOALX(mtmp->mstrategy) == x && STRAT_GOALY(mtmp->mstrategy) == y)
+        mtmp->mstrategy = STRAT_NONE;
 
     return mtmp->mhp <= 0;
 }
