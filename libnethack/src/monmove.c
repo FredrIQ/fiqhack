@@ -645,7 +645,7 @@ int
 m_move(struct monst *mtmp, int after)
 {
     int appr;
-    xchar gx, gy, nix, niy, chcnt;
+    xchar gx, gy, nix, niy;
     int chi;    /* could be schar except for stupid Sun-2 compiler */
     boolean can_tunnel = 0, can_open = 0, can_unlock = 0, doorbuster = 0;
     boolean setlikes = 0;
@@ -839,8 +839,8 @@ not_special:
     if (doorbuster)
         flag |= BUSTDOOR;
     {
-        int i, nx, ny, nearer;
-        int cnt;
+        int i, nx, ny, nearer, distance_tie;
+        int cnt, chcnt;
         int ndist, nidist;
         coord poss[9];
 
@@ -867,14 +867,20 @@ not_special:
             ny = poss[i].y;
 
             nearer = ((ndist = distmap(&ds, nx, ny)) < nidist);
+            distance_tie = (ndist == nidist);
 
-            if ((appr == 1 && nearer) || (appr == -1 && !nearer) ||
+            if ((appr == 1 && nearer) ||
+                (appr == -1 && !nearer && !distance_tie) ||
+                (appr && distance_tie && !rn2(++chcnt)) ||
                 (!appr && !rn2(++chcnt)) || !mmoved) {
                 nix = nx;
                 niy = ny;
                 nidist = ndist;
                 chi = i;
                 mmoved = 1;
+
+                if (appr && !distance_tie)
+                    chcnt = 1;
             }
         }
     }
