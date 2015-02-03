@@ -1328,7 +1328,7 @@ ucast_wizard_spell(struct monst *mattk, struct monst *mtmp, int dmg,
             return;
         }
         if (yours || canseemon(mtmp))
-            pline("You feel as though %s needs some help.", mon_nam(mtmp));
+            pline("You feel as if %s needs some help.", mon_nam(mtmp));
         mrndcurse(mtmp);
         dmg = 0;
         break;
@@ -1556,7 +1556,7 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
             return;
         }
         if (yours || canseemon(mtmp))
-            pline("You feel as though %s needs some help.", mon_nam(mtmp));
+            pline("You feel as if %s needs some help.", mon_nam(mtmp));
         mrndcurse(mtmp);
         dmg = 0;
         break;

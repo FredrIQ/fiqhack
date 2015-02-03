@@ -1850,7 +1850,7 @@ use_misc(struct monst *mtmp, struct musable *m)
         mreadmsg(mtmp, otmp);
         if (canseemon(mtmp)) {
             if (mtmp->mconf)
-                pline("You feel as though %s needs some help.", mon_nam(mtmp));
+                pline("You feel as if %s needs some help.", mon_nam(mtmp));
             else
                 pline("You feel like someone is helping %s.", mon_nam(mtmp));
             if (!objects[SCR_REMOVE_CURSE].oc_name_known &&
