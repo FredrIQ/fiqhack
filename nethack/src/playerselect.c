@@ -5,7 +5,6 @@
 
 #include "nhcurses.h"
 #include <ctype.h>
-#include <time.h>
 
 
 #define LISTSZ 32
@@ -310,8 +309,6 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
         list[i].caption = listbuffers[i];
     }
 
-    srand(time(NULL));
-
     /* Should we randomly pick for the player? */
     if (!randomall &&
         (role == ROLE_NONE || race == ROLE_NONE || gend == ROLE_NONE ||
@@ -335,7 +332,7 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
         /* Process the choice */
         if (pick4u == 'y' || role == ROLE_RANDOM || randomall) {
             /* Pick a random role */
-            role = list[random() % listlen].id;
+            role = list[rand() % listlen].id;
         } else {
             /* Prompt for a role */
 
@@ -350,7 +347,7 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
                               0);
                 lastch = thisch;
             }
-            pick_list[0] = id = list[random() % listlen].id + 1;
+            pick_list[0] = id = list[rand() % listlen].id + 1;
             add_menu_item(&menu, id, "Random", '*', 0);
             add_menu_item(&menu, -1, "Quit", 'q', 0);
 
@@ -372,7 +369,7 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
         listlen = get_valid_races(ri, role, gend, align, list, LISTSZ);
 
         if (pick4u == 'y' || race == ROLE_RANDOM || randomall) {
-            race = list[random() % listlen].id;
+            race = list[rand() % listlen].id;
         } else {        /* pick4u == 'n' */
             /* Count the number of valid races */
             k = list[0].id;     /* valid race */
@@ -387,7 +384,7 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
                     add_menu_item(&menu, id, list[i].caption,
                                   list[i].caption[0], 0);
                 }
-                pick_list[0] = id = list[random() % listlen].id + 1;
+                pick_list[0] = id = list[rand() % listlen].id + 1;
                 add_menu_item(&menu, id, "Random", '*', 0);
                 add_menu_item(&menu, -1, "Quit", 'q', 0);
 
@@ -410,7 +407,7 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
         listlen = get_valid_genders(ri, role, race, align, list, LISTSZ);
 
         if (pick4u == 'y' || gend == ROLE_RANDOM || randomall) {
-            gend = list[random() % listlen].id;
+            gend = list[rand() % listlen].id;
         } else {        /* pick4u == 'n' */
             /* Count the number of valid genders */
             k = list[0].id;     /* valid gender */
@@ -425,7 +422,7 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
                     add_menu_item(&menu, id, list[i].caption,
                                   list[i].caption[0], 0);
                 }
-                pick_list[0] = id = list[random() % listlen].id + 1;
+                pick_list[0] = id = list[rand() % listlen].id + 1;
                 add_menu_item(&menu, id, "Random", '*', 0);
                 add_menu_item(&menu, -1, "Quit", 'q', 0);
 
@@ -448,7 +445,7 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
         listlen = get_valid_aligns(ri, role, race, gend, list, LISTSZ);
 
         if (pick4u == 'y' || align == ROLE_RANDOM || randomall) {
-            align = list[random() % listlen].id;
+            align = list[rand() % listlen].id;
         } else {        /* pick4u == 'n' */
             /* Count the number of valid alignments */
             k = list[0].id;     /* valid alignment */
@@ -463,7 +460,7 @@ player_selection(int *out_role, int *out_race, int *out_gend, int *out_align,
                     add_menu_item(&menu, id, list[i].caption,
                                   list[i].caption[0], 0);
                 }
-                pick_list[0] = id = list[random() % listlen].id + 1;
+                pick_list[0] = id = list[rand() % listlen].id + 1;
                 add_menu_item(&menu, id, "Random", '*', 0);
                 add_menu_item(&menu, -1, "Quit", 'q', 0);
 
