@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-21 */
+/* Last modified by Alex Smith, 2015-02-03 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -230,7 +230,7 @@ find_defensive(struct monst *mtmp, struct musable *m)
 
     if (is_animal(mtmp->data) || mindless(mtmp->data))
         return FALSE;
-    if (dist2(x, y, mtmp->mux, mtmp->muy) > 25)
+    if (!aware_of_u(mtmp) || dist2(x, y, mtmp->mux, mtmp->muy) > 25)
         return FALSE;
     if (Engulfed && stuck)
         return FALSE;
@@ -1067,8 +1067,8 @@ find_offensive(struct monst * mtmp, struct musable * m)
             ((helmet && is_metallic(helmet)) || mtmp->mconf ||
              amorphous(mtmp->data) || passes_walls(mtmp->data) ||
              noncorporeal(mtmp->data) || unsolid(mtmp->data) || !rn2(10))
+            && aware_of_u(mtmp)
             && dist2(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy) <= 2
-            && (mtmp->mx != mtmp->mux || mtmp->my != mtmp->muy)
             && mtmp->mcansee && haseyes(mtmp->data)
             && !Is_rogue_level(&u.uz)
             && (!In_endgame(&u.uz) || Is_earthlevel(&u.uz))) {
@@ -1458,6 +1458,9 @@ use_offensive(struct monst *mtmp, struct musable *m)
             otmp->dknown = 1;
             pline("%s hurls %s!", Monnam(mtmp), singular(otmp, doname));
         }
+        /* Wow, this is a twisty mess of ugly global variables. */
+        if (!aware_of_u(mtmp))
+            panic("Monster throws potion while unaware!");
         m_throw(mtmp, mtmp->mx, mtmp->my, sgn(tbx), sgn(tby),
                 distmin(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy), otmp, TRUE);
         return 2;
@@ -1538,8 +1541,7 @@ find_misc(struct monst * mtmp, struct musable * m)
     /* We arbitrarily limit to times when a player is nearby for the same
        reason as Junior Pac-Man doesn't have energizers eaten until you can see 
        them... */
-    if (dist2(x, y, mtmp->mux, mtmp->muy) > 36 ||
-        (x == mtmp->mux && y == mtmp->muy))
+    if (!aware_of_u(mtmp) || dist2(x, y, mtmp->mux, mtmp->muy) > 36)
         return FALSE;
 
     if (!stuck && !immobile && !mtmp->cham && monstr[monsndx(mdat)] < 6) {

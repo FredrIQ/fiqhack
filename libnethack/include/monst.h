@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-21 */
+/* Last modified by Alex Smith, 2015-02-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -84,8 +84,9 @@ struct monst {
 
     short mnum; /* permanent monster index number */
     uchar m_lev;        /* adjusted difficulty level of monster */
-    xchar mx, my;
-    xchar mux, muy;     /* where the monster thinks you are */
+    xchar mx, my;       /* monster location */
+    xchar mux, muy;     /* where the monster thinks you are; if it doesn't know
+                           where you are, this is (COLNO, ROWNO) */
     aligntyp malign;    /* alignment of this monster, relative to the player
                            (positive = good to kill) */
     short moveoffset;   /* how this monster's actions map onto turns */
@@ -190,6 +191,29 @@ struct monst {
 # define DEADMONSTER(mon) ((mon)->mhp < 1)
 
 # define onmap(mon) (isok((mon)->mx, (mon)->my))
+
+/* Does a monster know where the player character is? Does it think it does? */
+# define knows_ux_uy(mon) ((mon)->mux == u.ux && (mon)->muy == u.uy)
+# define aware_of_u(mon)  (isok((mon)->mux, (mon)->muy))
+
+/* More detail on why a monster doesn't sense you: typically used for messages
+   that describe where a monster is aiming; also used to determine whether a
+   monster can specifically see a displaced image (if you're invisible and it
+   doesn't have see invis, it can't even if you're Displaced) */
+enum monster_awareness_reasons {
+    mar_unaware,
+    mar_guessing_invis,
+    mar_guessing_displaced,
+    mar_guessing_other,
+    mar_aware
+};
+# define awareness_reason(mon) (!aware_of_u(mon) ? mar_unaware :        \
+                                knows_ux_uy(mon) ? mar_aware :          \
+                                ((Invis && !perceives(mon->data)) ||    \
+                                 !((mon)->mcansee)) ?                   \
+                                mar_guessing_invis :                    \
+                                Displaced ? mar_guessing_displaced :    \
+                                mar_guessing_other)
 
 /* Is a monster using an item? Used to ensure that buzz() calls the correct kill
  * function.

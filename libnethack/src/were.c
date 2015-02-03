@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-28 */
+/* Last modified by Alex Smith, 2015-02-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -94,16 +94,16 @@ new_were(struct monst *mon)
 
 /* were-creature (even you) summons a horde */
 int
-were_summon(const struct permonst *ptr, boolean yours,
+were_summon(struct monst *msummoner,
             int *visible,    /* number of visible helpers created */
             const char **genbuf)
 {
-    int i, typ, pm = monsndx(ptr);
+    int i, typ, pm = monsndx(msummoner->data);
     struct monst *mtmp;
     int total = 0;
 
     *visible = 0;
-    if (Protection_from_shape_changers && !yours)
+    if (Protection_from_shape_changers && msummoner != &youmonst)
         return 0;
     for (i = rnd(5); i > 0; i--) {
         switch (pm) {
@@ -129,13 +129,17 @@ were_summon(const struct permonst *ptr, boolean yours,
         default:
             continue;
         }
-        mtmp = makemon(&mons[typ], level, u.ux, u.uy, NO_MM_FLAGS);
+        mtmp = makemon(&mons[typ], msummoner == &youmonst ? 
+                       level : msummoner->dlevel,
+                       msummoner == &youmonst ? u.ux : msummoner->mx,
+                       msummoner == &youmonst ? u.uy : msummoner->my,
+                       MM_ADJACENTOK);
         if (mtmp) {
             total++;
             if (canseemon(mtmp))
                 *visible += 1;
         }
-        if (yours && mtmp)
+        if (msummoner == &youmonst && mtmp)
             tamedog(mtmp, NULL);
     }
     return total;

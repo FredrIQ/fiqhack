@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2015-02-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,12 +7,10 @@
 # define MFNDPOS_H
 
 # define ALLOW_TRAPS    0x00020000L     /* can enter traps */
-# define ALLOW_U        0x00040000L
-                                        /* can attack you */
-# define ALLOW_M        0x00080000L
-                                        /* can attack other monsters */
+# define ALLOW_MUXY     0x00040000L     /* can attack your believed location */
+# define ALLOW_M        0x00080000L     /* can attack other monsters */
 # define ALLOW_TM       0x00100000L     /* can attack tame monsters */
-# define ALLOW_ALL      (ALLOW_U | ALLOW_M | ALLOW_TM | ALLOW_TRAPS)
+# define ALLOW_ALL      (ALLOW_MUXY | ALLOW_M | ALLOW_TM | ALLOW_TRAPS)
 # define NOTONL         0x00200000L     /* avoids direct line to player */
 # define OPENDOOR       0x00400000L     /* opens closed doors */
 # define UNLOCKDOOR     0x00800000L     /* unlocks locked doors */

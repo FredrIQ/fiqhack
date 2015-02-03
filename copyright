@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Alex Smith, 2014-11-23
+Last-Modified: Last modified by Alex Smith, 2015-02-03
 Upstream-Name: nethack4
 Upstream-Contact: ais523@nethack4.org
 
@@ -234,6 +234,12 @@ Copyright: Copyright (c) Daniel Thaler, 2011
 Files: libnethack/src/messages.c
 License: NGPL
 Copyright: Copyright (c) 2014 Alex Smith
+
+Files: libnethack/src/mhitq.c
+License: NGPL
+Copyright:
+ Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ Copyright (c) 2015 Alex Smith.
 
 Files: libnethack/src/mkmap.c
 License: NGPL

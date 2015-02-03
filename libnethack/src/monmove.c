@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-12-02 */
+/* Last modified by Alex Smith, 2015-02-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -138,7 +138,7 @@ disturb(struct monst *mtmp)
      * + Nymphs, jabberwocks, and leprechauns do not easily wake up.
      *
      * Wake up if:
-     *      in direct LOS                                           AND
+     *      in line of effect                                       AND
      *      within 10 squares                                       AND
      *      not stealthy or (mon is an ettin and 9/10)              AND
      *      (mon is not a nymph, jabberwock, or leprechaun) or 1/50 AND
@@ -203,10 +203,9 @@ distfleeck(struct monst *mtmp, int *inrange, int *nearby, int *scared)
 {
     int seescaryx, seescaryy;
 
-    *inrange =
-        (dist2(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy) <=
-         (BOLT_LIM * BOLT_LIM) && (mtmp->mux != mtmp->mx ||
-                                   mtmp->muy != mtmp->my));
+    *inrange = aware_of_u(mtmp) &&
+        dist2(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy) <= BOLT_LIM * BOLT_LIM;
+
     *nearby = *inrange && monnear(mtmp, mtmp->mux, mtmp->muy);
 
     /* Note: if your image is displaced, the monster sees the Elbereth at your
@@ -214,7 +213,7 @@ distfleeck(struct monst *mtmp, int *inrange, int *nearby, int *scared)
        possibly attacking you by accident.  If you are invisible, it sees the
        Elbereth at your real position, thus never running into you by accident
        but possibly attacking the spot where it guesses you are. */
-    if (!mtmp->mcansee || (Invis && !perceives(mtmp->data))) {
+    if (awareness_reason(mtmp) == mar_guessing_displaced) {
         seescaryx = mtmp->mux;
         seescaryy = mtmp->muy;
     } else {
@@ -253,7 +252,7 @@ dochug(struct monst *mtmp)
 {
     const struct permonst *mdat;
     int tmp = 0;
-    int inrange, nearby, scared;
+    int inrange, nearby, scared; /* note: all these depend on aware_of_u */
     struct obj *ygold = 0, *lepgold = 0;
     struct musable musable;
 
@@ -276,6 +275,10 @@ dochug(struct monst *mtmp)
     /* update quest status flags */
     quest_stat_check(mtmp);
 
+    /* TODO: Quest leaders should really be affected by invisibility and
+       displacement, but that's not only more of a balance change than I'm
+       comfortable with, it also seems likely to introduce weird bugs. So this
+       uses monnear and your real location. */
     if (!mtmp->mcanmove || (mtmp->mstrategy & STRAT_WAITMASK)) {
         if (Hallucination)
             newsym(mtmp->mx, mtmp->my);
@@ -346,7 +349,7 @@ dochug(struct monst *mtmp)
         !Engulfed) {
         if (u_helpless(hm_all))
             return 0; /* wait for you to be able to respond */
-        if (mtmp->mux != u.ux || mtmp->muy != u.uy) {
+        if (!knows_ux_uy(mtmp)) {
             pline("%s whispers at thin air.",
                   cansee(mtmp->mux, mtmp->muy) ? Monnam(mtmp) : "It");
 
@@ -465,6 +468,13 @@ toofar:
         lepgold = findgold(mtmp->minvent);
     }
 
+    /* We have two AI branches: "immediately attack the player's apparent
+       location", and "don't immediately attack the player's apparent location"
+       (in which case attacking the player's apparent location is still an
+       option, but it'll only be taken if the player's in the monster's way).
+       For the fallthroughs to work correctly, the "don't attack" branch comes
+       first, and we decide to use it via this rather large if statement. */
+
     if (!nearby || mtmp->mflee || scared || mtmp->mconf || mtmp->mstun ||
         (mtmp->minvis && !rn2(3)) ||
         (mdat->mlet == S_LEPRECHAUN && !ygold &&
@@ -483,7 +493,7 @@ toofar:
             for (a = &mdat->mattk[0]; a < &mdat->mattk[NATTK]; a++) {
                 if (a->aatyp == AT_MAGC &&
                     (a->adtyp == AD_SPEL || a->adtyp == AD_CLRC)) {
-                    if (castmu(mtmp, a, FALSE, FALSE)) {
+                    if (castmu(mtmp, a, 0)) {
                         break;
                     }
                 }
@@ -525,13 +535,25 @@ toofar:
         }
     }
 
+    /* The other branch: attacking the player's apparent location. We jump to
+       this immediately if no condition for not attacking (peaceful, outside
+       melee range, etc.) is met. We also can end up here as a fallthrough,
+       e.g. if a fleeing monster is stuck in a dead end, or a confused hostile
+       monster stumbles into the player.
 
-
-    /* Now, attack the player if possible - one attack set per monst */
+       At this point, we have established that the monster wants to either move
+       to or attack the player's apparent location. We don't know which, and we
+       don't know what's there. Stun and confusion are checked by m_move, which
+       won't fall through here unless the player's apparent square happened to
+       be selected by the movement randomizer. Thus, we do a hostile/conflict
+       check in order to ensure that the monster is willing to attack, then tell
+       it to attack the square it believes the player to be on. We also check to
+       make sure that the monster's physically capable of attacking the square,
+       and that the monster hasn't used its turn already (tmp == 3). */
 
     if (!mtmp->mpeaceful || (Conflict && !resist(mtmp, RING_CLASS, 0, 0))) {
         if (inrange && !noattacks(mdat) && u.uhp > 0 && !scared && tmp != 3)
-            if (mattacku(mtmp))
+            if (mattackq(mtmp, mtmp->mux, mtmp->muy))
                 return 1;       /* monster died (e.g. exploded) */
 
         if (mtmp->wormno)
@@ -603,10 +625,20 @@ itsstuck(struct monst *mtmp)
 
 /*
  * Return values:
- * 0: did not move, but can still attack and do other stuff.
- * 1: moved, possibly can attack.
- * 2: monster died.
- * 3: did not move, and can't do anything else either.
+ * 0: Did not move, but can still attack and do other stuff.
+ *    Returning this value will (in the current codebase) cause the monster to
+ *    immediately attempt a melee or ranged attack on the player, if it's in a
+ *    state (hostile/conflicted) in which it doesn't mind doing that, and it's
+ *    on a map square from which it's physically capable of doing that.
+ * 1: Moved, possibly can attack.
+ *    This will only attempt an attack if a ranged attack is a possibility.
+ * 2: Monster died.
+ * 3: Did not move, and can't do anything else either.
+ *
+ * This function is only called in situations where the monster's first
+ * preference is not a melee attack on the player.  Thus, a return value of 0
+ * can be used to signify a melee attack on the player as a lesser preference,
+ * e.g. when fleeing but stuck in a dead end.
  */
 int
 m_move(struct monst *mtmp, int after)
@@ -753,18 +785,6 @@ not_special:
     if (mtmp->mconf || (Engulfed && mtmp == u.ustuck) ||
         mtmp->mstrategy & STRAT_NONE)
         appr = 0;
-    else if (mtmp->mstrategy & STRAT_PLAYER) {
-        struct obj *lepgold, *ygold;
-
-        /* monsters that won't chase the player despite knowing their location
-           and /wanting/ to chase the player: currently none */
-
-        /* monsters that will flee from the player */
-        if (monsndx(ptr) == PM_LEPRECHAUN && (appr == 1) &&
-            ((lepgold = findgold(mtmp->minvent)) &&
-             (lepgold->quan > ((ygold = findgold(invent)) ? ygold->quan : 0L))))
-            appr = -1;
-    }
 
     /* monsters with limited control of their actions */
     if (((monsndx(ptr) == PM_STALKER || ptr->mlet == S_BAT ||
@@ -772,8 +792,7 @@ not_special:
         appr = 0;
 
     if ((!mtmp->mpeaceful || !rn2(10)) && (!Is_rogue_level(&u.uz))) {
-        boolean in_line = lined_up(mtmp) &&
-            (mtmp->mx != mtmp->mux || mtmp->my != mtmp->muy) &&
+        boolean in_line = lined_up(mtmp) && aware_of_u(mtmp) &&
             (distmin(mtmp->mx, mtmp->my, mtmp->mux, mtmp->muy) <=
              (throws_rocks(youmonst.data) ? 20 : ACURRSTR / 2 + 1));
 
@@ -793,7 +812,7 @@ not_special:
     if (mtmp->mpeaceful && (!Conflict || resist(mtmp, RING_CLASS, 0, 0)))
         flag |= (ALLOW_SANCT | ALLOW_SSM);
     else
-        flag |= ALLOW_U;
+        flag |= ALLOW_MUXY;
     if (is_minion(ptr) || is_rider(ptr))
         flag |= ALLOW_SANCT;
     /* unicorn may not be able to avoid hero on a noteleport level */
@@ -888,61 +907,87 @@ not_special:
             if (mtmp->weapon_check >= NEED_PICK_AXE && mon_wield_item(mtmp))
                 return 3;
         }
-        /* If ALLOW_U is set, either it's trying to attack you, or it thinks it 
-           is.  In either case, attack this spot in preference to all others. */
-        /* Actually, this whole section of code doesn't work as you'd expect.
-           Most attacks are handled in dochug().  It calls distfleeck(), which
-           among other things sets nearby if the monster is near you--and if
-           nearby is set, we never call m_move unless it is a special case
-           (confused, stun, etc.) The effect is that this ALLOW_U (and mfndpos) 
-           has no effect for normal attacks, though it lets a confused monster
-           attack you by accident. */
-        if (info[chi] & ALLOW_U) {
-            nix = mtmp->mux;
-            niy = mtmp->muy;
-        }
+        /* If ALLOW_MUXY is set, the monster thinks it's trying to attack you.
+
+           In most cases, this codepath won't happen. There are two main AI
+           codepaths in the game: "immediately commit to a melee attack", and
+           "don't immediately commit to a melee attack". This function
+           implements the latter codepath; however, in most cases where a
+           monster would actually /want/ to attack the player, the former
+           codepath would be used.
+
+           So it's best to think of ALLOW_MUXY as meaning "the monster doesn't
+           /mind/ attacking the player, and wants to go to (or accidentally went
+           to due to confusion) the player's square".  We obviously can't move
+           the monster in this case; if it doesn't mind attacking the player,
+           and the player is in the way, it will attack.  A good example of this
+           situation is a fleeing monster stuck in a dead end; the "fleeing"
+           status causes it to not immediately commit to a melee attack, but the
+           only direction to flee in is back past the player.
+
+           Thus, the solution is simply to leave everything as is and return 0.
+           This causes the other codepath - the one in which the monster attacks
+           the player's apparent square - to run.
+
+           In 3.4.3, this code was rather more complex; a bug in dochug meant
+           that it wouldn't handle this case correctly if the player was
+           displaced, and so the code for handling that case was placed in
+           m_move instead.  The buggy codepath was still accessible via the
+           immediately-commit AI, though.  4.3 uses the other alternative; we
+           fall out to dochug, and used the correct code for monster/muxy combat
+           from this function to replace the incorrect code there (although it's
+           been factored out into a separate function, mattackq, in mhitu.c).
+        */
+        if (info[chi] & ALLOW_MUXY)
+            return 0;
+
+        /* We also have to take into account another situation: the situation
+           where the monster doesn't believe it's attacking you, but selects
+           your square to move onto by mistake. The solution to this in 3.4.3 is
+           to alert the monster to your location (which makes sense), and to
+           return 0 (which seems a little unfair, as it will then be able to
+           immediately attack you, and unless peaceful, probably will).
+
+           Because 4.3 aims to make player hidden-ness factor properly into the
+           monster AI, the monster should at least lose its turn. We also add a
+           message, partly for the changed mechanic, partly so players
+           understand where the monster turn went. */
         if (nix == u.ux && niy == u.uy) {
             mtmp->mux = u.ux;
             mtmp->muy = u.uy;
-            return 0;
+
+            /* Exception: if you've laid a trap for the monster. */
+            if (u.uundetected)
+                return 0;
+
+            pline("%s bumps right into you!", Monnam(mtmp));
+            return 3;
         }
+
         /* The monster may attack another based on 1 of 2 conditions:
 
            1 - It may be confused.
 
            2 - It may mistake the monster for your (displaced) image.
 
-           Pets get taken care of above and shouldn't reach this code. Conflict
-           gets handled even farther away (movemon()). */
-        if ((info[chi] & ALLOW_M) || (nix == mtmp->mux && niy == mtmp->muy)) {
-            struct monst *mtmp2;
-            int mstatus;
+           Pets get taken care of above and shouldn't reach this code. I'm not
+           sure offhand where conflict gets handled. It might be here, actually;
+           it wasn't in an older version of the code, but the bugfixes to
+           mm_aggression may have changed that. */
+        if (info[chi] & ALLOW_M)
+            return mattackq(mtmp, nix, niy);
 
-            mtmp2 = m_at(level, nix, niy);
-
-            notonhead = mtmp2 && (nix != mtmp2->mx || niy != mtmp2->my);
-            /* note: mstatus returns 0 if mtmp2 is nonexistent */
-            mstatus = mattackm(mtmp, mtmp2);
-
-            if (mstatus & MM_AGR_DIED)  /* aggressor died */
-                return 2;
-
-            if ((mstatus & MM_HIT) && !(mstatus & MM_DEF_DIED) && rn2(4)) {
-                notonhead = 0;
-                mstatus = mattackm(mtmp2, mtmp);        /* return attack */
-                if (mstatus & MM_DEF_DIED)
-                    return 2;
-            }
-            return 3;
-        }
+        /* The monster's moving to an empty space. */
 
         if (!m_in_out_region(mtmp, nix, niy))
             return 3;
         remove_monster(level, omx, omy);
         place_monster(mtmp, nix, niy);
+
         /* Place a segment at the old position. */
         if (mtmp->wormno)
             worm_move(mtmp);
+
     } else {
         if (is_unicorn(ptr) && rn2(2) && !tele_restrict(mtmp)) {
             rloc(mtmp, FALSE);
@@ -1139,7 +1184,7 @@ void
 set_apparxy(struct monst *mtmp)
 {
     boolean notseen;
-    int disp, mx = mtmp->mux, my = mtmp->muy;
+    int disp;
     long umoney = money_cnt(invent);
     boolean actually_adjacent = distmin(mtmp->mx, mtmp->my, u.ux, u.uy) <= 1;
 
@@ -1157,8 +1202,8 @@ set_apparxy(struct monst *mtmp)
     /* monsters without LOS can't see you, and have no chance to randomly see
        you */
     if (!couldsee(mtmp->mx, mtmp->my)) {
-        mtmp->mux = mtmp->mx;
-        mtmp->muy = mtmp->my;
+        mtmp->mux = COLNO;
+        mtmp->muy = ROWNO;
         return;
     }
 
@@ -1167,16 +1212,16 @@ set_apparxy(struct monst *mtmp)
     if (!mtmp->mpeaceful && mtmp->dlevel->flags.shortsighted &&
         dist2(mtmp->mx, mtmp->my, u.ux, u.uy) >
         (couldsee(mtmp->mx, mtmp->my) ? 144 : 36)) {
-        mtmp->mux = mtmp->mx;
-        mtmp->muy = mtmp->my;
+        mtmp->mux = COLNO;
+        mtmp->muy = ROWNO;
         return;
     }
 
     /* monsters which know where you are don't suddenly forget, if you haven't
        moved away and are still close */
-    if (mx == u.ux && my == u.uy && actually_adjacent) {
-        mtmp->mux = mtmp->mx;
-        mtmp->muy = mtmp->my;
+    if (knows_ux_uy(mtmp) && actually_adjacent) {
+        mtmp->mux = u.ux;
+        mtmp->muy = u.uy;
         return;
     }
 
@@ -1200,12 +1245,18 @@ set_apparxy(struct monst *mtmp)
        movement purposes if invisible (meaning monsters would random-walk even
        though they knew where you were, which is a bit weird).
 
+       Additionally, 3.4.3 had a codepath in an entirely unrelated part of the
+       code (inside mfndpos) which caused your actual location to be detected
+       when actually adjacent. However, the actual change that implemented this
+       basically just turned off displacement; invisibility was implemented as
+       always knowing where you were, and sometimes just ignoring it.
+
        In 4.3, we approximate the same rules but in a less inconsistent way:
-       monsters can sense invisible or displaced players 1/3 or 1/4 of the time
+       monsters can sense invisible or displaced players 1/3 or 1/1 of the time
        respectively if adjacent, and 1/11 or 1/4 of the time respectively if not
        adjacent. */
 
-    /* add cases as required.  eg. Displacement ... */
+    /* add cases as required */
 
     disp = 0;
     if (notseen || Underwater) {
@@ -1216,12 +1267,16 @@ set_apparxy(struct monst *mtmp)
             disp = 0;
         else {
             /* monster has no idea where you are */
-            mtmp->mux = mtmp->mx;
-            mtmp->muy = mtmp->my;
+            mtmp->mux = COLNO;
+            mtmp->muy = ROWNO;
             return;
         }
     } else if (Displaced) {
-        disp = !rn2(4) ? 0 : couldsee(mx, my) ? 2 : 1;
+        /* TODO: As described above, this actually_adjacent check was moved from
+           mfndpos. It's worth considering modifying it. The comment in its
+           previous location in mfndpos should also be changed in that case. */
+        disp = actually_adjacent ? 0 : !rn2(4) ? 0 :
+            couldsee(mtmp->mx, mtmp->my) ? 2 : 1;
     } else
         disp = 0;
 
@@ -1235,6 +1290,7 @@ set_apparxy(struct monst *mtmp)
 
     /* Look for an appropriate place for the displaced image to appear. */
 
+    int mx, my;
     do {
         if (++try_cnt > 200) {
             mx = u.ux;
@@ -1245,7 +1301,7 @@ set_apparxy(struct monst *mtmp)
         mx = u.ux - disp + rn2(2 * disp + 1);
         my = u.uy - disp + rn2(2 * disp + 1);
     } while (!isok(mx, my)
-             || (disp != 2 && mx == mtmp->mx && my == mtmp->my)
+             || (mx == mtmp->mx && my == mtmp->my)
              || ((mx != u.ux || my != u.uy) && !passes_walls(mtmp->data) &&
                  (!ACCESSIBLE(level->locations[mx][my].typ) ||
                   (closed_door(level, mx, my) && !can_ooze(mtmp))))

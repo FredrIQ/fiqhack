@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-12-02 */
+/* Last modified by Alex Smith, 2015-02-03 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -841,7 +841,7 @@ extern void save_mon(struct memfile *mf, const struct monst *mon);
 
 /* ### mcastu.c ### */
 
-extern int castmu(struct monst *, const struct attack *, boolean, boolean);
+extern int castmu(struct monst *, const struct attack *, int);
 extern int buzzmu(struct monst *, const struct attack *);
 extern int castmm(struct monst *, struct monst *, const struct attack *);
 extern int castum(struct monst *, const struct attack *);
@@ -911,6 +911,11 @@ extern int sleep_monst(struct monst *, int, int);
 extern void slept_monst(struct monst *);
 extern long attk_protection(int);
 extern void mrustm (struct monst *magr, struct monst *mdef, struct obj *obj);
+
+/* ### mhitq.c ### */
+
+extern boolean mpreattack(struct monst *, boolean);
+extern int mattackq(struct monst *, int, int);
 
 /* ### mhitu.c ### */
 
@@ -1172,14 +1177,12 @@ extern void mplayer_talk(struct monst *);
 
 extern int thitu(int, int, struct obj *, const char *);
 extern int ohitmon(struct monst *, struct obj *, int, boolean);
-extern void thrwmu(struct monst *);
-extern void thrwmm(struct monst *, struct monst *);
-extern int spitm(struct monst *, struct monst *, const struct attack *);
-extern int bream(struct monst *, struct monst *, const struct attack *);
+extern void thrwmq(struct monst *, int, int);
+extern int spitmq(struct monst *, int, int, const struct attack *);
+extern int breamq(struct monst *, int, int, const struct attack *);
 extern struct monst *mfind_target(struct monst *);
 extern boolean linedup(xchar, xchar, xchar, xchar);
 extern boolean lined_up(struct monst *);
-extern boolean mlined_up(struct monst *, struct monst *, boolean);
 extern struct obj *m_carrying(struct monst *, int);
 extern void m_useup(struct monst *, struct obj *);
 extern void m_throw(struct monst *, int, int, int, int, int, struct obj *,
@@ -1843,7 +1846,7 @@ extern boolean would_prefer_rwep(struct monst *, struct obj *);
 
 extern void were_change(struct monst *);
 extern void new_were(struct monst *);
-extern int were_summon(const struct permonst *, boolean, int *, const char **);
+extern int were_summon(struct monst *, int *, const char **);
 extern void you_were(void);
 extern void you_unwere(boolean);
 

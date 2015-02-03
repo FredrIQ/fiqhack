@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-22 */
+/* Last modified by Alex Smith, 2015-02-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -696,7 +696,7 @@ dog_move(struct monst *mtmp, int after)
     if (throws_rocks(mtmp->data))
         allowflags |= ALLOW_ROCK;
     if (Conflict && !resist(mtmp, RING_CLASS, 0, 0)) {
-        allowflags |= ALLOW_U | ALLOW_M;
+        allowflags |= ALLOW_MUXY | ALLOW_M;
         if (!has_edog) {
             coord mm;
 
@@ -899,12 +899,12 @@ newdogpos:
     if (nix != omx || niy != omy) {
         struct obj *mw_tmp;
 
-        if (info[chi] & ALLOW_U) {
+        if (info[chi] & ALLOW_MUXY) {
             if (mtmp->mleashed) {       /* play it safe */
                 pline("%s breaks loose of %s leash!", Monnam(mtmp), mhis(mtmp));
                 m_unleash(mtmp, FALSE);
             }
-            mattacku(mtmp);
+            mattackq(mtmp, nix, niy);
             return 0;
         }
         if (!m_in_out_region(mtmp, nix, niy))

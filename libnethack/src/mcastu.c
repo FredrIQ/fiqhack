@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2015-02-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -53,17 +53,24 @@ cursetxt(struct monst *mtmp, boolean undirected)
 
         if (undirected)
             point_msg = "all around, then curses";
-        else if ((Invis && !perceives(mtmp->data) &&
-                  (mtmp->mux != u.ux || mtmp->muy != u.uy)) ||
-                 (youmonst.m_ap_type == M_AP_OBJECT &&
-                  youmonst.mappearance == STRANGE_OBJECT) || u.uundetected)
-            point_msg = "and curses in your general direction";
-        else if (Displaced && (mtmp->mux != u.ux || mtmp->muy != u.uy))
-            point_msg = "and curses at your displaced image";
         else
-            point_msg = "at you, then curses";
+            point_msg = ((const char *[]){
+                    [mar_unaware] = NULL,
+                    [mar_guessing_invis] =
+                        "and curses in your general direction",
+                    [mar_guessing_displaced] =
+                        "and curses at your displaced image",
+                    [mar_guessing_other] = /* e.g. mimic polyform*/
+                        "and curses in your general direction",
+                    [mar_aware] =
+                        "at you, then curses"
+                })[awareness_reason(mtmp)];
 
+        if (!point_msg)
+            impossible("monster directed-spellcasting at player "
+                       "despite !aware_of_u?");
         pline("%s points %s.", Monnam(mtmp), point_msg);
+
     } else if ((!(moves % 4) || !rn2(4)) && canhear()) {
             pline_once("You hear a mumbled curse.");
     }
@@ -153,22 +160,38 @@ choose_clerical_spell(int spellnum)
  * 0: unsuccessful spell
  */
 int
-castmu(struct monst *mtmp, const struct attack *mattk,
-       boolean thinks_it_foundyou, boolean foundyou)
+castmu(struct monst *mtmp, const struct attack *mattk, int allow_directed)
 {
     int dmg, ml = mtmp->m_lev;
     int ret;
     int spellnum = 0;
+    boolean casting_directed = FALSE;
 
-    /* Three cases: -- monster is attacking you.  Search for a useful spell. -- 
-       monster thinks it's attacking you.  Search for a useful spell, without
-       checking for undirected.  If the spell found is directed, it fails with
-       cursetxt() and loss of mspec_used. -- monster isn't trying to attack.
-       Select a spell once.  Don't keep searching; if that spell is not useful
-       (or if it's directed), return and do something else. Since most spells
-       are directed, this means that a monster that isn't attacking casts
-       spells only a small portion of the time that an attacking monster does.
-       */
+    /*
+     * We have four cases here, up from three in 3.4.3.
+     *
+     * - The monster is in combat (allow_directed is 1), and knows your
+     *   location. It searches for and uses a useful spell.
+     *
+     * - The monster is in combat, and doesn't know your location but thinks it
+     *   does. It searches for a useful spell, attempts to use it, and succeeds
+     *   if and only if it's undirected (otherwise it curses).
+     *
+     *   Setting allow_directed to -1 will force this specific failure case.
+     *   Eventually, that will be the only way for this failure mode to happen
+     *   (and castmu will only be called if known_ux_uy).
+     *
+     * - The monster is in combat, but doesn't know your location. It casts an
+     *   undirected spell, if it can. (This case is new in 4.3.)
+     *
+     * - The monster is not in combat. It selects a random spell. If it's
+     *   directed or useless, this function returns without doing anything, and
+     *   the monster does something else instead; this serves as a method to
+     *   reduce the frequency of spellcasts outside combat. Otherwise, it casts
+     *   it as in the previous case.
+     *
+     */
+
     if ((mattk->adtyp == AD_SPEL || mattk->adtyp == AD_CLRC) && ml) {
         int cnt = 40;
 
@@ -178,26 +201,30 @@ castmu(struct monst *mtmp, const struct attack *mattk,
                 spellnum = choose_magic_spell(spellnum);
             else
                 spellnum = choose_clerical_spell(spellnum);
+
+            casting_directed = !is_undirected_spell(mattk->adtyp, spellnum);
+
             /* not trying to attack? don't allow directed spells */
-            if (!thinks_it_foundyou) {
-                if (!is_undirected_spell(mattk->adtyp, spellnum) ||
+            if (!allow_directed) {
+                if (casting_directed ||
                     spell_would_be_useless(mtmp, mattk->adtyp, spellnum)) {
-                    if (foundyou)
-                        impossible("spellcasting monster found you and doesn't "
-                                   "know it?");
                     return 0;
                 }
                 break;
             }
         } while (--cnt > 0 &&
-                 spell_would_be_useless(mtmp, mattk->adtyp, spellnum));
+                 ((casting_directed && !aware_of_u(mtmp)) ||
+                  spell_would_be_useless(mtmp, mattk->adtyp, spellnum)));
         if (cnt == 0)
             return 0;
     }
 
+    /* note: at this point, casting_directed implies aware_of_u (although not
+       necessarily knows_ux_uy, a stronger condition) */
+
     /* monster unable to cast spells? */
     if (mtmp->mcan || mtmp->mspec_used || !ml) {
-        cursetxt(mtmp, is_undirected_spell(mattk->adtyp, spellnum));
+        cursetxt(mtmp, !casting_directed);
         return 0;
     }
 
@@ -209,9 +236,9 @@ castmu(struct monst *mtmp, const struct attack *mattk,
 
     /* monster can cast spells, but is casting a directed spell at the wrong
        place? If so, give a message, and return.  Do this *after* penalizing
-       mspec_used. */
-    if (!foundyou && thinks_it_foundyou &&
-        !is_undirected_spell(mattk->adtyp, spellnum)) {
+       mspec_used. TODO: Merge all this up into a castmq(), so we can get the
+       location right. */
+    if ((!knows_ux_uy(mtmp) || allow_directed == -1) && casting_directed) {
         pline("%s casts a spell at %s!",
               canseemon(mtmp) ? Monnam(mtmp) : "Something",
               level->locations[mtmp->mux][mtmp->muy].typ ==
@@ -226,24 +253,21 @@ castmu(struct monst *mtmp, const struct attack *mattk,
             pline("The air crackles around %s.", mon_nam(mtmp));
         return 0;
     }
-    if (canspotmon(mtmp) || !is_undirected_spell(mattk->adtyp, spellnum)) {
+    if (canspotmon(mtmp) || casting_directed ) {
         pline("%s casts a spell%s!",
               canspotmon(mtmp) ? Monnam(mtmp) : "Something",
-              is_undirected_spell(mattk->adtyp, spellnum) ? "" :
-              (Invisible && !perceives(mtmp->data) &&
-               (mtmp->mux != u.ux || mtmp->muy != u.uy)) ?
-              " at a spot near you" :
-              (Displaced &&
-               (mtmp->mux != u.ux || mtmp->muy != u.uy)) ?
+              !casting_directed ? "" :
+              awareness_reason(mtmp) == mar_guessing_displaced ?
               " at your displaced image" :
-              " at you");
+              awareness_reason(mtmp) == mar_aware ? " at you" :
+              " at a spot near you");
     }
 
     /* 
      * As these are spells, the damage is related to the level
      * of the monster casting the spell.
      */
-    if (!foundyou) {
+    if (!knows_ux_uy(mtmp)) {
         dmg = 0;
         if (mattk->adtyp != AD_SPEL && mattk->adtyp != AD_CLRC) {
             impossible("%s casting non-hand-to-hand version of hand-to-hand "
@@ -359,13 +383,16 @@ cast_wizard_spell(struct monst *mtmp, int dmg, int spellnum)
 
                 /* messages not quite right if plural monsters created but only 
                    a single monster is seen */
-                if (Invisible && !perceives(mtmp->data) &&
-                    (mtmp->mux != u.ux || mtmp->muy != u.uy))
-                    pline("%s around a spot near you!", mappear);
-                else if (Displaced && (mtmp->mux != u.ux || mtmp->muy != u.uy))
-                    pline("%s around your displaced image!", mappear);
-                else
+                switch (awareness_reason(mtmp)) {
+                case mar_aware:
                     pline("%s from nowhere!", mappear);
+                    break;
+                case mar_guessing_displaced:
+                    pline("%s around your displaced image!", mappear);
+                    break;
+                default:
+                    pline("%s around a spot near you!", mappear);
+                }
             }
             dmg = 0;
             break;
@@ -549,7 +576,11 @@ cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
                 quan = 3;
             success = pm ? TRUE : FALSE;
             for (i = 0; i <= quan; i++) {
-                if (!enexto(&bypos, level, mtmp->mux, mtmp->muy, mtmp->data))
+                int spelltarget_x = aware_of_u(mtmp) ? mtmp->mux : mtmp->mx;
+                int spelltarget_y = aware_of_u(mtmp) ? mtmp->muy : mtmp->my;
+
+                if (!enexto(&bypos, level,
+                            spelltarget_x, spelltarget_y, mtmp->data))
                     break;
                 if ((pm = mkclass(&u.uz, let, 0)) != 0 &&
                     (mtmp2 =
@@ -559,26 +590,32 @@ cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
                     set_malign(mtmp2);
                 }
             }
-            /* Not quite right: -- message doesn't always make sense for unseen 
-               caster (particularly the first message) -- message assumes
-               plural monsters summoned (non-plural should be very rare, unlike 
-               in nasty()) -- message assumes plural monsters seen */
+            /*
+             * Not quite right:
+             * -- message doesn't always make sense for unseen caster
+             *    (particularly the first message)
+             * -- message assumes plural monsters summoned
+             *    (non-plural should be very rare, unlike in nasty())
+             * -- message assumes plural monsters seen
+             */
             if (!success)
                 pline("%s casts at a clump of sticks, but nothing happens.",
                       Monnam(mtmp));
             else if (let == S_SNAKE)
                 pline("%s transforms a clump of sticks into snakes!",
                       Monnam(mtmp));
-            else if (Invisible && !perceives(mtmp->data) &&
-                     (mtmp->mux != u.ux || mtmp->muy != u.uy))
-                pline("%s summons insects around a spot near you!",
-                      Monnam(mtmp));
-            else if (Displaced && (mtmp->mux != u.ux || mtmp->muy != u.uy))
-                pline("%s summons insects around your displaced image!",
-                      Monnam(mtmp));
-            else
-                pline("%s summons insects!", Monnam(mtmp));
-            dmg = 0;
+            else switch (awareness_reason(mtmp)) {
+                case mar_guessing_displaced:
+                    pline("%s summons insects around your displaced image!",
+                          Monnam(mtmp));
+                    break;
+                case mar_aware:
+                    pline("%s summons insects!", Monnam(mtmp));
+                    break;
+                default:
+                    pline("%s summons insects around a spot near you!",
+                          Monnam(mtmp));
+                }
             break;
         }
     case CLC_BLIND_YOU:
