@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2015-02-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -217,7 +217,7 @@ done_in_by(struct monst *mtmp, const char *override_msg)
 
 /*VARARGS1*/
 noreturn void
-panic(const char *str, ...)
+panic_core(const char *file, int line, const char *str, ...)
 {
     va_list the_args;
     const char *buf;
@@ -229,16 +229,11 @@ panic(const char *str, ...)
     if (program_state.panicking++)
         terminate(GAME_DETACHED); /* avoid loops - this should never happen */
 
-    raw_print("Suddenly, the dungeon collapses.\n");
-    if (!wizard)
-        raw_printf("You can report this error at <http://trac.nethack4.org>.");
-
     buf = msgvprintf(str, the_args, TRUE);
-    raw_print(buf);
     paniclog("panic", buf);
     DEBUG_LOG_BACKTRACE("panic() called: %s\n", buf);
 
-    log_recover_noreturn(get_log_start_of_turn_offset());
+    log_recover_noreturn(get_log_start_of_turn_offset(), buf, file, line);
 }
 
 static boolean

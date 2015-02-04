@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-03 */
+/* Last modified by Alex Smith, 2015-02-04 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -523,7 +523,8 @@ extern const char *delayed_killer(int how);
 extern void clear_delayed_killers(void);
 extern void nonfatal_dump_core(void);
 extern noreturn void terminate(enum nh_play_status);
-extern noreturn void panic(const char *, ...) PRINTFLIKE(1,2);
+extern noreturn void panic_core(const char *, int, const char *, ...)
+    PRINTFLIKE(3,4);
 extern void done_in_by(struct monst *, const char *);
 extern void done(int, const char *killer);
 extern noreturn void done_noreturn(int how, const char *killer);
@@ -785,8 +786,9 @@ extern void log_backup_save(void);
 extern void log_sync(long, enum target_location_units, boolean);
 
 extern void log_revert_command(const char *);
-extern void log_recover_core(long, boolean, boolean);
-extern noreturn void log_recover_noreturn(long);
+extern void log_recover_core(long, boolean, const char *, const char *, int);
+extern noreturn void log_recover_noreturn(
+    long, const char *, const char *, int);
 extern long get_log_start_of_turn_offset(void);
 extern void log_maybe_undo_quit(void);
 
@@ -868,7 +870,8 @@ extern int32_t mread32(struct memfile *mf);
 extern int64_t mread64(struct memfile *mf);
 extern void mfmagic_check(struct memfile *mf, int32_t magic);
 extern void mfmagic_set(struct memfile *mf, int32_t magic);
-extern boolean mequal(struct memfile *mf1, struct memfile *mf2, boolean noisy);
+extern boolean mequal(struct memfile *mf1, struct memfile *mf2,
+                      const char **difference_reason);
 
 /* ### messages.c ### */
 
@@ -1310,7 +1313,8 @@ extern void pline(const char *, ...) PRINTFLIKE(1,2);
 extern void pline_nomore(const char *, ...) PRINTFLIKE(1,2);
 extern void pline_once(const char *, ...) PRINTFLIKE(1,2);
 extern void pline_once_nomore(const char *, ...) PRINTFLIKE(1,2);
-extern void impossible(const char *, ...) PRINTFLIKE(1,2);
+extern void impossible_core(const char *, int, const char *, ...)
+    PRINTFLIKE(3,4);
 extern void You_hear(const char *, ...) PRINTFLIKE(1,2);
 extern void verbalize(const char *, ...) PRINTFLIKE(1,2);
 extern void raw_printf(const char *, ...) PRINTFLIKE(1,2);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-12-02 */
+/* Last modified by Alex Smith, 2015-02-04 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -504,10 +504,10 @@ mfmagic_set(struct memfile *mf, int32_t magic)
     mwrite32(mf, magic);
 }
 
-/* Returns TRUE if two memory files are equal. If noisy is set, the code will
-   complain if they aren't, using raw prints. */
+/* Returns TRUE if two memory files are equal. Optionally, returns the reason
+   why they aren't equal in *difference_reason. */
 boolean
-mequal(struct memfile *mf1, struct memfile *mf2, boolean noisy)
+mequal(struct memfile *mf1, struct memfile *mf2, const char **difference_reason)
 {
     char *p1, *p2;
     long len, off;
@@ -522,12 +522,13 @@ mequal(struct memfile *mf1, struct memfile *mf2, boolean noisy)
     p1 = mmmap(mf1, len, 0);
     p2 = mmmap(mf2, len, 0);
 
+    if (difference_reason)
+        *difference_reason = "files are equal";
+
     if (mf1->pos != mf2->pos || memcmp(p1, p2, len) != 0) {
 
-        if (!noisy)
+        if (!difference_reason)
             return FALSE;
-
-        raw_printf("Unexpected change to save file contents:\n");
 
         /* Determine where the desyncs are. */
         for (off = 0; off < len; off++) {
@@ -540,35 +541,48 @@ mequal(struct memfile *mf1, struct memfile *mf2, boolean noisy)
                                 tag = titer;
 
                 if (!tag) {
-                    raw_printf("desync at %ld was %02x is %02x\n", off,
-                               (int)(unsigned char)p1[off],
-                               (int)(unsigned char)p2[off]);
-                    return FALSE;
-                }
 
-                raw_printf("desync at %ld (tag %d:%08lx + %ld byte%s), "
-                           "was %02x is %02x\n",
-                           off, (int)tag->tagtype, tag->tagdata,
-                           off - tag->pos, (off - tag->pos == 1) ? "" : "s",
-                           (int)(unsigned char)p1[off],
-                           (int)(unsigned char)p2[off]);
+                    *difference_reason =
+                        msgprintf("desync at %ld (untagged), "
+                                  "was %02x is %02x", off,
+                                  (int)(unsigned char)p1[off],
+                                  (int)(unsigned char)p2[off]);
 
-                if (tag->tagtype == MTAG_LOCATIONS) {
+                } else if (tag->tagtype == MTAG_LOCATIONS) {
 
                     const int bpl = 8; /* bytes per location */
                     int which_location = (off - tag->pos) / bpl;
 
-                    raw_printf("this corresponds to (%d, %d) + %ld byte%s\n",
-                               which_location / ROWNO,
-                               which_location % ROWNO,
-                               (off - tag->pos) % bpl,
-                               ((off - tag->pos) % bpl) == 1 ? "" : "s");
+                    *difference_reason = 
+                        msgprintf("desync at %ld ((%d, %d) + %ld byte%s), "
+                                  "was %02x is %02x", off,
+                                  which_location / ROWNO,
+                                  which_location % ROWNO,
+                                  (off - tag->pos) % bpl,
+                                  ((off - tag->pos) % bpl) == 1 ? "" : "s",
+                                  (int)(unsigned char)p1[off],
+                                  (int)(unsigned char)p2[off]);
+
+                } else {
+
+                    *difference_reason =
+                        msgprintf("desync at %ld (%d:%lx + %ld byte%s), "
+                                  "was %02x is %02x", off,
+                                  (int)tag->tagtype, tag->tagdata,
+                                  off - tag->pos,
+                                  (off - tag->pos == 1) ? "" : "s",
+                                  (int)(unsigned char)p1[off],
+                                  (int)(unsigned char)p2[off]);
                 }
 
                 return FALSE; /* only report one issue to reduce spam */
             }
 
         }
+
+        *difference_reason =
+            msgprintf("lengths differ (was %d is %d)",
+                      mf1->pos, mf2->pos);
 
         return FALSE;
     }
