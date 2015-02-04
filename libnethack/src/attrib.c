@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-18 */
+/* Last modified by Alex Smith, 2015-02-02 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -463,7 +463,8 @@ init_attr(int np)
     while (np > 0 && tryct < 100) {
 
         x = rn2(100);
-        for (i = 0; (i < A_MAX) && ((x -= urole.attrdist[i]) > 0); i++) ;
+        for (i = 0; (i < A_MAX) && ((x -= urole.attrdist[i]) > 0); i++)
+            ;
         if (i >= A_MAX)
             continue;   /* impossible */
 
@@ -482,7 +483,8 @@ init_attr(int np)
     while (np < 0 && tryct < 100) {     /* for redistribution */
 
         x = rn2(100);
-        for (i = 0; (i < A_MAX) && ((x -= urole.attrdist[i]) > 0); i++) ;
+        for (i = 0; (i < A_MAX) && ((x -= urole.attrdist[i]) > 0); i++)
+            ;
         if (i >= A_MAX)
             continue;   /* impossible */
 

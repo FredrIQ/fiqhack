@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-12-02 */
+/* Last modified by Alex Smith, 2015-02-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -232,7 +232,7 @@ target_on(int mask, struct monst *mtmp)
 }
 
 /* Work out what this monster wants to be doing, and set its mstrategy field
-   appropriately. knows_ux_uy is set if the monster should be magically aware
+   appropriately. magical_target is set if the monster should be magically aware
    of your position (typically due to someone casting "aggravate").
 
    Covetous monsters are automatically aware of the location of any items that
@@ -253,7 +253,7 @@ target_on(int mask, struct monst *mtmp)
    out of LOS, the monster will aim for the last square it saw the player
    on.) */
 void
-strategy(struct monst *mtmp, boolean knows_ux_uy)
+strategy(struct monst *mtmp, boolean magical_target)
 {
     boolean chases_player = !mtmp->mpeaceful || mtmp->isshk || mtmp->mtame;
 
@@ -262,6 +262,16 @@ strategy(struct monst *mtmp, boolean knows_ux_uy)
     /* Is the monster waiting for something? */
     if (mtmp->mstrategy & STRAT_WAITMASK)
         return;
+
+    /* Leprechaun special AI considerations, moved here from m_move.  These give
+       an "escaping" status; like fleeing but it wears off the instant the
+       conditions that caused it aren't met. */
+    struct obj *lepgold, *ygold;
+    int lepescape = FALSE;
+    if (monsndx(mtmp->data) == PM_LEPRECHAUN &&
+        ((lepgold = findgold(mtmp->minvent)) &&
+         (lepgold->quan > ((ygold = findgold(invent)) ? ygold->quan : 0L))))
+        lepescape = TRUE;
 
     /* Below half health, or when fleeing, we ignore what we were previously
        doing, and change to escape mode instead. Unless we were escaping, in
@@ -279,11 +289,11 @@ strategy(struct monst *mtmp, boolean knows_ux_uy)
        away from the target square; it might also heal up, use escape items,
        etc.. */
     if (mtmp->mhp * (mtmp->data == &mons[PM_WIZARD_OF_YENDOR] ? 4 : 2) <
-        mtmp->mhpmax || mtmp->mflee) {
+        mtmp->mhpmax || mtmp->mflee || lepescape) {
 
         /* An escaping pet instead moves towards the player, if it can.
            (dog_move will reverse this direction if fleeing in a panic.) */
-        if (mtmp->mtame && (mtmp->mux != mtmp->mx || mtmp->muy != mtmp->my)) {
+        if (mtmp->mtame && aware_of_u(mtmp)) {
             mtmp->mstrategy = STRAT(STRAT_PLAYER, mtmp->mux, mtmp->muy, 0);
             return;
         }
@@ -295,8 +305,7 @@ strategy(struct monst *mtmp, boolean knows_ux_uy)
            reason to be afraid of the player in particular (if the player had
            taken an aggressive action, they'd no longer be flagged as
            peaceful). */
-        if ((mtmp->mux != mtmp->mx || mtmp->muy != mtmp->my) &&
-            !mtmp->mpeaceful)
+        if (!mtmp->mpeaceful && aware_of_u(mtmp))
             mtmp->mstrategy = STRAT(STRAT_ESCAPE, mtmp->mux, mtmp->muy, 0);
 
         /* Does the monster already have a valid square to escape from? */
@@ -344,7 +353,7 @@ strategy(struct monst *mtmp, boolean knows_ux_uy)
     }
 
     /* Aggravated monsters are all attracted to the player's real location. */
-    if (knows_ux_uy && chases_player) {
+    if (magical_target && chases_player) {
         mtmp->mstrategy = STRAT(STRAT_PLAYER, u.ux, u.uy, 0);
         return;
     }
@@ -370,7 +379,7 @@ strategy(struct monst *mtmp, boolean knows_ux_uy)
        is), and not escaping, it's going to hunt you down. Likewise, tame
        monsters will try to follow. Shopkeeper strategy is determined as if the
        shopkeeper is angry; it won't be used in other situations. */
-    if ((mtmp->mux != mtmp->mx || mtmp->muy != mtmp->my) && chases_player) {
+    if (aware_of_u(mtmp) && chases_player) {
         mtmp->mstrategy = STRAT(STRAT_PLAYER, mtmp->mux, mtmp->muy, 0);
         return;
     }
@@ -646,14 +655,22 @@ nasty(struct monst *mcast)
     coord bypos;
     int count = 0;
 
+    if (!mcast) {
+        bypos.x = u.ux;
+        bypos.y = u.uy;
+    } else if (aware_of_u(mcast)) {
+        bypos.x = mcast->mux;
+        bypos.y = mcast->muy;
+    } else {
+        bypos.x = mcast->mx;
+        bypos.y = mcast->my;
+    }
+
     if (!rn2(10) && Inhell) {
         msummon(NULL, &level->z);       /* summons like WoY */
         count++;
     } else {
         tmp = (u.ulevel > 3) ? u.ulevel / 3 : 1;       /* just in case -- rph */
-        /* if we don't have a casting monster, the nasties appear around you */
-        bypos.x = u.ux;
-        bypos.y = u.uy;
         for (i = rnd(tmp); i > 0; --i)
             for (j = 0; j < 20; j++) {
                 int makeindex;
@@ -665,7 +682,7 @@ nasty(struct monst *mcast)
                 } while (mcast && attacktype(&mons[makeindex], AT_MAGC) &&
                          monstr[makeindex] >= monstr[mcast->mnum]);
                 /* do this after picking the monster to place */
-                if (mcast &&
+                if (mcast && aware_of_u(mcast) &&
                     !enexto(&bypos, level, mcast->mux, mcast->muy,
                             &mons[makeindex]))
                     continue;

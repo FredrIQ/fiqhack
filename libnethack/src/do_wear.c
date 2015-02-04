@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-18 */
+/* Last modified by Alex Smith, 2015-01-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -879,7 +879,7 @@ equip_heartbeat(void)
          * R   1 action
          * W   1 action  + oc_delay turns
          * T   1 action  + oc_delay turns
-         * A   0 actions + min(oc_delay, 1) actions; except 2 for os_tool
+         * A   0 actions + max(oc_delay, 1) actions; except 2 for os_tool
          *
          * (This has been verified experimentally as well as via reading the
          * code.) This means that A is normally faster (except for removing

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-12-02 */
+/* Last modified by Alex Smith, 2015-02-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1117,39 +1117,47 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
             if ((is_pool(mlevel, nx, ny) == wantpool || poolok) &&
                 (lavaok || !is_lava(mlevel, nx, ny))) {
                 int dispx, dispy;
-                boolean monseeu = (mon->mcansee && (!Invis || perceives(mdat)));
                 boolean checkobj = OBJ_AT(nx, ny);
+                boolean elbereth_activation = checkobj;
 
                 /* Displacement also displaces the Elbereth/scare monster, as
                    long as you are visible. */
-                if (Displaced && monseeu && (mon->mux == nx) &&
-                    (mon->muy == ny)) {
+                if (awareness_reason(mon) == mar_guessing_displaced &&
+                    mon->mux == nx && mon->muy == ny) {
                     dispx = u.ux;
                     dispy = u.uy;
+
+                    /* The code previously checked for (checkobj || Displaced),
+                       but that's wrong if the mu[xy] == nu[xy] check fails;
+                       it'll incorrectly treat you as activating an engraving
+                       on n[xy]. Instead, we check for checkobj in the other
+                       branch of the if statement, and unconditionally check
+                       onscary in this branch. */
+                    elbereth_activation = TRUE;
                 } else {
                     dispx = nx;
                     dispy = ny;
                 }
 
                 info[cnt] = 0;
-                if ((checkobj || Displaced) && onscary(dispx, dispy, mon)) {
+                if (elbereth_activation && onscary(dispx, dispy, mon)) {
                     if (!(flag & ALLOW_SSM))
                         continue;
                     info[cnt] |= ALLOW_SSM;
                 }
-                if ((nx == u.ux && ny == u.uy) ||
-                    (nx == mon->mux && ny == mon->muy)) {
-                    if (nx == u.ux && ny == u.uy) {
-                        /* If it's right next to you, it found you, displaced
-                           or no.  We must set mux and muy right now, so when
-                           we return we can tell that the ALLOW_U means to
-                           attack _you_ and not the image. */
-                        mon->mux = u.ux;
-                        mon->muy = u.uy;
-                    }
-                    if (!(flag & ALLOW_U))
+
+                /* This codepath previously automatically set the monster to
+                   detect you if it was actually adjacent to you, regardless of
+                   anything else (unless you were on an Elbereth, because that
+                   case has already been checked). This behaviour is debatable
+                   from a balance point of view, but more importantly, this is
+                   the wrong place in the AI to implement it. It's been moved to
+                   set_apparxy so that it is at least in the right place; the
+                   balance has been left unchanged pending more discussion. */
+                if (nx == mon->mux && ny == mon->muy) {
+                    if (!(flag & ALLOW_MUXY))
                         continue;
-                    info[cnt] |= ALLOW_U;
+                    info[cnt] |= ALLOW_MUXY;
                 } else {
                     if (MON_AT(mlevel, nx, ny)) {
                         struct monst *mtmp2 = m_at(mlevel, nx, ny);
@@ -1186,7 +1194,8 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                         continue;
                     info[cnt] |= ALLOW_ROCK;
                 }
-                if (monseeu && onlineu(nx, ny)) {
+                if (mon->mcansee && (!Invis || perceives(mdat)) &&
+                    onlineu(nx, ny)) {
                     if (flag & NOTONL)
                         continue;
                     info[cnt] |= NOTONL;
@@ -1272,8 +1281,7 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
 
         int i;
         for (i = 0; i < oldcnt; i++) {
-            if ((poss[i].x == u.ux && poss[i].y == u.uy) ||
-                MON_AT(mlevel, poss[i].x, poss[i].y)) {
+            if ((infocopy[i] & (ALLOW_MUXY | ALLOW_M))) {
                 info[cnt] = infocopy[i];
                 poss[cnt] = posscopy[i];
                 cnt++;
@@ -1508,7 +1516,8 @@ relmon(struct monst *mon)
         mon->dlevel->monlist = mon->dlevel->monlist->nmon;
     else {
         for (mtmp = mon->dlevel->monlist; mtmp && mtmp->nmon != mon;
-             mtmp = mtmp->nmon) ;
+             mtmp = mtmp->nmon)
+            ;
         if (mtmp)
             mtmp->nmon = mon->nmon;
         else

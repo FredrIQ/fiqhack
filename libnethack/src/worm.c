@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2015-02-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -109,7 +109,8 @@ initworm(struct monst *worm, int wseg_count)
 
     if (new_tail) {
         worm->dlevel->wtails[wnum] = new_tail;
-        for (seg = new_tail; seg->nseg; seg = seg->nseg) ;
+        for (seg = new_tail; seg->nseg; seg = seg->nseg)
+            ;
         worm->dlevel->wheads[wnum] = seg;
     } else {
         worm->dlevel->wtails[wnum] = worm->dlevel->wheads[wnum] = seg =
@@ -286,8 +287,8 @@ wormhitu(struct monst *worm)
  *  before we decide to do this.
  */
     for (seg = level->wtails[wnum]; seg; seg = seg->nseg)
-        if (distu(seg->wx, seg->wy) < 3)
-            mattacku(worm);
+        if (distu(seg->wx, seg->wy) < 3 && aware_of_u(worm))
+            mattackq(worm, worm->mux, worm->muy);
 }
 
 /*  cutoff()

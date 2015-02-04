@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2015-02-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -392,7 +392,8 @@ nhlib_clone_optlist(const struct nh_option_desc *in)
     int i;
     struct nh_option_desc *out;
 
-    for (i = 0; in[i].name; i++) ;
+    for (i = 0; in[i].name; i++)
+        ;
     i++;
     out = malloc(sizeof (struct nh_option_desc) * i);
     memcpy(out, in, sizeof (struct nh_option_desc) * i);

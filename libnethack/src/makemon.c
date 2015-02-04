@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-12-24 */
+/* Last modified by Alex Smith, 2015-02-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1995,6 +1995,11 @@ restore_mon(struct memfile *mf)
     mon->my = mread8(mf);
     mon->mux = mread8(mf);
     mon->muy = mread8(mf);
+    /* SAVEBREAK (4.3-beta2alpha -> 4.3-beta2): don't use a special encoding */
+    if (mon->mux == mon->mx && mon->muy == mon->my) {
+        mon->mux = COLNO;
+        mon->muy = ROWNO;
+    }
     mon->m_lev = mread8(mf);
     mon->malign = mread8(mf);
     mon->moveoffset = mread16(mf);
@@ -2201,8 +2206,14 @@ save_mon(struct memfile *mf, const struct monst *mon)
     mwrite16(mf, mon->mnum);
     mwrite8(mf, mon->mx);
     mwrite8(mf, mon->my);
-    mwrite8(mf, mon->mux);
-    mwrite8(mf, mon->muy);
+    /* SAVEBREAK (4.3-beta2alpha -> 4.3-beta2): don't use a special encoding */
+    if (mon->mux == COLNO && mon->muy == ROWNO) { /* savemap: ignore */
+        mwrite8(mf, mon->mx);                     /* savemap: ignore */
+        mwrite8(mf, mon->my);                     /* savemap: ignore */
+    } else {                                      /* savemap: ignore */
+        mwrite8(mf, mon->mux);
+        mwrite8(mf, mon->muy);
+    }                                             /* savemap: ignore */
     mwrite8(mf, mon->m_lev);
     mwrite8(mf, mon->malign);
     mwrite16(mf, mon->moveoffset);

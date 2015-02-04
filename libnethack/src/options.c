@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-23 */
+/* Last modified by Alex Smith, 2015-02-02 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -287,7 +287,8 @@ build_role_spec(void)
     struct nh_listitem *choices;
 
     /* build list of roles */
-    for (i = 0; roles[i].name.m || roles[i].name.f; i++) ; /* just count em */
+    for (i = 0; roles[i].name.m || roles[i].name.f; i++)
+        ; /* just count em */
     role_spec.numchoices = i + 2;
     choices = malloc((i + 2) * sizeof (struct nh_listitem));
     for (i = 0; roles[i].name.m || roles[i].name.f; i++) {
@@ -315,7 +316,8 @@ build_race_spec(void)
     struct nh_listitem *choices;
 
     /* build list of races */
-    for (i = 0; races[i].noun; i++) ;   /* just count em */
+    for (i = 0; races[i].noun; i++)
+        ;   /* just count em */
     race_spec.numchoices = i + 2;
     choices = malloc((i + 2) * sizeof (struct nh_listitem));
     for (i = 0; races[i].noun; i++) {
@@ -672,7 +674,8 @@ fruitadd(const char *str)
                 break;
             }
         }
-        for (c = pl_fruit; *c >= '0' && *c <= '9'; c++) ;
+        for (c = pl_fruit; *c >= '0' && *c <= '9'; c++)
+            ;
         if (isspace(*c) || *c == 0)
             numeric = TRUE;
 

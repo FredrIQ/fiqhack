@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2015-02-02 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -260,7 +260,7 @@ dbe_substitution(struct nh_dbuf_entry *dbe)
 }
 
 void
-print_cchar(WINDOW * win)
+print_cchar(WINDOW *win)
 {
     int attr;
     cchar_t uni_out;
@@ -281,8 +281,18 @@ print_cchar(WINDOW * win)
     setcchar(&uni_out, unichar, attr, color, NULL);
     wadd_wch(win, &uni_out);
 
-    /* Don't let the cchar leak from one cell to another */
+    /* Don't let the cchar leak from one cell to another, even if init_cchar
+       isn't called */
     curcchar = '?' | (CLR_RED << 21);
+}
+
+void
+init_cchar(char c)
+{
+    if (c == 0)
+        curcchar = '?' | (CLR_RED << 21);
+    else
+        curcchar = c | (CLR_YELLOW << 21);
 }
 
 static unsigned long

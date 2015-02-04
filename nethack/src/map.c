@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-20 */
+/* Last modified by Alex Smith, 2015-02-02 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -146,6 +146,34 @@ draw_map(int cx, int cy)
                positioning due to charset issues (IBM chars on a unicode term
                or vice versa) */
             wmove(mapwin, y, x);
+
+            /* a fallback for if rendering fails */
+            {
+                static const char errmsg_line1[] =
+                    "Your selected interface cannot render this tileset.";
+                static const char errmsg_line2[] =
+                    "Select a different tileset with the 'graphics' option.";
+
+                const char *errmsg = NULL;
+                int errlen = 0;
+
+                init_cchar(0);
+
+                if (y == 9) {
+                    errmsg = errmsg_line1;
+                    errlen = sizeof errmsg_line1 - 1;
+                } else if (y == 11) {
+                    errmsg = errmsg_line2;
+                    errlen = sizeof errmsg_line2 - 1;
+                }
+                if (errmsg) {
+                    int xmod = (COLNO - errlen) / 2;
+                    if (x - xmod >= 0 && x - xmod < errlen)
+                        init_cchar(errmsg[x - xmod]);
+                    else if (x - xmod == -1 || x - xmod == errlen)
+                        init_cchar(' ');
+                }
+            }
 
             /* make the map mouse-active for left clicks, middle/right clicks
                (which are interchangeable, because some terminals don't allow

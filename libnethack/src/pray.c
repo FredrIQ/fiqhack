@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-18 */
+/* Last modified by Alex Smith, 2015-02-02 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1721,7 +1721,8 @@ doturn(const struct nh_cmd_arg *arg)
 
             for (sp_no = 0;
                  sp_no < MAXSPELL && spl_book[sp_no].sp_id != SPE_TURN_UNDEAD;
-                 sp_no++) ;
+                 sp_no++)
+                ;
 
             if (sp_no < MAXSPELL && spl_book[sp_no].sp_id == SPE_TURN_UNDEAD &&
                 spellknow(sp_no) > 0)

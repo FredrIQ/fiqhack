@@ -1,11 +1,11 @@
-# Last modified by Alex Smith, 2014-10-26
+# Last modified by Alex Smith, 2015-02-03
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
 
 # There's a maximum combined length on the executable info structure.
 # So this is written concisely, so as to be able to fit everything in.
-$copyright = "(c) Stichting Mathematisch Centrum, Amsterdam, 1985; Alex Smith 2010-2014; Daniel Thaler 2011-2012; and many others";
+$copyright = "(c) Stichting Mathematisch Centrum, Amsterdam, 1985; Alex Smith 2010-2015; Daniel Thaler 2011-2012; and many others";
 $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Development Team 2003";
 
 {

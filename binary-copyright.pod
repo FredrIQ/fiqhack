@@ -23,7 +23,7 @@ NGPL. The others have licenses of their own, given later in this
 document.
 
 The documentation is also under this license (except where it quotes
-existing licenses verbatim), and © Alex Smith 2013, 2014.
+existing licenses verbatim), and © Alex Smith 2013, 2014, 2015.
 
 For a more detailed version of this document, including the individual
 copyright status of every source file, see the "copyright-details.txt"
@@ -36,7 +36,7 @@ There is B<no warranty> for NetHack 4 or any of its component parts.
 =head2 NetHack General Public License
 
 The NetHack 4 engine and interface are © Stichting Mathematisch
-Centrum, Amsterdam, 1985; © Alex Smith 2010-2014; © Daniel Thaler
+Centrum, Amsterdam, 1985; © Alex Smith 2010-2015; © Daniel Thaler
 2011-2012; and many other contributors. The full list of contributors
 is available in the "history" document, viewable in-game.
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-12-29 */
+/* Last modified by Alex Smith, 2015-02-02 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -22,7 +22,7 @@ enum uncursed_hook_type {
     uncursed_hook_type_recording,   /* like broadcast, but only on request */
 };
 
-struct uncursed_palette16 ;
+struct uncursed_palette16;
 
 struct uncursed_hooks;
 struct uncursed_hooks {

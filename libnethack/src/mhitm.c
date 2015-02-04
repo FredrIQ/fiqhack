@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-20 */
+/* Last modified by Alex Smith, 2015-02-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -37,7 +37,10 @@ static int dieroll;
 static const char *
 mon_nam_too(struct monst *mon, struct monst *other_mon)
 {
-    if (mon == other_mon)
+    if (mon == other_mon) {
+        if (!is_longworm(mon->data))
+            impossible("non-longworm attacking itself?");
+
         switch (pronoun_gender(mon)) {
         case 0:
             return "himself";
@@ -46,6 +49,7 @@ mon_nam_too(struct monst *mon, struct monst *other_mon)
         default:
             return "itself";
         }
+    }
     return mon_nam(mon);
 }
 
@@ -206,6 +210,9 @@ mattackm(struct monst *magr, struct monst *mdef)
     pa = magr->data;
     pd = mdef->data;
 
+    if (!mpreattack(magr, distmin(mdef->mx, mdef->my, magr->mx, magr->my) > 1))
+        return FALSE;
+
     /* Grid bugs cannot attack at an angle. */
     if (pa == &mons[PM_GRID_BUG] && magr->mx != mdef->mx &&
         magr->my != mdef->my)
@@ -260,7 +267,7 @@ mattackm(struct monst *magr, struct monst *mdef)
         switch (mattk->aatyp) {
         case AT_WEAP:  /* weapon attacks */
             if (dist2(magr->mx, magr->my, mdef->mx, mdef->my) > 2) {
-                thrwmm(magr, mdef);
+                thrwmq(magr, mdef->mx, mdef->my);
                 if (tmphp > mdef->mhp)
                     res[i] = MM_HIT;
                 else
@@ -336,7 +343,7 @@ mattackm(struct monst *magr, struct monst *mdef)
             break;
 
         case AT_BREA:
-            bream(magr, mdef, mattk);
+            breamq(magr, mdef->mx, mdef->my, mattk);
             if (tmphp > mdef->mhp)
                 res[i] = MM_HIT;
             else
@@ -349,7 +356,7 @@ mattackm(struct monst *magr, struct monst *mdef)
             break;
 
         case AT_SPIT:
-            spitm(magr, mdef, mattk);
+            spitmq(magr, mdef->mx, mdef->my, mattk);
             if (tmphp > mdef->mhp)
                 res[i] = MM_HIT;
             else

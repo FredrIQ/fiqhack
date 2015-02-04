@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-07-31 */
+/* Last modified by Alex Smith, 2015-02-02 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -57,7 +57,7 @@ curses_outrip(struct nh_menulist *ml, nh_bool tombstone, const char *plname,
 
     /* clear all game windows and print to the screen directly. Those windows
        will be destroyed later. */
-    clear();
+    erase();
 
     if (tombstone) {
         /* These allocations are safe because we deallocate them before doing
