@@ -51,133 +51,106 @@ static_assert(UICMD_SERVERCANCEL < CMD_INTERNAL, "CMD_INTERNAL too small");
 
 /* Special actions, found in the Keymap menus */
 enum keymap_action {
-    KEYMAP_ACTION_BEGIN = -10000 ,   /* ==== Dummy action! Should be first ==== */
-    KEYMAP_ACTION_RESET_ALL,         /* Reset all bindings to the default settings*/
-    KEYMAP_ACTION_CLEAR_DIRECTIONS,  /* Clear all directions */
-    KEYMAP_ACTION_KEYPAD_DIRECTIONS, /* Set the keypad directions */
-    KEYMAP_ACTION_DIAG_DIRECTIONS,   /* Various alternatives for diagonal directions */
-    KEYMAP_ACTION_RUN_DIRECTIONS,    /* Manage how to 'run' in all directions */
-    KEYMAP_ACTION_GO_DIRECTIONS,     /* Manage how to 'go' in all directions */
-    KEYMAP_ACTION_VI_DIRECTIONS,     /* Manage the vi directions */
-    KEYMAP_ACTION_VI_ALTERNATIVES,   /* Propose alternatives to vi directions */
-    KEYMAP_ACTION_ALL_SUBMENU,       /* Submenu to manage all keymaps at once */
-    KEYMAP_ACTION_DEBUG_SUBMENU,     /* Submenu to manage keymaps for the DEBUG command  */
-    KEYMAP_ACTION_DIRECTION_SUBMENU, /* Submenu to manage keymaps for the direction commands  */
-    KEYMAP_ACTION_UI_SUBMENU,        /* Submenu to manage keymaps for UI  */
-    KEYMAP_ACTION_GAME_SUBMENU,      /* Submenu to manage keymaps for the game commands  */
-    KEYMAP_ACTION_END,               /* ==== Dummy action! Should be last ==== */
-} ;
+    KEYMAP_ACTION_BEGIN = -10000 ,   /* === Dummy action! Should be first === */
+
+    /* Unbinding */
+    KEYMAP_ACTION_RESET_ALL,         /* Reset all keys to defaults */
+
+    /* Mass rebinds */
+    KEYMAP_ACTION_MASSREBIND_VI,     /* Manage the vi directions */
+    KEYMAP_ACTION_MASSREBIND_DIGITS, /* Manage the digits */
+    KEYMAP_ACTION_MASSREBIND_MODIF,  /* Manage Ctrl-/Shift-direction */
+
+    /* Individual commands */
+    KEYMAP_ACTION_ALL_SUBMENU,       /* Manage each individual command */
+    KEYMAP_ACTION_DEBUG_SUBMENU,     /* Manage debug commands */
+    KEYMAP_ACTION_UI_SUBMENU,        /* Manage UI commands */
+    KEYMAP_ACTION_GAME_SUBMENU,      /* Manage game commands */
+    KEYMAP_ACTION_END,               /* === Dummy action! Should be last === */
+};
 
 
-/* Try to add the CTRL modifier to the specified 'key' code.
- *
- * Since the behavior of the CTRL modifier is system and keyboard
- * dependant this function is only an approximation of the
- * real behavior.
- *
- * Simply speaking, the returned keycode may not always
- * correspond to the real CTRL-key behavior.
- *
- * A result of 0 indicates that the input key is known
- * to be problematic with CTRL.
- *
- * A result equal to 'key' indicates that key is known
- * to already have the CTRL modifier
- *
- */
+/* Try to add the Ctrl modifier to the specified 'key' code.
+
+   Since the behavior of the Ctrl modifier is system and keyboard dependent, it
+   is not always possible to calculate exactly what will happen.
+
+   A result of 0 indicates that the input key is known to be problematic with
+   Ctrl. A result equal to 'key' indicates that the key already has the Ctrl
+   modifier. */
 static int
 guess_ctrl_key(int key)
 {
-    if (key == 0) {
+    if (key == 0)
         return 0;
-    } else if ('a' <= key && key <= 'z') {
+    else if ('a' <= key && key <= 'z')
         return key - 'a' + 1;   /* 'a'..'z' into 1..26 */
-    } else if ('A' <= key && key <= 'Z') {
-        return key - 'A' + 1;   /* The SHIFT is lost!!! */
-    } else if (1 <= key && key <= 26) {
-        return key;     /* CTRL-a to CTRL-z so already has CTRL */
-    } else if (KEY_CTRL & key) {
-        return key;     /* Another key with CTRL */
-    } else {
+    else if ('A' <= key && key <= 'Z')
+        return key - 'A' + 1;   /* Ctrl-Shift-letter looks like Ctrl-letter */
+    else if (1 <= key && key <= 26)
+        return key;             /* Letter, already has Ctrl modifier */
+    else if (key < 256)
+        return 0;               /* KEY_CTRL doesn't work in the ASCII range */
+    else
         return KEY_CTRL | key;
-    }
 }
 
-/* Try to add the SHIFT modifier to the specified 'key' code.
- *
- * Since the behavior of the SHIFT modifier is system and
- * keyboard dependant this function is only an approximation
- * of the real behavior.
- *
- * Simply speaking, the returned keycode may not always
- * correspond to the real SHIFT-key behavior.
- *
- * A result of 0 indicates that the input key is known
- * to be problematic with SHIFT.
- *
- * The current implementation assumes that
- *   - SHIFT+'a'..'z' produces 'A'..'Z'
- *   - SHIT+'A'..'Z' produces 'A'..'Z' unchanged.
- *   - Keys with the KEY_SHIFT modifier are left unchanged
- *   - Special keys such F<n>, UP, HOME,... are given the KEY_SHIFT modifier
- *
- * Most other cases are considered too ambiguous and will
- * produce the error code 0.
- *
- */
+/* Try to add the Shift modifier to the specified 'key' code.
+
+   Since the behavior of the SHIFT modifier is system and keyboard dependent,
+   it is not always possible to calculate what will happen.
+
+   A result of 0 indicates that the input key is known to be problematic with
+   Shift. A result equal to 'key' indicates that the key already has the Shift
+   modifier. */
 static int
 guess_shift_key(int key)
 {
-    if (key == 0) {
+    if (key == 0)
         return 0;
-    } else if ('a' <= key && key <= 'z') {
-        /* from 'a'..'z' to 'A'..'Z' */
-        return key - 'a' + 'A';
-    } else if ('A' <= key && key <= 'Z') {
+    else if ('a' <= key && key <= 'z')
+        return key - 'a' + 'A'; /* from 'a'..'z' to 'A'..'Z' */
+    else if ('A' <= key && key <= 'Z')
         return key;
-    } else if (KEY_SHIFT & key) {
-        /* Keep the existing SHIFT modifier */
-        return key;
-    } else if (KEY_FUNCTION & key) {
-        /* Special keys usually get the KEY_SHIFT modifier */
+    else if (key < 256)
+        return 0;               /* KEY_SHIFT doesn't work in the ASCII range */
+    else
         return KEY_SHIFT | key;
-    } else {
-        return 0;
-    }
 }
 
+/* The order is important: adding 4 should be a 45 degree rotation clockwise */
 static const char *const all_directions[8] = {
     "north",
     "south",
     "west",
     "east",
     "north_east",
-    "north_west",
     "south_west",
+    "north_west",
     "south_east",
 };
 
-/* Provide the 8 run_ commands in the same order than in all_directions */
+/* Provide the 8 run_ commands in the same order as in all_directions */
 static const char *const all_run_directions[8] = {
     "run_north",
     "run_south",
     "run_west",
     "run_east",
     "run_north_east",
-    "run_north_west",
     "run_south_west",
+    "run_north_west",
     "run_south_east",
 };
 
-/* Provide the 8 go_ commands in the same order than in all_directions */
+/* Provide the 8 go_ commands in the same order as in all_directions */
 static const char *const all_go_directions[8] = {
     "go_north",
     "go_south",
     "go_west",
     "go_east",
     "go_north_east",
-    "go_north_west",
     "go_south_west",
+    "go_north_west",
     "go_south_east",
 };
 
@@ -186,8 +159,8 @@ static const char *const all_go_directions[8] = {
 #endif
 
 #define DIRCMD          (1U << 28)
-#define DIRCMD_SHIFT    (1U << 29)
-#define DIRCMD_CTRL     (1U << 30)
+#define DIRCMD_RUN      (1U << 29)
+#define DIRCMD_GO       (1U << 30)
 
 static struct nh_cmd_desc builtin_commands[] = {
     {"east", "move, fight or interact to the east", 'l', 0,
@@ -211,38 +184,38 @@ static struct nh_cmd_desc builtin_commands[] = {
      CMD_UI | DIRCMD | DIR_DOWN},
 
     {"run_east", "go east until you run into something", 'L', 0,
-     CMD_UI | DIRCMD_SHIFT | DIR_E},
+     CMD_UI | DIRCMD_RUN | DIR_E},
     {"run_north", "go north until you run into something", 'K', 0,
-     CMD_UI | DIRCMD_SHIFT | DIR_N},
+     CMD_UI | DIRCMD_RUN | DIR_N},
     {"run_north_east", "go northeast until you run into something", 'U', 0,
-     CMD_UI | DIRCMD_SHIFT | DIR_NE},
+     CMD_UI | DIRCMD_RUN | DIR_NE},
     {"run_north_west", "go northwest until you run into something", 'Y', 0,
-     CMD_UI | DIRCMD_SHIFT | DIR_NW},
+     CMD_UI | DIRCMD_RUN | DIR_NW},
     {"run_south", "go south until you run into something", 'J', 0,
-     CMD_UI | DIRCMD_SHIFT | DIR_S},
+     CMD_UI | DIRCMD_RUN | DIR_S},
     {"run_south_east", "go southeast until you run into something", 'N', 0,
-     CMD_UI | DIRCMD_SHIFT | DIR_SE},
+     CMD_UI | DIRCMD_RUN | DIR_SE},
     {"run_south_west", "go southwest until you run into something", 'B', 0,
-     CMD_UI | DIRCMD_SHIFT | DIR_SW},
+     CMD_UI | DIRCMD_RUN | DIR_SW},
     {"run_west", "go west until you run into something", 'H', 0,
-     CMD_UI | DIRCMD_SHIFT | DIR_W},
+     CMD_UI | DIRCMD_RUN | DIR_W},
 
     {"go_east", "run east until something interesting is seen", Ctrl('l'), 0,
-     CMD_UI | DIRCMD_CTRL | DIR_E},
+     CMD_UI | DIRCMD_GO | DIR_E},
     {"go_north", "run north until something interesting is seen", Ctrl('k'), 0,
-     CMD_UI | DIRCMD_CTRL | DIR_N},
+     CMD_UI | DIRCMD_GO | DIR_N},
     {"go_north_east", "run northeast until something interesting is seen",
-     Ctrl('u'), 0, CMD_UI | DIRCMD_CTRL | DIR_NE},
+     Ctrl('u'), 0, CMD_UI | DIRCMD_GO | DIR_NE},
     {"go_north_west", "run northwest until something interesting is seen",
-     Ctrl('y'), 0, CMD_UI | DIRCMD_CTRL | DIR_NW},
+     Ctrl('y'), 0, CMD_UI | DIRCMD_GO | DIR_NW},
     {"go_south", "run south until something interesting is seen", Ctrl('j'), 0,
-     CMD_UI | DIRCMD_CTRL | DIR_S},
+     CMD_UI | DIRCMD_GO | DIR_S},
     {"go_south_east", "run southeast until something interesting is seen",
-     Ctrl('n'), 0, CMD_UI | DIRCMD_CTRL | DIR_SE},
+     Ctrl('n'), 0, CMD_UI | DIRCMD_GO | DIR_SE},
     {"go_south_west", "run southwest until something interesting is seen",
-     Ctrl('b'), 0, CMD_UI | DIRCMD_CTRL | DIR_SW},
+     Ctrl('b'), 0, CMD_UI | DIRCMD_GO | DIR_SW},
     {"go_west", "run west until something interesting is seen", Ctrl('h'), 0,
-     CMD_UI | DIRCMD_CTRL | DIR_W},
+     CMD_UI | DIRCMD_GO | DIR_W},
 
     {"extcommand", "perform an extended command", '#', 0,
      CMD_UI | UICMD_EXTCMD},
@@ -292,26 +265,6 @@ static struct nh_cmd_desc *doextcmd(nh_bool);
 static void dostop(void);
 static void dotogglepickup(void);
 
-const char *
-curses_keyname(int key)
-{
-    static char knbuf[16];
-    const char *kname;
-
-    if (key == ' ')
-        return "SPACE";
-    else if (key == '\033')
-        return "ESC";
-
-    /* if ncurses doesn't know a key, keyname() returns NULL. This can happen
-       if you create a keymap with pdcurses, and then read it with ncurses */
-    kname = keyname(key);
-    if (kname && strcmp(kname, "UNKNOWN KEY"))
-        return kname;
-    snprintf(knbuf, sizeof (knbuf), "KEY_#%d", key);
-    return knbuf;
-}
-
 static struct nh_cmd_desc *
 find_command(const char *cmdname)
 {
@@ -333,7 +286,7 @@ void
 handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg,
                     nh_bool include_debug)
 {
-    int id = (*cmd)->flags & ~(CMD_UI | DIRCMD | DIRCMD_SHIFT | DIRCMD_CTRL);
+    int id = (*cmd)->flags & ~(CMD_UI | DIRCMD | DIRCMD_RUN | DIRCMD_GO);
 
     ui_flags.in_zero_time_command = TRUE;
 
@@ -352,9 +305,9 @@ handle_internal_cmd(struct nh_cmd_desc **cmd, struct nh_cmd_arg *arg,
         arg->dir = id;
         if ((*cmd)->flags & DIRCMD)
             *cmd = find_command("move");
-        else if ((*cmd)->flags & DIRCMD_SHIFT)
+        else if ((*cmd)->flags & DIRCMD_RUN)
             *cmd = find_command("run");
-        else if ((*cmd)->flags & DIRCMD_CTRL)
+        else if ((*cmd)->flags & DIRCMD_GO)
             *cmd = find_command("go");
         break;
 
@@ -599,10 +552,11 @@ key_to_dir(int key)
     if (cmd && (!strcmp(cmd->name, "wait") || !strcmp(cmd->name, "search")))
         return DIR_SELF;
 
-    if (!cmd || !(cmd->flags & DIRCMD))
+    if (!cmd || !(cmd->flags & (DIRCMD | DIRCMD_RUN | DIRCMD_GO)))
         return DIR_NONE;
 
-    return (enum nh_direction)cmd->flags & ~(CMD_UI | DIRCMD);
+    return (enum nh_direction)cmd->flags &
+        ~(CMD_UI | DIRCMD | DIRCMD_RUN | DIRCMD_GO);
 }
 
 /* here after #? - now list all full-word commands */
@@ -863,7 +817,7 @@ save_menu(void)
         /* Ask for a second confirmation, this is really dangerous! */
         init_menulist(&menu);
         add_menu_item(&menu, 1, "Yes, delete the save file", 'y', FALSE);
-        add_menu_item(&menu, 2, "No, I wcurses_display_menuant to keep playing", 'n', FALSE);
+        add_menu_item(&menu, 2, "No, I want to keep playing", 'n', FALSE);
         curses_display_menu(&menu, "Really delete the save file?", PICK_ONE,
                             PLHINT_URGENT, selected, curses_menu_callback);
 
@@ -1373,13 +1327,13 @@ do_select_cmd(struct nh_cmd_desc *cmd, enum select_cmd sel)
         return (cmd->flags & CMD_DEBUG) != 0;
     case SELECT_CMD_DIRECTION:
         return (cmd->flags & CMD_UI)
-            && (cmd->flags & (DIRCMD | DIRCMD_SHIFT | DIRCMD_CTRL))
+            && (cmd->flags & (DIRCMD | DIRCMD_RUN | DIRCMD_GO))
             /* Ignore UP and DOWN */
             && (cmd->flags != (CMD_UI | DIRCMD | DIR_UP))
             && (cmd->flags != (CMD_UI | DIRCMD | DIR_DOWN));
     case SELECT_CMD_UI:
         return (cmd->flags & CMD_UI)
-            && !(cmd->flags & (DIRCMD | DIRCMD_SHIFT | DIRCMD_CTRL));
+            && !(cmd->flags & (DIRCMD | DIRCMD_RUN | DIRCMD_GO));
     case SELECT_CMD_GAME:
         return !do_select_cmd(cmd, SELECT_CMD_DEBUG)
             && !do_select_cmd(cmd, SELECT_CMD_DIRECTION)
@@ -1474,45 +1428,39 @@ add_keylist_selection(struct nh_menulist *menu, enum select_cmd sel,
  *
  * Argument 'desc' is the array of lines that compose the dialog.
  *
- * - a line starting with '#' is a heading and so will be highlighted)
+ * - a line starting with '#' is a heading( and so will be highlighted)
  * - a line starting with ':' is a regular text
  * - a line stating with '[x]' where 'x' is a single character
  *   specifies a possible choice associated to the key 'x'
  * - the last line shall be NULL
  *
- * Argument 'allow_cancel' indicates if the menu can be cancelled
- *
  * If the dialog was cancelled then return CURSES_MENU_CANCELLED
  * else return the key of the selected choice (one of the 'x' above)
- *
  */
 static int
-simple_dialog(const char *title, const char *const *desc, nh_bool allow_cancel)
+simple_dialog(const char *title, const char *const *desc)
 {
     struct nh_menulist menu;
     const char *line;
     int i, result;
 
-    do {
+    init_menulist(&menu);
 
-        init_menulist(&menu);
-
-        for (i = 0; desc[i] != NULL; i++) {
-            line = desc[i];
-            if (line[0] == '#') {
-                add_menu_txt(&menu, line + 1, MI_HEADING);
-            } else if (line[0] == '[' && strlen(line) >= 3 && line[2] == ']') {
-                add_menu_item(&menu, line[1], line + 3, line[1], FALSE);
-            } else if (line[0] == ':') {
-                add_menu_txt(&menu, line + 1, MI_TEXT);
-            } else {
-                add_menu_txt(&menu, line, MI_TEXT);
-            }
+    for (i = 0; desc[i] != NULL; i++) {
+        line = desc[i];
+        if (line[0] == '#') {
+            add_menu_txt(&menu, line + 1, MI_HEADING);
+        } else if (line[0] == '[' && strlen(line) >= 3 && line[2] == ']') {
+            add_menu_item(&menu, line[1], line + 3, line[1], FALSE);
+        } else if (line[0] == ':') {
+            add_menu_txt(&menu, line + 1, MI_TEXT);
+        } else {
+            add_menu_txt(&menu, line, MI_TEXT);
         }
+    }
 
-        curses_display_menu(&menu, title, PICK_ONE, PLHINT_ANYWHERE, &result,
-                            curses_menu_callback);
-    } while (result == CURSES_MENU_CANCELLED && !allow_cancel);
+    curses_display_menu(&menu, title, PICK_ONE, PLHINT_ANYWHERE, &result,
+                        curses_menu_callback);
 
     return result;
 }
@@ -1527,15 +1475,15 @@ keymap_action_reset_all(void)
     const char *const dialog[] = {
         ":",
         "#Warning: All key bindings will be restored",
-        "#         to their default settings!!!",
+        "#         to their default settings!",
         ":",
-        "[a] Apply",
-        "[c] Cancel",
+        "[r]Reset all keybindings",
+        "[c]Cancel",
         NULL
     };
 
-    res = simple_dialog("Reset all keymaps", dialog, TRUE);
-    if (res == 'a') {
+    res = simple_dialog("Reset all key bindings", dialog);
+    if (res == 'r') {
 
         init_keymap();  /* fully reset the keymap */
 
@@ -1549,9 +1497,8 @@ keymap_action_reset_all(void)
     }
 }
 
-/* Remove the mapping of cmdname to the specified key.
- * Do nothing if that command is not mapped to that key.
- */
+/* Remove the mapping of cmdname to the specified key. Do nothing if that
+   command is not mapped to that key. */
 static void
 remove_keymap_if(int key, const char *cmdname)
 {
@@ -1560,24 +1507,10 @@ remove_keymap_if(int key, const char *cmdname)
     if (cmd)
         if (keymap[key] == cmd)
             keymap[key] = NO_KEYMAP;
-
 }
 
-static void
-remove_keymaps_to(const char *cmdname)
-{
-    int key;
-    struct nh_cmd_desc *cmd = find_command(cmdname);
-
-    if (cmd)
-        for (key = 0; key <= KEY_MAX; key++)
-            if (keymap[key] == cmd)
-                keymap[key] = NO_KEYMAP;
-}
-
-/* Remove the VI direction keys including their SHIFT and CTRL
- * variants for run_ or go_ commands.
- */
+/* Remove the vi direction keys, including their SHIFT and CTRL variants, from
+   run_ or go_ commands. */
 static void
 remove_all_vi_directions(void)
 {
@@ -1608,152 +1541,106 @@ remove_all_vi_directions(void)
 }
 
 static void
-keymap_action_vi_directions(void)
+keymap_action_massrebind_vi(void)
 {
-
     int i, res;
 
     const char *const dialog[] = {
+        ":The letter keys \"hjklyubn\" are used as direction keys in many",
+        ":configurations of NetHack (\"vi-keys\" configuration):",
         ":",
-        ":The VI direction keys are ",
+        ":    y k u ",
+        ":    h   l ",
+        ":    b j n ",
         ":",
-        ":    yku ",
-        ":    h l ",
-        ":    bjn ",
+        ":In other configurations, they are used as abbreviations for",
+        ":other commands:",
         ":",
+        ":h  help             (typically on ?)",
+        ":j  jump             (typically on #jump or Meta-j)",
+        ":k  kick             (typically on Ctrl-d)",
+        ":l  loot             (typically on #loot or Meta-l)",
+        ":n  command repeat   (typically on main keyboard digits)",
+        ":u  untrap           (typically on #untrap)",
         ":",
-        "[i] Install VI direction keys",
-        "[r] Remove all VI directions keys",
+        "[v]Bind hjklyubn to direction keys",
+        "[V]Bind hjklyubn and Ctrl- and Shift- variants to direction keys",
+        "[c]Bind hjklnu to commands, unbind yb",
+        "[u]Unbind hjklyubn and Ctrl- and Shift- variants from direction keys",
+        "[q]Cancel",
         NULL
     };
 
-    res = simple_dialog("Install VI Direction Keymap", dialog, TRUE);
+    res = simple_dialog("Mass rebind: hjklyubn", dialog);
 
-    /* Reminder: We assume here that the VI keymaps are stored in the defkey
-       field of their respective nh_cmd_desc descriptor */
+    /* The vikeys are in the default command mappings, so we can install them
+       via resetting direction commands to defaults. */
 
-    if (res == 'i') {
+    if (res == 'v') {
         for (i = 0; i < 8; i++) {
             struct nh_cmd_desc *dir = find_command(all_directions[i]);
 
             keymap[dir->defkey] = dir;
         }
-    } else if (res == 'r') {
-        remove_all_vi_directions();
-    }
-}
-
-static void
-keymap_action_vi_alternatives(void)
-{
-
-    int res;
-
-    const char *const dialog[] = {
-        ":",
-        ":Players not using the VI direction keys",
-        ":may appreciate the following alternatives:",
-        ":  ",
-        ":  kick       : k CTRL-k SHIFT-k",
-        ":  loot       : l CTRL-l SHIFT-l",
-        ":  name       : n CTRL-n SHIFT-n",
-        ":",
-        "[a] Bind them all and exit",
-        "[b] Bind kick",
-        "[c] Bind loot",
-        "[d] Bind name",
-        "[r] Remove all VI directions keys",
-        "[x] Exit",
-        NULL
-    };
-
-    do {
-        res =
-            simple_dialog("Alternatives commands to VI directions", dialog,
-                          TRUE);
-
-        if (res == 'a' || res == 'b') {
-            keymap['k'] = find_command("kick");
-            keymap[Ctrl('k')] = find_command("kick");
-        }
-
-        if (res == 'a' || res == 'c') {
-            keymap['l'] = find_command("loot");
-            keymap[Ctrl('l')] = find_command("loot");
-        }
-
-        if (res == 'a' || res == 'd') {
-            keymap['n'] = find_command("name");
-            keymap[Ctrl('n')] = find_command("name");
-        }
-
-        if (res == 'r') {
-            remove_all_vi_directions();
-        }
-
-        if (res == 'a' || res == 'x')
-            break;
-
-    } while (res != CURSES_MENU_CANCELLED);
-
-}
-
-static void
-keymap_action_clear_directions(void)
-{
-    int i, res;
-
-    const char *const dialog[] = {
-        ":",
-        ":This will clear all directions key including the",
-        ":SHIFT and CTRL variants. ",
-        ":",
-        ":The UP, LEFT, DOWN and RIGHT will then be remapped",
-        ":to their respective direction",
-        ":",
-        "[a] Apply to clear all direction keys",
-        NULL
-    };
-
-    res = simple_dialog("Clear Direction Keys", dialog, TRUE);
-
-    if (res == 'a') {
-
+    } else if (res == 'V') {
         for (i = 0; i < 8; i++) {
-            remove_keymaps_to(all_directions[i]);
-            remove_keymaps_to(all_run_directions[i]);
-            remove_keymaps_to(all_go_directions[i]);
+            struct nh_cmd_desc *dir;
+
+            dir = find_command(all_directions[i]);
+            keymap[dir->defkey] = dir;
+            dir = find_command(all_run_directions[i]);
+            keymap[dir->defkey] = dir;
+            dir = find_command(all_go_directions[i]);
+            keymap[dir->defkey] = dir;
         }
-
-        keymap[KEY_UP] = find_command("north");
-        keymap[KEY_DOWN] = find_command("south");
-        keymap[KEY_LEFT] = find_command("west");
-        keymap[KEY_RIGHT] = find_command("east");
-
+    } else if (res == 'u') {
+        remove_all_vi_directions();
+    } else if (res == 'c') {
+        keymap['h'] = find_command("help");
+        keymap['j'] = find_command("jump");
+        keymap['k'] = find_command("kick");
+        keymap['l'] = find_command("loot");
+        keymap['n'] = find_command("repeatcount");
+        keymap['u'] = find_command("untrap");
+        keymap['y'] = NO_KEYMAP;
+        keymap['b'] = NO_KEYMAP;
     }
 }
 
 static void
-keymap_action_keypad_directions(void)
+keymap_action_massrebind_digits(void)
 {
     int res;
 
     const char *const dialog[] = {
+        ":The digits \"0123456789\" are used as direction keys in many",
+        ":configurations of NetHack (\"numpad\" configuration):",
         ":",
-        ":Bind the keypad to the 8 directions:",
+        ":    7 8 9",
+        ":    4   6   (5 = farmove, 0 = inventory, . = wait)",
+        ":    1 2 3",
         ":",
-        ":   789",
-        ":   4 6",
-        ":   123",
+        ":In other configurations, they are used for command repeat,",
+        ":specifying how many turns to perform a command for.",
         ":",
-        "[a] Apply to set the keypad directions",
+        ":Some terminals can distinguish the numeric keypad keys from the main",
+        ":keyboard keys and the cursor movement keys. Some terminals cannot,",
+        ":producing main keyboard numbers with NumLock off, and cursor",
+        ":movement keys (Left, Home, etc.) with NumLock on.",
+        ":",
+        "[k]Bind numeric keypad numbers to directions (terminal-dependent)",
+        "[m]Bind main keypad numbers to directions",
+        "[c]Bind cursor movement keys to directions",
+        "[a]Bind both numeric keypad and cursor movement keys to directions",
+        "[r]Bind main keypad numbers to command repeat",
+        "[v]Bind numeric keypad numbers to command repeat",
+        "[q]Cancel",
         NULL
     };
 
-    res = simple_dialog("Keypad directions", dialog, TRUE);
+    res = simple_dialog("Mass rebind: 123456789", dialog);
 
-    if (res == 'a') {
-
+    if (res == 'k' || res == 'a') {
         keymap[KEY_A2] = find_command("north");
         keymap[KEY_C2] = find_command("south");
         keymap[KEY_B1] = find_command("west");
@@ -1762,236 +1649,130 @@ keymap_action_keypad_directions(void)
         keymap[KEY_A3] = find_command("north_east");
         keymap[KEY_C1] = find_command("south_west");
         keymap[KEY_C3] = find_command("south_east");
-    }
-}
 
-static void
-keymap_action_run_directions(void)
-{
-    int i, res, key;
-    struct nh_cmd_desc *dir;
-    struct nh_cmd_desc *run;
-
-    const char *const dialog[] = {
-        ":",
-        ":The SHIFT or CTRL modifiers can be used to 'run'",
-        ":in the 8 directions",
-        ":",
-        ":",
-        "[a] Map SHIFT + current directions to run commands",
-        "[b] Map CTRL + current directions to run commands",
-        "[x] Unmap all run commands",
-        NULL
-    };
-
-    res = simple_dialog("Manage run commands", dialog, TRUE);
-
-    if (res == 'a') {
-        for (i = 0; i < 8; i++) {
-            dir = find_command(all_directions[i]);
-            run = find_command(all_run_directions[i]);
-            if (!dir || !run)
-                return; /* should not happen */
-            for (key = 0; key <= KEY_MAX; key++) {
-                if (keymap[key] == dir) {
-                    int key2 = guess_shift_key(key);
-
-                    if (key2 != 0 && key2 != key) {
-                        keymap[key2] = run;
-                    } else {
-                        printf("failed to set shift on %d (%d)", key, key2);
-                        /* Failed to guess the SHIFT variant */
-                        /* TODO: emit warning? */
-                    }
-                }
-            }
-        }
-    } else if (res == 'b') {
-        for (i = 0; i < 8; i++) {
-            dir = find_command(all_directions[i]);
-            run = find_command(all_run_directions[i]);
-            if (!dir || !run)
-                return; /* should not happen */
-            for (key = 0; key <= KEY_MAX; key++) {
-                if (keymap[key] == dir) {
-                    int key2 = guess_ctrl_key(key);
-
-                    if (key2 != 0 && key2 != key) {
-                        keymap[key2] = run;
-                    } else {
-                        /* Failed to guess the CTRL variant */
-                        /* TODO: emit warning? */
-                    }
-                }
-            }
-        }
-    } else if (res == 'x') {
-        for (i = 0; i < 8; i++) {
-            run = find_command(all_run_directions[i]);
-            if (!run)
-                return; /* should not happen */
-            for (key = 0; key <= KEY_MAX; key++) {
-                if (keymap[key] == run) {
-                    keymap[key] = NO_KEYMAP;
-                }
-            }
-        }
+        keymap[KEY_B2] = find_command("go");
+        keymap[KEY_D1] = find_command("inventory");
+        keymap[KEY_D3] = find_command("wait");
     }
 
-}
+    if (res == 'm') {
+        keymap['8'] = find_command("north");
+        keymap['2'] = find_command("south");
+        keymap['4'] = find_command("west");
+        keymap['6'] = find_command("east");
+        keymap['7'] = find_command("north_west");
+        keymap['9'] = find_command("north_east");
+        keymap['1'] = find_command("south_west");
+        keymap['3'] = find_command("south_east");
 
-static void
-keymap_action_go_directions(void)
-{
-    int i, res, key;
-    struct nh_cmd_desc *dir;
-    struct nh_cmd_desc *go;
-
-    const char *const dialog[] = {
-        ":",
-        ":The SHIFT or CTRL modifiers can be used to 'go'",
-        ":in the 8 directions",
-        ":",
-        ":",
-        "[a] Map SHIFT + current directions to go commands",
-        "[b] Map CTRL + current directions to go commands",
-        "[x] Unmap all go commands",
-        NULL
-    };
-
-    res = simple_dialog("Manage go commands", dialog, TRUE);
-
-    if (res == 'a') {
-        for (i = 0; i < 8; i++) {
-            dir = find_command(all_directions[i]);
-            go = find_command(all_go_directions[i]);
-            if (!dir || !go)
-                return; /* should not happen */
-            for (key = 0; key <= KEY_MAX; key++) {
-                if (keymap[key] == dir) {
-                    int key2 = guess_shift_key(key);
-
-                    if (key2 != 0 && key2 != key) {
-                        keymap[key2] = go;
-                    } else {
-                        /* Failed to guess the SHIFT variant */
-                        /* TODO: emit warning? */
-                    }
-                }
-            }
-        }
-    } else if (res == 'b') {
-        for (i = 0; i < 8; i++) {
-            dir = find_command(all_directions[i]);
-            go = find_command(all_go_directions[i]);
-            if (!dir || !go)
-                return; /* should not happen */
-            for (key = 0; key <= KEY_MAX; key++) {
-                if (keymap[key] == dir) {
-                    int key2 = guess_ctrl_key(key);
-
-                    if (key2 != 0 && key2 != key) {
-                        keymap[key2] = go;
-                    } else {
-                        /* Failed to guess the CTRL variant */
-                        /* TODO: emit warning? */
-                    }
-                }
-            }
-        }
-    } else if (res == 'x') {
-        for (i = 0; i < 8; i++) {
-            go = find_command(all_go_directions[i]);
-            if (!go)
-                return; /* should not happen */
-            for (key = 0; key <= KEY_MAX; key++) {
-                if (keymap[key] == go) {
-                    keymap[key] = NO_KEYMAP;
-                }
-            }
-        }
+        keymap['5'] = find_command("go");
+        keymap['0'] = find_command("inventory");
+        /* . is not a digit */
     }
 
-}
-
-static void
-keymap_action_diag_directions(void)
-{
-    int res;
-
-    const char *const dialog[] = {
-        ":",
-        ":Depending of your keyboard layout, some of the following"
-            ":bindings may be suitable for diagonal moves (north_west,",
-        ":north_east, south_west and south_east)",
-        ":",
-        ":A good diagonal binding should typically form a square",
-        ":on your keyboard.",
-        ":",
-        ":Choose one or press ESC to cancel",
-        ":",
-        "#Warning: Some desktops or terminal emulators are",
-        "#         known to intercept ALT keys",
-        ":",
-        "[a] ALT-Up  | ALT-End     | ALT-Down/Left  | ALT-Right",
-        "[b] ALT-Up  | ALT-Insert  | ALT-Down/Left  | ALT-Right",
-        "[c] CTRL-Up | CTRL-End    | CTRL-Down/Left | CTRL-Right",
-        "[d] CTRL-Up | CTRL-Insert | CTRL-Down/Left | CTRL-Right",
-        "[e] Home    | PgUp        | End            | PgDn",
-        ":",
-        NULL
-    };
-
-    res = simple_dialog("Diagonal moves", dialog, TRUE);
-
-    switch (res) {
-    case 'a':
-        keymap[KEY_ALT | KEY_UP] = find_command("north_west");
-        keymap[KEY_ALT | KEY_END] = find_command("north_east");
-        keymap[KEY_ALT | KEY_DOWN] = find_command("south_west");
-        keymap[KEY_ALT | KEY_RIGHT] = find_command("south_east");
-        /* Also map ALT+Left to avoid moving left by mistake */
-        keymap[KEY_ALT | KEY_LEFT] = find_command("south_west");
-        break;
-    case 'b':
-        keymap[KEY_ALT | KEY_UP] = find_command("north_west");
-        keymap[KEY_ALT | KEY_IC] = find_command("north_east");
-        keymap[KEY_ALT | KEY_DOWN] = find_command("south_west");
-        keymap[KEY_ALT | KEY_RIGHT] = find_command("south_east");
-        /* Also map ALT+Left to avoid moving left by mistake */
-        keymap[KEY_ALT | KEY_LEFT] = find_command("south_west");
-        break;
-    case 'c':
-        keymap[KEY_CTRL | KEY_UP] = find_command("north_west");
-        keymap[KEY_CTRL | KEY_END] = find_command("north_east");
-        keymap[KEY_CTRL | KEY_DOWN] = find_command("south_west");
-        keymap[KEY_CTRL | KEY_RIGHT] = find_command("south_east");
-        /* Also map CTRL+Left to avoid moving left by mistake */
-        keymap[KEY_CTRL | KEY_LEFT] = find_command("south_west");
-        break;
-    case 'd':
-        keymap[KEY_CTRL | KEY_UP] = find_command("north_west");
-        keymap[KEY_CTRL | KEY_IC] = find_command("north_east");
-        keymap[KEY_CTRL | KEY_DOWN] = find_command("south_west");
-        keymap[KEY_CTRL | KEY_RIGHT] = find_command("south_east");
-        /* Also map CTRL+Left to avoid moving left by mistake */
-        keymap[KEY_ALT | KEY_LEFT] = find_command("south_west");
-        break;
-    case '2':
+    if (res == 'c' || res == 'a') {
+        keymap[KEY_UP] = find_command("north");
+        keymap[KEY_DOWN] = find_command("south");
+        keymap[KEY_LEFT] = find_command("west");
+        keymap[KEY_RIGHT] = find_command("east");
         keymap[KEY_HOME] = find_command("north_west");
         keymap[KEY_PPAGE] = find_command("north_east");
         keymap[KEY_END] = find_command("south_west");
         keymap[KEY_NPAGE] = find_command("south_east");
-        break;
-    default:
-        break;
+
+        keymap[KEY_B2] = find_command("go"); /* produces a unique code */
+        keymap[KEY_IC] = find_command("inventory");
+        keymap[KEY_DC] = find_command("wait");
     }
 
+    if (res == 'r') {
+        int i;
+        for (i = '0'; i <= '9'; i++)
+            keymap[i] = find_command("repeatcount");
+    }
+
+    if (res == 'v') {
+        keymap[KEY_A2] = find_command("repeatcount");
+        keymap[KEY_C2] = find_command("repeatcount");
+        keymap[KEY_B1] = find_command("repeatcount");
+        keymap[KEY_B3] = find_command("repeatcount");
+        keymap[KEY_A1] = find_command("repeatcount");
+        keymap[KEY_A3] = find_command("repeatcount");
+        keymap[KEY_C1] = find_command("repeatcount");
+        keymap[KEY_C3] = find_command("repeatcount");
+
+        keymap[KEY_B2] = find_command("repeatcount");
+        keymap[KEY_D1] = find_command("repeatcount");
+    }
+}
+
+static void
+keymap_action_massrebind_modif(void)
+{
+    int i, imax, res, key, mkey;
+    struct nh_cmd_desc *direction_commands[8];
+
+    const char *const dialog[] = {
+        ":In addition to moving a single space with the direction keys, there",
+        ":are also commands for moving multiple spaces: 'run' which will",
+        ":interact with, e.g., doors found on the way, and 'go' which is more",
+        ":cautious, stopping upon finding such features. One common binding",
+        ":for these is Shift- or Ctrl-direction. (You can also bind a key like",
+        ":'g' or '5' as a prefix via the game command binding menu.)",
+        ":",
+        ":Some players may prefer to use Shift-/Ctrl-direction for diagonal",
+        ":movement.",
+        ":",
+        "[g]Map Ctrl-direction to the 'go' command",
+        "[r]Map Ctrl-direction to the 'run' command",
+        "[d]Map Ctrl-direction to diagonals (rotate 45 degrees clockwise)",
+        "[u]Unmap Ctrl-direction",
+        "[G]Map Shift-direction to the 'go' command",
+        "[R]Map Shift-direction to the 'run' command",
+        "[D]Map Shift-direction to diagonals (rotate 45 degrees clockwise)",
+        "[U]Unmap Shift-direction",
+        "[q]Cancel",
+        NULL
+    };
+
+    res = simple_dialog("Mass rebind: Shift/Ctrl-direction", dialog);
+
+    if (res == 'q' || res == CURSES_MENU_CANCELLED)
+        return;
+
+    for (i = 0; i < 8; i++)
+        direction_commands[i] = find_command(all_directions[i]);
+
+    imax = (res == 'd' || res == 'D') ? 4 : 8;
+
+    for (key = 0; key <= KEY_MAX; key++) {
+        for (i = 0; i < imax; i++) {
+            if (keymap[key] == direction_commands[i]) {
+                if (res == 'g' || res == 'r' || res == 'u')
+                    mkey = guess_shift_key(key);
+                else
+                    mkey = guess_ctrl_key(key);
+
+                if (mkey == key || mkey == 0)
+                    ; /* be silent about this: the user might not care about
+                         a failure to rebind, say, shift-main-keyboard-2,
+                         and we've already warned about terminal problems */
+                else if (res == 'g' || res == 'G')
+                    keymap[mkey] = find_command(all_go_directions[i]);
+                else if (res == 'r' || res == 'R')
+                    keymap[mkey] = find_command(all_run_directions[i]);
+                else if (res == 'u' || res == 'U')
+                    keymap[mkey] = NO_KEYMAP;
+                else if (res == 'd' || res == 'D')
+                    keymap[mkey] = find_command(all_directions[i + 4]);
+            }
+        }
+    }
 }
 
 static nh_bool set_command_keys(struct win_menu *mdat, int idx);
 
-/* Sub-menu to manage the DEBUG keymaps */
+/* Sub-menu to manage the debug keymaps */
 static void
 keymap_action_debug_submenu(void)
 {
@@ -2007,7 +1788,7 @@ keymap_action_debug_submenu(void)
         add_keylist_selection(&menu, SELECT_CMD_DEBUG, ORDER_CMD_NAME,
                               readonly);
 
-        curses_display_menu_core(&menu, "Debug Keymap",
+        curses_display_menu_core(&menu, "Rebind keys: Debug commands",
                                  readonly ? PICK_NONE : PICK_ONE, selected,
                                  curses_menu_callback, 0, 0, COLS, LINES, FALSE,
                                  set_command_keys, TRUE);
@@ -2015,48 +1796,7 @@ keymap_action_debug_submenu(void)
     } while (*selected != CURSES_MENU_CANCELLED);
 }
 
-/* Sub-menu to manage the 8-directions keymaps */
-static void
-keymap_action_direction_submenu(void)
-{
-    int selected[1];
-    struct nh_menulist menu;
-    nh_bool readonly = FALSE;
-
-    do {
-        init_menulist(&menu);
-
-        add_menu_txt(&menu, "Command\tDescription\tKey", MI_HEADING);
-
-        add_keylist_selection(&menu, SELECT_CMD_DIRECTION, ORDER_CMD_NONE,
-                              readonly);
-
-        add_menu_txt(&menu, "", MI_TEXT);
-
-        add_keymap_action(&menu, KEYMAP_ACTION_CLEAR_DIRECTIONS, 0,
-                          "Clear the direction keys");
-        add_keymap_action(&menu, KEYMAP_ACTION_VI_DIRECTIONS, 0,
-                          "Use of VI keys for directions");
-        add_keymap_action(&menu, KEYMAP_ACTION_VI_ALTERNATIVES, 0,
-                          "Other use for VI direction keys");
-        add_keymap_action(&menu, KEYMAP_ACTION_KEYPAD_DIRECTIONS, 0,
-                          "Use of keypad for directions");
-        add_keymap_action(&menu, KEYMAP_ACTION_DIAG_DIRECTIONS, 0,
-                          "Various keys for diagonal directions");
-        add_keymap_action(&menu, KEYMAP_ACTION_RUN_DIRECTIONS, 0,
-                          "Configure the run commands");
-        add_keymap_action(&menu, KEYMAP_ACTION_GO_DIRECTIONS, 0,
-                          "Configure the go commands");
-
-        curses_display_menu_core(&menu, "Direction Keymap",
-                                 readonly ? PICK_NONE : PICK_ONE, selected,
-                                 curses_menu_callback, 0, 0, COLS, LINES, FALSE,
-                                 set_command_keys, TRUE);
-
-    } while (*selected != CURSES_MENU_CANCELLED);
-}
-
-/* Sub-menu to manage the special keymaps */
+/* Sub-menu to manage the UI keymaps */
 static void
 keymap_action_ui_submenu(void)
 {
@@ -2071,7 +1811,7 @@ keymap_action_ui_submenu(void)
 
         add_keylist_selection(&menu, SELECT_CMD_UI, ORDER_CMD_NAME, readonly);
 
-        curses_display_menu_core(&menu, "Special Commands Keymap",
+        curses_display_menu_core(&menu, "Rebind keys: UI commands",
                                  readonly ? PICK_NONE : PICK_ONE, selected,
                                  curses_menu_callback, 0, 0, COLS, LINES, FALSE,
                                  set_command_keys, TRUE);
@@ -2079,9 +1819,7 @@ keymap_action_ui_submenu(void)
     } while (*selected != CURSES_MENU_CANCELLED);
 }
 
-/* Sub-menu to manage/show all keymaps at once.
- * The keymaps are still categorized.
- */
+/* Sub-menu to manage/show all keymaps at once. */
 static void
 keymap_action_all_submenu(nh_bool readonly)
 {
@@ -2091,10 +1829,6 @@ keymap_action_all_submenu(nh_bool readonly)
     do {
         init_menulist(&menu);
 
-        add_menu_txt(&menu, "Direction Command\tDescription\tKey", MI_HEADING);
-        add_keylist_selection(&menu, SELECT_CMD_DIRECTION, ORDER_CMD_NONE,
-                              readonly);
-
         add_menu_txt(&menu, "", MI_HEADING);
         add_menu_txt(&menu, "UI Command\tDescription\tKey", MI_HEADING);
         add_keylist_selection(&menu, SELECT_CMD_UI, ORDER_CMD_NAME, readonly);
@@ -2102,13 +1836,16 @@ keymap_action_all_submenu(nh_bool readonly)
         add_menu_txt(&menu, "", MI_HEADING);
         add_menu_txt(&menu, "Game Command\tDescription\tKey", MI_HEADING);
         add_keylist_selection(&menu, SELECT_CMD_GAME, ORDER_CMD_NAME, readonly);
+        add_menu_txt(&menu, "", MI_HEADING);
+        add_keylist_selection(&menu, SELECT_CMD_DIRECTION, ORDER_CMD_NONE,
+                              readonly);
 
         add_menu_txt(&menu, "", MI_HEADING);
         add_menu_txt(&menu, "Debug Command\tDescription\tKey", MI_HEADING);
         add_keylist_selection(&menu, SELECT_CMD_DEBUG, ORDER_CMD_NAME,
                               readonly);
 
-        curses_display_menu_core(&menu, "All Commands Keymap",
+        curses_display_menu_core(&menu, "Rebind keys: All commands",
                                  readonly ? PICK_NONE : PICK_ONE, selected,
                                  curses_menu_callback, 0, 0, COLS, LINES, FALSE,
                                  set_command_keys, TRUE);
@@ -2116,7 +1853,7 @@ keymap_action_all_submenu(nh_bool readonly)
     } while (*selected != CURSES_MENU_CANCELLED);
 }
 
-/* Sub-menu to manage the game action keymaps (except directions) */
+/* Sub-menu to manage the game command keymaps */
 static void
 keymap_action_game_submenu(void)
 {
@@ -2130,8 +1867,11 @@ keymap_action_game_submenu(void)
         add_menu_txt(&menu, "Command\tDescription\tKey", MI_HEADING);
 
         add_keylist_selection(&menu, SELECT_CMD_GAME, ORDER_CMD_NAME, readonly);
+        add_menu_txt(&menu, "", MI_HEADING);
+        add_keylist_selection(&menu, SELECT_CMD_DIRECTION, ORDER_CMD_NONE,
+                              readonly);
 
-        curses_display_menu_core(&menu, "Game Commands Keymap",
+        curses_display_menu_core(&menu, "Rebind keys: Game commands",
                                  readonly ? PICK_NONE : PICK_ONE, selected,
                                  curses_menu_callback, 0, 0, COLS, LINES, FALSE,
                                  set_command_keys, TRUE);
@@ -2155,35 +1895,20 @@ set_command_keys(struct win_menu *mdat, int idx)
         case KEYMAP_ACTION_RESET_ALL:
             keymap_action_reset_all();
             break;
-        case KEYMAP_ACTION_CLEAR_DIRECTIONS:
-            keymap_action_clear_directions();
+        case KEYMAP_ACTION_MASSREBIND_VI:
+            keymap_action_massrebind_vi();
             break;
-        case KEYMAP_ACTION_KEYPAD_DIRECTIONS:
-            keymap_action_keypad_directions();
+        case KEYMAP_ACTION_MASSREBIND_DIGITS:
+            keymap_action_massrebind_digits();
             break;
-        case KEYMAP_ACTION_DIAG_DIRECTIONS:
-            keymap_action_diag_directions();
-            break;
-        case KEYMAP_ACTION_VI_DIRECTIONS:
-            keymap_action_vi_directions();
-            break;
-        case KEYMAP_ACTION_VI_ALTERNATIVES:
-            keymap_action_vi_alternatives();
-            break;
-        case KEYMAP_ACTION_RUN_DIRECTIONS:
-            keymap_action_run_directions();
-            break;
-        case KEYMAP_ACTION_GO_DIRECTIONS:
-            keymap_action_go_directions();
+        case KEYMAP_ACTION_MASSREBIND_MODIF:
+            keymap_action_massrebind_modif();
             break;
         case KEYMAP_ACTION_ALL_SUBMENU:
             keymap_action_all_submenu(FALSE);
             break;
         case KEYMAP_ACTION_DEBUG_SUBMENU:
             keymap_action_debug_submenu();
-            break;
-        case KEYMAP_ACTION_DIRECTION_SUBMENU:
-            keymap_action_direction_submenu();
             break;
         case KEYMAP_ACTION_UI_SUBMENU:
             keymap_action_ui_submenu();
@@ -2219,16 +1944,22 @@ show_keymap_menu(nh_bool readonly)
         do {
             init_menulist(&menu);
 
-            add_keymap_action(&menu, KEYMAP_ACTION_ALL_SUBMENU, 0,
-                              "Configure All Keymap");
-            add_keymap_action(&menu, KEYMAP_ACTION_DIRECTION_SUBMENU, 0,
-                              "Configure Direction Keymap");
+            add_keymap_action(&menu, KEYMAP_ACTION_MASSREBIND_VI, 0,
+                              "Mass rebind: hjklyubn");
+            add_keymap_action(&menu, KEYMAP_ACTION_MASSREBIND_DIGITS, 0,
+                              "Mass rebind: digits and direction keys");
+            add_keymap_action(&menu, KEYMAP_ACTION_MASSREBIND_MODIF, 0,
+                              "Mass rebind: Ctrl- and Shift-direction");
+            add_menu_txt(&menu, "", MI_HEADING);
             add_keymap_action(&menu, KEYMAP_ACTION_UI_SUBMENU, 0,
-                              "Configure UI Keymap");
+                              "Rebind UI commands");
             add_keymap_action(&menu, KEYMAP_ACTION_GAME_SUBMENU, 0,
-                              "Configure Game Keymap");
+                              "Rebind game commands");
             add_keymap_action(&menu, KEYMAP_ACTION_DEBUG_SUBMENU, 0,
-                              "Configure Debug Keymap");
+                              "Rebind debug commands");
+            add_keymap_action(&menu, KEYMAP_ACTION_ALL_SUBMENU, 0,
+                              "Rebind all commands");
+            add_menu_txt(&menu, "", MI_HEADING);
             add_keymap_action(&menu, KEYMAP_ACTION_RESET_ALL, '!',
                               "Reset all key bindings to built-in defaults");
             curses_display_menu_core(&menu, "Keymap",
