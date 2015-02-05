@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-14 */
+/* Last modified by Alex Smith, 2015-02-05 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) Robert Patrick Rankin, 1991                      */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -27,6 +27,10 @@
         char            lowc            (char)
         char *          mungspaces      (char *)
         char *          xcrypt          (const char *, char *)
+        int             base85enclen    (int)
+        int             base85declen    (int)
+        int             base85enc       (const unsigned char *, int, char *)
+        int             base85dec       (const char *, unsigned char *)
         boolean         onlyspace       (const char *)
         char *          tabexpand       (char *)
         char *          visctrl         (char)
@@ -112,6 +116,119 @@ xcrypt(const char *str, char *buf)
     }
     *q = '\0';
     return buf;
+}
+
+/* Base 85 encoding and decoding.
+
+   We encode every 4 octets of the input into 5 octets of output. If we have
+   fewer than 4 octets on input, we encode them into that many plus one octets
+   of output.
+
+   The encoding itself treats 4 octets of base 256, or 5 octets of base 85, as
+   a little-endian number, and translates it into the other number system. */
+int
+base85enclen(int declen)
+{
+    int dwords = declen / 4;
+    int remainder = declen % 4;
+    return dwords * 5 + (remainder == 0 ? 0 : remainder + 1);
+}
+
+int
+base85declen(int enclen)
+{
+    int dwords = enclen / 5;
+    int remainder = enclen % 5;
+
+    if (remainder == 1)
+        return -1; /* shouldn't happen */
+
+    return dwords * 4 + (remainder == 0 ? 0 : remainder - 1);
+}
+
+static const uint64_t powers_of_85[] =
+{ 1, 85, 85*85, 85L*85L*85L, 85L*85L*85L*85L, 85LL*85LL*85LL*85LL*85LL };
+
+static_assert(' ' == 32, "Charset must be ASCII");
+static_assert('~' == 126, "Charset must be ASCII");
+
+/* Requires: allocated length of encode_into >= base85enclen(declen) + 1 (the +1
+   is for the trailing NUL). Returns strlen(encode_into), to save the caller
+   having to recalculate it. (This function has no error conditions.) */
+int
+base85enc(const unsigned char *decoded, int declen, char *encode_into)
+{
+    uint32_t n = 0;
+    int bytes = 0;
+    int outbytes = 0;
+
+    while (declen) {
+        n |= ((uint32_t)(*decoded) << (bytes * 8));
+        decoded++;
+        bytes++;
+        declen--;
+
+        if (!declen || bytes == 4) {
+            if (bytes)
+                bytes++;
+
+            int bytes_upwards = 0;
+            while (bytes) {
+                bytes--;
+                *encode_into = '%' + ((n / powers_of_85[bytes_upwards]) % 85);
+                bytes_upwards++;
+                encode_into++;
+                outbytes++;
+            }
+
+            n = 0;
+        }
+    }
+
+    *encode_into = '\0';
+    return outbytes;
+}
+
+/* Requires: allocated length of decode_into >= base85declen(strlen(encoded)).
+   Returns the number of bytes in the original decoded input (and writes that
+   input into decode_into. Returns -1 on error. */
+int
+base85dec(const char *encoded, unsigned char *decode_into)
+{
+    uint64_t n = 0;
+    int bytes = 0;
+    int outbytes = 0;
+
+    while (*encoded) {
+        if (*encoded < '%' || *encoded >= '%' + 85)
+            return -1;
+
+        n += powers_of_85[bytes] * ((uint64_t)(*encoded - '%'));
+        encoded++;
+        bytes++;
+
+        if (!*encoded || bytes == 5) {
+            if (bytes == 1)
+                return -1;
+            if (n > 0xffffffffLLU)
+                return -1;
+            if (bytes)
+                bytes--;
+
+            int bytes_upwards = 0;
+            while (bytes) {
+                bytes--;
+                *decode_into = (n >> (bytes_upwards * 8)) & 0xff;
+                bytes_upwards++;
+                decode_into++;
+                outbytes++;
+            }
+
+            n = 0;
+        }
+    }
+
+    return outbytes;
 }
 
 
