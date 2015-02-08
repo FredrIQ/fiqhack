@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-18 */
+/* Last modified by Alex Smith, 2015-02-08 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -250,6 +250,7 @@ enum player_conduct {
     conduct_elbereth,                    /* wrote an elbereth */
     conduct_puddingsplit,                /* split a pudding */
     conduct_lostalign,                   /* lost alignment record points */
+    conduct_unused1,                     /* unused, might not be 0 in -beta1 */
     num_conducts,
 };
 
