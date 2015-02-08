@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-28 */
+/* Last modified by Alex Smith, 2015-02-08 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -12,98 +12,108 @@
    are rather hard to iterate over, and make it even harder to work with the
    game's logic. */
 
-/* Returns an object slot mask giving all the reasons why a player might have
-   the given property, limited by "reasons", an object slot mask (W_EQUIP,
-   INTRINSIC, and ANY_PROPERTY are the most likely values here, but you can
-   specify slots individually if you like). */
+/* Returns an object slot mask giving all the reasons why the given
+   player/monster might have the given property, limited by "reasons", an object
+   slot mask (W_EQUIP, INTRINSIC, and ANY_PROPERTY are the most likely values
+   here, but you can specify slots individually if you like). */
 unsigned
-u_have_property(enum youprop property, unsigned reasons,
-                boolean even_if_blocked)
+m_has_property(struct monst *mon, enum youprop property,
+               unsigned reasons, boolean even_if_blocked)
 {
     unsigned rv = 0;
+    struct obj *otmp;
 
     /* The general case for equipment */
-    rv |= worn_extrinsic(property);
+    rv |= mworn_extrinsic(mon, property);
 
-    /* Special cases from equipment (TODO: move these to the object description,
-       or to worn_extrinsic) */
-    if (property == SICK_RES && defends(AD_DISE,uwep))
-        rv |= W_MASK(os_wep);
-    if (property == BLINDED && ublindf && ublindf->otyp != LENSES)
-        rv |= W_MASK(os_tool);
+    if (mon == &youmonst) {
+        /* Intrinsics */
+        if (u.uintrinsic[property] & TIMEOUT)
+            rv |= W_MASK(os_timeout);
+        rv |= u.uintrinsic[property] & (INTRINSIC | I_SPECIAL);
+        
+        /* Birth options */
+        if (property == BLINDED && flags.permablind)
+            rv |= W_MASK(os_birthopt);
+        if (property == HALLUC && flags.permahallu)
+            rv |= W_MASK(os_birthopt);
+        if (property == UNCHANGING && flags.polyinit_mnum != -1)
+            rv |= W_MASK(os_birthopt);
+    }
 
-    /* Intrinsics */
-    if (u.uintrinsic[property] & TIMEOUT)
-        rv |= W_MASK(os_timeout);
-    rv |= u.uintrinsic[property] & (INTRINSIC | I_SPECIAL);
-
-    /* Birth options */
-    if (property == BLINDED && flags.permablind)
-        rv |= W_MASK(os_birthopt);
-    if (property == HALLUC && flags.permahallu)
-        rv |= W_MASK(os_birthopt);
-    if (property == UNCHANGING && flags.polyinit_mnum != -1)
-        rv |= W_MASK(os_birthopt);
-
-    /* Polyform */
+    /* Polyform / monster intrinsic */
     /* TODO: Change the monster data code into something that doesn't require a
        giant switch statement or ternary chain to get useful information from
        it. We use a ternary chain here because it cuts down on repetitive code
        and so is easier to read. */
-    if (property == FIRE_RES     ? resists_fire(&youmonst)                   :
-        property == COLD_RES     ? resists_cold(&youmonst)                   :
-        property == SLEEP_RES    ? resists_sleep(&youmonst)                  :
-        property == DISINT_RES   ? resists_disint(&youmonst)                 :
-        property == SHOCK_RES    ? resists_elec(&youmonst)                   :
-        property == POISON_RES   ? resists_poison(&youmonst)                 :
-        property == DRAIN_RES    ? resists_drli(&youmonst)                   :
-        property == SICK_RES     ? youmonst.data->mlet == S_FUNGUS ||
-                                   youmonst.data == &mons[PM_GHOUL]          :
-        property == ANTIMAGIC    ? resists_magm(&youmonst)                   :
-        property == ACID_RES     ? resists_acid(&youmonst)                   :
-        property == STONE_RES    ? resists_ston(&youmonst)                   :
+    if (property == FIRE_RES     ? resists_fire(mon)                     :
+        property == COLD_RES     ? resists_cold(mon)                     :
+        property == SLEEP_RES    ? resists_sleep(mon)                    :
+        property == DISINT_RES   ? resists_disint(mon)                   :
+        property == SHOCK_RES    ? resists_elec(mon)                     :
+        property == POISON_RES   ? resists_poison(mon)                   :
+        property == DRAIN_RES    ? resists_drli(mon)                     :
+        property == SICK_RES     ? mon->data->mlet == S_FUNGUS ||
+                                   mon->data == &mons[PM_GHOUL]          :
+        property == ANTIMAGIC    ? resists_magm(mon)                     :
+        property == ACID_RES     ? resists_acid(mon)                     :
+        property == STONE_RES    ? resists_ston(mon)                     :
         property == STUNNED      ? u.umonnum == PM_STALKER ||
-                                   youmonst.data->mlet == S_BAT              :
-        property == BLINDED      ? !haseyes(youmonst.data)                   :
-        property == HALLUC       ? Upolyd && dmgtype(youmonst.data, AD_HALU) :
-        property == SEE_INVIS    ? perceives(youmonst.data)                  :
-        property == TELEPAT      ? telepathic(youmonst.data)                 :
-        property == INFRAVISION  ? infravision(youmonst.data)                :
-        property == INVIS        ? pm_invisible(youmonst.data)               :
-        property == TELEPORT     ? can_teleport(youmonst.data)               :
-        property == LEVITATION   ? is_floater(youmonst.data)                 :
-        property == FLYING       ? is_flyer(youmonst.data)                   :
-        property == SWIMMING     ? is_swimmer(youmonst.data)                 :
-        property == PASSES_WALLS ? passes_walls(youmonst.data)               :
-        property == REGENERATION ? regenerates(youmonst.data)                :
-        property == REFLECTING   ? youmonst.data == &mons[PM_SILVER_DRAGON]  :
-        property == TELEPORT_CONTROL  ? control_teleport(youmonst.data)      :
-        property == MAGICAL_BREATHING ? amphibious(youmonst.data)            :
+                                   mon->data->mlet == S_BAT              :
+        property == BLINDED      ? !haseyes(mon->data)                   :
+        property == HALLUC       ? Upolyd && dmgtype(mon->data, AD_HALU) :
+        property == SEE_INVIS    ? perceives(mon->data)                  :
+        property == TELEPAT      ? telepathic(mon->data)                 :
+        property == INFRAVISION  ? infravision(mon->data)                :
+        property == INVIS        ? pm_invisible(mon->data)               :
+        property == TELEPORT     ? can_teleport(mon->data)               :
+        property == LEVITATION   ? is_floater(mon->data)                 :
+        property == FLYING       ? is_flyer(mon->data)                   :
+        property == SWIMMING     ? is_swimmer(mon->data)                 :
+        property == PASSES_WALLS ? passes_walls(mon->data)               :
+        property == REGENERATION ? regenerates(mon->data)                :
+        property == REFLECTING   ? mon->data == &mons[PM_SILVER_DRAGON]  :
+        property == TELEPORT_CONTROL  ? control_teleport(mon->data)      :
+        property == MAGICAL_BREATHING ? amphibious(mon->data)            :
         0)
         rv |= W_MASK(os_polyform);
 
-    /* External circumstances */
-    if (property == BLINDED && u_helpless(hm_unconscious))
-        rv |= W_MASK(os_circumstance);
-
-    /* Riding */
-    if (property == FLYING && u.usteed && is_flyer(u.usteed->data))
-        rv |= W_MASK(os_saddle);
-    if (property == SWIMMING && u.usteed && is_swimmer(u.usteed->data))
-        rv |= W_MASK(os_saddle);
-
+    if (mon == &youmonst) {
+        /* External circumstances */
+        if (property == BLINDED && u_helpless(hm_unconscious))
+            rv |= W_MASK(os_circumstance);
+        
+        /* Riding */
+        if (property == FLYING && u.usteed && is_flyer(u.usteed->data))
+            rv |= W_MASK(os_saddle);
+        if (property == SWIMMING && u.usteed && is_swimmer(u.usteed->data))
+            rv |= W_MASK(os_saddle);
+    }
+        
     /* Overrides */
     if (!even_if_blocked) {
-        if (property == BLINDED &&
-            ublindf && ublindf->oartifact == ART_EYES_OF_THE_OVERWORLD)
-            rv &= (unsigned)(W_MASK(os_circumstance) | W_MASK(os_birthopt));
-        if (property == WWALKING && Is_waterlevel(&u.uz))
+        if (property == BLINDED) {
+            for (otmp = minvent(mon); otmp; otmp = otmp->nobj)
+                if (otmp->oartifact == ART_EYES_OF_THE_OVERWORLD &&
+                    otmp->owornmask & W_MASK(os_tool))
+                    rv &= (unsigned)(W_MASK(os_circumstance) |
+                                     W_MASK(os_birthopt));
+        }
+
+        if (property == WWALKING && Is_waterlevel(m_mz(mon)))
             rv &= (unsigned)(W_MASK(os_birthopt));
-        if (worn_blocked(property))
+        if (mworn_blocked(mon, property))
             rv &= (unsigned)(W_MASK(os_birthopt));
     }
 
     return rv & reasons;
+}
+
+unsigned
+u_have_property(enum youprop property, unsigned reasons,
+                boolean even_if_blocked)
+{
+    return m_has_property(&youmonst, property, reasons, even_if_blocked);
 }
 
 /* Enlightenment and conduct */

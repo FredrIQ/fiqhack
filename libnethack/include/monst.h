@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-03 */
+/* Last modified by Alex Smith, 2015-02-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -192,6 +192,11 @@ struct monst {
 
 # define onmap(mon) (isok((mon)->mx, (mon)->my))
 
+/* player/monster symmetry; eventually we'll just access the fields of youmonst
+   directly, but for now, having accessor macros is a good compromise */
+# define minvent(mon) ((mon) == &youmonst ? invent : (mon)->minvent)
+# define m_mz(mon) ((mon) == &youmonst ? &u.uz : &((mon)->dlevel->z))
+
 /* Does a monster know where the player character is? Does it think it does? */
 # define knows_ux_uy(mon) ((mon)->mux == u.ux && (mon)->muy == u.uy)
 # define aware_of_u(mon)  (isok((mon)->mux, (mon)->muy))
@@ -216,8 +221,7 @@ enum monster_awareness_reasons {
                                 mar_guessing_other)
 
 /* Is a monster using an item? Used to ensure that buzz() calls the correct kill
- * function.
- */
+   function. */
 extern boolean m_using;
 
 /* When a long worm is hit, is the hit on the head or thebody? */

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2015-02-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -400,11 +400,13 @@ item_provides_extrinsic(struct obj *otmp, int extrinsic, int *warntype)
     if (objects[otmp->otyp].oc_oprop == extrinsic && extrinsic != WARN_OF_MON)
         return mask & W_EQUIP;
 
-    /* Non-artifact item properties go here. At the moment, there is only the
-       two: alchemy smocks give two extrinsics, and so only one can be placed in
-       its item property field, with the other one being special-cased; and the
-       Amulet of Yendor is not an artifact but grants clairvoyance when carried.
-       */
+    /* Non-artifact item properties go here. At the present:
+
+       - alchemy smocks give two extrinsics, and so only one can be placed in
+         its item property field, with the other one being special-cased;
+
+       - the Amulet of Yendor is not an artifact but grants clairvoyance when
+         carried */
     if (otmp->otyp == ALCHEMY_SMOCK && extrinsic == ACID_RES)
         return mask & W_EQUIP;
     if (otmp->otyp == AMULET_OF_YENDOR && extrinsic == CLAIRVOYANT)
@@ -426,7 +428,8 @@ item_provides_extrinsic(struct obj *otmp, int extrinsic, int *warntype)
         (dtyp == AD_ELEC && extrinsic == SHOCK_RES) ||
         (dtyp == AD_MAGM && extrinsic == ANTIMAGIC) ||
         (dtyp == AD_DISN && extrinsic == DISINT_RES) ||
-        (dtyp == AD_DRST && extrinsic == POISON_RES))
+        (dtyp == AD_DRST && extrinsic == POISON_RES) ||
+        (dtyp == AD_DISE && extrinsic == SICK_RES))
         return mask;
 
     if (equipped) {
@@ -437,7 +440,8 @@ item_provides_extrinsic(struct obj *otmp, int extrinsic, int *warntype)
             (dtyp == AD_ELEC && extrinsic == SHOCK_RES) ||
             (dtyp == AD_MAGM && extrinsic == ANTIMAGIC) ||
             (dtyp == AD_DISN && extrinsic == DISINT_RES) ||
-            (dtyp == AD_DRST && extrinsic == POISON_RES))
+            (dtyp == AD_DRST && extrinsic == POISON_RES) ||
+            (dtyp == AD_DISE && extrinsic == SICK_RES))
             return mask;
     }
 

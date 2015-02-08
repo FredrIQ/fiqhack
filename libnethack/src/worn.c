@@ -39,28 +39,28 @@ find_extrinsic(struct obj *chain, int extrinsic, int *warntype,
 }
 
 long
-worn_extrinsic(int extrinsic)
+mworn_extrinsic(struct monst *mon, int extrinsic)
 {
     int warntype;
     boolean blocked;
-    return find_extrinsic(invent, extrinsic, &warntype, &blocked);
+    return find_extrinsic(minvent(mon), extrinsic, &warntype, &blocked);
 }
 
 boolean
-worn_blocked(int extrinsic)
+mworn_blocked(struct monst *mon, int extrinsic)
 {
     int warntype;
     boolean blocked;
-    find_extrinsic(invent, extrinsic, &warntype, &blocked);
+    find_extrinsic(minvent(mon), extrinsic, &warntype, &blocked);
     return blocked;
 }
 
 int
-worn_warntype(void)
+mworn_warntype(struct monst *mon)
 {
     int warntype;
     boolean blocked;
-    return find_extrinsic(invent, WARN_OF_MON, &warntype, &blocked)
+    return find_extrinsic(minvent(mon), WARN_OF_MON, &warntype, &blocked)
         ? warntype : 0;
 }
 

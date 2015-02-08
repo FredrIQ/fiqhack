@@ -16,6 +16,9 @@
    compatibility macros. */
 
 # define u_any_property(p)     (!!u_have_property((p), ANY_PROPERTY, FALSE))
+# define worn_extrinsic(p)     mworn_extrinsic(&youmonst, p)
+# define worn_blocked(p)       mworn_blocked(&youmonst, p)
+# define worn_warntype()       mworn_warntype(&youmonst)
 
 /*** Resistances to troubles ***/
 /* With intrinsics and extrinsics */

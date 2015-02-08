@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-04 */
+/* Last modified by Alex Smith, 2015-02-08 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1936,9 +1936,9 @@ extern boolean worm_known(const struct monst *);
 extern void setworn(struct obj *, long);
 extern void setnotworn(struct obj *);
 extern boolean obj_worn_on(struct obj *, enum objslot);
-extern long worn_extrinsic(int);
-extern boolean worn_blocked(int);
-extern int worn_warntype(void);
+extern long mworn_extrinsic(struct monst *, int);
+extern boolean mworn_blocked(struct monst *, int);
+extern int mworn_warntype(struct monst *);
 
 extern void mon_set_minvis(struct monst *);
 extern void mon_adjust_speed(struct monst *, int, struct obj *);
@@ -1959,8 +1959,8 @@ extern int dowrite(struct obj *, const struct nh_cmd_arg *);
 
 /* ### youprop.c ### */
 
-extern unsigned u_have_property(enum youprop property,
-                                unsigned reasons, boolean even_if_blocked);
+extern unsigned m_has_property(struct monst *, enum youprop, unsigned, boolean);
+extern unsigned u_have_property(enum youprop, unsigned, boolean);
 extern void enlightenment(int);
 extern void unspoilered_intrinsics(void);
 extern void show_conduct(int);
