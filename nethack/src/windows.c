@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-02 */
+/* Last modified by Alex Smith, 2015-02-10 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1031,7 +1031,7 @@ key_is_meaningful_in_context(int key, enum keyreq_context context)
             !ui_flags.in_zero_time_command)
             return FALSE;
 
-        if (key_to_dir(key) != DIR_NONE)
+        if (key_to_dir(key, 0) != DIR_NONE)
             return TRUE;
         /* otherwise fall through */
 

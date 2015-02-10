@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-04 */
+/* Last modified by Alex Smith, 2015-02-10 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -540,7 +540,7 @@ set_next_command(const char *cmd, struct nh_cmd_arg *arg)
 }
 
 enum nh_direction
-key_to_dir(int key)
+key_to_dir(int key, int dircmd_only)
 {
     struct nh_cmd_desc *cmd;
 
@@ -549,10 +549,14 @@ key_to_dir(int key)
 
     cmd = keymap[key];
 
-    if (cmd && (!strcmp(cmd->name, "wait") || !strcmp(cmd->name, "search")))
+    if (cmd && (!strcmp(cmd->name, "wait") || !strcmp(cmd->name, "search")) &&
+        !dircmd_only)
         return DIR_SELF;
 
     if (!cmd || !(cmd->flags & (DIRCMD | DIRCMD_RUN | DIRCMD_GO)))
+        return DIR_NONE;
+
+    if (cmd->flags & (DIRCMD_RUN | DIRCMD_GO) && dircmd_only)
         return DIR_NONE;
 
     return (enum nh_direction)cmd->flags &

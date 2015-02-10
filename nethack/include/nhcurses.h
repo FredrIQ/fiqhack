@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-04 */
+/* Last modified by Alex Smith, 2015-02-10 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -459,7 +459,7 @@ extern void load_keymap(void);
 extern void free_keymap(void);
 extern void show_keymap_menu(nh_bool readonly);
 extern void handle_nested_key(int key);
-extern enum nh_direction key_to_dir(int key);
+extern enum nh_direction key_to_dir(int key, int dircmd_only);
 
 /* main.c */
 extern void curses_impossible(const char *msg);

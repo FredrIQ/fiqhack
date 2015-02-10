@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-02 */
+/* Last modified by Alex Smith, 2015-02-10 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -390,11 +390,11 @@ curses_getpos(int xorig, int yorig, nh_bool force, const char *goal)
             break;
         }
 
-        dir = key_to_dir(key);
+        dir = key_to_dir(key, 0);
         if (dir != DIR_NONE) {
             dx = mxdir[dir];
             dy = mydir[dir];
-        } else if ((dir = key_to_dir(tolower((char)key))) != DIR_NONE) {
+        } else if (((dir = key_to_dir(tolower((char)key), 0))) != DIR_NONE) {
             /* a shifted movement letter */
             dx = mxdir[dir] * 8;
             dy = mydir[dir] * 8;
