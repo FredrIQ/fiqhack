@@ -185,13 +185,17 @@ msensem(const struct monst *viewer, const struct monst *viewee)
 {
     unsigned sensemethod = 0;
 
-    /* sanity check, so the caller doesn't have to */
+    /* sanity checks, so the caller doesn't have to */
     if (viewer != &youmonst)
         if (!onmap(viewer) || DEADMONSTER(viewer))
             return 0;
     if (viewee != &youmonst)
         if (!onmap(viewee) || DEADMONSTER(viewee))
             return 0;
+    if (!level) {
+        impossible("vision calculations during level creation");
+        return 0;
+    }
 
     /* TODO: once levels rewrite is done, this code can be simplified (and won't
        work in its present form). */

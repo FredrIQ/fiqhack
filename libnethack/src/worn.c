@@ -416,14 +416,14 @@ m_dowear_type(struct monst *mon, enum objslot slot, boolean creation,
 {
     struct obj *old, *best, *obj;
     int m_delay = 0;
-    int unseen = !canseemon(mon);
+    boolean unseen = creation ? 1 : !canseemon(mon);
     const char *nambuf;
 
     if (mon->mfrozen)
         return; /* probably putting previous item on */
 
     /* Get a copy of monster's name before altering its visibility */
-    nambuf = See_invisible ? Monnam(mon) : mon_nam(mon);
+    nambuf = creation ? NULL : See_invisible ? Monnam(mon) : mon_nam(mon);
 
     old = which_armor(mon, slot);
     if (old && old->cursed)
