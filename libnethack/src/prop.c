@@ -252,7 +252,7 @@ msensem(const struct monst *viewer, const struct monst *viewee)
     boolean infravision_ok = infravision(viewer->data) &&
         infravisible(viewee->data);
 
-    boolean blinded = !!m_has_property(viewee, BLINDED, ANY_PROPERTY, 0);
+    boolean blinded = !!m_has_property(viewer, BLINDED, ANY_PROPERTY, 0);
     boolean see_invisible =
         !!m_has_property(viewer, SEE_INVIS, ANY_PROPERTY, 0);
 
@@ -305,7 +305,7 @@ msensem(const struct monst *viewer, const struct monst *viewee)
     /* Smell of gold, approximating 3.4.3 behaviour (which was previously in
        set_apparxy in monmove.c). Xorns can sense any monster with gold in their
        inventory. */
-    if (viewer->data == &mons[PM_XORN] && money_cnt(m_minvent(viewer)))
+    if (viewer->data == &mons[PM_XORN] && money_cnt(m_minvent(viewee)))
         sensemethod |= MSENSE_GOLDSMELL;
 
     /* Warning. This partial-senses monsters that are hostile to the viewer, and
