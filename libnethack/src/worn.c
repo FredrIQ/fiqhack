@@ -221,7 +221,7 @@ update_mon_intrinsics(struct monst *mon, struct obj *obj, boolean on,
     struct obj *otmp;
     int which = (int)objects[obj->otyp].oc_oprop;
 
-    unseen = !canseemon(mon);
+    unseen = silently || !canseemon(mon);
     if (!which)
         goto maybe_blocks;
 
