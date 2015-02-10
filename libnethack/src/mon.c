@@ -1415,14 +1415,14 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
     if (md->mlet == S_ANGEL && is_demon(ma))
         return ALLOW_M | ALLOW_TM;
 
-    /* dogs vs. cats, unless both are tame */
-    if (ma->mlet == S_DOG && md->mlet == S_FELINE &&
-        !(magr->mtame && mdef->mtame))
-        return ALLOW_M | ALLOW_TM;
-    /* ... and vice versa, for dog/cat symmetry reasons */
-    if (md->mlet == S_DOG && ma->mlet == S_FELINE &&
-        !(magr->mtame && mdef->mtame))
-        return ALLOW_M | ALLOW_TM;
+    /* domestic dogs vs. domestic cats, unless both are tame */
+    if (!(magr->mtame && mdef->mtame) && is_domestic(ma) && is_domestic(md)) {
+        if (ma->mlet == S_DOG && md->mlet == S_FELINE)
+            return ALLOW_M | ALLOW_TM;
+        /* ... and vice versa, for dog/cat symmetry reasons */
+        if (md->mlet == S_DOG && ma->mlet == S_FELINE)
+            return ALLOW_M | ALLOW_TM;
+    }
 
     /* woodchucks vs. The Oracle */
     if (ma == &mons[PM_WOODCHUCK] && md == &mons[PM_ORACLE])
