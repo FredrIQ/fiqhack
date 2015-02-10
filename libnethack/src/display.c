@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-12-29 */
+/* Last modified by Alex Smith, 2015-02-10 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -637,8 +637,8 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
 {
     struct monst *mon;
     struct rm *loc = &(level->locations[x][y]);
-    int see_it;
     xchar worm_tail;
+    unsigned msense_status;
 
     if (!isok(x, y)) {
         impossible("Trying to create new symbol at position: (%d,%d)", x, y);
@@ -674,6 +674,14 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
             return;
     }
 
+    /* Note for anyone confused (I know I was): is_worm_tail works by checking
+       the x and y variables via variable capture. */
+    msense_status = 0;
+    mon = m_at(level, x, y);
+    worm_tail = is_worm_tail(mon);
+    if (mon && !worm_tail)
+        msense_status = msensem(&youmonst, mon);
+
     /* Can physically see the location. */
     if (cansee(x, y)) {
         struct region *reg = visible_region_at(level, x, y);
@@ -701,13 +709,12 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
                 /* we can see what is there */
                 map_location(x, y, 1, reroll_hallucinated_appearances);
         } else {
-            mon = m_at(level, x, y);
-            worm_tail = is_worm_tail(mon);
-            see_it = mon && (worm_tail ? (!mon->minvis || See_invisible)
-                             : (mon_visible(mon)) || tp_sensemon(mon) ||
-                             MATCH_WARN_OF_MON(mon));
-            if (mon && (see_it || (!worm_tail && Detect_monsters))) {
-                if (mon->mtrapped) {
+            /* Note: MSENSE_WORM doesn't work; that would check to see if we can
+               see a segment of (a worm on this square), as opposed to (a
+               segment of a worm) on this square. Associativity matters! */
+            if (msense_status & (MSENSE_ANYVISION | MSENSE_ANYDETECT) ||
+                (worm_tail && (!mon->minvis || See_invisible))) {
+                if (mon->mtrapped && (msense_status & MSENSE_ANYVISION)) {
                     struct trap *trap = t_at(level, x, y);
                     int tt = trap ? trap->ttyp : NO_TRAP;
 
@@ -720,9 +727,10 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
                 /* map under the monster */
                 map_location(x, y, 0, reroll_hallucinated_appearances);
                 /* also gets rid of any invisibility glyph */
-                display_monster(x, y, mon, see_it ? PHYSICALLY_SEEN : DETECTED,
+                display_monster(x, y, mon, (msense_status & MSENSE_ANYVISION) ?
+                                PHYSICALLY_SEEN : DETECTED,
                                 reroll_hallucinated_appearances, worm_tail);
-            } else if (mon && mon_warning(mon) && !is_worm_tail(mon))
+            } else if (msense_status & MSENSE_WARNING)
                 display_warning(mon);
             else if (level->locations[x][y].mem_invis)
                 map_invisible(x, y);
@@ -741,22 +749,15 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
 
             if (senseself())
                 display_self();
-        } else if ((mon = m_at(level, x, y))
-                   && ((see_it = (tp_sensemon(mon) || MATCH_WARN_OF_MON(mon)
-                                  || (see_with_infrared(mon) &&
-                                      mon_visible(mon))))
-                       || Detect_monsters)
-                   && !is_worm_tail(mon)) {
+        } else if (msense_status & (MSENSE_ANYVISION | MSENSE_ANYDETECT)) {
             /* Monsters are printed every time. */
             /* This also gets rid of any invisibility glyph */
-            display_monster(x, y, mon, see_it ? 0 : DETECTED,
-                            reroll_hallucinated_appearances, 0);
-        } else if ((mon = m_at(level, x, y)) && mon_warning(mon) &&
-                   !is_worm_tail(mon)) {
+            display_monster(x, y, mon, (msense_status & MSENSE_ANYVISION) ?
+                            0 : DETECTED, reroll_hallucinated_appearances, 0);
+        } else if (msense_status & MSENSE_WARNING)
             display_warning(mon);
-        } else {
+        else
             dbuf_set_memory(level, x, y);
-        }
     }
 }
 

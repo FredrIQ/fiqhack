@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-03 */
+/* Last modified by Alex Smith, 2015-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -15,7 +15,7 @@
 extern const int monstr[];
 
 static short which_arti(int);
-static boolean mon_has_arti(struct monst *, short);
+static boolean mon_has_arti(const struct monst *, short);
 static struct monst *other_mon_has_arti(struct monst *, short);
 static struct obj *on_ground(short);
 static boolean you_have(int);
@@ -143,11 +143,11 @@ which_arti(int mask)
  * artifacts right now.    [MRS]
  */
 static boolean
-mon_has_arti(struct monst *mtmp, short otyp)
+mon_has_arti(const struct monst *mtmp, short otyp)
 {
     struct obj *otmp;
 
-    for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj) {
+    for (otmp = m_minvent(mtmp); otmp; otmp = otmp->nobj) {
         if (otyp) {
             if (otmp->otyp == otyp)
                 return 1;
@@ -156,6 +156,29 @@ mon_has_arti(struct monst *mtmp, short otyp)
     }
     return 0;
 
+}
+
+/* Used by msensem: can the viewer detect the viewee via being covetous for an
+   item the viewee holds? */
+boolean
+covetous_sense(const struct monst *viewer, const struct monst *viewee)
+{
+    if (viewer->data->mflags3 & M3_WANTSAMUL &&
+        mon_has_arti(viewee, AMULET_OF_YENDOR))
+        return TRUE;
+    if (viewer->data->mflags3 & M3_WANTSBELL &&
+        mon_has_arti(viewee, BELL_OF_OPENING))
+        return TRUE;
+    if (viewer->data->mflags3 & M3_WANTSCAND &&
+        mon_has_arti(viewee, CANDELABRUM_OF_INVOCATION))
+        return TRUE;
+    if (viewer->data->mflags3 & M3_WANTSBOOK &&
+        mon_has_arti(viewee, SPE_BOOK_OF_THE_DEAD))
+        return TRUE;
+    if (viewer->data->mflags3 & M3_WANTSARTI && mon_has_arti(viewee, 0))
+        return TRUE;
+
+    return FALSE;
 }
 
 static struct monst *

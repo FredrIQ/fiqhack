@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-08 */
+/* Last modified by Alex Smith, 2015-02-10 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -64,7 +64,6 @@ extern void one_occupation_turn(int (*)(void), const char *, enum occupation);
 extern void helpless(int turns, enum helpless_reason reason, const char *cause,
                      const char *endmsg);
 extern void cancel_helplessness(enum helpless_mask mask, const char *msg);
-extern boolean u_helpless(enum helpless_mask mask);
 extern void cancel_mimicking(const char *msg);
 extern boolean canhear(void);
 extern void break_conduct(enum player_conduct);
@@ -1118,7 +1117,7 @@ extern void kill_genocided_monsters(void);
 extern void golemeffects(struct monst *, int, int);
 extern boolean angry_guards(boolean);
 extern void pacify_guards(void);
-extern long mm_aggression(struct monst *, struct monst *);
+extern long mm_aggression(const struct monst *, const struct monst *);
 
 /* ### mondata.c ### */
 
@@ -1127,9 +1126,9 @@ extern const struct attack *attacktype_fordmg(const struct permonst *, int,
                                               int);
 extern boolean attacktype(const struct permonst *, int);
 extern boolean poly_when_stoned(const struct permonst *);
-extern boolean resists_drli(struct monst *);
-extern boolean resists_magm(struct monst *);
-extern boolean resists_blnd(struct monst *);
+extern boolean resists_drli(const struct monst *);
+extern boolean resists_magm(const struct monst *);
+extern boolean resists_blnd(const struct monst *);
 extern boolean can_blnd(struct monst *, struct monst *, uchar, struct obj *);
 extern boolean ranged_attk(const struct permonst *);
 extern boolean hates_silver(const struct permonst *);
@@ -1140,7 +1139,7 @@ extern boolean sliparm(const struct permonst *);
 extern boolean sticks(const struct permonst *);
 extern int num_horns(const struct permonst *);
 extern boolean dmgtype(const struct permonst *, int);
-extern int max_passive_dmg(struct monst *, struct monst *);
+extern int max_passive_dmg(const struct monst *, const struct monst *);
 extern int monsndx(const struct permonst *);
 extern int name_to_mon(const char *);
 extern int gender(struct monst *);
@@ -1382,7 +1381,6 @@ extern const char *halu_gname(aligntyp);
 extern const char *align_gtitle(aligntyp);
 extern void altar_wrath(int, int);
 
-
 /* ### priest.c ### */
 
 extern int move_special(struct monst *, boolean, schar, boolean, boolean, xchar,
@@ -1404,6 +1402,18 @@ extern void ghod_hitsu(struct monst *);
 extern void angry_priest(void);
 extern void clearpriests(void);
 extern void restpriest(struct monst *, boolean);
+
+/* ### prop.c ### */
+
+extern unsigned m_has_property(const struct monst *, enum youprop,
+                               unsigned, boolean);
+extern unsigned u_have_property(enum youprop, unsigned, boolean);
+extern boolean m_helpless(const struct monst *, enum helpless_mask mask);
+extern boolean u_helpless(enum helpless_mask mask);
+extern unsigned msensem(const struct monst *, const struct monst *);
+extern void enlightenment(int);
+extern void unspoilered_intrinsics(void);
+extern void show_conduct(int);
 
 /* ### quest.c ### */
 
@@ -1902,6 +1912,7 @@ extern int mon_has_amulet(struct monst *);
 extern int mon_has_special(struct monst *);
 extern int tactics(struct monst *);
 extern void strategy(struct monst *, boolean);
+extern boolean covetous_sense(const struct monst *, const struct monst *);
 extern void aggravate(void);
 extern void clonewiz(void);
 extern int pick_nasty(void);
@@ -1929,16 +1940,15 @@ extern void place_wsegs(struct monst *);
 extern void remove_worm(struct monst *);
 extern void place_worm_tail_randomly(struct monst *, xchar, xchar);
 extern int count_wsegs(struct monst *);
-extern boolean worm_known(const struct monst *);
 
 /* ### worn.c ### */
 
 extern void setworn(struct obj *, long);
 extern void setnotworn(struct obj *);
 extern boolean obj_worn_on(struct obj *, enum objslot);
-extern long mworn_extrinsic(struct monst *, int);
-extern boolean mworn_blocked(struct monst *, int);
-extern int mworn_warntype(struct monst *);
+extern long mworn_extrinsic(const struct monst *, int);
+extern boolean mworn_blocked(const struct monst *, int);
+extern int mworn_warntype(const struct monst *);
 
 extern void mon_set_minvis(struct monst *);
 extern void mon_adjust_speed(struct monst *, int, struct obj *);
@@ -1956,14 +1966,6 @@ extern int extra_pref(struct monst *, struct obj *);
 /* ### write.c ### */
 
 extern int dowrite(struct obj *, const struct nh_cmd_arg *);
-
-/* ### youprop.c ### */
-
-extern unsigned m_has_property(struct monst *, enum youprop, unsigned, boolean);
-extern unsigned u_have_property(enum youprop, unsigned, boolean);
-extern void enlightenment(int);
-extern void unspoilered_intrinsics(void);
-extern void show_conduct(int);
 
 /* ### zap.c ### */
 

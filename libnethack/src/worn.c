@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-08 */
+/* Last modified by Alex Smith, 2015-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -39,28 +39,28 @@ find_extrinsic(struct obj *chain, int extrinsic, int *warntype,
 }
 
 long
-mworn_extrinsic(struct monst *mon, int extrinsic)
+mworn_extrinsic(const struct monst *mon, int extrinsic)
 {
     int warntype;
     boolean blocked;
-    return find_extrinsic(minvent(mon), extrinsic, &warntype, &blocked);
+    return find_extrinsic(m_minvent(mon), extrinsic, &warntype, &blocked);
 }
 
 boolean
-mworn_blocked(struct monst *mon, int extrinsic)
+mworn_blocked(const struct monst *mon, int extrinsic)
 {
     int warntype;
     boolean blocked;
-    find_extrinsic(minvent(mon), extrinsic, &warntype, &blocked);
+    find_extrinsic(m_minvent(mon), extrinsic, &warntype, &blocked);
     return blocked;
 }
 
 int
-mworn_warntype(struct monst *mon)
+mworn_warntype(const struct monst *mon)
 {
     int warntype;
     boolean blocked;
-    return find_extrinsic(minvent(mon), WARN_OF_MON, &warntype, &blocked)
+    return find_extrinsic(m_minvent(mon), WARN_OF_MON, &warntype, &blocked)
         ? warntype : 0;
 }
 

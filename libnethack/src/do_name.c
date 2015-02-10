@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-14 */
+/* Last modified by Alex Smith, 2015-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -67,14 +67,16 @@ do_mname(const struct nh_cmd_arg *arg)
     } else
         mtmp = m_at(level, cx, cy);
 
-    if (!mtmp ||
-        (!sensemon(mtmp) &&
-         (!(cansee(cx, cy) || see_with_infrared(mtmp)) || mtmp->mundetected ||
-          mtmp->m_ap_type == M_AP_FURNITURE || mtmp->m_ap_type == M_AP_OBJECT ||
-          (mtmp->minvis && !See_invisible)))) {
+    unsigned msense_status = mtmp ? msensem(&youmonst, mtmp) : 0;
+
+    if (!msense_status) {
         pline("I see no monster there.");
         return 0;
+    } else if (!(msense_status & (MSENSE_ANYDETECT | MSENSE_ANYVISION))) {
+        pline("You can't see it well enough to recognise it in the future.");
+        return 0;
     }
+
     /* special case similar to the one in lookat() */
     qbuf = distant_monnam(mtmp, ARTICLE_THE);
     qbuf = msgprintf("What do you want to call %s?", qbuf);

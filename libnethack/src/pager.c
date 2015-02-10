@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-03 */
+/* Last modified by Alex Smith, 2015-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -74,85 +74,62 @@ append_str(const char **buf, const char *new_str, int is_plur, int is_in)
     return TRUE;
 }
 
+/* Like the above, except with commas, and into a BUFSZ-sized buffer for API
+   boundary uses. */
+static boolean
+append_str_comma(char *buf, char **end_of_buf, const char *new_str)
+{
+    int remaining_space = BUFSZ - (*end_of_buf - buf);
+    int newlen = strlen(new_str);
+
+    if (remaining_space < 2 + newlen)
+        return FALSE; /* just leave this portion out */
+
+    if (remaining_space < BUFSZ) {
+        memcpy(*end_of_buf, ", ", 2);
+        *end_of_buf += 2;
+    }
+
+    memcpy(*end_of_buf, new_str, newlen + 1);
+    *end_of_buf += newlen;
+
+    return TRUE;
+}
 
 static void
 mon_vision_summary(const struct monst *mtmp, char *outbuf)
 {
-    int ways_seen = 0, normal = 0, xraydist;
-    boolean useemon = (boolean) canseemon(mtmp);
+    unsigned msense_status = msensem(&youmonst, mtmp);
+    char *outbufp = outbuf;
+    char wbuf[BUFSZ];
 
     outbuf[0] = '\0';
 
-    xraydist = Xray_vision ? XRAY_RANGE * XRAY_RANGE : -1;
-    /* normal vision */
-    if ((mtmp->wormno ? worm_known(mtmp) : couldsee(mtmp->mx, mtmp->my) &&
-         cansee(mtmp->mx, mtmp->my)) && mon_visible(mtmp) && !mtmp->minvis) {
-        ways_seen++;
-        normal++;
+    if (msense_status & MSENSE_VISION)
+        append_str_comma(outbuf, &outbufp, "normal vision");
+    if (msense_status & MSENSE_SEEINVIS)
+        append_str_comma(outbuf, &outbufp, "see invisible");
+    if (msense_status & MSENSE_INFRAVISION)
+        append_str_comma(outbuf, &outbufp, "infravision");
+    if (msense_status & MSENSE_TELEPATHY)
+        append_str_comma(outbuf, &outbufp, "telepathy");
+    if (msense_status & MSENSE_XRAY)
+        append_str_comma(outbuf, &outbufp, "astral vision");
+    if (msense_status & MSENSE_MONDETECT)
+        append_str_comma(outbuf, &outbufp, "monster detection");
+    if (msense_status & MSENSE_WARNOFMON) {
+        snprintf(wbuf, SIZE(wbuf), "warned of %s",
+                 makeplural(mtmp->data->mname));
+        append_str_comma(outbuf, &outbufp,
+                         Hallucination ? "paranoid delusion" : wbuf);
     }
-    /* see invisible */
-    if (useemon && mtmp->minvis)
-        ways_seen++;
-    /* infravision */
-    if ((!mtmp->minvis || See_invisible) && see_with_infrared(mtmp))
-        ways_seen++;
-    /* telepathy */
-    if (tp_sensemon(mtmp))
-        ways_seen++;
-    /* xray */
-    if (useemon && xraydist > 0 && distu(mtmp->mx, mtmp->my) <= xraydist)
-        ways_seen++;
-    if (Detect_monsters)
-        ways_seen++;
-    if (MATCH_WARN_OF_MON(mtmp))
-        ways_seen++;
+    if (msense_status & MSENSE_COVETOUS)
+        append_str_comma(outbuf, &outbufp, "artifact sense");
+    if (msense_status & MSENSE_GOLDSMELL)
+        append_str_comma(outbuf, &outbufp, "smell of gold");
 
-    if (ways_seen > 1 || !normal) {
-        if (normal) {
-            strcat(outbuf, "normal vision");
-            /* can't actually be 1 yet here */
-            if (ways_seen-- > 1)
-                strcat(outbuf, ", ");
-        }
-        if (useemon && mtmp->minvis) {
-            strcat(outbuf, "see invisible");
-            if (ways_seen-- > 1)
-                strcat(outbuf, ", ");
-        }
-        if ((!mtmp->minvis || See_invisible) && see_with_infrared(mtmp)) {
-            strcat(outbuf, "infravision");
-            if (ways_seen-- > 1)
-                strcat(outbuf, ", ");
-        }
-        if (tp_sensemon(mtmp)) {
-            strcat(outbuf, "telepathy");
-            if (ways_seen-- > 1)
-                strcat(outbuf, ", ");
-        }
-        if (useemon && xraydist > 0 && distu(mtmp->mx, mtmp->my) <= xraydist) {
-            /* Eyes of the Overworld */
-            strcat(outbuf, "astral vision");
-            if (ways_seen-- > 1)
-                strcat(outbuf, ", ");
-        }
-        if (Detect_monsters) {
-            strcat(outbuf, "monster detection");
-            if (ways_seen-- > 1)
-                strcat(outbuf, ", ");
-        }
-        if (MATCH_WARN_OF_MON(mtmp)) {
-            char wbuf[BUFSZ];
-
-            if (Hallucination)
-                strcat(outbuf, "paranoid delusion");
-            else {
-                snprintf(wbuf, SIZE(wbuf), "warned of %s", makeplural(mtmp->data->mname));
-                strcat(outbuf, wbuf);
-            }
-            if (ways_seen-- > 1)
-                strcat(outbuf, ", ");
-        }
-    }
+    if (strcmp(outbuf, "normal vision") == 0)
+        outbuf[0] = '\0';
 }
 
 

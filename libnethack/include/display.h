@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-14 */
+/* Last modified by Alex Smith, 2015-02-10 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -8,7 +8,6 @@
 # define DISPLAY_H
 
 # include "vision.h"
-# include "mondata.h"   /* for mindless() */
 
 # ifndef INVISIBLE_OBJECTS
 #  define vobj_at(x,y) (level->objects[x][y])
@@ -21,107 +20,101 @@
 # define dbuf_explosion(etype, id) \
     ((E_EXPLOSION << 16) | (etype * NUMEXPCHARS + id + 1))
 
+/* The various ways in which a monster/player can sense a monster/player. These
+   are the return values for msensem (mondata.c), and the methods listed by
+   mon_vision_summary (pager.c).
 
-/*
- * sensemon()
- *
- * Returns true if the hero can sense the given monster.  This includes
- * monsters that are hiding or mimicing other monsters.
- */
-# define tp_sensemon(mon) (     /* The hero can always sense a monster IF:  */\
-    (onmap(mon))           &&   /* 1. the monster is actually present  AND  */\
-    (mon->dlevel == level) &&   /* 2. the monster is on the same level AND  */\
-    (!mindless(mon->data)) &&   /* 3. the monster has a brain to sense AND  */\
-    (!u_helpless(hm_unconscious)) && /* 4. the hero is conscious AND        */\
-      ((Blind && Blind_telepat) || /* 5a. hero is blind and telepathic OR   */\
-                                /* 5b. hero is using a telepathy inducing   */\
-                                /*       object and in range                */\
-       (Unblind_telepat &&                                              \
-        (distu(mon->mx, mon->my) <= (BOLT_LIM * BOLT_LIM))))            \
-        )
+   These do not take displacement into account (which doesn't prevent a monster
+   sensing another, just misleads it as to which square it's on).
 
-# define sensemon(mon) (mon->dlevel == level && \
-                       (tp_sensemon(mon) || Detect_monsters || \
-                        MATCH_WARN_OF_MON(mon)))
+   When updating this, update MSENSE_ANYDETECT and MSENSE_ANYVISION if
+   necessary, and mon_vision_summary in pager.c. */
 
-/*
- * mon_warning() is used to warn of any dangerous monsters in your
- * vicinity, and a glyph representing the warning level is displayed.
- */
+/* Normal vision. Requires LOE, that the target is either on a lit square or
+   adjacent, and that the target is not invisible, hiding, buried or
+   (if the source is not underwater) underwater.*/
+# define MSENSE_VISION        0x00000001u
 
-# define mon_warning(mon) (Warning && !(mon)->mpeaceful &&              \
-                           (distu((mon)->mx, (mon)->my) < 100) &&       \
-                           (((int) ((mon)->m_lev / 4)) >= 1))
+/* See invisible. Requires LOE, and that the target is on a lit square or
+   adjacent or (if the source has infravision) infravisible. The target must not
+   be hiding, buried, or (if the source is not underwater) underwater. */
+# define MSENSE_SEEINVIS      0x00000002u
 
-/*
- * mon_visible()
- *
- * Returns true if the hero can see the monster.  It is assumed that the
- * hero can physically see the location of the monster.  The function
- * vobj_at() returns a pointer to an object that the hero can see there.
- * Infravision is not taken into account.
- */
-# define mon_visible(mon) (             /* The hero can see the monster     */\
-                                        /* IF the monster                   */\
-    (!mon->minvis || See_invisible) &&  /* 1. is not invisible AND          */\
-    (!mon->mundetected) &&              /* 2. not an undetected hider       */\
-    (!(mon->mburied || u.uburied))      /* 3. neither you or it is buried   */\
-)
+/* Infravision. Requires LOE, that the target is infravisible, and that the
+   source has infravision. The target must not be invisible, hiding, buried, or
+   (if the source is not underwater) underwater. */
+# define MSENSE_INFRAVISION   0x00000004u
 
-/*
- * see_with_infrared()
- *
- * This function is true if the player can see a monster using infravision.
- * The caller must check for invisibility (invisible monsters are also
- * invisible to infravision), because this is usually called from within
- * canseemon() or canspotmon() which already check that.
- */
-# define see_with_infrared(mon) (!Blind && Infravision && \
-                                 infravisible(mon->data) && \
-                                 couldsee(mon->mx, mon->my))
+/* Telepathy. Requires that the target is on the same level, and that the source
+   is conscious and telepathic. The target must not be mindless. If the source
+   is not blind, there's a range limit (of BOLT_LIM, or 0 if the telepathy is
+   intrinsic). */
+# define MSENSE_TELEPATHY     0x00000008u
+
+/* Astral vision. Requires that the target is either on a lit square or adjacent,
+   that the target is not invisible, hiding, or buried, and that the target is
+   within the source's astral vision range. */
+# define MSENSE_XRAY          0x00000010u
+
+/* Monster detection. Requires that the source has monster detection and that the
+   target is on the same level. */
+# define MSENSE_MONDETECT     0x00000020u
+
+/* Warning vs. monster class, a property. Requires that the source has the
+   property and the target is on the same level and has the chosen monster
+   class. (At present, this is only granted by certain artifacts.) */
+# define MSENSE_WARNOFMON     0x00000040u
+
+/* Covetous sense. Requires that the source is covetous for an item that the
+   target is holding and the target is on the same level. */
+# define MSENSE_COVETOUS      0x00000080u
+
+/* Smell of gold. Implemented for xorns sensing the player in 3.4.3; the
+   behaviour is preserved and symmetrised for 4.3. */
+# define MSENSE_GOLDSMELL     0x00000100u
 
 
-/*
- * canseemon()
- *
- * This is the globally used canseemon().  It is not called within the display
- * routines.  Like mon_visible(), but it checks to see if the hero sees the
- * location instead of assuming it.  (And also considers worms.)
- */
-# define canseemon(mon) \
-    (onmap(mon) && mon->dlevel == level && \
-     (mon->wormno ? worm_known(mon) : \
-         (cansee(mon->mx, mon->my) || see_with_infrared(mon))) \
-     && mon_visible(mon))
+# define MSENSE_ANYVISION     (MSENSE_VISION | MSENSE_INFRAVISION |  \
+                               MSENSE_SEEINVIS | MSENSE_XRAY)
+# define MSENSE_ANYDETECT     (MSENSE_TELEPATHY | MSENSE_MONDETECT | \
+                               MSENSE_WARNOFMON | MSENSE_COVETOUS |  \
+                               MSENSE_GOLDSMELL)
+
+/* Flags that alert us to a monster's existence, but not full details. */
+
+/* Worm segment visible. This allows us to know a long worm is there, without
+   knowing its exact location. The rules are the same as for normal vision,
+   except that we're iterating over segments. In other words, MSENSE_VISION (or
+   infravision or */
+# define MSENSE_WORM          0x00100000u
+
+/* Warning. This lets us know the location, but not the exact monster. */
+# define MSENSE_WARNING       0x00200000u
 
 
-/*
- * canspotmon(mon)
- *
- * This function checks whether you can either see a monster or sense it by
- * telepathy, and is what you usually call for monsters about which nothing is
- * known.
- */
-# define canspotmon(mon) (onmap(mon) && (canseemon(mon) || sensemon(mon)))
+/* Other flags calculated at the same time as visibility. Be careful only to set
+   these when the target is sensed via some means, so that the result from
+   msensem can be interpreted as a boolean. */
 
-/* knowninvisible(mon)
- * This one checks to see if you know a monster is both there and invisible.
- * 1) If you can see the monster and have see invisible, it is assumed the
- * monster is transparent, but visible in some manner.
- * 2) If you can't see the monster, but can see its location and you have
- * telepathy that works when you can see, you can tell that there is a
- * creature in an apparently empty spot.
- * Infravision is not relevant; we assume that invisible monsters are also
- * invisible to infravision.
- */
-# define knowninvisible(mon) \
-    (onmap(mon) && (mon)->minvis && \
-        ((cansee(mon->mx, mon->my) && (See_invisible || Detect_monsters)) || \
-        (!Blind && (HTelepat & ~INTRINSIC) && \
-            distu(mon->mx, mon->my) <= (BOLT_LIM * BOLT_LIM) \
-        ) \
-        ) \
-    )
+/* The target is sensed, and known to be invisible (because normal vision can
+   see the square, but not the monster at that location). */
+# define MSENSEF_KNOWNINVIS   0x10000000u
+
+
+/* Various msensem() wrappers. */
+
+# define tp_sensemon(mon)     !!(msensem(&youmonst, (mon)) & MSENSE_TELEPATHY)
+# define sensemon(mon)        !!(msensem(&youmonst, (mon)) & MSENSE_ANYDETECT)
+# define mon_warning(mon)     !!(msensem(&youmonst, (mon)) & MSENSE_WARNING)
+# define mon_visible(mon)     !!(msensem(&youmonst, (mon)) & MSENSE_ANYVISION)
+# define canseemon(mon)       !!(msensem(&youmonst, (mon)) & \
+                                 (MSENSE_ANYVISION | MSENSE_WORM))
+# define canspotmon(mon)      !!(msensem(&youmonst, (mon)) & \
+                                 (MSENSE_ANYDETECT | MSENSE_ANYVISION))
+# define knowninvisible(mon)  !!(msensem(&youmonst, (mon)) & MSENSEF_KNOWNINVIS)
+
+# define m_canseeu(mon)       !!(msensem((mon), &youmonst) & MSENSE_ANYVISION)
+# define m_cansenseu(mon)     !!(msensem((mon), &youmonst))
 
 /*
  * is_safepet(mon)
@@ -145,8 +138,10 @@
  * The Engulfed check assumes that you can see yourself even if you are
  * invisible.  If not, then we don't need the check.
  */
-# define canseeself()   (Blind || Engulfed || (!Invisible && !u.uundetected))
-# define senseself()    (canseeself() || Unblind_telepat || Detect_monsters)
+# define canseeself()   (Engulfed || msensem(&youmonst, &youmonst) & \
+                         MSENSE_ANYVISION)
+# define senseself()    (Engulfed || msensem(&youmonst, &youmonst) & \
+                         (MSENSE_ANYVISION | MSENSE_ANYDETECT))
 
 /*
  * random_monster()

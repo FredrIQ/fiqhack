@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-08 */
+/* Last modified by Alex Smith, 2015-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -115,7 +115,9 @@ struct monst {
 # define CHAM_DOPPELGANGER      2       /* demi-human */
 # define CHAM_SANDESTIN         3       /* demon */
 # define CHAM_MAX_INDX          CHAM_SANDESTIN
-    unsigned mundetected:1;     /* not seen in present hiding place */
+    unsigned mundetected:1;     /* when S_EEL: underwater
+                                   for hiding monsters: currently hidden
+                                   otherwise: unused, always 0 */
 
     /* implies one of M1_CONCEAL or M1_HIDE, but not mimic (that is, snake,
        spider, trapper, piercer, eel) */
@@ -193,9 +195,20 @@ struct monst {
 # define onmap(mon) (isok((mon)->mx, (mon)->my))
 
 /* player/monster symmetry; eventually we'll just access the fields of youmonst
-   directly, but for now, having accessor macros is a good compromise */
-# define minvent(mon) ((mon) == &youmonst ? invent : (mon)->minvent)
+   directly, but for now, having accessor macros is a good compromise
+
+   DEFERRED: mburied appears to be a deferred feature, it's not set anywhere in
+   the code. */
+# define m_mburied(mon) ((mon) == &youmonst ? u.uburied : (mon)->mburied)
+# define m_mhiding(mon) ((mon) == &youmonst ? u.uundetected :   \
+                         is_hider(mon->data) && (mon)->mundetected)
+# define m_underwater(mon) ((mon) == &youmonst ? Underwater :           \
+                            (mon)->data->mlet == S_EEL && (mon)->mundetected)
+# define m_minvent(mon) ((mon) == &youmonst ? invent : (mon)->minvent)
+# define m_mx(mon) ((mon) == &youmonst ? u.ux : (mon)->mx)
+# define m_my(mon) ((mon) == &youmonst ? u.uy : (mon)->my)
 # define m_mz(mon) ((mon) == &youmonst ? &u.uz : &((mon)->dlevel->z))
+# define m_mlev(mon) (Upolyd ? mons[u.umonnum].mlevel : (mon)->data->mlevel)
 
 /* Does a monster know where the player character is? Does it think it does? */
 # define knows_ux_uy(mon) ((mon)->mux == u.ux && (mon)->muy == u.uy)

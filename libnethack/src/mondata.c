@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-08 */
+/* Last modified by Alex Smith, 2015-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -57,7 +57,7 @@ poly_when_stoned(const struct permonst * ptr)
 
 /* returns TRUE if monster is drain-life resistant */
 boolean
-resists_drli(struct monst * mon)
+resists_drli(const struct monst * mon)
 {
     const struct permonst *ptr = mon->data;
     struct obj *wep = ((mon == &youmonst) ? uwep : MON_WEP(mon));
@@ -69,7 +69,7 @@ resists_drli(struct monst * mon)
 
 /* TRUE if monster is magic-missile resistant */
 boolean
-resists_magm(struct monst * mon)
+resists_magm(const struct monst * mon)
 {
     const struct permonst *ptr = mon->data;
     struct obj *o;
@@ -93,7 +93,7 @@ resists_magm(struct monst * mon)
 
 /* TRUE iff monster is resistant to light-induced blindness */
 boolean
-resists_blnd(struct monst * mon)
+resists_blnd(const struct monst * mon)
 {
     const struct permonst *ptr = mon->data;
     boolean is_you = (mon == &youmonst);
@@ -324,9 +324,9 @@ dmgtype(const struct permonst * ptr, int dtyp)
 }
 
 /* returns the maximum damage a defender can do to the attacker via
- * a passive defense */
+   a passive defense */
 int
-max_passive_dmg(struct monst *mdef, struct monst *magr)
+max_passive_dmg(const struct monst *mdef, const struct monst *magr)
 {
     int i, n = 0, dmg = 0;
     uchar adtyp;

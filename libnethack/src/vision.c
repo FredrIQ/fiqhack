@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-08 */
+/* Last modified by Alex Smith, 2015-02-10 */
 /* Copyright (c) Dean Luick, with acknowledgements to Dave Cohrs, 1990. */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -1277,7 +1277,7 @@ q3_path(int srow, int scol, int y2, int x2)
  * Use vision tables to determine if there is a clear path from
  * (col1,row1) to (col2,row2).  This is used by:
  *     m_cansee()
- *     m_canseeu()
+ *     msensem()
  *     do_light_sources()
  */
 boolean

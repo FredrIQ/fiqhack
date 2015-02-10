@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-21 */
+/* Last modified by Alex Smith, 2015-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1257,22 +1257,6 @@ decrement_helplessness(void)
         cancel_helplessness(mask, NULL);
 }
 
-
-boolean
-u_helpless(enum helpless_mask mask)
-{
-    int i;
-
-    /* A lack of a cause canonically indicates that we weren't actually helpless
-       for this reason. We may not have an endmsg, and the timer may already
-       have expired but the helplessness not yet been canceled, so we can't use
-       these as indications. */
-    for (i = hr_first; i <= hr_last; ++i)
-        if ((mask & (1 << i)) && *turnstate.helpless_causes[i])
-            return TRUE;
-
-    return FALSE;
-}
 
 /* Cancel mimicking.  You can't just call cancel_helplessness with hm_helpless
    to do this in all cases because it'll fail in cases where mimicking doesn't
