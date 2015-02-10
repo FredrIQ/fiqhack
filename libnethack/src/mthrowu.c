@@ -911,7 +911,7 @@ lined_up(struct monst *mtmp)
 
 /* Check if a monster is carrying a particular item. */
 struct obj *
-m_carrying(struct monst *mtmp, int type)
+m_carrying(const struct monst *mtmp, int type)
 {
     struct obj *otmp;
 

@@ -556,12 +556,11 @@ outer_break:
    finds worn armor in that slot for the player (mon == &youmonst) or a
    monster. */
 struct obj *
-which_armor(struct monst *mon, enum objslot slot)
+which_armor(const struct monst *mon, enum objslot slot)
 {
     struct obj *obj;
 
-    for (obj = (mon == &youmonst ? invent : mon->minvent);
-         obj; obj = obj->nobj)
+    for (obj = m_minvent(mon); obj; obj = obj->nobj)
         if (obj->owornmask & W_MASK(slot))
             return obj;
     return NULL;
@@ -798,7 +797,7 @@ mon_break_armor(struct monst *mon, boolean polyspot)
 /* currently only does speed boots, but might be expanded if monsters get to
    use more armor abilities */
 int
-extra_pref(struct monst *mon, struct obj *obj)
+extra_pref(const struct monst *mon, struct obj *obj)
 {
     if (obj) {
         if (obj->otyp == SPEED_BOOTS && mon->permspeed != MFAST)

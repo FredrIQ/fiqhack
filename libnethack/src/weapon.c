@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2015-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -320,12 +320,12 @@ dmgval(struct obj *otmp, struct monst *mon)
 }
 
 
-static struct obj *oselect(struct monst *, int);
+static struct obj *oselect(const struct monst *, int);
 
 #define Oselect(x) if ((otmp = oselect(mtmp, x)) != 0) return otmp;
 
 static struct obj *
-oselect(struct monst *mtmp, int x)
+oselect(const struct monst *mtmp, int x)
 {
     struct obj *otmp, *obest = 0;
 
@@ -357,7 +357,7 @@ static const int pwep[] =
 };
 
 boolean
-would_prefer_rwep(struct monst *mtmp, struct obj *otmp)
+would_prefer_rwep(const struct monst *mtmp, struct obj *otmp)
 {
     struct obj *wep = select_rwep(mtmp);
 
@@ -415,7 +415,7 @@ struct obj *propellor;
 
 /* select a ranged weapon for the monster */
 struct obj *
-select_rwep(struct monst *mtmp)
+select_rwep(const struct monst *mtmp)
 {
     struct obj *otmp;
     int i;
@@ -540,7 +540,7 @@ static const short hwep[] = {
 };
 
 boolean
-would_prefer_hwep(struct monst *mtmp, struct obj *otmp)
+would_prefer_hwep(const struct monst *mtmp, struct obj *otmp)
 {
     struct obj *wep = select_hwep(mtmp);
 
@@ -577,7 +577,7 @@ would_prefer_hwep(struct monst *mtmp, struct obj *otmp)
 
 /* select a hand to hand weapon for the monster */
 struct obj *
-select_hwep(struct monst *mtmp)
+select_hwep(const struct monst *mtmp)
 {
     struct obj *otmp;
     int i;

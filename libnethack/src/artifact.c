@@ -18,7 +18,7 @@
 #define get_artifact(o) \
                 (((o)&&(o)->oartifact) ? &artilist[(int) (o)->oartifact] : 0)
 
-static int spec_applies(const struct artifact *, struct monst *);
+static int spec_applies(const struct artifact *, const struct monst *);
 static int arti_invoke(struct obj *);
 static boolean magicbane_hit(struct monst *magr, struct monst *mdef,
                              struct obj *, int *, int, boolean, const char *);
@@ -490,7 +490,7 @@ item_provides_extrinsic(struct obj *otmp, int extrinsic, int *warntype)
  * fooled by such trappings.
  */
 int
-touch_artifact(struct obj *obj, struct monst *mon)
+touch_artifact(struct obj *obj, const struct monst *mon)
 {
     const struct artifact *oart = get_artifact(obj);
     boolean badclass, badalign, self_willed, yours;
@@ -555,7 +555,7 @@ touch_artifact(struct obj *obj, struct monst *mon)
 
 /* decide whether an artifact's special attacks apply against mtmp */
 static int
-spec_applies(const struct artifact *weap, struct monst *mtmp)
+spec_applies(const struct artifact *weap, const struct monst *mtmp)
 {
     const struct permonst *ptr;
     boolean yours;

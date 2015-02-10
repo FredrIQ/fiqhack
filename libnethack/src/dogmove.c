@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-03 */
+/* Last modified by Alex Smith, 2015-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -17,13 +17,14 @@ static int dog_goal(struct monst *, struct edog *, int, int, int);
 static struct obj *DROPPABLES(struct monst *);
 static boolean can_reach_location(struct monst *, xchar, xchar, xchar, xchar);
 static boolean could_reach_item(struct monst *, xchar, xchar);
-static boolean is_better_armor(struct monst *mtmp, struct obj *otmp);
+static boolean is_better_armor(const struct monst *mtmp, struct obj *otmp);
+static boolean could_use_item(const struct monst *mtmp, struct obj *otmp);
 
 /*
  * See if this armor is better than what we're wearing.
  */
 static boolean
-is_better_armor(struct monst *mtmp, struct obj *otmp)
+is_better_armor(const struct monst *mtmp, struct obj *otmp)
 {
     struct obj *obj;
     struct obj *best = (struct obj *)0;
@@ -89,8 +90,8 @@ is_better_armor(struct monst *mtmp, struct obj *otmp)
 /*
  * See if a monst could use this item in an offensive or defensive capacity.
  */
-boolean
-could_use_item(struct monst *mtmp, struct obj *otmp)
+static boolean
+could_use_item(const struct monst *mtmp, struct obj *otmp)
 {
     boolean can_use =
         /* make sure this is an intelligent monster */
@@ -142,42 +143,66 @@ could_use_item(struct monst *mtmp, struct obj *otmp)
     return FALSE;
 }
 
+void
+initialize_pet_weapons(const struct monst *mtmp, struct pet_weapons *p)
+{
+    struct obj *obj;
+
+    p->mon = mtmp;
+    p->uses_weapons = !!attacktype(mtmp->data, AT_WEAP);
+    p->wep = MON_WEP(mtmp);
+    p->hwep = p->uses_weapons ? select_hwep(mtmp) : NULL;
+    p->proj = p->uses_weapons ? select_rwep(mtmp) : NULL;
+    p->rwep = p->uses_weapons ? propellor : &zeroobj;
+
+    p->pick = NULL;
+    p->unihorn = NULL;
+    for (obj = mtmp->minvent; obj; obj = obj->nobj) {
+        if (is_pick(obj) ||
+            (obj->otyp == DWARVISH_MATTOCK && !which_armor(mtmp, os_arms)))
+            p->pick = obj;
+        if (obj->otyp == UNICORN_HORN && !obj->cursed)
+            p->unihorn = obj;
+    }
+
+    if (is_animal(mtmp->data) || mindless(mtmp->data))
+        p->unihorn = NULL;
+    if (!tunnels(mtmp->data) || !needspick(mtmp->data))
+        p->pick = NULL;
+}
+
+/* Determines whether a pet wants an item that's currently in its inventory.
+   (If not, the pet will want to drop it.) */
+boolean
+pet_wants_object(const struct pet_weapons *p, struct obj *obj)
+{
+    if (obj->owornmask || could_use_item(p->mon, obj))
+        return TRUE;
+
+    if (obj == p->pick || obj == p->unihorn)
+        return TRUE;
+
+    if (p->uses_weapons)
+        if (obj == p->wep || obj == p->proj ||
+            obj == p->hwep || obj == p->rwep ||
+            would_prefer_hwep(p->mon, obj) || would_prefer_rwep(p->mon, obj) ||
+            (p->rwep == &zeroobj && (is_ammo(obj) || is_launcher(obj))) ||
+            (p->rwep != &zeroobj && ammo_and_launcher(obj, p->rwep)))
+            return TRUE;
+
+    return FALSE;
+}
 
 static struct obj *
 DROPPABLES(struct monst *mon)
 {
     struct obj *obj;
-    struct obj *wep = MON_WEP(mon), *hwep = attacktype(mon->data, AT_WEAP)
-        ? select_hwep(mon) : (struct obj *)0, *proj =
-        attacktype(mon->data, AT_WEAP)
-        ? select_rwep(mon) : (struct obj *)0, *rwep;
-    boolean item1 = FALSE, item2 = FALSE;
+    struct pet_weapons p;
+    initialize_pet_weapons(mon, &p);
 
-    rwep = attacktype(mon->data, AT_WEAP) ? propellor : &zeroobj;
-
-    if (is_animal(mon->data) || mindless(mon->data))
-        item1 = item2 = TRUE;
-    if (!tunnels(mon->data) || !needspick(mon->data))
-        item1 = TRUE;
-    for (obj = mon->minvent; obj; obj = obj->nobj) {
-        if (!item1 && is_pick(obj) &&
-            (obj->otyp != DWARVISH_MATTOCK || !which_armor(mon, os_arms))) {
-            item1 = TRUE;
-            continue;
-        }
-        if (!item2 && obj->otyp == UNICORN_HORN && !obj->cursed) {
-            item2 = TRUE;
-            continue;
-        }
-        if (!obj->owornmask && obj != wep && obj != rwep &&
-            obj != proj && obj != hwep &&
-            !would_prefer_hwep(mon, obj)  /* cursed item in hand?  */
-            && !would_prefer_rwep(mon, obj)
-            && ((rwep != &zeroobj) || (!is_ammo(obj) && !is_launcher(obj)))
-            && (rwep == &zeroobj || !ammo_and_launcher(obj, rwep))
-            && !could_use_item(mon, obj))
+    for (obj = mon->minvent; obj; obj = obj->nobj)
+        if (!pet_wants_object(&p, obj))
             return obj;
-    }
     return NULL;
 }
 
