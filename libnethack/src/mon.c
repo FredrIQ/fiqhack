@@ -1363,6 +1363,9 @@ mm_aggression(const struct monst *magr, /* monster that might attack */
         /* monsters won't make an attack that would petrify them */
         if (touch_petrifies(md) && !resists_ston(magr))
             return 0;
+        /* and for balance, the reverse */
+        if (touch_petrifies(ma) && !resists_ston(mdef))
+            return 0;
 
         /* tame monsters won't attack peaceful guardians or leaders, unless
            conflicted */
