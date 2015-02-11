@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-10 */
+/* Last modified by Alex Smith, 2015-02-11 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1228,6 +1228,9 @@ add_keylist_command(struct nh_menulist *menu, struct nh_cmd_desc *cmd, int id)
 
     keys[0] = '\0';
     for (i = 0; i <= KEY_MAX; i++) {
+        /* Don't display Alt-combinations with alt_is_esc turned on */
+        if (settings.alt_is_esc && i == (KEY_ALT | (i & 0xff)))
+            continue;
         if (keymap[i] == cmd) {
             keyname = friendly_keyname(i);
             kl = strlen(keys);

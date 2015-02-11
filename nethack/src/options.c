@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-02 */
+/* Last modified by Alex Smith, 2015-02-11 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -125,6 +125,8 @@ static const char *const bucnames[] =
     { "unknown", "blessed", "uncursed", "cursed", "all" };
 
 static struct nh_option_desc curses_options[] = {
+    {"alt_is_esc", "interpret Alt-letter as ESC letter", FALSE, OPTTYPE_BOOL,
+     {.b = FALSE}},
     {"animation", "what to animate, and how fast", FALSE, OPTTYPE_ENUM,
      {.e = ANIM_ALL}},
     {"border", "what to draw borders around", FALSE, OPTTYPE_ENUM,
@@ -165,10 +167,10 @@ static struct nh_option_desc curses_options[] = {
      OPTTYPE_ENUM, {.e = MOTD_ASK}},
     {"optstyle", "option menu display style", FALSE, OPTTYPE_ENUM,
      {.e = OPTSTYLE_FULL}},
-    {"palette", "color palette used for text (not for graphic tiles)", FALSE, OPTTYPE_ENUM,
+    {"palette", "color palette used for text", FALSE, OPTTYPE_ENUM,
      {.e = PALETTE_DEFAULT}},
-    {"prompt_inline", "place prompts in the message window", FALSE, OPTTYPE_BOOL,
-     {.b = FALSE}},
+    {"prompt_inline", "place prompts in the message window", FALSE,
+     OPTTYPE_BOOL, {.b = FALSE}},
     {"scores_own", "show all your own scores in the list", FALSE, OPTTYPE_BOOL,
      {.b = FALSE}},
     {"scores_top", "how many top scores to show", FALSE, OPTTYPE_INT, {.i = 3}},
@@ -181,6 +183,7 @@ static struct nh_option_desc curses_options[] = {
 };
 
 static struct nhlib_boolopt_map boolopt_map[] = {
+    {"alt_is_esc", &settings.alt_is_esc},
     {"draw_branch", &settings.dungeoncolor},
     {"draw_detected", &settings.use_inverse},
     {"draw_rock", &settings.visible_rock},

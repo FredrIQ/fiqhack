@@ -1107,6 +1107,17 @@ nh_wgetch(WINDOW * win, enum keyreq_context context)
         } else {
             wrefresh(win);
             key = wgetch(win);
+
+            /* Slow network connections sometimes throw off the key timings,
+               making ESC letter look like Alt-letter (the codes differ only in
+               timing). If a user has set their terminal to Alt-is-Meta mode (or
+               has a physical Meta key), or if the user wants to play very
+               quickly and doesn't care about Alt- combinations, they may want
+               to treat all incoming Alt-letter combinations as ESC letter. */
+            if (settings.alt_is_esc && key == (KEY_ALT | (key & 0xff))) {
+                ungetch(key & 0xff);
+                key = KEY_ESCAPE;
+            }
         }
 
         if (!ui_flags.ingame && key == KEY_SIGNAL) {
