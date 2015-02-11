@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-10 */
+/* Last modified by Alex Smith, 2015-02-11 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1109,11 +1109,18 @@ nh_wgetch(WINDOW * win, enum keyreq_context context)
             key = wgetch(win);
         }
 
+        if (!ui_flags.ingame && key == KEY_SIGNAL) {
+            /* We got a server cancel that arrived late. Just ignore it. */
+            key = 0;
+            continue;
+        }
+
         if (ui_flags.ingame && ui_flags.in_zero_time_command &&
             key == KEY_SIGNAL) {
             /* Don't let the server knock us out of something local to the
                client (or effectively local). */
             ui_flags.queued_server_cancels = 1;
+            key = 0;
             continue;
         }
 
