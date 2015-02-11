@@ -460,7 +460,7 @@ extern void load_keymap(void);
 extern void free_keymap(void);
 extern void show_keymap_menu(nh_bool readonly);
 extern void handle_nested_key(int key);
-extern enum nh_direction key_to_dir(int key, int dircmd_only);
+extern enum nh_direction key_to_dir(int key, int* range);
 
 /* main.c */
 extern void curses_impossible(const char *msg);

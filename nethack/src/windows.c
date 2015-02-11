@@ -1031,8 +1031,11 @@ key_is_meaningful_in_context(int key, enum keyreq_context context)
             !ui_flags.in_zero_time_command)
             return FALSE;
 
-        if (key_to_dir(key, 0) != DIR_NONE)
-            return TRUE;
+        {
+            int range;
+            if (key_to_dir(key, &range) != DIR_NONE)
+                return TRUE;
+        }
         /* otherwise fall through */
 
         /* Cases in which the meaningful inputs are all ASCII and/or

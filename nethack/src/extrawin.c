@@ -364,7 +364,7 @@ draw_extrawin(enum keyreq_context context)
         for (key = KEY_MAX; key; key--) {
             if (settings.alt_is_esc && key == (KEY_ALT | (key & 0xff)))
                 continue;
-            switch (key_to_dir(key, 1)) {
+            switch (key_to_dir(key, NULL)) {
             case DIR_NW: dirkey[classify_key(key)][0] = key; break;
             case DIR_N : dirkey[classify_key(key)][3] = key; break;
             case DIR_NE: dirkey[classify_key(key)][6] = key; break;

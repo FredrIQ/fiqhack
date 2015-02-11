@@ -539,8 +539,11 @@ set_next_command(const char *cmd, struct nh_cmd_arg *arg)
     strncpy(next_command_name, cmd, sizeof (next_command_name));
 }
 
+/* If range is NULL, only accept unshifted directions.
+
+   Otherwise, set *range to 1/4/8 for nothing/go/run modifiers. */
 enum nh_direction
-key_to_dir(int key, int dircmd_only)
+key_to_dir(int key, int *range)
 {
     struct nh_cmd_desc *cmd;
 
@@ -550,14 +553,21 @@ key_to_dir(int key, int dircmd_only)
     cmd = keymap[key];
 
     if (cmd && (!strcmp(cmd->name, "wait") || !strcmp(cmd->name, "search")) &&
-        !dircmd_only)
+        range)
         return DIR_SELF;
 
     if (!cmd || !(cmd->flags & (DIRCMD | DIRCMD_RUN | DIRCMD_GO)))
         return DIR_NONE;
 
-    if (cmd->flags & (DIRCMD_RUN | DIRCMD_GO) && dircmd_only)
+    if (cmd->flags & (DIRCMD_RUN | DIRCMD_GO) && !range)
         return DIR_NONE;
+
+    if (range)
+        *range = 1;
+    if (cmd->flags & DIRCMD_GO)
+        *range = 4;
+    if (cmd->flags & DIRCMD_RUN)
+        *range = 8;
 
     return (enum nh_direction)cmd->flags &
         ~(CMD_UI | DIRCMD | DIRCMD_RUN | DIRCMD_GO);
@@ -1756,9 +1766,9 @@ keymap_action_massrebind_modif(void)
         for (i = 0; i < imax; i++) {
             if (keymap[key] == direction_commands[i]) {
                 if (res == 'g' || res == 'r' || res == 'u')
-                    mkey = guess_shift_key(key);
-                else
                     mkey = guess_ctrl_key(key);
+                else
+                    mkey = guess_shift_key(key);
 
                 if (mkey == key || mkey == 0)
                     ; /* be silent about this: the user might not care about
