@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-11-14
+Last modified by Alex Smith, 2015-02-11
 
 Copyright (C) 2013 Alex Smith.
 
@@ -221,7 +221,7 @@ listed below.
         and whether they ask for confirmation when you attack peacefuls.  In
         NetHack 4, you could for instance have them refuse to attack monsters
         altogether, without losing the ability to pick up items (which is what
-        adding an `m` before every comand would do).
+        adding an `m` before every command would do).
 
       * Finally, if you're a traditionalist, don't worry: the vast majority of
         the new interface features from NetHack 4 can be turned off, leaving
