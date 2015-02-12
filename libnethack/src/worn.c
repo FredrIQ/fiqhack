@@ -374,6 +374,12 @@ void
 m_dowear(struct monst *mon, boolean creation)
 {
 #define RACE_EXCEPTION TRUE
+
+    /* Workaround for the fact that newcham() has lost track of creation state.
+       TODO: Find a better implementation of this. */
+    if (in_mklev)
+        creation = TRUE;
+
     /* Note the restrictions here are the same as in dowear in do_wear.c except 
        for the additional restriction on intelligence.  (Players are always
        intelligent, even if polymorphed). */
