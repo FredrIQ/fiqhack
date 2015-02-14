@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-02 */
+/* Last modified by Alex Smith, 2015-02-11 */
 /* Copyright (c) 2014 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -362,7 +362,9 @@ draw_extrawin(enum keyreq_context context)
         }
 
         for (key = KEY_MAX; key; key--) {
-            switch (key_to_dir(key)) {
+            if (settings.alt_is_esc && key == (KEY_ALT | (key & 0xff)))
+                continue;
+            switch (key_to_dir(key, NULL)) {
             case DIR_NW: dirkey[classify_key(key)][0] = key; break;
             case DIR_N : dirkey[classify_key(key)][3] = key; break;
             case DIR_NE: dirkey[classify_key(key)][6] = key; break;
@@ -445,9 +447,13 @@ draw_extrawin(enum keyreq_context context)
 
 #define hintcmd(s,d) do {                                         \
             int key;                                              \
-            for (key = 0; key <= KEY_MAX; key++)                  \
+            for (key = 0; key <= KEY_MAX; key++) {                \
+                if (settings.alt_is_esc &&                        \
+                    key == (KEY_ALT | (key & 0xff)))              \
+                    continue;                                     \
                 if (keymap[key] && !strcmp(keymap[key]->name, s)) \
                     break;                                        \
+            }                                                     \
             if (key <= KEY_MAX)                                   \
                 hintbinding(key, d);                              \
         } while (0)

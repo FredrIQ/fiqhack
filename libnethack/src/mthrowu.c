@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-03 */
+/* Last modified by Alex Smith, 2015-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -675,8 +675,13 @@ mfind_target(struct monst *mtmp)
                 break;  /* don't attack you if peaceful */
             }
 
-            if ((mat = m_at(level, x, y))) {
-                /* i > 0 ensures this is not a close range attack */
+            if (((mat = m_at(level, x, y))) && msensem(mtmp, mat)) {
+                /* i > 0 ensures this is not a close range attack
+
+                   Note: the couldsee() here is an LOE check and has nothing to
+                   do with vision; if your pet doesn't have LOE on you, it knows
+                   it can't hit you with a directed attack, so it won't bother
+                   about trying to avoid you. */
                 if ((mm_aggression(mtmp, mat) & ALLOW_M) ||
                     (Conflict && !resist(mtmp, RING_CLASS, 0, 0) &&
                      couldsee(mtmp->mx, mtmp->my) &&
@@ -816,9 +821,7 @@ linedup(xchar ax, xchar ay, xchar bx, xchar by)
 
     if ((!tbx || !tby || abs(tbx) == abs(tby))  /* straight line or diagonal */
         && distmin(tbx, tby, 0, 0) < BOLT_LIM) {
-        if (ax == u.ux && ay == u.uy)
-            return (boolean) (couldsee(bx, by));
-        else if (clear_path(ax, ay, bx, by))
+        if (clear_path(ax, ay, bx, by))
             return TRUE;
     }
     return FALSE;
@@ -893,17 +896,13 @@ qlined_up(struct monst *mtmp, int ax, int ay, boolean breath)
     return lined_up;
 }
 
-/* is mtmp in position to use ranged attack? */
+/* is mtmp in position to use ranged attack?
+
+   Note: this checks aware_of_u, not msensem; a monster is happy to aim a
+   ranged attack at the guessed location of a player. */
 boolean
 lined_up(struct monst *mtmp)
 {
-    /* Don't use ranged attacks against hiding players.
-       TODO: Possibly make monsters not use ranged attacks against hiding
-       monsters. */
-    if (u.uundetected || ((youmonst.data->mlet == S_MIMIC) &&
-        (youmonst.m_ap_type != M_AP_NOTHING)))
-        return FALSE;
-
     if (!aware_of_u(mtmp))
         return FALSE; /* monster doesn't know where you are */
 
@@ -912,7 +911,7 @@ lined_up(struct monst *mtmp)
 
 /* Check if a monster is carrying a particular item. */
 struct obj *
-m_carrying(struct monst *mtmp, int type)
+m_carrying(const struct monst *mtmp, int type)
 {
     struct obj *otmp;
 

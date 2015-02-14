@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2015-02-08 */
 /* Copyright (c) Dean Luick, 1994                                       */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -175,27 +175,9 @@ do_light_sources(char **cs_rows)
                 if ((max_x = (ls->x + offset)) >= COLNO)
                     max_x = COLNO - 1;
 
-                if (ls->x == u.ux && ls->y == u.uy) {
-                    /* 
-                     * If the light source is located at the hero, then
-                     * we can use the COULD_SEE bits already calcualted
-                     * by the vision system.  More importantly than
-                     * this optimization, is that it allows the vision
-                     * system to correct problems with clear_path().
-                     * The function clear_path() is a simple LOS
-                     * path checker that doesn't go out of its way
-                     * make things look "correct".  The vision system
-                     * does this.
-                     */
-                    for (x = min_x; x <= max_x; x++)
-                        if (row[x] & COULD_SEE)
-                            row[x] |= TEMP_LIT;
-                } else {
-                    for (x = min_x; x <= max_x; x++)
-                        if ((ls->x == x && ls->y == y)
-                            || clear_path((int)ls->x, (int)ls->y, x, y))
-                            row[x] |= TEMP_LIT;
-                }
+                for (x = min_x; x <= max_x; x++)
+                    if (clear_path((int)ls->x, (int)ls->y, x, y))
+                        row[x] |= TEMP_LIT;
             }
         }
     }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-03 */
+/* Last modified by Alex Smith, 2015-02-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -330,8 +330,11 @@ dochug(struct monst *mtmp)
 
     /* Monsters that want to acquire things */
     /* may teleport, so do it before inrange is set */
-    if (is_covetous(mdat))
-        tactics(mtmp);
+    if (is_covetous(mdat)) {
+        tmp = tactics(mtmp);
+        if (tmp != 0)
+            return tmp == 2;
+    }
 
     /* check distance and scariness of attacks */
     distfleeck(mtmp, &inrange, &nearby, &scared);
@@ -448,8 +451,8 @@ toofar:
 
     /* Look for other monsters to fight (at a distance) */
     if ((attacktype(mtmp->data, AT_BREA) || attacktype(mtmp->data, AT_GAZE) ||
-         attacktype(mtmp->data, AT_SPIT) || (attacktype(mtmp->data, AT_WEAP) &&
-                                             select_rwep(mtmp) != 0)) &&
+         attacktype(mtmp->data, AT_SPIT) ||
+         (attacktype(mtmp->data, AT_WEAP) && select_rwep(mtmp) != 0)) &&
         mtmp->mlstmv != moves) {
         struct monst *mtmp2 = mfind_target(mtmp);
 
@@ -944,7 +947,7 @@ not_special:
            immediately-commit AI, though.  4.3 uses the other alternative; we
            fall out to dochug, and used the correct code for monster/muxy combat
            from this function to replace the incorrect code there (although it's
-           been factored out into a separate function, mattackq, in mhitu.c).
+           been factored out into a separate function, mattackq, in mhitq.c).
         */
         if (info[chi] & ALLOW_MUXY)
             return 0;
@@ -978,10 +981,11 @@ not_special:
 
            2 - It may mistake the monster for your (displaced) image.
 
-           Pets get taken care of above and shouldn't reach this code. I'm not
-           sure offhand where conflict gets handled. It might be here, actually;
-           it wasn't in an older version of the code, but the bugfixes to
-           mm_aggression may have changed that. */
+           Pets get taken care of above and shouldn't reach this code. Conflict
+           does not turn on the mm_aggression flag, so isn't taken care of here
+           either (although it affects this code by turning off the sanity
+           checks on it, meanining that, say, a monster can kill itself via
+           passive damage). */
         if (info[chi] & ALLOW_M)
             return mattackq(mtmp, nix, niy);
 
@@ -1144,11 +1148,11 @@ postmov:
                     mmoved = 3;
             }
 
-            if (mtmp->minvis) {
-                newsym(mtmp->mx, mtmp->my);
-                if (mtmp->wormno)
-                    see_wsegs(mtmp);
-            }
+            /* We can't condition this on being invisible any more; maybe a
+               monster just picked up gold or an invocation item */
+            newsym(mtmp->mx, mtmp->my);
+            if (mtmp->wormno)
+                see_wsegs(mtmp);
         }
 
         if (isok(mtmp->mx, mtmp->my) &&
@@ -1191,14 +1195,12 @@ accessible(int x, int y)
 void
 set_apparxy(struct monst *mtmp)
 {
-    boolean notseen;
     int disp;
-    long umoney = money_cnt(invent);
     boolean actually_adjacent = distmin(mtmp->mx, mtmp->my, u.ux, u.uy) <= 1;
+    boolean loe = couldsee(mtmp->mx, mtmp->my);
+    unsigned msense_status;
 
-    /* 
-     * do cheapest and/or most likely tests first
-     */
+    /* do cheapest and/or most likely tests first */
 
     /* pet knows your smell; grabber still has hold of you */
     if (mtmp->mtame || mtmp == u.ustuck) {
@@ -1207,43 +1209,34 @@ set_apparxy(struct monst *mtmp)
         return;
     }
 
-    /* monsters without LOS can't see you, and have no chance to randomly see
-       you */
-    if (!couldsee(mtmp->mx, mtmp->my)) {
-        mtmp->mux = COLNO;
-        mtmp->muy = ROWNO;
-        return;
-    }
-
-    /* monsters won't track you beyond a certain range on some levels (mostly
-       endgame levels), for balance */
-    if (!mtmp->mpeaceful && mtmp->dlevel->flags.shortsighted &&
-        dist2(mtmp->mx, mtmp->my, u.ux, u.uy) >
-        (couldsee(mtmp->mx, mtmp->my) ? 144 : 36)) {
-        mtmp->mux = COLNO;
-        mtmp->muy = ROWNO;
-        return;
-    }
-
-    /* monsters which know where you are don't suddenly forget, if you haven't
-       moved away and are still close */
+    /* monsters which are adjacent to you and actually know your location will
+       continue to know it */
     if (knows_ux_uy(mtmp) && actually_adjacent) {
         mtmp->mux = u.ux;
         mtmp->muy = u.uy;
         return;
     }
 
-    /* monsters can't see in the dark without infravision or similar, and can't
-       see invisible things without see invisible, and some monsters can't see
-       at all, and in some situations monsters can't detect you */
-    notseen = (!mtmp->mcansee || u.uundetected ||
-               (Invis && !perceives(mtmp->data)) ||
-               (!actually_adjacent && !level->locations[u.ux][u.uy].lit &&
-                (!infravision(mtmp->data) || !infravisible(youmonst.data))) ||
-               (youmonst.m_ap_type == M_AP_OBJECT &&
-                youmonst.mappearance != STRANGE_OBJECT &&
-                (youmonst.mappearance != GOLD_PIECE ||
-                 !likes_gold(mtmp->data))));
+    /* monsters won't track you beyond a certain range on some levels (mostly
+       endgame levels), for balance */
+    if (!mtmp->mpeaceful && mtmp->dlevel->flags.shortsighted &&
+        dist2(mtmp->mx, mtmp->my, u.ux, u.uy) > (loe ? 144 : 36)) {
+        mtmp->mux = COLNO;
+        mtmp->muy = ROWNO;
+        return;
+    }
+
+    /* expensive, but the result is used in a ton of checks and very likely */
+    msense_status = msensem(mtmp, &youmonst);
+
+    /* if the monster can't sense you via any normal means and doesn't have LOE,
+       we don't give the monster random balance spoilers; otherwise, monsters
+       outside LOE will seek out the player, which is bizarre */
+    if (!loe && !msense_status) {
+        mtmp->mux = COLNO;
+        mtmp->muy = ROWNO;
+        return;
+    }
 
     /* Note: for balance reasons, monsters sometimes detect you even if
        invisible or displaced.
@@ -1262,58 +1255,27 @@ set_apparxy(struct monst *mtmp)
        In 4.3, we approximate the same rules but in a less inconsistent way:
        monsters can sense invisible or displaced players 1/3 or 1/1 of the time
        respectively if adjacent, and 1/11 or 1/4 of the time respectively if not
-       adjacent. */
+       adjacent.
 
-    /* add cases as required */
+       Additionally, displacement only works on vision-based methods of sensing
+       the player. Monsters that are telepathic, warned, etc. won't be fooled by
+       it. */
 
     disp = 0;
-    if (notseen || Underwater) {
-        /* Xorns can smell valuable metal like gold, treat as seen */
-        if ((mtmp->data == &mons[PM_XORN]) && umoney && !Underwater)
+    if (!msense_status) {
+        if (!rn2(actually_adjacent ? 3 : 11))
             disp = 0;
-        else if (!rn2(actually_adjacent ? 3 : 11))
-            disp = 0;
-        else if (mtmp->mstrategy & STRAT_PLAYER) {
-
-            /* If the monster has known the player's location recently, and the
-               player suddenly disappears, one reasonable guess that a monster
-               might make is that the player turned invisible. We can implement
-               this by looking at mstrategy; if there isn't a monster visible on
-               the square, and mstrategy says that the monster is tracking the
-               player's location, and that location is adjacent to the monster,
-               we mark it as the believed location of the player.
-
-               This is not as smart as it could be, but leads to more realistic
-               behaviour (e.g. continuing to attack a square from which an
-               invisible player has been attacking the monster). */
-
-            int x1 = STRAT_GOALX(mtmp->mstrategy);
-            int y1 = STRAT_GOALY(mtmp->mstrategy);
-            if (distmin(x1, y1, mtmp->mx, mtmp->my) == 1 &&
-                !MON_AT(level, x1, y1)) {
-                /* TODO: or doesn't perceive the monster there */
-                mtmp->mux = x1;
-                mtmp->muy = y1;
-            } else {
-                mtmp->mux = COLNO;
-                mtmp->muy = ROWNO;
-            }
-
-            return;
-
-        } else {
-
+        else {
             /* monster has no idea where you are */
             mtmp->mux = COLNO;
             mtmp->muy = ROWNO;
             return;
         }
-    } else if (Displaced) {
+    } else if (Displaced && !(msense_status & MSENSE_ANYDETECT)) {
         /* TODO: As described above, this actually_adjacent check was moved from
            mfndpos. It's worth considering modifying it. The comment in its
            previous location in mfndpos should also be changed in that case. */
-        disp = actually_adjacent ? 0 : !rn2(4) ? 0 :
-            couldsee(mtmp->mx, mtmp->my) ? 2 : 1;
+        disp = actually_adjacent ? 0 : !rn2(4) ? 0 : loe ? 2 : 1;
     } else
         disp = 0;
 
@@ -1356,11 +1318,9 @@ can_ooze(struct monst *mtmp)
 
     if (!amorphous(mtmp->data))
         return FALSE;
-    if (mtmp == &youmonst) {
-        chain = invent;
-    } else {
-        chain = mtmp->minvent;
-    }
+
+    chain = m_minvent(mtmp);
+
     for (obj = chain; obj; obj = obj->nobj) {
         int typ = obj->otyp;
 

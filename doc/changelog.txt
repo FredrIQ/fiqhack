@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-12-28
+Last modified by Alex Smith, 2015-02-06
 
 Copyright (C) 2013 Alex Smith.
 
@@ -251,6 +251,21 @@ naturally (e.g. elves versus orcs); this change was considered acceptable for
 NetHack 4 because it fits in with the theme of improved AI and is almost
 entirely to the player's benefit. (Un, 4176ec9)
 
+Numerous bugs have been fixed in the monster AI.  One of the more noticeable
+fixes is that monsters can now only locate the player via their own senses
+(rather than always knowing the player's location and choosing to ignore it
+some of the time if the player was invisible); they can do things like
+searching squares by attacking them, and follow an invisible player's tracks
+(eventually bumping into them), as methods of locating the player, in addition
+to remembering minimal information about the player's movements. (4, 163c8e0,
+78cd777, 0ac7085, f891d36)
+
+Monsters use an improved and less buggy pathfinding algorithm.  In particular,
+they are now willing to temporarily move further from their target in order
+that they might move nearer it later, so they don't get stuck on corners as
+easily (this is particularly noticeable with pets).  Additionally, they will
+no longer try to pick up items through walls. (4, ad00904, 4ff884d, e3a10ce)
+
 
 Dungeon
 -------
@@ -266,6 +281,13 @@ detected via means of trap detection). (4, e219111)
 
 The chest in the Castle that contains the wand of wishing can no longer be
 trapped. (4, 8ec73b5)
+
+Sources of noise now scale correctly to the player's level; instead of always
+being louder for a higher-level player, they are louder for a higher-level
+player who caused the noise intentionally (e.g. ringing a bell), but quieter
+for higher-level players who caused the noise unintentionally (e.g. during
+combat), and even quieter for Rogues.  Monsters now react to noise by
+investigating the source, rather than merely waking up. (4, 2ec0e59)
 
 
 Options
@@ -308,7 +330,7 @@ original, standard game. (Nitro, 856b22a)
 Wizard mode teleportation has been split in two, in order to ease testing the
 teleportation code itself.  `^T` now does not allow for any sort of
 teleportation that would not be allowed in regular play.  In order to teleport
-without restrictions in wizard mode, use `^F`. (4, 3cf2f4a, bfdc807)
+without restrictions in wizard mode, use `^F`. (4, 3cf2f4a, bfdc807, 65a76b3)
 
 Monster creation in wizard mode now only prompts for which type of monster to
 create if the `#genesis` command is used explicitly; and the `#genesis`
@@ -692,6 +714,9 @@ It's now possible to fit a bag of holding under the gap in a door even if it
 has items inside (assuming that the character holding it also fits through the
 gap). (4, 50c5dbe)
 
+A punishment ball and chain no longer crash when combined with engulfing
+and perhaps petrification. (4, C343-59, 65a76b3)
+
 
 Monsters and Polyforms
 ----------------------
@@ -853,6 +878,18 @@ Quest leaders will now avoid traps (thus preventing the game becoming
 unwinnable due to the Norn stepping on a fire trap and drowning). (4,
 efeff64)
 
+Various AI fixes were made to groups of monsters. For small groups, the group
+will have a tendency to stay together or at least not split up too much. Also,
+monsters stuck in the middle of very large groups of monsters will run only a
+minimal AI in order to save on CPU time and save file churn; this should help
+reduce the performance impact of pudding farming (and may break some existing
+pastescripts for pudding farming). (4, f4015d7)
+
+If a monster's AI determines that two squares are equally good choices, the
+monster will randomize between them even when aiming for or away from a
+particular square (rather than just when the monster has no target square
+set). (4, c0ca805)
+
 
 Dungeon
 -------
@@ -901,6 +938,10 @@ dig down on a fountain while blind, and then have travel automatically avoid
 the resulting pools even though you don't know where they are). (4, c627ba3)
 
 Fire traps now sometimes hit weapons instead of armor. (4, d84cd4f)
+
+The character can now enter a level that's entirely full of monsters, via
+displacing an existing monster on that level, without crashing the game (from
+the NetHack 3 series devteam, 76f55be)
 
 
 Character
@@ -1588,6 +1629,9 @@ This feature will not be activated without the user's permission (it asks on
 the first load); even after the first load, you can control it via the
 `networkmotd` option. (4, b0786a7, 367915e)
 
+Failures to open a file are now logged in the paniclog, making problems like
+missing dumplogs easier to diagnose. (4, cc037f1)
+
 
 Internals Improvements
 ======================
@@ -1723,7 +1767,18 @@ via treating impossible values as plausible legal values). (4, 41a0806,
 
 A new random number generator is in use, with improved error handling,
 increased seed space, better seeding, better security against attempts to
-deduce the RNG sequence, and reduced save file size. (Ace and 4, 7d99f45, )
+deduce the RNG sequence, and reduced save file size. (Ace and 4, 7d99f45,
+e2e7a1b, 7d719e6)
+
+The monster movement formula uses a different internal representation; instead
+of each monster independently keeping track of when its next turn will come
+up, the game stores information that allows it to calculate the turn order for
+any given turn in advance, together with where it is inside the current turn's
+turn order. This makes the save files easier to compress. (4, c5a485a)
+
+Save files now use an encoding in which the turn count is added to or
+subtracted from various fields, in order to make the save file more
+compressible. (4, 529d8c8..a615e70)
 
 
 Client/Server Structure and API
@@ -1867,6 +1922,12 @@ others)
 rendering, increasing the flexibility and customizability of the map display.
 (4, 3783ed3..a695061 and others)
 
+Users can now override the existing tilesets by placing a replacement version
+in the `tilesets` subdirectory of the game config directory (e.g. in
+`~/.config/NetHack4/tilesets` on most Linux setups).  (These tilesets can be
+produced using a separate program `tilecompile` that can be installed at the
+same time as NetHack 4.) (4, 0480c43)
+
 The code is now written to specific levels of library support (in general,
 X/Open `_XOPEN_SOURCE=700` and C11, although exceptions are made in some
 places, such as the server code), rather than the mix that had built up over
@@ -1945,7 +2006,7 @@ fixed. (6859f7e, d63ae4a, 79312f0, 4a8488b, 258e155, 0a980ce)
 Summoned nasties no longer crash the game when two references to the same
 level are stored in different places in memory. (a7cf369)
 
-Various typo fixes to messages. (7ca0627, 39478da, f58ce5f, d70bf91)
+Various typo fixes to messages. (7ca0627, 39478da, f58ce5f, d70bf91, 383f421)
 
 Identification of items by the "Do you want your possessions identified?"
 screen no longer exercises Wisdom (which triggered the desync detector,
@@ -2057,3 +2118,59 @@ Wounded legs no longer permanently reduce Dexterity. (1e946d8)
 Engravings are now again capable of eroding. (ea7ae17)
 
 Grayswandir now again blocks hallucination. (700b320)
+
+The items on the grappling hook menu again correctly do what their labels
+indicate they do. (7c49679)
+
+Shopkeepers can once again identify their shops if a bones file was left for
+their level, then loaded at a different depth, or if they die but need their
+monster data saved in case they are reanimated. (8ffdb7b, aad3622)
+
+The game no longer crashes trying to show help information if a --More-- was
+forced during the creation of a dialog box (e.g. because that dialog box would
+cover up existing messages). (3f33481)
+
+The #adjust command no longer desyncs the game when used on a loadstone in the
+53rd or later inventory slot. (25c1c27)
+
+The high score table will no longer give an incorrect position for your game
+on the scoreboard (although it might not be able to highlight the position
+your game came in at, the scoreboard will at least be updated
+correctly). (120174d)
+
+The save file format has been optimized to use less disk space. (af3161b,
+8b2482d)
+
+Players no longer start with a free 10 points of Defence; starting Defence has
+been reduced back to 3.4.3 levels. (I wonder why nobody reported that one
+earlier?) (27b7c41)
+
+Brandings now work correctly when viewing the character's memory of levels
+other than the current dungeon level. (cb7926c)
+
+Failure to load a bones file, and toggling autopickup, no longer leak
+memory. (17834e6, 65a76b3)
+
+Non-corpses can no longer be tinned (causing odd effects or crashing the
+game). (5c66591)
+
+Direction keys that are unbound in the key bindings editor will no longer
+rebind themselves upon restarting the NetHack 4 process. (97b2cce)
+
+When eating a mimic corpse, the game no longer waits for input at a time when
+the player cannot reasonably give input. (3d10ac9)
+
+Some rendering issues with the cursor in the SDL backend were fixed. (2bf3d76)
+
+The game now allows a choice of color palettes for the 16 colors it uses
+(which will not work in all terminals). (207a872, 0b1fc22)
+
+The random number generator is now seeded correctly for the purpose of
+generating random characters on Mac OS X. (530125f..7e0353a)
+
+The keymap dialog box now allows for quick rebinding of subsets of keys (such
+as `hjklyubn` or `1234567890`). (b0c2d7b..8a367e7)
+
+When a game desyncs or panics (or something similar happens), relevant debug
+data is now shown inside the resulting dialog box, rather than beforehand, and
+more debug information is given than before. (1a89562)

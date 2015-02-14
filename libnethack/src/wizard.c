@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-03 */
+/* Last modified by Alex Smith, 2015-02-11 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -15,7 +15,7 @@
 extern const int monstr[];
 
 static short which_arti(int);
-static boolean mon_has_arti(struct monst *, short);
+static boolean mon_has_arti(const struct monst *, short);
 static struct monst *other_mon_has_arti(struct monst *, short);
 static struct obj *on_ground(short);
 static boolean you_have(int);
@@ -143,11 +143,11 @@ which_arti(int mask)
  * artifacts right now.    [MRS]
  */
 static boolean
-mon_has_arti(struct monst *mtmp, short otyp)
+mon_has_arti(const struct monst *mtmp, short otyp)
 {
     struct obj *otmp;
 
-    for (otmp = mtmp->minvent; otmp; otmp = otmp->nobj) {
+    for (otmp = m_minvent(mtmp); otmp; otmp = otmp->nobj) {
         if (otyp) {
             if (otmp->otyp == otyp)
                 return 1;
@@ -156,6 +156,29 @@ mon_has_arti(struct monst *mtmp, short otyp)
     }
     return 0;
 
+}
+
+/* Used by msensem: can the viewer detect the viewee via being covetous for an
+   item the viewee holds? */
+boolean
+covetous_sense(const struct monst *viewer, const struct monst *viewee)
+{
+    if (viewer->data->mflags3 & M3_WANTSAMUL &&
+        mon_has_arti(viewee, AMULET_OF_YENDOR))
+        return TRUE;
+    if (viewer->data->mflags3 & M3_WANTSBELL &&
+        mon_has_arti(viewee, BELL_OF_OPENING))
+        return TRUE;
+    if (viewer->data->mflags3 & M3_WANTSCAND &&
+        mon_has_arti(viewee, CANDELABRUM_OF_INVOCATION))
+        return TRUE;
+    if (viewer->data->mflags3 & M3_WANTSBOOK &&
+        mon_has_arti(viewee, SPE_BOOK_OF_THE_DEAD))
+        return TRUE;
+    if (viewer->data->mflags3 & M3_WANTSARTI && mon_has_arti(viewee, 0))
+        return TRUE;
+
+    return FALSE;
 }
 
 static struct monst *
@@ -517,16 +540,20 @@ strategy(struct monst *mtmp, boolean magical_target)
        happened to be. */
 }
 
-/* How a covetous monster interprets the strategy fields.
-
-   TODO: This is mostly obnoxious teleportation. We should be able to do
-   something better than this. */
+/*
+ * How a covetous monster interprets the strategy fields.
+ *
+ * Return values:
+ * 0 Fall through to the regular AI
+ * 1 End the turn here
+ * 2 mtmp died
+ */
 int
 tactics(struct monst *mtmp)
 {
     long strat = mtmp->mstrategy;
 
-    switch (strat) {
+    switch (strat & STRAT_STRATMASK) {
     case STRAT_ESCAPE:   /* hide and recover */
         /* if wounded, hole up on or near the stairs (to block them) */
         /* unless, of course, there are no stairs (e.g. endlevel) */
@@ -541,13 +568,17 @@ tactics(struct monst *mtmp)
                     mtmp->my != level->upstair.sy)) {
             mnearto(mtmp, level->upstair.sx, level->upstair.sy, TRUE);
         }
-        /* if you're not around, cast healing spells */
-        if (distu(mtmp->mx, mtmp->my) > (BOLT_LIM * BOLT_LIM))
+        if (distu(mtmp->mx, mtmp->my) > (BOLT_LIM * BOLT_LIM)) {
+            /* if you're not around, cast healing spells */
             if (mtmp->mhp <= mtmp->mhpmax - 8) {
                 mtmp->mhp += rnd(8);
                 return 1;
             }
-        /* fall through :-) */
+        } else {
+            /* if you are around, fall through to the normal AI (which
+               includes running up the stairs, if necessary) */
+            return 0;
+        }
 
     case STRAT_NONE:   /* harrass */
         if (!rn2(!mtmp->mflee ? 5 : 33))
@@ -564,11 +595,15 @@ tactics(struct monst *mtmp)
             if (!targ) {        /* simply wants you to close */
                 return 0;
             }
-            if ((u.ux == tx && u.uy == ty) || where == STRAT_PLAYER) {
-                /* player is standing on it (or has it) */
-                mnexto(mtmp);
+
+            /* teleport as near to the desired square as possible */
+            mnearto(mtmp, tx, ty, FALSE);
+
+            /* if the player's blocking our target square, use the regular AI
+               to attack them (so that we use items, request bribes, etc.) */
+            if (u.ux == tx && u.uy == ty)
                 return 0;
-            }
+
             if (where == STRAT_GROUND) {
                 if (!MON_AT(level, tx, ty) ||
                     (mtmp->mx == tx && mtmp->my == ty)) {
@@ -586,18 +621,18 @@ tactics(struct monst *mtmp)
                     } else
                         return 0;
                 } else {
-                    /* a monster is standing on it - cause some trouble */
-                    if (!rn2(5))
-                        mnexto(mtmp);
-                    return 0;
+                    /* a monster is standing on it - go after it */
+                    return mattackq(mtmp, tx, ty) ? 2 : 1;
                 }
-            } else {    /* a monster has it - 'port beside it. */
-                mnearto(mtmp, tx, ty, FALSE);
+            } else if (mtmp->mx != tx || mtmp->my != ty) {
+                /* something is blocking our square; attack it */
+                return mattackq(mtmp, tx, ty) ? 2 : 1;
+            } else {
+                /* fall through to the normal AI */
                 return 0;
             }
         }
     }
-     /*NOTREACHED*/ return 0;
 }
 
 void

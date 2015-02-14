@@ -1,10 +1,11 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2015-02-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
 #include "hungerstatus.h"
+#include "edog.h"
 
 static const char *equipname(struct obj *);
 static void mdrop_obj(struct monst *, struct obj *, boolean);
@@ -444,45 +445,19 @@ relobj(struct monst *mtmp, int show, boolean is_pet)
     struct obj *otmp;
     int omx = mtmp->mx, omy = mtmp->my;
     struct obj *keepobj = 0;
-    struct obj *wep = MON_WEP(mtmp), *hwep = attacktype(mtmp->data, AT_WEAP)
-        ? select_hwep(mtmp) : (struct obj *)0, *proj =
-        attacktype(mtmp->data, AT_WEAP)
-        ? select_rwep(mtmp) : (struct obj *)0, *rwep;
-    boolean item1 = FALSE, item2 = FALSE;
-
-    rwep = attacktype(mtmp->data, AT_WEAP) ? propellor : &zeroobj;
-
-
-    if (!is_pet || mindless(mtmp->data) || is_animal(mtmp->data))
-        item1 = item2 = TRUE;
-    if (!tunnels(mtmp->data) || !needspick(mtmp->data))
-        item1 = TRUE;
+    struct pet_weapons p;
+    initialize_pet_weapons(mtmp, &p);
 
     while ((otmp = mtmp->minvent) != 0) {
         obj_extract_self(otmp);
-        /* special case: pick-axe and unicorn horn are non-worn */
-        /* items that we also want pets to keep 1 of */
-        /* (It is a coincidence that these can also be wielded.) */
-        if (otmp->owornmask || otmp == wep || otmp == hwep || otmp == rwep ||
-            otmp == proj ||
-            would_prefer_hwep(mtmp, otmp) ||  /* cursed item in hand? */
-            would_prefer_rwep(mtmp, otmp) || could_use_item(mtmp, otmp) ||
-            ((!rwep || rwep == &zeroobj) &&
-             (is_ammo(otmp) || is_launcher(otmp))) ||
-            (rwep && rwep != &zeroobj && ammo_and_launcher(otmp, rwep)) ||
-            ((!item1 && otmp->otyp == PICK_AXE) ||
-             (!item2 && otmp->otyp == UNICORN_HORN && !otmp->cursed))) {
-            if (is_pet) {       /* dont drop worn/wielded item */
-                if (otmp->otyp == PICK_AXE)
-                    item1 = TRUE;
-                if (otmp->otyp == UNICORN_HORN && !otmp->cursed)
-                    item2 = TRUE;
-                otmp->nobj = keepobj;
-                keepobj = otmp;
-                continue;
-            }
+
+        if (is_pet && pet_wants_object(&p, otmp)) {
+            otmp->nobj = keepobj;
+            keepobj = otmp;
+            continue;
         }
-        if (otmp == wep)
+
+        if (otmp->owornmask & W_MASK(os_wep))
             setmnotwielded(mtmp, otmp);
         mdrop_obj(mtmp, otmp, is_pet && flags.verbose);
     }

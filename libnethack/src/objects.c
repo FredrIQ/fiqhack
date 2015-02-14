@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-29 */
+/* Last modified by Alex Smith, 2015-02-08 */
 /* Copyright (c) Mike Threepoint, 1989.                           */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -565,26 +565,28 @@ const struct objclass const_objects[] = {
 
 /* tools ... */
 /* tools with weapon characteristics come last */
-#define TOOL(name,desc,kn,mrg,mgc,chg,prob,wt,cost,mat,color) \
-        OBJECT( OBJ(name,desc), \
-           BITS(kn,mrg,chg,0,mgc,chg,0,0,0,0,0,P_NONE,mat), \
-           0, TOOL_CLASS, prob, 0, \
-           wt, cost, 0, 0, 0, 0, wt, color )
-#define LIGHTSOURCE(name,desc,kn,mrg,mgc,chg,prob,wt,cost,mat,color) \
-       OBJECT( OBJ(name,desc), \
-               BITS(kn,mrg,1,0,mgc,chg,0,0,0,0,0,P_NONE,mat), \
-               0, TOOL_CLASS, prob, 0, \
-               wt, cost, 0, 0, 0, 0, wt, color )
-#define CONTAINER(name,desc,kn,mgc,chg,prob,wt,cost,mat,color) \
-        OBJECT( OBJ(name,desc), \
-           BITS(kn,0,chg,1,mgc,chg,0,0,0,0,0,P_NONE,mat), \
-           0, TOOL_CLASS, prob, 0, \
-           wt, cost, 0, 0, 0, 0, wt, color )
+#define TOOLX(name,desc,kn,mrg,mgc,chg,prob,wt,cost,mat,color,power)    \
+    OBJECT( OBJ(name,desc),                                             \
+            BITS(kn,mrg,chg,0,mgc,chg,0,0,0,0,0,P_NONE,mat),            \
+            power, TOOL_CLASS, prob, 0,                                 \
+            wt, cost, 0, 0, 0, 0, wt, color )
+#define TOOL(name,desc,kn,mrg,mgc,chg,prob,wt,cost,mat,color)   \
+    TOOLX(name,desc,kn,mrg,mgc,chg,prob,wt,cost,mat,color,0)
+#define LIGHTSOURCE(name,desc,kn,mrg,mgc,chg,prob,wt,cost,mat,color)    \
+    OBJECT( OBJ(name,desc),                                             \
+            BITS(kn,mrg,1,0,mgc,chg,0,0,0,0,0,P_NONE,mat),              \
+            0, TOOL_CLASS, prob, 0,                                     \
+            wt, cost, 0, 0, 0, 0, wt, color )
+#define CONTAINER(name,desc,kn,mgc,chg,prob,wt,cost,mat,color)  \
+    OBJECT( OBJ(name,desc),                                     \
+            BITS(kn,0,chg,1,mgc,chg,0,0,0,0,0,P_NONE,mat),      \
+            0, TOOL_CLASS, prob, 0,                             \
+            wt, cost, 0, 0, 0, 0, wt, color )
 #define WEPTOOL(name,desc,kn,mgc,bi,prob,wt,cost,sdam,ldam,hitbon,sub,mat,clr) \
-        OBJECT( OBJ(name,desc), \
-           BITS(kn,0,1,0,mgc,1,0,0,bi,0,hitbon,sub,mat), \
-           0, TOOL_CLASS, prob, 0, \
-           wt, cost, sdam, ldam, hitbon, 0, wt, clr )
+    OBJECT( OBJ(name,desc),                                             \
+            BITS(kn,0,1,0,mgc,1,0,0,bi,0,hitbon,sub,mat),               \
+            0, TOOL_CLASS, prob, 0,                                     \
+            wt, cost, sdam, ldam, hitbon, 0, wt, clr )
 /* containers */
     CONTAINER("large box", NULL, 1, 0, 0, 40, 350, 8, WOOD, HI_WOOD),
     CONTAINER("chest", NULL, 1, 0, 0, 35, 600, 16, WOOD, HI_WOOD),
@@ -615,8 +617,8 @@ const struct objclass const_objects[] = {
     TOOL("crystal ball", "glass orb",
          0, 0, 1, 1, 15, 150, 60, GLASS, HI_GLASS),
     TOOL("lenses", NULL, 1, 0, 0, 0, 5, 3, 80, GLASS, HI_GLASS),
-    TOOL("blindfold", NULL, 1, 0, 0, 0, 50, 2, 20, CLOTH, CLR_BLACK),
-    TOOL("towel", NULL, 1, 0, 0, 0, 50, 2, 50, CLOTH, CLR_MAGENTA),
+    TOOLX("blindfold", NULL, 1, 0, 0, 0, 50, 2, 20, CLOTH, CLR_BLACK, BLINDED),
+    TOOLX("towel", NULL, 1, 0, 0, 0, 50, 2, 50, CLOTH, CLR_MAGENTA, BLINDED),
     TOOL("saddle", NULL, 1, 0, 0, 0, 5, 200, 150, LEATHER, HI_LEATHER),
     TOOL("leash", NULL, 1, 0, 0, 0, 65, 12, 20, LEATHER, HI_LEATHER),
     TOOL("stethoscope", NULL, 1, 0, 0, 0, 25, 4, 75, IRON, HI_METAL),

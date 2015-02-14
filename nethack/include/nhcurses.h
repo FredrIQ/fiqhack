@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-02 */
+/* Last modified by Alex Smith, 2015-02-11 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -272,8 +272,9 @@ struct settings {
     enum nh_motd_setting show_motd;
     enum nh_menupaging menupaging;
     enum nh_frame whichframes;
-    enum nh_palette palette;         /* palette to use for text (not for graphical tiles)*/
+    enum nh_palette palette;         /* palette to use for text */
 
+    nh_bool alt_is_esc; /* parse Alt-letter as ESC letter */
     /* use bolded black instead of dark blue for CLR_BLACK */
     nh_bool darkgray;
     nh_bool dungeoncolor;       /* respect level display modes */
@@ -448,7 +449,6 @@ extern void curses_getline_pw(const char *query, void *callbackarg,
                               void (*callback)(const char *, void *));
 
 /* keymap.c */
-extern const char *curses_keyname(int key);
 extern void handle_internal_cmd(struct nh_cmd_desc **cmd,
                                 struct nh_cmd_arg *arg,
                                 nh_bool include_debug);
@@ -460,7 +460,7 @@ extern void load_keymap(void);
 extern void free_keymap(void);
 extern void show_keymap_menu(nh_bool readonly);
 extern void handle_nested_key(int key);
-extern enum nh_direction key_to_dir(int key);
+extern enum nh_direction key_to_dir(int key, int* range);
 
 /* main.c */
 extern void curses_impossible(const char *msg);

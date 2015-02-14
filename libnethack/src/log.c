@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-22 */
+/* Last modified by Alex Smith, 2015-02-04 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -86,9 +86,47 @@ error_reading_save(const char *reason)
     terminate(ERR_RESTORE_FAILED);
 }
 
+static void
+log_recover_core_reasons(struct nh_menulist *menu, const char *message,
+                         const char *file, int line)
+{
+    /* We don't want to report the full path of the file, just the path relative
+       to the root of the distribution. We can determine that because we know
+       that /this/ file is libnethack/src/log.c, and thus can remove any common
+       prefix. */
+    static const char *const this_file = __FILE__;
+    static const char *const this_file_expected_1 = "libnethack/src/log.c";
+    static const char *const this_file_expected_2 = "libnethack\\src\\log.c";
+
+    const char *end_of_root = strstr(this_file, this_file_expected_1);
+    if (!end_of_root)
+        end_of_root = strstr(this_file, this_file_expected_2);
+
+    if (end_of_root && (!strcmp(end_of_root, this_file_expected_1) ||
+                        !strcmp(end_of_root, this_file_expected_2))) {
+        int lendiff = end_of_root - this_file;
+        if (!strncmp(file, this_file, lendiff))
+            file += lendiff;
+    }
+
+    add_menutext(menu, "");
+    if (flags.debug) {
+        add_menutext(menu,
+                     "Here is additional information about this save rewind:");
+    } else {
+        add_menutext(menu,
+            "You can report this error at <http://trac.nethack4.org>.");
+        add_menutext(menu, "Please include the following information:");
+    }
+    add_menutext(menu, "");
+    add_menutext(menu, msgprintf("Error: %s", message));
+    add_menutext(menu, msgprintf("Location: %s:%d", file, line));
+    add_menutext(menu, "");
+}
+
 /*
  * The save file is too long, and the end needs to be removed. This happens in
- * five cases:
+ * six cases:
  *
  * - The save file was mostly in a correct format, but contains incomplete lines
  *   or some similar issue that prevents us reading the end of it;
@@ -98,6 +136,10 @@ error_reading_save(const char *reason)
  *
  * - The save file contains a broken or buggy binary save;
  *
+ * - A "this should never happen" situation actually has happened, and thus it's
+ *   impossible or undesirable to go forwards in the game (forcing us to go back
+ *   instead);
+ *
  * - We need to undo the end-game sequence so that we can replay it to
  *   regenerate dumpfiles and xlog entries;
  *
@@ -105,9 +147,7 @@ error_reading_save(const char *reason)
  *   removing".
  *
  * The argument is an offset just past a newline (get_log_last_newline(),
- * get_log_start_of_turn_offset(), program_state.end_of_gamestate_location
- * program_state.end_of_gamestate_location respectively for the four cases
- * above).
+ * get_log_start_of_turn_offset(), or program_state.end_of_gamestate_location).
  *
  * In almost every case, the user will be prompted to confirm the recovery, and
  * given a chance to decline it. If the recovery is declined, the game will be
@@ -117,17 +157,18 @@ error_reading_save(const char *reason)
  * function return normally (and the caller is responsible for doing the actual
  * repair).
  *
- * The exception is when FM_RECOVERQUIT is in force ("ask" false), which means
- * that an inconsistency has been detected between whether the server thinks the
- * game is over and whether the client thinks the game is over. In such a case,
- * we unconditionally recover to just before the death, then replay the death,
- * in order to regenerate things like dumpfiles and xlog entries. In this case,
- * this function returns normally, rather than via RESTART_PLAY.
+ * The exception is when FM_RECOVERQUIT is in force ("message" NULL), which
+ * means that an inconsistency has been detected between whether the server
+ * thinks the game is over and whether the client thinks the game is over. In
+ * such a case, we unconditionally recover to just before the death, then replay
+ * the death, in order to regenerate things like dumpfiles and xlog entries. In
+ * this case, this function returns normally, rather than via RESTART_PLAY.
  *
  * This function must not call panic(), because it is called /from/ panic().
  */
 void
-log_recover_core(long offset, boolean canreturn, boolean ask)
+log_recover_core(long offset, boolean canreturn, const char *message,
+                 const char *file, int line)
 {
     int n;
     const int *selected;
@@ -137,11 +178,12 @@ log_recover_core(long offset, boolean canreturn, boolean ask)
     struct nh_menulist menu;
     boolean ok = TRUE;
 
-    if (program_state.followmode != FM_PLAY && ask) {
+    if (program_state.followmode != FM_PLAY && message) {
         program_state.in_zero_time_command = TRUE; /* so menus work */
 
         init_menulist(&menu);
         add_menutext(&menu, "The game engine has lost track of this game.");
+        log_recover_core_reasons(&menu, message, file, line);
         add_menuitem(&menu, 1, "Attempt to reload the game.", 'r', FALSE);
         add_menuitem(&menu, 2, "Exit to the menu.", 'q', FALSE);
 
@@ -191,7 +233,7 @@ log_recover_core(long offset, boolean canreturn, boolean ask)
     boolean save_ztc = program_state.in_zero_time_command;
     program_state.in_zero_time_command = TRUE;
 
-    if (!ask) {
+    if (!message) {
         /* just recover without asking */
         n = 1;
         selected = selected_noask;
@@ -207,17 +249,18 @@ log_recover_core(long offset, boolean canreturn, boolean ask)
                                         lseek(program_state.logfile, 0,
                                               SEEK_END))));
         add_menutext(&menu, buf);
-        add_menutext(&menu, "");
 
         if (canreturn) {
+            add_menutext(&menu, "");
             add_menutext(&menu,
                          "It also seems like it might be possible to repair");
             add_menutext(&menu,
                          "the gamestate. This will lose no progress, "
                          "but might");
             add_menutext(&menu, "leave the game more unstable than usual.");
-            add_menutext(&menu, "");
         }
+
+        log_recover_core_reasons(&menu, message, file, line);
 
         if (canreturn)
             add_menuitem(&menu, 3, "Attempt to repair the gamestate", 'P', FALSE);
@@ -286,7 +329,7 @@ log_recover_core(long offset, boolean canreturn, boolean ask)
             terminate(ERR_IN_PROGRESS);
         }
 
-        if (ask)
+        if (message)
             terminate(RESTART_PLAY);
         else
             program_state.in_zero_time_command = save_ztc;
@@ -298,10 +341,11 @@ log_recover_core(long offset, boolean canreturn, boolean ask)
 }
 
 noreturn void
-log_recover_noreturn(long offset)
+log_recover_noreturn(long offset, const char *message,
+                     const char *file, int line)
 {
-    while (1)
-        log_recover_core(offset, FALSE, TRUE);
+    log_recover_core(offset, FALSE, message, file, line);
+    terminate(ERR_RECOVER_REFUSED);
 }
 
 /* The save file is just fine from the game engine point of view; but the client
@@ -336,7 +380,7 @@ log_maybe_undo_quit(void)
         error_reading_save("penultimate newline was past EOF");
 
     if (strcmp(logline, "Q") == 0)
-        log_recover_core(lastline, FALSE, FALSE);
+        log_recover_core(lastline, FALSE, NULL, __FILE__, __LINE__);
     free(logline);
 
     if (!change_fd_lock(program_state.logfile, TRUE, LT_MONITOR, 2))
@@ -404,7 +448,9 @@ log_desync(char found, char expected)
     }
 
     /* No. */
-    log_recover_noreturn(get_log_start_of_turn_offset());
+    log_recover_noreturn(get_log_start_of_turn_offset(),
+                         "Could not find a point to restore to",
+                         __FILE__, __LINE__);
 }
 
 /***** Base 64 handling *****/
@@ -724,7 +770,9 @@ lgetline_malloc(int fd)
            that has no open FDs of its own and which has closed all the
            standard handles. */
         if (fd == program_state.logfile) {
-            log_recover_noreturn(get_log_last_newline(1));
+            log_recover_noreturn(get_log_last_newline(1),
+                                 "Save file ends with a partial line",
+                                 __FILE__, __LINE__);
         } else {
             /* Maybe there's no game loaded, in which case we shouldn't try to
                recover it. This only happens from read_log_header.
@@ -834,7 +882,9 @@ get_log_start_of_turn_offset(void)
     save_diff_line = lgetline_malloc(program_state.logfile);
 
     if (!save_diff_line)
-        log_recover_noreturn(get_log_last_newline(1));
+        log_recover_noreturn(get_log_last_newline(1),
+                             "No save diff in binary save location",
+                             __FILE__, __LINE__);
 
     free(save_diff_line);
 
@@ -1183,13 +1233,14 @@ void
 log_revert_command(const char *cmd)
 {
     struct memfile mf;
+    const char *mequal_reason;
 
     mnew(&mf, NULL);
     savegame(&mf);
 
-    if (!mequal(&program_state.binary_save, &mf, TRUE)) {
+    if (!mequal(&program_state.binary_save, &mf, &mequal_reason)) {
         mfree(&mf);
-        impossible("Informational command (%s) changed the gamestate", cmd);
+        impossible("Informational command (%s): %s", cmd, mequal_reason);
         terminate(RESTART_PLAY);
     }
 
@@ -1850,6 +1901,7 @@ static void
 load_gamestate_from_binary_save(boolean maybe_old_version)
 {
     struct memfile mf;
+    const char *mequal_message;
 
     /* For the time being, there are no compatible old versions, thus we can
        safely force maybe_old_version to FALSE for even more aggressive error
@@ -1872,7 +1924,8 @@ load_gamestate_from_binary_save(boolean maybe_old_version)
     mnew(&mf, NULL);
     savegame(&mf);
 
-    if (!mequal(&program_state.binary_save, &mf, !maybe_old_version)) {
+    if (!mequal(&program_state.binary_save, &mf, maybe_old_version ? NULL :
+                &mequal_message)) {
 
         mfree(&mf);
         if (maybe_old_version) {
@@ -1886,7 +1939,8 @@ load_gamestate_from_binary_save(boolean maybe_old_version)
         lseek(program_state.logfile, program_state.binary_save_location,
               SEEK_SET);
         free(lgetline_malloc(program_state.logfile));
-        log_recover_noreturn(get_log_offset());
+        log_recover_noreturn(get_log_offset(), mequal_message,
+                             __FILE__, __LINE__);
     }
 
     /* Replace the old save file with the new save file. */

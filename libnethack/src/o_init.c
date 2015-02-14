@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Derrick Sund, 2014-06-01 */
+/* Last modified by Alex Smith, 2015-02-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -197,8 +197,14 @@ saveobjclass(struct memfile *mf, struct objclass *ocl)
     mwrite16(mf, ocl->oc_cost);
     mwrite16(mf, ocl->oc_nutrition);
 
+    /* SAVEBREAK (4.3-beta1 -> 4.3-beta2): to match restobjclass */
+    int oprop = ocl->oc_oprop;
+    if (ocl->oc_class == TOOL_CLASS && ocl->oc_material == CLOTH &&
+        ocl->oc_nutrition == 2)
+        oprop ^= BLINDED;
+
     mwrite8(mf, ocl->oc_subtyp);
-    mwrite8(mf, ocl->oc_oprop);
+    mwrite8(mf, oprop);
     mwrite8(mf, ocl->oc_class);
     mwrite8(mf, ocl->oc_delay);
     mwrite8(mf, ocl->oc_color);
@@ -282,6 +288,18 @@ restobjclass(struct memfile *mf, struct objclass *ocl)
     ocl->oc_wldam = mread8(mf);
     ocl->oc_oc1 = mread8(mf);
     ocl->oc_oc2 = mread8(mf);
+
+    /* SAVEBREAK (4.3-beta1 -> 4.3-beta2)
+
+       4.3-beta1 save files have blindfolds recorded as not causing blindness.
+       Thus, we xor the object property for blindfolds and towels with BLINDED,
+       so that it's saved as 0. At this point in the code, we don't directly
+       know what object we're dealing with; however, we can use the description
+       "cloth tools with nutrition 2" instead, which covers blindfolds and
+       towels but nothing else. */
+    if (ocl->oc_class == TOOL_CLASS && ocl->oc_material == CLOTH &&
+        ocl->oc_nutrition == 2)
+        ocl->oc_oprop ^= BLINDED;
 
     ocl->oc_uname = NULL;
     namelen = mread32(mf);

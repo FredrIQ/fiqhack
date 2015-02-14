@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-02 */
+/* Last modified by Alex Smith, 2015-02-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -23,7 +23,7 @@ find_extrinsic(struct obj *chain, int extrinsic, int *warntype,
                boolean *blocked)
 {
     if (program_state.restoring_binary_save)
-        return 0L; /* invent may not be linked yet */
+        return 0L; /* inventory chains may not be linked yet */
 
     long mask = 0L;
     *blocked = FALSE;
@@ -39,28 +39,28 @@ find_extrinsic(struct obj *chain, int extrinsic, int *warntype,
 }
 
 long
-worn_extrinsic(int extrinsic)
+mworn_extrinsic(const struct monst *mon, int extrinsic)
 {
     int warntype;
     boolean blocked;
-    return find_extrinsic(invent, extrinsic, &warntype, &blocked);
+    return find_extrinsic(m_minvent(mon), extrinsic, &warntype, &blocked);
 }
 
 boolean
-worn_blocked(int extrinsic)
+mworn_blocked(const struct monst *mon, int extrinsic)
 {
     int warntype;
     boolean blocked;
-    find_extrinsic(invent, extrinsic, &warntype, &blocked);
+    find_extrinsic(m_minvent(mon), extrinsic, &warntype, &blocked);
     return blocked;
 }
 
 int
-worn_warntype(void)
+mworn_warntype(const struct monst *mon)
 {
     int warntype;
     boolean blocked;
-    return find_extrinsic(invent, WARN_OF_MON, &warntype, &blocked)
+    return find_extrinsic(m_minvent(mon), WARN_OF_MON, &warntype, &blocked)
         ? warntype : 0;
 }
 
@@ -221,7 +221,7 @@ update_mon_intrinsics(struct monst *mon, struct obj *obj, boolean on,
     struct obj *otmp;
     int which = (int)objects[obj->otyp].oc_oprop;
 
-    unseen = !canseemon(mon);
+    unseen = silently || !canseemon(mon);
     if (!which)
         goto maybe_blocks;
 
@@ -374,6 +374,12 @@ void
 m_dowear(struct monst *mon, boolean creation)
 {
 #define RACE_EXCEPTION TRUE
+
+    /* Workaround for the fact that newcham() has lost track of creation state.
+       TODO: Find a better implementation of this. */
+    if (in_mklev)
+        creation = TRUE;
+
     /* Note the restrictions here are the same as in dowear in do_wear.c except 
        for the additional restriction on intelligence.  (Players are always
        intelligent, even if polymorphed). */
@@ -416,14 +422,14 @@ m_dowear_type(struct monst *mon, enum objslot slot, boolean creation,
 {
     struct obj *old, *best, *obj;
     int m_delay = 0;
-    int unseen = !canseemon(mon);
+    boolean unseen = creation ? 1 : !canseemon(mon);
     const char *nambuf;
 
     if (mon->mfrozen)
         return; /* probably putting previous item on */
 
     /* Get a copy of monster's name before altering its visibility */
-    nambuf = See_invisible ? Monnam(mon) : mon_nam(mon);
+    nambuf = creation ? NULL : See_invisible ? Monnam(mon) : mon_nam(mon);
 
     old = which_armor(mon, slot);
     if (old && old->cursed)
@@ -556,12 +562,11 @@ outer_break:
    finds worn armor in that slot for the player (mon == &youmonst) or a
    monster. */
 struct obj *
-which_armor(struct monst *mon, enum objslot slot)
+which_armor(const struct monst *mon, enum objslot slot)
 {
     struct obj *obj;
 
-    for (obj = (mon == &youmonst ? invent : mon->minvent);
-         obj; obj = obj->nobj)
+    for (obj = m_minvent(mon); obj; obj = obj->nobj)
         if (obj->owornmask & W_MASK(slot))
             return obj;
     return NULL;
@@ -632,7 +637,8 @@ mon_break_armor(struct monst *mon, boolean polyspot)
     boolean show_msg = (lev == level);
     boolean vis = (lev == level && cansee(mon->mx, mon->my));
     boolean handless_or_tiny = (nohands(mdat) || verysmall(mdat));
-    const char *pronoun = mhim(mon), *ppronoun = mhis(mon);
+    const char *pronoun = vis ? mhim(mon) : NULL,
+        *ppronoun = vis ? mhis(mon) : NULL;
 
     if (breakarm(mdat)) {
         if ((otmp = which_armor(mon, os_arm)) != 0) {
@@ -798,7 +804,7 @@ mon_break_armor(struct monst *mon, boolean polyspot)
 /* currently only does speed boots, but might be expanded if monsters get to
    use more armor abilities */
 int
-extra_pref(struct monst *mon, struct obj *obj)
+extra_pref(const struct monst *mon, struct obj *obj)
 {
     if (obj) {
         if (obj->otyp == SPEED_BOOTS && mon->permspeed != MFAST)

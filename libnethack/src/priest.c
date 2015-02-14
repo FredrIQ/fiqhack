@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-08-25 */
+/* Last modified by Alex Smith, 2015-02-10 */
 /* Copyright (c) Izchak Miller, Steve Linhart, 1989.              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -161,8 +161,8 @@ pri_move(struct monst *priest)
             mattacku(priest);
             return 0;
         } else if (strchr(u.urooms, temple)) {
-            /* chase player if inside temple & can see him */
-            if (priest->mcansee && m_canseeu(priest)) {
+            /* chase player if inside temple & can sense him */
+            if (m_cansenseu(priest)) {
                 gx = u.ux;
                 gy = u.uy;
             }

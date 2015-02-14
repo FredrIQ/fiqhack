@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-03 */
+/* Last modified by Alex Smith, 2015-02-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1303,7 +1303,7 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
    where they shouldn't be attacked, just in case there are codepaths that
    don't go through mm_aggression. */
 static int
-pet_attacks_up_to_difficulty(struct monst *mtmp)
+pet_attacks_up_to_difficulty(const struct monst *mtmp)
 {
     if (mtmp->mhp * 3 <= mtmp->mhpmax)
         return 0; /* pets below 1/3 health do not attack */
@@ -1315,15 +1315,29 @@ pet_attacks_up_to_difficulty(struct monst *mtmp)
 
 /* Monster against monster special attacks; for the specified monster
    combinations, this allows one monster to attack another adjacent one in the
-   absence of Conflict.  There is no provision for targetting other monsters;
-   just hand to hand fighting when they happen to be next to each other. */
+   absence of Conflict. There is no provision for targeting other monsters;
+   just hand to hand fighting when they happen to be next to each other. The
+   purpose of the function is to check whether magr would want to attack mdef.
+
+   This also handles monster vs. player and player vs. monster for the purposes
+   of Warning (which doesn't show monsters that are peaceful towards you), so
+   that Warning works correctly on monsters. The latter is naturally has to be a
+   guess, because we have no way to predict the player's actions in advance; we
+   assume that for the purposes of Warning, the player would attack any monster
+   that would attack them, unless pacifist. */
 long
-mm_aggression(struct monst *magr,     /* monster that is currently deciding
-                                         where to move */
-              struct monst *mdef)     /* another monster which is next to it */
+mm_aggression(const struct monst *magr, /* monster that might attack */
+              const struct monst *mdef) /* the monster it might attack  */
 {
     const struct permonst *ma = magr->data;
     const struct permonst *md = mdef->data;
+
+    /* magr or mdef as the player is a special case; not checking Conflict is
+       correct, because it shouldn't suddenly warn you of peacefuls */
+    if (magr == &youmonst && !u.uconduct[conduct_killer])
+        return mdef->mpeaceful ? 0 : (ALLOW_M | ALLOW_TM);
+    if (mdef == &youmonst)
+        return magr->mpeaceful ? 0 : (ALLOW_M | ALLOW_TM);
 
     /* anti-stupidity checks moved here from dog_move, so that hostile monsters
        benefit from the improved AI when attacking pets too: */
@@ -1348,6 +1362,9 @@ mm_aggression(struct monst *magr,     /* monster that is currently deciding
 
         /* monsters won't make an attack that would petrify them */
         if (touch_petrifies(md) && !resists_ston(magr))
+            return 0;
+        /* and for balance, the reverse */
+        if (touch_petrifies(ma) && !resists_ston(mdef))
             return 0;
 
         /* tame monsters won't attack peaceful guardians or leaders, unless
@@ -1401,14 +1418,14 @@ mm_aggression(struct monst *magr,     /* monster that is currently deciding
     if (md->mlet == S_ANGEL && is_demon(ma))
         return ALLOW_M | ALLOW_TM;
 
-    /* dogs vs. cats, unless both are tame */
-    if (ma->mlet == S_DOG && md->mlet == S_FELINE &&
-        !(magr->mtame && mdef->mtame))
-        return ALLOW_M | ALLOW_TM;
-    /* ... and vice versa, for dog/cat symmetry reasons */
-    if (md->mlet == S_DOG && ma->mlet == S_FELINE &&
-        !(magr->mtame && mdef->mtame))
-        return ALLOW_M | ALLOW_TM;
+    /* domestic dogs vs. domestic cats, unless both are tame */
+    if (!(magr->mtame && mdef->mtame) && is_domestic(ma) && is_domestic(md)) {
+        if (ma->mlet == S_DOG && md->mlet == S_FELINE)
+            return ALLOW_M | ALLOW_TM;
+        /* ... and vice versa, for dog/cat symmetry reasons */
+        if (md->mlet == S_DOG && ma->mlet == S_FELINE)
+            return ALLOW_M | ALLOW_TM;
+    }
 
     /* woodchucks vs. The Oracle */
     if (ma == &mons[PM_WOODCHUCK] && md == &mons[PM_ORACLE])
@@ -1872,8 +1889,7 @@ monkilled(struct monst *mdef, const char *fltxt, int how)
 {
     boolean be_sad = FALSE;     /* true if unseen pet is killed */
 
-    if ((mdef->wormno ? worm_known(mdef) : cansee(mdef->mx, mdef->my))
-        && fltxt)
+    if (fltxt && canseemon(mdef))
         pline("%s is %s%s%s!", Monnam(mdef),
               nonliving(mdef->data) ? "destroyed" : "killed",
               *fltxt ? " by the " : "", fltxt);
@@ -2572,11 +2588,14 @@ newcham(struct monst *mtmp, const struct permonst *mdat,
     int mhp, hpn, hpd;
     int mndx, tryct;
     const struct permonst *olddata = mtmp->data;
-    const char *oldname;
+    const char *oldname = NULL; /* initialize because gcc can't figure out that
+                                   this is unused if !msg */
 
-    /* like Monnam() but never mention saddle */
-    oldname = x_monnam(mtmp, ARTICLE_THE, NULL, SUPPRESS_SADDLE, FALSE);
-    oldname = msgupcasefirst(oldname);
+    if (msg) {
+        /* like Monnam() but never mention saddle */
+        oldname = x_monnam(mtmp, ARTICLE_THE, NULL, SUPPRESS_SADDLE, FALSE);
+        oldname = msgupcasefirst(oldname);
+    }
 
     /* mdat = 0 -> caller wants a random monster shape */
     tryct = 0;

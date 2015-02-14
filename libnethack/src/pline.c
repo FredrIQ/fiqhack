@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-21 */
+/* Last modified by Alex Smith, 2015-02-04 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -174,15 +174,14 @@ vraw_printf(const char *line, va_list the_args)
 
 /*VARARGS1*/
 void
-impossible(const char *s, ...)
+impossible_core(const char *file, int line, const char *s, ...)
 {
     nonfatal_dump_core();
 
-    va_list args, args2;
+    va_list args;
     const char *pbuf;
 
     va_start(args, s);
-    va_copy(args2, args);
     if (program_state.in_impossible)
         panic("impossible called impossible");
     program_state.in_impossible = 1;
@@ -192,11 +191,9 @@ impossible(const char *s, ...)
     DEBUG_LOG_BACKTRACE("impossible() called: %s\n", pbuf);
 
     va_end(args);
-    vpline(FALSE, FALSE, s, args2);
     program_state.in_impossible = 0;
-    va_end(args2);
 
-    log_recover_core(get_log_start_of_turn_offset(), TRUE, TRUE);
+    log_recover_core(get_log_start_of_turn_offset(), TRUE, pbuf, file, line);
 }
 
 const char *

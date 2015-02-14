@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-11-16 */
+/* Last modified by Alex Smith, 2015-02-08 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -750,7 +750,8 @@ nh_get_topten(int *out_len, char *statusbuf, const char *volatile player,
     boolean game_complete = game_inited && moves && program_state.gameover;
     int rank = -1;      /* index of the completed game in the topten list */
     int fd, i, j, sel_count;
-    boolean *selected, off_list = FALSE;
+    boolean *selected;
+    volatile boolean off_list = FALSE;
 
     statusbuf[0] = '\0';
     *out_len = 0;

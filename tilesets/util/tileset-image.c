@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-16 */
+/* Last modified by Alex Smith, 2015-02-08 */
 /*
  * Copyright (C) Andrew Apted <ajapted@users.sourceforge.net> 2002
  *		 Slash'EM Development Team 2003
@@ -38,7 +38,7 @@ load_png_file(FILE *in)
     int bit_depth, color_type, interlace_type, has_alpha, i, j, x, y, t;
 
     int tilecount;
-    int rv = 0;
+    volatile int rv = 0;
     
     /* The pointers are volatile. What they point to isn't. */
     unsigned char *volatile pixeldata = NULL;
@@ -293,7 +293,7 @@ write_png_file(const char *filename, bool add_nhTb_nhTs)
 
     FILE *volatile fp;
 
-    bool rv = 0;
+    volatile bool rv = 0;
 
     int tilecount, tilesacross, tilesdown;
     int i, j, x, y, ii, p; /* yes, we're iterating over six things at once */
@@ -321,6 +321,7 @@ write_png_file(const char *filename, bool add_nhTb_nhTs)
 
     if (setjmp(png_jmpbuf(png_ptr)) != 0) {
         fprintf(stderr, "Error: Unknown problem writing PNG.\n");
+        rv = 0;
         goto cleanup_memory;
     }
 

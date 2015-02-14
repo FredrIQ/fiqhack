@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-02 */
+/* Last modified by Alex Smith, 2015-02-11 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1031,8 +1031,11 @@ key_is_meaningful_in_context(int key, enum keyreq_context context)
             !ui_flags.in_zero_time_command)
             return FALSE;
 
-        if (key_to_dir(key) != DIR_NONE)
-            return TRUE;
+        {
+            int range;
+            if (key_to_dir(key, &range) != DIR_NONE)
+                return TRUE;
+        }
         /* otherwise fall through */
 
         /* Cases in which the meaningful inputs are all ASCII and/or
@@ -1107,6 +1110,23 @@ nh_wgetch(WINDOW * win, enum keyreq_context context)
         } else {
             wrefresh(win);
             key = wgetch(win);
+
+            /* Slow network connections sometimes throw off the key timings,
+               making ESC letter look like Alt-letter (the codes differ only in
+               timing). If a user has set their terminal to Alt-is-Meta mode (or
+               has a physical Meta key), or if the user wants to play very
+               quickly and doesn't care about Alt- combinations, they may want
+               to treat all incoming Alt-letter combinations as ESC letter. */
+            if (settings.alt_is_esc && key == (KEY_ALT | (key & 0xff))) {
+                ungetch(key & 0xff);
+                key = KEY_ESCAPE;
+            }
+        }
+
+        if (!ui_flags.ingame && key == KEY_SIGNAL) {
+            /* We got a server cancel that arrived late. Just ignore it. */
+            key = 0;
+            continue;
         }
 
         if (ui_flags.ingame && ui_flags.in_zero_time_command &&
@@ -1114,6 +1134,7 @@ nh_wgetch(WINDOW * win, enum keyreq_context context)
             /* Don't let the server knock us out of something local to the
                client (or effectively local). */
             ui_flags.queued_server_cancels = 1;
+            key = 0;
             continue;
         }
 

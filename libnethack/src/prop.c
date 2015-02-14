@@ -1,110 +1,359 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-28 */
+/* Last modified by Alex Smith, 2015-02-10 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include "mfndpos.h"
 
 /* This file is responsible for determining whether the character has intrinsics
    and extrinsics, because it was previously done with a bunch of macros, which
    are rather hard to iterate over, and make it even harder to work with the
    game's logic. */
 
-/* Returns an object slot mask giving all the reasons why a player might have
-   the given property, limited by "reasons", an object slot mask (W_EQUIP,
-   INTRINSIC, and ANY_PROPERTY are the most likely values here, but you can
-   specify slots individually if you like). */
+/* Returns an object slot mask giving all the reasons why the given
+   player/monster might have the given property, limited by "reasons", an object
+   slot mask (W_EQUIP, INTRINSIC, and ANY_PROPERTY are the most likely values
+   here, but you can specify slots individually if you like). */
 unsigned
-u_have_property(enum youprop property, unsigned reasons,
-                boolean even_if_blocked)
+m_has_property(const struct monst *mon, enum youprop property,
+               unsigned reasons, boolean even_if_blocked)
 {
     unsigned rv = 0;
+    struct obj *otmp;
 
     /* The general case for equipment */
-    rv |= worn_extrinsic(property);
+    rv |= mworn_extrinsic(mon, property);
 
-    /* Special cases from equipment (TODO: move these to the object description,
-       or to worn_extrinsic) */
-    if (property == SICK_RES && defends(AD_DISE,uwep))
-        rv |= W_MASK(os_wep);
-    if (property == BLINDED && ublindf && ublindf->otyp != LENSES)
-        rv |= W_MASK(os_tool);
+    if (mon == &youmonst) {
+        /* Intrinsics */
+        if (u.uintrinsic[property] & TIMEOUT)
+            rv |= W_MASK(os_timeout);
+        rv |= u.uintrinsic[property] & (INTRINSIC | I_SPECIAL);
+        
+        /* Birth options */
+        if (property == BLINDED && flags.permablind)
+            rv |= W_MASK(os_birthopt);
+        if (property == HALLUC && flags.permahallu)
+            rv |= W_MASK(os_birthopt);
+        if (property == UNCHANGING && flags.polyinit_mnum != -1)
+            rv |= W_MASK(os_birthopt);
 
-    /* Intrinsics */
-    if (u.uintrinsic[property] & TIMEOUT)
-        rv |= W_MASK(os_timeout);
-    rv |= u.uintrinsic[property] & (INTRINSIC | I_SPECIAL);
+    } else {
+        /* Monster tempraries are boolean flags.
 
-    /* Birth options */
-    if (property == BLINDED && flags.permablind)
-        rv |= W_MASK(os_birthopt);
-    if (property == HALLUC && flags.permahallu)
-        rv |= W_MASK(os_birthopt);
-    if (property == UNCHANGING && flags.polyinit_mnum != -1)
-        rv |= W_MASK(os_birthopt);
+           TODO: Monsters with no eyes are not considered blind. This doesn't
+           make much sense. However, changing it would be a major balance
+           change (due to Elbereth), and so it has been left alone for now. */
+        if (property == BLINDED && !mon->mcansee)
+            rv |= W_MASK(os_timeout);
+        if (property == FAST && mon->mspeed == MFAST)
+            rv |= (mon->permspeed == FAST ?
+                   W_MASK(os_polyform) : W_MASK(os_outside));
+        if (property == INVIS && mon->perminvis && !pm_invisible(mon->data))
+            rv |= W_MASK(os_outside);
+        if (property == STUNNED && mon->mstun)
+            rv |= W_MASK(os_timeout);
+        if (property == CONFUSION && mon->mconf)
+            rv |= W_MASK(os_timeout);
+    }
 
-    /* Polyform */
+
+    /* Polyform / monster intrinsic */
     /* TODO: Change the monster data code into something that doesn't require a
        giant switch statement or ternary chain to get useful information from
        it. We use a ternary chain here because it cuts down on repetitive code
        and so is easier to read. */
-    if (property == FIRE_RES     ? resists_fire(&youmonst)                   :
-        property == COLD_RES     ? resists_cold(&youmonst)                   :
-        property == SLEEP_RES    ? resists_sleep(&youmonst)                  :
-        property == DISINT_RES   ? resists_disint(&youmonst)                 :
-        property == SHOCK_RES    ? resists_elec(&youmonst)                   :
-        property == POISON_RES   ? resists_poison(&youmonst)                 :
-        property == DRAIN_RES    ? resists_drli(&youmonst)                   :
-        property == SICK_RES     ? youmonst.data->mlet == S_FUNGUS ||
-                                   youmonst.data == &mons[PM_GHOUL]          :
-        property == ANTIMAGIC    ? resists_magm(&youmonst)                   :
-        property == ACID_RES     ? resists_acid(&youmonst)                   :
-        property == STONE_RES    ? resists_ston(&youmonst)                   :
+    if (property == FIRE_RES     ? resists_fire(mon)                     :
+        property == COLD_RES     ? resists_cold(mon)                     :
+        property == SLEEP_RES    ? resists_sleep(mon)                    :
+        property == DISINT_RES   ? resists_disint(mon)                   :
+        property == SHOCK_RES    ? resists_elec(mon)                     :
+        property == POISON_RES   ? resists_poison(mon)                   :
+        property == DRAIN_RES    ? resists_drli(mon)                     :
+        property == SICK_RES     ? mon->data->mlet == S_FUNGUS ||
+                                   mon->data == &mons[PM_GHOUL]          :
+        property == ANTIMAGIC    ? resists_magm(mon)                     :
+        property == ACID_RES     ? resists_acid(mon)                     :
+        property == STONE_RES    ? resists_ston(mon)                     :
         property == STUNNED      ? u.umonnum == PM_STALKER ||
-                                   youmonst.data->mlet == S_BAT              :
-        property == BLINDED      ? !haseyes(youmonst.data)                   :
-        property == HALLUC       ? Upolyd && dmgtype(youmonst.data, AD_HALU) :
-        property == SEE_INVIS    ? perceives(youmonst.data)                  :
-        property == TELEPAT      ? telepathic(youmonst.data)                 :
-        property == INFRAVISION  ? infravision(youmonst.data)                :
-        property == INVIS        ? pm_invisible(youmonst.data)               :
-        property == TELEPORT     ? can_teleport(youmonst.data)               :
-        property == LEVITATION   ? is_floater(youmonst.data)                 :
-        property == FLYING       ? is_flyer(youmonst.data)                   :
-        property == SWIMMING     ? is_swimmer(youmonst.data)                 :
-        property == PASSES_WALLS ? passes_walls(youmonst.data)               :
-        property == REGENERATION ? regenerates(youmonst.data)                :
-        property == REFLECTING   ? youmonst.data == &mons[PM_SILVER_DRAGON]  :
-        property == TELEPORT_CONTROL  ? control_teleport(youmonst.data)      :
-        property == MAGICAL_BREATHING ? amphibious(youmonst.data)            :
+                                   mon->data->mlet == S_BAT              :
+        property == BLINDED      ? !haseyes(mon->data)                   :
+        property == HALLUC       ? Upolyd && dmgtype(mon->data, AD_HALU) :
+        property == SEE_INVIS    ? perceives(mon->data)                  :
+        property == TELEPAT      ? telepathic(mon->data)                 :
+        property == INFRAVISION  ? infravision(mon->data)                :
+        /* Note: This one assumes that there's no way to permanently turn
+           visible when you're in stalker form (i.e. mummy wrappings only). */
+        property == INVIS        ? pm_invisible(mon->data)               :
+        property == TELEPORT     ? can_teleport(mon->data)               :
+        property == LEVITATION   ? is_floater(mon->data)                 :
+        property == FLYING       ? is_flyer(mon->data)                   :
+        property == SWIMMING     ? is_swimmer(mon->data)                 :
+        property == PASSES_WALLS ? passes_walls(mon->data)               :
+        property == REGENERATION ? regenerates(mon->data)                :
+        property == REFLECTING   ? mon->data == &mons[PM_SILVER_DRAGON]  :
+        property == TELEPORT_CONTROL  ? control_teleport(mon->data)      :
+        property == MAGICAL_BREATHING ? amphibious(mon->data)            :
         0)
         rv |= W_MASK(os_polyform);
 
-    /* External circumstances */
-    if (property == BLINDED && u_helpless(hm_unconscious))
-        rv |= W_MASK(os_circumstance);
-
-    /* Riding */
-    if (property == FLYING && u.usteed && is_flyer(u.usteed->data))
-        rv |= W_MASK(os_saddle);
-    if (property == SWIMMING && u.usteed && is_swimmer(u.usteed->data))
-        rv |= W_MASK(os_saddle);
-
+    if (mon == &youmonst) {
+        /* External circumstances */
+        if (property == BLINDED && u_helpless(hm_unconscious))
+            rv |= W_MASK(os_circumstance);
+        
+        /* Riding */
+        if (property == FLYING && u.usteed && is_flyer(u.usteed->data))
+            rv |= W_MASK(os_saddle);
+        if (property == SWIMMING && u.usteed && is_swimmer(u.usteed->data))
+            rv |= W_MASK(os_saddle);
+    }
+        
     /* Overrides */
     if (!even_if_blocked) {
-        if (property == BLINDED &&
-            ublindf && ublindf->oartifact == ART_EYES_OF_THE_OVERWORLD)
-            rv &= (unsigned)(W_MASK(os_circumstance) | W_MASK(os_birthopt));
-        if (property == WWALKING && Is_waterlevel(&u.uz))
+        if (property == BLINDED) {
+            for (otmp = m_minvent(mon); otmp; otmp = otmp->nobj)
+                if (otmp->oartifact == ART_EYES_OF_THE_OVERWORLD &&
+                    otmp->owornmask & W_MASK(os_tool))
+                    rv &= (unsigned)(W_MASK(os_circumstance) |
+                                     W_MASK(os_birthopt));
+        }
+
+        if (property == WWALKING && Is_waterlevel(m_mz(mon)))
             rv &= (unsigned)(W_MASK(os_birthopt));
-        if (worn_blocked(property))
+        if (mworn_blocked(mon, property))
             rv &= (unsigned)(W_MASK(os_birthopt));
     }
 
     return rv & reasons;
 }
+
+unsigned
+u_have_property(enum youprop property, unsigned reasons,
+                boolean even_if_blocked)
+{
+    return m_has_property(&youmonst, property, reasons, even_if_blocked);
+}
+
+
+/* Player and monster helplessness. This is currently separate from properties,
+   because for player helplessness, we record a reason to place in the death
+   messages. */
+boolean
+u_helpless(enum helpless_mask mask)
+{
+    int i;
+
+    /* A lack of a cause canonically indicates that we weren't actually helpless
+       for this reason. We may not have an endmsg, and the timer may already
+       have expired but the helplessness not yet been canceled, so we can't use
+       these as indications. */
+    for (i = hr_first; i <= hr_last; ++i)
+        if ((mask & (1 << i)) && *turnstate.helpless_causes[i])
+            return TRUE;
+
+    return FALSE;
+}
+
+boolean
+m_helpless(const struct monst *mon, enum helpless_mask mask)
+{
+    if (mon == &youmonst)
+        return u_helpless(mask);
+    if (mon->msleeping && (mask & (1 << hr_asleep)))
+        return TRUE;
+    if (!mon->mcanmove && (mask & (1 << hr_paralyzed)))
+        return TRUE;
+    if (mon->meating && (mask & (1 << hr_busy)))
+        return TRUE;
+    if ((mon->m_ap_type == M_AP_OBJECT || mon->m_ap_type == M_AP_FURNITURE) &&
+        (mask & (1 << hr_mimicking)))
+        return TRUE;
+
+    return FALSE;
+}
+
+
+/* Returns the bitwise OR of all MSENSE_ values that explain how "viewer" can
+   see "viewee". &youmonst is accepted as either argument. If both arguments
+   are the same, this tests if/how a monster/player can detect itself. */
+unsigned
+msensem(const struct monst *viewer, const struct monst *viewee)
+{
+    unsigned sensemethod = 0;
+
+    /* sanity checks, so the caller doesn't have to */
+    if (viewer != &youmonst)
+        if (!onmap(viewer) || DEADMONSTER(viewer))
+            return 0;
+    if (viewee != &youmonst)
+        if (!onmap(viewee) || DEADMONSTER(viewee))
+            return 0;
+    if (!level) {
+        impossible("vision calculations during level creation");
+        return 0;
+    }
+
+    /* TODO: once levels rewrite is done, this code can be simplified (and won't
+       work in its present form). */
+    d_level *sz = m_mz(viewer), *tz = m_mz(viewee);
+    if (sz->dnum != tz->dnum || sz->dlevel != tz->dlevel)
+        return 0;
+    struct level *lev = level;
+    if (viewer != &youmonst)
+        lev = viewer->dlevel;
+
+    int sx = m_mx(viewer), sy = m_my(viewer),
+        tx = m_mx(viewee), ty = m_my(viewee);
+
+    int distance = dist2(sx, sy, tx, ty);
+
+    /* Line of effect. clear_path is like couldsee(), but doesn't require the
+       player to be at either endpoint. (If the player happens to be at one of
+       the endpoints, it just calls couldsee() directly.) */
+    boolean loe = clear_path(sx, sy, tx, ty);
+
+    /* A special case for many vision methods: water or the ground blocking
+       vision. A hiding target is also included in these, because hiding is
+       often a case of using an object, part of the floor, a cranny in the
+       ceiling, etc., to block vision (and even when it isn't, it should block
+       vision in the same cases). */
+    boolean vertical_loe =
+        !(m_mburied(viewer) || m_mburied(viewee) ||
+          ((!!m_underwater(viewee)) ^ (!!m_underwater(viewer))) ||
+          m_mhiding(viewee));
+    /* A mimicking mimic is not "hiding", but in the absence of protection from
+       shape changers on the player (which physically forces all monsters on the
+       level into natural form), it's unseeable for similar reasons. */
+    if (m_helpless(viewee, 1 << hr_mimicking) &&
+        (lev != level || !Protection_from_shape_changers))
+        vertical_loe = FALSE;
+
+    boolean invisible = !!m_has_property(viewee, INVIS, ANY_PROPERTY, 0);
+
+    /* For normal vision, one necessary condition is that the target must be
+       adjacent or on a lit square (we assume there's just enough light in the
+       dungeon that even in dark areas, adjacent squares are visible to normal
+       vision). We test "lit" by testing that the square is either temporarily
+       lit, or permanently lit. (We can't use the normal cansee() check because
+       that doesn't work for squares outside the player's LOE, and it's possible
+       that neither the viewer nor the viewee is the player.)
+
+       TODO: templit off-level. That's very hard to implement because we don't
+       run lighting calculations off-level. */
+    boolean target_lit = distance <= 2 || (lev == level && templit(tx, ty)) ||
+        lev->locations[tx][ty].lit;
+
+    /* TODO: Maybe infravision (and perhaps even infravisibility) should be
+       properties? */
+    boolean infravision_ok = infravision(viewer->data) &&
+        infravisible(viewee->data);
+
+    boolean blinded = !!m_has_property(viewer, BLINDED, ANY_PROPERTY, 0);
+    boolean see_invisible =
+        !!m_has_property(viewer, SEE_INVIS, ANY_PROPERTY, 0);
+
+    if (loe && vertical_loe && !blinded) {
+        if (!invisible && target_lit)
+            sensemethod |= MSENSE_VISION;
+        if (!invisible && infravision_ok)
+            sensemethod |= MSENSE_INFRAVISION;
+        if (invisible && (target_lit || infravision_ok) && see_invisible)
+            sensemethod |= MSENSE_SEEINVIS;
+    }
+
+    /* Telepathy. The viewee needs a mind; the viewer needs either to be blind,
+       or for the telepathy to be extrinsic and the viewer within BOLT_LIM. */
+    if (!mindless(viewee->data) && !m_helpless(viewer, hm_unconscious)) {
+        unsigned telepathy_reason =
+            m_has_property(viewer, TELEPAT, ANY_PROPERTY, 0);
+        if ((telepathy_reason && blinded) ||
+            (telepathy_reason & (W_EQUIP | W_ARTIFACT) &&
+             distance <= BOLT_LIM * BOLT_LIM))
+            sensemethod |= MSENSE_TELEPATHY;
+    }
+
+    /* Astral vision. Like regular vision, but has a distance check rather than
+       an LOE check. It's unclear whether this pierces blindness, because the
+       only item that gives astral vision also gives blindness immunity; this
+       code assumes not. */
+    boolean xray = m_has_property(viewer, XRAY_VISION, ANY_PROPERTY, 0) &&
+        (!invisible || see_invisible);
+    if (vertical_loe && distance <= XRAY_RANGE * XRAY_RANGE && xray &&
+        (target_lit || infravision_ok))
+        sensemethod |= MSENSE_XRAY;
+
+    /* Monster detection. All that is needed (apart from same-level, which was
+       checked earlier) is the property itself. */
+    if (m_has_property(viewer, DETECT_MONSTERS, ANY_PROPERTY, 0))
+        sensemethod |= MSENSE_MONDETECT;
+
+    /* Warning versus monster class. (Actually implemented as monster
+       /race/.) */
+    if (mworn_warntype(viewer) & viewee->data->mflags2)
+        sensemethod |= MSENSE_WARNOFMON;
+
+    /* Covetous sense. Note that the player can benefit from this too, e.g. a
+       player in master lich form will be able to detect the Wizard of Yendor
+       holding the Book of the Dead. */
+    if (covetous_sense(viewer, viewee))
+        sensemethod |= MSENSE_COVETOUS;
+
+    /* Smell of gold, approximating 3.4.3 behaviour (which was previously in
+       set_apparxy in monmove.c). Xorns can sense any monster with gold in their
+       inventory. */
+    if (viewer->data == &mons[PM_XORN] && money_cnt(m_minvent(viewee)))
+        sensemethod |= MSENSE_GOLDSMELL;
+
+    /* Warning. This partial-senses monsters that are hostile to the viewer, and
+       have a level of 4 or greater, and a distance of 100 or less. */
+    if (distance <= 100 && m_mlev(viewee) >= 4 &&
+        m_has_property(viewer, WARNING, ANY_PROPERTY, 0) &&
+        mm_aggression(viewee, viewer) & ALLOW_M)
+        sensemethod |= MSENSE_WARNING;
+
+    /* Deducing the existence of a long worm via seeing a segment.
+
+       Based on the code that was formerly worm_known in worm.c, but expanded to
+       handle monster viewing.
+
+       Note: assumes that normal vision, possibly modified by astral vision and
+       see invisible, is the only way to see a long worm tail. Infravision
+       doesn't work (they're cold-blooded), and currently no other types of
+       vision are implemented. Detection would find the head. */
+    if (viewee->wormno && (!invisible || see_invisible) &&
+        vertical_loe && !blinded) {
+        struct wseg *curr = viewee->dlevel->wtails[viewee->wormno];
+
+        while (curr) {
+            boolean seg_dist = dist2(sx, sy, curr->wx, curr->wy);
+            boolean seg_loe = clear_path(sx, sy, curr->wx, curr->wy) ||
+                (xray && seg_dist <= XRAY_RANGE * XRAY_RANGE);
+            boolean seg_lit = seg_dist <= 2 ||
+                (lev == level && templit(curr->wx, curr->wy)) ||
+                lev->locations[curr->wx][curr->wy].lit;
+
+            if (seg_loe && seg_lit)
+                sensemethod |= MSENSE_WORM;
+
+            curr = curr->nseg;
+        }
+    }
+
+    /* Calculate known invisibility, because we have all the information to
+       hand, and it's a complex calculation without it. We need to be able to
+       see the monster's location with normal vision, but not the monster
+       itself. */
+    if (loe && vertical_loe && !blinded && sensemethod && target_lit &&
+        !(sensemethod & MSENSE_VISION))
+        sensemethod |= MSENSEF_KNOWNINVIS;
+
+    return sensemethod;
+}
+
 
 /* Enlightenment and conduct */
 static const char

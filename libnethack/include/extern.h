@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-03 */
+/* Last modified by Alex Smith, 2015-02-10 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -47,6 +47,7 @@ struct nh_window_procs;
 struct obj;
 struct object_pick;
 struct permonst;
+struct pet_weapons;
 struct region;
 struct rm;
 struct tmp_sym;
@@ -64,7 +65,6 @@ extern void one_occupation_turn(int (*)(void), const char *, enum occupation);
 extern void helpless(int turns, enum helpless_reason reason, const char *cause,
                      const char *endmsg);
 extern void cancel_helplessness(enum helpless_mask mask, const char *msg);
-extern boolean u_helpless(enum helpless_mask mask);
 extern void cancel_mimicking(const char *msg);
 extern boolean canhear(void);
 extern void break_conduct(enum player_conduct);
@@ -116,7 +116,7 @@ extern boolean defends(int, struct obj *);
 extern boolean protects(int, struct obj *);
 extern long item_provides_extrinsic(struct obj *, int, int *);
 extern void uninvoke_artifact(struct obj *);
-extern int touch_artifact(struct obj *, struct monst *);
+extern int touch_artifact(struct obj *, const struct monst *);
 extern int spec_abon(struct obj *, struct monst *);
 extern int spec_dbon(struct obj *, struct monst *, int);
 extern void discover_artifact(xchar);
@@ -397,7 +397,7 @@ extern void mon_arrive(struct monst *, boolean);
 extern void mon_catchup_elapsed_time(struct monst *, long);
 extern void keepdogs(boolean);
 extern void migrate_to_level(struct monst *, xchar, xchar, coord *);
-extern int dogfood(struct monst *, struct obj *);
+extern int dogfood(const struct monst *, struct obj *);
 extern struct monst *tamedog(struct monst *, struct obj *);
 extern void abuse_dog(struct monst *);
 extern void wary_dog(struct monst *, boolean);
@@ -407,7 +407,8 @@ extern void wary_dog(struct monst *, boolean);
 extern int dog_nutrition(struct monst *, struct obj *);
 extern int dog_eat(struct monst *, struct obj *, int, int, boolean);
 extern int dog_move(struct monst *, int);
-extern boolean could_use_item(struct monst *, struct obj *);
+extern void initialize_pet_weapons(const struct monst *, struct pet_weapons *);
+extern boolean pet_wants_object(const struct pet_weapons *, struct obj *);
 
 /* ### dokick.c ### */
 
@@ -523,7 +524,8 @@ extern const char *delayed_killer(int how);
 extern void clear_delayed_killers(void);
 extern void nonfatal_dump_core(void);
 extern noreturn void terminate(enum nh_play_status);
-extern noreturn void panic(const char *, ...) PRINTFLIKE(1,2);
+extern noreturn void panic_core(const char *, int, const char *, ...)
+    PRINTFLIKE(3,4);
 extern void done_in_by(struct monst *, const char *);
 extern void done(int, const char *killer);
 extern noreturn void done_noreturn(int how, const char *killer);
@@ -785,8 +787,9 @@ extern void log_backup_save(void);
 extern void log_sync(long, enum target_location_units, boolean);
 
 extern void log_revert_command(const char *);
-extern void log_recover_core(long, boolean, boolean);
-extern noreturn void log_recover_noreturn(long);
+extern void log_recover_core(long, boolean, const char *, const char *, int);
+extern noreturn void log_recover_noreturn(
+    long, const char *, const char *, int);
 extern long get_log_start_of_turn_offset(void);
 extern void log_maybe_undo_quit(void);
 
@@ -868,7 +871,8 @@ extern int32_t mread32(struct memfile *mf);
 extern int64_t mread64(struct memfile *mf);
 extern void mfmagic_check(struct memfile *mf, int32_t magic);
 extern void mfmagic_set(struct memfile *mf, int32_t magic);
-extern boolean mequal(struct memfile *mf1, struct memfile *mf2, boolean noisy);
+extern boolean mequal(struct memfile *mf1, struct memfile *mf2,
+                      const char **difference_reason);
 
 /* ### messages.c ### */
 
@@ -1115,7 +1119,7 @@ extern void kill_genocided_monsters(void);
 extern void golemeffects(struct monst *, int, int);
 extern boolean angry_guards(boolean);
 extern void pacify_guards(void);
-extern long mm_aggression(struct monst *, struct monst *);
+extern long mm_aggression(const struct monst *, const struct monst *);
 
 /* ### mondata.c ### */
 
@@ -1124,9 +1128,9 @@ extern const struct attack *attacktype_fordmg(const struct permonst *, int,
                                               int);
 extern boolean attacktype(const struct permonst *, int);
 extern boolean poly_when_stoned(const struct permonst *);
-extern boolean resists_drli(struct monst *);
-extern boolean resists_magm(struct monst *);
-extern boolean resists_blnd(struct monst *);
+extern boolean resists_drli(const struct monst *);
+extern boolean resists_magm(const struct monst *);
+extern boolean resists_blnd(const struct monst *);
 extern boolean can_blnd(struct monst *, struct monst *, uchar, struct obj *);
 extern boolean ranged_attk(const struct permonst *);
 extern boolean hates_silver(const struct permonst *);
@@ -1137,7 +1141,7 @@ extern boolean sliparm(const struct permonst *);
 extern boolean sticks(const struct permonst *);
 extern int num_horns(const struct permonst *);
 extern boolean dmgtype(const struct permonst *, int);
-extern int max_passive_dmg(struct monst *, struct monst *);
+extern int max_passive_dmg(const struct monst *, const struct monst *);
 extern int monsndx(const struct permonst *);
 extern int name_to_mon(const char *);
 extern int gender(struct monst *);
@@ -1183,7 +1187,7 @@ extern int breamq(struct monst *, int, int, const struct attack *);
 extern struct monst *mfind_target(struct monst *);
 extern boolean linedup(xchar, xchar, xchar, xchar);
 extern boolean lined_up(struct monst *);
-extern struct obj *m_carrying(struct monst *, int);
+extern struct obj *m_carrying(const struct monst *, int);
 extern void m_useup(struct monst *, struct obj *);
 extern void m_throw(struct monst *, int, int, int, int, int, struct obj *,
                     boolean);
@@ -1310,7 +1314,8 @@ extern void pline(const char *, ...) PRINTFLIKE(1,2);
 extern void pline_nomore(const char *, ...) PRINTFLIKE(1,2);
 extern void pline_once(const char *, ...) PRINTFLIKE(1,2);
 extern void pline_once_nomore(const char *, ...) PRINTFLIKE(1,2);
-extern void impossible(const char *, ...) PRINTFLIKE(1,2);
+extern void impossible_core(const char *, int, const char *, ...)
+    PRINTFLIKE(3,4);
 extern void You_hear(const char *, ...) PRINTFLIKE(1,2);
 extern void verbalize(const char *, ...) PRINTFLIKE(1,2);
 extern void raw_printf(const char *, ...) PRINTFLIKE(1,2);
@@ -1378,7 +1383,6 @@ extern const char *halu_gname(aligntyp);
 extern const char *align_gtitle(aligntyp);
 extern void altar_wrath(int, int);
 
-
 /* ### priest.c ### */
 
 extern int move_special(struct monst *, boolean, schar, boolean, boolean, xchar,
@@ -1400,6 +1404,18 @@ extern void ghod_hitsu(struct monst *);
 extern void angry_priest(void);
 extern void clearpriests(void);
 extern void restpriest(struct monst *, boolean);
+
+/* ### prop.c ### */
+
+extern unsigned m_has_property(const struct monst *, enum youprop,
+                               unsigned, boolean);
+extern unsigned u_have_property(enum youprop, unsigned, boolean);
+extern boolean m_helpless(const struct monst *, enum helpless_mask mask);
+extern boolean u_helpless(enum helpless_mask mask);
+extern unsigned msensem(const struct monst *, const struct monst *);
+extern void enlightenment(int);
+extern void unspoilered_intrinsics(void);
+extern void show_conduct(int);
 
 /* ### quest.c ### */
 
@@ -1821,8 +1837,8 @@ extern void do_clear_area(int, int, int, void (*)(int, int, void *), void *);
 extern boolean can_advance(int, boolean);
 extern int hitval(struct obj *, struct monst *);
 extern int dmgval(struct obj *, struct monst *);
-extern struct obj *select_rwep(struct monst *);
-extern struct obj *select_hwep(struct monst *);
+extern struct obj *select_rwep(const struct monst *);
+extern struct obj *select_hwep(const struct monst *);
 extern void possibly_unwield(struct monst *, boolean);
 extern int mon_wield_item(struct monst *);
 extern int abon(void);
@@ -1839,8 +1855,8 @@ extern int uwep_skill_type(void);
 extern int weapon_hit_bonus(struct obj *);
 extern int weapon_dam_bonus(struct obj *);
 extern void skill_init(const struct def_skill *);
-extern boolean would_prefer_hwep(struct monst *, struct obj *);
-extern boolean would_prefer_rwep(struct monst *, struct obj *);
+extern boolean would_prefer_hwep(const struct monst *, struct obj *);
+extern boolean would_prefer_rwep(const struct monst *, struct obj *);
 
 /* ### were.c ### */
 
@@ -1898,6 +1914,7 @@ extern int mon_has_amulet(struct monst *);
 extern int mon_has_special(struct monst *);
 extern int tactics(struct monst *);
 extern void strategy(struct monst *, boolean);
+extern boolean covetous_sense(const struct monst *, const struct monst *);
 extern void aggravate(void);
 extern void clonewiz(void);
 extern int pick_nasty(void);
@@ -1925,16 +1942,15 @@ extern void place_wsegs(struct monst *);
 extern void remove_worm(struct monst *);
 extern void place_worm_tail_randomly(struct monst *, xchar, xchar);
 extern int count_wsegs(struct monst *);
-extern boolean worm_known(const struct monst *);
 
 /* ### worn.c ### */
 
 extern void setworn(struct obj *, long);
 extern void setnotworn(struct obj *);
 extern boolean obj_worn_on(struct obj *, enum objslot);
-extern long worn_extrinsic(int);
-extern boolean worn_blocked(int);
-extern int worn_warntype(void);
+extern long mworn_extrinsic(const struct monst *, int);
+extern boolean mworn_blocked(const struct monst *, int);
+extern int mworn_warntype(const struct monst *);
 
 extern void mon_set_minvis(struct monst *);
 extern void mon_adjust_speed(struct monst *, int, struct obj *);
@@ -1942,24 +1958,16 @@ extern void update_mon_intrinsics(struct monst *, struct obj *, boolean,
                                   boolean);
 extern int find_mac(struct monst *);
 extern void m_dowear(struct monst *, boolean);
-extern struct obj *which_armor(struct monst *, enum objslot);
+extern struct obj *which_armor(const struct monst *, enum objslot);
 extern void mon_break_armor(struct monst *, boolean);
 extern void bypass_obj(struct obj *);
 extern void clear_bypasses(void);
 extern int racial_exception(struct monst *, struct obj *);
-extern int extra_pref(struct monst *, struct obj *);
+extern int extra_pref(const struct monst *, struct obj *);
 
 /* ### write.c ### */
 
 extern int dowrite(struct obj *, const struct nh_cmd_arg *);
-
-/* ### youprop.c ### */
-
-extern unsigned u_have_property(enum youprop property,
-                                unsigned reasons, boolean even_if_blocked);
-extern void enlightenment(int);
-extern void unspoilered_intrinsics(void);
-extern void show_conduct(int);
 
 /* ### zap.c ### */
 
