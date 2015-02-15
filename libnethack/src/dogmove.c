@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-10 */
+/* Last modified by Alex Smith, 2015-02-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -775,11 +775,11 @@ dog_move(struct monst *mtmp, int after)
             return 2;   /* died */
         if (ret == 2)
             return 1;   /* did something */
-    } else
-        if ((attacktype(mtmp->data, AT_BREA) || attacktype(mtmp->data, AT_GAZE)
-             || attacktype(mtmp->data, AT_SPIT) ||
-             (attacktype(mtmp->data, AT_WEAP) && select_rwep(mtmp))) &&
-            mtmp->mlstmv != moves) {
+    } else if ((attacktype(mtmp->data, AT_BREA) ||
+                attacktype(mtmp->data, AT_GAZE) ||
+                attacktype(mtmp->data, AT_SPIT) ||
+                (attacktype(mtmp->data, AT_WEAP) && select_rwep(mtmp))) &&
+               mtmp->mlstmv != moves) {
         struct monst *mon = mfind_target(mtmp);
 
         if (mon) {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-11 */
+/* Last modified by Alex Smith, 2015-02-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -715,7 +715,7 @@ nasty(struct monst *mcast)
                 do {
                     makeindex = pick_nasty();
                 } while (mcast && attacktype(&mons[makeindex], AT_MAGC) &&
-                         monstr[makeindex] >= monstr[mcast->mnum]);
+                         monstr[makeindex] >= monstr[monsndx(mcast->data)]);
                 /* do this after picking the monster to place */
                 if (mcast && aware_of_u(mcast) &&
                     !enexto(&bypos, level, mcast->mux, mcast->muy,

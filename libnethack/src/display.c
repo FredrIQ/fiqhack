@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-10 */
+/* Last modified by Alex Smith, 2015-02-15 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -1212,8 +1212,8 @@ display_self(void)
                  level->locations[x][y].mem_trap,
                  level->locations[x][y].mem_obj,
                  level->locations[x][y].mem_obj_mn, 0,
-                 what_mon(u.usteed->mnum, x, y, newsym_rng) + 1, MON_RIDDEN, 0,
-                 dbuf_branding(level, x, y));
+                 what_mon(monsndx(u.usteed->data), x, y, newsym_rng) + 1,
+                 MON_RIDDEN, 0, dbuf_branding(level, x, y));
     } else if (youmonst.m_ap_type == M_AP_NOTHING) {
         int monnum = (Upolyd || !flags.showrace) ? u.umonnum :
             (u.ufemale && urace.femalenum != NON_PM) ?
