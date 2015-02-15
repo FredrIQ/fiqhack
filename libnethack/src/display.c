@@ -709,10 +709,11 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
                 /* we can see what is there */
                 map_location(x, y, 1, reroll_hallucinated_appearances);
         } else {
-            /* Note: MSENSE_WORM doesn't work; that would check to see if we can
-               see a segment of (a worm on this square), as opposed to (a
-               segment of a worm) on this square. Associativity matters! */
-            if (msense_status & (MSENSE_ANYVISION | MSENSE_ANYDETECT) ||
+            /* Note: MSENSE_WORM doesn't work for this; that would check to see
+               if we can see a segment of (a worm on this square), as opposed to
+               (a segment of a worm) on this square. Associativity matters! */
+            if (msense_status &
+                (MSENSE_ANYVISION | MSENSE_ANYDETECT | MSENSE_ITEMMIMIC) ||
                 (worm_tail && (!mon->minvis || See_invisible))) {
                 if (mon->mtrapped && (msense_status & MSENSE_ANYVISION)) {
                     struct trap *trap = t_at(level, x, y);
@@ -727,7 +728,9 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
                 /* map under the monster */
                 map_location(x, y, 0, reroll_hallucinated_appearances);
                 /* also gets rid of any invisibility glyph */
-                display_monster(x, y, mon, (msense_status & MSENSE_ANYVISION) ?
+                display_monster(x, y, mon,
+                                (msense_status &
+                                 (MSENSE_ANYVISION | MSENSE_ITEMMIMIC)) ?
                                 PHYSICALLY_SEEN : DETECTED,
                                 reroll_hallucinated_appearances, worm_tail);
             } else if (msense_status & MSENSE_WARNING)
@@ -749,10 +752,13 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
 
             if (senseself())
                 display_self();
-        } else if (msense_status & (MSENSE_ANYVISION | MSENSE_ANYDETECT)) {
+        } else if (msense_status &
+                   (MSENSE_ANYVISION | MSENSE_ANYDETECT | MSENSE_ITEMMIMIC)) {
             /* Monsters are printed every time. */
             /* This also gets rid of any invisibility glyph */
-            display_monster(x, y, mon, (msense_status & MSENSE_ANYVISION) ?
+            display_monster(x, y, mon,
+                            (msense_status &
+                             (MSENSE_ANYVISION | MSENSE_ITEMMIMIC)) ?
                             0 : DETECTED, reroll_hallucinated_appearances, 0);
         } else if (msense_status & MSENSE_WARNING)
             display_warning(mon);

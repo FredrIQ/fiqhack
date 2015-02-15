@@ -253,7 +253,7 @@ bhitm(struct monst *mtmp, struct obj *otmp)
                 mtmp->mblinded = 0;
                 mtmp->mcansee = 1;
             }
-            if (canseemon(mtmp)) {
+            if (canseemonoritem(mtmp)) {
                 if (disguised_mimic) {
                     if (mtmp->m_ap_type == M_AP_OBJECT &&
                         mtmp->mappearance == STRANGE_OBJECT) {

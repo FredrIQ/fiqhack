@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-02 */
+/* Last modified by Alex Smith, 2015-02-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -227,9 +227,8 @@ erode_obj(struct obj * otmp, const char *ostr, enum erode_type type,
     }
 }
 
-/* Protect an item from erosion with grease. Returns TRUE if the grease
- * wears off.
- */
+/* Protect an item from erosion with grease. Returns TRUE if the grease wears
+   off. */
 boolean
 grease_protect(struct obj *otmp, const char *ostr, struct monst *victim)
 {
@@ -529,9 +528,11 @@ animate_statue(struct obj *statue, xchar x, xchar y, int cause,
         seemimic(mon);
     else
         mon->mundetected = FALSE;
+
+    const char *comes_to_life =
+        nonliving(mon->data) ? "moves" : "comes to life";
+
     if ((x == u.ux && y == u.uy) || cause == ANIMATE_SPELL) {
-        const char *comes_to_life =
-            nonliving(mon->data) ? "moves" : "comes to life";
         if (cause == ANIMATE_SPELL)
             pline("%s %s!", msgupcasefirst(statuename),
                   canspotmon(mon) ? comes_to_life : "disappears");
@@ -542,10 +543,10 @@ animate_statue(struct obj *statue, xchar x, xchar y, int cause,
             pline("You feel guilty that the historic statue is now gone.");
             adjalign(-1);
         }
-    } else if (cause == ANIMATE_SHATTER)
+    } else if (cause == ANIMATE_SHATTER) {
         pline("Instead of shattering, the statue suddenly %s!",
-              canspotmon(mon) ? "comes to life" : "disappears");
-    else {      /* cause == ANIMATE_NORMAL */
+              canspotmon(mon) ? comes_to_life : "disappears");
+    } else {      /* cause == ANIMATE_NORMAL */
         pline("You find %s posing as a statue.",
               canspotmon(mon) ? a_monnam(mon) : "something");
         action_interrupted();
@@ -560,11 +561,9 @@ animate_statue(struct obj *statue, xchar x, xchar y, int cause,
     return mon;
 }
 
-/*
- * You've either stepped onto a statue trap's location or you've triggered a
- * statue trap by searching next to it or by trying to break it with a wand
- * or pick-axe.
- */
+/* You've either stepped onto a statue trap's location or you've triggered a
+   statue trap by searching next to it or by trying to break it with a wand or
+   pick-axe. */
 struct monst *
 activate_statue_trap(struct trap *trap, xchar x, xchar y, boolean shatter)
 {
@@ -572,11 +571,9 @@ activate_statue_trap(struct trap *trap, xchar x, xchar y, boolean shatter)
     struct obj *otmp = sobj_at(STATUE, level, x, y);
     int fail_reason;
 
-    /*
-     * Try to animate the first valid statue.  Stop the loop when we
-     * actually create something or the failure cause is not because
-     * the mon was unique.
-     */
+    /* Try to animate the first valid statue. Stop the loop when we actually
+       create something or the failure cause is not because the mon was
+       unique. */
     deltrap(level, trap);
     while (otmp) {
         mtmp =
@@ -2786,8 +2783,7 @@ acid_damage(struct obj *obj) {
         return;
 
     /* Scrolls (but not spellbooks) fade. There is no particular reason for this
-     * other than to preserve vanilla behaviour. See ticket #454.
-     */
+       other than to preserve vanilla behaviour. See ticket #454. */
     struct monst *victim =
         carried(obj) ? &youmonst : mcarried(obj) ? obj->ocarry : NULL;
     boolean vismon = victim && (victim != &youmonst) && canseemon(victim);

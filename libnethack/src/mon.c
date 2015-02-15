@@ -1588,10 +1588,14 @@ lifesaved_monster(struct monst *mtmp)
     struct obj *lifesave = mlifesaver(mtmp);
 
     if (lifesave) {
-        /* not canseemon; amulets are on the head, so you don't want */
-        /* to show this for a long worm with only a tail visible. */
-        /* Nor do you check invisibility, because glowing and disinte- */
-        /* grating amulets are always visible. */
+        /* Not canseemon; amulets are on the head, so you don't want to show
+           this for a long worm with only a tail visible.  Not mon_visible
+           (which only checks the head, because that checks invisibility;
+           glowing and disintegrating amulets are always visible.
+
+           TODO: Maybe this should be couldsee; it makes sense that the player
+           could see a glowing amulet on an unlit square. If that change is
+           made, it'll also be important to check player blindness. */
         if (cansee(mtmp->mx, mtmp->my)) {
             pline("But wait...");
             pline("%s medallion begins to glow!", s_suffix(Monnam(mtmp)));

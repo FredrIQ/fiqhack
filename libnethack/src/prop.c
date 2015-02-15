@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-10 */
+/* Last modified by Alex Smith, 2015-02-15 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -225,12 +225,6 @@ msensem(const struct monst *viewer, const struct monst *viewee)
         !(m_mburied(viewer) || m_mburied(viewee) ||
           ((!!m_underwater(viewee)) ^ (!!m_underwater(viewer))) ||
           m_mhiding(viewee));
-    /* A mimicking mimic is not "hiding", but in the absence of protection from
-       shape changers on the player (which physically forces all monsters on the
-       level into natural form), it's unseeable for similar reasons. */
-    if (m_helpless(viewee, 1 << hr_mimicking) &&
-        (lev != level || !Protection_from_shape_changers))
-        vertical_loe = FALSE;
 
     boolean invisible = !!m_has_property(viewee, INVIS, ANY_PROPERTY, 0);
 
@@ -262,7 +256,7 @@ msensem(const struct monst *viewer, const struct monst *viewee)
         if (!invisible && infravision_ok)
             sensemethod |= MSENSE_INFRAVISION;
         if (invisible && (target_lit || infravision_ok) && see_invisible)
-            sensemethod |= MSENSE_SEEINVIS;
+            sensemethod |= MSENSE_SEEINVIS | MSENSEF_KNOWNINVIS;
     }
 
     /* Telepathy. The viewee needs a mind; the viewer needs either to be blind,
@@ -283,8 +277,11 @@ msensem(const struct monst *viewer, const struct monst *viewee)
     boolean xray = m_has_property(viewer, XRAY_VISION, ANY_PROPERTY, 0) &&
         (!invisible || see_invisible);
     if (vertical_loe && distance <= XRAY_RANGE * XRAY_RANGE && xray &&
-        (target_lit || infravision_ok))
+        (target_lit || infravision_ok)) {
         sensemethod |= MSENSE_XRAY;
+        if (invisible && see_invisible)
+            sensemethod |= MSENSEF_KNOWNINVIS;
+    }
 
     /* Monster detection. All that is needed (apart from same-level, which was
        checked earlier) is the property itself. */
@@ -346,10 +343,21 @@ msensem(const struct monst *viewer, const struct monst *viewee)
     /* Calculate known invisibility, because we have all the information to
        hand, and it's a complex calculation without it. We need to be able to
        see the monster's location with normal vision, but not the monster
-       itself. */
+       itself. Also don't include warning in this (because then, we can't match
+       the monster to the message). */
     if (loe && vertical_loe && !blinded && sensemethod && target_lit &&
-        !(sensemethod & MSENSE_VISION))
+        !(sensemethod & (MSENSE_ANYVISION | MSENSE_WARNING)))
         sensemethod |= MSENSEF_KNOWNINVIS;
+
+    /* If the target is in item form, it's not being seen properly. Any
+       vision-style detection of the target is going to not see it as a
+       monster. */
+    if (m_helpless(viewee, 1 << hr_mimicking) &&
+        (lev != level || !Protection_from_shape_changers) &&
+        (sensemethod & MSENSE_ANYVISION)) {
+        sensemethod &= ~MSENSE_ANYVISION;
+        sensemethod |= MSENSE_ITEMMIMIC;
+    }
 
     return sensemethod;
 }

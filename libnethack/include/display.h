@@ -92,6 +92,9 @@
 /* Warning. This lets us know the location, but not the exact monster. */
 # define MSENSE_WARNING       0x00200000u
 
+/* Item/furniture mimic visible. The target can be sensed, but doesn't look like
+   a monster. (This replaces the normal "vision" senses.) */
+# define MSENSE_ITEMMIMIC     0x00400000u
 
 /* Other flags calculated at the same time as visibility. Be careful only to set
    these when the target is sensed via some means, so that the result from
@@ -101,17 +104,34 @@
    see the square, but not the monster at that location). */
 # define MSENSEF_KNOWNINVIS   0x10000000u
 
-
 /* Various msensem() wrappers. */
 
+/* seen specifically by telepathy; you usually don't need this */
 # define tp_sensemon(mon)     !!(msensem(&youmonst, (mon)) & MSENSE_TELEPATHY)
+/* seen by any non-vision means (possibly also via vision) */
 # define sensemon(mon)        !!(msensem(&youmonst, (mon)) & MSENSE_ANYDETECT)
-# define mon_warning(mon)     !!(msensem(&youmonst, (mon)) & MSENSE_WARNING)
+/* seen via warning only */
+# define mon_warning(mon)     !!(msensem(&youmonst, (mon)) == MSENSE_WARNING)
+/* monster /head/ seen via vision: attacking monsters, monsters using items */
 # define mon_visible(mon)     !!(msensem(&youmonst, (mon)) & MSENSE_ANYVISION)
+/* /any part of the monster/ seen via vision; general purpose; not mimics */
 # define canseemon(mon)       !!(msensem(&youmonst, (mon)) & \
                                  (MSENSE_ANYVISION | MSENSE_WORM))
+/* monster seen via vision, including mimicking mimics */
+# define canseemonoritem(mon) !!(msensem(&youmonst, (mon)) & \
+                                 (MSENSE_ANYVISION | MSENSE_WORM | \
+                                  MSENSE_ITEMMIMIC))
+/* monster seen or sensed via any means; mimicking mimics are included if sensed
+   via telepathy/monster detection/etc., but not if sensed via vision */
 # define canspotmon(mon)      !!(msensem(&youmonst, (mon)) & \
                                  (MSENSE_ANYDETECT | MSENSE_ANYVISION))
+/* monster sensed or seen via any means, including mimicking mimics */
+# define canspotmonoritem(mon)!!(msensem(&youmonst, (mon)) & \
+                                 (MSENSE_ANYDETECT | MSENSE_ANYVISION | \
+                                  MSENSE_ITEMMIMIC))
+/* the player can see that the monster is invisible (either seeing it via see
+   invis, or because the player can see the square it's on, and can sense the
+   monster via an ANYDETECT method, but can't see the monster via ANYVISION) */
 # define knowninvisible(mon)  !!(msensem(&youmonst, (mon)) & MSENSEF_KNOWNINVIS)
 
 # define m_canseeu(mon)       !!(msensem((mon), &youmonst) & MSENSE_ANYVISION)
