@@ -243,9 +243,14 @@ target_on(int mask, struct monst *mtmp)
     if (!mon_has_arti(mtmp, otyp)) {
         if (you_have(mask))
             mtmp->mstrategy = STRAT(STRAT_PLAYER, u.ux, u.uy, mask);
-        else if ((otmp = on_ground(otyp)))
-            mtmp->mstrategy = STRAT(STRAT_GROUND, otmp->ox, otmp->oy, mask);
-        else if ((mtmp2 = other_mon_has_arti(mtmp, otyp)))
+        else if ((otmp = on_ground(otyp))) {
+            /* Special case: if a meditating monster is standing on the item,
+               act like that item hasn't spawned. Otherwise randomly generated
+               liches will try to beat up the Wizard of Yendor. */
+            mtmp2 = m_at(level, otmp->ox, otmp->oy);
+            if (!mtmp2 || !(mtmp2->mstrategy & STRAT_WAITMASK))
+                mtmp->mstrategy = STRAT(STRAT_GROUND, otmp->ox, otmp->oy, mask);
+        } else if ((mtmp2 = other_mon_has_arti(mtmp, otyp)))
             mtmp->mstrategy = STRAT(STRAT_MONSTR, mtmp2->mx, mtmp2->my, mask);
         else
             return FALSE;
