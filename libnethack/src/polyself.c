@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-03 */
+/* Last modified by Alex Smith, 2015-02-15 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1021,19 +1021,15 @@ dogaze(enum u_interaction_mode uim)
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
         if (DEADMONSTER(mtmp))
             continue;
-        if (canseemon(mtmp) && couldsee(mtmp->mx, mtmp->my)) {
+        if (canspotmon(mtmp) && couldsee(mtmp->mx, mtmp->my)) {
             looked++;
-            if (Invis && !perceives(mtmp->data))
+            if (!m_canseeu(mtmp))
                 pline("%s seems not to notice your gaze.", Monnam(mtmp));
-            else if (mtmp->minvis && !See_invisible)
+            else if (!canseemon(mtmp))
                 pline("You can't see where to gaze at %s.", Monnam(mtmp));
-            else if (mtmp->m_ap_type == M_AP_FURNITURE ||
-                     mtmp->m_ap_type == M_AP_OBJECT) {
-                looked--;
-                continue;
-            } else if (is_safepet(mtmp, uim)) {
+            else if (is_safepet(mtmp, uim))
                 pline("You avoid gazing at %s.", y_monnam(mtmp));
-            } else {
+            else {
                 if (!Confusion && !confirm_attack(mtmp, uim))
                     continue;
                 setmangry(mtmp);

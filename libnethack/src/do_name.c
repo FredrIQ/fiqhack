@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-10 */
+/* Last modified by Alex Smith, 2015-02-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -69,7 +69,7 @@ do_mname(const struct nh_cmd_arg *arg)
 
     unsigned msense_status = mtmp ? msensem(&youmonst, mtmp) : 0;
 
-    if (!msense_status) {
+    if (!(msense_status & ~MSENSE_ITEMMIMIC)) {
         pline("I see no monster there.");
         return 0;
     } else if (!(msense_status & (MSENSE_ANYDETECT | MSENSE_ANYVISION))) {

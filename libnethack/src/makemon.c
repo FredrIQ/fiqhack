@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-03 */
+/* Last modified by Alex Smith, 2015-02-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -988,7 +988,7 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
 
     if (mtmp->data->msound == MS_LEADER)
         u.quest_status.leader_m_id = mtmp->m_id;
-    mtmp->mnum = mndx;
+    mtmp->orig_mnum = mndx;
 
     mtmp->m_lev = adj_lev(&lev->z, ptr);
     if (is_golem(ptr)) {
@@ -1990,7 +1990,7 @@ restore_mon(struct memfile *mf)
     mon->ylocale = mread8(mf);
     /* SAVEBREAK (4.3-beta1 -> 4.3-beta2): remove this */
     mon->save_compat_dword = mread32(mf);
-    mon->mnum = mread16(mf);
+    mon->orig_mnum = mread16(mf);
     mon->mx = mread8(mf);
     mon->my = mread8(mf);
     mon->mux = mread8(mf);
@@ -2203,7 +2203,7 @@ save_mon(struct memfile *mf, const struct monst *mon)
     mwrite8(mf, mon->xlocale);
     mwrite8(mf, mon->ylocale);
     mwrite32(mf, mon->save_compat_dword);
-    mwrite16(mf, mon->mnum);
+    mwrite16(mf, mon->orig_mnum);
     mwrite8(mf, mon->mx);
     mwrite8(mf, mon->my);
     /* SAVEBREAK (4.3-beta2alpha -> 4.3-beta2): don't use a special encoding */

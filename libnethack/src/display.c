@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-10 */
+/* Last modified by Alex Smith, 2015-02-15 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -709,10 +709,11 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
                 /* we can see what is there */
                 map_location(x, y, 1, reroll_hallucinated_appearances);
         } else {
-            /* Note: MSENSE_WORM doesn't work; that would check to see if we can
-               see a segment of (a worm on this square), as opposed to (a
-               segment of a worm) on this square. Associativity matters! */
-            if (msense_status & (MSENSE_ANYVISION | MSENSE_ANYDETECT) ||
+            /* Note: MSENSE_WORM doesn't work for this; that would check to see
+               if we can see a segment of (a worm on this square), as opposed to
+               (a segment of a worm) on this square. Associativity matters! */
+            if (msense_status &
+                (MSENSE_ANYVISION | MSENSE_ANYDETECT | MSENSE_ITEMMIMIC) ||
                 (worm_tail && (!mon->minvis || See_invisible))) {
                 if (mon->mtrapped && (msense_status & MSENSE_ANYVISION)) {
                     struct trap *trap = t_at(level, x, y);
@@ -727,7 +728,9 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
                 /* map under the monster */
                 map_location(x, y, 0, reroll_hallucinated_appearances);
                 /* also gets rid of any invisibility glyph */
-                display_monster(x, y, mon, (msense_status & MSENSE_ANYVISION) ?
+                display_monster(x, y, mon,
+                                (msense_status &
+                                 (MSENSE_ANYVISION | MSENSE_ITEMMIMIC)) ?
                                 PHYSICALLY_SEEN : DETECTED,
                                 reroll_hallucinated_appearances, worm_tail);
             } else if (msense_status & MSENSE_WARNING)
@@ -749,10 +752,13 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
 
             if (senseself())
                 display_self();
-        } else if (msense_status & (MSENSE_ANYVISION | MSENSE_ANYDETECT)) {
+        } else if (msense_status &
+                   (MSENSE_ANYVISION | MSENSE_ANYDETECT | MSENSE_ITEMMIMIC)) {
             /* Monsters are printed every time. */
             /* This also gets rid of any invisibility glyph */
-            display_monster(x, y, mon, (msense_status & MSENSE_ANYVISION) ?
+            display_monster(x, y, mon,
+                            (msense_status &
+                             (MSENSE_ANYVISION | MSENSE_ITEMMIMIC)) ?
                             0 : DETECTED, reroll_hallucinated_appearances, 0);
         } else if (msense_status & MSENSE_WARNING)
             display_warning(mon);
@@ -1212,8 +1218,8 @@ display_self(void)
                  level->locations[x][y].mem_trap,
                  level->locations[x][y].mem_obj,
                  level->locations[x][y].mem_obj_mn, 0,
-                 what_mon(u.usteed->mnum, x, y, newsym_rng) + 1, MON_RIDDEN, 0,
-                 dbuf_branding(level, x, y));
+                 what_mon(monsndx(u.usteed->data), x, y, newsym_rng) + 1,
+                 MON_RIDDEN, 0, dbuf_branding(level, x, y));
     } else if (youmonst.m_ap_type == M_AP_NOTHING) {
         int monnum = (Upolyd || !flags.showrace) ? u.umonnum :
             (u.ufemale && urace.femalenum != NON_PM) ?

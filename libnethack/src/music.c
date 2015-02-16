@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-25 */
+/* Last modified by Alex Smith, 2015-02-15 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -98,7 +98,7 @@ charm_snakes(int distance)
             was_peaceful = mtmp->mpeaceful;
             mtmp->mpeaceful = 1;
             mtmp->mavenge = 0;
-            could_see_mon = canseemon(mtmp);
+            could_see_mon = canspotmon(mtmp);
             mtmp->mundetected = 0;
             newsym(mtmp->mx, mtmp->my);
             if (canseemon(mtmp)) {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-05-01 */
+/* Last modified by Alex Smith, 2015-02-15 */
 /* Copyright Scott R. Turner, srt@ucla, 10/27/86                  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -533,8 +533,7 @@ drinksink(void)
             mtmp = makemon(&mons[PM_SEWER_RAT], level, u.ux, u.uy, NO_MM_FLAGS);
             if (mtmp)
                 pline("Eek!  There's %s in the sink!",
-                      (Blind ||
-                       !canspotmon(mtmp)) ? "something squirmy" :
+                      (Blind || !canspotmon(mtmp)) ? "something squirmy" :
                       a_monnam(mtmp));
         }
         break;

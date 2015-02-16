@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-02 */
+/* Last modified by Alex Smith, 2015-02-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -87,7 +87,7 @@ attack_checks(struct monst *mtmp,
        This happens regardless of the interaction mode (assuming it's not
        forcefight); the character tries to move onto the square (in every mode),
        and gets surprised. */
-    if (!canspotmon(mtmp) && !warning_at(u.ux + dx, u.uy + dy) &&
+    if (!canspotmonoritem(mtmp) && !warning_at(u.ux + dx, u.uy + dy) &&
         !level->locations[u.ux + dx][u.uy + dy].mem_invis &&
         !(!Blind && mtmp->mundetected && hides_under (mtmp->data))) {
         pline("Wait!  There's something there you can't see!");
@@ -377,7 +377,7 @@ known_hitum(struct monst *mon, int *mhit, const struct attack *uattk, schar dx,
         int y = u.uy + dy;
 
         /* Save current conduct state in case we revert it later on a forced
-         * miss. */
+           miss. */
 
         int curr_weaphit = u.uconduct[conduct_weaphit];
         int turn = u.uconduct_time[conduct_weaphit];

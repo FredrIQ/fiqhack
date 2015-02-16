@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-10 */
+/* Last modified by Alex Smith, 2015-02-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -526,7 +526,7 @@ thrwmq(struct monst *mtmp, int xdef, int ydef)
             (xdef == u.ux && ydef == u.uy && !couldsee(mtmp->mx, mtmp->my)))
             return;     /* Out of range, or intervening wall */
 
-        if (canseemon(mtmp)) {
+        if (mon_visible(mtmp)) {
             onm = singular(otmp, xname);
             pline("%s thrusts %s.", Monnam(mtmp),
                   obj_is_pname(otmp) ? the(onm) : an(onm));
@@ -549,7 +549,7 @@ thrwmq(struct monst *mtmp, int xdef, int ydef)
 
         } else if (MON_AT(level, xdef, ydef))
             (void)ohitmon(m_at(level, xdef, ydef), otmp, 0, FALSE);
-        else if (canseemon(mtmp))
+        else if (mon_visible(mtmp))
             pline("But it misses wildly.");
 
         return;
@@ -603,7 +603,7 @@ thrwmq(struct monst *mtmp, int xdef, int ydef)
             multishot = rnd(multishot);
     }
 
-    if (canseemon(mtmp)) {
+    if (mon_visible(mtmp)) {
         if (multishot > 1) {
             /* "N arrows"; multishot > 1 implies otmp->quan > 1, so xname()'s
                result will already be pluralized */
@@ -675,7 +675,8 @@ mfind_target(struct monst *mtmp)
                 break;  /* don't attack you if peaceful */
             }
 
-            if (((mat = m_at(level, x, y))) && msensem(mtmp, mat)) {
+            if (((mat = m_at(level, x, y))) &&
+                (msensem(mtmp, mat) & ~MSENSE_ITEMMIMIC)) {
                 /* i > 0 ensures this is not a close range attack
 
                    Note: the couldsee() here is an LOE check and has nothing to
@@ -748,7 +749,7 @@ spitmq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
             break;
         }
 
-        if (canseemon(mtmp)) {
+        if (mon_visible(mtmp)) {
             pline("%s spits venom!", Monnam(mtmp));
             action_interrupted();
         }
@@ -777,7 +778,7 @@ breamq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
     if (linedup) {
         if (mtmp->mcan) {
             if (canhear()) {
-                if (canseemon(mtmp))
+                if (mon_visible(mtmp))
                     pline("%s coughs.", Monnam(mtmp));
                 else
                     You_hear("a cough.");
@@ -786,7 +787,7 @@ breamq(struct monst *mtmp, int xdef, int ydef, const struct attack *mattk)
         }
         if (!mtmp->mspec_used && rn2(3)) {
             if ((typ >= AD_MAGM) && (typ <= AD_ACID)) {
-                if (canseemon(mtmp)) {
+                if (mon_visible(mtmp)) {
                     pline("%s breathes %s!", Monnam(mtmp), breathwep[typ - 1]);
                     action_interrupted();
                 }
@@ -827,6 +828,7 @@ linedup(xchar ax, xchar ay, xchar bx, xchar by)
     return FALSE;
 }
 
+/* TODO: Merge code with mfind_target */
 static boolean
 qlined_up(struct monst *mtmp, int ax, int ay, boolean breath)
 {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-03 */
+/* Last modified by Alex Smith, 2015-02-15 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -153,7 +153,7 @@ precheck(struct monst *mon, struct obj *obj, struct musable *m)
 static void
 mzapmsg(struct monst *mtmp, struct obj *otmp, boolean self)
 {
-    if (!canseemon(mtmp)) {
+    if (!mon_visible(mtmp)) {
         You_hear("a %s zap.",
                     (distu(mtmp->mx, mtmp->my) <=
                     (BOLT_LIM + 1) * (BOLT_LIM + 1)) ? "nearby" : "distant");
@@ -169,7 +169,7 @@ mzapmsg(struct monst *mtmp, struct obj *otmp, boolean self)
 static void
 mreadmsg(struct monst *mtmp, struct obj *otmp)
 {
-    boolean vismon = canseemon(mtmp);
+    boolean vismon = mon_visible(mtmp);
     short saverole;
     const char *onambuf;
     unsigned savebknown;
@@ -207,7 +207,7 @@ mreadmsg(struct monst *mtmp, struct obj *otmp)
 static void
 mquaffmsg(struct monst *mtmp, struct obj *otmp)
 {
-    if (canseemon(mtmp)) {
+    if (mon_visible(mtmp)) {
         otmp->dknown = 1;
         pline("%s drinks %s!", Monnam(mtmp), singular(otmp, doname));
     } else
@@ -509,7 +509,7 @@ use_defensive(struct monst *mtmp, struct musable *m)
     if ((i = precheck(mtmp, otmp, m)) != 0)
         return i;
     vis = cansee(mtmp->mx, mtmp->my);
-    vismon = canseemon(mtmp);
+    vismon = mon_visible(mtmp);
     oseen = otmp && vismon;
 
     /* when using defensive choice to run away, we want monster to avoid
@@ -636,7 +636,7 @@ use_defensive(struct monst *mtmp, struct musable *m)
                 return 2;
             }
             if (!can_dig_down(level)) {
-                if (canseemon(mtmp))
+                if (mon_visible(mtmp))
                     pline("The %s here is too hard to dig in.",
                           surface(mtmp->mx, mtmp->my));
                 return 2;
@@ -1266,7 +1266,7 @@ use_offensive(struct monst *mtmp, struct musable *m)
     /* offensive potions are not drunk, they're thrown */
     if (otmp->oclass != POTION_CLASS && (i = precheck(mtmp, otmp, m)) != 0)
         return i;
-    oseen = canseemon(mtmp);
+    oseen = mon_visible(mtmp);
     if (oseen)
         examine_object(otmp);
 
@@ -1328,8 +1328,7 @@ use_offensive(struct monst *mtmp, struct musable *m)
             } else if (cansee(mtmp->mx, mtmp->my)) {
                 pline("The %s rumbles in the middle of nowhere!",
                       ceiling(mtmp->mx, mtmp->my));
-                if (mtmp->minvis)
-                    map_invisible(mtmp->mx, mtmp->my);
+                map_invisible(mtmp->mx, mtmp->my);
                 if (oseen)
                     makeknown(otmp->otyp);
             }
@@ -1368,7 +1367,7 @@ use_offensive(struct monst *mtmp, struct musable *m)
                             if (cansee(mtmp2->mx, mtmp2->my)) {
                                 pline("%s is hit by %s!", Monnam(mtmp2),
                                       doname(otmp2));
-                                if (mtmp2->minvis && !canspotmon(mtmp2))
+                                if (!canspotmon(mtmp2))
                                     map_invisible(mtmp2->mx, mtmp2->my);
                             }
                             mdmg = dmgval(otmp2, mtmp2) * otmp2->quan;
@@ -1666,7 +1665,7 @@ use_misc(struct monst *mtmp, struct musable *m)
     if ((i = precheck(mtmp, otmp, m)) != 0)
         return i;
     vis = cansee(mtmp->mx, mtmp->my);
-    vismon = canseemon(mtmp);
+    vismon = mon_visible(mtmp);
     oseen = otmp && vismon;
 
     switch (m->has_misc) {
@@ -2127,7 +2126,7 @@ mon_consume_unstone(struct monst *mon, struct obj *obj, boolean by_you,
     if (stoning)
         mon_adjust_speed(mon, -3, NULL);
 
-    if (canseemon(mon)) {
+    if (mon_visible(mon)) {
         long save_quan = obj->quan;
 
         obj->quan = 1L;

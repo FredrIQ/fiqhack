@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-02 */
+/* Last modified by Alex Smith, 2015-02-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -368,6 +368,7 @@ use_magic_whistle(struct obj *obj)
                     fill_pit(level, mtmp->mx, mtmp->my);
                 }
                 mnexto(mtmp);
+                /* TODO: This is dead code. */
                 if (canspotmon(mtmp))
                     ++pet_cnt;
                 if (mintrap(mtmp) == 2)

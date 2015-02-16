@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-10 */
+/* Last modified by Alex Smith, 2015-02-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -723,7 +723,7 @@ mon_wield_item(struct monst *mon)
            weapon, the weapon welds itself, so the monster can know it's cursed 
            and needn't even bother trying. Still.... */
         if (mw_tmp && mw_tmp->cursed && mw_tmp->otyp != CORPSE) {
-            if (canseemon(mon)) {
+            if (mon_visible(mon)) {
                 const char *welded_buf;
                 const char *mon_hand = mbodypart(mon, HAND);
 
@@ -751,7 +751,7 @@ mon_wield_item(struct monst *mon)
         mon->mw = obj;  /* wield obj */
         setmnotwielded(mon, mw_tmp);
         mon->weapon_check = NEED_WEAPON;
-        if (canseemon(mon)) {
+        if (mon_visible(mon)) {
             pline("%s wields %s%s", Monnam(mon), singular(obj, doname),
                   mon->mtame ? "." : "!");
             if (obj->cursed && obj->otyp != CORPSE) {
@@ -763,7 +763,7 @@ mon_wield_item(struct monst *mon)
         }
         if (artifact_light(obj) && !obj->lamplit) {
             begin_burn(obj, FALSE);
-            if (canseemon(mon))
+            if (mon_visible(mon))
                 pline("%s brilliantly in %s %s!", Tobjnam(obj, "glow"),
                       s_suffix(mon_nam(mon)), mbodypart(mon, HAND));
         }
@@ -1482,7 +1482,7 @@ setmnotwielded(struct monst *mon, struct obj *obj)
         return;
     if (artifact_light(obj) && obj->lamplit) {
         end_burn(obj, FALSE);
-        if (canseemon(mon))
+        if (mon_visible(mon))
             pline("%s in %s %s %s glowing.", The(xname(obj)),
                   s_suffix(mon_nam(mon)), mbodypart(mon, HAND),
                   otense(obj, "stop"));

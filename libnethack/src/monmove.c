@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-12 */
+/* Last modified by Alex Smith, 2015-02-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -87,7 +87,9 @@ dochugw(struct monst *mtmp)
         /* and either couldn't see it before, or it was too far away */
         (!already_saw_mon || !couldsee(x, y) ||
          distu(x, y) > (BOLT_LIM + 1) * (BOLT_LIM + 1)) &&
-        /* can see it now, or sense it and would normally see it */
+        /* can see it now, or sense it and would normally see it
+
+           TODO: This can spoil the existence of walls in dark areas. */
         (canseemon(mtmp) || (sensemon(mtmp) && couldsee(mtmp->mx, mtmp->my))) &&
         mtmp->mcanmove && !noattacks(mtmp->data) && !onscary(u.ux, u.uy, mtmp))
         action_interrupted();
@@ -1232,7 +1234,7 @@ set_apparxy(struct monst *mtmp)
     /* if the monster can't sense you via any normal means and doesn't have LOE,
        we don't give the monster random balance spoilers; otherwise, monsters
        outside LOE will seek out the player, which is bizarre */
-    if (!loe && !msense_status) {
+    if (!loe && !(msense_status & ~MSENSE_ITEMMIMIC)) {
         mtmp->mux = COLNO;
         mtmp->muy = ROWNO;
         return;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-11 */
+/* Last modified by Alex Smith, 2015-02-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -243,9 +243,14 @@ target_on(int mask, struct monst *mtmp)
     if (!mon_has_arti(mtmp, otyp)) {
         if (you_have(mask))
             mtmp->mstrategy = STRAT(STRAT_PLAYER, u.ux, u.uy, mask);
-        else if ((otmp = on_ground(otyp)))
-            mtmp->mstrategy = STRAT(STRAT_GROUND, otmp->ox, otmp->oy, mask);
-        else if ((mtmp2 = other_mon_has_arti(mtmp, otyp)))
+        else if ((otmp = on_ground(otyp))) {
+            /* Special case: if a meditating monster is standing on the item,
+               act like that item hasn't spawned. Otherwise randomly generated
+               liches will try to beat up the Wizard of Yendor. */
+            mtmp2 = m_at(level, otmp->ox, otmp->oy);
+            if (!mtmp2 || !(mtmp2->mstrategy & STRAT_WAITMASK))
+                mtmp->mstrategy = STRAT(STRAT_GROUND, otmp->ox, otmp->oy, mask);
+        } else if ((mtmp2 = other_mon_has_arti(mtmp, otyp)))
             mtmp->mstrategy = STRAT(STRAT_MONSTR, mtmp2->mx, mtmp2->my, mask);
         else
             return FALSE;
@@ -715,7 +720,7 @@ nasty(struct monst *mcast)
                 do {
                     makeindex = pick_nasty();
                 } while (mcast && attacktype(&mons[makeindex], AT_MAGC) &&
-                         monstr[makeindex] >= monstr[mcast->mnum]);
+                         monstr[makeindex] >= monstr[monsndx(mcast->data)]);
                 /* do this after picking the monster to place */
                 if (mcast && aware_of_u(mcast) &&
                     !enexto(&bypos, level, mcast->mux, mcast->muy,

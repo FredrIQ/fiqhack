@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-12 */
+/* Last modified by Alex Smith, 2015-02-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1588,10 +1588,14 @@ lifesaved_monster(struct monst *mtmp)
     struct obj *lifesave = mlifesaver(mtmp);
 
     if (lifesave) {
-        /* not canseemon; amulets are on the head, so you don't want */
-        /* to show this for a long worm with only a tail visible. */
-        /* Nor do you check invisibility, because glowing and disinte- */
-        /* grating amulets are always visible. */
+        /* Not canseemon; amulets are on the head, so you don't want to show
+           this for a long worm with only a tail visible.  Not mon_visible
+           (which only checks the head, because that checks invisibility;
+           glowing and disintegrating amulets are always visible.
+
+           TODO: Maybe this should be couldsee; it makes sense that the player
+           could see a glowing amulet on an unlit square. If that change is
+           made, it'll also be important to check player blindness. */
         if (cansee(mtmp->mx, mtmp->my)) {
             pline("But wait...");
             pline("%s medallion begins to glow!", s_suffix(Monnam(mtmp)));
@@ -2307,7 +2311,7 @@ setmangry(struct monst *mtmp)
 
     /* attacking your own quest leader will anger his or her guardians */
     if (!flags.mon_moving &&    /* should always be the case here */
-        mtmp->mnum == quest_info(MS_LEADER)) {
+        monsndx(mtmp->data) == quest_info(MS_LEADER)) {
         struct monst *mon;
         int got_mad = 0;
 
@@ -2433,7 +2437,7 @@ restartcham(void)
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
         if (DEADMONSTER(mtmp))
             continue;
-        mtmp->cham = pm_to_cham(mtmp->mnum);
+        mtmp->cham = pm_to_cham(monsndx(mtmp->data));
         if (mtmp->data->mlet == S_MIMIC && mtmp->msleeping &&
             cansee(mtmp->mx, mtmp->my)) {
             set_mimic_sym(mtmp, mtmp->dlevel);
@@ -2460,7 +2464,7 @@ restore_cham(struct monst *mon)
             new_were(mon);
         }
     } else if (mon->cham == CHAM_ORDINARY) {
-        mon->cham = pm_to_cham(mon->mnum);
+        mon->cham = pm_to_cham(monsndx(mon->data));
     }
 }
 
@@ -2875,7 +2879,7 @@ kill_genocided_monsters(void)
         mtmp2 = mtmp->nmon;
         if (DEADMONSTER(mtmp))
             continue;
-        mndx = mtmp->mnum;
+        mndx = monsndx(mtmp->data);
         if ((mvitals[mndx].mvflags & G_GENOD) || kill_cham[mtmp->cham]) {
             if (mtmp->cham && !kill_cham[mtmp->cham])
                 newcham(mtmp, NULL, FALSE, FALSE);

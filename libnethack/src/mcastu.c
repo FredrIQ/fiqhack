@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-03 */
+/* Last modified by Alex Smith, 2015-02-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1696,7 +1696,9 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
             shieldeff(mtmp->mx, mtmp->my);
             dmg = (dmg + 1) / 2;
         }
-        /* not canseemon; if you can't see it you don't know it was wounded */
+        /* not canseemon; if you can't see it you don't know it was wounded
+           TODO: This seems suspicious despite the comment, perhaps it should
+           check canseemon but not yours? */
         if (yours) {
             if (dmg <= 5)
                 pline("%s looks itchy!", Monnam(mtmp));
