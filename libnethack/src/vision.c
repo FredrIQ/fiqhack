@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-10 */
+/* Last modified by Alex Smith, 2015-02-20 */
 /* Copyright (c) Dean Luick, with acknowledgements to Dave Cohrs, 1990. */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -1289,7 +1289,7 @@ clear_path(int col1, int row1, int col2, int row2)
        preferentially use that when checking the player's location. */
     if (col1 == u.ux && row1 == u.uy)
         return couldsee(col2, row2);
-    else if (col2 == u.ux && col1 == u.uy)
+    else if (col2 == u.ux && row2 == u.uy)
         return couldsee(col1, row1);
 
     if (col1 < col2) {
