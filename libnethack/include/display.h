@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-15 */
+/* Last modified by Alex Smith, 2015-02-26 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -86,7 +86,7 @@
 /* Worm segment visible. This allows us to know a long worm is there, without
    knowing its exact location. The rules are the same as for normal vision,
    except that we're iterating over segments. In other words, MSENSE_VISION (or
-   infravision or */
+   infravision, etc.). */
 # define MSENSE_WORM          0x00100000u
 
 /* Warning. This lets us know the location, but not the exact monster. */
@@ -110,8 +110,6 @@
 # define tp_sensemon(mon)     !!(msensem(&youmonst, (mon)) & MSENSE_TELEPATHY)
 /* seen by any non-vision means (possibly also via vision) */
 # define sensemon(mon)        !!(msensem(&youmonst, (mon)) & MSENSE_ANYDETECT)
-/* seen via warning only */
-# define mon_warning(mon)     !!(msensem(&youmonst, (mon)) == MSENSE_WARNING)
 /* monster /head/ seen via vision: attacking monsters, monsters using items */
 # define mon_visible(mon)     !!(msensem(&youmonst, (mon)) & MSENSE_ANYVISION)
 /* /any part of the monster/ seen via vision; general purpose; not mimics */

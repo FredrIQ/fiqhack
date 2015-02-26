@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-15 */
+/* Last modified by Alex Smith, 2015-02-26 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -501,7 +501,8 @@ display_monster(xchar x, xchar y,       /* display position */
  * above everything just like monsters do, but only if the monster
  * is not showing.
  *
- * Do not call for worm tails.
+ * Do not call for worm tails. Caller must check that the monster
+ * actually shows up via warning (e.g. using msensem).
  */
 static void
 display_warning(struct monst *mon)
@@ -510,7 +511,10 @@ display_warning(struct monst *mon)
     int wl = (int)(mon->m_lev / 4);
     int monnum, mflag;
 
-    if (mon_warning(mon)) {
+    if (MATCH_WARN_OF_MON(mon)) {
+        monnum = dbuf_monid(mon, x, y, newsym_rng);
+        mflag = 0;
+    } else {
         if (wl > WARNCOUNT - 1)
             wl = WARNCOUNT - 1;
         /* 3.4.1: this really ought to be rn2(WARNCOUNT), but value "0" isn't
@@ -519,12 +523,6 @@ display_warning(struct monst *mon)
             wl = newsym_rng(WARNCOUNT - 1) + 1;
         monnum = 1 + NUMMONS + wl;
         mflag = MON_WARNING;
-    } else if (MATCH_WARN_OF_MON(mon)) {
-        monnum = dbuf_monid(mon, x, y, newsym_rng);
-        mflag = 0;
-    } else {
-        impossible("display_warning did not match warning type?");
-        return;
     }
 
     dbuf_set(x, y, level->locations[x][y].mem_bg,
