@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-13 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -308,7 +308,12 @@ dowield(const struct nh_cmd_arg *arg)
     if (!wep)
         return 0;
 
-    return equip_in_slot(wep, os_wep);
+    if (flags.pushweapon) {
+        u.utracked[tos_first_equip + os_swapwep] = uwep;
+        u.uoccupation_progress[tos_first_equip + os_swapwep] = 0;
+    }
+
+    return equip_in_slot(wep, os_wep, TRUE);
 }
 
 int
@@ -341,13 +346,13 @@ dowieldquiver(const struct nh_cmd_arg *arg)
     if (!newquiver)
         return 0;
 
-    return equip_in_slot(newquiver, os_quiver);
+    return equip_in_slot(newquiver, os_quiver, FALSE);
 }
 
 /* Used to wield an item and then do something else; this is used for tools that
    need to be wielded. Returns a bitmask: the 1s bit is FALSE if the action must
    be aborted; the 2s bit is TRUE if the action took time; the 4s bit is TRUE if
-   the item is still being wielded.
+   the item is still in the process of being wielded.
 
    If both the 2s and 1s bit of the result are set, this function sets the
    occupation itself, to save the caller the trouble. (The caller can still
@@ -360,7 +365,12 @@ wield_tool(struct obj *obj, const char *occ_txt, enum occupation occupation)
     if (obj == uwep)
         return 1;
 
-    rv = equip_in_slot(obj, os_wep);
+    if (flags.pushweapon) {
+        u.utracked[tos_first_equip + os_swapwep] = uwep;
+        u.uoccupation_progress[tos_first_equip + os_swapwep] = 0;
+    }
+
+    rv = equip_in_slot(obj, os_wep, TRUE);
 
     if (obj == uwep && rv == 0) /* it took no time */
         return 1;

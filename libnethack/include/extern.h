@@ -377,7 +377,7 @@ extern int equip_heartbeat(void);
 extern int dounequip(const struct nh_cmd_arg *);
 extern int dowear(const struct nh_cmd_arg *);
 extern int doequip(const struct nh_cmd_arg *);
-extern int equip_in_slot(struct obj *otmp, enum objslot);
+extern int equip_in_slot(struct obj *, enum objslot, boolean);
 extern boolean canwearobj(struct obj *, long *, boolean, boolean, boolean);
 extern boolean canunwearobj(struct obj *, boolean, boolean, boolean);
 extern void glibr(void);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-01-30 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -813,7 +813,7 @@ equip_heartbeat(void)
          */
         if (islot == os_swapwep &&
             (desired == uwep || (desired == &zeroobj && uwep == NULL) ||
-             current == u.utracked[tos_first_equip + os_wep]))
+             (current && current == u.utracked[tos_first_equip + os_wep])))
             fast_weapon_swap = TRUE;
 
         if (!want_to_change_slot(islot) && !temp_unequip) continue;
@@ -1109,7 +1109,7 @@ equip_heartbeat(void)
    time. (In the case where it takes more than 1 action, it will mark the action
    as incomplete.) */
 int
-equip_in_slot(struct obj *otmp, enum objslot slot)
+equip_in_slot(struct obj *otmp, enum objslot slot, boolean keep_swapwep)
 {
     int t;
     enum objslot j;
@@ -1142,7 +1142,8 @@ equip_in_slot(struct obj *otmp, enum objslot slot)
        anywhere, though. */
     boolean resuming = FALSE;
     for (j = 0; j <= os_last_equip; j++)
-        if (u.utracked[tos_first_equip + j])
+        if (u.utracked[tos_first_equip + j] &&
+            (!keep_swapwep || j != os_swapwep))
             resuming = TRUE;
     resuming = resuming &&
         (u.utracked[tos_first_equip + slot] == otmp ||
@@ -1153,6 +1154,10 @@ equip_in_slot(struct obj *otmp, enum objslot slot)
     for (j = 0; j <= os_last_equip; j++) {
         struct obj **desired = u.utracked + tos_first_equip + j;
         struct obj *target = j == slot ? otmp : NULL;
+
+        if (keep_swapwep && j == os_swapwep)
+            continue;
+
         /* If we're continuing a compound equip, don't cancel desires for slots
            that cover the slot we want to change. (They may be temporarily
            unequipped items.) Also, don't cancel a desire for a weapon when
@@ -1230,7 +1235,7 @@ dounequip(const struct nh_cmd_arg *arg)
         if (otmp->owornmask & W_MASK(j)) {
             if (!canunwearobj(otmp, TRUE, FALSE, flags.cblock))
                 return 0; /* user knows it's impossible */
-            return equip_in_slot(NULL, j);
+            return equip_in_slot(NULL, j, FALSE);
         }
 
     /* We get here if an equip was interrupted while we were putting items back
@@ -1253,7 +1258,7 @@ dounequip(const struct nh_cmd_arg *arg)
        unequip that item, which is not what the user wants. */
     for (j = 0; j <= os_last_worn; j++)
         if (mask & W_MASK(j) && !EQUIP(j))
-            return equip_in_slot(NULL, j);
+            return equip_in_slot(NULL, j, FALSE);
 
     pline("You are not wearing that.");
     return 0;
@@ -1307,7 +1312,7 @@ dowear(const struct nh_cmd_arg *arg)
        equip_heartbeat). */
     for (j = 0; j <= os_last_worn; j++)
         if (mask & W_MASK(j))
-            return equip_in_slot(otmp, j);
+            return equip_in_slot(otmp, j, FALSE);
 
     impossible("Bad mask from canwearobj?");
     return 0;

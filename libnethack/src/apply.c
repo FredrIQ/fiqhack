@@ -2933,7 +2933,7 @@ doapply(const struct nh_cmd_arg *arg)
     switch (obj->otyp) {
     case BLINDFOLD:
     case LENSES:
-        res = equip_in_slot(obj, os_tool);
+        res = equip_in_slot(obj, os_tool, FALSE);
         break;
     case CREAM_PIE:
         res = use_cream_pie(&obj);
