@@ -946,6 +946,7 @@ dotrap(struct trap *trap, unsigned trflags)
         if (!Passes_walls) {
             u.utrap = rn1(6, 2);
             u.utraptype = TT_PIT;
+            turnstate.vision_full_recalc = TRUE;
         }
         if (!steedintrap(trap, NULL)) {
             if (ttype == SPIKED_PIT) {

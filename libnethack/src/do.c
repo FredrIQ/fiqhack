@@ -771,6 +771,7 @@ dodown(enum u_interaction_mode uim)
                 u.utraptype = TT_PIT;
                 pline("You %s down into the pit.",
                       locomotion(youmonst.data, "go"));
+                turnstate.vision_full_recalc = TRUE;
             }
             return 0;
         } else {
