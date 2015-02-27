@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-05-24 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (C) 1990 by Ken Arromdee                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -200,13 +200,8 @@ explode(int x, int y, int type, /* the same as in zap.c */
                         break;
                     }
             }
-            if (mtmp && cansee(i + x - 1, j + y - 1) && !canspotmon(mtmp))
-                map_invisible(i + x - 1, j + y - 1);
-            else if (!mtmp &&
-                     level->locations[i + x - 1][j + y - 1].mem_invis) {
-                unmap_object(i + x - 1, j + y - 1);
-                newsym(i + x - 1, j + y - 1);
-            }
+            reveal_monster_at(i + x - 1, j + y - 1, TRUE);
+
             if (cansee(i + x - 1, j + y - 1))
                 visible = TRUE;
             if (explmask[i][j] == 1)

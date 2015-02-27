@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-15 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1167,7 +1167,7 @@ seffects(struct obj *sobj, boolean * known)
                                 mdmg = dmgval(otmp2, mtmp) * otmp2->quan;
                                 if (helmet) {
                                     if (is_metallic(helmet)) {
-                                        if (canspotmon(mtmp))
+                                        if (canseemon(mtmp))
                                             pline("Fortunately, %s is wearing "
                                                   "a hard %s.",
                                                   mon_nam(mtmp),
@@ -1177,7 +1177,7 @@ seffects(struct obj *sobj, boolean * known)
                                         if (mdmg > 2)
                                             mdmg = 2;
                                     } else {
-                                        if (canspotmon(mtmp))
+                                        if (canseemon(mtmp))
                                             pline
                                                 ("%s's %s does not protect %s.",
                                                  Monnam(mtmp), xname(helmet),

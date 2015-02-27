@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-15 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -240,7 +240,7 @@ castmu(struct monst *mtmp, const struct attack *mattk, int allow_directed)
        location right. */
     if ((!knows_ux_uy(mtmp) || allow_directed == -1) && casting_directed) {
         pline("%s casts a spell at %s!",
-              canseemon(mtmp) ? Monnam(mtmp) : "Something",
+              canclassifymon(mtmp) ? Monnam(mtmp) : "Something",
               level->locations[mtmp->mux][mtmp->muy].typ ==
               WATER ? "empty water" : "thin air");
         return 0;
@@ -253,7 +253,7 @@ castmu(struct monst *mtmp, const struct attack *mattk, int allow_directed)
             pline("The air crackles around %s.", mon_nam(mtmp));
         return 0;
     }
-    if (canspotmon(mtmp) || casting_directed ) {
+    if (canspotmon(mtmp) || casting_directed) {
         pline("%s casts a spell%s!",
               canspotmon(mtmp) ? Monnam(mtmp) : "Something",
               !casting_directed ? "" :
@@ -945,6 +945,7 @@ castmm(struct monst *mtmp, struct monst *mdef, const struct attack *mattk)
     }
     if (canspotmon(mtmp) || canspotmon(mdef)) {
         pline("%s casts a spell%s!",
+              /* not canclassifymon; the monster's tail isn't casting */
               canspotmon(mtmp) ? Monnam(mtmp) : "Something",
               is_undirected_spell(mattk->adtyp, spellnum) ? "" :
               msgcat(" at ", mon_nam(mdef)));

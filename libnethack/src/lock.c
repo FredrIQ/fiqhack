@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-15 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -683,10 +683,9 @@ obstructed(int x, int y)
     if (mtmp && mtmp->m_ap_type != M_AP_FURNITURE) {
         if (mtmp->m_ap_type == M_AP_OBJECT)
             goto objhere;
+        reveal_monster_at(x, y, TRUE);
         pline("%s stands in the way!",
               !canspotmon(mtmp) ? "Some creature" : Monnam(mtmp));
-        if (!canspotmon(mtmp))
-            map_invisible(mtmp->mx, mtmp->my);
         return TRUE;
     }
     if (OBJ_AT(x, y)) {

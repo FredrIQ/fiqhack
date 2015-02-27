@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-10 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -252,6 +252,8 @@ describe_mon(int x, int y, int monnum, char *buf)
     struct monst *mtmp;
     char visionbuf[BUFSZ], temp_buf[BUFSZ];
 
+    static const int maximum_output_len = 78;
+
     if (monnum == -1)
         return;
 
@@ -304,13 +306,23 @@ describe_mon(int x, int y, int monnum, char *buf)
         bhitpos.y = y;
 
         if (mtmp->data == &mons[PM_COYOTE] && accurate)
-            name = coyotename(mtmp);
+            name = an(coyotename(mtmp));
         else
-            name = distant_monnam(mtmp, ARTICLE_NONE);
+            name = distant_monnam(mtmp, ARTICLE_A);
+
+        boolean spotted = canspotmon(mtmp);
+
+        if (!spotted && (mtmp->mx != x || mtmp->my != y))
+            name = "an unseen long worm";
+        else if (!spotted)
+            /* we can't safely impossible/panic from this point in the code;
+               well, we /could/, but as it's called on every mouse movement,
+               it'd quickly get very confusing and possibly lead to recursive
+               panics; just put up an obvious message instead */
+            name = "a <BUG: monster both seen and unseen>";
 
         sprintf(buf, "%s%s%s",
-                (mtmp->mx != x || mtmp->my != y) ?
-                ((mtmp->isshk && accurate) ? "tail of " : "tail of a ") : "",
+                (mtmp->mx != x || mtmp->my != y) ? "tail of " : "",
                 (mtmp->mtame && accurate) ? "tame " :
                 (mtmp->mpeaceful && accurate) ? "peaceful " : "", name);
         if (u.ustuck == mtmp)
@@ -335,13 +347,13 @@ describe_mon(int x, int y, int monnum, char *buf)
                      ", strategy %08lx, muxy %02x%02x",
                      (unsigned long)mtmp->mstrategy,
                      (int)mtmp->mux, (int)mtmp->muy);
-            strncat(buf, temp_buf, BUFSZ - strlen(buf) - 1);
+            strncat(buf, temp_buf, maximum_output_len - strlen(buf) - 1);
         }
 
         mon_vision_summary(mtmp, visionbuf);
         if (visionbuf[0]) {
             snprintf(temp_buf, SIZE(temp_buf), " [seen: %s]", visionbuf);
-            strncat(buf, temp_buf, BUFSZ - strlen(buf) - 1);
+            strncat(buf, temp_buf, maximum_output_len - strlen(buf) - 1);
         }
     }
 }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-22 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1455,11 +1455,10 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
             if (attack_status != ac_continue)
                 return attack_status != ac_cancel;
 
-            /* This point is only reached if the monster dodged, or is a
-               safepet. It used to be that you could cheese stumbling when
-               dodged via always using an explicit F when attacking leprechauns,
-               but that makes no sense, so force forcefight off in such cases,
-               and give a message. */
+            /* This point is only reached if the monster dodged. It used to be
+               that you could cheese stumbling when dodged via always using an
+               explicit F when attacking leprechauns, but that makes no sense,
+               so force forcefight off in such cases, and give a message. */
             pline("You miss wildly and stumble forwards.");
             if (uim == uim_forcefight)
                 uim = uim_indiscriminate;
@@ -1513,12 +1512,18 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
     struct nh_cmd_arg newarg;
     arg_from_delta(turnstate.move.dx, turnstate.move.dy, dz, &newarg);
 
+    boolean was_mem_invis = level->locations[x][y].mem_invis;
+
+    /* Regardless of whether the player was trying to attack or to move onto the
+       square, they're going to interact with the square, and will discover if
+       it contains a monster as a result. */
+    reveal_monster_at(x, y, TRUE);
+
     /* Either there isn't (any more) a monster there, or there is a safepet
        there. Does the character try to attack the square? They will if there's
        a remembered-monster 'I' and they aren't using a pacifist style of
        movement, or if they were force-fighting. */
-    if (uim == uim_forcefight ||
-        (level->locations[x][y].mem_invis && UIM_AGGRESSIVE(uim))) {
+    if (uim == uim_forcefight || (was_mem_invis && UIM_AGGRESSIVE(uim))) {
         boolean expl = (Upolyd && attacktype(youmonst.data, AT_EXPL));
         boolean hitsomething = FALSE, ouch = FALSE;
         struct obj *boulder = (sobj_at(BOULDER, level, x, y));
@@ -1590,21 +1595,12 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
                   is_pool(level, x, y) ? "empty water" : buf);
         }
 
-        unmap_object(x, y);     /* known empty -- remove 'I' if present */
-        newsym(x, y);
         action_completed();
         if (expl) {
             u.mh = -1;  /* dead in the current form */
             rehumanize(EXPLODED, "exploded in a futile attempt to attack");
         }
         return 1;
-    }
-
-    /* We saw an invisible 'I' but decided not to attack it. This is when we
-       discover there isn't a monster there after all. */
-    if (level->locations[x][y].mem_invis) {
-        unmap_object(x, y);
-        newsym(x, y);
     }
 
     /* Not attacking a monster, for whatever reason; we try to move. */
@@ -2678,6 +2674,7 @@ stop:
 static boolean
 check_interrupt(struct monst *mtmp)
 {
+    /* TODO: Should this stop for long worm tails? */
     return (mtmp->m_ap_type != M_AP_FURNITURE && mtmp->m_ap_type != M_AP_OBJECT
             && (!is_hider(mtmp->data) || !mtmp->mundetected) &&
             (!mtmp->mpeaceful || Hallucination) && !noattacks(mtmp->data) &&

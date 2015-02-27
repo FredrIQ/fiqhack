@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-15 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2798,7 +2798,7 @@ beam_hit(int ddx, int ddy, int range,   /* direction and range */
         } else {
             if (weapon == ZAPPED_WAND && obj->otyp == WAN_PROBING &&
                 level->locations[bhitpos.x][bhitpos.y].mem_invis) {
-                unmap_object(bhitpos.x, bhitpos.y);
+                level->locations[bhitpos.x][bhitpos.y].mem_invis = 0;
                 newsym(x, y);
             }
         }
@@ -2843,7 +2843,7 @@ beam_hit(int ddx, int ddy, int range,   /* direction and range */
             /* do this before the tmpsym_at() */
             if (level->locations[bhitpos.x][bhitpos.y].mem_invis &&
                 cansee(x, y)) {
-                unmap_object(bhitpos.x, bhitpos.y);
+                level->locations[bhitpos.x][bhitpos.y].mem_invis = FALSE;
                 newsym(x, y);
             }
             tmpsym_at(tsym, bhitpos.x, bhitpos.y);
@@ -3394,7 +3394,7 @@ buzz(int type, int nd, xchar sx, xchar sy, int dx, int dy)
                 if (mon && !canspotmon(mon))
                     map_invisible(sx, sy);
                 else if (!mon && level->locations[sx][sy].mem_invis) {
-                    unmap_object(sx, sy);
+                    level->locations[sx][sy].mem_invis = FALSE;
                     newsym(sx, sy);
                 }
                 if (ZAP_POS(loc->typ) || cansee(lsx, lsy))

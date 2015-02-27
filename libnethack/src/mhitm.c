@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-15 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -72,6 +72,10 @@ missmm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
 {
     const char *fmt, *buf;
 
+    /* TODO: This is badly spaghetti.
+
+       Don't use reveal_monster_at: the player isn't involved here, except
+       possibly as an observer. */
     if (vis) {
         if (!canspotmon(magr))
             map_invisible(magr->mx, magr->my);
@@ -534,6 +538,7 @@ gazemm(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                 }
                 return MM_MISS;
             }
+            /* TODO: Aren't there other sorts of gaze attacks than this? */
             if (canseemon(magr))
                 pline("%s is turned to stone!", Monnam(magr));
             monstone(magr);

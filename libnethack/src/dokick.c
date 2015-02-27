@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-22 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -240,10 +240,8 @@ doit:
         } else {
             rloc_to(mon, bypos.x, bypos.y);
             if (mon->mx != x || mon->my != y) {
-                if (level->locations[x][y].mem_invis) {
-                    unmap_object(x, y);
-                    newsym(x, y);
-                }
+                reveal_monster_at(x, y, TRUE);
+                /* TODO: This should probably use locomotion(). */
                 pline("%s %s, %s evading your %skick.", Monnam(mon),
                       (can_teleport(mon->data) &&
                        !level->flags.noteleport ? "teleports" :
@@ -795,13 +793,8 @@ dokick(const struct nh_cmd_arg *arg)
         wake_nearby(FALSE);
         u_wipe_engr(2);
 
-        /* see comment in attack_checks() */
-        if (!DEADMONSTER(mtmp) && !canspotmon(mtmp) &&
-            /* check x and y; a monster that evades your kick by jumping to an
-               unseen square doesn't leave an I behind */
-            mtmp->mx == x && mtmp->my == y && !level->locations[x][y].mem_invis
-            && !(Engulfed && mtmp == u.ustuck))
-            map_invisible(x, y);
+        reveal_monster_at(x, y, TRUE);
+
         if (Is_airlevel(&u.uz) || Levitation) {
             int range;
 
@@ -820,10 +813,8 @@ dokick(const struct nh_cmd_arg *arg)
     wake_nearby(FALSE);
     u_wipe_engr(2);
 
-    if (level->locations[x][y].mem_invis) {
-        unmap_object(x, y);
-        newsym(x, y);
-    }
+    reveal_monster_at(x, y, TRUE);
+
     if (is_pool(level, x, y) ^ ! !u.uinwater) {
         /* objects normally can't be removed from water by kicking */
         pline("You splash some water around.");

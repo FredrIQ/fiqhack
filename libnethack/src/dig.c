@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-10 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -548,6 +548,7 @@ digactualhole(int x, int y, struct monst *madeby, int ttyp)
     newsym(ttmp->tx, ttmp->ty);
 
     if (ttyp == PIT) {
+        /* Assume that long worms can't dig pits. */
 
         if (madeby_u) {
             pline("You dig a pit in the %s.", surface_type);
@@ -626,6 +627,9 @@ digactualhole(int x, int y, struct monst *madeby, int ttyp)
                 pay_for_damage("ruin", FALSE);
             if (newobjs)
                 impact_drop(NULL, x, y, 0);
+            /* TODO: Figure out when this is called. Digging down while engulfed
+               is one potential case (although I'm not sure that's possible),
+               but the code sort-of implise there are others. */
             if (mtmp) {
                 /* [don't we need special sokoban handling here?] */
                 if (is_flyer(mtmp->data) || is_floater(mtmp->data) ||
@@ -642,6 +646,8 @@ digactualhole(int x, int y, struct monst *madeby, int ttyp)
                     if (Is_stronghold(&u.uz)) {
                         assign_level(&tolevel, &valley_level);
                     } else if (Is_botlevel(&u.uz)) {
+                        /* TODO: I can't figure out what this does or if the
+                           canseemon() is the correct check. */
                         if (canseemon(mtmp))
                             pline("%s avoids the trap.", Monnam(mtmp));
                         return;

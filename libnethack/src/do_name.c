@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-15 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -540,7 +540,7 @@ x_monnam(const struct monst *mtmp,
 
     do_hallu = Hallucination && !(suppress & SUPPRESS_HALLUCINATION);
     do_invis = mtmp->minvis && !(suppress & SUPPRESS_INVISIBLE);
-    do_it = !canspotmon(mtmp) && article != ARTICLE_YOUR &&
+    do_it = !canclassifymon(mtmp) && article != ARTICLE_YOUR &&
         !program_state.gameover && mtmp != u.usteed &&
         !(Engulfed && mtmp == u.ustuck) &&
         !(suppress & SUPPRESS_IT);
@@ -771,7 +771,7 @@ distant_monnam(const struct monst *mon, int article)
 const char *
 k_monnam(const struct monst *mtmp) {
     const char *buf = "";
-    boolean distorted = (boolean) (Hallucination && canspotmon(mtmp));
+    boolean distorted = (boolean) (Hallucination && canclassifymon(mtmp));
     boolean article = FALSE;
 
     if ((mtmp->data->geno & G_UNIQ) != 0 &&

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-15 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -277,22 +277,15 @@ use_stethoscope(struct obj *obj, const struct nh_cmd_arg *arg)
         You_hear("a faint typing noise.");
         return 0;
     }
+
+    reveal_monster_at(rx, ry, FALSE);
+
     if ((mtmp = m_at(level, rx, ry)) != 0) {
         mstatusline(mtmp);
-        if (mtmp->mundetected) {
-            mtmp->mundetected = 0;
-            if (cansee(rx, ry))
-                newsym(mtmp->mx, mtmp->my);
-        }
-        if (!canspotmon(mtmp))
-            map_invisible(rx, ry);
+        reveal_monster_at(rx, ry, FALSE);
         return res;
     }
-    if (level->locations[rx][ry].mem_invis) {
-        unmap_object(rx, ry);
-        newsym(rx, ry);
-        pline("The invisible monster must have moved.");
-    }
+
     loc = &level->locations[rx][ry];
     switch (loc->typ) {
     case SDOOR:
@@ -354,8 +347,6 @@ use_magic_whistle(struct obj *obj)
         pline("You produce a high-pitched humming noise.");
         wake_nearby(FALSE);
     } else {
-        int pet_cnt = 0;
-
         pline(whistle_str, Hallucination ? "normal" : "strange");
         for (mtmp = level->monlist; mtmp; mtmp = nextmon) {
             nextmon = mtmp->nmon;       /* trap might kill mon */
@@ -368,9 +359,6 @@ use_magic_whistle(struct obj *obj)
                     fill_pit(level, mtmp->mx, mtmp->my);
                 }
                 mnexto(mtmp);
-                /* TODO: This is dead code. */
-                if (canspotmon(mtmp))
-                    ++pet_cnt;
                 if (mintrap(mtmp) == 2)
                     change_luck(-1);
             }
@@ -473,7 +461,13 @@ use_leash(struct obj *obj, const struct nh_cmd_arg *arg)
         return 0;
     }
 
-    if (!(mtmp = m_at(level, cc.x, cc.y))) {
+    if (knownwormtail(cc.x, cc.y)) {
+        pline("You can't leash a monster by its tail!");
+        return 0;
+    }
+
+    if (!((mtmp = m_at(level, cc.x, cc.y))) ||
+        mtmp->mx != cc.x || mtmp->my != cc.y) {
         pline("There is no creature there.");
         return 0;
     }
@@ -707,6 +701,12 @@ use_mirror(struct obj *obj, const struct nh_cmd_arg *arg)
     }
     mtmp = beam_hit(dx, dy, COLNO, INVIS_BEAM, NULL, NULL, obj, NULL);
     if (!mtmp || !haseyes(mtmp->data))
+        return 1;
+    /* handle the case of long worms where we have LOF to the tail but not the
+       head; without LOE to the head, the worm clearly can't see the mirror;
+       assume that given an intent to aim at the worm, the character can figure
+       out what angle to hold the mirror at even if they can't see the head */
+    if (!couldsee(mtmp->mx, mtmp->my))
         return 1;
 
     vis = canseemon(mtmp);
@@ -1756,15 +1756,23 @@ fig_transform(void *arg, long timeout)
                 struct monst *mon;
 
                 mon = figurine->ocarry;
-                /* figurine carring monster might be invisible */
-                if (canseemon(figurine->ocarry)) {
-                    carriedby = msgprintf("%s pack", s_suffix(a_monnam(mon)));
-                } else if (is_pool(level, mon->mx, mon->my))
-                    carriedby = "empty water";
-                else
-                    carriedby = "thin air";
-                pline("You see %s %s out of %s!", monnambuf,
-                      locomotion(mtmp->data, "drop"), carriedby);
+                /* Figurine carring monster might be invisible; or due to
+                   polymorph, the monster might not have a backpack, which means
+                   that the message needs serious rephrasing */
+                if (notake(mon->data) && canseemon(mon))
+                    pline("You see %s appear near %s!", monnambuf,
+                          a_monnam(mon));
+                else {
+                    if (canseemon(mon))
+                        carriedby = msgprintf("%s pack",
+                                              s_suffix(a_monnam(mon)));
+                    else if (is_pool(level, mon->mx, mon->my))
+                        carriedby = "empty water";
+                    else
+                        carriedby = "thin air";
+                    pline("You see %s %s out of %s!", monnambuf,
+                          locomotion(mtmp->data, "drop"), carriedby);
+                }
             }
             break;
 
@@ -2236,6 +2244,11 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
     if (proficient < 0)
         proficient = 0;
 
+    /* moving the bullwhip through a square reveals the presence or absence of a
+       monster there; also alerts the monster that you know if it's there */
+    if (!Engulfed)
+        reveal_monster_at(rx, ry, 1);
+
     if (Engulfed) {
         enum attack_check_status attack_status =
             attack(u.ustuck, dx, dy, apply_interaction_mode());
@@ -2352,10 +2365,6 @@ use_whip(struct obj *obj, const struct nh_cmd_arg *arg)
             pline("%s", msg_snap);
 
     } else if (mtmp) {
-        if (!canspotmon(mtmp) && !level->locations[rx][ry].mem_invis) {
-            pline("A monster is there that you couldn't see.");
-            map_invisible(rx, ry);
-        }
         otmp = MON_WEP(mtmp);   /* can be null */
         if (otmp) {
             const char *onambuf = cxname(otmp);
@@ -2500,6 +2509,9 @@ use_pole(struct obj *obj, const struct nh_cmd_arg *arg)
         return 0;
     } else if (!cansee(cc.x, cc.y) &&
                ((mtmp = m_at(level, cc.x, cc.y)) == NULL || !canseemon(mtmp))) {
+        /* TODO: The if condition above looks a little suspicious: it lets you
+           hit monsters you can see with infravision, but not monsters you can
+           see with telepathy. */
         pline(cant_see_spot);
         return 0;
     } else if (!couldsee(cc.x, cc.y)) { /* Eyes of the Overworld */

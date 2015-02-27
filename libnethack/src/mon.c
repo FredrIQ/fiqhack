@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-15 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1590,7 +1590,7 @@ lifesaved_monster(struct monst *mtmp)
     if (lifesave) {
         /* Not canseemon; amulets are on the head, so you don't want to show
            this for a long worm with only a tail visible.  Not mon_visible
-           (which only checks the head, because that checks invisibility;
+           (which only checks the head), because that checks invisibility;
            glowing and disintegrating amulets are always visible.
 
            TODO: Maybe this should be couldsee; it makes sense that the player
@@ -1632,6 +1632,7 @@ mondead(struct monst *mtmp)
 {
     const struct permonst *mptr;
     int tmp;
+    boolean player_aware = cansuspectmon(mtmp);
 
     if (mtmp->isgd) {
         /* if we're going to abort the death, it *must* be before the m_detach
@@ -1697,12 +1698,14 @@ mondead(struct monst *mtmp)
         }
     }
 
+    /* TODO: this is probably dead code */
+    if (player_aware)
+        level->locations[mtmp->mx][mtmp->my].mem_invis = FALSE;
+
     if (mtmp->iswiz)
         wizdead();
     if (mtmp->data->msound == MS_NEMESIS)
         nemdead();
-    if (level->locations[mtmp->mx][mtmp->my].mem_invis)
-        unmap_object(mtmp->mx, mtmp->my);
     m_detach(mtmp, mptr);
 }
 
@@ -1743,7 +1746,7 @@ corpse_chance(struct monst *mon,
                     if (magr->mhp < 1)
                         mondied(magr);
                     if (magr->mhp < 1) {        /* maybe lifesaved */
-                        if (canspotmon(magr))
+                        if (canseemon(magr))
                             pline("%s rips open!", Monnam(magr));
                     } else if (canseemon(magr))
                         pline("%s seems to have indigestion.", Monnam(magr));
@@ -1870,13 +1873,16 @@ monstone(struct monst *mdef)
         otmp = mksobj_at(ROCK, level, x, y, TRUE, FALSE);
 
     stackobj(otmp);
-    /* mondead() already does this, but we must do it before the newsym */
-    if (level->locations[x][y].mem_invis)
+    /* assume that a statue appearing within vision range lets the player know
+       that there isn't an invisible monster there any more, and overwrites
+       detected items; either seeing the monster disappear or the statue appear
+       is enough information */
+    if (cansee(x, y) || cansuspectmon(mdef)) {
         unmap_object(x, y);
-    if (cansee(x, y))
         newsym(x, y);
-    /* We don't currently trap the hero in the statue in this case but we could
-     */
+    }
+    /* We don't currently trap the hero in the statue in this case, but we
+       could */
     if (Engulfed && u.ustuck == mdef)
         wasinside = TRUE;
     mondead(mdef);
@@ -1959,7 +1965,7 @@ xkilled(struct monst *mtmp, int dest)
     if (dest & 1) {
         const char *verb = nonliving(mtmp->data) ? "destroy" : "kill";
 
-        if (!wasinside && mtmp != u.usteed && !canspotmon(mtmp))
+        if (!wasinside && mtmp != u.usteed && !canclassifymon(mtmp))
             pline("You %s it!", verb);
         else {
             pline("You %s %s!", verb,

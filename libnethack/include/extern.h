@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-10 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -237,6 +237,7 @@ extern void cvt_sdoor_to_door(struct rm *loc, const d_level * dlev);
 extern int findit(void);
 extern int openit(void);
 extern void find_trap(struct trap *);
+extern boolean reveal_monster_at(int, int, boolean);
 extern int dosearch0(int);
 extern int dosearch(const struct nh_cmd_arg *);
 extern void sokoban_detect(struct level *lev);

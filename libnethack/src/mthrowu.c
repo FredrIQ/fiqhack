@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-15 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -225,7 +225,7 @@ int ohitmon(struct monst *mtmp, /* accidental target */
         if (mtmp->mhp < 1) {
             if (vis || verbose)
                 pline("%s is %s!", Monnam(mtmp),
-                      (nonliving(mtmp->data) || !canspotmon(mtmp))
+                      (nonliving(mtmp->data) || !canclassifymon(mtmp))
                       ? "destroyed" : "killed");
             /* don't blame hero for unknown rolling boulder trap */
             if (!flags.mon_moving &&

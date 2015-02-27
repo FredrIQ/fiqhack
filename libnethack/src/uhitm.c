@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-15 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -70,10 +70,10 @@ attack_checks(struct monst *mtmp,
     /* If the user's very insistent about attacking, always try to attack. */
     if (uim == uim_forcefight) {
         /* With the new memory engine, we can do this without clobbering the
-           information on what's beneath. */
-        if (!canspotmon(mtmp) &&
-            !level->locations[u.ux + dx][u.uy + dy].mem_invis)
-            map_invisible(u.ux + dx, u.uy + dy);
+           information on what's beneath. Note: we can't call reveal_monster_at
+           unconditionally, because some callers need information about whether
+           there was an 'I', but this doesn't matter for forcefight. */
+        reveal_monster_at(u.ux + dx, u.uy + dy, TRUE);
         return ac_continue;
     }
 
@@ -124,6 +124,8 @@ attack_checks(struct monst *mtmp,
         return ac_somethingelse;
     }
 
+    /* TODO: Not touching this for now, but this looks like it could be replaced
+       by a custom msensem() call, greatly simplifying the code */
     if (mtmp->mundetected && !canseemon(mtmp) &&
         !warning_at(u.ux + dx, u.uy + dy) && (hides_under(mtmp->data) ||
                                               mtmp->data->mlet == S_EEL)) {
@@ -153,7 +155,9 @@ attack_checks(struct monst *mtmp,
     }
 
     /* The remaining cases only happen if the player knows what the monster is
-       and walked into it deliberately. */
+       and walked into it deliberately.
+
+       TODO: This looks wrong for warning. */
     if (canspotmon(mtmp) && !Confusion && !Hallucination && !Stunned) {
 
         if (uim <= uim_displace) {
@@ -290,15 +294,9 @@ attack(struct monst * mtmp, schar dx, schar dy, enum u_interaction_mode uim)
     const struct permonst *mdat = mtmp->data;
     enum attack_check_status ret;
 
-    /* This always needs doing, but it needs doing exactly once. We normally do
-       it ourselves in order that the caller doesn't have to. If the caller has
-       done a check already, they should set the interaction mode to
-       "indiscriminate" in order to avoid the second check causing problems
-       (it's always going to return ac_continue if the first check did). */
-    ret = attack_checks(mtmp, uwep, dx, dy, uim);
-    if (ret != ac_continue)
-        return ret;
-
+    /* Checks that prevent attacking altogether: do this to avoid a
+       map_invisible call (the player doesn't try to attack, so won't detect a
+       monster via collision). */
     if (Upolyd) {
         /* certain "pacifist" monsters don't attack */
         if (noattacks(youmonst.data)) {
@@ -310,6 +308,15 @@ attack(struct monst * mtmp, schar dx, schar dy, enum u_interaction_mode uim)
 
     if (check_capacity("You cannot fight while so heavily loaded."))
         return ac_cancel;
+
+    /* This always needs doing, but it needs doing exactly once. We normally do
+       it ourselves in order that the caller doesn't have to. If the caller has
+       done a check already, they should set the interaction mode to
+       "indiscriminate" in order to avoid the second check causing problems
+       (it's always going to return ac_continue if the first check did). */
+    ret = attack_checks(mtmp, uwep, dx, dy, uim);
+    if (ret != ac_continue)
+        return ret;
 
     if (u.twoweap && !can_twoweapon())
         untwoweapon();
@@ -997,7 +1004,7 @@ hmon_hitmon(struct monst *mon, struct obj *obj, int thrown)
         const char *fmt;
         const char *whom = mon_nam(mon);
 
-        if (canspotmon(mon)) {
+        if (canseemon(mon)) {
             if (barehand_silver_rings == 1)
                 fmt = "Your silver ring sears %s!";
             else if (barehand_silver_rings == 2)

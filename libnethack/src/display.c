@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-26 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -60,7 +60,7 @@
  * use these for things that only temporarily change the screen.  These
  * routines are also used directly by newsym().  unmap_object is used to
  * clear a remembered object when/if detection reveals it isn't there.
- *
+ * (See also reveal_monster_at for a commonly usable wrapper.)
  *
  * dbuf_set
  * dbuf_set_<foo>
@@ -292,7 +292,7 @@ map_object(struct obj *obj, int show, boolean reroll_hallu)
  * This is a special case in that the square will continue to be displayed
  * this way even when the hero is close enough to see it.  To get rid of
  * this and display the square's actual contents, use unmap_object() followed
- * by newsym() if necessary.
+ * by newsym() if necessary, or use reveal_monster_at().
  */
 void
 map_invisible(xchar x, xchar y)
@@ -635,7 +635,6 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
 {
     struct monst *mon;
     struct rm *loc = &(level->locations[x][y]);
-    xchar worm_tail;
     unsigned msense_status;
 
     if (!isok(x, y)) {
@@ -672,12 +671,9 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
             return;
     }
 
-    /* Note for anyone confused (I know I was): is_worm_tail works by checking
-       the x and y variables via variable capture. */
     msense_status = 0;
     mon = m_at(level, x, y);
-    worm_tail = is_worm_tail(mon);
-    if (mon && !worm_tail)
+    if (mon)
         msense_status = msensem(&youmonst, mon);
 
     /* Can physically see the location. */
@@ -709,10 +705,20 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
         } else {
             /* Note: MSENSE_WORM doesn't work for this; that would check to see
                if we can see a segment of (a worm on this square), as opposed to
-               (a segment of a worm) on this square. Associativity matters! */
-            if (msense_status &
-                (MSENSE_ANYVISION | MSENSE_ANYDETECT | MSENSE_ITEMMIMIC) ||
-                (worm_tail && (!mon->minvis || See_invisible))) {
+               (a segment of a worm) on this square. Associativity matters!
+
+               The monsndx check is technically unnecessary, but much cheaper
+               than knownwormtail is. */
+
+            if (mon && monsndx(mon->data) == PM_LONG_WORM &&
+                knownwormtail(x, y)) {
+                map_location(x, y, 0, reroll_hallucinated_appearances);
+                /* Assumes that worm tails can be seen only via vision */
+                display_monster(x, y, mon, 0,
+                                reroll_hallucinated_appearances, 1);
+            } else if (msense_status & (MSENSE_ANYVISION | MSENSE_ANYDETECT |
+                                        MSENSE_ITEMMIMIC) &&
+                       mon->mx == x && mon->my == y) {
                 if (mon->mtrapped && (msense_status & MSENSE_ANYVISION)) {
                     struct trap *trap = t_at(level, x, y);
                     int tt = trap ? trap->ttyp : NO_TRAP;
@@ -730,7 +736,7 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
                                 (msense_status &
                                  (MSENSE_ANYVISION | MSENSE_ITEMMIMIC)) ?
                                 PHYSICALLY_SEEN : DETECTED,
-                                reroll_hallucinated_appearances, worm_tail);
+                                reroll_hallucinated_appearances, 0);
             } else if (msense_status & MSENSE_WARNING)
                 display_warning(mon);
             else if (level->locations[x][y].mem_invis)
@@ -751,14 +757,16 @@ newsym_core(int x, int y, boolean reroll_hallucinated_appearances)
             if (senseself())
                 display_self();
         } else if (msense_status &
-                   (MSENSE_ANYVISION | MSENSE_ANYDETECT | MSENSE_ITEMMIMIC)) {
+                   (MSENSE_ANYVISION | MSENSE_ANYDETECT | MSENSE_ITEMMIMIC) &&
+                   mon->mx == x && mon->my == y) {
             /* Monsters are printed every time. */
             /* This also gets rid of any invisibility glyph */
             display_monster(x, y, mon,
                             (msense_status &
                              (MSENSE_ANYVISION | MSENSE_ITEMMIMIC)) ?
                             0 : DETECTED, reroll_hallucinated_appearances, 0);
-        } else if (msense_status & MSENSE_WARNING)
+        } else if (msense_status & MSENSE_WARNING &&
+                   mon->mx == x && mon->my == y)
             display_warning(mon);
         else
             dbuf_set_memory(level, x, y);
@@ -1544,7 +1552,8 @@ dbuf_get_mon(int x, int y)
 }
 
 
-/* warning_at: return TRUE if there is a warning symbol at the given position
+/*
+ * warning_at: return TRUE if there is a warning symbol at the given position
  *
  * attack_checks() needs to know and there is no other way to get this info
  */

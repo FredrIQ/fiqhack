@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-15 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -674,7 +674,7 @@ use_defensive(struct monst *mtmp, struct musable *m)
             mzapmsg(mtmp, otmp, FALSE);
             otmp->spe--;
             mon = makemon(NULL, level, cc.x, cc.y, NO_MM_FLAGS);
-            if (mon && canspotmon(mon) && oseen)
+            if (mon && cansuspectmon(mon) && oseen)
                 makeknown(WAN_CREATE_MONSTER);
             return 2;
         }
@@ -701,7 +701,7 @@ use_defensive(struct monst *mtmp, struct musable *m)
                 if (!enexto(&cc, level, mtmp->mx, mtmp->my, fish))
                     break;
                 mon = makemon(pm, level, cc.x, cc.y, NO_MM_FLAGS);
-                if (mon && canspotmon(mon))
+                if (mon && cansuspectmon(mon))
                     known = TRUE;
             }
             /* The only case where we don't use oseen.  For wands, you have to
@@ -1149,6 +1149,7 @@ mbhitm(struct monst *mtmp, struct obj *otmp)
         break;
     }
     if (reveal_invis) {
+        /* monster-on-monster, so don't use reveal_monster_at */
         if (mtmp->mhp > 0 && cansee(bhitpos.x, bhitpos.y)
             && !canspotmon(mtmp))
             map_invisible(bhitpos.x, bhitpos.y);
@@ -1373,7 +1374,7 @@ use_offensive(struct monst *mtmp, struct musable *m)
                             mdmg = dmgval(otmp2, mtmp2) * otmp2->quan;
                             if (helmet) {
                                 if (is_metallic(helmet)) {
-                                    if (canspotmon(mtmp2))
+                                    if (canseemon(mtmp2))
                                         pline("Fortunately, %s is wearing "
                                               "a hard %s.", mon_nam(mtmp2),
                                               helmet_name(helmet));
@@ -1382,7 +1383,7 @@ use_offensive(struct monst *mtmp, struct musable *m)
                                     if (mdmg > 2)
                                         mdmg = 2;
                                 } else {
-                                    if (canspotmon(mtmp2))
+                                    if (canseemon(mtmp2))
                                         pline("%s's %s does not protect %s.",
                                               Monnam(mtmp2), xname(helmet),
                                               mhim(mtmp2));

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-26 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -127,6 +127,24 @@
 # define canspotmonoritem(mon)!!(msensem(&youmonst, (mon)) & \
                                  (MSENSE_ANYDETECT | MSENSE_ANYVISION | \
                                   MSENSE_ITEMMIMIC))
+/* player has at least a minimal idea of monster species; used when naming
+   monsters (in cases where we're naming an item-form mimic, either it's in the
+   process of waking up or the player just discovered what it was); when
+   hallucinating, returns whether the player would know what it was if they
+   weren't hallucinating */
+# define canclassifymon(mon)  !!(msensem(&youmonst, (mon)) &            \
+                                 (MSENSE_ANYDETECT | MSENSE_ANYVISION | \
+                                  MSENSE_ITEMMIMIC | MSENSE_WORM))
+/* player has at least a minimal idea of monster existence; used to determine
+   whether the player is aware of the presence of monster creation magic; this
+   doesn't detect item-form mimics (because those don't look like monsters);
+   also used to determine whether the player is aware that a monster has died or
+   left the square */
+# define cansuspectmon(mon)   !!(msensem(&youmonst, (mon)) &            \
+                                 (MSENSE_ANYDETECT | MSENSE_ANYVISION | \
+                                  MSENSE_WARNING | MSENSE_WORM))
+
+
 /* the player can see that the monster is invisible (either seeing it via see
    invis, or because the player can see the square it's on, and can sense the
    monster via an ANYDETECT method, but can't see the monster via ANYVISION) */
@@ -134,6 +152,16 @@
 
 # define m_canseeu(mon)       !!(msensem((mon), &youmonst) & MSENSE_ANYVISION)
 # define m_cansenseu(mon)     !!(msensem((mon), &youmonst))
+
+/* not quite the same as the above, but it can do with centralizing; only use
+   on the current level; assumes that long worms aren't infravisible */
+# define knownwormtail(x, y)  (cansee((x), (y)) &&                 \
+                               MON_AT(level, (x), (y)) &&          \
+                               (m_at(level, (x), (y))->mx != x ||  \
+                                m_at(level, (x), (y))->my != y) && \
+                               (!m_at(level, (x), (y))->minvis ||  \
+                                See_invisible))
+
 
 /*
  * is_safepet(mon)

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-15 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1171,13 +1171,57 @@ find_trap(struct trap *trap)
     }
 }
 
+/* Gives spoiler information about the presence or absence of a monster on a
+   given square; called when the player does something that would determine the
+   presence of a monster on a given square. With true "unhide", unhides mimics
+   and hidden monsters, otherwise uses an invisible-I mark. For monsters that
+   aren't hiding but can't be seen, just uses an invisible-I mark directly.
+   "unhide" should be TRUE if there's no reason to believe that the player could
+   do the action cautiously; searching shouldn't disturb mimics.
+
+   Exception to all this: if the monster is visible and not hiding, do
+   nothing. Returns TRUE if a new monster was found. */
+boolean
+reveal_monster_at(int x, int y, boolean unhide)
+{
+    if (!isok(x, y))
+        return FALSE;
+
+    boolean unknown = !level->locations[x][y].mem_invis;
+    struct monst *mon = m_at(level, x, y);
+
+    if (mon && DEADMONSTER(mon))
+        mon = NULL;
+
+    /* Clear any invisible-monster I on this square.
+
+       Note: We can't use the normal unmap_object because there might be a
+       remembered item on the square (e.g. via object detection when blind). */
+    level->locations[x][y].mem_invis = 0;
+    unmap_object(x, y);
+
+    if (!mon) {
+        newsym(x, y);    /* required after unmap_object */
+        return FALSE;
+    }
+
+    if (unhide)
+        wakeup(mon, TRUE);
+
+    if (!canspotmon(mon) && !knownwormtail(x, y))
+        map_invisible(x, y);
+    else
+        unknown = FALSE;
+
+    newsym(x, y);
+    return unknown;
+}
 
 int
 dosearch0(int aflag)
 {
     xchar x, y;
     struct trap *trap;
-    struct monst *mtmp;
 
     if (Engulfed) {
         if (!aflag)
@@ -1216,48 +1260,19 @@ dosearch0(int aflag)
                         action_completed();
                         newsym(x, y);
                     } else {
-                        /* Be careful not to find anything in an SCORR or SDOOR 
-                         */
-                        if ((mtmp = m_at(level, x, y)) && !aflag) {
-                            if (mtmp->m_ap_type &&
-                                !level->locations[x][y].mem_invis) {
-                                map_invisible(x, y);
-                            find:exercise(A_WIS,
-                                         TRUE);
-                                if (!canspotmon(mtmp)) {
-                                    if (level->locations[x][y].mem_invis) {
-                                        /* found invisible monster in a square
-                                           which already has an 'I' in it.
-                                           Logically, this should still take
-                                           time and lead to a return(1), but if
-                                           we did that the player would keep
-                                           finding the same monster every
-                                           turn. */
-                                        continue;
-                                    } else {
-                                        pline("You feel an unseen monster!");
-                                        map_invisible(x, y);
-                                    }
-                                } else if (!sensemon(mtmp))
-                                    pline("You find %s.", a_monnam(mtmp));
+                        /* Be careful not to find anything in an SCORR or
+                           SDOOR. */
+                        if (!aflag) {
+                            if (reveal_monster_at(x, y, FALSE)) {
+                                exercise(A_WIS, TRUE);
+                                /* changed mechanic = changed message; also
+                                   don't imply we're touching a trice */
+                                if (m_at(level, x, y)->m_ap_type)
+                                    pline("You think there's a mimic there.");
+                                else
+                                    pline("You sense a monster nearby!");
                                 return 1;
                             }
-                            if (!canspotmon(mtmp)) {
-                                if (mtmp->mundetected &&
-                                    (is_hider(mtmp->data) ||
-                                     mtmp->data->mlet == S_EEL))
-                                    mtmp->mundetected = 0;
-                                newsym(x, y);
-                                goto find;
-                            }
-                        }
-
-                        /* see if an invisible monster has moved--if Blind,
-                           feel_location() already did it */
-                        if (!aflag && !mtmp && !Blind &&
-                            level->locations[x][y].mem_invis) {
-                            unmap_object(x, y);
-                            newsym(x, y);
                         }
 
                         if ((trap = t_at(level, x, y)) && !trap->tseen &&

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-10 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -802,8 +802,8 @@ magicbane_hit(struct monst *magr,   /* attacker */
         pline("The magic-absorbing blade %s %s!", vtense(NULL, verb), hittee);
         /* assume probing has some sort of noticeable feedback even if it is
            being done by one monster to another */
-        if (attack_indx == MB_INDEX_PROBE && !canspotmon(mdef))
-            map_invisible(mdef->mx, mdef->my);
+        if (attack_indx == MB_INDEX_PROBE)
+            reveal_monster_at(mdef->mx, mdef->my, FALSE);
     }
 
     /* now perform special effects */

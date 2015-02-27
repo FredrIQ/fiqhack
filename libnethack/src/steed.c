@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-15 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Kevin Hugo, 1998-1999. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -64,7 +64,10 @@ use_saddle(struct obj *otmp, const struct nh_cmd_arg *arg)
     }
     if (!isok(u.ux + dx, u.uy + dy) ||
         !((mtmp = m_at(level, u.ux + dx, u.uy + dy))) || !canspotmon(mtmp)) {
-        pline("I see nobody there.");
+        if (knownwormtail(u.ux + dx, u.uy + dy))
+            pline("It's hard to strap a saddle to a tail.");
+        else
+            pline("I see nobody there.");
         return 0;
     }
 
