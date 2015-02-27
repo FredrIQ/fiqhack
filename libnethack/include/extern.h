@@ -1830,7 +1830,7 @@ extern void vision_reset(void);
 extern void vision_recalc(int);
 extern void block_point(int, int);
 extern void unblock_point(int, int);
-extern boolean clear_path(int, int, int, int);
+extern boolean clear_path(int, int, int, int, char **);
 extern void do_clear_area(int, int, int, void (*)(int, int, void *), void *);
 
 /* ### weapon.c ### */

@@ -822,7 +822,7 @@ linedup(xchar ax, xchar ay, xchar bx, xchar by)
 
     if ((!tbx || !tby || abs(tbx) == abs(tby))  /* straight line or diagonal */
         && distmin(tbx, tby, 0, 0) < BOLT_LIM) {
-        if (clear_path(ax, ay, bx, by))
+        if (clear_path(ax, ay, bx, by, viz_array))
             return TRUE;
     }
     return FALSE;

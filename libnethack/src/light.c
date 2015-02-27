@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-08 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Dean Luick, 1994                                       */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -145,8 +145,8 @@ do_light_sources(char **cs_rows)
                 ls->flags |= LSF_SHOW;
         }
 
-        /* minor optimization: don't bother with duplicate light sources */
-        /* at hero */
+        /* minor optimization: don't bother with duplicate light sources at
+           hero */
         if (ls->x == u.ux && ls->y == u.uy) {
             if (at_hero_range >= ls->range)
                 ls->flags &= ~LSF_SHOW;
@@ -176,7 +176,7 @@ do_light_sources(char **cs_rows)
                     max_x = COLNO - 1;
 
                 for (x = min_x; x <= max_x; x++)
-                    if (clear_path((int)ls->x, (int)ls->y, x, y))
+                    if (clear_path((int)ls->x, (int)ls->y, x, y, cs_rows))
                         row[x] |= TEMP_LIT;
             }
         }

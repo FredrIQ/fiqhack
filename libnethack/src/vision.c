@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-20 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Dean Luick, with acknowledgements to Dave Cohrs, 1990. */
 /* NetHack may be freely redistributed.  See license for details.       */
 
@@ -1279,18 +1279,26 @@ q3_path(int srow, int scol, int y2, int x2)
  *     m_cansee()
  *     msensem()
  *     do_light_sources()
+ *
+ * Because this might be called from inside the vision code, and thus couldsee()
+ * might not have a valid viz_array to look at, the caller passes in a vision
+ * array (either viz_array or a vision array it's currently working on). As
+ * another exception, if couldsee_data is NULL, checks square-to-square
+ * visibility strictly, rather than square-to-centre-of-square; this makes a
+ * difference when determining whether there's a path to/from a monster that's
+ * currently engulfing the player.
  */
 boolean
-clear_path(int col1, int row1, int col2, int row2)
+clear_path(int col1, int row1, int col2, int row2, char **couldsee_data)
 {
     int result;
 
     /* couldsee() gives better results than the simple algorithm below, so
        preferentially use that when checking the player's location. */
-    if (col1 == u.ux && row1 == u.uy)
-        return couldsee(col2, row2);
-    else if (col2 == u.ux && row2 == u.uy)
-        return couldsee(col1, row1);
+    if (col1 == u.ux && row1 == u.uy && couldsee_data)
+        return !!(couldsee_data[row2][col2] & COULD_SEE);
+    else if (col2 == u.ux && row2 == u.uy && couldsee_data)
+        return !!(couldsee_data[row1][col1] & COULD_SEE);
 
     if (col1 < col2) {
         if (row1 > row2) {

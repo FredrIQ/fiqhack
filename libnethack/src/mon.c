@@ -1153,8 +1153,12 @@ nexttry:       /* eels prefer the water, but if there is no water nearby, they
                    from a balance point of view, but more importantly, this is
                    the wrong place in the AI to implement it. It's been moved to
                    set_apparxy so that it is at least in the right place; the
-                   balance has been left unchanged pending more discussion. */
-                if (nx == mon->mux && ny == mon->muy) {
+                   balance has been left unchanged pending more discussion.
+
+                   We also need to check for being engulfed; monsters should be
+                   willing to attack a monster that's engulfing the player. */
+                if (nx == mon->mux && ny == mon->muy &&
+                    (!Engulfed || mon == u.ustuck)) {
                     if (!(flag & ALLOW_MUXY))
                         continue;
                     info[cnt] |= ALLOW_MUXY;

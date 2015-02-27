@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-15 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -211,10 +211,17 @@ msensem(const struct monst *viewer, const struct monst *viewee)
 
     int distance = dist2(sx, sy, tx, ty);
 
+    /* Special case: if either endpoint is an engulfing monster, then we want
+       LOE to the square specifically, ignoring players on that square (because
+       the edge of an engulfing monster blocks LOE to the player). */
+    char **msensem_vizarray =
+        (Engulfed && (viewer == u.ustuck || viewee == u.ustuck)) ?
+        NULL : viz_array;
+
     /* Line of effect. clear_path is like couldsee(), but doesn't require the
        player to be at either endpoint. (If the player happens to be at one of
        the endpoints, it just calls couldsee() directly.) */
-    boolean loe = clear_path(sx, sy, tx, ty);
+    boolean loe = clear_path(sx, sy, tx, ty, msensem_vizarray);
 
     /* A special case for many vision methods: water or the ground blocking
        vision. A hiding target is also included in these, because hiding is
@@ -327,7 +334,8 @@ msensem(const struct monst *viewer, const struct monst *viewee)
 
         while (curr) {
             boolean seg_dist = dist2(sx, sy, curr->wx, curr->wy);
-            boolean seg_loe = clear_path(sx, sy, curr->wx, curr->wy) ||
+            boolean seg_loe =
+                clear_path(sx, sy, curr->wx, curr->wy, msensem_vizarray) ||
                 (xray && seg_dist <= XRAY_RANGE * XRAY_RANGE);
             boolean seg_lit = seg_dist <= 2 ||
                 (lev == level && templit(curr->wx, curr->wy)) ||

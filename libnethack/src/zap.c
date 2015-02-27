@@ -368,17 +368,14 @@ probe_monster(struct monst *mtmp)
 }
 
 
-/*
- * Return the object's physical location.  This only makes sense for
- * objects that are currently on the level (i.e. migrating objects
- * are nowhere).  By default, only things that can be seen (in hero's
- * inventory, monster's inventory, or on the ground) are reported.
- * By adding BURIED_TOO and/or CONTAINED_TOO flags, you can also get
- * the location of buried and contained objects.  Note that if an
- * object is carried by a monster, its reported position may change
- * from turn to turn.  This function returns FALSE if the position
- * is not available or subject to the constraints above.
- */
+/* Return the object's physical location.  This only makes sense for objects
+   that are currently on the level (i.e. migrating objects are nowhere).  By
+   default, only things that can be seen (in hero's inventory, monster's
+   inventory, or on the ground) are reported.  By adding BURIED_TOO and/or
+   CONTAINED_TOO flags, you can also get the location of buried and contained
+   objects.  Note that if an object is carried by a monster, its reported
+   position may change from turn to turn.  This function returns FALSE if the
+   position is not available or subject to the constraints above. */
 boolean
 get_obj_location(const struct obj *obj, xchar * xp, xchar * yp, int locflags)
 {
@@ -392,12 +389,12 @@ get_obj_location(const struct obj *obj, xchar * xp, xchar * yp, int locflags)
         *yp = obj->oy;
         return TRUE;
     case OBJ_MINVENT:
-        if (obj->ocarry->mx) {
+        if (isok(obj->ocarry->mx, obj->ocarry->my)) {
             *xp = obj->ocarry->mx;
             *yp = obj->ocarry->my;
             return TRUE;
         }
-        break;  /* !mx => migrating monster */
+        break;  /* !isok implies a migrating monster */
     case OBJ_BURIED:
         if (locflags & BURIED_TOO) {
             *xp = obj->ox;
