@@ -47,7 +47,7 @@ m_has_property(const struct monst *mon, enum youprop property,
            TODO: Monsters with no eyes are not considered blind. This doesn't
            make much sense. However, changing it would be a major balance
            change (due to Elbereth), and so it has been left alone for now. */
-        if (property == BLINDED && !mon->mcansee)
+        if (property == BLINDED && (!mon->mcansee || mon->mblinded))
             rv |= W_MASK(os_timeout);
         if (property == FAST && mon->mspeed == MFAST)
             rv |= (mon->permspeed == FAST ?

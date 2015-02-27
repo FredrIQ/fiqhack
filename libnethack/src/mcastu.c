@@ -39,8 +39,8 @@ static int choose_clerical_spell(int);
 static void cast_wizard_spell(struct monst *, int, int);
 static void cast_cleric_spell(struct monst *, int, int);
 static boolean is_undirected_spell(unsigned int, int);
-static boolean spell_would_be_useless(struct monst *, unsigned int, int);
-static boolean uspell_would_be_useless(unsigned int, int);
+static boolean mmspell_would_be_useless(struct monst *, struct monst *,
+                                        unsigned int, int);
 static void ucast_wizard_spell(struct monst *, struct monst *, int, int);
 static void ucast_cleric_spell(struct monst *, struct monst *, int, int);
 
@@ -78,7 +78,7 @@ cursetxt(struct monst *mtmp, boolean undirected)
 
 
 /* convert a level based random selection into a specific mage spell;
-   inappropriate choices will be screened out by spell_would_be_useless() */
+   inappropriate choices will be screened out by mmspell_would_be_useless() */
 static int
 choose_magic_spell(int spellval)
 {
@@ -207,14 +207,16 @@ castmu(struct monst *mtmp, const struct attack *mattk, int allow_directed)
             /* not trying to attack? don't allow directed spells */
             if (!allow_directed) {
                 if (casting_directed ||
-                    spell_would_be_useless(mtmp, mattk->adtyp, spellnum)) {
+                    mmspell_would_be_useless(mtmp, &youmonst,
+                                             mattk->adtyp, spellnum)) {
                     return 0;
                 }
                 break;
             }
         } while (--cnt > 0 &&
                  ((casting_directed && !aware_of_u(mtmp)) ||
-                  spell_would_be_useless(mtmp, mattk->adtyp, spellnum)));
+                  mmspell_would_be_useless(mtmp, &youmonst,
+                                           mattk->adtyp, spellnum)));
         if (cnt == 0)
             return 0;
     }
@@ -331,10 +333,10 @@ castmu(struct monst *mtmp, const struct attack *mattk, int allow_directed)
 /*
    If dmg is zero, then the monster is not casting at you.
    If the monster is intentionally not casting at you, we have previously
-   called spell_would_be_useless() and spellnum should always be a valid
+   called mmspell_would_be_useless() and spellnum should always be a valid
    undirected spell.
    If you modify either of these, be sure to change is_undirected_spell()
-   and spell_would_be_useless().
+   and mmspell_would_be_useless().
  */
 static void
 cast_wizard_spell(struct monst *mtmp, int dmg, int spellnum)
@@ -730,130 +732,82 @@ is_undirected_spell(unsigned int adtyp, int spellnum)
 
 /* Some spells are useless under some circumstances. */
 static boolean
-spell_would_be_useless(struct monst *mtmp, unsigned int adtyp, int spellnum)
+mmspell_would_be_useless(struct monst *magr, struct monst *mdef,
+                         unsigned int adtyp, int spellnum)
 {
-    /* Some spells don't require the player to really be there and can be cast
-       by the monster when you're invisible, yet still shouldn't be cast when
-       the monster doesn't even think you're there. This check isn't quite
-       right because it always uses your real position. We really want
-       something like "if the monster could see mux, muy". */
-    boolean mcouldseeu = couldsee(mtmp->mx, mtmp->my);
+    /* Can the aggressor see the square it thinks the defender is on? */
+    int believed_mdef_mx = m_mx(mdef);
+    int believed_mdef_my = m_my(mdef);
+    if (mdef == &youmonst) {
+        believed_mdef_mx = magr->mux;
+        believed_mdef_my = magr->muy;
+    }
+    char **appropriate_vizarray = viz_array;
+    if (Engulfed && (magr == u.ustuck || mdef == u.ustuck))
+        appropriate_vizarray = NULL;
+
+    boolean believed_loe = clear_path(magr->mx, magr->my,
+                                      believed_mdef_mx, believed_mdef_my,
+                                      appropriate_vizarray);
+    boolean magr_peaceful = magr == &youmonst || magr->mpeaceful;
+    boolean magr_tame = magr == &youmonst || magr->mtame;
 
     if (adtyp == AD_SPEL) {
-        /* aggravate monsters, etc. won't be cast by peaceful monsters */
-        if (mtmp->mpeaceful &&
+        /* monster creation and aggravation either aren't properly symmetrical,
+           or would cause problems if they were */
+        if (magr_peaceful &&
             (spellnum == MGC_AGGRAVATION || spellnum == MGC_SUMMON_MONS ||
              spellnum == MGC_CLONE_WIZ))
             return TRUE;
         /* haste self when already fast */
-        if (mtmp->permspeed == MFAST && spellnum == MGC_HASTE_SELF)
+        if (m_has_property(magr, FAST, ANY_PROPERTY, TRUE) &&
+            spellnum == MGC_HASTE_SELF)
             return TRUE;
         /* invisibility when already invisible */
-        if ((mtmp->minvis || mtmp->invis_blkd) && spellnum == MGC_DISAPPEAR)
+        if (m_has_property(magr, INVIS, ANY_PROPERTY, TRUE) &&
+            spellnum == MGC_DISAPPEAR)
             return TRUE;
         /* peaceful monster won't cast invisibility if you can't see invisible,
            same as when monsters drink potions of invisibility.  This doesn't
            really make a lot of sense, but lets the player avoid hitting
            peaceful monsters by mistake */
-        if (mtmp->mpeaceful && !See_invisible && spellnum == MGC_DISAPPEAR)
+        if (magr != &youmonst && magr_peaceful && !See_invisible &&
+            spellnum == MGC_DISAPPEAR)
             return TRUE;
         /* healing when already healed */
-        if (mtmp->mhp == mtmp->mhpmax && spellnum == MGC_CURE_SELF)
+        if (m_mhp(magr) == m_mhpmax(magr) && spellnum == MGC_CURE_SELF)
             return TRUE;
         /* don't summon monsters if it doesn't think you're around */
-        if (!mcouldseeu &&
+        if (!believed_loe &&
             (spellnum == MGC_SUMMON_MONS ||
-             (!mtmp->iswiz && spellnum == MGC_CLONE_WIZ)))
+             (!magr->iswiz && spellnum == MGC_CLONE_WIZ)))
             return TRUE;
-        if ((!mtmp->iswiz || flags.no_of_wizards > 1)
+        if ((!magr->iswiz || flags.no_of_wizards > 1)
             && spellnum == MGC_CLONE_WIZ)
             return TRUE;
         /* spells that harm master while tame and not conflicted */
-        if (mtmp->mtame && !Conflict &&
+        if (magr_tame && !Conflict &&
             (spellnum == MGC_CURSE_ITEMS || spellnum == MGC_DISAPPEAR ||
              spellnum == MGC_DESTRY_ARMR))
             return TRUE;
 
     } else if (adtyp == AD_CLRC) {
-        /* summon insects/sticks to snakes won't be cast by peaceful monsters */
-        if (mtmp->mpeaceful && spellnum == CLC_INSECTS)
+        /* as with the summoning spells above */
+        if (magr_peaceful && spellnum == CLC_INSECTS)
             return TRUE;
         /* healing when already healed */
-        if (mtmp->mhp == mtmp->mhpmax && spellnum == CLC_CURE_SELF)
+        if (m_mhp(magr) == m_mhpmax(magr) && spellnum == CLC_CURE_SELF)
             return TRUE;
         /* don't summon insects if it doesn't think you're around */
-        if (!mcouldseeu && spellnum == CLC_INSECTS)
+        if (!believed_loe && spellnum == CLC_INSECTS)
             return TRUE;
-        /* blindness spell on blinded player */
-        if (Blinded && spellnum == CLC_BLIND_YOU)
-            return TRUE;
-        /* spells that harm master while tame and not conflicted */
-        if (mtmp->mtame && !Conflict && spellnum == CLC_CURSE_ITEMS)
-            return TRUE;
-    }
-    return FALSE;
-}
-
-static boolean
-mspell_would_be_useless(struct monst *mtmp, struct monst *mdef,
-                        unsigned int adtyp, int spellnum)
-{
-    if (adtyp == AD_SPEL) {
-        /* haste self when already fast */
-        if (mtmp->permspeed == MFAST && spellnum == MGC_HASTE_SELF)
-            return TRUE;
-        /* invisibility when already invisible */
-        if ((mtmp->minvis || mtmp->invis_blkd) && spellnum == MGC_DISAPPEAR)
-            return TRUE;
-        /* healing when already healed */
-        if (mtmp->mhp == mtmp->mhpmax && spellnum == MGC_CURE_SELF)
-            return TRUE;
-        /* don't summon monsters if it doesn't think you're around */
-        if ((!mtmp->iswiz || flags.no_of_wizards > 1)
-            && spellnum == MGC_CLONE_WIZ)
-            return TRUE;
-        if (spellnum == MGC_SUMMON_MONS)
-            return TRUE;
-    } else if (adtyp == AD_CLRC) {
-        /* healing when already healed */
-        if (mtmp->mhp == mtmp->mhpmax && spellnum == CLC_CURE_SELF)
-            return TRUE;
-        /* blindness spell on blinded player */
-        if ((!haseyes(mdef->data) || mdef->mblinded) &&
+        /* blindness spell on blinded target */
+        if ((m_has_property(mdef, BLINDED, ANY_PROPERTY, TRUE) ||
+             !haseyes(mdef->data)) &&
             spellnum == CLC_BLIND_YOU)
             return TRUE;
-    }
-    return FALSE;
-}
-
-static boolean
-uspell_would_be_useless(unsigned int adtyp, int spellnum)
-{
-    if (adtyp == AD_SPEL) {
-        /* aggravate monsters, etc. won't be cast by peaceful monsters */
-        if (spellnum == MGC_CLONE_WIZ)
-            return TRUE;
-        /* haste self when already fast */
-        if (Fast && spellnum == MGC_HASTE_SELF)
-            return TRUE;
-        /* invisibility when already invisible */
-        if ((HInvis & INTRINSIC) && spellnum == MGC_DISAPPEAR)
-            return TRUE;
-        /* healing when already healed */
-        if (u.mh == u.mhmax && spellnum == MGC_CURE_SELF)
-            return TRUE;
-        /* balance */
-        if (spellnum == MGC_SUMMON_MONS)
-            return TRUE;
-        /* spells that you rather wouldn't cast */
-        if (spellnum == MGC_CURSE_ITEMS || spellnum == MGC_DESTRY_ARMR)
-            return TRUE;
-    } else if (adtyp == AD_CLRC) {
-        /* healing when already healed */
-        if (u.mh == u.mhmax && spellnum == CLC_CURE_SELF)
-            return TRUE;
-        /* spells that you rather wouldn't cast */
-        if (spellnum == CLC_CURSE_ITEMS)
+        /* spells that harm master while tame and not conflicted */
+        if (magr_tame && !Conflict && spellnum == CLC_CURSE_ITEMS)
             return TRUE;
     }
     return FALSE;
@@ -911,7 +865,7 @@ castmm(struct monst *mtmp, struct monst *mdef, const struct attack *mattk)
                 spellnum = choose_clerical_spell(spellnum);
             /* not trying to attack? don't allow directed spells */
         } while (--cnt > 0 &&
-                 mspell_would_be_useless(mtmp, mdef, mattk->adtyp, spellnum));
+                 mmspell_would_be_useless(mtmp, mdef, mattk->adtyp, spellnum));
         if (cnt == 0)
             return 0;
     }
@@ -1056,13 +1010,15 @@ castum(struct monst *mtmp, const struct attack *mattk)
             /* not trying to attack? don't allow directed spells */
             if (!mtmp || mtmp->mhp < 1) {
                 if (is_undirected_spell(mattk->adtyp, spellnum) &&
-                    !uspell_would_be_useless(mattk->adtyp, spellnum)) {
+                    !mmspell_would_be_useless(&youmonst, mtmp,
+                                              mattk->adtyp, spellnum)) {
                     break;
                 }
             }
         } while (--cnt > 0 &&
                  ((!mtmp && !is_undirected_spell(mattk->adtyp, spellnum))
-                  || uspell_would_be_useless(mattk->adtyp, spellnum)));
+                  || mmspell_would_be_useless(&youmonst, mtmp,
+                                              mattk->adtyp, spellnum)));
         if (cnt == 0) {
             pline("You have no spells to cast right now!");
             return 0;
@@ -1175,10 +1131,10 @@ extern const int nasties[];
 /*
    If dmg is zero, then the monster is not casting at you.
    If the monster is intentionally not casting at you, we have previously
-   called spell_would_be_useless() and spellnum should always be a valid
+   called mmspell_would_be_useless() and spellnum should always be a valid
    undirected spell.
    If you modify either of these, be sure to change is_undirected_spell()
-   and spell_would_be_useless().
+   and mmspell_would_be_useless().
  */
 static void
 ucast_wizard_spell(struct monst *mattk, struct monst *mtmp, int dmg,

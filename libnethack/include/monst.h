@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-15 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -208,6 +208,8 @@ struct monst {
 # define m_mx(mon) ((mon) == &youmonst ? u.ux : (mon)->mx)
 # define m_my(mon) ((mon) == &youmonst ? u.uy : (mon)->my)
 # define m_mz(mon) ((mon) == &youmonst ? &u.uz : &((mon)->dlevel->z))
+# define m_mhp(mon) ((mon) == &youmonst ? u.uhp : (mon)->mhp)
+# define m_mhpmax(mon) ((mon) == &youmonst ? u.uhpmax : (mon)->mhpmax)
 # define m_mlev(mon) (Upolyd ? mons[u.umonnum].mlevel : (mon)->data->mlevel)
 
 /* Does a monster know where the player character is? Does it think it does? */
