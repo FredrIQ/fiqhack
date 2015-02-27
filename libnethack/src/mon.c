@@ -1903,12 +1903,20 @@ monkilled(struct monst *mdef, const char *fltxt, int how)
 {
     boolean be_sad = FALSE;     /* true if unseen pet is killed */
 
+    /* canseemon() normally returns false for a monster that's already died;
+       because this monster is in the process of dying, temporarily mark it as
+       alive */
+
+    int save_mhp = mdef->mhp;
+
+    mdef->mhp = 1;
     if (fltxt && canseemon(mdef))
         pline("%s is %s%s%s!", Monnam(mdef),
               nonliving(mdef->data) ? "destroyed" : "killed",
               *fltxt ? " by the " : "", fltxt);
     else
         be_sad = (mdef->mtame != 0);
+    mdef->mhp = save_mhp;
 
     /* no corpses if digested or disintegrated */
     if (how == AD_DGST || how == -AD_RBRE)
