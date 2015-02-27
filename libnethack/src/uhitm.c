@@ -102,8 +102,9 @@ attack_checks(struct monst *mtmp,
         return ac_somethingelse;
     }
 
-    /* If the character remembers an invisible monster on the square, then
-       if they're a pacifist they're not going to risk attacking it. */
+    /* Duplicate the check from hack.c that prevents moving onto an
+       invisible-monster I (for situations like applying a pickaxe at an
+       invisible-monster I, etc.). */
     if (level->locations[mtmp->mx][mtmp->my].mem_invis &&
         !UIM_AGGRESSIVE(uim)) {
         pline("You don't want to risk attacking something.");

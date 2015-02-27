@@ -1401,6 +1401,13 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
     bhitpos.y = y;
     tmpr = &level->locations[x][y];
 
+    /* If the character remembers an invisible monster on the square, then
+       if they're a pacifist they're not going to risk attacking it. */
+    if (level->locations[x][y].mem_invis && !UIM_AGGRESSIVE(uim)) {
+        pline("You don't want to risk attacking something.");
+        return 0;
+    }
+
     /* There's a monster here. Do we try to attack it?
 
        The logic here has been simplified from previous via not duplicating half
