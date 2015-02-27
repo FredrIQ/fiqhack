@@ -570,6 +570,11 @@ monster_detect(struct obj *otmp,        /* detecting object (if any) */
     struct monst *mtmp;
     int mcnt = 0;
 
+    /* Change for NetHack 4.3-beta2: this gives a lingering effect for a couple
+       of turns after the detection. Mostly, this is so that ASCII players who
+       don't use the mouse can get an opportunity to farlook the monsters they
+       detected. */
+    incr_itimeout(&HDetect_monsters, 3);
 
     /* Note: This used to just check level->monlist for a non-zero value but in 
        versions since 3.3.0 level->monlist can test TRUE due to the presence of 
