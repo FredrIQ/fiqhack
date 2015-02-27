@@ -1195,7 +1195,7 @@ num_extinctions(void)
     int i, n = 0;
 
     for (i = LOW_PM; i < NUMMONS; ++i)
-        if ((mvitals[i].mvflags & G_GONE) && !(mons[i].geno & G_UNIQ))
+        if ((mvitals[i].mvflags & G_EXTINCT) && !(mons[i].geno & G_UNIQ))
             ++n;
 
     return n;
@@ -1223,13 +1223,8 @@ list_genocided(char defquery, boolean ask)
     const char *query, *title, *buf;
     struct nh_menulist menu;
 
-    ngenocided = nextincted = 0;
-    for (i = LOW_PM; i < NUMMONS; ++i) {
-        if (mvitals[i].mvflags & G_GENOD)
-            ngenocided++;
-        if ((mvitals[i].mvflags & G_GONE) && !(mons[i].geno & G_UNIQ))
-            nextincted++;
-    }
+    ngenocided = num_genocides();
+    nextincted = num_extinctions();
 
     /* genocided species list */
     if (ngenocided != 0 || nextincted != 0) {
