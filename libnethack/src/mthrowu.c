@@ -631,19 +631,122 @@ thrwmq(struct monst *mtmp, int xdef, int ydef)
     action_interrupted();
 }
 
+/* Is a monster willing to attack with a compass beam in a given direction?
+
+   Returns TRUE and sets *mdef to a monster if there's a monster it wants to
+   attack (and no monster it doesn't want to attack). *mdef can be &youmonst.
+
+   If mdef is non-NULL, also set the tbx/tby globals for backwards compatibility
+   (clobbered on a *mdef == NULL return, appropriately otherwise). TODO: get rid
+   of these, they're really spaghetti.
+
+   Returns TRUE and sets *mdef to NULL if there's no reason it wants to attack
+   in that direction, but no reason it dislikes attacking in that direction
+   either.
+
+   Returns FALSE if the monster refuses to attack in that direction. In this
+   case, *mdef will be a monster that we don't want to attack (possibly
+   &youmonst). */
+boolean
+m_beam_ok(struct monst *magr, int dx, int dy, struct monst **mdef)
+{
+    int x = magr->mx;
+    int y = magr->my;
+    int i;
+    struct monst *mat;
+
+    if (mdef)
+        *mdef = NULL;
+
+    for (i = 0; i < BOLT_LIM; i++) {
+        x += dx;
+        y += dy;
+
+        /* Will the beam stop at this point? As usual, assume that monsters have
+           perfect knowledge of the level layout. */
+        if (!isok(x, y) || !ZAP_POS(level->locations[x][y].typ) ||
+            closed_door(level, x, y))
+            break;
+
+        /* Will the monster think that the beam will hit the player? Does it
+           care? Hostiles like to attack the player; peacefuls don't want to.
+           Pets have perfect knowledge of their master's location even if they
+           can't sense their master. Confused monsters can't aim a beam at the
+           player (or to avoid the player); no monster can hit an engulfed
+           player with a beam. */
+        if ((x == magr->mux && y == magr->muy && msensem(magr, &youmonst)) ||
+            (magr->mtame && x == u.ux && y == u.uy)) {
+            if (!Engulfed && !magr->mconf) {
+                if (mdef) {
+                    *mdef = &youmonst;
+                    tbx = x - magr->mx;
+                    tby = y - magr->my;
+                }
+
+                if (magr->mpeaceful && !Conflict)
+                    return FALSE;
+            }
+        }
+
+        mat = m_at(level, x, y);
+
+        /* special case: make sure we don't hit the quest leader with stray
+           beams, as it can make the game unwinnable; do this regardless of LOS
+           or hostility or Conflict or confusion or anything like that */
+        if (mat && mat->data->msound == MS_LEADER) {
+            if (mdef)
+                *mdef = mat;
+            return FALSE;
+        }
+
+        /* Confused monsters aren't trying to target anything in particular,
+           because they don't have full control of their actions. Monsters won't
+           intentionally aim at or to avoid a monster they can't see (apart from
+           the above MS_LEADER case). */
+        if (mat && (msensem(magr, mat) & ~MSENSE_ITEMMIMIC) && !magr->mconf) {
+            /* Note: the couldsee() here is an LOE check and has nothing to
+               do with vision; it determines conflict radius */
+            if (Conflict && !resist(magr, RING_CLASS, 0, 0) &&
+                couldsee(magr->mx, magr->my) &&
+                distu(magr->mx, magr->my) <= BOLT_LIM * BOLT_LIM) {
+                /* we're conflicted, anything is a valid target */
+                if (mdef) {
+                    *mdef = mat;
+                    tbx = x - magr->mx;
+                    tby = y - magr->my;
+                }
+            } else if (mm_aggression(magr, mat) & ALLOW_M) {
+                /* we want to attack this monster */
+                if (mdef) {
+                    *mdef = mat;
+                    tbx = x - magr->mx;
+                    tby = y - magr->my;
+                }
+            } else if (magr->mpeaceful || mat->mpeaceful) {
+                /* we don't want to attack this monster; peacefuls (including
+                   pets) should avoid collateral damage; also handles the
+                   pet_attacks_up_to_difficulty checks; symmetrised so that
+                   hostiles won't attack pets who won't attack them */
+                if (mdef)
+                    *mdef = mat;
+                return FALSE;
+            }
+        }
+    }
+
+    return TRUE;
+}
+
 /* Find a target for a ranged attack. */
 struct monst *
 mfind_target(struct monst *mtmp)
 {
-    int dirx[8] = { 0, 1, 1, 1, 0, -1, -1, -1 }, diry[8] = {
-    1, 1, 0, -1, -1, -1, 0, 1};
+    int dirx[8] = { 0, 1, 1, 1, 0, -1, -1, -1 },
+        diry[8] = { 1, 1, 0, -1, -1, -1, 0, 1 };
 
     int dir, origdir = -1;
-    int x, y, dx, dy;
 
-    int i;
-
-    struct monst *mat, *mret;
+    struct monst *mret;
 
     if (!mtmp->mpeaceful && lined_up(mtmp))
         return &youmonst;     /* kludge - attack the player first if possible */
@@ -652,68 +755,11 @@ mfind_target(struct monst *mtmp)
         if (origdir < 0)
             origdir = dir;
 
-        mret = (struct monst *)0;
-
-        x = mtmp->mx;
-        y = mtmp->my;
-        dx = dirx[dir];
-        dy = diry[dir];
-        for (i = 0; i < BOLT_LIM; i++) {
-            x += dx;
-            y += dy;
-
-            tbx = (x - mtmp->mx);
-            tby = (y - mtmp->my);
-
-            if (!isok(x, y) || !ZAP_POS(level->locations[x][y].typ) ||
-                closed_door(level, x, y))
-                break;  /* off the map or otherwise bad */
-
-            if ((mtmp->mpeaceful && (x == mtmp->mux && y == mtmp->muy)) ||
-                (mtmp->mtame && x == u.ux && y == u.uy)) {
-                mret = (struct monst *)0;
-                break;  /* don't attack you if peaceful */
-            }
-
-            if (((mat = m_at(level, x, y))) &&
-                (msensem(mtmp, mat) & ~MSENSE_ITEMMIMIC)) {
-                /* i > 0 ensures this is not a close range attack
-
-                   Note: the couldsee() here is an LOE check and has nothing to
-                   do with vision; if your pet doesn't have LOE on you, it knows
-                   it can't hit you with a directed attack, so it won't bother
-                   about trying to avoid you. */
-                if ((mm_aggression(mtmp, mat) & ALLOW_M) ||
-                    (Conflict && !resist(mtmp, RING_CLASS, 0, 0) &&
-                     couldsee(mtmp->mx, mtmp->my) &&
-                     distu(mtmp->mx, mtmp->my) <= BOLT_LIM * BOLT_LIM)) {
-                    if (mtmp->mtame && !Conflict &&
-                        ((int)mat->m_lev >= (int)mtmp->m_lev + 2 || mat->mtame
-                         ||
-                         ((mtmp->mhp * 4 < mtmp->mhpmax ||
-                           mat->data->msound == MS_GUARDIAN ||
-                           mat->data->msound == MS_LEADER) &&
-                          mat->mpeaceful))) {
-                        mret = (struct monst *)0;
-                        break;  /* not willing to attack in that direction */
-                    }
-
-                    /* Can't make some pairs work together if they hate each
-                       other on principle. */
-                    if (Conflict || !(mtmp->mtame && mat->mtame) ||
-                        (!rn2(5) && i > 0))
-                        mret = mat;
-                }
-
-                if (mtmp->mtame && mat->mtame) {
-                    mret = NULL;
-                    break;      /* Not going to hit friendlies unless they
-                                   already hate them, as above. */
-                }
-            }
+        if (m_beam_ok(mtmp, dirx[dir], diry[dir], &mret) && mret) {
+            /* also check for a bounce */
+            if (m_beam_ok(mtmp, -dirx[dir], -diry[dir], NULL))
+                return mret;
         }
-        if (mret != NULL)
-            return mret;        /* nothing friendly in that direction */
     }
 
     /* Nothing lined up? */
@@ -832,70 +878,24 @@ linedup(xchar ax, xchar ay, xchar bx, xchar by)
 static boolean
 qlined_up(struct monst *mtmp, int ax, int ay, boolean breath)
 {
-    struct monst *mat;
-
     boolean lined_up = linedup(ax, ay, mtmp->mx, mtmp->my);
 
     int dx = sgn(ax - mtmp->mx), dy = sgn(ay - mtmp->my);
 
-    int x = mtmp->mx, y = mtmp->my;
+    if (!lined_up)
+        return FALSE;
 
-    int i = 10; /* arbitrary */
-
-    /* No special checks if confused - can't tell friend from foe. Likewise if
-       conflicted. */
-    if (!lined_up || mtmp->mconf || !mtmp->mtame || Conflict)
-        return lined_up;
-
-    if (mtmp->mpeaceful) {
-        /* Peaceful monsters will check for friendlies in the line of fire. */
-        for (; i > 0; --i) {
-            x += dx;
-            y += dy;
-            if (!isok(x, y))
-                break;
-
-            if (x == u.ux && y == u.uy)
-                return FALSE;
-
-            if (!breath && x == ax && y == ay)
-                return lined_up;
-
-            if ((mat = m_at(level, x, y))) {
-
-                /* Don't hit friendlies */
-                if (mat->mtame)
-                    return FALSE;
-            }
-        }
-
-        /* ...and behind the line of fire, in case of bounces. */
-        i = 10;
-        x = mtmp->mx;
-        y = mtmp->my;
-        for (; i > 0; --i) {
-            x -= dx;
-            y -= dy;
-            if (!isok(x, y))
-                break;
-
-            if (x == u.ux && y == u.uy)
-                return FALSE;
-
-            if ((mat = m_at(level, x, y))) {
-
-                /* Don't hit friendlies */
-                if (mat->mtame)
-                    return FALSE;
-            }
-        }
-    }
+    /* Ensure that this is a reasonable direction to attack in. We check in
+       front of the monster, and also behind in case of bounces. */
+    if (!m_beam_ok(mtmp, dx, dy, NULL) ||
+        (breath && !m_beam_ok(mtmp, -dx, -dy, NULL)))
+        return FALSE;
     /* We should really check for right-angle bounces too, but that's pretty
        difficult given the code. (Monsters never intentionally bounce attacks
        off walls, incidentally.) Let's just hope it doesn't happen; it isn't
        massively bad if it does, except for frustrating the player slightly. */
 
-    return lined_up;
+    return TRUE;
 }
 
 /* is mtmp in position to use ranged attack?

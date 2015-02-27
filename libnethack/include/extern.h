@@ -1186,6 +1186,7 @@ extern void thrwmq(struct monst *, int, int);
 extern int spitmq(struct monst *, int, int, const struct attack *);
 extern int breamq(struct monst *, int, int, const struct attack *);
 extern struct monst *mfind_target(struct monst *);
+extern boolean m_beam_ok(struct monst *, int, int, struct monst **);
 extern boolean linedup(xchar, xchar, xchar, xchar);
 extern boolean lined_up(struct monst *);
 extern struct obj *m_carrying(const struct monst *, int);
