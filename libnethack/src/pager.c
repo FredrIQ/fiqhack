@@ -305,10 +305,13 @@ describe_mon(int x, int y, int monnum, char *buf)
         bhitpos.x = x;
         bhitpos.y = y;
 
-        if (mtmp->data == &mons[PM_COYOTE] && accurate)
+        if (mtmp->data == &mons[PM_COYOTE] && accurate && !mtmp->mpeaceful)
             name = an(coyotename(mtmp));
         else
-            name = distant_monnam(mtmp, ARTICLE_A);
+            name = distant_monnam(
+                mtmp, (mtmp->mtame && accurate) ? "tame" :
+                (mtmp->mpeaceful && accurate) ? "peaceful" : NULL,
+                ARTICLE_A);
 
         boolean spotted = canspotmon(mtmp);
 
@@ -321,10 +324,9 @@ describe_mon(int x, int y, int monnum, char *buf)
                panics; just put up an obvious message instead */
             name = "a <BUG: monster both seen and unseen>";
 
-        sprintf(buf, "%s%s%s",
-                (mtmp->mx != x || mtmp->my != y) ? "tail of " : "",
-                (mtmp->mtame && accurate) ? "tame " :
-                (mtmp->mpeaceful && accurate) ? "peaceful " : "", name);
+        snprintf(buf, BUFSZ-1, "%s%s",
+                (mtmp->mx != x || mtmp->my != y) ? "tail of " : "", name);
+        buf[BUFSZ-1] = '\0';
         if (u.ustuck == mtmp)
             strcat(buf,
                    (Upolyd &&

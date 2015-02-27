@@ -78,7 +78,7 @@ do_mname(const struct nh_cmd_arg *arg)
     }
 
     /* special case similar to the one in lookat() */
-    qbuf = distant_monnam(mtmp, ARTICLE_THE);
+    qbuf = distant_monnam(mtmp, NULL, ARTICLE_THE);
     qbuf = msgprintf("What do you want to call %s?", qbuf);
     buf = getarglin(arg, qbuf);
     if (!*buf || *buf == '\033')
@@ -87,7 +87,7 @@ do_mname(const struct nh_cmd_arg *arg)
     buf = msgmungspaces(buf);
 
     if (mtmp->data->geno & G_UNIQ) {
-        qbuf = msgupcasefirst(distant_monnam(mtmp, ARTICLE_THE));
+        qbuf = msgupcasefirst(distant_monnam(mtmp, NULL, ARTICLE_THE));
         pline("%s doesn't like being called names!", qbuf);
     } else
         christen_monst(mtmp, buf);
@@ -752,7 +752,7 @@ Amonnam(const struct monst *mtmp)
    identification of the endgame altars via their attending priests */
 /* article: only ARTICLE_NONE and ARTICLE_THE are handled here */
 const char *
-distant_monnam(const struct monst *mon, int article)
+distant_monnam(const struct monst *mon, const char *adjective, int article)
 {
     /* high priest(ess)'s identity is concealed on the Astral Plane, unless
        you're adjacent (overridden for hallucination which does its own
@@ -763,7 +763,7 @@ distant_monnam(const struct monst *mon, int article)
         return msgcat(article == ARTICLE_THE ? "the " : "",
                       mon->female ? "high priestess" : "high priest");
     } else {
-        return x_monnam(mon, article, NULL, 0, TRUE);
+        return x_monnam(mon, article, adjective, 0, TRUE);
     }
 }
 

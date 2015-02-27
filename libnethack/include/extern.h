@@ -355,7 +355,7 @@ extern const char *y_monnam(const struct monst *);
 extern const char *Adjmonnam(const struct monst *, const char *);
 extern const char *Amonnam(const struct monst *);
 extern const char *a_monnam(const struct monst *);
-extern const char *distant_monnam(const struct monst *, int);
+extern const char *distant_monnam(const struct monst *, const char *, int);
 extern const char *k_monnam(const struct monst *);
 extern const char *s_suffix(const char *);
 extern int rndmonidx(void);
