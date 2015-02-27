@@ -690,12 +690,6 @@ trap_detect(struct obj *sobj)
     }
     for (door = 0; door < level->doorindex; door++) {
         cc = level->doors[door];
-        /* make the door, and its trapped status, show up on the player's
-           memory */
-        if (!sobj || !sobj->cursed) {
-            level->locations[cc.x][cc.y].mem_door_t = 1;
-            map_background(cc.x, cc.y, FALSE);
-        }
         if (level->locations[cc.x][cc.y].doormask & D_TRAPPED) {
             if (cc.x != u.ux || cc.y != u.uy)
                 goto outtrapmap;
@@ -726,8 +720,14 @@ outtrapmap:
 
     for (door = 0; door < level->doorindex; door++) {
         cc = level->doors[door];
-        if (level->locations[cc.x][cc.y].doormask & D_TRAPPED)
-            sense_trap(NULL, cc.x, cc.y, sobj && sobj->cursed);
+        /* make the door, and its trapped status, show up on the player's
+           memory */
+        if (!sobj || !sobj->cursed) {
+            if (level->locations[cc.x][cc.y].doormask & D_TRAPPED) {
+                level->locations[cc.x][cc.y].mem_door_t = 1;
+                map_background(cc.x, cc.y, TRUE);
+            }
+        }
     }
 
     newsym(u.ux, u.uy);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-12-27 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -637,8 +637,7 @@ curses_print_message_nonblocking(int turn, const char *inmsg)
 }
 
 /* Prints a message to the message history with the expectation it will be
- * erased later.
- */
+   erased later. */
 void
 curses_temp_message(const char *msg)
 {
@@ -646,7 +645,7 @@ curses_temp_message(const char *msg)
 }
 
 /* Clear the temporary messages from the buffer. Assumes that they are
- * contiguous at the end. */
+   contiguous at the end. */
 void
 curses_clear_temp_messages(void)
 {

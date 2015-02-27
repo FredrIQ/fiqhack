@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-11 */
+/* Last modified by Alex Smith, 2015-02-27 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -169,12 +169,17 @@ curses_inline_query(const char *msg, int (*validator)(int, void*),
     }
 
     /* We use a temporary message as the game will send a summary of the
-     * decision along later. */
+       decision along later. */
     curses_temp_message(msg);
     draw_msgwin();
 
     /* We do not respect cursor_visible here, since we want the cursor focused
-     * on the prompt. */
+       on the prompt. We need to leave a space after it, though. */
+    int y, x;
+    getyx(msgwin, y, x);
+    if (x < COLNO - 1)
+        wmove(msgwin, y, x + 1);
+
     int rv = -1;
     while (rv == -1)
         rv = validator(nh_wgetch(msgwin, context), arg);
