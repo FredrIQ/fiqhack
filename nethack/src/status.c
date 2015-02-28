@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Nathan Eady, 2014-12-17 */
+/* Last modified by Alex Smith, 2015-02-28 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -116,7 +116,7 @@ static const struct {
       { "Ranged", CLR_GREEN, -1 },
       { "Unarmed", CLR_MAGENTA, -1 },
       { "NonWeap", CLR_ORANGE, -1 },
-      { "Stone", CLR_YELLOW, -1 },
+      { "cWielded", CLR_YELLOW, -1 },
       { "Lev", CLR_BROWN, -1 },
       { "Fly", CLR_GREEN, -1 },
       /* trapped */

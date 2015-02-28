@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Nathan Eady, 2014-12-17 */
+/* Last modified by Alex Smith, 2015-02-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -306,7 +306,7 @@ make_player_info(struct nh_player_info *pi)
     else if (uwep && is_launcher(uwep))
         strncpy(pi->statusitems[pi->nr_items++], "Ranged", ITEMLEN);
     else if (uwep && (uwep->otyp == CORPSE) && (touch_petrifies(&mons[uwep->corpsenm])))
-        strncpy(pi->statusitems[pi->nr_items++], "Stone", ITEMLEN);
+        strncpy(pi->statusitems[pi->nr_items++], "cWielded", ITEMLEN);
     else if (!uwep)
         strncpy(pi->statusitems[pi->nr_items++], "Unarmed", ITEMLEN);
     else if (!is_wep(uwep))
