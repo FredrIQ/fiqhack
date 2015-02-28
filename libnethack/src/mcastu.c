@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-02-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -766,6 +766,11 @@ mmspell_would_be_useless(struct monst *magr, struct monst *mdef,
         /* invisibility when already invisible */
         if (m_has_property(magr, INVIS, ANY_PROPERTY, TRUE) &&
             spellnum == MGC_DISAPPEAR)
+            return TRUE;
+        /* invisibility when wearing a mummy wrapping */
+        if (spellnum == MGC_DISAPPEAR &&
+            ((magr == &youmonst && BInvis) ||
+             (magr != &youmonst && magr->invis_blkd)))
             return TRUE;
         /* peaceful monster won't cast invisibility if you can't see invisible,
            same as when monsters drink potions of invisibility.  This doesn't
