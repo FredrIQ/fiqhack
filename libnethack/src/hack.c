@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-02-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1456,9 +1456,12 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
                interaction mode all the way up to "indiscriminate". This is
                necessary to avoid double peaceful prompts (and also in the
                dubious situation where there's an invisible-monster I over a
-               peaceful mimic). */
+               peaceful mimic). Don't downgrade "forcefight", in case there's no
+               visible monster there at all. */
             attack_status = attack(mtmp, turnstate.move.dx,
-                                   turnstate.move.dy, uim_indiscriminate);
+                                   turnstate.move.dy,
+                                   uim == uim_forcefight ? uim :
+                                   uim_indiscriminate);
             if (attack_status != ac_continue)
                 return attack_status != ac_cancel;
 

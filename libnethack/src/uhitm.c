@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-02-28 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -89,6 +89,7 @@ attack_checks(struct monst *mtmp,
        and gets surprised. */
     if (!canspotmonoritem(mtmp) && !warning_at(u.ux + dx, u.uy + dy) &&
         !level->locations[u.ux + dx][u.uy + dy].mem_invis &&
+        !knownwormtail(u.ux + dx, u.uy + dy) &&
         !(!Blind && mtmp->mundetected && hides_under (mtmp->data))) {
         pline("Wait!  There's something there you can't see!");
         map_invisible(u.ux + dx, u.uy + dy);
@@ -314,7 +315,10 @@ attack(struct monst * mtmp, schar dx, schar dy, enum u_interaction_mode uim)
        it ourselves in order that the caller doesn't have to. If the caller has
        done a check already, they should set the interaction mode to
        "indiscriminate" in order to avoid the second check causing problems
-       (it's always going to return ac_continue if the first check did). */
+       (it's always going to return ac_continue if the first check did).
+
+       Exception: "forcefight" will sometimes return ac_continue in cases when
+       "indiscriminate" returns ac_somethingelse. */
     ret = attack_checks(mtmp, uwep, dx, dy, uim);
     if (ret != ac_continue)
         return ret;
