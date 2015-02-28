@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-02 */
+/* Last modified by Alex Smith, 2015-02-28 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -126,7 +126,7 @@ load_png_file_to_texture(const char *filename, int *w, int *h)
     int bit_depth, color_type, interlace_type, has_alpha, i;
 
     SDL_Surface *surface = NULL;
-    SDL_Texture *rv = NULL;
+    SDL_Texture *volatile rv = NULL;
 
     /* The pointers are volatile. What they point to isn't. */
     unsigned char *volatile pixeldata = NULL;

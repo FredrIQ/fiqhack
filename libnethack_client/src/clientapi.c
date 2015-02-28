@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-15 */
+/* Last modified by Alex Smith, 2015-02-28 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -99,7 +99,7 @@ nhnet_list_games(int done, int show_all, int *count)
     int i;
     json_t *jmsg, *jarr, *jobj;
     struct nhnet_game *gb;
-    struct nhnet_game *gamebuf = NULL;
+    struct nhnet_game *volatile gamebuf = NULL;
     const char *plname, *plrole, *plrace, *plgend, *plalign, *game_state;
 
     *count = 0; /* if we error out, we want this to be initialized */
@@ -284,7 +284,7 @@ nhnet_get_commands(int *count)
 {
     int i, defkey, altkey;
     json_t *jmsg, *jarr, *jobj;
-    struct nh_cmd_desc *cmdlist = NULL;
+    struct nh_cmd_desc *volatile cmdlist = NULL;
     const char *name, *desc;
 
     if (!nhnet_active())
@@ -327,7 +327,7 @@ nhnet_get_object_commands(int *count, char invlet)
 {
     int i, defkey, altkey;
     json_t *jmsg, *jarr, *jobj;
-    struct nh_cmd_desc *cmdlist = NULL;
+    struct nh_cmd_desc *volatile cmdlist = NULL;
     const char *name, *desc;
 
     if (!nhnet_active())
