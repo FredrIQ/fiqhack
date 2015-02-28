@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-04 */
+/* Last modified by Alex Smith, 2015-02-28 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1902,11 +1902,6 @@ load_gamestate_from_binary_save(boolean maybe_old_version)
 {
     struct memfile mf;
     const char *mequal_message;
-
-    /* For the time being, there are no compatible old versions, thus we can
-       safely force maybe_old_version to FALSE for even more aggressive error
-       detection. */
-    maybe_old_version = FALSE;
 
     /* Load the saved game. */
     program_state.gamestate_location = program_state.binary_save_location;
