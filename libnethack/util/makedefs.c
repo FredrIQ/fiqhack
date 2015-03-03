@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2015-03-03 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) M. Stephenson, 1990, 1991.                       */
 /* Copyright (c) Dean Luick, 1990.                                */
@@ -881,7 +881,7 @@ do_readonly(const char *outfile)
        UTC offsets. (This also avoids exploits due to timezones with malicious
        DST rules; timezones are under user control on some systems.)
        
-       We support timezones from UTC-1300 to UTC+1300 in 15 minute intervals. I
+       We support timezones from UTC-1200 to UTC+1400 in 15 minute intervals. I
        think that's sufficient to cover the entire world (if I've missed a
        country near the dateline or one with a weird offset, let me
        know). Allowing the range to be too wide allows some silly
@@ -892,7 +892,7 @@ do_readonly(const char *outfile)
        making this a birth option cuts down on timezone-related shenanigans. */
     fprintf(ofp, "\nconst struct nh_listitem timezone_list[] = {\n");
     fprintf(ofp, "    {0, \"UTC\"},\n");
-    for (i = -3600 * 13; i <= 3600 * 13; i += 3600 / 4) {
+    for (i = -3600 * 12; i <= 3600 * 14; i += 3600 / 4) {
         if (i == 0)
             continue;
         fprintf(ofp, "    {%d, \"UTC%c%02d%02d\"},\n", i,
