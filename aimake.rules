@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2015-02-03
+# Last modified by Alex Smith, 2015-03-07
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -14,6 +14,17 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
         packagename_text => 'NetHack 4',
         packageversion => '4.3.beta2',
         companyname => 'NetHack 4 DevTeam',
+        AM_CPPFLAGS => '-DNETCLIENT -D_REENTRANT',
+        CFLAGS => '-Wall -Wextra -fdiagnostics-show-option -O2 -g',
+        AM_CFLAGS => '-Wno-missing-field-initializers '.
+                     # These warnings are probably worth fixing eventually,
+                     # but have too many false positives to be able to show
+                     # them right now
+                     '-Wno-unused-parameter -Wno-sign-compare '.
+                     '-Wold-style-definition -Wstrict-prototypes '.
+                     '-Wmissing-prototypes -Wmissing-declarations '.
+                     '-Wpointer-arith',
+        CXXFLAGS => '-Wall -Wextra -Wmissing-declarations -Wpointer-arith -O2 -g',
     },
     features => {
         server => {
@@ -83,12 +94,9 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
         },
     },
     rules => {
-        _iflags => {
-            object => 'optionset:IFLAGS',
-            depends => [
-                'optstring:-DNETCLIENT',
-            ],
-            verb => 'determined',
+        _use_c11 => {
+            object => 'optionset:CFLAGS',
+            depends => ['optionset:c11_option', 'optionset:define_noreturn'],
         },
         _xopen_linux => {
             object => 'optionset:CFLAGS',
@@ -107,39 +115,6 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
             command => ['intcmd:assert_equal', 'optstring:darwin', "optstring:$^O"],
             depends => 'optstring:-D_DARWIN_C_SOURCE',
             on_failure => 'conditional'
-        },
-        _cflags => {
-            object => 'optionset:CFLAGS',
-            depends => [
-                'optionset:c11_option',
-                'optionset:define_noreturn',
-                'optstring:-fdiagnostics-show-option',
-                'optstring:-Wall',
-                'optstring:-Wextra',
-                'optstring:-Wno-missing-field-initializers',
-                # These warnings are probably worth fixing eventually,
-                # but have too many false positives to be able to show
-                # them right now
-                'optstring:-Wno-unused-parameter',
-                'optstring:-Wno-sign-compare',
-                'optstring:-Wold-style-definition',
-                'optstring:-Wstrict-prototypes',
-                'optstring:-Wmissing-prototypes',
-                'optstring:-Wmissing-declarations',
-                'optstring:-Wpointer-arith',
-                'optstring:-D_REENTRANT',
-            ],
-            verb => 'determined',
-        },
-        _cxxflags => {
-            object => 'optionset:CXXFLAGS',
-            depends => [
-                'optstring:-Wall',
-                'optstring:-Wextra',
-                'optstring:-Wmissing-declarations',
-                'optstring:-Wpointer-arith',
-            ],
-            verb => 'determined',
         },
         _libraries => {
             output => ['searchlib:z:symbol:compress',

@@ -212,7 +212,7 @@ B<--gen-installer> option.  This option will set most other options
 accordingly for the platform, and so the other options typically won't be
 needed.  One that might be is B<--with>/B<--without>; if you disable a
 feature, it won't be built and the installer won't install it, but if you
-enable a feature, some installes will still be able to give the option to not
+enable a feature, some installers will still be able to give the option to not
 install the feature (even though it has been built).
 
 Generating an installer needs more dependencies than merely building.  Here
@@ -225,7 +225,7 @@ are the various installer formats, and the dependencies they need:
 Generates a Windows Installer package, for use on Microsoft Windows.  (This
 should theoretically work on Windows 2000 SP3 and up, but full functionality
 will not be available in versions before Vista, and this has only been tested
-on Windows 8.1.)  This requires you to install L<http://wixtoolset.org/|WiX>,
+on Windows 8.1.)  This requires you to install L<WiX|http://wixtoolset.org/>,
 an installer generator toolkit for Windows (and to place its binaries on your
 PATH).
 
@@ -241,6 +241,61 @@ It is highly unlikely that this option will work unless you're running on a
 Windows system yourself.
 
 =back
+
+=item B<--var> I<key>=I<value>
+
+The B<--var> option makes it possible to easily override some commonly
+overriden options.  If this option is not given, the default is taken from the
+environment variable of the same name, (failing that) defaults specified by
+the project you are compiling, and (failing that) a default value provided by
+aimake:
+
+=over 4
+
+=item CC
+
+The C compiler toolchain to use (normally C<gcc> or C<clang>).  This must be
+the name of a command that exists on your system, and compiles C with the
+B<-c> option, preprocesses it with the B<-E> option, etc..  The default is
+F<gcc>.
+
+=item CXX
+
+Like B<CC>, but for C++.  The default is F<g++>.
+
+=item CPP
+
+Overrides the C and C++ preprocessor to use.  The default is whatever program
+is indicated by B<CC>, with the B<-E> option.
+
+=item CFLAGS
+
+Command-line arguments to use when building C programs.  The default is B<-g
+-O2 -Wall>.  (aimake will also add a few extra options of its own, depending
+on your platform, in order to ensure that the build works correctly.)
+
+=item CXXFLAGS
+
+Command-line arguments to use when building C++ programs.  The default is B<-g
+-O2 -Wall>.
+
+=item CPPFLAGS
+
+Command-line arguments to use when preprocessing C or C++.  The default is to
+give no options besides those required for aimake to function correctly.
+
+=item LFLAGS
+
+Command-line arguments to use when linking.  The default is to use no special
+options.  (Note that you don't need to, and shouldn't, include the B<-l>
+options that specify dependencies on libraries; aimake should figure those out
+by itself.)
+
+=back
+
+Note that this option is I<not> "sticky"; the value has to be given anew with
+every compilation, or it will revert to its default.  (In particular, it's not
+useful to give it alongside B<--config-only>.)
 
 =item B<-W> I<regexp>, B<--show-warnings>=I<regexp>
 
@@ -315,6 +370,11 @@ F<C:\Program Files\packagename>, for read-only files) or CSIDL_COMMON_APPDATA
 (for read-write files) as appropriate, as is standard for system-wide installs
 on Windows.  This option does not work on other operating sysems, which lack
 the appropriate system calls for locating these known folders.
+
+=item prefix
+
+Attempt to emulate the directory layout behaviour of autoconf and similar
+build systems.
 
 =item single_directory
 
@@ -398,7 +458,8 @@ may be able to build both a command-line program and a GUI program); this
 option lets you select which features you want (B<--with>) and/or don't want
 (B<--without>).  These options are "sticky"; they are saved in
 F<aimake.objects>, and so persist into future runs of aimake in the same
-directory.  If you want to reset such an option to its default value, use
+directory.  If you want to remove the persistence of such an option, causing
+it to fall back to and respect changes to its default value, use
 B<--with-default>.
 
 The list of features that are supported by this option varies depending on
@@ -436,6 +497,10 @@ C<sys:always_rebuild>.  This is used by aimake internally when it elevates
 permissions.  Note that if the build is not fully up to date, this may lead to
 only a partial install.
 
+Pretty much the only reason to use this manually is immediately after running
+aimake with no B<-i> option, perhaps with elevated permissions, in cases where
+you have a reason to separate the build and install steps.
+
 =item B<--dump-status>
 
 =item B<--dump-status=subset>
@@ -458,7 +523,7 @@ Causes aimake to do nothing but record persistent options in the statefile. This
 lets you incorporate aimake into build systems that expect a "configure, make,
 sudo make install" workflow, e.g.:
 
-    ../aimake --config-only -i prefix
+    ../aimake --config-only -i /usr/local
     ../aimake
     sudo ../aimake --install-only -i
 
@@ -467,21 +532,21 @@ successfully as root; normally it refuses to be run with root permissions.
 
 =item B<--local-config>=F<file>
 
-In addition to the local configuration (unless C<--ignore-builtin-config> is
+In addition to the built-in configuration (unless C<--ignore-builtin-config> is
 used), C<aimake.rules>, and C<aimake.local>, also read configuration from the
 given file.  This option can be given any number of times.
 
 =item B<--ignore-builtin-config>
 
 Ignore all the built-in rules and options, reading configuration only from the
-project-specific configuration file.  aimake only has minimal functionality
-with no rules (for instance, it will not even check for changes to files in
-the source directory), and as such, this is mostly only useful for testing
-aimake, or if you want to use aimake's engine for something radically
-different from compiling C and have a complex configuration file handy for
-that alternative use.  (The built-in directory layouts are not ignored, but
-they will not be used for anything if directory_layout is set to something
-other than a built-in directory layout.)
+project-specific configuration file and B<--local-config> options.  aimake
+has only minimal functionality with no rules (for instance, it will not even
+check for changes to files in the source directory), and as such, this is
+mostly only useful for testing aimake, or if you want to use aimake's engine
+for something radically different from compiling C and have a complex
+configuration file handy for that alternative use.  (The built-in directory
+layouts are not ignored, but they will not be used for anything if
+directory_layout is set to something other than a built-in directory layout.)
 
 =item B<--specific-exit-status>
 
@@ -702,6 +767,9 @@ typedef:
     typedef char *char_p;
     char_p AIMAKE_EXPORT(function_returning_a_string)(void) /* exported */
 
+(The C<AIMAKE_IMPORT>/C<AIMAKE_EXPORT> API is potentially subject to change, in
+case I find a notation that avoids this problem.)
+
 In addition to C<AIMAKE_IMPORT> and C<AIMAKE_EXPORT>, there are also
 C<AIMAKE_REVERSE_IMPORT> and C<AIMAKE_REVERSE_EXPORT>, which mark symbols that
 exist in the file using the library, and are used by the library (rather than
@@ -737,8 +805,8 @@ shared library).  The name of the library will be based on the common prefix
 of the source files that export symbols in the library (so, e.g., if they have
 wildly varying filenames but are all in the same directory, it will be named
 after the directory).  As an exception, directories called F<src> are ignored
-for naming purposes, because that name is very commonly used to hold source
-files.
+for naming purposes, because that name is very commonly used when source files
+and include files are separated into different directories.
 
 Shared libraries often have an OS-specific versioning system.  When exporting
 symbols, you can specify a version number for the shared library they create,
@@ -805,7 +873,7 @@ to an operating system.  But it's included for completeness.
 
 Library functions.  If you install any libraries, you can use this section to
 document your libraries' APIs.  Note that it is traditional to append some
-letters to the end of the 3 for languages other than C; for example, perl
+letters to the end of the 3 for languages other than C; for example, Perl
 modules tend to be in section C<3pm>, and TCL functions in C<3tcl>.  Usual
 practice is to have one manual page for each group of closely related
 functions; in languages with packages or namespaces, documenting one package
@@ -866,16 +934,17 @@ user to accept it), and also install it as "license.rtf" in C<docdir>.
 In addition to changing the source and headers that make up your project, it
 is also possible to add a project-specific configuration file, that contains
 configuration options or rules overrides.  This should be a file named
-F<aimake.rules> in the source directory.  (A second file, named aimake.local,
-can also be used; the idea is that aimake.rules can be kept under version
-control and provided by the project authors, with aimake.local used for local
-changes.  You can also use C<--local-config> to add further configuration
-files.)  Here's a sample configuration:
+F<aimake.rules> in the source directory.  (A second file, named
+F<aimake.local>, can also be used; the idea is that F<aimake.rules> can be
+kept under version control and provided by the project authors, with
+F<aimake.local> used for local changes.  You can also use C<--local-config> to
+add further configuration files.)  Here's a sample configuration:
 
     {
         options => {
             packagename => 'example',
             packageversion => '1.0.0',
+            CFLAGS => '-Wall -Wextra -g -O2',
         },
         features => {
             gui => {
@@ -887,10 +956,6 @@ files.)  Here's a sample configuration:
         rules => {
             _libraries => {
                 output => ['searchlib:some_unusual_library:symbol:foo'],
-            },
-            _cflags => {
-                object => 'optionset:CFLAGS',
-                depends => ['optstring:-Wall', 'optstring:-Wextra'],
             },
         },
     }
@@ -909,6 +974,12 @@ library, or if it finds it but does not find a reason to use it.)  There are
 some libraries searched for by default (rule C<default_libraries> in the
 default configuration); additionally, any libraries used by default on the
 build system (such as F<libc.so> on Linux) will be automatically included.
+
+Note that most B<--var> options like C<CFLAGS> come in two versions, which are
+combined.  C<CFLAGS> is a user option (and is mentioned in the documentation
+to C<--var> as a result); you can set defaults, but the user can override the
+entire set and replace them with other values.  C<AM_CFLAGS> is an alternative
+that works like CFLAGS, but will not be overridden by the user.
 
 =head1 INTERNALS
 
@@ -1971,7 +2042,7 @@ indicate that the directory is being used as a build directory.)
 
 =item ignore_files
 
-A list of filenames to never consider part of the source tree.  (By default,
+A regex of filenames to never consider part of the source tree.  (By default,
 this is a list of filename patterns used for backup, autosave, and similar
 files in a range of editors.)
 
@@ -2004,6 +2075,9 @@ to exist if they already exist (due to a previous aimake run where the feature
 was turned on) and do not need rebuilding.  (We are considering changing this
 rule in future versions of aimake.  For the time being, it's best to use this
 only to match C<path:> objects.)
+
+If you want the feature to only have an install-time effect, rather than a
+build-time effect, you can use the regex C<qr/(?!)/>, which matches nothing.
 
 =item default
 
@@ -2199,9 +2273,10 @@ expression matches.
 
 If set to a nonzero integer, aimake will consider the command to have errored
 out if any regexes in the rule fail to match any lines of output.  (This helps
-detect typos in regexes in the case where you know they should match at least
-once.)  This option overrides C<on_failure> in the situation where both are
-given.
+detect typos in regexes, or unusual output formats from the command you're
+regexing, in the case where you know that correct operation will cause the
+regex to match at least once.)  This option overrides C<on_failure> in the
+situation where both are given.
 
 =back
 
@@ -2355,10 +2430,11 @@ match.
 
 After a rule is run, it can produce objects, provide objects, add dependencies
 to objects, or install files — or any combination of these (except that
-installing must be done on its own).  If a rule only has one action, the
-fields that describe that action can be placed into the rule's dictionary
-directly.  Otherwise, each action has its own dictionary, all of which are
-specified using the C<actions> field.
+installing must be done on its own, because it might need special
+permissions).  If a rule only has one action, the fields that describe that
+action can be placed into the rule's dictionary directly.  Otherwise, each
+action has its own dictionary, all of which are specified using the C<actions>
+field.
 
 =over 4
 
@@ -2396,7 +2472,7 @@ is which, by looking for the C<output>, C<outdepends>, C<install_dir>, and
 C<depends> field.  However, there is a potential ambiguity in cases where both
 C<output> and C<outdepends> are specified.  aimake will assume that such
 actions are provision actions, by default; in the case where this is actually
-a production action, an explicit C<actiontype => 'produce'> must be given.
+a production action, an explicit C<< actiontype => 'produce' >> must be given.
 
 Any type of action can have an explicit C<actiontype> setting that specifies
 the type of action explicitly: the action types are C<provide>, C<produce>,
@@ -2504,8 +2580,10 @@ takes one of the following strings as its value:
 
 =item bindir
 
-A directory used for installing executables runnable by the user.  This will
-typically be somewhere that's on the $PATH by default.
+A directory used for installing executables runnable by the user.  When
+installing system-wide, this will typically be somewhere that's on the $PATH
+by default (except on Windows, where there are no suitable locations, and so a
+project-specific subdirectory of Program Files is used by default).
 
 =item libdir
 
@@ -2529,9 +2607,9 @@ architecture-independent files.
 
 A directory used for installing architecture-independent include files that
 are specific to the program being installed (although they will still be
-visible to system tools if an appropriate path is given; this does not cause
-the files to be secret, it simply tries to namespace the files to avoid
-filename clashes).
+visible to system tools if an appropriate path fragment is used when including
+them; this does not cause the files to be secret, it simply tries to namespace
+the files to avoid filename clashes).
 
 =item configdir
 
@@ -2584,14 +2662,13 @@ audience.
 =item rootbindir
 
 Like C<bindir>, but for executables designed to be run with elevated
-permissions.  (This doesn't actually do anything to elevate the permissions,
+permissions.  This doesn't actually do anything to elevate the permissions,
 nor to prevent users without elevated permissions running the executables;
-however, on many systems, users who don't have elevated permissions will be
-prevented from running the program by accident, even though they can still do
-so intentionally, or perhaps prompted to elevate their permissions via the
-normal means available on that system.  You can additionally use
-C<install_permission> if you wish to require administrator permissions, or
-some other elevated permissions, to be able to execute the program.)
+rather (on many operating systems) it makes it harder for non-administrators
+to run the program by accident.
+
+If you want to outright require administrator permissions to run the program,
+see the C<install_permission> field.
 
 =item gamesbindir
 
@@ -2617,15 +2694,16 @@ A directory used for files, shared between all users, that are transient in
 nature.  (The directory is likely, but not guaranteed, to be one where files
 are deleted on reboot.)  It is probably a bad idea to install anything into
 this directory, but aimake tracks it so that compiled programs can refer to
-it.
+it via C<aimake_get_option>.
 
 =item specificlockdir
 
 A directory used for files, shared between all users, that are transient in
 nature, that is not used by any other package (and thus, can be given files
-with arbitrary filenames without worrying about name clashes).  The directory
-may be deleted on reboot, and as such, may have to be re-created each time it
-is used.
+with arbitrary filenames without worrying about name clashes).  In addition to
+the warnings under C<lockdir>, bear in mind that the directory itself may be
+deleted on reboot, and as such, may have to be re-created each time it is
+used.
 
 =back
 
@@ -2645,7 +2723,7 @@ I<Available for: install actions>
 If set to 1 to mean true, defaults C<install_name> to the entire path of the
 C<object> (relative to C<path:>, C<bpath:>, or C<spath:>), rather than just
 the basename.  The main use for this is internal, to allow the installation of
-source code without losing information.
+source code without losing information about its directory structure.
 
 =item exeparams
 
@@ -2693,6 +2771,9 @@ of the following sizes (in pixels): 16, 24, 32, 48, 64, 72, 96, 128, 256.
 Additional sizes (including non-square sizes) can be specified, but may be
 ignored.
 
+This option currently does not work correctly on versions of Windows prior to
+Windows Vista.  (However, such versions are by now dangerously obsolete.)
+
 =item copyright
 
 A string that specifies the copyright status of the executable (for example,
@@ -2704,10 +2785,17 @@ use for this, so it may be ignored.
 
 A string that specifies the version number of the executable.  This should be
 comprised of dot-separated numbers (e.g. C<"1.0.0">); some operating systems
-may disallow more complex version components, or add trailing C<.0>
-components.  By default, the value will be taken from the C<packageversion>
-option, but it can be given explicitly to override this (e.g., if different
-executables have different versions).
+may disallow more complex version components, or add trailing C<.0> components
+(although aimake will handle C<alpha> and C<beta> components the same way as
+with C<packageversion>, converting them to numbers if necessary).  By default,
+the value will be taken from the C<packageversion> option, but it can be given
+explicitly to override this (e.g., if different executables have different
+versions).
+
+For upgrades to work correctly on every operating system, aim to ensure that
+with every new released version, the version number of every file increases
+within the first three components.  (Defaulting this to the C<packageversion>,
+and just increasing the C<packageversion>, is the easiest way to do this.)
 
 =item name
 
@@ -2721,7 +2809,7 @@ is to use the filename with any extension removed.
 A human-readable description for the executable.  On some operating systems,
 this will be used as a tooltip for the executable on menus.  (Others will just
 use its C<name>, especially if they have an icon-based rather than text-based
-menu system.)
+menu system, and thus aren't displaying the C<name> anywhere else.)
 
 =item terminal
 
@@ -2736,7 +2824,10 @@ window).
 
 This option has no effect if the application already has control of a terminal
 (e.g. the application is run using a command prompt that is already open in a
-terminal), and might not be respected on all OSes in all circumstances.
+terminal), and might not be respected on all OSes in all circumstances (one
+example of when it isn't is when using the Alt-F2 shortcut that exists in some
+Linux desktop environmens, which runs a program via filename without reading
+its metadata and without an existing terminal).
 
 The default is to respect whatever setting the compiler used, or in the case
 where it didn't specify, 1.  (It is quite common for the compiler not to
@@ -2794,16 +2885,18 @@ handling (i.e. C<install_permission> and C<install_elevation> will be
 ignored); that user will be able to do what they like with the installed
 files, other users will not be able to write those files (and may or may not
 be able to read or execute them depending on how that user has configured the
-permissions on the install directory).
+permissions on the install directory).  Likewise, the B<--natural-permissions>
+option disables permissions handling.
 
 Permissions are implemented as groups on UNIX-like operating systems (apart
 from "ADMINISTRATOR", which is implemented using the user with a UID of 0, and
 "ANYONE", which does not need a user/group to correspond to), and thus only
 exist where a group with the same name exists.  You may need to create the
 group separately before running aimake.  On Windows, permissions cannot be
-granted by aimake's install process; however, they will be reported in file
-lists, for the use of other installers (although any values other than
-"ADMINISTRATOR" will be considered as synonyms for "ANYONE").
+granted by aimake's own install process; however, aimake will communicate
+information about permissions to other installers, and thus an install via
+B<--gen-installer> will set permissions appropriately (although any values
+other than "ADMINISTRATOR" will be considered as synonyms for "ANYONE").
 
 If the permission in question does not exist, aimake will print a warning and
 substitute the default setting (anyone can read/execute, but only
@@ -2840,10 +2933,20 @@ to security problems unless the elevated executables are very well written.
 
 I<Available for: install actions>
 
-Features (see C<--with>/C<--without>) have a compile-time effect, preventing
+Features (see B<--with>/B<--without>) have a compile-time effect, preventing
 files being built.  However, they can also have an effect on what is
 installed.  If the C<install_feature> field of an install rule is set, that
 rule will not run unless the matching feature is requested.
+
+In some cases involving B<--gen-installer>, aimake can represent the behaviour
+of this field inside the generated installer.  In such a case, the install
+rule will not even be included in the installer if the feature is disabled
+with B<--without> (or having a disabled default); if the feature is enabled
+with B<--with> (or having an enabled default), it will be included in the
+installer, but the option as to whether to install the feature will be under
+the control of the person who uses the installer (and its default value in the
+installer interface will be the same as the default value of the feature in
+aimake).
 
 =item inner
 
@@ -2872,12 +2975,12 @@ be a regular expression (and typically is only useful if it's a regular
 expression); unlike with C<output> and C<inner>, it's always interpreted as a
 plain old string, not as a filename or object name.
 
-Although the split between C<output> and C<outputarg> where the C<output>
-contains the object name up to the first colon, and the C<outputarg> contains
-the part of the object name between the first two colons, this is not
-mandatory; the C<output> and C<outputarg> will be concatenated regardless of
-what they contain, and interpreted as an object name (or a nested object name
-missing the C<inner>).
+Although it is usual to divide up an object name between C<output> and
+C<outputarg> such that C<output> contains the object name up to the first
+colon, and the C<outputarg> contains the part of the object name between the
+first two colons, this is not mandatory; the C<output> and C<outputarg> will
+be concatenated regardless of what they contain, and interpreted as an object name
+(or a nested object name missing the C<inner>).
 
 =item dependsarg
 
@@ -2885,6 +2988,17 @@ I<Available for: production, provision, and dependency actions>
 
 Works exactly like C<outputarg>, except for C<depends> and C<outdepends>
 rather than C<output>.
+
+=item command_line_override
+
+I<Available for: provision actions>
+
+This specifies the name of an environment variable.  If the variable is set in
+the environment, as an option in a configuration file's C<options>, or using
+the B<--var> option, the C<outdepends> of this action is entirely replaced
+with the value of that variable.  (This is how things like C<CFLAGS> are
+implemented internally; their default values are specified in a rule which has
+a C<command_line_override>.)
 
 =item on_failure
 
@@ -2931,10 +3045,11 @@ that the compile failed unless C<hide_errors> is set to 0 explicitly.
 =item empty
 
 If the command fails to run, assume that it succeeded, but produced no output
-on stdout.  This typically works the same way as C<fail> if the C<output> is a
-regex match.  However, if the C<depends>/C<outdepends> is a regex match, this
-can lead to a successful output with fewer dependencies than it would
-otherwise have; occasionally, this is what you want.
+on stdout.  This typically works out to the same thing as C<fail> when the
+C<output> is a regex match (and is not very useful when not using regex
+matches).  However, if the C<depends>/C<outdepends> is a regex match, this can
+lead to a successful output with fewer dependencies than it would otherwise
+have; occasionally, this is what you want.
 
 =item conditional
 
@@ -3810,7 +3925,7 @@ my ($opt_verbose, $opt_install, $opt_prefix, $opt_dump, @opt_warnings,
     $opt_install_only, $opt_elevate_permissions, $opt_specific_exit_status,
     @opt_with, @opt_without, @opt_with_default, $opt_nonempty_directory,
     %opt_directory_overrides, $opt_nocr, @opt_rebuild, $opt_documentation,
-    $opt_gen_installer,
+    $opt_gen_installer, %opt_var,
     $opt_license, $opt_filelist, $opt_noperms, @opt_local_config); # options
 my ($codeset, $text_layers, $binary_layers,
     $utf8_layers, $ascii_layers); # encodings
@@ -5202,12 +5317,14 @@ sub final_symlink_target {
 # executable naming, and it's one of the modules we have access to in 5.8;
 # IPC::Cmd would be reasonable in a more modern Perl (and just goes indirectly
 # via MakeMaker anyway).
+#
+# Returns an OS path (to avoid issues with symlinks).
 sub locate_command {
     my $cmd = shift;
     for my $dir (File::Spec->path) {
         my $fnos = File::Spec->rel2abs($cmd, $dir);
         my $cmdos = MM->maybe_command($fnos);
-        return ospath2aipath $cmdos if $cmdos;
+        return $cmdos if $cmdos;
     }
     return;
 }
@@ -5705,7 +5822,6 @@ sub run_command {
         my $cmd_name = $1;
         $cmd = locate_command($1);
         defined $cmd or return ("No such command '$cmd_name'", '', '');
-        $cmd = aipath2ospath($cmd);
     }
 
     # Convert options into a string representation (unless we were running an
@@ -7623,6 +7739,7 @@ my %actionkeys = (
     'inner' => [''],
     'outputarg' => [''],
     'dependsarg' => [''],
+    'command_line_override' => undef,
     'on_failure' => {values => [qw/auto fail inapplicable alternative
                                    empty conditional parse/],
                      default => 'auto'},
@@ -7654,6 +7771,7 @@ my %actiontypes = (
     'inner' => [qw/provide produce depend/],
     'outputarg' => [qw/provide produce/],
     'dependsarg' => [qw/provide produce depend/],
+    'command_line_override' => [qw/provide/],
     'on_failure' => [qw/provide produce depend/],
     'alternative' => [qw/provide produce depend/],
     'preference' => [qw/provide/],
@@ -7747,6 +7865,7 @@ $opt_noperms = 0;
 $opt_license = 0;
 $opt_version = 0;
 $opt_nonempty_directory = 0;
+%opt_var = ();
 %opt_directory_overrides = ();
 @opt_with = ();
 @opt_without = ();
@@ -7770,6 +7889,7 @@ GetOptions('verbose|v:+' => \$opt_verbose,
            'documentation' => \$opt_documentation,
            'directory-layout=s' => \$opt_dlayout,
            'override-directory=s' => \%opt_directory_overrides,
+           'var=s' => \%opt_var,
            'ignore-builtin-config' => \$opt_ignore_builtin_config,
            'local-config=s' => \@opt_local_config,
            'specific-exit-status' => \$opt_specific_exit_status,
@@ -7887,7 +8007,8 @@ if (!defined $path) {
     my @offending_files = File::Spec->no_upwards(readdir($dh));
     # nytprof.out is a special case; it's produced as a side effect of
     # running a Perl program when profiling, and thus can exist even
-    # if the directory was empty.
+    # if the directory was empty. (Other special cases may exist; the
+    # user can indicate these with $opt_nonempty_directory.)
     @offending_files = grep ospath2aipath($_) ne statefilename &&
         ospath2aipath($_) ne 'bpath:nytprof.out',
         @offending_files;
@@ -7917,9 +8038,6 @@ atomically {
 # Safe module to allow only specification of constants. (rv2sv is there so
 # that variables can be used to avoid repetition. rv2gv seems to be needed on
 # recent Perl versions. Probably it's to do with different optimizers.)
-#
-# Perl 5.8 gets very confused (to the extent of needing "require", which
-# would allow anything), so we just evaluate the config file directly.
 my $configsafe = new Safe;
 $configsafe->permit_only(qw/null stub scalar pushmark const undef list qr
                             negate lineseq leaveeval anonlist anonhash rv2sv
@@ -7954,11 +8072,7 @@ my $configdata;
     local $/;
     $configdata = <DATA>;
 }
-if ($] >= 5.009) {
-    $config = $configsafe->reval($configdata, 0);
-} else {
-    $config = eval $configdata;
-}
+$config = $configsafe->reval($configdata, 0);
 $@ or ($! and $@ = $!);
 $@ or $@ = "bad configuration file format";
 defined $config or
@@ -8039,8 +8153,7 @@ $opt_install and $ipath = ospath2aipath($opt_install);
 #
 # Check effective UID for this, so that root can run a setuid-something-else
 # install program, and so that we complain if someone installs aimake suid root
-# (note: do not install aimake suid root, there are numerous reasons it won't
-# work correctly).
+# (note: do not install aimake suid root).
 if ($os_parsed ne 'MSWin32' && $> == 0 && !$opt_install_only) {
     die ("Please do not run aimake as root.\n" .
          "To install as root, use '-S su' or '-S sudo' as appropriate.");
@@ -8087,6 +8200,11 @@ sub feature_error {
         }
     }
     exit ($feature eq '?' ? 0 : 1);
+}
+
+# Work around a bug in Emacs. This function is never called, but is necessary
+# for indentation to work from this point onwards.
+sub fix_syntax_highlighting {
 }
 
 atomically {
@@ -8299,6 +8417,47 @@ for my $rulename (keys %{$config->{rules}}) {
         $a->{actiontype} = $actiontype;
         $rule->{"number_of_${actiontype}_actions"} =
             defined_or($rule->{"number_of_${actiontype}_actions"}, 0) + 1;
+
+        # Handle command_line_override, and related sugar.
+        if (defined $a->{command_line_override}) {
+            my $clostring = undef;
+            my $envname = $a->{command_line_override};
+
+            $a->{outdepends} or die "Action $anum of rule '$rulename' ".
+                "has a command_line_override but no outdepends";
+            ref $a->{outdepends} eq 'ARRAY' or die
+                "Action $anum of rule '$rulename' has a ".
+                "command_line_override, but not a hardcoded outdepends";
+
+            defined $clostring or $clostring = $opt_var{$envname};
+            defined $clostring or $clostring = $ENV{$envname};
+            defined $clostring or $clostring = $config->{options}{$envname};
+
+            if (defined $clostring) {
+                # We want to interpret $clostring as an optstring, cmd,
+                # or spath, depending on context. We look for tool or cmd
+                # objects in the existing outdepends to distinguish.
+                my @new_outdepends;
+                if (grep /^(?:tool|cmd):/, @{$a->{outdepends}}) {
+                    $clostring =~ /^(.*?) (.*)$/s or
+                        $clostring =~ /^(.*)()$/;
+                    my $cmdname = $1;
+                    $clostring = $2;
+                    if (-f $cmdname) {
+                        # TODO: We need to imply an spath: object for this case
+                        # to work correctly, otherwise we'll fail to build due
+                        # to a missing dependency on it
+                        push @new_outdepends, ospath2aipath $cmdname;
+                    } else {
+                        # If it's not an existing file, assume that we're
+                        # meant to be looking for it on the PATH
+                        push @new_outdepends, "cmd:$cmdname";
+                    }
+                }
+                $clostring eq '' or push @new_outdepends, "optstring:$clostring";
+                $a->{outdepends} = \@new_outdepends;
+            }
+        }
     }
     if ($anum > 1 && $rule->{number_of_install_actions}) {
         die "Rule '$rulename' has more than one action and includes an ".
@@ -10074,7 +10233,8 @@ int main(void) { return 0; }
 EOF
             command => ['tool:c_toolchain', 'optstring:-c', 'optpath::',
                         "optpath:-o :bpath:aimake/junk$objext"],
-            possibilities => [['optstring:--std=c11'], ['optstring:-std=c11'], []],
+            possibilities => [['optstring:--std=c11'], ['optstring:-std=c11'],
+                              ['optstring:--std=gnu99'], []],
         },
         'c99_option' => {
             source_extension => '.c',
@@ -10121,20 +10281,43 @@ EOF
     },
     rules => {
         # Option sets.
-        # TODO: Take these from options? Or from the environment?
+        #
+        # To simplify things, these have the same names as in autoconf /
+        # automake: most are user settings, the equivalents with an AM_ prefix
+        # are packager settings (and thus used by flags aimake needs).
+        #
+        # autoconf / automake have one variable per language, plus CPPFLAGS and
+        # LFLAGS. (Note that this is inconsistent with GNU's own recommendations
+        # for flags variables - they recommend LDFLAGS - but it's more important
+        # to match what they do than what they say, because we're only trying to
+        # comply with GNU naming in order to make life easier for users.) We use
+        # the same convention here.
+        #
         default_cflags => {
             output => 'optionset:CFLAGS',
             outdepends => ['optstring:-g',
                            'optstring:-O2',
-                           # -fno-common enforces that "extern" is added when
-                           # appropriate, which is important because aimake
-                           # doesn't work otherwise, and nor do OS X shared
-                           # libraries.
-                           'optstring:-fno-common',
                            'optstring:-Wall'],
             verb => 'determined',
             low_message_priority => 1,
+            command_line_override => 'CFLAGS',
         },
+        default_am_cflags => {
+            output => 'optionset:AM_CFLAGS',
+            outdepends => [],
+            verb => 'determined',
+            low_message_priority => 1,
+            command_line_override => 'AM_CFLAGS',
+        },
+        inclusions_into_cflags => {
+            object => 'optionset:CFLAGS',
+            # -fno-common enforces that "extern" is added when appropriate,
+            # which is important because aimake doesn't work otherwise, and
+            # nor do OS X shared libraries.
+            depends => ['optionset:AM_CFLAGS', 'optstring:-fno-common'],
+            verb => 'determined',
+        },
+
         default_cxxflags => {
             output => 'optionset:CXXFLAGS',
             outdepends => ['optstring:-g',
@@ -10142,28 +10325,71 @@ EOF
                            'optstring:-Wall'],
             verb => 'determined',
             low_message_priority => 1,
+            command_line_override => 'CXXFLAGS',
         },
-        default_iflags => {
-            output => 'optionset:IFLAGS',
-            outdepends => ['optpath:-include :bpath:aimake/aimake_1.h',
-                           'bpath:aimake/aimake_1.h'],
+        default_am_cxxflags => {
+            output => 'optionset:AM_CXXFLAGS',
+            outdepends => [],
             verb => 'determined',
             low_message_priority => 1,
+            command_line_override => 'AM_CXXFLAGS',
         },
+        cxxflags_includes_am_cxxflags => {
+            object => 'optionset:CXXFLAGS',
+            depends => 'optionset:AM_CXXFLAGS',
+            verb => 'determined',
+        },
+
+        default_cppflags => {
+            output => 'optionset:CPPFLAGS',
+            outdepends => [],
+            verb => 'determined',
+            low_message_priority => 1,
+            command_line_override => 'CPPFLAGS',
+        },
+        default_am_cppflags => {
+            output => 'optionset:AM_CPPFLAGS',
+            outdepends => [],
+            verb => 'determined',
+            low_message_priority => 1,
+            command_line_override => 'AM_CPPFLAGS',
+        },
+        inclusions_into_cppflags => {
+            object => 'optionset:CPPFLAGS',
+            depends => ['optionset:AM_CPPFLAGS',
+                        'optpath:-include :bpath:aimake/aimake_1.h',
+                        'bpath:aimake/aimake_1.h'],
+            verb => 'determined',
+        },
+
         default_lflags => {
             output => 'optionset:LFLAGS',
             outdepends => [],
             verb => 'determined',
             low_message_priority => 1,
+            command_line_override => 'LFLAGS',
         },
-        cflags_includes_iflags => {
+        default_am_lflags => {
+            output => 'optionset:AM_LFLAGS',
+            outdepends => [],
+            verb => 'determined',
+            low_message_priority => 1,
+            command_line_override => 'AM_LFLAGS',
+        },
+        lflags_includes_am_lflags => {
+            object => 'optionset:LFLAGS',
+            depends => 'optionset:AM_LFLAGS',
+            verb => 'determined',
+        },
+
+        cflags_includes_cppflags => {
             object => 'optionset:CFLAGS',
-            depends => 'optionset:IFLAGS',
+            depends => 'optionset:CPPFLAGS',
             verb => 'determined',
         },
         cxxflags_includes_iflags => {
             object => 'optionset:CXXFLAGS',
-            depends => 'optionset:IFLAGS',
+            depends => 'optionset:CPPFLAGS',
             verb => 'determined',
         },
 
@@ -10182,7 +10408,7 @@ EOF
             on_failure => 'conditional',
         },
         linux_clflags_depends_on_fpic => {
-            object => qr/^optionset:(?:[CL]|CXX)FLAGS$/,
+            object => qr/^optionset:AM_(?:[CL]|CXX)FLAGS$/,
             command => ['intcmd:assert_equal', 'optstring:linux',
                         "optstring:$os_parsed"],
             depends => 'optionset:linux_fpic_option',
@@ -10215,7 +10441,7 @@ EOF
             # extra library directories we should add, because some linkers
             # (and maybe some compilers?) don't know about /usr/local.
             # (*glares at gold*)
-            object => 'optionset:LFLAGS',
+            object => 'optionset:AM_LFLAGS',
             command => ['intcmd:filetest', 'optstring:-d',
                         'optpath::spath:/usr/local/lib'],
             on_failure => 'conditional',
@@ -10225,7 +10451,7 @@ EOF
         fhs_include_directory => {
             # Like the above, but for /usr/local/include. Apparently this is
             # sometimes required on Mac OS X.
-            object => 'optionset:IFLAGS',
+            object => 'optionset:AM_CPPFLAGS',
             command => ['intcmd:filetest', 'optstring:-d',
                         'optpath::spath:/usr/local/include'],
             on_failure => 'conditional',
@@ -10542,11 +10768,13 @@ EOF
             output => 'tool:c_toolchain',
             outdepends => 'cmd:gcc',
             verb => 'found',
+            command_line_override => 'CC',
         },
         cxx_toolchain => {
             output => 'tool:cxx_toolchain',
             outdepends => 'cmd:g++',
             verb => 'found',
+            command_line_override => 'CXX',
         },
         c_compiler_tool => {
             output => 'tool:c_compiler',
@@ -10560,13 +10788,16 @@ EOF
         },
         c_cxx_dependencies_tool => {
             output => 'tool:c_dependencies',
-            outdepends => ['tool:c_toolchain', 'optstring:-M -MG', 'optionset:IFLAGS'],
+            outdepends => ['tool:c_toolchain', 'optstring:-M -MG',
+                           'optionset:CPPFLAGS'],
             verb => 'found',
         },
         c_cxx_preprocess_tool => {
             output => 'tool:c_preprocessor',
-            outdepends => ['tool:c_toolchain', 'optstring:-E', 'optionset:IFLAGS'],
+            outdepends => ['tool:c_toolchain', 'optstring:-E',
+                           'optionset:CPPFLAGS'],
             verb => 'found',
+            command_line_override => 'CPP',
         },
 
         # We copy all the files from the path into the bpath, in isolation
@@ -10924,12 +11155,12 @@ EOF
 
         osx_linux_cflags => {
             command => ['intcmd:nop', 'optionset:os_osx_linux'],
-            output => ['optionset:CFLAGS', 'optionset:CXXFLAGS'],
+            output => ['optionset:AM_CFLAGS', 'optionset:AM_CXXFLAGS'],
             outdepends => 'optstring:-fvisibility=hidden',
         },
         osx_linux_lflags => {
             command => ['intcmd:nop', 'optionset:os_osx_linux'],
-            output => 'optionset:LFLAGS',
+            output => 'optionset:AM_LFLAGS',
             outdepends => 'optstring:-rdynamic',
         },
         osx_linux_headerlines => {
