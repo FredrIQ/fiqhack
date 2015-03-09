@@ -929,7 +929,7 @@ about this; currently, it is only used on Windows when creating a WiX
 installer, which will show it to the user before installation (requiring the
 user to accept it), and also install it as "license.rtf" in C<docdir>.
 
-=head2 CUSTOMIZING AIMAKE
+=head2 BASIC CONFIGURATION
 
 In addition to changing the source and headers that make up your project, it
 is also possible to add a project-specific configuration file, that contains
@@ -945,6 +945,10 @@ add further configuration files.)  Here's a sample configuration:
             packagename => 'example',
             packageversion => '1.0.0',
             CFLAGS => '-Wall -Wextra -g -O2',
+            AM_CFLAGS => '-DBUILT_WITH_AIMAKE',
+        },
+        libraries => {
+            'z' => 'compress',
         },
         features => {
             gui => {
@@ -953,33 +957,73 @@ add further configuration files.)  Here's a sample configuration:
                 default => 1,
             },
         },
-        rules => {
-            _libraries => {
-                output => ['searchlib:some_unusual_library:symbol:foo'],
-            },
-        },
     }
 
-The format of the configuration file is explained in much more detail later in
-this document, but this example should serve as an overview of some of the
-most common tasks: setting an option (in this case, C<packagename> and
-C<packageversion>, which are probably the most important options to set);
-defining a feature; telling aimake to search for a particular library so that
-it can be linked into the project (specifying the name of the library, and a
-symbol in that library); and changing the flags that will be passed to the C
-compiler.  (All the libraries used by a project can be listed as C<searchlib:>
-objects in a rule output, even if some are only used in some configurations or
-on some operating systems; aimake will not complain if it fails to find a
-library, or if it finds it but does not find a reason to use it.)  There are
-some libraries searched for by default (rule C<default_libraries> in the
-default configuration); additionally, any libraries used by default on the
-build system (such as F<libc.so> on Linux) will be automatically included.
+The format of the configuration file is explained in much more detail later
+(see L<the section on configuration|/"CONFIGURATION">), in case you need to do
+something complex or custom.  However, the most common tasks will be explained
+here:
 
-Note that most B<--var> options like C<CFLAGS> come in two versions, which are
-combined.  C<CFLAGS> is a user option (and is mentioned in the documentation
-to C<--var> as a result); you can set defaults, but the user can override the
-entire set and replace them with other values.  C<AM_CFLAGS> is an alternative
-that works like CFLAGS, but will not be overridden by the user.
+=head3 Setting package-wide options
+
+There are some options that aimake is unable to automatically infer: the most
+important are the C<packagename> and C<packageversion> options, that tell
+aimake what name and version number that your project has.  (Automated
+installation systems will need this information in order to be able to install
+your project correctly.)  These are set using the C<options> dictionary of the
+configuration file, using the syntax shown above.  Note that because the
+C<packagename> may be used for filenames, it has a very limited character set;
+you can use a separate C<packagename_ui> option if you want to use uppercase
+letters, punctuation, or the like.
+
+For more information on the package-wide options you can set, see
+L</"THE options DICTIONARY">.
+
+=head3 Setting default compiler flags
+
+The compiler flags (such as C<CFLAGS>, flags to pass to the C compiler) can be
+set by the user using environment variables or the C<--var> option (see the
+documentation for that option for the flags that exist).  The defaults for
+these values can be set in the C<options> dictionary, just as with
+package-wide options.
+
+In addition to the regular C<CFLAGS> and friends, there are also versions with
+an C<AM_> prefix (C<AM_CFLAGS>, etc.).  These will be combined with a possible
+user setting for C<CFLAGS>.  Thus, flags like C<-O2> that should be under user
+control should be placed in the C<CFLAGS>; additional flags required for the
+correct functionality of your package should typically be in C<AM_CFLAGS>.
+
+=head3 Linking in additional libraries
+
+The C<libraries> dictionary allows you to link in additional libraries to your
+project.  For each library, you specify the portion of the name of the library
+that the linker uses to find it (e.g. for the compression library "zlib", you
+specify C<z>, because you link in the library using C<-lz>), and you specify
+one symbol within that library (typically a function name, although you could
+also use an exported variable).  In this case, we used C<compress>; it's best
+to specify either a function that's part of the core functionality of the
+library and unlikely to change, or an initialization function that's required
+to use the library.  (The specified symbol is used by aimake in order to
+ensure that the library is linked correctly.)
+
+aimake will not report an error upon failure to find a library, unless it
+turns out that the library is actually required by the project.  Thus, it's
+safe to specify a library that is only used in certain configurations, on
+certain operating systems, or the like; there won't be an error about a
+failure to find it in configurations where it's unused.
+
+=head3 Defining a feature
+
+Many projects will want to provide multiple configurations, in which the user
+can choose what subset of the project to build.  In aimake, this is
+accomplished via the C<features> dictionary.  The simplest version of this
+specifies a set of source files that will not be built if the feature is
+turned off, as is shown in the example configuration file.  (You specify the
+files using a regular expression that matches filenames in aimake syntax, so
+that the same set of files is matched on every platform.)
+
+For more information about defining features, see
+L</"THE features DICTIONARY">.
 
 =head1 INTERNALS
 
@@ -1920,10 +1964,12 @@ expressions:
     # this is a comment, from the # to the end of line
     4                       # a number
     'abcde'                 # a literal string
-    "x\n\t$var"             # a string containing escapes, variables
+    "x\n\t$var"             # a string containing escapes and/or variables
     qr/foo.*bar/i           # a regular expression (qr//; the i is a modifier)
     [1, 2, 3, 4,]           # a list, trailing comma optional
     {foo => 1, bar => 2,}   # a dictionary, trailing comma optional
+
+Whitespace is ignored, except inside strings.
 
 The configuration file allows defining one or more variables (either to
 abbreviate what would otherwise be repeated code, or to avoid "magic numbers"
@@ -1939,8 +1985,16 @@ they're running on a 32- or 64-bit platform.  (In order to catch mistakes due
 to omitting $exeext, it will never be set to the null string, but rather to an
 arbitrary string on platforms that do not normally use a special extension for
 executables.  This extension will be removed when installing the executable.)
-These are followed by a single dictionary with up to three keys, C<options>,
-C<features> and C<rules>.  Here's a simple example F<aimake.rules>:
+
+After any variable definitions comes the main body of the configuration file.
+This is a single dictionary, which can contain keys C<options>, C<features>,
+C<libraries>, C<directories>, C<tests>, and C<rules>.  C<rules> is the most
+complex, and documented in L</"RULE SYNTAX">; C<tests> is currently
+undocumented because the API is subject to change; and C<libraries> was
+documented earlier in L</"Linking in additional libraries">.  The other
+sections are documented below.
+
+Here's a simple example F<aimake.rules>:
 
     $version = "1.2.3";        # variable definition
 
@@ -1963,6 +2017,8 @@ C<features> and C<rules>.  Here's a simple example F<aimake.rules>:
             },
         },
     }
+
+=head3 THE options DICTIONARY
 
 The options dictionary is very simple: keys of the dictionary are options, and
 the corresponding values their values.  The following options are recognised
@@ -2048,6 +2104,8 @@ files in a range of editors.)
 
 =back
 
+=head3 THE features DICTIONARY
+
 Features are dictionaries with the following keys:
 
 =over 4
@@ -2062,8 +2120,10 @@ limited space (e.g. entries in a menu).
 =item long_description
 
 Serves the same purpose as C<description>, but allows considerably more text.
-This should not contain newlines, but will be wrapped on spaces in order to
-fit it into the space available for it.
+This is used for UI elements where more space is available (and will typically
+be on-screen at the same time as the C<description>).  This should not contain
+newlines, but will be wrapped on spaces in order to fit it into the space
+available for it.
 
 =item object
 
@@ -2090,6 +2150,39 @@ The name of another feature.  This feature will not be built or installed if a
 feature it depends on is not built or installed.
 
 =back
+
+=head3 THE directories DICTIONARY
+
+When installing files, aimake will determine which directory to place each
+file into based on two factors.  One is the C<install_dir> field of the rule
+that installs the file; this specifies a directory logically, such as
+C<bindir>.  The other is the directory layout in use, which is specified by
+the C<--directory-layout> and C<-i> options.
+
+aimake's built-in configuration file specifies many directory layouts in its
+C<directories> dictionary.  You can create directory layouts of your own, too.
+Each key of the C<directories> dictionary is the name of a directory layout;
+the corresponding value is a dictionary that specifies the layout itself.
+
+A C<directories> layout has two special keys, C<autodetect> and
+C<preferred_installdir>.  These both handle the case where the user specifies
+only one of C<-i> and C<--directory-layout>.  The C<autodetect> key is a
+regular expression that matches an aimake-syntax filename (e.g. the
+C<autodetect> key for the C<fhs> layout is C<qr/^spath:\/(?:usr)?$/>, which
+matches only C<spath:/> and C<spath:/usr>); aimake will use this layout for an
+C<-i> option matching the given regular expression.  The
+C<preferred_installdir> option is an aimake-syntax filename, that specifies a
+default value for the C<-i> option in the case where only
+C<--directory-layout> is given.
+
+The other keys are all directory names ending in C<dir>, as aimake-syntax
+paths.  These can also substitute in the values of other directory names (or
+C<installdir>, the argument to the C<-i> option), e.g. the C<fhs> layout sets
+C<bindir> to C<$installdir/bin>, C<staterootdir> to C<spath:/var>, and
+C<logdir> to C<$staterootdir/log>.  Note that these should be single-quoted in
+the configuration file (i.e. C<bindir => '$installdir/bin'); otherwise, they
+will be confused with a variable substitution using a variable from the
+configuration file.
 
 =head2 RULE SYNTAX
 
@@ -2193,7 +2286,7 @@ is included. Its value is a string:
 
 The object is included in the C<command> if all the rule's C<action>s are
 provision, production, or install actions; and not included anywhere if all
-the rule's C<actions> are dependency actions.  In other cases, this value is
+the rule's C<action>s are dependency actions.  In other cases, this value is
 an error.  C<< object_dependency => "auto" >> is the default.
 
 =item outdepends
@@ -8081,9 +8174,10 @@ undef $@;
 ref $config eq 'HASH' or die "Invalid type in global config file";
 
 if ($opt_ignore_builtin_config) {
-    delete $config->{options};
-    delete $config->{rules};
-    delete $config->{tests};
+    $config->{options} = {};
+    $config->{rules} = {};
+    $config->{tests} = {};
+    $config->{libraries} = {};
 }
 
 # Parse the local config files (path:aimake.rules, path:aimake.local, and
@@ -8110,7 +8204,7 @@ for my $localconfigfile (aipath2ospath(configfilename),
     undef $@;
     ref $localconfig eq 'HASH'
         or die "Invalid type in project-specific config file";
-    for my $t (qw/rules options tests features directories/) {
+    for my $t (qw/rules options tests libraries features directories/) {
         if (exists $localconfig->{$t}) {
             $config->{$t}{$_} = $localconfig->{$t}{$_}
             for keys %{$localconfig->{$t}};
@@ -8283,6 +8377,22 @@ for my $option (keys %{$config->{options}}) {
                           "No config directory '$1'"/ge;
     }
 }
+
+##### Desugar the 'libraries' key into a rule.
+
+my $default_libraries_rule = {
+    output => [],
+    outdepends => [],
+    verb => 'determined',
+    low_message_priority => 1,
+};
+for my $lib (keys %{$config->{libraries}}) {
+    my $symbol = $config->{libraries}{$lib};
+    push @{$default_libraries_rule->{output}},
+        "searchlib:$lib:symbol:$symbol";
+}
+
+$config->{rules}{default_libraries} = $default_libraries_rule;
 
 ##### Desugar the tests into rules.
 #
@@ -9811,12 +9921,6 @@ __DATA__
 
 {
     options => {
-        default_libraries => [
-            'c',
-            'msvcrt', # Windows version of libc
-            'm',
-        ],
-        libraries => [],
         ignore_directories =>
             qr/^(?:\.svn|\.git|\.hg|\.bzr|_darcs)$/i,
         ignore_directories_with_files => [
@@ -10216,6 +10320,7 @@ __DATA__
             specificlockdir => '$staterootdir',
         },
     },
+
     tests => {
         'c11_option' => {
             source_extension => '.c',
@@ -10279,6 +10384,15 @@ EOF
                 ['optstring:-DAIMAKE_NORETURN=']],
         },
     },
+
+    libraries => {
+        # some likely guesses, not including the system libc
+        'm'       => 'sin',             # maths library
+        'pthread' => 'pthread_create',  # threading library on UNIX-likes
+        'dl'      => 'dlopen',          # used to load plugins on UNIX-likes
+        'Ole32'   => 'CoInitialize',    # needed for much Windows functionality
+    },
+
     rules => {
         # Option sets.
         #
@@ -10413,17 +10527,6 @@ EOF
                         "optstring:$os_parsed"],
             depends => 'optionset:linux_fpic_option',
             on_failure => 'conditional',
-        },
-
-        default_libraries => {
-            # some likely guesses, not including the system libc
-            output => ['searchlib:m:symbol:sin',
-                       'searchlib:pthread:symbol:pthread_create',
-                       'searchlib:dl:symbol:dlopen',
-                       'searchlib:Ole32:symbol:CoInitialize'],
-            outdepends => [],
-            verb => 'determined',
-            low_message_priority => 1,
         },
 
         # Finding relevant files.

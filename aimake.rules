@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2015-03-07
+# Last modified by Alex Smith, 2015-03-09
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -10,21 +10,32 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
 
 {
     options => {
-        packagename => 'nethack4',
+        packagename      => 'nethack4',
         packagename_text => 'NetHack 4',
-        packageversion => '4.3.beta2',
-        companyname => 'NetHack 4 DevTeam',
+        packageversion   => '4.3.beta2',
+        companyname      => 'NetHack 4 DevTeam',
+
         AM_CPPFLAGS => '-DNETCLIENT -D_REENTRANT',
-        CFLAGS => '-Wall -Wextra -fdiagnostics-show-option -O2 -g',
-        AM_CFLAGS => '-Wno-missing-field-initializers '.
-                     # These warnings are probably worth fixing eventually,
-                     # but have too many false positives to be able to show
-                     # them right now
-                     '-Wno-unused-parameter -Wno-sign-compare '.
-                     '-Wold-style-definition -Wstrict-prototypes '.
-                     '-Wmissing-prototypes -Wmissing-declarations '.
-                     '-Wpointer-arith',
-        CXXFLAGS => '-Wall -Wextra -Wmissing-declarations -Wpointer-arith -O2 -g',
+        CFLAGS      => '-Wall -Wextra -fdiagnostics-show-option -O2 -g',
+        AM_CFLAGS   => '-Wno-missing-field-initializers '.
+                       # These warnings are probably worth fixing eventually,
+                       # but have too many false positives to be able to show
+                       # them right now
+                       '-Wno-unused-parameter -Wno-sign-compare '.
+                       '-Wold-style-definition -Wstrict-prototypes '.
+                       '-Wmissing-prototypes -Wmissing-declarations '.
+                       '-Wpointer-arith',
+        CXXFLAGS    => '-Wall -Wextra -Wmissing-declarations '.
+                       '-Wpointer-arith -O2 -g',
+    },
+    libraries => {
+        'z'       => 'compress',
+        'png'     => 'png_create_write_struct',
+        'pq'      => 'PQsetdbLogin',
+        'pthread' => 'pthread_create',
+        'jansson' => 'json_loads',
+        'SDL2'    => 'SDL_Init',
+        'ws2_32'  => 'connect',
     },
     features => {
         server => {
@@ -115,17 +126,6 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
             command => ['intcmd:assert_equal', 'optstring:darwin', "optstring:$^O"],
             depends => 'optstring:-D_DARWIN_C_SOURCE',
             on_failure => 'conditional'
-        },
-        _libraries => {
-            output => ['searchlib:z:symbol:compress',
-                       'searchlib:png:symbol:png_create_write_struct',
-                       'searchlib:pq:symbol:PQsetdbLogin',
-                       'searchlib:pthread:symbol:pthread_create',
-                       'searchlib:jansson:symbol:json_loads',
-                       'searchlib:SDL2:symbol:SDL_Init',
-                       'searchlib:ws2_32:symbol:connect'],
-            outdepends => [],
-            verb => 'determined',
         },
 
         _warn_about_global_variables => {
