@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-02 */
+/* Last modified by Alex Smith, 2015-03-10 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -130,12 +130,12 @@ static const struct innate orc_abil[] = {
 static void exerper(void);
 static void postadjabil(unsigned int *);
 
-/* adjust an attribute; return TRUE if change is made, FALSE otherwise */
+/* adjust an attribute; return TRUE if change is made, FALSE otherwise
+
+   msgflag is positive for no message, zero for message, negative to print a
+   message when returning TRUE */
 boolean
-adjattrib(int ndx, int incr, int msgflg /* positive => no message, zero =>
-                                           message, and */
-          /* negative => conditional (msg if change made) */
-    )
+adjattrib(int ndx, int incr, int msgflg)
 {
     if (Fixed_abil || !incr)
         return FALSE;
@@ -155,6 +155,12 @@ adjattrib(int ndx, int incr, int msgflg /* positive => no message, zero =>
             return FALSE;
         }
 
+        if (ABASE(ndx) == ATTRMAX(ndx)) {
+            if (msgflg == 0 && flags.verbose)
+                pline("You're as %s as you can be right now.", plusattr[ndx]);
+            return FALSE;
+        }
+
         ABASE(ndx) += incr;
         if (ABASE(ndx) > AMAX(ndx)) {
             incr = ABASE(ndx) - AMAX(ndx);
@@ -168,6 +174,12 @@ adjattrib(int ndx, int incr, int msgflg /* positive => no message, zero =>
             if (msgflg == 0 && flags.verbose)
                 pline("You're already as %s as you can get.", minusattr[ndx]);
             ABASE(ndx) = ATTRMIN(ndx);  /* just in case */
+            return FALSE;
+        }
+
+        if (ABASE(ndx) == ATTRMIN(ndx)) {
+            if (msgflg == 0 && flags.verbose)
+                pline("You're as %s as you can be right now.", minusattr[ndx]);
             return FALSE;
         }
 
