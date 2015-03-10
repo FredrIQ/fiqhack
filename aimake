@@ -8392,7 +8392,8 @@ for my $lib (keys %{$config->{libraries}}) {
         "searchlib:$lib:symbol:$symbol";
 }
 
-$config->{rules}{default_libraries} = $default_libraries_rule;
+$config->{rules}{default_libraries} = $default_libraries_rule
+    unless $opt_install_only;
 
 ##### Desugar the tests into rules.
 #
@@ -8613,7 +8614,8 @@ atomically {
     $config_hash_on_disk{intern $_} =
         [intern "hash_on_disk:$config_hashes{$_}:$_"] for keys %config_hashes;
     record_pair_outputs 'parse_configuration sys:no_object',
-        \%config_hash_on_disk;
+        \%config_hash_on_disk
+        unless $opt_install_only; # happens when CFLAGS changes, etc.
     mark_object_unsure 'parse_configuration sys:no_object',
         'sys:rebuild_late', 'initial config'
         unless $opt_install_only;
