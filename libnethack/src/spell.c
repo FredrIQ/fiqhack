@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-10 */
+/* Last modified by Alex Smith, 2015-03-10 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -207,10 +207,17 @@ deadbook(struct obj *book2, boolean invoked)
                     You_hear("a faint chime...");
             }
             if (!Uhave_menorah) {
-                if (Hallucination)
+                if (Hallucination) {
                     pline("Nosferatu giggles.");
-                else
+                } else if (mvitals[PM_DOPPELGANGER].mvflags & G_GENOD) {
+                    /* suggestion by b_jonas: can't talk about doppelgangers
+                       if they don't exist */
+                    if (Uhave_bell)
+                        pline("Nothing seems to happen.");
+                    /* otherwise no message, we already printed one. */
+                } else {
                     pline("Vlad's doppelganger is amused.");
+                }
             }
             return;
         }
