@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-11 */
+/* Last modified by Alex Smith, 2015-03-10 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -99,7 +99,7 @@ typedef wchar_t fnchar;
 # define FRAME_PAIR     6             /* magenta frames for better visibility */
 # define NOEDIT_FRAME_PAIR 9          /* dark gray if the dialog doesn't work */
 
-# define MAINFRAME_PAIR 129           /* 16 * 8 + 1 */
+# define MAINFRAME_PAIR 57            /* 8 * 7 + 1 */
 
 # define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
 
