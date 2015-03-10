@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-14 */
+/* Last modified by Alex Smith, 2015-03-10 */
 /* Copyright (C) 2014 Alex Smith. */
 /* NetHack may be freely redistributed. See license for details. */
 
@@ -24,7 +24,7 @@
 /* Utility functions */
 
 static int
-palette_key_to_int(png_byte key)
+palette_key_to_int(uint8_t key)
 {
     if (key == '_')
         return 0;
@@ -40,12 +40,11 @@ palette_key_to_int(png_byte key)
         return -1;
 }
 
-/* Binary loading. This /might/ come from a PNG file, so we use png_byte.
-   Returns 1 on success, 0 on error. */
+/* Binary loading. Returns 1 on success, 0 on error. */
 bool
-load_binary_tileset(png_byte *data, png_size_t size)
+load_binary_tileset(uint8_t *data, size_t size)
 {
-    png_bytep dp;
+    uint8_t *dp;
     long tw, th;
 
     if (size < TILESET_NAME_SIZE + 2 + 2 + sizeof BINARY_TILESET_HEADER) {
@@ -124,9 +123,9 @@ load_binary_tileset(png_byte *data, png_size_t size)
 
 /* Text loading. This has the same API as binary loading. */
 bool
-load_text_tileset(png_byte *data, png_size_t size)
+load_text_tileset(uint8_t *data, size_t size)
 {
-    png_size_t i;
+    size_t i;
 
     /* We also need to store the palette for the current file, so that we can
        interpret what it means. */
@@ -179,9 +178,9 @@ load_text_tileset(png_byte *data, png_size_t size)
        that the pointer has the correct signedness. rawmemchr would also be
        simpler, but it's a GNU extension.) */
     for (i = 0, lineno = 1; i < size;
-         i = (png_byte *)memchr(data + i, 0, size - i) - data + 1, lineno++) {
+         i = (uint8_t *)memchr(data + i, 0, size - i) - data + 1, lineno++) {
 
-        int len = (png_byte *)memchr(data + i, 0, size - i) - data;
+        int len = (uint8_t *)memchr(data + i, 0, size - i) - data;
 
         /* Is it a comment line (leading !)? */
         if (data[i] == '!')
@@ -220,7 +219,7 @@ load_text_tileset(png_byte *data, png_size_t size)
                   &(filepalette[pk].b), &(filepalette[pk].a) };
             int curchannel = 0;
             unsigned long curchannelval = 0;
-            png_bytep dp = data + i + pw + 4;
+            uint8_t *dp = data + i + pw + 4;
             for (;;) {
                 if (*dp >= '0' && *dp <= '9') {
                     curchannelval *= 10; curchannelval += *dp - '0';
@@ -275,7 +274,7 @@ load_text_tileset(png_byte *data, png_size_t size)
         /* We combine the code for width and height directives, as it's
            almost the same. */
         {
-            png_bytep dp = 0;
+            uint8_t *dp = 0;
             long *td = 0;
             if (len > 8 && memcmp(data + i, "# width ", 8) == 0) {
                 td = &tileset_width;
@@ -319,7 +318,7 @@ load_text_tileset(png_byte *data, png_size_t size)
            by semicolon-space tokens. */
         {
             char *tilename = malloc(len + 1);
-            png_bytep dp = data + i;
+            uint8_t *dp = data + i;
             char *tp = tilename;
 
             if (!tilename)

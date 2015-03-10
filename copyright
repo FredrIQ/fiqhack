@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Alex Smith, 2015-02-03
+Last-Modified: Last modified by Alex Smith, 2015-03-10
 Upstream-Name: nethack4
 Upstream-Contact: ais523@nethack4.org
 
@@ -617,6 +617,10 @@ Copyright: Copyright (c) NetHack Development Team 1995
 Files: tilesets/util/*.c
 License: NGPL
 Copyright: Copyright (C) 2014 Alex Smith
+
+Files: tilesets/src/fallback-tileset-image.c
+License: NGPL
+Copyright: Copyright (C) 2015 Alex Smith
 
 Files: tilesets/util/tileset-image.c
 License: NGPL

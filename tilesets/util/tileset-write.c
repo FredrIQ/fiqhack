@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-21 */
+/* Last modified by Alex Smith, 2015-03-10 */
 /* Copyright (C) 2014 Alex Smith. */
 /* NetHack may be freely redistributed. See license for details. */
 
@@ -460,7 +460,7 @@ write_binary_tileset(const char *filename)
 
 bool
 callback_with_text_tileset(enum iiformat iif,
-                           bool (*callback)(png_byte *, png_size_t))
+                           bool (*callback)(uint8_t *, size_t))
 {
     /* The best way to create a temporary file is tmpfile(), which is simple and
        secure. However, it doesn't work properly on mingw (I /think/ it's trying
@@ -490,7 +490,7 @@ callback_with_text_tileset(enum iiformat iif,
 }
 
 bool
-callback_with_binary_tileset(bool (*callback)(png_byte *, png_size_t))
+callback_with_binary_tileset(bool (*callback)(uint8_t *, size_t))
 {
     FILE *t = tmpfile();
     const char *tn = NULL;

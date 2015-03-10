@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-21 */
+/* Last modified by Alex Smith, 2015-03-10 */
 /* Copyright (C) 2014 Alex Smith. */
 /* NetHack may be freely redistributed. See license for details. */
 
@@ -120,12 +120,12 @@ compare_deleted_tiles_to_end(const void *t1, const void *t2)
    which case they're provided as "header", "headerlen". Then calls the given
    callback and returns its result. The file is closed by this function. */
 bool
-slurp_file(FILE *in, png_byte *header, png_size_t headerlen,
+slurp_file(FILE *in, uint8_t *header, size_t headerlen,
            const char *unlink_after,
-           bool (*callback)(png_byte *, png_size_t))
+           bool (*callback)(uint8_t *, size_t))
 {
-    png_byte *storage = NULL;
-    png_size_t storagelen = headerlen, curpos = headerlen;
+    uint8_t *storage = NULL;
+    size_t storagelen = headerlen, curpos = headerlen;
     int c;
     bool rv;
 
@@ -148,7 +148,7 @@ slurp_file(FILE *in, png_byte *header, png_size_t headerlen,
                 return 0;
             }
         }
-        storage[curpos++] = (png_byte)c;
+        storage[curpos++] = (uint8_t)c;
     }
 
     fclose(in);
@@ -180,18 +180,18 @@ static bool
 load_file(char *filename)
 {
     FILE *in = fopen(filename, "rb");
-    png_byte header[sizeof BINARY_TILESET_HEADER];
+    uint8_t header[sizeof BINARY_TILESET_HEADER];
     if (!in) {
         perror(filename);
         return 0;
     }
-    if (fread(header, sizeof (png_byte), PNG_HEADER_SIZE, in) ==
-        PNG_HEADER_SIZE) {
-        if (!png_sig_cmp(header, 0, PNG_HEADER_SIZE)) {
+    if (fread(header, sizeof (uint8_t), PNG_HEADER_SIZE, in)
+        == PNG_HEADER_SIZE) {
+        if (memcmp(header, PNG_HEADER, PNG_HEADER_SIZE) == 0) {
             /* It's a PNG file. load_png_file closes the FILE * it's given. */
             return load_png_file(in);
         }
-        if (fread(header + PNG_HEADER_SIZE, sizeof (png_byte),
+        if (fread(header + PNG_HEADER_SIZE, sizeof (uint8_t),
                   (sizeof BINARY_TILESET_HEADER) - PNG_HEADER_SIZE, in) ==
             ((sizeof BINARY_TILESET_HEADER) - PNG_HEADER_SIZE)) {
 

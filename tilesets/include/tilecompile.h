@@ -1,15 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-16 */
+/* Last modified by Alex Smith, 2015-03-10 */
 /* Copyright (C) 2014 Alex Smith. */
 /* NetHack may be freely redistributed. See license for details. */
 
 #ifndef TILECOMPILE_H
 # define TILECOMPILE_H
-
-#define PNG_SETJMP_SUPPORTED
-#include <png.h> /* must be included first, for complicated reasons to do with
-                    <setjmp.h> */
-#include <zlib.h>
 
 # include <assert.h>
 # include <limits.h>
@@ -60,6 +55,8 @@ enum iiformat {
 # define MAX_PNG_PALETTE_SIZE 256
 /* The number of bytes in a PNG header. */
 # define PNG_HEADER_SIZE 8
+/* The PNG header itself. */
+# define PNG_HEADER "\x89PNG\x0d\x0a\x1a\x0a"
 
 /* Slash'EM's transparent color key. We need to know what this is for backwards
    compatibility. */
@@ -104,8 +101,8 @@ extern int unknown_name_count, allocated_name_count;
 /* Extern functions */
 
 /* tileset-read.c */
-extern bool load_text_tileset(png_byte *, png_size_t);
-extern bool load_binary_tileset(png_byte *, png_size_t);
+extern bool load_text_tileset(uint8_t *, size_t);
+extern bool load_binary_tileset(uint8_t *, size_t);
 
 /* tileset-image.c */
 extern bool load_png_file(FILE *);
@@ -115,11 +112,11 @@ extern bool write_png_file(const char *, bool);
 extern bool write_text_tileset(const char *, enum iiformat);
 extern bool write_binary_tileset(const char *);
 extern bool callback_with_text_tileset(enum iiformat,
-                                       bool (*)(png_byte *, png_size_t));
-extern bool callback_with_binary_tileset(bool (*)(png_byte *, png_size_t));
+                                       bool (*)(uint8_t *, size_t));
+extern bool callback_with_binary_tileset(bool (*)(uint8_t *, size_t));
 
 /* tilecompile.c */
-extern bool slurp_file(FILE *, png_byte *, png_size_t, const char *,
-                       bool (*)(png_byte *, png_size_t));
+extern bool slurp_file(FILE *, uint8_t *, size_t, const char *,
+                       bool (*)(uint8_t *, size_t));
 
 #endif

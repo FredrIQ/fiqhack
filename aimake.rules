@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2015-03-09
+# Last modified by Alex Smith, 2015-03-10
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -64,6 +64,7 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
                                 "text-based version without requiring the ".
                                 "use of a separate terminal emulator.",
             object => qr=^path:(?:tilesets/dat(?!/text|/catalogues/text)
+                                | tilesets/util/tileset-image.c
                                 | libuncursed/src/plugins/sdl)=x,
             default => 1,
         },
