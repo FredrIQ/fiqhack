@@ -98,7 +98,16 @@ License: NGPL
 Copyright:
  These files had no explicit copyright notice in the NetHack distribution; the
  format of the rumours.* files made it impossible to include one (whereas the
- oracles.txt file could have included one, but didn't). The likely copyright is
+ oracles.txt file could have included one, but didn't).  The likely copyright
+ is the general copyright of NetHack:
+ .
+ Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985
+
+Files: libnethack/dat/history
+License: NGPL
+Copyright:
+ This file is a text file containing a high-level changelog for NetHack. As
+ such, it did not have an explicit copyright notice.  The likely copyright is
  the general copyright of NetHack:
  .
  Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985
@@ -396,19 +405,28 @@ Files: libnethack/src/windows.c
 License: NGPL
 Copyright: Copyright (c) D. Cohrs, 1993
 
-Files: libnethack/util/dgn_*
+Files: libnethack/util/dgn_* doc/dgn_comp.pod
 License: NGPL
 Copyright:
  Copyright (c) 1989 by Jean-Christophe Collet
  Copyright (C) 1990 by M. Stephenson
+Comment:
+ The dgn_comp.pod copyright is a guess.  (The file was translated from
+ dgn_comp.6, which probably had the same copyright as dgn_comp itself.)
 
-Files: libnethack/util/dlb_main.c
+Files: libnethack/util/dlb_main.c doc/dlb.pod
 License: NGPL
 Copyright: Copyright (c) Kenneth Lorber, Bethesda, Maryland, 1993
+Comment:
+ The dlb.pod copyright is a guess.  (The file was translated from dlb.6, which
+ probably had the same copyright as dlb itself.)
 
-Files: libnethack/util/lev_*
+Files: libnethack/util/lev_* doc/lev_comp.pod
 License: NGPL
 Copyright: Copyright (c) 1989 by Jean-Christophe Collet
+Comment:
+ The lev_comp.pod copyright is a guess.  (The file was translated from
+ lev_comp.6, which probably had the same copyright as lev_comp itself.)
 
 Files: libnethack/util/makedefs.c
 License: NGPL
@@ -425,7 +443,15 @@ Files: libuncursed/*
 License: NGPL or GPL-2+
 Copyright: Copyright (c) 2013-2014 Alex Smith
 
-Files: libnethack_common/src/common_options.c
+Files: libnethack_common/nethack*.h
+License: NGPL
+Copyright:
+ These files have no explicit copyright notice.  However, the originals come
+ from NitroHack, and thus likely have the following copyright based on their
+ creation dates:
+ Copyright (c) Daniel Thaler 2011-2012
+
+Files: libnethack_common/*/common_options.*
 License: NGPL
 Copyright: Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985
 
@@ -439,21 +465,21 @@ Files: libnethack_common/src/xmalloc.c
 License: NGPL
 Copyright: Copyright (c) Daniel Thaler, 2011
 
-Files: libnethack_common/src/xmalloc.h
+Files: libnethack_common/include/xmalloc.h
 License: NGPL
 Copyright:
  Copyright (c) Daniel Thaler, 2011
  Copyright (c) Alex Smith, 2013
 
-Files: libnethack_common/src/menulist.c libnethack_common/include/menulist.h
+Files: libnethack_common/*/menulist.*
 License: NGPL
 Copyright: Copyright (c) Alex Smith, 2013
 
-Files: libnethack_common/src/utf8conv.c libnethack_common/include/utf8conv.h
+Files: libnethack_common/*/utf8conv.*
 License: NGPL
 Copyright: Copyright (C) 2014 Alex Smith
 
-Files: libnethack_common/src/netconnect.c libnethack_common/include/netconnect.h
+Files: libnethack_common/*/netconnect.*
 License: NGPL
 Copyright:
  Copyright (c) Daniel Thaler, 2012
@@ -668,7 +694,7 @@ Copyright:
  pickaxe, Kop Lieutenant, Kop Sergeant, elf-lord
  Oracle, Archon, Snake, pyton, cobra, Earendil
 
-Files: tilesets/dat/catalogues/*.txt
+Files: tilesets/dat/catalogues/*.txt*
 License: NGPL
 Copyright: Copyright (C) 2013, 2014 Alex Smith
 
