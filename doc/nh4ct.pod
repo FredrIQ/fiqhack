@@ -1,5 +1,5 @@
 =for comment
-Last modified by Alex Smith, 2014-10-26
+Last modified by Alex Smith, 2015-03-10
 NetHack can be freely redistributed.  See license for details.
 This documentation file was originally based on the tiles documentation from
 Slash'EM, but it is unclear if any of that documentation is still left.
@@ -36,8 +36,8 @@ those letters and digits were just formed into a rectangular image directly.
 Slash'EM brought some improvements to this system.  The image format was
 generalized to allow up to 4096 colors (via two-character keys), although
 Slash'EM refused to use more than 256 colors at once due to limitations of
-typical screens from that era.  It also supported transparency via a color key
-(71, 108, 108).  Another major change was that it supported the merging
+typical video cards from that era.  It also supported transparency via a color
+key (71, 108, 108).  Another major change was that it supported the merging
 together of multiple files to produce one tileset; the merge was by name,
 which was a little confusing/error-prone because multiple tiles could have the
 same name.  The workaround for this was to match both the identified and
@@ -55,7 +55,7 @@ source files without issue.  (This involved some changes to the game engine;
 probably the only user-visible one was that tools representing disarmed traps
 gained unidentified appearances, to distinguish them from the traps they
 became.)  These source files (that identified tiles by name) were merged into
-intermediate files that identified tiles by file permission, and then into
+intermediate files that identified tiles by file position, and then into
 images the same way as in Slash'EM.  Each tile name was also associated with a
 number; these numbers were in numerical sequence, so that they could be used
 as file positions directly.
@@ -314,7 +314,7 @@ In binary encoding, the bottom 21 bits are used to represent this, with
 C<invisible> being represented as zero.
 
 The tile compiler also accepts the text input C<basechar>.  This will be
-replaced, when compiling, with Unicode character of the most recently seen
+replaced, when compiling, with the Unicode character of the most recently seen
 I<unsubstituted> tile that matches the tile being compiled.  For instance, if
 you wanted statues to be gray versions of the corresponding monster, you could
 write a rule like C<sub statue *: gray basechar> (so long as the monsters had
@@ -459,13 +459,14 @@ A palette consists of lines of the form:
 
 where each key can provide 1, 3, or 4 channels.  Keys themselves can contain
 letters, digits, underscores and dollar signs, and be up to two characters
-long.  For single-letter keys, avoiding underscores and dollars gives the best
-possible backwards compatibility; for two-letter keys, using C<__> as the first
-key is recommended by the Slash'EM tiles developers to get old versions of the
-tiles utilities to bail out cleanly.  Providing a palette with no tiles is
-useful when doing tiles merging, in order to adjust all the tiles onto a
-specific palette (especially when the C<-p> option, to lock the palette to that
-in a particular file, is given).
+long (although all keys in any given file must have the same length).  For
+single-letter keys, avoiding underscores and dollars gives the best possible
+backwards compatibility; for two-letter keys, using C<__> as the first key is
+recommended by the Slash'EM tiles developers to get old versions of the tiles
+utilities to bail out cleanly.  Providing a palette with no tiles is useful
+when doing tiles merging, in order to adjust all the tiles onto a specific
+palette (especially when the C<-p> option, to lock the palette to that in a
+particular file, is given).
 
 A tile definition starts with the tile name.  For backwards compatibility,
 this can be given in the form C<# tile 0 (name)>, where the 0 can be any
@@ -488,8 +489,9 @@ the pixels of the image one after another.  (If keys provide 4 channels each,
 they give the RGBA of the pixel; if they provide 3 channels each, they give
 the RGB, with alpha being 0 if the RGB is (71, 108, 108) and 255 otherwise;
 and if they provide 1 channel each, then four keys will be needed per pixel,
-to give the red, green, blue and alpha separately.)  The braces are each on
-lines of their own, and no colon is used.
+to give the red, green, blue and alpha separately.  3-channel and 4-channel
+keys can be mixed, but neither can be mixed with a 1-channel key.)  The braces
+are each on lines of their own, and no colon is used.
 
 Binary tilesets also have a header, consisting of the string "NH4TILESET" and
 two NUL characters, then 80 characters representing the name of the tileset

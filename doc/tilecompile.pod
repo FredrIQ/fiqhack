@@ -1,5 +1,5 @@
 =for comment
-Last modified by Alex Smith, 2014-10-26
+Last modified by Alex Smith, 2015-03-10
 NetHack can be freely redistributed.  See license for details.
 
 =encoding utf8
@@ -191,7 +191,7 @@ reading them as input and producing them as output:
 
 A tileset format that places everything in a single file: palette,
 images, and the information about where those images should be used.
-For an image-based tileset, the images wil be converted to a textual
+For an image-based tileset, the images will be converted to a textual
 representation that represents each pixel of the image using from one
 to eight characters.
 
