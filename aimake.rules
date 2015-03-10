@@ -7,6 +7,11 @@
 # So this is written concisely, so as to be able to fit everything in.
 $copyright = "(c) Stichting Mathematisch Centrum, Amsterdam, 1985; Alex Smith 2010-2015; Daniel Thaler 2011-2012; and many others";
 $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Development Team 2003";
+$dlb_copyright = "(c) Kenneth Lorber, Bethesda, Maryland, 1994";
+$lev_copyright = "(c) 1989 by Jean-Christophe Collet";
+$dgn_copyright = "(c) 1989 by Jean-Christophe Collet; 1990 by M. Stephenson";
+
+$playfieldutils = qr/dlb|dgn_comp|lev_comp/;
 
 {
     options => {
@@ -71,13 +76,23 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
         tilecompile => {
             # We have to build the tileset compiler anyway, because we need
             # it during the build process. But we can choose not to install
-            # it.
+            # it, and we can choose not to build the documentation.
             description => "Tileset compiler",
             long_description => "Installs a command-line tool for changing ".
                                 "the tilesets that ship with NetHack 4 (both ".
                                 "graphical tiles, and sets of character/color ".
                                 "pairs used for rendering in a terminal).",
-            object => qr=(?!)=,
+            object => qr=^bpath:doc/tilecompile.pod$=,
+            default => 0,
+        },
+        playfield_utils => {
+            # Likewise for the level and dungeon compilers.
+            description => "Playfield utilities",
+            long_description => "Installs command-line tools for modifying part ".
+                                "of the NetHack playfield without needing to ".
+                                "recompile the game: 'dlb', 'lev_comp', and ".
+                                "'dgn_comp'.  Most users will not need these.",
+            object => qr=^bpath:doc/$playfieldutils.pod$=,
             default => 0,
         },
         slashem_tiles => {
@@ -518,6 +533,42 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
             },
             install_feature => "tilecompile",
         },
+        _install_dlb => {
+            object => "bpath:libnethack/util/dlb_main.c/dlb_main$exeext",
+            install_dir => "gamesbindir",
+            exeparams => {
+                copyright => $dlb_copyright,
+                name => "NetHack 4 Data Librarian",
+                description => "Archiver/unarchiver for NetHack 4's 'nhdat' file",
+                interactive => 0,
+            },
+            install_feature => 'playfield_utils',
+            install_name => "dlb$exeext",
+        },
+        _install_dgn_comp => {
+            object => "bpath:libnethack/util/dgn_main.c/dgn_main$exeext",
+            install_dir => "gamesbindir",
+            exeparams => {
+                copyright => $dgn_copyright,
+                name => "NetHack 4 Dungeon Compiler",
+                description => "Compiler for NetHack 4 dungeon descriptions",
+                interactive => 0,
+            },
+            install_feature => 'playfield_utils',
+            install_name => "dgn_comp$exeext",
+        },
+        _install_lev_comp => {
+            object => "bpath:libnethack/util/lev_main.c/lev_main$exeext",
+            install_dir => "gamesbindir",
+            exeparams => {
+                copyright => $lev_copyright,
+                name => "NetHack 4 Level Compiler",
+                description => "Compiler for NetHack 4 level descriptions",
+                interactive => 0,
+            },
+            install_feature => 'playfield_utils',
+            install_name => "lev_comp$exeext",
+        },
         _install_server => {
             object => "bpath:nethack_server/src/srvmain.c/srvmain$exeext",
             install_dir => "gamesbindir",
@@ -564,7 +615,7 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
             install_dir => "gamesdatadir",
         },
 
-        install_manuals => undef, # these are feature-gated
+        install_manuals => undef, # these are feature-gated at install time
 
         _install_manpage => {
             object => qr=^bpath:doc/nethack4\.6.*=,
@@ -579,6 +630,11 @@ $tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Devel
             object => qr=bpath:doc/(?:nh4ct\.5|tilecompile\.6).*=,
             install_dir => "mandir",
             install_feature => "tilecompile",
+        },
+        _install_playfield_utils_manpage => {
+            object => qr=bpath:doc/$playfieldutils\.6.*=,
+            install_dir => "mandir",
+            install_feature => "playfield_utils",
         },
         _install_docs => {
             object => qr=path:doc/(?:changelog|faq|philosophy)\.txt=,

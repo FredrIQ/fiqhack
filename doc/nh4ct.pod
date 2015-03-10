@@ -1,6 +1,9 @@
 =for comment
 Last modified by Alex Smith, 2015-03-10
+
+Copyright (C) 2013, 2014, 2015 Alex Smith
 NetHack can be freely redistributed.  See license for details.
+
 This documentation file was originally based on the tiles documentation from
 Slash'EM, but it is unclear if any of that documentation is still left.
 
