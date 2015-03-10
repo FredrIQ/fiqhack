@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-03-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2670,6 +2670,7 @@ beam_hit(int ddx, int ddy, int range,   /* direction and range */
     struct tmp_sym *tsym;
     uchar typ;
     boolean shopdoor = FALSE, point_blank = TRUE;
+    unsigned orig_ident = flags.ident;
 
     if (obj_destroyed)
         *obj_destroyed = FALSE;
@@ -2755,11 +2756,22 @@ beam_hit(int ddx, int ddy, int range,   /* direction and range */
                 break;
             }
 
+        /* Affect objects on the square. */
         if (fhito) {
             if (bhitpile(obj, fhito, bhitpos.x, bhitpos.y))
                 range--;
         }
-        if ((mtmp = m_at(level, bhitpos.x, bhitpos.y)) != 0) {
+
+        /* Affect monsters on the square. Exception: if the monster was created
+           as a result of the wand zap. We can determine this by comparing its
+           ident to orig_ident. orig_ident wraps around; thus, we compare the
+           distance the monster is above orig_ident, and if it's in the range
+           0..100, assume it's a newly created monster. */
+        mtmp = m_at(level, bhitpos.x, bhitpos.y);
+        if (mtmp && mtmp->m_id - orig_ident <= 100u)
+            mtmp = NULL;
+
+        if (mtmp) {
             notonhead = (bhitpos.x != mtmp->mx || bhitpos.y != mtmp->my);
             if (weapon != FLASHED_LIGHT) {
                 if (weapon != ZAPPED_WAND) {
