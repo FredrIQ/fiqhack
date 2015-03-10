@@ -263,6 +263,12 @@ useless without a separate file; the output will contain no tiles
 unless C<-k> is given, in which case the best the tile compiler can do
 is to name them C<unuseds 0>, C<unuseds 1>, etc..
 
+=item palette
+
+This format outputs just the palette that would be used for an output
+image; it does not output the image itself, or any metadata about what
+tile means what.
+
 =back
 
 For details about these formats, see L<nh4ct(5)>.

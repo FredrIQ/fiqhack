@@ -32,12 +32,14 @@ enum formatname {
     FN_HEX,
     FN_BINARY,
     FN_IMAGE,
+    FN_PALETTE,
 };
 
 enum iiformat {
     II_HEX,
     II_SPELTOUT,
-    II_FILEPOS
+    II_FILEPOS,
+    II_NONE,
 };
 
 /* The number of possible single-character keys. */

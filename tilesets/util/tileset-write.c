@@ -96,18 +96,22 @@ write_text_tileset_inner(const char *filename, FILE *out, enum iiformat iif)
         return 0;
     }
 
-    /* If we know the tileset name, output it. If we know the tileset
-       dimensions, output those too, /except/ if we're spelling out images (and
-       thus the dimensions are implicitly available from the images).  This
-       makes it easier to generate tilesets Slash'EM will accept. */
-    if (*tileset_name)
-        fprintf(out, "# name %s\n", tileset_name);
-    if (tileset_width != -1 && !embedding_images)
-        fprintf(out, "# width %ld\n", tileset_width);
-    if (tileset_height != -1 && !embedding_images)
-        fprintf(out, "# height %ld\n", tileset_height);
+    if (iif != II_NONE) {
+        /* If we know the tileset name, output it. If we know the tileset
+           dimensions, output those too, /except/ if we're spelling out images
+           (and thus the dimensions are implicitly available from the images).
+           This makes it easier to generate tilesets Slash'EM will accept.
 
-    if (embedding_images) {
+           Exception: when outputting only a palette.*/
+        if (*tileset_name)
+            fprintf(out, "# name %s\n", tileset_name);
+        if (tileset_width != -1 && !embedding_images)
+            fprintf(out, "# width %ld\n", tileset_width);
+        if (tileset_height != -1 && !embedding_images)
+            fprintf(out, "# height %ld\n", tileset_height);
+    }
+
+    if (embedding_images || iif == II_NONE) {
         /* We're going to be writing spelt-out images, so write the palette
            first. If there are more than 62 palette entries, use Slash'EM-style
            palette keys (keywidth = 2); otherwise, we can use NetHack 3 series
@@ -135,6 +139,18 @@ write_text_tileset_inner(const char *filename, FILE *out, enum iiformat iif)
                 fprintf(out, " = (%d, %d, %d, %d)\n", palette[i].r,
                         palette[i].g, palette[i].b, palette[i].a);
         }
+    }
+
+    if (iif == II_NONE) {
+        if (filename && fclose(out)) {
+            perror("Error: Completing writing a text file");
+            return 0; /* failure to close file */
+        }
+
+        if (filename)
+            printf("Info: wrote '%s', %d palette entries\n",
+                   filename, palettesize);
+        return 1;
     }
 
     /* Sort the tiles into image index order. We need to loop over image indexes

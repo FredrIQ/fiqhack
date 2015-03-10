@@ -226,7 +226,8 @@ static const char *const fn_strings[] = {
     [FN_MAP] = "map",
     [FN_HEX] = "hex",
     [FN_BINARY] = "binary",
-    [FN_IMAGE] = "image"
+    [FN_IMAGE] = "image",
+    [FN_PALETTE] = "palette"
 };
 
 int
@@ -713,6 +714,9 @@ main(int argc, char *argv[])
     switch(formatnumber) {
     case FN_TEXT:
         rv &= write_text_tileset(outfile, II_SPELTOUT);
+        break;
+    case FN_PALETTE:
+        rv &= write_text_tileset(outfile, II_NONE);
         break;
     case FN_IMAGE:
         if (!seen_image_count) {

@@ -379,11 +379,18 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
                         "optstring:-f",
                         "path:tilesets/dat/palettes/slashem.txt"],
         },
+        _extract_dawnlike_palette => {
+            object => 'path:tilesets/dat/tiles/dawnlike-dragons.txt',
+            command => ["bpath:tilesets/util/tilecompile.c/tilecompile$exeext",
+                        "optstring:-t palette", "optpath::",
+                        "optpath:-o :bpath:tilesets/dat/palettes/dawnlike.txt"],
+            output_from_optpath => '-o ',
+        },
         _dawnlike_catalogue_file_palette => {
             object => qr=^path:tilesets/dat/catalogues/dawnlike-.*\.txt$=s,
             # no -f for this; DawnHack shouldn't have out-of-range colors
-            depends => ["optpath:-p :path:tilesets/dat/palettes/dawnhack.txt",
-                        "path:tilesets/dat/palettes/dawnhack.txt"],
+            depends => ["optpath:-p :bpath:tilesets/dat/palettes/dawnlike.txt",
+                        "bpath:tilesets/dat/palettes/dawnlike.txt"],
         },
         _generate_base_text_tileset => {
             command => ["bpath:tilesets/util/basecchar.c/basecchar$exeext",

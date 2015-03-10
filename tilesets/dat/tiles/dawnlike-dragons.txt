@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2014-10-16
+! Last modified by Alex Smith, 2015-03-10
 !
 ! Copyright (C) Andrew Rios, 2014
 ! This work is licensed under the Creative Commons Attribution 3.0
@@ -13,6 +13,12 @@
 ! This file contains the dragon-related tiles from DawnHack; the
 ! dragon arrangement in DawnLike is more generic and less suited
 ! to NetHack in particular.
+!
+! This file is also used as the source file that determines what
+! colors exist in the DawnBringer palette.  Other source files are
+! forced to use only colors that exist in this file.  (It is easy to
+! verify manually that this file contains only transparent + 16
+! colors.)
 !
 A = (71, 108, 108)
 B = (69, 36, 52)
