@@ -9926,11 +9926,12 @@ __DATA__
         ignore_directories =>
             qr/^(?:\.svn|\.git|\.hg|\.bzr|_darcs)$/i,
         ignore_directories_with_files => [
-            'aimake.state',   # old versions of aimake
-            'aimake2.state',  # old versions of aimake
-            'aimake.objects', # this version of aimake
-            'config.status',  # autoconf
-            'CMakeCache.txt', # CMake
+            'aimake.state',       # old versions of aimake
+            'aimake2.state',      # old versions of aimake
+            'aimake.objects',     # this version of aimake
+            'config.status',      # autoconf
+            'CMakeCache.txt',     # CMake
+            'aimake-ignore-this', # so that other directories can be ignored
         ],
         ignore_files =>
             qr/(?:[:\/](?:aimake\.local\ |

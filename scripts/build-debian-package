@@ -1,5 +1,5 @@
 #!/bin/bash
-# Last modified by Alex Smith, 2014-10-21
+# Last modified by Alex Smith, 2015-03-10
 
 set -e
 
@@ -13,5 +13,9 @@ cp -r ../* "$BUILDDIR/$SUBDIR"
 cd "$BUILDDIR/$SUBDIR"
 mv dist/debian debian
 mv copyright debian/copyright
+# Remove the GPL from "copyright", it's already there on Debian
+sed -i -e '/^License: GPL-2$/,$ d' debian/copyright
+# The 'debian' directory changed location during file arrangement
+sed -i -e 's/dist\/debian/debian/g' debian/copyright
 dpkg-buildpackage -us -uc
 echo Output files written to "$BUILDDIR".

@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# Last modified by Alex Smith, 2014-10-21
+# Last modified by Alex Smith, 2015-03-10
 %:
 	env DH_VERBOSE=1 dh $@
 
@@ -9,6 +9,7 @@ PREFIX=/usr
 override_dh_auto_configure:
 	mkdir -p build
 	mkdir -p $(DESTDIR)
+	touch debian/aimake-ignore-this
 	(cd build; umask 022; ../aimake --without=jansson --config-only -i $(PREFIX) ..)
 
 override_dh_auto_build:
@@ -20,6 +21,7 @@ override_dh_auto_install:
 override_dh_auto_clean:
 	rm -f $(DESTDIR)
 	rm -f build
+	rm -f debian/aimake-ignore-this
 
 override_dh_fixperms:
 	dh_fixperms -X /var/games -X /usr/games/nethack4
@@ -27,5 +29,3 @@ override_dh_fixperms:
 override_dh_installdocs:
 	dh_installdocs
 	mv debian/nethack4/usr/share/doc/nethack4/changelog.txt debian/nethack4/usr/share/doc/nethack4/changelog
-	: # Remove the GPL from "copyright", it's already there on Debian
-	sed -i -e '/^License: GPL-2$$/,$$ d' debian/nethack4/usr/share/doc/nethack4/copyright
