@@ -1,4 +1,5 @@
-! Last modified by Alex Smith, 2014-10-20
+! Last modified by Alex Smith, 2015-03-10
+! Copyright (C) 2014 Alex Smith
 ! NetHack may be freely redistributed. See license for details.
 !
 ! This text tileset lists the special rules for the Rogue level.

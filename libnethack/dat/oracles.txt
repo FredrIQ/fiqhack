@@ -1,3 +1,5 @@
+# Last modified by Alex Smith, 2015-03-10
+# NetHack may be freely redistributed.  See license for details.
 -----
 If thy wand hath run out of charges, thou mayst zap it again and again; though
 naught will happen at first, verily, thy persistence shall be rewarded, as

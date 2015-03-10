@@ -1,3 +1,10 @@
+! Last modified by Alex Smith, 2015-03-10
+! Copyright (C) 2013 Alex Smith
+! NetHack may be freely redistributed.  See license for details.
+!
+! This file lists tiles that don't have a 32x32px version in the
+! Slash'EM tilesets.  It's currently unused, but if anyone wants
+! to draw these tiles, go ahead!
 unexplored area
 solid rock
 air

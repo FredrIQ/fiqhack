@@ -1,7 +1,69 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Last-Modified: Last modified by Alex Smith, 2015-03-10
+Comment:
+ .
+ This file is Copyright (C) Alex Smith 2013-2015, except as explained below
+ .
+ Parts of this file that quote other license agreements verbatim are
+ under the same licenses as those licenses.  Those licenses which even
+ have an explicit license agreement (which, in the case of the
+ licenses in this file, is embedded into the licenses themselves)
+ typically allow redistribution of the license, but only without
+ modifications (here interpreted as allowing embedding into a larger
+ document, including reversible changes to the sequence of bytes that
+ make up the license, that do not lose or hide any meaning).  When a
+ license does not have an explicit license agreement, I'm assuming
+ that the typical legal requirement to preserve copyright and license
+ notices also carries implicit permission to copy those notices (so as
+ to be able to preserve them).  The copyright statement above does not
+ apply to verbatim quotes of other licenses, and is not intended to
+ challenge their copyright status.
+ .
+ As for parts of this file that are not quoting other license
+ agreements, I hereby license anyone to copy and distribute them,
+ either verbatim or with modifications, so long as the authorship of
+ modified copies is not misrepresented.
+ .
+ THERE IS NO WARRANTY FOR THIS COPYRIGHT INFORMATION FILE.  IT HAS NOT
+ BEEN THOROUGHLY CHECKED FOR ACCURACY, AND MAY WELL CONTAIN MISTAKES.
+ USE IT AT YOUR OWN RISK.
+ .
 Upstream-Name: nethack4
 Upstream-Contact: ais523@nethack4.org
+
+Files: binary-copyright.pod copyright
+Copyright: Copyright (C) Alex Smith 2013-2015, except as explained below
+License: verbatim and nh4-metacopyright
+ Parts of this file that quote other license agreements verbatim are
+ under the same licenses as those licenses.  Those licenses which even
+ have an explicit license agreement (which, in the case of the
+ licenses in this file, is embedded into the licenses themselves)
+ typically allow redistribution of the license, but only without
+ modifications (here interpreted as allowing embedding into a larger
+ document, including reversible changes to the sequence of bytes that
+ make up the license, that do not lose or hide any meaning).  When a
+ license does not have an explicit license agreement, I'm assuming
+ that the typical legal requirement to preserve copyright and license
+ notices also carries implicit permission to copy those notices (so as
+ to be able to preserve them).  The copyright statement above does not
+ apply to verbatim quotes of other licenses, and is not intended to
+ challenge their copyright status.
+ .
+ As for parts of this file that are not quoting other license
+ agreements, I hereby license anyone to copy and distribute them,
+ either verbatim or with modifications, so long as the authorship of
+ modified copies is not misrepresented.
+ .
+ THERE IS NO WARRANTY FOR THIS COPYRIGHT INFORMATION FILE.  IT HAS NOT
+ BEEN THOROUGHLY CHECKED FOR ACCURACY, AND MAY WELL CONTAIN MISTAKES.
+ USE IT AT YOUR OWN RISK.
+Comment:
+ In order to track the copyright status of every file in the
+ distribution, the copyright-tracking files also need to track
+ themselves.  The license is open-source as far as is possible, but it
+ is typically a legal requirement to preserve existing license notices
+ unchanged.  This license is not used for any code; it is entirely
+ exclusive to files that explain the copyright status of other files.
 
 Files: libnethack_client/*
 License: NGPL or GPL-2+
@@ -30,6 +92,16 @@ Copyright: Copyright (c) 1990-95 by M. Stephenson
 Files: libnethack/dat/quest.txt
 License: NGPL
 Copyright: Copyright (c) 1991 by M. Stephenson
+
+Files: libnethack/dat/oracles.txt libnethack/dat/rumors.fal libnethack/dat/rumors.tru
+License: NGPL
+Copyright:
+ These files had no explicit copyright notice in the NetHack distribution; the
+ format of the rumours.* files made it impossible to include one (whereas the
+ oracles.txt file could have included one, but didn't). The likely copyright is
+ the general copyright of NetHack:
+ .
+ Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985
 
 Files: libnethack/include/*.h
 License: NGPL
@@ -143,7 +215,7 @@ Files: libnethack/include/vision.h
 License: NGPL
 Copyright: Copyright (c) Dean Luick, with acknowledgements to Dave Cohrs, 1990
 
-Files: libnethack/include/winprocs.c
+Files: libnethack/include/winprocs.h
 License: NGPL
 Copyright: Copyright (c) David Cohrs, 1992
 
@@ -273,6 +345,13 @@ Files: libnethack/src/priest.c
 License: NGPL
 Copyright: Copyright (c) Izchak Miller, Steve Linhart, 1989
 
+Files: libnethack/src/prop.c
+License: NGPL
+Copyright:
+ Copyright (c) 1989 Mike Threepoint
+ Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ Copyright (c) 2014 Alex Smith
+
 Files: libnethack/src/quest*.c
 License: NGPL
 Copyright: Copyright 1991, M. Stephenson
@@ -317,17 +396,6 @@ Files: libnethack/src/windows.c
 License: NGPL
 Copyright: Copyright (c) D. Cohrs, 1993
 
-Files: libnethack/src/xmalloc.c
-License: NGPL
-Copyright: Copyright (c) Daniel Thaler, 2011
-
-Files: libnethack/src/youprop.c
-License: NGPL
-Copyright:
- Copyright (c) 1989 Mike Threepoint
- Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
- Copyright (c) 2014 Alex Smith
-
 Files: libnethack/util/dgn_*
 License: NGPL
 Copyright:
@@ -353,20 +421,43 @@ Files: libnethack/util/checkglobals.sh
 License: NGPL
 Copyright: Copyright (c) 2013 Alex Smith
 
-Files: libnethack/util/savemap.pl
-License: NGPL
-Copyright: Copyright (c) 2014 Derrick Sund
-
 Files: libuncursed/*
 License: NGPL or GPL-2+
 Copyright: Copyright (c) 2013-2014 Alex Smith
 
-Files: libnethack_common/*
+Files: libnethack_common/src/common_options.c
+License: NGPL
+Copyright: Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985
+
+Files: libnethack_common/include/compilers.h
 License: NGPL
 Copyright:
- Copyright (c) 2013-2014 Alex Smith
- Copyright (c) Daniel Thaler, 2011-2012
- Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
+ Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985
+ Copyright (c) Alex Smith 2014
+
+Files: libnethack_common/src/xmalloc.c
+License: NGPL
+Copyright: Copyright (c) Daniel Thaler, 2011
+
+Files: libnethack_common/src/xmalloc.h
+License: NGPL
+Copyright:
+ Copyright (c) Daniel Thaler, 2011
+ Copyright (c) Alex Smith, 2013
+
+Files: libnethack_common/src/menulist.c libnethack_common/include/menulist.h
+License: NGPL
+Copyright: Copyright (c) Alex Smith, 2013
+
+Files: libnethack_common/src/utf8conv.c libnethack_common/include/utf8conv.h
+License: NGPL
+Copyright: Copyright (C) 2014 Alex Smith
+
+Files: libnethack_common/src/netconnect.c libnethack_common/include/netconnect.h
+License: NGPL
+Copyright:
+ Copyright (c) Daniel Thaler, 2012
+ Copyright (c) 2014 Alex Smith
 
 Files: nethack/*
 License: NGPL
@@ -388,9 +479,17 @@ Files: nethack/src/extrawin.c nethack/src/motd.c
 License: NGPL
 Copyright: Copyright (c) 2014 Alex Smith
 
+Files: libnethack_common/dat/motd.txt
+License: NGPL
+Copyright: Copyright (C) 2014 Alex Smith
+
 Files: nethack_server/*
 License: NGPL or GPL-2+
 Copyright: Copyright (c) Daniel Thaler, 2011
+
+Files: tilesets/missing-slashem-32-tiles.txt
+License: NGPL
+Copyright: Copyright (C) 2013 Alex Smith
 
 Files: tilesets/dat/tiles/s-*.txt tilesets/dat/palettes/slashem.txt
 License: NGPL
@@ -573,7 +672,7 @@ Files: tilesets/dat/catalogues/*.txt
 License: NGPL
 Copyright: Copyright (C) 2013, 2014 Alex Smith
 
-Files: tileset/dat/maps/*.map
+Files: tilesets/dat/maps/*.map
 License: NGPL
 Copyright:
  It's unclear whether these files are copyrightable at all, being a list of
@@ -599,6 +698,12 @@ Copyright:
 Files: tilesets/dat/maps/dawnlike.map
 License: CC-BY-SA-3.0
 Copyright: Copyright (C) 2014 Alex Smith
+Comment:
+ Unlike some other files in its directory, this one is rather more complex and
+ involves creative input (the selection of which tiles from DawnLike should be
+ used to represent which objects in NetHack).  Thus, it is highly unlikely to
+ be public domain.  (Rather, it has been placed under the same license as
+ DawnLike, to simplify the license of the resulting tileset post-compilation.)
 
 Files: tilesets/dat/fonts/*.txt
 License: NGPL
@@ -610,11 +715,15 @@ Comment: The format of these files in the original source made it
  conditions shown above, because all the other files in the directory
  had that copyright notice.
 
+Files: tilesets/dat/text/*.txt
+License: NGPL
+Copyright: Copyright (C) 2014 Alex Smith
+
 Files: tilesets/src/bigtile.c tilesets/src/magtile.c
 License: NGPL
 Copyright: Copyright (c) NetHack Development Team 1995
 
-Files: tilesets/util/*.c
+Files: tilesets/util/*.c tilesets/include/tilecompile.h
 License: NGPL
 Copyright: Copyright (C) 2014 Alex Smith
 
@@ -643,21 +752,42 @@ Files: scripts/*
 License: NGPL
 Copyright: Copyright (c) 2013-2014 Alex Smith
 
-Files: dist/debian/* dist/common/*
+Files: dist/debian/* dist/common/* dist/version-number-updates.txt
 License: NGPL
-Copyright: Copyright (c) 2014 Alex Smith
+Copyright: Copyright (c) 2013-2014 Alex Smith
 
 Files: doc/changelog.txt doc/faq.txt doc/mainloop.txt doc/philosophy.txt doc/saves.txt
 License: NGPL
-Copyright: Copyright (c) 2013 Alex Smith
+Copyright: Copyright (c) 2013-2015 Alex Smith
 
-Files: doc/nethack4.6.pod
+Files: doc/nethack4.pod doc/tilecompile.pod
 License: NGPL
-Copyright: Copyright (c) 2014 Alex Smith
+Copyright: Copyright (c) 2014-2015 Alex Smith
+
+Files: doc/nh4ct.pod
+License: NGPL
+Copyright:
+ Copyright (c) 2013-2015 Alex Smith
+ .
+ This documentation file was originally based on the tiles documentation from
+ Slash'EM, but it is unclear if any of that documentation is still left.
+ .
+ (The Slash'EM documentation in question is NGPL, but does not list an explicit
+ author.)
+
+Files: doc/ai.txt
+License: NGPL
+Copyright: Copyright (C) 2015 Alex Smith
 
 Files: doc/dungeon.txt
 License: NGPL
 Copyright: Copyright (c) 2013 Sean Hunt
+
+Files: doc/server_protocol.txt
+License: NGPL
+Copyright:
+ This document documents the version of the network protocol used in
+ NetHack 4.3, and was written by Daniel Thaler, GreyKnight, Alex Smith.
 
 Files: doc/tilesets.txt
 License: NGPL
@@ -682,6 +812,18 @@ Copyright: Copyright (c) 2013 Alex Smith
 Files: README
 License: NGPL
 Copyright: Copyright (c) 2013 Alex Smith
+
+Files: prebuilt/README.prebuilt
+License: public-domain
+ (The license on the file is not specified explicitly.)
+Copyright: This file is only one short sentence.  It was written by
+ Alex Smith, who does not which to enforce copyright on it.  (It's
+ also entirely unused during the build, and exists only to explain the
+ purpose of the directory in which it resides.)
+
+Files: COPYING
+License: NGPL
+Copyright: Copyright (C) 2013-2015 Alex Smith
 
 Files: aimake.rules
 License: NGPL
@@ -717,7 +859,7 @@ Comment:
 
 Files: libnethack/util/savemap.pl
 License: Expat
-Copyright: Copyright (c) 2014 Derrick Sund.
+Copyright: Copyright (c) 2014 Derrick Sund
 
 Files: libjansson/*
 License: Expat

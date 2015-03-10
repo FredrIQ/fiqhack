@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-03 */
+/* Last modified by Alex Smith, 2015-03-10 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) M. Stephenson, 1990, 1991.                       */
 /* Copyright (c) Dean Luick, 1990.                                */
@@ -236,7 +236,8 @@ xcrypt(const char *str)
 void
 do_rumors(const char *in_tru, const char *in_false, const char *outfile)
 {
-    long true_rumor_size;
+    long true_rumor_size, true_rumor_start;
+    int c;
 
     if (!(ofp = fopen(outfile, WRTMODE))) {
         perror(outfile);
@@ -251,11 +252,23 @@ do_rumors(const char *in_tru, const char *in_false, const char *outfile)
         exit(EXIT_FAILURE);
     }
 
+    /* skip to the first # sign */
+    while (((c = fgetc(ifp))) != '#' && c != EOF)
+        ;
+    if (fgetc(ifp) != '\n') {
+        fprintf(stderr, "true rumours file is missing #\\n sequence\n");
+        fclose(ifp);
+        fclose(ofp);
+        remove(outfile);
+        exit(EXIT_FAILURE);
+    }
+
     /* get size of true rumors file */
+    true_rumor_start = ftell(ifp);
     fseek(ifp, 0L, SEEK_END);
-    true_rumor_size = ftell(ifp);
+    true_rumor_size = ftell(ifp) - true_rumor_start;
     fprintf(ofp, "%06lx\n", true_rumor_size);
-    fseek(ifp, 0L, SEEK_SET);
+    fseek(ifp, true_rumor_start, SEEK_SET);
 
     /* copy true rumors */
     while (fgets(in_line, sizeof in_line, ifp) != 0)
@@ -267,6 +280,17 @@ do_rumors(const char *in_tru, const char *in_false, const char *outfile)
         perror(in_false);
         fclose(ofp);
         remove(outfile);        /* kill incomplete output file */
+        exit(EXIT_FAILURE);
+    }
+
+    /* skip to the first # sign */
+    while (((c = fgetc(ifp))) != '#' && c != EOF)
+        ;
+    if (fgetc(ifp) != '\n') {
+        fprintf(stderr, "false rumours file is missing #\\n sequence\n");
+        fclose(ifp);
+        fclose(ofp);
+        remove(outfile);
         exit(EXIT_FAILURE);
     }
 

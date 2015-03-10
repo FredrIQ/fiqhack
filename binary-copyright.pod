@@ -1,5 +1,35 @@
 =encoding utf8
 
+=begin comment
+
+ This file is Copyright (C) Alex Smith 2014-2015
+
+ Parts of this file that quote other license agreements verbatim are
+ under the same licenses as those licenses.  Those licenses which even
+ have an explicit license agreement (which, in the case of the
+ licenses in this file, is embedded into the licenses themselves)
+ typically allow redistribution of the license, but only without
+ modifications (here interpreted as allowing embedding into a larger
+ document, including reversible changes to the sequence of bytes that
+ make up the license, that do not lose or hide any meaning).  When a
+ license does not have an explicit license agreement, I'm assuming
+ that the typical legal requirement to preserve copyright and license
+ notices also carries implicit permission to copy those notices (so as
+ to be able to preserve them).  The copyright statement above does not
+ apply to verbatim quotes of other licenses, and is not intended to
+ challenge their copyright status.
+ 
+ As for parts of this file that are not quoting other license
+ agreements, I hereby license anyone to copy and distribute them,
+ either verbatim or with modifications, so long as the authorship of
+ modified copies is not misrepresented.
+ 
+ THERE IS NO WARRANTY FOR THIS COPYRIGHT INFORMATION FILE.  IT HAS NOT
+ BEEN THOROUGHLY CHECKED FOR ACCURACY, AND MAY WELL CONTAIN MISTAKES.
+ USE IT AT YOUR OWN RISK.
+
+=end comment
+
 =for aimake eula
 
 =head1 NetHack 4 License Information
