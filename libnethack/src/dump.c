@@ -1,9 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-13 */
+/* Last modified by Alex Smith, 2015-03-10 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
+#include <inttypes.h>
 
 static FILE *dumpfp;
 static struct nh_window_procs winprocs_original;
@@ -87,6 +88,7 @@ static void
 dump_status(void)
 {
     int hp;
+    char rngseedbuf[RNG_SEED_SIZE_BASE64];
 
     fprintf(dumpfp, "%s the %s\n", u.uplname,
             rank_of(u.ulevel, Role_switch, u.ufemale));
@@ -113,9 +115,13 @@ dump_status(void)
     fprintf(dumpfp, "  Energy: %d(%d)\n", u.uen, u.uenmax);
     fprintf(dumpfp, "  Def: %d\n", 10 - get_player_ac());
     fprintf(dumpfp, "  Gold: %ld\n", money_cnt(invent));
-    fprintf(dumpfp, "  Moves: %u\n", moves);
+    fprintf(dumpfp, "  Moves: %u\n\n", moves);
 
-    fprintf(dumpfp, "\n\n");
+    get_initial_rng_seed(rngseedbuf);
+
+    fprintf(dumpfp, "Dungeon seed: %.*s\n", RNG_SEED_SIZE_BASE64, rngseedbuf);
+    fprintf(dumpfp, "Game ID: %s_%" PRIdLEAST64 "\n\n", u.uplname,
+            (int_least64_t)u.ubirthday / 1000000L);
 }
 
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-28 */
+/* Last modified by Alex Smith, 2015-03-10 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -121,6 +121,8 @@ log_recover_core_reasons(struct nh_menulist *menu, const char *message,
     add_menutext(menu, "");
     add_menutext(menu, msgprintf("Error: %s", message));
     add_menutext(menu, msgprintf("Location: %s:%d", file, line));
+    add_menutext(menu, msgprintf("Game ID: %s_%" PRIdLEAST64, u.uplname,
+                                 (int_least64_t)u.ubirthday / 1000000L));
     add_menutext(menu, "");
 }
 
