@@ -517,6 +517,13 @@ This option is currently not particularly useful, because the statefile is
 stored in a compressed format in memory in order to save memory, and this
 option does not currently decompress it.  This may change in the future.
 
+=item B<--profile>
+
+After building, output statistics on how much time was spent on each rule.
+Does not work in combination with B<-S> (because elevating permissions
+requires exiting and restarting the aimake process, and the profiling data is
+lost upon exit).
+
 =item B<--config-only>
 
 Causes aimake to do nothing but record persistent options in the statefile. This
@@ -973,7 +980,7 @@ installation systems will need this information in order to be able to install
 your project correctly.)  These are set using the C<options> dictionary of the
 configuration file, using the syntax shown above.  Note that because the
 C<packagename> may be used for filenames, it has a very limited character set;
-you can use a separate C<packagename_ui> option if you want to use uppercase
+you can use a separate C<packagename_text> option if you want to use uppercase
 letters, punctuation, or the like.
 
 For more information on the package-wide options you can set, see
@@ -2147,7 +2154,11 @@ on by default.
 =item depends
 
 The name of another feature.  This feature will not be built or installed if a
-feature it depends on is not built or installed.
+feature it depends on is not built or installed.  This is optional, and can be
+omitted.  (Each feature can only depend on a single other feature, although
+more than one feature can depend on a given feature; thus, the features form
+a "forest", a tree that can potentially have more than one root.  The implicit
+root of the tree is the package as a whole.)
 
 =back
 
@@ -3973,6 +3984,7 @@ use Cwd qw/cwd realpath/;
 use Fcntl qw/:DEFAULT :flock :seek/;
 use FindBin qw'$RealBin $RealScript';
 use ExtUtils::MakeMaker;
+use Time::HiRes ();
 use Memoize;
 use Carp;
 use Config;
@@ -4018,15 +4030,17 @@ my ($opt_verbose, $opt_install, $opt_prefix, $opt_dump, @opt_warnings,
     $opt_install_only, $opt_elevate_permissions, $opt_specific_exit_status,
     @opt_with, @opt_without, @opt_with_default, $opt_nonempty_directory,
     %opt_directory_overrides, $opt_nocr, @opt_rebuild, $opt_documentation,
-    $opt_gen_installer, %opt_var,
+    $opt_gen_installer, %opt_var, $opt_profile,
     $opt_license, $opt_filelist, $opt_noperms, @opt_local_config); # options
 my ($codeset, $text_layers, $binary_layers,
     $utf8_layers, $ascii_layers); # encodings
-my ($path, $bpath, $ipath, $singledir, $cwd); # important paths
+my ($path, $bpath, $ipath, $singledir); # important paths
+our ($cwd, $oscwd);                     # current directories (often local-ed)
 my $installing;                   # mode of operation
 my %config_hashes = ();           # configuration
 my ($state, $state_fh, $config);  # state and configuration handling
 my $errorexit = 1;                # for --specific-exit-status
+my %rule_object_prefixes = ();    # an optimization on rules_that_apply_to
 our $os_parsed = $^O;
 $os_parsed eq 'msys' and $os_parsed = "MSWin32";
 
@@ -4143,36 +4157,42 @@ sub unintern ($) {
 # around if they're used both as strings and as non-strings. This is mostly
 # safe; aimake doesn't typically use numbers, except for 1 to mean "true", and
 # timestamps (which are all in the billions).
+#
+# The algorithm used here clobbers %unintern.  This is safe for all current
+# uses of garbage_collect_statefile, but bear it in mind for other potential
+# uses.
 sub collect_used_numbers;
 sub collect_used_numbers {
     my $sv = shift;
-    my $old = shift;
-    my $new = shift;
-    my $seen = shift;
-
     return unless defined $sv;
 
+    my $new = shift;
+
     if (ref $sv) {
+        my $seen = shift;
+
         $seen->{refaddr $sv} and return;
         $seen->{refaddr $sv} = 1;
-    }
 
-    if (!ref $sv && exists $old->{$sv}) {
-        $new->{$old->{$sv}} = $sv;
-    } elsif (ref $sv eq 'HASH') {
-        while (my ($k, $v) = each %$sv) {
-            $k eq '_intern' and next;
-            collect_used_numbers $k, $old, $new, $seen;
-            collect_used_numbers $v, $old, $new, $seen;
+        if (ref $sv eq 'HASH') {
+            while (my ($k, $v) = each %$sv) {
+                $k eq '_intern' and next;
+                exists $unintern{$k} and $new->{$unintern{$k}} = $k;
+                delete $unintern{$k};
+                collect_used_numbers $v, $new, $seen;
+            }
+        } elsif (ref $sv eq 'ARRAY') {
+            collect_used_numbers $_, $new, $seen for @$sv;
         }
-    } elsif (ref $sv eq 'ARRAY') {
-        collect_used_numbers $_, $old, $new, $seen for @$sv;
+    } else {
+        exists $unintern{$sv} and $new->{$unintern{$sv}} = $sv;
+        delete $unintern{$sv};
     }
 }
 sub garbage_collect_statefile {
     my $newintern = {};
 
-    collect_used_numbers $state, \%unintern, $newintern, {};
+    collect_used_numbers $state, $newintern, {};
 
     $state->{_intern} = $newintern;
 }
@@ -4301,11 +4321,22 @@ sub pvtransform {
     return $vn;
 }
 
+### Profiling
+my $last_profile_point = Time::HiRes::time();
+my %profile_intervals;
+sub charge_profiled_time_to {
+    $opt_profile or return;
+
+    my $new_profile_point = Time::HiRes::time();
+    $profile_intervals{+shift} += $new_profile_point - $last_profile_point;
+    $last_profile_point = $new_profile_point;
+}
+
 ##### Object name handling
 #
 # All objects have an object type, and a value. Depending on the object type,
 # they might also have an inner (nested) object. Some objects are produced,
-# and some are provided (and some are just virtual).
+# and some are provided.
 my %objtype_nested = (
     path => 0, bpath => 0, spath => 0, extend => 1, file => 0, symbol => 0,
     direct_symbol => 0, shared_symbol => 0, symbolset => 1, symbol_in_object
@@ -4320,13 +4351,6 @@ my %objtype_provided = (
     => 1, intcmd => 0, optstring => 0, optpath => 0, optionset => 1, sys => 0,
     searchpath => 1, searchfile => 1, standardlib => 0, searchlib => 1,
     dependencies => 1, hash_on_disk => 0);
-my %objtype_is_special = ( # TODO: existence check for (int)?cmd:?
-    path => 0, bpath => 0, spath => 0, extend => 1, file => 0, symbol => 0,
-    direct_symbol => 0, shared_symbol => 0, symbolset => 0, symbol_in_object
-    => 0, namehint => 1, config_option => 0, config_rule => 0, cmd => 1, tool
-    => 0, intcmd => 1, optstring => 1, optpath => 1, optionset => 0, sys => 1,
-    searchpath => 0, searchfile => 0, standardlib => 0, searchlib => 0,
-    dependencies => 0, hash_on_disk => 1);
 
 # Some object types allow multiple interchangeable providers, in which
 # case we merge the outdepends of each provider. This is done via a
@@ -4341,6 +4365,19 @@ use constant multiple_providers_ok_regex =>
             path |
             optionset |
             dependencies) : /x;
+
+# Some object types don't act normally, and are just virtual. This is also
+# done via regex; parsing the object name takes up over 6% of the program
+# runtime for small dirty builds.
+use constant objtype_is_special_regex =>
+    qr/^(?> extend |
+            namehint |
+            cmd |
+            intcmd |
+            opt(?: string |
+                   path) |
+            sys |
+            hash_on_disk)/x;
 
 # Splits an object name into its components. If the second argument is true,
 # don't worry about missing components.
@@ -4587,8 +4624,15 @@ if ($win32_available) {
     }
 }
 
-$bpath = ospath2aipath cwd, undef, 2;
+$oscwd = cwd;
+$bpath = ospath2aipath $oscwd, undef, 2;
 $cwd = 'bpath:';
+
+# Parsing an aimake path can be kind-of slow. Thus, we use a custom memoizer
+# for aipath2ospath, which can remember the results of the reverse conversion
+# (i.e. ospath2aipath) in addition to recording aipath2ospath results.
+# Take care to record only absolute ospaths in the cache.
+my %ospath_of_aipath_cache;
 
 # Given a native OS path, returns the matching aimake path, as an object name.
 #
@@ -4647,6 +4691,7 @@ sub ospath2aipath {
                 }
             }
         }
+        $ospath_of_aipath_cache{$aipath} = $ospath;
         return $aipath;
     } else {
         # Ignore the root: we can't make anything sensible of D:.. anyway
@@ -4670,6 +4715,8 @@ sub ospath2aipath {
 sub aipath2ospath {
     my $aipath = shift;
     my $shorten = shift;
+    !$shorten and exists $ospath_of_aipath_cache{$aipath} and
+        return $ospath_of_aipath_cache{$aipath};
     $shorten and $aipath eq $shorten and return File::Spec->curdir();
     $shorten and $shorten ne 'bpath:' and $shorten ne 'path:' and
         $shorten .= '/';
@@ -4706,7 +4753,9 @@ sub aipath2ospath {
         my (undef, $vol, @dirs) = parse_aipath $aipath; # ignore the spath:
         my $file = pop @dirs;
         unshift @dirs, File::Spec->rootdir;
-        return File::Spec->catpath($vol, File::Spec->catdir(@dirs), $file);
+        my $ospath = File::Spec->catpath($vol, File::Spec->catdir(@dirs), $file);
+        $ospath_of_aipath_cache{$aipath} = $ospath;
+        return $ospath;
     }
 }
 
@@ -4818,11 +4867,12 @@ sub ensure_directory {
     $objtype =~ /^[bs]?path$/ or return;
 
     $containing_only and $aipath = aipath_parent $aipath;
-    verify_writable $aipath, $installing;
     my $fon = friendly_objname $aipath;
     my $ospath = aipath2ospath $aipath;
 
-    return 1 if -d $ospath; # avoid a useless message
+    return 1 if -d $ospath; # must be before verify_writable
+    verify_writable $aipath, $installing;
+
     die "Found a non-directory at '$fon'" if -e $ospath;
     $dont_die or progress_report 1, "Creating directory '$fon'...";
     $@ = undef;
@@ -5563,11 +5613,24 @@ sub run_command {
             my $formatted;
             $formatter->no_errata_section(1);
             $formatter->output_string(\$formatted);
-            eval {
+            open my $save_stderr, '>&', STDERR
+                or return ('could not redirect error output', undef, $!);
+            close STDERR;
+            open STDERR, '>', \my $stderr;
+            my $ok = eval {
                 $formatter->parse_string_document($pod);
                 $formatter->any_errata_seen() ?
                     ($@='', 0) : 1;
-            } or return ('formatting failed', '', $@);
+            };
+            close STDERR;
+            if (!open STDERR, '>&', $save_stderr) {
+                # no point in using the normal error mechanism: we don't have
+                # a working stderr, send the error to stdout instead
+                print "Could not restore STDERR: $!\n";
+                die "cannot continue, no working STDERR";
+            }
+            $ok or return ($@ =~ s/ at .*// ? $@ : 'formatting failed',
+                           '', $stderr);
 
             if ($is_eula) {
                 $aipath = 'bpath:aimake/license.rtf';
@@ -5891,15 +5954,14 @@ sub run_command {
                 $! = 0;
                 # chdir to $ossourcedir so that the target is valid both as a
                 # cwd-relative and a source-relative filename
-                my $oldcwd_ospath = cwd;
                 chdir $ossourcedir or
                     return ("Could not change directory", '',
                             "Changing directory: $!");
                 ai_symlink $ostarget, $ossource or
-                   (chdir $oldcwd_ospath), return
-                    ("Could not create link", '',
-                     "Linking '$ossource' to '$ostarget': $!");
-                chdir $oldcwd_ospath;
+                   (chdir $oscwd or die "Could not unchange directory: $!"),
+                    return ("Could not create link", '',
+                            "Linking '$ossource' to '$ostarget': $!");
+                chdir $oscwd;
             }
             return (undef, '', '');
         }
@@ -5919,7 +5981,7 @@ sub run_command {
 
     # Convert options into a string representation (unless we were running an
     # internal command).
-    my $oldcwd_aipath = $cwd;
+    local $cwd = $cwd;
     $intopts{'cwd'} and $cwd = $intopts{'cwd'};
     my $rel = $intopts{'relpaths'} ? $cwd : undef;
     if ($cmd !~ /^intcmd:/) {
@@ -5942,18 +6004,18 @@ sub run_command {
     # escaping would be less readable, especially because, say, Windows uses
     # backslash as a path separator.)
     my $cmdline = "$cmd " . join ' ', map {/ / ? "\"$_\"" : $_} @opts;
-    $intopts{'cmdline'} and do {$cwd = $oldcwd_aipath; return $cmdline;};
+    $intopts{'cmdline'} and return $cmdline;
 
     # Change directory if necessary.
-    my $oldcwd_ospath = cwd;
-    unless (chdir aipath2ospath($cwd)) {
-        $cwd = $oldcwd_aipath;
+    my $oldoscwd = $oscwd;
+    local $oscwd = aipath2ospath($cwd);
+    unless (chdir $oscwd) {
         return ("Could not change directory to '" .
                 aipath2ospath($intopts{cwd}, 'bpath:') .
                 "': $!", undef, undef);
     }
     progress_report +($intopts{'debug_trace'} ? 0 : 2),
-        "Running $cmdline (wd: '" . aipath2ospath($cwd, 'bpath:') . "')";
+        "Running $cmdline (wd: '$oscwd')";
 
     # If we get information in the wrong encoding, treat that like a compile
     # error.
@@ -6012,9 +6074,9 @@ sub run_command {
         close $tmp_stderr;
     };
 
-    # Restore the changed directory.
-    $cwd = $oldcwd_aipath;
-    chdir $oldcwd_ospath or die
+    # Restore the changed directory. ($cwd, $oscwd will be reverted back
+    # to their old values by local.)
+    chdir $oldoscwd or die
         "Could not change back to the correct directory: $!";
 
     # Report the results.
@@ -6405,6 +6467,10 @@ sub set_permissions
 # all writing of the state file goes via atomically{}. This both leaves us in
 # a sane state upon crash or signal, and makes it easier to implement parallel
 # building in the future.
+#
+# For profiling to work correctly, all calls to atomically() must be preceded
+# by a call to charge_profiled_time_to (otherwise time spent before the call
+# might be charged to statefile writing).
 {
     my $state_backup = {};
     my $write_on_crash = undef;
@@ -6425,6 +6491,7 @@ sub set_permissions
             $state_backup = dclone $state;
             $last_clone_time = time;
             write_statefile;
+            charge_profiled_time_to('Backing up the statefile');
         }
         $write_on_crash = \$state_backup;
         $_[0]->();
@@ -6541,7 +6608,11 @@ sub rule_applies_to_object {
 sub rules_that_apply_to {
     my $objname = shift;
     my @rv = ();
-    for my $rulename (keys %{$config->{rules}}) {
+    $objname =~ /^([a-z_]+):/;
+    my $objprefix = $1;
+
+    for my $rulename (keys %{$rule_object_prefixes{$objprefix}},
+                      keys %{$rule_object_prefixes{any}}) {
         rule_applies_to_object $rulename, $objname or next;
         push @rv, $rulename;
     }
@@ -6849,7 +6920,6 @@ sub set_proviced_outdeps {
     my $pair = shift;
     my $obj = shift;
     my $outdeps = shift; # interned, undef if no longer proviced by the rule
-    my ($objtype, $objvalue) = parse_objname $obj;
     my $outdepends_changed = 1;
     my $ipair = intern $pair;
     my $iobj = intern $obj;
@@ -6904,7 +6974,7 @@ sub set_proviced_outdeps {
         my $cpair = unintern $icpair;
         mark_pair_unchanged $cpair, "unblocked by changed hash";
         mark_pair_xuse_unknown $cpair, "unblocked by non-special object"
-            if !$objtype_is_special{$objtype};
+            if $obj !~ objtype_is_special_regex;
         mark_pair_changed $cpair, "unblocked but is still changed";
     }
 
@@ -6929,7 +6999,7 @@ sub set_proviced_outdeps {
         # known again.)  Exception: if the outdepends stay the same, we know
         # the xuse calculation will too.
         mark_pair_xuse_unknown $cpair, "old xuse changed hash"
-            if !$objtype_is_special{$objtype} && $outdepends_changed;
+            if $outdepends_changed && $obj !~ objtype_is_special_regex;
         mark_pair_changed $cpair, "xuse changed hash";
     }
 
@@ -6956,7 +7026,8 @@ sub set_proviced_outdeps {
     # need to recalculate anything that depended on its object beforehand; if
     # it needs to be recalculated, it will observe the dependencies: object
     # that is already in its xuse being changed or deleted.)
-    if ($objtype eq 'config_rule') {
+    if ($obj =~ /^config_rule:/) {
+        my (undef, $objvalue) = parse_objname $obj;
         progress_report 4, "Adding pairs from rule $objvalue";
         my @objects = objects_for_rule $objvalue;
         my $r = $config->{rules}{$objvalue};
@@ -7286,8 +7357,14 @@ sub recalculate_pair_xuse {
             }
         }
 
+        # Complete and extend the object names in the command while we're
+        # outside our main loop. This avoids having to do a no-op completion
+        # and extension of all the use dependencies.
+        complete_and_extend \$_, $obj for @command;
+
         # For install rules, add sys:installing to the list.
         $r->{number_of_install_actions} and push @command, 'sys:installing';
+
         my %xuse_reason = ();
         my $pass = 1;
         my @postponed = ();
@@ -7297,12 +7374,9 @@ sub recalculate_pair_xuse {
                 @command = @postponed;
                 $pass = 2;
             }
-            # Convert the object name from a partially specified name into a
-            # complete name.
+
             my $o = shift @command;
-            complete_and_extend \$o, $obj;
             next if $xuse{$o};
-            my ($otype, undef) = parse_objname $o;
             my $io = intern $o;
 
             # Add the outdepends to the list, if any. (Or postpone it for
@@ -7310,7 +7384,7 @@ sub recalculate_pair_xuse {
             # still on the first pass.)  This is possible when the object is
             # provided or produced, but not if it's special (because it won't
             # have any outdep_by_object hash to check the outdepends from).
-            if (!$objtype_is_special{$otype}) {
+            if ($o !~ objtype_is_special_regex) {
                 my @ancestors = sort map unintern $_,
                     keys %{$state->{outdep_by_object}{$io}};
                 delete $state->{outdep_by_object}{$io} unless
@@ -7339,6 +7413,7 @@ sub recalculate_pair_xuse {
                         for my $iudep (@{$state->{outdep_by_pair}
                                         {intern $ancestor}{$io}}) {
                             my $udep = unintern $iudep;
+                            $udep =~ /^hash_on_disk:/ and next;
                             push @command, $udep unless $udeps{$udep};
                             $udeps{$udep} = 1;
                         }
@@ -7353,7 +7428,8 @@ sub recalculate_pair_xuse {
                     $report_ties or
                         $state->{xuse_prevpair}{$ipair}{$io} = $iancestor;
                     my @iudeps = @{$state->{outdep_by_pair}{$iancestor}{$io}};
-                    push @command, map unintern $_, @iudeps;
+                    push @command, grep $_ !~ /^hash_on_disk:/,
+                        map unintern $_, @iudeps;
                     $xuse_reason{unintern $_} = $o for @iudeps;
                 } elsif (@ancestors > 1 && $pass == 2 && $report_ties) {
                     return (1, $o, $obj, \@ancestors);
@@ -7673,9 +7749,8 @@ sub pair_is_sure {
 # spath.
 sub object_exists {
     my $obj = shift;
-    my ($objtype, undef) = parse_objname $obj;
     return $state->{outdep_by_object}{intern $obj}
-        unless $objtype_is_special{$objtype};
+        unless $obj =~ objtype_is_special_regex;
     return 0 if $obj eq 'sys:clean';
     return 1;
 }
@@ -7941,6 +8016,7 @@ $opt_verbose = 0;
 $opt_install = undef;
 $opt_prefix = undef;
 $opt_dump = undef;
+$opt_profile = 0;
 $opt_install_only = 0;
 $opt_config_only = 0;
 $opt_elevate_permissions = undef;
@@ -7975,6 +8051,7 @@ GetOptions('verbose|v:+' => \$opt_verbose,
            'filelist=s' => \$opt_filelist,
            'gen-installer=s' => \$opt_gen_installer,
            'natural-permissions' => \$opt_noperms,
+           'profile' => \$opt_profile,
            'dump-status:s' => \$opt_dump,
            'show-warnings|W=s' => \@opt_warnings,
            'no-carriage-return' => \$opt_nocr,
@@ -8119,6 +8196,8 @@ if (!defined $path) {
 
 -d aipath2ospath('path:') or die "Source directory '" .
     aipath2ospath('path:') . "' is not a directory.";
+
+charge_profiled_time_to('Early initialization');
 
 atomically {
     $state->{_srcdir} = $path;
@@ -8301,6 +8380,10 @@ sub feature_error {
 sub fix_syntax_highlighting {
 }
 
+charge_profiled_time_to('Mid initialization');
+
+$singledir = 0;
+
 atomically {
     for my $feature (@opt_with) {
         exists $config->{features}{$feature} or feature_error $feature;
@@ -8314,10 +8397,7 @@ atomically {
         exists $config->{features}{$feature} or feature_error $feature;
         delete $state->{_feature}{$feature};
     }
-};
 
-$singledir = 0;
-atomically {
     $ipath ||= $state->{_installdir};
 
     # Work out the install directory layout.
@@ -8484,6 +8564,33 @@ for my $rulename (keys %{$config->{rules}}) {
         verify_hash_field $rule, $k, $rulekeys{$k}, "rule '$rulename'";
     }
 
+    # Add the rule to the rule_object_prefixes cache.  This basically involves
+    # looking at the {object} field to see what sort of object it's looking
+    # for.  This is complicated by the fact that it might be a regex, and a
+    # regex can contain a | to match more than one object prefix.
+    #
+    # We work around this via looking for a | that isn't enclosed in
+    # parentheses.  If we find one, we place the rule into the "any" bucket.
+    # Likewise if the rule doesn't have the most common form.
+    my $ruleobject = $rule->{object};
+    my $bucket = 'any';
+    if (!ref $ruleobject) {
+        $ruleobject =~ /^([a-z_]+):/ and $bucket = $1;
+    } else {
+        $ruleobject = "$ruleobject";
+        $ruleobject =~ s/^\(\?\^[-a-z]*:\^// and
+            $ruleobject =~ s/\)$// and
+            $ruleobject =~ /^ (?: [^\\()|]
+                                | \\.
+                                | (?'bparens' \( (?: [^\\()]
+                                                   | \\.
+                                                   | (?&bparens))*
+                                              \))
+                              )* $/x and
+            $ruleobject =~ /^([a-z_]+):/ and $bucket = $1;
+    }
+    $rule_object_prefixes{$bucket}{$rulename} = undef;
+
     # Check each action.
     my $anum = 0;
     for my $a (@{$rule->{actions}}) {
@@ -8596,6 +8703,8 @@ for my $rulename (keys %{$config->{rules}}) {
 # we'd want when a rule becomes changed, including notifying aimake of new
 # rules, etc.
 
+charge_profiled_time_to('Late initialization');
+
 $config_hashes{"config_rule:$_"} = sv_hash $config->{rules}{$_}
     for keys %{$config->{rules}};
 $config_hashes{"config_option:$_"} = sv_hash $config->{options}{$_}
@@ -8657,6 +8766,8 @@ for my $feature (sort keys %{$config->{features}}) {
 
 $opt_config_only and write_statefile, exit 0;
 
+charge_profiled_time_to('Late initialization');
+
 atomically {
     for my $obj (@opt_rebuild) {
         for my $iprovicer (keys %{$state->{outdep_by_object}{intern $obj}}) {
@@ -8673,10 +8784,13 @@ if ($active_features eq "") {
 }
 
 my %pairs_currently_running = (); # used for parallel builds
+my @last_changedpairs = (); # optimization
 my $rebuild_late_locked = 1;
 my $installing_locked = 1;
 
 my %installed_location = ();
+
+charge_profiled_time_to('Late initialization');
 
 MAINLOOP: while (1) {
     my $curpair = undef;
@@ -8685,27 +8799,53 @@ MAINLOOP: while (1) {
     my $no_rules_since_timestamp = time;
     my $lastbuild;
     my @xuse;
+
+    # Note: we always have a charge_profiled_time_to call just before this
+    # atomically{}, because there's one just before the loop and one at the
+    # end of the loop.
+
     atomically {
       FIND_ANOTHER_RULE:
         $find_another = 0;
         $curpair = undef;
-        for my $runnable (keys %likely_runnable) {
-            $state->{changed_pairs}{intern $runnable} or
-                delete $likely_runnable{$runnable};
+
+        # Try to find an appropriate current pair.
+        #
+        # We check the following lists in order:
+        # 0 keys %likely_runnable
+        # 1 @last_changedpairs
+        # 2 @last_changedpairs, refilled from %{$state->{changed_pairs}}
+        # 3 keys %unlikely_runnable
+        # We don't make any assumptions about what sort of pairs are on each
+        # of these lists (except for the tautology that any pairs on list 2
+        # are changed).
+        my $current_list = [sort keys %likely_runnable];
+        my $whichlist = 0;
+        FIND_CURRENT_PAIR: {
+            if (!@$current_list) {
+                $whichlist++;
+                if ($whichlist == 3) {
+                    $current_list = [sort keys %unlikely_runnable];
+                    %unlikely_runnable = ();
+                } elsif ($whichlist > 3) {
+                    $curpair = undef;
+                    last FIND_CURRENT_PAIR;
+                } else {
+                    $current_list = \@last_changedpairs;
+                    $whichlist == 2 and @last_changedpairs =
+                        sort map unintern $_, keys %{$state->{changed_pairs}};
+                }
+                redo FIND_CURRENT_PAIR;
+            }
+            $curpair = shift @$current_list;
+            $whichlist == 2 or $state->{changed_pairs}{intern $curpair} or
+                redo FIND_CURRENT_PAIR;
+            $not_runnable_yet{$curpair} and redo FIND_CURRENT_PAIR;
+            $unlikely_runnable{$curpair} and redo FIND_CURRENT_PAIR;
+            $pairs_currently_running{$curpair} and redo FIND_CURRENT_PAIR;
         }
-        my @changedpairs = keys %likely_runnable;
-        @changedpairs or @changedpairs =
-            grep +(!$not_runnable_yet{$_} && !$unlikely_runnable{$_}),
-            map unintern $_, keys %{$state->{changed_pairs}};
-        @changedpairs =
-            sort grep !$pairs_currently_running{$_}, @changedpairs;
-        if (!@changedpairs && keys %unlikely_runnable) {
-            progress_report 3,
-                "Reconsidering rules that failed to run earlier...";
-            %unlikely_runnable = ();
-            goto FIND_ANOTHER_RULE;
-        }
-        if (!@changedpairs) {
+
+        if (!defined $curpair) {
             # It could be that no pairs are runnable. In that case, unlock
             # features if we can.
             if ($rebuild_late_locked) {
@@ -8730,7 +8870,6 @@ MAINLOOP: while (1) {
             # we still need to relinquish the critical section so that we can
             # exit the main loop.
         } else {
-            $curpair = $changedpairs[0];
             $icurpair = intern $curpair;
             my ($rulename, $objname) = parse_pairname $curpair;
             progress_report +(time > $no_rules_since_timestamp + 2 ?
@@ -8752,7 +8891,8 @@ MAINLOOP: while (1) {
                 delete $likely_runnable{$curpair};
                 $find_another = 1;
             } else {
-                if (!$state->{outdep_by_pair}->{$icurpair} &&
+                charge_profiled_time_to('Looking for a rule to run');
+                if (!$state->{outdep_by_pair}{$icurpair} &&
                     !exists $sure_pair_cache{$curpair} &&
                     !exists $unsure_pair_cache{$curpair}) {
                     # If a pair currently has no outputs, and it has at least
@@ -8783,6 +8923,8 @@ MAINLOOP: while (1) {
                             # want to postpone it. There's no restriction on
                             # what sort of pairs can be in unlikely_runnable.
                             $unlikely_runnable{$curpair} = 1;
+                            charge_profiled_time_to(
+                                "Rule '$rulename': sureness");
                             goto FIND_ANOTHER_RULE;
                         }
 
@@ -8806,9 +8948,12 @@ MAINLOOP: while (1) {
                     $state->{changed_pairs}{$ilikely_pair} and
                         prioritize_pair unintern $ilikely_pair;
                 }
+                charge_profiled_time_to("Rule '$rulename': sureness");
             }
         }
         $find_another and goto FIND_ANOTHER_RULE;
+
+        charge_profiled_time_to('Looking for a rule to run');
 
         if (defined $curpair) {
             progress_report 3,
@@ -8919,6 +9064,7 @@ MAINLOOP: while (1) {
                 # Find another rule.
                 $find_another = 1;
             }
+            charge_profiled_time_to("Rule '$rule': runnability");
         }
         $find_another and goto FIND_ANOTHER_RULE;
 
@@ -9117,6 +9263,8 @@ MAINLOOP: while (1) {
         }
     }
 
+    charge_profiled_time_to("Rule '$rulename': prepare to run");
+
     # If we're installing, install now.
     my $inapplicable = 0;
     if ($rule->{number_of_install_actions}) {
@@ -9241,6 +9389,8 @@ MAINLOOP: while (1) {
     # Run the command.
     my ($failreason, $stdout, $stderr) = run_command(@rcargs);
     $inapplicable and $failreason = 'not installing this feature';
+
+    charge_profiled_time_to("Rule '$rulename': run_command");
 
     $rule->{also_match_stderr} and ($stdout, $stderr) = ($stdout.$stderr, '');
 
@@ -9550,6 +9700,8 @@ EOF
     }
     progress_report +($failreason && !$hide_stderr ? -1 : $level), $msg;
 
+    charge_profiled_time_to("Rule '$rulename': parse output");
+
     atomically {
         if ($failreason && !$hide_stderr) {
             record_pair_error $curpair, "$whatmsg failed: $failreason";
@@ -9583,6 +9735,8 @@ EOF
         }
 
         delete $pairs_currently_running{$curpair};
+
+        charge_profiled_time_to("Rule '$rulename': record output");
     };
 }
 
@@ -9678,6 +9832,8 @@ if ($opt_gen_installer && $opt_gen_installer eq 'msi') {{
         progress_report -1, "Could not write installer file '" .
             (aipath2ospath "bpath:$pname.msi", "bpath:") . "': $!"
     }
+
+    charge_profiled_time_to('Generate installer');
 }}
 
 my $anyproblems = 0;
@@ -9703,6 +9859,8 @@ atomic_read {
         $ewprinted++;
     }
 };
+
+charge_profiled_time_to('Errors/warnings');
 
 ### Dependency problems
 #
@@ -9810,6 +9968,8 @@ EOF
     }
 };
 
+charge_profiled_time_to('Report dependency issues');
+
 ### Dependency loops
 #
 # One thing that's definitely a problem is loops in the dependencies. There
@@ -9894,12 +10054,35 @@ atomically {
     }
 };
 
+charge_profiled_time_to('Report dependency loops');
+
+### Garbage collection
+
 atomically {
+    # clobbers %unintern
     garbage_collect_statefile;
 };
 
+charge_profiled_time_to('Garbage collection');
+
 write_statefile;
 progress_report 3, "Main program is ending.";
+
+charge_profiled_time_to('Final statefile write');
+
+### Reporting profiling data
+#
+# This must be done last, because anything that happens after it can't be
+# profiled.
+
+flush STDERR;
+if ($opt_profile) {
+    print "\nProfiling information: \n";
+    for my $k (sort {$profile_intervals{$b} <=> $profile_intervals{$a}}
+               keys %profile_intervals) {
+        printf "%12.6f %s\n", $profile_intervals{$k}, $k;
+    }
+}
 
 $anyproblems and exit ($opt_specific_exit_status ? $errorexit : 1);
 
