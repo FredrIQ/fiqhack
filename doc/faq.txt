@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-10-16
+Last modified by Alex Smith, 2015-03-12
 
 Copyright (C) 2013 Alex Smith.
 
@@ -134,9 +134,9 @@ seems possible that we've even overtaken them by now, though.
 How can I follow/contribute to NetHack 4 development?
 -----------------------------------------------------
 
-NetHack 4 was branched from NitroHack, so its source (including interim
-development versions) is available from
-[Alex Smith's clone of the NitroHack repository][3], branch "nicehack".  There
+NetHack 4's development can be followed from its [git repository][3]; active
+developemnt is typically in branch "master" or "savebreak".  (That repository
+also contains (often out-of-date) versions of some related variants.)  There
 is also now a [bug tracker][4], where you can read or report bugs, or submit
 patches.
 
@@ -678,7 +678,7 @@ at the `grammartree` branch in the repository to see how far we've got.
 
 [1]: http://nethack.org
 [2]: http://nethack4.org
-[3]: https://gitorious.org/nitrohack/ais523/commits/nicehack
+[3]: http://nethack4.org/media/nethack4.git
 [4]: http://trac.nethack4.org
 [5]: http://junethack.de
 [6]: http://www.chiark.greenend.org.uk/~sgtatham/putty/

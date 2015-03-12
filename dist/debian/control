@@ -5,7 +5,7 @@ Maintainer: Alex Smith <ais523@nethack4.org>
 Build-Depends: debhelper (>= 9.0.0), libz-dev, libjansson-dev, bison, flex, libsdl2-dev, libpng-dev, perl (>= 5.8.1)
 Standards-Version: 3.9.5
 Homepage: http://nethack4.org
-Vcs-Git: git://gitorious.org/nitrohack/ais523.git -b nicehack
+Vcs-Git: http://nethack4.org/media/nethack4.git -b master
 
 Package: nethack4
 Architecture: any
