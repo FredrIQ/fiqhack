@@ -372,6 +372,8 @@ rungame(nh_bool net)
 
     struct nh_option_desc *old_opts = curses_get_nh_opts(),
                           *new_opts = nhlib_clone_optlist(old_opts),
+                          *seedopt = nhlib_find_option(new_opts, "seed"),
+                          *polyopt = nhlib_find_option(new_opts, "polyinit"),
                           *roleopt = nhlib_find_option(new_opts, "role"),
                           *raceopt = nhlib_find_option(new_opts, "race"),
                           *alignopt = nhlib_find_option(new_opts, "align"),
@@ -379,7 +381,8 @@ rungame(nh_bool net)
                           *nameopt = nhlib_find_option(new_opts, "name"),
                           *modeopt = nhlib_find_option(new_opts, "mode");
     curses_free_nh_opts(old_opts);
-    if (!roleopt || !raceopt || !alignopt || !gendopt || !nameopt || !modeopt) {
+    if (!roleopt || !raceopt || !alignopt || !gendopt || !nameopt || !modeopt ||
+        !seedopt || !polyopt) {
         curses_raw_print("Creation options not available?");
         goto cleanup;
     }
@@ -404,6 +407,22 @@ rungame(nh_bool net)
         curses_raw_print
             ("Could not find where to put the logfile for a new game.");
         goto cleanup;
+    }
+
+    /* Check to make sure that this game will be eligible for the high score
+       table. If not, print a warning, to prevent accidental nonscoring
+       games. */
+    if (playmode != MODE_NORMAL || (seedopt->value.s && *seedopt->value.s) ||
+        polyopt->value.e != -1) {
+        char prompt[BUFSZ];
+        snprintf(prompt, BUFSZ, "This game is not eligible for the high score "
+                 "table due to starting in %s mode. Continue?",
+                 playmode == MODE_EXPLORE ? "explore" :
+                 playmode == MODE_WIZARD ? "debug" :
+                 (seedopt->value.s && *seedopt->value.s) ? "set seed" :
+                 (polyopt->value.e != -1) ? "polyinit" : "[unknown]");
+        if (curses_yn_function_internal(prompt, "yn", 'y') != 'y')
+            goto cleanup;
     }
 
     if (!player_selection(&role, &race, &gend, &align, random_player))
