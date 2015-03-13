@@ -143,7 +143,7 @@ nh_exit_game(int exit_type)
     }
 }
 
-
+/* note: must not contain any RNG calls */
 void
 startup_common(boolean including_program_state)
 {
@@ -290,16 +290,6 @@ nh_create_game(int fd, struct nh_option_desc *opts_orig)
     /* Initalize all global data. (This also wipes the RNG seed, so needs to
        be called before seed_rng_from_entropy.) */
     init_data(TRUE);
-
-    /* Initialize the random number generator. This can use any algorithm we
-       like, and is not constrained by timing rules, so we use the entropy
-       collectors in newrng.c.
-
-       TODO: Allow this to be specified as a birth option, and enter a
-       non-scoring mode if it is. The main problem with this is in coming up
-       with a good interface for it. */
-    seed_rng_from_entropy();
-
     startup_common(TRUE);
 
     /* Set defaults in case list of options from client was incomplete. */
@@ -309,6 +299,19 @@ nh_create_game(int fd, struct nh_option_desc *opts_orig)
     nhlib_free_optlist(defaults);
     for (i = 0; opts[i].name; i++)
         nh_set_option(opts[i].name, opts[i].value);
+
+    /* Initialize the random number generator. This can use any algorithm we
+       like, and is not constrained by timing rules, so we use the entropy
+       collectors in newrng.c, unless the user set a seed. This must be called
+       after options setup because we won't otherwise know if we're playing with
+       a set seed. */
+    if (*flags.setseed) {
+        if (!seed_rng_from_base64(flags.setseed)) {
+            API_EXIT();
+            return NHCREATE_INVALID;
+        }
+    } else
+        seed_rng_from_entropy();
 
     if (wizard)
         strcpy(u.uplname, "wizard");

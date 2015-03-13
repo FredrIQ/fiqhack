@@ -815,9 +815,10 @@ restore_flags(struct memfile *mf, struct flag *f)
     f->save_encoding = mread8(mf);
 
     /* Ignore the padding added in save.c */
-    for (i = 0; i < 126; i++)
+    for (i = 0; i < 110; i++)
         (void) mread8(mf);
 
+    mread(mf, f->setseed, sizeof (f->setseed));
     mread(mf, f->inv_order, sizeof (f->inv_order));
 
     lsbl = mread32(mf);

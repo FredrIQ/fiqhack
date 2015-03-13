@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-08 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -279,6 +279,7 @@ write_xlentry(FILE * rfile, const struct toptenentry *tt,
 
     fprintf(rfile, SEP "mode=%s",
             (flags.debug ? "debug" : flags.explore ? "explore" :
+             *flags.setseed ? "setseed" :
              flags.polyinit_mnum != -1 ? "polyinit" : "normal"));
 
     fprintf(rfile, "\n");
@@ -514,7 +515,7 @@ update_topten(int how, const char *killer, unsigned long carried,
     update_xlog(&newtt, carried, dumpname);
 
     /* nothing more to do for non-scoring games */
-    if (wizard || discover || flags.polyinit_mnum != -1)
+    if (wizard || discover || *flags.setseed || flags.polyinit_mnum != -1)
         return;
 
     fd = open_datafile(RECORD, O_RDWR | O_CREAT, SCOREPREFIX);
@@ -793,11 +794,16 @@ nh_get_topten(int *out_len, char *statusbuf, const char *volatile player,
             if (!memcmp(&ttlist[i], &newtt, sizeof (struct toptenentry)))
                 rank = i;
 
-        if (wizard || discover || flags.polyinit_mnum != -1)
+        /* TODO: Perhaps we could have a different top ten list for play on a
+           particular set seed (seed of the week, as it were). But there's too
+           much scope for cheating involved in that, so it's probably best that
+           people make their leaderboards "unofficially". */
+        if (wizard || discover || *flags.setseed || flags.polyinit_mnum != -1)
             sprintf(statusbuf,
                     "Since you were in %s mode, your game was not "
                     "added to the score list.",
-                    wizard ? "debug" : discover ? "explore" : "polyinit");
+                    wizard ? "debug" : discover ? "explore" :
+                    *flags.setseed ? "set seed" : "polyinit");
         else if (rank >= 0 && rank < 10)
             sprintf(statusbuf, "You made the top ten list!");
         else if (rank >= 0)

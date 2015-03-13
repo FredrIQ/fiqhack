@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-10 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1017,9 +1017,10 @@ log_newgame(microseconds start_time)
 
     base64_encode(u.uplname, encbuf);
     lprintf("%0" PRIxLEAST64 " %x %d %s %.3s %.3s %.3s %.3s\x0a",
-            start_time_l64, 0, wizard ? MODE_WIZARD : discover ? MODE_EXPLORE
-            : MODE_NORMAL, encbuf, role, races[u.initrace].noun,
-            genders[u.initgend].adj, aligns[u.initalign].adj);
+            start_time_l64, 0, wizard ? MODE_WIZARD : discover ?
+            MODE_EXPLORE : *flags.setseed ? MODE_SETSEED : MODE_NORMAL,
+            encbuf, role, races[u.initrace].noun, genders[u.initgend].adj,
+            aligns[u.initalign].adj);
 
     /* The gamestate location is meant to be set to the start of the last line
        of the log, when the log's in a state ready to be updated. Ensure that

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-18 */
+/* Last modified by Alex Smith, 2015-03-13 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -225,7 +225,8 @@ enum nh_path_prefix {
 enum nh_game_modes {
     MODE_NORMAL,
     MODE_EXPLORE,
-    MODE_WIZARD
+    MODE_WIZARD,
+    MODE_SETSEED
 };
 
 enum nh_followmode {

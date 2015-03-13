@@ -190,6 +190,8 @@ static const struct nh_option_desc const_options[] = {
 
     {"name", "character name", TRUE, OPTTYPE_STRING, {.s = NULL}},
     {"mode", "game mode", TRUE, OPTTYPE_ENUM, {.e = MODE_NORMAL}},
+    {"seed", "if nonblank, replay a given dungeon (non-scoring)",
+     TRUE, OPTTYPE_STRING, {.s = NULL}},
     {"timezone", "time zone to use for time-dependent effects",
      TRUE, OPTTYPE_ENUM, {.e = 0}},
     {"elbereth", "difficulty: the E-word repels monsters", TRUE, OPTTYPE_BOOL,
@@ -349,6 +351,7 @@ new_opt_struct(void)
     nhlib_find_option(options, "autopickup_rules")->a = autopickup_spec;
 
     nhlib_find_option(options, "name")->s.maxlen = PL_NSIZ;
+    nhlib_find_option(options, "seed")->s.maxlen = RNG_SEED_SIZE_BASE64;
     nhlib_find_option(options, "mode")->e = mode_spec;
     nhlib_find_option(options, "timezone")->e = timezone_spec;
     nhlib_find_option(options, "polyinit")->e = polyinit_spec;
@@ -466,6 +469,10 @@ set_option(const char *name, union nh_optvalue value)
     else if (!strcmp("name", option->name)) {
         strncpy(u.uplname, option->value.s, PL_NSIZ-1);
         (u.uplname)[PL_NSIZ - 1] = '\0';
+    } else if (!strcmp("seed", option->name)) {
+        /* note: does not NUL-terminate a max-length string, this is
+           intentional */
+        strncpy(flags.setseed, option->value.s, RNG_SEED_SIZE_BASE64);
     } else if (!strcmp("catname", option->name)) {
         strncpy(catname, option->value.s, PL_PSIZ-1);
         catname[PL_PSIZ - 1] = '\0';
@@ -601,6 +608,15 @@ nh_get_options(void)
 
             strncpy(option->value.s, u.uplname, PL_NSIZ-1);
             option->value.s[PL_NSIZ - 1] = '\0';
+
+        } else if (!strcmp("seed", option->name)) {
+
+            if (option->value.s)
+                free(option->value.s);
+            option->value.s = malloc(RNG_SEED_SIZE_BASE64 + 1);
+
+            strncpy(option->value.s, flags.setseed, RNG_SEED_SIZE_BASE64);
+            option->value.s[RNG_SEED_SIZE_BASE64] = '\0';
 
         } else if (!strcmp("catname", option->name)) {
 

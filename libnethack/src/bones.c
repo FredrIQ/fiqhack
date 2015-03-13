@@ -180,7 +180,7 @@ drop_upon_death(struct monst *mtmp, struct obj *cont)
 
 /* check whether bones are feasible */
 boolean
-can_make_bones(d_level * lev)
+can_make_bones(d_level *lev)
 {
     struct trap *ttmp;
 
@@ -209,6 +209,9 @@ can_make_bones(d_level * lev)
     /* don't let multiple restarts generate multiple copies of objects in bones 
        files */
     if (discover)
+        return FALSE;
+    /* don't drop multiple bones files from the same dungeon */
+    if (*flags.setseed)
         return FALSE;
     return TRUE;
 }
@@ -401,7 +404,9 @@ getbones(d_level *levnum)
 
     mnew(&mf, NULL);
 
-    if (discover || !flags.bones_enabled) /* save bones files for real games */
+    /* save bones files for real games; also turn them off in set-seed play
+       because they wouldn't be the same for different players */
+    if (discover || !flags.bones_enabled || *flags.setseed)
         goto fail;
 
     /* note: this rn2 call has to be before we check to see if a bones file
