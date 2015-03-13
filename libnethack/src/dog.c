@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-10 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -33,6 +33,8 @@ initedog(struct monst *mtmp)
 static int
 pet_type(void)
 {
+    int which_pet = rn2(2);
+
     if (urole.petnum != NON_PM)
         return urole.petnum;
     else if (preferred_pet == 'c')
@@ -40,7 +42,7 @@ pet_type(void)
     else if (preferred_pet == 'd')
         return PM_LITTLE_DOG;
     else
-        return rn2(2) ? PM_KITTEN : PM_LITTLE_DOG;
+        return which_pet ? PM_KITTEN : PM_LITTLE_DOG;
 }
 
 struct monst *
@@ -69,7 +71,7 @@ make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
         } else if (!rn2(3)) {
             pm = &mons[pet_type()];
         } else {
-            pm = rndmonst(&u.uz);
+            pm = rndmonst(&u.uz, rng_t_create_monster);
             if (!pm) {
                 if (!quietly)
                     pline
@@ -78,7 +80,8 @@ make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
             }
         }
 
-        mtmp = makemon(pm, level, x, y, MM_EDOG | MM_IGNOREWATER);
+        mtmp = makemon(pm, level, x, y, MM_EDOG | MM_IGNOREWATER |
+                       (otmp ? 0 : (MM_CREATEMONSTER | MM_CMONSTER_T)));
         if (otmp && !mtmp) {    /* monster was genocided or square occupied */
             if (!quietly)
                 pline("The figurine writhes and then shatters into pieces!");
@@ -95,10 +98,11 @@ make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
     initedog(mtmp);
     mtmp->msleeping = 0;
     if (otmp) { /* figurine; resulting monster might not become a pet */
-        chance = rn2(10);       /* 0==tame, 1==peaceful, 2==hostile */
+        chance = rn2_on_rng(10, rng_figurine_effect);
+        /* 0: tame, 1: peaceful, 2: hostile, 3+: matching BCU; this gives
+           an 80% chance of the desired effect, 10% of each other effect */
         if (chance > 2)
             chance = otmp->blessed ? 0 : !otmp->cursed ? 1 : 2;
-        /* 0,1,2: b=80%,10,10; nc=10%,80,10; c=10%,10,80 */
         if (chance > 0) {
             mtmp->mtame = 0;    /* not tame after all */
             if (chance == 2) {  /* hostile (cursed figurine) */
@@ -123,9 +127,13 @@ make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
     return mtmp;
 }
 
-/* this function is only called from newgame, so we know:
+/*
+ * This function is only called from newgame, so we know:
  *   - pets aren't genocided so makemon will always work
- *   - the petname has not been used yet */
+ *   - the petname has not been used yet
+ * This is called very late in the newgame sequence, and so can safely clobber
+ * the charstats RNGs.
+ */
 struct monst *
 makedog(void)
 {
@@ -158,10 +166,12 @@ makedog(void)
             petname = "Sirius"; /* Orion's dog */
     }
 
+    /* ideally we'd use rng_charstats_role for this, but... */
     mtmp = makemon(&mons[pettype], level, u.ux, u.uy, MM_EDOG);
 
     /* Horses already wear a saddle */
-    if (pettype == PM_PONY && ! !(otmp = mksobj(level, SADDLE, TRUE, FALSE))) {
+    if (pettype == PM_PONY &&
+        ((otmp = mksobj(level, SADDLE, TRUE, FALSE, rng_charstats_role)))) {
         if (mpickobj(mtmp, otmp))
             panic("merged saddle?");
         mtmp->misc_worn_check |= W_MASK(os_saddle);
@@ -346,7 +356,7 @@ mon_arrive(struct monst *mtmp, boolean with_you)
             coord c;
 
             /* somexy() handles irregular level->rooms */
-            if (somexy(level, &level->rooms[*r - ROOMOFFSET], &c))
+            if (somexy(level, &level->rooms[*r - ROOMOFFSET], &c, rng_main))
                 xlocale = c.x, ylocale = c.y;
             else {
                 xlocale = COLNO;
@@ -391,7 +401,7 @@ mon_arrive(struct monst *mtmp, boolean with_you)
                 }
             }
             mkcorpstat(CORPSE, NULL, mtmp->data, level, xlocale, ylocale,
-                       FALSE);
+                       FALSE, rng_main);
             mongone(mtmp);
         }
     }
@@ -461,9 +471,12 @@ mon_catchup_elapsed_time(struct monst *mtmp, long nmv)
     if (mtmp->mtame) {
         int wilder = (imv + 75) / 150;
 
+        /* The rng_dog_untame RNG is only semi-synched, because the argument
+           changes.  This gives better results than rng_main, and we can't match
+           exactly due to different pet-wrangling habits. */
         if (mtmp->mtame > wilder)
             mtmp->mtame -= wilder;      /* less tame */
-        else if (mtmp->mtame > rn2(wilder))
+        else if (mtmp->mtame > rn2_on_rng(wilder, rng_dog_untame))
             mtmp->mtame = 0;    /* untame */
         else
             mtmp->mtame = mtmp->mpeaceful = 0;  /* hostile! */
@@ -769,7 +782,8 @@ tamedog(struct monst *mtmp, struct obj *obj)
         || (mtmp->data->mflags3 & M3_WANTSARTI))
         return NULL;
 
-    /* worst case, at least it'll be peaceful. */
+    /* worst case, at least it'll be peaceful; this uses the main RNG because
+     * realtime effects means that this won't really sync anyway */
     mtmp->mpeaceful = 1;
     set_malign(mtmp);
     if (flags.moonphase == FULL_MOON && night() && rn2(6) && obj &&
@@ -884,7 +898,7 @@ wary_dog(struct monst *mtmp, boolean was_dead)
     if (edog && (edog->killed_by_u == 1 || edog->abuse > 2)) {
         mtmp->mpeaceful = mtmp->mtame = 0;
         if (edog->abuse >= 0 && edog->abuse < 10)
-            if (!rn2(edog->abuse + 1))
+            if (!rn2_on_rng(edog->abuse + 1, rng_dog_untame))
                 mtmp->mpeaceful = 1;
         if (!quietly && cansee(mtmp->mx, mtmp->my)) {
             if (haseyes(youmonst.data)) {
@@ -898,7 +912,7 @@ wary_dog(struct monst *mtmp, boolean was_dead)
         }
     } else {
         /* chance it goes wild anyway - Pet Semetary */
-        if (!rn2(mtmp->mtame)) {
+        if (rn2_on_rng(mtmp->mtame, rng_dog_untame) == mtmp->mtame - 1) {
             mtmp->mpeaceful = mtmp->mtame = 0;
         }
     }

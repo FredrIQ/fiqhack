@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-15 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -134,7 +134,7 @@ newman(void)
 
     tmp = u.uhpmax;
     oldlvl = u.ulevel;
-    u.ulevel = u.ulevel + rn1(5, -2);
+    u.ulevel = u.ulevel - 2 + rn2_on_rng(5, rng_poly_level_adj);
     if (u.ulevel > 127 || u.ulevel < 1) {       /* level went below 0? */
         u.ulevel = oldlvl;      /* restore old level in case they lifesave */
         goto dead;
@@ -160,11 +160,13 @@ newman(void)
     /* random experience points for the new experience level */
     u.uexp = rndexp(FALSE);
 
-    /* u.uhpmax * u.ulevel / oldlvl: proportionate hit points to new level -10
-       and +10: don't apply proportionate HP to 10 of a starting character's
+    /* u.uhpmax * u.ulevel / oldlvl: proportionate hit points to new level
+
+       -10 and +10: don't apply proportionate HP to 10 of a starting character's
        hit points (since a starting character's hit points are not on the same
-       scale with hit points obtained through level gain) 9 - rn2(19): random
-       change of -9 to +9 hit points */
+       scale with hit points obtained through level gain)
+
+       9 - rn2(19): random change of -9 to +9 hit points */
     u.uhpmax = ((u.uhpmax - 10) * (long)u.ulevel / oldlvl + 10) + (9 - rn2(19));
 
     u.uhp = u.uhp * (long)u.uhpmax / tmp;
@@ -225,9 +227,10 @@ polyself(boolean forcecontrol)
     boolean was_floating = (Levitation || Flying);
 
     if (!Polymorph_control && !forcecontrol && !draconian && !iswere && !isvamp) {
-        if (rn2(20) > ACURR(A_CON)) {
+        int dam = 1 + rn2_on_rng(30, rng_system_shock);
+        if (rn2_on_rng(20, rng_system_shock) > ACURR(A_CON)) {
             pline("You shudder for a moment.");
-            losehp(rnd(30), killer_msg(DIED, "a system shock"));
+            losehp(dam, killer_msg(DIED, "a system shock"));
             exercise(A_CON, FALSE);
             return;
         }
@@ -962,7 +965,7 @@ dospinweb(void)
         return 1;
 
     }
-    ttmp = maketrap(level, u.ux, u.uy, WEB);
+    ttmp = maketrap(level, u.ux, u.uy, WEB, rng_main);
     if (ttmp) {
         ttmp->tseen = 1;
         ttmp->madeby_u = 1;

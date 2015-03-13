@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-10 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -277,14 +277,14 @@ deadbook(struct obj *book2, boolean invoked)
             You_hear("Michael Jackson dancing!");
         else
             pline("You raised the dead!");
-        /* first maybe place a dangerous adversary */
+        /* first maybe place a dangerous adversary; don't bother with
+           MM_CREATEMONSTER, that's mostly used to ensure that consistent
+           species of monsters generate */
         if (!rn2(3) &&
-            ((mtmp =
-              makemon(&mons[PM_MASTER_LICH], level, u.ux, u.uy,
-                      NO_MINVENT)) != 0 ||
-             (mtmp =
-              makemon(&mons[PM_NALFESHNEE], level, u.ux, u.uy,
-                      NO_MINVENT)) != 0)) {
+            ((mtmp = makemon(&mons[PM_MASTER_LICH], level, u.ux, u.uy,
+                             NO_MINVENT)) != 0 ||
+             (mtmp = makemon(&mons[PM_NALFESHNEE], level, u.ux, u.uy,
+                             NO_MINVENT)) != 0)) {
             mtmp->mpeaceful = 0;
             set_malign(mtmp);
         }
@@ -496,7 +496,7 @@ study_book(struct obj *spellbook, const struct nh_cmd_arg *arg)
                         return 1;
                     }
                 }
-                /* its up to random luck now */
+                /* it's up to random luck now */
                 if (rnd(20) > read_ability) {
                     too_hard = TRUE;
                 }

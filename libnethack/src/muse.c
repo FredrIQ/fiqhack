@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -96,6 +96,7 @@ precheck(struct monst *mon, struct obj *obj, struct musable *m)
                 return 2;
             }
         }
+        /* not rng_smoky_potion; that's for wishes that players will get */
         if (potion_descr && !strcmp(potion_descr, "smoky") &&
             flags.djinni_count < MAXMONNO &&
             !rn2(POTION_OCCUPANT_CHANCE(flags.djinni_count))) {
@@ -641,7 +642,7 @@ use_defensive(struct monst *mtmp, struct musable *m)
                           surface(mtmp->mx, mtmp->my));
                 return 2;
             }
-            ttmp = maketrap(level, mtmp->mx, mtmp->my, HOLE);
+            ttmp = maketrap(level, mtmp->mx, mtmp->my, HOLE, rng_main);
             if (!ttmp)
                 return 2;
             seetrap(ttmp);
@@ -673,7 +674,8 @@ use_defensive(struct monst *mtmp, struct musable *m)
                 return 0;
             mzapmsg(mtmp, otmp, FALSE);
             otmp->spe--;
-            mon = makemon(NULL, level, cc.x, cc.y, NO_MM_FLAGS);
+            mon = makemon(NULL, level, cc.x, cc.y,
+                          MM_CREATEMONSTER | MM_CMONSTER_M);
             if (mon && cansuspectmon(mon) && oseen)
                 makeknown(WAN_CREATE_MONSTER);
             return 2;
@@ -700,7 +702,8 @@ use_defensive(struct monst *mtmp, struct musable *m)
                    is what to actually create (0 => random) */
                 if (!enexto(&cc, level, mtmp->mx, mtmp->my, fish))
                     break;
-                mon = makemon(pm, level, cc.x, cc.y, NO_MM_FLAGS);
+                mon = makemon(pm, level, cc.x, cc.y,
+                              MM_CREATEMONSTER | MM_CMONSTER_M);
                 if (mon && cansuspectmon(mon))
                     known = TRUE;
             }
@@ -901,7 +904,7 @@ use_defensive(struct monst *mtmp, struct musable *m)
 }
 
 int
-rnd_defensive_item(struct monst *mtmp)
+rnd_defensive_item(struct monst *mtmp, enum rng rng)
 {
     const struct permonst *pm = mtmp->data;
     int difficulty = monstr[monsndx(pm)];
@@ -911,12 +914,13 @@ rnd_defensive_item(struct monst *mtmp)
         || noncorporeal(pm) || pm->mlet == S_KOP)
         return 0;
 try_again:
-    switch (rn2(8 + (difficulty > 3) + (difficulty > 6) + (difficulty > 8))) {
+    switch (rn2_on_rng(8 + (difficulty > 3) + (difficulty > 6) +
+                       (difficulty > 8), rng)) {
     case 6:
     case 9:
         if (mtmp->dlevel->flags.noteleport && ++trycnt < 2)
             goto try_again;
-        if (!rn2(3))
+        if (!rn2_on_rng(3, rng))
             return WAN_TELEPORTATION;
         /* else FALLTHRU */
     case 0:
@@ -924,7 +928,7 @@ try_again:
         return SCR_TELEPORTATION;
     case 8:
     case 10:
-        if (!rn2(3))
+        if (!rn2_on_rng(3, rng))
             return WAN_CREATE_MONSTER;
         /* else FALLTHRU */
     case 2:
@@ -947,9 +951,9 @@ try_again:
 
 
 /* Select an offensive item/action for a monster.  Returns TRUE iff one is
- * found. */
+   found. */
 boolean
-find_offensive(struct monst * mtmp, struct musable * m)
+find_offensive(struct monst *mtmp, struct musable *m)
 {
     struct obj *obj;
     boolean ranged_stuff = FALSE;
@@ -961,7 +965,7 @@ find_offensive(struct monst * mtmp, struct musable * m)
     if (target) {
         ranged_stuff = TRUE;
         if (target == &youmonst)
-            reflection_skip = (Reflecting && rn2(2));
+            reflection_skip = Reflecting && rn2(2);
     } else
         return FALSE;   /* nothing to attack */
 
@@ -1348,9 +1352,8 @@ use_offensive(struct monst *mtmp, struct musable *m)
                         struct monst *mtmp2;
 
                         /* Make the object(s) */
-                        otmp2 =
-                            mksobj(level, confused ? ROCK : BOULDER, FALSE,
-                                   FALSE);
+                        otmp2 = mksobj(level, confused ? ROCK : BOULDER,
+                                       FALSE, FALSE, rng_main);
                         if (!otmp2)
                             continue;   /* Shouldn't happen */
                         otmp2->quan = confused ? rn1(5, 2) : 1;
@@ -1411,7 +1414,8 @@ use_offensive(struct monst *mtmp, struct musable *m)
                 struct obj *otmp2;
 
                 /* Okay, _you_ write this without repeating the code */
-                otmp2 = mksobj(level, confused ? ROCK : BOULDER, FALSE, FALSE);
+                otmp2 = mksobj(level, confused ? ROCK : BOULDER, FALSE, FALSE,
+                               rng_main);
                 if (!otmp2)
                     goto xxx_noobj;     /* Shouldn't happen */
                 otmp2->quan = confused ? rn1(5, 2) : 1;
@@ -1475,7 +1479,7 @@ use_offensive(struct monst *mtmp, struct musable *m)
 }
 
 int
-rnd_offensive_item(struct monst *mtmp)
+rnd_offensive_item(struct monst *mtmp, enum rng rng)
 {
     const struct permonst *pm = mtmp->data;
     int difficulty = monstr[monsndx(pm)];
@@ -1483,9 +1487,9 @@ rnd_offensive_item(struct monst *mtmp)
     if (is_animal(pm) || attacktype(pm, AT_EXPL) || mindless(mtmp->data)
         || noncorporeal(pm) || pm->mlet == S_KOP)
         return 0;
-    if (difficulty > 7 && !rn2(35))
+    if (difficulty > 7 && !rn2_on_rng(35, rng))
         return WAN_DEATH;
-    switch (rn2(9 - (difficulty < 4) + 4 * (difficulty > 6))) {
+    switch (rn2_on_rng(9 - (difficulty < 4) + 4 * (difficulty > 6), rng)) {
     case 0:{
             struct obj *helmet = which_armor(mtmp, os_armh);
 
@@ -1652,7 +1656,7 @@ muse_newcham_mon(struct monst *mon)
         else if (Is_dragon_mail(m_armr))
             return Dragon_mail_to_pm(m_armr);
     }
-    return rndmonst(&mon->dlevel->z);
+    return rndmonst(&mon->dlevel->z, rng_main);
 }
 
 int
@@ -1867,7 +1871,7 @@ use_misc(struct monst *mtmp, struct musable *m)
                 if (otmp->blessed || otmp->owornmask ||
                     obj->otyp == LOADSTONE) {
                     if (mtmp->mconf)
-                        blessorcurse(obj, 2);
+                        blessorcurse(obj, 2, rng_main);
                     else
                         uncurse(obj);
                 }
@@ -1906,7 +1910,7 @@ you_aggravate(struct monst *mtmp)
 }
 
 int
-rnd_misc_item(struct monst *mtmp)
+rnd_misc_item(struct monst *mtmp, enum rng rng)
 {
     const struct permonst *pm = mtmp->data;
     int difficulty = monstr[monsndx(pm)];
@@ -1917,21 +1921,19 @@ rnd_misc_item(struct monst *mtmp)
     /* Unlike other rnd_item functions, we only allow _weak_ monsters to have
        this item; after all, the item will be used to strengthen the monster
        and strong monsters won't use it at all... */
-    if (difficulty < 6 && !rn2(30))
-        return rn2(6) ? POT_POLYMORPH : WAN_POLYMORPH;
+    if (difficulty < 6 && !rn2_on_rng(30, rng))
+        return rn2_on_rng(6, rng) ? POT_POLYMORPH : WAN_POLYMORPH;
 
-    if (!rn2(40) && !nonliving(pm))
+    if (!rn2_on_rng(40, rng) && !nonliving(pm))
         return AMULET_OF_LIFE_SAVING;
 
-    switch (rn2(3)) {
+    switch (rn2_on_rng(3, rng)) {
     case 0:
         if (mtmp->isgd)
             return 0;
-        return rn2(6) ? POT_SPEED : WAN_SPEED_MONSTER;
+        return rn2_on_rng(6, rng) ? POT_SPEED : WAN_SPEED_MONSTER;
     case 1:
-        if (mtmp->mpeaceful && !See_invisible)
-            return 0;
-        return rn2(6) ? POT_INVISIBILITY : WAN_MAKE_INVISIBLE;
+        return rn2_on_rng(6, rng) ? POT_INVISIBILITY : WAN_MAKE_INVISIBLE;
     case 2:
         return POT_GAIN_LEVEL;
     }

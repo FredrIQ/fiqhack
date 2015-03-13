@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -876,12 +876,16 @@ dokick(const struct nh_cmd_arg *arg)
         if (IS_THRONE(maploc->typ)) {
             int i;
 
+            boolean kickedloose = !rn2_on_rng(3, rng_throne_loot);
+            int goldamt = rn2_on_rng(200, rng_throne_loot);
+            boolean trapdoor = !rn2_on_rng(4, rng_throne_loot);
+
             if (Levitation)
                 goto dumb;
-            if ((Luck < 0 || maploc->doormask) && !rn2(3)) {
+            if ((Luck < 0 || maploc->doormask) && kickedloose) {
                 maploc->typ = ROOM;
                 maploc->doormask = 0;   /* don't leave loose ends.. */
-                mkgold((long)rnd(200), level, x, y);
+                mkgold(goldamt, level, x, y, rng_main);
                 if (Blind)
                     pline("CRASH!  You destroy it.");
                 else {
@@ -890,14 +894,15 @@ dokick(const struct nh_cmd_arg *arg)
                 }
                 exercise(A_DEX, TRUE);
                 return 1;
-            } else if (Luck > 0 && !rn2(3) && !maploc->looted) {
-                mkgold((long)rn1(201, 300), level, x, y);
+            } else if (Luck > 0 && kickedloose && !maploc->looted) {
+                mkgold(goldamt + 301, level, x, y, rng_main);
                 i = Luck + 1;
                 if (i > 6)
                     i = 6;
                 while (i--)
-                    mksobj_at(rnd_class(DILITHIUM_CRYSTAL, LUCKSTONE - 1),
-                              level, x, y, FALSE, TRUE);
+                    mksobj_at(rnd_class(DILITHIUM_CRYSTAL, LUCKSTONE - 1,
+                                        rng_main),
+                              level, x, y, FALSE, TRUE, rng_main);
                 if (Blind)
                     pline("You kick something loose!");
                 else {
@@ -907,7 +912,7 @@ dokick(const struct nh_cmd_arg *arg)
                 /* prevent endless milking */
                 maploc->looted = T_LOOTED;
                 return 1;
-            } else if (!rn2(4)) {
+            } else if (trapdoor) {
                 if (dunlev(&u.uz) < dunlevs_in_dungeon(&u.uz)) {
                     fall_through(FALSE);
                     return 1;
@@ -966,7 +971,7 @@ dokick(const struct nh_cmd_arg *arg)
                 if (nfall != nfruit) {
                     /* scatter left some in the tree, but treefruit may not
                        refer to the correct object */
-                    treefruit = mksobj(level, frtype, TRUE, FALSE);
+                    treefruit = mksobj(level, frtype, TRUE, FALSE, rng_main);
                     treefruit->quan = nfruit - nfall;
                     pline("%ld %s got caught in the branches.", nfruit - nfall,
                           xname(treefruit));
@@ -1005,44 +1010,57 @@ dokick(const struct nh_cmd_arg *arg)
                                (gend == 2 &&
                                 rn2(2))) ? PM_INCUBUS : PM_SUCCUBUS;
 
+            boolean pudding_available = !rn2_on_rng(3, rng_sink_kick);
+            boolean dishwasher_available = !rn2_on_rng(3, rng_sink_kick);
+            boolean ring_available = !rn2_on_rng(3, rng_sink_kick);
+
             if (Levitation)
                 goto dumb;
-            if (rn2(5)) {
+            if (rn2_on_rng(5, rng_sink_kick)) {
                 if (canhear())
                     pline("Klunk!  The pipes vibrate noisily.");
                 else
                     pline("Klunk!");
                 exercise(A_DEX, TRUE);
                 return 1;
-            } else if (!(maploc->looted & S_LPUDDING) && !rn2(3) &&
-                       !(mvitals[PM_BLACK_PUDDING].mvflags & G_GONE)) {
-                if (Blind)
-                    You_hear("a gushing sound.");
-                else
-                    pline("A %s ooze gushes up from the drain!",
-                          hcolor("black"));
-                makemon(&mons[PM_BLACK_PUDDING], level, x, y, NO_MM_FLAGS);
-                exercise(A_DEX, TRUE);
-                newsym(x, y);
-                maploc->looted |= S_LPUDDING;
-                return 1;
-            } else if (!(maploc->looted & S_LDWASHER) && !rn2(3) &&
-                       !(mvitals[washerndx].mvflags & G_GONE)) {
-                /* can't resist... */
-                pline("%s returns!", (Blind ? "Something" : "The dish washer"));
-                if (makemon(&mons[washerndx], level, x, y, NO_MM_FLAGS))
+            } else if (!(maploc->looted & S_LPUDDING) && pudding_available) {
+                if (!(mvitals[PM_BLACK_PUDDING].mvflags & G_GONE)) {
+                    if (Blind)
+                        You_hear("a gushing sound.");
+                    else
+                        pline("A %s ooze gushes up from the drain!",
+                              hcolor("black"));
+                    makemon(&mons[PM_BLACK_PUDDING], level, x, y, NO_MM_FLAGS);
+                    exercise(A_DEX, TRUE);
                     newsym(x, y);
-                maploc->looted |= S_LDWASHER;
-                exercise(A_DEX, TRUE);
+                    maploc->looted |= S_LPUDDING;
+                } else {
+                    /* this message works even if blind */
+                    pline("A %s ooze fails to gush up from the drain.",
+                          hcolor("black"));
+                }
                 return 1;
-            } else if (!rn2(3)) {
+            } else if (!(maploc->looted & S_LDWASHER) && dishwasher_available) {
+                if (!(mvitals[washerndx].mvflags & G_GONE)) {
+                    /* can't resist... */
+                    pline("%s returns!",
+                          (Blind ? "Something" : "The dish washer"));
+                    if (makemon(&mons[washerndx], level, x, y, NO_MM_FLAGS))
+                        newsym(x, y);
+                    maploc->looted |= S_LDWASHER;
+                    exercise(A_DEX, TRUE);
+                } else {
+                    pline("You wonder if the sink's owners would approve.");
+                }
+                return 1;
+            } else if (ring_available) {
                 pline("Flupp!  %s.",
                       (Blind ? "You hear a sloshing sound" :
                        "Muddy waste pops up from the drain"));
                 if (!(maploc->looted & S_LRING)) {      /* once per sink */
                     if (!Blind)
                         pline("You see a ring shining in its midst.");
-                    mkobj_at(RING_CLASS, level, x, y, TRUE);
+                    mkobj_at(RING_CLASS, level, x, y, TRUE, rng_sink_ring);
                     newsym(x, y);
                     exercise(A_DEX, TRUE);
                     exercise(A_WIS, TRUE);      /* a discovery! */

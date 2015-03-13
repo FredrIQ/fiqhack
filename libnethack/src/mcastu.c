@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-28 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -565,7 +565,7 @@ cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
         {
             /* Try for insects, and if there are none left, go for (sticks to)
                snakes.  -3. */
-            const struct permonst *pm = mkclass(&u.uz, S_ANT, 0);
+            const struct permonst *pm = mkclass(&u.uz, S_ANT, 0, rng_main);
             struct monst *mtmp2 = NULL;
             char let = (pm ? S_ANT : S_SNAKE);
             boolean success;
@@ -584,9 +584,9 @@ cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
                 if (!enexto(&bypos, level,
                             spelltarget_x, spelltarget_y, mtmp->data))
                     break;
-                if ((pm = mkclass(&u.uz, let, 0)) != 0 &&
-                    (mtmp2 =
-                     makemon(pm, level, bypos.x, bypos.y, NO_MM_FLAGS)) != 0) {
+                if ((pm = mkclass(&u.uz, let, 0, rng_main)) != 0 &&
+                    (mtmp2 = makemon(pm, level, bypos.x, bypos.y,
+                                     MM_CREATEMONSTER | MM_CMONSTER_M)) != 0) {
                     success = TRUE;
                     mtmp2->msleeping = mtmp2->mpeaceful = mtmp2->mtame = 0;
                     set_malign(mtmp2);
@@ -1236,11 +1236,10 @@ ucast_wizard_spell(struct monst *mattk, struct monst *mtmp, int dmg,
                             !enexto(&bypos, level, mattk->mx, mattk->my,
                                     &mons[makeindex]))
                             continue;
-                        if ((mpet =
-                             makemon(&mons[makeindex], level, bypos.x, bypos.y,
-                                     (yours ||
-                                      mattk->mtame) ? MM_EDOG : NO_MM_FLAGS)) !=
-                            0) {
+                        if ((mpet = makemon(&mons[makeindex], level,
+                                            bypos.x, bypos.y,
+                                            (yours || mattk->mtame) ?
+                                            MM_EDOG : NO_MM_FLAGS))) {
                             mpet->msleeping = 0;
                             if (yours || mattk->mtame) {
                                 /* TODO: We might want to consider taming the
@@ -1254,9 +1253,8 @@ ucast_wizard_spell(struct monst *mattk, struct monst *mtmp, int dmg,
 
                             set_malign(mpet);
                         } else  /* GENOD? */
-                            mpet =
-                                makemon((struct permonst *)0, level, bypos.x,
-                                        bypos.y, NO_MM_FLAGS);
+                            mpet = makemon((struct permonst *)0, level,
+                                           bypos.x, bypos.y, NO_MM_FLAGS);
                         if (mpet &&
                             (u.ualign.type == 0 || mpet->data->maligntyp == 0 ||
                              sgn(mpet->data->maligntyp) ==
@@ -1526,7 +1524,7 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
         {
             /* Try for insects, and if there are none left, go for (sticks to)
                snakes.  -3. */
-            const struct permonst *pm = mkclass(&u.uz, S_ANT, 0);
+            const struct permonst *pm = mkclass(&u.uz, S_ANT, 0, rng_main);
             struct monst *mtmp2 = (struct monst *)0;
             char let = (pm ? S_ANT : S_SNAKE);
             boolean success;
@@ -1539,18 +1537,17 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
                 return;
             }
 
-            quan =
-                (mons[u.umonnum].mlevel <
-                 2) ? 1 : rnd(mons[u.umonnum].mlevel / 2);
+            quan = (mons[u.umonnum].mlevel < 2) ? 1 :
+                rnd(mons[u.umonnum].mlevel / 2);
             if (quan < 3)
                 quan = 3;
             success = pm ? TRUE : FALSE;
             for (i = 0; i <= quan; i++) {
                 if (!enexto(&bypos, level, mtmp->mx, mtmp->my, mtmp->data))
                     break;
-                if ((pm = mkclass(&u.uz, let, 0)) != 0 &&
-                    (mtmp2 =
-                     makemon(pm, level, bypos.x, bypos.y, NO_MM_FLAGS)) != 0) {
+                if ((pm = mkclass(&u.uz, let, 0, rng_main)) != 0 &&
+                    ((mtmp2 = makemon(pm, level, bypos.x, bypos.y,
+                                      MM_CREATEMONSTER | MM_CMONSTER_M)))) {
                     success = TRUE;
                     mtmp2->msleeping = 0;
                     if (yours || mattk->mtame)

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-24 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -31,16 +31,18 @@ static const char *const random_mesg[] = {
 };
 
 const char *
-random_engraving(void)
+random_engraving(enum rng rng)
 {
     const char *rumor;
 
     /* a random engraving may come from the "rumors" file, or from the list
        above */
-    if (!rn2(4) || !(rumor = getrumor(0, TRUE, NULL)) || !*rumor)
-        rumor = random_mesg[rn2(SIZE(random_mesg))];
+    if (!rn2_on_rng(4, rng) ||
+        !((rumor = getrumor(0, TRUE, NULL, rng))) || !*rumor)
+        rumor = random_mesg[rn2_on_rng(SIZE(random_mesg), rng)];
 
-    return eroded_text(rumor, (int)(strlen(rumor) / 4), 0);
+    return eroded_text(rumor, (int)(strlen(rumor) / 4),
+                       rn2_on_rng(255, rng) + 1);
 }
 
 /* Partial rubouts for engraving characters. -3. */
@@ -114,6 +116,8 @@ wipeout_text(char *engr, int cnt, unsigned seed)
                 nxt = seed % lth;
                 seed *= 31;
                 seed %= 255; /* previously BUFSZ-1 */
+                if (!seed)
+                    seed++;
                 use_rubout = seed & 3;
             }
             s = &engr[nxt];
@@ -140,6 +144,8 @@ wipeout_text(char *engr, int cnt, unsigned seed)
                             seed *= 31;
                             seed %= 255;
                             j = seed % (strlen(rubouts[i].wipeto));
+                            if (!seed)
+                                seed++;
                         }
                         *s = rubouts[i].wipeto[j];
                         break;
@@ -388,7 +394,11 @@ make_engr_at(struct level *lev, int x, int y, const char *s, long e_time,
     if (!in_mklev && !strcmp(s, "Elbereth"))
         exercise(A_WIS, TRUE);
     ep->engr_time = e_time;
-    ep->engr_type = e_type > 0 ? e_type : rnd(N_ENGRAVE - 1);
+    /* the caller shouldn't be asking for a random engrave type except during
+       polymorph; if they do anyway, using the poly_engrave RNG isn't the end of
+       the world */
+    ep->engr_type = e_type > 0 ? e_type :
+        1 + rn2_on_rng(N_ENGRAVE - 1, rng_poly_engrave);
     ep->engr_lth = engr_len + 1;
 }
 
@@ -670,7 +680,7 @@ doengrave_core(const struct nh_cmd_arg *arg, int auto_elbereth)
                 if (oep) {
                     if (!Blind) {
                         type = (xchar) 0;       /* random */
-                        buf = random_engraving();
+                        buf = random_engraving(rng_main);
                         doknown = TRUE;
                     }
                     dengr = TRUE;
@@ -1329,8 +1339,10 @@ static const char *const epitaphs[] = {
 };
 
 /* Create a headstone at the given location.
- * The caller is responsible for newsym(x, y).
- */
+   
+   This is mosly for use in level creation. It can also be called outside level
+   creation; in that case, the caller must call newsym(), and must provide an
+   appropriate epitaph in order to avoid disturbing the level creation RNG. */
 void
 make_grave(struct level *lev, int x, int y, const char *str)
 {
@@ -1342,9 +1354,9 @@ make_grave(struct level *lev, int x, int y, const char *str)
     /* Make the grave */
     lev->locations[x][y].typ = GRAVE;
 
-    /* Engrave the headstone */
+    /* Engrave the headstone. */
     if (!str)
-        str = epitaphs[rn2(SIZE(epitaphs))];
+        str = epitaphs[rn2_on_rng(SIZE(epitaphs), rng_for_level(&lev->z))];
     del_engr_at(lev, x, y);
     make_engr_at(lev, x, y, str, 0L, HEADSTONE);
     return;

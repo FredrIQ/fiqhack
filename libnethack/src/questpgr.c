@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-02 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /*      Copyright 1991, M. Stephenson             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -374,21 +374,23 @@ qt_pager(int msgnum)
     return;
 }
 
+/* Note: this now only returns a suggestion; it no longer takes genocide into
+   account, so that the caller can handle the RNG implications */
 const struct permonst *
-qt_montype(const d_level * dlev)
+qt_montype(const d_level *dlev, enum rng rng)
 {
     int qpm;
 
-    if (rn2(5)) {
+    if (rn2_on_rng(5, rng)) {
         qpm = urole.enemy1num;
-        if (qpm != NON_PM && rn2(5) && !(mvitals[qpm].mvflags & G_GENOD))
+        if (qpm != NON_PM && rn2_on_rng(5, rng))
             return &mons[qpm];
-        return mkclass(dlev, urole.enemy1sym, 0);
+        return mkclass(dlev, urole.enemy1sym, 0, rng);
     }
     qpm = urole.enemy2num;
-    if (qpm != NON_PM && rn2(5) && !(mvitals[qpm].mvflags & G_GENOD))
+    if (qpm != NON_PM && rn2_on_rng(5, rng))
         return &mons[qpm];
-    return mkclass(dlev, urole.enemy2sym, 0);
+    return mkclass(dlev, urole.enemy2sym, 0, rng);
 }
 
 /*questpgr.c*/

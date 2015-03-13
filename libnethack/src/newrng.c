@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-14 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) 2014 Alex Smith */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -24,6 +24,7 @@
 #include "flag.h"
 #include "you.h"
 #include "extern.h"
+#include "rm.h"
 #include <sys/time.h>
 
 struct sha256_state {
@@ -434,6 +435,11 @@ rn2_from_seedarray(uint32_t maxplus1,
 {
     struct sha256_state ss;
 
+    if (maxplus1 == 0) {
+        impossible("Impossible range 0 <= x < 0 for a random number");
+        maxplus1 = 1;
+    }
+
     /* Calculate the SHA-256 of the current seed. */
     sha256_init(&ss);
     sha256_process(&ss, seedarray, RNG_SEED_SIZE_BYTES);
@@ -454,13 +460,24 @@ rn2_from_seedarray(uint32_t maxplus1,
        we call the RNG another time, meaning there's no modulo bias at all in
        the output. (There might or might not be other sources of bias; for
        example, I don't know for certain that SHA-256 is uniformly distributed,
-       although it seems likely.) */
+       although it seems likely.)
 
+       This means that the RNG may potentially desync if called with a different
+       argument on different codepaths; however, the odds are very small. Doing
+       that on rng_main is just fine, because it isn't expected to sync. For
+       special-purpose RNGs, though, there's a very slight chance of desync; in
+       some cases (e.g. pet untaming), this is tolerable because the alternative
+       is not being able to match up the RNG effects between games at all.
+
+       In order to maximize the RNG correlation between games in cases where the
+       argument changes, we use scaling rather than modulo to produce an answer
+       inside the range requested.  This means that high return values in one
+       game will tend to correspond to high return values in other games. */
     uint64_t unbiased_maximum =
         ((uint64_t)0x100000000LLU / maxplus1) * maxplus1;
     for (s = 0; s < 8; s++) {
         if (out[s] < unbiased_maximum)
-            return out[s] % maxplus1;
+            return out[s] / (unbiased_maximum / maxplus1);
     }
 
     return rn2_from_seedarray(maxplus1, seedarray);
@@ -490,7 +507,7 @@ rn2_on_rng(int maxplus1, enum rng rng)
 
         panic("Attempt to change the initial RNG seed using rn2_on_rng");
 
-    } else if (rng < number_of_rngs && rng >= 0) {
+    } else if (rng < first_level_rng + NUMBER_OF_LEVEL_RNGS && rng >= 0) {
 
         if (program_state.in_zero_time_command &&
             !program_state.gameover && !turnstate.generating_bones)
@@ -533,4 +550,16 @@ rnl(int x)
     }
 
     return i;
+}
+
+enum rng
+rng_for_level(const d_level *lev)
+{
+    return (ledger_no(lev) % NUMBER_OF_LEVEL_RNGS) + first_level_rng;
+}
+
+int
+mklev_rn2(int x, struct level *lev)
+{
+    return rn2_on_rng(x, rng_for_level(&lev->z));
 }

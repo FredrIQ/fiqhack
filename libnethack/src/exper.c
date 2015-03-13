@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-04-19 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -103,7 +103,11 @@ more_experienced(int exp, int rexp)
         flags.beginner = 0;
 }
 
-/* e.g., hit by drain life attack */
+/* e.g., hit by drain life attack
+
+   TODO: We really ought to be driving the rng_charstats_* RNGs /backwards/.
+   That's left out for now for sanity reasons, but is definitely possible to
+   implement. For now, this is left as main RNG. */
 void
 losexp(const char *killer, boolean override_res)
 {
@@ -169,8 +173,9 @@ newexplevel(void)
         pluslvl(TRUE);
 }
 
-/* incr: true iff via incremental experience growth
- *      false for potion of gain level */
+/* incr: true iff via incremental experience growth, false for potion of gain
+   level; TODO: place this onto a separate RNG (probably requires changes to
+   the energy gain formula) */
 void
 pluslvl(boolean incr)
 {

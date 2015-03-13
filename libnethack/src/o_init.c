@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-08 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -29,7 +29,7 @@ shuffle(int o_low, int o_high, boolean domaterial)
         if (objects[j].oc_name_known)
             continue;
         do
-            i = j + rn2(o_high - j + 1);
+            i = j + rn2_on_rng(o_high - j + 1, rng_dungeon_gen);
         while (objects[i].oc_name_known);
         sw = objects[j].oc_descr_idx;
         objects[j].oc_descr_idx = objects[i].oc_descr_idx;
@@ -74,13 +74,16 @@ init_objects(void)
             last++;
 
         if (oclass == GEM_CLASS) {
-            if (rn2(2)) {       /* change turquoise from green to blue? */
+            if (rn2_on_rng(2, rng_dungeon_gen)) {
+                /* change turquoise from green to blue? */
                 COPY_OBJ_DESCR(objects[TURQUOISE], objects[SAPPHIRE]);
             }
-            if (rn2(2)) {       /* change aquamarine from green to blue? */
+            if (rn2_on_rng(2, rng_dungeon_gen)) {
+                /* change aquamarine from green to blue? */
                 COPY_OBJ_DESCR(objects[AQUAMARINE], objects[SAPPHIRE]);
             }
-            switch (rn2(4)) {   /* change fluorite from violet? */
+            switch (rn2_on_rng(4, rng_dungeon_gen)) {
+                /* change fluorite from violet? */
             case 0:
                 break;
             case 1:    /* blue */

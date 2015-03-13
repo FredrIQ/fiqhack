@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -619,7 +619,8 @@ diseasemu(const struct permonst *mdat)
         pline("You feel a slight illness.");
         return FALSE;
     } else {
-        make_sick(Sick ? Sick / 3L + 1L : (long)rn1(ACURR(A_CON), 20),
+        make_sick(Sick ? Sick / 3L + 1L :
+                  20 + rn2_on_rng(ACURR(A_CON), rng_ddeath_dconp20),
                   mdat->mname, TRUE, SICK_NONVOMITABLE);
         return TRUE;
     }
@@ -1025,13 +1026,15 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             break;
         }
     case AD_STON:      /* cockatrice */
+    {
         hitmsg(mtmp, mattk);
+        boolean stiffen = !rn2_on_rng(10,rng_slow_stoning);
         if (!rn2(3)) {
             if (mtmp->mcan)
                 You_hear("a cough from %s!", mon_nam(mtmp));
             else {
                 You_hear("%s hissing!", s_suffix(mon_nam(mtmp)));
-                if (!rn2(10) ||
+                if (stiffen ||
                     (flags.moonphase == NEW_MOON && !have_lizard())) {
                 do_stone:
                     if (!Stoned && !Stone_resistance &&
@@ -1046,6 +1049,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             }
         }
         break;
+    }
     case AD_STCK:
         hitmsg(mtmp, mattk);
         if (uncancelled && !u.ustuck && !sticks(youmonst.data))
@@ -1053,7 +1057,10 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         break;
     case AD_WRAP:
         if ((!mtmp->mcan || u.ustuck == mtmp) && !sticks(youmonst.data)) {
-            if (!u.ustuck && !rn2(10)) {
+            boolean drownable = is_pool(level, mtmp->mx, mtmp->my) &&
+                !Swimming && !Amphibious;
+            if (!u.ustuck &&
+                !rn2_on_rng(10, drownable ? rng_eel_drowning : rng_main)) {
                 if (u_slip_free(mtmp, mattk)) {
                     dmg = 0;
                 } else {
@@ -1061,8 +1068,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                     u.ustuck = mtmp;
                 }
             } else if (u.ustuck == mtmp) {
-                if (is_pool(level, mtmp->mx, mtmp->my) && !Swimming &&
-                    !Amphibious) {
+                if (drownable) {
                     pline("%s drowns you...", Monnam(mtmp));
                     done(DROWNING,
                          killer_msg(DROWNING,
@@ -1334,7 +1340,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             pline("Was that the touch of death?");
             break;
         }
-        switch (rn2(20)) {
+        switch (rn2_on_rng(20, rng_deathtouch)) {
         case 19:
         case 18:
         case 17:
@@ -1439,8 +1445,14 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
              *      hpmax >  5*lvl  25..75%
              *      otherwise        0..50%
              * Never reduces hpmax below 1 hit point per level->
+             *
+             * Note: there's a potential RNG desync here in cases where a player
+             * gets hit by the "die instantly" result without MR, then
+             * lifesaves, but that's unlikely enough that having touches of
+             * death act differently in that game from then on is probably just
+             * fine
              */
-            permdmg = rn2(dmg / 2 + 1);
+            permdmg = rn2_on_rng(dmg / 2 + 1, rng_deathtouch);
             if (Upolyd || u.uhpmax > 25 * u.ulevel)
                 permdmg = dmg;
             else if (u.uhpmax > 10 * u.ulevel)
@@ -2105,10 +2117,10 @@ doseduce(struct monst *mon)
     /* by this point you have discovered mon's identity, blind or not... */
     pline("Time stands still while you and %s lie in each other's arms...",
           noit_mon_nam(mon));
-    if (rn2(35) > ACURR(A_CHA) + ACURR(A_INT)) {
+    if (rn2_on_rng(35, rng_foocubus_results) > ACURR(A_CHA) + ACURR(A_INT)) {
         /* Don't bother with mspec_used here... it didn't get tired! */
         pline("%s seems to have enjoyed it more than you...", noit_Monnam(mon));
-        switch (rn2(5)) {
+        switch (rn2_on_rng(5, rng_foocubus_results)) {
         case 0:
             pline("You feel drained of energy.");
             u.uen = 0;
@@ -2150,7 +2162,7 @@ doseduce(struct monst *mon)
     } else {
         mon->mspec_used = rnd(100);     /* monster is worn out */
         pline("You seem to have enjoyed it more than %s...", noit_mon_nam(mon));
-        switch (rn2(5)) {
+        switch (rn2_on_rng(5, rng_foocubus_results)) {
         case 0:
             pline("You feel raised to your full potential.");
             exercise(A_CON, TRUE);
@@ -2211,7 +2223,7 @@ doseduce(struct monst *mon)
             money2mon(mon, cost);
         }
     }
-    if (!rn2(25))
+    if (!rn2_on_rng(25, rng_foocubus_results))
         mon->mcan = 1;  /* monster is worn out */
     if (!tele_restrict(mon))
         rloc(mon, FALSE);

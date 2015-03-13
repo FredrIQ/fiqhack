@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-14 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -66,7 +66,7 @@ init_rumors(dlb * fp)
  */
 const char *
 getrumor(int truth,     /* 1=true, -1=false, 0=either */
-         boolean exclude_cookie, int *truth_out)
+         boolean exclude_cookie, int *truth_out, enum rng rng)
 {
     dlb *rumors;
     int tidbit, beginning;
@@ -97,16 +97,16 @@ getrumor(int truth,     /* 1=true, -1=false, 0=either */
              *       rn2 \ +1  2=T  1=T  0=F
              *       adj./ +0  1=T  0=F -1=F
              */
-            switch (adjtruth = truth + rn2(2)) {
+            switch (adjtruth = truth + rn2_on_rng(2, rng)) {
             case 2:    /* (might let a bogus input arg sneak thru) */
             case 1:
                 beginning = true_rumor_start;
-                tidbit = rn2(true_rumor_size);
+                tidbit = rn2_on_rng(true_rumor_size, rng);
                 break;
             case 0:    /* once here, 0 => false rather than "either" */
             case -1:
                 beginning = false_rumor_start;
-                tidbit = rn2(false_rumor_size);
+                tidbit = rn2_on_rng(false_rumor_size, rng);
                 break;
             default:
                 impossible("strange truth value for rumor");
@@ -166,7 +166,7 @@ outrumor(int truth,     /* 1=true, -1=false, 0=either */
             return;
         }
     }
-    line = getrumor(truth, reading ? FALSE : TRUE, &truth_out);
+    line = getrumor(truth, reading ? FALSE : TRUE, &truth_out, rng_main);
     if (truth_out)
         exercise(A_WIS, truth_out == 1);
     if (!*line)
@@ -284,11 +284,10 @@ outoracle(boolean special, boolean delphi)
         init_menulist(&menu);
 
         if (delphi)
-            add_menutext(&menu,
-                         special ?
-                         "The Oracle scornfully takes all your money and says:"
-                         :
-                         "The Oracle meditates for a moment and then intones:");
+            add_menutext(
+                &menu, special ?
+                "The Oracle scornfully takes all your money and says:" :
+                "The Oracle meditates for a moment and then intones:");
         else
             add_menutext(&menu, "The message reads:");
         add_menutext(&menu, "");

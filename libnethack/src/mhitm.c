@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -719,7 +719,8 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
         num = monsndx(mdef->data);
         if (magr->mtame && !magr->isminion &&
             !(mvitals[num].mvflags & G_NOCORPSE)) {
-            struct obj *virtualcorpse = mksobj(level, CORPSE, FALSE, FALSE);
+            struct obj *virtualcorpse =
+                mksobj(level, CORPSE, FALSE, FALSE, rng_main);
             int nutrit;
 
             virtualcorpse->corpsenm = num;

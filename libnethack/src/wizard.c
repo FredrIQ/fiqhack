@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-15 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -666,8 +666,8 @@ clonewiz(void)
                  NO_MM_FLAGS)) != 0) {
         mtmp2->msleeping = mtmp2->mtame = mtmp2->mpeaceful = 0;
         if (!Uhave_amulet && rn2(2)) {        /* give clone a fake */
-            add_to_minv(mtmp2,
-                        mksobj(level, FAKE_AMULET_OF_YENDOR, TRUE, FALSE));
+            add_to_minv(mtmp2, mksobj(level, FAKE_AMULET_OF_YENDOR,
+                                      TRUE, FALSE, rng_main));
         }
         mtmp2->m_ap_type = M_AP_MONSTER;
         mtmp2->mappearance = wizapp[rn2(SIZE(wizapp))];
@@ -800,7 +800,8 @@ resurrect(void)
 void
 intervene(void)
 {
-    int which = Is_astralevel(&u.uz) ? rnd(4) : rn2(6);
+    int which = Is_astralevel(&u.uz) ?
+        1 + rn2_on_rng(4, rng_intervention) : rn2_on_rng(6, rng_intervention);
 
     /* cases 0 and 5 don't apply on the Astral level */
     switch (which) {
@@ -831,7 +832,7 @@ wizdead(void)
     flags.no_of_wizards--;
     if (!u.uevent.udemigod) {
         u.uevent.udemigod = TRUE;
-        u.udg_cnt = rn1(250, 50);
+        u.udg_cnt = 50 + rn2(250);
     }
 }
 

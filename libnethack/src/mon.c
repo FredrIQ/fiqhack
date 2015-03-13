@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-06 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -205,9 +205,9 @@ make_corpse(struct monst *mtmp)
     case PM_YELLOW_DRAGON:
         /* Make dragon scales.  This assumes that the order of the */
         /* dragons is the same as the order of the scales.  */
-        if (!rn2(mtmp->mrevived ? 20 : 3)) {
+        if ((!mtmp->mrevived || !rn2(7)) && !rn2_on_rng(3, rng_dragonscales)) {
             num = GRAY_DRAGON_SCALES + mndx - PM_GRAY_DRAGON;
-            obj = mksobj_at(num, level, x, y, FALSE, FALSE);
+            obj = mksobj_at(num, level, x, y, FALSE, FALSE, rng_main);
             obj->spe = 0;
             obj->cursed = obj->blessed = FALSE;
         }
@@ -221,16 +221,16 @@ make_corpse(struct monst *mtmp)
                 pline("%s recently regrown horn crumbles to dust.",
                       s_suffix(Monnam(mtmp)));
         } else
-            mksobj_at(UNICORN_HORN, level, x, y, TRUE, FALSE);
+            mksobj_at(UNICORN_HORN, level, x, y, TRUE, FALSE, rng_main);
         goto default_1;
     case PM_LONG_WORM:
-        mksobj_at(WORM_TOOTH, level, x, y, TRUE, FALSE);
+        mksobj_at(WORM_TOOTH, level, x, y, TRUE, FALSE, rng_main);
         goto default_1;
     case PM_VAMPIRE:
     case PM_VAMPIRE_LORD:
         /* include mtmp in the mkcorpstat() call */
         num = undead_to_corpse(mndx);
-        obj = mkcorpstat(CORPSE, mtmp, &mons[num], level, x, y, TRUE);
+        obj = mkcorpstat(CORPSE, mtmp, &mons[num], level, x, y, TRUE, rng_main);
         obj->age -= 100;        /* this is an *OLD* corpse */
         break;
     case PM_KOBOLD_MUMMY:
@@ -250,52 +250,54 @@ make_corpse(struct monst *mtmp)
     case PM_GIANT_ZOMBIE:
     case PM_ETTIN_ZOMBIE:
         num = undead_to_corpse(mndx);
-        obj = mkcorpstat(CORPSE, mtmp, &mons[num], level, x, y, TRUE);
+        obj = mkcorpstat(CORPSE, mtmp, &mons[num], level, x, y, TRUE,
+                         rng_main);
         obj->age -= 100;        /* this is an *OLD* corpse */
         break;
     case PM_IRON_GOLEM:
         num = dice(2, 6);
         while (num--)
-            obj = mksobj_at(IRON_CHAIN, level, x, y, TRUE, FALSE);
+            obj = mksobj_at(IRON_CHAIN, level, x, y, TRUE, FALSE, rng_main);
         mtmp->mnamelth = 0;
         break;
     case PM_GLASS_GOLEM:
         num = dice(2, 4);       /* very low chance of creating all glass gems */
         while (num--)
-            obj = mksobj_at((LAST_GEM + rnd(9)), level, x, y, TRUE, FALSE);
+            obj = mksobj_at((LAST_GEM + rnd(9)), level, x, y, TRUE, FALSE,
+                            rng_main);
         mtmp->mnamelth = 0;
         break;
     case PM_CLAY_GOLEM:
-        obj = mksobj_at(ROCK, level, x, y, FALSE, FALSE);
+        obj = mksobj_at(ROCK, level, x, y, FALSE, FALSE, rng_main);
         obj->quan = (long)(rn2(20) + 50);
         obj->owt = weight(obj);
         mtmp->mnamelth = 0;
         break;
     case PM_STONE_GOLEM:
-        obj = mkcorpstat(STATUE, NULL, mdat, level, x, y, FALSE);
+        obj = mkcorpstat(STATUE, NULL, mdat, level, x, y, FALSE, rng_main);
         break;
     case PM_WOOD_GOLEM:
         num = dice(2, 4);
         while (num--) {
-            obj = mksobj_at(QUARTERSTAFF, level, x, y, TRUE, FALSE);
+            obj = mksobj_at(QUARTERSTAFF, level, x, y, TRUE, FALSE, rng_main);
         }
         mtmp->mnamelth = 0;
         break;
     case PM_LEATHER_GOLEM:
         num = dice(2, 4);
         while (num--)
-            obj = mksobj_at(LEATHER_ARMOR, level, x, y, TRUE, FALSE);
+            obj = mksobj_at(LEATHER_ARMOR, level, x, y, TRUE, FALSE, rng_main);
         mtmp->mnamelth = 0;
         break;
     case PM_GOLD_GOLEM:
         /* Good luck gives more coins */
-        obj = mkgold((long)(200 - rnl(101)), level, x, y);
+        obj = mkgold((long)(200 - rnl(101)), level, x, y, rng_main);
         mtmp->mnamelth = 0;
         break;
     case PM_PAPER_GOLEM:
         num = rnd(4);
         while (num--)
-            obj = mksobj_at(SCR_BLANK_PAPER, level, x, y, TRUE, FALSE);
+            obj = mksobj_at(SCR_BLANK_PAPER, level, x, y, TRUE, FALSE, rng_main);
         mtmp->mnamelth = 0;
         break;
     default_1:
@@ -305,7 +307,7 @@ make_corpse(struct monst *mtmp)
         else    /* preserve the unique traits of some creatures */
             obj =
                 mkcorpstat(CORPSE, KEEPTRAITS(mtmp) ? mtmp : 0, mdat, level, x,
-                           y, TRUE);
+                           y, TRUE, rng_main);
         break;
     }
     /* All special cases should precede the G_NOCORPSE check */
@@ -756,7 +758,8 @@ meatmetal(struct monst *mtmp)
                 }
                 /* Left behind a pile? */
                 if (rnd(25) < 3)
-                    mksobj_at(ROCK, level, mtmp->mx, mtmp->my, TRUE, FALSE);
+                    mksobj_at(ROCK, level, mtmp->mx, mtmp->my, TRUE, FALSE,
+                              rng_main);
                 if (mtmp->dlevel == level)
                     newsym(mtmp->mx, mtmp->my);
                 return 1;
@@ -1775,9 +1778,8 @@ corpse_chance(struct monst *mon,
         || is_mplayer(mdat)
         || is_rider(mdat))
         return TRUE;
-    return (boolean) (!rn2((int)
-                           (2 + ((int)(mdat->geno & G_FREQ) < 2) +
-                            verysmall(mdat))));
+    return (boolean) (!rn2((int) (2 + ((int)(mdat->geno & G_FREQ) < 2) +
+                                  verysmall(mdat))));
 }
 
 /* drop (perhaps) a cadaver and remove monster */
@@ -1860,9 +1862,8 @@ monstone(struct monst *mdef)
 
         /* defer statue creation until after inventory removal so that saved
            monster traits won't retain any stale item-conferred attributes */
-        otmp =
-            mkcorpstat(STATUE, KEEPTRAITS(mdef) ? mdef : 0, mdef->data, level,
-                       x, y, FALSE);
+        otmp = mkcorpstat(STATUE, KEEPTRAITS(mdef) ? mdef : 0, mdef->data,
+                          level, x, y, FALSE, rng_main);
         if (mdef->mnamelth)
             otmp = oname(otmp, NAME(mdef));
         while ((obj = oldminvent) != 0) {
@@ -1874,7 +1875,7 @@ monstone(struct monst *mdef)
             otmp->spe = 1;
         otmp->owt = weight(otmp);
     } else
-        otmp = mksobj_at(ROCK, level, x, y, TRUE, FALSE);
+        otmp = mksobj_at(ROCK, level, x, y, TRUE, FALSE, rng_main);
 
     stackobj(otmp);
     /* assume that a statue appearing within vision range lets the player know
@@ -2046,7 +2047,8 @@ xkilled(struct monst *mtmp, int dest)
         !(mvitals[mndx].mvflags & G_NOCORPSE) && mdat->mlet != S_KOP) {
         int typ;
 
-        otmp = mkobj_at(RANDOM_CLASS, level, x, y, TRUE);
+        otmp = mkobj_at(RANDOM_CLASS, level, x, y, TRUE, mdat->msize < MZ_HUMAN
+                        ? rng_death_drop_s : rng_death_drop_l);
         /* Don't create large objects from small monsters */
         typ = otmp->otyp;
         if (mdat->msize < MZ_HUMAN && typ != FOOD_RATION &&
@@ -2256,7 +2258,20 @@ poisoned(const char *string, int typ, const char *killer, int fatal)
         return;
     }
 
-    i = rn2(fatal + 20 * thrown_weapon);
+    fatal += 20 * thrown_weapon;
+    enum rng rng;
+    switch (fatal) {
+    case  8: rng = rng_deadlypoison_8;  break;
+    case 10: rng = rng_deadlypoison_10; break;
+    case 15: rng = rng_deadlypoison_15; break;
+    case 30: rng = rng_deadlypoison_30; break;
+    default:
+        impossible("Unknown poison type %d", fatal);
+        rng = rng_main;
+        break;
+    }
+
+    i = rn2_on_rng(fatal, rng);
     if (i == 0 && typ != A_CHA) {
         pline("The poison was deadly...");
         done(POISONING, killer);
@@ -2290,7 +2305,8 @@ m_respond(struct monst *mtmp)
         }
         if (!rn2(10)) {
             if (!rn2(13))
-                makemon(&mons[PM_PURPLE_WORM], level, COLNO, ROWNO, NO_MM_FLAGS);
+                makemon(&mons[PM_PURPLE_WORM], level, COLNO, ROWNO,
+                        NO_MM_FLAGS);
             else
                 makemon(NULL, level, COLNO, ROWNO, NO_MM_FLAGS);
 
@@ -2463,7 +2479,7 @@ restartcham(void)
         mtmp->cham = pm_to_cham(monsndx(mtmp->data));
         if (mtmp->data->mlet == S_MIMIC && mtmp->msleeping &&
             cansee(mtmp->mx, mtmp->my)) {
-            set_mimic_sym(mtmp, mtmp->dlevel);
+            set_mimic_sym(mtmp, mtmp->dlevel, rng_main);
             if (mtmp->dlevel == level)
                 newsym(mtmp->mx, mtmp->my);
         }
@@ -2501,7 +2517,7 @@ restrap(struct monst *mtmp)
         return FALSE;
 
     if (mtmp->data->mlet == S_MIMIC) {
-        set_mimic_sym(mtmp, level);
+        set_mimic_sym(mtmp, level, rng_main);
         return TRUE;
     } else if (level->locations[mtmp->mx][mtmp->my].typ == ROOM) {
         mtmp->mundetected = 1;
@@ -2601,7 +2617,9 @@ select_newcham_form(struct monst *mon)
     }
 
     if (mndx == NON_PM)
-        mndx = rn1(SPECIAL_PM - LOW_PM, LOW_PM);
+        mndx = LOW_PM + rn2_on_rng(
+            SPECIAL_PM - LOW_PM, mon->mtame ? rng_polyform_tame :
+            mon->mpeaceful ? rng_main : rng_polyform_hostile);
     return mndx;
 }
 
@@ -2745,7 +2763,7 @@ newcham(struct monst *mtmp, const struct permonst *mdat,
         /* we can now create worms with tails - 11/91 */
         initworm(mtmp, rn2(5));
         if (count_wsegs(mtmp))
-            place_worm_tail_randomly(mtmp, mtmp->mx, mtmp->my);
+            place_worm_tail_randomly(mtmp, mtmp->mx, mtmp->my, rng_main);
     }
 
     if (mtmp->dlevel == level)

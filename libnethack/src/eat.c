@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-12-27 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -17,7 +17,7 @@ static void touchfood(void);
 static void done_eating(boolean);
 static void cprefx(int);
 static int intrinsic_possible(int, const struct permonst *);
-static void givit(int, const struct permonst *ptr);
+static void givit(int, const struct permonst *ptr, int);
 static void cpostfx(int);
 static boolean start_tin(struct obj *);
 static int eatcorpse(void);
@@ -479,41 +479,91 @@ intrinsic_possible(int type, const struct permonst *ptr)
     default:
         return FALSE;
     }
- /*NOTREACHED*/}
+}
 
-/* givit() tries to give you an intrinsic based on the monster's level
- * and what type of intrinsic it is trying to give you.
- */
+/* givit() tries to give you an intrinsic based on the monster's level and what
+   type of intrinsic it is trying to give you.
+
+   Conferred intrinsics are clearly strategically important, and as such we want
+   to line them up as much as possible between games. Therefore, seven of the
+   intrinsics each have their own RNG. You get the intrinsic once the RNG rolls
+   a 1/296 chance (not an arbitrary number, see below for the explanation); the
+   more powerful the monster, the more rolls on the RNG you get. This way,
+   there's no difference between strategies that use multiple weak monsters, and
+   strategies that use a few strong monsters, you get the intrinsic at the same
+   time either way.
+
+   The other two intrinsics are telepathy and disintegration resistance. Both of
+   these have a 100% chance of being conveyed. This is not affected by the scale
+   factor (because there's no appropriate RNG). This doesn't matter very much,
+   because telepathy-granting monsters tend to be either floating eyes or
+   endgame quality, and monsters that grant disintegration resistance tend not
+   to grant anything else. */
 static void
-givit(int type, const struct permonst *ptr)
+givit(int type, const struct permonst *ptr, int scalefactor)
 {
-    int chance;
+    if (type != DISINT_RES && type != TELEPAT) {
+        /* Calculate the probability of gaining the intrinsic, and the
+           appropriate RNG. Some intrinsics are easier to get than others. */
+        int l100; /* monster level * 6 required for a 100% chance */
+        enum rng rng;
+        switch (type) {
+        case POISON_RES:       l100 = 90; rng = rng_intrinsic_poison; break;
+        case TELEPORT:         l100 = 60; rng = rng_intrinsic_itis;   break;
+        case TELEPORT_CONTROL: l100 = 72; rng = rng_intrinsic_tc;     break;
+        case FIRE_RES:         l100 = 90; rng = rng_intrinsic_fire;   break;
+        case SLEEP_RES:        l100 = 90; rng = rng_intrinsic_sleep;  break;
+        case COLD_RES:         l100 = 90; rng = rng_intrinsic_cold;   break;
+        case SHOCK_RES:        l100 = 90; rng = rng_intrinsic_shock;  break;
+        default:
+            impossible("Trying to confer unknown intrinsic %d", type);
+            return;
+        }
 
-    /* some intrinsics are easier to get than others */
-    switch (type) {
-    case POISON_RES:
-        if ((ptr == &mons[PM_KILLER_BEE] || ptr == &mons[PM_SCORPION]) &&
-            !rn2(4))
-            chance = 1;
-        else
-            chance = 15;
-        break;
-    case TELEPORT:
-        chance = 10;
-        break;
-    case TELEPORT_CONTROL:
-        chance = 12;
-        break;
-    case TELEPAT:
-        chance = 1;
-        break;
-    default:
-        chance = 15;
-        break;
+        int ml = ptr->mlevel * 6;
+
+        if (ml > l100)
+            ml = l100;
+
+        ml /= scalefactor;
+
+        if (ml < l100 && ml > 0) {
+            /* The odds of /not/ getting the intrinsic on a direct roll are (1 -
+               chance), naturally enough. The odds of not getting the intrinsic
+               with n RNG rolls are (295/296) ** n. Rearranging, we get n =
+               log(1 - chance) / log(295/296). Our existing integer logarithm
+               function returns base-2 logarithms scaled by a factor of 1024;
+               and 1024 * log(295/296) = -4.99939469..., which we approximate as
+               -5.  Thus, the number of RNG rolls we get is ilog2(1 / (1 -
+               chance)) / 5.
+
+               We cannot use this formula as-is due to rounding errors: the
+               chance is in the range 0..1, which does not work very well as an
+               integer.  Thus, instead of calculating ilog2(1 / (1 - chance)),
+               we instead calculate ilog2(1048576 / (1 - chance)) - 20480, which
+               is mathematically identical.  In fact, we only subtract 20478,
+               because C division truncates, and rounding will give us betrer
+               results.
+
+               In most cases, the chance is equal to mlevel / l100 (so the
+               failchance is equal to (l100 - mlevel) / l100). Killer bees and
+               scorpions are exceptions: they have a 25% chance of overriding
+               the chance to 100% (i.e. have 75% of the fail chance). */
+            long long failchance = (1048576LL * l100) / (l100 - ml);
+            if ((ptr == &mons[PM_KILLER_BEE] || ptr == &mons[PM_SCORPION]) &&
+                type == POISON_RES) {
+                failchance = (failchance * 3) / 4;
+            }
+
+            int rngrolls = (ilog2(failchance) - 20478) / 5;
+            while (rngrolls--)
+                if (!rn2_on_rng(296, rng))
+                    break;
+            if (rngrolls == -1)
+                return; /* haven't hit that 1/296 chance yet*/
+        }
+
     }
-
-    if (ptr->mlevel <= rn2(chance))
-        return; /* failed die roll */
 
     switch (type) {
     case FIRE_RES:
@@ -604,12 +654,13 @@ cpostfx(int pm)
     switch (pm) {
     case PM_NEWT:
         /* MRKR: "eye of newt" may give small magical energy boost */
-        if (rn2(3) || 3 * u.uen <= 2 * u.uenmax) {
+        if (rn2_on_rng(3, rng_newt_pw_boost) || 3 * u.uen <= 2 * u.uenmax) {
             int old_uen = u.uen;
+            boolean can_boost_max = !rn2_on_rng(3, rng_newt_pw_boost);
 
-            u.uen += rnd(3);
+            u.uen += 1 + rn2_on_rng(3, rng_newt_pw_boost);
             if (u.uen > u.uenmax) {
-                if (!rn2(3))
+                if (can_boost_max)
                     u.uenmax++;
                 u.uen = u.uenmax;
             }
@@ -716,7 +767,7 @@ cpostfx(int pm)
     case PM_MIND_FLAYER:
     case PM_MASTER_MIND_FLAYER:
         if (ABASE(A_INT) < ATTRMAX(A_INT)) {
-            if (!rn2(2)) {
+            if (!rn2_on_rng(2, rng_50percent_a_int)) {
                 pline("Yum! That was real brain food!");
                 adjattrib(A_INT, 1, FALSE);
                 break;  /* don't give them telepathy, too */
@@ -737,37 +788,28 @@ cpostfx(int pm)
             if (is_giant(ptr))
                 gainstr(NULL, 0);
 
-            /* Check the monster for all of the intrinsics.  If this monster
-               can give more than one, pick one to try to give from among all
-               it can give. If a monster can give 4 intrinsics then you have a
-               1/1 * 1/2 * 2/3 * 3/4 = 1/4 chance of getting the first, a 1/2 *
-               2/3 * 3/4 = 1/4 chance of getting the second, a 1/3 * 3/4 = 1/4
-               chance of getting the third, and a 1/4 chance of getting the
-               fourth. And now a proof by induction: it works for 1 intrinsic (1
-               in 1 of getting it) for 2 you have a 1 in 2 chance of getting the
-               second, otherwise you keep the first for 3 you have a 1 in 3
-               chance of getting the third, otherwise you keep the first or the
-               second for n+1 you have a 1 in n+1 chance of getting the (n+1)st,
-               otherwise you keep the previous one. Elliott Kleinrock, October
-               5, 1990 */
+            /* Check the monster for all of the intrinsics. If this monster can
+               give more than one, we reduce the chance of each by a factor of
+               the number of intrinsics it can give. (This leads to a slight
+               change from behaviour pre-4.3-beta2. Imagine a level-15 monster
+               that conferred both fire and cold resistance. Under 4.3-beta1
+               mechanics, it would have a 50% chance of conferring fire
+               resistance, and a 50% chance of conferring cold resistance. Under
+               4.3-beta2 mechanics, it has a 25% chance each of conferring one
+               specific resistance, a 25% chance of conferring both, and a 25%
+               chance of conferring neither. This is necessary to keep
+               intrinsics lined up between multiple games on the same seed;
+               otherwise, a player would be at a disadvantage if they happened
+               to be "due" to get two intrinsics at the same moment.) */
 
             count = 0;  /* number of possible intrinsics */
-            tmp = 0;    /* which one we will try to give */
-            for (i = 1; i <= LAST_PROP; i++) {
-                if (intrinsic_possible(i, ptr)) {
+            for (i = 1; i <= LAST_PROP; i++)
+                if (intrinsic_possible(i, ptr))
                     count++;
-                    /* a 1 in count chance of replacing the old one with this
-                       one, and a count-1 in count chance of keeping the old
-                       one.  (note that 1 in 1 and 0 in 1 are what we want for
-                       the first one */
-                    if (!rn2(count))
-                        tmp = i;
-                }
-            }
 
-            /* if any found try to give them one */
-            if (count)
-                givit(tmp, ptr);
+            for (i = 1; i <= LAST_PROP; i++)
+                if (intrinsic_possible(i, ptr))
+                    givit(i, ptr, count);
         }
         break;
     }
@@ -1105,7 +1147,7 @@ eatcorpse(void)
             const char *buf;
             long sick_time;
 
-            sick_time = (long)rn1(10, 10);
+            sick_time = rn2_on_rng(10, rng_ddeath_d10p9) + 9;
             /* make sure new ill doesn't result in improvement */
             if (Sick && (sick_time > Sick))
                 sick_time = (Sick > 1L) ? Sick - 1L : 1L;
@@ -1287,7 +1329,9 @@ eataccessory(struct obj *otmp)
             return;     /* died from sink fall */
     }
     otmp->known = otmp->dknown = 1;     /* by taste */
-    if (!rn2(otmp->oclass == RING_CLASS ? 3 : 5)) {
+    if (otmp->oclass == RING_CLASS ?
+        !rn2_on_rng(3, rng_intrinsic_ring) :
+        !rn2_on_rng(5, rng_intrinsic_amulet)) {
         switch (otmp->otyp) {
         default:
             if (!objects[typ].oc_oprop)
@@ -2188,7 +2232,7 @@ eat_floorfood:
                 if ((c = yn_function(qbuf, ynqchars, 'n')) == 'y') {
                     u.utrap = u.utraptype = 0;
                     deltrap(level, ttmp);
-                    return mksobj(level, BEARTRAP, TRUE, FALSE);
+                    return mksobj(level, BEARTRAP, TRUE, FALSE, rng_main);
                 } else if (c == 'q') {
                     return NULL;
                 }

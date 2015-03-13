@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-12-02 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -390,23 +390,26 @@ make_bones:
 
 
 int
-getbones(d_level * levnum)
+getbones(d_level *levnum)
 {
     int ok;
     char c, bonesid[10], oldbonesid[10];
     struct memfile mf;
     boolean from_file = FALSE;
     char *bonesfn = NULL;
+    enum rng rng = rng_for_level(levnum);
 
     mnew(&mf, NULL);
 
-    if (discover || !flags.bones_enabled)       /* save bones files for real
-                                                   games */
+    if (discover || !flags.bones_enabled) /* save bones files for real games */
         goto fail;
 
+    /* note: this rn2 call has to be before we check to see if a bones file
+       actually exists, to avoid level gen desyncs due to bones file presence */
+
     /* wizard check added by GAN 02/05/87 */
-    if (rn2(3)  /* only once in three times do we find bones */
-        &&!wizard)
+    if (rn2_on_rng(3, rng)  /* only once in three times do we find bones */
+        && !wizard)
         goto fail;
     if (no_bones_level(levnum))
         goto fail;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-10 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1658,7 +1658,7 @@ set_repo_loc(struct eshk *eshkp)
 }
 
 /* Dump inventory to the floor, called at game exit, after inventory disclosure
- * but before making bones */
+   but before making bones */
 void
 finish_paybill(void)
 {
@@ -3011,7 +3011,7 @@ repair_damage(struct level *lev, struct monst *shkp, struct damage *tmp_dam,
             /* convert to an object */
             otmp =
                 mksobj(lev, (ttmp->ttyp == LANDMINE) ? LAND_MINE : BEARTRAP,
-                       TRUE, FALSE);
+                       TRUE, FALSE, rng_main);
             otmp->quan = 1;
             otmp->owt = weight(otmp);
             mpickobj(shkp, otmp);

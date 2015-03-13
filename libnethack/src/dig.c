@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -358,6 +358,11 @@ dig(void)
             if (IS_TREE(loc->typ)) {
                 digtxt = "You cut down the tree.";
                 loc->typ = ROOM;
+                /* Don't bother with a custom RNG for this: it would desync
+                   between kicked fruits and cut-down fruits. (And if you think
+                   that's irrelevant, I agree with you, but that implies that
+                   there's no purpose in having a custom RNG in the first
+                   place.) */
                 if (!rn2(5))
                     rnd_treefruit_at(dpx, dpy);
             } else {
@@ -539,7 +544,7 @@ digactualhole(int x, int y, struct monst *madeby, int ttyp)
         surface_type = surface(x, y);
     shopdoor = IS_DOOR(loc->typ) && *in_rooms(level, x, y, SHOPBASE);
     oldobjs = level->objects[x][y];
-    ttmp = maketrap(level, x, y, ttyp);
+    ttmp = maketrap(level, x, y, ttyp, rng_main);
     if (!ttmp)
         return;
     newobjs = level->objects[x][y];
@@ -810,13 +815,15 @@ dig_up_grave(void)
         if (!Blind)
             pline(Hallucination ? "Dude!  The living dead!" :
                   "The grave's owner is very upset!");
-        makemon(mkclass(&u.uz, S_ZOMBIE, 0), level, u.ux, u.uy, NO_MM_FLAGS);
+        makemon(mkclass(&u.uz, S_ZOMBIE, 0, rng_main), level,
+                u.ux, u.uy, NO_MM_FLAGS);
         break;
     case 3:
         if (!Blind)
             pline(Hallucination ? "I want my mummy!" :
                   "You've disturbed a tomb!");
-        makemon(mkclass(&u.uz, S_MUMMY, 0), level, u.ux, u.uy, NO_MM_FLAGS);
+        makemon(mkclass(&u.uz, S_MUMMY, 0, rng_main), level,
+                u.ux, u.uy, NO_MM_FLAGS);
         break;
     default:
         /* No corpse */
@@ -1140,7 +1147,7 @@ mdig_tunnel(struct monst *mtmp)
         here->typ = CORR;
         if (pile && pile < 5)
             mksobj_at((pile == 1) ? BOULDER : ROCK, level, mtmp->mx, mtmp->my,
-                      TRUE, FALSE);
+                      TRUE, FALSE, rng_main);
     }
     newsym(mtmp->mx, mtmp->my);
     if (!sobj_at(BOULDER, level, mtmp->mx, mtmp->my))
@@ -1195,7 +1202,8 @@ zap_dig(schar dx, schar dy, schar dz)
                        killer_msg(DIED, msgcat_many(
                                       "collapsing the ceiling on top of ",
                                       uhim(), "self", NULL)));
-                otmp = mksobj_at(ROCK, level, u.ux, u.uy, FALSE, FALSE);
+                otmp = mksobj_at(ROCK, level, u.ux, u.uy, FALSE, FALSE,
+                                 rng_main);
                 if (otmp) {
                     xname(otmp);        /* set dknown, maybe bknown */
                     stackobj(otmp);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -52,9 +52,9 @@ boulder_hits_pool(struct obj * otmp, int rx, int ry, boolean pushing)
         boolean lava = is_lava(level, rx, ry), fills_up;
         const char *what = waterbody_name(rx, ry);
         schar ltyp = level->locations[rx][ry].typ;
-        int chance = rn2(10);   /* water: 90%; lava: 10% */
+        int chance = rn2_on_rng(10, rng_boulder_bridge);
 
-        fills_up = lava ? chance == 0 : chance != 0;
+        fills_up = lava ? chance == 0 : chance != 9; /* water: 90%; lava: 10% */
 
         if (fills_up) {
             struct trap *ttmp = t_at(level, rx, ry);
@@ -391,6 +391,10 @@ dosinkring(struct obj *obj)  /* obj is a ring being dropped over a sink */
         makeknown(obj->otyp);
     else
         You_hear("the ring bouncing down the drainpipe.");
+
+    /* A custom RNG would be nice here, but I can't see a way to make it work
+       without having a different RNG for each class of ring, which would be
+       overkill. */
     if (!rn2(20)) {
         pline("The sink backs up, leaving %s.", doname(obj));
         obj->in_use = FALSE;
@@ -568,7 +572,7 @@ obj_no_longer_held(struct obj *obj)
     case CRYSKNIFE:
         /* KMH -- Fixed crysknives have only 10% chance of reverting */
         /* only changes when not held by player or monster */
-        if (!obj->oerodeproof || !rn2(10)) {
+        if (!obj->oerodeproof || !rn2_on_rng(10, rng_unfix_crysknife)) {
             obj->otyp = WORM_TOOTH;
             obj->oerodeproof = 0;
         }
@@ -901,25 +905,45 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
         done(ESCAPED, NULL);
     }
 
-    /* If you have the amulet and are trying to get out of Gehennom, going up a 
-       set of stairs sometimes does some very strange things! Biased against
-       law and towards chaos, but not nearly as strongly as it used to be
-       (prior to 3.2.0). Odds: old new "up" L N C "up" L N C +1 75.0 75.0 75.0
-       +1 75.0 75.0 75.0 0 0.0 12.5 25.0 0 6.25 8.33 12.5 -1 8.33 4.17 0.0 -1
-       6.25 8.33 12.5 -2 8.33 4.17 0.0 -2 6.25 8.33 0.0 -3 8.33 4.17 0.0 -3
-       6.25 0.0 0.0 */
+    /*
+     * If you have the amulet and are trying to get out of Gehennom, going up a
+     * set of stairs sometimes does some very strange things! Biased against
+     * law and towards chaos, but not nearly as strongly as it used to be
+     * (prior to 3.2.0). Additionally, the documentation as of 3.2.0 didn't
+     * match the actual distribution:
+     *
+     *  pre-3.20 (documented)      3.2.0 (documented)         3.2.0 (actual)
+     * "up"   L     N     C     "up"   L     N     C     "up"   L     N     C
+     *  +1  75.00 75.00 75.00    +1  75.00 75.00 75.00    +1  75.00 75.00 75.00
+     *   0   0.00 12.50 25.00     0   6.25  8.33 12.50     0   6.25  8.33 12.50
+     *  -1   8.33  4.17  0.00    -1   6.25  8.33 12.50    -1  11.45 12.50 12.50
+     *  -2   8.33  4.17  0.00    -2   6.25  8.33  0.00    -2   5.21  4.17  0.00
+     *  -3   8.33  4.17  0.00    -3   6.25  0.00  0.00    -3   2.08  0.00  0.00
+     *
+     * 4.3.0 reproduces the actual distribution from 3.2.0 and later (i.e. the
+     * rightmost table above).
+     */
     if (Inhell && up && Uhave_amulet && !newdungeon && !portal &&
         (dunlev(&u.uz) < dunlevs_in_dungeon(&u.uz) - 3)) {
-        if (!rn2(4)) {
+        if (!rn2_on_rng(4, rng_mysterious_force)) {
+            /* Note: to keep the RNG behaviour the same between different
+               games on the same seed (with potentially different alignments),
+               we generate a distance to send back in the range 0 to 11, then
+               scale down to 0..1, 0..2, or 0..3 as appropriate;
+               assign_rnd_level uses one RNG, so burn an RNG to match if we're
+               not calling it */
             int odds = 3 + (int)u.ualign.type,  /* 2..4 */
-                diff = odds <= 1 ? 0 : rn2(odds);       /* paranoia */
+                diff = odds <= 1 ? 0 /* paranoia */
+                : rn2_on_rng(12, rng_mysterious_force) / (12 / odds);
 
             if (diff != 0) {
                 assign_rnd_level(newlevel, &u.uz, diff);
                 /* if inside the tower, stay inside */
                 if (was_in_W_tower && !On_W_tower_level(newlevel))
                     diff = 0;
-            }
+            } else
+                rn2_on_rng(12, rng_mysterious_force); /* burn a random number */
+
             if (diff == 0)
                 assign_level(newlevel, &u.uz);
 
@@ -1276,6 +1300,9 @@ goto_level(d_level * newlevel, boolean at_stairs, boolean falling,
 }
 
 
+/* This runs as the player arrives on Astral. At this point, the Astral level
+   RNG is in a consistent state between all games. We use it as far as it keeps
+   a consistent number of seeds, then switch to the main RNG. */
 static void
 final_level(void)
 {
@@ -1283,6 +1310,7 @@ final_level(void)
     struct obj *otmp;
     coord mm;
     int i;
+    enum rng astral_rng = rng_for_level(&level->z);
 
     /* reset monster hostility relative to player */
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
@@ -1290,27 +1318,34 @@ final_level(void)
             reset_hostility(mtmp);
 
     /* create some player-monsters */
-    create_mplayers(rn1(4, 3), TRUE);
+    create_mplayers(rn2_on_rng(4, astral_rng) + 3, TRUE);
+
+    /* generate angel count and guardian xlvl unconditionally */
+    int angel_count = rn2_on_rng(4, astral_rng) + 1;
+    int angel_xlvl  = rn2_on_rng(8, astral_rng) + 15;
 
     /* create a guardian angel next to player, if worthy */
     if (Conflict) {
+        /* unworthy: generate one angel on astral_rng (for consistency), others
+           on the main RNG */
         pline("A voice booms: \"Thy desire for conflict shall be fulfilled!\"");
-        for (i = rnd(4); i > 0; --i) {
+        for (i = angel_count; i > 0; --i) {
             mm.x = u.ux;
             mm.y = u.uy;
             if (enexto(&mm, level, mm.x, mm.y, &mons[PM_ANGEL]))
                 mk_roamer(&mons[PM_ANGEL], u.ualign.type, level, mm.x, mm.y,
-                          FALSE);
+                          FALSE, i == angel_count ? MM_ALLLEVRNG : NO_MM_FLAGS);
         }
 
     } else if (u.ualign.record > 8) {   /* fervent */
+        /* worthy: generate one angel on astral_rng and buff it using the main
+           RNG (except for m_lev which is relevant to balance), no others */
         pline("A voice whispers: \"Thou hast been worthy of me!\"");
         mm.x = u.ux;
         mm.y = u.uy;
         if (enexto(&mm, level, mm.x, mm.y, &mons[PM_ANGEL])) {
-            if ((mtmp =
-                 mk_roamer(&mons[PM_ANGEL], u.ualign.type, level, mm.x, mm.y,
-                           TRUE)) != 0) {
+            if (((mtmp = mk_roamer(&mons[PM_ANGEL], u.ualign.type, level,
+                                   mm.x, mm.y, TRUE, MM_ALLLEVRNG)))) {
                 if (!Blind)
                     pline("An angel appears near you.");
                 else
@@ -1320,11 +1355,11 @@ final_level(void)
                    structure, so we don't want to call tamedog(). */
                 mtmp->mtame = 10;
                 /* make him strong enough vs. endgame foes */
-                mtmp->m_lev = rn1(8, 15);
+                mtmp->m_lev = angel_xlvl;
                 mtmp->mhp = mtmp->mhpmax =
                     dice((int)mtmp->m_lev, 10) + 30 + rnd(30);
                 if ((otmp = select_hwep(mtmp)) == 0) {
-                    otmp = mksobj(level, SILVER_SABER, FALSE, FALSE);
+                    otmp = mksobj(level, SILVER_SABER, FALSE, FALSE, rng_main);
                     if (mpickobj(mtmp, otmp))
                         panic("merged weapon?");
                 }
@@ -1333,7 +1368,7 @@ final_level(void)
                     otmp->spe += rnd(4);
                 if ((otmp = which_armor(mtmp, os_arms)) == 0 ||
                     otmp->otyp != SHIELD_OF_REFLECTION) {
-                    mongets(mtmp, AMULET_OF_REFLECTION);
+                    mongets(mtmp, AMULET_OF_REFLECTION, rng_main);
                     m_dowear(mtmp, TRUE);
                 }
             }

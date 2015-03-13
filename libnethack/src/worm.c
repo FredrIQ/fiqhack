@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-10 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -9,7 +9,7 @@
 static void toss_wsegs(struct level *lev, struct wseg *curr,
                        boolean display_update);
 static void shrink_worm(int);
-static void random_dir(xchar, xchar, xchar *, xchar *);
+static void random_dir(xchar, xchar, xchar *, xchar *, enum rng);
 static struct wseg *create_worm_tail(int);
 
 /*  Description of long worm implementation.
@@ -589,7 +589,7 @@ remove_worm(struct monst *worm)
  *  be, if somehow the head is disjoint from the tail.
  */
 void
-place_worm_tail_randomly(struct monst *worm, xchar x, xchar y)
+place_worm_tail_randomly(struct monst *worm, xchar x, xchar y, enum rng rng)
 {
     int wnum = worm->wormno;
     struct level *lev = worm->dlevel;
@@ -617,7 +617,7 @@ place_worm_tail_randomly(struct monst *worm, xchar x, xchar y)
         /* pick a random direction from x, y and search for goodpos() */
 
         do {
-            random_dir(ox, oy, &nx, &ny);
+            random_dir(ox, oy, &nx, &ny, rng);
         } while (!goodpos(lev, nx, ny, worm, 0) && (tryct++ < 50));
 
         if (tryct < 50) {
@@ -645,24 +645,24 @@ place_worm_tail_randomly(struct monst *worm, xchar x, xchar y)
  * enexto() with a search radius.
  */
 static void
-random_dir(xchar x, xchar y, xchar * nx, xchar * ny)
+random_dir(xchar x, xchar y, xchar * nx, xchar * ny, enum rng rng)
 {
     *nx = x;
     *ny = y;
 
-    *nx += (x > 0 ?     /* extreme left ? */
-            (x < COLNO - 1 ?        /* extreme right ? */
-             (rn1(3, -1))       /* neither so +1, 0, or -1 */
-             : -rn2(2)) /* 0, or -1 */
-            : rn2(2));  /* 0, or 1 */
+    *nx += (x > 0 ?                     /* extreme left ? */
+            (x < COLNO - 1 ?            /* extreme right ? */
+             (rn2_on_rng(3, rng) - 1)   /* neither so +1, 0, or -1 */
+             : -rn2_on_rng(2, rng))     /* 0, or -1 */
+            : rn2_on_rng(2, rng));      /* 0, or 1 */
 
     *ny += (*nx == x ?  /* same kind of thing with y */
-            (y > 0 ? (y < ROWNO - 1 ? (rn2(2) ? 1 : -1)
+            (y > 0 ? (y < ROWNO - 1 ? (rn2_on_rng(2, rng) ? 1 : -1)
                       : -1)
              : 1)
-            : (y > 0 ? (y < ROWNO - 1 ? (rn1(3, -1))
-                        : -rn2(2))
-               : rn2(2)));
+            : (y > 0 ? (y < ROWNO - 1 ? (rn2_on_rng(3, rng) - 1)
+                        : -rn2_on_rng(2, rng))
+               : rn2_on_rng(2, rng)));
 }
 
 /*  count_wsegs()

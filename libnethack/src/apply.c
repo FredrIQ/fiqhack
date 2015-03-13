@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -806,9 +806,8 @@ use_bell(struct obj **optr)
             !(mvitals[PM_WOOD_NYMPH].mvflags & G_GONE) &&
             !(mvitals[PM_WATER_NYMPH].mvflags & G_GONE) &&
             !(mvitals[PM_MOUNTAIN_NYMPH].mvflags & G_GONE) &&
-            (mtmp =
-             makemon(mkclass(&u.uz, S_NYMPH, 0), level, u.ux, u.uy,
-                     NO_MINVENT)) != 0) {
+            ((mtmp = makemon(mkclass(&u.uz, S_NYMPH, 0, rng_main), level,
+                             u.ux, u.uy, NO_MINVENT)))) {
             pline("You summon %s!", a_monnam(mtmp));
             if (!obj_resists(obj, 93, 100)) {
                 pline("%s shattered!", Tobjnam(obj, "have"));
@@ -1514,7 +1513,7 @@ use_tinning_kit(struct obj *obj)
     }
     consume_obj_charge(obj, TRUE);
 
-    if ((can = mksobj(level, TIN, FALSE, FALSE)) != 0) {
+    if ((can = mksobj(level, TIN, FALSE, FALSE, rng_main)) != 0) {
         static const char you_buy_it[] = "You tin it, you bought it!";
 
         can->corpsenm = corpse->corpsenm;
@@ -1550,7 +1549,7 @@ use_unicorn_horn(struct obj *obj)
     if (obj && obj->cursed) {
         long lcount = (long)rnd(100);
 
-        switch (rn2(6)) {
+        switch (rn2_on_rng(6, rng_cursed_unihorn)) {
         case 0:
             make_sick(Sick ? Sick / 3L + 1L
                            : (unsigned long)rn1(ACURR(A_CON), 20),
@@ -1639,6 +1638,10 @@ use_unicorn_horn(struct obj *obj)
      *               0      1      2      3      4      5      6      7
      *   blessed:  22.7%  22.7%  19.5%  15.4%  10.7%   5.7%   2.6%   0.8%
      *  uncursed:  35.4%  35.4%  22.9%   6.3%    0      0      0      0
+     *
+     * We don't use a separate RNG for blessed unihorns; unlike cursed unihorns
+     * (which might be used once or twice per game by accident), blessed
+     * unihorns are normally used frequently all through the game.
      */
     val_limit = rn2(dice(2, (obj && obj->blessed) ? 4 : 2));
     if (val_limit > trouble_count)
@@ -2181,7 +2184,7 @@ set_trap(void)
         return 1;       /* still busy */
 
     ttyp = (otmp->otyp == LAND_MINE) ? LANDMINE : BEAR_TRAP;
-    ttmp = maketrap(level, u.ux, u.uy, ttyp);
+    ttmp = maketrap(level, u.ux, u.uy, ttyp, rng_main);
     if (ttmp) {
         ttmp->tseen = 1;
         ttmp->madeby_u = 1;
@@ -2828,7 +2831,7 @@ do_break_wand(struct obj *obj)
             continue;
         } else if (obj->otyp == WAN_CREATE_MONSTER) {
             /* u.ux,u.uy creates it near you--x,y might create it in rock */
-            makemon(NULL, level, u.ux, u.uy, NO_MM_FLAGS);
+            makemon(NULL, level, u.ux, u.uy, MM_CREATEMONSTER | MM_CMONSTER_U);
             continue;
         } else {
             if (x == u.ux && y == u.uy) {
@@ -2989,7 +2992,7 @@ doapply(const struct nh_cmd_arg *arg)
         if (obj->blessed) {
             use_magic_whistle(obj);
             /* sometimes the blessing will be worn off */
-            if (!rn2(49)) {
+            if (!rn2_on_rng(49, rng_eucalyptus)) {
                 if (!Blind) {
                     pline("%s %s %s.", Shk_Your(obj), aobjnam(obj, "glow"),
                           hcolor("brown"));
@@ -3076,16 +3079,18 @@ doapply(const struct nh_cmd_arg *arg)
             const char *what;
 
             consume_obj_charge(obj, TRUE);
-            if (!rn2(13)) {
-                otmp = mkobj(level, POTION_CLASS, FALSE);
+            if (!rn2_on_rng(13, rng_horn_of_plenty)) {
+                otmp = mkobj(level, POTION_CLASS, FALSE, rng_horn_of_plenty);
                 if (objects[otmp->otyp].oc_magic)
                     do {
-                        otmp->otyp = rnd_class(POT_BOOZE, POT_WATER);
+                        otmp->otyp = rnd_class(
+                            POT_BOOZE, POT_WATER, rng_horn_of_plenty);
                     } while (otmp->otyp == POT_SICKNESS);
                 what = "A potion";
             } else {
-                otmp = mkobj(level, FOOD_CLASS, FALSE);
-                if (otmp->otyp == FOOD_RATION && !rn2(7))
+                otmp = mkobj(level, FOOD_CLASS, FALSE, rng_horn_of_plenty);
+                if (otmp->otyp == FOOD_RATION &&
+                    !rn2_on_rng(7, rng_horn_of_plenty))
                     otmp->otyp = LUMP_OF_ROYAL_JELLY;
                 what = "Some food";
             }
@@ -3093,14 +3098,14 @@ doapply(const struct nh_cmd_arg *arg)
             otmp->blessed = obj->blessed;
             otmp->cursed = obj->cursed;
             otmp->owt = weight(otmp);
-            hold_another_object(otmp,
-                                Engulfed ? "Oops!  %s out of your reach!"
-                                : (Is_airlevel(&u.uz) || Is_waterlevel(&u.uz) ||
-                                   level->locations[u.ux][u.uy].typ < IRONBARS
-                                   || level->locations[u.ux][u.uy].typ >=
-                                   ICE) ? "Oops!  %s away from you!" :
-                                "Oops!  %s to the floor!",
-                                The(aobjnam(otmp, "slip")), NULL);
+            hold_another_object(
+                otmp, Engulfed ? "Oops!  %s out of your reach!"
+                : (Is_airlevel(&u.uz) || Is_waterlevel(&u.uz) ||
+                   level->locations[u.ux][u.uy].typ < IRONBARS
+                   || level->locations[u.ux][u.uy].typ >=
+                   ICE) ? "Oops!  %s away from you!" :
+                "Oops!  %s to the floor!",
+                The(aobjnam(otmp, "slip")), NULL);
             makeknown(HORN_OF_PLENTY);
         } else
             pline("Nothing happens.");

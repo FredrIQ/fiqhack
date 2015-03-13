@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-04 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -823,7 +823,7 @@ display_rip(int how, long umoney, const char *killer)
                 if (count == 0L)
                     continue;
                 if (objects[typ].oc_class != GEM_CLASS || typ <= LAST_GEM) {
-                    otmp = mksobj(level, typ, FALSE, FALSE);
+                    otmp = mksobj(level, typ, FALSE, FALSE, rng_display);
                     makeknown(otmp->otyp);
                     otmp->known = 1;    /* for fake amulets */
                     otmp->dknown = 1;   /* seen it (blindness fix) */

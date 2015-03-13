@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -367,7 +367,8 @@ dodrink(const struct nh_cmd_arg *arg)
             return 1;
         } else if (!strcmp(potion_descr, "smoky") &&
                    flags.djinni_count < MAXMONNO &&
-                   !rn2(POTION_OCCUPANT_CHANCE(flags.djinni_count))) {
+                   !rn2_on_rng(POTION_OCCUPANT_CHANCE(flags.djinni_count),
+                               rng_smoky_potion)) {
             djinni_from_bottle(potion);
             useup(potion);
             return 1;
@@ -1625,7 +1626,11 @@ dodip(const struct nh_cmd_arg *arg)
         /* Mixing potions is dangerous... */
         pline("The potions mix...");
         /* KMH, balance patch -- acid is particularly unstable */
-        if (obj->cursed || obj->otyp == POT_ACID || !rn2(10)) {
+        /* AIS: We use a custom RNG for this; many players alchemize only once
+           or twice per game with an enormous stack of potions, and whether they
+           survive or are consumed has balance implications */
+        if (obj->cursed || obj->otyp == POT_ACID ||
+            !rn2_on_rng(10, rng_alchemic_blast)) {
             pline("BOOM!  They explode!");
             wake_nearby(FALSE);
             exercise(A_STR, FALSE);
@@ -1656,7 +1661,7 @@ dodip(const struct nh_cmd_arg *arg)
                 {
                     struct obj *otmp;
 
-                    otmp = mkobj(level, POTION_CLASS, FALSE);
+                    otmp = mkobj(level, POTION_CLASS, FALSE, rng_main);
                     obj->otyp = otmp->otyp;
                     obfree(otmp, NULL);
                 }
@@ -1902,7 +1907,6 @@ void
 djinni_from_bottle(struct obj *obj)
 {
     struct monst *mtmp;
-    int chance;
 
     if (!(mtmp = makemon(&mons[PM_DJINNI], level, u.ux, u.uy, NO_MM_FLAGS))) {
         pline("It turns out to be empty.");
@@ -1917,18 +1921,28 @@ djinni_from_bottle(struct obj *obj)
         pline("Something speaks.");
     }
 
-    chance = rn2(5);
-    if (obj->blessed)
-        chance = (chance == 4) ? rnd(4) : 0;
-    else if (obj->cursed)
-        chance = (chance == 0) ? rn2(4) : 4;
-    /* 0,1,2,3,4: b=80%,5,5,5,5; nc=20%,20,20,20,20; c=5%,5,5,5,80 */
-
-    switch (chance) {
-    case 0:
+    int dieroll;
+    /* The wish has the largest balance implications; use wish_available to
+       balance it against other wish sources with the same probability; also
+       find out what the dieroll was so that the non-wish results will be
+       consistent if the only 80%/20%/5% wish sources so far were djinn */
+    if (wish_available(obj->blessed ? 80 : obj->cursed ? 5 : 20, &dieroll)) {
         verbalize("I am in your debt.  I will grant one wish!");
         makewish();
         mongone(mtmp);
+        return;
+    }
+
+    /* otherwise, typically an equal chance of each other result, although
+       for a cursed potion, we have a hostile djinni with an 80% chance */
+    if (obj->cursed && dieroll >= 20)
+        dieroll = 0;
+
+    switch (dieroll % 4) {
+    case 0:
+        verbalize("You disturbed me, fool!");
+        mtmp->mpeaceful = FALSE;
+        set_malign(mtmp);
         break;
     case 1:
         verbalize("Thank you for freeing me!");
@@ -1943,11 +1957,6 @@ djinni_from_bottle(struct obj *obj)
         verbalize("It is about time!");
         pline("%s vanishes.", Monnam(mtmp));
         mongone(mtmp);
-        break;
-    default:
-        verbalize("You disturbed me, fool!");
-        mtmp->mpeaceful = FALSE;
-        set_malign(mtmp);
         break;
     }
 }

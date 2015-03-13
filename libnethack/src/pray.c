@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-02 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -526,7 +526,7 @@ angrygods(aligntyp resp_god)
     else if (maxanger > 15)
         maxanger = 15;  /* be reasonable */
 
-    switch (rn2(maxanger)) {
+    switch (rn2_on_rng(maxanger, rng_god_anger)) {
     case 0:
     case 1:
         pline("You feel that %s is %s.", align_gname(resp_god),
@@ -645,7 +645,7 @@ gcrownu(void)
         !carrying(SPE_FINGER_OF_DEATH)) {
         class_gift = SPE_FINGER_OF_DEATH;
     make_splbk:
-        obj = mksobj(level, class_gift, TRUE, FALSE);
+        obj = mksobj(level, class_gift, TRUE, FALSE, rng_main);
         bless(obj);
         obj->bknown = TRUE;
         at_your_feet("A spellbook");
@@ -689,7 +689,7 @@ gcrownu(void)
             pline("Your %s goes snicker-snack!", xname(obj));
             obj->dknown = TRUE;
         } else if (!already_exists) {
-            obj = mksobj(level, LONG_SWORD, FALSE, FALSE);
+            obj = mksobj(level, LONG_SWORD, FALSE, FALSE, rng_main);
             obj = oname(obj, artiname(ART_VORPAL_BLADE));
             obj->spe = 1;
             at_your_feet("A sword");
@@ -711,7 +711,7 @@ gcrownu(void)
                 pline("Your %s hums ominously!", swordbuf);
                 obj->dknown = TRUE;
             } else if (!already_exists) {
-                obj = mksobj(level, RUNESWORD, FALSE, FALSE);
+                obj = mksobj(level, RUNESWORD, FALSE, FALSE, rng_main);
                 obj = oname(obj, artiname(ART_STORMBRINGER));
                 at_your_feet(An(swordbuf));
                 obj->spe = 1;
@@ -818,7 +818,9 @@ pleased(aligntyp g_align)
 
     /* note: can't get pat_on_head unless all troubles have just been fixed or
        there were no troubles to begin with; hallucination won't be in effect
-       so special handling for it is superfluous */
+       so special handling for it is superfluous
+
+       Luck input means we can't balance this between games */
     if (pat_on_head)
         switch (rn2((Luck + 6) >> 1)) {
         case 0:
@@ -956,7 +958,8 @@ pleased(aligntyp g_align)
                     if (!(HProtection & INTRINSIC)) {
                         HProtection |= FROMOUTSIDE;
                         if (!u.ublessed)
-                            u.ublessed = rn1(3, 2);
+                            u.ublessed = 2 +
+                                rn2_on_rng(3, rng_first_protection);
                     } else
                         u.ublessed++;
                     pline(msg, "my protection");
@@ -980,7 +983,7 @@ pleased(aligntyp g_align)
                 /* not yet known spells given preference over already known
                    ones */
                 /* Also, try to grant a spell for which there is a skill slot */
-                otmp = mkobj(level, SPBOOK_CLASS, TRUE);
+                otmp = mkobj(level, SPBOOK_CLASS, TRUE, rng_main);
                 while (--trycnt > 0) {
                     if (otmp->otyp != SPE_BLANK_PAPER) {
                         for (sp_no = 0; sp_no < MAXSPELL; sp_no++)
@@ -995,7 +998,8 @@ pleased(aligntyp g_align)
                             break;
                     }
                     otmp->otyp =
-                        rnd_class(bases[SPBOOK_CLASS], SPE_BLANK_PAPER);
+                        rnd_class(bases[SPBOOK_CLASS], SPE_BLANK_PAPER,
+                                  rng_spellbook_gift);
                 }
                 bless(otmp);
                 place_object(otmp, level, u.ux, u.uy);
@@ -1006,7 +1010,7 @@ pleased(aligntyp g_align)
             break;
         }
 
-    u.ublesscnt = rnz(350);
+    u.ublesscnt = rnz_on_rng(350, rng_prayer_timeout);
     kick_on_butt = u.uevent.udemigod ? 1 : 0;
 
     if (flags.elbereth_enabled && u.uevent.uhand_of_elbereth)
@@ -1214,8 +1218,8 @@ dosacrifice(const struct nh_cmd_arg *arg)
                     demonless_msg = "blood coagulates";
                 }
                 if ((pm = dlord(altaralign)) != NON_PM &&
-                    (dmon =
-                     makemon(&mons[pm], level, u.ux, u.uy, NO_MM_FLAGS))) {
+                    ((dmon =
+                      makemon(&mons[pm], level, u.ux, u.uy, NO_MM_FLAGS)))) {
                     pline("You have summoned %s!", a_monnam(dmon));
                     if (sgn(u.ualign.type) == sgn(dmon->data->maligntyp))
                         dmon->mpeaceful = TRUE;
@@ -1412,7 +1416,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                 consume_offering(otmp);
                 pline("You sense a conflict between %s and %s.", u_gname(),
                       a_gname());
-                if (rn2(8 + u.ulevel) > 5) {
+                if (rn2_on_rng(8 + u.ulevel, rng_altar_convert) > 5) {
                     struct monst *pri;
 
                     pline("You feel the power of %s increase.", u_gname());
@@ -1513,27 +1517,36 @@ dosacrifice(const struct nh_cmd_arg *arg)
             /* you were already in pretty good standing */
             /* The player can gain an artifact */
             /* The chance goes down as the number of artifacts goes up */
-            if (u.ulevel > 2 && u.uluck >= 0 &&
-                !rn2(10 + (2 * u.ugifts * nartifacts))) {
-                otmp = mk_artifact(level, NULL, a_align(u.ux, u.uy));
-                if (otmp) {
-                    if (otmp->spe < 0)
-                        otmp->spe = 0;
-                    if (otmp->cursed)
-                        uncurse(otmp);
-                    otmp->oerodeproof = TRUE;
-                    dropy(otmp);
-                    at_your_feet("An object");
-                    godvoice(u.ualign.type, "Use my gift wisely!");
-                    historic_event(FALSE, "received %s from %s.",
-                                   artiname(otmp->oartifact), u_gname());
-                    u.ugifts++;
-                    u.ublesscnt = rnz(300 + (50 * nartifacts));
-                    exercise(A_WIS, TRUE);
-                    /* make sure we can use this weapon */
-                    unrestrict_weapon_skill(weapon_type(otmp));
-                    discover_artifact(otmp->oartifact);
-                    return 1;
+            if (u.ulevel > 2 && u.uluck >= 0) {
+                if (!rn2_on_rng(10 + (2 * u.ugifts * nartifacts),
+                                rng_altar_gift)) {
+                    otmp = mk_artifact(level, NULL, a_align(u.ux, u.uy),
+                                       rng_altar_gift);
+                    if (otmp) {
+                        if (otmp->spe < 0)
+                            otmp->spe = 0;
+                        if (otmp->cursed)
+                            uncurse(otmp);
+                        otmp->oerodeproof = TRUE;
+                        dropy(otmp);
+                        at_your_feet("An object");
+                        godvoice(u.ualign.type, "Use my gift wisely!");
+                        historic_event(FALSE, "received %s from %s.",
+                                       artiname(otmp->oartifact), u_gname());
+                        u.ugifts++;
+                        u.ublesscnt = rnz(300 + (50 * nartifacts));
+                        exercise(A_WIS, TRUE);
+                        /* make sure we can use this weapon */
+                        unrestrict_weapon_skill(weapon_type(otmp));
+                        discover_artifact(otmp->oartifact);
+                        return 1;
+                    }
+                } else {
+                    /* we used a seed from rng_altar_gift but didn't get an
+                       artifact; burn a seed to match the one that would be
+                       consumed in mk_artifact (relevant if nartifacts is
+                       different between games) */
+                    rn2_on_rng(27720, rng_altar_gift);
                 }
             }
             change_luck((value * LUCKMAX) / (MAXVALUE * 2));
@@ -1890,7 +1903,7 @@ halu_gname(aligntyp alignment)
         return align_gname(alignment);
 
     do
-        which = randrole();
+        which = randrole(rng_main);
     while (!roles[which].lgod);
 
     switch (rn2(9)) {

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-10 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Izchak Miller, Steve Linhart, 1989.              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -174,7 +174,7 @@ pri_move(struct monst *priest)
     return move_special(priest, FALSE, TRUE, FALSE, avoid, omx, omy, gx, gy);
 }
 
-/* exclusively for mktemple() */
+/* exclusively for mktemple(); uses level creation RNG */
 void
 priestini(struct level *lev, struct mkroom *sroom, int sx, int sy,
           boolean sanctum)
@@ -208,9 +208,8 @@ priestini(struct level *lev, struct mkroom *sroom, int sx, int sy,
         if (MON_AT(lev, priest_pos->x, priest_pos->y))
             rloc(m_at(lev, priest_pos->x, priest_pos->y), FALSE);
 
-        priest =
-            makemon(&mons[sanctum ? PM_HIGH_PRIEST : PM_ALIGNED_PRIEST], lev,
-                    priest_pos->x, priest_pos->y, NO_MM_FLAGS);
+        priest = makemon(&mons[sanctum ? PM_HIGH_PRIEST : PM_ALIGNED_PRIEST],
+                         lev, priest_pos->x, priest_pos->y, MM_ALLLEVRNG);
     }
 
     if (priest) {
@@ -228,14 +227,15 @@ priestini(struct level *lev, struct mkroom *sroom, int sx, int sy,
         /* now his/her goodies... */
         if (sanctum && CONST_EPRI(priest)->shralign == A_NONE &&
             on_level(&sanctum_level, &lev->z)) {
-            mongets(priest, AMULET_OF_YENDOR);
+            mongets(priest, AMULET_OF_YENDOR, rng_for_level(&lev->z));
         }
         /* 2 to 4 spellbooks */
         for (cnt = rn1(3, 2); cnt > 0; --cnt) {
-            mpickobj(priest, mkobj(level, SPBOOK_CLASS, FALSE));
+            mpickobj(priest, mkobj(level, SPBOOK_CLASS, FALSE,
+                                   rng_for_level(&lev->z)));
         }
         /* robe [via makemon()] */
-        if (rn2(2) && (otmp = which_armor(priest, os_armc)) != 0) {
+        if (mklev_rn2(2, lev) && (otmp = which_armor(priest, os_armc)) != 0) {
             if (p_coaligned(priest))
                 uncurse(otmp);
             else
@@ -299,6 +299,8 @@ priestname(const struct monst *mon, boolean override_hallu)
                 pname = msgcat(pname, "renegade ");
             if (mon->data == &mons[PM_HIGH_PRIEST])
                 pname = msgcat(pname, "high ");
+            /* TODO: Can this be called zero-time? It might need to use the
+               display RNG. */
             if (Hallucination && !override_hallu) {
                 pname = msgcat(
                     pname,
@@ -428,9 +430,8 @@ intemple(int roomno)
             if (!rn2(5)) {
                 struct monst *mtmp;
 
-                if (!
-                    (mtmp =
-                     makemon(&mons[PM_GHOST], level, u.ux, u.uy, NO_MM_FLAGS)))
+                if (!((mtmp = makemon(&mons[PM_GHOST], level, 
+                                      u.ux, u.uy, NO_MM_FLAGS))))
                     return;
                 if (!Blind || sensemon(mtmp))
                     pline("An enormous ghost appears next to you!");
@@ -553,7 +554,7 @@ priest_talk(struct monst *priest)
 
 struct monst *
 mk_roamer(const struct permonst *ptr, aligntyp alignment, struct level *lev,
-          xchar x, xchar y, boolean peaceful)
+          xchar x, xchar y, boolean peaceful, int mm_flags)
 {
     struct monst *roamer;
     boolean coaligned = (u.ualign.type == alignment);
@@ -564,7 +565,7 @@ mk_roamer(const struct permonst *ptr, aligntyp alignment, struct level *lev,
     if (MON_AT(lev, x, y))
         rloc(m_at(lev, x, y), FALSE);   /* insurance */
 
-    if (!(roamer = makemon(ptr, lev, x, y, NO_MM_FLAGS)))
+    if (!(roamer = makemon(ptr, lev, x, y, mm_flags)))
         return NULL;
 
     EPRI(roamer)->shralign = alignment;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -642,7 +642,7 @@ sense_trap(struct trap *trap, xchar x, xchar y, int src_cursed)
             obj.ox = x;
             obj.oy = y;
         }
-        obj.otyp = (src_cursed) ? GOLD_PIECE : random_object(rn2);
+        obj.otyp = src_cursed ? GOLD_PIECE : random_object(rn2);
         obj.corpsenm = random_monster(rn2);        /* if otyp == CORPSE */
         map_object(&obj, 1, TRUE);
     } else if (trap) {
@@ -805,17 +805,31 @@ use_crystal_ball(struct obj *obj)
         pline("Too bad you can't see %s.", the(xname(obj)));
         return;
     }
-    oops = (rnd(20) > ACURR(A_INT) || obj->cursed);
+
+    /* We use a custom RNG for whether looking into the crystal ball succeeds or
+       not, because the number of uses you get out of one crystal ball can be
+       strategically important. */
+    int oops_result = rn2_on_rng(20, rng_crystal_ball);
+    oops = (rn2_on_rng(20, rng_crystal_ball) >= ACURR(A_INT) || obj->cursed);
     if (oops && (obj->spe > 0)) {
-        switch (rnd(obj->oartifact ? 4 : 5)) {
-        case 1:
+        /* Guarantee lined-up results between artifact and non-artifact unless a
+           non-artifact would explode; substitute a random result for artifacts
+           in that case. (It's OK to use rnd() for the actual timeout, because
+           that typically isn't very strategically important.) */
+        if (obj->oartifact && oops_result % 5 == 4)
+            oops_result /= 5;
+        else
+            oops_result %= 5;
+
+        switch (oops_result) {
+        case 0:
             pline("%s too much to comprehend!", Tobjnam(obj, "are"));
             break;
-        case 2:
+        case 1:
             pline("%s you!", Tobjnam(obj, "confuse"));
             make_confused(HConfusion + rnd(100), FALSE);
             break;
-        case 3:
+        case 2:
             if (!resists_blnd(&youmonst)) {
                 pline("%s your vision!", Tobjnam(obj, "damage"));
                 make_blinded(Blinded + rnd(100), FALSE);
@@ -826,11 +840,11 @@ use_crystal_ball(struct obj *obj)
                 pline("You are unaffected!");
             }
             break;
-        case 4:
+        case 3:
             pline("%s your mind!", Tobjnam(obj, "zap"));
             make_hallucinated(HHallucination + rnd(100), FALSE);
             break;
-        case 5:
+        case 4:
             pline("%s!", Tobjnam(obj, "explode"));
             useup(obj);
             obj = 0;    /* it's gone */

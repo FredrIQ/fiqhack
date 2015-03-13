@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-02 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2132,7 +2132,7 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
             cnt = 5000;
         if (cnt < 1)
             cnt = 1;
-        otmp = mksobj(level, GOLD_PIECE, FALSE, FALSE);
+        otmp = mksobj(level, GOLD_PIECE, FALSE, FALSE, rng_main);
         otmp->quan = cnt;
         otmp->owt = weight(otmp);
         return otmp;
@@ -2179,7 +2179,8 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
     /* "grey stone" check must be before general "stone" */
     for (i = 0; i < SIZE(o_ranges); i++)
         if (!strcmpi(bp, o_ranges[i].name)) {
-            typ = rnd_class(o_ranges[i].f_o_range, o_ranges[i].l_o_range);
+            typ = rnd_class(o_ranges[i].f_o_range, o_ranges[i].l_o_range,
+                            rng_main);
             goto typfnd;
         }
 
@@ -2357,7 +2358,7 @@ srch:
                 if ((trap == TRAPDOOR || trap == HOLE)
                     && !can_fall_thru(level))
                     trap = ROCKTRAP;
-                maketrap(level, u.ux, u.uy, trap);
+                maketrap(level, u.ux, u.uy, trap, rng_main);
                 pline("%s.", An(tname));
                 return &zeroobj;
             }
@@ -2464,7 +2465,7 @@ typfnd:
                 typ = FAKE_AMULET_OF_YENDOR;
                 break;
             case CANDELABRUM_OF_INVOCATION:
-                typ = rnd_class(TALLOW_CANDLE, WAX_CANDLE);
+                typ = rnd_class(TALLOW_CANDLE, WAX_CANDLE, rng_main);
                 break;
             case BELL_OF_OPENING:
                 typ = BELL;
@@ -2485,9 +2486,9 @@ typfnd:
         typ = OIL_LAMP;
 
     if (typ) {
-        otmp = mksobj(level, typ, TRUE, FALSE);
+        otmp = mksobj(level, typ, TRUE, FALSE, rng_main);
     } else {
-        otmp = mkobj(level, oclass, FALSE);
+        otmp = mkobj(level, oclass, FALSE, rng_main);
         if (otmp)
             typ = otmp->otyp;
         else
@@ -2506,9 +2507,10 @@ typfnd:
     }
 
     if (cnt > 0 && objects[typ].oc_merge && oclass != SPBOOK_CLASS &&
-        (cnt < rnd(6) || wizard || (cnt <= 7 && Is_candle(otmp)) ||
+        (wizard || (cnt <= 7 && Is_candle(otmp)) ||
          (cnt <= 20 && ((oclass == WEAPON_CLASS && is_ammo(otmp))
-                        || typ == ROCK || is_missile(otmp)))))
+                        || typ == ROCK || is_missile(otmp))) ||
+         cnt <= rn2_on_rng(6, rng_wish_quantity)))
         otmp->quan = (long)cnt;
 
     if (spesgn == 0)
@@ -2517,7 +2519,7 @@ typfnd:
         ;
     else if (oclass == ARMOR_CLASS || oclass == WEAPON_CLASS || is_weptool(otmp)
              || (oclass == RING_CLASS && objects[typ].oc_charged)) {
-        if (spe > rnd(5) && spe > otmp->spe)
+        if (spe > 1 + rn2_on_rng(5, rng_wish_quality))
             spe = 0;
         if (spe > 2 && Luck < 0)
             spesgn = -1;
@@ -2556,7 +2558,7 @@ typfnd:
     case HEAVY_IRON_BALL:
     case IRON_CHAIN:
     case STATUE:
-        /* otmp->cobj already done in mksobj(level, ) */
+        /* otmp->cobj already done in mksobj() */
         break;
     case WAN_WISHING:
         if (!wizard) {
@@ -2710,7 +2712,8 @@ typfnd:
     /* more wishing abuse: don't allow wishing for certain artifacts */
     /* and make them pay; charge them for the wish anyway! */
     if ((is_quest_artifact(otmp) ||
-         (otmp->oartifact && rn2(nartifact_exist()) > 1)) && !wizard) {
+         (otmp->oartifact &&
+          rn2_on_rng(nartifact_exist(), rng_artifact_wish) > 1)) && !wizard) {
         artifact_exists(otmp, ONAME(otmp), FALSE);
         obfree(otmp, NULL);
         otmp = &zeroobj;
@@ -2733,7 +2736,7 @@ typfnd:
 }
 
 int
-rnd_class(int first, int last)
+rnd_class(int first, int last, enum rng rng)
 {
     int i, x, sum = 0;
 
@@ -2742,8 +2745,8 @@ rnd_class(int first, int last)
     for (i = first; i <= last; i++)
         sum += objects[i].oc_prob;
     if (!sum)   /* all zero */
-        return first + rn2(last - first + 1);
-    x = rnd(sum);
+        return first + rn2_on_rng(last - first + 1, rng);
+    x = rn2_on_rng(sum, rng) + 1;
     for (i = first; i <= last; i++)
         if (objects[i].oc_prob && (x -= objects[i].oc_prob) <= 0)
             return i;

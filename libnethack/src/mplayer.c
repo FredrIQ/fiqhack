@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Izchak Miller, 1992.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,7 +7,7 @@
 
 static const char *dev_name(void);
 static void get_mplname(struct monst *, char *);
-static void mk_mplayer_armor(struct monst *, short);
+static void mk_mplayer_armor(struct monst *, short, enum rng);
 
 /* These are the names of those who
  * contributed to the development of NetHack 3.2/3.3/3.4.
@@ -89,29 +89,32 @@ get_mplname(struct monst *mtmp, char *nam)
 }
 
 static void
-mk_mplayer_armor(struct monst *mon, short typ)
+mk_mplayer_armor(struct monst *mon, short typ, enum rng rng)
 {
     struct obj *obj;
 
     if (typ == STRANGE_OBJECT)
         return;
-    obj = mksobj(mon->dlevel, typ, FALSE, FALSE);
-    if (!rn2(3))
+    obj = mksobj(mon->dlevel, typ, FALSE, FALSE, rng);
+    if (!rn2_on_rng(3, rng))
         obj->oerodeproof = 1;
-    if (!rn2(3))
+    if (!rn2_on_rng(3, rng))
         curse(obj);
-    if (!rn2(3))
+    if (!rn2_on_rng(3, rng))
         bless(obj);
     /* Most players who get to the endgame who have cursed equipment have it
        because the wizard or other monsters cursed it, so its chances of having
        plusses is the same as usual.... */
-    obj->spe = rn2(10) ? (rn2(3) ? rn2(5) : rn1(4, 4)) : -rnd(3);
+    obj->spe = rn2_on_rng(10, rng) ?
+        (rn2_on_rng(3, rng) ? rn2_on_rng(5, rng) : 4 + rn2_on_rng(4, rng)) :
+        - 1 - rn2_on_rng(3, rng);
     mpickobj(mon, obj);
 }
 
+/* assumes rng is rng_main or rng_for_level(&lev->z) */
 struct monst *
 mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
-           boolean special)
+           boolean special, enum rng rng)
 {
     struct monst *mtmp;
     char nam[PL_NSIZ];
@@ -125,121 +128,126 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
     if (!In_endgame(&u.uz))
         special = FALSE;
 
-    if ((mtmp = makemon(ptr, lev, x, y, NO_MM_FLAGS)) != 0) {
-        short weapon = rn2(2) ? LONG_SWORD : rnd_class(SPEAR, BULLWHIP);
+    if ((mtmp = makemon(ptr, lev, x, y,
+                        rng == rng_main ? NO_MM_FLAGS : MM_ALLLEVRNG)) != 0) {
+        short weapon = rn2_on_rng(2, rng) ?
+            LONG_SWORD : rnd_class(SPEAR, BULLWHIP, rng);
         short armor =
-            rnd_class(GRAY_DRAGON_SCALE_MAIL, YELLOW_DRAGON_SCALE_MAIL);
-        short cloak = !rn2(8) ? STRANGE_OBJECT :
-            rnd_class(OILSKIN_CLOAK, CLOAK_OF_DISPLACEMENT);
-        short helm = !rn2(8) ? STRANGE_OBJECT :
-            rnd_class(ELVEN_LEATHER_HELM, HELM_OF_TELEPATHY);
-        short shield = !rn2(8) ? STRANGE_OBJECT :
-            rnd_class(ELVEN_SHIELD, SHIELD_OF_REFLECTION);
+            rnd_class(GRAY_DRAGON_SCALE_MAIL, YELLOW_DRAGON_SCALE_MAIL, rng);
+        short cloak = !rn2_on_rng(8, rng) ? STRANGE_OBJECT :
+            rnd_class(OILSKIN_CLOAK, CLOAK_OF_DISPLACEMENT, rng);
+        short helm = !rn2_on_rng(8, rng) ? STRANGE_OBJECT :
+            rnd_class(ELVEN_LEATHER_HELM, HELM_OF_TELEPATHY, rng);
+        short shield = !rn2_on_rng(8, rng) ? STRANGE_OBJECT :
+            rnd_class(ELVEN_SHIELD, SHIELD_OF_REFLECTION, rng);
         int quan;
         struct obj *otmp;
 
-        mtmp->m_lev = (special ? rn1(16, 15) : rnd(16));
+        mtmp->m_lev = rn2_on_rng(16, rng) + (special ? 15 : 1);
         mtmp->mhp = mtmp->mhpmax =
-            dice((int)mtmp->m_lev, 10) + (special ? (30 + rnd(30)) : 30);
+            4 * mtmp->m_lev + rn2_on_rng(mtmp->m_lev * 3 + 1, rng) + 30 +
+            (special ? rn2_on_rng(30, rng) : 0);
         if (special) {
             get_mplname(mtmp, nam);
             mtmp = christen_monst(mtmp, nam);
             /* that's why they are "stuck" in the endgame :-) */
-            mongets(mtmp, FAKE_AMULET_OF_YENDOR);
+            mongets(mtmp, FAKE_AMULET_OF_YENDOR, rng);
         }
         mtmp->mpeaceful = 0;
         set_malign(mtmp);       /* peaceful may have changed again */
 
         switch (monsndx(ptr)) {
         case PM_ARCHEOLOGIST:
-            if (rn2(2))
+            if (rn2_on_rng(2, rng))
                 weapon = BULLWHIP;
             break;
         case PM_BARBARIAN:
-            if (rn2(2)) {
-                weapon = rn2(2) ? TWO_HANDED_SWORD : BATTLE_AXE;
+            if (rn2_on_rng(2, rng)) {
+                weapon = rn2_on_rng(2, rng) ? TWO_HANDED_SWORD : BATTLE_AXE;
                 shield = STRANGE_OBJECT;
             }
-            if (rn2(2))
-                armor = rnd_class(PLATE_MAIL, CHAIN_MAIL);
+            if (rn2_on_rng(2, rng))
+                armor = rnd_class(PLATE_MAIL, CHAIN_MAIL, rng);
             if (helm == HELM_OF_BRILLIANCE)
                 helm = STRANGE_OBJECT;
             break;
         case PM_CAVEMAN:
         case PM_CAVEWOMAN:
-            if (rn2(4))
+            if (rn2_on_rng(4, rng))
                 weapon = MACE;
-            else if (rn2(2))
+            else if (rn2_on_rng(2, rng))
                 weapon = CLUB;
             if (helm == HELM_OF_BRILLIANCE)
                 helm = STRANGE_OBJECT;
             break;
         case PM_HEALER:
-            if (rn2(4))
+            if (rn2_on_rng(4, rng))
                 weapon = QUARTERSTAFF;
-            else if (rn2(2))
-                weapon = rn2(2) ? UNICORN_HORN : SCALPEL;
-            if (rn2(4))
-                helm = rn2(2) ? HELM_OF_BRILLIANCE : HELM_OF_TELEPATHY;
-            if (rn2(2))
+            else if (rn2_on_rng(2, rng))
+                weapon = rn2_on_rng(2, rng) ? UNICORN_HORN : SCALPEL;
+            if (rn2_on_rng(4, rng))
+                helm = rn2_on_rng(2, rng) ?
+                    HELM_OF_BRILLIANCE : HELM_OF_TELEPATHY;
+            if (rn2_on_rng(2, rng))
                 shield = STRANGE_OBJECT;
             break;
         case PM_KNIGHT:
-            if (rn2(4))
+            if (rn2_on_rng(4, rng))
                 weapon = LONG_SWORD;
-            if (rn2(2))
-                armor = rnd_class(PLATE_MAIL, CHAIN_MAIL);
+            if (rn2_on_rng(2, rng))
+                armor = rnd_class(PLATE_MAIL, CHAIN_MAIL, rng);
             break;
         case PM_MONK:
             weapon = STRANGE_OBJECT;
             armor = STRANGE_OBJECT;
             cloak = ROBE;
-            if (rn2(2))
+            if (rn2_on_rng(2, rng))
                 shield = STRANGE_OBJECT;
             break;
         case PM_PRIEST:
         case PM_PRIESTESS:
-            if (rn2(2))
+            if (rn2_on_rng(2, rng))
                 weapon = MACE;
-            if (rn2(2))
-                armor = rnd_class(PLATE_MAIL, CHAIN_MAIL);
-            if (rn2(4))
+            if (rn2_on_rng(2, rng))
+                armor = rnd_class(PLATE_MAIL, CHAIN_MAIL, rng);
+            if (rn2_on_rng(4, rng))
                 cloak = ROBE;
-            if (rn2(4))
-                helm = rn2(2) ? HELM_OF_BRILLIANCE : HELM_OF_TELEPATHY;
-            if (rn2(2))
+            if (rn2_on_rng(4, rng))
+                helm = rn2_on_rng(2, rng) ?
+                    HELM_OF_BRILLIANCE : HELM_OF_TELEPATHY;
+            if (rn2_on_rng(2, rng))
                 shield = STRANGE_OBJECT;
             break;
         case PM_RANGER:
-            if (rn2(2))
+            if (rn2_on_rng(2, rng))
                 weapon = ELVEN_DAGGER;
             break;
         case PM_ROGUE:
-            if (rn2(2))
+            if (rn2_on_rng(2, rng))
                 weapon = SHORT_SWORD;
             break;
         case PM_SAMURAI:
-            if (rn2(2))
+            if (rn2_on_rng(2, rng))
                 weapon = KATANA;
             break;
         case PM_TOURIST:
             /* Defaults are just fine */
             break;
         case PM_VALKYRIE:
-            if (rn2(2))
+            if (rn2_on_rng(2, rng))
                 weapon = WAR_HAMMER;
-            if (rn2(2))
-                armor = rnd_class(PLATE_MAIL, CHAIN_MAIL);
+            if (rn2_on_rng(2, rng))
+                armor = rnd_class(PLATE_MAIL, CHAIN_MAIL, rng);
             break;
         case PM_WIZARD:
-            if (rn2(4))
-                weapon = rn2(2) ? QUARTERSTAFF : ATHAME;
-            if (rn2(2)) {
-                armor =
-                    rn2(2) ? BLACK_DRAGON_SCALE_MAIL : SILVER_DRAGON_SCALE_MAIL;
+            if (rn2_on_rng(4, rng))
+                weapon = rn2_on_rng(2, rng) ? QUARTERSTAFF : ATHAME;
+            if (rn2_on_rng(2, rng)) {
+                armor = rn2_on_rng(2, rng) ?
+                    BLACK_DRAGON_SCALE_MAIL : SILVER_DRAGON_SCALE_MAIL;
                 cloak = CLOAK_OF_MAGIC_RESISTANCE;
             }
-            if (rn2(4))
+            if (rn2_on_rng(4, rng))
                 helm = HELM_OF_BRILLIANCE;
             shield = STRANGE_OBJECT;
             break;
@@ -250,90 +258,100 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
         }
 
         if (weapon != STRANGE_OBJECT) {
-            otmp = mksobj(level, weapon, TRUE, FALSE);
-            otmp->spe = (special ? rn1(5, 4) : rn2(4));
-            if (!rn2(3))
+            otmp = mksobj(level, weapon, TRUE, FALSE, rng);
+            otmp->spe = (special ? 4 + rn2_on_rng(5, rng) : rn2_on_rng(4, rng));
+            if (!rn2_on_rng(3, rng))
                 otmp->oerodeproof = 1;
-            else if (!rn2(2))
+            else if (!rn2_on_rng(2, rng))
                 otmp->greased = 1;
-            if (special && rn2(2))
-                otmp = mk_artifact(lev, otmp, A_NONE);
+            if (special && rn2_on_rng(2, rng))
+                otmp = mk_artifact(lev, otmp, A_NONE, rng);
             /* mplayers knew better than to overenchant Magicbane */
             if (otmp->oartifact == ART_MAGICBANE)
-                otmp->spe = rnd(4);
+                otmp->spe = 1 + rn2_on_rng(4, rng);
             mpickobj(mtmp, otmp);
         }
 
         if (special) {
-            if (!rn2(10))
-                mongets(mtmp, rn2(3) ? LUCKSTONE : LOADSTONE);
-            mk_mplayer_armor(mtmp, armor);
-            mk_mplayer_armor(mtmp, cloak);
-            mk_mplayer_armor(mtmp, helm);
-            mk_mplayer_armor(mtmp, shield);
-            if (rn2(8))
-                mk_mplayer_armor(mtmp,
-                                 rnd_class(LEATHER_GLOVES,
-                                           GAUNTLETS_OF_DEXTERITY));
-            if (rn2(8))
-                mk_mplayer_armor(mtmp, rnd_class(LOW_BOOTS, LEVITATION_BOOTS));
+            if (!rn2_on_rng(10, rng))
+                mongets(mtmp, rn2_on_rng(3, rng) ? LUCKSTONE : LOADSTONE, rng);
+            mk_mplayer_armor(mtmp, armor, rng);
+            mk_mplayer_armor(mtmp, cloak, rng);
+            mk_mplayer_armor(mtmp, helm, rng);
+            mk_mplayer_armor(mtmp, shield, rng);
+            if (rn2_on_rng(8, rng))
+                mk_mplayer_armor(mtmp, rnd_class(LEATHER_GLOVES,
+                                                 GAUNTLETS_OF_DEXTERITY, rng),
+                                 rng);
+            if (rn2_on_rng(8, rng))
+                mk_mplayer_armor(mtmp, rnd_class(LOW_BOOTS,
+                                                 LEVITATION_BOOTS, rng), rng);
             m_dowear(mtmp, TRUE);
 
-            quan = rn2(3) ? rn2(3) : rn2(16);
+            quan = rn2_on_rng(3, rng) ?
+                rn2_on_rng(3, rng) : rn2_on_rng(16, rng);
             while (quan--)
-                mongets(mtmp, rnd_class(DILITHIUM_CRYSTAL, JADE));
-            /* To get the gold "right" would mean a player can double his */
-            /* gold supply by killing one mplayer.  Not good. */
-            mkmonmoney(mtmp, rn2(1000));
-            quan = rn2(10);
+                mongets(mtmp, rnd_class(DILITHIUM_CRYSTAL, JADE, rng), rng);
+            /* To get the gold "right" would mean a player can double his
+               gold supply by killing one mplayer.  Not good. */
+            mkmonmoney(mtmp, rn2_on_rng(1000, rng), rng);
+            quan = rn2_on_rng(10, rng);
             while (quan--)
-                mpickobj(mtmp, mkobj(level, RANDOM_CLASS, FALSE));
+                mpickobj(mtmp, mkobj(level, RANDOM_CLASS, FALSE, rng));
         }
-        quan = rnd(3);
+        quan = 1 + rn2_on_rng(3, rng);
         while (quan--)
-            mongets(mtmp, rnd_offensive_item(mtmp));
-        quan = rnd(3);
+            mongets(mtmp, rnd_offensive_item(mtmp, rng), rng);
+        quan = 1 + rn2_on_rng(3, rng);
         while (quan--)
-            mongets(mtmp, rnd_defensive_item(mtmp));
-        quan = rnd(3);
+            mongets(mtmp, rnd_defensive_item(mtmp, rng), rng);
+        quan = 1 + rn2_on_rng(3, rng);
         while (quan--)
-            mongets(mtmp, rnd_misc_item(mtmp));
+            mongets(mtmp, rnd_misc_item(mtmp, rng), rng);
     }
 
     return mtmp;
 }
 
-/* create the indicated number (num) of monster-players,
- * randomly chosen, and in randomly chosen (free) locations
- * on the level.  If "special", the size of num should not
- * be bigger than the number of _non-repeated_ names in the
- * developers array, otherwise a bunch of Adams and Eves will
- * fill up the overflow.
- */
+/* Create the indicated number (num) of monster-players, randomly chosen, and in
+   randomly chosen (free) locations on the level.  If "special", the size of num
+   should not be bigger than the number of _non-repeated_ names in the
+   developers array, otherwise a bunch of Adams and Eves will fill up the
+   overflow.
+
+   Uses the level generation RNG for the current level. */
 void
 create_mplayers(int num, boolean special)
 {
     int pm, x, y;
     struct monst fakemon;
 
+    enum rng rng = rng_for_level(&level->z);
+
     while (num) {
         int tryct = 0;
 
         /* roll for character class */
-        pm = PM_ARCHEOLOGIST + rn2(PM_WIZARD - PM_ARCHEOLOGIST + 1);
+        pm = PM_ARCHEOLOGIST + rn2_on_rng(PM_WIZARD - PM_ARCHEOLOGIST + 1, rng);
         fakemon.data = &mons[pm];
 
         /* roll for an available location */
         do {
-            x = rnd(COLNO - 2);
-            y = rnd(ROWNO - 2);
+            x = 1 + rn2_on_rng(COLNO - 2, rng);
+            y = 1 + rn2_on_rng(ROWNO - 2, rng);
+            /* Special case: the player is on the map right now, don't desync
+               the RNG by placing a monster on top of the player */
+            while (x == u.ux && y == u.uy) {
+                x = rnd(COLNO - 2);
+                y = rnd(ROWNO - 2);
+            }
         } while (!goodpos(level, x, y, &fakemon, 0) && tryct++ <= 50);
 
         /* if pos not found in 50 tries, don't bother to continue */
         if (tryct > 50)
             return;
 
-        mk_mplayer(&mons[pm], level, (xchar) x, (xchar) y, special);
+        mk_mplayer(&mons[pm], level, (xchar) x, (xchar) y, special, rng);
         num--;
     }
 }

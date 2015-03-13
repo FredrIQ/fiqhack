@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -127,7 +127,8 @@ struct obj *
 mk_artifact(
     struct level *lev,	/* level to create artifact on if otmp not given */
     struct obj *otmp,	/* existing object; ignored if alignment specified */
-    aligntyp alignment      /* target alignment, or A_NONE */
+    aligntyp alignment, /* target alignment, or A_NONE */
+    enum rng rng        /* which random number generator to use */
     ) {
     const struct artifact *a;
     int n, m;
@@ -135,6 +136,9 @@ mk_artifact(
     short o_typ = (by_align || !otmp) ? 0 : otmp->otyp;
     boolean unique = !by_align && otmp && objects[o_typ].oc_unique;
     short eligible[NROFARTIFACTS];
+
+    static const int round_number = 27720; /* divisible by all numbers 1..12 */
+    int artif_number = rn2_on_rng(27720, rng);
 
     /* gather eligible artifacts */
     for (n = 0, a = artilist + 1, m = 1; a->otyp; a++, m++)
@@ -167,13 +171,17 @@ mk_artifact(
             }
 
     if (n) {    /* found at least one candidate */
-        m = eligible[rn2(n)];   /* [0..n-1] */
+        m = eligible[artif_number / (round_number / n)];   /* [0..n-1] */
         a = &artilist[m];
 
         /* make an appropriate object if necessary, then christen it */
     make_artif:
+        /* note: not rng, that'd desync during level creation
+
+           i.e. the /identity/ of the artifact is on the given RNG, but the
+           /stats/ of the artifact (+1, etc.) are on rng_main */
         if (by_align)
-            otmp = mksobj(lev, (int)a->otyp, TRUE, FALSE);
+            otmp = mksobj(lev, (int)a->otyp, TRUE, FALSE, rng_main);
         otmp = oname(otmp, a->name);
         otmp->oartifact = m;
         artiexist[m] = TRUE;
@@ -1253,7 +1261,7 @@ arti_invoke(struct obj *obj)
             obj->age += (long)dice(3, 10);
             return 1;
         }
-        obj->age = moves + rnz(100);
+        obj->age = moves + rnz_on_rng(100, rng_artifact_invoke);
 
         switch (oart->inv_prop) {
         case TAMING:{
@@ -1388,7 +1396,8 @@ arti_invoke(struct obj *obj)
             enlightenment(0);
             break;
         case CREATE_AMMO:{
-                struct obj *otmp = mksobj(level, ARROW, TRUE, FALSE);
+                struct obj *otmp =
+                    mksobj(level, ARROW, TRUE, FALSE, rng_main);
 
                 if (!otmp)
                     goto nothing_special;
@@ -1426,7 +1435,7 @@ arti_invoke(struct obj *obj)
         } else if (!on) {
             /* when turning off property, determine downtime */
             /* arbitrary for now until we can tune this -dlc */
-            obj->age = moves + rnz(100);
+            obj->age = moves + rnz_on_rng(100, rng_artifact_invoke);
         }
         obj->owornmask ^= W_MASK(os_invoked);
 
@@ -1488,7 +1497,7 @@ arti_speak(struct obj *obj)
     if (!oart || !(oart->spfx & SPFX_SPEAK))
         return;
 
-    line = getrumor(bcsign(obj), TRUE, &truth);
+    line = getrumor(bcsign(obj), TRUE, &truth, rng_main);
     if (truth)
         exercise(A_WIS, truth == 1);
     if (!*line)

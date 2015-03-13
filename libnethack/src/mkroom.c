@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -18,14 +18,14 @@
 
 
 static boolean isbig(struct mkroom *);
-static struct mkroom *pick_room(struct level *lev, boolean strict);
+static struct mkroom *pick_room(struct level *lev, boolean strict, enum rng);
 static void mkshop(struct level *lev);
-static void mkzoo(struct level *lev, int type);
+static void mkzoo(struct level *lev, int type, enum rng rng);
 static void mkswamp(struct level *lev);
 static void mktemple(struct level *lev);
 static coord *shrine_pos(struct level *lev, int roomno);
-static const struct permonst *morguemon(const d_level * dlev);
-static const struct permonst *squadmon(const d_level * dlev);
+static const struct permonst *morguemon(const d_level *dlev, enum rng rng);
+static const struct permonst *squadmon(const d_level *dlev);
 static void save_room(struct memfile *mf, struct mkroom *);
 static void rest_room(struct memfile *mf, struct level *lev, struct mkroom *r);
 static boolean has_dnstairs(struct level *lev, struct mkroom *);
@@ -43,7 +43,12 @@ isbig(struct mkroom *sroom)
     return (boolean) (area > 20);
 }
 
-/* make and stock a room of a given type */
+/* make and stock a room of a given type
+
+   Note: must not use the level creation RNG if this is of a room type that's
+   affected by genocide/extinction (LEPREHALL, BEEHIVE, BARRACKS, ANTHOLE,
+   COCKNEST), or genocide/extinction would change the layout of the rest of the
+   level. */
 void
 mkroom(struct level *lev, int roomtype)
 {
@@ -52,19 +57,19 @@ mkroom(struct level *lev, int roomtype)
     else
         switch (roomtype) {
         case COURT:
-            mkzoo(lev, COURT);
+            mkzoo(lev, COURT, rng_for_level(&lev->z));
             break;
         case ZOO:
-            mkzoo(lev, ZOO);
+            mkzoo(lev, ZOO, rng_for_level(&lev->z));
             break;
         case BEEHIVE:
-            mkzoo(lev, BEEHIVE);
+            mkzoo(lev, BEEHIVE, rng_main);
             break;
         case MORGUE:
-            mkzoo(lev, MORGUE);
+            mkzoo(lev, MORGUE, rng_for_level(&lev->z));
             break;
         case BARRACKS:
-            mkzoo(lev, BARRACKS);
+            mkzoo(lev, BARRACKS, rng_main);
             break;
         case SWAMP:
             mkswamp(lev);
@@ -73,13 +78,13 @@ mkroom(struct level *lev, int roomtype)
             mktemple(lev);
             break;
         case LEPREHALL:
-            mkzoo(lev, LEPREHALL);
+            mkzoo(lev, LEPREHALL, rng_main);
             break;
         case COCKNEST:
-            mkzoo(lev, COCKNEST);
+            mkzoo(lev, COCKNEST, rng_main);
             break;
         case ANTHOLE:
-            mkzoo(lev, ANTHOLE);
+            mkzoo(lev, ANTHOLE, rng_main);
             break;
         default:
             impossible("Tried to make a room of type %d.", roomtype);
@@ -121,7 +126,7 @@ mkshop(struct level *lev)
 
     if (styp < 0) {
         /* pick a shop type at random */
-        j = rnd(100);
+        j = 1 + mklev_rn2(100, lev);
         for (styp = 0; (j -= shtypes[styp].prob) > 0; styp++)
             continue;
 
@@ -145,12 +150,12 @@ mkshop(struct level *lev)
 
 /* pick an unused room, preferably with only one door */
 static struct mkroom *
-pick_room(struct level *lev, boolean strict)
+pick_room(struct level *lev, boolean strict, enum rng rng)
 {
     struct mkroom *sroom;
     int i = lev->nroom;
 
-    for (sroom = &lev->rooms[rn2(lev->nroom)]; i--; sroom++) {
+    for (sroom = &lev->rooms[rn2_on_rng(lev->nroom, rng)]; i--; sroom++) {
         if (sroom == &lev->rooms[lev->nroom])
             sroom = &lev->rooms[0];
         if (sroom->hx < 0)
@@ -159,29 +164,29 @@ pick_room(struct level *lev, boolean strict)
             continue;
         if (!strict) {
             if (has_upstairs(lev, sroom) ||
-                (has_dnstairs(lev, sroom) && rn2(3)))
+                (has_dnstairs(lev, sroom) && rn2_on_rng(3, rng)))
                 continue;
         } else if (has_upstairs(lev, sroom) || has_dnstairs(lev, sroom))
             continue;
-        if (sroom->doorct == 1 || !rn2(5) || wizard)
+        if (sroom->doorct == 1 || !rn2_on_rng(5, rng) || wizard)
             return sroom;
     }
     return NULL;
 }
 
 static void
-mkzoo(struct level *lev, int type)
+mkzoo(struct level *lev, int type, enum rng rng)
 {
     struct mkroom *sroom;
 
-    if ((sroom = pick_room(lev, FALSE)) != 0) {
+    if ((sroom = pick_room(lev, FALSE, rng)) != 0) {
         sroom->rtype = type;
-        fill_zoo(lev, sroom);
+        fill_zoo(lev, sroom, rng);
     }
 }
 
 void
-fill_zoo(struct level *lev, struct mkroom *sroom)
+fill_zoo(struct level *lev, struct mkroom *sroom, enum rng rng)
 {
     struct monst *mon;
     int sx, sy, i;
@@ -202,7 +207,7 @@ fill_zoo(struct level *lev, struct mkroom *sroom)
         }
         i = 100;
         do {    /* don't place throne on top of stairs */
-            somexy(lev, sroom, &mm);
+            somexy(lev, sroom, &mm, rng);
             tx = mm.x;
             ty = mm.y;
         } while (occupied(lev, tx, ty) && --i > 0);
@@ -216,7 +221,7 @@ fill_zoo(struct level *lev, struct mkroom *sroom)
             /* center might not be valid, so put queen elsewhere */
             if ((int)lev->locations[tx][ty].roomno != rmno ||
                 lev->locations[tx][ty].edge) {
-                somexy(lev, sroom, &mm);
+                somexy(lev, sroom, &mm, rng);
                 tx = mm.x;
                 ty = mm.y;
             }
@@ -245,17 +250,17 @@ fill_zoo(struct level *lev, struct mkroom *sroom)
             /* don't place monster on explicitly placed throne */
             if (type == COURT && IS_THRONE(lev->locations[sx][sy].typ))
                 continue;
-            mon =
-                makemon((type == COURT) ? courtmon(&lev->z) :
-                        (type == BARRACKS) ? squadmon(&lev->z) :
-                        (type == MORGUE) ? morguemon(&lev->z) :
-                        (type == BEEHIVE) ? (sx == tx && sy == ty ?
-                                             &mons[PM_QUEEN_BEE] :
-                                             &mons[PM_KILLER_BEE]) :
-                        (type == LEPREHALL) ? &mons[PM_LEPRECHAUN] :
-                        (type == COCKNEST) ? &mons[PM_COCKATRICE] :
-                        (type == ANTHOLE) ? antholemon(&lev->z) :
-                        NULL, lev, sx, sy, NO_MM_FLAGS);
+            mon = makemon((type == COURT) ? courtmon(&lev->z, rng) :
+                          (type == BARRACKS) ? squadmon(&lev->z) :
+                          (type == MORGUE) ? morguemon(&lev->z, rng) :
+                          (type == BEEHIVE) ? (sx == tx && sy == ty ?
+                                               &mons[PM_QUEEN_BEE] :
+                                               &mons[PM_KILLER_BEE]) :
+                          (type == LEPREHALL) ? &mons[PM_LEPRECHAUN] :
+                          (type == COCKNEST) ? &mons[PM_COCKATRICE] :
+                          (type == ANTHOLE) ? antholemon(&lev->z) :
+                          NULL, lev, sx, sy,
+                          rng == rng_main ? NO_MM_FLAGS : MM_ALLLEVRNG);
             if (mon) {
                 mon->msleeping = 1;
                 if (type == COURT && mon->mpeaceful) {
@@ -275,41 +280,42 @@ fill_zoo(struct level *lev, struct mkroom *sroom)
                 if (i >= goldlim)
                     i = 5 * level_difficulty(&lev->z);
                 goldlim -= i;
-                mkgold((long)rn1(i, 10), lev, sx, sy);
+                mkgold(10 + rn2_on_rng(i, rng), lev, sx, sy, rng);
                 break;
             case MORGUE:
-                if (!rn2(5))
+                if (!rn2_on_rng(5, rng))
                     mk_tt_object(lev, CORPSE, sx, sy);
-                if (!rn2(10))   /* lots of treasure buried with dead */
-                    mksobj_at((rn2(3)) ? LARGE_BOX : CHEST, lev, sx, sy, TRUE,
-                              FALSE);
-                if (!rn2(5))
+                if (!rn2_on_rng(10, rng))   /* lots of treasure */
+                    mksobj_at(rn2_on_rng(3, rng) ? LARGE_BOX : CHEST,
+                              lev, sx, sy, TRUE, FALSE, rng);
+                if (!rn2_on_rng(5, rng))
                     make_grave(lev, sx, sy, NULL);
                 break;
             case BEEHIVE:
-                if (!rn2(3))
-                    mksobj_at(LUMP_OF_ROYAL_JELLY, lev, sx, sy, TRUE, FALSE);
+                if (!rn2_on_rng(3, rng))
+                    mksobj_at(LUMP_OF_ROYAL_JELLY, lev, sx, sy,
+                              TRUE, FALSE, rng);
                 break;
             case BARRACKS:
-                if (!rn2(20))   /* the payroll and some loot */
-                    mksobj_at((rn2(3)) ? LARGE_BOX : CHEST, lev, sx, sy, TRUE,
-                              FALSE);
+                if (!rn2_on_rng(20, rng))   /* the payroll and some loot */
+                    mksobj_at((rn2(3)) ? LARGE_BOX : CHEST, lev, sx, sy,
+                              TRUE, FALSE, rng);
                 break;
             case COCKNEST:
-                if (!rn2(3)) {
+                if (!rn2_on_rng(3, rng)) {
                     struct obj *sobj = mk_tt_object(lev, STATUE, sx, sy);
 
                     if (sobj) {
-                        for (i = rn2(5); i; i--)
-                            add_to_container(sobj,
-                                             mkobj(lev, RANDOM_CLASS, FALSE));
+                        for (i = rn2_on_rng(5, rng); i; i--)
+                            add_to_container(sobj, mkobj(lev, RANDOM_CLASS,
+                                                         FALSE, rng));
                         sobj->owt = weight(sobj);
                     }
                 }
                 break;
             case ANTHOLE:
-                if (!rn2(3))
-                    mkobj_at(FOOD_CLASS, lev, sx, sy, FALSE);
+                if (!rn2_on_rng(3, rng))
+                    mkobj_at(FOOD_CLASS, lev, sx, sy, FALSE, rng);
                 break;
             }
         }
@@ -318,18 +324,18 @@ fill_zoo(struct level *lev, struct mkroom *sroom)
         struct obj *chest;
 
         lev->locations[tx][ty].typ = THRONE;
-        somexy(lev, sroom, &mm);
-        mkgold((long)rn1(50 * level_difficulty(&lev->z), 10), lev, mm.x,
-               mm.y);
+        somexy(lev, sroom, &mm, rng);
+        mkgold(10 + rn2_on_rng(50 * level_difficulty(&lev->z), rng),
+               lev, mm.x, mm.y, rng);
         /* the royal coffers */
-        chest = mksobj_at(CHEST, lev, mm.x, mm.y, TRUE, FALSE);
+        chest = mksobj_at(CHEST, lev, mm.x, mm.y, TRUE, FALSE, rng);
         chest->spe = 2;     /* so it can be found later */
     }
 }
 
-/* make a swarm of undead around mm */
+/* make a swarm of undead around mm; uses the main RNG */
 void
-mkundead(struct level *lev, coord * mm, boolean revive_corpses, int mm_flags)
+mkundead(struct level *lev, coord *mm, boolean revive_corpses, int mm_flags)
 {
     int cnt = (level_difficulty(&lev->z) + 1) / 10 + rnd(5);
     const struct permonst *mdat;
@@ -337,7 +343,7 @@ mkundead(struct level *lev, coord * mm, boolean revive_corpses, int mm_flags)
     coord cc;
 
     while (cnt--) {
-        mdat = morguemon(&lev->z);
+        mdat = morguemon(&lev->z, rng_main);
         if (enexto(&cc, lev, mm->x, mm->y, mdat) &&
             (!revive_corpses || !(otmp = sobj_at(CORPSE, lev, cc.x, cc.y)) ||
              !revive(otmp)))
@@ -347,19 +353,19 @@ mkundead(struct level *lev, coord * mm, boolean revive_corpses, int mm_flags)
 }
 
 static const struct permonst *
-morguemon(const d_level * dlev)
+morguemon(const d_level *dlev, enum rng rng)
 {
-    int i = rn2(100), hd = rn2(level_difficulty(dlev));
+    int i = rn2_on_rng(100, rng);
+    int hd = rn2_on_rng(level_difficulty(dlev), rng);
 
     if (hd > 10 && i < 10)
-        return (In_hell(dlev) ||
-                In_endgame(dlev)) ? mkclass(dlev, S_DEMON,
-                                            0) : &mons[ndemon(dlev, A_NONE)];
+        return (In_hell(dlev) || In_endgame(dlev)) ?
+            mkclass(dlev, S_DEMON, 0, rng) : &mons[ndemon(dlev, A_NONE)];
     if (hd > 8 && i > 85)
-        return mkclass(dlev, S_VAMPIRE, 0);
+        return mkclass(dlev, S_VAMPIRE, 0, rng);
 
-    return (i < 20) ? &mons[PM_GHOST]
-        : (i < 40) ? &mons[PM_WRAITH] : mkclass(dlev, S_ZOMBIE, 0);
+    return (i < 20) ? &mons[PM_GHOST] :
+        (i < 40) ? &mons[PM_WRAITH] : mkclass(dlev, S_ZOMBIE, 0, rng);
 }
 
 const struct permonst *
@@ -368,7 +374,7 @@ antholemon(const d_level * dlev)
     int mtyp;
 
     /* Same monsters within a level, different ones between levels */
-    switch ((level_difficulty(dlev) + ((unsigned)u.ubirthday)) % 3) {
+    switch (level_difficulty(dlev) % 3) {
     default:
         mtyp = PM_GIANT_ANT;
         break;
@@ -388,8 +394,10 @@ mkswamp(struct level *lev)
     struct mkroom *sroom;
     int sx, sy, i, eelct = 0;
 
+    enum rng rng = rng_for_level(&lev->z);
+
     for (i = 0; i < 5; i++) {   /* turn up to 5 rooms swampy */
-        sroom = &lev->rooms[rn2(lev->nroom)];
+        sroom = &lev->rooms[rn2_on_rng(lev->nroom, rng)];
         if (sroom->hx < 0 || sroom->rtype != OROOM || has_upstairs(lev, sroom)
             || has_dnstairs(lev, sroom))
             continue;
@@ -402,17 +410,17 @@ mkswamp(struct level *lev)
                     !t_at(lev, sx, sy) && !nexttodoor(lev, sx, sy)) {
                     if ((sx + sy) % 2) {
                         lev->locations[sx][sy].typ = POOL;
-                        if (!eelct || !rn2(4)) {
+                        if (!eelct || !rn2_on_rng(4, rng)) {
                             /* mkclass() won't do, as we might get kraken */
-                            makemon(rn2(5) ? &mons[PM_GIANT_EEL]
-                                    : rn2(2) ? &mons[PM_PIRANHA]
+                            makemon(rn2_on_rng(5, rng) ? &mons[PM_GIANT_EEL]
+                                    : rn2_on_rng(2, rng) ? &mons[PM_PIRANHA]
                                     : &mons[PM_ELECTRIC_EEL], lev, sx, sy,
-                                    NO_MM_FLAGS);
+                                    MM_ALLLEVRNG);
                             eelct++;
                         }
-                    } else if (!rn2(4)) /* swamps tend to be moldy */
-                        makemon(mkclass(&lev->z, S_FUNGUS, 0), lev, sx, sy,
-                                NO_MM_FLAGS);
+                    } else if (!rn2_on_rng(4, rng)) /* swamps tend to be moldy */
+                        makemon(mkclass(&lev->z, S_FUNGUS, 0, rng),
+                                lev, sx, sy, MM_ALLLEVRNG);
                 }
     }
 }
@@ -435,7 +443,7 @@ mktemple(struct level *lev)
     coord *shrine_spot;
     struct rm *loc;
 
-    if (!(sroom = pick_room(lev, TRUE)))
+    if (!(sroom = pick_room(lev, TRUE, rng_for_level(&lev->z))))
         return;
 
     /* set up Priest and shrine */
@@ -447,7 +455,7 @@ mktemple(struct level *lev)
     shrine_spot = shrine_pos(lev, (sroom - lev->rooms) + ROOMOFFSET);
     loc = &lev->locations[shrine_spot->x][shrine_spot->y];
     loc->typ = ALTAR;
-    loc->altarmask = induced_align(&lev->z, 80);
+    loc->altarmask = induced_align(&lev->z, 80, rng_for_level(&lev->z));
     priestini(lev, sroom, shrine_spot->x, shrine_spot->y, FALSE);
     loc->altarmask |= AM_SHRINE;
 }
@@ -470,7 +478,7 @@ nexttodoor(struct level * lev, int sx, int sy)
 }
 
 boolean
-has_dnstairs(struct level * lev, struct mkroom * sroom)
+has_dnstairs(struct level *lev, struct mkroom *sroom)
 {
     if (sroom == lev->dnstairs_room)
         return TRUE;
@@ -480,7 +488,7 @@ has_dnstairs(struct level * lev, struct mkroom * sroom)
 }
 
 boolean
-has_upstairs(struct level * lev, struct mkroom * sroom)
+has_upstairs(struct level *lev, struct mkroom *sroom)
 {
     if (sroom == lev->upstairs_room)
         return TRUE;
@@ -491,19 +499,19 @@ has_upstairs(struct level * lev, struct mkroom * sroom)
 
 
 int
-somex(struct mkroom *croom)
+somex(struct mkroom *croom, enum rng rng)
 {
-    return rn2(croom->hx - croom->lx + 1) + croom->lx;
+    return rn2_on_rng(croom->hx - croom->lx + 1, rng) + croom->lx;
 }
 
 int
-somey(struct mkroom *croom)
+somey(struct mkroom *croom, enum rng rng)
 {
-    return rn2(croom->hy - croom->ly + 1) + croom->ly;
+    return rn2_on_rng(croom->hy - croom->ly + 1, rng) + croom->ly;
 }
 
 boolean
-inside_room(struct mkroom * croom, xchar x, xchar y)
+inside_room(struct mkroom *croom, xchar x, xchar y)
 {
     return ((boolean)
             (x >= croom->lx - 1 && x <= croom->hx + 1 && y >= croom->ly - 1 &&
@@ -511,7 +519,7 @@ inside_room(struct mkroom * croom, xchar x, xchar y)
 }
 
 boolean
-somexy(struct level * lev, struct mkroom * croom, coord * c)
+somexy(struct level *lev, struct mkroom *croom, coord *c, enum rng rng)
 {
     int try_cnt = 0;
     int i;
@@ -520,8 +528,8 @@ somexy(struct level * lev, struct mkroom * croom, coord * c)
         i = (croom - lev->rooms) + ROOMOFFSET;
 
         while (try_cnt++ < 100) {
-            c->x = somex(croom);
-            c->y = somey(croom);
+            c->x = somex(croom, rng);
+            c->y = somey(croom, rng);
             if (!lev->locations[c->x][c->y].edge &&
                 (int)lev->locations[c->x][c->y].roomno == i)
                 return TRUE;
@@ -536,16 +544,16 @@ somexy(struct level * lev, struct mkroom * croom, coord * c)
     }
 
     if (!croom->nsubrooms) {
-        c->x = somex(croom);
-        c->y = somey(croom);
+        c->x = somex(croom, rng);
+        c->y = somey(croom, rng);
         return TRUE;
     }
 
     /* Check that coords doesn't fall into a subroom or into a wall */
 
     while (try_cnt++ < 100) {
-        c->x = somex(croom);
-        c->y = somey(croom);
+        c->x = somex(croom, rng);
+        c->y = somey(croom, rng);
         if (IS_WALL(lev->locations[c->x][c->y].typ))
             continue;
         for (i = 0; i < croom->nsubrooms; i++)
@@ -586,28 +594,28 @@ search_special(struct level *lev, schar type)
 
 
 const struct permonst *
-courtmon(const d_level * dlev)
+courtmon(const d_level *dlev, enum rng rng)
 {
-    int i = rn2(60) + rn2(3 * level_difficulty(dlev));
+    int i = rn2_on_rng(60, rng) + rn2_on_rng(3 * level_difficulty(dlev), rng);
 
     if (i > 100)
-        return mkclass(dlev, S_DRAGON, 0);
+        return mkclass(dlev, S_DRAGON, 0, rng);
     else if (i > 95)
-        return mkclass(dlev, S_GIANT, 0);
+        return mkclass(dlev, S_GIANT, 0, rng);
     else if (i > 85)
-        return mkclass(dlev, S_TROLL, 0);
+        return mkclass(dlev, S_TROLL, 0, rng);
     else if (i > 75)
-        return mkclass(dlev, S_CENTAUR, 0);
+        return mkclass(dlev, S_CENTAUR, 0, rng);
     else if (i > 60)
-        return mkclass(dlev, S_ORC, 0);
+        return mkclass(dlev, S_ORC, 0, rng);
     else if (i > 45)
         return &mons[PM_BUGBEAR];
     else if (i > 30)
         return &mons[PM_HOBGOBLIN];
     else if (i > 15)
-        return mkclass(dlev, S_GNOME, 0);
+        return mkclass(dlev, S_GNOME, 0, rng);
     else
-        return mkclass(dlev, S_KOBOLD, 0);
+        return mkclass(dlev, S_KOBOLD, 0, rng);
 }
 
 #define NSTYPES (PM_CAPTAIN - PM_SOLDIER + 1)
@@ -624,11 +632,11 @@ static const struct {
 };
 
 static const struct permonst *
-squadmon(const d_level * dlev)
+squadmon(const d_level *dlev)
 {       /* return soldier types. */
     int sel_prob, i, cpro, mndx;
 
-    sel_prob = rnd(80 + level_difficulty(dlev));
+    sel_prob = 1 + rn2_on_rng(80 + level_difficulty(dlev), rng_for_level(dlev));
 
     cpro = 0;
     for (i = 0; i < NSTYPES; i++) {
@@ -638,7 +646,7 @@ squadmon(const d_level * dlev)
             goto gotone;
         }
     }
-    mndx = squadprob[rn2(NSTYPES)].pm;
+    mndx = squadprob[rn2_on_rng(NSTYPES, rng_for_level(dlev))].pm;
 gotone:
     if (!(mvitals[mndx].mvflags & G_GONE))
         return &mons[mndx];

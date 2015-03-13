@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-06-03 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -7,9 +7,12 @@
 #include "emin.h"
 #include "epri.h"
 
-/* mon summons a monster */
+/* mon summons a monster
+
+   TODO: It'd be nice to have custom RNGs for this, but it's unclear exactly
+   what we'd be trying to keep consistent between games. */
 void
-msummon(struct monst *mon, const d_level * dlev)
+msummon(struct monst *mon, const d_level *dlev)
 {
     const struct permonst *ptr;
     int dtype = NON_PM, cnt = 0;
@@ -82,7 +85,8 @@ msummon(struct monst *mon, const d_level * dlev)
     }
 
     while (cnt > 0) {
-        mtmp = makemon(&mons[dtype], level, u.ux, u.uy, NO_MM_FLAGS);
+        mtmp = makemon(&mons[dtype], level, u.ux, u.uy,
+                       MM_CREATEMONSTER | MM_CMONSTER_M);
         if (mtmp && roamer_type(&mons[dtype])) {
             /* alignment should match the summoner */
             EPRI(mtmp)->shralign = atyp;
@@ -174,11 +178,10 @@ demon_talk(struct monst *mtmp)
         return 1;
     }
     cash = money_cnt(invent);
-    demand =
-        (cash * (rnd(80) + 20 * Athome)) / (100 *
-                                            (1 +
-                                             (sgn(u.ualign.type) ==
-                                              sgn(mtmp->data->maligntyp))));
+    /* don't bother with a custom RNG here, too much unpredictability is
+       involved */
+    demand = (cash * (rnd(80) + 20 * Athome)) /
+        (100 * (1 + (sgn(u.ualign.type) == sgn(mtmp->data->maligntyp))));
 
     if (!demand) {      /* you have no gold */
         mtmp->mpeaceful = 0;
@@ -290,7 +293,7 @@ lminion(void)
     const struct permonst *ptr;
 
     for (tryct = 0; tryct < 20; tryct++) {
-        ptr = mkclass(&u.uz, S_ANGEL, 0);
+        ptr = mkclass(&u.uz, S_ANGEL, 0, rng_main);
         if (ptr && !is_lord(ptr))
             return monsndx(ptr);
     }
@@ -305,7 +308,7 @@ ndemon(const d_level * dlev, aligntyp atyp)
     const struct permonst *ptr;
 
     for (tryct = 0; tryct < 20; tryct++) {
-        ptr = mkclass(dlev, S_DEMON, 0);
+        ptr = mkclass(dlev, S_DEMON, 0, rng_main);
         if (ptr && is_ndemon(ptr) &&
             (atyp == A_NONE || sgn(ptr->maligntyp) == sgn(atyp)))
             return monsndx(ptr);

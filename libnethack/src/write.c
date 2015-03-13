@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-24 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
@@ -160,7 +160,7 @@ found:
     /* KMH, conduct */
     break_conduct(conduct_illiterate);
 
-    new_obj = mksobj(level, i, FALSE, FALSE);
+    new_obj = mksobj(level, i, FALSE, FALSE, rng_main);
     new_obj->bknown = (paper->bknown && pen->bknown);
 
     /* shk imposes a flat rate per use, not based on actual charges used */
@@ -174,7 +174,9 @@ found:
         return 1;
     }
 
-    /* we're really going to write now, so calculate cost */
+    /* we're really going to write now, so calculate cost
+
+       no custom RNG used: too much influence from player actions */
     actualcost = rn1(basecost / 2, basecost / 2);
     curseval = bcsign(pen) + bcsign(paper);
     exercise(A_WIS, TRUE);

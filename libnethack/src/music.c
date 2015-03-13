@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -274,7 +274,8 @@ do_earthquake(int force)
                         }
                     }
 
-                do_pit:chasm = maketrap(level, x, y, PIT);
+                do_pit:
+                    chasm = maketrap(level, x, y, PIT, rng_main);
                     if (!chasm)
                         break;  /* no pit if portal at that location */
                     chasm->tseen = 1;

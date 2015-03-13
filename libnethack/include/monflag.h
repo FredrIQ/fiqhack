@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-21 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -178,6 +178,12 @@
 # define G_GENO         0x0020  /* can be genocided */
 # define G_NOCORPSE     0x0010  /* no corpse left ever */
 # define G_FREQ         0x0007  /* creation frequency mask */
+
+/* rndmonst_inner uses the above flags, and: */
+# define G_INDEPTH      0x2000  /* not too weak or strong for the level */
+# define G_ALIGN        0x4000  /* an appropriate alignment for the level */
+/* (It's safe to change the numerical values of these flags in order to fit
+   more data into mons[].geno.) */
 
 /* for mvitals[].mvflags (variant during game), along with G_NOCORPSE */
 # define G_KNOWN        0x0004  /* have been encountered */

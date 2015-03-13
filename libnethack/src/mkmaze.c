@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -12,7 +12,7 @@ static boolean iswall_or_stone(struct level *lev, int x, int y);
 static boolean is_solid(struct level *lev, int x, int y);
 static int extend_spine(int[3][3], int, int, int);
 static boolean okay(struct level *lev, int x, int y, int dir);
-static void maze0xy(coord *);
+static void maze0xy(coord *, enum rng);
 static boolean put_lregion_here(struct level *lev, xchar, xchar, xchar, xchar,
                                 xchar, xchar, xchar, boolean, d_level *);
 static void move(int *, int *, int);
@@ -201,10 +201,10 @@ okay(struct level *lev, int x, int y, int dir)
 
 /* find random starting point for maze generation */
 static void
-maze0xy(coord * cc)
+maze0xy(coord *cc, enum rng rng)
 {
-    cc->x = 3 + 2 * rn2((x_maze_max >> 1) - 1);
-    cc->y = 3 + 2 * rn2((y_maze_max >> 1) - 1);
+    cc->x = 3 + 2 * rn2_on_rng((x_maze_max >> 1) - 1, rng);
+    cc->y = 3 + 2 * rn2_on_rng((y_maze_max >> 1) - 1, rng);
     return;
 }
 
@@ -255,8 +255,8 @@ place_lregion(struct level *lev, xchar lx, xchar ly, xchar hx, xchar hy,
     /* first a probabilistic approach */
     oneshot = (lx == hx && ly == hy);
     for (trycnt = 0; trycnt < 200; trycnt++) {
-        x = rn1((hx - lx) + 1, lx);
-        y = rn1((hy - ly) + 1, ly);
+        x = lx + mklev_rn2((hx - lx) + 1, lev);
+        y = ly + mklev_rn2((hy - ly) + 1, lev);
         if (put_lregion_here
             (lev, x, y, nlx, nly, nhx, nhy, rtype, oneshot, dest_lvl))
             return;
@@ -331,20 +331,23 @@ makemaz(struct level *lev, const char *s)
 
     if (*s) {
         if (sp && sp->rndlevs)
-            snprintf(protofile, SIZE(protofile), "%s-%d", s, rnd((int)sp->rndlevs));
+            snprintf(protofile, SIZE(protofile), "%s-%d", s,
+                     1 + mklev_rn2((int)sp->rndlevs, lev));
         else
             strcpy(protofile, s);
     } else if (*(dungeons[lev->z.dnum].proto)) {
         if (dunlevs_in_dungeon(&lev->z) > 1) {
             if (sp && sp->rndlevs)
-                snprintf(protofile, SIZE(protofile), "%s%d-%d", dungeons[lev->z.dnum].proto,
-                        dunlev(&lev->z), rnd((int)sp->rndlevs));
+                snprintf(protofile, SIZE(protofile), "%s%d-%d",
+                         dungeons[lev->z.dnum].proto,
+                         dunlev(&lev->z), 1 + mklev_rn2((int)sp->rndlevs, lev));
             else
-                snprintf(protofile, SIZE(protofile), "%s%d", dungeons[lev->z.dnum].proto,
-                        dunlev(&lev->z));
+                snprintf(protofile, SIZE(protofile), "%s%d",
+                         dungeons[lev->z.dnum].proto, dunlev(&lev->z));
         } else if (sp && sp->rndlevs) {
-            snprintf(protofile, SIZE(protofile), "%s-%d", dungeons[lev->z.dnum].proto,
-                    rnd((int)sp->rndlevs));
+            snprintf(protofile, SIZE(protofile), "%s-%d",
+                     dungeons[lev->z.dnum].proto,
+                     1 + mklev_rn2((int)sp->rndlevs, lev));
         } else
             strcpy(protofile, dungeons[lev->z.dnum].proto);
 
@@ -369,10 +372,11 @@ makemaz(struct level *lev, const char *s)
         for (y = 2; y <= y_maze_max; y++)
             lev->locations[x][y].typ = ((x % 2) && (y % 2)) ? STONE : HWALL;
 
-    maze0xy(&mm);
+    maze0xy(&mm, rng_for_level(&lev->z));
     walkfrom(lev, mm.x, mm.y);
     /* put a boulder at the maze center */
-    mksobj_at(BOULDER, lev, (int)mm.x, (int)mm.y, TRUE, FALSE);
+    mksobj_at(BOULDER, lev, (int)mm.x, (int)mm.y, TRUE, FALSE,
+              rng_for_level(&lev->z));
 
     wallification(lev, 2, 2, x_maze_max, y_maze_max);
     mazexy(lev, &mm);
@@ -402,8 +406,8 @@ makemaz(struct level *lev, const char *s)
 
         inv_pos.x = inv_pos.y = 0;      /* {occupied() => invocation_pos()} */
         do {
-            x = rn1(x_range, x_maze_min + INVPOS_X_MARGIN + 1);
-            y = rn1(y_range, y_maze_min + INVPOS_Y_MARGIN + 1);
+            x = mklev_rn2(x_range, lev) + x_maze_min + INVPOS_X_MARGIN + 1;
+            y = mklev_rn2(y_range, lev) + y_maze_min + INVPOS_Y_MARGIN + 1;
             /* we don't want it to be too near the stairs, nor to be on a spot
                that's already in use (wall|trap) */
         } while (x == lev->upstair.sx || y == lev->upstair.sy ||
@@ -414,7 +418,8 @@ makemaz(struct level *lev, const char *s)
                  !SPACE_POS(lev->locations[x][y].typ) || occupied(lev, x, y));
         inv_pos.x = x;
         inv_pos.y = y;
-        maketrap(lev, inv_pos.x, inv_pos.y, VIBRATING_SQUARE);
+        maketrap(lev, inv_pos.x, inv_pos.y, VIBRATING_SQUARE,
+                 rng_for_level(&lev->z));
 #undef INVPOS_X_MARGIN
 #undef INVPOS_Y_MARGIN
 #undef INVPOS_DISTANCE
@@ -425,27 +430,29 @@ makemaz(struct level *lev, const char *s)
     /* place branch stair or portal */
     place_branch(lev, Is_branchlev(&lev->z), COLNO, ROWNO);
 
-    for (x = rn1(8, 11); x; x--) {
+    for (x = 11 + mklev_rn2(8, lev); x; x--) {
         mazexy(lev, &mm);
-        mkobj_at(rn2(2) ? GEM_CLASS : 0, lev, mm.x, mm.y, TRUE);
+        mkobj_at(mklev_rn2(2, lev) ? GEM_CLASS : 0, lev, mm.x, mm.y,
+                 TRUE, rng_for_level(&lev->z));
     }
-    for (x = rn1(10, 2); x; x--) {
+    for (x = 2 + mklev_rn2(10, lev); x; x--) {
         mazexy(lev, &mm);
-        mksobj_at(BOULDER, lev, mm.x, mm.y, TRUE, FALSE);
+        mksobj_at(BOULDER, lev, mm.x, mm.y,
+                  TRUE, FALSE, rng_for_level(&lev->z));
     }
-    for (x = rn2(3); x; x--) {
+    for (x = mklev_rn2(3, lev); x; x--) {
         mazexy(lev, &mm);
-        makemon(&mons[PM_MINOTAUR], lev, mm.x, mm.y, NO_MM_FLAGS);
+        makemon(&mons[PM_MINOTAUR], lev, mm.x, mm.y, MM_ALLLEVRNG);
     }
-    for (x = rn1(5, 7); x; x--) {
+    for (x = 7 + mklev_rn2(5, lev); x; x--) {
         mazexy(lev, &mm);
-        makemon(NULL, lev, mm.x, mm.y, NO_MM_FLAGS);
+        makemon(NULL, lev, mm.x, mm.y, MM_ALLLEVRNG);
     }
-    for (x = rn1(6, 7); x; x--) {
+    for (x = 7 + mklev_rn2(6, lev); x; x--) {
         mazexy(lev, &mm);
-        mkgold(0L, lev, mm.x, mm.y);
+        mkgold(0L, lev, mm.x, mm.y, rng_for_level(&lev->z));
     }
-    for (x = rn1(6, 7); x; x--)
+    for (x = 7 + mklev_rn2(6, lev); x; x--)
         mktrap(lev, 0, 1, NULL, NULL);
 }
 
@@ -469,7 +476,7 @@ walkfrom(struct level *lev, int x, int y)
                 dirs[q++] = a;
         if (!q)
             return;
-        dir = dirs[rn2(q)];
+        dir = dirs[mklev_rn2(q, lev)];
         move(&x, &y, dir);
         lev->locations[x][y].typ = ROOM;
         move(&x, &y, dir);
@@ -500,16 +507,16 @@ move(int *x, int *y, int dir)
 }
 
 
-/* find random point in generated corridors,
- * so we don't create items in moats, bunkers, or walls */
+/* Find a random point in generated corridors, so we don't create items in
+   moats, bunkers, or walls.*/
 void
 mazexy(struct level *lev, coord * cc)
 {
     int cpt = 0;
 
     do {
-        cc->x = 3 + 2 * rn2((x_maze_max >> 1) - 1);
-        cc->y = 3 + 2 * rn2((y_maze_max >> 1) - 1);
+        cc->x = 3 + 2 * mklev_rn2((x_maze_max >> 1) - 1, lev);
+        cc->y = 3 + 2 * mklev_rn2((y_maze_max >> 1) - 1, lev);
         cpt++;
     } while (cpt < 100 && lev->locations[cc->x][cc->y].typ != ROOM);
     if (cpt >= 100) {
@@ -622,7 +629,8 @@ mkportal(struct level *lev, xchar x, xchar y, xchar todnum, xchar todlevel)
 {
     /* a portal "trap" must be matched by a */
     /* portal in the destination dungeon/dlevel */
-    struct trap *ttmp = maketrap(lev, x, y, MAGIC_PORTAL);
+    struct trap *ttmp = maketrap(lev, x, y, MAGIC_PORTAL,
+                                 rng_for_level(&lev->z));
 
     if (!ttmp) {
         impossible("portal on top of portal??");
@@ -1021,8 +1029,8 @@ mk_bubble(struct level *lev, int x, int y, int n)
         y = bymax - bmask[n][1] + 1;
     b->x = x;
     b->y = y;
-    b->dx = 1 - rn2(3);
-    b->dy = 1 - rn2(3);
+    b->dx = 1 - mklev_rn2(3, lev);
+    b->dy = 1 - mklev_rn2(3, lev);
     b->bm = bmask[n];
     b->cons = 0;
     if (!bbubbles)

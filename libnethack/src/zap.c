@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-10 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -258,7 +258,7 @@ bhitm(struct monst *mtmp, struct obj *otmp)
                     if (mtmp->m_ap_type == M_AP_OBJECT &&
                         mtmp->mappearance == STRANGE_OBJECT) {
                         /* it can do better now */
-                        set_mimic_sym(mtmp, level);
+                        set_mimic_sym(mtmp, level, rng_main);
                         newsym(mtmp->mx, mtmp->my);
                     } else
                         mimic_hit_msg(mtmp, otyp);
@@ -471,9 +471,8 @@ montraits(struct obj *obj, coord * cc)
         mtmp2->data = &mons[mtmp2->orig_mnum];
         if (mtmp2->mhpmax <= 0 && !is_rider(mtmp2->data))
             return NULL;
-        mtmp =
-            makemon(mtmp2->data, level, cc->x, cc->y,
-                    NO_MINVENT | MM_NOWAIT | MM_NOCOUNTBIRTH);
+        mtmp = makemon(mtmp2->data, level, cc->x, cc->y,
+                       NO_MINVENT | MM_NOWAIT | MM_NOCOUNTBIRTH);
         if (!mtmp)
             return mtmp;
 
@@ -645,9 +644,8 @@ revive(struct obj *obj)
                 if (mtmp && mtmp->mtame && !mtmp->isminion)
                     wary_dog(mtmp, TRUE);
             } else
-                mtmp =
-                    makemon(&mons[montype], level, x, y,
-                            NO_MINVENT | MM_NOWAIT | MM_NOCOUNTBIRTH);
+                mtmp = makemon(&mons[montype], level, x, y,
+                               NO_MINVENT | MM_NOWAIT | MM_NOCOUNTBIRTH);
             if (mtmp) {
                 if (obj->oxlth && (obj->oattached == OATTACHED_M_ID)) {
                     unsigned m_id;
@@ -1205,6 +1203,7 @@ poly_obj(struct obj *obj, int id)
     xchar ox, oy;
     boolean can_merge = (id == STRANGE_OBJECT);
     int obj_location = obj->where;
+    enum rng rng = rng_poly_obj;
 
     if (obj->owornmask & W_MASK(os_saddle) ||
         obj == uball || obj == uchain) {
@@ -1223,12 +1222,16 @@ poly_obj(struct obj *obj, int id)
         do {
             if (otmp)
                 delobj(otmp);
-            otmp = mkobj(level, obj->oclass, FALSE);
+            /* Ideally, we'd use a different RNG for each object class, but
+               for now, we just use one common RNG. */
+            otmp = mkobj(level, obj->oclass, FALSE, rng_poly_obj);
         } while (--try_limit > 0 &&
                  objects[obj->otyp].oc_magic != objects[otmp->otyp].oc_magic);
     } else {
-        /* literally replace obj with this new thing */
-        otmp = mksobj(level, id, FALSE, FALSE);
+        /* literally replace obj with this new thing; don't use rng_poly_obj
+           because we already know what we're replacing with */
+        rng = rng_main;
+        otmp = mksobj(level, id, FALSE, FALSE, rng_main);
         /* Actually more things use corpsenm but they polymorph differently */
 #define USES_CORPSENM(typ) ((typ)==CORPSE || (typ)==STATUE || (typ)==FIGURINE)
         if (USES_CORPSENM(obj->otyp) && USES_CORPSENM(id))
@@ -1319,7 +1322,8 @@ poly_obj(struct obj *obj, int id)
     switch (otmp->oclass) {
     case AMULET_CLASS:
         while (otmp->otyp == AMULET_OF_UNCHANGING)
-            otmp->otyp = rnd_class(AMULET_OF_ESP, AMULET_OF_MAGICAL_BREATHING);
+            otmp->otyp = rnd_class(AMULET_OF_ESP, AMULET_OF_MAGICAL_BREATHING,
+                                   rng);
         break;
 
     case TOOL_CLASS:
@@ -1334,7 +1338,7 @@ poly_obj(struct obj *obj, int id)
 
     case WAND_CLASS:
         while (otmp->otyp == WAN_WISHING || otmp->otyp == WAN_POLYMORPH)
-            otmp->otyp = rnd_class(WAN_LIGHT, WAN_LIGHTNING);
+            otmp->otyp = rnd_class(WAN_LIGHT, WAN_LIGHTNING, rng);
         /* altering the object tends to degrade its quality (analogous to
            spellbook `read count' handling) */
         if ((int)otmp->recharged < rn2(7))      /* recharge_limit */
@@ -1343,12 +1347,12 @@ poly_obj(struct obj *obj, int id)
 
     case POTION_CLASS:
         while (otmp->otyp == POT_POLYMORPH)
-            otmp->otyp = rnd_class(POT_GAIN_ABILITY, POT_WATER);
+            otmp->otyp = rnd_class(POT_GAIN_ABILITY, POT_WATER, rng);
         break;
 
     case SPBOOK_CLASS:
         while (otmp->otyp == SPE_POLYMORPH)
-            otmp->otyp = rnd_class(SPE_DIG, SPE_BLANK_PAPER);
+            otmp->otyp = rnd_class(SPE_DIG, SPE_BLANK_PAPER, rng);
         /* reduce spellbook abuse */
         otmp->spestudied = obj->spestudied + 1;
         break;
@@ -2400,7 +2404,7 @@ zap_updown(struct obj *obj, schar dz)
                   ceiling(x, y), body_part(HEAD));
             losehp(rnd((uarmh && is_metallic(uarmh)) ? 2 : 6),
                    killer_msg(DIED, "smashing up the ceiling"));
-            if ((otmp = mksobj_at(ROCK, level, x, y, FALSE, FALSE)) != 0) {
+            if ((otmp = mksobj_at(ROCK, level, x, y, FALSE, FALSE, rng_main))) {
                 xname(otmp);    /* set dknown, maybe bknown */
                 stackobj(otmp);
             }
@@ -2458,7 +2462,7 @@ zap_updown(struct obj *obj, schar dz)
             case WAN_POLYMORPH:
             case SPE_POLYMORPH:
                 del_engr(e, level);
-                make_engr_at(level, x, y, random_engraving(), moves,
+                make_engr_at(level, x, y, random_engraving(rng_main), moves,
                              (xchar) 0);
                 break;
             case WAN_CANCELLATION:
@@ -3692,7 +3696,7 @@ zap_over_floor(xchar x, xchar y, int type, boolean * shopdamage)
 
                 rangemod -= 3;
                 loc->typ = ROOM;
-                ttmp = maketrap(level, x, y, PIT);
+                ttmp = maketrap(level, x, y, PIT, rng_main);
                 if (ttmp)
                     ttmp->tseen = 1;
                 if (cansee(x, y))

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-10 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -26,7 +26,7 @@ struct innate {
     const char *gainstr, *losestr;
 };
 
-static const struct innate arc_abil[] = { 
+static const struct innate arc_abil[] = {
     {1, &(HStealth), "", ""},
     {1, &(HFast), "", ""},
     {10, &(HSearching), "perceptive", ""},
@@ -204,16 +204,21 @@ void
 gainstr(struct obj *otmp, int incr)
 {
     int num = 1;
+    boolean cursed = otmp && otmp->cursed;
+    enum rng rng = cursed ? rng_main : rng_strength_gain;
 
     if (incr)
         num = incr;
     else {
+        boolean gain_is_small = !!rn2_on_rng(4, rng);
+        int large_gain_amount = rn2_on_rng(6, rng);
         if (ABASE(A_STR) < 18)
-            num = (rn2(4) ? 1 : rnd(6));
-        else if (ABASE(A_STR) < STR18(85))
-            num = rnd(10);
+            num = (gain_is_small ? 1 : large_gain_amount + 1);
+        else if (ABASE(A_STR) < STR18(85)) {
+            num = large_gain_amount + 3;
+        }
     }
-    adjattrib(A_STR, (otmp && otmp->cursed) ? -num : num, TRUE);
+    adjattrib(A_STR, cursed ? -num : num, TRUE);
 }
 
 void
@@ -312,7 +317,7 @@ exercise(int i, boolean inc_or_dec)
         return;
 
     if (abs(AEXE(i)) < AVAL) {
-        /* 
+        /*
          *      Law of diminishing returns (Part I):
          *
          *      Gain is harder at higher attribute values.
@@ -400,7 +405,7 @@ exerchk(void)
 
     /* Are we ready for a test? */
     if (moves >= u.next_attr_check && !u_helpless(hm_all)) {
-        /* 
+        /*
          *  Law of diminishing returns (Part II):
          *
          *  The effects of "exercise" and "abuse" wear
@@ -415,7 +420,7 @@ exerchk(void)
             if (i == A_INT || i == A_CHA)
                 continue;       /* can't exercise these */
 
-            /* 
+            /*
              *      Law of diminishing returns (Part III):
              *
              *      You don't *always* gain by exercising.
@@ -464,51 +469,56 @@ init_attr(int np)
 {
     int i, x, tryct;
 
-
     for (i = 0; i < A_MAX; i++) {
         ABASE(i) = AMAX(i) = urole.attrbase[i];
         ATEMP(i) = ATIME(i) = 0;
         np -= urole.attrbase[i];
     }
 
-    tryct = 0;
-    while (np > 0 && tryct < 100) {
+    /* The starting ability distribution has changed slightly since 3.4.3 so
+       that players with different races but the same role will have the same
+       stats, as far as is possible. Instead of capping scores at the racial
+       maximum, we cap them at STR18(100) for Strength, or 20 for other
+       stats. Then, if any stats end up over the racial cap, we reduce them to
+       the cap and redistribute them on rng_main.  The result is that the number
+       of seeds consumed from rng_charstats_role depends purely on role.
 
-        x = rn2(100);
-        for (i = 0; (i < A_MAX) && ((x -= urole.attrdist[i]) > 0); i++)
-            ;
-        if (i >= A_MAX)
-            continue;   /* impossible */
-
-        if (ABASE(i) >= ATTRMAX(i)) {
-
-            tryct++;
-            continue;
-        }
+       Note: there were previously two loops here, one to top up to np points,
+       one to cut down to np points. The latter was dead code, and has been
+       removed. */
+    int pass;
+    for (pass = 1; pass < 3; pass++) {
         tryct = 0;
-        ABASE(i)++;
-        AMAX(i)++;
-        np--;
-    }
+        while (np > 0 && tryct < 100) {
 
-    tryct = 0;
-    while (np < 0 && tryct < 100) {     /* for redistribution */
+            x = rn2_on_rng(100, pass == 1 ? rng_charstats_role : rng_main);
 
-        x = rn2(100);
-        for (i = 0; (i < A_MAX) && ((x -= urole.attrdist[i]) > 0); i++)
-            ;
-        if (i >= A_MAX)
-            continue;   /* impossible */
+            for (i = 0; (i < A_MAX) && ((x -= urole.attrdist[i]) > 0); i++)
+                ;
+            if (i >= A_MAX)
+                continue;   /* impossible */
 
-        if (ABASE(i) <= ATTRMIN(i)) {
+            int current_max = (pass == 1 ? ATTRMAX(i) :
+                               i == A_STR ? STR18(100) : 20);
 
-            tryct++;
-            continue;
+            if (ABASE(i) >= current_max) {
+                tryct++;
+                continue;
+            }
+
+            tryct = 0;
+            ABASE(i)++;
+            AMAX(i)++;
+            np--;
         }
-        tryct = 0;
-        ABASE(i)--;
-        AMAX(i)--;
-        np++;
+
+        for (i = 0; i < A_MAX; i++) {
+            if (ABASE(i) > ATTRMAX(i)) {
+                np += ABASE(i) - ATTRMAX(i);
+                AMAX(i) -= ABASE(i) - ATTRMAX(i);
+                ABASE(i) = ATTRMAX(i);
+            }
+        }
     }
 }
 
@@ -670,9 +680,9 @@ newhp(void)
         /* Initialize hit points */
         hp = urole.hpadv.infix + urace.hpadv.infix;
         if (urole.hpadv.inrnd > 0)
-            hp += rnd(urole.hpadv.inrnd);
+            hp += 1 + rn2_on_rng(urole.hpadv.inrnd, rng_charstats_role);
         if (urace.hpadv.inrnd > 0)
-            hp += rnd(urace.hpadv.inrnd);
+            hp += 1 + rn2_on_rng(urace.hpadv.inrnd, rng_charstats_race);
 
         /* Initialize alignment stuff */
         u.ualign.type = aligns[u.initalign].value;
@@ -683,15 +693,15 @@ newhp(void)
         if (u.ulevel < urole.xlev) {
             hp = urole.hpadv.lofix + urace.hpadv.lofix;
             if (urole.hpadv.lornd > 0)
-                hp += rnd(urole.hpadv.lornd);
+                hp += 1 + rn2_on_rng(urole.hpadv.lornd, rng_charstats_role);
             if (urace.hpadv.lornd > 0)
-                hp += rnd(urace.hpadv.lornd);
+                hp += 1 + rn2_on_rng(urace.hpadv.lornd, rng_charstats_race);
         } else {
             hp = urole.hpadv.hifix + urace.hpadv.hifix;
             if (urole.hpadv.hirnd > 0)
-                hp += rnd(urole.hpadv.hirnd);
+                hp += 1 + rn2_on_rng(urole.hpadv.hirnd, rng_charstats_role);
             if (urace.hpadv.hirnd > 0)
-                hp += rnd(urace.hpadv.hirnd);
+                hp += 1 + rn2_on_rng(urace.hpadv.hirnd, rng_charstats_race);
         }
     }
 
@@ -730,7 +740,7 @@ acurr(int x)
              u.umonnum == PM_INCUBUS))
             return 18;
     } else if (x == A_INT || x == A_WIS) {
-        /* yes, this may raise int/wis if player is sufficiently stupid.  there 
+        /* yes, this may raise int/wis if player is sufficiently stupid.  there
            are lower levels of cognition than "dunce". */
         if (uarmh && uarmh->otyp == DUNCE_CAP)
             return 6;
@@ -889,4 +899,3 @@ calc_attr_bonus(void)
 }
 
 /*attrib.c*/
-

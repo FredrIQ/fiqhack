@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-15 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -480,7 +480,8 @@ hurtle_step(void *arg, int x, int y)
             if (bigmonst(youmonst.data) || too_much) {
                 pline("You %sget forcefully wedged into a crevice.",
                       too_much ? "and all your belongings " : "");
-                losehp(rnd(2 + *range), killer_msg(DIED, "wedging into a narrow crevice"));
+                losehp(rnd(2 + *range),
+                       killer_msg(DIED, "wedging into a narrow crevice"));
                 return FALSE;
             }
         }
@@ -1012,11 +1013,13 @@ throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang
     } else {
         /* the code following might become part of dropy() */
         if (obj->oartifact == ART_MJOLLNIR && Role_if(PM_VALKYRIE) &&
-            rn2(100)) {
+            rn2_on_rng(100, rng_mjollnir_return)) {
             /* we must be wearing Gauntlets of Power to get here */
             sho_obj_return_to_u(obj, dx, dy);   /* display its flight */
 
-            if (!impaired && rn2(100)) {
+            int dmg = rn2_on_rng(2, rng_mjollnir_return);
+
+            if (rn2_on_rng(100, rng_mjollnir_return) && !impaired) {
                 pline("%s to your hand!", Tobjnam(obj, "return"));
                 obj = addinv(obj);
                 encumber_msg();
@@ -1025,8 +1028,6 @@ throwit(struct obj *obj, long wep_mask, /* used to re-equip returning boomerang
                 if (cansee(bhitpos.x, bhitpos.y))
                     newsym(bhitpos.x, bhitpos.y);
             } else {
-                int dmg = rn2(2);
-
                 if (!dmg) {
                     pline(Blind ? "%s lands %s your %s." :
                           "%s back to you, landing %s your %s.",

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-12-02 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -14,7 +14,9 @@ struct trobj {
     unsigned trbless:2;
 };
 
-static void ini_inv(const struct trobj *, short nocreate[4]);
+static void ini_inv(const struct trobj *, short nocreate[4], enum rng);
+static void role_ini_inv(const struct trobj *, short nocreate[4]);
+static void race_ini_inv(const struct trobj *, short nocreate[4]);
 static void knows_object(int);
 static void knows_class(char);
 static boolean restricted_spell_discipline(int);
@@ -22,6 +24,17 @@ static boolean restricted_spell_discipline(int);
 #define UNDEF_TYP       0
 #define UNDEF_SPE       '\177'
 #define UNDEF_BLESS     2
+
+static int
+rolern2(int x)
+{
+    return rn2_on_rng(x, rng_charstats_role);
+}
+static int
+racern2(int x)
+{
+    return rn2_on_rng(x, rng_charstats_race);
+}
 
 /*
  * Initial inventory for the various roles.
@@ -241,35 +254,32 @@ static const struct trobj Money[] = {
 static const struct inv_sub {
     short race_pm, item_otyp, subs_otyp;
 } inv_subs[] = {
-    {
-    PM_ELF, DAGGER, ELVEN_DAGGER}, {
-    PM_ELF, SPEAR, ELVEN_SPEAR}, {
-    PM_ELF, SHORT_SWORD, ELVEN_SHORT_SWORD}, {
-    PM_ELF, BOW, ELVEN_BOW}, {
-    PM_ELF, ARROW, ELVEN_ARROW}, {
-    PM_ELF, HELMET, ELVEN_LEATHER_HELM},
-        /* { PM_ELF, SMALL_SHIELD, ELVEN_SHIELD }, */
-    {
-    PM_ELF, CLOAK_OF_DISPLACEMENT, ELVEN_CLOAK}, {
-    PM_ELF, CRAM_RATION, LEMBAS_WAFER}, {
-    PM_ORC, DAGGER, ORCISH_DAGGER}, {
-    PM_ORC, SPEAR, ORCISH_SPEAR}, {
-    PM_ORC, SHORT_SWORD, ORCISH_SHORT_SWORD}, {
-    PM_ORC, BOW, ORCISH_BOW}, {
-    PM_ORC, ARROW, ORCISH_ARROW}, {
-    PM_ORC, HELMET, ORCISH_HELM}, {
-    PM_ORC, SMALL_SHIELD, ORCISH_SHIELD}, {
-    PM_ORC, RING_MAIL, ORCISH_RING_MAIL}, {
-    PM_ORC, CHAIN_MAIL, ORCISH_CHAIN_MAIL}, {
-    PM_DWARF, SPEAR, DWARVISH_SPEAR}, {
-    PM_DWARF, SHORT_SWORD, DWARVISH_SHORT_SWORD}, {
-    PM_DWARF, HELMET, DWARVISH_IRON_HELM},
-        /* { PM_DWARF, SMALL_SHIELD, DWARVISH_ROUNDSHIELD }, */
-        /* { PM_DWARF, PICK_AXE, DWARVISH_MATTOCK }, */
-    {
-    PM_GNOME, BOW, CROSSBOW}, {
-    PM_GNOME, ARROW, CROSSBOW_BOLT}, {
-    NON_PM, STRANGE_OBJECT, STRANGE_OBJECT}
+    {PM_ELF, DAGGER, ELVEN_DAGGER},
+    {PM_ELF, SPEAR, ELVEN_SPEAR},
+    {PM_ELF, SHORT_SWORD, ELVEN_SHORT_SWORD},
+    {PM_ELF, BOW, ELVEN_BOW},
+    {PM_ELF, ARROW, ELVEN_ARROW},
+    {PM_ELF, HELMET, ELVEN_LEATHER_HELM},
+    /* { PM_ELF, SMALL_SHIELD, ELVEN_SHIELD }, */
+    {PM_ELF, CLOAK_OF_DISPLACEMENT, ELVEN_CLOAK},
+    {PM_ELF, CRAM_RATION, LEMBAS_WAFER},
+    {PM_ORC, DAGGER, ORCISH_DAGGER},
+    {PM_ORC, SPEAR, ORCISH_SPEAR},
+    {PM_ORC, SHORT_SWORD, ORCISH_SHORT_SWORD},
+    {PM_ORC, BOW, ORCISH_BOW},
+    {PM_ORC, ARROW, ORCISH_ARROW},
+    {PM_ORC, HELMET, ORCISH_HELM},
+    {PM_ORC, SMALL_SHIELD, ORCISH_SHIELD},
+    {PM_ORC, RING_MAIL, ORCISH_RING_MAIL},
+    {PM_ORC, CHAIN_MAIL, ORCISH_CHAIN_MAIL},
+    {PM_DWARF, SPEAR, DWARVISH_SPEAR},
+    {PM_DWARF, SHORT_SWORD, DWARVISH_SHORT_SWORD},
+    {PM_DWARF, HELMET, DWARVISH_IRON_HELM},
+    /* { PM_DWARF, SMALL_SHIELD, DWARVISH_ROUNDSHIELD }, */
+    /* { PM_DWARF, PICK_AXE, DWARVISH_MATTOCK }, */
+    {PM_GNOME, BOW, CROSSBOW},
+    {PM_GNOME, ARROW, CROSSBOW_BOLT},
+    {NON_PM, STRANGE_OBJECT, STRANGE_OBJECT}
 };
 
 static const struct def_skill Skill_A[] = {
@@ -498,7 +508,7 @@ copy_trobj_list(const struct trobj *list)
 {
     struct trobj *copy;
     int len = 0;
-
+    
     while (list[len].trotyp || list[len].trclass)
         len++;
     len++;      /* list is terminated by an entry of zeros */
@@ -544,9 +554,8 @@ u_init(microseconds birthday)
     u.umortality = 0;
     u.ugrave_arise = NON_PM;
 
-    u.umonnum = u.umonster = (u.ufemale &&
-                              urole.femalenum !=
-                              NON_PM) ? urole.femalenum : urole.malenum;
+    u.umonnum = u.umonster = (u.ufemale && urole.femalenum != NON_PM) ?
+        urole.femalenum : urole.malenum;
 
     u.lastinvnr = 51;
 
@@ -556,9 +565,9 @@ u_init(microseconds birthday)
     u.uhp = u.uhpmax = newhp();
     u.uenmax = urole.enadv.infix + urace.enadv.infix;
     if (urole.enadv.inrnd > 0)
-        u.uenmax += rnd(urole.enadv.inrnd);
+        u.uenmax += 1 + rolern2(urole.enadv.inrnd);
     if (urace.enadv.inrnd > 0)
-        u.uenmax += rnd(urace.enadv.inrnd);
+        u.uenmax += 1 + racern2(urace.enadv.inrnd);
     u.uen = u.uenmax;
     u.uspellprot = 0;
     adjabil(0, 1);
@@ -574,15 +583,15 @@ u_init(microseconds birthday)
     u.ualignbase[A_CURRENT] = u.ualignbase[A_ORIGINAL] = u.ualign.type =
         aligns[u.initalign].value;
     u.ulycn = NON_PM;
-
+    
     u.ubirthday = birthday;
-
+    
     /* For now, everyone starts out with a night vision range of 1. */
     u.nv_range = 1;
     u.next_attr_check = 600;    /* arbitrary initial setting */
-
+    
     u.delayed_killers.genocide = u.delayed_killers.illness =
-    u.delayed_killers.stoning = u.delayed_killers.sliming = NULL;
+        u.delayed_killers.stoning = u.delayed_killers.sliming = NULL;
 }
 
 
@@ -596,50 +605,47 @@ u_init_inv_skills(void)
 
         /*** Role-specific initializations ***/
     switch (Role_switch) {
-        /* rn2(100) > 50 necessary for some choices because some random number
-           generators are bad enough to seriously skew the results if we use
-           rn2(2)...  --KAA */
     case PM_ARCHEOLOGIST:
-        ini_inv(Archeologist, nclist);
-        if (!rn2(10))
-            ini_inv(Tinopener, nclist);
-        else if (!rn2(4))
-            ini_inv(Lamp, nclist);
-        else if (!rn2(10))
-            ini_inv(Magicmarker, nclist);
+        role_ini_inv(Archeologist, nclist);
+        if (!rolern2(10))
+            role_ini_inv(Tinopener, nclist);
+        else if (!rolern2(4))
+            role_ini_inv(Lamp, nclist);
+        else if (!rolern2(10))
+            role_ini_inv(Magicmarker, nclist);
         knows_object(SACK);
         knows_object(TOUCHSTONE);
         skill_init(Skill_A);
         break;
     case PM_BARBARIAN:
         trobj_list = copy_trobj_list(Barbarian);
-        if (rn2(100) >= 50) {   /* see above comment */
+        if (!rolern2(100)) {
             trobj_list[B_MAJOR].trotyp = BATTLE_AXE;
             trobj_list[B_MINOR].trotyp = SHORT_SWORD;
         }
-        ini_inv(trobj_list, nclist);
-        if (!rn2(6))
-            ini_inv(Lamp, nclist);
+        role_ini_inv(trobj_list, nclist);
+        if (!rolern2(6))
+            role_ini_inv(Lamp, nclist);
         knows_class(WEAPON_CLASS);
         knows_class(ARMOR_CLASS);
         skill_init(Skill_B);
         break;
     case PM_CAVEMAN:
         trobj_list = copy_trobj_list(Cave_man);
-        trobj_list[C_AMMO].trquan = rn1(11, 10);        /* 10..20 */
-        ini_inv(trobj_list, nclist);
+        trobj_list[C_AMMO].trquan = 10 + rolern2(11);
+        role_ini_inv(trobj_list, nclist);
         skill_init(Skill_C);
         break;
     case PM_HEALER:
-        u.umoney0 = rn1(1000, 1001);
-        ini_inv(Healer, nclist);
-        if (!rn2(25))
-            ini_inv(Lamp, nclist);
+        u.umoney0 = 1001 + rolern2(1000);
+        role_ini_inv(Healer, nclist);
+        if (!rolern2(25))
+            role_ini_inv(Lamp, nclist);
         knows_object(POT_FULL_HEALING);
         skill_init(Skill_H);
         break;
     case PM_KNIGHT:
-        ini_inv(Knight, nclist);
+        role_ini_inv(Knight, nclist);
         knows_class(WEAPON_CLASS);
         knows_class(ARMOR_CLASS);
         /* give knights chess-like mobility -- idea from
@@ -649,7 +655,7 @@ u_init_inv_skills(void)
         break;
     case PM_MONK:
         trobj_list = copy_trobj_list(Monk);
-        switch (rn2(90) / 30) {
+        switch (rolern2(3)) {
         case 0:
             trobj_list[M_BOOK].trotyp = SPE_HEALING;
             break;
@@ -660,20 +666,20 @@ u_init_inv_skills(void)
             trobj_list[M_BOOK].trotyp = SPE_SLEEP;
             break;
         }
-        ini_inv(trobj_list, nclist);
-        if (!rn2(5))
-            ini_inv(Magicmarker, nclist);
-        else if (!rn2(10))
-            ini_inv(Lamp, nclist);
+        role_ini_inv(trobj_list, nclist);
+        if (!rolern2(5))
+            role_ini_inv(Magicmarker, nclist);
+        else if (!rolern2(10))
+            role_ini_inv(Lamp, nclist);
         knows_class(ARMOR_CLASS);
         skill_init(Skill_Mon);
         break;
     case PM_PRIEST:
-        ini_inv(Priest, nclist);
-        if (!rn2(10))
-            ini_inv(Magicmarker, nclist);
-        else if (!rn2(10))
-            ini_inv(Lamp, nclist);
+        role_ini_inv(Priest, nclist);
+        if (!rolern2(10))
+            role_ini_inv(Magicmarker, nclist);
+        else if (!rolern2(10))
+            role_ini_inv(Lamp, nclist);
         knows_object(POT_WATER);
         skill_init(Skill_P);
         /* KMH, conduct -- Some may claim that this isn't agnostic, since they
@@ -683,60 +689,60 @@ u_init_inv_skills(void)
         break;
     case PM_RANGER:
         trobj_list = copy_trobj_list(Ranger);
-        trobj_list[RAN_TWO_ARROWS].trquan = rn1(10, 50);
-        trobj_list[RAN_ZERO_ARROWS].trquan = rn1(10, 30);
-        ini_inv(trobj_list, nclist);
+        trobj_list[RAN_TWO_ARROWS].trquan = 50 + rolern2(10);
+        trobj_list[RAN_ZERO_ARROWS].trquan = 30 + rolern2(10);
+        role_ini_inv(trobj_list, nclist);
         skill_init(Skill_Ran);
         break;
     case PM_ROGUE:
         trobj_list = copy_trobj_list(Rogue);
-        trobj_list[R_DAGGERS].trquan = rn1(10, 6);
+        trobj_list[R_DAGGERS].trquan = 6 + rolern2(10);
         u.umoney0 = 0;
-        ini_inv(trobj_list, nclist);
-        if (!rn2(5))
-            ini_inv(Blindfold, nclist);
+        role_ini_inv(trobj_list, nclist);
+        if (!rolern2(5))
+            role_ini_inv(Blindfold, nclist);
         knows_object(SACK);
         skill_init(Skill_R);
         break;
     case PM_SAMURAI:
         trobj_list = copy_trobj_list(Samurai);
-        trobj_list[S_ARROWS].trquan = rn1(20, 26);
-        ini_inv(trobj_list, nclist);
-        if (!rn2(5))
-            ini_inv(Blindfold, nclist);
+        trobj_list[S_ARROWS].trquan = 26 + rolern2(20);
+        role_ini_inv(trobj_list, nclist);
+        if (!rolern2(5))
+            role_ini_inv(Blindfold, nclist);
         knows_class(WEAPON_CLASS);
         knows_class(ARMOR_CLASS);
         skill_init(Skill_S);
         break;
     case PM_TOURIST:
         trobj_list = copy_trobj_list(Tourist);
-        trobj_list[T_DARTS].trquan = rn1(20, 21);
-        u.umoney0 = rnd(1000);
-        ini_inv(trobj_list, nclist);
-        if (!rn2(25))
-            ini_inv(Tinopener, nclist);
-        else if (!rn2(25))
-            ini_inv(Leash, nclist);
-        else if (!rn2(25))
-            ini_inv(Towel, nclist);
-        else if (!rn2(25))
-            ini_inv(Magicmarker, nclist);
+        trobj_list[T_DARTS].trquan = 21 + rolern2(201);
+        u.umoney0 = 1 + rolern2(1000);
+        role_ini_inv(trobj_list, nclist);
+        if (!rolern2(25))
+            role_ini_inv(Tinopener, nclist);
+        else if (!rolern2(25))
+            role_ini_inv(Leash, nclist);
+        else if (!rolern2(25))
+            role_ini_inv(Towel, nclist);
+        else if (!rolern2(25))
+            role_ini_inv(Magicmarker, nclist);
         skill_init(Skill_T);
         break;
     case PM_VALKYRIE:
-        ini_inv(Valkyrie, nclist);
-        if (!rn2(6))
-            ini_inv(Lamp, nclist);
+        role_ini_inv(Valkyrie, nclist);
+        if (!rolern2(6))
+            role_ini_inv(Lamp, nclist);
         knows_class(WEAPON_CLASS);
         knows_class(ARMOR_CLASS);
         skill_init(Skill_V);
         break;
     case PM_WIZARD:
-        ini_inv(Wizard, nclist);
-        if (!rn2(5))
-            ini_inv(Magicmarker, nclist);
-        if (!rn2(5))
-            ini_inv(Blindfold, nclist);
+        role_ini_inv(Wizard, nclist);
+        if (!rolern2(5))
+            role_ini_inv(Magicmarker, nclist);
+        if (!rolern2(5))
+            role_ini_inv(Blindfold, nclist);
         skill_init(Skill_W);
         break;
 
@@ -755,19 +761,17 @@ u_init_inv_skills(void)
         break;
 
     case PM_ELF:
-        /* 
-         * Elves are people of music and song, or they are warriors.
-         * Non-warriors get an instrument.  We use a kludge to
-         * get only non-magic instruments.
-         */
+    {
+        /* Elves are people of music and song, or they are warriors.
+           Non-warriors get an instrument.  We use a kludge to get only
+           non-magic instruments. */
+        static const int trotyp[] = {
+            WOODEN_FLUTE, TOOLED_HORN, WOODEN_HARP, BELL, BUGLE, LEATHER_DRUM
+        };
         if (Role_if(PM_PRIEST) || Role_if(PM_WIZARD)) {
-            static const int trotyp[] = {
-                WOODEN_FLUTE, TOOLED_HORN, WOODEN_HARP,
-                BELL, BUGLE, LEATHER_DRUM
-            };
             trobj_list = copy_trobj_list(Instrument);
             trobj_list[0].trotyp = trotyp[rn2(SIZE(trotyp))];
-            ini_inv(trobj_list, nclist);
+            ini_inv(trobj_list, nclist, rng_main);
         }
 
         /* Elves can recognize all elvish objects */
@@ -783,7 +787,7 @@ u_init_inv_skills(void)
         knows_object(ELVEN_BOOTS);
         knows_object(ELVEN_CLOAK);
         break;
-
+    }
     case PM_DWARF:
         /* Dwarves can recognize all dwarvish objects */
         knows_object(DWARVISH_SPEAR);
@@ -801,7 +805,7 @@ u_init_inv_skills(void)
     case PM_ORC:
         /* compensate for generally inferior equipment */
         if (!Role_if(PM_WIZARD))
-            ini_inv(Xtra_food, nclist);
+            ini_inv(Xtra_food, nclist, rng_main);
         /* Orcs can recognize all orcish objects */
         knows_object(ORCISH_SHORT_SWORD);
         knows_object(ORCISH_ARROW);
@@ -824,20 +828,19 @@ u_init_inv_skills(void)
         free(trobj_list);
 
     if (discover)
-        ini_inv(Wishing, nclist);
+        race_ini_inv(Wishing, nclist);
 
     if (u.umoney0)
-        ini_inv(Money, nclist);
+        race_ini_inv(Money, nclist);
     u.umoney0 += hidden_gold(); /* in case sack has gold in it */
 
     init_attr(75);      /* init attribute values */
     max_rank_sz();      /* set max str size for class ranks */
-/*
- * Do we really need this?
- */
+
+    /* Do we really need this? */
     for (i = 0; i < A_MAX; i++)
-        if (!rn2(20)) {
-            int xd = rn2(7) - 2;        /* biased variation */
+        if (!racern2(20)) {
+            int xd = racern2(7) - 2;        /* biased variation */
 
             adjattrib(i, xd, TRUE);
             if (ABASE(i) < AMAX(i))
@@ -918,7 +921,17 @@ restricted_spell_discipline(int otyp)
 }
 
 static void
-ini_inv(const struct trobj *trop, short nocreate[4])
+role_ini_inv(const struct trobj *trop, short nocreate[4])
+{
+    return ini_inv(trop, nocreate, rng_charstats_role);
+}
+static void
+race_ini_inv(const struct trobj *trop, short nocreate[4])
+{
+    return ini_inv(trop, nocreate, rng_charstats_race);
+}
+static void
+ini_inv(const struct trobj *trop, short nocreate[4], enum rng rng)
 {
     struct obj *obj;
     int otyp, i;
@@ -936,7 +949,7 @@ ini_inv(const struct trobj *trop, short nocreate[4])
                         break;
                     }
             }
-            obj = mksobj(level, otyp, TRUE, FALSE);
+            obj = mksobj(level, otyp, TRUE, FALSE, rng);
 
             /* lacquered armour */
             if (obj->otyp == SPLINT_MAIL && Role_if(PM_SAMURAI))
@@ -952,7 +965,7 @@ ini_inv(const struct trobj *trop, short nocreate[4])
              * one will immediately read it and use the iron ball as a
              * weapon.)
              */
-            obj = mkobj(level, trop->trclass, FALSE);
+            obj = mkobj(level, trop->trclass, FALSE, rng);
             otyp = obj->otyp;
             while (otyp == WAN_WISHING || otyp == nocreate[0]
                    || otyp == nocreate[1]
@@ -977,13 +990,13 @@ ini_inv(const struct trobj *trop, short nocreate[4])
                         restricted_spell_discipline(otyp)))
                 ) {
                 dealloc_obj(obj);
-                obj = mkobj(level, trop->trclass, FALSE);
+                obj = mkobj(level, trop->trclass, FALSE, rng);
                 otyp = obj->otyp;
             }
 
             /* Don't start with +0 or negative rings */
             if (objects[otyp].oc_charged && obj->spe <= 0)
-                obj->spe = rne(3);
+                obj->spe = rne_on_rng(3, rng);
 
             /* Heavily relies on the fact that 1) we create wands before rings, 
                2) that we create rings before spellbooks, and that 3) not more
@@ -1074,6 +1087,7 @@ ini_inv(const struct trobj *trop, short nocreate[4])
         trquan = trop->trquan;
     }
 }
+
 
 
 /*u_init.c*/

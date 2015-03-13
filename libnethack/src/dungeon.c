@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-12-02 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -466,7 +466,7 @@ parent_dlevel(const char *s, struct proto_dungeon *pd)
                     pd->tmpbranch[i].chain, pd, &base);
 
     /* KMH -- Try our best to find a level without an existing branch */
-    i = j = rn2(num);
+    i = j = rn2_on_rng(num, rng_dungeon_gen);
     do {
         if (++i >= num)
             i = 0;
@@ -607,7 +607,7 @@ init_level(int dgn, int proto_index, struct proto_dungeon *pd)
 
     pd->final_lev[proto_index] = NULL;  /* no "real" level */
     if (!wizard)
-        if (tlevel->chance <= rn2(100))
+        if (tlevel->chance <= rn2_on_rng(100, rng_dungeon_gen))
             return;
 
     pd->final_lev[proto_index] = new_level = malloc(sizeof (s_level));
@@ -619,10 +619,10 @@ init_level(int dgn, int proto_index, struct proto_dungeon *pd)
     new_level->dlevel.dnum = dgn;
     new_level->dlevel.dlevel = 0;       /* for now */
 
-    new_level->flags.town = ! !(tlevel->flags & TOWN);
-    new_level->flags.hellish = ! !(tlevel->flags & HELLISH);
-    new_level->flags.maze_like = ! !(tlevel->flags & MAZELIKE);
-    new_level->flags.rogue_like = ! !(tlevel->flags & ROGUELIKE);
+    new_level->flags.town = !!(tlevel->flags & TOWN);
+    new_level->flags.hellish = !!(tlevel->flags & HELLISH);
+    new_level->flags.maze_like = !!(tlevel->flags & MAZELIKE);
+    new_level->flags.rogue_like = !!(tlevel->flags & ROGUELIKE);
     new_level->flags.align = ((tlevel->flags & D_ALIGN_MASK) >> 4);
     if (!new_level->flags.align)
         new_level->flags.align =
@@ -704,7 +704,8 @@ place_level(int proto_index, struct proto_dungeon *pd)
     npossible = possible_places(proto_index, map, pd);
 
     for (; npossible; --npossible) {
-        lev->dlevel.dlevel = pick_level(map, rn2(npossible));
+        lev->dlevel.dlevel = pick_level(map, rn2_on_rng(npossible,
+                                                        rng_dungeon_gen));
         if (place_level(proto_index + 1, pd))
             return TRUE;
 
@@ -785,7 +786,7 @@ init_dungeons(void)
         Fread(&pd.tmpdungeon[i], sizeof (struct tmpdungeon), 1, dgn_file);
         if (!wizard)
             if (pd.tmpdungeon[i].chance &&
-                (pd.tmpdungeon[i].chance <= rn2(100))) {
+                (pd.tmpdungeon[i].chance <= rn2_on_rng(100, rng_dungeon_gen))) {
                 int j;
 
                 /* skip over any levels or branches */
@@ -807,8 +808,8 @@ init_dungeons(void)
 
         if (pd.tmpdungeon[i].lev.rand)
             dungeons[i].num_dunlevs =
-                (xchar) rn1(pd.tmpdungeon[i].lev.rand,
-                            pd.tmpdungeon[i].lev.base);
+                (xchar)(rn2_on_rng(pd.tmpdungeon[i].lev.rand, rng_dungeon_gen) +
+                        pd.tmpdungeon[i].lev.base);
         else
             dungeons[i].num_dunlevs = (xchar) pd.tmpdungeon[i].lev.base;
 
@@ -822,9 +823,9 @@ init_dungeons(void)
             dungeons[i].dunlev_ureached = 0;
         }
 
-        dungeons[i].flags.hellish = ! !(pd.tmpdungeon[i].flags & HELLISH);
-        dungeons[i].flags.maze_like = ! !(pd.tmpdungeon[i].flags & MAZELIKE);
-        dungeons[i].flags.rogue_like = ! !(pd.tmpdungeon[i].flags & ROGUELIKE);
+        dungeons[i].flags.hellish = !!(pd.tmpdungeon[i].flags & HELLISH);
+        dungeons[i].flags.maze_like = !!(pd.tmpdungeon[i].flags & MAZELIKE);
+        dungeons[i].flags.rogue_like = !!(pd.tmpdungeon[i].flags & ROGUELIKE);
         dungeons[i].flags.align =
             ((pd.tmpdungeon[i].flags & D_ALIGN_MASK) >> 4);
         /* 
@@ -925,7 +926,7 @@ init_dungeons(void)
     dlb_fclose(dgn_file);
 
     for (i = 0; i < 5; i++)
-        tune[i] = 'A' + rn2(7);
+        tune[i] = 'A' + rn2_on_rng(7, rng_dungeon_gen);
     tune[5] = 0;
 
     /* 
@@ -1062,7 +1063,7 @@ deepest_lev_reached(boolean noquest)
 /* return a bookkeeping level number for purpose of comparisons and
  * save/restore */
 xchar
-ledger_no(const d_level * lev)
+ledger_no(const d_level *lev)
 {
     return (xchar) (lev->dlevel + dungeons[lev->dnum].ledger_start);
 }
@@ -1496,8 +1497,12 @@ assign_level(d_level * dest, const d_level * src)
 void
 assign_rnd_level(d_level * dest, const d_level * src, int range)
 {
+    int rangerng = rn2_on_rng(12, rng_mysterious_force);
+
     dest->dnum = src->dnum;
-    dest->dlevel = src->dlevel + ((range > 0) ? rnd(range) : -rnd(-range));
+    dest->dlevel = src->dlevel + ((range > 0) ?
+                                  rangerng / (12 / range) + 1 :
+                                  -(rangerng / (12 / -range)) - 1);
 
     if (dest->dlevel > dunlevs_in_dungeon(dest))
         dest->dlevel = dunlevs_in_dungeon(dest);
@@ -1507,20 +1512,20 @@ assign_rnd_level(d_level * dest, const d_level * src, int range)
 
 
 int
-induced_align(const d_level * dlev, int pct)
+induced_align(const d_level * dlev, int pct, enum rng rng)
 {
     s_level *lev = Is_special(dlev);
     aligntyp al;
 
     if (lev && lev->flags.align)
-        if (rn2(100) < pct)
+        if (rn2_on_rng(100, rng) < pct)
             return lev->flags.align;
 
     if (dungeons[dlev->dnum].flags.align)
-        if (rn2(100) < pct)
+        if (rn2_on_rng(100, rng) < pct)
             return dungeons[dlev->dnum].flags.align;
 
-    al = rn2(3) - 1;
+    al = rn2_on_rng(3, rng) - 1;
     return Align2amask(al);
 }
 

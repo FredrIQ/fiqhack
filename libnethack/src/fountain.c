@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-15 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright Scott R. Turner, srt@ucla, 10/27/86                  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -22,7 +22,7 @@ floating_above(const char *what)
 static void
 dowatersnakes(void)
 {       /* Fountain of snakes! */
-    int num = rn1(5, 2);
+    int num = 2 + rn2_on_rng(5, rng_fountain_result);
     struct monst *mtmp;
 
     if (!(mvitals[PM_WATER_MOCCASIN].mvflags & G_GONE)) {
@@ -41,6 +41,36 @@ dowatersnakes(void)
         pline("The fountain bubbles furiously for a moment, then calms.");
 }
 
+/* Quantizes the probabilities of wishes, so that wish sources work consistently
+   across games with the same starting seed. Handles the range 0-22% (although
+   0% and 1% never give wishes), and 80%. The die roll is also available, e.g.
+   to get consistent results from failed lamp wishes. */
+boolean
+wish_available(int percentchance, int *dieroll)
+{
+    int unused;
+    if (!dieroll)
+        dieroll = &unused;
+
+    switch (percentchance) {
+    case 0: case 1:
+        *dieroll = rn2(100);
+        return FALSE;
+    case 2: case 3: case 4: case 5: case 6: case 7:
+        return ((*dieroll = rn2_on_rng(100, rng_wish_5))) < 5;
+    case 8: case 9: case 10: case 11: case 12:
+        return ((*dieroll = rn2_on_rng(100, rng_wish_10))) < 10;
+    case 13: case 14: case 15: case 16: case 17:
+        return ((*dieroll = rn2_on_rng(100, rng_wish_15))) < 15;
+    case 18: case 19: case 20: case 21: case 22:
+        return ((*dieroll = rn2_on_rng(100, rng_wish_20))) < 20;
+    case 78: case 79: case 80: case 81: case 82:
+        return ((*dieroll = rn2_on_rng(100, rng_wish_80))) < 80;
+    default:
+        impossible("Unexpected wish probability %d%%", percentchance);
+        return ((*dieroll = rn2(100))) < percentchance;
+    }
+}
 
 static void
 dowaterdemon(void)
@@ -55,9 +85,8 @@ dowaterdemon(void)
             else
                 pline("You feel the presence of evil.");
 
-            /* Give those on low levels a (slightly) better chance of survival
-               */
-            if (rnd(100) > (80 + level_difficulty(&u.uz))) {
+            /* A slightly better chance of a wish at early levels */
+            if (wish_available(20 - level_difficulty(&u.uz), NULL)) {
                 pline("Grateful for %s release, %s grants you a wish!",
                       mhis(mtmp), mhe(mtmp));
                 makewish();
@@ -142,8 +171,8 @@ dofindgem(void)
         pline("You spot a gem in the sparkling waters!");
     else
         pline("You feel a gem here!");
-    mksobj_at(rnd_class(DILITHIUM_CRYSTAL, LUCKSTONE - 1), level, u.ux, u.uy,
-              FALSE, FALSE);
+    mksobj_at(rnd_class(DILITHIUM_CRYSTAL, LUCKSTONE - 1, rng_random_gem),
+              level, u.ux, u.uy, FALSE, FALSE, rng_main);
     SET_FOUNTAIN_LOOTED(u.ux, u.uy);
     newsym(u.ux, u.uy);
     exercise(A_WIS, TRUE);      /* a discovery! */
@@ -153,7 +182,8 @@ void
 dryup(xchar x, xchar y, boolean isyou)
 {
     if (IS_FOUNTAIN(level->locations[x][y].typ) &&
-        (!rn2(3) || FOUNTAIN_IS_WARNED(x, y))) {
+        (!rn2_on_rng(3, isyou ? rng_fountain_result : rng_main) ||
+         FOUNTAIN_IS_WARNED(x, y))) {
         if (isyou && in_town(x, y) && !FOUNTAIN_IS_WARNED(x, y)) {
             struct monst *mtmp;
 
@@ -200,7 +230,8 @@ drinkfountain(void)
 {
     /* What happens when you drink from a fountain? */
     boolean mgkftn = (level->locations[u.ux][u.uy].blessedftn == 1);
-    int fate = rnd(30);
+    int fate = rn2_on_rng(30, (mgkftn && u.uluck >= 0) ?
+                          rng_fountain_magic : rng_fountain_result);
 
     if (Levitation) {
         floating_above("fountain");
@@ -237,62 +268,24 @@ drinkfountain(void)
         if (mgkftn)
             return;
     } else {
+        /* note: must match dipfountain() so that wishes and the like line up
+           between dippers and quaffers */
         switch (fate) {
-
-        case 19:       /* Self-knowledge */
-
-            pline("You feel self-knowledgeable...");
-            win_pause_output(P_MESSAGE);
-            enlightenment(0);
-            exercise(A_WIS, TRUE);
-            pline("The feeling subsides.");
-            break;
-
-        case 20:       /* Foul water */
-
-            pline("The water is foul!  You gag and vomit.");
+        case 16:       /* Curse items */ 
+        {
+            struct obj *obj;
+            
+            pline("This water's no good!");
             morehungry(rn1(20, 11));
-            vomit();
-            break;
-
-        case 21:       /* Poisonous */
-
-            pline("The water is contaminated!");
-            if (Poison_resistance) {
-                pline("Perhaps it is runoff from the nearby %s farm.",
-                      fruitname(FALSE));
-                losehp(rnd(4),
-                       killer_msg(DIED, "an unrefrigerated sip of juice"));
-                break;
-            }
-            losestr(rn1(4, 3));
-            losehp(rnd(10), killer_msg(DIED, "contaminated water"));
             exercise(A_CON, FALSE);
+            for (obj = invent; obj; obj = obj->nobj)
+                if (!rn2(5))
+                    curse(obj);
             break;
-
-        case 22:       /* Fountain of snakes! */
-
-            dowatersnakes();
-            break;
-
-        case 23:       /* Water demon */
-            dowaterdemon();
-            break;
-
-        case 24:       /* Curse an item */  {
-                struct obj *obj;
-
-                pline("This water's no good!");
-                morehungry(rn1(20, 11));
-                exercise(A_CON, FALSE);
-                for (obj = invent; obj; obj = obj->nobj)
-                    if (!rn2(5))
-                        curse(obj);
-                break;
-            }
-
-        case 25:       /* See invisible */
-
+        }
+        /* 17, 18, 19, 20 are uncurse effects in dipfountain(); match them
+           against good effects in drinkfountain() */
+        case 17:       /* See invisible */
             if (Blind) {
                 if (Invisible) {
                     pline("You feel transparent.");
@@ -308,42 +301,65 @@ drinkfountain(void)
             newsym(u.ux, u.uy);
             exercise(A_WIS, TRUE);
             break;
-
-        case 26:       /* See Monsters */
-
+        case 18:       /* See monsters */
             monster_detect(NULL, 0);
             exercise(A_WIS, TRUE);
             break;
-
-        case 27:       /* Find a gem in the sparkling waters. */
-
+        case 19:       /* Self-knowledge */
+            pline("You feel self-knowledgeable...");
+            win_pause_output(P_MESSAGE);
+            enlightenment(0);
+            exercise(A_WIS, TRUE);
+            pline("The feeling subsides.");
+            break;
+        case 20:       /* Scare monsters */ 
+        {
+            struct monst *mtmp;
+            
+            pline("This water gives you bad breath!");
+            for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
+                if (!DEADMONSTER(mtmp))
+                    monflee(mtmp, 0, FALSE, FALSE);
+            break;
+        }
+        case 21:       /* Water demon */
+            dowaterdemon();
+            break;
+        case 22:       /* Water nymph */
+            dowaternymph();
+            break;
+        case 23:       /* Fountain of snakes! */
+            dowatersnakes();
+            break;
+        case 24:       /* Find a gem in the sparkling waters. */
             if (!FOUNTAIN_IS_LOOTED(u.ux, u.uy)) {
                 dofindgem();
                 break;
             }
-
-        case 28:       /* Water Nymph */
-
-            dowaternymph();
-            break;
-
-        case 29:       /* Scare */  {
-                struct monst *mtmp;
-
-                pline("This water gives you bad breath!");
-                for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon)
-                    if (!DEADMONSTER(mtmp))
-                        monflee(mtmp, 0, FALSE, FALSE);
-            }
-            break;
-
-        case 30:       /* Gushing forth in this room */
-
+        case 25:       /* Gushing forth in this room */
             dogushforth(TRUE);
             break;
-
+        case 26:       /* Poisonous; strange tingling in dipfountain */
+            pline("The water is contaminated!");
+            if (Poison_resistance) {
+                pline("Perhaps it is runoff from the nearby %s farm.",
+                      fruitname(FALSE));
+                losehp(rnd(4),
+                       killer_msg(DIED, "an unrefrigerated sip of juice"));
+                break;
+            }
+            losestr(rn1(4, 3));
+            losehp(rnd(10), killer_msg(DIED, "contaminated water"));
+            exercise(A_CON, FALSE);
+            break;
+            /* 27 is a sudden chill (no effect) in dipfountain */
+        case 28:       /* Foul water; lose gold in dipfountain */
+            pline("The water is foul!  You gag and vomit.");
+            morehungry(rn1(20, 11));
+            vomit();
+            break;
+            /* 29 is gain money in dipfountain */
         default:
-
             pline("This tepid water is tasteless.");
             break;
         }
@@ -361,8 +377,8 @@ dipfountain(struct obj *obj)
 
     /* Don't grant Excalibur when there's more than one object.  */
     /* (quantity could be > 1 if merged daggers got polymorphed) */
-    if (obj->otyp == LONG_SWORD && obj->quan == 1L && u.ulevel >= 5 && !rn2(6)
-        && !obj->oartifact &&
+    if (obj->otyp == LONG_SWORD && obj->quan == 1L && u.ulevel >= 5 &&
+        !obj->oartifact && !rn2_on_rng(6, rng_excalibur) &&
         !exist_artifact(LONG_SWORD, artiname(ART_EXCALIBUR))) {
 
         if (u.ualign.type != A_LAWFUL) {
@@ -404,7 +420,7 @@ dipfountain(struct obj *obj)
         return;
     }
 
-    switch (rnd(30)) {
+    switch (rn2_on_rng(30, rng_fountain_result)) {
     case 16:   /* Curse the item */
         curse(obj);
         break;
@@ -479,9 +495,8 @@ dipfountain(struct obj *obj)
         if (FOUNTAIN_IS_LOOTED(u.ux, u.uy))
             break;
         SET_FOUNTAIN_LOOTED(u.ux, u.uy);
-        mkgold((long)
-               (rnd((dunlevs_in_dungeon(&u.uz) - dunlev(&u.uz) + 1) * 2) + 5),
-               level, u.ux, u.uy);
+        mkgold((rnd((dunlevs_in_dungeon(&u.uz) - dunlev(&u.uz) + 1) * 2) + 5),
+               level, u.ux, u.uy, rng_main);
         if (!Blind)
             pline("Far below you, you see coins glistening in the water.");
         exercise(A_WIS, TRUE);
@@ -512,7 +527,7 @@ drinksink(void)
         floating_above("sink");
         return;
     }
-    switch (rn2(20)) {
+    switch (rn2_on_rng(20, rng_sink_quaff)) {
     case 0:
         pline("You take a sip of very cold water.");
         break;
@@ -539,7 +554,7 @@ drinksink(void)
         break;
     case 4:
         do {
-            otmp = mkobj(level, POTION_CLASS, FALSE);
+            otmp = mkobj(level, POTION_CLASS, FALSE, rng_sink_quaff);
             if (otmp->otyp == POT_WATER) {
                 obfree(otmp, NULL);
                 otmp = NULL;
@@ -557,7 +572,7 @@ drinksink(void)
     case 5:
         if (!(level->locations[u.ux][u.uy].looted & S_LRING)) {
             pline("You find a ring in the sink!");
-            mkobj_at(RING_CLASS, level, u.ux, u.uy, TRUE);
+            mkobj_at(RING_CLASS, level, u.ux, u.uy, TRUE, rng_sink_ring);
             level->locations[u.ux][u.uy].looted |= S_LRING;
             exercise(A_WIS, TRUE);
             newsym(u.ux, u.uy);

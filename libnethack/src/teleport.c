@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-12-24 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -17,6 +17,9 @@ static void mvault_tele(struct monst *);
  *
  * This function will only look at mtmp->mdat, so makemon, mplayer, etc can
  * call it to generate new monster positions with fake monster structures.
+ *
+ * This function might be called during level generation, so should return
+ * deterministic results.
  */
 boolean
 goodpos(struct level *lev, int x, int y, struct monst *mtmp, unsigned gpflags)
@@ -54,11 +57,11 @@ goodpos(struct level *lev, int x, int y, struct monst *mtmp, unsigned gpflags)
         mdat = mtmp->data;
         if (is_pool(lev, x, y) && !ignorewater) {
             if (mtmp == &youmonst)
-                return ! !(HLevitation || Flying || Wwalking || Swimming ||
-                           Amphibious);
+                return !!(HLevitation || Flying || Wwalking || Swimming ||
+                          Amphibious);
             else
                 return (is_flyer(mdat) || is_swimmer(mdat) || is_clinger(mdat));
-        } else if (mdat->mlet == S_EEL && rn2(13) && !ignorewater) {
+        } else if (mdat->mlet == S_EEL && !ignorewater) {
             return FALSE;
         } else if (is_lava(lev, x, y)) {
             if (mtmp == &youmonst)
@@ -90,6 +93,8 @@ goodpos(struct level *lev, int x, int y, struct monst *mtmp, unsigned gpflags)
  * position to (xx,yy).  Do so in successive square rings around (xx,yy).
  * If there is more than one valid positon in the ring, choose one randomly.
  * Return TRUE and the position chosen when successful, FALSE otherwise.
+ *
+ * Always uses the main RNG.
  */
 boolean
 enexto(coord * cc, struct level * lev, xchar xx, xchar yy,
@@ -349,7 +354,8 @@ vault_tele(void)
     struct mkroom *croom = search_special(level, VAULT);
     coord c;
 
-    if (croom && somexy(level, croom, &c) && teleok(c.x, c.y, FALSE, FALSE)) {
+    if (croom && somexy(level, croom, &c, rng_main) &&
+        teleok(c.x, c.y, FALSE, FALSE)) {
         teleds(c.x, c.y, FALSE);
         return;
     }
@@ -406,6 +412,7 @@ tele_impl(boolean wizard_tele, boolean run_next_to_u)
     if (!Blinded)
         make_blinded(0L, FALSE);
 
+    /* when it happens at all, happens too often to be worth a custom RNG */
     if ((Uhave_amulet || On_W_tower_level(&u.uz)) && !rn2(3)) {
         pline("You feel disoriented for a moment.");
         return 1;
@@ -592,7 +599,8 @@ level_tele_impl(boolean wizard_tele)
                         if (!Uhave_amulet) {
                             struct obj *obj;
 
-                            obj = mksobj(level, AMULET_OF_YENDOR, TRUE, FALSE);
+                            obj = mksobj(level, AMULET_OF_YENDOR, TRUE, FALSE,
+                                         rng_main);
                             if (obj) {
                                 addinv(obj);
                                 dest = msgcat(dest, " with the amulet");
@@ -900,7 +908,7 @@ rloc_to(struct monst *mtmp, int x, int y)
     update_monster_region(mtmp);
 
     if (mtmp->wormno)   /* now put down tail */
-        place_worm_tail_randomly(mtmp, x, y);
+        place_worm_tail_randomly(mtmp, x, y, rng_main);
 
     if (u.ustuck == mtmp) {
         if (Engulfed) {
@@ -979,7 +987,7 @@ mvault_tele(struct monst *mtmp)
     struct mkroom *croom = search_special(level, VAULT);
     coord c;
 
-    if (croom && somexy(level, croom, &c) &&
+    if (croom && somexy(level, croom, &c, rng_main) &&
         goodpos(level, c.x, c.y, mtmp, 0)) {
         rloc_to(mtmp, c.x, c.y);
         return;
@@ -1165,7 +1173,7 @@ random_teleport_level(void)
 {
     int nlev, max_depth, min_depth, cur_depth = (int)depth(&u.uz);
 
-    if (!rn2(5) || Is_knox(&u.uz))
+    if (Is_knox(&u.uz) || !rn2_on_rng(5, rng_levport_results))
         return cur_depth;
 
     if (In_endgame(&u.uz))      /* only happens in wizmode */
@@ -1194,7 +1202,8 @@ random_teleport_level(void)
 
     /* Get a random value relative to the current dungeon */
     /* Range is 1 to current+3, current not counting */
-    nlev = rn2(cur_depth + 3 - min_depth) + min_depth;
+    nlev = rn2_on_rng(cur_depth + 3 - min_depth, rng_levport_results) +
+        min_depth;
     if (nlev >= cur_depth)
         nlev++;
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-18 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -161,15 +161,15 @@ dosit(const struct nh_cmd_arg *arg)
     } else if (IS_THRONE(typ)) {
 
         pline(sit_message, defexplain[S_throne]);
-        if (rnd(6) > 4) {
-            switch (rnd(13)) {
+        if (!rn2_on_rng(3, rng_throne_result)) {
+            switch (1 + rn2_on_rng(13, rng_throne_result)) {
             case 1:
-                attrib = rn2(A_MAX);
+                attrib = rn2_on_rng(A_MAX, rng_throne_result);
                 adjattrib(attrib, -rn1(4, 3), FALSE);
                 losehp(rnd(10), killer_msg(DIED, "a cursed throne"));
                 break;
             case 2:
-                adjattrib(rn2(A_MAX), 1, FALSE);
+                adjattrib(rn2_on_rng(A_MAX, rng_throne_result), 1, FALSE);
                 break;
             case 3:
                 pline("A%s electric shock shoots through your body!",
@@ -204,17 +204,17 @@ dosit(const struct nh_cmd_arg *arg)
                     makewish();
                 break;
             case 7:
-                {
-                    int cnt = rnd(10);
-
-                    pline("A voice echoes:");
-                    verbalize("Thy audience hath been summoned, %s!",
-                              u.ufemale ? "Dame" : "Sire");
-                    while (cnt--)
-                        makemon(courtmon(&u.uz), level, u.ux, u.uy,
-                                NO_MM_FLAGS);
-                    break;
-                }
+            {
+                int cnt = rn2_on_rng(10, rng_throne_result);
+                
+                pline("A voice echoes:");
+                verbalize("Thy audience hath been summoned, %s!",
+                          u.ufemale ? "Dame" : "Sire");
+                while (cnt--)
+                    makemon(courtmon(&u.uz, rng_main), level, u.ux, u.uy,
+                            NO_MM_FLAGS);
+                break;
+            }
             case 8:
                 pline("A voice echoes:");
                 verbalize("By thy Imperious order, %s...",
@@ -257,10 +257,11 @@ dosit(const struct nh_cmd_arg *arg)
                 break;
             case 12:
                 pline("You are granted an insight!");
-                if (invent) {
+                if (invent)
                     /* rn2(5) agrees w/seffects() */
-                    identify_pack(rn2(5));
-                }
+                    identify_pack(rn2_on_rng(5, rng_throne_result));
+                else
+                    rn2_on_rng(5, rng_throne_result); /* to match */
                 break;
             case 13:
                 pline("Your mind turns into a pretzel!");
@@ -277,7 +278,8 @@ dosit(const struct nh_cmd_arg *arg)
                 pline("You feel somehow out of place...");
         }
 
-        if (!rn2(3) && IS_THRONE(level->locations[u.ux][u.uy].typ)) {
+        if (!rn2_on_rng(3, rng_throne_result) &&
+            IS_THRONE(level->locations[u.ux][u.uy].typ)) {
             /* may have teleported */
             level->locations[u.ux][u.uy].typ = ROOM;
             pline("The throne vanishes in a puff of logic.");
@@ -297,7 +299,7 @@ dosit(const struct nh_cmd_arg *arg)
             return 0;
         }
 
-        uegg = mksobj(level, EGG, FALSE, FALSE);
+        uegg = mksobj(level, EGG, FALSE, FALSE, rng_main);
         uegg->spe = 1;
         uegg->quan = 1;
         uegg->owt = weight(uegg);
@@ -323,8 +325,12 @@ rndcurse(void)
     int cnt, onum;
     struct obj *otmp;
     static const char mal_aura[] = "You feel a malignant aura surround %s.";
+    boolean saddle;
 
-    if (uwep && (uwep->oartifact == ART_MAGICBANE) && rn2(20)) {
+    cnt = rn2_on_rng(6, rng_rndcurse);
+    saddle = !rn2_on_rng(4, rng_rndcurse);
+    if (rn2_on_rng(20, rng_rndcurse) &&
+        uwep && (uwep->oartifact == ART_MAGICBANE)) {
         pline(mal_aura, "the magic-absorbing blade");
         return;
     }
@@ -340,9 +346,17 @@ rndcurse(void)
             continue;
         nobj++;
     }
+
+    /*
+     * With neither MR nor half spell damage: cnt is 1-6
+     * With either MR or half spell damage:   cnt is 1-3
+     * With both MR and half spell damage:    cnt is 1-2
+     */
+    cnt /= (!!Antimagic + !!Half_spell_damage + 1);
+    cnt++;
+
     if (nobj) {
-        for (cnt = rnd(6 / ((! !Antimagic) + (! !Half_spell_damage) + 1));
-             cnt > 0; cnt--) {
+        for (; cnt > 0; cnt--) {
             onum = rnd(nobj);
             for (otmp = invent; otmp; otmp = otmp->nobj) {
                 /* as above */
@@ -371,8 +385,7 @@ rndcurse(void)
     }
 
     /* treat steed's saddle as extended part of hero's inventory */
-    if (u.usteed && !rn2(4) &&
-        (otmp = which_armor(u.usteed, os_saddle)) != 0 &&
+    if (saddle && u.usteed && (otmp = which_armor(u.usteed, os_saddle)) != 0 &&
         !otmp->cursed) { /* skip if already cursed */
         if (otmp->blessed)
             unbless(otmp);
@@ -449,6 +462,7 @@ mrndcurse(struct monst *mtmp)
 void
 attrcurse(void)
 {
+    /* probably too rare to benefit from a custom RNG */
     switch (rnd(11)) {
     case 1:
         if (HFire_resistance & INTRINSIC) {

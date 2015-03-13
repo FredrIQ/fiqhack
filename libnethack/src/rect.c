@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-04-05 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) 1990 by Jean-Christophe Collet  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -20,6 +20,7 @@ static boolean intersect(struct nhrect *, struct nhrect *, struct nhrect *);
 #define XLIM    4
 #define YLIM    3
 
+static enum rng rect_rng;
 static struct nhrect rect[MAXRECT + 1];
 static int rect_cnt;
 
@@ -29,12 +30,13 @@ static int rect_cnt;
  */
 
 void
-init_rect(void)
+init_rect(enum rng rng)
 {
     rect_cnt = 1;
     rect[0].lx = rect[0].ly = 0;
     rect[0].hx = COLNO - 1;
     rect[0].hy = ROWNO - 1;
+    rect_rng = rng;
 }
 
 /*
@@ -86,7 +88,7 @@ get_rect(struct nhrect *r)
 struct nhrect *
 rnd_rect(void)
 {
-    return rect_cnt > 0 ? &rect[rn2(rect_cnt)] : 0;
+    return rect_cnt > 0 ? &rect[rn2_on_rng(rect_cnt, rect_rng)] : 0;
 }
 
 /*

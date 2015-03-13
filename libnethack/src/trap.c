@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -20,7 +20,7 @@ static int try_lift(struct monst *, struct trap *, int, boolean);
 static int help_monster_out(struct monst *, struct trap *);
 static boolean thitm(int, struct monst *, struct obj *, int, boolean);
 static int mkroll_launch(struct trap *, struct level *lev, xchar, xchar, short,
-                         long);
+                         long, enum rng);
 static boolean isclearpath(struct level *lev, coord *, int, schar, schar);
 static int steedintrap(struct trap *, struct obj *);
 static boolean keep_saddle_with_steedcorpse(unsigned, struct obj *,
@@ -260,7 +260,7 @@ grease_protect(struct obj *otmp, const char *ostr, struct monst *victim)
 }
 
 struct trap *
-maketrap(struct level *lev, int x, int y, int typ)
+maketrap(struct level *lev, int x, int y, int typ, enum rng rng)
 {
     struct trap *ttmp;
     struct rm *loc;
@@ -294,10 +294,11 @@ maketrap(struct level *lev, int x, int y, int typ)
             struct monst *mtmp;
             struct obj *otmp, *statue;
 
-            statue =
-                mkcorpstat(STATUE, NULL, &mons[rndmonnum(&lev->z)], lev, x, y,
-                           FALSE);
-            mtmp = makemon(&mons[statue->corpsenm], lev, COLNO, ROWNO, NO_MM_FLAGS);
+            /* use the provided RNG for species but nothing else */
+            statue = mkcorpstat(STATUE, NULL, &mons[rndmonnum(&lev->z, rng)],
+                                lev, x, y, FALSE, rng_main);
+            mtmp = makemon(&mons[statue->corpsenm], lev, COLNO, ROWNO,
+                           NO_MM_FLAGS);
             if (!mtmp)
                 break;  /* should never happen */
             while (mtmp->minvent) {
@@ -311,7 +312,7 @@ maketrap(struct level *lev, int x, int y, int typ)
             break;
         }
     case ROLLING_BOULDER_TRAP: /* boulder will roll towards trigger */
-        mkroll_launch(ttmp, lev, x, y, BOULDER, 1L);
+        mkroll_launch(ttmp, lev, x, y, BOULDER, 1L, rng);
         break;
     case HOLE:
     case PIT:
@@ -369,9 +370,10 @@ fall_through(boolean td)
     if (Blind && Levitation && !In_sokoban(&u.uz))
         return;
 
-    do {
+    do
         newlevel++;
-    } while (!rn2(4) && newlevel < dunlevs_in_dungeon(&u.uz));
+    while (!rn2_on_rng(4, rng_trapdoor_result) &&
+           newlevel < dunlevs_in_dungeon(&u.uz));
 
     if (td) {
         struct trap *t = t_at(level, u.ux, u.uy);
@@ -479,9 +481,8 @@ animate_statue(struct obj *statue, xchar x, xchar y, int cause,
             ((mptr->geno & G_UNIQ) || mptr->msound == MS_GUARDIAN)) {
             /* Statues of quest guardians or unique monsters will not
                stone-to-flesh as the real thing. */
-            mon =
-                makemon(&mons[PM_DOPPELGANGER], level, x, y,
-                        NO_MINVENT | MM_NOCOUNTBIRTH | MM_ADJACENTOK);
+            mon = makemon(&mons[PM_DOPPELGANGER], level, x, y,
+                          NO_MINVENT | MM_NOCOUNTBIRTH | MM_ADJACENTOK);
             if (mon) {
                 /* makemon() will set mon->cham to CHAM_ORDINARY if hero is
                    wearing ring of protection from shape changers when
@@ -491,11 +492,8 @@ animate_statue(struct obj *statue, xchar x, xchar y, int cause,
                     newcham(mon, mptr, FALSE, FALSE);
             }
         } else
-            mon =
-                makemon(mptr, level, x, y,
-                        (cause ==
-                         ANIMATE_SPELL) ? (NO_MINVENT | MM_ADJACENTOK) :
-                        NO_MINVENT);
+            mon = makemon(mptr, level, x, y, (cause == ANIMATE_SPELL) ?
+                          (NO_MINVENT | MM_ADJACENTOK) : NO_MINVENT);
     }
 
     if (!mon) {
@@ -685,7 +683,7 @@ dotrap(struct trap *trap, unsigned trflags)
         trap->once = 1;
         seetrap(trap);
         pline("An arrow shoots out at you!");
-        otmp = mksobj(level, ARROW, TRUE, FALSE);
+        otmp = mksobj(level, ARROW, TRUE, FALSE, rng_main);
         otmp->quan = 1L;
         otmp->owt = weight(otmp);
         otmp->opoisoned = 0;
@@ -712,7 +710,7 @@ dotrap(struct trap *trap, unsigned trflags)
         trap->once = 1;
         seetrap(trap);
         pline("A little dart shoots out at you!");
-        otmp = mksobj(level, DART, TRUE, FALSE);
+        otmp = mksobj(level, DART, TRUE, FALSE, rng_main);
         otmp->quan = 1L;
         otmp->owt = weight(otmp);
         if (!rn2(6))
@@ -743,7 +741,7 @@ dotrap(struct trap *trap, unsigned trflags)
 
             trap->once = 1;
             seetrap(trap);
-            otmp = mksobj_at(ROCK, level, u.ux, u.uy, TRUE, FALSE);
+            otmp = mksobj_at(ROCK, level, u.ux, u.uy, TRUE, FALSE, rng_main);
             otmp->quan = 1L;
             otmp->owt = weight(otmp);
 
@@ -1598,7 +1596,7 @@ seetrap(struct trap *trap)
 
 static int
 mkroll_launch(struct trap *ttmp, struct level *lev, xchar x, xchar y,
-              short otyp, long ocount)
+              short otyp, long ocount, enum rng rng)
 {
     struct obj *otmp;
     int tmp;
@@ -1612,8 +1610,8 @@ mkroll_launch(struct trap *ttmp, struct level *lev, xchar x, xchar y,
 
     if (ttmp->ttyp == ROLLING_BOULDER_TRAP)
         mindist = 2;
-    distance = rn1(5, 4);       /* 4..8 away */
-    tmp = rn2(8);       /* randomly pick a direction to try first */
+    distance = 4 + rn2_on_rng(5, rng);       /* 4..8 away */
+    tmp = rn2_on_rng(8, rng);     /* randomly pick a direction to try first */
     while (distance >= mindist) {
         dx = xdir[tmp];
         dy = ydir[tmp];
@@ -1647,7 +1645,7 @@ mkroll_launch(struct trap *ttmp, struct level *lev, xchar x, xchar y,
         cc.x = bcc.x = x;
         cc.y = bcc.y = y;
     } else {
-        otmp = mksobj(lev, otyp, TRUE, FALSE);
+        otmp = mksobj(lev, otyp, TRUE, FALSE, rng_main);
         otmp->quan = ocount;
         otmp->owt = weight(otmp);
         place_object(otmp, lev, cc.x, cc.y);
@@ -1774,7 +1772,7 @@ mintrap(struct monst *mtmp)
                 break;
             }
             trap->once = 1;
-            otmp = mksobj(lev, ARROW, TRUE, FALSE);
+            otmp = mksobj(lev, ARROW, TRUE, FALSE, rng_main);
             otmp->quan = 1L;
             otmp->owt = weight(otmp);
             otmp->opoisoned = 0;
@@ -1794,7 +1792,7 @@ mintrap(struct monst *mtmp)
                 break;
             }
             trap->once = 1;
-            otmp = mksobj(lev, DART, TRUE, FALSE);
+            otmp = mksobj(lev, DART, TRUE, FALSE, rng_main);
             otmp->quan = 1L;
             otmp->owt = weight(otmp);
             if (!rn2(6))
@@ -1815,7 +1813,7 @@ mintrap(struct monst *mtmp)
                 break;
             }
             trap->once = 1;
-            otmp = mksobj(lev, ROCK, TRUE, FALSE);
+            otmp = mksobj(lev, ROCK, TRUE, FALSE, rng_main);
             otmp->quan = 1L;
             otmp->owt = weight(otmp);
             if (in_sight)
@@ -2604,8 +2602,12 @@ domagictrap(void)
             pline("You see a flash of light!");
         } else
             You_hear("a deafening roar!");
+        /* Use the "create monster used by monster" RNG for the species; the
+           other option is the "random monster generation on this level" RNG,
+           but I don't like that one as much; it's rather about what we want to
+           keep consistency with */
         while (cnt--)
-            makemon(NULL, level, u.ux, u.uy, NO_MM_FLAGS);
+            makemon(NULL, level, u.ux, u.uy, MM_CREATEMONSTER | MM_CMONSTER_M);
     } else
         switch (fate) {
 
@@ -3172,7 +3174,7 @@ untrap_prob(struct trap *ttmp)
 void
 cnv_trap_obj(struct level *lev, int otyp, int cnt, struct trap *ttmp)
 {
-    struct obj *otmp = mksobj(lev, otyp, TRUE, FALSE);
+    struct obj *otmp = mksobj(lev, otyp, TRUE, FALSE, rng_main);
 
     otmp->quan = cnt;
     otmp->owt = weight(otmp);
@@ -3267,7 +3269,8 @@ try_disarm(struct trap *ttmp, boolean force_failure, schar dx, schar dy)
                         killed(mtmp);
                 } else if (ttype == WEB) {
                     if (!webmaker(youmonst.data)) {
-                        struct trap *ttmp2 = maketrap(level, u.ux, u.uy, WEB);
+                        struct trap *ttmp2 =
+                            maketrap(level, u.ux, u.uy, WEB, rng_main);
 
                         if (ttmp2) {
                             pline("The webbing sticks to you. You're caught "

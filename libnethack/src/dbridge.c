@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) 1989 by Jean-Christophe Collet                   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -448,8 +448,9 @@ e_missed(struct entity *etmp, boolean chunks)
     if (is_db_wall(etmp->ex, etmp->ey))
         misses -= 3;    /* less airspace */
 
+    enum rng rng = is_u(etmp) ? rng_survive_dbridge : rng_main;
 
-    return (boolean) ((misses >= rnd(8)) ? TRUE : FALSE);
+    return (boolean) ((misses > rn2_on_rng(8, rng)) ? TRUE : FALSE);
 }
 
 /*
@@ -474,7 +475,9 @@ e_jumps(struct entity *etmp)
     if (is_db_wall(etmp->ex, etmp->ey))
         tmp -= 2;       /* less room to maneuver */
 
-    return (boolean) ((tmp >= rnd(10)) ? TRUE : FALSE);
+    enum rng rng = is_u(etmp) ? rng_survive_dbridge : rng_main;
+
+    return (boolean) ((tmp > rn2_on_rng(10, rng)) ? TRUE : FALSE);
 }
 
 static void

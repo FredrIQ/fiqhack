@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-18 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) J. C. Collet, M. Stephenson and D. Cohrs, 1992   */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -43,8 +43,8 @@ init_fill(struct level *lev, schar bg_typ, schar fg_typ)
     limit = (WIDTH * HEIGHT * 2) / 5;
     count = 0;
     while (count < limit) {
-        i = rnd(WIDTH - 1);
-        j = rnd(HEIGHT - 1);
+        i = 1 + mklev_rn2(WIDTH - 1, lev);
+        j = 1 + mklev_rn2(HEIGHT - 1, lev);
         if (lev->locations[i][j].typ == bg_typ) {
             lev->locations[i][j].typ = fg_typ;
             count++;
@@ -276,6 +276,8 @@ join_map(struct level *lev, schar bg_typ, schar fg_typ)
     int sx, sy;
     coord sm, em;
 
+    enum rng rng = rng_for_level(&lev->z);
+
     /* first, use flood filling to find all of the regions that need joining */
     for (i = 1; i <= WIDTH; i++)
         for (j = 1; j < HEIGHT; j++) {
@@ -317,7 +319,7 @@ joinm:
     for (croom = &lev->rooms[0], croom2 = croom + 1;
          croom2 < &lev->rooms[lev->nroom];) {
         /* pick random starting and end locations for "corridor" */
-        if (!somexy(lev, croom, &sm) || !somexy(lev, croom2, &em)) {
+        if (!somexy(lev, croom, &sm, rng) || !somexy(lev, croom2, &em, rng)) {
             /* ack! -- the level is going to be busted */
             /* arbitrarily pick centers of both rooms and hope for the best */
             impossible("No start/end room loc in join_map.");
@@ -332,7 +334,8 @@ joinm:
         /* choose next region to join */
         /* only increment croom if croom and croom2 are non-overlapping */
         if (croom2->lx > croom->hx ||
-            ((croom2->ly > croom->hy || croom2->hy < croom->ly) && rn2(3))) {
+            ((croom2->ly > croom->hy || croom2->hy < croom->ly) &&
+             mklev_rn2(3, lev))) {
             croom = croom2;
         }
         croom2++;       /* always increment the next room */
@@ -438,7 +441,7 @@ remove_room(struct level *lev, unsigned roomno)
 #define N_P3_ITER 2     /* tune map smoothing via this value */
 
 void
-mkmap(struct level *lev, lev_init * init_lev)
+mkmap(struct level *lev, lev_init *init_lev)
 {
     schar bg_typ = init_lev->bg, fg_typ = init_lev->fg;
     boolean smooth = init_lev->smoothed, join = init_lev->joined;
@@ -446,7 +449,8 @@ mkmap(struct level *lev, lev_init * init_lev)
     int i;
 
     if (lit < 0)
-        lit = (rnd(1 + abs(depth(&u.uz))) < 11 && rn2(77)) ? 1 : 0;
+        lit = (mklev_rn2(1 + abs(depth(&u.uz)), lev) < 10 &&
+               mklev_rn2(77, lev)) ? 1 : 0;
 
     new_locations = malloc((WIDTH + 1) * HEIGHT);
 

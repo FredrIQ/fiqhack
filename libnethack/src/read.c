@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -238,6 +238,7 @@ recharge(struct obj *obj, int curse_bless)
 
         /* 
          * Recharging might cause wands to explode.
+         *
          *  v = number of previous recharges
          *        v = percentage chance to explode on this attempt
          *                v = cumulative odds for exploding
@@ -249,6 +250,10 @@ recharge(struct obj *obj, int curse_bless)
          *  5 :  36.44   53.62
          *  6 :  62.97   82.83
          *  7 : 100     100
+         *
+         * No custom RNG, because we can't know whether the user will recharge
+         * the same wand repeatedly, or recharge a number of different wands
+         * separately, or a mixture, and this woud throw off the RNG.
          */
         n = (int)obj->recharged;
         if (n > 0 && (obj->otyp == WAN_WISHING ||
@@ -583,7 +588,7 @@ maybe_tame(struct monst *mtmp, struct obj *sobj)
 }
 
 int
-seffects(struct obj *sobj, boolean * known)
+seffects(struct obj *sobj, boolean *known)
 {
     int cval;
     boolean confused = (Confusion != 0);
@@ -642,6 +647,9 @@ seffects(struct obj *sobj, boolean * known)
             if (Blind)
                 same_color = FALSE;
 
+            /* a custom RNG for this would only give marginal benefits:
+               intentional overenchantment attemps are rare */
+
             /* KMH -- catch underflow */
             s = sobj->cursed ? -otmp->spe : otmp->spe;
             if (s > (special_armor ? 5 : 3) && rn2(s)) {
@@ -655,9 +663,19 @@ seffects(struct obj *sobj, boolean * known)
                 useup(otmp);
                 break;
             }
+
+            /* OTOH, a custom RNG for /this/ is useful. The main balance
+               implication here is whether armour goes to 5 or stops at 4. As
+               such, if we're enchanting from 2 or 3 precisely, and the
+               resulting spe is 4 or 5 precisely, we re-randomize which.
+               Exception: an uncursed enchant from 3 always goes to 4 (we never
+               bump it up to 5). */
             s = sobj->cursed ? -1 :
                 otmp->spe >= 9 ? (rn2(otmp->spe) == 0) :
-                sobj-> blessed ? rnd(3 - otmp->spe / 3) : 1;
+                sobj->blessed ? rnd(3 - otmp->spe / 3) : 1;
+            if ((otmp->spe == 2 || otmp->spe == 3) && sobj->blessed &&
+                (otmp->spe + s == 4 || otmp->spe + s == 5))
+                s = 4 + rn2_on_rng(2, rng_armor_ench_4_5) - otmp->spe;
             if (s < 0 && otmp->unpaid)
                 costly_damage_obj(otmp);
             if (s >= 0 && otmp->otyp >= GRAY_DRAGON_SCALES &&
@@ -877,7 +895,7 @@ seffects(struct obj *sobj, boolean * known)
                     if (sobj->blessed || wornmask || obj->otyp == LOADSTONE ||
                         (obj->otyp == LEASH && obj->leashmon)) {
                         if (confused)
-                            blessorcurse(obj, 2);
+                            blessorcurse(obj, 2, rng_main);
                         else
                             uncurse(obj);
                     }
@@ -918,11 +936,14 @@ seffects(struct obj *sobj, boolean * known)
                 pline("Your %s as good as new!",
                       aobjnam(uwep, Blind ? "feel" : "look"));
             }
-        } else
+        } else {
+            /* don't bother with a custom RNG here, 6/7 on weapons is much less
+               balance-affecting than 4/5 on armour */
             return !chwepon(sobj,
                             sobj->cursed ? -1 : !uwep ? 1 :
                             uwep->spe >= 9 ? (rn2(uwep->spe) == 0) :
                             sobj->blessed ? rnd(3 - uwep->spe / 3) : 1);
+        }
         break;
     case SCR_TAMING:
     case SPE_CHARM_MONSTER:
@@ -980,7 +1001,7 @@ seffects(struct obj *sobj, boolean * known)
             return 1;   /* nothing detected */
         break;
     case SPE_IDENTIFY:
-        cval = rn2(5);
+        cval = rn2_on_rng(25, rng_id_count) / 5;
         goto id;
     case SCR_IDENTIFY:
         /* known = TRUE; */
@@ -988,13 +1009,15 @@ seffects(struct obj *sobj, boolean * known)
             pline("You identify this as an identify scroll.");
         else
             pline("This is an identify scroll.");
-        if (sobj->blessed || (!sobj->cursed && !rn2(5))) {
-            cval = rn2(5);
-            /* Note: if rn2(5)==0, identify all items */
-            if (cval == 1 && sobj->blessed && Luck > 0)
-                ++cval;
-        } else
-            cval = 1;
+
+        cval = rn2_on_rng(25, rng_id_count);
+        if (sobj->cursed || (!sobj->blessed && cval % 5))
+            cval = 1;  /* cursed 100%, uncursed 80% chance of 1 */
+        else if (sobj->blessed && cval / 5 == 1 && Luck > 0)
+            cval = 2;  /* with positive luck, interpret 1 as 2 when blessed */
+        else
+            cval /= 5; /* otherwise, randomize all/1/2/3/4 items IDed */
+
         if (!objects[sobj->otyp].oc_name_known)
             more_experienced(0, 10);
         useup(sobj);
@@ -1141,9 +1164,8 @@ seffects(struct obj *sobj, boolean * known)
                             struct monst *mtmp;
 
                             /* Make the object(s) */
-                            otmp2 =
-                                mksobj(level, confused ? ROCK : BOULDER, FALSE,
-                                       FALSE);
+                            otmp2 = mksobj(level, confused ? ROCK : BOULDER,
+                                           FALSE, FALSE, rng_main);
                             if (!otmp2)
                                 continue;       /* Shouldn't happen */
                             otmp2->quan = confused ? rn1(5, 2) : 1;
@@ -1203,7 +1225,8 @@ seffects(struct obj *sobj, boolean * known)
                 struct obj *otmp2;
 
                 /* Okay, _you_ write this without repeating the code */
-                otmp2 = mksobj(level, confused ? ROCK : BOULDER, FALSE, FALSE);
+                otmp2 = mksobj(level, confused ? ROCK : BOULDER,
+                               FALSE, FALSE, rng_main);
                 if (!otmp2)
                     break;
                 otmp2->quan = confused ? rn1(5, 2) : 1;
@@ -1598,7 +1621,7 @@ do_genocide(int how)
             if (!strcmpi(buf, "none") || !strcmpi(buf, "nothing")) {
                 /* ... but no free pass if cursed */
                 if (!(how & REALLY)) {
-                    ptr = rndmonst(&u.uz);
+                    ptr = rndmonst(&u.uz, rng_main);
                     if (!ptr)
                         return; /* no message, like normal case */
                     mndx = monsndx(ptr);
@@ -1735,11 +1758,11 @@ punish(struct obj *sobj)
     if (amorphous(youmonst.data) || is_whirly(youmonst.data) ||
         unsolid(youmonst.data)) {
         pline("A ball and chain appears, then falls away.");
-        dropy(mkobj(level, BALL_CLASS, TRUE));
+        dropy(mkobj(level, BALL_CLASS, TRUE, rng_main));
         return;
     }
-    uchain = mkobj(level, CHAIN_CLASS, TRUE);
-    uball = mkobj(level, BALL_CLASS, TRUE);
+    uchain = mkobj(level, CHAIN_CLASS, TRUE, rng_main);
+    uball = mkobj(level, BALL_CLASS, TRUE, rng_main);
     uball->spe = 1;     /* special ball (see save) */
 
     /* 
@@ -1860,8 +1883,9 @@ create_particular(const struct nh_cmd_arg *arg)
         cant_create(&which, FALSE);
         whichpm = &mons[which];
         for (i = 0; i < quan; i++) {
+            /* no reason to use a custom RNG for wizmode commands */
             if (monclass != MAXMCLASSES)
-                whichpm = mkclass(&u.uz, monclass, 0);
+                whichpm = mkclass(&u.uz, monclass, 0, rng_main);
             if (maketame) {
                 mtmp = makemon(whichpm, level, u.ux, u.uy, MM_EDOG);
                 if (mtmp) {

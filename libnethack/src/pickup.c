@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-06-01 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1347,8 +1347,8 @@ lootcont:
                     add_to_container(coffers, goldob);
                     coffers->owt = weight(coffers);
                 } else {
-                    struct monst *mon = makemon(courtmon(&u.uz), level,
-                                                u.ux, u.uy, NO_MM_FLAGS);
+                    struct monst *mon = makemon(courtmon(&u.uz, rng_main),
+                                                level, u.ux, u.uy, NO_MM_FLAGS);
 
                     if (mon) {
                         add_to_minv(mon, goldob);
@@ -1510,7 +1510,10 @@ mbag_explodes(struct obj *obj, int depthin)
         return 2;
     }
 
-    /* odds: 1/1, 2/2, 3/4, 4/8, 5/16, 6/32, 7/64, 8/128, 9/128, 10/128,... */
+    /* odds: 1/1, 2/2, 3/4, 4/8, 5/16, 6/32, 7/64, 8/128, 9/128, 10/128,...
+
+       TODO: Might potentially use a custom RNG here, but it's too rare an
+       action to be worth it. */
     if ((Is_mbag(obj) || obj->otyp == WAN_CANCELLATION) &&
         (rn2(1 << (depthin > 7 ? 7 : depthin)) <= depthin))
         return TRUE;
@@ -1778,13 +1781,18 @@ observe_quantum_cat(struct obj *box)
     if (get_obj_location(box, &ox, &oy, 0))
         box->ox = ox, box->oy = oy;     /* in case it's being carried */
 
-    /* this isn't really right, since any form of observation (telepathic or
+    /* This isn't really right, since any form of observation (telepathic or
        monster/object/food detection) ought to force the determination of alive 
        vs dead state; but basing it just on opening the box is much simpler to
-       cope with */
-    livecat =
-        rn2(2) ? makemon(&mons[PM_HOUSECAT], level, box->ox, box->oy,
-                         NO_MINVENT) : 0;
+       cope with.
+
+       This /must/ be on rng_main: the whole point is that the fate of the cat
+       isn't determined until you open the box. (To really do things correctly,
+       we should do an entropy collection on rng_main just beforehand, but
+       that'd require logging in the save, which would be a bunch of extra
+       complexity.) */
+    livecat = rn2(2) ?
+        makemon(&mons[PM_HOUSECAT], level, box->ox, box->oy, NO_MINVENT) : 0;
     if (livecat) {
         livecat->mpeaceful = 1;
         set_malign(livecat);
@@ -1856,8 +1864,10 @@ use_container(struct obj *obj, int held)
         used = 1;
         quantum_cat = TRUE;     /* for adjusting "it's empty" message */
     }
-    /* Count the number of contained objects. Sometimes toss objects if */
-    /* a cursed magic bag.  */
+    /* Count the number of contained objects. Sometimes toss objects if a cursed
+       magic bag. Don't use a custom RNG: we can't know how many items were
+       placed into the bag (and multiple games can't get the same bones file, so
+       there's no point in synchronizing that either). */
     for (curr = obj->cobj; curr; curr = otmp) {
         otmp = curr->nobj;
         if (Is_mbag(obj) && obj->cursed && !rn2(13)) {

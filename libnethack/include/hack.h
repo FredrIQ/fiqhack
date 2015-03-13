@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-22 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -133,21 +133,33 @@ struct distmap_state {
 };
 
 /* flags to control makemon() and/or goodpos() */
-# define NO_MM_FLAGS      0x00  /* use this rather than plain 0 */
-# define NO_MINVENT       0x01  /* suppress minvent when creating mon */
-# define MM_NOWAIT        0x02  /* don't set STRAT_WAITMASK flags */
-# define MM_EDOG          0x04  /* add edog structure */
-# define MM_EMIN          0x08  /* add emin structure */
-# define MM_ANGRY         0x10  /* monster is created angry */
-# define MM_NONAME        0x20  /* monster is not christened */
-# define MM_NOCOUNTBIRTH  0x40  /* don't increment born counter (for revival) */
-# define MM_IGNOREWATER   0x80  /* ignore water when positioning */
-# define MM_ADJACENTOK    0x100 /* it is acceptable to use adjacent
-                                   coordinates */
-# define MM_IGNOREMONST   0x200 /* this location can contain a monster already;
-                                   don't use in makemon() for obvious reasons */
-# define MM_IGNOREDOORS   0x400 /* assume all doors are open and boulders don't
-                                   block squares; goodpos() only for now */
+# define NO_MM_FLAGS      0x0000 /* use this rather than plain 0 */
+# define NO_MINVENT       0x0001 /* suppress minvent when creating mon */
+# define MM_NOWAIT        0x0002 /* don't set STRAT_WAITMASK flags */
+# define MM_EDOG          0x0004 /* add edog structure */
+# define MM_EMIN          0x0008 /* add emin structure */
+# define MM_ANGRY         0x0010 /* monster is created angry */
+# define MM_NONAME        0x0020 /* monster is not christened */
+# define MM_NOCOUNTBIRTH  0x0040 /* don't increment born counter (for
+                                  revival) */
+# define MM_IGNOREWATER   0x0080 /* ignore water when positioning */
+# define MM_ADJACENTOK    0x0100 /* it is acceptable to use adjacent
+                                    coordinates */
+# define MM_IGNOREMONST   0x0200 /* this location can contain a monster already;
+                                    don't use in makemon() for obvious
+                                    reasons */
+# define MM_IGNOREDOORS   0x0400 /* assume all doors are open and boulders don't
+                                    block squares; goodpos() only for now */
+# define MM_SPECIESLEVRNG 0x0800 /* generate monster species on the level's
+                                    generation RNG */
+# define MM_ALLLEVRNG     0x1000 /* generate all aspects of the monster on the
+                                    level's generation RNG (and do not take
+                                    any aspects of the player into account) */
+# define MM_CREATEMONSTER 0x2000 /* created by a "create monster" effect;
+                                    must be ORed with... */
+# define MM_CMONSTER_M    0x0800 /* ...created by monster, */
+# define MM_CMONSTER_U    0x1000 /* created by player, or */
+# define MM_CMONSTER_T    0x1800 /* either, but will be tamed after creation */
 
 /* special mhpmax value when loading bones monster to flag as extinct or
    genocided */
