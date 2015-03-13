@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-28 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -211,7 +211,7 @@ draw_status(struct nh_player_info *pi, nh_bool threeline)
         mainframe_color = CLR_RED;
 
     if (ui_flags.current_followmode != FM_PLAY)
-        mainframe_color = CLR_DARK_GRAY;     /* a hint that we can't write */
+        mainframe_color = CLR_BLACK;     /* a hint that we can't write */
 
     /* We change the frame color via palette manipulation, because it's awkward
        to correctly redraw otherwise. However, we don't want to do color

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-10 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -21,26 +21,31 @@ init_nhcolors(void)
 
     start_color();
 
-    /* Set up all color pairs. We now unconditionally use A_BOLD plus colors
-       0 to 7 foreground (0 to 6 background, because white backgrounds don't
-       render correctly on many terminals), with a total requirement of 56
-       pairs;  uncursed folds colors beyond 7 into bold anyway. */
+    /* Set up all color pairs. We now unconditionally use A_BOLD plus colors 0
+       to 7 foreground and background, with a total requirement of 64 pairs;
+       uncursed folds colors beyond 7 into bold anyway. Note that a white
+       background doesn't render correctly on some terminals, thus we use it
+       only for solid rock. */
     for (bg = 0; bg <= 7; bg++) {
 
         /* Do not set up background colors if we're low on color pairs. */
-        if (bg == 1 && COLOR_PAIRS < 57)
+        if (bg == 1 && COLOR_PAIRS < 65)
             break;
 
         /* For no background, use black; otherwise use the color from the color
            map. */
         bgColor = bg ? colorlist[bg] : COLOR_BLACK;
 
-        for (fg = 0; fg < 8; fg++) {
+        for (fg = 0; fg <= 7; fg++) {
 
-            /* Replace black with blue if darkgray is not set. */
+            /* Handle the darkgray setting. */
             fgColor = colorlist[fg];
-            if (fgColor == COLOR_BLACK && !settings.darkgray)
-                fgColor = COLOR_BLUE;
+            if (fgColor == COLOR_BLACK) {
+                if (settings.darkgray)
+                    fgColor = COLOR_BLACK | 8;
+                else
+                    fgColor = COLOR_BLUE;
+            }
 
             /* Replace foreground=background with black foreground. */
             if (fgColor == bgColor && fgColor != -1)
@@ -50,7 +55,7 @@ init_nhcolors(void)
         }
     }
 
-    /* If we have at least 58 colour pairs, then we use pair 57 for the main
+    /* If we have at least 66 colour pairs, then we use pair 57 for the main
        background frame; this allows us to change its color to warn about
        critical situations via palette changes (which saves having to do a
        bunch of complex redrawing). The default color of the frame is color 7
@@ -73,7 +78,7 @@ curses_color_attr(int nh_color, int bg_color)
         cattr |= A_BOLD;
     }
 
-    if (COLOR_PAIRS >= 57)
+    if (COLOR_PAIRS >= 65)
         color += bg_color * 8;
 
     cattr |= COLOR_PAIR(color);

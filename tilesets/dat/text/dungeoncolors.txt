@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2014-10-18
+! Last modified by Alex Smith, 2015-03-13
 ! NetHack may be freely redistributed. See license for details.
 !
 ! Copyright (C) 2014 Alex Smith
@@ -61,10 +61,10 @@ sub val sub questgoal walls *: red basechar
 
 ! Solid rock tiles
 
-solid rock: bggray ' '
-sub mine solid rock; sub bar sub questlocate solid rock; sub bar sub questfill2 solid rock; sub bar sub questgoal solid rock; sub cav sub questfill1 solid rock; sub cav sub questlocate solid rock; sub cav sub questfill2 solid rock: bgbrown ' '
-sub gehennom solid rock; sub val sub questgoal solid rock; sub mon sub questlocate solid rock; sub mon sub questfill2 solid rock; sub mon sub questgoal solid rock; sub pri sub questfill2 solid rock; sub pri sub questgoal solid rock; sub val sub questlocate solid rock; sub val sub questfill2 solid rock; sub val sub questgoal solid rock: bgred ' '
-sub ran sub questgoal solid rock; sub rog sub questgoal solid rock; sub val sub questfill1 solid rock: bgblue ' '
+solid rock: black bggray ' '
+sub mine solid rock; sub bar sub questlocate solid rock; sub bar sub questfill2 solid rock; sub bar sub questgoal solid rock; sub cav sub questfill1 solid rock; sub cav sub questlocate solid rock; sub cav sub questfill2 solid rock: black bgbrown ' '
+sub gehennom solid rock; sub val sub questgoal solid rock; sub mon sub questlocate solid rock; sub mon sub questfill2 solid rock; sub mon sub questgoal solid rock; sub pri sub questfill2 solid rock; sub pri sub questgoal solid rock; sub val sub questlocate solid rock; sub val sub questfill2 solid rock; sub val sub questgoal solid rock: black bgred ' '
+sub ran sub questgoal solid rock; sub rog sub questgoal solid rock; sub val sub questfill1 solid rock: black bgblue ' '
 
 ! Swamp water override
 
