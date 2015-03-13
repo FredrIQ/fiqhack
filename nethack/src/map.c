@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-11 */
+/* Last modified by Alex Smith, 2015-03-13 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -34,13 +34,27 @@ get_map_key(nh_bool place_cursor, nh_bool report_clicks,
 {
     int key = ERR;
 
-    if (context == krc_interrupt_long_action)
-        wtimeout(mapwin, settings.animation == ANIM_SLOW ? 300 : 50);
+    static int consecutive = 0;
+    static int last_x = 0;
+    static int last_y = 0;
+
+    if (context == krc_interrupt_long_action) {
+        consecutive++;
+        int timeout = settings.animation == ANIM_SLOW ? 5000 : 700;
+        wtimeout(mapwin, timeout / (consecutive + 10));
+    } else
+        consecutive = 0;
 
     if (player.x && place_cursor) {     /* x == 0 is not a valid coordinate */
         wmove(mapwin, player.y, player.x);
         nh_curs_set(1);
     }
+
+    if (player.x != last_x || player.y != last_y)
+        consecutive = 0;
+
+    last_x = player.x;
+    last_y = player.y;
 
     while (1) {
         key = nh_wgetch(mapwin, context);
