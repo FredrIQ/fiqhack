@@ -1322,7 +1322,7 @@ static const struct permonst *
 rndmonst_inner(const d_level *dlev, char class, int flags, enum rng rng)
 {
     const struct permonst *ptr = NULL;
-    int tryct = 500;
+    int tryct = 1500;
     int minmlev, zlevel, maxmlev;
 
     /* Select up to one monster that overrides soft checks. Currently, this is
@@ -1374,7 +1374,15 @@ rndmonst_inner(const d_level *dlev, char class, int flags, enum rng rng)
         if (ptr)
             return ptr;
 
-        int mndx = LOW_PM + rn2_on_rng(SPECIAL_PM - LOW_PM, rng);
+        int mndx;
+
+        /* Change to deterministic generation (from LOW_PM up to SPECIAL_PM)
+           once we're running low on tries */
+        if (tryct < SPECIAL_PM - LOW_PM)
+            mndx = SPECIAL_PM - 1 - tryct;
+        else
+            mndx = LOW_PM + rn2_on_rng(SPECIAL_PM - LOW_PM, rng);
+
         ptr = mons + mndx;
         geno = ptr->geno & ~flags;
 
