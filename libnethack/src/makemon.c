@@ -1322,7 +1322,7 @@ static const struct permonst *
 rndmonst_inner(const d_level *dlev, char class, int flags, enum rng rng)
 {
     const struct permonst *ptr = NULL;
-    int tryct = 1500;
+    int tryct = 1000;
     int minmlev, zlevel, maxmlev;
 
     /* Select up to one monster that overrides soft checks. Currently, this is
@@ -1348,6 +1348,21 @@ rndmonst_inner(const d_level *dlev, char class, int flags, enum rng rng)
     boolean elem_plane = In_endgame(dlev) && !Is_astralevel(dlev);
 
     int geno = ptr ? ptr->geno & ~flags : 0;
+
+    int lowest_legal = LOW_PM;
+    int beyond_highest_legal = SPECIAL_PM;
+
+    if (class) {
+        while (mons[lowest_legal].mlet != class) {
+            lowest_legal++;
+            if (lowest_legal == SPECIAL_PM)
+                panic("Tried to create monster of invalid class");
+        }
+        beyond_highest_legal = lowest_legal;
+        while (beyond_highest_legal < SPECIAL_PM &&
+               mons[beyond_highest_legal].mlet == class)
+            beyond_highest_legal++;
+    }
 
     while (--tryct) {
         /* Hard dungeon-based checks: these outright stop monsters generating */
@@ -1376,12 +1391,13 @@ rndmonst_inner(const d_level *dlev, char class, int flags, enum rng rng)
 
         int mndx;
 
-        /* Change to deterministic generation (from LOW_PM up to SPECIAL_PM)
-           once we're running low on tries */
-        if (tryct < SPECIAL_PM - LOW_PM)
-            mndx = SPECIAL_PM - 1 - tryct;
+        /* Change to deterministic generation (from_lowest_legal upwards) once
+           we're running low on tries */
+        if (tryct < beyond_highest_legal - lowest_legal)
+            mndx = beyond_highest_legal - 1 - tryct;
         else
-            mndx = LOW_PM + rn2_on_rng(SPECIAL_PM - LOW_PM, rng);
+            mndx = lowest_legal + rn2_on_rng(beyond_highest_legal -
+                                             lowest_legal, rng);
 
         ptr = mons + mndx;
         geno = ptr->geno & ~flags;
