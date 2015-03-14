@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-11 */
+/* Last modified by Alex Smith, 2015-03-14 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -225,7 +225,7 @@ static struct nh_cmd_desc builtin_commands[] = {
      CMD_UI | UICMD_OPTIONS},
     {"prevmsg", "list previously displayed messages", Ctrl('p'), 0,
      CMD_UI | UICMD_PREVMSG},
-    {"save", "save or quit the game", 'S', 0, CMD_UI | UICMD_DETACH},
+    {"save", "save or abandon the game", 'S', 0, CMD_UI | UICMD_DETACH},
     {"stop", "suspend to shell", Ctrl('z'), 0, CMD_UI | UICMD_STOP},
     {"togglepickup", "toggle the autopickup option", '@', 0,
      CMD_UI | UICMD_TOGGLEPICKUP},
@@ -743,7 +743,7 @@ show_mainmenu(nh_bool inside_another_command, nh_bool include_debug_commands)
     if (ui_flags.current_followmode != FM_REPLAY)
         add_menu_item(&menu, 2, "view a replay of this game", 0, FALSE);
     add_menu_item(&menu, 3, ui_flags.current_followmode == FM_PLAY ?
-                  "save or quit the game" : "stop viewing", 0, FALSE);
+                  "save or abandon the game" : "stop viewing", 0, FALSE);
     if (include_debug_commands)
         add_menu_item(&menu, 4, "(debug) crash the client", 0, FALSE);
 
@@ -804,7 +804,7 @@ save_menu(void)
     add_menu_txt(&menu, "you can resume the game later.", MI_NORMAL);
     add_menu_txt(&menu, "", MI_NORMAL);
 
-    add_menu_item(&menu, 2, "Quit the game.", '!', FALSE);
+    add_menu_item(&menu, 2, "Abandon the game.", '!', FALSE);
     add_menu_txt(&menu, "You will see your statistics, as if you had died;",
                  MI_NORMAL);
     add_menu_txt(&menu, "the save file will be deleted (although a replay",
