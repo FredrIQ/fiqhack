@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-14 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -913,7 +913,11 @@ makemon(const struct permonst *ptr, struct level *lev, int x, int y,
         !(mmflags & MM_CREATEMONSTER) ? species_rng : rng_main;
 
     if (stats_rng != rng_main && !in_mklev)
-        impossible("Using level gen RNG for monster stats but !in_mklev");
+        /* Astral is partially generated after the player's already there, thus
+           !in_mklev; this should scale on player stats, really, so there's no
+           huge problem there */
+        if (!Is_astralevel(&lev->z))
+            impossible("Using level gen RNG for monster stats but !in_mklev");
 
     /* if caller wants random location, do it here */
     if (x == COLNO && y == ROWNO) {
