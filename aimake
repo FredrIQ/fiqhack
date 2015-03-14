@@ -297,6 +297,12 @@ Note that this option is I<not> "sticky"; the value has to be given anew with
 every compilation, or it will revert to its default.  (In particular, it's not
 useful to give it alongside B<--config-only>.)
 
+Leading and trailing spaces in the option to C<--var> (or an environment
+variable) will be removed, and consecutive spaces will be collapsed to one
+space, because such extra whitespace is not typically intended to add the null
+string as an option.  aimake currently does not perform any other sort of
+shell unescaping on the values of these variables.
+
 =item B<-W> I<regexp>, B<--show-warnings>=I<regexp>
 
 Instead of compiling, output all error and warning messages that were obtained
@@ -8649,6 +8655,13 @@ for my $rulename (keys %{$config->{rules}}) {
 
             defined $clostring or $clostring = $opt_var{$envname};
             defined $clostring or $clostring = $ENV{$envname};
+
+            if (defined $clostring) {
+                $clostring =~ s/^ +//;
+                $clostring =~ s/ +$//;
+                $clostring =~ s/  +/ /g;
+            }
+
             defined $clostring or $clostring = $config->{options}{$envname};
 
             if (defined $clostring) {
