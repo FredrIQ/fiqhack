@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-10 */
+/* Last modified by Alex Smith, 2015-03-16 */
 /* Copyright (C) 2014 Alex Smith. */
 /* NetHack may be freely redistributed. See license for details. */
 
@@ -344,12 +344,13 @@ load_text_tileset(uint8_t *data, size_t size)
             tile *intiles = NULL;
             int intile_alloccount = 0;
             int intilecount = 0;
-            int firsttile = 1;
+            bool firsttile = 1;
             char *tiletoken;
 
-            while ((tiletoken = strtok(firsttile ? tilename : NULL, ";"))) {
+            unsigned long long substar_substitution = 0;
+            bool substar = 0;
 
-                firsttile = 0;
+            while ((tiletoken = strtok(firsttile ? tilename : NULL, ";"))) {
 
                 /* Do a sanity check on the tile name we found, in case it's
                    someone trying to use syntax from elsewhere in the file and
@@ -369,6 +370,27 @@ load_text_tileset(uint8_t *data, size_t size)
                     continue;
 
                 unsigned long long substitution = substitution_from_name(&tp2);
+
+                /* The "sub *" syntax causes us to copy substitutions from
+                   matching tiles seen so far. This must be alone on the
+                   line. */
+
+                if (strstr(tp2, "sub * ") == tp2) {
+                    if (!firsttile)
+                        EPRINT("Error: 'sub *' tile '%s' is not alone on "
+                               "its line\n", tiletoken);
+
+                    substar = 1;
+                    substar_substitution = substitution;
+                    tp2 += strlen("sub * ");
+                    substitution = substitution_from_name(&tp2);
+                } else if (substar) {
+                    EPRINT("Error: Extra tile name '%s' seen after a "
+                           "'sub *' tile\n", tiletoken);
+                }
+
+                firsttile = 0;
+
                 int exact_match_tilenumber =
                     tileno_from_name(tp2, TILESEQ_INVALID_OFF);
 
@@ -431,8 +453,9 @@ load_text_tileset(uint8_t *data, size_t size)
                            "floor of a room with a corpse on" (i.e. "sub corpse
                            the floor of a room", which literally matches the
                            pattern, but probably wasn't intended). */
-                        if ((sensible_substitutions(tiletry) &
-                             substitution) == substitution)
+                        unsigned long long s =
+                            substar_substitution | substitution;
+                        if ((sensible_substitutions(tiletry) & s) == s)
                             tileok = pmatch(tp2, name_from_tileno(tiletry));
                     }
 
@@ -471,22 +494,48 @@ load_text_tileset(uint8_t *data, size_t size)
                     }
 
                     /* If this is the tile we're looking for, add it to the
-                       array. */
+                       array. In the case of substar, add all existing matching
+                       tiles to the array. As before, we loop unconditionally,
+                       but with !substar, only have one iteration. */
                     if (tileok) {
-                        tilefound = 1;
+                        int j;
+                        for (j = (substar ? seen_tile_count - 1 : 0);
+                             j >= 0; j--) {
 
-                        if (intilecount >= intile_alloccount) {
-                            intile_alloccount += 4;
-                            intile_alloccount *= 2;
-                            intiles = realloc(intiles, intile_alloccount *
-                                              sizeof *intiles);
-                            if (!intiles)
-                                EPRINTN("Error: Could not allocate memory\n");
+                            unsigned long long jsub = substitution;
+                            if (substar) {
+                                /* The based-on tile must contain every
+                                   substitution in 'substitution', no
+                                   substitutions in 'substar_substitution', and
+                                   use the same base tile. */
+                                if (tiles_seen[j].tilenumber != tiletry)
+                                    continue;
+                                jsub = tiles_seen[j].substitution;
+                                if ((jsub & substitution) != substitution)
+                                    continue;
+                                /* Also ignore tiles with ridiculous
+                                   combinations of substitutons. */
+                                if (mutually_exclusive_substitutions(
+                                        jsub | substar_substitution))
+                                    continue;
+                            }
+
+                            if (intilecount >= intile_alloccount) {
+                                intile_alloccount += 4;
+                                intile_alloccount *= 2;
+                                intiles = realloc(intiles, intile_alloccount *
+                                                  sizeof *intiles);
+                                if (!intiles)
+                                    EPRINTN("Error: "
+                                            "Could not allocate memory\n");
+                            }
+
+                            tilefound = 1;
+                            intiles[intilecount].tilenumber = tiletry;
+                            intiles[intilecount].substitution =
+                                jsub | substar_substitution;
+                            intilecount++;
                         }
-
-                        intiles[intilecount].tilenumber = tiletry;
-                        intiles[intilecount].substitution = substitution;
-                        intilecount++;
                     }
                 }
             }
@@ -772,6 +821,8 @@ load_text_tileset(uint8_t *data, size_t size)
             if (seen_tile_count + intilecount > allocated_tile_count) {
                 allocated_tile_count += 8;
                 allocated_tile_count *= 2;
+                if (allocated_tile_count < seen_tile_count + intilecount)
+                    allocated_tile_count = seen_tile_count + intilecount;
                 tiles_seen = realloc(tiles_seen, allocated_tile_count *
                                      sizeof *tiles_seen);
                 if (!tiles_seen)
@@ -788,8 +839,13 @@ load_text_tileset(uint8_t *data, size_t size)
                     /* We have to resolve any basechar, basefg, basebg, or
                        base_underline directives in ii. */
                     int j;
+                    unsigned long long base_substitution = 0;
+                    if (substar)
+                        base_substitution = intiles[i].substitution &
+                            (~substar_substitution);
                     for (j = seen_tile_count - 1; j >= 0; j--)
-                        if (tiles_seen[j].substitution == 0 &&
+                        if (tiles_seen[j].substitution ==
+                            base_substitution &&
                             tiles_seen[j].tilenumber ==
                             intiles[i].tilenumber)
                             break;

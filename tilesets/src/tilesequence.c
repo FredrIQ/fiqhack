@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-21 */
+/* Last modified by Alex Smith, 2015-03-16 */
 /* Copyright (c) 2013 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -15,6 +15,7 @@
    for things that need to be drawn but that libnethack is unaware of.) */
 
 #include "tilesequence.h"
+#include "hacklib.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -41,6 +42,33 @@ const struct symdef_array symdef_arrays[] = {
 
 static const char *name_from_tileno_internal(int tileno);
 
+/* Returns TRUE if the given set of substitutions could never occur. */
+int
+mutually_exclusive_substitutions(unsigned long long substitution)
+{
+    static unsigned long long impossible_pairings[] = {
+        NHCURSES_SUB_LIT | NHCURSES_SUB_UNLIT,
+        NHCURSES_SUB_CORPSE | NHCURSES_SUB_STATUE,
+        NHCURSES_SUB_LDM(LDM_COUNT) - 1,
+        NHCURSES_SUB_LDM(LDM_ROLE_0) -
+        NHCURSES_SUB_LDM(LDM_ROLE_0 + LDM_ROLE_COUNT),
+        NHCURSES_SUB_LDM(LDM_RACE_0) -
+        NHCURSES_SUB_LDM(LDM_RACE_0 + LDM_RACE_COUNT),
+        NHCURSES_SUB_LDM(LDM_GENDER_0) -
+        NHCURSES_SUB_LDM(LDM_GENDER_0 + LDM_GENDER_COUNT),
+    };
+
+    int i;
+    for (i = 0; i < SIZE(impossible_pairings); i++) {
+        unsigned long long s = substitution & impossible_pairings[i];
+        /* We need at most one bit to be set in s. */
+        if (popcount(s) > 1)
+            return 1;
+    }
+
+    return 0;
+}
+
 /* Returns a bitmask of substitutions that can reasonably apply to the given
    tile number. This is only used on wildcard matches, and limits what the
    wildcard can match, in order to keep the size of the generated tilesets down,
@@ -48,8 +76,8 @@ static const char *name_from_tileno_internal(int tileno);
 unsigned long long
 sensible_substitutions(int tileno)
 {
-     /* The current rule is: corpse/statue and race/gender apply only to
-        monsters; everything else applies to all tiles. */
+    /* The current rule is: corpse/statue and race/gender apply only to
+       monsters; everything else applies to all tiles. */
     if (tileno >= TILESEQ_MON_OFF &&
         tileno < TILESEQ_MON_OFF + TILESEQ_MON_SIZE)
         return (1ULL << (LDM_RACE_0 + 5)) - 1;
@@ -79,7 +107,9 @@ substitution_from_name(const char **name)
         }
         if (!found) {
             /* invalid substitution; just leave the "sub " prefix there so we
-               get an invalid name error later */
+               get an invalid name error later; this codepath also implements
+               the "sub *" case */
+            *name -= strlen("sub ");
             break;
         }
     }

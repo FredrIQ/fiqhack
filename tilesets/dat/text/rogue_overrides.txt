@@ -1,21 +1,11 @@
-! Last modified by Alex Smith, 2015-03-10
+! Last modified by Alex Smith, 2015-03-16
 ! Copyright (C) 2014 Alex Smith
 ! NetHack may be freely redistributed. See license for details.
 !
 ! This text tileset lists the special rules for the Rogue level.
 
-! Note: this is copying base tiles, not substitution tiles...
-sub rogue *: gray bgblack regular basechar
-
-! ...so we need to redo the furthest backgrounds...
-sub rogue the floor of a room: gray bgblack regular '.'
-sub rogue sub unlit the floor of a room: gray bgblack regular '.'
-sub rogue corridor: gray bgblack regular '#'
-sub rogue sub lit corridor: gray bgblack regular '#'
-
-! ...and statues and corpses.
-sub rogue corpse; sub rogue sub corpse *: ':'
-sub rogue statue; sub rogue sub statue *: '`'
+! General rule: no color on the Rogue level
+sub rogue sub * *: gray bgblack regular basechar
 
 ! Rogue used different backgrounds to ASCII NetHack in some cases, and
 ! to Unicode NetHack in many more cases.
@@ -46,6 +36,7 @@ sub rogue web: '^'
 
 ! Some objects looked different in Rogue
 sub rogue gold piece: '*'
+sub rogue corpse; sub rogue sub corpse *: ':'
 
 ! Override the most common food; TODO: do other food too?
 sub rogue food ration: ':'

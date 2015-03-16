@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-05 */
+/* Last modified by Alex Smith, 2015-03-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) Robert Patrick Rankin, 1991                      */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -39,6 +39,7 @@
         int             rounddiv        (long, int)
         int             isqrt           (int)
         int             ilog2           (long long)
+        int             popcount        (unsigned long long)
         int             distmin         (int, int, int, int)
         int             dist2           (int, int, int, int)
         boolean         online2         (int, int)
@@ -363,6 +364,21 @@ ilog2(long long val)
 
     /* now val is 1, so ilog2(val) is 0 */
     return rv;
+}
+
+/* Number of bits set in a given value.
+
+   There's almost certainly a more efficient algorithm than this, but this one
+   will do for now. */
+int
+popcount(unsigned long long u)
+{
+    int p = 0;
+    int i;
+    for (i = 0; i < CHAR_BIT * sizeof (unsigned long long); i++)
+        if (u & (1ULL << i))
+            p++;
+    return p;
 }
 
 /* distance between two points, in moves */

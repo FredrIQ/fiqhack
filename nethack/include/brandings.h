@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-12 */
+/* Last modified by Alex Smith, 2015-03-16 */
 /* Copyright (c) 2013 Alex Smith                                  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -95,8 +95,11 @@ extern const char *const nhcurses_branding_names[(int)nhcurses_branding_count];
 #define NHCURSES_SUB_STATUE   (1ULL << (LDM_COUNT + 3))
 
 #define LDM_ROLE_0            (LDM_COUNT + 4)
-#define LDM_GENDER_0          (LDM_ROLE_0 + 13)
-#define LDM_RACE_0            (LDM_GENDER_0 + 2)
+#define LDM_ROLE_COUNT        13
+#define LDM_GENDER_0          (LDM_ROLE_0 + LDM_ROLE_COUNT)
+#define LDM_GENDER_COUNT      2
+#define LDM_RACE_0            (LDM_GENDER_0 + LDM_GENDER_COUNT)
+#define LDM_RACE_COUNT        5
 
 /* A NULL-terminated list of substitution names. */
 extern const char *const nhcurses_sub_names[];

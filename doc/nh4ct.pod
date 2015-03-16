@@ -289,6 +289,26 @@ compiler will recognise, will not be matched by C<sub corpse *>.  This means
 that definitions like C<sub corpse *> and C<sub statue *> can safely be used
 to override all statue and corpse objects at once.
 
+=item *
+
+If a name starts with one or more substitutions followed by C<sub *>, it's
+also treated as a pattern.  In this case, the tile compiler will look at all
+previously defined tiles and match them against the part of the tile name from
+C<sub *> onwards.  (For example, if the only tiles that have been defined so
+far are C<sub lit corridor> and C<the floor of a room>, then you could write
+C<sub mines sub * *>, which would produce C<sub mines sub lit corridor> and
+C<sub mines the floor of a room>.)  Additionally, substitutions that appear
+before the C<sub *> will not match the C<sub *> itself; a definition like
+C<sub rogue sub lit sub * corridor> would not match C<sub lit corridor>
+(because if it did, the result would be C<sub rogue sub lit sub lit
+corridor>).  As with other patterns, this cannot produce implausible
+substitutions.
+
+This would typically be combined with a tile definition that contained
+components like C<basechar> that refer back to the matched tile, and allows a
+substitution to be implemented via transforming tiles according to a certain
+algorithm rather than via needing a separate tile for each case.
+
 =back
 
 When writing a 96-bit numerical tile name into the binary tiles format, the
@@ -317,13 +337,20 @@ In binary encoding, the bottom 21 bits are used to represent this, with
 C<invisible> being represented as zero.
 
 The tile compiler also accepts the text input C<basechar>.  This will be
-replaced, when compiling, with the Unicode character of the most recently seen
-I<unsubstituted> tile that matches the tile being compiled.  For instance, if
-you wanted statues to be gray versions of the corresponding monster, you could
-write a rule like C<sub statue *: gray basechar> (so long as the monsters had
-already been defined at that point, either in that tileset or in a tileset
-that came earlier on the command line).  This is numerically represented using
-the (invalid) Unicode character 0xd800.
+replaced, when compiling, with the Unicode character of the tile that this
+tile is I<based on>.  If the tile definition does not contain C<sub *>, the
+tile is based on the most recently seen tile that has the same base tile as
+the tile being compiled, and no substitutions.  If the tile definition
+contains C<sub *>, the tile is based on the previously seen tile that matched
+the tile definition from C<sub *> onwards.
+
+For example, if you wanted statues to be gray versions of the corresponding
+monster, you could write a rule like C<sub statue *: gray basechar> (so long
+as the monsters had already been defined at that point, either in that tileset
+or in a tileset that came earlier on the command line).
+
+C<basechar> is numerically represented using the (invalid) Unicode character
+0xd800.
 
 =item *
 
