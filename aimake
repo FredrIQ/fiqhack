@@ -5638,6 +5638,9 @@ sub run_command {
             $ok or return ($@ =~ s/ at .*// ? $@ : 'formatting failed',
                            '', $stderr);
 
+            # Work around a bug in Pod::Man
+            $formatter->isa('Pod::Man') and $formatted =~ s/^$/./gm;
+
             if ($is_eula) {
                 $aipath = 'bpath:aimake/license.rtf';
             } else {

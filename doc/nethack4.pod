@@ -1,6 +1,6 @@
 =for comment
-Last modified by Alex Smith, 2015-03-10
-
+Last modified by Alex Smith, 2015-03-16
+.
 Copyright (C) 2014, 2015 Alex Smith
 NetHack can be freely redistributed.  See license for details.
 

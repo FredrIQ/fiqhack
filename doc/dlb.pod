@@ -1,5 +1,5 @@
 =for comment
-Last modified by Alex Smith, 2015-03-10
+Last modified by Alex Smith, 2015-03-16
 NetHack may be freely redistributed.  See license for details.
 
 =encoding utf8
@@ -77,7 +77,7 @@ List the contents of the archive 'foo':
 
 Kenneth Lorber
 
-=head1 "SEE ALSO"
+=head1 SEE ALSO
 
 L<nethack(6)>, L<nethack4(6)>, L<tar(1)>
 

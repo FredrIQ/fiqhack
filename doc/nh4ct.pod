@@ -1,9 +1,9 @@
 =for comment
-Last modified by Alex Smith, 2015-03-10
-
+Last modified by Alex Smith, 2015-03-16
+.
 Copyright (C) 2013, 2014, 2015 Alex Smith
 NetHack can be freely redistributed.  See license for details.
-
+.
 This documentation file was originally based on the tiles documentation from
 Slash'EM, but it is unclear if any of that documentation is still left.
 
@@ -77,10 +77,10 @@ particular, aesthetic variations such as "substitution tiles" (tiles that look
 different in different branches) might or might not exist in any given
 tileset.
 
-One other issue was that the code for rendering ASCII/Unicode and for
-rendering tiles had diverged dangerously, meaning two different sets of code
-needed to be supported.  The method of rendering substitutions (such as dark
-rooms and lit corridors), in particular, was fragile and buggy.  Thus, it
+One other issue was that the code for rendering ASCII and Unicode had diverged
+dangerously from the code for rendering tiles, meaning two different sets of
+code needed to be supported.  The method of rendering substitutions (such as
+dark rooms and lit corridors), in particular, was fragile and buggy.  Thus, it
 seemed sensible to allow the tile selection code to also be used to calculate
 what to draw in ASCII, with the only difference between the two being
 rendering.
@@ -88,7 +88,7 @@ rendering.
 =head1 TYPES OF TILE FORMAT
 
 At its heart, a NetHack 4.3 tileset consists of a set of images or cchars (the
-ASCII/Unicode equivalent of a tiles image), each of which is associated with a
+ASCII and Unicode equivalent of a tiles image), each of which is associated with a
 name.  However, there are several different formats for expressing these, and
 converting between them is the main purpose of the tile utilities.
 
@@ -498,9 +498,9 @@ are each on lines of their own, and no colon is used.
 
 Binary tilesets also have a header, consisting of the string "NH4TILESET" and
 two NUL characters, then 80 characters representing the name of the tileset
-(padded to the right with NULs), then the width and height of each tile (as
-little-endian 16-bit integers).  In text-based tilesets, these header fields
-can be expressed as follows:
+(padded to the right with NUL characters), then the width and height of each
+tile (as little-endian 16-bit integers).  In text-based tilesets, these header
+fields can be expressed as follows:
 
     # name My Example Tileset
     # width 32
