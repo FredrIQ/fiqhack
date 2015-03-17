@@ -97,7 +97,7 @@ typedef wchar_t fnchar;
 
 /* attributes for dialog frames */
 # define FRAME_PAIR     6             /* magenta frames for better visibility */
-# define NOEDIT_FRAME_PAIR 9          /* dark gray if the dialog doesn't work */
+# define NOEDIT_FRAME_PAIR 1          /* dark gray if the dialog doesn't work */
 
 # define MAINFRAME_PAIR 72            /* 8 * 8 + 7 + 1 */
 
