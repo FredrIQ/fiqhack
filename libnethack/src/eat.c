@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1070,7 +1070,8 @@ start_tin(struct obj *otmp)
     return TRUE;
 }
 
-/* called on the "first bite" of rotten food */
+/* Called on the "first bite" of rotten food. Returns TRUE to veto the action of
+   eating the food. */
 static int
 rottenfood(struct obj *obj)
 {
@@ -1187,24 +1188,28 @@ eatcorpse(void)
 
     if (!tp && mnum != PM_LIZARD && mnum != PM_LICHEN &&
         (otmp->orotten || !rn2(7))) {
+        touchfood();
         if (rottenfood(otmp)) {
-            touchfood();
             if (!u.utracked[tos_food])
                 return 2;
 
             otmp = u.utracked[tos_food];
             retcode = 1;
         }
-        otmp->orotten = TRUE;
+        if (u.utracked[tos_food])
+            u.utracked[tos_food]->orotten = TRUE;
 
         if (!mons[otmp->corpsenm].cnutrit) {
             /* no nutrution: rots away, no message if you passed out */
-            if (!retcode)
-                pline("The corpse rots away completely.");
-            if (carried(otmp))
-                useup(otmp);
-            else
-                useupf(otmp, 1L);
+            if (u.utracked[tos_food]) {
+                otmp = u.utracked[tos_food];
+                if (!retcode)
+                    pline("The corpse rots away completely.");
+                if (carried(otmp))
+                    useup(otmp);
+                else
+                    useupf(otmp, 1L);
+            }
             retcode = 2;
         }
     } else {
@@ -1961,7 +1966,9 @@ doeat(const struct nh_cmd_arg *arg)
                   (otmp->orotten || !rn2(7))))) {
                 if (rottenfood(otmp))
                     dont_start = TRUE;
-                otmp->orotten = TRUE;
+                touchfood();
+                if (u.utracked[tos_food])
+                    u.utracked[tos_food]->orotten = TRUE;
 
                 /* In 4.2, the nutrition is halved at this point, but that leads
                    to the nutrition being halved repeatedly if the player is
