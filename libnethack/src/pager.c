@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-06 */
+/* Last modified by Alex Smith, 2015-03-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -678,7 +678,9 @@ do_look(boolean quick, const struct nh_cmd_arg *arg)
             if (!firstmatch)
                 firstmatch = descbuf.invisdesc;
 
-        if (append_str(&out_str, descbuf.mondesc, 0, 0))
+        /* We already have a/an added by describe_mon; don't add it again,
+           because that'll fail in cases like "Dudley's ghost" */
+        if (append_str(&out_str, descbuf.mondesc, 1, 0))
             if (!firstmatch)
                 firstmatch = descbuf.mondesc;
 
