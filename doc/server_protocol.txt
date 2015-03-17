@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-10-12
+Last modified by Alex Smith, 2015-03-17
 
 This document documents the version of the network protocol used in
 NetHack 4.3, and was written by Daniel Thaler, GreyKnight, Alex Smith.
@@ -992,6 +992,20 @@ Request arguments:
 Response arguments:
   * `charcode return`: the choice the user chose; this is `def` if cancelled
     by the user, ASCII 28 if cancelled by the server
+
+
+load_progress
+-------------
+
+Sent by the server periodically during time-consuming background operations in
+order to prevent the connection dropping.  This will never have a display list
+attached.
+
+Request arguments:
+  * `int progress`: a number from 0 to 10000, proportional to the estimated
+    length of the background operation
+
+Response arguments: no response is sent for this message
 
 
 server_error

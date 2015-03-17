@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-22 */
+/* Last modified by Alex Smith, 2015-03-17 */
 #ifndef NHSERVER_H
 # define NHSERVER_H
 
@@ -104,6 +104,7 @@ extern noreturn void exit_client(const char *err, int coredumpsignal);
 extern void client_server_cancel_msg(void);
 extern void client_msg(const char *key, json_t * value);
 extern json_t *read_input(void);
+extern void send_string_to_client(const char *jsonstr, int defer_errors);
 
 /* config.c */
 extern int read_config(const char *confname);

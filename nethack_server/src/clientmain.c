@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-14 */
+/* Last modified by Alex Smith, 2015-03-17 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -88,12 +88,14 @@ init_game_paths(void)
    async-signal-safe if the second argument is TRUE (this happens in signal
    handlers; also during exits for any reason, to prevent the exit code running
    recursively). */
-static void
+void
 send_string_to_client(const char *jsonstr, int defer_errors)
 {
     int len = strlen(jsonstr);
     int pos = 0;
     int ret;
+
+    currently_sending_message++;
     do {
         /* For NetHack 4.3, we separate the messages we send with NUL characters
            (which are not legal in JSON), so that the client can more easily
@@ -104,8 +106,10 @@ send_string_to_client(const char *jsonstr, int defer_errors)
         if (ret == -1 && (errno == EINTR || errno == EAGAIN))
             continue;
         else if (ret == -1 || ret == 0) {   /* bad news */
-            if (defer_errors)
+            if (defer_errors) {
+                currently_sending_message--;
                 return; /* handle the error later */
+            }
 
             /* since we just found we can't write output to the pipe,
                prevent any more tries */
@@ -116,6 +120,7 @@ send_string_to_client(const char *jsonstr, int defer_errors)
         }
         pos += ret;
     } while (pos < len);
+    currently_sending_message--;
 }
 
 /* Server cancels work differently from other messages; they can be sent out of
@@ -136,9 +141,7 @@ client_server_cancel_msg(void)
 
     int save_errno = errno;
 
-    currently_sending_message = 1;
     send_string_to_client("{\"server_cancel\":{}}", TRUE);
-    currently_sending_message = 0;
 
     errno = save_errno;
 }

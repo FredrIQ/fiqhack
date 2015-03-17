@@ -610,6 +610,7 @@ extern void curses_pause(enum nh_pause_reason reason);
 extern void curses_display_buffer(const char *buf, nh_bool trymove);
 extern void curses_raw_print(const char *str);
 extern void curses_delay_output(void);
+extern void curses_load_progress(int progress);
 extern void curses_server_cancel(void);
 extern void setup_palette(void);
 

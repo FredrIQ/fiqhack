@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-06 */
+/* Last modified by Alex Smith, 2015-03-17 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -9,7 +9,7 @@
 #include <time.h>
 #include <errno.h>
 
-WINDOW *basewin, *mapwin, *msgwin, *statuswin, *sidebar, *extrawin;
+WINDOW *basewin, *mapwin, *msgwin, *statuswin, *sidebar, *extrawin, *loadwin;
 struct gamewin *firstgw, *lastgw;
 static int orig_cursor;
 const char quit_chars[] = " \r\n\033";
@@ -31,6 +31,7 @@ struct nh_window_procs curses_windowprocs = {
     curses_yn_function_game,
     curses_getline,
     curses_delay_output,
+    curses_load_progress,
     curses_notify_level_changed,
     curses_outrip,
     curses_print_message_nonblocking,
@@ -931,6 +932,11 @@ redraw_popup_windows(void)
 void
 redraw_game_windows(void)
 {
+    if (loadwin) {
+        delwin(loadwin);
+        loadwin = NULL;
+    }
+
     wnoutrefresh(basewin);
 
     if (ui_flags.ingame) {
@@ -1079,6 +1085,11 @@ int
 nh_wgetch(WINDOW * win, enum keyreq_context context)
 {
     int key = 0;
+
+    /* If we put up a loading screen, redraw behind it. (This removes the
+       loading screen as a side effect.) */
+    if (loadwin)
+        redraw_game_windows();
 
     draw_extrawin(context);
 
@@ -1401,6 +1412,21 @@ curses_delay_output(void)
 #endif
 }
 
+
+void
+curses_load_progress(int progress)
+{
+    /*
+     * 123456789012345678
+     * Loading... 100.00%
+     */
+    if (!loadwin)
+        loadwin = newdialog(1, 18, 0, NULL);
+    wattrset(loadwin, 0);
+    mvwprintw(loadwin, 1, 2, "Loading... %6.2f%%",
+              (((float) progress) + 0.5f) / 100.0f);
+    wrefresh(loadwin);
+}
 
 void
 curses_server_cancel(void)

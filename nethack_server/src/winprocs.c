@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-12 */
+/* Last modified by Alex Smith, 2015-03-17 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -17,6 +17,7 @@ static void srv_print_message_nonblocking(int turn, const char *msg);
 static void srv_update_screen(struct nh_dbuf_entry dbuf[ROWNO][COLNO], int ux,
                               int uy);
 static void srv_delay_output(void);
+static void srv_load_progress(int progress);
 static void srv_level_changed(int displaymode);
 static void srv_outrip(struct nh_menulist *ml, nh_bool tombstone,
                        const char *name, int gold, const char *killbuf,
@@ -68,6 +69,7 @@ struct nh_window_procs server_windowprocs = {
     srv_yn_function,
     srv_getline,
     srv_delay_output,
+    srv_load_progress,
     srv_level_changed,
     srv_outrip,
     srv_print_message_nonblocking,
@@ -697,6 +699,18 @@ srv_getline(const char *query, void *callbackarg,
 
     callback(str, callbackarg);
     json_decref(jobj);
+}
+
+static void
+srv_load_progress(int progress)
+{
+    /* Just like with server cancels, we only use a small fraction of
+       the normal sending routines, because no response is expected, we can't
+       send display data, etc.. */
+    char load_progress_msg[sizeof "{\"load_progress\":{\"progress\":10000}}"];
+    snprintf(load_progress_msg, sizeof load_progress_msg,
+             "{\"load_progress\":{\"progress\":%d}}", progress);
+    send_string_to_client(load_progress_msg, FALSE);
 }
 
 static void

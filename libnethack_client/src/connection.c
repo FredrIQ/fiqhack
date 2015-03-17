@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-28 */
+/* Last modified by Alex Smith, 2015-03-17 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -153,13 +153,8 @@ receive_json_msg(void)
         } else {
             /* select before reading so that we get a timeout. Otherwise the
                program might hang indefinitely in read if the connection has
-               failed.
-
-               Previously we had a 10s delay. This seems to have been "not long
-               enough" in some extreme cases"; the delay has been increased in
-               the hope that this stops bug #565. */
-            tv.tv_sec = 90; /* 90s * 3 retries results in a long wait on failed
-                               connections... */
+               failed. */
+            tv.tv_sec = 10;
             tv.tv_usec = 0;
             do {
                 ret = select(sockfd + 1, &rfds, NULL, NULL, &tv);
@@ -273,6 +268,16 @@ send_receive_msg(const char *const volatile msgtype, json_t *volatile jmsg)
                sequence, and has no response. */
             json_decref(recv_msg); /* free it */
             client_windowprocs.win_server_cancel();
+            goto receive_without_sending;
+        }
+        if (!strcmp(key, "load_progress")) {
+            /* This message is only called in-sequence, but it still has no
+               response. */
+            int progress;
+            if (json_unpack(json_object_iter_value(iter), "{si!}",
+                            "progress", &progress) != -1)
+                client_windowprocs.win_load_progress(progress);
+            json_decref(recv_msg); /* free it */
             goto receive_without_sending;
         }
 

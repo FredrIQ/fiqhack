@@ -2254,13 +2254,16 @@ cleanup:
    mostly useful to log_sync(), which breaks the invariants at times, it allows
    a different value to be given.
 
+   The precise return value gives an estimate as to the distance between the
+   binary save and target location; larger values are more distant.
+
    Leaves the binary save pointer in its original location, but the log file
    pointer in an unpredictable location. */
 static long
 relative_to_target(long bsl, long targetpos, enum target_location_units tlu)
 {
     long temp_pos = program_state.binary_save.pos;
-    int turncount;
+    long curv;
 
     switch (tlu) {
 
@@ -2268,8 +2271,8 @@ relative_to_target(long bsl, long targetpos, enum target_location_units tlu)
         targetpos = lseek(program_state.logfile, 0, SEEK_END);
         /* fall through */
     case TLU_BYTES:
-
-        return bsl - targetpos;
+        curv = bsl;
+        break;
 
     case TLU_TURNS:
 
@@ -2278,14 +2281,15 @@ relative_to_target(long bsl, long targetpos, enum target_location_units tlu)
             error_reading_save(
                 "binary save is from the wrong version of NetHack\n");
 
-        turncount = mread32(&program_state.binary_save);
+        curv = mread32(&program_state.binary_save);
         program_state.binary_save.pos = temp_pos;
-
-        return turncount - targetpos;
+        break;
 
     default:
         panic("Invalid target_location_units");
     }
+
+    return curv - targetpos;
 }
 
 /*
@@ -2418,8 +2422,20 @@ log_sync(long target_location, enum target_location_units tlu,
        loop. That isn't implemented yet in order to start off by getting the
        simplest possible version of the code working. */
     sloc = program_state.binary_save_location;
-    while (relative_to_target(program_state.binary_save_location,
-                              target_location, tlu) < 0) {
+    long loadamt;
+    long orig_loadamt = 0;
+    clock_t last_load_progress_time = clock();
+    while (((loadamt = relative_to_target(program_state.binary_save_location,
+                                          target_location, tlu))) < 0) {
+        if (!orig_loadamt)
+            orig_loadamt = loadamt;
+        clock_t now = clock();
+        if (now - last_load_progress_time > CLOCKS_PER_SEC / 10) {
+            windowprocs.win_load_progress(
+                10000 - ((loadamt * 10000) / orig_loadamt));
+            last_load_progress_time = now;
+        }
+
         lseek(program_state.logfile, sloc, SEEK_SET);
         /* Skip the save diff or backup itself. */
         free(lgetline_malloc(program_state.logfile));
