@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-15 */
+/* Last modified by Alex Smith, 2015-03-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -728,7 +728,8 @@ m_move(struct monst *mtmp, int after)
        that all the code is in m_move or dochug, not both. (I prefer m_move.)
        The current situation allows (in fact, forces) the Wizard of Yendor to
        teleport before moving. */
-    if (is_covetous(ptr) && mtmp->mstrategy & STRAT_TARGMASK) {
+    if (is_covetous(ptr) && mtmp->mstrategy & STRAT_TARGMASK &&
+        mtmp->mstrategy & STRAT_GOAL) {
         xchar tx = STRAT_GOALX(mtmp->mstrategy), ty =
             STRAT_GOALY(mtmp->mstrategy);
         struct monst *intruder = m_at(level, tx, ty);
