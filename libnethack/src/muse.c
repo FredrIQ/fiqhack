@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-17 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -1664,12 +1664,11 @@ use_misc(struct monst *mtmp, struct musable *m)
 {
     int i;
     struct obj *otmp = m->misc;
-    boolean vis, vismon, oseen;
+    boolean vismon, oseen;
     const char *nambuf;
 
     if ((i = precheck(mtmp, otmp, m)) != 0)
         return i;
-    vis = cansee(mtmp->mx, mtmp->my);
     vismon = mon_visible(mtmp);
     oseen = otmp && vismon;
 
@@ -1776,11 +1775,14 @@ use_misc(struct monst *mtmp, struct musable *m)
         m_useup(mtmp, otmp);
         return 2;
     case MUSE_POLY_TRAP:
-        if (vismon)
+        if (vismon) {
+            /* If the player can see the monster jump onto a square and
+               polymorph, they'll know there's a trap there even if they can't
+               see the square the trap's on (e.g. infravisible monster). */
             pline("%s deliberately %s onto a polymorph trap!", Monnam(mtmp),
                   makeplural(locomotion(mtmp->data, "jump")));
-        if (vis)
             seetrap(t_at(level, trapx, trapy));
+        }
 
         /* don't use rloc() due to worms */
         remove_monster(level, mtmp->mx, mtmp->my);
