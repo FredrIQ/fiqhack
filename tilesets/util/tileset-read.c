@@ -892,6 +892,7 @@ load_text_tileset(uint8_t *data, size_t size)
                     EPRINTN("Error: not enough memory for tiles\n");
             }
 
+            int last_basetile = -1;
             int i;
             for (i = 0; i < intilecount; i++) {
 
@@ -946,37 +947,55 @@ load_text_tileset(uint8_t *data, size_t size)
                         EPRINTN("Error: image transformation with "
                                 "no based-on tile\n");
 
-                    /* TODO: Reuse an existing tile if we're doing the same
-                       transformation on the same base image */
+                    if (tiles_seen[j].image_index == last_basetile) {
+                        /* Reuse an existing tile if we're doing the same
+                           transformation on the same base image as the last
+                           tile we saw (base images will group together if we're
+                           using a map-based or otherwise semicolon-based
+                           input). Not perfect, but hopefully good enough for
+                           now, and we'd need some sort of hash table to get it
+                           perfect. (Failure simply causes the output to have a
+                           larger file size, rather than producing incorrect
+                           output.) */
 
-                    pixel *baseimage = images_seen[tiles_seen[j].image_index];
-                    pixel *image = malloc(tileset_width * tileset_height *
-                                          sizeof (pixel));
-                    images_seen = realloc(images_seen, (seen_image_count + 1)
-                                          * sizeof *images_seen);
-                    if (!images_seen)
-                        EPRINTN("Error allocating memory for tile images\n");
+                        ii2 = seen_image_count - 1;
 
-                    int nthpixel;
-                    for (nthpixel = 0;
-                         nthpixel < tileset_width * tileset_height;
-                         nthpixel++) {
-                        /* This would be a great place for a nested function,
-                           but those aren't properly portable. So instead of a
-                           partial application on baseimage[nthpixel], we just
-                           mention it each time. */
-                        image[nthpixel].r = image_transformation(
-                            transformation_matrix[0], baseimage[nthpixel]);
-                        image[nthpixel].g = image_transformation(
-                            transformation_matrix[1], baseimage[nthpixel]);
-                        image[nthpixel].b = image_transformation(
-                            transformation_matrix[2], baseimage[nthpixel]);
-                        image[nthpixel].a = image_transformation(
-                            transformation_matrix[3], baseimage[nthpixel]);
+                    } else {
+                        last_basetile = tiles_seen[j].image_index;
+
+                        pixel *baseimage =
+                            images_seen[tiles_seen[j].image_index];
+                        pixel *image = malloc(tileset_width * tileset_height *
+                                              sizeof (pixel));
+                        images_seen = realloc(images_seen,
+                                              (seen_image_count + 1) *
+                                              sizeof *images_seen);
+                        if (!images_seen)
+                            EPRINTN("Error allocating memory for tile "
+                                    "images\n");
+
+                        int nthpixel;
+                        for (nthpixel = 0;
+                             nthpixel < tileset_width * tileset_height;
+                             nthpixel++) {
+                            /* This would be a great place for a nested
+                               function, but those aren't properly portable. So
+                               instead of a partial application on
+                               baseimage[nthpixel], we just mention it each
+                               time. */
+                            image[nthpixel].r = image_transformation(
+                                transformation_matrix[0], baseimage[nthpixel]);
+                            image[nthpixel].g = image_transformation(
+                                transformation_matrix[1], baseimage[nthpixel]);
+                            image[nthpixel].b = image_transformation(
+                                transformation_matrix[2], baseimage[nthpixel]);
+                            image[nthpixel].a = image_transformation(
+                                transformation_matrix[3], baseimage[nthpixel]);
+                        }
+
+                        ii2 = seen_image_count;
+                        images_seen[seen_image_count++] = image;
                     }
-
-                    ii2 = seen_image_count;
-                    images_seen[seen_image_count++] = image;
                 }
 
                 intiles[i].image_index = ii2;

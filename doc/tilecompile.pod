@@ -283,10 +283,6 @@ Sometimes, the size of the tile images has to be specified manually
 even though it could be inferred from the other files given on the
 command line.
 
-The use of image transformations will sometimes lead to duplicate
-tiles in the output (mostly harmless, but makes the output images
-larger than they should be).
-
 If you find a bug, or want to peruse the list of bugs that other
 players have found, see the "Tile Utilities" section of the bug
 tracker at L<http://trac.nethack4.org>.
