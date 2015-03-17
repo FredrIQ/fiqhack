@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-12-25 */
+/* Last modified by Alex Smith, 2015-03-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1811,18 +1811,22 @@ update_location(boolean all_objects)
             buf = msgprintf("There is %s here.", an(dfeature));
             add_objitem(&objlist, MI_TEXT, 0, buf, NULL, FALSE);
         }
-
-        if (objlist.icount && otmp)
-            add_objitem(&objlist, MI_TEXT, 0, "", NULL, FALSE);
     }
 
-    for (ocount = 0; otmp; otmp = minv ? otmp->nobj : otmp->nexthere) {
-        examine_object(otmp);
-        if (!Blind || all_objects || ocount < 5)
-            add_objitem(&objlist, MI_NORMAL, 0,
-                        doname_price(otmp), otmp, FALSE);
-        ocount++;
-    }
+    /* match look_here: unless Underwater (checked above), water and lava
+       don't appear to contain items */
+    ocount = 0;
+    if (!dfeature || (strcmp(dfeature, "pool of water") != 0 &&
+                      strcmp(dfeature, "molten lava") != 0))
+        for (; otmp; otmp = minv ? otmp->nobj : otmp->nexthere) {
+            examine_object(otmp);
+            if (dfeature && !ocount)
+                add_objitem(&objlist, MI_TEXT, 0, "", NULL, FALSE);
+            if (!Blind || all_objects || ocount < 5)
+                add_objitem(&objlist, MI_NORMAL, 0,
+                            doname_price(otmp), otmp, FALSE);
+            ocount++;
+        }
 
     if (Blind && !all_objects && ocount >= 5) {
         const char *buf;
