@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-17 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1231,12 +1231,19 @@ log_time_line(void)
 /* Ensure that a command that was meant to have no effect actually did have no
    effect. If it did have an effect, complain and restart the turn, which will
    have the effect of undoing the command (as informational-only commands are
-   not saved anywhere). */
+   not saved anywhere).
+
+   Exception: when replaying a game, it's possible that the current turn was
+   saved with an old save format (we don't have "welcome" side effects to do the
+   format conversion for us). In such a case, we should ignore the problem. */
 void
 log_revert_command(const char *cmd)
 {
     struct memfile mf;
     const char *mequal_reason;
+
+    if (program_state.followmode != FM_PLAY)
+        return;
 
     mnew(&mf, NULL);
     savegame(&mf);

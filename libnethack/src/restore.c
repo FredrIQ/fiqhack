@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1079,6 +1079,23 @@ restore_dest_area(struct memfile *mf, dest_area *a)
     a->nly = mread8(mf);
     a->nhx = mread8(mf);
     a->nhy = mread8(mf);
+
+    /* SAVEBREAK (4.3-beta1 -> 4.3-beta2)
+
+       A level region spanning the entire level is saved with eight zeroes
+       in -beta1. It should be using COLNO/ROWNO sentinels. */
+    if (!a->lx && !a->ly && !a->hx && !a->hy) {
+        a->lx = COLNO;
+        a->ly = ROWNO;
+        a->hx = COLNO;
+        a->hy = ROWNO;
+    }
+    if (!a->nlx && !a->nly && !a->nhx && !a->nhy) {
+        a->nlx = COLNO;
+        a->nly = ROWNO;
+        a->nhx = COLNO;
+        a->nhy = ROWNO;
+    }
 }
 
 
