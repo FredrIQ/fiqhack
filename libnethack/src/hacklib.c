@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-16 */
+/* Last modified by Alex Smith, 2015-03-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) Robert Patrick Rankin, 1991                      */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -452,7 +452,7 @@ strstri(const char *str, const char *sub)
     int i, k;
 
 # define TABSIZ 0x20    /* 0x40 would be case-sensitive */
-    char tstr[TABSIZ], tsub[TABSIZ];    /* nibble count tables */
+    int tstr[TABSIZ], tsub[TABSIZ];    /* nibble count tables */
 
     /* special case: empty substring */
     if (!*sub)
@@ -493,7 +493,7 @@ strstri_mutable(char *str, const char *sub)
     int i, k;
 
 # define TABSIZ 0x20    /* 0x40 would be case-sensitive */
-    char tstr[TABSIZ], tsub[TABSIZ];    /* nibble count tables */
+    int tstr[TABSIZ], tsub[TABSIZ];    /* nibble count tables */
 
     /* special case: empty substring */
     if (!*sub)

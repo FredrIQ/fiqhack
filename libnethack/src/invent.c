@@ -727,7 +727,8 @@ gold_at(struct level *lev, int x, int y)
 }
 
 
-/* compact a string of inventory letters by dashing runs of letters */
+/* compact a string of inventory letters by dashing runs of letters; assumes at
+   least three letters are given and input is in sorted order */
 static const char *
 compactify(const char *buf_orig)
 {
@@ -735,6 +736,9 @@ compactify(const char *buf_orig)
     char ilet, ilet1, ilet2;
     char buf[strlen(buf_orig)+1];
     strcpy(buf, buf_orig);
+
+    if (buf[0] + 1 == buf[1])
+        buf[1] = '-';
 
     ilet2 = buf[0];
     ilet1 = buf[1];
