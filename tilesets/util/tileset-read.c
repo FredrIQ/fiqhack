@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-16 */
+/* Last modified by Alex Smith, 2015-03-17 */
 /* Copyright (C) 2014 Alex Smith. */
 /* NetHack may be freely redistributed. See license for details. */
 
@@ -38,6 +38,21 @@ palette_key_to_int(uint8_t key)
         return key - '0' + 53;
     else
         return -1;
+}
+
+static int
+image_transformation(const double t[static 5], const pixel p)
+{
+    double d = t[4] +
+        t[0] * (double) p.r +
+        t[1] * (double) p.g +
+        t[2] * (double) p.b +
+        t[3] * (double) p.a;
+    if (d < 0.0)
+        d = 0.0;
+    if (d > 255.0)
+        d = 255.0;
+    return (int) (d + 0.5);
 }
 
 /* Binary loading. Returns 1 on success, 0 on error. */
@@ -556,6 +571,7 @@ load_text_tileset(uint8_t *data, size_t size)
                No valid cchar string starts "0x", so we can just look at
                the next few characters to disambiguate. */
             uint32_t ii;
+            double transformation_matrix[4][5];
             if (*dp == ':' && dp[1] == ' ') {
                 if (using_filepos)
                     EPRINTN("Error: cannot mix map and tileset syntax\n");
@@ -703,7 +719,54 @@ load_text_tileset(uint8_t *data, size_t size)
                     ii = cchar;
                 }
             } else if (!*dp) {
-                if (dp - data < size - 1 && dp[1] == '{') {
+                if (dp - data < size - 1 && dp[1] == '(') {
+                    /* This is an image transformation. */
+                    if (using_filepos)
+                        EPRINTN("Error: cannot mix map and tileset syntax\n");
+                    avoiding_filepos = 1;
+
+                    if (tileset_width == 0 || tileset_height == 0)
+                        EPRINTN("Error: Text-based tilesets cannot use image "
+                                "transformations\n");
+                    else if (tileset_width < 0 || tileset_height < 0)
+                        EPRINTN("Error: Image transformation seen without "
+                                "known tile dimensions");
+
+                    int nthrow = 0;
+                    for (dp += 3; dp >= data + size || *dp != ')';) {
+                        if (dp >= data + size)
+                            EPRINTN("Error: unmatched '('\n");
+                        if (nthrow > 4)
+                            EPRINTN("Error: image transformation has more than "
+                                    "4 channels\n");
+                        double *t = transformation_matrix[nthrow];
+                        if (sscanf((const char *) dp, "%lf,%lf,%lf,%lf,%lf",
+                                   t + 0, t + 1, t + 2, t + 3, t + 4) != 5)
+                            EPRINTN("Error: could not parse image "
+                                    "transformation\n");
+                        dp = (uint8_t *) memchr(dp, 0, data + size - dp) + 1;
+                        nthrow++;
+                    }
+                    if (nthrow == 3) {
+                        transformation_matrix[3][0] = 0.0;
+                        transformation_matrix[3][1] = 0.0;
+                        transformation_matrix[3][2] = 0.0;
+                        transformation_matrix[3][3] = 1.0;
+                        transformation_matrix[3][4] = 0.0;
+                        nthrow++;
+                    }
+                    if (nthrow != 4)
+                        EPRINTN("Error: image transformation has fewer than "
+                                "3 channels\n");
+
+                    /* We can't allocate the image right now; we need a separate
+                       image for each tile that this tile definition is based
+                       on. So initialize ii to an invalid value and fix the
+                       situation later. */
+                    ii = (uint32_t) -1;
+                    i = dp - data;
+
+                } else if (dp - data < size - 1 && dp[1] == '{') {
                     if (using_filepos)
                         EPRINTN("Error: cannot mix map and tileset syntax\n");
                     avoiding_filepos = 1;
@@ -718,7 +781,7 @@ load_text_tileset(uint8_t *data, size_t size)
                         pixelcount = size;
                     else if (tileset_width == 0 || tileset_height == 0)
                         EPRINTN("Error: Text-based tilesets cannot have image "
-                                "data \n");
+                                "data\n");
                     else
                         pixelcount = tileset_width * tileset_height;
 
@@ -728,9 +791,9 @@ load_text_tileset(uint8_t *data, size_t size)
                     pixel *image = malloc(pixelcount * sizeof (pixel));
                     int x = 0, y = -1, w = tileset_width, c = 0;
                     lineno++;
-                    for (dp += 2; *dp != '}'; dp++) {
-                            if (dp >= data + size)
-                                EPRINTN("Error: unmatched '{'\n");
+                    for (dp += 2; dp >= data + size || *dp != '}'; dp++) {
+                        if (dp >= data + size)
+                            EPRINTN("Error: unmatched '{'\n");
                         if (*dp == ' ')
                             continue;
                         if (*dp == 0) {
@@ -832,25 +895,27 @@ load_text_tileset(uint8_t *data, size_t size)
             int i;
             for (i = 0; i < intilecount; i++) {
 
+                /* We have to resolve any basechar, basefg, basebg, or
+                   base_underline directives, or image transformations, in
+                   ii. We do this by looking for the based-on tile
+                   unconditionally, but only erroring out on failure to find
+                   it if we actually need it. */
+                int ii2 = ii;
+                int j;
+                unsigned long long base_substitution = 0;
+                if (substar)
+                    base_substitution = intiles[i].substitution &
+                        (~substar_substitution);
+                for (j = seen_tile_count - 1; j >= 0; j--)
+                    if (tiles_seen[j].substitution ==
+                        base_substitution &&
+                        tiles_seen[j].tilenumber ==
+                        intiles[i].tilenumber)
+                        break;
+
+#define ENSURE_J if (j < 0) EPRINTN("Error: 'base...' with no based-on tile\n")
+
                 if (!tileset_width) {
-
-                    int ii2 = ii;
-
-                    /* We have to resolve any basechar, basefg, basebg, or
-                       base_underline directives in ii. */
-                    int j;
-                    unsigned long long base_substitution = 0;
-                    if (substar)
-                        base_substitution = intiles[i].substitution &
-                            (~substar_substitution);
-                    for (j = seen_tile_count - 1; j >= 0; j--)
-                        if (tiles_seen[j].substitution ==
-                            base_substitution &&
-                            tiles_seen[j].tilenumber ==
-                            intiles[i].tilenumber)
-                            break;
-
-#define ENSURE_J if (j < 0) EPRINTN("Error: 'base...' used with no base tile")
 
                     if ((ii & 0x1ffffLU) == CCHAR_CHAR_BASE) {
                         ENSURE_J;
@@ -876,11 +941,45 @@ load_text_tileset(uint8_t *data, size_t size)
                         ii2 |= tiles_seen[j].image_index & (3LU << 30);
                     }
 
-                    intiles[i].image_index = ii2;
+                } else if (ii == (uint32_t) -1) {
+                    if (j < 0)
+                        EPRINTN("Error: image transformation with "
+                                "no based-on tile\n");
 
-                } else
-                    intiles[i].image_index = ii;
+                    /* TODO: Reuse an existing tile if we're doing the same
+                       transformation on the same base image */
 
+                    pixel *baseimage = images_seen[tiles_seen[j].image_index];
+                    pixel *image = malloc(tileset_width * tileset_height *
+                                          sizeof (pixel));
+                    images_seen = realloc(images_seen, (seen_image_count + 1)
+                                          * sizeof *images_seen);
+                    if (!images_seen)
+                        EPRINTN("Error allocating memory for tile images\n");
+
+                    int nthpixel;
+                    for (nthpixel = 0;
+                         nthpixel < tileset_width * tileset_height;
+                         nthpixel++) {
+                        /* This would be a great place for a nested function,
+                           but those aren't properly portable. So instead of a
+                           partial application on baseimage[nthpixel], we just
+                           mention it each time. */
+                        image[nthpixel].r = image_transformation(
+                            transformation_matrix[0], baseimage[nthpixel]);
+                        image[nthpixel].g = image_transformation(
+                            transformation_matrix[1], baseimage[nthpixel]);
+                        image[nthpixel].b = image_transformation(
+                            transformation_matrix[2], baseimage[nthpixel]);
+                        image[nthpixel].a = image_transformation(
+                            transformation_matrix[3], baseimage[nthpixel]);
+                    }
+
+                    ii2 = seen_image_count;
+                    images_seen[seen_image_count++] = image;
+                }
+
+                intiles[i].image_index = ii2;
                 tiles_seen[seen_tile_count++] = intiles[i];
             }
             free(intiles);

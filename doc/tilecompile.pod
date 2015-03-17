@@ -1,5 +1,5 @@
 =for comment
-Last modified by Alex Smith, 2015-03-16
+Last modified by Alex Smith, 2015-03-17
 .
 Copyright (C) 2014, 2015 Alex Smith
 NetHack can be freely redistributed.  See license for details.
@@ -282,6 +282,10 @@ L<nh4ct(5)>, L<nethack4(6)>, L<http://nethack4.org>.
 Sometimes, the size of the tile images has to be specified manually
 even though it could be inferred from the other files given on the
 command line.
+
+The use of image transformations will sometimes lead to duplicate
+tiles in the output (mostly harmless, but makes the output images
+larger than they should be).
 
 If you find a bug, or want to peruse the list of bugs that other
 players have found, see the "Tile Utilities" section of the bug

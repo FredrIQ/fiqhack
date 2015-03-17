@@ -1,5 +1,5 @@
 =for comment
-Last modified by Alex Smith, 2015-03-16
+Last modified by Alex Smith, 2015-03-17
 .
 Copyright (C) 2013, 2014, 2015 Alex Smith
 NetHack can be freely redistributed.  See license for details.
@@ -179,14 +179,14 @@ has a palette).  This can contain 1, 3, or 4 channels (separate channels,
 red/green/blue, or red/green/blue/alpha), and is necessary if any tile images
 are in text format and optional otherwise.
 
-Also noteworthy is the phrase "map file".  This is half a source-format
-tileset, one which specifies the names, and uses file position to determine
+Also noteworthy is the phrase "map file".  This is half of a source-format
+tileset: it specifies the tile names, but uses file position to determine
 images.  This forms a full tileset when combined with a NetHack 3 series or
 Slash'EM tileset (although it will probably need to be merged with a few extra
-tile images to provide tiles that weren't present in the source).  Map files
-can also be used in reverse, to specify the order that tiles should appear in
-in a produced tileset image; this allows NetHack 4 tilesets to be "backported"
-to earlier versions.
+tile images to provide tiles that weren't present in the source image).  Map
+files can also be used in reverse, to specify the order that tiles should
+appear in in a produced tileset image; this allows NetHack 4 tilesets to be
+"backported" to earlier versions.
 
 Finally, because it is very common to use an external image together with a
 tileset that references it, the combination can be glued together into one
@@ -480,23 +480,24 @@ It's now possible to define the format of a tileset file.
 
 A tileset file possibly contains a palette, and then contains zero or more
 tile definitions.  It also permits comments, which are lines starting with
-C<!>, that can appear anywhere except inside an image definition; these are
-ignored.
+C<!>, that can appear anywhere except inside an image definition or
+transformation; these are ignored.
 
 A palette consists of lines of the form:
 
-    key = (channel, channel, channel)
+ key = (channel, channel, channel)
 
-where each key can provide 1, 3, or 4 channels.  Keys themselves can contain
-letters, digits, underscores and dollar signs, and be up to two characters
-long (although all keys in any given file must have the same length).  For
-single-letter keys, avoiding underscores and dollars gives the best possible
-backwards compatibility; for two-letter keys, using C<__> as the first key is
-recommended by the Slash'EM tiles developers to get old versions of the tiles
-utilities to bail out cleanly.  Providing a palette with no tiles is useful
-when doing tiles merging, in order to adjust all the tiles onto a specific
-palette (especially when the C<-p> option, to lock the palette to that in a
-particular file, is given).
+where each key can provide 1, 3, or 4 channels (although either every key must
+have 1 channel, or every key must have 3+ channels).  Keys themselves can
+contain letters, digits, underscores and dollar signs, and be up to two
+characters long (although all keys in any given file must have the same
+length).  For single-letter keys, avoiding underscores and dollars gives the
+best possible backwards compatibility; for two-letter keys, using C<__> as the
+first key is recommended by the Slash'EM tiles developers to get old versions
+of the tiles utilities to bail out cleanly.  Providing a palette with no tiles
+is useful when doing tiles merging, in order to adjust all the tiles onto a
+specific palette (especially when the C<-p> option, to lock the palette to
+that in a particular file, is given).
 
 A tile definition starts with the tile name.  For backwards compatibility,
 this can be given in the form C<# tile 0 (name)>, where the 0 can be any
@@ -507,21 +508,90 @@ recommended if the tile file is entirely made out of text-format images, for
 backwards compatibility; however, there's no point in using it otherwise,
 because old tiles utilities would not be able to read such tilesets anyway.
 
-The format is then continued with the tile image or cchar.  This is typically
-just written with a colon, space, and a hexadecimal number or (for a cchar)
-its text representation.  There are two other possibilities.  When relying on
-file position, the tile image can just be omitted entirely, although this is
-only legal if every tile image in the tileset relies on file position (thus
-creating a map file).  Finally, if the images are embedded in text format into
-the tile file, this is accomplished by enclosing the text-format image in
-braces (C<{>, C<}>); each row of the image is one line of text, specifying all
-the pixels of the image one after another.  (If keys provide 4 channels each,
-they give the RGBA of the pixel; if they provide 3 channels each, they give
-the RGB, with alpha being 0 if the RGB is (71, 108, 108) and 255 otherwise;
-and if they provide 1 channel each, then four keys will be needed per pixel,
-to give the red, green, blue and alpha separately.  3-channel and 4-channel
-keys can be mixed, but neither can be mixed with a 1-channel key.)  The braces
-are each on lines of their own, and no colon is used.
+The format is then continued with the tile image or cchar:
+
+=over 4
+
+=item *
+
+A tile number, cchar number or cchar name can be written after the name,
+separated by a colon and space; for example, C<corridor: 0x00E00023> or
+C<corridor: bgblack gray regular '#'>.  Numbers must be written in
+hexadecimal, with a C<0x> prefix.  Tile numbers refer to tiles from a separate
+tiles image.
+
+=item *
+
+You can omit this part of the tileset description entirely.  In such a case,
+the tileset compiler will use file position: the first tile name in the file
+will correspond to image number 0, the second tile name in the file will
+correspond to image number 1, and so on.  (Multiple tile names on one line,
+using semicolons or wildcards, will all correspond to the same image.)  If any
+tiles do this, then every tile must do this; the resulting tileset is known as
+a "map file".
+
+=item *
+
+Just as a cchar name can be given explicitly for a cchar-based tileset, a tile
+image can be given explicitly for an image-based tileset.  The image starts on
+the line below the tile name, with a C<{> character on a line by itself; it
+ends with a C<}> character on a line by itself.  (You don't place a colon
+after the tile name in this format.)  In between, one line of text provides
+the colors of one line of pixels, and each line consists of the color code for
+each pixel in the line, concatenated together.
+
+The color codes themselves are based on the palette.  When using a 1-channel
+palette, a color code for a pixel consists of four palette keys: the red,
+blue, green and alpha components of the color (in that order).  (Alpha is a
+method of specifying transparency: 255 is fully opaque, 0 is fully
+transparent, and numbers in between specify semi-transparent colors.)  When
+using a palette with more channels, a pixel is expressed as a single palette
+key.  The color of the pixel is taken from the corresponding palette entry.
+If the entry only specifies three channels, the alpha is deduced from the
+other channels: (71, 108, 108) will produce an entirely transparent pixel, all
+other colors are fully opaque.  (This is for backwards compatibility with
+Slash'EM.)  If you want an opaque color (71, 108, 108), just specify the
+fourth channel, using C<(71, 108, 108, 255)> as your palette entry.
+
+=item *
+
+Finally, it's possible to automatically generate an image, based on other tile
+images that already existed in the tileset.  This is the image-based
+equivalent of using a cchar containing C<basechar>, C<basefg>, or the like.
+As with a cchar-based tileset, the image is based on the image of the tile
+that this tile is based on.
+
+You specify an image transformation in a similar way to an explicit tile
+image, but it is enclosed in parentheses rather than braces, i.e. it starts
+with C<(> on a line by itself and ends with C<)> on a line by itself.  Between
+the parentheses, you must place either three or four lines: the first line
+produces the red component of the resulting image, the second line the green
+component, the third line the blue component, and the fourth line (if any) the
+alpha component.  (If you omit the fourth line, it's treated as if it read
+C<0.0, 0.0, 0.0, 1.0, 0.0>, meaning "leave the alpha component unchanged".)
+
+Each line consists of five real numbers (which can have any real-number value,
+including negative values and values above 1.0, although the use of very large
+or small values may produce undesirabel rounding errors).  The first number is
+the contribution that the red component of the base image has to this
+component of the new image; subsequent numbers reflect the contribution of the
+blue, green, and alpha components respectively, and finally a constant factor
+to add.  The components will be given, and should be returned, in the range 0
+to 255, just as they are outside the palette.  If the resulting value is
+outside this range, values below 0 will be interpreted as 0, and values above
+255 will be interpreted as 255.  Non-integral outputs will be rounded to the
+nearest integer.
+
+Here's an example, which darkens the red channel and lightens the green
+channel, thus placing a bluish-green tint on an existing tiles image:
+
+ (
+ 0.5, 0.0, 0.0, 0.0, 0.0
+ 0.0, 1.0. 0.0, 0.0, 0.0
+ 0.0, 0.0, 0.5, 0.0, 127.5
+ )
+
+=back
 
 Binary tilesets also have a header, consisting of the string "NH4TILESET" and
 two NUL characters, then 80 characters representing the name of the tileset
@@ -529,9 +599,9 @@ two NUL characters, then 80 characters representing the name of the tileset
 tile (as little-endian 16-bit integers).  In text-based tilesets, these header
 fields can be expressed as follows:
 
-    # name My Example Tileset
-    # width 32
-    # height 48
+ # name My Example Tileset
+ # width 32
+ # height 48
 
 The headers can be omitted in text-based tilesets, in which case they must be
 supplied to C<tilecompile> using command-line arguments.
@@ -542,10 +612,9 @@ L<tilecompile(6)>, L<nethack4(6)>, L<http://nethack4.org>.
 
 =head1 BUGS
 
-The behaviour of patterns with substitution tiles is unsatisfactory, and needs
-to be improved.
-
-There's currently no way to do batch image processing, such as darkening floor
-tiles to implement C<sub unlit>.
+Substitution tiles and brandings are different concepts, and ones that
+are typically not interconvertible (although the C<sub *> syntax
+allows you to use a substitution tile as a branding in a cchar-based
+tileset).
 
 =cut

@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Alex Smith, 2015-03-10
+Last-Modified: Last modified by Alex Smith, 2015-03-17
 Comment:
  .
  This file is Copyright (C) Alex Smith 2013-2015, except as explained below
@@ -720,6 +720,10 @@ Copyright:
  .
  This file was written by Alex Smith, and encodes a dungeon coloring
  scheme suggested by Raz (the RLtiles artist).
+
+Files: tilesets/dat/tiles/los-transformations.txt
+License: NGPL
+Copyright: Copyright (C) 2015 Alex Smith
 
 Files: tilesets/dat/maps/dawnlike.map
 License: CC-BY-SA-3.0

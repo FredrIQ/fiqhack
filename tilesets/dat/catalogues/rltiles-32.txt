@@ -2,3 +2,4 @@
 RLTiles
 rltiles-32.png
 rltiles.map
+los-transformations.txt
