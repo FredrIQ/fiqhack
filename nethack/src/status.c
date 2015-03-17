@@ -12,7 +12,7 @@ static void
 draw_bar(int barlen, int val_cur, int val_max, nh_bool ishp)
 {
     char str[ui_flags.mapwidth];
-    int fill_len = 0, bl, colorattr, color;
+    int fill_len = 0, bl, colorattr, invcolorattr, color;
 
     bl = barlen - 2;
     if (val_max > 0 && val_cur > 0)
@@ -34,12 +34,16 @@ draw_bar(int barlen, int val_cur, int val_max, nh_bool ishp)
     else if (val_cur * 3 > val_max * 2)
         color = ishp ? CLR_GREEN : CLR_CYAN;
     else if (val_cur * 3 > val_max * 1)
-        color = ishp ? CLR_YELLOW : CLR_BLUE;
+        color = ishp ? CLR_BROWN : CLR_BLUE;
     else
         color = ishp ? CLR_RED : CLR_MAGENTA;
-    if (val_cur * 7 <= val_max)
-        color |= 8;     /* request a bolded attribute */
-    colorattr = curses_color_attr(color, 0);
+    if (val_cur * 7 <= val_max || color == CLR_BROWN)
+        color |= 8;                                     /* bold color */
+    colorattr = curses_color_attr(color, 0);        /* color on black */
+    /* For the 'bar' portion, we use a 'color & 7'-colored background, and
+       the foreground is either black or bolded background (depending on
+       whether the foreground equals the background or not). */
+    invcolorattr = curses_color_attr(color, color & 7);
 
     sprintf(str, "%*d / %-*d", (bl - 3) / 2, val_cur, (bl - 2) / 2, val_max);
 
@@ -48,10 +52,10 @@ draw_bar(int barlen, int val_cur, int val_max, nh_bool ishp)
         wprintw(statuswin, ishp ? "HP:" : "Pw:");
         wattroff(statuswin, colorattr);
         waddch(statuswin, '[');
-        wattron(statuswin, colorattr);
-        wattron(statuswin, A_REVERSE);
+        wattron(statuswin, invcolorattr);
         wprintw(statuswin, "%.*s", fill_len, str);
-        wattroff(statuswin, A_REVERSE);
+        wattroff(statuswin, invcolorattr);
+        wattron(statuswin, colorattr);
         wprintw(statuswin, "%s", &str[fill_len]);
         wattroff(statuswin, colorattr);
         waddch(statuswin, ']');
