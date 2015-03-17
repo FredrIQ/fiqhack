@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-17 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -25,11 +25,16 @@ init_nhcolors(void)
        to 7 foreground and background, with a total requirement of 64 pairs;
        uncursed folds colors beyond 7 into bold anyway. Note that a white
        background doesn't render correctly on some terminals, thus we use it
-       only for solid rock. */
-    for (bg = 0; bg <= 7; bg++) {
+       only for solid rock.
+
+       We also set up another 7 pairs for light-color-on-dark color, a
+       combination that's not otherwise possible (dark-color-on-dark-color has
+       its foreground replaced with black, black-on-dark-color has its
+       foreground replaced with darkgray or blue respectively). */
+    for (bg = 0; bg <= 8; bg++) {
 
         /* Do not set up background colors if we're low on color pairs. */
-        if (bg == 1 && COLOR_PAIRS < 65)
+        if (bg == 1 && COLOR_PAIRS < MAINFRAME_PAIR)
             break;
 
         /* For no background, use black; otherwise use the color from the color
@@ -55,7 +60,11 @@ init_nhcolors(void)
         }
     }
 
-    /* If we have at least 66 colour pairs, then we use pair 57 for the main
+    if (COLOR_PAIRS >= MAINFRAME_PAIR)
+        for (bg = 1; bg <= 7; bg++)
+            init_pair(64 + bg, bg | 8, bg);
+
+    /* If we have at least 72 colour pairs, then we use pair 71 for the main
        background frame; this allows us to change its color to warn about
        critical situations via palette changes (which saves having to do a
        bunch of complex redrawing). The default color of the frame is color 7
@@ -67,21 +76,21 @@ init_nhcolors(void)
 int
 curses_color_attr(int nh_color, int bg_color)
 {
-    int color = nh_color + 1;
+    int color = nh_color;
     int cattr = A_NORMAL;
 
-    if (colorlist[nh_color] == COLOR_BLACK && settings.darkgray)
-        cattr |= A_BOLD;
-
-    if (color > 8) {
+    if (color >= 8) {
         color -= 8;
-        cattr |= A_BOLD;
+        if (color == bg_color && color && COLOR_PAIRS >= MAINFRAME_PAIR)
+            bg_color = 8; /* "bold foreground on unbold background" */
+        else
+            cattr |= A_BOLD;
     }
 
-    if (COLOR_PAIRS >= 65)
+    if (COLOR_PAIRS >= MAINFRAME_PAIR)
         color += bg_color * 8;
 
-    cattr |= COLOR_PAIR(color);
+    cattr |= COLOR_PAIR(color + (bg_color == 8 ? 0 : 1));
     return cattr;
 }
 
