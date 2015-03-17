@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -961,14 +961,14 @@ show_map_spot(int x, int y)
         unblock_point(x, y);
     }
 
-    /* if we don't remember an object or trap there, map it */
-    if (!loc->mem_obj && !loc->mem_trap) {
-        if (level->flags.hero_memory) {
-            magic_map_background(x, y, 0);
-            newsym(x, y);       /* show it, if not blocked */
-        } else {
-            magic_map_background(x, y, 1);      /* display it */
-        }
+    /* Now we're using the Slash'EM display engine, we can map unconditionally
+       (with the 3.4.3 display engine, it's necessary to not overwrite
+       remembered objects or traps) */
+    if (level->flags.hero_memory) {
+        magic_map_background(x, y, 0);
+        newsym(x, y);       /* show it, if not blocked */
+    } else {
+        magic_map_background(x, y, 1);      /* display it */
     }
 }
 
