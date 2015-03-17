@@ -837,7 +837,9 @@ object_selection_checks(struct obj *otmp, const char *word)
           otyp != FORTUNE_COOKIE && otyp != T_SHIRT)) ||
         (!strcmp(word, "untrap with") &&
          (otmp->oclass == TOOL_CLASS && otyp != CAN_OF_GREASE)) ||
-        (!strcmp(word, "charge") && !is_chargeable(otmp)))
+        (!strcmp(word, "charge") &&
+         (otmp->oclass != TOOL_CLASS && otmp->oclass != WAND_CLASS &&
+          otmp->oclass != RING_CLASS)))
         return IMPOSSIBLE_USE;
 
     /* Other verbs: currently impossible uses. */
@@ -869,7 +871,8 @@ object_selection_checks(struct obj *otmp, const char *word)
            (otmp->dknown && objects[OIL_LAMP].oc_name_known)))) ||
         (!strcmp(word, "throw") &&
          !(ammo_and_launcher(otmp, uwep) || is_missile(otmp)) &&
-         !(throws_rocks(youmonst.data) && otyp == BOULDER)))
+         !(throws_rocks(youmonst.data) && otyp == BOULDER)) ||
+        (!strcmp(word, "charge") && !is_chargeable(otmp)))
         return NONSENSIBLE_USE;
 
     return OBJECT_USABLE;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -187,8 +187,8 @@ p_glow2(struct obj *otmp, const char *color)
           Blind ? "" : hcolor(color));
 }
 
-/* Is the object chargeable?  For purposes of inventory display; it is */
-/* possible to be able to charge things for which this returns FALSE. */
+/* Is the object chargeable?  For purposes of inventory display; it is
+   possible to be able to charge things for which this returns FALSE. */
 boolean
 is_chargeable(struct obj *obj)
 {
@@ -197,8 +197,10 @@ is_chargeable(struct obj *obj)
     /* known && !uname is possible after amnesia/mind flayer */
     if (obj->oclass == RING_CLASS)
         return (boolean) ((objects[obj->otyp].oc_charged &&
-                           (objects[obj->otyp].oc_name_known || obj->known)) ||
-                          (objects[obj->otyp].oc_uname &&
+                           ((objects[obj->otyp].oc_name_known &&
+                             obj->dknown) || obj->known)) ||
+                          (obj->dknown &&
+                           objects[obj->otyp].oc_uname &&
                            !objects[obj->otyp].oc_name_known));
     if (is_weptool(obj))        /* specific check before general tools */
         return FALSE;
