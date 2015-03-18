@@ -173,6 +173,7 @@ draw_menu(struct gamewin *gw)
                    mdat->title, mdat->width - 4);
         wattroff(gw->win, A_UNDERLINE);
     }
+    werase(gw->win2);
 
     /* Draw the menu items. It's possible to scroll beyond the bottom of the
        menu (e.g. by using PgDn when the menu isn't a whole number of pages),
