@@ -1,9 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-12 */
+/* Last modified by Alex Smith, 2015-03-18 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "nhcurses.h"
+#include "utf8conv.h"
+#include <limits.h>
+#include <inttypes.h>
 
 #define BORDERWIDTH  (settings.whichframes != FRAME_NONE ? 4 : 2)
 #define BORDERHEIGHT (settings.whichframes != FRAME_NONE ? 2 : 0)
@@ -16,11 +19,13 @@ calc_colwidths(char *menustr, int *colwidth)
 
     start = menustr;
     while ((tab = strchr(start, '\t')) != NULL && col < MAXCOLS) {
-        colwidth[col] = max(colwidth[col], tab - start);
+        *tab = '\0';
+        colwidth[col] = max(colwidth[col], utf8_wcswidth(start, SIZE_MAX));
+        *tab = '\t';
         start = tab + 1;
         col++;
     }
-    colwidth[col] = max(colwidth[col], strlen(start));
+    colwidth[col] = max(colwidth[col], utf8_wcswidth(start, SIZE_MAX));
     return col;
 }
 
@@ -197,15 +202,24 @@ draw_menu(struct gamewin *gw)
                     mdat->selected[mdat->offset + i] ? '+' : '-');
         }
 
+        /* TODO: This isn't quite correct, we're taking a number of codepoints
+           from the string equal to the width of the output we want, and that
+           doesn't work correctly with combining characters. */
         if (col) {
             for (j = 0; j <= col; j++) {
-                waddnstr(gw->win2, colstrs[j],
-                         mdat->colpos[j + 1] - mdat->colpos[j] - 1);
+                wchar_t wcol[utf8_wcswidth(colstrs[j], SIZE_MAX) + 1];
+                if (utf8_mbstowcs(wcol, colstrs[j], sizeof wcol) != (size_t) -1)
+                    waddwnstr(gw->win2, wcol,
+                              mdat->colpos[j + 1] - mdat->colpos[j] - 1);
+
                 if (j < col)
                     wmove(gw->win2, i, mdat->colpos[j + 1]);
             }
-        } else
-            waddnstr(gw->win2, caption, mdat->innerwidth);
+        } else {
+            wchar_t wcap[utf8_wcswidth(caption, SIZE_MAX) + 1];
+            if (utf8_mbstowcs(wcap, caption, sizeof wcap) != (size_t) -1)
+                waddwnstr(gw->win2, wcap, mdat->innerwidth);
+        }
 
         if (item->role == MI_HEADING)
             wattroff(gw->win2, settings.menu_headings);
