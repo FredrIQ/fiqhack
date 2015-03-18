@@ -116,7 +116,7 @@ contain colors that are only slightly off-palette.
 
 Tileset images can be stored in a "text" file in one of two ways:
 specifying colors as indexes into a palette (which is more concise),
-or specifying colors as separate red/blue/green/alpha channels (which
+or specifying colors as separate red/green/blue/alpha channels (which
 allows more colors).  In NetHack 3.4.3, a palette can only have 62
 colors; in Slash'EM 7E7F3, it can have up to 256.  Normally, the size
 of a palette will be limited to 256 colours in F<tilecompile> output
@@ -130,10 +130,10 @@ give you smaller output at the cost of processing time.  If you have
 more than 4096 colours, it will waste processing time for no benefit,
 as the image will still become channel-based.
 
-=item B<-b> I<red> I<blue> I<green>
+=item B<-b> I<red> I<green> I<blue>
 
 Interprets any color in the input files with exactly the given
-red/blue/green channels as fully transparent, regardless of its alpha.
+red/green/blue channels as fully transparent, regardless of its alpha.
 This has two purposes: one is to import images which use color-key
 transparency but don't declare it properly (which is very common among
 "older" tile images), and the other is to import images that use
