@@ -2748,7 +2748,7 @@ place installed files into the correct section.
 
 A directory used for documentation in GNU Info format.
 
-=item sourcedir
+=item sourcecodedir
 
 A directory for installing source code.
 
@@ -5261,6 +5261,7 @@ sub write_filelist {
         my $cname = $config->{options}{companyname};
         my $pversion = pvtransform $config->{options}{packageversion};
         my $guid = guid_from_string $pname;
+        my $pguid = guid_from_string "$pname $pversion";
         my $ui = 'WixUI_FeatureTree';
         keys %filelist_features == 1 and $ui = 'WixUI_Minimal';
         # TODO: Should Language always be 1033?
@@ -5268,7 +5269,7 @@ sub write_filelist {
         # what's required for 64-bit installs to work.
         print $fh qq[<?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-    <Product Id="*" UpgradeCode="$guid"
+    <Product Id="$pguid" UpgradeCode="$guid"
              Version="$pversion" Language="1033" Name="$pnametext"
              Manufacturer="$cname">
         <Package InstallerVersion="200" Compressed="yes"
@@ -5276,7 +5277,7 @@ sub write_filelist {
         <Media Id="1" Cabinet="$pname.cab" EmbedCab="yes" />
         <UIRef Id="$ui" />
         <MajorUpgrade DowngradeErrorMessage=
-            "To install an older version of $pname, please first uninstall any newer versions." />
+            "To install an older version of $pnametext, please first uninstall any newer versions." />
 ];
 
         # Create a variable for each directory we use. We use a (lowercase)
@@ -7903,7 +7904,7 @@ my %actionkeys = (
                                     specificincdir configdir datadir mandir
                                     infodir statedir rootbindir gamesbindir
                                     gamesdatadir gamesstatedir logdir lockdir
-                                    specificlockdir docdir sourcedir
+                                    specificlockdir docdir sourcecodedir
                                     shortcutdir/],
                       default => undef},
     'install_name' => undef,
@@ -10189,7 +10190,7 @@ __DATA__
             includedir => 'spath:/usr/include',
             specificincdir => 'spath:/usr/include/$packagename',
             datarootdir => 'spath:/usr/share',
-            sourcedir => 'spath:/usr/src',
+            sourcecodedir => 'spath:/usr/src',
 
             # Relative to datarootdir.
             datadir => '$datarootdir/$packagename',
@@ -10236,7 +10237,7 @@ __DATA__
             includedir => '$installdir/include',
             specificincdir => '$installdir/include/$packagename',
             datarootdir => '$installdir/share',
-            sourcedir => '$installdir/src',
+            sourcecodedir => '$installdir/src',
 
             # Relative to datarootdir.
             datadir => '$datarootdir/$packagename',
@@ -10289,7 +10290,7 @@ __DATA__
             includedir => '$installdir/include',
             specificincdir => '$installdir/include',
             datarootdir => '$installdir/share',
-            sourcedir => '$installdir/src',
+            sourcecodedir => '$installdir/src',
 
             # Relative to datarootdir.
             datadir => '$datarootdir',
@@ -10336,7 +10337,7 @@ __DATA__
             includedir => '$installdir/include',
             specificincdir => '$installdir/include',
             datarootdir => '$installdir',
-            sourcedir => '$installdir/source',
+            sourcecodedir => '$installdir/source',
 
             # Relative to datarootdir.
             datadir => '$datarootdir/data',
@@ -10371,7 +10372,7 @@ __DATA__
             includedir => '$installdir/include',
             specificincdir => '$installdir/include',
             datarootdir => '$installdir',
-            sourcedir => '$installdir/source',
+            sourcecodedir => '$installdir/source',
 
             # Relative to datarootdir.
             datadir => '$datarootdir/data',
@@ -10426,10 +10427,10 @@ __DATA__
             specificincdir => '$exerootdir/include/$packagename',
             datarootdir => '$exerootdir/data',
             staterootdir => 'spath:CSIDL_COMMON_APPDATA/$packagename_ui',
-            sourcedir => '$exerootdir/source',
+            sourcecodedir => '$exerootdir/source',
 
             docdir => '$exerootdir/doc',
-            mandir => '$exerootdir/manuals',
+            mandir => '$docdir/manuals',
 
             shortcutdir => 'spath:CSIDL_COMMON_PROGRAMS/$packagename_ui',
 
@@ -10464,7 +10465,7 @@ __DATA__
             includedir => '$installdir/include',
             specificincdir => '$installdir/include/$packagename',
             datarootdir => '$installdir/share',
-            sourcedir => '$installdir/src',
+            sourcecodedir => '$installdir/src',
 
             # Relative to datarootdir.
             datadir => '$datarootdir/$packagename',
@@ -10508,7 +10509,7 @@ __DATA__
             includedir => '$installdir',
             specificincdir => '$installdir',
             datarootdir => '$installdir',
-            sourcedir => '$installdir',
+            sourcecodedir => '$installdir',
             datadir => '$datarootdir',
             gamesdatadir => '$datarootdir',
             shortcutdir => '$datarootdir',
@@ -11859,14 +11860,14 @@ EOF
         },
         install_source => {
             object => qr/^path:/,
-            install_dir => "sourcedir",
+            install_dir => "sourcecodedir",
             install_feature => "sourcecode",
             copy_structure => 1,
             low_message_priority => 1,
         },
         install_source_link => {
             object => 'sys:touch_only',
-            install_dir => "sourcedir",
+            install_dir => "sourcecodedir",
             install_feature => "sourcecode",
             link_to_directory => 'source',
         },

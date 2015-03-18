@@ -88,9 +88,8 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
         playfield_utils => {
             # Likewise for the level and dungeon compilers.
             description => "Playfield utilities",
-            long_description => "Installs command-line tools for modifying part ".
-                                "of the NetHack playfield without needing to ".
-                                "recompile the game: 'dlb', 'lev_comp', and ".
+            long_description => "Installs command-line tools for updating ".
+                                "the game data: 'dlb', 'lev_comp', and ".
                                 "'dgn_comp'.  Most users will not need these.",
             object => qr=^bpath:doc/$playfieldutils.pod$=,
             default => 0,
