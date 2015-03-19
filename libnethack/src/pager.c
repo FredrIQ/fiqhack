@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-17 */
+/* Last modified by Alex Smith, 2015-03-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -354,10 +354,15 @@ describe_mon(int x, int y, int monnum, char *buf)
         }
 #endif
 
-        mon_vision_summary(mtmp, visionbuf);
-        if (visionbuf[0]) {
-            snprintf(temp_buf, SIZE(temp_buf), " [seen: %s]", visionbuf);
-            strncat(buf, temp_buf, maximum_output_len - strlen(buf) - 1);
+        /* Don't mention how a long worm tail is seen; msensem() only works on
+           monster heads. (Probably, the only unusual way to see a long worm
+           tail is see invisible, anyway.) */
+        if (mtmp->mx == x && mtmp->my == y) {
+            mon_vision_summary(mtmp, visionbuf);
+            if (visionbuf[0]) {
+                snprintf(temp_buf, SIZE(temp_buf), " [seen: %s]", visionbuf);
+                strncat(buf, temp_buf, maximum_output_len - strlen(buf) - 1);
+            }
         }
     }
 }
