@@ -255,7 +255,7 @@ examine_object(struct obj *obj)
     /* clean up known when it's tied to oc_name_known, eg after AD_DRIN */
     if (!nn && ocl->oc_uses_known && ocl->oc_unique)
         obj->known = 0;
-    if (!Blind)
+    if (!Blind || (!corpsenm_is_relevant(typ) && !has_shuffled_appearance(typ)))
         obj->dknown = TRUE;
     if (Role_if(PM_PRIEST))
         obj->bknown = TRUE;

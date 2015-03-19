@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -26,6 +26,10 @@ shuffle(int o_low, int o_high, boolean domaterial)
         return;
 
     for (j = o_low; j <= o_high; j++) {
+        /* sanity check */
+        if (!has_shuffled_appearance(j))
+            impossible("shuffle() called on nonshuffleable otyp %d", j);
+
         if (objects[j].oc_name_known)
             continue;
         do
@@ -128,7 +132,7 @@ shuffle_all(void)
 
         if (OBJ_DESCR(objects[first]) != NULL && oclass != TOOL_CLASS &&
             oclass != WEAPON_CLASS && oclass != ARMOR_CLASS &&
-            oclass != GEM_CLASS) {
+            oclass != GEM_CLASS && oclass != VENOM_CLASS) {
             int j = last - 1;
 
             if (oclass == POTION_CLASS)
@@ -159,6 +163,48 @@ shuffle_all(void)
     /* shuffle the boots [if they change, update find_skates() below] */
     shuffle(SPEED_BOOTS, LEVITATION_BOOTS, FALSE);
 }
+
+/* Returns TRUE if the unidentified appearance of this object could differ from
+   game to game. */
+boolean
+has_shuffled_appearance(int otyp)
+{
+    int oclass = objects[otyp].oc_class;
+
+    /* If an object doesn't even have an unidentified appearance, it definitely
+       doesn't have a shuffled appearance. */
+    if (OBJ_DESCR(objects[otyp]) == NULL)
+        return FALSE;
+
+    /* Most object classes are almost entirely shuffled. */
+    if (oclass == POTION_CLASS || oclass == WAND_CLASS ||
+        oclass == AMULET_CLASS || oclass == GEM_CLASS ||
+        oclass == SPBOOK_CLASS || oclass == RING_CLASS ||
+        oclass == SCROLL_CLASS)
+        return (oclass == WAND_CLASS || oclass == POTION_CLASS ||
+                objects[otyp].oc_magic) &&
+            !objects[otyp].oc_unique && otyp != POT_WATER && otyp != ROCK;
+
+    /* Armour is partially shuffled. */
+    if ((HELMET <= otyp && otyp <= HELM_OF_TELEPATHY) ||
+        (LEATHER_GLOVES <= otyp && otyp <= GAUNTLETS_OF_DEXTERITY) ||
+        (CLOAK_OF_PROTECTION <= otyp && otyp <= CLOAK_OF_DISPLACEMENT) ||
+        (SPEED_BOOTS <= otyp && otyp <= LEVITATION_BOOTS))
+        return TRUE;
+
+    /* Other items are not shuffled. */
+    return FALSE;
+}
+
+/* Returns TRUE if the given otyp has a "corpsenm" field that could potentially
+   be unidentified. */
+boolean
+corpsenm_is_relevant(int otyp)
+{
+    return (otyp == CORPSE || otyp == STATUE || otyp == TIN ||
+            otyp == FIGURINE || otyp == EGG);
+}
+
 
 /* find the object index for snow boots; used [once] by slippery ice code */
 int

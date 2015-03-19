@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-19 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1227,6 +1227,8 @@ int mklev_rn2(int, struct level *);
 /* ### o_init.c ### */
 
 extern void init_objects(void);
+extern boolean has_shuffled_appearance(int otyp);
+extern boolean corpsenm_is_relevant(int otyp);
 extern int find_skates(void);
 extern void freenames(void);
 extern void savenames(struct memfile *mf);
