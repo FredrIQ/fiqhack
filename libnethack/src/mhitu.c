@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -712,9 +712,8 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     if (!canspotmon(mtmp))
         map_invisible(mtmp->mx, mtmp->my);
 
-/* If the monster is undetected & hits you, you should know where
- * the attack came from.
- */
+    /* If the monster is undetected & hits you, you should know where the attack
+       came from. */
     if (mtmp->mundetected && (hides_under(mdat) || mdat->mlet == S_EEL)) {
         mtmp->mundetected = 0;
         if (!(Blind ? Blind_telepat : Unblind_telepat)) {
@@ -735,20 +734,20 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
         }
     }
 
-/* First determine the base damage done */
+    /* First determine the base damage done */
     dmg = dice((int)mattk->damn, (int)mattk->damd);
     if (is_undead(mdat) && midnight())
         dmg += dice((int)mattk->damn, (int)mattk->damd); /* extra damage */
 
-/* Next a cancellation factor
- * Use uncancelled when the cancellation factor takes into account certain
- * armor's special magic protection.  Otherwise just use !mtmp->mcan.
- */
+    /* Next a cancellation factor. Use uncancelled when the cancellation factor
+       takes into account certain armor's special magic protection.  Otherwise just
+       use !mtmp->mcan. */
     armpro = magic_negation(&youmonst);
     uncancelled = !mtmp->mcan && ((rn2(3) >= armpro) || !rn2(50));
 
     permdmg = 0;
-/* Now, adjust damages via resistances or specific attacks */
+
+    /* Now, adjust damages via resistances or specific attacks */
     switch (mattk->adtyp) {
     case AD_PHYS:
         if (mattk->aatyp == AT_HUGS && !sticks(youmonst.data)) {
@@ -1418,9 +1417,8 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
     if (u.uhp < 1)
         done_in_by(mtmp, NULL);
 
-/* Negative armor class reduces damage done instead of fully protecting
- * against hits.
- */
+    /* Negative armor class reduces damage done instead of fully protecting
+       against hits. */
     if (dmg && get_player_ac() < 0) {
         dmg -= rnd(-get_player_ac());
         if (dmg < 1)

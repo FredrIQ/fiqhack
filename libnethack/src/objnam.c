@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -206,13 +206,12 @@ obj_is_pname(const struct obj * obj)
                        obj->oartifact && !objects[obj->otyp].oc_unique));
 }
 
-/* Give the name of an object seen at a distance.  Unlike xname/doname,
- * we don't want to set dknown if it's not set already.  The kludge used is
- * to temporarily set Blind so that xname() skips the dknown setting.  This
- * assumes that we don't want to do this too often; if this function becomes
- * frequently used, it'd probably be better to pass a parameter to xname()
- * or doname() instead.
- */
+/* Give the name of an object seen at a distance. Unlike xname/doname, we don't
+   want to set dknown if it's not set already. The kludge used is to temporarily
+   set Blind so that xname() skips the dknown setting. This assumes that we
+   don't want to do this too often; if this function becomes frequently used,
+   it'd probably be better to pass a parameter to xname() or doname()
+   instead. */
 const char *
 distant_name(const struct obj *obj, const char *(*func) (const struct obj *))
 {
@@ -2630,8 +2629,7 @@ typfnd:
             otmp->spe = ishistoric ? STATUE_HISTORIC : 0;
             break;
         case SCALE_MAIL:
-            /* Dragon mail - depends on the order of objects */
-            /* & dragons.  */
+            /* Dragon mail - depends on the order of objects & dragons. */
             if (mntmp >= PM_GRAY_DRAGON && mntmp <= PM_YELLOW_DRAGON)
                 otmp->otyp = GRAY_DRAGON_SCALE_MAIL + mntmp - PM_GRAY_DRAGON;
             break;

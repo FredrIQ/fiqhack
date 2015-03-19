@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-17 */
+/* Last modified by Alex Smith, 2015-03-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -404,7 +404,8 @@ can_hold(struct obj *obj)
     return FALSE;
 }
 
-/* Add an item to the inventory unless we're fumbling or it refuses to be
+/*
+ * Add an item to the inventory unless we're fumbling or it refuses to be
  * held (via touch_artifact), and give a message.
  * If there aren't any free inventory slots, we'll drop it instead.
  * If both success and failure messages are NULL, then we're just doing the
@@ -416,7 +417,7 @@ hold_another_object(struct obj *obj, const char *drop_fmt, const char *drop_arg,
                     const char *hold_msg)
 {
     if (!Blind)
-        obj->dknown = 1;        /* maximize mergibility */
+        obj->dknown = 1;        /* maximize mergability */
     if (obj->oartifact) {
         /* place_object may change these */
         boolean crysknife = (obj->otyp == CRYSKNIFE);

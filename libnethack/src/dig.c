@@ -1,10 +1,10 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
 #include "hack.h"
-#include "edog.h" 
+#include "edog.h"
 /* #define DEBUG *//* turn on for diagnostics */
 
 static boolean rm_waslit(void);
@@ -68,8 +68,7 @@ mkcavepos(xchar x, xchar y, int dist, boolean waslit, boolean rockit)
     } else if (loc->typ == ROOM)
         return;
 
-    unblock_point(x, y);        /* make sure vision knows this location is open 
-                                 */
+    unblock_point(x, y);     /* make sure vision knows this location is open */
 
     /* fake out saved state */
     loc->seenv = 0;
@@ -619,7 +618,7 @@ digactualhole(int x, int y, struct monst *madeby, int ttyp)
                     pay_for_damage("dig into", TRUE);
 
                 pline("You fall through...");
-                /* Earlier checks must ensure that the destination level exists 
+                /* Earlier checks must ensure that the destination level exists
                    and is in the present dungeon. */
                 newlevel.dnum = u.uz.dnum;
                 newlevel.dlevel = u.uz.dlevel + 1;
@@ -712,7 +711,7 @@ dighole(boolean pit_only)
             pline("The boulder settles into the pit.");
             ttmp->ttyp = PIT;   /* crush spikes */
         } else {
-            /* 
+            /*
              * digging makes a hole, but the boulder immediately
              * fills it.  Final outcome:  no hole, no boulder.
              */
@@ -732,7 +731,7 @@ dighole(boolean pit_only)
         typ = fillholetyp(u.ux, u.uy);
 
         if (typ == ROOM) {
-            /* 
+            /*
              * We can't dig a hole here since that will destroy
              * the drawbridge.  The following is a cop-out. --dlc
              */
@@ -1158,9 +1157,8 @@ mdig_tunnel(struct monst *mtmp)
 
 
 /* zap_dig: digging via wand zap or spell cast
- * 
- * dig for digdepth positions; also down on request of Lennart Augustsson.
- */
+
+   dig for digdepth positions; also down on request of Lennart Augustsson. */
 void
 zap_dig(schar dx, schar dy, schar dz)
 {
@@ -1205,7 +1203,7 @@ zap_dig(schar dx, schar dy, schar dz)
                 otmp = mksobj_at(ROCK, level, u.ux, u.uy, FALSE, FALSE,
                                  rng_main);
                 if (otmp) {
-                    xname(otmp);        /* set dknown, maybe bknown */
+                    examine_object(otmp);     /* set dknown, maybe bknown */
                     stackobj(otmp);
                 }
                 newsym(u.ux, u.uy);
@@ -1320,7 +1318,7 @@ bury_an_obj(struct obj *otmp)
         unpunish();
     /* after unpunish(), or might get deallocated chain */
     otmp2 = otmp->nexthere;
-    /* 
+    /*
      * obj_resists(,0,0) prevents Rider corpses from being buried.
      * It also prevents The Amulet and invocation tools from being
      * buried.  Since they can't be confined to bags and statues,
@@ -1345,7 +1343,7 @@ bury_an_obj(struct obj *otmp)
         obfree(otmp, NULL);
         return otmp2;
     }
-    /* 
+    /*
      * Start a rot on organic material.  Not corpses -- they
      * are already handled.
      */
@@ -1418,7 +1416,7 @@ rot_organic(void *arg, long timeout)
            do need to update its map coordinates. */
         obj->cobj->ox = obj->ox, obj->cobj->oy = obj->oy;
         /* Everything which can be held in a container can also be buried, so
-           bury_an_obj's use of obj_extract_self insures that Has_contents(obj) 
+           bury_an_obj's use of obj_extract_self ensures that Has_contents(obj)
            will eventually become false. */
         bury_an_obj(obj->cobj);
     }
@@ -1479,4 +1477,3 @@ rot_corpse(void *arg, long timeout)
 }
 
 /*dig.c*/
-

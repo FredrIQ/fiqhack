@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1011,11 +1011,9 @@ safe_qbuf(const char *qbuf, unsigned padlength, const char *planA,
                                              textleft) ? planB : last_resort;
 }
 
-/*
- * Pick up <count> of obj from the ground and add it to the hero's inventory.
- * Returns -1 if caller should break out of its loop, 0 if nothing picked
- * up, 1 if otherwise.
- */
+/* Pick up <count> of obj from the ground and add it to the hero's inventory.
+   Returns -1 if caller should break out of its loop, 0 if nothing picked up, 1
+   otherwise. */
 int
 pickup_object(struct obj *obj, long count, boolean telekinesis)
 {       /* not picking it up directly by hand */

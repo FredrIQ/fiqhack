@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -322,10 +322,9 @@ make_corpse(struct monst *mtmp)
 
     /* Avoid "It was hidden under a green mold corpse!" during Blind combat. An
        unseen monster referred to as "it" could be killed and leave a corpse.
-       If a hider then hid underneath it, you could be told the corpse type of
-       a monster that you never knew was there without this.  The code in
-       hitmu() substitutes the word "something" if the corpses obj->dknown is
-       0. */
+       If a hider then hid underneath it, you could be told the corpse type of a
+       monster that you never knew was there without this.  The code in hitmu()
+       substitutes the word "something" if the corpse's obj->dknown is 0. */
     if (Blind && !sensemon(mtmp))
         obj->dknown = 0;
 

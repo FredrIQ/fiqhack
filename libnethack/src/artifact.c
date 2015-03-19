@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -973,10 +973,9 @@ artifact_hit_behead(struct monst *magr, struct monst *mdef, struct obj *otmp,
                 return TRUE;
             }
 
-            /* Players with negative AC's take less damage instead * of just
-               not getting hit.  We must add a large enough * value to the
-               damage so that this reduction in * damage does not prevent
-               death. */
+            /* Players with negative ACs take less damage instead of just not
+               getting hit.  We must add a large enough value to the damage so
+               that this reduction in damage does not prevent death. */
             *dmgptr = 2 * (Upolyd ? u.mh : u.uhp) + FATAL_DAMAGE_MODIFIER;
             pline("%s cuts you in half!", wepdesc);
             otmp->dknown = TRUE;
