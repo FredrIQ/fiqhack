@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2015-03-17
+Last modified by Alex Smith, 2015-03-20
 
 This document documents the version of the network protocol used in
 NetHack 4.3, and was written by Daniel Thaler, GreyKnight, Alex Smith.
@@ -150,6 +150,7 @@ Command arguments:
 
 Response arguments:
   * `string bgdesc`: a description of the background
+  * `boolean feature_described`: true if `bgdesc` is redundant to other fields
   * `string effectdesc`: a description of an effect
   * `boolean in`: true if an object is "in" rather than "on" the background
   * `string invisdesc`: a description of a remembered invisible monster

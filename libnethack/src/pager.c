@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-19 */
+/* Last modified by Alex Smith, 2015-03-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -16,7 +16,8 @@ static boolean append_str(const char **buf, const char *new_str,
                           int is_plur, int is_in);
 static void mon_vision_summary(const struct monst *mtmp, char *outbuf);
 static void describe_bg(int x, int y, int bg, char *buf);
-static int describe_object(int x, int y, int votyp, char *buf, int known_embed);
+static int describe_object(int x, int y, int votyp, char *buf, int known_embed,
+                           boolean *feature_described);
 static void describe_mon(int x, int y, int monnum, char *buf);
 static void checkfile(const char *inp, struct permonst *, boolean, boolean);
 static int do_look(boolean, const struct nh_cmd_arg *);
@@ -172,11 +173,14 @@ describe_bg(int x, int y, int bg, char *buf)
 
 
 static int
-describe_object(int x, int y, int votyp, char *buf, int known_embed)
+describe_object(int x, int y, int votyp, char *buf, int known_embed,
+                boolean *feature_described)
 {
     int num_objs = 0;
     struct obj *otmp;
     int typ;
+
+    *feature_described = FALSE;
 
     if (votyp == -1)
         return -1;
@@ -208,18 +212,25 @@ describe_object(int x, int y, int votyp, char *buf, int known_embed)
         strcat(buf, " stuck");
     else if (known_embed && (IS_ROCK(typ) || closed_door(level, x, y)))
         strcat(buf, " embedded");
-    else if (IS_TREE(typ))
+    else if (IS_TREE(typ)) {
         strcat(buf, " stuck in a tree");
-    else if (typ == STONE || typ == SCORR)
+        *feature_described = TRUE;
+    } else if (typ == STONE || typ == SCORR) {
         strcat(buf, " embedded in stone");
-    else if (IS_WALL(typ) || typ == SDOOR)
+        *feature_described = TRUE;
+    } else if (IS_WALL(typ) || typ == SDOOR) {
         strcat(buf, " embedded in a wall");
-    else if (closed_door(level, x, y))
+        *feature_described = TRUE;
+    } else if (closed_door(level, x, y)) {
         strcat(buf, " embedded in a door");
-    else if (is_pool(level, x, y))
+        *feature_described = TRUE;
+    } else if (is_pool(level, x, y)) {
         strcat(buf, " in water");
-    else if (is_lava(level, x, y))
+        *feature_described = TRUE;
+    } else if (is_lava(level, x, y)) {
         strcat(buf, " in molten lava"); /* [can this ever happen?] */
+        *feature_described = TRUE;
+    }
 
     if (!cansee(x, y))
         return -1;      /* don't disclose the number of objects for location
@@ -377,6 +388,7 @@ nh_describe_pos(int x, int y, struct nh_desc_buf *bufs, int *is_in)
     bufs->mondesc[0] = '\0';
     bufs->invisdesc[0] = '\0';
     bufs->effectdesc[0] = '\0';
+    bufs->feature_described = FALSE;
     bufs->objcount = -1;
 
     if (is_in)
@@ -411,7 +423,7 @@ nh_describe_pos(int x, int y, struct nh_desc_buf *bufs, int *is_in)
 
     bufs->objcount =
         describe_object(x, y, level->locations[x][y].mem_obj - 1, bufs->objdesc,
-                        mem_bg && is_in);
+                        mem_bg && is_in, &bufs->feature_described);
 
     describe_mon(x, y, monid - 1, bufs->mondesc);
 
@@ -697,7 +709,8 @@ do_look(boolean quick, const struct nh_cmd_arg *arg)
             if (!firstmatch)
                 firstmatch = descbuf.trapdesc;
 
-        if (append_str(&out_str, descbuf.bgdesc, 0, is_in))
+        if (!descbuf.feature_described &&
+            append_str(&out_str, descbuf.bgdesc, 0, is_in))
             if (!firstmatch)
                 firstmatch = descbuf.bgdesc;
 

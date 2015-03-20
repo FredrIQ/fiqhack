@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-17 */
+/* Last modified by Alex Smith, 2015-03-20 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -713,6 +713,7 @@ struct nh_desc_buf {
     char effectdesc[BUFSZ];     /* can only describe the swallow effect */
     int objcount;       /* number of (visible) objects or -1 if the location is 
                            not visible */
+    nh_bool feature_described;  /* bgdesc is redundant to another field */
 };
 
 

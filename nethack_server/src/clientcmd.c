@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-07-07 */
+/* Last modified by Alex Smith, 2015-03-20 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -694,10 +694,11 @@ ccmd_describe_pos(json_t * params)
 
     nh_describe_pos(x, y, &db, is_in ? &is_in : NULL);
     jmsg =
-        json_pack("{ss,ss,ss,ss,ss,ss,si,si}", "bgdesc", db.bgdesc, "trapdesc",
-                  db.trapdesc, "objdesc", db.objdesc, "mondesc", db.mondesc,
-                  "invisdesc", db.invisdesc, "effectdesc", db.effectdesc,
-                  "objcount", db.objcount, "in", is_in);
+        json_pack("{ss,ss,ss,ss,ss,ss,si,sb,sb}", "bgdesc", db.bgdesc,
+                  "trapdesc", db.trapdesc, "objdesc", db.objdesc, "mondesc",
+                  db.mondesc, "invisdesc", db.invisdesc, "effectdesc",
+                  db.effectdesc, "objcount", db.objcount, "in", is_in,
+                  "feature_described", db.feature_described);
     client_msg("describe_pos", jmsg);
 }
 

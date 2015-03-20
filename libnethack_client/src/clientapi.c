@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-28 */
+/* Last modified by Alex Smith, 2015-03-20 */
 /* Copyright (c) Daniel Thaler, 2012. */
 /* The NetHack client lib may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -697,11 +697,12 @@ nhnet_describe_pos(int x, int y, struct nh_desc_buf *bufs, int *is_in)
 
     jmsg =
         send_receive_msg("describe_pos",
-                         json_pack("{si,si, si}", "x", x, "y", y, "is_in",
+                         json_pack("{si,si,si}", "x", x, "y", y, "is_in",
                                    is_in != NULL));
-    json_unpack(jmsg, "{ss,ss,ss,ss,ss,ss,si,si!}", "bgdesc", &bgdesc,
+    json_unpack(jmsg, "{ss,ss,ss,ss,ss,ss,si,sb,sb!}", "bgdesc", &bgdesc,
                 "trapdesc", &trapdesc, "objdesc", &objdesc, "mondesc", &mondesc,
-                "invisdesc", &invisdesc, "effectdesc", &effectdesc, "objcount",
+                "invisdesc", &invisdesc, "effectdesc", &effectdesc,
+                "feature_described", &bufs->feature_described, "objcount",
                 &bufs->objcount, "in", &in);
 
     strncpy(bufs->bgdesc, bgdesc, BUFSZ - 1);
