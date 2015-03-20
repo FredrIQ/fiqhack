@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-20 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1832,6 +1832,12 @@ create_particular(const struct nh_cmd_arg *arg)
     boolean maketame, makepeaceful, makehostile;
     int quan = 1;
 
+    /* This is explicitly a debug mode operation only. (In addition to the
+       rather unflavoured messages, it prints some additional debug info that
+       would leak info in a non-debug-mode game.) */
+    if (!wizard)
+        impossible("calling create_particular outside debug mode");
+
     if ((arg->argtype & CMD_ARG_LIMIT) && arg->limit > 1)
         quan = arg->limit;
 
@@ -1880,6 +1886,8 @@ create_particular(const struct nh_cmd_arg *arg)
         pline("I've never heard of such monsters.");
     } while (++tries < 5);
 
+    mtmp = NULL;
+
     if (tries == 5) {
         pline("That's enough tries!");
     } else {
@@ -1907,6 +1915,33 @@ create_particular(const struct nh_cmd_arg *arg)
                 madeany = TRUE;
         }
     }
+
+    /* Output the coordinates of one created monster. This is used by the
+       testbench, so that it can #genesis up a monster and then start aiming at
+       it. (Note that #genesis is zero-time, meaning that the monster will have
+       no chance to move out of position until after the player's next turn.
+       Arguably, it would ease debugging further to give the monster summoning
+       sickness too, but we don't do that yet, because other sorts of debugging
+       might want the monster to be as "normal" as possible.) */
+    if (mtmp) {
+        int dx = mtmp->mx - u.ux;
+        int dy = mtmp->my - u.uy;
+
+        enum nh_direction dir = DIR_NONE;
+
+        if (dx == 0)
+            dir = dy < 0 ? DIR_N : DIR_S;
+        else if (dy == 0)
+            dir = dx < 0 ? DIR_W : DIR_E;
+        else if (dx == dy)
+            dir = dx < 0 ? DIR_NW : DIR_SE;
+        else if (dx == -dy)
+            dir = dx < 0 ? DIR_SW : DIR_NE;
+
+        pline("Created a monster at (%d, %d), direction %d",
+              mtmp->mx, mtmp->my, dir);
+    }
+
     return madeany;
 }
 

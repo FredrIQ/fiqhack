@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-17 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Daniel Thaler, 2011. */
 /* The NetHack server may be freely redistributed under the terms of either:
  *  - the NetHack license
@@ -361,7 +361,7 @@ client_main(int userid, int _infd, int _outfd)
     }
 
     gamepaths = init_game_paths();
-    nh_lib_init(&server_windowprocs, gamepaths);
+    nh_lib_init(&server_windowprocs, (const char *const *)gamepaths);
     for (i = 0; i < PREFIX_COUNT; i++)
         free(gamepaths[i]);
     free(gamepaths);
