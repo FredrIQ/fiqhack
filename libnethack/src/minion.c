@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-20 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -147,6 +147,40 @@ summon_minion(aligntyp alignment, boolean talk)
     }
 }
 
+/* Returns "mortal", "creature" (if allow_creature), or a more specific term.
+   This is mostly used by immortal/unalive entities when talking to other
+   entities. If they're talking /down/, "creature" is normally inappropriate
+   (e.g. "laughing at cowardly creatures"). If they're merely addressing the
+   permonst in question, "creature" is typically fine (e.g. "Hark, creature!").
+   Undead can be addressed as "creature"; constructs and demons won't be. */
+const char *
+mortal_or_creature(const struct permonst *data, boolean allow_creature)
+{
+    if (data->mlet == S_HUMAN)
+        return "mortal";
+    else if (allow_creature && (!nonliving(data) || is_undead(data)) &&
+             !is_demon(data))
+        return "creature";
+    else if (!nonliving(data) && !is_demon(data))
+        return "mortal";
+    else if (is_demon(data) || monsndx(data) == PM_MANES)
+        return "demon";
+    else if (nonliving(data) && !is_undead(data))
+        return "construct"; /* golems and vortices */
+    else if (data->mlet == S_LICH)
+        return "lich";
+    else if (data->mlet == S_MUMMY)
+        return "mummy";
+    else if (data->mlet == S_VAMPIRE)
+        return "vampire";
+    else if (data->mlet == S_ZOMBIE &&
+             monsndx(data) != PM_GHOUL && monsndx(data) != PM_SKELETON)
+        return "zombie";
+    else
+        return data->mname;
+}
+
+
 #define Athome (Inhell && !mtmp->cham)
 
 /* returns 1 if it won't attack. */
@@ -198,8 +232,8 @@ demon_talk(struct monst *mtmp)
               currency(demand));
 
         if ((offer = bribe(mtmp)) >= demand) {
-            pline("%s vanishes, laughing about cowardly mortals.",
-                  Amonnam(mtmp));
+            pline("%s vanishes, laughing about cowardly %s.", Amonnam(mtmp),
+                  makeplural(mortal_or_creature(youmonst.data, FALSE)));
         } else if (offer > 0L && (long)rnd(40) > (demand - offer)) {
             pline("%s scowls at you menacingly, then vanishes.", Amonnam(mtmp));
         } else {

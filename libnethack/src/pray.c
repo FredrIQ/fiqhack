@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-20 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -487,7 +487,8 @@ god_zaps_you(aligntyp resp_god)
         }
         if (has_sanctum(level, Align2amask(resp_god))) {
             /* one more try for high altars */
-            verbalize("Thou cannot escape my wrath, mortal!");
+            verbalize("Thou cannot escape my wrath, %s!",
+                      mortal_or_creature(youmonst.data, TRUE));
             summon_minion(resp_god, FALSE);
             summon_minion(resp_god, FALSE);
             summon_minion(resp_god, FALSE);
@@ -537,7 +538,7 @@ angrygods(aligntyp resp_god)
         godvoice(resp_god, NULL);
         pline("\"Thou %s, %s.\"", (ugod_is_angry() && resp_god == u.ualign.type)
               ? "hast strayed from the path" : "art arrogant",
-              youmonst.data->mlet == S_HUMAN ? "mortal" : "creature");
+              mortal_or_creature(youmonst.data, TRUE));
         verbalize("Thou must relearn thy lessons!");
         adjattrib(A_WIS, -1, FALSE);
         losexp(NULL, FALSE);
@@ -561,8 +562,7 @@ angrygods(aligntyp resp_god)
         verbalize("Thou durst %s me?",
                   (on_altar() &&
                    (a_align(u.ux, u.uy) != resp_god)) ? "scorn" : "call upon");
-        pline("\"Then die, %s!\"",
-              youmonst.data->mlet == S_HUMAN ? "mortal" : "creature");
+        pline("\"Then die, %s!\"", mortal_or_creature(youmonst.data, TRUE));
         summon_minion(resp_god, FALSE);
         break;
 
@@ -877,8 +877,7 @@ pleased(aligntyp g_align)
                 if (u.uevent.uheard_tune < 1) {
                     godvoice(g_align, NULL);
                     verbalize("Hark, %s!",
-                              youmonst.data->mlet ==
-                              S_HUMAN ? "mortal" : "creature");
+                              mortal_or_creature(youmonst.data, TRUE));
                     verbalize
                         ("To enter the castle, thou must play the right tune!");
                     u.uevent.uheard_tune++;
@@ -1321,10 +1320,15 @@ dosacrifice(const struct nh_cmd_arg *arg)
                 adjalign(10);
                 pline("An invisible choir sings, and you are bathed in "
                       "radiance...");
-                godvoice(altaralign, "Congratulations, mortal!");
+                godvoice(altaralign,
+                         msgcat_many("Congratulations, ",
+                                     mortal_or_creature(youmonst.data, TRUE),
+                                     "!", NULL));
                 win_pause_output(P_MESSAGE);
-                verbalize("In return for thy service, I grant thee the gift "
-                          "of Immortality!");
+                verbalize(
+                    "In return for thy service, I grant thee the gift of %s",
+                    is_undead(youmonst.data) || nonliving(youmonst.data) ?
+                    "Eternal Power!" : "Immortality!");
                 pline("You ascend to the status of Demigod%s...",
                       u.ufemale ? "dess" : "");
                 historic_event(FALSE,
@@ -1362,11 +1366,13 @@ dosacrifice(const struct nh_cmd_arg *arg)
     if (altaralign != u.ualign.type && sanctum) {
         /* 
          * REAL BAD NEWS!!! High altars cannot be converted.  Even an attempt
-         * gets the god who owns it truely pissed off.
+         * gets the god who owns it truly pissed off.
          */
         pline("You feel the air around you grow charged...");
         pline("Suddenly, you realize that %s has noticed you...", a_gname());
-        godvoice(altaralign, "So, mortal!  You dare desecrate my High Temple!");
+        godvoice(altaralign, msgcat_many(
+                     "So, ", mortal_or_creature(youmonst.data, TRUE),
+                     "!  You dare desecrate my High Temple!", NULL));
         /* Throw everything we have at the player */
         god_zaps_you(altaralign);
     } else if (value < 0) {     /* I don't think the gods are gonna like

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-19 */
+/* Last modified by Alex Smith, 2015-03-20 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -945,6 +945,7 @@ extern int doseduce(struct monst *);
 
 extern void msummon(struct monst *, const d_level *);
 extern void summon_minion(aligntyp, boolean);
+extern const char *mortal_or_creature(const struct permonst *, boolean);
 extern int demon_talk(struct monst *);
 extern long bribe(struct monst *);
 extern int dprince(aligntyp);
