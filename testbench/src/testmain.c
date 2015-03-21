@@ -6,6 +6,7 @@
 #include "testgame.h"
 #include "pm.h"
 #include "onames.h"
+#include "hacklib.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -34,17 +35,38 @@ round_robin_test(unsigned long long seed)
     const int cmdcount = sizeof testable_commands / sizeof *testable_commands;
     init_test_system(seed, "wgfn", moncount * itemcount * cmdcount);
 
-    int cmd, mon, item;
-    for (cmd = 0; cmd < cmdcount; cmd++)
-        for (mon = 0; mon < moncount; mon++)
-            for (item = 1; item <= itemcount; item++) {
-                char teststring[512];
-                snprintf(teststring, sizeof teststring,
-                         "genesis,\"monsndx #%d\",wish,\"Z - otyp #%d\",%s,"
-                         "wait,wait,wait,wait,wait", mon, item,
-                         testable_commands[cmd]);
-                play_test_game(teststring);
-            }
+    /* We want to test all (cmd, mon, item) triples, but in an order that cycles
+       through each individual command/monster/item as quickly as possible, and
+       each pair of commands/monsters/items as quickly as possible. We do this
+       by taking the next prime after *count, then taking the value of an
+       increasing integer modulo those factors, skipping any entries which are
+       out of range. */
+
+    int monfactor = nextprime(moncount);
+    int itemfactor = nextprime(itemcount);
+    int cmdfactor = nextprime(cmdcount);
+
+    long long nt;
+
+    for (nt = 0; nt < monfactor * itemfactor * cmdfactor; nt++) {
+        int cmd, mon, item;
+        cmd = nt % cmdfactor;
+        if (cmd >= cmdcount)
+            continue;
+        mon = nt % monfactor;
+        if (mon >= moncount)
+            continue;
+        item = nt % itemfactor;
+        if (item >= itemcount)
+            continue;
+
+        char teststring[512];
+        snprintf(teststring, sizeof teststring,
+                 "genesis,\"monsndx #%d\",wish,\"Z - otyp #%d\",%s,"
+                 "wait,wait,wait,wait,wait", mon, item + 1,
+                 testable_commands[cmd]);
+        play_test_game(teststring);
+    }
 
     shutdown_test_system();
 }

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-16 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* Copyright (c) Alex Smith, 2013.                                */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -27,6 +27,7 @@ extern int rounddiv(long, int);
 extern long long isqrt(long long);
 extern long long ilog2(long long);
 extern int popcount(unsigned long long);
+extern int nextprime(int);
 extern int dist2(int, int, int, int);
 extern int distmin(int, int, int, int);
 extern boolean online2(int, int, int, int);
