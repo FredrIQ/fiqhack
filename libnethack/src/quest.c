@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-08-25 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright 1991, M. Stephenson */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -386,7 +386,7 @@ prisoner_speaks(struct monst *mtmp)
             pline("%s speaks:", Monnam(mtmp));
         verbalize("I'm finally free!");
         mtmp->mstrategy &= ~STRAT_WAITMASK;
-        mtmp->mpeaceful = 1;
+        msethostility(mtmp, FALSE, FALSE); /* TODO: reset alignment? */
 
         /* Your god is happy... */
         adjalign(3);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Izchak Miller, Steve Linhart, 1989.              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -393,8 +393,7 @@ intemple(int roomno)
                 if (priest->mpeaceful) {
                     msg1 = "Infidel, you have entered Moloch's Sanctum!";
                     msg2 = "Be gone!";
-                    priest->mpeaceful = 0;
-                    set_malign(priest);
+                    msethostility(priest, TRUE, TRUE);
                 } else
                     msg1 = "You desecrate this place by your presence!";
             } else {
@@ -437,8 +436,7 @@ intemple(int roomno)
                     pline("An enormous ghost appears next to you!");
                 else
                     pline("You sense a presence close by!");
-                mtmp->mpeaceful = 0;
-                set_malign(mtmp);
+                msethostility(mtmp, TRUE, TRUE);
                 if (flags.verbose)
                     pline("You are frightened to death, and unable to move.");
                 helpless(3, hr_afraid, "frightened to death",
@@ -459,7 +457,7 @@ priest_talk(struct monst *priest)
 
     if (priest->mflee || (!priest->ispriest && coaligned && strayed)) {
         pline("%s doesn't want anything to do with you!", Monnam(priest));
-        priest->mpeaceful = 0;
+        msethostility(priest, TRUE, FALSE);
         return;
     }
 
@@ -477,7 +475,7 @@ priest_talk(struct monst *priest)
             priest->mfrozen = priest->msleeping = 0;
             priest->mcanmove = 1;
         }
-        priest->mpeaceful = 0;
+        msethostility(priest, TRUE, FALSE);
         verbalize("%s", cranky_msg[rn2(3)]);
         return;
     }
@@ -487,7 +485,7 @@ priest_talk(struct monst *priest)
         !has_shrine(priest)) {
         verbalize
             ("Begone!  Thou desecratest this holy place with thy presence.");
-        priest->mpeaceful = 0;
+        msethostility(priest, TRUE, FALSE);
         return;
     }
     if (!money_cnt(invent)) {
@@ -574,9 +572,8 @@ mk_roamer(const struct permonst *ptr, aligntyp alignment, struct level *lev,
     /* roamer->ispriest == FALSE naturally */
     roamer->isminion = TRUE;    /* borrowing this bit */
     roamer->mtrapseen = ~0;     /* traps are known */
-    roamer->mpeaceful = peaceful;
+    msethostility(roamer, !peaceful, TRUE); /* TODO: handle in_mklev */
     roamer->msleeping = 0;
-    set_malign(roamer); /* peaceful may have changed */
 
     /* MORE TO COME */
     return roamer;
@@ -585,18 +582,13 @@ mk_roamer(const struct permonst *ptr, aligntyp alignment, struct level *lev,
 void
 reset_hostility(struct monst *roamer)
 {
-    if (!
-        (roamer->isminion &&
-         (roamer->data == &mons[PM_ALIGNED_PRIEST] ||
-          roamer->data == &mons[PM_ANGEL])))
+    if (! (roamer->isminion &&
+           (roamer->data == &mons[PM_ALIGNED_PRIEST] ||
+            roamer->data == &mons[PM_ANGEL])))
         return;
 
-    if (EPRI(roamer)->shralign != u.ualign.type) {
-        roamer->mpeaceful = roamer->mtame = 0;
-        set_malign(roamer);
-    }
-    if (roamer->dlevel == level)
-        newsym(roamer->mx, roamer->my);
+    if (EPRI(roamer)->shralign != u.ualign.type)
+        msethostility(roamer, TRUE, TRUE);
 }
 
 boolean

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-19 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2324,6 +2324,35 @@ m_respond(struct monst *mtmp)
 }
 
 
+/* Marks a monster as peaceful (hostile = FALSE) or hostile (hostile = TRUE),
+   while handling appropriate side effects (brandings, etc.); note that this
+   will untame tame monsters. Does not print messages; this is a low-level
+   function, basically just a setter method for mtmp->mpeaceful. Use this for
+   hostility changes on monsters after makemon finishes returning; you don't
+   need to use it before the monster is placed on the map. You also don't need
+   to use this function during level creation (and shouldn't, really, although
+   there's an !in_mklev check to prevent problems if you do anyway).
+
+   If adjust_malign is true, then change the alignment yield of the monster as
+   if it had generated in the given hostility status (i.e. bonus for killing
+   hostiles, penalty for killing peacefuls). If it's false, leave the alignment
+   yield of the monster alone.
+
+   For general angering when it's the player's fault (attacking a monster,
+   etc.), see setmangry. */
+void
+msethostility(struct monst *mtmp, boolean hostile, boolean adjust_malign)
+{
+    mtmp->mpeaceful = !hostile;
+    mtmp->mtame = 0;
+
+    if (mtmp->dlevel == level && !in_mklev)
+        newsym(mtmp->mx, mtmp->my);
+
+    if (adjust_malign)
+        set_malign(mtmp);
+}
+
 void
 setmangry(struct monst *mtmp)
 {
@@ -2332,7 +2361,8 @@ setmangry(struct monst *mtmp)
         return;
     if (mtmp->mtame)
         return;
-    mtmp->mpeaceful = 0;
+    msethostility(mtmp, TRUE, FALSE);
+
     if (mtmp->ispriest) {
         if (p_coaligned(mtmp))
             adjalign(-5);       /* very bad */
@@ -2340,6 +2370,7 @@ setmangry(struct monst *mtmp)
             adjalign(2);
     } else
         adjalign(-1);   /* attacking peaceful monsters is bad */
+
     if (couldsee(mtmp->mx, mtmp->my)) {
         if (humanoid(mtmp->data) || mtmp->isshk || mtmp->isgd)
             pline("%s gets angry!", Monnam(mtmp));
@@ -2357,14 +2388,13 @@ setmangry(struct monst *mtmp)
         for (mon = level->monlist; mon; mon = mon->nmon)
             if (!DEADMONSTER(mon) && mon->data == &pm_guardian &&
                 mon->mpeaceful) {
-                mon->mpeaceful = 0;
+                msethostility(mtmp, TRUE, FALSE);
                 if (canseemon(mon))
                     ++got_mad;
             }
         if (got_mad && !Hallucination)
-            pline("The %s appear%s to be angry too...",
-                  got_mad ==
-                  1 ? pm_guardian.mname : makeplural(pm_guardian.mname),
+            pline("The %s appear%s to be angry too...", got_mad == 1 ?
+                  pm_guardian.mname : makeplural(pm_guardian.mname),
                   got_mad == 1 ? "s" : "");
     }
 }
@@ -2992,7 +3022,7 @@ angry_guards(boolean silent)
                 slct++;
                 mtmp->msleeping = mtmp->mfrozen = 0;
             }
-            mtmp->mpeaceful = 0;
+            msethostility(mtmp, TRUE, FALSE);
         }
     }
     if (ct) {
@@ -3025,7 +3055,7 @@ pacify_guards(void)
             continue;
         if (mtmp->data == &mons[PM_WATCHMAN] ||
             mtmp->data == &mons[PM_WATCH_CAPTAIN])
-            mtmp->mpeaceful = 1;
+            msethostility(mtmp, FALSE, FALSE);
     }
 }
 

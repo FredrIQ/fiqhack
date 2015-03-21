@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -108,8 +108,7 @@ make_familiar(struct obj *otmp, xchar x, xchar y, boolean quietly)
             if (chance == 2) {  /* hostile (cursed figurine) */
                 if (!quietly)
                     pline("You get a bad feeling about this.");
-                mtmp->mpeaceful = 0;
-                set_malign(mtmp);
+                msethostility(mtmp, TRUE, TRUE);
             }
         }
         /* if figurine has been named, give same name to the monster */
@@ -473,7 +472,9 @@ mon_catchup_elapsed_time(struct monst *mtmp, long nmv)
 
         /* The rng_dog_untame RNG is only semi-synched, because the argument
            changes.  This gives better results than rng_main, and we can't match
-           exactly due to different pet-wrangling habits. */
+           exactly due to different pet-wrangling habits.
+
+           Note: not msethostility; we're off-level right now. */
         if (mtmp->mtame > wilder)
             mtmp->mtame -= wilder;      /* less tame */
         else if (mtmp->mtame > rn2_on_rng(wilder, rng_dog_untame))
@@ -783,9 +784,10 @@ tamedog(struct monst *mtmp, struct obj *obj)
         return NULL;
 
     /* worst case, at least it'll be peaceful; this uses the main RNG because
-     * realtime effects means that this won't really sync anyway */
-    mtmp->mpeaceful = 1;
-    set_malign(mtmp);
+       realtime effects means that this won't really sync anyway; this also
+       calls set_malign (thus there's no need for the caller to call it after
+       calling tamedog()) */
+    msethostility(mtmp, FALSE, TRUE);
     if (flags.moonphase == FULL_MOON && night() && rn2(6) && obj &&
         mtmp->data->mlet == S_DOG)
         return NULL;
@@ -896,10 +898,10 @@ wary_dog(struct monst *mtmp, boolean was_dead)
     }
 
     if (edog && (edog->killed_by_u == 1 || edog->abuse > 2)) {
-        mtmp->mpeaceful = mtmp->mtame = 0;
+        msethostility(mtmp, TRUE, FALSE);
         if (edog->abuse >= 0 && edog->abuse < 10)
             if (!rn2_on_rng(edog->abuse + 1, rng_dog_untame))
-                mtmp->mpeaceful = 1;
+                msethostility(mtmp, FALSE, FALSE);
         if (!quietly && cansee(mtmp->mx, mtmp->my)) {
             if (haseyes(youmonst.data)) {
                 if (haseyes(mtmp->data))
@@ -912,9 +914,8 @@ wary_dog(struct monst *mtmp, boolean was_dead)
         }
     } else {
         /* chance it goes wild anyway - Pet Semetary */
-        if (rn2_on_rng(mtmp->mtame, rng_dog_untame) == mtmp->mtame - 1) {
-            mtmp->mpeaceful = mtmp->mtame = 0;
-        }
+        if (rn2_on_rng(mtmp->mtame, rng_dog_untame) == mtmp->mtame - 1)
+            msethostility(mtmp, TRUE, FALSE);
     }
     if (!mtmp->mtame) {
         newsym(mtmp->mx, mtmp->my);

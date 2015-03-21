@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Izchak Miller, 1992.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -153,8 +153,7 @@ mk_mplayer(const struct permonst *ptr, struct level *lev, xchar x, xchar y,
             /* that's why they are "stuck" in the endgame :-) */
             mongets(mtmp, FAKE_AMULET_OF_YENDOR, rng);
         }
-        mtmp->mpeaceful = 0;
-        set_malign(mtmp);       /* peaceful may have changed again */
+        msethostility(mtmp, TRUE, TRUE);
 
         switch (monsndx(ptr)) {
         case PM_ARCHEOLOGIST:

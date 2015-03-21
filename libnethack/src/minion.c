@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-20 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -142,7 +142,7 @@ summon_minion(aligntyp alignment, boolean talk)
             if (!Blind)
                 pline("%s appears before you.", Amonnam(mon));
         }
-        mon->mpeaceful = FALSE;
+        msethostility(mon, TRUE, FALSE);
         /* don't call set_malign(); player was naughty */
     }
 }
@@ -191,9 +191,7 @@ demon_talk(struct monst *mtmp)
 
     if (uwep && uwep->oartifact == ART_EXCALIBUR) {
         pline("%s looks very angry.", Amonnam(mtmp));
-        mtmp->mpeaceful = mtmp->mtame = 0;
-        set_malign(mtmp);
-        newsym(mtmp->mx, mtmp->my);
+        msethostility(mtmp, TRUE, TRUE);
         return 0;
     }
 
@@ -218,8 +216,7 @@ demon_talk(struct monst *mtmp)
         (100 * (1 + (sgn(u.ualign.type) == sgn(mtmp->data->maligntyp))));
 
     if (!demand) {      /* you have no gold */
-        mtmp->mpeaceful = 0;
-        set_malign(mtmp);
+        msethostility(mtmp, TRUE, TRUE);
         return 0;
     } else {
         /* make sure that the demand is unmeetable if the monster has the
@@ -238,8 +235,7 @@ demon_talk(struct monst *mtmp)
             pline("%s scowls at you menacingly, then vanishes.", Amonnam(mtmp));
         } else {
             pline("%s gets angry...", Amonnam(mtmp));
-            mtmp->mpeaceful = 0;
-            set_malign(mtmp);
+            msethostility(mtmp, TRUE, TRUE);
             return 0;
         }
     }

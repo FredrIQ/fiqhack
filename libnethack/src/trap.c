@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-17 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -3307,8 +3307,7 @@ reward_untrap(struct trap *ttmp, struct monst *mtmp)
         if (rnl(10) < 8 && !mtmp->mpeaceful && !mtmp->msleeping &&
             !mtmp->mfrozen && !mindless(mtmp->data) &&
             mtmp->data->mlet != S_HUMAN) {
-            mtmp->mpeaceful = 1;
-            set_malign(mtmp);   /* reset alignment */
+            msethostility(mtmp, FALSE, TRUE);
             pline("%s is grateful.", Monnam(mtmp));
         }
         /* Helping someone out of a trap is a nice thing to do, A lawful may be
@@ -3437,8 +3436,7 @@ try_lift(struct monst *mtmp, struct trap *ttmp, int wt, boolean stuff)
         if (!ttmp->madeby_u && !mtmp->mpeaceful && mtmp->mcanmove &&
             !mindless(mtmp->data) && mtmp->data->mlet != S_HUMAN &&
             rnl(10) < 3) {
-            mtmp->mpeaceful = 1;
-            set_malign(mtmp);   /* reset alignment */
+            msethostility(mtmp, FALSE, TRUE);
             pline("%s thinks it was nice of you to try.", Monnam(mtmp));
         }
         return 0;

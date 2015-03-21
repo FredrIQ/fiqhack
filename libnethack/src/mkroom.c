@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -263,10 +263,8 @@ fill_zoo(struct level *lev, struct mkroom *sroom, enum rng rng)
                           rng == rng_main ? NO_MM_FLAGS : MM_ALLLEVRNG);
             if (mon) {
                 mon->msleeping = 1;
-                if (type == COURT && mon->mpeaceful) {
-                    mon->mpeaceful = 0;
-                    set_malign(mon);
-                }
+                if (type == COURT && mon->mpeaceful)
+                    msethostility(mon, TRUE, TRUE);
             }
             switch (type) {
             case ZOO:

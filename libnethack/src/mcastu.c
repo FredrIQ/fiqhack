@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -588,8 +588,8 @@ cast_cleric_spell(struct monst *mtmp, int dmg, int spellnum)
                     (mtmp2 = makemon(pm, level, bypos.x, bypos.y,
                                      MM_CREATEMONSTER | MM_CMONSTER_M)) != 0) {
                     success = TRUE;
-                    mtmp2->msleeping = mtmp2->mpeaceful = mtmp2->mtame = 0;
-                    set_malign(mtmp2);
+                    mtmp2->msleeping = 0;
+                    msethostility(mtmp, TRUE, TRUE);
                 }
             }
             /*
@@ -1241,17 +1241,15 @@ ucast_wizard_spell(struct monst *mattk, struct monst *mtmp, int dmg,
                                             (yours || mattk->mtame) ?
                                             MM_EDOG : NO_MM_FLAGS))) {
                             mpet->msleeping = 0;
-                            if (yours || mattk->mtame) {
+                            if (yours || mattk->mtame)
                                 /* TODO: We might want to consider taming the
                                    monster, but that has both balance issues,
                                    and (if it's covetous) technical issues. */
-                                mpet->mpeaceful = 1;
-                            } else if (mattk->mpeaceful)
-                                mpet->mpeaceful = 1;
+                                msethostility(mpet, FALSE, TRUE);
+                            else if (mattk->mpeaceful)
+                                msethostility(mpet, FALSE, TRUE);
                             else
-                                mpet->mpeaceful = mpet->mtame = 0;
-
-                            set_malign(mpet);
+                                msethostility(mpet, TRUE, TRUE);
                         } else  /* GENOD? */
                             mpet = makemon((struct permonst *)0, level,
                                            bypos.x, bypos.y, NO_MM_FLAGS);
@@ -1552,12 +1550,8 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
                     mtmp2->msleeping = 0;
                     if (yours || mattk->mtame)
                         (void)tamedog(mtmp2, (struct obj *)0);
-                    else if (mattk->mpeaceful)
-                        mtmp2->mpeaceful = 1;
                     else
-                        mtmp2->mpeaceful = 0;
-
-                    set_malign(mtmp2);
+                        msethostility(mtmp2, !mattk->mpeaceful, TRUE);
                 }
             }
 

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) 1989 by Jean-Christophe Collet */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -96,11 +96,10 @@ charm_snakes(int distance)
         if (!DEADMONSTER(mtmp) && mtmp->data->mlet == S_SNAKE && mtmp->mcanmove
             && distu(mtmp->mx, mtmp->my) < distance) {
             was_peaceful = mtmp->mpeaceful;
-            mtmp->mpeaceful = 1;
             mtmp->mavenge = 0;
             could_see_mon = canspotmon(mtmp);
             mtmp->mundetected = 0;
-            newsym(mtmp->mx, mtmp->my);
+            msethostility(mtmp, FALSE, FALSE); /* does a newsym() */
             if (canseemon(mtmp)) {
                 if (!could_see_mon)
                     pline("You notice %s, swaying with the music.",
@@ -127,7 +126,7 @@ calm_nymphs(int distance)
         if (!DEADMONSTER(mtmp) && mtmp->data->mlet == S_NYMPH && mtmp->mcanmove
             && distu(mtmp->mx, mtmp->my) < distance) {
             mtmp->msleeping = 0;
-            mtmp->mpeaceful = 1;
+            msethostility(mtmp, FALSE, FALSE);
             mtmp->mavenge = 0;
             if (canseemon(mtmp))
                 pline("%s listens cheerfully to the music, then seems quieter.",
@@ -146,7 +145,8 @@ awaken_soldiers(void)
     while (mtmp) {
         if (!DEADMONSTER(mtmp) && is_mercenary(mtmp->data) &&
             mtmp->data != &mons[PM_GUARD]) {
-            mtmp->mpeaceful = mtmp->msleeping = mtmp->mfrozen = 0;
+            mtmp->mfrozen = 0;
+            msethostility(mtmp, TRUE, FALSE);
             mtmp->mcanmove = 1;
             if (canseemon(mtmp))
                 pline("%s is now ready for battle!", Monnam(mtmp));

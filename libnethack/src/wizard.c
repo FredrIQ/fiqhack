@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -664,7 +664,8 @@ clonewiz(void)
     if ((mtmp2 =
          makemon(&mons[PM_WIZARD_OF_YENDOR], level, u.ux, u.uy,
                  NO_MM_FLAGS)) != 0) {
-        mtmp2->msleeping = mtmp2->mtame = mtmp2->mpeaceful = 0;
+        mtmp2->msleeping = 0;
+        msethostility(mtmp2, TRUE, FALSE); /* TODO: reset alignment? */
         if (!Uhave_amulet && rn2(2)) {        /* give clone a fake */
             add_to_minv(mtmp2, mksobj(level, FAKE_AMULET_OF_YENDOR,
                                       TRUE, FALSE, rng_main));
@@ -726,11 +727,10 @@ nasty(struct monst *mcast)
                     !enexto(&bypos, level, mcast->mux, mcast->muy,
                             &mons[makeindex]))
                     continue;
-                if ((mtmp =
-                     makemon(&mons[makeindex], level, bypos.x, bypos.y,
-                             NO_MM_FLAGS)) != 0) {
-                    mtmp->msleeping = mtmp->mpeaceful = mtmp->mtame = 0;
-                    set_malign(mtmp);
+                if (((mtmp = makemon(&mons[makeindex], level, bypos.x, bypos.y,
+                                     NO_MM_FLAGS))) != 0) {
+                    mtmp->msleeping = 0;
+                    msethostility(mtmp, TRUE, TRUE);
                 } else  /* GENOD? */
                     mtmp = makemon(NULL, level, bypos.x, bypos.y, NO_MM_FLAGS);
                 if (mtmp &&
@@ -787,8 +787,8 @@ resurrect(void)
     }
 
     if (mtmp) {
-        mtmp->msleeping = mtmp->mtame = mtmp->mpeaceful = 0;
-        set_malign(mtmp);
+        mtmp->msleeping = 0;
+        msethostility(mtmp, TRUE, TRUE);
         pline("A voice booms out...");
         verbalize("So thou thought thou couldst %s me, fool.", verb);
     }

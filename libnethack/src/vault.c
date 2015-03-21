@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-15 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -272,8 +272,7 @@ invault(void)
         if (!(guard = makemon(&mons[PM_GUARD], level, x, y, NO_MM_FLAGS)))
             return;
         guard->isgd = 1;
-        guard->mpeaceful = 1;
-        set_malign(guard);
+        msethostility(guard, FALSE, TRUE);
         EGD(guard)->gddone = 0;
         EGD(guard)->ogx = x;
         EGD(guard)->ogy = y;
@@ -534,7 +533,7 @@ gd_move(struct monst *grd)
                 mnexto(grd);
                 level->locations[m][n].typ = egrd->fakecorr[0].ftyp;
                 newsym(m, n);
-                grd->mpeaceful = 0;
+                msethostility(grd, TRUE, FALSE);
                 return -1;
             }
             /* not fair to get mad when (s)he's fainted or paralyzed */
@@ -550,7 +549,7 @@ gd_move(struct monst *grd)
                 rloc(grd, FALSE);
                 level->locations[m][n].typ = egrd->fakecorr[0].ftyp;
                 newsym(m, n);
-                grd->mpeaceful = 0;
+                msethostility(grd, TRUE, FALSE);
             letknow:
                 if (!cansee(grd->mx, grd->my) || !mon_visible(grd))
                     You_hear("the shrill sound of a guard's whistle.");
@@ -592,7 +591,7 @@ gd_move(struct monst *grd)
                 return 0;
             } else {
                 verbalize("So be it, rogue!");
-                grd->mpeaceful = 0;
+                msethostility(grd, TRUE, FALSE);
                 return -1;
             }
         }

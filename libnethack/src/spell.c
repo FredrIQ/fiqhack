@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -285,8 +285,7 @@ deadbook(struct obj *book2, boolean invoked)
                              NO_MINVENT)) != 0 ||
              (mtmp = makemon(&mons[PM_NALFESHNEE], level, u.ux, u.uy,
                              NO_MINVENT)) != 0)) {
-            mtmp->mpeaceful = 0;
-            set_malign(mtmp);
+            msethostility(mtmp, TRUE, TRUE);
         }
         /* next handle the affect on things you're carrying */
         unturn_dead(&youmonst);
@@ -301,7 +300,7 @@ deadbook(struct obj *book2, boolean invoked)
                 continue;
 
             if (is_undead(mtmp->data) && cansee(mtmp->mx, mtmp->my)) {
-                mtmp->mpeaceful = TRUE;
+                msethostility(mtmp, FALSE, FALSE); /* TODO: reset alignment? */
                 if (sgn(mtmp->data->maligntyp) == sgn(u.ualign.type)
                     && distu(mtmp->mx, mtmp->my) < 4)
                     if (mtmp->mtame) {

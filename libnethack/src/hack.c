@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-28 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1813,7 +1813,8 @@ domove(const struct nh_cmd_arg *arg, enum u_interaction_mode uim,
         /* if trapped, there's a chance the pet goes wild */
         if (mtmp->mtrapped) {
             if (!rn2(mtmp->mtame)) {
-                mtmp->mtame = mtmp->mpeaceful = mtmp->msleeping = 0;
+                mtmp->msleeping = 0;
+                msethostility(mtmp, TRUE, FALSE);
                 if (mtmp->mleashed)
                     m_unleash(mtmp, TRUE);
                 growl(mtmp);
@@ -2095,7 +2096,7 @@ stillinwater:
             else if (mtmp->mpeaceful) {
                 pline("You surprise %s!", Blind &&
                       !sensemon(mtmp) ? "something" : a_monnam(mtmp));
-                mtmp->mpeaceful = 0;
+                msethostility(mtmp, TRUE, FALSE);
             } else
                 pline("%s attacks you by surprise!", Amonnam(mtmp));
             break;

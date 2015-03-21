@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1927,6 +1927,7 @@ djinni_from_bottle(struct obj *obj)
        find out what the dieroll was so that the non-wish results will be
        consistent if the only 80%/20%/5% wish sources so far were djinn */
     if (wish_available(obj->blessed ? 80 : obj->cursed ? 5 : 20, &dieroll)) {
+        msethostility(mtmp, FALSE, TRUE); /* show as peaceful while wishing */
         verbalize("I am in your debt.  I will grant one wish!");
         makewish();
         mongone(mtmp);
@@ -1941,8 +1942,7 @@ djinni_from_bottle(struct obj *obj)
     switch (dieroll % 4) {
     case 0:
         verbalize("You disturbed me, fool!");
-        mtmp->mpeaceful = FALSE;
-        set_malign(mtmp);
+        msethostility(mtmp, TRUE, TRUE);
         break;
     case 1:
         verbalize("Thank you for freeing me!");
@@ -1950,8 +1950,7 @@ djinni_from_bottle(struct obj *obj)
         break;
     case 2:
         verbalize("You freed me!");
-        mtmp->mpeaceful = TRUE;
-        set_malign(mtmp);
+        msethostility(mtmp, FALSE, TRUE);
         break;
     case 3:
         verbalize("It is about time!");

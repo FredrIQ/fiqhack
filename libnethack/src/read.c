@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-20 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1891,17 +1891,12 @@ create_particular(const struct nh_cmd_arg *arg)
                 whichpm = mkclass(&u.uz, monclass, 0, rng_main);
             if (maketame) {
                 mtmp = makemon(whichpm, level, u.ux, u.uy, MM_EDOG);
-                if (mtmp) {
+                if (mtmp)
                     initedog(mtmp);
-                    set_malign(mtmp);
-                }
             } else {
                 mtmp = makemon(whichpm, level, u.ux, u.uy, NO_MM_FLAGS);
-                if ((makepeaceful || makehostile) && mtmp) {
-                    mtmp->mtame = 0;    /* sanity precaution */
-                    mtmp->mpeaceful = makepeaceful ? 1 : 0;
-                    set_malign(mtmp);
-                }
+                if ((makepeaceful || makehostile) && mtmp)
+                    msethostility(mtmp, !makepeaceful, TRUE);
             }
             if (mtmp)
                 madeany = TRUE;

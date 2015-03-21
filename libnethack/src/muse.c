@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-17 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (C) 1990 by Ken Arromdee                              */
 /* NetHack may be freely redistributed.  See license for details.  */
 
@@ -117,8 +117,7 @@ precheck(struct monst *mon, struct obj *obj, struct musable *m)
                 /* can't wish for wands of death here.... */
                 if (rn2(2)) {
                     verbalize("You freed me!");
-                    mtmp->mpeaceful = 1;
-                    set_malign(mtmp);
+                    msethostility(mtmp, FALSE, TRUE);
                 } else {
                     verbalize("It is about time.");
                     if (vis)
