@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-02 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -307,13 +307,16 @@ combine_cchar(unsigned long cchar_old, unsigned long cchar_new)
         /* "disturb"; cycle colors in cchar_old */
         unsigned long fgcolor = (cchar_old >> 21) & 15;
         switch (fgcolor) {
-        case CLR_DARK_GRAY: fgcolor = CLR_BLUE; break;
+        case CLR_DARK_GRAY:
+            fgcolor = settings.darkgray ? CLR_BLUE : CLR_CYAN;
+            break;
         case CLR_BLUE: fgcolor = CLR_CYAN; break;
         case CLR_CYAN: fgcolor = CLR_GREEN; break;
         case CLR_GREEN: fgcolor = CLR_BROWN; break;
         case CLR_BROWN: fgcolor = CLR_RED; break;
         case CLR_RED: fgcolor = CLR_MAGENTA; break;
         case CLR_ORANGE: fgcolor = CLR_BRIGHT_MAGENTA; break;
+        case CLR_BRIGHT_BLUE: fgcolor = CLR_BRIGHT_MAGENTA; break;
         case CLR_YELLOW: fgcolor = CLR_ORANGE; break;
         case CLR_WHITE: fgcolor = CLR_YELLOW; break;
         default: fgcolor = CLR_BROWN; break;

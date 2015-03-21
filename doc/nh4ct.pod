@@ -1,5 +1,5 @@
 =for comment
-Last modified by Alex Smith, 2015-03-17
+Last modified by Alex Smith, 2015-03-21
 .
 Copyright (C) 2013, 2014, 2015 Alex Smith
 NetHack can be freely redistributed.  See license for details.
@@ -438,7 +438,7 @@ C<samefg> = 16: same color as beneath
 
 C<disturb> = 17: shift colors one step along these sequences: darkgray -> blue
 -> cyan -> green -> brown -> red -> magenta; white -> yellow -> orange ->
-bright_magenta; other colors shift to brown
+bright_magenta; bright_blue -> bright_magenta; other colors shift to brown
 
 =item *
 
