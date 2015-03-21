@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /*      Copyright (c) 1989 Janet Walz, Mike Threepoint */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -807,6 +807,11 @@ dotalk(const struct nh_cmd_arg *arg)
     schar dy;
     schar dz;
 
+    if (!getargdir(arg, NULL, &dx, &dy, &dz)) {
+        /* decided not to chat */
+        return 0;
+    }
+
     if (is_silent(youmonst.data)) {
         pline("As %s, you cannot speak.", an(youmonst.data->mname));
         return 0;
@@ -835,11 +840,6 @@ dotalk(const struct nh_cmd_arg *arg)
         return 1;
     }
 
-    if (!getargdir(arg, NULL, &dx, &dy, &dz)) {
-        /* decided not to chat */
-        return 0;
-    }
-
     if (u.usteed && dz > 0) {
         if (!u.usteed->mcanmove || u.usteed->msleeping) {
             pline("Your steed remains silent...");
@@ -864,13 +864,30 @@ dotalk(const struct nh_cmd_arg *arg)
 
     tx = u.ux + dx;
     ty = u.uy + dy;
+
+    if (!isok(tx, ty)) {
+        pline("You call out into the abyss, but nobody hears you.");
+        return 0;
+    }
+
     mtmp = m_at(level, tx, ty);
 
+    /* Do we try to close a door on the square? We do if a) the square is known
+       by the player to be a doorway, b) there's no invisible-I marker there,
+       c) there's no monster in a chattable state there. */
     if (!mtmp || mtmp->mundetected || mtmp->m_ap_type == M_AP_FURNITURE ||
         mtmp->m_ap_type == M_AP_OBJECT) {
-        struct nh_cmd_arg newarg;
-        arg_from_delta(dx, dy, dz, &newarg);
-        return doclose(&newarg);
+        int membg = level->locations[tx][ty].mem_bg;
+        if (membg == S_vodoor || membg == S_vcdoor || membg == S_ndoor ||
+            membg == S_hodoor || membg == S_hcdoor) {
+            if (!level->locations[tx][ty].mem_invis) {
+                struct nh_cmd_arg newarg;
+                arg_from_delta(dx, dy, dz, &newarg);
+                return doclose(&newarg);
+            }
+        }
+        pline("You start talking, but nobody seems to hear you.");
+        return 0;
     }
 
     /* sleeping monsters won't talk, except priests (who wake up) */
@@ -879,6 +896,8 @@ dotalk(const struct nh_cmd_arg *arg)
            noticing him and just not existing, so skip the message. */
         if (canspotmon(mtmp))
             pline("%s seems not to notice you.", Monnam(mtmp));
+        else
+            pline("You start talking, but nobody seems to hear you.");
         return 0;
     }
 
