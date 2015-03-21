@@ -216,9 +216,10 @@ play_test_game(const char *commands)
     char paniclog[strlen(temp_directory) + 9];
     strcpy(paniclog, temp_directory);
     strcat(paniclog, "paniclog");
-    int paniclogfd = open(paniclog, O_CREAT | O_APPEND | O_RDWR, 0644);
+    int paniclogfd = open(paniclog, O_CREAT | O_RDWR, 0644);
     if (paniclogfd < 0)
         tap_bail_errno("Opening paniclog");
+    lseek(paniclogfd, 0, SEEK_END);
 
     struct nh_option_desc *default_options = nh_get_options();
     struct nh_option_desc *newgame_options =
