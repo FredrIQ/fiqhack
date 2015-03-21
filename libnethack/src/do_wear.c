@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -623,8 +623,8 @@ setequip(enum objslot slot, struct obj *otmp, enum equipmsg msgtype)
 void
 setunequip(struct obj *otmp)
 {
-    if (otmp->owornmask & W_EQUIP)
-        setequip(objslot_from_mask(otmp->owornmask & W_EQUIP),
+    if (otmp->owornmask & W_WORN)
+        setequip(objslot_from_mask(otmp->owornmask & W_WORN),
                  NULL, em_silent);
 }
 
