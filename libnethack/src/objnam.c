@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-19 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2069,6 +2069,13 @@ readobjnam(char *bp, struct obj *no_wish, boolean from_user)
                                 mntmp = NON_PM;
                             }
                         }
+
+    /* in debug mode, we allow wishing for otyps by number; this is intended for
+       programmatic wishing (it's a pain to find a list of item names) */
+    if (wizard && sscanf(bp, "otyp #%d", &typ) == 1 &&
+        typ > STRANGE_OBJECT && typ < NUM_OBJECTS)
+        goto typfnd;
+    typ = 0;
 
     /* first change to singular if necessary */
     if (*bp) {
