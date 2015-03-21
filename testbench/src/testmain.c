@@ -84,6 +84,6 @@ round_robin_test(unsigned long long seed)
 int
 main(int argc, char **argv)
 {
-    round_robin_test(1);
+    round_robin_test(time(NULL));
     return 0;
 }
