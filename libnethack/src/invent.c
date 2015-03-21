@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-19 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2370,7 +2370,7 @@ doorganize(const struct nh_cmd_arg *arg)
     int ix, cur;
     char let;
     char alphabet[52 + 1], buf[52 + 1];
-    const char *qbuf;
+    const char *qbuf, *cbuf;
     const char *adj_type;
 
     /* get a pointer to the object the user wants to organize; this can split
@@ -2404,11 +2404,13 @@ doorganize(const struct nh_cmd_arg *arg)
 
     /* and by dashing runs of letters */
     if (cur > 5)
-        compactify(buf);
+        cbuf = compactify(buf);
+    else
+        cbuf = buf;
 
     /* get new letter to use as inventory letter */
     for (;;) {
-        qbuf = msgprintf("Adjust letter to what [%s]?", buf);
+        qbuf = msgprintf("Adjust letter to what [%s]?", cbuf);
         let = query_key(qbuf, NQKF_LETTER_REASSIGNMENT, NULL);
         if (strchr(quitchars, let)) {
             pline("Never mind.");

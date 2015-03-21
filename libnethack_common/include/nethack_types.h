@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-20 */
+/* Last modified by Alex Smith, 2015-03-21 */
 #ifndef NETHACK_TYPES_H
 # define NETHACK_TYPES_H
 
@@ -207,18 +207,19 @@ enum nh_pick_type {
     PICK_ANY,      /* can pick any amount */
 };
 
-/* Always use full pathnames for file names,
- * rather than assuming that they're all in the current directory.  This
- * provides all the subclasses that seem reasonable.
- * An array listing a path for each prefix must be passed to nh_lib_init().
- */
+/* Always use full pathnames for file names, rather than assuming that they're
+   all in the current directory. This provides all the subclasses that seem
+   reasonable. An array listing a path for each prefix must be passed to
+   nh_lib_init(). (You can also use the value $OMIT in some cases, to turn off
+   processing for files that would be placed in that directory; this feature is
+   used by testsuite and might be useful elsewhere.) */
 enum nh_path_prefix {
-    BONESPREFIX = 0,
-    DATAPREFIX,
-    SCOREPREFIX,
-    LOCKPREFIX,
-    TROUBLEPREFIX,
-    DUMPPREFIX,
+    BONESPREFIX = 0,  /* read/write; $OMIT: disable bones */
+    DATAPREFIX,       /* read-only;  $OMIT: illegal */
+    SCOREPREFIX,      /* read/write; $OMIT: illegal */
+    LOCKPREFIX,       /* currently unused */
+    TROUBLEPREFIX,    /* write-only; $OMIT: disable panic logging */
+    DUMPPREFIX,       /* write-only; $OMIT: disable dumplogs */
     PREFIX_COUNT
 };
 
@@ -768,7 +769,7 @@ struct nh_getpos_result {
 struct nh_window_procs {
     void (*win_pause) (enum nh_pause_reason reason);
     void (*win_display_buffer) (const char *buf, nh_bool trymove);
-    void (*win_update_status) (struct nh_player_info * pi);
+    void (*win_update_status) (struct nh_player_info *pi);
     void (*win_print_message) (int turn, const char *msg);
     void (*win_request_command) (nh_bool debug, nh_bool completed,
                                  nh_bool interrupted, void *callbackarg,

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-17 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) Robert Patrick Rankin, 1991                      */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -40,6 +40,7 @@
         int             isqrt           (int)
         int             ilog2           (long long)
         int             popcount        (unsigned long long)
+        int             nextprime       (int)
         int             distmin         (int, int, int, int)
         int             dist2           (int, int, int, int)
         boolean         online2         (int, int)
@@ -379,6 +380,22 @@ popcount(unsigned long long u)
         if (u & (1ULL << i))
             p++;
     return p;
+}
+
+/* The next prime after the given integer. */
+int
+nextprime(int n)
+{
+    while (++n) {
+        int factor;
+        int sqrtn = isqrt(n);
+        for (factor = 2; factor <= sqrtn; factor++)
+            if (n % factor == 0)
+                break;
+        if (factor > sqrtn)
+            break;
+    }
+    return n;
 }
 
 /* distance between two points, in moves */
