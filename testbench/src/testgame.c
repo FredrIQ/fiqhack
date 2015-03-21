@@ -25,6 +25,7 @@ static unsigned long long test_seed;
 static char temp_directory[] = "nethack4-testsuite-XXXXXX\0";
 static bool test_system_inited = false;
 static int testnumber = 1;
+static int cmdnumber = 0;
 static const char *curcmd, *curcmd_ptr;
 static char test_crga[4];
 static int last_monster_d, last_monster_x, last_monster_y;
@@ -210,6 +211,7 @@ play_test_game(const char *commands)
     last_monster_d = DIR_NONE;
     last_monster_x = -1;
     last_monster_y = -1;
+    cmdnumber = 0;
 
     char paniclog[strlen(temp_directory) + 9];
     strcpy(paniclog, temp_directory);
@@ -506,12 +508,12 @@ test_display_menu(struct nh_menulist *ml, const char *title,
 
     /* Special case: the desync dialog box. If this ever comes up, it's an
        automatic test failure.
-       
+
        We communicate the failure back to the main part of the code via
        reverse-bouncing it off the server's main loop using ERR_RECOVER_REFUSED
        (which won't be produced in other contexts). This uses knowledge of the
        menulist we'll have been given; the index in question is 2.
-       
+
        First, though, we tap_comment the log_recover_core_reasons, to make
        debugging the failure easier. */
     if (strcmp(title, "The save file is corrupted...") == 0) {
@@ -520,7 +522,7 @@ test_display_menu(struct nh_menulist *ml, const char *title,
                 strncmp(ml->items[i].caption, "Location: ", 10) == 0)
                 tap_comment("desync dialog: %s", ml->items[i].caption);
         }
-        
+
         dealloc_menulist(ml);
         int selected = 2;
         callback(&selected, 1, callbackarg);
@@ -540,6 +542,13 @@ test_display_menu(struct nh_menulist *ml, const char *title,
     if (*curcmd_ptr == 'M') {
         /* TODO */
         tap_bail("'M' unimplemented");
+    }
+
+    /* Break out of loops. */
+    if (popcount(++cmdnumber) >= 4) {
+        dealloc_menulist(ml);
+        callback(&results, -1, callbackarg);
+        return;
     }
 
     /* We don't; pick a "random" menu item. We select exactly one item, even
@@ -588,6 +597,13 @@ test_display_objects(
         tap_bail("'O' unimplemented");
     }
 
+    /* Break out of loops. */
+    if (popcount(++cmdnumber) >= 4) {
+        dealloc_objmenulist(ml);
+        callback(&results, -1, callbackarg);
+        return;
+    }
+
     /* The same code as in test_display_menu. Except not: the struct fields are
        fields of a different struct, and thus have different indexes, and so
        this compiles to different binary despite being textually almost
@@ -628,6 +644,10 @@ test_query_key(const char *prompt, enum nh_query_key_flags flags,
         return (struct nh_query_key_result){.key = res, .count = -1};
     }
     /* Nope, we'll have to improvise a response. */
+
+    /* Break out of loops. */
+    if (popcount(++cmdnumber) >= 4)
+        return (struct nh_query_key_result){.key = 27, .count = -1};
 
     /* If we're given Z as an option, take it; the testsuite normally wishes
        items it wants to test into that slot. */
@@ -683,7 +703,12 @@ test_yn_function(const char *query, const char *answers, char default_answer)
         nh_exit_game(EXIT_PANIC);      /* indirectly cause a test failure */
         return default_answer;         /* probably unreachable */
     }
-    /* Nope, we'll have to improvise a response. */    
+    /* Nope, we'll have to improvise a response. */
+
+    /* Break out of loops. */
+    if (popcount(++cmdnumber) >= 4)
+        return answers[(test_seed + testnumber) % strlen(answers)];
+
 
     /* yn_function is often (usually?) used for confirmation prompts. In most
        cases, we want to say "yes", because the path for "no" is boring.
@@ -721,6 +746,13 @@ test_getpos(int default_x, int default_y, nh_bool force, const char *msg)
         }
     }
 
+    /* Break out of loops. */
+    if (popcount(++cmdnumber) >= 4)
+        return (struct nh_getpos_result){.howclosed = NHCR_CLIENT_CANCEL,
+                .x = default_x,
+                .y = default_y};
+
+
     /* Do we have a monster to aim at? */
     if (last_monster_x > -1 && last_monster_y > -1) {
         return (struct nh_getpos_result){.howclosed = NHCR_ACCEPTED,
@@ -756,6 +788,10 @@ test_getdir(const char *prompt, nh_bool gridbug)
             tap_bail("'D' unimplemented (except 'Dm')");
         }
     }
+
+    /* Break out of loops. */
+    if (popcount(++cmdnumber) >= 4)
+        return DIR_NONE;
 
     /* Do we have a monster to aim at? */
     if (last_monster_d != DIR_NONE && gridbug_ok(last_monster_d, gridbug))
