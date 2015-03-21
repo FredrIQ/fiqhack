@@ -1427,11 +1427,11 @@ do_class_genocide(void)
             pline("That's enough tries!");
             return;
         }
-        do {
-            buf = getlin("What class of monsters do you wish to genocide?",
-                         FALSE); /* not meaningfully repeatable... */
-            buf = msgmungspaces(buf);
-        } while (buf[0] == '\033' || !buf[0]);
+
+        buf = getlin("What class of monsters do you wish to genocide?",
+                     FALSE); /* not meaningfully repeatable... */
+        buf = msgmungspaces(buf);
+
         /* choosing "none" preserves genocideless conduct */
         if (!strcmpi(buf, "none") || !strcmpi(buf, "nothing"))
             return;
@@ -1442,11 +1442,9 @@ do_class_genocide(void)
             class = def_char_to_monclass(buf[0]);
         } else {
             class = 0;
-            /* TODO: Potential buffer overflow here if the input is just
-               marginally below BUFSZ and gets longer when singularized.
-               Imagine "djinn" with a lot of adjectives. */
             buf = makesingular(buf);
         }
+
         immunecnt = gonecnt = goodcnt = 0;
         for (i = LOW_PM; i < NUMMONS; i++) {
             if (class == 0 && strstri(monexplain[(int)mons[i].mlet], buf) != 0)
