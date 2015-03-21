@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-10 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) M. Stephenson, 1990, 1991.                       */
 /* Copyright (c) Dean Luick, 1990.                                */
@@ -1271,6 +1271,7 @@ do_objs(const char *outfile)
     char class = '\0';
     boolean sumerr = FALSE;
     char last_gem[128] = "";
+    boolean need_comma = FALSE;
 
     if (!(ofp = fopen(outfile, WRTMODE))) {
         perror(outfile);
@@ -1380,7 +1381,19 @@ do_objs(const char *outfile)
         fprintf(ofp, "#define\tART_%s\t%d\n", limit(objnam, 1), i);
     }
 
-    fprintf(ofp, "#define\tNROFARTIFACTS\t%d\n", i - 1);
+    fprintf(ofp, "#define\tNROFARTIFACTS\t%d\n\n", i - 1);
+
+    fprintf(ofp, "#define\tUNUSEDOBJECTS\t{ ");
+    for (i = 0; !i || objects[i].oc_class != ILLOBJ_CLASS; i++) {
+        if (i && !OBJ_NAME(objects[i])) {
+            if (need_comma)
+                fprintf(ofp, ", ");
+            fprintf(ofp, "%d", i);
+            need_comma = TRUE;
+        }
+    }
+    fprintf(ofp, " }\n");
+
     fprintf(ofp, "\n#endif /* ONAMES_H */\n");
     fclose(ofp);
     if (sumerr)
