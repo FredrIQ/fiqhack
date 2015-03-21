@@ -8,6 +8,7 @@
 #include "common_options.h"
 #include "tap.h"
 #include "testgame.h"
+#include "hacklib.h"
 #include <stdbool.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -447,8 +448,10 @@ test_request_command(
     nh_bool debug, nh_bool completed, nh_bool interrupted, void *callbackarg,
     void (*callback)(const struct nh_cmd_and_arg *ncaa, void *arg))
 {
-    /* First case: if we gave a multi-turn command, continue it. */
-    if (!interrupted && !completed) {
+    /* First case: if we gave a multi-turn command, continue it. (Even if we're
+       interrupted; we ignore the interruptions, using wizmode lifesaving if
+       necessary). */
+    if (!completed) {
         callback(&(struct nh_cmd_and_arg){"repeat", {.argtype = 0}},
                  callbackarg);
         return;
@@ -543,7 +546,7 @@ test_display_menu(struct nh_menulist *ml, const char *title,
        when the menu is multi-select, for simplicity. TODO: Consider changing
        this. */
     int pickchance = 1;
-    unsigned long long s = test_seed;
+    unsigned long long s = test_seed + testnumber;
     for (i = 0; i < ml->icount; i++) {
         if (ml->items[i].id || ml->items[i].accel) {
             /* It's selectable. This algorithm picks menu items in a way that's
@@ -590,7 +593,7 @@ test_display_objects(
        this compiles to different binary despite being textually almost
        identical (we're setting results.id, not results). */
     int pickchance = 1;
-    unsigned long long s = test_seed;
+    unsigned long long s = test_seed + testnumber;
     for (i = 0; i < ml->icount; i++) {
         if (ml->items[i].id || ml->items[i].accel) {
             if (!(s % pickchance))
@@ -626,6 +629,11 @@ test_query_key(const char *prompt, enum nh_query_key_flags flags,
     }
     /* Nope, we'll have to improvise a response. */
 
+    /* If we're given Z as an option, take it; the testsuite normally wishes
+       items it wants to test into that slot. */
+    if (pmatch("*[*Z*]", prompt))
+        return (struct nh_query_key_result){.key = 'Z', .count = -1};
+
     /* In most cases, a query_key prompt will specify the sensible possibilities
        in square brackets. And in most of /those/ cases, the possibilities are
        listable via '?' (sensible) or '*' (possible). We can detect that we're
@@ -637,10 +645,12 @@ test_query_key(const char *prompt, enum nh_query_key_flags flags,
 
     /* Do the flags give a hint? */
     if (flags == NQKF_LETTER_REASSIGNMENT)
-        return (struct nh_query_key_result){.key = 'a' + (test_seed % 26),
+        return (struct nh_query_key_result){
+            .key = 'a' + ((test_seed + testnumber) % 26),
                 .count = -1};
     else if (flags == NQKF_SYMBOL)
-        return (struct nh_query_key_result){.key = ' ' + (test_seed % 94),
+        return (struct nh_query_key_result){
+            .key = ' ' + ((test_seed + testnumber) % 94),
                 .count = -1};
 
     /* We don't really know what to press here. So cancel. */
@@ -685,7 +695,7 @@ test_yn_function(const char *query, const char *answers, char default_answer)
         return 'y';
 
     /* Fall back to random. */
-    return answers[test_seed % strlen(answers)];
+    return answers[(test_seed + testnumber) % strlen(answers)];
 }
 
 
@@ -752,8 +762,8 @@ test_getdir(const char *prompt, nh_bool gridbug)
         return last_monster_d;
 
     /* We don't, so aim in a random direction. */
-    if (gridbug_ok(test_seed % 11, gridbug))
-        return test_seed % 11;
+    if (gridbug_ok((test_seed + testnumber) % 11, gridbug))
+        return (test_seed + testnumber) % 11;
 
     return DIR_N;
 }

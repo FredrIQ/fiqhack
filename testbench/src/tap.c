@@ -15,7 +15,6 @@
 void
 tap_init(int testcount)
 {
-    printf("TAP version 12\n");
     printf("1..%d\n", testcount);
 }
 
