@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-18 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -143,6 +143,9 @@ fopen_datafile(const char *filename, const char *mode, int prefix)
 {
     FILE *fp;
 
+    if (strcmp(fqn_prefix[prefix], "$OMIT") == 0)
+        return NULL;
+
     filename = fqname(filename, prefix, prefix == TROUBLEPREFIX ? 3 : 0);
     fp = fopen(filename, mode);
 
@@ -163,6 +166,9 @@ open_datafile(const char *filename, int oflags, int prefix)
 #ifdef WIN32
     oflags |= O_BINARY;
 #endif
+
+    if (strcmp(fqn_prefix[prefix], "$OMIT") == 0)
+        return -1;
 
     filename = fqname(filename, prefix, prefix == TROUBLEPREFIX ? 3 : 0);
     fd = open(filename, oflags, S_IRUSR | S_IWUSR);
@@ -189,6 +195,9 @@ create_bonesfile(const char *bonesid, const char **errbuf)
     const char *file;
     char tempname[PL_NSIZ + 32];
     int fd;
+
+    if (strcmp(fqn_prefix[BONESPREFIX], "$OMIT") == 0)
+        return -1;
 
     if (errbuf)
         *errbuf = "";
@@ -217,6 +226,9 @@ commit_bonesfile(char *bonesid)
     const char *fq_bones, *tempname;
     char tempbuf[PL_NSIZ + 32];
     int ret;
+
+    if (strcmp(fqn_prefix[BONESPREFIX], "$OMIT") == 0)
+        return;
 
     char *bonesfn = bones_filename(bonesid);
     fq_bones = fqname(bonesfn, BONESPREFIX, 0);
@@ -250,6 +262,9 @@ open_bonesfile(char *bonesid)
 int
 delete_bonesfile(char *bonesid)
 {
+    if (strcmp(fqn_prefix[BONESPREFIX], "$OMIT") == 0)
+        return 0;
+
     char *bonesfn = bones_filename(bonesid);
     nh_bool ret = unlink(fqname(bonesfn, BONESPREFIX, 0)) >= 0;
 

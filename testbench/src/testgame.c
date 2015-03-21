@@ -118,12 +118,12 @@ init_test_system(unsigned long long seed, const char crga[static 4],
 
 
     const char *paths[PREFIX_COUNT] = {
-        [BONESPREFIX] = temp_directory,
-        [DATAPREFIX] = gsd_with_slash,
-        [SCOREPREFIX] = temp_directory,
-        [LOCKPREFIX] = temp_directory,
-        [TROUBLEPREFIX] = temp_directory,
-        [DUMPPREFIX] = temp_directory
+        [BONESPREFIX] = "$OMIT",           /* disable bones */
+        [DATAPREFIX] = gsd_with_slash,     /* read-only, use default location */
+        [SCOREPREFIX] = temp_directory,    /* read-write, necessary */
+        [LOCKPREFIX] = temp_directory,     /* unused */
+        [TROUBLEPREFIX] = temp_directory,  /* write-only, unneeded but wanted */
+        [DUMPPREFIX] = "$OMIT",            /* write-only, unneeded */
     };
 
     nh_lib_init(&test_windowprocs, paths);
@@ -133,10 +133,24 @@ void
 shutdown_test_system(void)
 {
     nh_lib_exit();
-    char paniclog[strlen(temp_directory) + 9];
-    strcpy(paniclog, temp_directory);
-    strcat(paniclog, "paniclog");
-    remove(paniclog);
+    char logfiles[strlen(temp_directory) + 9];
+
+    strcpy(logfiles, temp_directory);
+    strcat(logfiles, "paniclog");
+    remove(logfiles);
+
+    strcpy(logfiles, temp_directory);
+    strcat(logfiles, "logfile");
+    remove(logfiles);
+
+    strcpy(logfiles, temp_directory);
+    strcat(logfiles, "xlogfile");
+    remove(logfiles);
+
+    strcpy(logfiles, temp_directory);
+    strcat(logfiles, "record");
+    remove(logfiles);
+
     rmdir(temp_directory);
 }
 

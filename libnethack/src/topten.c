@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-21 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -331,6 +331,9 @@ update_log(const struct toptenentry *newtt)
     /* used for debugging (who dies of what, where) */
     int fd = open_datafile(LOGFILE, O_CREAT | O_APPEND | O_WRONLY, SCOREPREFIX);
 
+    if (fd < 0)
+        panic("Failed to write logfile. Is it writable?");
+
     if (change_fd_lock(fd, FALSE, LT_WRITE, 10)) {
         writeentry(fd, newtt);
         change_fd_lock(fd, FALSE, LT_NONE, 0);
@@ -345,6 +348,10 @@ update_xlog(const struct toptenentry *newtt,
     /* used for statistical purposes and tournament scoring */
     int fd =
         open_datafile(XLOGFILE, O_CREAT | O_APPEND | O_WRONLY, SCOREPREFIX);
+
+    if (fd < 0)
+        panic("Failed to write xlogfile. Is it writable?");
+
     if (change_fd_lock(fd, FALSE, LT_WRITE, 10)) {
         FILE *xlfile = fdopen(fd, "a");
 
@@ -519,6 +526,10 @@ update_topten(int how, const char *killer, unsigned long carried,
         return;
 
     fd = open_datafile(RECORD, O_RDWR | O_CREAT, SCOREPREFIX);
+
+    if (fd < 0)
+        panic("Failed to write record. Is it writable?");
+
     if (!change_fd_lock(fd, FALSE, LT_WRITE, 30)) {
         close(fd);
         return;
@@ -572,6 +583,9 @@ tt_oname(struct obj *otmp)
         return NULL;
 
     fd = open_datafile(RECORD, O_RDONLY, SCOREPREFIX);
+    if (fd < 0)
+        return NULL;   /* the topten list is missing */
+
     toptenlist = read_topten(fd, 100);  /* load the top 100 scores */
     close(fd);
 
@@ -776,8 +790,12 @@ nh_get_topten(int *out_len, char *statusbuf, const char *volatile player,
     }
 
     fd = open_datafile(RECORD, O_RDONLY, SCOREPREFIX);
-    ttlist = read_topten(fd, TTLISTLEN);
-    close(fd);
+    if (fd >= 0) {
+        ttlist = read_topten(fd, TTLISTLEN);
+        close(fd);
+    } else
+        ttlist = NULL;
+
     if (!ttlist) {
         strcpy(statusbuf, "Cannot open record file!");
 

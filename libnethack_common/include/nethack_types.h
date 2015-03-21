@@ -207,18 +207,19 @@ enum nh_pick_type {
     PICK_ANY,      /* can pick any amount */
 };
 
-/* Always use full pathnames for file names,
- * rather than assuming that they're all in the current directory.  This
- * provides all the subclasses that seem reasonable.
- * An array listing a path for each prefix must be passed to nh_lib_init().
- */
+/* Always use full pathnames for file names, rather than assuming that they're
+   all in the current directory. This provides all the subclasses that seem
+   reasonable. An array listing a path for each prefix must be passed to
+   nh_lib_init(). (You can also use the value $OMIT in some cases, to turn off
+   processing for files that would be placed in that directory; this feature is
+   used by testsuite and might be useful elsewhere.) */
 enum nh_path_prefix {
-    BONESPREFIX = 0,
-    DATAPREFIX,
-    SCOREPREFIX,
-    LOCKPREFIX,
-    TROUBLEPREFIX,
-    DUMPPREFIX,
+    BONESPREFIX = 0,  /* read/write; $OMIT: disable bones */
+    DATAPREFIX,       /* read-only;  $OMIT: illegal */
+    SCOREPREFIX,      /* read/write; $OMIT: illegal */
+    LOCKPREFIX,       /* currently unused */
+    TROUBLEPREFIX,    /* write-only; $OMIT: disable panic logging */
+    DUMPPREFIX,       /* write-only; $OMIT: disable dumplogs */
     PREFIX_COUNT
 };
 
