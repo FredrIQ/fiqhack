@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-22 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -716,7 +716,7 @@ u_init_inv_skills(void)
         break;
     case PM_TOURIST:
         trobj_list = copy_trobj_list(Tourist);
-        trobj_list[T_DARTS].trquan = 21 + rolern2(201);
+        trobj_list[T_DARTS].trquan = 21 + rolern2(20);
         u.umoney0 = 1 + rolern2(1000);
         role_ini_inv(trobj_list, nclist);
         if (!rolern2(25))
