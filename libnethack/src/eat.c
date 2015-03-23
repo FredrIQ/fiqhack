@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-19 */
+/* Last modified by Alex Smith, 2015-03-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1174,7 +1174,7 @@ eatcorpse(void)
         tp++;
         pline("Ecch - that must have been poisonous!");
         if (!Poison_resistance) {
-            losestr(rnd(4));
+            losestr(rnd(4), DIED, killer_msg(DIED, "a poisonous corpse"), NULL);
             losehp(rnd(15), killer_msg(DIED, "a poisonous corpse"));
         } else
             pline("You seem unaffected by the poison.");
@@ -1868,7 +1868,7 @@ doeat(const struct nh_cmd_arg *arg)
         if (otmp->oclass == WEAPON_CLASS && otmp->opoisoned) {
             pline("Ecch - that must have been poisonous!");
             if (!Poison_resistance) {
-                losestr(rnd(4));
+                losestr(rnd(4), DIED, killer_msg_obj(DIED, otmp), NULL);
                 losehp(rnd(15), killer_msg_obj(DIED, otmp));
             } else
                 pline("You seem unaffected by the poison.");
@@ -2128,11 +2128,6 @@ newuhs(boolean incr)
     }
 
     if (newhs != u.uhs) {
-        if (newhs >= WEAK && u.uhs < WEAK)
-            losestr(1); /* this may kill you -- see below */
-        else if (newhs < WEAK && u.uhs >= WEAK)
-            losestr(-1);
-
         switch (newhs) {
         case HUNGRY:
             if (Hallucination) {
@@ -2163,13 +2158,12 @@ newuhs(boolean incr)
                 action_interrupted();
             break;
         }
+        if (newhs >= WEAK && u.uhs < WEAK)
+            losestr(1, STARVING, killer_msg(STARVING, "exhaustion"), NULL);
+        else if (newhs < WEAK && u.uhs >= WEAK)
+            losestr(-1, STARVING, killer_msg(STARVING, "exhaustion"), NULL);
         u.uhs = newhs;
         bot();
-        if ((Upolyd ? u.mh : u.uhp) < 1) {
-            pline("You die from hunger and exhaustion.");
-            done(STARVING, killer_msg(STARVING, "exhaustion"));
-            return;
-        }
     }
 }
 

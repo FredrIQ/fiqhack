@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-23 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -222,7 +222,7 @@ gainstr(struct obj *otmp, int incr)
 }
 
 void
-losestr(int num)
+losestr(int num, int how, const char *killer, struct monst *magr)
 {       /* may kill you; cause may be poison or monster like 'a' */
     int ustr = ABASE(A_STR) - num;
 
@@ -232,9 +232,25 @@ losestr(int num)
         if (Upolyd) {
             u.mh -= 6;
             u.mhmax -= 6;
+
+            if (u.mh <= 0) {
+                if (how == STARVING)
+                    pline("You can't go on any more like this.");
+                rehumanize(how, killer);
+            }
         } else {
             u.uhp -= 6;
             u.uhpmax -= 6;
+
+            if (u.uhp <= 0) {
+                if (how == STARVING)
+                    pline("You die from hunger and exhaustion.");
+
+                if (magr) /* don't give at the same time as STARVING */
+                    done_in_by(magr, killer);
+                else
+                    done(how, killer);
+            }
         }
     }
     adjattrib(A_STR, -num, TRUE);

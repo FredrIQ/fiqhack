@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-23 */
 /* Copyright Scott R. Turner, srt@ucla, 10/27/86                  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -348,7 +348,8 @@ drinkfountain(void)
                        killer_msg(DIED, "an unrefrigerated sip of juice"));
                 break;
             }
-            losestr(rn1(4, 3));
+            losestr(rn1(4, 3), DIED, killer_msg(DIED, "contaminated water"),
+                    NULL);
             losehp(rnd(10), killer_msg(DIED, "contaminated water"));
             exercise(A_CON, FALSE);
             break;

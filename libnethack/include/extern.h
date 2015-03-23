@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Alex Smith, 2015-03-23 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -139,7 +139,7 @@ extern void change_luck(schar);
 extern int stone_luck(boolean);
 extern void set_moreluck(void);
 extern void gainstr(struct obj *, int);
-extern void losestr(int);
+extern void losestr(int, int, const char *, struct monst *);
 extern void restore_attrib(void);
 extern void exercise(int, boolean);
 extern void exerchk(void);

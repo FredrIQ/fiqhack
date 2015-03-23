@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Alex Smith, 2015-03-23 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -118,7 +118,8 @@ cursed_book(struct obj *bp)
         }
         /* temp disable in_use; death should not destroy the book */
         bp->in_use = FALSE;
-        losestr(Poison_resistance ? rn1(2, 1) : rn1(4, 3));
+        losestr(Poison_resistance ? rn1(2, 1) : rn1(4, 3), DIED,
+                killer_msg(DIED, "a contact-poisoned spellbook"), NULL);
         losehp(rnd(Poison_resistance ? 6 : 10),
                killer_msg(DIED, "a contact-poisoned spellbook"));
         bp->in_use = TRUE;
