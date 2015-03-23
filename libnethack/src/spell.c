@@ -90,6 +90,7 @@ static boolean
 cursed_book(struct obj *bp)
 {
     int lev = objects[bp->otyp].oc_level;
+    boolean was_inuse;
 
     switch (rn2(lev)) {
     case 0:
@@ -116,13 +117,19 @@ cursed_book(struct obj *bp)
             erode_obj(uarmg, "gloves", ERODE_CORRODE, TRUE, TRUE);
             break;
         }
-        /* temp disable in_use; death should not destroy the book */
+        /* Temporarily disable in_use; death should not destroy the book.
+
+           Paranoia: ensure that we don't turn /on/ in_use, that causes a
+           desync. (That used to be able to happen via an old codepath, but that
+           codepath has since been removed. I don't think there are others, but
+           someone might unintentionally add one.) */
+        was_inuse = bp->in_use;
         bp->in_use = FALSE;
         losestr(Poison_resistance ? rn1(2, 1) : rn1(4, 3), DIED,
                 killer_msg(DIED, "a contact-poisoned spellbook"), NULL);
         losehp(rnd(Poison_resistance ? 6 : 10),
                killer_msg(DIED, "a contact-poisoned spellbook"));
-        bp->in_use = TRUE;
+        bp->in_use = was_inuse;
         break;
     case 6:
         if (Antimagic) {
@@ -253,7 +260,7 @@ deadbook(struct obj *book2, boolean invoked)
             mkinvokearea();
             u.uevent.invoked = 1;
             historic_event(FALSE, "performed the invocation.");
-            /* in case you haven't killed the Wizard yet, behave as if you just 
+            /* in case you haven't killed the Wizard yet, behave as if you just
                did */
             u.uevent.udemigod = 1;      /* wizdead() */
             if (!u.udg_cnt || u.udg_cnt > soon)
@@ -362,6 +369,21 @@ learn(void)
         return 0;
     }
 
+    /* The book might get cursed while we're reading it. In this case,
+       immediately stop reading it, cancel progress, and apply a few turns of
+       helplessness. (3.4.3 applies negative spellbook effects but lets you
+       memorize the spell anyway; this makes no sense. It destroys the spellbook
+       on the "contact poison" result, which makes even less sense.) */
+    if (u.utracked[tos_book]->cursed) {
+        pline("This book isn't making sense any more.");
+        helpless(rn1(5,5), hr_busy,
+                 "making sense of a spellbook",
+                 "You give up trying to make sense of the spellbook.");
+        u.uoccupation_progress[tos_book] = 0;
+        u.utracked[tos_book] = 0;
+        return 0;
+    }
+
     if (++u.uoccupation_progress[tos_book] < 0)
         return 1;       /* still busy */
 
@@ -390,7 +412,7 @@ learn(void)
                 } else
                     costly = FALSE;
             }
-            /* make book become known even when spell is already known, in case 
+            /* make book become known even when spell is already known, in case
                amnesia made you forget the book */
             makeknown((int)booktype);
             break;
@@ -413,13 +435,6 @@ learn(void)
         makeknown((int)booktype);
     }
 
-    if (u.utracked[tos_book]->cursed) { /* maybe a demon cursed it */
-        if (cursed_book(u.utracked[tos_book])) {
-            useup(u.utracked[tos_book]);
-            u.utracked[tos_book] = 0;
-            return 0;
-        }
-    }
     if (costly)
         check_unpaid(u.utracked[tos_book]);
     u.utracked[tos_book] = 0;
@@ -549,7 +564,7 @@ age_spells(void)
 {
     int i;
 
-    /* 
+    /*
      * The time relative to the hero (a pass through move
      * loop) causes all spell knowledge to be decremented.
      * The hero's speed, rest status, conscious status etc.
@@ -757,11 +772,11 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     role_skill = P_SKILL(skill);
 
     /* Get the direction or target, if applicable.
-       
+
        We want to do this *before* determining spell success, both for interface
        consistency and to cut down on needless mksobj calls. */
     switch (spellid(spell)) {
- 
+
     /* These spells ask the user to target a specific space. */
     case SPE_CONE_OF_COLD:
     case SPE_FIREBALL:
@@ -816,7 +831,7 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     default:
         break;
     }
- 
+
 
     /* Spell casting no longer affects knowledge of the spell. A decrement of
        spell knowledge is done every turn. */
@@ -907,7 +922,7 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     pseudo->quan = 20L; /* do not let useup get it */
 
     switch (pseudo->otyp) {
-        /* 
+        /*
          * At first spells act as expected.  As the hero increases in skill
          * with the appropriate spell type, some spells increase in their
          * effects, e.g. more damage, further distance, and so on, without
@@ -1185,7 +1200,7 @@ dospellmenu(const char *prompt,
 void
 dump_spells(void)
 {
-    /* note: the actual dumping is done in dump_display_menu(), we just need to 
+    /* note: the actual dumping is done in dump_display_menu(), we just need to
        get the data there. */
     dospellmenu("Spells known in the end:", SPELLMENU_VIEW, NULL);
 }
@@ -1243,7 +1258,7 @@ percent_success(int spell)
        their `magic' statistic. (Int or Wis) */
     chance = 11 * statused / 2;
 
-    /* 
+    /*
      * High level spells are harder.  Easier for higher level casters.
      * The difficulty is based on the hero's level and their skill level
      * in that spell type.
@@ -1324,4 +1339,3 @@ initialspell(struct obj *obj)
 }
 
 /*spell.c*/
-
