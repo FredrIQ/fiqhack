@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <errno.h>
 
 static unsigned long long test_seed;
 static char temp_directory[] = "nethack4-testsuite-XXXXXX\0";
@@ -288,6 +289,7 @@ play_test_game(const char *commands, bool verbose)
     enum nh_create_response nhcr = nh_create_game(fd, newgame_options);
     bool start_or_restart = true;
     bool ok = false;
+    bool keep_savefile = false;
     switch (nhcr) {
     case NHCREATE_FAIL:
         tap_comment("creating game: failure");
@@ -333,12 +335,15 @@ play_test_game(const char *commands, bool verbose)
                 break;
             case ERR_BAD_FILE:
                 tap_comment("playing game: bad save file");
+                keep_savefile = true;
                 break;
             case ERR_IN_PROGRESS:
                 tap_comment("playing game: locking issues");
+                keep_savefile = true;
                 break;
             case ERR_RESTORE_FAILED:
                 tap_comment("playing game: corrupted save");
+                keep_savefile = true;
                 break;
             default:
                 tap_comment("playing game: bad nh_play_game return");
@@ -347,6 +352,7 @@ play_test_game(const char *commands, bool verbose)
                 /* Recoverable errors. These are still test failures, though. */
             case ERR_RECOVER_REFUSED:
                 tap_comment("playing game: recoverable error");
+                keep_savefile = true;
                 break;
             }
         }
@@ -363,6 +369,28 @@ play_test_game(const char *commands, bool verbose)
         }
         while ((plogline = strtok(plogline ? NULL : paniclog_buffer, "\n")))
             tap_comment("paniclog: %s", plogline);
+    }
+
+    if (keep_savefile && !ok) {
+        char savefilename[strlen(temp_directory) +
+                          sizeof "testcase-4294967295.nhgame"];
+        snprintf(savefilename, sizeof savefilename,
+                 "%stestcase-%d.nhgame", temp_directory, testnumber);
+
+        FILE *savefilebackup = fopen(savefilename, "wb");
+        if (savefilebackup) {
+
+            tap_comment("Saving savefile for failing test at %s", savefilename);
+            lseek(fd, 0, SEEK_SET);
+            char buf[1024];
+            int rcount;
+            while (((rcount = read(fd, buf, sizeof(buf) > 1))) > 0 ||
+                   errno == EINTR)
+                fwrite(buf, 1, rcount, savefilebackup);
+            fclose(savefilebackup);
+
+        } else
+            tap_comment("Couldn't back savefile up at %s", savefilename);
     }
 
     tap_test(&testnumber, ok, "%s [seed %s]", commands, seedbuf);
