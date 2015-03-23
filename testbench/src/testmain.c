@@ -82,9 +82,9 @@ round_robin_test(unsigned long long seed, unsigned long long skip,
 
         char teststring[512];
         snprintf(teststring, sizeof teststring,
-                 "genesis,\"monsndx #%d\",wish,\"Z - otyp #%d\",%s,"
-                 "fight,fight,cast,zap,read,drink,fight,fight,"
-                 "wait,wait,%s,wait,wait,wait",
+                 "levelteleport,\"%d\",genesis,\"monsndx #%d\","
+                 "wish,\"Z - otyp #%d\",%s,fight,fight,cast,zap,read,drink,"
+                 "fight,fight,wait,wait,%s,wait,wait,wait", (seed + nt) % 50,
                  mon, item + 1, testable_commands[cmd], testable_commands[cmd]);
         (skipping ? skip_test_game : play_test_game)(teststring, verbose);
 
