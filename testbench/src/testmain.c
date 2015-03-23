@@ -27,8 +27,8 @@ const int unused_objects[] = UNUSEDOBJECTS;
    command (specifying the item and the monster's position as arguments, if
    necessary). */
 static void
-round_robin_test(unsigned long long seed,
-                 unsigned long long skip, unsigned long long limit)
+round_robin_test(unsigned long long seed, unsigned long long skip,
+                 unsigned long long limit, bool verbose)
 {
     const int unuseditemcount = sizeof unused_objects / sizeof *unused_objects;
 
@@ -84,7 +84,7 @@ round_robin_test(unsigned long long seed,
                  "fight,fight,cast,zap,read,drink,fight,fight,"
                  "wait,wait,wait,wait,wait",
                  mon, item + 1, testable_commands[cmd]);
-        (skipping ? skip_test_game : play_test_game)(teststring);
+        (skipping ? skip_test_game : play_test_game)(teststring, verbose);
 
     continue_main_loop:;
     }
@@ -112,7 +112,8 @@ main(int argc, char **argv)
                     "    seed will cause the same tests to be reproduced.\n\n"
                     "  --limit count\n"
                     "    Run only the given number of tests, then skip the\n"
-                    "    remaining tests.\n\n"
+                    "    remaining tests. If the limit is less than 10,\n"
+                    "    produce verbose comments in the output.\n\n"
                     "  --skip count\n"
                     "    Skip the given number of tests at the start of the\n"
                     "    testsuite.\n\n"
@@ -145,6 +146,6 @@ main(int argc, char **argv)
         argc -= 2;
     }
 
-    round_robin_test(seed, skip, limit);
+    round_robin_test(seed, skip, limit, limit < 10);
     return 0;
 }

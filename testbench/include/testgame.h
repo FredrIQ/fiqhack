@@ -8,5 +8,5 @@
 
 extern void init_test_system(unsigned long long, const char[static 4], int);
 extern void shutdown_test_system(void);
-extern void play_test_game(const char *);
-extern void skip_test_game(const char *);
+extern void play_test_game(const char *, bool);
+extern void skip_test_game(const char *, bool);

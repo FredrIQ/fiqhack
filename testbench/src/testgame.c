@@ -19,11 +19,10 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define DEBUG 0
-
 static unsigned long long test_seed;
 static char temp_directory[] = "nethack4-testsuite-XXXXXX\0";
 static bool test_system_inited = false;
+static bool test_verbose = false;
 static int testnumber = 1;
 static int cmdnumber = 0;
 static const char *curcmd, *curcmd_ptr;
@@ -196,7 +195,7 @@ shutdown_test_system(void)
  * client.
  */
 void
-play_test_game(const char *commands)
+play_test_game(const char *commands, bool verbose)
 {
     curcmd = commands;
     curcmd_ptr = curcmd;
@@ -207,6 +206,7 @@ play_test_game(const char *commands)
        dungeon generator in at the same time as we're testing other things.) */
     unsigned long long this_test_seed = test_seed;
     this_test_seed += (testnumber * 1000000LLU);
+    test_verbose = verbose;
 
     last_monster_d = DIR_NONE;
     last_monster_x = -1;
@@ -374,8 +374,9 @@ play_test_game(const char *commands)
 
 /* Like play_test_game, but doesn't actually run the game. */
 void
-skip_test_game(const char *commands)
+skip_test_game(const char *commands, bool verbose)
 {
+    (void) verbose;
     char seedbuf[80] = "<uninitialized>";
     unsigned long long this_test_seed = test_seed;
     this_test_seed += (testnumber * 1000000LLU);
@@ -453,7 +454,7 @@ test_print_message(int turncount, const char *message)
         last_monster_d = dummy[2];
     }
 
-    if (DEBUG)
+    if (test_verbose)
         tap_comment("pline: %s", message);
 }
 
@@ -469,6 +470,10 @@ test_request_command(
        interrupted; we ignore the interruptions, using wizmode lifesaving if
        necessary). */
     if (!completed) {
+        if (interrupted)
+            if (test_verbose)
+                tap_comment("command (interrupted): repeat");
+
         callback(&(struct nh_cmd_and_arg){"repeat", {.argtype = 0}},
                  callbackarg);
         return;
@@ -498,6 +503,9 @@ test_request_command(
         memcpy(cmdname, curcmd_ptr, eos - curcmd_ptr);
         cmdname[eos - curcmd_ptr] = '\0';
         curcmd_ptr = *eos ? eos + 1 : eos;
+
+        if (test_verbose)
+            tap_comment("command (from command): %s", cmdname);
 
         callback(&(struct nh_cmd_and_arg){cmdname, {.argtype = 0}},
                  callbackarg);
@@ -553,6 +561,9 @@ test_display_menu(struct nh_menulist *ml, const char *title,
         return;
     }
 
+    if (test_verbose)
+        tap_comment("display_menu: %s", title);
+
     /* Do we have a menu specification? */
     if (*curcmd_ptr == 'M') {
         /* TODO */
@@ -571,6 +582,7 @@ test_display_menu(struct nh_menulist *ml, const char *title,
        this. */
     int pickchance = 1;
     unsigned long long s = test_seed + testnumber;
+    char picked_accel = 0;
     for (i = 0; i < ml->icount; i++) {
         if (ml->items[i].id || ml->items[i].accel) {
             /* It's selectable. This algorithm picks menu items in a way that's
@@ -579,12 +591,17 @@ test_display_menu(struct nh_menulist *ml, const char *title,
                rather breaks down when the number of items in the menu is very
                large; hopefully that won't happen (if it does, we'll need to
                recycle entropy in the high-order bits of s). */
-            if (!(s % pickchance))
+            if (!(s % pickchance)) {
                 results = ml->items[i].id;
+                picked_accel = ml->items[i].accel;
+            }
             s /= pickchance;
             pickchance++;
         }
     }
+
+    if (test_verbose)
+        tap_comment("display_menu reply (random): %c", picked_accel);
 
     dealloc_menulist(ml);
     callback(&results, 1, callbackarg);
@@ -606,6 +623,9 @@ test_display_objects(
         return;
     }
 
+    if (test_verbose)
+        tap_comment("display_objects: %s", title);
+
     /* Do we have a menu specification? */
     if (*curcmd_ptr == 'O') {
         /* TODO */
@@ -624,15 +644,21 @@ test_display_objects(
        this compiles to different binary despite being textually almost
        identical (we're setting results.id, not results). */
     int pickchance = 1;
+    char picked_accel = 0;
     unsigned long long s = test_seed + testnumber;
     for (i = 0; i < ml->icount; i++) {
         if (ml->items[i].id || ml->items[i].accel) {
-            if (!(s % pickchance))
+            if (!(s % pickchance)) {
                 results.id = ml->items[i].id;
+                picked_accel = ml->items[i].accel;
+            }
             s /= pickchance;
             pickchance++;
         }
     }
+
+    if (test_verbose)
+        tap_comment("display_objects reply (random): %c", picked_accel);
 
     dealloc_objmenulist(ml);
     callback(&results, 1, callbackarg);
@@ -642,7 +668,7 @@ static struct nh_query_key_result
 test_query_key(const char *prompt, enum nh_query_key_flags flags,
                nh_bool allow_count)
 {
-    if (DEBUG)
+    if (test_verbose)
         tap_comment("query_key: %s", prompt);
 
     /* Do we have a query_key specification? */
@@ -656,18 +682,26 @@ test_query_key(const char *prompt, enum nh_query_key_flags flags,
             curcmd_ptr += 3;
         else
             tap_bail("query_key token is more than 2 chars long");
+        if (test_verbose)
+            tap_comment("query_key reply (from command): %c", res);
         return (struct nh_query_key_result){.key = res, .count = -1};
     }
     /* Nope, we'll have to improvise a response. */
 
     /* Break out of loops. */
-    if (popcount(++cmdnumber) >= 4)
+    if (popcount(++cmdnumber) >= 4) {
+        if (test_verbose)
+            tap_comment("query_key reply (cancel): <cancelled>");
         return (struct nh_query_key_result){.key = 27, .count = -1};
+    }
 
     /* If we're given Z as an option, take it; the testsuite normally wishes
        items it wants to test into that slot. */
-    if (pmatch("*[*Z*]", prompt))
+    if (pmatch("*[*Z*]", prompt)) {
+        if (test_verbose)
+            tap_comment("query_key reply (policy): Z");
         return (struct nh_query_key_result){.key = 'Z', .count = -1};
+    }
 
     /* In most cases, a query_key prompt will specify the sensible possibilities
        in square brackets. And in most of /those/ cases, the possibilities are
@@ -675,18 +709,26 @@ test_query_key(const char *prompt, enum nh_query_key_flags flags,
        in this case by looking for the string "*]" in the prompt. In such a
        case, we just hit '*' and let the menu handling code pick an item for
        us. */
-    if (strstr(prompt, "*]"))
+    if (strstr(prompt, "*]")) {
+        if (test_verbose)
+            tap_comment("query_key reply (policy): *");
         return (struct nh_query_key_result){.key = '*', .count = -1};
+    }
 
     /* Do the flags give a hint? */
-    if (flags == NQKF_LETTER_REASSIGNMENT)
-        return (struct nh_query_key_result){
-            .key = 'a' + ((test_seed + testnumber) % 26),
-                .count = -1};
-    else if (flags == NQKF_SYMBOL)
-        return (struct nh_query_key_result){
-            .key = ' ' + ((test_seed + testnumber) % 94),
-                .count = -1};
+    if (flags == NQKF_LETTER_REASSIGNMENT || flags == NQKF_SYMBOL) {
+        char k = flags == NQKF_SYMBOL ?
+            ' ' + ((test_seed + testnumber) % 94) :
+            'a' + ((test_seed + testnumber) % 26);
+
+        if (test_verbose)
+            tap_comment("query_key reply (random): <cancelled>");
+
+        return (struct nh_query_key_result){.key = k, .count = -1};
+    }
+
+    if (test_verbose)
+        tap_comment("query_key reply (random): <cancelled>");
 
     /* We don't really know what to press here. So cancel. */
     return (struct nh_query_key_result){.key = 27, .count = -1};
@@ -695,7 +737,7 @@ test_query_key(const char *prompt, enum nh_query_key_flags flags,
 static char
 test_yn_function(const char *query, const char *answers, char default_answer)
 {
-    if (DEBUG)
+    if (test_verbose)
         tap_comment("yn: %s", query);
 
     /* Do we have a yn specification? This is basically the same as with
@@ -711,8 +753,11 @@ test_yn_function(const char *query, const char *answers, char default_answer)
         else
             tap_bail("yn_function token is more than 2 chars long");
 
-        if (strchr(answers, res))
+        if (strchr(answers, res)) {
+            if (test_verbose)
+                tap_comment("yn reply (from command): %c", res);
             return res;
+        }
         tap_comment("expected illegal yn answer '%c' (legal: '%s')",
                     res, answers);
         nh_exit_game(EXIT_PANIC);      /* indirectly cause a test failure */
@@ -720,29 +765,41 @@ test_yn_function(const char *query, const char *answers, char default_answer)
     }
     /* Nope, we'll have to improvise a response. */
 
+    char ynr = answers[(test_seed + testnumber) % strlen(answers)];
+
     /* Break out of loops. */
-    if (popcount(++cmdnumber) >= 4)
-        return answers[(test_seed + testnumber) % strlen(answers)];
+    if (popcount(++cmdnumber) >= 4) {
+        if (test_verbose)
+            tap_comment("yn reply (cancel): %c", ynr);
+        return ynr;
+    }
 
 
     /* yn_function is often (usually?) used for confirmation prompts. In most
        cases, we want to say "yes", because the path for "no" is boring.
        Exception: if we die, we want to say "no" to use debug mode lifesaving
        (thus allowing us to complete whatever test we were running. */
-    if (strcmp(query, "Die?") == 0)
+    if (strcmp(query, "Die?") == 0) {
+        if (test_verbose)
+            tap_comment("yn reply (policy): n");
         return 'n';
-    else if (strchr(answers, 'y'))
+    } else if (strchr(answers, 'y')) {
+        if (test_verbose)
+            tap_comment("yn reply (policy): y");
         return 'y';
+    }
 
     /* Fall back to random. */
-    return answers[(test_seed + testnumber) % strlen(answers)];
+    if (test_verbose)
+        tap_comment("yn reply (random): %c", ynr);
+    return ynr;
 }
 
 
 static struct nh_getpos_result
 test_getpos(int default_x, int default_y, nh_bool force, const char *msg)
 {
-    if (DEBUG)
+    if (test_verbose)
         tap_comment("getpos: %s", msg);
 
     /* Do we have a getpos specification? */
@@ -762,18 +819,27 @@ test_getpos(int default_x, int default_y, nh_bool force, const char *msg)
     }
 
     /* Break out of loops. */
-    if (popcount(++cmdnumber) >= 4)
+    if (popcount(++cmdnumber) >= 4) {
+        if (test_verbose)
+            tap_comment("getpos reply (cancel): (%d,%d)", default_x, default_y);
         return (struct nh_getpos_result){.howclosed = NHCR_CLIENT_CANCEL,
                 .x = default_x,
                 .y = default_y};
+    }
 
 
     /* Do we have a monster to aim at? */
     if (last_monster_x > -1 && last_monster_y > -1) {
+        if (test_verbose)
+            tap_comment("getpos reply (at monster): (%d,%d)",
+                        last_monster_x, last_monster_y);
         return (struct nh_getpos_result){.howclosed = NHCR_ACCEPTED,
                 .x = last_monster_x,
                 .y = last_monster_y};
     }
+
+    if (test_verbose)
+        tap_comment("getpos reply (random): (%d,%d)", default_x, default_y);
 
     /* We don't, so aim at the default location. */
     return (struct nh_getpos_result){.howclosed = NHCR_ACCEPTED,
@@ -785,7 +851,21 @@ test_getpos(int default_x, int default_y, nh_bool force, const char *msg)
 static enum nh_direction
 test_getdir(const char *prompt, nh_bool gridbug)
 {
-    if (DEBUG)
+    static const char *const dirnames[] = {
+        [DIR_W] = "west",
+        [DIR_NW] = "northwest",
+        [DIR_N] = "north",
+        [DIR_NE] = "northeast",
+        [DIR_E] = "east",
+        [DIR_SE] = "southeast",
+        [DIR_S] = "south",
+        [DIR_SW] = "southwest",
+        [DIR_UP] = "up",
+        [DIR_DOWN] = "down",
+        [DIR_SELF] = "self"
+    };
+
+    if (test_verbose)
         tap_comment("getdir: %s", prompt);
 
     /* Do we have a getdir specification? */
@@ -809,12 +889,23 @@ test_getdir(const char *prompt, nh_bool gridbug)
         return DIR_NONE;
 
     /* Do we have a monster to aim at? */
-    if (last_monster_d != DIR_NONE && gridbug_ok(last_monster_d, gridbug))
+    if (last_monster_d != DIR_NONE && gridbug_ok(last_monster_d, gridbug)) {
+        if (test_verbose)
+            tap_comment("getdir reply (at monster): %s",
+                        dirnames[last_monster_d]);
         return last_monster_d;
+    }
 
     /* We don't, so aim in a random direction. */
-    if (gridbug_ok((test_seed + testnumber) % 11, gridbug))
-        return (test_seed + testnumber) % 11;
+    enum nh_direction dir = (test_seed + testnumber) % 11;
+    if (gridbug_ok(dir, gridbug)) {
+        if (test_verbose)
+            tap_comment("getdir reply (random): %s", dirnames[dir]);
+        return dir;
+    }
+
+    if (test_verbose)
+        tap_comment("getdir reply (random): north");
 
     return DIR_N;
 }
@@ -824,7 +915,7 @@ static void
 test_getlin(const char *query, void *callbackarg,
             void (*callback)(const char *lin, void *arg))
 {
-    if (DEBUG)
+    if (test_verbose)
         tap_comment("getlin: %s", query);
 
     /* Do we have a string in our command list? */
@@ -845,12 +936,16 @@ test_getlin(const char *query, void *callbackarg,
                 tap_bail("junk after getlin specification");
         }
 
+        if (test_verbose)
+            tap_comment("getlin reply (from command): %s", lin);
         callback(lin, callbackarg);
         return;
     }
 
     /* Nope. TODO: Pick a string from a list of game-relevant strings. For now,
        we just cancel. */
+    if (test_verbose)
+        tap_comment("getlin reply (random): <cancelled>");
     callback("\x1b", callbackarg);
 }
 
