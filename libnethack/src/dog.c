@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Alex Smith, 2015-03-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -863,7 +863,7 @@ tamedog(struct monst *mtmp, struct obj *obj)
         /* `obj' is now obsolete */
     }
 
-    if (mtmp->dlevel == level)
+    if (mtmp2->dlevel == level)
         newsym(mtmp2->mx, mtmp2->my);
     if (attacktype(mtmp2->data, AT_WEAP)) {
         mtmp2->weapon_check = NEED_HTH_WEAPON;
