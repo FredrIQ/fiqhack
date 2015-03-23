@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-19 */
+/* Last modified by Alex Smith, 2015-03-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -164,7 +164,7 @@ bhitm(struct monst *mtmp, struct obj *otmp)
     case SPE_POLYMORPH:
     case POT_POLYMORPH:
         if (resists_magm(mtmp)) {
-            /* magic resistance protects from polymorph traps, so make it guard 
+            /* magic resistance protects from polymorph traps, so make it guard
                against involuntary polymorph attacks too... */
             shieldeff(mtmp->mx, mtmp->my);
         } else if (!resist(mtmp, otmp->oclass, 0, NOTELL)) {
@@ -339,7 +339,7 @@ bhitm(struct monst *mtmp, struct obj *otmp)
             seemimic(mtmp);     /* might unblock if mimicing a boulder/door */
     }
     /* note: bhitpos won't be set if swallowed, but that's okay since
-       reveal_invis will be false.  We can't use mtmp->mx, my since it might be 
+       reveal_invis will be false.  We can't use mtmp->mx, my since it might be
        an invisible worm hit on the tail. */
     if (reveal_invis) {
         if (mtmp->mhp > 0 && cansee(bhitpos.x, bhitpos.y) && !canspotmon(mtmp))
@@ -482,7 +482,7 @@ montraits(struct obj *obj, coord * cc)
         mtmp2->mhp = mtmp2->mhpmax;
         /* Get these ones from mtmp */
         mtmp2->minvent = mtmp->minvent; /* redundant */
-        /* monster ID is available if the monster died in the current game, but 
+        /* monster ID is available if the monster died in the current game, but
            should be zero if the corpse was in a bones level (we cleared it
            when loading bones) */
         if (!mtmp2->m_id)
@@ -530,7 +530,7 @@ montraits(struct obj *obj, coord * cc)
 /*
  * get_container_location() returns the following information
  * about the outermost container:
- * loc argument gets set to: 
+ * loc argument gets set to:
  *   OBJ_INVENT   if in hero's inventory; return 0.
  *   OBJ_FLOOR    if on the floor; return 0.
  *   OBJ_BURIED   if buried; return 0.
@@ -732,7 +732,7 @@ revive(struct obj *obj)
 static void
 revive_egg(struct obj *obj)
 {
-    /* 
+    /*
      * Note: generic eggs with corpsenm set to NON_PM will never hatch.
      */
     if (obj->otyp != EGG)
@@ -1143,29 +1143,20 @@ do_osshock(struct obj *obj)
     }
 
     /* if quan > 1 then some will survive intact */
+    long broken_quan = 1;
     if (obj->quan > 1L) {
         if (obj->quan > LARGEST_INT)
-            obj = splitobj(obj, (long)rnd(30000));
+            broken_quan = rnd(30000);
         else
-            obj = splitobj(obj, (long)rnd((int)obj->quan - 1));
+            broken_quan = rnd((int)obj->quan - 1);
     }
 
-    /* appropriately add damage to bill */
-    if (costly_spot(obj->ox, obj->oy)) {
-        if (*u.ushops)
-            addtobill(obj, FALSE, FALSE, FALSE);
-        else
-            stolen_value(obj, obj->ox, obj->oy, FALSE, FALSE);
-    }
-
-    /* zap the object */
-    delobj(obj);
+    useupf(obj, broken_quan);
 }
 
 /* Is the object immune to polymorphing?
- *
- * Currently true for items of polymorph and amulets of unchanging.
- */
+
+   Currently true for items of polymorph and amulets of unchanging. */
 boolean
 poly_proof(struct obj *obj)
 {
@@ -1216,7 +1207,7 @@ poly_obj(struct obj *obj, int id)
     if (id == STRANGE_OBJECT) { /* preserve symbol */
         int try_limit = 3;
 
-        /* Try up to 3 times to make the magic-or-not status of the new item be 
+        /* Try up to 3 times to make the magic-or-not status of the new item be
            the same as it was for the old one. */
         otmp = NULL;
         do {
@@ -1404,7 +1395,7 @@ poly_obj(struct obj *obj, int id)
             impossible("More than one worn mask set in poly_obj?!?");
         } else if (canwearobj(otmp, &new_mask, FALSE, TRUE, TRUE)) {
             /* canwearobj only checks for wearable armor */
-            const int body_slots = 
+            const int body_slots =
                 (W_MASK(os_arm) | W_MASK(os_armc) | W_MASK(os_armu));
             if (old_mask == new_mask ||
                 (old_mask & body_slots && new_mask & body_slots) ||
@@ -1585,12 +1576,12 @@ bhito(struct obj *obj, struct obj *otmp)
     int res = 1;        /* affected object by default */
 
     if (obj->bypass) {
-        /* The bypass bit is currently only used as follows: POLYMORPH - When a 
+        /* The bypass bit is currently only used as follows: POLYMORPH - When a
            monster being polymorphed drops something from its inventory as a
            result of the change.  If the items fall to the floor, they are not
            subject to direct subsequent polymorphing themselves on that same
            zap. This makes it consistent with items that remain in the
-           monster's inventory. They are not polymorphed either. UNDEAD_TURNING 
+           monster's inventory. They are not polymorphed either. UNDEAD_TURNING
            - When an undead creature gets killed via undead turning, prevent
            its corpse from being immediately revived by the same effect. The
            bypass bit on all objects is reset each turn, whenever
@@ -1603,7 +1594,7 @@ bhito(struct obj *obj, struct obj *otmp)
             obj->bypass = 0;
     }
 
-    /* 
+    /*
      * Some parts of this function expect the object to be on the floor
      * obj->{ox,oy} to be valid.  The exception to this (so far) is
      * for the STONE_TO_FLESH spell.
@@ -1868,7 +1859,7 @@ backfire(struct obj *otmp)
 {
     otmp->in_use = TRUE;        /* in case losehp() is fatal */
     if (otmp->oartifact) {
-        /* 
+        /*
          * Artifacts aren't destroyed by a backfire, but the
          * explosion is more violent.
          */
@@ -2195,7 +2186,7 @@ zapyourself(struct obj *obj, boolean ordinary)
                 onext = otemp->nobj;
                 bhito(otemp, obj);
             }
-            /* 
+            /*
              * It is possible that we can now merge some inventory.
              * Do a higly paranoid merge.  Restart from the beginning
              * until no merges.
@@ -2230,7 +2221,7 @@ zap_steed(struct obj *obj)
 
     switch (obj->otyp) {
 
-        /* 
+        /*
          * Wands that are allowed to hit the steed
          * Carefully test the results of any that are
          * moved here from the bottom section.
@@ -2433,7 +2424,7 @@ zap_updown(struct obj *obj, schar dz)
         } else if (dz < 0) {    /* we should do more... */
             pline("Blood drips on your %s.", body_part(FACE));
         } else if (dz > 0 && !OBJ_AT(u.ux, u.uy)) {
-            /* 
+            /*
                Print this message only if there wasn't an engraving affected
                here.  If water or ice, act like waterlevel case. */
             e = engr_at(level, u.ux, u.uy);
@@ -2796,9 +2787,9 @@ beam_hit(int ddx, int ddy, int range,   /* direction and range */
             } else {
                 /* FLASHED_LIGHT hitting invisible monster should pass through
                    instead of stop so we call flash_hits_mon() directly rather
-                   than returning mtmp back to caller. That allows the flash to 
+                   than returning mtmp back to caller. That allows the flash to
                    keep on going. Note that we use mtmp->minvis not
-                   canspotmon() because it makes no difference whether the hero 
+                   canspotmon() because it makes no difference whether the hero
                    can see the monster or not. */
                 if (mtmp->minvis) {
                     obj->ox = u.ux, obj->oy = u.uy;
@@ -4242,7 +4233,7 @@ retry:
     char buf[strlen(origbuf) + BUFSZ];
     strcpy(buf, origbuf);
 
-    /* 
+    /*
      *  Note: if they wished for and got a non-object successfully,
      *  otmp == &zeroobj.  That includes gold, or an artifact that
      *  has been denied.  Wishing for "nothing" requires a separate
@@ -4286,4 +4277,3 @@ retry:
 }
 
 /*zap.c*/
-
