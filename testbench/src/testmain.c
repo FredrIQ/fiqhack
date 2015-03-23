@@ -37,7 +37,10 @@ round_robin_test(unsigned long long seed, unsigned long long skip,
     const int moncount = PM_LONG_WORM_TAIL - 0;
     const int itemcount = BLINDING_VENOM - 1 - unuseditemcount;
     const int cmdcount = sizeof testable_commands / sizeof *testable_commands;
-    init_test_system(seed, "wgfn", moncount * itemcount * cmdcount);
+    if (limit > moncount * itemcount * cmdcount - skip)
+        limit = moncount * itemcount * cmdcount - skip;
+
+    init_test_system(seed, "wgfn", skip + limit);
 
     /* We want to test all (cmd, mon, item) triples, but in an order that cycles
        through each individual command/monster/item as quickly as possible, and
@@ -72,11 +75,10 @@ round_robin_test(unsigned long long seed, unsigned long long skip,
         if (skip) {
             --skip;
             skipping = true;
-        }
-        if (limit)
+        } else if (limit)
             --limit;
         else
-            skipping = true;
+            break;
 
         char teststring[512];
         snprintf(teststring, sizeof teststring,
