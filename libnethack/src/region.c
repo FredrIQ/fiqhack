@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-11-21 */
+/* Last modified by Alex Smith, 2015-03-23 */
 /* Copyright (c) 1996 by Jean-Christophe Collet  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -275,10 +275,7 @@ remove_region(struct region *reg)
     lev->n_regions--;
 }
 
-/*
- * Remove all regions and clear all related data (This must be down
- * when changing level, for instance).
- */
+/* Remove all regions and clear all related data. */
 void
 free_regions(struct level *lev)
 {

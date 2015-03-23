@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -975,6 +975,7 @@ freedynamicdata(void)
         dmonsfree(lev); /* release dead monsters */
         free_timers(lev);
         free_light_sources(lev);
+        free_regions(lev);
         free_monchn(lev->monlist);
         free_worm(lev); /* release worm segment information */
         freetrapchn(lev->lev_traps);

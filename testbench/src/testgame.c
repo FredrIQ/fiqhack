@@ -369,6 +369,7 @@ play_test_game(const char *commands)
 
     fclose(savefile);
     close(paniclogfd);
+    nhlib_free_optlist(newgame_options);
 }
 
 /* Like play_test_game, but doesn't actually run the game. */
