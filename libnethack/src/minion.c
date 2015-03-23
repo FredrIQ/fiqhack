@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Alex Smith, 2015-03-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -323,7 +323,7 @@ lminion(void)
     const struct permonst *ptr;
 
     for (tryct = 0; tryct < 20; tryct++) {
-        ptr = mkclass(&u.uz, S_ANGEL, 0, rng_main);
+        ptr = mkclass(&u.uz, S_ANGEL, G_HELL | G_NOHELL, rng_main);
         if (ptr && !is_lord(ptr))
             return monsndx(ptr);
     }
@@ -338,7 +338,7 @@ ndemon(const d_level * dlev, aligntyp atyp)
     const struct permonst *ptr;
 
     for (tryct = 0; tryct < 20; tryct++) {
-        ptr = mkclass(dlev, S_DEMON, 0, rng_main);
+        ptr = mkclass(dlev, S_DEMON, G_HELL | G_NOHELL, rng_main);
         if (ptr && is_ndemon(ptr) &&
             (atyp == A_NONE || sgn(ptr->maligntyp) == sgn(atyp)))
             return monsndx(ptr);

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Alex Smith, 2015-03-23 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -356,10 +356,16 @@ morguemon(const d_level *dlev, enum rng rng)
     int i = rn2_on_rng(100, rng);
     int hd = rn2_on_rng(level_difficulty(dlev), rng);
 
-    if (hd > 10 && i < 10)
-        return (In_hell(dlev) || In_endgame(dlev)) ?
-            mkclass(dlev, S_DEMON, 0, rng) : &mons[ndemon(dlev, A_NONE)];
-    if (hd > 8 && i > 85)
+    if (hd > 10 && i < 10) {
+        if (In_hell(dlev) || In_endgame(dlev))
+            return mkclass(dlev, S_DEMON, 0, rng);
+        else {
+            int mnum = ndemon(dlev, A_NONE);
+            if (mnum != NON_PM)
+                return &mons[mnum];
+            /* otherwise fall through */
+        }
+    } else if (hd > 8 && i > 85)
         return mkclass(dlev, S_VAMPIRE, 0, rng);
 
     return (i < 20) ? &mons[PM_GHOST] :
