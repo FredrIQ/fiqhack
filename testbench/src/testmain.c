@@ -17,7 +17,7 @@
 const char *const testable_commands[] = {
     "adjust", "apply", "chat", "dip", "drop", "eat", "engrave", "farlook",
     "invoke", "kick", "namemon", "nameitem", "quiver", "read", "ride", "rub",
-    "takeoff", "throw", "wear", "wield"
+    "takeoff", "throw"
 };
 
 const int unused_objects[] = UNUSEDOBJECTS;
@@ -83,8 +83,8 @@ round_robin_test(unsigned long long seed, unsigned long long skip,
         char teststring[512];
         snprintf(teststring, sizeof teststring,
                  "levelteleport,\"%d\",genesis,\"monsndx #%d\","
-                 "wish,\"Z - otyp #%d\",%s,fight,fight,cast,zap,read,drink,"
-                 "fight,fight,wait,wait,%s,wait,wait,wait",
+                 "wish,\"Z - otyp #%d\",%s,wear,wield,fight,fight,cast,zap,"
+                 "read,drink,fight,fight,wait,wait,%s,wait,wait,wait",
                  (int)((seed + nt) % 50), mon, item + 1,
                  testable_commands[cmd], testable_commands[cmd]);
         (skipping ? skip_test_game : play_test_game)(teststring, verbose);
