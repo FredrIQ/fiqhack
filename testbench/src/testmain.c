@@ -15,10 +15,9 @@
    1 wizard, and don't have specific requirements on the adjacent terrain or on
    items on the floor. */
 const char *const testable_commands[] = {
-    "adjust", "apply", "cast", "chat", "dip", "drink", "drop", "eat", "engrave",
-    "farlook", "fight", "fire", "invoke", "kick", "name", "namemon", "nameitem",
-    "nametype", "quiver", "read", "ride", "rub", "takeoff", "throw", "wear",
-    "wield", "zap"
+    "adjust", "apply", "chat", "dip", "drop", "eat", "engrave", "farlook",
+    "invoke", "kick", "namemon", "nameitem", "quiver", "read", "ride", "rub",
+    "takeoff", "throw", "wear", "wield"
 };
 
 const int unused_objects[] = UNUSEDOBJECTS;
@@ -82,8 +81,9 @@ round_robin_test(unsigned long long seed,
         char teststring[512];
         snprintf(teststring, sizeof teststring,
                  "genesis,\"monsndx #%d\",wish,\"Z - otyp #%d\",%s,"
-                 "wait,wait,wait,wait,wait", mon, item + 1,
-                 testable_commands[cmd]);
+                 "fight,fight,cast,zap,read,drink,fight,fight,"
+                 "wait,wait,wait,wait,wait",
+                 mon, item + 1, testable_commands[cmd]);
         (skipping ? skip_test_game : play_test_game)(teststring);
 
     continue_main_loop:;
