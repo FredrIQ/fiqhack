@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Alex Smith, 2015-03-23 */
 /* Copyright (c) 2015 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -28,7 +28,8 @@ const int unused_objects[] = UNUSEDOBJECTS;
    command (specifying the item and the monster's position as arguments, if
    necessary). */
 static void
-round_robin_test(unsigned long long seed)
+round_robin_test(unsigned long long seed,
+                 unsigned long long skip, unsigned long long limit)
 {
     const int unuseditemcount = sizeof unused_objects / sizeof *unused_objects;
 
@@ -46,9 +47,9 @@ round_robin_test(unsigned long long seed)
        increasing integer modulo those factors, skipping any entries which are
        out of range. */
 
-    int monfactor = nextprime(moncount);
-    int itemfactor = nextprime(itemcount + unuseditemcount);
-    int cmdfactor = nextprime(cmdcount);
+    int monfactor = nextprime(moncount - 1);
+    int itemfactor = nextprime(itemcount + unuseditemcount - 1);
+    int cmdfactor = nextprime(cmdcount - 1);
 
     long long nt;
 
@@ -68,12 +69,22 @@ round_robin_test(unsigned long long seed)
             if (unused_objects[j] == item + 1)
                 goto continue_main_loop;
 
+        boolean skipping = false;
+        if (skip) {
+            --skip;
+            skipping = true;
+        }
+        if (limit)
+            --limit;
+        else
+            skipping = true;
+
         char teststring[512];
         snprintf(teststring, sizeof teststring,
                  "genesis,\"monsndx #%d\",wish,\"Z - otyp #%d\",%s,"
                  "wait,wait,wait,wait,wait", mon, item + 1,
                  testable_commands[cmd]);
-        play_test_game(teststring);
+        (skipping ? skip_test_game : play_test_game)(teststring);
 
     continue_main_loop:;
     }
@@ -84,6 +95,56 @@ round_robin_test(unsigned long long seed)
 int
 main(int argc, char **argv)
 {
-    round_robin_test(time(NULL));
+    unsigned long long seed = time(NULL);
+    unsigned long long limit = -(1ULL);
+    unsigned long long skip = 0;
+    char *endptr;
+
+    while (argc > 1) {
+        if (argc == 2) {
+            fprintf(stderr, "Usage:\n"
+                    "  testmain [options]\n\n"
+                    "Outputs a sequence of test results in TAP format.\n"
+                    "Use a TAP parser like prove(1) to parse them.\n\n"
+                    "Options:\n"
+                    "  --seed seed\n"
+                    "    Produce deterministic results; specifying the same\n"
+                    "    seed will cause the same tests to be reproduced.\n\n"
+                    "  --limit count\n"
+                    "    Run only the given number of tests, then skip the\n"
+                    "    remaining tests.\n\n"
+                    "  --skip count\n"
+                    "    Skip the given number of tests at the start of the\n"
+                    "    testsuite.\n\n"
+                    "  --stdoutbuffer count\n"
+                    "    Adjust the size of the buffer used on stdout (0 =\n"
+                    "    use line buffering for stdout)\n");
+            return (strcmp(argv[1], "--help") ? EXIT_FAILURE : 0);
+        }
+
+        unsigned long long parsevalue = strtoull(argv[2], &endptr, 10);
+        if (!*argv[2] || *endptr) {
+            fprintf(stderr, "Option value '%s' is not an integer\n", argv[2]);
+            return EXIT_FAILURE;
+        }
+
+        if (strcmp(argv[1], "--seed") == 0)
+            seed = parsevalue;
+        else if (strcmp(argv[1], "--limit") == 0)
+            limit = parsevalue;
+        else if (strcmp(argv[1], "--skip") == 0)
+            skip = parsevalue;
+        else if (strcmp(argv[1], "--stdoutbuffer") == 0)
+            setvbuf(stdout, NULL, parsevalue ? _IOFBF : _IOLBF, parsevalue);
+        else {
+            fprintf(stderr, "Unknown option '%s'\n", argv[1]);
+            return EXIT_FAILURE;
+        }
+
+        argv += 2;
+        argc -= 2;
+    }
+
+    round_robin_test(seed, skip, limit);
     return 0;
 }

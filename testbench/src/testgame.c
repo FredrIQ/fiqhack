@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Alex Smith, 2015-03-23 */
 /* Copyright (c) 2015 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -370,6 +370,19 @@ play_test_game(const char *commands)
     fclose(savefile);
     close(paniclogfd);
 }
+
+/* Like play_test_game, but doesn't actually run the game. */
+void
+skip_test_game(const char *commands)
+{
+    char seedbuf[80] = "<uninitialized>";
+    unsigned long long this_test_seed = test_seed;
+    this_test_seed += (testnumber * 1000000LLU);
+    snprintf(seedbuf, sizeof seedbuf, "%016llu", this_test_seed);
+    seedbuf[17] = '\0';
+    tap_skip(&testnumber, "%s [seed %s]", commands, seedbuf);
+}
+
 
 /* Window procedures: error detection */
 
