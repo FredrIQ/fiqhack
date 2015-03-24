@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-23 */
+/* Last modified by Alex Smith, 2015-03-24 */
 /* Copyright (c) 2015 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -101,6 +101,8 @@ init_test_system(unsigned long long seed, const char crga[static 4],
     tap_init(testcount);
     test_seed = seed;
     memcpy(test_crga, crga, 4);
+
+    tap_comment("Using seed: %llu", seed);
 
     if (!mkdtemp(temp_directory))
         tap_bail_errno("Creating a temporary directory");
@@ -567,7 +569,7 @@ test_display_menu(struct nh_menulist *ml, const char *title,
 
        First, though, we tap_comment the log_recover_core_reasons, to make
        debugging the failure easier. */
-    if (strcmp(title, "The save file is corrupted...") == 0) {
+    if (title && strcmp(title, "The save file is corrupted...") == 0) {
         for (i = 0; i < ml->icount; i++) {
             if (strncmp(ml->items[i].caption, "Error: ", 7) == 0 ||
                 strncmp(ml->items[i].caption, "Location: ", 10) == 0)
@@ -590,7 +592,7 @@ test_display_menu(struct nh_menulist *ml, const char *title,
     }
 
     if (test_verbose)
-        tap_comment("display_menu: %s", title);
+        tap_comment("display_menu: %s", title ? title : "<no title>");
 
     /* Do we have a menu specification? */
     if (*curcmd_ptr == 'M') {
@@ -652,7 +654,7 @@ test_display_objects(
     }
 
     if (test_verbose)
-        tap_comment("display_objects: %s", title);
+        tap_comment("display_objects: %s", title ? title : "<no title>");
 
     /* Do we have a menu specification? */
     if (*curcmd_ptr == 'O') {
