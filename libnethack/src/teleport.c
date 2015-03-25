@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-03-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -32,7 +32,7 @@ goodpos(struct level *lev, int x, int y, struct monst *mtmp, unsigned gpflags)
 
     /* in many cases, we're trying to create a new monster, which can't go on
        top of the player or any existing monster. however, occasionally we are
-       relocating engravings or objects, which could be co-located and thus get 
+       relocating engravings or objects, which could be co-located and thus get
        restricted a bit too much. oh well. */
     if (mtmp != &youmonst && x == u.ux && y == u.uy &&
         (!u.usteed || mtmp != u.usteed) && !(gpflags & MM_IGNOREMONST))
@@ -42,13 +42,13 @@ goodpos(struct level *lev, int x, int y, struct monst *mtmp, unsigned gpflags)
         struct monst *mtmp2 = (gpflags & MM_IGNOREMONST) ?
             NULL : m_at(lev, x, y);
 
-        /* Be careful with long worms.  A monster may be placed back in its own 
+        /* Be careful with long worms.  A monster may be placed back in its own
            location.  Normally, if m_at() returns the same monster that we're
            trying to place, the monster is being placed in its own location.
            However, that is not correct for worm segments, because all the
            segments of the worm return the same m_at(). Actually we overdo the
            check a little bit--a worm can't be placed in its own location,
-           period.  If we just checked for mtmp->mx != x || mtmp->my != y, we'd 
+           period.  If we just checked for mtmp->mx != x || mtmp->my != y, we'd
            miss the case where we're called to place the worm segment and the
            worm's head is at x,y. */
         if (mtmp2 && (mtmp2 != mtmp || mtmp->wormno))
@@ -121,7 +121,7 @@ enexto_core(coord * cc, struct level *lev, xchar xx, xchar yy,
     fakemon.data = mdat;        /* set up for goodpos */
     good_ptr = good;
     range = 1;
-    /* 
+    /*
      * Walk around the border of the square with center (xx,yy) and
      * radius range.  Stop when we find at least one valid position.
      */
@@ -244,10 +244,10 @@ teleds(int nux, int nuy, boolean allow_drag)
        move the ball, then always "drag" whether or not allow_drag is true,
        because we are calling that function, not to drag, but to move the
        chain.  *However* there are some dumb special cases: 0 0 _X move east
-       -----> X_ @ @ These are permissible if teleporting, but not if dragging. 
-       As a result, drag_ball() needs to know about allow_drag and might end up 
+       -----> X_ @ @ These are permissible if teleporting, but not if dragging.
+       As a result, drag_ball() needs to know about allow_drag and might end up
        dragging the ball anyway.  Also, drag_ball() might find that dragging
-       the ball is completely impossible (ball in range but there's rock in the 
+       the ball is completely impossible (ball in range but there's rock in the
        way), in which case it teleports the ball on its own. */
     if (ball_active) {
         if (!carried(uball) && distmin(nux, nuy, uball->ox, uball->oy) <= 2)
@@ -255,7 +255,7 @@ teleds(int nux, int nuy, boolean allow_drag)
         else {
             /* have to move the ball */
             if (!allow_drag || distmin(u.ux, u.uy, nux, nuy) > 1) {
-                /* we should not have dist > 1 and allow_drag at the same time, 
+                /* we should not have dist > 1 and allow_drag at the same time,
                    but just in case, we must then revert to teleport. */
                 allow_drag = FALSE;
                 unplacebc();
@@ -316,7 +316,7 @@ teleds(int nux, int nuy, boolean allow_drag)
         u.usteed->my = nuy;
     }
 
-    /* 
+    /*
      *  Make sure the hero disappears from the old location.  This will
      *  not happen if she is teleported within sight of her previous
      *  location.  Force a full vision recalculation because the hero
@@ -645,9 +645,9 @@ level_tele_impl(boolean wizard_tele)
         }
         /* if in Quest, the player sees "Home 1", etc., on the status line,
            instead of the logical depth of the level.  controlled level
-           teleport request is likely to be relativized to the status line, and 
+           teleport request is likely to be relativized to the status line, and
            consequently it should be incremented to the value of the logical
-           depth of the target level. we let negative values requests fall into 
+           depth of the target level. we let negative values requests fall into
            the "heaven" loop. */
         if (In_quest(&u.uz) && newlev > 0)
             newlev = newlev + dungeons[u.uz.dnum].depth_start - 1;
@@ -776,7 +776,7 @@ domagicportal(struct trap *ttmp)
     pline("You activated a magic portal!");
 
     /* prevent the poor shnook, whose amulet was stolen while in the endgame,
-       from accidently triggering the portal to the next level, and thus losing 
+       from accidently triggering the portal to the next level, and thus losing
        the game */
     if (In_endgame(&u.uz) && !Uhave_amulet) {
         pline("You feel dizzy for a moment, but nothing happens...");
@@ -837,7 +837,7 @@ rloc_pos_ok(int x, int y,       /* coordinates of candidate location */
 
     if (!goodpos(level, x, y, mtmp, 0))
         return FALSE;
-    /* 
+    /*
      * Check for restricted areas present in some special levels.
      *
      * `xx' is current column; if 0, then `yy' will contain flag bits
@@ -936,6 +936,7 @@ rloc(struct monst *mtmp,        /* mx==COLNO implies migrating monster arrival *
      boolean suppress_impossible)
 {
     int x, y, trycount;
+    int relaxed_goodpos;
 
     if (mtmp == u.usteed) {
         tele();
@@ -950,26 +951,35 @@ rloc(struct monst *mtmp,        /* mx==COLNO implies migrating monster arrival *
         else
             x = level->dnladder.sx, y = level->dnladder.sy;
         /* if the wiz teleports away to heal, try the up staircase, to block
-           the player's escaping before he's healed (deliberately use `goodpos' 
+           the player's escaping before he's healed (deliberately use `goodpos'
            rather than `rloc_pos_ok' here) */
         if (goodpos(level, x, y, mtmp, 0))
             goto found_xy;
     }
 
-    trycount = 0;
-    do {
-        x = rn2(COLNO);
-        y = rn2(ROWNO);
-        if ((trycount < 500) ? rloc_pos_ok(x, y, mtmp)
-            : goodpos(level, x, y, mtmp, 0))
-            goto found_xy;
-    } while (++trycount < 1000);
+    for (relaxed_goodpos = 0; relaxed_goodpos < 2; relaxed_goodpos++) {
 
-    /* last ditch attempt to find a good place */
-    for (x = 0; x < COLNO; x++)
-        for (y = 0; y < ROWNO; y++)
-            if (goodpos(level, x, y, mtmp, 0))
+        /* first try sensible terrain; if none exists, ignore water,
+           doors and boulders */
+        int gpflags = relaxed_goodpos ? MM_IGNOREWATER | MM_IGNOREDOORS : 0;
+
+        /* try several pairs of positions; try the more restrictive rloc_pos_ok
+           before we use the less restrictive goodpos */
+        trycount = 0;
+        do {
+            x = rn2(COLNO);
+            y = rn2(ROWNO);
+            if ((trycount < 500) ? rloc_pos_ok(x, y, mtmp)
+                : goodpos(level, x, y, mtmp, gpflags))
                 goto found_xy;
+        } while (++trycount < 1000);
+
+        /* try every square on the level as a fallback */
+        for (x = 0; x < COLNO; x++)
+            for (y = 0; y < ROWNO; y++)
+                if (goodpos(level, x, y, mtmp, gpflags))
+                    goto found_xy;
+    }
 
     /* level either full of monsters or somehow faulty */
     if (!suppress_impossible)
@@ -1181,13 +1191,13 @@ random_teleport_level(void)
 
     /* What I really want to do is as follows: -- If in a dungeon that goes
        down, the new level is to be restricted to [top of parent, bottom of
-       current dungeon] -- If in a dungeon that goes up, the new level is to be 
+       current dungeon] -- If in a dungeon that goes up, the new level is to be
        restricted to [top of current dungeon, bottom of parent] -- If in a
-       quest dungeon or similar dungeon entered by portals, the new level is to 
-       be restricted to [top of current dungeon, bottom of current dungeon] The 
+       quest dungeon or similar dungeon entered by portals, the new level is to
+       be restricted to [top of current dungeon, bottom of current dungeon] The
        current behavior is not as sophisticated as that ideal, but is still
-       better what we used to do, which was like this for players but different 
-       for monsters for no obvious reason.  Currently, we must explicitly check 
+       better what we used to do, which was like this for players but different
+       for monsters for no obvious reason.  Currently, we must explicitly check
        for special dungeons.  We check for Knox above; endgame is handled in
        the caller due to its different message ("disoriented"). --KAA 3.4.2:
        explicitly handle quest here too, to fix the problem of monsters
@@ -1249,4 +1259,3 @@ u_teleport_mon(struct monst * mtmp, boolean give_feedback)
 }
 
 /*teleport.c*/
-
