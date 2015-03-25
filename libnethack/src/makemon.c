@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-14 */
+/* Last modified by Alex Smith, 2015-03-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1426,7 +1426,9 @@ rndmonst_inner(const d_level *dlev, char class, int flags, enum rng rng)
            using flags & G_INDEPTH; this increases frequency of in-depth or
            excessively weak monsters by 1, and halves the frequency of
            out-of-depth monsters (which is my best estimation of what NitroHack
-           is doing). */
+           is doing). Take care not to generate probability-0 monsters on a
+           nonaligned level (we don't want to give them the +1 boost for being
+           in-depth). */
         if (ptr && !(flags & G_FREQ)) {
             int genprob = geno & G_FREQ;
             int maxgenprob = 5;
@@ -1434,7 +1436,7 @@ rndmonst_inner(const d_level *dlev, char class, int flags, enum rng rng)
                 genprob += align_shift(dlev, ptr);
                 maxgenprob += 5;
             }
-            if (flags & G_INDEPTH) {
+            if (flags & G_INDEPTH && genprob) {
                 maxgenprob++;
                 if (toostrong(mndx, maxmlev))
                     genprob /= 2;
