@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-19 */
+/* Last modified by Alex Smith, 2015-03-25 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1217,7 +1217,6 @@ reveal_monster_at(int x, int y, boolean unhide)
        Note: We can't use the normal unmap_object because there might be a
        remembered item on the square (e.g. via object detection when blind). */
     level->locations[x][y].mem_invis = 0;
-    unmap_object(x, y);
 
     if (!mon) {
         newsym(x, y);    /* required after unmap_object */
