@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-11-22
+Last modified by Alex Smith, 2015-03-26
 
 Copyright (C) 2013 Alex Smith.
 
@@ -136,12 +136,12 @@ lines, separated by newlines:
     file apart from the headers), and periodically thereafter: if a save diff
     line would be generated, it's converted to a save backup line if the
     uncompressed length of the previous turn's binary save (in bytes) would be
-    less than half the number of (after compression) bytes since the start of
-    the previous save backup line.  As such, not counting the first save
-    backup line in a file, at most 1/2 of the file can possibly be made out of
-    save backup lines, and something more like 1/4 is most likely.  This
-    algorithm prevents the size of the save file blowing up as a result of
-    pudding farming or similar actions; the details are chosen to produce
+    less than the number of (after compression) bytes since the start of the
+    previous save backup line.  As such, not counting the first save backup
+    line in a file, at most 1/2 of the file can possibly be made out of save
+    backup lines, and something more like 1/4 is most likely.  This algorithm
+    prevents the size of the save file blowing up as a result of pudding
+    farming or similar actions; the details are chosen to produce
     approximately the correct ratio while being fast to calculate.
     
     A save backup line is also used in place of a save diff line if a
