@@ -68,8 +68,11 @@ static struct nh_listitem palette_list[] = {
     {PALETTE_DEFAULT,   "uncursed default"},
     {PALETTE_SATURATED, "saturated bold"},
     {PALETTE_TERTIARY,  "tertiary colors"},
+    {PALETTE_EQUILUM,   "equiluminous"},
+    {PALETTE_DKPASTELS, "dark pastels"},
     {PALETTE_TTERMINAL, "typical X11 terminal"},
     {PALETTE_LCONSOLE,  "Linux console"},
+    {PALETTE_REDMOND,   "Windows console"},
     {PALETTE_ALT1,      "alternative 1"},
     {PALETTE_ALT2,      "alternative 2"},
     {PALETTE_ALT3,      "alternative 3"}

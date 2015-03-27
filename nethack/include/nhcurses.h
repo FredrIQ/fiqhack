@@ -236,6 +236,9 @@ enum nh_palette {
     PALETTE_TERTIARY,  /*  Tertiary Colors, jonadab */
     PALETTE_TTERMINAL, /*  Defaults from a typical X11 terminal */
     PALETTE_LCONSOLE,  /*  Konsole claims these are the Linux vt values */
+    PALETTE_EQUILUM,   /*  Equiluminous, from paxed's wintermcolors.php */
+    PALETTE_DKPASTELS, /*  Dark Pastels, from Konsole via paxed */
+    PALETTE_REDMOND,   /*  Windows console default colors */
 };
 
 enum nh_animation {
