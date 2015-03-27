@@ -2124,7 +2124,8 @@ mintrap(struct monst *mtmp)
         case VIBRATING_SQUARE:
             if (see_it && !Blind) {
                 if (in_sight)
-                    pline("You see a strange vibration beneath %s %s.",
+                    pline("You see a %s vibration beneath %s %s.",
+                          (Hallucination ? "normal" : "strange"),
                           s_suffix(mon_nam(mtmp)),
                           makeplural(mbodypart(mtmp, FOOT)));
                 else

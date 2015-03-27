@@ -212,6 +212,7 @@ restore_d_flags(struct memfile *mf)
     f.maze_like = (dflags >> 29) & 1;
     f.rogue_like = (dflags >> 28) & 1;
     f.align = (dflags >> 25) & 7;
+    f.unused = 0; /* avoid compiler warning */
 
     return f;
 }

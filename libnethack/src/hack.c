@@ -1986,10 +1986,13 @@ invocation_message(void)
         else
             buf = msgprintf("under your %s", makeplural(body_part(FOOT)));
 
-        pline("You feel a strange vibration %s.", buf);
+        pline("You feel a %s vibration %s.",
+              (Hallucination ? "normal" : "strange"), buf);
         if (otmp && otmp->spe == 7 && otmp->lamplit)
             pline("%s %s!", The(xname(otmp)),
-                  Blind ? "throbs palpably" : "glows with a strange light");
+                  Blind ? "throbs palpably" :
+                  Hallucination ? "glows with a normal light" :
+                  "glows with a strange light");
     }
 }
 

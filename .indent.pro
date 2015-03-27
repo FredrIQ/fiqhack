@@ -24,7 +24,7 @@
 -ndj
 -nfc1
 -fca
--nhnl
+-hnl
 -i4
 -il-4
 -ip4

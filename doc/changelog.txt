@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2015-02-06
+Last modified by Sean Hunt, 2015-02-13
 
 Copyright (C) 2013 Alex Smith.
 
@@ -431,7 +431,7 @@ Commands
 letters of known spells. (4, 6a5eec7)
 
 `a`: Candles can now be placed into candelabra even underwater. (Bilious,
-C343-238, 5c6ed21)
+C343-248, 5c6ed21)
 
 `a`: Digging into a pre-existing hole is no longer allowed. (Grunt, C343-78,
 cbf4fce)
