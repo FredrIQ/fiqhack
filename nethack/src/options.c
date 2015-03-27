@@ -64,8 +64,12 @@ static struct nh_enum_option graphics_spec =
     { graphics_list, listlen(graphics_list) };
 
 static struct nh_listitem palette_list[] = {
-    {PALETTE_NONE,      "none (may require new terminal)"},
-    {PALETTE_DEFAULT,   "default"},
+    {PALETTE_NONE,      "terminal default (may require new window)"},
+    {PALETTE_DEFAULT,   "uncursed default"},
+    {PALETTE_SATURATED, "saturated bold"},
+    {PALETTE_TERTIARY,  "tertiary colors"},
+    {PALETTE_TTERMINAL, "typical X11 terminal"},
+    {PALETTE_LCONSOLE,  "Linux console"},
     {PALETTE_ALT1,      "alternative 1"},
     {PALETTE_ALT2,      "alternative 2"},
     {PALETTE_ALT3,      "alternative 3"}

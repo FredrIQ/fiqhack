@@ -228,10 +228,14 @@ enum nh_text_mode {
 
 enum nh_palette {
     PALETTE_NONE,      /*  Keep default terminal palette */
-    PALETTE_DEFAULT,   /*  The default palette */
-    PALETTE_ALT1,      /*  Alternative palette 1*/
-    PALETTE_ALT2,      /*  Alternative palette 2*/
-    PALETTE_ALT3,      /*  Alternative palette 3*/
+    PALETTE_DEFAULT,   /*  The libuncursed default palette */
+    PALETTE_ALT1,      /*  Alternative palette 1, stef70 */
+    PALETTE_ALT2,      /*  Alternative palette 2, stef70 */
+    PALETTE_ALT3,      /*  Alternative palette 3, stef70 */
+    PALETTE_SATURATED, /*  Saturated Colors, jonadab */
+    PALETTE_TERTIARY,  /*  Tertiary Colors, jonadab */
+    PALETTE_TTERMINAL, /*  Defaults from a typical X11 terminal */
+    PALETTE_LCONSOLE,  /*  Konsole claims these are the Linux vt values */
 };
 
 enum nh_animation {
