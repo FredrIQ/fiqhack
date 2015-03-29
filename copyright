@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Alex Smith, 2015-03-21
+Last-Modified: Last modified by Alex Smith, 2015-03-29
 Comment:
  .
  This file is Copyright (C) Alex Smith 2013-2015, except as explained below
@@ -158,12 +158,6 @@ Files: libnethack/include/extern.h
 License: NGPL
 Copyright: Copyright (c) Steve Creps, 1988
 
-Files: libnethack/include/hacklib.h
-License: NGPL
-Copyright:
- Copyright (c) Alex Smith, 2013
- Copyright (c) Steve Creps, 1988
-
 Files: libnethack/include/magic.h
 License: NGPL
 Copyright: Copyright (c) Daniel Thaler, 2011
@@ -279,12 +273,6 @@ Copyright: Copyright 1988, 1989 by Ken Arromdee
 Files: libnethack/src/fountain.c
 License: NGPL
 Copyright: Copyright Scott R. Turner, srt@ucla, 10/27/86
-
-Files: libnethack/src/hacklib.c
-License: NGPL
-Copyright:
- Copyright (c) Robert Patrick Rankin, 1991
- Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985
 
 Files: libnethack/src/history.c
 License: NGPL
@@ -447,7 +435,7 @@ Files: libuncursed/*
 License: NGPL or GPL-2+
 Copyright: Copyright (c) 2013-2014 Alex Smith
 
-Files: libnethack_common/nethack*.h
+Files: libnethack_common/include/nethack*.h
 License: NGPL
 Copyright:
  These files have no explicit copyright notice.  However, the originals come
@@ -468,6 +456,18 @@ Copyright:
 Files: libnethack_common/src/xmalloc.c
 License: NGPL
 Copyright: Copyright (c) Daniel Thaler, 2011
+
+Files: libnethack_common/src/hacklib.c
+License: NGPL
+Copyright:
+ Copyright (c) Robert Patrick Rankin, 1991
+ Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985
+
+Files: libnethack_common/include/hacklib.h
+License: NGPL
+Copyright:
+ Copyright (c) Alex Smith, 2013
+ Copyright (c) Steve Creps, 1988
 
 Files: libnethack_common/include/xmalloc.h
 License: NGPL
