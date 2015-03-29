@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Alex Smith, 2015-03-29 */
 /* Copyright (c) Izchak Miller, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -98,13 +98,24 @@ kickdmg(struct monst *mon, boolean clumsy, schar dx, schar dy)
     if (uarmf)
         dmg += uarmf->spe;
     dmg += u.udaminc;   /* add ring(s) of increase damage */
-    if (dmg > 0)
-        mon->mhp -= dmg;
-    if (mon->mhp > 0 && martial() && !bigmonst(mon->data) && !rn2(3) &&
+
+    /* Do passive counterattacks before damaging the monster. Otherwise, we get
+       a dmonsfree crash if the monster and player kill each other
+       simultaneously. */
+    if (dmg < 0)
+        dmg = 0;
+
+    int newmhp = mon->mhp - dmg;
+
+    passive(mon, TRUE, newmhp > 0, AT_KICK);
+
+    if (newmhp > 0 && martial() && !bigmonst(mon->data) && !rn2(3) &&
         mon->mcanmove && mon != u.ustuck && !mon->mtrapped) {
         /* see if the monster has a place to move into */
         mdx = mon->mx + dx;
         mdy = mon->my + dy;
+        mon->mhp = newmhp;
+
         if (goodpos(level, mdx, mdy, mon, 0)) {
             pline("%s reels from the blow.", Monnam(mon));
             if (m_in_out_region(mon, mdx, mdy)) {
@@ -119,9 +130,11 @@ kickdmg(struct monst *mon, boolean clumsy, schar dx, schar dy)
             if (uarmf && uarmf->otyp == KICKING_BOOTS)
                 makeknown(KICKING_BOOTS);
         }
+
+        newmhp = mon->mhp;
     }
 
-    passive(mon, TRUE, mon->mhp > 0, AT_KICK);
+    mon->mhp = newmhp;
     if (mon->mhp <= 0 && !trapkilled)
         killed(mon);
 
