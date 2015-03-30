@@ -29,12 +29,13 @@ during a static build (and used as a shared library during a dynamic
 build), and is distributed under the Expat license. (See the
 "copyright" file for details.)
 
+The art in the "tilesets/" directories has its own licenses. View the
+files themselves, or the "copyright" file, for full details.
+
 For full, machine-readable detail on the licenses of all the source
 files that make up NetHack 4, see the "copyright" file.  The licenses
 to the files included in a binary distribution (either compiled from
 the source, or copied from elsewhere) are listed in the
 "binary-copyright.rtf" file.
-
-Please note:
 
 NetHack 4 DOES NOT COME WITH ANY SORT OF WARRANTY.
