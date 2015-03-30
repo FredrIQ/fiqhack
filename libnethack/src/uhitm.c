@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-29 */
+/* Last modified by Alex Smith, 2015-03-30 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2069,7 +2069,13 @@ hmonas(struct monst *mon, int tmp, schar dx, schar dy)
                youmonst.data->mlet==S_ORC || youmonst.data->mlet==S_GNOME ))
                goto use_weapon; */
             sum[i] = castum(mon, mattk);
-            continue;
+            /* allow enemy passives here, these spells are mostly flavoured as
+               melee attacks anyway (to do this properly, we'd need to get
+               castum to return a value that indicated whether a touch attack
+               was used); note that we can't disallow them via "continue"
+               because then, killing the monster will kill it twice and throw
+               off dead monster accounting */
+            break;
 
         case AT_NONE:
         case AT_BOOM:
