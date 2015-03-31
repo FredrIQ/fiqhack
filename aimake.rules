@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2015-03-10
+# Last modified by Alex Smith, 2015-03-31
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -590,6 +590,7 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
             install_dir => "gamesbindir",
             install_name => "nethack4-server$exeext",
             install_permission => "games",
+            install_readable => 1,
             exeparams => {
                 copyright => $copyright,
                 name => "NetHack 4 Server",

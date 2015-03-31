@@ -423,9 +423,10 @@ rights.
 
 =item B<--filelist=>I<format>
 
-This option can only be used when B<--destdir> is set.  It generates a list of
-files being installed in the specified format, designed for use as input to an
-installer program:
+This option generates a list of files being installed in the specified format,
+designed for use as input to an installer program.  If B<--destdir> is set,
+the file list will be placed in the root of that directory.  Otherwise, it
+will be placed in the root of the build directory.
 
 =over 4
 
@@ -4001,7 +4002,7 @@ use PerlIO;
 use PerlIO::encoding;
 use Encode qw/encode :fallbacks/;
 use Data::Dumper;
-use Digest::SHA qw/sha256_hex/;
+use Digest::SHA qw/sha1_hex sha256_hex/;
 use Scalar::Util qw/refaddr/;
 use Safe;
 use Storable qw/store_fd fd_retrieve dclone/; # why the naming inconsistency?
@@ -4273,14 +4274,18 @@ sub sv_hash {
     return sha256_hex(serialize_sv(shift));
 }
 
-# Here's an attempt to make globally unique values that are consistent from
-# one run of aimake to another.  This is bascially half a SHA-256, with
-# hyphens inserted in appropriate places.
+# Convert a string to a GUID (actually UUID), using the algorithm from RFC 4122.
 sub guid_from_string {
-    my $guid = uc sha256_hex ("aimake $longrandomstring " . shift);
-    substr $guid, 32, 32, "";
+    my $guid = uc sha1_hex (
+        # This magic hex string means "treat the rest of the string as a URL".
+        "\x6b\xa7\xb8\x11\x9d\xad\x11\xd1\x80\xb4\x00\xc0\x4f\xd4\x30\xc8" .
+        # We use a namespace inside the aimake website for uniqueness.
+        "http://nethack4.org/aimake/uuid/" . shift);
+    substr $guid, 32, 8, "";
     substr $guid, 20, 0, "-";
+    (substr $guid, 16, 1) =~ y/0123456789ABCDEF/89AB89AB89AB89AB/;
     substr $guid, 16, 0, "-";
+    substr $guid, 12, 1, "5"; # means "this UUID is SHA-1 based".
     substr $guid, 12, 0, "-";
     substr $guid, 8, 0, "-";
     return $guid;
@@ -4906,9 +4911,22 @@ sub calculate_permissions;
 sub calculate_installation_path {
     my $install_dir = shift;
     my $install_name = shift;
+
+    my $feature = shift;
+
+    my $permission = shift;
+    my $elevation = shift;
+    my $readable = shift;
+
+    my $shortcut_target = shift;
+    my $shortcut_description = shift;
+
+    my $create_subdir = shift;
+
+    my $executable = $create_subdir ? 2 : $install_dir =~ /bindir$|libdir$/;
+
     my $instpath = $install_dir =~ /^[bs]?path:/ ?
         $install_dir : $config->{options}{$install_dir};
-    my $executable = $install_dir =~ /bindir$|libdir$/;
 
     $install_name eq 'sys:touch_only' and $executable = 2;
 
@@ -4919,19 +4937,12 @@ sub calculate_installation_path {
             and $instpath .= "/man$1";
     }
 
-    my $feature = shift;
-
-    my $permission = shift;
-    my $elevation = shift;
-    my $readable = shift;
     my ($octal, undef, undef) = calculate_permissions
         $permission, $elevation, $readable, $executable,
         scalar ($install_dir =~ /(?:state|lock|log)dir$/);
 
-    my $shortcut_target = shift;
-    my $shortcut_description = shift;
-
     my $aipath = "$instpath/$install_name";
+
     my $outpath = ($shortcut_target || $install_dir =~ /^[bs]?path:/)
         ? $aipath : destdir_transform $aipath;
 
@@ -4953,7 +4964,7 @@ sub calculate_installation_path {
     # In some cases, we're installing to a different directory than
     # instpath.
     my @aipath = parse_aipath $aipath;
-    $install_name eq 'sys:touch_only' or pop @aipath;
+    $install_name eq 'sys:touch_only' or $create_subdir or pop @aipath;
     my $instdir = deparse_aipath @aipath;
 
     $opt_filelist ||= '';
@@ -5014,7 +5025,7 @@ sub calculate_installation_path {
         # we have consistency if WiX ever changes its ideas on GUIDs (which
         # has happened once in the past).
         my $pname = $config->{options}{packagename};
-        my $guid = guid_from_string "$pname $aipath";
+        my $guid = guid_from_string "$pname/$aipath";
 
         my $filelist_entry;
         my $in_component;
@@ -5073,7 +5084,8 @@ sub calculate_installation_path {
             </Component>
         </DirectoryRef>
 ];
-                $id eq $dirref or die "Folder component mismatch";
+                $id eq $dirref or
+                    die "Folder component mismatch: $aipath != $instdir";
                 $filelist_folder_removers{$dirref} = $id;
             } else {
                 $filelist_entry = qq[
@@ -5102,7 +5114,8 @@ sub calculate_installation_path {
             </Component>
         </DirectoryRef>
 ];
-            $id eq $dirref or die "Folder component mismatch";
+            $id eq $dirref or
+                die "Folder component mismatch: $aipath != $instdir";
             $filelist_folder_removers{$dirref} = $id;
         } else {
             $filelist_entry = qq[
@@ -5189,6 +5202,7 @@ sub calculate_installation_path {
         $filelist_directories{$instpath}{$install_dir} = 1
             unless $install_dir eq 'mandir' ||
             $install_dir =~ /^[bs]?path:/;
+
         # All its parents need to be present, too, going back to the root. And
         # their removers are all dependencies of the feature, apart from those
         # for the CSIDL_s themselves (which don't exist).
@@ -5245,23 +5259,24 @@ my %wixfolders = (
 );
 sub write_filelist {
     $opt_filelist ||= '';
+    my $fns = $opt_prefix ? "spath" : "bpath";
     if ($opt_filelist eq 'basic' || $opt_filelist eq 'listing') {
         $filelist_body = defined_or($filelist_body, '');
-        my $aifilelist = destdir_transform "spath:filelist.txt";
+        my $aifilelist = destdir_transform "$fns:filelist.txt";
         open my $fh, '>', aipath2ospath $aifilelist or return $!;
         print $fh $filelist_body;
         close $fh or return $!;
     } elsif ($opt_filelist eq 'wix') {
         $filelist_body = defined_or($filelist_body, '');
         my $pname = $config->{options}{packagename};
-        my $aifilelist = destdir_transform "spath:$pname.wxs";
+        my $aifilelist = destdir_transform "$fns:$pname.wxs";
         open my $fh, ">$utf8_layers", aipath2ospath $aifilelist or return $!;
         my $pnametext = $config->{options}{packagename_text};
         $pnametext =~ s/&/&amp;/g; $pnametext =~ s/"/&quot;/g;
         my $cname = $config->{options}{companyname};
         my $pversion = pvtransform $config->{options}{packageversion};
         my $guid = guid_from_string $pname;
-        my $pguid = guid_from_string "$pname $pversion";
+        my $pguid = guid_from_string "$pname/version:$pversion";
         my $ui = 'WixUI_FeatureTree';
         keys %filelist_features == 1 and $ui = 'WixUI_Minimal';
         # TODO: Should Language always be 1033?
@@ -5279,6 +5294,7 @@ sub write_filelist {
         <MajorUpgrade DowngradeErrorMessage=
             "To install an older version of $pnametext, please first uninstall any newer versions." />
 ];
+        # Fix a bug in Emacs' syntax highlighter: qq[];
 
         # Create a variable for each directory we use. We use a (lowercase)
         # SHA-256 name if the directory isn't one of the install directories
@@ -6319,7 +6335,7 @@ sub set_exeparams {
             my $written = 0;
             for my $i (@imageindexes) {
                 my $iconfile = calculate_installation_path 'datarootdir',
-                    "/icons/hicolor/" .
+                    "icons/hicolor/" .
                     "$png_width[$i]x$png_height[$i]/apps/$basename.png",
                         $feature;
                 my $fif = friendly_objname($iconfile);
@@ -6409,7 +6425,7 @@ sub calculate_permissions {
             if (($executable || 0) >= 2) {
                 $octal = $readable ? 0775 : 0770;
             } elsif ($executable) {
-                $octal = $readable ? 0774 : 0770;
+                $octal = $readable ? 0754 : 0750;
             } elsif ($in_statedir) {
                 $octal = $readable ? 0664 : 0660;
             } else {
@@ -9295,7 +9311,8 @@ MAINLOOP: while (1) {
                 (calculate_installation_path $a->{install_dir},
                  $a->{output_basename}, $a->{install_feature},
                  $a->{install_permission}, $a->{install_elevation},
-                 $a->{install_readable});
+                 $a->{install_readable}, undef, undef,
+                 $objname eq 'sys:create_subdir' ? 2 : undef);
 
             @known_output_locations = ($output_location);
 
