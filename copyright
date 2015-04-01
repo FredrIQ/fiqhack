@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Last-Modified: Last modified by Alex Smith, 2015-03-29
+Last-Modified: Last modified by Alex Smith, 2015-04-01
 Comment:
  .
  This file is Copyright (C) Alex Smith 2013-2015, except as explained below
@@ -865,7 +865,7 @@ Copyright: Copyright (c) Alex Smith, 2013
 
 Files: aimake
 License: GPL-3+
-Copyright: Copyright (C) 2013 Alex Smith
+Copyright: Copyright (C) 2013, 2014, 2015 Alex Smith
 Comment: aimake is only used as the build system and none of it is compiled
  into the resulting executables. As such, there is no license clash between
  it and the files it's compiling, just as there is no problem using a GPL'd

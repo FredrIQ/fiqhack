@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2015-02-11
+Last modified by Alex Smith, 2015-04-01
 
 Copyright (C) 2013 Alex Smith.
 
@@ -45,7 +45,8 @@ make more substantial gameplay changes in 4.4.
 Frequently Asked Questions
 ==========================
 
-See the file at `doc/faq.txt`.
+See the file `faq.txt` (`doc/faq.txt` in the source code, or in the
+documentation directory in an installed version).
 
 
 Contact
@@ -117,12 +118,14 @@ listed below.
         character's been walking, see stairs and traps underneath items, and
         tell at a glance which monsters are peaceful.
 
-      * Better rendering for map characters.  NetHack 3.4.3 could only use
-        IBMgraphics or DECgraphics for this, often with neither working
-        without spending time configuring your terminal.  NetHack 4 will
-        automatically switch between IBMgraphics and Unicode according to the
-        needs of your terminal, meaning that there is rarely a need to change
-        settings.
+      * A better rendering backend.  NetHack 3.4.3 could only use IBMgraphics
+        or DECgraphics for this, often with neither working without spending
+        time configuring your terminal.  NetHack 4 will automatically switch
+        between IBMgraphics and Unicode according to the needs of your
+        terminal, meaning that there is rarely a need to change settings.
+        Likewise, it will try its best to give you a working dark gray color
+        (although in emergencies, you can turn off dark gray in the options,
+        and the engine will redo its color schemes to avoid that color).
 
       * Commands are now fully rebindable.  In most cases, though, you won't
         need to; unlike NetHack 3, NetHack 4 understands most of the keys on
@@ -140,7 +143,8 @@ listed below.
         (This sadly cuts slightly into the convenience commands that numpad
         players were used to.  Instead of `N` for `#name`, you can use `C`;
         instead of `k` for kicking, you can use `^D`.  For command repeat,
-        just use the numbers on the main keyboard.)
+        just use the numbers on the main keyboard.  Alternatively, you can use
+        the options menu to change back to the old numpad bindings.)
         
         Another gain from this is that the `Meta-` shortcuts for many extended
         commands, that do not work properly in 3.4.3 on many terminals, will
@@ -152,7 +156,9 @@ listed below.
           * You can limit any command to a specific number of actions via
             specifying a number of actions to stop after.  (Single-turn
             commands will be repeated for that many actions instead, as in
-            3.4.3.)
+            3.4.3.)  You can also stop commands midway through by pressing any
+            key or clicking on the map, if your options are set to animate
+            long-running commands.
 
           * `^A` is a lot more powerful; when repeating commands, it will
             remember what choices you made, and if you use it after an
@@ -170,6 +176,10 @@ listed below.
           * There's no need to explicitly open doors any more; just use the
             direction keys to walk towards them.  If they turn out to be
             locked, you can now unlock them with `o`.
+
+          * Examining map squares using `;` still works, but if you have a
+            mouse available, you can also quickly examine them simply via
+            hovering the mouse pointer over them.
 
           * If you find exploring empty areas tedious, you can let the game
             take over for you; press `v`, and an AI will take over the
@@ -234,11 +244,12 @@ listed below.
     save files are also saved continuously; if something goes wrong, whether
     it's a bug in the game or your terminal crashing, you'll be able to just
     pick back up where you left.  You can even save in the middle of a turn!
-    The game is also ever-vigilant for mistakes in the save system; if at any
-    point your game can no longer be restored from its save, it will stop
-    gameplay immediately, maximizing the chances that the save file can be
-    recovered, rather than letting you play on and then losing all your
-    progress since the moment it went wrong.
+    (To do this, either close the window, or open the main menu using
+    Control-C and save that way.)  The game is also ever-vigilant for mistakes
+    in the save system; if at any point your game can no longer be restored
+    from its save, it will stop gameplay immediately, maximizing the chances
+    that the save file can be recovered, rather than letting you play on and
+    then losing all your progress since the moment it went wrong.
 
   * There have been some gameplay changes, mostly to remove "difficulty" that
     was created via relying on a bad interface and entirely avoidable via
@@ -249,16 +260,15 @@ listed below.
     character to forget anything the player could have made out-of-game notes
     about, but rather drains skill points and spells.
     
-    There are also many changes to streamline the interface.  Try dropping a
-    container full of unidentified items on an altar some time.
+    There are also many gameplay changes intended to streamline the interface.
+    Try dropping a container full of unidentified items on an altar some time.
     
     Finally, there are some improvements in the monster AI.  For instance,
     pets can use their special attacks now, and hostile monsters may attack
     each other even without conflict if they dislike each other enough.
-
-  * The game now supports server play, in which the interface and game engine
-    can be on different physical machines, communicating using JSON over a
-    network.  See `doc/server_protocol.txt` for the technical details.
+    Monsters also have less spoiler knowledge than they did before; in
+    particular, they won't know where you are on the map without some way to
+    see or sense your location.
 
   * Building the game from source is much easier than it was in NetHack
     3.4.3.  See the build instructions below.
@@ -312,8 +322,8 @@ location to install it into, and how to elevate its permissions:
 
 Note that this requires a group `games` to exist on your system, and contain
 no normal users, in order to ensure security of the bones files and high score
-tables.  This is the case on most Linux distributions, but not on all
-(e.g. Gentoo), and may not be the case on UNIX.
+tables.  This is the case on most Linux distributions, but not on all, and may
+not be the case on UNIX.
 
 To run the console port, use `nethack4`.  For the tiles/faketerm ports, use
 `nethack4-sdl`.

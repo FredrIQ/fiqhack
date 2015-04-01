@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2014-09-26
+Last modified by Alex Smith, 2015-04-01
 
 Copyright (C) 2013 Alex Smith.
 
@@ -25,8 +25,12 @@ you produced a new version, what's the minimum that has to change?"):
   * libnethack_common/include/nethack.h (this is the central place
     from which most C code should be pulling the version number)
   * README (describe the new version)
-  * scripts/build-debian-package, scripts/build-windows-zipfile
-    (filename of the newly created package)
+  * scripts/build-debian-package (filename of the newly created
+    package)
+  * Port numbers (README, libnethack_client/include/nhclient.h) if you
+    break server protocol compatibility (the port number should
+    normally be "53" followed by the major, minor, and patchlevel
+    version components)
 
 Additionally, almost every release will change the copyright status
 (typically just dates, but perhaps more extensively):

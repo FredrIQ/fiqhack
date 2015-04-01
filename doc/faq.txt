@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2015-03-12
+Last modified by Alex Smith, 2015-04-01
 
 Copyright (C) 2013 Alex Smith.
 
@@ -50,13 +50,13 @@ What is NetHack 4?
 NetHack (and its predecessor Hack) were kept in development for many many
 years; NetHack dates from 1987 (and as such, is older than many people who
 play it).  The development team who worked on versions 1 to 3 of NetHack
-([the DevTeam][1]) claim to still be working on it, but there's hardly any
-visible progress; just the occasional update to the (woefully inadequate) bug
-tracker, or the fix of one of the ports to work on the latest version of an
-operating system.  This means that NetHack is still stuck in 2003, with the
-world moving on in the meantime.  It's a testament to the game's quality that
-it can still be enjoyed after staying stagnant for this long, but the
-situation is far from what it could be.
+([the DevTeam][1]) are still working on it (although there was no real
+evidence of this until 2014), but they don't release their progress, meaning
+that the situation is effectively the same as if they'd been doing nothing.
+This means that NetHack is still stuck in 2003, with the world moving on in
+the meantime.  It's a testament to the game's quality that it can still be
+enjoyed after staying stagnant for this long, but the situation is far from
+what it could be.
 
 As expected for a game popular among programmers, there were many people
 willing to take the game forwards who *weren't* members of the DevTeam; an
@@ -88,64 +88,44 @@ modification to the name (adding the "4") lets us signify that we're trying to
 keep it alive, rather than abandoning it in favour of an alternative.
 
 (Incidentally, the DevTeam are aware of the variant, and have not objected to
-the name.  They spell it "NetHack4", with no space; sometimes, we do too.
-This helps to be unambiguous if you want to distinguish NetHack 4 from
-DevTeam-released versions of NetHack.)
-
-As an additional historical note, the name "NetHack" was chosen because it was
-a version of Hack which was coordinated over the Internet (especially Usenet).
-Nowdays, the DevTeam have mostly abandoned online communication with the
-users, merely answering the occasional bug report email, so the name "NetHack"
-more accurately describes NetHack 4 than it describes NetHack 3.4.3.
+the name; they've even been known to copy the occasional patch from NetHack 4
+into their own development version.  They spell it "NetHack4", with no space;
+sometimes, we do too.  This helps to be unambiguous if you want to distinguish
+NetHack 4 from DevTeam-released versions of NetHack.)
 
 
 What will you do if the DevTeam releases a new version of NetHack?
 ------------------------------------------------------------------
 
-If this baits a new version out, we'll be happy enough with that result that
-any version number clashes or other disputes become secondary.  Most likely,
-we'd attempt to merge their version with ours (or vice versa).
-
-By the way, if the DevTeam needs help and are willing to give us the
-information we need to help them, we'd be willing to help them out with their
-own development version; we're having to proceed without them because they're
-too secretive to let us proceed with them, but working together would be
-better.
-
-
-Why has the DevTeam not produced a new version of NetHack?
-----------------------------------------------------------
-
-We don't know conclusively, but there are a few plausible guesses.  It's
-strongly suspected that whatever they have in their own source repository is
-not particularly close to a releasable state, and that either none or few of
-the DevTeam are willing to work on the parts that have problems, meaning that
-it doesn't get noticeably closer to release over time (and may even be
-drifting further away).  Because the DevTeam keeps the development process
-secretive (there's no public source for any interim version since 3.4.3, for
-instance), it's impossible for the NetHack patching community to help them
-out, and we don't even know what they're having trouble with.
-
-This is very annoying, because it forces us to duplicate their work rather
-than being able to build on it, and they've had several years' head start.  It
-seems possible that we've even overtaken them by now, though.
+We'll merge as many of their changes as we think are good ideas into NetHack
+4, hopefully producing a game with the advantages of most versions.  There's
+already been some progress in this respect; although we don't have access to
+all the DevTeam's internal development code, they've been willing to share
+large amounts of it with us (mostly bugfixes), which is incidentally how we
+know they're working on it in the first place.  We haven't made much use of it
+yet, in favour of getting 4.3.0 released, but are likely to merge in most of
+the bugfixes for 4.3.1.
 
 
-How can I follow/contribute to NetHack 4 development?
------------------------------------------------------
+How can I follow/contribute to the programming of NetHack 4?
+------------------------------------------------------------
 
 NetHack 4's development can be followed from its [git repository][3]; active
-developemnt is typically in branch "master" or "savebreak".  (That repository
-also contains (often out-of-date) versions of some related variants.)  There
-is also now a [bug tracker][4], where you can read or report bugs, or submit
-patches.
+development is typically in branch "master".  (That repository also contains
+(often out-of-date) versions of some related variants.)  There is also a
+[bug tracker][4], where you can read or report bugs, or submit patches; the
+bug tracker also contains a web-based view of the repository, which may be
+more convenient for browsing it (the official repository can only reasonably
+be read using `git` itself).
 
 Sometimes, interim development projects take place on other branches, because
-the "nicehack" branch is expected to be at least somewhat playable.  In
+the "master" branch is expected to be at least somewhat playable.  In
 particular, we often use a "savebreak" branch for development that is expected
 to break the save system (either because the save system itself does not work,
 or because the save format changes so often that a saved game might not be
-loadable on the next day).
+loadable on the next day).  Sometimes there are also branches for development
+planned to go into a future version, which normally have numerical names
+indicating the version the changes will go into.
 
 You can also send emails to ais523.  The email address is not written here
 directly in the hope of confusing spambots, but it's the most obvious one that
@@ -153,11 +133,25 @@ can be formed from the username "ais523" and the domain name "nethack4.org".
 
 If you want to discuss the game or its development, we also have an IRC
 channel, #nethack4 on irc.freenode.net; many of the developers idle there, and
-many discussions are made there too.
+many discussions are made there too.  There is also now a #nethack-dev channel
+for NetHack development generally (mostly aimed at variants with fewer changes
+from the 3.4.3 codebase).
 
 Finally, you can comment on Usenet, at rec.games.roguelikes.nethack.  Make
 sure your subject line clearly refers to NetHack 4 if you don't want to cause
 confusion as to which version you're talking about.
+
+
+I'm not a programmer.  Can I still help with NetHack 4?
+-------------------------------------------------------
+
+You can.  One way any NetHack player can help out is in playtesting; connect
+to the server (following the instructions below) and start playing the most
+recent version.  If you encounter a bug, or if the game tells you that
+something is wrong and asks you to make a bug report, file it at the
+[bug tracker][4].  (You will need a bug tracker account; we give these out
+freely on request by email.  There's no automated way to create them because
+we couldn't stop spambots using it.)
 
 
 What about playing in tournaments?
@@ -185,9 +179,11 @@ Several of the libraries on which NetHack 4 depends have other licenses; for
 instance, libjansson (which ships with the NetHack 4 source, nowadays) is
 licensed under the Expat license, and SDL2 (which does not ship with the
 source, but which does ship with the binaries) is licensed under the zlib
-license.  The file `copyright` in the root of a source or binary distribution
-gives a machine-readable explanation of the copyright status of the source
-files in the distribution.
+license.  Likewise, the tilesets mostly have licenses of their own.  The file
+`copyright` in the root of the source distribution gives a machine-readable
+explanation of the copyright status of the source files in the distribution.
+For binary distributions, full copyright information will be installed with
+the documentation.
 
 Please note that there is no warranty for NetHack 4.
 
@@ -204,9 +200,9 @@ the server.  Server play has the advantage that your save file is available no
 matter which computer you play on, and that you can (on Linux or Mac OS X) use
 standard software that comes with the operating system rather than having to
 install a separate binary; it's also much easier to prove that you aren't
-cheating.  Local play works even without an Internet connection, and allows
-you to experiment with patches to the code and otherwise modify the game as
-you like.
+cheating, because you cannot modify the game's code.  Local play works even
+without an Internet connection, and allows you to experiment with patches to
+the code and otherwise modify the game as you like.
 
 
 How can I play on a public server?
@@ -214,14 +210,14 @@ How can I play on a public server?
 
 The official (and to our knowledge, only) public server is nethack4.org.  Open
 a terminal in your favourite terminal emulator, and use telnet (default
-settings) or ssh (username "nethack", password "nethack") to connect. At the
-command prompt:
+settings) or ssh (username "nethack43", password "nethack43") to connect. At
+the command prompt:
 
     telnet nethack4.org
 
 or
 
-    ssh nethack@nethack4.org
+    ssh nethack43@nethack4.org
 
 You'll be asked to give a username and password upon connecting; if you use a
 currently unknown username, you'll be prompted to create an account.
@@ -295,8 +291,8 @@ What does the "connect to server" option in the main menu do?
 
 NetHack 4 inherits a server API from NitroHack that should theoretically allow
 a local executable (even tiles) to play on a remote system.  This mode works
-fine in testing, but there are no publically servers right now to connect to,
-so it's not that useful in practice.
+fine in testing, but there are no publically available servers right now to
+connect to, so it's not that useful in practice.
 
 We don't host such a server on nethack4.org because there are known security
 problems in the implementation (which do not affect local play).
@@ -306,6 +302,17 @@ Does NetHack 4 depend on curses/ncurses?
 ----------------------------------------
 
 Not any more; it used to, but that dependency has since been removed.
+(Likewise, it does not use the "curses interface patch" seen in some NetHack
+variants, such as the one running on nethack.alt.org, despite some visual
+similarities.)
+
+
+How do I set the interface to look more like 3.4.3?
+---------------------------------------------------
+
+Options you may want to consider changing include `border` (especially if
+you're playing in an 80x24 terminal), the various `draw_` options,
+`menupaging`, `prompt_inline`, and `tileset`.
 
 
 How do I select which interface NetHack 4 uses?
@@ -320,7 +327,7 @@ NetHack 4 source, meaning that it will be built when you compile the source on
 other operating systems, too).
 
 In order to load the `sdl` rather than `tty` or `wincon` interface, you will
-need to make this request known to libuncursed via any of the following
+need to make this request known to libuncursed via either of the following
 methods:
 
   * Use the `--interface sdl` command line option when starting NetHack 4; or
@@ -340,21 +347,53 @@ Is there a graphical/tiles version?
 
 Yes.  For tiles play, you will need to be playing on a graphical interface
 (not a terminal interface; thus tiles play on a server won't work); and you
-will also need to change the "graphics" option in-game to specify tiles play.
-(The option exists even for terminal players, but will have no effect for
-those players unless they subsequently load a tiles interface; all interfaces
-share the same option files.)  The `libuncursed_sdl` interface plugin is
-currently recommended for tiles play (being the only current graphical
-interface plugin for libuncursed).
+will also need to change the "tileset" option in-game to specify a graphical,
+rather than text-based, tileset.  The `libuncursed_sdl` interface is currently
+recommended for tiles play (being the only current graphical interface plugin
+for libuncursed).
 
-There are currently two tilesets available: the "Slash'EM" tileset is based on
-the tiles that shipped with previous versions (Slash'EM has a greater
-selection of tiles available than NetHack, which is why its tiles are used);
-and the "DawnLike" tileset is a new tileset by Andrew Rios (based on a 16
-color palette by DawnBringer).
+There are currently five tilesets available:
+
+  * The "ASCII" tileset is a very traditional 3.4.3-like text-based tileset
+    that uses only ASCII characters;
+  * The "Unicode" tileset is the equivalent of "IBMgraphics" or "DECgraphics"
+    from 3.4.3 in terms of how it looks (it is internally implemented in terms
+    of either Unicode or IBMgraphics, depending on what your terminal needs),
+    and is the recommended tileset for text-based play;
+  * The "Slash'EM" tileset is based on the tiles that shipped with previous
+    versions of NetHack and Slash'EM (Slash'EM has a greater selection of
+    tiles available than NetHack, which is why its tiles are used);
+  * The "DawnLike" tileset is a new tileset by Andrew Rios (based on a 16
+    color palette by DawnBringer), which is particularly good on smaller or
+    lower-resolution screens; and
+  * The "RLTiles" tileset is a substantially improved version of an old
+    NetHack tileset (also called RLTiles), thanks to Raz, that contains a huge
+    amount of detail (e.g. you can typically make out the type of monster that
+    makes up a statue, or the race and gender of a player, simply from details
+    in the art).
 
 Note that as libuncursed plugins do not currently work correctly on Mac OS X,
-the tiles version does not work there either.
+graphical tilesets will not work there either.
+
+
+How do I customize the map display, or install new tilesets?
+------------------------------------------------------------
+
+These are the same questions: you customize the map display via creating and
+using a custom tileset.  You can create and edit tilesets using the
+`tilecompile` tool, which can be optionally installed along with NetHack 4
+(use `--with=tilecompile` if building manually, or enable the option in the
+installer if you're using a precompiled build).  See its manual for
+instructions (`man tilecompile` on Linux, or look in the documentation folder
+on Windows; the documentation folder itself will be linked from your Start
+menu, if you're using the precopmiled installer).  The easiest way to start is
+to decompile an existing tileset using `tilecompile`, make changes, and then
+recompile your changed version.
+
+Once you've created a tileset, or obtained one from someone else, you can
+place it in the `tilesets` subdirectory (alongside your `save` subdirectory,
+e.g. `~/.config/NetHack4/tilesets` on Linux), and it should automatically show
+up on the options menu in-game.
 
 
 Why is the build system building things I didn't expect it to?
@@ -369,11 +408,20 @@ sometimes creates one or more provisional copies of a library in order to get
 all the dependencies correctly figured out.
 
 Alternatively, if your problem is that it seems to be building the tiles code
-and you're not running a tiles install, this is because the display engine
-needs to at least be aware of tile *numbers* to work, and those are calculated
-by the tiles code.  Thus, at least enough of the tiles code needs building for
-the numbers to be calculated.  The tiles images themselves are not being
-built.
+and you're not running a graphical install, this is because tilesets are now
+used even for text-based play (the "tiles images" are character/styling
+combinations rather than images).
+
+
+Can you reduce aimake's memory usage?  My build ran out of memory!
+------------------------------------------------------------------
+
+What, *again*?
+
+500 MB should be plenty for the build, but if you're trying to build on a
+particularly small system, let us know.  The problem is that `aimake` is
+trying to do a huge amount of work (more than most build systems do), and that
+Perl is very memory-inefficient.
 
 
 Gameplay
@@ -404,7 +452,7 @@ spoilers for 3.4.3 will still be mostly applicable.
 
 
 Which character should I select?
----------------------------------
+--------------------------------
 
 Whatever you enjoy playing with.  Try a few playstyles out, and note that
 trying the more difficult characters is often good practice for eventually
@@ -464,10 +512,10 @@ letter, in order to see a list of possible actions with that item.
 If you expand your terminal very, very high vertically (at least 37 rows, but
 more will give more space for information), the spare space will be used to
 show reminders of game commands.  New players may want to do this while they
-are learning the game.  (This also works on the tiles port, but you will need
-to expand the window still higher, as the tiles take up more space than a
-character-based view: 40 rows on the smallest tile size, or 64 rows with 32x32
-tiles.)
+are learning the game.  (This also works when using a graphical tileset, but
+you will need to expand the window still higher, as the graphics take up more
+space than a character-based view would: 40 rows on the smallest tile size, or
+64 rows with 32x32 tiles.)
 
 
 How do I save or quit the game?
@@ -550,6 +598,29 @@ If you're feeling particularly heretical, you can move orthogonally with the
 cursor keys (Up/Left/Down/Right) and diagonally using Home/End/PgDn/PgUp.
 This adds a new dimension to the movement command Holy War whose implications
 have not yet been discovered in practice.
+
+See also the `keymap` option, that lets you replace blocks of keys
+(e.g. rebinding `hjklyubn` to game commands rather than movement), or to make
+more fine-tuned adjustments.
+
+
+Why does pressing Esc sometimes produce stray commands or Alt-combinations?
+---------------------------------------------------------------------------
+
+Alt and Esc have almost identical terminal codes; the only difference between
+them is the timings.  Sometimes, if you're playing on a server over a laggy
+connection, network lag can make it impossible for NetHack (or any other
+program) to distinguish between the two keys.
+
+You can work around this via setting the `alt_is_esc` option; the downside is
+that instead of an unreliable Esc key, your Alt key will no longer function.
+You can work around that problem, in turn, by configuring your terminal to
+interpret your Alt key as Meta, rather than as Alt; instructions for doing
+this will depend on your terminal, and it may not be possible on every
+terminal.  This will in turn lead to ambiguities between Alt and certain
+non-ASCII characters; Nethack 4 does not yet support Unicode input, so the
+problem doesn't come up here, but it's something to watch out for.  Terminal
+codes can be badly designed sometimes.
 
 
 What are the "x" and "[OK]" decorations on windows?
@@ -643,19 +714,22 @@ from remote clients (nethack4.org firewalls them out, because the server has
 not been security audited yet, and we have reason to believe that there are
 several security bugs in the API).  The server/client code is used internally
 on nethack4.org; connecting to it via telnet or ssh spawns a client, which
-connects to the separate server daemon internally.
+then spawns a matching server process and connects to it.  When playing
+locally, there's normally no need to do this; the interface will just use the
+game engine directly.
 
-There are eight separate directories in the distribution, which handle the
+There are nine separate directories in the distribution, which handle the
 separate codebases: `libnethack_common` for information common to both the
 server and client, `libnethack` for the game logic, `libnethack_client` to
 allow clients to connect to the server, `nethack` for the interface code (that
 calculates what to draw on screen), `libuncursed` for the rendering code (that
-actually draws it), `tilesets` for the tiles-handling utilities, `libjansson`
-for the JSON encoding between the client and the server, and `nethack_server`
-for the server-specific logic (creating accounts, keeping separate save games
-for separate user accounts, that sort of thing).  Various executables are
-built out of code from various directories (but not with a 1:1 correspondence;
-most of them use code from multiple directories).
+actually draws it), `testbench` for test code, `tilesets` for the
+tiles-handling utilities, `libjansson` for the JSON encoding between the
+client and the server, and `nethack_server` for the server-specific logic
+(creating accounts, keeping separate save games for separate user accounts,
+that sort of thing).  Various executables are built out of code from various
+directories (but not with a 1:1 correspondence; most of them use code from
+multiple directories).
 
 
 What is grammartree?
