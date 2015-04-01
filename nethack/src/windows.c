@@ -257,6 +257,15 @@ load_tile_file(const char *tilebase, char *store_tilename_in)
     tiletable_len = ttlen;
 }
 
+static int
+compare_tileset_descriptions(const void *d1, const void *d2)
+{
+    const struct tileset_description *td1 = d1;
+    const struct tileset_description *td2 = d2;
+
+    return strcmp(td1->basename, td2->basename);
+}
+
 struct tileset_description *
 get_tileset_descriptions(int *count)
 {
@@ -303,11 +312,31 @@ get_tileset_descriptions(int *count)
             strncpy(rv[*count].basename, d_name, sizeof rv->basename);
             rv[*count].basename[sizeof rv->basename - 1] = '\0';
             load_tile_file(rv[*count].basename, rv[*count].desc);
-            (*count)++;
+            ++*count;
         }
         closedir(dirp);
 #endif
     }
+
+    /* Sort the tiles by basename. If we find duplicates, we eliminate them. */
+    qsort(rv, *count, sizeof *rv, compare_tileset_descriptions);
+    struct tileset_description *tdp1 = rv, *tdp2 = rv;
+    /* tdp1 points to the position of a tile in the old array; tdp2 points to
+       the position it should be placed in in the new array. */
+    while (tdp2 - rv < *count - 1) {
+        if (strcmp(tdp1[0].basename, tdp1[1].basename) == 0) {
+            tdp1++;
+            --*count;
+        } else {
+            if (tdp1 != tdp2)
+                memcpy(tdp2, tdp1, sizeof *rv);
+            tdp1++;
+            tdp2++;
+        }
+    }
+    if (tdp2 - rv < *count) /* i.e. *count, but this is clearer */
+        memcpy(tdp2, tdp1, sizeof *rv);
+
     return rv;
 }
 
