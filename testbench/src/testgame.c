@@ -3,6 +3,10 @@
 /* Copyright (c) 2015 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
+#ifdef AIMAKE_BUILDOS_MSWin32
+# error !AIMAKE_FAIL_SILENTLY! Testing on Windows is not yet supported.
+#endif
+
 #include "nethack.h"
 #include "menulist.h"
 #include "common_options.h"
