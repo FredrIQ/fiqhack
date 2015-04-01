@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Alex Smith, 2015-04-02 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -224,14 +224,16 @@ dbe_substitution(struct nh_dbuf_entry *dbe)
 
     s |= (dbe->branding & lit_branding) ? NHCURSES_SUB_LIT : NHCURSES_SUB_UNLIT;
 
-    /* Corpses and statues have their own substitution (that's turned off on
-       layers above "object" by map.c to avoid substituting a monster that's
+    /* Corpses/statues/figurines have their own substitution (that's turned off
+       on layers above "object" by map.c to avoid substituting a monster that's
        standing on a corpse or statue). */
     if (dbe->obj) {
         if (!strcmp("corpse", default_drawing->objects[dbe->obj-1].symname))
             s |= NHCURSES_SUB_CORPSE;
         if (!strcmp("statue", default_drawing->objects[dbe->obj-1].symname))
             s |= NHCURSES_SUB_STATUE;
+        if (!strcmp("figurine", default_drawing->objects[dbe->obj-1].symname))
+            s |= NHCURSES_SUB_FIGURINE;
     }
 
     char tempsub[PL_NSIZ + 5]; /* "sub  " and a \0 */

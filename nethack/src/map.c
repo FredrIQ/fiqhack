@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-04-01 */
+/* Last modified by Alex Smith, 2015-04-02 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -220,7 +220,8 @@ draw_map(int cx, int cy)
                    crashes. (The server should be checking this for validity, as
                    should the client API, but they aren't, and a redundant check
                    here will nonetheless never hurt.) */
-                if (substitution & (NHCURSES_SUB_CORPSE | NHCURSES_SUB_STATUE)
+                if (substitution & (NHCURSES_SUB_CORPSE | NHCURSES_SUB_STATUE |
+                                    NHCURSES_SUB_FIGURINE)
                     && dbyx->obj_mn > 0
                     && dbyx->obj_mn <= default_drawing->num_monsters)
                     print_tile(mapwin, default_drawing->monsters +
@@ -240,7 +241,8 @@ draw_map(int cx, int cy)
             if (dbyx->mon && dbyx->mon <= default_drawing->num_monsters)
                 print_tile(mapwin, default_drawing->monsters + dbyx->mon-1,
                            NULL, TILESEQ_MON_OFF, substitution &
-                           ~(NHCURSES_SUB_CORPSE | NHCURSES_SUB_STATUE));
+                           ~(NHCURSES_SUB_CORPSE | NHCURSES_SUB_STATUE |
+                             NHCURSES_SUB_FIGURINE));
             /* warnings */
             if (dbyx->mon > default_drawing->num_monsters &&
                 (dbyx->monflags & MON_WARNING))

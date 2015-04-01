@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2014-10-20
+! Last modified by Alex Smith, 2015-04-02
 !
 ! Copyright (C) 2014 Alex Smith
 ! NetHack may be freely redistributed.  See license for details.
@@ -10,6 +10,7 @@
 ! the sequence of tiles in the RLtiles images.
 
 ! Tile sequence from NetHack 3.4.3
+
 giant ant
 killer bee
 soldier ant
@@ -622,7 +623,7 @@ stethoscope
 tinning kit
 tin opener
 can of grease
-figurine
+figurine; sub figurine *
 magic marker
 explosive trap
 toothed trap

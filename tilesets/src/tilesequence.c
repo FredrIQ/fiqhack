@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-16 */
+/* Last modified by Alex Smith, 2015-04-02 */
 /* Copyright (c) 2013 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -48,7 +48,7 @@ mutually_exclusive_substitutions(unsigned long long substitution)
 {
     static unsigned long long impossible_pairings[] = {
         NHCURSES_SUB_LIT | NHCURSES_SUB_UNLIT,
-        NHCURSES_SUB_CORPSE | NHCURSES_SUB_STATUE,
+        NHCURSES_SUB_CORPSE | NHCURSES_SUB_STATUE | NHCURSES_SUB_FIGURINE,
         NHCURSES_SUB_LDM(LDM_COUNT) - 1,
         NHCURSES_SUB_LDM(LDM_ROLE_0) -
         NHCURSES_SUB_LDM(LDM_ROLE_0 + LDM_ROLE_COUNT),
@@ -76,14 +76,14 @@ mutually_exclusive_substitutions(unsigned long long substitution)
 unsigned long long
 sensible_substitutions(int tileno)
 {
-    /* The current rule is: corpse/statue and race/gender apply only to
+    /* The current rule is: corpse/statue/figurine and race/gender apply only to
        monsters; everything else applies to all tiles. */
     if (tileno >= TILESEQ_MON_OFF &&
         tileno < TILESEQ_MON_OFF + TILESEQ_MON_SIZE)
         return (1ULL << (LDM_RACE_0 + 5)) - 1;
     else
         return (1ULL << LDM_GENDER_0) - 1 -
-            NHCURSES_SUB_CORPSE - NHCURSES_SUB_STATUE;
+            NHCURSES_SUB_CORPSE - NHCURSES_SUB_STATUE - NHCURSES_SUB_FIGURINE;
 }
 
 unsigned long long

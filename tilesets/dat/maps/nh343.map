@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2014-10-20
+! Last modified by Alex Smith, 2015-04-02
 ! NetHack may be freely redistributed. See license for details.
 !
 ! This is the sequence in which tiles normally appear in NetHack 3.4.3
@@ -619,7 +619,7 @@ stethoscope
 tinning kit
 tin opener
 can of grease
-figurine
+figurine; sub figurine *
 magic marker
 explosive trap
 toothed trap

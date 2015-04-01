@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2014-10-12 */
+/* Last modified by Alex Smith, 2015-04-02 */
 /* Copyright (c) 2013 Alex Smith                                  */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -56,11 +56,12 @@ const char *const nhcurses_sub_names[] = {
     [LDM_COUNT + 0] = "lit",
     [LDM_COUNT + 1] = "unlit",
 
-    /* Statues and corpses are substitutions on the matching monsters, in
-       order to be able to use generators. (Many tilesets will simply want
-       rules for 'sub corpse *' and 'sub statue *'.) */
+    /* Statues, corpses and figurines are substitutions on the matching
+       monsters, in order to be able to use generators. (Many tilesets will
+       simply want rules for 'sub corpse *' and 'sub statue *'.) */
     [LDM_COUNT + 2] = "corpse",
     [LDM_COUNT + 3] = "statue",
+    [LDM_COUNT + 4] = "figurine",
 
     /* These represent /quests/, and so affect terrain. This gives some
        awkwardness with gender-specific player-monster names, so we truncate to

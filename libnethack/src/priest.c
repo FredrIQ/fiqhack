@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Alex Smith, 2015-04-02 */
 /* Copyright (c) Izchak Miller, Steve Linhart, 1989.              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -299,13 +299,12 @@ priestname(const struct monst *mon, boolean override_hallu)
                 pname = msgcat(pname, "renegade ");
             if (mon->data == &mons[PM_HIGH_PRIEST])
                 pname = msgcat(pname, "high ");
-            /* TODO: Can this be called zero-time? It might need to use the
-               display RNG. */
             if (Hallucination && !override_hallu) {
                 pname = msgcat(
                     pname,
-                    hallu_priest_types[rn2(sizeof hallu_priest_types /
-                                           sizeof *hallu_priest_types)]);
+                    hallu_priest_types[rn2_on_display_rng(
+                            sizeof hallu_priest_types /
+                            sizeof *hallu_priest_types)]);
                 pname = msgcat(pname, " ");
             } else if (mon->female)
                 pname = msgcat(pname, "priestess ");

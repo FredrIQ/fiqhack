@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2014-10-20
+! Last modified by Alex Smith, 2015-04-02
 ! NetHack may be freely redistributed.  See license for details.
 A = (0, 0, 0)
 B = (0, 182, 255)
@@ -5565,7 +5565,7 @@ $ = (71, 108, 108)
   MMMMMMMAAAAMMMMM
   MMMMMMMMMMMMMMMM
 }
-# tile 292 (figurine)
+# tile 292 (figurine; sub figurine *)
 {
   MMMMMMMMMMMMMMMM
   MMMMMMMMMMMMMMMM

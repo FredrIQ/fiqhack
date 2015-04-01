@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2014-10-20
+! Last modified by Alex Smith, 2015-04-02
 !
 ! Copyright (C) 2014 Alex Smith
 !
@@ -468,7 +468,7 @@ stethoscope: [Tool.png] 0x7
 tinning kit: [Tool.png] 0x8
 tin opener: [Tool.png] 0x9
 can of grease: [Tool.png] 0xA
-figurine: [Tool.png] 0xB
+figurine; sub figurine *: [Tool.png] 0xB
 magic marker: [Tool.png] 0xC
 explosive trap: [Tool.png] 0xD
 toothed trap: [Tool.png] 0xE

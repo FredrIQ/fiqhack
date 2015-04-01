@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-04-02 */
 /* Copyright (c) Dean Luick, with acknowledgements to Kevin Darcy */
 /* and Dave Cohrs, 1990.                                          */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -346,8 +346,8 @@ map_location(int x, int y, int show, boolean reroll_hallucinated_appearances)
         if ((obj = vobj_at(x, y)) && !covers_objects(level, x, y))
             map_object(obj, FALSE, reroll_hallucinated_appearances);
         else
-            level->locations[x][y].mem_obj_mn = level->locations[x][y].mem_obj =
-                0;
+            level->locations[x][y].mem_obj_mn =
+                level->locations[x][y].mem_obj = 0;
         if ((trap = t_at(level, x, y)) && trap->tseen &&
             !covers_traps(level, x, y))
             map_trap(trap, FALSE, reroll_hallucinated_appearances);
