@@ -1,5 +1,5 @@
 About this document:
-Last modified by Sean Hunt, 2015-02-13
+Last modified by Alex Smith, 2015-04-01
 
 Copyright (C) 2013 Alex Smith.
 
@@ -234,17 +234,24 @@ Monsters are now capable of using their special attacks even if tame; and more
 special attacks now work for polymorphed players than before. (Grunt and Ace,
 53a8e41, 05587f7, 3df54b4, 239ed8e, 93811e3, eb5c83c, 7c67ab1, 867118c)
 
+Monsters no longer have spoiler knowledge of the player's location.  Rather,
+they will only be able to seek out the player if they have some method of
+sensing where the player is (sight, sound, following tracks, covetous sense,
+aggravate effects, etc.). (4, 879d0c0, 9085088, 65befc1, ab33194,
+072da4c..324e041)
+
 Monsters who naturally live on a level (rather than spawning later) now have a
 difficulty mostly independent of the player's level (with some exceptions in
 the late-game to keep the game balance close to 3.4.3; in the early game
 (pre-D:12), the game wil calculate monster difficulty as though the player's
 level were 1). (Nitro and 4, 98a3b47, 0ea054c)
 
-Tame monster will no longer attack nor be attacked when under 1/3 health; when
-injured but on more health, they will be more cautious about what they fight.
-They also no longer attack peaceful monsters, unless you anger the peaceful
-monster first.  As a safeguard against being caught in crossfire, tame
-monsters at below 1/3 health are now almost impossible to hit. (4, 037731d)
+Tame monsters will no longer attack nor be attacked when under 1/3 health;
+when injured but on more health, they will be more cautious about what they
+fight.  They also no longer attack peaceful monsters, unless you anger the
+peaceful monster first.  As a safeguard against being caught in crossfire,
+tame monsters at below 1/3 health are now almost impossible to hit. (4,
+037731d)
 
 Hostile monsters will now attack each other if they dislike each other
 naturally (e.g. elves versus orcs); this change was considered acceptable for
@@ -258,7 +265,7 @@ some of the time if the player was invisible); they can do things like
 searching squares by attacking them, and follow an invisible player's tracks
 (eventually bumping into them), as methods of locating the player, in addition
 to remembering minimal information about the player's movements. (4, 163c8e0,
-78cd777, 0ac7085, f891d36)
+78cd777, 0ac7085, f891d36, b96aa6e, a402438, 7319788, b46203b, 0d583af)
 
 Monsters use an improved and less buggy pathfinding algorithm.  In particular,
 they are now willing to temporarily move further from their target in order
@@ -312,6 +319,10 @@ different score-maximizing activities. (Ace, 40a84c6, 5bfb6e5, 68a29f0)
 Some new conducts have been added in order to discourage degenerate behaviour,
 and allow players to prove that they haven't engaged in it: Elberethless and
 puddingsplitless. (4, 3f0b895)
+
+A new conduct is added to track players who choose not to violate the flavour
+of their role and alignment (defined as their alignment record never
+decreasing). (4, 6a1af22..ae00c9c)
 
 
 Alternative Game Mode Changes
@@ -387,6 +398,14 @@ A new game mode `polyinit` lets you play the whole game polymorphed into a
 monster; you select your polyform as a birth option, and you start polymorphed
 into that form and with intrinsic unchanging.  Games in this game mode are not
 eligible for the high score table. (4, bdb83fb)
+
+It's now possible to play the game in a "set seed" mode.  This tries to, as
+far as possible, line up random events between different games played with the
+same seed (thus allowing for more meaningful comparisons between players).
+You can also look at the seed from the dumplog of a completed game you've
+played, allowing you or someone else to replay the game in the same dungeon.
+Games in this mode are not eligible for the high score table. (4, 4da1437,
+76369ee..eee6901, 60cb577, 8642323, 668e8fa, f7aedc1, 41644bc)
 
 
 Minor Gameplay Changes
@@ -717,6 +736,26 @@ gap). (4, 50c5dbe)
 A punishment ball and chain no longer crash when combined with engulfing
 and perhaps petrification. (4, C343-59, 65a76b3)
 
+Uncursed potions of monster detection (and other similar monster detection
+effects) now have a very short lingering monster detection effect afterwards.
+This is to allow players playing with a non-graphical interface and a keyboard
+an opportunity to examine the exact species of each detected monster using
+farlook (beforehand, you would need to either use details in a graphical
+interface, or use the mouse to examine the monsters). (4, b95ba0e)
+
+Magic mapping now maps the background (normally "floor of a room" or
+"corridor") behind a trap or remembered object. (4, bf6eeeb)
+
+Once the character learns the true identity (like "mirror") of any item with a
+nonrandomized appearance (like "looking glass"), they will then be able to
+identify future items like that even if blind. (4, fd34c2a)
+
+If a spellbook is cursed while you're reading it, it now produces a
+short-duration helplessness and aborts the spell memorization, rather than
+memorizing the spell, then performing around half of the cursed spellbook
+routine and potentially leaving the spellbook in an inconsistent state.
+(4, 564a5d6)
+
 
 Monsters and Polyforms
 ----------------------
@@ -776,6 +815,9 @@ they polymorph into a non-mimic. (4, C343-391, 89eef0f)
 `m`: Mimics mimicking objects that block sight (such as boulders and doors) no
 longer continue to block sight after being genocided. (Dyna, 2f9436c)
 
+`m`: Several bugs relating to whether or not a player could see a mimic have
+been fixed. (4, 6ee7cdd)
+
 `n`,`&`: Demon princes no longer demand bribes from helpless players, and
 foocubi and nymphs no longer attempt to seduce or charm them. (Grunt,
 C343-137, e41bd77, 6092b66, 3d53054)
@@ -799,6 +841,9 @@ the alignment of the new player arriving on the level. (Grunt, C343-66,
 `w`: The chance of long worms being cut is now based on the type of damage
 they take (slashing having more of a chance to cut them), then the shape of
 the weapon that attacks them. (4, 8782996)
+
+`w`: Attempting to close a door on a long worm tail when blind no longer
+reveals its head. (4, a402438)
 
 `W`: Incorporeal monsters (ghosts and shades) can no longer be slimed. (Grunt,
 C343-81, 53922d0)
@@ -825,6 +870,10 @@ unarmed. (Un, 6865f90)
 character for disturbing it, it now always generates hostile (rather than
 sometimes generating peaceful if the character is neutral). (Grunt, c9456af)
 
+`&`: If a graveyard fails to generate a normal demon, it now substitutes
+undead, rather than the nonexistent monster #-1 (which would probably crash
+the game). (4, 7345322)
+
 Monsters "shrieking in pain" now create noise. (Grunt, C343-65, 3e0ea7b)
 
 Monsters can no longer equip shirts in zero time while wearing armor. (Grunt,
@@ -847,9 +896,10 @@ Pets can now ascend even while eating. (Grunt, C343-83, c22e8e1)
 Killing a tame pet from inside no longer spouts warning messages. (4,
 C343-299, e568e1b)
 
-Monsters can no longer continue hiding if the corpse they're hiding under rots
-away, or if objects on the square are otherwise destroyed. (Grunt and 4,
-C343-33, C343-308, 7f16165, 4af2ed0)
+Monsters, and players in monster polyform, can no longer continue hiding if
+the corpse they're hiding under rots away, or if objects on the square are
+otherwise destroyed. (Grunt and 4, C343-33, C343-308, 7f16165, 4af2ed0,
+0b2fa24)
 
 Polyforms that are incapable of breathing can no longer use brass or woodwind
 instruments. (Grunt, SC343-1, 17fd2d5)
@@ -889,6 +939,11 @@ If a monster's AI determines that two squares are equally good choices, the
 monster will randomize between them even when aiming for or away from a
 particular square (rather than just when the monster has no target square
 set). (4, c0ca805)
+
+The game now consistently handles a player in a monster polyform having
+Strength drained below 3 (dying from the resulting damage is now always
+considered HP death rather than sometimes being considered ability drain
+death). (4, 9cd95f9)
 
 
 Dungeon
@@ -942,6 +997,13 @@ Fire traps now sometimes hit weapons instead of armor. (4, d84cd4f)
 The character can now enter a level that's entirely full of monsters, via
 displacing an existing monster on that level, without crashing the game (from
 the NetHack 3 series devteam, 76f55be)
+
+When a monster jumps onto a polymorph trap, being able to see the monster
+(e.g. via infravision) is now sufficient to locate the trap. (4, 2a4fe55)
+
+An engraving containing 128 or more copies of `e`/`l`/`b`/`r`/`t`/`h`
+(case-insensitive) is no longer considered to never potentially contain the
+substring `Elbereth`. (4, d036612)
 
 
 Character
@@ -999,7 +1061,7 @@ speed of the character. (4, 2415414)
 A character can now have a different name from the player even in server play.
 The set of characters allowed in character names has been limited to prevent
 path traversal / shell injection vulnerabilities that might otherwise arise as
-a side-effect of this change. (Nitro and 4, 2ec5137-91348a9 and others)
+a side-effect of this change. (Nitro and 4, 2ec5137..91348a9 and others)
 
 Sleeping gas traps can now affect monsters even if they're ridden by a
 sleep-resistant player. (4, C343-260, 20805c6)
@@ -1078,6 +1140,14 @@ C343-219, 75e737c, 24ac31b, 21cbbca)
 
 Objects on lava burning up now always have messages printed for them. (4,
 a6951c6, 8d7b8d9)
+
+The game no longer prints a misleading message if your ability scores are
+capped by a combination of racial maximums and temporary status effects, and
+you try to increase them. (4, 2b437b2)
+
+The game (and characters inside the game) will no longer address monsters and
+polyforms that are not truly alive (constructs, undead, etc.) as "mortal" (4,
+117d59f).
 
 
 Crash / Memory Corruption Fixes
@@ -1502,16 +1572,16 @@ merely displays differently. (4, 25161ad)
 
 The status area now lists many more statuses than before, such as
 "Levitating", and colors them appropriately. (Ace and 4, fd746b7, f9402ec,
-7265bb2, aea03d3)
+7265bb2, aea03d3, e461dea..c844f34, b7df68f)
 
-Instead of ASCII/IBMgraphics/DECgraphics, there are now three display modes
-for the map: ASCII, Unicode graphics (which will be translated to IBMgraphics
-via libuncursed if necessary for correct rendering on your terminal), and
-graphical tiles (only currently available if using the SDL backend to
-libuncursed).  Unicode graphics can be customized via a configuration file
-`unicode.conf`, in the same place as the other configuration files, but which
-must be updated manually. (Nitro and 4, 2fd08d1, 14a028a, b1f8a8c, 2f4f50a,
-6dd19de, 524a57f)
+Instead of ASCII/IBMgraphics/DECgraphics/tiles, you specify the renderings you
+want for various map elements using a tileset (which could be either graphical
+or text-based); the game translates this to Unicode graphics, IBMgraphics, or
+image rendering accoring to what your interface needs.  (Graphical tiles re
+only currently available if using the SDL backend to libuncursed).  You can
+use the `tilecompile` tool to create your own tilesets, either text-based or
+image-based.  (Nitro and 4, 2fd08d1, 14a028a, b1f8a8c, 2f4f50a, 6dd19de,
+524a57f, and many many others; I lost track of them)
 
 On sufficiently wide terminals (or sufficienly wide windows, in tiles play), a
 sidebar will be used to show the player's inventory and information on the
@@ -1537,13 +1607,16 @@ A new `animation` option (replacing `runmode`) allows control of the speed at
 which all interruptible multi-turn actions play, not just running.  For
 instance, when turned on, multi-turn search actions animate (with the turn
 counter increasing and monsters moving around being visible on the map).  This
-is so that they can be interrupted. (4, c1d4e5b)
+is so that they can be interrupted.  The duration of actions is
+log-compressed, as with most replay tools for NetHack games, to avoid long
+waiting periods where apparently nothing is happening apart from the turn
+counter increasing. (4, c1d4e5b, 011f9a2)
 
 Many monsters (and the occasional dungeon feature) have been assigned new
 colors in order to make them more distinct; some monsters have also been
 assigned underlining to make them even more distinct, and ghosts and shades
-have been moved to the 'W' monster class in order to make them visible. (Ace,
-2d6ee5a, ab96b14, 9681301)
+have been moved to the `W` monster class in order to make them visible. (Ace
+and 4, 2d6ee5a, ab96b14, 9681301, d6f6f20)
 
 The message area now shows more than one line, on a sufficiently large
 terminal.  The extra space is used to show extra messages from this turn, in
@@ -1631,6 +1704,11 @@ the first load); even after the first load, you can control it via the
 
 Failures to open a file are now logged in the paniclog, making problems like
 missing dumplogs easier to diagnose. (4, cc037f1)
+
+There is now a warning upon attempting to start a non-scoring game (to avoid
+accidents where, say, your settings are accidentally left in debug mode or set
+seed mode, and you try to play what you think will be a scoring-eligible
+game). (4, a495b49)
 
 
 Internals Improvements
@@ -1926,7 +2004,7 @@ Users can now override the existing tilesets by placing a replacement version
 in the `tilesets` subdirectory of the game config directory (e.g. in
 `~/.config/NetHack4/tilesets` on most Linux setups).  (These tilesets can be
 produced using a separate program `tilecompile` that can be installed at the
-same time as NetHack 4.) (4, 0480c43)
+same time as NetHack 4.) (4, 0480c43 and others)
 
 The code is now written to specific levels of library support (in general,
 X/Open `_XOPEN_SOURCE=700` and C11, although exceptions are made in some
@@ -1949,6 +2027,15 @@ system (because things can be rearranged internally without breaking
 anything), and is also much easier for players building from source, because
 it requires substantially less manual intervention than the old system did.
 (4, 2912d38 and others)
+
+
+Testbench
+---------
+
+Support for automatically testing the game has been added (on Linux only), and
+has caught numerous bugs.  (This needs to be run manually after a build of the
+game, and is not included in executable versions.) (4, 8520a8f..a87d42a,
+d511a10..e81d005 and others)
 
 
 Bugfixes against Beta Versions
@@ -2174,3 +2261,108 @@ as `hjklyubn` or `1234567890`). (b0c2d7b..8a367e7)
 When a game desyncs or panics (or something similar happens), relevant debug
 data is now shown inside the resulting dialog box, rather than beforehand, and
 more debug information is given than before. (1a89562)
+
+Tame monsters no longer hoard weapons. (3a9acbd)
+
+The grudge between `d` and `f` monsters now only affects dogs and cats
+specifically (not, say, wolves and jaguars). (1e6d378)
+
+Cockatrices no longer attack pets that would refuse to attack them (to avoid a
+situation where a monster can't fight back); this was a regression
+from 3.4.3. (9c0c3fa)
+
+Shift- and Ctrl-direction now work correctly at position prompts. (55cbd7e)
+
+Several bugs were fixed in the covetous monster AI. (184e511, 5a21c28)
+
+Some bugs where polymorphed monsters looked like their original form on the
+map, not their current form, were fixed. (ce81809)
+
+Monsters again consider plot-critical items underneath meditating monsters to
+not have spawned yet (this is mostly intended to prevent covetous monsters
+waking up the Wizard of Yendor). (6d18c16)
+
+Some bugs in the `pushweapon` option, and in wielding more generally, have
+been fixed. (9525afc)
+
+Detecting traps using a crystal ball no longer reveals all doors on the
+level. (0c93cf3)
+
+Falling into a pit now again correctly reduces your vision range. (5b23218)
+
+The game now distinguishes between the player and the player's square in some
+situations where it matters (e.g. while being engulfed). (0818d79)
+
+Tame monsters that reject the use of a ranged attack (so as not to hit their
+owner) now consider melee attacks instead, rather than just doing nothing.
+(91bde50)
+
+Pacifist movement now uses remembered rather than actual information to reject
+attacks on invisible monsters; although it still will never actually attack an
+invisible monster, you can no longer get information on whether it's still
+there or not without spending a turn. (7a1f633)
+
+Tame monsters are more cautious in their spell selection. (a717609, ef2a617)
+
+Some problems with farlook have been fixed. (230e7bf, 21ece58, 898eff3,
+98585ed)
+
+The endgame disclose screen now correctly distinguishes between extinction and
+genocide. (e35cb28)
+
+The game again reacts sensibly to attempted attacks on long worm tails in
+unusual visibility conditions. (709f260)
+
+The list of available timezones has been adjusted to cover all the timezones
+that are currently in use. (e598cb8)
+
+When watching two consecutive games, information from the first will not spill
+over to the inventory sidebar in the second. (cb08a79)
+
+Polymorphing items will no longer polymorph a golem created from those
+items. (55ed3a3)
+
+When food randomly becomes rotten, it will no longer mark the entire stack as
+rotten. (91603f8)
+
+The inventory sidebar can no longer see underwater items unless your character
+can see them. (a8aa73a)
+
+The "What item do you want to charge?" menu no longer leaks information when
+the character is blind. (13d80ec)
+
+Slow operations (like loading save files) now have a loading bar, that
+prevents network connections timing out during the load. (637bfa2)
+
+Viewing the credits (development history) from the help menu now again
+works. (3c6d5dd, 2965100..dc3e040)
+
+The mouse wheel now works when it's over blank space in a menu, not just when
+it's over a visible character. (df2ce1b)
+
+When a monster's attitude towards the player changes, the game now does a
+better job of updating any visual indicators of that immediately (such as a
+blue or brown background, with the default text-based tilesets). (9adcd5f)
+
+The game no longer gives misleading feedback when the `c` command is used on
+the old location of an invisible monster that has since moved away. (dc0184d)
+
+`#adjust` now again abbreviates the list of unused inventory letters, rather
+than listing them all. (0031931)
+
+The game no longer crashes when a wielded wand is destroyed by
+lightning. (1f52b5a)
+
+Hangup at the genocide prompt no longer causes an infinite loop. (6ca461c)
+
+Being punished while engulfed is now treated the same way as being engulfed
+while punished, rather than crashing. (1e4324a)
+
+Overflowing the inventory weight no longer crashes the game. (13bb37d)
+
+The game no longer crashes if you kick a monster with a passive attack, kill
+it, then die from the recoil damage. (c6c5ae5)
+
+The game no longer crashes when a monster kills another monster in certain
+unusual ways (touch of Death, or monster spell), and also achieves an HP kill
+on the same monster in the same attack sequence. (7c8d6e0)
