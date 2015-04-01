@@ -9,6 +9,7 @@
 #include <time.h>
 #include <errno.h>
 #include <sys/types.h>
+#include <ctype.h>
 #ifndef WIN32
 # include <dirent.h>
 #endif
@@ -269,7 +270,7 @@ compare_tileset_descriptions(const void *d1, const void *d2)
 struct tileset_description *
 get_tileset_descriptions(int *count)
 {
-    fnchar user_tilespath[
+    char user_tilespath[
 #ifdef AIMAKE_BUILDOS_MSWin32
         MAX_PATH
 #else
@@ -280,29 +281,46 @@ get_tileset_descriptions(int *count)
     *user_tilespath = '\0';
 
     if (!ui_flags.connection_only)
-        get_gamedir(TILESET_DIR, user_tilespath);
+        get_gamedirA(TILESET_DIR, user_tilespath);
 
     *count = 0;
     struct tileset_description *rv = malloc(1);
 
     int dirnum;
     for (dirnum = 0; dirnum < 2; dirnum++) {
-#ifdef WIN32
-# error TODO
-#else
         char *dir;
         if (dirnum == 0)
             dir = user_tilespath;
         else
             dir = tileprefix;
 
+#ifdef WIN32
+        HANDLE dirp;
+        WIN32_FIND_DATAA dp;
+
+        char pattern[strlen(dir) + sizeof "*.nh4ct"];
+        strcpy(pattern, dir);
+        strcat(pattern, "*.nh4ct");
+        dirp = FindFirstFileA(pattern, &dp);
+
+        while (dirp != INVALID_HANDLE_VALUE)
+        {
+            char d_name[strlen(dp.cFileName) + 1];
+            strcpy(d_name, dp.cFileName);
+            char *ep;
+            for (ep = d_name; *ep; ep++)
+                *ep = tolower(*ep);       /* Windows is case-insensitive */
+#else
         DIR *dirp = opendir(dir);
         struct dirent *dp;
         while ((dp = readdir(dirp)))
         {
             char d_name[strlen(dp->d_name) + 1];
             strcpy(d_name, dp->d_name);
-            char *ep = strstr(d_name, ".nh4ct");
+            char *ep;
+#endif
+
+            ep = strstr(d_name, ".nh4ct");
             if (!ep || ep[6] != '\0')
                 continue;
 
@@ -313,6 +331,15 @@ get_tileset_descriptions(int *count)
             rv[*count].basename[sizeof rv->basename - 1] = '\0';
             load_tile_file(rv[*count].basename, rv[*count].desc);
             ++*count;
+
+#ifdef WIN32
+            if (!FindNextFileA(dirp, &dp))
+                break;
+        }
+
+        if (dirp != INVALID_HANDLE_VALUE)
+            FindClose(dirp);
+#else
         }
         closedir(dirp);
 #endif
