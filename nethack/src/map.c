@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-04-01 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -166,7 +166,7 @@ draw_map(int cx, int cy)
                 static const char errmsg_line1[] =
                     "Your selected interface cannot render this tileset.";
                 static const char errmsg_line2[] =
-                    "Select a different tileset with the 'graphics' option.";
+                    "Select a different tileset with the 'tileset' option.";
 
                 const char *errmsg = NULL;
                 int errlen = 0;

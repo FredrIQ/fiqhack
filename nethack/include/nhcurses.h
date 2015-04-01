@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-17 */
+/* Last modified by Alex Smith, 2015-04-01 */
 /* Copyright (c) Daniel Thaler, 2011                              */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -192,6 +192,8 @@ struct interface_flags {
     int sidebarwidth; /* width of the sidebar */
     int map_padding;  /* padding on each side of the map */
 
+    nh_bool asciiborders;
+
     nh_bool extrawin_populated;
 
     int levelmode;
@@ -208,22 +210,6 @@ struct interface_flags {
     nh_bool want_cursor;       /* delayed-action cursor setting */
 
     char username[BUFSZ];      /* username being used in connection-only mode */
-};
-
-/*
- * Graphics sets for display symbols
- */
-enum nh_text_mode {
-    ASCII_GRAPHICS,     /* ASCII only */
-    UNICODE_GRAPHICS,   /* Unicode; default symbols should be CP437 */
-    /* Tilesets, defaulting to Unicode if tiles are not available */
-    TILESET_DAWNLIKE_16, /* DawnLike by DragonDePlatino */
-    TILESET_DAWNLIKE_32, /* The same, upscaled */
-    TILESET_RLTILES_32,  /* RLTiles by many contributors, provided by Raz */
-    /* Slash'EM has its own tilesets (many of which are unfinished) */
-    TILESET_SLASHEM_16,
-    TILESET_SLASHEM_32,
-    TILESET_SLASHEM_3D,
 };
 
 enum nh_palette {
@@ -274,12 +260,13 @@ struct settings {
     int optstyle;       /* option display style */
 
     enum autoable_boolean sidebar;   /* whether to draw the inventory sidebar */
-    enum nh_text_mode graphics;      /* how to draw the map */
     enum nh_animation animation;     /* when to delay */
     enum nh_motd_setting show_motd;
     enum nh_menupaging menupaging;
     enum nh_frame whichframes;
     enum nh_palette palette;         /* palette to use for text */
+
+    char *tileset;                   /* tileset file name */
 
     nh_bool alt_is_esc; /* parse Alt-letter as ESC letter */
     /* use bolded black instead of dark blue for CLR_BLACK */

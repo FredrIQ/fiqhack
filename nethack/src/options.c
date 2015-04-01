@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-11 */
+/* Last modified by Alex Smith, 2015-04-01 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -46,22 +46,6 @@ static struct nh_listitem menu_headings_list[] = {
 };
 static struct nh_enum_option menu_headings_spec =
     { menu_headings_list, listlen(menu_headings_list) };
-
-/* TODO: Generate this list at runtime. */
-static struct nh_listitem graphics_list[] = {
-    {ASCII_GRAPHICS, "Text (ASCII only)"},
-    {UNICODE_GRAPHICS, "Text (Unicode)"},
-    {TILESET_DAWNLIKE_16, "Tiles (DawnLike, 16px)"},
-/*    We don't have an upscaler for this yet.
-      {TILESET_DAWNLIKE_32, "Tiles (DawnLike, 32px)"}, */
-    {TILESET_SLASHEM_16, "Tiles (Slash'EM, 16px)"},
-/*    Tilesets with missing images or rendering issues (or both):
-      {TILESET_SLASHEM_32, "Tiles (32x32)"},
-      {TILESET_SLASHEM_3D, "Tiles (3D effect)"}, */
-    {TILESET_RLTILES_32, "Tiles (RLTiles, 32px)"},
-};
-static struct nh_enum_option graphics_spec =
-    { graphics_list, listlen(graphics_list) };
 
 static struct nh_listitem palette_list[] = {
     {PALETTE_NONE,      "terminal default (may require new window)"},
@@ -155,8 +139,6 @@ static struct nh_option_desc curses_options[] = {
      OPTTYPE_BOOL, {.b = TRUE}},
     {"extmenu", "use a menu for selecting extended commands (#)", FALSE,
      OPTTYPE_BOOL, {.b = FALSE}},
-    {"graphics", "characters or tiles to use for the map", FALSE, OPTTYPE_ENUM,
-     {.e = UNICODE_GRAPHICS}},
     {"invweight", "show item weights in the inventory", FALSE, OPTTYPE_BOOL,
      {.b = TRUE}},
     {"keymap", "alter the key to command mapping", FALSE,
@@ -186,6 +168,8 @@ static struct nh_option_desc curses_options[] = {
     {"sidebar", "when to draw the inventory sidebar", FALSE, OPTTYPE_ENUM,
      {.e = AB_AUTO}},
     {"status3", "3 line status display", FALSE, OPTTYPE_BOOL, {.b = TRUE}},
+    {"tileset", "text or graphics for map drawing", FALSE, OPTTYPE_STRING,
+     {.s = NULL}},
     {NULL, NULL, FALSE, OPTTYPE_BOOL, {NULL}}
 };
 
@@ -207,10 +191,12 @@ static struct nhlib_boolopt_map boolopt_map[] = {
     {NULL, NULL}
 };
 
-/* When editing game options, there are two scenarios:
- *  - A game in progress, in which case changes apply only to that game.
+/*
+ * When editing game options, there are two scenarios:
+ *  - A game in progress, in which case changes apply only to that game, and
+ *    we let the game engine save them.
  *  - No game in progress, in which case changes apply to new games and are
- *    saved.
+ *    saved by the interface.
  *
  * This pointer is to the client's local copy of the game options, which are
  * edited when no game is in progress, and used to set the startup options for a
@@ -243,10 +229,10 @@ curses_free_nh_opts(struct nh_option_desc *opts)
         if (opts == nh_options)
             curses_impossible("Freeing non-game options during a game!");
         else
-            free(opts);
+            nhlib_free_optlist(opts);
     } else if (opts != nh_options) {
         curses_impossible("Freeing game options outside a game!");
-        free(opts);
+        nhlib_free_optlist(opts);
     }
 }
 
@@ -303,6 +289,12 @@ curses_set_option(const char *name, union nh_optvalue value)
         }
     } else if (!strcmp(option->name, "comment")) {
         /* do nothing */
+    } else if (!strcmp(option->name, "tileset")) {
+        if (settings.tileset)
+            free(settings.tileset);
+        settings.tileset = malloc(strlen(option->value.s) + 1);
+        strcpy(settings.tileset, option->value.s);
+        rebuild_ui();
     } else if (!strcmp(option->name, "border")) {
         settings.whichframes = option->value.e;
         rebuild_ui();
@@ -328,13 +320,6 @@ curses_set_option(const char *name, union nh_optvalue value)
         }
     } else if (!strcmp(option->name, "animation")) {
         settings.animation = option->value.e;
-    } else if (!strcmp(option->name, "graphics")) {
-        settings.graphics = option->value.e;
-        if (ui_flags.ingame) {
-            rebuild_ui(); /* sets up tiles/ASCII mode */
-            draw_map(player.x, player.y);
-            redraw_game_windows();
-        }
     } else if (!strcmp(option->name, "sidebar")) {
         settings.sidebar = option->value.e;
         rebuild_ui();
@@ -382,13 +367,15 @@ init_options(void)
 
     find_option("border")->e = frame_spec;
     find_option("comment")->s.maxlen = BUFSZ;
+    find_option("tileset")->s.maxlen = BUFSZ;
+    find_option("tileset")->value.s = malloc(sizeof "textunicode");
+    strcpy(find_option("tileset")->value.s, "textunicode");
     find_option("menu_headings")->e = menu_headings_spec;
     find_option("msgheight")->i.min = 1;
     find_option("msgheight")->i.max = 40;
     find_option("msghistory")->i.min = 20;      /* arbitrary min/max values */
     find_option("msghistory")->i.max = 20000;
     find_option("animation")->e = animation_spec;
-    find_option("graphics")->e = graphics_spec;
     find_option("networkmotd")->e = networkmotd_spec;
     find_option("optstyle")->e = optstyle_spec;
     find_option("menupaging")->e = menupaging_spec;
@@ -396,6 +383,7 @@ init_options(void)
     find_option("scores_top")->i.max = 10000;
     find_option("scores_around")->i.max = 100;
     find_option("sidebar")->e = autoable_boolean_spec;
+
     /* set up option defaults; this is necessary for options that are not
        specified in the config file */
     for (i = 0; curses_options[i].name; i++)

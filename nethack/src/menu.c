@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-18 */
+/* Last modified by Alex Smith, 2015-04-01 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -123,7 +123,7 @@ draw_menu_scrollbar(WINDOW *win, nh_bool title, int icount, int offset,
                 char ch = ' ';
                 attr = A_NORMAL;
                 if (i >= scrlpos && i < scrlpos + scrlheight) {
-                    if (settings.graphics == ASCII_GRAPHICS)
+                    if (ui_flags.asciiborders)
                         ch = '#';
                     else
                         attr = A_REVERSE;
