@@ -11,8 +11,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-
-
 enum option_lists {
     NO_LIST,
     BIRTH_OPTS,
@@ -533,6 +531,38 @@ select_enum_value(union nh_optvalue *value, struct nh_option_desc *option)
     }
 }
 
+/* display a selection menu for tilesets */
+static void
+select_tileset_value(union nh_optvalue *value, struct nh_option_desc *option)
+{
+    struct nh_menulist menu;
+    int i;
+
+    int tc;
+    struct tileset_description *tilesets = get_tileset_descriptions(&tc);
+    struct tileset_description tilesets_copy[tc];
+    memcpy(tilesets_copy, tilesets, sizeof tilesets_copy);
+    free(tilesets);
+
+    init_menulist(&menu);
+
+    add_menu_txt(&menu, option->helptxt, MI_TEXT);
+    add_menu_txt(&menu, "", MI_TEXT);
+
+    for (i = 0; i < tc; i++)
+        add_menu_item(&menu, i + 1, tilesets_copy[i].desc, 0, 0);
+
+    int pick_list[1];
+    curses_display_menu(&menu, option->name, PICK_ONE, PLHINT_RIGHT, pick_list,
+                        curses_menu_callback);
+
+    const char *newname = option->value.s;
+    if (pick_list[0] != CURSES_MENU_CANCELLED)
+        newname = tilesets_copy[pick_list[0] - 1].basename;
+
+    value->s = malloc(strlen(newname) + 1);
+    strcpy(value->s, newname);
+}
 
 static void
 getlin_option_callback(const char *str, void *option_void)
@@ -612,7 +642,9 @@ query_new_value(struct win_menu *mdat, int idx)
         break;
 
     case OPTTYPE_STRING:
-        {
+        if (!strcmp(optioncopy.name, "tileset")) {
+            select_tileset_value(&optioncopy.value, option);
+        } else {
             char query[strlen(optioncopy.name) + 1 +
                        sizeof "New value for  (text)"];
             sprintf(query, "New value for %s (text)", optioncopy.name);

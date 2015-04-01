@@ -331,6 +331,11 @@ struct curses_drawing_info {
     int bg_feature_offset;
 };
 
+struct tileset_description {
+    char basename[BUFSZ];
+    char desc[QBUFSZ];
+};
+
 struct gamewin {
     void (*draw) (struct gamewin * gw);
     void (*resize) (struct gamewin * gw);
@@ -584,7 +589,8 @@ extern void show_topten(char *player, int top, int around, nh_bool own);
 extern void init_curses_ui(const char *dataprefix);
 extern void exit_curses_ui(void);
 extern void set_font_file(const char *);
-extern void set_tile_file(const char *);
+extern void load_tile_file(const char *, char *);
+extern struct tileset_description *get_tileset_descriptions(int *);
 extern int nh_curs_set(int);
 extern void nh_mvwvline(WINDOW *, int, int, int);
 extern void nh_mvwhline(WINDOW *, int, int, int);

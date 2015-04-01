@@ -8,6 +8,10 @@
 #include <locale.h>
 #include <time.h>
 #include <errno.h>
+#include <sys/types.h>
+#ifndef WIN32
+# include <dirent.h>
+#endif
 
 WINDOW *basewin, *mapwin, *msgwin, *statuswin, *sidebar, *extrawin, *loadwin;
 struct gamewin *firstgw, *lastgw;
@@ -131,16 +135,21 @@ seek_tile_file(FILE *in) {
     return filelen;
 }
 
-/* This function parses the given tile file to determine its dimensions,
-   image/cchar nature, and to record the tile table in it. If the tile file is
-   image-based, it also sends it to libuncursed to start rendering the
-   images. */
+/* This function parses the given tile file. If "store_tilename_in" is NULL,
+   then loads the tileset into the appropriate global variables (dimensions,
+   image/cchar, tile table), and if the tile file is image-based, also sends it
+   to libuncursed to start rendering the images. Otherwise, the tileset metadata
+   is converted into a string and returned; the global variables remain
+   untouched. */
 void
-set_tile_file(const char *tilebase)
+load_tile_file(const char *tilebase, char *store_tilename_in)
 {
-    free(tiletable);
-    tiletable = NULL;
-    tiletable_len = 0;
+    if (!store_tilename_in) {
+        free(tiletable);
+        tiletable = NULL;
+        tiletable_len = 0;
+    } else
+        *store_tilename_in = '\0';
 
     if (!tileprefix)
         return;        /* UI not initialized yet */
@@ -191,17 +200,40 @@ set_tile_file(const char *tilebase)
         curses_raw_print(strerror(e));
         return;
     }
-    tiletable_len = seek_tile_file(in) - 84;
-    if (tiletable_len == -84)
+
+    int ttlen = seek_tile_file(in) - 84;
+    if (ttlen == -84)
         return; /* error message has already been printed */
 
-    fseek(in, 80, SEEK_CUR); /* skip the name */
+    if (store_tilename_in) {
+        if (fread(store_tilename_in, 1, 80, in) != 80)
+            curses_impossible("File length is longer than the file");
+    } else
+        fseek(in, 80, SEEK_CUR); /* skip the name */
 
     /* Unlike PNG, tile tables are little-endian. */
     int w = getc(in);
     w += getc(in) << 8;
     int h = getc(in);
     h += getc(in) << 8;
+
+    if (store_tilename_in) {
+        store_tilename_in[80] = '\0';
+
+        char *p = store_tilename_in;
+        int remlen = QBUFSZ;
+        while (*p) {
+            p++;
+            remlen--;
+        }
+
+        if (w || h)
+            snprintf(p, remlen - 1, " (graphical, %d x %d)", w, h);
+        else
+            snprintf(p, remlen - 1, " (text-based)");
+
+        return;
+    }
 
     if (w == 0 || h == 0) {
         if (ui_flags.initialized)
@@ -214,14 +246,69 @@ set_tile_file(const char *tilebase)
     }
 
     /* Load up the entire table. */
-    tiletable = malloc(tiletable_len);
-    if (fread(tiletable, 1, tiletable_len, in) < tiletable_len) {
+    tiletable = malloc(ttlen);
+    if (fread(tiletable, 1, ttlen, in) < ttlen) {
         curses_raw_print("Warning: tileset shrunk while in use.\n");
         free(tiletable);
         tiletable = NULL;
         tiletable_len = 0;
         return;
     }
+    tiletable_len = ttlen;
+}
+
+struct tileset_description *
+get_tileset_descriptions(int *count)
+{
+    fnchar user_tilespath[
+#ifdef AIMAKE_BUILDOS_MSWin32
+        MAX_PATH
+#else
+        BUFSZ
+#endif
+        ];
+
+    *user_tilespath = '\0';
+
+    if (!ui_flags.connection_only)
+        get_gamedir(TILESET_DIR, user_tilespath);
+
+    *count = 0;
+    struct tileset_description *rv = malloc(1);
+
+    int dirnum;
+    for (dirnum = 0; dirnum < 2; dirnum++) {
+#ifdef WIN32
+# error TODO
+#else
+        char *dir;
+        if (dirnum == 0)
+            dir = user_tilespath;
+        else
+            dir = tileprefix;
+
+        DIR *dirp = opendir(dir);
+        struct dirent *dp;
+        while ((dp = readdir(dirp)))
+        {
+            char d_name[strlen(dp->d_name) + 1];
+            strcpy(d_name, dp->d_name);
+            char *ep = strstr(d_name, ".nh4ct");
+            if (!ep || ep[6] != '\0')
+                continue;
+
+            *ep = '\0';
+            rv = realloc(rv, (1 + *count) * sizeof *rv);
+
+            strncpy(rv[*count].basename, d_name, sizeof rv->basename);
+            rv[*count].basename[sizeof rv->basename - 1] = '\0';
+            load_tile_file(rv[*count].basename, rv[*count].desc);
+            (*count)++;
+        }
+        closedir(dirp);
+#endif
+    }
+    return rv;
 }
 
 /* A delayed-action curs_set; we don't show the cursor until just before we
@@ -781,7 +868,7 @@ setup_palette(void)
 static void
 setup_tiles(void)
 {
-    set_tile_file(settings.tileset);
+    load_tile_file(settings.tileset, NULL);
     ui_flags.asciiborders = FALSE;
 
     if (!tiletable || !tiletable_is_cchar)
