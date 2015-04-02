@@ -1450,3 +1450,588 @@ sub ran sub questgoal corridor; sub rog sub questgoal the floor of a room
 
 long staircase up
 long staircase down
+
+! Figurines
+
+! Approximately humanoid
+sub figurine gremlin; sub figurine gargoyle; sub figurine winged gargoyle; sub figurine hobbit; sub figurine dwarf; sub figurine bugbear; sub figurine dwarf lord; sub figurine dwarf king; sub figurine mind flayer; sub figurine master mind flayer; sub figurine *kobold*; sub figurine leprechaun; sub figurine * mimic; sub figurine * nymph; sub figurine goblin; sub figurine hobgoblin; sub figurine orc; sub figurine hill orc; sub figurine Mordor orc; sub figurine Uruk-hai; sub figurine orc shaman; sub figurine orc-captain; sub figurine zruty; sub figurine stalker; sub figurine fire elemental; sub figurine earth elemental; sub figurine water elemental; sub figurine gnome*; sub figurine *giant; sub figurine ettin; sub figurine titan; sub figurine minotaur; sub figurine *Kop*; sub figurine *lich; sub figurine * mummy; sub figurine ogre*; sub figurine quantum mechanic; sub figurine *troll; sub figurine Olog-hai; sub figurine umber hulk; sub figurine vampire*; sub figurine barrow wight; sub figurine wraith; sub figurine Nazgul; sub figurine monkey; sub figurine ape; sub figurine owlbear; sub figurine yeti; sub figurine carnivorous ape; sub figurine sasquatch; sub figurine * zombie; sub figurine ghoul; sub figurine skeleton; sub figurine * golem; sub figurine human; sub figurine human were*; sub figurine elf; sub figurine *-elf; sub figurine elf-lord; sub figurine Elvenking
+! Insect-like
+sub figurine * ant; sub figurine * bee; sub figurine giant beetle; sub figurine cave spider; sub figurine centipede; sub figurine giant spider; sub figurine scorpion; sub figurine grid bug; sub figurine xan
+! Canines
+sub figurine jackal; sub figurine fox; sub figurine coyote; sub figurine werejackal; sub figurine little dog; sub figurine dog; sub figurine large dog; sub figurine dingo; sub figurine wolf; sub figurine werewolf; sub figurine warg; sub figurine winter wolf*; sub figurine hell hound*
+! Felines
+sub figurine kitten; sub figurine housecat; sub figurine jaguar; sub figurine lynx; sub figurine panther; sub figurine large cat; sub figurine tiger
+! Quadrupeds
+sub figurine rothe; sub figurine mumak; sub figurine leocrotta; sub figurine wumpus; sub figurine titanothere; sub figurine baluchitherium; sub figurine mastodon
+! Rodents
+sub figurine * rat; sub figurine wererat; sub figurine rock mole; sub figurine woodchuck
+! Horse-shaped
+sub figurine * unicorn; sub figurine pony; sub figurine horse; sub figurine warhorse; sub figurine ki-rin
+! Centaurs
+sub figurine * centaur
+! Draconic
+sub figurine * dragon; sub figurine jabberwock
+! Snake-like
+sub figurine * worm; sub figurine garter snake; sub figurine snake; sub figurine water moccasin; sub figurine pit viper; sub figurine python; sub figurine cobra; sub figurine * naga; sub figurine * naga hatchling; sub figurine * eel
+! Xorn
+sub figurine xorn
+! Cockatrices
+sub figurine chickatrice; sub figurine cockatrice; sub figurine pyrolisk
+! Reptiles
+sub figurine newt; sub figurine gecko; sub figurine iguana; sub figurine *crocodile; sub figurine lizard; sub figurine chameleon; sub figurine salamander
+! Angels
+sub figurine Aleax; sub figurine Angel; sub figurine Archon
+! Demons
+sub figurine manes; sub figurine homunculus; sub figurine imp; sub figurine lemure; sub figurine quasit; sub figurine tengu; sub figurine * demon; sub figurine * demon; sub figurine *cubus; sub figurine erinys; sub figurine marilith; sub figurine vrock; sub figurine hezrou; sub figurine nalfeshnee; sub figurine pit fiend; sub figurine balrog; sub figurine djinni; sub figurine sandestin
+! Bird-like
+sub figurine bat; sub figurine * bat; sub figurine raven
+! Amorphous
+sub figurine acid blob; sub figurine quivering blob; sub figurine gelatinous cube; sub figurine * jelly; sub figurine jellyfish; sub figurine lurker above; sub figurine trapper; sub figurine gray ooze; sub figurine * pudding; sub figurine green slime; sub figurine ghost; sub figurine shade
+! Spherical
+sub figurine gas spore; sub figurine floating eye; sub figurine * sphere; sub figurine * light; sub figurine fog cloud
+! Piercers
+sub figurine * piercer
+! Fish
+sub figurine piranha; sub figurine shark
+! Vortexes
+sub figurine * vortex
+! Fungi
+sub figurine lichen; sub figurine * mold; sub figurine shrieker; sub figurine violet fungus
+
+! Statues
+
+sub statue giant ant
+sub statue killer bee
+sub statue soldier ant
+sub statue fire ant
+sub statue giant beetle
+sub statue queen bee
+sub statue acid blob
+sub statue quivering blob
+sub statue gelatinous cube
+sub statue chickatrice
+sub statue cockatrice
+sub statue pyrolisk
+sub statue jackal
+sub statue fox
+sub statue coyote
+sub statue werejackal
+sub statue little dog
+sub statue dog
+sub statue large dog
+sub statue dingo
+sub statue wolf
+sub statue werewolf
+sub statue warg
+sub statue winter wolf cub
+sub statue winter wolf
+sub statue hell hound pup
+sub statue hell hound
+sub statue Cerberus
+sub statue gas spore
+sub statue floating eye
+sub statue freezing sphere
+sub statue flaming sphere
+sub statue shocking sphere
+sub statue beholder
+sub statue kitten
+sub statue housecat
+sub statue jaguar
+sub statue lynx
+sub statue panther
+sub statue large cat
+sub statue tiger
+sub statue gremlin
+sub statue gargoyle
+sub statue winged gargoyle
+sub statue hobbit
+sub statue dwarf
+sub statue bugbear
+sub statue dwarf lord
+sub statue dwarf king
+sub statue mind flayer
+sub statue master mind flayer
+sub statue manes
+sub statue homunculus
+sub statue imp
+sub statue lemure
+sub statue quasit
+sub statue tengu
+sub statue blue jelly
+sub statue spotted jelly
+sub statue ochre jelly
+sub statue kobold
+sub statue large kobold
+sub statue kobold lord
+sub statue kobold shaman
+sub statue leprechaun
+sub statue small mimic
+sub statue large mimic
+sub statue giant mimic
+sub statue wood nymph
+sub statue water nymph
+sub statue mountain nymph
+sub statue goblin
+sub statue hobgoblin
+sub statue orc
+sub statue hill orc
+sub statue Mordor orc
+sub statue Uruk-hai
+sub statue orc shaman
+sub statue orc-captain
+sub statue rock piercer
+sub statue iron piercer
+sub statue glass piercer
+sub statue rothe
+sub statue mumak
+sub statue leocrotta
+sub statue wumpus
+sub statue titanothere
+sub statue baluchitherium
+sub statue mastodon
+sub statue sewer rat
+sub statue giant rat
+sub statue rabid rat
+sub statue wererat
+sub statue rock mole
+sub statue woodchuck
+sub statue cave spider
+sub statue centipede
+sub statue giant spider
+sub statue scorpion
+sub statue lurker above
+sub statue trapper
+sub statue white unicorn
+sub statue gray unicorn
+sub statue black unicorn
+sub statue pony
+sub statue horse
+sub statue warhorse
+sub statue fog cloud
+sub statue dust vortex
+sub statue ice vortex
+sub statue energy vortex
+sub statue steam vortex
+sub statue fire vortex
+sub statue baby long worm
+sub statue baby purple worm
+sub statue long worm
+sub statue purple worm
+sub statue grid bug
+sub statue xan
+sub statue yellow light
+sub statue black light
+sub statue zruty
+sub statue couatl
+sub statue Aleax
+sub statue Angel
+sub statue ki-rin
+sub statue Archon
+sub statue bat
+sub statue giant bat
+sub statue raven
+sub statue vampire bat
+sub statue plains centaur
+sub statue forest centaur
+sub statue mountain centaur
+sub statue baby gray dragon
+sub statue baby silver dragon
+sub statue baby shimmering dragon
+sub statue baby red dragon
+sub statue baby white dragon
+sub statue baby orange dragon
+sub statue baby black dragon
+sub statue baby blue dragon
+sub statue baby green dragon
+sub statue baby yellow dragon
+sub statue gray dragon
+sub statue silver dragon
+sub statue shimmering dragon
+sub statue red dragon
+sub statue white dragon
+sub statue orange dragon
+sub statue black dragon
+sub statue blue dragon
+sub statue green dragon
+sub statue yellow dragon
+sub statue stalker
+sub statue air elemental
+sub statue fire elemental
+sub statue earth elemental
+sub statue water elemental
+sub statue lichen
+sub statue brown mold
+sub statue yellow mold
+sub statue green mold
+sub statue red mold
+sub statue shrieker
+sub statue violet fungus
+sub statue gnome
+sub statue gnome lord
+sub statue gnomish wizard
+sub statue gnome king
+sub statue giant
+sub statue stone giant
+sub statue hill giant
+sub statue fire giant
+sub statue frost giant
+sub statue storm giant
+sub statue ettin
+sub statue titan
+sub statue minotaur
+sub statue jabberwock
+sub statue vorpal jabberwock
+sub statue Keystone Kop
+sub statue Kop Sergeant
+sub statue Kop Lieutenant
+sub statue Kop Kaptain
+sub statue lich
+sub statue demilich
+sub statue master lich
+sub statue arch-lich
+sub statue kobold mummy
+sub statue gnome mummy
+sub statue orc mummy
+sub statue dwarf mummy
+sub statue elf mummy
+sub statue human mummy
+sub statue ettin mummy
+sub statue giant mummy
+sub statue red naga hatchling
+sub statue black naga hatchling
+sub statue golden naga hatchling
+sub statue guardian naga hatchling
+sub statue red naga
+sub statue black naga
+sub statue golden naga
+sub statue guardian naga
+sub statue ogre
+sub statue ogre lord
+sub statue ogre king
+sub statue gray ooze
+sub statue brown pudding
+sub statue black pudding
+sub statue green slime
+sub statue quantum mechanic
+sub statue rust monster
+sub statue disenchanter
+sub statue garter snake
+sub statue snake
+sub statue water moccasin
+sub statue pit viper
+sub statue python
+sub statue cobra
+sub statue troll
+sub statue ice troll
+sub statue rock troll
+sub statue water troll
+sub statue Olog-hai
+sub statue umber hulk
+sub statue vampire
+sub statue vampire lord
+sub statue vampire mage
+sub statue Vlad the Impaler
+sub statue barrow wight
+sub statue wraith
+sub statue Nazgul
+sub statue xorn
+sub statue monkey
+sub statue ape
+sub statue owlbear
+sub statue yeti
+sub statue carnivorous ape
+sub statue sasquatch
+sub statue kobold zombie
+sub statue gnome zombie
+sub statue orc zombie
+sub statue dwarf zombie
+sub statue elf zombie
+sub statue human zombie
+sub statue ettin zombie
+sub statue giant zombie
+sub statue ghoul
+sub statue skeleton
+sub statue straw golem
+sub statue paper golem
+sub statue rope golem
+sub statue gold golem
+sub statue leather golem
+sub statue wood golem
+sub statue flesh golem
+sub statue clay golem
+sub statue stone golem
+sub statue glass golem
+sub statue iron golem
+sub statue human
+sub statue human wererat
+sub statue human werejackal
+sub statue human werewolf
+sub statue elf
+sub statue Woodland-elf
+sub statue Green-elf
+sub statue Grey-elf
+sub statue elf-lord
+sub statue Elvenking
+sub statue doppelganger
+sub statue nurse
+sub statue shopkeeper
+sub statue guard
+sub statue prisoner
+sub statue Oracle
+sub statue aligned priest
+sub statue high priest
+sub statue soldier
+sub statue sergeant
+sub statue lieutenant
+sub statue captain
+sub statue watchman
+sub statue watch captain
+sub statue Medusa
+sub statue Wizard of Yendor
+sub statue Croesus
+sub statue Charon
+sub statue ghost
+sub statue shade
+sub statue water demon
+sub statue horned devil
+sub statue succubus
+sub statue incubus
+sub statue erinys
+sub statue barbed devil
+sub statue marilith
+sub statue vrock
+sub statue hezrou
+sub statue bone devil
+sub statue ice devil
+sub statue nalfeshnee
+sub statue pit fiend
+sub statue balrog
+sub statue Juiblex
+sub statue Yeenoghu
+sub statue Orcus
+sub statue Geryon
+sub statue Dispater
+sub statue Baalzebub
+sub statue Asmodeus
+sub statue Demogorgon
+sub statue Death
+sub statue Pestilence
+sub statue Famine
+sub statue mail daemon
+sub statue djinni
+sub statue sandestin
+sub statue jellyfish
+sub statue piranha
+sub statue shark
+sub statue giant eel
+sub statue electric eel
+sub statue kraken
+sub statue newt
+sub statue gecko
+sub statue iguana
+sub statue baby crocodile
+sub statue lizard
+sub statue chameleon
+sub statue crocodile
+sub statue salamander
+sub statue long worm tail
+sub statue archeologist
+sub statue barbarian
+sub statue caveman
+sub statue cavewoman
+sub statue healer
+sub statue knight
+sub statue monk
+sub statue priest
+sub statue priestess
+sub statue ranger
+sub statue rogue
+sub statue samurai
+sub statue tourist
+sub statue valkyrie
+sub statue wizard
+sub statue Lord Carnarvon
+sub statue Pelias
+sub statue Shaman Karnov
+sub statue Earendil
+sub statue Elwing
+sub statue Hippocrates
+sub statue King Arthur
+sub statue Grand Master
+sub statue Arch Priest
+sub statue Orion
+sub statue Master of Thieves
+sub statue Lord Sato
+sub statue Twoflower
+sub statue Norn
+sub statue Neferet the Green
+sub statue Minion of Huhetotl
+sub statue Thoth Amon
+sub statue Chromatic Dragon
+sub statue Goblin King
+sub statue Cyclops
+sub statue Ixoth
+sub statue Master Kaen
+sub statue Nalzok
+sub statue Scorpius
+sub statue Master Assassin
+sub statue Ashikaga Takauji
+sub statue Lord Surtur
+sub statue Dark One
+sub statue student
+sub statue chieftain
+sub statue neanderthal
+sub statue High-elf
+sub statue attendant
+sub statue page
+sub statue abbot
+sub statue acolyte
+sub statue hunter
+sub statue thug
+sub statue ninja
+sub statue roshi
+sub statue guide
+sub statue warrior
+sub statue apprentice
+
+sub statue sub human sub female archeologist
+sub statue sub dwarf archeologist
+sub statue sub gnome sub male archeologist
+sub statue sub gnome sub female archeologist
+sub statue sub human sub female barbarian
+sub statue sub orc sub male barbarian
+sub statue sub orc sub female barbarian
+sub statue sub dwarf sub male caveman
+sub statue sub dwarf sub female caveman
+sub statue sub gnome sub male caveman
+sub statue sub gnome sub female caveman
+sub statue sub human sub female healer
+sub statue sub gnome sub male healer
+sub statue sub gnome sub female healer
+sub statue sub elf priest
+sub statue sub human sub female ranger
+sub statue sub elf sub male ranger
+sub statue sub elf sub female ranger
+sub statue sub gnome sub male ranger
+sub statue sub gnome sub female ranger
+sub statue sub orc sub male ranger
+sub statue sub orc sub female ranger
+sub statue sub human sub female rogue
+sub statue sub orc rogue
+sub statue sub human sub female samurai
+sub statue sub human sub female tourist
+sub statue sub human sub male valkyrie
+sub statue sub dwarf valkyrie
+sub statue sub human sub female wizard
+sub statue sub gnome sub male wizard
+sub statue sub gnome sub female wizard
+sub statue sub elf sub male wizard
+sub statue sub elf sub female wizard
+sub statue sub orc wizard
+
+! Player-monster tiles
+! Currently unused by the game engine; there are 49 of them
+
+sub playermonster archeologist
+sub playermonster barbarian
+sub playermonster caveman
+sub playermonster cavewoman
+sub playermonster healer
+sub playermonster knight
+sub playermonster monk
+sub playermonster priest
+sub playermonster priestess
+sub playermonster ranger
+sub playermonster rogue
+sub playermonster samurai
+sub playermonster tourist
+sub playermonster valkyrie
+sub playermonster wizard
+
+sub playermonster sub human sub female archeologist
+sub playermonster sub dwarf archeologist
+sub playermonster sub gnome sub male archeologist
+sub playermonster sub gnome sub female archeologist
+sub playermonster sub human sub female barbarian
+sub playermonster sub orc sub male barbarian
+sub playermonster sub orc sub female barbarian
+sub playermonster sub dwarf sub male caveman
+sub playermonster sub dwarf sub female caveman
+sub playermonster sub gnome sub male caveman
+sub playermonster sub gnome sub female caveman
+sub playermonster sub human sub female healer
+sub playermonster sub gnome sub male healer
+sub playermonster sub gnome sub female healer
+sub playermonster sub elf priest
+sub playermonster sub human sub female ranger
+sub playermonster sub elf sub male ranger
+sub playermonster sub elf sub female ranger
+sub playermonster sub gnome sub male ranger
+sub playermonster sub gnome sub female ranger
+sub playermonster sub orc sub male ranger
+sub playermonster sub orc sub female ranger
+sub playermonster sub human sub female rogue
+sub playermonster sub orc rogue
+sub playermonster sub human sub female samurai
+sub playermonster sub human sub female tourist
+sub playermonster sub human sub male valkyrie
+sub playermonster sub dwarf valkyrie
+sub playermonster sub human sub female wizard
+sub playermonster sub gnome sub male wizard
+sub playermonster sub gnome sub female wizard
+sub playermonster sub elf sub male wizard
+sub playermonster sub elf sub female wizard
+sub playermonster sub orc wizard
+
+! Generic item tiles
+! Again, currently unused, but needed for a future bugfix
+
+generic amulet
+generic shield
+generic potion
+generic scroll
+generic wand
+generic spellbook
+generic ring
+generic gem
+
+! Currently unused brandings
+
+remembered as multiple items
+
+! Varying-size gold piles
+
+gold piles 0
+gold piles 1
+gold piles 2
+gold piles 3
+gold piles 4
+gold piles 5
+
+! Special case corpses
+
+sub corpse * ant
+sub corpse * bee
+sub corpse acid blob
+sub corpse gray ooze; sub corpse gelatinous cube
+sub corpse quivering blob
+sub corpse brown pudding
+sub corpse black pudding
+sub corpse unknown green monster
+sub corpse cockatrice
+sub corpse floating eye
+sub corpse homunculus
+sub corpse blue jelly
+sub corpse spotted jelly
+sub corpse ochre jelly
+sub corpse * mimic
+sub corpse rock piercer
+sub corpse iron piercer
+sub corpse glass piercer
+sub corpse * naga hatchling
+sub corpse * naga
+sub corpse lichen
+sub corpse * mold
+sub corpse shrieker
+sub corpse violet fungus
+sub corpse lizard
