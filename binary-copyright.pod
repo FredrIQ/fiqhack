@@ -353,8 +353,9 @@ Suite 300, San Francisco, California 94105, USA.
 =head2 Copyright of the RLTiles Tileset
 
 The version of the RLTiles tileset in NetHack 4 was produced by Raz in
-2014, with some coding by Alex Smith. It was derived from the original
-version of RLTiles, which had the following license information:
+2014 and 2015, with some coding by Alex Smith. It was derived from the
+original version of RLTiles, which had the following license
+information:
 
  You can use these tilesets in your program freely. Please include the
  following text in your distribution package, either as a separate
