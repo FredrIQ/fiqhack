@@ -659,8 +659,8 @@ extern int dofight(const struct nh_cmd_arg *);
 /* ### history.c ### */
 
 extern int dohistory(const struct nh_cmd_arg *);
-extern void historic_event(boolean hidden, const char *fmt, ...)
-    PRINTFLIKE(2,3);
+extern void historic_event(boolean hidden, boolean dolivelog, const char *fmt, ...)
+    PRINTFLIKE(3,4);
 extern void save_history(struct memfile *mf);
 extern void restore_history(struct memfile *mf);
 extern void free_history(void);
@@ -2026,6 +2026,10 @@ extern void destroy_item(int, int);
 extern int destroy_mitem(struct monst *, int, int);
 extern int resist(struct monst *, char, int, int);
 extern void makewish(void);
+
+/* ### livelog.c ### */
+extern void livelog_write_event(const char *);
+extern void livelog_unique_monster(const struct monst *);
 
 #endif /* EXTERN_H */
 

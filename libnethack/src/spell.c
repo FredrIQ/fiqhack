@@ -259,7 +259,7 @@ deadbook(struct obj *book2, boolean invoked)
             /* successful invocation */
             mkinvokearea();
             u.uevent.invoked = 1;
-            historic_event(FALSE, "performed the invocation.");
+            historic_event(FALSE, TRUE, "performed the invocation.");
             /* in case you haven't killed the Wizard yet, behave as if you just
                did */
             u.uevent.udemigod = 1;      /* wizdead() */

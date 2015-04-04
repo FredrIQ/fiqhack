@@ -1459,7 +1459,7 @@ newgame(microseconds birthday)
     /* Stop autoexplore revisiting the entrance stairs (or position). */
     level->locations[u.ux][u.uy].mem_stepped = 1;
 
-    historic_event(FALSE,
+    historic_event(FALSE, FALSE,
                    "entered the Dungeons of Doom to retrieve the Amulet of "
                    "Yendor!");
 

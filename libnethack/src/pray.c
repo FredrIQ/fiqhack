@@ -614,14 +614,14 @@ gcrownu(void)
     case A_LAWFUL:
         u.uevent.uhand_of_elbereth = 1;
         verbalize("I crown thee...  The Hand of Elbereth!");
-        historic_event(FALSE, "were crowned as the Hand of Elbereth!");
+        historic_event(FALSE, TRUE, "were crowned as the Hand of Elbereth!");
         break;
     case A_NEUTRAL:
         u.uevent.uhand_of_elbereth = 2;
         in_hand = (uwep && uwep->oartifact == ART_VORPAL_BLADE);
         already_exists = exist_artifact(LONG_SWORD, artiname(ART_VORPAL_BLADE));
         verbalize("Thou shalt be my Envoy of Balance!");
-        historic_event(FALSE, "were named as the Envoy of Balance!");
+        historic_event(FALSE, TRUE, "were named as the Envoy of Balance!");
         break;
     case A_CHAOTIC:
         u.uevent.uhand_of_elbereth = 3;
@@ -629,7 +629,7 @@ gcrownu(void)
         already_exists = exist_artifact(RUNESWORD, artiname(ART_STORMBRINGER));
         verbalize("Thou art chosen to %s for My Glory!", already_exists &&
                   !in_hand ? "take lives" : "steal souls");
-        historic_event(FALSE, "were chosen to %s for your god's glory!",
+        historic_event(FALSE, TRUE, "were chosen to %s for your god's glory!",
                        already_exists &&
                        !in_hand ? "take lives" : "steal souls");
         break;
@@ -1331,7 +1331,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                     "Eternal Power!" : "Immortality!");
                 pline("You ascend to the status of Demigod%s...",
                       u.ufemale ? "dess" : "");
-                historic_event(FALSE,
+                historic_event(FALSE, FALSE,
                                "offered the Amulet of Yendor to %s and ascended"
                                " to the status of Demigod%s!", u_gname(),
                                u.ufemale ? "dess" : "");
@@ -1537,7 +1537,7 @@ dosacrifice(const struct nh_cmd_arg *arg)
                         dropy(otmp);
                         at_your_feet("An object");
                         godvoice(u.ualign.type, "Use my gift wisely!");
-                        historic_event(FALSE, "received %s from %s.",
+                        historic_event(FALSE, FALSE, "received %s from %s.",
                                        artiname(otmp->oartifact), u_gname());
                         u.ugifts++;
                         u.ublesscnt = rnz(300 + (50 * nartifacts));

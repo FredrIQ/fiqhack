@@ -4249,12 +4249,12 @@ retry:
         if (!otmp)
             return;     /* for safety; should never happen */
     } else if (otmp == &nothing) {
-        historic_event(FALSE, "refused a wish.");
+        historic_event(FALSE, TRUE, "refused a wish.");
         /* explicitly wished for "nothing", presumeably attempting to retain
            wishless conduct */
         return;
     } else
-        historic_event(FALSE, "wished for \"%s\".", origbuf);
+        historic_event(FALSE, TRUE, "wished for \"%s\".", origbuf);
 
     /* KMH, conduct */
     break_conduct(conduct_wish);

@@ -315,7 +315,7 @@ static void
 addinv_stats(struct obj *obj)
 {
     if (obj->otyp == AMULET_OF_YENDOR) {
-        historic_event(!obj->known, "gained the Amulet of Yendor!");
+        historic_event(!obj->known, FALSE, "gained the Amulet of Yendor!");
     } else if (obj->oartifact) {
         if (is_quest_artifact(obj)) {
             artitouch();
@@ -530,7 +530,7 @@ freeinv_stats(struct obj *obj)
         /* Minor information leak about the Amulet of Yendor (vs fakes). You
            don't get any more info than you do by turning on show_uncursed
            though. */
-        historic_event(!obj->known, "lost the Amulet of Yendor.");
+        historic_event(!obj->known, FALSE, "lost the Amulet of Yendor.");
     } else if (obj->oartifact) {
         uninvoke_artifact(obj);
     }

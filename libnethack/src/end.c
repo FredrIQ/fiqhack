@@ -737,7 +737,7 @@ check_survival(int how)
             if (how == GENOCIDED)
                 pline("Unfortunately you are still genocided...");
             else {
-                historic_event(FALSE,
+                historic_event(FALSE, TRUE,
                                "were saved from death by your amulet of life "
                                "saving!");
                 return TRUE;
@@ -751,7 +751,7 @@ check_survival(int how)
         if (u.uhpmax <= 0)
             u.uhpmax = u.ulevel * 8;    /* arbitrary */
         savelife(how);
-        historic_event(FALSE, "were saved from death by your wizard powers!");
+        historic_event(FALSE, FALSE, "were saved from death by your wizard powers!");
         return TRUE;
     }
 

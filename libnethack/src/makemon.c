@@ -2051,6 +2051,13 @@ restore_mon(struct memfile *mf)
     if (mon->mnamelth)
         mread(mf, NAME_MUTABLE(mon), mon->mnamelth);
 
+#ifdef LIVELOG_BONES_KILLER
+    mon->former_role   = mread8(mf);
+    mon->former_race   = mread8(mf);
+    mon->former_gender = mread8(mf);
+    mon->former_align  = mread8(mf);
+#endif
+
     switch (mon->mxtyp) {
     case MX_EPRI:
         EPRI(mon)->shralign = mread8(mf);
@@ -2282,6 +2289,15 @@ save_mon(struct memfile *mf, const struct monst *mon)
 
     if (mon->mnamelth)
         mwrite(mf, NAME(mon), mon->mnamelth);
+
+#ifdef LIVELOG_BONES_KILLER
+    /* It would probably be possible to optimize this, combining the fields to
+     * fewer than four bytes total via bitshifting.  Not sure if it matters. */
+    mwrite8(mf, mon->former_role);
+    mwrite8(mf, mon->former_race);
+    mwrite8(mf, mon->former_gender);
+    mwrite8(mf, mon->former_align);
+#endif
 
     switch (mon->mxtyp) {
     case MX_EPRI:
