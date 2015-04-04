@@ -312,6 +312,8 @@ get_tileset_descriptions(int *count)
                 *ep = tolower(*ep);       /* Windows is case-insensitive */
 #else
         DIR *dirp = opendir(dir);
+        if (!dirp) /* If opendir fails, don't try to readdir */
+            return rv;
         struct dirent *dp;
         while ((dp = readdir(dirp)))
         {
