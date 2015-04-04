@@ -1,4 +1,4 @@
-! Last modified by Alex Smith, 2015-03-10
+! Last modified by Alex Smith, 2015-04-03
 ! Copyright (C) 2014 Alex Smith
 ! NetHack may be freely redistributed. See license for details.
 !
@@ -17,9 +17,10 @@ sub lit corridor: bgblack white regular '#'
 ! Everyone hates the default boulder tile.
 boulder: gray '0'
 
-! Corpse and statue substitutions.
+! Corpse/statue/figurine substitutions.
 sub corpse *: basefg '%'
 sub statue *: gray '`'
+sub figurine *: gray ')'
 
 ! Stairs and portals have red backgrounds (that show through).
 staircase *; ladder *; long staircase *: bgred basefg base_underline basechar
