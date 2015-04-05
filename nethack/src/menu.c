@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-04-01 */
+/* Last modified by Alex Smith, 2015-04-05 */
 /* Copyright (c) Daniel Thaler, 2011 */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -424,9 +424,9 @@ curses_display_menu_core(struct nh_menulist *ml, const char *title, int how,
     dealloc_menulist(ml);
 
     if (x1 < 0)
-        x1 = 0;
+        x1 = COLS;
     if (y1 < 0)
-        y1 = 0;
+        y1 = LINES;
     if (x2 < 0)
         x2 = COLS;
     if (y2 < 0)
@@ -637,18 +637,23 @@ curses_display_menu(struct nh_menulist *ml, const char *title,
     if (placement_hint == PLHINT_URGENT)
         ui_flags.in_zero_time_command = TRUE;
 
-    if (placement_hint == PLHINT_INVENTORY ||
-        placement_hint == PLHINT_CONTAINER) {
-        if (ui_flags.sidebarwidth)
-            x1 = COLS - getmaxx(sidebar);
-        else
-            x1 = COLS - 64;
-    } else if (placement_hint == PLHINT_ONELINER && game_is_running) {
+    if (placement_hint == PLHINT_ONELINER && game_is_running) {
         x1 = 0;
         if (ui_flags.sidebarwidth)
             x2 = getmaxx(sidebar);
         y1 = 0;
         y2 = getmaxy(msgwin);
+    } else if (!ui_flags.sidebarwidth && game_is_running) {
+        /* If we have no sidebar, place all menus but oneliners in the top-right
+           corner. */
+        x1 = -1;
+        y2 = 0;
+    } else if (placement_hint == PLHINT_INVENTORY ||
+               placement_hint == PLHINT_CONTAINER) {
+        if (ui_flags.sidebarwidth)
+            x1 = COLS - getmaxx(sidebar);
+        else
+            x1 = COLS - 64;
     }
 
     curses_display_menu_core(ml, title, how, callbackarg, callback,
