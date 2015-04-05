@@ -1,6 +1,10 @@
+nethack4 (4.3.0~beta3) unstable; urgency=low
+  * Updated packages for 4.3
+ -- Alex Smith <ais523@nethack4.org>  Sun, 05 Apr 2015 02:57:00 +0100
+
 nethack4 (4.3.0~beta2) unstable; urgency=low
   * Updated packages for 4.3
- -- Alex Smith <ais523@nethack4.org>  Tue, 21 Oct 2014 05:55:00 +0100
+ -- Alex Smith <ais523@nethack4.org>  Thu, 02 Apr 2015 02:08:48 +0100
 
 nethack4 (4.3.0~beta1) unstable; urgency=low
   * Updated packages for 4.3

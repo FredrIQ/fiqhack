@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2015-04-01
+Last modified by Alex Smith, 2015-04-05
 
 Copyright (C) 2013 Alex Smith.
 
@@ -2040,6 +2040,12 @@ d511a10..e81d005 and others)
 
 Bugfixes against Beta Versions
 ==============================
+
+Since 4.3-beta2
+---------------
+
+Figurines no longer look like monsters in the ASCII and Unicode tilesets.
+(e4e9caa)
 
 Since 4.3-beta1
 ---------------

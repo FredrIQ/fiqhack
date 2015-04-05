@@ -1,4 +1,4 @@
-# Last modified by Alex Smith, 2015-03-31
+# Last modified by Alex Smith, 2015-04-05
 # Copyright (c) Alex Smith, 2013.
 # NetHack may be freely redistributed.  See license for details.
 # NetHack 4: aimake configuration.
@@ -17,7 +17,7 @@ $playfieldutils = qr/dlb|dgn_comp|lev_comp/;
     options => {
         packagename      => 'nethack4',
         packagename_text => 'NetHack 4',
-        packageversion   => '4.3.beta2',
+        packageversion   => '4.3.beta3',
         companyname      => 'NetHack 4 DevTeam',
 
         AM_CPPFLAGS => '-DNETCLIENT -D_REENTRANT',
