@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-12-29 */
+/* Last modified by Alex Smith, 2015-04-05 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -612,22 +612,6 @@ color_on_screen_for_attr(attr_t a)
     return f | (b << 5) | (!!(a & A_UNDERLINE) << 10);
 }
 
-/* Handle the palette when the palette or screen changes. */
-static void
-recolor_nout_win(int ymin, int ymax, int xmin, int xmax)
-{
-    int y, x;
-    if (!nout_win)
-        return;
-
-    for (y = ymin; y <= ymax; y++)
-        for (x = xmin; x <= xmax; x++) {
-            cchar_t *nwct = nout_win->chararray + y * nout_win->stride + x;
-            nwct->color_on_screen = color_on_screen_for_attr(nwct->attr);
-        }
-}
-
-
 #define DEFAULT_FOREGROUND COLOR_WHITE
 #define DEFAULT_BACKGROUND COLOR_BLACK
 int
@@ -667,9 +651,6 @@ init_pair(uncursed_color pairnum,
 
     pair_content_list[pairnum][0] = fgcolor;
     pair_content_list[pairnum][1] = bgcolor;
-
-    if (nout_win)
-        recolor_nout_win(0, nout_win->maxy, 0, nout_win->maxx);
 
     return OK;
 }
@@ -2432,8 +2413,6 @@ wnoutrefresh(WINDOW *win)
     win->clear_on_refresh = 0;
     copywin(win, nout_win, 0, 0, win->scry, win->scrx, win->scry + win->maxy,
             win->scrx + win->maxx, 0);
-    recolor_nout_win(win->scry, win->scry + win->maxy,
-                     win->scrx, win->scrx + win->maxx);
 
     return wmove(nout_win, win->scry + win->y, win->scrx + win->x);
 }
@@ -2457,6 +2436,8 @@ doupdate(void)
     for (j = 0; j <= nout_win->maxy; j++) {
         for (i = 0; i <= nout_win->maxx; i++) {
             int k;
+
+            p->color_on_screen = color_on_screen_for_attr(p->attr);
 
             if (p->color_on_screen != q->color_on_screen ||
                 *rp != *rq || *rq == &invalid_region)
