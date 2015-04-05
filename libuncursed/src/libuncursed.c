@@ -1642,8 +1642,9 @@ copywin(const WINDOW *from, const WINDOW *to, int from_miny, int from_minx,
 
         cchar_t *fc = from->chararray + j * from->stride;
         cchar_t *tc = to->chararray + xoffset + ((j + yoffset) * to->stride);
-        void **fr = from->regionarray + j * from->stride;
-        void **tr = to->regionarray + xoffset + ((j + yoffset) * to->stride);
+        void **fr = from->regionarray + j * (from->maxx + 1);
+        void **tr = to->regionarray + xoffset +
+            ((j + yoffset) * (to->maxx + 1));
 
         if (skip_blanks) {
             /* Conceptually "for (i = imin; i <= imax; i++)", but we don't use
