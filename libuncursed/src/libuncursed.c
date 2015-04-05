@@ -1602,34 +1602,72 @@ copywin(const WINDOW *from, const WINDOW *to, int from_miny, int from_minx,
 
     int i, j;
 
-    for (j = to_miny; j <= to_maxy; j++) {
-        if (j < 0 || j - to_miny + from_miny < 0)
-            continue;
-        if (j > to->maxy || j - to_miny + from_miny > from->maxy)
-            continue;
+    const int xoffset = to_minx - from_minx;
+    const int yoffset = to_miny - from_miny;
 
-        for (i = to_minx; i <= to_maxx; i++) {
-            if (i < 0 || i - to_minx + from_minx < 0)
-                continue;
-            if (i > to->maxx || i - to_minx + from_minx > from->maxx)
-                continue;
+    int imin = from_minx;
+    if (imin < 0)
+        imin = 0;
+    if (imin < -xoffset)
+        imin = -xoffset;
 
-            cchar_t *f =
-                from->chararray + i - to_minx + from_minx +
-                (j - to_miny + from_miny) * from->stride;
-            cchar_t *t = to->chararray + i + j * to->stride;
+    int imax = to_maxx - xoffset;
+    if (imax > from->maxx)
+        imax = from->maxx;
+    if (imax > to->maxx - xoffset) /* note: to->maxx might not be to_maxx */
+        imax = to->maxx - xoffset;
 
-            if (skip_blanks && f->chars[0] == 32)
-                continue;
+    int irange = imax + 1 - imin;
 
-            *t = *f;
+    int jmin = from_miny;
+    if (jmin < 0)
+        jmin = 0;
+    if (jmin < -yoffset)
+        jmin = -yoffset;
 
-            void **rf =
-                from->regionarray + i - to_minx + from_minx +
-                (j - to_miny + from_miny) * (from->maxx + 1);
-            void **rt = to->regionarray + i + j * (to->maxx + 1);
+    int jmax = to_maxy - yoffset;
+    if (jmax > from->maxy)
+        jmax = from->maxy;
+    if (jmax > to->maxy - yoffset) /* note: to->maxy might not be to_maxy */
+        jmax = to->maxy - yoffset;
 
-            *rt = *rf;
+    for (j = jmin; j <= jmax; j++) {
+
+        /* Note: C doesn't allow pointers to go more than one byte past the
+           end of an array. This makes it hard to dead-reckon these pointers
+           with respect to j, because we can't be an entire stride past the
+           start or the end. The easiest solution is to just calculate them
+           anew on each loop iteration (especially because this isn't the
+           inner loop; the loop on i is the inner loop). */
+
+        cchar_t *fc = from->chararray + j * from->stride;
+        cchar_t *tc = to->chararray + xoffset + ((j + yoffset) * to->stride);
+        void **fr = from->regionarray + j * from->stride;
+        void **tr = to->regionarray + xoffset + ((j + yoffset) * to->stride);
+
+        if (skip_blanks) {
+            /* Conceptually "for (i = imin; i <= imax; i++)", but we don't use
+               the value of i, so make the loop as optimizable as possible. */
+            for (i = 0; i < irange; i++) {
+                if (fc->chars[0] != 32) {
+                    *tc = *fc;
+                    *tr = *fr;
+                }
+
+                /* Dead-reckon these pointers for performance. This function is
+                   often the inner loop of libuncursed (depending on what the
+                   application using us wants). */
+                tc++;
+                fc++;
+                tr++;
+                fr++;
+            }
+        } else {
+            /* We could use a dead-reckoned loop like the above. However,
+               there's no particular reason to copy one cchar/void * at a time
+               when we could copy as opaque objects (which is even faster). */
+            memcpy(tc, fc, irange * sizeof *tc);
+            memcpy(tr, fr, irange * sizeof *tr);
         }
     }
     return OK;
@@ -1845,7 +1883,7 @@ keyname(int c)
     if (c > KEY_MAX) {
         snprintf(keybuf, sizeof(keybuf), "KEY_MAX + %d", c - KEY_MAX);
         return keybuf;
-    } 
+    }
 
     strcpy(keybuf, "KEY_");
     if (c & KEY_CTRL)
