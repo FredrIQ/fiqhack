@@ -152,12 +152,8 @@ struct monst {
     int misc_worn_check;
 
 #ifdef LIVELOG_BONES_KILLER
-    /* Four fields for the former identity of bones ghosts: */
-    int   former_role;   /* former player's role (index into roles[]) */
-    int   former_race;   /* former player's race (index into races[]) */
-    short former_gender; /* former player's gender.allow constant
-                          *             ROLE_MALE or ROLE_FEMALE */
-    int   former_align;  /* former player's alignment (aligns[]) */
+    short former_player; /* info about this being the ghost or whatnot
+                            of a former player, from a bones file*/
 #endif
 
     uchar mnamelth;     /* length of name (following mxlth) */

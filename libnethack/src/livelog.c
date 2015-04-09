@@ -77,30 +77,26 @@ livelog_unique_monster(const struct monst *mon) {
         && (mvitals[monsndx(mon->data)].died == 1))
         livelog_write_event(msgprintf("defeated=%s", noit_mon_nam(mon)));
 #ifdef LIVELOG_BONES_KILLER
-    /* We abuse the fact that ROLE_MALE, ROLE_FEMALE, and ROLE_NEUTER
-     * are all true values (1, 2, and 4, respectively).  It's done that
-     * way because they're used in a bitmask to control which genders
-     * a given role is allowed to be, so none of them can be zero.
-     * This has the pleasant side-effect of allowing us to test the
-     * former_gender here, since the bones code sets former_gender
-     * to the allow field of the gender structure.  The consequence
-     * is, we have to loop through the genders and find the right one. */
-    else if (name && mon->former_gender) {
+    else if (mon->former_player > 0) {
         /* $player killed the $bones_monst of $bones_killed the former
          * $bones_rank on $turns on dungeon level $dlev! */
-        int gend, i;
-        const struct Role frole = roles[mon->former_role];
-        for (i = 0; i <= 2; i++)
-            if (genders[i].allow == mon->former_gender)
-                gend = i;
+        int   frace, falign, fgend;
+        short fplayer = mon->former_player;
+        struct Role frole;
+        fplayer       = fplayer - (fplayer % 2); /* Throw away the 1. */
+        fgend         = (fplayer % 8) / 2;
+        fplayer       = fplayer - fgend;
+        falign        = (fplayer % 32) / 8;
+        fplayer       = fplayer - falign;
+        frace         = (fplayer % 256) / 32;
+        frole         = roles[(fplayer - frace) / 256];
+
         livelog_write_event(msgprintf("bones_killed=%s:bones_align=%s:"
                                       "bones_race=%s:bones_gender=%s:"
                                       "bones_role=%s:bones_monst=%s",
-                                      name, aligns[mon->former_align].adj,
-                                      races[mon->former_race].adj,
-                                      genders[gend].adj,
-                                      ((((short)mon->former_gender)
-                                        == (short) ROLE_FEMALE)
+                                      name, aligns[falign].adj,
+                                      races[frace].adj, genders[fgend].adj,
+                                      (genders[fgend].allow == ROLE_FEMALE
                                        ? (frole.name.f ? frole.name.f
                                                        : frole.name.m)
                                        : (frole.name.m)),

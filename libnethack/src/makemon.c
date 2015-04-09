@@ -2052,10 +2052,7 @@ restore_mon(struct memfile *mf)
         mread(mf, NAME_MUTABLE(mon), mon->mnamelth);
 
 #ifdef LIVELOG_BONES_KILLER
-    mon->former_role   = mread8(mf);
-    mon->former_race   = mread8(mf);
-    mon->former_gender = mread8(mf);
-    mon->former_align  = mread8(mf);
+    mon->former_player = mread16(mf);
 #endif
 
     switch (mon->mxtyp) {
@@ -2291,12 +2288,9 @@ save_mon(struct memfile *mf, const struct monst *mon)
         mwrite(mf, NAME(mon), mon->mnamelth);
 
 #ifdef LIVELOG_BONES_KILLER
-    /* It would probably be possible to optimize this, combining the fields to
-     * fewer than four bytes total via bitshifting.  Not sure if it matters. */
-    mwrite8(mf, mon->former_role);
-    mwrite8(mf, mon->former_race);
-    mwrite8(mf, mon->former_gender);
-    mwrite8(mf, mon->former_align);
+    /* It would be possible to optimize this to one byte, theoretically
+       (but the logic in bones.c and livelog.c would be more complicated.) */
+    mwrite16(mf, mon->former_player);
 #endif
 
     switch (mon->mxtyp) {

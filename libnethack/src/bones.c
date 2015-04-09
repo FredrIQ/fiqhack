@@ -330,13 +330,11 @@ make_bones:
         mtmp->female = u.ufemale;
         mtmp->msleeping = 1;
 #ifdef LIVELOG_BONES_KILLER
-        mtmp->former_role   = u.initrole;
-        mtmp->former_race   = u.initrace;
-        mtmp->former_align  = u.initalign;
-        mtmp->former_gender = genders[u.initgend].allow;
-        /* The allow field is used here because it is always nonzero, which
-         * provides a reliable way to tell whether the monster is the ghost or
-         * whatever of a former player from bones.  See livelog.c for usage. */
+        mtmp->former_player = 1 + /* Guarantee former_player > 0 */
+            (2 * u.initgend    /*   2 * (0-2) = 0-4 */) +
+            (8   * u.initalign /*   8 * (0-3) = 0-24 */) +
+            (32  * u.initrace  /*  32 * (0-4) = 0-128, but leave room */) +
+            (256 * u.initrole);
 #endif
     }
     for (mtmp = level->monlist; mtmp; mtmp = mtmp->nmon) {
