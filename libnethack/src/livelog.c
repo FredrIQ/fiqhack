@@ -8,6 +8,7 @@
 #include "hack.h"
 #include "epri.h"
 #include <fcntl.h>
+#include <inttypes.h>
 
 void livelog_write_string(const char *);
 
@@ -53,9 +54,25 @@ livelog_write_event(const char *buffer) {
         else
             buf[i] = uname[i];
     }
-    livelog_write_string(msgprintf(
-                             "player=%s:character=%s:turns=%1d:depth=%1d:%s",
-                             buf, u.uplname, moves, depth(&u.uz), buffer));
+    livelog_write_string(msgprintf("version=%d.%d.%d:player=%s:charname=%s:"
+                                   "turns=%1d:depth=%1d:%s:eventdate=%ld:"
+                                   "uid=%d,role=%s:race=%s:gender=%s:"
+                                   "align=%s:birthdate=%ld:"
+                                   "starttime=%" PRIdLEAST64 ":"
+                                   "xplevel=%1d:mode=%s",
+                                   VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL,
+                                   buf, u.uplname, moves, depth(&u.uz), buffer,
+                                   yyyymmdd(utc_time()), getuid(),
+                                   urole.filecode, urace.filecode,
+                                   genders[u.ufemale].filecode,
+                                   aligns[1 - u.ualign.type].filecode,
+                                   (unsigned long)u.ubirthday,
+                                   ((int_least64_t)u.ubirthday / 1000000L),
+                                   u.ulevel, (flags.debug ? "debug" :
+                                              flags.explore ? "explore" :
+                                              flags.setseed ? "setseed" :
+                                              flags.polyinit_mnum != -1 ?
+                                              "polyinit" : "normal")));
 }
 
 void
