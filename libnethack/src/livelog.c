@@ -59,6 +59,7 @@ livelog_write_event(const char *buffer) {
                                    "uid=%d,role=%s:race=%s:gender=%s:"
                                    "align=%s:birthdate=%ld:"
                                    "starttime=%" PRIdLEAST64 ":"
+                                   "eventtime=%" PRIdLEAST64 ":"
                                    "xplevel=%1d:mode=%s",
                                    VERSION_MAJOR, VERSION_MINOR, PATCHLEVEL,
                                    buf, u.uplname, moves, depth(&u.uz), buffer,
@@ -68,11 +69,12 @@ livelog_write_event(const char *buffer) {
                                    aligns[1 - u.ualign.type].filecode,
                                    (unsigned long)u.ubirthday,
                                    ((int_least64_t)u.ubirthday / 1000000L),
-                                   u.ulevel, (flags.debug ? "debug" :
-                                              flags.explore ? "explore" :
-                                              flags.setseed ? "setseed" :
-                                              flags.polyinit_mnum != -1 ?
-                                              "polyinit" : "normal")));
+                                   ((int_least64_t)utc_time()), u.ulevel,
+                                   (flags.debug ? "debug" :
+                                    flags.explore ? "explore" :
+                                    flags.setseed ? "setseed" :
+                                    (flags.polyinit_mnum != -1) ? "polyinit" :
+                                                                  "normal")));
 }
 
 void
