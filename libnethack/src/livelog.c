@@ -48,7 +48,7 @@ livelog_write_event(const char *buffer) {
         uname = nh_getenv("USER");
     if (!uname)
         uname = "";
-    for (i = 0; i < ENTRYSIZE && uname[1] != '\0'; i++) {
+    for (i = 0; i < ENTRYSIZE && uname[i] != '\0'; i++) {
         if (uname[i] == ':' || uname[i] == '\n')
             buf[i] = '_';
         else
