@@ -56,7 +56,7 @@ livelog_write_event(const char *buffer) {
     }
     livelog_write_string(msgprintf("version=%d.%d.%d:player=%s:charname=%s:"
                                    "turns=%1d:depth=%1d:%s:eventdate=%ld:"
-                                   "uid=%d,role=%s:race=%s:gender=%s:"
+                                   "uid=%d:role=%s:race=%s:gender=%s:"
                                    "align=%s:birthdate=%ld:"
                                    "starttime=%" PRIdLEAST64 ":"
                                    "eventtime=%" PRIdLEAST64 ":"
