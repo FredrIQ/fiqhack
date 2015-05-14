@@ -2029,6 +2029,8 @@ extern void makewish(void);
 
 /* ### livelog.c ### */
 extern void livelog_write_event(const char *);
+extern void livelog_wish(const char *);
+extern void livelog_flubbed_wish(const char *, const struct obj *);
 extern void livelog_unique_monster(const struct monst *);
 
 #endif /* EXTERN_H */

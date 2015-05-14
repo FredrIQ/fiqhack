@@ -4246,6 +4246,7 @@ retry:
             goto retry;
         pline("That's enough tries!");
         otmp = readobjnam(NULL, NULL, TRUE);
+        livelog_flubbed_wish(origbuf, otmp);
         if (!otmp)
             return;     /* for safety; should never happen */
     } else if (otmp == &nothing) {
@@ -4253,8 +4254,12 @@ retry:
         /* explicitly wished for "nothing", presumeably attempting to retain
            wishless conduct */
         return;
-    } else
-        historic_event(FALSE, TRUE, "wished for \"%s\".", origbuf);
+    } else {
+        /* Don't have historic_event livelog the wishes for us, because we want
+           to special-case them to use different fields. */
+        historic_event(FALSE, FALSE, "wished for \"%s\".", origbuf);
+        livelog_wish(origbuf);
+    }
 
     /* KMH, conduct */
     break_conduct(conduct_wish);

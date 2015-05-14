@@ -11,6 +11,24 @@
 #include <inttypes.h>
 
 void livelog_write_string(const char *);
+static void munge_llstring(char *, const char *, int);
+
+#define ENTRYSIZE 99
+
+static void
+munge_llstring(char *dest, const char *src, int n)
+{
+    int i;
+    for (i = 0; i < (n - 1) && src[i] != '\0'; i++) {
+        if (src[i] == ':' || src[i] == '\n')
+            dest[i] = '_';
+        else
+            dest[i] = src[i];
+    }
+    dest[i] = '\0';
+    return;
+}
+
 
 /* The original livelog patch has achieve() stuff here, but we're
  * going to skip that and use the historic_event mechanism instead. */
@@ -19,6 +37,7 @@ void livelog_write_string(const char *);
 void
 livelog_write_string(const char *buffer) {
     FILE* livelogfile;
+    
     int fd = open_datafile(LIVELOG,
                            O_CREAT | O_APPEND | O_WRONLY,
                            SCOREPREFIX);
@@ -36,24 +55,16 @@ livelog_write_string(const char *buffer) {
     }
 }
 
-#define ENTRYSIZE 99
-
 void
 livelog_write_event(const char *buffer) {
     const char *uname;
     uname = nh_getenv("NH4SERVERUSER");
     char buf[ENTRYSIZE + 1];
-    int i;
     if (!uname)
         uname = nh_getenv("USER");
     if (!uname)
         uname = "";
-    for (i = 0; i < ENTRYSIZE && uname[i] != '\0'; i++) {
-        if (uname[i] == ':' || uname[i] == '\n')
-            buf[i] = '_';
-        else
-            buf[i] = uname[i];
-    }
+    munge_llstring(buf, uname, ENTRYSIZE + 1);
     livelog_write_string(msgprintf("version=%d.%d.%d:player=%s:charname=%s:"
                                    "turns=%1d:depth=%1d:%s:eventdate=%ld:"
                                    "uid=%d:role=%s:race=%s:gender=%s:"
@@ -67,7 +78,7 @@ livelog_write_event(const char *buffer) {
                                    urole.filecode, urace.filecode,
                                    genders[u.ufemale].filecode,
                                    aligns[1 - u.ualign.type].filecode,
-                                   (unsigned long)u.ubirthday,
+                                   (unsigned long)yyyymmdd(u.ubirthday) ,
                                    ((int_least64_t)u.ubirthday / 1000000L),
                                    ((int_least64_t)utc_time() / 1000000L),
                                    u.ulevel, (flags.debug ? "debug" :
@@ -75,6 +86,24 @@ livelog_write_event(const char *buffer) {
                                               flags.setseed ? "setseed" :
                                               (flags.polyinit_mnum != -1) ?
                                               "polyinit" : "normal")));
+}
+
+void
+livelog_wish(const char *wishstring)
+{
+    char buf[ENTRYSIZE + 1];
+    munge_llstring(buf, wishstring, ENTRYSIZE + 1);
+    livelog_write_event(msgprintf("type=wish:wish_count=%d:wish=%s",
+                                  (u.uconduct[conduct_wish] + 1), wishstring));
+}
+
+void livelog_flubbed_wish(const char *wishstring, const struct obj *result)
+{
+    char buf[ENTRYSIZE + 1];
+    munge_llstring(buf, wishstring, ENTRYSIZE + 1);
+    livelog_write_event(msgprintf("type=flubbedwish:wish_count=%d:wish=%s:result=%s",
+                                  (u.uconduct[conduct_wish] + 1), wishstring,
+                                  aobjnam(result, NULL)));
 }
 
 void
