@@ -132,7 +132,7 @@ hist_lev_name(const d_level * l, boolean in_or_on)
     else if (Is_earthlevel(l))
         hlnbuf = "on the Plane of Earth";
     else if (Is_knox(l))
-        hlnbuf = "in Fort Knox";
+        hlnbuf = "in Fort Ludios";
     else if (Is_stronghold(l))
         hlnbuf = "in The Castle";
     else if (Is_valley(l))
