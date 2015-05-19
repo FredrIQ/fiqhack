@@ -135,7 +135,7 @@ mon_regen(struct monst *mon, boolean digest_meal)
 static int
 disturb(struct monst *mtmp)
 {
-    /* 
+    /*
      * + Ettins are hard to surprise.
      * + Nymphs, jabberwocks, and leprechauns do not easily wake up.
      *
@@ -490,7 +490,7 @@ toofar:
         /* note that most of the time castmu() will pick a directed spell and
            do nothing, so the monster moves normally */
         /* arbitrary distance restriction to keep monster far away from you
-           from having cast dozens of sticks-to-snakes or similar spells by the 
+           from having cast dozens of sticks-to-snakes or similar spells by the
            time you reach it */
         if (dist2(mtmp->mx, mtmp->my, u.ux, u.uy) <= 49 && !mtmp->mspec_used) {
             const struct attack *a;
@@ -734,7 +734,7 @@ m_move(struct monst *mtmp, int after)
             STRAT_GOALY(mtmp->mstrategy);
         struct monst *intruder = m_at(level, tx, ty);
 
-        /* 
+        /*
          * if there's a monster on the object or in possession of it,
          * attack it.
          */
@@ -778,6 +778,10 @@ not_special:
     /* Work out where the monster is aiming, from strategy(). */
     omx = mtmp->mx;
     omy = mtmp->my;
+
+    if (!isok(omx, omy))
+        panic("monster AI run with an off-level monster: %s (%d, %d)",
+              k_monnam(mtmp), omx, omy);
 
     if (mtmp->mstrategy & (STRAT_TARGMASK | STRAT_ESCAPE)) {
         gx = STRAT_GOALX(mtmp->mstrategy);
@@ -1407,4 +1411,3 @@ can_ooze(struct monst *mtmp)
 }
 
 /*monmove.c*/
-
