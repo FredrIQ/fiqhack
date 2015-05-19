@@ -1,5 +1,5 @@
 About this document:
-Last modified by Alex Smith, 2015-02-03
+Last modified by Alex Smith, 2015-05-19
 
 Copyright (C) 2015 Alex Smith.
 
@@ -150,9 +150,10 @@ the individual tasks, as listed here).
   * (1/A) Monster recovery from confusion and stun.
 
   * (AI) Monster teleport-at-will while fleeing.  The player equivalent of
-    this is a 1/A; however, the monster version costs it the action and only
-    triggers while fleeing, so this appears to be a (very) simple AI for the
-    equivalent of a control-T.  It runs with 1/40 probability.
+    this is a 1/A (actually 1/turn); however, the monster version costs it the
+    action and only triggers while fleeing, so this appears to be a (very)
+    simple AI for the equivalent of a control-T.  It runs with 1/40
+    probability.
 
   * (AI) `m_respond` (continue/abort-style, but the only abort reason is the
     death of the monster).  `m_respond` generally is used for free actions
@@ -293,8 +294,8 @@ out into a separate function.  It determines a square to move to as follows:
     In NetHack 3.4.3, monsters aim away from the player if they're fleeing, or
     a leprechaun that's richer than the player; and the goal square is the
     player, the player's displaced image, or an adjacent location if the
-    player is invisible.  Monster don't aim towards or away from the player if
-    the monster is a peaceful non-shopkeeper, or blind, or the player is
+    player is invisible.  Monsters don't aim towards or away from the player
+    if the monster is a peaceful non-shopkeeper, or blind, or the player is
     hiding, or the monster should be able to see the player but can't due to
     invisibility (and a 10/11 chance happens and the monster is within 6
     spaces).
@@ -320,7 +321,11 @@ out into a separate function.  It determines a square to move to as follows:
 
     In both versions, bats, stalkers and lights have a 1 in 3 chance to not
     move towards or away from their goal square; and confused and engulfing
-    monsters never move towards or away from their goal squares.
+    monsters never move towards or away from their goal squares.  (This means
+    that monster confusion isn't implemented as randomizing directions, but
+    rather, giving the monster no reason to prefer any direction to any other;
+    the monster thus chooses a random direction to move in, rather than
+    choosing an appropriate direction and then having it randomized.)
 
   * The AI then determines whether the monster will consider picking up items.
     It won't if it's peaceful (unless a 10% chance happens), or on the Rogue
