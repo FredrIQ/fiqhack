@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-19 */
+/* Last modified by Alex Smith, 2015-05-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1120,7 +1120,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                   "brags about the goods some dungeon explorer provided" :
                   "makes some remarks about how difficult theft is lately");
             if (!tele_restrict(mtmp))
-                rloc(mtmp, FALSE);
+                rloc(mtmp, TRUE);
             return 3;
         } else if (mtmp->mcan) {
             if (!Blind) {
@@ -1131,7 +1131,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
             }
             if (rn2(3)) {
                 if (!tele_restrict(mtmp))
-                    rloc(mtmp, FALSE);
+                    rloc(mtmp, TRUE);
                 return 3;
             }
             break;
@@ -1147,7 +1147,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                 break;
             default:
                 if (!is_animal(mtmp->data) && !tele_restrict(mtmp))
-                    rloc(mtmp, FALSE);
+                    rloc(mtmp, TRUE);
                 if (is_animal(mtmp->data) && *buf) {
                     if (canseemon(mtmp))
                         pline("%s tries to %s away with %s.", Monnam(mtmp),
@@ -1256,7 +1256,7 @@ hitmu(struct monst *mtmp, const struct attack *mattk)
                 return 2;
             } else if (!rn2(33)) {
                 if (!tele_restrict(mtmp))
-                    rloc(mtmp, FALSE);
+                    rloc(mtmp, TRUE);
                 monflee(mtmp, dice(3, 6), TRUE, FALSE);
                 return 3;
             }
@@ -2106,7 +2106,7 @@ doseduce(struct monst *mon)
         verbalize("You're such a %s; I wish...",
                   u.ufemale ? "sweet lady" : "nice guy");
         if (!tele_restrict(mon))
-            rloc(mon, FALSE);
+            rloc(mon, TRUE);
         return 1;
     }
     if (u.ualign.type == A_CHAOTIC)
@@ -2224,7 +2224,7 @@ doseduce(struct monst *mon)
     if (!rn2_on_rng(25, rng_foocubus_results))
         mon->mcan = 1;  /* monster is worn out */
     if (!tele_restrict(mon))
-        rloc(mon, FALSE);
+        rloc(mon, TRUE);
     return 1;
 }
 
