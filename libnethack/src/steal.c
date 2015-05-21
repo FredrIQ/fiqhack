@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-10 */
+/* Last modified by Alex Smith, 2015-05-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -70,7 +70,7 @@ stealgold(struct monst *mtmp)
               Monnam(mtmp), makeplural(body_part(FOOT)));
         if (!ygold || !rn2(5)) {
             if (!tele_restrict(mtmp))
-                rloc(mtmp, FALSE);
+                rloc(mtmp, TRUE);
             monflee(mtmp, 0, FALSE, FALSE);
         }
     } else if (ygold) {
@@ -85,7 +85,7 @@ stealgold(struct monst *mtmp)
         add_to_minv(mtmp, ygold);
         pline("Your purse feels lighter.");
         if (!tele_restrict(mtmp))
-            rloc(mtmp, FALSE);
+            rloc(mtmp, TRUE);
         monflee(mtmp, 0, FALSE, FALSE);
     }
 }
@@ -383,7 +383,7 @@ stealamulet(struct monst *mtmp)
         mpickobj(mtmp, otmp);   /* may merge and free otmp */
         pline("%s stole %s!", Monnam(mtmp), doname(otmp));
         if (can_teleport(mtmp->data) && !tele_restrict(mtmp))
-            rloc(mtmp, FALSE);
+            rloc(mtmp, TRUE);
     }
 }
 

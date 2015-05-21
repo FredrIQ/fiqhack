@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Alex Smith, 2015-05-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -383,6 +383,7 @@ minliquid(struct monst *mtmp)
     }
 
     if (inlava) {
+        boolean alive_means_lifesaved = TRUE;
         /*
          * Lava effects much as water effects. Lava likers are able to
          * protect their stuff. Fire resistant monsters can only protect
@@ -401,12 +402,20 @@ minliquid(struct monst *mtmp)
                     if (cansee(mtmp->mx, mtmp->my))
                         pline("%s surrenders to the fire.", Monnam(mtmp));
                     mondead(mtmp);
-                } else if (cansee(mtmp->mx, mtmp->my))
-                    pline("%s burns slightly.", Monnam(mtmp));
+                } else {
+                    alive_means_lifesaved = FALSE;
+                    if (cansee(mtmp->mx, mtmp->my))
+                        pline("%s burns slightly.", Monnam(mtmp));
+                }
             }
             if (mtmp->mhp > 0) {
                 fire_damage(mtmp->minvent, FALSE, FALSE, mtmp->mx, mtmp->my);
-                rloc(mtmp, FALSE);
+                if (alive_means_lifesaved) {
+                    rloc(mtmp, TRUE);
+                    /* Analogous to player case: if we have nowhere to place the
+                       monster, it ends up back in the lava, and dies again */
+                    minliquid(mtmp);
+                }
                 return 0;
             }
             return 1;
@@ -428,8 +437,9 @@ minliquid(struct monst *mtmp)
             }
             mondead(mtmp);
             if (mtmp->mhp > 0) {
-                rloc(mtmp, FALSE);
+                rloc(mtmp, TRUE);
                 water_damage_chain(mtmp->minvent, FALSE);
+                minliquid(mtmp);
                 return 0;
             }
             return 1;

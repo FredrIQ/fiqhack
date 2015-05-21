@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-30 */
+/* Last modified by Alex Smith, 2015-05-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -935,7 +935,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
                in the suddenly disappears message */
 
             mdef->mstrategy &= ~STRAT_WAITFORU;
-            rloc(mdef, FALSE);
+            rloc(mdef, TRUE);
             if (vis && !canspotmon(mdef) && mdef != u.usteed)
                 pline("%s suddenly disappears!", mdef_Monnam);
         }
@@ -1055,7 +1055,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             pline("%s steals some gold from %s.", magr_Monnam, mon_nam(mdef));
 
         if (!tele_restrict(magr)) {
-            rloc(magr, FALSE);
+            rloc(magr, TRUE);
             if (vis && !canspotmon(magr))
                 pline("%s suddenly disappears!", magr_Monnam);
         }
@@ -1120,7 +1120,7 @@ mdamagem(struct monst *magr, struct monst *mdef, const struct attack *mattk)
             if (mdef->mhp <= 0)
                 return (MM_DEF_DIED | (grow_up(magr, mdef) ? 0 : MM_AGR_DIED));
             if (magr->data->mlet == S_NYMPH && !tele_restrict(magr)) {
-                rloc(magr, FALSE);
+                rloc(magr, TRUE);
                 if (vis && !canspotmon(magr))
                     pline("%s suddenly disappears!", magr_Monnam);
             }

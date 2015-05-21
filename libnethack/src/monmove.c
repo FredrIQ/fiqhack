@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Alex Smith, 2015-05-19 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -135,7 +135,7 @@ mon_regen(struct monst *mon, boolean digest_meal)
 static int
 disturb(struct monst *mtmp)
 {
-    /* 
+    /*
      * + Ettins are hard to surprise.
      * + Nymphs, jabberwocks, and leprechauns do not easily wake up.
      *
@@ -311,7 +311,7 @@ dochug(struct monst *mtmp)
     /* some monsters teleport */
     if (mtmp->mflee && !rn2(40) && can_teleport(mdat) && !mtmp->iswiz &&
         !level->flags.noteleport) {
-        rloc(mtmp, FALSE);
+        rloc(mtmp, TRUE);
         return 0;
     }
     if (mdat->msound == MS_SHRIEK && !um_dist(mtmp->mx, mtmp->my, 1))
@@ -361,7 +361,7 @@ dochug(struct monst *mtmp)
             if (is_demon(youmonst.data)) {
                 /* "Good hunting, brother" */
                 if (!tele_restrict(mtmp))
-                    rloc(mtmp, FALSE);
+                    rloc(mtmp, TRUE);
             } else {
                 mtmp->minvis = mtmp->perminvis = 0;
                 /* Why? For the same reason in real demon talk */
@@ -490,7 +490,7 @@ toofar:
         /* note that most of the time castmu() will pick a directed spell and
            do nothing, so the monster moves normally */
         /* arbitrary distance restriction to keep monster far away from you
-           from having cast dozens of sticks-to-snakes or similar spells by the 
+           from having cast dozens of sticks-to-snakes or similar spells by the
            time you reach it */
         if (dist2(mtmp->mx, mtmp->my, u.ux, u.uy) <= 49 && !mtmp->mspec_used) {
             const struct attack *a;
@@ -734,7 +734,7 @@ m_move(struct monst *mtmp, int after)
             STRAT_GOALY(mtmp->mstrategy);
         struct monst *intruder = m_at(level, tx, ty);
 
-        /* 
+        /*
          * if there's a monster on the object or in possession of it,
          * attack it.
          */
@@ -764,7 +764,7 @@ m_move(struct monst *mtmp, int after)
     if (ptr == &mons[PM_TENGU] && !rn2(5) && !mtmp->mcan &&
         !tele_restrict(mtmp)) {
         if (mtmp->mhp < 7 || mtmp->mpeaceful || rn2(2))
-            rloc(mtmp, FALSE);
+            rloc(mtmp, TRUE);
         else
             mnexto(mtmp);
         mmoved = 1;
@@ -778,6 +778,10 @@ not_special:
     /* Work out where the monster is aiming, from strategy(). */
     omx = mtmp->mx;
     omy = mtmp->my;
+
+    if (!isok(omx, omy))
+        panic("monster AI run with an off-level monster: %s (%d, %d)",
+              k_monnam(mtmp), omx, omy);
 
     if (mtmp->mstrategy & (STRAT_TARGMASK | STRAT_ESCAPE)) {
         gx = STRAT_GOALX(mtmp->mstrategy);
@@ -1005,7 +1009,7 @@ not_special:
 
     } else {
         if (is_unicorn(ptr) && rn2(2) && !tele_restrict(mtmp)) {
-            rloc(mtmp, FALSE);
+            rloc(mtmp, TRUE);
             return 1;
         }
         if (mtmp->wormno)
@@ -1407,4 +1411,3 @@ can_ooze(struct monst *mtmp)
 }
 
 /*monmove.c*/
-
