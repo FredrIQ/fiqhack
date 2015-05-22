@@ -481,10 +481,11 @@ Show the full documentation for aimake.
 
 Show the license/copyright information for aimake.
 
-=item B<--no-carriage-return>
+=item B<--absent-terminal>
 
-Don't use carriage returns to provide progress information.  (This is mostly
-only useful if stdout is not a terminal).
+Don't assume that whatever is connected to stdout supports any control codes
+but newline (not even carriage return).  (This is mostly only useful if stdout
+is not a terminal).
 
 =item B<--nonempty-directory>
 
@@ -519,10 +520,6 @@ It is possible to specify a subset of the statefile to dump as a
 comma-separated sequence of keys (e.g. 'xuse_by_object,config_option:libdir').
 On large projects, this is considerably faster than dumping the entire
 statefile if you are only interested in a small portion of it.
-
-This option is currently not particularly useful, because the statefile is
-stored in a compressed format in memory in order to save memory, and this
-option does not currently decompress it.  This may change in the future.
 
 =item B<--profile>
 
@@ -4147,7 +4144,9 @@ my %unintern;
 sub intern ($) {
     my $i = $state->{_intern}{$_[0]};
     $i and return $i;
-    $i = $state->{_intern_number} = defined_or($state->{_intern_number}, 0) + 1;
+    # Note: start _intern_number high enough that it doesn't interfere with, say,
+    # the use of 1 as a boolean
+    $i = $state->{_intern_number} = defined_or($state->{_intern_number}, 100) + 1;
     $state->{_intern}{$_[0]} = $i;
     $unintern{$i} = $_[0];
     return $i;
@@ -4155,6 +4154,29 @@ sub intern ($) {
 sub unintern ($) {
     return $unintern{$_[0]};
 }
+
+# Note: modifies the first argument in-place exploiting @_ alias behaviour
+# A little obscure, but easier to read than the other versions I tried
+sub recursive_unintern;
+sub recursive_unintern {
+    defined $_[0] or return;
+    if (!ref $_[0]) {
+        my $u = unintern $_[0];
+        defined $u and $_[0] = $u;
+    } elsif (ref $_[0] eq 'ARRAY') {
+        recursive_unintern $_ for @{$_[0]};
+    } elsif (ref $_[0] eq 'HASH') {
+        for my $k (keys %{$_[0]}) {
+            recursive_unintern $_[0]{$k};
+            my $u = unintern $k;
+            if (defined $u) {
+                $_[0]{$u} = $_[0]{$k};
+                delete $_[0]{$k};
+            }
+        }
+    }
+}
+
 
 # We don't want the statefile to grow indefinitely due to unused strings. So
 # find unused strings, and remove them from _intern. This is done by copying
@@ -8080,7 +8102,7 @@ GetOptions('verbose|v:+' => \$opt_verbose,
            'profile' => \$opt_profile,
            'dump-status:s' => \$opt_dump,
            'show-warnings|W=s' => \@opt_warnings,
-           'no-carriage-return' => \$opt_nocr,
+           'absent-terminal' => \$opt_nocr,
            'nonempty-directory' => \$opt_nonempty_directory,
            'documentation' => \$opt_documentation,
            'directory-layout=s' => \$opt_dlayout,
@@ -8160,7 +8182,15 @@ if (defined $opt_dump) {
         $Data::Dumper::Deepcopy = 1; # don't use cross-references
         $Data::Dumper::Terse = 1;    # don't prefix '$VAR1 = '
         my @path = split /,/, $opt_dump;
-        my $subset = $state;
+
+        # So as to make the dump easier (i.e. possible) to read, undo all
+        # the string interning; note that recursive_unintern changes the
+        # arrayrefs and hashrefs that make up its argument directly, so we
+        # need to dclone first
+        my $subset = dclone $state;
+        recursive_unintern $subset;
+        delete $subset->{_intern};
+
         for my $key (@path) {
             if (defined_or(ref $subset, 'undef') eq 'HASH') {
                 if (exists $subset->{$key}) {
@@ -8251,12 +8281,15 @@ our $pointerbits = $Config{ptrsize} * 8;
 $exeext eq '' and $exeext = '.bin';
 our $dllext =       {MSWin32 => '.dll',
                      linux   => '.so',
+                     freebsd => '.so',
                      darwin  => '.dylib'}->{$os_parsed};
 our $impext =       {MSWin32 => '.dll.a', # MinGW uses this
                      linux   => '.so',
+                     freebsd => '.so',
                      darwin  => '.dylib'}->{$os_parsed};
 our $symbolprefix = {MSWin32 => '',
                      linux   => '',
+                     freebsd => '_',
                      darwin  => '_'}->{$os_parsed};
 $configsafe->share('$libext', '$objext', '$exeext', '$dllext', '$impext',
                    '$symbolprefix', '$pointerbits', '$longrandomstring',
@@ -8470,9 +8503,21 @@ atomically {
 # -S is not also given. However, if we can create the directory, it isn't
 # unwritable. (And if it is writable, it clearly already exists.) This creates
 # the install directory early, but that's not a problem if we're installing.
+my $transformed_ipath = destdir_transform $ipath;
 if ($installing && !defined $opt_elevate_permissions &&
     !-w (aipath2ospath $ipath)) {
-    ensure_directory $ipath, 0, 1, 1 or $installing = 0;
+    ensure_directory $transformed_ipath, 0, 1, 1 or $installing = 0;
+}
+
+# Complain and exit if -S or --install-only were specified, but we're
+# nonetheless failing to install.
+if ((defined $opt_elevate_permissions || defined $opt_install_only) &&
+    !$installing) {
+    die "Cannot obey the requested install options: -S and --install-only " .
+        "are useful only when installing, but the install path '" .
+        (aipath2ospath $transformed_ipath) .
+        "' is not writable and cannot be created " .
+        "(a combination which normally causes aimake to skip the install)";
 }
 
 # Directory options need substitutions.
@@ -8885,6 +8930,7 @@ MAINLOOP: while (1) {
                 $rebuild_late_locked = 0;
                 mark_object_sure 'parse_configuration sys:no_object',
                     'sys:rebuild_late', 'unlocking rebuild_late';
+                progress_report 3, "Moving to rebuild_late phase...";
                 $find_another = 1;
                 %unlikely_runnable = (%unlikely_runnable, %not_runnable_yet);
                 %not_runnable_yet = ();
@@ -8892,6 +8938,7 @@ MAINLOOP: while (1) {
                 $installing_locked = 0;
                 mark_object_sure 'parse_configuration sys:no_object',
                     'sys:installing', 'unlocking install';
+                progress_report 3, "Moving to install phase...";
                 $find_another = 1;
                 %unlikely_runnable = (%unlikely_runnable, %not_runnable_yet);
                 %not_runnable_yet = ();
@@ -8923,6 +8970,8 @@ MAINLOOP: while (1) {
                 $not_runnable_yet{$curpair} = 1;
                 delete $likely_runnable{$curpair};
                 $find_another = 1;
+                progress_report 3,
+                    "Pair '$curpair' is unsure: not installing yet.";
             } else {
                 charge_profiled_time_to('Looking for a rule to run');
                 if (!$state->{outdep_by_pair}{$icurpair} &&
@@ -8969,6 +9018,7 @@ MAINLOOP: while (1) {
                     %unlikely_runnable =
                         (%unlikely_runnable, %not_runnable_yet);
                     %not_runnable_yet = ();
+                    progress_report 3, "Pair '$curpair' is sure.";
                 } else {
                     $not_runnable_yet{$curpair} = 1;
                     delete $likely_runnable{$curpair};
@@ -8978,8 +9028,15 @@ MAINLOOP: while (1) {
                     # just try that one next, if it happens to be a changed
                     # pair.
                     my $ilikely_pair = $iunsure_list->[-1];
-                    $state->{changed_pairs}{$ilikely_pair} and
-                        prioritize_pair unintern $ilikely_pair;
+                    if ($state->{changed_pairs}{$ilikely_pair}) {
+                        my $likely_pair = unintern $ilikely_pair;
+                        progress_report 3, "Pair '$curpair' is unsure: " .
+                            "blocked by '$likely_pair'";
+                        prioritize_pair $likely_pair;
+                    } else {
+                        progress_report 3, "Pair '$curpair' is unsure, ".
+                            "for an unknown reason.";
+                    }
                 }
                 charge_profiled_time_to("Rule '$rulename': sureness");
             }
@@ -11358,7 +11415,7 @@ EOF
             command => ['intcmd:assert_equal',
                         'optstring:linux', "optstring:$os_parsed"],
             hide_errors => 1,
-            output => ['optionset:os_linux', 'optionset:os_osx_linux'],
+            output => ['optionset:os_linux', 'optionset:os_posix'],
             outdepends => [],
         },
         os_detect_windows => {
@@ -11372,7 +11429,14 @@ EOF
             command => ['intcmd:assert_equal',
                         'optstring:darwin', "optstring:$os_parsed"],
             hide_errors => 1,
-            output => ['optionset:os_osx', 'optionset:os_osx_linux'],
+            output => ['optionset:os_osx', 'optionset:os_posix'],
+            outdepends => [],
+        },
+        os_detect_freebsd=> {
+            command => ['intcmd:assert_equal',
+                        'optstring:freebsd', "optstring:$os_parsed"],
+            hide_errors => 1,
+            output => ['optionset:os_freebsd', 'optionset:os_posix'],
             outdepends => [],
         },
 
@@ -11476,18 +11540,18 @@ EOF
             avoid_built_from => "extend:$impext:",
         },
 
-        osx_linux_cflags => {
-            command => ['intcmd:nop', 'optionset:os_osx_linux'],
+        posix_cflags => {
+            command => ['intcmd:nop', 'optionset:os_posix'],
             output => ['optionset:AM_CFLAGS', 'optionset:AM_CXXFLAGS'],
             outdepends => 'optstring:-fvisibility=hidden',
         },
-        osx_linux_lflags => {
-            command => ['intcmd:nop', 'optionset:os_osx_linux'],
+        posix_lflags => {
+            command => ['intcmd:nop', 'optionset:os_posix'],
             output => 'optionset:AM_LFLAGS',
             outdepends => 'optstring:-rdynamic',
         },
-        osx_linux_headerlines => {
-            command => ['intcmd:nop', 'optionset:os_osx_linux'],
+        posix_headerlines => {
+            command => ['intcmd:nop', 'optionset:os_posix'],
             output => 'optionset:aimake_header_lines',
             outdepends => 'optstring:' .
                 '#_ifndef_AIMAKE\\_OVERRIDE\\_DEFINES ' .
