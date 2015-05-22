@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2013-12-31 */
+/* Last modified by Alex Smith, 2015-05-22 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -25,7 +25,7 @@
 # include <windows.h>
 #endif
 
-#ifdef AIMAKE_BUILDOS_linux
+#if defined(AIMAKE_BUILDOS_linux) || defined(AIMAKE_BUILDOS_freebsd)
 # define DLLEXT ".so"
 #else
 # ifdef AIMAKE_BUILDOS_MSWin32
@@ -48,7 +48,8 @@ static void *plugin_handles[MAX_PLUGINS];
 static void
 unload_handle(void *handle)
 {
-#if defined(AIMAKE_BUILDOS_linux) || defined(AIMAKE_BUILDOS_darwin)
+#if defined(AIMAKE_BUILDOS_linux) || defined(AIMAKE_BUILDOS_darwin) || \
+    defined(AIMAKE_BUILDOS_freebsd)
     dlclose(handle);
 #else
 # ifdef AIMAKE_BUILDOS_MSWin32
@@ -99,7 +100,8 @@ uncursed_load_plugin(const char *plugin_name)
     strcat(fname, plugin_name);
     strcat(fname, DLLEXT);
 
-#if defined(AIMAKE_BUILDOS_linux) || defined(AIMAKE_BUILDOS_darwin)
+#if defined(AIMAKE_BUILDOS_linux) || defined(AIMAKE_BUILDOS_darwin) || \
+    defined(AIMAKE_BUILDOS_freebsd)
 
     /* dlopen() uses much the same search path rules as ld.so, so this will
        look for the plugins in the rpath, which includes the libdir where they
