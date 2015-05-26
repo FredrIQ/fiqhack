@@ -52,7 +52,9 @@ wish_available(int percentchance, int *dieroll)
     if (!dieroll)
         dieroll = &unused;
 
-    switch (percentchance) {
+    /* Negative probabilities are allowed because it keeps dowaterdemon
+       simple while not changing its behavior relative to 3.4.3 */
+    switch ((percentchance < 0) ? 0 : percentchance) {
     case 0: case 1:
         *dieroll = rn2(100);
         return FALSE;
