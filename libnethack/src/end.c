@@ -90,7 +90,7 @@ add_killer_notes(int how, boolean carried, const char *killer) {
             already_helpless = TRUE;
         }
 
-    if (Unchanging && (u.mh < 1))
+    if (Unchanging && (u.mh < 1) && Upolyd)
         killer = msgcat(killer, ", while stuck in monster form");
 
     if (carried & 0x0001UL) /* real Amulet of Yendor */
