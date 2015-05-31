@@ -2112,11 +2112,13 @@ overview_print_gods(const struct overview_info *oi)
     }
     for (i = 0; i < num_gods; i++) {
         buf = msgcat(buf, god_names[i]);
-        if (i < num_gods - 1 && num_gods > 2)
-            buf = msgcat(buf, ",");
-        buf = msgcat(buf, " ");
-        if (i == num_gods - 2)
-            buf = msgcat(buf, "and ");
+        if (i < num_gods - 1) {
+            if (num_gods > 2)
+                buf = msgcat(buf, ",");
+            if (i == num_gods - 2)
+                buf = msgcat(buf, " and");
+            buf = msgcat(buf, " ");
+        }
     }
     return buf;
 }

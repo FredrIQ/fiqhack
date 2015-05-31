@@ -1357,7 +1357,7 @@ static const char *plurals_dictionary[][2] = {
     {"manes", "manes"},
     {"ki-rin", "ki-rin"},
     {"Nazgul", "Nazgul"},
-    {"gunoyki", "gunyoki"},
+    {"gunyoki", "gunyoki"},
     {"shuriken", "shuriken"},
 
     /* Irregular endings */
