@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-25 */
+/* Last modified by Alex Smith, 2015-05-31 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1419,16 +1419,62 @@ rndmonst_inner(const d_level *dlev, char class, int flags, enum rng rng)
 
         /* Rejection probabilities. */
 
-        /* Each monster has a frequency ranging from 0 to 5. This can be
-           adjusted via the comparative alignment of the monster and branch
-           (potentially bringing a frequency of 0 up into the positives). It can
-           also be adjusted by out-of-depthness, if we turned off the OOD check
-           using flags & G_INDEPTH; this increases frequency of in-depth or
-           excessively weak monsters by 1, and halves the frequency of
-           out-of-depth monsters (which is my best estimation of what NitroHack
-           is doing). Take care not to generate probability-0 monsters on a
-           nonaligned level (we don't want to give them the +1 boost for being
-           in-depth). */
+        /*
+         * Each monster has a frequency ranging from 0 to 5. This can be
+         * adjusted via the comparative alignment of the monster and branch
+         * (potentially bringing a frequency of 0 up into the positives).
+         *
+         * It can also be adjusted by out-of-depthness, if we turned off the OOD
+         * check using flags & G_INDEPTH. The rules for this from 3.4.3 are:
+         *
+         * - Calculate the total frequency of all legal monsters. For each
+         *   discrete monster strength band that would be out of depth at half
+         *   the current dungeon level, there's a 50% chance of rejecting all
+         *   monsters in that band or deeper bands. (For example, suppose you're
+         *   in the Mines and want to generate an 'h', and the cutoff for being
+         *   in-depth is between "dwarf king" and "mind flayer". There's a 50%
+         *   chance that the total frequency stops at "dwarf king", 25% chance
+         *   that it stops at "mind flayer", and a 25% chance that all
+         *   possibilities are included.
+         *
+         * - There's then a second out-of-depthness test on each monster. The
+         *   monster is considered out of depth on the new test if its adjusted
+         *   generation strength is more than twice your experience level.
+         *   Adjusted generation depth is the monster's generation depth, plus
+         *   one quarter the difference between the generation depth and the
+         *   player's level (or -1 if out of depth), plus one fifth the
+         *   difference between the generation depth and the actual depth; being
+         *   deeper in the dungeon or a higher level raises generation strength.
+         *   In other words, we're testing g + (x-g)/4 + (d-g) / 5 > 2*x, i.e.
+         *   (11/20)*g + d/5 > (7/4)*x, or (with integers) 11*g > 35*x - 4*d; if
+         *   the monster is out of depth, d is effectively locked to g-4, so
+         *   we're instead testing 11*g > 35*x - 4*(g-4) or 7*g > 35*x + 16,
+         *   which is approximately g > 5*x + 2. If this test passes, the
+         *   frequency of the monster is increased by 1, without changing the
+         *   total, i.e. its frequency is stolen from the most difficult monster
+         *   that could otherwise generate (bearing in mind the rejection chance
+         *   seen earlier, and frequency stolen by easier monsters).
+         *
+         * It should be reasonably clear that the second check is unlikely to
+         * pass except in protection racket games; for example, it doesn't
+         * matter on the most difficult 'h' monster (the master mind flayer),
+         * and the regular mind flayer (the second most difficult 'h') has a
+         * generation depth of 9, meaning that it passes only if the player has
+         * an experience level of 1 (and has the effect of moving all the
+         * probability from master mind flayers to regular mind flayers. We thus
+         * use an overestimate for the second check for 4.3: we assume a monster
+         * is outright rejected if g > 5*x + 3 (i.e. some hypothetical easier
+         * monster could have g > 5*x + 2 and thus steal our probability), even
+         * if there's no actual monster to do the stealing or the monster isn't
+         * actually out of depth (and thus would use the formula that involves
+         * the dungeon level).
+         *
+         * This leaves us with the rejection chance from the first check. We'd
+         * need to know the strength band locations to match 3.4.3, but we can
+         * approximate as one strength band every 2 generation depths. Thus,
+         * every 2 strength bands that a monster is out of depth compared to
+         * half the dungeon level, we halve its probability.
+         */
         if (ptr && !(flags & G_FREQ)) {
             int genprob = geno & G_FREQ;
             int maxgenprob = 5;
@@ -1437,11 +1483,22 @@ rndmonst_inner(const d_level *dlev, char class, int flags, enum rng rng)
                 maxgenprob += 5;
             }
             if (flags & G_INDEPTH && genprob) {
-                maxgenprob++;
-                if (toostrong(mndx, maxmlev))
-                    genprob /= 2;
+                /* implement a rejection chance from the first check*/
+                int ood_distance = (int)monstr[mndx] - (int)maxmlev / 2;
+                if (ood_distance > 14)
+                    ood_distance = 14; /* avoid integer overflow problems */
+                if (ood_distance <= 0)
+                    {} /* no rejection chance */
+                else if (ood_distance == 1)
+                    maxgenprob = (maxgenprob * 3) / 2;
+                else if (ood_distance % 2)
+                    maxgenprob = (maxgenprob * 3) << ((ood_distance / 2) - 1);
                 else
-                    genprob++;
+                    maxgenprob <<= ood_distance / 2;
+
+                /* implement a hard rejection from the second check */
+                if (ptr->mlevel > 5*u.ulevel + 3)
+                    genprob = 0;
             }
             if (genprob <= rn2_on_rng(maxgenprob, rng))
                 ptr = NULL;                 /* failed monster frequency check */
