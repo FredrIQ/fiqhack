@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-23 */
+/* Last modified by Alex Smith, 2015-05-31 */
 /* Copyright (c) 2015 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -86,11 +86,10 @@ round_robin_test(unsigned long long seed, unsigned long long skip,
 
         char teststring[512];
         snprintf(teststring, sizeof teststring,
-                 "levelteleport,\"%d\",genesis,\"monsndx #%d\","
+                 "levelteleport,\"?\",genesis,\"monsndx #%d\","
                  "wish,\"Z - otyp #%d\",%s,wear,wield,fight,fight,cast,zap,"
                  "read,drink,fight,fight,wait,wait,%s,wait,wait,wait",
-                 (int)((seed + nt) % 50), mon, item + 1,
-                 testable_commands[cmd], testable_commands[cmd]);
+                 mon, item + 1, testable_commands[cmd], testable_commands[cmd]);
         (skipping ? skip_test_game : play_test_game)(teststring, verbose);
 
     continue_main_loop:;
