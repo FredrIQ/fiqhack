@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-24 */
+/* Last modified by Alex Smith, 2015-05-31 */
 /* Copyright (c) 2015 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -618,18 +618,16 @@ test_display_menu(struct nh_menulist *ml, const char *title,
     unsigned long long s = test_seed + testnumber;
     char picked_accel = 0;
     for (i = 0; i < ml->icount; i++) {
-        if (ml->items[i].id || ml->items[i].accel) {
+        if (ml->items[i].accel || ml->items[i].id) {
             /* It's selectable. This algorithm picks menu items in a way that's
                consistent for a given seed, and which is as stable as possible
-               against changes in the number of menu items. Unfortunately, it
-               rather breaks down when the number of items in the menu is very
-               large; hopefully that won't happen (if it does, we'll need to
-               recycle entropy in the high-order bits of s). */
-            if (!(s % pickchance)) {
+               against changes in the number of menu items. */
+            if (s % pickchance == 1 || !picked_accel) {
                 results = ml->items[i].id;
                 picked_accel = ml->items[i].accel;
             }
             s /= pickchance;
+            s += test_seed + testnumber * 101094863; /* recycle entropy */
             pickchance++;
         }
     }

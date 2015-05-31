@@ -1,12 +1,12 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-05-31 */
 /* Copyright (c) 2014 Alex Smith */
 /* NetHack may be freely redistributed.  See license for details. */
 
 /* This random number generator was newly designed by Alex Smith in order to get
-   around both practical issues (it bloated the save files), and legal issues
-   (the previously used RNG was licensed under LGPL2+, which is not compatible
-   with the NGPL).
+   around both practical issues with the old RNG (it bloated the save files),
+   and legal issues (the previously used RNG was licensed under LGPL2+, which is
+   not compatible with the NGPL).
 
    The SHA-256 code here is based on that from the NGPL AdeonRNG (as submitted
    to /dev/null/nethack), which was in turn based on that in the public domain
