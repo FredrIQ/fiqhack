@@ -627,7 +627,8 @@ test_display_menu(struct nh_menulist *ml, const char *title,
                 picked_accel = ml->items[i].accel;
             }
             s /= pickchance;
-            s += test_seed + testnumber * 101094863; /* recycle entropy */
+            /* recycle entropy */
+            s += test_seed + (unsigned long)testnumber * 101094863ULL;
             pickchance++;
         }
     }

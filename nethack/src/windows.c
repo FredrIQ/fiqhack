@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-04-01 */
+/* Last modified by Alex Smith, 2015-05-31 */
 /* Copyright (c) Daniel Thaler, 2011.                             */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -294,6 +294,9 @@ get_tileset_descriptions(int *count)
         else
             dir = tileprefix;
 
+        if (!*dir)
+            continue;
+
 #ifdef WIN32
         HANDLE dirp;
         WIN32_FIND_DATAA dp;
@@ -313,7 +316,8 @@ get_tileset_descriptions(int *count)
 #else
         DIR *dirp = opendir(dir);
         if (!dirp) /* If opendir fails, don't try to readdir */
-            return rv;
+            continue;
+
         struct dirent *dp;
         while ((dp = readdir(dirp)))
         {
