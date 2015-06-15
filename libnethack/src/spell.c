@@ -442,7 +442,9 @@ learn(void)
                amnesia made you forget the book */
             makeknown((int)booktype);
             break;
-        } else if (spellid(i) == NO_SPELL && i < first_unknown)
+        } else if (spellid(i) == NO_SPELL &&
+                   (i < first_unknown ||
+                    i == spellno_from_let(objects[booktype].oc_defletter)))
             first_unknown = i;
         else
             known_spells++;
@@ -1445,16 +1447,19 @@ initialspell(struct obj *obj)
 {
     int i;
 
-    for (i = 0; i < MAXSPELL; i++) {
-        if (spellid(i) == obj->otyp) {
+    for (i = -1; i < MAXSPELL; i++) {
+        int j = i;
+        if (i == -1)
+            j = spellno_from_let(objects[obj->otyp].oc_defletter);
+        if (spellid(j) == obj->otyp) {
             pline("Error: Spell %s already known.",
                   OBJ_NAME(objects[obj->otyp]));
             return;
         }
-        if (spellid(i) == NO_SPELL) {
-            spl_book[i].sp_id = obj->otyp;
-            spl_book[i].sp_lev = objects[obj->otyp].oc_level;
-            incrnknow(i);
+        if (spellid(j) == NO_SPELL) {
+            spl_book[j].sp_id = obj->otyp;
+            spl_book[j].sp_lev = objects[obj->otyp].oc_level;
+            incrnknow(j);
             return;
         }
     }
