@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-05-19 */
+/* Last modified by Alex Smith, 2015-06-15 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -574,7 +574,10 @@ tactics(struct monst *mtmp)
             mnearto(mtmp, level->upstair.sx, level->upstair.sy, TRUE);
         }
         if (distu(mtmp->mx, mtmp->my) > (BOLT_LIM * BOLT_LIM)) {
-            /* if you're not around, cast healing spells */
+            /* if you're not around, cast healing spells
+
+               TODO: experience shows that this is probably too weak with the
+               new covetous monster AI */
             if (mtmp->mhp <= mtmp->mhpmax - 8) {
                 mtmp->mhp += rnd(8);
                 return 1;

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-08 */
+/* Last modified by Alex Smith, 2015-06-15 */
 /* Copyright (c) Mike Threepoint, 1989.                           */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -788,7 +788,9 @@ const struct objclass const_objects[] = {
 #undef SCROLL
 
 /* spellbooks ... */
-#define SPELL(name,desc,sub,prob,delay,level,mgc,dir,color) OBJECT( \
+/* note: the number of "ordinary" spellbooks must not exceed
+   MAXSPELL-SPID_COUNT (otherwise we have problems assigning letters) */
+#define SPELL(name,desc,sub,prob,delay,level,mgc,dir,color) OBJECT(   \
         OBJ(name,desc), BITS(0,0,0,0,mgc,0,0,0,0,0,dir,sub,PAPER), 0, \
             SPBOOK_CLASS, prob, delay, \
             50, level*100, 0, 0, 0, level, 20, color )
