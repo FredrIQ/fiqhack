@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 use utf8;     # this source file is UTF-8
 use warnings;
 use strict;
