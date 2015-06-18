@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-02 */
+/* Last modified by Alex Smith, 2015-06-19 */
 /* Copyright (c) 2013 Alex Smith. */
 /* The 'uncursed' rendering library may be distributed under either of the
  * following licenses:
@@ -99,8 +99,9 @@
 #include "uncursed_tty.h"
 
 /* Note: ifile only uses platform-specific read functions like read(); ofile
-   only uses stdio for output (e.g. fputs), but all output to ofile is
-   abstracted via ofile_output anyway. Try not to muddle these! */
+   only uses stdio for output (e.g. fputs), but all output to ofile while the
+   terminal is initialized is abstracted via ofile_output anyway. Try not to
+   muddle these! */
 #define ofile stdout
 #define ifile stdin
 
@@ -519,6 +520,8 @@ platform_specific_getkeystring(int timeout_ms, int ignore_signals)
                     tty_hook_exit();
                     inited_when_stopped = 1;
                 }
+                ofile_output("Process suspended.\nUse 'fg' to resume it.\n");
+                tty_hook_flush();
                 raise(SIGSTOP);
                 break;
 
