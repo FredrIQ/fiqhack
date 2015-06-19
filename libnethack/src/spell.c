@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-23 */
+/* Last modified by Alex Smith, 2015-06-15 */
 /* Copyright (c) M. Stephenson 1988                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -14,9 +14,35 @@
 #define incrnknow(spell)        spl_book[spell].sp_know = KEEN
 
 #define spellev(spell)          spl_book[spell].sp_lev
-#define spellname(spell)        OBJ_NAME(objects[spellid(spell)])
-#define spellet(spell)  \
-        ((char)((spell < 26) ? ('a' + spell) : ('A' + spell - 26)))
+
+static const char *
+spellname(int spell)
+{
+    int sid = spellid(spell);
+    if (SPELL_IS_FROM_SPELLBOOK(spell))
+        return OBJ_NAME(objects[sid]);
+    else if (sid == SPID_PRAY)
+        return "pray for help";
+    else if (sid == SPID_TURN)
+        return "turn undead";
+    else if (sid == SPID_RLOC)
+        return "teleportitis";
+    else if (sid == SPID_JUMP)
+        return "supernatural jump"; /* distinguish from the spell */
+    else if (sid == SPID_MONS) {
+        struct polyform_ability pa;
+        if (has_polyform_ability(youmonst.data, &pa))
+            return pa.description;
+        panic("SPID_MONS is in spellbook, but #monster is invalid");
+    }
+    panic("Unknown spell number %d", sid);
+}
+
+#define spelllet_from_no(spell)                                 \
+    ((char)((spell < 26) ? ('a' + spell) : ('A' + spell - 26)))
+#define spellno_from_let(slet)                                  \
+    (((slet) >= 'a' && (slet) <= 'z') ? slet - 'a' :            \
+     ((slet) >= 'A' && (slet) <= 'Z') ? slet - 'A' + 26 : -1)
 
 static boolean cursed_book(struct obj *bp);
 static boolean confused_book(struct obj *);
@@ -295,7 +321,7 @@ deadbook(struct obj *book2, boolean invoked)
                              NO_MINVENT)) != 0)) {
             msethostility(mtmp, TRUE, TRUE);
         }
-        /* next handle the affect on things you're carrying */
+        /* next handle the effect on things you're carrying */
         unturn_dead(&youmonst);
         /* last place some monsters around you */
         mm.x = u.ux;
@@ -416,14 +442,16 @@ learn(void)
                amnesia made you forget the book */
             makeknown((int)booktype);
             break;
-        } else if (spellid(i) == NO_SPELL && i < first_unknown)
+        } else if (spellid(i) == NO_SPELL &&
+                   (i < first_unknown ||
+                    i == spellno_from_let(objects[booktype].oc_defletter)))
             first_unknown = i;
         else
             known_spells++;
     }
 
     if (first_unknown == MAXSPELL && !already_known)
-        impossible("Too many spells memorized!");
+        panic("Too many spells memorized!");
 
     if (!already_known) {
         spl_book[first_unknown].sp_id = booktype;
@@ -564,35 +592,16 @@ age_spells(void)
 {
     int i;
 
-    /*
-     * The time relative to the hero (a pass through move
-     * loop) causes all spell knowledge to be decremented.
-     * The hero's speed, rest status, conscious status etc.
-     * does not alter the loss of memory.
-     */
+    /* The time relative to the hero (a pass through move loop) causes all spell
+       knowledge to be decremented.  The hero's speed, rest status, conscious
+       status etc. does not alter the loss of memory. */
     for (i = 0; i < MAXSPELL; i++) {
-        if (spellid(i) == NO_SPELL)
+        if (!SPELL_IS_FROM_SPELLBOOK(i))
             continue;
         if (spellknow(i))
             decrnknow(i);
     }
     return;
-}
-
-/*
- * Return TRUE if the player knows (or, at least, knew) at least one spell.
- * Otherwise return FALSE.
- */
-static boolean
-knows_spells(void)
-{
-    int i;
-    for (i = 0; i < MAXSPELL; i++) {
-        if (spellid(i) != NO_SPELL) {
-            return TRUE;
-        }
-    }
-    return FALSE;
 }
 
 /*
@@ -602,19 +611,21 @@ knows_spells(void)
 static boolean
 getspell(int *spell_no)
 {
-    if (!knows_spells()) {
-        pline("You don't know any spells right now.");
-        return FALSE;
-    }
-
     return dospellmenu("Choose which spell to cast", SPELLMENU_CAST, spell_no);
 }
 
 static boolean
 getargspell(const struct nh_cmd_arg *arg, int *spell_no)
 {
-    /* TODO: look at arg */
-    (void) arg;
+    if (arg->argtype & CMD_ARG_SPELL) {
+        char slet = arg->spelllet;
+        int sno = spellno_from_let(slet);
+        if (sno >= 0 && spellid(sno) != NO_SPELL) {
+            *spell_no = sno;
+            return TRUE;
+        }
+    }
+
     return getspell(spell_no);
 }
 
@@ -627,6 +638,98 @@ docast(const struct nh_cmd_arg *arg)
     if (getargspell(arg, &spell_no))
         return spelleffects(spell_no, FALSE, arg);
     return 0;
+}
+
+/*
+ * Add SPID_* values to the player's spellbook, and remove those which are no
+ * longer necessary.
+ *
+ * SPID_PRAY always exists;
+ * SPID_TURN exists according to the player's role.
+ *
+ * The other three change dynamically:
+ *
+ * SPID_RLOC: on intrinsic/extrinsic change
+ *            (requires Teleportation + xlvl 12, or 8 as a wizard; and/or
+ *             Teleportation from polyform specifically)
+ * SPID_JUMP: on intrinsic/extrinsic change (requires Jumping)
+ * SPID_MONS: on polyform change
+ *
+ * Thus, we call this function:
+ * - At character creation
+ * - When levelling up
+ * - When polymorphing
+ * - When changing equipment
+ * - When gaining/losing intrinsic teleportitis
+ * This assumes that there's no source of Jumping or Teleportation on a
+ * timeout; at present there isn't.
+ */
+void
+update_supernatural_abilities(void)
+{
+    int i, j;
+
+    /* Look through our spellbook for abilities we no longer have, and delete
+       them. */
+    for (i = 0; i < MAXSPELL; i++) {
+        if (!SPELL_IS_FROM_SPELLBOOK(i) && spellid(i) &&
+            !supernatural_ability_available(spellid(i))) {
+            spl_book[i].sp_id = 0;
+            spl_book[i].sp_know = 0;
+            spl_book[i].sp_lev = 0;
+        }
+    }
+
+    /* For each ability we have, look for it in our spellbook. If we can't find
+       it there, assign a letter to it. We default to letters near the end of
+       the alphabet, specific to each spell. We might have to use a different
+       letter, though, if the one we want is already taken. */
+    for (j = -1; j >= -SPID_COUNT; j--) {
+        if (!supernatural_ability_available(j))
+            continue;
+        int best = -1;
+        for (i = 0; i < MAXSPELL; i++) {
+            /* Later letters are better than earlier ones, apart from the
+               last SPID_COUNT which are worth avoiding if possible. Two
+               exceptions trump everything: the letter where the spell already
+               is; and the preferred letter. */
+            if (spellid(i) == j)
+                goto next_spid; /* multi-level continue */
+            if (spellid(i) == NO_SPELL &&
+                (i < MAXSPELL - SPID_COUNT || best == -1 ||
+                 spelllet_from_no(i) == SPID_PREFERRED_LETTER[-1-j]))
+                best = i;
+        }
+        if (best == -1)
+            panic("too many spells + supernatural abilities");
+        spl_book[best].sp_id = j;
+        spl_book[best].sp_lev = 0;
+        spl_book[best].sp_know = 0;
+    next_spid:
+        ;
+    }
+}
+
+boolean
+supernatural_ability_available(int spid)
+{
+    switch (spid) {
+    case SPID_PRAY:
+        return TRUE;
+    case SPID_TURN: /* 3.4.3 doturn: "Knights & Priest(esse)s only please" */
+        return Role_if(PM_PRIEST) || Role_if(PM_KNIGHT);
+    case SPID_RLOC:
+        return Teleportation &&
+            (u.ulevel >= (Role_if(PM_WIZARD) ? 8 : 12) ||
+             can_teleport(youmonst.data));
+    case SPID_JUMP:
+        return Jumping;
+    case SPID_MONS:
+        return has_polyform_ability(youmonst.data, NULL);
+    default:
+        impossible("Unknown supernatural ability %d", spid);
+        return FALSE;
+    }
 }
 
 static const char *
@@ -763,6 +866,27 @@ spelleffects(int spell, boolean atme, const struct nh_cmd_arg *arg)
     boolean dummy;
     coord cc;
     schar dx = 0, dy = 0, dz = 0;
+
+    if (!SPELL_IS_FROM_SPELLBOOK(spell)) {
+        /* At the moment, we implement this via calling the code for the
+           shortcut command. Eventually, it would make sense to invert this
+           (and make the shortcut commands wrappers for spelleffects). */
+        switch (spellid(spell)) {
+        case SPID_PRAY:
+            return dopray(arg);
+        case SPID_TURN:
+            return doturn(arg);
+        case SPID_RLOC:
+            return dotele(arg);
+        case SPID_JUMP:
+            return dojump(arg);
+        case SPID_MONS:
+            return domonability(arg);
+        default:
+            impossible("Unknown spell number %d?", spellid(spell));
+            return 0;
+        }
+    }
 
     /*
      * Find the skill the hero has in a spell type category.
@@ -1111,7 +1235,7 @@ losespells(void)
 {
     int n;
     for (n = 0; n < MAXSPELL; n++) {
-        if(spellid(n) == NO_SPELL)
+        if(!SPELL_IS_FROM_SPELLBOOK(n))
             continue;
         spellknow(n) = rn2(spellknow(n) + 1);
     }
@@ -1127,19 +1251,15 @@ dovspell(const struct nh_cmd_arg *arg)
 
     (void) arg;
 
-    if (!knows_spells())
-        pline("You don't know any spells right now.");
-    else {
-        while (dospellmenu("Currently known spells", SPELLMENU_VIEW, &splnum)) {
-            qbuf = msgprintf("Reordering spells; adjust '%c' to",
-                             spellet(splnum));
-            if (!dospellmenu(qbuf, splnum, &othnum))
-                break;
+    while (dospellmenu("Your magical abilities", SPELLMENU_VIEW, &splnum)) {
+        qbuf = msgprintf("Reordering magic: adjust '%c' to",
+                         spelllet_from_no(splnum));
+        if (!dospellmenu(qbuf, splnum, &othnum))
+            break;
 
-            spl_tmp = spl_book[splnum];
-            spl_book[splnum] = spl_book[othnum];
-            spl_book[othnum] = spl_tmp;
-        }
+        spl_tmp = spl_book[splnum];
+        spl_book[splnum] = spl_book[othnum];
+        spl_book[othnum] = spl_tmp;
     }
     return 0;
 }
@@ -1159,14 +1279,17 @@ dospellmenu(const char *prompt,
     for (i = 0; i < MAXSPELL; i++) {
         if (spellid(i) == NO_SPELL)
             continue;
-        const char *buf = msgprintf(
-            "%s\t%-d%s\t%s\t%-d%%\t%-d%%", spellname(i), spellev(i),
-            spellknow(i) ? " " : "*",
-            spelltypemnemonic(spell_skilltype(spellid(i))),
-            100 - percent_success(i),
-            (spellknow(i) * 100 + (KEEN - 1)) / KEEN);
+        const char *buf = SPELL_IS_FROM_SPELLBOOK(i) ?
+            msgprintf("%s\t%-d%s\t%s\t%-d%%\t%-d%%", spellname(i), spellev(i),
+                      spellknow(i) ? " " : "*",
+                      spelltypemnemonic(spell_skilltype(spellid(i))),
+                      100 - percent_success(i),
+                      (spellknow(i) * 100 + (KEEN - 1)) / KEEN) :
+            msgprintf("%s\t--\t%s\t?\t--", spellname(i),
+                      (spellid(i) == SPID_PRAY || spellid(i) == SPID_TURN) ?
+                      "divine" : "ability");
         set_menuitem(&items[count++], i + 1, MI_NORMAL, buf,
-                     i < 26 ? i + 'a' : i + 'A' - 26, FALSE);
+                     spelllet_from_no(i), FALSE);
     }
 
     how = PICK_ONE;
@@ -1202,10 +1325,13 @@ dump_spells(void)
 {
     /* note: the actual dumping is done in dump_display_menu(), we just need to
        get the data there. */
-    dospellmenu("Spells known in the end:", SPELLMENU_VIEW, NULL);
+    dospellmenu("Spells and supernatural/magical abilities:",
+                SPELLMENU_VIEW, NULL);
 }
 
-
+/* Note: only gives sensible results if SPELL_IS_FROM_SPELLBOOK(spell)
+   Potentially we could expand this to prayer and the like, but that'd need a
+   rewrite of the prayer success code (and mathematical analysis of rnz) */
 static int
 percent_success(int spell)
 {
@@ -1321,16 +1447,19 @@ initialspell(struct obj *obj)
 {
     int i;
 
-    for (i = 0; i < MAXSPELL; i++) {
-        if (spellid(i) == obj->otyp) {
+    for (i = -1; i < MAXSPELL; i++) {
+        int j = i;
+        if (i == -1)
+            j = spellno_from_let(objects[obj->otyp].oc_defletter);
+        if (spellid(j) == obj->otyp) {
             pline("Error: Spell %s already known.",
                   OBJ_NAME(objects[obj->otyp]));
             return;
         }
-        if (spellid(i) == NO_SPELL) {
-            spl_book[i].sp_id = obj->otyp;
-            spl_book[i].sp_lev = objects[obj->otyp].oc_level;
-            incrnknow(i);
+        if (spellid(j) == NO_SPELL) {
+            spl_book[j].sp_id = obj->otyp;
+            spl_book[j].sp_lev = objects[obj->otyp].oc_level;
+            incrnknow(j);
             return;
         }
     }

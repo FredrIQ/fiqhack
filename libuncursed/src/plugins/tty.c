@@ -74,6 +74,8 @@
                                    libc versions */
 #define _DARWIN_C_SOURCE 1      /* needed for SIGWINCH on OS X; no effect on
                                    Linux */
+#define __BSD_VISIBLE 1         /* needed for SIGWINCH on FreeBSD; no effect
+                                   on Linux */
 #include <sys/select.h>
 #include <termios.h>
 #include <unistd.h>
@@ -373,7 +375,10 @@ platform_specific_init(void)
     ti.c_cc[VTIME] = 0;
     if (!raw_isig)
         ti.c_lflag |= ISIG;
-    ti.c_oflag &= ~(OPOST | OCRNL | ONLRET | OFILL);
+    ti.c_oflag &= ~(OPOST | OCRNL | ONLRET);
+#if !defined(AIMAKE_BUILDOS_freebsd)
+    ti.c_oflag &= ~OFILL;
+#endif
     if (tcsetattr(fileno(ifile), TCSADRAIN, &ti) == -1)
         tcsetattr(fileno(ofile), TCSADRAIN, &ti);
 

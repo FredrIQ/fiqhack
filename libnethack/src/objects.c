@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-08 */
+/* Last modified by Alex Smith, 2015-06-15 */
 /* Copyright (c) Mike Threepoint, 1989.                           */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -787,85 +787,116 @@ const struct objclass const_objects[] = {
     SCROLL("blank paper", "unlabeled", 0, 28, 60),
 #undef SCROLL
 
-/* spellbooks ... */
-#define SPELL(name,desc,sub,prob,delay,level,mgc,dir,color) OBJECT( \
-        OBJ(name,desc), BITS(0,0,0,0,mgc,0,0,0,0,0,dir,sub,PAPER), 0, \
-            SPBOOK_CLASS, prob, delay, \
-            50, level*100, 0, 0, 0, level, 20, color )
-    SPELL("dig", "parchment", P_MATTER_SPELL, 20, 6, 5, 1, RAY, HI_PAPER),
-    SPELL("magic missile", "vellum", P_ATTACK_SPELL, 45, 2, 2, 1, RAY,
-          HI_PAPER),
-    SPELL("fireball", "ragged", P_ATTACK_SPELL, 20, 4, 4, 1, RAY, HI_PAPER),
-    SPELL("cone of cold", "dog eared", P_ATTACK_SPELL, 10, 7, 4, 1, RAY,
-          HI_PAPER),
-    SPELL("sleep", "mottled", P_ENCHANTMENT_SPELL, 50, 1, 1, 1, RAY, HI_PAPER),
-    SPELL("finger of death", "stained", P_ATTACK_SPELL, 5, 10, 7, 1, RAY,
-          HI_PAPER),
-    SPELL("light", "cloth", P_DIVINATION_SPELL, 45, 1, 1, 1, NODIR, HI_CLOTH),
+/*
+ * spellbooks ...
+ * note: the number of "ordinary" spellbooks must not exceed MAXSPELL-SPID_COUNT
+ * (otherwise we have problems assigning letters); each spell has a distinct
+ * default letter that's either lowercase, or an uppercase letter that isn't in
+ * the last SPID_COUNT (those letters are reserved for supernatural abilities)
+ *
+ * Currently used: aABcCdDeEfFgGhHiIjkKlLmMnoOpPrRsStTuUvwxz
+ *         unused: bJNqQy
+ *       reserved: VWXYZ
+ *
+ * Reasoning:
+ * - most spells get the first letter of their name
+ * - in case of clashes, we use the first letter of a subsequent word, if any
+ * - if there are still clashes (e.g. 'c' spells, 'detect *', 1-word spells)
+ *   we use a later letter from the word, or a letter that fits thematically
+ *   (e.g. z - sleep)
+ * - force bolt gets 'a' because that's where it is for starting wizards in all
+ *   previous versions
+ * - effects that are more likely to be spammed get first pick of the lowercase
+ *   letters
+ *
+ * The user can override these letters in-game with the + command.
+ */
+#define SPELL(name,desc,sub,prob,delay,level,mgc,dir,color,deflet)      \
+    OBJECT( OBJ(name,desc), BITS(0,0,0,0,mgc,0,0,0,0,0,dir,sub,PAPER), 0, \
+            SPBOOK_CLASS, prob, delay,                                  \
+            50, level*100, 0, 0, deflet, level, 20, color )
+    SPELL("dig", "parchment", P_MATTER_SPELL, 20, 6, 5, 1,
+          RAY, HI_PAPER, 'd'),
+    SPELL("magic missile", "vellum", P_ATTACK_SPELL, 45, 2, 2, 1,
+          RAY, HI_PAPER, 'm'),
+    SPELL("fireball", "ragged", P_ATTACK_SPELL, 20, 4, 4, 1,
+          RAY, HI_PAPER, 'f'),
+    SPELL("cone of cold", "dog eared", P_ATTACK_SPELL, 10, 7, 4, 1,
+          RAY, HI_PAPER, 'o'),
+    SPELL("sleep", "mottled", P_ENCHANTMENT_SPELL, 50, 1, 1, 1,
+          RAY, HI_PAPER, 'z'),
+    SPELL("finger of death", "stained", P_ATTACK_SPELL, 5, 10, 7, 1,
+          RAY, HI_PAPER, 'F'),
+    SPELL("light", "cloth", P_DIVINATION_SPELL, 45, 1, 1, 1,
+          NODIR, HI_CLOTH, 'l'),
     SPELL("detect monsters", "leather-bound", P_DIVINATION_SPELL, 43, 1, 1, 1,
-          NODIR, HI_LEATHER),
-    SPELL("healing", "white", P_HEALING_SPELL, 40, 2, 1, 1, IMMEDIATE,
-          CLR_WHITE),
-    SPELL("knock", "pink", P_MATTER_SPELL, 35, 1, 1, 1, IMMEDIATE,
-          CLR_BRIGHT_MAGENTA),
-    SPELL("force bolt", "red", P_ATTACK_SPELL, 35, 2, 1, 1, IMMEDIATE, CLR_RED),
+          NODIR, HI_LEATHER, 'n'),
+    SPELL("healing", "white", P_HEALING_SPELL, 40, 2, 1, 1,
+          IMMEDIATE, CLR_WHITE, 'h'),
+    SPELL("knock", "pink", P_MATTER_SPELL, 35, 1, 1, 1,
+          IMMEDIATE, CLR_BRIGHT_MAGENTA, 'k'),
+    SPELL("force bolt", "red", P_ATTACK_SPELL, 35, 2, 1, 1,
+          IMMEDIATE, CLR_RED, 'a'),
     SPELL("confuse monster", "orange", P_ENCHANTMENT_SPELL, 30, 2, 2, 1,
-          IMMEDIATE, CLR_ORANGE),
-    SPELL("cure blindness", "yellow", P_HEALING_SPELL, 25, 2, 2, 1, IMMEDIATE,
-          CLR_YELLOW),
-    SPELL("drain life", "velvet", P_ATTACK_SPELL, 10, 2, 2, 1, IMMEDIATE,
-          CLR_MAGENTA),
+          IMMEDIATE, CLR_ORANGE, 'u'),
+    SPELL("cure blindness", "yellow", P_HEALING_SPELL, 25, 2, 2, 1,
+          IMMEDIATE, CLR_YELLOW, 'B'),
+    SPELL("drain life", "velvet", P_ATTACK_SPELL, 10, 2, 2, 1,
+          IMMEDIATE, CLR_MAGENTA, 'D'),
     SPELL("slow monster", "light green", P_ENCHANTMENT_SPELL, 30, 2, 2, 1,
-          IMMEDIATE, CLR_BRIGHT_GREEN),
-    SPELL("wizard lock", "dark green", P_MATTER_SPELL, 30, 3, 2, 1, IMMEDIATE,
-          CLR_GREEN),
-    SPELL("create monster", "turquoise", P_CLERIC_SPELL, 35, 3, 2, 1, NODIR,
-          CLR_BRIGHT_CYAN),
-    SPELL("detect food", "cyan", P_DIVINATION_SPELL, 30, 3, 2, 1, NODIR,
-          CLR_CYAN),
-    SPELL("cause fear", "light blue", P_ENCHANTMENT_SPELL, 25, 3, 3, 1, NODIR,
-          CLR_BRIGHT_BLUE),
-    SPELL("clairvoyance", "dark blue", P_DIVINATION_SPELL, 15, 3, 3, 1, NODIR,
-          CLR_BLUE),
-    SPELL("cure sickness", "indigo", P_HEALING_SPELL, 32, 3, 3, 1, NODIR,
-          CLR_BLUE),
+          IMMEDIATE, CLR_BRIGHT_GREEN, 's'),
+    SPELL("wizard lock", "dark green", P_MATTER_SPELL, 30, 3, 2, 1,
+          IMMEDIATE, CLR_GREEN, 'w'),
+    SPELL("create monster", "turquoise", P_CLERIC_SPELL, 35, 3, 2, 1,
+          NODIR, CLR_BRIGHT_CYAN, 'O'),
+    SPELL("detect food", "cyan", P_DIVINATION_SPELL, 30, 3, 2, 1,
+          NODIR, CLR_CYAN, 'E'),
+    SPELL("cause fear", "light blue", P_ENCHANTMENT_SPELL, 25, 3, 3, 1,
+          NODIR, CLR_BRIGHT_BLUE, 'c'),
+    SPELL("clairvoyance", "dark blue", P_DIVINATION_SPELL, 15, 3, 3, 1,
+          NODIR, CLR_BLUE, 'v'),
+    SPELL("cure sickness", "indigo", P_HEALING_SPELL, 32, 3, 3, 1,
+          NODIR, CLR_BLUE, 'K'),
     SPELL("charm monster", "magenta", P_ENCHANTMENT_SPELL, 20, 3, 3, 1,
-          IMMEDIATE, CLR_MAGENTA),
-    SPELL("haste self", "purple", P_ESCAPE_SPELL, 33, 4, 3, 1, NODIR,
-          CLR_MAGENTA),
-    SPELL("detect unseen", "violet", P_DIVINATION_SPELL, 20, 4, 3, 1, NODIR,
-          CLR_MAGENTA),
-    SPELL("levitation", "tan", P_ESCAPE_SPELL, 20, 4, 4, 1, NODIR, CLR_BROWN),
-    SPELL("extra healing", "plaid", P_HEALING_SPELL, 27, 5, 3, 1, IMMEDIATE,
-          CLR_GREEN),
-    SPELL("restore ability", "light brown", P_HEALING_SPELL, 25, 5, 4, 1, NODIR,
-          CLR_BROWN),
-    SPELL("invisibility", "dark brown", P_ESCAPE_SPELL, 25, 5, 4, 1, NODIR,
-          CLR_BROWN),
-    SPELL("detect treasure", "gray", P_DIVINATION_SPELL, 20, 5, 4, 1, NODIR,
-          CLR_GRAY),
-    SPELL("remove curse", "wrinkled", P_CLERIC_SPELL, 25, 5, 3, 1, NODIR,
-          HI_PAPER),
-    SPELL("magic mapping", "dusty", P_DIVINATION_SPELL, 18, 7, 5, 1, NODIR,
-          HI_PAPER),
-    SPELL("identify", "bronze", P_DIVINATION_SPELL, 20, 6, 3, 1, NODIR,
-          HI_COPPER),
-    SPELL("turn undead", "copper", P_CLERIC_SPELL, 16, 8, 6, 1, IMMEDIATE,
-          HI_COPPER),
-    SPELL("polymorph", "silver", P_MATTER_SPELL, 10, 8, 6, 1, IMMEDIATE,
-          HI_SILVER),
-    SPELL("teleport away", "gold", P_ESCAPE_SPELL, 15, 6, 6, 1, IMMEDIATE,
-          HI_GOLD),
-    SPELL("create familiar", "glittering", P_CLERIC_SPELL, 10, 7, 6, 1, NODIR,
-          CLR_WHITE),
-    SPELL("cancellation", "shining", P_MATTER_SPELL, 15, 8, 7, 1, IMMEDIATE,
-          CLR_WHITE),
-    SPELL("protection", "dull", P_CLERIC_SPELL, 18, 3, 1, 1, NODIR, HI_PAPER),
-    SPELL("jumping", "thin", P_ESCAPE_SPELL, 20, 3, 1, 1, IMMEDIATE, HI_PAPER),
-    SPELL("stone to flesh", "thick", P_HEALING_SPELL, 15, 1, 3, 1, IMMEDIATE,
-          HI_PAPER),
+          IMMEDIATE, CLR_MAGENTA, 'e'),
+    SPELL("haste self", "purple", P_ESCAPE_SPELL, 33, 4, 3, 1,
+          NODIR, CLR_MAGENTA, 'H'),
+    SPELL("detect unseen", "violet", P_DIVINATION_SPELL, 20, 4, 3, 1,
+          NODIR, CLR_MAGENTA, 'U'),
+    SPELL("levitation", "tan", P_ESCAPE_SPELL, 20, 4, 4, 1,
+          NODIR, CLR_BROWN, 'L'),
+    SPELL("extra healing", "plaid", P_HEALING_SPELL, 27, 5, 3, 1,
+          IMMEDIATE, CLR_GREEN, 'x'),
+    SPELL("restore ability", "light brown", P_HEALING_SPELL, 25, 5, 4, 1,
+          NODIR, CLR_BROWN, 'R'),
+    SPELL("invisibility", "dark brown", P_ESCAPE_SPELL, 25, 5, 4, 1,
+          NODIR, CLR_BROWN, 'i'),
+    SPELL("detect treasure", "gray", P_DIVINATION_SPELL, 20, 5, 4, 1,
+          NODIR, CLR_GRAY, 'G'),
+    SPELL("remove curse", "wrinkled", P_CLERIC_SPELL, 25, 5, 3, 1,
+          NODIR, HI_PAPER, 'r'),
+    SPELL("magic mapping", "dusty", P_DIVINATION_SPELL, 18, 7, 5, 1,
+          NODIR, HI_PAPER, 'M'),
+    SPELL("identify", "bronze", P_DIVINATION_SPELL, 20, 6, 3, 1,
+          NODIR, HI_COPPER, 'I'),
+    SPELL("turn undead", "copper", P_CLERIC_SPELL, 16, 8, 6, 1,
+          IMMEDIATE, HI_COPPER, 'T'),
+    SPELL("polymorph", "silver", P_MATTER_SPELL, 10, 8, 6, 1,
+          IMMEDIATE, HI_SILVER, 'P'),
+    SPELL("teleport away", "gold", P_ESCAPE_SPELL, 15, 6, 6, 1,
+          IMMEDIATE, HI_GOLD, 't'),
+    SPELL("create familiar", "glittering", P_CLERIC_SPELL, 10, 7, 6, 1,
+          NODIR, CLR_WHITE, 'A'),
+    SPELL("cancellation", "shining", P_MATTER_SPELL, 15, 8, 7, 1,
+          IMMEDIATE, CLR_WHITE, 'C'),
+    SPELL("protection", "dull", P_CLERIC_SPELL, 18, 3, 1, 1,
+          NODIR, HI_PAPER, 'p'),
+    SPELL("jumping", "thin", P_ESCAPE_SPELL, 20, 3, 1, 1,
+          IMMEDIATE, HI_PAPER, 'j'),
+    SPELL("stone to flesh", "thick", P_HEALING_SPELL, 15, 1, 3, 1,
+          IMMEDIATE, HI_PAPER, 'S'),
 /* blank spellbook must come last because it retains its description */
-    SPELL("blank paper", "plain", P_NONE, 18, 0, 0, 0, 0, HI_PAPER),
+    SPELL("blank paper", "plain", P_NONE, 18, 0, 0, 0, 0, HI_PAPER, 0),
 /* a special, one of a kind, spellbook */
     OBJECT(OBJ("Book of the Dead", "papyrus"),
            BITS(0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, P_NONE, PAPER), 0,

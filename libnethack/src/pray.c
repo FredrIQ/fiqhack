@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-30 */
+/* Last modified by Alex Smith, 2015-06-15 */
 /* Copyright (c) Benson I. Margulies, Mike Stephenson, Steve Linhart, 1989. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1726,14 +1726,14 @@ prayer_done(void)
 
 int
 doturn(const struct nh_cmd_arg *arg)
-{       /* Knights & Priest(esse)s only please */
+{
 
     struct monst *mtmp, *mtmp2;
     int once, range, xlev;
 
     (void) arg;
 
-    if (!Role_if(PM_PRIEST) && !Role_if(PM_KNIGHT)) {
+    if (!supernatural_ability_available(SPID_TURN)) {
         /* Try to use turn undead spell. */
         if (objects[SPE_TURN_UNDEAD].oc_name_known) {
             int sp_no;

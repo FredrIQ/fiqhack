@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-21 */
+/* Last modified by Alex Smith, 2015-06-16 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -35,15 +35,14 @@ static const char * const c_slotnames_menu[] = {
     [os_armf]    = "Boots",
     [os_armu]    = "Shirt",
     [os_amul]    = "Amulet",
-    [os_ringl]   = "Left ring",
-    [os_ringr]   = "Right ring",
+    [os_ringl]   = "L. Ring",
+    [os_ringr]   = "R. Ring",
     [os_tool]    = "Eyewear",
     [os_wep]     = "Weapon",
-    [os_swapwep] = "Secondary weapon",
+    [os_swapwep] = "Readied", /* special case: "Offhand" if twoweaponing */
     [os_quiver]  = "Quiver",
 };
-/* Hopefully, the compiler will optimize out the strlen of a literal string. */
-#define LONGEST_SLOTNAME ((int)strlen("Secondary weapon"))
+#define LONGEST_SLOTNAME 7 /* longest length of a c_slotnames_menu entry */
 
 static const char c_that_[] = "that";
 
@@ -1989,7 +1988,8 @@ doequip(const struct nh_cmd_arg *arg)
             const int linelen = 80; /* don't produce lines longer than this */
 
             buf = msgprintf("%*s: %.*s", LONGEST_SLOTNAME,
-                            c_slotnames_menu[j],
+                            ((j == os_swapwep && u.twoweap) ? "Offhand" :
+                             c_slotnames_menu[j]),
                             linelen - LONGEST_SLOTNAME - 4,
                             otmp ? doname(otmp) : "(empty)");
 

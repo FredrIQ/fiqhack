@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-23 */
+/* Last modified by Alex Smith, 2015-06-17 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -166,33 +166,35 @@ castmu(struct monst *mtmp, const struct attack *mattk, int allow_directed)
     int ret;
     int spellnum = 0;
     boolean casting_directed = FALSE;
+    boolean casting_elemental = (mattk->adtyp != AD_SPEL &&
+                                 mattk->adtyp != AD_CLRC);
 
-    /*
-     * We have four cases here, up from three in 3.4.3.
-     *
-     * - The monster is in combat (allow_directed is 1), and knows your
-     *   location. It searches for and uses a useful spell.
-     *
-     * - The monster is in combat, and doesn't know your location but thinks it
-     *   does. It searches for a useful spell, attempts to use it, and succeeds
-     *   if and only if it's undirected (otherwise it curses).
-     *
-     *   Setting allow_directed to -1 will force this specific failure case.
-     *   Eventually, that will be the only way for this failure mode to happen
-     *   (and castmu will only be called if known_ux_uy).
-     *
-     * - The monster is in combat, but doesn't know your location. It casts an
-     *   undirected spell, if it can. (This case is new in 4.3.)
-     *
-     * - The monster is not in combat. It selects a random spell. If it's
-     *   directed or useless, this function returns without doing anything, and
-     *   the monster does something else instead; this serves as a method to
-     *   reduce the frequency of spellcasts outside combat. Otherwise, it casts
-     *   it as in the previous case.
-     *
-     */
+    if (!casting_elemental && ml) {
+        /*
+         * We have four cases here, up from three in 3.4.3.
+         *
+         * - The monster is in combat (allow_directed is 1), and knows your
+         *   location. It searches for and uses a useful spell.
+         *
+         * - The monster is in combat, and doesn't know your location but thinks
+         *   it does. It searches for a useful spell, attempts to use it, and
+         *   succeeds if and only if it's undirected (otherwise it curses).
+         *
+         *   Setting allow_directed to -1 will force this specific failure case.
+         *   Eventually, that will be the only way for this failure mode to
+         *   happen (and castmu will only be called if known_ux_uy).
+         *
+         * - The monster is in combat, but doesn't know your location. It casts
+         *   an undirected spell, if it can. (This case is new in 4.3.)
+         *
+         * - The monster is not in combat. It selects a random spell. If it's
+         *   directed or useless, this function returns without doing anything,
+         *   and the monster does something else instead; this serves as a
+         *   method to reduce the frequency of spellcasts outside
+         *   combat. Otherwise, it casts it as in the previous case.
+         *
+         */
 
-    if ((mattk->adtyp == AD_SPEL || mattk->adtyp == AD_CLRC) && ml) {
         int cnt = 40;
 
         do {
@@ -225,12 +227,12 @@ castmu(struct monst *mtmp, const struct attack *mattk, int allow_directed)
        necessarily knows_ux_uy, a stronger condition) */
 
     /* monster unable to cast spells? */
-    if (mtmp->mcan || mtmp->mspec_used || !ml) {
+    if (mtmp->mcan || (mtmp->mspec_used && !casting_elemental) || !ml) {
         cursetxt(mtmp, !casting_directed);
         return 0;
     }
 
-    if (mattk->adtyp == AD_SPEL || mattk->adtyp == AD_CLRC) {
+    if (!casting_elemental) {
         mtmp->mspec_used = 10 - mtmp->m_lev;
         if (mtmp->mspec_used < 2)
             mtmp->mspec_used = 2;
@@ -258,22 +260,25 @@ castmu(struct monst *mtmp, const struct attack *mattk, int allow_directed)
     if (canspotmon(mtmp) || casting_directed) {
         pline("%s casts a spell%s!",
               canspotmon(mtmp) ? Monnam(mtmp) : "Something",
-              !casting_directed ? "" :
+              (!casting_directed && !casting_elemental) ? "" :
               awareness_reason(mtmp) == mar_guessing_displaced ?
               " at your displaced image" :
               awareness_reason(mtmp) == mar_aware ? " at you" :
               " at a spot near you");
     }
 
-    /* 
+    /*
      * As these are spells, the damage is related to the level
      * of the monster casting the spell.
      */
     if (!knows_ux_uy(mtmp)) {
         dmg = 0;
-        if (mattk->adtyp != AD_SPEL && mattk->adtyp != AD_CLRC) {
-            impossible("%s casting non-hand-to-hand version of hand-to-hand "
-                       "spell %d?", Monnam(mtmp), mattk->adtyp);
+        if (casting_elemental) {
+            /* The monster's casting a damage spell (as opposed to monster
+               spell) at the wrong location. We already printed a message if the
+               player is aware of the monster casting it. If the monster missed
+               the player and the player can't see the monster, we don't
+               currently produce a message. TODO: consider changing this. */
             return 0;
         }
     } else if (mattk->damd)
@@ -383,7 +388,7 @@ cast_wizard_spell(struct monst *mtmp, int dmg, int spellnum)
                 const char *mappear =
                     (count == 1) ? "A monster appears" : "Monsters appear";
 
-                /* messages not quite right if plural monsters created but only 
+                /* messages not quite right if plural monsters created but only
                    a single monster is seen */
                 switch (awareness_reason(mtmp)) {
                 case mar_aware:
@@ -992,7 +997,7 @@ castum(struct monst *mtmp, const struct attack *mattk)
     int spellnum = 0;
     boolean directed = FALSE;
 
-    /* Three cases: -- monster is attacking you.  Search for a useful spell. -- 
+    /* Three cases: -- monster is attacking you.  Search for a useful spell. --
        monster thinks it's attacking you.  Search for a useful spell, without
        checking for undirected.  If the spell found is directed, it fails with
        cursetxt() and loss of mspec_used. -- monster isn't trying to attack.
@@ -1496,7 +1501,7 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
                 destroy_mitem(mtmp, WAND_CLASS, AD_ELEC);
                 destroy_mitem(mtmp, RING_CLASS, AD_ELEC);
             }
-            if (!resists_blnd(mtmp)) { 
+            if (!resists_blnd(mtmp)) {
                 unsigned rnd_tmp = rnd(50);
                 mtmp->mcansee = 0;
                 if((mtmp->mblinded + rnd_tmp) > 127)
@@ -1680,4 +1685,3 @@ ucast_cleric_spell(struct monst *mattk, struct monst *mtmp, int dmg,
 
 
 /*mcastu.c*/
-

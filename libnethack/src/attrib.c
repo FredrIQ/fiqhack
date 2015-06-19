@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-23 */
+/* Last modified by Alex Smith, 2015-06-15 */
 /* Copyright 1988, 1989, 1990, 1992, M. Stephenson                */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -576,7 +576,6 @@ adjabil(int oldlevel, int newlevel)
     const struct innate *abil, *rabil;
     long mask = FROMEXPER;
 
-
     switch (Role_switch) {
     case PM_ARCHEOLOGIST:
         abil = arc_abil;
@@ -682,6 +681,8 @@ adjabil(int oldlevel, int newlevel)
             add_weapon_skill(newlevel - oldlevel);
         else
             lose_weapon_skill(oldlevel - newlevel);
+
+        update_supernatural_abilities();
     }
 }
 
