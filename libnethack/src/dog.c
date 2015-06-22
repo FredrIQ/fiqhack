@@ -375,7 +375,7 @@ mon_arrive(struct monst *mtmp, boolean with_you)
     /* moved a bit */
     mtmp->mx = COLNO;       /* (already is 0) */
     mtmp->my = xyflags;
-    if (xlocale)
+    if (xlocale != COLNO)
         mnearto(mtmp, xlocale, ylocale, FALSE);
     else {
         if (!rloc(mtmp, TRUE)) {
