@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-06-15 */
+/* Last modified by Alex Smith, 2015-06-19 */
 /* Copyright (C) 1987, 1988, 1989 by Ken Arromdee */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -419,77 +419,53 @@ has_polyform_ability(const struct permonst *pm,
         case AD_RBRE: breathname = "random breath weapon"; break;
         default:      breathname = "unknown breath weapon"; break;
         }
-        *pa = (struct polyform_ability) {
-            .description = breathname,
-            .directed = TRUE,
-            .handler_directed = dobreathe
-        };
+        pa->description = breathname;
+        pa->directed = TRUE;
+        pa->handler_directed = dobreathe;
     } else if (attacktype(pm, AT_SPIT)) {
-        *pa = (struct polyform_ability) {
-            .description = "spit venom",
-            .directed = TRUE,
-            .handler_directed = dospit
-        };
+        pa->description = "spit venom";
+        pa->directed = TRUE;
+        pa->handler_directed = dospit;
     } else if (attacktype(pm, AT_MAGC)) {
-        *pa = (struct polyform_ability) {
-            .description = "monster magic",
-            .directed = FALSE,
-            .handler_undirected = docast_at_magc
-        };
+        pa->description = "monster magic";
+        pa->directed = FALSE;
+        pa->handler_undirected = docast_at_magc;
     } else if (pm->mlet == S_NYMPH) {
-        *pa = (struct polyform_ability) {
-            .description = "remove iron ball",
-            .directed = FALSE,
-            .handler_undirected = doremove
-        };
+        pa->description = "remove iron ball";
+        pa->directed = FALSE;
+        pa->handler_undirected = doremove;
     } else if (attacktype(pm, AT_GAZE)) {
-        *pa = (struct polyform_ability) {
-            .description = "gaze",
-            .directed = FALSE, /* TODO: why undirected? */
-            .handler_undirected = dogaze
-        };
+        pa->description = "gaze";
+        pa->directed = FALSE; /* TODO: why undirected? */
+        pa->handler_undirected = dogaze;
     } else if (is_were(pm)) {
-        *pa = (struct polyform_ability) {
-            .description = "summon allies",
-            .directed = FALSE,
-            .handler_undirected = dosummon
-        };
+        pa->description = "summon allies";
+        pa->directed = FALSE;
+        pa->handler_undirected = dosummon;
     } else if (webmaker(pm)) {
-        *pa = (struct polyform_ability) {
-            .description = "spin web",
-            .directed = FALSE,
-            .handler_undirected = dospinweb
-        };
+        pa->description = "spin web";
+        pa->directed = FALSE;
+        pa->handler_undirected = dospinweb;
     } else if (is_hider(pm)) {
-        *pa = (struct polyform_ability) {
-            .description = "hide",
-            .directed = FALSE,
-            .handler_undirected = dohide
-        };
+        pa->description = "hide";
+        pa->directed = FALSE;
+        pa->handler_undirected = dohide;
     } else if (is_mind_flayer(pm)) {
-        *pa = (struct polyform_ability) {
-            .description = "mind blast",
-            .directed = FALSE,
-            .handler_undirected = domindblast
-        };
+        pa->description = "mind blast";
+        pa->directed = FALSE;
+        pa->handler_undirected = domindblast;
     } else if (monsndx(pm) == PM_GREMLIN) {
-        *pa = (struct polyform_ability) {
-            .description = "multiply",
-            .directed = FALSE,
-            .handler_undirected = dogremlin_multiply
-        };
+        pa->description = "multiply";
+        pa->directed = FALSE;
+        pa->handler_undirected = dogremlin_multiply;
     } else if (is_unicorn(pm)) {
-        *pa = (struct polyform_ability) {
-            .description = "activate horn",
-            .directed = FALSE,
-            .handler_undirected = dopolyself_unihorn
-        };
+        pa->description = "activate horn";
+        pa->directed = FALSE;
+        pa->handler_undirected = dopolyself_unihorn;
     } else if (pm->msound == MS_SHRIEK) {
-        *pa = (struct polyform_ability) {
-            .description = "shriek",
-            .directed = FALSE,
-            .handler_undirected = doshriek
-        };
+        pa->description = "shriek";
+        pa->directed = FALSE;
+        pa->handler_undirected = doshriek;
     } else {
         return FALSE;
     }
