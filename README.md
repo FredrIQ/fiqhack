@@ -1,0 +1,1 @@
+A NetHack variant
