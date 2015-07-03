@@ -1,0 +1,9 @@
+# Last modified by Alex Smith, 2013-09-21
+*.lev
+data
+dungeon
+dungeon.pdf
+nhdat
+oracles
+quest.dat
+rumors

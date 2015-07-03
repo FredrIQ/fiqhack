@@ -1,0 +1,167 @@
+! Last modified by Alex Smith, 2015-03-10
+! Copyright (C) 2013 Alex Smith
+! NetHack may be freely redistributed.  See license for details.
+!
+! This file lists tiles that don't have a 32x32px version in the
+! Slash'EM tilesets.  It's currently unused, but if anyone wants
+! to draw these tiles, go ahead!
+unexplored area
+solid rock
+air
+doorway
+long staircase up
+long staircase down
+lowered drawbridges 0
+lowered drawbridges 1
+raised drawbridges 0
+raised drawbridges 1
+remembered as stepped on
+remembered as locked
+remembered as unlocked
+remembered as trapped
+vibrating square
+bow
+mummy wrapping
+apron
+buckled boots
+brass lantern
+saddle
+whistles 0
+whistles 1
+iron hook
+eucalyptus leaf
+ragged spellbook
+coyote
+dingo
+lynx
+panther
+centipede
+zruty
+Aleax
+jabberwock
+kobold mummy
+orc mummy
+dwarf mummy
+elf mummy
+human mummy
+ettin mummy
+giant mummy
+ogre lord
+ogre king
+yeti
+sasquatch
+dwarf zombie
+paper golem
+human
+doppelganger
+prisoner
+sandestin
+jellyfish
+piranha
+baby crocodile
+Neferet the Green
+Minion of Huhetotl
+Thoth Amon
+Nalzok
+student
+chieftain
+neanderthal
+attendant
+acolyte
+thug
+guide
+monster is tame
+monster is peaceful
+monster is detected
+monster is ridden
+swallow top left
+swallow top center
+swallow top right
+swallow middle left
+swallow middle right
+swallow bottom left
+swallow bottom center
+swallow bottom right
+dig beam
+flash beam
+gas cloud
+unexplored area
+solid rock
+air
+doorway
+long staircase up
+long staircase down
+lowered drawbridges 0
+lowered drawbridges 1
+raised drawbridges 0
+raised drawbridges 1
+remembered as stepped on
+remembered as locked
+remembered as unlocked
+remembered as trapped
+vibrating square
+bow
+mummy wrapping
+apron
+buckled boots
+brass lantern
+saddle
+whistles 0
+whistles 1
+iron hook
+eucalyptus leaf
+ragged spellbook
+coyote
+dingo
+lynx
+panther
+centipede
+zruty
+Aleax
+jabberwock
+kobold mummy
+orc mummy
+dwarf mummy
+elf mummy
+human mummy
+ettin mummy
+giant mummy
+ogre lord
+ogre king
+yeti
+sasquatch
+dwarf zombie
+paper golem
+human
+doppelganger
+prisoner
+sandestin
+jellyfish
+piranha
+baby crocodile
+Neferet the Green
+Minion of Huhetotl
+Thoth Amon
+Nalzok
+student
+chieftain
+neanderthal
+attendant
+acolyte
+thug
+guide
+monster is tame
+monster is peaceful
+monster is detected
+monster is ridden
+swallow top left
+swallow top center
+swallow top right
+swallow middle left
+swallow middle right
+swallow bottom left
+swallow bottom center
+swallow bottom right
+dig beam
+flash beam
+gas cloud

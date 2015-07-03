@@ -1,0 +1,149 @@
+! Last modified by Alex Smith, 2015-03-21
+! NetHack may be freely redistributed. See license for details.
+!
+! Copyright (C) 2014 Alex Smith
+!
+! This text tileset is used to make branches look a little different
+! from each other.
+!
+! This file was written by Alex Smith, and encodes a dungeon coloring
+! scheme suggested by Raz (the RLtiles artist).
+
+! === Generic walls
+
+sub mine walls *; sub bar sub questfill2 walls *; sub bar sub questgoal walls *; sub cav sub questfill1 walls *; sub cav sub questlocate walls *; sub cav sub questfill2 walls *: brown basechar
+sub gehennom walls *; sub pri sub questfill2 walls *; sub pri sub questgoal walls *: orange basechar
+sub knox walls *: white basechar
+sub sokoban walls *: green basechar
+sub vlad walls *: brown basechar
+sub astral walls *: bright_cyan basechar
+
+! === Specific walls, in the same order as in RLTiles
+
+! "College of Archeology"
+sub arc sub questhome walls *: brown basechar
+! "Toltec"
+sub arc sub questlocate walls *; sub arc sub questfill2 walls *; sub arc sub questgoal walls *: gray basechar
+! "Barbarian Camp"
+sub bar sub questhome walls *; sub bar sub questlocate walls *: brown basechar
+! "Caves of the Ancestors"
+sub cav sub questhome walls *: gray basechar
+! "Greek"
+sub hea sub questhome walls *; sub hea sub questlocate walls *: white basechar
+! "Camelot"
+sub kni sub questhome walls *: gray basechar
+! "Chinese"
+sub mon sub questhome walls *; sub mon sub questfill1 walls *: red basechar
+! "Church"
+sub pri sub questhome walls *: gray basechar
+! "Evil Castle"
+sub pri sub questlocate walls *; sub wiz sub questlocate walls *; sub wiz sub questfill2 walls *; sub wiz sub questgoal walls *: darkgray basechar
+! "Wizard Castle"
+sub wiz sub questhome walls *: gray basechar
+! "Tudor"
+sub rog sub questhome walls *; sub rog sub questlocate walls *; sub tou sub questhome walls *; sub tou sub questlocate walls *; sub tou sub questgoal walls *: brown basechar
+! "Japanese"
+sub sam sub questhome walls *; sub sam sub questlocate walls *; sub sam sub questfill2 walls *; sub sam sub questgoal walls *: blue basechar
+! "Grey Cave"
+sub kni sub questgoal walls *; sub ran sub questlocate walls *; sub ran sub questfill2 walls *; sub tou sub questfill1 walls *; sub tou sub questfill2 walls *; sub wiz sub questfill1 walls *: gray basechar
+! "Red Cave"
+sub cav sub questgoal walls *; sub mon sub questlocate walls *; sub mon sub questfill2 walls *; sub mon sub questgoal walls *; sub val sub questlocate walls *; sub val sub questfill2 walls *: red basechar
+! "Blue Cave"
+sub ran sub questgoal walls *; sub val sub questfill1 walls *: blue basechar
+! "Brown Dungeon"
+sub arc sub questfill1 walls *: brown basechar
+! "Blue Dungeon"
+sub rog sub questgoal walls *: blue basechar
+! "White Dungeon"
+sub rog sub questfill1 walls *; sub rog sub questfill2 walls *; sub val sub questhome walls *: white basechar
+! "Surtur's Fortress"
+sub val sub questgoal walls *: red basechar
+
+! === Solid rock tiles
+
+solid rock: black bggray ' '
+sub mine solid rock; sub bar sub questlocate solid rock; sub bar sub questfill2 solid rock; sub bar sub questgoal solid rock; sub cav sub questfill1 solid rock; sub cav sub questlocate solid rock; sub cav sub questfill2 solid rock: black bgbrown ' '
+sub gehennom solid rock; sub val sub questgoal solid rock; sub mon sub questlocate solid rock; sub mon sub questfill2 solid rock; sub mon sub questgoal solid rock; sub pri sub questfill2 solid rock; sub pri sub questgoal solid rock; sub val sub questlocate solid rock; sub val sub questfill2 solid rock; sub val sub questgoal solid rock: black bgred ' '
+sub ran sub questgoal solid rock; sub rog sub questgoal solid rock; sub val sub questfill1 solid rock: black bgblue ' '
+
+! === Swamp water override
+
+sub swamp water; sub hea sub questfill1 water; sub hea sub questfill2 water; sub hea sub questgoal water; sub sam sub questfill1 water: cyan basechar
+
+! === Specific floors
+
+! Each of these has four colors: unlit, unlit+stepped, lit, lit+stepped.
+! (The "stepped" colors are implemented using "disturb").
+! Ensure that all four colors are distinct with both darkgray and !darkgray.
+
+! "Grass": blue, cyan, green, brown
+sub arc sub questhome the floor of a room; sub hea sub questhome the floor of a room; sub hea sub questlocate the floor of a room; sub kni sub questhome the floor of a room; sub mon sub questhome the floor of a room; sub ran sub questhome the floor of a room; sub ran sub questfill1 the floor of a room; sub sam sub questhome the floor of a room; sub sam sub questlocate the floor of a room; sub wiz sub questhome the floor of a room: green basechar
+sub arc sub questhome sub unlit the floor of a room; sub hea sub questhome sub unlit the floor of a room; sub hea sub questlocate sub unlit the floor of a room; sub kni sub questhome sub unlit the floor of a room; sub mon sub questhome sub unlit the floor of a room; sub ran sub questhome sub unlit the floor of a room; sub ran sub questfill1 the floor of a room; sub sam sub questhome sub unlit the floor of a room; sub sam sub questlocate sub unlit the floor of a room; sub wiz sub questhome sub unlit the floor of a room: blue basechar
+
+! "Dead grass": cyan, green, brown, red
+sub swamp the floor of a room; sub arc sub questlocate the floor of a room; sub hea sub questfill1 the floor of a room; sub hea sub questfill2 the floor of a room; sub hea sub questgoal the floor of a room; sub kni sub questfill1 the floor of a room; sub kni sub questlocate the floor of a room; sub kni sub questfill2 the floor of a room; sub sam sub questfill1 the floor of a room; sub wiz sub questlocate the floor of a room: brown basechar
+sub swamp sub unlit the floor of a room; sub arc sub questlocate sub unlit the floor of a room; sub hea sub questfill1 sub unlit the floor of a room; sub hea sub questfill2 sub unlit the floor of a room; sub hea sub questgoal sub unlit the floor of a room; sub kni sub questfill1 sub unlit the floor of a room; sub kni sub questlocate sub unlit the floor of a room; sub kni sub questfill2 sub unlit the floor of a room; sub sam sub questfill1 sub unlit the floor of a room; sub wiz sub questlocate sub unlit the floor of a room: cyan basechar
+
+! "Mines floor": darkgray, blue, brown, red or blue, cyan, brown, red
+sub mine the floor of a room; sub arc sub questfill1 the floor of a room; sub bar sub questfill2 the floor of a room; sub bar sub questgoal the floor of a room; sub cav sub questfill1 the floor of a room; sub cav sub questlocate the floor of a room; sub cav sub questfill2 the floor of a room: brown basechar
+sub mine sub unlit the floor of a room; sub arc sub questfill1 sub unlit the floor of a room; sub bar sub questfill2 sub unlit the floor of a room; sub bar sub questgoal sub unlit the floor of a room; sub cav sub questfill1 sub unlit the floor of a room; sub cav sub questlocate sub unlit the floor of a room; sub cav sub questfill2 sub unlit the floor of a room: darkgray basechar
+
+! "Gehennom floor" / "Red floor": red, magenta, orange, bright_magenta
+sub gehennom the floor of a room; sub cav sub questgoal the floor of a room; sub mon sub questfill2 the floor of a room; sub mon sub questgoal the floor of a room; sub val sub questlocate the floor of a room; sub val sub questfill2 the floor of a room; sub val sub questgoal the floor of a room: orange basechar
+sub gehennom sub unlit the floor of a room; sub cav sub questgoal sub unlit the floor of a room; sub mon sub questfill2 sub unlit the floor of a room; sub mon sub questgoal sub unlit the floor of a room; sub val sub questlocate sub unlit the floor of a room; sub val sub questfill2 sub unlit the floor of a room; sub val sub questgoal sub unlit the floor of a room: red basechar
+
+! "Blue floor": blue, cyan, bright_blue, bright_magenta
+sub ran sub questgoal the floor of a room; sub rog sub questgoal the floor of a room: bright_blue basechar
+sub ran sub questgoal sub unlit the floor of a room; sub rog sub questgoal sub unlit the floor of a room: blue basechar
+
+! "Ludios floor": darkgray, blue, gray, brown or blue, cyan, gray, brown
+sub knox the floor of a room: gray basechar
+sub knox sub unlit the floor of a room: darkgray basechar
+
+! "Sokoban floor": darkgray, blue, gray, brown or blue, cyan, gray, brown
+sub sokoban the floor of a room: gray basechar
+sub sokoban sub unlit the floor of a room: darkgray basechar
+
+! "Vlad's Tower floor": gray, brown, red, magenta
+sub vlad the floor of a room: red basechar
+sub vlad sub unlit the floor of a room: gray basechar
+
+! "Astral Plane floor": blue, cyan, white, yellow
+sub astral the floor of a room: white basechar
+sub astral sub unlit the floor of a room: blue basechar
+
+! "Desert floor": brown, red, yellow, orange
+sub bar sub questhome the floor of a room; sub bar sub questlocate the floor of a room: yellow basechar
+sub bar sub questhome sub unlit the floor of a room; sub bar sub questlocate sub unlit the floor of a room: brown basechar
+
+! "Dark Desert floor": blue, cyan, brown, red
+sub bar sub questfill1 the floor of a room: brown basechar
+sub bar sub questfill1 sub unlit the floor of a room: blue basechar
+
+! "Planks floor": darkgray, blue, brown, red or blue, cyan, brown, red
+sub rog sub questhome the floor of a room; sub rog sub questlocate the floor of a room; sub tou sub questhome the floor of a room; sub tou sub questlocate the floor of a room; sub tou sub questgoal the floor of a room; sub val sub questhome the floor of a room: brown basechar
+sub rog sub questhome sub unlit the floor of a room; sub rog sub questlocate sub unlit the floor of a room; sub tou sub questhome sub unlit the floor of a room; sub tou sub questlocate sub unlit the floor of a room; sub tou sub questgoal sub unlit the floor of a room; sub val sub questhome sub unlit the floor of a room: darkgray basechar
+
+! "Japan floor": darkgray, blue, gray, brown or blue, cyan, gray, brown
+sub sam sub questfill2 the floor of a room; sub sam sub questgoal the floor of a room: gray basechar
+sub sam sub questfill2 sub unlit the floor of a room; sub sam sub questgoal sub unlit the floor of a room: darkgray basechar
+
+! "Wizard Castle floor": darkgray, blue, red, magenta or blue, cyan, red, magenta
+unused wizard castle floor: red basechar
+sub unlit unused wizard castle floor: darkgray basechar
+
+! "Evil Castle floor": cyan, green, magenta, brown
+sub pri sub questlocate the floor of a room; sub wiz sub questfill2 the floor of a room; sub wiz sub questgoal the floor of a room: magenta basechar
+sub pri sub questlocate sub unlit the floor of a room; sub wiz sub questfill2 sub unlit the floor of a room; sub wiz sub questgoal sub unlit the floor of a room: cyan basechar
+
+! "Mines corridor": brown, red, yellow, orange
+sub mine corridor; sub bar sub questfill2 corridor; sub bar sub questgoal corridor; sub cav sub questfill1 corridor; sub cav sub questlocate corridor; sub cav sub questfill2 corridor: brown basechar
+sub mine sub lit corridor; sub bar sub questfill2 sub lit corridor; sub bar sub questgoal sub lit corridor; sub cav sub questfill1 sub lit corridor; sub cav sub questlocate sub lit corridor; sub cav sub questfill2 sub lit corridor: yellow basechar
+
+! "Gehennom corridor": red, magenta, orange, bright_magenta
+sub gehennom corridor: red basechar
+sub gehennom sub lit corridor: orange basechar
+
+! "Blue corridor": blue, cyan, green, brown
+sub ran sub questgoal corridor; sub rog sub questgoal the floor of a room: blue basechar
+sub ran sub questgoal sub lit corridor; sub rog sub questgoal sub lit corridor: green basechar

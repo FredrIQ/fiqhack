@@ -1,0 +1,56 @@
+About this document:
+Last modified by Alex Smith, 2015-04-01
+
+Copyright (C) 2013 Alex Smith.
+
+This document is licensed under the NetHack General Public License.  See
+libnethack/dat/license for details.
+
+
+This is a chart of all the places in the source distribution that need
+to be updated due to a new version of NetHack coming out (i.e. a "if
+you produced a new version, what's the minimum that has to change?"):
+
+  * aimake.rules (packageversion option near the start of the file)
+    [note: aimake translates this number into various formats
+    automatically, so it should be in the format, e.g., 4.3.0 or
+    4.3.beta2; only the first 3 components are significant on Windows,
+    which is a mess, but one which won't be relevant until/unless
+    4.3.1 has betas]
+  * libnethack/include/patchlevel.h (VERSION_COMPATIBILITY constant,
+    if and only if the new release breaks save compatibility)
+  * libnethack/dat/history (first line)
+  * dist/debian/changelog (summary changelog entry for Debian)
+  * doc/changelog.txt (detailed description of the changes)
+  * libnethack_common/include/nethack.h (this is the central place
+    from which most C code should be pulling the version number)
+  * README (describe the new version)
+  * scripts/build-debian-package (filename of the newly created
+    package)
+  * Port numbers (README, libnethack_client/include/nhclient.h) if you
+    break server protocol compatibility (the port number should
+    normally be "53" followed by the major, minor, and patchlevel
+    version components)
+
+Additionally, almost every release will change the copyright status
+(typically just dates, but perhaps more extensively):
+
+  * copyright, binary-copyright.pod
+  * aimake.rules ($copyright statement)
+  * libnethack/include/patchlevel.h (this is the central place from
+    which most C code should be pulling the copyright statement)
+
+Places to announce a new release (including betas):
+
+  * http://reddit.com/r/nethack
+  * IRC channels on Freenode: #nethack (just say it's been released),
+    #nethack4 (change the topic if necessary)
+  * rec.games.roguelikes.nethack on Usenet
+  * the networkmotd daemon on http://motd.nethack4.org (needs an admin
+    to change this)
+
+Note that the NGPL also requires all modified files to specify who
+modified them and when, which is a pretty obnoxious requirement.
+Nowadays, we get git to do this automatically: see
+scripts/vcs-hooks/git-hooks-post-commit.
+

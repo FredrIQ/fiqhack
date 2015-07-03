@@ -1,0 +1,31 @@
+#!/usr/bin/make -f
+# Last modified by Alex Smith, 2015-03-10
+%:
+	env DH_VERBOSE=1 dh $@
+
+DESTDIR=debian/nethack4
+PREFIX=/usr
+
+override_dh_auto_configure:
+	mkdir -p build
+	mkdir -p $(DESTDIR)
+	touch debian/aimake-ignore-this
+	(cd build; umask 022; ../aimake --without=jansson --config-only -i $(PREFIX) ..)
+
+override_dh_auto_build:
+	(cd build; umask 022; ../aimake)
+
+override_dh_auto_install:
+	(cd build; umask 022; ../aimake --install-only -i --destdir=../$(DESTDIR))
+
+override_dh_auto_clean:
+	rm -f $(DESTDIR)
+	rm -f build
+	rm -f debian/aimake-ignore-this
+
+override_dh_fixperms:
+	dh_fixperms -X /var/games -X /usr/games/nethack4
+
+override_dh_installdocs:
+	dh_installdocs
+	mv debian/nethack4/usr/share/doc/nethack4/changelog.txt debian/nethack4/usr/share/doc/nethack4/changelog

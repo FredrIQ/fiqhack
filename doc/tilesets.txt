@@ -1,0 +1,173 @@
+About this document:
+Last modified by Alex Smith, 2014-10-26
+
+The tiles code in this directory was originally taken from Slash'EM, and has
+been modified by Alex Smith for use in NetHack 4.  (This documentation file
+itself was originally based on the tiles documentation from Slash'EM.)  The
+tiles themselves are distributed in a text format with routines to help in
+converting them to a system's preferred format and using them there.  For
+information on the authorship of the tiles, see the "copyright" file in the
+root of the NetHack 4 distribution.
+
+This document is licensed under the NetHack General Public License.  See
+libnethack/dat/license for details.
+
+
+The Tiles System in NetHack 4.3
+===============================
+
+The description of the tile format has been moved to nh4ct(5).  This
+documentation file contains lower-level details.
+
+Tile Rendering
+--------------
+
+The various sorts of objects that can have tiles are:
+
+  * backgrounds
+  * traps
+  * objects
+  * memory of invisibility
+  * monsters
+  * warning symbols
+  * explosions
+  * beams (i.e. directional visual effects associated with wands, breath, etc.)
+  * other visual effects (sparkle, boomerangs, MR, etc.)
+  * engulfing monsters
+  * brandings (must always be transparent, even in 16x16)
+
+Every square will always have exactly one background, and can have up to one
+of each of the following: traps, objects, object associated monster (e.g. for
+statues and corpses); up to one monster or warning symbol; up to one
+explosion, beam, or effect; and any number of monster brandings (e.g. to show
+that a monster is peaceful) and general brandings (e.g. to show that a door is
+known to be unlocked).  When not using a tiles port, brandings are shown using
+background or foreground colors (depending on the branding); in tiles ports,
+general brandings are superimposed on the background (except for the trap
+branding, which appears on top of everything because it's so important), and
+monster brandings are superimposed on the monster.  Warning symbols are
+encoded as monsters (with a specific branding to show that they're warnings
+rather than monsters).
+
+Some tilesets have backgrounds that are not completely opaque.  As such, when
+rendering views in tiles, two backgrounds have to be drawn; the underlying
+floor, and the background itself (on top of the floor).  The lowermost
+backgrounds used for this purpose are "floor of a room" and "corridor"; thus,
+these tiles must be completely opaque, to ensure that the map itself does not
+end up partly transparent (which might not be rendered correctly).  (Likewise,
+cchars for these backgrounds must be fully defined, and not refer to the layer
+below.)
+
+
+Tile substitution
+-----------------
+
+NetHack 4 shows more information on its tiles than other variants, and also
+has various cosmetic adjustments to make areas more visually distinct.  This
+means a large number of potential tiles, many of which do not exist in any
+given tileset.
+
+This is handled using the concept of a "substitution tile", which is the name
+of an existing tile with one or more prefixes.  `sub gehennom walls 0` is an
+example of a substitution tile name that exists in NetHack 3.4.3 and Slash'EM;
+NetHack 4 adds many more possibilities (e.g. `sub sokoban floor of a room`, or
+even `sub male sub gnome wizard`).  The client specifies any appropriate
+substitution prefixes when asking for a tile number; the tiles system will
+then find an appropriate tile for the current tileset, which will contain as
+many of the given prefixes as possible, but may have to remove some (so for
+instance, if `sub male sub gnome wizard` is not present, perhaps `sub gnome
+wizard` will work instead, or just `wizard`).
+
+Much of the information about tile substitution is sent separately from the
+map, over a different API call; the LDM_* constants give general substitution
+rules for the level, and other substitutions (e.g. player character race and
+gender) are part of the player's status.  Things like whether a tile is lit or
+not are also used for substitutions; both `sub lit` and `sub unlit` exist, so
+that a tileset can choose whether it wants the lit or unlit room/corridor tile
+as a fallback.
+
+Unlike regular tiles, which are listed in `nethack4.map`, and all of which are
+present and appear in order in every generated tile image, which substitution
+tiles exist depends on the tileset.  The substitution tiles appear at the end
+of each tile image; and the tile image is accompanied by a `.tiledesc` file
+that lists which substitution tiles exist and which order they appear in.
+
+Existing substitution keys:
+
+  * `sub default`, `sub gehennom`, `sub questhome`, `sub mine`, `sub sokoban`,
+    `sub rogue`, `sub knox`, `sub questfill1`, `sub questlocate`, `sub
+    questfill2`, `sub questgoal`, `sub vlad`, `sub astral`: Specifies the
+    current level display mode.  Some of these names are chosen for
+    compatibility with 3.4.3 and Slash'EM; the order is for compatibility with
+    NitroHack.  These loosely correspond to branches, but many branches are
+    currently lumped together as `default`.  This is relatively easy to change
+    (do a search on the `LDM_` prefix).
+
+  * `sub arc`, `sub bar`, ..., `sub wiz`: For locations within the Quest,
+    specifies which quest is the quest in question.
+ 
+  * `sub female`, `sub male`, `sub human`, `sub gnome`, `sub elf`, `sub orc`,
+    `sub dwarf`: Used for monster tiles, and specifies gender and (for
+    player-monsters, including the player) race.
+
+  * `sub lit`, `sub unlit`: Although these can exist on any tile, they are
+    typically only used for `corridor` and `the floor of a room` to implement
+    light level display via changing the image used for the furthest
+    background.
+
+  * `sub corpse`, `sub statue`: These substitutions are applied to monster
+    tiles in order to create a corpse-of-that-monster or
+    statue-of-that-monster object tile.  Their behaviour on non-monster tiles
+    is subject to change and should be avoided; a wildcard like `sub statue *`
+    will match monster tiles only, in order to make following this rule
+    easier.
+
+
+Tile utilities API
+------------------
+
+`tilesequence.c` provides the following five functions:
+
+
+    unsigned long long substitution_from_name(const char **name)
+
+Given the name of a tile, returns the substitutions applied to that name, and
+adjusts the `*name` pointer to point at the start of the non-substitution
+portion of that name.
+
+
+    int tileno_from_name(const char *name, int offset)
+
+Given the name of a tile (with substitutions stripped), returns the
+corresponding number.
+
+
+    int tileno_from_api_name(const char *name, const char *type, int offset)
+
+Given the name of an nh_symdef (which might not be the same as the name of the
+corresponding tile; it tends to be a lot shorter), returns the tile name it
+corresponds to, as a number. Zaps and explosions have a type as well as a
+name; both are needed to find the correct tile.
+
+
+    const char *name_from_tileno(int tileno)
+
+Given a tile name as a number, returns that name as a string. (The return
+value needs no deallocation; it might be a string literal, or might point to a
+static buffer that is overwritten with each call, or might point to a buffer
+that is specific to the input you give. Basically, don't assume it to stay
+valid beyond the next call.)
+
+
+    const char *name_from_substitution(unsigned long long substitution)
+
+Given a substitution number, returns the name prefix that corresponds to that
+substitution.  (Just like with `name_from_tileno`, this needs no
+deallocation.)
+
+
+The "offset" parameter to some of these functions is a value that represents a
+logically connected range of tiles (`TILESET_*_OFF`), to make the lookup more
+efficient, and can be `TILESEQ_INVALID_OFF` if it is not known in which range
+the tile resides. The return value on error is NULL for a pointer, or
+`TILESEQ_INVALID_OFF` for an integer.

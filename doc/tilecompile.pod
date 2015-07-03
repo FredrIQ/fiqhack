@@ -1,0 +1,290 @@
+=for comment
+Last modified by Alex Smith, 2015-03-17
+.
+Copyright (C) 2014, 2015 Alex Smith
+NetHack can be freely redistributed.  See license for details.
+
+=encoding utf8
+
+=for aimake manualsection 6
+
+=for aimake manualname tilecompile
+
+=head1 NAME
+
+tilecompile - tile compiler for NetHack 4
+
+=head1 SYNOPSIS
+
+B<tilecompile> [I<options>] B<-t> I<type> B<-o> F<outfile> F<files>
+
+=head1 DESCRIPTION
+
+The NetHack 4 tile compiler is used to create and edit tilesets for
+NetHack 4.  A "tileset" associates a rendering (an image, or a
+character with color and styling) with everything that exists in the
+game, and thus affects the visual appearance of the game map.
+
+Tilesets exist in a range of formats.  The format used by the game
+itself is the "nh4ct" format, which bundles together an image (if
+necessary) and a description of renderings into a single file.
+However, this format cannot easily be edited; although it is portable
+between systems, it is a binary format and not human-readable.  The
+"source" of a tiles is thus better represented in one of two ways: as
+a list of tiles that contains embedded images or character styling
+descriptions in text format ("text"), or as an image together with a
+separate file defining what the individual elements of that image mean
+("map", "hex").
+
+The tile compiler can translate tilesets from one format to another.
+Thus, to produce a new tileset, you would use B<-t> B<nh4ct>; to edit
+an existing tileset, if you didn't have the source available, you
+could "decompile" an existing tileset using (say) B<-t> B<text>.
+(However, you should work from the original source if it is available,
+because it may have helpful additional information such as comments,
+or contain generating rules to make it less repetitive.)
+
+The tile compiler is also capable of combining multiple tilesets into
+a single tileset.  It is very common for a tileset to be defined to be
+the same as another tileset, but with some exceptions; in such a case,
+it is typically created by merging together the original tileset (or
+its source files) and a small tileset that just contains the
+exceptions.  Tilesets that come earlier on the command line will be
+overridden by tilesets that come later; if a tileset consists of
+multiple files (e.g. an image file and a map file), the image file
+must come first, because all map/hex files refer to the most recently
+seen image file.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-o> F<outfile>
+
+Specifies the file in which to place the output.  Some output formats
+will require outputting multiple files, in which case the file
+extension on F<outfile> will be overridden for each individual file
+output (for example, if you wrote "B<-o> F</tmp/test.ext>", a single
+file would be output at F</tmp/test.ext>, but when outputting multiple
+files, they might be placed at, e.g., F</tmp/test.txt> and
+F</tmp/test.png>).  This option is required.
+
+=item B<-t> I<format>
+
+Specifies the format of the output.  See the L</"FORMATS"> section for
+details on the available options.  This option is required.
+
+=item B<-z> I<width> I<height>
+
+Specifies the dimensions of one tile image (for a text-based tileset,
+the dimensions of one tile image are considered to be 0 by 0).  In
+some cases, the tile compiler can deduce this from the input files it
+is given, but in many cases, you will need to specify this manually.
+
+=item B<-n> I<name>
+
+Specifies a name for the tileset, which will be placed into the output
+file (except for the "image" format).  Some formats ("nh4ct" and
+"binary") I<require> a tileset name; for others, it is optional but
+recommended.
+
+=item B<-i> F<image>
+
+Requires the image portion of an image-based tileset to be identical
+to the given PNG file.  You can use this if you already have an
+existing single PNG file containing every tile and merely want to add
+the "nh4ct" metadata to it.  Another use is to transfer a list of tile
+names from one image to another.
+
+=item B<-p> F<palette>
+
+Limits the palette that will be used to the colors in the given file
+(which is in the same format as the palettes at the start of a "text"
+format file).  If this option is not given, the output palette will
+consist of every color that is used in any tile image.
+
+=item B<-f>
+
+By default, a palette set using the B<-p> option will be used to
+verify that the input tilesets do not contain unwanted colors; any
+colors outside the palette will be an error.  Setting this option
+instead causes colors outside the palette to be adjusted to the
+closest available color within it, and is useful if your source images
+contain colors that are only slightly off-palette.
+
+=item B<-l>
+
+Tileset images can be stored in a "text" file in one of two ways:
+specifying colors as indexes into a palette (which is more concise),
+or specifying colors as separate red/green/blue/alpha channels (which
+allows more colors).  In NetHack 3.4.3, a palette can only have 62
+colors; in Slash'EM 7E7F3, it can have up to 256.  Normally, the size
+of a palette will be limited to 256 colours in F<tilecompile> output
+(after it will switch to channel mode); this option allows the palette
+to expand up to 4096 colours.  (Note that with more than 256 colours,
+the image will not be compatible with other NetHack versions no matter
+which format you use.)
+
+If the image has from 257 to 4096 colours inclusive, this option will
+give you smaller output at the cost of processing time.  If you have
+more than 4096 colours, it will waste processing time for no benefit,
+as the image will still become channel-based.
+
+=item B<-b> I<red> I<green> I<blue>
+
+Interprets any color in the input files with exactly the given
+red/green/blue channels as fully transparent, regardless of its alpha.
+This has two purposes: one is to import images which use color-key
+transparency but don't declare it properly (which is very common among
+"older" tile images), and the other is to import images that use
+Slash'EM's convention of "C<(71, 108, 108)> is transparent" but are
+not in "text" format.  (In "text" format images, specifying a color
+using three channels, as in C<(255, 0, 0)> or C<(71, 108, 108)>,
+specifies an implicit alpha channel that is fully opaque for most
+colors, or fully transparent for C<(71, 108, 108)>; for an opaque
+C<(71, 108, 108)>, you would have to write C<(71, 108, 108, 255)>.
+Tools that do not understand this convention might produce an image
+with a literal background of C<(71, 108, 108)> where transparency is
+intended.)
+
+=item B<-k>
+
+If the input tileset contains unreferenced images, copy them to the
+output tileset even though they are unreferenced.  (The most common
+reason for a tile image to be unreferenced is that it is "past the
+end" of a tileset, because tileset images need to be rectangular, in
+which case the spare images are useless.  But in special cases, you
+might have a need to keep them around.)
+
+=item B<-u>
+
+If a tile image is referenced with an unknown tile name, then keep the
+reference to the image anyway (by default, such references are
+deleted).  Such images most commonly exist as a result of tiles being
+left in a tileset after the corresponding feature is removed from the
+game; such tile images are potentially useful if the feature (or a
+similar one) is ever re-added.  As such, this option would typically
+be given when converting a tileset from one format to another for
+inclusion in a source repository, but not when producing a tileset for
+direct use by the game.
+
+This option does not work correctly (even though it is accepted) with
+the "binary" format, nor with the "nh4ct" format for text-based
+tilesets, because there is nowhere to store the resulting tile names.
+
+=item B<-W>
+
+Produces a warning if the tileset is missing any tiles that are
+necessary for the correct functioning of the game.  Missing tiles are
+fine when working with partial tilesets (such as those which are
+designed to override tiles in other tilesets), but tilesets with
+missing tiles will not render correctly in the actual game.
+
+=back
+
+=head1 FORMATS
+
+The following tileset formats are understood by F<tilecompile>, both
+reading them as input and producing them as output:
+
+=over 4
+
+=item text
+
+A tileset format that places everything in a single file: palette,
+images, and the information about where those images should be used.
+For an image-based tileset, the images will be converted to a textual
+representation that represents each pixel of the image using from one
+to eight characters.
+
+This is the format that was traditionally "officially" used by
+previous versions and forks of NetHack (although unofficial tilesets
+were more commonly distributed as Windows bitmaps, this was not
+portable between platforms, and was inflexible to changes in the
+number of monsters or items that existed in the game).  If the images
+in the tileset are simple enough to be accepted by NetHack 3.4.3, then
+the image format will be made backwards-compatible to it.  Otherwise,
+the images will be output in a format acceptable to Slash'EM 7E7F3, if
+possible (which could also read images in the old 3.4.3 format).
+(Note that the tile I<names> may need adjusting or reordering in both
+cases; the tilesets will not be directly usable by older versions.)
+If the images are too complex to be represented in either image format
+(e.g. they have alpha transparency, or use more than 256 colours),
+NetHack 4-specific extensions will be used to avoid loss of fidelity.
+
+=item nh4ct
+
+A binary format that places everything in a single file.  This is the
+only format that F<nethack4> can read.  It is not human-readable, and
+in some cases loses some information that is not vital to rendering
+(such as the names of unused tiles).
+
+For image-based tilesets, a "nh4ct" file is a polyglot: in addition to
+containing the tile metadata, it is also a valid PNG image file.  This
+makes it easy to inspect in an image-processing program.
+
+=item binary
+
+This is basically the same as the "nh4ct" format, but split into
+separate files; a PNG image will be output for an image-based tileset,
+and the rest of the "nh4ct" file will be output as a separate file
+with the extension F<.bin>.  For a text-based tileset, this is
+equivalent to "nh4ct".
+
+=item map
+
+A format consisting of a PNG image, and a separate file (with the
+extension F<.map>) that gives a name to each tile in that image, one
+per line (starting at the top-left corner and moving along each row in
+turn).  This format is particularly useful for importing tilesets
+intended for older versions of NetHack or NetHack variants, and is
+also a reasonable choice to use as the source for new tilesets.
+
+=item hex
+
+A format consisting of a F<.txt> file which associates tile names with
+indexes into another file (e.g. C<solid rock: 0x4A>).  For an
+image-based tileset, the other file is an image file, and the indexes
+start at 0 for the top-left corner, and increase along each column of
+the tile image and then each row.  For a text-based tileset, the other
+file is a virtual file consisting of all possible characters in all
+possible styles, arranged in a standard order (thus, any possible
+styled character will be found somewhere in the file).  This format is
+useful for importing tilesets which contain a large number of unused
+tiles (perhaps because they are designed as general-purpose tilesets,
+rather than for NetHack specifically).
+
+=item image
+
+This format just produces a PNG image containing every tile, and
+discards the metadata about which tile means what.  It might be useful
+for debugging purposes.  Attempting to read this format will be
+useless without a separate file; the output will contain no tiles
+unless C<-k> is given, in which case the best the tile compiler can do
+is to name them C<unuseds 0>, C<unuseds 1>, etc..
+
+=item palette
+
+This format outputs just the palette that would be used for an output
+image; it does not output the image itself, or any metadata about what
+tile means what.
+
+=back
+
+For details about these formats, see L<nh4ct(5)>.
+
+=head1 SEE ALSO
+
+L<nh4ct(5)>, L<nethack4(6)>, L<http://nethack4.org>.
+
+=head1 BUGS
+
+Sometimes, the size of the tile images has to be specified manually
+even though it could be inferred from the other files given on the
+command line.
+
+If you find a bug, or want to peruse the list of bugs that other
+players have found, see the "Tile Utilities" section of the bug
+tracker at L<http://trac.nethack4.org>.
+
+=cut

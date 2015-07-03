@@ -1,0 +1,268 @@
+About this document:
+Last modified by Sean Hunt, 2014-01-15
+
+Copyright (C) 2013 Sean Hunt
+
+This document is licensed under the NetHack General Public License.  See
+libnethack/dat/license for details.
+
+
+Dungeon Layout in NetHack 4
+===========================
+
+Background
+----------
+
+<+ais523_> I guess whenever you look at any part of NetHack code in details,
+you just find a mound of special cases taped together by global variables
+<+ais523_> apart from the drawbridge code
+< coppro> ais523_: which is a mound of special cases taped together by special
+cases?
+<+ais523_> which works by assuming that the rest of NetHack follows a sane
+storage model and then tries to warp reality around it to fit
+
+Currently, the level and dungeon layout in NetHack is a mess. A large amount
+of the engine seems to have been designed assuming a single linear dungeon
+layout, and things like interbranch connections are largely glued on.
+
+It's important to remember that what we think of as a "branch" is often
+referred to in existing code as a "dungeon".
+
+If we look in dungeon.h, we will see the following structures:
+
+ - d_flags: Level flags which apply to entire dungeons or to special levels.
+ - d_level: An identifier for a level, including the dungeon number and depth.
+ - s_level: Extra information required for a special level.
+ - stairway: Destination data for stairs.
+ - dest_area: actually just a rectangle in a rectangle, it's used for some
+   forms of level change.
+ - dungeon: This contains an entire dungeon, including its flags and
+   information about its levels.
+ - branch: This contains the information about the link between a pair of
+   dungeons.
+ - overview_info: Information for use with the dungeon overview feature.
+
+The level struct in rm.h is also important, since it contains the entire level
+and all data, including monsters, objects, a levelflags structure (of course,
+different from the d_flags structure), room information, door information, and
+more.
+
+The special level loading process is also its own set of Wonderful Wonderful
+fun, becase for no particularly-well-understood reason, the dev originally
+designing it thought it would be a good idea to make the compiled levels
+pluggable so that you could change the levels around on the fly. In practice,
+some special cases (for instance, handling moving up into the Castle level
+from the Valley) are poorly done and this makes pluggability not particularly
+good.
+
+The level compiler also doesn't handle everything as well as it might; the
+special vault in Knox, for instance, is a morgue in the description file and
+the loader does some hacking to populate it correctly. This just adds to the
+raft of special cases.
+
+
+The Plan
+--------
+
+For NetHack 4, the plan is to significantly revamp and simplify the level
+handling system. Firstly, the level compiler will be mostly scrapped and the
+special level descriptions will be transferred into the main library with a
+pluggable interface. Macros will be used to help generate such levels. This
+will allow special levels to do weird things which they couldn't otherwise
+while reducing the number of special cases in the main part of the code.
+Ideally, we can outsource everything or almost everything to the level
+interface and that will lead to a much happier developer. For instance, a
+level could provide a migration override so that the Castle migration can be
+handled correctly. This also allows levels to do all sorts of things that
+require full Turing completeness without needing to make another Turing
+complete sublanguage.
+
+Also important is the simplification of dungeon and branch layout. Very little
+needs to be stored on the dungeon/branch itself; instead, dungeon properties
+will simply be stored on each level within the dungeon. On the particularly
+rare occasions that information about the larger structure is
+required---branchports and overviews---it can be generated on the fly. Levels
+will generally be referred to by pointers, and each level will store the
+connection information directly in the level. When you migrate via a
+connection, the default migration code will simply try to find the matching
+connection and, if it fails, will just complain a lot. The code will not rely
+on having at most one of each type of connection (ladder up/down, stair
+up/down, long stair, portal) per level.
+
+This will allow some other nice properties: it will be impossible to move
+"down" by simply adding one to the level z, but instead you'll need to use a
+helper function. This will permit things to fall out of the bottom of Sokoban.
+Finally. In order to implement this bit, there will need to be a concept of
+"directly above" and "directly below" in the connection information. There
+will only be one level directly above or below a given level, but the relation
+is not necessarily symmetric, as D:2 might be directly above both D:3 and
+Mines:1. 
+
+The Details
+-----------
+
+The level manager is the structure containing all the functions needed to
+handle special cases in the level system. This includes almost everything that
+makes special levels special, but also some other branch-related controls. A
+level manager is responsible for generating the level in the first place, and
+thereafter for handling a number of things related to the level via a series
+of hooks.
+
+All levels are given managers, even regular levels. The dungeon layout is
+responsible for assigning the level managers to each level. For ease of
+coding, a dungeon manager may leave a given hook as nulled, in which case it
+will be filled in with the game's default function for that hook.
+
+Level flags and other parameters of levels will be effectively split into four
+categories:
+ 1. Properties which may be changed as a result of specific occurrences in the
+    game (examples: whether the level was forgotten, whether it's a graveyard)
+ 2. Properties which are constant and part of the level description (examples:
+    whether the level is notele or undiggable)
+ 3. Properties which may be dynamically recalculated but are not otherwise
+    subject to change (no examples come to mind at the moment but it's worth
+    leaving as a category)
+ 4. Properties which would otherwise be in class 2 but are more easily
+    expressible as functions
+
+Properties in classes 1 and 2 will be stored directly on the level structure,
+in different substructures to make clear which is which. Properties in classes
+3 and 4 will be handled as level manager hooks.
+
+Certain levels will require additional special cases beyond what can be
+provided by the level manager; at the very least the Rogue level, the Sokoban
+branch, and the planes of Air and Water. These levels will have a single flag
+(of class 2) indicating that they require extra special cases. The rest of the
+endgame will be special-cased initially, although it may turn out to be
+possible to eliminate the special cases.
+
+The d_level struct will be excised from the general game usage, and u.uz (the
+global variable for the current level) will instead be replaced with level (the
+existing other global variable for the current level). Pointers to level
+structures will be preferred wherever possible. An alternate structure will
+be provided for situations such as migrations where the level's existence
+cannot be assured; the API will be designed in such a way as to minimize the
+need for other code to know if its existence.
+
+Working Notes
+-------------
+
+The following is a list of known special level special cases that are not
+easily handled through some aspect of this method:
+ - The Castle drawbridge
+ - Special pickaxe digging on earth
+ - Earth elementals and xorns from digging on Earth
+ - The maze level digging rules, including the way they don't apply on Earth
+ - The farlooking protection of high priests and priestesses on Astral
+ - Pets refuse to dig on the Rogue level [why?]
+ - Various special cased messages
+ - Bracing yourself while kicking on astral [this is broken anyway]
+ - The inability to use cursed gain level to ascend from the top of the
+   Wizard's tower
+ - Escaping in celestial disgrace being a factor of the astral plane
+ - Level names on gravestones and historic events
+ - Some surface names and other descriptions
+ - Some bits of spoteffects
+ - Portals on planes not letting through coelementals and the Amulet
+ - the valley's and the invocation level's level teleport blocking effects
+ - wizard tower migration
+ - Vlad not using wands of digging in his own tower
+ - Clairvoyance/branchport/levelport not working in the endgame
+ - The behaviour of the D:1 upstair
+ - Different naming/inventory/talking of monster players in the endgame
+ - Samurai lacquered armor in their Quest
+ - The mysterious force
+
+Things that need to be in/accessible via struct level:
+ - Bones id
+ - Pointer to branch
+ - Depth in branch [for level descriptions and the like]
+ - Difficulty level
+ - Connections to other levels
+
+Things that need to be in the branch information:
+ - Branch name
+
+Things that need to be in the level flags:
+ - Whether the level is weightless (currently Air, Water?)
+ - Whether the level is moist (currently Water) (affects eels)
+ - Level display mode
+ - Whether something is the rogue level [there are tons of special cases and
+   since there is a unifying theme here, it is acceptable to have a rogue
+   level flag]
+ - Whether this is a sokoban level [too many special cases and again no easy
+   unifying themes]
+ - Whether the floor is diggable
+ - Whether altars are high (also affects wrath; make the Amulet sacrificable
+   to Moloch in the Sanctum)
+ - Whether scrolls of earth work [can this be merged with something else? Fire
+   is the big weird one here, especially as it has a ceiling]
+ - Whether the level is open air (currently qhome, Fire?)
+ - Existing dungeon flags (incl. alignment and hellishness)
+ - A pointer to either the bones name of the level, or NULL for no bones.
+   [note that this could be changed in the future if the level manager is
+    given more control over bones, say to allow bones on branch levels]
+ - Whether the level blocks level teleporting downward. This includes the
+   quest home until it's unlocked, the invocation level until the invocation
+   is performed, and the valley if you're not on it.
+
+Things that need to be in the level manager:
+ - Generation (at least mklev() through mineralize())
+   - Generation of terrain and monsters should be done independently
+ - Hook to do each turn
+ - Hook for loading
+ - Hook for unloading
+ - Hook for migrations
+ - Hook for entering the level
+ - The description for the overview
+ - The description for wizmode printdungeon and extra info like
+   portal/vibrating square location
+ - Some monster generation controls (rogue monster inventories/letters,
+   elemental plane restrictions, alignment restrictions, pickaxes for
+   elvenkings on Earth, wands of digging for minotaurs on Earth, extra HP for
+   Ds and Es in the endgame)
+ - Some item generation controls (rogue/hellprobs)
+ - Some trap generation controls (a set of flags at the very least)
+ - Saving/loading
+ - How the Wizard performs an intervention
+
+Other things that need more thought:
+ - Handling of water, generally. See is_moat, is_pool, waterbody_name, and
+   Plane of Water special cases in draw code especially. Thoughts: make water
+   on Water into "freestanding" water, a different terrain type that could
+   exist on a regular level as well. Deal with juiblex differently (why is it
+   different from Medusa anway, other than surface name?)
+ - How exactly does the Plane of Water work? Is the player actually walking on
+   the surface of the bubble, or floating in the air? The code seems to be
+   contradictory on this point. We should make a decision and rework all the
+   special cases accordingly. [possibly related: should you be able to dive in
+   while walking on water?]
+ - What is the exact algorithm for branchporting and levelporting?
+
+Special cases that need looking for:
+ - Is_water/air/earth/fire/astrallevel
+ - Is_rogue_level
+ - Is_stronghold
+ - Is_special
+ - Is_oracle_level
+ - Is_qstart
+ - Is_qlocate
+ - Is_bigroom
+ - Is_nemesis
+ - Is_asmo_level
+ - Is_juiblex_level
+ - Is_baal_level
+ - Is_valley
+ - Is_medusa_level
+ - Is_wiz1/2/3_level
+ - Is_sanctum
+ - Is_portal_level
+ - In_sokoban
+ - In_W_tower
+ - Invocation_lev
+ - In_V_tower
+ - On_W_tower_level
+ - In_endgame
+ - Inhell
+ - In_quest
+ - In_hell

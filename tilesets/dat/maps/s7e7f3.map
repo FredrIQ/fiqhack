@@ -1,0 +1,1421 @@
+! Last modified by Alex Smith, 2015-04-02
+! NetHack may be freely redistributed. See license for details.
+!
+! This is the sequence in which tiles normally appear in Slash'EM 7E7F3
+! tilesets, obtained by taking the tiles from monsters.txt, objects.txt,
+! and other.txt in that order, and then renaming to NetHack 4 names.
+! Therefore, this file can be used with import_tileset to import tiles
+! from tilesets intended for use with Slash'EM 7E7F3.
+!
+! Note that three tiles ("apron", "buckled boots", "robe") exist in
+! NetHack 3.4.3 but not Slash'EM 7E7F3, and thus need to be added to
+! the tileset along with the tiles from nh4new.txt (perhaps you could
+! take the tiles from a NetHack tileset instead). For "robe", you can
+! substitute "red robe" without much difficulty; NetHack 3.4.3 "apron"
+! = Slash'EM "lab coat" but those probably need different tiles; and
+! Slash'EM having fewer boots than NetHack is just a weird anomaly.
+!
+giant ant
+giant tick
+killer bee
+giant flea
+soldier ant
+fire ant
+snow ant
+giant beetle
+giant louse
+tsetse fly
+migo drone
+queen bee
+yellow jacket
+black wasp
+migo warrior
+giant wasp
+spitting beetle
+migo queen
+assassin bug
+killer beetle
+acid blob
+quivering blob
+gelatinous cube
+jiggling blob
+lava blob
+static blob
+burbling blob
+chicken
+cockatoo
+chickatrice
+cockatrice
+pyrolisk
+parrot
+jackal
+fox
+coyote
+werejackal
+little dog
+dog
+large dog
+pit bull
+dingo puppy
+dingo
+large dingo
+wolf
+death dog
+rabid wolf
+werewolf
+warg
+winter wolf cub
+winter wolf
+hell hound pup
+wolverine
+shadow wolf
+mist wolf
+hell hound
+Cerberus
+gas spore
+floating eye
+glowing eye
+freezing sphere
+flaming sphere
+shocking sphere
+bloodshot eye
+blinking eye
+kitten
+housecat
+jaguar
+lynx
+panther
+werepanther
+large cat
+kamadan
+displacer beast
+caterwaul
+tiger
+weretiger
+sabre-toothed cat
+hellcat
+gremlin
+gargoyle
+winged gargoyle
+statue gargoyle
+hobbit
+dwarf
+dwarf thief
+bugbear
+dwarf lord
+dwarf king
+duergar
+deep one
+mind flayer
+master mind flayer
+deeper one
+deepest one
+manes
+homunculus
+dretch
+imp
+lemure
+quasit
+rutterkin
+tengu
+nupperibo
+blood imp
+blue jelly
+spotted jelly
+clear jelly
+ochre jelly
+yellow jelly
+orange jelly
+rancid jelly
+kobold
+large kobold
+kobold lord
+kobold shaman
+swamp kobold
+rock kobold
+kobold warrior
+Kroo the Kobold King
+leprechaun
+leprechaun wizard
+small mimic
+large mimic
+giant mimic
+wood nymph
+water nymph
+mountain nymph
+pixie
+brownie
+quickling
+Aphrodite
+goblin
+hobgoblin
+orc
+hill orc
+Mordor orc
+Uruk-hai
+orc shaman
+orc-captain
+war orc
+great orc
+Grund the Orc King
+snow orc
+demon orc
+rock piercer
+iron piercer
+glass piercer
+lamb
+rothe
+giant badger
+scramper
+sheep
+goat
+squealer
+mumak
+leocrotta
+cow
+mangler
+wumpus
+bull
+titanothere
+baluchitherium
+mastodon
+Jumbo the Elephant
+juggernaut
+catoblepas
+sewer rat
+rabbit
+black rat
+giant rat
+rabid rat
+rabid rabbit
+pack rat
+wererat
+rock mole
+woodchuck
+hellrat
+the Rat King
+cave spider
+centipede
+recluse spider
+giant spider
+barking spider
+scorpion
+carrion crawler
+nickelpede
+giant scorpion
+Girtab
+Shelob
+phase spider
+werespider
+lurker above
+trapper
+white unicorn
+gray unicorn
+black unicorn
+pony
+horse
+warhorse
+Pegasus
+fog cloud
+dust vortex
+ice vortex
+energy vortex
+steam vortex
+fire vortex
+larva
+maggot
+dung worm
+acid worm
+bloodworm
+tunnel worm
+baby long worm
+baby purple worm
+long worm
+purple worm
+rot worm
+grid bug
+spark bug
+arc bug
+lightning bug
+xan
+yellow light
+black light
+zruty
+echidna
+platypus
+koala
+wombat
+Tasmanian devil
+wallaby
+wallaroo
+kangaroo
+couatl
+Aleax
+movanic deva
+monadic deva
+astral deva
+Angel
+ki-rin
+Archon
+Planetar
+Solar
+bat
+giant bat
+rhumbat
+athol
+raven
+vampire bat
+hellbat
+mongbat
+mobat
+harpy
+byakhee
+nightgaunt
+plains centaur
+forest centaur
+mountain centaur
+baby gray dragon
+baby silver dragon
+baby shimmering dragon
+baby deep dragon
+baby red dragon
+baby white dragon
+baby orange dragon
+baby black dragon
+baby blue dragon
+baby green dragon
+baby yellow dragon
+gray dragon
+silver dragon
+shimmering dragon
+deep dragon
+red dragon
+white dragon
+orange dragon
+black dragon
+blue dragon
+green dragon
+yellow dragon
+wyvern
+hydra
+stalker
+air elemental
+fire elemental
+earth elemental
+water elemental
+lichen
+brown mold
+yellow mold
+green mold
+red mold
+shrieker
+violet fungus
+disgusting mold
+black mold
+gnome
+gnome thief
+gnome lord
+gnomish wizard
+deep gnome
+gnome warrior
+Ruggo the Gnome King
+gnome king
+gnoll
+gnoll warrior
+gnoll chieftain
+gnoll shaman
+giant
+stone giant
+hill giant
+fire giant
+frost giant
+ettin
+titan
+storm giant
+minotaur
+the Largest Giant
+Father Dagon
+Mother Hydra
+jabberwock
+vorpal jabberwock
+Keystone Kop
+Kop Sergeant
+Kop Lieutenant
+Kop Kaptain
+lich
+demilich
+master lich
+arch-lich
+kobold mummy
+gnome mummy
+orc mummy
+dwarf mummy
+elf mummy
+human mummy
+ettin mummy
+giant mummy
+troll mummy
+red naga hatchling
+black naga hatchling
+golden naga hatchling
+guardian naga hatchling
+red naga
+black naga
+golden naga
+guardian naga
+ogre
+ogre lord
+ogre mage
+ogre king
+shadow ogre
+gray ooze
+brown pudding
+moldy pudding
+black pudding
+green slime
+shoggoth
+giant shoggoth
+quantum mechanic
+genetic engineer
+Doctor Frankenstein
+rust monster
+disenchanter
+garter snake
+snake
+water moccasin
+pit viper
+python
+cobra
+king cobra
+weresnake
+asphynx
+troll
+ice troll
+rock troll
+two-headed troll
+water troll
+Olog-hai
+black troll
+umber hulk
+water hulk
+vampire
+vampire lord
+fire vampire
+star vampire
+vampire mage
+Vlad the Impaler
+barrow wight
+wight
+wraith
+Nazgul
+xorn
+monkey
+ape
+owlbear
+yeti
+carnivorous ape
+sasquatch
+zruty
+kobold zombie
+gnome zombie
+orc zombie
+dwarf zombie
+elf zombie
+human zombie
+ghoul
+ghoul mage
+ettin zombie
+ghast
+giant zombie
+skeleton
+ghoul queen
+gug
+straw golem
+paper golem
+wax golem
+plastic golem
+rope golem
+gold golem
+leather golem
+wood golem
+flesh golem
+clay golem
+stone golem
+glass golem
+iron golem
+Frankenstein's Monster
+ruby golem
+diamond golem
+sapphire golem
+steel golem
+crystal golem
+human
+human wererat
+human werejackal
+human werewolf
+human werepanther
+human weretiger
+human weresnake
+human werespider
+gibberling
+grimlock
+elf
+Woodland-elf
+Green-elf
+Grey-elf
+High-elf
+elf-lord
+drow
+Elvenking
+doppelganger
+mugger
+nurse
+gypsy
+shopkeeper
+black marketeer
+guard
+prisoner
+Oracle
+aligned priest
+high priest
+soldier
+sergeant
+lieutenant
+captain
+watchman
+watch captain
+Medusa
+Wizard of Yendor
+Croesus
+Charon
+shadow
+ghost
+shade
+water demon
+horned devil
+spined devil
+bearded devil
+succubus
+incubus
+erinys
+barbed devil
+marilith
+bar-lgura
+chasme
+vrock
+babau
+hezrou
+bone devil
+ice devil
+nalfeshnee
+nabassu
+pit fiend
+balrog
+Juiblex
+Yeenoghu
+Orcus
+Geryon
+Dispater
+Baalzebub
+Asmodeus
+Demogorgon
+Cthulhu
+Death
+Pestilence
+Famine
+mail daemon
+djinni
+efreeti
+dao
+marid
+sandestin
+jellyfish
+piranha
+giant eel
+shark
+giant crab
+electric eel
+kraken
+newt
+gecko
+iguana
+baby crocodile
+lizard
+gila monster
+chameleon
+crocodile
+salamander
+rhaumbusun
+basilisk
+komodo dragon
+bad egg
+killer tripe ration
+killer food ration
+pile of killer coins
+large pile of killer coins
+huge pile of killer coins
+long worm tail
+Nightmare
+beholder
+Vecna
+archeologist
+barbarian
+caveman
+cavewoman
+flame mage
+healer
+ice mage
+knight
+monk
+necromancer
+priest
+priestess
+ranger
+rogue
+samurai
+tourist
+undead slayer
+valkyrie
+yeoman
+wizard
+Lord Carnarvon
+Pelias
+Shaman Karnov
+Master Shifter
+Thorin
+Earendil
+Elwing
+High Flame Mage
+Hippocrates
+Bilbo Baggins
+High Ice Mage
+King Arthur
+High Lycanthrope
+Grand Master
+Dark Lord
+Arch Priest
+Orion
+Master of Thieves
+Lord Sato
+Twoflower
+Van Helsing
+Norn
+Neferet the Green
+Lolth
+Chief Yeoman Warder
+Minion of Huhetotl
+Thoth Amon
+Chromatic Dragon
+Transmuter
+Smaug
+Goblin King
+Water Mage
+Lareth
+Cyclops
+Gollum
+Earth Mage
+Ixoth
+Sir Lorimar
+Master Kaen
+Maugneshaagar
+Nalzok
+Scorpius
+Master Assassin
+Ashikaga Takauji
+Count Dracula
+Lord Surtur
+Dark One
+Colonel Blood
+student
+chieftain
+neanderthal
+shifter
+dwarf warrior
+igniter
+froster
+fiend
+attendant
+proudfoot
+intern
+page
+abbot
+embalmer
+acolyte
+hunter
+thug
+ninja
+ronin
+roshi
+guide
+exterminator
+warrior
+apprentice
+Yeoman Warder
+Farmer Maggot
+invisible monster
+strange object
+crude dagger
+dagger
+athame
+silver dagger
+runed dagger
+black runed dagger
+wooden stake
+great dagger
+worm tooth
+knife
+stiletto
+scalpel
+crysknife
+axe
+double-headed axe
+broad pick
+crude short sword
+short sword
+silver short sword
+broad short sword
+runed short sword
+black runed short sword
+broadsword
+runed broadsword
+elven broadsword
+long sword
+silver long sword
+samurai sword
+two-handed sword
+long samurai sword
+curved sword
+rapier
+silver saber
+club
+thonged club
+baseball bat
+fly swatter
+silver mace
+mace
+morning star
+flail
+war hammer
+heavy hammer
+staff
+vulgar polearm
+single-edged polearm
+forked polearm
+hilted polearm
+long poleaxe
+pole cleaver
+angled poleaxe
+pole sickle
+pruning hook
+hooked polearm
+pronged polearm
+beaked polearm
+crude spear
+spear
+silver spear
+runed spear
+stout spear
+throwing spear
+trident
+lance
+crude bow
+bow
+runed bow
+black runed bow
+long bow
+crude arrow
+arrow
+silver arrow
+runed arrow
+black runed arrow
+bamboo arrow
+sling
+pistol
+submachine gun
+heavy machine gun
+rifle
+assault rifle
+sniper rifle
+shotgun
+auto shotgun
+rocket launcher
+grenade launcher
+bullet
+silver bullet
+shotgun shell
+rocket
+frag grenade
+gas grenade
+red stick
+crossbow
+crossbow bolt
+dart
+throwing star
+boomerang
+bullwhip
+rubber hose
+Hawaiian shirt
+T-shirt
+plate mail
+crystal plate mail
+bronze plate mail
+splint mail
+banded mail
+dwarvish mithril-coat
+dark elven mithril-coat
+elven mithril-coat
+chain mail
+crude chain mail
+scale mail
+studded leather armor
+ring mail
+crude ring mail
+leather armor
+leather jacket
+red robe
+blue robe
+orange robe
+green robe
+gray dragon scale mail
+silver dragon scale mail
+shimmering dragon scale mail
+deep dragon scale mail
+red dragon scale mail
+white dragon scale mail
+orange dragon scale mail
+black dragon scale mail
+blue dragon scale mail
+green dragon scale mail
+yellow dragon scale mail
+gray dragon scales
+silver dragon scales
+shimmering dragon scales
+deep dragon scales
+red dragon scales
+white dragon scales
+orange dragon scales
+black dragon scales
+blue dragon scales
+green dragon scales
+yellow dragon scales
+mummy wrapping
+coarse mantelet
+hooded cloak
+slippery cloak
+faded pall
+white coat
+leather cloak
+tattered cape
+dirty rag
+opera cloak
+ornamental cope
+piece of cloth
+leather hat
+iron skull cap
+hard hat
+fedora
+conical hat
+conical hat
+dented pot
+plumed helmet
+etched helmet
+crested helmet
+visored helmet
+old gloves
+padded gloves
+riding gloves
+black gloves
+fencing gloves
+small shield
+blue and green shield
+white-handed shield
+red-eyed shield
+large shield
+large round shield
+polished silver shield
+walking shoes
+hard shoes
+jackboots
+combat boots
+jungle boots
+hiking boots
+mud boots
+steel boots
+riding boots
+snow boots
+wooden ring
+topaz ring
+ridged ring
+black onyx ring
+shiny ring
+wedding ring
+jade ring
+bronze ring
+diamond ring
+sapphire ring
+brass ring
+opal ring
+obsidian ring
+plain ring
+granite ring
+glass ring
+clay ring
+coral ring
+steel ring
+wire ring
+pearl ring
+engagement ring
+copper ring
+iron ring
+twisted ring
+agate ring
+moonstone ring
+tiger eye ring
+silver ring
+ruby ring
+ivory ring
+emerald ring
+gold ring
+square amulet
+warped amulet
+circular amulet
+convex amulet
+spherical amulet
+octagonal amulet
+hexagonal amulet
+triangular amulet
+oval amulet
+concave amulet
+pyramidal amulet
+lunate amulet
+Amulet of Yendor
+Amulet of Yendor
+large box
+chest
+ice box
+bag
+bag
+bag
+bag
+key
+lock pick
+credit card
+candle
+candle
+candle
+lamp
+brass lantern
+lamp
+whistle
+whistle
+flute
+flute
+horn
+horn
+horn
+horn
+harp
+harp
+bell
+bugle
+drum
+drum
+explosive trap
+toothed trap
+spoon
+pick-axe
+fishing pole
+iron hook
+unicorn horn
+torch
+lightsaber
+lightsaber
+lightsaber
+double lightsaber
+expensive camera
+looking glass
+glass orb
+lenses
+blindfold
+towel
+saddle
+leash
+stethoscope
+tinning kit
+leather bag
+tin opener
+can of grease
+figurine; sub figurine *
+magic marker
+bandage
+phial
+candelabrum
+silver bell
+tripe ration
+corpse; sub corpse *
+egg
+meatball
+meat stick
+huge chunk of meat
+meat ring
+eyeball
+severed hand
+kelp frond
+eucalyptus leaf
+clove of garlic
+sprig of wolfsbane
+apple
+carrot
+pear
+asian pear
+banana
+orange
+mushroom
+melon
+slime mold
+lump of royal jelly
+cream pie
+sandwich
+candy bar
+fortune cookie
+pancake
+tortilla
+cheese
+pill
+holy wafer
+lembas wafer
+cram ration
+food ration
+K-ration
+C-ration
+tin
+brown potion
+dark potion
+magenta potion
+fizzy potion
+effervescent potion
+luminescent potion
+orange potion
+sky blue potion
+purple-red potion
+puce potion
+pink potion
+yellow potion
+muddy potion
+cloudy potion
+brilliant blue potion
+bubbly potion
+smoky potion
+swirly potion
+black potion
+cyan potion
+golden potion
+dark green potion
+white potion
+murky potion
+ruby potion
+milky potion
+icy potion
+emerald potion
+clear potion
+blood-red potion
+blood-red potion
+sparkling potion
+LEP GEX VEN ZEA
+PRIRUTSENIE
+VERR YED HORRE
+YUM YUM
+THARR
+KERNOD WEL
+ELAM EBOW
+NR 9
+XIXAXA XOXAXA XUXAXA
+DAIYEN FOOELS
+ZELGO MER
+PRATYAVAYAH
+VENZAR BORGAVVE
+ANDOVA BEGARIN
+KIRJE
+JUYED AWK YACC
+DUAM XNAHT
+HACKEM MUCHE
+ELBIB YLOH
+VE FORBRYDERNE
+VELOX NEB
+FOOBIE BLETCH
+TEMOV
+GARVEN DEH
+READ ME
+stamped
+unlabeled
+red spellbook
+turquoise spellbook
+velvet spellbook
+dark spellbook
+black spellbook
+thick spellbook
+white spellbook
+yellow spellbook
+indigo spellbook
+plaid spellbook
+light brown spellbook
+glittering spellbook
+cloth spellbook
+leather-bound spellbook
+cyan spellbook
+dark blue spellbook
+violet spellbook
+bronze spellbook
+gray spellbook
+dusty spellbook
+orange spellbook
+light green spellbook
+light blue spellbook
+magenta spellbook
+dull spellbook
+thin spellbook
+wide spellbook
+big spellbook
+fuzzy spellbook
+deep spellbook
+spotted spellbook
+long spellbook
+wrinkled spellbook
+copper spellbook
+torn spellbook
+purple spellbook
+faded spellbook
+dark brown spellbook
+tan spellbook
+gold spellbook
+ochre spellbook
+silver spellbook
+pink spellbook
+canvas spellbook
+hardcover spellbook
+dark green spellbook
+parchment spellbook
+shining spellbook
+vellum spellbook
+ragged spellbook
+dog eared spellbook
+mottled spellbook
+stained spellbook
+rainbow spellbook
+tattered spellbook
+colorful spellbook
+tartan spellbook
+stylish spellbook
+psychedelic spellbook
+spiral-bound spellbook
+left-handed spellbook
+stapled spellbook
+plain spellbook
+papyrus spellbook
+glass wand
+oak wand
+crystal wand
+bamboo wand
+aluminum wand
+marble wand
+zinc wand
+uranium wand
+balsa wand
+tin wand
+brass wand
+ebony wand
+copper wand
+ceramic wand
+platinum wand
+maple wand
+rusty wand
+silver wand
+iridium wand
+black wand
+bronze wand
+pine wand
+iron wand
+steel wand
+hexagonal wand
+short wand
+runed wand
+long wand
+curved wand
+octagonal wand
+forked wand
+spiked wand
+jeweled wand
+gold piece
+white gem
+white gem
+red gem
+orange gem
+blue gem
+black gem
+green gem
+green gem
+yellow gem
+green gem
+yellowish brown gem
+yellowish brown gem
+black gem
+white gem
+yellow gem
+red gem
+violet gem
+red gem
+violet gem
+black gem
+orange gem
+green gem
+white gem
+blue gem
+red gem
+yellowish brown gem
+orange gem
+yellow gem
+black gem
+green gem
+violet gem
+gray gem
+gray gem
+gray gem
+gray gem
+gray gem
+gray gem
+rock gem
+boulder
+statue; sub statue *
+heavy iron ball
+iron chain
+splash of venom
+splash of venom
+sub unlit the floor of a room
+wall
+wall
+wall
+wall
+wall
+wall
+wall
+wall
+wall
+wall
+wall
+doorway
+open door
+open door
+closed door
+closed door
+iron bars
+tree
+the floor of a room
+corridor
+sub lit corridor
+staircase up
+staircase down
+ladder up
+ladder down
+altar
+grave
+opulent throne
+sink
+toilet
+fountain
+water
+ice
+molten lava
+lowered drawbridge
+lowered drawbridge
+raised drawbridge
+raised drawbridge
+air
+cloud
+underwater
+arrow trap
+dart trap
+falling rock trap
+squeaky board
+bear trap
+land mine
+rolling boulder trap
+sleeping gas trap
+rust trap
+fire trap
+pit
+spiked pit
+hole
+trap door
+teleportation trap
+level teleporter
+magic portal
+web
+statue trap
+magic trap
+anti-magic field
+polymorph trap
+jagged wall
+jagged wall
+jagged wall
+jagged wall
+dig beam
+flash beam
+thrown boomerang, open left
+thrown boomerang, open right
+magic shield 1
+magic shield 2
+magic shield 3
+magic shield 4
+swallow top left
+swallow top center
+swallow top right
+swallow middle left
+swallow middle right
+swallow bottom left
+swallow bottom center
+swallow bottom right
+explosion dark 0
+explosion dark 1
+explosion dark 2
+explosion dark 3
+explosion dark 4
+explosion dark 5
+explosion dark 6
+explosion dark 7
+explosion dark 8
+explosion noxious 0
+explosion noxious 1
+explosion noxious 2
+explosion noxious 3
+explosion noxious 4
+explosion noxious 5
+explosion noxious 6
+explosion noxious 7
+explosion noxious 8
+explosion muddy 0
+explosion muddy 1
+explosion muddy 2
+explosion muddy 3
+explosion muddy 4
+explosion muddy 5
+explosion muddy 6
+explosion muddy 7
+explosion muddy 8
+explosion wet 0
+explosion wet 1
+explosion wet 2
+explosion wet 3
+explosion wet 4
+explosion wet 5
+explosion wet 6
+explosion wet 7
+explosion wet 8
+explosion magical 0
+explosion magical 1
+explosion magical 2
+explosion magical 3
+explosion magical 4
+explosion magical 5
+explosion magical 6
+explosion magical 7
+explosion magical 8
+explosion fiery 0
+explosion fiery 1
+explosion fiery 2
+explosion fiery 3
+explosion fiery 4
+explosion fiery 5
+explosion fiery 6
+explosion fiery 7
+explosion fiery 8
+explosion frosty 0
+explosion frosty 1
+explosion frosty 2
+explosion frosty 3
+explosion frosty 4
+explosion frosty 5
+explosion frosty 6
+explosion frosty 7
+explosion frosty 8
+zap 0 0
+zap 0 1
+zap 0 2
+zap 0 3
+zap 1 0
+zap 1 1
+zap 1 2
+zap 1 3
+zap 2 0
+zap 2 1
+zap 2 2
+zap 2 3
+zap 3 0
+zap 3 1
+zap 3 2
+zap 3 3
+zap 4 0
+zap 4 1
+zap 4 2
+zap 4 3
+zap 5 0
+zap 5 1
+zap 5 2
+zap 5 3
+zap 6 0
+zap 6 1
+zap 6 2
+zap 6 3
+zap 7 0
+zap 7 1
+zap 7 2
+zap 7 3
+warning 0
+warning 1
+warning 2
+warning 3
+warning 4
+warning 5
+sub mine walls 0
+sub mine walls 1
+sub mine walls 2
+sub mine walls 3
+sub mine walls 4
+sub mine walls 5
+sub mine walls 6
+sub mine walls 7
+sub mine walls 8
+sub mine walls 9
+sub mine walls 10
+sub gehennom walls 0
+sub gehennom walls 1
+sub gehennom walls 2
+sub gehennom walls 3
+sub gehennom walls 4
+sub gehennom walls 5
+sub gehennom walls 6
+sub gehennom walls 7
+sub gehennom walls 8
+sub gehennom walls 9
+sub gehennom walls 10
+sub knox walls 0
+sub knox walls 1
+sub knox walls 2
+sub knox walls 3
+sub knox walls 4
+sub knox walls 5
+sub knox walls 6
+sub knox walls 7
+sub knox walls 8
+sub knox walls 9
+sub knox walls 10
+sub sokoban walls 0
+sub sokoban walls 1
+sub sokoban walls 2
+sub sokoban walls 3
+sub sokoban walls 4
+sub sokoban walls 5
+sub sokoban walls 6
+sub sokoban walls 7
+sub sokoban walls 8
+sub sokoban walls 9
+sub sokoban walls 10

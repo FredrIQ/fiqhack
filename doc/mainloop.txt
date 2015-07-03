@@ -1,0 +1,509 @@
+About this document:
+Last modified by Alex Smith, 2014-05-31
+
+Copyright (C) 2013 Alex Smith.
+
+This document is licensed under the NetHack General Public License.  See
+libnethack/dat/license for details.
+
+
+The NetHack 4 Main Loop
+=======================
+
+The control flow in NetHack can be quite hard to follow.  This document is
+thus designed to help NetHack 4 developers understand how information flows to
+and from libnethack, and how gameplay proceeds from the point of view of the
+code outside the game engine.
+
+There are two main ways in which libnethack is used.  One is for local play,
+in which case libnethack is dynamically linked against a client (such as the
+default client in the `nethack/` subdirectory of the distribution, and
+sometimes referred to internally as "nhcurses" for historical reasons, even
+though it no longer uses curses; we use the name "nhcurses" in documentation
+because it is less ambiguous than the alternatives).  In this case,
+communication is via C function calls and returns, and the server and client
+are part of the same executable at run time.
+
+The other way in which libnethack is used is for server play, in which case
+libnethack is linked against the server binary, and the player uses a
+separate, client binary.  Communication between libnethack and the server is
+done via C function calls and returns, as is communication between the client
+and the client library (`libnethack_client.so`), but communication between the
+server binary and client library is done via TCP/IP (typically over the
+Internet, but it works just as well over a LAN or even localhost).
+
+The client library's purpose is to abstract away differences in the user
+interface from the server's point of view, and to abstract away many (but not
+all) of the differences between local and network play from the client's point
+of view.  The client library accomplishes this via defining functions
+`nhnet_*`, many of which are equivalent to the `nh_*` functions provided by
+libnethack except that they work for both server and local play.  Some,
+however, are meaningful only for server play, or have slightly different APIs
+from the equivalent local play functions.
+
+Because libnethack and the client library act very similarly from a client's
+point of view (although not identically, so the differences should be kept in
+mind when writing a client and will be explained where necessary in this
+document), whichever of the two libraries is in use will be collectively
+referred to as the "game library".  (TODO: There are currently deficiencies in
+the client library API that cause some awkward dependencies on libnethack even
+for binaries that don't plan to use libnethack for anything.  These are not
+currently documented because at present, nobody really understands them, but
+eventually they will be removed.  It's reasonable to imagine a client that can
+only do network play, and it's also reasonable to imagine a client that can do
+both network and local play, but the code does not correctly distinguish
+between these cases at the moment.)
+
+For information on the details of the serialized form used for network play
+(perhaps because you plan to write a NetHack 4 client in a language other than
+C, in which case using a network socket is likely easier than linking
+directly, or because you're maintaining the client library itself), see
+`doc/server_protocol.txt`.  If you are planning to write a new NetHack 4
+client in C, you may as well just use the existing client library; it already
+abstracts a lot of the details for you, and thus will save you the trouble of
+writing code that has already been written.
+
+
+Outside a game
+--------------
+
+Before communicating with the game library, a client process needs to call
+`nh_lib_init`/`nhnet_lib_init`.  These calls give the game library an
+opportunity to allocate data, and also inform it about the addresses of the
+functions that it should use to make calls back into the client itself.
+`nh_lib_init` also takes an extra argument that informs it about which
+directories to use for game files (such as save files, bones files, and its
+playfield).  There are also opposite functions, `nh_lib_exit` and
+`nhnet_lib_exit`, useful for an orderly shutdown; they do things like
+deallocating data and deinitializing networking libraries.  (In theory, just
+exiting the process should work, allowing the operating system to clean up
+after it, but deinitializing the connection explcitly is recommended in case
+functionality is added in the future that benefits from an explicit shutdown
+process.)
+
+For networked games only, a client process also needs to create a network
+connection to a server.  This is done using `nhnet_connect`, which takes
+information on the server to connect to and the user account on that server to
+connect to, and creates a connection.  As expected, there is also a matching
+`nhnet_disconnect`.  A connection does not have any tie to a particular game,
+although it is tied to a particular user account on the server; it can thus be
+thought of in much the same way as a telnet connection to dgamelaunch (which
+is the external-to-NetHack way that NetHack 3 servers typically work).
+Nothing prevents multiple connections on the same user account.
+
+One detail that is mostly abstracted away by the client library, but which is
+important for implementors writing network clients that don't use the client
+library, is that there are actually two parts to a connection that need to
+exist for it to remain connected: the state that the server uses to track the
+connection (which is minor outside a game, but includes the entire current
+state of the game being played/watched/replayed while inside a game), and the
+network socket over which the connection communicates.  Both of these can
+become disconnected spontaneously even if the client makes no mistakes: the
+server state will be cleaned up if the server is restarted (maybe to update
+the game) or after a long period of inactivity, the network connection can
+become disconnected spontaneously due to network problems.  The client library
+will attempt to reconstruct as much state as possible when either of these
+situations happen.  If only the network connection was lost, it will use the
+over-the-wire API to reconnect to the existing server state.  If the server
+state was lost as well (the server will close the network connection if it
+doesn't have matching state), it will reconnect it silently in most cases, or
+else produce an appropriate error return if it's in the middle of an API call
+and there is no game active.  (If there is a game active, it will use the
+exception-based mechanism explained later.)
+
+There are many API commands that work without a game running (in fact, some
+work only without a game running).  They fall into the following categories:
+
+  * Queries for information about what exists in this version of the game, in
+    an abstract sense.  For instance, a client can query which commands exist
+    and their suggested default keybindings, which drawable entities exist in
+    the game, which options exist in the game, and so on.  This information is
+    all independent of any given game.  This is to avoid needing to duplicate
+    the information between the server and client, which also gains the
+    advantage that there's no need for the server and client to have exactly
+    the same version. Changes to the server that merely make changes to what
+    exists in the game can thus be compensated for by the client, although it
+    might not be able to use them to their full potential; for instance, if a
+    new monster was added to the game that the server was aware of but the
+    client predated, then the client would have enough information to be able
+    to render the monster in ASCII (using the recommended rendering provided
+    to it by the server), but not be able to render it in Unicode or with
+    graphical tiles.  Likewise, this mechanism means that the server can use
+    numbers rather than names, saving on bandwidth; the information requested
+    from the server will allow the client to know what, for instance, "trap 4"
+    is, and even if new traps are added earlier in the list, the mechanism
+    avoids off-by-one errors.  A client would typically query this information
+    once during startup.
+
+  * Queries for server-wide state: lists of games that exist (e.g. games to
+    resume, or completed games to replay), and the high-score table.  The game
+    listing only exists for network play; clients are expected to handle this
+    themselves for local play (in fact, the API for local play uses file
+    descriptors in order to refer to specific games, all the duty of locating
+    and opening the file is on the client).  The high-score table is managed
+    by the server for both local and network play, though.
+
+  * Queries about save files: "is this file a NetHack game", "can it be
+    resumed, or is it finished and only capable of being replayed", etc..
+    This makes sense for both local and server play.
+
+  * TODO: Options?
+
+  * The "create game" and "play game" APIs.  (In NetHack 4.2 and below, these
+    were "new game" and "resume game", but the current API turns out to be a
+    lot cleaner.)  Creating a game does not load it; it just creates a new
+    game that can be loaded just like any other game.  The API (and the server
+    implementation) actually does not have the concept of whether a game is
+    "loaded", or of "saving" a game; rather, a game's save file represents its
+    current gamestate at all times (and thus, creating a new game creates a
+    save file that represents the instant just before a player starts playing
+    it for the first time).  `nh_play_game` and `nhnet_play_game` thus
+    represent the concept of *attaching*, rather than resuming; the client
+    process or connection respectively becomes associated with that game, up
+    to the point that `nh[net]_play_game` returns.
+
+
+Inside nh[net]_play_game
+------------------------
+
+All the main gameplay of NetHack happens inside a `nh_play_game` or
+`nhnet_play_game` function call.  The main loop is on the server in NetHack
+4.3 and up; in NetHack 4.2 and below, it was on the client, but this lead to
+more special cases in the implementation than should have been necessary.  The
+server will repeatedly call *window procedures* on the client, callbacks that
+are specified by `nh_lib_init` or `nhnet_lib_init`.  There are two sorts of
+window procedure: those that instruct the client to display something (such as
+a message, or a symbol on the map); and those that instruct the client to
+request something from the user (such as the next command to input, or an item
+to wish for).
+
+The client should handle requests to display something via processing them and
+immediately returning.  If the server is requesting information from the user,
+there are more possibilities.  The most obvious is that it can just provide
+the information, in which case the main loop continues onwards.  There are
+other things it can do, though.  The exact list of things that the client can
+safely do in this situation has not been pinned down yet (TODO: pin it down!),
+but here is a partial list:
+
+  * Request generic information about what exists in this version of the game,
+    just like it could do outside a game.
+
+  * "Save" (actually detach) or quit the game.  This seems innocuous, but has
+    quite a complex implementation: see below.
+
+  * Request more detailed information about the gamestate than the server will
+    send spontaneously via window procedures.  For instance, the window
+    procedures will let the client know that there's a tame kitten on a
+    particular map square, but a call to `nh[net]_describe_pos` is necessary
+    to find out what its name is.  (The nhcurses client uses this to display
+    information on "hover" while the cursor is being moved at a `getpos`
+    prompt.)  Likewise, a client can request a list of possible actions that
+    are associated with an item, perhaps because it has a menu-driven
+    interface rather than a command-driven interface.
+
+  * (Currently unimplemented: replay commands.)
+
+This general pattern is quite simple, but there are some complicating cases
+that implementors need to be aware of.
+
+The first is that a form of exceptions are used in order to handle a range of
+situations that do not fit into the normal pattern.  This leads to a second,
+"exceptional", pattern.  (Note that the normal pattern has no way to exit;
+`nh[net]_play_game` only ever exits via the exceptional pattern.)  Before
+explaining how it works, we give a list of situations known to use it:
+
+ 1. The process becomes detached from the game as a result of the
+    death/escape/ascension of the character, the in-game quit command,the
+    in-game save command (which is really a detach in disguise), or the
+    `nh[net]_exit_game` API call from the client (which it sends in response
+    to emergencies like hangup, or if the user attempts to save at a prompt).
+
+ 2. The server needs to rewind a save file.  This happens most obviously in
+    response to an explicit command to rewind a replay of a game to an earlier
+    turn.  This can also happen as part of the recovery process if something
+    goes wrong on the server.
+
+ 3. For network play, the connection breaks or times out while the game is
+    running.  In such a case, the exceptional pattern is followed on both the
+    client and the server, when they respectively become aware that something
+    is wrong with the connection.  (This is a little unusual in that it
+    doesn't correspond to anything in the TCP/IP network API; the server
+    process and client library each independently determine that the situation
+    has occurred, and correct it individually.)
+
+ 4. The server wants to undo a request to request information from the user;
+    for instance, it opened a menu, but now it wants to close it again without
+    waiting for the user to make a selection.  The most obvious situation in
+    which this occurs is when watching a game; menus should close based on the
+    actions of the player being watched, rather than based on the actions of
+    the player who is watching; the latter would be replaying, not watching.
+    It also happens when a user starts a client for a game, forgets about it
+    (or becomes unable to access it due to ssh timeout, etc.), and starts a
+    second client for the same game; answering a prompt in the second game
+    closes it in the first game.  (TODO: This situation no longer uses the
+    exceptional pattern in most case because server cancels suffice instead.
+    Document this.)
+
+The exceptional pattern is implemented in the server and the client library
+via a `longjmp` that causes the `nh[net]_play_game` to return a specific
+value.  (It thus can always be distinguished from the normal pattern; the
+exceptional pattern always makes `nh[net]_play_game` return, the normal
+pattern never does.)  In the TCP/IP network API, it's implemented via a
+`play_game` response that can occur even in contexts where a different sort of
+response is requested.  Note that this means that any code that might be
+skipped over by the `longjmp` needs to be exception-safe.  This is mostly a
+problem for the server to deal with; things are more lenient on the client, as
+explained below.
+
+There are a large number of different possible triggers for the exceptional
+pattern, but they all fall into three catgories:
+
+  * libnethack realises that it needs to be triggered while processing a
+    user's response to its request for information.  In this case, all the
+    exception-safety issues are inside libnethack itself, because the
+    `longjmp` only skips code in libnethack (the client is already in a state
+    where it's waiting for `nh[net]_play_game` to return); the client library
+    ends up having to skip a zero amount of code (although in NetHack 4.3 and
+    later it does actually do a `longjmp`, this is only because there's no
+    need for a special case to avoid it: in this case it simply jumps back a
+    few lines within a function, and acts like a simple `goto` rather than
+    removing stack frames).  In NetHack 4.2, this was confined entirely to
+    libnethack; in NetHack 4.3, it's observably indistinguishable from being
+    confined entirely to libnethack.
+    
+    This is by far the simplest case, because it involves only one process
+    (the combined server/client process for local play, or the server process
+    for network play).  It's implemented via `terminate()` inside libnethack
+    (the argument to `terminate()` is the return value from `nh_play_game`).
+    It is also the most common case, covering most of 1. and 2. in the
+    numbered list above (all the cases except `nh[net]_exit_game` and
+    `nh[net]_replay_game`).
+
+  * The trigger is an explicit API call by the client: `nh[net]_exit_game` and
+    `nh[net]_replay_game` (currently unimplemented) can both move the code to
+    the exceptional pattern as part of their normal behaviour, and any API
+    call by the client (while the game is running) can cause this in case of
+    network failure.
+
+    This covers cases 1. and 2. in the list above, when triggered by
+    `nh[net]_exit_game` and `nh[net]_replay_game`.  The same codepaths also
+    handle case 3 (which goes via `nh_exit_game` at the server end, and via
+    some API call into the client library at the client end).
+    
+    The client needs to take some care to be exception-safe in its use of API
+    calls as a result of this trigger.  However, the need for exception-safety
+    is limited to times where it actually calls the API.
+    
+    (TODO: Make sure that there's no situation in which we get recursive
+    window procedure calls.  In 4.2, you could do this using
+    `nh_exit_game(EXIT_REQUEST_SAVE)` from within a menu.  This didn't
+    actually work, and it's probably best to disallow the situation altogether
+    rather than try to make it work, because otherwise clients would have to
+    be able to handle exception-safety for an infinite number of nested
+    menus. `EXIT_REQUEST_SAVE` no longer exists in 4.3.)
+
+  * The trigger is some action via an external process (e.g. you're watching a
+    game and the person playing it makes a move).  This is case 4. in the list
+    above, and entirely the most complicated case.
+    
+    The issue here is that the trigger could happen at any time at all
+    relative to the code flow of the client and server.  This might make it
+    seem as though the entire code of the client and server might need to be
+    asynchronous signal safe (which is a very high standard of exception
+    safety that most codebases cannot manage, including typical system
+    libraries), which would be far too high a standard to hold the NetHack
+    codebase to.  However, all these triggers have something in common: the
+    only purpose of the trigger is to undo a request for information from the
+    user, and if the user hapens to provide information in response to the
+    request, the entire exceptional pattern becomes unnecessary; the server
+    can just ignore the provided information, and it coes to the same thing as
+    before.  So the triggers only need to be handled while the client is
+    waiting for input.
+    
+    So instead, we have two problems, but much more tractable ones than the
+    problem of asynchronous signal safety.  Clearly, there needs to be some
+    sort of exception safety in the client with respect to user input; that's
+    the more obvious of the two problems.  The more subtle problem is related
+    to the network API: if the server needs to cancel the turn, it has to
+    somehow communicate this to the client, and if the client's blocked on a
+    `getchar()` call or similar, it's not going to be calling `recv()` to be
+    able to observe the `play_game` response coming from the server.  (This
+    problem does not happen in local play; because the client and server are
+    in the same process, the server can communicate with the client via
+    calling into it using a signal handler.)
+
+    Both these problems are fixed in the same sort of way: when a situation
+    that has a chance of being an externally caused exceptional pattern
+    happens, the client needs to abort its input attempt, get to an
+    exception-safe place in its code (a location where it can handle a
+    potential `longjmp` out), then ask the game library to process any
+    exceptional pattern triggers that may have occured.  This is accomplished
+    via the window procedure `abort_input` (for the server to notify the
+    client that there's a potential for an exceptional pattern trigger having
+    occurred), via the client library informing the client of the file
+    descriptor it's using for the network communication (so that it can use
+    `select` or similar to be able to handle input from both the network and
+    from the user); and via the API call `nh[net]_input_aborted`, which the
+    client uses to notify the server that it's in a safe place in the code and
+    is ready to `longjmp` out to the `nh_play_game` return value if necessary.
+    (If it turns out to be a false alarm, `nh[net]_input_aborted` simply
+    returns, leaving the client to go back into its input loop.)
+    
+    Thus, `abort_input` itself needs to be asynchronous signal safe, but the
+    rest of the client code need not be.  The typical way to implement it in a
+    client is to generate simulated input of the same type that it's expecting
+    from the user.  For instance, when inputting from a terminal on UNIX, the
+    client is expecting input from a file (using `select` or the like);
+    `abort_input` is thus most easily implemented via writing to a pipe, with
+    the `select` attached both to the terminal and to the other end of the
+    pipe.  For GUI clients, they will likely be using some sort of message
+    loop to wait for user input, and so `abort_input` can be implemented via
+    the client sending a message to itself (in an asynchronous signal safe
+    way; the vast majority of message loop systems have a function for doing
+    that specifically for this sort of use case).
+    
+    In nhcurses, this issue is handled via using libuncursed's support for
+    interrupting user input in response to a signal handler or to activity on
+    a network socket.  (It is not a coincidence that libuncursed happens to
+    abstract over precisely those operations that the API requires the client
+    to be able to handle; libuncursed was originally written for use with
+    NetHack 4.)
+
+
+Here's a summary of the exception and signal safety requirements on clients:
+
+  * When making an API call while `nh[net]_play_game` is running, the client
+    must be able to handle a `longjmp` back to the `nh[net]_play_game` call.
+    In order to make handling this situation easier, `nh[net]_play_game` will
+    immediately return after it has been jumped back to, giving the client an
+    opportunity to observe the jump.  (By "able to handle", this means no
+    leaks of any kind, and the user interface must be restored to a neutral
+    state, rather than leaving prompts or menus showing on the screen.)  This
+    includes `nh[net]_input_aborted`.
+
+  * For local play, the client must have an `abort_input` window procedure
+    that can safely be asynchronously called from signal handlers.  While
+    accepting input from the user, if the client recieves an `abort_input`
+    call, the client must stop blocking on input and instead call
+    `nh_input_aborted`, blocking on the input again only once
+    `nh_input_aborted` returns (if it returns at all).
+
+  * For network play, the client must monitor a network socket specified by
+    the client library, in addition to whatever it is monitoring in order to
+    read input from the user.  If there is activity on the network socket, it
+    must stop blocking on user input and instead call `nhnet_input_aborted`,
+    blocking on the input again only once `nhnet_input_aborted` returns (if it
+    returns at all).
+
+
+Semantics of the request_command window procedure
+-------------------------------------------------
+
+Probably the hardest window procedure call to understand in terms of its
+semantics is `windowprocs.request_command`.  (Some of the other window
+procedures are more complex in terms of serializing and deserializing the
+command-line arguments, but that is an issue more relevant for the server
+protocol documentation in `doc/server_protocol.txt`.)
+
+Single-action commands are easy enough to understand: the server requests a
+command, the client asks the player what to do next and then sends the
+command, the player's character performs it and we're back to the original
+state.
+
+The more complex cases are commands that take more than one action.  These are
+divided into two categories:
+
+  * (TODO: This is slightly out of date.)
+  
+    Interruptible actions.  These can be cancelled at any time by the client.
+    The way this works is that the client sends the command, libnethack
+    simulates the command for one action, then requests a command again; the
+    client can continue the action by sending the `repeat` command, or it can
+    do something else (at no penalty).  (TODO: Instead of `repeat`, wouldn't
+    it be great if the client could just send the command over and over again,
+    getting rid of a special case and a bunch of turnstate?  There are some
+    problems here, though, e.g. repeating a move command turns corners,
+    whereas resending it doesn't.)
+
+    There are two boolean arguments to `request_commmand` that help the client
+    determine what sort of interface they should give to the user.  The
+    `completed` argument is true if the previously sent command has logically
+    finished.  (Some commands are mostly identical but have different
+    behaviour for `completed`; for instance, this is the main thing
+    distinguishing control-move from shift-move from a regular move.)  The
+    `interrupted` argument is is true if since the previously sent command,
+    something has happened to make the character not want to continue the
+    command, such as a monster approaching.  (TODO: `interrupted` is currently
+    unimplemented and always false; it should be moved to `u` and used to
+    replace `nomul(0, NULL)` calls.)
+
+    The NetHack 3 series had many different classifications for this, but
+    they all (TODO: eventually) work the same way in Nethack 4:
+
+      * Command repeat (e.g. `n20s` with numpad controls or `20s` with vikeys
+        controls).  This was traditionally implemented by setting the variable
+        `multi` to a positive value, which decremented every action.
+        
+        The `multi` variable also had many other uses.  The uses of `multi`
+        for things like limiting the number of items picked up from a pile
+        with `,` or the maximum number of arrows to shoot with `f` are now
+        implemented via the `limit` element of `struct nh_cmd_arg`.  For
+        repetition-related uses, the repetition now happens on the client,
+        with `CMD_ARG_CONT` used to make the server aware of the repetition
+        (so that it can adapt the interface appropriately, e.g. not prompting
+        about whether to resume an interrupted action).
+
+      * Farmove commands (e.g. `54` with numpad controls or `gh` with vikeys
+        controls).  These were traditionally implemented as command repeat
+        with a repeat count of 80, which was special-cased to mean infinity
+        when applied to movement commands.  They're still implemented the same
+        way as command repeat, but clients are free to (and recommended to)
+        choose some saner method of implementing an unbounded number of
+        repeats.
+
+      * Occupations.  This was traditionally implemented via setting the
+        variable `occupation` to a non-NULL value, a callback that ran every
+        action.  The new implementation works via setting the `completed`
+        argument of `nh_request_command` to false, recommending that the
+        client repeat the action; the server tracks the *name* of the action
+        being repeated, in order to construct messages, but whether to
+        continue or stop is entirely up to the client (the server just sends
+        it hints: `completed` when the action is conceptually finished and any
+        further repetitions would logically be a new action, `interrupted` if
+        the character is in danger and the player should be asked to confirm
+        continuing/repeating the action manually with control-A).
+
+  * (TODO: This documentation is very out of date.)
+  
+    Uninterruptible actions.  These are currently implemented in the
+    traditional way: `multi` is set to a negative number, increasing by one
+    per turn, and the server ignores all commands sent until it gets back to
+    zero.  However, it does continue requesting commands (with completed and
+    interrupted both false), even though it's going to ignore them.  (TODO:
+    Change the API for this; a separate windowproc is possibly overkill, but
+    we should at least let `request_command` know that repeating is the only
+    option.) (Another TODO: `multi` now has sensible semantics, but it badly
+    needs a better name, and should probably be flipped to be positive rather
+    than negative.)
+
+    Paralysis is also implemented as an uninterruptible action; the player is
+    forced to repeat waiting until `multi` gets back to 0.  The general term
+    for a negative `multi` value in the NetHack community is "helplessness",
+    after the "while helpless" message that NetHack 3.4.3 (and probably
+    earlier versions) places on the tombstone of a character who died while
+    their multi was negative.
+    
+    One huge flaw in this implementation is that the player cannot do things
+    while they are performing uninterruptible actions; in the NetHack 3
+    series, for instance, engraving is implemented via calculating how long it
+    will take, leaving the character helpless until it would be finished, and
+    placing an engraving on the ground that, although visible, won't become
+    active until the engraving should be finished.  There's no way in that
+    codebase to implement an engraving that gradually lengthens over time, and
+    the traditional implementation is not equivalent to the correct one, even
+    though it does a good job of faking it.  (For instance, while writing an
+    engraving, you hide existing engravings on the square; and if you lifesave
+    during a long engraving, it cancels the helplessness but not the delay on
+    the engraving activating, so you have a visible but temporarily
+    ineffective engraving.)
+

@@ -1,0 +1,753 @@
+# Last modified by Alex Smith, 2015-05-22
+# Copyright (c) Alex Smith, 2013.
+# NetHack may be freely redistributed.  See license for details.
+# NetHack 4: aimake configuration.
+
+# There's a maximum combined length on the executable info structure.
+# So this is written concisely, so as to be able to fit everything in.
+$copyright = "(c) Stichting Mathematisch Centrum, Amsterdam, 1985; Alex Smith 2010-2015; Daniel Thaler 2011-2012; and many others";
+$tilecompile_copyright = "(c) Alex Smith 2014, Andrew Apted 2002, Slash'EM Development Team 2003";
+$dlb_copyright = "(c) Kenneth Lorber, Bethesda, Maryland, 1994";
+$lev_copyright = "(c) 1989 by Jean-Christophe Collet";
+$dgn_copyright = "(c) 1989 by Jean-Christophe Collet; 1990 by M. Stephenson";
+
+$playfieldutils = qr/dlb|dgn_comp|lev_comp/;
+
+{
+    options => {
+        packagename      => 'nethack4',
+        packagename_text => 'NetHack 4',
+        packageversion   => '4.3.beta3',
+        companyname      => 'NetHack 4 DevTeam',
+
+        AM_CPPFLAGS => '-DNETCLIENT -D_REENTRANT',
+        CFLAGS      => '-Wall -Wextra -fdiagnostics-show-option -O2 -g',
+        AM_CFLAGS   => '-Wno-missing-field-initializers '.
+                       # These warnings are probably worth fixing eventually,
+                       # but have too many false positives to be able to show
+                       # them right now
+                       '-Wno-unused-parameter -Wno-sign-compare '.
+                       '-Wold-style-definition -Wstrict-prototypes '.
+                       '-Wmissing-prototypes -Wmissing-declarations '.
+                       '-Wpointer-arith',
+        CXXFLAGS    => '-Wall -Wextra -Wmissing-declarations '.
+                       '-Wpointer-arith -O2 -g',
+    },
+    libraries => {
+        'z'       => 'compress',
+        'png'     => 'png_create_write_struct',
+        'pq'      => 'PQsetdbLogin',
+        'pthread' => 'pthread_create',
+        'jansson' => 'json_loads',
+        'SDL2'    => 'SDL_Init',
+        'ws2_32'  => 'connect',
+    },
+    features => {
+        server => {
+            description => "Server executable (Linux only)",
+            long_description => "Installs an executable that, if added to ".
+                                "your inetd configuration, allows players on ".
+                                "remote systems to play on your computer.",
+            object => qr=^path:nethack_server/=,
+            default => 0,
+        },
+        jansson => {
+            description => "Use the provided rather than system libjansson",
+            long_description => "NetHack 4 can build either using a copy of ".
+                                "libjansson that already exists on your ".
+                                "system, or a copy that ships with the ".
+                                "NetHack 4 source. Set this to false if you ".
+                                "already have libjansson development headers ".
+                                "installed, or true otherwise.",
+            object => qr=^path:libjansson/=,
+            default => 1,
+        },
+        gui => {
+            description => "Tiles and fake terminal ports",
+            long_description => "Installs a GUI executable, that lets you ".
+                                "play with graphical tiles, and play the ".
+                                "text-based version without requiring the ".
+                                "use of a separate terminal emulator.",
+            object => qr=^path:(?:tilesets/dat(?!/text|/catalogues/text)
+                                | tilesets/util/tileset-image.c
+                                | libuncursed/src/plugins/sdl)=x,
+            default => 1,
+        },
+        tilecompile => {
+            # We have to build the tileset compiler anyway, because we need
+            # it during the build process. But we can choose not to install
+            # it, and we can choose not to build the documentation.
+            description => "Tileset compiler",
+            long_description => "Installs a command-line tool for changing ".
+                                "the tilesets that ship with NetHack 4 (both ".
+                                "graphical tiles, and sets of character/color ".
+                                "pairs used for rendering in a terminal).",
+            object => qr=^bpath:doc/tilecompile.pod$=,
+            default => 0,
+        },
+        playfield_utils => {
+            # Likewise for the level and dungeon compilers.
+            description => "Playfield utilities",
+            long_description => "Installs command-line tools for updating ".
+                                "the game data: 'dlb', 'lev_comp', and ".
+                                "'dgn_comp'.  Most users will not need these.",
+            object => qr=^bpath:doc/$playfieldutils.pod$=,
+            default => 0,
+        },
+        slashem_tiles => {
+            description => "Slash'EM tileset",
+            long_description => "Installs the tileset that traditionally ".
+                                "shipped with older versions of NetHack, ".
+                                "with enhancements from Slash'EM.",
+            object => qr=^path:tilesets/dat/catalogues/slashem-=,
+            default => 1,
+            depends => 'gui',
+        },
+        dawnlike_tiles => {
+            description => "DawnLike tileset",
+            long_description => "Installs the DawnLike tileset by Andrew Rios.",
+            object => qr=^path:tilesets/dat/catalogues/dawnlike-=,
+            default => 1,
+            depends => 'gui',
+        },
+        rltiles_tiles => {
+            description => "RLTiles tileset",
+            long_description => "Installs a modern version of the 'RLTiles'/".
+                                "'Ikatura' tileset, enhanced by Raz.",
+            object => qr=^path:tilesets/dat/catalogues/rltiles-=,
+            default => 1,
+            depends => 'gui',
+        },
+    },
+    rules => {
+        _use_c11 => {
+            object => 'optionset:CFLAGS',
+            depends => ['optionset:c11_option', 'optionset:define_noreturn'],
+        },
+        _xopen_linux => {
+            object => 'optionset:CFLAGS',
+            command => ['intcmd:assert_equal', 'optstring:linux', "optstring:$^O"],
+            depends => 'optstring:-D_XOPEN_SOURCE=700',
+            on_failure => 'conditional'
+        },
+        _xopen_osx => {
+            object => 'optionset:CFLAGS',
+            command => ['intcmd:assert_equal', 'optstring:darwin', "optstring:$^O"],
+            depends => 'optstring:-D_XOPEN_SOURCE=700',
+            on_failure => 'conditional'
+        },
+        _darwin_c_source => {
+            object => 'optionset:CFLAGS',
+            command => ['intcmd:assert_equal', 'optstring:darwin', "optstring:$^O"],
+            depends => 'optstring:-D_DARWIN_C_SOURCE',
+            on_failure => 'conditional'
+        },
+
+        _warn_about_global_variables => {
+            object => "bpath:libnethack/libnethack$dllext",
+            command => ['optionset:os_osx_linux',
+                        'optionset:maintainer_mode',
+                        'cmd:sh',
+                        'path:libnethack/util/checkglobals.sh',
+                        'optpath::path:libnethack/util/checkglobals.sh',
+                        'optpath::'],
+            object_dependency => 'nowhere',
+            output => [],
+        },
+
+        _generate_artinames_h => {
+            # artilist.h is compiled twice, once as itself, once as
+            # artinames.h. We generate the two versions using the preprocessor
+            # directly.
+            object => 'bpath:libnethack/include/artilist.h/artilist.h',
+            command => ['tool:c_preprocessor', 'optpath::',
+                        'optstring:-DARTINAMES_H',
+                        'optpath:-o :' .
+                        'bpath:libnethack/include/artinames.h/artinames.h'],
+            output_from_optpath => '-o ',
+            verb => 'generated',
+            object_dependency => 'nowhere',
+        },
+
+        _statically_link_uncursed_plugins => {
+            # Most uncursed plugins are loaded as libraries. However, there's
+            # no reason to do that in the case of terminal-based plugins that
+            # require no external library support of their own (tty and
+            # wincon), so we just link those in directly.
+            object => "bpath:libuncursed/src/libuncursed.c/libuncursed$objext",
+            depends => "optionset:_uncursed_static_plugins",
+        },
+        _uncursed_plugins_have_wrappers => {
+            object => qr=^bpath:libuncursed/src/plugins/
+                         [^/]+\.c/.+\Q$objext\E$=xs,
+            command => ['intcmd:echo', 'optpath::'],
+            depends => ["extend:$objext:extend:/:extend:.cxx:extend:..:",
+                        "optpath::extend:$objext:extend:/:extend:.cxx:extend:..:"],
+            require_match => 1,
+        },
+        _uncursed_plugins_to_link_statically => {
+            object => qr=^bpath:libuncursed/src/plugins/
+                      (?:wincon|tty)\.c/.+\Q$objext\E$=xs,
+            output => 'optionset:_uncursed_static_plugins',
+            object_dependency => 'outdepends',
+            outdepends => 'optpath::'
+        },
+        _uncursed_plugins_to_link_dynamically => {
+            object => qr=^bpath:libuncursed/src/plugins/
+                         (?!wincon\b|tty\b).+\.c/.+\Q$objext\E$=xs,
+            command => ['intcmd:echo', 'optpath::'],
+            output => "symbolset::bpath:libuncursed/src/plugins/libuncursed_",
+            outputarg => qr=^bpath:libuncursed/src/plugins/(.*)\.c=,
+            object_dependency => 'outdepends',
+            outdepends => 'optpath::'
+        },
+
+        _build_desfile => {
+            object => qr/^path:.*\.des$/s,
+            command => ["bpath:libnethack/util/lev_main.c/lev_main$exeext",
+                        # We can't portably produce a "filename with a
+                        # trailing slash". So we give a single space
+                        # as the file part of the name, and get
+                        # lev_main to replace it with the filename.
+                        'optpath:-o :bpath:libnethack/dat/ ',
+                        'optpath::'],
+            actions => [
+                {
+                    output => qr/^Wrote '(.*)'.$/,
+                },
+                {
+                    output => 'optionset:nhdata_levfiles',
+                    outdepends => qr/^Wrote '(.*)'.$/,
+                },
+            ],
+        },
+        _levfile_command_line_argument => {
+            object => qr/^bpath:.*\.lev$/,
+            depends => 'optpath::',
+        },
+
+        _specific_version => {
+            output => 'optionset:specific_version',
+            outdepends => [],
+        },
+        _git_hash => {
+            object => 'optionset:specific_version',
+            command => ["cmd:git", "optstring:rev-parse HEAD",
+                        "sys:always_rebuild"],
+            on_failure => 'conditional',
+            in_subdir => 'path:',
+            depends => 'optstring: ',
+            dependsarg => qr/^([0-9a-f]{8})/,
+        },
+
+        _makedefs_date => {
+            command => ["bpath:libnethack/util/makedefs.c/makedefs$exeext",
+                        "optpath:-v :bpath:libnethack/include/date.h",
+                        "sys:always_rebuild",
+                        "optionset:specific_version"],
+            output => 'bpath:libnethack/include/date.h',
+        },
+        _makedefs_verinfo => {
+            command => ["bpath:libnethack/util/makedefs.c/makedefs$exeext",
+                        "optpath:-w :bpath:libnethack/include/verinfo.h"],
+            output => 'bpath:libnethack/include/verinfo.h',
+        },
+        _makedefs_onames => {
+            command => ["bpath:libnethack/util/makedefs.c/makedefs$exeext",
+                        "optpath:-o :bpath:libnethack/include/onames.h"],
+            output => 'bpath:libnethack/include/onames.h',
+        },
+        _makedefs_pm => {
+            command => ["bpath:libnethack/util/makedefs.c/makedefs$exeext",
+                        "optpath:-p :bpath:libnethack/include/pm.h"],
+            output => 'bpath:libnethack/include/pm.h',
+        },
+        _makedefs_readonly => {
+            command => ["bpath:libnethack/util/makedefs.c/makedefs$exeext",
+                        "optpath:-m :bpath:libnethack/src/readonly.c"],
+            output => 'bpath:libnethack/src/readonly.c',
+        },
+        _makedefs_data => {
+            object => "path:libnethack/dat/data.base",
+            command => ["bpath:libnethack/util/makedefs.c/makedefs$exeext",
+                        "optpath:-d :",
+                        "optpath::bpath:libnethack/dat/data"],
+            output => 'bpath:libnethack/dat/data',
+        },
+        _makedefs_dungeon => {
+            object => "path:libnethack/dat/dungeon.def",
+            command => ["bpath:libnethack/util/makedefs.c/makedefs$exeext",
+                        "optpath:-e :",
+                        "optpath::bpath:libnethack/dat/dungeon.pdf"],
+            output => 'bpath:libnethack/dat/dungeon.pdf',
+        },
+        _makedefs_quest => {
+            object => "path:libnethack/dat/quest.txt",
+            command => ["bpath:libnethack/util/makedefs.c/makedefs$exeext",
+                        "optpath:-q :",
+                        "optpath::bpath:libnethack/dat/quest.dat"],
+            output => 'bpath:libnethack/dat/quest.dat',
+        },
+        _makedefs_oracles => {
+            object => "path:libnethack/dat/oracles.txt",
+            command => ["bpath:libnethack/util/makedefs.c/makedefs$exeext",
+                        "optpath:-h :",
+                        "optpath::bpath:libnethack/dat/oracles"],
+            output => 'bpath:libnethack/dat/oracles',
+        },
+        _makedefs_rumors => {
+            # We rely on the fact that optpath: options given
+            # explicitly always stay in the same order.
+            command => ["bpath:libnethack/util/makedefs.c/makedefs$exeext",
+                        "optstring:-r",
+                        "path:libnethack/dat/rumors.tru",
+                        "optpath::path:libnethack/dat/rumors.tru",
+                        "path:libnethack/dat/rumors.fal",
+                        "optpath::path:libnethack/dat/rumors.fal",
+                        "optpath::bpath:libnethack/dat/rumors"],
+            output => 'bpath:libnethack/dat/rumors',
+        },
+        _compile_dungeon => {
+            object => "bpath:libnethack/dat/dungeon.pdf",
+            command => ["bpath:libnethack/util/dgn_main.c/dgn_main$exeext",
+                        "optpath::"],
+            output => 'bpath:libnethack/dat/dungeon',
+        },
+        _copy_history => {
+            object => "path:libnethack/dat/history",
+            command => ["intcmd:symlink", "optpath::",
+                        "optpath:-o:bpath:libnethack/dat/history"],
+            output_from_optpath => "-o",
+            verb => "symlinked",
+            low_message_priority => 1,
+        },
+        _nhdata => {
+            command => ["bpath:libnethack/util/dlb_main.c/dlb_main$exeext",
+                        "optpath:cf :bpath:libnethack/dat/nhdat",
+                        "optionset:nhdata_levfiles",
+                        "bpath:libnethack/dat/data",
+                        "bpath:libnethack/dat/dungeon",
+                        "bpath:libnethack/dat/history",
+                        "bpath:libnethack/dat/oracles",
+                        "bpath:libnethack/dat/quest.dat",
+                        "bpath:libnethack/dat/rumors",
+                        "optpath::bpath:libnethack/dat/data",
+                        "optpath::bpath:libnethack/dat/dungeon",
+                        "optpath::bpath:libnethack/dat/history",
+                        "optpath::bpath:libnethack/dat/oracles",
+                        "optpath::bpath:libnethack/dat/quest.dat",
+                        "optpath::bpath:libnethack/dat/rumors"],
+            in_subdir => "bpath:libnethack/dat",
+            output => "bpath:libnethack/dat/nhdat",
+        },
+        _merged_tileset_output_location => {
+            object => qr=^path:tilesets/dat/catalogues/.*\.txt$=s,
+            command => ["intcmd:echo", "optpath::"],
+            depends => "optpath:-o :extend:.nh4ct:bpath:tilesets/dat/merged/",
+            dependsarg => qr=^path:tilesets/dat/catalogues/(.*)\.txt$=s,
+            require_match => 1,
+        },
+        _catalogue_file_size => {
+            object => qr=^path:tilesets/dat/catalogues/.*\.txt$=s,
+            command => ["intcmd:cat", "optpath::"],
+            linemax => 1,
+            depends => "optstring:-z ",
+            dependsarg => qr=^(\d+ \d+)$=s,
+            require_match => 1,
+        },
+        _catalogue_file_name => {
+            object => qr=^path:tilesets/dat/catalogues/.*\.txt$=s,
+            command => ["intcmd:cat", "optpath::"],
+            lineskip => 1,
+            linemax => 1,
+            depends => "optstring:-n ",
+            dependsarg => qr=^(.*)$=s,
+            require_match => 1,
+        },
+        _catalogue_file_dependencies => {
+            object => qr=^path:tilesets/dat/catalogues/(?!text).*\.txt$=s,
+            command => ["intcmd:cat", "optpath::"],
+            lineskip => 2,
+            depends => ["optpath::path:tilesets/dat/tiles/",
+                        "path:tilesets/dat/tiles/"],
+            dependsarg => qr=^(.+)$=s,
+            require_match => 1,
+        },
+        _text_catalogue_file_dependencies => {
+            object => qr=^path:tilesets/dat/catalogues/text.*\.txt$=s,
+            command => ["intcmd:cat", "optpath::"],
+            lineskip => 2,
+            depends => ["optpath::path:tilesets/dat/text/",
+                        "path:tilesets/dat/text/"],
+            dependsarg => qr=^(.+)$=s,
+            require_match => 1,
+        },
+        _slashem_catalogue_file_palette => {
+            object => 'path:tilesets/dat/catalogues/slashem-32.txt',
+            depends => ["optpath:-p :path:tilesets/dat/palettes/slashem.txt",
+                        "optstring:-f",
+                        "path:tilesets/dat/palettes/slashem.txt"],
+        },
+        _extract_dawnlike_palette => {
+            object => 'path:tilesets/dat/tiles/dawnlike-dragons.txt',
+            command => ["bpath:tilesets/util/tilecompile.c/tilecompile$exeext",
+                        "optstring:-t palette", "optpath::",
+                        "optpath:-o :bpath:tilesets/dat/palettes/dawnlike.txt"],
+            output_from_optpath => '-o ',
+        },
+        _dawnlike_catalogue_file_palette => {
+            object => qr=^path:tilesets/dat/catalogues/dawnlike-.*\.txt$=s,
+            # no -f for this; DawnHack shouldn't have out-of-range colors
+            depends => ["optpath:-p :bpath:tilesets/dat/palettes/dawnlike.txt",
+                        "bpath:tilesets/dat/palettes/dawnlike.txt"],
+        },
+        _generate_base_text_tileset => {
+            command => ["bpath:tilesets/util/basecchar.c/basecchar$exeext",
+                        "optpath:-o :bpath:tilesets/dat/text/base.txt"],
+            output_from_optpath => '-o ',
+        },
+        _include_base_text_tileset => {
+            # Hack: merge an extra option into the optpath in order to ensure
+            # that the base tileset comes first.
+            object => qr=^path:tilesets/dat/catalogues/text.*\.txt$=s,
+            depends => ["bpath:tilesets/dat/text/base.txt",
+                        "optpath:-W :bpath:tilesets/dat/text/base.txt"],
+        },
+        _merge_tilesets => {
+            object => qr=^path:tilesets/dat/catalogues/.*\.txt$=s,
+            command => ["bpath:tilesets/util/tilecompile.c/tilecompile$exeext",
+                        "optstring:-W", "optstring:-t nh4ct"],
+            output_from_optpath => '-o ',
+            verb => 'merged',
+        },
+        _build_fonts => {
+            object => qr=^path:tilesets/dat/fonts/font14\.txt=s,
+            command => ["bpath:tilesets/util/tilecompile.c/tilecompile$exeext",
+                        "optpath:-o :extend:.png:",
+                        "optstring:-z 8 14", "optstring:-b 0 0 0",
+                        "optstring:-t image", "optstring:-u",
+                        "optpath::"],
+            output_from_optpath => '-o ',
+        },
+        _readme_dumps => {
+            command => ["intcmd:writefile",
+"optstring:This_directory_stores_dumplogs_produced_during_server_play.",
+"optstring:When_you_play_locally,_dumplogs_are_saved_in_the_same_place_as_your",
+"optstring:save_files_(e.g._~/.config/NetHack4/dumps_on_Linux).",
+                        "optpath::bpath:readme-dumps"],
+            output => "bpath:readme-dumps",
+        },
+        _readme_saves => {
+            command => ["intcmd:writefile",
+"optstring:This_directory_stores_data_shared_between_all_users.",
+"optstring:When_you_play_locally,_your_save_files_are_stored_in_your_home",
+"optstring:directory_(e.g._~/.config/NetHack4/saves_on_Linux).",
+                        "optpath::bpath:readme-saves"],
+            output => "bpath:readme-saves",
+        },
+
+        # We need a symlink from "nethack4-sdl" to "nethack4". Thus we
+        # add a second symlink from "nethack4" to "main" so that if
+        # symlinks are implemented by copying, nothing breaks.
+
+        _sdl_link_preparation => {
+            object => "bpath:nethack/src/main.c/main$exeext",
+            command => ["intcmd:symlink", "optpath::",
+                        "optpath:-o:bpath:nethack/src/main.c/nethack4$exeext",
+                        "bpath:tilesets/dat/fonts/font14.png"],
+            output_from_optpath => '-o',
+            verb => 'symlinked',
+        },
+        _sdl_link => {
+            object => "bpath:nethack/src/main.c/nethack4$exeext",
+            command => ["intcmd:symlink", "optpath::",
+                        "optpath:-o:bpath:nethack/src/main.c/nethack4-sdl$exeext",
+                        "bpath:tilesets/dat/fonts/font14.png"],
+            output_from_optpath => '-o',
+            verb => 'symlinked',
+        },
+
+        _man_sdl_symlink => {
+            command => ["intcmd:symlink",
+                        "optpath:-o:bpath:doc/nethack4-sdl.6",
+                        "optpath::bpath:doc/nethack4.6",
+                        "bpath:doc/nethack4.6",
+                        "bpath:tilesets/dat/fonts/font14.png"],
+            output_from_optpath => '-o',
+            verb => 'symlinked',
+        },
+
+        install_executables => undef, # we don't want to install most of them
+        install_libraries => undef,
+        _install_nethack_libraries => {
+            object => qr=^bpath:.*libnethack[^/]*\Q$dllext\E$=s,
+            install_dir => 'specificlibdir',
+        },
+        _install_prebuilt_libraries => {
+            object => qr=^path:prebuilt/(?!sdl).*\Q$dllext\E=si,
+            install_dir => 'libdir',
+        },
+        _install_prebuilt_sdl_library => {
+            object => qr=^path:prebuilt/sdl.*\Q$dllext\E=si,
+            install_dir => 'libdir',
+            install_feature => 'gui',
+        },
+        _install_prebuilt_documentation => {
+            object => qr=^path:prebuilt/.*\.txt=s,
+            install_dir => 'docdir',
+        },
+        _install_uncursed_plugins => {
+            object => qr=^bpath:libuncursed/src/plugins/.*\Q$dllext\E$=s,
+            install_dir => 'specificlibdir',
+            install_feature => "gui",
+        },
+        _install_libuncursed => {
+            object => qr=^bpath:libuncursed/src/libuncursed\Q$dllext\E[.\d]*$=s,
+            install_dir => 'libdir',
+        },
+        _install_libjansson => {
+            object => qr=^bpath:libjansson/libjansson\Q$dllext\E[.\d]*$=s,
+            install_dir => 'libdir',
+            # we don't write install_feature => "jansson"; this way, the user
+            # will never be prompted about whether to install a built copy of
+            # jansson, because most users won't care.
+        },
+        _install_tty => {
+            object => "bpath:nethack/src/main.c/main$exeext",
+            install_dir => "gamesbindir",
+            install_elevation => "games",
+            install_name => "nethack4$exeext",
+            exeparams => {
+                icon => qr/^path:dist\/common\/icon.*\.png$/,
+                copyright => $copyright,
+                name => "NetHack 4 (console)",
+                description => "Dungeon exploration game (text interface)",
+                terminal => 1,
+            },
+        },
+        _install_sdl => {
+            object => "bpath:nethack/src/main.c/nethack4-sdl$exeext",
+            install_dir => "gamesbindir",
+            install_elevation => "games",
+            exeparams => {
+                icon => qr/^path:dist\/common\/icon.*\.png$/,
+                copyright => $copyright,
+                name => "NetHack 4 (GUI)",
+                description => "Dungeon exploration game (graphical interface)",
+                terminal => 0,
+            },
+            install_feature => "gui",
+        },
+        _install_tilecompile => {
+            object => "bpath:tilesets/util/tilecompile.c/tilecompile$exeext",
+            install_dir => "gamesbindir",
+            exeparams => {
+                copyright => $tilecompile_copyright,
+                name => "NetHack 4 Tile Compiler",
+                terminal => 1,
+                interactive => 0,
+            },
+            install_feature => "tilecompile",
+        },
+        _install_dlb => {
+            object => "bpath:libnethack/util/dlb_main.c/dlb_main$exeext",
+            install_dir => "gamesbindir",
+            exeparams => {
+                copyright => $dlb_copyright,
+                name => "NetHack 4 Data Librarian",
+                description => "Archiver/unarchiver for NetHack 4's 'nhdat' file",
+                interactive => 0,
+            },
+            install_feature => 'playfield_utils',
+            install_name => "dlb$exeext",
+        },
+        _install_dgn_comp => {
+            object => "bpath:libnethack/util/dgn_main.c/dgn_main$exeext",
+            install_dir => "gamesbindir",
+            exeparams => {
+                copyright => $dgn_copyright,
+                name => "NetHack 4 Dungeon Compiler",
+                description => "Compiler for NetHack 4 dungeon descriptions",
+                interactive => 0,
+            },
+            install_feature => 'playfield_utils',
+            install_name => "dgn_comp$exeext",
+        },
+        _install_lev_comp => {
+            object => "bpath:libnethack/util/lev_main.c/lev_main$exeext",
+            install_dir => "gamesbindir",
+            exeparams => {
+                copyright => $lev_copyright,
+                name => "NetHack 4 Level Compiler",
+                description => "Compiler for NetHack 4 level descriptions",
+                interactive => 0,
+            },
+            install_feature => 'playfield_utils',
+            install_name => "lev_comp$exeext",
+        },
+        _install_server => {
+            object => "bpath:nethack_server/src/srvmain.c/srvmain$exeext",
+            install_dir => "gamesbindir",
+            install_name => "nethack4-server$exeext",
+            install_permission => "games",
+            install_readable => 1,
+            exeparams => {
+                copyright => $copyright,
+                name => "NetHack 4 Server",
+                description => "NetHack 4 server daemon",
+                interactive => 0,
+            },
+            install_feature => "server",
+        },
+        _install_nhdat => {
+            object => "bpath:libnethack/dat/nhdat",
+            install_dir => "gamesdatadir",
+        },
+        _install_text_tilesets => {
+            object => qr{^bpath:tilesets/dat/merged/text.*\.nh4ct$},
+            install_dir => "gamesdatadir",
+        },
+        _install_fonts => {
+            object => qr{^bpath:tilesets/dat/fonts/.*\.png$},
+            install_dir => "gamesdatadir",
+            install_feature => "gui",
+        },
+        _install_dawnlike => {
+            object => qr{^bpath:tilesets/dat/merged/dawnlike-.*\.nh4ct$},
+            install_dir => "gamesdatadir",
+            install_feature => "dawnlike_tiles",
+        },
+        _install_slashem => {
+            object => qr{^bpath:tilesets/dat/merged/slashem-.*\.nh4ct$},
+            install_dir => "gamesdatadir",
+            install_feature => "slashem_tiles",
+        },
+        _install_rltiles => {
+            object => qr{^bpath:tilesets/dat/merged/rltiles-.*\.nh4ct$},
+            install_dir => "gamesdatadir",
+            install_feature => "rltiles_tiles",
+        },
+        _install_license => {
+            object => "path:libnethack/dat/license",
+            install_dir => "gamesdatadir",
+        },
+
+        install_manuals => undef, # these are feature-gated at install time
+
+        _install_manpage => {
+            object => qr=^bpath:doc/nethack4\.6.*=,
+            install_dir => "mandir",
+        },
+        _install_sdl_manpage => {
+            object => qr=^bpath:doc/nethack4-sdl\.6.*=,
+            install_dir => "mandir",
+            install_feature => "gui",
+        },
+        _install_tilecompile_manpage => {
+            object => qr=^bpath:doc/(?:nh4ct\.5|tilecompile\.6).*=,
+            install_dir => "mandir",
+            install_feature => "tilecompile",
+        },
+        _install_playfield_utils_manpage => {
+            object => qr=^bpath:doc/$playfieldutils\.6.*=,
+            install_dir => "mandir",
+            install_feature => "playfield_utils",
+        },
+        _install_docs => {
+            object => qr=^path:doc/(?:changelog|faq|philosophy)\.txt=,
+            install_dir => "docdir",
+        },
+        _install_copyright => {
+            object => "path:copyright",
+            command => ["intcmd:nop", "optionset:os_windows"],
+            install_dir => "docdir",
+            install_name => "copyright-details.txt",
+        },
+        _install_highscores => {
+            object => "sys:ensure_exists",
+            install_dir => "gamesstatedir",
+            install_name => "record",
+            install_permission => "games",
+            install_readable => 1,
+        },
+        _install_gamesstatedir => {
+            object => "sys:touch_only",
+            install_dir => "gamesstatedir",
+            install_permission => "games",
+            install_readable => 1,
+        },
+        _install_xlogfile => {
+            object => "sys:ensure_exists",
+            install_dir => "gamesstatedir",
+            install_name => "xlogfile",
+            install_permission => "games",
+            install_readable => 1,
+        },
+        _install_logfile => {
+            object => "sys:ensure_exists",
+            install_dir => "gamesstatedir",
+            install_name => "logfile",
+            install_permission => "games",
+            install_readable => 1,
+        },
+        _install_paniclog => {
+            object => "sys:ensure_exists",
+            install_dir => "gamesstatedir",
+            install_name => "paniclog",
+            install_permission => "games",
+            install_readable => 1,
+        },
+        _install_server_config => {
+            object => "sys:ensure_exists",
+            install_dir => "configdir",
+            install_name => "nethack4.conf",
+            install_feature => "server",
+        },
+        _install_server_logfile => {
+            object => "sys:ensure_exists",
+            install_dir => "logdir",
+            install_name => "nethack4.log",
+            install_permission => "games",
+            install_feature => "server",
+        },
+        _install_server_lockfile => {
+            object => "sys:touch_only",
+            install_dir => "lockdir",
+            install_feature => "server",
+        },
+        _install_server_dumps => {
+            object => "sys:create_subdir",
+            install_dir => "gamesstatedir",
+            install_name => "dumps",
+            install_permission => "games",
+            install_readable => 1,
+            install_feature => "server",
+        },
+        _install_server_completed => {
+            object => "sys:create_subdir",
+            install_dir => "gamesstatedir",
+            install_name => "completed",
+            install_permission => "games",
+            install_readable => 1,
+            install_feature => "server",
+        },
+        _install_server_save => {
+            object => "sys:create_subdir",
+            install_dir => "gamesstatedir",
+            install_name => "save",
+            install_permission => "games",
+            install_feature => "server",
+        },
+        _install_dumps_note => {
+            object => "bpath:readme-dumps",
+            install_dir => "gamesstatedir",
+            install_name => "dumps/README",
+            install_feature => "server",
+        },
+        _install_saves_note => {
+            object => "bpath:readme-saves",
+            install_dir => "gamesstatedir",
+            install_name => "README",
+        },
+    },
+}

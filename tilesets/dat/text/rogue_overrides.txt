@@ -1,0 +1,42 @@
+! Last modified by Alex Smith, 2015-03-16
+! Copyright (C) 2014 Alex Smith
+! NetHack may be freely redistributed. See license for details.
+!
+! This text tileset lists the special rules for the Rogue level.
+
+! General rule: no color on the Rogue level
+sub rogue sub * *: gray bgblack regular basechar
+
+! Rogue used different backgrounds to ASCII NetHack in some cases, and
+! to Unicode NetHack in many more cases.
+sub rogue walls 0: '|'
+sub rogue walls 1: '-'
+sub rogue walls 2: '-'
+sub rogue walls 3: '-'
+sub rogue walls 4: '-'
+sub rogue walls 5: '-'
+sub rogue walls 6: '-'
+sub rogue walls 7: '-'
+sub rogue walls 8: '-'
+sub rogue walls 9: '|'
+sub rogue walls 10: '|'
+sub rogue open doors ?: '+'
+sub rogue doorway: '+'
+sub rogue *staircase *: '%'
+
+! Even for things that weren't in Rogue, Unicode looks weird.
+! Some of these are probably impossible, but included anyway to make sure.
+sub rogue iron bars: '#'
+sub rogue fountain: '{'
+sub rogue altar: '_'
+sub rogue ice: '.'
+sub rogue water; sub rogue underwater; sub rogue lava: '}'
+sub rogue tree: '#'
+sub rogue web: '^'
+
+! Some objects looked different in Rogue
+sub rogue gold piece: '*'
+sub rogue corpse; sub rogue sub corpse *: ':'
+
+! Override the most common food; TODO: do other food too?
+sub rogue food ration: ':'

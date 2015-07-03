@@ -1,0 +1,8 @@
+16 16
+Slash'EM
+n-343.txt
+s-extras.txt
+s-monsters.txt
+s-objects.txt
+s-other.txt
+n-4-16.txt

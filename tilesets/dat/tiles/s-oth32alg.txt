@@ -1,0 +1,853 @@
+! Last modified by Alex Smith, 2013-09-24
+! NetHack may be freely redistributed.  See license for details.
+__ = (71, 108, 108)
+_A = (0, 0, 0)
+_B = (0, 0, 16)
+_C = (0, 0, 32)
+_D = (0, 0, 48)
+_E = (0, 0, 64)
+_F = (0, 0, 96)
+_G = (0, 0, 128)
+_H = (0, 0, 160)
+_I = (0, 0, 192)
+_J = (0, 0, 224)
+_K = (0, 0, 255)
+_L = (0, 16, 0)
+_M = (0, 16, 16)
+_N = (0, 24, 0)
+_O = (0, 24, 24)
+_P = (0, 24, 48)
+_Q = (0, 32, 0)
+_R = (0, 32, 32)
+_S = (0, 32, 64)
+_T = (0, 48, 0)
+_U = (0, 48, 24)
+_V = (0, 48, 48)
+_W = (0, 48, 96)
+_X = (0, 64, 0)
+_Y = (0, 64, 32)
+_Z = (0, 64, 64)
+_a = (0, 64, 128)
+_b = (0, 80, 160)
+_c = (0, 96, 0)
+_d = (0, 96, 48)
+_e = (0, 96, 96)
+_f = (0, 96, 192)
+_g = (0, 112, 224)
+_h = (0, 128, 0)
+_i = (0, 128, 64)
+_j = (0, 128, 128)
+_k = (0, 128, 255)
+_l = (0, 144, 0)
+_m = (0, 160, 0)
+_n = (0, 160, 80)
+_o = (0, 160, 160)
+_p = (0, 182, 255)
+_q = (0, 192, 0)
+_r = (0, 192, 96)
+_s = (0, 192, 192)
+_t = (0, 224, 0)
+_u = (0, 224, 112)
+_v = (0, 224, 224)
+_w = (0, 255, 0)
+_x = (0, 255, 128)
+_y = (0, 255, 255)
+_z = (16, 0, 0)
+_0 = (16, 0, 16)
+_1 = (16, 16, 0)
+_2 = (16, 16, 16)
+_3 = (16, 48, 48)
+_4 = (24, 0, 0)
+_5 = (24, 24, 0)
+_6 = (24, 24, 48)
+_7 = (24, 48, 0)
+_8 = (24, 48, 24)
+_9 = (24, 48, 48)
+_$ = (32, 0, 0)
+A_ = (32, 0, 32)
+AA = (32, 32, 0)
+AB = (32, 32, 32)
+AC = (32, 64, 0)
+AD = (32, 64, 32)
+AE = (32, 64, 64)
+AF = (32, 242, 186)
+AG = (48, 0, 0)
+AH = (48, 0, 48)
+AI = (48, 12, 0)
+AJ = (48, 24, 0)
+AK = (48, 24, 24)
+AL = (48, 36, 0)
+AM = (48, 48, 0)
+AN = (48, 48, 24)
+AO = (48, 48, 48)
+AP = (48, 48, 96)
+AQ = (48, 96, 0)
+AR = (48, 96, 48)
+AS = (48, 96, 96)
+AT = (64, 0, 0)
+AU = (64, 0, 32)
+AV = (64, 0, 64)
+AW = (64, 0, 128)
+AX = (64, 16, 0)
+AY = (64, 32, 0)
+AZ = (64, 32, 32)
+Aa = (64, 32, 64)
+Ab = (64, 48, 0)
+Ac = (64, 64, 0)
+Ad = (64, 64, 32)
+Ae = (64, 64, 64)
+Af = (64, 64, 128)
+Ag = (64, 128, 0)
+Ah = (64, 128, 64)
+Ai = (64, 128, 128)
+Aj = (72, 108, 108)
+Ak = (80, 0, 160)
+Al = (80, 80, 80)
+Am = (80, 80, 160)
+An = (80, 160, 0)
+Ao = (80, 160, 80)
+Ap = (80, 160, 160)
+Aq = (96, 0, 0)
+Ar = (96, 0, 48)
+As = (96, 0, 96)
+At = (96, 0, 192)
+Au = (96, 16, 0)
+Av = (96, 24, 0)
+Aw = (96, 48, 0)
+Ax = (96, 48, 48)
+Ay = (96, 48, 96)
+Az = (96, 72, 0)
+A0 = (96, 96, 0)
+A1 = (96, 96, 48)
+A2 = (96, 96, 96)
+A3 = (96, 96, 128)
+A4 = (96, 96, 192)
+A5 = (96, 128, 96)
+A6 = (96, 128, 128)
+A7 = (96, 192, 0)
+A8 = (96, 192, 96)
+A9 = (96, 192, 192)
+A$ = (96, 144, 178)
+B_ = (104, 84, 31)
+BA = (108, 144, 182)
+BB = (108, 255, 0)
+BC = (112, 0, 224)
+BD = (112, 112, 112)
+BE = (112, 112, 224)
+BF = (112, 160, 160)
+BG = (112, 224, 0)
+BH = (112, 224, 112)
+BI = (112, 224, 224)
+BJ = (117, 105, 88)
+BK = (120, 120, 160)
+BL = (120, 160, 120)
+BM = (120, 160, 160)
+BN = (128, 0, 0)
+BO = (128, 0, 64)
+BP = (128, 0, 128)
+BQ = (128, 0, 255)
+BR = (128, 32, 0)
+BS = (128, 64, 0)
+BT = (128, 64, 64)
+BU = (128, 64, 128)
+BV = (128, 90, 72)
+BW = (128, 96, 0)
+BX = (128, 96, 96)
+BY = (128, 96, 128)
+BZ = (128, 112, 32)
+Ba = (128, 128, 0)
+Bb = (128, 128, 64)
+Bc = (128, 128, 96)
+Bd = (128, 128, 128)
+Be = (128, 128, 255)
+Bf = (128, 255, 0)
+Bg = (128, 255, 128)
+Bh = (128, 255, 255)
+Bi = (144, 72, 0)
+Bj = (144, 135, 110)
+Bk = (144, 144, 144)
+Bl = (144, 144, 192)
+Bm = (144, 192, 144)
+Bn = (144, 192, 192)
+Bo = (160, 0, 0)
+Bp = (160, 0, 80)
+Bq = (160, 0, 160)
+Br = (160, 40, 0)
+Bs = (160, 80, 0)
+Bt = (160, 80, 80)
+Bu = (160, 80, 160)
+Bv = (160, 120, 0)
+Bw = (160, 120, 120)
+Bx = (160, 120, 160)
+By = (160, 160, 0)
+Bz = (160, 160, 80)
+B0 = (160, 160, 120)
+B1 = (160, 160, 160)
+B2 = (160, 160, 224)
+B3 = (165, 118, 96)
+B4 = (168, 168, 224)
+B5 = (168, 224, 168)
+B6 = (168, 224, 224)
+B7 = (170, 136, 52)
+B8 = (170, 154, 128)
+B9 = (176, 176, 176)
+B$ = (178, 64, 0)
+C_ = (178, 224, 16)
+CA = (182, 72, 0)
+CB = (192, 0, 0)
+CC = (192, 0, 96)
+CD = (192, 0, 192)
+CE = (192, 48, 0)
+CF = (192, 96, 0)
+CG = (192, 96, 96)
+CH = (192, 96, 192)
+CI = (192, 144, 0)
+CJ = (192, 144, 144)
+CK = (192, 144, 192)
+CL = (192, 160, 64)
+CM = (192, 192, 0)
+CN = (192, 192, 96)
+CO = (192, 192, 144)
+CP = (192, 192, 192)
+CQ = (192, 192, 255)
+CR = (192, 255, 192)
+CS = (192, 255, 255)
+CT = (202, 144, 114)
+CU = (208, 168, 80)
+CV = (208, 208, 208)
+CW = (210, 210, 178)
+CX = (218, 218, 182)
+CY = (224, 0, 0)
+CZ = (224, 0, 112)
+Ca = (224, 0, 224)
+Cb = (224, 56, 0)
+Cc = (224, 112, 0)
+Cd = (224, 112, 112)
+Ce = (224, 112, 224)
+Cf = (224, 168, 0)
+Cg = (224, 168, 168)
+Ch = (224, 168, 224)
+Ci = (224, 192, 160)
+Cj = (224, 224, 0)
+Ck = (224, 224, 112)
+Cl = (224, 224, 168)
+Cm = (224, 224, 224)
+Cn = (229, 162, 130)
+Co = (240, 240, 240)
+Cp = (242, 0, 0)
+Cq = (242, 96, 0)
+Cr = (242, 196, 77)
+Cs = (248, 224, 96)
+Ct = (252, 252, 153)
+Cu = (255, 0, 0)
+Cv = (255, 0, 128)
+Cw = (255, 0, 255)
+Cx = (255, 64, 0)
+Cy = (255, 108, 0)
+Cz = (255, 128, 0)
+C0 = (255, 128, 128)
+C1 = (255, 128, 255)
+C2 = (255, 182, 144)
+C3 = (255, 192, 0)
+C4 = (255, 192, 192)
+C5 = (255, 192, 255)
+C6 = (255, 211, 176)
+C7 = (255, 255, 0)
+C8 = (255, 255, 128)
+C9 = (255, 255, 192)
+C$ = (255, 255, 255)
+# tile 911 (explosion fiery 0)
+{
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  _______________________________________________________A________
+  _________________________________________________________A_2_A_2
+  _______________________________________________A________AOAlAEAe
+  ________________________________________________AB_9__ABB_BVBTCA
+  ________________________________________________AEAjAABTCECECECb
+  _____________________________________________A___9A3BTBiCECBCECE
+  ___________________________________________2AdAlASAlBTCECEBrCECE
+  ___________________________________________2A2BXA2A2ArBrBTBrCECE
+  ___________________________________________2AjAxBTA2BTAxBrCECbCE
+  ___________________________________________2BVBVAeAyBVCECECECbCx
+  ___________________________________________1BTBVAxAxBTCBCBCbCxCx
+  ___________________________________________zAKBTBVAxBRBOBrCbCECB
+  ______________________________________________AdBVBVCAAxBrCYBpBo
+  _____________________A_________A_______A________AEA6AlBOCBCECyCy
+  _______________A_______2AeAO_2___________2AeAE____AEAlBrCbCxCUC3
+  _________________AAB_2AeBcBJ_2__________ANBdA2_6_BA_BrCbCzC3C3C7
+  _________________2AlA2BVA2AE_2___A______ABBVAxAyAPBOCECzC3C7C7C7
+  _________________2AjBVBVAx_RAeAlAN_____9AlBRCECbCYCYCbCdC7C7C8Cs
+  _________________2A2AaAYAK_AAKBcAe___$BTBtCBCxCyCyCxCyCrCsCsCsCs
+  _________________2Ae_2_A_A_A_AANAeABAxBrCECxCxCrCrCzCzCsC8CsC8C7
+  ___________________z_A_A_A_A_A_A_6AjBJAxBoCxCzCzCsCsC2CsCrCrC8Cs
+  _______________________A_A_A_A_A_AAOAlBTBrCbCyCrCtCsC7CsC2CsC7C8
+  _________________________1AB_9AO_1_AAeBTCBCECzCrC8CsC7CsC8C7C7Cs
+  _________________________2BVAjBXAx_2AeBRCBCbCzCrCrCrC6C8C7C3C2Cs
+  _________________________2A1BTAxAxAxBrCbCbCECdCyCzCsCsCrCrC3CrCr
+  ________________________AKBVBTBTBTAxCECYCbCbCxCzCzC0CrCyCzCrCrCs
+  _________________________2AxAjA2BTBRBrBrCbCyCdCrCzCdCyCdCUCrC8C8
+}
+# tile 912 (explosion fiery 1)
+{
+  _____________2AlBJAB____________________________________________
+  _____________2AlBJAB____________________________________________
+  _________M_2ANBVBVAO_A_2________________________________________
+  _A______AEA2B_BrAxAxA1Al_A______________________________________
+  ___RAeAeA2AlBTCEBrBTCABTAZAE_R__AE_B_________A___2AeAB__________
+  ___9BcBVBTBTBrBrBrCEBrCECABtAe_9A2Ae_R_9AB_______zAl_2__________
+  _AAZBTCEBRBrCYCECEBTCECBCbCEBTAjBVBVA2A2BV_2___A_A_____A________
+  AlAeBRBrBrCECECxCECBCECECYCEBTAlASAlBOBrBrAl_O_5Al_A____________
+  BtBrBrBrCBCbCzCyCbBrBrCECECEBrBTBTBrBoCYCbBXAEAlAl_z____________
+  BrCECbCYCbCcCzCyCbBTBOCEBrCECBCECECECECbCbBoAlBDAd_A____________
+  BrCECbCbCxCbCECbCECECYCEBrBTCECECBCECYCxCbBoBOBVAl_z____________
+  CECxCdCxCbCECECEBrCECbCbCECEBTBrCECbCyCcCBCEBRAlAl_____________A
+  CbCxCxCbCbCbBpBrCECbCuCxCYBrAyAxCYCxCxCxCbCYCBBrAxAZAB_9AEAB_z__
+  CbCbCbCECbCxCbBoCbCxCbCxCxAyAPBrCbCxCGCxCxCxCxCuBoBTBTA2A3BJAB_M
+  CbBpCACECECECbCbCYCyCyCbCEAyAxCBCuCyCdCzCdCUCxCxCYBoCEBrAxA2AjAl
+  CbBrAxAyBOCBCxCyCdCzCzCyCxBTArCECuCzCsCrCrCrCrCdCyCYCYCEBTAxAxAx
+  BpBRArArBoCbCxCdCzCzCrCyCYAxArCBCyCrCsC8CrCtCsC3CzCYCBCbCEBRCBCB
+  CEBrCBCBCxCrCzCxCzCzCyCbBoAxBOCYCdCsC8C2CsCtC7C7CyCECBCbCbCBCbCb
+  CyCbCxCyCrC2CsCzCrCUCxCbBNCBCuCyCzCsC8CsC8CsC2CrCzCyCbCYCbCYCxCx
+  C3C3CzCsC7CsC8CsCsCrC0CxBoCbCxCrCsCsCsC8CsCsC8CsCrCrCzCxCyCyCyCz
+  C7CsCsCtCsC7CtCsC8C8CsCyBoCcCrCsC8CtCsCtC2C8C8CtC8CrCrCzCzCrCzCy
+  CsC2C8CsCsCtC6C8CsC8CsCUCBCcCsC8CtCtCtCtCtCtCtCtCtCsCrCrC0C3CrCx
+  CrC7C7C8CsCtC8CtCsCsCsCrCxCdCsCsCsCtCtCtCtCtCsCsC8CsC6CsCrCrCzCz
+  CrCrCsCsC2C8CtCtCtCtCsCrCdC3CsCtC8CtCtC8CsCtCtC2CsCtC7CsC8CzCUC3
+  CsC8CsC8CtCtC6CtCtC6CtCsCrCyCrCsC6CtCsC2C8CtCtC8CsC2C7CsCsCrCrCr
+  CsC8CsCtC8C9C9C6CtCtC6CsCrCyCdCsCsCtCtC6C8CtC8CsC8CsC8CsCrCzCrCU
+  CsC8CtCtC8CtC6CtCtCtC8CsCtCnCrCrCsCtCtC6CtCtCtCsCsC8CsCrCrCsCrCs
+  C2C8CtC6CtC9C6CtC6CtCtC8CtCtCrCrCsC8CtC6C6C6CtCtC2CsCtCsCrCtCtCs
+  CsC8C6CtC9C9C9C8C6CtC8C6CtCtCsCrCtCtC6CtCtC6CtC8C8CtC8C2C8CtCtCt
+  CsC8C6C9C6C9C9C8CtC6C6CtC6CtCrCrCtCtC8CtC6CtCtC8CtC8C6CtC8CtCtC6
+  CsCtC6C9C9C9C6CtC6CtC6CtCtC8CrCrCsCtCtCtCtCtCtC6CtC6CtC6CtC6C6Ct
+  C2C8C8CtC9C6CtC6C6C6CtCtCsC2CrCrC8C6CtCtCtCsC8CtC6CtC6CtCtCtC6Ct
+}
+# tile 913 (explosion fiery 2)
+{
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ___________A_A_A_A______________________________________________
+  _________2A1AxBVAO______________________________________________
+  ________AOBVAdAeAB______________________________________________
+  _2_2_2__ANA2_______A____________________________________________
+  AlASA2_1_6A2_A__________________________________________________
+  AlAlBtAx_V_O_______A____________________________________________
+  BrBrBrBV_9_AABAN_2______________________________________________
+  CbCBAxBTAd_2AlBJAO_A_2_M_2_A____________________________________
+  CbCbCBAlAiASAxAxAlASASASAlAN____________________________________
+  CxCbBoBNBTBTBRBRBOBTAxBTBTB__9_____A____________________________
+  CxCbCBCBCYCbCYCECbCYCBCYCBCABTAB_M______________________________
+  CbCbCbCbCxCyCxCxCxCxCxCxCxCEBoAj_9______________________________
+  CUCyCxCbCxCdCzCfCzCzCzCzCxCBArA3_R___A__________________________
+  CrCrCrCdCyCyCrCrCrCrCzCzCxCEAxAlAP_O____________________________
+  CrCrCzCrCzCUCdCzCyCzCzCzCyCbCEBrA2Ae_A__________________________
+  CrCrCrCsCrCzCdCyCrCzCzCrCzCyCbCEAxBTAe_A________________________
+  CrCrCsCsCrCxCbCzCyCxCzCzCzCzCbCECBBsAl__________________________
+  CtCsCtCrCUCxCBCcCxCbCzCcCcCxCEBrCEBTAx_9_AABAB_________A________
+  CsC8CsCrCzCbCECYCbCbCzCECECECECEBVAxBTAj_2ANAl_1_2_2_1__________
+  CtCtCtCsCzCYCBBpCECxCzCbBoCBBTCEBRAlAjA2AB_AAKA2AlBJAO__________
+  C8CtCsCrCzCxCbCbCbCzCzCcCbCBCBCECBA2AeAB_A_A_AAOAZAOAB__________
+  CtCtC2CrCzCzCyCbCyCzCrCrC0CyCbCbCEBiAx_O_A_A___________A________
+}
+# tile 914 (explosion fiery 3)
+{
+  _____________________A_A____ASAlBrCEBoCYCyCzCrC3CrCyCdCzCrCsCsC8
+  _______________A____AeAO_____BAZBTCYCbCbCbCyCzCzC2CsCrCdCrC8C2Cs
+  _________________AABBJAe______AXCbCxCxCECYCbCdCrCrCsCrCrCrCsC8C6
+  _________________1BJBJAB_____AAxCECxCbCbCECxCxCrCrCrCrCrCnCsC8C6
+  _________________2AlAB_____AAZAxBrCxCbCbCbCxCdCrCrC2CUCrCrCrCsCt
+  _________________AAK_A______AlBtBrCECbCxCxCbCyC0CrCrCrCrCsCsC2Cs
+  _______________A_________AABAeBrCYBtCYCGCxCxCzCrCrCrC2C8CsCsCsCs
+  ___________________2_2___OAjBTBoCBCxCECbCxCxCrCrCrC2C8CsCsC2CtCs
+  _____________A___AAlAS_2_OA3BTBrCbCxCYCyCzCdCzCsCsCsCtC2CrCsCsCt
+  _______________OAxBtBVAB_AABAxCECbCxCbCxCzCrCnCsC2CsCtCtCsCsCtCt
+  AB_A_2_2__AB_AAOB3CABVAx_A_AAUCECuCxCxCdCrCsCsCsCsC8CtCtCtCsCtC6
+  A2_0AdAl_MAe_O_5BVB_AlA2Ax_1AUCYCxCUCrCsCtCsC8C2C8CsCtCtCsC8CtC6
+  Al_MAOBcAlAB_A_9Al_5AeA2AjASBRCYCxCrCrCsC8CsCsC8CsCtCtCtCtC6CtCt
+  _9_A_2AOAO_A_A_A_O_zAlAl_9BXBOCbCzCrC8C8CsC6C8CsCsCsC8CsCtCtCsC8
+  _____________2AB_B_AAOAB_0AxCBCxCrCrCrCsCtC8CsC8C2C8C2CsCtC8C8C6
+  ____________AdBDAS_z_A_6AyBNCbCzCzCrCrCrC8CsCsC8CsCsCtCtCtCtCtC6
+  _________AAOBJBVAxAeAZAxBrBrCbCyCrCrCrCrC2CsCrCsCsCtCtCtCtC8CtC6
+  _________1A2BXAxBSBtBrCECECYCxCrCrCrC2CsC8CsCrCsC8CsCtCtC8CtC6Ct
+  _________AAlBTAxCACECYCbCxCbCyCzCrCrCsC8CsCrCrCrCsCtCtCtCtC6C9C6
+  _________AAxBTCECBCbCyCyCxCyCzCyC0CrCrCrCrCrCzCrCsCtC6C8CtC6C9C9
+  _______OAeAxBrCbCxCyCyCyCyCzCxCxCUCrCrCrCrC3CrCrCrCtC8CtC6CtC8Ct
+  ______ABA3AyBrCbCbCzCxCxCrC3CGCxCxCyCzCzCyCrC2CrC2C8CtC8CtC6CtCt
+  ______ABBJAxBrCECbCzCbCcCrCrCzCyCbCxCzCzCyCdCsCsC8CtCtCtC6CtC6Ct
+  _____9AeAxBrCECbCyCbCbCyCzCrCrCbCbCzCyCdCyC3CrCsC8CtC6C8CtCtC8C6
+  ____AOBJBTCbCbCzCzCbCBCxCrC3CrCyCyCdCzCzCrCrCrCrC8C8CtC8CtCtCtC6
+  ____AEBVBtCECcCzCzCbBrCbCzCzCrCzCyCyCzCzCsC2CrCsCsCsC8C6CtCtC8C6
+  ____AEA2AxCbCYCFCzCbBpCECzCrCzCdCyCUCyCrCrCrC8C2C8C8C6CtCtC8CtC6
+  _____BAOBVCECbCbCbCbCECxCrCzCrCzCzCrCzCrCrCrCrCsCsCsC8CtC6CtCtCt
+  ___A_A_AAOAxCECbCBCECYCxCzCrCrCzCzCrCrCzCrCrCrCsC8CtCtCsC8CtCtC8
+  _____A____ASBtCECEBrBoCECzCyCrCzCrC3CrCzCzCrCsC8C2CsC8C2C8C8C6Ct
+  _________AASA2BVBTAyAyBrCxCzCzCrCrCzCrCyCzCrC8CsC8CtC8CtCsC8CtC8
+  _________AAB_2AOAS_DAaBrCbCzCrCzCrCrC0CyCyCrCsC8C8CtCsCsC8CtCtC6
+}
+# tile 915 (explosion fiery 4)
+{
+  CtC8CsCtCtC6CtC6CtC6CtCtCsCsCrC2C9C9CtCtCtCsCtC6CtC6CtC6CtC6C6Ct
+  CsC8CsCtCtCtC6CtC6CtCtCtCsC2CrCsC6C9C9CtC6C8C8C9C9CtC6CtCtCtC6Ct
+  CsCsCtCtC8C6CtCtCtC6CtCtC2CsCsC2CtC6C9CoCtC9C6CtC6C6CtCtCtC6CtCt
+  CtCsCsC6CtCtCtC8C6CtC6C8C6C8C8C8CtCtC9C9CoC9CtC6C9C6CtC8CtCtCtCs
+  C8CsC8C6CtCtCtCtCtC6CtC8CtCtCtCtC6C9C9C9C9C9C9C6C9C9CtCtCtCtCtC8
+  C2CsCtC6C8CsC6CsCsC8CtC6C9CtCsCtC9C9C9C9CoC9C9C9C6C9C6C8CsCsC6Ct
+  CsCsC9C6C8C2C8CsC8C8CtC6C9C8C2CtC9CoC9C9C9C9C9C9C6CtCtCtCrCUCrC8
+  C8C8CtC6CtCtCtCsCtC6CtC8CtCtC6C9C9C9C9CoC9C9CoC9C9C9C9C2CrCUCrCt
+  CtC6CtC6CtCtCtC6C6CtCtCtC6C6CtC6C9C9C9C9C9C9C9C9CoC9C9C2CrCrC2Ct
+  C6CtC6C9C6CtC6CtCtC9C6C8CtCtC9C6C9CoC9C9CoC9CoC9C9C9C6C8CsCsC8Ct
+  CtC6CtC9CtCtC6CtC6CtC9CtCtC9C6CtC9C9C9C9C9C9C9C9CoC9C9CsC6CtCtCt
+  CtCtC6C6CtC8CtCtC6CtC6C2C8C6CtC6C6C9C9CoC9CoC9C9C9C9C9CtC2CkCtC9
+  C8CtC6CtCsC8C6C6C8C9C9C8C6CtC6CtC6CtC9C9C9C9C9CoC9C6C9C9C8CsC6C9
+  CtCtCtC6CtC8CtC6CtC6C9CtC9C9C9C6CtC6C9CoC9CoC9C9C9C9C9C6CtC8C8C9
+  CtC8CtC8CtC6C6CtCtC6C9C9C9C9C9C9C6C8CtC9C9C9C9C9C9C9C6CtC6C8C6Ct
+  CtCtCtC8C6C9C9CtC9C9C9C9C6C9CoC9C9CtC8C9C9C6C9C9CoC9C9C9C8CrC8Ct
+  CtC6C8CtC8C6CtC6C9C6C9C6C9C9C9C9CoC9C9C9C9C6C9C9C9C9C9C6C8C6C8Ct
+  C6C6CtCtCtCtCtCtCtCtC6C9C9C9C9C9C9C9C9C9C9CtC9C9CoC9C6CtC8CtCtC6
+  CtC6CtC6CtC6C8C6C8C6CtC9C9CoC9C9C6C9CoC9C6C6C9C9C9C9CtCtCtCtC6Ct
+  C6CtC9C6C8C6CtC6CtC6C9CoC9C9C9C9C6C9C9C6C8C6C9C9C6C6CtCtC6CtC6C9
+  C6CtC6C9CtCtCtCtC6C9C9C9C9C9C9C9C9C6C9C9C9C6CtC6CtCtC9C6CtC6CtC9
+  CtC6C9C9C6C6C8CtC9C9C9C9C9C9CoC9C9C9C9C9C9CtC6CtC8C6C9C9CtC6C9C9
+  C9C9C9C9C9CtC8CtC9C6C9C9CoC9C9C9C9C9C9C9C6C6CtC6C6CtC9C9CoC9C6Ct
+  C9C9CoC9C6C6CtCsC6C9C9C9C9CtC6C9CoC9CoC9C9C9CtCtC9C9C6C9C9C9C9C9
+  C9C9C9C9CtCtC8C8C6C9CoC9C9C9C9C6CtC9C9C9C9C9CtC6C9C9C9C6C9C6C9C9
+  C9C9C6C9CtCtCtCtC9C9C9C9CoC9C9C9C6C9C9CoC9CtC6CtC6C9C9C9C6C9C9C9
+  CtC6CtC6C6C6CtCtCtCtC6C9C9C9CoC9C9C9C9C9C9C6CtC9C9C6C9C9C9C9C9C9
+  CtCtCtCtCtC6C6CtC8C9C9C9C9C9C9C9CoC9C9CoC9C9C2C9C9C6CtC6C9CoC9C9
+  CsCtCtC8CtC6CtCtC8C6C6C6C9CoC9C9C9C9C9C9C9C6CtC9C9C6CtC9C9C9C9C6
+  CtCsC6C6C8C9C9C8CtCtCtCtC9C9C9C6C9C9C9C6C9CtC9CoC9C6C9C9C9C9C9C9
+  CtC6CtC6CsC8CtCsCtCtCtC6CtC9C9C9C6C9C9C9C9C6C9C9C9C9C9C6C6C6CtC6
+  CtCtCtCtCtC8C8C2CsC8CtCtC6C6C6C9C9CoC9C9C9C9C9C6C9C9C9C9C9CtC6Ct
+}
+# tile 916 (explosion fiery 5)
+{
+  CtC6C8CrCdCyCzCxCbCUCrCrCrCrCzCxCECBBTA2_O______________________
+  CtCtCsCrCrCrCzCdCyCUCrCrCrCrCrCxCxCYBrAx_z___A__________________
+  C8C8CsCsCsCrCrCzCUCrCUCrCrCrCzCxCbCBArBrAe_R____________________
+  CsCsCtCsCtCsCrCrCrCrC3C3CrCzCyCbCxCEBRBrBXAE____________________
+  CsC2CtCtCtCsC2CsCtCsC7CrCrCxCbCzCzCyCYBoBVAN____________________
+  CsC8C8CtCtC8CtC8CsCsCsCrCzCyCdCzCrCyCbCEBRAlAEAeAlAB____________
+  CtCtC9C6CtCtCtCsC8CsCsCrCzC3C7CrCzCxCYCEBrAyBDBJAl_5____________
+  CtCtC9CtC6C6CtCtC8CrCrCzCzCrC7CrCzCyCbBTCEBRBTAl_A___A__________
+  C6C8C6C9C9C6C8CtCtCrCrCzCzC3CzCzCzCrCyCBCEBTAxA2_1______________
+  C6C9CtC6C6CtC8C2C8CrCrCrCzCdCrCzCrCzCyCbBRAxA2BJ_2______________
+  C9C9C6CtC9C6CtC8CsCsCrCyCyCrCrCrCrC3CyCbCBAxAeAZ_L______________
+  C9C9C6C9C9CtC6CsC8C2C3CdCyCzCrCrCrCrCzCxCuCYAZ__________________
+  C9C6C9C9C6C6CtCtC8CsCrCyCdCyC0CsCtCrCzCrCxCbBTAe_B___A__________
+  C9C6C9C9C6CtC6C6CtCrCrCyCdCyCrCrCsCtCsCrCzCuBrAiAe_A_A_A________
+  C9CtC9C9C9C6CtCtC8CrCyCxCyCdC3CrCrCsCsCrCzCbArASBJAe_z__________
+  CtCoC9C6C9C9C6C8C2CzCdCxCxCzCzC2C7C3C3CrCyCEAK_AAlBJAe__________
+  C9C6C9CtCtC6C8CrCzCdCyCxCbCGCrCsCrCrCrCyCbBTAZ_A_2AB_2__________
+  C9CtC2CtC8CtCsCrCrCzCdCxCYCbCrC3CzCrCrCxCYCEAx_R_______A________
+  CtC6CsCsCsCsC2CrCrCzCyCbCbCxCxCxCyCzCzCxCECBBTAl_M______________
+  C9CtCsCrC2CsCsCsCrCrCdCxCECECxCxCxCxCxCECEBRBTAS_2______________
+  C6C8CsC2CsCsC8C8CsCzCyCdCxCBBpCbBtCECECEBOBTAlAj_M______________
+  C9C6C8CtCtC8C6CsCsCrCnCyCxCbBoCEBrBRBrBTAxBVA2Al_2______________
+  C9C9CtCtCtCtC8C8CtCsCrCyCxCbCECYCBCBBOAxBVBVBJAl_2______________
+  C6CtCtCtC6CtCtC6CtCsCrCzCrCUCxCxCbCYCEBoBRAlAjAl_2______________
+  C6CtC6CtCtC8CtC8CsCsC2CrCzCrCzCdCyCyCxCEBrAxA2Al_2______________
+  CtC6CtC6C8CtCtCsC8CsCrCdCyC3CrCzCrCzCyCxCEBoBTAS_2______________
+  C9C6CtCtCtC2CsC8C2CrCyCzCrCrCrCzCzCrCzCxCBBrBTAl_2______________
+  C6C9C6C8CtCtC8CsCsCzCrCzCrCzCrCzCrC3C3CbCYCbBrAy_0______________
+  C9C9CtCtCtC8CsCrCnCrCrCrC3CrCrCrCrC3CjCyCbCbBTAy_L______________
+  C6C9CtCtCsCsCzCzCrCsCrCsCsC7CsC7C3CrCyCyCbBrBTA2_2______________
+  CtC9CtCsCrCzCbCdC7C7CrCrCrCsC7CrC3CxCxCxBoAxBDAj_2______________
+  C6C9CtC2CzCxCxCrCrCrC7CsCsC7C3CrCrCxCbCbBTAOAB_2_A______________
+}
+# tile 917 (explosion fiery 6)
+{
+  _______________9A2_AAOBTCYCyC3CzCzCrCzCyCdCzCsCsCsCsCsCsC8CtCtC6
+  ______________ANAe_AAeBTCBCbCyCzCzCyCyCyCzCzCrCrCrC2CrCsCsCsCtC6
+  _______________A_2____AEBXCBCYCcCzCzCxCbCdCrCrCzCzCrCrC2C8CsC8Ct
+  _____________A_________B_9AxBTCECbCcCYCbCyC0CzCrCzCdCrCrCsCtCsCs
+  _______________________AAOAlAOArBoCEBTCYCxCrCdCrCrCzCrCrCrCsC8C8
+  ______________________AOBXA1_AAKBTBrASBoCxCzCrCrCdCUCrCzC7C7CsC6
+  _____________A__________AOA2_2_AAZAy_aBTCxCzCrCrC3CzCyCzCrCrCtC8
+  _______________2ANAOAO_1_AAE_2_A_OAyAjCBCuCyCrC3CdCbCYCxCyCrCsCs
+  ______________ABBJBJBcAO_A_A_A_AABBJB_CECuCxCyCyCbBoBoCbCxCUCrC2
+  ______________ABBJBVBVAZ_A_A_A_AABBJAxBTCECbCbCbCYBNBOCECxCxCrCs
+  _________AAOAlAlBVAxBTAd_A_A_AABAlAlAxCBCbCxCECbBpAxBrBoCBCbCdCr
+  _________1A2AlAlA2BTBVAd_A_A_2AlBJA2AlBTCECbCBCbBrBTCACBCECbCxCr
+  _________AAE_1_1AlA2A2AB_A_2AlA2AlA2AlAiAyCECBCbCEBrBrCbCxCxCbCx
+  ___________2_A__ABBJAN___0A1AxAxA2BVAxAlAjAlBTBrCECECECECECYCxCb
+  __________________AB_A__ABBJBVBXAlANAxBXAiA3AxBTCYCECBCbCEBrCBCb
+  _______________A_________2AeAxAlAB_ABVAlAOAeBVBTBrCEBsBpBrBrBOCB
+  ___________________________________1AlAB___MAlAxBTBtBrAxBrBTAxBo
+  ___________________________________A_2_A_____1AxBTBVAxBTBXBVBTAx
+  _________________________________________A____AZBTBiBTBVAEAEBDBT
+  ______________________________________________A1BVBRCEBV_5_BASBr
+  ______________________________________________AeBXBTBrCEAZ___zAx
+  ______________________________________________APBVCECECBAT___zBT
+  _________________________________________A____AeA2BsCECEAZ___AAN
+  ___________________________________________A_2AeBDAfBrBXAB______
+  ___________________________________________2AlBJAlAxAxA_________
+  ___________________________________________AANAlBrCEBT_1___A____
+  _________________________________________A____AdCECEBJ_2________
+  ______________________________________________AaBrBTAS_2________
+  ______________________________________________AeBdBT_M_A________
+  _______________________________________________6AEAB_____A______
+  ________________________________________________________________
+  ________________________________________________________________
+}
+# tile 918 (explosion fiery 7)
+{
+  CtCtCtCtCtCtCtCsCsCtC8C8C6CtCtC6C9C9CtC6C9C9C6CtCtC9C9C9C9CtCtC6
+  CtC8CtC8CtCtC6CsCtCtCtCsCtC8C6CtC6CtC9C9CtC6CtC6CtC8CtC6C6CtCtC8
+  CtC8CsCtCtC6CtCtCtC9C9C8CtCtCtC6C9C9C9C9C6CtC6C8CtCtCtCtC8CtCsCs
+  C8C2CsCtCtCtC6CtCtCtC6CtCsC8C8C9C9C6C9C9C9C9CtC8C8C2CtCsC8C8C8Cs
+  CsCsC8CtCtC6CtC8CtC6CtCtC2C8CtCtC9C9C9C9C9C9C6C8CsC6CsCsCsC2CsCs
+  CtCsCsCtC8CtC6CtC8C9C9C6CtCtCtCtCtC9C9C9C6C6CtCtCtCsC8CrCrCsCsC8
+  CsC8C2C8CtCtCtCtCtCtCtCtCtC8CtCtC8C6C9C9C6C8CtCtCtCsC8C2CrCrC2C8
+  CsC8CsCsCsC8CtC8C2C8CtCtCtCtC8C2CtCtC6C6CtC6CtCtCtCtCsCrCrCrCsC8
+  C8CsC8CsC2C8CtCtCsC8CtCtCtCtCsCsCtC6CtCtC6CtCtC8CtCtCtCrCzCyC2Cs
+  CsC2CsC8CsC8CtCsCtCtCsC8C6C8CsC8CsC8CtC6CtC6CtC8C6CtC8CrCrCxCyCr
+  CrCrCrC8CsC2C8CsCsCsCtCtCtCtCsCsC8CsCtCtCsC8CsCtCtCtC8CrCyCbCxCn
+  CyCyCrCrCsC8CsC8C2CsCsCtCsCtCtCsC2CsC8CtCsC8CsCsC2C8C8CsCdCbCuCr
+  CdCyCzCrCsCsCsC8CsC8C2CsCsCsCsC8CsCsC2CsCsCsCsC8CsCsC8CrCxCbCYCy
+  CyCdCyCrC7CsCtCsC2C8CsC8C6CsCtCsCtCsCrCrCzCrCsCtCsC8CrCrCxCbCBCY
+  CyCzCzCrC3CsCsC8C7C8CsC7C7C8CsCrCrCsCrCyCyC3CrCsC8CrCrCzCyCEBOCE
+  CbCdCzCyCzCrCrCrC7CsCsC7C7CsCrCzCrCrC0CYCbC3C7CrCsCzCrCrCyCEBNBo
+  CECxCxCdCxCxCzCzCrCrCrCtC2CrC3CrC3CzCyCBCBCyC3C7CrCrC3CzCyCbCBBo
+  CBCbCxCxCYCBCxCxCxCyC3CrCrCrCrCzCzCrCyCYCECbCzCrCzCrCyCxCxCbBrBO
+  BrCbCxCEBoAxBTCACECYCyCrCzCzCyCxCxCyCbBoBrCBCxCzC3CxCbCxCyBpAlBT
+  CBCbCxCEBRAfASAeBOCBCxCxCyCxCYCbCECECBBoArBrCbCxCxCbCYCyCcBoA2Ax
+  BTCECBCEBTAxAxAyBNCbCbCbCxCxCbCEBrBTBrCEBrBTBTCbCbCECbCxCbBrA2BT
+  BTBoCECEBrBrCECECBCbCbCCCbCbBrBOCEBpBrCECEBoCECECbCbCbCxCbCEBTAx
+  AlBTBTBTBrCECbCbCxCbCbCcCbCYBTAxCEBrCECbCbCbCbCECECbCxCxCbCBBTBT
+  _9BJBTBRBTCECBCECbCECbCyCbCbBrAxAxAxBpCxCzCbCuCEBrBpCcCyCEBrASAx
+  __AKBrCECEBTCECEBpCECECbCEBOBTAlA2AlBrCYCxCbCECEBtCECbCECEBrA__9
+  _9AlBTBTCECECECECECECECECEBRAxBVA2BDA2BTBrBtBTBrBrCECECECEBTAOAS
+  _9A2BTAxCECuCbCBCECbCbCEBTBTBVAlAeAEAPAEAaAOAlBTCECECbCbCEBsBDAl
+  __ANBVBRBTCECbCECBCbCbCEBRBTA2AE_____________WBYCYCbCyCcCEBrBVAB
+  __AOBVAxBTCABOBTCECxCbCBCEBTAZ_M____________AOBVCECxCECEBTBTAK_A
+  __ANBXBVBJA3AlAyCACYCECEBoBtAZ______________AeBtCECbBrCEBTAK____
+  ___2AeAeAeAPASASBTBrCEBTBTAlAB______________ABA1BTBTBTBTAb_____A
+  _______________AASAfBrBrA2AB___________________6AjAeBJAZ________
+}
+# tile 919 (explosion fiery 8)
+{
+  CtC8CtCsCrCxC0CrCrCrC7CsCrC7CrCzCzCbBNAvAa_O_______A____________
+  CtCtC8CrC2CsCrCzCrCzCrC3CrCzCrCzCxCEAK_______A__________________
+  CtCtCrCrCrCrCrCrC3CrCzCrCzCzCzCxCABVAe__________________________
+  CsCtCsC2CrCrCrCrCzCyCyCrCrCzCbCbAxAlA2AO_2______________________
+  CsCsC8CsCsC8C8CzCdCzCrCzCzCxCbCEBOAaA1BJAB______________________
+  C6CsCtC7C7CtCsCrCzCrCzCrCyCYCbCBCbCEAxAl_2______________________
+  C8CsCsCsC8CsCrCrCzCrCyCxCEBrCBCbCbCBBNBT_4______________________
+  CtCsCtCrCsC2C3C3CrCzCyCzCbBOCECbCxCbBrBT_1___A__________________
+  CsCsC8CrCrCsCrC7CsCzCzCyCbCECECxCxCxCEBTAB_A____________________
+  C8C8C2CsCsC8CsC8CsCUCbCbCbCEBrCxCzCyBrAxBJAO____________________
+  C8C8CsC8C6CsC7CrCrCyCuCBBOBTCECbCbCEBTA2A3A2AO__________________
+  CsCsCsCsCsCsC7CrCzCxCbCEBRAxBRCEBrBRAaAEAEAeAO____________ABAOAO
+  C3CrCsCrC3C7C8CrCyCbCBCEBOBTBTBTBTBTAx____________________AeBJAl
+  CyCdCrCrC3CrC7C3CxCbCEBTBRAxBJBTAxBTAx_____________________z_2_1
+  CxCrCzCrCrC3C3CrCzCyCEBRAyBJBDBTAxBVA1AeAlAB____________________
+  CbCzCrCrC7C7C3CrCzCxBoBTAeAeAeAeBVBVBVAlAlAB____________________
+  CECzC3CUC3C7C7C3CxCEArA2_9___AASBVA2AE__________________________
+  CbCyCzCzCrCrC3CzCYBoAxAB_A___1A2B3Ae_B__________________________
+  CYCxCyCzCyCyCbCYCEAxAK_______AABAd_2____________________________
+  CBCxCUCzCyCYCBBoBTAS_____A_A_________A__________________________
+  CECbCyCzCyCxCECEBXAS____________________________________________
+  CECbCyCzCbCBCECEAv_B_____A______________________________________
+  CECECzCyCBBTBTBtAZ_OAB_1________________________________________
+  BrCbCyCbBNAaASAjA2A2BJ_2________________________________________
+  BTCbCECbAv_0_AAeBJA2A2_2________________________________________
+  BXBrCEBtAO_____2AOANAB_z________________________________________
+  AOAZBTAe_R_______________A______________________________________
+  _A_0AS_9________________________________________________________
+  _A_A_2_A________________________________________________________
+  _A_______A______________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+}
+# tile 940 (zap 5 0)
+{
+  _______________________o_pBIC$BI_p_o____________________________
+  _____________________gA9BIB6BIA9Ap______________________________
+  ___________________o_pB6C$BI_p_g________________________________
+  _________________gA9B6BIBIA9Ap__________________________________
+  _______________o_pBhCoBI_p_g____________________________________
+  _________________gA9B6BIB6A9_o__________________________________
+  ___________________o_pBIC$BI_pAp________________________________
+  _____________________oBeBIB6BIA9_o______________________________
+  _______________________o_pBICoBI_pAp____________________________
+  ______________________Ap_pBIBIB6BIA9_o__________________________
+  _______________________o_k_p_pBICoBI_pAp________________________
+  _____________________gA9BhBIB4BIBhBe_o__________________________
+  ___________________o_pB6CoC$C$BI_p_o____________________________
+  _________________gA9B6BIBIBIBIA9Ap______________________________
+  _______________o_pBhCoBI_p_p_p_g________________________________
+  _________________gA9B6BIB6BIB6A9_o______________________________
+  ___________________o_pBICoC$C$BI_pAp____________________________
+  _____________________oBeB6BIBIB6BIA9_o__________________________
+  _______________________o_p_p_pBICoBI_pAp________________________
+  _________________________gAp_oBeBIB6BIA9_o______________________
+  _______________________________o_pBICoBI_pAp____________________
+  _____________________________gA9B6BIBhBe_o______________________
+  ___________________________o_pBhCoBI_p_o________________________
+  _________________________oA9CQBIBhBEAp__________________________
+  _______________________o_pBIC$BI_p_o____________________________
+  _____________________oBeBIB6BIA9Ap______________________________
+  ___________________o_pBhC$BI_p_g________________________________
+  _____________________gA9BIB6BIA9_o______________________________
+  ______________________Ap_pBICoB6_p_o____________________________
+  _________________________oBeBIBIBhBe_o__________________________
+  ___________________________o_pB6CoBh_pAp________________________
+  __________________________Ap_pBIC$BI_p_o________________________
+}
+# tile 941 (zap 5 1)
+{
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  _________________________________________o______________________
+  _______________________________________o_pAp____________________
+  _o_______________________o___________oBeBIA9_o___________o______
+  _pAp___________________o_pAp_______o_pBhC$BI_pAp_______o_pAp____
+  BIA9_o_______________oBeBIA9_oAp_gA9B6BIB6BIBIA9_oAp_gA9CQ_pAp_o
+  C$BI_pAp___________o_pBhC$BI_p_p_pBIC$BI_pBICoBI_p_p_pBhCoBh_p_p
+  B6BIBIA9_o_______oBeBIB6BIBIB6BIBIBICQ_p_pB6CoBI_pBIBIBIBIB4BIBI
+  _pBICoBI_pAp___o_pBhC$BI_pBICoC$C$BI_p_p_pBIC$BI_pBICoB6_pBIC$C$
+  _oBeBIB6BIA9_gA9B6BIBIBe_oBeB6BIBhBe_oAp_gA9BIB4BIB6BIA9_gA9BIBI
+  ___o_pBIC$BI_pBIC$BI_p_o___o_p_p_p_o______Ap_pBIC$BI_p_g__Ap_p_p
+  _____oBeBIB6BIB6BIA9Ap______Ap_fAp___________gA9BIA9Ap______Ap_o
+  _______o_pBIC$BI_p_g__________________________Ap_p_g____________
+  _________oBeBIA9Ap_______________________________o______________
+  ___________o_p_g________________________________________________
+  ____________Ap__________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+}
+# tile 942 (zap 5 2)
+{
+  C$BI_p_o________________________________________________________
+  BIBIB6A9_o______________________________________________________
+  _pBIC$BI_pAp____________________________________________________
+  _pBIC$B6_p_k_o__________________________________________________
+  _pBIC$BI_p_p_pAp________________________________________________
+  _oBeBIBIB6BIBIA9_o______________________________________________
+  ___o_pBIC$C$C$BI_pAp____________________________________________
+  _____oBeBIBIB6BIBIA9_o__________________________________________
+  _______o_p_p_pBICoBI_pAp________________________________________
+  ________Ap_g_pB6CoB6_p_s_gAp_o__________________________________
+  ___________o_pBIC$BI_p_p_p_p_pAp________________________________
+  _____________gA9B6BIBIB6BIBIBIA9_o______________________________
+  _______________o_pBICoC$C$C$C$BI_pAp____________________________
+  _________________oBeB6BIBIBIB4BIBIA9_o__________________________
+  ___________________o_p_p_p_p_pBIC$BI_pAp________________________
+  ____________________Ap_oA4_s_pBICoBI_p_o________________________
+  ___________________________o_pB6C$BI_pA4________________________
+  __________________________Ap_pBICoB6_p_o________________________
+  ___________________________o_pBIC$BI_p_o________________________
+  _____________________________oBeB6BIBhBe_o______________________
+  _______________________________o_pBIC$BI_pAp____________________
+  _________________________________gA9B6BIBIA9_oAp_gAp_o__________
+  ___________________________________o_pBIC$BI_p_p_p_p_pAp________
+  _____________________________________oBeBIB6BIBIBIBIBIA9_o______
+  _______________________________________o_pBICoC$C$C$C$BI_pAp____
+  _________________________________________gA9B6BIBIBIB6BIBIA9_oAp
+  ___________________________________________g_p_p_p_p_pBICoBI_p_p
+  ____________________________________________Ap_oAp_g_pBIC$BI_p_p
+  ___________________________________________________o_pB6CoB6_p_p
+  _____________________________________________________oBeBIBIBIBI
+  _______________________________________________________o_pB6C$C$
+  ______________________________________________________Ap_pBIC$C$
+}
+# tile 943 (zap 5 3)
+{
+  ___________________________________________________o_p_p_pBIC$C$
+  _____________________________________________oAp_gA9BIBIB6BIBhBI
+  ___________________________________________o_p_p_pB6C$C$C$BI_p_p
+  _________________________________________oBeBIB6BIBIBIBIBIA9_fAp
+  _______________________________________o_pBhC$C$C$B6_p_p_pAp____
+  _____________________________________oBeBIB6BIBIBIA9_oA4_o______
+  ___________________________________o_pBhC$BI_p_p_p_g____________
+  ________________________________Ap_k_pBICoB6_p_gAp______________
+  _______________________________o_p_p_pB6C$BI_p_o________________
+  _____________________________gA9BIB6BICSC$BI_pAp________________
+  ___________________________o_pB6C$C$C$C$C$BI_p_f________________
+  _________________________gA9B6BIBIBIBIBIBIA9Ap__________________
+  _______________________o_pBhCoBI_p_p_p_p_p_g____________________
+  ________________Ap_oAp_p_pBIC$B6_p_kAp_fAp______________________
+  _______________o_p_p_p_p_pCQC$BI_pAp____________________________
+  _____________oBeBIBIBIB6BIBIBIA9_o______________________________
+  ___________o_pBhC$C$CoC$C$BI_p_g________________________________
+  __________Ap_pBIC$CQB6BIBIA9Ap__________________________________
+  ___________o_pB6C$BI_p_p_p_g____________________________________
+  __________Ap_pBIC$BI_p_s________________________________________
+  ___________f_pBIC$BI_pA4________________________________________
+  ________Ap_s_pBIC$B6_p_o________________________________________
+  _______o_p_p_pB6CoBI_pAp________________________________________
+  _____gA9B6BIBIBIBhBe_o__________________________________________
+  ___o_pBIC$C$C$BI_p_o____________________________________________
+  _gA9BIB6BIBIBIA9Ap______________________________________________
+  _pB6C$BI_p_p_k_g________________________________________________
+  _pBICoB6_p_pAp__________________________________________________
+  _pBIC$BI_pAi____________________________________________________
+  BIBIBhBe_o______________________________________________________
+  C$BI_p_o________________________________________________________
+  CoBI_pAp________________________________________________________
+}
+# tile 948 (zap 7 0)
+{
+  ______________B7__By____B7CNCNCLCN__CNCLCN______CN______________
+  ________________CNByCNByCNCaByCNCMCN__By__By____________________
+  ______________CNCaBzByBz__ByBzBGB7By__Bz________________________
+  ______________ByBzBy__ByBzByBzByBzByBzByBy______________________
+  __________________ByBzByCN__ByBzCNCNA7CN__CN____CN______________
+  ________By________CNByBzBGByBzByA7CMCN__BzBy__By________________
+  __________________By____CNCNByBzCLBzByByCN______________________
+  ______________CN__Bz__CN__ByBzBy__CaBz__By______________________
+  ________________CNByCa______ByCNByBzCa__________________________
+  __________________ByCNCaCNCNCNCNBy______By______________________
+  ______________By__BzCNBy__A7ByCN__ByBz______By__________________
+  __________By______ByBy__BzByCNBGBz______________________________
+  ______________________ByCNByBzCLBy__By__CN______________________
+  ________By____ByBzByBz__ByCNCMCN__CN__________By________________
+  ____________ByCNA7__By__BzBGBzByBzBG__By________________________
+  ______________By__CNBzByBzBy__CN____ByBzCNBy__________________Ca
+  ________________ByBy__By__ByCNByBy__BzCM________________________
+  ________________BzCNA7CNCNBz______CNBy____BzBy__________________
+  ______________ByBz__ByBzByByByCN__By__BzCa______________________
+  ________BzBy____CMBzByCLA7__CNBzBy__By__________________________
+  ____________Bz______By__BzByA7__CNCNA7______ByBz________________
+  ________By________ByCN__By__CN__By__CL__By______________________
+  ________________CN____By__BzBy__BzBy__By________________________
+  ________By____ByCN______ByByCNCN__By__BzBy______________________
+  ________________Ca__CN____BzA7CNByBzCNCaCN__By__________________
+  ____________________BGBzByByCNCNByA7CN____CN____________________
+  ______________By____B7CNCNCaCNBy__CLCM__________CN______________
+  __________BzByBz__BzBy__ByByBzBy__ByBz__________________________
+  ________________ByCNCaBzCNCNCMBzBy______By______________________
+  ________________BzBy____ByBGCN__BzBy__By________________________
+  __________________ByCNByCNBzCNA7CNByCN__________________________
+  __________CaBzBy__CNCNByCNCMCNBy__A7CN__ByCN____________________
+}
+# tile 949 (zap 7 1)
+{
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  __________B7______________B7__________B7__By__B7________________
+  ______________________By______________By______________B7________
+  ____________________________By__________Bz____________By______By
+  By__CNBy______CN____By____BzCNBy____By________By____ByBz______Bz
+  __CN__By________CN________ByBy__BzByBzCNCa__CNCN________ByBz____
+  BzByByBzByCLBzByByByBzBy__Bz__CNByCN__By__ByCa________ByCNByByCN
+  __CNBy__BzBG______CNCNBy__ByByBzCaByBzByBzCN____CNByBzBy____CNCM
+  __ByBzByByB7__CN____ByCaBz____BzByCNBzBy____By____ByCN__By__BGBz
+  ByCN__BzCNByCNCa__CN__BzCMBzA7By__CNA7CLByBz__By__BzBfBzCNByCNCN
+  CN__ByBy__A7CNCLCaCNByBzByCNByBzByByCLCaBzCaBzByBzBy__ByCNBzByCN
+  CNA7BzByBzByByByBzCNA7CNByCNBy__CN__ByCNByCNByCNByCNCNByCNCMCNCN
+  CNCNByBzByBzBzByCNCMCNByCNCNBzCNBy__CNBy____CaCNCNCNByBzA7__ByBy
+  CNCMBzByCNByBy__BGBz__ByBG__By__BG____BzCNBGCLCaByA7____B7ByCN__
+  CaCNBzA7CNCNBz__B7__By____CNBy____CNByCaCN__BzByBzByBzBy__BGBzBy
+  CN____ByByCNA7By____Bz__By____BzByBz__ByByBy____CNCNCNBy____CNCN
+  CNByBzByCN__CL______________ByByCN__By______BzBy__Ca______ByCa__
+  CM____By__ByCNBy__By____CN____CNCa________By__ByCN______By____By
+  __By____CNA7__________________By__By______________CN__________CN
+  ____________________By____________Bz____By______By______________
+  __________By______________By____________Bz______________________
+  CN______CN__________________________________________CN__________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+  ________________________________________________________________
+}
+# tile 950 (zap 7 2)
+{
+  __CN____CN______CN______________________________________________
+  CN__B7ByCaCN__By________________________________________________
+  CLCNCM__CNByCN______By__________________________________________
+  __CaBz__By__________B7__CN______________________________________
+  CNByCN____CN____CNByCNCa________________________________________
+  __ByCaCNCNCaCN__By______________________________________________
+  __CN____CMBzCaBy________CN______By____B7________________________
+  __CaCN__BzCMBz__CNByCN__By____ByBz______________________________
+  __By____CN____CNBy__ByCNBy____B7________CN______________________
+  ____CN__CaCNBy__CaCNBzBy__By____________________________________
+  __CNCaCM____ByBzBy______CNByBz__By__CN__________________________
+  ________CN__BGBzByBzByCNA7CNByByCN__Ca__________________________
+  Ca______CN__CNBy__CNCNCNCNBy__BzCa______________________________
+  ________Ca____BzBy__A7__ByByCNBzBy______________________________
+  Ca__________CNCMBzByCNCNByCNA7By__CN__CN__CN____________________
+  __________CN______By______CNCNCNBy__CaCN__By__ByCN______________
+  __________________BzByBzBy__CNCM____CNByCNBy____By______________
+  __________________________By__ByCNCNBy__By__By__CN______________
+  __________________By__CNCa__BzCNCaBy______CNByCN____By__________
+  ______________________________BGByCNBzByCNA7CNBy__By__B7________
+  __________________________By__CN______CNCNCNBy__Bz____CN________
+  ____________________________________CNCa__ByByBzByByCNByCaCN____
+  ____________________________________By__CNByCNCNCa__By______By__
+  ____________________________________________CNByBzByBzCNBy__CN__
+  ________________________________________ByBzCaCNCa__CNCa______CN
+  __________________________________________CaBzBy__CaCN__BzByCN__
+  ________________________________________CN__________CNCaCN__By__
+  ________________________________________________CNCNCMBy__ByCN__
+  ____________________________________________ByBy______BzBy____By
+  __________________________________________________By______CN____
+  ____________________________________________________By__CNBG__CN
+  ______________________________________________________By____BzCM
+}
+# tile 951 (zap 7 3)
+{
+  ______________________________________________CN______CN____CN__
+  ________________________________________________By__CN__B7ByCaCN
+  __________________________________________B7______CNByCNCaCNCNCM
+  ______________________________________CN__By__________By__By____
+  __________________________________________CNByCN____CN____CNByCN
+  ______________________________________________ByCaCNCaCNCN__By__
+  ________________________B7____By______CNCa______Bz__ByCNCa__CN__
+  ______________________________BzB7____By__CNByCN__ByCNBy__CN____
+  ______________________CN________By____BzCNBy__ByCN____CNCa__By__
+  ____________________________________By__ByByCN____ByCN____CN____
+  __________________________CNCaBy__ByBzCN______A7BzBy____By__CN__
+  ______________________________CNBzByCNA7CNByBzByBzBy__CN________
+  ________________________________By__ByCNCNCNCM__ByCN__CNCa______
+  ______________________________BzByCNBzBy__A7__ByBz______________
+  ____________________CN__CL__CNCaByBzCMBzCNCNByBzCNBf____________
+  ______________CNBy__ByCaCN____ByCNCNCNCa____By______CN__________
+  ______________By____BzCNByCN____CNBf__ByBzByBz__________________
+  ______________CN__By__By__BGCMCNBy__Bz__________________________
+  __________B7____CNByCN______Bz__CNBy____CN__By__________________
+  ________By__By__ByCNByCNByBzCMBzBy______________________________
+  ________CN____Bz__A7CNCNCNCa____CN__By__________________________
+  ____CN__ByCNBzByByBzBy__CaCN____________________________________
+  __By______By____CNCNByCN__By____________________________________
+  __CN__ByCNByBzByA7CN____________________________________________
+  CL________CNCa__CN__ByBz________________________________________
+  CaCNByBzCaCN____ByBy____________________________________________
+  __By__CN__CNCa________CNCa______________________________________
+  __CNBy__ByByCNCN________________________________________________
+  BzCa__BzBG______ByBz____________________________________________
+  ____CN______By__________________________________________________
+  CNCaByCN__By____________________________________________________
+  CNBy____By______________________________________________________
+}

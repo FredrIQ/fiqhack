@@ -1,0 +1,91 @@
+=for comment
+Last modified by Alex Smith, 2015-03-16
+NetHack may be freely redistributed.  See license for details.
+
+=encoding utf8
+
+=for aimake manualname dlb
+=for aimake manualsection 6
+
+=head1 NAME
+
+dlb - NetHack data librarian
+
+=head1 SYNOPSIS
+
+B<dlb> {B<xct>} [B<vfIC>] I<arguments...> [B<files...>]
+
+=head1 DESCRIPTION
+
+F<dlb> is a file archiving tool in the spirit (and tradition) of tar
+for NetHack version 3.1 and higher.  (This manual page ships with
+NetHack 4, but the program it describes has not changed in usage from
+the NetHack 3 series.)  It is used to maintain the archive files from
+which NetHack reads special level files and other read-only
+information.  Note that like tar the command and option specifiers are
+specified as a continuous string and are followed by any arguments
+required in the same order as the option specifiers.
+
+=head1 COMMANDS
+
+The B<x> command causes F<dlb> to extract the contents of the archive
+into the current directory.
+
+The B<c> command causes F<dlb> to create a new archive from files in
+the current directory.
+
+The B<t> command lists the files in the archive.
+
+=head1 OPTIONS AND ARGUMENTS
+
+=over 10
+
+=item B<v>
+
+Verbose output.
+
+=item B<f> I<archive>
+
+Specifies the archive.  The default if B<f> is not specified is
+C<LIBFILE> (usually the nhdat file in the playground).
+
+=item B<I> I<lfile>
+
+Specifies the file containing the list of files to put in to or
+extract from the archive if no files are listed on the command line.
+The default for archive creation if no files are listed is
+C<LIBLISTFILE>.
+
+=item B<C> I<dir>
+
+Changes directory before trying to read any files (including the
+I<archive> and the I<lfile>).
+
+=back
+
+=head1 EXAMPLES
+
+Create the default archive from the default file list:
+
+ dlb c
+
+List the contents of the archive 'foo':
+
+ dlb tf foo
+
+=head1 AUTHOR
+
+Kenneth Lorber
+
+=head1 SEE ALSO
+
+L<nethack(6)>, L<nethack4(6)>, L<tar(1)>
+
+=head1 BUGS
+
+Not a good tar emulation; C<-> does not mean stdin or stdout.
+
+Should include an optional compression facility.
+
+Not all read-only files for NetHack can be read out of an archive;
+examining the source is the only way to know which files can be.

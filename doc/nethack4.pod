@@ -1,0 +1,119 @@
+=for comment
+Last modified by Alex Smith, 2015-03-16
+.
+Copyright (C) 2014, 2015 Alex Smith
+NetHack can be freely redistributed.  See license for details.
+
+=encoding utf8
+
+=for aimake manualsection 6
+
+=for aimake manualname nethack4
+
+=head1 NAME
+
+nethack4 - dungeon exploration game
+
+=head1 SYNOPSIS
+
+B<nethack4> [B<--interface> I<interface>] [I<options>]
+
+=head1 DESCRIPTION
+
+NetHack 4 is a "roguelike" computer game in which you control an
+adventurer delving into a dungeon to find the Amulet of Yendor.  Back
+when the idea of running a computer game on an actual computer, rather
+than a games console, was still relatively new, most games were text
+adventures in which you communicated with the game through a command
+line; Rogue was the first game to use a more screen-oriented approach
+which represents the view onscreen with ASCII art.  NetHack is perhaps
+the best known successor to Rogue, and is very much written in the
+same spirit.  NetHack 4 is an attempt to restart NetHack devlopment
+after over 10 years of dormancy, with numerous interface improvements
+and bugfixes.
+
+If you are just learning the game, it is best to use a very very high
+terminal; if there is sufficient room, a reminder of the relevant
+controls will be shown in the bottom-left corner of the screen.  Some
+of the most useful are C<?> for help, C<!> for a menu, and C<i> to use
+items; you can move and attack with C<hjklyubn> (L<vi(1)>-style),
+C<42867913> on the numeric keypad (you may need to turn off NumLock),
+or Left/Up/Right/Down/Home/End/PgUp/PgDn.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<--interface> I<plugin>
+
+Choose the libuncursed plugin that will be used to render the game.
+The default, which is always available, is C<tty> on Linux and UNIX,
+and C<wincon> on Windows; these both give a character-based interface
+in a terminal.  If it is installed, you could also use C<sdl> for a
+"fake terminal" or graphical tiles interface (depending on the setting
+of the in-game C<graphics> option).
+
+This option can also be set by changing the name of the executable (or
+using a symbolic link); an executable named C<nethack4-sdl> defaults
+to the C<sdl> plugin, and so on.
+
+Because this option is parsed by libuncursed, not NetHack 4 proper, it
+must come first on the command line.
+
+=item B<-k>
+
+Start the game client in connection-only mode; it will automatically
+attempt to connect to a server daemon running on localhost, prompting
+for a name and password, and exiting if it cannot.  This option is
+designed for creating a client for public servers.
+
+=item B<-D>
+
+When creating new games, create them in debug mode.  These games do
+not count for the high score table, and allow a wide range of debug
+commands to be use to help test the game.  You could also use this to
+experiment with the game mechanics.
+
+=item B<-X>
+
+When creating new games, create them in explore mode.  This is
+designed to allow less experienced players see more of the game; you
+start with a free wand of wishing and an infinite supply of
+lifesaving.
+
+=item B<-u> I<name>
+
+=item B<-p> I<role>
+
+=item B<-r> I<race>
+
+Specifies the name, role, and/or race for your character in newly
+created games.
+
+=item B<-@>
+
+Specifies that newly created characters should be chosen at random.
+
+=item B<-H> I<playfield>
+
+=item B<-U> I<userdir>
+
+Overrides the game playfield (where NetHack 4 stores data common to
+all users) or the user directory (where NetHack 4 stores data specific
+to an individual user), respectively.  This is intended for use with
+L<dgamelaunch(8)>.
+
+=back
+
+=head1 SEE ALSO
+
+L<hack(6)>, L<rogue(6)>, L<nethack(6)>, L<dgamelaunch(8)>,
+L<http://nethack4.org>
+
+=head1 BUGS
+
+Numerous.  If you find a bug, or want to peruse the list of bugs that
+other players have found, see the bug tracker at
+L<http://trac.nethack4.org>.
+
+=cut

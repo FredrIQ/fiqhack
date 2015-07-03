@@ -1,0 +1,1514 @@
+! Last modified by Alex Smith, 2015-04-02
+!
+! Copyright (C) 2014 Alex Smith
+!
+! This work is licenced under the Creative Commons Attribution-Share
+! Alike 3.0 Unported License. To view a copy of this licence, visit
+! http://creativecommons.org/licenses/by-sa/3.0/ or send a letter to
+! Creative Commons, 171 Second Street, Suite 300, San Francisco,
+! California 94105, USA.
+!
+! This map file lists the location of each of the NetHack 4 tiles
+! within the DawnLike tilesets. It can be used to manually import a
+! new version of DawnLike (it is not used by the build system). Run
+! dawnlike-import.pl to make use of this file.
+
+! Wall sets: contain 11 wall tiles each
+! Solid rock tiles are also on wall.png, but needn't be the same tiles as the
+! actual walls.
+! Wall.png has width 20, not 8 like the others
+!
+! DawnLike wall sequence to NetHack 4 wall sequence conversion (where $x is
+! the tile number of "walls 2" in the tileset, the top-left corner):
+!
+! walls 0: $x + 20
+! walls 1: $x + 1
+! walls 2: $x + 0
+! walls 3: $x + 2
+! walls 4: $x + 40
+! walls 5: $x + 42
+! walls 6: $x + 24
+! walls 7: $x + 44
+! walls 8: $x + 4
+! walls 9: $x + 25
+! walls 10: $x + 23
+!
+! These calculations are done automatically from a line containing "walls *".
+
+!!! Backgrounds
+
+!! Varying per-dungeon
+
+! Generic walls
+
+walls *: [Wall.png] 0x78
+sub knox walls *: [Wall.png] 0x7F
+sub mine walls *; sub bar sub questfill2 walls *; sub bar sub questgoal walls *; sub cav sub questfill1 walls *; sub cav sub questlocate walls *; sub cav sub questfill2 walls *: [Wall.png] 0x86
+sub sokoban walls *: [Wall.png] 0xB4
+sub gehennom walls *; sub pri sub questfill2 walls *; sub pri sub questgoal walls *: [Wall.png] 0x176
+sub vlad walls *: [Wall.png] 0xFE
+sub astral walls *: [Wall.png] 0x21C
+
+! Specific walls
+
+! "College of Archeology"
+sub arc sub questhome walls *: [Wall.png] 0x7F
+! "Toltec"
+sub arc sub questlocate walls *; sub arc sub questfill2 walls *; sub arc sub questgoal walls *: [Wall.png] 0x38B
+! "Barbarian Camp"
+sub bar sub questhome walls *; sub bar sub questlocate walls *: [Wall.png] 0xBB
+! "Caves of the Ancestors"
+sub cav sub questhome walls *: [Wall.png] 0x1ee
+! "Greek"
+sub hea sub questhome walls *; sub hea sub questlocate walls *: [Wall.png] 0x258
+! "Camelot"
+sub kni sub questhome walls *: [Wall.png] 0x1ab
+! "Chinese"
+sub mon sub questhome walls *; sub mon sub questfill1 walls *: [Wall.png] 0x29b
+! "Church"
+sub pri sub questhome walls *: [Wall.png] 0x1e7
+! "Evil Castle"
+sub pri sub questlocate walls *; sub wiz sub questlocate walls *; sub wiz sub questfill2 walls *; sub wiz sub questgoal walls *: [Wall.png] 0x1e0
+! "Wizard Castle"
+sub wiz sub questhome walls *: [Wall.png] 0x2d0
+! "Tudor"
+sub rog sub questhome walls *; sub rog sub questlocate walls *; sub tou sub questhome walls *; sub tou sub questlocate walls *; sub tou sub questgoal walls *: [Wall.png] 0x4E
+! "Japanese"
+sub sam sub questhome walls *; sub sam sub questlocate walls *; sub sam sub questfill2 walls *; sub sam sub questgoal walls *: [Wall.png] 0x294
+! "Grey Cave"
+sub kni sub questgoal walls *; sub ran sub questlocate walls *; sub ran sub questfill2 walls *; sub tou sub questfill1 walls *; sub tou sub questfill2 walls *; sub wiz sub questfill1 walls *: [Wall.png] 0x1ab
+! "Red Cave"
+sub cav sub questgoal walls *; sub mon sub questlocate walls *; sub mon sub questfill2 walls *; sub mon sub questgoal walls *; sub val sub questlocate walls *; sub val sub questfill2 walls *: [Wall.png] 0x1b2
+! "Blue Cave"
+sub ran sub questgoal walls *; sub val sub questfill1 walls *: [Wall.png] 0x16f
+! "Brown Dungeon"
+sub arc sub questfill1 walls *: [Wall.png] 0x4a
+! "Blue Dungeon"
+sub rog sub questgoal walls *: [Wall.png] 0xb4
+! "White Dungeon"
+sub rog sub questfill1 walls *; sub rog sub questfill2 walls *; sub val sub questhome walls *: [Wall.png] 0x3c
+! "Surtur's Fortress"
+sub val sub questgoal walls *: [Wall.png] 0xc2
+
+! Solid rock
+
+solid rock: [Wall.png] 0x1ae
+sub mine solid rock; sub bar sub questlocate solid rock; sub bar sub questfill2 solid rock; sub bar sub questgoal solid rock; sub cav sub questfill1 solid rock; sub cav sub questlocate solid rock; sub cav sub questfill2 solid rock: [Wall.png] 0x12f
+sub gehennom solid rock; sub val sub questgoal solid rock; sub mon sub questlocate solid rock; sub mon sub questfill2 solid rock; sub mon sub questgoal solid rock; sub pri sub questfill2 solid rock; sub pri sub questgoal solid rock; sub val sub questlocate solid rock; sub val sub questfill2 solid rock; sub val sub questgoal solid rock: [Wall.png] 0x179
+sub ran sub questgoal solid rock; sub rog sub questgoal solid rock; sub val sub questfill1 solid rock: [Wall.png] 0x136
+
+!! Same per-dungeon
+
+! Floors
+
+! We can't really vary floors per-dungeon due to the palette restrictions, and
+! the fact that DawnLike tileable floors don't really fit our engine and show
+! the wrong sorts of things (apart from grass).
+
+corridor: [Tile.png] 0x13
+sub lit corridor: [Tile.png] 0x14
+the floor of a room: [Tile.png] 0x15
+sub unlit the floor of a room: [Tile.png] 0x12
+
+! Floor
+
+unexplored area: [Tile.png] 0x10
+water; underwater: [Tile.png] 0x1
+sub swamp water: [Tile.png] 0x2
+air: [Tile.png] 0x7
+cloud: [Effect0.png] 0xC0
+ice: [Tile.png] 0x3
+molten lava: [Tile.png] 0x5
+
+! Doors: a second variation's available by adding 8
+
+doorway: [Door0.png] 0x06
+open doors 0: [Door1.png] 0x1
+open doors 1: [Door1.png] 0x0
+closed doors 0: [Door0.png] 0x1
+closed doors 1: [Door0.png] 0x0
+
+! Other features
+
+! I couldn't find an obvious "iron bars" tile; this one's "closed portcullis"
+iron bars: [Door0.png] 0x10
+tree: [Tree0.png] 0x4
+staircase up: [Tile.png] 0x8
+staircase down: [Tile.png] 0x9
+ladder up: [Tile.png] 0xC
+ladder down: [Tile.png] 0xD
+long staircase up: [Tile.png] 0xA
+long staircase down: [Tile.png] 0xB
+altar: [Decor0.png] 0xA1
+sub astral altar: [Decor0.png] 0xA0
+grave: [Decor0.png] 0x88
+opulent throne: [Decor0.png] 0x3E
+sink: [Decor0.png] 0xA8
+fountain: [Decor0.png] 0xA9
+lowered drawbridges 0: [Tile.png] 0x18
+lowered drawbridges 1: [Tile.png] 0x19
+raised drawbridges *: [Door0.png] 0x18
+
+!!! Traps
+
+arrow trap: [Trap.png] 0x0
+dart trap: [Trap.png] 0x1
+falling rock trap: [Trap.png] 0x2
+squeaky board: [Trap.png] 0x3
+bear trap: [Trap.png] 0x4
+land mine: [Trap.png] 0x5
+rolling boulder trap: [Trap.png] 0x6
+sleeping gas trap: [Trap.png] 0x7
+rust trap: [Trap.png] 0x8
+fire trap: [Trap.png] 0x10
+pit: [Trap.png] 0x18
+spiked pit: [Trap.png] 0x19
+hole: [Trap.png] 0x1A
+trap door: [Trap.png] 0x1B
+vibrating square: [Tile.png] 0x6
+teleportation trap: [Trap.png] 0xA
+level teleporter: [Trap.png] 0xB
+magic portal: [Trap.png] 0xC
+web: [Decor0.png] 0x98
+statue trap: [Trap.png] 0xD
+magic trap: [Trap.png] 0xE
+anti-magic field: [Trap.png] 0xF
+polymorph trap: [Trap.png] 0x11
+
+!!! Items
+
+!! Weapons
+
+! Ammo
+
+arrow: [Ammo.png] 0x10
+runed arrow: [Ammo.png] 0x11
+crude arrow: [Ammo.png] 0x12
+silver arrow: [Ammo.png] 0x13
+bamboo arrow: [Ammo.png] 0x14
+crossbow bolt: [Ammo.png] 0x15
+dart: [Ammo.png] 0x18
+throwing star: [Ammo.png] 0x19
+boomerang: [Ammo.png] 0x1A
+
+! Spears
+
+spear: [LongWep.png] 0x0
+runed spear: [LongWep.png] 0x1
+crude spear: [LongWep.png] 0x2
+stout spear: [LongWep.png] 0x3
+silver spear: [LongWep.png] 0x4
+throwing spear: [LongWep.png] 0x5
+trident: [LongWep.png] 0x6
+
+! Knives and daggers
+
+dagger: [ShortWep.png] 0x0
+runed dagger: [ShortWep.png] 0x1
+crude dagger: [ShortWep.png] 0x2
+silver dagger: [ShortWep.png] 0x3
+athame: [ShortWep.png] 0x4
+scalpel: [ShortWep.png] 0x5
+knife: [ShortWep.png] 0x6
+stiletto: [ShortWep.png] 0x7
+worm tooth: [ShortWep.png] 0xB
+crysknife: [ShortWep.png] 0x8
+
+! Axes
+
+axe: [MedWep.png] 0x8
+double-headed axe: [MedWep.png] 0x9
+
+! Swords
+
+short sword: [MedWep.png] 0x0
+runed short sword: [MedWep.png] 0x1
+crude short sword: [MedWep.png] 0x2
+broad short sword: [MedWep.png] 0x3
+curved sword: [MedWep.png] 0x4
+silver saber: [ShortWep.png] 0x9
+broadsword: [LongWep.png] 0x8
+runed broadswords 0: [LongWep.png] 0x9
+long sword: [LongWep.png] 0xA
+two-handed sword: [LongWep.png] 0xB
+samurai sword: [MedWep.png] 0x5
+long samurai sword: [LongWep.png] 0xC
+runed broadswords 1: [LongWep.png] 0xD
+
+! Polearms
+
+vulgar polearm: [LongWep.png] 0x10
+hilted polearm: [LongWep.png] 0x11
+forked polearm: [LongWep.png] 0x12
+single-edged polearm: [LongWep.png] 0x13
+lance: [LongWep.png] 0x31
+angled poleaxe: [LongWep.png] 0x20
+long poleaxe: [LongWep.png] 0x21
+pole cleaver: [LongWep.png] 0x14
+pole sickle: [LongWep.png] 0x18
+pruning hook: [LongWep.png] 0x19
+hooked polearm: [LongWep.png] 0x1A
+pronged polearm: [LongWep.png] 0x1B
+beaked polearm: [LongWep.png] 0x1C
+
+! Blunt
+
+mace: [ShortWep.png] 0x20
+morning star: [ShortWep.png] 0x21
+war hammer: [LongWep.png] 0x30
+club: [ShortWep.png] 0x11
+rubber hose: [LongWep.png] 0x28
+staff: [LongWep.png] 0x22
+thonged club: [ShortWep.png] 0x10
+flail: [ShortWep.png] 0x12
+bullwhip: [LongWep.png] 0x29
+
+! Upgraded weapon-tools
+
+broad pick: [ShortWep.png] 0x1A
+
+! Launchers
+
+bow: [Ammo.png] 0x08
+runed bow: [Ammo.png] 0x09
+crude bow: [Ammo.png] 0x0A
+long bow: [Ammo.png] 0x0B
+sling: [Ammo.png] 0x0C
+crossbow: [Ammo.png] 0x0D
+
+!! Armor
+
+! Helms
+
+leather hat: [Hat.png] 0x08
+iron skull cap: [Hat.png] 0x09
+hard hat: [Hat.png] 0x0A
+fedora: [Hat.png] 0x10
+conical hats *: [Hat.png] 0x11
+dented pot: [Hat.png] 0x00
+plumed helmet: [Hat.png] 0x02
+etched helmet: [Hat.png] 0x03
+crested helmet: [Hat.png] 0x04
+visored helmet: [Hat.png] 0x05
+
+! Draconic
+
+gray dragon scale mail: [Armor.png] 0x2
+silver dragon scale mail: [Armor.png] 0x5
+red dragon scale mail: [Armor.png] 0x1
+white dragon scale mail: [Armor.png] 0x9
+orange dragon scale mail: [Armor.png] 0x0
+black dragon scale mail: [Armor.png] 0x8
+blue dragon scale mail: [Armor.png] 0x7
+green dragon scale mail: [Armor.png] 0x3
+yellow dragon scale mail: [Armor.png] 0x4
+
+gray dragon scales: [Armor.png] 0x12
+silver dragon scales: [Armor.png] 0x15
+red dragon scales: [Armor.png] 0x11
+white dragon scales: [Armor.png] 0x19
+orange dragon scales: [Armor.png] 0x10
+blue dragon scales: [Armor.png] 0x17
+black dragon scales: [Armor.png] 0x18
+green dragon scales: [Armor.png] 0x13
+yellow dragon scales: [Armor.png] 0x14
+
+! Body
+
+plate mail: [Armor.png] 0x32
+crystal plate mail: [Armor.png] 0x37
+bronze plate mail: [Armor.png] 0x31
+splint mail: [Armor.png] 0x33
+banded mail: [Armor.png] 0x34
+dwarvish mithril-coat: [Armor.png] 0x35
+elven mithril-coat: [Armor.png] 0x36
+chain mail: [Armor.png] 0x40
+crude chain mail: [Armor.png] 0x41
+scale mail: [Armor.png] 0x42
+studded leather armor: [Armor.png] 0x43
+ring mail: [Armor.png] 0x44
+crude ring mail: [Armor.png] 0x45
+leather armor: [Armor.png] 0x30
+leather jacket: [Armor.png] 0x38
+
+! Shirts
+
+Hawaiian shirt: [Armor.png] 0x3A
+T-shirt: [Armor.png] 0x3C
+
+! Cloaks
+
+mummy wrapping: [Armor.png] 0x2B
+faded pall: [Armor.png] 0x20
+coarse mantelet: [Armor.png] 0x21
+hooded cloak: [Armor.png] 0x22
+slippery cloak: [Armor.png] 0x23
+robe: [Armor.png] 0x24
+apron: [Armor.png] 0x25
+leather cloak: [Armor.png] 0x26
+tattered cape: [Armor.png] 0x27
+opera cloak: [Armor.png] 0x28
+ornamental cope: [Armor.png] 0x29
+piece of cloth: [Armor.png] 0x2A
+
+! Shields
+
+small shield: [Shield.png] 0x0
+blue and green shield: [Shield.png] 0x1
+white-handed shield: [Shield.png] 0x2
+red-eyed shield: [Shield.png] 0x3
+large shield: [Shield.png] 0x4
+large round shield: [Shield.png] 0x5
+polished silver shield: [Shield.png] 0x6
+
+! Gloves
+
+old gloves: [Glove.png] 0x0
+padded gloves: [Glove.png] 0x1
+riding gloves: [Glove.png] 0x2
+fencing gloves: [Glove.png] 0x3
+
+! Shoes
+
+walking shoes: [Boot.png] 0x0
+hard shoes: [Boot.png] 0x1
+jackboots: [Boot.png] 0x2
+combat boots: [Boot.png] 0x3
+jungle boots: [Boot.png] 0x4
+hiking boots: [Boot.png] 0x5
+mud boots: [Boot.png] 0x6
+buckled boots: [Boot.png] 0x7
+riding boots: [Boot.png] 0x8
+snow boots: [Boot.png] 0x9
+
+!! Rings
+
+wooden ring: [Ring.png] 0x0
+granite ring: [Ring.png] 0x1
+opal ring: [Ring.png] 0x2
+clay ring: [Ring.png] 0xC
+coral ring: [Ring.png] 0x7
+black onyx ring: [Ring.png] 0x8
+moonstone ring: [Ring.png] 0x9
+tiger eye ring: [Ring.png] 0xA
+jade ring: [Ring.png] 0x2A
+bronze ring: [Ring.png] 0x28
+agate ring: [Ring.png] 0xD
+topaz ring: [Ring.png] 0x12
+sapphire ring: [Ring.png] 0xF
+ruby ring: [Ring.png] 0x10
+diamond ring: [Ring.png] 0x11
+pearl ring: [Ring.png] 0x20
+iron ring: [Ring.png] 0x13
+brass ring: [Ring.png] 0x14
+copper ring: [Ring.png] 0x15
+twisted ring: [Ring.png] 0x16
+steel ring: [Ring.png] 0x17
+silver ring: [Ring.png] 0x18
+gold ring: [Ring.png] 0x19
+ivory ring: [Ring.png] 0x1A
+emerald ring: [Ring.png] 0x1B
+wire ring: [Ring.png] 0x1C
+engagement ring: [Ring.png] 0x1D
+shiny ring: [Ring.png] 0x1E
+
+!! Amulets
+
+circular amulet: [Amulet.png] 0x0
+spherical amulet: [Amulet.png] 0x1
+oval amulet: [Amulet.png] 0x2
+triangular amulet: [Amulet.png] 0x3
+pyramidal amulet: [Amulet.png] 0x4
+square amulet: [Amulet.png] 0x5
+concave amulet: [Amulet.png] 0x6
+hexagonal amulet: [Amulet.png] 0x7
+octagonal amulet: [Amulet.png] 0x8
+Amulet of Yendors 0: [Amulet.png] 0x10
+Amulet of Yendors 1: [Amulet.png] 0x11
+
+!! Containers
+
+large box: [Chest0.png] 0x0
+chest: [Chest0.png] 0x1
+ice box: [Chest0.png] 0x6
+bags 0: [Chest0.png] 0x10
+bags 1: [Chest0.png] 0x11
+bags 2: [Chest0.png] 0x12
+bags 3: [Chest0.png] 0x13
+
+!! Tools
+
+! Unlocking
+
+key: [Key.png] 0x0
+lock pick: [Key.png] 0x1
+credit card: [Key.png] 0x2
+
+! Light sources
+
+candles 0: [Light.png] 0x0
+candles 1: [Light.png] 0x1
+brass lantern: [Light.png] 0x3
+lamps 0: [Light.png] 0x4
+lamps 1: [Light.png] 0x5
+
+candelabrum: [Light.png] 0x2
+
+! Miscellaneous
+
+expensive camera: [Light.png] 0x6
+looking glass: [Tool.png] 0x0
+glass orb: [Tool.png] 0x1
+lenses: [Tool.png] 0x2
+blindfold: [Tool.png] 0x3
+towel: [Tool.png] 0x4
+saddle: [Tool.png] 0x5
+leash: [Tool.png] 0x6
+stethoscope: [Tool.png] 0x7
+tinning kit: [Tool.png] 0x8
+tin opener: [Tool.png] 0x9
+can of grease: [Tool.png] 0xA
+figurine; sub figurine *: [Tool.png] 0xB
+magic marker: [Tool.png] 0xC
+explosive trap: [Tool.png] 0xD
+toothed trap: [Tool.png] 0xE
+
+! Musical
+
+whistles 0: [Music.png] 0x0
+whistles 1: [Music.png] 0x1
+flutes 0: [Music.png] 0x2
+flutes 1: [Music.png] 0x3
+horns 0: [Music.png] 0x8
+horns 1: [Music.png] 0x9
+horns 2: [Music.png] 0xA
+horns 3: [Music.png] 0xB
+harps 0: [Music.png] 0x18
+harps 1: [Music.png] 0x19
+bell: [Music.png] 0x20
+bugle: [Music.png] 0x28
+drums 0: [Music.png] 0x10
+drums 1: [Music.png] 0x11
+
+silver bell: [Music.png] 0x21
+
+! Weapon-tool
+
+pick-axe: [ShortWep.png] 0x19
+iron hook: [LongWep.png] 0x2A
+unicorn horn: [ShortWep.png] 0x0A
+
+!! Food
+
+tripe ration: [Flesh.png] 0x8
+corpse; sub corpse *: [Flesh.png] 0x0
+! MISSING: egg
+meatball: [Flesh.png] 0x1
+meat stick: [Flesh.png] 0x2
+huge chunk of meat: [Flesh.png] 0x3
+meat ring: [Flesh.png] 0x4
+kelp frond: [Food.png] 0x1B
+eucalyptus leaf: [Food.png] 0x1C
+apple: [Food.png] 0x10
+orange: [Food.png] 0x11
+pear: [Food.png] 0x12
+melon: [Food.png] 0x13
+banana: [Food.png] 0x14
+carrot: [Food.png] 0x18
+sprig of wolfsbane: [Food.png] 0x1A
+clove of garlic: [Food.png] 0xB
+slime mold: [Food.png] 0x16
+lump of royal jelly: [Food.png] 0x28
+cream pie: [Food.png] 0x29
+candy bar: [Food.png] 0x2A
+fortune cookie: [Food.png] 0x2B
+pancake: [Food.png] 0x2C
+lembas wafer: [Food.png] 0x20
+cram ration: [Food.png] 0x21
+food ration: [Food.png] 0x22
+K-ration: [Food.png] 0x23
+C-ration: [Food.png] 0x24
+tin: [Food.png] 0x25
+
+!! Potions
+
+ruby potion: [Potion.png] 0x0
+pink potion: [Potion.png] 0x1
+orange potion: [Potion.png] 0x2
+yellow potion: [Potion.png] 0x3
+emerald potion: [Potion.png] 0x4
+dark green potion: [Potion.png] 0x5
+cyan potion: [Potion.png] 0x6
+sky blue potion: [Potion.png] 0x7
+brilliant blue potion: [Potion.png] 0x8
+magenta potion: [Potion.png] 0x9
+purple-red potion: [Potion.png] 0xA
+puce potion: [Potion.png] 0xB
+milky potion: [Potion.png] 0xC
+swirly potion: [Potion.png] 0xD
+bubbly potion: [Potion.png] 0xE
+smoky potion: [Potion.png] 0xF
+cloudy potion: [Potion.png] 0x10
+effervescent potion: [Potion.png] 0x11
+black potion: [Potion.png] 0x12
+golden potion: [Potion.png] 0x13
+brown potion: [Potion.png] 0x14
+fizzy potion: [Potion.png] 0x15
+dark potion: [Potion.png] 0x16
+white potion: [Potion.png] 0x17
+murky potion: [Potion.png] 0x18
+clear potion: [Potion.png] 0x1A
+
+!! Scrolls
+
+ZELGO MER: [Scroll.png] 0x0
+JUYED AWK YACC: [Scroll.png] 0x1
+NR 9: [Scroll.png] 0x2
+XIXAXA XOXAXA XUXAXA: [Scroll.png] 0x3
+PRATYAVAYAH: [Scroll.png] 0x4
+DAIYEN FOOELS: [Scroll.png] 0x5
+LEP GEX VEN ZEA: [Scroll.png] 0x6
+PRIRUTSENIE: [Scroll.png] 0x7
+ELBIB YLOH: [Scroll.png] 0x8
+VERR YED HORRE: [Scroll.png] 0x9
+VENZAR BORGAVVE: [Scroll.png] 0xA
+THARR: [Scroll.png] 0xB
+YUM YUM: [Scroll.png] 0xC
+KERNOD WEL: [Scroll.png] 0xD
+ELAM EBOW: [Scroll.png] 0xE
+DUAM XNAHT: [Scroll.png] 0xF
+ANDOVA BEGARIN: [Scroll.png] 0x10
+KIRJE: [Scroll.png] 0x11
+VE FORBRYDERNE: [Scroll.png] 0x12
+HACKEM MUCHE: [Scroll.png] 0x13
+VELOX NEB: [Scroll.png] 0x14
+FOOBIE BLETCH: [Scroll.png] 0x15
+TEMOV: [Scroll.png] 0x16
+GARVEN DEH: [Scroll.png] 0x17
+READ ME: [Scroll.png] 0x18
+unlabeled: [Scroll.png] 0x2B
+
+!! Spellbooks
+parchment spellbook: [Book.png] 0x0
+vellum spellbook: [Book.png] 0x1
+ragged spellbook: [Book.png] 0x2
+dog eared spellbook: [Book.png] 0x3
+mottled spellbook: [Book.png] 0x4
+stained spellbook: [Book.png] 0x5
+cloth spellbook: [Book.png] 0x6
+leather-bound spellbook: [Book.png] 0x7
+white spellbook: [Book.png] 0x8
+pink spellbook: [Book.png] 0x9
+red spellbook: [Book.png] 0xA
+orange spellbook: [Book.png] 0xB
+yellow spellbook: [Book.png] 0xC
+velvet spellbook: [Book.png] 0xD
+light green spellbook: [Book.png] 0xE
+dark green spellbook: [Book.png] 0xF
+turquoise spellbook: [Book.png] 0x10
+cyan spellbook: [Book.png] 0x11
+light blue spellbook: [Book.png] 0x12
+dark blue spellbook: [Book.png] 0x13
+indigo spellbook: [Book.png] 0x14
+magenta spellbook: [Book.png] 0x15
+purple spellbook: [Book.png] 0x16
+violet spellbook: [Book.png] 0x17
+tan spellbook: [Book.png] 0x18
+plaid spellbook: [Book.png] 0x19
+light brown spellbook: [Book.png] 0x1A
+dark brown spellbook: [Book.png] 0x1B
+gray spellbook: [Book.png] 0x1C
+wrinkled spellbook: [Book.png] 0x1D
+dusty spellbook: [Book.png] 0x1E
+bronze spellbook: [Book.png] 0x1F
+copper spellbook: [Book.png] 0x20
+silver spellbook: [Book.png] 0x21
+gold spellbook: [Book.png] 0x22
+glittering spellbook: [Book.png] 0x23
+shining spellbook: [Book.png] 0x24
+dull spellbook: [Book.png] 0x25
+thin spellbook: [Book.png] 0x26
+thick spellbook: [Book.png] 0x27
+plain spellbook: [Book.png] 0x3F
+papyrus spellbook: [Book.png] 0x40
+
+!! Wands
+
+glass wand: [Wand.png] 0x0
+balsa wand: [Wand.png] 0x1
+crystal wand: [Wand.png] 0x2
+maple wand: [Wand.png] 0x3
+pine wand: [Wand.png] 0x4
+oak wand: [Wand.png] 0x5
+ebony wand: [Wand.png] 0x6
+marble wand: [Wand.png] 0x7
+tin wand: [Wand.png] 0x8
+brass wand: [Wand.png] 0x9
+copper wand: [Wand.png] 0xA
+silver wand: [Wand.png] 0xB
+platinum wand: [Wand.png] 0xC
+iridium wand: [Wand.png] 0xD
+zinc wand: [Wand.png] 0xE
+aluminum wand: [Wand.png] 0xF
+uranium wand: [Wand.png] 0x10
+iron wand: [Wand.png] 0x11
+steel wand: [Wand.png] 0x12
+hexagonal wand: [Wand.png] 0x13
+short wand: [Wand.png] 0x14
+runed wand: [Wand.png] 0x15
+long wand: [Wand.png] 0x16
+curved wand: [Wand.png] 0x17
+forked wand: [Wand.png] 0x18
+spiked wand: [Wand.png] 0x19
+jeweled wand: [Wand.png] 0x1A
+
+!! Money and Gems
+
+! Valuable
+
+gold piece: [Money.png] 0x8
+white gems 0: [Money.png] 0x10
+white gems 1: [Money.png] 0x11
+red gems 0: [Money.png] 0x12
+orange gems 0: [Money.png] 0x13
+blue gems 0: [Money.png] 0x14
+black gems 0: [Money.png] 0x15
+green gems 0: [Money.png] 0x16
+green gems 1: [Money.png] 0x17
+yellow gems 0: [Money.png] 0x18
+green gems 2: [Money.png] 0x19
+yellowish brown gems 0: [Money.png] 0x1A
+yellowish brown gems 1: [Money.png] 0x1B
+black gems 1: [Money.png] 0x1C
+white gems 2: [Money.png] 0x1D
+yellow gems 1: [Money.png] 0x1E
+red gems 1: [Money.png] 0x1F
+violet gems 0: [Money.png] 0x20
+red gems 2: [Money.png] 0x21
+violet gems 1: [Money.png] 0x22
+black gems 2: [Money.png] 0x23
+orange gems 1: [Money.png] 0x24
+green gems 3: [Money.png] 0x25
+
+! Worthless
+
+white gems 3: [Money.png] 0x29
+blue gems 1: [Money.png] 0x2C
+red gems 3: [Money.png] 0x2A
+yellowish brown gems 2: [Money.png] 0x32
+orange gems 2: [Money.png] 0x2B
+yellow gems 2: [Money.png] 0x30
+black gems 3: [Money.png] 0x2D
+green gems 4: [Money.png] 0x2E
+violet gems 2: [Money.png] 0x38
+
+! Rocks
+
+gray gems 0: [Rock.png] 0x0
+gray gems 1: [Rock.png] 0x1
+gray gems 2: [Rock.png] 0x2
+gray gems 3: [Rock.png] 0x3
+rock gem: [Rock.png] 0x9
+
+!! Miscellaneous item classes
+
+strange object: [Elemental0.png] 0x40
+
+boulder: [Rock.png] 0xA
+statue; sub statue *: [Rock.png] 0xB
+
+heavy iron ball: [Tool.png] 0x10
+iron chain: [Tool.png] 0x11
+
+splash of venoms 0: [Ammo.png] 0x28
+splash of venoms 1: [Ammo.png] 0x29
+
+!!! Monsters
+
+!! Placeholders
+
+invisible monster: [Elemental0.png] 0x42
+
+!! Enemies
+
+! Insects
+
+giant ant: [Pest0.png] 0x21
+killer bee: [Pest0.png] 0x40
+soldier ant: [Pest0.png] 0x20
+fire ant: [Pest0.png] 0x22
+giant beetle: [Pest0.png] 0x50
+queen bee: [Pest0.png] 0x41
+
+! Blobs
+
+acid blob: [Slime0.png] 0x10
+quivering blob: [Slime0.png] 0x11
+gelatinous cube: [Slime0.png] 0x12
+
+! Trices
+
+chickatrice: [Reptile0.png] 0x38
+cockatrice: [Reptile0.png] 0x39
+pyrolisk: [Reptile0.png] 0x3B
+
+! Canines
+
+jackal: [Dog0.png] 0x0
+fox: [Dog0.png] 0x1
+coyote: [Dog0.png] 0x2
+werejackal: [Dog0.png] 0x4
+little dog: [Dog0.png] 0x10
+dog: [Dog0.png] 0x11
+large dog: [Dog0.png] 0x12
+dingo: [Dog0.png] 0x3
+wolf: [Dog0.png] 0x8
+werewolf: [Dog0.png] 0xC
+warg: [Dog0.png] 0x9
+winter wolf cub: [Dog0.png] 0xA
+winter wolf: [Dog0.png] 0xB
+hell hound pup: [Dog0.png] 0x28
+hell hound: [Dog0.png] 0x29
+
+! Spheres
+
+gas spore: [Elemental0.png] 0x20
+floating eye: [Elemental0.png] 0x28
+freezing sphere: [Elemental0.png] 0x21
+flaming sphere: [Elemental0.png] 0x22
+shocking sphere: [Elemental0.png] 0x23
+
+! Felines
+
+kitten: [Cat0.png] 0x08
+housecat: [Cat0.png] 0x09
+large cat: [Cat0.png] 0x0A
+jaguar: [Cat0.png] 0x1
+lynx: [Cat0.png] 0x0
+panther: [Cat0.png] 0x2
+tiger: [Cat0.png] 0x3
+
+! Gremlins and gargoyles
+
+gremlin: [Misc0.png] 0x8
+gargoyle: [Misc0.png] 0x9
+winged gargoyle: [Misc0.png] 0xA
+
+! Humanoid monsters
+
+hobbit: [Humanoid0.png] 0x50
+dwarf: [Humanoid0.png] 0x51
+bugbear: [Misc0.png] 0x4
+
+dwarf lord: [Humanoid0.png] 0x52
+dwarf king: [Humanoid0.png] 0x53
+
+mind flayer: [Humanoid0.png] 0xA0
+master mind flayer: [Humanoid0.png] 0xA1
+
+! Minor demons
+
+manes: [Undead0.png] 0x20
+homunculus: [Demon0.png] 0x20
+imp: [Demon0.png] 0x21
+lemure: [Undead0.png] 0x21
+quasit: [Demon0.png] 0x22
+tengu: [Demon0.png] 0x38
+
+! Jellies
+
+blue jelly: [Slime0.png] 0x18
+spotted jelly: [Slime0.png] 0x19
+ochre jelly: [Slime0.png] 0x1A
+
+! Kobolds
+
+kobold: [Misc0.png] 0x10
+large kobold: [Misc0.png] 0x11
+kobold lord: [Misc0.png] 0x12
+kobold shaman: [Misc0.png] 0x13
+
+! Leprechauns
+
+leprechaun: [Humanoid0.png] 0x44
+
+! Mimics
+
+small mimic: [Elemental0.png] 0x38
+large mimic: [Elemental0.png] 0x39
+giant mimic: [Elemental0.png] 0x3A
+
+! Nymphs
+
+wood nymph: [Humanoid0.png] 0x58
+water nymph: [Humanoid0.png] 0x59
+mountain nymph: [Humanoid0.png] 0x5A
+
+! Orcs and goblins
+
+goblin: [Humanoid0.png] 0x98
+hobgoblin: [Humanoid0.png] 0x99
+
+orc: [Humanoid0.png] 0x20
+hill orc: [Humanoid0.png] 0x21
+Mordor orc: [Humanoid0.png] 0x22
+Uruk-hai: [Humanoid0.png] 0x23
+orc shaman: [Humanoid0.png] 0x24
+orc-captain: [Humanoid0.png] 0x25
+
+! Piercers
+
+rock piercer: [Elemental0.png] 0x30
+iron piercer: [Elemental0.png] 0x31
+glass piercer: [Elemental0.png] 0x32
+
+! Quadrupeds
+
+rothe: [Quadraped0.png] 0xC
+mumak: [Quadraped0.png] 0x49
+leocrotta: [Quadraped0.png] 0x59
+wumpus: [Quadraped0.png] 0x58
+titanothere: [Quadraped0.png] 0x50
+baluchitherium: [Quadraped0.png] 0x51
+mastodon: [Quadraped0.png] 0x48
+
+! Rodents
+
+sewer rat: [Rodent0.png] 0x8
+giant rat: [Rodent0.png] 0x9
+rabid rat: [Rodent0.png] 0x10
+wererat: [Rodent0.png] 0x11
+! MISSING: rock mole
+woodchuck: [Rodent0.png] 0x4
+
+! Spiders, etc.
+
+cave spider: [Pest0.png] 0x48
+centipede: [Pest0.png] 0x49
+giant spider: [Pest0.png] 0x12
+scorpion: [Pest0.png] 0x14
+
+! Trappers
+
+lurker above: [Elemental0.png] 0x48
+trapper: [Elemental0.png] 0x49
+
+! Horses
+
+white unicorn: [Quadraped0.png] 0x21
+gray unicorn: [Quadraped0.png] 0x22
+black unicorn: [Quadraped0.png] 0x23
+
+pony: [Quadraped0.png] 0x29
+horse: [Quadraped0.png] 0x2A
+warhorse: [Quadraped0.png] 0x2B
+
+! Vortices
+
+fog cloud: [Elemental0.png] 0x10
+dust vortex: [Elemental0.png] 0x11
+ice vortex: [Elemental0.png] 0x12
+energy vortex: [Elemental0.png] 0x13
+steam vortex: [Elemental0.png] 0x14
+fire vortex: [Elemental0.png] 0x15
+
+! Worms
+
+baby long worm: [Pest0.png] 0x18
+long worm: [Pest0.png] 0x19
+long worm tail: [Pest0.png] 0x1A
+baby purple worm: [Pest0.png] 0x1B
+purple worm: [Pest0.png] 0x1C
+
+! Fantastic insects
+
+grid bug: [Pest0.png] 0x30
+xan: [Pest0.png] 0x31
+
+! Lights
+
+yellow light: [Elemental0.png] 0x50
+black light: [Elemental0.png] 0x51
+
+! Zruties
+
+zruty: [Misc0.png] 0x38
+
+! Angels
+
+couatl: [Reptile0.png] 0x3
+Aleax: [Humanoid0.png] 0x91
+Angel: [Humanoid0.png] 0x80
+ki-rin: [Quadraped0.png] 0x20
+Archon: [Humanoid0.png] 0x82
+
+! Birds
+
+bat: [Avian0.png] 0x58
+giant bat: [Avian0.png] 0x59
+vampire bat: [Avian0.png] 0x5A
+
+raven: [Avian0.png] 0x9
+
+! Centaurs
+
+plains centaur: [Humanoid0.png] 0x69
+forest centaur: [Humanoid0.png] 0x6A
+mountain centaur: [Humanoid0.png] 0x6B
+
+! Dragons
+
+! DawnLike seems to have a different set of dragons to NetHack 4.
+! Perhaps we should override these with tiles from DawnHack.
+
+baby gray dragon: [Reptile0.png] 0x4
+baby silver dragon: [Reptile0.png] 0x1D
+baby red dragon: [Reptile0.png] 0x1A
+baby white dragon: [Reptile0.png] 0x12
+baby orange dragon: [Reptile0.png] 0x8
+baby black dragon: [Reptile0.png] 0x10
+baby blue dragon: [Reptile0.png] 0xE
+baby green dragon: [Reptile0.png] 0x6
+baby yellow dragon: [Reptile0.png] 0xC
+
+gray dragon: [Reptile0.png] 0x5
+silver dragon: [Reptile0.png] 0x1C
+red dragon: [Reptile0.png] 0x1B
+white dragon: [Reptile0.png] 0x13
+orange dragon: [Reptile0.png] 0x9
+black dragon: [Reptile0.png] 0x11
+blue dragon: [Reptile0.png] 0xF
+green dragon: [Reptile0.png] 0x7
+yellow dragon: [Reptile0.png] 0xD
+
+! Elementals
+
+stalker: [Elemental0.png] 0x18
+air elemental: [Elemental0.png] 0x19
+fire elemental: [Elemental0.png] 0x1A
+earth elemental: [Elemental0.png] 0x1B
+water elemental: [Elemental0.png] 0x1C
+
+! Fungi
+
+lichen: [Slime0.png] 0x0
+brown mold: [Slime0.png] 0x1
+yellow mold: [Slime0.png] 0x2
+green mold: [Slime0.png] 0x3
+red mold: [Slime0.png] 0x4
+shrieker: [Plant0.png] 0x38
+violet fungus: [Slime0.png] 0x5
+
+! Gnomes
+
+gnome: [Humanoid0.png] 0x40
+gnome lord: [Humanoid0.png] 0x41
+gnomish wizard: [Humanoid0.png] 0x42
+gnome king: [Humanoid0.png] 0x43
+
+! Giants
+
+giant: [Humanoid0.png] 0x0
+stone giant: [Humanoid0.png] 0x1
+hill giant: [Humanoid0.png] 0x2
+fire giant: [Humanoid0.png] 0x3
+frost giant: [Humanoid0.png] 0x4
+storm giant: [Humanoid0.png] 0x5
+ettin: [Humanoid0.png] 0x6
+titan: [Humanoid0.png] 0x7
+minotaur: [Humanoid0.png] 0x8
+
+! Jabberwocks
+
+jabberwock: [Misc0.png] 0x20
+
+! Kops
+
+Keystone Kop: [Humanoid0.png] 0x10
+Kop Sergeant: [Humanoid0.png] 0x11
+Kop Lieutenant: [Humanoid0.png] 0x12
+Kop Kaptain: [Humanoid0.png] 0x13
+
+! Liches
+
+lich: [Undead0.png] 0x14
+demilich: [Undead0.png] 0x15
+master lich: [Undead0.png] 0x16
+arch-lich: [Undead0.png] 0x17
+
+! Mummies
+
+kobold mummy: [Undead0.png] 0x8
+gnome mummy: [Undead0.png] 0x9
+orc mummy: [Undead0.png] 0xA
+dwarf mummy: [Undead0.png] 0xB
+elf mummy: [Undead0.png] 0xC
+human mummy: [Undead0.png] 0xD
+ettin mummy: [Undead0.png] 0xE
+giant mummy: [Undead0.png] 0xF
+
+! Nagas
+
+red naga hatchling: [Reptile0.png] 0x28
+black naga hatchling: [Reptile0.png] 0x2A
+golden naga hatchling: [Reptile0.png] 0x2C
+guardian naga hatchling: [Reptile0.png] 0x2E
+
+red naga: [Reptile0.png] 0x29
+black naga: [Reptile0.png] 0x2B
+golden naga: [Reptile0.png] 0x2D
+guardian naga: [Reptile0.png] 0x2F
+
+! Ogres
+
+ogre: [Humanoid0.png] 0x70
+ogre lord: [Humanoid0.png] 0x71
+ogre king: [Humanoid0.png] 0x72
+
+! Oozes and puddings
+
+gray ooze: [Slime0.png] 0x8
+brown pudding: [Slime0.png] 0x9
+black pudding: [Slime0.png] 0xA
+green slime: [Slime0.png] 0x20
+
+! Quantum mechanics
+
+quantum mechanic: [Humanoid0.png] 0x78
+
+! Item-damaging monsters
+
+rust monster: [Aquatic0.png] 0x18
+disenchanter: [Aquatic0.png] 0x19
+
+! Snakes
+
+garter snake: [Reptile0.png] 0x20
+snake: [Reptile0.png] 0x21
+water moccasin: [Reptile0.png] 0x23
+pit viper: [Reptile0.png] 0x24
+python: [Reptile0.png] 0x22
+cobra: [Reptile0.png] 0x26
+
+! Trolls
+
+troll: [Humanoid0.png] 0x38
+ice troll: [Humanoid0.png] 0x39
+rock troll: [Humanoid0.png] 0x3A
+water troll: [Humanoid0.png] 0x3B
+Olog-hai: [Humanoid0.png] 0x3C
+
+! Umber hulks
+
+umber hulk: [Misc0.png] 0x28
+
+! Vampires
+
+vampire: [Undead0.png] 0x18
+vampire lord: [Undead0.png] 0x19
+
+Vlad the Impaler: [Undead0.png] 0x1B
+
+! Wights and wraiths
+
+barrow wight: [Undead0.png] 0x32
+wraith: [Undead0.png] 0x30
+Nazgul: [Undead0.png] 0x31
+
+ghost: [Undead0.png] 0x22
+shade: [Undead0.png] 0x23
+
+! Xorns
+
+xorn: [Elemental0.png] 0x41
+
+! Primates
+
+monkey: [Misc0.png] 0x18
+ape: [Misc0.png] 0x19
+carnivorous ape: [Misc0.png] 0x1A
+
+yeti: [Humanoid0.png] 0xA9
+sasquatch: [Humanoid0.png] 0xA8
+
+! Zombies
+
+kobold zombie: [Undead0.png] 0x0
+gnome zombie: [Undead0.png] 0x1
+orc zombie: [Undead0.png] 0x2
+dwarf zombie: [Undead0.png] 0x3
+elf zombie: [Undead0.png] 0x4
+human zombie: [Undead0.png] 0x5
+ettin zombie: [Undead0.png] 0x6
+giant zombie: [Undead0.png] 0x7
+
+ghoul: [Undead0.png] 0x40
+skeleton: [Undead0.png] 0x10
+
+! Golems
+
+straw golem: [Elemental0.png] 0x0
+paper golem: [Elemental0.png] 0x1
+rope golem: [Elemental0.png] 0x3
+gold golem: [Elemental0.png] 0x4
+leather golem: [Elemental0.png] 0x5
+wood golem: [Elemental0.png] 0x6
+flesh golem: [Elemental0.png] 0x7
+clay golem: [Elemental0.png] 0x8
+stone golem: [Elemental0.png] 0x9
+glass golem: [Elemental0.png] 0xA
+iron golem: [Elemental0.png] 0xB
+
+! Humans and elves
+
+human: [Humanoid0.png] 0x48
+human wererat: [Rodent0.png] 0x18
+human werejackal: [Dog0.png] 0x5
+human werewolf: [Dog0.png] 0xD
+
+elf: [Humanoid0.png] 0x30
+Woodland-elf: [Humanoid0.png] 0x31
+Green-elf: [Humanoid0.png] 0x32
+Grey-elf: [Humanoid0.png] 0x33
+elf-lord: [Humanoid0.png] 0x34
+Elvenking: [Humanoid0.png] 0x35
+
+doppelganger: [Humanoid0.png] 0x92
+nurse: [Humanoid0.png] 0xB1
+shopkeeper: [Humanoid0.png] 0x60
+guard: [Humanoid0.png] 0x63
+prisoner: [Humanoid0.png] 0x17
+Oracle: [Humanoid0.png] 0xB0
+aligned priest: [Humanoid0.png] 0xB8
+high priest: [Humanoid0.png] 0xB9
+soldier: [Humanoid0.png] 0x28
+sergeant: [Humanoid0.png] 0x29
+lieutenant: [Humanoid0.png] 0x2A
+captain: [Humanoid0.png] 0x2B
+watchman: [Humanoid0.png] 0x2C
+watch captain: [Humanoid0.png] 0x2D
+
+Medusa: [Humanoid0.png] 0xD0
+Wizard of Yendor: [Undead0.png] 0x39
+Croesus: [Humanoid0.png] 0x7A
+
+! Major demons
+
+water demon: [Demon0.png] 0x28
+horned devil: [Demon0.png] 0x1A
+succubus: [Demon0.png] 0x30
+incubus: [Demon0.png] 0x31
+! MISSING: erinys
+! MISSING: barbed devil
+marilith: [Demon0.png] 0x1
+vrock: [Demon0.png] 0x2
+hezrou: [Demon0.png] 0x3
+bone devil: [Demon0.png] 0x18
+ice devil: [Demon0.png] 0x19
+nalfeshnee: [Demon0.png] 0x40
+pit fiend: [Demon0.png] 0x9
+balrog: [Demon0.png] 0xA
+
+Juiblex: [Demon0.png] 0x4
+Yeenoghu: [Demon0.png] 0x5
+Orcus: [Demon0.png] 0x6
+Geryon: [Demon0.png] 0x7
+Dispater: [Demon0.png] 0x10
+Baalzebub: [Demon0.png] 0x11
+Asmodeus: [Demon0.png] 0x12
+Demogorgon: [Demon0.png] 0x14
+
+! MISSING: Death
+! MISSING: Pestilence
+! MISSING: Famine
+
+djinni: [Humanoid0.png] 0x90
+sandestin: [Demon0.png] 0x8
+
+! Fish
+
+jellyfish: [Aquatic0.png] 0x6
+piranha: [Aquatic0.png] 0x4
+shark: [Aquatic0.png] 0x9
+giant eel: [Aquatic0.png] 0x12
+electric eel: [Aquatic0.png] 0x13
+kraken: [Aquatic0.png] 0x21
+
+! Reptiles
+
+newt: [Reptile0.png] 0x50
+gecko: [Reptile0.png] 0x51
+iguana: [Reptile0.png] 0x41
+baby crocodile: [Reptile0.png] 0x48
+lizard: [Reptile0.png] 0x40
+chameleon: [Reptile0.png] 0x42
+crocodile: [Reptile0.png] 0x49
+salamander: [Reptile0.png] 0x5A
+
+!! Parts of monsters
+
+long worm tail: [Pest0.png] 0x1A
+
+!! Player-monsters
+
+archeologist: [Player0.png] 0x23
+sub dwarf archeologist: [Player0.png] 0x5F
+sub gnome archeologist: [Player0.png] 0x3
+
+barbarian: [Player0.png] 0x24
+sub female barbarian: [Player0.png] 0x28
+sub orc barbarian: [Player0.png] 0x60
+sub female sub orc barbarian: [Player0.png] 0x65
+
+caveman: [Player0.png] 0x25
+sub dwarf caveman: [Player0.png] 0x58
+sub gnome caveman: [Player0.png] 0xD
+cavewoman: [Player0.png] 0x2A
+sub dwarf cavewoman: [Player0.png] 0x58
+sub gnome cavewoman: [Player0.png] 0xD
+
+healer: [Player0.png] 0x21
+sub gnome healer: [Player0.png] 0xE
+
+knight: [Player0.png] 0x19
+
+monk: [Player0.png] 0x1E
+
+priest: [Player0.png] 0x20
+sub elf priest: [Player0.png] 0x3F
+priestess: [Player0.png] 0x29
+sub elf priestess: [Player0.png] 0x40
+
+rogue: [Player0.png] 0x22
+sub orc rogue: [Player0.png] 0x42
+
+ranger: [Player0.png] 0x2
+sub elf ranger: [Player0.png] 0x38
+sub male sub elf ranger: [Player0.png] 0x3A
+sub gnome ranger: [Player0.png] 0x2
+
+samurai: [Player0.png] 0x1D
+sub female samurai: [Player0.png] 0x5
+
+tourist: [Player0.png] 0x26
+
+valkyrie: [Player0.png] 0x1C
+sub dwarf valkyrie: [Player0.png] 0x59
+
+wizard: [Player0.png] 0x1F
+sub elf wizard: [Player0.png] 0x1F
+sub gnome wizard: [Player0.png] 0x7
+
+!! Quest
+
+Lord Carnarvon: [Player0.png] 0x43
+Pelias: [Player0.png] 0x44
+Shaman Karnov: [Player0.png] 0x45
+Hippocrates: [Player0.png] 0x41
+King Arthur: [Player0.png] 0x39
+Grand Master: [Player0.png] 0x3F
+Arch Priest: [Player0.png] 0x47
+Orion: [Player0.png] 0x3A
+Master of Thieves: [Player0.png] 0x44
+Lord Sato: [Player0.png] 0x3D
+Twoflower: [Player0.png] 0x47
+Norn: [Player0.png] 0x3C
+Neferet the Green: [Player0.png] 0x3E
+
+Minion of Huhetotl: [Demon0.png] 0xC
+Thoth Amon: [Demon0.png] 0x13
+Chromatic Dragon: [Reptile0.png] 0x17
+Cyclops: [Humanoid0.png] 0x9
+Ixoth: [Demon0.png] 0xD
+Master Kaen: [Undead0.png] 0x3A
+Nalzok: [Demon0.png] 0xB
+Scorpius: [Pest0.png] 0x15
+Master Assassin: [Humanoid0.png] 0x16
+Ashikaga Takauji: [Player0.png] 0x3D
+Lord Surtur: [Humanoid0.png] 0xA
+Dark One: [Undead0.png] 0x41
+
+student: [Player0.png] 0xB
+chieftain: [Player0.png] 0xC
+neanderthal: [Player0.png] 0x0
+attendant: [Player0.png] 0x8
+page: [Player0.png] 0x1
+abbot: [Player0.png] 0x7
+acolyte: [Player0.png] 0x9
+hunter: [Player0.png] 0x1A
+thug: [Player0.png] 0x3
+ninja: [Player0.png] 0x22
+roshi: [Player0.png] 0xA
+guide: [Player0.png] 0xE
+warrior: [Player0.png] 0x4
+apprentice: [Player0.png] 0x6
+
+!!! Brandings
+
+!! MISSING: "remembered as" brandings
+
+!! "monster is" brandings
+
+! Note: these are the smaller ones from GUI1
+! Note: GUI1 is 16 tiles wide
+
+monster is tame: [GUI1.png] 0x50
+monster is peaceful: [GUI1.png] 0x51
+monster is detected: [GUI1.png] 0x52
+monster is ridden: [GUI1.png] 0x53
+
+!!! Warnings
+
+warning 0: [GUI0.png] 0x0
+warning 1: [GUI0.png] 0x1
+warning 2: [GUI0.png] 0x2
+warning 3: [GUI0.png] 0x3
+warning 4: [GUI0.png] 0x4
+warning 5: [GUI0.png] 0x5
+
+!!! Explosions
+
+explosion dark 0: [Effect0.png] 0x18
+explosion dark 1: [Effect0.png] 0x19
+explosion dark 2: [Effect0.png] 0x1A
+explosion dark 3: [Effect0.png] 0x20
+explosion dark 4: [Effect0.png] 0x21
+explosion dark 5: [Effect0.png] 0x22
+explosion dark 6: [Effect0.png] 0x28
+explosion dark 7: [Effect0.png] 0x29
+explosion dark 8: [Effect0.png] 0x2A
+
+explosion fiery 0: [Effect0.png] 0x0
+explosion fiery 1: [Effect0.png] 0x1
+explosion fiery 2: [Effect0.png] 0x2
+explosion fiery 3: [Effect0.png] 0x8
+explosion fiery 4: [Effect0.png] 0x9
+explosion fiery 5: [Effect0.png] 0xA
+explosion fiery 6: [Effect0.png] 0x10
+explosion fiery 7: [Effect0.png] 0x11
+explosion fiery 8: [Effect0.png] 0x12
+
+explosion frosty 0: [Effect0.png] 0x33
+explosion frosty 1: [Effect0.png] 0x34
+explosion frosty 2: [Effect0.png] 0x35
+explosion frosty 3: [Effect0.png] 0x3B
+explosion frosty 4: [Effect0.png] 0x3C
+explosion frosty 5: [Effect0.png] 0x3D
+explosion frosty 6: [Effect0.png] 0x43
+explosion frosty 7: [Effect0.png] 0x44
+explosion frosty 8: [Effect0.png] 0x45
+
+explosion magical 0: [Effect0.png] 0x48
+explosion magical 1: [Effect0.png] 0x49
+explosion magical 2: [Effect0.png] 0x4A
+explosion magical 3: [Effect0.png] 0x50
+explosion magical 4: [Effect0.png] 0x51
+explosion magical 5: [Effect0.png] 0x52
+explosion magical 6: [Effect0.png] 0x58
+explosion magical 7: [Effect0.png] 0x59
+explosion magical 8: [Effect0.png] 0x5A
+
+explosion muddy 0: [Effect0.png] 0x3
+explosion muddy 1: [Effect0.png] 0x4
+explosion muddy 2: [Effect0.png] 0x5
+explosion muddy 3: [Effect0.png] 0xB
+explosion muddy 4: [Effect0.png] 0xC
+explosion muddy 5: [Effect0.png] 0xD
+explosion muddy 6: [Effect0.png] 0x13
+explosion muddy 7: [Effect0.png] 0x14
+explosion muddy 8: [Effect0.png] 0x15
+
+explosion noxious 0: [Effect0.png] 0x1B
+explosion noxious 1: [Effect0.png] 0x1C
+explosion noxious 2: [Effect0.png] 0x1D
+explosion noxious 3: [Effect0.png] 0x23
+explosion noxious 4: [Effect0.png] 0x24
+explosion noxious 5: [Effect0.png] 0x25
+explosion noxious 6: [Effect0.png] 0x2B
+explosion noxious 7: [Effect0.png] 0x2C
+explosion noxious 8: [Effect0.png] 0x2D
+
+explosion wet 0: [Effect0.png] 0x30
+explosion wet 1: [Effect0.png] 0x31
+explosion wet 2: [Effect0.png] 0x32
+explosion wet 3: [Effect0.png] 0x38
+explosion wet 4: [Effect0.png] 0x39
+explosion wet 5: [Effect0.png] 0x3A
+explosion wet 6: [Effect0.png] 0x40
+explosion wet 7: [Effect0.png] 0x41
+explosion wet 8: [Effect0.png] 0x42
+
+!!! Zaps
+
+zap 0 0: [Effect0.png] 0x94
+zap 0 1: [Effect0.png] 0x95
+zap 0 2: [Effect0.png] 0x96
+zap 0 3: [Effect0.png] 0x97
+
+zap 1 0: [Effect0.png] 0x78
+zap 1 1: [Effect0.png] 0x79
+zap 1 2: [Effect0.png] 0x7A
+zap 1 3: [Effect0.png] 0x7B
+
+zap 2 0: [Effect0.png] 0x80
+zap 2 1: [Effect0.png] 0x81
+zap 2 2: [Effect0.png] 0x82
+zap 2 3: [Effect0.png] 0x83
+
+zap 3 0: [Effect0.png] 0x84
+zap 3 1: [Effect0.png] 0x85
+zap 3 2: [Effect0.png] 0x86
+zap 3 3: [Effect0.png] 0x87
+
+zap 4 0: [Effect0.png] 0x8C
+zap 4 1: [Effect0.png] 0x8D
+zap 4 2: [Effect0.png] 0x8E
+zap 4 3: [Effect0.png] 0x8F
+
+zap 5 0: [Effect0.png] 0x88
+zap 5 1: [Effect0.png] 0x89
+zap 5 2: [Effect0.png] 0x8A
+zap 5 3: [Effect0.png] 0x8B
+
+zap 6 0: [Effect0.png] 0x98
+zap 6 1: [Effect0.png] 0x99
+zap 6 2: [Effect0.png] 0x9A
+zap 6 3: [Effect0.png] 0x9B
+
+zap 7 0: [Effect0.png] 0x9C
+zap 7 1: [Effect0.png] 0x9D
+zap 7 2: [Effect0.png] 0x9E
+zap 7 3: [Effect0.png] 0x9F
+
+!!! Effects
+
+!! Swallow
+
+swallow top left: [Effect0.png] 0x60
+swallow top center: [Effect0.png] 0x61
+swallow top right: [Effect0.png] 0x62
+swallow middle left: [Effect0.png] 0x68
+swallow middle right: [Effect0.png] 0x6A
+swallow bottom left: [Effect0.png] 0x70
+swallow bottom center: [Effect0.png] 0x71
+swallow bottom right: [Effect0.png] 0x72
+
+!! Miscellaneous
+
+dig beam: [Effect0.png] 0xC3
+flash beam: [Effect0.png] 0xB7
+thrown boomerang, open left: [Effect0.png] 0xC8
+thrown boomerang, open right: [Effect1.png] 0xC8
+magic shield 1: [Effect0.png] 0xBC
+magic shield 2: [Effect0.png] 0xBD
+magic shield 3: [Effect0.png] 0xBE
+magic shield 4: [Effect0.png] 0xBF
+gas cloud: [Effect0.png] 0xC2
+
+!!! The Platino
+
+! The artist requests to use this tile, and hide it well. Because this
+! is being done entirely within the tiles API, we're limited to
+! ridiculous tile+substitution combinations.  This one requires
+! navigating Vlad up to Astral.
+sub astral Vlad the Impaler: [Reptile0.png] 0x63

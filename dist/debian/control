@@ -1,0 +1,30 @@
+Source: nethack4
+Section: games
+Priority: optional
+Maintainer: Alex Smith <ais523@nethack4.org>
+Build-Depends: debhelper (>= 9.0.0), libz-dev, libjansson-dev, bison, flex, libsdl2-dev, libpng-dev, perl (>= 5.8.1)
+Standards-Version: 3.9.5
+Homepage: http://nethack4.org
+Vcs-Git: http://nethack4.org/media/nethack4.git -b master
+
+Package: nethack4
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: modernized version of the classic roguelike
+ NetHack 4 is a modernized version of the classic game NetHack. It adds a
+ completely new user interface, numerous bugfixes, and much more. It also tries
+ to avoid killing the player with the interface - its authors feel that player
+ deaths should be the result of their actions, not their typos.
+ .
+ NetHack itself is perhaps the best-known "roguelike" game: a screen-oriented
+ dungeon crawler in which levels are randomly generated, giving a different
+ gameplay experience each time. NetHack's emphasis is on developing your
+ character in the way you want; if it feels like something should be possible,
+ it probably is. The eventual goal of the game is to collect the Amulet of
+ Yendor from deep in the dungeon, but concentrating on learning to survive in
+ the dungeon should be most players' first priority; winning the game can take
+ months of learning, as when a character dies, you have to restart the game from
+ scratch.
+ .
+ This package contains the files required both to play in a terminal, and to
+ play in a separate window with optional graphical tile support.

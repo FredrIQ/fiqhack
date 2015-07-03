@@ -1,0 +1,24 @@
+! Last modified by Alex Smith, 2014-10-03
+! NetHack may be freely redistributed. See license for details.
+!
+! This tilemap lists the tiles in NetHack 4 that do not exist in
+! NetHack 3.4.3 (or that do exist but with different meanings).
+!
+unexplored area
+corridor
+sub lit corridor
+the floor of a room
+sub unlit the floor of a room
+long staircase up
+long staircase down
+remembered as stepped on
+remembered as locked
+remembered as unlocked
+remembered as trapped
+vibrating square
+monster is tame
+monster is peaceful
+monster is detected
+monster is ridden
+gas cloud
+solid rock

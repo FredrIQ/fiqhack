@@ -1,0 +1,358 @@
+! Last modified by Alex Smith, 2014-10-03
+! Copyright (C) 2013 Alex Smith, in addition to the copyright on the
+! tiles from Slash'EM (originally by Warwick Allison) on which this
+! file is based.
+! NetHack may be freely redistributed.  See license for details.
+!
+! The tiles in this file are required by NetHack 4, but not Slash'EM
+! nor NetHack 3.4.3.  This file additionally contains some overrides
+! for tiles that shipped with Slash'EM (for instance, room tiles have
+! changed to accommodate darkroom tiles).  This file contains only
+! 16x16 tiles.
+A = (0, 0, 0)
+B = (0, 182, 255)
+C = (255, 108, 0)
+D = (255, 0, 0)
+E = (0, 0, 255)
+F = (0, 145, 0)
+G = (108, 255, 0)
+H = (255, 255, 0)
+I = (255, 0, 255)
+J = (145, 71, 0)
+K = (182, 71, 0)
+L = (255, 182, 145)
+M = (72, 108, 108)
+N = (255, 255, 255)
+O = (218, 218, 182)
+P = (108, 145, 182)
+Q = (32, 32, 32)
+R = (64, 64, 64)
+S = (0, 48, 96)
+T = (0, 255, 255)
+U = (0, 182, 255)
+V = (0, 0, 128)
+W = (128, 0, 0)
+$ = (71, 108, 108)
+# tile 0 (unexplored area)
+{
+  QQQQQQQQQQQQQQQQ
+  QQQQQQQQQQQQQQQQ
+  QQQQQQRRRRQQQQQQ
+  QQQQQRRRRRRQQQQQ
+  QQQQRRQQQQRRQQQQ
+  QQQQRRQQQQRRQQQQ
+  QQQQQQQQQQRRQQQQ
+  QQQQQQQQQRRQQQQQ
+  QQQQQQQQRRQQQQQQ
+  QQQQQQQRRQQQQQQQ
+  QQQQQQQRRQQQQQQQ
+  QQQQQQQQQQQQQQQQ
+  QQQQQQQRRQQQQQQQ
+  QQQQQQQRRQQQQQQQ
+  QQQQQQQQQQQQQQQQ
+  QQQQQQQQQQQQQQQQ
+}
+# tile 13 (corridor)
+{
+  SSSSSSSSSSSSSSSS
+  SSSSSSSSSSSSSSSS
+  SSSSSSSSSSSSSSSS
+  SSSSSSSSSSSSSSSS
+  SSSSSSSSSSSSSSSS
+  SSSSSSSSSSSSSSSS
+  SSSSSSSPPSSSSSSS
+  SSSSSSPSSPSSSSSS
+  SSSSSSPSSPSSSSSS
+  SSSSSSSPPSSSSSSS
+  SSSSSSSSSSSSSSSS
+  SSSSSSSSSSSSSSSS
+  SSSSSSSSSSSSSSSS
+  SSSSSSSSSSSSSSSS
+  SSSSSSSSSSSSSSSS
+  SSSSSSSSSSSSSSSS
+}
+# tile 14 (sub lit corridor)
+{
+  MMMMMMMMMMMMMMMM
+  MMMMMMMMMMMMMMMM
+  MMMMMMMMMMMMMMMM
+  MMMMMMMMMMMMMMMM
+  MMMMMMMMMMMMMMMM
+  MMMMMMMMMMMMMMMM
+  MMMMMMMPPMMMMMMM
+  MMMMMMPMMPMMMMMM
+  MMMMMMPMMPMMMMMM
+  MMMMMMMPPMMMMMMM
+  MMMMMMMMMMMMMMMM
+  MMMMMMMMMMMMMMMM
+  MMMMMMMMMMMMMMMM
+  MMMMMMMMMMMMMMMM
+  MMMMMMMMMMMMMMMM
+  MMMMMMMMMMMMMMMM
+}
+# tile 15 (the floor of a room)
+{
+  MMMMMMMMMMMMMMMM
+  MMMMMMMMMMMMMMMM
+  MMMMMMMMMMMMMMMM
+  MMMMMMMMMMMMMMMM
+  MMMMMMMMMMMMMMMM
+  MMMMMMMMMMMMMMMM
+  MMMMMMMPPMMMMMMM
+  MMMMMMPPPPMMMMMM
+  MMMMMMPPPPMMMMMM
+  MMMMMMMPPMMMMMMM
+  MMMMMMMMMMMMMMMM
+  MMMMMMMMMMMMMMMM
+  MMMMMMMMMMMMMMMM
+  MMMMMMMMMMMMMMMM
+  MMMMMMMMMMMMMMMM
+  MMMMMMMMMMMMMMMM
+}
+# tile 16 (sub unlit the floor of a room)
+{
+  SSSSSSSSSSSSSSSS
+  SSSSSSSSSSSSSSSS
+  SSSSSSSSSSSSSSSS
+  SSSSSSSSSSSSSSSS
+  SSSSSSSSSSSSSSSS
+  SSSSSSSSSSSSSSSS
+  SSSSSSSPPSSSSSSS
+  SSSSSSPPPPSSSSSS
+  SSSSSSPPPPSSSSSS
+  SSSSSSSPPSSSSSSS
+  SSSSSSSSSSSSSSSS
+  SSSSSSSSSSSSSSSS
+  SSSSSSSSSSSSSSSS
+  SSSSSSSSSSSSSSSS
+  SSSSSSSSSSSSSSSS
+  SSSSSSSSSSSSSSSS
+}
+# tile 34 (long staircase up)
+{
+  AAAAAAAAAAAAAAMA
+  AADJJJJJJJJJDAMA
+  AACDDJKTKKDDCAMA
+  AAAAAATTTAAAAMMA
+  AAADJTTTTTJDAMMA
+  AAACTUUTUTTCAMMA
+  AAAAAAUUTAAAMMMA
+  AAAAKDUUUKJAMMMA
+  AAAACKPUTKCAMMMA
+  AAAAAAUPUAAMMMMA
+  AAAAAKPPPJAMMMMA
+  AAAAACKJJKAMMMMA
+  AAAAAAAAAAAAMMMA
+  AAAAAAAAAAAAAMMA
+  AAAAAAAAAAAAAAMA
+  AAAAAAAAAAAAAAAA
+}
+# tile 35 (long staircase down)
+{
+  AAAAAAAAAAAAAAMA
+  AADJJJJJJJJJDAMA
+  AACDDJTTTKDDCAMA
+  AAAAAATTTAAAAMMA
+  AAADJJTUTJJDAMMA
+  AAACDDUTTKDCAMMA
+  AAAAAAUTUAAAMMMA
+  AAAAPUUUTUTAMMMA
+  AAAACPUUUPCAMMMA
+  AAAAAATPTAAMMMMA
+  AAAAAKKUJJAMMMMA
+  AAAAACKJJKAMMMMA
+  AAAAAAAAAAAAMMMA
+  AAAAAAAAAAAAAMMA
+  AAAAAAAAAAAAAAMA
+  AAAAAAAAAAAAAAAA
+}
+# tile 45 (remembered as stepped on)
+{
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$CC$$$$$$$
+  $$$$$$C$$C$$$$$$
+  $$$$$$C$$C$$$$$$
+  $$$$$$$CC$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+}
+# tile 46 (remembered as locked)
+{
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$DD$$$
+  $$$$$$$$$$DAAD$$
+  $$$$$$$$$$DA$DA$
+  $$$$$$$$$$DDDDA$
+  $$$$$$$$$$DDDDA$
+  $$$$$$$$$$DDDDA$
+  $$$$$$$$$$$AAAA$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+}
+# tile 47 (remembered as unlocked)
+{
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$FF$$$
+  $$$$$$$$$$FAAFA$
+  $$$$$$$$$$FA$AA$
+  $$$$$$$$$$FFFFA$
+  $$$$$$$$$$FFFFA$
+  $$$$$$$$$$FFFFA$
+  $$$$$$$$$$$AAAA$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+}
+# tile 48 (remembered as trapped)
+{
+  $$$$$$$$$$$$$$$$
+  $$$$$$$DD$$$$DD$
+  $$$$$$$DDD$$DDD$
+  $$$$$$$$DDDDDD$$
+  $$$$$$$$$DDDD$$$
+  $$$$$$$$$DDDD$$$
+  $$$$$$$$DDDDDD$$
+  $$$$$$$DDD$$DDD$
+  $$$$$$$DD$$$$DD$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+}
+# tile 63 (vibrating square)
+{
+  MMMMMMMMMMMMMMMM
+  MMMMMDDDDDMMMMMM
+  MMMMDDDCDDDMMMMM
+  MMMDDCCHCCDDMMMM
+  MMMDCCHOHCCDDMMM
+  MMDDCHAAAHCCDMMM
+  MMDDCHAAAGCCDAMM
+  MMDDCHAAAHCCDAMM
+  MMDDCHAAAHCCDAMM
+  MMDDAAAAAAACDAMM
+  MMMDCAAAAACCAAMM
+  MMMDCCAAACCDAMMM
+  MMMMDDCACDDAAMMM
+  MMMMMDDDDDAAMMMM
+  MMMMMMAAAAAMMMMM
+  MMMMMMMMMMMMMMMM
+}
+# tile 886 (monster is tame)
+{
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$WW$WW$$
+  $$$$$$$$WWDWDDW$
+  $$$$$$$$WDDDDDW$
+  $$$$$$$$$WDDDW$$
+  $$$$$$$$$$WDW$$$
+  $$$$$$$$$$$W$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+}
+# tile 886 (monster is peaceful)
+{
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$VV$VV$$
+  $$$$$$$$VEEVEVV$
+  $$$$$$$$VEEEEEV$
+  $$$$$$$$$VEEEV$$
+  $$$$$$$$$$VEV$$$
+  $$$$$$$$$$$V$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+}
+# tile 886 (monster is detected)
+{
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+}
+# tile 886 (monster is ridden)
+{
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+  $$$$$$$$$$$$$$$$
+}
+# tile 1007 (gas cloud)
+{
+  MMMMMMMMMFMFMMMM
+  MMMFMFFMMMMMMMMM
+  MFMFFMFMFFFMFMMM
+  MMMMFMFFGFFFFMMM
+  FMFFMFFGHHHFFFMM
+  MMMFFHHGHGHFFMMM
+  MFMFFFHGGGGHFFFM
+  FMMFFGHHHHGHHFMM
+  MMFFGHHGHHHHFMFM
+  MFFFFHGHGHGHGFMM
+  FFMFGFHHHHHHFFMF
+  MMFFFHFGHGHHFFFM
+  MFFMFFFFFHHGHFMM
+  MMFMMFFFFFFFFFFM
+  MFMFMMFMMMFFFFMM
+  MMMMFMMMFMMMMMMM
+}

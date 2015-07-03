@@ -1,0 +1,26 @@
+nethack4 (4.3.0~beta3) unstable; urgency=low
+  * Updated packages for 4.3
+ -- Alex Smith <ais523@nethack4.org>  Sun, 05 Apr 2015 02:57:00 +0100
+
+nethack4 (4.3.0~beta2) unstable; urgency=low
+  * Updated packages for 4.3
+ -- Alex Smith <ais523@nethack4.org>  Thu, 02 Apr 2015 02:08:48 +0100
+
+nethack4 (4.3.0~beta1) unstable; urgency=low
+  * Updated packages for 4.3
+ -- Alex Smith <ais523@nethack4.org>  Thu, 29 May 2014 08:06:00 +0100
+
+nitrohack (4.0.2-1) unstable; urgency=low
+  * Updated packages for 4.0.2
+
+ -- Daniel Thaler <daniel@dthaler.de>  Sun, 5 Feb 2012 19:00:00 +0100
+
+nitrohack (4.0.1-1) unstable; urgency=low
+  * Updated packages for 4.0.1
+
+ -- Daniel Thaler <daniel@dthaler.de>  Sun, 22 Jan 2012 23:00:00 +0100
+
+nitrohack (4.0.0-1) unstable; urgency=low
+  * Created a new debian/ directory with packaging info; lets hope this is all OK.
+
+ -- Daniel Thaler <daniel@dthaler.de>  Sat, 14 Jan 2012 20:22:00 +0100

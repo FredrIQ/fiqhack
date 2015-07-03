@@ -1,0 +1,486 @@
+About this document:
+Last modified by Alex Smith, 2015-05-19
+
+Copyright (C) 2015 Alex Smith.
+
+This document is licensed under the NetHack General Public License.  See
+libnethack/dat/license for details.
+
+
+The NetHack Monster AI
+======================
+
+NetHack's monster AI is, as comments in the 3.4.3 code explain, quite
+convoluted and hard to follow.  This document attempts to explain
+what's going on, both in previous versions, and in NetHack 4.
+
+Notes
+-----
+
+There are two main styles used for monster AI implementation in NetHack.
+
+One is "continue/abort style": a function checks a condition, possibly handles
+it, then tells its caller either to keep going with whatever it was doing, or
+else to stop immediately (normally because the monster has already performed
+the turn's action).  This style is particularly useful for conditions that
+trump everything else.
+
+The other is "check/perform style": one function checks to see what actions
+are possible/reasonable, then later, another function performs them.  This
+style is particularly useful when a monster's actions aren't determined via a
+priority list, but via some more complicated mechanism (like randomizing among
+possibilities).
+
+As an aside, it's interesting to compare this to two of the most successful
+AIs developed for the NetHack bot framework TAEB (which were for player
+characters, not for monsters, but most of the same principles apply).
+TAEB::AI::Behavioral was written in continue/abort style; TAEB::AI::Planar was
+written in check/perform style.
+
+NetHack's monster AI code uses a mix of styles (although continue/abort seems
+to be more common).  Possible TODO: standardize the continue/abort values in
+an enum, rather than using magic numbers everywhere.
+
+
+This guide does not list every sanity check that exists in the AI.  For
+example, when a monster does a melee attack, I haven't listed whether the
+check to see whether the monster actually *has* a melee attack is in the
+caller or callee.  (Often, that sort of check is in both.)  I have listed
+things like conflict, because they can have a major effect on the AI.
+
+
+High-level functions
+--------------------
+
+These are functions that call into other parts of the AI, effectively running
+the show, and are listed from outermost to innermost.
+
+### movemon
+
+`movemon` handles one action for all monsters; this is the entry point for the
+code that handles the "monster turn", and calls into the AI of individual
+monsters.  It's mostly concerned with calculating turn alternation, handling
+monster speeds, and all that stuff.
+
+In NetHack 3.4.3, each monster has its own reservoir of movement points, and
+this function deducts one action's worth of movement points; thus, calling it
+multiple times wouldn't give monsters any more turns on average, it would just
+cause monster and player turns to fail to alternate correctly when both the
+monster and player had above-average speed.  (This situation actually happens
+when the player has exactly 24 movement points, due to a typo in allmain.c.)
+
+In NetHack 4, a different representation of monster movement is used which is
+equivalent but more compressible in the save file; during normal behaviour,
+the only thing that actually changes to mark the passage of time within a turn
+is `flags.actions`, and the fields of the monster structure basically
+represent a function for calculating the number of movement points the monster
+has based on the value of `flags.actions` and the current turn count.  To make
+this work, callers of `movemon` have to be a little more careful; it needs to
+be called exactly once every time `flags.actions` is incremented.
+
+This function is also partly responsible for detecting when a turn is over.
+It returns `TRUE` if the turn is definitely not over because monsters still
+have movement points left, or `FALSE` if there are no monster-based reasons
+not to end the turn.
+
+Finally, this function handles cleanup from the monster turn.  One such case
+is to handle the player being level-teleported during the monster turn (via
+`deferred_goto`), in order to stop monsters moving after the player has left
+the level they're on.  The other, much more common case, is to actually delete
+monsters that have died (via `dmonsfree`); until this cleanup happens, they're
+left around but with negative hitpoints (so as to avoid dangling pointers).
+
+This function can run the following AIs:
+
+  * `minliquid` (continue/abort-style)
+  * `restrap` (continue/abort-style), for hiding monsters only
+  * a simple "do-nothing" AI for monsters that are already hidden
+  * `dochugw`, in almost every case
+
+### dochugw
+
+This is a small wrapper around `dochug`, which handles the player character's
+reaction to a monster's turn.  Specifically, it checks various conditions to
+see if the character has become aware of the monster as a result of the
+monster's turn, and calls an appropriate function to interrupt multi-turn
+actions as a result (`stop_occupation` in 3.4.3, `action_interrupted` in 4.3).
+In NetHack 3.3.0 and earlier, it apparently also handled warning, but that
+code is long gone now.
+
+### dochug
+
+This function handles once-per-action behaviour for monsters, as well as
+calling into the other various parts of the AI. Sadly, these two tasks are a
+little intermingled with each other, which can lead to weird bugs (such as
+bribable demons not recovering from confusion until the initial conversation
+with the player has finished).
+
+The various tasks here are categorised into once-per-action tasks (1/A) and
+AI-related tasks (AI).  It would be a sensible change to move all the 1/A
+tasks first, but one that, as of the time of writing, I have not yet
+performed.  They are listed in the order in which they happen in 3.4.3;
+NetHack 4 currently hasn't changed the order (although it has changed some of
+the individual tasks, as listed here).
+
+  * (?) `m_arrival` (continue/abort-style), for monsters that have migrated
+    onto the level since their last action; this is currently unused in
+    both 3.4.3 and 4.3, so I don't know whether it would be used for 1/A or AI
+    behaviour.
+    
+  * (AI) Removing `STRAT_WAITFORU` status if the monster can see the player,
+    or has taken any HP damage.
+    
+  * (1/A) `quest_stat_check` (which permanently sets the `Qstat(in_battle)`
+    flag if the player is adjacent to the quest nemesis).
+    
+  * (AI) Running a simple "do-nothing" AI for monsters with `STRAT_WAITFORU`
+    or `STRAT_CLOSE` status, or who are paralyzed.  This AI is not quite a
+    no-op; it handles the conversation with a quest leader, once the player is
+    adjacent.  (Strangely, the AI does not turn off `STRAT_CLOSE` status
+    itself when the player becomes adjacent.  This is instead handled on the
+    player turn, via commands like `#chat`.)
+
+  * (AI) `disturb` (continue/abort-style), for sleeping monsters;
+
+  * (1/A) `wipe_engr_at`, which scuffs engravings, and is presumably here so
+    that it doesn't run for paralyzed or sleeping monsters.  Most likely, that
+    should just be added as a condition on this task, and that this task
+    should be moved earlier.
+
+  * (1/A) Monster recovery from confusion and stun.
+
+  * (AI) Monster teleport-at-will while fleeing.  The player equivalent of
+    this is a 1/A (actually 1/turn); however, the monster version costs it the
+    action and only triggers while fleeing, so this appears to be a (very)
+    simple AI for the equivalent of a control-T.  It runs with 1/40
+    probability.
+
+  * (AI) `m_respond` (continue/abort-style, but the only abort reason is the
+    death of the monster).  `m_respond` generally is used for free actions
+    that monsters get when the player is near them or interacts with them.
+    This particular function just handles the proximity trigger (melee range
+    for shriekers, line of effect for Medusa, the only two implemented cases).
+
+  * (AI) Monster recovery from fleeing status.  This is implemented like a
+    timeouted intrinsic, but given what fleeing status is flavourwise, it
+    makes more sense to consider it as AI code.
+
+  * (AI) `set_apparxy`, `strategy` (checks).  These aren't necessarily called
+    directly; 3.4.3 calls `strategy` via `tactics`, and 4.3 calls
+    `set_apparxy` via `strategy`.
+
+  * (AI) `tactics`, for covetous monsters (perform for `strategy`, done
+    continue/abort style)
+
+  * (AI) `distfleeck` (check).
+
+  * (AI) Item use (continue/abort): this is handled via a range of functions.
+    These come in pairs called in check/perform style:
+    `find_defensive`/`use_defensive`, `find_misc`/`use_misc`.  Strangely, if
+    `find_defensive` succeeds, `find_misc` won't be called even if
+    `use_defensive` doesn't use the turn.
+
+  * (AI) Bribable demon behaviour; this is mostly in `demon_talk`, although
+    part of the code (for displaced players) is in `dochug` itself.
+
+  * (AI) `watch_on_duty`, for watchmen and watch captains.
+
+  * (AI) Mind flayer mind blasts.  These have a 1 in 20 chance of happening,
+    and don't cost the turn.  (Strangely, they can hit monsters, but only if
+    the player is in range; otherwise, they outright fail.)
+
+  * (AI) Wielding an appropriate ranged or melee weapon, if nearish or near
+    the player respectively, (in 4.3) aware that the player is near, not
+    wielding an appropriate weapon already, and hostile or conflicted.  This
+    is implemented continue/abort style via `select_rwep`, `mon_wield_item`,
+    and a very confusing `if` statement.  There's a special case to suppress
+    this for monsters fleeing into a wall (so that they don't unwield their
+    pickaxe).  The case of a ranged weapon only runs if the monster is marked
+    as needing a weapon, a value that is set whenever the monster wields a
+    weapon or has its weapon destroyed, and unset when the monster discovers
+    its weapon is cursed, wields a pickaxe, or is polymorphed into a
+    non-weapon-wielding form.  (This codepath seems suspect to me, given that
+    I haven't yet figured out how the flag gets set initially.)
+
+  * If the monster is outside melee range, unaware of the player, fleeing,
+    Elbereth-scared, confused, stunned, invisible (1/3 of the time), a
+    leprechaun with no gold to steal (half the time, unless it has gold in
+    which case all the time), a wanderer (1/4 of the time), conflicted, blind
+    (1/4 of the time), or peaceful:
+
+      * (AI) `castmu` (continue/abort), if the player's nearby and the monster
+        has the monster Pw for it; this is in "low probability undirected"
+        mode that normally aborts even if an action is available.
+
+      * (AI) `m_move` (continue/abort), followed by a `distfleeck`
+        recalculation.
+
+      * (AI) `ranged_attk` and `find_offensive` (checks), if the monster
+        moved, to determine whether to allow it to fall through to an attack
+        despite moving.
+
+      * (AI) `mattacku`, if you're being engulfed (the monster gets to attack
+        you while engulfing).
+
+  * Otherwise, or as a fallthrough if none of the above produced an action, or
+    if `ranged_attk` or `find_offensive` discovered that the monster had a
+    ranged attack available:
+
+      * (AI) `mattackq` (continue/abort) at your apparent square, if near
+        enough, and hostile or conflicted.  In 3.4.3, this calls `mattacku`
+        instead, but that function only works on empty squares or the player's
+        square, and nothing has checked that that square is free of monsters;
+        this leads to a bug in which you can get messages like "the black
+        pudding attacks a spot in thin air" when the pudding is entirely
+        surrounded.  (Many players must have noticed this, but it's not
+        obviously a bug until you think about it, and it's clearly a bug from
+        the code.)
+
+      * (AI) `wormhitu`, for long worms.
+
+  * (AI) Conversation with a quest leader.
+
+  * (AI) Imp insults.
+
+`dochug` is a pretty complex function, but most of it is special cases.  In
+the common case, it basically comes down to "call `m_move` or `mattacku` or
+both".  In a situation where the monster is unimpaired and in melee range, it
+just attacks outright without `m_move` being involved at all.  Otherwise,
+calls `m_move` first, and then falls through to `mattacku` if the monster
+doesn't move or if it moved but has a ranged attack available.
+
+Thus, we can basically divide the monster AI into two branches: the "immediate
+attack" branch where the monster believes itself to be in melee range, hostile
+and unimpared; and the "no immediate attack" branch where that case does not
+hold (and thus the monster wishes to try other possibilities before melee
+attacking).
+
+### m_move
+
+This function handles monster behaviour in situations where the monster does
+not immediately commit to a melee attack.  It's also called for leprechaun
+dodges, making it harder to make assumptions about what state the code will be
+in (because everything it calls, a substantial proportion of the monster AI,
+has to be able to run during the player turn).
+
+It has four possible return values ("died", "didn't move", "moved", "don't
+move or attack"), and mostly calls a series of sub-AIs which return one of
+those values (or fall through to another AI).  As can be seen from the
+discussion of `dochug` above, "didn't move" really means "run `doattack`".
+Most sub-AIs go through a common postprocessing step (PP), except when the
+monster dies; some don't.  Here are the sub-AIs, in the order they're tested
+for:
+
+  * `mintrap` ("died"/no-PP "didn't move"/fallthrough), for trapped monsters;
+  * A trivial AI for pets that are eating (no-PP "don't move or attack");
+  * 90% no-PP "didn't move" for monsters that can currently hide under items;
+  * `set_apparxy` (in case it was called from a leprechaun dodge);
+  * `dog_move` ("died"/"didn't move"/"moved"), for pets;
+  * `shk_move` ("died"/"didn't move"/"moved"/fallthrough), for shopkeepers;
+  * `gd_move` ("died"/"didn't move"/"moved"/fallthrough), for vault guards;
+  * `mattackm` ("died"/"didn't move"/"moved"), for covetous monsters;
+  * `pri_move` ("died"/"didn't move"/"moved"/fallthrough), for priests;
+  * Disappearing with a message ("died"), for mail daemons;
+  * 20% teleporting randomly or to the player ("moved"), for tengu;
+  * "moved" if the player is engulfed;
+  * and then the `not_special` AI ("moved"/"died"/"don't move or attack").
+
+The `not_special` AI is also part of this function, rather than being split
+out into a separate function.  It determines a square to move to as follows:
+
+  * First, the AI determines a goal square, and whether the monster wants to
+    move towards it, away from it, or neither.
+
+    In NetHack 3.4.3, monsters aim away from the player if they're fleeing, or
+    a leprechaun that's richer than the player; and the goal square is the
+    player, the player's displaced image, or an adjacent location if the
+    player is invisible.  Monsters don't aim towards or away from the player
+    if the monster is a peaceful non-shopkeeper, or blind, or the player is
+    hiding, or the monster should be able to see the player but can't due to
+    invisibility (and a 10/11 chance happens and the monster is within 6
+    spaces).
+
+    If the player is more than 6 spaces away or outside line of sight, the
+    goal square might instead be determined by `gettrack`, which is meant to
+    implement scent, but sufficiently buggy that it usually will not find a
+    scent trail (or occasionally, may find one from a different dungeon
+    level).  This only happens for monsters that `can_track`.  In the common
+    case where `gettrack` (due to bugs, or because there is no such trail)
+    fails to find a scent trail, or the monster can't track, the monster will
+    aim towards the player's actual location; this is almost certainly a bug.
+
+    In NetHack 4.3, the goal square is determined by the monster's strategy,
+    or the monster's current location if the strategy has no location
+    information; the direction is determined by the strategy.  The leprechaun
+    special case still exists, but was moved to `strategy`, so that all the
+    strategic calculations are in one place.  If the strategy gives no goal
+    square, such as if the monster's strategy was reset recently, the monster
+    doesn't aim towards or away from its own square.  (The behaviour of
+    monsters seeking out players they shouldn't be able to see no longer
+    exists.)
+
+    In both versions, bats, stalkers and lights have a 1 in 3 chance to not
+    move towards or away from their goal square; and confused and engulfing
+    monsters never move towards or away from their goal squares.  (This means
+    that monster confusion isn't implemented as randomizing directions, but
+    rather, giving the monster no reason to prefer any direction to any other;
+    the monster thus chooses a random direction to move in, rather than
+    choosing an appropriate direction and then having it randomized.)
+
+  * The AI then determines whether the monster will consider picking up items.
+    It won't if it's peaceful (unless a 10% chance happens), or on the Rogue
+    level, or if it's aware of the player, and on a square from which it could
+    hit the player with a ranged attack (this is to prevent the monster
+    picking up arrows when the player and monster are shooting at each
+    other).  Otherwise, it will.
+
+  * Next, the game works out what restrictions exist on squares that that
+    monster will aim for.  For example, peaceful non-conflicted monsters won't
+    aim for the player's location in 3.4.3 (or the location they believe the
+    player is standing at in 4.3), and monsters that can't open doors won't
+    aim for doors.
+
+  * Then, the game checks which restrictions apply to which squares.  This is
+    done by `mfndpos`.
+
+  * Finally, the monster looks for the "best" adjacent square, based on the
+    distance from the goal square, and randomizing between equal
+    possibilities.  This is based on `distmin` distance (Manhattan distance
+    with diagonals) in 3.4.3, and routing distance in 4.3 (which assumes that
+    monsters have perfect knowledge of the level map; possibly a little
+    unrealistic, but not too bad, and it's better than the monsters getting
+    stuck in corners).  3.4.3 also looks for items in this loop (in 4.3,
+    looking for items happens in `strategy`).
+
+  * In 4.3, there is one more step: the monster's strategy will be cleared
+    (causing it to pick a new strategy on its next move) if it had legal
+    moves, but none were an improvement over its current square, and it was
+    aiming for something in particular; this prevents the AI getting stuck
+    behind a closed door or the like.
+
+After determining the target square, the monster attempts to go there:
+
+  * It fails (no-PP "don't move or attack") if the player has grabbed it;
+  * It wields a pickaxe or axe as appropriate (no-PP "don't move or attack")
+    if it's blocked by terrain it can tunnel through;
+  * If it believes the player is on the square in question, then 4.3-beta2
+    falls through to the attacking codepath (3.4.3 just has the monster move,
+    or attack a monster that happens to be on the square);
+  * Alternatively, if the player actually is on the square in question (but
+    the monster doesn't believe it), the monster is informed of the player's
+    location, and then the code falls through to the attacking codepath (in
+    3.4.3, it always still has its turn; in 4.3, it loses it, unless the
+    player is undetected, in which case it's allowed to stumble into the
+    player on the same turn).
+
+The postprocessing that is done updates the display, then makes the monster do
+whatever action it'd need to do on its new square: tunnelling it out, picking
+up items, hiding, etc..
+
+TODO: mattackq/mattacku
+
+
+General checks
+--------------
+
+These functions calculate general-purpose information about what a monster is
+planning to do.
+
+### set_apparxy
+
+This function determines what the monster knows about the player's location.
+In 3.4.3, it handles only displacement and invisibility (which are basically
+the same internally, except that displacement has a larger range and different
+messages).  In 4.3, it also centralizes the possibility that the player is
+simply out of sight via mundane means (round a corner, on the other side of
+the level, etc.), rather than needing to check this separately every time the
+game needs to know whether the monster would be aware of the player.
+
+### strategy
+
+This function determines where a monster is planning to go.  In 3.4.3, it's
+only used for covetous monsters, and determines whether the monster wants to
+heal up at the stairs, and if not, what items it might be covetous for exist
+on the level (and where they are).
+
+In 4.3-beta2, this function is greatly expanded, and used by all monsters.
+The actual strategies are much the same, but non-covetous monsters will have
+to implement them differently (e.g. walking to a particular map square).  The
+function normally leaves an existing strategy alone (except in the case of
+covetous monsters); it's responsible for selecting a new one only when the old
+one has failed, or when:
+
+  * The monster is on low HP, fleeing, or a leprechaun richer than the player
+    (it tries to escape from the player, or from a previous escape location or
+    its current location if it can't sense the player);
+
+  * A monster just cast the "aggravate" spell (it aims for the player's
+    location, even if it can't sense the player via normal means, because the
+    spell gives magical location alerts);
+
+  * The player is currently visible to the monster (it chases the player);
+
+  * The monster is "social" and sees a higher-ranking monster of the same mlet
+    nearby (it changes strategy to match, in most cases);
+
+  * The monster steps onto the player's scent trail (it follows the trail);
+
+  * The monster has just stopped wanting to escape.
+
+When a monster does have to select a new strategy, it looks for a nearby item
+it wants to pick up, if there is one, and paths to that.  Otherwise, it paths
+to a random square over the other end of the level (causing monsters to patrol
+the level, and meaning that their normal behaviour when the player isn't
+around is distinguishable from confusion/stun).
+
+### distfleeck
+
+This function calculates how near a monster thinks it is to the player, and
+also calculates whether a monster wants to flee from Elbereth (and similar
+effects, like sanctuary).
+
+
+Specific AIs
+------------
+
+These functions handle all or most of a monster's AI behaviour, but are only
+called in special cases.
+
+### tactics
+
+This is the covetous monster AI.  It works as follows:
+
+  * When healing/escaping, teleport to the upstairs.  If the player's not
+    around, heal d8 hitpoints per turn.  Otherwise, fall through.
+
+  * When the player has nothing to steal (or a fallthrough on heal/escape), or
+    when a monster is *standing on* (not holding) a coveted item, teleport
+    next to the player with 1 in 5 probability (1 in 33 when fleeing), then
+    perform an action using the regular AI (via a "continue" return value).
+
+  * When there's an item worth coveting around (except if a monster is
+    standing on it), teleport on top of it or next to a monster holding it.
+    When teleporting on top of an item this way, pick it up and abort (the
+    monster's already used its turn).  Otherwise, perform an action using the
+    regular AI.
+
+### demon_talk
+
+This is the AI for peaceful bribable demons near the player.  The demon
+becomes hostile if the player has Excalibur.  Otherwise, it asks for a bribe,
+and becomes hostile if the player does not pay enough in response
+(disappearing from the game if the player does).  The bribe amount is always
+too high to pay if the demon has the Amulet (the DevTeam thinks of
+everything), although apparently not if the demon has a different invocation
+item (I'm not sure if this case is possible; you could probably pull it off in
+Slash'EM, at least, using a combination of polymorph and taming, unless the
+monMR checks were too high to beat).
+
+### watch_on_duty
+
+This function is called on the Watch, and checks to see if a) they are in
+Minetown, and if so, b) if they are aware of the player picking a lock or
+digging via a source that can take multiple turns.  This produces a warning,
+or all guards on the level turning hostile (if there's already been a
+warning).  Because this is part of the monster AI, a sufficiently fast
+lockpick or slow-dig will thus evade their notice.

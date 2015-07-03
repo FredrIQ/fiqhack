@@ -1,0 +1,2374 @@
+About this document:
+Last modified by Alex Smith, 2015-04-05
+
+Copyright (C) 2013 Alex Smith.
+
+This document is licensed under the NetHack General Public License.  See
+libnethack/dat/license for details.
+
+
+NetHack 4 Changelog
+===================
+
+This document describes the changes that have been made in the NetHack 4
+series (i.e. that do not exist in NetHack 3.4.3, the last version of the
+NetHack 3 series).
+
+Changes are divided into categories:
+
+  * Major gameplay changes.
+
+    This includes anything that noticeably and directly affects a game
+    character during normal play.  In the NetHack 4.1, 4.2 and 4.3 series,
+    these are only intended to exist as the result of bugfixes (many bugs are
+    of the form "doing action X is posible but should not be"), to change
+    scoring or conducts, in order to adjust for the effects of an improved
+    interface, in order to allow the player to avoid using a convoluted
+    sequence of actions to do something they could mostly do anyway (e.g. you
+    can now interrupt a multi-turn action voluntarily, if it's the sort of
+    action that can be interrupted by a monster) or on occasion to remove
+    circumstances where the game is unwinnable, or almost so.  If in doubt, we
+    erred on the side of making these changes only when it benefits the
+    player.  The NetHack 4.4 series will have intentional gameplay changes of
+    its own (although still intends to be conservative compared to other
+    variants).
+
+  * Gameplay changes in alternative game modes.
+
+    This includes the addition of alternative game modes (such as the
+    "permablind" mode added in 4.2), as well as changes in existing game modes
+    (such as debug/wizard mode).
+
+  * Minor gameplay changes.
+
+    Frequently, the gameplay will change in minor ways as the result of fixing
+    a bug or improving the game internals.  You probably wouldn't notice most
+    of these changes unless we listed them, but they're being listed anyway
+    for completeness, and to help people determine what is and isn't a bug.
+
+  * Interface improvements.
+
+    Anything listed here is something you could have done anyway in 3.4.3,
+    even if it would have been very tedious to do so.  (The classic example is
+    that amnesia has basically no effect in 3.4.3, except on spells, because
+    you could record all the information separately outside the game.)  Most
+    commonly, these changes are about showing extra information to the
+    character (that could have been calculated anyway), streamlining the
+    controls, or making it harder to perform dangerous actions.
+
+  * Internals improvements.
+
+    You probably won't notice these unless you're developing on the game, or
+    like reading source code.  But they're there, and they're making the game
+    easier to develop as time goes on.
+
+  * Packaging / build system / platform support.
+
+    Unfortunately, the NetHack 4 team does not have access to as wide a range
+    of systems as the NetHack 3 team had, so we cannot support the more
+    obscure platforms (unless someone turns up to help us out).  Additionally,
+    NetHack 4 uses more processor power and disk space in the name of making
+    the code cleaner and thus reducing bugs, so it probably wouldn't run on
+    weaker processors anyway.  There is positive news, though, in that the
+    game is now much easier to build.
+
+  * Bugfixes against beta versions.
+
+    These are things that we didn't mean to change, and have since been
+    changed back.  They're thus unlikely to be of interest to a NetHack 3
+    series player, but may interest players who played a beta of NetHack 4.
+    (Changes in beta versions that are larger than simple bugfixes will be
+    mentioned in the main changelog instead.)
+
+Documentation improvements are not listed here.  Although there are many of
+those too, it should be easy to find them via looking in the various `doc/`
+subfolders of the NetHack 4 distribution.  Additionally, changes that cancel
+each other out (e.g. if a command was deleted and then re-added) are not
+necessarily listed here, although they may be mentioned to provide historical
+context.
+
+Each change is marked with various tags, to help learn about the history of
+the change:
+
+  * Variant tags ((4), (Nitro), (Ace), (Un), (Grunt), (Dyna), (NAO),
+    (Slash'EM), (Spork)): there is a large ecosystem of NetHack variants, and
+    in many cases, code has been taken more or less directly from one of these
+    variants.  The variant listed is an abbreviation for the variant from
+    which the code used came originally, and not the variant from which that
+    code was ported from, nor the variant that originally came up with the
+    idea.  Changes marked with (4) were created specifically for NetHack 4,
+    although some of them may have found their way into other variants since.
+    "Bilious" is not a variant; it refers to the NetHack Patch Database.
+    
+    In terms of the route via which code eventually ends up in NetHack 4,
+    NetHack 4 was originally created via porting many of the changes from
+    AceHack onto NitroHack (which in turn took many changes from AceHack, some
+    of which originally came from UnNetHack).  More recently, changes from
+    other variants normally make their way into NetHack 4 by way of DynaHack,
+    which in turn takes them from UnNetHack, which sometimes takes them from
+    SporkHack.  Of course, good ideas from anywhere can be added directly, if
+    necessary.
+
+  * Commit tags ((9abcdef), etc.): these can be used to find the change in
+    question in the NetHack 4 code repository (which also contains copies of
+    the AceHack, NitroHack, DynaHack, and GruntHack repositories).
+    Frequently, many commits will be involved in a change, in which case we
+    might list all of them, or just give a range, or even just some examples
+    (in the cases where there are a huge nuber of chnges addressing the same
+    thing).
+    
+    Sometimes a commit was cherry-picked directly from another variant, rather
+    than being ported.  In such cases, the commit number from the original
+    variant is listed here, rather than the new number that it gained after
+    the cherry-pick (due to the way git works).
+
+  * Vanilla bug numbers ((C343-1), etc.): to track which bugs in vanilla
+    NetHack were fixed by changes in NetHack 4.
+
+
+Major Gameplay Changes
+======================
+
+Commands
+--------
+
+`>`: It's now possible to enter a pit intentionally using the `>` command. (Un,
+C343-12, a8e8089, 827f0fe, cad32dd, dd56886)
+
+`a`: Opening and closing the Castle drawbridge via music now takes time. (Un,
+C343-318, 878e409)
+
+`a`: When writing a scroll by its actual type (e.g. `scroll of identify`),
+having seen an unidentified but type-named scroll of the same sort
+(e.g. `scroll called unknown 1` that is actualy, unbeknownst to the character,
+a scroll of identify) no longer guarantess success in writing the
+scroll. (Grunt, C343-403, 0aa9c5e)
+
+`C`: The `C` command no longer identifies high priests at range. (Nitro,
+SC343-12, be3e353)
+
+`e`: Protection from eaten rings is no longer considered to be divinely
+sourced. (4, f66dbaf)
+
+`E`: Wresting a wand via engraving with it now takes time. (Bilious, C343-246,
+a93e3bc)
+
+`r`: Spellbooks can now be read even if spell memory is not low (although
+doing so still damages the spellbook). (Ace, 7cd834e)
+
+`x`: No longer costs time (in order to avoid the need to toggle the
+`pushweapon` option repeatedly in order to set up weapons for two-weapon
+fighting as fast as possible). (Ace, 8c894a3)
+
+`Z`: Spells that ask for a position can now target monsters that are visible
+via infravision/telepathy, even if you cannot see the target location using
+visible light. (Grunt, C341-7, 3df1f97)
+
+Multi-turn commands can now be interrupted voluntarily by the player, if they
+would be interrupted by the appearance of a monster, via specifying a maximum
+number of turns to perform the command in the same way as a repeat count, or
+(if the `animation` option is set to animate interruptible commands) by
+pressing a key or clicking on the map. (Engine code from Nitro, 17a9532;
+interface code from 4, 41fcf8c, c1d4e5b)
+
+Non-time-consuming commands no longer cause the character to sink further into
+lava. (Nitro, f4754b2, 86b2d0c)
+
+
+Items
+-----
+
+Scrolls of destroy armor no longer give permanent boosts to stats
+when wearing cursed stat-boosting items. (Ace, C343-30, 90ee9a8)
+
+Jumping boots and potions of oil now automatically ID (upon equipping them and
+game start, respectively), in order to avoid a need to test them with `#jump`
+or the `a` command. (Ace, 9dc6d96)
+
+Amnesia sources (such as the scroll) no longer causes the character to forget
+information that the player could have remembered, or written down.  This
+saves the player the tedium of having to draw all the maps out on paper in
+case they get amnesia'd.  To compensate, amnesia now drains skill points.
+Additionally, it is no longer possible to control which spells are lost to
+amnesia via reordering the list, and spells lost to amnesia have their spell
+memory reduced to 0, rather than being deleted from the list entirely. (Ace
+and 4, ae101af, 639861d, 863ac16)
+
+Scrolls of charging now make the charge/recharge status of their targets
+permanently visible (so that you can see that they've been recharged); and
+light sources now have a visible charge count. (4, 66ec75d)
+
+Items which are otherwise identical now stack even if one has a known
+beatitude and the other doesn't (this is to compensate for side effects of
+container beatitude identification). (4, 9156017)
+
+It is now much more difficult to explode a bag of holding; placing a wand of
+cancellation or bag of tricks in it will drain the offending item of all
+charges (so that it can be inserted safely), whereas nesting bags of holding
+will fail outright unless the bags are insulated from each other with at least
+two layers of sacks (at which point the nest is assume to be intentional, and
+has the usual explosion chances). (4, e4fd0bd)
+
+Sunsword now stops glowing if a monster holding it is killed. (Grunt,
+C343-106, 5e430da)
+
+
+Monsters and Polyforms
+----------------------
+
+`e`: Floating eyes are now impossible for the player to hit with melee
+attacks, unless the player is protected from gazes. This is because a good
+interface would require confirmation to attack them, thus rendering them
+almost entirely unthreatening, so something else had to be done in order to
+ensure that they remained dangerous; the old and new implementations both
+effectively make them impossible to eliminate via melee without gaze
+protection, but the new implementation is a lot less typo-sensitive. (Ace,
+d83177f)
+
+`G`: Gnomes now have a chance at generating with candles (although unlike in
+AceHack, they don't actually use them, in order to avoid inventory clutter);
+this is to make it possible to farm candles in order to avoid the game
+becoming unwinnable due to a candle shortage. (4, 9dc7a4c)
+
+Monsters are now capable of using their special attacks even if tame; and more
+special attacks now work for polymorphed players than before. (Grunt and Ace,
+53a8e41, 05587f7, 3df54b4, 239ed8e, 93811e3, eb5c83c, 7c67ab1, 867118c)
+
+Monsters no longer have spoiler knowledge of the player's location.  Rather,
+they will only be able to seek out the player if they have some method of
+sensing where the player is (sight, sound, following tracks, covetous sense,
+aggravate effects, etc.). (4, 879d0c0, 9085088, 65befc1, ab33194,
+072da4c..324e041)
+
+Monsters who naturally live on a level (rather than spawning later) now have a
+difficulty mostly independent of the player's level (with some exceptions in
+the late-game to keep the game balance close to 3.4.3; in the early game
+(pre-D:12), the game wil calculate monster difficulty as though the player's
+level were 1). (Nitro and 4, 98a3b47, 0ea054c)
+
+Tame monsters will no longer attack nor be attacked when under 1/3 health;
+when injured but on more health, they will be more cautious about what they
+fight.  They also no longer attack peaceful monsters, unless you anger the
+peaceful monster first.  As a safeguard against being caught in crossfire,
+tame monsters at below 1/3 health are now almost impossible to hit. (4,
+037731d)
+
+Hostile monsters will now attack each other if they dislike each other
+naturally (e.g. elves versus orcs); this change was considered acceptable for
+NetHack 4 because it fits in with the theme of improved AI and is almost
+entirely to the player's benefit. (Un, 4176ec9)
+
+Numerous bugs have been fixed in the monster AI.  One of the more noticeable
+fixes is that monsters can now only locate the player via their own senses
+(rather than always knowing the player's location and choosing to ignore it
+some of the time if the player was invisible); they can do things like
+searching squares by attacking them, and follow an invisible player's tracks
+(eventually bumping into them), as methods of locating the player, in addition
+to remembering minimal information about the player's movements. (4, 163c8e0,
+78cd777, 0ac7085, f891d36, b96aa6e, a402438, 7319788, b46203b, 0d583af)
+
+Monsters use an improved and less buggy pathfinding algorithm.  In particular,
+they are now willing to temporarily move further from their target in order
+that they might move nearer it later, so they don't get stuck on corners as
+easily (this is particularly noticeable with pets).  Additionally, they will
+no longer try to pick up items through walls. (4, ad00904, 4ff884d, e3a10ce)
+
+
+Dungeon
+-------
+
+Stairways that lead between branches are now a different map entity from
+stairways that lead to another level within a branch (and thus look different,
+and are described differently on farlook); this is a gameplay change because
+there's no longer a need to take them to see where they lead. (Ace, 6929bda)
+
+The Vibrating Square is now classified as a trap (and thus shows up in the
+player's memory after finding it, avoiding the need to mark it, and can be
+detected via means of trap detection). (4, e219111)
+
+The chest in the Castle that contains the wand of wishing can no longer be
+trapped. (4, 8ec73b5)
+
+Sources of noise now scale correctly to the player's level; instead of always
+being louder for a higher-level player, they are louder for a higher-level
+player who caused the noise intentionally (e.g. ringing a bell), but quieter
+for higher-level players who caused the noise unintentionally (e.g. during
+combat), and even quieter for Rogues.  Monsters now react to noise by
+investigating the source, rather than merely waking up. (4, 2ec0e59)
+
+
+Options
+-------
+
+Autopickup is now much more customizable, adding filters for items based on
+things like beatitude or partial matches on the name, and there is also an
+option for whether thrown items should automatically be marked for autopickup.
+(Bilious and Nitro, 2327b13, a5bc53b, 4a7e22e, 18bab34)
+
+
+Scoring and Conducts
+--------------------
+
+The scoring system has radically changed; the system used in the NetHack 3
+series was massively abusable and did not do a good job of measuring progress
+through the game (it was pretty much entirely dominated by monster kills).
+The NetHack 4 series tracks score in a number of different categories, each
+with diminishing returns, ensuring that a high score requires a range of
+different score-maximizing activities. (Ace, 40a84c6, 5bfb6e5, 68a29f0)
+
+Some new conducts have been added in order to discourage degenerate behaviour,
+and allow players to prove that they haven't engaged in it: Elberethless and
+puddingsplitless. (4, 3f0b895)
+
+A new conduct is added to track players who choose not to violate the flavour
+of their role and alignment (defined as their alignment record never
+decreasing). (4, 6a1af22..ae00c9c)
+
+
+Alternative Game Mode Changes
+=============================
+
+Debug (Wizard) Mode
+-------------------
+
+In local play, there is no longer a restriction based on UNIX username or (on
+Windows) character name as to who can enter wizard mode. (Nitro, a50250c)
+
+Games created outside wizard mode can no longer be loaded inside
+wizard/explore mode in order to gain spoilers about them and then resume the
+original, standard game. (Nitro, 856b22a)
+
+Wizard mode teleportation has been split in two, in order to ease testing the
+teleportation code itself.  `^T` now does not allow for any sort of
+teleportation that would not be allowed in regular play.  In order to teleport
+without restrictions in wizard mode, use `^F`. (4, 3cf2f4a, bfdc807, 65a76b3)
+
+Monster creation in wizard mode now only prompts for which type of monster to
+create if the `#genesis` command is used explicitly; and the `#genesis`
+command now allows a quantity of monster to be specified at the prompt. (4,
+d179170)
+
+Two new wizard mode commands are added in order to reduce interference of
+monsters: `#levelcide` to destroy all monsters on the level (saving you from
+having to wish up a scroll of genocide), and `#togglegen` to stop monsters
+generating altogether (so that you don't have to interrupt whatever you were
+doing to levelcide). (4, 2a6738b, c4b063c)
+
+A new wizard mode command `#hpset` fully heals the character; alternatively, a
+count can be given to precisely set the character's HP to some other
+value. (4, ad21853)
+
+In the wizard mode spoilers on `^X`, the current alignment cap and the
+player's hunger level are now visible. (Un, 145e145, 6ec5736)
+
+While in wizard mode, confused level teleport on the Planes no longer has a
+chance of crashing the game. (Grunt, C343-5, 3df1f97)
+
+Three new commands are added to accompany `#panic` for testing the game's
+error recovery routines: `#impossible` causes a nonfatal error (unlike
+`#panic` which causes a fatal error), `#desync` corrupts the binary save, and
+a new entry on the `!` menu causes the client to segfault (in order to observe
+how that affects the rest of the system, such as the server). (4, 7a3978f,
+900018f)
+
+A new debug command `#rewind` allows rewinding of save files to earlier
+states, perhaps as part of a manual recovery process, or for testing; it
+rewinds to the current turn, and is intended for use while replaying a game.
+(It can also undo a game over, although it will not move the save file back
+into the saves directory; you'll have to do that by hand.) (4, c1d9296)
+
+The `#vision` command now additionally shows which areas are considered by the
+game to be lit. (4, 35cdb4f)
+
+The environment variables that could be used to skew the RNG for special room
+generation no longer exist (they caused problems with save file
+reproducibility). (4, 83dae9b)
+
+
+New Game Modes
+--------------
+
+Some new challenge game modes have been added, controlled by birth options:
+`permablind`, an implementation of the Zen conduct, which leaves your
+character unable to see all game; and `permahallu`, in which your character
+spends the entire game hallucinating. (4 and Bilious, fd61601, ffe5ae5,
+8fd78aa)
+
+A new game mode `polyinit` lets you play the whole game polymorphed into a
+monster; you select your polyform as a birth option, and you start polymorphed
+into that form and with intrinsic unchanging.  Games in this game mode are not
+eligible for the high score table. (4, bdb83fb)
+
+It's now possible to play the game in a "set seed" mode.  This tries to, as
+far as possible, line up random events between different games played with the
+same seed (thus allowing for more meaningful comparisons between players).
+You can also look at the seed from the dumplog of a completed game you've
+played, allowing you or someone else to replay the game in the same dungeon.
+Games in this mode are not eligible for the high score table. (4, 4da1437,
+76369ee..eee6901, 60cb577, 8642323, 668e8fa, f7aedc1, 41644bc)
+
+
+Minor Gameplay Changes
+======================
+
+Display
+-------
+
+If two objects have the same textual description, they now will also show with
+the same tile in tiles view (rather than using different tiles that look
+identical by default, an information leak). (Nitro, a535b83)
+
+Unexplored area, dark parts of a room, and known stone are now distinct
+objects to the display system, and can display differently (and do display
+differently in tiles mode); this makes magic mapping marginally more
+informative. (Nitro, Dyna, Un and 4, 2ad693c, e3ee161, f1bcc95)
+
+Inventory displays are now sorted by the type of item.  (This is a minor
+gameplay change because it makes it harder to exploit information on the order
+of items in bones files.) (Bilious, Nitro, Un and Dyna, 1ae9b87, e274847,
+4d26cb4, 1c153d6)
+
+Inventory displays now show the weight of the item they're displaying.
+(probably Nitro, 34f1e85 and others).  Some items had their weights adjusted
+in order to avoid spoilers from this. (4, 5a6e10f)
+
+Items in shops now have price tags attached, without needing to have to chat
+to the shopkeeper or pick them up to get a price quote. (Un, 9d7ef39)
+
+Hallucination now rerolls appearances somewhat less often (once per
+time-consuming action for most hallucinated objects, rather than once per
+screen refresh). (4, 4c8b7da)
+
+
+Commands
+--------
+
+`>`: The game no longer discloses information about the ground when pressing
+`>` when blind and levitating. (Grunt, C343-32, 4feb4aa)
+
+`+`: The player may now assign known spells to any letter, not just swap the
+letters of known spells. (4, 6a5eec7)
+
+`a`: Candles can now be placed into candelabra even underwater. (Bilious,
+C343-248, 5c6ed21)
+
+`a`: Digging into a pre-existing hole is no longer allowed. (Grunt, C343-78,
+cbf4fce)
+
+`a`: Time usage for the `a` command is now more consistent: it takes time if
+any actual action happened or if the character tried and failed, no time if
+the action was aborted. (Grunt and 4, C343-353, C343-382, dca24d1, b00d3fd)
+
+`a`: Touchstones can now have arbitrary objects rubbed on them even if
+identified. (4, C343-124, C343-130, dc752a1)
+
+`a`: You can now use each stethoscope in your inventory for free once per
+turn, rather than being able to use one stethoscope total (unless you saved
+and restored in between, in which case in 3.4.3 you could use the same
+stethoscope as often as you liked). (Nitro and 4, f342510, 18db100)
+
+`a`: Towels can now be used even if wielded. (4, C343-274, 6e19ca0)
+
+`A`: Now allows equipping items into arbitrary slots (e.g. changing your
+secondary weapon slot while wielding cursed weapon), in addition to
+de-equipping. The timing rules have also changed, because they were entirely
+inconsistent in 3.4.3; for many items, `A` will now be one action slower,
+because the 3.4.3 version of `A` contained a bug in its timing
+calculations. (4, 983bdde)
+
+`C`: If your finger slips while naming an object, the replacement name now
+includes `z` as a possible letter for the resulting random typo. (4, C343-364,
+a26b2a4)
+
+`d`: Dropping a container on an altar now reveals the beatitude of the items
+inside the container, thus saving the player from having to unpack it
+manually. (Ace, 4258309)
+
+`d`: Dropping a ring down a sink now formally identifies it (rather than
+prompting the player to informally identify it). (Un, 4f0a367)
+
+`^D`: Kicking an empty space now takes time. (Un, C343-298, 92f43f4)
+
+`^D`: Cancelling a kick on a monster now takes no time and makes no noise.
+(Grunt, a2ec6da)
+
+`^D`: The effect of kicking a steed no longer depends on which commands you
+use for movement (i.e. it responds to travel, and moving one square at a time,
+the same way). (4, 6860cd2)
+
+`^D`: Causing a monster to reel via kicking it with kicking boots now
+identifies the boots as kicking boots. (4, 243d312..e7c4029)
+
+`e`: Now warns upon dangerous attempts to eat food; warnings for tainted
+corpses no longer cost an existing edibility intrinsic. (Ace and 4, 649a6b7,
+5e5f135)
+
+`e`: No longer works on artifacts that can't be touched. (Grunt, C343-244,
+7ed1784)
+
+`E`: Now formally IDs the type of wand if the engrave attempt produces a
+unique message. (Ace, 1e34184)
+
+`E`: Now works with pick-axes. (4, C343-145, a911545)
+
+`^E`: The number of slots remaining (and available for enhancing skills) is
+now shown on the skill enhancement menu. (Ace and Dyna, 529b276, a9047bf)
+
+`F`: Can now be used to force attacks upon terrain.  This is mostly only
+useful as a shortcut for applying a wielded pick-axe; however, it opens some
+new (admittedly, likely useless) possibilities, like whacking a wall with a
+sword, which were not previously possible. (Grunt, C343-322, f7ffd31)
+
+`P`, `W`: Now prints a message if you just equipped a cursed set of armour.
+(The `A` and `i` commands will also print the message, if used to emulate `P`
+or `W`.) (4, c0d5ee2)
+
+`q`, `#pray`: These commands no longer interact with dungeon features while
+engulfed. (Grunt, C343-63, 8c03941)
+
+`q`: Now formally IDs the type of potion if the quaff produces a unique
+message. (4, 43b7de0)
+
+`r`: Now formally identifies enchant armour scrolls when they are used to
+create DSM. (Dyna, c9ffd37)
+
+`s`: Finding a mimic via a search no longer wakes it; this is to enable
+players/interfaces to un-bind the `wait` command if they wish to free up keys.
+(Ace, 8208917)
+
+`S`: Saving no longer resets the character's movement energy to 12, and thus
+no longer loses any bonus actions the character might have that turn nor any
+progress towards accumulating bonus actions on future turns. (Nitro, 0cd2e80)
+
+`S`: Saving no longer blocks the ability to resume the following commands
+after interruption: `r`. (Nitro, 5c56a81)
+
+`t`: No longer works without hands. (Grunt, C343-243, d07e9cb)
+
+`T`: Has had its timing rules change, because they were inconsistent in 3.4.3;
+now takes the same time as the new `A` command would take, which is typically
+faster than `T` from 3.4.3 (except when in a slow polyform), but slower than
+`A` from 3.4.3. (4, e5262d7)
+
+`^T`: No longer teleports leashed pets adjacent to you if the teleport fails
+(e.g. due to being on a no-teleport level) or is cancelled. (4, c3bdbc4)
+
+`z`: Now formally IDs a wand as teleport if you zap yourself under the same
+circumstances as if you zap your steed. (4, b7347be)
+
+`^X`: Now shows the total inventory weight, and how close this is to the
+nearest point where burden level changes. (Ace, 237951d)
+
+`#force`: Now works with pick-axes. (4, C343-145, a911545)
+
+`#force`: Now charged for if used on an unpaid item. (Grunt, C343-241,
+7704a8f)
+
+`#kick`: Now correctly handles kicking beyond the edge of the map. (4,
+C343-245, b85d9a3)
+
+`#offer`: If the character should be given a sacrifice gift but no coaligned
+artifacts are available, they will now be given an unaligned artifact as a
+gift, rather than the game becoming confused and failing to give a gift at
+all. (4, C343-358, aa45966)
+
+`#pray`: The invulnerability period (if any) now protects against stinking
+clouds. (Grunt, 3f358cc)
+
+`#untrap`: No longer works on monsters you can't reach due to levitation. 
+(Grunt, C343-22, 628c7ec)
+
+Interruptible multi-turn commands are now interrupted by the process of
+turning to stone. (Un, C343-74, f203351)
+
+Interruptible multi-turn commands are no longer interrupted if an unseen
+monster misses the player with a breath or spit attack. (4, 39d6010)
+
+
+Items
+-----
+
+Pearl rings are no longer capable of rusting. (Ace, C343-386, d97abba)
+
+"leather spellbook" has been renamed "leather-bound spellbook", because it
+isn't made of leather. (Ace, C343-160, cc182fe)
+
+Silver damage now works correctly while polymorphed, and from silver arrows.
+(Un and Ace, C343-2, C343-171, 97b97bb, 805f9ae)
+
+Boulders created via polymorphing statues, or splitting a stack of boulders on
+a square, now block line of sight. (Ace and Grunt, C343-88, C343-114, ff8a0c1,
+5cde50e, 607b0f5)
+
+Cancelling an item near a shop now correctly checks whether or not the
+cancelled item is in the shop. (Nitro, C343-129, 93a1f3e)
+
+Items owned by shops will be automatically identified if they're the only item
+in their weight and price range. (Ace, 767aa23, 5a6e10f)
+
+Cursed light sources will be marked as such when they fail to light (affecting
+gameplay in a marginal way if they subsequently get cancelled and then
+randomly cursed, because the player will know that the random curse hit that
+item in particular). (Ace, 5736180)
+
+The Candelabrum of Invocation no longer becomes permanently unusable if you
+take it to the Vibrating Square when it has exactly one turn left. (Grunt,
+C343-424, efac3c6)
+
+The Candelabrum of Invocation's weight now includes the weight of the attached
+candles. (Grunt, bd97343)
+
+Statues and containers will have the correct weight even if generated on
+special levels.  (Grunt and 4, C343-36, f2b7b98, 4f69e13)
+
+Beam-type wands that hit a monster no longer affect its corpse. (Grunt,
+C343-362, 2a36eed)
+
+Greased projectiles now work the same way for monsters as for players. (Grunt,
+C343-47, 661239e)
+
+Magic lamps now cease being magic in bones if the player died as a result of
+making a wish from them. (Grunt, C343-95, 3d7a853)
+
+The wish parser now accepts undead monster corpses (e.g. "elf zombie corpse"),
+producing a corpse that could have been be produced as the result of killing
+that species of undead. (4, 83e49d2)
+
+It's now possible to wish for an item with a specific inventory letter
+(e.g. by wishing for "k - a blessed skeleton key").  This is mainly intended
+for the eventual creation of a testsuite, but perhaps it will be of use to
+people attempting certain bizarre conducts.  (Note that this affects gameplay
+in the obscure situation where you wish for a tripe ration with a full
+inventory or when fumbling; it'll count as having been in inventory
+momentarily to gain the letter, so a pet will consider it to have been dropped
+by the player.) (4, 245d8ce)
+
+The Book of the Dead is now immune to lava even if the character holding it
+does not have fire resistance. (Grunt, a9267e4, 1b6f60e)
+
+It's no longer possible to stand on lava with the aid of non-fireproof water
+walking boots and sufficiently many hitpoints. (Grunt and 4, SC343-3, 919fdb5,
+a591080)
+
+Auto-cursing items now treat monsters the same way as players. (Grunt,
+C343-91, 69180c4)
+
+The distance that thrown/kicked objects move now correctly respects the
+presence/absence of gravity, whether the floor is stone or ice, and whether
+the object is greased. (Grunt and 4, C343-27, 87bfcda, 80bd729)
+
+Objects that provide drain resistance (such as Excalibur) are now immune to
+drain themselves. (Grunt, C343-442, dc37dab)
+
+Helms of opposite alignment now reset alignment record in the same way that
+permaconversion does. (Grunt, C343-343, fbf8859)
+
+Alchemical explosions now create noise. (Grunt, C343-351, 63dbb64)
+
+Lizard corpses no longer slow monsters who eat them due to stunning or
+confusion. (4, C343-173, a4f65c4)
+
+Rings can now be charged even if not formally IDed. (4, C343-290, 32dffda)
+
+Shops now correctly charge for unpaid items whose enchantment has changed via
+enchantment scrolls or damage. (Grunt, C343-89, 9f00331)
+
+Probing now observes the contents of a box containing Schrödinger's Cat.
+(Grunt, C343-263, 7e5bdca)
+
+Bags of holding now round the weight of their contents correctly. (4,
+C343-418, cb6a6c9)
+
+Drums of earthquake can no longer create pits inside holes or trapdoors, and
+no longer destroy beartraps (they disarm them instead, if they create a pit on
+the same square). (4, 277a41f)
+
+Landmines and bear traps now have (nonrandomized, and distinct) unidentified
+appearances; this is mostly so that a land mine (the object) and a land mine
+(the trap) can be distinguished in config files, but has a very minor effect
+on scoring. (4, a76b51e)
+
+Recently created comestibles can no longer be rotten (this feature was meant
+to be in 3.4.3, but there's a typo in the relevant code). (Un, ab81299)
+
+Potions of blindness no longer grant blindness immunity when wielded or
+carried in the alternate weapon slot. (Dyna, 96fe8fe)
+
+Players who cannot die to cursed or uncursed potions of sickness (due to
+poison resistance) now cannot die to blessed potions of sickness either. (4,
+SC343-2, c66219b)
+
+Polymorphed equipped items remain equipped, if the new item fits into the same
+slot on the body. (4, b7e605c)
+
+Amulets of unchanging can no longer be polymorphed, nor polymorphed into. (4,
+b7e605c)
+
+Dipping potions of polymorph into another potion no longer causes them to be
+polymorphed (only the other way round). (4, b7e605c)
+
+If a hat or helmet becomes cursed as a result of wearing it, its BCU status
+will become known immediately. (4, 8c25729)
+
+Whistles are now identified upon use (because magic and tin whistles produce
+different messages). (4, 096007e)
+
+Potions are now identified when thrown by a monster at the character, if this
+causes a unique message to be printed and the character was able to see the
+potion before it hit. (4, 3071b59)
+
+Items on the D:1 upstairs are no longer autopickedup before the first turn of
+the game (in 3.4.3, they would be picked up even with autopickup off!). (4,
+3769725)
+
+Randomly generated splint mail on D:1 no longer generates rustproof for
+samurai. (4, 820b493)
+
+Rust, corrosion, etc. now work more consistently between different sources of
+erosion damage.  (Some specific changes of this are that grease is now more
+reliable and the character is able to notice that an item is rustproof when it
+resists damage in more situations.) (4, 4e5d57b..454f173, 6dc5d8a, b380af2)
+
+It's now possible to fit a bag of holding under the gap in a door even if it
+has items inside (assuming that the character holding it also fits through the
+gap). (4, 50c5dbe)
+
+A punishment ball and chain no longer crash when combined with engulfing
+and perhaps petrification. (4, C343-59, 65a76b3)
+
+Uncursed potions of monster detection (and other similar monster detection
+effects) now have a very short lingering monster detection effect afterwards.
+This is to allow players playing with a non-graphical interface and a keyboard
+an opportunity to examine the exact species of each detected monster using
+farlook (beforehand, you would need to either use details in a graphical
+interface, or use the mouse to examine the monsters). (4, b95ba0e)
+
+Magic mapping now maps the background (normally "floor of a room" or
+"corridor") behind a trap or remembered object. (4, bf6eeeb)
+
+Once the character learns the true identity (like "mirror") of any item with a
+nonrandomized appearance (like "looking glass"), they will then be able to
+identify future items like that even if blind. (4, fd34c2a)
+
+If a spellbook is cursed while you're reading it, it now produces a
+short-duration helplessness and aborts the spell memorization, rather than
+memorizing the spell, then performing around half of the cursed spellbook
+routine and potentially leaving the spellbook in an inconsistent state.
+(4, 564a5d6)
+
+
+Monsters and Polyforms
+----------------------
+
+`a`: Antholes no longer generate if there are no ants to place in them. (4,
+343-163, 02844f7)
+
+`A`: The alignment of angels is now correctly displayed regardless of whether
+they are sent by particular gods or not. (Grunt, C343-122, 6f19361)
+
+`A`: Ki-rins and couatls no longer wear armor. (Grunt, C341-18, 3df1f97)
+
+`b`: Gelatinous cubes now die if they attempt to engulf Rider corpses (thus
+preventing the player from indirectly destroying the corpse). (Grunt,
+SC343-16, 7536ccc) 
+
+`D`: Disintegration attacks from black dragons now affect monster inventory
+the same way as player inventory. (4, b060883, cf276aa)
+
+`e`,`y`: Exploding monsters are no longer visible while the effects of the
+explosion are calculated (so that, for instance, you will not hallucinate a
+random monster in the location where a black light exploded). (Grunt, C343-64,
+a143c93)
+
+`e`,`y`: Exploding monsters are now correctly masked by hallucination. (Grunt,
+C343-128, f5964d4)
+
+`e`: Spheres are now consistently incapable of picking up items. (4, C343-138,
+d2f3edd)
+
+`E`: Air elementals are no longer solid. (4, C343-295, 1dae971)
+
+`E`: Invisible stalkers now count as having a humanoid shape. (Grunt,
+C343-159, 1caa11b)
+
+`g`: Gremlins now reset the entire state of protection when stealing
+protection, rather than leaving the amount of divine protection different from
+the amount of Defence granted by divine protection. (Un, C343-189, 2a3043c)
+
+`H`: Players in giant polyform can no longer pick up boulders into inventory
+overflow slots. (Grunt, C343-225, 5338c20)
+
+`m`: Mimics pretending to be doors now react more appropriately to attempts to
+lock or unlock them. (Grunt, C343-409, 23a2051)
+
+`m`: If a mimic is somehow lead to the Rogue level, it will now pretend to be an
+open doorway rather than a door if placed into a doorway. (4, C343-34, C343-380,
+81e5261)
+
+`m`: Mimics will no longer pretend to be items or furniture in impossible
+locations (such as a fountain or boulder over a pit). (Grunt, C343-37,
+3e94adf)
+
+`m`: A player who is mimicking an object in mimic polyform will stop hiding if
+they polymorph into a non-mimic. (4, C343-391, 89eef0f)
+
+`m`: Mimics mimicking objects that block sight (such as boulders and doors) no
+longer continue to block sight after being genocided. (Dyna, 2f9436c)
+
+`m`: Several bugs relating to whether or not a player could see a mimic have
+been fixed. (4, 6ee7cdd)
+
+`n`,`&`: Demon princes no longer demand bribes from helpless players, and
+foocubi and nymphs no longer attempt to seduce or charm them. (Grunt,
+C343-137, e41bd77, 6092b66, 3d53054)
+
+`N`: Players in guardian naga form now spit the correct sort of venom. (4,
+C343-153, 56eb207)
+
+`t`: Players in trapper polyform are no longer described as hiding on the
+ceiling. (Grunt, C342-51, 3df1f97)
+
+`T`: It's no longer possible to see an invisible troll revive (without see
+invisible). (Grunt, bdf06c2)
+
+`u`: Unicorns can no longer catch gems while helpless. (Grunt, C343-115,
+b977028)
+
+`u`: Unicorns in bones files are now correctly peaceful or hostile based on
+the alignment of the new player arriving on the level. (Grunt, C343-66,
+0a9a09b)
+
+`w`: The chance of long worms being cut is now based on the type of damage
+they take (slashing having more of a chance to cut them), then the shape of
+the weapon that attacks them. (4, 8782996)
+
+`w`: Attempting to close a door on a long worm tail when blind no longer
+reveals its head. (4, a402438)
+
+`W`: Incorporeal monsters (ghosts and shades) can no longer be slimed. (Grunt,
+C343-81, 53922d0)
+
+`@`: Resurrected quest leaders no longer forget their status as quest leaders.
+(Grunt, C343-98, 7c72caa)
+
+`@`: Vault guard handling has been reworked to fix many of the outstanding
+bugs in it. (Grunt, C343-23, C343-125, C343-127, C343-166, C343-333, C343-432,
+C343-433, C343-435, b3dd07d, 7867ff7, 3775d40)
+
+`@`: Nurses now take passive damage when healing players in passively damaging
+polyforms. (Grunt, SC343-15, e44e1cc)
+
+`@`: Nurses now consistently treat characters holding nonweapons as being
+unarmed. (Un, 6865f90)
+
+`@`: The Oracle of Delphi no longer welcomes characters that she's hostile to.
+(4, C343-181, 5113058)
+
+`@`: Prisoners no longer use messages intended for djinn. (4, 896f668)
+
+`&`: When a djinni is pulled out of a lamp or bottle, if it is annoyed at the
+character for disturbing it, it now always generates hostile (rather than
+sometimes generating peaceful if the character is neutral). (Grunt, c9456af)
+
+`&`: If a graveyard fails to generate a normal demon, it now substitutes
+undead, rather than the nonexistent monster #-1 (which would probably crash
+the game). (4, 7345322)
+
+Monsters "shrieking in pain" now create noise. (Grunt, C343-65, 3e0ea7b)
+
+Monsters can no longer equip shirts in zero time while wearing armor. (Grunt,
+C343-360, 1da4ce4)
+
+Tame monsters can no longer dig on the Rogue level, if they couldn't dig there
+when hostile. (Grunt, C343-4, 06d2940)
+
+Monsters can no longer jump over walls to evade kicks, nor teleport to evade
+kicks on a no-teleport level. (Grunt, C343-38, C343-73, 0f8cd36)
+
+Passive damage taken by monsters now scales correctly on the number of attacks
+they made. (Grunt, C343-80, dbc3584)
+
+Non-randomly-generating monsters no longer randomly generate on special
+levels. (Grunt, C343-415, a68925a)
+
+Pets can now ascend even while eating. (Grunt, C343-83, c22e8e1)
+
+Killing a tame pet from inside no longer spouts warning messages. (4,
+C343-299, e568e1b)
+
+Monsters, and players in monster polyform, can no longer continue hiding if
+the corpse they're hiding under rots away, or if objects on the square are
+otherwise destroyed. (Grunt and 4, C343-33, C343-308, 7f16165, 4af2ed0,
+0b2fa24)
+
+Polyforms that are incapable of breathing can no longer use brass or woodwind
+instruments. (Grunt, SC343-1, 17fd2d5)
+
+Monsters that do not cause physical damage now have their experience gains
+calculated correctly. (Grunt, C343-70, 80f94d9)
+
+Steeds and engulfing monsters are now capable of dropping corpses. (Grunt,
+C343-107, 6cf9497)
+
+Disintegrating a steed no longer makes it impossible to saddle. (Nitro,
+C343-176, 3bf9166)
+
+Monsters that can ooze under doors can also ooze through diagonal gaps.
+(Grunt, C343-144, 892c156)
+
+Monsters no longer get stuck in corridors while fleeing. (Dyna, f71440b)
+
+Monsters will no longer attack hiding players with ranged attacks.
+(Grunt, C343-377, 81f437f)
+
+The monster clerical "lightning" spell now works consistently with other forms
+of lightning with respect to blinding the player. (Grunt, C342-46, 7438364)
+
+Quest leaders will now avoid traps (thus preventing the game becoming
+unwinnable due to the Norn stepping on a fire trap and drowning). (4,
+efeff64)
+
+Various AI fixes were made to groups of monsters. For small groups, the group
+will have a tendency to stay together or at least not split up too much. Also,
+monsters stuck in the middle of very large groups of monsters will run only a
+minimal AI in order to save on CPU time and save file churn; this should help
+reduce the performance impact of pudding farming (and may break some existing
+pastescripts for pudding farming). (4, f4015d7)
+
+If a monster's AI determines that two squares are equally good choices, the
+monster will randomize between them even when aiming for or away from a
+particular square (rather than just when the monster has no target square
+set). (4, c0ca805)
+
+The game now consistently handles a player in a monster polyform having
+Strength drained below 3 (dying from the resulting damage is now always
+considered HP death rather than sometimes being considered ability drain
+death). (4, 9cd95f9)
+
+
+Dungeon
+-------
+
+Rolling boulder traps no longer generate on lava. (Un, 39a4599)
+
+Rolling boulder traps now correctly reset for the next victim if they kill the
+player's character (and are subsequently loaded from bones). (Grunt, C343-49,
+549ba7a)
+
+It's no longer possible to interact with items at the bottom of a pit with
+melee-range commands (such as kicking) unless you are in the pit yourself, or
+have phasing. (4, C343-16, C343-17, 7d86789)
+
+Fire traps below ice no longer perform their effects twice when triggered
+once. (Grunt, C343-42, 5577e8d)
+
+Characters in water or lava now take water/fire damage regardless of whether
+or not they move. (Grunt, 6533efe, f8b9d68)
+
+It's no longer possible to create a pit on a drawbridge via using a land mine.
+(Grunt, C343-82, 77c8aa0)
+
+Monsters and characters that escape a drawbridge collapse now correctly fall
+into the water/lava beneath it, rather than continuing to stand in midair.
+(Grunt, C343-266, 687e769)
+
+The moat created by the Invocation now affects monsters immediately, rather
+than with a 1-turn delay. (Grunt, cd40b25)
+
+Shopkeepers no longer sometimes forget about pits dug in their shops. (Grunt,
+7d66e21)
+
+Lava no longer gives an extra turn of survival if your water walking boots burn
+up. (Grunt, a6951c6)
+
+The time in the dungeon (for things like moon phase and werewolf
+transformations) is now specified as an offset from UTC (the "timezone" birth
+option), rather than using the local time of the server; this both allows
+remote players to get moon phases more in line with their local time, and
+removes exploits from malicious daylight saving definitions. (4, 236c80b)
+
+The game now correctly tracks whether the player is aware of water and lava
+that they can't currently see (thus, for instance, it's no longer possible to
+dig down on a fountain while blind, and then have travel automatically avoid
+the resulting pools even though you don't know where they are). (4, c627ba3)
+
+Fire traps now sometimes hit weapons instead of armor. (4, d84cd4f)
+
+The character can now enter a level that's entirely full of monsters, via
+displacing an existing monster on that level, without crashing the game (from
+the NetHack 3 series devteam, 76f55be)
+
+When a monster jumps onto a polymorph trap, being able to see the monster
+(e.g. via infravision) is now sufficient to locate the trap. (4, 2a4fe55)
+
+An engraving containing 128 or more copies of `e`/`l`/`b`/`r`/`t`/`h`
+(case-insensitive) is no longer considered to never potentially contain the
+substring `Elbereth`. (4, d036612)
+
+
+Character
+---------
+
+Removing an amulet of restful sleep no longer removes intrinsic "sleepitis".
+(other sources, C343-356, c5e27fb)
+
+Lifesaving upon unpolymorphing from a stoning-resistant form now unwields
+cockatrice corpses. (GruntHack and other sources, C343-222, f4be125, 73f6078)
+
+Killing a monster with an unknown rolling boulder trap no longer breaks
+pacifist. (Un, 62a8438)
+
+Unconcious characters can no longer see. (Grunt, C343-101, fccd7a4)
+
+Characters in lava can no longer be slimed. (Grunt, C343-232, 6533efe)
+
+Levitation now stacks correctly with flying, and interrupts multi-turn
+commands when it ends. (Grunt, e90f457)
+
+Hunger now interrupts multi-turn actions. (Dyna, f80ea2f)
+
+When stoning a monster from the inside, punishment is now handled correctly.
+(Grunt, C343-59, a194db1)
+
+Touchstones in starting inventory no longer give a starting proficiency with
+slings. (Grunt, C343-355, ccf75ee)
+
+Stacks of daggers or ammo in starting inventory now start quivered. (Dyna,
+1d6a7e1, d551790)
+
+Swallowing a cockatrice whole now violates foodless conduct even if the
+character dies in the process. (Grunt, C343-134, a65cf62)
+
+Reading the Book of the Dead now breaks illiterate conduct. However, it can be
+invoked instead, for the same results as reading it, but without breaking the
+conduct; and there is a message letting players know about this so that they
+don't break the conduct by mistake. (Bilious, 8fd78aa)
+
+Clairvoyance granted by the Amulet of Yendor is now visible on enlightenment.
+(4, 4f08317)
+
+Accuracy bonuses from martial arts / bare-handed skill are now taken into
+account (in 3.4.3, there was code to calculate them, but the code for
+attacking forgot to call it). (Spork, 757c4d6)
+
+Helplessness sources are now tracked independently (thus, it's no longer the
+case that 4 turns of sleep + 20 turns of paralysis = 20 turns of sleep, as in
+previous versions of NetHack). (4, 971d4e9, c55c327)
+
+The blindness from stinking clouds now works consistently regardless of the
+speed of the character. (4, 2415414)
+
+A character can now have a different name from the player even in server play.
+The set of characters allowed in character names has been limited to prevent
+path traversal / shell injection vulnerabilities that might otherwise arise as
+a side-effect of this change. (Nitro and 4, 2ec5137..91348a9 and others)
+
+Sleeping gas traps can now affect monsters even if they're ridden by a
+sleep-resistant player. (4, C343-260, 20805c6)
+
+
+Messages
+--------
+
+Some messages have had typo fixes. (Un, Ace, Grunt, 4 and Dyna, C343-8,
+C343-24, C343-45, C343-54, C343-55, C343-57, C343-58, C343-77, C343-90,
+C343-104, C343-109, C343-111, C343-116, C343-123, C343-131, C343-136,
+C343-155, C343-183, C343-211, C343-235, C343-258, C343-259, C343-345,
+C343-379, C343-399, C343-438, 9528d39, f18503d, 63329da, 6069675, 25bd1d0,
+b7dafb1, 1ab7536, 660ac1f, adce07d, d35ea64, 09b7802, ed3c54c, 2cce8e1,
+0c2f758, e95ea48, 0333ed2, 07fe690, f809ede, e609855, a78bfcf, 02e6a13,
+5d40e9f, e785e38, 6ada174, 4c37976, 6140ba9)
+
+The game no longer produces misleading messages when healing an invisible
+monster, scaring a mimicking mimic, using a drum of earthquake while trapped,
+sitting down after escaping from a pit, failing to light a light source while
+blind, attaching a stack of candles to a candelabrum with one free slot left,
+teleporting an engulfing monster using a quantum mechanic polyform, being
+attacked by a monster with no attacks while praying, farlooking a monster seen
+only via astral vision, observing a monster turn invisible via telepathy,
+dying in a shop with multiple shopkeepers on the level, chatting to a sleeping
+steed, removing levitation while riding a flying steed, pushing a boulder into
+a pool while riding, pushing a boulder onto a level teleporter, or using a
+pickaxe when standing on water. (Ace, Un, Grunt and 4, C343-7, C343-15,
+C343-18, C343-50, C343-56 C343-69, C343-72, C343-152, C343-174, C343-202,
+C343-233, d35ea64, 75888c3, 50b8255, a546d6b, 85054d7, 8c6d549, c0fa205,
+3e7219f, 065bac4, 73156d5, 0a8ecf8, 7515046, 4ed3165, 71b9a83)
+
+Climbing a ladder no longer produces redundant messages. (Ace, 6f55aca)
+
+The water in the Plane of Water is now correctly described in messages.
+(Grunt, C343-26, C343-325, C343-314, 4605b9b, de18364)
+
+You can no longer hear rolling boulder traps while blind and asleep. (Grunt,
+C343-41, 7334f64)
+
+Messages now correctly distinguish between "hats" and "helmets". (Grunt,
+C343-28, 7f26bd7)
+
+Messages involving mirrors now respect their identification status. (Grunt,
+C343-118, 1dfa2e1)
+
+Messages for displacing pets into traps are now printed in the right order.
+(Grunt, C343-71, 14e2d7f)
+
+If a monster is wielding a stack of items, messages now correctly describe
+them as holding only one of them. (Grunt and 4, C343-40, C343-168, ce36a66,
+9628c2c)
+
+The game now always chooses the correct variant of the "You can move again."
+message when helplessness ends, rather than sometimes reusing the previous
+message. (Grunt and 4, C343-84, 218cc7b, ba8ede8)
+
+Many new hallucinatory messages and "you can't do that" messages were
+added. (Un and 4, 4cbb620, bb5f3d0 and others)
+
+Erodeproofing now takes precedence over maximum erosion status when giving
+feedback for why an object cannot be eroded. (Grunt, 593c6c7)
+
+Messages for steeds being killed by their riders now allow for the fact that
+riders are always aware of their steed. (Grunt, c063835)
+
+When rumour sources want to exercise or abuse wisdom, this is now correctly
+tied to the truthfulness/usefulness of the rumour. (4, C343-178, 125b1c9)
+
+The message for a shopkeeper being after your hide now respects polymorphed
+forms. (4, 10eb057)
+
+The game now keeps better track of causes of death across turns, preventing
+you from being turned to slime by a scroll of genocide, among others. (4,
+C343-219, 75e737c, 24ac31b, 21cbbca)
+
+Objects on lava burning up now always have messages printed for them. (4,
+a6951c6, 8d7b8d9)
+
+The game no longer prints a misleading message if your ability scores are
+capped by a combination of racial maximums and temporary status effects, and
+you try to increase them. (4, 2b437b2)
+
+The game (and characters inside the game) will no longer address monsters and
+polyforms that are not truly alive (constructs, undead, etc.) as "mortal" (4,
+117d59f).
+
+
+Crash / Memory Corruption Fixes
+-------------------------------
+
+Bisecting a long worm on 1hp, or at level 0, no longer crashes the game. (Un,
+C343-324, C343-384, ab1d19f, 26199b2)
+
+Throwing a potion at iron bars no longer crashes the game if it subsequently
+hits a monster. (Un, C343-100, 44fef77)
+
+The game no longer corrupts memory when destroying the following items while
+wielded: cream pie via `a`; candle or potion of oil via burn timeout; figurine
+via autotransformation; potion of polymorph via quaffing (and transforming
+into something with no hands). (Un and Ace, C343-218, C343-275, C343-276,
+C343-398, 0fcbbbf, 71cf898)
+
+The game no longer corrupts memory when potions of acid are destroyed in
+water. (Un, C343-179, 319b504)
+
+The game now correctly tracks items when dying in a shop while two-weaponing.
+(Un, C343-270, 0114692)
+
+The game no longer corrupts memory upon probing a reanimated statue. (Un,
+C343-94, SC343-8, c6bf9dd)
+
+The game no longer corrupts memory upon attempting to travel from (or maybe
+to?) a location equidistant from a very large number of boulders. (Ace,
+ceec202)
+
+Bullwhips no longer corrupt memory when applied off the edge of the map.
+(Grunt, C343-383, 7831df3)
+
+The game no longer crashes when an engulfing monster expels a player onto a
+magic trap and is one of multiple monsters that gets tamed as a result.
+(Grunt, C343-147, 04d133a)
+
+The game no longer crashes upon repeatedly giving an unidentified item very
+long names using the `C` commands, and/or dipping such an item. (Un, 2eddb58,
+ab27767)
+
+The game no longer spews warnings upon angering one shopkeeper while holding
+items belonging to another. (Dyna, d995ed1)
+
+The game no longer crashes if the character is teleported onto a sink while
+equipping boots of levitation. (4, 59c8439)
+
+
+Interface Improvements
+======================
+
+It should be noted that the interface was entirely rewritten for NitroHack,
+and thus NetHack 4.  Thus, there are a large number of minor interface
+differences not listed here due to differences in replicating the original
+behaviour in the reimplementation.  The NetHack 4 developers have aimed to
+keep it keystroke-compatible while in-game, though, except in the cases listed
+here.
+
+
+Commands
+--------
+
+`!`: The `!` command for starting a shell no longer exists; pressing it by mistake
+was much more common than using it for an actual shell, and the `^Z` suspend
+command (which was removed by NitroHack but re-added in NetHack 4) is probably
+more useful. (Nitro and 4, c2316d2, 10645f3)
+
+`!`: The `!` command now shows a menu that contains commands that are
+generally applicable regardless of the character's situation (such as changing
+options, viewing character statistics, and saving the game); the commands each
+have their own individual bindings too, but the combined menu may be easier
+for some players to remember. (4, e73128a)
+
+`_`: Travel now understands that the player might want to route through traps; it
+will still try to avoid traps, but if avoiding a trap is impossible or would
+require going a long way out of the way, it will route to just before the trap
+and then wait for more input. (Ace, 18888d8)
+
+`_`: Travel is now interrupted by hostile monsters capable of attacking, even
+if not adjacent.  (The `travel_interrupt` option controls this behaviour, and
+can be turned off to require monsters to be adjacent before interrupting
+travel.) It is also now interrupted by confusion. (Ace and Dyna, f52e890,
+7dc7ea3, a7f6b94)
+
+`_`: Travel now treats boulders in Sokoban the same way that it treats walls,
+making it much safer to use. (Dyna, 4b57d83)
+
+`_`: Travel no longer gets stuck in infinite loops in some corner cases
+involving unreachable spaces and obstacles that block sight. (Dyna, 02da53e)
+
+`_`: Travel is no longer stopped by engravings that the player has seen
+before. (Dyna, 2d5d701)
+
+`_`: Travel (and farmove and autoexplore) now respect the `movecommand`
+option, meaning (among other things) that they will displace pets if normal
+movement would. (4, 6860cd2)
+
+`:`: Has been split into two commands: `:` (lists what is here without feeling
+the square, equivalent to the old `:` when sighted), and `^G` (feels the
+ground, costing a turn and touching items on it, equivalent to the old `:`
+when blind). (4, 955a4e7, f394be6, 1c76f8f)
+
+`;`: Now shows a quick description of map cells as the cursor is moved over
+them, so that there's no need to select a number of cells you want to identify
+individually. (4, d90a5a1)
+
+`;`: Now understands the difference between `.`/`,`/`:`/`;` confirmations,
+just as `/` does. (4, 5edb710)
+
+`/`: Now contains a database of item descriptions, rather than flavour text.
+(4, b9afc36)
+
+`+`: Now lists how much memory of spells remains (something that previously
+could have been tracked by hand). (Ace, 3bb41b3)
+
+`>`: No longer automatically digs downwards unless the `autodigdown` option is
+set. (Dyna, 4bf0151)
+
+`a`: No longer breaks wands; that was moved to `V`, in order to reduce the
+chance of typos. (Ace and 4, 120cdac, 5a49ff0)
+
+`a`: `a,` is now accepted as a synonym for `#loot`. (Ace, 6b75b3c)
+
+`a`: Now respects the `movecommand` (formerly `confirm`) option when pounding
+monsters with a polearm. (Grunt, C343-305, dca24d1)
+
+`a`: Now accepts a count, allowing in particular lighting some of a stack of
+candles. (4, c0a22a4)
+
+`^A`: Now actually works. It remembers arguments to a command in order to be
+able to repeat them; and can also now be used to resume an interrupted
+multi-turn action. (4, 017ca27, 828dbbb)
+
+`C`: `#name` and `C` (in addition to some new commands, such as `#annotate`) have
+been merged into a single menu, bound to `C` by default; the original commands
+exist with no bindings, so that it is possible to restore the NetHack 3
+behaviour via rebinding keys. (NAO, Nitro and 4, c1e315a, fe36496, 9c7596c)
+
+`C`: Items with randomized appearances can now be type-named even if you don't
+have a copy of the item handy to type-name (thus saving you from having to
+remember until another item with the same appearance finds its way to your
+inventory); because of this, randomized-appearance items no longer prompt for
+names when destroyed (rather, there is a shortcut in the `C` menu to name the
+most recently destroyed randomized-appearance item). (Ace, 9562e5c)
+
+`^C`: Now a synonym for `!` (open menu), but one which works even at prompts
+(thus allowing you to save via opening the menu at a prompt, and then choosing
+to save from the menu).  Note that only a limited range of functionality is
+available from the menu while at a prompt. (4, 5b6b996)
+
+`D`: Now allows selection of all unidentified items. (Nitro, a854a21)
+
+`e`: Eating from the ground now works like Slash'EM, using `e,` (and a menu if
+there's more than one item) rather than `ey` to eat items on the ground, and
+thus cutting down on food-related typos. (Ace, Dyna and 4, 28b83ea, abba6bc,
+1cadf2d)
+
+`^E`: A new shortcut for writing "Elbereth" on the floor using your fingers
+(nothing that couldn't have been done with the `E` command, but it's faster to
+type). (4, 24e0071)
+
+`f`: When firing with an empty quiver, you can choose an item to quiver and
+the item will be both fired, and quivered for future firings. (Bilious and
+Dyna, 1115668, c489412)
+
+`g`,`G`,`5`: The difference between these commands (whether they stop at
+intersections) is now controlled via the `corridorbranch` option, not which
+command you use, and the three are now identical (freeing up any of them to be
+rebound, should you need more keys for whatever reason). (4, b3a276f..9ca21c3
+and others)
+
+`^G`: The old `^G` (debug mode create monster) was moved to `#genesis`; `^G`
+now feels the ground for items. (4, f394be6, 1c76f8f)
+
+`h`, etc.: Walking into a closed door is now interpreted as an attempt to open
+it. (Ace, cea2284)
+
+`h`, etc.: Walking into an always-peaceful monster will chat to them rather
+than atacking them, unless an `F` prefix is given. (Ace, 361ed66)
+
+`h`, etc.: What these commands do is now controllable via the `movecommand`
+option, which offers a range of possibilities, such as the `standard`
+behaviour, and a `pacifist` setting that never attacks.  This replaces the
+`confirm` option (`confirm` off corresponds to a `movecommand` of
+`indiscriminate`), and the `safe_pet` option (`safe_pet` off corresponds to a
+`movecommand` of `traditional`), and has many other possibilities. (4,
+6860cd2)
+
+`H`, etc.: Shift-moving down a path that eventually collides with a monster no
+longer automatically attacks it. (4, 4fd86a5)
+
+`i`: Selecting an object from the inventory menu `i` now produces a menu of all
+commands that work with that object. (Ace, Un, Nitro and Dyna, 59363d1,
+7f91acf, 5490bef, 95ce923 and others)
+
+`^I`: You can now split a stack of items in inventory via entering the number
+of items you wish to split out of the stack between the `^I` or `#adjust` and
+the inventory letter for the stack. (Bilious and Nitro, 7092675)
+
+`m`: The `m` command is now the only way to start entering water/lava (unless
+levitating, or confused/stunned/otherwise unaware of the danger), in order to
+cut down on typo-related item destruction and death. (Ace, eadc0ef)
+
+`n`/`0`-`9`: It's now possible to rebind the prefix for giving a numeric count
+to a command.  If you bind the main keyboard digits to be a repeat count (as
+is the default), you get behaviour like "vi-keys" from the NetHack 3 series,
+whereby you can enter a repeat count directly.  Any other key just enters
+repeat count mode without specifying a count, like `n` from "numpad" mode from
+the NetHack 3 series. (a199737)
+
+`o`: Now closes doors in addition to opening them, and unlocks locked doors
+(using whichever unlocking tool you used most recently). (Ace, 03643af,
+6ee1f33)
+
+`^O`: The game now automatically tracks notes on interesting dungeon features
+that the character has seen on levels they have visited, via a new command
+`^O`/`#overview`; additionally, a character can select a level from this menu
+to view their memory of it, and name levels using the `#annotate` or `Cf`
+commands. (Bilious, Un, Dyna, Nitro and 4, a155515, c461257, 5083a8e, 05472d5,
+3e4a189, b015a4c, a765dbf, 8fb4e51, and others)
+
+`p`: The `p` command can now be cancelled without having to say "no" to each item
+individually. (Ace, 962456a)
+
+`P`,`R`,`T`,`W`: The `W`/`P` commands have been merged, as have the `T`/`R`
+commands. By default, the two keybindings for each of the merged commands are
+entirely interchangeable, but this frees up keys so that you could rebind them
+to something else if you wanted to. (4, 24c4359)
+
+`P`,`R`,`T`,`W`: Can now equip and unequip items in slots blocked by other
+items; the outside slots will be temporarily removed to allow for the
+multistage equip (and left removed if they cannot be re-equipped afterwards,
+e.g. when wearing a shield with a two-handed weapon previously wielded). (4,
+e5262d7, ec32a78)
+
+`q`: Quaffing from sinks and fountains is now on `q,` rather than 3.4.3's `qy`
+(which broke muscle memory when attempting to quaff from inventory slot `y`).
+(Ace, a113165)
+
+`r`: A scroll of charging you just used no longer appears in the list of
+objects that could potentially be charged. (4, C343-161, ef93676)
+
+`R`,`T`: The `T`/`R` commands will prompt for an object even if there is only
+one possibility, so that objects will not be removed due to typos. (Nitro,
+723776d)
+
+`S`: The `S` command now also allows quitting the game, `S!y` (chosen to be
+hard to type, and thus unlikely to be typed by mistake). (Ace, a07c105,
+0b37bc4)
+
+`^T`: Cancelling a controlled `^T` command with Escape no longer costs a
+turn. (Dyna, 5f60575)
+
+`v`: The game now has an "autoexplore" command, bound to `v` by default, that
+automatically explores until it finds something interesting or is interrupted
+(by a monster, trap, or similar effect). (Ace, Un and Dyna, 5f2e241..d1d221d,
+a06d1c8, 34df1f3, 02c4698..3479754, 579d288..3237483, d117d1f, 2f85168,
+dffe879, 6bf8e3d)
+
+`V`: Now also allows you to rub items, if they're suitable for rubbing rather
+than invoking, and is the new way to break wands. (4, 120cdac)
+
+`w`,`a`: When the `multistage_equip` optionis set, these commands will
+automatically remove a shield to make way for a two-handed item. (4, ec32a78)
+
+`X`: The `X` command for entering explore mode no longer exists; `X` is now
+bound to `#twoweapon`. (Nitro and Ace, a2c8999, 74dea97)
+
+`X`: When attempting to enter two-weapon mode with an invalid character, the
+game explains what is wrong. (Un and 4, 21bc711, bdd6251, fd16f77)
+
+`^X`: The `^X` command now records a range of information (such as which
+intrinsics the character has gained, or what monsters the character has
+killed) that could have been (and often was) tracked manually by the player
+using out-of-game notes. (Ace, e894514..a7a0ce7, cd9df40)
+
+`Z`: Directional and positional spells can now be cancelled at the prompt that
+requests a direction or position. (4, e75e808..00cb03c)
+
+`#`: Extended commands are now case-insensitive. (4, c6d4f71)
+
+`#history`: The game now stores a list of major events that happened during
+the game (levelling up, wishes, etc.), viewable in-game with the `#history`
+command, and in the dumplog. (Nitro, b905a92)
+
+`#loot`: No longer asks you whether or not to loot the only container on the
+current map square; if there are multiple containers, a menu will be
+used. (Un and Dyna, f033f23, e3c7db5)
+
+`#offer`: Now uses `,` to sacrifice corpses on the floor, analagously to the
+`e,` change for eating. (4, fda3342, 322aa79)
+
+`#wipe`: Now mentioned by the game when it becomes useful. (Dyna, 39e2c13)
+
+Many commands have gained additional bindings, and in a few cases lost some:
+
+  * `#adjust`: now also available via `^I`
+  * `#chat`: now also available via `c`
+  * `close`: now on `o` (although `c` normally works, for compatibility)
+  * `#enhance`: now also available via `^E`
+  * `#invoke`: now also available via `V`
+  * `#monster`: now also available via `M` (farmove is on `g` and Num 5)
+  * `#offer`: now can also be spelled `#sacrifice`
+  * `#pray`: now also available via `^W` outside wizard mode
+  * `#quit`: no longer implemented, use `S!` instead
+  * `#ride`: now also available on `M-r`
+  * `#rub`: merged into `V`
+  * `#twoweapon`: now also available via `X`
+  * `version`, `verhistory`: moved onto the help menu `?`
+
+(4, 66d44c8, 79619b6, 2de7cf1, eb717fd, 2ee0dcb)
+
+The code now always uses a menu upon pressing `?` at an object prompt, rather
+than using the message area when there's exactly one possibility. (Nitro,
+50e5cba)
+
+It is possible to use the `m`/`M` keys to cycle between monsters when asked
+for a position. (Nitro and Dyna, c9737d1, b63723b)
+
+All commands are now rebindable; they can be rebound via the keymap menu
+in-game (a submenu of the options menu), and these changes will be saved for
+future gameplay sessions. (Nitro, 411a005, dbf6cbe and others)
+
+It is now possible to customize which commands exist as extended commands
+(thus, it is possible to have a command with no binding, or an extended
+command that also binds to a key, such as `#monster`/`M`). (Nitro, 0403969)
+
+
+Items
+-----
+
+Stormbringer no longer automatically confirms attacks on monsters. (4,
+d2b6039)
+
+Named items no longer stack with un-named items, in order to make it easier to
+prevent items stacking. (4, 0df7237)
+
+Extinguishing a candle now adds it back to an existing stack of candles, if
+appropriate, in order to make candle use less annoying (if you need to prevent
+this happening, you can name the candle). (4, 0df7237)
+
+Genocide prompts (e.g. from the scroll) now parse `master mindflayer` as
+`master mind flayer`, not as `master`. (Un and 4, C343-395, a41a65d, 8d086e4)
+
+Boulders now render as `0` by default. (4, 5d5b740)
+
+Thrown projectiles automatically requiver even if the quiver empties entirely,
+so long as they're autopickedup by means of the `pickup_thrown` option. (Dyna,
+3b5634b, 234d32f)
+
+Lit objects are now treated like equipped objects for the purpose of
+highlighting equipped objects in inventory menus. (Dyna, b999769)
+
+To help prevent typos, inventory letter assignment now tends to steer food items
+away from the letters eyYnN; potions away from qyYnN; scrolls from r; wands from
+z; and armor, gems, rocks, balls, and chains toward these problem letters. (4,
+894d615)
+
+Walking over items now never produces a pop-up box describing them; rather,
+they appear in the inventory sidebar (if using a wide terminal), and a message
+appears ("There are a few items here", etc.) to alert the user that there are
+items there (perhaps propmting the user to view them using `:`). (Ace, 44f4c51)
+
+
+Options
+-------
+
+Options are now stored in the appropriate user configuration directory for the
+system, and separately for the engine and each windowport (for instance,
+`~/.config/NetHack4/{NetHack,curses}.conf` on Linux); they are written
+automatically by the game whenever the options are changed with no game
+loaded, rather than needing to be edited by hand. (Nitro and 4, 679b28f,
+deb573e..0a7fa1e, 0b6c90b..ccc0472, 8233832 and others)
+
+Many options that previously had to be changed at compile time can now be
+changed at runtime (but are fixed for a given game once it has been started,
+i.e. are "birth options"): `ELBERETH`, `REINCARNATION`, `SEDUCE`. (Nitro,
+b84594b, bd7f641, ad88da7)
+
+Some options (that were basically unused, that do nothing on modern systems,
+or were made redundant due to other changes) were removed: `traditional`,
+`perm_invent` (now automatically determined from terminal width),
+`sanity_check`, `timed_delay`, `travel` (redundant to keybinding),
+`pickup_types` (redundant to the new autopickup system), `help`, `fixinv`,
+`lootabc`, `toptenwin`, `ignintr` (now always false in wizard mode, true in
+regular play). (Nitro, 96f7c20, 3a0d9d8, 24604f9, 920cbef, bf652c4, 0453e07,
+8109b2a, 7807fab, b63c1b1)
+
+It is now possible to disable the loading of bones files for a game, using a
+birth option `bones`. (Nitro, 4bbff89)
+
+It is now possible to increase the length of the control-P list to much higher 
+values than in the NetHack 3 series. (Nitro, 88716d3)
+
+A new option `show_uncursed` can be used to suppress the hiding of "uncursed"
+in situations where it's implied via knowing an item's enchantment or being a
+Priestess or Priest. (Bilious, 44ca3f6)
+
+A new option `comment` has been added that does nothing.  Its purpose is to
+allow a player to prove they own a server account (via setting the value of
+the option to a specific string), for tournament administration. (4, 4972873)
+
+
+Display
+-------
+
+The character now remembers one of each of an item, monster, trap, etc. on a
+map square, rather than being limited to only remembering one of those total
+per map square. (Slash'EM and Nitro, fee7233, c3381e3)
+
+The status area has been redesigned, allowing either a 3-line status area with
+full information shown, or a compact 2-line status area that omits some
+lesser-used information, giving room for HP and Pw bars (that also change
+color as they get lower). (Nitro and Ace, cd19816 and a13501c)
+
+When using a large terminal, the border of the screen will change color to
+warn of low health and particularly pressing status effects. (4, 6c0a9a3)
+
+The character's AC is now shown as a "Defence" value, that counts up from 0,
+rather than down from 10; there are currently no changes to the AC formula, it
+merely displays differently. (4, 25161ad)
+
+The status area now lists many more statuses than before, such as
+"Levitating", and colors them appropriately. (Ace and 4, fd746b7, f9402ec,
+7265bb2, aea03d3, e461dea..c844f34, b7df68f)
+
+Instead of ASCII/IBMgraphics/DECgraphics/tiles, you specify the renderings you
+want for various map elements using a tileset (which could be either graphical
+or text-based); the game translates this to Unicode graphics, IBMgraphics, or
+image rendering accoring to what your interface needs.  (Graphical tiles re
+only currently available if using the SDL backend to libuncursed).  You can
+use the `tilecompile` tool to create your own tilesets, either text-based or
+image-based.  (Nitro and 4, 2fd08d1, 14a028a, b1f8a8c, 2f4f50a, 6dd19de,
+524a57f, and many many others; I lost track of them)
+
+On sufficiently wide terminals (or sufficienly wide windows, in tiles play), a
+sidebar will be used to show the player's inventory and information on the
+current map square.  (This replaces the "perm_invent" option, that used not to
+work in tty play anyway.) (Nitro, 39db83c, 171ff59)
+
+On very very large terminals (large enough that the map, status area and
+message area have all expanded to full size), any remaining space is used to
+show hints about the game controls, and information about the map square under
+the mouse cursor (if the `mouse` option is on). (4, 918eec3, 7cb7397..b604352,
+cf03b19..4a08a7e, c4c2b2e..d20d64d, 646f9f1)
+
+The game now understands "dark gray"/"black" as an additional color to the 14
+already available (although only 7 of them were typically used); now, all 16
+available colors are used by the game for rendering. (Bilious, Nitro and 4,
+ef6581f, 9291a95)
+
+The terminal / game window can now be resized during the game; so long as the
+new size is at least 80 by 24, this will not break rendering. (Nitro and 4,
+a00086e, 72963ea, 625ba90, 77a94cc, 6b7506b)
+
+A new `animation` option (replacing `runmode`) allows control of the speed at
+which all interruptible multi-turn actions play, not just running.  For
+instance, when turned on, multi-turn search actions animate (with the turn
+counter increasing and monsters moving around being visible on the map).  This
+is so that they can be interrupted.  The duration of actions is
+log-compressed, as with most replay tools for NetHack games, to avoid long
+waiting periods where apparently nothing is happening apart from the turn
+counter increasing. (4, c1d4e5b, 011f9a2)
+
+Many monsters (and the occasional dungeon feature) have been assigned new
+colors in order to make them more distinct; some monsters have also been
+assigned underlining to make them even more distinct, and ghosts and shades
+have been moved to the `W` monster class in order to make them visible. (Ace
+and 4, 2d6ee5a, ab96b14, 9681301, d6f6f20)
+
+The message area now shows more than one line, on a sufficiently large
+terminal.  The extra space is used to show extra messages from this turn, in
+order to cut down on `--More--` prompts (which are still presented if there
+are so many messages generated in a turn that they do not fit into the message
+area); if space still remains, it shows messages from previous turns, in a
+darker color (dark gray or blue). (4, deefc21, 4fa8192, 6825a36, 3a464dd,
+fc11b9d..abc1efc)
+
+The message area (and `^P`) now show which selections were made at prompts,
+menus, etc.. (4 and Dyna, 58295ae, 7ea9a49)
+
+The game now tracks the player's knowledge about whether doors are locked,
+unlocked, and/or trapped; in console play, this is accomplished via via
+coloring the doors (as red, green, cyan respectively), and there is a similar
+indicator in tiles. (Ace, 599c3d1)
+
+In console play, background colors are now used to show information about the
+game: red = "there are stairs on this square" (including under items); brown =
+"this monster is peaceful"; blue = "this monster is tame"; magenta = "this
+monster is detected"; cyan = "this square is trapped".  Similar information is
+available in tiles play, via the use of overlays on the tiles.  This is
+controlled by the `bgbranding`, `hilite_pet`, and `use_inverse` options. (4,
+b30c90a, a919baf)
+
+Map squares that the player has stepped on are now drawn differently in order
+to communicate this fact (controllable via the `floorcolor` option). (4,
+a146d59, 5da195e)
+
+Menus are now drawn on a screen location that aims to avoid hiding important
+information; for instance, the inventory menu is drawn over the inventory
+sidebar (if there is one), so that it does not hide the map or messages.  (4,
+69841a7, 4e77ee8)
+
+Walls and floors now have a huge range of different colour schemes (depending
+on the selected tileset or the ASCII equivalent), depending on which branch
+you're in, and sometimes, where in the branch you are. (4, b58c431)
+
+
+Outside the Game
+----------------
+
+The game no longer exits when a game is saved or ended, allowing another game
+to be started or loaded. (Nitro, 3616a4c, 39db83c and others)
+
+The death reason now records more specific information on what caused
+helplessness than just "while helpless". (Bilious, 7ccecee)
+
+The game now automatically records a dumplog showing information about the
+game when the player ends. (Nitro, Dyna and 4, 28c01f1, 3ddd389, 5dc4448,
+653784f, 00fa98f, 97fd16d)
+
+Extinct creatures are now listed in the end-game dumps, in addition to
+genocided creatures. (Bilious, 594f040)
+
+Death messages are now more precise, hopefully making unique deaths
+competitions more interesting; for instance, deaths such as "touching a
+cockatrice corpse" have been made more specific (e.g. "searching a monster's
+interior for a cockatrice corpse").  Additionally, portions of the death
+message under user control have been marked to avoid tournament parser
+exploits (e.g. "killed by kicking a "slime mold (with the Amulet)""). (Grunt
+and 4, 0128f35, e6b2994, caac7d0, c278fd2)
+
+The game now generates an extended logfile that stores more detail about what
+happened in the games played on that installation (or server), for statistical
+and tournament scoring purposes. (Bilious, Ace and 4, 33350a2,
+e25fe11..b405854 and others)
+
+Pressing `q` during the "Do you want your possessions identified?" sequence
+now skips to the final screen with the tombstone, rather than skipping past
+it, avoiding the need to repeatedly press `n` to get to the tombstone. (4,
+5925b5c)
+
+There have been grammar improvements to death messages caused by choking on
+artifacts. (Grunt, 1f9636f, ef35a26)
+
+Self-genocide while polymorphed no longer creates a corrupted tombstone. (4,
+C342-16, c3bdbc4)
+
+The game executable can now connect to the Internet to receive NetHack-related
+announcements and (when there are no announcements available) gameplay tips.
+This feature will not be activated without the user's permission (it asks on
+the first load); even after the first load, you can control it via the
+`networkmotd` option. (4, b0786a7, 367915e)
+
+Failures to open a file are now logged in the paniclog, making problems like
+missing dumplogs easier to diagnose. (4, cc037f1)
+
+There is now a warning upon attempting to start a non-scoring game (to avoid
+accidents where, say, your settings are accidentally left in debug mode or set
+seed mode, and you try to play what you think will be a scoring-eligible
+game). (4, a495b49)
+
+
+Internals Improvements
+======================
+
+Coding Style
+------------
+
+Many macros have been removed, substituted into the source code (where this
+makes the code easier to read), or replaced with functions. (Nitro, 9bd8a54
+and others)
+
+Most conditionally compiled features have been removed from the game source,
+in the favour of always or never compiling them; this ensures that nobody is
+missing features in their game.  (This does not affect gameplay, because the
+features that had gameplay effects were made into runtime-changeable options
+instead; see other changes.) (Nitro, c9663db and others)
+
+The code now uses C89-style prototypes rather than K&R-style function
+definitions. (Nitro, 41fe692..6daeaee)
+
+Many fixes to compiler warnings. (Nitro and 4, 918c516..91ab7bc, 13cf183 and
+others)
+
+The coding style was made more consistent. (Nitro, a73c088, d8dbbfe)
+
+The indentation and whitespace were made consistent across all files;
+previously, the code used a mix of 4-space indents, 1-tab indents, and
+4-spaces-for-1-indent-1-tab-for-2-indents styles, now everything uses 4-space
+indents and a consistent set of rules for things like which lines to put
+braces on. (4, 4daa09e, 656fd82, d540858)
+
+Dead (or mostly dead) code, constants, and variables (especially global
+variables) were removed. (Nitro and 4, 487ec18, b056309, 3160d45, 03367af,
+088afe6 and others)
+
+Many variables have been marked as `const`. (Nitro and 4, 3916bcf, 072167e and
+others)
+
+The code is now almost entirely const-correct (a few exceptions still
+remain). (4, 0c75ca2, e622855)
+
+The code now uses standard C functions in place of their pre-standard
+equivalents. (Nitro, 1b49dfb, 0f2b938)
+
+`pline` is now used directly to output messages, rather than using functions
+like `You` and `The` for outputting strings that start with specific words and
+`pline` only in the general case. (Nitro, 6d548b7)
+
+Instead of using static buffers to store strings, the vast majority of buffers
+are now dynamically allocated and have no length limit. (4, 0c75ca2, 6e90958)
+
+All functions are now explicitly marked `static` or `extern`. (Nitro, 476bc4a)
+
+The code now makes use of C99 and C11 features where they greatly simplify the
+code, or are more portable than the alternatives, so long as the compilers
+that we use in practice (gcc and clang) support them as extensions even
+outside C99 mode. (4, 9e13e1b, 1362014)
+
+The code now makes more use of functions/macros for handling common code,
+rather than duplicating it. (Un and 4, 7158a54, a7f6a59 and others)
+
+Header files no longer have dependencies that force them to be included in a
+specific order. (4, 122bc10)
+
+
+Data Storage
+------------
+
+Many data that are logically associated with a level (e.g. long worm
+information, engravings, light sources) are now stored inside the structure
+for that level, rather than separately. (Nitro, b78bb49, 5c2867a, 3fa2644)
+
+Gold is now treated as an object, not a number. (Nitro and 4, 52665f1,
+2894d39, 15013a8, 4a162c2)
+
+The game no longer saves inactive levels to disk in files of their own; the
+binary saves hold all levels at once, and inactive levels are also stored in
+memory. (Nitro, 085908d)
+
+A large number of global/static variables have been replaced via storage in a
+few globals that each have defined semantics for their lifetimes, with
+function parameters / return values, or with constants. (Nitro and 4, b854b71,
+f342510, d0ecdb0, cb9ed91, 1362ccd, ba8ede8 and others)
+
+Saving data and freeing data are now separate concepts internally,
+considerably simplifying the code. (Nitro, bf43e08)
+
+Migration of objects now occurs immediately, rather than being deferred until
+the player changes level. (Nitro, 4 and Dyna, ed8960f, aad761b, b19bd70,
+2557f16 and others)
+
+Equipment is now stored internally via a flag on items to say whether they're
+equipped, rather than pointers into the inventory array.  This greatly reduces
+the chance for bugs related to forgetting to zero equipment pointers, makes
+the code cleaner, and makes it easier to implement equipment-related features
+in the future. (4, 4519fce..438f761, dc47863)
+
+Extrinsics are now calculated when needed, rather than being dead-reckoned,
+making the extrinsic-handling code much simpler. (4, 730a8f6)
+
+Equipping is now done through a centralized set of functions, in order to
+avoid needing special cases everywhere. (4, 7d24609, 0dbb0de)
+
+The storage for properties of a level has been simplified. (4, 95c0482,
+f651183)
+
+Light and darkness are now properties of a map square, rather than of a
+background; the main practical benefit of this is improved rendering of
+unusual dungeon features in unusual lighting conditions. (4, 3c06767, 3b11dc1)
+
+x coordinates and y coordinates now use the same storage internally; in
+particular, x = 0 no longer means "off the map", because y = 0 is on the
+map. (4, e61bcb3, f12c528, 8f01d76 and others)
+
+Objects intended to exist only briefly are now allocated separately and checks
+occur that they do not survive for more than a turn. Additionally, venom now
+must be temporary and accordingly cannot be wished for. (4, b4fd8ec, 6a04b22)
+
+Objects are now always stored on an object chain, rather than sometimes just
+stored on the stack or the like; this mean that any object-related memory
+leaks will be discovered, and that temporary objects can be correctly
+deallocated if the game ends while they are allocated (say, due to
+hangup). (4, 301962c)
+
+The game is now capable of recovering saves automatically if something goes
+wrong; and it does a save and restore almost every turn to ensure that the
+save file can still be loaded correctly.  After a save-related error, the user
+will have the option of automatic recovery, manual recovery (leaving the save
+file in place to be manually edited), or in some cases automatic repair
+(automatic recovery works by reloading from a backup save, automatic repair
+via treating impossible values as plausible legal values). (4, 41a0806,
+7a3978f)
+
+A new random number generator is in use, with improved error handling,
+increased seed space, better seeding, better security against attempts to
+deduce the RNG sequence, and reduced save file size. (Ace and 4, 7d99f45,
+e2e7a1b, 7d719e6)
+
+The monster movement formula uses a different internal representation; instead
+of each monster independently keeping track of when its next turn will come
+up, the game stores information that allows it to calculate the turn order for
+any given turn in advance, together with where it is inside the current turn's
+turn order. This makes the save files easier to compress. (4, c5a485a)
+
+Save files now use an encoding in which the turn count is added to or
+subtracted from various fields, in order to make the save file more
+compressible. (4, 529d8c8..a615e70)
+
+
+Client/Server Structure and API
+-------------------------------
+
+The game engine has been split out into a library of its own, `libnethack`.
+(Nitro, c2771f1 and others)
+
+The game's main loop has been restructured (and repeatedly moved between the
+game engine and windowports; we eventually settled on placing it in the game
+engine, but it's now split into a number of small functions to make it easier
+to follow). (Nitro and 4, b28a198, eab25d3, 0d1caed..79e72a4, 2431fac,
+26a7364, cd3d8d2, ba8ede8)
+
+The API for menu creation has been improved. (Nitro, 3da8355)
+
+The game engine no longer cares about which commands are bound to which keys
+(beyond making suggestions, so that commands can be added to the engine
+without requiring the windowports to be immediately updated to match). (Nitro,
+9124795)
+
+The `^P` command is now handled by the windowport, not the server. (Nitro,
+fc81b48)
+
+The code now uses "exceptions" (actually `setjmp`/`longjmp`) for handling
+escape from nested contexts when things go wrong (either in terms of code
+errors, or for things like hangup handling), meaning that a mistake on the
+client does not bring the server down and vice versa. (Nitro and 4, 1a88f50,
+ce2b50f and others)
+
+The game engine can now do computations "ahead" of the client, in situations
+where the client cannot meaningfully contribute to the game, rather than
+always waiting for the user to acknowledge a message before continuing; the
+client will nonetheless display the gamestate at the time of the message.
+(Nitro and 4, b7fbca6, 306911d)
+
+The game engine and interface now both understand the concept of an argument
+to a game command.  This made many other fixes possible. (Nitro and 4,
+d52dd14, 240faca, d55552b..5e8b9bf and others)
+
+The distribution now comes with source for a game server (that links against
+the game engine) that allows the game engine to be on a different physical
+computer than the interface, and handles things like user accounts, shared
+bones files and so on. (Nitro and 4, f95e83d..e81e925, 7018a13 and others)
+
+It's now possible to have a game open in more than one process at once; moves
+made in either will be reflected in the other.  (This is useful for
+implementing features like watching and replaying, and is also useful if you
+lose a connection because you don't have to wait for the old connection to
+time out.) (4, f4ea0a0 and others)
+
+It is now possible to view replays of games, and (for server play) watch live
+games.  This can be done from the main menu, or the menu inside a game (for an
+"instant replay" feature, which even works inside prompts if the menu is
+accessed via a keybinding that isn't needed by the prompt.) (Nitro and 4,
+039fc4c, de9ba8b..977fe43, 6e8fb4c..5c91a2b and others)
+
+
+Error Handling
+--------------
+
+When the game malfunctions, it will now dump core on UNIXy systems (in order
+to ease debugging), but attempt to continue to execute anyway. (4, 2e14a0c)
+
+The code now contains debug hooks for valgrind (not compiled by default, use
+`-DVALGRIND_ANNOTATIONS`, meaning that `impossible`/`panic` will be observable
+when running under that debugger). (4, 2383605)
+
+The game can now detect a truncated save file, and automatically recover (via
+loading the most recent backup that remains intact). (4, 3cdad9c)
+
+
+Saves and Replays
+-----------------
+
+The game now uses a reproducible random number generator, and saves the seed
+in the save file, so that copying a save file and performing the same actions
+will lead to the same results.  In addition to making savescumming harder,
+this also makes bugs easier to reproduce. (Nitro, 6728cce)
+
+Saves and bones files are now platform-independent, allowing them to be moved
+from one system to another. (Nitro and 4, 756ecc9, 6a312e9)
+
+The save file now contains an entire history of the gamestate, tracking diffs
+in the binary save (that represents the gamestate) from one command to the
+next.  This means that it can be rewound (e.g. for bug reproduction and
+recovering broken games), and that the game can be saved just by exiting the
+process (meaning that games are unlikely to be lost due to segfaults, hangups,
+or similar situations). (4, C342-13, 9923807, 22053c2 and others)
+
+It is now possible to save in the middle of a turn; the game tracks the
+choices made during the partially completed turn, and replays them upon
+reloading the save. (4, 5c5bf51, 5b6b996)
+
+
+Packaging, Build System, and Libraries
+======================================
+
+Platform and Windowport Support
+-------------------------------
+
+The set of supported platforms has been reduced to Linux, Mac OS X, and
+Windows.  (Unlike NitroHack, we are not fundamentally opposed to the idea of
+porting the code to more platforms, such as BSD, but we currently have no way
+to test on them; the code may well work, but we don't know for sure.) (Nitro,
+ad815fc..e51ae4f and others)
+
+All the existing windowports were removed, and replaced with a brand new
+windowports system, together with a single windowport, `nhcurses`, that forms
+the codebase for all currently existing windowports; there is support in the
+code for the addition of other windowports, but none currently exist. (Nitro,
+4 and Dyna, 0bd8fa6, 39db83c and others)
+
+A new terminal rendering library, libuncursed, is used for drawing on the
+terminal, and parsing input back from the user.  Among other things, this
+supports widely portable dark gray, a better understanding of cursor keys than
+any library previously used with NetHack (including `curses`), ttyrecs that
+can be ported from one terminal to another correctly, a color palette that
+makes colors more distinct from each other, and support for both Unicode and
+IBMgraphics without extra interaction or configuration.  libuncursed has
+support for UNIXy terminals generally, for the Windows console, and for
+rendering via a fake terminal on SDL on any platform. (4, 24b8a25..c404c3b,
+c8a6f31, a7828b5, 7102298, 54b1c17, 9bfb164, 0c0f5ed and others)
+
+A tiles interface has been added via using libuncursed's tiles support. The
+SDL backend of libuncursed can be switched between ASCII, Unicode, and tiles
+in-game, rather than requiring a separate windowport for tiles and text. (4,
+69eda23..1eb1244, 063cd11)
+
+The game's tiles system is now capable of handling multiple sizes of tile,
+and transparent tiles, in addition to referring to tiles by name rather than
+number (reducing tiles-related mistakes when adding new features to the
+game). (Slash'EM and 4, 267b5a1..9e69e72)
+
+The tiles system has been generalized to allow some tiles to exist in some
+tilesets, and not in other tilesets (meaning that tilesets can have more
+specific tiles than before, e.g. "dwarf valkyrie"). (4, 4c457cd..c173171 and
+others)
+
+"Tilesets" that specify a character and colour are now also used for non-tiles
+rendering, increasing the flexibility and customizability of the map display.
+(4, 3783ed3..a695061 and others)
+
+Users can now override the existing tilesets by placing a replacement version
+in the `tilesets` subdirectory of the game config directory (e.g. in
+`~/.config/NetHack4/tilesets` on most Linux setups).  (These tilesets can be
+produced using a separate program `tilecompile` that can be installed at the
+same time as NetHack 4.) (4, 0480c43 and others)
+
+The code is now written to specific levels of library support (in general,
+X/Open `_XOPEN_SOURCE=700` and C11, although exceptions are made in some
+places, such as the server code), rather than the mix that had built up over
+the years in earlier versions. In general, this only affects the windowports;
+the game engine aims to be as portable as possible among C11 systems, and
+hardly uses platform-specific calls (although there are some exceptions, such
+as save file locking). (4, b85714a)
+
+
+Build System
+------------
+
+`makedefs` and the dungeon and level compilers now understand out-of-tree
+builds. (Nitro, 60480e9, 34f1e85, 6e9b16b)
+
+A new build system, `aimake` version 3, is now used to build the game.  This
+build system makes life easier for maintainers than the old Makefile-based
+system (because things can be rearranged internally without breaking
+anything), and is also much easier for players building from source, because
+it requires substantially less manual intervention than the old system did.
+(4, 2912d38 and others)
+
+
+Testbench
+---------
+
+Support for automatically testing the game has been added (on Linux only), and
+has caught numerous bugs.  (This needs to be run manually after a build of the
+game, and is not included in executable versions.) (4, 8520a8f..a87d42a,
+d511a10..e81d005 and others)
+
+
+Bugfixes against Beta Versions
+==============================
+
+Since 4.3-beta2
+---------------
+
+Figurines no longer look like monsters in the ASCII and Unicode tilesets.
+(e4e9caa)
+
+Since 4.3-beta1
+---------------
+
+Being hit by a reflectable attack (with no reflection sources) no longer gives
+an error message. (46eae5d)
+
+Recovering from a desync no longer causes further desyncs with every use of
+the RNG. (ee16602)
+
+Hangup in a terminal smaller than 80 by 24 no longer causes an infinite loop.
+(055ee42)
+
+There have been some fixes to ensure that messages display correctly in corner
+cases. (3803ac7..17dcb97, 50cc5d9)
+
+The Enter key on the numeric keypad once again works to step through a
+`--More--` prompt. (cd0cee1..7e301ca)
+
+EOF on standard input no longer causes an infinite loop at program exit.
+(6af63e8)
+
+The game no longer prints error messages for every item in inventory you can't
+wield merely as a result of opening the `w` menu; you now actually have to
+wield the item to be told that you can't. (9c8c1e5)
+
+Pressing alt, control, and an opening square bracket is now interpreted
+identically to `ESC` (the terminal codes for this, and for `ESC` pressed
+twice, differ only in timing, and it's much more likely that we're seeing an
+`ESC ESC` that got its timing corrupted due to network lag than that someone
+actually pressed that bizarre key combo). (659fc26)
+
+The rules for choking on items have changed from one set of inconsistent
+behaviour, to a different set of inconsistent behaviour that never kills a
+character if they wouldn't have died in NetHack 3.4.3. (4879834)
+
+The game no longer crashes when an object with a timer (such as a lit oil
+lamp) moves between levels without being carried (e.g. falling through a
+hole). (d66b190)
+
+Many checks have been added against the player wielding items outside their
+inventory. (eefbe63)
+
+The alignment padding in the save file format is no longer considered
+interesting for the purpose of binary diffs (meaning that the compression used
+on save files compresses a little better). (9a5a308)
+
+Many incorrect assumptions that prevented the game running on Mac OS X were
+fixed. (6859f7e, d63ae4a, 79312f0, 4a8488b, 258e155, 0a980ce)
+
+Summoned nasties no longer crash the game when two references to the same
+level are stored in different places in memory. (a7cf369)
+
+Various typo fixes to messages. (7ca0627, 39478da, f58ce5f, d70bf91, 383f421)
+
+Identification of items by the "Do you want your possessions identified?"
+screen no longer exercises Wisdom (which triggered the desync detector,
+because the players' stats aren't meant to be changing at that point).
+(60d28cc)
+
+Worn items no longer remain worn after the player's death (which was
+triggering the desync detector, whose reaction was to undo the death to get
+the game back into a sane state!) (990c00d)
+
+Amulets of change no longer cause a desync. (92d477a)
+
+Automatic recovery of save files has been disabled in situations where it
+would rewind the vast majority of the game (e.g. to before the first turn).
+(0936020)
+
+Venom now always breaks upon being thrown (so that it can no longer be picked
+up and thrown back some proportion of the time). (d01be1d)
+
+The client no longer enters an infinite loop on hangup if it disagrees with
+the server as to whether there's a game running. (099033d)
+
+The performance of screen updates has been improved by reducing the amount of
+redundant redrawing. (4ae58d5)
+
+Level regions, staircases, and the like are again defined in a consistent way,
+meaning that falling onto a level like the Castle will place the character
+over the left hand side (as intended), rather than sometimes at the right or
+top or bottom.  Note: the game attempts to detect and fix save files that were
+corrupted by this sort of problem, and because it would be a false positive,
+stairs will not function in the top-left corner of the map (but they never
+generate there anyway). (8f01d76, d76ac60, e02902b)
+
+Wielding a cockatrice corpse no longer disregards the presence of gloves.
+(64baef1)
+
+The parser for the spell-adjustment menu on `+` has been fixed to correctly
+distinguish valid from invalid input. (afbeafc)
+
+In server play, it's now possible to start a new game after watching somebody
+else's game. (805b28e)
+
+If a game crashes during the game over sequence, loading the replay will now
+detect this and automatically attempt to reconstruct the game over sequence
+(creating an xlogfile entry and dumplog that might otherwise have been
+missing). (226daa1, 3301166..aeae4b0 and others)
+
+Much of the server daemon code was replaced by offloading the work to `inetd`
+instead.  This solved the server reliability problems that nethack4.org was
+having, and also makes debugging a server locally much more convenient.
+(472d025..78aa8b8)
+
+If a user rebinds 5 (on the main or numeric keypad) to a movement direction
+(overriding its default meaning), that's now respected at direction prompts.
+(e389814)
+
+Yes/no and similar prompts no longer corrupt one byte of memory. (8771d1b)
+
+Inventory letters no longer become corrupted in the corner case where a player
+has a full inventory with the last item picked inhabiting slot `Z`, drops that
+item, then picks up a different item that's never previously been in their
+inventory.  (If your game is affected by this bug, you can fix the issue by
+dropping your entire inventory, then picking the items up again.) (441e50d)
+
+A Strength score of 18/100 no longer displays as `18/10`, like a Strength
+score of 18/10 would. (50251de)
+
+Monsters that have been deleted from the map (currently recorded, as in the
+NetHack 3 series, by setting their HP to a negative number) no longer have the
+ability to spontaneously undelete themselves via regenerating HP over time.
+(fad1d3a)
+
+Removing gauntlets of fumbling now again causes you to stop fumbling
+immediately, rather than with a d20 turn delay. (ee4ac33)
+
+Seeking forwards 50 turns in a replay now seeks to the next available seekable
+point in the replay if there are no seekable points within 50 turns. (7683f53)
+
+Menus are no longer sometimes drawn offscreen (this case most commonly
+happened with itemactions menus in cases where the object name was wider than
+the inventory sidebar). (9377bc1, 643b6e0)
+
+The client no longer crashes upon trying to open the extended command
+menu. (c19e6cb)
+
+Many pluralisation problems have been fixed, especially with respect to items
+that come in pairs (such as gloves). (3716cb1)
+
+Resizing the client is now more reliable, both in a terminal and when using an
+SDL fake terminal or tiles view. (8c39d1a)
+
+New interface options have been added to make menus and prompts in NetHack 4
+render more like they did in the NetHack 3 series. (117a1cb, ebf177e, 94a38cf,
+80d35f4)
+
+Workarounds to bugs in various terminals were added. (141c307)
+
+`#name` no longer uses the Sting/Orcrist codepath for other artifacts (meaning
+that you could create arbitrary artifacts if you owned the corresponding base
+item). (6c2cf58)
+
+It's no longer possible to use wizard-mode teleport outside wizard mode.
+(f2f91a0)
+
+Purple worms summoned by shriekers no longer appear outside the map. (44e5bea)
+
+Wounded legs no longer permanently reduce Dexterity. (1e946d8)
+
+Engravings are now again capable of eroding. (ea7ae17)
+
+Grayswandir now again blocks hallucination. (700b320)
+
+The items on the grappling hook menu again correctly do what their labels
+indicate they do. (7c49679)
+
+Shopkeepers can once again identify their shops if a bones file was left for
+their level, then loaded at a different depth, or if they die but need their
+monster data saved in case they are reanimated. (8ffdb7b, aad3622)
+
+The game no longer crashes trying to show help information if a --More-- was
+forced during the creation of a dialog box (e.g. because that dialog box would
+cover up existing messages). (3f33481)
+
+The #adjust command no longer desyncs the game when used on a loadstone in the
+53rd or later inventory slot. (25c1c27)
+
+The high score table will no longer give an incorrect position for your game
+on the scoreboard (although it might not be able to highlight the position
+your game came in at, the scoreboard will at least be updated
+correctly). (120174d)
+
+The save file format has been optimized to use less disk space. (af3161b,
+8b2482d)
+
+Players no longer start with a free 10 points of Defence; starting Defence has
+been reduced back to 3.4.3 levels. (I wonder why nobody reported that one
+earlier?) (27b7c41)
+
+Brandings now work correctly when viewing the character's memory of levels
+other than the current dungeon level. (cb7926c)
+
+Failure to load a bones file, and toggling autopickup, no longer leak
+memory. (17834e6, 65a76b3)
+
+Non-corpses can no longer be tinned (causing odd effects or crashing the
+game). (5c66591)
+
+Direction keys that are unbound in the key bindings editor will no longer
+rebind themselves upon restarting the NetHack 4 process. (97b2cce)
+
+When eating a mimic corpse, the game no longer waits for input at a time when
+the player cannot reasonably give input. (3d10ac9)
+
+Some rendering issues with the cursor in the SDL backend were fixed. (2bf3d76)
+
+The game now allows a choice of color palettes for the 16 colors it uses
+(which will not work in all terminals). (207a872, 0b1fc22)
+
+The random number generator is now seeded correctly for the purpose of
+generating random characters on Mac OS X. (530125f..7e0353a)
+
+The keymap dialog box now allows for quick rebinding of subsets of keys (such
+as `hjklyubn` or `1234567890`). (b0c2d7b..8a367e7)
+
+When a game desyncs or panics (or something similar happens), relevant debug
+data is now shown inside the resulting dialog box, rather than beforehand, and
+more debug information is given than before. (1a89562)
+
+Tame monsters no longer hoard weapons. (3a9acbd)
+
+The grudge between `d` and `f` monsters now only affects dogs and cats
+specifically (not, say, wolves and jaguars). (1e6d378)
+
+Cockatrices no longer attack pets that would refuse to attack them (to avoid a
+situation where a monster can't fight back); this was a regression
+from 3.4.3. (9c0c3fa)
+
+Shift- and Ctrl-direction now work correctly at position prompts. (55cbd7e)
+
+Several bugs were fixed in the covetous monster AI. (184e511, 5a21c28)
+
+Some bugs where polymorphed monsters looked like their original form on the
+map, not their current form, were fixed. (ce81809)
+
+Monsters again consider plot-critical items underneath meditating monsters to
+not have spawned yet (this is mostly intended to prevent covetous monsters
+waking up the Wizard of Yendor). (6d18c16)
+
+Some bugs in the `pushweapon` option, and in wielding more generally, have
+been fixed. (9525afc)
+
+Detecting traps using a crystal ball no longer reveals all doors on the
+level. (0c93cf3)
+
+Falling into a pit now again correctly reduces your vision range. (5b23218)
+
+The game now distinguishes between the player and the player's square in some
+situations where it matters (e.g. while being engulfed). (0818d79)
+
+Tame monsters that reject the use of a ranged attack (so as not to hit their
+owner) now consider melee attacks instead, rather than just doing nothing.
+(91bde50)
+
+Pacifist movement now uses remembered rather than actual information to reject
+attacks on invisible monsters; although it still will never actually attack an
+invisible monster, you can no longer get information on whether it's still
+there or not without spending a turn. (7a1f633)
+
+Tame monsters are more cautious in their spell selection. (a717609, ef2a617)
+
+Some problems with farlook have been fixed. (230e7bf, 21ece58, 898eff3,
+98585ed)
+
+The endgame disclose screen now correctly distinguishes between extinction and
+genocide. (e35cb28)
+
+The game again reacts sensibly to attempted attacks on long worm tails in
+unusual visibility conditions. (709f260)
+
+The list of available timezones has been adjusted to cover all the timezones
+that are currently in use. (e598cb8)
+
+When watching two consecutive games, information from the first will not spill
+over to the inventory sidebar in the second. (cb08a79)
+
+Polymorphing items will no longer polymorph a golem created from those
+items. (55ed3a3)
+
+When food randomly becomes rotten, it will no longer mark the entire stack as
+rotten. (91603f8)
+
+The inventory sidebar can no longer see underwater items unless your character
+can see them. (a8aa73a)
+
+The "What item do you want to charge?" menu no longer leaks information when
+the character is blind. (13d80ec)
+
+Slow operations (like loading save files) now have a loading bar, that
+prevents network connections timing out during the load. (637bfa2)
+
+Viewing the credits (development history) from the help menu now again
+works. (3c6d5dd, 2965100..dc3e040)
+
+The mouse wheel now works when it's over blank space in a menu, not just when
+it's over a visible character. (df2ce1b)
+
+When a monster's attitude towards the player changes, the game now does a
+better job of updating any visual indicators of that immediately (such as a
+blue or brown background, with the default text-based tilesets). (9adcd5f)
+
+The game no longer gives misleading feedback when the `c` command is used on
+the old location of an invisible monster that has since moved away. (dc0184d)
+
+`#adjust` now again abbreviates the list of unused inventory letters, rather
+than listing them all. (0031931)
+
+The game no longer crashes when a wielded wand is destroyed by
+lightning. (1f52b5a)
+
+Hangup at the genocide prompt no longer causes an infinite loop. (6ca461c)
+
+Being punished while engulfed is now treated the same way as being engulfed
+while punished, rather than crashing. (1e4324a)
+
+Overflowing the inventory weight no longer crashes the game. (13bb37d)
+
+The game no longer crashes if you kick a monster with a passive attack, kill
+it, then die from the recoil damage. (c6c5ae5)
+
+The game no longer crashes when a monster kills another monster in certain
+unusual ways (touch of Death, or monster spell), and also achieves an HP kill
+on the same monster in the same attack sequence. (7c8d6e0)

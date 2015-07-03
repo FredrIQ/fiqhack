@@ -1,0 +1,22 @@
+! Last modified by Alex Smith, 2015-03-20
+!
+! Copyright (C) 2015 Alex Smith
+! NetHack may be freely redistributed.  See license for details.
+!
+! This file generates "darker" versions of unlit floor tiles. This allows
+! tilesets such as RLTiles which have a large number of branch-specific tiles
+! to avoid needing to explicitly specify unlit versions of those tiles.
+
+! Suggestion by Raz: average 50:50 with black for unlit tiles.
+sub unlit sub * the floor of a room
+(
+  0.5, 0.0, 0.0, 0.0, 0.0
+  0.0, 0.5, 0.0, 0.0, 0.0
+  0.0, 0.0, 0.5, 0.0, 0.0
+)
+sub unlit sub * corridor
+(
+  0.5, 0.0, 0.0, 0.0, 0.0
+  0.0, 0.5, 0.0, 0.0, 0.0
+  0.0, 0.0, 0.5, 0.0, 0.0
+)

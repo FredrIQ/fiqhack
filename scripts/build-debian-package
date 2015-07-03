@@ -1,0 +1,21 @@
+#!/bin/bash
+# Last modified by Alex Smith, 2015-04-05
+
+set -e
+
+test -f build-debian-package || echo Please run this script from its own directory.
+test -f build-debian-package || exit 1
+
+BUILDDIR=`mktemp -d /tmp/nh4build.XXXXXXXX`
+SUBDIR='nethack4-4.3.0~beta3'
+mkdir "$BUILDDIR/$SUBDIR"
+(cd ..; git archive --format tar HEAD) | (cd "$BUILDDIR/$SUBDIR"; tar xf /dev/stdin)
+cd "$BUILDDIR/$SUBDIR"
+mv dist/debian debian
+mv copyright debian/copyright
+# Remove the GPL from "copyright", it's already there on Debian
+sed -i -e '/^License: GPL-2$/,$ d' debian/copyright
+# The 'debian' directory changed location during file arrangement
+sed -i -e 's/dist\/debian/debian/g' debian/copyright
+dpkg-buildpackage -us -uc
+echo Output files written to "$BUILDDIR".

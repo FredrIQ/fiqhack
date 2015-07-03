@@ -1,0 +1,446 @@
+About this document:
+Last modified by Alex Smith, 2015-04-01
+
+Copyright (C) 2013 Alex Smith.
+
+This README file is licensed under the NetHack General Public License.  See
+libnethack/dat/license for details.
+
+
+NetHack 4
+=========
+
+NetHack 4 is a version of the computer game NetHack, that aims to bring a
+better-quality codebase and a less hostile interface to NetHack's highly rated
+"roguelike" gameplay.  Unlike many NetHack variants, it is intentionally
+conservative in making gameplay changes; in particular, it aims to avoid the
+common problem whereby development is driven via fixing perceived balance
+issues with the game (often losing the ability to improvise solutions to
+complex problems in the process), or via focusing too much on the difference
+between wins and losses (meaning that players are forced into taking the best
+choice, rather than the choice they enjoy most or a choice they want to try).
+See the file `doc/philosophy.txt` for more information on NetHack 4's
+philosophy.
+
+NetHack 4 was originally produced by merging two forks, Alex Smith's AceHack,
+and Daniel Thaler's NitroHack.  Since then it has incorporated changes from
+numerous other forks (especially the fertile sources of bugfixes that are
+GruntHack and UnNetHack), and has had many improvements of its own.
+
+NetHack 4 has come a long way since 2009, when AceHack began.  Out of all the
+lines of C, lex, and yacc source code currently in NetHack 4, less than half
+originally come from NetHack 3.4.3 or earlier – even if you don't count
+whitespace changes.  The rest are typically modifications or even rewrites of
+the old code with bugs fixed and style improved.  Many people have suggested
+rewriting NetHack from scratch to get rid of the bugs and improve the coding
+style, but doing so would be close to an impossible project.  Our continuous
+changes of NetHack from the inside will eventually accomplish a similar goal,
+but in a more realistic manner.
+
+This README file describes NetHack 4.3, which focuses mostly on improvements
+to the game's internals, rather than gameplay changes.  We are planning to
+make more substantial gameplay changes in 4.4.
+
+
+Frequently Asked Questions
+==========================
+
+See the file `faq.txt` (`doc/faq.txt` in the source code, or in the
+documentation directory in an installed version).
+
+
+Contact
+=======
+
+Bugs in NetHack 4 can be reported at http://trac.nethack4.org, our bug
+tracker.  The homepage for NetHack 4 itself is http://nethack4.org, and
+contains many other resources about the game and its community.
+
+You can discuss NetHack 4 on IRC.  irc:irc.freenode.net/nethack4 is the
+specific channel for NetHack 4, and typically discusses development.  For
+gameplay advice, the best place is the general NetHack discussion channel at
+irc:irc.freenode.net/nethack (which also covers NetHack 3 and Slash'EM).  If
+you're more old-fashioned, you can use Usenet instead; the appropriate
+newsgroup is rec.games.roguelike.nethack (although they would appreciate it if
+you put `[NetHack 4]` in the subject line to make it clear that you aren't
+talking about NetHack 3).
+
+If you want to contact the developers directly, you can use IRC, or email;
+`ais523` (Alex Smith) can receive email using that username, at nethack4.org.
+
+
+Selected Changes
+================
+
+For a full list of changes in NetHack 4 compared to the NetHack 3 series, see
+`doc/changelog.txt`.  Some of the most interesting or noticeable changes are
+listed below.
+
+  * Numerous bugfixes.  Over 150 of the numbered bugs in NetHack 3.4.3 have
+    been fixed *intentionally*; many more have been fixed as a side effect of
+    the improvements to NetHack's internals included in NetHack 4, and many
+    bugs have been fixed in NetHack 4 that aren't included in the NetHack
+    3.4.3 bug list (because the NetHack 3 devteam failed to add them, despite
+    being notified about them).
+
+  * A fully rewritten interface, that nonetheless is almost compatible at the
+    keystroke level with 3.4.3 (with a few exceptions to reduce the effect of
+    making typos, or to remove redundant prompts).  Just like previous
+    versions, both tiles and console ports are available; unlike previous
+    versions, these ports are keystroke-compatible with each other, so
+    more detailed graphics no longer have to be accompanied by a loss in
+    functionality on the keyboard.
+    
+    Features of the interface include:
+
+      * Status lines which visually represent health and magical power, and
+        which use color in order to draw attention to dangerous situations and
+        to allow a quick appraisal of the character out of the corner of your
+        eye – but stay gray if they have nothing urgent to say, so that they
+        are most visible when most necessary.
+        
+      * Improved support for large terminals:
+      
+          * Extra vertical space will be used to display more messages at once
+            (cutting down on the need to space through messages at the
+            infamous `--More--` prompt, and to present more information in the
+            status area.  If you have even more vertical space than that, the
+            spare space will be used for mouselook (showing information about
+            the map square the mouse is pointing over), and for reminders
+            about the controls.  (New players are recommended to use very
+            vertically large terminals.)
+        
+          * If you have spare horizontal space, it is used to maintain a
+            permanent display of the inventory and to show information about
+            the floor beneath your character's feet.
+
+      * More information shown on the game map.  You can see where your
+        character's been walking, see stairs and traps underneath items, and
+        tell at a glance which monsters are peaceful.
+
+      * A better rendering backend.  NetHack 3.4.3 could only use IBMgraphics
+        or DECgraphics for this, often with neither working without spending
+        time configuring your terminal.  NetHack 4 will automatically switch
+        between IBMgraphics and Unicode according to the needs of your
+        terminal, meaning that there is rarely a need to change settings.
+        Likewise, it will try its best to give you a working dark gray color
+        (although in emergencies, you can turn off dark gray in the options,
+        and the engine will redo its color schemes to avoid that color).
+
+      * Commands are now fully rebindable.  In most cases, though, you won't
+        need to; unlike NetHack 3, NetHack 4 understands most of the keys on
+        the keyboard, meaning that (especially with NumLock off) it can
+        distinguish the main keyboard and numeric keypad numbers, meaning that
+        there's no longer a need to mess around with the `numpad` option.  In
+        fact, you can even use the cursor keys for navigation (without losing
+        the ability to use diagonals), giving three styles of movement:
+        
+                  vi-keys           cursor keys         number keys
+                  y  k  u         Home  Up   PgUp         7  8  9
+                  h  .  l         Left  .   Right         4  .  6
+                  b  j  n         End  Down  PgDn         1  2  3
+
+        (This sadly cuts slightly into the convenience commands that numpad
+        players were used to.  Instead of `N` for `#name`, you can use `C`;
+        instead of `k` for kicking, you can use `^D`.  For command repeat,
+        just use the numbers on the main keyboard.  Alternatively, you can use
+        the options menu to change back to the old numpad bindings.)
+        
+        Another gain from this is that the `Meta-` shortcuts for many extended
+        commands, that do not work properly in 3.4.3 on many terminals, will
+        normally work in NetHack 4 (using the `Alt` key on the keyboard).
+
+      * Addition of some new, convenient, commands, without compromising the
+        original commands:
+        
+          * You can limit any command to a specific number of actions via
+            specifying a number of actions to stop after.  (Single-turn
+            commands will be repeated for that many actions instead, as in
+            3.4.3.)  You can also stop commands midway through by pressing any
+            key or clicking on the map, if your options are set to animate
+            long-running commands.
+
+          * `^A` is a lot more powerful; when repeating commands, it will
+            remember what choices you made, and if you use it after an
+            interrupted multi-turn command, it will resume that command for
+            you.
+
+          * You no longer have to remember the difference between `W` and `P`,
+            or between `R` and `T`; they're interchangeable now.  In fact, you
+            no longer have to remember any of those commands, nor `w`, `x`, or
+            `Q`, because you can now change your equipment around using `A`.
+            Also, your character will temporarily unequip armor in order to
+            manipulate armor beneath it, meaning that you don't have to
+            explicitly remove a suit in order to take off a shirt.
+
+          * There's no need to explicitly open doors any more; just use the
+            direction keys to walk towards them.  If they turn out to be
+            locked, you can now unlock them with `o`.
+
+          * Examining map squares using `;` still works, but if you have a
+            mouse available, you can also quickly examine them simply via
+            hovering the mouse pointer over them.
+
+          * If you find exploring empty areas tedious, you can let the game
+            take over for you; press `v`, and an AI will take over the
+            exploring for you until it finds something interesting or a
+            monster turns up.
+
+          * The game will remember information about other levels for you,
+            accessible via the `^O` command; not only will it give a quick
+            guide to interesting features on each level, but you can select a
+            level from the menu to view what you remember about its map.
+
+          * Fed up of typing out Elbereth by hand?  The `^E` command is a
+            quick shortcut to write an Elbereth in the dust.
+
+      * It's now harder to do things that are normally bad ideas by mistake –
+        but it's still possible to do them intentionally.  For instance,
+        moving towards a shopkeeper is interpreted as "pay" (`p`) rather than
+        "fight" (`F`); you'd need to give the `F` intentionally if you wanted
+        to attack.  Likewise, moving into lava (when not levitating, confused,
+        or the like) needs an `m` prefix, or the game will give a warning and
+        your character will wisely just stand there.
+
+      * Along similar lines, you now normally use `,` as an inventory letter
+        to interact with items on the floor (e.g. `e,` to eat them), because
+        the ambiguity of `ey` lead to many typo-related deaths back in 3.4.3.
+
+      * The game now tracks more information about your character, with a
+        "history" view that shows major events in your character's life, and
+        with dumplogs produced when the game ends to summarize the heroic
+        efforts and final defeat (or glorious victory) of your character.
+
+  * Customizing options no longer requires messing around with configuration
+    files; you can change options for one game using the in-game `O` command,
+    and options for all future games from the main menu.  There are numerous
+    improvements to the options themselves, too:
+    
+      * You can set various "birth options" for your game in order to control
+        what sort of game you want to play, ranging from something small like
+        turning off bones, to challenge modes where your character is
+        permanently blind or hallucinating.  There's no longer a need to
+        recompile the game if you want to do something like turn off Elbereth.
+        
+      * Autopickup is a lot more customizable than in 3.4.3, with the ability
+        to add rules that match various properties of items against patterns
+        to choose whether to pick them up.
+
+      * There are many more options for what the main movement keys do.  In
+        3.4.3, your choices are limited to choosing whether they displace pets
+        and whether they ask for confirmation when you attack peacefuls.  In
+        NetHack 4, you could for instance have them refuse to attack monsters
+        altogether, without losing the ability to pick up items (which is what
+        adding an `m` before every command would do).
+
+      * Finally, if you're a traditionalist, don't worry: the vast majority of
+        the new interface features from NetHack 4 can be turned off, leaving
+        you with an uninteresting 3.4.3-like ASCII view if you want.
+
+  * The save system has been rewritten (and we removed all the much-maligned
+    NitroHack save code, too).  Save files now contain a complete history of
+    the gamestate, allowing them to be reconstructed at any point, making it
+    possible to view a replay of a game with full character knowledge.  The
+    save files are also saved continuously; if something goes wrong, whether
+    it's a bug in the game or your terminal crashing, you'll be able to just
+    pick back up where you left.  You can even save in the middle of a turn!
+    (To do this, either close the window, or open the main menu using
+    Control-C and save that way.)  The game is also ever-vigilant for mistakes
+    in the save system; if at any point your game can no longer be restored
+    from its save, it will stop gameplay immediately, maximizing the chances
+    that the save file can be recovered, rather than letting you play on and
+    then losing all your progress since the moment it went wrong.
+
+  * There have been some gameplay changes, mostly to remove "difficulty" that
+    was created via relying on a bad interface and entirely avoidable via
+    playing slowly and taking lots of notes.  Most notably, floating eyes can
+    no longer be hit in melee unless you have protection from their gaze,
+    meaning that you'll never hit them by mistake, but you'll never be able to
+    hit them on purpose either.  Likewise, amnesia does not cause the
+    character to forget anything the player could have made out-of-game notes
+    about, but rather drains skill points and spells.
+    
+    There are also many gameplay changes intended to streamline the interface.
+    Try dropping a container full of unidentified items on an altar some time.
+    
+    Finally, there are some improvements in the monster AI.  For instance,
+    pets can use their special attacks now, and hostile monsters may attack
+    each other even without conflict if they dislike each other enough.
+    Monsters also have less spoiler knowledge than they did before; in
+    particular, they won't know where you are on the map without some way to
+    see or sense your location.
+
+  * Building the game from source is much easier than it was in NetHack
+    3.4.3.  See the build instructions below.
+
+
+Build Instructions
+==================
+
+UNIX/Linux/Mac OS X
+-------------------
+
+You will need to install NetHack 4's dependencies: zlib (which is probably
+installed already, but you may need to get its development headers from your
+package manager), and (if you want a working server binary) inetd, postgresql
+and pgcrypto.  You also need development headers for the libraries listed.
+
+NetHack 4 also requires a working libjansson library (available from
+http://www.digip.org/jansson), and its development headers.  However, both of
+those ship with NetHack 4, and will be used by default or if you explicitly
+specify `--with=jansson` as an option to `aimake`.  (If you have installed
+libjansson yourself, you can give `--without=jansson` to use your own copy.
+This will build a little faster and avoid installing redundant copies of the
+jansson library.)
+
+You will also need the `bison` and `flex` programs (in addition to the usual
+compilers), because some of NetHack's tools (e.g. the level-handling
+utilities) are written in them.
+
+If you want to build the tiles or faketerm ports (the default), you will also
+need to install libpng, and version 2 of the Simple DirectMedia Layer; it may
+be available in your package manager, or else you could download the source
+code from http://www.libsdl.org and compile it yourself.  Otherwise, you can
+specify `--without=gui` as an option to `aimake` to build just the console
+port (which is built either way), and disable the tiles ports.  Note that the
+tiles ports do not currently work on Mac OS X.
+
+Assuming you just want to run NetHack 4 from your home directory, from the top
+source directory, run:
+
+    mkdir build
+    cd build
+    ../aimake -i ~/nethack4 .. # or wherever you want
+
+If you want to install for all users, you will need to tell `aimake` which
+location to install it into, and how to elevate its permissions:
+
+    # as a regular user, not root
+    mkdir build
+    cd build
+    ../aimake -i /usr/local -S su ..    # or perhaps -S sudo
+
+Note that this requires a group `games` to exist on your system, and contain
+no normal users, in order to ensure security of the bones files and high score
+tables.  This is the case on most Linux distributions, but not on all, and may
+not be the case on UNIX.
+
+To run the console port, use `nethack4`.  For the tiles/faketerm ports, use
+`nethack4-sdl`.
+
+
+Windows
+-------
+
+You will need to install various prerequisite programs in order to compile
+NetHack 4.  The build system is written in Perl, and as such, the simplest way
+to get a working toolchain is to install Strawberry Perl, available at
+http://strawberryperl.com, which comes with a working C toolchain.  You will
+also need to install Flex and Bison, scanner and parser generators; the
+versions at GnuWin32 (http://gnuwin32.sourceforge.net/) work (although they
+don't have a very Windows-like idea of directory structure, and thus can't be
+installed to paths with spaces in, and produce compiler warnings; if you know
+a better option, let us know).  Strawberry Perl's and GnuWin32's executables
+will all need to be on your PATH (search for "PATH" in Control Panel, on
+recent versions of Windows).
+
+You will also need to create two more folders, `build` and `install`; I
+recommend that both are parallel to the `nethack4` folder that contains the
+entire NetHack 4 distribution.
+
+If you want to build a tiles or fake terminal port (recommended even if you
+aren't a tiles player, because Windows' terminal is rather slow), you will
+need version 2 of the Simple DirectMedia Layer.  Download the MinGW version of
+the development headers and import libraries from http://www.libsdl.org; also
+download the library itself.  Then copy the entire `include/SDL2` subdirectory
+from the appropriate processor-dependent directory of the SDL distribution, to
+the `c/include` folder that was created when you installed Strawberry Perl (so
+that it beomes `c/include/SDL2`); and all the files `lib/*.a` from the
+appropriate processor-dependent directory of the SDL distribution to the
+`c/lib` folder that was created when you installed Strawberry Perl (so that
+they become `c/lib/libSDL2.a`, etc.).  Finally, copy the file `SDL2.dll` that
+you obtained when you downloaded the library itself to the `prebuilt` folder
+inside the `nethack4` folder that contained the distribution.
+
+Once you've done this, open Strawberry Perl's command prompt, change to the
+build directory, and type:
+
+    perl ..\nethack4\aimake -i ..\install --directory-layout=single_directory
+
+aimake should compile and install the entirety of NetHack 4 for you into the
+install directory.  In order to run the console port, change directory to the
+install directory, and type `nethack4`.  For the tiles/faketerm port, use
+`nethack4-sdl.exe`.
+
+It is possible that `ld.exe` will crash in the process of the build.  This
+only seems to happen after it has already produced the output that aimake
+needed, so you can just dismiss the error box and let the build work as
+normal.
+
+Note that despite the best efforts of the rendering library, the game is quite
+slow to render on the console when using recent versions of Windows; this is
+because the Windows console itself is prety slow.  (For a comparison, you can
+try running a command that produces a lot of text, such as `perl
+../nethack4/aimake --documentation`, and observing how long it takes to scroll
+the screen when you press the spacebar.)  The faketerm port somehow manages to
+be faster, even though it too is fairly slow.
+
+
+Server setup
+------------
+
+If you want to run your own server (which is only necessary/useful if you want
+people to be able to connect to your NetHack 4 server from other computers,
+rather than running locally), you'll need to give `--with=server` as a
+command-line option to `aimake`, and also need to set up the postgresql
+database:
+
+    su postgres             # or any other way to elevate your permissions
+    createuser -DPRS nh4server
+    # You'll be prompted for a password at this point.
+    createdb -O nh4server nethack4
+    echo 'CREATE EXTENSION pgcrypto' | psql -d nethack4
+    exit                    # go back to your normal permissions
+
+Next you need to edit the configuration file (a blank configuration file will
+have been installed in the appropriate place for you to edit).  If you
+installed into `~/nethack4`, it should be named
+`~/nethack4/config/nethack4.conf`; other forms of install may have other
+locations.  (You can run nethack4-server with no arguments to discover where
+the configuration file should be; if it can't find its configuration file,
+it'll complain and tell you where it's looking for it.)
+
+The configuration file looks something like this:
+
+    dbhost=127.0.0.1
+    dbport=5432
+    dbuser=nh4server
+    dbpass=**password**
+    dbname=nethack4
+
+Note that the port number has been known to vary based on the way that your
+copy of postgresql is packaged; you may want to verify it by looking at
+postgresql's configuration, `/etc/postgresql/.../postgresql.conf`.  Also be
+aware that the configuration file necessarily has to store the password in
+plaintext (a hashed password is no good for actually logging into the
+database); you may want to change the permissions on the configuration file to
+help protect it.  (I recommend using a long random password, because it's only
+used by computers; there's no need for humans to memorize it.)
+
+Finally, you need to tell inetd about the new server setup.  As root, you need
+to add two extra lines to `/etc/inetd.conf`, looking something like this:
+
+    53430 stream tcp  nowait username /path/to/nethack4-server nethack4-server
+    53430 stream tcp6 nowait username /path/to/nethack4-server nethack4-server
+
+(Here, "username" is the username of the user that the server binaries should
+run as.)  Then, again as root, just send a `SIGHUP` to inetd (`killall -HUP
+inetd`), to tell it to load the new configuration file.  inetd will be
+responsible for starting the server processes when a new connection is made;
+no server processes will be running while no games are being played.  To test
+your server setup, you can use the `nethack4` client; there's a menu option to
+connect to a server with it.
+
+This only really works properly on Linux, at present; on Mac OS X, it may be
+possible to get a partially working server, but functionality is missing due
+to that operating system's lack of support for realtime signals.

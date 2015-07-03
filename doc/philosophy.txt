@@ -1,0 +1,288 @@
+About this document:
+Last modified by Alex Smith, 2013-12-29
+
+Copyright (C) 2013 Alex Smith.
+
+This document is licensed under the NetHack General Public License.  See
+libnethack/dat/license for details.
+
+
+
+Explaining the design decisions behind roguelikes seems to be all the rage,
+nowadays.  So here, I'm trying to explain my thoughts behind the philosophy of
+NetHack and NetHack 4.
+
+
+Flexibility
+===========
+
+In most roguelikes, flexibility is a minor or irrelevant design goal.
+(Brogue, for instance, is an awesome roguelike, but is intentionally designed
+to be inflexible; the skill in that game is adapting your character build to
+the resources you find. That doesn't make it a bad game; it just makes it a
+very un-NetHack-like game.)  By flexibility, what I mean is: if you want to be
+able to do something, you should be able to do it.  NetHack is, and always has
+been, excellent in this regard; people have thought up interesting new ways to
+play the game which were not really envisaged by the developers.  (Unlike some
+roguelikes, NetHack's classes are really just starting points, and there are
+probably too many of them as it is; the issue is that removing or merging any
+would cause an uproar.)
+
+As such, in order to accommodate everyone, the game needs to be rather easy
+for experienced players to play without restrictions, so that playing *with*
+restrictions (of their choice) is an achievable goal.  This is not really a
+problem; sometimes people just want to breeze through the game and that's
+perfectly reasonable, sometimes people want a real challenge, and they can do
+that in whatever way they find most fun.  (The game tracks some "conducts" in
+order to provide a starting point for this.  They fall into three main
+categories: avoiding specific powerful strategies (polyselfless,
+puddingfarmless, Elberethless); playing with resources limited either in
+general (wishless, polyitemless) or with specific limitations (artiwishless,
+illiterate, vegan/vegetarian, atheist); and challenge runs that heavily alter
+the normal play of the game (pacifist, foodless, permablind, permahallu).)
+This is the source of NetHack's replayability after ascension; the flexibility
+given to the player makes it possible to improvise solutions to all sorts of
+problems that might not have come up before.  Even with simple unrestricted
+play, problems frequently come up that may never have come up before, and
+require improvised solutions.  This is something that I'd like to encourage
+more of, but it's very hard to balance the game to accomplish that, and I'm
+erring on the side of not frustrating players.
+
+I'd also like to make a direct argument in favour of choices, even when some
+of them are usually going to be bad ideas.  Although NetHack tries hard to
+make sure that no course of action is going to be 100% useless (if only due to
+the presence of unique-deaths competitions where people try to come up with
+the most creative suicides of characters that they can), something that's 99%
+useless is perfectly OK to put in the game.  There are multiple reasons for
+this: for people who prefer to play unspoiled, there's the joy of discovery in
+working out which options are best, and for spoiled players, sometimes that 1%
+is going to come up, and the game's enhanced by the ability to use unusual
+solutions to unusual problems.  If the best solution to any problem is always
+an intended solution designed into the game by the developers, the game
+becomes an issue of memorisation, rather than creativity.
+
+The converse is also true; if there's a choice that's 99% or even 100% of the
+time correct, it doesn't detract that much from the game.  And it probably
+isn't going to be made in 99% of games, because the player is going to have a
+goal at reaching a point in the game in which they can make it (and some
+characters are going to die first); it's serving as an important milestone for
+those who do that gives a sense of accomplishment (and psychologically, helps
+cut down on boredom and the feeling of repetitiveness that can pervade long
+games in any genre).  Also, such choices cannot really be eliminated without
+detracting from the game; forcing the player to take them would eliminate
+obvious challenge runs (just make the bad choice at that point), and there's
+probably *someone* who will try the run and have fun doing so; and nerfing
+them will make the game more difficult and usually not solve the underlying
+problem (players will just move to the next-best choice instead, then you'll
+nerf that one too, and so on). It is important, however, to cut down on newbie
+traps; if a choice is usually wrong, either it should be obviously usually
+wrong, or the game should warn people who try to take it.
+
+Finally, to allow this flexibility, the player needs to be able to have a
+meaningful influence over the development of their character.  This is why
+items like wands of wishing exist.  Also, why it's important that the ability
+to start-scum characters exist, but due to the interface and grindiness issues
+of that, I'm looking to replace that with some other mechanism that gives the
+same choices but in a less boring to use way.  It's also why different dungeon
+branches have notably different loot; players who want something in particular
+should be able to take steps to increase their chance of getting it.  Failing
+to do this is quite commonly observed in roguelikes; it leads to a game where
+the player has no incentive to go in any direction but the one with the
+easiest enemies at that point in the game, and as such, the choice is mostly a
+false one.
+
+
+Interface
+=========
+
+There are definitely games whose interest comes from the difficulty of
+instructing your character precisely in real-time (imagine bullet-hell
+shooters, for instance).  However, games tend to be most fun when they focus
+on one particular sort of difficulty, rather than making you do multiple
+unrelated things at the same time; puzzling your way out of a difficult combat
+is made less fun, rather than more, by having to constantly check for typos as
+well.  As such, in NetHack 4, there's a strong focus on trying to make sure
+that what the character does is what the player wants them to do.  For
+instance, apparently suicidal actions require confirmation before the
+character actually does them (with a prefix, not the easily typoed y/n, in
+cases where the player might be typing movement commands at the time),
+although the character *is* allowed to perform them because sometimes they
+might be important.  Likewise, monsters and items whose main interest came
+from interface issues have been altered to provide an interface-independent
+effect (with floating eyes becoming mobile obstacles that can't be meleed, and
+scrolls of amnesia draining skills rather than map memory).
+
+I also try to ensure that information the player needs is readily available,
+to save time and effort repeatedly asking for it.  Almost all monsters have
+different letter/colour/underscore combinations; the status bar is
+intentionally mostly grey, with colour for the HP and Pw bars (so that you can
+easily check your health status out of the corner of your eye); background
+colours show the remembered locations of traps and stairs, and the attitude of
+monsters.  As such, the need to farlook things should be very low for someone
+experienced at the game.
+
+There are also interface niceties like travel and autoexplore; however, these
+are implemented without compromising the corresponding gameplay, so it may
+often be the case that manual play is better than using the automated
+commands.  It's better to make something like exploration interesting (with
+nontrivial decisions about which order to clear rooms in, and trade-offs
+between waiting to heal and pushing on immediately), than eliminate it from
+the game altogether and tell people to simply tap a key in order to skip past
+it.  The skill in something like exploration isn't currently working as well
+as it could be, but it's more interesting to try to improve it than just to
+give up and abandon it to just another task that can be ignored and left to
+the AI.
+
+
+Balance
+=======
+
+I've already covered why NetHack has to be somewhat easy for experienced
+players.  This isn't a balance issue in its own right; there are still plenty
+of ways to tell players apart, and for a game where people can spend hours or
+days (or in some cases, years) on a character, win rate for non-challenge
+games is an uninteresting and reasonably un-fun metric.  It's much more
+important that every game is winnable, than it is that players can easily be
+distinguished via win rate; playing a game where you're doomed before you
+start rapidly becomes unfun.  For inexperienced players, this is even more
+important; you can learn to play a roguelike by dying repeatedly to every
+letter of the alphabet, but that means going through the early game again and
+again and again and again, getting slightly further each time.  And with a
+game with the scope of NetHack, that's going to lead to frustration and
+boredom while the player's simply trying to learn the game, which would make
+it very fun unspoiled.
+
+However, it's just as important to ensure that games do not become routine,
+and that players are forced to improvise rather than solve the game via
+memorization and a standard strategy.  Some roguelikes do this by limiting the
+character's options, generating only a minimum resources and leaving the
+skill in the game about adapting to what the game gives you.  This is not a
+good fit for NetHack, where much of the fun comes from customizing your
+character; instead, the game is not about adapting to what it gives you, but
+to what it throws at you.  Even after over 10 years with no new versions
+coming out, interesting problems in NetHack 3.4.3 crop up all the time, and
+improvising solutions is a major theme in the NetHack community.  (A corollary
+to all this is that problems with only one solution should be avoided, where
+possible.)
+
+There is an apparent contradiction here.  How can we ensure that the game is
+(almost) always winnable, and yet keeps posing interesting and fresh problems?
+The solution is to make it easy to back out when in trouble, but at the cost
+of resources so that the game still retains tension, and also to avoid
+eliminating strategy from the game (you still have to be prepared, in order to
+be able to back out, and you're still only going to be able to try a difficult
+section every now and again).  One possibility would be to make it very easy
+to run away, but having a standard solution to everything difficult is not
+particularly fun (and additionally, being able to easily run away from a
+problem often means that you end up never having to face it at all, so you
+miss the fun of coming back and solving it later).  Instead, NetHack has a
+range of viable escapes, ranging from full-heals to teleports to levports to
+branchports to digging through the floor to life-saving to Elbereth (which is
+fine in concept, but which currently tends to lead to tedium because it's
+simply far too powerful and spammable).  As such, a player exploring an area
+they've never been to before can have multiple tries until they finally figure
+it out, and yet are never completely out of danger, because they're still
+losing resources unless they press onwards.
+
+This also means that it's OK if the player can somehow become invincible or
+effectively invincible; it's a fun goal for some players.  However, doing that
+should take more effort than simply just winning the game; and it should also
+happen reasonably close to the end of the game.  (The game can be counted as
+won when it happens; you don't want people to expend so much effort into going
+through the motions to actually *win* from there.)  This goal is harder than
+it might seem; some players of older versions got infinite stats using a bug,
+and they still died sometimes (and more frequently still, failed whatever
+challenge goal they were aiming for).  It probably isn't completely
+impossible, though.
+
+Another balance issue is that of grinding; some players actually enjoy it,
+somehow (and I don't want to deny them their "fun"), but it's for the best if
+it never becomes the best strategy, and if the game never encourages players
+to do it.  This is why freshly generated levels have more items than cleared
+levels, why monsters get more powerful throughout the game even if you camp
+dlvl 1 (and you're probably going to starve if you do that, anyway), and why
+farming gives diminishing or even negative returns on your score.  Likewise,
+shopkeepers have only limited gold, and pay sufficiently small amounts for
+common items like daggers that the gold you'd get is not even worth the time
+you take to collect them.  (And it's why gold drops off in usefulness past the
+early game.)
+
+It's also OK if not all races or classes or play-styles are equal.  (In fact,
+it would be rather surprising if they were.)  At the moment, pure melee is
+probably the best strategy (at least one top player will make a pure melee
+build even with wizards), but that doesn't matter; players are still going to
+play in other ways, such as spellcasting or ranged combat or riding, purely
+because that's what they find fun (and aren't games about fun)?  Again,
+flexibility is important; if the game were hard enough that perfect play were
+required to win, then everyone would be forced into the best strategy, which
+would take away a lot of choice from the game.  With slack in the system, even
+underpowered characters have a real chance at being made viable, and this adds
+replayability as well as personalisation to the game.
+
+Finally, I try to give meaningful strategic decisions about where to go and
+what to do next, and what sort of goals to focus on.  This is why things like
+intrinsics and ascension kit items exist; they give the player something to
+aim for throughout the whole of the early and mid-game (whilst none of them,
+apart from the invocation items, are completely necessary, to play into the
+flexibility goal), and they're valuable enough that they encourage the player
+to take risks to get them.  (This is the main purpose of enemies that are very
+dangerous missing a certain intrinsic/extrinsic but easy if you have it, such
+as Mordor orcs and energy vortices; the implementation here could do with
+improvements, but the goal is important enough that even a bad method of
+achieving it adds to the game.)  It's interesting to note that Gehennom
+currently fails very badly at this goal, and it's one of the main reasons why
+it's the least fun part of the game (there are a few others).  I'm looking for
+improvements there, but it serves as a striking example of why this philosophy
+is important.
+
+
+Need (or lack of need) for spoilers
+===================================
+
+There's a lot to discover in NetHack; even after playing it for years, and
+reading all the spoilers you can find, there's *still* going to be things
+about the game that you don't know, and can surprise you.  (And this is true
+even of 3.4.3, which hasn't changed for years; even after ten years, new
+things about it are discovered from time to time.)  As such, I try to allow
+for unspoiled play.  NetHack 4 intentionally spoils information that is hard
+to remember or discover (the relative strength of weapons, the Invocation
+sequence), or that is grindy and un-fun to find out (which corpses are edible
+and which will kill you), while leaving other things there to be discovered;
+this is why the descriptions of items list their most obvious effect, rather
+than an exhaustive list of everything you can do with that item (as has been
+seen in some Angband variants, for instance; it's interesting to note that
+such variants are often described as having "NetHack envy").  The flexibility
+in the game also allows for unspoiled play to have a decent chance of survival
+even when it makes mistakes; it works like just another challenge goal.  (Note
+that this doesn't mean that I expect unspoiled players to win at all quickly;
+it's OK if it takes months or years of effort to win unspoiled.)
+
+However, although some players love the joy of discovery, many don't; and just
+as the game is designed to be fun unspoiled, it should be designed to be fun
+spoiled too.  Even spoilers tend not to give players a good feel for the
+game's strategy; knowing all the information, but without practical dungeon
+experience, tends to get players killed in interesting ways.  And players who
+know all the information about the game will still have to improvise solutions
+from time to time (or all the time, if they're trying a challenge run that's
+never been done before); it's fun when that happens, and they'll have all the
+information that they need to work out what will happen when they do.  (This
+is one of the main benefits of NetHack communities online; the knowledge of
+100 people is better than the knowledge of 1, and can lead to creative
+solutions when otherwise there'd be a vague guess and a disappointing death.)
+
+
+Consistency
+===========
+
+NetHack is a very large game, and there's a huge amount to remember.  As such,
+consistency in the way things behave in the game helps make playing more fun
+by reducing the amount of arbitrary lists you have to memorise.  This is why
+making NetHack match real life or common fantasy tropes when possible is
+useful; you probably already know what elves are like, for instance, and if
+there's something that an item "should" be able to do, it probably can.  (A
+fun experiment: find someone who doesn't play NetHack, describe a problem
+you're having in the game, ask them to suggest a solution.  Over half the
+time, it's going to be something that is actually possible in the game,
+although you may not have the items for it.)  Likewise, the occasional bad pun
+in the operation of an item is there both for the groans when it's noticed,
+and because someone who discovers it is unlikely to forget it from then on.

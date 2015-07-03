@@ -1,0 +1,30 @@
+#!/bin/bash
+# Last modified by Alex Smith, 2013-11-25
+
+# If there are any changes in the working copy, stash them.
+stashed_changes=`git stash create`
+git reset --hard -q
+
+# Work out which files to change.
+# We need to use git diff-tree, not git diff, in case this is a merge.
+# We would want to use --name-only, which is documented to do exactly
+# what we want, but its results seem buggy/nonsensical. So we grep the
+# filenames out of the result by hand instead.
+for x in $(git diff-tree --cc HEAD | pcregrep -o '^\+\+\+ b/\K.*')
+do
+    # Update the timestamps on the files that were changed in the
+    # commit that was just committed.
+    sed -i -e "1,2s/Last modified by.*, ....-..-../Last modified by $(git log -n1 --pretty='%cn'), $(date +%F)/" $x
+    git add $x
+done
+
+# If there are any changes to timestamps, amend the commit we just
+# commited to contain the new timestamps. (We need the conditional
+# here to prevent an infinite loop; the commit would amend itself
+# forever.)
+git diff --staged --quiet || git commit -C HEAD --amend
+
+# Re-apply the changes to the working copy.
+if [ "x$stashed_changes" != "x" ]
+then git stash apply -q $stashed_changes
+fi

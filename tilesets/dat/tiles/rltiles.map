@@ -1,0 +1,2037 @@
+! Last modified by Alex Smith, 2015-04-02
+!
+! Copyright (C) 2014 Alex Smith
+! NetHack may be freely redistributed.  See license for details.
+!
+! This file was written by Alex Smith, and encodes a dungeon coloring
+! scheme suggested by Raz (the RLtiles artist).
+!
+! It also lists the tile sequence from NetHack 3.4.3, because that is
+! the sequence of tiles in the RLtiles images.
+
+! Tile sequence from NetHack 3.4.3
+
+giant ant
+killer bee
+soldier ant
+fire ant
+giant beetle
+queen bee
+acid blob
+quivering blob
+gelatinous cube
+chickatrice
+cockatrice
+pyrolisk
+jackal
+fox
+coyote
+werejackal
+little dog
+dog
+large dog
+dingo
+wolf
+werewolf
+warg
+winter wolf cub
+winter wolf
+hell hound pup
+hell hound
+Cerberus
+gas spore
+floating eye
+freezing sphere
+flaming sphere
+shocking sphere
+beholder
+kitten
+housecat
+jaguar
+lynx
+panther
+large cat
+tiger
+gremlin
+gargoyle
+winged gargoyle
+hobbit
+dwarf
+bugbear
+dwarf lord
+dwarf king
+mind flayer
+master mind flayer
+manes
+homunculus
+imp
+lemure
+quasit
+tengu
+blue jelly
+spotted jelly
+ochre jelly
+kobold
+large kobold
+kobold lord
+kobold shaman
+leprechaun
+small mimic
+large mimic
+giant mimic
+wood nymph
+water nymph
+mountain nymph
+goblin
+hobgoblin
+orc
+hill orc
+Mordor orc
+Uruk-hai
+orc shaman
+orc-captain
+rock piercer
+iron piercer
+glass piercer
+rothe
+mumak
+leocrotta
+wumpus
+titanothere
+baluchitherium
+mastodon
+sewer rat
+giant rat
+rabid rat
+wererat
+rock mole
+woodchuck
+cave spider
+centipede
+giant spider
+scorpion
+lurker above
+trapper
+white unicorn
+gray unicorn
+black unicorn
+pony
+horse
+warhorse
+fog cloud
+dust vortex
+ice vortex
+energy vortex
+steam vortex
+fire vortex
+baby long worm
+baby purple worm
+long worm
+purple worm
+grid bug
+xan
+yellow light
+black light
+zruty
+couatl
+Aleax
+Angel
+ki-rin
+Archon
+bat
+giant bat
+raven
+vampire bat
+plains centaur
+forest centaur
+mountain centaur
+baby gray dragon
+baby silver dragon
+baby shimmering dragon
+baby red dragon
+baby white dragon
+baby orange dragon
+baby black dragon
+baby blue dragon
+baby green dragon
+baby yellow dragon
+gray dragon
+silver dragon
+shimmering dragon
+red dragon
+white dragon
+orange dragon
+black dragon
+blue dragon
+green dragon
+yellow dragon
+stalker
+air elemental
+fire elemental
+earth elemental
+water elemental
+lichen
+brown mold
+yellow mold
+green mold
+red mold
+shrieker
+violet fungus
+gnome
+gnome lord
+gnomish wizard
+gnome king
+giant
+stone giant
+hill giant
+fire giant
+frost giant
+storm giant
+ettin
+titan
+minotaur
+jabberwock
+vorpal jabberwock
+Keystone Kop
+Kop Sergeant
+Kop Lieutenant
+Kop Kaptain
+lich
+demilich
+master lich
+arch-lich
+kobold mummy
+gnome mummy
+orc mummy
+dwarf mummy
+elf mummy
+human mummy
+ettin mummy
+giant mummy
+red naga hatchling
+black naga hatchling
+golden naga hatchling
+guardian naga hatchling
+red naga
+black naga
+golden naga
+guardian naga
+ogre
+ogre lord
+ogre king
+gray ooze
+brown pudding
+black pudding
+green slime
+quantum mechanic
+rust monster
+disenchanter
+garter snake
+snake
+water moccasin
+pit viper
+python
+cobra
+troll
+ice troll
+rock troll
+water troll
+Olog-hai
+umber hulk
+vampire
+vampire lord
+vampire mage
+Vlad the Impaler
+barrow wight
+wraith
+Nazgul
+xorn
+monkey
+ape
+owlbear
+yeti
+carnivorous ape
+sasquatch
+kobold zombie
+gnome zombie
+orc zombie
+dwarf zombie
+elf zombie
+human zombie
+ettin zombie
+giant zombie
+ghoul
+skeleton
+straw golem
+paper golem
+rope golem
+gold golem
+leather golem
+wood golem
+flesh golem
+clay golem
+stone golem
+glass golem
+iron golem
+human
+human wererat
+human werejackal
+human werewolf
+elf
+Woodland-elf
+Green-elf
+Grey-elf
+elf-lord
+Elvenking
+doppelganger
+nurse
+shopkeeper
+guard
+prisoner
+Oracle
+aligned priest
+high priest
+soldier
+sergeant
+lieutenant
+captain
+watchman
+watch captain
+Medusa
+Wizard of Yendor
+Croesus
+Charon
+ghost
+shade
+water demon
+horned devil
+succubus
+incubus
+erinys
+barbed devil
+marilith
+vrock
+hezrou
+bone devil
+ice devil
+nalfeshnee
+pit fiend
+balrog
+Juiblex
+Yeenoghu
+Orcus
+Geryon
+Dispater
+Baalzebub
+Asmodeus
+Demogorgon
+Death
+Pestilence
+Famine
+mail daemon
+djinni
+sandestin
+jellyfish
+piranha
+shark
+giant eel
+electric eel
+kraken
+newt
+gecko
+iguana
+baby crocodile
+lizard
+chameleon
+crocodile
+salamander
+long worm tail
+archeologist
+barbarian
+caveman
+cavewoman
+healer
+knight
+monk
+priest
+priestess
+ranger
+rogue
+samurai
+tourist
+valkyrie
+wizard
+Lord Carnarvon
+Pelias
+Shaman Karnov
+Earendil
+Elwing
+Hippocrates
+King Arthur
+Grand Master
+Arch Priest
+Orion
+Master of Thieves
+Lord Sato
+Twoflower
+Norn
+Neferet the Green
+Minion of Huhetotl
+Thoth Amon
+Chromatic Dragon
+Goblin King
+Cyclops
+Ixoth
+Master Kaen
+Nalzok
+Scorpius
+Master Assassin
+Ashikaga Takauji
+Lord Surtur
+Dark One
+student
+chieftain
+neanderthal
+High-elf
+attendant
+page
+abbot
+acolyte
+hunter
+thug
+ninja
+roshi
+guide
+warrior
+apprentice
+invisible monster
+strange object
+arrow
+runed arrow
+crude arrow
+silver arrow
+bamboo arrow
+crossbow bolt
+dart
+throwing star
+boomerang
+spear
+runed spear
+crude spear
+stout spear
+silver spear
+throwing spear
+trident
+dagger
+runed dagger
+crude dagger
+silver dagger
+athame
+scalpel
+knife
+stiletto
+worm tooth
+crysknife
+axe
+double-headed axe
+short sword
+runed short sword
+crude short sword
+broad short sword
+curved sword
+silver saber
+broadsword
+runed broadsword
+long sword
+two-handed sword
+samurai sword
+long samurai sword
+runed broadsword
+vulgar polearm
+hilted polearm
+forked polearm
+single-edged polearm
+lance
+angled poleaxe
+long poleaxe
+pole cleaver
+broad pick
+pole sickle
+pruning hook
+hooked polearm
+pronged polearm
+beaked polearm
+mace
+morning star
+war hammer
+club
+rubber hose
+staff
+thonged club
+flail
+bullwhip
+bow
+runed bow
+crude bow
+long bow
+sling
+crossbow
+leather hat
+iron skull cap
+hard hat
+fedora
+conical hat
+conical hat
+dented pot
+plumed helmet
+etched helmet
+crested helmet
+visored helmet
+gray dragon scale mail
+silver dragon scale mail
+shimmering dragon scale mail
+red dragon scale mail
+white dragon scale mail
+orange dragon scale mail
+black dragon scale mail
+blue dragon scale mail
+green dragon scale mail
+yellow dragon scale mail
+gray dragon scales
+silver dragon scales
+shimmering dragon scales
+red dragon scales
+white dragon scales
+orange dragon scales
+black dragon scales
+blue dragon scales
+green dragon scales
+yellow dragon scales
+plate mail
+crystal plate mail
+bronze plate mail
+splint mail
+banded mail
+dwarvish mithril-coat
+elven mithril-coat
+chain mail
+crude chain mail
+scale mail
+studded leather armor
+ring mail
+crude ring mail
+leather armor
+leather jacket
+Hawaiian shirt
+T-shirt
+mummy wrapping
+faded pall
+coarse mantelet
+hooded cloak
+slippery cloak
+robe
+apron
+leather cloak
+tattered cape
+opera cloak
+ornamental cope
+piece of cloth
+small shield
+blue and green shield
+white-handed shield
+red-eyed shield
+large shield
+large round shield
+polished silver shield
+old gloves
+padded gloves
+riding gloves
+fencing gloves
+walking shoes
+hard shoes
+jackboots
+combat boots
+jungle boots
+hiking boots
+mud boots
+buckled boots
+riding boots
+snow boots
+wooden ring
+granite ring
+opal ring
+clay ring
+coral ring
+black onyx ring
+moonstone ring
+tiger eye ring
+jade ring
+bronze ring
+agate ring
+topaz ring
+sapphire ring
+ruby ring
+diamond ring
+pearl ring
+iron ring
+brass ring
+copper ring
+twisted ring
+steel ring
+silver ring
+gold ring
+ivory ring
+emerald ring
+wire ring
+engagement ring
+shiny ring
+circular amulet
+spherical amulet
+oval amulet
+triangular amulet
+pyramidal amulet
+square amulet
+concave amulet
+hexagonal amulet
+octagonal amulet
+Amulet of Yendor
+Amulet of Yendor
+large box
+chest
+ice box
+bag
+bag
+bag
+bag
+key
+lock pick
+credit card
+candle
+candle
+brass lantern
+lamp
+lamp
+expensive camera
+looking glass
+glass orb
+lenses
+blindfold
+towel
+saddle
+leash
+stethoscope
+tinning kit
+tin opener
+can of grease
+figurine; sub figurine *
+magic marker
+explosive trap
+toothed trap
+whistle
+whistle
+flute
+flute
+horn
+horn
+horn
+horn
+harp
+harp
+bell
+bugle
+drum
+drum
+pick-axe
+iron hook
+unicorn horn
+candelabrum
+silver bell
+tripe ration
+corpse; sub corpse *
+egg
+meatball
+meat stick
+huge chunk of meat
+meat ring
+kelp frond
+eucalyptus leaf
+apple
+orange
+pear
+melon
+banana
+carrot
+sprig of wolfsbane
+clove of garlic
+slime mold
+lump of royal jelly
+cream pie
+candy bar
+fortune cookie
+pancake
+lembas wafer
+cram ration
+food ration
+K-ration
+C-ration
+tin
+ruby potion
+pink potion
+orange potion
+yellow potion
+emerald potion
+dark green potion
+cyan potion
+sky blue potion
+brilliant blue potion
+magenta potion
+purple-red potion
+puce potion
+milky potion
+swirly potion
+bubbly potion
+smoky potion
+cloudy potion
+effervescent potion
+black potion
+golden potion
+brown potion
+fizzy potion
+dark potion
+white potion
+murky potion
+clear potion
+ZELGO MER
+JUYED AWK YACC
+NR 9
+XIXAXA XOXAXA XUXAXA
+PRATYAVAYAH
+DAIYEN FOOELS
+LEP GEX VEN ZEA
+PRIRUTSENIE
+ELBIB YLOH
+VERR YED HORRE
+VENZAR BORGAVVE
+THARR
+YUM YUM
+KERNOD WEL
+ELAM EBOW
+DUAM XNAHT
+ANDOVA BEGARIN
+KIRJE
+VE FORBRYDERNE
+HACKEM MUCHE
+VELOX NEB
+FOOBIE BLETCH
+TEMOV
+GARVEN DEH
+READ ME
+stamped
+unlabeled
+parchment spellbook
+vellum spellbook
+ragged spellbook
+dog eared spellbook
+mottled spellbook
+stained spellbook
+cloth spellbook
+leather-bound spellbook
+white spellbook
+pink spellbook
+red spellbook
+orange spellbook
+yellow spellbook
+velvet spellbook
+light green spellbook
+dark green spellbook
+turquoise spellbook
+cyan spellbook
+light blue spellbook
+dark blue spellbook
+indigo spellbook
+magenta spellbook
+purple spellbook
+violet spellbook
+tan spellbook
+plaid spellbook
+light brown spellbook
+dark brown spellbook
+gray spellbook
+wrinkled spellbook
+dusty spellbook
+bronze spellbook
+copper spellbook
+silver spellbook
+gold spellbook
+glittering spellbook
+shining spellbook
+dull spellbook
+thin spellbook
+thick spellbook
+plain spellbook
+papyrus spellbook
+glass wand
+balsa wand
+crystal wand
+maple wand
+pine wand
+oak wand
+ebony wand
+marble wand
+tin wand
+brass wand
+copper wand
+silver wand
+platinum wand
+iridium wand
+zinc wand
+aluminum wand
+uranium wand
+iron wand
+steel wand
+hexagonal wand
+short wand
+runed wand
+long wand
+curved wand
+forked wand
+spiked wand
+jeweled wand
+gold piece
+white gem
+white gem
+red gem
+orange gem
+blue gem
+black gem
+green gem
+green gem
+yellow gem
+green gem
+yellowish brown gem
+yellowish brown gem
+black gem
+white gem
+yellow gem
+red gem
+violet gem
+red gem
+violet gem
+black gem
+orange gem
+green gem
+white gem
+blue gem
+red gem
+yellowish brown gem
+orange gem
+yellow gem
+black gem
+green gem
+violet gem
+gray gem
+gray gem
+gray gem
+gray gem
+rock gem
+boulder
+statue; sub statue *
+heavy iron ball
+iron chain
+splash of venom
+splash of venom
+unexplored area
+wall
+wall
+wall
+wall
+wall
+wall
+wall
+wall
+wall
+wall
+wall
+doorway
+open door
+open door
+closed door
+closed door
+iron bars
+tree
+the floor of a room
+corridor
+! Note: in vanilla this is "sub lit corridor"; RLtiles has another use
+! for it
+darken floor
+staircase up
+staircase down
+ladder up
+ladder down
+altar
+grave
+opulent throne
+sink
+fountain
+water
+ice
+molten lava
+lowered drawbridge
+lowered drawbridge
+raised drawbridge
+raised drawbridge
+air
+cloud
+underwater
+arrow trap
+dart trap
+falling rock trap
+squeaky board
+bear trap
+land mine
+rolling boulder trap
+sleeping gas trap
+rust trap
+fire trap
+pit
+spiked pit
+hole
+trap door
+teleportation trap
+level teleporter
+magic portal
+web
+statue trap
+magic trap
+anti-magic field
+polymorph trap
+jagged wall
+jagged wall
+jagged wall
+jagged wall
+dig beam
+flash beam
+thrown boomerang, open left
+thrown boomerang, open right
+magic shield 1
+magic shield 2
+magic shield 3
+magic shield 4
+swallow top left
+swallow top center
+swallow top right
+swallow middle left
+swallow middle right
+swallow bottom left
+swallow bottom center
+swallow bottom right
+explosion dark 0
+explosion dark 1
+explosion dark 2
+explosion dark 3
+explosion dark 4
+explosion dark 5
+explosion dark 6
+explosion dark 7
+explosion dark 8
+explosion noxious 0
+explosion noxious 1
+explosion noxious 2
+explosion noxious 3
+explosion noxious 4
+explosion noxious 5
+explosion noxious 6
+explosion noxious 7
+explosion noxious 8
+explosion muddy 0
+explosion muddy 1
+explosion muddy 2
+explosion muddy 3
+explosion muddy 4
+explosion muddy 5
+explosion muddy 6
+explosion muddy 7
+explosion muddy 8
+explosion wet 0
+explosion wet 1
+explosion wet 2
+explosion wet 3
+explosion wet 4
+explosion wet 5
+explosion wet 6
+explosion wet 7
+explosion wet 8
+explosion magical 0
+explosion magical 1
+explosion magical 2
+explosion magical 3
+explosion magical 4
+explosion magical 5
+explosion magical 6
+explosion magical 7
+explosion magical 8
+explosion fiery 0
+explosion fiery 1
+explosion fiery 2
+explosion fiery 3
+explosion fiery 4
+explosion fiery 5
+explosion fiery 6
+explosion fiery 7
+explosion fiery 8
+explosion frosty 0
+explosion frosty 1
+explosion frosty 2
+explosion frosty 3
+explosion frosty 4
+explosion frosty 5
+explosion frosty 6
+explosion frosty 7
+explosion frosty 8
+zap 0 0
+zap 0 1
+zap 0 2
+zap 0 3
+zap 1 0
+zap 1 1
+zap 1 2
+zap 1 3
+zap 2 0
+zap 2 1
+zap 2 2
+zap 2 3
+zap 3 0
+zap 3 1
+zap 3 2
+zap 3 3
+zap 4 0
+zap 4 1
+zap 4 2
+zap 4 3
+zap 5 0
+zap 5 1
+zap 5 2
+zap 5 3
+zap 6 0
+zap 6 1
+zap 6 2
+zap 6 3
+zap 7 0
+zap 7 1
+zap 7 2
+zap 7 3
+warning 0
+warning 1
+warning 2
+warning 3
+warning 4
+warning 5
+
+! Substitution walls from 3.4.3; some of these are used for other
+! purposes too
+
+sub mine walls 0; sub bar sub questfill2 walls 0; sub bar sub questgoal walls 0; sub cav sub questfill1 walls 0; sub cav sub questlocate walls 0; sub cav sub questfill2 walls 0
+sub mine walls 1; sub bar sub questfill2 walls 1; sub bar sub questgoal walls 1; sub cav sub questfill1 walls 1; sub cav sub questlocate walls 1; sub cav sub questfill2 walls 1
+sub mine walls 2; sub bar sub questfill2 walls 2; sub bar sub questgoal walls 2; sub cav sub questfill1 walls 2; sub cav sub questlocate walls 2; sub cav sub questfill2 walls 2
+sub mine walls 3; sub bar sub questfill2 walls 3; sub bar sub questgoal walls 3; sub cav sub questfill1 walls 3; sub cav sub questlocate walls 3; sub cav sub questfill2 walls 3
+sub mine walls 4; sub bar sub questfill2 walls 4; sub bar sub questgoal walls 4; sub cav sub questfill1 walls 4; sub cav sub questlocate walls 4; sub cav sub questfill2 walls 4
+sub mine walls 5; sub bar sub questfill2 walls 5; sub bar sub questgoal walls 5; sub cav sub questfill1 walls 5; sub cav sub questlocate walls 5; sub cav sub questfill2 walls 5
+sub mine walls 6; sub bar sub questfill2 walls 6; sub bar sub questgoal walls 6; sub cav sub questfill1 walls 6; sub cav sub questlocate walls 6; sub cav sub questfill2 walls 6
+sub mine walls 7; sub bar sub questfill2 walls 7; sub bar sub questgoal walls 7; sub cav sub questfill1 walls 7; sub cav sub questlocate walls 7; sub cav sub questfill2 walls 7
+sub mine walls 8; sub bar sub questfill2 walls 8; sub bar sub questgoal walls 8; sub cav sub questfill1 walls 8; sub cav sub questlocate walls 8; sub cav sub questfill2 walls 8
+sub mine walls 9; sub bar sub questfill2 walls 9; sub bar sub questgoal walls 9; sub cav sub questfill1 walls 9; sub cav sub questlocate walls 9; sub cav sub questfill2 walls 9
+sub mine walls 10; sub bar sub questfill2 walls 10; sub bar sub questgoal walls 10; sub cav sub questfill1 walls 10; sub cav sub questlocate walls 10; sub cav sub questfill2 walls 10
+sub gehennom walls 0; sub pri sub questfill2 walls 0; sub pri sub questgoal walls 0
+sub gehennom walls 1; sub pri sub questfill2 walls 1; sub pri sub questgoal walls 1
+sub gehennom walls 2; sub pri sub questfill2 walls 2; sub pri sub questgoal walls 2
+sub gehennom walls 3; sub pri sub questfill2 walls 3; sub pri sub questgoal walls 3
+sub gehennom walls 4; sub pri sub questfill2 walls 4; sub pri sub questgoal walls 4
+sub gehennom walls 5; sub pri sub questfill2 walls 5; sub pri sub questgoal walls 5
+sub gehennom walls 6; sub pri sub questfill2 walls 6; sub pri sub questgoal walls 6
+sub gehennom walls 7; sub pri sub questfill2 walls 7; sub pri sub questgoal walls 7
+sub gehennom walls 8; sub pri sub questfill2 walls 8; sub pri sub questgoal walls 8
+sub gehennom walls 9; sub pri sub questfill2 walls 9; sub pri sub questgoal walls 9
+sub gehennom walls 10; sub pri sub questfill2 walls 10; sub pri sub questgoal walls 10
+sub knox walls 0
+sub knox walls 1
+sub knox walls 2
+sub knox walls 3
+sub knox walls 4
+sub knox walls 5
+sub knox walls 6
+sub knox walls 7
+sub knox walls 8
+sub knox walls 9
+sub knox walls 10
+sub sokoban walls 0
+sub sokoban walls 1
+sub sokoban walls 2
+sub sokoban walls 3
+sub sokoban walls 4
+sub sokoban walls 5
+sub sokoban walls 6
+sub sokoban walls 7
+sub sokoban walls 8
+sub sokoban walls 9
+sub sokoban walls 10
+
+! New for NetHack 4
+
+! Generic walls
+
+sub vlad walls 0
+sub vlad walls 1
+sub vlad walls 2
+sub vlad walls 3
+sub vlad walls 4
+sub vlad walls 5
+sub vlad walls 6
+sub vlad walls 7
+sub vlad walls 8
+sub vlad walls 9
+sub vlad walls 10
+sub astral walls 0
+sub astral walls 1
+sub astral walls 2
+sub astral walls 3
+sub astral walls 4
+sub astral walls 5
+sub astral walls 6
+sub astral walls 7
+sub astral walls 8
+sub astral walls 9
+sub astral walls 10
+
+! Traps
+
+vibrating square
+
+! Specific walls
+
+! "College of Archeology"
+sub arc sub questhome walls 0
+sub arc sub questhome walls 1
+sub arc sub questhome walls 2
+sub arc sub questhome walls 3
+sub arc sub questhome walls 4
+sub arc sub questhome walls 5
+sub arc sub questhome walls 6
+sub arc sub questhome walls 7
+sub arc sub questhome walls 8
+sub arc sub questhome walls 9
+sub arc sub questhome walls 10
+! "Toltec"
+sub arc sub questlocate walls 0; sub arc sub questfill2 walls 0; sub arc sub questgoal walls 0
+sub arc sub questlocate walls 1; sub arc sub questfill2 walls 1; sub arc sub questgoal walls 1
+sub arc sub questlocate walls 2; sub arc sub questfill2 walls 2; sub arc sub questgoal walls 2
+sub arc sub questlocate walls 3; sub arc sub questfill2 walls 3; sub arc sub questgoal walls 3
+sub arc sub questlocate walls 4; sub arc sub questfill2 walls 4; sub arc sub questgoal walls 4
+sub arc sub questlocate walls 5; sub arc sub questfill2 walls 5; sub arc sub questgoal walls 5
+sub arc sub questlocate walls 6; sub arc sub questfill2 walls 6; sub arc sub questgoal walls 6
+sub arc sub questlocate walls 7; sub arc sub questfill2 walls 7; sub arc sub questgoal walls 7
+sub arc sub questlocate walls 8; sub arc sub questfill2 walls 8; sub arc sub questgoal walls 8
+sub arc sub questlocate walls 9; sub arc sub questfill2 walls 9; sub arc sub questgoal walls 9
+sub arc sub questlocate walls 10; sub arc sub questfill2 walls 10; sub arc sub questgoal walls 10
+! "Barbarian Camp"
+sub bar sub questhome walls 0; sub bar sub questlocate walls 0
+sub bar sub questhome walls 1; sub bar sub questlocate walls 1
+sub bar sub questhome walls 2; sub bar sub questlocate walls 2
+sub bar sub questhome walls 3; sub bar sub questlocate walls 3
+sub bar sub questhome walls 4; sub bar sub questlocate walls 4
+sub bar sub questhome walls 5; sub bar sub questlocate walls 5
+sub bar sub questhome walls 6; sub bar sub questlocate walls 6
+sub bar sub questhome walls 7; sub bar sub questlocate walls 7
+sub bar sub questhome walls 8; sub bar sub questlocate walls 8
+sub bar sub questhome walls 9; sub bar sub questlocate walls 9
+sub bar sub questhome walls 10; sub bar sub questlocate walls 10
+! "Caves of the Ancestors"
+sub cav sub questhome walls 0
+sub cav sub questhome walls 1
+sub cav sub questhome walls 2
+sub cav sub questhome walls 3
+sub cav sub questhome walls 4
+sub cav sub questhome walls 5
+sub cav sub questhome walls 6
+sub cav sub questhome walls 7
+sub cav sub questhome walls 8
+sub cav sub questhome walls 9
+sub cav sub questhome walls 10
+! "Greek"
+sub hea sub questhome walls 0; sub hea sub questlocate walls 0
+sub hea sub questhome walls 1; sub hea sub questlocate walls 1
+sub hea sub questhome walls 2; sub hea sub questlocate walls 2
+sub hea sub questhome walls 3; sub hea sub questlocate walls 3
+sub hea sub questhome walls 4; sub hea sub questlocate walls 4
+sub hea sub questhome walls 5; sub hea sub questlocate walls 5
+sub hea sub questhome walls 6; sub hea sub questlocate walls 6
+sub hea sub questhome walls 7; sub hea sub questlocate walls 7
+sub hea sub questhome walls 8; sub hea sub questlocate walls 8
+sub hea sub questhome walls 9; sub hea sub questlocate walls 9
+sub hea sub questhome walls 10; sub hea sub questlocate walls 10
+! "Camelot"
+sub kni sub questhome walls 0
+sub kni sub questhome walls 1
+sub kni sub questhome walls 2
+sub kni sub questhome walls 3
+sub kni sub questhome walls 4
+sub kni sub questhome walls 5
+sub kni sub questhome walls 6
+sub kni sub questhome walls 7
+sub kni sub questhome walls 8
+sub kni sub questhome walls 9
+sub kni sub questhome walls 10
+! "Chinese"
+sub mon sub questhome walls 0; sub mon sub questfill1 walls 0
+sub mon sub questhome walls 1; sub mon sub questfill1 walls 1
+sub mon sub questhome walls 2; sub mon sub questfill1 walls 2
+sub mon sub questhome walls 3; sub mon sub questfill1 walls 3
+sub mon sub questhome walls 4; sub mon sub questfill1 walls 4
+sub mon sub questhome walls 5; sub mon sub questfill1 walls 5
+sub mon sub questhome walls 6; sub mon sub questfill1 walls 6
+sub mon sub questhome walls 7; sub mon sub questfill1 walls 7
+sub mon sub questhome walls 8; sub mon sub questfill1 walls 8
+sub mon sub questhome walls 9; sub mon sub questfill1 walls 9
+sub mon sub questhome walls 10; sub mon sub questfill1 walls 10
+! "Church"
+sub pri sub questhome walls 0
+sub pri sub questhome walls 1
+sub pri sub questhome walls 2
+sub pri sub questhome walls 3
+sub pri sub questhome walls 4
+sub pri sub questhome walls 5
+sub pri sub questhome walls 6
+sub pri sub questhome walls 7
+sub pri sub questhome walls 8
+sub pri sub questhome walls 9
+sub pri sub questhome walls 10
+! "Evil Castle"
+sub pri sub questlocate walls 0; sub wiz sub questlocate walls 0; sub wiz sub questfill2 walls 0; sub wiz sub questgoal walls 0
+sub pri sub questlocate walls 1; sub wiz sub questlocate walls 1; sub wiz sub questfill2 walls 1; sub wiz sub questgoal walls 1
+sub pri sub questlocate walls 2; sub wiz sub questlocate walls 2; sub wiz sub questfill2 walls 2; sub wiz sub questgoal walls 2
+sub pri sub questlocate walls 3; sub wiz sub questlocate walls 3; sub wiz sub questfill2 walls 3; sub wiz sub questgoal walls 3
+sub pri sub questlocate walls 4; sub wiz sub questlocate walls 4; sub wiz sub questfill2 walls 4; sub wiz sub questgoal walls 4
+sub pri sub questlocate walls 5; sub wiz sub questlocate walls 5; sub wiz sub questfill2 walls 5; sub wiz sub questgoal walls 5
+sub pri sub questlocate walls 6; sub wiz sub questlocate walls 6; sub wiz sub questfill2 walls 6; sub wiz sub questgoal walls 6
+sub pri sub questlocate walls 7; sub wiz sub questlocate walls 7; sub wiz sub questfill2 walls 7; sub wiz sub questgoal walls 7
+sub pri sub questlocate walls 8; sub wiz sub questlocate walls 8; sub wiz sub questfill2 walls 8; sub wiz sub questgoal walls 8
+sub pri sub questlocate walls 9; sub wiz sub questlocate walls 9; sub wiz sub questfill2 walls 9; sub wiz sub questgoal walls 9
+sub pri sub questlocate walls 10; sub wiz sub questlocate walls 10; sub wiz sub questfill2 walls 10; sub wiz sub questgoal walls 10
+! "Wizard Castle"
+sub wiz sub questhome walls 0
+sub wiz sub questhome walls 1
+sub wiz sub questhome walls 2
+sub wiz sub questhome walls 3
+sub wiz sub questhome walls 4
+sub wiz sub questhome walls 5
+sub wiz sub questhome walls 6
+sub wiz sub questhome walls 7
+sub wiz sub questhome walls 8
+sub wiz sub questhome walls 9
+sub wiz sub questhome walls 10
+! "Tudor"
+sub rog sub questhome walls 0; sub rog sub questlocate walls 0; sub tou sub questhome walls 0; sub tou sub questlocate walls 0; sub tou sub questgoal walls 0
+sub rog sub questhome walls 1; sub rog sub questlocate walls 1; sub tou sub questhome walls 1; sub tou sub questlocate walls 1; sub tou sub questgoal walls 1
+sub rog sub questhome walls 2; sub rog sub questlocate walls 2; sub tou sub questhome walls 2; sub tou sub questlocate walls 2; sub tou sub questgoal walls 2
+sub rog sub questhome walls 3; sub rog sub questlocate walls 3; sub tou sub questhome walls 3; sub tou sub questlocate walls 3; sub tou sub questgoal walls 3
+sub rog sub questhome walls 4; sub rog sub questlocate walls 4; sub tou sub questhome walls 4; sub tou sub questlocate walls 4; sub tou sub questgoal walls 4
+sub rog sub questhome walls 5; sub rog sub questlocate walls 5; sub tou sub questhome walls 5; sub tou sub questlocate walls 5; sub tou sub questgoal walls 5
+sub rog sub questhome walls 6; sub rog sub questlocate walls 6; sub tou sub questhome walls 6; sub tou sub questlocate walls 6; sub tou sub questgoal walls 6
+sub rog sub questhome walls 7; sub rog sub questlocate walls 7; sub tou sub questhome walls 7; sub tou sub questlocate walls 7; sub tou sub questgoal walls 7
+sub rog sub questhome walls 8; sub rog sub questlocate walls 8; sub tou sub questhome walls 8; sub tou sub questlocate walls 8; sub tou sub questgoal walls 8
+sub rog sub questhome walls 9; sub rog sub questlocate walls 9; sub tou sub questhome walls 9; sub tou sub questlocate walls 9; sub tou sub questgoal walls 9
+sub rog sub questhome walls 10; sub rog sub questlocate walls 10; sub tou sub questhome walls 10; sub tou sub questlocate walls 10; sub tou sub questgoal walls 10
+! "Japanese"
+sub sam sub questhome walls 0; sub sam sub questlocate walls 0; sub sam sub questfill2 walls 0; sub sam sub questgoal walls 0
+sub sam sub questhome walls 1; sub sam sub questlocate walls 1; sub sam sub questfill2 walls 1; sub sam sub questgoal walls 1
+sub sam sub questhome walls 2; sub sam sub questlocate walls 2; sub sam sub questfill2 walls 2; sub sam sub questgoal walls 2
+sub sam sub questhome walls 3; sub sam sub questlocate walls 3; sub sam sub questfill2 walls 3; sub sam sub questgoal walls 3
+sub sam sub questhome walls 4; sub sam sub questlocate walls 4; sub sam sub questfill2 walls 4; sub sam sub questgoal walls 4
+sub sam sub questhome walls 5; sub sam sub questlocate walls 5; sub sam sub questfill2 walls 5; sub sam sub questgoal walls 5
+sub sam sub questhome walls 6; sub sam sub questlocate walls 6; sub sam sub questfill2 walls 6; sub sam sub questgoal walls 6
+sub sam sub questhome walls 7; sub sam sub questlocate walls 7; sub sam sub questfill2 walls 7; sub sam sub questgoal walls 7
+sub sam sub questhome walls 8; sub sam sub questlocate walls 8; sub sam sub questfill2 walls 8; sub sam sub questgoal walls 8
+sub sam sub questhome walls 9; sub sam sub questlocate walls 9; sub sam sub questfill2 walls 9; sub sam sub questgoal walls 9
+sub sam sub questhome walls 10; sub sam sub questlocate walls 10; sub sam sub questfill2 walls 10; sub sam sub questgoal walls 10
+! "Grey Cave"
+sub kni sub questgoal walls 0; sub ran sub questlocate walls 0; sub ran sub questfill2 walls 0; sub tou sub questfill1 walls 0; sub tou sub questfill2 walls 0; sub wiz sub questfill1 walls 0
+sub kni sub questgoal walls 1; sub ran sub questlocate walls 1; sub ran sub questfill2 walls 1; sub tou sub questfill1 walls 1; sub tou sub questfill2 walls 1; sub wiz sub questfill1 walls 1
+sub kni sub questgoal walls 2; sub ran sub questlocate walls 2; sub ran sub questfill2 walls 2; sub tou sub questfill1 walls 2; sub tou sub questfill2 walls 2; sub wiz sub questfill1 walls 2
+sub kni sub questgoal walls 3; sub ran sub questlocate walls 3; sub ran sub questfill2 walls 3; sub tou sub questfill1 walls 3; sub tou sub questfill2 walls 3; sub wiz sub questfill1 walls 3
+sub kni sub questgoal walls 4; sub ran sub questlocate walls 4; sub ran sub questfill2 walls 4; sub tou sub questfill1 walls 4; sub tou sub questfill2 walls 4; sub wiz sub questfill1 walls 4
+sub kni sub questgoal walls 5; sub ran sub questlocate walls 5; sub ran sub questfill2 walls 5; sub tou sub questfill1 walls 5; sub tou sub questfill2 walls 5; sub wiz sub questfill1 walls 5
+sub kni sub questgoal walls 6; sub ran sub questlocate walls 6; sub ran sub questfill2 walls 6; sub tou sub questfill1 walls 6; sub tou sub questfill2 walls 6; sub wiz sub questfill1 walls 6
+sub kni sub questgoal walls 7; sub ran sub questlocate walls 7; sub ran sub questfill2 walls 7; sub tou sub questfill1 walls 7; sub tou sub questfill2 walls 7; sub wiz sub questfill1 walls 7
+sub kni sub questgoal walls 8; sub ran sub questlocate walls 8; sub ran sub questfill2 walls 8; sub tou sub questfill1 walls 8; sub tou sub questfill2 walls 8; sub wiz sub questfill1 walls 8
+sub kni sub questgoal walls 9; sub ran sub questlocate walls 9; sub ran sub questfill2 walls 9; sub tou sub questfill1 walls 9; sub tou sub questfill2 walls 9; sub wiz sub questfill1 walls 9
+sub kni sub questgoal walls 10; sub ran sub questlocate walls 10; sub ran sub questfill2 walls 10; sub tou sub questfill1 walls 10; sub tou sub questfill2 walls 10; sub wiz sub questfill1 walls 10
+! "Red Cave"
+sub cav sub questgoal walls 0; sub mon sub questlocate walls 0; sub mon sub questfill2 walls 0; sub mon sub questgoal walls 0; sub val sub questlocate walls 0; sub val sub questfill2 walls 0
+sub cav sub questgoal walls 1; sub mon sub questlocate walls 1; sub mon sub questfill2 walls 1; sub mon sub questgoal walls 1; sub val sub questlocate walls 1; sub val sub questfill2 walls 1
+sub cav sub questgoal walls 2; sub mon sub questlocate walls 2; sub mon sub questfill2 walls 2; sub mon sub questgoal walls 2; sub val sub questlocate walls 2; sub val sub questfill2 walls 2
+sub cav sub questgoal walls 3; sub mon sub questlocate walls 3; sub mon sub questfill2 walls 3; sub mon sub questgoal walls 3; sub val sub questlocate walls 3; sub val sub questfill2 walls 3
+sub cav sub questgoal walls 4; sub mon sub questlocate walls 4; sub mon sub questfill2 walls 4; sub mon sub questgoal walls 4; sub val sub questlocate walls 4; sub val sub questfill2 walls 4
+sub cav sub questgoal walls 5; sub mon sub questlocate walls 5; sub mon sub questfill2 walls 5; sub mon sub questgoal walls 5; sub val sub questlocate walls 5; sub val sub questfill2 walls 5
+sub cav sub questgoal walls 6; sub mon sub questlocate walls 6; sub mon sub questfill2 walls 6; sub mon sub questgoal walls 6; sub val sub questlocate walls 6; sub val sub questfill2 walls 6
+sub cav sub questgoal walls 7; sub mon sub questlocate walls 7; sub mon sub questfill2 walls 7; sub mon sub questgoal walls 7; sub val sub questlocate walls 7; sub val sub questfill2 walls 7
+sub cav sub questgoal walls 8; sub mon sub questlocate walls 8; sub mon sub questfill2 walls 8; sub mon sub questgoal walls 8; sub val sub questlocate walls 8; sub val sub questfill2 walls 8
+sub cav sub questgoal walls 9; sub mon sub questlocate walls 9; sub mon sub questfill2 walls 9; sub mon sub questgoal walls 9; sub val sub questlocate walls 9; sub val sub questfill2 walls 9
+sub cav sub questgoal walls 10; sub mon sub questlocate walls 10; sub mon sub questfill2 walls 10; sub mon sub questgoal walls 10; sub val sub questlocate walls 10; sub val sub questfill2 walls 10
+! "Blue Cave"
+sub ran sub questgoal walls 0; sub val sub questfill1 walls 0
+sub ran sub questgoal walls 1; sub val sub questfill1 walls 1
+sub ran sub questgoal walls 2; sub val sub questfill1 walls 2
+sub ran sub questgoal walls 3; sub val sub questfill1 walls 3
+sub ran sub questgoal walls 4; sub val sub questfill1 walls 4
+sub ran sub questgoal walls 5; sub val sub questfill1 walls 5
+sub ran sub questgoal walls 6; sub val sub questfill1 walls 6
+sub ran sub questgoal walls 7; sub val sub questfill1 walls 7
+sub ran sub questgoal walls 8; sub val sub questfill1 walls 8
+sub ran sub questgoal walls 9; sub val sub questfill1 walls 9
+sub ran sub questgoal walls 10; sub val sub questfill1 walls 10
+! "Brown Dungeon"
+sub arc sub questfill1 walls 0
+sub arc sub questfill1 walls 1
+sub arc sub questfill1 walls 2
+sub arc sub questfill1 walls 3
+sub arc sub questfill1 walls 4
+sub arc sub questfill1 walls 5
+sub arc sub questfill1 walls 6
+sub arc sub questfill1 walls 7
+sub arc sub questfill1 walls 8
+sub arc sub questfill1 walls 9
+sub arc sub questfill1 walls 10
+! "Blue Dungeon"
+sub rog sub questgoal walls 0
+sub rog sub questgoal walls 1
+sub rog sub questgoal walls 2
+sub rog sub questgoal walls 3
+sub rog sub questgoal walls 4
+sub rog sub questgoal walls 5
+sub rog sub questgoal walls 6
+sub rog sub questgoal walls 7
+sub rog sub questgoal walls 8
+sub rog sub questgoal walls 9
+sub rog sub questgoal walls 10
+! "White Dungeon"
+sub rog sub questfill1 walls 0; sub rog sub questfill2 walls 0; sub val sub questhome walls 0
+sub rog sub questfill1 walls 1; sub rog sub questfill2 walls 1; sub val sub questhome walls 1
+sub rog sub questfill1 walls 2; sub rog sub questfill2 walls 2; sub val sub questhome walls 2
+sub rog sub questfill1 walls 3; sub rog sub questfill2 walls 3; sub val sub questhome walls 3
+sub rog sub questfill1 walls 4; sub rog sub questfill2 walls 4; sub val sub questhome walls 4
+sub rog sub questfill1 walls 5; sub rog sub questfill2 walls 5; sub val sub questhome walls 5
+sub rog sub questfill1 walls 6; sub rog sub questfill2 walls 6; sub val sub questhome walls 6
+sub rog sub questfill1 walls 7; sub rog sub questfill2 walls 7; sub val sub questhome walls 7
+sub rog sub questfill1 walls 8; sub rog sub questfill2 walls 8; sub val sub questhome walls 8
+sub rog sub questfill1 walls 9; sub rog sub questfill2 walls 9; sub val sub questhome walls 9
+sub rog sub questfill1 walls 10; sub rog sub questfill2 walls 10; sub val sub questhome walls 10
+! "Surtur's Fortress"
+sub val sub questgoal walls 0
+sub val sub questgoal walls 1
+sub val sub questgoal walls 2
+sub val sub questgoal walls 3
+sub val sub questgoal walls 4
+sub val sub questgoal walls 5
+sub val sub questgoal walls 6
+sub val sub questgoal walls 7
+sub val sub questgoal walls 8
+sub val sub questgoal walls 9
+sub val sub questgoal walls 10
+
+! Swamp water override
+
+sub swamp water; sub hea sub questfill1 water; sub hea sub questfill2 water; sub hea sub questgoal water; sub sam sub questfill1 water
+
+! A currently unused animation
+
+shuriken in flight
+
+! Brandings
+
+remembered as stepped on
+monster is tame
+monster is peaceful
+monster is detected
+monster is ridden
+remembered as locked
+remembered as unlocked
+remembered as trapped
+
+! Effects
+
+gas cloud
+
+! Player and player-monster substitution tiles
+
+sub human sub female archeologist
+sub dwarf archeologist
+sub gnome sub male archeologist
+sub gnome sub female archeologist
+sub human sub female barbarian
+sub orc sub male barbarian
+sub orc sub female barbarian
+sub dwarf sub male caveman
+sub dwarf sub female caveman
+sub gnome sub male caveman
+sub gnome sub female caveman
+sub human sub female healer
+sub gnome sub male healer
+sub gnome sub female healer
+sub elf priest
+sub human sub female ranger
+sub elf sub male ranger
+sub elf sub female ranger
+sub gnome sub male ranger
+sub gnome sub female ranger
+sub orc sub male ranger
+sub orc sub female ranger
+sub human sub female rogue
+sub orc rogue
+sub human sub female samurai
+sub human sub female tourist
+sub human sub male valkyrie
+sub dwarf valkyrie
+sub human sub female wizard
+sub gnome sub male wizard
+sub gnome sub female wizard
+sub elf sub male wizard
+sub elf sub female wizard
+sub orc wizard
+
+! Solid rock
+
+solid rock
+sub mine solid rock; sub bar sub questlocate solid rock; sub bar sub questfill2 solid rock; sub bar sub questgoal solid rock; sub cav sub questfill1 solid rock; sub cav sub questlocate solid rock; sub cav sub questfill2 solid rock
+sub gehennom solid rock; sub val sub questgoal solid rock; sub mon sub questlocate solid rock; sub mon sub questfill2 solid rock; sub mon sub questgoal solid rock; sub pri sub questfill2 solid rock; sub pri sub questgoal solid rock; sub val sub questlocate solid rock; sub val sub questfill2 solid rock; sub val sub questgoal solid rock
+sub ran sub questgoal solid rock; sub rog sub questgoal solid rock; sub val sub questfill1 solid rock
+
+! Specific floors
+
+! "Grass"
+sub arc sub questhome the floor of a room; sub hea sub questhome the floor of a room; sub hea sub questlocate the floor of a room; sub kni sub questhome the floor of a room; sub mon sub questhome the floor of a room; sub ran sub questhome the floor of a room; sub ran sub questfill1 the floor of a room; sub sam sub questhome the floor of a room; sub sam sub questlocate the floor of a room; sub wiz sub questhome the floor of a room
+! "Dead grass"; 
+sub swamp the floor of a room; sub arc sub questlocate the floor of a room; sub hea sub questfill1 the floor of a room; sub hea sub questfill2 the floor of a room; sub hea sub questgoal the floor of a room; sub kni sub questfill1 the floor of a room; sub kni sub questlocate the floor of a room; sub kni sub questfill2 the floor of a room; sub sam sub questfill1 the floor of a room; sub wiz sub questlocate the floor of a room
+! "Mines floor"
+sub mine the floor of a room; sub arc sub questfill1 the floor of a room; sub bar sub questfill2 the floor of a room; sub bar sub questgoal the floor of a room; sub cav sub questfill1 the floor of a room; sub cav sub questlocate the floor of a room; sub cav sub questfill2 the floor of a room
+! "Gehennom floor" / "Red floor"
+sub gehennom the floor of a room; sub cav sub questgoal the floor of a room; sub mon sub questfill2 the floor of a room; sub mon sub questgoal the floor of a room; sub val sub questlocate the floor of a room; sub val sub questfill2 the floor of a room; sub val sub questgoal the floor of a room
+! "Blue floor"
+sub ran sub questgoal the floor of a room; sub rog sub questgoal the floor of a room
+! "Ludios floor"
+sub knox the floor of a room
+! "Sokoban floor"
+sub sokoban the floor of a room
+! "Vlad's Tower floor"
+sub vlad the floor of a room
+! "Astral Plane floor"
+sub astral the floor of a room
+! "Desert floor"
+sub bar sub questhome the floor of a room; sub bar sub questlocate the floor of a room
+! "Dark Desert floor"
+sub bar sub questfill1 the floor of a room
+! "Planks floor"
+sub rog sub questhome the floor of a room; sub rog sub questlocate the floor of a room; sub tou sub questhome the floor of a room; sub tou sub questlocate the floor of a room; sub tou sub questgoal the floor of a room; sub val sub questhome the floor of a room
+! "Japan floor"
+sub sam sub questfill2 the floor of a room; sub sam sub questgoal the floor of a room
+! "Wizard Castle floor"
+unused wizard castle floor
+! "Evil Castle floor"
+sub pri sub questlocate the floor of a room; sub wiz sub questfill2 the floor of a room; sub wiz sub questgoal the floor of a room
+
+! Corridors
+
+! "Mines corridor"
+sub mine corridor; sub bar sub questfill2 corridor; sub bar sub questgoal corridor; sub cav sub questfill1 corridor; sub cav sub questlocate corridor; sub cav sub questfill2 corridor
+! "Gehennom corridor"
+sub gehennom corridor
+! "Blue corridor"
+sub ran sub questgoal corridor; sub rog sub questgoal the floor of a room
+
+! Long stairs
+
+long staircase up
+long staircase down
+
+! Figurines
+
+! Approximately humanoid
+sub figurine gremlin; sub figurine gargoyle; sub figurine winged gargoyle; sub figurine hobbit; sub figurine dwarf; sub figurine bugbear; sub figurine dwarf lord; sub figurine dwarf king; sub figurine mind flayer; sub figurine master mind flayer; sub figurine *kobold*; sub figurine leprechaun; sub figurine * mimic; sub figurine * nymph; sub figurine goblin; sub figurine hobgoblin; sub figurine orc; sub figurine hill orc; sub figurine Mordor orc; sub figurine Uruk-hai; sub figurine orc shaman; sub figurine orc-captain; sub figurine zruty; sub figurine stalker; sub figurine fire elemental; sub figurine earth elemental; sub figurine water elemental; sub figurine gnome*; sub figurine *giant; sub figurine ettin; sub figurine titan; sub figurine minotaur; sub figurine *Kop*; sub figurine *lich; sub figurine * mummy; sub figurine ogre*; sub figurine quantum mechanic; sub figurine *troll; sub figurine Olog-hai; sub figurine umber hulk; sub figurine vampire*; sub figurine barrow wight; sub figurine wraith; sub figurine Nazgul; sub figurine monkey; sub figurine ape; sub figurine owlbear; sub figurine yeti; sub figurine carnivorous ape; sub figurine sasquatch; sub figurine * zombie; sub figurine ghoul; sub figurine skeleton; sub figurine * golem; sub figurine human; sub figurine human were*; sub figurine elf; sub figurine *-elf; sub figurine elf-lord; sub figurine Elvenking
+! Insect-like
+sub figurine * ant; sub figurine * bee; sub figurine giant beetle; sub figurine cave spider; sub figurine centipede; sub figurine giant spider; sub figurine scorpion; sub figurine grid bug; sub figurine xan
+! Canines
+sub figurine jackal; sub figurine fox; sub figurine coyote; sub figurine werejackal; sub figurine little dog; sub figurine dog; sub figurine large dog; sub figurine dingo; sub figurine wolf; sub figurine werewolf; sub figurine warg; sub figurine winter wolf*; sub figurine hell hound*
+! Felines
+sub figurine kitten; sub figurine housecat; sub figurine jaguar; sub figurine lynx; sub figurine panther; sub figurine large cat; sub figurine tiger
+! Quadrupeds
+sub figurine rothe; sub figurine mumak; sub figurine leocrotta; sub figurine wumpus; sub figurine titanothere; sub figurine baluchitherium; sub figurine mastodon
+! Rodents
+sub figurine * rat; sub figurine wererat; sub figurine rock mole; sub figurine woodchuck
+! Horse-shaped
+sub figurine * unicorn; sub figurine pony; sub figurine horse; sub figurine warhorse; sub figurine ki-rin
+! Centaurs
+sub figurine * centaur
+! Draconic
+sub figurine * dragon; sub figurine jabberwock
+! Snake-like
+sub figurine * worm; sub figurine garter snake; sub figurine snake; sub figurine water moccasin; sub figurine pit viper; sub figurine python; sub figurine cobra; sub figurine * naga; sub figurine * naga hatchling; sub figurine * eel
+! Xorn
+sub figurine xorn
+! Cockatrices
+sub figurine chickatrice; sub figurine cockatrice; sub figurine pyrolisk
+! Reptiles
+sub figurine newt; sub figurine gecko; sub figurine iguana; sub figurine *crocodile; sub figurine lizard; sub figurine chameleon; sub figurine salamander
+! Angels
+sub figurine Aleax; sub figurine Angel; sub figurine Archon
+! Demons
+sub figurine manes; sub figurine homunculus; sub figurine imp; sub figurine lemure; sub figurine quasit; sub figurine tengu; sub figurine * demon; sub figurine * demon; sub figurine *cubus; sub figurine erinys; sub figurine marilith; sub figurine vrock; sub figurine hezrou; sub figurine nalfeshnee; sub figurine pit fiend; sub figurine balrog; sub figurine djinni; sub figurine sandestin
+! Bird-like
+sub figurine bat; sub figurine * bat; sub figurine raven
+! Amorphous
+sub figurine acid blob; sub figurine quivering blob; sub figurine gelatinous cube; sub figurine * jelly; sub figurine jellyfish; sub figurine lurker above; sub figurine trapper; sub figurine gray ooze; sub figurine * pudding; sub figurine green slime; sub figurine ghost; sub figurine shade
+! Spherical
+sub figurine gas spore; sub figurine floating eye; sub figurine * sphere; sub figurine * light; sub figurine fog cloud
+! Piercers
+sub figurine * piercer
+! Fish
+sub figurine piranha; sub figurine shark
+! Vortexes
+sub figurine * vortex
+! Fungi
+sub figurine lichen; sub figurine * mold; sub figurine shrieker; sub figurine violet fungus
+
+! Statues
+
+sub statue giant ant
+sub statue killer bee
+sub statue soldier ant
+sub statue fire ant
+sub statue giant beetle
+sub statue queen bee
+sub statue acid blob
+sub statue quivering blob
+sub statue gelatinous cube
+sub statue chickatrice
+sub statue cockatrice
+sub statue pyrolisk
+sub statue jackal
+sub statue fox
+sub statue coyote
+sub statue werejackal
+sub statue little dog
+sub statue dog
+sub statue large dog
+sub statue dingo
+sub statue wolf
+sub statue werewolf
+sub statue warg
+sub statue winter wolf cub
+sub statue winter wolf
+sub statue hell hound pup
+sub statue hell hound
+sub statue Cerberus
+sub statue gas spore
+sub statue floating eye
+sub statue freezing sphere
+sub statue flaming sphere
+sub statue shocking sphere
+sub statue beholder
+sub statue kitten
+sub statue housecat
+sub statue jaguar
+sub statue lynx
+sub statue panther
+sub statue large cat
+sub statue tiger
+sub statue gremlin
+sub statue gargoyle
+sub statue winged gargoyle
+sub statue hobbit
+sub statue dwarf
+sub statue bugbear
+sub statue dwarf lord
+sub statue dwarf king
+sub statue mind flayer
+sub statue master mind flayer
+sub statue manes
+sub statue homunculus
+sub statue imp
+sub statue lemure
+sub statue quasit
+sub statue tengu
+sub statue blue jelly
+sub statue spotted jelly
+sub statue ochre jelly
+sub statue kobold
+sub statue large kobold
+sub statue kobold lord
+sub statue kobold shaman
+sub statue leprechaun
+sub statue small mimic
+sub statue large mimic
+sub statue giant mimic
+sub statue wood nymph
+sub statue water nymph
+sub statue mountain nymph
+sub statue goblin
+sub statue hobgoblin
+sub statue orc
+sub statue hill orc
+sub statue Mordor orc
+sub statue Uruk-hai
+sub statue orc shaman
+sub statue orc-captain
+sub statue rock piercer
+sub statue iron piercer
+sub statue glass piercer
+sub statue rothe
+sub statue mumak
+sub statue leocrotta
+sub statue wumpus
+sub statue titanothere
+sub statue baluchitherium
+sub statue mastodon
+sub statue sewer rat
+sub statue giant rat
+sub statue rabid rat
+sub statue wererat
+sub statue rock mole
+sub statue woodchuck
+sub statue cave spider
+sub statue centipede
+sub statue giant spider
+sub statue scorpion
+sub statue lurker above
+sub statue trapper
+sub statue white unicorn
+sub statue gray unicorn
+sub statue black unicorn
+sub statue pony
+sub statue horse
+sub statue warhorse
+sub statue fog cloud
+sub statue dust vortex
+sub statue ice vortex
+sub statue energy vortex
+sub statue steam vortex
+sub statue fire vortex
+sub statue baby long worm
+sub statue baby purple worm
+sub statue long worm
+sub statue purple worm
+sub statue grid bug
+sub statue xan
+sub statue yellow light
+sub statue black light
+sub statue zruty
+sub statue couatl
+sub statue Aleax
+sub statue Angel
+sub statue ki-rin
+sub statue Archon
+sub statue bat
+sub statue giant bat
+sub statue raven
+sub statue vampire bat
+sub statue plains centaur
+sub statue forest centaur
+sub statue mountain centaur
+sub statue baby gray dragon
+sub statue baby silver dragon
+sub statue baby shimmering dragon
+sub statue baby red dragon
+sub statue baby white dragon
+sub statue baby orange dragon
+sub statue baby black dragon
+sub statue baby blue dragon
+sub statue baby green dragon
+sub statue baby yellow dragon
+sub statue gray dragon
+sub statue silver dragon
+sub statue shimmering dragon
+sub statue red dragon
+sub statue white dragon
+sub statue orange dragon
+sub statue black dragon
+sub statue blue dragon
+sub statue green dragon
+sub statue yellow dragon
+sub statue stalker
+sub statue air elemental
+sub statue fire elemental
+sub statue earth elemental
+sub statue water elemental
+sub statue lichen
+sub statue brown mold
+sub statue yellow mold
+sub statue green mold
+sub statue red mold
+sub statue shrieker
+sub statue violet fungus
+sub statue gnome
+sub statue gnome lord
+sub statue gnomish wizard
+sub statue gnome king
+sub statue giant
+sub statue stone giant
+sub statue hill giant
+sub statue fire giant
+sub statue frost giant
+sub statue storm giant
+sub statue ettin
+sub statue titan
+sub statue minotaur
+sub statue jabberwock
+sub statue vorpal jabberwock
+sub statue Keystone Kop
+sub statue Kop Sergeant
+sub statue Kop Lieutenant
+sub statue Kop Kaptain
+sub statue lich
+sub statue demilich
+sub statue master lich
+sub statue arch-lich
+sub statue kobold mummy
+sub statue gnome mummy
+sub statue orc mummy
+sub statue dwarf mummy
+sub statue elf mummy
+sub statue human mummy
+sub statue ettin mummy
+sub statue giant mummy
+sub statue red naga hatchling
+sub statue black naga hatchling
+sub statue golden naga hatchling
+sub statue guardian naga hatchling
+sub statue red naga
+sub statue black naga
+sub statue golden naga
+sub statue guardian naga
+sub statue ogre
+sub statue ogre lord
+sub statue ogre king
+sub statue gray ooze
+sub statue brown pudding
+sub statue black pudding
+sub statue green slime
+sub statue quantum mechanic
+sub statue rust monster
+sub statue disenchanter
+sub statue garter snake
+sub statue snake
+sub statue water moccasin
+sub statue pit viper
+sub statue python
+sub statue cobra
+sub statue troll
+sub statue ice troll
+sub statue rock troll
+sub statue water troll
+sub statue Olog-hai
+sub statue umber hulk
+sub statue vampire
+sub statue vampire lord
+sub statue vampire mage
+sub statue Vlad the Impaler
+sub statue barrow wight
+sub statue wraith
+sub statue Nazgul
+sub statue xorn
+sub statue monkey
+sub statue ape
+sub statue owlbear
+sub statue yeti
+sub statue carnivorous ape
+sub statue sasquatch
+sub statue kobold zombie
+sub statue gnome zombie
+sub statue orc zombie
+sub statue dwarf zombie
+sub statue elf zombie
+sub statue human zombie
+sub statue ettin zombie
+sub statue giant zombie
+sub statue ghoul
+sub statue skeleton
+sub statue straw golem
+sub statue paper golem
+sub statue rope golem
+sub statue gold golem
+sub statue leather golem
+sub statue wood golem
+sub statue flesh golem
+sub statue clay golem
+sub statue stone golem
+sub statue glass golem
+sub statue iron golem
+sub statue human
+sub statue human wererat
+sub statue human werejackal
+sub statue human werewolf
+sub statue elf
+sub statue Woodland-elf
+sub statue Green-elf
+sub statue Grey-elf
+sub statue elf-lord
+sub statue Elvenking
+sub statue doppelganger
+sub statue nurse
+sub statue shopkeeper
+sub statue guard
+sub statue prisoner
+sub statue Oracle
+sub statue aligned priest
+sub statue high priest
+sub statue soldier
+sub statue sergeant
+sub statue lieutenant
+sub statue captain
+sub statue watchman
+sub statue watch captain
+sub statue Medusa
+sub statue Wizard of Yendor
+sub statue Croesus
+sub statue Charon
+sub statue ghost
+sub statue shade
+sub statue water demon
+sub statue horned devil
+sub statue succubus
+sub statue incubus
+sub statue erinys
+sub statue barbed devil
+sub statue marilith
+sub statue vrock
+sub statue hezrou
+sub statue bone devil
+sub statue ice devil
+sub statue nalfeshnee
+sub statue pit fiend
+sub statue balrog
+sub statue Juiblex
+sub statue Yeenoghu
+sub statue Orcus
+sub statue Geryon
+sub statue Dispater
+sub statue Baalzebub
+sub statue Asmodeus
+sub statue Demogorgon
+sub statue Death
+sub statue Pestilence
+sub statue Famine
+sub statue mail daemon
+sub statue djinni
+sub statue sandestin
+sub statue jellyfish
+sub statue piranha
+sub statue shark
+sub statue giant eel
+sub statue electric eel
+sub statue kraken
+sub statue newt
+sub statue gecko
+sub statue iguana
+sub statue baby crocodile
+sub statue lizard
+sub statue chameleon
+sub statue crocodile
+sub statue salamander
+sub statue long worm tail
+sub statue archeologist
+sub statue barbarian
+sub statue caveman
+sub statue cavewoman
+sub statue healer
+sub statue knight
+sub statue monk
+sub statue priest
+sub statue priestess
+sub statue ranger
+sub statue rogue
+sub statue samurai
+sub statue tourist
+sub statue valkyrie
+sub statue wizard
+sub statue Lord Carnarvon
+sub statue Pelias
+sub statue Shaman Karnov
+sub statue Earendil
+sub statue Elwing
+sub statue Hippocrates
+sub statue King Arthur
+sub statue Grand Master
+sub statue Arch Priest
+sub statue Orion
+sub statue Master of Thieves
+sub statue Lord Sato
+sub statue Twoflower
+sub statue Norn
+sub statue Neferet the Green
+sub statue Minion of Huhetotl
+sub statue Thoth Amon
+sub statue Chromatic Dragon
+sub statue Goblin King
+sub statue Cyclops
+sub statue Ixoth
+sub statue Master Kaen
+sub statue Nalzok
+sub statue Scorpius
+sub statue Master Assassin
+sub statue Ashikaga Takauji
+sub statue Lord Surtur
+sub statue Dark One
+sub statue student
+sub statue chieftain
+sub statue neanderthal
+sub statue High-elf
+sub statue attendant
+sub statue page
+sub statue abbot
+sub statue acolyte
+sub statue hunter
+sub statue thug
+sub statue ninja
+sub statue roshi
+sub statue guide
+sub statue warrior
+sub statue apprentice
+
+sub statue sub human sub female archeologist
+sub statue sub dwarf archeologist
+sub statue sub gnome sub male archeologist
+sub statue sub gnome sub female archeologist
+sub statue sub human sub female barbarian
+sub statue sub orc sub male barbarian
+sub statue sub orc sub female barbarian
+sub statue sub dwarf sub male caveman
+sub statue sub dwarf sub female caveman
+sub statue sub gnome sub male caveman
+sub statue sub gnome sub female caveman
+sub statue sub human sub female healer
+sub statue sub gnome sub male healer
+sub statue sub gnome sub female healer
+sub statue sub elf priest
+sub statue sub human sub female ranger
+sub statue sub elf sub male ranger
+sub statue sub elf sub female ranger
+sub statue sub gnome sub male ranger
+sub statue sub gnome sub female ranger
+sub statue sub orc sub male ranger
+sub statue sub orc sub female ranger
+sub statue sub human sub female rogue
+sub statue sub orc rogue
+sub statue sub human sub female samurai
+sub statue sub human sub female tourist
+sub statue sub human sub male valkyrie
+sub statue sub dwarf valkyrie
+sub statue sub human sub female wizard
+sub statue sub gnome sub male wizard
+sub statue sub gnome sub female wizard
+sub statue sub elf sub male wizard
+sub statue sub elf sub female wizard
+sub statue sub orc wizard
+
+! Player-monster tiles
+! Currently unused by the game engine; there are 49 of them
+
+sub playermonster archeologist
+sub playermonster barbarian
+sub playermonster caveman
+sub playermonster cavewoman
+sub playermonster healer
+sub playermonster knight
+sub playermonster monk
+sub playermonster priest
+sub playermonster priestess
+sub playermonster ranger
+sub playermonster rogue
+sub playermonster samurai
+sub playermonster tourist
+sub playermonster valkyrie
+sub playermonster wizard
+
+sub playermonster sub human sub female archeologist
+sub playermonster sub dwarf archeologist
+sub playermonster sub gnome sub male archeologist
+sub playermonster sub gnome sub female archeologist
+sub playermonster sub human sub female barbarian
+sub playermonster sub orc sub male barbarian
+sub playermonster sub orc sub female barbarian
+sub playermonster sub dwarf sub male caveman
+sub playermonster sub dwarf sub female caveman
+sub playermonster sub gnome sub male caveman
+sub playermonster sub gnome sub female caveman
+sub playermonster sub human sub female healer
+sub playermonster sub gnome sub male healer
+sub playermonster sub gnome sub female healer
+sub playermonster sub elf priest
+sub playermonster sub human sub female ranger
+sub playermonster sub elf sub male ranger
+sub playermonster sub elf sub female ranger
+sub playermonster sub gnome sub male ranger
+sub playermonster sub gnome sub female ranger
+sub playermonster sub orc sub male ranger
+sub playermonster sub orc sub female ranger
+sub playermonster sub human sub female rogue
+sub playermonster sub orc rogue
+sub playermonster sub human sub female samurai
+sub playermonster sub human sub female tourist
+sub playermonster sub human sub male valkyrie
+sub playermonster sub dwarf valkyrie
+sub playermonster sub human sub female wizard
+sub playermonster sub gnome sub male wizard
+sub playermonster sub gnome sub female wizard
+sub playermonster sub elf sub male wizard
+sub playermonster sub elf sub female wizard
+sub playermonster sub orc wizard
+
+! Generic item tiles
+! Again, currently unused, but needed for a future bugfix
+
+generic amulet
+generic shield
+generic potion
+generic scroll
+generic wand
+generic spellbook
+generic ring
+generic gem
+
+! Currently unused brandings
+
+remembered as multiple items
+
+! Varying-size gold piles
+
+gold piles 0
+gold piles 1
+gold piles 2
+gold piles 3
+gold piles 4
+gold piles 5
+
+! Special case corpses
+
+sub corpse * ant
+sub corpse * bee
+sub corpse acid blob
+sub corpse gray ooze; sub corpse gelatinous cube
+sub corpse quivering blob
+sub corpse brown pudding
+sub corpse black pudding
+sub corpse unknown green monster
+sub corpse cockatrice
+sub corpse floating eye
+sub corpse homunculus
+sub corpse blue jelly
+sub corpse spotted jelly
+sub corpse ochre jelly
+sub corpse * mimic
+sub corpse rock piercer
+sub corpse iron piercer
+sub corpse glass piercer
+sub corpse * naga hatchling
+sub corpse * naga
+sub corpse lichen
+sub corpse * mold
+sub corpse shrieker
+sub corpse violet fungus
+sub corpse lizard

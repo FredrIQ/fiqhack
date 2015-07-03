@@ -1,0 +1,41 @@
+(This file itself is Copyright (C) 2013, 2014, 2015 Alex Smith, and
+may be freely redistributed. See license for details.)
+
+NetHack 4 is licensed under the the NetHack General Public License
+(see libnethack/dat/license for the license terms). The license is
+similar to old versions of the GPL (both the GPL and the NGPL were
+based on the same license, the BISON general public license).
+
+Additionally, some of the newer files in the repository offer a choice
+of license; they can be distributed under the terms of the NGPL, but
+additionally, can also be distributed under the terms of the GNU
+General Public License (or GPL), version 2 or later. If a file offers
+this choice of license, that fact will be specified in a comment in
+the file itself. If you plan to redistribute or modify these
+dual-licensed files, you can follow the terms of either or both
+licenses, at your option. You can find a copy of version 2 of the GPL
+as libnethack/dat/gpl.
+
+The build system, version 3 of aimake, is licensed under version 3 of
+the GPL and is *not* licensed under the NGPL. However, the license of
+the build system does not transfer onto the files that it is used to
+build, leaving the resulting executables as purely NGPL. There is a
+copy of version 3 of the GPL inside aimake's source code; it can most
+conveniently be viewed via "./aimake --license", or else you can read
+it via opening the source code of aimake in a text editor.
+
+libjansson is not part of NetHack 4, although it is compiled into it
+during a static build (and used as a shared library during a dynamic
+build), and is distributed under the Expat license. (See the
+"copyright" file for details.)
+
+The art in the "tilesets/" directories has its own licenses. View the
+files themselves, or the "copyright" file, for full details.
+
+For full, machine-readable detail on the licenses of all the source
+files that make up NetHack 4, see the "copyright" file.  The licenses
+to the files included in a binary distribution (either compiled from
+the source, or copied from elsewhere) are listed in the
+"binary-copyright.rtf" file.
+
+NetHack 4 DOES NOT COME WITH ANY SORT OF WARRANTY.
