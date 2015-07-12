@@ -665,21 +665,20 @@ dosinkfall(void)
     }
 }
 
+/* note: returns TRUE on non-walls; you should probably only call it on walls,
+   in most cases */
 boolean
 may_dig(struct level *lev, xchar x, xchar y)
-/* intended to be called only on ROCKs */
 {
-    return (!
-            (IS_STWALL(lev->locations[x][y].typ) &&
-             (lev->locations[x][y].wall_info & W_NONDIGGABLE)));
+    return !(IS_STWALL(lev->locations[x][y].typ) &&
+             (lev->locations[x][y].wall_info & W_NONDIGGABLE));
 }
 
 boolean
 may_passwall(struct level * lev, xchar x, xchar y)
 {
-    return (!
-            (IS_STWALL(lev->locations[x][y].typ) &&
-             (lev->locations[x][y].wall_info & W_NONPASSWALL)));
+    return !(IS_STWALL(lev->locations[x][y].typ) &&
+             (lev->locations[x][y].wall_info & W_NONPASSWALL));
 }
 
 
@@ -1064,6 +1063,13 @@ distmap_init(struct distmap_state *ds, int x1, int y1, struct monst *mtmp)
     ds->travelstepy[0][0] = y1;
 
     ds->mon = mtmp;
+    ds->mmflags = MM_IGNOREMONST | MM_IGNOREDOORS;
+
+    struct obj *monwep = MON_WEP(ds->mon);
+    if (tunnels(ds->mon->data) && (!needspick(ds->mon->data) ||
+                                   (monwep && is_pick(monwep))))
+        ds->mmflags |= MM_CHEWROCK;
+
 }
 
 int
@@ -1091,7 +1097,7 @@ distmap(struct distmap_state *ds, int x2, int y2)
                     if (!isok(x + dx, y + dy))
                         continue;
                     if (!goodpos(ds->mon->dlevel, x + dx, y + dy,
-                                 ds->mon, MM_IGNOREMONST | MM_IGNOREDOORS))
+                                 ds->mon, ds->mmflags))
                         continue;
 
                     ds->travelstepx[(ds->curdist + 1) % 2][ds->tslen] = x + dx;

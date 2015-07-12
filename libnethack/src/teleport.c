@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-06-15 */
+/* Last modified by Alex Smith, 2015-07-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -69,8 +69,12 @@ goodpos(struct level *lev, int x, int y, struct monst *mtmp, unsigned gpflags)
             else
                 return is_flyer(mdat) || likes_lava(mdat);
         }
-        if (passes_walls(mdat) && may_passwall(lev, x, y))
-            return TRUE;
+        if (IS_STWALL(lev->locations[x][y].typ)) {
+            if (passes_walls(mdat) && may_passwall(lev, x, y))
+                return TRUE;
+            if (gpflags & MM_CHEWROCK && may_dig(lev, x, y))
+                return TRUE;
+        }
     }
     if (!ACCESSIBLE(lev->locations[x][y].typ)) {
         if (!(is_pool(lev, x, y) && ignorewater))
