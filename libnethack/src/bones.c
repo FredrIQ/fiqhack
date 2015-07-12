@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-07-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985,1993. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -96,6 +96,7 @@ resetobjs(struct obj *ochain, boolean restore)
             otmp->invlet = 0;
             otmp->no_charge = 0;
             otmp->was_thrown = 0;
+            otmp->was_dropped = 0;
 
             if (otmp->otyp == SLIME_MOLD)
                 goodfruit(otmp->spe);

@@ -329,10 +329,8 @@ addinv_stats(struct obj *obj)
     }
 }
 
-/*
-Add obj to the hero's inventory.  Make sure the object is "free".
-Adjust hero attributes as necessary.
-*/
+/* Add obj to the hero's inventory.  Make sure the object is "free".
+   Adjust hero attributes as necessary. */
 struct obj *
 addinv(struct obj *obj)
 {
@@ -346,6 +344,7 @@ addinv(struct obj *obj)
 
     obj->no_charge = 0; /* not meaningful for invent */
     obj->was_thrown = 0;
+    obj->was_dropped = 0;
 
     examine_object(obj);
 

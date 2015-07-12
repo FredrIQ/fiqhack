@@ -30,6 +30,7 @@ dodrop(const struct nh_cmd_arg *arg)
     obj = getargobj(arg, &drop_types[i], "drop");
     if (!obj)
         return 0;
+    obj->was_dropped = 1;
     result = drop(obj);
     if (*u.ushops)
         sellobj_state(SELL_NORMAL);
@@ -633,6 +634,7 @@ menu_drop(int retry)
     if (drop_everything) {
         for (otmp = invent; otmp; otmp = otmp2) {
             otmp2 = otmp->nobj;
+            otmp->was_dropped = 1;
             n_dropped += drop(otmp);
         }
     } else {
@@ -653,6 +655,7 @@ menu_drop(int retry)
                     } else
                         otmp = splitobj(otmp, cnt);
                 }
+                otmp->was_dropped = 1;
                 n_dropped += drop(otmp);
             }
             free(obj_pick_list);
