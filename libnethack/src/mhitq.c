@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-03 */
+/* Last modified by Alex Smith, 2015-07-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2015 Alex Smith. */
 /* NetHack may be freely redistributed.  See license for details. */
@@ -250,7 +250,7 @@ mpreattack(struct monst *mtmp, boolean range2)
         return FALSE;
 
     /* Special demon handling code */
-    if (!mtmp->cham && is_demon(mdat) && !range2 &&
+    if (!mtmp->cham && is_demon(mdat) && !range2 && !mtmp->mtame &&
         mtmp->data != &mons[PM_BALROG]
         && mtmp->data != &mons[PM_SUCCUBUS]
         && mtmp->data != &mons[PM_INCUBUS])
@@ -266,7 +266,7 @@ mpreattack(struct monst *mtmp, boolean range2)
         } else if (!rn2(30) && !mtmp->mcan)
             new_were(mtmp);
 
-        if (!rn2(10) && !mtmp->mcan) {
+        if (!rn2(10) && !mtmp->mcan && !mtmp->mtame) {
             int numseen, numhelp;
             const char *buf, *genericwere;
 
