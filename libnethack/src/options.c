@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-04-01 */
+/* Last modified by Alex Smith, 2015-07-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -48,7 +48,7 @@ static const struct nh_listitem movecommand_list[] = {
     {uim_onlyitems, "onlyitems"},
     {uim_displace, "displace"},
     {uim_pacifist, "pacifist"},
-    {uim_attackonly, "attackonly"},
+    {uim_attackhostile, "attackhostile"},
     {uim_traditional, "traditional"},
     {uim_standard, "standard"},
     {uim_indiscriminate, "indiscriminate"},

@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-13 */
+/* Last modified by Alex Smith, 2015-07-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -316,22 +316,22 @@ enum dungeon_symbols {
  * the size of temporary files and save files.
  */
 struct rm {
-    unsigned mem_bg:6;  /* remembered background */
-    unsigned mem_trap:5;        /* remembered trap */
-    unsigned mem_obj:10;        /* remembered object */
+    unsigned mem_bg:6;          /* remembered background */
+    unsigned mem_trap:5;        /* remembered trap (0 = no trap) */
+    unsigned mem_obj:10;        /* remembered object, +1 (0 = no object) */
     unsigned mem_obj_mn:9;      /* monnum of remembered corpses, statues,
-                                   figurines */
+                                   figurines, +1 */
     unsigned mem_invis:1;       /* remembered invisible monster encounter */
     unsigned mem_stepped:1;     /* has this square been stepped on? */
 
-    schar typ;  /* what is really there */
-    uchar seenv;        /* seen vector */
-    unsigned flags:5;   /* extra information for typ */
+    schar typ;                  /* what is really there */
+    uchar seenv;                /* seen vector */
+    unsigned flags:5;           /* extra information for typ */
     unsigned horizontal:1;      /* wall/door/etc is horiz. (more typ info) */
-    unsigned lit:1;     /* speed hack for lit rooms */
-    unsigned waslit:1;  /* remember if a location was lit */
-    unsigned roomno:6;  /* room # for special rooms */
-    unsigned edge:1;    /* marks boundaries for special rooms */
+    unsigned lit:1;             /* speed hack for lit rooms */
+    unsigned waslit:1;          /* remember if a location was lit */
+    unsigned roomno:6;          /* room # for special rooms */
+    unsigned edge:1;            /* marks boundaries for special rooms */
 
     /* these values only have meaning if mem_bg is some sort of door, and are
        saved in mem_bg not in their own bits; they record what the player knows 

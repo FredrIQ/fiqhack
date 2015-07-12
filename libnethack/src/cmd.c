@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-06-15 */
+/* Last modified by Alex Smith, 2015-07-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -1495,6 +1495,9 @@ getargdir(const struct nh_cmd_arg *arg, const char *query,
         dir_to_delta(arg->dir, dx, dy, dz) &&
         (!*dx || !*dy || u.umonnum != PM_GRID_BUG)) {
 
+        turnstate.intended_dx = *dx;
+        turnstate.intended_dy = *dy;
+
         /* getdir() has a stun/confusion check; replicate that here.
 
            (Doing things this way prevents a bug whereby command repeat would
@@ -1529,7 +1532,7 @@ struct obj *
 getargobj(const struct nh_cmd_arg *arg, const char *let, const char *word)
 {
     struct obj *obj = NULL, *otmp;
-  
+
     /* Did the client specify an inventory letter? */
     if (arg->argtype & CMD_ARG_OBJ)
         for (otmp = invent; otmp && !obj; otmp = otmp->nobj)
@@ -1788,4 +1791,3 @@ dotravel(const struct nh_cmd_arg *arg)
 }
 
 /*cmd.c*/
-
