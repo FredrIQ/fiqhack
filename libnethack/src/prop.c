@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-02-27 */
+/* Last modified by Alex Smith, 2015-07-12 */
 /* Copyright (c) 1989 Mike Threepoint                             */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* Copyright (c) 2014 Alex Smith                                  */
@@ -32,7 +32,7 @@ m_has_property(const struct monst *mon, enum youprop property,
         if (u.uintrinsic[property] & TIMEOUT)
             rv |= W_MASK(os_timeout);
         rv |= u.uintrinsic[property] & (INTRINSIC | I_SPECIAL);
-        
+
         /* Birth options */
         if (property == BLINDED && flags.permablind)
             rv |= W_MASK(os_birthopt);
@@ -104,14 +104,14 @@ m_has_property(const struct monst *mon, enum youprop property,
         /* External circumstances */
         if (property == BLINDED && u_helpless(hm_unconscious))
             rv |= W_MASK(os_circumstance);
-        
+
         /* Riding */
         if (property == FLYING && u.usteed && is_flyer(u.usteed->data))
             rv |= W_MASK(os_saddle);
         if (property == SWIMMING && u.usteed && is_swimmer(u.usteed->data))
             rv |= W_MASK(os_saddle);
     }
-        
+
     /* Overrides */
     if (!even_if_blocked) {
         if (property == BLINDED) {
@@ -289,6 +289,11 @@ msensem(const struct monst *viewer, const struct monst *viewee)
         if (invisible && see_invisible)
             sensemethod |= MSENSEF_KNOWNINVIS;
     }
+
+    /* Ideally scent should work around corners, but not through walls. That's
+       awkward to write, though, because it'd require pathfinding. */
+    if (vertical_loe && loe && distance <= 5 && has_scent(viewer->data))
+        sensemethod |= MSENSE_SCENT;
 
     /* Monster detection. All that is needed (apart from same-level, which was
        checked earlier) is the property itself. */

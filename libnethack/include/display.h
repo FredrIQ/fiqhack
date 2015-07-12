@@ -74,12 +74,17 @@
    behaviour is preserved and symmetrised for 4.3. */
 # define MSENSE_GOLDSMELL     0x00000100u
 
+/* Scent. Works over a radius-root-5 range, and requires that the source and
+   target are either both underwater or both out of water. The source must have
+   the M3_SCENT flag. TODO: make stinking clouds block this. */
+# define MSENSE_SCENT         0x00000200u
+
 
 # define MSENSE_ANYVISION     (MSENSE_VISION | MSENSE_INFRAVISION |  \
                                MSENSE_SEEINVIS | MSENSE_XRAY)
 # define MSENSE_ANYDETECT     (MSENSE_TELEPATHY | MSENSE_MONDETECT | \
                                MSENSE_WARNOFMON | MSENSE_COVETOUS |  \
-                               MSENSE_GOLDSMELL)
+                               MSENSE_GOLDSMELL | MSENSE_SCENT)
 
 /* Flags that alert us to a monster's existence, but not full details. */
 
