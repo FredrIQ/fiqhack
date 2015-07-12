@@ -199,6 +199,8 @@ query_key(const char *query, enum nh_query_key_flags qkflags, int *count)
 
     if (count && qkr.count != -1)
         pline_nomore("<%s: %d %c>", query, qkr.count, qkr.key);
+    else if (count && strchr(quitchars, qkr.key))
+        pline_nomore("<%s: cancelled>", query);
     else
         pline_nomore("<%s: %c>", query, qkr.key);
 
