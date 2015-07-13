@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Sean Hunt, 2014-10-17 */
+/* Last modified by Alex Smith, 2015-07-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -102,8 +102,9 @@ struct obj {
 
     unsigned in_use:1;          /* for magic items before useup items */
     unsigned was_thrown:1;      /* thrown by the hero since last picked up */
+    unsigned was_dropped:1;     /* last left inventory via d or D command */
     unsigned bypass:1;  /* mark this as an object to be skipped by bhito() */
-    /* 5 free bits */
+    /* 4 free bits */
 
     union {
         int corpsenm;           /* type of corpse is mons[corpsenm] */
@@ -346,4 +347,3 @@ extern struct destroy_message destroy_messages[num_destroy_msgs];
 extern struct obj *thrownobj;
 
 #endif /* OBJ_H */
-

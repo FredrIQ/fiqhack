@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-03-23 */
+/* Last modified by Alex Smith, 2015-07-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -2872,10 +2872,10 @@ beam_hit(int ddx, int ddy, int range,   /* direction and range */
                           an(xname(bobj)));
                 range = 0;
             } else if (obj == uball) {
+                struct test_move_cache cache;
+                init_test_move_cache(&cache);
                 if (!test_move(x - ddx, y - ddy, ddx, ddy, 0, TEST_MOVE,
-                               uim_standard, !!Blind, !!Stunned,
-                               !!Fumbling, !!Hallucination,
-                               !!Passes_walls, !!Ground_based)) {
+                               &cache)) {
                     /* nb: it didn't hit anything directly */
                     if (cansee(x, y))
                         pline("%s jerks to an abrupt halt.",

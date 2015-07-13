@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-06-15 */
+/* Last modified by Alex Smith, 2015-07-12 */
 /* Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985. */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -116,9 +116,9 @@ struct monst {
     unsigned mundetected:1;     /* when S_EEL: underwater
                                    for hiding monsters: currently hidden
                                    otherwise: unused, always 0 */
-
     /* implies one of M1_CONCEAL or M1_HIDE, but not mimic (that is, snake,
        spider, trapper, piercer, eel) */
+
     unsigned mcan:1;    /* has been cancelled */
     unsigned mburied:1; /* has been buried */
     unsigned mspeed:2;  /* current speed */

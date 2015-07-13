@@ -1,5 +1,5 @@
 /* vim:set cin ft=c sw=4 sts=4 ts=8 et ai cino=Ls\:0t0(0 : -*- mode:c;fill-column:80;tab-width:8;c-basic-offset:4;indent-tabs-mode:nil;c-file-style:"k&r" -*-*/
-/* Last modified by Alex Smith, 2015-06-15 */
+/* Last modified by Alex Smith, 2015-07-12 */
 /* Copyright (c) Steve Creps, 1988.                               */
 /* NetHack may be freely redistributed.  See license for details. */
 
@@ -52,6 +52,7 @@ struct pet_weapons;
 struct polyform_ability;
 struct region;
 struct rm;
+struct test_move_cache;
 struct tmp_sym;
 struct trap;
 struct version_info;
@@ -73,7 +74,6 @@ extern void break_conduct(enum player_conduct);
 
 /* ### apply.c ### */
 
-extern enum u_interaction_mode apply_interaction_mode(void);
 extern int doapply(const struct nh_cmd_arg *);
 extern int dorub(const struct nh_cmd_arg *);
 extern int dojump(const struct nh_cmd_arg *);
@@ -300,7 +300,6 @@ extern void dbuf_set_effect(int x, int y, int eglyph);
 extern void dbuf_set_memory(struct level *lev, int x, int y);
 extern short dbuf_branding(struct level *lev, int x, int y);
 extern int dbuf_get_mon(int x, int y);
-extern boolean warning_at(int x, int y);
 extern void clear_display_buffer(void);
 extern void cls(void);
 extern void flush_screen_enable(void);
@@ -323,8 +322,8 @@ extern void dropx(struct obj *);
 extern void dropy(struct obj *);
 extern void obj_no_longer_held(struct obj *);
 extern int doddrop(const struct nh_cmd_arg *);
-extern int dodown(enum u_interaction_mode);
-extern int doup(enum u_interaction_mode);
+extern int dodown(boolean);
+extern int doup(void);
 extern void notify_levelchange(const d_level *);
 extern void goto_level(d_level *, boolean, boolean, boolean);
 extern void schedule_goto(d_level *, boolean, boolean, int, const char *,
@@ -617,6 +616,8 @@ extern void drinksink(void);
 
 /* ### hack.c ### */
 
+extern enum u_interaction_attempt resolve_uim(
+    enum u_interaction_mode, boolean, xchar, xchar);
 extern void clear_travel_direction(void);
 extern boolean revive_nasty(int, int, const char *);
 extern void movobj(struct obj *, xchar, xchar);
@@ -625,9 +626,9 @@ extern boolean may_passwall(struct level *lev, xchar x, xchar y);
 extern boolean bad_rock(const struct permonst *, xchar, xchar);
 extern boolean invocation_pos(const d_level * dlev, xchar x, xchar y);
 extern boolean travelling(void);
-extern boolean test_move(
-    int, int, int, int, int, int, enum u_interaction_mode,
-    boolean, boolean, boolean, boolean, boolean, boolean);
+extern void init_test_move_cache(struct test_move_cache *);
+extern boolean test_move(int, int, int, int, int, int,
+                         const struct test_move_cache *);
 extern void distmap_init(struct distmap_state *, int, int, struct monst *mtmp);
 extern int distmap(struct distmap_state *, int, int);
 extern int domove(const struct nh_cmd_arg *, enum u_interaction_mode,
@@ -1799,13 +1800,9 @@ extern void u_init_inv_skills(void);
 
 /* ### uhitm.c ### */
 
-extern boolean confirm_attack(struct monst *, enum u_interaction_mode);
-extern enum attack_check_status attack_checks(
-    struct monst *, struct obj *, schar, schar, enum u_interaction_mode);
 extern void check_caitiff(struct monst *);
 extern schar find_roll_to_hit(struct monst *);
-extern enum attack_check_status attack(
-    struct monst *, schar, schar, enum u_interaction_mode);
+extern enum attack_check_status attack(struct monst *, schar, schar, boolean);
 extern boolean hmon(struct monst *, struct obj *, int);
 extern int damageum(struct monst *, const struct attack *);
 extern void missum(struct monst *, const struct attack *);
